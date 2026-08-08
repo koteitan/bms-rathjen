@@ -1,4 +1,26 @@
-/- gentable: generates table/r1-tm.md from the row database (to standard output) -/
+/- gentable: generates table/r1-tm.md from the row database (to standard output).
+
+   Each table row links to the line of Rows/TM.lean that defines it.  The line
+   numbers are resolved here, by reading that file, so that they cannot drift out
+   of date: CI regenerates the table and diffs it against the committed one. -/
 import Rows.TM
 
-def main : IO Unit := IO.print Rows.genTable
+/-- Is `needle` a substring of `s`? -/
+def hasSub (s needle : String) : Bool := (s.splitOn needle).length > 1
+
+/-- The path of Rows/TM.lean, whether the exe is run from `lean/` or from the repo root. -/
+def sourcePath : IO String := do
+  for p in ["Rows/TM.lean", "lean/Rows/TM.lean"] do
+    if ← System.FilePath.pathExists p then return p
+  throw (IO.userError "Rows/TM.lean not found (run from lean/ or from the repo root)")
+
+/-- 1-based line number of the first line of `path` containing `key`. -/
+def lineFinder (path : String) : IO (String → Option Nat) := do
+  let lines := (← IO.FS.readFile path).splitOn "\n"
+  return fun key => (lines.findIdx? (hasSub · key)).map (· + 1)
+
+def main : IO Unit := do
+  let dir := ((← sourcePath).dropEnd "Rows/TM.lean".length).toString
+  let rowLine ← lineFinder (dir ++ "Rows/TM.lean")
+  let proofLine ← lineFinder (dir ++ "Rows/Proofs.lean")
+  IO.print (Rows.genTable rowLine proofLine)
