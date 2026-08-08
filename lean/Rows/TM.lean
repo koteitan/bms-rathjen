@@ -25,6 +25,7 @@ The generated table itself is written in Japanese, since it is the user-facing
 document of this repository; only the comments here are in English.
 -/
 import Trans.TM
+import Trans.Pair
 import Evidence.Check
 import Evidence.Bisim
 
@@ -90,10 +91,22 @@ def rows : List Row := [
   { m := [[0],[1],[2],[3]], t := phi zero (phi zero omega),
     name := "\\omega^{\\omega^\\omega}", proof := "«(0)(1)(2)(3)»", hasO := true,
     ev := "bisim6" },
-  { m := [[0,0],[1,1]], t := e0, name := "\\varepsilon_0", ev := "bisim6",
-    note := "2 行の最初の極限。$`o`$ 未定義のため証明は Stage B 待ち" },
+  { m := [[0,0],[1,1]], t := e0, name := "\\varepsilon_0", hasO := true, ev := "bisim6",
+    note := "2 行の最初の極限" },
   { m := [[0,0],[1,1],[1,0]], t := phi zero e0,
-    name := "\\omega^{\\varepsilon_0+1}", ev := "bisim6" }
+    name := "\\omega^{\\varepsilon_0+1}", hasO := true, ev := "bisim6" },
+  { m := [[0,0],[1,1],[1,1]], t := phi one one, name := "\\varepsilon_1", hasO := true },
+  { m := [[0,0],[1,1],[2,0]], t := phi one omega, name := "\\varepsilon_\\omega",
+    hasO := true },
+  { m := [[0,0],[1,1],[2,0],[3,1]], t := phi one e0,
+    name := "\\varepsilon_{\\varepsilon_0}", hasO := true },
+  { m := [[0,0],[1,1],[2,1]], t := phi (ofNat 2) zero, name := "\\zeta_0", hasO := true },
+  { m := [[0,0],[1,1],[2,1],[2,1]], t := phi (ofNat 2) one, name := "\\zeta_1",
+    hasO := true },
+  { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (ofNat 2) omega, name := "\\zeta_\\omega",
+    hasO := true },
+  { m := [[0,0],[1,1],[2,1],[3,1]], t := phi (ofNat 3) zero,
+    name := "\\bar{\\varphi}(3,0)", hasO := true }
 ]
 
 /-! ## Per-row machine checks (a successful build means every row is verified) -/
@@ -101,8 +114,10 @@ def rows : List Row := [
 -- E1: every row marked `hasO` really has the matching value of `o`
 #guard rows.all fun r => !r.hasO || Trans.o? r.m == some r.t
 
--- bisimulation to depth 6: all rows
-#guard rows.all fun r => Evidence.bisim 6 r.m r.t 3
+-- bisimulation to depth 6: exactly the rows that claim it
+-- (beyond ε₀ the expansions and the fs are different cofinal sequences,
+--  so bisim is only claimed where it holds)
+#guard rows.all fun r => r.ev != "bisim6" || Evidence.bisim 6 r.m r.t 3
 
 -- the table is sorted, in the BMS order and in the T(M) order alike (an instance of E2)
 #guard (rows.zip rows.tail).all fun (a, b) => BMS.cmpM a.m b.m == .lt
@@ -110,6 +125,33 @@ def rows : List Row := [
 
 -- every term satisfies the formation conditions
 #guard rows.all fun r => inT r.t
+
+/-- A region row: asserts a claim about ALL standard matrices of a whole interval
+    (below `boundT`), rather than about one matrix.  Rendered between the ordinary
+    rows, just before the first row whose term reaches `boundT`.
+    `proof` names a theorem in Evidence/StageA.lean once the general theorem for
+    the region is integrated; until then it stays "" and no checkmark is shown. -/
+structure RegionRow where
+  bms : String         -- display text for the BMS cell
+  tm : String          -- display math for the T(M) cell
+  nm : String          -- display math for the common-name cell
+  boundT : Term        -- exclusive upper bound of the region (insertion point)
+  proof : String := "" -- theorem name in Evidence/StageA.lean ("" = pending)
+  evLabel : String := ""
+  evPath : String := ""
+  note : String := ""
+
+/-- The regions covered (or to be covered) by general theorems. -/
+def regions : List RegionRow := [
+  { bms := "<(0,0)(1,1)",
+    tm := "\\lt\\bar{\\varphi}(1,0)",
+    nm := "\\lt\\varepsilon_0",
+    boundT := e0,
+    proof := "e3_general",
+    evLabel := "checkAll",
+    evPath := "../lean/Test/TransTest.lean",
+    note := "区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明" }
+]
 
 /-! ## Table generation -/
 
@@ -130,11 +172,23 @@ def rowKey (r : Row) : String :=
 def linked (label path : String) : String :=
   if path == "" then label else "[" ++ label ++ "](" ++ path ++ ")"
 
+/-- Render one region row. -/
+def regionLine (regionProofLine : String → Option Nat) (g : RegionRow) : String :=
+  let proofCell :=
+    if g.proof == "" then ""
+    else match regionProofLine ("theorem " ++ g.proof) with
+      | some n => "[✅](../lean/Evidence/StageA.lean#L" ++ toString n ++ ")"
+      | none => ""
+  "| **" ++ g.bms ++ "** | $`" ++ g.tm ++ "`$ | $`" ++ g.nm ++ "`$ | " ++
+    proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
+
 /-- The contents of table/r1-tm.md.
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
-    defines it, and `proofLine` maps a proof namespace to its line in
-    Rows/Proofs.lean; `gentable` supplies both by reading those files. -/
-def genTable (lineOf : String → Option Nat) (proofLine : String → Option Nat) : String :=
+    defines it, `proofLine` maps a proof namespace to its line in Rows/Proofs.lean,
+    and `regionProofLine` maps a region theorem name to its line in
+    Evidence/StageA.lean; `gentable` supplies all three by reading those files. -/
+def genTable (lineOf : String → Option Nat) (proofLine : String → Option Nat)
+    (regionProofLine : String → Option Nat) : String :=
   let header :=
 "# BMS × Rathjen T(M) 対応表 (R1)
 
@@ -152,6 +206,8 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
   (リンク先がその証明)。極限行は E3 $`\\forall n.\\ o(M[n]) = t[n{+}1]`$、
   後続行は $`\\forall n.\\ o(M[n]) = t-1`$、零行は $`o(M) = t`$。
   表で唯一、検査ではなく証明である列。
+- **太字の区間行**: 個別の行列ではなく**区間内の全標準行列**への主張。
+  ✅ が付けば区間まるごと一般定理で証明済み (それまでは弱いエビデンスのみ)。
 - **その他の弱いエビデンス** (いずれも有限個の $`n`$ の計算検査):
   - $`o`$ = 翻訳関数がこの行列で定義され $`o(M) = t`$ が成立 (E1)。
     $`o`$ の定義域全体では [コーパス検査](../lean/Evidence/Check.lean)
@@ -163,7 +219,7 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | BMS | $`T(M)`$ | 通称 | 証明 | その他の弱いエビデンス | 備考 |
 |---|---|---|---|---|---|
 "
-  let body := String.join <| rows.map fun r =>
+  let rowStr (r : Row) : String :=
     let bms := if r.m.isEmpty then "(空)" else BMS.showMatrix r.m
     -- the BMS cell links to the line of Rows/TM.lean that defines this row
     let bmsCell :=
@@ -182,6 +238,14 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
         (if r.ev == "" then [] else [linked r.ev (evLink r.ev)])))
     "| " ++ bmsCell ++ " | $`" ++ tex r.t ++ "`$ | $`" ++ r.name ++ "`$ | " ++
       proofCell ++ " | " ++ weak ++ " | " ++ r.note ++ " |\n"
+  -- interleave: emit a region row just before the first row whose term reaches its bound
+  let step (st : List RegionRow × String) (r : Row) : List RegionRow × String :=
+    let (gs, acc) := st
+    let due := gs.filter (fun g => le g.boundT r.t)
+    let rest := gs.filter (fun g => !(le g.boundT r.t))
+    (rest, acc ++ String.join (due.map (regionLine regionProofLine)) ++ rowStr r)
+  let (gsLeft, body) := rows.foldl step (regions, "")
+  let body := body ++ String.join (gsLeft.map (regionLine regionProofLine))
   let footer :=
 "
 ## 実装

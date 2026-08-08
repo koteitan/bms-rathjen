@@ -55,9 +55,8 @@ def oPrAux : Nat → List Nat → Term
 /-- Stage A: translation of one-row-effective matrices. -/
 def oPr (M : BMS.Matrix) : Term := oPrAux (M.length + 1) (row0 M)
 
-/-- The translation, as a partial function; its domain grows stage by stage.
-    Outside the domain it is `none` (such rows are checked as explicit pairs by bisim). -/
-def o? (M : BMS.Matrix) : Option Term :=
-  if onlyRow0 M then some (oPr M) else none
+-- The dispatcher `o?` lives in Trans/Pair.lean (Stage B): it delegates
+-- one-row-effective matrices to `oPr` and the 2-row fragment with row-1
+-- entries ≤ 1 to `oPair?`.
 
 end Trans

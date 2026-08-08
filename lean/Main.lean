@@ -14,8 +14,11 @@ def sourcePath : IO String := do
     if ← System.FilePath.pathExists p then return p
   throw (IO.userError "Rows/TM.lean not found (run from lean/ or from the repo root)")
 
-/-- 1-based line number of the first line of `path` containing `key`. -/
+/-- 1-based line number of the first line of `path` containing `key`.
+    A missing file resolves nothing (used for not-yet-integrated proof files). -/
 def lineFinder (path : String) : IO (String → Option Nat) := do
+  if !(← System.FilePath.pathExists path) then
+    return fun _ => none
   let lines := (← IO.FS.readFile path).splitOn "\n"
   return fun key => (lines.findIdx? (hasSub · key)).map (· + 1)
 
@@ -23,4 +26,5 @@ def main : IO Unit := do
   let dir := ((← sourcePath).dropEnd "Rows/TM.lean".length).toString
   let rowLine ← lineFinder (dir ++ "Rows/TM.lean")
   let proofLine ← lineFinder (dir ++ "Rows/Proofs.lean")
-  IO.print (Rows.genTable rowLine proofLine)
+  let regionProofLine ← lineFinder (dir ++ "Evidence/StageA.lean")
+  IO.print (Rows.genTable rowLine proofLine regionProofLine)
