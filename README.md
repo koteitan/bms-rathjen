@@ -1,4 +1,4 @@
-# pss-rathjen
+# bms-rathjen
 
 順序数表記と見做した BMS (Bashicu Matrix System) と、Rathjen の順序数崩壊関数の
 対応表を、Lean による機械検証付きで作るプロジェクト。

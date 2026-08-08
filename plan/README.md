@@ -179,7 +179,7 @@ MT:  otype(M より下の標準形行列) = otype(o(M) より下の正規形項)
 ## ディレクトリ構成
 
 ```
-pss-rathjen/
+bms-rathjen/
 ├── README.md                 # 入口: プロジェクト概要 + 対応表へのリンク
 ├── rathjen-ordinals.md       # Rathjen 表記系の一覧(強さ順)
 ├── plan/

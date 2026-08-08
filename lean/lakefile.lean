@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL
 
-package «pss-rathjen» where
+package «bms-rathjen» where
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩

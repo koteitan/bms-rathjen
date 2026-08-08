@@ -1,9 +1,9 @@
 ---
-name: pss-rathjen-lean
-description: Repo-local conventions for Lean work on the BMS × Rathjen correspondence table in pss-rathjen — project layout, definition-fidelity rules for BMS and T(M), evidence lemma conventions (E1/E2/E3), table generation, yaBMS crosscheck, and this repo's kimina instance. Load whenever writing or verifying Lean, editing Rows/tables, or spawning agents for this repo. General kimina ops live in the global skill `use-kimina-lean-server`.
+name: bms-rathjen-lean
+description: Repo-local conventions for Lean work on the BMS × Rathjen correspondence table in bms-rathjen — project layout, definition-fidelity rules for BMS and T(M), evidence lemma conventions (E1/E2/E3), table generation, yaBMS crosscheck, and this repo's kimina instance. Load whenever writing or verifying Lean, editing Rows/tables, or spawning agents for this repo. General kimina ops live in the global skill `use-kimina-lean-server`.
 ---
 
-# pss-rathjen-lean
+# bms-rathjen-lean
 
 Goal of this repo: a correspondence table between BMS (as an ordinal notation;
 activation function generalized away, so matrices are used without `[n]`) and
@@ -66,7 +66,7 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
 
   ```sh
   cd ~/proofs/pss-proof/kimina-lean-server && \
-  LEAN_SERVER_PORT=12346 LEAN_SERVER_PROJECT_DIR=$HOME/proofs/pss-rathjen/git/lean \
+  LEAN_SERVER_PORT=12346 LEAN_SERVER_PROJECT_DIR=$HOME/proofs/bms-rathjen/git/lean \
     setsid nohup .venv/bin/python -m server > /tmp/kimina-rathjen.log 2>&1 &
   ```
 
