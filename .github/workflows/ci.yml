@@ -24,3 +24,9 @@ jobs:
           git clone --depth 1 https://github.com/koteitan/yaBMS "$RUNNER_TEMP/yaBMS"
           make -C "$RUNNER_TEMP/yaBMS/c"
           YABMS="$RUNNER_TEMP/yaBMS/c/bms" scripts/crosscheck.sh
+
+      - name: gentable up-to-date
+        working-directory: lean
+        run: |
+          lake exe gentable > "$RUNNER_TEMP/r1-tm.md"
+          diff -u ../table/r1-tm.md "$RUNNER_TEMP/r1-tm.md"
