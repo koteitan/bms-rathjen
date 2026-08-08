@@ -1,88 +1,103 @@
 import Trans.Pair
 /-
 Trans/StageC.lean — Stage C of the translation o : BMS → 𝔗(M):
-into the 2-row fragment with row-1 entries ≤ 2 (first-argument limits of φ̄,
-the region from φ̄(ω,0) upward), with an honestly documented frontier.
+the 2-row fragment with row-1 entries ≤ 2 (first-argument limits of φ̄, the
+region from φ̄(ω,0) upward), Stage C' revision: (0,2)-repeats resolved.
 
 Fragment (the domain of `oStageC?`):
   matrices all of whose columns have height ≤ 2 and row-1 entry ≤ 2.
   On row-1 ≤ 1 matrices the reading coincides with Stage B (`oPair?`, #guarded).
-  The upper boundary (0,0)(1,1)(2,2)(3,3) (row-1 entry 3) is outside; by the
-  α-floor reading below it corresponds to φ̄(ω^ω, 0) (conjecture, see Findings).
+  The upper boundary (0,0)(1,1)(2,2)(3,3) (row-1 entry 3) is outside.
 
 Translation rule (`oCAux`), derived by the same E3-driven method as Stage B:
 
   Blocks are split at row-0 = 0 columns and folded left to right with an
   accumulator; the recursion carries the PATH p : List Nat of (row1 - 1)-values
-  of the enclosing block heads (top level: p = []).
+  of the enclosing block heads (top level: p = []), and the fold counts the
+  (0,2)-headed blocks already passed (cnt).
 
   * block (0,0)::t — acc := acc + ω̄^( oC [] 0 (dec t) )    (as in Stage B)
   * block (0,b)::t (b = 1,2) — acc := φ_K( logφ_K(acc) + step ) with
-      K    = levelOf (p ++ [b-1]),
-      v    = oC (p ++ [b-1]) thr (dec t),  v := 0 if the tail added nothing,
-      step = 1 if v = 0, ω̄^v otherwise, and
-      thr  = acc if p ≠ [] and acc is a strict fixed point above the tail's
-             (0,1)-level (`isHighFp`), else 0 — the tail is then read on top of
-             the inherited base (threading).
+      K = levelOf (p ++ [b-1]),   v = oC (p ++ [b-1]) thr (dec t)
+      (v := 0 if the tail added nothing beyond thr), where
+      thr = acc if p ≠ [] and acc is a strict fixed point above the tail's
+            (0,1)-level (`isHighFp`), else 0 (threaded base), and
+      step = at a successor level K: 1 if v = 0, ω̄^v otherwise (Stage B);
+             at a limit level K:     ω̄^( ω·v + cnt )
+             (ω·v is summand-wise left multiplication; v = 0, cnt = 0 gives
+             step 1; each (0,2)-sibling raises the count exponent by one).
+      Overshooting v (φ-level above K) collapses: step = ω̄^v, phiNF absorbs.
 
   levelOf p is the ONE-ROW (PrSS/CNF) reading `oPrAux` of the path itself: the
   first Veblen argument is the Stage-A translation of the head skeleton, one
-  floor up.  This subsumes Stage B (a path of k zeros reads as k) and gives
+  floor up.  A path of k zeros reads as k (subsuming Stage B), and
     [0,1] = ω, [0,1,0] = ω+1, [0,1,0,1] = ω·2, [0,1,1] = ω², [0,1,1,1] = ω³.
 
+  The limit-level step rule is the Stage C' finding: the second argument of a
+  limit-level φ̄ is built on a COUNT LADDER — the n-th (0,2)-sibling of a fold
+  contributes ω̄^n, and a tail v contributes ω̄^(ω·v) ("v-many ω-blocks"), e.g.
+    (0,0)(1,1)(2,2)(2,2)       = φ̄(ω,ω)     (repeat: cnt = 1)
+    (0,0)(1,1)(2,2)(2,2)(2,2)  = φ̄(ω,ω²)    (cnt = 2)
+    (0,0)(1,1)(2,2)(3,0)       = φ̄(ω,ω̄^ω)  (v = 1: sup of the repeats)
+  This CORRECTS the Stage-C value of (0,0)(1,1)(2,2)(3,0), which was listed as
+  φ̄(ω,ω): the corpus of (2,2)(2,2) proved the repeats themselves march through
+  all φ_ω(n) (their sup (2,2)(2,2) = φ̄(ω,ω) is machine-checked below), so the
+  sup of (2,2)ⁿ is φ̄(ω,ω̄^ω).  Table row to fix accordingly.
+
   Sample values (each #guarded below AND corpus-validated, W := φ̄(ω,0)):
-    (0,0)(1,1)(2,2)          = φ̄(ω,0) = W      (α-tower diagonal)
-    (0,0)(1,1)(2,2)(1,1)     = φ̄(1,W)          (= ε_{W+1})
-    (0,0)(1,1)(2,2)(2,0)     = φ̄(1,φ̄(0,W))    (= ε_{W·ω})
-    (0,0)(1,1)(2,2)(2,1)     = φ̄(2,W)          (= φ₂(W+1))
+    (0,0)(1,1)(2,2)           = φ̄(ω,0) = W
+    (0,0)(1,1)(2,2)(1,1)      = φ̄(1,W)        (= ε_{W+1})
+    (0,0)(1,1)(2,2)(2,0)      = φ̄(1,φ̄(0,W))  (= ε_{W·ω})
+    (0,0)(1,1)(2,2)(2,1)      = φ̄(2,W)        (= φ₂(W+1))
     (0,0)(1,1)(2,2)(2,1)(3,1) = φ̄(3,W)
     (0,0)(1,1)(2,2)(2,1)(3,2) = φ̄(ω,1)
-    (0,0)(1,1)(2,2)(3,0)     = φ̄(ω,ω)
-    (0,0)(1,1)(2,2)(3,1)     = φ̄(ω+1,0)
+    (0,0)(1,1)(2,2)(2,2)      = φ̄(ω,ω)
+    (0,0)(1,1)(2,2)(2,2)(2,2) = φ̄(ω,ω²)
+    (0,0)(1,1)(2,2)(3,0)      = φ̄(ω,ω̄^ω)
+    (0,0)(1,1)(2,2)(3,1)      = φ̄(ω+1,0)
     (0,0)(1,1)(2,2)(3,1)(4,2) = φ̄(ω·2,0)
-    (0,0)(1,1)(2,2)(3,2)     = φ̄(ω²,0)
+    (0,0)(1,1)(2,2)(3,2)      = φ̄(ω²,0)
     (0,0)(1,1)(2,2)(3,2)(4,2) = φ̄(ω³,0)
 
-Validated region (all #guards below; 0 failures):
-  the reachable corpora (depth 3, width 3) of the seeds
-    (0,0)(1,1)(2,2)                       [28]
-    (0,0)(1,1)(2,2)(2,1)                  [34]
-    (0,0)(1,1)(2,2)(2,1)(3,1)             [40]
-    (0,0)(1,1)(2,2)(2,1)(3,2)             [32]
-    (0,0)(1,1)(2,2)(3,1)                  [34]
-    (0,0)(1,1)(2,2)(3,1)(4,2)             [32]
-    (0,0)(1,1)(2,2)(3,2)                  [32]
-    (0,0)(1,1)(2,2)(3,2)(4,2)             [40]
-    (0,0)(1,1)(2,2)(3,3) minus the seed   [29]
-  under checkKind/checkSucc/checkE2/checkE3i, plus (dev record, not in the
-  guards) the depth-4 corpora of (2,2), (2,2)(3,2) and (2,2)(3,3)∖seed
-  (62/85/76 matrices), all with 0 failures.
+Validated region (all #guards below; 0 failures): the reachable corpora
+(depth 3, width 3) of the seeds
+  (2,2) [28], (2,2)(2,1) [34], (2,2)(2,1)(3,1) [40], (2,2)(2,1)(3,2) [32],
+  (2,2)(3,1) [34], (2,2)(3,1)(4,2) [32], (2,2)(3,2) [32], (2,2)(3,2)(4,2) [40],
+  (2,2)(3,3)∖seed [29], and — new in Stage C' — (2,2)(2,2) [32],
+  (2,2)(3,0) [30], (2,2)(2,2)(2,2) [40],
+under checkKind/checkSucc/checkE2/checkE3i.  Frontier (i) of Stage C (the
+(2,2)(2,2)-repeats, formerly 22 failures) is thereby RESOLVED.
 
-KNOWN FRONTIER (defective, kept OUT of the acceptance record; values there are
-provisional — do NOT add table rows from it):
-  (i) a (0,2)-headed block following a nonzero accumulator of its own fold —
-      the "(2,2)(2,2)-repeat".  oCAux gives (0,0)(1,1)(2,2)(2,2) = φ̄(ω,1),
-      which collides with (0,0)(1,1)(2,2)(2,1)(3,2) (checkE2 fails in the
-      corpus of (2,2)(2,2); 22 failures).  The expansion sups suggest the
-      repeat step at a limit level is larger than +1 (φ̄(ω,ω)-like), but a
-      plain limit-step rule broke the validated (2,2)(3,0)-family, so the
-      correct rule is still open.
-  (ii) at the top-level fold (p = []), a (0,1)-block with nonempty tail whose
-      dec-tail starts with a (0,1)-head, following a φ_ω-class accumulator —
-      e.g. (0,0)(1,1)(2,2)(1,1)(2,1) (corpus of (2,2)(2,0): 124 failures).
-      Here the un-threaded reading is too small, but threading breaks the
-      validated [C_ω][C_ω]-chains: the same dichotomy as (i), one floor down.
-  Both families are exactly the configurations where an inherited accumulator
-  and a same-or-lower-level tail compete; resolving them is the entry ticket
-  to the ψ-region and is left to Stage C'.
+KNOWN FRONTIER (kept OUT of the acceptance record; do NOT make rows from it):
+  (ii) unchanged from Stage C: at the top-level fold, a (0,1)-block with a
+      (0,1)-headed dec-tail following a φ_ω-class accumulator — e.g.
+      (0,0)(1,1)(2,2)(1,1)(2,1) (corpus of (2,2)(2,0): 124 failures).  The
+      un-threaded reading is too small; threading breaks the validated
+      [C_ω][C_ω]-chains.  The expansion data show the (0,0)-block exponent
+      reset re-derives W-material that the BMS order says is already consumed
+      (an ordinal-collapsing phenomenon) — entry point of ψ, left open.
+  (iii) inside the (·,0)-tails of (2,2)(3,0)-blocks at depth ≥ 2 the
+      count-ladder is still wrong: the corpus of (2,2)(3,0)(4,1) has 4
+      failures.  Chain-forced anchors (skeleton = dec'd tail of the
+      (0,2)-block; W-arguments φ̄(ω, ω̄^E)):
+        [0]       (3,0)            E = ω        [0,0]   (3,0)(3,0)      ω+1
+        [0,1]     (3,0)(4,0)       ω·2          [0,1,1] (3,0)(4,0)(4,0) ω·2+1
+        [0,1,2]   (3,0)(4,0)(5,0)  ω·3          sup ⇒ (3,0)(4,1)        ω²
+      (the last corrects this file's provisional value for (2,2)(3,0)(4,1);
+      never a table row).  Structure found in the chains, for Stage C'':
+      within a (0,2)-tail, BARE (0,0)-sub-blocks bump the argument exponent
+      by 1 while TAILED ones open a fresh ω̄^E-summand — the cnt-ladder
+      pattern repeated one floor in — with E(block) = ω·(1 + G(dec tail)) +
+      bumps and G a linear depth count going transfinite at (·,1)-columns;
+      [0,1,2,1,2]-skeletons ((3,0)(4,0)(5,0)(4,0)(5,0)) force CNF SUMS inside
+      E, so the floor needs the full fold machinery (a 4th self-similar
+      floor), not a local formula (a summand-wise ω̄^(ω·t)-rule was tried and
+      regressed the (2,2)(3,1)-corpora).  Also order-forced: skeletons with an
+      ascent after a repeat at a lower value ([0,1,1,2], (3,0)(4,0)(4,0)(5,0))
+      are NOT standard — their expansion chains coincide with the [0,1,2]-ones.
 
-Findings on Γ₀ (= ψ_Ω(0), the mission's item 2):
-  Γ₀ is NOT below (0,0)(1,1)(2,2)(3,3).  The α-floor of a 2-row matrix is the
-  one-row PrSS of its (row1-1)-skeleton, so first arguments below the boundary
-  stay below ω^ω ((3,3)-corpus validation above), and more generally 2-row
-  α-floors read below ε₀.  The candidates (2,2)(2,2) and (2,2)(3,2) proposed
-  in the mission are φ̄(ω,1)-provisional and φ̄(ω²,0)-validated respectively —
-  both far below Γ₀.  ψ enters only after the frontier (i)/(ii) is resolved.
+Γ₀ status (unchanged): Γ₀ = ψ_Ω(0) is not below (0,0)(1,1)(2,2)(3,3); its
+matrix needs frontiers (ii)/(iii) resolved first.
 
 Note: the imports precede this comment because the kimina server extracts the
 header imports from the top of a posted snippet.
@@ -108,40 +123,61 @@ def isHighFp (k : Term) : Term → Bool
   | .phi a _ => lt k a
   | _ => false
 
-/-- One (0,b)-block step at level k (b ≥ 1): φ_k(logφ_k(acc) + step),
-    step = 1 for an empty tail and ω̄^v otherwise (Stage B's `phiStep`,
-    shared here so the two stages provably agree on the common fragment). -/
-def phiStepC (k acc v : Term) : Term :=
+/-- CNF exponent of an AP term: the (shifted) argument for ω̄-powers, the term
+    itself for higher fixed points (ω̄^t = t there). -/
+def expOf : Term → Term
+  | .phi Term.zero b => if phiShifted Term.zero b then plus b one else b
+  | t => t
+
+/-- Left multiplication ω·v (v in CNF): ω̄^(1+a) summand-wise; continuous,
+    so ω·ε₀ = ε₀. -/
+def mulOmegaLeft (v : Term) : Term :=
+  ofList ((toList v).map fun t => omegaNF (plus one (expOf t)))
+
+/-- One (0,b)-block step at level k (b ≥ 1): φ_k(logφ_k(acc) + step).
+    Successor levels use Stage B's arithmetic; limit levels use the count
+    ladder (see the header).  `cnt` counts the preceding (0,2)-siblings. -/
+def phiStepC (k acc v : Term) (cnt : Nat) : Term :=
+  let base := (logPhi k acc).getD Term.zero
+  let isL := kindT k == .isLim
   let g : Term :=
-    if v == Term.zero then
-      match logPhi k acc with
-      | none => Term.zero
-      | some b => plus b one
-    else plus ((logPhi k acc).getD Term.zero) (omegaNF v)
+    if isL then
+      if v != Term.zero && isHighFp k v then plus base (omegaNF v)
+      else if v == Term.zero && (logPhi k acc).isNone && cnt == 0 then Term.zero
+      else plus base
+        (omegaNF (if v == Term.zero then ofNat cnt else mulOmegaLeft v))
+    else
+      if v == Term.zero then
+        match logPhi k acc with
+        | none => Term.zero
+        | some b => plus b one
+      else plus base (omegaNF v)
   phiNF k g
 
 /-- The path-indexed reading (see the header). -/
 def oCAux : Nat → List Nat → Term → List BMS.Col → Term
   | 0, _, _, _ => Term.zero
   | fuel + 1, p, acc0, s =>
-    (blocksP s).foldl (init := acc0) fun acc b =>
+    ((blocksP s).foldl (init := (acc0, 0)) fun (acc, cnt) b =>
       match b with
-      | [] => acc  -- unreachable: blocks are nonempty
+      | [] => (acc, cnt)  -- unreachable: blocks are nonempty
       | c :: t =>
         if r1 c == 0 then
-          plus acc (omegaNF (oCAux fuel [] Term.zero (decP t)))
+          (plus acc (omegaNF (oCAux fuel [] Term.zero (decP t))), cnt)
         else
           let p' := p ++ [r1 c - 1]
           let thr := if !p.isEmpty && isHighFp (levelOf (p' ++ [0])) acc
                      then acc else Term.zero
           let vi := oCAux fuel p' thr (decP t)
-          phiStepC (levelOf p') acc (if vi == thr then Term.zero else vi)
+          (phiStepC (levelOf p') acc (if vi == thr then Term.zero else vi) cnt,
+           if r1 c == 2 then cnt + 1 else cnt)).1
 
 end StageC
 
-/-- Stage C: the translation on the 2-row fragment with row-1 entries ≤ 2
-    (`none` outside).  Row-1-all-zero matrices delegate to `oPr`.  The values
-    on the frontier configurations (i)/(ii) of the header are provisional. -/
+/-- Stage C (C' revision): the translation on the 2-row fragment with row-1
+    entries ≤ 2 (`none` outside).  Row-1-all-zero matrices delegate to `oPr`.
+    Values on the frontier configurations (ii)/(iii) of the header are
+    provisional. -/
 def oStageC? (m : BMS.Matrix) : Option Term :=
   if StageC.inFragC m then
     some (if onlyRow0 m then oPr m
@@ -167,7 +203,9 @@ private def W : Term := phi omega zero            -- φ̄(ω,0)
 #guard oStageC? [[0,0],[1,1],[2,2],[2,1]] == some (phi (ofNat 2) W)
 #guard oStageC? [[0,0],[1,1],[2,2],[2,1],[3,1]] == some (phi (ofNat 3) W)
 #guard oStageC? [[0,0],[1,1],[2,2],[2,1],[3,2]] == some (phi omega one)
-#guard oStageC? [[0,0],[1,1],[2,2],[3,0]] == some (phi omega omega)
+#guard oStageC? [[0,0],[1,1],[2,2],[2,2]] == some (phi omega omega)
+#guard oStageC? [[0,0],[1,1],[2,2],[2,2],[2,2]] == some (phi omega (phi zero (ofNat 2)))
+#guard oStageC? [[0,0],[1,1],[2,2],[3,0]] == some (phi omega (phi zero omega))
 #guard oStageC? [[0,0],[1,1],[2,2],[3,1]] == some (phi (plus omega one) zero)
 #guard oStageC? [[0,0],[1,1],[2,2],[3,1],[4,2]] == some (phi (plus omega omega) zero)
 #guard oStageC? [[0,0],[1,1],[2,2],[3,2]] == some (phi (phi zero (ofNat 2)) zero)
@@ -192,7 +230,11 @@ private def g8 : List Matrix := corpus [[0,0],[1,1],[2,2],[3,2],[4,2]] 3 3
 private def g9 : List Matrix :=
   (corpus [[0,0],[1,1],[2,2],[3,3]] 3 3).filter
     (fun m => m != [[0,0],[1,1],[2,2],[3,3]])
-private def gall : List Matrix := g1 ++ g2 ++ g3 ++ g4 ++ g5 ++ g6 ++ g7 ++ g8 ++ g9
+private def g10 : List Matrix := corpus [[0,0],[1,1],[2,2],[2,2]] 3 3
+private def g11 : List Matrix := corpus [[0,0],[1,1],[2,2],[3,0]] 3 3
+private def g12 : List Matrix := corpus [[0,0],[1,1],[2,2],[2,2],[2,2]] 3 3
+private def gall : List Matrix :=
+  g1 ++ g2 ++ g3 ++ g4 ++ g5 ++ g6 ++ g7 ++ g8 ++ g9 ++ g10 ++ g11 ++ g12
 
 -- domain closure and formation conditions
 #guard gall.all fun m => (oStageC? m).isSome
@@ -208,6 +250,9 @@ private def gall : List Matrix := g1 ++ g2 ++ g3 ++ g4 ++ g5 ++ g6 ++ g7 ++ g8 +
 #guard checkAll oStageCT g7 3 6
 #guard checkAll oStageCT g8 3 6
 #guard checkAll oStageCT g9 3 6
+#guard checkAll oStageCT g10 3 6
+#guard checkAll oStageCT g11 3 8
+#guard checkAll oStageCT g12 3 8
 
 end StageC.Test
 

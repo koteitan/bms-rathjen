@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.10
+バージョン: v0.1.11
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -41,22 +41,24 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | [`(0)(1)(2)`](../lean/Rows/TM.lean#L94) | $`\bar{\varphi}(0,\omega)`$ | $`\omega^\omega`$ | [✅](../lean/Rows/Proofs.lean#L120) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | [`(0)(1)(2)(3)`](../lean/Rows/TM.lean#L96) | $`\bar{\varphi}(0,\bar{\varphi}(0,\omega))`$ | $`\omega^{\omega^\omega}`$ | [✅](../lean/Rows/Proofs.lean#L133) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | **<(0,0)(1,1)** | $`\lt\bar{\varphi}(1,0)`$ | $`\lt\varepsilon_0`$ | [✅](../lean/Evidence/StageA.lean#L1409) | [checkAll](../lean/Test/TransTest.lean) | 区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明 |
-| [`(0,0)(1,1)`](../lean/Rows/TM.lean#L99) | $`\bar{\varphi}(1,0)`$ | $`\varepsilon_0`$ | [✅](../lean/Rows/ProofsB.lean#L766) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 2 行の最初の極限 |
-| [`(0,0)(1,1)(1,0)`](../lean/Rows/TM.lean#L101) | $`\bar{\varphi}(0,\bar{\varphi}(1,0))`$ | $`\omega^{\varepsilon_0+1}`$ |  | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L103) | $`\bar{\varphi}(1,1)`$ | $`\varepsilon_1`$ |  | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)`](../lean/Rows/TM.lean#L104) | $`\bar{\varphi}(1,\omega)`$ | $`\varepsilon_\omega`$ |  | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L106) | $`\bar{\varphi}(1,\bar{\varphi}(1,0))`$ | $`\varepsilon_{\varepsilon_0}`$ | [✅](../lean/Rows/ProofsB.lean#L971) | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L108) | $`\bar{\varphi}(2,0)`$ | $`\zeta_0`$ | [✅](../lean/Rows/ProofsB.lean#L489) | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L110) | $`\bar{\varphi}(2,1)`$ | $`\zeta_1`$ |  | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L112) | $`\bar{\varphi}(2,\omega)`$ | $`\zeta_\omega`$ |  | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L114) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ | [✅](../lean/Rows/ProofsB.lean#L612) | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L116) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行 |
-| [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L119) | $`\bar{\varphi}(1,\bar{\varphi}(\omega,0))`$ | $`\varepsilon_{\bar{\varphi}(\omega,0)+1}`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
-| [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L121) | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0))`$ | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0)+1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
-| [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L123) | $`\bar{\varphi}(\omega,1)`$ | $`\bar{\varphi}(\omega,1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
-| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L125) | $`\bar{\varphi}(\omega,\omega)`$ | $`\bar{\varphi}(\omega,\omega)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
-| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L127) | $`\bar{\varphi}(\omega+1,0)`$ | $`\bar{\varphi}(\omega+1,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
-| [`(0,0)(1,1)(2,2)(3,2)`](../lean/Rows/TM.lean#L129) | $`\bar{\varphi}(\bar{\varphi}(0,2),0)`$ | $`\bar{\varphi}(\omega^2,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)`](../lean/Rows/TM.lean#L99) | $`\bar{\varphi}(1,0)`$ | $`\varepsilon_0`$ | [✅](../lean/Rows/ProofsB.lean#L775) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 2 行の最初の極限 |
+| [`(0,0)(1,1)(1,0)`](../lean/Rows/TM.lean#L101) | $`\bar{\varphi}(0,\bar{\varphi}(1,0))`$ | $`\omega^{\varepsilon_0+1}`$ | [✅](../lean/Rows/ProofsB.lean#L1747) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L103) | $`\bar{\varphi}(1,1)`$ | $`\varepsilon_1`$ | [✅](../lean/Rows/ProofsB.lean#L1954) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)`](../lean/Rows/TM.lean#L105) | $`\bar{\varphi}(1,\omega)`$ | $`\varepsilon_\omega`$ | [✅](../lean/Rows/ProofsB.lean#L1472) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L107) | $`\bar{\varphi}(1,\bar{\varphi}(1,0))`$ | $`\varepsilon_{\varepsilon_0}`$ | [✅](../lean/Rows/ProofsB.lean#L980) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L109) | $`\bar{\varphi}(2,0)`$ | $`\zeta_0`$ | [✅](../lean/Rows/ProofsB.lean#L498) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L111) | $`\bar{\varphi}(2,1)`$ | $`\zeta_1`$ | [✅](../lean/Rows/ProofsB.lean#L2309) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L113) | $`\bar{\varphi}(2,\omega)`$ | $`\zeta_\omega`$ | [✅](../lean/Rows/ProofsB.lean#L1561) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L115) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ | [✅](../lean/Rows/ProofsB.lean#L621) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L117) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行 |
+| [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L120) | $`\bar{\varphi}(1,\bar{\varphi}(\omega,0))`$ | $`\varepsilon_{\bar{\varphi}(\omega,0)+1}`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L122) | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0))`$ | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0)+1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L124) | $`\bar{\varphi}(\omega,1)`$ | $`\bar{\varphi}(\omega,1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L126) | $`\bar{\varphi}(\omega,\omega)`$ | $`\bar{\varphi}(\omega,\omega)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L128) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,2))`$ | $`\bar{\varphi}(\omega,\omega^2)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L130) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,\omega))`$ | $`\bar{\varphi}(\omega,\omega^\omega)`$ |  | [oStageC](../lean/Trans/StageC.lean) | v0.1.10 の値を訂正 ((2,2) 反復列の sup) |
+| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L133) | $`\bar{\varphi}(\omega+1,0)`$ | $`\bar{\varphi}(\omega+1,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,2)`](../lean/Rows/TM.lean#L135) | $`\bar{\varphi}(\bar{\varphi}(0,2),0)`$ | $`\bar{\varphi}(\omega^2,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
 
 ## 実装
 

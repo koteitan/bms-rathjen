@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.10"
+def version : String := "v0.1.11"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -99,18 +99,19 @@ def rows : List Row := [
   { m := [[0,0],[1,1]], t := e0, name := "\\varepsilon_0", proof := "R1",
     hasO := true, ev := "bisim6", note := "2 行の最初の極限" },
   { m := [[0,0],[1,1],[1,0]], t := phi zero e0,
-    name := "\\omega^{\\varepsilon_0+1}", hasO := true, ev := "bisim6" },
-  { m := [[0,0],[1,1],[1,1]], t := phi one one, name := "\\varepsilon_1", hasO := true },
-  { m := [[0,0],[1,1],[2,0]], t := phi one omega, name := "\\varepsilon_\\omega",
+    name := "\\omega^{\\varepsilon_0+1}", proof := "R2", hasO := true, ev := "bisim6" },
+  { m := [[0,0],[1,1],[1,1]], t := phi one one, name := "\\varepsilon_1", proof := "R3",
     hasO := true },
+  { m := [[0,0],[1,1],[2,0]], t := phi one omega, name := "\\varepsilon_\\omega",
+    proof := "R4", hasO := true },
   { m := [[0,0],[1,1],[2,0],[3,1]], t := phi one e0,
     name := "\\varepsilon_{\\varepsilon_0}", proof := "R5", hasO := true },
   { m := [[0,0],[1,1],[2,1]], t := phi (ofNat 2) zero, name := "\\zeta_0",
     proof := "R6", hasO := true },
   { m := [[0,0],[1,1],[2,1],[2,1]], t := phi (ofNat 2) one, name := "\\zeta_1",
-    hasO := true },
+    proof := "R7", hasO := true },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (ofNat 2) omega, name := "\\zeta_\\omega",
-    hasO := true },
+    proof := "R8", hasO := true },
   { m := [[0,0],[1,1],[2,1],[3,1]], t := phi (ofNat 3) zero,
     name := "\\bar{\\varphi}(3,0)", proof := "R9", hasO := true },
   { m := [[0,0],[1,1],[2,2]], t := phi omega zero,
@@ -122,8 +123,13 @@ def rows : List Row := [
     name := "\\bar{\\varphi}(2,\\bar{\\varphi}(\\omega,0)+1)", ev := "oStageC" },
   { m := [[0,0],[1,1],[2,2],[2,1],[3,2]], t := phi omega one,
     name := "\\bar{\\varphi}(\\omega,1)", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[3,0]], t := phi omega omega,
+  { m := [[0,0],[1,1],[2,2],[2,2]], t := phi omega omega,
     name := "\\bar{\\varphi}(\\omega,\\omega)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,2],[2,2]], t := phi omega (phi zero (ofNat 2)),
+    name := "\\bar{\\varphi}(\\omega,\\omega^2)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[3,0]], t := phi omega (phi zero omega),
+    name := "\\bar{\\varphi}(\\omega,\\omega^\\omega)", ev := "oStageC",
+    note := "v0.1.10 の値を訂正 ((2,2) 反復列の sup)" },
   { m := [[0,0],[1,1],[2,2],[3,1]], t := phi (plus omega one) zero,
     name := "\\bar{\\varphi}(\\omega+1,0)", ev := "oStageC" },
   { m := [[0,0],[1,1],[2,2],[3,2]], t := phi (phi zero (ofNat 2)) zero,
