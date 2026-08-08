@@ -2,3 +2,4 @@
 import Trans.TM
 import Trans.Pair
 import Trans.Lemmas
+import Trans.StageC

@@ -21,6 +21,8 @@ Master plan: `plan/README.md`. Target list & staging: `rathjen-ordinals.md`
   `Rows/` (table row DB + per-row lemmas), `Evidence/` (general theorems).
 - `table/*.md` is **generated** by `lake exe gentable` from `Rows/` — never
   hand-edit; edit `Rows/` and regenerate.
+- `Rows.version` in `Rows/TM.lean` is rendered into the table header; bump it
+  together with every /commitbump and regenerate the table before committing.
 
 ## Definition-fidelity rules
 

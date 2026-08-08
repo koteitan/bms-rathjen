@@ -26,6 +26,7 @@ document of this repository; only the comments here are in English.
 -/
 import Trans.TM
 import Trans.Pair
+import Trans.StageC
 import Evidence.Check
 import Evidence.Bisim
 
@@ -34,6 +35,10 @@ namespace Rows
 open BMS (Matrix)
 open TM (Term)
 open TM.Term
+
+/-- Version of the table (the repository version of the /commitbump workflow).
+    Bump this together with every commit; gentable renders it into the header. -/
+def version : String := "v0.1.10"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -91,22 +96,38 @@ def rows : List Row := [
   { m := [[0],[1],[2],[3]], t := phi zero (phi zero omega),
     name := "\\omega^{\\omega^\\omega}", proof := "«(0)(1)(2)(3)»", hasO := true,
     ev := "bisim6" },
-  { m := [[0,0],[1,1]], t := e0, name := "\\varepsilon_0", hasO := true, ev := "bisim6",
-    note := "2 行の最初の極限" },
+  { m := [[0,0],[1,1]], t := e0, name := "\\varepsilon_0", proof := "R1",
+    hasO := true, ev := "bisim6", note := "2 行の最初の極限" },
   { m := [[0,0],[1,1],[1,0]], t := phi zero e0,
     name := "\\omega^{\\varepsilon_0+1}", hasO := true, ev := "bisim6" },
   { m := [[0,0],[1,1],[1,1]], t := phi one one, name := "\\varepsilon_1", hasO := true },
   { m := [[0,0],[1,1],[2,0]], t := phi one omega, name := "\\varepsilon_\\omega",
     hasO := true },
   { m := [[0,0],[1,1],[2,0],[3,1]], t := phi one e0,
-    name := "\\varepsilon_{\\varepsilon_0}", hasO := true },
-  { m := [[0,0],[1,1],[2,1]], t := phi (ofNat 2) zero, name := "\\zeta_0", hasO := true },
+    name := "\\varepsilon_{\\varepsilon_0}", proof := "R5", hasO := true },
+  { m := [[0,0],[1,1],[2,1]], t := phi (ofNat 2) zero, name := "\\zeta_0",
+    proof := "R6", hasO := true },
   { m := [[0,0],[1,1],[2,1],[2,1]], t := phi (ofNat 2) one, name := "\\zeta_1",
     hasO := true },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (ofNat 2) omega, name := "\\zeta_\\omega",
     hasO := true },
   { m := [[0,0],[1,1],[2,1],[3,1]], t := phi (ofNat 3) zero,
-    name := "\\bar{\\varphi}(3,0)", hasO := true }
+    name := "\\bar{\\varphi}(3,0)", proof := "R9", hasO := true },
+  { m := [[0,0],[1,1],[2,2]], t := phi omega zero,
+    name := "\\bar{\\varphi}(\\omega,0)", ev := "oStageC",
+    note := "行 1 に 2 が現れる最初の行" },
+  { m := [[0,0],[1,1],[2,2],[1,1]], t := phi one (phi omega zero),
+    name := "\\varepsilon_{\\bar{\\varphi}(\\omega,0)+1}", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,1]], t := phi (ofNat 2) (phi omega zero),
+    name := "\\bar{\\varphi}(2,\\bar{\\varphi}(\\omega,0)+1)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,1],[3,2]], t := phi omega one,
+    name := "\\bar{\\varphi}(\\omega,1)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[3,0]], t := phi omega omega,
+    name := "\\bar{\\varphi}(\\omega,\\omega)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[3,1]], t := phi (plus omega one) zero,
+    name := "\\bar{\\varphi}(\\omega+1,0)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[3,2]], t := phi (phi zero (ofNat 2)) zero,
+    name := "\\bar{\\varphi}(\\omega^2,0)", ev := "oStageC" }
 ]
 
 /-! ## Per-row machine checks (a successful build means every row is verified) -/
@@ -122,6 +143,11 @@ def rows : List Row := [
 -- the table is sorted, in the BMS order and in the T(M) order alike (an instance of E2)
 #guard (rows.zip rows.tail).all fun (a, b) => BMS.cmpM a.m b.m == .lt
 #guard (rows.zip rows.tail).all fun (a, b) => lt a.t b.t
+
+-- rows whose evidence is the Stage-C candidate translation match its value
+-- (oStageC? is corpus-checked in Trans/StageC.lean but not yet merged into o?,
+--  pending the frontier documented there)
+#guard rows.all fun r => r.ev != "oStageC" || Trans.oStageC? r.m == some r.t
 
 -- every term satisfies the formation conditions
 #guard rows.all fun r => inT r.t
@@ -159,6 +185,7 @@ def regions : List RegionRow := [
     (path relative to table/, as resolved by GitHub). -/
 def evLink : String → String
   | "bisim6" => "../lean/Evidence/Bisim.lean"
+  | "oStageC" => "../lean/Trans/StageC.lean"
   | _ => ""
 
 /-- The matrix literal of a row, spelled exactly as it appears in the source of
@@ -184,15 +211,19 @@ def regionLine (regionProofLine : String → Option Nat) (g : RegionRow) : Strin
 
 /-- The contents of table/r1-tm.md.
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
-    defines it, `proofLine` maps a proof namespace to its line in Rows/Proofs.lean,
-    and `regionProofLine` maps a region theorem name to its line in
-    Evidence/StageA.lean; `gentable` supplies all three by reading those files. -/
-def genTable (lineOf : String → Option Nat) (proofLine : String → Option Nat)
+    defines it, `proofLine` maps a proof namespace to the file (path relative to
+    lean/) and line of the row-proof file that declares it (Rows/Proofs.lean or
+    Rows/ProofsB.lean), and `regionProofLine` maps a region theorem name to its
+    line in Evidence/StageA.lean; `gentable` supplies all three by reading those
+    files. -/
+def genTable (lineOf : String → Option Nat) (proofLine : String → Option (String × Nat))
     (regionProofLine : String → Option Nat) : String :=
   let header :=
 "# BMS × Rathjen T(M) 対応表 (R1)
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
+
+バージョン: " ++ version ++ "
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -203,7 +234,9 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 エビデンス凡例:
 
 - **証明列**: ✅ = その行の主張が **任意の $`n`$ について** Lean で証明済み
-  (リンク先がその証明)。極限行は E3 $`\\forall n.\\ o(M[n]) = t[n{+}1]`$、
+  (リンク先がその証明)。極限行は E3: 1 行領域では等式
+  $`\\forall n.\\ o(M[n]) = t[n{+}1]`$、Stage B 以降では展開値の閉形式と
+  相互共終 (両列が互いに追い越し合う witness 付き)。
   後続行は $`\\forall n.\\ o(M[n]) = t-1`$、零行は $`o(M) = t`$。
   表で唯一、検査ではなく証明である列。
 - **太字の区間行**: 個別の行列ではなく**区間内の全標準行列**への主張。
@@ -213,6 +246,8 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
     $`o`$ の定義域全体では [コーパス検査](../lean/Evidence/Check.lean)
     (E2 順序埋め込み・E3 相互共終) 済み。
   - bisim6 = 深さ 6 の双模倣 (展開列と基本列が一致する領域で有効)。
+  - oStageC = Stage C の候補翻訳 oStageC? の値の一致。コーパス検査済みだが、
+    上位領域に未解決の設計問題が残るため $`o`$ への統合は保留中。
 
 ## 対応表
 
@@ -226,11 +261,11 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
       match lineOf (rowKey r) with
       | some n => "[`" ++ bms ++ "`](../lean/Rows/TM.lean#L" ++ toString n ++ ")"
       | none => "`" ++ bms ++ "`"
-    -- the proof column links to the row's proof namespace in Rows/Proofs.lean
+    -- the proof column links to the row's proof namespace (Proofs.lean or ProofsB.lean)
     let proofCell :=
       if r.proof == "" then ""
       else match proofLine ("namespace " ++ r.proof) with
-        | some n => "[✅](../lean/Rows/Proofs.lean#L" ++ toString n ++ ")"
+        | some (path, n) => "[✅](../lean/" ++ path ++ "#L" ++ toString n ++ ")"
         | none => ""
     -- the weak-evidence column lists o and bisim6, each linked separately
     let weak := String.intercalate "+"
