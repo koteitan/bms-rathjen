@@ -1,1 +1,3 @@
-/- Evidence: 一般定理 E2 (順序埋め込み)・G (構造定理)・MT (S5 で実装) -/
+/- Evidence: 一般定理 E2/G/MT と双模倣検査器 -/
+import Evidence.Bisim
+import Evidence.Check
