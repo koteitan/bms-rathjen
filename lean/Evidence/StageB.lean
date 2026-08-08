@@ -40,13 +40,29 @@ matrix with a symbolic parameter this must be proved, not computed.
 WHAT THIS FILE PROVES (families, each for ALL a ≥ 1, i.e. infinitely many matrices
 beyond the table):
 
-  §3  F2 : (0,0)(1,1)…(a,1)(a+1,0)  =  φ̄(a,ω)      o?(M[n]) = fsN t n      (shift 0)
-      instances: a = 1 is Rows.ProofsB.R4, a = 2 is Rows.ProofsB.R8.
+  §3  F2 : (0,0)(1,1)…(a,1)(a+1,0)  =  φ̄(a,ω)   o?(M[n]) = fsN t n      (shift 0)
+      `e3_family`; a = 1 is Rows.ProofsB.R4, a = 2 is Rows.ProofsB.R8.
+  §5  F1 : (0,0)(1,1)…(a,1)         =  φ̄(a,0)   o?(M[n]) = fsN t (n+1)  (shift +1)
+      `e3_F1family`; a = 1, 2, 3 are Rows.ProofsB.R1, R6, R9.
+
+F1 needs the genuinely new machinery of §4: its last column has row-1 entry 1, so
+`t = 1`, `Δ₀ = a ≠ 0`, and the bad root is `parent M 1 (X-1)`, which runs through
+`iterParent` over the row-0 parent chain.  §4 proves that chain is `downFrom` and
+that filtering it by "row-1 entry < 1" leaves exactly the column 0, for a symbolic
+parameter.  §5 then computes the value with `chainP` (the `a-1` nested `phiStep`s
+that the descending `(0,1)`-heads produce, of which only the innermost survives —
+`chainP_collapse`).
 
 FRONTIER (not proved here):
-  * F1 : (0,0)(1,1)…(a,1) = φ̄(a,0) — value side is the same induction as F2, but the
-    BMS side needs `parent M 1 (X-1)` through `iterParent` (Δ₀ = a ≠ 0).
   * F3 : (0,0)(1,1)…(a,1)(a,1) = φ̄(a,1) — the "no shift works" family (R3, R7).
+    Its BMS side is now unblocked (same §4 machinery: bad root 0, Δ₀ = a, bad block
+    `lad a`), and its value side is the same `chainP` chain; what is still missing is
+    (i) the accumulator recursion `V(m+1) = plus (φ̄(a,0)) (ω^(chainP 1 (a-1) (V m)))`
+    with its `plus_drop` side conditions in symbolic `a`, (ii) the base of the
+    expansion tower `φ̄(a-1, ω^{φ̄(a,0)·2})`, which degenerates at a = 1 (the chain is
+    empty, so the base is `ω^{ε₀·2}` with no outer `φ̄(a-1,·)`) and therefore needs a
+    case split, and (iii) the two-base tower comparison (expansion base vs fs base
+    `φ̄(a-1, φ̄(a,0))`) generalized in `a`.
   * A genuinely region-wide theorem additionally needs a 2-row standardness
     invariant and an invariant carried on the `oLAux` accumulator (`logPhi k acc`
     defined and `acc` a φ_k-value), since the Stage-B value function is an
@@ -478,6 +494,572 @@ example (n : Nat) :
 #guard (List.range 4).all fun q => (List.range 4).all fun n =>
   Trans.o? (BMS.expand (M2 q) n) == some (fsN (t0 q) n)
 #guard (List.range 5).all fun q => Trans.o? (M2 q) == some (t0 q)
+
+
+/-! ## §4 The bad root at row 1 (the machinery F1 and F3 need)
+
+When the last column of a Stage-B matrix has row-1 entry 1, the bad root is
+`parent M 1 (X-1)`, which runs through `iterParent` over the row-0 parent chain.
+On a matrix whose row 0 is `0 1 2 … ` the chain is the descending list `downFrom`,
+and filtering it by "row-1 entry < 1" leaves exactly the column 0. -/
+
+/-- `[x-1, x-2, …, 0]`. -/
+def downFrom : Nat → List Nat
+  | 0 => []
+  | x + 1 => x :: downFrom x
+
+theorem mem_downFrom_zero : ∀ x, 1 ≤ x → 0 ∈ downFrom x
+  | 0, h => by omega
+  | 1, _ => by show (0:Nat) ∈ [0]; simp
+  | x + 2, _ => by
+    show (0:Nat) ∈ (x+1) :: downFrom (x+1)
+    exact List.mem_cons_of_mem _ (mem_downFrom_zero (x+1) (by omega))
+
+theorem iterParent_desc {f : Nat → Option Nat} {B : Nat}
+    (h : ∀ x, 1 ≤ x → x ≤ B → f x = some (x-1)) (h0 : f 0 = none) :
+    ∀ (fuel x : Nat), x ≤ fuel → x ≤ B → BMS.iterParent f fuel x = downFrom x
+  | 0, x, hx, _ => by
+    have hx0 : x = 0 := by omega
+    subst hx0
+    rfl
+  | fuel + 1, 0, _, _ => by
+    show (match f 0 with | none => [] | some p => p :: BMS.iterParent f fuel p) = downFrom 0
+    rw [h0]
+    rfl
+  | fuel + 1, x + 1, hx, hB => by
+    show (match f (x+1) with | none => [] | some p => p :: BMS.iterParent f fuel p) = downFrom (x+1)
+    rw [h (x+1) (by omega) hB]
+    show (x + 1 - 1) :: BMS.iterParent f fuel (x+1-1) = x :: downFrom x
+    have hs : x + 1 - 1 = x := by omega
+    rw [hs, iterParent_desc h h0 fuel x (by omega) (by omega)]
+
+theorem filter_downFrom {P : Nat → Bool} (h0 : P 0 = true) :
+    ∀ (x : Nat), (∀ p, 1 ≤ p → p ≤ x → P p = false) → (downFrom (x+1)).filter P = [0]
+  | 0, _ => by
+    show (List.filter P [0]) = [0]
+    rw [List.filter_cons, h0]
+    rfl
+  | x + 1, hp => by
+    show (List.filter P ((x+1) :: downFrom (x+1))) = [0]
+    rw [List.filter_cons, hp (x+1) (by omega) (by omega)]
+    simp only [Bool.false_eq_true, if_false]
+    exact filter_downFrom h0 x (fun p hq1 hq2 => hp p hq1 (by omega))
+
+/-! ## §5 The family F1 : `(0,0)(1,1)…(a,1)` = `φ̄(a,0)`
+
+Writing `a = q+1`, the last column has row-1 entry 1, so `t = 1`, `Δ₀ = a` and the
+bad blocks are the ladder `lad q` shifted by `a` per copy. -/
+
+/-- The ladder block `(o,0)(o+1,1)…(o+p,1)` (`p+1` columns). -/
+def lad (p o : Nat) : Matrix := ([o,0] : BMS.Col) :: ups (o+1) p
+
+/-- `M1 q = (0,0)(1,1)…(q+1,1)`, i.e. `a = q+1`. -/
+def M1 (q : Nat) : Matrix := lad (q+1) 0
+
+theorem ups_range : ∀ (p o : Nat), ups o p = (List.range p).map (fun i => ([o+i, 1] : BMS.Col))
+  | 0, _ => rfl
+  | p + 1, o => by
+    rw [List.range_succ_eq_map, List.map_cons, List.map_map]
+    show ([o,1] : BMS.Col) :: ups (o+1) p = ([o+0, 1] : BMS.Col) :: _
+    have h1 : ((fun i => ([o+i, 1] : BMS.Col)) ∘ Nat.succ) = (fun i => ([(o+1)+i, 1] : BMS.Col)) := by
+      funext i
+      show ([o+(i+1), 1] : BMS.Col) = ([(o+1)+i, 1] : BMS.Col)
+      have : o + (i+1) = (o+1) + i := by omega
+      rw [this]
+    rw [h1, ← ups_range p (o+1)]
+    rfl
+
+theorem ent_ups0 : ∀ (p o x : Nat), x < p → BMS.ent (ups o p) x 0 = o + x
+  | 0, _, _, h => by omega
+  | p + 1, o, 0, _ => rfl
+  | p + 1, o, x + 1, h => by
+    have h1 : BMS.ent (ups o (p+1)) (x+1) 0 = BMS.ent (ups (o+1) p) x 0 := by
+      show ((([o,1] : BMS.Col) :: ups (o+1) p).getD (x+1) []).getD 0 0
+          = ((ups (o+1) p).getD x []).getD 0 0
+      rw [List.getD_cons_succ]
+    rw [h1, ent_ups0 p (o+1) x (by omega)]
+    omega
+
+theorem ent_ups1 : ∀ (p o x : Nat), x < p → BMS.ent (ups o p) x 1 = 1
+  | 0, _, _, h => by omega
+  | p + 1, o, 0, _ => rfl
+  | p + 1, o, x + 1, h => by
+    have h1 : BMS.ent (ups o (p+1)) (x+1) 1 = BMS.ent (ups (o+1) p) x 1 := by
+      show ((([o,1] : BMS.Col) :: ups (o+1) p).getD (x+1) []).getD 1 0
+          = ((ups (o+1) p).getD x []).getD 1 0
+      rw [List.getD_cons_succ]
+    rw [h1, ent_ups1 p (o+1) x (by omega)]
+
+theorem ent_M1_0 (q x : Nat) (h : x ≤ q+1) : BMS.ent (M1 q) x 0 = x := by
+  cases x with
+  | zero => rfl
+  | succ y =>
+    have h1 : BMS.ent (M1 q) (y+1) 0 = BMS.ent (ups 1 (q+1)) y 0 := by
+      show ((([0,0] : BMS.Col) :: ups 1 (q+1)).getD (y+1) []).getD 0 0
+          = ((ups 1 (q+1)).getD y []).getD 0 0
+      rw [List.getD_cons_succ]
+    rw [h1, ent_ups0 (q+1) 1 y (by omega)]
+    omega
+
+theorem ent_M1_1_zero (q : Nat) : BMS.ent (M1 q) 0 1 = 0 := rfl
+
+theorem ent_M1_1 (q x : Nat) (h1 : 1 ≤ x) (h2 : x ≤ q+1) : BMS.ent (M1 q) x 1 = 1 := by
+  cases x with
+  | zero => omega
+  | succ y =>
+    have h3 : BMS.ent (M1 q) (y+1) 1 = BMS.ent (ups 1 (q+1)) y 1 := by
+      show ((([0,0] : BMS.Col) :: ups 1 (q+1)).getD (y+1) []).getD 1 0
+          = ((ups 1 (q+1)).getD y []).getD 1 0
+      rw [List.getD_cons_succ]
+    rw [h3, ent_ups1 (q+1) 1 y (by omega)]
+
+theorem len_M1 (q : Nat) : (M1 q).length = q + 2 := by
+  show (ups 1 (q+1)).length + 1 = q + 2
+  rw [ups_len]
+
+theorem parent0_M1 (q x : Nat) (h1 : 1 ≤ x) (h2 : x ≤ q+1) :
+    BMS.parent (M1 q) 0 x = some (x-1) := by
+  show (((List.range x).filter
+      (fun p => decide (BMS.ent (M1 q) p 0 < BMS.ent (M1 q) x 0))).max?) = some (x-1)
+  rw [Evidence.StageA.max?_filter_range]
+  refine Evidence.StageA.lastSome_spec _ x (x-1) (by omega) ?_ ?_
+  · rw [ent_M1_0 q (x-1) (by omega), ent_M1_0 q x (by omega)]
+    exact decide_eq_true (by omega)
+  · intro r hr1 hr2
+    omega
+
+theorem parent0_M1_zero (q : Nat) : BMS.parent (M1 q) 0 0 = none := rfl
+
+theorem parent1_M1 (q x : Nat) (h1 : 1 ≤ x) (h2 : x ≤ q+1) :
+    BMS.parent (M1 q) 1 x = some 0 := by
+  obtain ⟨y, hy⟩ : ∃ y, x = y + 1 := ⟨x - 1, by omega⟩
+  subst hy
+  have hchain : BMS.iterParent (BMS.parent (M1 q) 0) (y+1) (y+1) = downFrom (y+1) :=
+    iterParent_desc (fun z hz1 hz2 => parent0_M1 q z hz1 (by omega)) (parent0_M1_zero q)
+      (y+1) (y+1) (by omega) (by omega)
+  have hP0 : (decide (BMS.ent (M1 q) 0 1 < 1)) = true := by
+    rw [ent_M1_1_zero]
+    exact decide_eq_true (by omega)
+  have hPp : ∀ p, 1 ≤ p → p ≤ y → (decide (BMS.ent (M1 q) p 1 < 1)) = false := by
+    intro p hp1 hp2
+    rw [ent_M1_1 q p hp1 (by omega)]
+    exact decide_eq_false (by omega)
+  show (((BMS.iterParent (BMS.parent (M1 q) 0) (y+1) (y+1)).filter
+      (fun p => decide (BMS.ent (M1 q) p 1 < BMS.ent (M1 q) (y+1) 1))).max?) = some 0
+  rw [hchain, ent_M1_1 q (y+1) h1 h2,
+    filter_downFrom (P := fun p => decide (BMS.ent (M1 q) p 1 < 1)) hP0 y hPp]
+  rfl
+
+
+/-! ### The nested `phiStep` chain -/
+
+/-- `p` nested `phiStep`s at levels `j, j+1, …, j+p-1` (the innermost is level `j+p-1`). -/
+def chainP (j : Nat) : Nat → Term → Term
+  | 0, v => v
+  | p + 1, v => Trans.Pair.phiStep (ofNat j) zero (chainP (j+1) p v)
+
+theorem chainP_add : ∀ (p1 p2 j : Nat) (v : Term),
+    chainP j (p1 + p2) v = chainP j p1 (chainP (j + p1) p2 v)
+  | 0, p2, j, v => by
+    rw [Nat.zero_add, Nat.add_zero]
+    rfl
+  | p1 + 1, p2, j, v => by
+    rw [show p1 + 1 + p2 = (p1 + p2) + 1 from by omega]
+    show Trans.Pair.phiStep (ofNat j) zero (chainP (j+1) (p1+p2) v)
+        = chainP j (p1+1) (chainP (j + (p1+1)) p2 v)
+    rw [chainP_add p1 p2 (j+1) v, show j + (p1+1) = (j+1) + p1 from by omega]
+    rfl
+
+theorem chainP_collapse : ∀ (p j c : Nat) (x : Term), j + p ≤ c →
+    chainP j p (phi (ofNat c) x) = phi (ofNat c) x
+  | 0, _, _, _, _ => rfl
+  | p + 1, j, c, x, h => by
+    show Trans.Pair.phiStep (ofNat j) zero (chainP (j+1) p (phi (ofNat c) x)) = _
+    rw [chainP_collapse p (j+1) c x (by omega), phiStep_zero,
+      show ((phi (ofNat c) x == zero) = false) from rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [omegaNF_phi_ne_zero (by
+        obtain ⟨d, hd⟩ : ∃ d, c = d + 1 := ⟨c - 1, by omega⟩
+        rw [hd]; exact ofNat_ne_zero d),
+      phiNF_collapse (lt_ofNat_mono (show j < c from by omega))]
+
+/-! ### The ladder block and its expansion family -/
+
+theorem decP_lad (q o : Nat) : Trans.Pair.decP (lad q (o+1)) = lad q o := by
+  show ([o+1-1, 0] : BMS.Col) :: Trans.Pair.decP (ups (o+1+1) q) = ([o,0] : BMS.Col) :: ups (o+1) q
+  have h : o + 1 - 1 = o := by omega
+  rw [h, decP_ups q (o+1)]
+
+theorem r0_lad (q o : Nat) (ho : 1 ≤ o) : ∀ c ∈ lad q o, Trans.Pair.r0 c ≠ 0 := by
+  intro c hc
+  rcases List.mem_cons.mp hc with h | h
+  · subst h; show o ≠ 0; omega
+  · exact r0_ups q (o+1) (by omega) c h
+
+theorem inFrag_lad (q o : Nat) : Trans.Pair.inFrag (lad q o) = true := by
+  show Trans.Pair.inFrag (([o,0] : BMS.Col) :: ups (o+1) q) = true
+  rw [inFrag_cons, inFrag_ups q (o+1)]
+  rfl
+
+theorem len_lad (q o : Nat) : (lad q o).length = q + 1 := by
+  show (ups (o+1) q).length + 1 = q + 1
+  rw [ups_len]
+
+theorem len_frep_lad : ∀ (m q o : Nat), (frep (lad q) (q+1) o m).length = (q+1) * m
+  | 0, _, _ => rfl
+  | m + 1, q, o => by
+    show ((lad q o) ++ frep (lad q) (q+1) (o+(q+1)) m).length = (q+1) * (m+1)
+    rw [List.length_append, len_lad, len_frep_lad m q (o+(q+1)), Nat.mul_succ]
+    omega
+
+theorem frep_lad_cons (q m : Nat) :
+    frep (lad q) (q+1) 0 (m+1) = ([0,0] : BMS.Col) :: (ups 1 q ++ frep (lad q) (q+1) (q+1) m) := by
+  show (lad q 0) ++ frep (lad q) (q+1) (0+(q+1)) m = _
+  rw [show (0:Nat) + (q+1) = q+1 from by omega]
+  rfl
+
+/-- The value of the inner descending chain over the ladder expansion. -/
+theorem oLAux_chain {q m : Nat} {v : Term} {N : Nat}
+    (hv : ∀ fuel j, N ≤ fuel → Trans.Pair.oLAux fuel j (frep (lad q) (q+1) 0 m) = v) :
+    ∀ (p j fuel : Nat), N + p ≤ fuel →
+      Trans.Pair.oLAux fuel j (ups 0 p ++ frep (lad q) (q+1) p m) = chainP j p v
+  | 0, j, fuel, hf => by
+    show Trans.Pair.oLAux fuel j (frep (lad q) (q+1) 0 m) = v
+    exact hv fuel j (by omega)
+  | p + 1, j, fuel, hf => by
+    cases fuel with
+    | zero => omega
+    | succ g =>
+      have ht : ∀ c ∈ (ups 1 p ++ frep (lad q) (q+1) (p+1) m), Trans.Pair.r0 c ≠ 0 := by
+        intro c hc
+        rcases List.mem_append.mp hc with h1 | h1
+        · exact r0_ups p 1 (by omega) c h1
+        · exact r0_frep (fun o ho => r0_lad q o ho) m (p+1) (by omega) c h1
+      have hd : Trans.Pair.decP (ups 1 p ++ frep (lad q) (q+1) (p+1) m)
+          = ups 0 p ++ frep (lad q) (q+1) p m := by
+        rw [decP_append, decP_ups, decP_frep (fun o => decP_lad q o) m p]
+      show Trans.Pair.oLAux (g+1) j (([0,1] : BMS.Col)
+        :: (ups 1 p ++ frep (lad q) (q+1) (p+1) m)) = chainP j (p+1) v
+      rw [oLAux_single g j [0,1] _ ht]
+      show Trans.Pair.phiStep (ofNat j) zero (Trans.Pair.oLAux g (j+1)
+        (Trans.Pair.decP (ups 1 p ++ frep (lad q) (q+1) (p+1) m))) = chainP j (p+1) v
+      rw [hd, oLAux_chain hv p (j+1) g (by omega)]
+      rfl
+
+/-- Closed form of `oLAux` on the F1 expansion family: the `m`-th `φ_q`-tower. -/
+theorem valE1 : ∀ (m q fuel k : Nat), (q+1) * m + 1 ≤ fuel →
+    Trans.Pair.oLAux fuel k (frep (lad q) (q+1) 0 m) = iterT (ofNat q) m
+  | 0, _, fuel, k, _ => oLAux_nil fuel k
+  | m + 1, q, fuel, k, hf => by
+    have hmul : (q+1) * (m+1) = (q+1) * m + q + 1 := by rw [Nat.mul_succ]; omega
+    cases fuel with
+    | zero => omega
+    | succ g =>
+      have ht : ∀ c ∈ (ups 1 q ++ frep (lad q) (q+1) (q+1) m), Trans.Pair.r0 c ≠ 0 := by
+        intro c hc
+        rcases List.mem_append.mp hc with h1 | h1
+        · exact r0_ups q 1 (by omega) c h1
+        · exact r0_frep (fun o ho => r0_lad q o ho) m (q+1) (by omega) c h1
+      have hd : Trans.Pair.decP (ups 1 q ++ frep (lad q) (q+1) (q+1) m)
+          = ups 0 q ++ frep (lad q) (q+1) q m := by
+        rw [decP_append, decP_ups, decP_frep (fun o => decP_lad q o) m q]
+      have hv : ∀ fuel' j, (q+1) * m + 1 ≤ fuel' →
+          Trans.Pair.oLAux fuel' j (frep (lad q) (q+1) 0 m) = iterT (ofNat q) m :=
+        fun fuel' j hf' => valE1 m q fuel' j hf'
+      rw [frep_lad_cons, oLAux_single g k [0,0] _ ht]
+      show plus zero (omegaNF (Trans.Pair.oLAux g 1
+        (Trans.Pair.decP (ups 1 q ++ frep (lad q) (q+1) (q+1) m)))) = _
+      rw [hd, oLAux_chain hv q 1 g (by omega)]
+      cases q with
+      | zero =>
+        show plus zero (omegaNF (iterT zero m)) = iterT zero (m+1)
+        cases m with
+        | zero =>
+          show plus zero (omegaNF zero) = iterT zero 1
+          rw [plus_zero_left (isAP_omegaNF zero)]
+          rfl
+        | succ m' =>
+          rw [omegaNF_iterT_zero m', plus_zero_left (by rw [iterT_succ isSC_zero (m'+1)]; rfl)]
+      | succ q' =>
+        have hne : (ofNat (q'+1) : Term) ≠ zero := ofNat_ne_zero q'
+        have hsc : (ofNat (q'+1) : Term).isSC = false := isSC_ofNat (q'+1)
+        rw [chainP_add q' 1 1 (iterT (ofNat (q'+1)) m)]
+        show plus zero (omegaNF (chainP 1 q'
+          (Trans.Pair.phiStep (ofNat (1+q')) zero (iterT (ofNat (q'+1)) m)))) = _
+        rw [show (1 + q') = (q' + 1) from by omega, phiStep_iterT hsc hne m,
+          iterT_succ hsc m, chainP_collapse q' 1 (q'+1) (iterT (ofNat (q'+1)) m) (by omega),
+          omegaNF_phi_ne_zero hne, plus_zero_left rfl, ← iterT_succ hsc m]
+
+
+/-! ### The BM4 expansion of the F1 family -/
+
+theorem iterParent_zero {f : Nat → Option Nat} (h0 : f 0 = none) :
+    ∀ fuel, BMS.iterParent f fuel 0 = []
+  | 0 => rfl
+  | fuel + 1 => by
+    show (match f 0 with | none => [] | some p => p :: BMS.iterParent f fuel p) = []
+    rw [h0]
+
+theorem parent1_M1_zero (q : Nat) : BMS.parent (M1 q) 1 0 = none := rfl
+
+theorem iterParent1_M1 (q j : Nat) (h1 : 1 ≤ j) (h2 : j ≤ q+1) :
+    BMS.iterParent (BMS.parent (M1 q) 1) j j = [0] := by
+  obtain ⟨y, hy⟩ : ∃ y, j = y + 1 := ⟨j - 1, by omega⟩
+  subst hy
+  show (match BMS.parent (M1 q) 1 (y+1) with
+        | none => [] | some p => p :: BMS.iterParent (BMS.parent (M1 q) 1) y p) = [0]
+  rw [parent1_M1 q (y+1) h1 h2]
+  show (0:Nat) :: BMS.iterParent (BMS.parent (M1 q) 1) y 0 = [0]
+  rw [iterParent_zero (parent1_M1_zero q) y]
+
+theorem contains_downFrom_zero : ∀ x, 1 ≤ x → (downFrom x).contains 0 = true
+  | 0, h => by omega
+  | 1, _ => rfl
+  | x + 2, _ => by
+    show (match ((0:Nat) == (x+1)) with
+          | true => true | false => List.elem 0 (downFrom (x+1))) = true
+    rw [show ((0:Nat) == (x+1)) = false from rfl]
+    exact contains_downFrom_zero (x+1) (by omega)
+
+theorem ascends_M1 (q j y : Nat) (hj : j ≤ q+1) (hy : y ≤ 1) :
+    BMS.ascends (M1 q) 0 j y = true := by
+  cases j with
+  | zero => rfl
+  | succ j' =>
+    show ((j'+1 == 0) || ((BMS.iterParent (BMS.parent (M1 q) y) (j'+1) (j'+1)).contains 0)) = true
+    rw [show ((j'+1 == 0)) = false from rfl]
+    simp only [Bool.false_or]
+    cases y with
+    | zero =>
+      rw [iterParent_desc (fun z hz1 hz2 => parent0_M1 q z hz1 (by omega)) (parent0_M1_zero q)
+        (j'+1) (j'+1) (by omega) (by omega)]
+      exact contains_downFrom_zero (j'+1) (by omega)
+    | succ y' =>
+      have hy1 : y' = 0 := by omega
+      subst hy1
+      rw [iterParent1_M1 q (j'+1) (by omega) (by omega)]
+      rfl
+
+theorem delta_M1_0 (q : Nat) : BMS.delta (M1 q) 0 1 0 = q+1 := by
+  show (if 0 < 1 then BMS.ent (M1 q) ((M1 q).length - 1) 0 - BMS.ent (M1 q) 0 0 else 0) = q+1
+  rw [if_pos (by omega), len_M1, show q + 2 - 1 = q + 1 from by omega,
+    ent_M1_0 q (q+1) (by omega)]
+  rfl
+
+theorem delta_M1_1 (q : Nat) : BMS.delta (M1 q) 0 1 1 = 0 := by
+  show (if 1 < 1 then BMS.ent (M1 q) ((M1 q).length - 1) 1 - BMS.ent (M1 q) 0 1 else 0) = 0
+  rw [if_neg (by omega)]
+
+theorem getLast_ups : ∀ (p o : Nat), (ups o (p+1)).getLast? = some ([o+p, 1] : BMS.Col)
+  | 0, o => by
+    show (([o,1] : BMS.Col) :: ups (o+1) 0).getLast? = _
+    rfl
+  | p + 1, o => by
+    show (([o,1] : BMS.Col) :: ups (o+1) (p+1)).getLast? = some ([o+(p+1), 1] : BMS.Col)
+    rw [show (([o,1] : BMS.Col) :: ups (o+1) (p+1))
+        = ([[o,1]] : Matrix) ++ ups (o+1) (p+1) from rfl,
+      Evidence.StageA.getLast?_append_right _ _ (by
+        show ups (o+1) (p+1) ≠ []
+        intro hc
+        have := congrArg List.length hc
+        rw [ups_len] at this
+        simp at this),
+      getLast_ups p (o+1), show (o+1)+p = o+(p+1) from by omega]
+
+theorem getLast_M1 (q : Nat) : (M1 q).getLast? = some ([q+1, 1] : BMS.Col) := by
+  show (([0,0] : BMS.Col) :: ups 1 (q+1)).getLast? = _
+  rw [show (([0,0] : BMS.Col) :: ups 1 (q+1)) = ([[0,0]] : Matrix) ++ ups 1 (q+1) from rfl,
+    Evidence.StageA.getLast?_append_right _ _ (by
+      show ups 1 (q+1) ≠ []
+      intro hc
+      have := congrArg List.length hc
+      rw [ups_len] at this
+      simp at this),
+    getLast_ups q 1, show (1:Nat)+q = q+1 from by omega]
+
+theorem lnz_M1 (q : Nat) : BMS.lnz ([q+1, 1] : BMS.Col) = some 1 := by
+  show (((List.range 2).filter (fun y => decide (([q+1,1] : BMS.Col).getD y 0 > 0))).max?) = some 1
+  have h0 : (decide ((([q+1,1] : BMS.Col).getD 0 0) > 0)) = true := by
+    show (decide ((q+1 : Nat) > 0)) = true
+    exact decide_eq_true (by omega)
+  show ((([0,1] : List Nat).filter (fun y => decide (([q+1,1] : BMS.Col).getD y 0 > 0))).max?)
+      = some 1
+  rw [List.filter_cons, h0]
+  rfl
+
+theorem expand_M1 (q n : Nat) : BMS.expand? (M1 q) n = some (frep (lad q) (q+1) 0 (n+1)) := by
+  have hpar : BMS.parent (M1 q) 1 ((M1 q).length - 1) = some 0 := by
+    rw [len_M1, show q + 2 - 1 = q + 1 from by omega]
+    exact parent1_M1 q (q+1) (by omega) (by omega)
+  have hlen1 : (M1 q).length - 1 - 0 = q + 1 := by rw [len_M1]; omega
+  have hmap : ∀ (o : Nat),
+      (List.range (q+1)).map (fun x => ([x + o, BMS.ent (M1 q) x 1] : BMS.Col)) = lad q o := by
+    intro o
+    rw [List.range_succ_eq_map, List.map_cons, List.map_map]
+    show ([0 + o, BMS.ent (M1 q) 0 1] : BMS.Col) :: _ = ([o,0] : BMS.Col) :: ups (o+1) q
+    rw [show (0:Nat)+o = o from by omega, ent_M1_1_zero, ups_range q (o+1)]
+    congr 1
+    refine List.map_congr_left ?_
+    intro i hi
+    have hi' : i < q := List.mem_range.mp hi
+    show ([(i+1) + o, BMS.ent (M1 q) (i+1) 1] : BMS.Col) = ([(o+1)+i, 1] : BMS.Col)
+    rw [ent_M1_1 q (i+1) (by omega) (by omega), show (i+1)+o = (o+1)+i from by omega]
+  have hbad : ∀ (c : Nat), (List.range (q+1)).map (fun x =>
+      (List.range ([q+1,1] : BMS.Col).length).map (fun y => BMS.ent (M1 q) (0+x) y
+        + c * BMS.delta (M1 q) 0 1 y
+          * (if BMS.ascends (M1 q) 0 (0+x) y = true then 1 else 0)))
+      = lad q ((q+1)*c + 0) := by
+    intro c
+    have hinner : ∀ x ∈ List.range (q+1),
+        (List.range ([q+1,1] : BMS.Col).length).map (fun y => BMS.ent (M1 q) (0+x) y
+          + c * BMS.delta (M1 q) 0 1 y
+            * (if BMS.ascends (M1 q) 0 (0+x) y = true then 1 else 0))
+        = ([x + ((q+1)*c + 0), BMS.ent (M1 q) x 1] : BMS.Col) := by
+      intro x hx
+      have hx' : x < q+1 := List.mem_range.mp hx
+      show [BMS.ent (M1 q) (0+x) 0 + c * BMS.delta (M1 q) 0 1 0
+              * (if BMS.ascends (M1 q) 0 (0+x) 0 = true then 1 else 0),
+            BMS.ent (M1 q) (0+x) 1 + c * BMS.delta (M1 q) 0 1 1
+              * (if BMS.ascends (M1 q) 0 (0+x) 1 = true then 1 else 0)] = _
+      rw [show (0:Nat)+x = x from by omega, delta_M1_0, delta_M1_1,
+        ascends_M1 q x 0 (by omega) (by omega), ascends_M1 q x 1 (by omega) (by omega),
+        ent_M1_0 q x (by omega)]
+      simp only [if_true, Nat.mul_one, Nat.mul_zero, Nat.add_zero]
+      rw [show x + c * (q+1) = x + ((q+1)*c + 0) from by rw [Nat.mul_comm]; omega]
+      rfl
+    rw [List.map_congr_left hinner, hmap ((q+1)*c + 0)]
+  simp only [BMS.expand?, getLast_M1, Option.bind_eq_bind, Option.bind_some, lnz_M1, hpar,
+    Option.pure_def, hlen1]
+  rw [List.map_congr_left (fun c _ => hbad c), flat_frep]
+  rfl
+
+
+/-! ### The F1 package -/
+
+theorem onlyRow0_ups : ∀ (p o : Nat), onlyRow0 (ups o (p+1)) = false
+  | _, o => by
+    show onlyRow0 (([o,1] : BMS.Col) :: _) = false
+    rw [onlyRow0_cons]
+    rfl
+
+theorem onlyRow0_E1 (q n : Nat) : onlyRow0 (frep (lad (q+1)) (q+2) 0 (n+1)) = false := by
+  rw [frep_lad_cons]
+  show onlyRow0 (([0,0] : BMS.Col) :: (ups 1 (q+1) ++ frep (lad (q+1)) (q+2) (q+2) n)) = false
+  rw [onlyRow0_cons, onlyRow0_append, onlyRow0_ups q 1]
+  rfl
+
+theorem getLast_replicate_one : ∀ q, (List.replicate (q+1) (one : Term)).getLast? = some one
+  | 0 => rfl
+  | q + 1 => by
+    show ((one : Term) :: List.replicate (q+1) one).getLast? = some one
+    rw [show ((one : Term) :: List.replicate (q+1) one)
+        = ([one] : List Term) ++ List.replicate (q+1) one from rfl,
+      Evidence.StageA.getLast?_append_right _ _ (by
+        intro hc
+        have := congrArg List.length hc
+        simp at this),
+      getLast_replicate_one q]
+
+theorem kindT_ofNat_succ (q : Nat) : kindT (ofNat (q+1)) = KindT.isSucc := by
+  rw [Evidence.StageA.kindT_ne_zero (ofNat_ne_zero q), toList_ofNat, getLast_replicate_one q]
+  rfl
+
+theorem predT_ofNat_succ (q : Nat) : predT (ofNat (q+1)) = ofNat q := by
+  rw [Evidence.StageA.predT_eq (by rw [toList_ofNat, getLast_replicate_one q]; rfl),
+    toList_ofNat,
+    show (List.replicate (q+1) (one : Term)).dropLast = List.replicate q one from by
+      rw [List.replicate_succ', List.dropLast_concat],
+    ← mulNat_one_ofNat]
+  rfl
+
+/-- The term of the family: `φ̄(a,0)` with `a = q+1`. -/
+def t1 (q : Nat) : Term := phi (ofNat (q+1)) zero
+
+/-- The closed form of the n-th expansion: the fundamental sequence at n+1. -/
+def oval1 (q n : Nat) : Term := fsN (t1 q) (n+1)
+
+theorem fs_t1 (q k : Nat) : fsN (t1 q) k = iterT (ofNat q) k := by
+  show fsN (phi (ofNat (q+1)) zero) k = _
+  rw [fsN_phi_zero (isSC_ofNat (q+1)) (kindT_ofNat_succ q) k, predT_ofNat_succ q]
+
+theorem e3_val1 (q n : Nat) : o? (BMS.expand (M1 q) n) = some (oval1 q n) := by
+  cases q with
+  | zero => exact Rows.ProofsB.R1.e3_val n
+  | succ q' =>
+    have hE : BMS.expand (M1 (q'+1)) n = frep (lad (q'+1)) (q'+2) 0 (n+1) := by
+      show (BMS.expand? (M1 (q'+1)) n).getD [] = _
+      rw [expand_M1]; rfl
+    show o? (BMS.expand (M1 (q'+1)) n) = some (fsN (t1 (q'+1)) (n+1))
+    rw [hE, o?_pair (onlyRow0_E1 q' n) (inFrag_frep (fun o => inFrag_lad (q'+1) o) (n+1) 0),
+      len_frep_lad (n+1) (q'+1) 0, valE1 (n+1) (q'+1) _ 1 (by omega), fs_t1]
+
+theorem ltF_iterT_bound' {a c : Term} {N : Nat} (ha : a.isSC = false) (hac : (a == c) = false)
+    (hlt : ∀ f, N ≤ f → ltF f a c = true) :
+    ∀ (m f : Nat), N + m + 1 ≤ f → ltF f (iterT a m) (phi c zero) = true
+  | 0, f, hf => ltF_zero (by omega) (by intro hh; exact Term.noConfusion hh)
+  | m + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      rw [iterT_succ ha m]
+      exact ltF_phi_fst hac (hlt g (by omega)) (ltF_iterT_bound' ha hac hlt m g (by omega))
+
+theorem e3_lt1 (q n : Nat) : lt (oval1 q n) (t1 q) = true := by
+  show lt (fsN (t1 q) (n+1)) (t1 q) = true
+  rw [fs_t1]
+  show lt (iterT (ofNat q) (n+1)) (phi (ofNat (q+1)) zero) = true
+  refine Rows.ProofsB.lt_of_ltF (N := (q+2) + (n+1) + 1)
+    (fun f hf => ltF_iterT_bound' (isSC_ofNat q) (ofNat_bne (by omega))
+      (fun f' hf' => ltF_ofNat_mono q (q+1) f' (by omega) (by omega)) (n+1) f hf) ?_
+  have h1 := deg_iterT (isSC_ofNat q) (n+1)
+  have h2 := deg_ofNat (q+1)
+  show (q+2) + (n+1) + 1
+      ≤ 2 * ((iterT (ofNat q) (n+1)).deg + (1 + (ofNat (q+1)).deg + (zero : Term).deg)) + 8
+  omega
+
+/-- **(b)** with witness `k := n+2`. -/
+theorem e3_over1 (q n : Nat) : lt (oval1 q n) (fsN (t1 q) (n+2)) = true := by
+  show lt (fsN (t1 q) (n+1)) (fsN (t1 q) (n+2)) = true
+  rw [fs_t1, fs_t1]
+  exact lt_iterT_succ (isSC_ofNat q) (n+1)
+
+/-- **(c)** with witness `n := k+1`. -/
+theorem e3_under1 (q k : Nat) : lt (fsN (t1 q) (k+1)) (oval1 q (k+1)) = true := by
+  show lt (fsN (t1 q) (k+1)) (fsN (t1 q) (k+2)) = true
+  rw [fs_t1, fs_t1]
+  exact lt_iterT_succ (isSC_ofNat q) (k+1)
+
+/-- **E3 for the F1 family**, for every `a = q+1 ≥ 1`: `(0,0)(1,1)…(a,1) = φ̄(a,0)`. -/
+theorem e3_F1family (q : Nat) :
+    (∀ n, o? (BMS.expand (M1 q) n) = some (oval1 q n))
+    ∧ (∀ n, lt (oval1 q n) (t1 q) = true)
+    ∧ (∀ n, lt (oval1 q n) (fsN (t1 q) (n + 2)) = true)
+    ∧ (∀ k, lt (fsN (t1 q) (k + 1)) (oval1 q (k + 1)) = true) :=
+  ⟨e3_val1 q, e3_lt1 q, e3_over1 q, e3_under1 q⟩
+
+/-! ### The three table rows are instances -/
+
+theorem m1_zero : M1 0 = Rows.ProofsB.R1.m0 := rfl
+theorem m1_one : M1 1 = Rows.ProofsB.R6.m0 := rfl
+theorem m1_two : M1 2 = Rows.ProofsB.R9.m0 := rfl
+theorem t1_zero : t1 0 = Rows.ProofsB.R1.t0 := rfl
+theorem t1_one : t1 1 = Rows.ProofsB.R6.t0 := rfl
+theorem t1_two : t1 2 = Rows.ProofsB.R9.t0 := rfl
+
+example (n : Nat) : o? (BMS.expand Rows.ProofsB.R1.m0 n)
+    = some (fsN Rows.ProofsB.R1.t0 (n+1)) := e3_val1 0 n
+example (n : Nat) : o? (BMS.expand Rows.ProofsB.R6.m0 n)
+    = some (fsN Rows.ProofsB.R6.t0 (n+1)) := e3_val1 1 n
+example (n : Nat) : o? (BMS.expand Rows.ProofsB.R9.m0 n)
+    = some (fsN Rows.ProofsB.R9.t0 (n+1)) := e3_val1 2 n
+
+/-- Beyond the table: `a = 4`, i.e. `(0,0)(1,1)(2,1)(3,1)(4,1) = φ̄(4,0)`. -/
+example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,1],[3,1],[4,1]] n)
+    = some (fsN (phi (ofNat 4) zero) (n+1)) := e3_val1 3 n
+
+#guard (List.range 4).all fun q => (List.range 4).all fun n =>
+  Trans.o? (BMS.expand (M1 q) n) == some (fsN (t1 q) (n+1))
+#guard (List.range 5).all fun q => Trans.o? (M1 q) == some (t1 q)
 
 
 end Evidence.StageB
