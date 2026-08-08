@@ -70,19 +70,35 @@ conspiracy and exposed them.  Correct values need floor 5; they are filtered
 out of the guard below and must not become rows.
 
 KNOWN FRONTIER (kept OUT of the acceptance record; do NOT make rows from it):
-  (ii) unchanged from Stage C (the ψ-collapse entry): corpus of (2,2)(2,0),
-      124 failures; the (0,0)-exponent reset re-derives consumed W-material.
-  (iii-b) FLOOR 5: tails whose (·,1)-columns nest under other marked columns
-      ((0,1)-blocks with marked tails at the ebGroups-floor, e.g.
-      (3,0)(4,1)(5,1), (3,0)(4,1)(5,0)(6,1)), and the relative-claim family
-      in the corpus of (2,2)(3,0)(3,0) ((2,2)(3,0)(2,1)(3,2)-style appends
-      whose φ_ω-claims must be counted relative to the accumulated argument;
-      121 failures there).  A recursive +ω-promotion for deep (·,1)-tails was
-      tried and regressed the (2,2)(3,1)/(2,2)(3,1)(4,2)-corpora — the
-      (·,1)-ladder above ω² needs its own derivation round (the pattern:
-      each floor's ladder is forced by chains, not by a formula).
+  (ii) THE RELATIVE-COUNTING MECHANISM (the ψ-collapse entry) — now blocking
+      three fronts, all with the same signature (a sub-pattern re-derives
+      already-consumed material and must be counted relative to it):
+      (ii-a) the original Stage-C front: corpus of (2,2)(2,0), 124 failures;
+        the (0,0)-exponent reset re-derives consumed W-material.
+      (ii-b) the relative-claim family in the corpus of (2,2)(3,0)(3,0)
+        (121 failures).  The threading already yields the FIRST relative
+        claim correctly ((2,2)(3,0)(2,1)(3,2) = φ_ω(ω̄^ω+1) via
+        logφ_ω(thr)+1), but the nested (2,1)(3,2)(4,0)(3,1)(4,2)(5,0)-appends
+        re-derive shifted copies of the consumed (2,2)(3,0)-material.
+      (ii-c) inside floor 5(a): the (4,0)(5,1)-pair-chains of
+        (3,0)(4,1)(4,1) re-derive (0,0)::(1,1)-groups that must count
+        relative to the consumed ω̄^(ω²)-group (else they collide with
+        (4,1)(4,1) itself — machine-checked collision).
+  (iii-b) FLOOR 5(a), derivation record for the next round (chain-forced,
+      E1-verified in a dev build, NOT integrated because the corpus battery
+      immediately runs into (ii-c)): extend the groups with a MARKED flag;
+      bare (0,1)-blocks open (ω, marked); (0,1)-heads promote marked inner
+      groups multiplicatively (g·ω) and unmarked ones additively (ω+g);
+      (0,0)-heads promote by +1 and stamp unmarked.  Anchors this reproduces:
+        (3,0)(4,1)(4,1)      = φ̄(ω, ω̄^(ω²)·2)
+        (3,0)(4,1)(5,0)(6,1) = φ̄(ω, ω̄^(ω²·2))   (exposed member 1)
+        (3,0)(4,1)(5,1)      = φ̄(ω, ω̄^(ω³))
+      A flat recursive +ω-promotion (no marked flag) was refuted earlier
+      (regressed the (2,2)(3,1)-corpora); the marked ladder is anchor-correct
+      but its corpus closure needs (ii) resolved first.
 
-Γ₀ status: unchanged (needs frontiers (ii) and the floor-5 ladder first).
+Γ₀ status: unchanged (everything now waits on the relative-counting
+mechanism (ii) — the single remaining design problem of the 2-row fragment).
 
 Note: the imports precede this comment because the kimina server extracts the
 header imports from the top of a posted snippet.
