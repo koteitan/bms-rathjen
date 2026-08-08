@@ -54,25 +54,66 @@ that the descending `(0,1)`-heads produce, of which only the innermost survives 
 `chainP_collapse`).
 
 PARTIAL — F3 : (0,0)(1,1)…(a,1)(a,1) = φ̄(a,1)  (§6, R3 at a=1, R7 at a=2)
+
   PROVED for symbolic a = q+1:
-    `expand_M3` — the whole BM4 expansion (bad root 0 via §4, Δ₀ = a, bad part the
-      full ladder `lad (q+1)` with step `q+1`, so the copies overlap in one column);
-    `oLAux_chainV` — the descending `(0,1)`-chain lemma at a fixed final level
-      (F3 needs the level-indexed form: its inner head is `(0,1)`, not `(0,0)`);
-    `valV3` — the accumulator recursion `VV q 0 = φ̄(a,0)`,
-      `VV q (m+1) = φ̄(a,0) + ω^(chainP 1 q (VV q m))`;
-    `valE3` / `o?_expand_M3` — `o?(M3 q [n]) = some (ω^(chainP 1 q (VV q n)))`.
-  NOT YET PROVED (the remaining gap, all on the term side):
-    (i) the closed form `VV q (m+2) = twr q m` for the tower `twr q` with step
-        `φ̄(ofNat q, ·)` over the base `bse q = φ̄(ofNat q, xbase q)`, where
-        `xbase 0 = φ̄(a,0)·2` and `xbase (q+1) = ω^(φ̄(a,0)·2)` — the case split at
-        q = 0 is forced (there the `chainP` is empty, so the outer `ω^` supplies the
-        `φ̄(0,·)` that the innermost `phiStep` supplies for q ≥ 1);
-    (ii) the `plus`-absorption side conditions `le (twr q j) (φ̄(a,0)) = false`;
-    (iii) the two-base tower comparison against the fundamental sequence, whose
-        base is `φ̄(ofNat q, φ̄(a,0))` — giving witnesses kw n = n+1, nw k = k+1.
-  R3 and R7 already have all of (i)–(iii) at a = 1, 2 in `Rows/ProofsB.lean` (`tow`,
-  `etow`); generalizing those two developments in `q` is what remains.
+    `expand_M3` — the whole BM4 expansion.  Bad root 0 via §4; Δ₀ = a; the bad part
+      is the FULL ladder `lad (q+1)` while the step is only `q+1`, so consecutive
+      copies overlap in one column.  That overlap is why the expansion contains
+      interior row-0 zeros and hence why F3 is the no-shift family.
+    `oLAux_chainV` — the descending `(0,1)`-chain lemma, indexed by the FINAL level.
+    `valV3` — the accumulator recursion
+        VV q 0 = φ̄(a,0),   VV q (m+1) = φ̄(a,0) + ω^(chainP 1 q (VV q m)).
+    `valE3` / `o?_expand_M3` — o?(M3 q [n]) = some (ω^(chainP 1 q (VV q n))).
+    `#guard`s check these closed forms against computation for q < 3, n < 4.
+
+  REMAINING WORK (handoff note; all of it is on the 𝔗(M) side).
+  Target: `theorem e3_F3family (q : Nat)` with the usual 4-part package,
+  oval3 q 0 = φ̄(a,0) and oval3 q (n+1) = twr q n, witnesses kw n = n+1, nw k = k+1
+  (both verified numerically and matching R3/R7).  Definitions to add:
+
+      def zt  (q : Nat) : Term := phi (ofNat (q+1)) zero          -- φ̄(a,0), already here
+      def xbase (q : Nat) : Term := match q with
+        | 0      => add (zt 0) (zt 0)                             -- φ̄(a,0)·2
+        | q'+1   => phi zero (add (zt (q'+1)) (zt (q'+1)))        -- ω^(φ̄(a,0)·2)
+      def bse (q : Nat) : Term := phi (ofNat q) (xbase q)
+      def twr (q : Nat) : Nat → Term
+        | 0     => bse q
+        | j + 1 => phi (ofNat q) (twr q j)
+      -- fundamental-sequence side: same tower over `sbse q := phi (ofNat q) (zt q)`
+
+  Lemmas to prove, in order:
+    (A) `omegaNF (chainP 1 q (zt q)) = zt q`      (chainP_collapse q 1 (q+1), 1+q ≤ q+1)
+    (B) `VV q 1 = add (zt q) (zt q)`              (needs `plus a a = add a a` for AP a)
+    (C) `omegaNF (chainP 1 q (add (zt q) (zt q))) = bse q`   -- CASE SPLIT on q
+    (D) `omegaNF (chainP 1 q (twr q j)) = twr q (j+1)`       -- CASE SPLIT on q
+    (E) `le (twr q j) (zt q) = false` and `le (bse q) (zt q) = false`, hence
+        `VV q (m+2) = twr q m` by `plus_drop`
+    (F) `fsN (φ̄(a,1)) (k+1) = twr-over-sbse q k`
+    (G) three base comparisons, then `ltF`-tower monotonicity as in R3/R7.
+
+  PITFALLS ALREADY HIT (do not rediscover these):
+    * `oLAux_chainV` CANNOT be stated with a level-independent hypothesis the way
+      F1's `oLAux_chain` is: F1's inner matrix starts with `(0,0)` (r1 = 0 resets the
+      level), F3's starts with `(0,1)`, so its value genuinely depends on the level.
+      The version here carries `j + p = L` and requires the hypothesis only at `L`.
+    * In (C)/(D) the innermost `phiStep` is at level q and its argument is a
+      `φ̄(ofNat q, ·)`, so it WRAPS (`phiNF_phi_arg`) — it does not collapse; only the
+      OUTER q-1 steps collapse (`chainP_collapse` with j + p = 1 + (q-1) = q ≤ q).
+      Getting this backwards is the natural mistake.
+    * The tower step is `φ̄(ofNat q, ·)` uniformly, but for q = 0 it is supplied by
+      the outer `ω^` (`omegaNF = phiNF zero` there) and for q ≥ 1 by the innermost
+      `phiStep`; that is exactly why `xbase` needs the case split — at q = 0 the
+      chain is empty, so the base is `φ̄(0, φ̄(a,0)·2)` with no extra `φ̄(0,·)` layer.
+    * (F) at k = 0: `iterPhiAt (ofNat q) (plus (zt q) one) 1 = φ̄(ofNat q, zt q)` goes
+      through the `phiNFsucc` "down" branch (`splitFin (zt q + 1) = (zt q, 1)`,
+      `down = zt q`, taken because `lt (ofNat q) (ofNat (q+1))`).  R3/R7 discharged
+      the corresponding step with `decide` on closed terms; for symbolic q it needs a
+      bespoke lemma — this is the one place with no reusable analogue in the file.
+    * Fuel accounting is tight, not slack: `valV3`/`valE3` need `(q+2)*m + 1` and the
+      matrix supplies exactly `(q+2)*(n+1) + 1 = length + 1`.
+  Templates: R3 (`tow`, `W`, `ltF_tow_not_lt`, `W_succ2`) and R7 (`etow`, `VV`,
+  `ltF_etow_not_lt`, `W_succ2`) in Rows/ProofsB.lean are the q = 0 and q = 1 cases of
+  exactly (A)–(G); generalizing those two developments in `q` is the whole job.
 
 FRONTIER (not proved here):
   * A genuinely region-wide theorem additionally needs a 2-row standardness
