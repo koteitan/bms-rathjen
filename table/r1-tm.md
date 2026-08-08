@@ -26,15 +26,15 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 
 | BMS | $`T(M)`$ | 通称 | 証明 | その他の弱いエビデンス | 備考 |
 |---|---|---|---|---|---|
-| [`(空)`](../lean/Rows/TM.lean#L79) | $`0`$ | $`0`$ | [✅](../lean/Rows/Proofs.lean#L206) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 空行列 |
-| [`(0)`](../lean/Rows/TM.lean#L81) | $`1`$ | $`1`$ | [✅](../lean/Rows/Proofs.lean#L219) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(0)`](../lean/Rows/TM.lean#L82) | $`2`$ | $`2`$ | [✅](../lean/Rows/Proofs.lean#L233) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)`](../lean/Rows/TM.lean#L83) | $`\omega`$ | $`\omega`$ | [✅](../lean/Rows/Proofs.lean#L246) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(0)(1)`](../lean/Rows/TM.lean#L85) | $`\omega+\omega`$ | $`\omega\cdot 2`$ | [✅](../lean/Rows/Proofs.lean#L272) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(1)`](../lean/Rows/TM.lean#L87) | $`\bar{\varphi}(0,2)`$ | $`\omega^2`$ | [✅](../lean/Rows/Proofs.lean#L309) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(2)`](../lean/Rows/TM.lean#L89) | $`\bar{\varphi}(0,\omega)`$ | $`\omega^\omega`$ | [✅](../lean/Rows/Proofs.lean#L380) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(2)(3)`](../lean/Rows/TM.lean#L91) | $`\bar{\varphi}(0,\bar{\varphi}(0,\omega))`$ | $`\omega^{\omega^\omega}`$ | [✅](../lean/Rows/Proofs.lean#L418) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| **<(0,0)(1,1)** | $`\lt\bar{\varphi}(1,0)`$ | $`\lt\varepsilon_0`$ | [✅](../lean/Evidence/StageA.lean#L1410) | [checkAll](../lean/Test/TransTest.lean) | 区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明 |
+| [`(空)`](../lean/Rows/TM.lean#L79) | $`0`$ | $`0`$ | [✅](../lean/Rows/Proofs.lean#L42) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 空行列 |
+| [`(0)`](../lean/Rows/TM.lean#L81) | $`1`$ | $`1`$ | [✅](../lean/Rows/Proofs.lean#L55) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(0)`](../lean/Rows/TM.lean#L82) | $`2`$ | $`2`$ | [✅](../lean/Rows/Proofs.lean#L68) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)`](../lean/Rows/TM.lean#L83) | $`\omega`$ | $`\omega`$ | [✅](../lean/Rows/Proofs.lean#L81) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(0)(1)`](../lean/Rows/TM.lean#L85) | $`\omega+\omega`$ | $`\omega\cdot 2`$ | [✅](../lean/Rows/Proofs.lean#L94) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(1)`](../lean/Rows/TM.lean#L87) | $`\bar{\varphi}(0,2)`$ | $`\omega^2`$ | [✅](../lean/Rows/Proofs.lean#L107) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(2)`](../lean/Rows/TM.lean#L89) | $`\bar{\varphi}(0,\omega)`$ | $`\omega^\omega`$ | [✅](../lean/Rows/Proofs.lean#L120) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(2)(3)`](../lean/Rows/TM.lean#L91) | $`\bar{\varphi}(0,\bar{\varphi}(0,\omega))`$ | $`\omega^{\omega^\omega}`$ | [✅](../lean/Rows/Proofs.lean#L133) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| **<(0,0)(1,1)** | $`\lt\bar{\varphi}(1,0)`$ | $`\lt\varepsilon_0`$ | [✅](../lean/Evidence/StageA.lean#L1409) | [checkAll](../lean/Test/TransTest.lean) | 区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明 |
 | [`(0,0)(1,1)`](../lean/Rows/TM.lean#L94) | $`\bar{\varphi}(1,0)`$ | $`\varepsilon_0`$ |  | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 2 行の最初の極限 |
 | [`(0,0)(1,1)(1,0)`](../lean/Rows/TM.lean#L96) | $`\bar{\varphi}(0,\bar{\varphi}(1,0))`$ | $`\omega^{\varepsilon_0+1}`$ |  | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L98) | $`\bar{\varphi}(1,1)`$ | $`\varepsilon_1`$ |  | [o](../lean/Trans/TM.lean) |  |

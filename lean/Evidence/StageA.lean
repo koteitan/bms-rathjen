@@ -1,4 +1,5 @@
-import Rows.Proofs
+import Trans.Pair
+import Trans.Lemmas
 /-
 Evidence/StageA.lean — E3 in general form on the one-row region (Stage A)
 
@@ -55,8 +56,6 @@ open BMS (Matrix)
 open TM (Term)
 open TM.Term
 open Trans
-open Rows.Proofs (blocks0_cons_zero blocks0_single repM repM_append flat_range
-  oPrAux_unfold oPrAux_nil oPrAux_single oPrAux_rep0)
 
 theorem blocks0_nil : blocks0 [] = [] := rfl
 
@@ -794,7 +793,7 @@ theorem toList_oV {s : List Nat} (h : stdSeq s = true) : toList (oV s) = blockVa
 /-- The block encoding of a sub-sequence: `t ↦ (0)(t₁+1)(t₂+1)…`. -/
 def mkBlock (t : List Nat) : List Nat := 0 :: t.map (· + 1)
 
-/-- `B` repeated `k` times (the sequence-level version of `Rows.Proofs.repM`). -/
+/-- `B` repeated `k` times (the sequence-level version of `Trans.repM`). -/
 def repL (B : List Nat) : Nat → List Nat
   | 0 => []
   | k + 1 => B ++ repL B k
