@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.12
+バージョン: v0.1.13
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -58,8 +58,11 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L126) | $`\bar{\varphi}(\omega,\omega)`$ | $`\bar{\varphi}(\omega,\omega)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
 | [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L128) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,2))`$ | $`\bar{\varphi}(\omega,\omega^2)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
 | [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L130) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,\omega))`$ | $`\bar{\varphi}(\omega,\omega^\omega)`$ |  | [oStageC](../lean/Trans/StageC.lean) | v0.1.10 の値を訂正 ((2,2) 反復列の sup) |
-| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L133) | $`\bar{\varphi}(\omega+1,0)`$ | $`\bar{\varphi}(\omega+1,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
-| [`(0,0)(1,1)(2,2)(3,2)`](../lean/Rows/TM.lean#L135) | $`\bar{\varphi}(\bar{\varphi}(0,2),0)`$ | $`\bar{\varphi}(\omega^2,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L133) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,\omega+1))`$ | $`\bar{\varphi}(\omega,\omega^{\omega+1})`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L135) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,\omega+\omega))`$ | $`\bar{\varphi}(\omega,\omega^{\omega\cdot 2})`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L137) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,\bar{\varphi}(0,2)))`$ | $`\bar{\varphi}(\omega,\omega^{\omega^2})`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L139) | $`\bar{\varphi}(\omega+1,0)`$ | $`\bar{\varphi}(\omega+1,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,2)`](../lean/Rows/TM.lean#L141) | $`\bar{\varphi}(\bar{\varphi}(0,2),0)`$ | $`\bar{\varphi}(\omega^2,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
 
 ## 実装
 
