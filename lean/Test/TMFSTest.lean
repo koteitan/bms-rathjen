@@ -1,15 +1,15 @@
 /-
-Test/TMFSTest.lean — 基本列の検証
+Test/TMFSTest.lean — checks of the fundamental sequences
 
-既知の基本列と照合する:
+Comparison against the known fundamental sequences:
   ω[n] = n
   (ω^ω)[n] = ω^n
-  ε₀[n] = 0, 1, ω, ω^ω, …        (φ₀ の反復)
+  ε₀[n] = 0, 1, ω, ω^ω, …                   (iterating φ₀)
   ω^{ε₀+1}[n] = ε₀·n
-  Γ₀[n] = ψ_Ω(0)[n] = 1, ε₀, φ_{ε₀}(0), …   (x ↦ φ_x(0) の反復)
-  ψ_Ω(Ω)[n] = ψ(0), ψ(ψ(0)), …             (対角化)
+  Γ₀[n] = ψ_Ω(0)[n] = 1, ε₀, φ_{ε₀}(0), …   (iterating x ↦ φ_x(0))
+  ψ_Ω(Ω)[n] = ψ(0), ψ(ψ(0)), …              (diagonalization)
   ψ_Ω(Ω·2)[n] = ψ(Ω), ψ(Ω+ψ(Ω)), …
-さらに単調性 t[n] < t[n+1] < t をサンプルで総当たり検査する。
+Monotonicity t[n] < t[n+1] < t is then checked exhaustively over a sample.
 -/
 import Test.TMTest
 
@@ -18,7 +18,7 @@ open TM.Term
 
 def G0 : Term := psi Om zero
 
--- 分類
+-- classification
 #guard kindT zero = .isZero
 #guard kindT one = .isSucc
 #guard kindT (ofNat 3) = .isSucc
@@ -29,15 +29,15 @@ def G0 : Term := psi Om zero
 #guard predT (ofNat 3) = ofNat 2
 #guard predT (plus omega one) = omega
 
--- 共終度
+-- cofinality
 #guard cofT omega = omega
 #guard cofT e0 = omega
 #guard cofT G0 = omega
 #guard cofT Om = Om
 #guard cofT (add Om Om) = Om
-#guard cofT (psi Om Om) = omega            -- 対角化で ω に落ちる
+#guard cofT (psi Om Om) = omega            -- diagonalization brings the cofinality down to ω
 #guard cofT (psi Om (add Om Om)) = omega
-#guard cofT (phi zero (add Om Om)) = Om    -- ω^{Ω·2} は Ω 共終
+#guard cofT (phi zero (add Om Om)) = Om    -- ω^{Ω·2} has cofinality Ω
 #guard cofT (omg (plus M one)) = omega     -- ω̄^{M+1}[n] = M·n
 #guard cofT (psi (Z one) zero) = omega
 
@@ -64,33 +64,33 @@ def G0 : Term := psi Om zero
 #guard fsN G0 1 = e0
 #guard fsN G0 2 = phi e0 zero
 
--- ψ_Ω(α+1): ψ_Ω(α)+1 から φ-閉包
+-- ψ_Ω(α+1): φ-closure starting from ψ_Ω(α)+1
 #guard fsN (psi Om one) 0 = plus G0 one
 #guard fsN (psi Om one) 1 = phi (plus G0 one) zero
 
--- ψ_Ω(Ω) の対角化: ψ(0), ψ(ψ(0))
+-- diagonalization of ψ_Ω(Ω): ψ(0), ψ(ψ(0))
 #guard fsN (psi Om Om) 0 = G0
 #guard fsN (psi Om Om) 1 = psi Om G0
 #guard fsN (psi Om Om) 2 = psi Om (psi Om G0)
 
--- ψ_Ω(Ω·2) の対角化: ψ(Ω), ψ(Ω+ψ(Ω))
+-- diagonalization of ψ_Ω(Ω·2): ψ(Ω), ψ(Ω+ψ(Ω))
 #guard fsN (psi Om (add Om Om)) 0 = psi Om Om
 #guard fsN (psi Om (add Om Om)) 1 = psi Om (plus Om (psi Om Om))
 
--- ψ_Ω(ω) : 可算共終度の伝播
+-- ψ_Ω(ω): propagation at countable cofinality
 #guard fsN (psi Om omega) 2 = psi Om (ofNat 2)
 
--- ψ_{Z1}(0): Ω+1 から φ-閉包 (Γ_{Ω+1} 相当)
+-- ψ_{Z1}(0): φ-closure from Ω+1 (a Γ_{Ω+1}-like point)
 #guard fsN (psi (Z one) zero) 0 = plus Om one
 #guard fsN (psi (Z one) zero) 1 = phi (plus Om one) zero
 
 -- ω̄^{M+1}[n] = M·n
 #guard fsN (omg (plus M one)) 2 = add M M
 
--- 加法: 最後の成分に伝播
+-- addition: propagate into the last component
 #guard fsN (plus e0 omega) 3 = plus e0 (ofNat 3)
 
-/-! ## 単調性の総当たり: t[n] < t[n+1] < t -/
+/-! ## Exhaustive monotonicity check: t[n] < t[n+1] < t -/
 
 def fsSample : List Term :=
   [ omega, phi zero omega, e0, phi zero e0, phi omega zero, phi e0 zero,
@@ -99,13 +99,13 @@ def fsSample : List Term :=
     psi (Z one) zero, psi (Z omega) zero,
     plus e0 omega, omg (plus M one), omg (plus M omega) ]
 
-/-- t[n] が t への増加列になっている (n < 4 で検査) -/
+/-- t[n] is an increasing sequence towards t (checked for n < 4). -/
 def fsMono : Bool :=
   fsSample.all fun t =>
     (List.range 4).all fun n =>
       lt (fsN t n) (fsN t (n + 1)) && lt (fsN t n) t
 
-/-- 基本列の値も形成条件を満たす -/
+/-- The values of the fundamental sequence are well-formed too. -/
 def fsWF : Bool :=
   fsSample.all fun t =>
     inT t && (List.range 4).all fun n => inT (fsN t n)

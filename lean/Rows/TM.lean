@@ -1,17 +1,24 @@
 /-
-Rows/TM.lean — 対応表の行データベース (R1: BMS × T(M))
+Rows/TM.lean — the row database of the correspondence table (R1: BMS × T(M))
 
-方針 (plan/README.md):
-  - 表の唯一の情報源はこのファイル。table/r1-tm.md は gentable で生成する。
-  - 掲載するのは機械検査を通った行だけ。行ごとの検査は本ファイル末尾の
-    #guard で行い、ビルドが通ること = 全行検証済みを意味する。
+Policy (see plan/README.md):
+  - This file is the single source of truth for the table; table/r1-tm.md is
+    generated from it by `gentable`.
+  - Only rows that pass the machine checks are listed.  The per-row checks are the
+    `#guard`s in the middle of this file, so a successful build means every listed
+    row has been verified.
 
-列の意味:
-  hasO : 翻訳関数 o がこの行列で定義され、o(M) = t が成立する (E1)。
-         o の定義域全体はコーパス上の checkAll
-         (E2 順序埋め込み + E3 相互共終) で検査済み (Test/TransTest.lean)。
-  ev   : その他のエビデンス。"bisim6" = 深さ 6 の厳密双模倣
-         (展開列と基本列が添字 +1 のずれを除いて一致する領域で有効)。
+Meaning of the columns:
+  hasO : the translation `o` is defined on this matrix and o(M) = t holds (E1).
+         The whole domain of `o` is additionally checked over a corpus by
+         `checkAll` (E2 order embedding + E3 mutual cofinality), see
+         Test/TransTest.lean.
+  ev   : the remaining, weaker evidence.  "bisim6" = strict bisimulation to depth 6
+         (valid in the region where the expansions and the fundamental sequences
+         agree up to the index shift of one).
+
+The generated table itself is written in Japanese, since it is the user-facing
+document of this repository; only the comments here are in English.
 -/
 import Trans.TM
 import Evidence.Check
@@ -23,16 +30,16 @@ open BMS (Matrix)
 open TM (Term)
 open TM.Term
 
-/-- 対応表の 1 行 -/
+/-- One row of the correspondence table. -/
 structure Row where
-  m : Matrix          -- BMS 行列
-  t : Term            -- T(M) 項
-  name : String       -- 通称 (MathJax)
-  hasO : Bool := false -- o の値の一致 (E1) が成立
-  ev : String := ""   -- その他のエビデンス
+  m : Matrix           -- the BMS matrix
+  t : Term             -- the T(M) term
+  name : String        -- common name (MathJax)
+  hasO : Bool := false -- o(M) = t holds (E1)
+  ev : String := ""    -- the remaining, weaker evidence
   note : String := ""
 
-/-- 項が自然数 n (1 = φ̄00 の n 個の和) なら n を返す -/
+/-- If the term is a natural number n (a sum of n copies of 1 = φ̄00), return n. -/
 def natOf? (t : Term) : Option Nat :=
   match t with
   | .zero => some 0
@@ -40,7 +47,7 @@ def natOf? (t : Term) : Option Nat :=
     let l := toList t
     if l.all (· == one) then some l.length else none
 
-/-- Term → MathJax (表の表示用) -/
+/-- Term → MathJax (for display in the table). -/
 def tex (t : Term) : String :=
   match natOf? t with
   | some n => toString n
@@ -61,7 +68,7 @@ def tex (t : Term) : String :=
 /-- ε₀ = φ̄10 -/
 def e0 : Term := phi one zero
 
-/-- 対応表の行 (上から昇順) -/
+/-- The rows of the table, in increasing order. -/
 def rows : List Row := [
   { m := [], t := zero, name := "0", hasO := true, ev := "bisim6", note := "空行列" },
   { m := [[0]], t := one, name := "1", hasO := true, ev := "bisim6" },
@@ -78,24 +85,34 @@ def rows : List Row := [
     name := "\\omega^{\\varepsilon_0+1}", ev := "bisim6" }
 ]
 
-/-! ## 行ごとの機械検査 (ビルドが通ること = 全行検証済み) -/
+/-! ## Per-row machine checks (a successful build means every row is verified) -/
 
--- E1: hasO の行はすべて o の値が一致する
+-- E1: every row marked `hasO` really has the matching value of `o`
 #guard rows.all fun r => !r.hasO || Trans.o? r.m == some r.t
 
--- 双模倣 (深さ 6): 全行
+-- bisimulation to depth 6: all rows
 #guard rows.all fun r => Evidence.bisim 6 r.m r.t 3
 
--- 表の整列: BMS 順・T(M) 順の両方で昇順 (E2 のインスタンス)
+-- the table is sorted, in the BMS order and in the T(M) order alike (an instance of E2)
 #guard (rows.zip rows.tail).all fun (a, b) => BMS.cmpM a.m b.m == .lt
 #guard (rows.zip rows.tail).all fun (a, b) => lt a.t b.t
 
--- 全項が形成条件を満たす
+-- every term satisfies the formation conditions
 #guard rows.all fun r => inT r.t
 
-/-! ## 表の生成 -/
+/-! ## Table generation -/
 
-/-- table/r1-tm.md の中身を生成する -/
+/-- Evidence name → the file that defines it
+    (path relative to table/, as resolved by GitHub). -/
+def evLink : String → String
+  | "bisim6" => "../lean/Evidence/Bisim.lean"
+  | _ => ""
+
+/-- Turn a label into a link (left alone when the path is empty). -/
+def linked (label path : String) : String :=
+  if path == "" then label else "[" ++ label ++ "](" ++ path ++ ")"
+
+/-- The contents of table/r1-tm.md. -/
 def genTable : String :=
   let header :=
 "# BMS × Rathjen T(M) 対応表 (R1)
@@ -103,25 +120,34 @@ def genTable : String :=
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
-Rathjen の表記系 $T(M)$ (Rathjen, *Proof-theoretic analysis of KPM*,
+Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
 Arch. Math. Logic 30 (1991), §2) の対応表。
 **機械検査を通った行のみ**を掲載する。検査の設計は
 [plan/README.md](../plan/README.md) を参照。
 
 エビデンス凡例:
 
-- **$o$ 列**: ✅ = 翻訳関数 $o$ がこの行列で定義され $o(M) = t$ が成立 (E1)。
-  $o$ の定義域全体ではコーパス検査 (E2 順序埋め込み・E3 相互共終) 済み。
-- **その他のエビデンス**: bisim6 = 深さ 6 の双模倣
+- **$`o`$ 列**: ✅ = 翻訳関数 $`o`$ ([定義](../lean/Trans/TM.lean)) がこの行列で定義され
+  $`o(M) = t`$ が成立 (E1)。$`o`$ の定義域全体では
+  [コーパス検査](../lean/Evidence/Check.lean) (E2 順序埋め込み・E3 相互共終) 済み。
+- **その他の弱いエビデンス**: [bisim6](../lean/Evidence/Bisim.lean) = 深さ 6 の双模倣
   (展開列と基本列が一致する領域で有効)。
 
-| BMS | $T(M)$ | 通称 | $o$ | その他のエビデンス | 備考 |
+実装:
+[行 DB と行ごとの検査](../lean/Rows/TM.lean) ·
+[BMS の展開](../lean/BMS/Expand.lean) ·
+[T(M) の項](../lean/TM/Terms.lean) ·
+[T(M) の順序](../lean/TM/Order.lean) ·
+[基本列](../lean/TM/FS.lean)
+
+| BMS | $`T(M)`$ | 通称 | $`o`$ | その他の弱いエビデンス | 備考 |
 |---|---|---|---|---|---|
 "
   let body := String.join <| rows.map fun r =>
     let bms := if r.m.isEmpty then "(空)" else BMS.showMatrix r.m
-    "| `" ++ bms ++ "` | $" ++ tex r.t ++ "$ | $" ++ r.name ++ "$ | " ++
-      (if r.hasO then "✅" else "") ++ " | " ++ r.ev ++ " | " ++ r.note ++ " |\n"
+    "| `" ++ bms ++ "` | $`" ++ tex r.t ++ "`$ | $`" ++ r.name ++ "`$ | " ++
+      (if r.hasO then linked "✅" "../lean/Trans/TM.lean" else "") ++ " | " ++
+      linked r.ev (evLink r.ev) ++ " | " ++ r.note ++ " |\n"
   header ++ body
 
 end Rows

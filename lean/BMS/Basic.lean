@@ -1,38 +1,39 @@
 /-
-BMS/Basic.lean — バシク行列の表現と基本操作
+BMS/Basic.lean — representation of Bashicu matrices and basic operations
 
-出典: Koteitan「バシク行列の数式的定義」(巨大数研究 Wiki ユーザーブログ)。
-以下のコメントで「数式的定義」と呼ぶ。BMS のバージョンは BM4。
+Source: Koteitan, "バシク行列の数式的定義" ("A formula-only definition of the Bashicu
+matrices", Googology Wiki user blog).  Cited below as "the formal definition".
+The BMS version is BM4.
 
-行列 S = S_0 S_1 ... S_{X-1} を列のリストで表す。
-列 S_x = (S_{x0}, ..., S_{x(Y-1)}) は上の行から下の行への成分リスト。
+A matrix S = S_0 S_1 ... S_{X-1} is a list of columns.
+A column S_x = (S_{x0}, ..., S_{x(Y-1)}) lists its entries from the top row down.
 -/
 
 namespace BMS
 
-/-- 列: 上の行 (行番号 0) から下の行への成分リスト -/
+/-- A column: entries from row 0 (top) downwards. -/
 abbrev Col := List Nat
 
-/-- 行列: 左から右への列のリスト -/
+/-- A matrix: columns from left to right. -/
 abbrev Matrix := List Col
 
-/-- 全列の高さが h で揃っている -/
+/-- All columns have height `h`. -/
 def WF (h : Nat) (M : Matrix) : Prop := ∀ c ∈ M, c.length = h
 
-/-- 成分 S_{xy}。範囲外は 0 (標準形の範囲では参照しない)。 -/
+/-- The entry S_{xy}.  Out of range reads as 0 (never consulted on standard input). -/
 def ent (M : Matrix) (x y : Nat) : Nat := (M.getD x []).getD y 0
 
-/-- 初期行列 (0,...,0)(1,...,1) (高さ h)。表の起点。 -/
+/-- The initial matrix (0,...,0)(1,...,1) of height `h`; the origin of the table. -/
 def init (h : Nat) : Matrix := [List.replicate h 0, List.replicate h 1]
 
-/-- "(0,0,0)(1,1,1)" 形式の表示 (yaBMS と同じ書式) -/
+/-- Printing in the "(0,0,0)(1,1,1)" format (the same syntax as yaBMS). -/
 def showMatrix (M : Matrix) : String :=
   String.join (M.map fun c => "(" ++ String.intercalate "," (c.map toString) ++ ")")
 
-/-- 空白除去 (v4.30: trimAscii は Slice を返すので String に戻す) -/
+/-- Whitespace trimming (in v4.30 `trimAscii` yields a slice, so convert back). -/
 def trimS (s : String) : String := s.trimAscii.toString
 
-/-- "(0,0,0)(1,1,1)" 形式の読み取り。空文字列は空行列。 -/
+/-- Parsing of the "(0,0,0)(1,1,1)" format.  The empty string is the empty matrix. -/
 def parseMatrix (s : String) : Option Matrix :=
   let parts := (((trimS s).splitOn ")").map trimS).filter (· ≠ "")
   parts.mapM fun p => do

@@ -1,33 +1,34 @@
 /-
-TM/Terms.lean — Rathjen の表記系 𝔗(M) の項
+TM/Terms.lean — the terms of Rathjen's notation system 𝔗(M)
 
-一次ソース: M. Rathjen, "Proof-theoretic analysis of KPM",
-Archive for Mathematical Logic 30 (1991) 377–403, §2 (pp. 382–384)。
-以下「[R91]」と略記し、定義番号は同論文のもの。
+Primary source: M. Rathjen, "Proof-theoretic analysis of KPM",
+Archive for Mathematical Logic 30 (1991) 377–403, §2 (pp. 382–384).
+Cited below as [R91]; definition numbers are those of that paper.
 
-[R91] §2 冒頭: 𝔗(M) は T(M) ([R90]) の軽量版で、
-  1. 項 Φαβ を落とし、
-  2. χ の階層の代わりに単一関数 Z (= α ↦ χ_α(0)) を持つ。
+[R91] §2: 𝔗(M) is a lightweight variant of T(M) of [R90] in which
+  1. the terms Φαβ are omitted, and
+  2. the hierarchy χ is replaced by the single function Z (= α ↦ χ_α(0)).
 
-項の構成子 ([R91] 2.1):
+Term constructors ([R91] 2.1):
   0, M
-  ⊕(α₁,…,αₙ)   (n ≥ 2, αᵢ ∈ AP, αₙ ≤ … ≤ α₁)     … 形式和
-  ω̄^α          (M < α)                             … M 超の加法主要項
-  φ̄αβ          (α, β < M)                          … 2 変数 Veblen (生)
-  ψκα          (κ ∈ R, α < M, K_κ α < α)           … 崩壊関数
-  Zα                                                … 正則基数の名前 (α ↦ χ_α(0))
+  ⊕(α₁,…,αₙ)   (n ≥ 2, αᵢ ∈ AP, αₙ ≤ … ≤ α₁)     formal sum
+  ω̄^α          (M < α)                            additively principal above M
+  φ̄αβ          (α, β < M)                         binary Veblen (raw)
+  ψκα          (κ ∈ R, α < M, K_κ α < α)          collapsing function
+  Zα                                               names of regulars (α ↦ χ_α(0))
 
-⊕ は右結合の 2 項 add で符号化する:
+⊕ is encoded by a right-nested binary `add`:
   ⊕(α₁,…,αₙ) = add α₁ (add α₂ (… (add α_{n-1} αₙ)))
-形成条件 (成分が AP・降順) は TM/NF.lean の inT で検査する。
+The formation conditions (components in AP, descending) are checked by `inT`
+in TM/NF.lean.
 -/
 
 namespace TM
 
 inductive Term where
   | zero              -- 0
-  | M                 -- M (最小弱 Mahlo)
-  | add (a b : Term)  -- ⊕ の右結合符号化: a は AP 成分、b は残り
+  | M                 -- M (the least weakly Mahlo cardinal)
+  | add (a b : Term)  -- right-nested encoding of ⊕: `a` is an AP component, `b` the rest
   | omg (a : Term)    -- ω̄^a
   | phi (a b : Term)  -- φ̄ a b
   | psi (k a : Term)  -- ψ_k a
@@ -36,9 +37,10 @@ deriving DecidableEq, Repr
 
 namespace Term
 
-/-- 次数 Gα ([R91] 2.4): 記号 0, M, ⊕, ω̄, φ̄, ψ, Z の総数。
-    ⊕ は add の連鎖でも 1 個と数えるべきだが、fuel の上界として使うだけ
-    なので add ごとに 1 と数えて構わない (真の Gα 以上になる)。 -/
+/-- The degree Gα ([R91] 2.4): the number of symbols 0, M, ⊕, ω̄, φ̄, ψ, Z.
+    Strictly, a chain of ⊕ counts as one symbol, but this is only used as an
+    upper bound for recursion fuel, so counting one per `add` is fine
+    (it only overestimates the true Gα). -/
 def deg : Term → Nat
   | zero => 1
   | M => 1
@@ -48,25 +50,26 @@ def deg : Term → Nat
   | psi k a => 1 + k.deg + a.deg
   | Z a => 1 + a.deg
 
-/-- 加法主要項 AP の形 ([R91] 2.1: AP = {M} ∪ {ω̄^α} ∪ {φ̄αβ} ∪ SC) -/
+/-- Shape of the additively principal terms AP
+    ([R91] 2.1: AP = {M} ∪ {ω̄^α} ∪ {φ̄αβ} ∪ SC). -/
 def isAP : Term → Bool
   | zero => false
   | add _ _ => false
   | _ => true
 
-/-- 強臨界項 SC の形 ([R91] 2.1: SC = {M} ∪ {ψκα} ∪ {Zα}) -/
+/-- Shape of the strongly critical terms SC ([R91] 2.1: SC = {M} ∪ {ψκα} ∪ {Zα}). -/
 def isSC : Term → Bool
   | M => true
   | psi _ _ => true
   | Z _ => true
   | _ => false
 
-/-- 正則項 R の形 ([R91] 2.1 (vii): R = {Zα}) -/
+/-- Shape of the regular terms R ([R91] 2.1 (vii): R = {Zα}). -/
 def isR : Term → Bool
   | Z _ => true
   | _ => false
 
-/-- 表示 (デバッグ・表生成用): ⊕ は + で、ω̄/φ̄/ψ/Z はそのまま -/
+/-- Printing (for debugging and table generation): ⊕ as `+`, the rest as named forms. -/
 def toStr : Term → String
   | zero => "0"
   | M => "M"

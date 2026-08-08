@@ -1,17 +1,20 @@
 /-
-Trans/TM.lean — 翻訳関数 o : BMS → 𝔗(M) (段階的構築)
+Trans/TM.lean — the translation o : BMS → 𝔗(M), built up in stages
 
-方針: 対応表の予想 (BM4-Analysis 等) は大きい側で信頼できないため、
-o は小さい領域から段階的に定義し、各段階を E3 (展開 ↔ 基本列) の
-計算検査 (Evidence/Bisim.lean) で検証しながら拡張する。
+Policy: the conjectured correspondences found in the community tables
+(BM4-Analysis and the like) are not reliable on the large side, so `o` is defined
+starting from the small region and extended stage by stage, each stage being
+validated by computational checks of E3 (expansion vs fundamental sequence) —
+see Evidence/Check.lean and Evidence/Bisim.lean.
 
-添字の規約: BMS の M[n] はコピー B(0)…B(n) (n+1 個) を並べるため、
-T(M) 側の基本列とは添字が 1 ずれる:
-    o(M[n]) = (o M)[n+1]
-E3 の行ごとの補題もこの形で立てる。
+Index convention: the BMS expansion M[n] lays down the copies B(0)…B(n), i.e.
+n+1 of them, so the index is shifted by one against the T(M) side:
+    o(M[n])  corresponds to  (o M)[n+1]
+The per-row E3 statements use this convention.
 
-現在の定義域:
-  Stage A: 1 行有効領域 (行 0 以外が全零) = ε₀ 未満の CNF 領域
+Current domain:
+  Stage A: the one-row-effective region (all rows below row 0 are zero),
+           i.e. the CNF region below ε₀.
 -/
 import BMS
 import TM
@@ -21,15 +24,16 @@ namespace Trans
 open TM (Term)
 open TM.Term
 
-/-- 行列の行 0 (先頭行) の並び -/
+/-- Row 0 (the top row) of a matrix, as a sequence. -/
 def row0 (M : BMS.Matrix) : List Nat := M.map (·.getD 0 0)
 
-/-- 行 0 以外が全零 (1 行有効) か -/
+/-- Is every row below row 0 zero (i.e. only row 0 is effective)? -/
 def onlyRow0 (M : BMS.Matrix) : Bool :=
   M.all fun c => (c.drop 1).all (· == 0)
 
-/-- 0 の直前で区切ってブロックに分割する:
-    (0,1,2,0,1) → [[0,1,2],[0,1]]。標準形の 1 行数列は 0 始まりのブロックの並び。 -/
+/-- Split into blocks just before each 0:
+    (0,1,2,0,1) → [[0,1,2],[0,1]].  A standard one-row sequence is a run of
+    blocks each starting with 0. -/
 def blocks0 : List Nat → List (List Nat)
   | [] => []
   | x :: rest =>
@@ -37,8 +41,8 @@ def blocks0 : List Nat → List (List Nat)
     | acc, some h => if h == 0 then [x] :: acc else (x :: acc.headD []) :: acc.tail
     | _, none => [[x]]
 
-/-- 原始数列 (1 行) → CNF 項。
-    o(ブロック列) = Σ_i ω^{o(ブロック i の先頭 0 を除き全体を -1)}  -/
+/-- A primitive sequence (one row) as a CNF term:
+    o(blocks) = Σ_i ω^{o(block i with its leading 0 removed and all entries decremented)}. -/
 def oPrAux : Nat → List Nat → Term
   | 0, _ => zero
   | fuel + 1, s =>
@@ -48,11 +52,11 @@ def oPrAux : Nat → List Nat → Term
       (bs.map fun b =>
         omegaNF (oPrAux fuel ((b.drop 1).map (· - 1)))).foldr plus zero
 
-/-- Stage A: 1 行有効行列の翻訳 -/
+/-- Stage A: translation of one-row-effective matrices. -/
 def oPr (M : BMS.Matrix) : Term := oPrAux (M.length + 1) (row0 M)
 
-/-- 翻訳関数 (部分)。定義域を段階的に広げる。
-    定義域外は none (行の検証は bisim による直接ペアで行う)。 -/
+/-- The translation, as a partial function; its domain grows stage by stage.
+    Outside the domain it is `none` (such rows are checked as explicit pairs by bisim). -/
 def o? (M : BMS.Matrix) : Option Term :=
   if onlyRow0 M then some (oPr M) else none
 

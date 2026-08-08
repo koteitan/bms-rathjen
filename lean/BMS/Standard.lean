@@ -1,17 +1,17 @@
 /-
-BMS/Standard.lean — 標準形 = 初期行列からの展開到達性
+BMS/Standard.lean — standard form as reachability from the initial matrix
 
-標準形の定義: (0,...,0)(1,...,1) (高さ h) から展開を有限回
-(各回のコピー数 n は任意) 施して得られる行列。
+A matrix is standard when it is obtained from (0,...,0)(1,...,1) of height `h`
+by finitely many expansions (with an arbitrary copy count `n` at each step).
 
-行 DB では到達の witness (展開パス) を具体的に持たせ、
-reachBy の計算 (decide/rfl) で標準形であることを検査する。
+Rows of the table carry an explicit witness (the list of copy counts); evaluating
+`reachBy` on that witness (by `decide`) checks standardness by computation.
 -/
 import BMS.Expand
 
 namespace BMS
 
-/-- M から N へ展開で到達できる -/
+/-- `N` is reachable from `M` by expansions. -/
 inductive Reach : Matrix → Matrix → Prop
   | refl (M : Matrix) : Reach M M
   | step {M N N' : Matrix} (n : Nat) :
@@ -23,10 +23,10 @@ theorem Reach.trans {A B C : Matrix} (hab : Reach A B) (hbc : Reach B C) :
   | refl => exact hab
   | step n _ he ih => exact Reach.step n ih he
 
-/-- 標準形 (高さ h): 初期行列から到達可能 -/
+/-- Standard form at height `h`: reachable from the initial matrix. -/
 def Standard (h : Nat) (M : Matrix) : Prop := Reach (init h) M
 
-/-- 展開パス (各ステップのコピー数) に沿って計算する witness 評価器 -/
+/-- Witness evaluator: follow an expansion path (the copy count of each step). -/
 def reachBy (M : Matrix) : List Nat → Option Matrix
   | [] => some M
   | n :: ns =>
@@ -34,7 +34,7 @@ def reachBy (M : Matrix) : List Nat → Option Matrix
     | none => none
     | some N => reachBy N ns
 
-/-- witness の健全性: reachBy が成功すれば Reach が成り立つ -/
+/-- Soundness of the witness: a successful `reachBy` yields `Reach`. -/
 theorem reachBy_sound {M N : Matrix} {path : List Nat}
     (h : reachBy M path = some N) : Reach M N := by
   induction path generalizing M with

@@ -1,20 +1,23 @@
 /-
-Evidence/Check.lean — o の定義域上の全数検査 (E1/E2/E3 のインスタンス検査器)
+Evidence/Check.lean — exhaustive checks over the domain of `o`
+(instance checkers for E1 / E2 / E3)
 
-o が定義されている領域のコーパス (展開で到達する行列の有限集合) に対し、
-T(M) 側の決定可能な順序だけを使って検査する:
+Over a corpus (a finite set of matrices reachable by expansion) on which `o` is
+defined, everything is checked inside the decidable order of the T(M) side:
 
-  checkKind : 零・後続・極限の分類が o で保たれる
-  checkSucc : 後続で o(pred M) = pred (o M)
-  checkE2   : 順序埋め込み ltB M N ↔ o M <_T o N (全ペア)
-  checkE3i  : 極限 M で
+  checkKind : `o` preserves the classification zero / successor / limit
+  checkSucc : for successors, o(pred M) = pred (o M)
+  checkE2   : order embedding, ltB M N ↔ o M <_T o N (all pairs)
+  checkE3i  : for a limit M,
                 (a) o(M[n]) < o(M)
-                (b) ∀n ∃k. o(M[n]) < (o M)[k]   (展開像が基本列に抜かれる)
-                (c) ∀k ∃n. (o M)[k] < o(M[n])   (基本列が展開像に抜かれる)
-              — E3 の相互共終形。(b)(c) が両立すれば両列の上限は一致する。
+                (b) ∀n ∃k. o(M[n]) < (o M)[k]   (the expansions are overtaken by the fs)
+                (c) ∀k ∃n. (o M)[k] < o(M[n])   (the fs is overtaken by the expansions)
+              — E3 in mutual-cofinality form.  If (b) and (c) both hold, the two
+              sequences have the same supremum.
 
-BMS の展開列と fs の列は同じ順序数への異なる共終列になり得るため
-(ε₁ に対する ε₀-タワーと ω-タワー)、E3 は等式ではなくこの相互共終形で立てる。
+The BMS expansions and the fundamental sequences may be different cofinal sequences
+for one and the same ordinal (an ε₀-tower versus an ω-tower for ε₁), which is why
+E3 is stated in this mutual-cofinality form rather than as an equation.
 -/
 import BMS
 import TM
@@ -26,15 +29,15 @@ open BMS (Matrix)
 open TM (Term)
 open TM.Term
 
-/-- 1 段の展開像 (幅 w) -/
+/-- One round of expansions (width w). -/
 def stepAll (w : Nat) (ms : List Matrix) : List Matrix :=
   ms.flatMap fun m => (List.range w).filterMap fun n => BMS.expand? m n
 
-/-- seed から深さ d・幅 w で到達する行列のコーパス (重複除去) -/
+/-- The corpus reachable from `seed` within depth d and width w (duplicates removed). -/
 def corpus (seed : Matrix) (d w : Nat) : List Matrix :=
   (List.range d).foldl (fun acc _ => (acc ++ stepAll w acc).eraseDups) [seed]
 
-/-- 分類の保存 -/
+/-- Preservation of the classification. -/
 def checkKind (o : Matrix → Term) (c : List Matrix) : Bool :=
   c.all fun m =>
     match BMS.kind m, kindT (o m) with
@@ -43,7 +46,7 @@ def checkKind (o : Matrix → Term) (c : List Matrix) : Bool :=
     | .lim, .isLim => true
     | _, _ => false
 
-/-- 後続の前者の対応 -/
+/-- Correspondence of predecessors at successors. -/
 def checkSucc (o : Matrix → Term) (c : List Matrix) : Bool :=
   c.all fun m =>
     BMS.kind m != .succ ||
@@ -51,12 +54,12 @@ def checkSucc (o : Matrix → Term) (c : List Matrix) : Bool :=
      | some m' => o m' == predT (o m)
      | none => false)
 
-/-- E2 インスタンス: 順序埋め込み (コーパス内全ペア) -/
+/-- Instances of E2: the order embedding, over all pairs of the corpus. -/
 def checkE2 (o : Matrix → Term) (c : List Matrix) : Bool :=
   c.all fun m1 => c.all fun m2 =>
     (BMS.cmpM m1 m2 == .lt) == lt (o m1) (o m2)
 
-/-- E3 相互共終形 (幅 w、追い越しの探索幅 w') -/
+/-- E3 in mutual-cofinality form (width w, search width w' for the overtaking index). -/
 def checkE3i (o : Matrix → Term) (c : List Matrix) (w w' : Nat) : Bool :=
   c.all fun m =>
     BMS.kind m != .lim ||
@@ -77,7 +80,7 @@ def checkE3i (o : Matrix → Term) (c : List Matrix) (w w' : Nat) : Bool :=
          | some m' => lt (fsN t (k + 1)) (o m')
          | none => false))
 
-/-- 全検査をまとめて実行 -/
+/-- Run all of the checks. -/
 def checkAll (o : Matrix → Term) (c : List Matrix) (w w' : Nat) : Bool :=
   checkKind o c && checkSucc o c && checkE2 o c && checkE3i o c w w'
 

@@ -1,4 +1,4 @@
-/- gentable: 行 DB から table/r1-tm.md を生成する (標準出力へ) -/
+/- gentable: generates table/r1-tm.md from the row database (to standard output) -/
 import Rows.TM
 
 def main : IO Unit := IO.print Rows.genTable

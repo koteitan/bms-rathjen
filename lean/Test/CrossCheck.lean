@@ -1,7 +1,7 @@
 /-
-Test/CrossCheck.lean — 展開・比較のスモークテスト
+Test/CrossCheck.lean — smoke tests of expansion and comparison
 
-期待値は yaBMS (C 実装) の出力から取った:
+The expected values are taken from the output of yaBMS (the C implementation):
   (0,0)(1,1)[2]               → (0,0)(1,0)(2,0)
   (0,0)(1,1)[3]               → (0,0)(1,0)(2,0)(3,0)
   (0,0,0)(1,1,1)[2]           → (0,0,0)(1,1,0)(2,2,0)
@@ -12,44 +12,44 @@ import BMS
 
 namespace BMS.Test
 
--- 展開
+-- expansion
 #guard expand? [[0,0],[1,1]] 2 = some [[0,0],[1,0],[2,0]]
 #guard expand? [[0,0],[1,1]] 3 = some [[0,0],[1,0],[2,0],[3,0]]
 #guard expand? [[0,0,0],[1,1,1]] 2 = some [[0,0,0],[1,1,0],[2,2,0]]
 #guard expand? [[0,0,0],[1,1,1],[2,1,0],[1,1,1]] 2 =
   some [[0,0,0],[1,1,1],[2,1,0],[1,1,0],[2,2,1],[3,2,0],[2,2,0],[3,3,1],[4,3,0]]
 
--- (0,0)(1,0) は 1 行目だけ非零の極限 ((0)(1) = ω 相当): 全零列のコピーになる
+-- (0,0)(1,0) is a limit with only row 0 nonzero (like (0)(1) = ω): copies of the zero column
 #guard expand? [[0,0],[1,0]] 3 = some [[0,0],[0,0],[0,0],[0,0]]
 
--- 後続 (最後列全零 → 落とす)
+-- successor (last column all zero → drop it)
 #guard expand? [[0,0],[1,1],[0,0]] 5 = some [[0,0],[1,1]]
 #guard expand? [[0,0]] 0 = some []
 
--- 空行列は展開なし
+-- the empty matrix has no expansion
 #guard expand? ([] : Matrix) 1 = none
 
--- 分類
+-- classification
 #guard kind ([] : Matrix) = .zero
 #guard kind [[0,0],[1,1],[0,0]] = .succ
 #guard kind [[0,0],[1,0]] = .lim
 #guard kind [[0,0],[1,1]] = .lim
 
--- 比較 (辞書式)
+-- comparison (lexicographic)
 #guard cmpM [[0,0],[1,1],[2,0]] [[0,0],[1,1],[1,1]] = .gt
 #guard cmpM [[0,0]] [[0,0],[1,0]] = .lt
 #guard cmpM [[0,0],[1,1]] [[0,0],[1,1]] = .eq
 
--- 展開は行列を小さくする (具体例)
+-- expansion makes the matrix smaller (a concrete instance)
 #guard cmpM (expand [[0,0],[1,1]] 3) [[0,0],[1,1]] = .lt
 
--- 表示と読み取り
+-- printing and parsing
 #guard showMatrix [[0,0,0],[1,1,1]] = "(0,0,0)(1,1,1)"
 #guard parseMatrix "(0,0,0)(1,1,1)" = some [[0,0,0],[1,1,1]]
 #guard parseMatrix "" = some []
 
--- witness による標準形検査の例:
---   (0,0)(1,1) --[2]--> (0,0)(1,0)(2,0) なので後者は標準形
+-- example of checking standardness by a witness:
+--   (0,0)(1,1) --[2]--> (0,0)(1,0)(2,0), so the latter is standard
 #guard reachBy (init 2) [2] = some [[0,0],[1,0],[2,0]]
 
 example : Standard 2 [[0,0],[1,0],[2,0]] :=

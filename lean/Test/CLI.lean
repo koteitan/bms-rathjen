@@ -1,10 +1,10 @@
 /-
-Test/CLI.lean — yaBMS との突き合わせ用 CLI (lean_exe bmscli)
+Test/CLI.lean — the CLI used to cross-check against yaBMS (lean_exe bmscli)
 
-標準入力から 1 行 1 コマンドを読む:
-  expand <matrix> <n>   → 展開結果を "(0,0)(1,0)" 形式で出力 (未定義なら "undefined")
-  cmp <m0> <m1>         → 1 / 0 / -1  (m0 > m1 / == / <)   yaBMS -c と同じ
-空行列は "" で表す。出力は 1 行 1 応答。
+Reads one command per line from standard input:
+  expand <matrix> <n>   → the expansion in "(0,0)(1,0)" form ("undefined" if none)
+  cmp <m0> <m1>         → 1 / 0 / -1  (m0 > m1 / == / <), as in yaBMS -c
+The empty matrix is written "".  One response line per input line.
 -/
 import BMS
 
@@ -21,7 +21,7 @@ def runLine (line : String) : String :=
       | none => "undefined"
     | _, _ => "parse-error"
   | ["expand", ns] =>
-    -- 空行列の展開: "expand <n>" の形で受ける
+    -- expansion of the empty matrix, given as "expand <n>"
     match ns.toNat? with
     | some _ => "undefined"
     | none => "parse-error"
@@ -41,7 +41,7 @@ partial def loop (h : IO.FS.Stream) : IO Unit := do
   if line.isEmpty then
     pure ()  -- EOF
   else
-    -- 1 入力行につき必ず 1 出力行 (空行列の展開結果は空行)
+    -- exactly one output line per input line (an empty matrix prints an empty line)
     IO.println (runLine line)
     loop h
 

@@ -1,2 +1,2 @@
-/- Rows: 対応表の行データベースと行ごとの検査 -/
+/- Rows: the row database of the correspondence table and its per-row checks -/
 import Rows.TM

@@ -1,14 +1,16 @@
 /-
-TM/Order.lean — 𝔗(M) の順序 < と写像 * ([R91] 2.2, 2.3)
+TM/Order.lean — the order < and the map * of 𝔗(M) ([R91] 2.2, 2.3)
 
-[R91] 2.3 の 16 clauses を、項の形の場合分けによる再帰的判定手続きとして
-実装する。* ([R91] 2.2) が順序 (max) を使い、順序が * (κ⁻ = δ*) を使うため
-相互再帰になる。停止性は fuel (再帰深度の上界) で保証する。
-各再帰呼び出しで両引数の次数の和が真に減るので、fuel = deg の和 で十分。
+The 16 clauses of [R91] 2.3 are implemented as a recursive decision procedure by
+case analysis on the shapes of the terms.  Since * ([R91] 2.2) uses the order (max)
+and the order uses * (κ⁻ = δ*), the two are mutually recursive.  Termination is
+secured by fuel (an upper bound on the recursion depth): every recursive call
+strictly decreases the sum of the degrees of the two arguments, so the sum of the
+degrees is enough fuel.
 
-clause との対応は各分岐のコメントに記す。判定の完全性 (三分律) は
-[R91] の定理に対応する将来の証明課題であり、ここでは計算手続きとして
-忠実に書き下すことを優先する。
+The clause each branch implements is named in its comment.  Completeness of the
+decision (trichotomy) corresponds to a theorem of [R91] and is left as future work;
+here the priority is a faithful transcription as a computation.
 -/
 import TM.Terms
 
@@ -17,7 +19,7 @@ namespace Term
 
 mutual
 
-/-- α* ([R91] 2.2)。fuel は相互再帰の深度上界。 -/
+/-- α* ([R91] 2.2).  `fuel` bounds the depth of the mutual recursion. -/
 def starF : Nat → Term → Term
   | 0, _ => zero
   | fuel + 1, t =>
@@ -33,10 +35,10 @@ def starF : Nat → Term → Term
       let x := starF fuel a
       let y := starF fuel b
       if ltF fuel x y then y else x
-    | psi k a => psi k a                 -- 2.2(v): α* = α (α ∈ SC, α < M)
+    | psi k a => psi k a                 -- 2.2(v): α* = α for α ∈ SC, α < M
     | Z a => Z a                         -- 2.2(v)
 
-/-- 順序 s < t ([R91] 2.3) の判定 -/
+/-- Decision of the order s < t ([R91] 2.3). -/
 def ltF : Nat → Term → Term → Bool
   | 0, _, _ => false
   | fuel + 1, s, t =>
@@ -45,13 +47,14 @@ def ltF : Nat → Term → Term → Bool
     -- 2.3.1: 0 ≠ α ⟹ 0 < α
     | zero, _ => true
     | _, zero => false
-    -- 2.3.16: ⊕ 同士はスパイン上の辞書式 (接頭辞なら短い方が小)
+    -- 2.3.16: two sums compare lexicographically along the spine
+    --         (on a common prefix the shorter one is smaller)
     | add a b, add c d => if a == c then ltF fuel b d else ltF fuel a c
-    -- 2.3.10: α₁ < γ ⟹ ⊕ < γ (成分は降順なので先頭 α₁ だけ見ればよい)
+    -- 2.3.10: α₁ < γ ⟹ ⊕ < γ (components descend, so the head α₁ decides)
     | add a _, t' => ltF fuel a t'
     -- 2.3.11: γ ≤ α₁ ⟹ γ < ⊕
     | s', add c _ => s' == c || ltF fuel s' c
-    -- 2.3.3: M < ω̄^γ (形成条件 M < γ を前提)
+    -- 2.3.3: M < ω̄^γ (given the formation condition M < γ)
     | M, omg _ => true
     -- 2.3.2: φ̄, ψ, Z < M
     | M, _ => false
@@ -67,7 +70,7 @@ def ltF : Nat → Term → Term → Bool
       if a == c then ltF fuel b d                       -- 13(ii)
       else if ltF fuel a c then ltF fuel b (phi c d)    -- 13(i)
       else phi a b == d || ltF fuel (phi a b) d         -- 13(iii): φ̄αβ ≤ δ
-    -- 2.3.5: γ ∈ SC, α, β < γ ⟹ φ̄αβ < γ (t' は ψ か Z)
+    -- 2.3.5: γ ∈ SC, α, β < γ ⟹ φ̄αβ < γ (here t' is a ψ or a Z)
     | phi a b, t' => ltF fuel a t' && ltF fuel b t'
     -- 2.3.4: γ ≤ α ∨ γ ≤ β ⟹ γ < φ̄αβ
     | s', phi c d => s' == c || s' == d || ltF fuel s' c || ltF fuel s' d
@@ -76,14 +79,14 @@ def ltF : Nat → Term → Term → Bool
       if k == p then ltF fuel a b                       -- 14(ii)
       else if ltF fuel k p then ltF fuel k (psi p b)    -- 14(i)
       else ltF fuel (psi k a) p                         -- 14(iii)
-    -- ψ 対 Z: 2.3.8 (κ ≤ γ ⟹ ψκα < γ)、さもなくば 2.3.6/2.3.9 (δ* 経由)
+    -- ψ against Z: 2.3.8 (κ ≤ γ ⟹ ψκα < γ), otherwise 2.3.6 / 2.3.9 (via δ*)
     | psi k a, Z d =>
       if k == Z d || ltF fuel k (Z d) then true         -- 8
       else
         let dm := starF fuel d
         psi k a == dm || ltF fuel (psi k a) dm          -- 6: γ ≤ π⁻ ⟹ γ < π
     | Z d, psi k a =>
-      if k == Z d || ltF fuel k (Z d) then false        -- 8 (逆向き)
+      if k == Z d || ltF fuel k (Z d) then false        -- 8 (other direction)
       else ltF fuel (starF fuel d) (psi k a)            -- 9: π⁻ < ψκα ∧ π < κ ⟹ π < ψκα
     -- 2.3.15: Zα < Zβ
     | Z a, Z b =>
@@ -92,7 +95,7 @@ def ltF : Nat → Term → Term → Bool
 
 end
 
-/-- fuel の既定値: 再帰の各段で両引数の次数和が真に減るので、これで十分 -/
+/-- Default fuel: every step strictly decreases the sum of the degrees, so this suffices. -/
 def fuelOf (s t : Term) : Nat := 2 * (s.deg + t.deg) + 8
 
 /-- s < t -/
@@ -104,7 +107,7 @@ def le (s t : Term) : Bool := s == t || lt s t
 /-- α* -/
 def star (t : Term) : Term := starF (2 * t.deg + 8) t
 
-/-- κ⁻ ([R91] 2.3): κ = Zδ のとき δ*。R の形でなければ使わない (0 を返す)。 -/
+/-- κ⁻ ([R91] 2.3): δ* when κ = Zδ.  Never used on terms outside R (returns 0). -/
 def kminus : Term → Term
   | Z d => star d
   | _ => zero
