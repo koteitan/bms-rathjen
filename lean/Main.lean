@@ -30,5 +30,9 @@ def main : IO Unit := do
   let finders ← proofFiles.mapM fun f => do pure (f, ← lineFinder (dir ++ f))
   let proofLine (key : String) : Option (String × Nat) :=
     finders.firstM fun (f, find) => (find key).map (f, ·)
-  let regionProofLine ← lineFinder (dir ++ "Evidence/StageA.lean")
+  -- region proofs live in the file each region row names
+  let regionFiles := (Rows.regions.map (·.proofFile)).eraseDups
+  let rfinders ← regionFiles.mapM fun f => do pure (f, ← lineFinder (dir ++ f))
+  let regionProofLine (file key : String) : Option Nat :=
+    (rfinders.lookup file).bind (· key)
   IO.print (Rows.genTable rowLine proofLine regionProofLine)

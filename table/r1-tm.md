@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.11
+バージョン: v0.1.12
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -50,6 +50,7 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L111) | $`\bar{\varphi}(2,1)`$ | $`\zeta_1`$ | [✅](../lean/Rows/ProofsB.lean#L2309) | [o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L113) | $`\bar{\varphi}(2,\omega)`$ | $`\zeta_\omega`$ | [✅](../lean/Rows/ProofsB.lean#L1561) | [o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L115) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ | [✅](../lean/Rows/ProofsB.lean#L621) | [o](../lean/Trans/TM.lean) |  |
+| **(0,0)(1,1)…(a,1)(a+1,0), a≥1** | $`\bar{\varphi}(a,\omega)`$ | $`\varepsilon_\omega,\ \zeta_\omega,\ \bar{\varphi}(3,\omega),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L453) |  | 1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く |
 | [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L117) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行 |
 | [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L120) | $`\bar{\varphi}(1,\bar{\varphi}(\omega,0))`$ | $`\varepsilon_{\bar{\varphi}(\omega,0)+1}`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
 | [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L122) | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0))`$ | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0)+1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |

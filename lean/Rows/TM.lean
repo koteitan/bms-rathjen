@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.11"
+def version : String := "v0.1.12"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -158,17 +158,19 @@ def rows : List Row := [
 -- every term satisfies the formation conditions
 #guard rows.all fun r => inT r.t
 
-/-- A region row: asserts a claim about ALL standard matrices of a whole interval
-    (below `boundT`), rather than about one matrix.  Rendered between the ordinary
-    rows, just before the first row whose term reaches `boundT`.
-    `proof` names a theorem in Evidence/StageA.lean once the general theorem for
+/-- A region row: asserts a claim about a whole FAMILY of matrices — an interval
+    of standard matrices, or a parameterized family — rather than about one matrix.
+    Rendered between the ordinary rows, just before the first row whose term
+    reaches `boundT`.
+    `proof` names a theorem in the file `proofFile` once the general theorem for
     the region is integrated; until then it stays "" and no checkmark is shown. -/
 structure RegionRow where
   bms : String         -- display text for the BMS cell
   tm : String          -- display math for the T(M) cell
   nm : String          -- display math for the common-name cell
   boundT : Term        -- exclusive upper bound of the region (insertion point)
-  proof : String := "" -- theorem name in Evidence/StageA.lean ("" = pending)
+  proof : String := "" -- theorem name in `proofFile` ("" = pending)
+  proofFile : String := "Evidence/StageA.lean"  -- file of the theorem, relative to lean/
   evLabel : String := ""
   evPath : String := ""
   note : String := ""
@@ -182,7 +184,14 @@ def regions : List RegionRow := [
     proof := "e3_general",
     evLabel := "checkAll",
     evPath := "../lean/Test/TransTest.lean",
-    note := "区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明" }
+    note := "区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明" },
+  { bms := "(0,0)(1,1)…(a,1)(a+1,0), a≥1",
+    tm := "\\bar{\\varphi}(a,\\omega)",
+    nm := "\\varepsilon_\\omega,\\ \\zeta_\\omega,\\ \\bar{\\varphi}(3,\\omega),\\ldots",
+    boundT := phi omega zero,
+    proof := "e3_family",
+    proofFile := "Evidence/StageB.lean",
+    note := "1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く" }
 ]
 
 /-! ## Table generation -/
@@ -206,11 +215,11 @@ def linked (label path : String) : String :=
   if path == "" then label else "[" ++ label ++ "](" ++ path ++ ")"
 
 /-- Render one region row. -/
-def regionLine (regionProofLine : String → Option Nat) (g : RegionRow) : String :=
+def regionLine (regionProofLine : String → String → Option Nat) (g : RegionRow) : String :=
   let proofCell :=
     if g.proof == "" then ""
-    else match regionProofLine ("theorem " ++ g.proof) with
-      | some n => "[✅](../lean/Evidence/StageA.lean#L" ++ toString n ++ ")"
+    else match regionProofLine g.proofFile ("theorem " ++ g.proof) with
+      | some n => "[✅](../lean/" ++ g.proofFile ++ "#L" ++ toString n ++ ")"
       | none => ""
   "| **" ++ g.bms ++ "** | $`" ++ g.tm ++ "`$ | $`" ++ g.nm ++ "`$ | " ++
     proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
@@ -219,11 +228,11 @@ def regionLine (regionProofLine : String → Option Nat) (g : RegionRow) : Strin
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
     defines it, `proofLine` maps a proof namespace to the file (path relative to
     lean/) and line of the row-proof file that declares it (Rows/Proofs.lean or
-    Rows/ProofsB.lean), and `regionProofLine` maps a region theorem name to its
-    line in Evidence/StageA.lean; `gentable` supplies all three by reading those
+    Rows/ProofsB.lean), and `regionProofLine` maps a region proof file and theorem
+    name to the line in that file; `gentable` supplies all three by reading those
     files. -/
 def genTable (lineOf : String → Option Nat) (proofLine : String → Option (String × Nat))
-    (regionProofLine : String → Option Nat) : String :=
+    (regionProofLine : String → String → Option Nat) : String :=
   let header :=
 "# BMS × Rathjen T(M) 対応表 (R1)
 
