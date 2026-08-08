@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.18"
+def version : String := "v0.1.19"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -198,6 +198,13 @@ def regions : List RegionRow := [
     proof := "e3_F1family",
     proofFile := "Evidence/StageB.lean",
     note := "1 パラメータ族 (対角線) の一括証明。a=1,2,3 が表の ε₀, ζ₀, φ̄(3,0) 行、族の sup が φ̄(ω,0)" },
+  { bms := "(0,0)(1,1)…(a,1)(a,1), a≥1",
+    tm := "\\bar{\\varphi}(a,1)",
+    nm := "\\varepsilon_1,\\ \\zeta_1,\\ \\bar{\\varphi}(3,1),\\ldots",
+    boundT := phi omega zero,
+    proof := "e3_F3family",
+    proofFile := "Evidence/StageB.lean",
+    note := "1 パラメータ族の一括証明。a=1,2 の ε₁, ζ₁ 行は定理としてインスタンス化" },
   { bms := "(0,0)(1,1)…(a,1)(a+1,0), a≥1",
     tm := "\\bar{\\varphi}(a,\\omega)",
     nm := "\\varepsilon_\\omega,\\ \\zeta_\\omega,\\ \\bar{\\varphi}(3,\\omega),\\ldots",

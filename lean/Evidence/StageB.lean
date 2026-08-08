@@ -44,6 +44,9 @@ beyond the table):
       `e3_family`; a = 1 is Rows.ProofsB.R4, a = 2 is Rows.ProofsB.R8.
   §5  F1 : (0,0)(1,1)…(a,1)         =  φ̄(a,0)   o?(M[n]) = fsN t (n+1)  (shift +1)
       `e3_F1family`; a = 1, 2, 3 are Rows.ProofsB.R1, R6, R9.
+  §6–7 F3 : (0,0)(1,1)…(a,1)(a,1)   =  φ̄(a,1)   NO shift exists — the full 4-part
+      package, witnesses kw n = n+1, nw k = k+1.
+      `e3_F3family`; a = 1 is Rows.ProofsB.R3, a = 2 is Rows.ProofsB.R7.
 
 F1 needs the genuinely new machinery of §4: its last column has row-1 entry 1, so
 `t = 1`, `Δ₀ = a ≠ 0`, and the bad root is `parent M 1 (X-1)`, which runs through
@@ -53,9 +56,21 @@ parameter.  §5 then computes the value with `chainP` (the `a-1` nested `phiStep
 that the descending `(0,1)`-heads produce, of which only the innermost survives —
 `chainP_collapse`).
 
-PARTIAL — F3 : (0,0)(1,1)…(a,1)(a,1) = φ̄(a,1)  (§6, R3 at a=1, R7 at a=2)
+F3 : (0,0)(1,1)…(a,1)(a,1) = φ̄(a,1)  (§6 the BMS side, §7 the 𝔗(M) side;
+R3 at a = 1, R7 at a = 2) — PROVED for symbolic a = q+1, `e3_F3family`.
 
-  PROVED for symbolic a = q+1:
+  This is the family where the expansion and the fundamental sequence are genuinely
+  different cofinal sequences: both climb the `φ_q`-tower, but over different bases,
+
+      expansions            `bse  q = φ̄(q, xbase q)`,  `xbase q = φ̄(a,0)·2`   (q = 0)
+                                                                 `ω^(φ̄(a,0)·2)` (q ≥ 1)
+      fundamental sequence  `sbse q = φ̄(q, φ̄(a,0))`               and `sbse q < bse q`,
+
+  so no index shift makes them equal and only the 4-part package survives:
+      oval3 q 0 = φ̄(a,0),   oval3 q (n+1) = twr q n  (the `φ_q`-tower over `bse q`),
+      fsN (φ̄(a,1)) (k+1)   = the same tower over `sbse q`.
+
+  BMS side (§6):
     `expand_M3` — the whole BM4 expansion.  Bad root 0 via §4; Δ₀ = a; the bad part
       is the FULL ladder `lad (q+1)` while the step is only `q+1`, so consecutive
       copies overlap in one column.  That overlap is why the expansion contains
@@ -64,34 +79,22 @@ PARTIAL — F3 : (0,0)(1,1)…(a,1)(a,1) = φ̄(a,1)  (§6, R3 at a=1, R7 at a=2
     `valV3` — the accumulator recursion
         VV q 0 = φ̄(a,0),   VV q (m+1) = φ̄(a,0) + ω^(chainP 1 q (VV q m)).
     `valE3` / `o?_expand_M3` — o?(M3 q [n]) = some (ω^(chainP 1 q (VV q n))).
-    `#guard`s check these closed forms against computation for q < 3, n < 4.
 
-  REMAINING WORK (handoff note; all of it is on the 𝔗(M) side).
-  Target: `theorem e3_F3family (q : Nat)` with the usual 4-part package,
-  oval3 q 0 = φ̄(a,0) and oval3 q (n+1) = twr q n, witnesses kw n = n+1, nw k = k+1
-  (both verified numerically and matching R3/R7).  Definitions to add:
+  𝔗(M) side (§7), in dependency order:
+    (A) `step_zt`      omegaNF (chainP 1 q (zt q)) = zt q
+    (B) `VV_one`       VV q 1 = add (zt q) (zt q)          (via `plus_self`)
+    (C) `step_add_zt`  omegaNF (chainP 1 q (add (zt q) (zt q))) = bse q   -- case split
+    (D) `step_twr`     omegaNF (chainP 1 q (twr q j)) = twr q (j+1)       -- case split
+    (E) `le_twr_zt` (through `ltF_twr_not`), hence `VV_succ2 : VV q (m+2) = twr q m`
+        by `plus_drop`; this closes part (a) as `oval3_eq` / `e3_val3`
+    (F) `fs_t3`        fsN (φ̄(a,1)) (k+1) = twB q (sbse q) k
+    (G) the `ltF` base comparisons and the tower monotonicity `ltF_twB_mono`,
+        giving `e3_lt3`, `e3_over3`, `e3_under3`.
+  `oval3_zero` / `oval3_one` prove that the value functions of R3 and R7 are literally
+  the q = 0 and q = 1 instances of `oval3`, and `#guard`s check every part against
+  computation for q < 4, n < 5.
 
-      def zt  (q : Nat) : Term := phi (ofNat (q+1)) zero          -- φ̄(a,0), already here
-      def xbase (q : Nat) : Term := match q with
-        | 0      => add (zt 0) (zt 0)                             -- φ̄(a,0)·2
-        | q'+1   => phi zero (add (zt (q'+1)) (zt (q'+1)))        -- ω^(φ̄(a,0)·2)
-      def bse (q : Nat) : Term := phi (ofNat q) (xbase q)
-      def twr (q : Nat) : Nat → Term
-        | 0     => bse q
-        | j + 1 => phi (ofNat q) (twr q j)
-      -- fundamental-sequence side: same tower over `sbse q := phi (ofNat q) (zt q)`
-
-  Lemmas to prove, in order:
-    (A) `omegaNF (chainP 1 q (zt q)) = zt q`      (chainP_collapse q 1 (q+1), 1+q ≤ q+1)
-    (B) `VV q 1 = add (zt q) (zt q)`              (needs `plus a a = add a a` for AP a)
-    (C) `omegaNF (chainP 1 q (add (zt q) (zt q))) = bse q`   -- CASE SPLIT on q
-    (D) `omegaNF (chainP 1 q (twr q j)) = twr q (j+1)`       -- CASE SPLIT on q
-    (E) `le (twr q j) (zt q) = false` and `le (bse q) (zt q) = false`, hence
-        `VV q (m+2) = twr q m` by `plus_drop`
-    (F) `fsN (φ̄(a,1)) (k+1) = twr-over-sbse q k`
-    (G) three base comparisons, then `ltF`-tower monotonicity as in R3/R7.
-
-  PITFALLS ALREADY HIT (do not rediscover these):
+  FOUR FACTS THAT DECIDE THE SHAPE OF §6–§7 (each was a wrong turn first):
     * `oLAux_chainV` CANNOT be stated with a level-independent hypothesis the way
       F1's `oLAux_chain` is: F1's inner matrix starts with `(0,0)` (r1 = 0 resets the
       level), F3's starts with `(0,1)`, so its value genuinely depends on the level.
@@ -107,13 +110,13 @@ PARTIAL — F3 : (0,0)(1,1)…(a,1)(a,1) = φ̄(a,1)  (§6, R3 at a=1, R7 at a=2
     * (F) at k = 0: `iterPhiAt (ofNat q) (plus (zt q) one) 1 = φ̄(ofNat q, zt q)` goes
       through the `phiNFsucc` "down" branch (`splitFin (zt q + 1) = (zt q, 1)`,
       `down = zt q`, taken because `lt (ofNat q) (ofNat (q+1))`).  R3/R7 discharged
-      the corresponding step with `decide` on closed terms; for symbolic q it needs a
-      bespoke lemma — this is the one place with no reusable analogue in the file.
-    * Fuel accounting is tight, not slack: `valV3`/`valE3` need `(q+2)*m + 1` and the
-      matrix supplies exactly `(q+2)*(n+1) + 1 = length + 1`.
+      the corresponding step with `decide` on closed terms; for symbolic q it is the
+      bespoke lemma `phiNF_zt_one`, the one step with no reusable analogue here.
+    Fuel accounting is tight, not slack: `valV3`/`valE3` need `(q+2)*m + 1` and the
+    matrix supplies exactly `(q+2)*(n+1) + 1 = length + 1`.
   Templates: R3 (`tow`, `W`, `ltF_tow_not_lt`, `W_succ2`) and R7 (`etow`, `VV`,
   `ltF_etow_not_lt`, `W_succ2`) in Rows/ProofsB.lean are the q = 0 and q = 1 cases of
-  exactly (A)–(G); generalizing those two developments in `q` is the whole job.
+  exactly (A)–(G); §7 is those two developments generalized in `q`.
 
 FRONTIER (not proved here):
   * A genuinely region-wide theorem additionally needs a 2-row standardness
@@ -1474,5 +1477,625 @@ theorem o?_expand_M3 (q n : Nat) :
   Trans.o? (M3 q) == some (phi (ofNat (q+1)) one)
 #guard M3 0 == Rows.ProofsB.R3.m0 && M3 1 == Rows.ProofsB.R7.m0
 
+
+
+/-! ## §7 The family F3 — the term side: the tower, its base, the fundamental
+       sequence, and the package
+
+The two towers of F3.  Both sides climb `φ_q`, but over different bases:
+
+  expansions            `bse  q = φ̄(q, xbase q)`,  `xbase q = φ̄(a,0)·2` (q = 0)
+                                                             `ω^(φ̄(a,0)·2)` (q ≥ 1)
+  fundamental sequence  `sbse q = φ̄(q, φ̄(a,0))`
+
+and `bse q > sbse q`, which is why no index shift can make the two sequences equal
+and why the statement has to be the 4-part package. -/
+
+
+def xbase (q : Nat) : Term :=
+  match q with
+  | 0 => add (zt 0) (zt 0)
+  | q' + 1 => phi zero (add (zt (q'+1)) (zt (q'+1)))
+
+def bse (q : Nat) : Term := phi (ofNat q) (xbase q)
+def sbse (q : Nat) : Term := phi (ofNat q) (zt q)
+
+def twB (q : Nat) (b : Term) : Nat → Term
+  | 0 => b
+  | j + 1 => phi (ofNat q) (twB q b j)
+
+def twr (q j : Nat) : Term := twB q (bse q) j
+
+theorem twr_zero (q : Nat) : twr q 0 = bse q := rfl
+theorem twr_succ (q j : Nat) : twr q (j+1) = phi (ofNat q) (twr q j) := rfl
+
+theorem twB_shape (q : Nat) {b y : Term} (hb : b = phi (ofNat q) y) :
+    ∀ j, ∃ z, twB q b j = phi (ofNat q) z
+  | 0 => ⟨y, hb⟩
+  | j + 1 => ⟨twB q b j, rfl⟩
+
+theorem twr_shape (q j : Nat) : ∃ z, twr q j = phi (ofNat q) z := twB_shape q rfl j
+
+theorem sbse_shape (q j : Nat) : ∃ z, twB q (sbse q) j = phi (ofNat q) z := twB_shape q rfl j
+
+theorem isAP_twr (q j : Nat) : (twr q j).isAP = true := by cases j <;> rfl
+
+theorem twB_phi (q : Nat) (b : Term) : ∀ j, twB q (phi (ofNat q) b) j = twB q b (j+1)
+  | 0 => rfl
+  | j + 1 => by
+    show phi (ofNat q) (twB q (phi (ofNat q) b) j) = phi (ofNat q) (twB q b (j+1))
+    rw [twB_phi q b j]
+
+theorem deg_twB (q : Nat) (b : Term) : ∀ j, j ≤ (twB q b j).deg
+  | 0 => by show (0:Nat) ≤ b.deg; omega
+  | j + 1 => by
+    show j + 1 ≤ 1 + (ofNat q).deg + (twB q b j).deg
+    have := deg_twB q b j
+    omega
+
+theorem deg_twr (q j : Nat) : j ≤ (twr q j).deg := deg_twB q (bse q) j
+
+/-! ### Small term facts -/
+
+theorem zero_bne_ofNat (q : Nat) : ((zero : Term) == ofNat (q+1)) = false := by
+  simpa using (ofNat_ne_zero q).symm
+
+theorem zt_bne_one (q : Nat) : ((zt q : Term) == one) = false := by
+  show (phi (ofNat (q+1)) zero == phi zero zero) = false
+  simp [ofNat_ne_zero q]
+
+theorem plus_self {a : Term} (ha : a.isAP = true) : plus a a = add a a := by
+  unfold plus
+  rw [toList_of_isAP ha]
+  show ofList ((match le a a with | true => [a] | false => []) ++ [a]) = add a a
+  rw [show le a a = true from by simp [le]]
+  rfl
+
+theorem ltF_M_add_phi (f : Nat) (a b c : Term) : ltF f M (add (phi a b) c) = false := by
+  cases f with
+  | zero => rfl
+  | succ g =>
+    show ((M : Term) == phi a b || ltF g M (phi a b)) = false
+    rw [Evidence.StageA.ltF_M_phi]
+    rfl
+
+theorem splitFin_add_pair {x y : Term} (hy : y.isAP = true) (h1 : (y == one) = false) :
+    splitFin (add x y) = (add x y, 0) := by
+  have hl : toList (add x y) = [x, y] := by
+    show x :: toList y = [x, y]
+    rw [toList_of_isAP hy]
+  unfold splitFin
+  simp only [hl]
+  simp [h1, ofList]
+
+theorem phiNF_add_pair {a x y : Term} (ha : a.isSC = false) (hy : y.isAP = true)
+    (h1 : (y == one) = false) : phiNF a (add x y) = phi a (add x y) := by
+  unfold phiNF
+  simp only [isSC, Bool.false_and, Bool.false_eq_true, if_false]
+  show phiNFsucc a (add x y) = phi a (add x y)
+  unfold phiNFsucc
+  rw [splitFin_add_pair hy h1]
+  show phiNFdefault a (add x y) = phi a (add x y)
+  exact phiNFdefault_phi ha
+
+theorem omegaNF_add_zt (q : Nat) :
+    omegaNF (add (zt q) (zt q)) = phi zero (add (zt q) (zt q)) := by
+  rw [omegaNF_of_le_M (show lt M (add (zt q) (zt q)) = false from
+      ltF_M_add_phi _ (ofNat (q+1)) zero (zt q))]
+  exact phiNF_add_pair isSC_zero rfl (zt_bne_one q)
+
+/-! ### (A)–(D): the accumulator steps -/
+
+/-- **(A)** the chain collapses onto `φ̄(a,0)` and `ω^` leaves it alone. -/
+theorem step_zt (q : Nat) : omegaNF (chainP 1 q (zt q)) = zt q := by
+  rw [show chainP 1 q (zt q) = zt q from
+    chainP_collapse q 1 (q+1) zero (by omega)]
+  exact omegaNF_phi_ne_zero (ofNat_ne_zero q)
+
+/-- **(B)** the first accumulator value is `φ̄(a,0)·2`. -/
+theorem VV_one (q : Nat) : VV q 1 = add (zt q) (zt q) := by
+  show plus (zt q) (omegaNF (chainP 1 q (VV q 0))) = add (zt q) (zt q)
+  rw [show VV q 0 = zt q from rfl, step_zt q, plus_self (show (zt q).isAP = true from rfl)]
+
+/-- **(C)** the next accumulator value is the base of the tower.
+    The case split on `q` is forced: at `q = 0` the chain is empty and the outer
+    `ω^` supplies the `φ̄(0,·)` layer; for `q ≥ 1` the innermost `phiStep` (level `q`)
+    wraps and the outer `ω^` is the identity. -/
+theorem step_add_zt (q : Nat) : omegaNF (chainP 1 q (add (zt q) (zt q))) = bse q := by
+  cases q with
+  | zero =>
+    show omegaNF (add (zt 0) (zt 0)) = phi (ofNat 0) (xbase 0)
+    rw [omegaNF_add_zt 0]
+    rfl
+  | succ q' =>
+    have hstep : chainP (1+q') 1 (add (zt (q'+1)) (zt (q'+1))) = bse (q'+1) := by
+      show Trans.Pair.phiStep (ofNat (1+q')) zero (add (zt (q'+1)) (zt (q'+1))) = _
+      rw [phiStep_zero, show ((add (zt (q'+1)) (zt (q'+1)) : Term) == zero) = false from rfl]
+      simp only [Bool.false_eq_true, if_false]
+      rw [omegaNF_add_zt (q'+1), show 1 + q' = q' + 1 from by omega]
+      exact phiNF_phi_gen (isSC_ofNat (q'+1)) (lt_lt_zero (ofNat (q'+1)))
+    rw [chainP_add q' 1 1 (add (zt (q'+1)) (zt (q'+1))), hstep,
+      show bse (q'+1) = phi (ofNat (q'+1)) (xbase (q'+1)) from rfl,
+      chainP_collapse q' 1 (q'+1) (xbase (q'+1)) (by omega)]
+    exact omegaNF_phi_ne_zero (ofNat_ne_zero q')
+
+/-- **(D)** one more accumulator step climbs one storey of the tower. -/
+theorem step_twr (q j : Nat) : omegaNF (chainP 1 q (twr q j)) = twr q (j+1) := by
+  cases q with
+  | zero =>
+    obtain ⟨y, hy⟩ := twr_shape 0 j
+    show omegaNF (twr 0 j) = phi (ofNat 0) (twr 0 j)
+    rw [hy]
+    show omegaNF (phi zero y) = phi zero (phi zero y)
+    rw [omegaNF_phi, phiNF_phi_arg isSC_zero]
+  | succ q' =>
+    obtain ⟨y, hy⟩ := twr_shape (q'+1) j
+    have hstep : chainP (1+q') 1 (twr (q'+1) j) = twr (q'+1) (j+1) := by
+      show Trans.Pair.phiStep (ofNat (1+q')) zero (twr (q'+1) j) = _
+      rw [phiStep_zero, show ((twr (q'+1) j : Term) == zero) = false from by rw [hy]; rfl]
+      simp only [Bool.false_eq_true, if_false]
+      rw [hy, omegaNF_phi_ne_zero (ofNat_ne_zero q'),
+        show 1 + q' = q' + 1 from by omega, phiNF_phi_arg (isSC_ofNat (q'+1)), ← hy]
+      rfl
+    rw [chainP_add q' 1 1 (twr (q'+1) j), hstep, twr_succ,
+      chainP_collapse q' 1 (q'+1) (twr (q'+1) j) (by omega)]
+    exact omegaNF_phi_ne_zero (ofNat_ne_zero q')
+
+/-! ### (E): the tower never falls back below `φ̄(a,0)`, so the sum drops -/
+
+/-- The step of clause 2.3.13(iii) against `φ̄(a,0)`: a `φ̄` whose first argument is
+    not `a` and does not exceed `a` cannot be `< φ̄(a,0)`. -/
+theorem ltF_phi_not_zt {q f : Nat} {a b : Term} (hac : (a == ofNat (q+1)) = false)
+    (h1 : ltF f b (zt q) = false) : ltF (f+1) (phi a b) (zt q) = false := by
+  have hac' : a ≠ ofNat (q+1) := by simpa using hac
+  have hne : ((phi a b : Term) == zt q) = false := by
+    show ((phi a b : Term) == phi (ofNat (q+1)) zero) = false
+    simp [hac']
+  show (if ((phi a b : Term) == zt q) = true then false else _) = false
+  rw [hne]
+  simp only [Bool.false_eq_true, if_false]
+  show (if (a == ofNat (q+1)) = true then ltF f b zero
+        else if ltF f a (ofNat (q+1)) = true then ltF f b (phi (ofNat (q+1)) zero)
+        else (((phi a b : Term) == zero) || ltF f (phi a b) zero)) = false
+  rw [hac]
+  simp only [Bool.false_eq_true, if_false]
+  cases hlt : ltF f a (ofNat (q+1)) with
+  | true => simpa using h1
+  | false =>
+    simp only [Bool.false_eq_true, if_false,
+      show (((phi a b : Term)) == zero) = false from rfl, Bool.false_or]
+    exact ltF_lt_zero f _
+
+theorem ltF_add_zt_not (q : Nat) : ∀ f, ltF f (add (zt q) (zt q)) (zt q) = false
+  | 0 => rfl
+  | f + 1 => by
+    show (if ((add (zt q) (zt q) : Term) == zt q) = true then false
+          else ltF f (zt q) (zt q)) = false
+    simp only [show ((add (zt q) (zt q) : Term) == zt q) = false from rfl,
+      Bool.false_eq_true, if_false]
+    exact ltF_irrefl f (zt q)
+
+theorem ltF_xbase_not (q : Nat) : ∀ f, ltF f (xbase q) (zt q) = false
+  | 0 => rfl
+  | f + 1 => by
+    cases q with
+    | zero => exact ltF_add_zt_not 0 (f+1)
+    | succ q' =>
+      show ltF (f+1) (phi zero (add (zt (q'+1)) (zt (q'+1)))) (zt (q'+1)) = false
+      exact ltF_phi_not_zt (zero_bne_ofNat (q'+1)) (ltF_add_zt_not (q'+1) f)
+
+theorem ltF_twr_not (q : Nat) : ∀ (f j : Nat), ltF f (twr q j) (zt q) = false
+  | 0, _ => rfl
+  | f + 1, 0 => by
+    show ltF (f+1) (phi (ofNat q) (xbase q)) (zt q) = false
+    exact ltF_phi_not_zt (ofNat_bne (by omega)) (ltF_xbase_not q f)
+  | f + 1, j + 1 => by
+    show ltF (f+1) (phi (ofNat q) (twr q j)) (zt q) = false
+    exact ltF_phi_not_zt (ofNat_bne (by omega)) (ltF_twr_not q f j)
+
+theorem twr_bne_zt (q j : Nat) : ((twr q j : Term) == zt q) = false := by
+  obtain ⟨y, hy⟩ := twr_shape q j
+  rw [hy]
+  show ((phi (ofNat q) y : Term) == phi (ofNat (q+1)) zero) = false
+  have hne : (ofNat q : Term) ≠ ofNat (q+1) := by
+    intro h; have := ofNat_inj h; omega
+  simp [hne]
+
+/-- **(E)** -/
+theorem le_twr_zt (q j : Nat) : le (twr q j) (zt q) = false := by
+  show (((twr q j : Term) == zt q) || lt (twr q j) (zt q)) = false
+  rw [twr_bne_zt q j]
+  simp only [Bool.false_or]
+  exact ltF_twr_not q _ j
+
+theorem VV_succ2 : ∀ (q m : Nat), VV q (m+2) = twr q m
+  | q, 0 => by
+    show plus (zt q) (omegaNF (chainP 1 q (VV q 1))) = twr q 0
+    rw [VV_one q, step_add_zt q]
+    exact plus_drop rfl (isAP_twr q 0) (le_twr_zt q 0)
+  | q, m + 1 => by
+    show plus (zt q) (omegaNF (chainP 1 q (VV q (m+2)))) = twr q (m+1)
+    rw [VV_succ2 q m, step_twr q m]
+    exact plus_drop rfl (isAP_twr q (m+1)) (le_twr_zt q (m+1))
+
+/-! ### The closed form of the value of the n-th expansion -/
+
+/-- `oval3 q 0 = φ̄(a,0)`; afterwards the `φ_q`-tower over `bse q`. -/
+def oval3 (q : Nat) : Nat → Term
+  | 0 => zt q
+  | n + 1 => twr q n
+
+theorem oval3_eq : ∀ (q n : Nat), omegaNF (chainP 1 q (VV q n)) = oval3 q n
+  | q, 0 => step_zt q
+  | q, 1 => by rw [VV_one q]; exact step_add_zt q
+  | q, m + 2 => by rw [VV_succ2 q m]; exact step_twr q m
+
+/-- **E3, part (a)** for the F3 family. -/
+theorem e3_val3 (q n : Nat) : o? (BMS.expand (M3 q) n) = some (oval3 q n) := by
+  rw [o?_expand_M3 q n, oval3_eq q n]
+
+/-! ### (F): the fundamental sequence of `φ̄(a,1)` -/
+
+def t3 (q : Nat) : Term := phi (ofNat (q+1)) one
+
+theorem fs_raw3 (q k : Nat) : fsN (t3 q) k = iterPhiAt (ofNat q) (plus (zt q) one) k := by
+  show fsN (phi (ofNat (q+1)) one) k = _
+  rw [fsN]
+  simp only [phiShifted_of_splitFin_zero (isSC_ofNat (q+1))
+      (show (splitFin (one : Term)).1 = zero from rfl), Bool.false_or,
+    show (kindT (one : Term) == KindT.isSucc) = true from rfl, if_true]
+  simp only [Bool.false_eq_true, if_false, show predT (one : Term) = zero from rfl,
+    kindT_ofNat_succ q, predT_ofNat_succ q, phiNF_zero_arg (isSC_ofNat (q+1))]
+  rfl
+
+theorem ltF_one_zt (q : Nat) : ∀ f, 2 ≤ f → ltF f one (zt q) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show ltF (g+1) (phi zero zero) (phi (ofNat (q+1)) zero) = true
+    exact ltF_phi_fst (zero_bne_ofNat q)
+      (ltF_zero (by omega) (ofNat_ne_zero q))
+      (ltF_zero (by omega) (by intro hc; exact Term.noConfusion hc))
+
+theorem le_one_zt (q : Nat) : le one (zt q) = true := by
+  show (((one : Term) == zt q) || lt one (zt q)) = true
+  rw [show lt one (zt q) = true from
+    lt_of_ltF (N := 2) (fun f hf => ltF_one_zt q f hf) (by
+      show 2 ≤ 2 * ((one : Term).deg + (zt q).deg) + 8
+      omega)]
+  simp
+
+theorem plus_zt_one (q : Nat) : plus (zt q) one = add (zt q) one := by
+  unfold plus
+  show ofList ((match le one (zt q) with | true => [zt q] | false => []) ++ [one])
+      = add (zt q) one
+  rw [le_one_zt q]
+  rfl
+
+theorem splitFin_add_one {x : Term} (h : (x == one) = false) : splitFin (add x one) = (x, 1) := by
+  have hl : toList (add x one) = [x, one] := rfl
+  unfold splitFin
+  simp only [hl]
+  simp [h, ofList]
+
+/-- The one step with no analogue elsewhere in the file: the "down" branch of
+    `phiNFsucc`.  `φ_q(φ̄(a,0) + 1) = φ̄(q, φ̄(a,0))` because `φ̄(a,0)` is a
+    `φ_q`-fixed-point shape (`q < a = q+1`). -/
+theorem phiNF_zt_one (q : Nat) : phiNF (ofNat q) (plus (zt q) one) = sbse q := by
+  rw [plus_zt_one q]
+  unfold phiNF
+  simp only [isSC, Bool.false_and, Bool.false_eq_true, if_false]
+  show phiNFsucc (ofNat q) (add (zt q) one) = sbse q
+  unfold phiNFsucc
+  rw [splitFin_add_one (zt_bne_one q)]
+  show (match (phi (ofNat (q+1)) zero : Term) with
+        | phi d _ => if lt (ofNat q) d = true then phi (ofNat q) (plus (zt q) (ofNat (1-1)))
+                     else phiNFdefault (ofNat q) (add (zt q) one)
+        | _ => if ((zt q).isSC && lt (ofNat q) (zt q)) = true
+               then phi (ofNat q) (plus (zt q) (ofNat (1-1)))
+               else phiNFdefault (ofNat q) (add (zt q) one)) = sbse q
+  simp only [lt_ofNat_mono (show q < q + 1 from by omega), if_true]
+  rfl
+
+/-- **(F)** the fundamental sequence of `φ̄(a,1)` is the `φ_q`-tower over `φ̄(q,φ̄(a,0))`. -/
+theorem fs_t3 (q : Nat) : ∀ k, fsN (t3 q) (k+1) = twB q (sbse q) k
+  | 0 => by
+    rw [fs_raw3 q 1]
+    show phiNF (ofNat q) (plus (zt q) one) = twB q (sbse q) 0
+    exact phiNF_zt_one q
+  | k + 1 => by
+    obtain ⟨y, hy⟩ := sbse_shape q k
+    rw [fs_raw3 q (k+2)]
+    show phiNF (ofNat q) (iterPhiAt (ofNat q) (plus (zt q) one) (k+1)) = twB q (sbse q) (k+1)
+    rw [← fs_raw3 q (k+1), fs_t3 q k, hy]
+    show phiNF (ofNat q) (phi (ofNat q) y) = phi (ofNat q) (twB q (sbse q) k)
+    rw [phiNF_phi_arg (isSC_ofNat q), ← hy]
+
+/-! ### (G): the order facts -/
+
+/-- The finite terms are linearly ordered by their index: no `ofNat i` is below a
+    smaller (or equal) one.  Needed for clause 2.3.13(iii). -/
+theorem ltF_ofNat_not : ∀ (f i j : Nat), j ≤ i → ltF f (ofNat i) (ofNat j) = false
+  | 0, _, _, _ => rfl
+  | f + 1, i, j, h => by
+    match i, j, h with
+    | i, 0, _ => exact ltF_lt_zero (f+1) (ofNat i)
+    | 0, _+1, h => exact absurd h (by omega)
+    | 1, 1, _ => exact ltF_irrefl (f+1) (ofNat 1)
+    | 1, _+2, h => exact absurd h (by omega)
+    | i'+2, 1, _ =>
+      rw [ofNat_shape i', ofNat_one]
+      show (if ((add one (ofNat (i'+1)) : Term) == one) = true then false
+            else ltF f one one) = false
+      simp only [show ((add one (ofNat (i'+1)) : Term) == one) = false from rfl,
+        Bool.false_eq_true, if_false]
+      exact ltF_irrefl f one
+    | i'+2, j'+2, h =>
+      rw [ofNat_shape i', ofNat_shape j']
+      cases hb : ((add one (ofNat (i'+1)) : Term) == add one (ofNat (j'+1))) with
+      | true =>
+        show (if ((add one (ofNat (i'+1)) : Term) == add one (ofNat (j'+1))) = true
+              then false else _) = false
+        rw [hb]
+        rfl
+      | false =>
+        show (if ((add one (ofNat (i'+1)) : Term) == add one (ofNat (j'+1))) = true
+              then false
+              else if ((one : Term) == one) = true then ltF f (ofNat (i'+1)) (ofNat (j'+1))
+                   else ltF f one one) = false
+        rw [hb]
+        simp only [Bool.false_eq_true, if_false, beq_self_eq_true, if_true]
+        exact ltF_ofNat_not f (i'+1) (j'+1) (by omega)
+
+theorem ltF_twB_mono {q : Nat} {x y : Term} {N : Nat} (h : ∀ f, N ≤ f → ltF f x y = true) :
+    ∀ (j f : Nat), N + j ≤ f → ltF f (twB q x j) (twB q y j) = true
+  | 0, f, hf => h f (by omega)
+  | j + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g => exact ltF_phi_same (ltF_twB_mono h j g (by omega))
+
+/-! #### The expansion values are below `φ̄(a,1)` -/
+
+theorem ltF_zt_t3 (q : Nat) : ∀ f, 2 ≤ f → ltF f (zt q) (t3 q) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    exact ltF_phi_same (ltF_zero (by omega) (by intro hc; exact Term.noConfusion hc))
+
+theorem ltF_add_t3 (q : Nat) : ∀ f, 3 ≤ f → ltF f (add (zt q) (zt q)) (t3 q) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show (if ((add (zt q) (zt q) : Term) == t3 q) = true then false
+          else ltF g (zt q) (t3 q)) = true
+    simp only [show ((add (zt q) (zt q) : Term) == t3 q) = false from rfl,
+      Bool.false_eq_true, if_false]
+    exact ltF_zt_t3 q g (by omega)
+
+theorem ltF_xbase_t3 (q : Nat) : ∀ f, 4 ≤ f → ltF f (xbase q) (t3 q) = true := by
+  intro f hf
+  cases q with
+  | zero => exact ltF_add_t3 0 f (by omega)
+  | succ q' =>
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi zero (add (zt (q'+1)) (zt (q'+1)))) (phi (ofNat (q'+2)) one) = true
+      exact ltF_phi_fst (zero_bne_ofNat (q'+1)) (ltF_zero (by omega) (ofNat_ne_zero (q'+1)))
+        (ltF_add_t3 (q'+1) g (by omega))
+
+theorem ltF_twr_t3 (q : Nat) : ∀ (j f : Nat), q + j + 5 ≤ f → ltF f (twr q j) (t3 q) = true
+  | 0, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi (ofNat q) (xbase q)) (phi (ofNat (q+1)) one) = true
+      exact ltF_phi_fst (ofNat_bne (by omega))
+        (ltF_ofNat_mono q (q+1) g (by omega) (by omega)) (ltF_xbase_t3 q g (by omega))
+  | j + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi (ofNat q) (twr q j)) (phi (ofNat (q+1)) one) = true
+      exact ltF_phi_fst (ofNat_bne (by omega))
+        (ltF_ofNat_mono q (q+1) g (by omega) (by omega)) (ltF_twr_t3 q j g (by omega))
+
+/-- **E3, part (b)**: every expansion value is `< φ̄(a,1)`. -/
+theorem e3_lt3 (q : Nat) : ∀ n, lt (oval3 q n) (t3 q) = true
+  | 0 => by
+    refine lt_of_ltF (N := 2) (fun f hf => ltF_zt_t3 q f hf) ?_
+    show 2 ≤ 2 * ((zt q).deg + (1 + (ofNat (q+1)).deg + (one : Term).deg)) + 8
+    omega
+  | n + 1 => by
+    show lt (twr q n) (t3 q) = true
+    refine lt_of_ltF (N := q + n + 5) (fun f hf => ltF_twr_t3 q n f hf) ?_
+    have h1 := deg_twr q n
+    have h2 := deg_ofNat (q+1)
+    show q + n + 5 ≤ 2 * ((twr q n).deg + (1 + (ofNat (q+1)).deg + (one : Term).deg)) + 8
+    omega
+
+/-! #### The expansion tower against the fundamental-sequence tower -/
+
+theorem ltF_zt_sbse (q : Nat) : ∀ f, 1 ≤ f → ltF f (zt q) (sbse q) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show ltF (g+1) (phi (ofNat (q+1)) zero) (phi (ofNat q) (zt q)) = true
+    exact ltF_phi_eq (ofNat_bne (by omega)) (ltF_ofNat_not g (q+1) q (by omega))
+      (show ((phi (ofNat (q+1)) zero : Term) == zt q) = true from beq_self_eq_true _)
+
+theorem ltF_add_sbse (q : Nat) : ∀ f, 2 ≤ f → ltF f (add (zt q) (zt q)) (sbse q) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show (if ((add (zt q) (zt q) : Term) == sbse q) = true then false
+          else ltF g (zt q) (sbse q)) = true
+    simp only [show ((add (zt q) (zt q) : Term) == sbse q) = false from rfl,
+      Bool.false_eq_true, if_false]
+    exact ltF_zt_sbse q g (by omega)
+
+theorem ltF_xbase_sbse (q : Nat) : ∀ f, 3 ≤ f → ltF f (xbase q) (sbse q) = true := by
+  intro f hf
+  cases q with
+  | zero => exact ltF_add_sbse 0 f (by omega)
+  | succ q' =>
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi zero (add (zt (q'+1)) (zt (q'+1))))
+        (phi (ofNat (q'+1)) (zt (q'+1))) = true
+      exact ltF_phi_fst (zero_bne_ofNat q') (ltF_zero (by omega) (ofNat_ne_zero q'))
+        (ltF_add_sbse (q'+1) g (by omega))
+
+theorem ltF_bse_phisbse (q : Nat) :
+    ∀ f, 4 ≤ f → ltF f (bse q) (phi (ofNat q) (sbse q)) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g => exact ltF_phi_same (ltF_xbase_sbse q g (by omega))
+
+theorem ltF_zt_add_zt (q f : Nat) : ltF (f+1) (zt q) (add (zt q) (zt q)) = true := by
+  show (if ((zt q : Term) == add (zt q) (zt q)) = true then false
+        else (((zt q : Term) == zt q) || ltF f (zt q) (zt q))) = true
+  simp only [show ((zt q : Term) == add (zt q) (zt q)) = false from rfl,
+    Bool.false_eq_true, if_false]
+  simp
+
+theorem ltF_zt_xbase (q : Nat) : ∀ f, 2 ≤ f → ltF f (zt q) (xbase q) = true := by
+  intro f hf
+  cases q with
+  | zero =>
+    cases f with
+    | zero => omega
+    | succ g => exact ltF_zt_add_zt 0 g
+  | succ q' =>
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi (ofNat (q'+2)) zero)
+        (phi zero (add (zt (q'+1)) (zt (q'+1)))) = true
+      refine ltF_phi_snd (show ((ofNat (q'+2) : Term) == zero) = false from by
+          simpa using ofNat_ne_zero (q'+1))
+        (ltF_lt_zero g (ofNat (q'+2))) ?_
+      cases g with
+      | zero => omega
+      | succ h => exact ltF_zt_add_zt (q'+1) h
+
+theorem ltF_sbse_bse (q : Nat) : ∀ f, 3 ≤ f → ltF f (sbse q) (bse q) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g => exact ltF_phi_same (ltF_zt_xbase q g (by omega))
+
+/-- **E3, part (c)** with witness `k := n+1`: the fundamental sequence overtakes. -/
+theorem e3_over3 (q : Nat) : ∀ n, lt (oval3 q n) (fsN (t3 q) (n+1)) = true
+  | 0 => by
+    rw [fs_t3 q 0]
+    show lt (zt q) (sbse q) = true
+    refine lt_of_ltF (N := 1) (fun f hf => ltF_zt_sbse q f hf) ?_
+    show 1 ≤ 2 * ((zt q).deg + (sbse q).deg) + 8
+    omega
+  | n + 1 => by
+    rw [fs_t3 q (n+1), ← twB_phi q (sbse q) n]
+    show lt (twB q (bse q) n) (twB q (phi (ofNat q) (sbse q)) n) = true
+    refine lt_of_ltF (N := 4 + n)
+      (fun f hf => ltF_twB_mono (fun g hg => ltF_bse_phisbse q g hg) n f hf) ?_
+    have h1 := deg_twB q (bse q) n
+    show 4 + n ≤ 2 * ((twB q (bse q) n).deg + (twB q (phi (ofNat q) (sbse q)) n).deg) + 8
+    omega
+
+/-- **E3, part (d)** with witness `n := k+1`: the expansions overtake back. -/
+theorem e3_under3 (q k : Nat) : lt (fsN (t3 q) (k+1)) (oval3 q (k+1)) = true := by
+  rw [fs_t3 q k]
+  show lt (twB q (sbse q) k) (twB q (bse q) k) = true
+  refine lt_of_ltF (N := 3 + k)
+    (fun f hf => ltF_twB_mono (fun g hg => ltF_sbse_bse q g hg) k f hf) ?_
+  have h1 := deg_twB q (sbse q) k
+  show 3 + k ≤ 2 * ((twB q (sbse q) k).deg + (twB q (bse q) k).deg) + 8
+  omega
+
+/-- **E3 for the F3 family**, for every `a = q+1 ≥ 1`:
+    `(0,0)(1,1)…(a,1)(a,1) = φ̄(a,1)`, in the 4-part mutual-cofinality form with
+    witnesses `kw n = n+1`, `nw k = k+1`. -/
+theorem e3_F3family (q : Nat) :
+    (∀ n, o? (BMS.expand (M3 q) n) = some (oval3 q n))
+    ∧ (∀ n, lt (oval3 q n) (t3 q) = true)
+    ∧ (∀ n, lt (oval3 q n) (fsN (t3 q) (n + 1)) = true)
+    ∧ (∀ k, lt (fsN (t3 q) (k + 1)) (oval3 q (k + 1)) = true) :=
+  ⟨e3_val3 q, e3_lt3 q, e3_over3 q, e3_under3 q⟩
+
+/-- The same package with the term written out. -/
+example (q : Nat) :
+    (∀ n, o? (BMS.expand (M3 q) n) = some (oval3 q n))
+    ∧ (∀ n, lt (oval3 q n) (phi (ofNat (q+1)) one) = true)
+    ∧ (∀ n, lt (oval3 q n) (fsN (phi (ofNat (q+1)) one) (n + 1)) = true)
+    ∧ (∀ k, lt (fsN (phi (ofNat (q+1)) one) (k + 1)) (oval3 q (k + 1)) = true) :=
+  e3_F3family q
+
+/-! ### The two table rows are instances -/
+
+theorem m3_zero : M3 0 = Rows.ProofsB.R3.m0 := rfl
+theorem m3_one : M3 1 = Rows.ProofsB.R7.m0 := rfl
+theorem t3_zero : t3 0 = Rows.ProofsB.R3.t0 := rfl
+theorem t3_one : t3 1 = Rows.ProofsB.R7.t0 := rfl
+theorem bse_zero : bse 0 = Rows.ProofsB.R3.P0 := rfl
+theorem bse_one : bse 1 = Rows.ProofsB.R7.R0 := rfl
+theorem sbse_zero : sbse 0 = Rows.ProofsB.R3.Q0 := rfl
+theorem sbse_one : sbse 1 = Rows.ProofsB.R7.S0 := rfl
+
+theorem twB_zero_tow (b : Term) : ∀ j, twB 0 b j = Rows.ProofsB.tow b j
+  | 0 => rfl
+  | j + 1 => by
+    show phi (ofNat 0) (twB 0 b j) = phi zero (Rows.ProofsB.tow b j)
+    rw [twB_zero_tow b j]
+    rfl
+
+theorem twB_one_etow (b : Term) : ∀ j, twB 1 b j = Rows.ProofsB.R7.etow b j
+  | 0 => rfl
+  | j + 1 => by
+    show phi (ofNat 1) (twB 1 b j) = phi one (Rows.ProofsB.R7.etow b j)
+    rw [twB_one_etow b j]
+    rfl
+
+/-- `q = 0` is exactly row R3 (`ε₁`), value function included. -/
+theorem oval3_zero : ∀ n, oval3 0 n = Rows.ProofsB.R3.oval n
+  | 0 => rfl
+  | n + 1 => twB_zero_tow (bse 0) n
+
+/-- `q = 1` is exactly row R7 (`ζ₁`), value function included. -/
+theorem oval3_one : ∀ n, oval3 1 n = Rows.ProofsB.R7.oval n
+  | 0 => rfl
+  | n + 1 => twB_one_etow (bse 1) n
+
+example (n : Nat) : o? (BMS.expand Rows.ProofsB.R3.m0 n) = some (Rows.ProofsB.R3.oval n) := by
+  rw [← oval3_zero n]; exact e3_val3 0 n
+example (n : Nat) : o? (BMS.expand Rows.ProofsB.R7.m0 n) = some (Rows.ProofsB.R7.oval n) := by
+  rw [← oval3_one n]; exact e3_val3 1 n
+
+/-- The family goes strictly beyond the table: `a = 3`, i.e.
+    `(0,0)(1,1)(2,1)(3,1)(3,1) = φ̄(3,1)`. -/
+example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,1],[3,1],[3,1]] n) = some (oval3 2 n) :=
+  e3_val3 2 n
+example (n : Nat) : lt (oval3 2 n) (phi (ofNat 3) one) = true := e3_lt3 2 n
+example (n : Nat) : lt (oval3 2 n) (fsN (phi (ofNat 3) one) (n+1)) = true := e3_over3 2 n
+example (k : Nat) : lt (fsN (phi (ofNat 3) one) (k+1)) (oval3 2 (k+1)) = true := e3_under3 2 k
+
+-- the closed forms of §7 agree with computation on small instances
+#guard (List.range 4).all fun q => (List.range 5).all fun n =>
+  Trans.o? (BMS.expand (M3 q) n) == some (oval3 q n)
+#guard (List.range 4).all fun q => Trans.o? (M3 q) == some (t3 q)
+#guard (List.range 4).all fun q => (List.range 5).all fun k =>
+  fsN (t3 q) (k+1) == twB q (sbse q) k
+#guard (List.range 4).all fun q => (List.range 5).all fun n =>
+  lt (oval3 q n) (t3 q) && lt (oval3 q n) (fsN (t3 q) (n+1))
+#guard (List.range 4).all fun q => (List.range 5).all fun k =>
+  lt (fsN (t3 q) (k+1)) (oval3 q (k+1))
+#guard (List.range 4).all fun q => (List.range 4).all fun m => VV q (m+2) == twr q m
 
 end Evidence.StageB
