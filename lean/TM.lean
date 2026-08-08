@@ -3,3 +3,4 @@
 import TM.Terms
 import TM.Order
 import TM.NF
+import TM.FS
