@@ -59,10 +59,20 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
 
 ## Verification workflow
 
-- Verify snippets via **this repo's own kimina instance**, NOT the pss-proof one:
-  port 12345 serves pss-proof's project and cannot import `BMS.*`/`TM.*`.
-  At S0, create a second instance: own `.env` with `LEAN_SERVER_PROJECT_DIR` →
-  this repo's `lean/`, a fresh port (never 8000/8080), log `/tmp/kimina-rathjen.log`.
+- Verify snippets via **this repo's own kimina instance on port 12346**, NOT the
+  pss-proof one: port 12345 serves pss-proof's project and cannot import
+  `BMS.*`/`TM.*`. Launch (env vars override the shared `.env`; server body lives
+  in the pss-proof checkout):
+
+  ```sh
+  cd ~/proofs/pss-proof/kimina-lean-server && \
+  LEAN_SERVER_PORT=12346 LEAN_SERVER_PROJECT_DIR=$HOME/proofs/pss-rathjen/git/lean \
+    setsid nohup .venv/bin/python -m server > /tmp/kimina-rathjen.log 2>&1 &
+  ```
+
+  Health check: POST `{"snippets":[{"id":"t","code":"import BMS\n#check @BMS.expand?"}]}`
+  to `http://localhost:12346/api/check`. Kill selectively by PID (check
+  `/tmp/kimina-rathjen.log` vs `/tmp/kimina-pss.log` instances before pkill).
   General ops (start/health-check/restart rules, multi-agent verification
   discipline): global skill `use-kimina-lean-server`.
 - After editing `BMS/ TM/ Trans/` libs: `lake build` + restart the rathjen
