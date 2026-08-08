@@ -90,12 +90,24 @@ KNOWN FRONTIER (kept OUT of the acceptance record; do NOT make rows from it):
       bare (0,1)-blocks open (ω, marked); (0,1)-heads promote marked inner
       groups multiplicatively (g·ω) and unmarked ones additively (ω+g);
       (0,0)-heads promote by +1 and stamp unmarked.  Anchors this reproduces:
-        (3,0)(4,1)(4,1)      = φ̄(ω, ω̄^(ω²)·2)
+        (3,0)(4,1)(4,1)      = φ̄(ω, ω̄^(ω²)·2)   — SUSPECT, see below
         (3,0)(4,1)(5,0)(6,1) = φ̄(ω, ω̄^(ω²·2))   (exposed member 1)
         (3,0)(4,1)(5,1)      = φ̄(ω, ω̄^(ω³))
       A flat recursive +ω-promotion (no marked flag) was refuted earlier
       (regressed the (2,2)(3,1)-corpora); the marked ladder is anchor-correct
       but its corpus closure needs (ii) resolved first.
+      LATER CHAIN DATA (the (ii)-session probes) casts doubt on the first
+      anchor: (3,0)(4,1)(4,1)[1] = (3,0)(4,1)(4,0)(5,1), whose own chain
+      appends (5,0)(6,0)… and sups to the same ω̄^(ω²)·2 — so either
+      (4,0)(5,1) = ω̄^(ω²)·2 and (4,1)(4,1) = ω̄^(ω²+1), or the whole
+      (4,1)(4,0)-family collapses below; the (ii)-collapse must decide.
+      Chain record for the fresh (ii)-session (machine-expanded):
+        (3,0)(4,1)(4,1)[n]     appends (4,0)(5,1), then ascended (5,0)(6,1)…
+        (3,0)(4,1)(4,0)(5,1)[n] appends (5,0), (6,0), …   ((·,0)-chain)
+        (2,2)(3,0)(2,2)[n]     appends (2,1)(3,2)(4,0), then ASCENDED
+                               (3,1)(4,2)(5,0) — nested, not summed
+        (2,2)(1,1)(2,1)[n]     appends (2,0)(3,1)(4,2)(3,1), then ascended
+                               (4,0)(5,1)(6,2)(5,1)  (front ii-a)
 
 Γ₀ status: unchanged (everything now waits on the relative-counting
 mechanism (ii) — the single remaining design problem of the 2-row fragment).
