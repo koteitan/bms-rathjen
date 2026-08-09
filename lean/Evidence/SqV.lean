@@ -2031,7 +2031,45 @@ WHAT THIS ROUTE NEEDS, AND WHY IT IS THE RIGHT ONE: two facts about how `splitFi
 recurses through `add` — **facts about `splitFin`'s own definition, not about normal
 forms**.  That is the coordinator's tell for this route being the right one; if the
 induction turns out to need "components are AP", the route has collapsed into the one
-being avoided and it stops there. -/
+being avoided and it stops there.
+
+**AND THIS IS THE SECOND HALF OF THE HOUSE TECHNIQUE, on its fourth use tonight: PROVE THE
+BOUND, NOT THE IDENTITY.**  `tdepth_ofList_take`, `tdepth_summands`, (S), and now this —
+where the identity is not merely harder but FALSE on 5 of 15, and the bound goes through
+anyway.  The two halves are complementary: **"induct on the term" says where to put the
+induction; "prove the bound" says what to state**, and both have the same effect — the
+normal-form fact becomes unnecessary rather than avoided.  Measuring the recursion before
+designing is what turned a refutation into a case split rather than into a lost turn. -/
+
+/-- Every LEAF case of `tdepth_predOr`.  `splitFin` of a non-`add` term has finite part 1
+    exactly when the term IS `1`, and then `predOr` is `0`; otherwise the finite part is 0
+    and `predOr` is the identity. -/
+theorem tdepth_predOr_leaf (c d : Term) :
+    tdepth (predOr (TM.Term.phi c d)) ≤ tdepth (TM.Term.phi c d) := by
+  by_cases h : (TM.Term.phi c d == one) = true
+  · have he : TM.Term.phi c d = one := by simpa using h
+    rw [he]
+    show tdepth (predOr one) ≤ tdepth one
+    decide
+  · simp only [predOr, TM.Term.splitFin, toList, List.reverse, List.reverseAux,
+      List.takeWhile, h, List.length]
+    exact Nat.le_refl _
+
+theorem tdepth_predOr_zero : tdepth (predOr zero) ≤ tdepth zero := by
+  simp only [predOr, TM.Term.splitFin, toList]; exact Nat.le_refl _
+
+theorem tdepth_predOr_M : tdepth (predOr TM.Term.M) ≤ tdepth TM.Term.M := by
+  simp only [predOr, TM.Term.splitFin, toList]; exact Nat.le_refl _
+
+theorem tdepth_predOr_omg (c : Term) : tdepth (predOr (TM.Term.omg c)) ≤ tdepth (TM.Term.omg c) := by
+  simp only [predOr, TM.Term.splitFin, toList]; exact Nat.le_refl _
+
+theorem tdepth_predOr_psi (c e : Term) :
+    tdepth (predOr (TM.Term.psi c e)) ≤ tdepth (TM.Term.psi c e) := by
+  simp only [predOr, TM.Term.splitFin, toList]; exact Nat.le_refl _
+
+theorem tdepth_predOr_Z (c : Term) : tdepth (predOr (TM.Term.Z c)) ≤ tdepth (TM.Term.Z c) := by
+  simp only [predOr, TM.Term.splitFin, toList]; exact Nat.le_refl _
 
 def probeXY : List (Term × Term) :=
   [(one, one), (one, plus one one), (phi one zero, one), (phi one zero, plus one one),
