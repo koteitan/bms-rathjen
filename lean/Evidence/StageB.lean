@@ -2308,8 +2308,10 @@ side.  STATUS: §10 proves the BMS side of the whole `r = 1` column in one lemma
 (`expand_M4`, which subsumes `expand_M3` and `expand_M1`), E1 for the ladder
 (`o?_M1`), and the `b = 0` successor case complete (`o?_M4z`, `esucc_M4z`); the
 whole `r = 0` column is DONE (`b = 0` successor, `b = 1` case B with R2 as its `a = 1`
-instance, `2 ≤ b ≤ a` case C, `b = a+1` = F2), and only case A (`r = 1`, `1 ≤ b < a`)
-is still open — see the note at the end of §10.  Cost estimate, calibrated on F3 (one case, one session, with all machinery
+instance, `2 ≤ b ≤ a` case C, `b = a+1` = F2).  For case A (`r = 1`, `1 ≤ b < a`) the
+BMS side and the value in accumulator form are proved and the chain obstacle named
+here is CLEARED (`valVk`); only the term side, a parameter addition to §7, is left —
+see the note at the end of §10.  Cost estimate, calibrated on F3 (one case, one session, with all machinery
 already present): 2–3 sessions.  The natural continuation, "ladder + two columns",
 covers 35 of the 72 uncovered limits in the window and is the next unit after that.
 
@@ -3742,32 +3744,204 @@ example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,1],[2,0]] n)
 example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,1],[3,1],[2,0]] n)
     = some (fsN (phi one (phi zero (phi (ofNat 3) zero))) (n+1)) := e3_val4c 0 1 n
 
-/-! ### What is still missing for F4 (the value side)
 
-The `r = 0` column is now COMPLETE: `b = 0` is the successor case above, `b = 1` is
-case B, `2 ≤ b ≤ a` is case C, and `b = a+1` is F2 (§2–§3).  What remains is exactly
-one case.
+/-! ### F4, case A : `r = 1`, `1 ≤ b < a` — `(0,0)(1,1)…(a,1)(b,1)` = `φ̄(b, φ̄(a,0))`
 
-`r = 1`, `1 ≤ b < a` (case A).  `expand_M4` above gives the BMS side.  The value,
-measured for `a ≤ 4` and `n ≤ 3`, is EXACTLY the §7 development with the tower level
-`q` replaced by `k = b-1` and the SAME base `zt q = φ̄(a,0)`:
+Writing `b = k+1` and `a = q+1` with `q = k+d+1` (so `k+1 ≤ q`, i.e. `b < a`), the
+expansion is `frep (lad (q+1)) (k+1) 0 (n+1)` (`expand_M4` above).  The value
+recursion is §6's `VV` with the chain length `q` replaced by `k`.
 
-    oval 0 = φ̄(a,0),  oval (n+1) = the φ_k-tower over `φ̄(k, xb)`,
-    xb = φ̄(a,0)·2  (k = 0),   ω^(φ̄(a,0)·2)  (k ≥ 1)
+The step that looked like an obstacle in §8/§10 — after `k` descending `(0,1)`-steps
+the tail's first copy starts with `(0,0)`, so the leading block is no longer a single
+column — needs NO new chain lemma.  Split the `(0,1)`-run as
+`ups 0 (q+1) = ups 0 k ++ ups k (d+2)` and apply `oLAux_chainR` to the FUSED tail
+family `R o = ups o (d+2) ++ frep (lad (q+1)) (k+1) o j`: the `ups` part supplies
+exactly the columns the chain would have run past, and `R` still has no row-0-zero
+column at positive offset, which is all `oLAux_chainR` asks. -/
 
-so F3 is the instance `k = q`, and `xbase`/`bse`/`twr` generalize by adding the level
-as a parameter.  The fundamental sequence is the same tower over `φ̄(k, φ̄(a,0))` —
-§7's `sbse q` is again the `k = q` instance — so `fs_t3` generalizes verbatim; only
-the TERM differs (`φ̄(b, φ̄(a,0))` for `b < a` against `φ̄(a,1)` for `b = a`), and its
-`fsN` goes through the `phiShifted = true` branch, unlike `t3`.
+theorem ups_split : ∀ (p p' o : Nat), ups o (p + p') = ups o p ++ ups (o+p) p'
+  | 0, p', o => by
+    rw [Nat.zero_add, Nat.add_zero]
+    rfl
+  | p + 1, p', o => by
+    rw [show (p+1) + p' = (p + p') + 1 from by omega]
+    show ([o,1] : BMS.Col) :: ups (o+1) (p + p')
+        = ([o,1] : BMS.Col) :: (ups (o+1) p ++ ups (o+(p+1)) p')
+    rw [ups_split p p' (o+1), show (o+1)+p = o+(p+1) from by omega]
 
-The obstacle, unchanged: `oLAux_chainV` (§6) and its successor `oLAux_chainR` (case C
-above) both require the tail family to have NO row-0-zero column at positive offset.
-With step `b < q+1` the descending `(0,1)`-chain runs out of `frep` offset BEFORE it
-runs out of `ups` columns — after `b-1` steps the state is `ups 0 (q-b+2) ++ frep … 0 m`
-with `q-b+2 ≥ 2`, so the leading block is no longer a single column and the tail's
-first copy starts with `(0,0)`.  Neither chain lemma applies; the step generalization
-is genuinely new work. -/
+/-- The accumulator of the case-A reading: §6's `VV` with the chain length `k`. -/
+def VVk (k q : Nat) : Nat → Term
+  | 0 => zt q
+  | m + 1 => plus (zt q) (omegaNF (chainP 1 k (VVk k q m)))
+
+theorem VVk_top (q : Nat) : ∀ m, VVk q q m = VV q m
+  | 0 => rfl
+  | m + 1 => by
+    show plus (zt q) (omegaNF (chainP 1 q (VVk q q m))) = _
+    rw [VVk_top q m]
+    rfl
+
+/-- The inner reading of the case-A expansion, at level `k+1`: the accumulator `VVk`. -/
+theorem valVk : ∀ (j k d fuel : Nat), (k+d+3) * j + (d+2) ≤ fuel →
+    Trans.Pair.oLAux fuel (k+1) (ups 0 (d+2) ++ frep (lad (k+d+2)) (k+1) 0 j)
+      = VVk k (k+d+1) j
+  | 0, k, d, fuel, hf => by
+    rw [show (ups 0 (d+2) ++ frep (lad (k+d+2)) (k+1) 0 0) = ups 0 (d+2) from by
+      show ups 0 (d+2) ++ ([] : Matrix) = _
+      rw [List.append_nil]]
+    rw [oLAux_ups (d+1) (k+1) fuel (by omega),
+      show chainP (k+1) (d+1) (phi (ofNat ((k+1)+(d+1))) zero) = zt (k+d+1) from by
+        rw [show (k+1)+(d+1) = (k+d+1)+1 from by omega]
+        exact chainP_collapse (d+1) (k+1) ((k+d+1)+1) zero (by omega)]
+    rfl
+  | j + 1, k, d, fuel, hf => by
+    have hmul : (k+d+3) * (j+1) = (k+d+3) * j + k + d + 3 := by rw [Nat.mul_succ]; omega
+    cases fuel with
+    | zero => omega
+    | succ g =>
+      have hlad : ∀ o, Trans.Pair.decP (lad (k+d+2) (o+1)) = lad (k+d+2) o :=
+        fun o => decP_lad (k+d+2) o
+      have hladr : ∀ o, 1 ≤ o → ∀ cc ∈ lad (k+d+2) o, Trans.Pair.r0 cc ≠ 0 :=
+        fun o ho => r0_lad (k+d+2) o ho
+      have htB : ∀ cc ∈ (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) j),
+          Trans.Pair.r0 cc ≠ 0 := by
+        intro cc hc
+        rcases List.mem_append.mp hc with h1 | h1
+        · exact r0_ups (k+d+2) 1 (by omega) cc h1
+        · exact r0_frep hladr j (k+1) (by omega) cc h1
+      have hfrep : frep (lad (k+d+2)) (k+1) 0 (j+1)
+          = ([0,0] : BMS.Col) :: (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) j) := by
+        show lad (k+d+2) 0 ++ frep (lad (k+d+2)) (k+1) (0+(k+1)) j = _
+        rw [show (0:Nat)+(k+1) = k+1 from by omega]
+        rfl
+      have hb : Trans.Pair.blocksP (ups 0 (d+2) ++ frep (lad (k+d+2)) (k+1) 0 (j+1))
+          = [ups 0 (d+2)] ++ [([0,0] : BMS.Col)
+              :: (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) j)] := by
+        rw [blocksP_append (ups 0 (d+2)) (frep (lad (k+d+2)) (k+1) 0 (j+1))
+            (Or.inr ⟨[0,0], (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) j), hfrep, rfl⟩),
+          show Trans.Pair.blocksP (ups 0 (d+2)) = [ups 0 (d+2)] from
+            blocksP_single [0,1] _ (r0_ups (d+1) 1 (by omega)),
+          hfrep, blocksP_single [0,0] _ htB]
+      have houter : Trans.Pair.oLAux g 1 (ups 0 (k+d+2) ++ frep (lad (k+d+2)) (k+1) k j)
+          = chainP 1 k (VVk k (k+d+1) j) := by
+        have hsplit : ups 0 (k+d+2) = ups 0 k ++ ups k (d+2) := by
+          rw [show k+d+2 = k+(d+2) from by omega, ups_split k (d+2) 0,
+            show (0:Nat)+k = k from by omega]
+        rw [hsplit, List.append_assoc]
+        exact oLAux_chainR (R := fun o => ups o (d+2) ++ frep (lad (k+d+2)) (k+1) o j)
+          (fun o => by
+            rw [decP_append, decP_ups (d+2) o, decP_frep hlad j o])
+          (fun o ho cc hc => by
+            rcases List.mem_append.mp hc with h1 | h1
+            · exact r0_ups (d+2) o ho cc h1
+            · exact r0_frep hladr j o ho cc h1)
+          (fun fuel'' hf'' => valVk j k d fuel'' hf'') k 1 g (by omega) (by omega)
+      rw [oLAux_cons', hb]
+      show zsF g (k+1) (zsF g (k+1) zero (ups 0 (d+2))) (([0,0] : BMS.Col)
+        :: (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) j)) = _
+      rw [zsF_ups0 k d g (by omega) zero,
+        show Trans.Pair.phiStep (ofNat (k+1)) zero (zt (k+d+1)) = zt (k+d+1) from
+          WC_one (k+d+1) (k+1) (by omega)]
+      show plus (zt (k+d+1)) (omegaNF (Trans.Pair.oLAux g 1
+        (Trans.Pair.decP (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) j)))) = _
+      rw [decP_append, decP_ups (k+d+2) 0, decP_frep hlad j k, houter]
+      rfl
+
+
+/-- The chain in front of the case-A expansion, as a standalone lemma. -/
+theorem valEk (j k d fuel : Nat) (hf : (k+d+3) * j + (d+2) + k ≤ fuel) :
+    Trans.Pair.oLAux fuel 1 (ups 0 (k+d+2) ++ frep (lad (k+d+2)) (k+1) k j)
+      = chainP 1 k (VVk k (k+d+1) j) := by
+  have hsplit : ups 0 (k+d+2) = ups 0 k ++ ups k (d+2) := by
+    rw [show k+d+2 = k+(d+2) from by omega, ups_split k (d+2) 0,
+      show (0:Nat)+k = k from by omega]
+  rw [hsplit, List.append_assoc]
+  exact oLAux_chainR (R := fun o => ups o (d+2) ++ frep (lad (k+d+2)) (k+1) o j)
+    (fun o => by
+      rw [decP_append, decP_ups (d+2) o, decP_frep (fun o' => decP_lad (k+d+2) o') j o])
+    (fun o ho cc hc => by
+      rcases List.mem_append.mp hc with h1 | h1
+      · exact r0_ups (d+2) o ho cc h1
+      · exact r0_frep (fun o' ho' => r0_lad (k+d+2) o' ho') j o ho cc h1)
+    (fun fuel'' hf'' => valVk j k d fuel'' hf'') k 1 fuel (by omega) (by omega)
+
+theorem frep_lad_cons_k (k d j : Nat) :
+    frep (lad (k+d+2)) (k+1) 0 (j+1)
+      = ([0,0] : BMS.Col) :: (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) j) := by
+  show lad (k+d+2) 0 ++ frep (lad (k+d+2)) (k+1) (0+(k+1)) j = _
+  rw [show (0:Nat)+(k+1) = k+1 from by omega]
+  rfl
+
+/-- **The value of the case-A expansion**, through the accumulator `VVk`
+    (the analogue of `o?_expand_M3`, which is the instance `k = q`). -/
+theorem o?_expand_M4 (k d n : Nat) :
+    o? (BMS.expand (M4 (k+d+1) (k+1)) n)
+      = some (omegaNF (chainP 1 k (VVk k (k+d+1) n))) := by
+  have hE : BMS.expand (M4 (k+d+1) (k+1)) n = frep (lad (k+d+2)) (k+1) 0 (n+1) := by
+    show (BMS.expand? (M4 (k+d+1) (k+1)) n).getD [] = _
+    rw [expand_M4 (k+d+1) (k+1) n (by omega) (by omega)]
+    rfl
+  have htB : ∀ cc ∈ (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) n),
+      Trans.Pair.r0 cc ≠ 0 := by
+    intro cc hc
+    rcases List.mem_append.mp hc with h1 | h1
+    · exact r0_ups (k+d+2) 1 (by omega) cc h1
+    · exact r0_frep (fun o' ho' => r0_lad (k+d+2) o' ho') n (k+1) (by omega) cc h1
+  have honly : onlyRow0 (frep (lad (k+d+2)) (k+1) 0 (n+1)) = false := by
+    rw [frep_lad_cons_k k d n]
+    show onlyRow0 (([0,0] : BMS.Col)
+      :: (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) n)) = false
+    rw [onlyRow0_cons, onlyRow0_append, onlyRow0_ups (k+d+1) 1]
+    rfl
+  rw [hE, o?_pair honly (inFrag_frep (fun o => inFrag_lad (k+d+2) o) (n+1) 0),
+    len_frep_gen (fun o => len_lad (k+d+2) o) (n+1) (k+1) 0, frep_lad_cons_k k d n]
+  show some (Trans.Pair.oLAux ((k+d+3) * (n+1) + 1) 1 (([0,0] : BMS.Col)
+    :: (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) n))) = _
+  rw [oLAux_single ((k+d+3) * (n+1)) 1 [0,0] _ htB]
+  show some (plus zero (omegaNF (Trans.Pair.oLAux ((k+d+3) * (n+1)) 1
+    (Trans.Pair.decP (ups 1 (k+d+2) ++ frep (lad (k+d+2)) (k+1) (k+1) n))))) = _
+  rw [decP_append, decP_ups (k+d+2) 0,
+    decP_frep (fun o' => decP_lad (k+d+2) o') n k,
+    valEk n k d ((k+d+3) * (n+1)) (by
+      have h1 : (k+d+3) * (n+1) = (k+d+3) * n + (k+d+3) := by rw [Nat.mul_succ]
+      omega),
+    plus_zero_left (isAP_omegaNF _)]
+
+/-- `k = q` is F3: the case-A value recursion specialises to §6's. -/
+theorem o?_expand_M4_top (q n : Nat) :
+    o? (BMS.expand (M4 q (q+1)) n) = some (omegaNF (chainP 1 q (VV q n))) := by
+  rw [show M4 q (q+1) = M3 q from rfl]
+  rw [o?_expand_M3 q n]
+
+-- the case-A closed forms agree with computation on small instances
+#guard (List.range 3).all fun k => (List.range 3).all fun d =>
+  (List.range 4).all fun n =>
+    Trans.o? (BMS.expand (M4 (k+d+1) (k+1)) n)
+      == some (omegaNF (chainP 1 k (VVk k (k+d+1) n)))
+#guard (List.range 4).all fun q => (List.range 4).all fun m => VVk q q m == VV q m
+
+/-! ### What is still missing for F4
+
+The `r = 0` column is COMPLETE (`b = 0` successor, `b = 1` case B, `2 ≤ b ≤ a` case C,
+`b = a+1` = F2).  For `r = 1`, `1 ≤ b < a` (case A) the BMS side and the value in
+accumulator form are now proved above (`expand_M4`, `valVk`, `valEk`, `o?_expand_M4`) —
+the §8/§10 obstacle is CLEARED, and it needed no new chain lemma: splitting the
+`(0,1)`-run as `ups 0 (q+1) = ups 0 k ++ ups k (d+2)` and fusing the leftover `ups`
+into the tail family of `oLAux_chainR` is enough (see the section header).
+
+What remains for case A is the TERM side, and it is §7 with the tower level `q`
+replaced by `k = b-1` over the SAME base `zt q = φ̄(a,0)` — a parameter addition, with
+both halves verified by computation for `k, d < 4`:
+
+    VVk k q (m+2) = twB k (φ̄(k, xb)) m,   xb = φ̄(a,0)·2 (k = 0), ω^(φ̄(a,0)·2) (k ≥ 1)
+    fsN (φ̄(k+1, φ̄(a,0))) (m+1) = twB k (φ̄(k, φ̄(a,0))) m
+
+i.e. `xbase`/`bse`/`sbse`/`twr`/`oval3`/`fs_t3` of §7 all take a level parameter, F3
+is the instance `k = q` (`VVk_top`, `o?_expand_M4_top`), and the tower machinery
+(`twB`, `twB_phi`, `deg_twB`, `ltF_twB_mono`) is already level-generic.  The one step
+with no §7 analogue is the fundamental sequence of the term `φ̄(b, φ̄(a,0))`, whose
+`fsN` goes through the `phiShifted = true` branch (as `t4b`'s does, §case B) rather
+than `t3`'s successor branch. -/
 
 -- §10 checks
 #guard (List.range 4).all fun q => (List.range 4).all fun i =>

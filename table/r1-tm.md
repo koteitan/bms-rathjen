@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.25
+バージョン: v0.1.26
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -57,8 +57,8 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L126) | $`\bar{\varphi}(3,0)+1`$ | $`\bar{\varphi}(3,0)+1`$ | [✅](../lean/Rows/Proofs.lean#L175) | [o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L128) | $`\bar{\varphi}(0,\bar{\varphi}(3,0))`$ | $`\omega^{\bar{\varphi}(3,0)+1}`$ | [✅](../lean/Rows/Proofs.lean#L202) | [o](../lean/Trans/TM.lean) |  |
 | **(0,0)(1,1)…(a,1), a≥1** | $`\bar{\varphi}(a,0)`$ | $`\varepsilon_0,\ \zeta_0,\ \bar{\varphi}(3,0),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L1095) |  | 1 パラメータ族 (対角線) の一括証明。a=1,2,3 が表の ε₀, ζ₀, φ̄(3,0) 行、族の sup が φ̄(ω,0) |
-| **(0,0)(1,1)…(a,1)(1,0), a≥1** | $`\bar{\varphi}(0,\bar{\varphi}(a,0))`$ | $`\omega^{\varepsilon_0+1},\ \omega^{\zeta_0+1},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3207) |  | 1 パラメータ族の一括証明。a=1 が表の ω^(ε₀+1) 行 |
-| **(0,0)(1,1)…(a,1)(b,0), 2≤b≤a** | $`\bar{\varphi}(b{-}1,\bar{\varphi}(0,\bar{\varphi}(a,0)))`$ | $`\varepsilon_{\zeta_0\cdot\omega},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3724) |  | 2 パラメータ族の一括証明。これで梯子+1列 (r=0) の全ケースが証明済み |
+| **(0,0)(1,1)…(a,1)(1,0), a≥1** | $`\bar{\varphi}(0,\bar{\varphi}(a,0))`$ | $`\omega^{\varepsilon_0+1},\ \omega^{\zeta_0+1},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3209) |  | 1 パラメータ族の一括証明。a=1 が表の ω^(ε₀+1) 行 |
+| **(0,0)(1,1)…(a,1)(b,0), 2≤b≤a** | $`\bar{\varphi}(b{-}1,\bar{\varphi}(0,\bar{\varphi}(a,0)))`$ | $`\varepsilon_{\zeta_0\cdot\omega},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3726) |  | 2 パラメータ族の一括証明。これで梯子+1列 (r=0) の全ケースが証明済み |
 | **(0,0)(1,1)…(a,1)(a,1), a≥1** | $`\bar{\varphi}(a,1)`$ | $`\varepsilon_1,\ \zeta_1,\ \bar{\varphi}(3,1),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L2032) |  | 1 パラメータ族の一括証明。a=1,2 の ε₁, ζ₁ 行は定理としてインスタンス化 |
 | **(0,0)(1,1)…(a,1)(a+1,0), a≥1** | $`\bar{\varphi}(a,\omega)`$ | $`\varepsilon_\omega,\ \zeta_\omega,\ \bar{\varphi}(3,\omega),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L531) |  | 1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く |
 | [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L131) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行。この行より上の候補行は v0.1.22 の監査で撤回・再導出中 |
