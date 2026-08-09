@@ -7379,6 +7379,140 @@ theorem parent_append (A B : BMS.Matrix) (hroot : ∀ y, BMS.ent B 0 y = 0) (y x
     BMS.parent (A ++ B) y x = (BMS.parent B y (x - A.length)).map (· + A.length) :=
   parent_append_gen A B (fun z hz => parent_zero_append A B (hroot 0) z hz) y x hx
 
+/-! ### §17.4 THE LOCALITY THEOREM
+
+Everything above assembles: the last column of `A ++ B` is `B`'s, the bad root is
+`B`'s shifted (§17.3), and therefore so are `delta`, `ascends` and the blocks.  The
+only hypotheses are that `B` is nonempty and that its FIRST COLUMN IS ZERO — the root
+column, `#guard`ed as load-bearing in §17.1. -/
+
+theorem contains_map_add (L r : Nat) : ∀ (l : List Nat),
+    (l.map (· + L)).contains (r + L) = l.contains r := by
+  intro l
+  induction l with
+  | nil => rfl
+  | cons a t ih =>
+    rw [List.map_cons, List.contains_cons, List.contains_cons, ih,
+      show ((r + L == a + L) : Bool) = (r == a) from by
+        cases h : (r == a) with
+        | true => have hh : r = a := by simpa using h
+                  simp [hh]
+        | false => have hh : r ≠ a := by simpa using h
+                   simp [hh]]
+
+theorem ascends_append {A B : Matrix} {L : Nat} (hL : L = A.length)
+    (hpar : ∀ (y x : Nat), A.length ≤ x →
+      BMS.parent (A ++ B) y x = (BMS.parent B y (x - A.length)).map (· + A.length))
+    (r j y : Nat) :
+    BMS.ascends (A ++ B) (r + L) (j + L) y = BMS.ascends B r j y := by
+  subst hL
+  have hchain : BMS.iterParent (BMS.parent (A ++ B) y) (j + A.length) (j + A.length)
+      = (BMS.iterParent (BMS.parent B y) j j).map (· + A.length) :=
+    iterParent_shift (f := BMS.parent (A ++ B) y) (g := BMS.parent B y) (L := A.length)
+      (fun z hz => hpar y z hz) (fun z w hw => parent_lt B y z w hw)
+      (j + A.length) j j (by omega) (by omega)
+  show ((j + A.length == r + A.length) ||
+      (BMS.iterParent (BMS.parent (A ++ B) y) (j + A.length) (j + A.length)).contains (r + A.length))
+    = ((j == r) || (BMS.iterParent (BMS.parent B y) j j).contains r)
+  rw [hchain, contains_map_add, show ((j + A.length == r + A.length) : Bool) = (j == r) from by
+    cases h : (j == r) with
+    | true => have : j = r := by simpa using h
+              simp [this]
+    | false => have : j ≠ r := by simpa using h
+               simp [this]]
+
+theorem delta_append {A B : Matrix} (hB : B ≠ []) (r t y : Nat) :
+    BMS.delta (A ++ B) (r + A.length) t y = BMS.delta B r t y := by
+  have hBpos : 0 < B.length := List.length_pos_iff.mpr hB
+  show (if y < t then BMS.ent (A ++ B) ((A ++ B).length - 1) y - BMS.ent (A ++ B) (r + A.length) y else 0)
+     = (if y < t then BMS.ent B (B.length - 1) y - BMS.ent B r y else 0)
+  rw [ent_append A B ((A ++ B).length - 1) y (by rw [List.length_append]; omega),
+    ent_append A B (r + A.length) y (by omega),
+    show (A ++ B).length - 1 - A.length = B.length - 1 from by rw [List.length_append]; omega,
+    show r + A.length - A.length = r from by omega]
+
+theorem expand?_append (A B : Matrix) (hB : B ≠ [])
+    (hpar : ∀ (y x : Nat), A.length ≤ x →
+      BMS.parent (A ++ B) y x = (BMS.parent B y (x - A.length)).map (· + A.length)) (n : Nat) :
+    BMS.expand? (A ++ B) n = (BMS.expand? B n).map (fun m => A ++ m) := by
+  have hBpos : 0 < B.length := List.length_pos_iff.mpr hB
+  cases hL : B.getLast? with
+  | none => exact absurd (List.getLast?_eq_none_iff.mp hL) hB
+  | some L =>
+    have hLA : (A ++ B).getLast? = some L := by rw [List.getLast?_append, hL]; rfl
+    simp only [BMS.expand?, hLA, hL, Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+    cases hlnz : BMS.lnz L with
+    | none =>
+      simp only [Option.map_some]
+      rw [List.dropLast_append_of_ne_nil hB]
+    | some t =>
+      dsimp only
+      have hidx : A.length ≤ (A ++ B).length - 1 := by rw [List.length_append]; omega
+      rw [hpar t ((A ++ B).length - 1) hidx,
+        show (A ++ B).length - 1 - A.length = B.length - 1 from by
+          rw [List.length_append]; omega]
+      cases hr : BMS.parent B t (B.length - 1) with
+      | none => rfl
+      | some r =>
+        simp only [Option.map_some, Option.bind_some]
+        congr 1
+        rw [show r + A.length = A.length + r from by omega, List.take_length_add_append]
+        rw [List.append_assoc]
+        congr 1
+        rw [show (A ++ B).length - 1 - (A.length + r) = B.length - 1 - r from by
+          rw [List.length_append]; omega]
+        refine congrArg (fun z => List.take r B ++ z) ?_
+        refine congrArg List.flatten (List.map_congr_left ?_)
+        intro a _
+        refine List.map_congr_left ?_
+        intro x _
+        refine List.map_congr_left ?_
+        intro y _
+        rw [show A.length + r + x = (r + x) + A.length from by omega,
+          ent_append A B ((r + x) + A.length) y (by omega),
+          show (r + x) + A.length - A.length = r + x from by omega,
+          show A.length + r = r + A.length from by omega,
+          delta_append hB r t y,
+          ascends_append (A := A) (B := B) rfl hpar r (r + x) y]
+
+/-- **LOCALITY.**  A matrix with a root column expands inside itself: the prefix is
+    inert.  This is the BMS side of the sum clause `sqv (u ⊕ v) = sqv u ++ sqv v`,
+    confirmed on ~100 `t2m` pairs in §16.5 and needed by every certificate family that
+    concatenates blocks — the ε₀·k family of Group A, and `ω^(ζ₀+1)` after it with ζ₀
+    for ε₀, which is why nothing here mentions ε₀. -/
+theorem expand?_append_root (A B : Matrix) (hB : B ≠ []) (hroot : ∀ y, BMS.ent B 0 y = 0)
+    (n : Nat) : BMS.expand? (A ++ B) n = (BMS.expand? B n).map (fun m => A ++ m) :=
+  expand?_append A B hB (fun y x hx => parent_append A B hroot y x hx) n
+
+/-- The total form, on the branch where the tail block expands. -/
+theorem expand_append_root (A B : Matrix) (hB : B ≠ []) (hroot : ∀ y, BMS.ent B 0 y = 0)
+    (n : Nat) {m : Matrix} (hm : BMS.expand? B n = some m) :
+    BMS.expand (A ++ B) n = A ++ m := by
+  show (BMS.expand? (A ++ B) n).getD [] = _
+  rw [expand?_append_root A B hB hroot n, hm]
+  rfl
+
+/-- The kind is read off the tail block. -/
+theorem kind_append (A B : Matrix) (hB : B ≠ []) : BMS.kind (A ++ B) = BMS.kind B := by
+  cases hL : B.getLast? with
+  | none => exact absurd (List.getLast?_eq_none_iff.mp hL) hB
+  | some L =>
+    show (match (A ++ B).getLast? with
+          | none => BMS.Kind.zero
+          | some L => match BMS.lnz L with
+            | none => BMS.Kind.succ
+            | some _ => BMS.Kind.lim) = _
+    rw [show (A ++ B).getLast? = some L from by rw [List.getLast?_append, hL]; rfl]
+    show (match BMS.lnz L with
+          | none => BMS.Kind.succ
+          | some _ => BMS.Kind.lim) = BMS.kind B
+    show _ = (match B.getLast? with
+              | none => BMS.Kind.zero
+              | some L => match BMS.lnz L with
+                | none => BMS.Kind.succ
+                | some _ => BMS.Kind.lim)
+    rw [hL]
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
