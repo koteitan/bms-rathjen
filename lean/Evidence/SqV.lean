@@ -1929,4 +1929,59 @@ def deepW : Term := phi (ofNat 2) (phi one (phi zero omega))
 #guard (tdepth deepW, tdepth TM.Term.M, tdepth (TM.Term.add deepW TM.Term.M)) == (5, 1, 6)
 #guard !(tdepth (TM.Term.add deepW TM.Term.M) == max (0 + tdepth deepW) (1 + tdepth TM.Term.M))
 
+
+/-! ### §11.6 (W) IS FALSE — measured before anyone proved it, and the caution was the mechanism
+
+The coordinator proposed weakening the missing fact from an equality to
+
+    (W)   Sublist (toList ((splitFin a).1)) (toList a)
+
+since `tdepth_ofList_sublist` only ever consumes a sublist — and cautioned that
+`toList (ofList X)` might insert structure, saying to measure rather than take their word.
+**IT DOES, AND (W) IS FALSE.**  4 violations of the 254-term sweep and 5 of the 8
+`addHead` probes below — every one with an `add`-HEADED COMPONENT:
+
+    t = ((1+1)+1)          toList t             = [(1+1), 1]
+                           (splitFin t).1       = (1+1)
+                           toList (splitFin t).1 = [1, 1]      NOT a sublist of [(1+1), 1]
+
+`toList` recurses on the right, so a component can itself be `add`-headed, and then
+`ofList` and `toList` do not agree on where the structure is.
+
+THE SEPARATING HYPOTHESIS IS MEASURED, not guessed: every violation has a NON-AP component,
+and restricted to terms all of whose components are additively principal, **(W) holds with
+0 violations of 235**.  So the normal-form content does come back — as 2.1(iii)'s AP
+condition rather than as the roundtrip, which is a different disguise for the same thing.
+
+**AND THE LEMMAS SURVIVE THE REGION THAT KILLS THE ROUTE — THIRD TIME TONIGHT.**  All six
+`tdepth` facts hold on the 8 `add`-headed terms (0 violations), none of which is `inT` or
+`CNV`.  §11.4's rule caught this one: I checked the routes as well as the claims, and the
+route is what died.  A blind corpus had validated (W) exactly as it had validated the
+roundtrip and `plus_ofNat_succ`'s `CNV`. -/
+
+def isSubl : List Term → List Term → Bool
+  | [], _ => true
+  | _ :: _, [] => false
+  | x :: xs, y :: ys => if x == y then isSubl xs ys else isSubl (x :: xs) ys
+
+def addHead : List Term :=
+  [TM.Term.add (TM.Term.add one one) one, TM.Term.add (TM.Term.add (phi one zero) one) one,
+   TM.Term.add (TM.Term.add one one) (TM.Term.add one one),
+   phi zero (TM.Term.add (TM.Term.add one one) one),
+   TM.Term.add (TM.Term.add TM.Term.M one) one,
+   TM.Term.add (TM.Term.add one (phi one zero)) one,
+   TM.Term.add (TM.Term.add (TM.Term.add one one) one) one,
+   phi one (TM.Term.add (TM.Term.add one one) one)]
+
+-- (W) is FALSE, and the witness family is `add`-headed components
+#guard !(isSubl (toList (TM.Term.splitFin (TM.Term.add (TM.Term.add one one) one)).1)
+                (toList (TM.Term.add (TM.Term.add one one) one)))
+#guard (addHead.filter (fun t => !(isSubl (toList (TM.Term.splitFin t).1) (toList t)))).length == 5
+-- under the AP-components hypothesis it holds, and the lemmas hold regardless
+#guard ((allM ++ addHead).eraseDups.filter (fun t => (toList t).all (fun c => TM.Term.isAP c)
+          && !(isSubl (toList (TM.Term.splitFin t).1) (toList t)))).length == 0
+#guard (addHead.filter (fun t => !(tdepth (predOr t) <= tdepth t))).length == 0
+#guard (addHead.filter (fun t => !(tdepth (omLog t) <= tdepth t))).length == 0
+#guard (addHead.filter (fun t => TM.Term.inT t)).length == 0
+
 end Evidence.SqV
