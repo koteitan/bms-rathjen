@@ -247,6 +247,22 @@ theorem e3 :
 
 end «(0,0)(1,1)(2,1)(1,1)»
 
+/-! ### Row `(0,0)(1,1)(2,1)(3,0)(4,1)` = `φ̄(2,ε₀)`, the `a = 2` instance of the
+F5 family (`Evidence.StageB.e3_F5family`, the first ladder+two-columns family;
+a shift-2 equality family, R5's convention). -/
+
+namespace «(0,0)(1,1)(2,1)(3,0)(4,1)»
+
+def M : Matrix := [[0,0],[1,1],[2,1],[3,0],[4,1]]
+def t : Term := phi (ofNat 2) (phi one zero)
+
+theorem e1 : o? M = some t := rfl
+
+theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 2)) :=
+  (Evidence.StageB.e3_F5family 1).1 n
+
+end «(0,0)(1,1)(2,1)(3,0)(4,1)»
+
 /-! ## Row-linkage guards
 
 Each guard pins the table rows of Rows/TM.lean that cite a namespace of this
@@ -275,6 +291,8 @@ def rowLinked (nm : String) (M : BMS.Matrix) (t : Term) : Bool :=
   «(0,0)(1,1)(2,1)(3,1)(1,0)».M «(0,0)(1,1)(2,1)(3,1)(1,0)».t
 #guard rowLinked "«(0,0)(1,1)(2,1)(2,0)»" «(0,0)(1,1)(2,1)(2,0)».M «(0,0)(1,1)(2,1)(2,0)».t
 #guard rowLinked "«(0,0)(1,1)(2,1)(1,1)»" «(0,0)(1,1)(2,1)(1,1)».M «(0,0)(1,1)(2,1)(1,1)».t
+#guard rowLinked "«(0,0)(1,1)(2,1)(3,0)(4,1)»"
+  «(0,0)(1,1)(2,1)(3,0)(4,1)».M «(0,0)(1,1)(2,1)(3,0)(4,1)».t
 
 -- the rows proved in Rows/ProofsB.lean, pinned here (this file can import both)
 #guard rowLinked "R1" Rows.ProofsB.R1.m0 Rows.ProofsB.R1.t0

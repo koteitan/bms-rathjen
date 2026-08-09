@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.30
+バージョン: v0.1.31
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -54,19 +54,21 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | [`(0,0)(1,1)(2,1)(2,0)`](../lean/Rows/TM.lean#L119) | $`\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(2,0)))`$ | $`\varepsilon_{\zeta_0\cdot\omega}`$ | [✅](../lean/Rows/Proofs.lean#L218) | [o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L122) | $`\bar{\varphi}(2,1)`$ | $`\zeta_1`$ | [✅](../lean/Rows/ProofsB.lean#L2309) | [o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L124) | $`\bar{\varphi}(2,\omega)`$ | $`\zeta_\omega`$ | [✅](../lean/Rows/ProofsB.lean#L1561) | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L126) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ | [✅](../lean/Rows/ProofsB.lean#L621) | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L128) | $`\bar{\varphi}(3,0)+1`$ | $`\bar{\varphi}(3,0)+1`$ | [✅](../lean/Rows/Proofs.lean#L176) | [o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L130) | $`\bar{\varphi}(0,\bar{\varphi}(3,0))`$ | $`\omega^{\bar{\varphi}(3,0)+1}`$ | [✅](../lean/Rows/Proofs.lean#L203) | [o](../lean/Trans/TM.lean) |  |
-| **(0,0)(1,1)…(a,1)(b,r), a≥1, b≤a+1, (b,r)≠(0,1)** | 下の 7 行の場合分け |  | [✅](../lean/Evidence/StageB.lean#L4769) |  | 傘: 梯子+1列の全行列で o? が定義され 7 分岐の値に一致 (E1 を全ての a で証明)。E3 は下の各族行の形で成立 |
+| [`(0,0)(1,1)(2,1)(3,0)(4,1)`](../lean/Rows/TM.lean#L126) | $`\bar{\varphi}(2,\bar{\varphi}(1,0))`$ | $`\zeta_{\varepsilon_0}`$ | [✅](../lean/Rows/Proofs.lean#L254) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L129) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ | [✅](../lean/Rows/ProofsB.lean#L621) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L131) | $`\bar{\varphi}(3,0)+1`$ | $`\bar{\varphi}(3,0)+1`$ | [✅](../lean/Rows/Proofs.lean#L176) | [o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L133) | $`\bar{\varphi}(0,\bar{\varphi}(3,0))`$ | $`\omega^{\bar{\varphi}(3,0)+1}`$ | [✅](../lean/Rows/Proofs.lean#L203) | [o](../lean/Trans/TM.lean) |  |
+| **(0,0)(1,1)…(a,1)(b,r), a≥1, b≤a+1, (b,r)≠(0,1)** | 下の 7 行の場合分け |  | [✅](../lean/Evidence/StageB.lean#L4784) |  | 傘: 梯子+1列の全行列で o? が定義され 7 分岐の値に一致 (E1 を全ての a で証明)。E3 は下の各族行の形で成立 |
 | **(0,0)(1,1)…(a,1), a≥1** | $`\bar{\varphi}(a,0)`$ | $`\varepsilon_0,\ \zeta_0,\ \bar{\varphi}(3,0),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L1095) |  | 1 パラメータ族 (対角線) の一括証明。a=1,2,3 が表の ε₀, ζ₀, φ̄(3,0) 行、族の sup が φ̄(ω,0) |
-| **(0,0)(1,1)…(a,1)(0,0), a≥1** | $`\bar{\varphi}(a,0)+1`$ | $`\varepsilon_0+1,\ \zeta_0+1,\ldots`$ | [✅](../lean/Evidence/StageB.lean#L2893) |  | 後続行の 1 パラメータ族 (E1 と後続則を全ての a で証明) |
-| **(0,0)(1,1)…(a,1)(1,0), a≥1** | $`\bar{\varphi}(0,\bar{\varphi}(a,0))`$ | $`\omega^{\varepsilon_0+1},\ \omega^{\zeta_0+1},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3203) |  | 1 パラメータ族の一括証明。a=1 が表の ω^(ε₀+1) 行 |
-| **(0,0)(1,1)…(a,1)(b,0), 2≤b≤a** | $`\bar{\varphi}(b{-}1,\bar{\varphi}(0,\bar{\varphi}(a,0)))`$ | $`\varepsilon_{\zeta_0\cdot\omega},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3720) |  | 2 パラメータ族の一括証明。これで梯子+1列 (r=0) の全ケースが証明済み |
-| **(0,0)(1,1)…(a,1)(b,1), 1≤b<a** | $`\bar{\varphi}(b,\bar{\varphi}(a,0))`$ | $`\varepsilon_{\zeta_0+1},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L4298) |  | 2 パラメータ族の一括証明。これで梯子+1列の全 7 ケース (F4) が完全証明 |
+| **(0,0)(1,1)…(a,1)(0,0), a≥1** | $`\bar{\varphi}(a,0)+1`$ | $`\varepsilon_0+1,\ \zeta_0+1,\ldots`$ | [✅](../lean/Evidence/StageB.lean#L2904) |  | 後続行の 1 パラメータ族 (E1 と後続則を全ての a で証明) |
+| **(0,0)(1,1)…(a,1)(1,0), a≥1** | $`\bar{\varphi}(0,\bar{\varphi}(a,0))`$ | $`\omega^{\varepsilon_0+1},\ \omega^{\zeta_0+1},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3214) |  | 1 パラメータ族の一括証明。a=1 が表の ω^(ε₀+1) 行 |
+| **(0,0)(1,1)…(a,1)(b,0), 2≤b≤a** | $`\bar{\varphi}(b{-}1,\bar{\varphi}(0,\bar{\varphi}(a,0)))`$ | $`\varepsilon_{\zeta_0\cdot\omega},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3731) |  | 2 パラメータ族の一括証明。これで梯子+1列 (r=0) の全ケースが証明済み |
+| **(0,0)(1,1)…(a,1)(b,1), 1≤b<a** | $`\bar{\varphi}(b,\bar{\varphi}(a,0))`$ | $`\varepsilon_{\zeta_0+1},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L4309) |  | 2 パラメータ族の一括証明。これで梯子+1列の全 7 ケース (F4) が完全証明 |
 | **(0,0)(1,1)…(a,1)(a,1), a≥1** | $`\bar{\varphi}(a,1)`$ | $`\varepsilon_1,\ \zeta_1,\ \bar{\varphi}(3,1),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L2032) |  | 1 パラメータ族の一括証明。a=1,2 の ε₁, ζ₁ 行は定理としてインスタンス化 |
 | **(0,0)(1,1)…(a,1)(a+1,0), a≥1** | $`\bar{\varphi}(a,\omega)`$ | $`\varepsilon_\omega,\ \zeta_\omega,\ \bar{\varphi}(3,\omega),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L531) |  | 1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L133) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行。この行より上の候補行は v0.1.22 の監査で撤回・再導出中 |
-| [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L136) | $`\bar{\varphi}(1,\bar{\varphi}(\omega,0))`$ | $`\varepsilon_{\bar{\varphi}(\omega,0)+1}`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| **(0,0)(1,1)…(a,1)(a+1,0)(a+2,1), a≥1** | $`\bar{\varphi}(a,\varepsilon_0)`$ | $`\varepsilon_{\varepsilon_0},\ \zeta_{\varepsilon_0},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L5153) |  | 初の梯子+2列族。a=1 が表の ε_{ε₀} 行 (R5 の手証明は族定理のインスタンスに退役) |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L136) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行。この行より上の候補行は v0.1.22 の監査で撤回・再導出中 |
+| [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L139) | $`\bar{\varphi}(1,\bar{\varphi}(\omega,0))`$ | $`\varepsilon_{\bar{\varphi}(\omega,0)+1}`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
 
 ## 実装
 

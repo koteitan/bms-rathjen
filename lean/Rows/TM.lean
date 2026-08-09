@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.30"
+def version : String := "v0.1.31"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -123,6 +123,9 @@ def rows : List Row := [
     proof := "R7", hasO := true },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (ofNat 2) omega, name := "\\zeta_\\omega",
     proof := "R8", hasO := true },
+  { m := [[0,0],[1,1],[2,1],[3,0],[4,1]], t := phi (ofNat 2) (phi one zero),
+    name := "\\zeta_{\\varepsilon_0}", proof := "«(0,0)(1,1)(2,1)(3,0)(4,1)»",
+    hasO := true },
   { m := [[0,0],[1,1],[2,1],[3,1]], t := phi (ofNat 3) zero,
     name := "\\bar{\\varphi}(3,0)", proof := "R9", hasO := true },
   { m := [[0,0],[1,1],[2,1],[3,1],[0,0]], t := add (phi (ofNat 3) zero) one,
@@ -249,7 +252,14 @@ def regions : List RegionRow := [
     boundT := phi omega zero,
     proof := "e3_family",
     proofFile := "Evidence/StageB.lean",
-    note := "1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く" }
+    note := "1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く" },
+  { bms := "(0,0)(1,1)…(a,1)(a+1,0)(a+2,1), a≥1",
+    tm := "\\bar{\\varphi}(a,\\varepsilon_0)",
+    nm := "\\varepsilon_{\\varepsilon_0},\\ \\zeta_{\\varepsilon_0},\\ldots",
+    boundT := phi omega zero,
+    proof := "e3_F5family",
+    proofFile := "Evidence/StageB.lean",
+    note := "初の梯子+2列族。a=1 が表の ε_{ε₀} 行 (R5 の手証明は族定理のインスタンスに退役)" }
 ]
 
 /-! ## Table generation -/
