@@ -7736,7 +7736,7 @@ WHAT REMAINS FOR THE ELEVENTH ✅, with no further input needed from the WF lane
 Then `certIn_rowA` is `CertifiedIn.lim fsA` over `expand_rowA`, and registration is
 the §16.2 pattern. -/
 
-open Evidence.WF (eps0T)
+open Evidence.WF (eps0T CNV)
 
 /-- The value of `famM k c`: `k` copies of ε₀ in front of `c`, right-nested. -/
 def famV : Nat → TM.Term → TM.Term
@@ -7798,6 +7798,161 @@ theorem sumSeq_famV : ∀ (k : Nat) (g : Nat → TM.Term), (∀ n, g n ≠ zero)
     intro g hg n
     show add eps0T (Evidence.WF.sumSeq eps0T g j n) = _
     rw [ih g hg n, famV_succ_ne j (hg n)]
+
+/-! ### §18.3 THE CERTIFICATE RECURSION, against the WF §15.13 interface
+
+`certIn_fam_of` is the whole recursion for the family, and it is LEXICOGRAPHIC on
+`(k, c)` as §18.2 explains: outer induction on `k`, inner on `Acc RC c`, with the
+`c = 0` case recursing to `(k-1, tower n)` because `epsBlocks (k+1)` expands in its
+LAST block.  Its three cases use, in order, `certIn_padSq` (k = 0), `lim_clauses_fsA`
+(c = 0), `plus_famV_one` + `plus_predC` (successor) and the `hsum` interface (limit);
+the matrices come from §17.4's locality theorem throughout.
+
+IT IS STATED AGAINST AN INTERFACE, in the idiom of `no_overshoot_of` and
+`parent_append_gen`: `hdom`/`hdomz` are the `CNV` facts about the family's values and
+`hsum` is `Evidence.WF.lim_clauses_sum_iter_gen` transported along `famV`.  All three
+exist in WF §15.13 as of tonight; this file's copy of the oleans predates them, so the
+instantiation — and with it `certIn_rowA` and the eleventh ✅ — is one rebuild away.
+
+THE ROW IS THEREFORE NOT YET CERTIFIED, and nothing here should be read as saying it
+is: `certIn_fam_of` is a conditional theorem, not a certificate, and no registry entry
+cites it. -/
+
+theorem sq_ne_nil {c : TM.Term} (hcn : CN c = true) (hz : c ≠ zero) : sq c ≠ [] := by
+  intro h; exact hz (sq_eq_nil c hcn h)
+
+theorem padRow_ne_nil {c : TM.Term} (hcn : CN c = true) (hz : c ≠ zero) : padRow (sq c) ≠ [] := by
+  cases h : sq c with
+  | nil => exact absurd h (sq_ne_nil hcn hz)
+  | cons a t => simp [padRow]
+
+theorem famM_eq (k : Nat) (c : TM.Term) : famM k c = epsBlocks k ++ padRow (sq c) := rfl
+
+theorem epsBlocks_succ_right (k : Nat) :
+    epsBlocks (k + 1) = epsBlocks k ++ [[0, 0], [1, 1]] := by
+  show (List.replicate (k + 1) [[0, 0], [1, 1]]).flatten = _
+  rw [List.replicate_succ']
+  show (List.replicate k [[0,0],[1,1]] ++ [[[0,0],[1,1]]]).flatten = _
+  rw [List.flatten_append]
+  rfl
+
+theorem famM_zero_arg (k : Nat) : famM k zero = epsBlocks k := by
+  show epsBlocks k ++ padRow (sq zero) = _
+  show epsBlocks k ++ ([] : Matrix) = _
+  rw [List.append_nil]
+
+theorem expand?_eps0_row (n : Nat) :
+    BMS.expand? ([[0, 0], [1, 1]] : Matrix) n = some (towerM n) := by
+  rw [show BMS.expand? [[0, 0], [1, 1]] n
+      = some (((List.range (n + 1)).map (fun a => [[0 + a * 1 * 1, 0 + a * 0 * 1]])).flatten)
+      from rfl]
+  congr 1
+  show ((List.range (n + 1)).map (fun a => [[0 + a * 1 * 1, 0 + a * 0 * 1]])).flatten = towerM n
+  rw [show (fun (a : Nat) => [[0 + a * 1 * 1, 0 + a * 0 * 1]])
+        = (fun (a : Nat) => [((fun (b : Nat) => [b, 0]) a)]) from by
+      funext a; simp]
+  rw [flatten_map_singleton]
+  rfl
+
+theorem eps0row_root : ∀ y, BMS.ent ([[0, 0], [1, 1]] : Matrix) 0 y = 0 := by
+  intro y
+  show (([0, 0] : List Nat)).getD y 0 = 0
+  cases y with
+  | zero => rfl
+  | succ m => cases m with | zero => rfl | succ p => rfl
+
+/-- The certificate family, modulo the two 𝔗(M)-side facts that WF §15.13 supplies:
+    `hsum` is `lim_clauses_sum_iter_gen` transported along `famV`, and `hdom` is
+    `CNV (famV k c)` (which needs `hdLe c ε₀`). -/
+theorem certIn_fam_of
+    (hdom : ∀ (k : Nat) (c : TM.Term), CN c = true → c ≠ zero → CNV (famV k c) = true)
+    (hdomz : ∀ (k : Nat), CNV (repAdd eps0T k) = true)
+    (hsum : ∀ (k : Nat) (c : TM.Term) (g : Nat → TM.Term), CN c = true → c ≠ zero →
+      (∀ n, CN (g n) = true) → (∀ n, lt (g n) c = true) → (∀ n, lt (g n) (g (n + 1)) = true) →
+      (∀ s, inT s = true → lt s c = true → ∃ n, le s (g n) = true) → (∀ n, g n ≠ zero) →
+      (∀ n, lt (famV k (g n)) (famV k c) = true)
+        ∧ (∀ n, lt (famV k (g n)) (famV k (g (n + 1))) = true)
+        ∧ (∀ s, inT s = true → lt s (famV k c) = true → ∃ n, le s (famV k (g n)) = true)) :
+    ∀ (k : Nat) (c : TM.Term), CN c = true → CertifiedIn DomI (famM k c) (famV k c) := by
+  intro k
+  induction k with
+  | zero =>
+    intro c hcn
+    show CertifiedIn DomI (epsBlocks 0 ++ padRow (sq c)) c
+    show CertifiedIn DomI (padRow (sq c)) c
+    exact certifiedIn_mono domF_le_domI (certIn_padSq c hcn)
+  | succ j ihk =>
+    have key : ∀ (c : TM.Term), Acc Evidence.WF.RC c → CN c = true →
+        CertifiedIn DomI (famM (j + 1) c) (famV (j + 1) c) := by
+      intro c hacc
+      induction hacc with
+      | intro c _ ihc =>
+        intro hcn
+        by_cases hz : c = zero
+        · subst hz
+          obtain ⟨_, hlt, hstep, hcof⟩ := Evidence.WF.lim_clauses_fsA j
+          rw [famM_zero_arg, epsBlocks_succ_right, famV_zero_arg]
+          refine CertifiedIn.lim (fun n => famV j (Evidence.WF.tower n)) ?_ ?_ ?_ ?_ ?_ ?_
+          · exact kind_append _ _ (by simp)
+          · intro n
+            show CertifiedIn DomI ((BMS.expand? (epsBlocks j ++ [[0,0],[1,1]]) n).getD [])
+              (famV j (Evidence.WF.tower n))
+            rw [expand?_append_root _ _ (by simp) eps0row_root n,
+              show BMS.expand? ([[0,0],[1,1]] : Matrix) n = some (towerM n) from expand?_eps0_row n]
+            show CertifiedIn DomI (epsBlocks j ++ towerM n) _
+            rw [towerM_eq n]
+            exact ihk _ (Evidence.WF.cn_tower n)
+          · intro n
+            show lt (famV j (Evidence.WF.tower n)) (repAdd eps0T j) = true
+            rw [← sumSeq_famV j Evidence.WF.tower Evidence.WF.tower_ne_zero n]
+            exact hlt n
+          · intro n
+            show lt (famV j (Evidence.WF.tower n)) (famV j (Evidence.WF.tower (n+1))) = true
+            rw [← sumSeq_famV j Evidence.WF.tower Evidence.WF.tower_ne_zero n,
+              ← sumSeq_famV j Evidence.WF.tower Evidence.WF.tower_ne_zero (n+1)]
+            exact hstep n
+          · intro s hin hlts
+            obtain ⟨n, hn⟩ := hcof s hin hlts
+            refine ⟨n, ?_⟩
+            show le s (famV j (Evidence.WF.tower n)) = true
+            rw [← sumSeq_famV j Evidence.WF.tower Evidence.WF.tower_ne_zero n]
+            exact hn
+          · show inT (repAdd eps0T j) = true
+            exact Evidence.WF.inT_of_cnv _ (hdomz j)
+        · by_cases hk : kindC c = true
+          · have hcnp : CN (predC c) = true := Evidence.WF.cn_predC c hcn hk
+            have hres : CertifiedIn DomI (famM (j+1) c) (plus (famV (j+1) (predC c)) one) := by
+              refine CertifiedIn.succ ?_ ?_ ?_
+              · rw [famM_eq]
+                exact (kind_append _ _ (padRow_ne_nil hcn hz)).trans (kind_padSq_succ c hcn hk)
+              · intro n
+                show CertifiedIn DomI ((BMS.expand? (famM (j+1) c) n).getD []) _
+                rw [famM_eq, expand?_append_root _ _ (padRow_ne_nil hcn hz)
+                  (fun y => famM_root 0 c hcn (sq_ne_nil hcn hz) y) n,
+                  expand_padSq_succ c hcn hk n]
+                exact ihc (predC c) ⟨hcnp, Evidence.WF.lt_predC c hcn hk⟩ hcnp
+              · rw [plus_famV_one, plus_predC c hcn hk]
+                show inT (famV (j+1) c) = true
+                exact Evidence.WF.inT_of_cnv _ (hdom (j+1) c hcn hz)
+            rw [plus_famV_one, plus_predC c hcn hk] at hres
+            exact hres
+          · have hk' : kindC c = false := by simpa using hk
+            obtain ⟨hcnfs, hltfs, hstepfs, hcoffs⟩ := Evidence.WF.lim_clauses c hcn hk' hz
+            obtain ⟨s1, s2, s3⟩ := hsum (j+1) c (fsC c) hcn hz hcnfs hltfs hstepfs hcoffs
+              (fun n => Evidence.WF.fsC_ne_zero c hcn hk' hz n)
+            refine CertifiedIn.lim (fun n => famV (j+1) (fsC c n)) ?_ ?_ s1 s2 s3 ?_
+            · rw [famM_eq]
+              exact (kind_append _ _ (padRow_ne_nil hcn hz)).trans (kind_padSq_lim c hcn hk' hz)
+            · intro n
+              show CertifiedIn DomI ((BMS.expand? (famM (j+1) c) n).getD []) _
+              rw [famM_eq, expand?_append_root _ _ (padRow_ne_nil hcn hz)
+                (fun y => famM_root 0 c hcn (sq_ne_nil hcn hz) y) n,
+                expand_padSq c hcn hk' hz n]
+              exact ihc (fsC c n) ⟨hcnfs n, hltfs n⟩ (hcnfs n)
+            · show inT (famV (j+1) c) = true
+              exact Evidence.WF.inT_of_cnv _ (hdom (j+1) c hcn hz)
+    intro c hcn
+    exact key c (Evidence.WF.acc_cn c hcn) hcn
 
 /-! ## §6 The registry
 
