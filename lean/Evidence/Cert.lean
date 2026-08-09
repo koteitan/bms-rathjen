@@ -6976,6 +6976,49 @@ never had to say this: at base level the condition degenerates to `isPow`, which
 -- and the shape that is NOT flagged: an ordinary CNF exponent
 #guard TM.Term.isFP zero (phi zero omega) == false
 
+/-! ### §16.4 THE ENCODING IS NOT "APPEND = APPLY `φ̄1·`"  (measurement, 2026-08-10)
+
+Written down because the natural guess is wrong and costs an hour to discover.  A
+Veblen-region term-to-matrix map (`sqv`, the coordinator's route) will be read off
+the data; here is the part of the data that REFUTES the obvious recursion
+"emit a ladder for `a`, then a shifted encoding of `b`".  All of it is `Trans.o?`
+run on matrices of the repository's own expansion closure, `F(a,b)` for `φ̄ab`:
+
+    F(1,0)      = ε₀        ↦ (0,0)(1,1)
+    F(1,1)      = ε₁        ↦ (0,0)(1,1)(1,1)          a REPEAT at the same depth
+    F(1,2)      = ε₂        ↦ (0,0)(1,1)(1,1)(1,1)
+    F(1,ω)      = ε_ω       ↦ (0,0)(1,1)(2,0)          ONE column for the subscript
+    F(1,ω^ω)    = ε_{ω^ω}   ↦ (0,0)(1,1)(2,0)(3,0)
+    F(1,F(1,0)) = ε_{ε₀}    ↦ (0,0)(1,1)(2,0)(3,1)
+    F(1,F(2,0))             ↦ (0,0)(1,1)(2,1)(1,1)
+    F(2,0)      = ζ₀        ↦ (0,0)(1,1)(2,1)
+    F(3,0)                  ↦ (0,0)(1,1)(2,1)(2,1)
+    F(ω,0)                  ↦ (0,0)(1,1)(2,1)(3,0)
+    F(F(1,0),0)             ↦ (0,0)(1,1)(2,1)(3,0)(4,1)
+
+THE REFUTATION IS IN LINES 7 AND 6.  Appending `(1,1)` to the matrix of `x` yields
+the matrix of `F(1,x)` when `x = ζ₀` — line 7 is line 8 with `(1,1)` appended — but
+NOT when `x = ε₀`: appending `(1,1)` to `(0,0)(1,1)` gives `(0,0)(1,1)(1,1)`, which
+is ε₁ = F(1,1), while F(1,ε₀) is the different matrix of line 6.  So "append the
+ε-marker" is not "apply `φ̄1·`", and no rule of the form
+`sqv (φ̄ a b) = ladder a ++ shift (sqv b)` reproduces both lines at once.
+
+(The reason is visible once stated: `F(1,F(2,0))` is a COLLAPSING term — `isFP 1 (φ̄20)`
+holds, §16.3 — so it is one of the seven non-normal-form values in the closure, and the
+encoding treats it as the matrix of ζ₀ with one more ε-step rather than as a fresh
+subscript.  Whatever `sqv` is, it must be total on such terms: 7 of the 414 matrices in
+the twelve rows' closure carry one, and one of the seven is the row ε_{ζ₀+1} itself.)
+
+Eleven examples under-determine the map; a few hundred would not.  The instrument for
+generating them is the surveys' `t2m` (dictionary-inverse plus a compositional
+encoder), which is CANDIDATE TIER: it may say what matrix `sqv` should produce, and it
+must never appear in a certificate's justification — `sqv` has to be PROVED to produce
+that matrix, by `sqv_decomp` in the idiom of §10's `sq_decomp`. -/
+
+#guard Trans.o? [[0, 0], [1, 1], [1, 1]] == Trans.o? ([[0, 0], [1, 1]] ++ [[1, 1]])
+#guard !(Trans.o? [[0, 0], [1, 1], [2, 0], [3, 1]] == Trans.o? ([[0, 0], [1, 1]] ++ [[1, 1]]))
+#guard Trans.o? [[0, 0], [1, 1], [2, 1], [1, 1]] == Trans.o? ([[0, 0], [1, 1], [2, 1]] ++ [[1, 1]])
+
 /-! ## §17 THE SUM CLAUSE — concatenation of matrices  (Group A / `sqv`, STARTED)
     (certificate lane, 2026-08-10)
 
@@ -7052,6 +7095,74 @@ theorem ent_append (A B : BMS.Matrix) (j y : Nat) (h : A.length ≤ j) :
   rw [getD_append_right A B j [] h]
   rfl
 
+/-- **The bad root never leaves the tail block, at row 0.**  `parent` at row 0 is the
+    MAXIMUM earlier column with a strictly smaller entry.  `B`'s first column has entry
+    `0`, so it is a candidate whenever the entry at `x` is positive — and being the
+    maximum, the search can never prefer a column of `A`; when the entry at `x` is `0`
+    there is no candidate at all, entries being naturals, and both sides are `none`.
+    No hypothesis on `A`, and none on `B` beyond its first entry. -/
+theorem parent_zero_append (A B : BMS.Matrix) (hroot : BMS.ent B 0 0 = 0) (x : Nat)
+    (hx : A.length ≤ x) :
+    BMS.parent (A ++ B) 0 x = (BMS.parent B 0 (x - A.length)).map (· + A.length) := by
+  have hex : BMS.ent (A ++ B) x 0 = BMS.ent B (x - A.length) 0 := ent_append A B x 0 hx
+  show ((List.range x).filter
+      (fun p => decide (BMS.ent (A ++ B) p 0 < BMS.ent (A ++ B) x 0))).max?
+    = (((List.range (x - A.length)).filter
+        (fun p => decide (BMS.ent B p 0 < BMS.ent B (x - A.length) 0))).max?).map (· + A.length)
+  rw [hex]
+  cases hB : (((List.range (x - A.length)).filter
+      (fun p => decide (BMS.ent B p 0 < BMS.ent B (x - A.length) 0))).max?) with
+  | none =>
+    have hemp := List.max?_eq_none_iff.mp hB
+    have he0 : BMS.ent B (x - A.length) 0 = 0 := by
+      cases he : BMS.ent B (x - A.length) 0 with
+      | zero => rfl
+      | succ m =>
+        exfalso
+        cases hk : x - A.length with
+        | zero => rw [hk, hroot] at he; exact Nat.noConfusion he
+        | succ j =>
+          have hmem : (0 : Nat) ∈ (List.range (x - A.length)).filter
+              (fun p => decide (BMS.ent B p 0 < BMS.ent B (x - A.length) 0)) := by
+            rw [List.mem_filter, List.mem_range]
+            refine ⟨by omega, ?_⟩
+            simp only [hroot, he, decide_eq_true_eq]
+            omega
+          rw [hemp] at hmem
+          exact absurd hmem (by simp)
+    have hnil : ∀ (l : List Nat),
+        l.filter (fun p => decide (BMS.ent (A ++ B) p 0 < BMS.ent B (x - A.length) 0)) = [] := by
+      intro l
+      induction l with
+      | nil => rfl
+      | cons a tl ih => rw [List.filter_cons_of_neg (by simp [he0]), ih]
+    rw [hnil (List.range x)]
+    rfl
+  | some r =>
+    rw [List.max?_eq_some_iff] at hB
+    obtain ⟨hmem, hmax⟩ := hB
+    rw [List.mem_filter, List.mem_range] at hmem
+    show ((List.range x).filter
+        (fun p => decide (BMS.ent (A ++ B) p 0 < BMS.ent B (x - A.length) 0))).max?
+      = some (r + A.length)
+    apply List.max?_eq_some_iff.mpr
+    constructor
+    · rw [List.mem_filter, List.mem_range]
+      refine ⟨by omega, ?_⟩
+      rw [ent_append A B (r + A.length) 0 (by omega),
+        show r + A.length - A.length = r from by omega]
+      exact hmem.2
+    · intro b hb
+      rw [List.mem_filter, List.mem_range] at hb
+      by_cases hbL : A.length ≤ b
+      · have hmm := hmax (b - A.length) (by
+          rw [List.mem_filter, List.mem_range]
+          refine ⟨by omega, ?_⟩
+          rw [← ent_append A B b 0 hbL]
+          exact hb.2)
+        omega
+      · omega
+
 /-- Inside the prefix, an entry of `A ++ B` is an entry of `A`. -/
 theorem ent_append_left (A B : BMS.Matrix) (j y : Nat) (h : j < A.length) :
     BMS.ent (A ++ B) j y = BMS.ent A j y := by
@@ -7059,6 +7170,155 @@ theorem ent_append_left (A B : BMS.Matrix) (j y : Nat) (h : j < A.length) :
   rw [show (A ++ B).getD j [] = A.getD j [] from by
     simp [List.getD_eq_getElem?_getD, List.getElem?_append_left h]]
   rfl
+
+/-! ### §17.3 The bad root never leaves the tail block — the general row
+
+The row-0 case is `parent_zero_append`.  For row `y+1` the search runs over
+`iterParent (parent M y) x x`, so two things have to be shown: the CHAIN shifts (by
+the induction hypothesis, since every step lands in `B`), and the two computations
+agree DESPITE DIFFERENT FUEL — `iterParent` is called with the absolute index, which
+differs by `A.length` between `A ++ B` and `B`.  `iterParent_shift` handles both at
+once: it is stated for an arbitrary shift-conjugate pair of parent functions and any
+two fuels that are large enough, with "large enough" supplied by the fact that a
+parent is strictly smaller than its child (`parent_lt`). -/
+
+theorem iterParent_nil {f : Nat → Option Nat} {fuel x : Nat} (h : f x = none) :
+    BMS.iterParent f fuel x = [] := by
+  cases fuel with
+  | zero => rfl
+  | succ g => show (match f x with | none => [] | some p => p :: BMS.iterParent f g p) = []
+              rw [h]
+
+theorem iterParent_cons {f : Nat → Option Nat} {fuel x q : Nat} (h : f x = some q) :
+    BMS.iterParent f (fuel + 1) x = q :: BMS.iterParent f fuel q := by
+  show (match f x with | none => [] | some p => p :: BMS.iterParent f fuel p) = _
+  rw [h]
+
+theorem iterParent_lt {f : Nat → Option Nat} (hdec : ∀ z w, f z = some w → w < z) :
+    ∀ (fuel x p : Nat), p ∈ BMS.iterParent f fuel x → p < x := by
+  intro fuel
+  induction fuel with
+  | zero => intro x p hp; exact absurd hp (by simp [BMS.iterParent])
+  | succ g ih =>
+    intro x p hp
+    cases hfx : f x with
+    | none => rw [iterParent_nil hfx] at hp; exact absurd hp (by simp)
+    | some q =>
+      rw [iterParent_cons hfx] at hp
+      rcases List.mem_cons.mp hp with h | h
+      · rw [h]; exact hdec x q hfx
+      · exact Nat.lt_trans (ih q p h) (hdec x q hfx)
+
+theorem map_add_max? (L : Nat) : ∀ (l : List Nat), (l.map (· + L)).max? = l.max?.map (· + L) := by
+  intro l
+  induction l with
+  | nil => rfl
+  | cons a t ih =>
+    rw [List.map_cons, List.max?_cons, List.max?_cons, ih]
+    cases t.max? with
+    | none => rfl
+    | some m => show some (max (a + L) (m + L)) = some (max a m + L)
+                rw [Nat.add_max_add_right]
+
+theorem filter_map_add (L : Nat) (P : Nat → Bool) : ∀ (l : List Nat),
+    (l.map (· + L)).filter P = (l.filter (fun p => P (p + L))).map (· + L) := by
+  intro l
+  induction l with
+  | nil => rfl
+  | cons a t ih =>
+    rw [List.map_cons]
+    by_cases h : P (a + L)
+    · rw [List.filter_cons_of_pos h, List.filter_cons_of_pos (by exact h), List.map_cons, ih]
+    · rw [List.filter_cons_of_neg h, List.filter_cons_of_neg (by exact h), ih]
+
+theorem iterParent_shift {f g : Nat → Option Nat} {L : Nat}
+    (hfg : ∀ z, L ≤ z → f z = (g (z - L)).map (· + L))
+    (hdecg : ∀ z w, g z = some w → w < z) :
+    ∀ (fuel fuel' k : Nat), k ≤ fuel → k ≤ fuel' →
+      BMS.iterParent f fuel (k + L) = (BMS.iterParent g fuel' k).map (· + L) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro fuel' k hk _
+    have hk0 : k = 0 := by omega
+    subst hk0
+    have hg0 : g 0 = none := by
+      cases h : g 0 with
+      | none => rfl
+      | some w => exact absurd (hdecg 0 w h) (by omega)
+    rw [iterParent_nil hg0]
+    rfl
+  | succ F ih =>
+    intro fuel' k hk hk'
+    cases hgk : g k with
+    | none =>
+      have : f (k + L) = none := by rw [hfg (k + L) (by omega), show k + L - L = k from by omega, hgk]; rfl
+      rw [iterParent_nil this, iterParent_nil hgk]
+      rfl
+    | some w =>
+      have hw : w < k := hdecg k w hgk
+      have hf : f (k + L) = some (w + L) := by
+        rw [hfg (k + L) (by omega), show k + L - L = k from by omega, hgk]; rfl
+      cases fuel' with
+      | zero => omega
+      | succ F' =>
+        rw [iterParent_cons hf, iterParent_cons hgk, List.map_cons,
+          show w + L = w + L from rfl]
+        congr 1
+        exact ih F' w (by omega) (by omega)
+
+theorem parent_lt : ∀ (M : Matrix) (y x r : Nat), BMS.parent M y x = some r → r < x := by
+  intro M y
+  induction y with
+  | zero =>
+    intro x r h
+    have h' : (((List.range x).filter
+        (fun p => decide (BMS.ent M p 0 < BMS.ent M x 0))).max?) = some r := h
+    obtain ⟨hmem, _⟩ := List.max?_eq_some_iff.mp h'
+    rw [List.mem_filter, List.mem_range] at hmem
+    exact hmem.1
+  | succ y ih =>
+    intro x r h
+    have h' : (((BMS.iterParent (BMS.parent M y) x x).filter
+        (fun p => decide (BMS.ent M p (y + 1) < BMS.ent M x (y + 1)))).max?) = some r := h
+    obtain ⟨hmem, _⟩ := List.max?_eq_some_iff.mp h'
+    rw [List.mem_filter] at hmem
+    exact iterParent_lt (fun z w hw => ih z w hw) x x r hmem.1
+
+/-- A parent is strictly to the left of its child, at every row. -/
+theorem parent_append_gen (A B : Matrix)
+    (h0 : ∀ x, A.length ≤ x →
+      BMS.parent (A ++ B) 0 x = (BMS.parent B 0 (x - A.length)).map (· + A.length)) :
+    ∀ (y x : Nat), A.length ≤ x →
+      BMS.parent (A ++ B) y x = (BMS.parent B y (x - A.length)).map (· + A.length) := by
+  intro y
+  induction y with
+  | zero => intro x hx; exact h0 x hx
+  | succ y ih =>
+    intro x hx
+    have hiter : BMS.iterParent (BMS.parent (A ++ B) y) x x
+        = (BMS.iterParent (BMS.parent B y) (x - A.length) (x - A.length)).map (· + A.length) := by
+      have hs := iterParent_shift (f := BMS.parent (A ++ B) y) (g := BMS.parent B y) (L := A.length)
+        (fun z hz => ih z hz) (fun z w hw => parent_lt B y z w hw)
+        x (x - A.length) (x - A.length) (by omega) (by omega)
+      rw [show x - A.length + A.length = x from by omega] at hs
+      exact hs
+    have hpred : (fun p => decide (BMS.ent (A ++ B) (p + A.length) (y + 1) < BMS.ent (A ++ B) x (y + 1)))
+        = (fun p => decide (BMS.ent B p (y + 1) < BMS.ent B (x - A.length) (y + 1))) := by
+      funext p
+      rw [ent_append A B (p + A.length) (y + 1) (by omega),
+        show p + A.length - A.length = p from by omega, ent_append A B x (y + 1) hx]
+    show ((BMS.iterParent (BMS.parent (A ++ B) y) x x).filter
+        (fun p => decide (BMS.ent (A ++ B) p (y + 1) < BMS.ent (A ++ B) x (y + 1)))).max? = _
+    rw [hiter, filter_map_add, hpred, map_add_max?]
+    rfl
+
+
+/-- **The bad root never leaves the tail block, at every row.** -/
+theorem parent_append (A B : BMS.Matrix) (hroot : ∀ y, BMS.ent B 0 y = 0) (y x : Nat)
+    (hx : A.length ≤ x) :
+    BMS.parent (A ++ B) y x = (BMS.parent B y (x - A.length)).map (· + A.length) :=
+  parent_append_gen A B (fun z hz => parent_zero_append A B (hroot 0) z hz) y x hx
 
 /-! ## §6 The registry
 
