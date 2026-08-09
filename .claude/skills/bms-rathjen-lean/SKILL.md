@@ -108,6 +108,15 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   is mid-write, the coordinator's build will fail on THAT file — commit the
   other lane's verified file alone (no version bump, so no table regeneration)
   rather than waiting or committing an unverified state.
+- **Read the SNAPSHOT, not the working file.** `git add` freezes the bytes; the
+  lane keeps writing. Any math check done by `grep`/`sed` on the path afterwards
+  is a check of the lane's CURRENT file, not of what is staged. Once, a commit
+  message described a section that the commit did not contain, because the lane
+  added it in the seconds between staging and reading. Verify with
+  `git show :lean/Evidence/WF.lean | grep …` (or diff the staged blob), and
+  compare the report's sha256 the moment it arrives — if it already differs, the
+  snapshot opportunity is gone and the right move is to hold that file and ask
+  the lane to re-report, not to commit bytes nobody has verified.
   **On any build failure, read WHICH FILE failed before deciding.** If it is
   another lane's file — tracked and mid-write, or a new UNTRACKED file it is
   drafting — the file you are committing may still be sound, and it is sound
