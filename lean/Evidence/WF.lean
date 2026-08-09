@@ -4525,6 +4525,237 @@ This also sharpens §8's item 1 in a useful direction: what makes Stage 3b hard 
 comparability, not transitivity.  Whatever `inT` has to buy, it has to buy it
 there. -/
 
+/-! ### §8.3 STAGE 3b, STARTED: the `ψ`/`Z` rule table and the `starF` layer
+
+§8's Stage 3b says the real work is the clauses routing through `starF`, and names
+the two facts to prove first: `le (star d) d` and `star d ≤ Z d`.  This section
+supplies what comes before them — the complete rewrite-rule table for `ψ` and `Z`
+(so 3b starts from a rule table, exactly as 3a started from §8.1's), the `starF`
+unfolding rules, and the one `starF` fact that is `inT`-FREE.  It does NOT prove
+`le (star d) d`; see the measurement note at the end for what that will cost and
+why it cannot be done here.
+
+THE SHAPE MATRIX IS ALREADY COMPLETE.  §8.2's `ltF_succ_add_nsum` /
+`ltF_succ_nsum_add` were stated against an ARBITRARY non-sum, and `ψ` and `Z` are
+non-sums, so every sum-vs-`ψ`/`Z` case is already covered.  §8.1 covers `M` and
+`ω̄` against `ψ` and `Z`.  What is left is the eight rules below — `φ̄`, `ψ`, `Z`
+against each other — and then 3b's inductions have a complete table. -/
+
+/-! 2.3.5: `γ ∈ SC` and `α, β < γ` ⟹ `φ̄αβ < γ`.  Both `SC` shapes, same clause. -/
+theorem ltF_succ_phi_psi (f : Nat) (a b k c : Term) :
+    ltF (f + 1) (phi a b) (psi k c) = (ltF f a (psi k c) && ltF f b (psi k c)) := rfl
+
+theorem ltF_succ_phi_Z (f : Nat) (a b d : Term) :
+    ltF (f + 1) (phi a b) (Z d) = (ltF f a (Z d) && ltF f b (Z d)) := rfl
+
+/-! 2.3.4: `γ ≤ α ∨ γ ≤ β` ⟹ `γ < φ̄αβ`. -/
+theorem ltF_succ_psi_phi (f : Nat) (k a c d : Term) :
+    ltF (f + 1) (psi k a) (phi c d) =
+      ((psi k a == c) || (psi k a == d) || ltF f (psi k a) c || ltF f (psi k a) d) := rfl
+
+theorem ltF_succ_Z_phi (f : Nat) (e c d : Term) :
+    ltF (f + 1) (Z e) (phi c d) =
+      ((Z e == c) || (Z e == d) || ltF f (Z e) c || ltF f (Z e) d) := rfl
+
+/-- 2.3.14: `ψκα < ψπβ`, the three sub-clauses.  §8's observation that this has
+    exactly the shape of 2.3.13 is visible here: compare with `ltF_succ_phi_phi`,
+    which is the same `if`-tree with `κ` in place of `α`. -/
+theorem ltF_succ_psi_psi (f : Nat) {k a p b : Term} (h : psi k a ≠ psi p b) :
+    ltF (f + 1) (psi k a) (psi p b) =
+      (if k = p then ltF f a b
+       else if ltF f k p = true then ltF f k (psi p b)
+       else ltF f (psi k a) p) := by
+  show (if (psi k a == psi p b) = true then false
+        else if (k == p) = true then ltF f a b
+        else if ltF f k p = true then ltF f k (psi p b)
+        else ltF f (psi k a) p) = _
+  rw [if_neg (by simpa using h)]
+  by_cases hkp : k = p
+  · rw [if_pos (by simpa using hkp), if_pos hkp]
+  · rw [if_neg (by simpa using hkp), if_neg hkp]
+
+/-! `ψ` against `Z`: 2.3.8 (`κ ≤ γ ⟹ ψκα < γ`), else 2.3.6 / 2.3.9 through `δ*`.
+    These need no distinctness hypothesis — a `ψ` is never a `Z`. -/
+theorem ltF_succ_psi_Z (f : Nat) (k a d : Term) :
+    ltF (f + 1) (psi k a) (Z d) =
+      (if ((k == Z d) || ltF f k (Z d)) = true then true
+       else ((psi k a == starF f d) || ltF f (psi k a) (starF f d))) := rfl
+
+theorem ltF_succ_Z_psi (f : Nat) (e k b : Term) :
+    ltF (f + 1) (Z e) (psi k b) =
+      (if ((k == Z e) || ltF f k (Z e)) = true then false
+       else ltF f (starF f e) (psi k b)) := rfl
+
+/-- 2.3.15: `Zα < Zβ`. -/
+theorem ltF_succ_Z_Z (f : Nat) {a b : Term} (h : Z a ≠ Z b) :
+    ltF (f + 1) (Z a) (Z b) =
+      (if ltF f a b = true then ltF f (starF f a) (Z b)
+       else ((Z a == starF f b) || ltF f (Z a) (starF f b))) := by
+  show (if (Z a == Z b) = true then false
+        else if ltF f a b = true then ltF f (starF f a) (Z b)
+        else ((Z a == starF f b) || ltF f (Z a) (starF f b))) = _
+  rw [if_neg (by simpa using h)]
+
+/-! #### §8.3.1 The `starF` unfolding rules ([R91] 2.2)
+
+`starF` is where 3b differs from everything before it: the recursion of `ltF` goes
+THROUGH it, so its clauses need the same treatment `ltF`'s got in §7.2 / §8.1. -/
+
+theorem starF_succ_zero (f : Nat) : starF (f + 1) zero = zero := rfl
+theorem starF_succ_M (f : Nat) : starF (f + 1) M = zero := rfl
+theorem starF_succ_psi (f : Nat) (k a : Term) : starF (f + 1) (psi k a) = psi k a := rfl
+theorem starF_succ_Z (f : Nat) (a : Term) : starF (f + 1) (Z a) = Z a := rfl
+theorem starF_succ_omg (f : Nat) (a : Term) : starF (f + 1) (omg a) = starF f a := rfl
+
+/-- 2.2(ii): `⊕(…)* = max(αᵢ*)`. -/
+theorem starF_succ_add (f : Nat) (a b : Term) :
+    starF (f + 1) (add a b)
+      = (if ltF f (starF f a) (starF f b) then starF f b else starF f a) := rfl
+
+/-- 2.2(iv): `(φ̄αβ)* = max(α*, β*)`. -/
+theorem starF_succ_phi (f : Nat) (a b : Term) :
+    starF (f + 1) (phi a b)
+      = (if ltF f (starF f a) (starF f b) then starF f b else starF f a) := rfl
+
+/-- **`α*` is `0` or strongly critical** — [R91] 2.2 read as a range statement.
+    This is the one `starF` fact that needs NO formation condition: it is pure
+    structure, and it is what tells 3b's `ψ`/`Z` clauses that the term they recurse
+    into through `starF` is again one of the shapes the table above covers.
+    MEASURED to hold on ALL 3042 terms of degree ≤ 6, `inT` or not — and here it is
+    as a theorem, for every term. -/
+theorem starF_zero_or_isSC : ∀ (f : Nat) (t : Term),
+    starF f t = zero ∨ isSC (starF f t) = true
+  | 0, _ => Or.inl rfl
+  | f + 1, t => by
+    cases t with
+    | zero => exact Or.inl rfl
+    | M => exact Or.inl rfl
+    | psi k a => exact Or.inr rfl
+    | Z a => exact Or.inr rfl
+    | omg a => exact starF_zero_or_isSC f a
+    | add a b =>
+      rw [starF_succ_add]
+      cases ltF f (starF f a) (starF f b)
+      · show starF f a = zero ∨ (starF f a).isSC = true
+        exact starF_zero_or_isSC f a
+      · show starF f b = zero ∨ (starF f b).isSC = true
+        exact starF_zero_or_isSC f b
+    | phi a b =>
+      rw [starF_succ_phi]
+      cases ltF f (starF f a) (starF f b)
+      · show starF f a = zero ∨ (starF f a).isSC = true
+        exact starF_zero_or_isSC f a
+      · show starF f b = zero ∨ (starF f b).isSC = true
+        exact starF_zero_or_isSC f b
+
+/-- The `star` form, at the default fuel. -/
+theorem star_zero_or_isSC (t : Term) : star t = zero ∨ isSC (star t) = true :=
+  starF_zero_or_isSC _ t
+
+/-- **The range of `α*` is sharper than `{0} ∪ SC`: `M` is never a value.**  2.2(i)
+    sends `M` to `0`, and no other clause can produce `M`, so `α*` lands in
+    `{0} ∪ {ψκβ} ∪ {Zβ}` — the SC terms BELOW `M`.  This is the form 3b wants: the
+    clauses that recurse into `δ*` (2.3.6 / 2.3.9 / 2.3.15) compare it against `ψ`
+    terms, and `M` is exactly the shape that would make those comparisons behave
+    differently (`M < φ̄` is false while `ψ < φ̄` need not be). -/
+theorem starF_zero_or_psi_or_Z : ∀ (f : Nat) (t : Term),
+    starF f t = zero ∨ (∃ k a, starF f t = psi k a) ∨ (∃ a, starF f t = Z a)
+  | 0, _ => Or.inl rfl
+  | f + 1, t => by
+    cases t with
+    | zero => exact Or.inl rfl
+    | M => exact Or.inl rfl
+    | psi k a => exact Or.inr (Or.inl ⟨k, a, rfl⟩)
+    | Z a => exact Or.inr (Or.inr ⟨a, rfl⟩)
+    | omg a => exact starF_zero_or_psi_or_Z f a
+    | add a b =>
+      rw [starF_succ_add]
+      cases ltF f (starF f a) (starF f b)
+      · exact starF_zero_or_psi_or_Z f a
+      · exact starF_zero_or_psi_or_Z f b
+    | phi a b =>
+      rw [starF_succ_phi]
+      cases ltF f (starF f a) (starF f b)
+      · exact starF_zero_or_psi_or_Z f a
+      · exact starF_zero_or_psi_or_Z f b
+
+/-- `α*` is never `M`. -/
+theorem starF_ne_M (f : Nat) (t : Term) : starF f t ≠ M := by
+  rcases starF_zero_or_psi_or_Z f t with h | ⟨k, a, h⟩ | ⟨a, h⟩ <;>
+    rw [h] <;> intro hc <;> exact Term.noConfusion hc
+
+/-! #### §8.3.2 What `le (star d) d` will cost — MEASURED, not guessed
+
+§8's Stage 3b names `le (star d) d` and `star d ≤ Z d` as the first things to prove,
+on the evidence of the 171 `inT` terms of degree ≤ 6.  Re-measured here at degree
+≤ 8, on the 1687 `inT` terms, BOTH still hold — the claim survives its first test
+above its calibration depth.  Two further measurements say what the proof will look
+like, and neither is in §8:
+
+  * `le (star d) d` IS NOT `inT`-FREE, unlike everything in §8.2 and unlike
+    `starF_zero_or_isSC` above.  MEASURED: 106 terms of degree ≤ 6 falsify it, the
+    smallest being `0 ⊕ Z0`, whose `*` is `Z0` while its head component is `0`, so
+    2.3.11 asks `Z0 ≤ 0` and gets `false`.  Every one of the 106 fails `inT`.  So
+    this is the point at which 3b stops being able to copy §8.2's `inT`-free style,
+    and the conjunct it needs is 2.1(iii) — components in AP and descending — NOT
+    2.1(vi).  That is a DIFFERENT `inT` destructor from the one §8 item 3 predicted
+    would be needed (`κ ∈ R`); both are needed, for different clauses.
+
+  * K_κ IS NOT NEEDED FOR THIS LAYER.  MEASURED: with the K_κ conjunct of 2.1(vi)
+    deleted, `le (star d) d` and `le (star d) (Z d)` still hold on all 1691 admitted
+    terms of degree ≤ 8.  Since K_κ is the one conjunct with no cheap destructor
+    (`Kset` is itself defined by recursion through `lt`), that is worth knowing
+    before the work is planned: 3b should not budget for a K_κ destructor here.
+
+CORRECTION TO §8's STAGING, and this one matters for planning.  §8 says of
+`le (star d) d` and `le (star d) (Z d)` that "they are the first things to prove in
+3b".  They cannot be proved FIRST: working the induction out, one case of
+`le (star d) d` is entangled with the very theorem 3b is after.  Case by case, with
+`α* ∈ {0} ∪ ψ ∪ Z` (`starF_zero_or_psi_or_Z`) in hand:
+
+  * `0`, `M`, `ψκα`, `Zα` — immediate (`α*` is `0` or `α` itself).
+  * `ω̄^α` — FREE, and it needs no induction hypothesis at all: `(ω̄^α)* = α*`, which
+    is `0`, a `ψ` or a `Z`, and every one of those is below every `ω̄^·` by §8.1's
+    constant rules (`ltF_succ_psi_omg`, `ltF_succ_Z_omg`, `ltF_left_zero`).
+  * `φ̄αβ` — FREE given the induction hypothesis, in ONE step and with no
+    transitivity: `(φ̄αβ)*` is `α*` or `β*`, the hypothesis gives `α* ≤ α`, and
+    2.3.4 (`ltF_succ_psi_phi` / `ltF_succ_Z_phi`) turns `γ ≤ α` straight into
+    `γ < φ̄αβ`.
+  * `⊕(α₁,…,αₙ)` — ENTANGLED.  `⊕* = max(αᵢ*)` and 2.3.11 compares it with the HEAD
+    `α₁` only.  For `α₁*` the hypothesis is exactly what 2.3.11 asks for; but for
+    `αᵢ*` with `i > 1` the hypothesis gives `αᵢ* ≤ αᵢ`, while 2.1(iii) gives only
+    `αᵢ ≤ α₁`, so the step needs `αᵢ* ≤ αᵢ ≤ α₁` — TRANSITIVITY of `≤`, on exactly
+    the terms 3b is trying to order.  And transitivity's `ψ`/`Z` clauses recurse
+    through `starF`, so it cannot be had first either.
+
+So 3b is not a sequence of four steps; `le (star d) d`, comparability, asymmetry and
+transitivity have to close as ONE simultaneous induction (the way §7.3 already had
+to fuse asymmetry with comparability, for a structurally identical reason).  The
+measure should still be §7.4's, since `deg_starF` (§5) guarantees `α*` does not
+raise a degree.  Concretely, what 3b needs:
+
+  1. the `inT` destructors for 2.1(iii) (`inT (add a b) → a.isAP ∧ inT a ∧ inT b`,
+     plus the descending condition) — §6's map already isolated these — AND for
+     2.1(vi)'s `κ ∈ R`, which §8 item 3 shows is what restores comparability;
+     NOT a K_κ destructor (§8.3.2 measured that this layer does not need it);
+  2. one simultaneous induction proving `le (star d) d`, comparability, asymmetry
+     and transitivity together, rather than §8's staged order;
+  3. comparability is the hard half — §8.2.5's sweeps found raw `lt` transitive as
+     far as it can be swept but NOT comparable, and §7/§8.2's route to both
+     asymmetry and 13(iii) runs through comparability;
+  4. 2.3.14 then admits §7.3/§7.4's arguments verbatim (see `ltF_succ_psi_psi`
+     above, which is `ltF_succ_phi_phi`'s `if`-tree with `κ` for `α`). -/
+
+-- receipts for §8.3.2 (samples of the measurements quoted above)
+#guard star (add zero (Z zero)) == Z zero
+#guard le (star (add zero (Z zero))) (add zero (Z zero)) == false
+#guard inT (add zero (Z zero)) == false
+#guard (zero : Term).isAP == false          -- ... and this is why: 2.1(iii) needs AP components
+#guard le (star (add (Z zero) (Z zero))) (add (Z zero) (Z zero)) == true
+#guard star (psi (Z zero) zero) == psi (Z zero) zero
+#guard star M == zero
+#guard star (phi zero (Z zero)) == Z zero
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
