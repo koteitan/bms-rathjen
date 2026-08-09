@@ -12001,6 +12001,140 @@ theorem lim_clauses_phi_zero_succ {p : Term} (hcnp : CNV p = true) :
 #guard succT (ofNat 2) == ofNat 3
 
 
+/-! ### §15.22 THE PARTIAL ASSEMBLY — dispatch the SHAPE, take the SHIFT as a parameter
+
+THE DECISION THIS IMPLEMENTS.  §15.19 mapped the assembly, §15.20's `kindV` unblocked its
+dispatch, and §15.19's INDEX SHIFT remains.  Option (c) — paying §15.3's cost to import `isFP` —
+IS REFUSED ON EVIDENCE RATHER THAN DEFERRED: `isFP` is TWO-VALUED and there are THREE shift
+values.  It separates {ε₀ : +1} from {ω², ω^ω : 0} and cannot produce ω's −1, whose cause is
+already known and is NOT fixed-pointness — `fsC ω n = ofNat (n+1)`, 1-based against the matrix's
+0-based index, proved as `fsC_omega` (§15.12.1).  The cost would buy an INCOMPLETE predictor.
+
+THE SHIFT MEASUREMENT, INDEPENDENTLY RE-RUN AND WIDENED (coordinator, 2026-08-10; record in
+`table/index-shift-2026-08-10.txt`).  The first reading compared each row against LIBRARY
+sequence functions whose anchoring differs, which is the trap `tower` sets; re-measured with BOTH
+sides read from MATRICES, same instrument, same index, ALL THREE SHIFTS SURVIVED:
+
+    ε_ω / ω        −1          ε_{ω²} / ω²     0
+    ε_{ε₀} / ε₀    +1          ε_{ω^ω} / ω^ω   0    ← a second witness at 0, NOT a fixed point
+    ε_{ζ₀+1} / ζ₀  NO shift works at all
+
+The last is a POSITIVE CONTROL, not a counterexample: ζ₀ is a fixed point of φ̄₁, so
+φ̄(1, anything below ζ₀) < ζ₀ < φ̄(1,ζ₀) and no index reaches — §15.18's uniform cap again.  That
+row is template (B).  So the shift question is DEMONSTRATED to arise only inside core (C) rather
+than assumed to.
+NOT ESTABLISHED, and the record says so: four witnesses inside core (C); no predictor other than
+`isFP` was looked for, which is "not looked for" and not "does not exist"; and the CAUSE of ε₀'s
++1 is unidentified — ε₀'s matrix sequence starts at 1 and the row skips that first value, which
+cofinality does not force.
+
+**WHY THE PARAMETER IS NOT A SHORTCOMING.**  Taking the shift explicitly at each call site is not
+merely more honest than computing it — IT IS THE ACCURATE REPRESENTATION.  C2 says the MATRIX
+fixes the sequence, and the shift is exactly the part of the sequence that no property of the
+TERM determines.  A function computing it would be asserting a term-level rule that the
+measurement says is not there.
+
+WHAT THIS SECTION IS.  `fsPhiZero a g` dispatches `φ̄(a,0)` on `kindV a` — core (B) via §15.21
+when `a` is a successor, core (C') via §15.18 when `a` is a limit — and takes the inner sequence
+`g`, INCLUDING ITS SHIFT, as a parameter.  `g`'s four clauses are demanded ONLY in the limit
+branch, where they are meaningful: for a SUCCESSOR `a` no such `g` exists at all — there is no
+strictly increasing cofinal sequence below a successor — so requiring them unconditionally would
+make the theorem VACUOUS in exactly the branch §15.21 was built for. -/
+
+theorem predC_head {v : Term} (hcnv : CNV v = true) (hkv : kindV v = true)
+    (hv1 : (v == one) = false) : predC v ≠ zero ∧ hdOf (predC v) = hdOf v := by
+  cases v with
+  | M => exact Bool.noConfusion hcnv
+  | omg _ => exact Bool.noConfusion hcnv
+  | psi _ _ => exact Bool.noConfusion hcnv
+  | Z _ => exact Bool.noConfusion hcnv
+  | zero => exact Bool.noConfusion hkv
+  | phi p q =>
+    exfalso
+    simp only [kindV, Bool.and_eq_true, beq_iff_eq] at hkv
+    obtain ⟨hp, hq⟩ := hkv
+    subst hp; subst hq
+    exact Bool.noConfusion hv1
+  | add w x =>
+    obtain ⟨hAPw, _, _, _⟩ := cnv_add hcnv
+    have hwz : w ≠ zero := ne_zero_of_isAP hAPw
+    by_cases hx : (x == one) = true
+    · refine ⟨?_, ?_⟩
+      · show (if (x == one) = true then w else add w (predC x)) ≠ zero
+        rw [if_pos hx]; exact hwz
+      · show hdOf (if (x == one) = true then w else add w (predC x)) = w
+        rw [if_pos hx]
+        cases w with
+        | zero => exact absurd rfl hwz
+        | add _ _ => exact Bool.noConfusion hAPw
+        | M => rfl | omg _ => rfl | phi _ _ => rfl | psi _ _ => rfl | Z _ => rfl
+    · refine ⟨?_, ?_⟩
+      · show (if (x == one) = true then w else add w (predC x)) ≠ zero
+        rw [if_neg hx]; intro hc; exact Term.noConfusion hc
+      · show hdOf (if (x == one) = true then w else add w (predC x)) = w
+        rw [if_neg hx]; rfl
+
+theorem cnv_predC : ∀ (a : Term), CNV a = true → kindV a = true → CNV (predC a) = true := by
+  intro a
+  induction a with
+  | M => intro h _; exact Bool.noConfusion h
+  | omg _ _ => intro h _; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h _; exact Bool.noConfusion h
+  | Z _ _ => intro h _; exact Bool.noConfusion h
+  | zero => intro _ h; exact Bool.noConfusion h
+  | phi p q _ _ => intro _ _; rfl
+  | add u v _ ihv =>
+    intro h hk
+    obtain ⟨hAPu, hcnu, hcnv, hdesc⟩ := cnv_add h
+    have hkv : kindV v = true := hk
+    show CNV (if (v == one) = true then u else add u (predC v)) = true
+    by_cases hv1 : (v == one) = true
+    · rw [if_pos hv1]; exact hcnu
+    · rw [if_neg hv1]
+      have hv1' : (v == one) = false := by simpa using hv1
+      obtain ⟨hpz, hhd⟩ := predC_head hcnv hkv hv1'
+      have hvz : v ≠ zero := by intro hc; rw [hc] at hdesc; exact Bool.noConfusion hdesc
+      show (u.isAP && CNV u && CNV (predC v) && hdLe (predC v) u) = true
+      rw [hAPu, hcnu, ihv hcnv hkv,
+        show hdLe (predC v) u = true from by
+          rw [hdLe_eq _ _ hpz, hhd, ← hdLe_eq v u hvz]; exact hdesc]
+      rfl
+
+/-- The `φ̄(a,0)` sequence, DISPATCHED on shape.  The inner sequence `g` — INCLUDING ITS INDEX
+    SHIFT — is a PARAMETER, because no property of the term determines it (§15.19). -/
+def fsPhiZero (a : Term) (g : Nat → Term) : Nat → Term :=
+  if kindV a then fsGen (phi (predC a) zero) (predC a) (phi (predC a) zero)
+  else fun n => phi (g n) zero
+
+/-- **THE PARTIAL ASSEMBLY at `φ̄(a,0)`.**  Dispatches core (B) / core (C') by `kindV`, and takes
+    the inner sequence as a parameter — needed only in the limit branch, where it is meaningful. -/
+theorem lim_clauses_phi_zero {a : Term} (hcna : CNV a = true) (g : Nat → Term)
+    (hg : kindV a = false →
+        (∀ n, CNV (g n) = true) ∧ (∀ n, lt (g n) a = true)
+      ∧ (∀ n, lt (g n) (g (n + 1)) = true)
+      ∧ (∀ s, inT s = true → lt s a = true → ∃ n, le s (g n) = true)) :
+    (∀ n, CNV (fsPhiZero a g n) = true)
+  ∧ (∀ n, lt (fsPhiZero a g n) (phi a zero) = true)
+  ∧ (∀ n, lt (fsPhiZero a g n) (fsPhiZero a g (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (phi a zero) = true →
+        ∃ n, le s (fsPhiZero a g n) = true) := by
+  by_cases hk : kindV a = true
+  · have hpa : CNV (predC a) = true := cnv_predC a hcna hk
+    have hsp : succT (predC a) = a := succT_predC a hcna hk
+    have H := lim_clauses_phi_zero_succ hpa
+    rw [hsp] at H
+    show (∀ n, CNV (fsPhiZero a g n) = true) ∧ _
+    simp only [fsPhiZero, if_pos hk]
+    exact H
+  · have hk' : kindV a = false := by simpa using hk
+    obtain ⟨h1, h2, h3, h4⟩ := hg hk'
+    simp only [fsPhiZero, if_neg hk]
+    exact lim_clauses_phi_arg1 g h1 h2 h3 h4 hcna
+
+#guard fsPhiZero (ofNat 2) (fun _ => zero) 1 == phi one eps0T
+#guard fsPhiZero omega (fun n => ofNat (n+2)) 0 == phi (ofNat 2) zero
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
