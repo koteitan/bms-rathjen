@@ -2120,4 +2120,56 @@ theorem tdepth_predOr_add_zero (x : Term) :
       List.takeWhile, h, List.length]
     exact Nat.le_refl _
 
+
+/-! ### §11.8 THE ROUNDTRIP AS A BOUND — the AP condition does not appear after all
+
+Branch A wants `toList (ofList prefix)`, and that is where the AP condition was expected
+to arrive: the IDENTITY `ofList (toList t) = t` is false (4 violations of 251 here, 30 of
+578 for veblen2) and its repair is 2.1(iii) in its third disguise.
+
+**BUT THE ASSEMBLY CONSUMES A BOUND, NOT AN IDENTITY — house technique, FIFTH use:**
+
+    identity   ofList (toList t) = t                        4 violations of 251
+    BOUND      tdepth (ofList (toList t)) ≤ tdepth t        0 violations, margin 0
+    the shape branch A needs                                0 violations
+        tdepth (ofList (toList ((splitFin t).1))) ≤ tdepth t
+
+**So the AP condition does not appear**, and `tdepth_ofList_toList` below is four lines by
+induction on the term.  Third zero-margin case in this file: the bound is tight, so
+nothing weaker would have done, and the identity — which is what everyone reaches for —
+is strictly stronger than what is needed and false.
+
+THE PATTERN IS NOW WORTH STATING AS A RULE, since it has decided five separate obstacles:
+**when a normal-form fact blocks you, check whether what you consume is the EQUALITY or
+only a BOUND ON A MEASURE.  The bound survives the terms the equality dies on, because
+the measure is what `toList`/`ofList` preserve and the structure is not.** -/
+
+theorem tdepth_ofList_toList : ∀ (t : Term), tdepth (ofList (toList t)) ≤ tdepth t := by
+  intro t
+  induction t with
+  | zero => simp only [toList, ofList]; exact Nat.le_refl _
+  | M => simp only [toList, ofList]; exact Nat.le_refl _
+  | omg _ _ => simp only [toList, ofList]; exact Nat.le_refl _
+  | psi _ _ _ _ => simp only [toList, ofList]; exact Nat.le_refl _
+  | Z _ _ => simp only [toList, ofList]; exact Nat.le_refl _
+  | phi _ _ _ _ => simp only [toList, ofList]; exact Nat.le_refl _
+  | add u v _ ihv =>
+    simp only [toList]
+    cases h : toList v with
+    | nil => simp only [ofList, tdepth]; omega
+    | cons y ys =>
+      show tdepth (TM.Term.add u (ofList (y :: ys))) ≤ tdepth (TM.Term.add u v)
+      rw [h] at ihv
+      simp only [tdepth] at ihv ⊢
+      omega
+
+def wideAll : List Term := (allM ++ addHead ++ probeXY.map (fun p => TM.Term.add p.1 p.2)
+  ++ [TM.Term.add zero zero, TM.Term.add TM.Term.M zero, TM.Term.add one zero,
+      TM.Term.add (phi one zero) zero, TM.Term.add zero one]).eraseDups
+
+-- the identity fails where the bound holds — banked so the distinction stays visible
+#guard (wideAll.filter (fun t => !(ofList (toList t) == t))).length == 4
+#guard (wideAll.filter (fun t => !(tdepth (ofList (toList t)) <= tdepth t))).length == 0
+#guard wideAll.foldl (fun m t => min m (tdepth t - tdepth (ofList (toList t)))) 99 == 0
+
 end Evidence.SqV
