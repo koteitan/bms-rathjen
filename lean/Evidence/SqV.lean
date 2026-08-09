@@ -2344,4 +2344,70 @@ prove. -/
         tdepth (TM.Term.add (ofNat 3) (ofNat 3))) == (5, 4, 4)
 #guard !(predOr (ofNat 3) == zero)
 
+
+/-! ## §13 WHAT ACTUALLY DECREASES — the measure question, measured  (2026-08-10)
+
+Two measures have died: `deg` at `omLog` (§9.2) and `tdepth` at `predOr` (§12).  Rather
+than guess a third, the coordinator asked for the table — measure-before-designing applied
+to the MEASURE.  Over 263 junk terms including both known witnesses, the `add`-headed
+family, `φ̄(0,M)` and the zero-component terms, counting VIOLATIONS of "does not increase"
+at each of `encvF`'s three non-structural recursion sites:
+
+                       predOr     omLog     fpDeep out
+    deg                   0         25          0
+    tdepth                1          0          0
+    size (constructors)   0         25          0
+    ncomp (components)    3         44          0
+    deg + tdepth          0         25          0
+    size + tdepth         0         25          0
+    lt, where it changes  0/55       6/78       8/74
+
+**NO SINGLE MEASURE IN THIS FAMILY WORKS AT ALL THREE SITES**, and the failures are in
+OPPOSITE DIRECTIONS, which is why sums do not rescue them: `predOr` FLATTENS (raises
+nesting, lowers or preserves `deg` and `size`) and `omLog` NESTS (raises `deg` and `size`,
+preserves nesting).  A sum inherits both failures; a lexicographic pair inherits whichever
+component it tests first.  **The category is dead by measurement, not by two failures.**
+
+THE ORDER — the coordinator's third direction — IS THE INTERESTING ROW.  `predOr` strictly
+DECREASES `lt` whenever it changes the term: **0 violations of 55**.  That is the site
+where every arithmetic measure struggles, and the order handles it exactly.  But `omLog`
+violates on 6 of 78 and `fpDeep`'s output on 8 of 74, so `lt` is not a measure for the
+recursion as a whole either — **and it fails at the two sites the arithmetic measures
+handle.**  The three sites do not admit a common order.
+
+WHAT THAT LEAVES, stated as measurement rather than as a plan: the recursion has three
+sites with genuinely different behaviour, and `encvF`'s termination is currently carried by
+the FUEL alone — which is why `encv` picks `2 * deg + 8` and why D8 measured that as
+sufficient (0 violations over 234, and still 0 on the badHosts of §12).  **The fuel works;
+what has no proof is that it works.** -/
+
+def ncomp (t : Term) : Nat := (toList t).length
+
+def tsize : Term → Nat
+  | .zero => 1 | .M => 1
+  | .omg a => 1 + tsize a | .Z a => 1 + tsize a
+  | .psi a b => 1 + tsize a + tsize b
+  | .phi a b => 1 + tsize a + tsize b
+  | .add a b => 1 + tsize a + tsize b
+
+def junk : List Term :=
+  (wideAll ++ addHead ++ badHosts ++
+   [badPredOr, phi zero TM.Term.M, TM.Term.add zero zero, TM.Term.add TM.Term.M zero,
+    ofNat 3, ofNat 5, TM.Term.add (ofNat 3) (ofNat 2), TM.Term.add (ofNat 2) (ofNat 3),
+    TM.Term.add (TM.Term.add one one) one, TM.Term.add (ofNat 3) (ofNat 3)]).eraseDups
+
+#guard junk.length == 263
+-- the row that decides it: every candidate fails at some site
+#guard (junk.filter (fun t => !((omLog t).deg <= t.deg))).length == 25
+#guard (junk.filter (fun t => !(tdepth (predOr t) <= tdepth t))).length == 1
+#guard (junk.filter (fun t => !(tsize (omLog t) <= tsize t))).length == 25
+#guard (junk.filter (fun t => !(ncomp (predOr t) <= ncomp t))).length == 3
+#guard (junk.filter (fun t => !((omLog t).deg + tdepth (omLog t) <= t.deg + tdepth t))).length == 25
+-- the order: perfect at `predOr`, and not at the other two
+#guard (junk.filter (fun t => !(predOr t == t) && !(TM.Term.lt (predOr t) t))).length == 0
+#guard (junk.filter (fun t => !(omLog t == t) && !(TM.Term.lt (omLog t) t))).length == 6
+-- and the fuel still suffices everywhere, which is what has no proof
+#guard (junk.filter (fun t =>
+          !((List.range 4).all (fun k => encvF (2 * t.deg + 8 + k) t 0 == encv t 0)))).length == 0
+
 end Evidence.SqV
