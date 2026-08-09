@@ -9244,6 +9244,101 @@ theorem lim_clauses_rowA :
 #guard fsA 1 == add eps0T eps0T
 #guard (List.range 6).all (fun n => CNV (fsA n) && lt (fsA n) rowA && lt (fsA n) (fsA (n+1)))
 
+
+/-! ### §15.5 TOWARD CORE (B): the ITERATED closed forms
+
+Row A's template (§15.4) covers rows whose sequence REPEATS — `u·(n+1)`.  The ε-hierarchy
+does not: ε₁ = φ̄(1,1) ITERATES, and per the classical Veblen fundamental sequence the
+twelve rows split over exactly three shapes, not twelve —
+
+    (A) `repAdd u`              u·(n+1)                     §15.4, done
+    (B) iterate `φ̄ u` from a base   the successor branch    ε₁, ζ₀
+    (C) `φ̄ a (fs of b)`         the limit-argument branch   ε_ω, ε_{ω²}, ε_{ω^ω}, ε_{ε₀}
+                                (MEASURED: fsN ε_ω n = ε_n)
+
+This section supplies what core (B) rests on.  Its "strictly increasing" clause reduces to
+`x < φ̄ u x`, and the lemma below gives that — in a form strictly stronger than §12's
+`lt_pow_self`, which is stated for `CN` and only for `u = 0`.  The strengthening to
+`x ≤ y → x < φ̄ u y` is not decoration: it is what makes the induction close, since the
+`φ̄`-case at 2.3.13(i) needs the hypothesis at a DIFFERENT second argument.
+
+WHAT IS NOT DECIDED YET, and deliberately not baked in: ε₁ admits (at least) THREE distinct
+closed forms — iterate `ω^·` from `ε₀+1` (classical), from `ε₀` (simplest), and `fsN`'s own,
+which takes `ε₀+1` at n = 0 and then iterates from `ε₀`.  MEASURED: all three are CNV at
+every index, strictly increasing, below ε₁, and COFINAL.  So the choice is not a
+mathematical one and must come from the BMS side — Row A's value came from agreeing with
+the certificate lane's independently measured expansions INDEX BY INDEX, and picking here by
+taste would forfeit exactly that.  Core (B) is therefore being built parameterised by the
+base, so whichever the matrices dictate instantiates in one line. -/
+
+/-- Strengthened so the induction closes: `x ≤ y` puts `x` strictly below `φ̄ u y`, for
+    EVERY first argument `u`.  Taking `y = x` gives the CNV analogue of §12's `lt_pow_self`,
+    which is stated for `CN` and only for `u = 0`. -/
+private theorem lt_phi_of_le_aux : ∀ (n : Nat) (x y u : Term), x.deg ≤ n →
+    CNV x = true → CNV y = true → le x y = true → lt x (phi u y) = true := by
+  intro n
+  induction n with
+  | zero => intro x _ _ hd; have := deg_pos x; omega
+  | succ n ih =>
+    intro x y u hd hx hy hle
+    cases x with
+    | M => exact Bool.noConfusion hx
+    | omg _ => exact Bool.noConfusion hx
+    | psi _ _ => exact Bool.noConfusion hx
+    | Z _ => exact Bool.noConfusion hx
+    | zero =>
+      show ltF (fuelOf zero (phi u y)) zero (phi u y) = true
+      exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (phi u y).deg) + 8; omega)
+        (by intro hc; exact Term.noConfusion hc)
+    | phi p q =>
+      obtain ⟨hcp, hcq⟩ := cnv_phi hx
+      have hdq : q.deg ≤ n := by
+        have e : (phi p q).deg = 1 + p.deg + q.deg := rfl
+        have := deg_pos p; omega
+      have hqx : lt q (phi p q) = true := ih q q p hdq hcq hcq (le_self q)
+      have hne : phi p q ≠ phi u y := by
+        intro hc; injection hc with h1 h2
+        subst h2
+        have hbad : lt q q = true :=
+          lt_of_lt_of_le (frag_of_cnv _ hcq) (frag_of_cnv _ hx) (frag_of_cnv _ hcq) hqx hle
+        rw [lt_irrefl] at hbad; exact Bool.noConfusion hbad
+      rw [lt_phi_phi hne]
+      by_cases hpu : p = u
+      · rw [if_pos hpu]
+        exact lt_of_lt_of_le (frag_of_cnv _ hcq) (frag_of_cnv _ hx) (frag_of_cnv _ hy) hqx hle
+      · rw [if_neg hpu]
+        by_cases hpl : lt p u = true
+        · rw [if_pos hpl]
+          have h2 : le q y = true :=
+            le_of_lt (lt_of_lt_of_le (frag_of_cnv _ hcq) (frag_of_cnv _ hx)
+              (frag_of_cnv _ hy) hqx hle)
+          exact ih q y u hdq hcq hy h2
+        · rw [if_neg hpl]; exact hle
+    | add c d =>
+      obtain ⟨hAPc, hcc, hcd, _⟩ := cnv_add hx
+      have hdc : c.deg ≤ n := by
+        have e : (add c d).deg = 1 + c.deg + d.deg := rfl
+        have := deg_pos d; omega
+      rw [lt_add_phi]
+      have hcx : lt c (add c d) = true := by
+        rw [lt_atom_add (isAtom_of_isAP hAPc)]
+        exact le_self c
+      exact ih c y u hdc hcc hy
+        (le_of_lt (lt_of_lt_of_le (frag_of_cnv _ hcc) (frag_of_cnv _ hx)
+          (frag_of_cnv _ hy) hcx hle))
+
+/-- `x ≤ y` puts `x` strictly below `φ̄ u y`, for every `u`. -/
+theorem lt_phi_of_le {x y u : Term} (hx : CNV x = true) (hy : CNV y = true)
+    (hle : le x y = true) : lt x (phi u y) = true :=
+  lt_phi_of_le_aux x.deg x y u (Nat.le_refl _) hx hy hle
+
+/-- **The CNV analogue of §12's `lt_pow_self`, and strictly stronger**: that one is stated
+    for `CN` and only for `ω^· = φ̄0·`; this holds on all of `CNV` and for EVERY first
+    argument.  It is what makes the "strictly increasing" clause of an ITERATED closed form
+    (core (B)) immediate. -/
+theorem lt_phi_self {x : Term} (hx : CNV x = true) (u : Term) : lt x (phi u x) = true :=
+  lt_phi_of_le hx hx (le_self x)
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
