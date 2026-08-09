@@ -184,4 +184,31 @@ theorem esucc (n : Nat) : o? (BMS.expand M n) = some (predT t) :=
 
 end «(0,0)(1,1)(2,1)(3,1)(0,0)»
 
+/-! ### Rows `(0,0)(1,1)…(a,1)(1,0)` = `φ̄(0,φ̄(a,0))`, instances of the F4 `b = 1` case
+(`Evidence.StageB.e3_F4bfamily`; `a = 1` is Rows/ProofsB.lean's R2). -/
+
+namespace «(0,0)(1,1)(2,1)(1,0)»
+
+def M : Matrix := [[0,0],[1,1],[2,1],[1,0]]
+def t : Term := phi zero (phi (ofNat 2) zero)
+
+theorem e1 : o? M = some t := rfl
+
+theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 1)) :=
+  Evidence.StageB.e3_val4b 1 n
+
+end «(0,0)(1,1)(2,1)(1,0)»
+
+namespace «(0,0)(1,1)(2,1)(3,1)(1,0)»
+
+def M : Matrix := [[0,0],[1,1],[2,1],[3,1],[1,0]]
+def t : Term := phi zero (phi (ofNat 3) zero)
+
+theorem e1 : o? M = some t := rfl
+
+theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 1)) :=
+  Evidence.StageB.e3_val4b 2 n
+
+end «(0,0)(1,1)(2,1)(3,1)(1,0)»
+
 end Rows.Proofs
