@@ -6369,6 +6369,91 @@ theorem neg_control_eps0_times_two_strong :
   no_cert_above_eps0 _ (by decide)
 
 
+/-! ### §15.9 THE MUTANT: why §14's guard is not decoration
+
+`Certified` is NOT single-valued on the raw type `Term`, and the witness is §8's
+junk term at the ω row.  `1 + M` is not a term of 𝔗(M) (`M ≰ 1`, so 2.1(iii)
+fails), but the head-only comparison of formal sums puts every finite term below
+it and nothing else of 𝔗(M) below it — so the four `lim` clauses hold with the
+SAME expansion values `fs' n = n+1` that `cert_omega` uses, and the ω row carries
+two certified values, ω and `1 + M`.
+
+This is the mutant for §14: delete the `Dom` guard from `cert_unique_in` and the
+theorem becomes FALSE, by `cert_not_single_valued` below.  It is also the machine
+version of design input 2 of plan/README.md ("quantify over `inT` terms"), and it
+is why §14 guards the values ALL THE WAY DOWN rather than only at the top: the
+same junk can sit at any expansion of any row. -/
+
+private theorem ofNat_ne_M : ∀ n, ofNat (n + 1) ≠ M
+  | 0 => by intro hc; exact Term.noConfusion hc
+  | n + 1 => by rw [ofNat_shape n]; intro hc; exact Term.noConfusion hc
+
+private theorem lt_ofNat_M : ∀ n, lt (ofNat n) M = true
+  | 0 => rfl
+  | 1 => rfl
+  | n + 2 => by rw [ofNat_shape n, lt_add_ap one (ofNat (n + 1)) rfl]; rfl
+
+private theorem lt_ofNat_junk : ∀ n, lt (ofNat (n + 1)) (add one M) = true
+  | 0 => rfl
+  | n + 1 => by
+    rw [ofNat_shape n,
+      Evidence.WF.lt_add_add (by
+        intro hc; injection hc with _ h2; exact ofNat_ne_M n h2),
+      if_pos rfl]
+    exact lt_ofNat_M (n + 1)
+
+/-- The cofinality clause for the junk value `1 + M`: the terms of 𝔗(M) below it
+    are exactly the finite ones, because a sum is compared by its head and nothing
+    of 𝔗(M) is strictly between `0` and `1`. -/
+private theorem cofinal_junk (s : Term) (hs : inT s = true) (h : lt s (add one M) = true) :
+    ∃ n, le s (ofNat (n + 1)) = true := by
+  by_cases hz : s = zero
+  · exact ⟨0, by rw [hz]; rfl⟩
+  · have hhead : le ((toList s).headD zero) one = true := by
+      by_cases hap : isAP s = true
+      · rw [TM.Term.toList_of_isAP hap]
+        show le s one = true
+        rw [lt_ap_add hap one M] at h
+        exact h
+      · cases s with
+        | zero => exact absurd rfl hz
+        | M => exact absurd rfl hap
+        | omg _ => exact absurd rfl hap
+        | phi _ _ => exact absurd rfl hap
+        | psi _ _ => exact absurd rfl hap
+        | Z _ => exact absurd rfl hap
+        | add a b =>
+          obtain ⟨hapa, hina, _⟩ := inT_add hs
+          by_cases hone : a = one
+          · show le a one = true
+            rw [hone]; exact Evidence.WF.le_self one
+          · exfalso
+            rw [Evidence.WF.lt_add_add (by
+                intro hc; injection hc with h1 _; exact hone h1), if_neg hone] at h
+            rw [Evidence.WF.below_one a hina _ h] at hapa
+            exact Bool.noConfusion hapa
+    obtain ⟨j, hj⟩ := tail_ofNat s hs hz hhead
+    exact ⟨j, by rw [hj]; exact Evidence.WF.le_self _⟩
+
+/-- **The junk certificate.**  `(0)(1)` carries the value `1 + M` as well as ω. -/
+theorem junk_omega_row : Certified [[0], [1]] (add one M) :=
+  .lim (fun n => ofNat (n + 1)) rfl
+    (fun n => by rw [expand_omega n]; exact cert_zeros (n + 1))
+    lt_ofNat_junk
+    (fun n => lt_ofNat_succ (n + 1))
+    cofinal_junk
+
+/-- The junk value fails the formation conditions — this is exactly what `DomF`
+    excludes, and `cert_omega` is the guarded one (`certIn_padSq` at `ω`). -/
+theorem junk_not_inT : inT (add one M) = false := rfl
+
+/-- **`Certified` IS NOT SINGLE-VALUED ON RAW TERMS.**  Hence no theorem of the
+    form `Certified M t → Certified M u → t = u` is true, and §14's guard (or some
+    other restriction to 𝔗(M)) is forced, not stylistic. -/
+theorem cert_not_single_valued :
+    Certified [[0], [1]] omega ∧ Certified [[0], [1]] (add one M) ∧ omega ≠ add one M :=
+  ⟨cert_omega, junk_omega_row, by intro hc; exact Term.noConfusion hc⟩
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate.
