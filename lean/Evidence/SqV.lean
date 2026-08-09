@@ -1876,8 +1876,24 @@ FIRST, THE GOOD NEWS, MEASURED ON EXACTLY THE BLIND REGION: all six `tdepth` fac
 those 14 terms — `predOr` 0 violations, `omLog` 0, summands/headD/fpDeep 0, minFuel 0.  There
 is no second counterexample; what the region kills is the two ROUTES, not the lemma.
 
+**AND THAT IS THE RULE TO TAKE FROM IT: WHEN A CORPUS TURNS OUT BLIND, RE-CHECK THE ROUTES
+IT VALIDATED AS WELL AS THE CLAIMS.**  Someone re-checking only "does my lemma survive the
+new region" gets a clean answer here — all six hold — and keeps a dead route: the roundtrip
+and `plus_ofNat_succ`'s `CNV` are both refuted by the same 14 terms that refute nothing about
+the lemmas.  A blind corpus validates the WAY you were going to prove something just as
+silently as it validates what you were going to prove.
+
+AND ON HOW THE ROUTE WAS CHOSEN, so the record is fair: L1/L2 were recommended over (S)
+because they already existed, which was correct on the information both lanes had.  It was
+overturned by a fact neither had — `CNV` is not dischargeable where `encvF` actually calls
+`predOr`.  **"Already proved" is a COST argument; "usable here" is a FEASIBILITY one, and
+the second decides.**  Neither lane was wrong; the corpus was.
+
 SO THE ROUTE IS (S), AND IT IS PROVED HERE BY THE SAME MOVE AS `tdepth_ofList_take`:
-induct on the TERM, not on the list, and the roundtrip never appears.  `plus_eq_of_toList`
+induct on the TERM, not on the list, and the roundtrip never appears.  **Third use of that
+move in this file — `tdepth_ofList_take`, `tdepth_summands`, and now (S) — and each time it
+makes the normal-form fact UNNECESSARY rather than merely avoided.  It is the house
+technique for any bound about `ofList` of something derived from `toList t`.**  `plus_eq_of_toList`
 is unconditional, `toList_ofNat` is unconditional, and `filter` yields a sublist — so
 `tdepth_predOr` needs no `CNV` and no normal-form fact at all. -/
 
