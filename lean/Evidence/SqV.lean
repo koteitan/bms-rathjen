@@ -988,10 +988,13 @@ where a bundle exists.  That set is exactly what `sqv_decomp` will be applied to
 is a minority of the corpus and the file should say so rather than let "D7 green" read as
 "green everywhere":
 
-    D7 domain          48 of 269 corpusW terms
+    D7 domain          24 DISTINCT terms (48 list entries)
       11 named rows    ε₀, ε₁, ε₂, ε₃, ε_ω, ε_{ω²}, ε_{ω^ω}, ε_{ε₀}, ζ₀, ε_{ζ₀}, φ̄(ω,0)
-      37 CN limits     paired with `Evidence.WF.fsC`
-    no bundle         221 of 269
+      13 CN limits     paired with `Evidence.WF.fsC` (37 entries)
+    no bundle         145 of the 169 distinct terms
+
+**THE DISTINCT COUNT IS THE ONE THAT MEANS ANYTHING, AND IT IS NOT THE ONE THIS FILE HAS
+BEEN REPORTING** — see §8.
 
 RESULT: **0 failures, all at SHIFT 0**, with the shift-1 control failing on all 48 — so
 the check discriminates rather than being satisfied by any pairing.
@@ -1056,5 +1059,52 @@ def cnLims : List Term :=
           Trans.oR (BMS.expand (sqv (phi one one)) n) == some (TM.Term.fsN (phi one one) (n + s)))))
 #guard (List.range 4).all (fun n => Trans.oR (BMS.expand (sqv (phi one one)) n)
           == some (Evidence.WF.fsEsucc 0 n))
+
+
+/-! ## §8 THE DENOMINATORS ARE LIST LENGTHS, NOT SET SIZES  (correction, 2026-08-10)
+
+Every count in this file — "0 of 234", "130 of 1076", "48 of 269" — is over a LIST, and
+the lists contain duplicates.  `corpus` is built by two `flatMap`s over `bases` and the
+same term arises many ways:
+
+    corpus        234 entries    119 DISTINCT
+    nested         35 entries     35 distinct
+    deeper         15 entries     15 distinct
+    corpusW       269 entries    154 DISTINCT
+    corpusW+deeper 284 entries   169 DISTINCT
+    cnLims         37 entries     13 DISTINCT
+    D7 domain      48 entries     24 DISTINCT
+
+NO VERDICT CHANGES: zero failures over a multiset is zero failures over its underlying
+set, and a failure count is an upper bound on distinct failures.  **What changes is every
+COVERAGE claim**, which is what this whole file has been about.  "All six green on 269
+terms" is really 154 terms tested 269 times, and "D7 green on 48" is 24 terms tested 48
+times.  A denominator that looks like coverage and is not is the same species as counting
+instead of comparing sets (§5.3) — a number that reads as a result.
+
+The distinct `fpReach` distribution, which is the one §5.1a should have printed:
+
+    depth   0    1   2   3   4   5
+            111  10  5   5   5   0
+
+— so the depth-4 probe is 5 distinct terms out of 169, and depth 5 is where the corpus
+now stops.  The shape of §5.1a's conclusion is unchanged and its numbers were inflated.
+
+I am NOT deduplicating the lists.  The candidate table in §3 compares candidates 1–13 on
+the same denominators, and changing them now would break every historical row for no gain
+— the correction is to READ them as list lengths, which is what this section is for. -/
+
+#eval ("entries vs distinct",
+       (corpus.length, corpus.eraseDups.length),
+       (corpusW.length, corpusW.eraseDups.length),
+       ((corpusW ++ deeper).length, (corpusW ++ deeper).eraseDups.length))
+
+#guard corpus.eraseDups.length == 119
+#guard corpusW.eraseDups.length == 154
+#guard (corpusW ++ deeper).eraseDups.length == 169
+#guard ((bundles.map (fun p => p.1)) ++ cnLims).eraseDups.length == 24
+#guard ((List.range 6).map (fun k =>
+  ((corpusW ++ deeper).eraseDups.filter (fun t => fpReach t == some k)).length))
+    == [111, 10, 5, 5, 5, 0]
 
 end Evidence.SqV
