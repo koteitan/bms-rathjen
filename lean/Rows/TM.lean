@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.29"
+def version : String := "v0.1.30"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -178,6 +178,7 @@ structure RegionRow where
   boundT : Term        -- exclusive upper bound of the region (insertion point)
   proof : String := "" -- theorem name in `proofFile` ("" = pending)
   proofFile : String := "Evidence/StageA.lean"  -- file of the theorem, relative to lean/
+  plainCells : Bool := false -- render tm/nm as plain text (for case-split umbrella rows)
   evLabel : String := ""
   evPath : String := ""
   note : String := ""
@@ -192,6 +193,14 @@ def regions : List RegionRow := [
     evLabel := "checkAll",
     evPath := "../lean/Test/TransTest.lean",
     note := "区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明" },
+  { bms := "(0,0)(1,1)…(a,1)(b,r), a≥1, b≤a+1, (b,r)≠(0,1)",
+    tm := "下の 7 行の場合分け",
+    nm := "",
+    boundT := phi omega zero,
+    proof := "e1_F4unified",
+    proofFile := "Evidence/StageB.lean",
+    plainCells := true,
+    note := "傘: 梯子+1列の全行列で o? が定義され 7 分岐の値に一致 (E1 を全ての a で証明)。E3 は下の各族行の形で成立" },
   { bms := "(0,0)(1,1)…(a,1), a≥1",
     tm := "\\bar{\\varphi}(a,0)",
     nm := "\\varepsilon_0,\\ \\zeta_0,\\ \\bar{\\varphi}(3,0),\\ldots",
@@ -270,7 +279,9 @@ def regionLine (regionProofLine : String → String → Option Nat) (g : RegionR
     else match regionProofLine g.proofFile ("theorem " ++ g.proof) with
       | some n => "[✅](../lean/" ++ g.proofFile ++ "#L" ++ toString n ++ ")"
       | none => ""
-  "| **" ++ g.bms ++ "** | $`" ++ g.tm ++ "`$ | $`" ++ g.nm ++ "`$ | " ++
+  let cell (s : String) : String :=
+    if g.plainCells || s == "" then s else "$`" ++ s ++ "`$"
+  "| **" ++ g.bms ++ "** | " ++ cell g.tm ++ " | " ++ cell g.nm ++ " | " ++
     proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
 
 /-- The contents of table/r1-tm.md.

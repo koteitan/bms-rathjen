@@ -4357,4 +4357,467 @@ so the region-wide theorem stays parked. -/
   Trans.o? (BMS.expand (M4z q) n) == some (zt q)
 #guard (List.range 4).all fun q => M4 q (q+1) == M3 q && M4 q (q+2) == M1 (q+1)
 
+/-! ## §11 FEASIBILITY MAP — "ladder + two columns" (assessment, no proofs)
+
+The next unit after F4, mapped the same way §8 mapped the region.  Standardness
+verdicts come from the yaBMS BM4 reference implementation (`c/bms -s`), values and
+bad roots from computation; the `#guard`s at the end pin the three facts the
+recommendation rests on.
+
+### §11.1 The window and the counts
+
+For `a = 1 … 4`, every pair of columns `(b₁,r₁)(b₂,r₂)` with `bᵢ ≤ a+2`, `rᵢ ≤ 1`
+appended to the ladder `(0,0)(1,1)…(a,1)`:
+
+    a    pairs   standard   of those:  first col (a+1,1)   second col (0,0)   new limits
+    1     64        23                       7                   4               12
+    2    100        40                       9                   6               25
+    3    144        61                      11                   8               42
+    4    196        86                      13                  10               63
+
+### §11.2 The decomposition: an F4 column, then one more
+
+Every standard two-column extension has an ADMISSIBLE F4 column first — the same
+seven-way classification as §8.5 — and the second column then acts on the value the
+first produced.  The six classes of first column that are not `(a+1,1)`:
+
+    I    (0,0)      ladder + 1     value  φ̄(a,0) + (a sum read at level 1)
+    II   (1,0)      case B         value  φ̄(0, φ̄(a,0) + …)
+    III  (b,0) 2≤b≤a  case C       value  φ̄(b-1, φ̄(0, φ̄(a,0) + …))
+    IV   (a+1,0)    F2             value  φ̄(a, … )
+    V    (b,1) 1≤b<a  case A       value  φ̄(b, φ̄(a,0) + …)
+    VI   (a,1)      F3             value  φ̄(a, 1 + …) / φ̄(0, φ̄(a,1))
+
+Read the pattern as: the first column fixes an outer `φ̄(c,·)`, the second column
+either adds a summand INSIDE that argument, or wraps one more `φ̄` around it, or
+increments the second Veblen argument (`φ̄(1,1)` → `φ̄(1,2)` at `a = 1`, VI + `(1,1)`).
+
+### §11.3 What is already proved
+
+First column `(a+1,1)` extends the ladder, so those matrices ARE `M1 (q+1) ++ [c]`
+and F4 at `a+1` covers them outright (`#guard` below).  That is 7/9/11/13 of the
+standard pairs at `a = 1/2/3/4` — the whole `(a+1,1)` row of the table, free.
+
+### §11.4 The successors are a single general lemma, and not a family at all
+
+Second column `(0,0)` (4/6/8/10 of the pairs) is a successor: `expand?` drops it and
+the value is one more than the value of the ladder-plus-first-column.  Measured over
+the whole expansion fan of the boundary matrix:
+
+    o? (M ++ [(0,0)]) = plus (o? M) one    for every M of the fragment
+
+so this is not a two-column phenomenon at all — it is ONE lemma about appending a
+row-0-zero column, provable from `§9`'s fuel-free `oLV` plus `blocksP_append_zero`
+(the fold gains one block whose contribution is `ω^0 = 1`), and it would cover every
+successor row of the whole Stage-B region at once, `o?_M4z` included.  **Recommended
+first target: it is cheap, general, and independent of everything else.**
+
+### §11.5 Where the risk is: the bad root leaves `{0, b-1}`
+
+In F4 the bad root was always `0` (last column row-1 = 1) or `b-1` (row-1 = 0), and
+§4's `filter_downFrom` delivered exactly that: filtering the descending row-0 parent
+chain by "row-1 entry < 1" leaves the single column `0`.  With two extra columns that
+is FALSE: the first extra column can itself have row-1 entry 0 and sit above column 0
+in the chain, and then IT is the bad root.  Measured bad roots at `a = 2`
+(ladder length 3, extra columns at indices 3 and 4) over the new limit shapes: they
+take the values `0`, `1` (an interior ladder column) and `3` (THE FIRST EXTRA COLUMN).
+
+    e.g.  (0,0)(1,1)(2,0)(3,1)  — R5 — has bad root 2, the first extra column,
+          and expands to (0,0)(1,1)(2,0)(3,0)(4,0)… : the bad part is the single
+          column (2,0), copied with Δ₀ = 1.
+
+So the one piece of new machinery this unit needs is the generalization of §4:
+`filter_downFrom` must become "the filter leaves the LARGEST row-1-zero column of the
+chain", with the position of that column as a parameter.  Everything downstream
+(`frep`, the chain lemmas, the accumulator) already carries the bad root as a
+parameter, so this is the single point of concentration — the analogue of the case-A
+chain step, and I expect it to be of similar size.
+
+### §11.6 Recommended targets, in order
+
+  T1  the append-`(0,0)` lemma of §11.4 — one lemma, whole-region successor coverage.
+  T2  `(0,0)(1,1)…(a,1)(a+1,0)(a+2,1) = φ̄(a, ε₀)` for every `a ≥ 1` — R5 is `a = 1`,
+      currently a hand proof in `Rows/ProofsB.lean`.  Bad root = the first extra
+      column, Δ₀ = 1, and the expansion is the ladder followed by a run of row-1-zero
+      columns `(a+1,0)(a+2,0)…` — the F2 shape with `r = 0`, so after T1's §4
+      generalization this should be the easiest of the new families.  It also retires
+      a hand proof, which is the same compression F4 achieved for R1–R4/R6–R9.
+  T3  the rest of class IV (first column `(a+1,0)`, i.e. F2 plus one column): 5/7/9
+      shapes per `a`, all sharing T2's bad-root structure.
+  Classes I–III, V, VI after that; they need no new machinery beyond T1/T2's, only
+  more case analysis, and their values are the "summand inside the argument" shapes.
+
+Not recommended before the above: anything that needs the standardness predicate.
+The §8.2 finding is unchanged — there is no `stdSeq`-shaped `stdPair` — so every
+theorem here stays a statement about an explicitly given family, as in F4. -/
+
+-- §11.3  the `(a+1,1)` first column extends the ladder: F4 at `a+1` covers it
+#guard (List.range 4).all fun q => (List.range 4).all fun b => (List.range 2).all fun r =>
+  (M1 q ++ [[q+2,1],[b,r]]) == (M1 (q+1) ++ [[b,r]])
+-- §11.4  appending a row-0-zero column adds one, over the boundary's expansion fan
+#guard ((Evidence.corpus [[0,0],[1,1],[2,2]] 3 3).filter
+    (fun m => m != [] && Trans.Pair.inFrag m)).all fun m =>
+  match Trans.o? m, Trans.o? (m ++ [[0,0]]) with
+  | some v, some w => w == plus v one
+  | _, _ => true
+-- §11.5/§11.6  the T2 family and its bad root (R5 is a = 1)
+#guard (List.range 4).all fun q =>
+  Trans.o? (M1 q ++ [[q+2,0],[q+3,1]]) == some (phi (ofNat (q+1)) (phi one zero))
+#guard (List.range 4).all fun q =>
+  let m := M1 q ++ [[q+2,0],[q+3,1]]
+  BMS.parent m 1 (m.length - 1) == some (q+2)
+#guard Trans.o? Rows.ProofsB.R5.m0 == some (phi one (phi one zero))
+
+/-! ## §12 E1 for the one-column families: `o? M` itself, not `o?` of its expansion
+
+Until now E1 was a theorem only for the ladder (`o?_M1`) and the successor family
+(`o?_M4z`); for the other five one-column families it was `#guard`ed on small
+instances only — the reverse of what the table's `hasO` column suggests.  This
+section closes that: one shared fuse-split (`oLAux_ups_col`, the same splitting of
+the `(0,1)`-run that case A introduced), five base values, the five missing E1
+theorems (`o?_M2`, `o?_M3`, `o?_M4b`, `o?_M4c`, `o?_M4a`), and the unified statement
+
+    e1_F4unified (q b r) (b ≤ q+2) (r ≤ 1) (¬(b = 0 ∧ r = 1)) :
+        o? ((0,0)(1,1)…(a,1)(b,r)) = some (F4val q b r)
+
+covering the whole one-column case table at once — the seven cases being exhaustive,
+this is the E1 content of the entire F4 region, and it is what an umbrella region row
+in `Rows/TM.lean` would cite.  E3 cannot be unified the same way: the seven cases have
+genuinely different statement shapes (three shift-1 equalities, three 4-part packages
+with different witnesses, one successor rule), which is why they stay seven rows. -/
+
+/-- The value of a ladder-shaped `(0,1)`-run followed by a single column, split at the
+    column's own index: the same fuse-into-`R` trick as case A. -/
+theorem oLAux_ups_col (q c r : Nat) (hc : c ≤ q+1) {v : Term} {N : Nat}
+    (hv : ∀ f, N ≤ f → Trans.Pair.oLAux f (1+c) (ups 0 (q+1-c) ++ [[0,r]]) = v) :
+    ∀ fuel, N + c ≤ fuel →
+      Trans.Pair.oLAux fuel 1 (ups 0 (q+1) ++ [[c,r]]) = chainP 1 c v := by
+  intro fuel hf
+  have hsplit : ups 0 (q+1) = ups 0 c ++ ups c (q+1-c) := by
+    rw [show q+1 = c + (q+1-c) from by omega, ups_split c (q+1-c) 0,
+      show (0:Nat)+c = c from by omega, show c + (q+1-c) - c = q+1-c from by omega]
+  rw [hsplit, List.append_assoc]
+  exact oLAux_chainR (R := fun o => ups o (q+1-c) ++ [[o,r]])
+    (fun o => by
+      rw [decP_append, decP_ups (q+1-c) o]
+      rfl)
+    (fun o ho cc hc' => by
+      rcases List.mem_append.mp hc' with h1 | h1
+      · exact r0_ups (q+1-c) o ho cc h1
+      · rw [List.mem_singleton.mp h1]
+        show o ≠ 0
+        omega)
+    hv c 1 fuel (by omega) (by omega)
+
+/-! ### the five base values -/
+
+/-- `w = 0`: the run is empty and only the column is left. -/
+theorem base_col_zero (L r : Nat) (fuel : Nat) (hf : 1 ≤ fuel) :
+    Trans.Pair.oLAux fuel L (ups 0 0 ++ [[0,r]])
+      = (if r == 0 then one else phi (ofNat L) zero) := by
+  cases fuel with
+  | zero => omega
+  | succ g =>
+    show Trans.Pair.oLAux (g+1) L ([[0,r]] : Matrix) = _
+    rw [oLAux_single g L [0,r] [] (by intro cc hc; simp at hc)]
+    cases r with
+    | zero =>
+      show (if ((0:Nat) == 0) = true then plus zero (omegaNF (Trans.Pair.oLAux g 1 []))
+            else _) = _
+      rw [oLAux_nil]
+      rfl
+    | succ r' =>
+      show (if ((r'+1 : Nat) == 0) = true then _
+            else Trans.Pair.phiStep (ofNat L) zero (Trans.Pair.oLAux g (L+1) [])) = _
+      rw [oLAux_nil]
+      simp only [show ((r'+1 : Nat) == 0) = false from rfl, Bool.false_eq_true, if_false]
+      rw [phiStep_start L]
+      rfl
+
+/-- `w ≥ 1`: the run contributes `φ̄(L+w-1, 0)` and then the column is a second block. -/
+theorem base_acc1 (L w fuel : Nat) (hf : w + 1 ≤ fuel) :
+    Trans.Pair.phiStep (ofNat L) zero (Trans.Pair.oLAux fuel (L+1) (ups 0 w))
+      = phi (ofNat (L+w)) zero := by
+  cases w with
+  | zero =>
+    rw [show ups 0 0 = ([] : Matrix) from rfl, oLAux_nil, phiStep_start L]
+    rfl
+  | succ w' =>
+    rw [oLAux_ups w' (L+1) fuel (by omega),
+      show chainP (L+1) w' (phi (ofNat ((L+1)+w')) zero) = phi (ofNat (L+w'+1)) zero from by
+        rw [show (L+1)+w' = L+w'+1 from by omega]
+        exact chainP_collapse w' (L+1) (L+w'+1) zero (by omega),
+      phiStep_zero, show ((phi (ofNat (L+w'+1)) zero : Term) == zero) = false from rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [show omegaNF (phi (ofNat (L+w'+1)) zero) = phi (ofNat (L+w'+1)) zero from
+      omegaNF_phi_ne_zero (ofNat_ne_zero (L+w')),
+      phiNF_collapse (lt_ofNat_mono (show L < L+w'+1 from by omega))]
+    congr 2
+
+theorem chainP_one : ∀ (p j : Nat), chainP j (p+1) one = phi (ofNat (j+p)) omega
+  | 0, j => by
+    show Trans.Pair.phiStep (ofNat j) zero one = phi (ofNat (j+0)) omega
+    rw [phiStep_zero, show ((one : Term) == zero) = false from rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [show omegaNF one = omega from phiNF_one_arg isSC_zero,
+      show j + 0 = j from by omega]
+    exact phiNF_phi_gen (isSC_ofNat j) (lt_lt_zero (ofNat j))
+  | p + 1, j => by
+    show Trans.Pair.phiStep (ofNat j) zero (chainP (j+1) (p+1) one) = phi (ofNat (j+(p+1))) omega
+    rw [chainP_one p (j+1), show (j+1)+p = (j+p)+1 from by omega, phiStep_zero,
+      show ((phi (ofNat ((j+p)+1)) omega : Term) == zero) = false from rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [omegaNF_phi_ne_zero (ofNat_ne_zero (j+p)),
+      phiNF_collapse (lt_ofNat_mono (show j < (j+p)+1 from by omega))]
+    congr 2
+
+theorem blocksP_ups_col (w r : Nat) :
+    Trans.Pair.blocksP (ups 0 (w+1) ++ [[0,r]])
+      = [ups 0 (w+1)] ++ [([[0,r]] : Matrix)] := by
+  rw [blocksP_append (ups 0 (w+1)) [[0,r]] (Or.inr ⟨[0,r], [], rfl, rfl⟩),
+    show Trans.Pair.blocksP (ups 0 (w+1)) = [ups 0 (w+1)] from
+      blocksP_single [0,1] _ (r0_ups w 1 (by omega))]
+  rfl
+
+theorem base_col_r0 (L w fuel : Nat) (hf : w + 2 ≤ fuel) :
+    Trans.Pair.oLAux fuel L (ups 0 (w+1) ++ [[0,0]])
+      = plus (phi (ofNat (L+w)) zero) one := by
+  cases fuel with
+  | zero => omega
+  | succ g =>
+    rw [oLAux_cons', blocksP_ups_col w 0]
+    show zsF g L (zsF g L zero (ups 0 (w+1))) ([[0,0]] : Matrix) = _
+    rw [show zsF g L zero (ups 0 (w+1)) = phi (ofNat (L+w)) zero from by
+      show Trans.Pair.phiStep (ofNat L) zero
+        (Trans.Pair.oLAux g (L+1) (Trans.Pair.decP (ups 1 w))) = _
+      rw [decP_ups w 0]
+      exact base_acc1 L w g (by omega)]
+    show plus (phi (ofNat (L+w)) zero) (omegaNF (Trans.Pair.oLAux g 1 [])) = _
+    rw [oLAux_nil]
+    rfl
+
+theorem base_col_r1_zero (L fuel : Nat) (hf : 1 ≤ fuel) :
+    Trans.Pair.oLAux fuel L (ups 0 1 ++ [[0,1]]) = phi (ofNat L) one := by
+  show Trans.Pair.oLAux fuel L (zs 2) = _
+  rw [oLAux_zs 1 fuel L hf]
+  rfl
+
+theorem base_col_r1_succ (L w fuel : Nat) (hf : w + 3 ≤ fuel) :
+    Trans.Pair.oLAux fuel L (ups 0 (w+2) ++ [[0,1]])
+      = phi (ofNat L) (phi (ofNat (L+w+1)) zero) := by
+  cases fuel with
+  | zero => omega
+  | succ g =>
+    rw [oLAux_cons', blocksP_ups_col (w+1) 1]
+    show zsF g L (zsF g L zero (ups 0 (w+2))) ([[0,1]] : Matrix) = _
+    rw [show zsF g L zero (ups 0 (w+2)) = phi (ofNat (L+w+1)) zero from by
+      show Trans.Pair.phiStep (ofNat L) zero
+        (Trans.Pair.oLAux g (L+1) (Trans.Pair.decP (ups 1 (w+1)))) = _
+      rw [decP_ups (w+1) 0, show L+w+1 = L+(w+1) from by omega]
+      exact base_acc1 L (w+1) g (by omega)]
+    show Trans.Pair.phiStep (ofNat L) (phi (ofNat (L+w+1)) zero)
+      (Trans.Pair.oLAux g (L+1) []) = _
+    rw [oLAux_nil]
+    unfold Trans.Pair.phiStep
+    rw [show Trans.Pair.logPhi (ofNat L) (phi (ofNat (L+w+1)) zero)
+        = some (phi (ofNat (L+w+1)) zero) from by
+      show (if ((ofNat (L+w+1) : Term) == ofNat L) = true then _
+            else if lt (ofNat L) (ofNat (L+w+1)) = true then some (phi (ofNat (L+w+1)) zero)
+            else Trans.Pair.logPhi (ofNat L) zero) = _
+      rw [ofNat_bne (show L+w+1 ≠ L from by omega)]
+      simp only [Bool.false_eq_true, if_false,
+        lt_ofNat_mono (show L < L+w+1 from by omega), if_true]]
+    show phiNF (ofNat L) (plus (phi (ofNat (L+w+1)) zero) one) = _
+    exact phiNF_zt_oneK (L+w) L (by omega)
+
+/-! ### the shared reduction, and E1 for the five limit families -/
+
+/-- `o?` of a ladder plus one column with positive row-0 entry, reduced to the value
+    of the `(0,1)`-run that carries it. -/
+theorem o?_ladder_col (q c r : Nat) (hc : c ≤ q+1) (hr : r ≤ 1) {v : Term} {N : Nat}
+    (hv : ∀ f, N ≤ f → Trans.Pair.oLAux f (1+c) (ups 0 (q+1-c) ++ [[0,r]]) = v)
+    (hfuel : N + c ≤ q+3) :
+    o? (M1 q ++ [[c+1, r]]) = some (omegaNF (chainP 1 c v)) := by
+  have ht : ∀ cc ∈ (ups 1 (q+1) ++ [([c+1,r] : BMS.Col)]), Trans.Pair.r0 cc ≠ 0 := by
+    intro cc hcc
+    rcases List.mem_append.mp hcc with h1 | h1
+    · exact r0_ups (q+1) 1 (by omega) cc h1
+    · rw [List.mem_singleton.mp h1]
+      show c+1 ≠ 0
+      omega
+  have honly : onlyRow0 (M1 q ++ [[c+1,r]]) = false := by
+    rw [onlyRow0_append, onlyRow0_M1 q]
+    rfl
+  have hfrag : Trans.Pair.inFrag (M1 q ++ [[c+1,r]]) = true := by
+    rw [inFrag_append, show Trans.Pair.inFrag (M1 q) = true from inFrag_lad (q+1) 0]
+    show (true && (decide (([c+1,r] : BMS.Col).length ≤ 2)
+      && decide (Trans.Pair.r1 ([c+1,r] : BMS.Col) ≤ 1) && true)) = true
+    simp only [Bool.true_and, Bool.and_true]
+    show (decide (2 ≤ 2) && decide (r ≤ 1)) = true
+    simp only [decide_eq_true_eq, Nat.le_refl, decide_true, Bool.true_and]
+    exact hr
+  have hlen : (M1 q ++ [[c+1,r]]).length = q + 3 := by
+    rw [List.length_append, len_M1]
+    rfl
+  rw [o?_pair honly hfrag, hlen]
+  show some (Trans.Pair.oLAux (q+3+1) 1 (([0,0] : BMS.Col)
+    :: (ups 1 (q+1) ++ [([c+1,r] : BMS.Col)]))) = _
+  rw [oLAux_single (q+3) 1 [0,0] _ ht]
+  show some (plus zero (omegaNF (Trans.Pair.oLAux (q+3) 1
+    (Trans.Pair.decP (ups 1 (q+1) ++ [([c+1,r] : BMS.Col)]))))) = _
+  rw [decP_append, decP_ups (q+1) 0,
+    show Trans.Pair.decP ([([c+1,r] : BMS.Col)]) = [([c,r] : BMS.Col)] from rfl,
+    oLAux_ups_col q c r hc hv (q+3) (by omega),
+    plus_zero_left (isAP_omegaNF _)]
+
+/-- **E1 for F2**: `o((0,0)(1,1)…(a,1)(a+1,0)) = φ̄(a,ω)`. -/
+theorem o?_M2 (q : Nat) : o? (M2 q) = some (t0 q) := by
+  have h : M2 q = M1 q ++ [[q+2, 0]] := by
+    show ([0,0] : BMS.Col) :: (ups 1 (q+1) ++ [[1+(q+1),0]]) = _
+    rw [show 1+(q+1) = q+2 from by omega]
+    rfl
+  rw [h, o?_ladder_col q (q+1) 0 (by omega) (by omega)
+      (v := one) (N := 1) (fun f hf => by
+        rw [show q+1-(q+1) = 0 from by omega]
+        exact base_col_zero (1+(q+1)) 0 f hf) (by omega),
+    chainP_one q 1, show (1:Nat)+q = q+1 from by omega]
+  exact congrArg some (omegaNF_phi_ne_zero (ofNat_ne_zero q))
+
+/-- **E1 for F3**: `o((0,0)(1,1)…(a,1)(a,1)) = φ̄(a,1)`. -/
+theorem o?_M3 (q : Nat) : o? (M3 q) = some (t3 q) := by
+  have h : M3 q = M1 q ++ [[q+1, 1]] := rfl
+  rw [h, o?_ladder_col q q 1 (by omega) (by omega)
+      (v := phi (ofNat (1+q)) one) (N := 1) (fun f hf => by
+        rw [show q+1-q = 1 from by omega]
+        exact base_col_r1_zero (1+q) f hf) (by omega),
+    show chainP 1 q (phi (ofNat (1+q)) one) = phi (ofNat (1+q)) one from
+      chainP_collapse q 1 (1+q) one (by omega),
+    show (1:Nat)+q = q+1 from by omega]
+  exact congrArg some (omegaNF_phi_ne_zero (ofNat_ne_zero q))
+
+/-- **E1 for case B**: `o((0,0)(1,1)…(a,1)(1,0)) = φ̄(0,φ̄(a,0))`. -/
+theorem o?_M4b (q : Nat) : o? (M4b q) = some (t4b q) := by
+  have h : M4b q = M1 q ++ [[0+1, 0]] := rfl
+  rw [h, o?_ladder_col q 0 0 (by omega) (by omega)
+      (v := plus (phi (ofNat (1+q)) zero) one) (N := q+2) (fun f hf => by
+        rw [show q+1-0 = q+1 from by omega]
+        exact base_col_r0 1 q f (by omega)) (by omega),
+    show chainP 1 0 (plus (phi (ofNat (1+q)) zero) one)
+        = plus (zt q) one from by rw [show (1:Nat)+q = q+1 from by omega]; rfl,
+    omegaNF_of_le_M (show lt M (plus (zt q) one) = false from by
+      rw [plus_zt_one q]
+      exact ltF_M_add_phi _ (ofNat (q+1)) zero one)]
+  exact congrArg some (phiNF_zt_oneK q 0 (by omega))
+
+/-- **E1 for case C**: `o((0,0)(1,1)…(a,1)(b,0)) = φ̄(b-1,φ̄(0,φ̄(a,0)))`, `2 ≤ b ≤ a`. -/
+theorem o?_M4c (q c : Nat) (hc : c + 1 ≤ q) : o? (M4c q c) = some (t4c q c) := by
+  have h : M4c q c = M1 q ++ [[(c+1)+1, 0]] := rfl
+  have hstep : chainP (1+c) 1 (plus (phi (ofNat (q+1)) zero) one) = t4c q c := by
+    show Trans.Pair.phiStep (ofNat (1+c)) zero (plus (zt q) one) = _
+    rw [phiStep_zero, show ((plus (zt q) one : Term) == zero) = false from by
+      rw [plus_zt_one q]; rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [omegaNF_of_le_M (show lt M (plus (zt q) one) = false from by
+        rw [plus_zt_one q]
+        exact ltF_M_add_phi _ (ofNat (q+1)) zero one),
+      show phiNF zero (plus (zt q) one) = phi zero (zt q) from phiNF_zt_oneK q 0 (by omega),
+      show (1:Nat)+c = c+1 from by omega]
+    exact phiNF_phi_gen (isSC_ofNat (c+1)) (lt_lt_zero (ofNat (c+1)))
+  rw [h, o?_ladder_col q (c+1) 0 (by omega) (by omega)
+      (v := plus (phi (ofNat (1+(c+1)+(q-c-1))) zero) one) (N := q-c+1) (fun f hf => by
+        rw [show q+1-(c+1) = (q-c-1)+1 from by omega]
+        exact base_col_r0 (1+(c+1)) (q-c-1) f (by omega)) (by omega),
+    show (1+(c+1)+(q-c-1)) = q+1 from by omega,
+    chainP_add c 1 1 (plus (phi (ofNat (q+1)) zero) one), hstep,
+    show t4c q c = phi (ofNat (c+1)) (phi zero (zt q)) from rfl,
+    chainP_collapse c 1 (c+1) (phi zero (zt q)) (by omega)]
+  exact congrArg some (omegaNF_phi_ne_zero (ofNat_ne_zero c))
+
+/-- **E1 for case A**: `o((0,0)(1,1)…(a,1)(b,1)) = φ̄(b,φ̄(a,0))`, `1 ≤ b < a`. -/
+theorem o?_M4a (k d : Nat) :
+    o? (M4 (k+d+1) (k+1)) = some (t4a (k+d+1) k) := by
+  have h : M4 (k+d+1) (k+1) = M1 (k+d+1) ++ [[k+1, 1]] := rfl
+  rw [h, o?_ladder_col (k+d+1) k 1 (by omega) (by omega)
+      (v := phi (ofNat (1+k)) (phi (ofNat (1+k+d+1)) zero)) (N := d+3) (fun f hf => by
+        rw [show (k+d+1)+1-k = d+2 from by omega]
+        exact base_col_r1_succ (1+k) d f (by omega)) (by omega),
+    show (1+k+d+1) = (k+d+1)+1 from by omega,
+    show chainP 1 k (phi (ofNat (1+k)) (phi (ofNat ((k+d+1)+1)) zero))
+        = phi (ofNat (1+k)) (phi (ofNat ((k+d+1)+1)) zero) from
+      chainP_collapse k 1 (1+k) (phi (ofNat ((k+d+1)+1)) zero) (by omega),
+    show (1:Nat)+k = k+1 from by omega]
+  exact congrArg some (omegaNF_phi_ne_zero (ofNat_ne_zero k))
+
+/-! ### the unified E1 statement -/
+
+/-- The value of the one-column case table of §8.5 / §10, as a function. -/
+def F4val (q b r : Nat) : Term :=
+  if r = 0 then
+    if b = 0 then plus (zt q) one
+    else if b = 1 then phi zero (zt q)
+    else if b = q+2 then phi (ofNat (q+1)) omega
+    else phi (ofNat (b-1)) (phi zero (zt q))
+  else
+    if b = q+2 then phi (ofNat (q+2)) zero
+    else if b = q+1 then phi (ofNat (q+1)) one
+    else phi (ofNat b) (zt q)
+
+/-- **E1 for the whole "ladder + one column" region**, in one statement: for every
+    `a = q+1 ≥ 1` and every admissible column `(b,r)`, `o?` is defined on
+    `(0,0)(1,1)…(a,1)(b,r)` and computes the case-table value.  The seven cases are
+    exhaustive, so this is the E1 content of the whole F4 region. -/
+theorem e1_F4unified (q b r : Nat) (hb : b ≤ q+2) (hr : r ≤ 1) (h01 : ¬(b = 0 ∧ r = 1)) :
+    o? (M1 q ++ [[b,r]]) = some (F4val q b r) := by
+  cases r with
+  | zero =>
+    by_cases h0 : b = 0
+    · subst h0
+      rw [show F4val q 0 0 = plus (zt q) one from by simp [F4val]]
+      exact o?_M4z q
+    · by_cases h1 : b = 1
+      · subst h1
+        rw [show F4val q 1 0 = phi zero (zt q) from by simp [F4val]]
+        exact o?_M4b q
+      · by_cases h2 : b = q+2
+        · subst h2
+          rw [show F4val q (q+2) 0 = phi (ofNat (q+1)) omega from by simp [F4val],
+            show M1 q ++ [[q+2,0]] = M2 q from by
+              show _ = ([0,0] : BMS.Col) :: (ups 1 (q+1) ++ [[1+(q+1),0]])
+              rw [show 1+(q+1) = q+2 from by omega]
+              rfl]
+          exact o?_M2 q
+        · obtain ⟨c, rfl⟩ : ∃ c, b = c+2 := ⟨b-2, by omega⟩
+          rw [show F4val q (c+2) 0 = phi (ofNat (c+1)) (phi zero (zt q)) from by
+            simp only [F4val, show ¬(c+2 = 0) from by omega,
+              show ¬(c+2 = 1) from by omega, h2, if_false]
+            congr 2]
+          exact o?_M4c q c (by omega)
+  | succ r' =>
+    have hr1 : r' = 0 := by omega
+    subst hr1
+    have hb0 : b ≠ 0 := by
+      intro hc; exact h01 ⟨hc, rfl⟩
+    by_cases h2 : b = q+2
+    · subst h2
+      rw [show F4val q (q+2) 1 = phi (ofNat (q+2)) zero from by simp [F4val]]
+      rw [show M1 q ++ [[q+2,1]] = M1 (q+1) from M4_top q]
+      exact o?_M1 (q+1)
+    · by_cases h3 : b = q+1
+      · subst h3
+        rw [show F4val q (q+1) 1 = phi (ofNat (q+1)) one from by simp [F4val]]
+        exact o?_M3 q
+      · obtain ⟨k, rfl⟩ : ∃ k, b = k+1 := ⟨b-1, by omega⟩
+        obtain ⟨d, hd⟩ : ∃ d, q = k+d+1 := ⟨q-k-1, by omega⟩
+        subst hd
+        rw [show F4val (k+d+1) (k+1) 1 = phi (ofNat (k+1)) (zt (k+d+1)) from by
+          simp only [F4val, show ¬((1:Nat) = 0) from by omega, if_false, h2, h3]]
+        exact o?_M4a k d
+
+-- the unified statement agrees with computation on the whole admissible window
+#guard (List.range 4).all fun q => (List.range 6).all fun b => (List.range 2).all fun r =>
+  !(decide (b ≤ q+2 && r ≤ 1 && !(b == 0 && r == 1)))
+    || (Trans.o? (M1 q ++ [[b,r]]) == some (F4val q b r))
+#guard (List.range 5).all fun q => Trans.o? (M2 q) == some (t0 q)
+#guard (List.range 5).all fun q => Trans.o? (M3 q) == some (t3 q)
+
 end Evidence.StageB

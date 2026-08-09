@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.29
+バージョン: v0.1.30
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -57,6 +57,7 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L126) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ | [✅](../lean/Rows/ProofsB.lean#L621) | [o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L128) | $`\bar{\varphi}(3,0)+1`$ | $`\bar{\varphi}(3,0)+1`$ | [✅](../lean/Rows/Proofs.lean#L176) | [o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L130) | $`\bar{\varphi}(0,\bar{\varphi}(3,0))`$ | $`\omega^{\bar{\varphi}(3,0)+1}`$ | [✅](../lean/Rows/Proofs.lean#L203) | [o](../lean/Trans/TM.lean) |  |
+| **(0,0)(1,1)…(a,1)(b,r), a≥1, b≤a+1, (b,r)≠(0,1)** | 下の 7 行の場合分け |  | [✅](../lean/Evidence/StageB.lean#L4769) |  | 傘: 梯子+1列の全行列で o? が定義され 7 分岐の値に一致 (E1 を全ての a で証明)。E3 は下の各族行の形で成立 |
 | **(0,0)(1,1)…(a,1), a≥1** | $`\bar{\varphi}(a,0)`$ | $`\varepsilon_0,\ \zeta_0,\ \bar{\varphi}(3,0),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L1095) |  | 1 パラメータ族 (対角線) の一括証明。a=1,2,3 が表の ε₀, ζ₀, φ̄(3,0) 行、族の sup が φ̄(ω,0) |
 | **(0,0)(1,1)…(a,1)(0,0), a≥1** | $`\bar{\varphi}(a,0)+1`$ | $`\varepsilon_0+1,\ \zeta_0+1,\ldots`$ | [✅](../lean/Evidence/StageB.lean#L2893) |  | 後続行の 1 パラメータ族 (E1 と後続則を全ての a で証明) |
 | **(0,0)(1,1)…(a,1)(1,0), a≥1** | $`\bar{\varphi}(0,\bar{\varphi}(a,0))`$ | $`\omega^{\varepsilon_0+1},\ \omega^{\zeta_0+1},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L3203) |  | 1 パラメータ族の一括証明。a=1 が表の ω^(ε₀+1) 行 |
