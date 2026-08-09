@@ -6124,4 +6124,138 @@ parameter is already threaded there).  Two sessions, plus one for the instances.
 research risk: every step is a re-statement, and the two C-dependent hypotheses are
 discharged by `rfl` for each concrete base. -/
 
+/-! ## §18 UNIT 2, slice 1 : the abstract base and the (A)/(C) steps
+
+The base of §7 with its argument freed (§17).  `Zb q C = φ̄(a,C)`; the only hypothesis
+any of this needs about `C` is `(Zb q C == one) = false`, and even `le one (Zb q C)`
+turns out to be derivable rather than assumed, so the bundle is one side condition.
+`C := zero` gives §7 back by `rfl` (the bridges at the end). -/
+
+/-- The abstract base: `φ̄(a, C)` with `a = q+1`. -/
+def Zb (q : Nat) (C : Term) : Term := phi (ofNat (q+1)) C
+
+theorem Zb_zero (q : Nat) : Zb q zero = zt q := rfl
+
+theorem isAP_Zb (q : Nat) (C : Term) : (Zb q C).isAP = true := rfl
+
+theorem ltF_one_Zb (q : Nat) (C : Term) : ∀ f, 2 ≤ f → ltF f one (Zb q C) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show ltF (g+1) (phi zero zero) (phi (ofNat (q+1)) C) = true
+    exact ltF_phi_fst (zero_bne_ofNat q) (ltF_zero (by omega) (ofNat_ne_zero q))
+      (ltF_zero (by omega) (by intro hc; exact Term.noConfusion hc))
+
+theorem le_one_Zb (q : Nat) (C : Term) : le one (Zb q C) = true := by
+  show (((one : Term) == Zb q C) || lt one (Zb q C)) = true
+  rw [show lt one (Zb q C) = true from
+    lt_of_ltF (N := 2) (fun f hf => ltF_one_Zb q C f hf) (by
+      show 2 ≤ 2 * ((one : Term).deg + (Zb q C).deg) + 8
+      omega)]
+  simp
+
+theorem plus_Zb_one (q : Nat) (C : Term) : plus (Zb q C) one = add (Zb q C) one := by
+  unfold plus
+  show ofList ((match le one (Zb q C) with | true => [Zb q C] | false => []) ++ [one])
+      = add (Zb q C) one
+  rw [le_one_Zb q C]
+  rfl
+
+theorem omegaNF_add_Zb (q : Nat) (C : Term) (hC : ((Zb q C : Term) == one) = false) :
+    omegaNF (add (Zb q C) (Zb q C)) = phi zero (add (Zb q C) (Zb q C)) := by
+  rw [omegaNF_of_le_M (show lt M (add (Zb q C) (Zb q C)) = false from
+      ltF_M_add_phi _ (ofNat (q+1)) C (Zb q C))]
+  exact phiNF_add_pair isSC_zero (isAP_Zb q C) hC
+
+/-- The tower base at level `k` over the abstract base. -/
+def xbaseB (q : Nat) (C : Term) (k : Nat) : Term :=
+  match k with
+  | 0 => add (Zb q C) (Zb q C)
+  | _ + 1 => phi zero (add (Zb q C) (Zb q C))
+
+def bseB (q : Nat) (C : Term) (k : Nat) : Term := phi (ofNat k) (xbaseB q C k)
+def sbseB (q : Nat) (C : Term) (k : Nat) : Term := phi (ofNat k) (Zb q C)
+def twrB (q : Nat) (C : Term) (k j : Nat) : Term := twB k (bseB q C k) j
+
+/-- **(A)** over the abstract base. -/
+theorem step_ZbA (q : Nat) (C : Term) (k : Nat) (hk : k ≤ q) :
+    omegaNF (chainP 1 k (Zb q C)) = Zb q C := by
+  rw [show chainP 1 k (Zb q C) = Zb q C from chainP_collapse k 1 (q+1) C (by omega)]
+  exact omegaNF_phi_ne_zero (ofNat_ne_zero q)
+
+/-- **(C)** over the abstract base — the case split on `k` is the same as §7's. -/
+theorem step_add_ZbA (q : Nat) (C : Term) (hC : ((Zb q C : Term) == one) = false)
+    (k : Nat) (hk : k ≤ q) :
+    omegaNF (chainP 1 k (add (Zb q C) (Zb q C))) = bseB q C k := by
+  cases k with
+  | zero =>
+    show omegaNF (add (Zb q C) (Zb q C)) = phi (ofNat 0) (xbaseB q C 0)
+    rw [omegaNF_add_Zb q C hC]
+    rfl
+  | succ k' =>
+    have hstep : chainP (1+k') 1 (add (Zb q C) (Zb q C)) = bseB q C (k'+1) := by
+      show Trans.Pair.phiStep (ofNat (1+k')) zero (add (Zb q C) (Zb q C)) = _
+      rw [phiStep_zero, show ((add (Zb q C) (Zb q C) : Term) == zero) = false from rfl]
+      simp only [Bool.false_eq_true, if_false]
+      rw [omegaNF_add_Zb q C hC, show 1 + k' = k' + 1 from by omega]
+      exact phiNF_phi_gen (isSC_ofNat (k'+1)) (lt_lt_zero (ofNat (k'+1)))
+    rw [chainP_add k' 1 1 (add (Zb q C) (Zb q C)), hstep,
+      show bseB q C (k'+1) = phi (ofNat (k'+1)) (xbaseB q C (k'+1)) from rfl,
+      chainP_collapse k' 1 (k'+1) (xbaseB q C (k'+1)) (by omega)]
+    exact omegaNF_phi_ne_zero (ofNat_ne_zero k')
+
+/-- **(D)** over the abstract base. -/
+theorem twrB_shape (q : Nat) (C : Term) (k j : Nat) : ∃ z, twrB q C k j = phi (ofNat k) z :=
+  twB_shape k rfl j
+
+theorem step_twrB (q : Nat) (C : Term) (k j : Nat) :
+    omegaNF (chainP 1 k (twrB q C k j)) = twrB q C k (j+1) := by
+  cases k with
+  | zero =>
+    obtain ⟨y, hy⟩ := twrB_shape q C 0 j
+    show omegaNF (twrB q C 0 j) = phi (ofNat 0) (twrB q C 0 j)
+    rw [hy]
+    show omegaNF (phi zero y) = phi zero (phi zero y)
+    rw [omegaNF_phi, phiNF_phi_arg isSC_zero]
+  | succ k' =>
+    obtain ⟨y, hy⟩ := twrB_shape q C (k'+1) j
+    have hstep : chainP (1+k') 1 (twrB q C (k'+1) j) = twrB q C (k'+1) (j+1) := by
+      show Trans.Pair.phiStep (ofNat (1+k')) zero (twrB q C (k'+1) j) = _
+      rw [phiStep_zero, show ((twrB q C (k'+1) j : Term) == zero) = false from by
+        rw [hy]; rfl]
+      simp only [Bool.false_eq_true, if_false]
+      rw [hy, omegaNF_phi_ne_zero (ofNat_ne_zero k'),
+        show 1 + k' = k' + 1 from by omega, phiNF_phi_arg (isSC_ofNat (k'+1)), ← hy]
+      rfl
+    rw [chainP_add k' 1 1 (twrB q C (k'+1) j), hstep,
+      show twrB q C (k'+1) (j+1) = phi (ofNat (k'+1)) (twrB q C (k'+1) j) from rfl,
+      chainP_collapse k' 1 (k'+1) (twrB q C (k'+1) j) (by omega)]
+    exact omegaNF_phi_ne_zero (ofNat_ne_zero k')
+
+/-! ### The `C := zero` bridges: §7/§10 are this development's instance -/
+
+theorem xbaseB_zero (q k : Nat) : xbaseB q zero k = xbaseK q k := by cases k <;> rfl
+theorem bseB_zero (q k : Nat) : bseB q zero k = bseK q k := by
+  rw [bseB, xbaseB_zero]; rfl
+theorem sbseB_zero (q k : Nat) : sbseB q zero k = sbseK q k := rfl
+theorem twrB_zero (q k j : Nat) : twrB q zero k j = twrK q k j := by
+  rw [twrB, bseB_zero]; rfl
+
+example (q k : Nat) (hk : k ≤ q) :
+    omegaNF (chainP 1 k (zt q)) = zt q := step_ZbA q zero k hk
+example (q k : Nat) (hk : k ≤ q) :
+    omegaNF (chainP 1 k (add (zt q) (zt q))) = bseK q k := by
+  rw [← bseB_zero q k]
+  exact step_add_ZbA q zero (zt_bne_one q) k hk
+example (q k j : Nat) : omegaNF (chainP 1 k (twrK q k j)) = twrK q k (j+1) := by
+  rw [← twrB_zero q k j, ← twrB_zero q k (j+1)]
+  exact step_twrB q zero k j
+
+#guard (List.range 3).all fun q => (List.range 3).all fun k =>
+  !(decide (k ≤ q)) || (omegaNF (chainP 1 k (Zb q omega)) == Zb q omega)
+#guard (List.range 3).all fun q => (List.range 3).all fun k =>
+  !(decide (k ≤ q))
+    || (omegaNF (chainP 1 k (add (Zb q omega) (Zb q omega))) == bseB q omega k)
+
 end Evidence.StageB
