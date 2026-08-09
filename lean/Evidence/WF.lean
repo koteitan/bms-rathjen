@@ -9647,6 +9647,75 @@ theorem lim_clauses_eps1 :
 #guard fsE1 1 == phi zero (add eps0T eps0T)
 #guard (List.range 5).all (fun n => CNV (fsE1 n) && lt (fsE1 n) eps1 && lt (fsE1 n) (fsE1 (n+1)))
 
+/-! #### §15.9 `CNV ⊆ inT`, and the Veblen region sits under `M`
+
+§15.1 MEASURED that every `CNV` term satisfies `inT` (all 89 of degree ≤ 12) and used the
+measurement only as calibration.  It is now PROVED, and it turned out to be needed rather
+than decorative: template (C) must feed a `CNV` term to an inner row's cofinality clause,
+and that clause is stated for `inT` — so without this the combinator cannot be assembled at
+all.  The content is `cnv_lt_M`: the whole Veblen region lies below `M` (2.3.2), which is
+what discharges 2.1(v)'s two side conditions on every `φ̄`. -/
+
+theorem lt_phi_M (a b : Term) : lt (phi a b) M = true := by
+  show ltF (fuelOf (phi a b) M) (phi a b) M = true
+  rw [show fuelOf (phi a b) M = (2 * ((phi a b).deg + (M : Term).deg) + 7) + 1 from by
+    show 2 * ((phi a b).deg + (M : Term).deg) + 8 = _; omega]
+  exact ltF_succ_phi_M _ _ _
+
+theorem lt_add_M (a b : Term) : lt (add a b) M = lt a M := by
+  have hb := deg_pos b
+  show ltF (fuelOf (add a b) M) (add a b) M = _
+  rw [show fuelOf (add a b) M = (2 * ((add a b).deg + (M : Term).deg) + 7) + 1 from by
+    show 2 * ((add a b).deg + (M : Term).deg) + 8 = _; omega,
+    ltF_succ_add_M]
+  exact (lt_eq_ltF a M _
+    (by show a.deg + (M : Term).deg ≤ 2 * ((1 + a.deg + b.deg) + (M : Term).deg) + 7; omega)).symm
+
+/-- Every `CNV` term is below `M` — the Veblen region sits entirely under `M` (2.3.2). -/
+theorem cnv_lt_M : ∀ (t : Term), CNV t = true → lt t M = true
+  | zero, _ => by
+    show ltF (fuelOf zero M) zero M = true
+    exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (M : Term).deg) + 8; omega)
+      (by intro hc; exact Term.noConfusion hc)
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi a b, _ => lt_phi_M a b
+  | add a b, h => by
+    rw [lt_add_M]
+    exact cnv_lt_M a (cnv_add h).2.1
+
+/-- **`CNV ⊆ inT`** — the converse containment to `inT_le_fragR`, measured in §15.1 and now
+    proved.  It is what lets a `(C)`-style combinator feed a `CNV` term to an inner row's
+    cofinality clause, which is stated for `inT`. -/
+theorem inT_of_cnv : ∀ (t : Term), CNV t = true → inT t = true
+  | zero, _ => rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi a b, h => by
+    obtain ⟨ha, hb⟩ := cnv_phi h
+    show (inT a && inT b && lt a M && lt b M) = true
+    rw [inT_of_cnv a ha, inT_of_cnv b hb, cnv_lt_M a ha, cnv_lt_M b hb]; rfl
+  | add a b, h => by
+    obtain ⟨hAP, ha, hb, hd⟩ := cnv_add h
+    have hia := inT_of_cnv a ha
+    have hib := inT_of_cnv b hb
+    cases b with
+    | zero => exact Bool.noConfusion hd
+    | M => exact Bool.noConfusion hb
+    | omg _ => exact Bool.noConfusion hb
+    | psi _ _ => exact Bool.noConfusion hb
+    | Z _ => exact Bool.noConfusion hb
+    | add c d =>
+      show (a.isAP && inT a && inT (add c d) && le c a) = true
+      rw [hAP, hia, hib, show le c a = true from hd]; rfl
+    | phi x y =>
+      show (a.isAP && inT a && inT (phi x y) && ((phi x y).isAP && le (phi x y) a)) = true
+      rw [hAP, hia, hib, show le (phi x y) a = true from hd]; rfl
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
