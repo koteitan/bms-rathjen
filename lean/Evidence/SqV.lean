@@ -2555,6 +2555,22 @@ back clean AND provable on the consumer's side, so the obligation is zero.
 satisfies.  **Nothing rests on the 2-mover `CNV`-preservation sample.**  Measured anyway,
 since it was free:
 
+**AND THE MIRROR OF THE RULE THIS FILE HAS ENFORCED SIX TIMES, because someone who has
+absorbed those refusals will be tempted to trim conclusions by symmetry and the symmetry
+is false:**
+
+    STRENGTHENING A HYPOTHESIS narrows, is invisible at the use site, REFUSE IT.
+    STRENGTHENING A CONCLUSION is free, and has OPTION VALUE.
+
+An earlier draft of `landing` carried `CNV u` in the CONCLUSION, put there only because the
+measurement said it cost nothing.  It turned out to be exactly what the consumer's
+`CarrierV` form needed — that carrier does not transport `CNV`, so at a depth-2 step the
+theorem's own `CNV t` hypothesis would have been unavailable — and without it the two
+pieces would not have composed.  **The consumer then chose the BOUNDED form instead, so the
+option was never exercised.**  That is not the rule failing; that is what an option is.  You
+cannot know which consumer will need which conclusion, so when a measurement says a stronger
+conclusion is free, take it and let the consumer discard it.
+
                           movers   `CNV` lost   `RT`-step failed
         predOr              39          0              0
         omLog               28          0              0
@@ -2813,5 +2829,37 @@ theorem inT_ofList_take : ∀ (b : Term) (k : Nat),
         | cons w ws =>
           simp only [ofList] at hiy ⊢
           exact inT_add_intro_add hap hiu hiy hyu.2
+
+
+/-! ### §15.3 THE `lt` HALF — the sub-term facts every site needs, measured
+
+Each `land_*` theorem's second conjunct is `lt <target> <parent as passed>`, and the parent
+is the `φ̄(a,b)` the recursion was called on, not the site's own argument.  So every site
+needs the sub-term facts first.  Over the 97 `φ̄`-headed terms of `startsW`:
+
+    lt a (φ̄(a,b))                                      0 violations
+    lt b (φ̄(a,b))                                      0 violations
+    lt (predOr a) (φ̄(a,b))     where `predOr` moves    0 of 51
+    lt g (φ̄(a,b))              g a summand of `(splitFin b).1`   0
+    lt (omLog g) (φ̄(a,b))      same g                            0
+
+**The first two are what the other three reduce to**: `lt (predOr a) a` composed with
+`lt a (φ̄(a,b))` through `lt_trans_inT`, and likewise for the subscript side.  So the
+per-site obligation is the site's own step and the sub-term fact, and the sub-term fact is
+the same one twice. -/
+
+def phis : List (Term × Term) :=
+  startsW.filterMap (fun t => match t with | .phi a b => some (a, b) | _ => none)
+
+#guard phis.length == 97
+#guard (phis.filter (fun p => !(TM.Term.lt p.1 (TM.Term.phi p.1 p.2)))).length == 0
+#guard (phis.filter (fun p => !(TM.Term.lt p.2 (TM.Term.phi p.1 p.2)))).length == 0
+#guard (phis.filter (fun p => !(predOr p.1 == p.1)
+          && !(TM.Term.lt (predOr p.1) (TM.Term.phi p.1 p.2)))).length == 0
+#guard (phis.filter (fun p => !(predOr p.1 == p.1))).length == 51
+#guard (phis.filter (fun p => !((summands (TM.Term.splitFin p.2).1).all
+          (fun g => TM.Term.lt g (TM.Term.phi p.1 p.2))))).length == 0
+#guard (phis.filter (fun p => !((summands (TM.Term.splitFin p.2).1).all
+          (fun g => TM.Term.lt (omLog g) (TM.Term.phi p.1 p.2))))).length == 0
 
 end Evidence.SqV

@@ -227,6 +227,12 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   side of the relation the decision procedure reads LAST" — and called it a
   reusable discipline. A file that documents its methods will hand you the
   answer before you design one.
+  **The cheap tell that you are in a failing CATEGORY rather than a failing
+  attempt: the second failure has the same ERROR TEXT as the first.** Not the same
+  tactic — the same message. Twice tonight an improvement-loop ran four rounds
+  where the second round's message already said the category ("motive is not type
+  correct", "the goal's shape is not uniform"), and both times naming the category
+  closed it in one. Read the message, not the tactic.
   **A template's value is the QUESTIONS IT FORCES, not the code it saves.**
   Reading `ltF_stable` before designing `encvF_saturate` did not supply the
   induction skeleton — that would have been reconstructed anyway. It supplied
