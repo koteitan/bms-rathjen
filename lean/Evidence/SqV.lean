@@ -3708,4 +3708,67 @@ end
 #guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
           (fun p => (toList (TM.Term.add p.1 p.2)).any (fun x => x == p.2))).length != 72
 
+/-! ### §15.12 F4 IS NOT NEEDED — THE `add` CLAUSE SHOULD RECURSE ON SUMMANDS, NOT COMPONENTS
+
+§15.11 reduced F4 to one `le` fact and routed it.  **It should not have been routed at all**, and
+the reason is a change to `encv'`, not to the order theory.
+
+`encvF`'s `add` clause is `encvF f u d ++ encvF f v d` — it recurses on the RAW components, so the
+tail `v` is a target and `v` is not a component of `add u v` (§15.11: only 33 of 72).  But the
+same output is produced by recursing on the SUMMANDS:
+
+    encv t d  =  (summands t).flatMap (fun g => encv g d)
+
+MEASURED over all 215 `CNV` terms at four depths — **0 violations**, not only on the 72 `add`s.
+It is not a coincidence: `CNV (add u v)` forces `u.isAP`, so `summands u = [u]`, and the flatten
+unrolls to exactly the same concatenation the two-component clause produces.
+
+**AND EVERY SUMMAND IS ADDITIVELY PRINCIPAL, SO THE DECREASE IS FREE.**  `le` comes from
+`le_summands_self` (§15.10); strictness needs `g ≠ add u v`, and `isAP (add _ _) = false` while
+every summand of a `CNV` term is `isAP` — so the disequality is a CONSTRUCTOR clash, not a `deg`
+argument and not an order fact.  `lt_summand_add` below.
+
+WHAT THIS COSTS AND WHAT IT BUYS.  It costs one clause of `encv'` being written over `summands`
+rather than over `u`/`v` — an EQUAL definition on `CNV`, measured.  It buys the deletion of the
+last routed order fact.  **The general lesson is the one §15.8 and §15.10 already showed twice:
+when a clause's decrease is hard, look at whether the clause is asking the right question before
+asking the order lane to answer the wrong one.**  Three sites now, all closed by restating the
+step rather than by strengthening the order theory:
+
+    land_omLog    stated against the summand, not the parent   ⇒  F1b was never needed here
+    land_fpDeep   `le`, because `fpDeep` can return its argument ⇒  no overclaim to defend
+    the `add` clause  recurses on summands, not components      ⇒  F4 not needed at all
+
+`lt_head_add` (§15.11, F3) is kept: it is one line from `le_head_add`, it is true, and a caller
+who does want the two-component form should not have to rediscover it. -/
+
+section
+open Evidence.WF (CNV)
+
+/-- Every summand of a `CNV` term is additively principal — §15.9's bridge plus §15.5. -/
+theorem isAP_mem_summands {t g : Term} (ht : CNV t = true) (hg : g ∈ summands t) :
+    g.isAP = true := by
+  rw [summands_eq_toList t ht] at hg
+  exact cnv_toList_isAP t ht g hg
+
+/-- **THE `add` CLAUSE'S DECREASE, WITH NO ORDER FACT BEYOND F1b.**  A summand is additively
+    principal, so it cannot BE the sum — a constructor clash, not an argument about size. -/
+theorem lt_summand_add {u v g : Term} (h : CNV (TM.Term.add u v) = true)
+    (hg : g ∈ summands (TM.Term.add u v)) : lt g (TM.Term.add u v) = true := by
+  refine lt_of_le_of_ne (le_summands_self h hg) ?_
+  intro he
+  have hap := isAP_mem_summands h hg
+  rw [he] at hap
+  exact absurd hap (by simp [TM.Term.isAP])
+
+end
+
+/-- The restructured `add` clause, as a function, so the agreement is executable. -/
+def encvFlat (t : Term) (d : Nat) : List Col2 := (summands t).flatMap (fun g => encv g d)
+
+#guard (cnvAll.filter (fun t => !((List.range 4).all (fun d => encv t d == encvFlat t d)))).length == 0
+#guard cnvAll.length == 215
+#guard (cnvAll.filter (fun t => match t with | .add _ _ => true | _ => false)).length == 72
+#guard (cnvAll.filter (fun t => !((summands t).all (fun g => TM.Term.isAP g)))).length == 0
+
 end Evidence.SqV
