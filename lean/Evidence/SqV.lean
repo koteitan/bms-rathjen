@@ -1240,7 +1240,25 @@ saturation proof is: induct on a bound `n ≥ tdepth t`, step both fuels, and di
 three sites with the three lemmas above — plus `tdepth t ≤ 2 * t.deg + 8`, so that the
 fuel `encv` chooses is above the bound.
 
-THIS IS A PLAN, NOT A PROOF.  The four facts are `#eval`-measured on 169 terms and none
+WHAT THE TEMPLATE DID NOT HAVE, named before working around it.  `ltF_stable`'s recursion
+sites are all sub-terms; `encvF`'s `phi` clause has two that are not:
+
+  * the head of `summands (splitFin b).1` — a computed term, needing `tdepth_headD`;
+  * **`fpDeep`'s OUTPUT.**  `fpDeep` carries its OWN fuel, so it is fuel-independent of
+    `encvF` and contributes no step-down obligation — but the term it RETURNS is fed to
+    `encvF`, so its depth has to be bounded: `fpDeep a t = some g → tdepth g ≤ tdepth t`.
+    Nothing in `ltF_stable` corresponds to this, because nothing there returns a term.
+
+Both are measured 0-failure below.
+
+STATE OF THE PROOF (not in this file, because it is not finished and `sorry` does not go
+in): the induction skeleton is proved — `zero`, `M`, `omg`, `psi`, `Z` are `rfl` and `add`
+closes from the IH.  The `phi` case unfolds cleanly under `simp only [encvF]`, exposing
+exactly four fuel-dependent sites; three of them (`predOr a`, the `headD`, `fpDeep`'s `g`)
+rewrite from the IH, and the fourth sits under a `List.map` binder where the congruence
+step is still open plumbing.
+
+THIS IS A PLAN, NOT A PROOF.  The seven facts are `#eval`-measured on 169 terms and none
 of them is proved.  They are stated here so that the proof is written against measured
 lemmas rather than guessed ones — the same order this file has used for the encoding. -/
 
@@ -1267,6 +1285,14 @@ def distinctTerms : List Term := (corpusW ++ deeper).eraseDups
 #guard (distinctTerms.filter (fun t =>
           !((summands (TM.Term.splitFin t).1).all (fun g => tdepth g <= tdepth t)))).length == 0
 #guard (distinctTerms.filter (fun t => !(tdepth t <= 2 * t.deg + 8))).length == 0
+-- the two sites `ltF_stable` did not have: `headD` of the summands, and `fpDeep`'s OUTPUT
+#guard (distinctTerms.filter (fun t =>
+          !(tdepth ((summands (TM.Term.splitFin t).1).headD zero) <= tdepth t))).length == 0
+#guard (distinctTerms.filter (fun t =>
+          !((List.range 3).all (fun i =>
+              match fpDeep (ofNat i) t with
+              | none => true
+              | some g => tdepth g <= tdepth t)))).length == 0
 -- and the NEGATIVE control: `deg` really does fail, so §9.1 is not a statement about nothing
 #guard (distinctTerms.filter (fun t => !((omLog t).deg <= t.deg))).length == 4
 
