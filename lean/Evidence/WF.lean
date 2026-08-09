@@ -8371,6 +8371,297 @@ counterexample" is this, so that the claim is not read as wider than the check:
     configuration is impossible.
   * degree ≥ 8 is NOT covered, and no proof is claimed. -/
 
+/-! ## §15 THE VEBLEN SEGMENT BELOW Γ₀ IS WELL-FOUNDED  (STAGE 1 of the wf road)
+
+WHAT THIS IS.  §10 proves accessibility for `CN` — the Cantor normal forms below ε₀,
+i.e. `φ̄0β` and descending sums of them.  This section does the same one level up, for
+the full BINARY VEBLEN fragment: `φ̄αβ` with α arbitrary, which reaches Γ₀.  §10 is
+subsumed (`cnv_of_cn`), and the target of the road is (B) — the full R1 ordinal
+ψ_{Ω₁}(ε_{M+1}) — so this is step 1, not the destination; see THE SEAM below.
+
+THE FRAGMENT, AND WHY ONLY THE SUMS ARE RESTRICTED.  `CNV` is `Frag` plus 2.1(iii) on
+sums (components additively principal, descending) and NOTHING else — in particular no
+Veblen normal-form condition on `φ̄`.  That is not an oversight, and the evidence is a
+CALIBRATED CONTRAST rather than an absence of evidence.  §10.3 shows what forces
+2.1(iii): prefix-descent, `1 ⊕ 1 ⊕ … ⊕ ω`.  Testing for exactly that shape over the
+COMPLETE corpus of all 1619 `Frag` terms of degree ≤ 12 (complete because `Frag` degrees
+are odd, so the generator saturates):
+
+      ∃ c u,  lt (add c u) u  =  true     →  1,224,175 witness pairs
+      ∃ a u,  lt (phi a u) u  =  true     →  0 witnesses
+
+The positive control fires massively, so the zero is informative: `⊕` admits
+prefix-descent everywhere and `φ̄` admits it nowhere.  Inside `CNV` both counts are 0.
+Sizes: `CNV` admits 89 of those 1619 terms against `CN`'s 14 — a 6.4x widening, exactly
+the step ε₀ → Γ₀.
+
+`CNV` CARRIES AN ORDER-VALUED CONJUNCT (`hdLe` calls `le`), exactly as `CN` already does.
+That is safe HERE and would not be in §7/§8: the induction below is on `Acc`, not on
+`lt`, so there is no circularity.  This is the one place where the trade-off that made
+§8.4 choose the syntactic `FragR` over `inT` runs the other way.
+
+WHAT CHANGED FROM §10's ARGUMENT, and why it had to.  §10 returns a PAIR — `Acc (ω^a)`
+together with the `⊕` step for that head — because its `⊕` half needs the `C` lemma of
+the same head.  With α = 0 fixed, the head of any smaller sum is `ω^e` with `e < a`, so
+the outer induction always reaches it.  With BINARY Veblen it does not: 2.3.13(iii) lets
+a head `φ̄pq` with `p > a` sit below `φ̄ab` (via `φ̄pq ≤ b`), and no induction hypothesis
+of the (a, b) recursion reaches `(p, q)`.  THE FIX IS TO DECOUPLE: `acc_sum` below proves
+"accessibility is closed under `⊕`" as a STANDALONE lemma, taking `Acc c` and `Acc d` as
+hypotheses instead of deriving them from a pair.  Its own `u < c` case then needs the
+tail `w` of a smaller sum to be accessible, and that is `lt_tail_of_lt`: `hdLe w u` bounds
+`w`'s head by `u`, so `w < c` whenever `u < c` and `c` is additively principal.  With
+`acc_sum` standalone, `C` never needs a pair at a head it cannot reach, and 13(iii)
+becomes a one-liner (`x ≤ b`, so `Acc x` follows from `Acc b`).
+
+THE SEAM — what survives into (B), stated because the next reader will otherwise assume
+all of it does.
+  SURVIVES: `CNV` and its destructors, `lt_tail_cnv`, `lt_tail_of_lt`, the relation, and
+    `acc_sum`.  `acc_sum` is essentially generic — it uses only 2.3.11 and 2.3.16 and the
+    fact that the head is additively principal, all of which hold verbatim with `ψ`/`Z`
+    heads; adapting it means replacing `lt_phi_add` by the arbitrary-non-sum form (§8.2's
+    `ltF_succ_nsum_add` is already proved for every non-sum) and `eq_phi_of_isAP_cnv` by
+    "additively principal = non-sum, non-zero".  The top-level degree recursion is generic
+    too.
+  DOES NOT SURVIVE: `acc_phi_v`'s inner `C`.  It is a STRUCTURAL induction on `x` only
+    because `x < φ̄ a b` bounds `x` structurally.  For `ψ_κ α` it does not — that is what
+    collapsing means — and this is exactly where Rathjen 1994's distinguished-set / C_κ
+    machinery has to enter.  It is a different method, not a further case.
+  ALSO FLAGGED: the initial-segment property that would make this permanent
+    (`inT x → CNV v → lt x v → CNV x`, the §13 analogue) is MEASURED but NOT PROVED here —
+    0 violations over the 1687 `inT` terms of degree ≤ 8 against the 89 `CNV` terms, with
+    the positive control firing (134 violations once `inT` is dropped, the `0 ⊕ M < 1`
+    phenomenon of §13).  Proving it is the remaining step, and it would upgrade `acc_cnv`
+    from the `CNV`-relation `RV` to the `inT`-relation, which is what makes step 1 a
+    literal sub-statement of (B)'s goal rather than something to be restated.  Its
+    ψ-analogue is probably FALSE — below `ψ_κ α` there are terms of essentially arbitrary
+    shape — so this trick is a gift of the Veblen layer specifically. -/
+
+def CNV : Term → Bool
+  | zero => true
+  | phi a b => CNV a && CNV b
+  | add a b => a.isAP && CNV a && CNV b && hdLe b a
+  | _ => false
+
+theorem cnv_phi {a b : Term} (h : CNV (phi a b) = true) : CNV a = true ∧ CNV b = true := by
+  simp only [CNV, Bool.and_eq_true] at h; exact h
+
+theorem cnv_add {a b : Term} (h : CNV (add a b) = true) :
+    a.isAP = true ∧ CNV a = true ∧ CNV b = true ∧ hdLe b a = true := by
+  simp only [CNV, Bool.and_eq_true] at h
+  exact ⟨h.1.1.1, h.1.1.2, h.1.2, h.2⟩
+
+theorem frag_of_cnv : ∀ (t : Term), CNV t = true → Frag t = true
+  | zero, _ => rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi a b, h => by
+    obtain ⟨ha, hb⟩ := cnv_phi h
+    show (Frag a && Frag b) = true
+    rw [frag_of_cnv a ha, frag_of_cnv b hb]; rfl
+  | add a b, h => by
+    obtain ⟨_, ha, hb, _⟩ := cnv_add h
+    show (Frag a && Frag b) = true
+    rw [frag_of_cnv a ha, frag_of_cnv b hb]; rfl
+
+/-- An additively principal `CNV` term is a `φ̄`. -/
+theorem eq_phi_of_isAP_cnv : ∀ {c : Term}, CNV c = true → c.isAP = true → ∃ p q, c = phi p q
+  | zero, _, h => Bool.noConfusion h
+  | add _ _, _, h => Bool.noConfusion h
+  | M, h, _ => Bool.noConfusion h
+  | omg _, h, _ => Bool.noConfusion h
+  | psi _ _, h, _ => Bool.noConfusion h
+  | Z _, h, _ => Bool.noConfusion h
+  | phi p q, _, _ => ⟨p, q, rfl⟩
+
+/-- The tail of a `CNV` sum inherits any `φ̄`-bound on its head (§10's `lt_tail`). -/
+theorem lt_tail_cnv {a b p q : Term} (h : CNV (add a b) = true) (hfpq : Frag (phi p q) = true)
+    (hlt : lt a (phi p q) = true) : lt b (phi p q) = true := by
+  obtain ⟨_, hcna, hcnb, hdesc⟩ := cnv_add h
+  have hfa : Frag a = true := frag_of_cnv a hcna
+  cases b with
+  | zero => exact Bool.noConfusion hdesc
+  | M => exact Bool.noConfusion hcnb
+  | omg _ => exact Bool.noConfusion hcnb
+  | psi _ _ => exact Bool.noConfusion hcnb
+  | Z _ => exact Bool.noConfusion hcnb
+  | phi x y => exact lt_of_le_of_lt (frag_of_cnv _ hcnb) hfa hfpq hdesc hlt
+  | add c d =>
+    obtain ⟨_, hcnc, _, _⟩ := cnv_add hcnb
+    rw [lt_add_phi]
+    exact lt_of_le_of_lt (frag_of_cnv c hcnc) hfa hfpq hdesc hlt
+
+/-- THE NEW STEP the standalone `⊕` lemma needs: a `CNV` tail sits below anything its
+    own component sits below, because `hdLe` bounds its head.  This is what removes the
+    need for §10's coupled pair, and with it the 13(iii) obstruction. -/
+theorem lt_tail_of_lt {w u c : Term} (hw : CNV w = true) (hu' : CNV u = true)
+    (hd : hdLe w u = true) (hc : CNV c = true) (hAP : c.isAP = true)
+    (hu : lt u c = true) : lt w c = true := by
+  obtain ⟨p, q, rfl⟩ := eq_phi_of_isAP_cnv hc hAP
+  have hfc : Frag (phi p q) = true := frag_of_cnv _ hc
+  have hfu : Frag u = true := frag_of_cnv u hu'
+  cases w with
+  | zero => exact Bool.noConfusion hd
+  | M => exact Bool.noConfusion hw
+  | omg _ => exact Bool.noConfusion hw
+  | psi _ _ => exact Bool.noConfusion hw
+  | Z _ => exact Bool.noConfusion hw
+  | phi x y => exact lt_of_le_of_lt (frag_of_cnv _ hw) hfu hfc hd hu
+  | add s t =>
+    obtain ⟨_, hcs, _, _⟩ := cnv_add hw
+    rw [lt_add_phi]
+    exact lt_of_le_of_lt (frag_of_cnv s hcs) hfu hfc hd hu
+
+def RV (x y : Term) : Prop := CNV x = true ∧ lt x y = true
+
+theorem acc_zero_v : Acc RV zero := by
+  refine Acc.intro _ (fun x hx => ?_)
+  have h := hx.2
+  rw [show lt x zero = false from ltF_right_zero _ x] at h
+  exact Bool.noConfusion h
+
+/-- **Accessibility is closed under `⊕`** — standalone, unlike §10 where the `⊕` half is
+    coupled to the `φ̄` half and returned as a pair.  Decoupling is what dissolves the
+    13(iii) obstruction: `C` never needs the pair at a head it cannot reach. -/
+private theorem acc_sum : ∀ (c : Term), Acc RV c → CNV c = true → c.isAP = true →
+    ∀ (d : Term), Acc RV d → CNV d = true → hdLe d c = true → Acc RV (add c d) := by
+  intro c hc
+  induction hc with
+  | intro c hc' IHc =>
+    intro hcnc hAPc d hd
+    induction hd with
+    | intro d hd' IHd =>
+      intro hcnd hdesc
+      refine Acc.intro _ (fun x hx => ?_)
+      obtain ⟨hcnx, hlt⟩ := hx
+      cases x with
+      | zero => exact acc_zero_v
+      | M => exact Bool.noConfusion hcnx
+      | omg _ => exact Bool.noConfusion hcnx
+      | psi _ _ => exact Bool.noConfusion hcnx
+      | Z _ => exact Bool.noConfusion hcnx
+      | phi s t =>
+        rw [lt_phi_add] at hlt
+        simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlt
+        rcases hlt with h1 | h1
+        · rw [h1]; exact Acc.intro _ hc'
+        · exact hc' _ ⟨hcnx, h1⟩
+      | add u w =>
+        obtain ⟨hAPu, hcnu, hcnw, hdw⟩ := cnv_add hcnx
+        by_cases heq : add u w = add c d
+        · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+        rw [lt_add_add heq] at hlt
+        by_cases huc : u = c
+        · subst huc
+          rw [if_pos rfl] at hlt
+          exact IHd w ⟨hcnw, hlt⟩ hcnw hdw
+        · rw [if_neg huc] at hlt
+          have hwc : lt w c = true := lt_tail_of_lt hcnw hcnu hdw hcnc hAPc hlt
+          exact IHc u ⟨hcnu, hlt⟩ hcnu hAPu w (hc' w ⟨hcnw, hwc⟩) hcnw hdw
+
+/-- **THE VEBLEN STEP.**  `φ̄ a b` is accessible whenever `a` and `b` are. -/
+private theorem acc_phi_v : ∀ (a : Term), Acc RV a → CNV a = true →
+    ∀ (b : Term), Acc RV b → CNV b = true → Acc RV (phi a b) := by
+  intro a ha
+  induction ha with
+  | intro a ha' IHa =>
+    intro hcna b hb
+    induction hb with
+    | intro b hb' IHb =>
+      intro hcnb
+      have hfab : Frag (phi a b) = true :=
+        frag_of_cnv _ (by show (CNV a && CNV b) = true; rw [hcna, hcnb]; rfl)
+      have C : ∀ x, CNV x = true → lt x (phi a b) = true → Acc RV x := by
+        intro x
+        induction x with
+        | zero => intro _ _; exact acc_zero_v
+        | M => intro h _; exact Bool.noConfusion h
+        | omg _ _ => intro h _; exact Bool.noConfusion h
+        | psi _ _ _ _ => intro h _; exact Bool.noConfusion h
+        | Z _ _ => intro h _; exact Bool.noConfusion h
+        | phi p q _ ihq =>
+          intro hcn hlt
+          obtain ⟨hcnp, hcnq⟩ := cnv_phi hcn
+          by_cases heq : phi p q = phi a b
+          · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+          rw [lt_phi_phi heq] at hlt
+          by_cases hpa : p = a
+          · subst hpa
+            rw [if_pos rfl] at hlt
+            exact IHb q ⟨hcnq, hlt⟩ hcnq
+          · rw [if_neg hpa] at hlt
+            by_cases hlt2 : lt p a = true
+            · rw [if_pos hlt2] at hlt
+              exact IHa p ⟨hcnp, hlt2⟩ hcnp q (ihq hcnq hlt) hcnq
+            · rw [if_neg hlt2] at hlt
+              simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlt
+              rcases hlt with h1 | h1
+              · rw [h1]; exact Acc.intro _ hb'
+              · exact hb' _ ⟨hcn, h1⟩
+        | add c d ihc ihd =>
+          intro hcn hlt
+          obtain ⟨hAPc, hcnc, hcnd, hdesc⟩ := cnv_add hcn
+          have hhead : lt c (phi a b) = true := by rw [← lt_add_phi]; exact hlt
+          have htail : lt d (phi a b) = true := lt_tail_cnv hcn hfab hhead
+          exact acc_sum c (ihc hcnc hhead) hcnc hAPc d (ihd hcnd htail) hcnd hdesc
+      exact Acc.intro _ (fun x hx => C x hx.1 hx.2)
+
+private theorem acc_cnv_aux : ∀ (n : Nat) (t : Term), t.deg ≤ n → CNV t = true → Acc RV t := by
+  intro n
+  induction n with
+  | zero => intro t hd _; have := deg_pos t; omega
+  | succ n ih =>
+    intro t hd hcn
+    cases t with
+    | zero => exact acc_zero_v
+    | M => exact Bool.noConfusion hcn
+    | omg _ => exact Bool.noConfusion hcn
+    | psi _ _ => exact Bool.noConfusion hcn
+    | Z _ => exact Bool.noConfusion hcn
+    | phi p q =>
+      obtain ⟨hp, hq⟩ := cnv_phi hcn
+      have e : (phi p q).deg = 1 + p.deg + q.deg := rfl
+      have h1 := deg_pos p; have h2 := deg_pos q
+      exact acc_phi_v p (ih p (by omega) hp) hp q (ih q (by omega) hq) hq
+    | add c d =>
+      obtain ⟨hAP, hc, hd', hdesc⟩ := cnv_add hcn
+      have e : (add c d).deg = 1 + c.deg + d.deg := rfl
+      have h1 := deg_pos c; have h2 := deg_pos d
+      exact acc_sum c (ih c (by omega) hc) hc hAP d (ih d (by omega) hd') hd' hdesc
+
+/-- **WELL-FOUNDEDNESS OF THE VEBLEN SEGMENT BELOW Γ₀.** -/
+theorem acc_cnv (t : Term) (h : CNV t = true) : Acc RV t :=
+  acc_cnv_aux t.deg t (Nat.le_refl _) h
+
+-- CN ⊆ CNV, so §10's segment is subsumed
+theorem cnv_of_cn : ∀ (t : Term), CN t = true → CNV t = true
+  | zero, _ => rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi a b, h => by
+    obtain ⟨ha, hb⟩ := cn_phi h
+    subst ha
+    show (CNV zero && CNV b) = true
+    rw [cnv_of_cn b hb]; rfl
+  | add a b, h => by
+    obtain ⟨hpow, ha, hb, hd⟩ := cn_add h
+    show (a.isAP && CNV a && CNV b && hdLe b a) = true
+    have : a.isAP = true := by cases a <;> simp_all [isPow, Term.isAP]
+    rw [this, cnv_of_cn a ha, cnv_of_cn b hb, hd]; rfl
+
+/-! Receipts: the ε₀ → Γ₀ widening, and the calibrated contrast quoted above. -/
+
+#guard CNV (phi one zero) == true      -- ε₀ = φ̄(1,0) is in CNV …
+#guard CN  (phi one zero) == false     -- … and NOT in CN: this is the widening
+#guard CNV omega == true
+#guard CNV (add one omega) == false    -- §10.3's descent family is excluded
+#guard lt (add one omega) omega == true                        -- ⊕ admits prefix-descent
+#guard lt (phi zero (phi one zero)) (phi one zero) == false    -- φ̄ does not
+#guard lt (phi one zero) (phi zero (phi one zero)) == true
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
