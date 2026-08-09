@@ -8848,4 +8848,75 @@ theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.
         exact Bool.noConfusion hn
   · cases e
 
+/-! ### §20.1 TWO MORE ROW EXPANSION IDENTITIES — `ε_{ω²}` and `ε_{ω^ω}`
+
+Same skeleton as `expand_rowA` and `expand_epsOmega`: an `hblk` closed by `intro a; rfl`, then a
+`show` of `take k ++ (range (n+1)).map …`.  **They differ only in the take index, the block width
+and the constant block** — 0/`[[0,0],[1,1]]`, 1/`[[1,1]]`, 1/`[[1,1],[2,0]]`, 2/`[[2,0]]` for the
+four rows respectively.
+
+**FOUR OF THE FIVE VEBLEN ROWS ARE THIS SHAPE AND `ε_{ε₀}` IS NOT.**  Its expansions are
+`(0,0)(1,1) ++ (2,0),(3,0),(4,0),…` — **the block GROWS with the index instead of repeating**, so a
+lemma over a CONSTANT block cannot express it.  That is the same structure that made `ε_{ε₀}` the
+first row needing an induction on `n` in `Evidence/SqV.lean` §21, now visible on the MATRIX side:
+the term side and the matrix side agree about which row is different.
+
+**Both statements were `#guard`ed against the encoder before being proved** (in `SqV.lean`, where
+`sqv'` lives — this file cannot cite it, so the check lives there and the record lives here): the
+identity held at `n < 5` on both rows.  A wrong matrix in a `rfl`-shaped computational identity
+builds green, so the check is not optional. -/
+
+theorem expand_epsOmegaSq (n : Nat) :
+    BMS.expand? [[0, 0], [1, 1], [2, 0], [2, 0]] n
+      = some ([[0, 0]] ++ (List.replicate (n + 1) ([[1, 1], [2, 0]] : Matrix)).flatten) := by
+  have hblk : ∀ (a : Nat), ((List.range 2).map (fun x =>
+      (List.range 2).map (fun y =>
+        BMS.ent [[0, 0], [1, 1], [2, 0], [2, 0]] (1 + x) y +
+          a * BMS.delta [[0, 0], [1, 1], [2, 0], [2, 0]] 1 0 y *
+            (if BMS.ascends [[0, 0], [1, 1], [2, 0], [2, 0]] 1 (1 + x) y then 1 else 0))))
+      = ([[1, 1], [2, 0]] : Matrix) := by
+    intro a; rfl
+  show some (([[0, 0], [1, 1], [2, 0], [2, 0]] : Matrix).take 1 ++
+      ((List.range (n + 1)).map (fun a =>
+        (List.range 2).map (fun x =>
+          (List.range 2).map (fun y =>
+            BMS.ent [[0, 0], [1, 1], [2, 0], [2, 0]] (1 + x) y +
+              a * BMS.delta [[0, 0], [1, 1], [2, 0], [2, 0]] 1 0 y *
+                (if BMS.ascends [[0, 0], [1, 1], [2, 0], [2, 0]] 1 (1 + x) y then 1 else 0))))).flatten)
+    = _
+  rw [List.map_congr_left (l := List.range (n + 1))
+      (g := fun _ => ([[1, 1], [2, 0]] : Matrix)) (fun a _ => hblk a),
+    map_const_flatten]
+  rfl
+
+theorem expand_epsOmegaOmega (n : Nat) :
+    BMS.expand? [[0, 0], [1, 1], [2, 0], [3, 0]] n
+      = some ([[0, 0], [1, 1]] ++ (List.replicate (n + 1) ([[2, 0]] : Matrix)).flatten) := by
+  have hblk : ∀ (a : Nat), ((List.range 1).map (fun x =>
+      (List.range 2).map (fun y =>
+        BMS.ent [[0, 0], [1, 1], [2, 0], [3, 0]] (2 + x) y +
+          a * BMS.delta [[0, 0], [1, 1], [2, 0], [3, 0]] 2 0 y *
+            (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 0]] 2 (2 + x) y then 1 else 0))))
+      = ([[2, 0]] : Matrix) := by
+    intro a; rfl
+  show some (([[0, 0], [1, 1], [2, 0], [3, 0]] : Matrix).take 2 ++
+      ((List.range (n + 1)).map (fun a =>
+        (List.range 1).map (fun x =>
+          (List.range 2).map (fun y =>
+            BMS.ent [[0, 0], [1, 1], [2, 0], [3, 0]] (2 + x) y +
+              a * BMS.delta [[0, 0], [1, 1], [2, 0], [3, 0]] 2 0 y *
+                (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 0]] 2 (2 + x) y then 1 else 0))))).flatten)
+    = _
+  rw [List.map_congr_left (l := List.range (n + 1))
+      (g := fun _ => ([[2, 0]] : Matrix)) (fun a _ => hblk a),
+    map_const_flatten]
+  rfl
+
+#guard (List.range 6).all (fun n =>
+  BMS.expand [[0, 0], [1, 1], [2, 0], [2, 0]] n
+    == [[0, 0]] ++ (List.replicate (n + 1) ([[1, 1], [2, 0]] : Matrix)).flatten)
+#guard (List.range 6).all (fun n =>
+  BMS.expand [[0, 0], [1, 1], [2, 0], [3, 0]] n
+    == [[0, 0], [1, 1]] ++ (List.replicate (n + 1) ([[2, 0]] : Matrix)).flatten)
+
 end Evidence.Cert
