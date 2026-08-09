@@ -24,6 +24,7 @@ Each row lives in a namespace named after the matrix itself and provides
   e3 / esucc : the statement above.
 -/
 import Evidence.StageA
+import Evidence.StageB
 
 namespace Rows.Proofs
 
@@ -141,5 +142,46 @@ theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 1)) :=
   e3_matrix (X := M) rfl (by decide) (c := 3) (by decide) rfl n
 
 end «(0)(1)(2)(3)»
+
+/-! ### Successor rows `(0,0)(1,1)…(a,1)(0,0)` = `φ̄(a,0)+1`.
+
+The `a = 1, 2, 3` instances of the F4 `b = 0` case of Evidence/StageB.lean
+(`o?_M4z` / `esucc_M4z`), which proves the whole family. -/
+
+namespace «(0,0)(1,1)(0,0)»
+
+def M : Matrix := [[0,0],[1,1],[0,0]]
+def t : Term := add (phi one zero) one
+
+theorem e1 : o? M = some t := Evidence.StageB.o?_M4z 0
+
+theorem esucc (n : Nat) : o? (BMS.expand M n) = some (predT t) :=
+  Evidence.StageB.esucc_M4z 0 n
+
+end «(0,0)(1,1)(0,0)»
+
+namespace «(0,0)(1,1)(2,1)(0,0)»
+
+def M : Matrix := [[0,0],[1,1],[2,1],[0,0]]
+def t : Term := add (phi (ofNat 2) zero) one
+
+theorem e1 : o? M = some t := Evidence.StageB.o?_M4z 1
+
+theorem esucc (n : Nat) : o? (BMS.expand M n) = some (predT t) :=
+  Evidence.StageB.esucc_M4z 1 n
+
+end «(0,0)(1,1)(2,1)(0,0)»
+
+namespace «(0,0)(1,1)(2,1)(3,1)(0,0)»
+
+def M : Matrix := [[0,0],[1,1],[2,1],[3,1],[0,0]]
+def t : Term := add (phi (ofNat 3) zero) one
+
+theorem e1 : o? M = some t := Evidence.StageB.o?_M4z 2
+
+theorem esucc (n : Nat) : o? (BMS.expand M n) = some (predT t) :=
+  Evidence.StageB.esucc_M4z 2 n
+
+end «(0,0)(1,1)(2,1)(3,1)(0,0)»
 
 end Rows.Proofs
