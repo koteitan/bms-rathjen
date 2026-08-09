@@ -6755,12 +6755,37 @@ theorem cert_not_single_valued :
 
 /-! ## §6 The registry
 
-gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate.
+gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
 
 MOVED TO THE END OF THE FILE (certificate lane, 2026-08-09).  It used to sit
 between §5.15 and §7, but the ε₀ row's certificate is built in §13 and Lean needs
-it in scope before `certRows_ok` can cite it.  Registry and gate stay together;
-nothing outside this file depends on their position. -/
+it in scope before the gate can cite it.  Registry and gate stay together;
+nothing outside this file depends on their position.
+
+THE GATE IS NOW GUARDED (certificate lane, 2026-08-09, approved by the coordinator).
+It used to be `certRows_ok`, i.e. plain `Certified`, and §15.9's
+`cert_not_single_valued` shows what that lets through: `Certified` is satisfied by
+values that are not terms of 𝔗(M) at all (the ω row also certifies `1 + M`), so a
+row could in principle be registered on the strength of a derivation whose values
+wander outside the notation system.  The gate is therefore
+
+    certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2
+
+with `DomI t := inT t = true` — the values are TERMS OF 𝔗(M), all the way down.
+That is plan/README.md's design input 2 enforced at the level where the ✅ is
+computed, and it is strictly stronger than the old gate: `certRows_ok` is now its
+image under `certifiedIn_forget`, so every consumer of the old statement is
+unaffected.
+
+WHY `DomI` AND NOT `DomF`.  `DomF = Frag2 ∧ inT` is the guard uniqueness is
+discharged on today (§14.3), but `Frag2` EXCLUDES `ψ` and `Z` — the shapes the
+whole T(M) table is aiming at.  A `DomF` gate would refuse the first `ψ` row (Γ₀)
+for a reason that has nothing to do with whether its certificate is sound: it
+would look like rigour and act as a wall in front of the target.  So the gate asks
+only for membership in 𝔗(M), which every legitimate future row can satisfy, and
+UNIQUENESS stays a separate, per-region theorem (`certRows_unique_guarded` on
+`DomF` today, wider as the order theory widens, with `certifiedIn_mono` bridging
+the two). -/
 
 /-- The registered certified rows. -/
 def certRows : List (Matrix × Term) :=
@@ -6770,28 +6795,10 @@ def certRows : List (Matrix × Term) :=
    ([[0], [1], [2], [3]], phi zero (phi zero omega)),
    ([[0, 0], [1, 1]], phi one zero)]
 
-/-- Every registered pair carries a derivation.  Extending `certRows` without
-    extending this proof breaks the build — the label cannot outrun the
-    certificates. -/
-theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 := by
-  intro p hp
-  simp only [certRows, List.mem_cons] at hp
-  rcases hp with h | h | h | h | h | h | h | h | h | h
-  · rw [h]; exact cert_empty
-  · rw [h]; exact cert_one
-  · rw [h]; exact cert_two
-  · rw [h]; exact cert_omega
-  · rw [h]; exact cert_omega2
-  · rw [h]; exact cert_omega_sq
-  · rw [h]; exact cert_omega_pow
-  · rw [h]; exact cert_omega_pow_pow
-  · rw [h]; exact cert_eps0
-  · cases h
-
-/-! ### §6.1 The registry, read as uniqueness (certificate lane §14) -/
-
-/-- Every registered pair carries a GUARDED derivation.  (`certRows_ok` is the
-    same list with `Certified`; `certifiedIn_forget` recovers it.) -/
+/-- **THE GATE.**  Every registered pair carries a derivation whose values are all
+    terms of 𝔗(M).  Extending `certRows` without extending this proof breaks the
+    build — the label cannot outrun the certificates, and (since v0.1.80) it cannot
+    outrun the formation conditions either. -/
 theorem certIn_rows : ∀ p ∈ certRows, CertifiedIn DomF p.1 p.2 := by
   intro p hp
   simp only [certRows, List.mem_cons] at hp
@@ -6807,12 +6814,18 @@ theorem certIn_rows : ∀ p ∈ certRows, CertifiedIn DomF p.1 p.2 := by
   · rw [h]; exact certIn_eps0
   · cases h
 
-/-- The same registry, guarded only by the formation conditions.  This is the
-    statement a future gate should use (§6.1 note): it does not mention `Frag2`, so
-    it survives the arrival of the `ψ`/`Z` rows, and `certRows_ok` is its image
-    under `certifiedIn_forget`. -/
+/-- **THE GATE**, in the form the table is computed against: the registry is
+    guarded by the formation conditions alone, so it does not mention `Frag2` and
+    survives the arrival of the `ψ`/`Z` rows.  See the §6 header. -/
 theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 :=
   fun p hp => certifiedIn_mono domF_le_domI (certIn_rows p hp)
+
+/-- The old gate, now a COROLLARY of the guarded one: forget the guard.  Kept
+    verbatim so that every consumer of the previous statement is unaffected. -/
+theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 :=
+  fun p hp => certifiedIn_forget (certIn_rows_inT p hp)
+
+/-! ### §6.1 The registry, read as uniqueness and as a ceiling (certificate lane) -/
 
 /-- **THE TABLE'S ✅, READ AS UNIQUENESS.**  For every registered row, a guarded
     certificate can only carry the registered value. -/
