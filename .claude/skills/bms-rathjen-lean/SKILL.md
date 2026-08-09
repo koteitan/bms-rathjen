@@ -178,6 +178,22 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **TWO INSTRUMENTS AGREEING ON 0 IS NOT CORROBORATION UNLESS BOTH HAVE
+  CONTROLS.** A `branchOf` dispatch classifier's `FIFTH` bucket was dead code —
+  it tested `kindV b` first and routed every successor `b` away before the
+  fifth-shape test could run, and the fifth shape *is* `a` limit with `b` a
+  successor, so the one case it existed for could never reach it
+  (`branchOf (φ̄(ω,1))` returned `terminal`). Its 0 was vacuous **and it agreed
+  with an independent detector's meaningful 0.** Indistinguishable from the
+  output. Run the positive control on EVERY bucket that reports 0, including
+  the ones a second instrument seems to confirm.
+- **DISTINGUISH "NO INSTANCE ANYWHERE" FROM "NO INSTANCE DOWNSTREAM OF THIS
+  CORPUS" — they both print 0.** At depth 4 the fifth shape is genuinely absent
+  (detector returns 1 on a hand-built `φ̄(ω,1)`), while core (C') is also 0 yet
+  reachable — `branchOf (φ̄(ω,0))` and `branchOf (φ̄(ε₀,0))` return `coreC'`, and
+  `lim_clauses_phiW0` / `lim_clauses_phiE0` are proved rows that land there. A
+  branch unreached by the closure of 21 roots is still required by the theorem.
+  Collapsing the two readings drops a needed branch.
 - **THE COORDINATOR'S RECURRING FAILURE IS AMPLIFYING A LANE'S SCOPED
   OBSERVATION INTO A JUSTIFICATION.** Twice in one session. A lane said the
   carrier is `BelowC`; that became "it is answered, not open" over four

@@ -4283,8 +4283,28 @@ theorem encv'_epsOmega (n : Nat) :
   encv' (phi one (ofNat n)) 0 == (0,0) :: List.replicate (n+1) ((1,1) : Col2))
 #guard (List.range 8).all (fun n => encv (phi one (ofNat n)) 0 == encv' (phi one (ofNat n)) 0)
 
-/-! ## §18 ROW A — THE FIRST ROW WHOSE SUBSCRIPT HAS SUMMANDS, AND THE `add` CLAUSE IS THE
-     TWO-COMPONENT ONE AFTER ALL
+/-! ## §18 THE PRINCIPLE, STATED FIRST BECAUSE IT WAS DISCOVERED FOUR TIMES
+
+**IN ANY DEFINITION BY WELL-FOUNDED RECURSION, THE PROOFS THREADED THROUGH THE CARRIER ARE
+LOAD-BEARING FOR TERMINATION AND NEVER FOR THE VALUE.  The definition discharged termination once,
+at elaboration.  A consumer reasoning about the VALUE may leave those proofs behind rather than
+route around them.**
+
+`encvC_eq_encv'` is that sentence as a theorem: `encvC ⟨x, hx⟩ d = encv' x d` for ANY `hx`.  Four
+obstructions that looked like four different problems are four applications of it, and the fourth
+(§19) is why it now leads this section instead of concluding it:
+
+    §17  ε_ω        empty `attach`         a length argument on a `Nat`
+    §17  fpDeep     match binding its eq   `fpDeepC`, proofs pushed into the data
+    §18  row A      real `attach`, `add`   `encv'_add`, the clause left proof-free
+    §19  ε_{ω²}     real `attach`, `mk`    `encvC_eq_encv'` + `List.attach_map_val`
+
+**A NAMED-EQUATION LAYER ROUTES AROUND THE PROOFS, WHICH IS WHY IT WAS PREDICTED THREE TIMES AND
+NEEDED ZERO** — see the retirement at the end of this section.  A principle discovered four times
+should be findable once, so it is here rather than at the bottom.
+
+### §18.1 ROW A — THE FIRST ROW WHOSE SUBSCRIPT HAS SUMMANDS, AND THE `add` CLAUSE IS THE
+    TWO-COMPONENT ONE AFTER ALL
 
 §17 closed `ε_ω`, whose subscript `ofNat n` contributes NO summands, so the `attach` list was
 empty and a length argument sufficed.  The coordinator's test for whether a named-equation layer
@@ -4325,14 +4345,10 @@ three times, each refusal on a proof attempt rather than on an opinion:
 **Each prediction named a real obstruction and got the route wrong**, which is why both wrong
 predictions stay written down: the third attempt had somewhere to stand because the first two had
 said exactly what was in the way.  What replaced the layer is one sentence rather than a
-three-lemma apparatus, and it is not a fact about this encoder:
-
-**IN ANY DEFINITION BY WELL-FOUNDED RECURSION, THE PROOFS THREADED THROUGH THE CARRIER ARE
-LOAD-BEARING FOR TERMINATION AND NEVER FOR THE VALUE — the definition discharged termination once,
-at elaboration, so a consumer reasoning about the VALUE may leave those proofs behind rather than
-route around them.**  That is why `encvC ⟨x, hx⟩ d = encv' x d` holds for ANY `hx`, why `attach`'s
-membership can be discarded, and why a named-equation layer — which routes AROUND the proofs — was
-solving a problem that did not need solving.  `encvC_eq_encv'` is the sentence as a theorem.
+three-lemma apparatus: **THE PRINCIPLE AT THE HEAD OF THIS SECTION.**  A named-equation layer
+routes AROUND the carrier's proofs; the principle says there is nothing to route around, because
+the proofs are irrelevant to the value.  That is why `encvC ⟨x, hx⟩ d = encv' x d` holds for ANY
+`hx` and why `attach`'s membership can be discarded rather than tracked.
 
 A layer refused three times on measurement is a firmer record than one adopted once on prediction;
 if a later row needs it, it will need it for a reason none of these three had, and that reason
@@ -4410,5 +4426,307 @@ theorem encv'_rowA : ∀ n, encv' (Evidence.WF.fsA n) 0
 #guard (List.range 6).all (fun n => encv (Evidence.WF.fsA n) 0 == encv' (Evidence.WF.fsA n) 0)
 #guard Evidence.WF.fsA 2 == TM.Term.add Evidence.WF.eps0T
          (TM.Term.add Evidence.WF.eps0T Evidence.WF.eps0T)
+
+/-! ## §19 `ε_{ω²}` — THE `mkBlocks` SITE, AND THE FOURTH SHAPE TO FALL TO THE SAME SENTENCE
+
+§17's subscript had no summands, §18's row went through the `add` clause.  This is the first row
+where **`mkBlocks` actually runs** — it maps a proof-carrying lambda over the `attach` list and
+emits one ladder-plus-block per summand of the subscript.
+
+**IT FELL TO `encvC_eq_encv'` AGAIN, AND THAT IS THE FOURTH DISTINCT-LOOKING OBSTRUCTION THE SAME
+ONE SENTENCE HAS DISSOLVED** (§18's principle: the carrier's proofs are load-bearing for
+TERMINATION, never for the VALUE).  Here it is `encvC_eq_encv'` followed by
+`List.attach_map_val` — the map over `attach` becomes a map over the plain list, and from there
+`List.map_replicate` finishes it.  **Not one line of the dependent structure is reasoned about.**
+
+    §17  ε_ω        empty `attach`          length argument on a `Nat`
+    §17  fpDeep     match binding its eq    `fpDeepC`, proofs pushed into the data
+    §18  row A      real `attach`, `add`    `encv'_add`, clause left proof-free
+    §19  ε_{ω²}     real `attach`, `mk`     `encvC_eq_encv'` + `List.attach_map_val`
+
+**AND THE ROW NEEDED NOTHING FROM THE 𝔗(M) SIDE, WHICH NEITHER LANE EXPECTED.**  The brief was to
+have the Veblen lane characterise `summands (fsC ω² n)`.  Both lanes `#eval`ed before either
+proved anything, and both found the same thing:
+
+    fsC ω² n = repAdd ω n            ω²'s fundamental sequence is ω·(n+1)
+
+so the subscript's summand list is a REPLICATE — the shape §18 already handles — and
+`Evidence.WF.fsC_omegaSq` (theirs, §15.16) composes with `summands_repAdd` (mine, §18) with
+nothing in between.  **A compound-looking argument `φ̄(0,1+1)` said nothing about the shape of its
+fundamental sequence, and the brief treated it as if it did.**  One `#eval` on each side was worth
+more than the theorem either of us was about to write.
+
+THE ROW IS STATED THREE TIMES ON PURPOSE: `encvC_epsOmegaSq` against the carrier, `encv'_epsOmegaSq`
+against the total wrapper, and **`encv'_fsEW2` against the table's own `fsEW2`** — the last is the
+one `sqv_decomp` will cite, and it is the other two plus `fsC_omegaSq`. -/
+
+theorem toList_repAdd {x : Term} (hx : x.isAP = true) : ∀ n,
+    toList (Evidence.WF.repAdd x n) = List.replicate (n + 1) x
+  | 0 => TM.Term.toList_of_isAP hx
+  | n + 1 => by
+    show x :: toList (Evidence.WF.repAdd x n) = _
+    rw [toList_repAdd hx n]
+    simp [List.replicate_succ]
+
+theorem ofList_replicate {x : Term} : ∀ n, ofList (List.replicate (n + 1) x) = Evidence.WF.repAdd x n
+  | 0 => rfl
+  | n + 1 => by
+    rw [List.replicate_succ]
+    show TM.Term.add x (ofList (List.replicate (n + 1) x)) = _
+    rw [ofList_replicate n]
+    rfl
+
+/-- A sum of copies of one non-`1` additively principal term has NO finite part. -/
+theorem splitFin_repAdd {x : Term} (hx : x.isAP = true) (hne : (x == one) = false) (n : Nat) :
+    TM.Term.splitFin (Evidence.WF.repAdd x n) = (Evidence.WF.repAdd x n, 0) := by
+  have hl := toList_repAdd hx n
+  have htw : ((toList (Evidence.WF.repAdd x n)).reverse.takeWhile (fun y => y == one)) = [] := by
+    rw [hl, List.reverse_replicate, List.replicate_succ,
+        List.takeWhile_cons_of_neg (p := fun y => y == one) (by simp [hne])]
+  show (ofList ((toList (Evidence.WF.repAdd x n)).take
+        ((toList (Evidence.WF.repAdd x n)).length
+          - ((toList (Evidence.WF.repAdd x n)).reverse.takeWhile (fun y => y == one)).length)),
+        ((toList (Evidence.WF.repAdd x n)).reverse.takeWhile (fun y => y == one)).length) = _
+  rw [htw, List.length_nil, Nat.sub_zero, List.take_length, hl, ofList_replicate]
+
+theorem cnv_repAdd_omega : ∀ n, Evidence.WF.CNV (Evidence.WF.repAdd omega n) = true
+  | 0 => rfl
+  | n + 1 => by
+    show (TM.Term.isAP omega && Evidence.WF.CNV omega
+          && Evidence.WF.CNV (Evidence.WF.repAdd omega n)
+          && Evidence.WF.hdLe (Evidence.WF.repAdd omega n) omega) = true
+    have hh : Evidence.WF.hdLe (Evidence.WF.repAdd omega n) omega = true :=
+      Evidence.WF.hdLe_repAdd_self (p := zero) (q := one) n
+    rw [cnv_repAdd_omega n, hh]
+    rfl
+
+theorem cnv_phi_one_repAdd_omega (n : Nat) :
+    Evidence.WF.CNV (phi one (Evidence.WF.repAdd omega n)) = true := by
+  show (Evidence.WF.CNV one && Evidence.WF.CNV (Evidence.WF.repAdd omega n)) = true
+  rw [cnv_repAdd_omega n]; rfl
+
+/-- `1 = φ̄(0,0)` encodes as a single column — the `a = 0`, empty-subscript clause. -/
+theorem encvC_one (h : Evidence.WF.CNV (phi zero zero) = true) (d : Nat) :
+    encvC ⟨phi zero zero, h⟩ d = [((d, 0) : Col2)] := by
+  have hfd : ∀ pf, fpDeepC zero ((summands (TM.Term.splitFin zero).1).headD zero) pf = none :=
+    fun pf => fpDeepC_none pf rfl
+  rw [encvC]
+  dsimp only
+  rw [show TM.Term.isFP zero ((summands (TM.Term.splitFin zero).1).headD zero) = false from rfl]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hfd]
+  dsimp only
+  rfl
+
+theorem encv'_one (d : Nat) : encv' (phi zero zero) d = [((d, 0) : Col2)] := by
+  show (if h : Evidence.WF.CNV (phi zero zero) = true then encvC ⟨phi zero zero, h⟩ d else []) = _
+  rw [dif_pos (show Evidence.WF.CNV (phi zero zero) = true from rfl)]
+  exact encvC_one _ d
+
+/-- **THE `ε_{ω²}` ROW'S ENCODER FACT, FOR EVERY `n`** — the first row where `mkBlocks` runs.
+    `ω²`'s fundamental sequence is `ω·(n+1)`, so the subscript's summand list is a REPLICATE of
+    `n+1` copies of `ω` and each one contributes one ladder-plus-block. -/
+theorem encvC_epsOmegaSq (n : Nat)
+    (h : Evidence.WF.CNV (phi one (Evidence.WF.repAdd omega n)) = true) :
+    encvC ⟨phi one (Evidence.WF.repAdd omega n), h⟩ 0
+      = (0, 0) :: (List.replicate (n + 1) [((1, 1) : Col2), (2, 0)]).flatten := by
+  have hsf : TM.Term.splitFin (Evidence.WF.repAdd omega n)
+      = (Evidence.WF.repAdd omega n, 0) := splitFin_repAdd rfl rfl n
+  have hgs : summands (TM.Term.splitFin (Evidence.WF.repAdd omega n)).1
+      = List.replicate (n + 1) omega := by rw [hsf]; exact summands_repAdd rfl n
+  have hm2 : (TM.Term.splitFin (Evidence.WF.repAdd omega n)).2 = 0 := by rw [hsf]
+  have hhd : (summands (TM.Term.splitFin (Evidence.WF.repAdd omega n)).1).headD zero = omega := by
+    rw [hgs, List.replicate_succ]; rfl
+  have hfp : TM.Term.isFP one
+      ((summands (TM.Term.splitFin (Evidence.WF.repAdd omega n)).1).headD zero) = false := by
+    rw [hhd]; rfl
+  have hfd : ∀ pf, fpDeepC one
+      ((summands (TM.Term.splitFin (Evidence.WF.repAdd omega n)).1).headD zero) pf = none :=
+    fun pf => fpDeepC_none pf (by rw [hhd]; rfl)
+  rw [encvC]
+  dsimp only
+  rw [hfp]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hfd, hm2, encvC_predOr_one]
+  simp only [encvC_eq_encv', show (one == zero) = false from rfl, Bool.false_eq_true, if_false]
+  rw [List.attach_map_val
+        (l := summands (TM.Term.splitFin (Evidence.WF.repAdd omega n)).1)
+        (f := fun x => ((0 + 1, 1) :: bumpAt (0 + 2) ([] : List Col2))
+                ++ shiftD (0 + 2) (encv' (omLog x) 0))]
+  rw [hgs, List.map_replicate]
+  simp only [List.replicate_succ]
+  rw [show omLog omega = phi zero zero from rfl, encv'_one]
+  simp only [List.replicate_zero, List.flatten_nil, List.append_nil]
+  rfl
+
+theorem encv'_epsOmegaSq (n : Nat) :
+    encv' (phi one (Evidence.WF.repAdd omega n)) 0
+      = (0, 0) :: (List.replicate (n + 1) [((1, 1) : Col2), (2, 0)]).flatten := by
+  show (if h : Evidence.WF.CNV (phi one (Evidence.WF.repAdd omega n)) = true
+        then encvC ⟨phi one (Evidence.WF.repAdd omega n), h⟩ 0 else []) = _
+  rw [dif_pos (cnv_phi_one_repAdd_omega n)]
+  exact encvC_epsOmegaSq n _
+
+/-- The row as the table states it, through veblen2's `fsC_omegaSq` (WF §15.16). -/
+theorem encv'_fsEW2 (n : Nat) :
+    encv' (Evidence.WF.fsEW2 n) 0
+      = (0, 0) :: (List.replicate (n + 1) [((1, 1) : Col2), (2, 0)]).flatten := by
+  show encv' (phi one (Evidence.WF.fsC Evidence.WF.omegaSq n)) 0 = _
+  rw [Evidence.WF.fsC_omegaSq]
+  exact encv'_epsOmegaSq n
+
+#guard (List.range 7).all (fun n =>
+  encv' (Evidence.WF.fsEW2 n) 0 == (0,0) :: (List.replicate (n+1) [((1,1) : Col2),(2,0)]).flatten)
+#guard (List.range 7).all (fun n => encv (Evidence.WF.fsEW2 n) 0 == encv' (Evidence.WF.fsEW2 n) 0)
+#guard (List.range 7).all (fun n =>
+  Evidence.WF.fsC Evidence.WF.omegaSq n == Evidence.WF.repAdd omega n)
+
+/-! ## §20 `ε_{ω^ω}` — ONE SUMMAND, ONE `φ̄` DEEPER, AND THE FIRST UNFOLDING OF `fpDeepF`'s FUEL
+
+`ω^ω`'s fundamental sequence is `ω^(n+1)`, not a repeated sum: `fsC ω^ω n = φ̄(0, ofNat (n+1))`
+(WF §15.16's `fsC_omegaOmega`, already proved — I looked before asking, and it was there, which is
+now the sixth time tonight).  So the subscript has exactly ONE summand and `mkBlocks` runs on a
+SINGLETON, while the block's own encoding is `ω^(n+1)`'s rather than a leaf's.
+
+**THE ONE GENUINELY NEW PIECE IS `fpDeep_none_of_empty`, AND IT IS THE FIRST TIME THIS FILE
+UNFOLDS A FUEL RECURSION AT A SYMBOLIC INDEX.**  `fpDeep a t = fpDeepF (t.deg + 4) a t`, and
+`t.deg` varies with `n`, so §9's original blocker — "an induction on `n` compares `encvF 22`
+against `encvF 30`" — is exactly the shape one would fear here.  It does not bite, and the reason
+is worth stating: **the branch is decided at the FIRST step, so the fuel is `f + 1` for an
+arbitrary `f` and never has to be known.**  Fuel only obstructs when the recursion must be
+followed; a clause that terminates immediately unfolds once at any positive fuel.
+
+**AND §18's ROW A IS NOW AN INSTANCE OF A GENERAL LEMMA IT MOTIVATED.**  `encv'_repAdd` says a sum
+of copies encodes as copies of the encoding, for ANY additively principal summand — and it needs
+NO induction on the encoder, because `summands_repAdd` delivers the whole list and `encv'_add`
+consumes it in one step.  `encv'_ofNat_succ` (`ω^(n+1)`'s block above) is the instance at `x = 1`;
+row A is the instance at `x = ε₀`.  The lemma was written for this row and subsumes the earlier
+one, which is the ordinary way a file's second use of a shape finds the right generality.
+
+THE ROW IS STATED TWICE AND BRIDGED ONCE, as in §19: `encvC_epsOmegaOmega` against the carrier,
+`encv'_epsOmegaOmega` against the total wrapper, and `encv'_fsEWW` against the table's own
+`fsEWW` — the last is what `sqv_decomp` will cite. -/
+
+theorem cnv_repAdd_one : ∀ n, Evidence.WF.CNV (Evidence.WF.repAdd one n) = true
+  | 0 => rfl
+  | n + 1 => by
+    show (TM.Term.isAP one && Evidence.WF.CNV one
+          && Evidence.WF.CNV (Evidence.WF.repAdd one n)
+          && Evidence.WF.hdLe (Evidence.WF.repAdd one n) one) = true
+    have hh : Evidence.WF.hdLe (Evidence.WF.repAdd one n) one = true :=
+      Evidence.WF.hdLe_repAdd_self (p := zero) (q := zero) n
+    rw [cnv_repAdd_one n, hh]
+    rfl
+
+/-- **A SUM OF COPIES ENCODES AS COPIES OF THE ENCODING** — no induction on the encoder, because
+    `summands_repAdd` delivers the whole list and `encv'_add` consumes it in one step. -/
+theorem encv'_repAdd {x : Term} (hx : x.isAP = true) (d : Nat) : ∀ n,
+    Evidence.WF.CNV (Evidence.WF.repAdd x n) = true →
+    encv' (Evidence.WF.repAdd x n) d = (List.replicate (n + 1) (encv' x d)).flatten
+  | 0, _ => by show encv' x d = _; simp
+  | n + 1, h => by
+    show encv' (TM.Term.add x (Evidence.WF.repAdd x n)) d = _
+    rw [encv'_add h d,
+        show summands (TM.Term.add x (Evidence.WF.repAdd x n)) = List.replicate (n + 2) x
+          from summands_repAdd hx (n + 1),
+        flatMap_replicate]
+
+theorem encv'_ofNat_succ (n : Nat) :
+    encv' (ofNat (n + 1)) 0 = List.replicate (n + 1) ((0, 0) : Col2) := by
+  rw [Evidence.WF.ofNat_succ_eq n, encv'_repAdd (x := one) rfl 0 n (cnv_repAdd_one n),
+      show encv' one 0 = [((0, 0) : Col2)] from encv'_one 0, flatten_replicate_singleton]
+
+/-- `fpDeep` stops immediately when the head is not a fixed point and the subscript's infinite
+    part has no summands — one unfolding, no induction on the fuel. -/
+theorem fpDeep_none_of_empty {a c x : Term} (hfp : TM.Term.isFP a (phi c x) = false)
+    (hgs : summands (TM.Term.splitFin x).1 = []) : fpDeep a (phi c x) = none := by
+  show (if TM.Term.isFP a (phi c x) then some (phi c x)
+        else match (phi c x : Term) with
+             | .phi _ y => (summands (TM.Term.splitFin y).1).findSome?
+                             (fpDeepF ((phi c x).deg + 3) a)
+             | _ => none) = none
+  rw [hfp]
+  simp only [Bool.false_eq_true, if_false]
+  show (summands (TM.Term.splitFin x).1).findSome? (fpDeepF ((phi c x).deg + 3) a) = none
+  rw [hgs]
+  rfl
+
+theorem cnv_phi_one_pow (n : Nat) :
+    Evidence.WF.CNV (phi one (phi zero (ofNat (n + 1)))) = true := by
+  show (Evidence.WF.CNV one && (Evidence.WF.CNV zero && Evidence.WF.CNV (ofNat (n + 1)))) = true
+  rw [Evidence.WF.cnv_ofNat (n + 1)]; rfl
+
+/-- **THE `ε_{ω^ω}` ROW'S ENCODER FACT, FOR EVERY `n`** — one summand, nested one `φ̄` deeper
+    than §19's, so `mkBlocks` runs on a SINGLETON and the block's own encoding is `ω^(n+1)`'s. -/
+theorem encvC_epsOmegaOmega (n : Nat)
+    (h : Evidence.WF.CNV (phi one (phi zero (ofNat (n + 1)))) = true) :
+    encvC ⟨phi one (phi zero (ofNat (n + 1))), h⟩ 0
+      = (0, 0) :: (1, 1) :: List.replicate (n + 1) ((2, 0) : Col2) := by
+  have hzz : ofNat (n + 1) ≠ zero := by
+    intro hc
+    have ht := Evidence.WF.toList_ofNat (n + 1)
+    rw [hc] at ht
+    simp [toList, List.replicate_succ] at ht
+  have hne : (phi zero (ofNat (n + 1)) == one) = false := by
+    have : phi zero (ofNat (n + 1)) ≠ one := by
+      intro hc; injection hc with _ h2; exact hzz h2
+    simpa using this
+  have hsf : TM.Term.splitFin (phi zero (ofNat (n + 1)))
+      = (phi zero (ofNat (n + 1)), 0) :=
+    splitFin_repAdd (x := phi zero (ofNat (n + 1))) rfl hne 0
+  have hgs : summands (TM.Term.splitFin (phi zero (ofNat (n + 1)))).1
+      = [phi zero (ofNat (n + 1))] := by rw [hsf]; rfl
+  have hm2 : (TM.Term.splitFin (phi zero (ofNat (n + 1)))).2 = 0 := by rw [hsf]
+  have hhd : (summands (TM.Term.splitFin (phi zero (ofNat (n + 1)))).1).headD zero
+      = phi zero (ofNat (n + 1)) := by rw [hgs]; rfl
+  have hfp : TM.Term.isFP one
+      ((summands (TM.Term.splitFin (phi zero (ofNat (n + 1)))).1).headD zero) = false := by
+    rw [hhd]; rfl
+  have hin : summands (TM.Term.splitFin (ofNat (n + 1))).1 = [] := by rw [splitFin_ofNat]; rfl
+  have hfd : ∀ pf, fpDeepC one
+      ((summands (TM.Term.splitFin (phi zero (ofNat (n + 1)))).1).headD zero) pf = none :=
+    fun pf => fpDeepC_none pf (by rw [hhd]; exact fpDeep_none_of_empty (by rfl) hin)
+  have hom : omLog (phi zero (ofNat (n + 1))) = ofNat (n + 1) := by
+    show (match summands (TM.Term.splitFin (ofNat (n + 1))).1 with
+          | [g] => if TM.Term.isFP zero g then plus (ofNat (n + 1)) one else ofNat (n + 1)
+          | _ => ofNat (n + 1)) = _
+    rw [hin]
+  rw [encvC]
+  dsimp only
+  rw [hfp]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hfd, hm2, encvC_predOr_one]
+  simp only [encvC_eq_encv', show (one == zero) = false from rfl, Bool.false_eq_true, if_false]
+  rw [List.attach_map_val
+        (l := summands (TM.Term.splitFin (phi zero (ofNat (n + 1)))).1)
+        (f := fun y => ((0 + 1, 1) :: bumpAt (0 + 2) ([] : List Col2))
+                ++ shiftD (0 + 2) (encv' (omLog y) 0))]
+  rw [hgs]
+  simp only [List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil]
+  rw [hom, encv'_ofNat_succ]
+  simp only [shiftD, List.map_replicate, List.replicate_zero, List.flatten_nil, List.append_nil]
+  rfl
+
+theorem encv'_epsOmegaOmega (n : Nat) :
+    encv' (phi one (phi zero (ofNat (n + 1)))) 0
+      = (0, 0) :: (1, 1) :: List.replicate (n + 1) ((2, 0) : Col2) := by
+  show (if h : Evidence.WF.CNV (phi one (phi zero (ofNat (n + 1)))) = true
+        then encvC ⟨phi one (phi zero (ofNat (n + 1))), h⟩ 0 else []) = _
+  rw [dif_pos (cnv_phi_one_pow n)]
+  exact encvC_epsOmegaOmega n _
+
+#guard (List.range 8).all (fun n =>
+  encv' (Evidence.WF.fsEWW n) 0 == (0,0) :: (1,1) :: List.replicate (n+1) ((2,0) : Col2))
+#guard (List.range 8).all (fun n => encv (Evidence.WF.fsEWW n) 0 == encv' (Evidence.WF.fsEWW n) 0)
+#guard (List.range 10).all (fun n =>
+  Evidence.WF.fsC Evidence.WF.omegaOmega n == phi zero (ofNat (n+1)))
+
+/-- The row as the table states it, through `fsC_omegaOmega` (WF §15.16, already proved). -/
+theorem encv'_fsEWW (n : Nat) :
+    encv' (Evidence.WF.fsEWW n) 0
+      = (0, 0) :: (1, 1) :: List.replicate (n + 1) ((2, 0) : Col2) := by
+  show encv' (phi one (Evidence.WF.fsC Evidence.WF.omegaOmega n)) 0 = _
+  rw [Evidence.WF.fsC_omegaOmega]
+  exact encv'_epsOmegaOmega n
 
 end Evidence.SqV
