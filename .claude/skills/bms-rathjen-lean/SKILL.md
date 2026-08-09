@@ -234,6 +234,13 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `Evidence/` for the statement SHAPE (the conclusion's head symbol and the main
   hypothesis), not for the name you would have chosen; the existing name is
   rarely the one you would pick. Re-deriving now costs more than grepping.
+  **And the reliable form: WRITE THE STATEMENT YOU WISH EXISTED, THEN GREP FOR
+  IT.** Searching the words of your PROBLEM misses facts that answer it without
+  resembling it — `cnv_of_lt_cnv` ("below a normal form there is nothing but
+  normal forms") is the answer to "is `CNV` free on my carrier", and no grep
+  phrased from the second finds the first. The lane that found it conjectured the
+  statement and measured it, which reaches the same place more reliably than
+  searching does.
   Related but distinct: when the ancestor exists for a narrower fragment, widen
   it by RE-DERIVING, not by porting (constitution W3).
 - **The same applies to METHODS, not just lemmas.** When a step looks blocked,
