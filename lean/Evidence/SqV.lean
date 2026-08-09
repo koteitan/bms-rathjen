@@ -2410,4 +2410,70 @@ def junk : List Term :=
 #guard (junk.filter (fun t =>
           !((List.range 4).all (fun k => encvF (2 * t.deg + 8 + k) t 0 == encv t 0)))).length == 0
 
+
+/-! ## §14 THE RECURSION NEVER LEAVES 𝔗(M) FROM A LEGAL START  (2026-08-10)
+
+The coordinator's assumption that `encvF`'s intermediates "need not be `inT`" was inferred
+from `encvF` being TOTAL and not measured.  **Totality says `encvF` is DEFINED on junk; it
+does not say a legal input produces junk arguments.**  Those are different claims, and the
+measurement separates them.
+
+`targetsF` below mirrors `encvF`'s recursion and collects every argument it recurses on,
+over-approximating by taking ALL branches' targets rather than the one taken.  Over
+**169 legal starting terms** — `corpusW ++ deeper`, all `inT` and all `CNV`, checked —
+producing **40 distinct targets**:
+
+    targets not `inT`        0
+    targets not `lt` start   0
+    targets not `CNV`        0
+
+**CONTROL, and it fires: from the 42 JUNK starts, 10 DO produce non-`inT` targets.**  So
+the property is not vacuous and not a quirk of the instrument — junk in, junk out; legal
+in, legal out.  §12's and §9.2's counterexamples were terms fed to `encvF` DIRECTLY, which
+is a different question from what `encvF` produces when fed a legal term, and that
+distinction is the whole content of this section.
+
+**CONSEQUENCE.**  `Evidence.WF.acc_inT_below_cnv` — every `inT` term below a `CNV` term is
+accessible, with no fragment hypothesis on the term itself — applies to every recursion
+target from a legal start.  **The termination `encvF_saturate` needs is already proved, and
+no new order theory or arithmetic measure is required.**  §13's table stands as the record
+that no measure in that family exists; it is no longer on the critical path.
+
+WHAT IS STILL NOT PROVED: that the recursion stays inside 𝔗(M), which is measured here on
+169 starts and is a THEOREM someone has to write.  It is a statement about `encvF`'s
+clauses — `predOr`, `omLog`, `fpDeep` and the summands all landing in 𝔗(M) below the
+input — and it is the shape §13 says no arithmetic measure can carry. -/
+
+def targetsF : Nat → Term → List Term
+  | 0, _ => []
+  | _ + 1, .zero => []
+  | f + 1, .add u v => [u, v] ++ targetsF f u ++ targetsF f v
+  | f + 1, .phi a b =>
+      let gs := summands (TM.Term.splitFin b).1
+      let hd := gs.headD zero
+      let lad : List Term := if a == zero then [] else [predOr a]
+      let ladR : List Term := if a == zero then [] else targetsF f (predOr a)
+      let blk : List Term := gs.map (fun g => if a == zero then g else omLog g)
+      let blkR : List Term := (blk.map (fun g => targetsF f g)).flatten
+      let cl : List Term := [hd] ++ targetsF f hd
+      let dp : List Term := match fpDeep a hd with
+        | some z => [z] ++ targetsF f z
+        | none => []
+      lad ++ ladR ++ blk ++ blkR ++ cl ++ dp
+  | _ + 1, _ => []
+
+def targets (t : Term) : List Term := (targetsF (2 * t.deg + 8) t).eraseDups
+
+def startsW : List Term := (corpusW ++ deeper).eraseDups
+
+#guard startsW.length == 169
+#guard (startsW.filter (fun t => !(TM.Term.inT t))).length == 0
+#guard (startsW.filter (fun t => !(Evidence.WF.CNV t))).length == 0
+#guard (startsW.filter (fun t => !((targets t).all (fun u => TM.Term.inT u)))).length == 0
+#guard (startsW.filter (fun t => !((targets t).all (fun u => TM.Term.lt u t)))).length == 0
+#guard (startsW.filter (fun t => !((targets t).all (fun u => Evidence.WF.CNV u)))).length == 0
+-- the CONTROL: junk starts DO produce non-`inT` targets, so the property is not vacuous
+#guard ((junk.filter (fun t => !(TM.Term.inT t))).filter
+          (fun t => !((targets t).all (fun u => TM.Term.inT u)))).length == 10
+
 end Evidence.SqV
