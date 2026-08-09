@@ -39,6 +39,25 @@ the easy cases but repeats an old error is caught:
 It appears nowhere in this file.  The gate below compares `sqv` against the
 REPOSITORY's own instruments only: `Trans.o?` for the round trip, and the literal
 matrices of the table's rows.
+
+WHY THE FIXED-POINT MACHINERY IS UNAVOIDABLE HERE AND NOT ON THE OTHER SIDE
+(measured by the coordinator, 2026-08-10, correcting a first guess that the two
+sides were seeing one fact twice — they are not, and the asymmetry is the point).
+
+`Evidence/WF.lean`'s Veblen templates — `lim_clauses_repAdd`, `lim_clauses_fsGen`,
+`lim_clauses_phi_arg` — use `isFP` / `splitFin` / `phiShifted` NOWHERE; every
+occurrence past its §15 is prose, in the §15.3 note explaining why a GENERAL `fsN`
+theory would need them.  That lane escaped the machinery by going PER ROW with closed
+forms: a closed form is written for one term, and no term has to ask whether it is a
+fixed point of itself.
+
+`sqv` cannot escape it, and not because of how it is written.  A TOTAL map over the
+region must decide, for every input, which clause applies — and "is `b` a fixed point
+of `φ̄a`" IS that decision (failure class (b) below).  So the `isFP` split is not an
+artefact of this encoding that a cleverer definition might remove: it is the price of
+TOTALITY, which the per-row route does not pay because it never generalises over the
+region at all.  Route (ii) (a dictionary to Buchholz trees) would have moved the same
+decision into the dictionary rather than removing it, since `enc` is total too.
 -/
 
 namespace Evidence.SqV
@@ -59,56 +78,87 @@ def shiftD (d : Nat) (cs : List Col2) : List Col2 := cs.map (fun c => (c.1 + d, 
 CANDIDATE 1.  The three established clauses, with the OPEN clause filled in by the
 `a = 1` data read as "root, then a marker for `a`, then `b` one level deeper".
 
-GATE RESULT FOR CANDIDATE 1 — IT FAILS, as expected, and the failures are the
+GATE RESULT FOR CANDIDATE 1 — IT FAILED, as expected, and the failures were the
 specification of candidate 2.  Round trip: 90 of 234 corpus terms.  Table rows: 3 of
 5.  Discriminators: 2 of 3.  The four failure classes, each with the witness the
 gate printed:
 
   (a) THE TRAILING FINITE PART OF THE SUBSCRIPT IS ABSORBED AS REPEATS OF THE
       `a`-MARKER, at the SAME depth — not as a deeper block:
-          φ̄(1,1) = (0,0)(1,1)(1,1)          candidate said (0,0)(1,1)(2,0)
-          φ̄(1,2) = (0,0)(1,1)(1,1)(1,1)
+          φ̄(1,1) = (0,0)(1,1)(1,1)          candidate 1 said (0,0)(1,1)(2,0)
           φ̄(1,ω+1) = (0,0)(1,1)(2,0)(1,1)   — infinite part, THEN one repeat
-      This is `TM.Term.splitFin` (β = γ ⊕ m, the number of trailing `1`s) appearing
-      in the encoding, and it is the same mechanism `sq` uses for finite exponents.
+      This is `TM.Term.splitFin` (β = γ ⊕ m) appearing in the encoding.
 
-  (b) AN `φ̄(0,·)` SUBSCRIPT LOSES ITS ROOT COLUMN one level down:
-          φ̄(1,ω) = (0,0)(1,1)(2,0)           candidate said (0,0)(1,1)(2,0)(3,0)
-          φ̄(1,ω^ω) = (0,0)(1,1)(2,0)(3,0)
-      i.e. the subscript contributes `sq`'s tail, not `sq` itself — whereas a
-      subscript that is itself an ε-number keeps its full block:
-          φ̄(1,ε₀) = (0,0)(1,1)(2,0)(3,1)
+  (b) AN `φ̄(0,·)` SUBSCRIPT LOSES A COLUMN one level down, where an ε-number
+      subscript does not:
+          φ̄(1,ω) = (0,0)(1,1)(2,0)           φ̄(1,ε₀) = (0,0)(1,1)(2,0)(3,1)
 
-  (c) THE FIRST ARGUMENT NEEDS ITS OWN LADDER, which candidate 1 has not got at all:
-          φ̄(2,0) = (0,0)(1,1)(2,1)           candidate said (0,0)(1,1)
-          φ̄(3,0) = (0,0)(1,1)(2,1)(2,1)      — the repeat mechanism of (a), one level in
-          φ̄(ω,0) = (0,0)(1,1)(2,1)(3,0)      — and the drop of (b), one level in
+  (c) THE FIRST ARGUMENT NEEDS ITS OWN LADDER, recursively:
+          φ̄(2,0) = (0,0)(1,1)(2,1)   φ̄(3,0) = (0,0)(1,1)(2,1)(2,1)
+          φ̄(ω,0) = (0,0)(1,1)(2,1)(3,0)
 
-  (d) THE BASE CLAUSE IS WRONG WHEN THE EXPONENT CONTAINS AN ε-NUMBER — this is the
-      §16.5 refutation, and candidate 1 walks into it:
-          φ̄(0, ε₀·2) = (0,0)(1,1)(1,0)(2,1)  candidate said (0,0)(1,0)(2,1)(1,0)(2,1)
+  (d) the base clause walked into §16.5's refutation on φ̄(0, ε₀·2).
 
-CANDIDATE 2 is therefore: the `a`-ladder of (c), the `splitFin`-driven marker repeats
-of (a), the root-drop of (b) for `φ̄(0,·)` subscripts, and a base clause that respects
-(d).  Note that (a) and (b) recur INSIDE (c) — the first argument is encoded by the
-same rules one level in — which is what "carrying a level parameter" means here and
-is the reason the parameter cannot be eliminated. -/
+CANDIDATE 2 — below — takes (a) as `splitFin`-driven repeats, (c) as a recursive
+`a`-ladder with the level bumped one depth in, and keeps the collapse and sum clauses.
+IT IS A MEASURED IMPROVEMENT, WHICH IS THE POINT OF KEEPING THE BASELINE:
 
-/-- `encv t d` : the columns of `t` at first-row depth `d`. -/
-def encv : Term → Nat → List Col2
-  | zero, _ => []
-  | add u v, d => encv u d ++ encv v d
-  | phi a b, d =>
+                        candidate 1   candidate 2
+    round trip / 234         90            34
+    table rows / 5            3             1
+    discriminators / 3        2             2
+
+TWO CLASSES REMAIN, and they are sharper than anything candidate 1 could have told us:
+
+  (e) DEPTH OF THE SUBSCRIPT WHEN `a ≠ 0`.  `φ̄(1,ε₀)` wants `(0,0)(1,1)(2,0)(3,1)` —
+      ε₀'s own two columns shifted by TWO — and candidate 2 puts them at depth 1.
+      So the subscript of a Veblen term sits one level deeper than the `a = 0` case,
+      which is the level parameter doing its job and is a one-line fix.
+
+  (f) THE "1 +" CONVENTION IN SUBSCRIPT POSITION.  `φ̄(1,ω)` wants `(0,0)(1,1)(2,0)` —
+      ONE column for the subscript ω — while ω's own encoding is `(0,0)(1,0)`, two
+      columns.  A finite part in subscript position is off by one against the same
+      part at the root.  This is the convention the surveys' own validation reported
+      as its four mismatches, so it is a property of the ENCODING and not of this
+      candidate; (e) and (f) interact, and the next iteration should fix (e) first
+      and re-measure before touching (f).
+
+-/
+
+/-- Bump the columns that sit exactly at depth `d` to level 1. -/
+def bumpAt (d : Nat) (cs : List Col2) : List Col2 :=
+  cs.map (fun c => if c.1 == d then (c.1, 1) else c)
+
+/-- `t` minus one when it has a trailing `1`; `t` itself otherwise. -/
+def predOr (t : Term) : Term :=
+  match TM.Term.splitFin t with
+  | (_, 0) => t
+  | (g, m + 1) => plus g (ofNat m)
+
+/-- CANDIDATE 2 — `encvF f t d` : the columns of `t` at first-row depth `d`.
+    Fuel, as `ltF`/`starF`/`iterParent` do it: the `predOr` recursion is not
+    structural, and at the gate stage a termination proof would be premature. -/
+def encvF : Nat → Term → Nat → List Col2
+  | 0, _, _ => []
+  | _ + 1, zero, _ => []
+  | f + 1, add u v, d => encvF f u d ++ encvF f v d
+  | f + 1, phi a b, d =>
       if TM.Term.isFP a b then
-        -- COLLAPSE: `b`'s own block, then one column determined by `a`
-        encv b d ++ [(d + 1, if a == zero then 0 else 1)]
-      else if a == zero then
-        -- BASE: the CNF clause of `sq`, padded
-        (d, 0) :: shiftD 1 (encv b d)
+        encvF f b d ++ [(d + 1, if a == zero then 0 else 1)]
       else
-        -- OPEN: root, marker for `a`, then `b` one level deeper
-        (d, 0) :: (d + 1, 1) :: shiftD (d + 1) (encv b 1)
-  | _, _ => []
+        let bm := TM.Term.splitFin b
+        let ladder : List Col2 :=
+          if a == zero then [] else (d + 1, 1) :: bumpAt (d + 2) (encvF f (predOr a) (d + 2))
+        let lvl : Nat := if a == zero then 0 else 1
+        let sub : List Col2 :=
+          match bm.1 with
+          | zero => []
+          | b' => shiftD (d + 1) (encvF f b' 0)
+        let reps : List Col2 := List.replicate bm.2 (d + 1, lvl)
+        (d, 0) :: (ladder ++ sub ++ reps)
+  | _ + 1, _, _ => []
+
+def encv (t : Term) (d : Nat) : List Col2 := encvF (2 * t.deg + 8) t d
 
 def sqv (t : Term) : BMS.Matrix := toMatrix (encv t 0)
 
