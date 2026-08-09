@@ -5175,4 +5175,88 @@ example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,1],[3,0],[4,1]] n)
 #guard (List.range 4).all fun q => (List.range 4).all fun n =>
   BMS.expand? (M5 q) n == some (M1 q ++ frep zc 1 (q+2) (n+1))
 
+/-! ## §14 Class IV of §11 (`F2` plus one column): the successor shape, and the map
+
+The sub-shapes of "ladder + `(a+1,0)` + one column" are, measured for `a ≤ 3` over the
+standard pairs of §11 (write `Z = φ̄(a,ω) = t0 q`, the F2 value):
+
+    +(0,0)          Z + 1                  successor      — proved below
+    +(b,0) 1≤b<a    φ̄(b-1, φ̄(0,Z))         bad root 0/b-1
+    +(b,1) 1≤b<a    φ̄(b, Z)                bad root 0
+    +(a,1)          φ̄(a, ω+1)              bad root 0
+    +(a+1,0)        φ̄(a, ω²)               bad root a
+    +(a+2,0)        φ̄(a, ω^ω)              bad root a+1
+    +(a+2,1)        φ̄(a, ε₀)               bad root a+1  — §13, F5
+
+STRUCTURAL FINDING.  The first three lines are EXACTLY the §8.5 case table of F4 with
+the base `φ̄(a,0)` replaced by `Z = φ̄(a,ω)`; the last four grow the second Veblen
+argument along the one-row hierarchy `ω, ω+1, ω², ω^ω, ε₀` instead.  So the economical
+target here is NOT the five remaining sub-shapes one at a time: it is to generalize
+§10's F4 development in the BASE TERM (`zt q` → an arbitrary `φ̄(a,·)` value with the
+same order properties), after which class IV's first three lines fall out as instances
+in the same way F4's cases fell out of one two-parameter scheme.  That refactor also
+subsumes classes II/III/V/VI of §11, whose values have the same shape over their own
+bases.  Recorded here rather than attempted: it is a bigger unit than one session and
+should be planned as such. -/
+
+theorem onlyRow0_M2 (q : Nat) : onlyRow0 (M2 q) = false := by
+  show onlyRow0 (([0,0] : BMS.Col) :: (ups 1 (q+1) ++ [[1+(q+1),0]])) = false
+  rw [onlyRow0_cons, onlyRow0_append, onlyRow0_ups q 1]
+  rfl
+
+theorem inFrag_M2 (q : Nat) : Trans.Pair.inFrag (M2 q) = true := by
+  show Trans.Pair.inFrag (([0,0] : BMS.Col) :: (ups 1 (q+1) ++ [[1+(q+1),0]])) = true
+  rw [inFrag_cons, inFrag_append, inFrag_ups (q+1) 1]
+  rfl
+
+theorem ltF_one_t0 (q : Nat) : ∀ f, 2 ≤ f → ltF f one (t0 q) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show ltF (g+1) (phi zero zero) (phi (ofNat (q+1)) omega) = true
+    exact ltF_phi_fst (zero_bne_ofNat q) (ltF_zero (by omega) (ofNat_ne_zero q))
+      (ltF_zero (by omega) (by intro hc; exact Term.noConfusion hc))
+
+theorem plus_t0_one (q : Nat) : plus (t0 q) one = add (t0 q) one := by
+  unfold plus
+  show ofList ((match le one (t0 q) with | true => [t0 q] | false => []) ++ [one])
+      = add (t0 q) one
+  rw [show le one (t0 q) = true from by
+    show (((one : Term) == t0 q) || lt one (t0 q)) = true
+    rw [show lt one (t0 q) = true from
+      lt_of_ltF (N := 2) (fun f hf => ltF_one_t0 q f hf) (by
+        show 2 ≤ 2 * ((one : Term).deg + (t0 q).deg) + 8
+        omega)]
+    simp]
+  rfl
+
+/-- The successor shape of class IV: `(0,0)(1,1)…(a,1)(a+1,0)(0,0) = φ̄(a,ω) + 1`. -/
+theorem o?_M2z (q : Nat) : o? (M2 q ++ [([0,0] : BMS.Col)]) = some (plus (t0 q) one) := by
+  rw [o?_append_zero (onlyRow0_M2 q) (inFrag_M2 q), o?_M2]
+  rfl
+
+theorem expand_M2z (q n : Nat) : BMS.expand? (M2 q ++ [([0,0] : BMS.Col)]) n = some (M2 q) := by
+  have hdl : (M2 q ++ [([0,0] : BMS.Col)]).dropLast = M2 q := List.dropLast_concat
+  simp only [BMS.expand?, List.getLast?_concat, Option.bind_eq_bind, Option.bind_some,
+    lnz_zero_col, Option.pure_def, hdl]
+
+/-- The successor rule for that shape: the expansion lands on the predecessor. -/
+theorem esucc_M2z (q n : Nat) :
+    o? (BMS.expand (M2 q ++ [([0,0] : BMS.Col)]) n) = some (predT (plus (t0 q) one)) := by
+  have hE : BMS.expand (M2 q ++ [([0,0] : BMS.Col)]) n = M2 q := by
+    show (BMS.expand? (M2 q ++ [([0,0] : BMS.Col)]) n).getD [] = _
+    rw [expand_M2z]; rfl
+  have hp : predT (plus (t0 q) one) = t0 q := by
+    rw [plus_t0_one q]
+    show (if ((toList (add (t0 q) one)).getLast? == some one) = true
+          then ofList (toList (add (t0 q) one)).dropLast else zero) = t0 q
+    rw [show toList (add (t0 q) one) = [t0 q, one] from rfl]
+    rfl
+  rw [hE, hp, o?_M2]
+
+#guard (List.range 5).all fun q => Trans.o? (M2 q ++ [[0,0]]) == some (plus (t0 q) one)
+#guard (List.range 4).all fun q => (List.range 4).all fun n =>
+  Trans.o? (BMS.expand (M2 q ++ [[0,0]]) n) == some (t0 q)
+
 end Evidence.StageB

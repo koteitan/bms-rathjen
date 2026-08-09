@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.31"
+def version : String := "v0.1.32"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -106,6 +106,8 @@ def rows : List Row := [
     hasO := true },
   { m := [[0,0],[1,1],[2,0]], t := phi one omega, name := "\\varepsilon_\\omega",
     proof := "R4", hasO := true },
+  { m := [[0,0],[1,1],[2,0],[0,0]], t := add (phi one omega) one,
+    name := "\\varepsilon_\\omega+1", proof := "«(0,0)(1,1)(2,0)(0,0)»", hasO := true },
   { m := [[0,0],[1,1],[2,0],[3,1]], t := phi one e0,
     name := "\\varepsilon_{\\varepsilon_0}", proof := "R5", hasO := true },
   { m := [[0,0],[1,1],[2,1]], t := phi (ofNat 2) zero, name := "\\zeta_0",

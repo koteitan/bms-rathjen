@@ -263,6 +263,21 @@ theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 2)) :=
 
 end «(0,0)(1,1)(2,1)(3,0)(4,1)»
 
+/-! ### Row `(0,0)(1,1)(2,0)(0,0)` = `φ̄(1,ω)+1` = `ε_ω+1`, the `a = 1` instance of the
+class-IV successor shape (`Evidence.StageB.o?_M2z` / `esucc_M2z`). -/
+
+namespace «(0,0)(1,1)(2,0)(0,0)»
+
+def M : Matrix := [[0,0],[1,1],[2,0],[0,0]]
+def t : Term := add (phi one omega) one
+
+theorem e1 : o? M = some t := rfl
+
+theorem esucc (n : Nat) : o? (BMS.expand M n) = some (predT t) :=
+  Evidence.StageB.esucc_M2z 0 n
+
+end «(0,0)(1,1)(2,0)(0,0)»
+
 /-! ## Row-linkage guards
 
 Each guard pins the table rows of Rows/TM.lean that cite a namespace of this
@@ -293,6 +308,7 @@ def rowLinked (nm : String) (M : BMS.Matrix) (t : Term) : Bool :=
 #guard rowLinked "«(0,0)(1,1)(2,1)(1,1)»" «(0,0)(1,1)(2,1)(1,1)».M «(0,0)(1,1)(2,1)(1,1)».t
 #guard rowLinked "«(0,0)(1,1)(2,1)(3,0)(4,1)»"
   «(0,0)(1,1)(2,1)(3,0)(4,1)».M «(0,0)(1,1)(2,1)(3,0)(4,1)».t
+#guard rowLinked "«(0,0)(1,1)(2,0)(0,0)»" «(0,0)(1,1)(2,0)(0,0)».M «(0,0)(1,1)(2,0)(0,0)».t
 
 -- the rows proved in Rows/ProofsB.lean, pinned here (this file can import both)
 #guard rowLinked "R1" Rows.ProofsB.R1.m0 Rows.ProofsB.R1.t0
