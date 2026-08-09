@@ -4,6 +4,7 @@
 対応表を、Lean による機械検証付きで作るプロジェクト。
 
 - **[対応表 (R1: BMS × T(M))](table/r1-tm.md)** — 機械検査を通った行のみ掲載
+- [作業原則 (constitution)](constitution.md) — 一度誤った値を公開した経験から得た原則。1 枚
 - [計画とエビデンスの設計](plan/README.md) — 何を証明することをエビデンスとするか (E1/E2/E3/G/MT)
 - [Rathjen の表記系一覧 (強さ順)](rathjen-ordinals.md) — R1〜R5 と最終ターゲット
 
