@@ -4639,4 +4639,116 @@ premise these three lines make the `lim` constructor unusable for ω. -/
 #guard lt (plus omega (ofNat 3)) (plus omega (ofNat 5)) = true
 #guard (List.range 40).all (fun n => le (plus omega (ofNat 3)) (ofNat n) == false)
 
+/-! ## §9 THE ε₀ ROW `(0,0)(1,1)` — the BMS side, and the map to `cert_eps0`
+    (certificate lane, 2026-08-09)
+
+STATUS.  The 𝔗(M) side of this row is DONE, in `Evidence/WF.lean`: §9 there proves
+the three order premises of `Certified.lim` for the ω-towers (`lt_tower_eps0`,
+`lt_tower_step`, and the cofinality clause `cof_eps0`), and §11–§14 prove all four
+premises for EVERY CNF limit below ε₀ at once (`Evidence.WF.lim_clauses`, with the
+sequence `Evidence.WF.fsC`).  This section supplies the BMS side of the row itself
+and states exactly what is still missing.
+
+BUILD NOTE.  `Evidence/WF.lean` grew from 1635 to ~3650 lines in this lane, so
+until someone runs `lake build` a snippet of THIS file still sees the old
+`Evidence.WF` olean.  Everything below is therefore written to depend only on
+`BMS/` and `Trans/`, and no name from WF.lean §9–§14 is used yet.  Wiring
+`cert_eps0` to `Evidence.WF.cof_eps0` is the first thing to do after the build.
+
+THE ROW.  `BMS.kind (0,0)(1,1) = .lim` and
+
+    (0,0)(1,1)[n] = (0,0)(1,0)(2,0)…(n,0) = `towerM n`
+
+(`expand_eps0_row`, proved below — the ascension amount Δ₀ = 1 lands in the copied
+column, Δ₁ = 0, which is why the second row stays zero).  Its values are the
+ω-TOWERS: `o? (towerM n) = 1, ω, ω^ω, ω^(ω^ω), …` (the `#guard`s below check the
+first four against the terms of the already-certified rows).  So the certificate is
+
+    cert_eps0 : Certified [[0,0],[1,1]] (phi one zero)
+      := .lim Evidence.WF.tower rfl  ⟨A⟩  Evidence.WF.lt_tower_eps0
+             Evidence.WF.lt_tower_step  (fun s hs h => Evidence.WF.cof_eps0 s hs h)
+
+and the ONLY missing premise is ⟨A⟩ : `∀ n, Certified (towerM n) (tower n)`.
+
+WHAT ⟨A⟩ NEEDS (Stage 2c — the honest frontier of this lane).
+
+  1. THE PAD IS INERT.  `towerM n` is the one-row matrix `(0)(1)…(n)` with a
+     second row of zeros, and the BM4 rule ignores that row: `lnz [a,0] = lnz [a]`,
+     `parent` at rows ≥ 1 is `none` (every entry there is 0, so the filter is
+     empty), and `delta M r 0 y = 0` for every `y` because the lowest nonzero row
+     is `t = 0` and `delta` is `0` unless `y < t`.  Hence
+         BMS.kind (pad M) = BMS.kind M      and      BMS.expand (pad M) n = pad (BMS.expand M n)
+     for one-row `M`, and therefore `Certified M t → Certified (pad M) t` by a
+     one-screen induction on the derivation.  MEASURED on the whole tower family;
+     the `#guard`s below keep a sample.  This is needed because §2–§5.15's
+     certificates are for the UNPADDED matrices — `cert_omega_pow` gives
+     `Certified [[0],[1],[2]] ω^ω`, not `Certified (towerM 2) ω^ω`.
+
+  2. THE ONE-ROW CERTIFICATE FAMILY, i.e. `Certified (oneRow s) (oV s)` for every
+     `stdSeq s`, by well-founded recursion on `Evidence.WF.acc_cn` /
+     `Evidence.WF.wf_RCn`.  The expansion identity it runs on is already inside
+     `Evidence/StageA.lean`'s `e3_general` — its proof establishes
+         BMS.expand (oneRow s) n = oneRow (A ++ repL B (n+1))   and
+         oV (A ++ repL B (n+1)) = fsN (oV s) (n+1)
+     for the decomposition `s = A ++ B ++ [c]` produced by `core`.  Two gaps
+     remain: `stdSeq` is not known to be PRESERVED by the expansion (needed to
+     re-enter the recursion), and `fsN` has to be matched to `Evidence.WF.fsC`
+     (MEASURED equal on the CNF segment with the index shift `fsC t n = fsN t (n+1)`;
+     alternatively skip `fsN` entirely, since `Certified.lim` takes an arbitrary
+     `fs'` and WF.lean §14 gives all four clauses for `fsC` directly).
+     Levels 0–3 of the family already exist concretely (§2, §3, §5.7, §5.15), so
+     the recursion only has to reproduce them uniformly.
+
+  3. THE PER-ROW NEGATIVE CONTROL for ε₀, in the style of §7 and of
+     `Evidence.WF.cof_eps0_needs_inT`: an attempt to certify ε₀·2 or ε₀+ω for
+     `(0,0)(1,1)` must be refuted by a genuine witness of 𝔗(M).  With `fs' = tower`
+     forced by 1 above, the witness is any term below the compressed value that no
+     tower overtakes — e.g. ε₀ itself for ε₀·2. -/
+
+/-- `(0)(1)…(n)` with a second row of zeros: the n-th expansion of the ε₀ row. -/
+def towerM (n : Nat) : Matrix := (List.range (n + 1)).map (fun a => [a, 0])
+
+private theorem flatten_map_singleton {α : Type} (f : α → List Nat) :
+    ∀ (l : List α), ((l.map (fun a => [f a])).flatten) = l.map f
+  | [] => rfl
+  | a :: t => by
+    show [f a] ++ ((t.map (fun x => [f x])).flatten) = f a :: t.map f
+    rw [flatten_map_singleton f t]
+    rfl
+
+/-- The ε₀ row is a limit row. -/
+theorem kind_eps0_row : BMS.kind [[0, 0], [1, 1]] = .lim := rfl
+
+/-- **The BMS side of the ε₀ row, in closed form.** -/
+theorem expand_eps0_row (n : Nat) : BMS.expand [[0, 0], [1, 1]] n = towerM n := by
+  show (BMS.expand? [[0, 0], [1, 1]] n).getD [] = towerM n
+  rw [show BMS.expand? [[0, 0], [1, 1]] n
+      = some (((List.range (n + 1)).map (fun a => [[0 + a * 1 * 1, 0 + a * 0 * 1]])).flatten)
+      from rfl]
+  show ((List.range (n + 1)).map (fun a => [[0 + a * 1 * 1, 0 + a * 0 * 1]])).flatten = towerM n
+  rw [show (fun (a : Nat) => [[0 + a * 1 * 1, 0 + a * 0 * 1]])
+        = (fun (a : Nat) => [((fun (b : Nat) => [b, 0]) a)]) from by
+      funext a; simp]
+  rw [flatten_map_singleton]
+  rfl
+
+/-! ### §9.1 Evidence for the map above -/
+
+-- the values of the expansions are the towers: the first four are the terms of the
+-- rows already certified in §2, §3, §5.7 and §5.15
+#guard Trans.o? (towerM 0) == some one
+#guard Trans.o? (towerM 1) == some omega
+#guard Trans.o? (towerM 2) == some (phi zero omega)
+#guard Trans.o? (towerM 3) == some (phi zero (phi zero omega))
+
+-- and the unpadded rows that ARE certified carry the same values, which is what
+-- the pad transfer of item 1 has to turn into a `Certified`
+#guard Trans.o? [[0], [1], [2]] == Trans.o? (towerM 2)
+#guard Trans.o? [[0], [1], [2], [3]] == Trans.o? (towerM 3)
+
+-- the pad is inert, on the whole tower family and on their expansions
+#guard (List.range 5).all (fun n => BMS.kind (towerM n) == BMS.kind (StageA.oneRow (List.range (n+1))))
+#guard (List.range 4).all (fun n => (List.range 4).all (fun k =>
+         BMS.expand (towerM n) k == (BMS.expand (StageA.oneRow (List.range (n+1))) k).map (· ++ [0])))
+
 end Evidence.Cert
