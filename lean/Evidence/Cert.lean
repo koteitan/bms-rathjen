@@ -8078,27 +8078,22 @@ def certRows : List (Matrix × Term) :=
     terms of 𝔗(M).  Extending `certRows` without extending this proof breaks the
     build — the label cannot outrun the certificates, and (since v0.1.80) it cannot
     outrun the formation conditions either. -/
-theorem certIn_rows : ∀ p ∈ certRows, CertifiedIn DomF p.1 p.2 := by
+theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 := by
   intro p hp
   simp only [certRows, List.mem_cons] at hp
   rcases hp with h | h | h | h | h | h | h | h | h | h | h
   · rw [h]; exact CertifiedIn.zero
-  · rw [h]; exact certIn_sq one (by decide)
-  · rw [h]; exact certIn_sq (ofNat 2) (by decide)
-  · rw [h]; exact certIn_sq omega (by decide)
-  · rw [h]; exact certIn_sq (add omega omega) (by decide)
-  · rw [h]; exact certIn_sq (phi zero (ofNat 2)) (by decide)
-  · rw [h]; exact certIn_sq (phi zero omega) (by decide)
-  · rw [h]; exact certIn_sq (phi zero (phi zero omega)) (by decide)
-  · rw [h]; exact certIn_eps0
-  · rw [h]; exact certIn_eps0_succ_F
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq one (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (ofNat 2) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq omega (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (add omega omega) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero (ofNat 2)) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero omega) (by decide))
+  · rw [h]
+    exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero (phi zero omega)) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0
+  · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0_succ_F
   · cases h
-
-/-- **THE GATE**, in the form the table is computed against: the registry is
-    guarded by the formation conditions alone, so it does not mention `Frag2` and
-    survives the arrival of the `ψ`/`Z` rows.  See the §6 header. -/
-theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 :=
-  fun p hp => certifiedIn_mono domF_le_domI (certIn_rows p hp)
 
 /-- The old gate, now a COROLLARY of the guarded one: forget the guard.  Kept
     verbatim so that every consumer of the previous statement is unaffected. -/
