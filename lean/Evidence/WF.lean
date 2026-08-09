@@ -1545,9 +1545,19 @@ theorem lt_comparable_needs_frag :
 
 This is a map in the style of §6, for §6's own item 3 — the version of §7 that
 `cert_sound` needs.  It is not speculation: every claim marked MEASURED comes from
-an exhaustive `#eval` sweep over ALL 3042 terms of degree ≤ 6 built from all seven
-constructors, and a sample of each is kept as a `#guard` below.  Nothing here is a
-theorem.
+an exhaustive `#eval` sweep over ALL terms of degree ≤ 7 built from all seven
+constructors — 16850 of them, of which 529 satisfy `inT` — and a sample of each is
+kept as a `#guard` below.  Nothing here is a theorem.
+
+HOW THE SWEEP CERTIFIES TRANSITIVITY WITHOUT AN `n³` LOOP.  Worth recording,
+because it is what makes extending the sweep feasible at all: the direct triple
+loop is `n³` and dies well before n = 529.  Instead check three `n²` properties —
+`lt` is asymmetric; `lt` is total on distinct terms; and the "number of
+predecessors" scores of the n terms are exactly `0,1,…,n-1`.  A tournament whose
+scores are all distinct is transitive, so the three together certify a STRICT
+LINEAR ORDER.  All three hold on the 529 `inT` terms of degree ≤ 7, and the
+enumeration is duplicate-free (`eraseDups` changes nothing).  Use this, not a
+triple loop, when pushing to degree 8.
 
 WHAT §7 HANDS OVER UNCHANGED.
 
@@ -1566,9 +1576,10 @@ WHAT §7 HANDS OVER UNCHANGED.
 
 WHAT CHANGES, AND THE MEASUREMENTS THAT SAY SO.
 
- 1. STAGE 3 IS TRUE.  MEASURED: on all 171 terms of degree ≤ 6 satisfying `inT`,
-    asymmetry, comparability and transitivity all hold, with no exception.  It is
-    a cost question, not a risk question.
+ 1. STAGE 3 IS TRUE.  MEASURED: the 529 terms of degree ≤ 7 satisfying `inT` carry
+    a strict linear order under `lt` — asymmetric, total, and transitive (by the
+    score argument above), with no exception.  It is a cost question, not a risk
+    question.
 
  2. `inT` BECOMES NECESSARY — the situation inverts.  On `Frag`, `inT` is dead
     weight (§7 proves everything without it).  Off `Frag` it is indispensable:
@@ -1589,9 +1600,14 @@ WHAT CHANGES, AND THE MEASUREMENTS THAT SAY SO.
     So the order theory of §8 needs `k.isR` from 2.1(vi) and, at this depth,
     nothing else.  That is much cheaper than §6 budgeted: the `inT` destructor
     actually required is the `κ ∈ R` conjunct, not the sum machinery.
-    HONEST CAVEAT: the K_κ conjunct could not be tested this way — at degree ≤ 6
-    it removes no term at all (171 either way), so the sweep says NOTHING about
-    it.  Do not read the table as "K_κ is dispensable"; it is untested.
+    HONEST CAVEAT: the K_κ conjunct could not be tested this way.  It removes no
+    term at degree ≤ 6 (171 either way) and still none at degree ≤ 7 (529 either
+    way); hand-built candidates with a NON-EMPTY `Kset` up to degree 10 — e.g.
+    `ψ_(Z0)(ψ_(Z0)(ψ_(Z0)0))`, whose `Kset` is `[ψ_(Z0)0, 0]` — satisfy the
+    condition rather than violating it, because the collected `β`s are `ψ`-subterms
+    of `α` and land below it anyway.  So the sweep says NOTHING about K_κ.  Do NOT
+    read the table as "K_κ is dispensable"; it is UNTESTED, and the reason it is
+    untested is that no small term makes it bite.
 
  4. THE SPLIT THAT MAKES §8 TRACTABLE.  MEASURED: on the sub-language with `M`
     and `ω̄` but still no `ψ`/`Z` (556 terms of degree ≤ 6), asymmetry and
@@ -1612,10 +1628,85 @@ WHAT CHANGES, AND THE MEASUREMENTS THAT SAY SO.
                 are precisely the two `starF` facts §6's map asked for, and they
                 are the first things to prove in 3b.
 
-WHAT WOULD FALSIFY THIS MAP: a pair of `inT` terms of degree ≥ 7 that is
-incomparable, or a `starF` counterexample to `le (star d) d`.  Extending the sweep
-past degree 6 is the cheapest possible check and should be run before 3b is
-started — the sweep is ~20 lines of `#eval` and costs seconds. -/
+WHAT WOULD FALSIFY THIS MAP: a pair of `inT` terms of degree ≥ 8 that is
+incomparable, or a `starF` counterexample to `le (star d) d`.  Pushing the sweep to
+degree 8 is the cheapest possible check and should be run before 3b is started —
+with the score argument above it is ~25 lines of `#eval`.  A degree-8 sweep would
+also be the first real chance to make K_κ bite. -/
+
+/-! ### §8.1 The Stage-3a rewrite-rule table, pre-proved
+
+§8 item 4 says the cost of Stage 3a is the shape matrix, not the mathematics, and
+recommends factoring out the constant clauses before bashing.  Here is that
+factoring, done and machine-checked, so 3a starts from a complete rule table
+instead of re-deriving one: `M` and `ω̄` against every other shape.  Every rule
+below is `rfl` — 2.3.2 / 2.3.3 / 2.3.12 really are constant clauses — except
+`ω̄`-vs-`ω̄`, which needs distinctness exactly as `ltF_succ_add_add` does.
+
+Read together they say: on non-sums the order is by LEVEL, `φ̄/ψ/Z  <  M  <  ω̄^·`,
+with ties broken inside the level; and a sum still compares by its head.  That is
+the shape of the 3a induction. -/
+
+/-- The Stage-3a fragment: `Frag` plus `M` and `ω̄`, i.e. everything except `ψ`/`Z`.
+    MEASURED (§8 item 4): on the 556 such terms of degree ≤ 6, `lt` is asymmetric
+    and total with NO `inT` hypothesis — so 3a should go through `inT`-free, like
+    §7 and unlike 3b. -/
+def Frag2 : Term → Bool
+  | zero => true
+  | M => true
+  | add a b => Frag2 a && Frag2 b
+  | omg a => Frag2 a
+  | phi a b => Frag2 a && Frag2 b
+  | psi _ _ => false
+  | Z _ => false
+
+theorem frag_le_frag2 : ∀ (t : Term), Frag t = true → Frag2 t = true
+  | zero, _ => rfl
+  | M, h => by simp [Frag] at h
+  | omg _, h => by simp [Frag] at h
+  | psi _ _, h => by simp [Frag] at h
+  | Z _, h => by simp [Frag] at h
+  | add a b, h => by
+    have hab := frag_add h
+    show (Frag2 a && Frag2 b) = true
+    rw [frag_le_frag2 a hab.1, frag_le_frag2 b hab.2]; rfl
+  | phi a b, h => by
+    have hab := frag_phi h
+    show (Frag2 a && Frag2 b) = true
+    rw [frag_le_frag2 a hab.1, frag_le_frag2 b hab.2]; rfl
+
+/-! 2.3.3 and 2.3.2: `M` against everything.  `M < ω̄^γ`, and `φ̄ , ψ , Z < M`. -/
+theorem ltF_succ_M_omg (f : Nat) (x : Term) : ltF (f + 1) M (omg x) = true := rfl
+theorem ltF_succ_M_phi (f : Nat) (c d : Term) : ltF (f + 1) M (phi c d) = false := rfl
+theorem ltF_succ_M_psi (f : Nat) (k a : Term) : ltF (f + 1) M (psi k a) = false := rfl
+theorem ltF_succ_M_Z (f : Nat) (a : Term) : ltF (f + 1) M (Z a) = false := rfl
+theorem ltF_succ_phi_M (f : Nat) (a b : Term) : ltF (f + 1) (phi a b) M = true := rfl
+theorem ltF_succ_psi_M (f : Nat) (k a : Term) : ltF (f + 1) (psi k a) M = true := rfl
+theorem ltF_succ_Z_M (f : Nat) (a : Term) : ltF (f + 1) (Z a) M = true := rfl
+theorem ltF_succ_omg_M (f : Nat) (x : Term) : ltF (f + 1) (omg x) M = false := rfl
+
+/-! `ω̄^·` sits above `M`, hence above every `φ̄`, `ψ`, `Z`. -/
+theorem ltF_succ_omg_phi (f : Nat) (x c d : Term) : ltF (f + 1) (omg x) (phi c d) = false := rfl
+theorem ltF_succ_omg_psi (f : Nat) (x k a : Term) : ltF (f + 1) (omg x) (psi k a) = false := rfl
+theorem ltF_succ_omg_Z (f : Nat) (x a : Term) : ltF (f + 1) (omg x) (Z a) = false := rfl
+theorem ltF_succ_phi_omg (f : Nat) (a b y : Term) : ltF (f + 1) (phi a b) (omg y) = true := rfl
+theorem ltF_succ_psi_omg (f : Nat) (k a y : Term) : ltF (f + 1) (psi k a) (omg y) = true := rfl
+theorem ltF_succ_Z_omg (f : Nat) (a y : Term) : ltF (f + 1) (Z a) (omg y) = true := rfl
+
+/-- 2.3.12: `M < γ < δ ⟹ ω̄^γ < ω̄^δ`.  The one Stage-3a rule that is not `rfl`. -/
+theorem ltF_succ_omg_omg (f : Nat) {x y : Term} (h : omg x ≠ omg y) :
+    ltF (f + 1) (omg x) (omg y) = ltF f x y := by
+  show (if (omg x == omg y) = true then false else ltF f x y) = _
+  rw [if_neg (by simpa using h)]
+
+/-! 2.3.10 / 2.3.11 for the two new shapes: a sum still compares by its head. -/
+theorem ltF_succ_M_add (f : Nat) (c d : Term) :
+    ltF (f + 1) M (add c d) = ((M : Term) == c || ltF f M c) := rfl
+theorem ltF_succ_add_M (f : Nat) (a b : Term) : ltF (f + 1) (add a b) M = ltF f a M := rfl
+theorem ltF_succ_omg_add (f : Nat) (x c d : Term) :
+    ltF (f + 1) (omg x) (add c d) = ((omg x == c) || ltF f (omg x) c) := rfl
+theorem ltF_succ_add_omg (f : Nat) (a b y : Term) :
+    ltF (f + 1) (add a b) (omg y) = ltF f a (omg y) := rfl
 
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
