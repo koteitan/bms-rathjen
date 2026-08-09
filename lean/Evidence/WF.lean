@@ -8269,6 +8269,61 @@ private def fragRSample : List Term :=
 #guard fragRSample.all (fun s => fragRSample.all (fun t => fragRSample.all (fun u =>
          !(lt s t && lt t u) || lt s u)))
 
+/-! ### §8.6 MIXED transitivity: an unconstrained middle term, for the certificate lane
+
+THE REQUEST (certificate lane, 2026-08-09): `le s x → lt x v → lt s v` with `s` and
+`v` in the CNF region and `x` UNCONSTRAINED — because their bound (Cert.lean §15.7)
+pins only a value's leftmost component, so they cannot show the middle term lies in
+any fragment, and `Trans3`, which constrains all three terms, does not reach them.
+
+THE ANSWER: they do not need a new theorem, and they do not need the middle term in
+a fragment.  They need `inT x` — which every term of 𝔗(M) satisfies by
+construction — and then §13 CONSTRAINS THE MIDDLE FOR THEM: `frag_of_lt_cn` says
+that below a Cantor normal form there is nothing but Cantor normal forms, so `x`
+lands in `Frag` on its own and §7's `lt_of_le_of_lt` closes the goal.  The whole
+thing is the three lines below; no induction, no new measure, and no dependence on
+§8.5.
+
+WHY `inT` ON THE MIDDLE CANNOT BE DROPPED, and why that is not a real cost.  §13's
+hypothesis is indispensable for its own reason (`0 ⊕ M` is below `1` but is not
+CNF), so the `inT`-free statement does not follow by this route.  MEASURED at
+degree ≤ 5: 34 terms are non-CNF and yet strictly below some CNF term, and ZERO of
+them satisfy `inT` — i.e. `inT` is exactly the hypothesis that removes them.  The
+fully unconstrained version was also swept (all 578 terms of degree ≤ 5 as the
+middle, against `Frag2` endpoints and again against `CN` endpoints) and NO
+counterexample was found; so it is plausibly true, but it is NOT proved here and
+§13's route is closed to it.  If the lane ever needs the middle term without `inT`,
+that is a separate lemma with its own argument — say so rather than assuming this
+one covers it. -/
+
+/-- **MIXED transitivity, CNF endpoints.**  The middle term `x` is constrained only
+    by `inT`; §13 supplies the rest. -/
+theorem lt_of_le_of_lt_cn {s x v : Term} (hs : CN s = true) (hx : inT x = true)
+    (hv : CN v = true) (h1 : le s x = true) (h2 : lt x v = true) : lt s v = true :=
+  lt_of_le_of_lt (frag_of_cn s hs) (frag_of_lt_cn hx hv h2) (frag_of_cn v hv) h1 h2
+
+/-- The same with the left endpoint only assumed to be in `Frag2` (§8.2's fragment),
+    which is the shape the certificate lane asked for. -/
+theorem lt_of_le_of_lt_mixed {s x v : Term} (hs : Frag2 s = true) (hx : inT x = true)
+    (hv : CN v = true) (h1 : le s x = true) (h2 : lt x v = true) : lt s v = true :=
+  lt_of_le_of_lt2 hs (frag_le_frag2 x (frag_of_lt_cn hx hv h2))
+    (frag_le_frag2 v (frag_of_cn v hv)) h1 h2
+
+/-- The `lt`/`lt` form, for completeness. -/
+theorem lt_trans_mixed {s x v : Term} (hs : Frag2 s = true) (hx : inT x = true)
+    (hv : CN v = true) (h1 : lt s x = true) (h2 : lt x v = true) : lt s v = true :=
+  lt_trans2 hs (frag_le_frag2 x (frag_of_lt_cn hx hv h2))
+    (frag_le_frag2 v (frag_of_cn v hv)) h1 h2
+
+/-! Receipts for the measurement quoted above: `0 ⊕ M` is the reason §13 needs
+    `inT`, and it is exactly the kind of middle term the `inT`-free statement would
+    have to survive. -/
+
+#guard lt (add zero M) one == true          -- below a CNF term …
+#guard CN (add zero M) == false             -- … without being one
+#guard inT (add zero M) == false            -- … and this is what `inT` rules out
+#guard CN one == true
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
