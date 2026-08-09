@@ -9262,14 +9262,36 @@ This section supplies what core (B) rests on.  Its "strictly increasing" clause 
 `x ≤ y → x < φ̄ u y` is not decoration: it is what makes the induction close, since the
 `φ̄`-case at 2.3.13(i) needs the hypothesis at a DIFFERENT second argument.
 
-WHAT IS NOT DECIDED YET, and deliberately not baked in: ε₁ admits (at least) THREE distinct
-closed forms — iterate `ω^·` from `ε₀+1` (classical), from `ε₀` (simplest), and `fsN`'s own,
-which takes `ε₀+1` at n = 0 and then iterates from `ε₀`.  MEASURED: all three are CNV at
-every index, strictly increasing, below ε₁, and COFINAL.  So the choice is not a
-mathematical one and must come from the BMS side — Row A's value came from agreeing with
-the certificate lane's independently measured expansions INDEX BY INDEX, and picking here by
-taste would forfeit exactly that.  Core (B) is therefore being built parameterised by the
-base, so whichever the matrices dictate instantiates in one line. -/
+RESOLVED BY MEASUREMENT, AND BOTH MY CANDIDATES WERE WRONG — recorded because the WAY they
+were wrong is the lesson.  ε₁ admits at least THREE closed forms that are each CNV at every
+index, strictly increasing, below ε₁, and COFINAL: iterate `ω^·` from `ε₀+1` (classical),
+from `ε₀` (simplest), and `fsN`'s own.  I could not choose between them from the T(M) side,
+and I was right not to try, because the true sequence is NONE of them.  `BMS.expand` on the
+row `(0,0)(1,1)(1,1)`, read through `Trans.oR`, gives
+
+    fs 0 = ε₀,   fs 1 = ω^(ε₀·2),   fs (n+1) = ω^(fs n)  for n ≥ 1
+
+— the iteration base is `ε₀·2`, which appears at index 1 only.  THE POINT: `Certified.lim`
+requires `∀ n, Certified (BMS.expand M n) (fs' n)`, so `fs'` is not chosen at all — it IS
+the certified value of the n-th expansion, and the MATRIX fixes it.  Cofinality does not
+determine a fundamental sequence: many sequences are cofinal below the same term, and I
+exhibited three.  So for every remaining row the expansions must be MEASURED first and the
+closed form read off them; deriving a sequence from the term order and checking it is
+cofinal can only ever produce a plausible wrong answer.
+
+UNIFORMITY, re-measured rather than assumed: ε₂'s row `(0,0)(1,1)(1,1)(1,1)` has the SAME
+shape, `fs 0 = ε₁`, `fs 1 = ω^(ε₁·2)`, and so on.  So the ε-successors are uniform in the
+MATRICES even though `fsN` is not uniform with them — one template covers them, with the
+previous ε as its parameter:
+
+    fsB v 0 = v          fsB v (n+1) = (iterate `ω^·` from `v ⊕ v`) at n+1
+
+and note this makes shapes (A) and (B) COMPOSE rather than compete: the base of the (B)
+iteration is `v ⊕ v = repAdd v 1`, an (A) term.  Core (B) therefore takes an ARBITRARY CNV
+base, not a choice between constants.  CAVEAT: these values are `oR`, which is
+candidate-tier — oracle-calibrated and build-guarded against every table row, but not a
+theorem.  If an expansion certifies a value `oR` does not predict, that is a finding about
+`oR`, not a licence to tune the sequence.  -/
 
 /-- Strengthened so the induction closes: `x ≤ y` puts `x` strictly below `φ̄ u y`, for
     EVERY first argument `u`.  Taking `y = x` gives the CNV analogue of §12's `lt_pow_self`,
