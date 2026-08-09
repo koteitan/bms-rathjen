@@ -9064,6 +9064,168 @@ MEASURED, `fsN t (n+1) = fsC t n` there.  Both are cofinal; only the offset diff
 --  WF.lean imports only `TM.NF`, and adding `import TM.FS` is itself part of the cost —
 --  see the note above, and `Evidence/Cert.lean` imports this file.)
 
+
+/-! ### §15.4 PER-ROW CLOSED-FORM FUNDAMENTAL SEQUENCES — the Veblen rows
+
+WHY PER ROW rather than a general theory.  `Certified.lim` takes an ARBITRARY sequence
+`fs' : Nat → Term`; it is the caller's choice, and `cert_eps0` already exercises that by
+passing the closed form `tower` rather than `fsC` or `fsN`.  So the twelve Veblen rows do
+not need the general `fsN` theory §15.3 prices — each needs one closed form and the four
+premises for it.  That also keeps §15.3's warning at arm's length: a closed form is
+written against the row's TERM, so a mismatch shows up as a failed clause for that row
+instead of as pressure to tune a general definition.
+
+THE REUSABLE CORE is `le_repAdd_of_head`: any `CNV` term whose head does not exceed an
+additively principal `u` lies below `u·(n+1)` for some `n`.  Every row whose closed form is
+a `repAdd` reduces its cofinality clause to that lemma plus a bound on heads, so the
+per-row cost after the first is small.  Cofinality also consumes `cnv_of_lt_cnv` (§15.1) to
+learn that an arbitrary `inT` term below the row is `CNV` at all — which is exactly the
+role §15.1 was built for. -/
+
+theorem cnv_repAdd {p q : Term} (h : CNV (phi p q) = true) :
+    ∀ n, CNV (repAdd (phi p q) n) = true
+  | 0 => h
+  | n + 1 => by
+    show ((phi p q).isAP && CNV (phi p q) && CNV (repAdd (phi p q) n)
+            && hdLe (repAdd (phi p q) n) (phi p q)) = true
+    rw [cnv_repAdd h n, h, hdLe_eq _ _ (repAdd_ne_zero p q n), hdOf_repAdd, le_self]
+    rfl
+
+/-- **THE REUSABLE COFINALITY CORE.**  Any `CNV` term whose head does not exceed an
+    additively principal `u` is below `u·(n+1)` for some `n`.  Every row whose closed form
+    is a `repAdd` reduces its cofinality clause to this. -/
+theorem le_repAdd_of_head {u : Term} (hu : CNV u = true) (hAP : u.isAP = true) :
+    ∀ (s : Term), CNV s = true → le (hdOf s) u = true → ∃ n, le s (repAdd u n) = true := by
+  obtain ⟨p, q, rfl⟩ := eq_phi_of_isAP_cnv hu hAP
+  intro s
+  induction s with
+  | zero =>
+    intro _ _
+    refine ⟨0, ?_⟩
+    show ((zero : Term) == repAdd (phi p q) 0 || lt zero (repAdd (phi p q) 0)) = true
+    show ((zero : Term) == phi p q || lt zero (phi p q)) = true
+    rw [show lt zero (phi p q) = true from by
+      show ltF (fuelOf zero (phi p q)) zero (phi p q) = true
+      exact ltF_left_zero
+        (by show 1 ≤ 2 * ((zero : Term).deg + (phi p q).deg) + 8; omega)
+        (by intro hc; exact Term.noConfusion hc)]
+    exact Bool.or_true _
+  | M => intro h _; exact Bool.noConfusion h
+  | omg _ _ => intro h _; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h _; exact Bool.noConfusion h
+  | Z _ _ => intro h _; exact Bool.noConfusion h
+  | phi a b _ _ => intro _ hh; exact ⟨0, hh⟩
+  | add c d _ ihd =>
+    intro hcn hh
+    obtain ⟨hAPc, hcnc, hcnd, hdesc⟩ := cnv_add hcn
+    have hdz : d ≠ zero := by intro hc; rw [hc] at hdesc; exact Bool.noConfusion hdesc
+    have hcu : le c (phi p q) = true := hh
+    by_cases heq : c = phi p q
+    · have hhd : le (hdOf d) c = true := by rw [← hdLe_eq d c hdz]; exact hdesc
+      obtain ⟨m, hm⟩ := ihd hcnd (by rw [heq] at hhd; exact hhd)
+      refine ⟨m + 1, ?_⟩
+      rw [heq]
+      show ((add (phi p q) d == add (phi p q) (repAdd (phi p q) m))
+            || lt (add (phi p q) d) (add (phi p q) (repAdd (phi p q) m))) = true
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hm
+      rcases hm with rfl | hm
+      · simp
+      · rw [lt_add_add (by intro hc; injection hc with _ h2; exact ne_of_ltF hm h2),
+          if_pos rfl, hm]
+        exact Bool.or_true _
+    · have hlt : lt c (phi p q) = true := by
+        simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hcu
+        rcases hcu with h1 | h1
+        · exact absurd h1 heq
+        · exact h1
+      refine ⟨0, ?_⟩
+      show ((add c d == repAdd (phi p q) 0) || lt (add c d) (repAdd (phi p q) 0)) = true
+      show ((add c d == phi p q) || lt (add c d) (phi p q)) = true
+      rw [lt_add_phi, hlt]
+      exact Bool.or_true _
+
+/-! #### The row `(0,0)(1,1)(1,0)`, whose database term is `φ̄0(ε₀)`
+
+ITS SEQUENCE IS `ε₀·(n+1)`, NOT THE ω-TOWER.  §15.3's witness is exactly this row: the
+naive `φ̄0(·)`-sequence built from below `ε₀` satisfies three of the four clauses and fails
+COFINALITY, because `ε₀` itself lies below `φ̄0(ε₀)` and no such sequence reaches it.  The
+closed form below is the one that does.  MEASURED: it agrees with `TM/FS.lean`'s `fsN`
+exactly, modulo the index shift `fsA n = fsN rowA (n+1)` (checked for n ≤ 7) — evidence
+that the closed form is the canonical sequence and not an ad-hoc fit. -/
+
+def eps0T : Term := phi one zero            -- ε₀ = φ̄(1,0)
+def rowA : Term := phi zero eps0T           -- the row's DATABASE TERM, φ̄0(ε₀)
+def fsA (n : Nat) : Term := repAdd eps0T n  -- ε₀·(n+1) — NOT the ω-tower; see §15.3
+
+theorem cnv_eps0T : CNV eps0T = true := rfl
+theorem cnv_rowA : CNV rowA = true := rfl
+theorem lt_eps0T_rowA : lt eps0T rowA = true := by decide
+
+/-- Everything additively principal below the row's term is `≤ ε₀`.  This is the whole
+    content of the cofinality clause for this row; the rest is `le_repAdd_of_head`. -/
+theorem le_eps0T_of_lt_rowA {x : Term} (hx : CNV x = true) (hAP : x.isAP = true)
+    (hlt : lt x rowA = true) : le x eps0T = true := by
+  obtain ⟨a, b, rfl⟩ := eq_phi_of_isAP_cnv hx hAP
+  rw [show rowA = phi zero eps0T from rfl] at hlt
+  have hne : phi a b ≠ phi zero eps0T := ne_of_ltF hlt
+  rw [lt_phi_phi hne] at hlt
+  by_cases haz : a = zero
+  · rw [if_pos haz] at hlt
+    subst haz
+    have hne2 : phi zero b ≠ phi one zero := by
+      intro hc; injection hc with h1 _; exact Term.noConfusion h1
+    show ((phi zero b == eps0T) || lt (phi zero b) eps0T) = true
+    rw [show lt (phi zero b) eps0T = true from by
+      rw [show eps0T = phi one zero from rfl, lt_phi_phi hne2,
+        if_neg (by intro hc; exact Term.noConfusion hc),
+        if_pos (show lt zero one = true from by decide)]
+      exact hlt]
+    exact Bool.or_true _
+  · rw [if_neg haz, if_neg (by
+      rw [show lt a zero = false from ltF_right_zero _ _]; exact Bool.noConfusion)] at hlt
+    exact hlt
+
+theorem hdOf_le_eps0T {s : Term} (hs : CNV s = true) (hlt : lt s rowA = true) :
+    le (hdOf s) eps0T = true := by
+  cases s with
+  | M => exact Bool.noConfusion hs
+  | omg _ => exact Bool.noConfusion hs
+  | psi _ _ => exact Bool.noConfusion hs
+  | Z _ => exact Bool.noConfusion hs
+  | zero =>
+    show ((zero : Term) == eps0T || lt zero eps0T) = true
+    rw [show lt zero eps0T = true from by
+      show ltF (fuelOf zero eps0T) zero eps0T = true
+      exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + eps0T.deg) + 8; omega)
+        (by intro hc; exact Term.noConfusion hc)]
+    exact Bool.or_true _
+  | phi a b => exact le_eps0T_of_lt_rowA hs rfl hlt
+  | add c d =>
+    obtain ⟨hAPc, hcnc, _, _⟩ := cnv_add hs
+    rw [show rowA = phi zero eps0T from rfl, lt_add_phi] at hlt
+    exact le_eps0T_of_lt_rowA hcnc hAPc hlt
+
+/-- **THE FOUR `Certified.lim` PREMISES for the row `(0,0)(1,1)(1,0)`**, bundled for the
+    consumer exactly as §14's `lim_clauses` bundles them for a CNF limit. -/
+theorem lim_clauses_rowA :
+    (∀ n, CNV (fsA n) = true)
+  ∧ (∀ n, lt (fsA n) rowA = true)
+  ∧ (∀ n, lt (fsA n) (fsA (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s rowA = true → ∃ n, le s (fsA n) = true) :=
+  ⟨fun n => cnv_repAdd cnv_eps0T n,
+   fun n => by rw [show fsA n = repAdd (phi one zero) n from rfl,
+                  show rowA = phi zero eps0T from rfl, lt_repAdd_phi]; exact lt_eps0T_rowA,
+   fun n => lt_repAdd_step one zero n,
+   fun s hin hlt =>
+     le_repAdd_of_head cnv_eps0T rfl s (cnv_of_lt_cnv hin cnv_rowA hlt)
+       (hdOf_le_eps0T (cnv_of_lt_cnv hin cnv_rowA hlt) hlt)⟩
+
+#guard CNV rowA && inT rowA                       -- the row's term is a genuine CNV term
+#guard lt eps0T rowA == true                      -- ε₀ lies BELOW it — the fixed-point trap
+#guard fsA 0 == eps0T
+#guard fsA 1 == add eps0T eps0T
+#guard (List.range 6).all (fun n => CNV (fsA n) && lt (fsA n) rowA && lt (fsA n) (fsA (n+1)))
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
