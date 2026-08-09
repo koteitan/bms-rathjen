@@ -5121,4 +5121,96 @@ theorem cert_epsOmega
 #guard (List.range 3).all (fun n => (List.range 3).all (fun k =>
   !((List.range 6).any (fun m => BMS.expand (Evidence.Cert.epsM (n+1)) (k+1) == Evidence.Cert.epsM m))))
 
+/-! ## §24 `SqvDecomp` FOR THE REMAINING ROWS — ONE CLOSES, THREE ARE BLOCKED ON `Cert`
+
+The task was `SqvDecomp` for the other four rows, with each row's `Certified` residue named so the
+four residues could be compared.  **One row closes.  Three are blocked, and not on anything in this
+file** — `SqvDecomp` needs a `Cert`-side EXPANSION IDENTITY per row, and three of them do not exist:
+
+    row          sqv' t                        `Cert` expansion identity
+    ε_ω          (0,0)(1,1)(2,0)               `expand_epsOmega`   ✓  §22
+    ω^(ε₀+1)     (0,0)(1,1)(1,0)               `expand_rowA`       ✓  Cert:7831 — closed below
+    ε_{ω²}       (0,0)(1,1)(2,0)(2,0)          — MISSING —
+    ε_{ω^ω}      (0,0)(1,1)(2,0)(3,0)          — MISSING —
+    ε_{ε₀}       (0,0)(1,1)(2,0)(3,1)          — MISSING —
+
+**THE BINDING CONSTRAINT WAS NEVER THE ASSEMBLY'S SHAPE; IT IS THE PER-ROW EXPANSION IDENTITY.**
+I had five encoder facts and assumed the consumer side was uniform across the rows they serve.  It
+is not, and ONE GREP of `Cert.lean`'s `expand_` theorems showed it — cheaper than the `#eval` that
+caught the ε_n ladder, and the same mistake one level up.
+
+**NAMED, NOT SUBSTITUTED.**  The three missing facts are, in `Cert.lean`'s own idiom:
+
+    expand? [[0,0],[1,1],[2,0],[2,0]] n = some …        for ε_{ω²}
+    expand? [[0,0],[1,1],[2,0],[3,0]] n = some …        for ε_{ω^ω}
+    expand? [[0,0],[1,1],[2,0],[3,1]] n = some …        for ε_{ε₀}
+
+Proving substitutes here would put matrix-expansion facts in the candidate tier, which is what the
+import arrow exists to prevent.  `Cert.lean` §7224–7225 already names the last two rows' matrices in
+prose, so the shapes are agreed; only the identities are absent.
+
+**TWO RESIDUES, SIDE BY SIDE, WHICH IS WHAT THE TASK WAS FOR.**  `ε_ω`'s residue is
+`∀ n, Certified (epsM n) (fsEW n)` — the ε_n rungs, whose own expansions leave the ladder for a
+two-column family.  `ω^(ε₀+1)`'s residue is `∀ n, Certified (eps0M n) (fsA n)`, and `eps0M n` is
+`(n+1)` copies of `(0,0)(1,1)` — **the SAME block repeated, not a growing ladder.**  Two rows, two
+residues, two different shapes already.  **That is one data point against "one family will cover
+them", collected before any family was built**, which is exactly what the task was meant to
+produce; three more await the missing identities. -/
+
+/-- **THE COLLAPSE BRANCH, FOR THE FIRST TIME** — `ε₀` IS a fixed point of `ω^·`, so
+    `isFP 0 ε₀` fires and the head is encoded whole rather than through `mkBlocks`. -/
+theorem encv'_rowA_val : encv' Evidence.WF.rowA 0 = [((0, 0) : Col2), (1, 1), (1, 0)] := by
+  show (if h : Evidence.WF.CNV (phi zero Evidence.WF.eps0T) = true
+        then encvC ⟨phi zero Evidence.WF.eps0T, h⟩ 0 else []) = _
+  rw [dif_pos (show Evidence.WF.CNV (phi zero Evidence.WF.eps0T) = true from rfl)]
+  have hgs : summands (TM.Term.splitFin Evidence.WF.eps0T).1 = [Evidence.WF.eps0T] := by
+    rw [splitFin_isAP (x := Evidence.WF.eps0T) rfl rfl]; rfl
+  have hhd : (summands (TM.Term.splitFin Evidence.WF.eps0T).1).headD zero = Evidence.WF.eps0T := by
+    rw [hgs]; rfl
+  have hm2 : (TM.Term.splitFin Evidence.WF.eps0T).2 = 0 := by
+    rw [splitFin_isAP (x := Evidence.WF.eps0T) rfl rfl]
+  rw [encvC]
+  dsimp only
+  rw [show TM.Term.isFP zero ((summands (TM.Term.splitFin Evidence.WF.eps0T).1).headD zero) = true
+        from by rw [hhd]; rfl]
+  simp only [if_true]
+  rw [hm2, encvC_eq_encv', hhd, encv'_eps0T,
+      show ((summands (TM.Term.splitFin Evidence.WF.eps0T).1).length == 1) = true from by
+        rw [hgs]; rfl]
+  simp only [if_true, List.replicate_zero, List.flatten_nil, List.append_nil]
+  rfl
+
+theorem sqv'_rowA : sqv' Evidence.WF.rowA = [[0, 0], [1, 1], [1, 0]] := by
+  show toMatrix (encv' Evidence.WF.rowA 0) = _
+  rw [encv'_rowA_val]
+  rfl
+
+theorem sqv'_fsA (n : Nat) : sqv' (Evidence.WF.fsA n) = Evidence.Cert.eps0M n := by
+  show toMatrix (encv' (Evidence.WF.fsA n) 0) = _
+  rw [encv'_rowA n]
+  show ((List.replicate (n + 1) [((0, 0) : Col2), (1, 1)]).flatten).map (fun c => [c.1, c.2])
+     = (List.replicate (n + 1) ([[0, 0], [1, 1]] : BMS.Matrix)).flatten
+  rw [List.map_flatten, List.map_replicate]
+  rfl
+
+/-- **`ω^(ε₀+1)` CLOSED END TO END** — the second row, by the same three lines as `ε_ω`. -/
+theorem sqv_decomp_rowA : SqvDecomp Evidence.WF.rowA Evidence.WF.fsA := by
+  intro n
+  rw [sqv'_rowA, sqv'_fsA]
+  show (BMS.expand? [[0, 0], [1, 1], [1, 0]] n).getD [] = _
+  rw [Evidence.Cert.expand_rowA n]
+  rfl
+
+#guard sqv' Evidence.WF.rowA == [[0, 0], [1, 1], [1, 0]]
+#guard (List.range 6).all (fun n => sqv' (Evidence.WF.fsA n) == Evidence.Cert.eps0M n)
+#guard (List.range 6).all (fun n =>
+  BMS.expand (sqv' Evidence.WF.rowA) n == sqv' (Evidence.WF.fsA n))
+-- the three rows whose `Cert` expansion identity is missing, recorded as matrices
+#guard sqv' Evidence.WF.epsOmegaSq == [[0, 0], [1, 1], [2, 0], [2, 0]]
+#guard sqv' (phi one Evidence.WF.omegaOmega) == [[0, 0], [1, 1], [2, 0], [3, 0]]
+#guard sqv' (phi one (phi one zero)) == [[0, 0], [1, 1], [2, 0], [3, 1]]
+-- the two residues differ in shape: `epsM n` grows a ladder, `eps0M n` repeats one block
+#guard Evidence.Cert.epsM 2 == [[0, 0], [1, 1], [1, 1], [1, 1]]
+#guard Evidence.Cert.eps0M 2 == [[0, 0], [1, 1], [0, 0], [1, 1], [0, 0], [1, 1]]
+
 end Evidence.SqV
