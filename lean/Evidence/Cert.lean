@@ -137,6 +137,94 @@ private theorem ltF_lt_zero (f : Nat) (a : Term) : ltF f a zero = false := by
 private theorem lt_of_ltF {x y : Term} {N : Nat} (h : ∀ f, N ≤ f → ltF f x y = true)
     (hN : N ≤ 2 * (x.deg + y.deg) + 8) : lt x y = true := h _ hN
 
+/-! ### Destructuring the formation conditions `inT` ([R91] 2.1) -/
+
+private theorem isAP_ne_zero {a : Term} (h : a.isAP = true) : a ≠ zero := by
+  intro hc; rw [hc] at h; exact Bool.noConfusion h
+
+private theorem inT_add {a b : Term} (h : inT (add a b) = true) :
+    a.isAP = true ∧ inT a = true ∧ inT b = true := by
+  simp only [inT, Bool.and_eq_true] at h
+  exact ⟨h.1.1.1, h.1.1.2, h.1.2⟩
+
+private theorem inT_phi {a b : Term} (h : inT (phi a b) = true) :
+    inT a = true ∧ inT b = true := by
+  simp only [inT, Bool.and_eq_true] at h
+  exact ⟨h.1.1.1, h.1.1.2⟩
+
+/-- In a sum of 𝔗(M) the tail is never `0` (its head must be additively principal). -/
+private theorem inT_add_ne_zero : ∀ {a b : Term}, inT (add a b) = true → b ≠ zero
+  | _, zero, h => by simp only [inT, Bool.and_eq_true] at h; exact absurd h.2 (by simp [isAP])
+  | _, add _ _, _ => by intro hc; exact Term.noConfusion hc
+  | _, M, _ => by intro hc; exact Term.noConfusion hc
+  | _, omg _, _ => by intro hc; exact Term.noConfusion hc
+  | _, phi _ _, _ => by intro hc; exact Term.noConfusion hc
+  | _, psi _ _, _ => by intro hc; exact Term.noConfusion hc
+  | _, Z _, _ => by intro hc; exact Term.noConfusion hc
+
+/-- The components of a sum of 𝔗(M) descend: the head of the tail is at most the head. -/
+private theorem inT_add_head_le : ∀ {a b : Term}, inT (add a b) = true →
+    le ((toList b).headD zero) a = true
+  | _, zero, h => by simp only [inT, Bool.and_eq_true] at h; exact absurd h.2 (by simp [isAP])
+  | _, add _ _, h => by simp only [inT, Bool.and_eq_true] at h; exact h.2
+  | _, M, h => by simp only [inT, Bool.and_eq_true] at h; exact h.2.2
+  | _, omg _, h => by simp only [inT, Bool.and_eq_true] at h; exact h.2.2
+  | _, phi _ _, h => by simp only [inT, Bool.and_eq_true] at h; exact h.2.2
+  | _, psi _ _, h => by simp only [inT, Bool.and_eq_true] at h; exact h.2.2
+  | _, Z _, h => by simp only [inT, Bool.and_eq_true] at h; exact h.2.2
+
+/-! ### Nothing but `0` lies below `1`
+
+This is where the formation conditions are indispensable: `lt` decides a sum by
+its head component alone, so the junk term `1 + M` would otherwise be below `1`'s
+successors without being below any of them. -/
+
+private theorem ltF_one_false : ∀ (f : Nat) (x : Term), inT x = true → x ≠ zero →
+    ltF f x one = false
+  | 0, _, _, _ => rfl
+  | f + 1, x, hx, hne => by
+    cases x with
+    | zero => exact absurd rfl hne
+    | M => rfl
+    | add a b =>
+      obtain ⟨hap, ha, _⟩ := inT_add hx
+      show ltF f a one = false
+      exact ltF_one_false f a ha (isAP_ne_zero hap)
+    | omg a => rfl
+    | phi a b =>
+      simp only [ltF]
+      cases hxo : ((phi a b) == one) with
+      | true => simp
+      | false =>
+        simp only [Bool.false_eq_true, if_false]
+        show (if (a == zero) = true then ltF f b zero
+              else if ltF f a zero = true then ltF f b (phi zero zero)
+              else ((phi a b == zero) || ltF f (phi a b) zero)) = false
+        rw [ltF_lt_zero, ltF_lt_zero]
+        simp [ltF_lt_zero]
+    | psi k a =>
+      show ((psi k a == zero) || (psi k a == zero) || ltF f (psi k a) zero
+            || ltF f (psi k a) zero) = false
+      simp [ltF_lt_zero]
+    | Z a =>
+      show ((Z a == zero) || (Z a == zero) || ltF f (Z a) zero || ltF f (Z a) zero) = false
+      simp [ltF_lt_zero]
+
+private theorem lt_one_false {x : Term} (hx : inT x = true) (hne : x ≠ zero) :
+    lt x one = false := ltF_one_false _ x hx hne
+
+private theorem le_one_eq {x : Term} (hx : inT x = true) (hne : x ≠ zero)
+    (h : le x one = true) : x = one := by
+  simp only [TM.Term.le, lt_one_false hx hne, Bool.or_false, beq_iff_eq] at h
+  exact h
+
+private theorem eq_zero_of_ltF_one {f : Nat} {b : Term} (hb : inT b = true)
+    (h : ltF f b one = true) : b = zero := by
+  cases b <;> first
+    | rfl
+    | exact absurd h (by
+        rw [ltF_one_false f _ hb (by intro hc; exact Term.noConfusion hc)]; simp)
+
 /-! ### The finite terms `ofNat n` -/
 
 private theorem filter_le_one : ∀ n,
@@ -296,13 +384,147 @@ theorem cert_one : Certified [[0]] one := cert_zeros 1
 
 theorem cert_two : Certified [[0], [0]] (ofNat 2) := cert_zeros 2
 
-/-! ## §3 The registry
+/-! ## §3 ω — the first limit certificate
+
+L1 (the cofinality obligation) for `t = ω`: the terms of 𝔗(M) below ω are
+exactly the natural numbers, so the expansion values `1, 2, 3, …` overtake every
+one of them.  The quantifier is over ALL terms of the notation system, not over
+values of the translation — that is the point of the doctrine. -/
+
+/-- Every term of 𝔗(M) whose head component is at most `1` is a natural number. -/
+private theorem tail_ofNat : ∀ (b : Term), inT b = true → b ≠ zero →
+    le ((toList b).headD zero) one = true → ∃ j, b = ofNat (j + 1)
+  | zero, _, hne, _ => absurd rfl hne
+  | add c d, h, _, hle => by
+    obtain ⟨hap, hc, hd⟩ := inT_add h
+    rw [show (toList (add c d)).headD zero = c from rfl] at hle
+    have hc1 : c = one := le_one_eq hc (isAP_ne_zero hap) hle
+    have hdhead : le ((toList d).headD zero) c = true := inT_add_head_le h
+    rw [hc1] at hdhead
+    obtain ⟨j, hj⟩ := tail_ofNat d hd (inT_add_ne_zero h) hdhead
+    exact ⟨j + 1, by rw [hc1, hj, ofNat_shape j]⟩
+  | M, h, hne, hle => ⟨0, le_one_eq h hne hle⟩
+  | omg _, h, hne, hle => ⟨0, le_one_eq h hne hle⟩
+  | phi _ _, h, hne, hle => ⟨0, le_one_eq h hne hle⟩
+  | psi _ _, h, hne, hle => ⟨0, le_one_eq h hne hle⟩
+  | Z _, h, hne, hle => ⟨0, le_one_eq h hne hle⟩
+
+/-- **L1 for ω.**  Every term of 𝔗(M) below ω is a natural number.  Stated with
+    the fuel universally quantified, so that the hypothesis can be consumed at
+    whatever fuel the recursive call of `ltF` supplies. -/
+theorem below_omega : ∀ (f : Nat) (s : Term), inT s = true → ltF f s omega = true →
+    ∃ k, s = ofNat k
+  | 0, s, _, h => by exact absurd h (by rw [show ltF 0 s omega = false from rfl]; simp)
+  | f + 1, s, hs, h => by
+    cases s with
+    | zero => exact ⟨0, rfl⟩
+    | M =>
+      rw [show ltF (f+1) M omega = false from Evidence.StageA.ltF_M_phi (f+1) zero one] at h
+      exact Bool.noConfusion h
+    | omg a =>
+      rw [show ltF (f+1) (omg a) omega = false from rfl] at h
+      exact Bool.noConfusion h
+    | psi k a =>
+      rw [show ltF (f+1) (psi k a) omega
+            = ((psi k a == zero) || (psi k a == one) || ltF f (psi k a) zero
+               || ltF f (psi k a) one) from rfl,
+          show ((psi k a == zero) : Bool) = false from rfl,
+          show ((psi k a == one) : Bool) = false from rfl,
+          ltF_lt_zero,
+          ltF_one_false f (psi k a) hs (by intro hc; exact Term.noConfusion hc)] at h
+      simp at h
+    | Z a =>
+      rw [show ltF (f+1) (Z a) omega
+            = ((Z a == zero) || (Z a == one) || ltF f (Z a) zero || ltF f (Z a) one) from rfl,
+          show ((Z a == zero) : Bool) = false from rfl,
+          show ((Z a == one) : Bool) = false from rfl,
+          ltF_lt_zero,
+          ltF_one_false f (Z a) hs (by intro hc; exact Term.noConfusion hc)] at h
+      simp at h
+    | add a b =>
+      obtain ⟨hap, ha, hb⟩ := inT_add hs
+      have h' : ltF f a omega = true := h
+      obtain ⟨k, hk⟩ := below_omega f a ha h'
+      subst hk
+      have hone : (ofNat k) = one := by
+        match k with
+        | 0 => exact absurd hap (by decide)
+        | 1 => rfl
+        | (m + 2) => rw [ofNat_shape m] at hap; exact absurd hap (by simp [isAP])
+      have hhead : le ((toList b).headD zero) (ofNat k) = true := inT_add_head_le hs
+      rw [hone] at hhead
+      obtain ⟨j, hj⟩ := tail_ofNat b hb (inT_add_ne_zero hs) hhead
+      exact ⟨j + 2, by rw [hone, hj, ofNat_shape j]⟩
+    | phi a b =>
+      obtain ⟨ha, hb⟩ := inT_phi hs
+      have hpne : phi a b ≠ zero := by intro hc; exact Term.noConfusion hc
+      cases hxo : ((phi a b) == omega) with
+      | true =>
+        have heq : phi a b = omega := by simpa using hxo
+        rw [heq, ltF_irrefl] at h
+        exact Bool.noConfusion h
+      | false =>
+        have h2 : (if (a == zero) = true then ltF f b one
+                   else if ltF f a zero = true then ltF f b (phi zero one)
+                   else ((phi a b == one) || ltF f (phi a b) one)) = true := by
+          rw [show ltF (f+1) (phi a b) omega
+                = (if ((phi a b) == omega) = true then false
+                   else if (a == zero) = true then ltF f b one
+                   else if ltF f a zero = true then ltF f b (phi zero one)
+                   else ((phi a b == one) || ltF f (phi a b) one) : Bool) from rfl,
+              hxo] at h
+          simpa using h
+        cases haz : (a == zero) with
+        | true =>
+          rw [haz] at h2
+          simp only [if_true] at h2
+          have haz' : a = zero := by simpa using haz
+          exact ⟨1, by rw [haz', eq_zero_of_ltF_one hb h2]; rfl⟩
+        | false =>
+          rw [haz] at h2
+          simp only [Bool.false_eq_true, if_false, ltF_lt_zero,
+            ltF_one_false f (phi a b) hs hpne, Bool.or_false] at h2
+          exact ⟨1, by simpa using h2⟩
+
+/-- The cofinality clause for ω, in the form the `lim` constructor consumes. -/
+private theorem cofinal_omega (s : Term) (hs : inT s = true) (h : lt s omega = true) :
+    ∃ n, le s (ofNat (n + 1)) = true := by
+  obtain ⟨k, hk⟩ := below_omega _ s hs h
+  cases k with
+  | zero => exact ⟨0, by rw [hk]; rfl⟩
+  | succ j => exact ⟨j, by rw [hk]; simp [TM.Term.le]⟩
+
+private theorem flatten_const : ∀ (m : Nat) (c : BMS.Col),
+    ((List.range m).map (fun _ => ([c] : Matrix))).flatten = List.replicate m c
+  | 0, _ => rfl
+  | m + 1, c => by
+    rw [List.range_succ, List.map_append, List.flatten_append, flatten_const m c,
+      List.replicate_succ']
+    rfl
+
+/-- The BM4 expansion of `(0)(1)`: all ascension amounts vanish, so the rule is
+    "copy the bad part `n+1` times" and the result is `(0)…(0)` with `n+1`
+    columns. -/
+private theorem expand_omega (n : Nat) : BMS.expand ([[0], [1]] : Matrix) n = zeros (n + 1) := by
+  rw [show BMS.expand ([[0], [1]] : Matrix) n
+        = ((List.range (n+1)).map (fun _ => ([[0]] : Matrix))).flatten from rfl]
+  exact flatten_const (n + 1) [0]
+
+/-- **The first limit certificate.**  `(0)(1)` has value ω. -/
+theorem cert_omega : Certified [[0], [1]] omega :=
+  .lim (fun n => ofNat (n + 1)) rfl
+    (fun n => by rw [expand_omega n]; exact cert_zeros (n + 1))
+    (fun n => lt_ofNat_omega (n + 1))
+    (fun n => lt_ofNat_succ (n + 1))
+    cofinal_omega
+
+/-! ## §4 The registry
 
 gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate. -/
 
 /-- The registered certified rows. -/
 def certRows : List (Matrix × Term) :=
-  [([], Term.zero), ([[0]], one), ([[0], [0]], ofNat 2)]
+  [([], Term.zero), ([[0]], one), ([[0], [0]], ofNat 2), ([[0], [1]], omega)]
 
 /-- Every registered pair carries a derivation.  Extending `certRows` without
     extending this proof breaks the build — the label cannot outrun the
@@ -310,10 +532,11 @@ def certRows : List (Matrix × Term) :=
 theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 := by
   intro p hp
   simp only [certRows, List.mem_cons] at hp
-  rcases hp with h | h | h | h
+  rcases hp with h | h | h | h | h
   · rw [h]; exact cert_empty
   · rw [h]; exact cert_one
   · rw [h]; exact cert_two
+  · rw [h]; exact cert_omega
   · cases h
 
 /-! ## §5 The junk-term computations behind the DEFINITION CHANGE

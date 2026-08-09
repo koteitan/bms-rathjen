@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.49
+バージョン: v0.1.50
 
 > **⚠ 較正事故の記録 (v0.1.41–v0.1.48)**: 旧翻訳 $`o`$ は
 > `(0,0)(1,1)(2,1)(2,0)` 以上で系統的に誤った値を与えていた
@@ -39,7 +39,7 @@ Arch. Math. Logic 30 (1991), §2) の対応表。検査の設計は
 | [`(空)`](../lean/Rows/TM.lean#L86) | $`0`$ | $`0`$ | [✅](../lean/Evidence/Cert.lean) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 空行列 |
 | [`(0)`](../lean/Rows/TM.lean#L88) | $`1`$ | $`1`$ | [✅](../lean/Evidence/Cert.lean) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | [`(0)(0)`](../lean/Rows/TM.lean#L89) | $`2`$ | $`2`$ | [✅](../lean/Evidence/Cert.lean) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)`](../lean/Rows/TM.lean#L90) | $`\omega`$ | $`\omega`$ |  | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)`](../lean/Rows/TM.lean#L90) | $`\omega`$ | $`\omega`$ | [✅](../lean/Evidence/Cert.lean) | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | [`(0)(1)(0)(1)`](../lean/Rows/TM.lean#L92) | $`\omega+\omega`$ | $`\omega\cdot 2`$ |  | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | [`(0)(1)(1)`](../lean/Rows/TM.lean#L94) | $`\bar{\varphi}(0,2)`$ | $`\omega^2`$ |  | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | [`(0)(1)(2)`](../lean/Rows/TM.lean#L96) | $`\bar{\varphi}(0,\omega)`$ | $`\omega^\omega`$ |  | [o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
