@@ -12283,6 +12283,61 @@ theorem undershoot_reduction
       (by simp)
 
 
+/-! ### §15.24 `toList (ofNat m)` AND `plus`'s FILTER — the two facts `tdepth_predOr` needs
+
+REQUESTED for `TM/Lemmas.lean`, and they cannot go there.  **`plus`'s filter is the identity
+exactly when every component of the left argument is `≥` the head of the right one, and on the
+`ofNat` instance that head is `1` — so the hypothesis is "every component is `≥ 1`", which is
+`CNV`.  `CNV` is defined in THIS file, so a lemma carrying it cannot live in `TM/`, which this
+file imports.**  They are here instead, beside the machinery they are built from.
+
+AND THEY ARE NOT NEW.  Both derive from lemmas already proved in §15.12.1 and §15.17 —
+`ofNat_succ_eq`, `toList_repAdd_one`, `filter_toList_cnv` — and `Evidence/SqV.lean` already
+imports this file, so the consumer could reach them without anything being written at all.  What
+was missing was three lines of wrapper, not a fact.
+
+ONE CORRECTION TO THE REQUEST, MEASURED.  The identity these were wanted for was stated as
+    predOr t = ofList ((toList t).take ((toList t).length - 1))
+UNCONDITIONALLY.  That is FALSE: over 578 terms of degree ≤ 6, **569 violations**.  The missing
+hypothesis is `(splitFin t).2 ≥ 1` — `t` must HAVE a trailing `1` — which is exactly `predOr`'s
+own `| (_, 0) => t` branch, where `predOr` returns `t` and the right-hand side drops a component.
+Restricted to the 8 terms of that corpus which do have a trailing `1`: **0 violations**; and on
+the other 570, `predOr t = t` holds in all 570.  (8 is a thin positive class — the requester
+measured 40 relevant terms and found 0, which is the wider check.)
+
+THE DIRECT ROUTE EXISTS AND IS NOT CHEAPER, since it was worth pricing before proving these.
+Bounding `tdepth (predOr t)` without the identity needs `tdepth (plus s u) ≤ tdepth s + tdepth u`
+— MEASURED clean over 578², while the `max` form is FALSE with 182038 violations — plus
+`tdepth g + m ≤ tdepth t` for `(g, m+1) = splitFin t`, measured clean.  Both hold, so a direct
+proof is possible; but the first is a `plus` lemma of the same character as the one below, and
+the second is extra.  The identity route is strictly less work. -/
+
+theorem toList_ofNat : ∀ m, toList (ofNat m) = List.replicate m one
+  | 0 => rfl
+  | m + 1 => by rw [ofNat_succ_eq m, toList_repAdd_one m]
+
+/-- `plus` unfolded once, given the head of `toList t`.  Stated separately because the `match` in
+    `plus` is on `toList t`, so a rewrite of `toList t` in the goal does not reach it. -/
+theorem plus_eq_of_toList {s t b1 : Term} {rest : List Term} (ht : toList t = b1 :: rest) :
+    plus s t = ofList ((toList s).filter (fun a => le b1 a) ++ toList t) := by
+  show (match toList t with
+        | [] => s
+        | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) = _
+  rw [ht]
+
+/-- **`plus`'s FILTER IS THE IDENTITY against `ofNat (m+1)`**, whose head is `1`.  The hypothesis
+    is `CNV s` — every component additively principal, hence `≥ 1` — which is what the filter
+    actually wants. -/
+theorem plus_ofNat_succ (s : Term) (hs : CNV s = true) (m : Nat) :
+    plus s (ofNat (m + 1)) = ofList (toList s ++ toList (ofNat (m + 1))) := by
+  rw [plus_eq_of_toList (b1 := one) (rest := List.replicate m one)
+        (by rw [toList_ofNat (m + 1)]; rfl),
+      filter_toList_cnv s hs]
+
+#guard (List.range 6).all (fun m => toList (ofNat m) == List.replicate m one)
+#guard toList (ofNat 3) == [one, one, one]
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
