@@ -207,10 +207,15 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
       file -> commit it. Report says done + CLEAN tree -> it is already in and
       your model is behind.
 
-  **And grep for the CONCEPT, not the name you expect.** Checking for
+  **And grep for the CONCEPT, not the name you expect — this is the one to do
+  FIRST, because it is the only check here that fails SILENTLY.** Checking for
   `lt_fpDeep` and concluding the clause was unproved missed `le_fpDeep`, which was
-  sitting on disk — the check was aimed at the right thing with a pattern that
-  presumed its name.
+  sitting on disk: the check was aimed at the right thing with a pattern that
+  presumed its name, and **a wrong-name grep returns a clean empty result that
+  looks exactly like a true absence.** The name was also unguessable on purpose —
+  the conclusion is `le` because `fpDeep a t` returns `t` itself on 6 of 24
+  triples, so `lt_fpDeep` was never going to exist. **A theorem's name is a
+  neighbour of its statement.**
 - **When a lane reports a MEASUREMENT, ask WHICH CORPUS before building on it.**
   The count-vs-set rule below has a twin: a number can be honest, verifiable and
   useless because the corpus could not reach the failure class. It happened —
