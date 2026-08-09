@@ -122,6 +122,21 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   is mid-write, the coordinator's build will fail on THAT file — commit the
   other lane's verified file alone (no version bump, so no table regeneration)
   rather than waiting or committing an unverified state.
+- **Editing a large file AFTER compaction**: do not reproduce it by a full-file
+  `Write` from context — an 8000-line file is not in context any more, and
+  regenerating it is the corruption the full-file rule exists to prevent. Instead:
+  confirm the on-disk hash matches HEAD *before* touching anything (if it does
+  not, someone else's work is uncommitted — stop), re-read each region
+  immediately before editing it, make anchored `Edit`s against text just read,
+  and POST the complete on-disk file afterwards. The verification half of the
+  discipline is what matters and it stays intact; say in the checkpoint that the
+  `Write` half was not used, so the coordinator knows rather than infers.
+- **A refactor that claims to preserve statements must have the STATEMENTS
+  compared, not just the build.** Green means the file elaborates, not that a
+  theorem still says what it said. Extract the old text with
+  `git show HEAD:<path>` and diff each signature, and diff the declaration-name
+  lists both ways — removals should be exactly the specialised versions their
+  general replacements subsume, and nothing else.
 - **Read the SNAPSHOT, not the working file.** `git add` freezes the bytes; the
   lane keeps writing. Any math check done by `grep`/`sed` on the path afterwards
   is a check of the lane's CURRENT file, not of what is staged. Once, a commit

@@ -5875,23 +5875,29 @@ avoids this completely, and that is the design of the whole section:
     every such term is above every `φ̄` term, so the probe `ω^(t+1)` would be `≤` it,
     which `no_overshoot` forbids.
 
-THE INVARIANT (`no_overshoot`).  For a Cantor normal form `t`, no term of 𝔗(M) ∩
-`Frag` that is additively principal and `≥ ω^(t+1)` is `≤` any value certified for
-`padRow (sq t)`.  The three cases:
+THE INVARIANT (`no_overshoot_ceiling`, §15.7.2).  Given a region — a relation
+`Reg M X` reading "`M` is a region matrix with bound-parameter `X`" whose parameters
+are Veblen-fragment terms and whose expansions have STRICTLY SMALLER parameters — no
+term of 𝔗(M) ∩ `Frag` that is additively principal and `≥ ω^(X+1)` is `≤` any value
+certified for a region matrix.  The three cases:
 
-  zero  `v = 0`, and no principal `s` is `≤ 0`.
+  zero  `v = 0`, and no principal `s` is `≤ 0`.  Region-free.
   succ  `v = plus v' 1`.  `plus` filters out the components below `1`, so `v` has
         the SAME leftmost component as `v'` (`hd_plus_one`, via `cert_hd`), and a
         principal `s` compares with a sum only through that component
         (`le_ap_hd`) — so `le s v` and `le s v'` are the SAME Bool, and the
         induction hypothesis at the (constant) expansion closes the case.  The
-        bound is unchanged along the step because `predC t + 1 = t`.
+        bound moves down with the parameter, by `le_bnd_of_lt_cnv`.
   lim   `v` carries a family `fs`.  If `s < v`, `v`'s own cofinality clause hands
         back a `k` with `s ≤ fs k`, and the induction hypothesis at `k` — whose
-        bound `ω^(fsC t k + 1)` is `≤ ω^t ≤ s`, the limit absorbing the `+1`
-        (`le_plus_one_of_lt_lim`) — says exactly `le s (fs k) = false`.  If instead
-        `s = v`, the same argument runs with the probe `ω^t`, which is STRICTLY
-        below `ω^(t+1) ≤ v` precisely because `t` is a limit.
+        bound `ω^(Y+1)` is `≤ ω^X ≤ s` for the smaller parameter `Y`
+        (`le_bnd_of_lt_cnv`, i.e. `Evidence.WF.le_plus_one_of_lt_cnv`, WITH NO
+        LIMIT HYPOTHESIS) — says exactly `le s (fs k) = false`.  If instead
+        `s = v`, the same argument runs with the probe `ω^X`, which is STRICTLY
+        below `ω^(X+1) ≤ v`.
+
+  `no_overshoot` / `no_overshoot_one` (the CNF rows, §15.8) and `no_overshoot_fam`
+  (Row A's ε₀-prefixed region, §19.2) are instances; neither runs an induction.
 
 `cert_hd` (the shape lemma the succ case needs) is proved for `Certified` itself,
 junk and all: the `lim` case gets it from `fs 1 ≠ 0` and the descent lemma
@@ -6075,7 +6081,7 @@ theorem hd_zero_of_lt : ∀ (v x : Term), lt x v = true → hd v = zero → hd x
 
 /-! ### §15.4 `t + 1` on Cantor normal forms -/
 
-open Evidence.WF (isPow hdLe hdOf)
+open Evidence.WF (isPow hdLe hdOf CNV)
 
 theorem ofListCons {a : Term} : ∀ {l : List Term}, l ≠ [] → ofList (a :: l) = add a (ofList l)
   | [], h => absurd rfl h
@@ -6324,7 +6330,52 @@ theorem kindC_of_kind_lim {t : Term} (hcn : CN t = true)
     exact absurd hk (by simp)
   · exact ⟨by simpa using hkc, hz⟩
 
-/-! ### §15.7 THE INVARIANT: no certificate overshoots its bound -/
+/-! ### §15.7 THE CEILING: no certificate overshoots its bound
+
+ONE induction BOUNDS a certificate in this file, and it is `no_overshoot_ceiling`
+below; §15.8's CNF rows and §19's ε₀-prefixed family are instances of it, and neither
+runs an induction of its own.  (The file's other inductions on the inductive are not
+bounds: `cert_hd` reads a certified value's shape, and §14's three run on
+`CertifiedIn` for uniqueness.)
+
+WHAT THE CEILING ACTUALLY NEEDS FROM A REGION (§15.7.2).  A region is a relation
+`Reg M X`, read "`M` is a region matrix whose bound-parameter is `X`", and the whole
+interface is three facts:
+
+    hcnv   the parameters are Veblen-fragment terms
+    hsucc  if `kind M = .succ`, the 0-th expansion is again a region matrix, and its
+           parameter is STRICTLY BELOW `X`
+    hlim   if `kind M = .lim`, the same for every expansion
+
+Nothing is asked at `kind M = .zero`: `Certified.zero` pins the value to `0` and no
+additively principal probe is `≤ 0`, so that case is region-free.
+
+WHAT THIS COST, AND WHAT IT BOUGHT — the four hypotheses of the old §15.7 interface
+(kept below as `no_overshoot_of`, now a corollary) were
+
+    hRsucc/hRlim   the kind of `R t` reads off `kindC t`
+    hRes/hRel      the expansions of `R t` are the `R` of `predC t` / `fsC t n`
+
+and every one of them names CNF-region machinery.  That machinery is not available
+above the CNF region, and `kindC` is not merely unavailable but WRONG there: it
+branches on the second Veblen argument alone, so `kindC ε₀ = true` — it calls ε₀ a
+successor (§19's trap, `#guard`ed in WF §15.3).  An interface stated with `kindC`
+therefore could not have been discharged on Row A's region at all.
+
+THE POINT IS THAT THE CEILING NEVER NEEDED THE CLASSIFIER.  `kindC`/`predC`/`fsC`
+are how the CNF region PRODUCES a strictly smaller parameter; the induction consumes
+only the decrease.  Four hypotheses collapse to three, and none of the three mentions
+a classifier, a predecessor operation or a fundamental sequence.
+
+A SECOND CONJUNCT WENT THE SAME WAY, and it is worth recording because it was
+load-bearing until an hour ago.  The old `lim` case closed with
+`le_plus_one_of_lt_lim`, which asks that `t` be a LIMIT; the ceiling closes with
+`Evidence.WF.le_plus_one_of_lt_cnv`, which does not.  So "t is a limit" was a
+hypothesis the CNF region handed over for free — `hRlim` had already produced it —
+and it was never needed.  Both are the same shape: a check that is free in a region
+because the region degenerates it, and that must be PAID FOR outside.  Asking that
+question at each hypothesis is what made the interface discharge on two regions
+instead of one. -/
 
 theorem cn_pow {t : Term} (h : CN t = true) : CN (phi zero t) = true := by
   show (((zero : Term) == zero) && CN t) = true; rw [h]; rfl
@@ -6365,17 +6416,244 @@ theorem not_le_one {s t : Term} (hin : inT s = true) (hap : isAP s = true)
       exact Bool.noConfusion hb]
   rfl
 
-/-- **NO CERTIFICATE OF A CNF REGION OVERSHOOTS ITS BOUND**, abstractly in the
-    region.  `R` assigns a matrix to every Cantor normal form; the four hypotheses
-    are all the proof knows about it (the kind of `R t` reads off `kindC t`, and the
-    expansions of `R t` are the `R` of `predC t` / `fsC t n`).  Then every value
-    certified for `R t` — junk values included, with no `inT` and no fragment
-    hypothesis on the value — is escaped by every term of 𝔗(M) ∩ `Frag` that is
-    additively principal and at least `ω^(t+1)`.
+/-! #### §15.7.1 The bound arithmetic on the Veblen fragment
+
+`ω^(X+1)` has to be a legitimate probe for a parameter `X` that is no longer a Cantor
+normal form, so §15.4's `le_self_plus_one` (CN only) needs a `CNV` twin, and the six
+one-liners after it are the probe's `Frag` / `inT` / order receipts.  These were §19's
+private lemmas about `famV k c`; they are stated here about an arbitrary `CNV` term,
+which is all §19 ever used them at. -/
+
+/-- Every `CNV` term other than `0` has an additively principal leftmost component. -/
+theorem le_one_hd_cnv : ∀ (t : Term), CNV t = true → t ≠ zero → le one (hd t) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ h; exact absurd rfl h
+  | phi x y _ _ => intro _ _; exact le_one_ap (show isAP (phi x y) = true from rfl)
+  | add a b iha _ =>
+    intro hcnv _
+    obtain ⟨hap, hca, _, _⟩ := Evidence.WF.cnv_add hcnv
+    rw [hd_add, hd_of_isAP hap]
+    exact le_one_ap hap
+
+/-- **`x ≤ x+1` on the Veblen fragment** — §15.4's `le_self_plus_one` off the CNF
+    region.  The `add` step needs `CNV`'s own descending condition to know the tail
+    is nonzero. -/
+theorem le_self_plus_one_cnv : ∀ (t : Term), CNV t = true → le t (plus t one) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; rfl
+  | phi x y _ _ =>
+    intro _
+    rw [show plus (phi x y) one = add (phi x y) one from
+      plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl)), le_ap_add rfl]
+    exact Evidence.WF.le_self _
+  | add a b _ ihb =>
+    intro hcnv
+    obtain ⟨hap, _, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
+    have hb0 : b ≠ zero := by
+      intro hz; rw [hz] at hdb; exact Bool.noConfusion hdb
+    rw [plus_one_add (le_one_ap hap)]
+    exact Evidence.WF.le_add_tail (ihb hcb)
+
+theorem hdOf_plus_one {b : Term} (h : le one (hd b) = true) :
+    hdOf (plus b one) = hdOf b := by
+  obtain ⟨w, hw⟩ := plus_one_shape h
+  rw [hw]; rfl
+
+/-- `t+1` stays in the Veblen fragment. -/
+theorem cnv_plus_one : ∀ (t : Term), CNV t = true → CNV (plus t one) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; rfl
+  | phi x y _ _ =>
+    intro hcnv
+    rw [plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl))]
+    show (isAP (phi x y) && CNV (phi x y) && CNV one && Evidence.WF.hdLe one (phi x y)) = true
+    rw [show isAP (phi x y) = true from rfl, hcnv, show CNV one = true from rfl,
+      show Evidence.WF.hdLe one (phi x y) = le one (phi x y) from rfl,
+      le_one_ap (show isAP (phi x y) = true from rfl)]
+    rfl
+  | add a b _ ihb =>
+    intro hcnv
+    obtain ⟨hap, hca, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
+    have hb0 : b ≠ zero := by intro hz; rw [hz] at hdb; exact Bool.noConfusion hdb
+    have h1b : le one (hd b) = true := le_one_hd_cnv b hcb hb0
+    rw [plus_one_add (le_one_ap hap)]
+    show (isAP a && CNV a && CNV (plus b one) && Evidence.WF.hdLe (plus b one) a) = true
+    rw [hap, hca, ihb hcb,
+      Evidence.WF.hdLe_eq _ a (plus_one_ne_zero b), hdOf_plus_one h1b,
+      ← Evidence.WF.hdLe_eq b a hb0, hdb]
+    rfl
+
+theorem plus_one_ne_self : ∀ (t : Term), CNV t = true → t ≠ plus t one := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ h; exact TM.Term.noConfusion h
+  | phi x y _ _ =>
+    intro _
+    rw [plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl))]
+    intro h; exact TM.Term.noConfusion h
+  | add a b _ ihb =>
+    intro hcnv
+    obtain ⟨hap, _, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
+    rw [plus_one_add (le_one_ap hap)]
+    intro h
+    injection h with _ h2
+    exact ihb hcb h2
+
+/-- `x < x+1` on the Veblen fragment. -/
+theorem lt_self_plus_one_cnv (t : Term) (hcnv : CNV t = true) :
+    lt t (plus t one) = true := by
+  have hle := le_self_plus_one_cnv t hcnv
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
+  rcases hle with h | h
+  · exact absurd h (plus_one_ne_self t hcnv)
+  · exact h
+
+theorem frag_pow_cnv {X : Term} (h : CNV X = true) : Evidence.WF.Frag (phi zero X) = true :=
+  Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ h)
+
+theorem frag_bnd_cnv {X : Term} (h : CNV X = true) :
+    Evidence.WF.Frag (phi zero (plus X one)) = true :=
+  Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ h))
+
+theorem inT_pow_cnv {X : Term} (h : CNV X = true) : inT (phi zero X) = true :=
+  Evidence.WF.inT_of_cnv _ (by show (CNV zero && CNV X) = true; rw [h]; rfl)
+
+theorem le_pow_bnd_cnv {X : Term} (h : CNV X = true) :
+    le (phi zero X) (phi zero (plus X one)) = true :=
+  Evidence.WF.le_pow (le_self_plus_one_cnv _ h)
+
+theorem lt_pow_bnd_cnv {X : Term} (h : CNV X = true) :
+    lt (phi zero X) (phi zero (plus X one)) = true := by
+  rw [Evidence.WF.lt_pow]; exact lt_self_plus_one_cnv _ h
+
+/-- The bound at a sub-parameter is below the bound at the parameter, whenever the
+    sub-parameter is below.  This is the ONE place the ceiling's induction moves
+    between two bounds, and `Evidence.WF.le_plus_one_of_lt_cnv` — which arrived
+    WITHOUT the limit hypothesis the certificate lane asked for — is why it needs no
+    kind classification of either parameter. -/
+theorem le_bnd_of_lt_cnv {x y : Term} (hx : CNV x = true) (hy : CNV y = true)
+    (h : lt x y = true) : le (phi zero (plus x one)) (phi zero y) = true :=
+  Evidence.WF.le_pow (Evidence.WF.le_plus_one_of_lt_cnv hx hy h)
+
+/-! #### §15.7.2 THE CEILING -/
+
+/-- **NO CERTIFICATE OVERSHOOTS ITS BOUND** — the file's only induction on
+    `Certified`, abstract in the region.
+
+    `Reg M X` reads "`M` is a region matrix whose bound-parameter is `X`".  The three
+    hypotheses are all the proof knows: the parameters are Veblen-fragment terms, and
+    an expansion of a region matrix of nonzero kind is again a region matrix, with a
+    STRICTLY SMALLER parameter.  Then every value certified for a region matrix —
+    junk values included, with no `inT` and no fragment hypothesis on the value — is
+    escaped by every term of 𝔗(M) ∩ `Frag` that is additively principal and at least
+    `ω^(X+1)`.
+
+    Nothing is required at `kind M = .zero`, and nothing anywhere is required about
+    HOW the smaller parameter is found: no kind classifier, no predecessor operation,
+    no fundamental sequence.  Those are how a particular region produces the decrease
+    (§15.7.3 uses `kindC`/`predC`/`fsC`; §19 uses the family's own order facts), and
+    the induction consumes only the decrease itself.
 
     The proof never chains through a certified value: junk appears only on the RIGHT
     of `le s v`, the probe `s` on the left is always one the proof chooses, and the
     only order facts used are between such probes (all inside `Frag`, §7 of WF). -/
+theorem no_overshoot_ceiling (Reg : BMS.Matrix → Term → Prop)
+    (hcnv : ∀ (M : BMS.Matrix) (X : Term), Reg M X → CNV X = true)
+    (hsucc : ∀ (M : BMS.Matrix) (X : Term), Reg M X → BMS.kind M = .succ →
+      ∃ Y, Reg (BMS.expand M 0) Y ∧ lt Y X = true)
+    (hlim : ∀ (M : BMS.Matrix) (X : Term), Reg M X → BMS.kind M = .lim → ∀ (n : Nat),
+      ∃ Y, Reg (BMS.expand M n) Y ∧ lt Y X = true) :
+    ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
+    ∀ (X : Term), Reg N X →
+      ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+        le (phi zero (plus X one)) s = true → le s v = false := by
+  intro N v h
+  induction h with
+  | zero =>
+    intro X _ s _ _ hap _
+    show ((s == zero) || lt s zero) = false
+    rw [show lt s zero = false from Evidence.WF.ltF_right_zero _ s,
+      show ((s == zero) : Bool) = false from by
+        cases s <;> first | exact Bool.noConfusion hap | rfl]
+    rfl
+  | @succ M w hk hall ih =>
+    intro X hreg s hin hfr hap hb
+    obtain ⟨Y, hregY, hltY⟩ := hsucc M X hreg hk
+    have hcX : CNV X = true := hcnv M X hreg
+    have hcY : CNV Y = true := hcnv _ Y hregY
+    have hbY : le (phi zero (plus Y one)) s = true :=
+      Evidence.WF.le_trans (frag_bnd_cnv hcY) (frag_bnd_cnv hcX) hfr
+        (Evidence.WF.le_trans (frag_bnd_cnv hcY) (frag_pow_cnv hcX) (frag_bnd_cnv hcX)
+          (le_bnd_of_lt_cnv hcY hcX hltY) (le_pow_bnd_cnv hcX)) hb
+    have hiv : le s w = false := ih 0 Y hregY s hin hfr hap hbY
+    rcases cert_hd (hall 0) with hzw | hzw
+    · rw [hzw, show plus (zero : Term) one = one from rfl]
+      exact not_le_one hin hap hb
+    · rw [le_ap_hd hap (plus w one), hd_plus_one (le_one_ap (isAP_hd w hzw)),
+        ← le_ap_hd hap w]
+      exact hiv
+  | @lim M v fs hk hall hlt hstep hcof ih =>
+    intro X hreg s hin hfr hap hb
+    have hcX : CNV X = true := hcnv M X hreg
+    have key : ∀ (s' : Term), inT s' = true → Evidence.WF.Frag s' = true → isAP s' = true →
+        le (phi zero X) s' = true → ∀ (n : Nat), le s' (fs n) = false := by
+      intro s' hin' hfr' hap' hb' n
+      obtain ⟨Y, hregY, hltY⟩ := hlim M X hreg hk n
+      have hcY : CNV Y = true := hcnv _ Y hregY
+      exact ih n Y hregY s' hin' hfr' hap'
+        (Evidence.WF.le_trans (frag_bnd_cnv hcY) (frag_pow_cnv hcX) hfr'
+          (le_bnd_of_lt_cnv hcY hcX hltY) hb')
+    have hbt : le (phi zero X) s = true :=
+      Evidence.WF.le_trans (frag_pow_cnv hcX) (frag_bnd_cnv hcX) hfr (le_pow_bnd_cnv hcX) hb
+    cases hlev : le s v with
+    | false => rfl
+    | true =>
+      exfalso
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
+      rcases hlev with rfl | hlts
+      · have hltv : lt (phi zero X) s = true :=
+          Evidence.WF.lt_of_lt_of_le (frag_pow_cnv hcX) (frag_bnd_cnv hcX) hfr
+            (lt_pow_bnd_cnv hcX) hb
+        obtain ⟨n, hn⟩ := hcof (phi zero X) (inT_pow_cnv hcX) hltv
+        rw [key (phi zero X) (inT_pow_cnv hcX) (frag_pow_cnv hcX) rfl
+          (Evidence.WF.le_self _) n] at hn
+        exact Bool.noConfusion hn
+      · obtain ⟨n, hn⟩ := hcof s hin hlts
+        rw [key s hin hfr hap hbt n] at hn
+        exact Bool.noConfusion hn
+
+/-! #### §15.7.3 The CNF region, as an instance -/
+
+/-- **NO CERTIFICATE OF A CNF REGION OVERSHOOTS ITS BOUND** — the statement this
+    section had before the ceiling existed, now derived from it.  `R` assigns a
+    matrix to every Cantor normal form, and the four hypotheses say the kind of `R t`
+    reads off `kindC t` and the expansions of `R t` are the `R` of `predC t` /
+    `fsC t n`.
+
+    Discharging the ceiling's interface from them is the whole proof, and it is where
+    the CNF region's degeneracies are spent: `predC t + 1 = t` gives the successor
+    step's decrease, `Evidence.WF.lim_clauses` gives the limit step's, and the
+    limit-hypothesis conjunct that `hRlim` supplies is DISCARDED — §15.7's header
+    records why that is the interesting half of the exchange. -/
 theorem no_overshoot_of (R : Term → BMS.Matrix)
     (hRsucc : ∀ (t : Term), CN t = true → BMS.kind (R t) = .succ → kindC t = true)
     (hRlim : ∀ (t : Term), CN t = true → BMS.kind (R t) = .lim → kindC t = false ∧ t ≠ zero)
@@ -6386,75 +6664,25 @@ theorem no_overshoot_of (R : Term → BMS.Matrix)
     ∀ (t : Term), CN t = true → N = R t →
       ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
         le (phi zero (plus t one)) s = true → le s v = false := by
-  intro N v h
-  induction h with
-  | zero =>
-    intro t _ _ s _ _ hap _
-    show ((s == zero) || lt s zero) = false
-    rw [show lt s zero = false from Evidence.WF.ltF_right_zero _ s,
-      show ((s == zero) : Bool) = false from by
-        cases s <;> first | exact Bool.noConfusion hap | rfl]
-    rfl
-  | @succ M w hk hall ih =>
-    intro t hcn hN s hin hfr hap hb
-    have hk' : BMS.kind (R t) = .succ := by rw [← hN]; exact hk
-    have hkc : kindC t = true := hRsucc t hcn hk'
-    have hcnp : CN (predC t) = true := Evidence.WF.cn_predC t hcn hkc
-    have hexp : BMS.expand M 0 = R (predC t) := by
-      rw [hN]; exact hRes t hcn hkc 0
-    have hbnd : le (phi zero (plus (predC t) one)) s = true := by
-      rw [plus_predC t hcn hkc]
-      exact Evidence.WF.le_trans (frag_pow_cn hcn) (frag_bnd hcn) hfr (le_pow_bnd hcn) hb
-    have hiv : le s w = false := ih 0 (predC t) hcnp hexp s hin hfr hap hbnd
-    rcases cert_hd (hall 0) with hzw | hzw
-    · rw [hzw, show plus (zero : Term) one = one from rfl]
-      exact not_le_one hin hap hb
-    · rw [le_ap_hd hap (plus w one), hd_plus_one (le_one_ap (isAP_hd w hzw)),
-        ← le_ap_hd hap w]
-      exact hiv
-  | @lim M v fs hk hall hlt hstep hcof ih =>
-    intro t hcn hN s hin hfr hap hb
-    have hk' : BMS.kind (R t) = .lim := by rw [← hN]; exact hk
-    obtain ⟨hkc, hz⟩ := hRlim t hcn hk'
-    obtain ⟨hcnfs, hltfs, _, _⟩ := Evidence.WF.lim_clauses t hcn hkc hz
-    have hexp : ∀ n, BMS.expand M n = R (fsC t n) := by
-      intro n
-      rw [hN]; exact hRel t hcn hkc hz n
-    have key : ∀ (s' : Term), inT s' = true → Evidence.WF.Frag s' = true → isAP s' = true →
-        le (phi zero t) s' = true → ∀ n, le s' (fs n) = false := by
-      intro s' hin' hfr' hap' hb' n
-      refine ih n (fsC t n) (hcnfs n) (hexp n) s' hin' hfr' hap' ?_
-      exact Evidence.WF.le_trans (frag_bnd (hcnfs n)) (frag_pow_cn hcn) hfr'
-        (Evidence.WF.le_pow (le_plus_one_of_lt_lim (hcnfs n) hcn hkc (hltfs n))) hb'
-    have hbt : le (phi zero t) s = true :=
-      Evidence.WF.le_trans (frag_pow_cn hcn) (frag_bnd hcn) hfr (le_pow_bnd hcn) hb
-    cases hlev : le s v with
-    | false => rfl
-    | true =>
-      exfalso
-      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
-      rcases hlev with rfl | hlts
-      · have hstrict : lt (phi zero t) (phi zero (plus t one)) = true := by
-          rw [Evidence.WF.lt_pow]
-          have hne : t ≠ plus t one := by
-            intro hcc
-            have hkk := (plus_one_cn t hcn).2.1
-            rw [← hcc, hkc] at hkk
-            exact Bool.noConfusion hkk
-          have hself := le_self_plus_one t hcn
-          simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hself
-          rcases hself with hc | hc
-          · exact absurd hc hne
-          · exact hc
-        have hltv : lt (phi zero t) s = true :=
-          Evidence.WF.lt_of_lt_of_le (frag_pow_cn hcn) (frag_bnd hcn) hfr hstrict hb
-        obtain ⟨k, hk2⟩ := hcof (phi zero t) (inT_of_cn _ (cn_pow hcn)) hltv
-        rw [key (phi zero t) (inT_of_cn _ (cn_pow hcn)) (frag_pow_cn hcn) rfl
-          (Evidence.WF.le_self _) k] at hk2
-        exact Bool.noConfusion hk2
-      · obtain ⟨k, hk2⟩ := hcof s hin hlts
-        rw [key s hin hfr hap hbt k] at hk2
-        exact Bool.noConfusion hk2
+  intro N v hc t hcn hN
+  refine no_overshoot_ceiling (fun M X => CN X = true ∧ M = R X) ?_ ?_ ?_ hc t ⟨hcn, hN⟩
+  · intro M X hr
+    exact Evidence.WF.cnv_of_cn X hr.1
+  · intro M X hr hk
+    obtain ⟨h, hM⟩ := hr
+    subst hM
+    have hkc := hRsucc X h hk
+    have hcp : CN (predC X) = true := Evidence.WF.cn_predC X h hkc
+    refine ⟨predC X, ⟨hcp, hRes X h hkc 0⟩, ?_⟩
+    have hlt : lt (predC X) (plus (predC X) one) = true :=
+      lt_self_plus_one_cnv _ (Evidence.WF.cnv_of_cn _ hcp)
+    rwa [plus_predC X h hkc] at hlt
+  · intro M X hr hk n
+    obtain ⟨h, hM⟩ := hr
+    subst hM
+    obtain ⟨hkc, hz⟩ := hRlim X h hk
+    obtain ⟨hcnfs, hltfs, _, _⟩ := Evidence.WF.lim_clauses X h hkc hz
+    exact ⟨fsC X n, ⟨hcnfs n, hRel X h hkc hz n⟩, hltfs n⟩
 
 
 /-- The two regions this file certifies: the PADDED rows (`cert_padSq`, the ε₀
@@ -8029,76 +8257,62 @@ theorem certIn_rowA : CertifiedIn DomI [[0, 0], [1, 1], [1, 0]] Evidence.WF.rowA
 theorem cert_rowA : Certified [[0, 0], [1, 1], [1, 0]] Evidence.WF.rowA :=
   certifiedIn_forget certIn_rowA
 
-/-! ## §19 THE CEILING FOR THE ε₀-PREFIXED REGION  (STARTED)
+/-! ## §19 THE ε₀-PREFIXED REGION MEETS THE CEILING  (2026-08-10)
 
-Registering Row A obliges `certRows_no_overshoot` at the new row, i.e. a §15.7-style
-invariant over the family: no good principal probe `≥ ω^(famV k c + 1)` is `≤` any
-value certified for `famM k c`.  §15's `no_overshoot` does not reach it — `eps0M k` is
-neither `padRow (sq t)` nor `oneRow (sq t)` — and `no_overshoot_of` cannot be
-instantiated either, because its bound is tied to the region parameter `c` while the
-value here is `famV k c`; at `c = 0` the bound would read `ω` and the value is
-ε₀·(k+1), so the invariant is false in that form.  The probe discipline carries over
-unchanged; what has to be rebuilt is the arithmetic around the bound.
+Registering Row A obliges `certRows_no_overshoot` at the new row: no good principal
+probe `≥ ω^(famV k c + 1)` is `≤` any value certified for `famM k c`.  §15.7's
+`no_overshoot_of` cannot be instantiated for it — its bound is tied to the region
+parameter `c` while the value here is `famV k c`; at `c = 0` the bound would read `ω`
+and the value is ε₀·(k+1), so the invariant is FALSE in that form.  That is not a gap
+in the ε₀-prefixed region; it is `no_overshoot_of` stating a CNF accident (parameter =
+bound) as if it were part of the invariant.
 
-FOUR FACTS ARE NEEDED.  Three are here; the fourth is the WF lane's:
+So this section does not rebuild the induction.  It discharges §15.7.2's interface,
+which asks only that the family's parameters are `CNV` and that each expansion's
+parameter is STRICTLY BELOW.  Three facts do it:
 
-  (1) `le_self_plus_one_cnv` — `x ≤ x+1` on the Veblen fragment.  §15.4 has it for
-      `CN` only, and the `add` step needs `CNV`'s own descending condition to know
-      the tail is nonzero.  DONE below.
-  (2) the succ-step transport — §15.7's argument verbatim (`plus w 1` has the same
-      leftmost component as `w`, and a principal probe reads only that).
-  (3) `kind_famM` — the kind of a family matrix, in THREE cases.  DONE below.
-  (4) "A CNV LIMIT ABSORBS `+1`" — `lt a v → CNV v → v a limit → le (plus a one) v`.
-      NOT AVAILABLE: `le_predC_of_lt` (WF §12) is stated on `CN` and there is no CNV
-      analogue.  Routed to the WF lane.
+  `kind_famM`      the kind of a family matrix, in THREE cases
+  `lt_famV_fsC`    at a LIMIT parameter, `famV k (fsC c n) < famV k c`
+  `lt_famV_tower`  at the `c = 0` parameter, `famV k (tower n) < ε₀·(k+1)`
 
-AND A TRAP THAT (4) MUST AVOID, recorded here because it would bite anyone who
-reached for the obvious predicate: `kindC` IS WRONG ON CNV VALUES.  It branches on the
-second Veblen argument alone, so `kindC (φ̄10) = true` — it calls ε₀ a SUCCESSOR, and
-likewise every ε and every ζ (WF §15.3 `#guard`s exactly this).  So (4) cannot be
-stated with `kindC`; it needs a correct CNV kind predicate or a limit condition
-expressed without one.  Note that `kind_famM` below DOES use `kindC`, and legitimately:
-there it is applied only to the CN parameter `c`, which is where `kindC` is correct. -/
+plus `cnv_famV'` for the `CNV` side.  The last two are about the FAMILY, not about a
+certificate: a certificate's own `lim` clauses bound ITS sequence, whereas the ceiling
+compares the PARAMETERS of two region matrices.
 
-/-- Every `CNV` term other than `0` has an additively principal leftmost component. -/
-theorem le_one_hd_cnv : ∀ (t : TM.Term), CNV t = true → t ≠ zero → le one (hd t) = true := by
-  intro t
-  induction t with
-  | M => intro h; exact Bool.noConfusion h
-  | omg _ _ => intro h; exact Bool.noConfusion h
-  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
-  | Z _ _ => intro h; exact Bool.noConfusion h
-  | zero => intro _ h; exact absurd rfl h
-  | phi x y _ _ => intro _ _; exact le_one_ap (show isAP (phi x y) = true from rfl)
-  | add a b iha _ =>
-    intro hcnv _
-    obtain ⟨hap, hca, _, _⟩ := Evidence.WF.cnv_add hcnv
-    rw [hd_add, hd_of_isAP hap]
-    exact le_one_ap hap
+WHAT THE CEILING SAVED HERE.  Before the generalisation this section needed a fourth
+fact — "a CNV limit absorbs `+1`", `lt a v → CNV v → v a limit → le (plus a one) v` —
+because the old `lim` step closed through `le_plus_one_of_lt_lim`, whose CN version
+carries a limit hypothesis.  The WF lane delivered `le_plus_one_of_lt_cnv` WITHOUT
+that hypothesis, which is what lets §15.7.2 avoid classifying a parameter's kind at
+all.  That matters more than one saved lemma, because of the trap it sidesteps:
+`kindC` IS WRONG ON CNV VALUES.  It branches on the second Veblen argument alone, so
+`kindC (φ̄10) = true` — it calls ε₀ a SUCCESSOR, and likewise every ε and every ζ (WF
+§15.3 `#guard`s exactly this).  Any interface that had classified the VALUES would
+have been unstatable here.  `kind_famM` below does use `kindC`, and legitimately: only
+on the CN parameter `c`, which is where `kindC` is correct. -/
 
-/-- **`x ≤ x+1` on the Veblen fragment** — §15.4's `le_self_plus_one` off the CNF
-    region.  The ε₀-prefixed values are `CNV`, not `CN`, and the `add` step needs
-    `CNV`'s own descending condition to know the tail is nonzero. -/
-theorem le_self_plus_one_cnv : ∀ (t : TM.Term), CNV t = true → le t (plus t one) = true := by
-  intro t
-  induction t with
-  | M => intro h; exact Bool.noConfusion h
-  | omg _ _ => intro h; exact Bool.noConfusion h
-  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
-  | Z _ _ => intro h; exact Bool.noConfusion h
-  | zero => intro _; rfl
-  | phi x y _ _ =>
-    intro _
-    rw [show plus (phi x y) one = add (phi x y) one from
-      plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl)), le_ap_add rfl]
-    exact Evidence.WF.le_self _
-  | add a b _ ihb =>
-    intro hcnv
-    obtain ⟨hap, _, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
-    have hb0 : b ≠ zero := by
-      intro hz; rw [hz] at hdb; exact Bool.noConfusion hdb
-    rw [plus_one_add (le_one_ap hap)]
-    exact Evidence.WF.le_add_tail (ihb hcb)
+/-- **NEGATIVE CONTROL FOR THE INTERFACE CHANGE.**  The header above says
+    `no_overshoot_of` cannot be instantiated on this region.  That is not a remark
+    about what was hard to prove: its CONCLUSION is FALSE here, and the witness is the
+    ε₀ row itself, which is `famM 1 0`.
+
+    Read with the region parameter as the bound — the CNF interface's shape — the
+    invariant at `c = 0` would say that every good principal probe `≥ ω^(0+1) = ω`
+    escapes every value certified for `famM 1 0`.  The probe `ω` qualifies on all
+    three side conditions, the certificate is `cert_eps0`, and `ω ≤ ε₀`.
+
+    The LAST conjunct is the one that keeps this from being a problem: under §19.2's
+    bound `ω^(ε₀+1)` the same probe is excluded.  So what is refuted is the shape
+    "parameter = bound", not the invariant — and the reason the ceiling could drop it
+    is that `Reg M X` carries the bound separately from whatever indexes the region. -/
+theorem bound_is_not_the_parameter :
+    famM 1 zero = [[0, 0], [1, 1]] ∧ famV 1 zero = eps0T ∧
+    Certified (famM 1 zero) (famV 1 zero) ∧
+    (inT omega = true ∧ Evidence.WF.Frag omega = true ∧ isAP omega = true) ∧
+    le (phi zero (plus (zero : TM.Term) one)) omega = true ∧
+    le omega (famV 1 zero) = true ∧
+    le (phi zero (plus (famV 1 zero) one)) omega = false :=
+  ⟨rfl, rfl, cert_eps0, ⟨rfl, rfl, rfl⟩, rfl, rfl, rfl⟩
 
 /-- **The kind of a family matrix, in THREE cases.**  `c = 0` splits by `k`:
     `famM 0 0` is the empty matrix and `famM (k+1) 0` is a limit row (the ε₀ blocks).
@@ -8128,56 +8342,13 @@ theorem kind_famM (k : Nat) (c : TM.Term) (hcn : CN c = true) :
       rw [famM_eq]
       exact (kind_append _ _ hne).trans (kind_padSq_lim c hcn hk' hz)
 
-/-! ### §19.1 The bound arithmetic
+/-! ### §19.1 The family's own order facts
 
-The ceiling's induction moves between the bounds `ω^(famV k c + 1)` of neighbouring
-region parameters, so it needs four facts about the FAMILY (as opposed to about any
-particular certificate).  With `Evidence.WF.le_plus_one_of_lt_cnv` — which arrived
-WITHOUT the limit hypothesis I asked for, so nothing here has to classify a CNV term —
-they are all available:
-
-    cnv_plus_one     `t+1` stays in the fragment          (needed by (1) at `X+1`)
-    cnv_famV         the family's values are CNV
-    lt_famV_fsC      at a LIMIT parameter, `famV k (fsC c n) < famV k c`
-    lt_famV_tower    at the `c = 0` parameter, `famV k (tower n) < ε₀·(k+1)`
-
-The last two are about the family, not about a certificate: a certificate's own `lim`
-clauses bound ITS sequence, whereas the ceiling's induction has to compare the BOUNDS
-of two region parameters, which is a statement about `famV` alone. -/
-
-theorem hdOf_plus_one {b : TM.Term} (h : le one (hd b) = true) :
-    Evidence.WF.hdOf (plus b one) = Evidence.WF.hdOf b := by
-  obtain ⟨w, hw⟩ := plus_one_shape h
-  rw [hw]; rfl
-
-/-- `t+1` stays in the Veblen fragment. -/
-theorem cnv_plus_one : ∀ (t : TM.Term), CNV t = true → CNV (plus t one) = true := by
-  intro t
-  induction t with
-  | M => intro h; exact Bool.noConfusion h
-  | omg _ _ => intro h; exact Bool.noConfusion h
-  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
-  | Z _ _ => intro h; exact Bool.noConfusion h
-  | zero => intro _; rfl
-  | phi x y _ _ =>
-    intro hcnv
-    rw [plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl))]
-    show (isAP (phi x y) && CNV (phi x y) && CNV one && Evidence.WF.hdLe one (phi x y)) = true
-    rw [show isAP (phi x y) = true from rfl, hcnv, show CNV one = true from rfl,
-      show Evidence.WF.hdLe one (phi x y) = le one (phi x y) from rfl,
-      le_one_ap (show isAP (phi x y) = true from rfl)]
-    rfl
-  | add a b _ ihb =>
-    intro hcnv
-    obtain ⟨hap, hca, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
-    have hb0 : b ≠ zero := by intro hz; rw [hz] at hdb; exact Bool.noConfusion hdb
-    have h1b : le one (hd b) = true := le_one_hd_cnv b hcb hb0
-    rw [plus_one_add (le_one_ap hap)]
-    show (isAP a && CNV a && CNV (plus b one) && Evidence.WF.hdLe (plus b one) a) = true
-    rw [hap, hca, ihb hcb,
-      Evidence.WF.hdLe_eq _ a (plus_one_ne_zero b), hdOf_plus_one h1b,
-      ← Evidence.WF.hdLe_eq b a hb0, hdb]
-    rfl
+The three facts the ceiling asks for.  Note what is NOT here any more: the bound
+arithmetic (`x ≤ x+1`, `t+1` stays in the fragment, the `Frag`/`inT` receipts for the
+probe `ω^(X+1)`) used to live in this section stated about `famV k c`, and it now
+lives in §15.7.1 stated about an arbitrary `CNV` term — which is all this section ever
+used it at.  A region section should contain what is true of the REGION. -/
 
 /-- The family's values are Veblen-fragment terms. -/
 theorem cnv_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) (hz : c ≠ zero) :
@@ -8207,16 +8378,14 @@ theorem lt_famV_tower (k n : Nat) : lt (famV k (Evidence.WF.tower n)) (repAdd ep
   rwa [show Evidence.WF.fsAin k n = famV k (Evidence.WF.tower n) from
     sumSeq_famV k Evidence.WF.tower Evidence.WF.tower_ne_zero n] at this
 
-/-! ### §19.2 THE CEILING
+/-! ### §19.2 THE DISCHARGE
 
-The §15.7 induction, transposed to the family.  Same probe discipline: the junk value
-is on the RIGHT of `le s v` throughout, the probe is always one the proof chooses, and
-the only order facts relate two chosen terms.  What changed is the bound arithmetic —
-`ω^(famV k c + 1)` rather than `ω^(t+1)` — and the `lim` case now splits in two, by
-`kind_famM`: the ε₀-block rows (`c = 0`, `k ≥ 1`), whose expansions are `famM (k-1)
-(tower n)`, and the CNF-limit rows, whose expansions are `famM k (fsC c n)`.  Both
-close through `Evidence.WF.le_plus_one_of_lt_cnv` — which, arriving without a limit
-hypothesis, is why nothing here has to classify a CNV term. -/
+`Reg M X := ∃ k c, CN c ∧ M = famM k c ∧ X = famV k c`, and the three expansion
+identities that make it a region.  The `lim` clause splits in two, by `kind_famM`: the
+ε₀-block rows (`c = 0`, `k ≥ 1`), whose expansions are `famM (k-1) (tower n)`, and the
+CNF-limit rows, whose expansions are `famM k (fsC c n)`.  The probe discipline is
+§15.7.2's and is not restated here — no value certified for a family matrix is
+mentioned by any lemma in this section. -/
 
 theorem cnv_famV' (k : Nat) (c : TM.Term) (hcn : CN c = true) : CNV (famV k c) = true := by
   by_cases hz : c = zero
@@ -8226,81 +8395,52 @@ theorem cnv_famV' (k : Nat) (c : TM.Term) (hcn : CN c = true) : CNV (famV k c) =
     | succ j => rw [famV_zero_arg]; exact Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T j
   · exact cnv_famV k c hcn hz
 
-theorem plus_one_ne_self : ∀ (t : TM.Term), CNV t = true → t ≠ plus t one := by
-  intro t
-  induction t with
-  | M => intro h; exact Bool.noConfusion h
-  | omg _ _ => intro h; exact Bool.noConfusion h
-  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
-  | Z _ _ => intro h; exact Bool.noConfusion h
-  | zero => intro _ h; exact TM.Term.noConfusion h
-  | phi x y _ _ =>
-    intro _
-    rw [plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl))]
-    intro h; exact TM.Term.noConfusion h
-  | add a b _ ihb =>
-    intro hcnv
-    obtain ⟨hap, _, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
-    rw [plus_one_add (le_one_ap hap)]
-    intro h
-    injection h with _ h2
-    exact ihb hcb h2
+/-- At a successor parameter the family steps down in the CNF argument. -/
+theorem expand_famM_succ (k : Nat) (c : TM.Term) (hcn : CN c = true) (hzc : c ≠ zero)
+    (hkc : kindC c = true) : BMS.expand (famM k c) 0 = famM k (predC c) := by
+  rw [famM_eq]
+  show (BMS.expand? (epsBlocks k ++ padRow (sq c)) 0).getD [] = _
+  rw [expand?_append_root _ _ (padRow_ne_nil hcn hzc)
+    (fun y => famM_root 0 c hcn (sq_ne_nil hcn hzc) y) 0, expand_padSq_succ c hcn hkc 0]
+  rfl
 
-/-- `x < x+1` on the Veblen fragment. -/
-theorem lt_self_plus_one_cnv (t : TM.Term) (hcnv : CNV t = true) :
-    lt t (plus t one) = true := by
-  have hle := le_self_plus_one_cnv t hcnv
-  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
-  rcases hle with h | h
-  · exact absurd h (plus_one_ne_self t hcnv)
-  · exact h
+/-- At a CNF-limit parameter the family follows `fsC`. -/
+theorem expand_famM_lim (k : Nat) (c : TM.Term) (hcn : CN c = true) (hzc : c ≠ zero)
+    (hkc : kindC c = false) (n : Nat) : BMS.expand (famM k c) n = famM k (fsC c n) := by
+  rw [famM_eq]
+  show (BMS.expand? (epsBlocks k ++ padRow (sq c)) n).getD [] = _
+  rw [expand?_append_root _ _ (padRow_ne_nil hcn hzc)
+    (fun y => famM_root 0 c hcn (sq_ne_nil hcn hzc) y) n, expand_padSq c hcn hkc hzc n]
+  rfl
 
-theorem frag_bnd_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) :
-    Evidence.WF.Frag (phi zero (plus (famV k c) one)) = true :=
-  Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ (cnv_famV' k c hcn)))
+/-- At the `c = 0` parameter an ε₀ BLOCK is consumed and the CNF argument becomes a
+    tower — the one step that moves the family's first index. -/
+theorem expand_famM_block (j n : Nat) :
+    BMS.expand (famM (j + 1) zero) n = famM j (Evidence.WF.tower n) := by
+  rw [famM_zero_arg, epsBlocks_succ_right]
+  show (BMS.expand? (epsBlocks j ++ [[0, 0], [1, 1]]) n).getD [] = _
+  rw [expand?_append_root _ _ (by simp) eps0row_root n, expand?_eps0_row n]
+  show epsBlocks j ++ towerM n = _
+  rw [towerM_eq n]
+  rfl
 
-theorem frag_pow_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) :
-    Evidence.WF.Frag (phi zero (famV k c)) = true :=
-  Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ (cnv_famV' k c hcn))
-
-/-- The bound at a sub-parameter is below the bound at the parameter, whenever the
-    sub-parameter's VALUE is below (which is what `lt_famV_fsC` / `lt_famV_tower` give). -/
-theorem le_bnd_of_lt_famV {x y : TM.Term} (hx : CNV x = true) (hy : CNV y = true)
-    (h : lt x y = true) : le (phi zero (plus x one)) (phi zero y) = true :=
-  Evidence.WF.le_pow (Evidence.WF.le_plus_one_of_lt_cnv hx hy h)
-
-theorem le_pow_famV_bnd (k : Nat) (c : TM.Term) (hcn : CN c = true) :
-    le (phi zero (famV k c)) (phi zero (plus (famV k c) one)) = true :=
-  Evidence.WF.le_pow (le_self_plus_one_cnv _ (cnv_famV' k c hcn))
-
-theorem lt_pow_famV_bnd (k : Nat) (c : TM.Term) (hcn : CN c = true) :
-    lt (phi zero (famV k c)) (phi zero (plus (famV k c) one)) = true := by
-  rw [Evidence.WF.lt_pow]
-  exact lt_self_plus_one_cnv _ (cnv_famV' k c hcn)
-
-theorem inT_pow_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) :
-    inT (phi zero (famV k c)) = true :=
-  Evidence.WF.inT_of_cnv _ (by
-    show (CNV zero && CNV (famV k c)) = true
-    rw [cnv_famV' k c hcn]; rfl)
-
-/-- **THE CEILING FOR THE ε₀-PREFIXED REGION.** -/
+/-- **THE CEILING FOR THE ε₀-PREFIXED REGION** — §15.7.2 at this region.  No
+    induction: the statement is `no_overshoot_ceiling` with `Reg` instantiated, and
+    the proof is the three interface facts. -/
 theorem no_overshoot_fam : ∀ {N : Matrix} {v : TM.Term}, Certified N v →
     ∀ (k : Nat) (c : TM.Term), CN c = true → N = famM k c →
       ∀ (s : TM.Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
         le (phi zero (plus (famV k c) one)) s = true → le s v = false := by
-  intro N v h
-  induction h with
-  | zero =>
-    intro k c _ _ s _ _ hap _
-    show ((s == zero) || lt s zero) = false
-    rw [show lt s zero = false from Evidence.WF.ltF_right_zero _ s,
-      show ((s == zero) : Bool) = false from by
-        cases s <;> first | exact Bool.noConfusion hap | rfl]
-    rfl
-  | @succ M w hk hall ih =>
-    intro k c hcn hN s hin hfr hap hb
-    have hkm : BMS.kind (famM k c) = .succ := by rw [← hN]; exact hk
+  intro N v hc k c hcn hN
+  refine no_overshoot_ceiling
+    (fun M X => ∃ (k : Nat) (c : TM.Term), CN c = true ∧ M = famM k c ∧ X = famV k c)
+    ?_ ?_ ?_ hc (famV k c) ⟨k, c, hcn, hN, rfl⟩
+  · intro M X hr
+    obtain ⟨k, c, hcn, _, hX⟩ := hr
+    rw [hX]; exact cnv_famV' k c hcn
+  · intro M X hr hkm
+    obtain ⟨k, c, hcn, hM, hX⟩ := hr
+    subst hM; subst hX
     have hcase : c ≠ zero ∧ kindC c = true := by
       rcases kind_famM k c hcn with ⟨hz, _, _⟩ | ⟨_, hne, hkc⟩ | ⟨hl, _⟩
       · rw [hz] at hkm; exact absurd hkm (by simp)
@@ -8308,84 +8448,32 @@ theorem no_overshoot_fam : ∀ {N : Matrix} {v : TM.Term}, Certified N v →
       · rw [hl] at hkm; exact absurd hkm (by simp)
     obtain ⟨hzc, hkc⟩ := hcase
     have hcnp : CN (predC c) = true := Evidence.WF.cn_predC c hcn hkc
-    have hexp : BMS.expand M 0 = famM k (predC c) := by
-      rw [hN, famM_eq]
-      show (BMS.expand? (epsBlocks k ++ padRow (sq c)) 0).getD [] = _
-      rw [expand?_append_root _ _ (padRow_ne_nil hcn hzc)
-        (fun y => famM_root 0 c hcn (sq_ne_nil hcn hzc) y) 0, expand_padSq_succ c hcn hkc 0]
-      rfl
-    have hbp : le (phi zero (plus (famV k (predC c)) one)) s = true := by
-      refine Evidence.WF.le_trans (frag_bnd_famV k (predC c) hcnp)
-        (frag_bnd_famV k c hcn) hfr ?_ hb
-      rw [show famV k c = plus (famV k (predC c)) one from by
-        rw [plus_famV_one, plus_predC c hcn hkc]]
-      exact Evidence.WF.le_pow
-        (le_self_plus_one_cnv _ (cnv_plus_one _ (cnv_famV' k (predC c) hcnp)))
-    have hiv : le s w = false := ih 0 k (predC c) hcnp hexp s hin hfr hap hbp
-    rcases cert_hd (hall 0) with hzw | hzw
-    · rw [hzw, show plus (zero : TM.Term) one = one from rfl]
-      exact not_le_one hin hap hb
-    · rw [le_ap_hd hap (plus w one), hd_plus_one (le_one_ap (isAP_hd w hzw)), ← le_ap_hd hap w]
-      exact hiv
-  | @lim M v fs hk hall hlt hstep hcof ih =>
-    intro k c hcn hN s hin hfr hap hb
-    have hkm : BMS.kind (famM k c) = .lim := by rw [← hN]; exact hk
+    refine ⟨famV k (predC c),
+      ⟨k, predC c, hcnp, expand_famM_succ k c hcn hzc hkc, rfl⟩, ?_⟩
+    rw [show famV k c = plus (famV k (predC c)) one from by
+      rw [plus_famV_one, plus_predC c hcn hkc]]
+    exact lt_self_plus_one_cnv _ (cnv_famV' k (predC c) hcnp)
+  · intro M X hr hkm n
+    obtain ⟨k, c, hcn, hM, hX⟩ := hr
+    subst hM; subst hX
     have hcase : (c = zero ∧ k ≠ 0) ∨ (c ≠ zero ∧ kindC c = false) := by
       rcases kind_famM k c hcn with ⟨hz, _, _⟩ | ⟨hs, _, _⟩ | ⟨_, hd⟩
       · rw [hz] at hkm; exact absurd hkm (by simp)
       · rw [hs] at hkm; exact absurd hkm (by simp)
       · exact hd
-    have key : ∀ (s' : TM.Term), inT s' = true → Evidence.WF.Frag s' = true → isAP s' = true →
-        le (phi zero (famV k c)) s' = true → ∀ n, le s' (fs n) = false := by
-      intro s' hin' hfr' hap' hb' n
-      rcases hcase with ⟨hz, hk0⟩ | ⟨hzc, hkc⟩
-      · subst hz
-        cases k with
-        | zero => exact absurd rfl hk0
-        | succ j =>
-          have hexp : BMS.expand M n = famM j (Evidence.WF.tower n) := by
-            rw [hN, famM_zero_arg, epsBlocks_succ_right]
-            show (BMS.expand? (epsBlocks j ++ [[0, 0], [1, 1]]) n).getD [] = _
-            rw [expand?_append_root _ _ (by simp) eps0row_root n, expand?_eps0_row n]
-            show epsBlocks j ++ towerM n = _
-            rw [towerM_eq n]
-            rfl
-          refine ih n j (Evidence.WF.tower n) (Evidence.WF.cn_tower n) hexp s' hin' hfr' hap' ?_
-          refine Evidence.WF.le_trans (frag_bnd_famV j _ (Evidence.WF.cn_tower n))
-            (frag_pow_famV (j + 1) zero rfl) hfr' ?_ hb'
-          rw [famV_zero_arg]
-          exact le_bnd_of_lt_famV (cnv_famV' j _ (Evidence.WF.cn_tower n))
-            (Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T j) (lt_famV_tower j n)
-      · obtain ⟨hcnfs, _, _, _⟩ := Evidence.WF.lim_clauses c hcn hkc hzc
-        have hexp : BMS.expand M n = famM k (fsC c n) := by
-          rw [hN, famM_eq]
-          show (BMS.expand? (epsBlocks k ++ padRow (sq c)) n).getD [] = _
-          rw [expand?_append_root _ _ (padRow_ne_nil hcn hzc)
-            (fun y => famM_root 0 c hcn (sq_ne_nil hcn hzc) y) n, expand_padSq c hcn hkc hzc n]
-          rfl
-        refine ih n k (fsC c n) (hcnfs n) hexp s' hin' hfr' hap' ?_
-        refine Evidence.WF.le_trans (frag_bnd_famV k _ (hcnfs n)) (frag_pow_famV k c hcn) hfr' ?_ hb'
-        exact le_bnd_of_lt_famV (cnv_famV' k _ (hcnfs n)) (cnv_famV' k c hcn)
-          (lt_famV_fsC k c hcn hzc hkc n)
-    have hbt : le (phi zero (famV k c)) s = true :=
-      Evidence.WF.le_trans (frag_pow_famV k c hcn) (frag_bnd_famV k c hcn) hfr
-        (le_pow_famV_bnd k c hcn) hb
-    cases hlev : le s v with
-    | false => rfl
-    | true =>
-      exfalso
-      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
-      rcases hlev with rfl | hlts
-      · have hltv : lt (phi zero (famV k c)) s = true :=
-          Evidence.WF.lt_of_lt_of_le (frag_pow_famV k c hcn) (frag_bnd_famV k c hcn) hfr
-            (lt_pow_famV_bnd k c hcn) hb
-        obtain ⟨n, hn⟩ := hcof (phi zero (famV k c)) (inT_pow_famV k c hcn) hltv
-        rw [key (phi zero (famV k c)) (inT_pow_famV k c hcn) (frag_pow_famV k c hcn) rfl
-          (Evidence.WF.le_self _) n] at hn
-        exact Bool.noConfusion hn
-      · obtain ⟨n, hn⟩ := hcof s hin hlts
-        rw [key s hin hfr hap hbt n] at hn
-        exact Bool.noConfusion hn
+    rcases hcase with ⟨hz, hk0⟩ | ⟨hzc, hkc⟩
+    · subst hz
+      cases k with
+      | zero => exact absurd rfl hk0
+      | succ j =>
+        refine ⟨famV j (Evidence.WF.tower n),
+          ⟨j, Evidence.WF.tower n, Evidence.WF.cn_tower n, expand_famM_block j n, rfl⟩, ?_⟩
+        rw [famV_zero_arg]
+        exact lt_famV_tower j n
+    · obtain ⟨hcnfs, _, _, _⟩ := Evidence.WF.lim_clauses c hcn hkc hzc
+      exact ⟨famV k (fsC c n),
+        ⟨k, fsC c n, hcnfs n, expand_famM_lim k c hcn hzc hkc n, rfl⟩,
+        lt_famV_fsC k c hcn hzc hkc n⟩
 
 /-! ## §20 THE ε-LADDER  (the (B)-shaped rows, STARTED)
 
@@ -8539,10 +8627,18 @@ tail over the VEBLEN region", and encoding that tail is exactly `Evidence/SqV.le
 A rung index does not reach the defect, which is why no amount of measuring rungs would
 have exposed it — §20.2's measurements were necessary and not sufficient.
 
-CONSEQUENCE FOR THE CEILING: the generalised ceiling WILL subsume `no_overshoot_fam`
-(Row A's region is its CNF-tail special case), so when it exists Row A's ✅ should come
-to rest on it and the special case should go — one ceiling is cheaper to trust than two.
-It cannot be built before the tail encoding exists. -/
+CONSEQUENCE FOR THE CEILING, DISCHARGED (2026-08-10).  This paragraph used to read
+"the generalised ceiling WILL subsume `no_overshoot_fam` … it cannot be built before
+the tail encoding exists".  The first half happened and the second half was wrong.
+`no_overshoot_ceiling` (§15.7.2) is built, Row A's ✅ rests on it, and so do the CNF
+rows: there is now one induction on `Certified` in this file instead of two.
+
+The tail encoding was not needed because the ceiling does not encode anything.  It
+asks a region for a strictly smaller PARAMETER at each expansion, and never asks what
+the parameter looks like — so `sqv`'s job is not a precondition of the ceiling, it is a
+precondition of DISCHARGING the ceiling on the (B) rows.  What §20.3 measures is
+exactly that remaining half: the twelve non-`famM` matrices are the region this file
+cannot yet name, and naming a region is all that is left. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>
