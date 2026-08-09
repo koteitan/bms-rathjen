@@ -67,6 +67,14 @@ SCOPE, HONESTLY (see also the design note at the end of Evidence/Cert.lean).
     put a lexicographic order on.  ε₀ needs the classical structural argument
     (`Acc a → Acc b → Acc (ω^a + b)`), which is where transitivity becomes
     unavoidable.
+
+    That remains true of the certificate RECURSION for ε₀.  It is NOT true of the
+    cofinality clause: §9 (added by the certificate lane) proves that the ω-towers
+    are cofinal in ε₀ among the terms of 𝔗(M) by one structural induction, with no
+    well-foundedness, no transitivity and no `Frag` — only clause-by-clause
+    analysis of 2.3 against a tower.  Comparing an arbitrary term with a TOWER is
+    much cheaper than comparing two arbitrary terms, and that asymmetry is what
+    §9 exploits.
 -/
 
 namespace Evidence.WF
@@ -1540,6 +1548,429 @@ theorem lt_comparable_needs_frag :
   · exact Bool.noConfusion h1
   · exact absurd h1 (by decide)
   · exact Bool.noConfusion h1
+
+/-! ## §9 The segment below ε₀ — the ω-towers and their cofinality
+    (STAGE 1 of the ε₀ certificate, certificate lane 2026-08-09)
+
+WHY THIS SECTION EXISTS.  The row `(0,0)(1,1)` of the table is ε₀, and its BM4
+expansions are the ω-TOWERS:
+
+    (0,0)(1,1)[n] = (0,0)(1,0)(2,0)…(n,0)   with value   1, ω, ω^ω, ω^(ω^ω), …
+
+Certifying that row with the `lim` constructor of `Evidence/Cert.lean` needs three
+order facts about the towers: they lie below ε₀ (`lt_tower_eps0`), they increase
+(`lt_tower_step`), and they are COFINAL among the terms of 𝔗(M) below ε₀
+(`cof_eps0`).  The first two are short inductions; the third is the whole content
+of this section and is the clause on which every attempt at the ε₀ row has to
+stand or fall.
+
+THE SHAPE ANALYSIS.  Clause 2.3.13 decides `s < φ̄10` by the head of `s`:
+
+    0 < ε₀                            (2.3.1)
+    ⊕(α₁,…) < ε₀   ⟺  α₁ < ε₀        (2.3.10 — the head alone)
+    φ̄γδ < ε₀       ⟺  γ < 1 ∧ δ < ε₀  (13(i); 13(ii) and 13(iii) both give `false`)
+    M, ω̄^·, ψ, Z   are never < ε₀     (2.3.2/2.3.3/2.3.5)
+
+so a term below ε₀ is a CNF term — and the tower that overtakes it can be read
+straight off its syntax.  `ht` below is that reading: `ht 0 = 0`,
+`ht (⊕ a b) = ht a + 1`, `ht (φ̄ a b) = ht b + 1`.  The bound `s < tower (ht s)`
+then needs NO transitivity, NO comparability and no `Frag` hypothesis: every
+recursive step of the proof is a single clause of 2.3 applied to strictly smaller
+subterms.  (This is why §9 is much shorter than §7 although it proves a statement
+about all of 𝔗(M): §7 has to compare two arbitrary terms, §9 only has to compare
+an arbitrary term with a tower.)
+
+WHY `inT` IS UNAVOIDABLE HERE — the exact opposite of §7.  "γ < 1" in 13(i) is
+decided by 2.3.10 on the HEAD of a sum, so the ill-formed `γ = 0 ⊕ M` passes it
+(`0 < 1`), and the junk term `φ̄(0 ⊕ M)0` is put below ε₀ while 13(iii) sends every
+comparison with a tower down the tower's exponent and never fires.  So that junk
+term is below ε₀ and above EVERY tower: without a formation condition the
+cofinality clause is FALSE, not merely unprovable.  `inT` kills it at
+`isAP 0 = false` (2.1(iii)).  This is the ε₀-side reading of the DEFINITION CHANGE
+recorded in the header of `Evidence/Cert.lean`, and `cof_eps0_needs_inT` at the end
+of the section is its kernel-checked mutant. -/
+
+/-- ε₀ = φ̄10.  (`φ̄` is the RAW Veblen function of [R91] 2.1(v), so `φ̄10 = φ₁(0)`;
+    `phiNF` would return the same term here — `0` is not `SC` and has no fixed-point
+    shape, so 2.6(vi) falls through to its default line.) -/
+def eps0 : Term := phi one zero
+
+/-- The ω-tower `ω↑↑n`: `tower 0 = 1`, `tower (n+1) = ω^(tower n) = φ̄0(tower n)`.
+    These are exactly the values of the expansions of `(0,0)(1,1)`. -/
+def tower : Nat → Term
+  | 0 => one
+  | n + 1 => phi zero (tower n)
+
+/-- The tower height of a term: the index of a tower that overtakes it.  On the
+    shapes 2.3 puts below ε₀ it counts the `⊕`/`φ̄` nesting along the head spine;
+    on every other shape it is junk (and `tower_bound` never reaches it). -/
+def ht : Term → Nat
+  | zero => 0
+  | add a _ => ht a + 1
+  | phi _ b => ht b + 1
+  | _ => 0
+
+/-! ### §9.1 Elementary facts about the towers -/
+
+theorem deg_tower : ∀ n, (tower n).deg = 2 * n + 3
+  | 0 => rfl
+  | n + 1 => by
+    have ih := deg_tower n
+    show 1 + 1 + (tower n).deg = 2 * (n + 1) + 3
+    omega
+
+theorem ht_tower : ∀ n, ht (tower n) = n + 1
+  | 0 => rfl
+  | n + 1 => by
+    have ih := ht_tower n
+    show ht (tower n) + 1 = n + 1 + 1
+    omega
+
+theorem frag_tower : ∀ n, Frag (tower n) = true
+  | 0 => rfl
+  | n + 1 => by
+    show (Frag zero && Frag (tower n)) = true
+    rw [frag_tower n]; rfl
+
+theorem tower_ne_zero : ∀ n, tower n ≠ zero
+  | 0 => by intro h; exact Term.noConfusion h
+  | n + 1 => by intro h; exact Term.noConfusion h
+
+/-- The default fuel of `lt` is above the degree bound, so a sufficiently fuelled
+    `ltF` computation settles `lt`.  (`§5`'s `ltF_mono`, packaged.) -/
+private theorem lt_of_ltF_deg {s t : Term} {f : Nat} (hf : s.deg + t.deg ≤ f)
+    (h : ltF f s t = true) : lt s t = true := by
+  show ltF (fuelOf s t) s t = true
+  exact ltF_mono hf (by show s.deg + t.deg ≤ 2 * (s.deg + t.deg) + 8; omega) h
+
+/-- **The towers increase.** -/
+theorem ltF_tower_step : ∀ (n f : Nat), (tower n).deg + (tower (n + 1)).deg ≤ f →
+    ltF f (tower n) (tower (n + 1)) = true := by
+  intro n
+  induction n with
+  | zero =>
+    intro f hf
+    rw [deg_tower 0, deg_tower 1] at hf
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g + 1) (phi zero zero) (phi zero one) = true
+      rw [ltF_succ_phi_phi g (by decide), if_pos rfl]
+      exact ltF_left_zero (by omega) (by decide)
+  | succ n ih =>
+    intro f hf
+    rw [deg_tower (n + 1), deg_tower (n + 1 + 1)] at hf
+    cases f with
+    | zero => omega
+    | succ g =>
+      have hih : ltF g (tower n) (tower (n + 1)) = true :=
+        ih g (by rw [deg_tower n, deg_tower (n + 1)]; omega)
+      have hne : tower n ≠ tower (n + 1) := ne_of_ltF hih
+      show ltF (g + 1) (phi zero (tower n)) (phi zero (tower (n + 1))) = true
+      rw [ltF_succ_phi_phi g (by intro h; injection h with h1 h2; exact hne h2), if_pos rfl]
+      exact hih
+
+theorem lt_tower_step (n : Nat) : lt (tower n) (tower (n + 1)) = true :=
+  lt_of_ltF_deg (Nat.le_refl _) (ltF_tower_step n _ (Nat.le_refl _))
+
+/-- **Every tower is below ε₀.** -/
+theorem ltF_tower_eps0 : ∀ (n f : Nat), (tower n).deg + eps0.deg ≤ f →
+    ltF f (tower n) eps0 = true := by
+  intro n
+  induction n with
+  | zero =>
+    intro f hf
+    rw [deg_tower 0] at hf
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g + 1) (phi zero zero) (phi one zero) = true
+      rw [ltF_succ_phi_phi g (by decide), if_neg (by decide),
+        if_pos (show ltF g zero one = true from ltF_left_zero (by omega) (by decide))]
+      exact ltF_left_zero (by omega) (by decide)
+  | succ n ih =>
+    intro f hf
+    rw [deg_tower (n + 1)] at hf
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g + 1) (phi zero (tower n)) (phi one zero) = true
+      rw [ltF_succ_phi_phi g (by intro h; injection h with h1 h2; exact absurd h1 (by decide)),
+        if_neg (by decide),
+        if_pos (show ltF g zero one = true from ltF_left_zero (by omega) (by decide))]
+      exact ih g (by rw [deg_tower n]; omega)
+
+theorem lt_tower_eps0 (n : Nat) : lt (tower n) eps0 = true :=
+  lt_of_ltF_deg (Nat.le_refl _) (ltF_tower_eps0 n _ (Nat.le_refl _))
+
+/-! ### §9.2 The formation conditions, destructured
+
+Only the two conjuncts the classification uses; `Evidence/Cert.lean` has the same
+two but `private`, and it imports this file. -/
+
+theorem inT_add {a b : Term} (h : inT (add a b) = true) :
+    a.isAP = true ∧ inT a = true ∧ inT b = true := by
+  simp only [inT, Bool.and_eq_true] at h
+  exact ⟨h.1.1.1, h.1.1.2, h.1.2⟩
+
+theorem inT_phi {a b : Term} (h : inT (phi a b) = true) : inT a = true ∧ inT b = true := by
+  simp only [inT, Bool.and_eq_true] at h
+  exact ⟨h.1.1.1, h.1.1.2⟩
+
+/-! ### §9.3 Nothing but `0` is below `1` (for terms of 𝔗(M))
+
+The `inT` hypothesis is the whole point: `0 ⊕ M` is below `1` for the decision
+procedure (2.3.10 reads the head `0` and stops), and that junk term is exactly
+what would break §9.4. -/
+
+/-- A `ψ` or a `Z` is never below `1`: 2.3.4 asks whether it is `≤ 0`. -/
+private theorem ltF_sc_one : ∀ (f : Nat) (s : Term), s.isSC = true → s ≠ M →
+    ltF f s one = false := by
+  intro f s hsc hM
+  cases f with
+  | zero => rfl
+  | succ g =>
+    cases s with
+    | M => exact absurd rfl hM
+    | psi k a =>
+      show ((psi k a == zero) || (psi k a == zero) || ltF g (psi k a) zero
+              || ltF g (psi k a) zero) = false
+      rw [ltF_right_zero]; rfl
+    | Z a =>
+      show ((Z a == zero) || (Z a == zero) || ltF g (Z a) zero || ltF g (Z a) zero) = false
+      rw [ltF_right_zero]; rfl
+    | zero => exact Bool.noConfusion hsc
+    | add a b => exact Bool.noConfusion hsc
+    | omg a => exact Bool.noConfusion hsc
+    | phi a b => exact Bool.noConfusion hsc
+
+/-- **Below `1` there is only `0`** — on the terms of 𝔗(M). -/
+theorem below_one : ∀ (s : Term), inT s = true → ∀ (f : Nat), ltF f s one = true → s = zero := by
+  intro s
+  induction s with
+  | zero => intro _ _ _; rfl
+  | M =>
+    intro _ f h
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g => exact Bool.noConfusion h
+  | omg a _ =>
+    intro _ f h
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g => exact Bool.noConfusion h
+  | psi k a _ _ =>
+    intro _ f h
+    rw [ltF_sc_one f (psi k a) rfl (by intro hc; exact Term.noConfusion hc)] at h
+    exact Bool.noConfusion h
+  | Z a _ =>
+    intro _ f h
+    rw [ltF_sc_one f (Z a) rfl (by intro hc; exact Term.noConfusion hc)] at h
+    exact Bool.noConfusion h
+  | add a b iha _ =>
+    intro hin f h
+    obtain ⟨hap, hina, _⟩ := inT_add hin
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g =>
+      have hz : a = zero := iha hina g h
+      rw [hz] at hap
+      exact Bool.noConfusion hap
+  | phi c d _ _ =>
+    intro _ f h
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g =>
+      by_cases hone : phi c d = one
+      · rw [hone] at h
+        rw [ltF_irrefl] at h
+        exact Bool.noConfusion h
+      · have h : ltF (g + 1) (phi c d) (phi zero zero) = true := h
+        rw [ltF_succ_phi_phi g hone] at h
+        by_cases hc : c = zero
+        · rw [if_pos hc, ltF_right_zero] at h
+          exact Bool.noConfusion h
+        · rw [if_neg hc, if_neg (by rw [ltF_right_zero]; exact Bool.noConfusion),
+            ltF_right_zero] at h
+          exact Bool.noConfusion h
+
+/-! ### §9.4 THE COFINALITY BOUND
+
+`s < ε₀` and `s ∈ 𝔗(M)` imply `s < tower (ht s)`.  One structural induction; each
+case is one clause of 2.3.  Note the `φ̄` case is where `below_one` is spent, and
+the `⊕` case is where the head-only clause 2.3.10 makes the tail irrelevant. -/
+
+private theorem tower_bound : ∀ (s : Term), inT s = true → ∀ (f m : Nat),
+    ltF f s eps0 = true → ht s ≤ m → lt s (tower m) = true := by
+  intro s
+  induction s with
+  | zero =>
+    intro _ f m _ _
+    show ltF (fuelOf zero (tower m)) zero (tower m) = true
+    exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (tower m).deg) + 8; omega)
+      (tower_ne_zero m)
+  | M =>
+    intro _ f m h _
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g => exact Bool.noConfusion h
+  | omg a _ =>
+    intro _ f m h _
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g => exact Bool.noConfusion h
+  | psi k a _ _ =>
+    intro _ f m h _
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g =>
+      rw [show ltF (g + 1) (psi k a) eps0
+            = ((psi k a == one) || (psi k a == zero) || ltF g (psi k a) one
+                || ltF g (psi k a) zero) from rfl,
+        ltF_sc_one g (psi k a) rfl (by intro hc; exact Term.noConfusion hc),
+        ltF_right_zero] at h
+      exact Bool.noConfusion h
+  | Z a _ =>
+    intro _ f m h _
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g =>
+      rw [show ltF (g + 1) (Z a) eps0
+            = ((Z a == one) || (Z a == zero) || ltF g (Z a) one || ltF g (Z a) zero) from rfl,
+        ltF_sc_one g (Z a) rfl (by intro hc; exact Term.noConfusion hc),
+        ltF_right_zero] at h
+      exact Bool.noConfusion h
+  | add a b iha _ =>
+    intro hin f m h hm
+    obtain ⟨_, hina, _⟩ := inT_add hin
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g =>
+      cases m with
+      | zero => exact absurd hm (by show ¬ (ht a + 1 ≤ 0); omega)
+      | succ m' =>
+        have h : ltF (g + 1) (add a b) (phi one zero) = true := h
+        rw [ltF_succ_add_phi g a b one zero] at h
+        have hm' : ht a + 1 ≤ m' + 1 := hm
+        have hlt : lt a (tower (m' + 1)) = true :=
+          iha hina g (m' + 1) h (by omega)
+        refine lt_of_ltF_deg (f := a.deg + b.deg + (tower (m' + 1)).deg + 1)
+          (by show 1 + a.deg + b.deg + (tower (m' + 1)).deg
+                ≤ a.deg + b.deg + (tower (m' + 1)).deg + 1; omega) ?_
+        show ltF (a.deg + b.deg + (tower (m' + 1)).deg + 1) (add a b) (phi zero (tower m')) = true
+        rw [ltF_succ_add_phi]
+        exact ltF_mono (by show a.deg + (tower (m' + 1)).deg
+                              ≤ 2 * (a.deg + (tower (m' + 1)).deg) + 8; omega)
+          (by show a.deg + (tower (m' + 1)).deg ≤ a.deg + b.deg + (tower (m' + 1)).deg;
+              omega) hlt
+  | phi c d _ ihd =>
+    intro hin f m h hm
+    obtain ⟨hinc, hind⟩ := inT_phi hin
+    cases f with
+    | zero => exact Bool.noConfusion h
+    | succ g =>
+      by_cases he : phi c d = eps0
+      · rw [he, ltF_irrefl] at h; exact Bool.noConfusion h
+      have hh : ltF (g + 1) (phi c d) (phi one zero) = true := h
+      rw [ltF_succ_phi_phi g he] at hh
+      by_cases hc1 : c = one
+      · rw [if_pos hc1, ltF_right_zero] at hh; exact Bool.noConfusion hh
+      rw [if_neg hc1] at hh
+      by_cases hc0 : ltF g c one = true
+      · rw [if_pos hc0] at hh
+        have hcz : c = zero := below_one c hinc g hc0
+        subst hcz
+        cases m with
+        | zero => exact absurd hm (by show ¬ (ht d + 1 ≤ 0); omega)
+        | succ m' =>
+          have hm' : ht d + 1 ≤ m' + 1 := hm
+          have hmd : ht d ≤ m' := by omega
+          have hlt : lt d (tower m') = true := ihd hind g m' hh hmd
+          have hdne : d ≠ tower m' := by
+            intro hc
+            rw [hc, ht_tower] at hmd
+            omega
+          refine lt_of_ltF_deg (f := d.deg + (tower m').deg + 5)
+            (by show 1 + 1 + d.deg + (1 + 1 + (tower m').deg) ≤ d.deg + (tower m').deg + 5;
+                omega) ?_
+          show ltF (d.deg + (tower m').deg + 5) (phi zero d) (phi zero (tower m')) = true
+          rw [show d.deg + (tower m').deg + 5 = (d.deg + (tower m').deg + 4) + 1 from rfl,
+            ltF_succ_phi_phi _ (by intro hcc; injection hcc with h1 h2; exact hdne h2), if_pos rfl]
+          exact ltF_mono (by show d.deg + (tower m').deg ≤ 2 * (d.deg + (tower m').deg) + 8; omega)
+            (by omega) hlt
+      · rw [if_neg hc0, ltF_right_zero] at hh
+        simp only [Bool.or_false] at hh
+        exact Bool.noConfusion hh
+
+/-- **THE COFINALITY CLAUSE FOR ε₀.**  Every term of 𝔗(M) below ε₀ is overtaken by
+    a tower — with the overtaking index read off the term's own syntax.  This is
+    the premise of `Certified.lim` that the row `(0,0)(1,1)` needs, and the only
+    one of the five that is not a computation. -/
+theorem cof_eps0 (s : Term) (hs : inT s = true) (h : lt s eps0 = true) :
+    ∃ n, le s (tower n) = true := by
+  refine ⟨ht s, ?_⟩
+  show ((s == tower (ht s)) || lt s (tower (ht s))) = true
+  rw [tower_bound s hs (fuelOf s eps0) (ht s) h (Nat.le_refl _)]
+  exact Bool.or_true _
+
+/-! ### §9.5 Evidence, and the mutant that shows `inT` is load-bearing
+
+`φ̄(0 ⊕ M)0` is below ε₀ and above every tower.  It is not a term of 𝔗(M) — its
+`0 ⊕ M` fails 2.1(iii) at `isAP 0 = false` — so `cof_eps0` is untouched; but delete
+`inT` from the statement and it becomes FALSE, which is what
+`cof_eps0_needs_inT` certifies in the kernel. -/
+
+/-- The junk term of the mutant. -/
+private def junk : Term := phi (add zero M) zero
+
+#guard lt junk eps0 = true
+#guard inT junk = false
+#guard inT (add zero M) = false
+#guard (List.range 12).all (fun n => le junk (tower n) == false)
+#guard (List.range 8).all (fun n => lt (tower n) eps0 && lt (tower n) (tower (n + 1)))
+#guard (List.range 8).all (fun n => ht (tower n) == n + 1)
+
+private theorem ltF_junk_tower : ∀ (n f : Nat), ltF f junk (tower n) = false := by
+  intro n
+  induction n with
+  | zero =>
+    intro f
+    cases f with
+    | zero => rfl
+    | succ g =>
+      show (if (junk == one) = true then false
+            else if ((add zero M : Term) == zero) = true then ltF g zero zero
+            else if ltF g (add zero M) zero = true then ltF g zero one
+            else ((junk == zero) || ltF g junk zero)) = false
+      rw [if_neg (by intro hc; exact Bool.noConfusion hc), if_neg (by intro hc; exact Bool.noConfusion hc), ltF_right_zero]
+      simp only [Bool.false_eq_true, if_false]
+      rw [ltF_right_zero]
+      rfl
+  | succ n ih =>
+    intro f
+    cases f with
+    | zero => rfl
+    | succ g =>
+      show (if (junk == tower (n + 1)) = true then false
+            else if ((add zero M : Term) == zero) = true then ltF g zero (tower n)
+            else if ltF g (add zero M) zero = true then ltF g zero (tower (n + 1))
+            else ((junk == tower n) || ltF g junk (tower n))) = false
+      rw [if_neg (by intro hc; exact Bool.noConfusion hc),
+        if_neg (by intro hc; exact Bool.noConfusion hc), ltF_right_zero]
+      simp only [Bool.false_eq_true, if_false]
+      rw [ih g,
+        show ((junk == tower n) : Bool) = false from by cases n <;> rfl]
+      rfl
+
+/-- **The mutant.**  `cof_eps0` with the formation condition deleted is FALSE. -/
+theorem cof_eps0_needs_inT :
+    ¬ (∀ s, lt s eps0 = true → ∃ n, le s (tower n) = true) := by
+  intro hcof
+  obtain ⟨n, hn⟩ := hcof junk (by decide)
+  rw [show le junk (tower n) = ((junk == tower n) || lt junk (tower n)) from rfl,
+    show lt junk (tower n) = false from ltF_junk_tower n _,
+    show ((junk == tower n) : Bool) = false from by cases n <;> rfl] at hn
+  exact Bool.noConfusion hn
 
 /-! ## §8 STAGE 3 — the `ψ`/`Z` clauses: what is left  (NOTHING PROVED BELOW)
 
