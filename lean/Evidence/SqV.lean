@@ -2145,6 +2145,13 @@ induction on the term.  Third zero-margin case in this file: the bound is tight,
 nothing weaker would have done, and the identity — which is what everyone reaches for —
 is strictly stronger than what is needed and false.
 
+**AND THE THREE ZERO MARGINS ARE A PATTERN, NOT A COINCIDENCE.**  `tdepth_omLog`, branch C,
+and this — each time the bound was tight, and each time it was the case that looked LEAST
+likely to survive.  Tight bounds in the dangerous cases mean the statements are the right
+ones: **there was no slack to have spent on a weaker formulation, so nothing weaker was
+ever available.**  That is the strongest evidence this family of statements is correctly
+shaped rather than merely provable.
+
 THE PATTERN IS NOW WORTH STATING AS A RULE, since it has decided five separate obstacles:
 **when a normal-form fact blocks you, check whether what you consume is the EQUALITY or
 only a BOUND ON A MEASURE.  The bound survives the terms the equality dies on, because
@@ -2208,5 +2215,36 @@ def pairsSU : List (Term × Term) :=
           !(tdepth (TM.Term.plus p.1 p.2) <= 1 + max (tdepth p.1) (tdepth p.2)))).length == 77
 #guard (pairsSU.filter (fun p =>
           !(tdepth (TM.Term.plus p.1 p.2) <= tdepth p.1 + tdepth p.2))).length == 0
+
+
+/-! ### §11.10 THE INTERMEDIATE IS NOT EXPRESSIBLE IN `g` AND `k` — five candidates, one true
+
+The goal for branches A and B is `tdepth (plus g (ofNat k)) ≤ tdepth a`, where
+`(g, k+1) = splitFin a`.  Two facts are in hand: `tdepth g ≤ tdepth a`
+(`tdepth_splitFin_fst`, proved) and `(splitFin a).2 ≤ tdepth a` (measured, 0 violations —
+the trailing ones are paid for by the depth).  Five candidate intermediates, all measured
+before any was attempted:
+
+    tdepth (plus s u) ≤ max (tdepth s) (tdepth u)                869 of 1255   FALSE
+    tdepth (plus s u) ≤ 1 + max (tdepth s) (tdepth u)             77 of 1255   FALSE
+    tdepth (plus s u) ≤ tdepth s + tdepth u                         0          TRUE, TOO WEAK
+    tdepth (plus g (ofNat k)) ≤ max (tdepth g) (k+1)               12 of 51    FALSE
+    tdepth (plus g (ofNat k)) ≤ max (tdepth g) (tdepth (ofNat (k+1)))  12 of 51 FALSE
+
+**NOTHING STATED IN TERMS OF `g` AND `k` ALONE HAS HELD**, and the reason is visible in the
+`add`-headed witnesses of §11.6: `toList (ofList X)` can be LONGER than `X`, so `|toList g|`
+is not bounded by `a`'s component count, and the depth of the reassembled list is not
+bounded by `a`'s.  The bound is true — `predOr` violations are 0 on every corpus measured —
+but its proof needs the LENGTH relation between `toList g` and `toList a`, which is the
+structural content the measure was supposed to let us avoid.
+
+`tdepth (ofNat n) = n` exactly, measured for n ≤ 6, so the arithmetic is not the obstacle;
+the obstacle is that `g` has forgotten how it sat inside `a`. -/
+
+#guard (wideAll.filter (fun t => !((TM.Term.splitFin t).2 <= tdepth t))).length == 0
+#guard ((List.range 7).map (fun n => tdepth (ofNat n))) == [0, 1, 2, 3, 4, 5, 6]
+#guard (wideAll.filter (fun t => (TM.Term.splitFin t).2 >= 1 && (fun g k =>
+          !(tdepth (TM.Term.plus g (ofNat k)) <= max (tdepth g) (k + 1)))
+          (TM.Term.splitFin t).1 ((TM.Term.splitFin t).2 - 1))).length == 12
 
 end Evidence.SqV
