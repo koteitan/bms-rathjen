@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.21"
+def version : String := "v0.1.22"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -116,30 +116,15 @@ def rows : List Row := [
     name := "\\bar{\\varphi}(3,0)", proof := "R9", hasO := true },
   { m := [[0,0],[1,1],[2,2]], t := phi omega zero,
     name := "\\bar{\\varphi}(\\omega,0)", ev := "oStageC",
-    note := "行 1 に 2 が現れる最初の行" },
+    note := "行 1 に 2 が現れる最初の行。この行より上の候補行は v0.1.22 の監査で撤回・再導出中" },
   { m := [[0,0],[1,1],[2,2],[1,1]], t := phi one (phi omega zero),
-    name := "\\varepsilon_{\\bar{\\varphi}(\\omega,0)+1}", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[2,1]], t := phi (ofNat 2) (phi omega zero),
-    name := "\\bar{\\varphi}(2,\\bar{\\varphi}(\\omega,0)+1)", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[2,1],[3,2]], t := phi omega one,
-    name := "\\bar{\\varphi}(\\omega,1)", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[2,2]], t := phi omega omega,
-    name := "\\bar{\\varphi}(\\omega,\\omega)", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[2,2],[2,2]], t := phi omega (phi zero (ofNat 2)),
-    name := "\\bar{\\varphi}(\\omega,\\omega^2)", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[3,0]], t := phi omega (phi zero omega),
-    name := "\\bar{\\varphi}(\\omega,\\omega^\\omega)", ev := "oStageC",
-    note := "v0.1.10 の値を訂正 ((2,2) 反復列の sup)" },
-  { m := [[0,0],[1,1],[2,2],[3,0],[3,0]], t := phi omega (phi zero (plus omega one)),
-    name := "\\bar{\\varphi}(\\omega,\\omega^{\\omega+1})", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[3,0],[4,0]], t := phi omega (phi zero (plus omega omega)),
-    name := "\\bar{\\varphi}(\\omega,\\omega^{\\omega\\cdot 2})", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[3,0],[4,1]], t := phi omega (phi zero (phi zero (ofNat 2))),
-    name := "\\bar{\\varphi}(\\omega,\\omega^{\\omega^2})", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[3,1]], t := phi (plus omega one) zero,
-    name := "\\bar{\\varphi}(\\omega+1,0)", ev := "oStageC" },
-  { m := [[0,0],[1,1],[2,2],[3,2]], t := phi (phi zero (ofNat 2)) zero,
-    name := "\\bar{\\varphi}(\\omega^2,0)", ev := "oStageC" }
+    name := "\\varepsilon_{\\bar{\\varphi}(\\omega,0)+1}", ev := "oStageC" }
+  -- The former candidate rows above (2,2)(1,1) — (2,2)(2,1) .. phi-bar(omega^2,0) — were
+  -- WITHDRAWN in v0.1.22: the psi-session audit machine-refuted (2,2)(2,1) = phi-bar(2,W)
+  -- outright (E2 witnesses in Trans/StageC.lean) and left every value >= the
+  -- (2,2)(2,0)-cascade shift-suspect (the committed diagonal rows carried the values of
+  -- their first re-derivation members).  They return with re-derived values; the record
+  -- of the refutation and the forced ladder is Trans/StageC.lean, header sections 1-5.
 ]
 
 /-! ## Per-row machine checks (a successful build means every row is verified) -/

@@ -69,48 +69,92 @@ misassignment; the floor-4 corrections to the (·,0)-members broke the
 conspiracy and exposed them.  Correct values need floor 5; they are filtered
 out of the guard below and must not become rows.
 
-KNOWN FRONTIER (kept OUT of the acceptance record; do NOT make rows from it):
-  (ii) THE RELATIVE-COUNTING MECHANISM (the ψ-collapse entry) — now blocking
-      three fronts, all with the same signature (a sub-pattern re-derives
-      already-consumed material and must be counted relative to it):
-      (ii-a) the original Stage-C front: corpus of (2,2)(2,0), 124 failures;
-        the (0,0)-exponent reset re-derives consumed W-material.
-      (ii-b) the relative-claim family in the corpus of (2,2)(3,0)(3,0)
-        (121 failures).  The threading already yields the FIRST relative
-        claim correctly ((2,2)(3,0)(2,1)(3,2) = φ_ω(ω̄^ω+1) via
-        logφ_ω(thr)+1), but the nested (2,1)(3,2)(4,0)(3,1)(4,2)(5,0)-appends
-        re-derive shifted copies of the consumed (2,2)(3,0)-material.
-      (ii-c) inside floor 5(a): the (4,0)(5,1)-pair-chains of
-        (3,0)(4,1)(4,1) re-derive (0,0)::(1,1)-groups that must count
-        relative to the consumed ω̄^(ω²)-group (else they collide with
-        (4,1)(4,1) itself — machine-checked collision).
-  (iii-b) FLOOR 5(a), derivation record for the next round (chain-forced,
-      E1-verified in a dev build, NOT integrated because the corpus battery
-      immediately runs into (ii-c)): extend the groups with a MARKED flag;
-      bare (0,1)-blocks open (ω, marked); (0,1)-heads promote marked inner
-      groups multiplicatively (g·ω) and unmarked ones additively (ω+g);
-      (0,0)-heads promote by +1 and stamp unmarked.  Anchors this reproduces:
-        (3,0)(4,1)(4,1)      = φ̄(ω, ω̄^(ω²)·2)   — SUSPECT, see below
-        (3,0)(4,1)(5,0)(6,1) = φ̄(ω, ω̄^(ω²·2))   (exposed member 1)
-        (3,0)(4,1)(5,1)      = φ̄(ω, ω̄^(ω³))
-      A flat recursive +ω-promotion (no marked flag) was refuted earlier
-      (regressed the (2,2)(3,1)-corpora); the marked ladder is anchor-correct
-      but its corpus closure needs (ii) resolved first.
-      LATER CHAIN DATA (the (ii)-session probes) casts doubt on the first
-      anchor: (3,0)(4,1)(4,1)[1] = (3,0)(4,1)(4,0)(5,1), whose own chain
-      appends (5,0)(6,0)… and sups to the same ω̄^(ω²)·2 — so either
-      (4,0)(5,1) = ω̄^(ω²)·2 and (4,1)(4,1) = ω̄^(ω²+1), or the whole
-      (4,1)(4,0)-family collapses below; the (ii)-collapse must decide.
-      Chain record for the fresh (ii)-session (machine-expanded):
-        (3,0)(4,1)(4,1)[n]     appends (4,0)(5,1), then ascended (5,0)(6,1)…
-        (3,0)(4,1)(4,0)(5,1)[n] appends (5,0), (6,0), …   ((·,0)-chain)
-        (2,2)(3,0)(2,2)[n]     appends (2,1)(3,2)(4,0), then ASCENDED
-                               (3,1)(4,2)(5,0) — nested, not summed
-        (2,2)(1,1)(2,1)[n]     appends (2,0)(3,1)(4,2)(3,1), then ascended
-                               (4,0)(5,1)(6,2)(5,1)  (front ii-a)
+(ii)-SESSION RESULT (the dedicated ψ-collapse session): THE INHERITED
+COLLAPSE DIRECTION IS REFUTED — THE DIAGONAL ROWS, NOT THE SUB-READS, ARE
+THE MISASSIGNED SIDE.  Method: the fresh-session protocol (chains first,
+derive green-outward).  Every claim below is machine-verified over the
+committed rule and re-checked by the evidence #guards at the bottom of this
+file.  Abbreviations: W := φ̄(ω,0), P := (0,0)(1,1)(2,2)(1,1)(2,0)(3,1)(4,2)
+(matrices hereafter written without the (0,0)(1,1)-prefix).
 
-Γ₀ status: unchanged (everything now waits on the relative-counting
-mechanism (ii) — the single remaining design problem of the 2-row fragment).
+1. FORCED GREEN LADDER inside the (2,2)(1,1)-subtree.  Each value below is
+   E3-mutually-cofinal with its machine-expanded fan, and the fan values are
+   Stage-B/CNF green (no floor-5 material involved).  #guarded:
+     P                      = φ̄(1, W·2)        fan (3,1)(4,1)… ↦ φ̄(1,W+φ̄(n,0))
+     P(1,1)(2,0)(3,1)(4,2)  = φ̄(1, W·3)        ([copy]²; cascade [copy]^k = φ̄(1,W·(k+1)))
+     P(2,0)                 = φ̄(1, φ̄(0,W)) = ε_{W·ω} (!)   fan = the [copy]^k
+     P(2,0)(3,1)(4,2)       = φ̄(1, φ̄(0,W·2))   ([rep]²)
+     P(3,0)                 = φ̄(1, φ̄(0,φ̄(0,W)))  fan = the [rep]^k
+     P(3,1) = (1,1)(2,1)[1] = φ̄(1, φ̄(1,W))     fan = ω-towers over W·2
+     (2,2)(1,1)(2,1)        = φ̄(2, W)          fan = the φ̄(1)-towers (= fs φ̄(2,W))
+
+2. REFUTATION of the committed diagonal rows (E2 against the green ladder;
+   #guarded witnesses):  P(3,0) < (2,2)(2,0) in BMS, but its forced value
+   exceeds the committed ε_{W·ω}; P(3,1) likewise; and the forced value of
+   (2,2)(1,1)(2,1) EQUALS the committed value φ̄(2,W) of the larger (2,2)(2,1).
+   Hence each committed diagonal row currently owns the value that belongs to
+   its first re-derivation member — the same mutual-misassignment phenomenon
+   one level up.  The committed corpora never contain both sides of a
+   colliding pair (depth-3 cutoffs); the (2,2)(2,0)-corpus does, and its
+   failures (8 E3 members + 116/802 E2-violating pairs at depth 3/4) ARE this
+   finding, not a rule bug in the sub-reads.
+
+3. TABLE CORRECTIONS (flagged; chain evidence = the ladder of 1.):
+     (2,2)(2,0) ≠ ε_{W·ω}    — ε_{W·ω} is P(2,0)'s value;
+     (2,2)(2,1) ≠ φ̄(2,W)     — φ̄(2,W) is (2,2)(1,1)(2,1)'s value;
+   and by the cascade EVERY committed row ≥ (2,2)(2,0) — (2,2)(2,2) = φ̄(ω,ω),
+   (2,2)(2,2)(2,2), the (2,2)(3,·)-family, hence also the floor-4 anchor
+   table — is shift-suspect and must be re-derived before further rows.
+   Predicted corrected values (thr-threading hand-trace; fs shapes machine-
+   checked): (1,1)(2,1)(3,1) = φ̄(3,W), the (2,1)(3,1)-ladder ↦ φ̄(n,W),
+   (1,1)(2,2) = φ̄(ω,1) (fs(φ̄(ω,1))[n] = the φ̄(n,W)-ladder), [(1,1)(2,2)]^k =
+   φ̄(ω,k), (2,2)(2,0) = φ̄(ω,ω).  I.e. the (1,1)-subtree alone exhausts
+   [φ̄(1,W), φ̄(ω,ω)) and the diagonal rows all shift upward.
+
+4. CORRECTED-RULE DIRECTION (hand-trace-verified, NOT implemented here):
+   (a) drop the `!p.isEmpty` condition on thr — thread the accumulator into
+       sub-reads at the top level too.  This alone already yields
+       (1,1)(2,1) = φ̄(2,W), (1,1)(2,1)(3,1) = φ̄(3,W), (1,1)(2,2) = φ̄(ω,1),
+       [(1,1)(2,2)]² = φ̄(ω,2) through the existing logφ/cnt machinery, and
+       Stage-B agreement survives (isHighFp filters Stage-B accumulators).
+   (b) the (0,0)-summand exponent reads STAY FRESH — threading them was
+       tried in-trace and breaks the green P(2,0) = ε_{W·ω}; re-derived
+       W-material as a CNF summand is correct as-is.
+   (c) a bare (0,0)-block after (0,2)-consumption must claim the count
+       ladder's diagonal: (2,2)(2,0)'s sub-read [(0,2),(0,0)] must yield a
+       level-ω step with argument step ω̄^cnt (giving φ̄(ω,ω)), not `+1`.
+   (d) after (a)–(c) the whole region ≥ (2,2)(2,0) needs fresh chain
+       derivation (all its E1 guards change).  That rebuild is why the rule
+       is untouched in this file: every #guard must keep passing at every
+       saved state, and the corrected values there are not yet chain-forced.
+
+5. FRONT STATUS.
+   (ii-a) mechanism identified, anchor ladder forced and #guarded; the corpus
+       stays red pending the diagonal rebuild (the red members are the
+       correctly-forced ones — making them "green" under the committed
+       diagonal values would re-install the misassignment).
+   (ii-b) same disease at the floor-4 argument level: the corpus shows both
+       (3,0)(2,1)(3,2)(4,0)-re-derivations and (3,0)(2,2)(3,0)-repeats
+       reading ω̄^ω·n (identical values, one corpus) — the (3,0)(2,2)-diagonal
+       family must be re-ranked by the same principle.
+   (ii-c) the SUSPECT floor-5 anchor is now REFUTED: machine chains give the
+       (5,0)(6,0)-fan to (3,0)(4,1)(4,0)(5,1), so ω̄^(ω²)·2-territory belongs
+       to that re-derivation member and the diagonal (3,0)(4,1)(4,1) must
+       claim above it (the ω̄^(ω²+1) alternative recorded by the predecessor).
+       Floor 5(a)'s marked-groups rule is refuted in its first anchor.
+
+  (iii-b) FLOOR 5(a) rule sketch (marked groups), kept for reference but
+      refuted in its first anchor by (ii-c) above: bare (0,1)-blocks open
+      (ω, marked); (0,1)-heads promote marked groups by g·ω, unmarked by ω+g;
+      (0,0)-heads promote by +1 and stamp unmarked.  Anchors it reproduced:
+        (3,0)(4,1)(4,1)      = φ̄(ω, ω̄^(ω²)·2)   — now refuted
+        (3,0)(4,1)(5,0)(6,1) = φ̄(ω, ω̄^(ω²·2))
+        (3,0)(4,1)(5,1)      = φ̄(ω, ω̄^(ω³))
+
+Γ₀ status: reopened.  The corrected cascade pushes the fragment's reach far
+above the committed reading (the (1,1)-subtree alone spans [φ̄(1,W), φ̄(ω,ω)));
+where the (2,2)(3,3)-boundary lands — and whether Γ₀ = ψ_Ω(0) becomes a
+matrix of this fragment — is open until the diagonal rebuild reaches it.
 
 Note: the imports precede this comment because the kimina server extracts the
 header imports from the top of a posted snippet.
@@ -323,6 +367,70 @@ private def gall : List Matrix :=
 #guard checkAll oStageCT g11 3 8
 #guard checkAll oStageCT g12 3 8
 #guard checkAll oStageCT g13 3 8
+
+/-! ## (ii)-session evidence record: the diagonal misassignment
+
+Everything below runs over the COMMITTED rule.  The E1 anchors pin down the
+forced green ladder inside the (2,2)(1,1)-subtree (header §1); the `mcE3`
+guards verify each forced value mutually cofinal with its machine fan; the
+collision tripwires witness the disease (header §2–3) — when the corrected
+rule lands they MUST flip (delete them then; the ladder anchors must stay). -/
+
+private def P : Matrix := [[0,0],[1,1],[2,2],[1,1],[2,0],[3,1],[4,2]]
+private def copy2 : Matrix := P ++ [[1,1],[2,0],[3,1],[4,2]]
+private def P20 : Matrix := P ++ [[2,0]]
+private def rep2 : Matrix := P ++ [[2,0],[3,1],[4,2]]
+private def P30 : Matrix := P ++ [[3,0]]
+private def M1 : Matrix := P ++ [[3,1]]
+private def f1 : Matrix := [[0,0],[1,1],[2,2],[1,1],[2,1]]
+private def d20 : Matrix := [[0,0],[1,1],[2,2],[2,0]]
+private def d21 : Matrix := [[0,0],[1,1],[2,2],[2,1]]
+
+/-- E3-mutual-cofinality of a candidate value `t` for `m`, over the machine
+    fan of `m` with the committed readings of the fan members. -/
+private def mcE3 (m : Matrix) (t : Term) (w w' : Nat) : Bool :=
+  ((List.range w).all fun n =>
+    match BMS.expand? m n with
+    | some m' => lt (oStageCT m') t
+    | none => false)
+  &&
+  ((List.range w).all fun n =>
+    match BMS.expand? m n with
+    | some m' => (List.range w').any fun k => lt (oStageCT m') (fsN t (k + 1))
+    | none => false)
+  &&
+  ((List.range w).all fun k =>
+    (List.range w').any fun n =>
+      match BMS.expand? m n with
+      | some m' => lt (fsN t (k + 1)) (oStageCT m')
+      | none => false)
+
+-- the forced green ladder (E1 anchors of the committed rule, header §1)
+#guard oStageC? P == some (phiNF one (plus W W))
+#guard oStageC? copy2 == some (phiNF one (plus (plus W W) W))
+#guard oStageC? P20 == some (phiNF one (omegaNF (plus W one)))
+#guard oStageC? rep2 == some (phiNF one (omegaNF (plus W W)))
+#guard oStageC? P30 == some (phiNF one (omegaNF (omegaNF (plus W one))))
+#guard oStageC? M1 == some (phiNF one (phiNF one (plus W one)))
+
+-- mutual cofinality of the forced values over their green fans
+#guard mcE3 P (phiNF one (plus W W)) 3 6
+#guard mcE3 P20 (phiNF one (omegaNF (plus W one))) 3 6
+#guard mcE3 rep2 (phiNF one (omegaNF (plus W W))) 3 6
+#guard mcE3 P30 (phiNF one (omegaNF (omegaNF (plus W one)))) 3 6
+#guard mcE3 M1 (phiNF one (phiNF one (plus W one))) 3 6
+-- the forced value of (2,2)(1,1)(2,1): its fan is the (green) φ̄(1)-towers
+#guard mcE3 f1 (phiNF (ofNat 2) (plus W one)) 3 6
+
+-- collision tripwires (the disease; must flip under the corrected rule)
+#guard oStageCT [[0,0],[1,1],[2,2],[1,1],[2,2]] == oStageCT P
+#guard oStageCT d20 == oStageCT P20
+#guard oStageCT [[0,0],[1,1],[2,2],[2,0],[3,1],[4,2]] == oStageCT rep2
+#guard oStageCT d21 == phiNF (ofNat 2) (plus W one)
+
+-- E2-violation witnesses against the committed diagonal rows (header §2)
+#guard BMS.cmpM P30 d20 == .lt && lt (oStageCT d20) (oStageCT P30)
+#guard BMS.cmpM M1 d20 == .lt && lt (oStageCT d20) (oStageCT M1)
 
 end StageC.Test
 
