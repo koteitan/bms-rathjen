@@ -2304,14 +2304,8 @@ value is not a fixed closed form but a function of a second parameter.
 Why it is the right size: the three new cases all have the same BMS-side shape as
 F2/F3 (bad root by §4, one `frep` of a ladder block), and their terms are one or
 two `φ̄` layers over `Z` — the `chainP`/`twB` machinery already covers the term
-side.  STATUS: §10 proves the BMS side of the whole `r = 1` column in one lemma
-(`expand_M4`, which subsumes `expand_M3` and `expand_M1`), E1 for the ladder
-(`o?_M1`), and the `b = 0` successor case complete (`o?_M4z`, `esucc_M4z`); the
-whole `r = 0` column is DONE (`b = 0` successor, `b = 1` case B with R2 as its `a = 1`
-instance, `2 ≤ b ≤ a` case C, `b = a+1` = F2).  For case A (`r = 1`, `1 ≤ b < a`) the
-BMS side and the value in accumulator form are proved and the chain obstacle named
-here is CLEARED (`valVk`); only the term side, a parameter addition to §7, is left —
-see the note at the end of §10.  Cost estimate, calibrated on F3 (one case, one session, with all machinery
+side.  STATUS: DONE — §10 proves all seven cases of the table above; see the
+completion note at the end of §10.  Cost estimate, calibrated on F3 (one case, one session, with all machinery
 already present): 2–3 sessions.  The natural continuation, "ladder + two columns",
 covers 35 of the 72 uncovered limits in the window and is the next unit after that.
 
@@ -3920,28 +3914,437 @@ theorem o?_expand_M4_top (q n : Nat) :
       == some (omegaNF (chainP 1 k (VVk k (k+d+1) n)))
 #guard (List.range 4).all fun q => (List.range 4).all fun m => VVk q q m == VV q m
 
-/-! ### What is still missing for F4
 
-The `r = 0` column is COMPLETE (`b = 0` successor, `b = 1` case B, `2 ≤ b ≤ a` case C,
-`b = a+1` = F2).  For `r = 1`, `1 ≤ b < a` (case A) the BMS side and the value in
-accumulator form are now proved above (`expand_M4`, `valVk`, `valEk`, `o?_expand_M4`) —
-the §8/§10 obstacle is CLEARED, and it needed no new chain lemma: splitting the
-`(0,1)`-run as `ups 0 (q+1) = ups 0 k ++ ups k (d+2)` and fusing the leftover `ups`
-into the tail family of `oLAux_chainR` is enough (see the section header).
+/-! ### F4, case A — the term side: §7 with the tower level as a parameter
 
-What remains for case A is the TERM side, and it is §7 with the tower level `q`
-replaced by `k = b-1` over the SAME base `zt q = φ̄(a,0)` — a parameter addition, with
-both halves verified by computation for `k, d < 4`:
+Everything below is §7 with the level `q` replaced by `k` and the base kept at
+`zt q = φ̄(a,0)`; §7 is the instance `k = q` (`xbaseK_top` … `oval4a_top` state this,
+all by `rfl`), except that the TERM differs there (`φ̄(a,1)` for `b = a` against
+`φ̄(b,φ̄(a,0))` for `b < a`), which is why the two developments coexist. -/
 
-    VVk k q (m+2) = twB k (φ̄(k, xb)) m,   xb = φ̄(a,0)·2 (k = 0), ω^(φ̄(a,0)·2) (k ≥ 1)
-    fsN (φ̄(k+1, φ̄(a,0))) (m+1) = twB k (φ̄(k, φ̄(a,0))) m
+/-- The argument of the tower base, at level `k`. -/
+def xbaseK (q k : Nat) : Term :=
+  match k with
+  | 0 => add (zt q) (zt q)
+  | _ + 1 => phi zero (add (zt q) (zt q))
 
-i.e. `xbase`/`bse`/`sbse`/`twr`/`oval3`/`fs_t3` of §7 all take a level parameter, F3
-is the instance `k = q` (`VVk_top`, `o?_expand_M4_top`), and the tower machinery
-(`twB`, `twB_phi`, `deg_twB`, `ltF_twB_mono`) is already level-generic.  The one step
-with no §7 analogue is the fundamental sequence of the term `φ̄(b, φ̄(a,0))`, whose
-`fsN` goes through the `phiShifted = true` branch (as `t4b`'s does, §case B) rather
-than `t3`'s successor branch. -/
+/-- Base of the expansion tower, at level `k`. -/
+def bseK (q k : Nat) : Term := phi (ofNat k) (xbaseK q k)
+
+/-- Base of the fundamental-sequence tower, at level `k`. -/
+def sbseK (q k : Nat) : Term := phi (ofNat k) (zt q)
+
+/-- The expansion tower of case A. -/
+def twrK (q k j : Nat) : Term := twB k (bseK q k) j
+
+theorem xbaseK_top (q : Nat) : xbaseK q q = xbase q := by cases q <;> rfl
+theorem bseK_top (q : Nat) : bseK q q = bse q := by rw [bseK, xbaseK_top]; rfl
+theorem sbseK_top (q : Nat) : sbseK q q = sbse q := rfl
+theorem twrK_top (q j : Nat) : twrK q q j = twr q j := by rw [twrK, bseK_top]; rfl
+
+theorem twrK_shape (q k j : Nat) : ∃ z, twrK q k j = phi (ofNat k) z :=
+  twB_shape k rfl j
+
+theorem isAP_twrK (q k j : Nat) : (twrK q k j).isAP = true := by cases j <;> rfl
+
+theorem deg_twrK (q k j : Nat) : j ≤ (twrK q k j).deg := deg_twB k (bseK q k) j
+
+/-! #### (A)–(E) at level `k` -/
+
+theorem step_ztK (q k : Nat) (hk : k ≤ q) : omegaNF (chainP 1 k (zt q)) = zt q := by
+  rw [show chainP 1 k (zt q) = zt q from chainP_collapse k 1 (q+1) zero (by omega)]
+  exact omegaNF_phi_ne_zero (ofNat_ne_zero q)
+
+theorem VVk_one (q k : Nat) (hk : k ≤ q) : VVk k q 1 = add (zt q) (zt q) := by
+  show plus (zt q) (omegaNF (chainP 1 k (VVk k q 0))) = add (zt q) (zt q)
+  rw [show VVk k q 0 = zt q from rfl, step_ztK q k hk,
+    plus_self (show (zt q).isAP = true from rfl)]
+
+theorem step_add_ztK (q k : Nat) (hk : k ≤ q) :
+    omegaNF (chainP 1 k (add (zt q) (zt q))) = bseK q k := by
+  cases k with
+  | zero =>
+    show omegaNF (add (zt q) (zt q)) = phi (ofNat 0) (xbaseK q 0)
+    rw [omegaNF_add_zt q]
+    rfl
+  | succ k' =>
+    have hstep : chainP (1+k') 1 (add (zt q) (zt q)) = bseK q (k'+1) := by
+      show Trans.Pair.phiStep (ofNat (1+k')) zero (add (zt q) (zt q)) = _
+      rw [phiStep_zero, show ((add (zt q) (zt q) : Term) == zero) = false from rfl]
+      simp only [Bool.false_eq_true, if_false]
+      rw [omegaNF_add_zt q, show 1 + k' = k' + 1 from by omega]
+      exact phiNF_phi_gen (isSC_ofNat (k'+1)) (lt_lt_zero (ofNat (k'+1)))
+    rw [chainP_add k' 1 1 (add (zt q) (zt q)), hstep,
+      show bseK q (k'+1) = phi (ofNat (k'+1)) (xbaseK q (k'+1)) from rfl,
+      chainP_collapse k' 1 (k'+1) (xbaseK q (k'+1)) (by omega)]
+    exact omegaNF_phi_ne_zero (ofNat_ne_zero k')
+
+theorem step_twrK (q k j : Nat) (hk : k ≤ q) :
+    omegaNF (chainP 1 k (twrK q k j)) = twrK q k (j+1) := by
+  cases k with
+  | zero =>
+    obtain ⟨y, hy⟩ := twrK_shape q 0 j
+    show omegaNF (twrK q 0 j) = phi (ofNat 0) (twrK q 0 j)
+    rw [hy]
+    show omegaNF (phi zero y) = phi zero (phi zero y)
+    rw [omegaNF_phi, phiNF_phi_arg isSC_zero]
+  | succ k' =>
+    obtain ⟨y, hy⟩ := twrK_shape q (k'+1) j
+    have hstep : chainP (1+k') 1 (twrK q (k'+1) j) = twrK q (k'+1) (j+1) := by
+      show Trans.Pair.phiStep (ofNat (1+k')) zero (twrK q (k'+1) j) = _
+      rw [phiStep_zero, show ((twrK q (k'+1) j : Term) == zero) = false from by rw [hy]; rfl]
+      simp only [Bool.false_eq_true, if_false]
+      rw [hy, omegaNF_phi_ne_zero (ofNat_ne_zero k'),
+        show 1 + k' = k' + 1 from by omega, phiNF_phi_arg (isSC_ofNat (k'+1)), ← hy]
+      rfl
+    rw [chainP_add k' 1 1 (twrK q (k'+1) j), hstep,
+      show twrK q (k'+1) (j+1) = phi (ofNat (k'+1)) (twrK q (k'+1) j) from rfl,
+      chainP_collapse k' 1 (k'+1) (twrK q (k'+1) j) (by omega)]
+    exact omegaNF_phi_ne_zero (ofNat_ne_zero k')
+
+theorem ltF_xbaseK_not (q k : Nat) : ∀ f, ltF f (xbaseK q k) (zt q) = false
+  | 0 => rfl
+  | f + 1 => by
+    cases k with
+    | zero => exact ltF_add_zt_not q (f+1)
+    | succ k' =>
+      show ltF (f+1) (phi zero (add (zt q) (zt q))) (zt q) = false
+      exact ltF_phi_not_zt (zero_bne_ofNat q) (ltF_add_zt_not q f)
+
+theorem ltF_twrK_not (q k : Nat) (hk : k ≤ q) : ∀ (f j : Nat),
+    ltF f (twrK q k j) (zt q) = false
+  | 0, _ => rfl
+  | f + 1, 0 => by
+    show ltF (f+1) (phi (ofNat k) (xbaseK q k)) (zt q) = false
+    exact ltF_phi_not_zt (ofNat_bne (by omega)) (ltF_xbaseK_not q k f)
+  | f + 1, j + 1 => by
+    show ltF (f+1) (phi (ofNat k) (twrK q k j)) (zt q) = false
+    exact ltF_phi_not_zt (ofNat_bne (by omega)) (ltF_twrK_not q k hk f j)
+
+theorem le_twrK_zt (q k j : Nat) (hk : k ≤ q) : le (twrK q k j) (zt q) = false := by
+  show (((twrK q k j : Term) == zt q) || lt (twrK q k j) (zt q)) = false
+  rw [show ((twrK q k j : Term) == zt q) = false from by
+    obtain ⟨y, hy⟩ := twrK_shape q k j
+    rw [hy]
+    show ((phi (ofNat k) y : Term) == phi (ofNat (q+1)) zero) = false
+    have hne : (ofNat k : Term) ≠ ofNat (q+1) := by
+      intro h; have := ofNat_inj h; omega
+    simp [hne]]
+  simp only [Bool.false_or]
+  exact ltF_twrK_not q k hk _ j
+
+theorem VVk_succ2 (q k : Nat) (hk : k ≤ q) : ∀ m, VVk k q (m+2) = twrK q k m
+  | 0 => by
+    show plus (zt q) (omegaNF (chainP 1 k (VVk k q 1))) = twrK q k 0
+    rw [VVk_one q k hk, step_add_ztK q k hk]
+    exact plus_drop rfl (isAP_twrK q k 0) (le_twrK_zt q k 0 hk)
+  | m + 1 => by
+    show plus (zt q) (omegaNF (chainP 1 k (VVk k q (m+2)))) = twrK q k (m+1)
+    rw [VVk_succ2 q k hk m, step_twrK q k m hk]
+    exact plus_drop rfl (isAP_twrK q k (m+1)) (le_twrK_zt q k (m+1) hk)
+
+/-- The closed form of the n-th case-A expansion. -/
+def oval4a (q k : Nat) : Nat → Term
+  | 0 => zt q
+  | n + 1 => twrK q k n
+
+theorem oval4a_top (q : Nat) : ∀ n, oval4a q q n = oval3 q n
+  | 0 => rfl
+  | n + 1 => twrK_top q n
+
+theorem oval4a_eq (q k : Nat) (hk : k ≤ q) : ∀ n,
+    omegaNF (chainP 1 k (VVk k q n)) = oval4a q k n
+  | 0 => step_ztK q k hk
+  | 1 => by rw [VVk_one q k hk]; exact step_add_ztK q k hk
+  | m + 2 => by rw [VVk_succ2 q k hk m]; exact step_twrK q k m hk
+
+/-- **E3, part (a)** for case A. -/
+theorem e3_val4a (k d n : Nat) :
+    o? (BMS.expand (M4 (k+d+1) (k+1)) n) = some (oval4a (k+d+1) k n) := by
+  rw [o?_expand_M4 k d n, oval4a_eq (k+d+1) k (by omega) n]
+
+
+/-! #### (F) the fundamental sequence of `φ̄(b, φ̄(a,0))` -/
+
+/-- The term of case A: `φ̄(b, φ̄(a,0))` with `b = k+1`. -/
+def t4a (q k : Nat) : Term := phi (ofNat (k+1)) (zt q)
+
+theorem phiShifted_ofNat_zt (q k : Nat) (hk : k + 1 ≤ q) :
+    phiShifted (ofNat (k+1)) (zt q) = true := by
+  show (isFP (ofNat (k+1)) (splitFin (phi (ofNat (q+1)) zero)).1
+        || (((phi (ofNat (q+1)) zero : Term) == zero) && (ofNat (k+1)).isSC)) = true
+  rw [splitFin_phi_ne_one (zt_bne_one q)]
+  show (((((phi (ofNat (q+1)) zero : Term)).isSC && lt (ofNat (k+1)) (phi (ofNat (q+1)) zero))
+        || lt (ofNat (k+1)) (ofNat (q+1)))
+        || (((phi (ofNat (q+1)) zero : Term) == zero) && (ofNat (k+1)).isSC)) = true
+  rw [lt_ofNat_mono (show k+1 < q+1 from by omega)]
+  simp
+
+/-- The `phiNFsucc` "down" branch at level `k` (the §7 pitfall, with the level free). -/
+theorem phiNF_zt_oneK (q k : Nat) (hk : k ≤ q) :
+    phiNF (ofNat k) (plus (zt q) one) = sbseK q k := by
+  rw [plus_zt_one q]
+  unfold phiNF
+  simp only [isSC, Bool.false_and, Bool.false_eq_true, if_false]
+  show phiNFsucc (ofNat k) (add (zt q) one) = sbseK q k
+  unfold phiNFsucc
+  rw [splitFin_add_one (zt_bne_one q)]
+  show (match (phi (ofNat (q+1)) zero : Term) with
+        | phi d _ => if lt (ofNat k) d = true then phi (ofNat k) (plus (zt q) (ofNat (1-1)))
+                     else phiNFdefault (ofNat k) (add (zt q) one)
+        | _ => if ((zt q).isSC && lt (ofNat k) (zt q)) = true
+               then phi (ofNat k) (plus (zt q) (ofNat (1-1)))
+               else phiNFdefault (ofNat k) (add (zt q) one)) = sbseK q k
+  simp only [lt_ofNat_mono (show k < q + 1 from by omega), if_true]
+  rfl
+
+theorem fs_raw4a (q k m : Nat) (hk : k + 1 ≤ q) :
+    fsN (t4a q k) m = iterPhiAt (ofNat k) (plus (zt q) one) m := by
+  show fsN (phi (ofNat (k+1)) (zt q)) m = _
+  rw [fsN]
+  simp only [phiShifted_ofNat_zt q k hk, Bool.true_or, if_true,
+    kindT_ofNat_succ k, predT_ofNat_succ k,
+    show phiNF (ofNat (k+1)) (zt q) = zt q from
+      phiNF_collapse (lt_ofNat_mono (show k+1 < q+1 from by omega))]
+
+theorem fs_t4a (q k : Nat) (hk : k + 1 ≤ q) : ∀ m,
+    fsN (t4a q k) (m+1) = twB k (sbseK q k) m
+  | 0 => by
+    rw [fs_raw4a q k 1 hk]
+    show phiNF (ofNat k) (plus (zt q) one) = twB k (sbseK q k) 0
+    exact phiNF_zt_oneK q k (by omega)
+  | m + 1 => by
+    obtain ⟨y, hy⟩ := twB_shape k (b := sbseK q k) rfl m
+    rw [fs_raw4a q k (m+2) hk]
+    show phiNF (ofNat k) (iterPhiAt (ofNat k) (plus (zt q) one) (m+1))
+      = twB k (sbseK q k) (m+1)
+    rw [← fs_raw4a q k (m+1) hk, fs_t4a q k hk m, hy]
+    show phiNF (ofNat k) (phi (ofNat k) y) = phi (ofNat k) (twB k (sbseK q k) m)
+    rw [phiNF_phi_arg (isSC_ofNat k), ← hy]
+
+/-! #### (G) the order facts of case A -/
+
+theorem ltF_zt_t4a (q k : Nat) (hk : k + 1 ≤ q) : ∀ f, 1 ≤ f →
+    ltF f (zt q) (t4a q k) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show ltF (g+1) (phi (ofNat (q+1)) zero) (phi (ofNat (k+1)) (zt q)) = true
+    exact ltF_phi_eq (ofNat_bne (by omega)) (ltF_ofNat_not g (q+1) (k+1) (by omega))
+      (show ((phi (ofNat (q+1)) zero : Term) == zt q) = true from beq_self_eq_true _)
+
+theorem ltF_add_t4a (q k : Nat) (hk : k + 1 ≤ q) : ∀ f, 2 ≤ f →
+    ltF f (add (zt q) (zt q)) (t4a q k) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show (if ((add (zt q) (zt q) : Term) == t4a q k) = true then false
+          else ltF g (zt q) (t4a q k)) = true
+    simp only [show ((add (zt q) (zt q) : Term) == t4a q k) = false from rfl,
+      Bool.false_eq_true, if_false]
+    exact ltF_zt_t4a q k hk g (by omega)
+
+theorem ltF_xbaseK_t4a (q k : Nat) (hk : k + 1 ≤ q) : ∀ f, 3 ≤ f →
+    ltF f (xbaseK q k) (t4a q k) = true := by
+  intro f hf
+  cases k with
+  | zero => exact ltF_add_t4a q 0 hk f (by omega)
+  | succ k' =>
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi zero (add (zt q) (zt q))) (phi (ofNat (k'+2)) (zt q)) = true
+      exact ltF_phi_fst (zero_bne_ofNat (k'+1)) (ltF_zero (by omega) (ofNat_ne_zero (k'+1)))
+        (ltF_add_t4a q (k'+1) hk g (by omega))
+
+theorem ltF_twrK_t4a (q k : Nat) (hk : k + 1 ≤ q) : ∀ (j f : Nat), k + j + 4 ≤ f →
+    ltF f (twrK q k j) (t4a q k) = true
+  | 0, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi (ofNat k) (xbaseK q k)) (phi (ofNat (k+1)) (zt q)) = true
+      exact ltF_phi_fst (ofNat_bne (by omega))
+        (ltF_ofNat_mono k (k+1) g (by omega) (by omega)) (ltF_xbaseK_t4a q k hk g (by omega))
+  | j + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi (ofNat k) (twrK q k j)) (phi (ofNat (k+1)) (zt q)) = true
+      exact ltF_phi_fst (ofNat_bne (by omega))
+        (ltF_ofNat_mono k (k+1) g (by omega) (by omega)) (ltF_twrK_t4a q k hk j g (by omega))
+
+theorem ltF_zt_sbseK (q k : Nat) (hk : k ≤ q) : ∀ f, 1 ≤ f →
+    ltF f (zt q) (sbseK q k) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show ltF (g+1) (phi (ofNat (q+1)) zero) (phi (ofNat k) (zt q)) = true
+    exact ltF_phi_eq (ofNat_bne (by omega)) (ltF_ofNat_not g (q+1) k (by omega))
+      (show ((phi (ofNat (q+1)) zero : Term) == zt q) = true from beq_self_eq_true _)
+
+theorem ltF_add_sbseK (q k : Nat) (hk : k ≤ q) : ∀ f, 2 ≤ f →
+    ltF f (add (zt q) (zt q)) (sbseK q k) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g =>
+    show (if ((add (zt q) (zt q) : Term) == sbseK q k) = true then false
+          else ltF g (zt q) (sbseK q k)) = true
+    simp only [show ((add (zt q) (zt q) : Term) == sbseK q k) = false from rfl,
+      Bool.false_eq_true, if_false]
+    exact ltF_zt_sbseK q k hk g (by omega)
+
+theorem ltF_xbaseK_sbseK (q k : Nat) (hk : k ≤ q) : ∀ f, 3 ≤ f →
+    ltF f (xbaseK q k) (sbseK q k) = true := by
+  intro f hf
+  cases k with
+  | zero => exact ltF_add_sbseK q 0 hk f (by omega)
+  | succ k' =>
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi zero (add (zt q) (zt q))) (phi (ofNat (k'+1)) (zt q)) = true
+      exact ltF_phi_fst (zero_bne_ofNat k') (ltF_zero (by omega) (ofNat_ne_zero k'))
+        (ltF_add_sbseK q (k'+1) hk g (by omega))
+
+theorem ltF_bseK_phisbseK (q k : Nat) (hk : k ≤ q) : ∀ f, 4 ≤ f →
+    ltF f (bseK q k) (phi (ofNat k) (sbseK q k)) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g => exact ltF_phi_same (ltF_xbaseK_sbseK q k hk g (by omega))
+
+theorem ltF_zt_xbaseK (q k : Nat) : ∀ f, 2 ≤ f → ltF f (zt q) (xbaseK q k) = true := by
+  intro f hf
+  cases k with
+  | zero =>
+    cases f with
+    | zero => omega
+    | succ g => exact ltF_zt_add_zt q g
+  | succ k' =>
+    cases f with
+    | zero => omega
+    | succ g =>
+      show ltF (g+1) (phi (ofNat (q+1)) zero) (phi zero (add (zt q) (zt q))) = true
+      refine ltF_phi_snd (show ((ofNat (q+1) : Term) == zero) = false from by
+          simpa using ofNat_ne_zero q)
+        (ltF_lt_zero g (ofNat (q+1))) ?_
+      cases g with
+      | zero => omega
+      | succ h => exact ltF_zt_add_zt q h
+
+theorem ltF_sbseK_bseK (q k : Nat) : ∀ f, 3 ≤ f → ltF f (sbseK q k) (bseK q k) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g => exact ltF_phi_same (ltF_zt_xbaseK q k g (by omega))
+
+
+theorem e3_lt4a (k d : Nat) : ∀ n, lt (oval4a (k+d+1) k n) (t4a (k+d+1) k) = true
+  | 0 => by
+    refine lt_of_ltF (N := 1) (fun f hf => ltF_zt_t4a (k+d+1) k (by omega) f hf) ?_
+    show 1 ≤ 2 * ((zt (k+d+1)).deg
+      + (1 + (ofNat (k+1)).deg + (zt (k+d+1)).deg)) + 8
+    omega
+  | n + 1 => by
+    show lt (twrK (k+d+1) k n) (t4a (k+d+1) k) = true
+    refine lt_of_ltF (N := k+n+4)
+      (fun f hf => ltF_twrK_t4a (k+d+1) k (by omega) n f hf) ?_
+    have h1 := deg_twrK (k+d+1) k n
+    have h2 := deg_ofNat (k+1)
+    show k + n + 4 ≤ 2 * ((twrK (k+d+1) k n).deg
+      + (1 + (ofNat (k+1)).deg + (zt (k+d+1)).deg)) + 8
+    omega
+
+/-- **(b)** with witness `k := n+1`. -/
+theorem e3_over4a (k d : Nat) : ∀ n,
+    lt (oval4a (k+d+1) k n) (fsN (t4a (k+d+1) k) (n+1)) = true
+  | 0 => by
+    rw [fs_t4a (k+d+1) k (by omega) 0]
+    show lt (zt (k+d+1)) (sbseK (k+d+1) k) = true
+    refine lt_of_ltF (N := 1) (fun f hf => ltF_zt_sbseK (k+d+1) k (by omega) f hf) ?_
+    show 1 ≤ 2 * ((zt (k+d+1)).deg + (sbseK (k+d+1) k).deg) + 8
+    omega
+  | n + 1 => by
+    rw [fs_t4a (k+d+1) k (by omega) (n+1), ← twB_phi k (sbseK (k+d+1) k) n]
+    show lt (twB k (bseK (k+d+1) k) n) (twB k (phi (ofNat k) (sbseK (k+d+1) k)) n) = true
+    refine lt_of_ltF (N := 4 + n)
+      (fun f hf => ltF_twB_mono
+        (fun g hg => ltF_bseK_phisbseK (k+d+1) k (by omega) g hg) n f hf) ?_
+    have h1 := deg_twB k (bseK (k+d+1) k) n
+    show 4 + n ≤ 2 * ((twB k (bseK (k+d+1) k) n).deg
+      + (twB k (phi (ofNat k) (sbseK (k+d+1) k)) n).deg) + 8
+    omega
+
+/-- **(c)** with witness `n := m+1`. -/
+theorem e3_under4a (k d m : Nat) :
+    lt (fsN (t4a (k+d+1) k) (m+1)) (oval4a (k+d+1) k (m+1)) = true := by
+  rw [fs_t4a (k+d+1) k (by omega) m]
+  show lt (twB k (sbseK (k+d+1) k) m) (twB k (bseK (k+d+1) k) m) = true
+  refine lt_of_ltF (N := 3 + m)
+    (fun f hf => ltF_twB_mono (fun g hg => ltF_sbseK_bseK (k+d+1) k g hg) m f hf) ?_
+  have h1 := deg_twB k (sbseK (k+d+1) k) m
+  show 3 + m ≤ 2 * ((twB k (sbseK (k+d+1) k) m).deg
+    + (twB k (bseK (k+d+1) k) m).deg) + 8
+  omega
+
+/-- **E3 for the F4 case-A family**: `(0,0)(1,1)…(a,1)(b,1) = φ̄(b,φ̄(a,0))` for every
+    `1 ≤ b < a` (`b = k+1`, `a = k+d+2`).  This closes F4: every one-column extension
+    of the ladder is now proved. -/
+theorem e3_F4afamily (k d : Nat) :
+    (∀ n, o? (BMS.expand (M4 (k+d+1) (k+1)) n) = some (oval4a (k+d+1) k n))
+    ∧ (∀ n, lt (oval4a (k+d+1) k n) (t4a (k+d+1) k) = true)
+    ∧ (∀ n, lt (oval4a (k+d+1) k n) (fsN (t4a (k+d+1) k) (n + 1)) = true)
+    ∧ (∀ m, lt (fsN (t4a (k+d+1) k) (m + 1)) (oval4a (k+d+1) k (m + 1)) = true) :=
+  ⟨e3_val4a k d, e3_lt4a k d, e3_over4a k d, e3_under4a k d⟩
+
+/-- Beyond the table: `a = 2, b = 1`, i.e. `(0,0)(1,1)(2,1)(1,1) = φ̄(1,ζ₀)`. -/
+example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,1],[1,1]] n)
+    = some (oval4a 1 0 n) := e3_val4a 0 0 n
+example (n : Nat) : lt (oval4a 1 0 n) (phi one (phi (ofNat 2) zero)) = true := e3_lt4a 0 0 n
+
+/-- `a = 3, b = 2`: `(0,0)(1,1)(2,1)(3,1)(2,1) = φ̄(2,φ̄(3,0))`. -/
+example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,1],[3,1],[2,1]] n)
+    = some (oval4a 2 1 n) := e3_val4a 1 0 n
+
+#guard (List.range 3).all fun k => (List.range 3).all fun d =>
+  (List.range 4).all fun n =>
+    Trans.o? (BMS.expand (M4 (k+d+1) (k+1)) n) == some (oval4a (k+d+1) k n)
+#guard (List.range 3).all fun k => (List.range 3).all fun d =>
+  Trans.o? (M4 (k+d+1) (k+1)) == some (t4a (k+d+1) k)
+#guard (List.range 3).all fun k => (List.range 3).all fun d =>
+  (List.range 4).all fun m => fsN (t4a (k+d+1) k) (m+1) == twB k (sbseK (k+d+1) k) m
+
+/-! ### F4 is complete
+
+Every one-column extension of the ladder is now proved, i.e. the whole §8.5 case table:
+
+    r=0, b=0        φ̄(a,0)+1            successor      `o?_M4z` / `esucc_M4z`
+    r=0, b=1        φ̄(0,φ̄(a,0))         case B         `e3_F4bfamily`   (R2 = a 1)
+    r=0, 2≤b≤a      φ̄(b-1,φ̄(0,φ̄(a,0)))  case C         `e3_F4cfamily`
+    r=0, b=a+1      φ̄(a,ω)              F2             `e3_family`
+    r=1, 1≤b<a      φ̄(b,φ̄(a,0))         case A         `e3_F4afamily`
+    r=1, b=a        φ̄(a,1)              F3             `e3_F3family`
+    r=1, b=a+1      φ̄(a+1,0)            F1 at a+1      `e3_F1family`
+
+The BMS side of the whole `r = 1` column is one lemma (`expand_M4`, which subsumes
+`expand_M3` and `expand_M1`); the `r = 0` column splits by the bad root `b-1`.  The
+case-A value recursion `VVk` is §6's `VV` with the chain length `q` replaced by
+`k = b-1`, and the case-A term side is §7 with the tower level replaced by `k`
+(`xbaseK_top`, `bseK_top`, `sbseK_top`, `twrK_top`, `oval4a_top`, `VVk_top` and
+`o?_expand_M4_top` all state that §6–§7 are the instance `k = q`, by `rfl` or one
+rewrite).  A later cleanup could delete §7's copies in favour of the `K`-versions;
+they are kept here so that nothing already committed had to be touched.
+
+WHAT F4 DOES NOT COVER, and what the next unit would be: matrices whose extension is
+longer than one column — "ladder + two columns" is 35 of the 72 uncovered limit
+matrices in the §8.1 window, and R5 `(0,0)(1,1)(2,0)(3,1)` is its smallest table
+instance.  The §8.2 finding (no `stdSeq`-shaped standardness predicate) is unchanged,
+so the region-wide theorem stays parked. -/
 
 -- §10 checks
 #guard (List.range 4).all fun q => (List.range 4).all fun i =>

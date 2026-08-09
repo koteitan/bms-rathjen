@@ -226,4 +226,24 @@ theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 1)) :=
 
 end «(0,0)(1,1)(2,1)(2,0)»
 
+/-! ### Row `(0,0)(1,1)(2,1)(1,1)` = `φ̄(1,ζ₀)`, the `a = 2, b = 1` instance of the
+F4 case-A family (`Evidence.StageB.e3_F4afamily`) — a no-shift row, so `e3` is the
+4-part mutual-cofinality package. -/
+
+namespace «(0,0)(1,1)(2,1)(1,1)»
+
+def M : Matrix := [[0,0],[1,1],[2,1],[1,1]]
+def t : Term := phi one (phi (ofNat 2) zero)
+
+theorem e1 : o? M = some t := rfl
+
+theorem e3 :
+    (∀ n, o? (BMS.expand M n) = some (Evidence.StageB.oval4a 1 0 n))
+    ∧ (∀ n, lt (Evidence.StageB.oval4a 1 0 n) t = true)
+    ∧ (∀ n, lt (Evidence.StageB.oval4a 1 0 n) (fsN t (n + 1)) = true)
+    ∧ (∀ m, lt (fsN t (m + 1)) (Evidence.StageB.oval4a 1 0 (m + 1)) = true) :=
+  Evidence.StageB.e3_F4afamily 0 0
+
+end «(0,0)(1,1)(2,1)(1,1)»
+
 end Rows.Proofs
