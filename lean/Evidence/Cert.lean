@@ -6976,6 +6976,90 @@ never had to say this: at base level the condition degenerates to `isPow`, which
 -- and the shape that is NOT flagged: an ordinary CNF exponent
 #guard TM.Term.isFP zero (phi zero omega) == false
 
+/-! ## §17 THE SUM CLAUSE — concatenation of matrices  (Group A / `sqv`, STARTED)
+    (certificate lane, 2026-08-10)
+
+The coordinator's route for the Veblen region is a direct term-to-matrix map `sqv`
+built on the `sq` skeleton, whose SUM CLAUSE concatenates.  This section is that
+clause's BMS side, which is what the ε₀·k family (`ω^(ε₀+1)`, the first genuinely
+new limit row) needs and what any `sqv` will consume.  It is STARTED, not finished:
+what is proved is the index bookkeeping; what remains is named at the end.
+
+THE FACT, MEASURED FIRST (35 pairs `(A,B)`, `n ≤ 3`, `#guard` samples below):
+
+    BMS.expand (A ++ B) n = A ++ BMS.expand B n        (locality)
+    BMS.kind (A ++ B) = BMS.kind B
+    o? (A ++ B) = plus (o? A) (o? B)                   (values add)
+
+for every `A` and every `B` whose FIRST COLUMN IS A ROOT COLUMN `(0,0)`.  The side
+condition is not decoration — with `A = (0,0)(1,1)` and `B = (2,0)` locality fails
+outright (`(A ++ B)` is the ε_ω row, whose expansions climb the ε-ladder, while
+`A ++ B[n]` is constant).  Every matrix in `sq`'s image, and every matrix the
+scoping data shows for the Veblen rows, starts with `(0,0)`, so the condition is
+exactly "B is a block in its own right".
+
+WHY IT IS TRUE, and what the remaining proof has to do.  `expand?` reads the last
+column, takes its lowest nonzero row `t`, finds the bad root `parent M t (X-1)`, and
+repeats the segment from there.  `parent` at row 0 is the MAXIMUM earlier column with
+a strictly smaller row-0 entry; B's first column has entry 0 in every row, so
+whenever the entry at `x` is positive that column is a candidate, and being the
+maximum the search can never prefer anything in `A`; and when the entry is 0 there is
+no candidate at all (entries are naturals), so the answer is `none` on both sides.
+The same argument lifts to row `y+1` through `iterParent`.  Hence the whole
+computation — bad root, `delta`, `ascends`, `take` — happens inside `B` with every
+index shifted by `A.length`.
+
+WHAT IS PROVED HERE: the shift lemmas for `ent` (`ent_append`, `ent_append_left`),
+which is what every step of that argument is stated against.
+WHAT REMAINS: `parent (A ++ B) y x = (parent B y (x - A.length)).map (· + A.length)`
+and its `iterParent` companion, then `expand?_append`.  The `parent` step needs a
+`List.max?`-over-`filter`-over-`range` split lemma (`List.range_add` exists; the
+`max?`-over-append lemma does not and must be proved), and the `iterParent` step needs
+that a chain which terminates within one fuel bound gives the same list at a larger
+one — the two fuels differ by `A.length`.  Estimated 200–300 lines; it is the only
+BMS-side obligation of the sum clause, and it is independent of what `sqv` turns out
+to be, because the clause is `sqv (u ⊕ v) = sqv u ++ sqv v` whatever the other two
+clauses do. -/
+
+/-! ### §17.1 The measurements -/
+
+-- locality, on the ε₀ row and its multiples, against padded CNF blocks
+#guard (List.range 4).all (fun n =>
+  BMS.expand ([[0, 0], [1, 1]] ++ [[0, 0], [1, 0], [2, 0]]) n
+    == [[0, 0], [1, 1]] ++ BMS.expand [[0, 0], [1, 0], [2, 0]] n)
+#guard (List.range 4).all (fun n =>
+  BMS.expand ([[0, 0], [1, 1], [0, 0], [1, 1]] ++ [[0, 0], [1, 1]]) n
+    == [[0, 0], [1, 1], [0, 0], [1, 1]] ++ BMS.expand [[0, 0], [1, 1]] n)
+#guard (List.range 4).all (fun n =>
+  BMS.expand ([[0, 0], [1, 1], [2, 1]] ++ [[0, 0], [1, 0]]) n
+    == [[0, 0], [1, 1], [2, 1]] ++ BMS.expand [[0, 0], [1, 0]] n)
+-- the kind is read off the tail block
+#guard BMS.kind ([[0, 0], [1, 1]] ++ [[0, 0], [1, 0]]) == BMS.kind [[0, 0], [1, 0]]
+#guard BMS.kind ([[0, 0], [1, 1]] ++ [[0, 0], [0, 0]]) == BMS.kind [[0, 0], [0, 0]]
+-- and the side condition is load-bearing: a non-root first column breaks locality
+#guard !(BMS.expand ([[0, 0], [1, 1]] ++ [[2, 0]]) 1 == [[0, 0], [1, 1]] ++ BMS.expand [[2, 0]] 1)
+
+/-! ### §17.2 The shift lemmas -/
+
+theorem getD_append_right {α : Type} (A B : List α) (j : Nat) (d : α)
+    (h : A.length ≤ j) : (A ++ B).getD j d = B.getD (j - A.length) d := by
+  simp [List.getD_eq_getElem?_getD, List.getElem?_append_right h]
+
+/-- Past the prefix, an entry of `A ++ B` is an entry of `B`. -/
+theorem ent_append (A B : BMS.Matrix) (j y : Nat) (h : A.length ≤ j) :
+    BMS.ent (A ++ B) j y = BMS.ent B (j - A.length) y := by
+  show ((A ++ B).getD j []).getD y 0 = _
+  rw [getD_append_right A B j [] h]
+  rfl
+
+/-- Inside the prefix, an entry of `A ++ B` is an entry of `A`. -/
+theorem ent_append_left (A B : BMS.Matrix) (j y : Nat) (h : j < A.length) :
+    BMS.ent (A ++ B) j y = BMS.ent A j y := by
+  show ((A ++ B).getD j []).getD y 0 = _
+  rw [show (A ++ B).getD j [] = A.getD j [] from by
+    simp [List.getD_eq_getElem?_getD, List.getElem?_append_left h]]
+  rfl
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
