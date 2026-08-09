@@ -10678,6 +10678,128 @@ theorem hdLe_cn_eps0T (c : Term) (hcn : CN c = true) (hz : c ≠ zero) : hdLe c 
 #guard hdLe (add (phi zero one) (phi zero zero)) eps0T == true    -- and its head bound
 
 
+/-! ### §15.14 THE INTERMEDIATE VALUES OF THE ε₁ ROW — and a sequence that is NOT §15.11's
+
+WHAT THIS ADDS.  §15.13 did ε_ω's intermediate values; this does ε₁'s, the row that follows
+row A in `Rows/TM.lean`.  Its expansions are §15.8's `fsE1` — ε₀, ω^(ε₀·2), ω^(ω^(ε₀·2)), … —
+and every one past the first is a LIMIT, so each needs its own four premises.
+
+THE FINDING, and it is why this section is not two lines.  The natural move is to feed core
+(C) at `a = 0` with §15.11's `fsAin 1`: the level-1 term is `ω^(ε₀·2)`, and `fsAin 1` is
+exactly the sequence of ε₀·2 that ROW A's certificate uses.  MEASURED, and it is WRONG — at
+one index:
+
+    oR (BMS.expand (BMS.expand (0,0)(1,1)(1,1) 1) k)
+      = ω^(ε₀), ω^(ε₀ ⊕ ω), ω^(ε₀ ⊕ ω^ω), ω^(ε₀ ⊕ ω^(ω^ω)), …        k ≤ 7, exact
+    φ̄0(fsAin 1 k)
+      = ω^(ε₀ ⊕ 1), ω^(ε₀ ⊕ ω), …                                     FALSE at k = 0 only
+
+The inner sequence is `fsA1x`: ε₀ at index 0, then `ε₀ ⊕ tower k`.  It agrees with `fsAin 1`
+at every index EXCEPT 0.
+
+WHY THIS IS NOT A CONTRADICTION WITH §15.11, which a later reader will suspect it is.
+`fsAin 1` is the sequence of the MATRIX `eps0M 1`, pinned there by `Certified.lim`.  `fsA1x`
+is pinned by nothing on its own: it is an INNER ARGUMENT, and what the matrix pins here is
+its image `φ̄0(fsA1x k)`.  `lim_clauses_phi_arg` accepts ANY `g` satisfying the four clauses
+and returns `φ̄0 ∘ g`, so the two sequences may differ and both be right — they answer
+different questions.  This is "cofinality does not determine the sequence" turning up exactly
+where it does NOT matter, two sections after one where it did, and the two cases must not be
+conflated: the rule is that a sequence is pinned when a MATRIX pins it, and `fsA1x` has no
+matrix of its own.
+
+ABOVE LEVEL 1 THERE IS NO FURTHER EXCEPTION.  MEASURED at levels 2 and 3: each is plain
+`φ̄0 ∘ (previous level's sequence)`, so core (C) at `a = 0` iterates unchanged.  What has to
+be carried through that iteration is `hside`, and it propagates by 2.3.13(ii) alone
+(`lt_pow`) — which is why `lim_clauses_iterI` RETURNS it beside the four clauses instead of
+taking it as a hypothesis at every level. -/
+
+/-- ε₀·2's sequence AS IT OCCURS INSIDE THE ε₁ ROW: exceptional first term ε₀, then
+    `fsAin 1`.  NOT `fsAin 1` itself — see the section header. -/
+def fsA1x : Nat → Term
+  | 0 => eps0T
+  | k + 1 => add eps0T (tower (k + 1))
+
+theorem fsA1x_succ (k : Nat) : fsA1x (k + 1) = fsAin 1 (k + 1) := rfl
+
+theorem cnv_fsA1x : ∀ k, CNV (fsA1x k) = true
+  | 0 => cnv_eps0T
+  | k + 1 => (lim_clauses_fsA 1).1 (k + 1)
+
+theorem lt_fsA1x : ∀ k, lt (fsA1x k) (fsA 1) = true
+  | 0 => by
+    show lt eps0T (add eps0T eps0T) = true
+    rw [lt_atom_add (s := eps0T) rfl]; exact le_self _
+  | k + 1 => (lim_clauses_fsA 1).2.1 (k + 1)
+
+theorem lt_fsA1x_step : ∀ k, lt (fsA1x k) (fsA1x (k + 1)) = true
+  | 0 => by
+    show lt eps0T (add eps0T (tower 1)) = true
+    rw [lt_atom_add (s := eps0T) rfl]; exact le_self _
+  | k + 1 => (lim_clauses_fsA 1).2.2.1 (k + 1)
+
+/-- Cofinality transfers from `fsAin 1` by one index, since the two agree above 0. -/
+theorem cof_fsA1x (s : Term) (hin : inT s = true) (hlt : lt s (fsA 1) = true) :
+    ∃ k, le s (fsA1x k) = true := by
+  obtain ⟨n, hn⟩ := (lim_clauses_fsA 1).2.2.2 s hin hlt
+  refine ⟨n + 1, ?_⟩
+  exact le_trans_inT hin (inT_of_cnv _ ((lim_clauses_fsA 1).1 n))
+    (inT_of_cnv _ (cnv_fsA1x (n + 1))) hn (le_of_lt ((lim_clauses_fsA 1).2.2.1 n))
+
+/-- The sequence of `iterPhi 0 (ε₀·2) m`. -/
+def fsE1inI : Nat → Nat → Term
+  | 0, k => fsA1x k
+  | m + 1, k => phi zero (fsE1inI m k)
+
+theorem cnv_base1 : CNV base1 = true := by decide
+
+/-- Core (C) at `a = 0`, ITERATED.  It returns `hside` as well as the four clauses, because
+    `hside` is what the next level needs and it is not derivable from the clauses — the same
+    observation §15.10 made when it turned `hside` into a hypothesis.  Here it propagates by
+    2.3.13(ii) alone, so returning it costs one `lt_pow`. -/
+theorem lim_clauses_iterI : ∀ m,
+    ((∀ k, CNV (fsE1inI m k) = true)
+   ∧ (∀ k, lt (fsE1inI m k) (iterPhi zero base1 m) = true)
+   ∧ (∀ k, lt (fsE1inI m k) (fsE1inI m (k + 1)) = true)
+   ∧ (∀ s, inT s = true → lt s (iterPhi zero base1 m) = true →
+         ∃ k, le s (fsE1inI m k) = true))
+   ∧ lt (iterPhi zero base1 m) (phi zero (fsE1inI m 0)) = true
+  | 0 => ⟨⟨cnv_fsA1x, lt_fsA1x, lt_fsA1x_step, cof_fsA1x⟩, by decide⟩
+  | m + 1 => by
+    obtain ⟨⟨i1, i2, i3, i4⟩, hside⟩ := lim_clauses_iterI m
+    refine ⟨lim_clauses_phi_arg (fsE1inI m) rfl (cnv_iterPhi rfl cnv_base1 m)
+      i1 i2 i3 i4 hside, ?_⟩
+    show lt (phi zero (iterPhi zero base1 m)) (phi zero (phi zero (fsE1inI m 0))) = true
+    rw [lt_pow]
+    exact hside
+
+/-- The sequence of the ε₁ row's `m`-th intermediate value `fsE1 m`. -/
+def fsE1in : Nat → Nat → Term
+  | 0, k => tower k
+  | m + 1, k => fsE1inI (m + 1) k
+
+/-- **THE FOUR PREMISES FOR EVERY INTERMEDIATE VALUE OF THE ε₁ ROW.**  Level 0 is ε₀ and its
+    sequence is §9's ω-tower; every level above it is core (C) at `a = 0`. -/
+theorem lim_clauses_fsE1in : ∀ m,
+    (∀ k, CNV (fsE1in m k) = true)
+  ∧ (∀ k, lt (fsE1in m k) (fsE1 m) = true)
+  ∧ (∀ k, lt (fsE1in m k) (fsE1in m (k + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsE1 m) = true → ∃ k, le s (fsE1in m k) = true)
+  | 0 => lim_clauses_eps0
+  | m + 1 => (lim_clauses_iterI (m + 1)).1
+
+/-! Receipts.  The middle three are the finding: index 0 differs from `fsAin 1` and every
+    later index does not, and there is no further exception at level 2. -/
+
+#guard fsE1in 0 3 == tower 3
+#guard fsE1 1 == phi zero (add eps0T eps0T)
+#guard fsE1in 1 0 == phi zero eps0T                        -- ω^(ε₀) …
+#guard (fsE1in 1 0 == phi zero (fsAin 1 0)) == false        -- … NOT ω^(ε₀ ⊕ 1)
+#guard fsE1in 1 1 == phi zero (fsAin 1 1)                   -- but §15.11's sequence above 0
+#guard fsE1in 2 0 == phi zero (phi zero eps0T)              -- no further exception at level 2
+#guard (List.range 4).all (fun m => (List.range 5).all (fun k =>
+  CNV (fsE1in m k) && lt (fsE1in m k) (fsE1 m) && lt (fsE1in m k) (fsE1in m (k+1))))
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
