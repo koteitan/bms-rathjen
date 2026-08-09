@@ -6797,6 +6797,102 @@ theorem cert_not_single_valued :
     Certified [[0], [1]] omega ∧ Certified [[0], [1]] (add one M) ∧ omega ≠ add one M :=
   ⟨cert_omega, junk_omega_row, by intro hc; exact Term.noConfusion hc⟩
 
+/-! ## §16 SCOPING THE VEBLEN-REGION ROWS  (measurement, 2026-08-09)
+
+The ✅ frontier is ε₀.  The next twelve rows of the table are all Veblen-region
+values (φ̄ only, no ψ/Z), and this section records what they actually cost, MEASURED
+with `#eval` on `BMS.expand` rather than argued.  Everything below is a `#guard`
+except `certIn_eps0_succ`, which is the one row that is free today.
+
+THE THREE KINDS.  Of the twelve, three are SUCCESSOR rows and nine are LIMIT rows:
+
+    succ : (0,0)(1,1)(0,0) = ε₀+1     (0,0)(1,1)(2,0)(0,0) = ε_ω+1
+           (0,0)(1,1)(2,1)(0,0) = ζ₀+1
+    lim  : the other nine
+
+and each successor row's expansion is CONSTANT and equal to the row below it —
+`(0,0)(1,1)(0,0)[n] = (0,0)(1,1)` for every n, and likewise for the other two.  So
+every successor row is `Certified.succ` applied to the row below, at a cost of four
+lines.  `certIn_eps0_succ` below is that, for the one whose predecessor is already
+certified; the other two come free the moment ε_ω and ζ₀ are done.
+
+WHERE THE ONE-ROW MACHINERY STOPS.  `cert_eps0` worked because the ε₀ row expands to
+`towerM n = padRow (sq (tower n))` — PADDED ONE-ROW matrices, which §10–§12 consume.
+The limit rows leave that region immediately:
+
+    (0,0)(1,1)(1,1)[n] = (0,0)(1,1), (0,0)(1,1)(1,0)(2,1), (0,0)(1,1)(1,0)(2,1)(2,0)(3,1), …
+
+Columns like `(2,1)` have a nonzero SECOND row, which `padRow` (second row identically
+zero) cannot produce.  MEASURED on the ε₁ row: its expansion closure to depth 3
+(sampling n ≤ 2) contains 30 distinct matrices, of which only 8 are padded one-row;
+the other 22 are outside everything this file can currently certify.  So the obstacle
+is not a missing lemma, it is a missing REGION: a term-to-matrix map for the Veblen
+region with its own decomposition and expansion identity, in the §10–§12 idiom.
+
+THE TRAP IN THE TERM COLUMN, worth stating before anyone writes these certificates.
+For `(0,0)(1,1)(1,0)` the row DB carries the term `φ̄0(φ̄10)` while the table's ordinal
+column reads `ω^(ε₀+1)`.  Those are NOT the same object read two ways: as TERMS,
+`φ̄0(φ̄10) < φ̄0(ε₀+1)` (`#guard` below).  The certificate machinery accepts the DB's
+term and REFUTES the other one: the row's expansions are the matrices ε₀·(n+1), and
+no ε₀·(n+1) overtakes `φ̄0(φ̄10)`, which is an `inT` term strictly below `φ̄0(ε₀+1)` —
+that is exactly the shape of §7's and §13.1's negative controls.  The ordinal column
+is the ORDER-TYPE reading (the segment below `φ̄0(φ̄10)` has order type ε₀·ω =
+ω^(ε₀+1)), so the table is coherent; but a certificate written against the ordinal
+column instead of the term column cannot close, and "fixing" it by adjusting the
+fundamental sequence until it does is precisely the 較正事故 mechanism. -/
+
+/-! ### §16.1 The measurements -/
+
+-- the three successor rows, and the constancy of their expansions
+#guard BMS.kind [[0, 0], [1, 1], [0, 0]] == BMS.Kind.succ
+#guard BMS.kind [[0, 0], [1, 1], [2, 0], [0, 0]] == BMS.Kind.succ
+#guard BMS.kind [[0, 0], [1, 1], [2, 1], [0, 0]] == BMS.Kind.succ
+#guard (List.range 4).all (fun n => BMS.expand [[0, 0], [1, 1], [0, 0]] n == [[0, 0], [1, 1]])
+#guard (List.range 4).all (fun n =>
+  BMS.expand [[0, 0], [1, 1], [2, 0], [0, 0]] n == [[0, 0], [1, 1], [2, 0]])
+#guard (List.range 4).all (fun n =>
+  BMS.expand [[0, 0], [1, 1], [2, 1], [0, 0]] n == [[0, 0], [1, 1], [2, 1]])
+
+-- the nine limit rows really are limit rows
+#guard [[[0,0],[1,1],[1,0]], [[0,0],[1,1],[1,1]], [[0,0],[1,1],[2,0]],
+        [[0,0],[1,1],[2,0],[2,0]], [[0,0],[1,1],[2,0],[3,0]], [[0,0],[1,1],[2,0],[3,1]],
+        [[0,0],[1,1],[2,1]], [[0,0],[1,1],[2,1],[1,0]], [[0,0],[1,1],[2,1],[1,1]]].all
+  (fun m => BMS.kind m == BMS.Kind.lim)
+
+-- the ε₁ row leaves the padded one-row region at the first step
+#guard BMS.expand [[0, 0], [1, 1], [1, 1]] 1 == [[0, 0], [1, 1], [1, 0], [2, 1]]
+#guard !((BMS.expand [[0, 0], [1, 1], [1, 1]] 1).all (fun c => c.getD 1 0 == 0))
+
+-- the ω^(ε₀+1) row: its expansions are the matrices ε₀·(n+1) …
+#guard (List.range 3).all (fun n =>
+  BMS.expand [[0, 0], [1, 1], [1, 0]] n == (List.replicate (n + 1) [[0, 0], [1, 1]]).flatten)
+-- … and the term column's value, not the ordinal column's, is the one they can certify
+#guard lt (phi zero (phi one zero)) (phi zero (plus (phi one zero) one)) == true
+#guard inT (phi zero (phi one zero)) == true
+#guard (List.range 6).all (fun k =>
+  le (phi zero (phi one zero)) (Evidence.WF.repAdd (phi one zero) k) == false)
+
+/-! ### §16.2 The one row that is free today
+
+`(0,0)(1,1)(0,0)` expands constantly to the ε₀ row, so it is `CertifiedIn.succ`
+applied to `certIn_eps0`.  Built GUARDED (`DomI`) so that registering it would give
+uniqueness and the ceiling with no further work — registration itself is a table
+change and is left to the coordinator: it is one entry in `certRows` and one branch
+in `certIn_rows`. -/
+
+theorem certIn_eps0_succ :
+    CertifiedIn DomI [[0, 0], [1, 1], [0, 0]] (plus (phi one zero) one) :=
+  CertifiedIn.succ rfl
+    (fun n => by
+      show CertifiedIn DomI ((BMS.expand? [[0, 0], [1, 1], [0, 0]] n).getD [])
+        (phi one zero)
+      exact certifiedIn_mono domF_le_domI certIn_eps0)
+    (by show inT (plus (phi one zero) one) = true; decide)
+
+/-- The unguarded form, for symmetry with §13's `cert_eps0`. -/
+theorem cert_eps0_succ : Certified [[0, 0], [1, 1], [0, 0]] (plus (phi one zero) one) :=
+  certifiedIn_forget certIn_eps0_succ
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
