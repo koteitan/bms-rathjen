@@ -80,6 +80,14 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `/tmp/kimina-rathjen.log` vs `/tmp/kimina-pss.log` instances before pkill).
   General ops (start/health-check/restart rules, multi-agent verification
   discipline): global skill `use-kimina-lean-server`.
+- **A cascade of `unknown constant`/`unknown namespace` on BASIC names (`String`,
+  `TM`, core prelude) means the SERVER ENVIRONMENT is broken, not your snippet.**
+  A genuine error names one identifier you wrote; a broken environment fails on
+  names nobody typed. Reported once as an import-order defect ("these three
+  imports together fail, any two work") — it did not reproduce under either
+  `lake env lean` or the same server minutes later, and the real cause was a
+  restart in flight. Before reporting an import or elaboration defect, re-run it
+  after confirming the server is up and its start time postdates every olean.
 - **HTTP 500 at ~31 s is a TIMEOUT, not a crash.** The default per-request
   ceiling is ~30 s, which full-file POSTs of `Evidence/WF.lean` started hitting
   once it passed ~8700 lines. Add a `timeout` field alongside `snippets`:
