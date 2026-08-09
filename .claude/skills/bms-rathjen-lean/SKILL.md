@@ -80,14 +80,20 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `/tmp/kimina-rathjen.log` vs `/tmp/kimina-pss.log` instances before pkill).
   General ops (start/health-check/restart rules, multi-agent verification
   discipline): global skill `use-kimina-lean-server`.
-- **A cascade of `unknown constant`/`unknown namespace` on BASIC names (`String`,
-  `TM`, core prelude) means the SERVER ENVIRONMENT is broken, not your snippet.**
-  A genuine error names one identifier you wrote; a broken environment fails on
-  names nobody typed. Reported once as an import-order defect ("these three
-  imports together fail, any two work") — it did not reproduce under either
-  `lake env lean` or the same server minutes later, and the real cause was a
-  restart in flight. Before reporting an import or elaboration defect, re-run it
-  after confirming the server is up and its start time postdates every olean.
+- **kimina CACHES HEADER ENVIRONMENTS, and a poisoned one makes CORRECT CODE LOOK
+  BROKEN.** A cascade of `unknown constant`/`unknown namespace` on BASIC names
+  (`String`, `TM`, core prelude) is the server, not your snippet: a genuine error
+  names one identifier you wrote; a poisoned header fails on names nobody typed.
+  Diagnosed on a report that three imports together fail while any two work —
+  Lean imports are order-insensitive, which already rules out the project.
+  **The decisive tell is TIMING: the failure returns in ~0.1 s (cache hit) and the
+  success in ~0.4 s (fresh elaboration).** A restart clears it; the byte-identical
+  file then passes. Distinguish the two cache faults, because they mislead in
+  opposite directions — stale oleans make NEW names unknown, which reads as "not
+  built yet"; a poisoned header makes code that already passed fail unchanged,
+  which invites working around a problem that does not exist or blaming another
+  lane's file. **If something that just passed now fails unchanged, suspect the
+  cache before the code**, and never conclude a defect from a fast failure.
 - **HTTP 500 at ~31 s is a TIMEOUT, not a crash.** The default per-request
   ceiling is ~30 s, which full-file POSTs of `Evidence/WF.lean` started hitting
   once it passed ~8700 lines. Add a `timeout` field alongside `snippets`:

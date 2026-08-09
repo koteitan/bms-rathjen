@@ -1,5 +1,6 @@
 import Trans.TM
 import TM.FS
+import Trans.Recal
 import Evidence.StageA
 import Evidence.WF
 /-
@@ -4708,15 +4709,15 @@ theorem expand_eps0_row (n : Nat) : BMS.expand [[0, 0], [1, 1]] n = towerM n := 
 
 -- the values of the expansions are the towers: the first four are the terms of the
 -- rows already certified in §2, §3, §5.7 and §5.15
-#guard Trans.o? (towerM 0) == some one
-#guard Trans.o? (towerM 1) == some omega
-#guard Trans.o? (towerM 2) == some (phi zero omega)
-#guard Trans.o? (towerM 3) == some (phi zero (phi zero omega))
+#guard Trans.oR (towerM 0) == some one
+#guard Trans.oR (towerM 1) == some omega
+#guard Trans.oR (towerM 2) == some (phi zero omega)
+#guard Trans.oR (towerM 3) == some (phi zero (phi zero omega))
 
 -- and the unpadded rows that ARE certified carry the same values, which is what
 -- the pad transfer of item 1 has to turn into a `Certified`
-#guard Trans.o? [[0], [1], [2]] == Trans.o? (towerM 2)
-#guard Trans.o? [[0], [1], [2], [3]] == Trans.o? (towerM 3)
+#guard Trans.oR [[0], [1], [2]] == Trans.oR (towerM 2)
+#guard Trans.oR [[0], [1], [2], [3]] == Trans.oR (towerM 3)
 
 -- the pad is inert, on the whole tower family and on their expansions
 #guard (List.range 5).all (fun n => BMS.kind (towerM n) == BMS.kind (StageA.oneRow (List.range (n+1))))
@@ -6981,8 +6982,12 @@ never had to say this: at base level the condition degenerates to `isPow`, which
 Written down because the natural guess is wrong and costs an hour to discover.  A
 Veblen-region term-to-matrix map (`sqv`, the coordinator's route) will be read off
 the data; here is the part of the data that REFUTES the obvious recursion
-"emit a ladder for `a`, then a shifted encoding of `b`".  All of it is `Trans.o?`
-run on matrices of the repository's own expansion closure, `F(a,b)` for `φ̄ab`:
+"emit a ladder for `a`, then a shifted encoding of `b`".  All of it is the ORACLE
+run on matrices of the repository's own expansion closure, `F(a,b)` for `φ̄ab`.  (The
+guards below were switched from `Trans.o?` to `Trans.oR` on 2026-08-10: `o?` is the
+RETRACTED pre-calibration reader and is wrong above ζ₀ — see `Evidence/SqV.lean` §1.1.
+Every matrix here was audited and the two oracles agree on all of them, so no datum
+changed; the instrument did.):
 
     F(1,0)      = ε₀        ↦ (0,0)(1,1)
     F(1,1)      = ε₁        ↦ (0,0)(1,1)(1,1)          a REPEAT at the same depth
@@ -7015,9 +7020,9 @@ encoder), which is CANDIDATE TIER: it may say what matrix `sqv` should produce, 
 must never appear in a certificate's justification — `sqv` has to be PROVED to produce
 that matrix, by `sqv_decomp` in the idiom of §10's `sq_decomp`. -/
 
-#guard Trans.o? [[0, 0], [1, 1], [1, 1]] == Trans.o? ([[0, 0], [1, 1]] ++ [[1, 1]])
-#guard !(Trans.o? [[0, 0], [1, 1], [2, 0], [3, 1]] == Trans.o? ([[0, 0], [1, 1]] ++ [[1, 1]]))
-#guard Trans.o? [[0, 0], [1, 1], [2, 1], [1, 1]] == Trans.o? ([[0, 0], [1, 1], [2, 1]] ++ [[1, 1]])
+#guard Trans.oR [[0, 0], [1, 1], [1, 1]] == Trans.oR ([[0, 0], [1, 1]] ++ [[1, 1]])
+#guard !(Trans.oR [[0, 0], [1, 1], [2, 0], [3, 1]] == Trans.oR ([[0, 0], [1, 1]] ++ [[1, 1]]))
+#guard Trans.oR [[0, 0], [1, 1], [2, 1], [1, 1]] == Trans.oR ([[0, 0], [1, 1], [2, 1]] ++ [[1, 1]])
 
 /-! ### §16.5 WHAT 273 `t2m` PAIRS SAY  (measurement, 2026-08-10)
 
@@ -7069,11 +7074,11 @@ dictionary `Term ↔ BT` proved correct, with `sqv := ofCols ∘ enc ∘ dict`. 
 design decision, and it should be made against this corpus rather than against
 eleven examples — which is how the first attempt went wrong. -/
 
-#guard Trans.o? [[0, 0], [1, 1], [2, 1], [0, 0], [1, 1]]
-  == (do let a ← Trans.o? [[0, 0], [1, 1], [2, 1]]; let b ← Trans.o? [[0, 0], [1, 1]];
+#guard Trans.oR [[0, 0], [1, 1], [2, 1], [0, 0], [1, 1]]
+  == (do let a ← Trans.oR [[0, 0], [1, 1], [2, 1]]; let b ← Trans.oR [[0, 0], [1, 1]];
          pure (plus a b))
-#guard Trans.o? [[0, 0], [1, 1], [0, 0], [1, 0], [2, 0]]
-  == (do let a ← Trans.o? [[0, 0], [1, 1]]; let b ← Trans.o? [[0, 0], [1, 0], [2, 0]];
+#guard Trans.oR [[0, 0], [1, 1], [0, 0], [1, 0], [2, 0]]
+  == (do let a ← Trans.oR [[0, 0], [1, 1]]; let b ← Trans.oR [[0, 0], [1, 0], [2, 0]];
          pure (plus a b))
 #guard TM.Term.isFP zero (phi one zero) == true
 #guard TM.Term.isFP one (phi one zero) == false
@@ -8415,8 +8420,9 @@ The WF lane's clause bundles are 𝔗(M)-side: they say what sequence a term's f
 premises are proved for, and NOTHING about whether that sequence is the one this
 row's matrix expands to.  The identity premise `∀ n, Certified (expand M n) (fs' n)`
 is where a wrong pairing must fail — but it fails at proof time, after the work.
-These are the cheap pre-checks, and they are MEASUREMENTS (`Trans.o?` is candidate
-tier and appears in no justification here).
+These are the cheap pre-checks, and they are MEASUREMENTS (`Trans.oR` is candidate
+tier and appears in no justification here — and it is `oR`, not the retracted `o?`;
+see `Evidence/SqV.lean` §1.1).
 
 They also CONFIRM veblen2's routing trap 1 from the matrix side: the ε_ω row's n-th
 expansion has value `ε_n` (0-based), so the bundle's `fsEW n = φ̄1(ofNat n)` pairs and
@@ -8425,12 +8431,12 @@ the `fsC`-based routing `φ̄1(fsC ω n) = ε_{n+1}` does NOT.  Their trap was d
 below turns the matrix half of it into a theorem. -/
 
 #guard (List.range 5).all (fun n =>
-  Trans.o? (BMS.expand [[0, 0], [1, 1], [2, 0]] n) == some (Evidence.WF.fsEW n))
+  Trans.oR (BMS.expand [[0, 0], [1, 1], [2, 0]] n) == some (Evidence.WF.fsEW n))
 #guard (List.range 5).all (fun n =>
-  !(Trans.o? (BMS.expand [[0, 0], [1, 1], [2, 0]] n)
+  !(Trans.oR (BMS.expand [[0, 0], [1, 1], [2, 0]] n)
       == some (phi one (Evidence.WF.fsC omega n))))
 #guard (List.range 4).all (fun n =>
-  Trans.o? (BMS.expand [[0, 0], [1, 1], [1, 1]] n) == some (Evidence.WF.fsEsucc 0 n))
+  Trans.oR (BMS.expand [[0, 0], [1, 1], [1, 1]] n) == some (Evidence.WF.fsEsucc 0 n))
 
 /-- The matrix of ε_k: the ε₀ row with `k` further ε-steps at depth 1. -/
 def epsM (k : Nat) : Matrix := [[0, 0], [1, 1]] ++ (List.replicate k [[1, 1]]).flatten
@@ -8503,9 +8509,9 @@ kept rather than deleted because it is the conclusion a reader arrives at from R
 its refutation is worth more standing next to it than gone. -/
 
 #guard (List.range 3).all (fun k => (List.range 4).all (fun n =>
-  Trans.o? (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc k n)))
+  Trans.oR (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc k n)))
 #guard ((List.range 3).map (fun k => (List.range 4).all (fun n =>
-  Trans.o? (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc 0 n))))
+  Trans.oR (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc 0 n))))
     == [true, false, false]
 
 /-- The expansion closure to depth 3, sampling `n ≤ 2` — a measurement helper. -/
