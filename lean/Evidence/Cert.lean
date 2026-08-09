@@ -5295,13 +5295,21 @@ theorem cert_eps0 : Certified [[0, 0], [1, 1]] (phi one zero) := by
 
 /-! ### §13.1 The negative control for the ε₀ row
 
-The expansion values are forced (`expand_eps0_row` + `cert_tower`), so an attempt
-to certify a COMPRESSED value for `(0,0)(1,1)` — say ε₀·2 — has to discharge the
-cofinality clause with the same `fs' = tower`.  That clause is refutable, and the
-witness is ε₀ itself: it is a term of 𝔗(M), it is below ε₀·2, and no tower
-overtakes it (clause 2.3.13(iii) sends `φ̄10 ≤ δ` down the tower's exponent and
-never fires).  This is the §7 control transposed to the new row, and — like
-`Evidence.WF.cof_eps0_needs_inT` — it is a kernel-checked theorem, not a `#guard`. -/
+The expansion MATRICES are forced (`expand_eps0_row` is a closed form for all n),
+and `cert_tower` certifies each of them at value `tower n`.  An attempt to certify
+a COMPRESSED value for `(0,0)(1,1)` — say ε₀·2 — that discharges the cofinality
+clause with these values `fs' = tower` is refuted here: the witness is ε₀ itself —
+a term of 𝔗(M), below ε₀·2, that no tower overtakes (clause 2.3.13(iii) sends
+`φ̄10 ≤ δ` down the tower's exponent and never fires).  This is the §7 control
+transposed to the new row, and — like `Evidence.WF.cof_eps0_needs_inT` — it is a
+kernel-checked theorem, not a `#guard`.
+
+CAVEAT (audit 2026-08-09): `Certified` has no value-uniqueness theorem yet, so
+nothing in Lean forces a hypothetical wrong certificate to instantiate `fs'` with
+`tower`; this control refutes exactly that instantiation, not
+`¬ Certified [[0,0],[1,1]] (ε₀·2)` itself.  Closing that gap — uniqueness of the
+certified value among `inT` terms — is the planned `cert_sound` meta-theorem
+(plan/README.md). -/
 
 theorem ltF_eps0_tower : ∀ (n f : Nat), ltF f (phi one zero) (Evidence.WF.tower n) = false := by
   intro n
@@ -5345,9 +5353,11 @@ theorem le_eps0_tower (n : Nat) : le (phi one zero) (Evidence.WF.tower n) = fals
   rfl
 
 /-- **The negative control for the ε₀ row, machine-checked.**  The cofinality
-    clause that a certificate `Certified [[0,0],[1,1]] (ε₀·2)` would need — with the
-    expansion values `fs' n = tower n`, which are FORCED by `cert_tower` — is
-    FALSE: ε₀ is a term of 𝔗(M) below ε₀·2 that no `fs' n` overtakes. -/
+    clause that a certificate `Certified [[0,0],[1,1]] (ε₀·2)` would need — when
+    instantiated with the expansion values `fs' n = tower n` that `cert_tower`
+    provides — is FALSE: ε₀ is a term of 𝔗(M) below ε₀·2 that no `fs' n`
+    overtakes.  (Value-uniqueness making this the only instantiation is the
+    planned `cert_sound` meta-theorem; see the §13.1 header.) -/
 theorem neg_control_eps0_times_two :
     ¬ (∀ s, inT s = true → lt s (add (phi one zero) (phi one zero)) = true →
         ∃ n, le s (Evidence.WF.tower n) = true) := by

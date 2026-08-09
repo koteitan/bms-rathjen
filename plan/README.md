@@ -346,3 +346,20 @@ Trans による: `(2,1)(2,0) = ζ_ω`、`(2,1)(3,1) = Γ_0`、`(2,2) = ψ_0(Ω_2
 cert_sound ロードマップ: (i) 抽象版 (wfT・linT を仮定) → (ii) Buchholz 辞書の
 順序埋め込みで pss-proof の整礎性を 2 行断片へ移送 (wfT の放電) →
 (iii) 認証区間ごとに命題7(4) で BMS 側整礎性を定理化 (wfB の区間放電)。
+
+cert_sound への設計入力 (v0.1.70 検収時の文レベル監査、2026-08-09):
+
+1. 値の一意性が本体: `cert_tower` は各展開の証明書の存在定理であって
+   一意性ではない。したがって `neg_control_eps0_times_two` は
+   「fs' = tower という具体化」の反駁であり、`¬Certified (0,0)(1,1) (ε₀·2)`
+   そのものではまだない。cert_sound は inT 項上の Certified 値一意性
+   (cofinality + 非対称性から) を含むこと。
+2. 量化範囲: `Certified` は認証される値の側に inT を課していないため、
+   生 Term 上ではジャンク値 (例: ω 行に対する 1+M) も認証され得る。
+   表へは行 DB の inT #guard で遮断済みだが、cert_sound の主張は
+   inT 項 (または正規形) 上で量化すること。§8 の教訓 (生 Term 上の
+   cofinality は空虚) と対をなす。
+3. 強化候補: certRows を証明携行型
+   (`List {p : Matrix × Term // Certified p.1 p.2}`) にすれば、
+   ✅ は証明なしには構成不能になり、gate 定理 (certRows_ok) の
+   存在に依存しない構造になる。
