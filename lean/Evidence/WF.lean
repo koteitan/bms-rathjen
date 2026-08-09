@@ -12398,6 +12398,14 @@ private theorem acc_belowC_aux {v : Term} :
     refine Acc.intro _ (fun x hx => ?_)
     exact IH x.1 ⟨x.2.1, hy ▸ hx⟩ x rfl
 
+/-- **`CNV` IS FREE ON THE CARRIER.**  A member carries only `inT` and `lt t v`, but §15.1's
+    `cnv_of_lt_cnv` — below a Veblen normal form there is nothing but Veblen normal forms —
+    supplies `CNV` from those plus `CNV` of the BOUND.  So a consumer whose obligation needs
+    `CNV` of the parent does NOT have to strengthen the carrier: the two compose already, and the
+    choice between an `inT`-carrier and a `CNV`-carrier (§15.25.1) never has to be made. -/
+theorem cnv_of_belowC {v : Term} (hv : CNV v = true) (y : BelowC v) : CNV y.1 = true :=
+  cnv_of_lt_cnv y.2.1 hv y.2.2
+
 /-- **THE RECURSION PRINCIPLE.**  `lt` is well-founded on the genuine terms of 𝔗(M) below any
     `CNV` bound — so a function may recurse on any step that strictly decreases the VALUE, with
     no arithmetic measure at all.  Packages §15.1's `acc_inT_below_cnv`, which is already
