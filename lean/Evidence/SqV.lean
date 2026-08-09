@@ -618,11 +618,22 @@ and were corrected in 37cd066.  It is kept as a correction rather than deleted b
 reading the repo's own statement form is the right move and it was the statement form
 that was wrong.
 
-This is the same non-uniformity WF §15.22 measures inside core (C) and
-`table/index-shift-2026-08-10.txt` measures on five pairs, now seen from the encoding.
-The reading all three support: **the index is matrix-determined and no property of the
-term computes it.**  ε₁'s line above is `sqv`'s own defect (the nested case), not a
-shift and not `fsEsucc`'s.
+ε₁'S ROW HAS BEEN CARRYING THE EVIDENCE ALL ALONG.  `Rows`' R3 is the ε₁ row and it has
+an E3 proof; its sequence is neither `fsN` nor a shift of it but a hand-written
+recursion, `oval 0 = ε₀`, `oval (n+1) = tow P0 n`.  Whoever proved that row could not use
+`fsN` either.  So "no `s` works, it is a different sequence rather than a displaced one"
+is not a new fact about ε₁ — it is the reason R3 has the shape it has, arrived at from
+the encoding side.
+
+THE THREE LEGS, and which of them are independent — this matters because the temptation
+is to count data sets.  WF §15.22's core-(C) shifts and `table/index-shift-2026-08-10.txt`'s
+five pairs are both `oR` measurements, so they are not independent OF EACH OTHER; the
+per-row table above is a further data set on that same leg, not a third instrument.  The
+independent leg is the E3 STATEMENTS: they are PROVED rather than measured, and they are
+stated with `o?` rather than `oR` — a different translation function and a different kind
+of evidence.  What the two legs jointly support: **the index is matrix-determined and no
+property of the term computes it.**  ε₁'s line above is `sqv`'s own defect (the nested
+case), not a shift and not `fsEsucc`'s.
 
 The four `#guard`s below are that table, including the NEGATIVE one: a check that
 `fsEsucc 0` fits ε₁ cannot show that no `fsN` shift does, and it is the second claim
@@ -631,6 +642,85 @@ that carries the paragraph.
 CONSEQUENCE: `sqv_decomp` is NOT started.  Proving the recursion against a map that
 fails image closure on 21 corpus terms would prove something false or carry a hypothesis
 excluding them, which is the same objection that stopped the proof at candidate 4. -/
+
+/-! ### §5.1 THE WIDENED CORPUS — chosen to CONTAIN the failure class
+
+§5's failure class is a nested `φ̄(0,·)` whose inner subscript collapses, and `corpus`
+is structurally blind to it: every corpus term is one Veblen application deep, so no
+gate could ever have seen it.  Widening the corpus is therefore not "adding more terms"
+— a wider corpus that happens not to reach the class would give six green dimensions
+again and mean nothing, which is exactly how candidates 1–8 passed.
+
+So the class is given a SYNTACTIC predicate first, independent of what `sqv` does with
+it, and the new terms are counted against that predicate rather than against the current
+defect.  `nestedFP t` asks whether `t` contains a Veblen application whose subscript is
+itself a `φ̄(0,·)` whose own subscript has a fixed-point summand.
+
+    nestedFP over `corpus`    0 of 234       ← the blindness, as a number
+    nestedFP over `nested`   25 of  35       ← the widening, as a number
+
+The operational count is reported beside it: 17 of the 35 new terms fail image closure
+under candidate 8, and 16 fail the round trip.  Two counts rather than one, because the
+syntactic one says the corpus reaches the class and the operational one says the class
+is still live — neither implies the other.
+
+THE NEW BASELINE, all six dimensions, candidate 8 unchanged:
+
+                              corpus (234)        corpusW (269)
+    D1 round trip               0 / 234            16 / 269      all 16 in `nested`
+    D2 table rows               0 / 5               0 / 5
+    D3 discriminators           0 / 3               0 / 3
+    D4 NON-STANDARD             0 / 232            12 / 267      (`bms -s`)
+    D5 image closure           83 / 936           130 / 1076     21 → 51 terms
+    D6 order preservation       0 / 54756        1923 / 72361
+
+**D6 WENT FROM GREEN TO RED, and that is the point of the exercise.**  Checkpoint 40
+reported order preservation as the dimension `sqv` HAS; it was as corpus-blind as the
+gates were.  All 35 new terms are `inT`, checked, so the order failures are real terms
+and not artefacts of illegal ones — and they are downstream of the same nesting defect
+(`ε₀ < φ̄(0,φ̄(0,ε₀))` holds in 𝔗(M) while the matrices do not compare that way, because
+the right-hand matrix is wrong), so D6 has to be re-measured after the fix rather than
+attacked separately.
+
+Nothing is fixed against this baseline yet.  It exists so that the fix has something to
+be measured against, which is what candidates 1–8 each had and what a fix invented from
+the 21 witnesses of §5 would not. -/
+
+def nestedFP : Term → Bool
+  | .zero => false
+  | .add u v => nestedFP u || nestedFP v
+  | .phi a b =>
+      (match b with
+       | .phi .zero c => (summands (TM.Term.splitFin c).1).any (fun g => TM.Term.isFP zero g)
+       | _ => false)
+      || nestedFP a || nestedFP b
+  | _ => false
+
+/-- Inner subscripts that COLLAPSE at `a = 0`: `isFP zero` holds of each. -/
+def inners : List Term :=
+  [phi one zero, plus (phi one zero) (phi one zero), plus (phi one zero) one,
+   phi (ofNat 2) zero, phi one one]
+
+/-- One `φ̄(0,·)` wrapped around each, so the subscript of the next layer is a `φ̄(0,·)`
+    with a collapsing inner subscript — the class itself. -/
+def mids : List Term := inners.map (fun x => phi zero x)
+
+def nested : List Term :=
+  (mids.flatMap (fun m => [phi zero m, phi one m, phi (ofNat 2) m, phi omega m]))
+  ++ mids.map (fun m => phi zero (phi zero m))
+  ++ mids.map (fun m => plus m m)
+  ++ mids.map (fun m => phi one (plus m one))
+
+def corpusW : List Term := corpus ++ nested
+
+#eval (corpus.length, (corpus.filter nestedFP).length,
+       nested.length, (nested.filter nestedFP).length)
+
+-- the blindness and the widening, as guards: the OLD corpus cannot reach the class,
+-- the new terms do, and every new term is a legal 𝔗(M) term
+#guard (corpus.filter nestedFP).length == 0
+#guard (nested.filter nestedFP).length == 25
+#guard (nested.filter (fun t => !(TM.Term.inT t))).length == 0
 
 -- the per-row shift, and the row where none exists
 #guard (List.range 4).all (fun n => Trans.oR (BMS.expand (sqv (phi one omega)) n)
