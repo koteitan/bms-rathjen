@@ -41,7 +41,14 @@ of which first looked like something else:
     exactly "is the subscript a fixed point";
   * Evidence/SqV.lean's `omLog` encoded the ω-exponent WITHOUT the skip and was
     insensitive on all 234 corpus terms for the same reason.
-Ask it of any new function whose domain reaches ε₀.
+Ask it of any new function whose domain reaches ε₀ — **and of any MEASURE you
+induct on.**  A measure is the last place anyone thinks to check a notation
+convention, and it was the fourth thing this fact broke: `Evidence/SqV.lean`'s
+encoder needs an `omLog` clause BECAUSE of the skip, and that clause is exactly
+the one on which `deg` — the obvious measure, and the one the repo's own
+`ltF_stable` uses — fails.  It fails on four terms out of 169; the measure that
+works is constructor nesting depth, whose worst margin on an adversarial corpus
+is exactly 0.
 -/
 
 namespace TM

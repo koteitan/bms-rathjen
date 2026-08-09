@@ -1258,8 +1258,31 @@ exactly four fuel-dependent sites; three of them (`predOr a`, the `headD`, `fpDe
 rewrite from the IH, and the fourth sits under a `List.map` binder where the congruence
 step is still open plumbing.
 
-THIS IS A PLAN, NOT A PROOF.  The seven facts are `#eval`-measured on 169 terms and none
-of them is proved.  They are stated here so that the proof is written against measured
+AND 169 DISTINCT TERMS IS A REAL CORPUS BUT IT IS STILL A CORPUS, so the lemma most
+likely to fail was attacked directly.  `tdepth_omLog` is the one at risk: `omLog` is the
+clause §6's notation fact forced in, `omLog (φ̄(0,x)) = x+1` goes through `plus`, and
+`plus` goes through `ofList`, whose depth GROWS WITH LIST LENGTH while `φ̄(0,·)` adds only
+one.  `stress` below is 57 terms built to exploit exactly that — long additive spines of
+`1`s under a `φ̄(0,·)`, at every length up to 8, with and without a nested layer.
+
+    all six non-increase facts on `stress`      0 failures
+    minFuel ≤ tdepth on `stress`                0 failures
+    WORST `omLog` MARGIN                        0
+
+**The margin is zero**: at the tightest point `tdepth (omLog t) = tdepth t` exactly.  So
+`≤` is the right statement, there is no slack to give away, and a measure even slightly
+coarser than `tdepth` would fail here.  That is worth knowing before the induction rather
+than at the site.
+
+AND A NOTE ON D8, which this measurement makes honest.  Minimal saturating fuel is ≤ 6
+against a chosen fuel of 10–62 — tenfold slack — so "more fuel does not change the
+answer" was nearly certain to pass, and **D8's information was carried by its CONTROLS
+(fuel 1 differing on 234, fuel 3 on 52), not by the measurement.**  When a test's margin
+is an order of magnitude, the control IS the measurement.  Contrast `tdepth_omLog` above,
+whose margin is 0 and whose measurement therefore carries its own information.
+
+THIS IS A PLAN, NOT A PROOF.  The seven facts are `#eval`-measured on 169 + 57 terms and
+none of them is proved.  They are stated here so that the proof is written against measured
 lemmas rather than guessed ones — the same order this file has used for the encoding. -/
 
 def tdepth : Term → Nat
@@ -1295,5 +1318,31 @@ def distinctTerms : List Term := (corpusW ++ deeper).eraseDups
               | some g => tdepth g <= tdepth t)))).length == 0
 -- and the NEGATIVE control: `deg` really does fail, so §9.1 is not a statement about nothing
 #guard (distinctTerms.filter (fun t => !((omLog t).deg <= t.deg))).length == 4
+
+
+def stress : List Term :=
+  ((List.range 9).flatMap (fun k =>
+    [phi zero (plus (phi one zero) (ofNat k)),
+     phi zero (plus (phi (ofNat 2) zero) (ofNat k)),
+     phi zero (plus (plus (phi one zero) (phi one zero)) (ofNat k)),
+     phi one (plus (phi one zero) (ofNat k)),
+     phi zero (phi zero (plus (phi one zero) (ofNat k)))]))
+  ++ ((List.range 6).map (fun k => phi zero (Evidence.WF.repAdd (phi one zero) k)))
+  ++ ((List.range 6).map (fun k => phi zero (phi zero (Evidence.WF.repAdd (phi one zero) k))))
+
+#eval (stress.length, stress.foldl (fun m t => min m (tdepth t - tdepth (omLog t))) 99)
+
+#guard (stress.filter (fun t => !(tdepth (omLog t) <= tdepth t))).length == 0
+#guard (stress.filter (fun t => !(tdepth (predOr t) <= tdepth t))).length == 0
+#guard (stress.filter (fun t =>
+          !((summands (TM.Term.splitFin t).1).all (fun g => tdepth g <= tdepth t)))).length == 0
+#guard (stress.filter (fun t =>
+          !(tdepth ((summands (TM.Term.splitFin t).1).headD zero) <= tdepth t))).length == 0
+#guard (stress.filter (fun t => !((List.range 3).all (fun i =>
+          match fpDeep (ofNat i) t with | none => true | some g => tdepth g <= tdepth t)))).length == 0
+#guard (stress.filter (fun t =>
+          !(((List.range 60).find? (fun f => encvF f t 0 == encv t 0)).getD 99 <= tdepth t))).length == 0
+-- the margin is TIGHT: zero at the worst term, so `tdepth` is not merely sufficient
+#guard stress.foldl (fun m t => min m (tdepth t - tdepth (omLog t))) 99 == 0
 
 end Evidence.SqV
