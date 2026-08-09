@@ -1432,6 +1432,88 @@ in each case, and the difference decides the roadmap:
 An earlier report from this lane said ω^ω needed the Hydra/multiset ordering;
 that was too pessimistic — only ε₀ needs the well-foundedness stage. -/
 
+/-! ### Scaffolding for the ω^ω stage (definitions + design evidence only)
+
+HAND-OFF NOTE.  Nothing below is proved about certificates; this is the
+representation the next lane should build on, together with the computations
+that show it is the right one.  Picking the representation wrong is the
+expensive mistake in this development (see how much of §4/§5 is shape lemmas),
+so it is pinned and machine-checked here before anyone invests in proofs.
+
+A term of the CNF segment below ω^ω is a count vector `cs = [c_k, …, c_0]`,
+read as `ω^k·c_k + … + ω^0·c_0`; the level of an entry is the length of what
+follows it.  `wv` is its value, `wvM` its matrix, `wvSeq` the one-row sequence
+in between.  The `#guard`s below check, by computation:
+
+  * `oPr (wvM cs) = wv cs` — the encoding agrees with the translation;
+  * `wv [c₁, c₀] = wm c₁ c₀` — it literally generalises §5's certified family,
+    so the ω²-and-below work is the `k ≤ 1` case and nothing is re-done;
+  * `expand (0)(1)(2) n = wvM [1,0,…,0]` — the expansions of ω^ω are exactly the
+    ω^(n+1) of this family, which is what makes it the right index set.
+
+WHAT REMAINS, in dependency order:
+
+  1. Shape lemmas for `wv`/`wvSeq` (the analogues of `wm_cons`, `wm_zero_k`,
+     `deg_wm`, `plus_wm_one`).  §5's are the template; expect this to be the
+     bulk of the line count.
+  2. The expansion lemmas, prefix-relative, over `StageA.expand_oneRow`:
+     successor step (drop a unit) and limit step at level j>0 (one `ω^j` becomes
+     `n+1` copies of `ω^(j-1)`).  `expand_wmM_lim` is the template.
+  3. The classification `below_wv` at level k — the analogue of `below_wm`,
+     recursion on the fuel with the level as a parameter.  §5's
+     `ltF_ofList_head`/`ltF_ofList_prefix` already cover every order comparison
+     needed and are stated for arbitrary sums, so no new order theory is
+     required.
+  4. `cert_wv : ∀ cs, Certified (wvM cs) (wv cs)`.  Two routes, both open:
+     the prefix induction of the note above (no `Acc`), or termination by
+     `Evidence.WF.lexLt_at` + `Evidence.WF.lexLt_wf` (`open Evidence.WF` — the
+     `WellFoundedRelation` instance there is `scoped` on purpose).  The vector
+     route is the shorter statement now that WF.lean exists.
+  5. `cert_omega_pow : Certified [[0],[1],[2]] (phi zero omega)` as the limit
+     over `cert_wv [1,0,…,0]`.
+
+NOT covered by this layer: the row `(0)(1)(2)(3)` (ω^(ω^ω)).  Its expansions are
+`ω^(ω^(n+1))` — checked: `expand (0)(1)(2)(3) 1 = (0)(1)(2)(2)`, value
+`ω^(ω^2)` — whose exponents are themselves ω^k, not naturals, so they are NOT in
+this family.  That row needs one more layer, with the exponents drawn from this
+one; the construction iterates, and each finite level of nesting is another
+instance of the same pattern.  ε₀ is where the iteration itself has to be
+internalised, which is the well-foundedness stage. -/
+
+/-- The block of a one-row sequence whose value is `ω^j`. -/
+def blockOf (j : Nat) : List Nat := 0 :: List.replicate j 1
+
+/-- The one-row sequence of the count vector `cs = [c_k, …, c_0]`. -/
+def wvSeq : List Nat → List Nat
+  | [] => []
+  | c :: cs => Evidence.StageA.repL (blockOf cs.length) c ++ wvSeq cs
+
+/-- The components of `ω^k·c_k + … + ω^0·c_0`, in descending order. -/
+def wvList : List Nat → List Term
+  | [] => []
+  | c :: cs => List.replicate c (phi zero (ofNat cs.length)) ++ wvList cs
+
+/-- The value of the count vector. -/
+def wv (cs : List Nat) : Term := ofList (wvList cs)
+
+/-- The matrix of the count vector. -/
+def wvM (cs : List Nat) : Matrix := Evidence.StageA.oneRow (wvSeq cs)
+
+-- the encoding agrees with the translation
+#guard Trans.oPr (wvM [1, 0, 0]) == wv [1, 0, 0]
+#guard Trans.oPr (wvM [2, 1, 3]) == wv [2, 1, 3]
+#guard Trans.oPr (wvM [0, 4, 2]) == wv [0, 4, 2]
+#guard Trans.oPr (wvM [1, 0, 0, 0]) == wv [1, 0, 0, 0]
+#guard wv [1, 0, 0] == phi zero (ofNat 2)
+-- it generalises the certified family of §5 (`k ≤ 1`)
+#guard wv [3, 2] == wm 3 2
+#guard wv [0, 5] == wm 0 5
+-- the expansions of ω^ω are exactly this family
+#guard BMS.expand ([[0], [1], [2]] : Matrix) 2 == wvM [1, 0, 0, 0]
+#guard Trans.oPr [[0], [1], [2]] == phi zero omega
+-- …and the next row up leaves it (its exponents are ω^k, not naturals)
+#guard BMS.expand ([[0], [1], [2], [3]] : Matrix) 1 == ([[0], [1], [2], [2]] : Matrix)
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate. -/
