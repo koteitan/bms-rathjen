@@ -7019,6 +7019,65 @@ that matrix, by `sqv_decomp` in the idiom of §10's `sq_decomp`. -/
 #guard !(Trans.o? [[0, 0], [1, 1], [2, 0], [3, 1]] == Trans.o? ([[0, 0], [1, 1]] ++ [[1, 1]]))
 #guard Trans.o? [[0, 0], [1, 1], [2, 1], [1, 1]] == Trans.o? ([[0, 0], [1, 1], [2, 1]] ++ [[1, 1]])
 
+/-! ### §16.5 WHAT 273 `t2m` PAIRS SAY  (measurement, 2026-08-10)
+
+`t2m` (the surveys' candidate-tier map: dictionary inverse followed by the
+compositional Buchholz-side encoder `enc`) was run over a generated corpus of 273
+Veblen-region terms — `φ̄ a b` for `a ∈ {0,1,2,3,ω,ε₀,ζ₀}` against thirteen `b`, plus
+all 169 sums of those thirteen.  Every term produced a matrix: 0 failures.  Three
+things the corpus settles, and one it refutes.
+
+SETTLED 1 — THE SUM CLAUSE, on about a hundred real pairs rather than one sample:
+
+    ζ₀ ⊕ ε₀        ↦ (0,0)(1,1)(2,1)(0,0)(1,1)          = sqv ζ₀ ++ sqv ε₀
+    ε₀ ⊕ 1         ↦ (0,0)(1,1)(0,0)
+    ε₀ ⊕ ω^ω       ↦ (0,0)(1,1)(0,0)(1,0)(2,0)
+    ε₁ ⊕ ε₀ ⊕ 1    ↦ (0,0)(1,1)(1,1)(0,0)(1,1)(0,0)
+
+CONCATENATION, with no shift and no adjustment — which is exactly the clause §17
+proves the BMS side of, and is why that section is worth having whatever else `sqv`
+turns out to be.
+
+SETTLED 2 — the base case `a = 0` on non-fixed-point arguments IS `padRow ∘ sq`:
+`φ̄(0,1) ↦ (0,0)(1,0)`, `φ̄(0,2) ↦ (0,0)(1,0)(1,0)`, `φ̄(0,ω) ↦ (0,0)(1,0)(2,0)`.
+
+SETTLED 3 — the COLLAPSING case has its own clause, and it is uniform in `a`:
+when `isFP a b` holds (§16.3's criterion), the matrix is `sqv b` with ONE column
+appended, the column depending only on `a`:
+
+    φ̄(0,ε₀) ↦ (0,0)(1,1)(1,0)          = sqv ε₀ ++ (1,0)
+    φ̄(0,ε₁) ↦ (0,0)(1,1)(1,1)(1,0)     = sqv ε₁ ++ (1,0)
+    φ̄(0,ζ₀) ↦ (0,0)(1,1)(2,1)(1,0)     = sqv ζ₀ ++ (1,0)
+    φ̄(1,ζ₀) ↦ (0,0)(1,1)(2,1)(1,1)     = sqv ζ₀ ++ (1,1)
+
+This is what §16.4's table was seeing: `φ̄(1,ζ₀)` is the collapsing clause, `φ̄(1,ε₀)`
+is not (`isFP 1 (φ̄10)` is FALSE — `1 < 1` fails), so they are governed by different
+clauses and no single "append the marker" rule covers both.
+
+REFUTED — a three-clause recursion on T(M) SYNTAX of the shape
+`sqv (φ̄ 0 b) = (0,0) :: shift₁ (sqv b)` for non-collapsing `b`.  Counterexample from
+the corpus: `φ̄(0, ε₀·2) ↦ (0,0)(1,1)(1,0)(2,1)`, whereas that clause predicts
+`(0,0) ++ shift₁ (sqv (ε₀·2)) = (0,0)(1,0)(2,1)(1,0)(2,1)`.  `ε₀·2` is a sum, so
+`isFP` is false and the collapsing clause does not apply either.
+
+WHAT THAT MEANS FOR THE ROUTE.  `enc` is compositional in BUCHHOLZ-TREE coordinates,
+not in `φ̄` coordinates; the ε-LEVEL of a subterm, which the tree carries explicitly,
+is what the `φ̄` view has to reconstruct — and the two refutations above are both
+places where it fails to.  So a T(M)-side `sqv` is either (i) a recursion carrying a
+level parameter, with the `isFP` split as a genuine third clause, or (ii) a
+dictionary `Term ↔ BT` proved correct, with `sqv := ofCols ∘ enc ∘ dict`.  That is a
+design decision, and it should be made against this corpus rather than against
+eleven examples — which is how the first attempt went wrong. -/
+
+#guard Trans.o? [[0, 0], [1, 1], [2, 1], [0, 0], [1, 1]]
+  == (do let a ← Trans.o? [[0, 0], [1, 1], [2, 1]]; let b ← Trans.o? [[0, 0], [1, 1]];
+         pure (plus a b))
+#guard Trans.o? [[0, 0], [1, 1], [0, 0], [1, 0], [2, 0]]
+  == (do let a ← Trans.o? [[0, 0], [1, 1]]; let b ← Trans.o? [[0, 0], [1, 0], [2, 0]];
+         pure (plus a b))
+#guard TM.Term.isFP zero (phi one zero) == true
+#guard TM.Term.isFP one (phi one zero) == false
+
 /-! ## §17 THE SUM CLAUSE — concatenation of matrices  (Group A / `sqv`, STARTED)
     (certificate lane, 2026-08-10)
 
