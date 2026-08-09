@@ -9592,6 +9592,61 @@ theorem lim_clauses_rowZ :
 #guard fsZ 0 == zeta0
 #guard (List.range 5).all (fun n => CNV (fsZ n) && lt (fsZ n) rowZ && lt (fsZ n) (fsZ (n+1)))
 
+/-- §9's `below_one` lifted from `inT` to `CNV`: below `1 = φ̄00` there is only `0`.  It is a
+    restatement in the sense that the statement is the same, but NOT in its proof — §9's goes
+    through `inT`'s formation conditions, while this one is a direct case analysis on the
+    three `CNV` shapes, with 2.3.13(iii) closing the `φ̄` case because nothing is `≤ 0`. -/
+theorem below_one_cnv : ∀ (s : Term), CNV s = true → lt s one = true → s = zero := by
+  intro s hs hlt
+  cases s with
+  | M => exact Bool.noConfusion hs
+  | omg _ => exact Bool.noConfusion hs
+  | psi _ _ => exact Bool.noConfusion hs
+  | Z _ => exact Bool.noConfusion hs
+  | zero => rfl
+  | phi p q =>
+    exfalso
+    have hne : phi p q ≠ one := ne_of_ltF hlt
+    rw [show one = phi zero zero from rfl, lt_phi_phi hne] at hlt
+    by_cases hpz : p = zero
+    · rw [if_pos hpz, show lt q zero = false from ltF_right_zero _ _] at hlt
+      exact Bool.noConfusion hlt
+    · rw [if_neg hpz, if_neg (by
+        rw [show lt p zero = false from ltF_right_zero _ _]; exact Bool.noConfusion)] at hlt
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlt
+      rcases hlt with h1 | h1
+      · exact Term.noConfusion h1
+      · rw [show lt (phi p q) zero = false from ltF_right_zero _ _] at h1
+        exact Bool.noConfusion h1
+  | add c d =>
+    exfalso
+    obtain ⟨hAPc, hcc, _, _⟩ := cnv_add hs
+    rw [show one = phi zero zero from rfl, lt_add_phi] at hlt
+    have := below_one_cnv c hcc hlt
+    rw [this] at hAPc
+    exact Bool.noConfusion hAPc
+
+/-! #### §15.8 The row `ε₁` — template (B) at `u = 0`, `base = ε₀·2` -/
+
+def eps1 : Term := phi one one                       -- ε₁ = φ̄(1,1), the row's database term
+def base1 : Term := add eps0T eps0T                  -- ε₀·2
+def fsE1 (n : Nat) : Term := fsGen eps0T zero base1 n
+
+theorem lim_clauses_eps1 :
+    (∀ n, CNV (fsE1 n) = true)
+  ∧ (∀ n, lt (fsE1 n) eps1 = true)
+  ∧ (∀ n, lt (fsE1 n) (fsE1 (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s eps1 = true → ∃ m, le s (fsE1 m) = true) :=
+  lim_clauses_fsGen cnv_eps0T rfl (by decide) (by decide)
+    (by decide) (by decide) (by decide) (by decide)
+    (fun q hq hlt => by rw [below_one_cnv q hq hlt]; exact le_self _)
+    (fun p hp hlt => by rw [below_one_cnv p hp hlt]; exact le_self _)
+    (by decide)
+
+#guard fsE1 0 == eps0T
+#guard fsE1 1 == phi zero (add eps0T eps0T)
+#guard (List.range 5).all (fun n => CNV (fsE1 n) && lt (fsE1 n) eps1 && lt (fsE1 n) (fsE1 (n+1)))
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
