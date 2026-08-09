@@ -178,6 +178,31 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **THERE ARE THREE WAYS `Classical.choice` ARRIVES, AND ONLY THE FIRST IS OURS.**
+  (1) *tactic-introduced* — the six `Evidence/WF.lean` sites; cleanable, cleaned.
+  (2) *lemma-inherited* — the cited lemma itself carries choice.
+  (3) **instance-inherited** — the lemma is clean and INSTANTIATING it is not.
+  Measured, and the reason the gate cannot be cleaned:
+
+  ```
+  List.max?_mem                          [propext]
+  List.max?_mem h  at α = Nat            [propext, Classical.choice, Quot.sound]
+  Std.instMaxEqOrOfLawfulOrderLeftLeaningMax
+                                         [propext, Classical.choice, Quot.sound]  ← the root
+  Std.instLawfulOrderLeftLeaningMaxOfIsLinearOrderOfLawfulOrderSup   [propext]
+  Nat.instIsLinearOrder                  [propext]
+  BMS.parent                             [propext]
+  ```
+
+  Class 3 answers to neither tactic hygiene nor picking a different lemma —
+  swapping `List.max?_eq_some_iff` for the clean `List.max?_mem` changes
+  nothing. **So "def-side taint is core's, proof-side taint is ours" is wrong
+  as stated: a PROOF can inherit from core through an INSTANCE**, and
+  `Evidence.Cert.certIn_rows_inT` — the registry gate — does, through
+  `List.max?` reached via `BMS.parent`, even though `BMS.parent` is `[propext]`.
+  When a declaration measures dirty and its cited lemmas are clean, **print
+  axioms of the synthesised instance** (`#synth` then `#print axioms`) before
+  concluding anything about tactics.
 - **Sweep for axiom hazards by OUTCOME, not by grep.** `#print axioms` over the
   public surface answers the question; grepping `omega` cannot, because the
   hazard is defined by what the GOAL was. A clean grep reads as a clean sweep and

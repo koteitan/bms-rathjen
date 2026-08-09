@@ -45,21 +45,41 @@ checks are needed and **neither substitutes for the other**:
 A canary alone reports clean for a reason unrelated to the server being current — the same shape
 as every other inverted check in this repo's history.  Pair them.
 
-## Counts as of 2026-08-10 (HEAD ≈ de08b52 + WF 5b76d6d259ea04a9)
+## EXPECTATION — what this printed on 2026-08-10, at HEAD 485c0b0
 
-    declarations scanned (Evidence/Rows/TM/BMS/Trans)   2972
-    carrying sorryAx                                       0     ← the one that must stay 0
-    carrying Classical.choice                            236
-    Evidence.WF                                            0
-    TM                                                     0
+    scanned 2972 | sorryAx 0 | Classical.choice 236
+
+**A run that differs from this is a CHANGE, not a discovery.**  The baseline is here so no reader
+has to re-derive whether a number is good news.  Which way to read a difference:
+
+    sorryAx > 0             a regression, and the only one of the three that is unambiguous
+    Classical.choice ↑      something new became classical — find it and decide, do not assume
+    Classical.choice ↓      an improvement, OR the namespace filter stopped seeing something
+    scanned ↓               declarations vanished from the sweep before you celebrate the rest
+
+CROSS-CHECKED: a second, independently written implementation scanned 3242 (it filtered
+`.isInternal` names differently) and reported **the same 236 hit set**.  Different denominators,
+identical hits — which is why the hit set is the number to watch and `scanned` is context.
 
 `Classical.choice` is not unsoundness; this repo is classical in places and that is recorded, not
-apologised for.  `sorryAx` at anything other than 0 is a different matter entirely.
+apologised for.  The standing summary, true as of this baseline:
 
-CAVEAT ON 236: private declarations of IMPORTED modules carry mangled `_private.…` names and are
-filtered out by the namespace test below, so 236 is a FLOOR.  The in-module pass over
-`Evidence/Cert.lean` alone found 82 where this script attributes fewer, precisely because it sees
-the private ones.
+> the project is `sorryAx`-free everywhere, and classical in places, with at least one classical
+> dependency inherited from the Lean standard library.
+
+`sorryAx` at anything other than 0 is a different matter entirely.
+
+### TWO LIMITS, STATED AS LIMITS
+
+* **236 is a FLOOR, not a total.**  Private declarations of IMPORTED modules carry mangled
+  `_private.…` names and fail the namespace test below.  The in-module pass over
+  `Evidence/Cert.lean` alone found 82 there, because in-module it sees the private ones.
+  Do not add a `#guard` on 236: freezing a floor makes a future improvement look like a regression.
+* **"Root" bounds project-local causes from ABOVE, not below.**  A declaration with no tainted
+  dependency inside the project has *not* necessarily introduced the axiom itself — it may inherit
+  from Lean core through a lemma (`String.trimAscii`) or, less obviously, through a TYPECLASS
+  INSTANCE.  `Evidence.Cert.parent_lt` is the worked counterexample: `List.max?_mem` is `[propext]`
+  and becomes classical the moment it is instantiated at `Nat`.
 -/
 
 open Lean Elab Command in
