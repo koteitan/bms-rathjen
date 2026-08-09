@@ -5309,7 +5309,15 @@ nothing in Lean forces a hypothetical wrong certificate to instantiate `fs'` wit
 `tower`; this control refutes exactly that instantiation, not
 `¬ Certified [[0,0],[1,1]] (ε₀·2)` itself.  Closing that gap — uniqueness of the
 certified value among `inT` terms — is the planned `cert_sound` meta-theorem
-(plan/README.md). -/
+(plan/README.md).
+
+CAVEAT DISCHARGED, for this row and upwards (certificate lane, same day):
+§15's `neg_control_eps0_times_two_strong` is `¬ Certified [[0,0],[1,1]] (ε₀·2)`
+itself, with no assumption on the competing certificate at all — and it is the
+instance `u = ε₀·2` of `no_cert_above_eps0`, which refutes EVERY value above ε₀.
+The theorem below is kept because it is the control at the level of the CLAUSE
+(it is what a broken `lim` premise would make unprovable), and because §15's proof
+consumes it in spirit: the witness there is again ε₀ itself. -/
 
 theorem ltF_eps0_tower : ∀ (n f : Nat), ltF f (phi one zero) (Evidence.WF.tower n) = false := by
   intro n
@@ -5680,6 +5688,686 @@ theorem certIn_eps0 : CertifiedIn DomF [[0, 0], [1, 1]] (phi one zero) := by
     as soon as the competing certificate keeps its values inside 𝔗(M) ∩ `Frag2`. -/
 theorem certIn_eps0_unique (u : Term) (h : CertifiedIn DomF [[0, 0], [1, 1]] u) :
     u = phi one zero := (cert_unique_frag2 certIn_eps0 h).symm
+
+/-! ## §15 NO CERTIFICATE OVERSHOOTS  (`cert_sound`, part 2)
+    (certificate lane, 2026-08-09)
+
+§14 makes `Certified` single-valued on GUARDED certificates.  This section proves
+the half of unqualified single-valuedness that today's order theory can reach, and
+it is the half the table's ✅ needs most:
+
+    no_cert_above_eps0 : ∀ u, lt ε₀ u = true → ¬ Certified [[0,0],[1,1]] u
+
+— no hypothesis on `u` beyond being above ε₀, and NO hypothesis whatsoever on the
+values inside the hypothetical certificate.  §13.1's caveat ("this control refutes
+that instantiation, not `¬ Certified [[0,0],[1,1]] (ε₀·2)` itself") is thereby
+retired for everything at or above ε₀·2; the ε₀ row's ✅ now means "this value, and
+nothing bigger, whatever certificate you bring".
+
+WHY ONLY THE UPPER HALF, HONESTLY.  Refuting a value BELOW ε₀ needs a lower bound
+on the certified values of the expansions, i.e. a step
+`s ≤ fs n` and `fs n < v`  ⟹  `s < v`, which chains THROUGH `fs n` — a value the
+inductive does not constrain, so possibly junk carrying `ψ`/`Z`, where no
+transitivity is available (WF §8.2 stops at `ψ`; that is Stage 3b).  The upper half
+avoids this completely, and that is the design of the whole section:
+
+    THE PROBE DISCIPLINE.  Every statement below has the form `le s v = false`
+    with the junk value `v` on the RIGHT.  The term `s` on the left is always one
+    the PROOF chooses (`ω^(t+1)`, `ω^t`, ε₀ — all Cantor normal forms or ε₀), and
+    the only order facts consumed relate two such chosen terms, inside `Frag`,
+    where §7 of WF gives transitivity, asymmetry and comparability with no `inT`.
+    Nothing is ever chained through a certified value.
+
+THE INVARIANT (`no_overshoot`).  For a Cantor normal form `t`, no term of 𝔗(M) ∩
+`Frag` that is additively principal and `≥ ω^(t+1)` is `≤` any value certified for
+`padRow (sq t)`.  The three cases:
+
+  zero  `v = 0`, and no principal `s` is `≤ 0`.
+  succ  `v = plus v' 1`.  `plus` filters out the components below `1`, so `v` has
+        the SAME leftmost component as `v'` (`hd_plus_one`, via `cert_hd`), and a
+        principal `s` compares with a sum only through that component
+        (`le_ap_hd`) — so `le s v` and `le s v'` are the SAME Bool, and the
+        induction hypothesis at the (constant) expansion closes the case.  The
+        bound is unchanged along the step because `predC t + 1 = t`.
+  lim   `v` carries a family `fs`.  If `s < v`, `v`'s own cofinality clause hands
+        back a `k` with `s ≤ fs k`, and the induction hypothesis at `k` — whose
+        bound `ω^(fsC t k + 1)` is `≤ ω^t ≤ s`, the limit absorbing the `+1`
+        (`le_plus_one_of_lt_lim`) — says exactly `le s (fs k) = false`.  If instead
+        `s = v`, the same argument runs with the probe `ω^t`, which is STRICTLY
+        below `ω^(t+1) ≤ v` precisely because `t` is a limit.
+
+`cert_hd` (the shape lemma the succ case needs) is proved for `Certified` itself,
+junk and all: the `lim` case gets it from `fs 1 ≠ 0` and the descent lemma
+`hd_zero_of_lt`, which reads the clauses of `lt` and chains through nothing. -/
+
+/-! ### §15.1 Clause bodies at a general additively principal term -/
+
+
+theorem ltF_succ_ap_add (f : Nat) : ∀ {s : Term}, isAP s = true → ∀ (c d : Term),
+    ltF (f + 1) s (add c d) = ((s == c) || ltF f s c)
+  | zero, h, _, _ => Bool.noConfusion h
+  | add _ _, h, _, _ => Bool.noConfusion h
+  | M, _, _, _ => rfl
+  | omg _, _, _, _ => rfl
+  | phi _ _, _, _, _ => rfl
+  | psi _ _, _, _, _ => rfl
+  | Z _, _, _, _ => rfl
+
+theorem ltF_succ_add_ap (f : Nat) (a b : Term) : ∀ {t : Term}, isAP t = true →
+    ltF (f + 1) (add a b) t = ltF f a t
+  | zero, h => Bool.noConfusion h
+  | add _ _, h => Bool.noConfusion h
+  | M, _ => rfl
+  | omg _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+
+theorem lt_ap_add {s : Term} (hs : isAP s = true) (c d : Term) : lt s (add c d) = le s c := by
+  have hd := Evidence.WF.deg_pos d
+  show ltF (fuelOf s (add c d)) s (add c d) = _
+  rw [show fuelOf s (add c d) = (2 * (s.deg + (add c d).deg) + 7) + 1 from by
+      show 2 * (s.deg + (add c d).deg) + 8 = _; omega,
+    ltF_succ_ap_add _ hs c d]
+  rw [show ltF (2 * (s.deg + (add c d).deg) + 7) s c = lt s c from
+    (Evidence.WF.lt_eq_ltF s c _
+      (by show s.deg + c.deg ≤ 2 * (s.deg + (1 + c.deg + d.deg)) + 7; omega)).symm]
+  rfl
+
+theorem le_ap_add {s : Term} (hs : isAP s = true) (c d : Term) : le s (add c d) = le s c := by
+  show ((s == add c d) || lt s (add c d)) = _
+  rw [lt_ap_add hs c d, show ((s == add c d) : Bool) = false from by
+    cases s <;> first | exact Bool.noConfusion hs | rfl]
+  rfl
+
+theorem lt_add_ap (a b : Term) {t : Term} (ht : isAP t = true) : lt (add a b) t = lt a t := by
+  have hb := Evidence.WF.deg_pos b
+  show ltF (fuelOf (add a b) t) (add a b) t = _
+  rw [show fuelOf (add a b) t = (2 * ((add a b).deg + t.deg) + 7) + 1 from by
+      show 2 * ((add a b).deg + t.deg) + 8 = _; omega,
+    ltF_succ_add_ap _ a b ht]
+  exact (Evidence.WF.lt_eq_ltF a t _
+    (by show a.deg + t.deg ≤ 2 * ((1 + a.deg + b.deg) + t.deg) + 7; omega)).symm
+
+/-! ### §15.2 `1` is below every additively principal term -/
+
+theorem ltF_succ_one_ap (f : Nat) (hf : 1 ≤ f) : ∀ {h : Term}, isAP h = true → h ≠ one →
+    ltF (f + 1) one h = true := by
+  intro h hap hne
+  cases f with
+  | zero => omega
+  | succ g =>
+    cases h with
+    | zero => exact Bool.noConfusion hap
+    | add _ _ => exact Bool.noConfusion hap
+    | M => rfl
+    | omg _ => rfl
+    | psi k a =>
+      show (if (one == psi k a) = true then false else (ltF (g + 1) zero (psi k a) &&
+        ltF (g + 1) zero (psi k a))) = true
+      rfl
+    | Z a =>
+      show (if (one == Z a) = true then false else (ltF (g + 1) zero (Z a) &&
+        ltF (g + 1) zero (Z a))) = true
+      rfl
+    | phi c d =>
+      show (if (one == phi c d) = true then false else
+        (if (zero == c) = true then ltF (g + 1) zero d
+         else if ltF (g + 1) zero c = true then ltF (g + 1) zero (phi c d)
+         else (one == d) || ltF (g + 1) one d)) = true
+      rw [show ((one == phi c d) : Bool) = false from by
+        simp only [one, beq_eq_false_iff_ne, ne_eq]
+        intro hc; injection hc with h1 h2; exact hne (by rw [← h1, ← h2]; rfl)]
+      simp only [Bool.false_eq_true, if_false]
+      by_cases hc : c = zero
+      · subst hc
+        rw [if_pos (show (((zero : Term) == zero) : Bool) = true from rfl)]
+        have hd : d ≠ zero := by
+          intro hdz; subst hdz; exact hne rfl
+        cases d with
+        | zero => exact absurd rfl hd
+        | add _ _ => rfl
+        | M => rfl
+        | omg _ => rfl
+        | phi _ _ => rfl
+        | psi _ _ => rfl
+        | Z _ => rfl
+      · rw [if_neg (by simp only [beq_iff_eq]; exact fun hcc => hc hcc.symm)]
+        rw [if_pos (by cases c with
+          | zero => exact absurd rfl hc
+          | add _ _ => rfl | M => rfl | omg _ => rfl | phi _ _ => rfl
+          | psi _ _ => rfl | Z _ => rfl)]
+        rfl
+
+theorem le_one_ap {h : Term} (hap : isAP h = true) : le one h = true := by
+  by_cases hne : h = one
+  · subst hne; exact Evidence.WF.le_self one
+  · show ((one == h) || lt one h) = true
+    rw [show lt one h = true from by
+      show ltF (fuelOf one h) one h = true
+      have hh := Evidence.WF.deg_pos h
+      rw [show fuelOf one h = (2 * ((one : Term).deg + h.deg) + 7) + 1 from by
+        show 2 * ((one : Term).deg + h.deg) + 8 = _; omega]
+      exact ltF_succ_one_ap _ (by omega) hap hne]
+    exact Bool.or_true _
+
+/-! ### §15.3 The leftmost component, and the descent lemma -/
+
+/-- The leftmost non-`⊕` component of a formal sum. -/
+def hd : Term → Term
+  | add a _ => hd a
+  | t => t
+
+theorem hd_add (a b : Term) : hd (add a b) = hd a := rfl
+
+theorem isAP_hd : ∀ (t : Term), hd t ≠ zero → isAP (hd t) = true
+  | zero, h => absurd rfl h
+  | M, _ => rfl
+  | omg _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+  | add a _, h => by rw [hd_add] at h ⊢; exact isAP_hd a h
+
+/-- A principal term compares with a sum through the sum's leftmost component. -/
+theorem le_ap_hd {s : Term} (hs : isAP s = true) : ∀ (v : Term), le s v = le s (hd v)
+  | zero => rfl
+  | M => rfl
+  | omg _ => rfl
+  | phi _ _ => rfl
+  | psi _ _ => rfl
+  | Z _ => rfl
+  | add c d => by rw [hd_add, le_ap_add hs c d]; exact le_ap_hd hs c
+
+/-- **The descent lemma.**  If anything is below `v` and `v`'s leftmost component is
+    `0`, then that thing's leftmost component is `0` too.  Junk on the right is fine:
+    the proof never chains through a term, it only reads clauses. -/
+theorem hd_zero_of_lt : ∀ (v x : Term), lt x v = true → hd v = zero → hd x = zero
+  | zero, x, h, _ => by
+    rw [show lt x zero = false from Evidence.WF.ltF_right_zero _ x] at h
+    exact Bool.noConfusion h
+  | M, _, _, h => Term.noConfusion h
+  | omg _, _, _, h => Term.noConfusion h
+  | phi _ _, _, _, h => Term.noConfusion h
+  | psi _ _, _, _, h => Term.noConfusion h
+  | Z _, _, _, h => Term.noConfusion h
+  | add c d, x, hlt, hz => by
+    rw [hd_add] at hz
+    by_cases hx : isAP x = true
+    · rw [lt_ap_add hx c d] at hlt
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlt
+      rcases hlt with rfl | h
+      · exact hz
+      · exact hd_zero_of_lt c x h hz
+    · cases x with
+      | zero => rfl
+      | M => exact absurd rfl hx
+      | omg _ => exact absurd rfl hx
+      | phi _ _ => exact absurd rfl hx
+      | psi _ _ => exact absurd rfl hx
+      | Z _ => exact absurd rfl hx
+      | add a b =>
+        rw [hd_add]
+        by_cases hab : add a b = add c d
+        · injection hab with h1 _; rw [h1]; exact hz
+        · rw [Evidence.WF.lt_add_add hab] at hlt
+          by_cases hac : a = c
+          · rw [hac]; exact hz
+          · rw [if_neg hac] at hlt
+            exact hd_zero_of_lt c a hlt hz
+
+/-! ### §15.4 `t + 1` on Cantor normal forms -/
+
+open Evidence.WF (isPow hdLe hdOf)
+
+theorem ofListCons {a : Term} : ∀ {l : List Term}, l ≠ [] → ofList (a :: l) = add a (ofList l)
+  | [], h => absurd rfl h
+  | _ :: _, _ => rfl
+
+theorem plus_one_eq (s : Term) :
+    plus s one = ofList ((toList s).filter (fun a => le one a) ++ [one]) := rfl
+
+theorem plus_one_ap {a : Term} (hap : isAP a = true) (h1 : le one a = true) :
+    plus a one = add a one := by
+  rw [plus_one_eq, TM.Term.toList_of_isAP hap, List.filter_cons_of_pos h1]
+  rfl
+
+theorem plus_one_add {a b : Term} (h1 : le one a = true) :
+    plus (add a b) one = add a (plus b one) := by
+  rw [plus_one_eq, plus_one_eq]
+  show ofList (((a :: toList b).filter (fun x => le one x)) ++ [one]) = _
+  rw [List.filter_cons_of_pos h1, List.cons_append, ofListCons (by simp)]
+
+theorem hd_of_isAP : ∀ {a : Term}, isAP a = true → hd a = a
+  | zero, h => Bool.noConfusion h
+  | add _ _, h => Bool.noConfusion h
+  | M, _ => rfl
+  | omg _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+
+theorem hd_hdOf : ∀ (v : Term), hd (hdOf v) = hd v
+  | zero => rfl
+  | M => rfl
+  | omg _ => rfl
+  | phi _ _ => rfl
+  | psi _ _ => rfl
+  | Z _ => rfl
+  | add _ _ => rfl
+
+/-- **The shape of `v + 1`**: `plus` filters out the components below `1`, so as
+    soon as `v`'s leftmost component is `≥ 1` the head survives and `v+1` is a sum
+    with the SAME head component.  True of junk `v` as well — no `inT` anywhere. -/
+theorem plus_one_shape : ∀ {v : Term}, le one (hd v) = true →
+    ∃ b, plus v one = add (hdOf v) b := by
+  intro v
+  cases v with
+  | zero => intro h; exact absurd h (by decide)
+  | M => intro h; exact ⟨one, plus_one_ap rfl h⟩
+  | omg _ => intro h; exact ⟨one, plus_one_ap rfl h⟩
+  | phi _ _ => intro h; exact ⟨one, plus_one_ap rfl h⟩
+  | psi _ _ => intro h; exact ⟨one, plus_one_ap rfl h⟩
+  | Z _ => intro h; exact ⟨one, plus_one_ap rfl h⟩
+  | add c d =>
+    intro h
+    have hc : le one c = true := by
+      rw [le_ap_hd (show isAP one = true from rfl) c]; exact h
+    exact ⟨plus d one, plus_one_add hc⟩
+
+theorem hd_plus_one {v : Term} (h : le one (hd v) = true) : hd (plus v one) = hd v := by
+  obtain ⟨b, he⟩ := plus_one_shape h
+  rw [he, hd_add, hd_hdOf]
+
+theorem plus_one_ne_one {v : Term} (h : le one (hd v) = true) : plus v one ≠ one := by
+  obtain ⟨b, he⟩ := plus_one_shape h
+  rw [he]; intro hc; exact Term.noConfusion hc
+
+theorem le_one_hd_cn : ∀ (t : Term), CN t = true → t ≠ zero → le one (hd t) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ h; exact absurd rfl h
+  | phi x y _ _ =>
+    intro hcn _
+    have hx : x = zero := (Evidence.WF.cn_phi hcn).1
+    subst hx
+    exact le_one_pow y
+  | add a b iha _ =>
+    intro hcn _
+    obtain ⟨hpow, hca, _, _⟩ := Evidence.WF.cn_add hcn
+    obtain ⟨e, he⟩ := Evidence.WF.eq_pow_of_isPow hpow
+    rw [hd_add, he, hd_of_isAP (show isAP (phi zero e) = true from rfl)]
+    exact le_one_pow e
+
+/-- `t+1` on a CNF term: still a CNF term, a successor, with predecessor `t`. -/
+theorem plus_one_cn : ∀ (t : Term), CN t = true →
+    CN (plus t one) = true ∧ kindC (plus t one) = true ∧ predC (plus t one) = t := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; exact ⟨rfl, rfl, rfl⟩
+  | phi x y _ _ =>
+    intro hcn
+    have hx : x = zero := (Evidence.WF.cn_phi hcn).1
+    subst hx
+    rw [plus_one_ap rfl (le_one_pow y)]
+    refine ⟨?_, rfl, rfl⟩
+    show (isPow (phi zero y) && CN (phi zero y) && CN one && hdLe one (phi zero y)) = true
+    rw [show isPow (phi zero y) = true from rfl, hcn, show CN one = true from rfl,
+      show hdLe one (phi zero y) = le one (phi zero y) from rfl, le_one_pow y]
+    rfl
+  | add a b _ ihb =>
+    intro hcn
+    obtain ⟨hpow, hca, hcb, hhd⟩ := Evidence.WF.cn_add hcn
+    obtain ⟨e, he⟩ := Evidence.WF.eq_pow_of_isPow hpow
+    have h1a : le one a = true := by rw [he]; exact le_one_pow e
+    obtain ⟨ihcn, ihk, ihp⟩ := ihb hcb
+    have hb0 : b ≠ zero := by intro hz; rw [hz] at hhd; exact Bool.noConfusion hhd
+    have h1b : le one (hd b) = true := le_one_hd_cn b hcb hb0
+    obtain ⟨w, hw⟩ := plus_one_shape h1b
+    have hhdb : hdLe (plus b one) a = true := by
+      rw [Evidence.WF.hdLe_eq _ a (by rw [hw]; intro hc; exact Term.noConfusion hc),
+        hw, show hdOf (add (hdOf b) w) = hdOf b from rfl,
+        ← Evidence.WF.hdLe_eq b a hb0]
+      exact hhd
+    rw [plus_one_add h1a]
+    refine ⟨?_, ihk, ?_⟩
+    · show (isPow a && CN a && CN (plus b one) && hdLe (plus b one) a) = true
+      rw [hpow, hca, ihcn, hhdb]; rfl
+    · show (if (plus b one == one) = true then a else add a (predC (plus b one))) = add a b
+      rw [if_neg (by simp only [beq_iff_eq]; exact plus_one_ne_one h1b), ihp]
+
+theorem le_self_plus_one : ∀ (t : Term), CN t = true → le t (plus t one) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; rfl
+  | phi x y _ _ =>
+    intro hcn
+    have hx : x = zero := (Evidence.WF.cn_phi hcn).1
+    subst hx
+    rw [plus_one_ap rfl (le_one_pow y), le_ap_add rfl]
+    exact Evidence.WF.le_self _
+  | add a b _ ihb =>
+    intro hcn
+    obtain ⟨hpow, _, hcb, _⟩ := Evidence.WF.cn_add hcn
+    obtain ⟨e, he⟩ := Evidence.WF.eq_pow_of_isPow hpow
+    rw [plus_one_add (show le one a = true from by rw [he]; exact le_one_pow e)]
+    exact Evidence.WF.le_add_tail (ihb hcb)
+
+/-- **A limit absorbs `+1`**: below a CNF limit there is room for a successor. -/
+theorem le_plus_one_of_lt_lim {a t : Term} (hca : CN a = true) (hct : CN t = true)
+    (hk : kindC t = false) (hlt : lt a t = true) : le (plus a one) t = true := by
+  obtain ⟨hcn1, hk1, hp1⟩ := plus_one_cn a hca
+  have hfa : Evidence.WF.Frag a = true := Evidence.WF.frag_of_cn a hca
+  have hft : Evidence.WF.Frag t = true := Evidence.WF.frag_of_cn t hct
+  have hf1 : Evidence.WF.Frag (plus a one) = true :=
+    Evidence.WF.frag_plus hfa Evidence.WF.frag_one
+  rcases Evidence.WF.lt_comparable hf1 hft with h | h | h
+  · show ((plus a one == t) || lt (plus a one) t) = true
+    rw [h]; exact Bool.or_true _
+  · rw [h] at hk1; rw [hk1] at hk; exact Bool.noConfusion hk
+  · have hle : le t a = true := by
+      have := Evidence.WF.le_predC_of_lt (plus a one) hcn1 hk1 t (inT_of_cn t hct) h
+      rwa [hp1] at this
+    have hcon : lt t t = true := Evidence.WF.lt_of_le_of_lt hft hfa hft hle hlt
+    rw [Evidence.WF.lt_irrefl] at hcon
+    exact Bool.noConfusion hcon
+
+/-! ### §15.5 The shape of a certified value -/
+
+theorem plus_one_ne_zero (v : Term) : plus v one ≠ zero := by
+  rw [plus_one_eq]
+  cases h : (toList v).filter (fun a => le one a) with
+  | nil => intro hc; exact Term.noConfusion hc
+  | cons a l => rw [List.cons_append, ofListCons (by simp)]; intro hc; exact Term.noConfusion hc
+
+/-- **Every certified value has a nonzero leftmost component** (or is `0`).
+    `zero`: forced.  `succ`: `plus · 1` filters the `< 1` components away, so the
+    head it produces is `≥ 1` whatever it started from.  `lim`: `fs 1` is nonzero
+    (it is above `fs 0`), its leftmost component is nonzero by the induction
+    hypothesis, and `hd_zero_of_lt` carries that up to `v`. -/
+theorem cert_hd : ∀ {N : Matrix} {v : Term}, Certified N v → v = zero ∨ hd v ≠ zero := by
+  intro N v h
+  induction h with
+  | zero => exact Or.inl rfl
+  | @succ M t hk hall ih =>
+    refine Or.inr ?_
+    rcases ih 0 with hz | hz
+    · rw [hz]
+      show hd one ≠ zero
+      intro hc; exact Term.noConfusion hc
+    · rw [hd_plus_one (le_one_ap (isAP_hd t hz))]
+      exact hz
+  | @lim M v fs hk hall hlt hstep hcof ih =>
+    refine Or.inr ?_
+    have h1 : fs 1 ≠ zero := by
+      intro hc
+      have := hstep 0
+      rw [hc, show lt (fs 0) zero = false from Evidence.WF.ltF_right_zero _ _] at this
+      exact Bool.noConfusion this
+    have h2 : hd (fs 1) ≠ zero := by
+      rcases ih 1 with hz | hz
+      · exact absurd hz h1
+      · exact hz
+    intro hz
+    exact h2 (hd_zero_of_lt v (fs 1) (hlt 1) hz)
+
+/-! ### §15.6 The region, and its three kinds -/
+
+theorem sq_eq_nil : ∀ (t : Term), CN t = true → sq t = [] → t = zero := by
+  intro t
+  cases t with
+  | zero => intro _ _; rfl
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ => intro h; exact Bool.noConfusion h
+  | psi _ _ => intro h; exact Bool.noConfusion h
+  | Z _ => intro h; exact Bool.noConfusion h
+  | phi x y => intro _ h; rw [sq_phi] at h; exact absurd h (by simp)
+  | add u v =>
+    intro hcn h
+    obtain ⟨hpow, _, _, _⟩ := Evidence.WF.cn_add hcn
+    obtain ⟨e, he⟩ := Evidence.WF.eq_pow_of_isPow hpow
+    subst he
+    rw [sq_add, sq_phi] at h
+    exact absurd h (by simp)
+
+theorem kindC_of_kind_succ {t : Term} (hcn : CN t = true)
+    (hk : BMS.kind (padRow (sq t)) = .succ) : kindC t = true := by
+  by_cases hz : t = zero
+  · subst hz
+    rw [show sq (zero : Term) = [] from rfl, show padRow [] = ([] : BMS.Matrix) from rfl,
+      show BMS.kind ([] : BMS.Matrix) = .zero from rfl] at hk
+    exact absurd hk (by simp)
+  by_cases hkc : kindC t = true
+  · exact hkc
+  · have hk' : kindC t = false := by simpa using hkc
+    rw [kind_padSq_lim t hcn hk' hz] at hk
+    exact absurd hk (by simp)
+
+theorem kindC_of_kind_lim {t : Term} (hcn : CN t = true)
+    (hk : BMS.kind (padRow (sq t)) = .lim) : kindC t = false ∧ t ≠ zero := by
+  by_cases hz : t = zero
+  · subst hz
+    rw [show sq (zero : Term) = [] from rfl, show padRow [] = ([] : BMS.Matrix) from rfl,
+      show BMS.kind ([] : BMS.Matrix) = .zero from rfl] at hk
+    exact absurd hk (by simp)
+  by_cases hkc : kindC t = true
+  · rw [kind_padSq_succ t hcn hkc] at hk
+    exact absurd hk (by simp)
+  · exact ⟨by simpa using hkc, hz⟩
+
+/-! ### §15.7 THE INVARIANT: no certificate overshoots its bound -/
+
+theorem cn_pow {t : Term} (h : CN t = true) : CN (phi zero t) = true := by
+  show (((zero : Term) == zero) && CN t) = true; rw [h]; rfl
+
+theorem frag_pow_cn {t : Term} (h : CN t = true) : Evidence.WF.Frag (phi zero t) = true :=
+  Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cn t h)
+
+theorem frag_bnd {t : Term} (h : CN t = true) :
+    Evidence.WF.Frag (phi zero (plus t one)) = true :=
+  Evidence.WF.frag_omegaPow (Evidence.WF.frag_plus (Evidence.WF.frag_of_cn t h)
+    Evidence.WF.frag_one)
+
+theorem le_pow_bnd {t : Term} (h : CN t = true) :
+    le (phi zero t) (phi zero (plus t one)) = true :=
+  Evidence.WF.le_pow (le_self_plus_one t h)
+
+theorem le_pow_one_false {X : Term} (hX : X ≠ zero) : le (phi zero X) one = false := by
+  show ((phi zero X == one) || lt (phi zero X) (phi zero zero)) = false
+  rw [Evidence.WF.lt_pow, show lt X zero = false from Evidence.WF.ltF_right_zero _ X,
+    show ((phi zero X == one) : Bool) = false from by
+      simp only [beq_eq_false_iff_ne, ne_eq]
+      intro hc; injection hc with _ h2; exact hX h2]
+  rfl
+
+theorem not_le_one {s t : Term} (hin : inT s = true) (hap : isAP s = true)
+    (hb : le (phi zero (plus t one)) s = true) : le s one = false := by
+  show ((s == one) || lt s one) = false
+  rw [show lt s one = false from by
+      cases h : lt s one with
+      | false => rfl
+      | true =>
+        have hz := Evidence.WF.below_one s hin _ h
+        rw [hz] at hap; exact Bool.noConfusion hap,
+    show ((s == one) : Bool) = false from by
+      simp only [beq_eq_false_iff_ne, ne_eq]
+      intro hc
+      rw [hc, le_pow_one_false (plus_one_ne_zero t)] at hb
+      exact Bool.noConfusion hb]
+  rfl
+
+/-- **NO CERTIFICATE OF THE CNF REGION OVERSHOOTS ITS BOUND.**  For every Cantor
+    normal form `t`, every value certified for the padded row of `t` — junk values
+    included, with no `inT` and no fragment hypothesis on the value — is escaped by
+    every term of 𝔗(M) ∩ `Frag` that is additively principal and at least `ω^(t+1)`.
+
+    The proof never chains through a certified value: junk appears only on the RIGHT
+    of `le s v`, the probe `s` on the left is always one the proof chooses, and the
+    only order facts used are between such probes (all inside `Frag`, §7 of WF). -/
+theorem no_overshoot : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
+    ∀ (t : Term), CN t = true → N = padRow (sq t) →
+      ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+        le (phi zero (plus t one)) s = true → le s v = false := by
+  intro N v h
+  induction h with
+  | zero =>
+    intro t _ _ s _ _ hap _
+    show ((s == zero) || lt s zero) = false
+    rw [show lt s zero = false from Evidence.WF.ltF_right_zero _ s,
+      show ((s == zero) : Bool) = false from by
+        cases s <;> first | exact Bool.noConfusion hap | rfl]
+    rfl
+  | @succ M w hk hall ih =>
+    intro t hcn hN s hin hfr hap hb
+    have hk' : BMS.kind (padRow (sq t)) = .succ := by rw [← hN]; exact hk
+    have hkc : kindC t = true := kindC_of_kind_succ hcn hk'
+    have hcnp : CN (predC t) = true := Evidence.WF.cn_predC t hcn hkc
+    have hexp : BMS.expand M 0 = padRow (sq (predC t)) := by
+      rw [hN]
+      show (BMS.expand? (padRow (sq t)) 0).getD [] = _
+      rw [expand_padSq_succ t hcn hkc 0]
+      rfl
+    have hbnd : le (phi zero (plus (predC t) one)) s = true := by
+      rw [plus_predC t hcn hkc]
+      exact Evidence.WF.le_trans (frag_pow_cn hcn) (frag_bnd hcn) hfr (le_pow_bnd hcn) hb
+    have hiv : le s w = false := ih 0 (predC t) hcnp hexp s hin hfr hap hbnd
+    rcases cert_hd (hall 0) with hzw | hzw
+    · rw [hzw, show plus (zero : Term) one = one from rfl]
+      exact not_le_one hin hap hb
+    · rw [le_ap_hd hap (plus w one), hd_plus_one (le_one_ap (isAP_hd w hzw)),
+        ← le_ap_hd hap w]
+      exact hiv
+  | @lim M v fs hk hall hlt hstep hcof ih =>
+    intro t hcn hN s hin hfr hap hb
+    have hk' : BMS.kind (padRow (sq t)) = .lim := by rw [← hN]; exact hk
+    obtain ⟨hkc, hz⟩ := kindC_of_kind_lim hcn hk'
+    obtain ⟨hcnfs, hltfs, _, _⟩ := Evidence.WF.lim_clauses t hcn hkc hz
+    have hexp : ∀ n, BMS.expand M n = padRow (sq (fsC t n)) := by
+      intro n
+      rw [hN]
+      show (BMS.expand? (padRow (sq t)) n).getD [] = _
+      rw [expand_padSq t hcn hkc hz n]
+      rfl
+    have key : ∀ (s' : Term), inT s' = true → Evidence.WF.Frag s' = true → isAP s' = true →
+        le (phi zero t) s' = true → ∀ n, le s' (fs n) = false := by
+      intro s' hin' hfr' hap' hb' n
+      refine ih n (fsC t n) (hcnfs n) (hexp n) s' hin' hfr' hap' ?_
+      exact Evidence.WF.le_trans (frag_bnd (hcnfs n)) (frag_pow_cn hcn) hfr'
+        (Evidence.WF.le_pow (le_plus_one_of_lt_lim (hcnfs n) hcn hkc (hltfs n))) hb'
+    have hbt : le (phi zero t) s = true :=
+      Evidence.WF.le_trans (frag_pow_cn hcn) (frag_bnd hcn) hfr (le_pow_bnd hcn) hb
+    cases hlev : le s v with
+    | false => rfl
+    | true =>
+      exfalso
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
+      rcases hlev with rfl | hlts
+      · have hstrict : lt (phi zero t) (phi zero (plus t one)) = true := by
+          rw [Evidence.WF.lt_pow]
+          have hne : t ≠ plus t one := by
+            intro hcc
+            have hkk := (plus_one_cn t hcn).2.1
+            rw [← hcc, hkc] at hkk
+            exact Bool.noConfusion hkk
+          have hself := le_self_plus_one t hcn
+          simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hself
+          rcases hself with hc | hc
+          · exact absurd hc hne
+          · exact hc
+        have hltv : lt (phi zero t) s = true :=
+          Evidence.WF.lt_of_lt_of_le (frag_pow_cn hcn) (frag_bnd hcn) hfr hstrict hb
+        obtain ⟨k, hk2⟩ := hcof (phi zero t) (inT_of_cn _ (cn_pow hcn)) hltv
+        rw [key (phi zero t) (inT_of_cn _ (cn_pow hcn)) (frag_pow_cn hcn) rfl
+          (Evidence.WF.le_self _) k] at hk2
+        exact Bool.noConfusion hk2
+      · obtain ⟨k, hk2⟩ := hcof s hin hlts
+        rw [key s hin hfr hap hbt k] at hk2
+        exact Bool.noConfusion hk2
+
+/-! ### §15.8 Cashing it in on the ε₀ row -/
+
+theorem lt_hdOf_phi : ∀ (a p q : Term), lt a (phi p q) = lt (hdOf a) (phi p q)
+  | zero, _, _ => rfl
+  | M, _, _ => rfl
+  | omg _, _, _ => rfl
+  | phi _ _, _, _ => rfl
+  | psi _ _, _, _ => rfl
+  | Z _, _, _ => rfl
+  | add c d, p, q => by rw [Evidence.WF.lt_add_phi]; rfl
+
+theorem lt_plus_one_phi {a p q : Term} (h1 : le one (hd a) = true)
+    (h : lt a (phi p q) = true) : lt (plus a one) (phi p q) = true := by
+  obtain ⟨b, hb⟩ := plus_one_shape h1
+  rw [hb, Evidence.WF.lt_add_phi, ← lt_hdOf_phi]
+  exact h
+
+theorem lt_pow_of_lt_eps0 {X : Term} (h : lt X (phi one zero) = true) :
+    lt (phi zero X) (phi one zero) = true := by
+  have hX := Evidence.WF.deg_pos X
+  show ltF (fuelOf (phi zero X) (phi one zero)) (phi zero X) (phi one zero) = true
+  rw [show fuelOf (phi zero X) (phi one zero)
+        = (2 * ((phi zero X).deg + (phi one zero).deg) + 7) + 1 from by
+      show 2 * ((phi zero X).deg + (phi one zero).deg) + 8 = _; omega]
+  show (if (phi zero X == phi one zero) = true then false else
+    if ((zero : Term) == one) = true then _
+    else if ltF (2 * ((phi zero X).deg + (phi one zero).deg) + 7) zero one = true
+      then ltF (2 * ((phi zero X).deg + (phi one zero).deg) + 7) X (phi one zero)
+      else _) = true
+  rw [show ((phi zero X == phi one zero) : Bool) = false from by
+      simp only [beq_eq_false_iff_ne, ne_eq]
+      intro hc; injection hc with h1 _; exact Term.noConfusion h1,
+    show (((zero : Term) == one) : Bool) = false from rfl,
+    show ltF (2 * ((phi zero X).deg + (phi one zero).deg) + 7) (zero : Term) one = true from rfl]
+  simp only [Bool.false_eq_true, if_false, if_true]
+  rw [← Evidence.WF.lt_eq_ltF X (phi one zero) _
+    (by show X.deg + (phi one zero).deg ≤ 2 * ((1 + 1 + X.deg) + (phi one zero).deg) + 7; omega)]
+  exact h
+
+/-- **No certified value of the k-th expansion of the ε₀ row reaches ε₀.** -/
+theorem le_eps0_towerM (k : Nat) (v : Term) (h : Certified (towerM k) v) :
+    le (phi one zero) v = false := by
+  refine no_overshoot h (Evidence.WF.tower k) (Evidence.WF.cn_tower k) (towerM_eq k)
+    (phi one zero) (by decide) rfl rfl ?_
+  show ((phi zero (plus (Evidence.WF.tower k) one) == phi one zero) ||
+    lt (phi zero (plus (Evidence.WF.tower k) one)) (phi one zero)) = true
+  rw [show lt (phi zero (plus (Evidence.WF.tower k) one)) (phi one zero) = true from
+    lt_pow_of_lt_eps0 (lt_plus_one_phi
+      (le_one_hd_cn _ (Evidence.WF.cn_tower k) (Evidence.WF.tower_ne_zero k))
+      (Evidence.WF.lt_tower_eps0 k))]
+  exact Bool.or_true _
+
+/-- **THE ε₀ ROW ADMITS NO VALUE ABOVE ε₀.**  No hypothesis on `u` beyond being
+    above ε₀, and none at all on the values inside the hypothetical certificate. -/
+theorem no_cert_above_eps0 (u : Term) (hu : lt (phi one zero) u = true) :
+    ¬ Certified [[0, 0], [1, 1]] u := by
+  intro h
+  cases h with
+  | succ hk _ => rw [kind_eps0_row] at hk; exact absurd hk (by simp)
+  | lim fs hk hall hlt hstep hcof =>
+    obtain ⟨k, hk2⟩ := hcof (phi one zero) (by decide) hu
+    have hc : Certified (towerM k) (fs k) := by
+      have hx := hall k
+      rwa [show BMS.expand [[0, 0], [1, 1]] k = towerM k from expand_eps0_row k] at hx
+    rw [le_eps0_towerM k (fs k) hc] at hk2
+    exact Bool.noConfusion hk2
+
+/-- **The ε₀·2 negative control, as a genuine non-certifiability theorem.** -/
+theorem neg_control_eps0_times_two_strong :
+    ¬ Certified [[0, 0], [1, 1]] (add (phi one zero) (phi one zero)) :=
+  no_cert_above_eps0 _ (by decide)
+
 
 /-! ## §6 The registry
 
