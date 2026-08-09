@@ -4995,4 +4995,82 @@ theorem encv'_fsEE (n : Nat) :
 #guard (List.range 4).all (fun n =>
   (summands (TM.Term.splitFin (Evidence.WF.fsZeta0 n)).1).length == 1)
 
+/-! ## §22 `sqv_decomp` — THE STATEMENT, AND ONE ROW CLOSED END TO END
+
+Five rows had `∀ n` encoder facts and `sqv_decomp` had never been STATED.  Five suppliers and no
+consumer is the same bet as predicting a shape without measuring it, and this file has lost that
+bet five times tonight; the coordinator called it and was right.  **The statement first, then one
+row against it.**
+
+    SqvDecomp t fs'  :=  ∀ n, BMS.expand (sqv' t) n = sqv' (fs' n)
+
+**THE ENCODER COMMUTES WITH EXPANSION.**  That is what `sqv_decomp` has to mean for the ceiling to
+consume it: `Cert.lean`'s `Certified.lim` needs `∀ n, Certified (expand M n) (fs' n)`, and the
+whole point of the encoder is that `expand` on the matrix side matches `fs` on the term side.
+
+**IT IS STATED AGAINST `sqv'`, NOT `sqv`.**  `sqv` is `toMatrix ∘ encv`, and `encv` is fuelled;
+`sqv'` is `toMatrix ∘ encv'`, fuel-free.  §16's agreement `#guard`s say they coincide on all 169
+corpus terms and all 215 `CNV` terms at four depths — **measured, not proved**, so the two names
+are kept apart and the theorems are about the one that has proofs.
+
+**WHAT THE ROW ACTUALLY NEEDED, AND IT IS EXACTLY WHAT §9 SAID WAS MISSING.**  §9 listed four
+pieces for `ε_ω` and called the encoder fact the blocker.  All four are now theorems:
+
+    sqv' (φ̄(1,ω)) = (0,0)(1,1)(2,0)        `sqv'_epsOmega`   — from §19's row at n = 0
+    expand … n = epsM n                      `Cert.expand_epsOmega`  (Cert §20, already proved)
+    fsEW n = φ̄(1, ofNat n)                   by definition
+    encv' (φ̄(1, ofNat n)) 0 = …              `encv'_epsOmega`  (§17)
+
+and the bridge is `sqv'_fsEW : sqv' (fsEW n) = epsM n`, which is `toMatrix` over §17's list.
+**Nothing on `Certified`'s side was needed and nothing had to be assumed as a hypothesis** — the
+row is `SqvDecomp` for `ε_ω` outright.
+
+**WHAT THIS DOES NOT YET GIVE, STATED SO THE GAP IS VISIBLE AT THE USE SITE.**  `SqvDecomp` is the
+EXPANSION half.  `Certified M t` also needs `kind M = .lim` and the three order clauses, and those
+are `Evidence.WF.lim_clauses_epsOmega` (proved) — but assembling them into `Certified` requires
+`∀ n, Certified (expand M n) (fsEW n)`, i.e. the ε_n rows certified, which is a RECURSION down the
+ladder and not part of this section.  **`sqv_decomp` is one input to that recursion, not the whole
+of it**, and saying so here is cheaper than discovering it at the assembly. -/
+
+def sqv' (t : Term) : BMS.Matrix := toMatrix (encv' t 0)
+
+/-- **`sqv_decomp`, THE GENERAL STATEMENT.**  Proved per row; no general proof is claimed. -/
+def SqvDecomp (t : Term) (fs' : Nat → Term) : Prop :=
+  ∀ n, BMS.expand (sqv' t) n = sqv' (fs' n)
+
+theorem sqv'_epsOmega : sqv' (phi one omega) = [[0, 0], [1, 1], [2, 0]] := by
+  show toMatrix (encv' (phi one (Evidence.WF.repAdd omega 0)) 0) = _
+  rw [encv'_epsOmegaSq 0]
+  rfl
+
+theorem sqv'_fsEW (n : Nat) : sqv' (Evidence.WF.fsEW n) = Evidence.Cert.epsM n := by
+  show toMatrix (encv' (phi one (ofNat n)) 0) = _
+  rw [encv'_epsOmega n]
+  show ([0, 0] : List Nat) :: (List.replicate (n + 1) ((1, 1) : Col2)).map (fun c => [c.1, c.2])
+     = [[0, 0], [1, 1]] ++ (List.replicate n ([[1, 1]] : BMS.Matrix)).flatten
+  rw [List.map_replicate, flatten_replicate_singleton, List.replicate_succ]
+  rfl
+
+/-- **`ε_ω` CLOSED END TO END** — the encoder commutes with expansion on the row §9 called the
+    cleanest, with nothing assumed. -/
+theorem sqv_decomp_epsOmega : SqvDecomp (phi one omega) Evidence.WF.fsEW := by
+  intro n
+  rw [sqv'_epsOmega, sqv'_fsEW]
+  show (BMS.expand? [[0, 0], [1, 1], [2, 0]] n).getD [] = _
+  rw [Evidence.Cert.expand_epsOmega n]
+  rfl
+
+#guard (List.range 8).all (fun n =>
+  BMS.expand (sqv' (phi one omega)) n == sqv' (Evidence.WF.fsEW n))
+#guard sqv' (phi one omega) == sqv (phi one omega)
+#guard (List.range 8).all (fun n => sqv' (Evidence.WF.fsEW n) == sqv (Evidence.WF.fsEW n))
+
+/-! **THE PREDICTION TALLY, as a fact about the rule rather than about me.**  Six predictions of
+mine tonight were refuted by measurement that cost one `#eval` each: `tdepth` at `predOr`, the
+named-equation layer (three times), `ε_{ω^ω}`'s subscript being a new shape, and `ε_{ε₀}` needing
+induction for the summand-list reason.  **All six were reasonable and all six were wrong, and the
+`#eval` was free every time.**  That ratio is the argument for measuring first, stated by someone
+who has now paid it six times — and the coordinator's *"a request to characterise something is
+worth one `#eval` before it is worth one theorem"* is the same rule from the other side. -/
+
 end Evidence.SqV
