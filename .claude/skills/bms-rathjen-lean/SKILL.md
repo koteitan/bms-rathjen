@@ -21,6 +21,16 @@ Master plan: `plan/README.md`. Target list & staging: `rathjen-ordinals.md`
   `Rows/` (table row DB + per-row lemmas), `Evidence/` (general theorems).
 - `table/*.md` is **generated** by `lake exe gentable` from `Rows/` — never
   hand-edit; edit `Rows/` and regenerate.
+- **THE PROOF PATH MUST NOT IMPORT THE CANDIDATE TIER.** `Evidence/Cert.lean` is
+  the proof path — `certIn_rows_inT` is the gate that mints every ✅.
+  `Evidence/SqV.lean` and `Trans/Recal.lean` (`oR`) are candidate tier. The arrow
+  runs **candidate → proof**, never the reverse: a bridge lemma relating `sqv` to
+  `Certified` goes in `SqV.lean` (which imports `Cert.lean`), NOT in `Cert.lean`.
+  Reason: if `Cert` imported `SqV`, a candidate-tier lemma would become citable
+  inside a certificate and a corpus change could break the gate's build. This
+  makes "`oR` must not appear in a certificate's justification" a property of the
+  module graph instead of a rule someone has to remember. Putting the bridge next
+  to `Certified` is the natural move and it is the wrong one.
 - `Rows.version` in `Rows/TM.lean` is rendered into the table header; bump it
   together with every /commitbump and regenerate the table before committing.
 
