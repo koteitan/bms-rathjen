@@ -10404,6 +10404,280 @@ theorem lim_clauses_epsZeta0 :
   CNV (fsEZ n) && lt (fsEZ n) epsZeta0 && lt (fsEZ n) (fsEZ (n+1)))
 
 
+/-! ### §15.13 THE INTERMEDIATE VALUES OF THE ε-ROWS, and what Cert.lean §18.2 asked for
+
+WHAT THIS IS FOR.  §15.12 gave the four `Certified.lim` premises for each remaining row.
+Every one of them is a LIMIT row whose EXPANSIONS ARE THEMSELVES LIMITS, so each ALSO needs
+premises at its intermediate values — the obligation §15.11 discharged for row A.  This
+section discharges it for the ε_ω row, whose intermediates are exactly the ε-hierarchy, and
+supplies the three things `Evidence/Cert.lean` §18.2 lists as still outstanding for row A.
+(That section says "with no further input needed from the WF lane" and then names two CNF
+facts and one iteration.  All three are WF-region statements, so they belong here; writing
+them in Cert.lean would duplicate `cnv_of_cn`, which already exists.)
+
+MEASURED FIRST, per §15.5's rule.  `Trans.oR` on `BMS.expand`, with
+`epsM k := (0,0)(1,1)` followed by `k` copies of `(1,1)`:
+
+    oR (epsM k)                     = ε_k = φ̄(1, ofNat k)              k ≤ 4, exact
+    BMS.expand (0,0)(1,1)(2,0) n    = epsM n                           n ≤ 5, exact
+    oR (BMS.expand (epsM (k+1)) n)  = fsGen (ε_k) 0 (ε_k ⊕ ε_k) n      k ≤ 3, n ≤ 5, exact
+
+The middle line is the one that makes this section necessary: ε_ω's expansions ARE the
+ε-hierarchy's matrices, so its intermediate values are ε₀, ε₁, ε₂, … .  The third says the
+ε-SUCCESSOR IS UNIFORM — one template covers every ε_{k+1} at once, with ε_k as its
+parameter.  §15.5 predicted that from ε₂ alone ("the same shape"); it is now measured to
+k ≤ 3 and PROVED for all k.
+
+TWO NEGATIVE CONTROLS, both measured FALSE: the iteration base is `ε_k ⊕ ε_k`, not `ε_k`;
+and the sequence is not `ω^·` applied to the whole `fsGen`.  And ONE CONSISTENCY CHECK on a
+predecessor's work: §15.8's `fsE1` is exactly this family at `k = 0` — measured equal for
+n ≤ 5 and `#guard`ed below.  So §15.8 is not superseded, it is the family's first instance,
+and the two agree where they overlap. -/
+
+/-! #### §15.13.1 Below `n+1` in the CNF region
+
+`below_one_cnv` (§15.7) and `below_two_cnv` (§15.12.2) are the cases `n = 0, 1` of one
+statement: below `n+1` every `CNV` term is `≤ n`.  The ε-successor family's `H1` needs it at
+every `n`, so it is proved once, on `repAdd one` where the induction is natural, and
+transported to `ofNat` by §15.12.1's identification. -/
+
+theorem le_one_repAdd : ∀ k, le one (repAdd one k) = true
+  | 0 => le_self one
+  | k + 1 => by
+    refine le_of_lt ?_
+    show lt one (add one (repAdd one k)) = true
+    rw [lt_atom_add (s := one) rfl]
+    exact le_self one
+
+theorem below_repAdd_one : ∀ (k : Nat) (q : Term), CNV q = true →
+    lt q (repAdd one (k + 1)) = true → le q (repAdd one k) = true := by
+  intro k
+  induction k with
+  | zero =>
+    intro q hq hlt
+    exact below_two_cnv q hq (by rw [ofNat_succ_eq 1]; exact hlt)
+  | succ k ih =>
+    intro q hq hlt
+    rw [show repAdd one (k + 1 + 1) = add one (repAdd one (k + 1)) from rfl] at hlt
+    cases q with
+    | M => exact Bool.noConfusion hq
+    | omg _ => exact Bool.noConfusion hq
+    | psi _ _ => exact Bool.noConfusion hq
+    | Z _ => exact Bool.noConfusion hq
+    | zero => exact le_zero_left (repAdd_ne_zero zero zero (k + 1))
+    | phi p r =>
+      rw [lt_atom_add (s := phi p r) rfl] at hlt
+      exact le_trans (frag_of_cnv _ hq) (frag_of_cnv one rfl)
+        (frag_of_cnv _ (cnv_repAdd (p := zero) (q := zero) rfl (k + 1)))
+        hlt (le_one_repAdd (k + 1))
+    | add c d =>
+      obtain ⟨hAPc, hcnc, hcnd, _⟩ := cnv_add hq
+      by_cases heq : add c d = add one (repAdd one (k + 1))
+      · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+      rw [lt_add_add heq] at hlt
+      show le (add c d) (add one (repAdd one k)) = true
+      by_cases hc1 : c = one
+      · rw [if_pos hc1] at hlt
+        rw [hc1]
+        exact le_add_tail (ih d hcnd hlt)
+      · rw [if_neg hc1] at hlt
+        rw [below_one_cnv c hcnc hlt] at hAPc
+        exact Bool.noConfusion hAPc
+
+/-- **Below `n+1` every `CNV` term is `≤ n`.**  `below_one_cnv` and `below_two_cnv` are the
+    cases `n = 0` and `n = 1`. -/
+theorem below_ofNat_cnv : ∀ (k : Nat) (q : Term), CNV q = true →
+    lt q (ofNat (k + 1)) = true → le q (ofNat k) = true
+  | 0, q, hq, hlt => by
+    rw [below_one_cnv q hq (by rw [show one = ofNat 1 from rfl]; exact hlt)]
+    exact le_self _
+  | k + 1, q, hq, hlt => by
+    rw [ofNat_succ_eq (k + 1)] at hlt
+    rw [ofNat_succ_eq k]
+    exact below_repAdd_one k q hq hlt
+
+theorem le_zero_ofNat : ∀ k, le zero (ofNat k) = true
+  | 0 => le_self zero
+  | k + 1 => by rw [ofNat_succ_eq k]; exact le_zero_left (repAdd_ne_zero zero zero k)
+
+/-! #### §15.13.2 THE ε-SUCCESSOR FAMILY — ε_ω's intermediate values -/
+
+/-- ε_k = φ̄(1, k).  This is the SAME function as §15.12's `fsEW`, and that is the point:
+    ε_ω's fundamental sequence enumerates the ε-hierarchy, which is why its intermediate
+    values need the family below. -/
+def epsN (k : Nat) : Term := phi one (ofNat k)
+
+theorem fsEW_eq_epsN (n : Nat) : fsEW n = epsN n := rfl
+
+theorem cnv_epsN (k : Nat) : CNV (epsN k) = true := by
+  show (CNV one && CNV (ofNat k)) = true
+  rw [cnv_ofNat k]; rfl
+
+theorem le_eps0T_epsN (k : Nat) : le eps0T (epsN k) = true :=
+  le_phi_of_le rfl rfl rfl (cnv_ofNat k) (le_self one) (le_zero_ofNat k)
+
+theorem lt_ofNat_eps0T (k : Nat) : lt (ofNat (k + 1)) eps0T = true := by
+  rw [ofNat_succ_eq k]
+  show lt (repAdd (phi zero zero) k) (phi one zero) = true
+  rw [lt_repAdd_phi zero zero one zero k]
+  decide
+
+theorem le_ofNat_epsN (k : Nat) : le (ofNat (k + 1)) (epsN k) = true :=
+  le_of_lt (lt_of_lt_of_le (frag_of_cnv _ (cnv_ofNat (k + 1))) (frag_of_cnv _ cnv_eps0T)
+    (frag_of_cnv _ (cnv_epsN k)) (lt_ofNat_eps0T k) (le_eps0T_epsN k))
+
+/-- ε_{k+1}'s sequence: ε_k, then the ω-tower over ε_k·2.  MEASURED for k ≤ 3. -/
+def fsEsucc (k : Nat) : Nat → Term := fsGen (epsN k) zero (add (epsN k) (epsN k))
+
+/-- **THE ε-SUCCESSOR FAMILY.**  The four `Certified.lim` premises for ε_{k+1}, for EVERY
+    `k` at once — core (B) with `ε_k` as its parameter rather than a constant, which is what
+    §15.6 made the `v` parameter for.  With `lim_clauses_eps0` (§15.11.2) at `k = 0`, this
+    covers every intermediate value of the ε_ω row. -/
+theorem lim_clauses_epsSucc (k : Nat) :
+    (∀ n, CNV (fsEsucc k n) = true)
+  ∧ (∀ n, lt (fsEsucc k n) (epsN (k + 1)) = true)
+  ∧ (∀ n, lt (fsEsucc k n) (fsEsucc k (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (epsN (k + 1)) = true → ∃ n, le s (fsEsucc k n) = true) := by
+  have hv : CNV (epsN k) = true := cnv_epsN k
+  have hAP : (epsN k).isAP = true := rfl
+  have hbase : CNV (add (epsN k) (epsN k)) = true := by
+    show ((epsN k).isAP && CNV (epsN k) && CNV (epsN k) && hdLe (epsN k) (epsN k)) = true
+    rw [hv, hAP, hdLe_of_isAP hAP, le_self]; rfl
+  have hvb : le (epsN k) (add (epsN k) (epsN k)) = true := by
+    refine le_of_lt ?_
+    rw [lt_atom_add (s := epsN k) rfl]
+    exact le_self _
+  have hvt : lt (epsN k) (epsN (k + 1)) = true := lt_phi_arg (lt_ofNat_step k)
+  exact lim_clauses_fsGen hv rfl hbase (cnv_epsN (k + 1)) hvb (by decide) hvt
+    (by rw [lt_add_phi]; exact hvt)
+    (fun q hq hlt =>
+      le_phi_of_le rfl hq rfl (cnv_ofNat k) (le_self one) (below_ofNat_cnv k q hq hlt))
+    (fun p hp hlt => by rw [below_one_cnv p hp hlt]; exact le_self _)
+    (le_ofNat_epsN k)
+
+/-! Receipts.  The `fsE1` line is the consistency check on §15.8: this family at `k = 0` is
+    that row, not a rival to it. -/
+
+#guard epsN 0 == eps0T
+#guard epsN 1 == phi one one
+#guard fsEsucc 0 0 == eps0T
+#guard fsEsucc 0 1 == phi zero (add eps0T eps0T)
+#guard (List.range 6).all (fun n => fsEsucc 0 n == fsE1 n)      -- §15.8 IS the case k = 0
+#guard fsEsucc 1 0 == phi one one
+#guard fsEsucc 1 1 == phi zero (add (phi one one) (phi one one))
+#guard (fsEsucc 1 1 == phi zero (phi one one)) == false          -- the base is ε_k·2, not ε_k
+#guard (List.range 4).all (fun k => (List.range 4).all (fun n =>
+  CNV (fsEsucc k n) && lt (fsEsucc k n) (epsN (k+1)) && lt (fsEsucc k n) (fsEsucc k (n+1))))
+
+/-! #### §15.13.3 THE PREFIX ITERATION AT A GENERAL TAIL — Cert.lean §18.2's request
+
+IN THAT SECTION'S WORDS: "its limit case needs `lim_clauses_sum` ITERATED over a general
+`c` — NOT `lim_clauses_sum_iter`, which iterates at `v = repAdd u k` and so serves only the
+`c = 0` case."  That is correct, and it is a WF-region lemma, so here it is.
+
+`repPre u w k` is `k` copies of `u` in front of an ARBITRARY tail `w`.  It is Cert.lean's
+`famV` minus the `c = 0` special case — and that special case is a FORMATION CONDITION on
+the tail (`u ⊕ 0` is not a term of 𝔗(M); §15.11's `hgz` is the same fact), not a feature of
+the iteration, which is why it stays on that side of the boundary.
+
+`lim_clauses_sum_iter` (§15.11.1) is the instance `w = u`, and `repPre_self` says so.  It is
+left standing rather than re-derived as a corollary because Cert.lean cites it by name and
+it is already verified; the small redundancy is cheaper than churning a lemma another lane
+is mid-proof against. -/
+
+/-- `k` copies of `u` in front of `w`. -/
+def repPre (u w : Term) : Nat → Term
+  | 0 => w
+  | k + 1 => add u (repPre u w k)
+
+theorem repPre_self (u : Term) : ∀ k, repPre u u k = repAdd u k
+  | 0 => rfl
+  | k + 1 => by show add u (repPre u u k) = add u (repAdd u k); rw [repPre_self u k]
+
+/-- §15.11's sequence, read as a prefix of a varying tail. -/
+theorem sumSeq_repPre {u : Term} (g : Nat → Term) : ∀ k n, sumSeq u g k n = repPre u (g n) k
+  | 0, _ => rfl
+  | k + 1, n => by
+    show add u (sumSeq u g k n) = add u (repPre u (g n) k)
+    rw [sumSeq_repPre g k n]
+
+theorem hdLe_repPre {u w : Term} (hdwu : hdLe w u = true) : ∀ k, hdLe (repPre u w k) u = true
+  | 0 => hdwu
+  | _ + 1 => le_self u
+
+theorem cnv_repPre {u w : Term} (hcnu : CNV u = true) (hAPu : u.isAP = true)
+    (hcnw : CNV w = true) (hdwu : hdLe w u = true) : ∀ k, CNV (repPre u w k) = true
+  | 0 => hcnw
+  | k + 1 => by
+    show (u.isAP && CNV u && CNV (repPre u w k) && hdLe (repPre u w k) u) = true
+    rw [hAPu, hcnu, cnv_repPre hcnu hAPu hcnw hdwu k, hdLe_repPre hdwu k]; rfl
+
+/-- **THE SUM COMBINATOR ITERATED AT A GENERAL TAIL.**  From the four premises for `w` with
+    sequence `g`, the four premises for `u·k ⊕ w` with sequence `n ↦ u·k ⊕ g n`, for every
+    `k`.  `lim_clauses_sum_iter` is the case `w = u`. -/
+theorem lim_clauses_sum_iter_gen {u w : Term} (g : Nat → Term)
+    (hcnu : CNV u = true) (hAPu : u.isAP = true)
+    (hcnw : CNV w = true) (hdwu : hdLe w u = true)
+    (hg1 : ∀ n, CNV (g n) = true) (hg2 : ∀ n, lt (g n) w = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s w = true → ∃ n, le s (g n) = true)
+    (hgz : ∀ n, g n ≠ zero) :
+    ∀ k, (∀ n, CNV (sumSeq u g k n) = true)
+       ∧ (∀ n, lt (sumSeq u g k n) (repPre u w k) = true)
+       ∧ (∀ n, lt (sumSeq u g k n) (sumSeq u g k (n + 1)) = true)
+       ∧ (∀ s, inT s = true → lt s (repPre u w k) = true →
+             ∃ n, le s (sumSeq u g k n) = true) := by
+  intro k
+  induction k with
+  | zero => exact ⟨hg1, hg2, hg3, hg4⟩
+  | succ k ih =>
+    obtain ⟨i1, i2, i3, i4⟩ := ih
+    exact lim_clauses_sum (sumSeq u g k) hcnu hAPu (cnv_repPre hcnu hAPu hcnw hdwu k)
+      (hdLe_repPre hdwu k) i1 i2 i3 i4 (sumSeq_ne_zero hgz k)
+
+/-! #### §15.13.4 The CNF region sits below ε₀
+
+Cert.lean §18.2's other two requests were "`CN c → CNV c`, and `hdLe c ε₀` for CN `c`".  THE
+FIRST ALREADY EXISTS: it is `cnv_of_cn`, proved in §15 where `CNV` is defined, so nothing new
+is needed and nothing should be written for it.  The second is `hdLe_cn_eps0T`, whose content
+is `lt_cn_eps0` — and that statement is NOT already in the file: §9 bounds terms below ε₀ by
+TOWERS and §10 proves accessibility, neither of which gives "every CNF term is below ε₀"
+directly.  It is one structural induction, immediate from 2.3.13(ii). -/
+
+/-- **The whole CNF region lies below ε₀.** -/
+theorem lt_cn_eps0 : ∀ (c : Term), CN c = true → lt c eps0T = true
+  | zero, _ => by
+    show ltF (fuelOf zero eps0T) zero eps0T = true
+    exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + eps0T.deg) + 8; omega)
+      (by intro hc; exact Term.noConfusion hc)
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi a b, h => by
+    obtain ⟨ha, hb⟩ := cn_phi h
+    subst ha
+    show lt (phi zero b) (phi one zero) = true
+    rw [lt_phi_phi (by intro hc; injection hc with h1 _; exact Term.noConfusion h1),
+      if_neg (by intro hc; exact Term.noConfusion hc),
+      if_pos (show lt zero one = true from by decide)]
+    exact lt_cn_eps0 b hb
+  | add c d, h => by
+    obtain ⟨_, hc, _, _⟩ := cn_add h
+    show lt (add c d) (phi one zero) = true
+    rw [lt_add_phi]
+    exact lt_cn_eps0 c hc
+
+/-- Every CNF head is an ω-power below ε₀ — the second of Cert.lean §18.2's two facts. -/
+theorem hdLe_cn_eps0T (c : Term) (hcn : CN c = true) (hz : c ≠ zero) : hdLe c eps0T = true :=
+  hdLe_of_lt_cnv eps0T cnv_eps0T c hz (inT_of_cnv c (cnv_of_cn c hcn)) (lt_cn_eps0 c hcn)
+
+#guard repPre eps0T (tower 2) 3 == sumSeq eps0T tower 3 2
+#guard repPre eps0T eps0T 3 == repAdd eps0T 3
+#guard lt (fsC (phi zero (ofNat 2)) 4) eps0T == true              -- a CNF term below ε₀
+#guard hdLe (add (phi zero one) (phi zero zero)) eps0T == true    -- and its head bound
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
