@@ -77,9 +77,25 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `/tmp/kimina-rathjen.log` vs `/tmp/kimina-pss.log` instances before pkill).
   General ops (start/health-check/restart rules, multi-agent verification
   discipline): global skill `use-kimina-lean-server`.
+- **HTTP 500 at ~31 s is a TIMEOUT, not a crash.** The default per-request
+  ceiling is ~30 s, which full-file POSTs of `Evidence/WF.lean` started hitting
+  once it passed ~8700 lines. Add a `timeout` field alongside `snippets`:
+  `{"snippets":[…], "timeout": 300}`. With it the same file checks in ~78 s.
+  Do not restart the server or bisect the file on a 500 near 31 s — raise the
+  timeout first.
 - After editing `BMS/ TM/ Trans/` libs: `lake build` + restart the rathjen
   instance (header cache). `Rows/` snippets sent as full text need no restart.
-- Parallel agents never run `lake build`; coordinator builds once.
+- **The coordinator must restart :12346 after every `lake build`.** The server
+  silently keeps serving the oleans it started with, so a lane that verifies
+  against it after a rebuild gets stale-environment failures that look like
+  real errors (measured: a server started before a build could not resolve any
+  name added by it). Health-check against a name you know is new.
+- Parallel agents never run `lake build`; coordinator builds once. When a lane
+  is mid-write, the coordinator's build will fail on THAT file — commit the
+  other lane's verified file alone (no version bump, so no table regeneration)
+  rather than waiting or committing an unverified state.
+- Generate the table to a scratch path and `diff` before installing it:
+  running `gentable` while a lane is mid-write truncated `table/r1-tm.md` once.
 
 ## Publishing rules (public repo)
 
