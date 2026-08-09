@@ -3931,6 +3931,14 @@ THE AGREEMENT, over the corpus the coordinator named, stated rather than summari
     the same over `cnvAll` (215 `CNV` terms)                         0 violations
     toMatrix (encv' t 0) = sqv t                                     0 violations
 
+**AND THEY ARE `#guard`s IN THE FILE, NOT NUMBERS IN A MESSAGE — WHICH IS THE PROPERTY THAT PAID
+OUT.**  §17's `fpDeepC` changed `encvC`'s `fpDeep` clause AFTER these were written.  The agreement
+re-ran on the very check that verified the change: `agreeCorpus` is `corpusW ++ deeper ++ nested`
+deduped, `cnvAll` is `cnvPool ++ gpool`-filtered-to-`CNV` deduped, both NAMED in the guards rather
+than described, and both still 0 violations at `d ∈ 0..3`.  **A definition change cannot silently
+invalidate a measurement that is executable and lives beside it** — it can only make the file red.
+A measurement reported in prose would have gone stale and read as current.
+
 **`encvF` STAYS.**  Thirteen candidates were compared on it, and the D1–D8 gate numbers
 throughout this file are ITS numbers; deleting it would orphan every measurement above.  `encv'`
 supersedes it as the definition to reason about, and the agreement above is what licenses reading
@@ -4141,12 +4149,24 @@ the carrier equality.
 is the whole proof, plus `flatten_replicate_singleton` for the `reps` block and a `split` whose
 second branch contradicts `summands (splitFin (ofNat n)).1 = []`.
 
-**AND I BRIEFLY BELIEVED IT HAD CLOSED ONE ROUND EARLIER, WHEN IT HAD NOT.**  I filtered the
-checker's messages by line number to isolate the new ones, the filter bound sat above the lines
-the test occupied, and it reported CLEAN for three variants that all failed.  **A FILTERED GREEN
-IS NOT A GREEN.**  The file's rule — verify the whole artifact, read the raw result — exists for
-exactly this, and I broke it on a throwaway probe and then believed the probe.  The verdict here
-is from an unfiltered check.
+**AND I BRIEFLY BELIEVED IT HAD CLOSED ONE ROUND EARLIER, WHEN IT HAD NOT.  I WAS ONE SENTENCE
+FROM REPORTING SUCCESS, AND THE COORDINATOR WOULD HAVE COMMITTED IT.**  I filtered the checker's
+messages by line number to isolate the new ones, the filter bound sat above the lines the test
+occupied, and it reported CLEAN for three variants that all failed.  **A FILTERED GREEN IS NOT A
+GREEN.**
+
+**IT HAPPENED ON A THROWAWAY PROBE, AND THAT IS WHY IT HAPPENED.**  The whole-artifact rule was
+never in doubt for a real check; I relaxed it for a disposable one and then believed the
+disposable one's output exactly as much as a real check's.  **The status of a tool does not lower
+how much its output gets believed.**  Filter by SEVERITY, never by line number or substring: a
+line-number filter with a wrong bound does not fail, **it prints CLEAN**.
+
+**AND THE ONLY SURVIVING TRACE WAS `#print axioms`.**  The build passed.  The file held no `sorry`
+token — the failed proof was `sorry`-FREE in source; Lean had inserted `sorryAx` itself.  The line
+count grew the way a successful edit grows.  `sorryAx` in the axiom print was the single signal
+that anything was wrong, which makes the axiom print not an audit step but **the last line of
+retreat when something that looks like it went through did not.**  The verdict here is from an
+unfiltered full-file check, read by severity.
 
 WHAT GENERALISES: `splitFin_ofNat` handles every `φ̄(a, ofNat n)` subscript, and the three
 "rewrite the whole dependent term" moves are reusable as stated.  A row whose subscript HAS

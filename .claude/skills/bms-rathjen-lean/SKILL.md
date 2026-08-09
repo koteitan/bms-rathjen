@@ -154,10 +154,22 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `Evidence/WF.lean` (`acc_of_cn_aux`, `acc_cnv_aux`) put choice into `acc_cnv`,
   `acc_cnv_inT`, `acc_inT_below_cnv`, `wf_lt_cnv`, `wf_lt_belowC`, `belowC_wf`
   and thence into `Evidence/SqV.lean`'s `encvC`/`encv'`; the fix was `+15/-2`
-  and made all of them `[propext, Quot.sound]`. Suspect any decision procedure
-  (`omega`, `decide`, `simp_arith`, `trivial`) used to discharge a contradiction
-  on a Prop-valued goal. **Guard the fix in the source** — shortening it back to
-  a bare `omega` is the natural edit and silently undoes it.
+  and made all of them `[propext, Quot.sound]`. Four more sites followed
+  (`cof_fsGen_aux`, `cof_phiArg_aux`, `cof_phiArg1_aux`, `acc_lexLt`); at
+  `acc_lexLt` the tactic was `simp at hl`, not `omega`, and there **the fix
+  pattern did not transfer** — `exact absurd hl (by simp)` was still classical
+  and it took explicit `Nat.succ_ne_zero` / `Nat.noConfusion`.
+  **THE TRIGGER IS NOT CHARACTERISED, AND AN EARLIER VERSION OF THIS ENTRY
+  OVERCLAIMED IT.** Minimal standalone probes do NOT reproduce the taint: bare
+  `simp`, `simpa`, `omega`, `decide`, and `simp at hv` on a contradictory
+  hypothesis with a non-arithmetic goal each came back `[propext]`. So "any
+  decision tactic closing a non-arithmetic goal by contradiction" is a wider
+  claim than the evidence supports. What IS established: **these six sites were
+  tainted, explicit terms cleared them, and the only reliable detector is
+  `#print axioms` — not a tactic-shape heuristic.** Reach for explicit
+  discharge when a declaration measures dirty, not preemptively by grepping for
+  tactics. **Guard each fix in the source** — shortening it back to the bare
+  tactic is the natural edit and silently undoes it.
 - **WHEN A DEPENDENCY BISECT SAYS "EVERY CHILD CLEAN, PARENT DIRTY", THE ANSWER IS
   IN THE PARENT'S TACTICS.** That reads as impossible and is not: a
   tactic-generated axiom has no constant to bisect, so the standard technique
