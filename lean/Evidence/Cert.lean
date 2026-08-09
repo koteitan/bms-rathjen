@@ -1,6 +1,7 @@
 import Trans.TM
 import TM.FS
 import Evidence.StageA
+import Evidence.WF
 /-
 Evidence/Cert.lean — semantic certificates (the v0.1.42 doctrine)
 
@@ -1535,13 +1536,16 @@ the prefix induction (`cert_pre`).
 Two things are worth flagging to a reader who checks this section against §5.
 
   * NOTHING here propagates an order HYPOTHESIS into an order CONCLUSION.  `lt`
-    is `ltF` at one fixed amount of fuel and this file has no fuel-monotonicity
-    lemma, so `ltF f x y = true` at the fuel the caller happens to supply cannot
-    be re-used at the fuel the goal happens to want.  Every proof therefore
-    CLASSIFIES its term into a canonical `pwv e` first and then RE-DERIVES the
-    comparison from scratch with its own fuel budget — the same discipline §5
-    uses (`below_wm` then `lt_wm_step`), here made explicit because the region
-    is big enough that the temptation is real.
+    is `ltF` at one fixed amount of fuel, and when this section was written
+    there was no fuel-monotonicity lemma, so `ltF f x y = true` at the fuel the
+    caller happens to supply could not be re-used at the fuel the goal happens
+    to want.  Every proof therefore CLASSIFIES its term into a canonical `pwv e`
+    first and then RE-DERIVES the comparison from scratch with its own fuel
+    budget — the same discipline §5 uses (`below_wm` then `lt_wm_step`).
+    `Evidence.WF.ltF_mono` (proved afterwards, and now imported) LIFTS this
+    restriction: see `pwLt_of_lt` below for the entry point.  The proofs here
+    were not rewritten to use it — they are green and mutation-controlled as
+    they stand — but a future simplification pass should start there.
   * The cofinality clause is proved ONCE, prefix-relatively (`cof_pre`), for
     every limit node of the family at the same time.  It quantifies over ALL
     `inT` terms, as the doctrine requires; `below_pre` is the analysis that
@@ -2857,6 +2861,16 @@ def PwLt (a b : List Nat) : Prop :=
 private theorem lt_of_pwLt {a b : List Nat} (h : PwLt a b) : lt (pwv a) (pwv b) = true :=
   h _ (by show (pwv a).deg + (pwv b).deg + 4 ≤ 2 * ((pwv a).deg + (pwv b).deg) + 8; omega)
 
+/-- The converse, by `Evidence.WF.ltF_mono`.  Before that lemma existed this
+    direction was unavailable and every `PwLt` had to be BUILT in the ∀-fuel form
+    (which is why `pwLt_head` / `pwLt_ext` exist); with it, a single `lt`
+    computation suffices.  Kept as the documented entry point for anyone
+    simplifying §5.7–§5.15 now that the import is in place. -/
+theorem pwLt_of_lt {a b : List Nat} (h : lt (pwv a) (pwv b) = true) : PwLt a b := fun f hf =>
+  Evidence.WF.ltF_mono
+    (by show (pwv a).deg + (pwv b).deg ≤ 2 * ((pwv a).deg + (pwv b).deg) + 8; omega)
+    (by omega) h
+
 private theorem pwLt_zero {b : List Nat} (hb : b ≠ []) : PwLt [] b := by
   intro f hf
   exact ltF_zero (by have := deg_pos (pwv b); omega) (pwv_ne_zero b hb)
@@ -4095,66 +4109,13 @@ descent is not structural (a limit exponent is replaced by a LONGER list).  The
 count vector is where it becomes structural-in-disguise: both BM4 steps agree on
 a prefix and strictly drop the next entry, i.e. they are instances of `lexLt_at`.
 
-This duplicates `Evidence/WF.lean` §1–§3 rather than importing it: `Evidence.WF`
-still has to be added to this file's imports by a lane that can run `lake build`
-(see the note at the head of WF.lean).  When that happens this block should be
-deleted and `open Evidence.WF` used instead. -/
-
-inductive LexLt : List Nat → List Nat → Prop
-  | head {a b : Nat} {l l' : List Nat} (hab : a < b) (hlen : l.length = l'.length) :
-      LexLt (a :: l) (b :: l')
-  | tail {a : Nat} {l l' : List Nat} (h : LexLt l l') : LexLt (a :: l) (a :: l')
-
-private theorem lexLt_length : ∀ {l l' : List Nat}, LexLt l l' → l.length = l'.length
-  | _, _, .head _ h => by simp [h]
-  | _, _, .tail h => by simp [lexLt_length h]
-
-private theorem not_lexLt_nil {l : List Nat} : ¬ LexLt l [] := by intro h; cases h
-
-private theorem acc_cons_of (n b : Nat)
-    (hlow : ∀ c, c < b → ∀ t', t'.length = n → Acc LexLt (c :: t')) :
-    ∀ (t : List Nat), Acc LexLt t → t.length = n → Acc LexLt (b :: t) := by
-  intro t hacc
-  induction hacc with
-  | intro u _ ih =>
-    intro hlen
-    refine Acc.intro _ (fun y hy => ?_)
-    cases hy with
-    | @head c d l l' hcd hll => exact hlow c hcd l (by rw [hll]; exact hlen)
-    | @tail _ l _ h => exact ih l h (by rw [lexLt_length h]; exact hlen)
-
-private theorem acc_cons_aux (n : Nat) (hn : ∀ l : List Nat, l.length = n → Acc LexLt l) :
-    ∀ (a b : Nat), b ≤ a → ∀ (t : List Nat), t.length = n → Acc LexLt (b :: t)
-  | 0, b, hb, t, ht => by
-    have hb0 : b = 0 := by omega
-    subst hb0
-    exact acc_cons_of n 0 (fun c hc => absurd hc (by omega)) t (hn t ht) ht
-  | a + 1, b, hb, t, ht => by
-    rcases Nat.lt_or_ge b (a + 1) with h | h
-    · exact acc_cons_aux n hn a b (by omega) t ht
-    · have hb1 : b = a + 1 := by omega
-      subst hb1
-      refine acc_cons_of n (a+1)
-        (fun c hc t' ht' => acc_cons_aux n hn a c (by omega) t' ht') t (hn t ht) ht
-
-private theorem acc_lexLt : ∀ (n : Nat) (l : List Nat), l.length = n → Acc LexLt l
-  | 0, l, hl => by
-    cases l with
-    | nil => exact Acc.intro [] (fun y hy => absurd hy not_lexLt_nil)
-    | cons a t => simp at hl
-  | n + 1, l, hl => by
-    cases l with
-    | nil => simp at hl
-    | cons a t =>
-      have ht : t.length = n := by simp only [List.length_cons] at hl; omega
-      exact acc_cons_aux n (fun l' hl' => acc_lexLt n l' hl') a a (Nat.le_refl a) t ht
-
-theorem lexLt_wf : WellFounded LexLt := ⟨fun l => acc_lexLt l.length l rfl⟩
-
-private theorem lexLt_at : ∀ (p : List Nat) {a b : Nat} {l l' : List Nat}, a < b →
-    l.length = l'.length → LexLt (p ++ a :: l) (p ++ b :: l')
-  | [], _, _, _, _, hab, hlen => .head hab hlen
-  | _ :: p, _, _, _, _, hab, hlen => .tail (lexLt_at p hab hlen)
+`Evidence/WF.lean` §1–§3 supplies exactly this: the length-preserving
+lexicographic order `LexLt` on count vectors, its well-foundedness, and the step
+lemma `lexLt_at` ("agree on a prefix, drop at the next entry") of which BOTH BM4
+steps are instances.  That file was written for this use and is imported here.
+The instance `Evidence.WF`'s `WellFoundedRelation (List Nat)` is `scoped`, so
+importing does NOT change how Lean discharges termination anywhere else in this
+file — the references below are explicit. -/
 
 /-! #### How `expOf` sees the two steps -/
 
@@ -4243,7 +4204,7 @@ instances of `lexLt_at`, exactly as `Evidence/WF.lean` predicted. -/
 private theorem cert_q_one : ∀ (v : List Nat) (Q : List (List Nat)),
     Certified (qM Q) (qv Q) → Certified (qM (Q ++ [expOf v])) (qv (Q ++ [expOf v])) := by
   intro v
-  refine lexLt_wf.induction (C := fun w => ∀ (Q : List (List Nat)),
+  refine Evidence.WF.lexLt_wf.induction (C := fun w => ∀ (Q : List (List Nat)),
     Certified (qM Q) (qv Q) → Certified (qM (Q ++ [expOf w])) (qv (Q ++ [expOf w]))) v ?_
   intro v IH Q hQ
   rcases expOf_split v with hnil | ⟨u, c, j, rfl⟩
@@ -4252,7 +4213,8 @@ private theorem cert_q_one : ∀ (v : List Nat) (Q : List (List Nat)),
   · rw [expOf_snoc_pos u c j]
     cases j with
     | zero =>
-      have hv : LexLt (u ++ [c]) (u ++ [c + 1]) := lexLt_at u (by omega) rfl
+      have hv : Evidence.WF.LexLt (u ++ [c]) (u ++ [c + 1]) :=
+          Evidence.WF.lexLt_at u (by omega) rfl
       have hfam : ∀ m, Certified (qM (Q ++ List.replicate m (expOf (u ++ [c]))))
           (qv (Q ++ List.replicate m (expOf (u ++ [c])))) := by
         intro m
@@ -4306,7 +4268,7 @@ private theorem cert_q_one : ∀ (v : List Nat) (Q : List (List Nat)),
               = u ++ (c + 1) :: 0 :: List.replicate k 0 from by
             rw [show List.replicate (k + 1) (0 : Nat) = 0 :: List.replicate k 0 from
               List.replicate_succ]]
-        exact lexLt_at u (by omega) (by simp)
+        exact Evidence.WF.lexLt_at u (by omega) (by simp)
       · refine lt_of_qLt ?_
         rw [show expOf (u ++ c :: List.replicate (k + 1) 0) ++ List.replicate (n + 1) k
               = expOf (u ++ c :: List.replicate (k + 1) 0) ++ k :: List.replicate n k from by
