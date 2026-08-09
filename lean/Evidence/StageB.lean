@@ -5712,31 +5712,17 @@ theorem expand_M7 (q n : Nat) :
     hpar, Option.pure_def, hlen1, take_M7]
   rw [List.map_congr_left (fun c _ => hbad c), flat_range]
 
-/-! ### F7, the value side — measured, not yet proved
+/-! ### F7, the value side
 
-The expansion above is `((0,0) :: ups 1 a-1) ++ repM (bl2 a) (n+1)`.  Only the leading
-`(0,0)` has row-0 entry 0, so the whole matrix is ONE `blocksP` block and the value is
-`ω^(oLAux 1 (ups 0 (a-1) ++ repM (bl2 (a-1)) (n+1)))`.  `oLAux_chainR` then applies
-with `R o := repM (bl2 o) (n+1)` and `p = a-1`, and the base is
-
-    oLAux fuel (1+q) (repM (bl2 0) (n+1)) = φ̄(a, ω·(n+1))
-
-because at offset 0 every copy starts with `(0,1)`, so each copy is its own block,
-headed by a row-1 = 1 column: the fold is one `phiStep` per copy over the tail value
-`oLAux _ (L+1) [[0,0]] = 1`, giving `φ̄(L,ω)`, `φ̄(L,ω·2)`, … (the `logPhi` returns
-`some ω` at each step, and `plus ω (ω^1) = ω·2`).  The chain then collapses onto it.
-The term is `t7 q = φ̄(a, ω²)` with `fsN (φ̄(a,ω²)) k = φ̄(a, ω·k)`, so this is another
-shift-1 EQUALITY family.  Both halves are `#guard`ed below.
-
-STATUS: the `blocksP`/fold pair IS now proved (`blocksP_repM_bl2`, `WD`, `WD_succ`,
-`foldl_bl2`, `oLAux_repM_bl2` below) — `oLAux fuel L (repM (bl2 0) m) = WD L m` and
-`WD L (m+1) = φ̄(L, ω·(m+1))`.  What remains is the assembly, which is the same three
-steps as `e3_val5`/`e3_val6`: `o?_pair` + `oLAux_single` to strip the leading `(0,0)`,
-`oLAux_chainR` with `R o := repM (bl2 o) (n+1)` and `p = q` (its `hdec` is
-`decP_repM` + `decP_bl2`, its `hr0` is `r0_repM_bl2`), then `chainP_collapse` and
-`omegaNF_phi_ne_zero`; plus `fs_t7` (the `fsN` of `φ̄(a,ω²)`, whose inner step is
-`fsN (φ̄(0,2)) k = ω·k` through the `.isZero` branch) and the order pair, which is
-`ltF_phi_same` over `ltF_mulNat_*` with base `omega` instead of `zt q`. -/
+Only the leading `(0,0)` has row-0 entry 0, so the whole expansion is ONE `blocksP`
+block and the value is `ω^(oLAux 1 (ups 0 (a-1) ++ repM (bl2 (a-1)) (n+1)))`;
+`oLAux_chainR` applies with `R o := repM (bl2 o) (n+1)` and `p = a-1`, and the base is
+`oLAux fuel (1+q) (repM (bl2 0) (n+1)) = φ̄(a, ω·(n+1))` because at offset 0 every copy
+starts with `(0,1)`, so each copy is its own block headed by a row-1 = 1 column: one
+`phiStep` per copy over the tail value 1, and `logPhi` returns `some ω` at each step
+with `plus (ω·m) ω = ω·(m+1)` (`WD`, `WD_succ`).  The term is `t7 q = φ̄(a,ω²)` with
+`fsN (φ̄(a,ω²)) k = φ̄(a, ω·k)`, so this is another shift-1 EQUALITY family
+(`e3_F7family`). -/
 
 #guard (List.range 4).all fun q => (List.range 4).all fun n =>
   BMS.expand? (M7 q) n == some ((([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1))
@@ -5876,5 +5862,205 @@ theorem oLAux_repM_bl2 (m fuel L : Nat) (hf : 2 ≤ fuel) :
     rw [h]
     congr 1
     omega
+
+/-! ### The F7 package -/
+
+theorem onlyRow0_repM_bl2 (o k : Nat) : onlyRow0 (repM (bl2 o) (k+1)) = false := by
+  show onlyRow0 (bl2 o ++ repM (bl2 o) k) = false
+  rw [onlyRow0_append]
+  rfl
+
+theorem onlyRow0_E7 (q n : Nat) :
+    onlyRow0 ((([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1)) = false := by
+  show onlyRow0 (([0,0] : BMS.Col) :: (ups 1 q ++ repM (bl2 (q+1)) (n+1))) = false
+  rw [onlyRow0_cons, onlyRow0_append, onlyRow0_repM_bl2 (q+1) n]
+  simp
+
+theorem inFrag_E7 (q n : Nat) :
+    Trans.Pair.inFrag ((([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1)) = true := by
+  show Trans.Pair.inFrag (([0,0] : BMS.Col) :: (ups 1 q ++ repM (bl2 (q+1)) (n+1))) = true
+  rw [inFrag_cons, inFrag_append, inFrag_ups q 1, inFrag_repM_bl2 (n+1) (q+1)]
+  rfl
+
+theorem len_E7 (q n : Nat) :
+    ((([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1)).length = (1+q) + 2*(n+1) := by
+  rw [List.length_append, len_repM_bl2 (n+1) (q+1)]
+  show (ups 1 q).length + 1 + 2*(n+1) = _
+  rw [ups_len q 1]
+  omega
+
+/-- The term of the family: `φ̄(a, ω²)`. -/
+def t7 (q : Nat) : Term := phi (ofNat (q+1)) (phi zero (ofNat 2))
+
+theorem fs_t7 (q k : Nat) : fsN (t7 q) k = phiNF (ofNat (q+1)) (mulNat omega k) := by
+  show fsN (phi (ofNat (q+1)) (phi zero (ofNat 2))) k = _
+  rw [fsN_phi_lim (show phiShifted (ofNat (q+1)) (phi zero (ofNat 2)) = false from by
+      show (isFP (ofNat (q+1)) (splitFin (phi zero (ofNat 2))).1
+            || (((phi zero (ofNat 2) : Term) == zero) && (ofNat (q+1)).isSC)) = false
+      rw [splitFin_phi_ne_one (show ((phi zero (ofNat 2) : Term) == one) = false from rfl)]
+      show (((((phi zero (ofNat 2) : Term)).isSC && lt (ofNat (q+1)) (phi zero (ofNat 2)))
+            || lt (ofNat (q+1)) zero)
+            || (((phi zero (ofNat 2) : Term) == zero) && (ofNat (q+1)).isSC)) = false
+      rw [lt_lt_zero]
+      simp [isSC])
+    (show kindT (phi zero (ofNat 2)) = KindT.isLim from rfl) k,
+    show fsN (phi zero (ofNat 2)) k = mulNat omega k from by
+      rw [fsN]
+      simp only [show phiShifted zero (ofNat 2) = false from
+          phiShifted_ofNat isSC_zero 2, Bool.false_or,
+        show (kindT (ofNat 2) == KindT.isSucc) = true from rfl, if_true]
+      show mulNat (omegaNF (predT (ofNat 2))) k = mulNat omega k
+      rw [show predT (ofNat 2) = one from rfl,
+        show omegaNF one = omega from phiNF_one_arg isSC_zero]]
+
+theorem fs_t7_succ (q k : Nat) :
+    fsN (t7 q) (k+1) = phi (ofNat (q+1)) (mulNat omega (k+1)) := by
+  rw [fs_t7]
+  cases k with
+  | zero =>
+    show phiNF (ofNat (q+1)) omega = _
+    exact phiNF_phi_gen (isSC_ofNat (q+1)) (lt_lt_zero (ofNat (q+1)))
+  | succ j =>
+    exact phiNF_mulNat (isSC_ofNat (q+1)) (show (omega : Term).isAP = true from rfl)
+      (show ((omega : Term) == one) = false from rfl) j
+
+/-- **E3 for F7**, as an equality at the repository shift. -/
+theorem e3_val7 (q n : Nat) : o? (BMS.expand (M7 q) n) = some (fsN (t7 q) (n+1)) := by
+  have ht : ∀ cc ∈ (ups 1 q ++ repM (bl2 (q+1)) (n+1)), Trans.Pair.r0 cc ≠ 0 := by
+    intro cc hcc
+    rcases List.mem_append.mp hcc with h1 | h1
+    · exact r0_ups q 1 (by omega) cc h1
+    · exact r0_repM_bl2 (n+1) (q+1) (by omega) cc h1
+  have hE : BMS.expand (M7 q) n
+      = (([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1) := by
+    show (BMS.expand? (M7 q) n).getD [] = _
+    rw [expand_M7]; rfl
+  rw [hE, o?_pair (onlyRow0_E7 q n) (inFrag_E7 q n), len_E7]
+  show some (Trans.Pair.oLAux ((1+q) + 2*(n+1) + 1) 1 (([0,0] : BMS.Col)
+    :: (ups 1 q ++ repM (bl2 (q+1)) (n+1)))) = _
+  rw [oLAux_single ((1+q) + 2*(n+1)) 1 [0,0] _ ht]
+  show some (plus zero (omegaNF (Trans.Pair.oLAux ((1+q) + 2*(n+1)) 1
+    (Trans.Pair.decP (ups 1 q ++ repM (bl2 (q+1)) (n+1)))))) = _
+  rw [decP_append, decP_ups q 0,
+    show Trans.Pair.decP (repM (bl2 (q+1)) (n+1)) = repM (bl2 q) (n+1) from by
+      rw [decP_repM (n+1), decP_bl2 q],
+    oLAux_chainR (R := fun o => repM (bl2 o) (n+1))
+      (fun o => by rw [decP_repM (n+1), decP_bl2 o])
+      (fun o ho cc hcc => r0_repM_bl2 (n+1) o ho cc hcc)
+      (N := 2) (L := 1+q) (v := WD (1+q) (n+1))
+      (fun f hf => oLAux_repM_bl2 (n+1) f (1+q) hf) q 1 ((1+q) + 2*(n+1))
+      (by omega) (by
+        have h2 : 2 * 1 ≤ 2 * (n+1) := Nat.mul_le_mul_left 2 (by omega)
+        omega),
+    WD_succ (1+q) n,
+    show chainP 1 q (phi (ofNat (1+q)) (mulNat omega (n+1)))
+        = phi (ofNat (1+q)) (mulNat omega (n+1)) from
+      chainP_collapse q 1 (1+q) (mulNat omega (n+1)) (by omega),
+    plus_zero_left (isAP_omegaNF _),
+    show (1:Nat)+q = q+1 from by omega,
+    omegaNF_phi_ne_zero (ofNat_ne_zero q), fs_t7_succ q n]
+
+theorem deg_mulNat_omega : ∀ k, k ≤ (mulNat omega k).deg
+  | 0 => by show (0:Nat) ≤ 1; omega
+  | 1 => by rw [mulNat_one_eq]; show (1:Nat) ≤ 1 + 1 + (one : Term).deg; omega
+  | k + 2 => by
+    rw [mulNat_succ2]
+    show k + 2 ≤ 1 + (omega : Term).deg + (mulNat omega (k+1)).deg
+    have := deg_mulNat_omega (k+1)
+    show k + 2 ≤ 1 + (1 + (zero : Term).deg + (one : Term).deg) + (mulNat omega (k+1)).deg
+    omega
+
+theorem ltF_omega_t7arg : ∀ f, 3 ≤ f → ltF f omega (phi zero (ofNat 2)) = true := by
+  intro f hf
+  cases f with
+  | zero => omega
+  | succ g => exact ltF_phi_same (ltF_one_two g (by omega))
+
+theorem ltF_mulNat_omega_t7 : ∀ (k f : Nat), 4 ≤ f →
+    ltF f (mulNat omega (k+1)) (phi zero (ofNat 2)) = true
+  | 0, f, hf => by
+    rw [mulNat_one_eq]
+    exact ltF_omega_t7arg f (by omega)
+  | k + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      rw [mulNat_succ2]
+      show (if ((add omega (mulNat omega (k+1)) : Term) == phi zero (ofNat 2)) = true
+            then false else ltF g omega (phi zero (ofNat 2))) = true
+      simp only [show ((add omega (mulNat omega (k+1)) : Term)
+          == phi zero (ofNat 2)) = false from rfl, Bool.false_eq_true, if_false]
+      exact ltF_omega_t7arg g (by omega)
+
+theorem ltF_mulNat_omega_succ : ∀ (k f : Nat), k + 2 ≤ f →
+    ltF f (mulNat omega (k+1)) (mulNat omega (k+2)) = true
+  | 0, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      rw [mulNat_one_eq, mulNat_succ2, mulNat_one_eq]
+      show (if ((omega : Term) == add omega omega) = true then false
+            else ((omega : Term) == omega) || ltF g omega omega) = true
+      simp only [show ((omega : Term) == add omega omega) = false from rfl,
+        Bool.false_eq_true, if_false, beq_self_eq_true, Bool.true_or]
+  | k + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      have ih := ltF_mulNat_omega_succ k g (by omega)
+      rw [mulNat_succ2, mulNat_succ2]
+      show (if ((add omega (mulNat omega (k+1)) : Term)
+              == add omega (mulNat omega (k+2))) = true then false
+            else if ((omega : Term) == omega) = true then
+              ltF g (mulNat omega (k+1)) (mulNat omega (k+2))
+            else ltF g omega omega) = true
+      rw [show (((add omega (mulNat omega (k+1)) : Term)
+          == add omega (mulNat omega (k+2))) = false) from by simp [ne_of_ltF ih]]
+      simp [ih]
+
+def oval7 (q n : Nat) : Term := fsN (t7 q) (n+1)
+
+theorem deg_fs7 (q k : Nat) : k ≤ (fsN (t7 q) (k+1)).deg := by
+  rw [fs_t7_succ]
+  show k ≤ 1 + (ofNat (q+1)).deg + (mulNat omega (k+1)).deg
+  have := deg_mulNat_omega (k+1)
+  omega
+
+theorem e3_lt7 (q n : Nat) : lt (oval7 q n) (t7 q) = true := by
+  refine lt_of_ltF (N := n+5) (fun f hf => by
+    rw [show oval7 q n = fsN (t7 q) (n+1) from rfl, fs_t7_succ]
+    cases f with
+    | zero => omega
+    | succ g => exact ltF_phi_same (ltF_mulNat_omega_t7 n g (by omega))) ?_
+  have h1 : n ≤ (fsN (t7 q) (n+1)).deg := deg_fs7 q n
+  show n+5 ≤ 2 * ((fsN (t7 q) (n+1)).deg
+    + (1 + (ofNat (q+1)).deg + (phi zero (ofNat 2) : Term).deg)) + 8
+  omega
+
+theorem e3_over7 (q n : Nat) : lt (oval7 q n) (fsN (t7 q) (n+2)) = true := by
+  refine lt_of_ltF (N := n+4) (fun f hf => by
+    rw [show oval7 q n = fsN (t7 q) (n+1) from rfl, fs_t7_succ, fs_t7_succ]
+    cases f with
+    | zero => omega
+    | succ g => exact ltF_phi_same (ltF_mulNat_omega_succ n g (by omega))) ?_
+  have h1 : n ≤ (fsN (t7 q) (n+1)).deg := deg_fs7 q n
+  show n+4 ≤ 2 * ((fsN (t7 q) (n+1)).deg + (fsN (t7 q) (n+2)).deg) + 8
+  omega
+
+/-- **E3 for the F7 family**: `(0,0)(1,1)…(a,1)(a+1,0)(a+1,0) = φ̄(a,ω²)`. -/
+theorem e3_F7family (q : Nat) :
+    (∀ n, o? (BMS.expand (M7 q) n) = some (oval7 q n))
+    ∧ (∀ n, lt (oval7 q n) (t7 q) = true)
+    ∧ (∀ n, lt (oval7 q n) (fsN (t7 q) (n + 2)) = true)
+    ∧ (∀ k, lt (fsN (t7 q) (k + 1)) (oval7 q (k + 1)) = true) :=
+  ⟨e3_val7 q, e3_lt7 q, e3_over7 q, fun k => e3_over7 q k⟩
+
+/-- Beyond the table: `a = 1`, i.e. `(0,0)(1,1)(2,0)(2,0) = φ̄(1,ω²) = ε_{ω²}`. -/
+example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,0],[2,0]] n)
+    = some (fsN (phi one (phi zero (ofNat 2))) (n+1)) := e3_val7 0 n
+
+#guard (List.range 4).all fun q => (List.range 4).all fun n =>
+  Trans.o? (BMS.expand (M7 q) n) == some (fsN (t7 q) (n+1))
+#guard (List.range 5).all fun q => Trans.o? (M7 q) == some (t7 q)
 
 end Evidence.StageB
