@@ -12750,4 +12750,95 @@ theorem le_succT_phi_zero {x : Term} (hx : CNV x = true) :
 #guard lt (succT zero) (phi zero zero) == false   -- F2's side condition, as a NEGATIVE CONTROL
 #guard le (succT zero) (phi zero zero) == true    -- ... and why the `le` form survives it
 
+/-! ### §15.28 F3 AND F4 — the raw `add` constructor, which `plus` cannot reach
+
+The residue of the certificate lane's five-fact batch.  F1a and F2 were WITHDRAWN — that lane
+proved them independently in `SqV.lean` §15.7 while §15.27 was being written — and F1b was
+withdrawn as derivable from F3 and F4.  §15.27 STANDS AS IT IS: those proofs are green, the
+duplicates are recorded on both sides, and the peer's own note keeps this file's forms as the
+ones to survive.  What was actually owed is below.
+
+    F3   CNV (add u v) → lt u (add u v)     `lt_head_add_cnv`  (general form `lt_head_add`)
+    F4   CNV (add u v) → lt v (add u v)     `lt_tail_add`
+
+WHY THESE TWO AND NOT THE OTHER THREE, which is the interesting part of the batch: §15.5's
+machinery is about `plus`, which NORMALISES a sum, so it says nothing about the raw `add`
+constructor.  F3 and F4 are exactly the shapes that survive that gap.
+
+F3 IS PROVED WITHOUT `CNV`.  `lt_atom_add` needs only `u.isAP`, so `lt_head_add` is stated at
+that hypothesis and `lt_head_add_cnv` is the requested drop-in, one line, via `cnv_add`.  The
+`CNV` in the request was never load-bearing for this half.
+
+F4 CARRIES NO SIDE CONDITION, AND THE REQUESTER'S FAILED CONTROL IS WHY — a case where NOT
+finding a control is the right outcome and is checkable.  They proposed `v ≠ 0` (since `u + 0`
+ought not to exceed `u`), probed it, and reported honestly that it did NOT fire: `lt u (add u 0)`
+returns TRUE, because `lt` compares SYNTAX and `add u zero` is a different term from `u`.  The
+two `#guard`s below pin both halves of that.  The reason the control cannot fire is PROVABLE,
+not accidental:
+
+    hdLe zero u = false   (by `rfl`)   ⟹   CNV (add u 0) = false
+
+so the probe is off-`CNV` and no `CNV` instance of the proposed counterexample exists.  This is
+§C4's discriminator applied to a CONTROL rather than to a measurement, and it lands the same way:
+a control that does not fire is worthless UNLESS its failure to fire is provable, in which case
+it is a confirmation that the hypothesis already excludes the case.  `CNV (add u v)` does the
+excluding, which is why F4 needs nothing added.
+
+AND THE PROOF CONSUMES THE SAME FACT.  F4's `v = 0` case is discharged by `hdLe zero u = false` —
+the identical `rfl` that voids the probe.  As with F2, where the measured side condition and the
+proof's obstruction turned out to be one obstruction, the control's failure and the case's
+vacuity here are one fact seen from two sides. -/
+
+/-- **F3, general form** — needs only that the head is additively principal, not `CNV`. -/
+theorem lt_head_add {u : Term} (hAP : u.isAP = true) (v : Term) :
+    lt u (add u v) = true := by
+  rw [lt_atom_add (isAtom_of_isAP hAP)]; exact le_self u
+
+/-- **F3 exactly as requested**, so it drops into a `CNV` context without a detour. -/
+theorem lt_head_add_cnv {u v : Term} (h : CNV (add u v) = true) :
+    lt u (add u v) = true :=
+  lt_head_add (cnv_add h).1 v
+
+/-- **F4 — the tail is strictly below the sum.**  No side condition: see the section header
+    for why the proposed one has no `CNV` instance. -/
+theorem lt_tail_add : ∀ (v u : Term), CNV (add u v) = true → lt v (add u v) = true := by
+  intro v
+  induction v with
+  | M => intro u h; exact Bool.noConfusion (cnv_add h).2.2.1
+  | omg _ _ => intro u h; exact Bool.noConfusion (cnv_add h).2.2.1
+  | psi _ _ _ _ => intro u h; exact Bool.noConfusion (cnv_add h).2.2.1
+  | Z _ _ => intro u h; exact Bool.noConfusion (cnv_add h).2.2.1
+  | zero =>
+    intro u h
+    have hz := (cnv_add h).2.2.2
+    rw [show hdLe (zero : Term) u = false from rfl] at hz
+    exact Bool.noConfusion hz
+  | phi p q _ _ =>
+    intro u h
+    rw [lt_atom_add (isAtom_of_isAP (show (phi p q).isAP = true from rfl))]
+    exact (cnv_add h).2.2.2
+  | add w z _ ihz =>
+    intro u h
+    obtain ⟨_, _, hcnv, hdvu⟩ := cnv_add h
+    have hwu : le w u = true := hdvu
+    have hne : add w z ≠ add u (add w z) := by
+      intro hc
+      injection hc with _ h2
+      have hd : (add w z).deg = 1 + w.deg + z.deg := rfl
+      rw [← h2] at hd
+      have := deg_pos w
+      omega
+    rw [lt_add_add hne]
+    by_cases hw : w = u
+    · rw [if_pos hw]; exact ihz w hcnv
+    · rw [if_neg hw]
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hwu
+      rcases hwu with rfl | hlt
+      · exact absurd rfl hw
+      · exact hlt
+
+-- The requester's control, recorded as a fact about the PROBE, not about the theorem:
+#guard lt one (add one zero) == true    -- it does NOT fire — `lt` compares syntax
+#guard CNV (add one zero) == false      -- ... and this is why: the probe is off-`CNV`
+
 end Evidence.WF
