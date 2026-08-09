@@ -178,6 +178,18 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **THE COORDINATOR'S RECURRING FAILURE IS AMPLIFYING A LANE'S SCOPED
+  OBSERVATION INTO A JUSTIFICATION.** Twice in one session. A lane said the
+  carrier is `BelowC`; that became "it is answered, not open" over four
+  messages, and the answer was `CarrierV`. A lane said `CarrierV`/`wf_lt_cnv`
+  answers §15.19's measure problem; that became "the fact that makes the
+  assembly worth doing now", and then the spikes showed the assembly's
+  recursion is STRUCTURAL and needs no measure at all — the observation was
+  true and was not the justification. **The tell is a claim of the form "this
+  is why X is possible now", which is a story rather than a measurement**, and
+  it survives review because the underlying fact is real. Restate a lane's
+  claim in their scope, and when tempted to say what it makes possible, ask for
+  the spike instead.
 - **A REQUEST TO CHARACTERISE SOMETHING IS WORTH ONE `#eval` BEFORE IT IS WORTH
   ONE THEOREM — the characterisation may already be a composition of things you
   have.** Asked for the 𝔗(M)-side facts about `summands (fsC ω² n)` because the
