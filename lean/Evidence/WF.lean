@@ -58,8 +58,10 @@ SCOPE, HONESTLY (see also the design note at the end of Evidence/Cert.lean).
   * It is NOT the same thing as well-foundedness of `lt` itself on the inT terms
     below a bound.  That stronger statement is what the conditional main theorem
     MT wants, and it additionally needs the analytic direction of the order
-    (inversion lemmas) plus transitivity of `lt`, neither of which is proved
-    anywhere in this repository yet.
+    (inversion lemmas) plus transitivity of `lt`.  Both are now available ON THE
+    φ̄-FRAGMENT — §7 proves transitivity (`lt_trans`) and the inversions
+    (`le_of_not_lt`, `lt_of_not_le`, from comparability).  Above the fragment,
+    i.e. once `ψ`/`Z` appear, they are still open; see §8.
   * The method here does NOT scale to ε₀: below ε₀ the exponents are themselves
     unbounded terms, so no fixed level bound exists and there is no vector to
     put a lexicographic order on.  ε₀ needs the classical structural argument
@@ -962,5 +964,581 @@ theorem ltF_comparable {a b : Term} (hfa : Frag a = true) (hfb : Frag b = true)
     {f : Nat} (hf : a.deg + b.deg ≤ f) :
     ltF f a b = true ∨ a = b ∨ ltF f b a = true :=
   (cmp_aux (a.deg + b.deg)).2 a b hfa hfb (Nat.le_refl _) f hf
+
+/-- A `Frag` term is a `0`, a sum, or a `φ̄` — and the parts stay in the fragment.
+    Packaging the four impossible constructors once keeps §7.4 readable. -/
+theorem frag_cases {t : Term} (h : Frag t = true) :
+    t = zero
+    ∨ (∃ x y, t = add x y ∧ Frag x = true ∧ Frag y = true)
+    ∨ (∃ x y, t = phi x y ∧ Frag x = true ∧ Frag y = true) := by
+  cases t with
+  | zero => exact Or.inl rfl
+  | M => simp [Frag] at h
+  | omg x => simp [Frag] at h
+  | psi k x => simp [Frag] at h
+  | Z x => simp [Frag] at h
+  | add x y => exact Or.inr (Or.inl ⟨x, y, rfl, (frag_add h).1, (frag_add h).2⟩)
+  | phi x y => exact Or.inr (Or.inr ⟨x, y, rfl, (frag_phi h).1, (frag_phi h).2⟩)
+
+/-! ### §7.4 TRANSITIVITY
+
+The measure is the lexicographic pair `(b.deg, a.deg + c.deg)` — see the section
+header for why the flat sum `a.deg + b.deg + c.deg` cannot work.  It is spelled
+out as an outer recursion on `n` (a bound on the MIDDLE degree) with an inner
+`induction` on `m` (a bound on `a.deg + c.deg`), which gives exactly two induction
+hypotheses:
+
+  `TR1` — the middle term may be replaced by anything of smaller degree, and then
+          `a` and `c` are unconstrained;
+  `TR2` — the middle term stays `b`, and `a`, `c` may be replaced by anything with
+          a smaller degree sum.
+
+Every one of the nine shape combinations below is discharged by one of those two.
+The `ψ`/`Z` clauses are never reached, which is why no `starF` reasoning appears. -/
+
+private theorem trans_aux : ∀ (n : Nat) (m : Nat) (a b c : Term),
+    Frag a = true → Frag b = true → Frag c = true →
+    b.deg ≤ n → a.deg + c.deg ≤ m →
+    ∀ f, a.deg + b.deg + c.deg ≤ f →
+    ltF f a b = true → ltF f b c = true → ltF f a c = true
+  | 0 => by
+    intro _ _ b _ _ _ _ hb _ _ _ _ _
+    exfalso; have := deg_pos b; omega
+  | n + 1 => by
+    intro m
+    induction m with
+    | zero =>
+      intro a _ c _ _ _ _ hm _ _ _ _
+      exfalso; have := deg_pos a; have := deg_pos c; omega
+    | succ m ihm =>
+      intro a b c hfa hfb hfc hb hm f hf h1 h2
+      -- the two induction hypotheses, in the shape the case analysis wants
+      have TR1 : ∀ (x y z : Term), Frag x = true → Frag y = true → Frag z = true →
+          y.deg ≤ n → ∀ g, x.deg + y.deg + z.deg ≤ g →
+          ltF g x y = true → ltF g y z = true → ltF g x z = true :=
+        fun x y z hx hy hz hyd g hg =>
+          trans_aux n (x.deg + z.deg) x y z hx hy hz hyd (Nat.le_refl _) g hg
+      have TR2 : ∀ (x z : Term), Frag x = true → Frag z = true →
+          x.deg + z.deg ≤ m → ∀ g, x.deg + b.deg + z.deg ≤ g →
+          ltF g x b = true → ltF g b z = true → ltF g x z = true :=
+        fun x z hx hz hd g hg => ihm x b z hx hfb hz hb hd g hg
+      have da := deg_pos a; have db := deg_pos b; have dc := deg_pos c
+      obtain ⟨f', rfl⟩ : ∃ f', f = f' + 1 := ⟨f - 1, by omega⟩
+      -- §5 is what lets a sub-fact move between the two fuels in play
+      have LOW : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+          ltF (f' + 1) x y = true → ltF f' x y = true := by
+        intro x y hxy h
+        rw [ltF_stable x y f' (f' + 1) hxy (by omega)]; exact h
+      have UP : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+          ltF f' x y = true → ltF (f' + 1) x y = true := by
+        intro x y hxy h
+        rw [ltF_stable x y (f' + 1) f' (by omega) hxy]; exact h
+      have hbz : b ≠ zero := by
+        intro hc; rw [hc, ltF_right_zero] at h1; exact Bool.noConfusion h1
+      have hcz : c ≠ zero := by
+        intro hc; rw [hc, ltF_right_zero] at h2; exact Bool.noConfusion h2
+      have hac : a ≠ c := by
+        intro hc; subst hc
+        rw [ltF_asymm hfa hfb (by omega) h1] at h2; exact Bool.noConfusion h2
+      rcases frag_cases hfa with rfl | ⟨p, q, rfl, hfp, hfq⟩ | ⟨p, q, rfl, hfp, hfq⟩
+      · exact ltF_left_zero (by omega) hcz
+      · rcases frag_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨r, s, rfl, hfr, hfs⟩
+        · exact absurd rfl hbz
+        · rcases frag_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨t, u, rfl, hft, hfu⟩
+          · exact absurd rfl hcz
+          · -- (1) ⊕ / ⊕ / ⊕ : 2.3.16 three times, along the spine
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+            have hab1 : add p q ≠ add r s := ne_of_ltF h1
+            have hab2 : add r s ≠ add t u := ne_of_ltF h2
+            rw [ltF_succ_add_add _ hab1] at h1
+            rw [ltF_succ_add_add _ hab2] at h2
+            rw [ltF_succ_add_add _ hac]
+            by_cases hpr : p = r
+            · subst hpr
+              rw [if_pos rfl] at h1
+              by_cases hrt : p = t
+              · subst hrt
+                rw [if_pos rfl] at h2
+                rw [if_pos rfl]
+                exact TR1 q s u hfq hfs hfu (by omega) f' (by omega) h1 h2
+              · rw [if_neg hrt] at h2
+                rw [if_neg hrt]
+                exact h2
+            · rw [if_neg hpr] at h1
+              by_cases hrt : r = t
+              · subst hrt
+                rw [if_pos rfl] at h2
+                rw [if_neg hpr]
+                exact h1
+              · rw [if_neg hrt] at h2
+                have hpt : p ≠ t := by
+                  intro hc; subst hc
+                  rw [ltF_asymm hfp hfr (by omega) h1] at h2; exact Bool.noConfusion h2
+                rw [if_neg hpt]
+                exact TR1 p r t hfp hfr hft (by omega) f' (by omega) h1 h2
+          · -- (2) ⊕ / ⊕ / φ̄
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (phi t u).deg = 1 + t.deg + u.deg := rfl
+            have hab1 : add p q ≠ add r s := ne_of_ltF h1
+            rw [ltF_succ_add_add _ hab1] at h1
+            rw [ltF_succ_add_phi] at h2
+            rw [ltF_succ_add_phi]
+            by_cases hpr : p = r
+            · subst hpr; exact h2
+            · rw [if_neg hpr] at h1
+              exact TR1 p r (phi t u) hfp hfr hfc (by omega) f' (by omega) h1 h2
+        · rcases frag_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨t, u, rfl, hft, hfu⟩
+          · exact absurd rfl hcz
+          · -- (3) ⊕ / φ̄ / ⊕
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (phi r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+            rw [ltF_succ_add_phi] at h1
+            rw [ltF_succ_phi_add] at h2
+            rw [ltF_succ_add_add _ hac]
+            simp only [Bool.or_eq_true, beq_iff_eq] at h2
+            have hpt : ltF f' p t = true := by
+              rcases h2 with h3 | h3
+              · rw [← h3]; exact h1
+              · exact TR2 p t hfp hft (by omega) f' (by omega) h1 h3
+            rw [if_neg (ne_of_ltF hpt)]
+            exact hpt
+          · -- (4) ⊕ / φ̄ / φ̄
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (phi r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (phi t u).deg = 1 + t.deg + u.deg := rfl
+            have hBC : ltF f' (phi r s) (phi t u) = true :=
+              LOW (phi r s) (phi t u) (by omega) h2
+            rw [ltF_succ_add_phi] at h1
+            rw [ltF_succ_add_phi]
+            exact TR2 p (phi t u) hfp hfc (by omega) f' (by omega) h1 hBC
+      · rcases frag_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨r, s, rfl, hfr, hfs⟩
+        · exact absurd rfl hbz
+        · rcases frag_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨t, u, rfl, hft, hfu⟩
+          · exact absurd rfl hcz
+          · -- (5) φ̄ / ⊕ / ⊕
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+            have hab2 : add r s ≠ add t u := ne_of_ltF h2
+            rw [ltF_succ_phi_add] at h1
+            rw [ltF_succ_add_add _ hab2] at h2
+            rw [ltF_succ_phi_add]
+            by_cases hrt : r = t
+            · subst hrt; exact h1
+            · rw [if_neg hrt] at h2
+              simp only [Bool.or_eq_true, beq_iff_eq] at h1
+              rcases h1 with h3 | h3
+              · rw [h3]; simp [h2]
+              · have h4 : ltF f' (phi p q) t = true :=
+                  TR1 (phi p q) r t hfa hfr hft (by omega) f' (by omega) h3 h2
+                simp [h4]
+          · -- (6) φ̄ / ⊕ / φ̄
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (phi t u).deg = 1 + t.deg + u.deg := rfl
+            rw [ltF_succ_phi_add] at h1
+            rw [ltF_succ_add_phi] at h2
+            simp only [Bool.or_eq_true, beq_iff_eq] at h1
+            have h4 : ltF f' (phi p q) (phi t u) = true := by
+              rcases h1 with h3 | h3
+              · rw [h3]; exact h2
+              · exact TR1 (phi p q) r (phi t u) hfa hfr hfc (by omega) f' (by omega) h3 h2
+            exact UP (phi p q) (phi t u) (by omega) h4
+        · rcases frag_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨t, u, rfl, hft, hfu⟩
+          · exact absurd rfl hcz
+          · -- (7) φ̄ / φ̄ / ⊕
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (phi r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+            have hAB : ltF f' (phi p q) (phi r s) = true :=
+              LOW (phi p q) (phi r s) (by omega) h1
+            rw [ltF_succ_phi_add] at h2
+            rw [ltF_succ_phi_add]
+            simp only [Bool.or_eq_true, beq_iff_eq] at h2
+            rcases h2 with h3 | h3
+            · rw [← h3]; simp [hAB]
+            · have h4 : ltF f' (phi p q) t = true :=
+                TR2 (phi p q) t hfa hft (by omega) f' (by omega) hAB h3
+              simp [h4]
+          · -- (8) φ̄ / φ̄ / φ̄ : the nine sub-clause combinations of 2.3.13
+            have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+            have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+            have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+            have eB : (phi r s).deg = 1 + r.deg + s.deg := rfl
+            have eC : (phi t u).deg = 1 + t.deg + u.deg := rfl
+            have hAB : ltF f' (phi p q) (phi r s) = true :=
+              LOW (phi p q) (phi r s) (by omega) h1
+            have hBC : ltF f' (phi r s) (phi t u) = true :=
+              LOW (phi r s) (phi t u) (by omega) h2
+            have hab1 : phi p q ≠ phi r s := ne_of_ltF h1
+            have hab2 : phi r s ≠ phi t u := ne_of_ltF h2
+            rw [ltF_succ_phi_phi _ hab1] at h1
+            rw [ltF_succ_phi_phi _ hab2] at h2
+            by_cases hpr : p = r
+            · -- 13(ii) on the left: α = γ
+              subst hpr
+              rw [if_pos rfl] at h1
+              by_cases hrt : p = t
+              · subst hrt
+                rw [if_pos rfl] at h2
+                rw [ltF_succ_phi_phi _ hac, if_pos rfl]
+                exact TR1 q s u hfq hfs hfu (by omega) f' (by omega) h1 h2
+              · rw [if_neg hrt] at h2
+                by_cases hrt2 : ltF f' p t = true
+                · rw [if_pos hrt2] at h2
+                  rw [ltF_succ_phi_phi _ hac, if_neg hrt, if_pos hrt2]
+                  exact TR1 q s (phi t u) hfq hfs hfc (by omega) f' (by omega) h1 h2
+                · rw [if_neg hrt2] at h2
+                  rw [ltF_succ_phi_phi _ hac, if_neg hrt, if_neg hrt2]
+                  simp only [Bool.or_eq_true, beq_iff_eq] at h2
+                  rcases h2 with h3 | h3
+                  · rw [← h3]; simp [hAB]
+                  · have h4 : ltF f' (phi p q) u = true :=
+                      TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3
+                    simp [h4]
+            · rw [if_neg hpr] at h1
+              by_cases hpr2 : ltF f' p r = true
+              · -- 13(i) on the left: α < γ, and then β < φ̄γδ carries everything
+                rw [if_pos hpr2] at h1
+                by_cases hrt : r = t
+                · subst hrt
+                  rw [if_pos rfl] at h2
+                  rw [ltF_succ_phi_phi _ hac, if_neg hpr, if_pos hpr2]
+                  exact TR2 q (phi r u) hfq hfc (by omega) f' (by omega) h1 hBC
+                · rw [if_neg hrt] at h2
+                  by_cases hrt2 : ltF f' r t = true
+                  · rw [if_pos hrt2] at h2
+                    have hpt : ltF f' p t = true :=
+                      TR1 p r t hfp hfr hft (by omega) f' (by omega) hpr2 hrt2
+                    rw [ltF_succ_phi_phi _ hac, if_neg (ne_of_ltF hpt), if_pos hpt]
+                    exact TR2 q (phi t u) hfq hfc (by omega) f' (by omega) h1 hBC
+                  · rw [if_neg hrt2] at h2
+                    -- α < γ and π < γ leaves α vs π open: comparability decides it
+                    rcases ltF_comparable (f := f') hfp hft (by omega) with hc1 | hc1 | hc1
+                    · rw [ltF_succ_phi_phi _ hac, if_neg (ne_of_ltF hc1), if_pos hc1]
+                      exact TR2 q (phi t u) hfq hfc (by omega) f' (by omega) h1 hBC
+                    · subst hc1
+                      rw [ltF_succ_phi_phi _ hac, if_pos rfl]
+                      simp only [Bool.or_eq_true, beq_iff_eq] at h2
+                      rcases h2 with h3 | h3
+                      · rw [← h3]; exact h1
+                      · exact TR2 q u hfq hfu (by omega) f' (by omega) h1 h3
+                    · have hpt : p ≠ t := by
+                        intro hc; rw [hc, ltF_irrefl] at hc1; exact Bool.noConfusion hc1
+                      have hnp : ltF f' p t = false := ltF_asymm hft hfp (by omega) hc1
+                      rw [ltF_succ_phi_phi _ hac, if_neg hpt, if_neg (by simp [hnp])]
+                      simp only [Bool.or_eq_true, beq_iff_eq] at h2
+                      rcases h2 with h3 | h3
+                      · rw [← h3]; simp [hAB]
+                      · have h4 : ltF f' (phi p q) u = true :=
+                          TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3
+                        simp [h4]
+              · -- 13(iii) on the left: γ < α and φ̄αβ ≤ δ
+                rw [if_neg hpr2] at h1
+                have hrp : ltF f' r p = true := by
+                  rcases ltF_comparable (f := f') hfp hfr (by omega) with h3 | h3 | h3
+                  · exact absurd h3 hpr2
+                  · exact absurd h3 hpr
+                  · exact h3
+                by_cases hrt : r = t
+                · subst hrt
+                  rw [if_pos rfl] at h2
+                  rw [ltF_succ_phi_phi _ hac, if_neg hpr, if_neg hpr2]
+                  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+                  rcases h1 with h3 | h3
+                  · rw [h3]; simp [h2]
+                  · have h4 : ltF f' (phi p q) u = true :=
+                      TR1 (phi p q) s u hfa hfs hfu (by omega) f' (by omega) h3 h2
+                    simp [h4]
+                · rw [if_neg hrt] at h2
+                  by_cases hrt2 : ltF f' r t = true
+                  · -- φ̄αβ ≤ δ < φ̄πυ: no branch analysis needed at all
+                    rw [if_pos hrt2] at h2
+                    simp only [Bool.or_eq_true, beq_iff_eq] at h1
+                    have h4 : ltF f' (phi p q) (phi t u) = true := by
+                      rcases h1 with h3 | h3
+                      · rw [h3]; exact h2
+                      · exact TR1 (phi p q) s (phi t u) hfa hfs hfc
+                          (by omega) f' (by omega) h3 h2
+                    exact UP (phi p q) (phi t u) (by omega) h4
+                  · rw [if_neg hrt2] at h2
+                    have htr : ltF f' t r = true := by
+                      rcases ltF_comparable (f := f') hfr hft (by omega) with h3 | h3 | h3
+                      · exact absurd h3 hrt2
+                      · exact absurd h3 hrt
+                      · exact h3
+                    have htp : ltF f' t p = true :=
+                      TR1 t r p hft hfr hfp (by omega) f' (by omega) htr hrp
+                    have hpt : p ≠ t := by
+                      intro hc; rw [← hc, ltF_irrefl] at htp; exact Bool.noConfusion htp
+                    have hnp : ltF f' p t = false := ltF_asymm hft hfp (by omega) htp
+                    rw [ltF_succ_phi_phi _ hac, if_neg hpt, if_neg (by simp [hnp])]
+                    simp only [Bool.or_eq_true, beq_iff_eq] at h2
+                    rcases h2 with h3 | h3
+                    · rw [← h3]; simp [hAB]
+                    · have h4 : ltF f' (phi p q) u = true :=
+                        TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3
+                      simp [h4]
+
+/-- **TRANSITIVITY on the φ̄-fragment**, same fuel.  (STAGE 2 of the §6 map, in the
+    stronger `inT`-free form.) -/
+theorem trans_ltF {a b c : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (hfc : Frag c = true) {f : Nat} (hf : a.deg + b.deg + c.deg ≤ f)
+    (h1 : ltF f a b = true) (h2 : ltF f b c = true) : ltF f a c = true :=
+  trans_aux b.deg (a.deg + c.deg) a b c hfa hfb hfc (Nat.le_refl _) (Nat.le_refl _) f hf h1 h2
+
+/-! ### §7.5 The user-facing statements, about `lt`
+
+This is where §5 pays off: the three hypotheses of transitivity live at three
+different default fuels, and `lt_eq_ltF` brings all of them to the single fuel
+`a.deg + b.deg + c.deg` that `trans_ltF` wants. -/
+
+theorem lt_irrefl (a : Term) : lt a a = false := ltF_irrefl _ a
+
+/-- **ASYMMETRY.** -/
+theorem lt_asymm {a b : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (h : lt a b = true) : lt b a = false := by
+  rw [lt_eq_ltF a b (a.deg + b.deg) (Nat.le_refl _)] at h
+  rw [lt_eq_ltF b a (a.deg + b.deg) (by omega)]
+  exact ltF_asymm hfa hfb (Nat.le_refl _) h
+
+/-- **COMPARABILITY.** -/
+theorem lt_comparable {a b : Term} (hfa : Frag a = true) (hfb : Frag b = true) :
+    lt a b = true ∨ a = b ∨ lt b a = true := by
+  rw [lt_eq_ltF a b (a.deg + b.deg) (Nat.le_refl _),
+      lt_eq_ltF b a (a.deg + b.deg) (by omega)]
+  exact ltF_comparable hfa hfb (Nat.le_refl _)
+
+/-- **TRANSITIVITY** — the keystone.  Three different default fuels, unified by §5. -/
+theorem lt_trans {a b c : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (hfc : Frag c = true) (h1 : lt a b = true) (h2 : lt b c = true) : lt a c = true := by
+  have da := deg_pos a; have db := deg_pos b; have dc := deg_pos c
+  rw [lt_eq_ltF a b (a.deg + b.deg + c.deg) (by omega)] at h1
+  rw [lt_eq_ltF b c (a.deg + b.deg + c.deg) (by omega)] at h2
+  rw [lt_eq_ltF a c (a.deg + b.deg + c.deg) (by omega)]
+  exact trans_ltF hfa hfb hfc (Nat.le_refl _) h1 h2
+
+/-- **The fragment order is a strict LINEAR order**: exactly one of `<`, `=`, `>`. -/
+theorem lt_trichotomy {a b : Term} (hfa : Frag a = true) (hfb : Frag b = true) :
+    (lt a b = true ∧ a ≠ b ∧ lt b a = false)
+  ∨ (lt a b = false ∧ a = b ∧ lt b a = false)
+  ∨ (lt a b = false ∧ a ≠ b ∧ lt b a = true) := by
+  rcases lt_comparable hfa hfb with h | h | h
+  · exact Or.inl ⟨h, ne_of_ltF h, lt_asymm hfa hfb h⟩
+  · subst h; exact Or.inr (Or.inl ⟨lt_irrefl a, rfl, lt_irrefl a⟩)
+  · refine Or.inr (Or.inr ⟨lt_asymm hfb hfa h, ?_, h⟩)
+    intro hc; rw [hc, lt_irrefl] at h; exact Bool.noConfusion h
+
+/-! The `≤` forms.  `Evidence/Cert.lean` states almost every order fact with `le`
+    (the classification lemmas produce `le s (fs n)`), so these are the shapes its
+    proofs will actually apply. -/
+
+theorem lt_of_le_of_lt {a b c : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (hfc : Frag c = true) (h1 : le a b = true) (h2 : lt b c = true) : lt a c = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h1
+  rcases h1 with rfl | h1
+  · exact h2
+  · exact lt_trans hfa hfb hfc h1 h2
+
+theorem lt_of_lt_of_le {a b c : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (hfc : Frag c = true) (h1 : lt a b = true) (h2 : le b c = true) : lt a c = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h2
+  rcases h2 with rfl | h2
+  · exact h1
+  · exact lt_trans hfa hfb hfc h1 h2
+
+/-! The two INVERSION lemmas — the "analytic direction" the scope note at the head
+    of this file listed as missing.  They turn a NEGATIVE order fact into a
+    positive one, which is what a classification proof ("everything below `t` has
+    shape …") needs and what no amount of computing `ltF` can supply.  Both are
+    immediate from comparability, and both are false without `Frag`
+    (`lt_comparable_needs_frag`). -/
+
+theorem le_of_not_lt {a b : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (h : lt a b = false) : le b a = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq]
+  rcases lt_comparable hfa hfb with h1 | h1 | h1
+  · rw [h1] at h; exact Bool.noConfusion h
+  · exact Or.inl h1.symm
+  · exact Or.inr h1
+
+theorem lt_of_not_le {a b : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (h : le a b = false) : lt b a = true := by
+  simp only [TM.Term.le, Bool.or_eq_false_iff, beq_eq_false_iff_ne, ne_eq] at h
+  rcases lt_comparable hfa hfb with h1 | h1 | h1
+  · rw [h1] at h; exact absurd h.2 (by simp)
+  · exact absurd h1 h.1
+  · exact h1
+
+theorem le_trans {a b c : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (hfc : Frag c = true) (h1 : le a b = true) (h2 : le b c = true) : le a c = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h1 h2 ⊢
+  rcases h1 with rfl | h1
+  · exact h2
+  · rcases h2 with rfl | h2
+    · exact Or.inr h1
+    · exact Or.inr (lt_trans hfa hfb hfc h1 h2)
+
+/-! ### §7.6 The fragment is closed under the operations `Evidence/Cert.lean` uses
+
+Without these the client would have to re-derive `Frag` for every term it builds.
+`pwv e = ofList (e.map pw)` and `pw k = φ̄0(ofNat k)`, so `frag_ofList` +
+`frag_mk_phi` + `frag_ofNat` cover the whole CNF layer of Cert.lean. -/
+
+theorem frag_mk_add {a b : Term} (ha : Frag a = true) (hb : Frag b = true) :
+    Frag (add a b) = true := by
+  show (Frag a && Frag b) = true; rw [ha, hb]; rfl
+
+theorem frag_mk_phi {a b : Term} (ha : Frag a = true) (hb : Frag b = true) :
+    Frag (phi a b) = true := by
+  show (Frag a && Frag b) = true; rw [ha, hb]; rfl
+
+/-- `ω^α = φ̄0α` stays in the fragment. -/
+theorem frag_omegaPow {a : Term} (ha : Frag a = true) : Frag (phi zero a) = true :=
+  frag_mk_phi rfl ha
+
+theorem frag_toList : ∀ (t : Term), Frag t = true → ∀ x ∈ toList t, Frag x = true
+  | zero, _, x, hx => by simp [toList] at hx
+  | M, h, _, _ => by simp [Frag] at h
+  | omg _, h, _, _ => by simp [Frag] at h
+  | psi _ _, h, _, _ => by simp [Frag] at h
+  | Z _, h, _, _ => by simp [Frag] at h
+  | phi a b, h, x, hx => by
+    have he : toList (phi a b) = [phi a b] := rfl
+    rw [he] at hx; simp at hx; subst hx; exact h
+  | add a b, h, x, hx => by
+    have hab := frag_add h
+    have he : toList (add a b) = a :: toList b := rfl
+    rw [he] at hx
+    rcases List.mem_cons.mp hx with rfl | hx2
+    · exact hab.1
+    · exact frag_toList b hab.2 x hx2
+
+theorem frag_ofList : ∀ (l : List Term), (∀ x ∈ l, Frag x = true) → Frag (ofList l) = true
+  | [], _ => rfl
+  | [a], h => h a (by simp)
+  | a :: b :: t, h => by
+    show (Frag a && Frag (ofList (b :: t))) = true
+    rw [h a (by simp), frag_ofList (b :: t) (fun x hx => h x (List.mem_cons_of_mem a hx))]
+    rfl
+
+theorem frag_plus {s t : Term} (hs : Frag s = true) (ht : Frag t = true) :
+    Frag (plus s t) = true := by
+  show Frag (match toList t with
+             | [] => s
+             | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) = true
+  cases hl : toList t with
+  | nil => exact hs
+  | cons b1 rest =>
+    apply frag_ofList
+    intro x hx
+    rcases List.mem_append.mp hx with hx | hx
+    · exact frag_toList s hs x (List.mem_filter.mp hx).1
+    · exact frag_toList t ht x (by rw [hl]; exact hx)
+
+theorem frag_one : Frag one = true := rfl
+theorem frag_omega : Frag omega = true := rfl
+
+theorem frag_ofNat : ∀ n, Frag (ofNat n) = true
+  | 0 => rfl
+  | n + 1 => frag_plus (frag_ofNat n) rfl
+
+/-- The whole CNF layer of `Evidence/Cert.lean` §5.7 is in the fragment.  That
+    file's `pw k` is `φ̄0(ofNat k)` and its `pwv e` is `ofList (e.map pw)`, so this
+    is literally `Frag (pwv e) = true` — stated here without those definitions,
+    because the import goes the other way.  Together with §7.5 it gives the
+    certificate lane transitivity of its exponent-list order for free. -/
+theorem frag_cnf (e : List Nat) :
+    Frag (ofList (e.map (fun k => phi zero (ofNat k)))) = true := by
+  apply frag_ofList
+  intro x hx
+  rcases List.mem_map.mp hx with ⟨k, _, rfl⟩
+  exact frag_omegaPow (frag_ofNat k)
+
+/-! ### §7.7 Evidence that §7 has content, and two discriminating mutants
+
+The doctrine of `plan/README.md`'s 較正事故 section: a theorem whose hypotheses are
+never tested is a theorem about nothing.  Both hypotheses of `trans_ltF` are
+tested below by an explicit counterexample to the statement with that hypothesis
+removed.  (These `#guard`s are a sample of an exhaustive `#eval` sweep run before
+the proofs were written: all 275 fragment terms of degree ≤ 9 for asymmetry and
+comparability, all 51 of degree ≤ 7 for transitivity, each with and without the
+`inT` filter.) -/
+
+private def fragSample : List Term :=
+  [zero, one, omega, ofNat 2, ofNat 3, phi one zero, phi zero (phi one zero),
+   add omega one, add (phi one zero) one, phi one one]
+
+#guard fragSample.all (fun t => Frag t)
+#guard fragSample.all (fun s => fragSample.all (fun t => !(lt s t && lt t s)))
+#guard fragSample.all (fun s => fragSample.all (fun t => lt s t || s == t || lt t s))
+#guard fragSample.all (fun s => fragSample.all (fun t => fragSample.all (fun u =>
+         !(lt s t && lt t u) || lt s u)))
+
+/-! MUTANT 1 — DROP THE FUEL HYPOTHESIS of `trans_ltF`.  It is load-bearing, not
+decoration: at fuel 2 this triple violates transitivity outright.  The hypothesis
+`a.deg + b.deg + c.deg ≤ f` demands `f ≥ 15` here, and `lt` (whose default fuel is
+`2*(deg+deg)+8`) gets the right answer. -/
+
+#guard ltF 2 one (phi one zero) == true
+#guard ltF 2 (phi one zero) (add (phi one zero) zero) == true
+#guard ltF 2 one (add (phi one zero) zero) == false
+#guard (one : Term).deg + (phi one zero).deg + (add (phi one zero) zero).deg == 15
+#guard lt one (add (phi one zero) zero) == true
+
+/-! MUTANT 2 — DROP `Frag`.  Outside the fragment the raw order is not even
+comparable, so `ltF_comparable` (and with it the 13(iii) step of `ltF_asymm`)
+genuinely needs the hypothesis: `ψ_M M` and `ψ_(ψ_M M) M` are distinct and neither
+is below the other.  Note both fail `inT` — an exhaustive sweep of all 3042 terms
+of degree ≤ 6 over ALL seven constructors found 792 incomparable pairs, and ZERO
+of them among the 171 that satisfy `inT`.  That is the evidence that STAGE 3 (the
+`ψ`/`Z` clauses, §6's item 3) is true but will need `inT`, exactly where the
+fragment did not. -/
+
+#guard lt (psi M M) (psi (psi M M) M) == false
+#guard lt (psi (psi M M) M) (psi M M) == false
+#guard ((psi M M : Term) == psi (psi M M) M) == false
+#guard inT (psi M M) == false
+
+/-! The same two mutants as THEOREMS, so that the kernel — not the evaluator —
+certifies that neither hypothesis can be deleted.  Each is literally the statement
+of the corresponding theorem of §7.4/§7.5 with one hypothesis removed. -/
+
+/-- Deleting the fuel hypothesis from `trans_ltF` makes it FALSE. -/
+theorem trans_ltF_needs_fuel :
+    ¬ (∀ (a b c : Term), Frag a = true → Frag b = true → Frag c = true →
+        ∀ f, ltF f a b = true → ltF f b c = true → ltF f a c = true) := by
+  intro h
+  have hbad := h one (phi one zero) (add (phi one zero) zero) rfl rfl rfl 2 rfl rfl
+  have hc : ltF 2 one (add (phi one zero) zero) = false := rfl
+  rw [hc] at hbad
+  exact Bool.noConfusion hbad
+
+/-- Deleting `Frag` from `lt_comparable` makes it FALSE. -/
+theorem lt_comparable_needs_frag :
+    ¬ (∀ (a b : Term), lt a b = true ∨ a = b ∨ lt b a = true) := by
+  intro h
+  rcases h (psi M M) (psi (psi M M) M) with h1 | h1 | h1
+  · exact Bool.noConfusion h1
+  · exact absurd h1 (by decide)
+  · exact Bool.noConfusion h1
 
 end Evidence.WF
