@@ -5689,6 +5689,54 @@ theorem certIn_eps0 : CertifiedIn DomF [[0, 0], [1, 1]] (phi one zero) := by
 theorem certIn_eps0_unique (u : Term) (h : CertifiedIn DomF [[0, 0], [1, 1]] u) :
     u = phi one zero := (cert_unique_frag2 certIn_eps0 h).symm
 
+/-! ### §14.5 EVERY REGISTERED ROW, not just ε₀
+
+`certIn_padSq` is the guarded family for the PADDED rows; the registry's other
+eight rows are the unpadded one-row matrices of §11, so they need `cert_sq` with
+the guard as well.  It is the same proof again — the only new obligation is `DomF`
+of each value, and every value in that recursion is a Cantor normal form.
+
+With both families, every matrix in `certRows` carries a GUARDED certificate, and
+`cert_unique_frag2` turns each of them into a uniqueness statement.  That is the
+table-level reading of §14: a ✅ in the proof column now means "this value and no
+other" for every competing certificate that stays inside 𝔗(M) ∩ `Frag2`.  The two
+registry theorems (`certIn_rows`, `certRows_unique_guarded`) live in §6.1, after
+`certRows` itself — this section only supplies the family they run on. -/
+
+/-- **The CNF family, guarded** — `cert_sq` with `DomF` at every value. -/
+theorem certIn_sq : ∀ (t : Term), CN t = true →
+    CertifiedIn DomF (StageA.oneRow (sq t)) t := by
+  have key : ∀ (t : Term), Acc Evidence.WF.RC t → CN t = true →
+      CertifiedIn DomF (StageA.oneRow (sq t)) t := by
+    intro t ht
+    induction ht with
+    | intro t _ ih =>
+      intro hcn
+      by_cases hz : t = zero
+      · subst hz; exact CertifiedIn.zero
+      by_cases hk : kindC t = true
+      · have hcnp : CN (predC t) = true := Evidence.WF.cn_predC t hcn hk
+        have hltp : lt (predC t) t = true := Evidence.WF.lt_predC t hcn hk
+        have hpred : CertifiedIn DomF (StageA.oneRow (sq (predC t))) (predC t) :=
+          ih (predC t) ⟨hcnp, hltp⟩ hcnp
+        have hres : CertifiedIn DomF (StageA.oneRow (sq t)) (plus (predC t) one) :=
+          CertifiedIn.succ (kind_sq_succ t hcn hk) (fun n => by
+            show CertifiedIn DomF ((BMS.expand? (StageA.oneRow (sq t)) n).getD []) (predC t)
+            rw [expand_sq_succ t hcn hk n]
+            exact hpred)
+            (by rw [plus_predC t hcn hk]; exact domF_of_cn t hcn)
+        rw [plus_predC t hcn hk] at hres
+        exact hres
+      · have hk' : kindC t = false := by simpa using hk
+        obtain ⟨hcnfs, hltfs, hstep, hcof⟩ := Evidence.WF.lim_clauses t hcn hk' hz
+        refine CertifiedIn.lim (fsC t) (kind_sq_lim t hcn hk' hz) (fun n => ?_) hltfs hstep hcof
+          (domF_of_cn t hcn)
+        show CertifiedIn DomF ((BMS.expand? (StageA.oneRow (sq t)) n).getD []) (fsC t n)
+        rw [expand_sq t hcn hk' hz n]
+        exact ih (fsC t n) ⟨hcnfs n, hltfs n⟩ (hcnfs n)
+  intro t hcn
+  exact key t (Evidence.WF.acc_cn t hcn) hcn
+
 /-! ## §15 NO CERTIFICATE OVERSHOOTS  (`cert_sound`, part 2)
     (certificate lane, 2026-08-09)
 
@@ -6208,16 +6256,25 @@ theorem not_le_one {s t : Term} (hin : inT s = true) (hap : isAP s = true)
       exact Bool.noConfusion hb]
   rfl
 
-/-- **NO CERTIFICATE OF THE CNF REGION OVERSHOOTS ITS BOUND.**  For every Cantor
-    normal form `t`, every value certified for the padded row of `t` — junk values
-    included, with no `inT` and no fragment hypothesis on the value — is escaped by
-    every term of 𝔗(M) ∩ `Frag` that is additively principal and at least `ω^(t+1)`.
+/-- **NO CERTIFICATE OF A CNF REGION OVERSHOOTS ITS BOUND**, abstractly in the
+    region.  `R` assigns a matrix to every Cantor normal form; the four hypotheses
+    are all the proof knows about it (the kind of `R t` reads off `kindC t`, and the
+    expansions of `R t` are the `R` of `predC t` / `fsC t n`).  Then every value
+    certified for `R t` — junk values included, with no `inT` and no fragment
+    hypothesis on the value — is escaped by every term of 𝔗(M) ∩ `Frag` that is
+    additively principal and at least `ω^(t+1)`.
 
     The proof never chains through a certified value: junk appears only on the RIGHT
     of `le s v`, the probe `s` on the left is always one the proof chooses, and the
     only order facts used are between such probes (all inside `Frag`, §7 of WF). -/
-theorem no_overshoot : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
-    ∀ (t : Term), CN t = true → N = padRow (sq t) →
+theorem no_overshoot_of (R : Term → BMS.Matrix)
+    (hRsucc : ∀ (t : Term), CN t = true → BMS.kind (R t) = .succ → kindC t = true)
+    (hRlim : ∀ (t : Term), CN t = true → BMS.kind (R t) = .lim → kindC t = false ∧ t ≠ zero)
+    (hRes : ∀ (t : Term), CN t = true → kindC t = true → ∀ n, BMS.expand (R t) n = R (predC t))
+    (hRel : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero → ∀ n,
+        BMS.expand (R t) n = R (fsC t n)) :
+    ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
+    ∀ (t : Term), CN t = true → N = R t →
       ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
         le (phi zero (plus t one)) s = true → le s v = false := by
   intro N v h
@@ -6231,14 +6288,11 @@ theorem no_overshoot : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
     rfl
   | @succ M w hk hall ih =>
     intro t hcn hN s hin hfr hap hb
-    have hk' : BMS.kind (padRow (sq t)) = .succ := by rw [← hN]; exact hk
-    have hkc : kindC t = true := kindC_of_kind_succ hcn hk'
+    have hk' : BMS.kind (R t) = .succ := by rw [← hN]; exact hk
+    have hkc : kindC t = true := hRsucc t hcn hk'
     have hcnp : CN (predC t) = true := Evidence.WF.cn_predC t hcn hkc
-    have hexp : BMS.expand M 0 = padRow (sq (predC t)) := by
-      rw [hN]
-      show (BMS.expand? (padRow (sq t)) 0).getD [] = _
-      rw [expand_padSq_succ t hcn hkc 0]
-      rfl
+    have hexp : BMS.expand M 0 = R (predC t) := by
+      rw [hN]; exact hRes t hcn hkc 0
     have hbnd : le (phi zero (plus (predC t) one)) s = true := by
       rw [plus_predC t hcn hkc]
       exact Evidence.WF.le_trans (frag_pow_cn hcn) (frag_bnd hcn) hfr (le_pow_bnd hcn) hb
@@ -6251,15 +6305,12 @@ theorem no_overshoot : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
       exact hiv
   | @lim M v fs hk hall hlt hstep hcof ih =>
     intro t hcn hN s hin hfr hap hb
-    have hk' : BMS.kind (padRow (sq t)) = .lim := by rw [← hN]; exact hk
-    obtain ⟨hkc, hz⟩ := kindC_of_kind_lim hcn hk'
+    have hk' : BMS.kind (R t) = .lim := by rw [← hN]; exact hk
+    obtain ⟨hkc, hz⟩ := hRlim t hcn hk'
     obtain ⟨hcnfs, hltfs, _, _⟩ := Evidence.WF.lim_clauses t hcn hkc hz
-    have hexp : ∀ n, BMS.expand M n = padRow (sq (fsC t n)) := by
+    have hexp : ∀ n, BMS.expand M n = R (fsC t n) := by
       intro n
-      rw [hN]
-      show (BMS.expand? (padRow (sq t)) n).getD [] = _
-      rw [expand_padSq t hcn hkc hz n]
-      rfl
+      rw [hN]; exact hRel t hcn hkc hz n
     have key : ∀ (s' : Term), inT s' = true → Evidence.WF.Frag s' = true → isAP s' = true →
         le (phi zero t) s' = true → ∀ n, le s' (fs n) = false := by
       intro s' hin' hfr' hap' hb' n
@@ -6295,6 +6346,67 @@ theorem no_overshoot : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
       · obtain ⟨k, hk2⟩ := hcof s hin hlts
         rw [key s hin hfr hap hbt k] at hk2
         exact Bool.noConfusion hk2
+
+
+/-- The two regions this file certifies: the PADDED rows (`cert_padSq`, the ε₀
+    row's expansions) and the unpadded one-row matrices (`cert_sq`, eight of the
+    nine registered rows).  Same invariant, same proof — only the four region facts
+    of §11/§12 change. -/
+theorem no_overshoot : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
+    ∀ (t : Term), CN t = true → N = padRow (sq t) →
+      ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+        le (phi zero (plus t one)) s = true → le s v = false :=
+  no_overshoot_of (fun t => padRow (sq t))
+    (fun _ hcn hk => kindC_of_kind_succ hcn hk)
+    (fun _ hcn hk => kindC_of_kind_lim hcn hk)
+    (fun t hcn hkc n => by
+      show (BMS.expand? (padRow (sq t)) n).getD [] = _
+      rw [expand_padSq_succ t hcn hkc n]; rfl)
+    (fun t hcn hkc hz n => by
+      show (BMS.expand? (padRow (sq t)) n).getD [] = _
+      rw [expand_padSq t hcn hkc hz n]; rfl)
+
+theorem kindC_of_kind_succ_one {t : Term} (hcn : CN t = true)
+    (hk : BMS.kind (StageA.oneRow (sq t)) = .succ) : kindC t = true := by
+  by_cases hz : t = zero
+  · subst hz
+    rw [show sq (zero : Term) = [] from rfl,
+      show StageA.oneRow [] = ([] : BMS.Matrix) from rfl,
+      show BMS.kind ([] : BMS.Matrix) = .zero from rfl] at hk
+    exact absurd hk (by simp)
+  by_cases hkc : kindC t = true
+  · exact hkc
+  · have hk' : kindC t = false := by simpa using hkc
+    rw [kind_sq_lim t hcn hk' hz] at hk
+    exact absurd hk (by simp)
+
+theorem kindC_of_kind_lim_one {t : Term} (hcn : CN t = true)
+    (hk : BMS.kind (StageA.oneRow (sq t)) = .lim) : kindC t = false ∧ t ≠ zero := by
+  by_cases hz : t = zero
+  · subst hz
+    rw [show sq (zero : Term) = [] from rfl,
+      show StageA.oneRow [] = ([] : BMS.Matrix) from rfl,
+      show BMS.kind ([] : BMS.Matrix) = .zero from rfl] at hk
+    exact absurd hk (by simp)
+  by_cases hkc : kindC t = true
+  · rw [kind_sq_succ t hcn hkc] at hk
+    exact absurd hk (by simp)
+  · exact ⟨by simpa using hkc, hz⟩
+
+/-- The same invariant on the UNPADDED rows — the eight registered rows of §11. -/
+theorem no_overshoot_one : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
+    ∀ (t : Term), CN t = true → N = StageA.oneRow (sq t) →
+      ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+        le (phi zero (plus t one)) s = true → le s v = false :=
+  no_overshoot_of (fun t => StageA.oneRow (sq t))
+    (fun _ hcn hk => kindC_of_kind_succ_one hcn hk)
+    (fun _ hcn hk => kindC_of_kind_lim_one hcn hk)
+    (fun t hcn hkc n => by
+      show (BMS.expand? (StageA.oneRow (sq t)) n).getD [] = _
+      rw [expand_sq_succ t hcn hkc n]; rfl)
+    (fun t hcn hkc hz n => by
+      show (BMS.expand? (StageA.oneRow (sq t)) n).getD [] = _
+      rw [expand_sq t hcn hkc hz n]; rfl)
 
 /-! ### §15.8 Cashing it in on the ε₀ row -/
 
@@ -6368,6 +6480,78 @@ theorem neg_control_eps0_times_two_strong :
     ¬ Certified [[0, 0], [1, 1]] (add (phi one zero) (phi one zero)) :=
   no_cert_above_eps0 _ (by decide)
 
+
+/-! ### §15.10 THE REGISTRY, READ AS AN UPPER BOUND
+
+§14.5/§6.1 give uniqueness for GUARDED certificates on every registered row.  Here
+is what survives with no guard at all: no certificate whatsoever — junk values at
+every level allowed — carries a value that reaches `ω^(value+1)`.  For the ε₀ row
+§15.8 says much more (nothing above ε₀ at all), because ε₀ is closed under `ω^·`;
+for the eight CNF rows the bound `ω^(t+1)` is what the invariant of §15.7 gives,
+and sharpening it below `ω^t` would need the undershoot half (see the §15 header). -/
+
+/-- Inversion at a limit row: any certificate of a limit matrix hands back the four
+    `lim` clauses.  (`cases` on `Certified` with the matrix a variable.) -/
+theorem certified_lim_inv {N : BMS.Matrix} {v : Term} (h : Certified N v)
+    (hk : BMS.kind N = .lim) :
+    ∃ fs : Nat → Term, (∀ n, Certified (BMS.expand N n) (fs n)) ∧ (∀ n, lt (fs n) v = true) ∧
+      (∀ n, lt (fs n) (fs (n + 1)) = true) ∧
+      (∀ s, inT s = true → lt s v = true → ∃ n, le s (fs n) = true) := by
+  cases h with
+  | zero => rw [kind_nil] at hk; exact absurd hk (by simp)
+  | succ hk2 _ => rw [hk2] at hk; exact absurd hk (by simp)
+  | lim fs _ hall hlt hstep hcof => exact ⟨fs, hall, hlt, hstep, hcof⟩
+
+/-- **No certified value of the one-row matrix of `t` reaches `ω^(t+1)`.**  The
+    invariant of §15.7 with the bound itself as the probe. -/
+theorem cert_below_bound_one (t : Term) (hcn : CN t = true) (v : Term)
+    (h : Certified (StageA.oneRow (sq t)) v) : le (phi zero (plus t one)) v = false :=
+  no_overshoot_one h t hcn rfl (phi zero (plus t one))
+    (inT_of_cn _ (cn_pow (plus_one_cn t hcn).1)) (frag_bnd hcn) rfl (Evidence.WF.le_self _)
+
+/-- The same for the padded rows. -/
+theorem cert_below_bound_padSq (t : Term) (hcn : CN t = true) (v : Term)
+    (h : Certified (padRow (sq t)) v) : le (phi zero (plus t one)) v = false :=
+  no_overshoot h t hcn rfl (phi zero (plus t one))
+    (inT_of_cn _ (cn_pow (plus_one_cn t hcn).1)) (frag_bnd hcn) rfl (Evidence.WF.le_self _)
+
+theorem lt_eps0_bnd : lt (phi one zero) (phi zero (plus (phi one zero) one)) = true := by decide
+
+/-- The ε₀ row, whose matrix is not of the form `oneRow (sq t)`: its expansions are
+    the padded towers, and the two sub-cases are `le_eps0_towerM` (via §15.7 with the
+    probe `ω^(ε₀+1)`, which dominates every `ω^(tower k + 1)`) and §15.8. -/
+theorem cert_below_bound_eps0 (v : Term) (h : Certified [[0, 0], [1, 1]] v) :
+    le (phi zero (plus (phi one zero) one)) v = false := by
+  obtain ⟨fs, hall, _, _, hcof⟩ := certified_lim_inv h kind_eps0_row
+  cases hlev : le (phi zero (plus (phi one zero) one)) v with
+  | false => rfl
+  | true =>
+    exfalso
+    simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
+    rcases hlev with rfl | hlt
+    · exact no_cert_above_eps0 _ lt_eps0_bnd h
+    · obtain ⟨k, hk2⟩ := hcof (phi zero (plus (phi one zero) one)) (by decide) hlt
+      have hc : Certified (towerM k) (fs k) := by
+        have hx := hall k
+        rwa [show BMS.expand [[0, 0], [1, 1]] k = towerM k from expand_eps0_row k] at hx
+      rw [no_overshoot hc (Evidence.WF.tower k) (Evidence.WF.cn_tower k) (towerM_eq k)
+        (phi zero (plus (phi one zero) one)) (by decide) rfl rfl
+        (Evidence.WF.le_trans (frag_bnd (Evidence.WF.cn_tower k))
+          (show Evidence.WF.Frag (phi one zero) = true from rfl)
+          (show Evidence.WF.Frag (phi zero (plus (phi one zero) one)) = true from rfl)
+          (show le (phi zero (plus (Evidence.WF.tower k) one)) (phi one zero) = true from by
+            show ((phi zero (plus (Evidence.WF.tower k) one) == phi one zero) ||
+              lt (phi zero (plus (Evidence.WF.tower k) one)) (phi one zero)) = true
+            rw [show lt (phi zero (plus (Evidence.WF.tower k) one)) (phi one zero) = true from
+              lt_pow_of_lt_eps0 (lt_plus_one_phi
+                (le_one_hd_cn _ (Evidence.WF.cn_tower k) (Evidence.WF.tower_ne_zero k))
+                (Evidence.WF.lt_tower_eps0 k))]
+            exact Bool.or_true _)
+          (show le (phi one zero) (phi zero (plus (phi one zero) one)) = true from by
+            show ((phi one zero == phi zero (plus (phi one zero) one)) ||
+              lt (phi one zero) (phi zero (plus (phi one zero) one))) = true
+            rw [lt_eps0_bnd]; exact Bool.or_true _))] at hk2
+      exact Bool.noConfusion hk2
 
 /-! ### §15.9 THE MUTANT: why §14's guard is not decoration
 
@@ -6488,5 +6672,52 @@ theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 := by
   · rw [h]; exact cert_omega_pow_pow
   · rw [h]; exact cert_eps0
   · cases h
+
+/-! ### §6.1 The registry, read as uniqueness (certificate lane §14) -/
+
+/-- Every registered pair carries a GUARDED derivation.  (`certRows_ok` is the
+    same list with `Certified`; `certifiedIn_forget` recovers it.) -/
+theorem certIn_rows : ∀ p ∈ certRows, CertifiedIn DomF p.1 p.2 := by
+  intro p hp
+  simp only [certRows, List.mem_cons] at hp
+  rcases hp with h | h | h | h | h | h | h | h | h | h
+  · rw [h]; exact CertifiedIn.zero
+  · rw [h]; exact certIn_sq one (by decide)
+  · rw [h]; exact certIn_sq (ofNat 2) (by decide)
+  · rw [h]; exact certIn_sq omega (by decide)
+  · rw [h]; exact certIn_sq (add omega omega) (by decide)
+  · rw [h]; exact certIn_sq (phi zero (ofNat 2)) (by decide)
+  · rw [h]; exact certIn_sq (phi zero omega) (by decide)
+  · rw [h]; exact certIn_sq (phi zero (phi zero omega)) (by decide)
+  · rw [h]; exact certIn_eps0
+  · cases h
+
+/-- **THE TABLE'S ✅, READ AS UNIQUENESS.**  For every registered row, a guarded
+    certificate can only carry the registered value. -/
+theorem certRows_unique_guarded :
+    ∀ p ∈ certRows, ∀ (u : Term), CertifiedIn DomF p.1 u → u = p.2 :=
+  fun p hp _ h => (cert_unique_frag2 (certIn_rows p hp) h).symm
+
+
+/-- **THE TABLE'S ✅, READ AS AN UPPER BOUND.**  For every registered row, NO
+    certificate at all — no guard, junk values allowed at every level — carries a
+    value that reaches `ω^(value+1)`.  §15.8 says much more for the ε₀ row (nothing
+    above ε₀ at all); the two together are what makes the ✅ column a claim about
+    the VALUE rather than about one derivation. -/
+theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.1 u →
+    le (phi zero (plus p.2 one)) u = false := by
+  intro p hp u h
+  simp only [certRows, List.mem_cons] at hp
+  rcases hp with e | e | e | e | e | e | e | e | e | e
+  · subst e; exact cert_below_bound_one zero (by decide) u h
+  · subst e; exact cert_below_bound_one one (by decide) u h
+  · subst e; exact cert_below_bound_one (ofNat 2) (by decide) u h
+  · subst e; exact cert_below_bound_one omega (by decide) u h
+  · subst e; exact cert_below_bound_one (add omega omega) (by decide) u h
+  · subst e; exact cert_below_bound_one (phi zero (ofNat 2)) (by decide) u h
+  · subst e; exact cert_below_bound_one (phi zero omega) (by decide) u h
+  · subst e; exact cert_below_bound_one (phi zero (phi zero omega)) (by decide) u h
+  · subst e; exact cert_below_bound_eps0 u h
+  · cases e
 
 end Evidence.Cert
