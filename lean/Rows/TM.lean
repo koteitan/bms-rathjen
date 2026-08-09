@@ -30,6 +30,7 @@ import Trans.StageC
 import Evidence.Check
 import Evidence.Bisim
 import Evidence.Cert
+import Trans.Recal
 
 namespace Rows
 
@@ -39,7 +40,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.46"
+def version : String := "v0.1.47"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -139,6 +140,11 @@ def rows : List Row := [
 
 -- E1: every row marked `hasO` really has the matching value of `o`
 #guard rows.all fun r => !r.hasO || Trans.o? r.m == some r.t
+
+-- G2 (v0.1.47): every row matches the oracle-calibrated reading oR = dict ∘ TransPort
+-- (candidate-tier calibration, but a mandatory consistency gate: re-introducing a
+--  miscalibrated value — e.g. the historical ζ₁ row — turns the build red here)
+#guard rows.all fun r => Trans.oR r.m == some r.t
 
 -- bisimulation to depth 6: exactly the rows that claim it
 -- (beyond ε₀ the expansions and the fs are different cofinal sequences,
