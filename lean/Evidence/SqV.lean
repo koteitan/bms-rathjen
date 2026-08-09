@@ -1841,4 +1841,52 @@ def sPairs : List (List Term × List Term) :=
 #guard (allM.filter (fun t => !(ofList (toList t) == t))).length == 0
 #guard (ofNat 0 == zero) && (allM.filter (fun t => !(plus t (ofNat 0) == t))).length == 0
 
+
+/-! ### §11.5 THE SUBLIST BOUND — the coordinator's (S), proved, and without the roundtrip
+
+veblen2 delivered `toList_ofNat`, `plus_eq_of_toList` and `plus_ofNat_succ` (WF §15.24) and
+two corrections that between them close off both obvious routes to `tdepth_predOr`:
+
+  * `ofList (toList t) = t` is FALSE — 30 of 578 for them, and 5 of the 14 zero-component
+    terms I then built.  **My §11.4 "0 violations over `allM`" was measured on a corpus with
+    NO zero-component terms at all** (0 of 234, checked).  Same blindness as `φ̄(0,M)`, in my
+    own measurement, one section after I wrote the caution.
+  * `plus_ofNat_succ` needs `CNV s`, and **none of the 14 zero-component terms is `CNV`** —
+    so that hypothesis is not dischargeable where `encvF` actually calls `predOr`.
+
+FIRST, THE GOOD NEWS, MEASURED ON EXACTLY THE BLIND REGION: all six `tdepth` facts hold on
+those 14 terms — `predOr` 0 violations, `omLog` 0, summands/headD/fpDeep 0, minFuel 0.  There
+is no second counterexample; what the region kills is the two ROUTES, not the lemma.
+
+SO THE ROUTE IS (S), AND IT IS PROVED HERE BY THE SAME MOVE AS `tdepth_ofList_take`:
+induct on the TERM, not on the list, and the roundtrip never appears.  `plus_eq_of_toList`
+is unconditional, `toList_ofNat` is unconditional, and `filter` yields a sublist — so
+`tdepth_predOr` needs no `CNV` and no normal-form fact at all. -/
+
+theorem tdepth_ofList_sublist : ∀ (b : Term) (L : List Term),
+    L.Sublist (toList b) → tdepth (ofList L) ≤ tdepth b := by
+  intro b
+  induction b with
+  | zero => intro L hL; simp only [toList] at hL; cases hL; exact Nat.le_refl _
+  | M => intro L hL; simp only [toList] at hL; cases hL <;> rename_i h <;> cases h <;> simp only [ofList, tdepth] <;> omega
+  | omg _ _ => intro L hL; simp only [toList] at hL; cases hL <;> rename_i h <;> cases h <;> simp only [ofList, tdepth] <;> omega
+  | psi _ _ _ _ => intro L hL; simp only [toList] at hL; cases hL <;> rename_i h <;> cases h <;> simp only [ofList, tdepth] <;> omega
+  | Z _ _ => intro L hL; simp only [toList] at hL; cases hL <;> rename_i h <;> cases h <;> simp only [ofList, tdepth] <;> omega
+  | phi _ _ _ _ => intro L hL; simp only [toList] at hL; cases hL <;> rename_i h <;> cases h <;> simp only [ofList, tdepth] <;> omega
+  | add u v _ ihv =>
+    intro L hL
+    simp only [toList] at hL
+    cases hL with
+    | cons _ h => have := ihv _ h; simp only [tdepth]; omega
+    | cons_cons _ h =>
+      rename_i L'
+      have hv := ihv L' h
+      cases hL' : L' with
+      | nil => simp only [ofList, tdepth]; omega
+      | cons y ys =>
+        show tdepth (TM.Term.add u (ofList (y :: ys))) ≤ tdepth (TM.Term.add u v)
+        rw [hL'] at hv
+        simp only [tdepth] at hv ⊢
+        omega
+
 end Evidence.SqV
