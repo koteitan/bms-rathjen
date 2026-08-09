@@ -8123,6 +8123,85 @@ theorem kind_famM (k : Nat) (c : TM.Term) (hcn : CN c = true) :
       rw [famM_eq]
       exact (kind_append _ _ hne).trans (kind_padSq_lim c hcn hk' hz)
 
+/-! ### §19.1 The bound arithmetic
+
+The ceiling's induction moves between the bounds `ω^(famV k c + 1)` of neighbouring
+region parameters, so it needs four facts about the FAMILY (as opposed to about any
+particular certificate).  With `Evidence.WF.le_plus_one_of_lt_cnv` — which arrived
+WITHOUT the limit hypothesis I asked for, so nothing here has to classify a CNV term —
+they are all available:
+
+    cnv_plus_one     `t+1` stays in the fragment          (needed by (1) at `X+1`)
+    cnv_famV         the family's values are CNV
+    lt_famV_fsC      at a LIMIT parameter, `famV k (fsC c n) < famV k c`
+    lt_famV_tower    at the `c = 0` parameter, `famV k (tower n) < ε₀·(k+1)`
+
+The last two are about the family, not about a certificate: a certificate's own `lim`
+clauses bound ITS sequence, whereas the ceiling's induction has to compare the BOUNDS
+of two region parameters, which is a statement about `famV` alone. -/
+
+theorem hdOf_plus_one {b : TM.Term} (h : le one (hd b) = true) :
+    Evidence.WF.hdOf (plus b one) = Evidence.WF.hdOf b := by
+  obtain ⟨w, hw⟩ := plus_one_shape h
+  rw [hw]; rfl
+
+/-- `t+1` stays in the Veblen fragment. -/
+theorem cnv_plus_one : ∀ (t : TM.Term), CNV t = true → CNV (plus t one) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; rfl
+  | phi x y _ _ =>
+    intro hcnv
+    rw [plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl))]
+    show (isAP (phi x y) && CNV (phi x y) && CNV one && Evidence.WF.hdLe one (phi x y)) = true
+    rw [show isAP (phi x y) = true from rfl, hcnv, show CNV one = true from rfl,
+      show Evidence.WF.hdLe one (phi x y) = le one (phi x y) from rfl,
+      le_one_ap (show isAP (phi x y) = true from rfl)]
+    rfl
+  | add a b _ ihb =>
+    intro hcnv
+    obtain ⟨hap, hca, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
+    have hb0 : b ≠ zero := by intro hz; rw [hz] at hdb; exact Bool.noConfusion hdb
+    have h1b : le one (hd b) = true := le_one_hd_cnv b hcb hb0
+    rw [plus_one_add (le_one_ap hap)]
+    show (isAP a && CNV a && CNV (plus b one) && Evidence.WF.hdLe (plus b one) a) = true
+    rw [hap, hca, ihb hcb,
+      Evidence.WF.hdLe_eq _ a (plus_one_ne_zero b), hdOf_plus_one h1b,
+      ← Evidence.WF.hdLe_eq b a hb0, hdb]
+    rfl
+
+/-- The family's values are Veblen-fragment terms. -/
+theorem cnv_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) (hz : c ≠ zero) :
+    CNV (famV k c) = true := by
+  rw [famV_eq_repPre k hz]
+  exact Evidence.WF.cnv_repPre Evidence.WF.cnv_eps0T rfl (Evidence.WF.cnv_of_cn c hcn)
+    (Evidence.WF.hdLe_cn_eps0T c hcn hz) k
+
+/-- The family's own order fact at a LIMIT parameter: the value of the `n`-th
+    expansion is below the value.  (The certificate's own clauses say this for ITS
+    sequence; this says it for the FAMILY, which is what the ceiling's bound needs.) -/
+theorem lt_famV_fsC (k : Nat) (c : TM.Term) (hcn : CN c = true) (hz : c ≠ zero)
+    (hk : kindC c = false) (n : Nat) : lt (famV k (fsC c n)) (famV k c) = true := by
+  obtain ⟨hcnfs, hltfs, hstepfs, hcoffs⟩ := Evidence.WF.lim_clauses c hcn hk hz
+  obtain ⟨_, b2, _, _⟩ := Evidence.WF.lim_clauses_sum_iter_gen (fsC c) Evidence.WF.cnv_eps0T rfl
+    (Evidence.WF.cnv_of_cn c hcn) (Evidence.WF.hdLe_cn_eps0T c hcn hz)
+    (fun n => Evidence.WF.cnv_of_cn _ (hcnfs n)) hltfs hstepfs hcoffs
+    (fun n => Evidence.WF.fsC_ne_zero c hcn hk hz n) k
+  have := b2 n
+  rwa [Evidence.WF.sumSeq_repPre, ← famV_eq_repPre k (Evidence.WF.fsC_ne_zero c hcn hk hz n),
+    ← famV_eq_repPre k hz] at this
+
+/-- The same at the `c = 0` parameter, where the expansions are the towers. -/
+theorem lt_famV_tower (k n : Nat) : lt (famV k (Evidence.WF.tower n)) (repAdd eps0T k) = true := by
+  obtain ⟨_, b2, _, _⟩ := Evidence.WF.lim_clauses_fsA k
+  have := b2 n
+  rwa [show Evidence.WF.fsAin k n = famV k (Evidence.WF.tower n) from
+    sumSeq_famV k Evidence.WF.tower Evidence.WF.tower_ne_zero n] at this
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
