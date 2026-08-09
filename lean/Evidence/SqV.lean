@@ -1687,4 +1687,51 @@ def dropLast1 (t : Term) : Term := ofList ((toList t).take ((toList t).length - 
           (fun t => if (TM.Term.splitFin t).2 >= 1 then !(predOr t == dropLast1 t)
                     else !(predOr t == t))).length == 0
 
+
+/-! ### §11.2 `tdepth_omLog` REDUCED — and fix (a) is what makes its leaf case TRUE
+
+`omLog` is the identity off `φ̄(0,·)`, and on it returns either `x` (bound immediate) or
+`plus x one`.  So the whole lemma is
+
+    tdepth (plus x one) ≤ 1 + tdepth x
+
+and that goes by induction on `x`, with `plus x one = ofList ((toList x).filter (le 1) ++ [1])`:
+
+  add u v   the head is kept or dropped; either way the IH on `v` gives it, since
+            `1 + max (tdepth u) (1 + tdepth v)` ≤ `1 + tdepth (add u v)`
+  LEAF      `ofList [x, 1]` is `add x 1`, of depth `1 + max (tdepth x) 1`.
+            The bound needs **`max (tdepth x) 1 ≤ tdepth x`, i.e. `tdepth x ≥ 1`**
+
+**THAT IS §9.2's FIX, AND THIS IS WHERE IT EARNS ITS NAME.** `tdepth_pos` below — every
+term but `zero` has depth at least 1 — is exactly the leaf case's requirement, and under
+the REFUTED measure it is FALSE at `M`, which is guarded.  So `tdepth M = 1` is not a
+patch that removed one witness: it is the hypothesis the induction needs at every leaf,
+and `φ̄(0,M)` was the one term the corpus could have shown it with.
+
+WHAT REMAINS is the `plus`/`filter` reduction — the same family as §11.1's L1/L2, and
+already routed.  The MATHEMATICS of `tdepth_omLog` is settled; the Lean is not.
+
+A CORRECTION TO W5's TELL, from the coordinator and worth carrying: the tell is NOT "a
+normal-form notion appears", it is "the hypothesis has nothing to do with what I am
+proving".  `plus`'s filter tests `le 1 a`, which is **what `plus` is defined by** — a
+statement about what `plus` computes must mention the condition `plus` branches on, so
+nothing is being smuggled across a boundary and the answer is a missing lemma in the file
+that owns the definition, not a direct proof.  §11's roundtrip was the other case:
+`ofList (toList b) = b` is about normal forms and the goal never mentioned them. -/
+
+theorem tdepth_pos : ∀ (t : Term), t ≠ zero → 1 ≤ tdepth t := by
+  intro t ht
+  cases t with
+  | zero => exact absurd rfl ht
+  | M => exact Nat.le_refl _
+  | omg _ => simp only [tdepth]; omega
+  | Z _ => simp only [tdepth]; omega
+  | psi _ _ => simp only [tdepth]; omega
+  | phi _ _ => simp only [tdepth]; omega
+  | add _ _ => simp only [tdepth]; omega
+
+-- the leaf case's requirement, and the refuted measure failing it at exactly `M`
+#guard 1 <= tdepth TM.Term.M
+#guard !(1 <= tdepthOld TM.Term.M)
+
 end Evidence.SqV
