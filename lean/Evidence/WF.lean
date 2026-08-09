@@ -2323,6 +2323,471 @@ theorem cn_desc_needed : ¬ (∀ t, Frag t = true → Acc (fun x y => lt x y = t
       exact ih (desc (n + 1)) (lt_desc n) (n + 1) rfl
   exact key (desc 0) (hwf (desc 0) rfl) 0 rfl
 
+/-! ## §11 The fundamental sequence of a CNF term  (STAGE 2b of the ε₀ certificate)
+
+`Certified.lim` takes an ARBITRARY sequence `fs'` — it does not have to be
+`TM/FS.lean`'s `fsN`.  On the CNF segment that is a large saving: `fsN` routes
+every `φ̄` through `phiShifted` / `isFP` / `splitFin` (the [R91] 2.7 recalibration,
+which is about Veblen fixed points and does nothing at all when `α = 0`), so
+proving anything about it below ε₀ means dragging that machinery along.  `fsC`
+below is the Cantor-normal-form sequence written directly:
+
+    (ξ ⊕ ρ)[n]   = ξ ⊕ ρ[n]                 (into the last component)
+    (ω^0)[n]     = —                        (ω^0 = 1 is a successor)
+    (ω^(β+1))[n] = ω^β · (n+1)              (`repAdd`)
+    (ω^β)[n]     = ω^(β[n])                 (β a limit)
+
+Matching `fsC` to what the BM4 expansion actually produces is Stage 2c's job;
+this section is pure order theory and needs nothing from `BMS/` or `Trans/`.
+
+WHAT IS PROVED HERE: the three clauses of `Certified.lim` that speak only about
+the sequence — it stays in CNF (`cn_fsC`), it is below (`lt_fsC`), and it
+increases (`lt_fsC_step`).  The fourth, COFINALITY, is the remaining frontier and
+is mapped at the end of the section. -/
+
+/-- `u · (n+1)`: `n+1` copies of `u` as a formal sum. -/
+def repAdd (u : Term) : Nat → Term
+  | 0 => u
+  | n + 1 => add u (repAdd u n)
+
+/-- Is a CNF term a successor?  Exactly when its last component is `ω^0 = 1`. -/
+def kindC : Term → Bool
+  | phi _ b => b == zero
+  | add _ v => kindC v
+  | _ => false
+
+/-- The predecessor of a CNF successor: drop the trailing `1`. -/
+def predC : Term → Term
+  | add u v => if v == one then u else add u (predC v)
+  | _ => zero
+
+/-- The head component of a formal sum. -/
+def hdOf : Term → Term
+  | add u _ => u
+  | t => t
+
+/-- **The CNF fundamental sequence.** -/
+def fsC : Term → Nat → Term
+  | add u v, n => add u (fsC v n)
+  | phi a b, n =>
+      if b == zero then zero
+      else if kindC b then repAdd (phi a (predC b)) n
+      else phi a (fsC b n)
+  | _, _ => zero
+
+/-! ### §11.0 The three defining equations of `fsC`, as rewrite rules
+
+Stating them once is not cosmetic: the `if`-chain of `fsC` appears twice in the
+statement of `lt_fsC_step` (at `n` and at `n+1`) with different bodies, and `rw`
+instantiates its metavariables from the first match, so an unfolding `show`
+cannot reach the second. -/
+
+theorem fsC_add (u v : Term) (n : Nat) : fsC (add u v) n = add u (fsC v n) := rfl
+
+theorem fsC_phi_succ {x y : Term} (hy : (y == zero) = false) (hk : kindC y = true) (n : Nat) :
+    fsC (phi x y) n = repAdd (phi x (predC y)) n := by
+  show (if (y == zero) = true then zero
+        else if kindC y then repAdd (phi x (predC y)) n else phi x (fsC y n)) = _
+  rw [if_neg (by rw [hy]; exact Bool.noConfusion), if_pos hk]
+
+theorem fsC_phi_lim {x y : Term} (hy : (y == zero) = false) (hk : kindC y = false) (n : Nat) :
+    fsC (phi x y) n = phi x (fsC y n) := by
+  show (if (y == zero) = true then zero
+        else if kindC y then repAdd (phi x (predC y)) n else phi x (fsC y n)) = _
+  rw [if_neg (by rw [hy]; exact Bool.noConfusion), if_neg (by rw [hk]; exact Bool.noConfusion)]
+
+/-! ### §11.1 Bookkeeping -/
+
+theorem le_self (u : Term) : le u u = true := by
+  show ((u == u) || lt u u) = true
+  simp
+
+theorem hdLe_eq : ∀ (b a : Term), b ≠ zero → hdLe b a = le (hdOf b) a
+  | zero, _, h => absurd rfl h
+  | add _ _, _, _ => rfl
+  | M, _, _ => rfl
+  | omg _, _, _ => rfl
+  | phi _ _, _, _ => rfl
+  | psi _ _, _, _ => rfl
+  | Z _, _, _ => rfl
+
+theorem hdOf_repAdd (p q : Term) : ∀ n, hdOf (repAdd (phi p q) n) = phi p q
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem repAdd_ne_zero (p q : Term) : ∀ n, repAdd (phi p q) n ≠ zero
+  | 0 => by intro h; exact Term.noConfusion h
+  | _ + 1 => by intro h; exact Term.noConfusion h
+
+theorem cn_repAdd {p q : Term} (h : CN (phi p q) = true) :
+    ∀ n, CN (repAdd (phi p q) n) = true
+  | 0 => h
+  | n + 1 => by
+    have hp : p = zero := (cn_phi h).1
+    show (isPow (phi p q) && CN (phi p q) && CN (repAdd (phi p q) n)
+            && hdLe (repAdd (phi p q) n) (phi p q)) = true
+    rw [cn_repAdd h n, h, hdLe_eq _ _ (repAdd_ne_zero p q n), hdOf_repAdd,
+      le_self, show isPow (phi p q) = true from by rw [hp]; rfl]
+    rfl
+
+/-- A sum built by `repAdd` is below a `φ̄` exactly when its single component is. -/
+theorem lt_repAdd_phi (p q c d : Term) : ∀ n,
+    lt (repAdd (phi p q) n) (phi c d) = lt (phi p q) (phi c d)
+  | 0 => rfl
+  | n + 1 => by
+    show lt (add (phi p q) (repAdd (phi p q) n)) (phi c d) = _
+    rw [lt_add_phi]
+
+/-- `u·(n+1) < u·(n+2)`. -/
+theorem lt_repAdd_step (p q : Term) : ∀ n,
+    lt (repAdd (phi p q) n) (repAdd (phi p q) (n + 1)) = true
+  | 0 => by
+    show lt (phi p q) (add (phi p q) (phi p q)) = true
+    rw [lt_phi_add]
+    exact le_self _
+  | n + 1 => by
+    have ih := lt_repAdd_step p q n
+    show lt (add (phi p q) (repAdd (phi p q) n)) (add (phi p q) (repAdd (phi p q) (n + 1))) = true
+    rw [lt_add_add (by intro h; injection h with h1 h2; exact ne_of_ltF ih h2), if_pos rfl]
+    exact ih
+
+/-! ### §11.2 The predecessor of a CNF successor -/
+
+theorem predC_ne_zero : ∀ (b : Term), CN b = true → kindC b = true → b ≠ one →
+    predC b ≠ zero := by
+  intro b hcn hk hne
+  cases b with
+  | zero => exact Bool.noConfusion hk
+  | M => exact Bool.noConfusion hcn
+  | omg _ => exact Bool.noConfusion hcn
+  | psi _ _ => exact Bool.noConfusion hcn
+  | Z _ => exact Bool.noConfusion hcn
+  | phi x y =>
+    have hx : x = zero := (cn_phi hcn).1
+    have hy : y = zero := by
+      have : (y == zero) = true := hk
+      simpa using this
+    exact absurd (by rw [hx, hy]; rfl) hne
+  | add u v =>
+    show (if (v == one) = true then u else add u (predC v)) ≠ zero
+    obtain ⟨hpow, _, _, _⟩ := cn_add hcn
+    obtain ⟨e, he⟩ := eq_pow_of_isPow hpow
+    subst he
+    by_cases hv : (v == one) = true
+    · rw [if_pos hv]; intro h; exact Term.noConfusion h
+    · rw [if_neg hv]; intro h; exact Term.noConfusion h
+
+theorem cn_predC : ∀ (b : Term), CN b = true → kindC b = true → CN (predC b) = true := by
+  intro b
+  induction b with
+  | zero => intro _ hk; exact Bool.noConfusion hk
+  | M => intro hcn _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | phi _ _ _ _ => intro _ _; exact rfl
+  | add u v _ ihv =>
+    intro hcn hk
+    obtain ⟨hpow, hcnu, hcnv, hdesc⟩ := cn_add hcn
+    show CN (if (v == one) = true then u else add u (predC v)) = true
+    by_cases hv : (v == one) = true
+    · rw [if_pos hv]; exact hcnu
+    · rw [if_neg hv]
+      have hkv : kindC v = true := hk
+      have hvone : v ≠ one := by intro h; exact hv (by rw [h]; rfl)
+      have hpz : predC v ≠ zero := predC_ne_zero v hcnv hkv hvone
+      show (isPow u && CN u && CN (predC v) && hdLe (predC v) u) = true
+      rw [ihv hcnv hkv, hcnu, hpow]
+      have hvz : v ≠ zero := by intro h; rw [h] at hkv; exact Bool.noConfusion hkv
+      rw [hdLe_eq _ _ hpz, show hdOf (predC v) = hdOf v from ?_]
+      · rw [← hdLe_eq v u hvz, hdesc]
+        rfl
+      · cases v with
+        | add w r =>
+          show hdOf (if (r == one) = true then w else add w (predC r)) = w
+          by_cases hr : (r == one) = true
+          · rw [if_pos hr]
+            cases w with
+            | add _ _ => obtain ⟨hpw, _, _, _⟩ := cn_add hcnv; exact Bool.noConfusion hpw
+            | _ => rfl
+          · rw [if_neg hr]; rfl
+        | phi x y =>
+          exfalso
+          apply hvone
+          have hx : x = zero := (cn_phi hcnv).1
+          have hy2 : y = zero := by
+            have hh : (y == zero) = true := hkv
+            simpa using hh
+          rw [hx, hy2]
+          rfl
+        | zero => exact Bool.noConfusion hkv
+        | M => exact Bool.noConfusion hcnv
+        | omg _ => exact Bool.noConfusion hcnv
+        | psi _ _ => exact Bool.noConfusion hcnv
+        | Z _ => exact Bool.noConfusion hcnv
+
+theorem lt_predC : ∀ (b : Term), CN b = true → kindC b = true → lt (predC b) b = true := by
+  intro b
+  induction b with
+  | zero => intro _ hk; exact Bool.noConfusion hk
+  | M => intro hcn _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | phi x y _ _ =>
+    intro hcn hk
+    have hx : x = zero := (cn_phi hcn).1
+    have hy : y = zero := by have : (y == zero) = true := hk; simpa using this
+    subst hx; subst hy
+    show lt zero (phi zero zero) = true
+    exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (one : Term).deg) + 8; omega)
+      (by decide)
+  | add u v _ ihv =>
+    intro hcn hk
+    obtain ⟨hpow, hcnu, hcnv, hdesc⟩ := cn_add hcn
+    obtain ⟨e, he⟩ := eq_pow_of_isPow hpow
+    subst he
+    show lt (if (v == one) = true then phi zero e else add (phi zero e) (predC v))
+        (add (phi zero e) v) = true
+    by_cases hv : (v == one) = true
+    · rw [if_pos hv, lt_phi_add]
+      exact le_self _
+    · rw [if_neg hv]
+      have hkv : kindC v = true := hk
+      have hlt : lt (predC v) v = true := ihv hcnv hkv
+      rw [lt_add_add (by intro h; injection h with h1 h2; exact ne_of_ltF hlt h2), if_pos rfl]
+      exact hlt
+
+/-! ### §11.3 The three sequence clauses -/
+
+theorem fsC_ne_zero : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero →
+    ∀ n, fsC t n ≠ zero := by
+  intro t
+  induction t with
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | M => intro hcn _ _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | phi x y _ _ =>
+    intro hcn hk _ n
+    have hy : (y == zero) = false := hk
+    by_cases hky : kindC y = true
+    · rw [fsC_phi_succ hy hky]; exact repAdd_ne_zero _ _ n
+    · rw [fsC_phi_lim hy (by simpa using hky)]; intro h; exact Term.noConfusion h
+  | add u v _ _ =>
+    intro _ _ _ _ h; exact Term.noConfusion h
+
+/-- **The sequence is below its limit.** -/
+theorem lt_fsC : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero →
+    ∀ n, lt (fsC t n) t = true := by
+  intro t
+  induction t with
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | M => intro hcn _ _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | phi x y _ ihy =>
+    intro hcn hk _ n
+    have hx : x = zero := (cn_phi hcn).1
+    have hcny : CN y = true := (cn_phi hcn).2
+    subst hx
+    have hy : (y == zero) = false := hk
+    have hyz : y ≠ zero := by intro h; rw [h] at hy; exact Bool.noConfusion hy
+    by_cases hky : kindC y = true
+    · rw [fsC_phi_succ hy hky, lt_repAdd_phi, lt_pow]
+      exact lt_predC y hcny hky
+    · rw [fsC_phi_lim hy (by simpa using hky), lt_pow]
+      exact ihy hcny (by simpa using hky) hyz n
+  | add u v _ ihv =>
+    intro hcn hk _ n
+    obtain ⟨_, _, hcnv, hdesc⟩ := cn_add hcn
+    have hvz : v ≠ zero := by intro h; rw [h] at hdesc; exact Bool.noConfusion hdesc
+    have hlt : lt (fsC v n) v = true := ihv hcnv hk hvz n
+    show lt (add u (fsC v n)) (add u v) = true
+    rw [lt_add_add (by intro h; injection h with h1 h2; exact ne_of_ltF hlt h2), if_pos rfl]
+    exact hlt
+
+/-- **The sequence increases.** -/
+theorem lt_fsC_step : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero →
+    ∀ n, lt (fsC t n) (fsC t (n + 1)) = true := by
+  intro t
+  induction t with
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | M => intro hcn _ _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | phi x y _ ihy =>
+    intro hcn hk _ n
+    have hx : x = zero := (cn_phi hcn).1
+    have hcny : CN y = true := (cn_phi hcn).2
+    subst hx
+    have hy : (y == zero) = false := hk
+    have hyz : y ≠ zero := by intro h; rw [h] at hy; exact Bool.noConfusion hy
+    by_cases hky : kindC y = true
+    · rw [fsC_phi_succ hy hky, fsC_phi_succ hy hky]
+      exact lt_repAdd_step zero (predC y) n
+    · rw [fsC_phi_lim hy (by simpa using hky), fsC_phi_lim hy (by simpa using hky), lt_pow]
+      exact ihy hcny (by simpa using hky) hyz n
+  | add u v _ ihv =>
+    intro hcn hk _ n
+    obtain ⟨_, _, hcnv, hdesc⟩ := cn_add hcn
+    have hvz : v ≠ zero := by intro h; rw [h] at hdesc; exact Bool.noConfusion hdesc
+    have hlt : lt (fsC v n) (fsC v (n + 1)) = true := ihv hcnv hk hvz n
+    show lt (add u (fsC v n)) (add u (fsC v (n + 1))) = true
+    rw [lt_add_add (by intro h; injection h with h1 h2; exact ne_of_ltF hlt h2), if_pos rfl]
+    exact hlt
+
+/-- The head of the sequence never exceeds the head of the limit — the step the
+    CNF-closure of `fsC` turns on. -/
+theorem hdOf_fsC_le : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero →
+    ∀ n, le (hdOf (fsC t n)) (hdOf t) = true := by
+  intro t
+  induction t with
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | M => intro hcn _ _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | phi x y _ _ =>
+    intro hcn hk hz n
+    have hlt : lt (fsC (phi x y) n) (phi x y) = true := lt_fsC _ hcn hk hz n
+    have hx : x = zero := (cn_phi hcn).1
+    subst hx
+    have hy : (y == zero) = false := hk
+    show le (hdOf (fsC (phi zero y) n)) (phi zero y) = true
+    by_cases hky : kindC y = true
+    · rw [fsC_phi_succ hy hky, hdOf_repAdd]
+      show ((phi zero (predC y) == phi zero y) || lt (phi zero (predC y)) (phi zero y)) = true
+      rw [lt_pow, lt_predC y (cn_phi hcn).2 hky]
+      exact Bool.or_true _
+    · rw [fsC_phi_lim hy (by simpa using hky)]
+      show ((phi zero (fsC y n) == phi zero y) || lt (phi zero (fsC y n)) (phi zero y)) = true
+      rw [fsC_phi_lim hy (by simpa using hky)] at hlt
+      rw [hlt]
+      exact Bool.or_true _
+  | add u v _ _ =>
+    intro _ _ _ _
+    show le (hdOf (add u (fsC v _))) (hdOf (add u v)) = true
+    exact le_self _
+
+/-- **The sequence stays in CNF.** -/
+theorem cn_fsC : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero →
+    ∀ n, CN (fsC t n) = true := by
+  intro t
+  induction t with
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | M => intro hcn _ _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _ _; exact Bool.noConfusion hcn
+  | phi x y _ ihy =>
+    intro hcn hk _ n
+    have hx : x = zero := (cn_phi hcn).1
+    have hcny : CN y = true := (cn_phi hcn).2
+    subst hx
+    have hy : (y == zero) = false := hk
+    have hyz : y ≠ zero := by intro h; rw [h] at hy; exact Bool.noConfusion hy
+    by_cases hky : kindC y = true
+    · rw [fsC_phi_succ hy hky]
+      refine cn_repAdd ?_ n
+      show (((zero : Term) == zero) && CN (predC y)) = true
+      rw [cn_predC y hcny hky]
+      rfl
+    · rw [fsC_phi_lim hy (by simpa using hky)]
+      show (((zero : Term) == zero) && CN (fsC y n)) = true
+      rw [ihy hcny (by simpa using hky) hyz n]
+      rfl
+  | add u v _ ihv =>
+    intro hcn hk _ n
+    obtain ⟨hpow, hcnu, hcnv, hdesc⟩ := cn_add hcn
+    have hvz : v ≠ zero := by intro h; rw [h] at hdesc; exact Bool.noConfusion hdesc
+    have hcnfv : CN (fsC v n) = true := ihv hcnv hk hvz n
+    have hfvz : fsC v n ≠ zero := fsC_ne_zero v hcnv hk hvz n
+    have hhd : le (hdOf (fsC v n)) (hdOf v) = true := hdOf_fsC_le v hcnv hk hvz n
+    have hfrag1 : Frag (hdOf (fsC v n)) = true := by
+      have := frag_of_cn _ hcnfv
+      cases hx : fsC v n with
+      | add c d => rw [hx] at this; exact (frag_add this).1
+      | _ => rw [hx] at this; exact this
+    have hfrag2 : Frag (hdOf v) = true := by
+      have := frag_of_cn _ hcnv
+      cases hx : v with
+      | add c d => rw [hx] at this; exact (frag_add this).1
+      | _ => rw [hx] at this; exact this
+    show (isPow u && CN u && CN (fsC v n) && hdLe (fsC v n) u) = true
+    rw [hcnfv, hcnu, hpow, hdLe_eq _ _ hfvz]
+    have hvu : le (hdOf v) u = true := by rw [← hdLe_eq v u hvz]; exact hdesc
+    rw [le_trans hfrag1 hfrag2 (frag_of_cn u hcnu) hhd hvu]
+    rfl
+
+/-! ### §11.4 Evidence, and the frontier: COFINALITY
+
+MEASURED (not proved here).  `fsC t n = fsN t (n + 1)` for every term of the
+sample below and every `n ≤ 5` — i.e. `fsC` IS `TM/FS.lean`'s fundamental
+sequence on the CNF segment, with the index shift of `Trans/TM.lean`
+(`M[n] ↦ t[n+1]`).  The check cannot be a `#guard` in THIS file: `fsN` lives in
+`TM/FS.lean`, which `Evidence/WF.lean` does not import (and must not, to keep the
+import direction that lets `Evidence/Cert.lean` import this file).  Stage 2c can
+either prove that identity in `Cert.lean` — where `fsN` is in scope — or bypass
+`fsN` completely, since `Certified.lim` takes an arbitrary `fs'`.
+
+THE FRONTIER — the fourth clause, cofinality:
+
+    cof_fsC : CN t = true → kindC t = false → t ≠ zero →
+              ∀ s, inT s = true → lt s t = true → ∃ n, le s (fsC t n) = true
+
+Route (worked out, not executed), by structural induction on `t`, with the `s`
+analysis of §9's `tower_bound` inside each case:
+
+  * `t = ξ ⊕ ρ`.  `t[n] = ξ ⊕ ρ[n]`.  If `s` is a sum with head `ξ`, its tail is
+    below `ρ` and the induction hypothesis at `ρ` applies; if its head is below
+    `ξ`, or `s` is additively principal with `s ≤ ξ`, then already `s < t[0]`.
+  * `t = ω^β` with `β` a limit.  `t[n] = ω^(β[n])`.  Clause 2.3.13 reduces
+    `s < ω^β` for `s = φ̄pq` to `q < β` (p = 0) or `s < β` (p ≠ 0, since a CNF `β`
+    is never `φ̄pq` with `p ≠ 0`), and both are handed to the hypothesis at `β`;
+    the `⊕` case needs only the HEAD, plus `lt_fsC_step` to turn the `≤` the
+    hypothesis returns into the `<` that clause 2.3.10 wants.
+  * `t = ω^(β+1)`.  `t[n] = ω^β·(n+1)`, and this is the only case that COUNTS:
+    `s` is a sum of components each `≤ ω^β`, so `n` is its number of components.
+    Needs the successor inversion `q < β+1 → inT q → q ≤ β` (an analogue of
+    `below_one`, which is its `β = 0` instance).
+
+Three auxiliary facts the route needs, none of them in the file yet:
+    (J)  a `ψ`, `Z`, `M` or `ω̄^·` is never below a CN term  (structural induction
+         on the CN term; the `ψ`-vs-`φ̄` clause 2.3.4 recurses into the exponent,
+         which is CN, so it terminates) — this is what kills the junk shapes of
+         `s`, exactly as §9's `ltF_sc_one` does for the tower bound;
+    (K)  `x < ω^x` for CN `x`;
+    (L)  the successor inversion above.
+`inT` is again load-bearing and again for §9's reason: `φ̄(0 ⊕ M)0` is below every
+`ω^β` with `β ≥ 1` and above nothing the sequence reaches. -/
+
+private def cnSample : List Term :=
+  [omega, phi zero omega, phi zero (ofNat 2), add omega omega, phi zero (phi zero omega),
+   add (phi zero omega) omega, phi zero (add omega one), tower 3, tower 4,
+   add (phi zero (phi zero omega)) (phi zero omega)]
+
+#guard cnSample.all (fun t => CN t && !kindC t && !(t == zero))
+#guard cnSample.all (fun t => (List.range 5).all (fun n =>
+         CN (fsC t n) && lt (fsC t n) t && lt (fsC t n) (fsC t (n + 1))))
+#guard (List.range 6).all (fun k => CN (tower k) && (fsC (tower (k + 1)) 0 == tower k))
+
+/-- The towers are the values of `(0,0)(1,1)[n]`, and `fsC` reproduces them: the
+    fundamental sequence of `tower (k+1) = ω^(tower k)` starts at `tower k`
+    because `tower k` is a limit for `k ≥ 1`. -/
+theorem fsC_tower_zero : ∀ k, fsC (tower (k + 1)) 0 = tower k
+  | 0 => rfl
+  | k + 1 => by
+    have hne : (tower (k + 1) == zero) = false := by cases k <;> rfl
+    have hk : kindC (tower (k + 1)) = false := by cases k <;> rfl
+    show fsC (phi zero (tower (k + 1))) 0 = tower (k + 1)
+    rw [fsC_phi_lim hne hk]
+    show phi zero (fsC (tower (k + 1)) 0) = phi zero (tower k)
+    rw [fsC_tower_zero k]
+
 /-! ## §8 STAGE 3 — the `ψ`/`Z` clauses: what is left  (NOTHING PROVED BELOW)
 
 (§9 and §10 were added later and sit ABOVE this section on purpose: this map is
