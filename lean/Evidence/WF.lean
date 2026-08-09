@@ -4728,23 +4728,19 @@ CORRECTION TO §8's STAGING, and this one matters for planning.  §8 says of
     the terms 3b is trying to order.  And transitivity's `ψ`/`Z` clauses recurse
     through `starF`, so it cannot be had first either.
 
-So 3b is not a sequence of four steps; `le (star d) d`, comparability, asymmetry and
-transitivity have to close as ONE simultaneous induction (the way §7.3 already had
-to fuse asymmetry with comparability, for a structurally identical reason).  The
-measure should still be §7.4's, since `deg_starF` (§5) guarantees `α*` does not
-raise a degree.  Concretely, what 3b needs:
-
-  1. the `inT` destructors for 2.1(iii) (`inT (add a b) → a.isAP ∧ inT a ∧ inT b`,
-     plus the descending condition) — §6's map already isolated these — AND for
-     2.1(vi)'s `κ ∈ R`, which §8 item 3 shows is what restores comparability;
-     NOT a K_κ destructor (§8.3.2 measured that this layer does not need it);
-  2. one simultaneous induction proving `le (star d) d`, comparability, asymmetry
-     and transitivity together, rather than §8's staged order;
-  3. comparability is the hard half — §8.2.5's sweeps found raw `lt` transitive as
-     far as it can be swept but NOT comparable, and §7/§8.2's route to both
-     asymmetry and 13(iii) runs through comparability;
-  4. 2.3.14 then admits §7.3/§7.4's arguments verbatim (see `ltF_succ_psi_psi`
-     above, which is `ltF_succ_phi_phi`'s `if`-tree with `κ` for `α`). -/
+SUPERSEDED CONCLUSION — CORRECTED IN §8.4(ii).  This note originally concluded from
+the above that `le (star d) d`, comparability, asymmetry and transitivity therefore
+have to close as ONE simultaneous induction.  That does not follow, and it is
+wrong.  The entanglement above is a fact about `le (star d) d`; but the ORDER proofs
+never need `le (star d) d` at all, because every clause that recurses through
+`starF` (2.3.6 / 2.3.9 / 2.3.15) falls back on comparability, asymmetry or
+transitivity at a STRICTLY SMALLER degree sum — `deg_starF` gives
+`(starF f d).deg ≤ d.deg` while the clause has already stripped a `Z` or a `ψ`.  So
+§7's two-stage architecture survives unchanged and §8's staging was right about the
+shape, if not about this lemma's place in it.  Read the case analysis above as what
+it is: a description of `le (star d) d` itself, which remains a genuine
+theorem-in-waiting but is NOT on 3b's critical path.  §8.4 is the design that
+replaces this paragraph. -/
 
 -- receipts for §8.3.2 (samples of the measurements quoted above)
 #guard star (add zero (Z zero)) == Z zero
@@ -4755,6 +4751,277 @@ raise a degree.  Concretely, what 3b needs:
 #guard star (psi (Z zero) zero) == psi (Z zero) zero
 #guard star M == zero
 #guard star (phi zero (Z zero)) == Z zero
+
+/-! ### §8.4 STAGE 3b, PHASE A: the fragment, the measure, and the interface
+
+This section is a DESIGN, not a proof.  It fixes (i) the fragment Stage 3b should
+target and why, (ii) the termination measure, (iii) the exact statements to be
+produced, and (iv) the interface every case lemma is written against, so that the
+cases can be proved independently and assembled.  Nothing below is asserted as an
+order theorem; the only theorems here are the `FragR` destructors, which are one
+line each and exist so the interface compiles.
+
+Sweep evidence referenced throughout: `table/order-sweep-2026-08-09.txt` (four
+agents, generators independent of §8's and of §8.2.5's, calibrated against §8's
+published counts before running).  Numbers are cited there rather than restated.
+
+────────────────────────────────────────────────────────────────────────────────
+(i) THE FRAGMENT: `FragR`, and why it is NOT `inT`
+
+§8 item 2 says Stage 3b needs `inT`, and §8 item 3 narrows that to ONE conjunct,
+`κ ∈ R` of 2.1(vi).  Taking that seriously gives a fragment much better than `inT`:
+keep only the `κ ∈ R` requirement, hereditarily, and drop everything else.  That is
+`FragR` below — every `ψ`-subterm has a head in `R`.  It is worth the change:
+
+  * `FragR` IS PURELY SYNTACTIC.  `inT` is not: it contains `lt a M`, `le c a`, and
+    `Kset`, and `Kset` is itself defined by recursion through `lt`.  Carrying `inT`
+    through an induction ON `lt` therefore risks circularity and certainly costs
+    destructor work at every step; `FragR` is hereditary in the trivial way `Frag`
+    and `Frag2` are, so §7.3/§7.4's inductions transcribe with no new machinery.
+  * IT IS MUCH LARGER, so the theorem is much stronger.  MEASURED: at degree ≤ 6,
+    1906 terms satisfy `FragR` against 171 for `inT`; at degree ≤ 7, 9410 against
+    529 — 8881 of those are NOT `inT`.
+  * IT SUBSUMES `inT`.  MEASURED: every one of the 529 `inT` terms of degree ≤ 7
+    satisfies `FragR` (2.1(vi) demands `κ.isR` at each `ψ`, which is exactly what
+    `FragR` collects).  So the `inT` forms are corollaries via `inT_le_fragR`
+    (enumerated as a Phase-B case), and nothing that wants `inT` is lost.
+  * IT IS THE MEASURED BOUNDARY.  §8.2.5 found every raw incomparable pair to be of
+    the shape `ψ_M x` vs `ψ_(ψ_M x) y` — i.e. failing exactly `κ ∈ R`.  Removing
+    precisely that restores the order: MEASURED, on all 1906 `FragR` terms of
+    degree ≤ 6, `lt` is asymmetric, total on distinct terms, and its
+    predecessor-scores are the 1906 distinct values 0,…,1905 — the §8 tournament
+    certificate for a strict linear order, enumeration duplicate-free.
+
+QUARANTINE, EXPLICITLY.  `FragR` reaches terms the sweeps never covered: it admits
+K_κ-REJECTED terms (8881 non-`inT` terms already at degree ≤ 7), and
+`table/order-sweep-2026-08-09.txt` records that mixed `⊕`/`φ̄`/`ω̄` K-rejected terms
+first exist at degree ≥ 10 and were never swept.  The exhaustive `FragR` evidence
+above stops at degree 6.  This design therefore ASSUMES that K_κ is
+order-irrelevant — which the sweep supports as far as it looked, and which the
+sweep explicitly does not certify above its depth.  THE FALLBACK IS NAMED: if any
+case lemma below turns out to need K_κ, do not weaken the case — shrink the
+fragment to `fun t => FragR t && inT t` and re-derive, which costs only the `inT`
+destructors and loses only the non-`inT` terms.
+
+────────────────────────────────────────────────────────────────────────────────
+(ii) THE MEASURE: §7's, unchanged — and a CORRECTION to §8.3.2
+
+§8.3.2 (written earlier in this lane) concluded that `le (star d) d`, comparability,
+asymmetry and transitivity must close as ONE simultaneous induction, because
+`le (star d) d` is entangled with transitivity at the `⊕` case.  THE ENTANGLEMENT IS
+REAL BUT THE CONCLUSION WAS WRONG, and the error mattered enough to correct here:
+`le (star d) d` IS NEVER NEEDED BY THE ORDER PROOFS.  Every clause that recurses
+through `starF` — 2.3.6, 2.3.9, 2.3.15 — consumes only comparability, asymmetry or
+transitivity at a STRICTLY SMALLER degree sum, because `deg_starF` gives
+`(starF f d).deg ≤ d.deg` while the clause has already stripped a `Z` or a `ψ`
+(degree `1 + d.deg`).  So `le (star d) d` is a fact about the system, not a
+prerequisite of it, and §8's original two-stage staging survives:
+
+    STAGE I   `cmp_aux3` — asymmetry and comparability, simultaneously,
+              by induction on `a.deg + b.deg`   (§7.3's shape, unchanged)
+    STAGE II  `trans_aux3` — transitivity, with Stage I available, by the
+              lexicographic measure `(b.deg, a.deg + c.deg)`   (§7.4's, unchanged)
+
+Worked instances of "smaller degree suffices", which is what makes this safe:
+  * 2.3.6 `ψκα < Zδ` falls back on comparing `ψκα` with `δ*`, of degree sum
+    `(1+κ+α) + (δ*).deg ≤ (1+κ+α) + δ.deg  <  (1+κ+α) + (1+δ)`.
+  * 2.3.15 `Zα < Zβ` falls back on `α* vs Zβ` and `Zα vs β*`, both strictly below
+    `(1+α) + (1+β)` for the same reason.
+So the ONE genuinely new obligation the `starF` clauses create is not an order fact
+at all but a CLOSURE fact — the fragment must contain `α*` (case S1 below), since
+otherwise the induction hypothesis cannot be applied to it.
+
+────────────────────────────────────────────────────────────────────────────────
+(iii) WHERE `κ ∈ R` IS CONSUMED — the obligation map §8.2's mutants cannot cover
+
+`Frag` and `Frag2` carried no side condition, so §7.7/§8.2.5 could test their
+hypotheses by deletion.  `FragR` has a real side condition, so the file must say
+where it is USED rather than only that it cannot be dropped:
+
+  * COMPARABILITY of `ψ` against `ψ` (2.3.14) is the only place it is essential.
+    2.3.14 selects on `κ = π` / `κ < π` / neither, so "neither" must mean `π < κ`,
+    i.e. the two HEADS must be comparable.  With `κ, π ∈ R` both heads are `Z`
+    terms and their comparison is 2.3.15, which the same induction is proving
+    total.  Without it the heads can be `M` and `ψ_M 0`, which are incomparable —
+    that is exactly `frag2_stops_at_psi`'s witness, and the reason it is a witness.
+  * Everywhere else `FragR` is passed along unused, purely to keep the induction
+    hypotheses applicable.  Case lemmas below that do not mention `isR` in their
+    hint do not consume it.
+
+────────────────────────────────────────────────────────────────────────────────
+(iv) WHY THE CASE LIST IS EXHAUSTIVE
+
+Shapes split as `0` / sum / non-sum, exactly as in §8.2, because §8.2's
+`ltF_succ_add_nsum` and `ltF_succ_nsum_add` were already proved against an ARBITRARY
+non-sum — `ψ` and `Z` included.  So all sum-involving cases transcribe from §8.2
+with `Frag2 ↦ FragR` and nothing else.  Among non-sums, §8.1's table orders by
+LEVEL — `φ̄, ψ, Z` at level 1, `M` at 2, `ω̄^·` at 3 — and level is a function of the
+shape alone.  `a < b` forbids the level of `a` from exceeding that of `b`, so in the
+all-non-sum transitivity case `a < b < c` either raises the level (conclusion
+immediate from the level lemma) or pins all three to one level.  Level 2 forces
+`a = b = M`, impossible; level 3 is one call of 2.3.12; level 1 leaves the 27 shape
+triples over `{φ̄, ψ, Z}`, and MEASURED, all 27 are reachable — as are all 9 level-1
+pairs for comparability — so no case in the list below is vacuous. -/
+
+/-- The Stage-3b fragment: every `ψ`-subterm has a head in `R` ([R91] 2.1(vi)'s
+    `κ ∈ R`, hereditarily, and nothing else).  Purely syntactic, unlike `inT`. -/
+def FragR : Term → Bool
+  | zero => true
+  | M => true
+  | add a b => FragR a && FragR b
+  | omg a => FragR a
+  | phi a b => FragR a && FragR b
+  | psi k a => k.isR && FragR k && FragR a
+  | Z a => FragR a
+
+theorem fragR_add {a b : Term} (h : FragR (add a b) = true) :
+    FragR a = true ∧ FragR b = true := by
+  simp only [FragR, Bool.and_eq_true] at h; exact h
+
+theorem fragR_omg {a : Term} (h : FragR (omg a) = true) : FragR a = true := h
+
+theorem fragR_phi {a b : Term} (h : FragR (phi a b) = true) :
+    FragR a = true ∧ FragR b = true := by
+  simp only [FragR, Bool.and_eq_true] at h; exact h
+
+theorem fragR_psi {k a : Term} (h : FragR (psi k a) = true) :
+    k.isR = true ∧ FragR k = true ∧ FragR a = true := by
+  simp only [FragR, Bool.and_eq_true] at h; exact ⟨h.1.1, h.1.2, h.2⟩
+
+theorem fragR_Z {a : Term} (h : FragR (Z a) = true) : FragR a = true := h
+
+/-- `Frag2` sits inside `FragR`: §8.2's fragment has no `ψ` at all. -/
+theorem frag2_le_fragR : ∀ (t : Term), Frag2 t = true → FragR t = true
+  | zero, _ => rfl
+  | M, _ => rfl
+  | psi _ _, h => by simp [Frag2] at h
+  | Z _, h => by simp [Frag2] at h
+  | omg a, h => frag2_le_fragR a h
+  | add a b, h => by
+    have hab := frag2_add h
+    show (FragR a && FragR b) = true
+    rw [frag2_le_fragR a hab.1, frag2_le_fragR b hab.2]; rfl
+  | phi a b, h => by
+    have hab := frag2_phi h
+    show (FragR a && FragR b) = true
+    rw [frag2_le_fragR a hab.1, frag2_le_fragR b hab.2]; rfl
+
+/-- The LEVEL of a non-sum: `φ̄`, `ψ`, `Z` at 1, `M` at 2, `ω̄^·` at 3, `0` at 0
+    (`⊕` gets 4 and is excluded by hypothesis).  §8.1's table says the order on
+    non-sums is by level first, with ties broken inside the level.  Making that a
+    function is what collapses the all-non-sum case from 125 shape triples to the
+    27 of level 1 plus three schematic cases — without it the fan-out would have to
+    grind out ~98 constant-clause triples by hand. -/
+def lvl : Term → Nat
+  | zero => 0
+  | phi _ _ => 1
+  | psi _ _ => 1
+  | Z _ => 1
+  | M => 2
+  | omg _ => 3
+  | add _ _ => 4
+
+/-- Level strictly up ⟹ below.  Every instance is a constant clause of §8.1/§8.3. -/
+def LvlUp : Prop :=
+  ∀ (f : Nat) (x y : Term), NSum x = true → NSum y = true →
+    lvl x < lvl y → ltF (f + 1) x y = true
+
+/-- Level strictly down ⟹ not below.  Contrapositive: `a < b` forbids `lvl a` from
+    exceeding `lvl b`, which is what pins `a < b < c` to one level. -/
+def LvlDown : Prop :=
+  ∀ (f : Nat) (x y : Term), NSum x = true → NSum y = true →
+    lvl y < lvl x → ltF (f + 1) x y = false
+
+/-- The fragment must contain `α*`, or the induction hypotheses cannot be applied to
+    it — the one genuinely new obligation the `starF` clauses create (§8.4(ii)). -/
+def StarClosed : Prop :=
+  ∀ (f : Nat) (t : Term), FragR t = true → FragR (starF f t) = true
+
+/-! #### §8.4.1 The exact statements Phase B must produce -/
+
+/-- ASYMMETRY on `FragR`, same fuel. -/
+def Asym3 : Prop :=
+  ∀ (a b : Term), FragR a = true → FragR b = true → ∀ f, a.deg + b.deg ≤ f →
+    ltF f a b = true → ltF f b a = false
+
+/-- COMPARABILITY on `FragR`, same fuel. -/
+def Comp3 : Prop :=
+  ∀ (a b : Term), FragR a = true → FragR b = true → ∀ f, a.deg + b.deg ≤ f →
+    ltF f a b = true ∨ a = b ∨ ltF f b a = true
+
+/-- TRANSITIVITY on `FragR`, same fuel. -/
+def Trans3 : Prop :=
+  ∀ (a b c : Term), FragR a = true → FragR b = true → FragR c = true →
+    ∀ f, a.deg + b.deg + c.deg ≤ f →
+    ltF f a b = true → ltF f b c = true → ltF f a c = true
+
+/-! #### §8.4.2 The interface every case lemma is written against
+
+`IH_ASYM`/`IH_COMP` are §7.3's two simultaneous hypotheses at the bound `n`;
+`IH_TR1`/`IH_TR2` are §7.4's two, spelled out.  A case lemma takes them as ordinary
+parameters, so it is provable IN ISOLATION and Phase B only has to apply it. -/
+
+def IH_ASYM (n : Nat) : Prop :=
+  ∀ (x y : Term), FragR x = true → FragR y = true → x.deg + y.deg ≤ n →
+    ∀ g, n ≤ g → ltF g x y = true → ltF g y x = false
+
+def IH_COMP (n : Nat) : Prop :=
+  ∀ (x y : Term), FragR x = true → FragR y = true → x.deg + y.deg ≤ n →
+    ∀ g, n ≤ g → ltF g x y = true ∨ x = y ∨ ltF g y x = true
+
+/-- `TR1`: the middle term may be replaced by anything of degree ≤ `n`. -/
+def IH_TR1 (n : Nat) : Prop :=
+  ∀ (x y z : Term), FragR x = true → FragR y = true → FragR z = true → y.deg ≤ n →
+    ∀ g, x.deg + y.deg + z.deg ≤ g →
+    ltF g x y = true → ltF g y z = true → ltF g x z = true
+
+/-- `TR2`: the middle term stays `b`; `x` and `z` shrink in degree SUM. -/
+def IH_TR2 (b : Term) (m : Nat) : Prop :=
+  ∀ (x z : Term), FragR x = true → FragR z = true → x.deg + z.deg ≤ m →
+    ∀ g, x.deg + b.deg + z.deg ≤ g →
+    ltF g x b = true → ltF g b z = true → ltF g x z = true
+
+/-- The shape of every ASYMMETRY case lemma. -/
+def AsymCase (A B : Term) (n f' : Nat) : Prop :=
+  FragR A = true → FragR B = true → A.deg + B.deg ≤ n + 1 → n ≤ f' →
+  IH_ASYM n → IH_COMP n →
+  ltF (f' + 1) A B = true → ltF (f' + 1) B A = false
+
+/-- The shape of every COMPARABILITY case lemma.  `A ≠ B` is discharged by the
+    caller, exactly as in §7.3. -/
+def CompCase (A B : Term) (n f' : Nat) : Prop :=
+  FragR A = true → FragR B = true → A.deg + B.deg ≤ n + 1 → n ≤ f' →
+  IH_ASYM n → IH_COMP n → A ≠ B →
+  (ltF (f' + 1) A B = true ∨ ltF (f' + 1) B A = true)
+
+/-- The shape of every TRANSITIVITY case lemma.  `Asym3`/`Comp3` are available
+    because Stage I completes before Stage II, exactly as in §8.2. -/
+def TransCase (A B C : Term) (n m f' : Nat) : Prop :=
+  FragR A = true → FragR B = true → FragR C = true →
+  B.deg ≤ n + 1 → A.deg + C.deg ≤ m + 1 → A.deg + B.deg + C.deg ≤ f' + 1 →
+  Asym3 → Comp3 → IH_TR1 n → IH_TR2 B m →
+  ltF (f' + 1) A B = true → ltF (f' + 1) B C = true → ltF (f' + 1) A C = true
+
+/-! The three worked shapes, type-checked, as the fan-out will see them.  (The full
+    numbered enumeration is delivered as data in the lane report; these `#check`s
+    exist so the interface itself is machine-verified, not prose.) -/
+
+-- CASE T-14 (ψ/ψ/ψ), the analogue of §7.4's case (8):
+#check (∀ (k a p b q c : Term) (n m f' : Nat),
+          TransCase (psi k a) (psi p b) (psi q c) n m f' : Prop)
+-- CASE T-27 (Z/Z/Z), the one that routes through `starF` twice:
+#check (∀ (x y z : Term) (n m f' : Nat), TransCase (Z x) (Z y) (Z z) n m f' : Prop)
+-- CASE C-ψψ, where `κ ∈ R` is consumed:
+#check (∀ (k a p b : Term) (n f' : Nat), CompCase (psi k a) (psi p b) n f' : Prop)
+
+/-! #### §8.4.3 Receipts for the design measurements -/
+
+#guard FragR (psi (Z zero) zero) == true          -- an R head is admitted
+#guard FragR (psi M zero) == false                -- ... and the §8 witness is not
+#guard FragR (psi (psi M zero) zero) == false
+#guard Frag2 (omg M) == true && FragR (omg M) == true
+#guard FragR (Z (psi M zero)) == false            -- hereditary, not just top-level
+#guard inT (psi (Z zero) zero) == true && FragR (psi (Z zero) zero) == true
 
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
