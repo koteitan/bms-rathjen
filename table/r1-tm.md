@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.1.34
+バージョン: v0.1.35
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -70,8 +70,29 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
 | **(0,0)(1,1)…(a,1)(a+1,0), a≥1** | $`\bar{\varphi}(a,\omega)`$ | $`\varepsilon_\omega,\ \zeta_\omega,\ \bar{\varphi}(3,\omega),\ldots`$ | [✅](../lean/Evidence/StageB.lean#L531) |  | 1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く |
 | **(0,0)(1,1)…(a,1)(a+1,0)(a+2,0), a≥1** | $`\bar{\varphi}(a,\omega^\omega)`$ | $`\varepsilon_{\omega^\omega},\ \zeta_{\omega^\omega},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L5596) |  | 梯子+2列族。a=1 が表の ε_{ω^ω} 行 |
 | **(0,0)(1,1)…(a,1)(a+1,0)(a+2,1), a≥1** | $`\bar{\varphi}(a,\varepsilon_0)`$ | $`\varepsilon_{\varepsilon_0},\ \zeta_{\varepsilon_0},\ldots`$ | [✅](../lean/Evidence/StageB.lean#L5163) |  | 初の梯子+2列族。a=1 が表の ε_{ε₀} 行 (R5 の手証明は族定理のインスタンスに退役) |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L141) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行。この行より上の候補行は v0.1.22 の監査で撤回・再導出中 |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L141) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 行 1 に 2 が現れる最初の行 |
 | [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L144) | $`\bar{\varphi}(1,\bar{\varphi}(\omega,0))`$ | $`\varepsilon_{\bar{\varphi}(\omega,0)+1}`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,1)`](../lean/Rows/TM.lean#L151) | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0))`$ | $`\bar{\varphi}(2,\bar{\varphi}(\omega,0)+1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L153) | $`\bar{\varphi}(3,\bar{\varphi}(\omega,0))`$ | $`\bar{\varphi}(3,\bar{\varphi}(\omega,0)+1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,2)`](../lean/Rows/TM.lean#L155) | $`\bar{\varphi}(\omega,1)`$ | $`\bar{\varphi}(\omega,1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,2)(1,1)(2,2)`](../lean/Rows/TM.lean#L157) | $`\bar{\varphi}(\omega,2)`$ | $`\bar{\varphi}(\omega,2)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,0)`](../lean/Rows/TM.lean#L159) | $`\bar{\varphi}(\omega,\omega)`$ | $`\bar{\varphi}(\omega,\omega)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,0)(2,0)`](../lean/Rows/TM.lean#L161) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,2))`$ | $`\bar{\varphi}(\omega,\omega^2)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,0)(3,0)`](../lean/Rows/TM.lean#L163) | $`\bar{\varphi}(\omega,\bar{\varphi}(0,\omega))`$ | $`\bar{\varphi}(\omega,\omega^\omega)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,0)(3,1)`](../lean/Rows/TM.lean#L165) | $`\bar{\varphi}(\omega,\bar{\varphi}(1,0))`$ | $`\bar{\varphi}(\omega,\varepsilon_0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L167) | $`\bar{\varphi}(\omega,\bar{\varphi}(\omega,0))`$ | $`\bar{\varphi}(\omega,\bar{\varphi}(\omega,0))`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L169) | $`\bar{\varphi}(\omega+1,0)`$ | $`\bar{\varphi}(\omega+1,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を訂正 (v0.1.35) |
+| [`(0,0)(1,1)(2,2)(2,1)(2,1)`](../lean/Rows/TM.lean#L172) | $`\bar{\varphi}(\omega+1,1)`$ | $`\bar{\varphi}(\omega+1,1)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,1)(3,1)`](../lean/Rows/TM.lean#L174) | $`\bar{\varphi}(\omega+2,0)`$ | $`\bar{\varphi}(\omega+2,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L176) | $`\bar{\varphi}(\omega+\omega,0)`$ | $`\bar{\varphi}(\omega\cdot 2,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を訂正 (v0.1.35) |
+| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L179) | $`\bar{\varphi}(\bar{\varphi}(0,2),0)`$ | $`\bar{\varphi}(\omega^2,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を訂正 (v0.1.35) |
+| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L182) | $`\bar{\varphi}(\bar{\varphi}(0,3),0)`$ | $`\bar{\varphi}(\omega^3,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を訂正 (v0.1.35) |
+| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L185) | $`\bar{\varphi}(\bar{\varphi}(0,\omega),0)`$ | $`\bar{\varphi}(\omega^\omega,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を 2 度訂正 (v0.1.11, v0.1.35) |
+| [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L188) | $`\bar{\varphi}(\bar{\varphi}(0,\bar{\varphi}(0,2)),0)`$ | $`\bar{\varphi}(\omega^{\omega^2},0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を訂正 (v0.1.35) |
+| [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L191) | $`\bar{\varphi}(\bar{\varphi}(0,\bar{\varphi}(0,\omega)),0)`$ | $`\bar{\varphi}(\omega^{\omega^\omega},0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を訂正 (v0.1.35) |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L194) | $`\bar{\varphi}(\bar{\varphi}(1,0),0)`$ | $`\bar{\varphi}(\varepsilon_0,0)`$ |  | [oStageC](../lean/Trans/StageC.lean) | 旧候補値を訂正 (v0.1.35) |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L197) | $`\bar{\varphi}(\bar{\varphi}(\omega,0),0)`$ | $`\bar{\varphi}(\bar{\varphi}(\omega,0),0)`$ |  | [oStageC](../lean/Trans/StageC.lean) |  |
+| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L199) | $`\psi_{\Omega}(0)`$ | $`\Gamma_0`$ |  | [oStageC](../lean/Trans/StageC.lean) | ψ 項の初登場: Γ₀ = ψ_Ω(0)。展開連鎖は Γ-塔 W, φ̄(W,0), … (旧候補値を訂正) |
 
 ## 実装
 

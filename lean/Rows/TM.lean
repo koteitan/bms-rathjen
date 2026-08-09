@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.34"
+def version : String := "v0.1.35"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -140,15 +140,65 @@ def rows : List Row := [
     hasO := true },
   { m := [[0,0],[1,1],[2,2]], t := phi omega zero,
     name := "\\bar{\\varphi}(\\omega,0)", ev := "oStageC",
-    note := "行 1 に 2 が現れる最初の行。この行より上の候補行は v0.1.22 の監査で撤回・再導出中" },
+    note := "行 1 に 2 が現れる最初の行" },
   { m := [[0,0],[1,1],[2,2],[1,1]], t := phi one (phi omega zero),
-    name := "\\varepsilon_{\\bar{\\varphi}(\\omega,0)+1}", ev := "oStageC" }
-  -- The former candidate rows above (2,2)(1,1) — (2,2)(2,1) .. phi-bar(omega^2,0) — were
-  -- WITHDRAWN in v0.1.22: the psi-session audit machine-refuted (2,2)(2,1) = phi-bar(2,W)
-  -- outright (E2 witnesses in Trans/StageC.lean) and left every value >= the
-  -- (2,2)(2,0)-cascade shift-suspect (the committed diagonal rows carried the values of
-  -- their first re-derivation members).  They return with re-derived values; the record
-  -- of the refutation and the forced ladder is Trans/StageC.lean, header sections 1-5.
+    name := "\\varepsilon_{\\bar{\\varphi}(\\omega,0)+1}", ev := "oStageC" },
+  -- The rows below were withdrawn in v0.1.22 (mutual misassignment with their
+  -- re-derivation members) and REBUILT in v0.1.35 from the corrected Stage-C rule:
+  -- every value is green in the corpus battery and the pooled cross-corpus E2 sweep
+  -- of Trans/StageC.lean.  (2,2)(3,2) stays out: its value needs the psi-argument
+  -- hierarchy, the documented next frontier.
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,1]], t := phi (ofNat 2) (phi omega zero),
+    name := "\\bar{\\varphi}(2,\\bar{\\varphi}(\\omega,0)+1)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,1],[3,1]], t := phi (ofNat 3) (phi omega zero),
+    name := "\\bar{\\varphi}(3,\\bar{\\varphi}(\\omega,0)+1)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,2]], t := phi omega one,
+    name := "\\bar{\\varphi}(\\omega,1)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,2],[1,1],[2,2]], t := phi omega (ofNat 2),
+    name := "\\bar{\\varphi}(\\omega,2)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,0]], t := phi omega omega,
+    name := "\\bar{\\varphi}(\\omega,\\omega)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[2,0]], t := phi omega (phi zero (ofNat 2)),
+    name := "\\bar{\\varphi}(\\omega,\\omega^2)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[3,0]], t := phi omega (phi zero omega),
+    name := "\\bar{\\varphi}(\\omega,\\omega^\\omega)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[3,1]], t := phi omega (phi one zero),
+    name := "\\bar{\\varphi}(\\omega,\\varepsilon_0)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[3,1],[4,2]], t := phi omega (phi omega zero),
+    name := "\\bar{\\varphi}(\\omega,\\bar{\\varphi}(\\omega,0))", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,1]], t := phi (plus omega one) zero,
+    name := "\\bar{\\varphi}(\\omega+1,0)", ev := "oStageC",
+    note := "旧候補値を訂正 (v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[2,1],[2,1]], t := phi (plus omega one) one,
+    name := "\\bar{\\varphi}(\\omega+1,1)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,1],[3,1]], t := phi (plus omega (ofNat 2)) zero,
+    name := "\\bar{\\varphi}(\\omega+2,0)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[2,1],[3,2]], t := phi (plus omega omega) zero,
+    name := "\\bar{\\varphi}(\\omega\\cdot 2,0)", ev := "oStageC",
+    note := "旧候補値を訂正 (v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[2,2]], t := phi (phi zero (ofNat 2)) zero,
+    name := "\\bar{\\varphi}(\\omega^2,0)", ev := "oStageC",
+    note := "旧候補値を訂正 (v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[2,2],[2,2]], t := phi (phi zero (ofNat 3)) zero,
+    name := "\\bar{\\varphi}(\\omega^3,0)", ev := "oStageC",
+    note := "旧候補値を訂正 (v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[3,0]], t := phi (phi zero omega) zero,
+    name := "\\bar{\\varphi}(\\omega^\\omega,0)", ev := "oStageC",
+    note := "旧候補値を 2 度訂正 (v0.1.11, v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[3,0]], t := phi (phi zero (phi zero (ofNat 2))) zero,
+    name := "\\bar{\\varphi}(\\omega^{\\omega^2},0)", ev := "oStageC",
+    note := "旧候補値を訂正 (v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[4,0]], t := phi (phi zero (phi zero omega)) zero,
+    name := "\\bar{\\varphi}(\\omega^{\\omega^\\omega},0)", ev := "oStageC",
+    note := "旧候補値を訂正 (v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[4,1]], t := phi (phi one zero) zero,
+    name := "\\bar{\\varphi}(\\varepsilon_0,0)", ev := "oStageC",
+    note := "旧候補値を訂正 (v0.1.35)" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[4,1],[5,2]], t := phi (phi omega zero) zero,
+    name := "\\bar{\\varphi}(\\bar{\\varphi}(\\omega,0),0)", ev := "oStageC" },
+  { m := [[0,0],[1,1],[2,2],[3,1]], t := psi (Z zero) zero,
+    name := "\\Gamma_0", ev := "oStageC",
+    note := "ψ 項の初登場: Γ₀ = ψ_Ω(0)。展開連鎖は Γ-塔 W, φ̄(W,0), … (旧候補値を訂正)" }
 ]
 
 /-! ## Per-row machine checks (a successful build means every row is verified) -/
