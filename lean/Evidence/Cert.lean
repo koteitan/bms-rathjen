@@ -8472,6 +8472,32 @@ theorem expand_epsOmega (n : Nat) :
     map_const_flatten2]
   rfl
 
+/-! ### §20.2 THE RUNGS, MEASURED AT THREE LEVELS
+
+§20 records that each rung's expansions LEAVE the ladder — `epsM 1`'s tower over ε₀·2.
+One rung does not determine the family: "tower over ε₀·2", "tower over ε_k·2" and
+"tower over `famV`'s value at that rung" all agree at k = 1 and disagree above it, and
+reading the closed form off k = 1 is deriving it from one data point.  So it was
+measured at k = 1, 2, 3 before anything was designed:
+
+  THE CLOSED FORM IS `tower over ε_k·2` — which is exactly the WF lane's own `fsEsucc k`:
+      o? (expand (epsM (k+1)) n) = fsEsucc k n            k ≤ 2, n ≤ 3
+  AND THE ONE-LEVEL GENERALISATION IS REFUTED:
+      the same with `fsEsucc 0` for every k holds at k = 0 and FAILS at k = 1 and 2.
+
+The second `#guard` is the one worth having.  A check that only confirms the surviving
+candidate cannot say that the others were excluded — and here the excluded candidate is
+the one a reader would most naturally have written down.
+
+So the family under the ladder is ε_k-PREFIXED, not ε₀-prefixed: `no_overshoot_fam`
+(§19.2) does not cover the (B) rows, and the ceiling has to generalise along the same
+index.  That is now a measurement rather than the guess §20 left open. -/
+
+#guard (List.range 3).all (fun k => (List.range 4).all (fun n =>
+  Trans.o? (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc k n)))
+#guard !((List.range 3).all (fun k => (List.range 4).all (fun n =>
+  Trans.o? (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc 0 n))))
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
