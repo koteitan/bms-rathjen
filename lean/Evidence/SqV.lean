@@ -3771,4 +3771,223 @@ def encvFlat (t : Term) (d : Nat) : List Col2 := (summands t).flatMap (fun g => 
 #guard (cnvAll.filter (fun t => match t with | .add _ _ => true | _ => false)).length == 72
 #guard (cnvAll.filter (fun t => !((summands t).all (fun g => TM.Term.isAP g)))).length == 0
 
+/-! ### §15.13 THE OBLIGATIONS AS `encv'` WILL MEET THEM — one per recursion site, against
+     THE PARENT
+
+§15.5–§15.12 state each clause against its OWN argument, which is what made them provable
+separately.  What Lean will actually generate at a fuel-free `encv'` is a decrease against the
+PARENT `φ̄(a,b)` or `u ⊕ v`, so the compositions belong in the file rather than at the definition
+site — otherwise the same three-line `lt_of_le_of_lt` chain gets rewritten six times.
+
+    site                  target                              theorem
+    add clause            g ∈ summands (u ⊕ v)                `lt_summand_add`      §15.12
+    ladder                predOr a                            `lt_predOr_phi`
+    head                  (summands (splitFin b).1).headD 0   `lt_headD_phi`
+    mkBlocks              g or omLog g, per summand           `lt_blockArg_phi`
+    collapse              same head                           `lt_headD_phi`
+    fpDeep                z with fpDeep a hd = some z         `lt_fpDeep_phi`
+
+**AND THE MACHINERY IS VERIFIED, NOT ASSUMED.**  A spike — a `CarrierV`-recursive function
+descending through `summands` via `List.attach`, with the decrease discharged by
+`lt_summand_add` — ELABORATES and EVALUATES.  That was the one thing no measurement could tell
+me: whether Lean's well-founded recursion would accept the obligations in the shape these
+theorems produce.  It does, and the pattern is `match hp : p.1 with … termination_by p …
+decreasing_by rw [hp]; exact …`.
+
+`le_predOr` and `le_omLog` are the unconditional `le` forms of §15.5 and §15.8 — the "it moves"
+hypothesis disappears because the identity case gives `le_self`.  A caller at a recursion site
+does not know whether the step moves, so the `le` form is the one it can use; the `lt` forms
+stay because they are what the movement facts actually say. -/
+
+section
+open Evidence.WF (CNV cnv_phi le_self le_of_lt le_zero_any inT_of_cnv inT_le_fragR
+  lt_of_le_of_lt3 lt_phi_of_le_fst)
+
+private theorem lt_of_le_of_lt_cnv {a b c : Term} (ha : CNV a = true) (hb : CNV b = true)
+    (hc : CNV c = true) (h1 : le a b = true) (h2 : lt b c = true) : lt a c = true :=
+  lt_of_le_of_lt3 (inT_le_fragR a (inT_of_cnv a ha)) (inT_le_fragR b (inT_of_cnv b hb))
+    (inT_le_fragR c (inT_of_cnv c hc)) h1 h2
+
+theorem lt_zero_phi (a b : Term) : lt zero (phi a b) = true :=
+  lt_of_le_of_ne (le_zero_any _) (by intro hc; exact absurd hc (by simp))
+
+/-- `predOr` never ascends — the unconditional form the recursion site needs. -/
+theorem le_predOr {t : Term} (ht : CNV t = true) : le (predOr t) t = true := by
+  by_cases h : predOr t = t
+  · rw [h]; exact le_self t
+  · exact le_of_lt (lt_predOr ht h)
+
+/-- `omLog` never ascends. -/
+theorem le_omLog {g : Term} (hg : CNV g = true) : le (omLog g) g = true := by
+  by_cases h : omLog g = g
+  · rw [h]; exact le_self g
+  · exact le_of_lt (lt_omLog hg h)
+
+theorem cnv_headD {b : Term} (hb : CNV b = true) :
+    CNV ((summands (TM.Term.splitFin b).1).headD zero) = true := by
+  have hsf : CNV (TM.Term.splitFin b).1 = true :=
+    cnv_ofList_take b ((toList b).length
+      - ((toList b).reverse.takeWhile (fun y => y == one)).length) hb
+  cases hg : summands (TM.Term.splitFin b).1 with
+  | nil => rfl
+  | cons c rest =>
+    show CNV c = true
+    exact cnv_mem_summands _ c hsf (by rw [hg]; exact List.mem_cons_self)
+
+/-- **THE LADDER SITE.** -/
+theorem lt_predOr_phi {a b : Term} (h : CNV (phi a b) = true) :
+    lt (predOr a) (phi a b) = true :=
+  lt_phi_of_le_fst (cnv_predOr (cnv_phi h).1) (cnv_phi h).1 (le_predOr (cnv_phi h).1)
+
+/-- **THE HEAD SITE** — including the empty-summand case, where the head defaults to `0`. -/
+theorem lt_headD_phi {a b : Term} (h : CNV (phi a b) = true) :
+    lt ((summands (TM.Term.splitFin b).1).headD zero) (phi a b) = true := by
+  cases hg : summands (TM.Term.splitFin b).1 with
+  | nil => exact lt_zero_phi a b
+  | cons c rest =>
+    show lt c (phi a b) = true
+    exact lt_summand_phi h (by rw [hg]; exact List.mem_cons_self)
+
+/-- **THE `mkBlocks` SITE** — the argument is the summand at `a = 0` and its ω-exponent otherwise,
+    and both descend. -/
+theorem lt_blockArg_phi {a b g : Term} (h : CNV (phi a b) = true)
+    (hg : g ∈ summands ((TM.Term.splitFin b).1)) :
+    lt (if a == zero then g else omLog g) (phi a b) = true := by
+  have hsf : CNV (TM.Term.splitFin b).1 = true :=
+    cnv_ofList_take b ((toList b).length
+      - ((toList b).reverse.takeWhile (fun y => y == one)).length) (cnv_phi h).2
+  have hg' : CNV g = true := cnv_mem_summands _ g hsf hg
+  by_cases hz : (a == zero) = true
+  · rw [if_pos hz]; exact lt_summand_phi h hg
+  · rw [if_neg hz]
+    exact lt_of_le_of_lt_cnv (cnv_omLog hg') hg' h (le_omLog hg') (lt_summand_phi h hg)
+
+/-- **THE `fpDeep` SITE.** -/
+theorem lt_fpDeep_phi {a b z : Term} (h : CNV (phi a b) = true)
+    (hz : fpDeep a ((summands (TM.Term.splitFin b).1).headD zero) = some z) :
+    lt z (phi a b) = true :=
+  lt_of_le_of_lt_cnv (cnv_fpDeep (cnv_headD (cnv_phi h).2) hz) (cnv_headD (cnv_phi h).2) h
+    (le_fpDeep (cnv_headD (cnv_phi h).2) hz) (lt_headD_phi h)
+
+end
+
+/-! ## §16 THE FUEL-FREE ENCODER — `encv'`, BY WELL-FOUNDED RECURSION ON THE ORDER
+
+`encvF` carries fuel because "the `predOr` recursion is not structural, and at the gate stage a
+termination proof would be premature" (§1's own comment).  §13 then showed no ARITHMETIC measure
+in the `deg`/`tdepth`/`tsize`/`ncomp` family works — `deg` dies at `omLog`, `tdepth` at `predOr`,
+and the 263-term table is the record that the family was searched, not that it was not tried.
+The order itself is the measure: WF §15.25.1's `CarrierV` is the `CNV` terms under `lt`, well
+founded by `acc_cnv_inT`, and §15.5–§15.13 supply a decrease at every recursion site.
+
+**`encvC` ELABORATED ON THE FIRST ATTEMPT, with all five obligations discharged by §15.13.**
+That is the part no measurement could have established: `targets` over-approximates the call
+graph and was only ever evidence that the obligations would be DISCHARGEABLE.  Lean generates
+the real obligations from the syntax of the definition, and if `targets` had MISSED a call the
+definition would not have elaborated.  It did.
+
+    site               obligation                    discharged by
+    add                lt g (u ⊕ v)                  `lt_summand_add`     §15.12
+    ladder             lt (predOr a) φ̄(a,b)          `lt_predOr_phi`      §15.13
+    mkBlocks           lt (g | omLog g) φ̄(a,b)       `lt_blockArg_phi`    §15.13
+    head / collapse    lt (headD gs) φ̄(a,b)          `lt_headD_phi`       §15.13
+    fpDeep             lt z φ̄(a,b)                   `lt_fpDeep_phi`      §15.13
+
+THE AGREEMENT, over the corpus the coordinator named, stated rather than summarised:
+
+    corpusW ++ deeper ++ nested        319 entries,  169 distinct,  ALL 169 `CNV`
+    encv' t d = encv t d,  d ∈ 0..3                                 0 violations
+    the same over `cnvAll` (215 `CNV` terms)                         0 violations
+    toMatrix (encv' t 0) = sqv t                                     0 violations
+
+**`encvF` STAYS.**  Thirteen candidates were compared on it, and the D1–D8 gate numbers
+throughout this file are ITS numbers; deleting it would orphan every measurement above.  `encv'`
+supersedes it as the definition to reason about, and the agreement above is what licenses reading
+this file's earlier measurements as measurements of `encv'`.
+
+**`encv'` IS TOTAL BUT SAYS NOTHING OFF `CNV`** — it returns `[]` there, where `encv` returns the
+fuelled value.  That is a deliberate difference and not a defect: the Veblen-region encoder is
+only ever applied inside `CNV`, and a function that is honest about its domain is better than one
+that returns a value it cannot justify.  The agreement above is stated ON `CNV` for that reason.
+
+**THE AXIOM SET CHANGES, AND THE CHANGE IS INHERITED, NOT INTRODUCED.**  Every theorem in this
+file is `[propext, Quot.sound]`; `encvC` and `encv'` are `[propext, Classical.choice, Quot.sound]`.
+The extra axiom is not mine and not the definition's — `Evidence.WF.acc_cnv_inT` already carries
+it, so `wf_lt_cnv` and the `WellFoundedRelation` instance do too, and anything recursing on them
+must.  Recorded rather than passed over: a file that reports axioms should say when the set grows
+and where the growth came from.
+
+**WHAT THIS SETTLES ABOUT THE CARRIER, AND ON THE CONSUMER'S OWN CRITERION.**  WF §15.25.1 says
+the choice between the bounded `BelowC` and the unbounded `CarrierV` "depends only on whether
+`CNV` at each target is cheap to PROVE, not on whether it is true."  It was cheap — `cnv_predOr`,
+`cnv_omLog`, `cnv_fpDeep`, `cnv_mem_summands`, none of which needed an order fact.  So the
+criterion resolves to `CarrierV`, and `encv'` gets to be `Term → Nat → List Col2` with no bound
+threaded through it.  Under `BelowC` the change is mechanical — `belowC_step` in place of the
+subtype constructor, plus a bound parameter — and it is the WF lane's call to make. -/
+
+def encvC (p : Evidence.WF.CarrierV) (d : Nat) : List Col2 :=
+  match hp : p.1 with
+  | .zero => []
+  | .add u v =>
+      (summands (TM.Term.add u v)).attach.flatMap (fun g =>
+        encvC ⟨g.1, cnv_mem_summands _ g.1 (hp ▸ p.2) g.2⟩ d)
+  | .phi a b =>
+      let ladder : List Col2 :=
+        if a == zero then []
+        else (d + 1, 1) :: bumpAt (d + 2)
+          (encvC ⟨predOr a, cnv_predOr (Evidence.WF.cnv_phi (hp ▸ p.2)).1⟩ (d + 2))
+      let unit : List Col2 := if a == zero then [(d + 1, 0)] else ladder
+      let reps : List Col2 := (List.replicate (TM.Term.splitFin b).2 unit).flatten
+      let mk : List {x // x ∈ summands (TM.Term.splitFin b).1} → List Col2 := fun hs =>
+        (hs.map (fun g =>
+          ladder ++ shiftD (if a == zero then d + 1 else d + 2)
+            (encvC ⟨if a == zero then g.1 else omLog g.1,
+              by
+                by_cases hz : (a == zero) = true
+                · rw [if_pos hz]
+                  exact cnv_mem_summands _ g.1
+                    (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2
+                · rw [if_neg hz]
+                  exact cnv_omLog (cnv_mem_summands _ g.1
+                    (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2)⟩ 0))).flatten
+      if TM.Term.isFP a ((summands (TM.Term.splitFin b).1).headD zero) then
+        encvC ⟨(summands (TM.Term.splitFin b).1).headD zero,
+                cnv_headD (Evidence.WF.cnv_phi (hp ▸ p.2)).2⟩ d
+          ++ (if (summands (TM.Term.splitFin b).1).length == 1
+              then (if a == zero then [((d + 1, 0) : Col2)] else ladder)
+              else mk ((summands (TM.Term.splitFin b).1).attach.drop 1))
+          ++ reps
+      else
+        match hfd : fpDeep a ((summands (TM.Term.splitFin b).1).headD zero) with
+        | some z =>
+            encvC ⟨z, cnv_fpDeep (cnv_headD (Evidence.WF.cnv_phi (hp ▸ p.2)).2) hfd⟩ d
+              ++ mk (summands (TM.Term.splitFin b).1).attach ++ reps
+        | none =>
+            (d, 0) :: ((match summands (TM.Term.splitFin b).1 with
+                        | [] => ladder
+                        | _ => mk (summands (TM.Term.splitFin b).1).attach) ++ reps)
+  | _ => []
+termination_by p
+decreasing_by
+  · rw [hp]; exact lt_summand_add (hp ▸ p.2) g.2
+  · rw [hp]; exact lt_predOr_phi (hp ▸ p.2)
+  · rw [hp]; exact lt_blockArg_phi (hp ▸ p.2) g.2
+  · rw [hp]; exact lt_headD_phi (hp ▸ p.2)
+  · rw [hp]; exact lt_fpDeep_phi (hp ▸ p.2) hfd
+
+/-- The fuel-free encoder as a total function: `encvC` on `CNV`, `[]` elsewhere. -/
+def encv' (t : Term) (d : Nat) : List Col2 :=
+  if h : Evidence.WF.CNV t = true then encvC ⟨t, h⟩ d else []
+
+def agreeCorpus : List Term := (corpusW ++ deeper ++ nested).eraseDups
+
+#guard (corpusW ++ deeper ++ nested).length == 319
+#guard agreeCorpus.length == 169
+#guard (agreeCorpus.filter (fun t => Evidence.WF.CNV t)).length == 169
+#guard (agreeCorpus.filter (fun t =>
+          !((List.range 4).all (fun d => encv' t d == encv t d)))).length == 0
+#guard (cnvAll.filter (fun t =>
+          !((List.range 4).all (fun d => encv' t d == encv t d)))).length == 0
+#guard (agreeCorpus.filter (fun t => !(toMatrix (encv' t 0) == sqv t))).length == 0
+
 end Evidence.SqV
