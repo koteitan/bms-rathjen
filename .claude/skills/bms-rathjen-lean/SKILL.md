@@ -178,6 +178,17 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **A WORD THAT IS TRUE OF THE ORDINALS CAN BE FALSE OF THE MATRICES — this is
+  the correspondence the repo exists to establish, so never assume it.**
+  `expand (epsM 1) k` has `oR` equal to `ω^(ε₀·2)`, `ω^(ω^(ε₀·2))`, … — a tower,
+  genuinely. **The matrices are not `towerM`**: they are a two-column-per-step
+  family `[j,0],[j+1,1]`, while `towerM` is one column per step and `famM`
+  alternates `[0,0]`/`[1,1]`. `cert_tower` proves its family via `cert_padSq` on
+  a `CN` term and these matrices are not `padRow (sq c)` for any `c`, because
+  the second row is not constant. So "generalise `cert_tower` over its base" does
+  not reach it — **the base is not what differs, the per-step block is.**
+  Check the matrix shape by `#eval` before reusing a certificate family whose
+  ORDINAL description matches.
 - **LANE PROTOCOL: THE VERDICT IS THE LAST THING A LANE DOES, AND ACKS CARRY NO
   WORK.** After sending a verdict a lane makes no further writes to that file
   until the coordinator acks. Five sha mismatches in one evening, the last five

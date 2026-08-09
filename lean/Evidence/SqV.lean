@@ -5073,4 +5073,52 @@ induction for the summand-list reason.  **All six were reasonable and all six we
 who has now paid it six times — and the coordinator's *"a request to characterise something is
 worth one `#eval` before it is worth one theorem"* is the same rule from the other side. -/
 
+/-! ## §23 `Certified` FOR `ε_ω` — FOUR PREMISES DISCHARGED, THE FIFTH NAMED
+
+`Certified.lim` has five premises.  Four are proved and the fifth is a whole sub-project, so it is
+carried as an explicit HYPOTHESIS at the use site rather than hidden by a narrower statement —
+§9's instruction, applied where it bites.
+
+    kind (sqv' ε_ω) = .lim                     decidable
+    ∀ n, Certified (expand … n) (fsEW n)       ← `cert_epsN`, THE HYPOTHESIS
+    ∀ n, lt (fsEW n) ε_ω                       `Evidence.WF.lim_clauses_epsOmega`
+    ∀ n, lt (fsEW n) (fsEW (n+1))              same
+    cofinality                                 same
+
+**AND THE MEASUREMENT THAT PUT THE HYPOTHESIS THERE RATHER THAN A RECURSION.**  I proposed
+assembling this by recursion down the ε_n ladder.  One `#eval` refuted it before any statement was
+written:
+
+    expand (epsM (n+1)) k = epsM m  for some m       ONLY at k = 0, for n = 0,1,2
+    expand (epsM 1) 1 = [[0,0],[1,1],[1,0],[2,1]]    oR = φ̄(0, ε₀ ⊕ ε₀) = ω^(ε₀·2)
+
+**Each rung's own fundamental sequence LEAVES the ladder for a tower family one level down** — a
+tower over `ε₀·2`, not over `ε₀`.  `Cert.lean` §20 says exactly this at line 8494 and neither lane
+read it before proposing the recursion; the `#eval` found it in one step.  **A target written first
+would have been wrong in the way that reads as correct**: the ladder is real and the rungs are
+real, and only the rungs' fundamental sequences leave it.
+
+`cert_epsN` is `Cert.lean`'s to hold, not this file's — the import arrow is `SqV → Cert`, so a
+statement about `Certified` may be USED here and its proof may not cite anything from here. -/
+
+/-- **`ε_ω`'s CERTIFICATE, MODULO THE RUNGS.**  The hypothesis is `cert_epsN`, stated in full at
+    the use site so the residue is one named obligation rather than an invisible restriction. -/
+theorem cert_epsOmega
+    (h : ∀ n, Evidence.Cert.Certified (Evidence.Cert.epsM n) (Evidence.WF.fsEW n)) :
+    Evidence.Cert.Certified (sqv' (phi one omega)) (phi one omega) := by
+  rw [sqv'_epsOmega]
+  obtain ⟨_, hlt, hmono, hcof⟩ := Evidence.WF.lim_clauses_epsOmega
+  refine Evidence.Cert.Certified.lim Evidence.WF.fsEW (by decide) ?_ hlt hmono hcof
+  intro n
+  show Evidence.Cert.Certified ((BMS.expand? [[0, 0], [1, 1], [2, 0]] n).getD []) _
+  rw [Evidence.Cert.expand_epsOmega n]
+  exact h n
+
+#guard BMS.kind (sqv' (phi one omega)) == BMS.Kind.lim
+#guard (List.range 6).all (fun n => BMS.expand (sqv' (phi one omega)) n == Evidence.Cert.epsM n)
+-- the rungs leave the ladder: `expand (epsM (n+1)) k` is an `epsM` only at k = 0
+#guard (List.range 3).all (fun n => BMS.expand (Evidence.Cert.epsM (n+1)) 0 == Evidence.Cert.epsM n)
+#guard (List.range 3).all (fun n => (List.range 3).all (fun k =>
+  !((List.range 6).any (fun m => BMS.expand (Evidence.Cert.epsM (n+1)) (k+1) == Evidence.Cert.epsM m))))
+
 end Evidence.SqV
