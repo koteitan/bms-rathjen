@@ -971,6 +971,74 @@ A fact with three defects to its name in one night will have a fourth.  The ques
 ask of any clause that touches `φ̄(0,·)`: does it assume `φ̄(0,x) = ω^x`?  Below ε₀ that
 is true, which is exactly why it survives every test written below ε₀. -/
 
+/-! ## §7 D7 — SEQUENCE AGREEMENT, the dimension `sqv_decomp` actually consumes
+
+D5 says the expansion of an encoded matrix is again an encoding.  It does NOT say it is
+the encoding of the RIGHT term: `u` there is whatever `oR` returns, so a map could be
+perfectly closed under expansion and send every expansion to the wrong member of the
+right shape with D5 reading 0 throughout.  `Certified.lim`'s identity premise is
+`∀ n, Certified (expand M n) (fs' n)` — the n-th member of the FUNDAMENTAL SEQUENCE, so
+what has to hold is
+
+    oR (expand (sqv t) n) = some (fs t n)        for the CALIBRATED `fs`
+
+ITS SCOPE, AND WHY THE RESTRICTION IS THE RIGHT ONE.  The calibrated sequence is per row,
+not a function of the term — that is §5's index-shift result — so D7 is measurable only
+where a bundle exists.  That set is exactly what `sqv_decomp` will be applied to, but it
+is a minority of the corpus and the file should say so rather than let "D7 green" read as
+"green everywhere":
+
+    D7 domain          48 of 269 corpusW terms
+      11 named rows    ε₀, ε₁, ε₂, ε₃, ε_ω, ε_{ω²}, ε_{ω^ω}, ε_{ε₀}, ζ₀, ε_{ζ₀}, φ̄(ω,0)
+      37 CN limits     paired with `Evidence.WF.fsC`
+    no bundle         221 of 269
+
+RESULT: **0 failures, all at SHIFT 0**, with the shift-1 control failing on all 48 — so
+the check discriminates rather than being satisfied by any pairing.
+
+AND THAT SETTLES SOMETHING §5 LEFT AMBIGUOUS.  §5 measured three different `fsN` shifts
+and one row where no shift exists, and read it as "the index is matrix-determined".  D7
+says where that non-uniformity lives: **between `fsN` and the matrices, NOT between the
+CALIBRATED bundles and the matrices** — every bundle pairs at shift 0, including φ̄(ω,0)
+which needed `fsN` shifted by 2 and ε₁ for which no `fsN` shift exists at all.  The
+bundles are calibrated against the matrices, so this is confirmation that they are, not a
+new fact; but it means `sqv_decomp` will not have to carry a per-row index. -/
+
+open Evidence.WF (fsC tower fsEW fsEW2 fsEWW fsEE fsZeta0 fsEZ fsEsucc)
+
+def bundles : List (Term × (Nat → Term)) :=
+  [(phi one zero, tower),
+   (phi one one, fsEsucc 0),
+   (phi one (ofNat 2), fsEsucc 1),
+   (phi one (ofNat 3), fsEsucc 2),
+   (phi one omega, fsEW),
+   (phi one (phi zero (ofNat 2)), fsEW2),
+   (phi one (phi zero omega), fsEWW),
+   (phi one (phi one zero), fsEE),
+   (phi (ofNat 2) zero, fsZeta0),
+   (phi one (phi (ofNat 2) zero), fsEZ),
+   (phi omega zero, fun n => phi (ofNat (n + 2)) zero)]
+
+def cnLims : List Term :=
+  corpusW.filter (fun t => Evidence.WF.CN t && !(t == zero) && Evidence.WF.kindC t == false)
+
+-- D7, and the shift-1 CONTROL beside it: a pairing check that only confirms agreement
+-- cannot say a wrong pairing was excluded
+#eval (bundles.length, cnLims.length,
+       (bundles.filter (fun p => !((List.range 4).all (fun n =>
+          Trans.oR (BMS.expand (sqv p.1) n) == some (p.2 n))))).length,
+       (cnLims.filter (fun t => !((List.range 4).all (fun n =>
+          Trans.oR (BMS.expand (sqv t) n) == some (fsC t n))))).length)
+
+#guard (bundles.filter (fun p => !((List.range 4).all (fun n =>
+          Trans.oR (BMS.expand (sqv p.1) n) == some (p.2 n))))).length == 0
+#guard (cnLims.filter (fun t => !((List.range 4).all (fun n =>
+          Trans.oR (BMS.expand (sqv t) n) == some (fsC t n))))).length == 0
+#guard (bundles.filter (fun p => !((List.range 4).all (fun n =>
+          Trans.oR (BMS.expand (sqv p.1) n) == some (p.2 (n + 1)))))).length == 11
+#guard (cnLims.filter (fun t => !((List.range 4).all (fun n =>
+          Trans.oR (BMS.expand (sqv t) n) == some (fsC t (n + 1)))))).length == 37
+
 -- §5.2's four searched/predicted witnesses, as guards
 #guard sqv (phi one (phi zero (phi one zero))) == [[0,0],[1,1],[2,0],[3,1],[2,0]]
 #guard sqv (phi zero (phi zero (phi one zero))) == [[0,0],[1,1],[1,0],[2,1],[2,0]]
