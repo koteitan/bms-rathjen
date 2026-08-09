@@ -9817,6 +9817,267 @@ theorem lim_clauses_phi_arg {a b : Term} (g : Nat → Term)
      cof_phiArg_aux g hcna hcnb hg1 hg3 hg4 hside s.deg s (Nat.le_refl _)
        (cnv_of_lt_cnv hin (by show (CNV a && CNV b) = true; rw [hcna, hcnb]; rfl) hlt) hlt⟩
 
+/-! ### §15.11 THE SUM COMBINATOR — the certificates of a row's own EXPANSIONS
+
+WHY THIS IS NOT A FOURTH ROW SHAPE, and the note is first because the count is the thing a
+later reader will get wrong.  §15.5 predicted that the twelve Veblen ROWS split over exactly
+three closed-form shapes, (A)/(B)/(C), and that prediction STANDS: it was a count over the
+ROWS, and it held against the complete map.  What follows is over INTERMEDIATE values — the
+certificates of a single row's EXPANSIONS — an obligation that appears only when a row is
+ASSEMBLED, never when its own sequence is read off its matrix.  Do not count four here and
+conclude the three-shape prediction failed.
+
+WHAT MAKES THE OBLIGATION APPEAR.  `Certified.lim` demands
+`∀ n, Certified (BMS.expand M n) (fs' n)`.  For row A, `(0,0)(1,1)(1,0)`, the certificate
+lane has proved `expand_rowA n = eps0M n` (Cert.lean §18), so the row needs a certificate for
+each `eps0M n`, whose value is `ε₀·(n+1) = fsA n` — and that is itself a LIMIT.  So every
+intermediate value needs its own four premises, and their sequences are SUMS.
+
+MEASURED FIRST, per §15.5's rule — AND MY FIRST CLOSED FORM WAS WRONG.  Recorded because the
+way it was wrong is §15.5's trap one level down.  `Trans.oR` on `BMS.expand (eps0M k) n`, all
+`k, n ≤ 5`:
+
+    oR (eps0M k)                 =  ε₀·(k+1)  =  repAdd eps0T k
+    oR (BMS.expand (eps0M k) n)  =  ε₀ ⊕ (ε₀ ⊕ … ⊕ tower n)      -- k copies of ε₀
+
+I predicted `add (repAdd eps0T (k-1)) (tower n)`.  That is the SAME ORDINAL and a DIFFERENT
+TERM: it nests the sum on the left, and 𝔗(M)'s `⊕` is a right-nested spine.  It is green on
+every clause that speaks of the ORDER — CNV, below the row, increasing, cofinal — precisely
+because those are order facts and the two terms denote the same ordinal.  It fails only
+against the matrix.  That is §15.5's finding at term level: the four clauses state
+PROPERTIES, and only `Certified (expand M n) (fs' n)` states IDENTITY.  The right-nested form
+is what the combinator produces by construction, `fun n => u ⊕ g n`.
+
+THE HYPOTHESIS THAT IS REAL.  `hgz : ∀ n, g n ≠ zero` cannot be dropped and is NOT implied by
+`g`'s four clauses.  `hdLe zero u = false`, so `u ⊕ 0` fails 2.1(iii) — it is not a term of
+𝔗(M) at all — and §15.3 records `fsN ε₀ 0 = 0` as a live instance of exactly that; it is the
+zero tail that broke the direct sequence there.  Row A discharges it with `tower_ne_zero`
+(`tower 0 = 1`), but it has to be STATED, not assumed away.
+
+THE FACT THAT IS NOT A HYPOTHESIS.  Clause 1 needs `hdLe (g n) u`, the descending condition at
+the tail, and that is not among `g`'s four clauses: they bound `g n` below `v`, not below
+`v`'s HEAD.  It is `hdLe_mono` below, and it is PROVED rather than assumed — measured with
+zero counterexamples over the CNV triples of degree ≤ 12, and carried as a hypothesis it
+would have propagated into all six remaining rows.  ONE DEVIATION from the design sketch,
+stated because it is a genuine strengthening of the premises: `hdLe_mono` carries `CNV u`,
+which the sketch did not.  It is needed because `le_trans` is stated on `Frag`, and it costs
+nothing here — the measurement was over CNV triples, and `u` is the head of a CNV sum at
+every call site.
+
+COFINALITY IS NOT §12's `cof_repAdd` LIFTED, and the wrong ancestor was named in advance.
+`cof_repAdd` COUNTS the components of `s` against a fixed head, and spends `le_predC_of_lt`
+to do it.  With the head FIXED there is nothing to count: the tail goes straight to `g`'s own
+cofinality clause.  The right ancestor is the `⊕` case of §14's `cof_fsC` — a flat case
+analysis, no induction, no arithmetic — so the CNV lift of `cof_repAdd` that §15.8's warning
+priced was never needed.  `inT_of_cnv` (§15.9) IS needed, to feed a tail known only to be
+`CNV` to `g`'s `inT`-stated clause: the same role it plays in core (C). -/
+
+/-- The head of a `CNV` term is `CNV`. -/
+theorem cnv_hdOf : ∀ {t : Term}, CNV t = true → CNV (hdOf t) = true
+  | zero, h => h
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi _ _, h => h
+  | add _ _, h => (cnv_add h).2.1
+
+/-- Heads are monotone: a nonzero `CNV` term below `y` has its head at or below `y`'s.  The
+    only case with content is `⊕` vs `⊕`, where 2.3.16 compares the heads first. -/
+theorem le_hdOf_of_lt {s y : Term} (hs : CNV s = true) (hy : CNV y = true)
+    (hsz : s ≠ zero) (hlt : lt s y = true) : le (hdOf s) (hdOf y) = true := by
+  cases y with
+  | zero => rw [show lt s zero = false from ltF_right_zero _ _] at hlt; exact Bool.noConfusion hlt
+  | M => exact Bool.noConfusion hy
+  | omg _ => exact Bool.noConfusion hy
+  | psi _ _ => exact Bool.noConfusion hy
+  | Z _ => exact Bool.noConfusion hy
+  | phi p q =>
+    cases s with
+    | zero => exact absurd rfl hsz
+    | M => exact Bool.noConfusion hs
+    | omg _ => exact Bool.noConfusion hs
+    | psi _ _ => exact Bool.noConfusion hs
+    | Z _ => exact Bool.noConfusion hs
+    | phi a b => exact le_of_lt hlt
+    | add c d => rw [lt_add_phi] at hlt; exact le_of_lt hlt
+  | add e f =>
+    cases s with
+    | zero => exact absurd rfl hsz
+    | M => exact Bool.noConfusion hs
+    | omg _ => exact Bool.noConfusion hs
+    | psi _ _ => exact Bool.noConfusion hs
+    | Z _ => exact Bool.noConfusion hs
+    | phi a b => rw [lt_phi_add] at hlt; exact hlt
+    | add c d =>
+      show le c e = true
+      by_cases heq : add c d = add e f
+      · injection heq with h1 _; rw [h1]; exact le_self e
+      · rw [lt_add_add heq] at hlt
+        by_cases hce : c = e
+        · rw [hce]; exact le_self e
+        · rw [if_neg hce] at hlt; exact le_of_lt hlt
+
+/-- **THE DESCENDING CONDITION IS INHERITED DOWNWARDS.**  If `y`'s head does not exceed `u`,
+    then neither does the head of anything below `y`.  This is what clause 1 of the sum
+    combinator needs and what `g`'s four clauses do not supply, and it is PROVED here rather
+    than carried as a hypothesis — carried, it would propagate into every remaining row. -/
+theorem hdLe_mono {y u s : Term} (hcnu : CNV u = true) (hy : CNV y = true)
+    (hyu : hdLe y u = true) (hs : CNV s = true) (hsz : s ≠ zero)
+    (hlt : lt s y = true) : hdLe s u = true := by
+  have hyz : y ≠ zero := by
+    intro hc; rw [hc] at hyu; exact Bool.noConfusion hyu
+  rw [hdLe_eq s u hsz]
+  rw [hdLe_eq y u hyz] at hyu
+  exact le_trans (frag_of_cnv _ (cnv_hdOf hs)) (frag_of_cnv _ (cnv_hdOf hy))
+    (frag_of_cnv _ hcnu) (le_hdOf_of_lt hs hy hsz hlt) hyu
+
+/-- **THE SUM COMBINATOR.**  From the four `Certified.lim` premises for `v` with sequence `g`,
+    the four premises for `u ⊕ v` with sequence `fun n => u ⊕ g n`.  Clauses 2 and 3 are
+    2.3.16 in the tail; clause 1 is `hdLe_mono`; clause 4 hands the tail of a smaller sum to
+    `g`'s own cofinality clause and everything else to 2.3.11/2.3.16.  `hgz` is a REAL
+    hypothesis: without it `fs` can be `u ⊕ 0`, which is not a term of 𝔗(M). -/
+theorem lim_clauses_sum {u v : Term} (g : Nat → Term)
+    (hcnu : CNV u = true) (hAPu : u.isAP = true)
+    (hcnv : CNV v = true) (hdvu : hdLe v u = true)
+    (hg1 : ∀ n, CNV (g n) = true) (hg2 : ∀ n, lt (g n) v = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s v = true → ∃ n, le s (g n) = true)
+    (hgz : ∀ n, g n ≠ zero) :
+    (∀ n, CNV (add u (g n)) = true)
+  ∧ (∀ n, lt (add u (g n)) (add u v) = true)
+  ∧ (∀ n, lt (add u (g n)) (add u (g (n + 1))) = true)
+  ∧ (∀ s, inT s = true → lt s (add u v) = true → ∃ n, le s (add u (g n)) = true) := by
+  have hcnuv : CNV (add u v) = true := by
+    show (u.isAP && CNV u && CNV v && hdLe v u) = true
+    rw [hAPu, hcnu, hcnv, hdvu]; rfl
+  refine ⟨fun n => ?_, fun n => ?_, fun n => ?_, fun s hin hlt => ?_⟩
+  · show (u.isAP && CNV u && CNV (g n) && hdLe (g n) u) = true
+    rw [hAPu, hcnu, hg1 n, hdLe_mono hcnu hcnv hdvu (hg1 n) (hgz n) (hg2 n)]; rfl
+  · rw [lt_add_add (by intro hc; injection hc with _ h2; exact ne_of_ltF (hg2 n) h2), if_pos rfl]
+    exact hg2 n
+  · rw [lt_add_add (by intro hc; injection hc with _ h2; exact ne_of_ltF (hg3 n) h2), if_pos rfl]
+    exact hg3 n
+  · have hcns : CNV s = true := cnv_of_lt_cnv hin hcnuv hlt
+    cases s with
+    | M => exact Bool.noConfusion hcns
+    | omg _ => exact Bool.noConfusion hcns
+    | psi _ _ => exact Bool.noConfusion hcns
+    | Z _ => exact Bool.noConfusion hcns
+    | zero => exact ⟨0, le_zero_left (by intro hc; exact Term.noConfusion hc)⟩
+    | phi p q =>
+      rw [lt_phi_add] at hlt
+      exact ⟨0, le_of_lt (by rw [lt_phi_add]; exact hlt)⟩
+    | add c d =>
+      obtain ⟨hAPc, hcnc, hcnd, _⟩ := cnv_add hcns
+      by_cases heq : add c d = add u v
+      · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+      rw [lt_add_add heq] at hlt
+      by_cases hcu : c = u
+      · rw [if_pos hcu] at hlt
+        obtain ⟨n, hn⟩ := hg4 d (inT_of_cnv d hcnd) hlt
+        exact ⟨n, by rw [hcu]; exact le_add_tail hn⟩
+      · rw [if_neg hcu] at hlt
+        exact ⟨0, le_of_lt (lt_add_head hcu hlt)⟩
+
+/-! #### §15.11.1 The combinator ITERATED — every intermediate value of a `repAdd` row
+
+A row whose closed form is `u·(k+1)` (template (A), §15.4) needs the four premises at EVERY
+`u·(k+1)`, not just at the row, because each of them is a limit in its own right.  Iterating
+the combinator over `k` supplies exactly that, and the sequence it produces is the
+right-nested spine the measurement demands.  Nothing new is proved here — this is one
+induction over `k` — but it is what turns the combinator into a row. -/
+
+/-- `k` copies of `u` prefixed to `g n`.  This is the shape the expansions MEASURE at
+    (see §15.11), not `add (repAdd u (k-1)) (g n)`, which is the same ordinal and a
+    different term. -/
+def sumSeq (u : Term) (g : Nat → Term) : Nat → Nat → Term
+  | 0, n => g n
+  | k + 1, n => add u (sumSeq u g k n)
+
+theorem sumSeq_ne_zero {u : Term} {g : Nat → Term} (hgz : ∀ n, g n ≠ zero) :
+    ∀ k n, sumSeq u g k n ≠ zero
+  | 0, n => hgz n
+  | _ + 1, _ => by intro hc; exact Term.noConfusion hc
+
+theorem hdLe_repAdd_self {p q : Term} : ∀ k, hdLe (repAdd (phi p q) k) (phi p q) = true := by
+  intro k
+  rw [hdLe_eq _ _ (repAdd_ne_zero p q k), hdOf_repAdd]
+  exact le_self _
+
+/-- **THE COMBINATOR ITERATED.**  From the four premises for `u` with sequence `g`, the four
+    premises for `u·(k+1)` with sequence `sumSeq u g k`, simultaneously for every `k`. -/
+theorem lim_clauses_sum_iter {u : Term} (g : Nat → Term)
+    (hcnu : CNV u = true) (hAPu : u.isAP = true)
+    (hg1 : ∀ n, CNV (g n) = true) (hg2 : ∀ n, lt (g n) u = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s u = true → ∃ n, le s (g n) = true)
+    (hgz : ∀ n, g n ≠ zero) :
+    ∀ k, (∀ n, CNV (sumSeq u g k n) = true)
+       ∧ (∀ n, lt (sumSeq u g k n) (repAdd u k) = true)
+       ∧ (∀ n, lt (sumSeq u g k n) (sumSeq u g k (n + 1)) = true)
+       ∧ (∀ s, inT s = true → lt s (repAdd u k) = true →
+             ∃ n, le s (sumSeq u g k n) = true) := by
+  obtain ⟨p, q, rfl⟩ := eq_phi_of_isAP_cnv hcnu hAPu
+  intro k
+  induction k with
+  | zero => exact ⟨hg1, hg2, hg3, hg4⟩
+  | succ k ih =>
+    obtain ⟨i1, i2, i3, i4⟩ := ih
+    exact lim_clauses_sum (sumSeq (phi p q) g k) hcnu hAPu (cnv_repAdd hcnu k)
+      (hdLe_repAdd_self k) i1 i2 i3 i4 (sumSeq_ne_zero hgz k)
+
+/-! #### §15.11.2 ROW A's INTERMEDIATE VALUES — the request from Cert.lean §18, answered
+
+§15.4 gave the row's own four premises (`lim_clauses_rowA`, sequence `fsA n = ε₀·(n+1)`).
+Cert.lean §18 then asked for the four premises at each `fsA k` in turn, since `expand_rowA`
+makes them the values the row's own certificate recurses into.  `lim_clauses_fsA` is that,
+for every `k`, with the sequence MEASURED above: `k` copies of ε₀ prefixed to the ω-tower.
+
+ε₀'s own four premises come from §9 and cost nothing new: `cn_tower` + `cnv_of_cn` for CNV,
+`lt_tower_eps0`, `lt_tower_step`, and §9's `cof_eps0` — which is the same `inT`-stated
+cofinality clause the combinator consumes.  `tower_ne_zero` discharges `hgz`, and it is not
+decoration: `tower 0 = 1`, whereas `fsN ε₀ 0 = 0` (§15.3), and the second choice would have
+built `ε₀ ⊕ 0`. -/
+
+theorem cnv_tower (n : Nat) : CNV (tower n) = true := cnv_of_cn _ (cn_tower n)
+
+/-- The four `Certified.lim` premises for ε₀ itself, with the ω-tower — §9's facts, bundled
+    in the shape the combinator consumes. -/
+theorem lim_clauses_eps0 :
+    (∀ n, CNV (tower n) = true)
+  ∧ (∀ n, lt (tower n) eps0T = true)
+  ∧ (∀ n, lt (tower n) (tower (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s eps0T = true → ∃ n, le s (tower n) = true) :=
+  ⟨cnv_tower, lt_tower_eps0, lt_tower_step, fun s hin hlt => cof_eps0 s hin hlt⟩
+
+/-- The sequence of the row's `k`-th intermediate value `ε₀·(k+1)`: MEASURED as
+    `ε₀ ⊕ (ε₀ ⊕ … ⊕ tower n)` with `k` copies of ε₀. -/
+def fsAin (k : Nat) : Nat → Term := sumSeq eps0T tower k
+
+/-- **THE FOUR `Certified.lim` PREMISES FOR EVERY INTERMEDIATE VALUE OF ROW A.**  With
+    `lim_clauses_rowA` (§15.4) and Cert.lean §18's `expand_rowA`, this is the whole 𝔗(M) side
+    of the row `(0,0)(1,1)(1,0)`. -/
+theorem lim_clauses_fsA (k : Nat) :
+    (∀ n, CNV (fsAin k n) = true)
+  ∧ (∀ n, lt (fsAin k n) (fsA k) = true)
+  ∧ (∀ n, lt (fsAin k n) (fsAin k (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsA k) = true → ∃ n, le s (fsAin k n) = true) :=
+  lim_clauses_sum_iter tower cnv_eps0T rfl cnv_tower lt_tower_eps0 lt_tower_step
+    (fun s hin hlt => cof_eps0 s hin hlt) tower_ne_zero k
+
+/-! Receipts.  The first two pin the SHAPE the measurement fixed — right-nested, and NOT
+    `add (repAdd eps0T 1) (tower 3)`, which is the same ordinal and the wrong term. -/
+
+#guard fsAin 0 3 == tower 3
+#guard fsAin 2 3 == add eps0T (add eps0T (tower 3))
+#guard (fsAin 2 3 == add (repAdd eps0T 1) (tower 3)) == false   -- the wrong term, same ordinal
+#guard fsA 2 == add eps0T (add eps0T eps0T)
+#guard (List.range 5).all (fun k => (List.range 5).all (fun n =>
+  CNV (fsAin k n) && lt (fsAin k n) (fsA k) && lt (fsAin k n) (fsAin k (n+1))
+    && !(fsAin k n == zero)))
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
