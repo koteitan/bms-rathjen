@@ -8382,6 +8382,96 @@ theorem no_overshoot_fam : ∀ {N : Matrix} {v : TM.Term}, Certified N v →
         rw [key s hin hfr hap hbt n] at hn
         exact Bool.noConfusion hn
 
+/-! ## §20 THE ε-LADDER  (the (B)-shaped rows, STARTED)
+
+Row A's certificate covers the ε₀-prefixed region.  The next four rows are the
+ε-hierarchy, and the WF lane's measurement is that they are ONE LADDER rather than
+four rows: ζ₀'s level 1 IS the ε_{ε₀} row, whose level 1 IS the ε_{ω^ω} row, whose
+level 1 IS the ε_{ω²} row, and all three (C) rows' level 0 IS the ε_ω row.  So the
+right shape here is one family parameterised by ladder position — the same move
+`famM k c` made one level down — with the rows as instances.
+
+MEASURED FIRST (`#guard`s below):
+
+    epsM k = (0,0)(1,1) ++ (1,1)^k          has value  φ̄(1,k) = ε_k
+    (0,0)(1,1)(2,0)[n] = epsM n             the ε_ω row expands to the ε-hierarchy ITSELF
+    epsM 1 [n] = ε₀, ω^(ε₀·2), ω^(ω^(ε₀·2)), …   a TOWER over ε₀·2, not over ε₀
+
+The third line is why the ladder is not uniform: the ε_ω row's expansions are the
+ladder's own rungs, but each RUNG's expansions leave the ladder for a tower family
+one level down.  `expand_epsOmega` below is the first of those identities, and it is
+the same computation as Row A's: the last column is `(2,0)`, so `t = 0`, the ascension
+vanishes, and the bad part `(1,1)` is copied `n+1` times after the root.
+
+TWO ROUTING TRAPS from the WF lane, recorded before anyone writes the branch table:
+`φ̄1(ω)` is NOT the ε-limit branch, and that ω exception recurs at `φ̄(a,ω)` for every
+`a`.  Its cause is measured: `fsC ω n = ofNat (n+1)`, a 1-BASED sequence index against
+the matrix's 0-based one.  A branch table that routes on shape alone will mis-route
+exactly there. -/
+
+/-! ### §20.1 PAIRING THE WF BUNDLES AGAINST THE MATRICES
+
+The WF lane's clause bundles are 𝔗(M)-side: they say what sequence a term's four
+premises are proved for, and NOTHING about whether that sequence is the one this
+row's matrix expands to.  The identity premise `∀ n, Certified (expand M n) (fs' n)`
+is where a wrong pairing must fail — but it fails at proof time, after the work.
+These are the cheap pre-checks, and they are MEASUREMENTS (`Trans.o?` is candidate
+tier and appears in no justification here).
+
+They also CONFIRM veblen2's routing trap 1 from the matrix side: the ε_ω row's n-th
+expansion has value `ε_n` (0-based), so the bundle's `fsEW n = φ̄1(ofNat n)` pairs and
+the `fsC`-based routing `φ̄1(fsC ω n) = ε_{n+1}` does NOT.  Their trap was derived from
+`fsC`'s off-by-one; this is the same fact seen from the expansion, and `expand_epsOmega`
+below turns the matrix half of it into a theorem. -/
+
+#guard (List.range 5).all (fun n =>
+  Trans.o? (BMS.expand [[0, 0], [1, 1], [2, 0]] n) == some (Evidence.WF.fsEW n))
+#guard (List.range 5).all (fun n =>
+  !(Trans.o? (BMS.expand [[0, 0], [1, 1], [2, 0]] n)
+      == some (phi one (Evidence.WF.fsC omega n))))
+#guard (List.range 4).all (fun n =>
+  Trans.o? (BMS.expand [[0, 0], [1, 1], [1, 1]] n) == some (Evidence.WF.fsEsucc 0 n))
+
+/-- The matrix of ε_k: the ε₀ row with `k` further ε-steps at depth 1. -/
+def epsM (k : Nat) : Matrix := [[0, 0], [1, 1]] ++ (List.replicate k [[1, 1]]).flatten
+
+theorem epsM_zero : epsM 0 = [[0, 0], [1, 1]] := rfl
+
+theorem map_const_flatten2 : ∀ (m : Nat) (B : Matrix),
+    ((List.range m).map (fun _ => B)).flatten = (List.replicate m B).flatten := by
+  intro m B
+  induction m with
+  | zero => rfl
+  | succ j ih =>
+    rw [List.range_succ, List.map_append, List.flatten_append, ih, List.replicate_succ',
+      List.flatten_append]
+    rfl
+
+/-- **The ε_ω row expands to the ε-hierarchy itself.**  Its last column is `(2,0)`,
+    so `t = 0` and the ascension vanishes exactly as in Row A; the bad part is the
+    single column `(1,1)`, copied `n+1` times after the root. -/
+theorem expand_epsOmega (n : Nat) :
+    BMS.expand? [[0, 0], [1, 1], [2, 0]] n = some (epsM n) := by
+  have hblk : ∀ (a : Nat), ((List.range 1).map (fun x =>
+      (List.range 2).map (fun y =>
+        BMS.ent [[0, 0], [1, 1], [2, 0]] (1 + x) y +
+          a * BMS.delta [[0, 0], [1, 1], [2, 0]] 1 0 y *
+            (if BMS.ascends [[0, 0], [1, 1], [2, 0]] 1 (1 + x) y then 1 else 0))))
+      = ([[1, 1]] : Matrix) := by
+    intro a; rfl
+  show some (([[0, 0], [1, 1], [2, 0]] : Matrix).take 1 ++
+      ((List.range (n + 1)).map (fun a =>
+        (List.range 1).map (fun x =>
+          (List.range 2).map (fun y =>
+            BMS.ent [[0, 0], [1, 1], [2, 0]] (1 + x) y +
+              a * BMS.delta [[0, 0], [1, 1], [2, 0]] 1 0 y *
+                (if BMS.ascends [[0, 0], [1, 1], [2, 0]] 1 (1 + x) y then 1 else 0))))).flatten)
+    = some (epsM n)
+  rw [List.map_congr_left (l := List.range (n + 1))
+      (g := fun _ => ([[1, 1]] : Matrix)) (fun a _ => hblk a),
+    map_const_flatten2]
+  rfl
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
