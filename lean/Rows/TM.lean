@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.40"
+def version : String := "v0.1.41"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -355,11 +355,10 @@ def linked (label path : String) : String :=
 
 /-- Render one region row. -/
 def regionLine (regionProofLine : String → String → Option Nat) (g : RegionRow) : String :=
-  let proofCell :=
-    if g.proof == "" then ""
-    else match regionProofLine g.proofFile ("theorem " ++ g.proof) with
-      | some n => "[✅](../lean/" ++ g.proofFile ++ "#L" ++ toString n ++ ")"
-      | none => ""
+  -- v0.1.41: checkmarks suspended table-wide pending the recalibration
+  -- (a systematic miscalibration of o was found from (0,0)(1,1)(2,1)(2,0) upward)
+  let proofCell := ""
+  let _ := regionProofLine
   let cell (s : String) : String :=
     if g.plainCells || s == "" then s else "$`" ++ s ++ "`$"
   "| **" ++ g.bms ++ "** | " ++ cell g.tm ++ " | " ++ cell g.nm ++ " | " ++
@@ -381,29 +380,29 @@ def genTable (lineOf : String → Option Nat) (proofLine : String → Option (St
 
 バージョン: " ++ version ++ "
 
+> **⚠ 警告 (v0.1.41)**: 本表の翻訳 $`o`$ に系統的な較正誤りが発見されたため、
+> **証明列 (✅) を全行から一時撤去した**。BMS 順で `(0,0)(1,1)(2,1)(2,0)` 以上の行の
+> $`T(M)`$ 値と通称は**誤っている**
+> (例: 真の値は $`(0,0)(1,1)(2,1)(2,0) = \\zeta_\\omega`$、
+> $`(0,0)(1,1)(2,1)(3,1) = \\Gamma_0`$、$`(0,0)(1,1)(2,2) = \\psi_0(\\Omega_2)`$ —
+> P進大好きbot 氏のペア数列停止性証明の変換写像による)。
+> それ未満の行は変換写像と一致することを確認済み。表は再構築中。
+
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
-Arch. Math. Logic 30 (1991), §2) の対応表。
-**機械検査を通った行のみ**を掲載する。検査の設計は
+Arch. Math. Logic 30 (1991), §2) の対応表。検査の設計は
 [plan/README.md](../plan/README.md) を参照。
 
 エビデンス凡例:
 
-- **証明列**: ✅ = その行の主張が **任意の $`n`$ について** Lean で証明済み
-  (リンク先がその証明)。極限行は E3: 1 行領域では等式
-  $`\\forall n.\\ o(M[n]) = t[n{+}1]`$、Stage B 以降では展開値の閉形式と
-  相互共終 (両列が互いに追い越し合う witness 付き)。
-  後続行は $`\\forall n.\\ o(M[n]) = t-1`$、零行は $`o(M) = t`$。
-  表で唯一、検査ではなく証明である列。
-- **太字の区間行**: 個別の行列ではなく**区間内の全標準行列**への主張。
-  ✅ が付けば区間まるごと一般定理で証明済み (それまでは弱いエビデンスのみ)。
-- **その他の弱いエビデンス** (いずれも有限個の $`n`$ の計算検査):
+- **証明列**: 一時撤去中 (上記警告を参照)。従来の ✅ は「o?-値についての
+  Lean 定理」を意味していたが、o? 自身の較正誤りにより行の意味論
+  (行列の順序数 = 表記の値) は保証されないことが判明した。
+- **その他の弱いエビデンス** (いずれも有限個の $`n`$ の計算検査であり、
+  **較正誤りを検出できない**ことが今回実証された):
   - $`o`$ = 翻訳関数がこの行列で定義され $`o(M) = t`$ が成立 (E1)。
-    $`o`$ の定義域全体では [コーパス検査](../lean/Evidence/Check.lean)
-    (E2 順序埋め込み・E3 相互共終) 済み。
   - bisim6 = 深さ 6 の双模倣 (展開列と基本列が一致する領域で有効)。
-  - oStageC = Stage C の候補翻訳 oStageC? の値の一致。コーパス検査済みだが、
-    上位領域に未解決の設計問題が残るため $`o`$ への統合は保留中。
+  - oStageC = Stage C の候補翻訳 oStageC? の値の一致。
 
 ## 対応表
 
@@ -417,12 +416,9 @@ Arch. Math. Logic 30 (1991), §2) の対応表。
       match lineOf (rowKey r) with
       | some n => "[`" ++ bms ++ "`](../lean/Rows/TM.lean#L" ++ toString n ++ ")"
       | none => "`" ++ bms ++ "`"
-    -- the proof column links to the row's proof namespace (Proofs.lean or ProofsB.lean)
-    let proofCell :=
-      if r.proof == "" then ""
-      else match proofLine ("namespace " ++ r.proof) with
-        | some (path, n) => "[✅](../lean/" ++ path ++ "#L" ++ toString n ++ ")"
-        | none => ""
+    -- v0.1.41: checkmarks suspended table-wide pending the recalibration
+    let proofCell := ""
+    let _ := proofLine
     -- the weak-evidence column lists o and bisim6, each linked separately
     let weak := String.intercalate "+"
       (((if r.hasO then [linked "o" "../lean/Trans/TM.lean"] else []) ++
