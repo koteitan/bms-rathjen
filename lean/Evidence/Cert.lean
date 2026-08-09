@@ -6628,25 +6628,33 @@ theorem lt_eps0_bnd : lt (phi one zero) (phi zero (plus (phi one zero) one)) = t
 /-- The ε₀ row, whose matrix is not of the form `oneRow (sq t)`: its expansions are
     the padded towers, and the two sub-cases are `le_eps0_towerM` (via §15.7 with the
     probe `ω^(ε₀+1)`, which dominates every `ω^(tower k + 1)`) and §15.8. -/
-theorem cert_below_bound_eps0 (v : Term) (h : Certified [[0, 0], [1, 1]] v) :
-    le (phi zero (plus (phi one zero) one)) v = false := by
+theorem cert_eps0_row_ceiling {s : Term} (hin : inT s = true)
+    (hfr : Evidence.WF.Frag s = true) (hap : isAP s = true)
+    (hb : le (phi zero (plus (phi one zero) one)) s = true)
+    (v : Term) (h : Certified [[0, 0], [1, 1]] v) : le s v = false := by
   obtain ⟨fs, hall, _, _, hcof⟩ := certified_lim_inv h kind_eps0_row
-  cases hlev : le (phi zero (plus (phi one zero) one)) v with
+  have heps : lt (phi one zero) s = true :=
+    Evidence.WF.lt_of_lt_of_le (show Evidence.WF.Frag (phi one zero) = true from rfl)
+      (show Evidence.WF.Frag (phi zero (plus (phi one zero) one)) = true from rfl) hfr
+      lt_eps0_bnd hb
+  have heps' : le (phi one zero) s = true := by
+    show ((phi one zero == s) || lt (phi one zero) s) = true
+    rw [heps]; exact Bool.or_true _
+  cases hlev : le s v with
   | false => rfl
   | true =>
     exfalso
     simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
     rcases hlev with rfl | hlt
-    · exact no_cert_above_eps0 _ lt_eps0_bnd h
-    · obtain ⟨k, hk2⟩ := hcof (phi zero (plus (phi one zero) one)) (by decide) hlt
+    · exact no_cert_above_eps0 _ heps h
+    · obtain ⟨k, hk2⟩ := hcof s hin hlt
       have hc : Certified (towerM k) (fs k) := by
         have hx := hall k
         rwa [show BMS.expand [[0, 0], [1, 1]] k = towerM k from expand_eps0_row k] at hx
       rw [no_overshoot hc (Evidence.WF.tower k) (Evidence.WF.cn_tower k) (towerM_eq k)
-        (phi zero (plus (phi one zero) one)) (by decide) rfl rfl
+        s hin hfr hap
         (Evidence.WF.le_trans (frag_bnd (Evidence.WF.cn_tower k))
-          (show Evidence.WF.Frag (phi one zero) = true from rfl)
-          (show Evidence.WF.Frag (phi zero (plus (phi one zero) one)) = true from rfl)
+          (show Evidence.WF.Frag (phi one zero) = true from rfl) hfr
           (show le (phi zero (plus (Evidence.WF.tower k) one)) (phi one zero) = true from by
             show ((phi zero (plus (Evidence.WF.tower k) one) == phi one zero) ||
               lt (phi zero (plus (Evidence.WF.tower k) one)) (phi one zero)) = true
@@ -6655,11 +6663,39 @@ theorem cert_below_bound_eps0 (v : Term) (h : Certified [[0, 0], [1, 1]] v) :
                 (le_one_hd_cn _ (Evidence.WF.cn_tower k) (Evidence.WF.tower_ne_zero k))
                 (Evidence.WF.lt_tower_eps0 k))]
             exact Bool.or_true _)
-          (show le (phi one zero) (phi zero (plus (phi one zero) one)) = true from by
-            show ((phi one zero == phi zero (plus (phi one zero) one)) ||
-              lt (phi one zero) (phi zero (plus (phi one zero) one))) = true
-            rw [lt_eps0_bnd]; exact Bool.or_true _))] at hk2
+          heps')] at hk2
       exact Bool.noConfusion hk2
+
+/-- The ε₀ row's ceiling at the standard probe — the statement §15.10 published. -/
+theorem cert_below_bound_eps0 (v : Term) (h : Certified [[0, 0], [1, 1]] v) :
+    le (phi zero (plus (phi one zero) one)) v = false :=
+  cert_eps0_row_ceiling (by decide) rfl rfl (Evidence.WF.le_self _) v h
+
+/-- Inversion at a successor matrix, the companion of `certified_lim_inv`. -/
+theorem certified_succ_inv {N : BMS.Matrix} {v : Term} (h : Certified N v)
+    (hk : BMS.kind N = .succ) :
+    ∃ w, v = plus w one ∧ ∀ n, Certified (BMS.expand N n) w := by
+  cases h with
+  | zero => rw [kind_nil] at hk; exact absurd hk (by simp)
+  | succ _ hall => exact ⟨_, rfl, hall⟩
+  | lim _ hk2 _ _ _ _ => rw [hk2] at hk; exact absurd hk (by simp)
+
+/-- **A ceiling transports across a successor row.**  `plus w 1` has the SAME
+    leftmost component as `w` (§15.5), and a principal probe reads only that
+    (`le_ap_hd`), so a bound on the row below is a bound on the row.  This is the
+    §15.7 succ-step, packaged for the successor rows of §16. -/
+theorem cert_below_bound_succ {N N' : BMS.Matrix} (hk : BMS.kind N = .succ)
+    (hexp : BMS.expand N 0 = N') {s : Term} (hap : isAP s = true) (hs1 : le s one = false)
+    (hbase : ∀ w, Certified N' w → le s w = false) :
+    ∀ u, Certified N u → le s u = false := by
+  intro u h
+  obtain ⟨w, hu, hall⟩ := certified_succ_inv h hk
+  subst hu
+  have hw : Certified N' w := by rw [← hexp]; exact hall 0
+  rcases cert_hd hw with hz | hz
+  · rw [hz, show plus (zero : Term) one = one from rfl]; exact hs1
+  · rw [le_ap_hd hap (plus w one), hd_plus_one (le_one_ap (isAP_hd w hz)), ← le_ap_hd hap w]
+    exact hbase w hw
 
 /-- **NOTHING ABOVE `ω^t` IS CERTIFIABLE FOR A LIMIT ROW OF THE REGION**, abstractly
     in the region: the row's own cofinality clause hands the probe `ω^t` down to one
@@ -6880,18 +6916,65 @@ uniqueness and the ceiling with no further work — registration itself is a tab
 change and is left to the coordinator: it is one entry in `certRows` and one branch
 in `certIn_rows`. -/
 
-theorem certIn_eps0_succ :
-    CertifiedIn DomI [[0, 0], [1, 1], [0, 0]] (plus (phi one zero) one) :=
+theorem certIn_eps0_succ_F :
+    CertifiedIn DomF [[0, 0], [1, 1], [0, 0]] (plus (phi one zero) one) :=
   CertifiedIn.succ rfl
     (fun n => by
-      show CertifiedIn DomI ((BMS.expand? [[0, 0], [1, 1], [0, 0]] n).getD [])
+      show CertifiedIn DomF ((BMS.expand? [[0, 0], [1, 1], [0, 0]] n).getD [])
         (phi one zero)
-      exact certifiedIn_mono domF_le_domI certIn_eps0)
-    (by show inT (plus (phi one zero) one) = true; decide)
+      exact certIn_eps0)
+    ⟨rfl, by decide⟩
+
+theorem certIn_eps0_succ :
+    CertifiedIn DomI [[0, 0], [1, 1], [0, 0]] (plus (phi one zero) one) :=
+  certifiedIn_mono domF_le_domI certIn_eps0_succ_F
 
 /-- The unguarded form, for symmetry with §13's `cert_eps0`. -/
 theorem cert_eps0_succ : Certified [[0, 0], [1, 1], [0, 0]] (plus (phi one zero) one) :=
   certifiedIn_forget certIn_eps0_succ
+
+/-! ### §16.3 THE DIVERGENCE SWEEP — how many rows carry a collapsing term
+    (asked for by the coordinator after the `(0,0)(1,1)(1,0)` finding)
+
+The trap of the §16 header is not a one-off.  Its criterion is exact and already in
+the codebase: `TM.Term.isFP a g` ([R91] 2.6(vi)) decides whether `g` is an
+a-fixed-point shape, i.e. whether `φ̄ag` COLLAPSES to `g` under the Veblen rules —
+`φ̄0(φ̄10) = ω^(ε₀) = ε₀` is the instance the ε₀ campaign ran into.  A term of the row
+database is at risk exactly when some subterm `φ̄ab` of it satisfies `isFP a b`.
+
+SWEPT over all 51 rows of `Rows.rows` (run from a snippet importing `Rows.TM`, which
+cannot be done from this file — `Rows.TM` imports it):
+
+    51  rows total
+    18  carry a subterm `φ̄ab` with `isFP a b = true`   ← the divergence shape
+     1  more is flagged by `phiShifted` only  (ψ₀(ψ₂(2)), (0,0)(1,1)(2,2)(3,0)(3,0))
+     0  rows carry a term failing `inT`                 ← every DB term is a term of 𝔗(M)
+
+Of the TWELVE Veblen-region rows this lane is scoping, THREE are flagged, and they
+are exactly the three whose name has a successor exponent:
+
+    ω^(ε₀+1)    (0,0)(1,1)(1,0)          DB term  φ̄0(φ̄10)
+    ω^(ζ₀+1)    (0,0)(1,1)(2,1)(1,0)     DB term  φ̄0(φ̄20)
+    ε_{ζ₀+1}    (0,0)(1,1)(2,1)(1,1)     DB term  φ̄1(φ̄20)
+
+WHAT THIS MEANS FOR THE CAMPAIGN.  Nothing in the table is wrong — the ordinal column
+is the ORDER-TYPE reading and the term column is the term — but for these three rows a
+certificate must be written against the TERM, and the term suggested by the ordinal
+column is refutable (the §16 header shows the refutation for the first).  For the
+remaining fifteen flagged rows, all of them beyond ζ₀, the same care will be needed
+when their turn comes.
+
+IT ALSO PRICES A PIECE OF THE CAMPAIGN.  A normal-form predicate for the Veblen
+region (the analogue of `CN`) must EXCLUDE collapsing terms, or the term-to-matrix map
+is not injective and the certificate family cannot be built by recursion on it.  `CN`
+never had to say this: at base level the condition degenerates to `isPow`, which is why
+§10–§13 could stay as short as they are. -/
+
+#guard TM.Term.isFP zero (phi one zero) == true
+#guard TM.Term.isFP zero (phi (ofNat 2) zero) == true
+#guard TM.Term.isFP one (phi (ofNat 2) zero) == true
+-- and the shape that is NOT flagged: an ordinary CNF exponent
+#guard TM.Term.isFP zero (phi zero omega) == false
 
 /-! ## §6 The registry
 
@@ -6940,7 +7023,8 @@ def certRows : List (Matrix × Term) :=
    ([[0], [1], [0], [1]], add omega omega), ([[0], [1], [1]], phi zero (ofNat 2)),
    ([[0], [1], [2]], phi zero omega),
    ([[0], [1], [2], [3]], phi zero (phi zero omega)),
-   ([[0, 0], [1, 1]], phi one zero)]
+   ([[0, 0], [1, 1]], phi one zero),
+   ([[0, 0], [1, 1], [0, 0]], plus (phi one zero) one)]
 
 /-- **THE GATE.**  Every registered pair carries a derivation whose values are all
     terms of 𝔗(M).  Extending `certRows` without extending this proof breaks the
@@ -6949,7 +7033,7 @@ def certRows : List (Matrix × Term) :=
 theorem certIn_rows : ∀ p ∈ certRows, CertifiedIn DomF p.1 p.2 := by
   intro p hp
   simp only [certRows, List.mem_cons] at hp
-  rcases hp with h | h | h | h | h | h | h | h | h | h
+  rcases hp with h | h | h | h | h | h | h | h | h | h | h
   · rw [h]; exact CertifiedIn.zero
   · rw [h]; exact certIn_sq one (by decide)
   · rw [h]; exact certIn_sq (ofNat 2) (by decide)
@@ -6959,6 +7043,7 @@ theorem certIn_rows : ∀ p ∈ certRows, CertifiedIn DomF p.1 p.2 := by
   · rw [h]; exact certIn_sq (phi zero omega) (by decide)
   · rw [h]; exact certIn_sq (phi zero (phi zero omega)) (by decide)
   · rw [h]; exact certIn_eps0
+  · rw [h]; exact certIn_eps0_succ_F
   · cases h
 
 /-- **THE GATE**, in the form the table is computed against: the registry is
@@ -6999,7 +7084,7 @@ theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.
     le (phi zero (plus p.2 one)) u = false := by
   intro p hp u h
   simp only [certRows, List.mem_cons] at hp
-  rcases hp with e | e | e | e | e | e | e | e | e | e
+  rcases hp with e | e | e | e | e | e | e | e | e | e | e
   · subst e; exact cert_below_bound_one zero (by decide) u h
   · subst e; exact cert_below_bound_one one (by decide) u h
   · subst e; exact cert_below_bound_one (ofNat 2) (by decide) u h
@@ -7009,6 +7094,32 @@ theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.
   · subst e; exact cert_below_bound_one (phi zero omega) (by decide) u h
   · subst e; exact cert_below_bound_one (phi zero (phi zero omega)) (by decide) u h
   · subst e; exact cert_below_bound_eps0 u h
+  · -- the ε₀+1 row: a SUCCESSOR row, so §15.10's transport carries the ε₀ row's
+    -- ceiling across it, at the probe `ω^((ε₀+1)+1)`
+    subst e
+    show le (phi zero (plus (plus (phi one zero) one) one)) u = false
+    have hone : le one (phi one zero) = true := le_one_ap rfl
+    have hval : plus (plus (phi one zero) one) one = add (phi one zero) (add one one) := by
+      rw [plus_one_ap (show isAP (phi one zero) = true from rfl) hone,
+        plus_one_add hone, plus_one_ap (show isAP one = true from rfl) (le_one_ap rfl)]
+    have hne : add (phi one zero) one ≠ add (phi one zero) (add one one) := by
+      intro hc; injection hc with _ h2; exact Term.noConfusion h2
+    have hlt1 : lt (add (phi one zero) one) (add (phi one zero) (add one one)) = true := by
+      rw [Evidence.WF.lt_add_add hne, if_pos rfl,
+        lt_ap_add (show isAP one = true from rfl) one one]
+      exact Evidence.WF.le_self one
+    have hbnd : le (phi zero (plus (phi one zero) one))
+        (phi zero (add (phi one zero) (add one one))) = true := by
+      show ((phi zero (plus (phi one zero) one) == phi zero (add (phi one zero) (add one one)))
+        || lt (phi zero (plus (phi one zero) one))
+             (phi zero (add (phi one zero) (add one one)))) = true
+      rw [plus_one_ap (show isAP (phi one zero) = true from rfl) hone, Evidence.WF.lt_pow, hlt1]
+      exact Bool.or_true _
+    rw [hval]
+    refine cert_below_bound_succ (N' := [[0, 0], [1, 1]]) rfl rfl rfl ?_ ?_ u h
+    · exact le_pow_one_false (by intro hc; exact Term.noConfusion hc)
+    · intro w hw
+      exact cert_eps0_row_ceiling (by decide) rfl rfl hbnd w hw
   · cases e
 
 end Evidence.Cert
