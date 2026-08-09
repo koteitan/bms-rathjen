@@ -165,6 +165,14 @@ def omLog : Term → Term
   | .phi .zero x => x
   | t => t
 
+/-- The additive summands of a term, left to right; `0` has none.  §3's cause 2: the
+    summands of a SUBSCRIPT are separated by a repeat of the ladder, so the encoder has
+    to see them individually rather than encode the sum as one block. -/
+def summands : Term → List Term
+  | .zero => []
+  | .add u v => summands u ++ summands v
+  | t => [t]
+
 /-- `t` minus one when it has a trailing `1`; `t` itself otherwise. -/
 def predOr (t : Term) : Term :=
   match TM.Term.splitFin t with
@@ -179,23 +187,35 @@ def encvF : Nat → Term → Nat → List Col2
   | _ + 1, zero, _ => []
   | f + 1, add u v, d => encvF f u d ++ encvF f v d
   | f + 1, phi a b, d =>
-      if TM.Term.isFP a b then
-        encvF f b d ++ [(d + 1, if a == zero then 0 else 1)]
+      let bm := TM.Term.splitFin b
+      let gs := summands bm.1
+      let ladder : List Col2 :=
+        if a == zero then [] else (d + 1, 1) :: bumpAt (d + 2) (encvF f (predOr a) (d + 2))
+      -- the trailing finite part repeats the LADDER TAIL, not a single marker column
+      let unit : List Col2 := if a == zero then [(d + 1, 0)] else ladder
+      let reps : List Col2 := (List.replicate bm.2 unit).flatten
+      -- CANDIDATE 4 (§3, cause 1): at `a ≠ 0` the sub-block is the ω-EXPONENT.
+      -- CANDIDATE 5 (§3, cause 2): one LADDER per additive summand of the subscript.
+      let mkBlocks : List Term → List Col2 := fun hs =>
+        (hs.map (fun g =>
+          ladder ++ shiftD (if a == zero then d + 1 else d + 2)
+            (encvF f (if a == zero then g else omLog g) 0))).flatten
+      -- CANDIDATE 7 (§3, cause 3): the fixed-point test is applied to the SUMMANDS of
+      -- the subscript's infinite part, not to `b` — so `ε₀+1` and `ε₀·k` reach the
+      -- collapse clause, which they never did while `isFP` saw only the `add`.  The
+      -- FIRST fixed-point summand is collapsed (its own encoding becomes the head) and
+      -- every later one is an ordinary summand block, exactly as in the else branch.
+      -- CANDIDATE 8 (§4): the test is on the FIRST summand alone.  `gs.all` was the
+      -- all-or-nothing reading of "only the first summand collapses", and it sent
+      -- MIXED subscripts (`ε₀+ω`) to the else branch, where they round-tripped
+      -- correctly and emitted a NON-STANDARD matrix.
+      if TM.Term.isFP a (gs.headD zero) then
+        encvF f (gs.headD zero) d
+          ++ (if gs.length == 1 then [((d + 1, if a == zero then 0 else 1) : Col2)]
+              else mkBlocks (gs.drop 1))
+          ++ reps
       else
-        let bm := TM.Term.splitFin b
-        let ladder : List Col2 :=
-          if a == zero then [] else (d + 1, 1) :: bumpAt (d + 2) (encvF f (predOr a) (d + 2))
-        let sub : List Col2 :=
-          match bm.1 with
-          | zero => []
-          | b' =>
-            -- CANDIDATE 4 (§3, cause 1): at `a ≠ 0` the block is the ω-EXPONENT
-            let b'' := if a == zero then b' else omLog b'
-            shiftD (if a == zero then d + 1 else d + 2) (encvF f b'' 0)
-        -- the trailing finite part repeats the LADDER TAIL, not a single marker column
-        let unit : List Col2 := if a == zero then [(d + 1, 0)] else ladder
-        let reps : List Col2 := (List.replicate bm.2 unit).flatten
-        (d, 0) :: (ladder ++ sub ++ reps)
+        (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
   | _ + 1, _, _ => []
 
 def encv (t : Term) (d : Nat) : List Col2 := encvF (2 * t.deg + 8) t d
@@ -307,17 +327,48 @@ here by WHERE THE DISAGREEMENT LIVES, not by how hard they look.
     routing-side    (a shape the branch table routes)         0
     undecided                                                 0
 
-CANDIDATE 4 THEN FIXED CAUSE 1 AND THE RESIDUE IS EXACTLY WHAT THIS SECTION PREDICTED:
+EACH CAUSE WAS FIXED SEPARATELY AND RE-MEASURED, AND EACH RESIDUE WAS THE PREDICTED
+SET rather than merely the predicted count — a count comes out right when two errors
+cancel, so the survivors were checked BY NAME every time:
 
-                        candidate 1   candidate 2   candidate 3   candidate 4
-    round trip / 234         90            34            16             4
-    table rows / 5            3             1             1             0
-    discriminators / 3        2             2             1             1
+                        cand 1   cand 2   cand 3   cand 4   cand 5   cand 6   cand 7   cand 8
+    round trip / 234       90       34       16        4        1        0        0        0
+    table rows / 5          3        1        1        0        0        0        0        0
+    discriminators / 3      2        2        1        1        1        0        0        0
+    NON-STANDARD / 234      ?        ?        2        2        2        0        0        0
+    §4 open cases / 2       -        -        2        2        2        2        0        0
+    §4.1 mixed / 5          -        -        ?        ?        ?        ?        5        0
 
-The four survivors are the four members of cause 2, by name — `φ̄(0,ε₀+1)` and
-`φ̄(a,ε₀+ε₀)` for `a ∈ {1,2,ω}` — and nothing that passed before broke.  That the
-residue is the predicted SET and not merely the predicted COUNT is the check worth
-having: a count can come out right by two errors cancelling.  Cause 2 is untouched.
+  cand 4 = `omLog`      (cause 1)   residue: the 4 of causes 2 and 3, by name
+  cand 5 = `summands`   (cause 2)   residue: the 1 of cause 3
+  cand 6 = per-summand `isFP`       (cause 3), fitted to k ≤ 2 — WRONG at k = 3
+  cand 7 = §4's rule: only the FIRST fixed-point summand collapses
+  cand 8 = §4.1: test `isFP` on the first summand ALONE — `gs.all` emitted
+           non-standard matrices on mixed subscripts while round-tripping correctly
+
+THE NON-STANDARD ROW IS THE ONE THAT COULD NOT BE MEASURED IN LEAN, and it is the row
+that matters most.  `BMS.Standard` is `Reach (init h) M`, a Prop with a positive route
+only, so a matrix can be proved standard and not refuted.  The repo's instrument for
+the negative direction is yaBMS `bms -s`, which `scripts/standard-audit.sh` runs in CI;
+the coordinator ran it on the three bucket witnesses and I then ran it over all 234.
+At candidate 5, TWO outputs were non-standard, and **one of them passed the round
+trip** — `φ̄(0,ε₀·2)`, whose wrong matrix and right matrix have the same `oR` value.
+That failure was visible to gate 3 and to `bms -s` and to nothing else.
+
+A RULE FOUND FIVE MINUTES AGO IS A MEASUREMENT, NOT A LAW.  Cause 1's rule says the
+subscript block is an ω-exponent; since `ω^X` is always additively principal, the rule
+says `φ̄(1,ε₀·2)` cannot be written at all, and cause 2 was one sentence from being
+filed as an expressibility limit of the region.  Asking `oR` for the matrix instead of
+deriving from the fresh rule produced it immediately — the ladder repeat separates the
+summands.  Deriving from a rule this young is the same error as deriving from the
+order side, and it would have left the file carrying both a clause for a problem that
+does not exist and a false limitation.
+
+WHEN A DISCRIMINATOR PASSES, ASK WHAT ITS OWN PARAMETERS DEGENERATE.  Cause 1 survived
+`φ̄(1,ε₀)` for three candidates because `ω^ε₀ = ε₀`: at an ε-number subscript the defect
+is invisible, and ε₀ is exactly the subscript the discriminator was built from.  The
+test was blind inside a region in the same way that `isFP` at `a = 0` and `kindC`'s
+dropped conjunct are free inside one.
 
 ZERO ROUTING-SIDE, and the reason is structural rather than lucky: every failure is a
 matrix that `oR` decodes to a DIFFERENT TERM, so the disagreement is always about what
@@ -362,9 +413,111 @@ AND A PROPERTY OF THE GATE SUITE ITSELF, which is the reason gate 3 exists.  Gat
 one failure is `φ̄(0, ε₀·2)`, and GATE 1 PASSES IT: `oR` sends the wrong matrix and the
 right matrix to the SAME term, so a round trip cannot separate them, while `cmpM` says
 they are different matrices (`.lt`).  The round-trip gate is blind to standard form.
-Whether the one `sqv` produces is non-standard is not something this file can decide —
-there is no Bool standard-form test in `BMS/` — and that is a question for the BMS
-lane, not a claim about `oR`. -/
+The one `sqv` produced WAS non-standard — `bms -s` says 0 — so gate 3 was catching a
+matrix that is not a notation of the system at all, not merely one with a wrong value. -/
+
+/-! ## §4 THE VALIDATED RANGE, and how the k ≥ 3 rule was MEASURED rather than guessed
+
+The corpus carries at most TWO fixed-point summands in a subscript, so candidate 6's
+collapse rule — first summand takes the marker, each further one a single column at
+depth `d+2` — was fitted to k ≤ 2 and had no evidence beyond it.  This section is what
+happened when the two witnesses outside the corpus were measured instead of designed.
+
+CANDIDATE 6 WAS WRONG AT k = 3, AND WRONG IN THE WAY THE OBVIOUS EXTRAPOLATION IS:
+
+    sqv (φ̄(0,ε₀·3)) = (0,0)(1,1)(1,0)(2,1)(2,1)     NON-STANDARD, and `oR` reads it as ε₁
+    sqv (φ̄(1,ζ₀·2)) = (0,0)(1,1)(2,1)(1,1)(2,1)     standard, but it is φ̄(2,1)
+
+Repeating the `(2,1)` is what k ≤ 2 suggests and it is not what the region does.
+
+HOW THE TRUE MATRIX WAS FOUND, since guessing again was not available: enumerate every
+matrix (0,0)(1,1)(1,0) ++ s with `s` up to three columns from a 6×3 grid — 6175 of them
+— keep those `oR` sends to the target, then keep those `bms -s` calls STANDARD.  72
+matrices decode to `φ̄(0,ε₀·3)` and exactly ONE of them is standard.  `oR` alone cannot
+pick it out; it maps a non-standard matrix to the value of its standard form, which is
+the same blindness §3 records for the round-trip gate.  The same search at `a = 1` gave
+12 decodings and again exactly one standard.
+
+    φ̄(0, ε₀·3)   (0,0)(1,1)(1,0)(2,1)(1,0)(2,1)
+    φ̄(1, ζ₀·2)   (0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)
+
+AND THE TWO SIDES TURNED OUT TO BE ONE RULE.  Read against the clause that already
+existed, the extra columns are not a new construct: `(1,0)(2,1)` is `shiftD 1 (encv ε₀ 0)`
+and `(1,1)(2,0)(3,1)(4,1)` is `ladder ++ shiftD 2 (encv ζ₀ 0)` — i.e. each summand after
+the first is an ORDINARY summand block, the same one cause 2 introduced.  Only the FIRST
+fixed-point summand is collapsed.  Candidate 7 is that sentence, and it needed no new
+machinery; what it needed was for k = 2 to stop being the whole evidence.
+
+THE RANGE IT IS NOW VALIDATED ON: `a = 0` at k = 1,2,3,4,5 and `a ≠ 0` at k = 1,2,3, all
+against the unique standard matrix, with k = 4 and k = 3 predicted by the clause BEFORE
+they were looked up.  Beyond that it is untested, and the honest statement is the one
+this section began with: a rule fitted to k ≤ 2 was wrong at k = 3, so a rule fitted to
+k ≤ 5 is evidence and not a law. -/
+
+def openCases : List Term :=
+  [phi zero (plus (phi one zero) (plus (phi one zero) (phi one zero))),
+   phi one (plus (phi (ofNat 2) zero) (phi (ofNat 2) zero))]
+
+-- 0 since candidate 7; it was 2 under candidate 6, which is the point of the list
+#eval (openCases.filter (fun t => !(Trans.oR (sqv t) == some t))).length
+
+-- the two matrices the search found, and the two the clause then PREDICTED
+#guard sqv (phi zero (plus (phi one zero) (plus (phi one zero) (phi one zero))))
+         == [[0,0],[1,1],[1,0],[2,1],[1,0],[2,1]]
+#guard sqv (phi one (plus (phi (ofNat 2) zero) (phi (ofNat 2) zero)))
+         == [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1]]
+#guard sqv (phi zero (plus (phi one zero) (plus (phi one zero)
+           (plus (phi one zero) (phi one zero)))))
+         == [[0,0],[1,1],[1,0],[2,1],[1,0],[2,1],[1,0],[2,1]]
+#guard sqv (phi one (plus (phi (ofNat 2) zero) (plus (phi (ofNat 2) zero)
+           (phi (ofNat 2) zero))))
+         == [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[1,1],[2,0],[3,1],[4,1]]
+-- and the candidate-6 outputs, kept so the improvement is not merely asserted
+#guard Trans.oR [[0,0],[1,1],[1,0],[2,1],[2,1]] == some (phi one one)
+#guard Trans.oR [[0,0],[1,1],[2,1],[1,1],[2,1]] == some (phi (ofNat 2) one)
+
+/-! ### §4.1 MIXED SUBSCRIPTS — the class the round trip could not see
+
+Candidate 7's collapse test was `gs.all isFP`, the all-or-nothing reading of "only the
+first summand collapses".  A subscript with a fixed point AND a non-fixed point — `ε₀+ω`
+— therefore failed the test entirely and fell to the else branch.  What that produced:
+
+    sqv (φ̄(0,ε₀+ω)) = (0,0)(1,0)(2,1)(1,0)(2,0)          ROUND TRIP TRUE, NON-STANDARD
+    sqv (φ̄(1,ζ₀+ω)) = (0,0)(1,1)(2,0)(3,1)(4,1)(1,1)(2,0)  ROUND TRIP TRUE, NON-STANDARD
+
+BOTH ROUND-TRIP CORRECTLY.  Gates 1–3 were 0/0/0 and `openCases` was 0 while the map was
+emitting matrices that are not notations of the system, and the class is not exotic —
+it is any subscript mixing an ε-number with anything below it.  It was found only
+because `bms -s` was run over the corpus rather than over the three witnesses that had
+already failed something else.  **A gate suite reading all-zero is a statement about the
+dimensions it measures.**
+
+The same search that settled k = 3 settled these: 8 and 61 decodings respectively, one
+standard each, and both are exactly what candidate 7's own sentence predicts —
+`encv g₁ 0 ++ mkBlocks [ω]`.  So the sentence was right and the CONDITION was wrong;
+candidate 8 tests `isFP` on the first summand alone.  Nothing else changed.
+
+    φ̄(0, ε₀+ω)   (0,0)(1,1)(1,0)(2,0)
+    φ̄(1, ζ₀+ω)   (0,0)(1,1)(2,1)(1,1)(2,0)
+
+`mixed` is kept permanently: it is the smallest set that fails if the collapse test ever
+goes back to reading all the summands. -/
+
+def mixed : List Term :=
+  [phi zero (plus (phi one zero) omega),
+   phi one (plus (phi (ofNat 2) zero) omega),
+   phi zero (plus (phi one zero) (plus omega one)),
+   phi (ofNat 2) (plus (phi (ofNat 2) zero) omega),
+   phi zero (plus (phi one zero) (plus (phi one zero) omega))]
+
+#eval (mixed.filter (fun t => !(Trans.oR (sqv t) == some t))).length
+
+#guard sqv (phi zero (plus (phi one zero) omega)) == [[0,0],[1,1],[1,0],[2,0]]
+#guard sqv (phi one (plus (phi (ofNat 2) zero) omega)) == [[0,0],[1,1],[2,1],[1,1],[2,0]]
+-- the candidate-7 outputs: right value, and NOT a notation of the system (`bms -s` = 0)
+#guard Trans.oR [[0,0],[1,0],[2,1],[1,0],[2,0]] == some (phi zero (plus (phi one zero) omega))
+#guard Trans.oR [[0,0],[1,1],[2,0],[3,1],[4,1],[1,1],[2,0]]
+         == some (phi one (plus (phi (ofNat 2) zero) omega))
 
 -- CAUSE 1, the rule: at `a ≠ 0` the block after the ladder is the ω-EXPONENT.
 #guard Trans.oR [[0,0],[1,1],[2,0]]             == some (phi one omega)
@@ -385,13 +538,17 @@ lane, not a claim about `oR`. -/
 #guard sqv (phi omega omega) == [[0,0],[1,1],[2,1],[3,0],[2,0]]
 #guard sqv (phi one (plus omega one)) == [[0,0],[1,1],[2,0],[1,1]]
 
--- CAUSE 2: the ladder column separates the summands, and `sqv` omits it.
+-- CAUSE 2 and CAUSE 3, FIXED (candidates 5 and 6).  Candidate 4 emitted
+-- (0,0)(1,1)(2,0)(3,1)(2,0)(3,1) and (0,0)(1,0)(2,1)(1,0) for these two; the second of
+-- those was NON-STANDARD, which is why the fix is checked against `bms -s` and not
+-- only against the round trip.
 #guard Trans.oR [[0,0],[1,1],[2,0],[3,1],[1,1],[2,0],[3,1]]
          == some (phi one (plus (phi one zero) (phi one zero)))
 #guard sqv (phi one (plus (phi one zero) (phi one zero)))
-         == [[0,0],[1,1],[2,0],[3,1],[2,0],[3,1]]
+         == [[0,0],[1,1],[2,0],[3,1],[1,1],[2,0],[3,1]]
 #guard Trans.oR [[0,0],[1,1],[1,0],[1,0]] == some (phi zero (plus (phi one zero) one))
-#guard sqv (phi zero (plus (phi one zero) one)) == [[0,0],[1,0],[2,1],[1,0]]
+#guard sqv (phi zero (plus (phi one zero) one)) == [[0,0],[1,1],[1,0],[1,0]]
+#guard sqv (phi zero (plus (phi one zero) (phi one zero))) == [[0,0],[1,1],[1,0],[2,1]]
 
 -- THE GATE SUITE'S OWN LIMIT: two distinct matrices, one term.  Gate 1 cannot see it.
 #guard Trans.oR [[0,0],[1,0],[2,1],[1,0],[2,1]] == Trans.oR [[0,0],[1,1],[1,0],[2,1]]
