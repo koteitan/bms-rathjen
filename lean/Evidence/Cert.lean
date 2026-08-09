@@ -1397,7 +1397,16 @@ theorem cert_omega_sq : Certified [[0], [1], [1]] (phi zero (ofNat 2)) := by
   obtain ⟨m, k, hk⟩ := below_omega_sq _ s hs h
   exact ⟨m, by rw [hk]; simp [TM.Term.le, lt_wm_step m 0 k 0]⟩
 
-/-! ### The route from here to ω^ω (design note, nothing proved below)
+/-! ### The route from here to ω^ω (design note — route (a) is now EXECUTED)
+
+STATUS (2026-08-09, certificate lane gen 2).  Route (a) below is carried out
+in §5.7: `cert_pre` is the prefix induction verbatim (outer structural
+induction on the level, inner `Nat` induction on the coefficient),
+`cert_wv` its closed form, `cert_omega_pow` the row `(0)(1)(2)`.  The
+prediction "no new well-foundedness" held: `Evidence/WF.lean`'s `LexLt` is
+NOT used.  The prediction "the cost is generalising the region machinery"
+also held — `below_pw` / `tail_pw` / `below_pre` / `cof_pre` are that cost,
+and they are the bulk of §5.7.
 
 The families above stop at ω².  What blocks the next rows is NOT the same thing
 in each case, and the difference decides the roadmap:
@@ -1451,28 +1460,29 @@ in between.  The `#guard`s below check, by computation:
   * `expand (0)(1)(2) n = wvM [1,0,…,0]` — the expansions of ω^ω are exactly the
     ω^(n+1) of this family, which is what makes it the right index set.
 
-WHAT REMAINS, in dependency order:
+ALL FIVE ITEMS OF THIS HAND-OFF ARE NOW DISCHARGED IN §5.7 (2026-08-09):
 
-  1. Shape lemmas for `wv`/`wvSeq` (the analogues of `wm_cons`, `wm_zero_k`,
-     `deg_wm`, `plus_wm_one`).  §5's are the template; expect this to be the
-     bulk of the line count.
-  2. The expansion lemmas, prefix-relative, over `StageA.expand_oneRow`:
-     successor step (drop a unit) and limit step at level j>0 (one `ω^j` becomes
-     `n+1` copies of `ω^(j-1)`).  `expand_wmM_lim` is the template.
-  3. The classification `below_wv` at level k — the analogue of `below_wm`,
-     recursion on the fuel with the level as a parameter.  §5's
-     `ltF_ofList_head`/`ltF_ofList_prefix` already cover every order comparison
-     needed and are stated for arbitrary sums, so no new order theory is
-     required.
-  4. `cert_wv : ∀ cs, Certified (wvM cs) (wv cs)`.  Two routes, both open:
-     the prefix induction of the note above (no `Acc`), or termination by
-     `Evidence.WF.lexLt_at` + `Evidence.WF.lexLt_wf` (`open Evidence.WF` — the
-     `WellFoundedRelation` instance there is `scoped` on purpose).  The vector
-     route is the shorter statement now that WF.lean exists.
-  5. `cert_omega_pow : Certified [[0],[1],[2]] (phi zero omega)` as the limit
-     over `cert_wv [1,0,…,0]`.
+  1. Shape lemmas — as `pwv_cons` / `toList_pwv` / `deg_pwv_len` / `deg_pwv_mem`
+     / `plus_pwv_one`, stated on the EXPONENT LIST `expOf cs` rather than on the
+     count vector, because every proof decomposes a term as PREFIX ++ REST and
+     concatenation is not an operation on count vectors.  `wv_eq` / `wvM_eq`
+     bridge the two, so the definitions pinned here stay the interface.
+  2. The expansion lemmas — `kind_pwM_succ` / `expand_pwM_succ` and
+     `kind_pwM_lim` / `expand_pwM_lim`.  They are prefix-relative for free:
+     `StageA.expand_oneRow` puts NO condition on its prefix `A`.
+  3. The classification — `below_pw` (recursion on `(level, fuel)`), with its
+     companion `tail_pw` for the tail of a sum, and the prefix-relative
+     `below_pre` / `cof_pre`.  The prediction that `ltF_ofList_head` /
+     `ltF_ofList_prefix` cover every comparison was right; what they do NOT
+     cover, and what had to be added, is the analysis of `ofNat`
+     (`ltF_ofNat_lt` / `ltF_ofNat_ge` / `below_ofNat`).
+  4. `cert_wv : ∀ cs, Certified (wvM cs) (wv cs)` — by the PREFIX route.  The
+     vector/`LexLt` route was not needed: the prefix induction has no
+     termination obligation at all, and the order work it avoids is nil.
+  5. `cert_omega_pow : Certified [[0],[1],[2]] (phi zero omega)`, registered.
 
-NOT covered by this layer: the row `(0)(1)(2)(3)` (ω^(ω^ω)).  Its expansions are
+STILL NOT covered, and this is the honest frontier: the row `(0)(1)(2)(3)`
+(ω^(ω^ω)).  Its expansions are
 `ω^(ω^(n+1))` — checked: `expand (0)(1)(2)(3) 1 = (0)(1)(2)(2)`, value
 `ω^(ω^2)` — whose exponents are themselves ω^k, not naturals, so they are NOT in
 this family.  That row needs one more layer, with the exponents drawn from this
@@ -1514,6 +1524,27 @@ def wvM (cs : List Nat) : Matrix := Evidence.StageA.oneRow (wvSeq cs)
 -- …and the next row up leaves it (its exponents are ω^k, not naturals)
 #guard BMS.expand ([[0], [1], [2], [3]] : Matrix) 1 == ([[0], [1], [2], [2]] : Matrix)
 
+
+/-! ## §5.7 ω^ω — the whole CNF region below ω^ω, certified
+
+The plan of this section, in one line: classify (`below_pw`), compare
+(`lt_pwv_repl`, `lt_pwv_step`, `lt_pwv_more`), expand (`expand_pwM_*`), then run
+the prefix induction (`cert_pre`).
+
+Two things are worth flagging to a reader who checks this section against §5.
+
+  * NOTHING here propagates an order HYPOTHESIS into an order CONCLUSION.  `lt`
+    is `ltF` at one fixed amount of fuel and this file has no fuel-monotonicity
+    lemma, so `ltF f x y = true` at the fuel the caller happens to supply cannot
+    be re-used at the fuel the goal happens to want.  Every proof therefore
+    CLASSIFIES its term into a canonical `pwv e` first and then RE-DERIVES the
+    comparison from scratch with its own fuel budget — the same discipline §5
+    uses (`below_wm` then `lt_wm_step`), here made explicit because the region
+    is big enough that the temptation is real.
+  * The cofinality clause is proved ONCE, prefix-relatively (`cof_pre`), for
+    every limit node of the family at the same time.  It quantifies over ALL
+    `inT` terms, as the doctrine requires; `below_pre` is the analysis that
+    makes that quantifier tractable. -/
 /-! ### The exponent-list layer
 
 The count vector `cs` is the right *index set* (it is total: every list of counts
@@ -2008,6 +2039,769 @@ theorem below_pw : ∀ (k f : Nat) (s : Term), inT s = true → ltF f s (pw k) =
         · have := hbb x h'; omega
       · rw [haa, hbeq, pwv_cons hbne]
   termination_by k f => (k, f)
+
+/-! ### Degrees, and the fuel budget
+
+Every order statement is proved in the "for all sufficiently large fuel" form and
+consumed at the default fuel `2*(deg+deg)+8`, so each family needs a lower bound
+on its degree.  These three are all that the ω^k region uses. -/
+
+private theorem deg_pos : ∀ (t : Term), 1 ≤ t.deg
+  | zero => by show 1 ≤ 1; omega
+  | M => by show 1 ≤ 1; omega
+  | add a b => by show 1 ≤ 1 + a.deg + b.deg; omega
+  | omg a => by show 1 ≤ 1 + a.deg; omega
+  | phi a b => by show 1 ≤ 1 + a.deg + b.deg; omega
+  | psi a b => by show 1 ≤ 1 + a.deg + b.deg; omega
+  | Z a => by show 1 ≤ 1 + a.deg; omega
+
+private theorem deg_pw (k : Nat) : k + 2 ≤ (pw k).deg := by
+  have := deg_ofNat k
+  show k + 2 ≤ 1 + (zero : Term).deg + (ofNat k).deg
+  show k + 2 ≤ 1 + 1 + (ofNat k).deg
+  omega
+
+private theorem deg_ofList_len : ∀ (l : List Term), l.length ≤ (ofList l).deg
+  | [] => by show 0 ≤ _; omega
+  | [a] => by show 1 ≤ a.deg; exact deg_pos a
+  | a :: b :: r => by
+    have h1 := deg_ofList_len (b :: r)
+    have h2 := deg_pos a
+    show (b :: r).length + 1 ≤ 1 + a.deg + (ofList (b :: r)).deg
+    omega
+
+private theorem deg_ofList_mem : ∀ (l : List Term) (x : Term), x ∈ l → x.deg ≤ (ofList l).deg
+  | [], x, hx => by simp at hx
+  | [a], x, hx => by
+    have : x = a := by simpa using hx
+    rw [this]
+    show a.deg ≤ a.deg
+    omega
+  | a :: b :: r, x, hx => by
+    rcases List.mem_cons.mp hx with h | h
+    · rw [h]; show a.deg ≤ 1 + a.deg + (ofList (b :: r)).deg; omega
+    · have := deg_ofList_mem (b :: r) x h
+      show x.deg ≤ 1 + a.deg + (ofList (b :: r)).deg
+      omega
+
+private theorem deg_pwv_len (e : List Nat) : e.length ≤ (pwv e).deg := by
+  have h := deg_ofList_len (e.map pw)
+  simpa using h
+
+private theorem deg_pwv_mem {e : List Nat} {x : Nat} (h : x ∈ e) : x + 2 ≤ (pwv e).deg := by
+  have h1 : (pw x).deg ≤ (pwv e).deg :=
+    deg_ofList_mem (e.map pw) (pw x) (List.mem_map_of_mem h)
+  have h2 := deg_pw x
+  omega
+
+private theorem pwv_ne_zero : ∀ (l : List Nat), l ≠ [] → pwv l ≠ zero
+  | [], h => absurd rfl h
+  | [k], _ => by rw [show pwv [k] = pw k from rfl]; exact pw_ne_zero k
+  | k :: k' :: r, _ => by rw [pwv_cons (by simp)]; intro hc; exact Term.noConfusion hc
+
+/-- **The pointwise bound.**  A sum of `|e|` components each at most `ω^j` is
+    strictly below `ω^j·(|e|+1)`, and this stays true under any prefix — the
+    prefix parameter is what makes the induction go through. -/
+private theorem lt_pwv_repl : ∀ (e : List Nat) (j : Nat), (∀ x ∈ e, x ≤ j) → ∀ (P : List Term),
+    (∀ z ∈ P, z.isAP = true) → ∀ f, P.length + e.length + j + 4 ≤ f →
+    ltF f (ofList (P ++ e.map pw))
+      (ofList (P ++ (List.replicate (e.length + 1) j).map pw)) = true
+  | [], j, _, P, hP, f, hf => by
+    cases P with
+    | nil =>
+      show ltF f (ofList ([] : List Term)) (ofList [pw j]) = true
+      refine ltF_zero ?_ (pw_ne_zero j)
+      simp only [List.length_nil] at hf
+      omega
+    | cons z Q =>
+      show ltF f (ofList ((z :: Q) ++ ([] : List Term))) (ofList ((z :: Q) ++ [pw j])) = true
+      rw [List.append_nil]
+      refine ltF_ofList_prefix (z :: Q) (pw j) [] (by simp) hP f ?_
+      simp only [List.length_cons, List.length_nil] at hf ⊢
+      omega
+  | x :: r, j, hxr, P, hP, f, hf => by
+    rcases Nat.lt_or_ge x j with hlt | hge
+    · have hrhs : (List.replicate ((x :: r).length + 1) j).map pw
+          = pw j :: (List.replicate (r.length + 1) j).map pw := by
+        show (List.replicate (r.length + 1 + 1) j).map pw = _
+        rw [List.replicate_succ]
+        rfl
+      rw [hrhs]
+      show ltF f (ofList (P ++ pw x :: r.map pw))
+        (ofList (P ++ pw j :: (List.replicate (r.length + 1) j).map pw)) = true
+      refine ltF_ofList_head P (pw x) (pw j) (r.map pw)
+        ((List.replicate (r.length + 1) j).map pw) (x + 3) (pw_isAP x) (pw_isAP j)
+        (fun g hg => ltF_pw_lt hlt g hg) f ?_
+      simp only [List.length_cons] at hf
+      omega
+    · have hxj : x = j := by have := hxr x (by simp); omega
+      subst hxj
+      have hIH := lt_pwv_repl r x (fun y hy => hxr y (by simp [hy])) (P ++ [pw x])
+        (by
+          intro z hz
+          rcases List.mem_append.mp hz with h | h
+          · exact hP z h
+          · have : z = pw x := by simpa using h
+            rw [this]; exact pw_isAP x)
+        f (by simp only [List.length_append, List.length_cons, List.length_nil] at hf ⊢; omega)
+      rw [List.append_assoc, List.append_assoc] at hIH
+      show ltF f (ofList (P ++ pw x :: r.map pw))
+        (ofList (P ++ (List.replicate (r.length + 1 + 1) x).map pw)) = true
+      rw [List.replicate_succ]
+      exact hIH
+
+private theorem ltF_omg_phi : ∀ (f : Nat) (a c d : Term), ltF f (omg a) (phi c d) = false
+  | 0, _, _, _ => rfl
+  | _ + 1, _, _, _ => rfl
+
+/-- **L1 relative to a prefix.**  A term of 𝔗(M) below `ω^{p₁}+…+ω^{pᵣ}+ω^{j+1}`
+    either has the whole prefix `p` in front of a rest bounded by `ω^j`, or it
+    already differs from `p` inside `p`, and then it is below EVERY extension of
+    `p` — which is the only thing the cofinality clause needs of it. -/
+private theorem below_pre : ∀ (f : Nat) (p : List Nat) (j : Nat) (s : Term), inT s = true →
+    ltF f s (pwv (p ++ [j + 1])) = true →
+    (∃ e, (∀ x ∈ e, x ≤ j) ∧ s = pwv (p ++ e)) ∨
+    (∀ g, 2 * s.deg + 2 ≤ g → ∀ t : List Nat, t ≠ [] → ltF g s (pwv (p ++ t)) = true)
+  | 0, p, j, s, _, h => by
+    exact absurd h (by rw [show ltF 0 s (pwv (p ++ [j+1])) = false from rfl]; simp)
+  | f + 1, [], j, s, hs, h => by
+    obtain ⟨e, he, hse⟩ := below_pw (j + 1) (f + 1) s hs h
+    exact Or.inl ⟨e, fun x hx => by have := he x hx; omega, by rw [hse]; rfl⟩
+  | f + 1, x :: p', j, s, hs, h => by
+    have htgt : pwv ((x :: p') ++ [j + 1]) = add (pw x) (pwv (p' ++ [j + 1])) :=
+      pwv_cons (by simp)
+    have hext : ∀ t : List Nat, t ≠ [] →
+        pwv ((x :: p') ++ t) = add (pw x) (pwv (p' ++ t)) := by
+      intro t ht
+      refine pwv_cons ?_
+      intro hc
+      exact ht (List.append_eq_nil_iff.mp hc).2
+    rw [htgt] at h
+    -- the head-only clause 2.3.11, shared by the five non-sum constructors
+    cases s with
+    | zero =>
+      refine Or.inr (fun g hg t ht => ?_)
+      have hg4 : 4 ≤ g := hg
+      refine ltF_zero (by omega) ?_
+      rw [hext t ht]
+      intro hc; exact Term.noConfusion hc
+    | M =>
+      have h2 : (((M : Term) == pw x) || ltF f M (pw x)) = true := h
+      rw [show (((M : Term) == pw x) : Bool) = false from rfl,
+        show ltF f M (pw x) = false from Evidence.StageA.ltF_M_phi f zero (ofNat x)] at h2
+      exact Bool.noConfusion h2
+    | omg a =>
+      have h2 : ((omg a == pw x) || ltF f (omg a) (pw x)) = true := h
+      rw [show ((omg a == pw x) : Bool) = false from rfl,
+        show ltF f (omg a) (pw x) = false from ltF_omg_phi f a zero (ofNat x)] at h2
+      exact Bool.noConfusion h2
+    | psi q a =>
+      have h2 : ((psi q a == pw x) || ltF f (psi q a) (pw x)) = true := h
+      rw [show ((psi q a == pw x) : Bool) = false from rfl] at h2
+      simp only [Bool.false_or] at h2
+      obtain ⟨e, _, heq⟩ := below_pw x f (psi q a) hs h2
+      obtain ⟨y, rfl⟩ := pwv_isAP e (by rw [← heq]; rfl)
+      exact absurd heq (by intro hc; exact Term.noConfusion hc)
+    | Z a =>
+      have h2 : ((Z a == pw x) || ltF f (Z a) (pw x)) = true := h
+      rw [show ((Z a == pw x) : Bool) = false from rfl] at h2
+      simp only [Bool.false_or] at h2
+      obtain ⟨e, _, heq⟩ := below_pw x f (Z a) hs h2
+      obtain ⟨y, rfl⟩ := pwv_isAP e (by rw [← heq]; rfl)
+      exact absurd heq (by intro hc; exact Term.noConfusion hc)
+    | phi a b =>
+      have h2 : ((phi a b == pw x) || ltF f (phi a b) (pw x)) = true := h
+      cases hxo : ((phi a b == pw x) : Bool) with
+      | true =>
+        have hax : phi a b = pw x := by simpa using hxo
+        cases p' with
+        | nil => exact Or.inl ⟨[], by simp, by rw [hax]; rfl⟩
+        | cons z q =>
+          refine Or.inr (fun g hg t ht => ?_)
+          rw [hext t ht, hax]
+          cases g with
+          | zero => have := deg_pos (pw x); omega
+          | succ g' => exact ltF_to_add (pw_isAP x) (by simp)
+      | false =>
+        rw [hxo] at h2
+        simp only [Bool.false_or] at h2
+        obtain ⟨e, he, heq⟩ := below_pw x f (phi a b) hs h2
+        obtain ⟨y, rfl⟩ := pwv_isAP e (by rw [← heq]; rfl)
+        have hyx : y < x := he y (by simp)
+        have hdy : y + 2 ≤ (phi a b).deg := by rw [show phi a b = pw y from heq]; exact deg_pw y
+        refine Or.inr (fun g hg t ht => ?_)
+        rw [hext t ht, show phi a b = pw y from heq]
+        cases g with
+        | zero => omega
+        | succ g' =>
+          refine ltF_to_add (pw_isAP y) ?_
+          rw [ltF_pw_lt hyx g' (by omega)]
+          simp
+    | add a b =>
+      obtain ⟨hap, ha, hb⟩ := inT_add hs
+      cases hxo : ((add a b) == add (pw x) (pwv (p' ++ [j + 1]))) with
+      | true =>
+        have heq : add a b = add (pw x) (pwv (p' ++ [j+1])) := by simpa using hxo
+        rw [heq, ltF_irrefl] at h
+        exact Bool.noConfusion h
+      | false =>
+        have h2 : (if (a == pw x) = true then ltF f b (pwv (p' ++ [j+1]))
+                   else ltF f a (pw x)) = true := by
+          rw [show ltF (f+1) (add a b) (add (pw x) (pwv (p' ++ [j+1])))
+                = (if ((add a b) == add (pw x) (pwv (p' ++ [j+1]))) = true then false
+                   else if (a == pw x) = true then ltF f b (pwv (p' ++ [j+1]))
+                   else ltF f a (pw x) : Bool) from rfl, hxo] at h
+          simpa using h
+        cases haz : (a == pw x) with
+        | true =>
+          have hax : a = pw x := by simpa using haz
+          rw [haz] at h2
+          simp only [if_true] at h2
+          rcases below_pre f p' j b hb h2 with ⟨e, he, hbe⟩ | hb'
+          · refine Or.inl ⟨e, he, ?_⟩
+            have hne : p' ++ e ≠ [] := by
+              intro hc
+              exact inT_add_ne_zero hs (by rw [hbe, hc]; rfl)
+            rw [hax, hbe, ← pwv_cons hne]
+            rfl
+          · refine Or.inr (fun g hg t ht => ?_)
+            have hdb : (add a b).deg = 1 + a.deg + b.deg := rfl
+            have hda : 2 ≤ a.deg := by rw [hax]; have := deg_pw x; omega
+            rw [hext t ht, hax]
+            cases g with
+            | zero => omega
+            | succ g' =>
+              exact ltF_add_same (hb' g' (by omega) t ht)
+        | false =>
+          rw [haz] at h2
+          simp only [Bool.false_eq_true, if_false] at h2
+          obtain ⟨ea, hea, haeq⟩ := below_pw x f a ha h2
+          obtain ⟨y, rfl⟩ := pwv_isAP ea (by rw [← haeq]; exact hap)
+          have hyx : y < x := hea y (by simp)
+          have hay : a = pw y := haeq
+          have hhead : le ((toList b).headD zero) a = true := inT_add_head_le hs
+          rw [hay] at hhead
+          obtain ⟨eb, hbne, hbb, hbeq⟩ :=
+            tail_pw y (fun k' hk' f' s' hs' h' => below_pw k' f' s' hs' h') b hb
+              (inT_add_ne_zero hs) y (Nat.le_refl y) hhead
+          have hdy : y + 2 ≤ (add a b).deg := by
+            have h1 : a.deg ≤ (add a b).deg := by show a.deg ≤ 1 + a.deg + b.deg; omega
+            have h2' : y + 2 ≤ a.deg := by rw [hay]; exact deg_pw y
+            omega
+          refine Or.inr (fun g hg t ht => ?_)
+          rw [hext t ht, hay, hbeq]
+          have hpt : p' ++ t ≠ [] := by
+            intro hc; exact ht (List.append_eq_nil_iff.mp hc).2
+          rw [show add (pw y) (pwv eb) = ofList ([] ++ pw y :: eb.map pw) from
+                (pwv_cons hbne).symm,
+            show add (pw x) (pwv (p' ++ t)) = ofList ([] ++ pw x :: (p' ++ t).map pw) from
+                (pwv_cons hpt).symm]
+          refine ltF_ofList_head [] (pw y) (pw x) (eb.map pw) ((p' ++ t).map pw) (y + 3)
+            (pw_isAP y) (pw_isAP x) (fun g' hg' => ltF_pw_lt hyx g' hg') g ?_
+          simp only [List.length_nil]
+          omega
+
+/-- **The cofinality clause of the whole region, once.**  Every term of 𝔗(M)
+    below `P + ω^{j+1}` is overtaken by some `P + ω^j·(n+1)`. -/
+private theorem cof_pre (p : List Nat) (j : Nat) (s : Term) (hs : inT s = true)
+    (h : lt s (pwv (p ++ [j + 1])) = true) :
+    ∃ n, le s (pwv (p ++ List.replicate (n + 1) j)) = true := by
+  have hP : ∀ z ∈ p.map pw, z.isAP = true := by
+    intro z hz
+    obtain ⟨k, _, hk⟩ := List.mem_map.mp hz
+    rw [← hk]; exact pw_isAP k
+  rcases below_pre _ p j s hs h with ⟨e, he, hse⟩ | h'
+  · refine ⟨e.length, ?_⟩
+    have hsplit : ∀ (q : List Nat), pwv (p ++ q) = ofList (p.map pw ++ q.map pw) := by
+      intro q
+      show ofList ((p ++ q).map pw) = _
+      rw [List.map_append]
+    have hlt : lt s (pwv (p ++ List.replicate (e.length + 1) j)) = true := by
+      refine lt_of_ltF (N := p.length + e.length + j + 4) (fun f hf => ?_) ?_
+      · rw [hse, hsplit e, hsplit (List.replicate (e.length + 1) j)]
+        exact lt_pwv_repl e j he (p.map pw) hP f (by simp only [List.length_map]; exact hf)
+      · have h1 : p.length + e.length ≤ s.deg := by
+          rw [hse]
+          have h := deg_pwv_len (p ++ e)
+          simpa using h
+        have h2 : j + 2 ≤ (pwv (p ++ List.replicate (e.length + 1) j)).deg :=
+          deg_pwv_mem (List.mem_append_right p (List.mem_replicate.mpr ⟨by omega, rfl⟩))
+        omega
+    simp [TM.Term.le, hlt]
+  · refine ⟨0, ?_⟩
+    have hlt : lt s (pwv (p ++ [j])) = true := by
+      refine h' _ ?_ [j] (by simp)
+      show 2 * s.deg + 2 ≤ 2 * (s.deg + (pwv (p ++ [j])).deg) + 8
+      omega
+    show ((s == pwv (p ++ List.replicate 1 j)) || lt s (pwv (p ++ List.replicate 1 j))) = true
+    rw [show List.replicate 1 j = [j] from rfl, hlt]
+    simp
+
+/-! ### The matrices and the expansion
+
+`A` is unconstrained in `StageA.expand_oneRow`: only the last block matters for
+the BM4 rule.  That is what makes every lemma here prefix-relative for free. -/
+
+private theorem blockOf_succ (j : Nat) : blockOf (j + 1) = blockOf j ++ [1] := by
+  show 0 :: List.replicate (j+1) 1 = (0 :: List.replicate j 1) ++ [1]
+  rw [List.replicate_succ']
+  rfl
+
+private theorem pwSeq_single (k : Nat) : pwSeq [k] = blockOf k := by
+  show ((List.map blockOf [k]).flatten) = _
+  simp
+
+private theorem pwSeq_snoc (e : List Nat) (k : Nat) : pwSeq (e ++ [k]) = pwSeq e ++ blockOf k := by
+  rw [pwSeq_append, pwSeq_single]
+
+private theorem pwM_snoc_zero (e : List Nat) : pwM (e ++ [0]) = pwM e ++ [[0]] := by
+  show StageA.oneRow (pwSeq (e ++ [0])) = _
+  rw [pwSeq_snoc, show blockOf 0 = [0] from rfl, StageA.oneRow_append]
+  rfl
+
+private theorem kind_pwM_succ (e : List Nat) : BMS.kind (pwM (e ++ [0])) = .succ := by
+  show (match (pwM (e ++ [0])).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match BMS.lnz L with
+          | none => BMS.Kind.succ
+          | some _ => BMS.Kind.lim) = _
+  rw [pwM_snoc_zero, List.getLast?_concat]
+  rfl
+
+private theorem expand_pwM_succ (e : List Nat) (n : Nat) :
+    BMS.expand (pwM (e ++ [0])) n = pwM e := by
+  have hL : (pwM (e ++ [0])).getLast? = some [0] := by
+    rw [pwM_snoc_zero]; exact List.getLast?_concat
+  have hexp : BMS.expand? (pwM (e ++ [0])) n = some ((pwM (e ++ [0])).dropLast) := by
+    simp only [BMS.expand?, hL, Option.bind_eq_bind, Option.bind_some,
+      show BMS.lnz ([0] : BMS.Col) = none from rfl, Option.pure_def]
+  show (BMS.expand? (pwM (e ++ [0])) n).getD [] = _
+  rw [hexp]
+  show (pwM (e ++ [0])).dropLast = pwM e
+  rw [pwM_snoc_zero]
+  exact List.dropLast_concat
+
+private theorem pwM_snoc_lim (e : List Nat) (j : Nat) :
+    pwM (e ++ [j + 1]) = StageA.oneRow ((pwSeq e ++ blockOf j) ++ [1]) := by
+  show StageA.oneRow (pwSeq (e ++ [j+1])) = _
+  rw [pwSeq_snoc, blockOf_succ, List.append_assoc]
+
+private theorem kind_pwM_lim (e : List Nat) (j : Nat) : BMS.kind (pwM (e ++ [j + 1])) = .lim := by
+  have hL : (pwM (e ++ [j+1])).getLast? = some [1] := by
+    rw [pwM_snoc_lim, StageA.oneRow_append]
+    exact List.getLast?_concat
+  show (match (pwM (e ++ [j+1])).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match BMS.lnz L with
+          | none => BMS.Kind.succ
+          | some _ => BMS.Kind.lim) = _
+  rw [hL]
+  rfl
+
+/-- `(P + ω^{j+1})[n] = P + ω^j·(n+1)`: the BM4 rule copies the last block. -/
+private theorem expand_pwM_lim (e : List Nat) (j n : Nat) :
+    BMS.expand (pwM (e ++ [j + 1])) n = pwM (e ++ List.replicate (n + 1) j) := by
+  have hexp := StageA.expand_oneRow (A := pwSeq e) (B := blockOf j) (c := 1) (b0 := 0)
+    (B' := List.replicate j 1) rfl (by omega)
+    (by intro x hx; have := List.eq_of_mem_replicate hx; omega) (by omega) n
+  show (BMS.expand? (pwM (e ++ [j+1])) n).getD [] = _
+  rw [pwM_snoc_lim, hexp]
+  show StageA.oneRow (pwSeq e ++ StageA.repL (blockOf j) (n+1)) = pwM (e ++ List.replicate (n+1) j)
+  rw [← pwSeq_replicate, ← pwSeq_append]
+  rfl
+
+/-! ### The successor step on values, and the two strict-increase facts -/
+
+private theorem filter_le_one_pw : ∀ (l : List Nat),
+    (l.map pw).filter (fun a => le one a) = l.map pw
+  | [] => rfl
+  | k :: r => by
+    show (pw k :: r.map pw).filter _ = _
+    rw [List.filter_cons_of_pos (le_one_pw k), filter_le_one_pw r]
+    rfl
+
+private theorem plus_pwv_one (e : List Nat) : plus (pwv e) one = pwv (e ++ [0]) := by
+  unfold plus
+  rw [show toList (one : Term) = [one] from rfl]
+  show ofList ((toList (pwv e)).filter (fun a => le one a) ++ [one]) = pwv (e ++ [0])
+  rw [toList_pwv, filter_le_one_pw]
+  show ofList (e.map pw ++ [pw 0]) = ofList ((e ++ [0]).map pw)
+  rw [List.map_append]
+  rfl
+
+private theorem pw_map_isAP (q : List Nat) : ∀ z ∈ q.map pw, z.isAP = true := by
+  intro z hz
+  obtain ⟨k, _, hk⟩ := List.mem_map.mp hz
+  rw [← hk]; exact pw_isAP k
+
+/-- `P + ω^j·(n+1) < P + ω^{j+1}`. -/
+private theorem lt_pwv_step (p : List Nat) (j n : Nat) :
+    lt (pwv (p ++ List.replicate (n + 1) j)) (pwv (p ++ [j + 1])) = true := by
+  have hsplit : ∀ (q : List Nat), pwv (p ++ q) = ofList (p.map pw ++ q.map pw) := by
+    intro q
+    show ofList ((p ++ q).map pw) = _
+    rw [List.map_append]
+  refine lt_of_ltF (N := p.length + j + 4) (fun f hf => ?_) ?_
+  · rw [hsplit, hsplit]
+    rw [show (List.replicate (n+1) j).map pw = pw j :: (List.replicate n j).map pw from by
+          rw [List.replicate_succ]; rfl,
+      show ([j+1] : List Nat).map pw = pw (j+1) :: ([] : List Term) from rfl]
+    refine ltF_ofList_head (p.map pw) (pw j) (pw (j+1)) ((List.replicate n j).map pw) []
+      (j + 3) (pw_isAP j) (pw_isAP (j+1)) (fun g hg => ltF_pw_lt (by omega) g hg) f ?_
+    simp only [List.length_map]
+    omega
+  · have h2 : j + 3 ≤ (pwv (p ++ [j+1])).deg :=
+      deg_pwv_mem (List.mem_append_right p (by simp))
+    have h1 : p.length ≤ (pwv (p ++ List.replicate (n+1) j)).deg := by
+      have h := deg_pwv_len (p ++ List.replicate (n+1) j)
+      simp only [List.length_append, List.length_replicate] at h
+      omega
+    omega
+
+/-- `P + ω^j·(n+1) < P + ω^j·(n+2)`. -/
+private theorem lt_pwv_more (p : List Nat) (j n : Nat) :
+    lt (pwv (p ++ List.replicate (n + 1) j)) (pwv (p ++ List.replicate (n + 2) j)) = true := by
+  have hsplit : ∀ (q : List Nat), pwv (p ++ q) = ofList (p.map pw ++ q.map pw) := by
+    intro q
+    show ofList ((p ++ q).map pw) = _
+    rw [List.map_append]
+  refine lt_of_ltF (N := p.length + n + 2) (fun f hf => ?_) ?_
+  · rw [hsplit, hsplit]
+    rw [show (List.replicate (n+2) j).map pw
+          = (List.replicate (n+1) j).map pw ++ pw j :: ([] : List Term) from by
+          rw [show n + 2 = (n+1) + 1 from rfl, List.replicate_succ', List.map_append]
+          rfl,
+      ← List.append_assoc]
+    refine ltF_ofList_prefix (p.map pw ++ (List.replicate (n+1) j).map pw) (pw j) [] ?_ ?_ f ?_
+    · intro hc
+      have hlen := congrArg List.length hc
+      simp only [List.length_append, List.length_map, List.length_replicate,
+        List.length_nil] at hlen
+      omega
+    · intro z hz
+      rcases List.mem_append.mp hz with h | h
+      · exact pw_map_isAP p z h
+      · exact pw_map_isAP (List.replicate (n+1) j) z h
+    · simp only [List.length_append, List.length_map, List.length_replicate]
+      omega
+  · have h1 : p.length + (n + 1) ≤ (pwv (p ++ List.replicate (n+1) j)).deg := by
+      have h := deg_pwv_len (p ++ List.replicate (n+1) j)
+      simp only [List.length_append, List.length_replicate] at h
+      omega
+    omega
+
+/-! ### The certificate family below ω^ω
+
+The prefix induction of the design note, verbatim: OUTER structural induction on
+the level `k` (the length of the count vector), INNER `Nat` induction on the
+coefficient `c`.  No `Acc`, no multiset ordering — `Evidence/WF.lean`'s `LexLt`
+is not needed for this region.  The side condition `∀ x ∈ p, k ≤ x` is not used
+by any step; it is kept because it is what confines the family to the DESCENDING
+(hence genuine, `inT`) exponent lists, and dropping it would let the statement
+range over junk terms `ofList` builds out of an ascending list. -/
+
+private theorem cert_pre : ∀ (k : Nat) (v : List Nat), v.length = k → ∀ (p : List Nat),
+    (∀ x ∈ p, k ≤ x) → Certified (pwM p) (pwv p) →
+    Certified (pwM (p ++ expOf v)) (pwv (p ++ expOf v))
+  | 0, v, hv, p, _, hp => by
+    cases v with
+    | cons a t => simp at hv
+    | nil =>
+      show Certified (pwM (p ++ [])) (pwv (p ++ []))
+      rw [List.append_nil]
+      exact hp
+  | k + 1, v, hv, p, hpk, hp => by
+    have IH : ∀ (v' : List Nat), v'.length = k → ∀ (p' : List Nat),
+        (∀ x ∈ p', k ≤ x) → Certified (pwM p') (pwv p') →
+        Certified (pwM (p' ++ expOf v')) (pwv (p' ++ expOf v')) :=
+      fun v' hv' p' h1 h2 => cert_pre k v' hv' p' h1 h2
+    cases v with
+    | nil => simp at hv
+    | cons c r =>
+      have hr : r.length = k := by simp only [List.length_cons] at hv; omega
+      have hpre : ∀ (c' : Nat), ∀ x ∈ p ++ List.replicate c' k, k ≤ x := by
+        intro c' x hx
+        rcases List.mem_append.mp hx with h | h
+        · have := hpk x h; omega
+        · have := List.eq_of_mem_replicate h; omega
+      have step : ∀ (c' : Nat),
+          Certified (pwM (p ++ List.replicate c' k)) (pwv (p ++ List.replicate c' k)) := by
+        intro c'
+        induction c' with
+        | zero =>
+          rw [List.replicate_zero, List.append_nil]
+          exact hp
+        | succ c'' ih =>
+          rw [show p ++ List.replicate (c'' + 1) k = (p ++ List.replicate c'' k) ++ [k] from by
+                rw [List.replicate_succ', ← List.append_assoc]]
+          cases k with
+          | zero =>
+            rw [← plus_pwv_one]
+            exact .succ (kind_pwM_succ _) (fun n => by rw [expand_pwM_succ]; exact ih)
+          | succ j =>
+            refine .lim
+              (fun n => pwv ((p ++ List.replicate c'' (j + 1)) ++ List.replicate (n + 1) j))
+              (kind_pwM_lim _ j) (fun n => ?_) (fun n => lt_pwv_step _ j n)
+              (fun n => lt_pwv_more _ j n) (fun s hs h => cof_pre _ j s hs h)
+            rw [expand_pwM_lim]
+            have hcert := IH ((n + 1) :: List.replicate j 0) (by simp)
+              (p ++ List.replicate c'' (j + 1)) (hpre c'') ih
+            rw [expOf_step] at hcert
+            exact hcert
+      have hexp : expOf (c :: r) = List.replicate c k ++ expOf r := by
+        show List.replicate c r.length ++ expOf r = _
+        rw [hr]
+      rw [hexp, ← List.append_assoc]
+      exact IH r hr (p ++ List.replicate c k) (hpre c) (step c)
+
+/-- **The whole CNF region below ω^ω, certified.**  Every count vector
+    `cs = [c_k, …, c_0]` gets a derivation for `ω^k·c_k + … + ω^0·c_0`. -/
+theorem cert_wv (cs : List Nat) : Certified (wvM cs) (wv cs) := by
+  rw [wvM_eq, wv_eq]
+  have h := cert_pre cs.length cs rfl [] (by simp) (show Certified (pwM []) (pwv []) from .zero)
+  rw [List.nil_append] at h
+  exact h
+
+/-! ### ω^ω
+
+The row `(0)(1)(2)`.  Its expansions are `(0)(1)…(1)` with `n+1` ones, i.e. the
+count vectors `[1,0,…,0]`, so the whole fundamental sequence is inside the family
+just certified; what is left is the classification below ω^ω. -/
+
+/-- A sum of components each at most `ω^k` is below `ω^{k+1}`. -/
+private theorem lt_pwv_pw : ∀ (e : List Nat) (k : Nat), (∀ x ∈ e, x ≤ k) →
+    lt (pwv e) (pw (k + 1)) = true
+  | [], k, _ => by
+    refine lt_of_ltF (N := 1) (fun f hf => ltF_zero hf (pw_ne_zero (k+1))) ?_
+    omega
+  | [y], k, hy => by
+    have hyk : y < k + 1 := by have := hy y (by simp); omega
+    exact lt_pw_lt hyk
+  | y :: z :: r, k, hy => by
+    have hyk : y < k + 1 := by have := hy y (by simp); omega
+    rw [pwv_cons (by simp)]
+    refine lt_of_ltF (N := y + 4) (fun f hf => ?_) ?_
+    · cases f with
+      | zero => omega
+      | succ g => exact ltF_add_to (pw_isAP (k+1)) (ltF_pw_lt hyk g (by omega))
+    · have h1 : y + 2 ≤ (pw y).deg := deg_pw y
+      show y + 4 ≤ 2 * ((1 + (pw y).deg + (pwv (z :: r)).deg) + (pw (k+1)).deg) + 8
+      omega
+
+/-- **L1 for ω^ω.**  Every term of 𝔗(M) below ω^ω is a sum of `ω^{eᵢ}` with all
+    exponents bounded by one natural number. -/
+private theorem below_pw_omega : ∀ (f : Nat) (s : Term), inT s = true →
+    ltF f s (phi zero omega) = true → ∃ (e : List Nat) (k : Nat), (∀ x ∈ e, x ≤ k) ∧ s = pwv e
+  | 0, s, _, h => by
+    exact absurd h (by rw [show ltF 0 s (phi zero omega) = false from rfl]; simp)
+  | f + 1, s, hs, h => by
+    cases s with
+    | zero => exact ⟨[], 0, by simp, rfl⟩
+    | M =>
+      rw [Evidence.StageA.ltF_M_phi] at h
+      exact Bool.noConfusion h
+    | omg a =>
+      rw [show ltF (f+1) (omg a) (phi zero omega) = false from rfl] at h
+      exact Bool.noConfusion h
+    | psi q a =>
+      have h2 : ((psi q a == zero) || (psi q a == omega) || ltF f (psi q a) zero
+                 || ltF f (psi q a) omega) = true := h
+      rw [show ((psi q a == zero) : Bool) = false from rfl,
+        show ((psi q a == omega) : Bool) = false from rfl, ltF_lt_zero] at h2
+      simp only [Bool.or_false, Bool.false_or] at h2
+      obtain ⟨i, hi⟩ := below_omega f (psi q a) hs h2
+      exact absurd hi (psi_ne_ofNat q a i)
+    | Z a =>
+      have h2 : ((Z a == zero) || (Z a == omega) || ltF f (Z a) zero
+                 || ltF f (Z a) omega) = true := h
+      rw [show ((Z a == zero) : Bool) = false from rfl,
+        show ((Z a == omega) : Bool) = false from rfl, ltF_lt_zero] at h2
+      simp only [Bool.or_false, Bool.false_or] at h2
+      obtain ⟨i, hi⟩ := below_omega f (Z a) hs h2
+      exact absurd hi (Z_ne_ofNat a i)
+    | phi a b =>
+      obtain ⟨ha, hb⟩ := inT_phi hs
+      cases hxo : ((phi a b) == phi zero omega) with
+      | true =>
+        have heq : phi a b = phi zero omega := by simpa using hxo
+        rw [heq, ltF_irrefl] at h
+        exact Bool.noConfusion h
+      | false =>
+        have h2 : (if (a == zero) = true then ltF f b omega
+                   else if ltF f a zero = true then ltF f b (phi zero omega)
+                   else ((phi a b == omega) || ltF f (phi a b) omega)) = true := by
+          rw [show ltF (f+1) (phi a b) (phi zero omega)
+                = (if ((phi a b) == phi zero omega) = true then false
+                   else if (a == zero) = true then ltF f b omega
+                   else if ltF f a zero = true then ltF f b (phi zero omega)
+                   else ((phi a b == omega) || ltF f (phi a b) omega) : Bool) from rfl,
+              hxo] at h
+          simpa using h
+        cases haz : (a == zero) with
+        | true =>
+          have haz' : a = zero := by simpa using haz
+          rw [haz] at h2
+          simp only [if_true] at h2
+          obtain ⟨i, hi⟩ := below_omega f b hb h2
+          exact ⟨[i], i, by intro x hx; simp at hx; omega, by rw [haz', hi]; rfl⟩
+        | false =>
+          rw [haz] at h2
+          simp only [Bool.false_eq_true, if_false, ltF_lt_zero] at h2
+          have hphi : ∀ i, phi a b ≠ ofNat i := by
+            intro i hcon
+            rcases ofNat_cases i with hz | ho | ⟨j, hj⟩
+            · rw [hz] at hcon; exact Term.noConfusion hcon
+            · have hcon' : phi a b = phi zero zero := by rw [ho] at hcon; exact hcon
+              injection hcon' with h1 _
+              rw [h1] at haz
+              simp at haz
+            · rw [hj] at hcon; exact Term.noConfusion hcon
+          cases hbe : ((phi a b == omega) : Bool) with
+          | true =>
+            have hcon0 : phi a b = omega := by simpa using hbe
+            have hcon : phi a b = phi zero one := hcon0
+            injection hcon with h1 _
+            rw [h1] at haz
+            simp at haz
+          | false =>
+            rw [hbe] at h2
+            simp only [Bool.false_or] at h2
+            obtain ⟨i, hi⟩ := below_omega f (phi a b) hs h2
+            exact absurd hi (hphi i)
+    | add a b =>
+      obtain ⟨hap, ha, hb⟩ := inT_add hs
+      have h2 : ltF f a (phi zero omega) = true := h
+      obtain ⟨ea, k, hea, haa⟩ := below_pw_omega f a ha h2
+      obtain ⟨y, rfl⟩ := pwv_isAP ea (by rw [← haa]; exact hap)
+      have hyk : y ≤ k := hea y (by simp)
+      have hay : a = pw y := haa
+      have hhead : le ((toList b).headD zero) a = true := inT_add_head_le hs
+      rw [hay] at hhead
+      obtain ⟨eb, hbne, hbb, hbeq⟩ :=
+        tail_pw y (fun k' hk' f' s' hs' h' => below_pw k' f' s' hs' h') b hb
+          (inT_add_ne_zero hs) y (Nat.le_refl y) hhead
+      refine ⟨y :: eb, k, ?_, ?_⟩
+      · intro x hx
+        rcases List.mem_cons.mp hx with h' | h'
+        · omega
+        · have := hbb x h'; omega
+      · rw [hay, hbeq, pwv_cons hbne]
+
+/-- `(0)(1)(2)[n] = (0)(1)…(1)` with `n+1` ones. -/
+private theorem expand_omega_pow (n : Nat) :
+    BMS.expand ([[0], [1], [2]] : Matrix) n = pwM [n + 1] := by
+  have hexp := StageA.expand_oneRow (A := [0]) (B := [1]) (c := 2) (b0 := 1)
+    (B' := []) rfl (by omega) (by intro x hx; simp at hx) (by omega) n
+  show (BMS.expand? ([[0], [1], [2]] : Matrix) n).getD [] = _
+  rw [show ([[0], [1], [2]] : Matrix) = StageA.oneRow ((([0] : List Nat) ++ [1]) ++ [2]) from rfl,
+    hexp]
+  show StageA.oneRow ([0] ++ StageA.repL [1] (n+1)) = pwM [n+1]
+  rw [repL_single]
+  show StageA.oneRow (0 :: List.replicate (n+1) 1) = StageA.oneRow (pwSeq [n+1])
+  rw [pwSeq_single]
+  rfl
+
+/-- **ω^ω.**  `(0)(1)(2)` has value ω^ω. -/
+theorem cert_omega_pow : Certified [[0], [1], [2]] (phi zero omega) := by
+  refine .lim (fun n => pw (n + 1)) rfl (fun n => ?_) (fun n => ?_)
+    (fun n => lt_pw_lt (by omega)) (fun s hs h => ?_)
+  · rw [expand_omega_pow n]
+    have hc := cert_wv (1 :: List.replicate (n + 1) 0)
+    rw [wvM_eq, wv_eq, expOf_step] at hc
+    exact hc
+  · refine lt_of_ltF (N := n + 4) (fun f hf => ?_) ?_
+    · cases f with
+      | zero => omega
+      | succ g => exact ltF_phi_same (ltF_ofNat_omega (n + 1) g (by omega))
+    · have := deg_ofNat (n + 1)
+      show n + 4 ≤ 2 * ((1 + (zero : Term).deg + (ofNat (n+1)).deg) + (phi zero omega).deg) + 8
+      show n + 4 ≤ 2 * ((1 + 1 + (ofNat (n+1)).deg) + (phi zero omega).deg) + 8
+      omega
+  · obtain ⟨e, k, he, hse⟩ := below_pw_omega _ s hs h
+    exact ⟨k, by rw [hse]; simp [TM.Term.le, lt_pwv_pw e k he]⟩
+
+/-! ### The negative control for the ω^ω row
+
+The same review exercise as §7, one level up.  `cert_omega_pow` uses
+`fs' n = ω^(n+1)` — forced, those ARE the values of the expansions of `(0)(1)(2)`
+— so an attempt to certify a COMPRESSED value for the same matrix has to
+discharge the cofinality clause with the same `fs'`.  For ω^ω·2 it is refutable,
+and the witness is the genuine term ω^ω. -/
+
+private theorem ltF_omega_ofNat : ∀ (m f : Nat), ltF f omega (ofNat m) = false
+  | 0, f => by rw [show (ofNat 0 : Term) = zero from rfl]; exact ltF_lt_zero f omega
+  | 1, f => ltF_one_false f omega (by decide) (by intro hc; exact Term.noConfusion hc)
+  | m + 2, f => by
+    cases f with
+    | zero => rfl
+    | succ g =>
+      rw [ofNat_shape m]
+      show (if ((omega : Term) == add one (ofNat (m+1))) = true then false
+            else (((omega : Term) == one) || ltF g omega one)) = false
+      rw [show (((omega : Term) == add one (ofNat (m+1))) : Bool) = false from rfl,
+        show (((omega : Term) == one) : Bool) = false from rfl]
+      simp only [Bool.false_eq_true, if_false, Bool.false_or]
+      exact ltF_one_false g omega (by decide) (by intro hc; exact Term.noConfusion hc)
+
+private theorem omega_ne_ofNat : ∀ i, (omega : Term) ≠ ofNat i := by
+  intro i hc
+  rcases ofNat_cases i with h | h | ⟨j, h⟩ <;> rw [h] at hc
+  · exact Term.noConfusion hc
+  · injection hc with _ h2
+    exact Term.noConfusion h2
+  · exact Term.noConfusion hc
+
+private theorem ltF_phi_zero_false {f : Nat} {x y : Term} (h : ltF f x y = false)
+    (hne : (phi zero x == phi zero y) = false) : ltF (f + 1) (phi zero x) (phi zero y) = false := by
+  show (if (phi zero x == phi zero y) = true then false else _) = false
+  rw [hne]
+  simp only [Bool.false_eq_true, if_false]
+  show (if ((zero : Term) == zero) = true then ltF f x y else _) = false
+  simp [h]
+
+/-- No `ω^(n+1)` overtakes ω^ω. -/
+private theorem le_omega_pow_pw (n : Nat) : le (phi zero omega) (pw (n + 1)) = false := by
+  have hne : ((phi zero omega == phi zero (ofNat (n+1))) : Bool) = false := by
+    cases hb : ((phi zero omega == phi zero (ofNat (n+1))) : Bool) with
+    | true =>
+      have heq : phi zero omega = phi zero (ofNat (n+1)) := by simpa using hb
+      injection heq with _ h2
+      exact absurd h2 (omega_ne_ofNat (n+1))
+    | false => rfl
+  have hlt : lt (phi zero omega) (pw (n + 1)) = false :=
+    ltF_phi_zero_false (ltF_omega_ofNat (n+1) _) hne
+  show ((phi zero omega == phi zero (ofNat (n+1)))
+        || lt (phi zero omega) (phi zero (ofNat (n+1)))) = false
+  rw [hne, show lt (phi zero omega) (phi zero (ofNat (n+1))) = false from hlt]
+  rfl
+
+/-- **The negative control for ω^ω, machine-checked.**  The cofinality clause
+    that a certificate `Certified [[0],[1],[2]] (ω^ω·2)` would need — with the
+    expansion values `fs' n = ω^(n+1)` of `cert_omega_pow`, which are forced by
+    `cert_wv` — is FALSE: the term ω^ω of 𝔗(M) is below ω^ω·2 and is overtaken
+    by no `fs' n`. -/
+theorem neg_control_omega_pow_times_two :
+    ¬ (∀ s, inT s = true → lt s (add (phi zero omega) (phi zero omega)) = true →
+        ∃ n, le s (pw (n + 1)) = true) := by
+  intro hcof
+  obtain ⟨n, hn⟩ := hcof (phi zero omega) (by decide) (by decide)
+  rw [le_omega_pow_pw n] at hn
+  exact Bool.noConfusion hn
+
+/-! ### Evidence for the ω^ω layer -/
+
+-- the exponent-list layer agrees with the translation, like the count vector does
+#guard Trans.oPr (pwM [3, 1]) == pwv [3, 1]
+#guard Trans.oPr (pwM [0, 0, 0]) == pwv [0, 0, 0]
+#guard pwM [1] == ([[0], [1]] : Matrix)
+#guard pwv [1] == omega
+-- the certified values really are terms of 𝔗(M) (the family stays inside `inT`)
+#guard inT (wv [2, 1, 3]) = true
+#guard inT (wv [1, 0, 0]) = true
+#guard inT (phi zero omega) = true
+-- the fundamental sequence of the new row, as `cert_omega_pow` uses it
+#guard BMS.expand ([[0], [1], [2]] : Matrix) 3 == pwM [4]
+#guard Trans.oPr (pwM [4]) == pw 4
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate. -/
@@ -2015,7 +2809,8 @@ gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate. -
 /-- The registered certified rows. -/
 def certRows : List (Matrix × Term) :=
   [([], Term.zero), ([[0]], one), ([[0], [0]], ofNat 2), ([[0], [1]], omega),
-   ([[0], [1], [0], [1]], add omega omega), ([[0], [1], [1]], phi zero (ofNat 2))]
+   ([[0], [1], [0], [1]], add omega omega), ([[0], [1], [1]], phi zero (ofNat 2)),
+   ([[0], [1], [2]], phi zero omega)]
 
 /-- Every registered pair carries a derivation.  Extending `certRows` without
     extending this proof breaks the build — the label cannot outrun the
@@ -2023,13 +2818,14 @@ def certRows : List (Matrix × Term) :=
 theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 := by
   intro p hp
   simp only [certRows, List.mem_cons] at hp
-  rcases hp with h | h | h | h | h | h | h
+  rcases hp with h | h | h | h | h | h | h | h
   · rw [h]; exact cert_empty
   · rw [h]; exact cert_one
   · rw [h]; exact cert_two
   · rw [h]; exact cert_omega
   · rw [h]; exact cert_omega2
   · rw [h]; exact cert_omega_sq
+  · rw [h]; exact cert_omega_pow
   · cases h
 
 /-! ## §7 The negative control, as a theorem
