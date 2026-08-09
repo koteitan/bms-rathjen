@@ -5726,9 +5726,17 @@ headed by a row-1 = 1 column: the fold is one `phiStep` per copy over the tail v
 `oLAux _ (L+1) [[0,0]] = 1`, giving `φ̄(L,ω)`, `φ̄(L,ω·2)`, … (the `logPhi` returns
 `some ω` at each step, and `plus ω (ω^1) = ω·2`).  The chain then collapses onto it.
 The term is `t7 q = φ̄(a, ω²)` with `fsN (φ̄(a,ω²)) k = φ̄(a, ω·k)`, so this is another
-shift-1 EQUALITY family.  Both halves are `#guard`ed below; what is missing is the
-`blocksP`/fold pair for the two-column block, in the shape of `blocksP_repM_M1` and
-`foldl_repM_M1`. -/
+shift-1 EQUALITY family.  Both halves are `#guard`ed below.
+
+STATUS: the `blocksP`/fold pair IS now proved (`blocksP_repM_bl2`, `WD`, `WD_succ`,
+`foldl_bl2`, `oLAux_repM_bl2` below) — `oLAux fuel L (repM (bl2 0) m) = WD L m` and
+`WD L (m+1) = φ̄(L, ω·(m+1))`.  What remains is the assembly, which is the same three
+steps as `e3_val5`/`e3_val6`: `o?_pair` + `oLAux_single` to strip the leading `(0,0)`,
+`oLAux_chainR` with `R o := repM (bl2 o) (n+1)` and `p = q` (its `hdec` is
+`decP_repM` + `decP_bl2`, its `hr0` is `r0_repM_bl2`), then `chainP_collapse` and
+`omegaNF_phi_ne_zero`; plus `fs_t7` (the `fsN` of `φ̄(a,ω²)`, whose inner step is
+`fsN (φ̄(0,2)) k = ω·k` through the `.isZero` branch) and the order pair, which is
+`ltF_phi_same` over `ltF_mulNat_*` with base `omega` instead of `zt q`. -/
 
 #guard (List.range 4).all fun q => (List.range 4).all fun n =>
   BMS.expand? (M7 q) n == some ((([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1))
@@ -5740,5 +5748,133 @@ shift-1 EQUALITY family.  Both halves are `#guard`ed below; what is missing is t
 -- the third grower, for the record: (a,1) after F2, bad root 0, step a
 #guard (List.range 4).all fun q =>
   Trans.o? (M2 q ++ [[q+1,1]]) == some (phi (ofNat (q+1)) (plus omega one))
+
+/-! ### F7, the value: one `phiStep` per two-column copy -/
+
+theorem decP_repM {B : Matrix} : ∀ k,
+    Trans.Pair.decP (repM B k) = repM (Trans.Pair.decP B) k
+  | 0 => rfl
+  | k + 1 => by
+    show Trans.Pair.decP (B ++ repM B k) = Trans.Pair.decP B ++ repM (Trans.Pair.decP B) k
+    rw [decP_append, decP_repM k]
+
+theorem decP_bl2 (o : Nat) : Trans.Pair.decP (bl2 (o+1)) = bl2 o := rfl
+
+theorem r0_bl2 (o : Nat) (ho : 1 ≤ o) : ∀ cc ∈ bl2 o, Trans.Pair.r0 cc ≠ 0 := by
+  intro cc hcc
+  rcases List.mem_cons.mp hcc with h1 | h1
+  · subst h1; show o ≠ 0; omega
+  · rw [List.mem_singleton.mp h1]; show o+1 ≠ 0; omega
+
+theorem r0_repM_bl2 : ∀ (k o : Nat), 1 ≤ o → ∀ cc ∈ repM (bl2 o) k, Trans.Pair.r0 cc ≠ 0
+  | 0, _, _, cc, hc => by simp [repM] at hc
+  | k + 1, o, ho, cc, hc => by
+    have hc' : cc ∈ bl2 o ++ repM (bl2 o) k := hc
+    rcases List.mem_append.mp hc' with h1 | h1
+    · exact r0_bl2 o ho cc h1
+    · exact r0_repM_bl2 k o ho cc h1
+
+theorem inFrag_bl2 (o : Nat) : Trans.Pair.inFrag (bl2 o) = true := rfl
+
+theorem inFrag_repM_bl2 : ∀ (k o : Nat), Trans.Pair.inFrag (repM (bl2 o) k) = true
+  | 0, _ => rfl
+  | k + 1, o => by
+    show Trans.Pair.inFrag (bl2 o ++ repM (bl2 o) k) = true
+    rw [inFrag_append, inFrag_bl2 o, inFrag_repM_bl2 k o]
+    rfl
+
+theorem len_repM_bl2 : ∀ (k o : Nat), (repM (bl2 o) k).length = 2 * k
+  | 0, _ => rfl
+  | k + 1, o => by
+    show (bl2 o ++ repM (bl2 o) k).length = 2 * (k+1)
+    rw [List.length_append, len_repM_bl2 k o]
+    show 2 + 2 * k = 2 * (k+1)
+    omega
+
+theorem blocksP_repM_bl2 : ∀ (m : Nat),
+    Trans.Pair.blocksP (repM (bl2 0) m) = List.replicate m (bl2 0)
+  | 0 => rfl
+  | m + 1 => by
+    show Trans.Pair.blocksP (bl2 0 ++ repM (bl2 0) m) = _
+    rw [blocksP_append (bl2 0) (repM (bl2 0) m) (by
+        cases m with
+        | zero => exact Or.inl rfl
+        | succ j => exact Or.inr ⟨[0,1], ([[1,0]] ++ repM (bl2 0) j), rfl, rfl⟩),
+      show Trans.Pair.blocksP (bl2 0) = [bl2 0] from
+        blocksP_single [0,1] [[1,0]] (by
+          intro cc hcc
+          rw [List.mem_singleton.mp hcc]
+          show (1:Nat) ≠ 0
+          omega),
+      blocksP_repM_bl2 m]
+    rfl
+
+/-- The accumulator of the F7 reading: one `phiStep` at level `L` per copy. -/
+def WD (L : Nat) : Nat → Term
+  | 0 => zero
+  | m + 1 => Trans.Pair.phiStep (ofNat L) (WD L m) one
+
+theorem zsF_bl2 (g L : Nat) (hg : 1 ≤ g) (acc : Term) :
+    zsF g L acc (bl2 0) = Trans.Pair.phiStep (ofNat L) acc one := by
+  show Trans.Pair.phiStep (ofNat L) acc
+    (Trans.Pair.oLAux g (L+1) (Trans.Pair.decP [[1,0]])) = _
+  cases g with
+  | zero => omega
+  | succ h =>
+    rw [show Trans.Pair.decP ([[1,0]] : Matrix) = [([0,0] : BMS.Col)] from rfl]
+    show Trans.Pair.phiStep (ofNat L) acc
+      (Trans.Pair.oLAux (h+1) (L+1) ([[0,0]] : Matrix)) = _
+    rw [oLAux_single h (L+1) [0,0] [] (by intro cc hcc; simp at hcc)]
+    show Trans.Pair.phiStep (ofNat L) acc
+      (plus zero (omegaNF (Trans.Pair.oLAux h 1 (Trans.Pair.decP [])))) = _
+    rw [show Trans.Pair.decP ([] : List BMS.Col) = [] from rfl, oLAux_nil]
+    rfl
+
+theorem phiShifted_omega_mul (L : Nat) : ∀ m,
+    phiShifted (ofNat L) (mulNat omega (m+1)) = false
+  | 0 => phiShifted_omega (isSC_ofNat L)
+  | m + 1 => phiShifted_mulNat (show (omega : Term).isAP = true from rfl)
+      (show ((omega : Term) == one) = false from rfl) m
+
+theorem WD_succ (L : Nat) : ∀ m, WD L (m+1) = phi (ofNat L) (mulNat omega (m+1))
+  | 0 => by
+    show Trans.Pair.phiStep (ofNat L) zero one = _
+    rw [phiStep_zero, show ((one : Term) == zero) = false from rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [show omegaNF one = omega from phiNF_one_arg isSC_zero]
+    exact phiNF_phi_gen (isSC_ofNat L) (lt_lt_zero (ofNat L))
+  | m + 1 => by
+    show Trans.Pair.phiStep (ofNat L) (WD L (m+1)) one = _
+    rw [WD_succ L m]
+    unfold Trans.Pair.phiStep
+    rw [logPhi_self L (mulNat omega (m+1)) (phiShifted_omega_mul L m),
+      show ((one : Term) == zero) = false from rfl]
+    show phiNF (ofNat L) (plus (mulNat omega (m+1)) (omegaNF one)) = _
+    rw [show omegaNF one = omega from phiNF_one_arg isSC_zero,
+      plus_mulNat (show (omega : Term).isAP = true from rfl) (m+1)]
+    exact phiNF_mulNat (isSC_ofNat L) (show (omega : Term).isAP = true from rfl)
+      (show ((omega : Term) == one) = false from rfl) m
+
+theorem foldl_bl2 (g L : Nat) (hg : 1 ≤ g) : ∀ (m i : Nat),
+    (List.replicate m (bl2 0)).foldl (zsF g L) (WD L i) = WD L (i + m)
+  | 0, i => by simp
+  | m + 1, i => by
+    rw [List.replicate_succ, List.foldl_cons, zsF_bl2 g L hg]
+    show (List.replicate m (bl2 0)).foldl (zsF g L) (WD L (i+1)) = _
+    rw [foldl_bl2 g L hg m (i+1)]
+    congr 1
+    omega
+
+theorem oLAux_repM_bl2 (m fuel L : Nat) (hf : 2 ≤ fuel) :
+    Trans.Pair.oLAux fuel L (repM (bl2 0) m) = WD L m := by
+  cases fuel with
+  | zero => omega
+  | succ g =>
+    rw [oLAux_cons', blocksP_repM_bl2 m]
+    have h := foldl_bl2 g L (by omega) m 0
+    rw [show WD L 0 = zero from rfl] at h
+    rw [h]
+    congr 1
+    omega
 
 end Evidence.StageB
