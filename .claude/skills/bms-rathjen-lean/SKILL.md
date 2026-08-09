@@ -153,6 +153,14 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `git show HEAD:<path>` and diff each signature, and diff the declaration-name
   lists both ways — removals should be exactly the specialised versions their
   general replacements subsume, and nothing else.
+- **RELAYING BETWEEN LANES IS ITSELF AN INSTRUMENT, and the coordinator is the
+  only one who can check it.** A lane's measurement carries a scope; restating it
+  for the other lane drops the scope unless you copy it deliberately. Happened
+  twice: a count relayed as if it were a set, and a measurement reported as
+  "0 violations of 40 on the RELEVANT terms" relayed as an unconditional identity
+  — which was FALSE, 569 of 578, because "relevant" was carrying the hypothesis.
+  **Quote the qualifier verbatim, or say you are dropping it.** The receiving lane
+  cannot see the original and will prove what you wrote.
 - **When a lane reports a COUNT, ask for the SET before acting on it.** The
   coordinator cannot verify a count from a report — the members are not in it —
   so accepting one is accepting an unverified claim, and repeating it in an
