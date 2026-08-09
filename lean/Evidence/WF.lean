@@ -8996,6 +8996,51 @@ theorem acc_inT_le_cnv {v : Term} (hv : CNV v = true) (t : Term)
 #guard inT (add zero M) == false               -- … `0 ⊕ M` is below `1` and not a CNV
 #guard CNV (add zero M) == false
 
+
+/-! ### §15.3 THE FUNDAMENTAL SEQUENCE ABOVE ε₀ — why §11 does NOT lift
+
+Recorded because "do §11 one level up" is the obvious next move and it does not work,
+in a way that a reader will otherwise discover only after building on it.
+
+`fsC` IS NOT MERELY CNF-SPECIFIC, IT IS WRONG ABOVE ε₀.  Its `φ̄` clause branches on the
+SECOND argument only (`if b == zero then zero`), so every `φ̄ a 0` with `a ≠ 0` — that is,
+every `ε`, `ζ`, … — is treated as a successor and sent to `0`.  MEASURED:
+`fsC ε₀ n = 0` and `fsC ζ₀ n = 0` for all `n`, where `ε₀ = φ̄(1,0)` and `ζ₀ = φ̄(2,0)` are
+limits.  So clauses 2–4 of `Certified.lim` fail outright for it, and no minimal patch
+recovers it: the missing cases are the two that need an ITERATION.  `kindC` is wrong here
+for the same reason — it calls `φ̄(1,0)` a successor, whereas at this level only
+`φ̄00 = 1` is one.
+
+THE CORRECT SEQUENCE ALREADY EXISTS: `TM/FS.lean`'s `fsN`, whose `φ̄` clause is the
+classical binary-Veblen fundamental sequence — a three-way branch on `kindT a` with
+`iterPhiAt` for the `φ_{α'}`-iteration and `phiShifted`/`isFP` for the fixed points.
+MEASURED, on all 78 `CNV` limits of degree ≤ 12: `fsN t n` stays in `CNV`, is below `t`,
+and strictly increases; and it is COFINAL — every one of the 1687 `inT` terms of degree
+≤ 8 that is below such a `t` is `≤ fsN t n` for some `n ≤ 12`.  So the target is true and
+this is a cost question, not a risk question.
+
+WHY §11's DIRECTNESS IS NOT AVAILABLE (§11's note explains that `fsC` exists to avoid
+`phiShifted`/`isFP`/`splitFin`, "which does nothing at all when `α = 0`").  That vacuity
+is a property of the CNF REGION, not of `α = 0`: MEASURED, `phiShifted 0 k = isFP 0 k =
+false` for `k = 0,1,2`, but `isFP 0 ε₀ = TRUE`.  Veblen fixed points are exactly the
+phenomenon that distinguishes this level, so a "direct" Veblen sequence would have to
+re-derive `iterPhiAt` and `isFP` under new names — duplicating a design choice that
+`TM/FS.lean` documents as frozen once rows depend on it, and risking divergence from the
+`fsN` those rows use.  The detour is therefore unavoidable HERE, and that is the honest
+cost: the four clauses are shaped like §11/§14, but every rewrite rule about `kindT`,
+`predT`, `phiNF`, `mulNat`, `omegaNF`, `iterPhiAt`, `phiShifted` and `isFP` has to be
+built first, and WF.lean currently has none, precisely because §11 avoided them all.
+
+INDEX CONVENTION, for a consumer: `fsN` is `fsC` shifted by one on CNF limits —
+MEASURED, `fsN t (n+1) = fsC t n` there.  Both are cofinal; only the offset differs. -/
+
+#guard fsC (phi one zero) 3 == zero          -- ε₀ is a limit, yet `fsC` sends it to 0
+#guard fsC (phi (ofNat 2) zero) 3 == zero    -- … and ζ₀ likewise
+#guard kindC (phi one zero) == true          -- `kindC` calls ε₀ a successor: wrong above ε₀
+-- (the `isFP` / `fsN` measurements quoted above were taken in a snippet importing `TM.FS`;
+--  WF.lean imports only `TM.NF`, and adding `import TM.FS` is itself part of the cost —
+--  see the note above, and `Evidence/Cert.lean` imports this file.)
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
