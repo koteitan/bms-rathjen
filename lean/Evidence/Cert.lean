@@ -8024,6 +8024,105 @@ theorem certIn_rowA : CertifiedIn DomI [[0, 0], [1, 1], [1, 0]] Evidence.WF.rowA
 theorem cert_rowA : Certified [[0, 0], [1, 1], [1, 0]] Evidence.WF.rowA :=
   certifiedIn_forget certIn_rowA
 
+/-! ## §19 THE CEILING FOR THE ε₀-PREFIXED REGION  (STARTED)
+
+Registering Row A obliges `certRows_no_overshoot` at the new row, i.e. a §15.7-style
+invariant over the family: no good principal probe `≥ ω^(famV k c + 1)` is `≤` any
+value certified for `famM k c`.  §15's `no_overshoot` does not reach it — `eps0M k` is
+neither `padRow (sq t)` nor `oneRow (sq t)` — and `no_overshoot_of` cannot be
+instantiated either, because its bound is tied to the region parameter `c` while the
+value here is `famV k c`; at `c = 0` the bound would read `ω` and the value is
+ε₀·(k+1), so the invariant is false in that form.  The probe discipline carries over
+unchanged; what has to be rebuilt is the arithmetic around the bound.
+
+FOUR FACTS ARE NEEDED.  Three are here; the fourth is the WF lane's:
+
+  (1) `le_self_plus_one_cnv` — `x ≤ x+1` on the Veblen fragment.  §15.4 has it for
+      `CN` only, and the `add` step needs `CNV`'s own descending condition to know
+      the tail is nonzero.  DONE below.
+  (2) the succ-step transport — §15.7's argument verbatim (`plus w 1` has the same
+      leftmost component as `w`, and a principal probe reads only that).
+  (3) `kind_famM` — the kind of a family matrix, in THREE cases.  DONE below.
+  (4) "A CNV LIMIT ABSORBS `+1`" — `lt a v → CNV v → v a limit → le (plus a one) v`.
+      NOT AVAILABLE: `le_predC_of_lt` (WF §12) is stated on `CN` and there is no CNV
+      analogue.  Routed to the WF lane.
+
+AND A TRAP THAT (4) MUST AVOID, recorded here because it would bite anyone who
+reached for the obvious predicate: `kindC` IS WRONG ON CNV VALUES.  It branches on the
+second Veblen argument alone, so `kindC (φ̄10) = true` — it calls ε₀ a SUCCESSOR, and
+likewise every ε and every ζ (WF §15.3 `#guard`s exactly this).  So (4) cannot be
+stated with `kindC`; it needs a correct CNV kind predicate or a limit condition
+expressed without one.  Note that `kind_famM` below DOES use `kindC`, and legitimately:
+there it is applied only to the CN parameter `c`, which is where `kindC` is correct. -/
+
+/-- Every `CNV` term other than `0` has an additively principal leftmost component. -/
+theorem le_one_hd_cnv : ∀ (t : TM.Term), CNV t = true → t ≠ zero → le one (hd t) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ h; exact absurd rfl h
+  | phi x y _ _ => intro _ _; exact le_one_ap (show isAP (phi x y) = true from rfl)
+  | add a b iha _ =>
+    intro hcnv _
+    obtain ⟨hap, hca, _, _⟩ := Evidence.WF.cnv_add hcnv
+    rw [hd_add, hd_of_isAP hap]
+    exact le_one_ap hap
+
+/-- **`x ≤ x+1` on the Veblen fragment** — §15.4's `le_self_plus_one` off the CNF
+    region.  The ε₀-prefixed values are `CNV`, not `CN`, and the `add` step needs
+    `CNV`'s own descending condition to know the tail is nonzero. -/
+theorem le_self_plus_one_cnv : ∀ (t : TM.Term), CNV t = true → le t (plus t one) = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; rfl
+  | phi x y _ _ =>
+    intro _
+    rw [show plus (phi x y) one = add (phi x y) one from
+      plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl)), le_ap_add rfl]
+    exact Evidence.WF.le_self _
+  | add a b _ ihb =>
+    intro hcnv
+    obtain ⟨hap, _, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
+    have hb0 : b ≠ zero := by
+      intro hz; rw [hz] at hdb; exact Bool.noConfusion hdb
+    rw [plus_one_add (le_one_ap hap)]
+    exact Evidence.WF.le_add_tail (ihb hcb)
+
+/-- **The kind of a family matrix, in THREE cases.**  `c = 0` splits by `k`:
+    `famM 0 0` is the empty matrix and `famM (k+1) 0` is a limit row (the ε₀ blocks).
+    `kindC` appears here ONLY on the CN parameter `c`, where it is correct; it must
+    NOT be used on the family's VALUES, which are CNV — WF §15.3 records that
+    `kindC (φ̄10) = true`, i.e. it calls ε₀ a successor. -/
+theorem kind_famM (k : Nat) (c : TM.Term) (hcn : CN c = true) :
+    (BMS.kind (famM k c) = .zero ∧ k = 0 ∧ c = zero)
+  ∨ (BMS.kind (famM k c) = .succ ∧ c ≠ zero ∧ kindC c = true)
+  ∨ (BMS.kind (famM k c) = .lim ∧ ((c = zero ∧ k ≠ 0) ∨ (c ≠ zero ∧ kindC c = false))) := by
+  by_cases hz : c = zero
+  · subst hz
+    rw [famM_zero_arg]
+    cases k with
+    | zero => exact Or.inl ⟨rfl, rfl, rfl⟩
+    | succ j =>
+      refine Or.inr (Or.inr ⟨?_, Or.inl ⟨rfl, by omega⟩⟩)
+      rw [epsBlocks_succ_right]
+      exact kind_append _ _ (by simp)
+  · have hne : padRow (sq c) ≠ [] := padRow_ne_nil hcn hz
+    by_cases hk : kindC c = true
+    · refine Or.inr (Or.inl ⟨?_, hz, hk⟩)
+      rw [famM_eq]
+      exact (kind_append _ _ hne).trans (kind_padSq_succ c hcn hk)
+    · have hk' : kindC c = false := by simpa using hk
+      refine Or.inr (Or.inr ⟨?_, Or.inr ⟨hz, hk'⟩⟩)
+      rw [famM_eq]
+      exact (kind_append _ _ hne).trans (kind_padSq_lim c hcn hk' hz)
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
