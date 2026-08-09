@@ -2036,6 +2036,12 @@ computation with `x` in place of the leaf, and `tdepth_predOr_add_zero` below is
 proof verbatim.  The property that made it look dangerous — non-normality — is exactly the
 property that makes `toList` erase it.
 
+**THE QUESTION TO ASK AT SUCH A BRANCH IS NOT "HOW BAD IS THE NON-NORMALITY" BUT "DOES
+ANYTHING DOWNSTREAM STILL SEE IT?"**  Here nothing does, one step in.  The coordinator's
+prediction picked the right branch — `y = 0` IS the distinctive one — and inverted what the
+distinctiveness implies, which is worth recording because the next person meeting a
+non-normal branch will budget for it the same way.
+
 WHAT THIS ROUTE NEEDS, AND WHY IT IS THE RIGHT ONE: two facts about how `splitFin`
 recurses through `add` — **facts about `splitFin`'s own definition, not about normal
 forms**.  That is the coordinator's tell for this route being the right one; if the
@@ -2171,5 +2177,36 @@ def wideAll : List Term := (allM ++ addHead ++ probeXY.map (fun p => TM.Term.add
 #guard (wideAll.filter (fun t => !(ofList (toList t) == t))).length == 4
 #guard (wideAll.filter (fun t => !(tdepth (ofList (toList t)) <= tdepth t))).length == 0
 #guard wideAll.foldl (fun m t => min m (tdepth t - tdepth (ofList (toList t)))) 99 == 0
+
+
+/-! ### §11.9 BRANCHES A AND B — three `plus` bounds measured, and why the true one is too weak
+
+The remaining branches reduce to bounding `plus g (ofNat k)` where `(g, k+1) = splitFin a`
+and `tdepth g ≤ tdepth a` is already proved (`tdepth_splitFin_fst`).  Three candidates,
+measured over 1255 pairs before any was attempted:
+
+    tdepth (plus s u) ≤ max (tdepth s) (tdepth u)             869 violations   FALSE
+    tdepth (plus s u) ≤ 1 + max (tdepth s) (tdepth u)          77 violations   FALSE
+    tdepth (plus s u) ≤ tdepth s + tdepth u                      0 violations   TRUE
+
+**AND THE TRUE ONE IS TOO WEAK, WHICH IS THE POINT OF MEASURING ALL THREE.**  It gives
+`tdepth (predOr a) ≤ tdepth a + tdepth (ofNat k)`, and that is `≤ tdepth a` only when
+`k = 0`.  What the branches need is a bound that ties `k` BACK TO `a` — the `k` trailing
+ones are components OF `a`, so `a` is deep enough to pay for them, and no bound stated in
+terms of `s` and `u` alone can express that.  A `plus` lemma is the wrong shape here; the
+lemma has to mention `splitFin`.
+
+Recorded rather than attempted: two false candidates cost one `#eval` each, and the true
+one would have cost a proof and then not closed the goal. -/
+
+def pairsSU : List (Term × Term) :=
+  wideAll.flatMap (fun s => [(s, one), (s, ofNat 2), (s, ofNat 3), (s, phi one zero), (s, zero)])
+
+#guard (pairsSU.filter (fun p =>
+          !(tdepth (TM.Term.plus p.1 p.2) <= max (tdepth p.1) (tdepth p.2)))).length == 869
+#guard (pairsSU.filter (fun p =>
+          !(tdepth (TM.Term.plus p.1 p.2) <= 1 + max (tdepth p.1) (tdepth p.2)))).length == 77
+#guard (pairsSU.filter (fun p =>
+          !(tdepth (TM.Term.plus p.1 p.2) <= tdepth p.1 + tdepth p.2))).length == 0
 
 end Evidence.SqV
