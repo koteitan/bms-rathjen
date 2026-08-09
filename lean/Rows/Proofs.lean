@@ -310,6 +310,10 @@ end «(0,0)(1,1)(2,0)(2,0)»
 
 /-! ## Row-linkage guards
 
+(v0.1.42: the guards for the rows withdrawn by the calibration audit were removed
+with their rows; the namespaces and theorems they pointed at remain as o?-level
+statements.)
+
 Each guard pins the table rows of Rows/TM.lean that cite a namespace of this
 file: some row cites the name, and EVERY row citing it carries exactly this
 namespace's matrix and term.  This closes the only unchecked step of the table's
@@ -329,15 +333,8 @@ def rowLinked (nm : String) (M : BMS.Matrix) (t : Term) : Bool :=
 #guard rowLinked "«(0)(1)(2)(3)»" «(0)(1)(2)(3)».M «(0)(1)(2)(3)».t
 #guard rowLinked "«(0,0)(1,1)(0,0)»" «(0,0)(1,1)(0,0)».M «(0,0)(1,1)(0,0)».t
 #guard rowLinked "«(0,0)(1,1)(2,1)(0,0)»" «(0,0)(1,1)(2,1)(0,0)».M «(0,0)(1,1)(2,1)(0,0)».t
-#guard rowLinked "«(0,0)(1,1)(2,1)(3,1)(0,0)»"
-  «(0,0)(1,1)(2,1)(3,1)(0,0)».M «(0,0)(1,1)(2,1)(3,1)(0,0)».t
 #guard rowLinked "«(0,0)(1,1)(2,1)(1,0)»" «(0,0)(1,1)(2,1)(1,0)».M «(0,0)(1,1)(2,1)(1,0)».t
-#guard rowLinked "«(0,0)(1,1)(2,1)(3,1)(1,0)»"
-  «(0,0)(1,1)(2,1)(3,1)(1,0)».M «(0,0)(1,1)(2,1)(3,1)(1,0)».t
-#guard rowLinked "«(0,0)(1,1)(2,1)(2,0)»" «(0,0)(1,1)(2,1)(2,0)».M «(0,0)(1,1)(2,1)(2,0)».t
 #guard rowLinked "«(0,0)(1,1)(2,1)(1,1)»" «(0,0)(1,1)(2,1)(1,1)».M «(0,0)(1,1)(2,1)(1,1)».t
-#guard rowLinked "«(0,0)(1,1)(2,1)(3,0)(4,1)»"
-  «(0,0)(1,1)(2,1)(3,0)(4,1)».M «(0,0)(1,1)(2,1)(3,0)(4,1)».t
 #guard rowLinked "«(0,0)(1,1)(2,0)(0,0)»" «(0,0)(1,1)(2,0)(0,0)».M «(0,0)(1,1)(2,0)(0,0)».t
 #guard rowLinked "«(0,0)(1,1)(2,0)(3,0)»" «(0,0)(1,1)(2,0)(3,0)».M «(0,0)(1,1)(2,0)(3,0)».t
 #guard rowLinked "«(0,0)(1,1)(2,0)(2,0)»" «(0,0)(1,1)(2,0)(2,0)».M «(0,0)(1,1)(2,0)(2,0)».t
@@ -349,8 +346,5 @@ def rowLinked (nm : String) (M : BMS.Matrix) (t : Term) : Bool :=
 #guard rowLinked "R4" Rows.ProofsB.R4.m0 Rows.ProofsB.R4.t0
 #guard rowLinked "R5" Rows.ProofsB.R5.m0 Rows.ProofsB.R5.t0
 #guard rowLinked "R6" Rows.ProofsB.R6.m0 Rows.ProofsB.R6.t0
-#guard rowLinked "R7" Rows.ProofsB.R7.m0 Rows.ProofsB.R7.t0
-#guard rowLinked "R8" Rows.ProofsB.R8.m0 Rows.ProofsB.R8.t0
-#guard rowLinked "R9" Rows.ProofsB.R9.m0 Rows.ProofsB.R9.t0
 
 end Rows.Proofs
