@@ -21,6 +21,27 @@ Term constructors ([R91] 2.1):
   ⊕(α₁,…,αₙ) = add α₁ (add α₂ (… (add α_{n-1} αₙ)))
 The formation conditions (components in AP, descending) are checked by `inT`
 in TM/NF.lean.
+
+**φ̄ ENUMERATES PAST ITS OWN FIXED POINTS, and this is the single fact in the file
+that most often reads as a bug.**  φ̄0β is NOT ω^β in general: φ̄0 enumerates the
+additively principal numbers SKIPPING the fixed points of ω^·, which is what gives
+the notation system unique normal forms.  So
+
+    φ̄(0,β) = ω^β        for β below the first fixed point
+    φ̄(0,ε₀) = ω^(ε₀+1)  NOT ω^(ε₀) = ε₀
+    lt ε₀ (φ̄(0,ε₀)) = true
+
+BELOW A FIXED POINT THE TWO READINGS COINCIDE, so a function, a corpus or a reader
+calibrated only there is insensitive to the difference and fails silently above it.
+In one session (2026-08-10) this caused three separate defects, in three files, all
+of which first looked like something else:
+  * the table's row (0,0)(1,1)(1,0) reads as a duplicate of ε₀ unless you know it
+    (Rows/TM.lean; the term is φ̄(0,ε₀) and the row is ω^(ε₀+1));
+  * Evidence/WF.lean §15.18.2's split between `lim_clauses_repAdd` and core (C) is
+    exactly "is the subscript a fixed point";
+  * Evidence/SqV.lean's `omLog` encoded the ω-exponent WITHOUT the skip and was
+    insensitive on all 234 corpus terms for the same reason.
+Ask it of any new function whose domain reaches ε₀.
 -/
 
 namespace TM
