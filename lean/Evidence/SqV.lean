@@ -279,4 +279,88 @@ def corpus : List Term :=
 -- the corpus size, so that "0 failures" is never read as "0 tested"
 #eval corpus.length
 
+/-! ## §3 THE SIXTEEN, DECODED  (measurement, 2026-08-10)
+
+Every earlier failure count was contaminated by the retracted oracle (§1.1), so these
+sixteen are the first honest measurement of what `sqv` gets wrong.  They are separated
+here by WHERE THE DISAGREEMENT LIVES, not by how hard they look.
+
+    encoding-side   (the map is wrong and `oR` is right)     16
+    routing-side    (a shape the branch table routes)         0
+    undecided                                                 0
+
+ZERO ROUTING-SIDE, and the reason is structural rather than lucky: every failure is a
+matrix that `oR` decodes to a DIFFERENT TERM, so the disagreement is always about what
+the map computes, never about which clause a shape should take.  A routing-side failure
+would have looked different — `sqv` producing the table's own matrix for a shape the
+branch table sends elsewhere — and none of the sixteen does that.
+
+THEY REDUCE TO TWO CAUSES, and both are the same mistake: the additive structure of the
+SUBSCRIPT is not peeled before the clause is chosen.
+
+CAUSE 1 (12 of 16) — AT `a ≠ 0` THE SUBSCRIPT BLOCK DENOTES THE ω-EXPONENT OF THE
+SUBSCRIPT, and `sqv` writes the subscript itself.  This is failure class (f), which
+turns out not to be about the finite part specially:
+
+    sqv (φ̄(1,ω)) = (0,0)(1,1)(2,0)(3,0)   and  oR of that = φ̄(1,ω^ω)
+
+i.e. `sqv` emits, verbatim, the matrix of a DIFFERENT TABLE ROW — the row whose
+subscript is `ω^(mine)`.  The table's ε_ω row is (0,0)(1,1)(2,0), one column, and
+(0,0)(1,1)(2,0)(3,0) is its ε_{ω^ω} row.  Eight `#guard`s below confirm the rule at
+`a = 1, 2, ω` and at subscripts `ω, ω+1, ω², ω^ω, ε₀`; the ε₀ case is why the
+discriminator passed all along — `ω^ε₀ = ε₀`, so the bug is invisible exactly there.
+Members: `φ̄(a,b)` for `a ∈ {1,2,ω}` and `b ∈ {ω, ω+1, ω², ω^ω}`.
+
+CAUSE 2 (4 of 16) — THE ADDITIVE SUMMANDS OF THE SUBSCRIPT MUST BE SEPARATED BY A
+REPEAT OF THE LADDER, and `sqv` concatenates them bare.  `sqv`'s `reps` clause already
+does exactly this for the FINITE part (`splitFin`'s `m`); the correction is that every
+summand needs it, not only the finite ones:
+
+    φ̄(1, ε₀+ε₀) = (0,0)(1,1)(2,0)(3,1) (1,1)(2,0)(3,1)     ← ladder column between
+    sqv gives     (0,0)(1,1)(2,0)(3,1)      (2,0)(3,1)     ← read by oR as φ̄(1,ω^(ε₀·2))
+
+This class was NOT an expressibility problem, which is what it looked like before the
+matrix was measured: `ω^X` is always additively principal, so `φ̄(1,ε₀·2)` cannot be a
+subscript block under Cause 1's rule, and the natural conclusion was that the region
+cannot express it.  It can — the ladder repeat is the mechanism, and guessing instead
+of asking `oR` would have produced a clause for a problem that does not exist.
+Members: `φ̄(a, ε₀+ε₀)` for `a ∈ {1,2,ω}`, plus `φ̄(0, ε₀+1)` at `a = 0`, where the same
+peel is missing in a different place — `isFP` is tested on `b` when it must be tested
+on `b`'s infinite part, so an `add` never reaches the collapse clause at all.
+
+AND A PROPERTY OF THE GATE SUITE ITSELF, which is the reason gate 3 exists.  Gate 3's
+one failure is `φ̄(0, ε₀·2)`, and GATE 1 PASSES IT: `oR` sends the wrong matrix and the
+right matrix to the SAME term, so a round trip cannot separate them, while `cmpM` says
+they are different matrices (`.lt`).  The round-trip gate is blind to standard form.
+Whether the one `sqv` produces is non-standard is not something this file can decide —
+there is no Bool standard-form test in `BMS/` — and that is a question for the BMS
+lane, not a claim about `oR`. -/
+
+-- CAUSE 1, the rule: at `a ≠ 0` the block after the ladder is the ω-EXPONENT.
+#guard Trans.oR [[0,0],[1,1],[2,0]]             == some (phi one omega)
+#guard Trans.oR [[0,0],[1,1],[2,0],[1,1]]       == some (phi one (plus omega one))
+#guard Trans.oR [[0,0],[1,1],[2,0],[2,0]]       == some (phi one (phi zero (ofNat 2)))
+#guard Trans.oR [[0,0],[1,1],[2,0],[3,0]]       == some (phi one (phi zero omega))
+#guard Trans.oR [[0,0],[1,1],[2,0],[3,1]]       == some (phi one (phi one zero))
+#guard Trans.oR [[0,0],[1,1],[2,1],[2,0]]       == some (phi (ofNat 2) omega)
+#guard Trans.oR [[0,0],[1,1],[2,1],[2,0],[2,0]] == some (phi (ofNat 2) (phi zero (ofNat 2)))
+#guard Trans.oR [[0,0],[1,1],[2,1],[3,0],[2,0]] == some (phi omega omega)
+
+-- CAUSE 1, the defect: `sqv` emits the matrix of the row one ω-power up.
+#guard sqv (phi one omega) == [[0,0],[1,1],[2,0],[3,0]]
+#guard Trans.oR (sqv (phi one omega)) == some (phi one (phi zero omega))
+
+-- CAUSE 2: the ladder column separates the summands, and `sqv` omits it.
+#guard Trans.oR [[0,0],[1,1],[2,0],[3,1],[1,1],[2,0],[3,1]]
+         == some (phi one (plus (phi one zero) (phi one zero)))
+#guard sqv (phi one (plus (phi one zero) (phi one zero)))
+         == [[0,0],[1,1],[2,0],[3,1],[2,0],[3,1]]
+#guard Trans.oR [[0,0],[1,1],[1,0],[1,0]] == some (phi zero (plus (phi one zero) one))
+#guard sqv (phi zero (plus (phi one zero) one)) == [[0,0],[1,0],[2,1],[1,0]]
+
+-- THE GATE SUITE'S OWN LIMIT: two distinct matrices, one term.  Gate 1 cannot see it.
+#guard Trans.oR [[0,0],[1,0],[2,1],[1,0],[2,1]] == Trans.oR [[0,0],[1,1],[1,0],[2,1]]
+#guard BMS.cmpM [[0,0],[1,0],[2,1],[1,0],[2,1]] [[0,0],[1,1],[1,0],[2,1]] == Ordering.lt
+#guard !(Trans.oR (sqv (phi zero (plus (phi one zero) (phi one zero)))) == none)
+
 end Evidence.SqV
