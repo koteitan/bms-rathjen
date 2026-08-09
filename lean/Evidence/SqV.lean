@@ -2024,8 +2024,17 @@ rather than built on:
 I had written the degenerate branch as "`= x`" without the `y ≠ 0` side condition; `y = 0`
 makes `add x y` a non-normal term whose trailing ones are `x`'s own, so `predOr` there
 depends on `x` and not on the shape of the `add`.  The BOUND still holds in all three (0
-violations everywhere measured) — `tdepth (ε₀ ⊕ 0) = 3 = tdepth (add ε₀ 0)`, exactly — so
-the induction is a THREE-way split and the third branch is the awkward one.
+violations everywhere measured) — **`tdepth (ε₀ ⊕ 0) = 3 = tdepth (add ε₀ 0)`, EXACTLY.
+A zero margin in the awkward branch means what it meant for `tdepth_omLog`: no slack, so
+the statement is right and nothing weaker will do.**  Second zero-margin case in this file,
+and both times it was the branch that looked like it might not survive.
+
+**AND THE THIRD BRANCH IS NOT THE AWKWARD ONE — IT COLLAPSES.**  It was expected to be most
+of the work, being the only branch governed by the term being non-normal.  But
+`toList (add x 0) = [x]`: `toList` DROPS the trailing zero, so the branch is the LEAF
+computation with `x` in place of the leaf, and `tdepth_predOr_add_zero` below is the leaf
+proof verbatim.  The property that made it look dangerous — non-normality — is exactly the
+property that makes `toList` erase it.
 
 WHAT THIS ROUTE NEEDS, AND WHY IT IS THE RIGHT ONE: two facts about how `splitFin`
 recurses through `add` — **facts about `splitFin`'s own definition, not about normal
@@ -2096,5 +2105,19 @@ def probeXY : List (Term × Term) :=
           && !(predOr (TM.Term.add p.1 p.2) == p.1))).length == 0
 #guard !(predOr (TM.Term.add (phi one zero) zero) == phi one zero)
 #guard tdepth (predOr (TM.Term.add (phi one zero) zero)) <= tdepth (TM.Term.add (phi one zero) zero)
+
+
+/-- **BRANCH C of the `add` case.**  `toList (add x 0) = [x]`, so this is the leaf
+    computation, not a new one: the finite part is 1 exactly when `x` IS `1`. -/
+theorem tdepth_predOr_add_zero (x : Term) :
+    tdepth (predOr (TM.Term.add x zero)) ≤ tdepth (TM.Term.add x zero) := by
+  by_cases h : (x == one) = true
+  · have he : x = one := by simpa using h
+    rw [he]
+    show tdepth (predOr (TM.Term.add one zero)) ≤ tdepth (TM.Term.add one zero)
+    decide
+  · simp only [predOr, TM.Term.splitFin, toList, List.reverse, List.reverseAux,
+      List.takeWhile, h, List.length]
+    exact Nat.le_refl _
 
 end Evidence.SqV
