@@ -1734,4 +1734,55 @@ theorem tdepth_pos : ∀ (t : Term), t ≠ zero → 1 ≤ tdepth t := by
 #guard 1 <= tdepth TM.Term.M
 #guard !(1 <= tdepthOld TM.Term.M)
 
+
+/-! ### §11.3 `tdepth_fpDeep` — structural, as expected
+
+`fpDeep` is fuel-recursive, so the induction is on the fuel; both of its steps are
+already covered — `isFP` at the top returns `t` itself, and the descent goes through
+`summands (splitFin x).1` of a `φ̄`'s subscript, which is `tdepth_summands` composed with
+`tdepth x ≤ tdepth (φ̄(c,x))`.  No new machinery, which is what §9.1 predicted for this
+one.  `findSome_mem` is the only general lemma it needed and core does not have it. -/
+
+theorem findSome_mem {α β : Type} (f : α → Option β) :
+    ∀ (l : List α) (b : β), l.findSome? f = some b → ∃ a ∈ l, f a = some b := by
+  intro l
+  induction l with
+  | nil => intro b h; simp only [List.findSome?] at h; exact absurd h (by simp)
+  | cons x xs ih =>
+    intro b h
+    simp only [List.findSome?_cons] at h
+    cases hx : f x with
+    | some c =>
+      rw [hx] at h
+      exact ⟨x, List.mem_cons_self, by rw [hx]; exact h⟩
+    | none =>
+      rw [hx] at h
+      obtain ⟨a, ha, hfa⟩ := ih b h
+      exact ⟨a, List.mem_cons_of_mem x ha, hfa⟩
+
+theorem tdepth_fpDeepF : ∀ (f : Nat) (a t g : Term),
+    fpDeepF f a t = some g → tdepth g ≤ tdepth t := by
+  intro f
+  induction f with
+  | zero => intro a t g h; simp only [fpDeepF] at h; exact absurd h (by simp)
+  | succ f ih =>
+    intro a t g h
+    simp only [fpDeepF] at h
+    split at h
+    · injection h with h; rw [← h]; exact Nat.le_refl _
+    · cases t with
+      | phi c x =>
+        obtain ⟨y, hy, hfy⟩ := findSome_mem _ _ g h
+        exact Nat.le_trans (ih a y g hfy)
+          (Nat.le_trans (tdepth_summands x y hy) (by simp only [tdepth]; omega))
+      | zero => exact absurd h (by simp)
+      | M => simp at h
+      | omg _ => simp at h
+      | psi _ _ => simp at h
+      | Z _ => simp at h
+      | add _ _ => simp at h
+
+theorem tdepth_fpDeep (a t g : Term) (h : fpDeep a t = some g) : tdepth g ≤ tdepth t :=
+  tdepth_fpDeepF _ a t g h
+
 end Evidence.SqV
