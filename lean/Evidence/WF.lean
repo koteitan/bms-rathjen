@@ -8426,15 +8426,11 @@ all of it does.
     because `x < φ̄ a b` bounds `x` structurally.  For `ψ_κ α` it does not — that is what
     collapsing means — and this is exactly where Rathjen 1994's distinguished-set / C_κ
     machinery has to enter.  It is a different method, not a further case.
-  ALSO FLAGGED: the initial-segment property that would make this permanent
-    (`inT x → CNV v → lt x v → CNV x`, the §13 analogue) is MEASURED but NOT PROVED here —
-    0 violations over the 1687 `inT` terms of degree ≤ 8 against the 89 `CNV` terms, with
-    the positive control firing (134 violations once `inT` is dropped, the `0 ⊕ M < 1`
-    phenomenon of §13).  Proving it is the remaining step, and it would upgrade `acc_cnv`
-    from the `CNV`-relation `RV` to the `inT`-relation, which is what makes step 1 a
-    literal sub-statement of (B)'s goal rather than something to be restated.  Its
-    ψ-analogue is probably FALSE — below `ψ_κ α` there are terms of essentially arbitrary
-    shape — so this trick is a gift of the Veblen layer specifically. -/
+  THE INITIAL-SEGMENT PROPERTY that makes this permanent (`inT x → CNV v → lt x v → CNV x`,
+    the §13 analogue) IS PROVED, in §15.1 below, together with the upgrade of `acc_cnv`
+    from the `CNV`-relation to the `inT`-relation.  Its ψ-analogue is probably FALSE —
+    below `ψ_κ α` there are terms of essentially arbitrary shape — so that trick is a gift
+    of the Veblen layer specifically; see §15.1. -/
 
 def CNV : Term → Bool
   | zero => true
@@ -8661,6 +8657,309 @@ theorem cnv_of_cn : ∀ (t : Term), CN t = true → CNV t = true
 #guard lt (add one omega) omega == true                        -- ⊕ admits prefix-descent
 #guard lt (phi zero (phi one zero)) (phi one zero) == false    -- φ̄ does not
 #guard lt (phi one zero) (phi zero (phi one zero)) == true
+
+
+/-! ### §15.1 THE INITIAL SEGMENT, AND THE RELATION AT ITS FINAL WIDTH
+
+WHAT THIS ADDS.  §15 proves accessibility for `CNV` against the `CNV`-relation `RV`.
+That is not yet a statement one can extend: the destination is (B), the full R1 ordinal,
+and a later `ψ` layer must not have to restate step 1.  The fix is NOT to widen the
+predicate — `ψ` and `Z` terms sit below `φ̄` terms (2.3.4: Γ₀ < φ̄Γ₀0), so an `inT`-stated
+step 1 would drag the collapsing region into step 1 and leave no Veblen-first layer.  The
+fix is to widen the RELATION and let the predicate narrow per layer:
+
+    RT x y := inT x ∧ lt x y          -- final width, never changes again
+    acc_cnv_inT : ∀ t, CNV t → Acc RT t
+
+which is a LITERAL SUB-STATEMENT of the eventual `∀ t, inT t → Acc RT t`.  What licenses
+it is `cnv_of_lt_cnv` — below a Veblen normal form there is nothing but Veblen normal
+forms — so the `RT`-predecessors of a `CNV` term are all `CNV` and the two relations agree
+there.  This is §13's theorem one level up, and it is proved here, not assumed.
+
+CALIBRATION for the claim that `CNV` is an initial segment.  MEASURED over the 1687 `inT`
+terms of degree ≤ 8 against the 89 `CNV` terms of degree ≤ 12:
+
+    non-CNV `inT` terms below some CNV term           :   0
+    `inT` terms below Γ₀ that are not CNV             :   0      -- so CNV = inT ∩ (< Γ₀)
+    all 89 CNV terms are < Γ₀, and CNV Γ₀ = false     -- Γ₀ is the supremum, not a member
+    POSITIVE CONTROL — the same sweep with `inT` dropped:  134 violations at degree ≤ 6
+
+The control is what makes the zeros informative: without `inT` the property fails badly,
+and the smallest witness is §13's own, `0 ⊕ M < 1` with `0 ⊕ M` not a normal form.  That
+is exactly why `cnv_of_lt_cnv` carries `inT` and cannot be stated without it.
+
+THE ψ-ANALOGUE IS PROBABLY FALSE, and that is worth writing down rather than leaving as a
+silent gap: below `ψ_κ α` there are terms of essentially arbitrary shape — the same fact,
+seen from the other side, that makes `acc_phi_v`'s `C` a structural induction for `φ̄` and
+not for `ψ_κ`.  So the initial-segment trick that makes step 1 permanent is a gift of the
+Veblen layer specifically, and whoever takes (B) should not plan on repeating it.  If it
+turns out true, that is a discovery. -/
+
+theorem cnv_ne_junkAP {s b : Term} (hs : junkAP s = true) (hb : CNV b = true) :
+    (s == b) = false := by
+  cases s <;> cases b <;>
+    first
+      | rfl
+      | exact Bool.noConfusion hs
+      | exact Bool.noConfusion hb
+
+/-- No `M` / `ω̄` / `ψ` / `Z` term is below a `CNV` term.  §13's `lt_junkAP_cn` needs only
+    ONE induction hypothesis because `CN` forces the first Veblen argument to be `0`;
+    here both are live. -/
+theorem lt_junkAP_cnv : ∀ (y : Term), CNV y = true → ∀ (f : Nat) (s : Term),
+    junkAP s = true → ltF f s y = false := by
+  intro y
+  induction y with
+  | M => intro hb; exact Bool.noConfusion hb
+  | omg _ _ => intro hb; exact Bool.noConfusion hb
+  | psi _ _ _ _ => intro hb; exact Bool.noConfusion hb
+  | Z _ _ => intro hb; exact Bool.noConfusion hb
+  | zero =>
+    intro _ f s hs
+    cases f with
+    | zero => rfl
+    | succ g =>
+      cases s with
+      | zero => exact Bool.noConfusion hs
+      | add _ _ => exact Bool.noConfusion hs
+      | phi _ _ => exact Bool.noConfusion hs
+      | M => rfl
+      | omg _ => rfl
+      | psi _ _ => rfl
+      | Z _ => rfl
+  | phi x b ihx ihb =>
+    intro hcn f s hs
+    obtain ⟨hcx, hcb⟩ := cnv_phi hcn
+    cases f with
+    | zero => rfl
+    | succ g =>
+      cases s with
+      | zero => exact Bool.noConfusion hs
+      | add _ _ => exact Bool.noConfusion hs
+      | phi _ _ => exact Bool.noConfusion hs
+      | M => rfl
+      | omg _ => rfl
+      | psi k a =>
+        rw [ltF_succ_psi_phi, cnv_ne_junkAP (s := psi k a) rfl hcx,
+          cnv_ne_junkAP (s := psi k a) rfl hcb, ihx hcx g (psi k a) rfl,
+          ihb hcb g (psi k a) rfl]
+        rfl
+      | Z a =>
+        rw [ltF_succ_Z_phi, cnv_ne_junkAP (s := Z a) rfl hcx,
+          cnv_ne_junkAP (s := Z a) rfl hcb, ihx hcx g (Z a) rfl, ihb hcb g (Z a) rfl]
+        rfl
+  | add u v ihu ihv =>
+    intro hcn f s hs
+    obtain ⟨_, hcu, _, _⟩ := cnv_add hcn
+    cases f with
+    | zero => rfl
+    | succ g =>
+      cases s with
+      | zero => exact Bool.noConfusion hs
+      | add _ _ => exact Bool.noConfusion hs
+      | phi _ _ => exact Bool.noConfusion hs
+      | M =>
+        show ((M : Term) == u || ltF g M u) = false
+        rw [cnv_ne_junkAP (s := M) rfl hcu, ihu hcu g M rfl]; rfl
+      | omg a =>
+        show ((omg a == u) || ltF g (omg a) u) = false
+        rw [cnv_ne_junkAP (s := omg a) rfl hcu, ihu hcu g (omg a) rfl]; rfl
+      | psi k a =>
+        show ((psi k a == u) || ltF g (psi k a) u) = false
+        rw [cnv_ne_junkAP (s := psi k a) rfl hcu, ihu hcu g (psi k a) rfl]; rfl
+      | Z a =>
+        show ((Z a == u) || ltF g (Z a) u) = false
+        rw [cnv_ne_junkAP (s := Z a) rfl hcu, ihu hcu g (Z a) rfl]; rfl
+
+theorem hdLe_of_lt_cnv : ∀ (y : Term), CNV y = true → ∀ (s : Term), s ≠ zero → inT s = true →
+    lt s y = true → hdLe s y = true := by
+  intro y hcn s hz hin hlt
+  cases s with
+  | zero => exact absurd rfl hz
+  | M => exact le_of_lt hlt
+  | omg _ => exact le_of_lt hlt
+  | phi _ _ => exact le_of_lt hlt
+  | psi _ _ => exact le_of_lt hlt
+  | Z _ => exact le_of_lt hlt
+  | add c d =>
+    obtain ⟨hap, _, _⟩ := inT_add hin
+    cases y with
+    | zero =>
+      rw [show lt (add c d) zero = false from ltF_right_zero _ _] at hlt
+      exact Bool.noConfusion hlt
+    | M => exact Bool.noConfusion hcn
+    | omg _ => exact Bool.noConfusion hcn
+    | psi _ _ => exact Bool.noConfusion hcn
+    | Z _ => exact Bool.noConfusion hcn
+    | phi p q =>
+      rw [lt_add_phi] at hlt
+      show ((c == phi p q) || lt c (phi p q)) = true
+      rw [hlt]; exact Bool.or_true _
+    | add u v =>
+      show ((c == add u v) || lt c (add u v)) = true
+      rw [lt_atom_add (isAtom_of_isAP hap)]
+      by_cases heq : add c d = add u v
+      · injection heq with h1 h2
+        rw [h1]
+        show ((u == add u v) || ((u == u) || lt u u)) = true
+        simp
+      · rw [lt_add_add heq] at hlt
+        by_cases hcu : c = u
+        · rw [hcu]
+          show ((u == add u v) || ((u == u) || lt u u)) = true
+          simp
+        · rw [if_neg hcu] at hlt
+          show ((c == add u v) || ((c == u) || lt c u)) = true
+          rw [hlt]; simp
+
+/-- **The structural theorem, one level up from §13.**  A term of 𝔗(M) whose head does
+    not exceed a Veblen normal form is itself one. -/
+theorem cnv_of_inT_hdLe : ∀ (n : Nat) (s c : Term), s.deg + c.deg ≤ n →
+    inT s = true → CNV c = true → hdLe s c = true → CNV s = true := by
+  intro n
+  induction n with
+  | zero =>
+    intro s c hd _ _ _
+    have := deg_pos s; have := deg_pos c; omega
+  | succ n ih =>
+    intro s c hd hin hcn hle
+    have hjunk : ∀ (x : Term), junkAP x = true → hdLe x c = true → False := by
+      intro x hx hxc
+      have hx' : le x c = true := by
+        cases x with
+        | M => exact hxc
+        | omg _ => exact hxc
+        | psi _ _ => exact hxc
+        | Z _ => exact hxc
+        | zero => exact Bool.noConfusion hx
+        | add _ _ => exact Bool.noConfusion hx
+        | phi _ _ => exact Bool.noConfusion hx
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hx'
+      rcases hx' with h1 | h1
+      · rw [h1] at hx
+        cases c <;> first | exact Bool.noConfusion hx | exact Bool.noConfusion hcn
+      · rw [show lt x c = false from lt_junkAP_cnv c hcn _ x hx] at h1
+        exact Bool.noConfusion h1
+    cases s with
+    | zero => rfl
+    | M => exact absurd (hjunk M rfl hle) (by simp)
+    | omg a => exact absurd (hjunk (omg a) rfl hle) (by simp)
+    | psi k a => exact absurd (hjunk (psi k a) rfl hle) (by simp)
+    | Z a => exact absurd (hjunk (Z a) rfl hle) (by simp)
+    | add c' d' =>
+      obtain ⟨hap, hinc, hind⟩ := inT_add hin
+      have hdd : hdLe d' c' = true := hdLe_of_inT_add hin
+      have hcc : hdLe c' c = true := by rw [hdLe_of_isAP hap]; exact hle
+      have hdegc : c'.deg + c.deg ≤ n := by
+        have := deg_pos d'
+        have h2 : 1 + c'.deg + d'.deg + c.deg ≤ n + 1 := hd
+        omega
+      have hcnc : CNV c' = true := ih c' c hdegc hinc hcn hcc
+      have hdegd : d'.deg + c'.deg ≤ n := by
+        have := deg_pos c
+        have h2 : 1 + c'.deg + d'.deg + c.deg ≤ n + 1 := hd
+        omega
+      have hcnd : CNV d' = true := ih d' c' hdegd hind hcnc hdd
+      show (c'.isAP && CNV c' && CNV d' && hdLe d' c') = true
+      rw [hcnc, hcnd, hdd, hap]; rfl
+    | phi p q =>
+      obtain ⟨hinp, hinq⟩ := inT_phi hin
+      have hle' : le (phi p q) c = true := hle
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle'
+      rcases hle' with h1 | h1
+      · rw [h1]; exact hcn
+      · cases c with
+        | zero =>
+          rw [show lt (phi p q) zero = false from ltF_right_zero _ _] at h1
+          exact Bool.noConfusion h1
+        | M => exact Bool.noConfusion hcn
+        | omg _ => exact Bool.noConfusion hcn
+        | psi _ _ => exact Bool.noConfusion hcn
+        | Z _ => exact Bool.noConfusion hcn
+        | add u v =>
+          obtain ⟨_, hcnu, _, _⟩ := cnv_add hcn
+          rw [lt_atom_add rfl] at h1
+          have hdeg : (phi p q).deg + u.deg ≤ n := by
+            have := deg_pos v
+            have h2 : (phi p q).deg + (1 + u.deg + v.deg) ≤ n + 1 := hd
+            omega
+          exact ih (phi p q) u hdeg hin hcnu h1
+        | phi x b =>
+          obtain ⟨hcx, hcb⟩ := cnv_phi hcn
+          have hne : phi p q ≠ phi x b := by
+            intro hc; rw [hc, lt_irrefl] at h1; exact Bool.noConfusion h1
+          rw [lt_phi_phi hne] at h1
+          have hdp := deg_pos p; have hdq := deg_pos q
+          have hdx := deg_pos x; have hdb := deg_pos b
+          have hdegs : (1 + p.deg + q.deg) + (1 + x.deg + b.deg) ≤ n + 1 := hd
+          have epq : (phi p q).deg = 1 + p.deg + q.deg := rfl
+          have exb : (phi x b).deg = 1 + x.deg + b.deg := rfl
+          by_cases hpx : p = x
+          · rw [if_pos hpx] at h1
+            have hcnq : CNV q = true := by
+              by_cases hqz : q = zero
+              · rw [hqz]; rfl
+              · exact ih q b (by omega) hinq hcb (hdLe_of_lt_cnv b hcb q hqz hinq h1)
+            show (CNV p && CNV q) = true
+            rw [hcnq, hpx, hcx]; rfl
+          · rw [if_neg hpx] at h1
+            by_cases hpl : lt p x = true
+            · have hcnp : CNV p = true := by
+                by_cases hpz : p = zero
+                · rw [hpz]; rfl
+                · exact ih p x (by omega) hinp hcx (hdLe_of_lt_cnv x hcx p hpz hinp hpl)
+              rw [if_pos hpl] at h1
+              have hcnq : CNV q = true := by
+                by_cases hqz : q = zero
+                · rw [hqz]; rfl
+                · exact ih q (phi x b) (by omega) hinq hcn
+                    (hdLe_of_lt_cnv (phi x b) hcn q hqz hinq h1)
+              show (CNV p && CNV q) = true
+              rw [hcnp, hcnq]; rfl
+            · rw [if_neg hpl] at h1
+              exact ih (phi p q) b (by omega) hin hcb (by rw [hdLe_of_isAP rfl]; exact h1)
+
+/-- **BELOW A VEBLEN NORMAL FORM THERE IS NOTHING BUT VEBLEN NORMAL FORMS.** -/
+theorem cnv_of_lt_cnv {s y : Term} (hin : inT s = true) (hcn : CNV y = true)
+    (hlt : lt s y = true) : CNV s = true := by
+  by_cases hz : s = zero
+  · rw [hz]; rfl
+  · exact cnv_of_inT_hdLe (s.deg + y.deg) s y (Nat.le_refl _) hin hcn
+      (hdLe_of_lt_cnv y hcn s hz hin hlt)
+
+/-- The relation at its FINAL width: `inT` on the predecessor, not `CNV`.  Fixing this
+    now is what makes step 1 a literal sub-statement of the eventual
+    `∀ t, inT t → Acc RT t`, so that the `ψ` steps extend it rather than restate it. -/
+def RT (x y : Term) : Prop := inT x = true ∧ lt x y = true
+
+private theorem acc_RT_of_acc_RV : ∀ (t : Term), Acc RV t → CNV t = true → Acc RT t := by
+  intro t ht
+  induction ht with
+  | intro t _ IH =>
+    intro hcnt
+    exact Acc.intro _ (fun y hy =>
+      IH y ⟨cnv_of_lt_cnv hy.1 hcnt hy.2, hy.2⟩ (cnv_of_lt_cnv hy.1 hcnt hy.2))
+
+/-- **acc_cnv AT THE `inT` RELATION.** -/
+theorem acc_cnv_inT (t : Term) (h : CNV t = true) : Acc RT t :=
+  acc_RT_of_acc_RV t (acc_cnv t h) h
+
+/-- **THE FORM THE ROAD CONSUMES:** every genuine term of 𝔗(M) below a Veblen normal
+    form is accessible, with no fragment hypothesis on the term itself. -/
+theorem acc_inT_below_cnv {v : Term} (hv : CNV v = true) (t : Term)
+    (hin : inT t = true) (hlt : lt t v = true) : Acc RT t :=
+  acc_cnv_inT t (cnv_of_lt_cnv hin hv hlt)
+
+/-! Receipts for §15.1's calibration. -/
+
+#guard CNV (psi (Z zero) zero) == false        -- Γ₀ is the supremum, not a member
+#guard inT (psi (Z zero) zero) == true
+#guard lt (phi one zero) (psi (Z zero) zero) == true          -- ε₀ < Γ₀
+#guard CNV (phi (phi one zero) zero) == true                  -- φ̄(ε₀,0) is still CNV …
+#guard lt (phi (phi one zero) zero) (psi (Z zero) zero) == true   -- … and still below Γ₀
+#guard lt (add zero M) one == true             -- the positive control: without `inT` …
+#guard inT (add zero M) == false               -- … `0 ⊕ M` is below `1` and not a CNV
+#guard CNV (add zero M) == false
 
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
