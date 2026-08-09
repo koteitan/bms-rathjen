@@ -2476,4 +2476,53 @@ def startsW : List Term := (corpusW ++ deeper).eraseDups
 #guard ((junk.filter (fun t => !(TM.Term.inT t))).filter
           (fun t => !((targets t).all (fun u => TM.Term.inT u)))).length == 10
 
+
+/-! ### §14.1 THE DISCRIMINATING QUESTION, AND ALL THREE SITES ON `inT` INPUTS
+
+**(4) DO THE JUNK WITNESSES ARISE AS RECURSION TARGETS FROM A LEGAL ROOT?  NO — 0 of 13.**
+`φ̄(0,M)`, `add (ofNat 3) (ofNat 3)`, the whole `add`-headed family, the zero-component
+terms: none appears among the 40 targets of the 169 legal starts.  **§13's table describes
+terms `encvF` never meets.**
+
+AND THE SAME RUN SUPPLIES THE `inT`-ROOTED SAMPLE THAT FILTERING CANNOT REACH.  veblen2
+cleared the `predOr` site on 5 movers out of a 1010-term corpus — `inT` is rare enough
+(44 of 1010) that a wider corpus must be generated FOR the class rather than deeper.  The
+call graph IS that generator: every target is `inT` by construction.  Over the pool of
+169 (starts and targets, all `inT`):
+
+                   movers   leave `inT`   fail the `lt`-step
+    predOr           39          0                0
+    omLog            28          0                0
+    fpDeep           24          0                0
+
+**ALL THREE SITES TAKE A GENUINE `RT`-STEP ON `inT` INPUTS** — target `inT`, target
+strictly below.  §13 measured `omLog` violating `lt` on 6 of 78 and `fpDeep` on 8 of 74;
+**those violations are junk-only and do not occur from a legal root.**  `predOr`'s positive
+class goes from 5 to 39.
+
+**SO THE MEASURE QUESTION IS CLOSED, NOT PARKED.**  `acc_inT_below_cnv` needs `inT` and
+below a `CNV` bound; both hold at every site on every target measured.  No arithmetic
+measure is required and §13's table is the record of why one was never going to work —
+it was measuring the wrong domain, which is the same error as counting over the wrong
+corpus, one level further out. -/
+
+def allTargets : List Term := (startsW.flatMap targets).eraseDups
+
+def witnesses : List Term :=
+  [badPredOr, phi zero TM.Term.M] ++ addHead ++
+  [TM.Term.add zero zero, TM.Term.add TM.Term.M zero, TM.Term.add (ofNat 3) (ofNat 3)]
+
+def pool : List Term := (startsW ++ allTargets).eraseDups
+
+#guard (witnesses.filter (fun w => allTargets.any (fun u => u == w))).length == 0
+#guard (pool.filter (fun t => !(TM.Term.inT t))).length == 0
+-- all three sites: they move, they stay in 𝔗(M), and they go strictly down
+#guard (pool.filter (fun t => !(predOr t == t))).length == 39
+#guard (pool.filter (fun t => !(predOr t == t) && !(TM.Term.inT (predOr t) && TM.Term.lt (predOr t) t))).length == 0
+#guard (pool.filter (fun t => !(omLog t == t))).length == 28
+#guard (pool.filter (fun t => !(omLog t == t) && !(TM.Term.inT (omLog t) && TM.Term.lt (omLog t) t))).length == 0
+#guard (pool.filter (fun t => !((List.range 3).all (fun i =>
+          match fpDeep (ofNat i) t with
+          | none => true | some g => TM.Term.inT g && (g == t || TM.Term.lt g t))))).length == 0
+
 end Evidence.SqV
