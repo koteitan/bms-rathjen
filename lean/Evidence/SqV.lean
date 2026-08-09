@@ -2629,7 +2629,33 @@ additively principal and `≤ u`.  That is exactly what `inT (add u v)`'s own fo
 says about `v`'s head, and `y` IS `v`'s head — the bookkeeping is relating `take`'s first
 element to `toList v`'s first element through the `cases` on `v`.
 
-Not in the file until it closes; the measurement is. -/
+Not in the file until it closes; the measurement is.
+
+**STATE OF THE PROOF (2026-08-10).**  `head_of_take` below is proved and is the bookkeeping
+that relates `take`'s first element to `toList v`'s.  With it, the `add` case's structure is
+complete: the `hyu` derivation — `y` additively principal and `≤ u` — closes in all six
+sub-cases of `v`, reading 2.1(iii)'s fourth conjunct in the `add` case and its `isAP v && le v u`
+form in the five leaf cases.
+
+**WHAT IS LEFT IS ONE `simp` PROBLEM, not a mathematical one**: assembling
+`inT (add u (ofList (y :: ys)))` from its five parts.  `simp only [TM.Term.inT]` unfolds the
+INNER `inT y` as well as the outer, so the hypothesis `inT y` no longer matches; and a `show`
+cannot state the goal uniformly because 2.1(iii)'s fourth conjunct branches on whether the
+tail is an `add`.  The fix is an introduction lemma —
+`isAP u → inT u → inT y → isAP y → le y u → inT (add u y)` — which does the case analysis
+once instead of at every use.  That is the next step and it is bookkeeping. -/
+
+theorem head_of_take {l : List Term} {j : Nat} {y : Term} {ys : List Term}
+    (h : l.take j = y :: ys) : ∃ rest, l = y :: rest := by
+  cases j with
+  | zero => simp only [List.take_zero] at h; exact absurd h (by simp)
+  | succ i =>
+    cases l with
+    | nil => simp only [List.take_nil] at h; exact absurd h (by simp)
+    | cons z rest =>
+      simp only [List.take_succ_cons] at h
+      injection h with h1 _
+      exact ⟨rest, by rw [h1]⟩
 
 def inTpool : List Term := (startsW ++ junk).eraseDups
 
