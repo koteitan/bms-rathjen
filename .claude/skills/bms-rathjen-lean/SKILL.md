@@ -73,7 +73,10 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   ```
 
   Health check: POST `{"snippets":[{"id":"t","code":"import BMS\n#check @BMS.expand?"}]}`
-  to `http://localhost:12346/api/check`. Kill selectively by PID (check
+  to `http://localhost:12346/api/check`. **Do NOT health-check by substring-matching
+  the name in the response** — an "unknown identifier NAME" ERROR contains the name
+  too, so the check reads "present" exactly when it is absent. Check the message
+  `severity` instead, or match on the printed TYPE. Kill selectively by PID (check
   `/tmp/kimina-rathjen.log` vs `/tmp/kimina-pss.log` instances before pkill).
   General ops (start/health-check/restart rules, multi-agent verification
   discipline): global skill `use-kimina-lean-server`.
