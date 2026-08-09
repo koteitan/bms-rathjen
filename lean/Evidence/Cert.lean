@@ -7954,6 +7954,76 @@ theorem certIn_fam_of
     intro c hcn
     exact key c (Evidence.WF.acc_cn c hcn) hcn
 
+/-! ### §18.4 ROW A, CERTIFIED
+
+`certIn_fam_of`'s three hypotheses, discharged from `Evidence/WF.lean` §15.13:
+`cnv_repPre` and `cnv_repAdd` for the values, `lim_clauses_sum_iter_gen` transported
+along `famV_eq_repPre` for the limit clause.  Then the row itself: its expansions are
+the `eps0M n` (`expand_rowA`, §18), which are `famM (n+1) 0`, and its four premises
+are `lim_clauses_rowA`.
+
+    certIn_rowA : CertifiedIn DomI [[0,0],[1,1],[1,0]] (φ̄0(ε₀))
+
+— the first LIMIT row above ε₀, and the first row whose certificate needed a family
+that the CNF machinery could not express.  It is built GUARDED, as the registry gate
+requires; `cert_rowA` is its image under `certifiedIn_forget`. -/
+
+theorem famV_eq_repPre : ∀ (k : Nat) {c : TM.Term}, c ≠ zero →
+    famV k c = Evidence.WF.repPre eps0T c k
+  | 0, _, _ => rfl
+  | k + 1, c, hc => by
+    rw [famV_succ_ne k hc, famV_eq_repPre k hc]
+    rfl
+
+/-- **THE FAMILY, unconditionally.**  `certIn_fam_of`'s three hypotheses, discharged
+    from `Evidence/WF.lean` §15.13. -/
+theorem certIn_fam (k : Nat) (c : TM.Term) (hcn : CN c = true) :
+    CertifiedIn DomI (famM k c) (famV k c) := by
+  refine certIn_fam_of ?_ ?_ ?_ k c hcn
+  · intro k c hcn hz
+    rw [famV_eq_repPre k hz]
+    exact Evidence.WF.cnv_repPre Evidence.WF.cnv_eps0T rfl (Evidence.WF.cnv_of_cn c hcn)
+      (Evidence.WF.hdLe_cn_eps0T c hcn hz) k
+  · intro k
+    exact Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T k
+  · intro k c g hcn hz hg1 hg2 hg3 hg4 hgz
+    obtain ⟨_, b2, b3, b4⟩ := Evidence.WF.lim_clauses_sum_iter_gen g Evidence.WF.cnv_eps0T rfl
+      (Evidence.WF.cnv_of_cn c hcn) (Evidence.WF.hdLe_cn_eps0T c hcn hz)
+      (fun n => Evidence.WF.cnv_of_cn _ (hg1 n)) hg2 hg3 hg4 hgz k
+    refine ⟨?_, ?_, ?_⟩
+    · intro n
+      have := b2 n
+      rwa [Evidence.WF.sumSeq_repPre, ← famV_eq_repPre k (hgz n),
+        ← famV_eq_repPre k hz] at this
+    · intro n
+      have := b3 n
+      rwa [Evidence.WF.sumSeq_repPre, Evidence.WF.sumSeq_repPre,
+        ← famV_eq_repPre k (hgz n), ← famV_eq_repPre k (hgz (n+1))] at this
+    · intro s hin hlts
+      have hlt' : lt s (Evidence.WF.repPre eps0T c k) = true := by
+        rwa [← famV_eq_repPre k hz]
+      obtain ⟨n, hn⟩ := b4 s hin hlt'
+      refine ⟨n, ?_⟩
+      rwa [Evidence.WF.sumSeq_repPre, ← famV_eq_repPre k (hgz n)] at hn
+
+/-- **ROW A: `(0,0)(1,1)(1,0)` = `φ̄0(ε₀)`, CERTIFIED.**  The first LIMIT row above ε₀. -/
+theorem certIn_rowA : CertifiedIn DomI [[0, 0], [1, 1], [1, 0]] Evidence.WF.rowA := by
+  obtain ⟨_, hlt, hstep, hcof⟩ := Evidence.WF.lim_clauses_rowA
+  refine CertifiedIn.lim Evidence.WF.fsA rfl ?_ hlt hstep hcof ?_
+  · intro n
+    show CertifiedIn DomI ((BMS.expand? [[0, 0], [1, 1], [1, 0]] n).getD [])
+      (Evidence.WF.fsA n)
+    rw [expand_rowA n]
+    show CertifiedIn DomI (eps0M n) (Evidence.WF.fsA n)
+    rw [show eps0M n = famM (n + 1) zero from (famM_zero_arg (n + 1)).symm,
+      show Evidence.WF.fsA n = famV (n + 1) zero from rfl]
+    exact certIn_fam (n + 1) zero rfl
+  · show inT Evidence.WF.rowA = true
+    exact Evidence.WF.inT_of_cnv _ Evidence.WF.cnv_rowA
+
+theorem cert_rowA : Certified [[0, 0], [1, 1], [1, 0]] Evidence.WF.rowA :=
+  certifiedIn_forget certIn_rowA
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
