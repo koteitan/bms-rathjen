@@ -211,4 +211,19 @@ theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 1)) :=
 
 end «(0,0)(1,1)(2,1)(3,1)(1,0)»
 
+/-! ### Row `(0,0)(1,1)(2,1)(2,0)` = `φ̄(1,φ̄(0,ζ₀))`, the `a = b = 2` instance of the
+F4 case-C family (`Evidence.StageB.e3_F4cfamily`, whole `r = 0` column). -/
+
+namespace «(0,0)(1,1)(2,1)(2,0)»
+
+def M : Matrix := [[0,0],[1,1],[2,1],[2,0]]
+def t : Term := phi one (phi zero (phi (ofNat 2) zero))
+
+theorem e1 : o? M = some t := rfl
+
+theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 1)) :=
+  Evidence.StageB.e3_val4c 0 0 n
+
+end «(0,0)(1,1)(2,1)(2,0)»
+
 end Rows.Proofs
