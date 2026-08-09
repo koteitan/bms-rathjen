@@ -12882,4 +12882,166 @@ theorem lt_tail_add : ∀ (v u : Term), CNV (add u v) = true → lt v (add u v) 
 #guard lt one (add one zero) == true    -- it does NOT fire — `lt` compares syntax
 #guard CNV (add one zero) == false      -- ... and this is why: the probe is off-`CNV`
 
+/-! ### §15.29 THE ASSEMBLY, SPIKED — what is answered, what is ASSUMED, and one correction
+
+§15.19 designs the deeper-layer assembly and lists two things as unknown.  This section answers
+both with theorems rather than prose, and states what those theorems ASSUME as prominently as
+what they prove — a spike whose hypotheses are not read is a finished proof to the next reader.
+
+WHAT IS ANSWERED.
+
+  (1) **The cofinality clause composes with NO separate induction.**  `lim_clauses_sum` and
+      `lim_clauses_phi_arg` each deliver all four clauses from the sub-sequence's four, and
+      clause 4 of the result is clause 4 of the recursive call UNMODIFIED.  Uniform across
+      branches, not per-branch.  This was §15.19's open question and it is now closed.
+
+  (2) **Lean accepts an `∃ fs, LimClauses t fs` motive under plain `induction t`.**  That is a
+      question no corpus can answer — it is about elaboration, not about ordinals — so it was
+      answered small and early rather than at the end of a large theorem.
+
+WHAT THE SPIKES ASSUME, AND `asm_spike2` IS NOT A PROOF OF THE ASSEMBLY:
+  * `Hside` — core (C)'s `lt b (phi a (g 0))`.  ASSUMED, and it is the assembly's real content.
+  * `Hzero` — the `b = 0` branches, cores (B) and (C').  ASSUMED (they are terminal or use
+    other templates; §15.21 and §15.18 prove them).
+  * `Hsucc` — `φ̄(a,b)` with `b` a `kindV` successor.  ASSUMED (§15.15's template).
+
+THE CORRECTION, WHICH IS TO A CLAIM THIS LANE MADE AND THEN REFUTED WITH THE SPIKE.
+
+§15.19 warns that `deg` covers the recursive branches but NOT the second use — the intermediate
+values, whose `deg` grows with `n` — and this lane proposed §15.25.1's `CarrierV` / `wf_lt_cnv`
+as the answer, on the true observation that **the intermediate values are `lt` the row by clause
+2 of `Certified.lim` itself**, which `deg` cannot see because `deg` is syntactic and the fact is
+an order fact.
+
+**THAT OBSERVATION IS TRUE AND THIS THEOREM DOES NOT NEED IT.  THE RECURSION IS STRUCTURAL.**
+Every recursive branch descends into a STRUCTURAL SUBTERM — the sum branch to the tail `v` of
+`add u v`, core (C) to `b` of `φ̄(a,b)`, core (C') to `a` — and the terminal branches recurse on
+nothing.  No `deg`, no `CarrierV`, no well-founded recursion.  §15.19 had already dissolved the
+problem in a sentence that was read past: *"So long as that second use is a FRESH INSTANTIATION
+rather than a recursive call it is sound."*  A ∀-quantified assembly applies to its own
+intermediate values by INSTANTIATION, so they are never a recursive call and never need to be
+smaller.  The `CarrierV` route is load-bearing only for someone insisting on ONE recursion
+covering both uses — which §15.19 already advises against.  Recorded here as a note on why that
+restatement is not needed, NOT as the reason the assembly works.
+
+Likewise `lt_tail_add`, `lt_phi_self` and `lt_phi_fst` are the order facts BEHIND the branches;
+they are not needed for termination.  Claiming them as "the assembly's decreases" was an
+overstatement by this lane, corrected here rather than left standing.
+
+THE DISPATCH AND THE FIFTH SHAPE, MEASURED — corpus stated before the verdict.  21 Veblen roots
+(rows with `hasO` and `CNV t`), closed under `BMS.expand` with arguments 0..3 at limits, mapped
+through `Trans.oR`, deduplicated: 504 terms / 471 `CNV` limits at depth 3, 1647 terms at depth 4.
+
+    branch        depth 3   depth 4
+    sum               123       396
+    core (C)          312      1023
+    successor           2         2
+    terminal           34       136
+    core (C')           0         0
+    FIFTH SHAPE         0         0     (`φ̄(a,b)`, `b ≠ 0`, `a` a `CNV` LIMIT)
+
+**THE DISPATCH DOES NOT COLLAPSE** — all five branches are required, so the theorem is not
+smaller than §15.19 describes.  The two zeros mean DIFFERENT things and must not be read alike:
+
+  * **core (C') is unreached BY THIS CLOSURE and is still needed.**  `lim_clauses_phiW0` and
+    `lim_clauses_phiE0` are proved rows that land there; the classifier reaches the bucket
+    (controls: `φ̄(ω,0)` and `φ̄(ε₀,0)` both classify as (C')).  Instances exist — just not
+    downstream of these 21 roots.
+  * **the FIFTH SHAPE has no instance anywhere measured**, one depth deeper and twice as wide as
+    §15.19's original sweep.  Its detector has a POSITIVE CONTROL: it returns 1 on a constructed
+    `φ̄(ω,1)`.  So the hypothesis stays COSMETIC on everything the table reaches — and is carried
+    anyway, because absence at depth 4 is not absence from 𝔗(M) and §15.18's cap does not forbid
+    the shape.
+
+AND A DEAD BUCKET, RECORDED BECAUSE ITS ZERO AGREED WITH THE TRUE ONE.  A first dispatch
+classifier also carried a `FIFTH` bucket; it tested `kindV b` BEFORE the fifth-shape test, so
+every successor `b` was routed away first — and the fifth shape is exactly *`a` limit with `b` a
+successor*.  The bucket could not fire, `branchOf (φ̄(ω,1))` returned `terminal`, and its 0 was
+worth nothing.  **It agreed with the good detector's 0, and from the output the two were
+indistinguishable.**  The figure above is the independent detector's, which has the control.
+
+WHAT REMAINS: `hside`.  Not termination.  Core (C) needs `lt b (phi a (g 0))` where `g` is the
+recursive call's sequence for `b` — `g 0 < b` while `φ̄(a, g 0) > b` is required, i.e. the step UP
+in the first argument must outrun the step DOWN in the second.  Its neighbourhood is §15.21's
+`b ≠ 0` tracking and §15.23's undershoot family. -/
+
+/-- The four `Certified.lim` clauses, as one predicate. -/
+def LimClauses (t : Term) (fs : Nat → Term) : Prop :=
+  (∀ n, CNV (fs n) = true) ∧ (∀ n, lt (fs n) t = true)
+  ∧ (∀ n, lt (fs n) (fs (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s t = true → ∃ n, le s (fs n) = true)
+
+/-- **SPIKE 1** — the SUM branch recursive, the `φ̄` branches assumed.  Establishes that the
+    recursion elaborates and that cofinality composes from the tail's clause 4. -/
+theorem asm_sum_spike
+    (Hphi : ∀ (p q : Term), CNV (phi p q) = true → kindV (phi p q) = false →
+       ∃ fs, LimClauses (phi p q) fs ∧ ∀ n, fs n ≠ zero) :
+    ∀ (t : Term), CNV t = true → kindV t = false → t ≠ zero →
+      ∃ fs, LimClauses t fs ∧ ∀ n, fs n ≠ zero := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | phi p q _ _ => intro h hk _; exact Hphi p q h hk
+  | add u v _ ihv =>
+    intro h hk _
+    obtain ⟨hAPu, hcnu, hcnv, hdvu⟩ := cnv_add h
+    have hvz : v ≠ zero := by
+      intro hc
+      rw [hc, show hdLe (zero : Term) u = false from rfl] at hdvu
+      exact Bool.noConfusion hdvu
+    obtain ⟨g, hg, hgz⟩ := ihv hcnv hk hvz
+    exact ⟨fun n => add u (g n),
+      lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
+      fun n => by intro hc; exact Term.noConfusion hc⟩
+
+/-- **SPIKE 2** — the SUM branch AND core (C) both recursive and STRUCTURAL.  `Hside` is the
+    assembly's real content and is ASSUMED here so that it is isolated; `Hzero` and `Hsucc` are
+    the branches proved by other templates.  **This is not a proof of the assembly.** -/
+theorem asm_spike2
+    (Hside : ∀ (a b : Term) (g : Nat → Term), CNV (phi a b) = true → LimClauses b g →
+        lt b (phi a (g 0)) = true)
+    (Hzero : ∀ (a : Term), CNV (phi a zero) = true → kindV (phi a zero) = false →
+        ∃ fs, LimClauses (phi a zero) fs ∧ ∀ n, fs n ≠ zero)
+    (Hsucc : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = true →
+        ∃ fs, LimClauses (phi a b) fs ∧ ∀ n, fs n ≠ zero) :
+    ∀ (t : Term), CNV t = true → kindV t = false → t ≠ zero →
+      ∃ fs, LimClauses t fs ∧ ∀ n, fs n ≠ zero := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | phi p q _ ihq =>
+    intro h hk _
+    obtain ⟨hcnp, hcnq⟩ := cnv_phi h
+    by_cases hq : q = zero
+    · subst hq; exact Hzero p h hk
+    · by_cases hkq : kindV q = true
+      · exact Hsucc p q h hq hkq
+      · have hkq' : kindV q = false := by
+          cases hh : kindV q with
+          | true => exact absurd hh hkq
+          | false => rfl
+        obtain ⟨g, hg, _⟩ := ihq hcnq hkq' hq
+        exact ⟨fun n => phi p (g n),
+          lim_clauses_phi_arg g hcnp hcnq hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 (Hside p q g h hg),
+          fun n => by intro hc; exact Term.noConfusion hc⟩
+  | add u v _ ihv =>
+    intro h hk _
+    obtain ⟨hAPu, hcnu, hcnv, hdvu⟩ := cnv_add h
+    have hvz : v ≠ zero := by
+      intro hc
+      rw [hc, show hdLe (zero : Term) u = false from rfl] at hdvu
+      exact Bool.noConfusion hdvu
+    obtain ⟨g, hg, hgz⟩ := ihv hcnv hk hvz
+    exact ⟨fun n => add u (g n),
+      lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
+      fun n => by intro hc; exact Term.noConfusion hc⟩
+
 end Evidence.WF
