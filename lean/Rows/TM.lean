@@ -40,7 +40,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.62"
+def version : String := "v0.1.63"
 
 /-- One row of the correspondence table. -/
 structure Row where

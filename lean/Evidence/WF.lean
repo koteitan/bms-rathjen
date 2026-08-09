@@ -1541,4 +1541,95 @@ theorem lt_comparable_needs_frag :
   · exact absurd h1 (by decide)
   · exact Bool.noConfusion h1
 
+/-! ## §8 STAGE 3 — the `ψ`/`Z` clauses: what is left  (NOTHING PROVED BELOW)
+
+This is a map in the style of §6, for §6's own item 3 — the version of §7 that
+`cert_sound` needs.  It is not speculation: every claim marked MEASURED comes from
+an exhaustive `#eval` sweep over ALL 3042 terms of degree ≤ 6 built from all seven
+constructors, and a sample of each is kept as a `#guard` below.  Nothing here is a
+theorem.
+
+WHAT §7 HANDS OVER UNCHANGED.
+
+  * The proof architecture.  `cmp_aux`'s simultaneous asymmetry+comparability and
+    `trans_aux`'s lexicographic measure `(b.deg, a.deg + c.deg)` are not artefacts
+    of the fragment: 2.3.14 (`ψκα < ψπβ`) has exactly the same three-sub-clause
+    shape as 2.3.13, so the 13(i)/13(ii)/13(iii) arguments transcribe verbatim
+    with `κ` in place of `α`.
+  * §7.2's style: state each clause body as a `rfl` rewrite rule first, then bash.
+  * §5, and now for a second reason.  `starF f d` DEPENDS ON THE FUEL, so once the
+    `ψ`/`Z` clauses are in play "same fuel" is no longer a purely syntactic notion
+    and `starF_stable` is what keeps the two fuels' `α*` equal.  §5 was needed at
+    the END of §7 (to lift to `lt`); in §8 it is needed in the MIDDLE.
+  * `deg_starF` (§5) is what keeps the measure working: `α*` is a subterm of `α`,
+    so the clauses that recurse into `starF f d` do not raise any degree.
+
+WHAT CHANGES, AND THE MEASUREMENTS THAT SAY SO.
+
+ 1. STAGE 3 IS TRUE.  MEASURED: on all 171 terms of degree ≤ 6 satisfying `inT`,
+    asymmetry, comparability and transitivity all hold, with no exception.  It is
+    a cost question, not a risk question.
+
+ 2. `inT` BECOMES NECESSARY — the situation inverts.  On `Frag`, `inT` is dead
+    weight (§7 proves everything without it).  Off `Frag` it is indispensable:
+    MEASURED, the raw language has 792 incomparable pairs among those 3042 terms,
+    and ZERO of them satisfy `inT`.  (Asymmetry, by contrast, held everywhere,
+    `inT` or not — but §7's route to asymmetry goes through comparability, so
+    that observation does not by itself make asymmetry cheaper.)
+
+ 3. AND IT IS ESSENTIALLY ONE CLAUSE OF `inT`.  Re-running the sweep with single
+    conditions of [R91] 2.1 deleted (terms admitted / incomparable pairs /
+    transitivity violations):
+
+        inT as written                        171 /   0 /  0
+        2.1(vi) without  κ ∈ R                320 / 106 / 15     <-- load-bearing
+        2.1(vi) without  α < M                193 /   0 /  0
+        2.1(iii) without αₙ ≤ … ≤ α₁          263 /   0 /  0
+
+    So the order theory of §8 needs `k.isR` from 2.1(vi) and, at this depth,
+    nothing else.  That is much cheaper than §6 budgeted: the `inT` destructor
+    actually required is the `κ ∈ R` conjunct, not the sum machinery.
+    HONEST CAVEAT: the K_κ conjunct could not be tested this way — at degree ≤ 6
+    it removes no term at all (171 either way), so the sweep says NOTHING about
+    it.  Do not read the table as "K_κ is dispensable"; it is untested.
+
+ 4. THE SPLIT THAT MAKES §8 TRACTABLE.  MEASURED: on the sub-language with `M`
+    and `ω̄` but still no `ψ`/`Z` (556 terms of degree ≤ 6), asymmetry and
+    comparability hold RAW — no `inT` needed, exactly as in `Frag`.  So:
+
+      STAGE 3a  extend `Frag` to `Frag ∪ {M, ω̄}`, still `inT`-free.  Pure case
+                bash: clauses 2.3.2 / 2.3.3 / 2.3.12 are constant or a single
+                recursive call, and 2.3.5 / 2.3.4 are the `φ̄`-vs-`SC` pair.  The
+                cost is the shape matrix, not the mathematics — `cmp_aux` goes
+                from 9 shape pairs to 25 and `trans_aux` from 27 triples to 125,
+                so factor out a "constant clause" lemma before bashing or the
+                file triples in size for no content.
+
+      STAGE 3b  `ψ` and `Z`, with `inT`.  This is where the real work is: the
+                clauses routing through `starF` (2.3.6 / 2.3.8 / 2.3.9 / 2.3.15)
+                need, beyond §7's pattern, that `α*` behaves.  MEASURED on all 171
+                `inT` terms: `le (star d) d` and `star d ≤ Z d` both hold — those
+                are precisely the two `starF` facts §6's map asked for, and they
+                are the first things to prove in 3b.
+
+WHAT WOULD FALSIFY THIS MAP: a pair of `inT` terms of degree ≥ 7 that is
+incomparable, or a `starF` counterexample to `le (star d) d`.  Extending the sweep
+past degree 6 is the cheapest possible check and should be run before 3b is
+started — the sweep is ~20 lines of `#eval` and costs seconds. -/
+
+/-! ### §8 receipts (samples of the measurements quoted above) -/
+
+-- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
+-- these two terms are distinct and incomparable, and they fail `inT` only there.
+#guard lt (psi M zero) (psi (psi M zero) zero) == false
+#guard lt (psi (psi M zero) zero) (psi M zero) == false
+#guard (M : Term).isR == false
+#guard inT (psi M zero) == false
+
+-- With an `R` head the corresponding pair is `inT` and IS comparable.
+#guard inT (psi (Z zero) zero) == true
+#guard inT (psi (Z (Z zero)) zero) == true
+#guard lt (psi (Z zero) zero) (psi (Z (Z zero)) zero) == true
+#guard lt (psi (Z (Z zero)) zero) (psi (Z zero) zero) == false
+
 end Evidence.WF
