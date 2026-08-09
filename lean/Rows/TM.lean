@@ -40,7 +40,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.47"
+def version : String := "v0.1.48"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -124,16 +124,116 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,1],[1,0]], t := phi zero (phi (ofNat 2) zero),
     name := "\\omega^{\\zeta_0+1}", proof := "«(0,0)(1,1)(2,1)(1,0)»", hasO := true },
   { m := [[0,0],[1,1],[2,1],[1,1]], t := phi one (phi (ofNat 2) zero),
-    name := "\\varepsilon_{\\zeta_0+1}", proof := "«(0,0)(1,1)(2,1)(1,1)»", hasO := true }
-  -- WITHDRAWN (v0.1.42): every row from (0,0)(1,1)(2,1)(2,0) upward — 7 proof-column
-  -- rows and the 23 Stage-C rows — was removed after the calibration audit: the
-  -- oracle (p-bot's PSS termination translation, computed by pss-proof's PSS.Trans
-  -- and pss2bp) refutes their values ((2,1)(2,0) = zeta_omega, (2,1)(2,1) = phi(3,0),
-  -- (2,1)(3,1) = Gamma_0, (2,2) = psi_0(Omega_2), ...).  The o?-level theorems remain
-  -- in Rows/Proofs*.lean and Evidence/StageB.lean but their semantic readings were
-  -- wrong: o? compresses from (2,1)(2,0) upward (appended full-ladder copies read as
-  -- additive epsilon-steps instead of Omega-weight jumps).  The audit record is
-  -- table/oracle-audit-2026-08-09.txt; the rebuild plan is plan/README.md.
+    name := "\\varepsilon_{\\zeta_0+1}", proof := "«(0,0)(1,1)(2,1)(1,1)»", hasO := true },
+  -- The rows below were withdrawn in v0.1.42 (the o? calibration failure; see
+  -- table/oracle-audit-2026-08-09.txt and plan/README.md) and RESTORED in v0.1.48
+  -- with the oracle-calibrated values of oR = dict ∘ TransPort (Trans/Recal.lean,
+  -- candidate tier, gated by the oR #guard below).  Terms were machine-extracted
+  -- from oR, never hand-derived.
+  { m := [[0,0],[1,1],[2,1],[2,0]],
+    t := phi (add (phi zero zero) (phi zero zero)) (phi zero (phi zero zero)),
+    name := "\\zeta_\\omega", ev := "oR", note := "旧値 ε_{ζ₀·ω} を訂正 (較正事故)" },
+  { m := [[0,0],[1,1],[2,1],[2,1]],
+    t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero))) zero,
+    name := "\\bar{\\varphi}(3,0)", ev := "oR", note := "旧値 ζ₁ を訂正 (較正事故の初検出行)" },
+  { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (phi zero (phi zero zero)) zero,
+    name := "\\bar{\\varphi}(\\omega,0)", ev := "oR", note := "旧値 ζ_ω を訂正" },
+  { m := [[0,0],[1,1],[2,1],[3,0],[4,1]], t := phi (phi (phi zero zero) zero) zero,
+    name := "\\bar{\\varphi}(\\varepsilon_0,0)", ev := "oR", note := "旧値 ζ_{ε₀} を訂正" },
+  { m := [[0,0],[1,1],[2,1],[3,1]], t := psi (Z zero) zero,
+    name := "\\Gamma_0", ev := "oR",
+    note := "ψ 項の初登場。旧値 φ̄(3,0) を訂正" },
+  { m := [[0,0],[1,1],[2,1],[3,1],[0,0]], t := add (psi (Z zero) zero) (phi zero zero),
+    name := "\\Gamma_0+1", ev := "oR" },
+  { m := [[0,0],[1,1],[2,1],[3,1],[1,0]], t := phi zero (psi (Z zero) zero),
+    name := "\\omega^{\\Gamma_0+1}", ev := "oR" },
+  { m := [[0,0],[1,1],[2,1],[3,2]], t := psi (Z zero) (phi (phi zero zero) (Z zero)),
+    name := "\\psi_0(\\varepsilon_{\\Omega+1})", ev := "oR",
+    note := "Bachmann–Howard 順序数" },
+  { m := [[0,0],[1,1],[2,2]], t := psi (Z zero) (Z (phi zero zero)),
+    name := "\\psi_0(\\Omega_2)", ev := "oR",
+    note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正" },
+  { m := [[0,0],[1,1],[2,2],[1,1]],
+    t := phi (phi zero zero) (psi (Z zero) (Z (phi zero zero))),
+    name := "\\varepsilon_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,1]],
+    t := phi (add (phi zero zero) (phi zero zero)) (psi (Z zero) (Z (phi zero zero))),
+    name := "\\zeta_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,1],[3,1]],
+    t := psi (Z zero) (add (Z (phi zero zero)) (phi zero zero)),
+    name := "\\Gamma_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,2]],
+    t := psi (Z zero) (add (Z (phi zero zero)) (phi (phi zero zero) (Z zero))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[1,1],[2,2],[1,1],[2,2]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (add (phi (phi zero zero) (Z zero)) (phi (phi zero zero) (Z zero)))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2)\\cdot 2)", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,0]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (phi (phi zero zero) (Z zero)))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+1))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[2,0]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero)) (phi zero zero)))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+2))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[3,0]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero)) (phi zero (phi zero zero))))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\omega))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[3,1]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero)) (phi (phi zero zero) zero)))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\varepsilon_0))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,0],[3,1],[4,2]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero))
+        (psi (Z zero) (Z (phi zero zero)))))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_0(\\Omega_2)))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,1]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero)) (Z zero)))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\Omega_1))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,1],[2,1]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero)) (add (Z zero) (Z zero))))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\Omega_1\\cdot 2))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,1],[3,1]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero))
+        (phi zero (add (Z zero) (Z zero)))))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_1(\\Omega_1)))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,1],[3,2]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (phi zero (add (phi (phi zero zero) (Z zero))
+        (phi (phi zero zero) (Z zero))))),
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_1(\\Omega_2)))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[2,2]],
+    t := psi (Z zero) (add (Z (phi zero zero)) (Z (phi zero zero))),
+    name := "\\psi_0(\\Omega_2\\cdot 2)", ev := "oR", note := "旧値 φ̄(ω²,0) を訂正" },
+  { m := [[0,0],[1,1],[2,2],[2,2],[2,2]],
+    t := psi (Z zero) (add (Z (phi zero zero))
+      (add (Z (phi zero zero)) (Z (phi zero zero)))),
+    name := "\\psi_0(\\Omega_2\\cdot 3)", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[3,0]],
+    t := psi (Z zero) (phi zero (Z (phi zero zero))),
+    name := "\\psi_0(\\psi_2(1))", ev := "oR", note := "旧値 φ̄(ω^ω,0) を訂正" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[3,0]],
+    t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi zero zero))),
+    name := "\\psi_0(\\psi_2(2))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[4,0]],
+    t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi zero (phi zero zero)))),
+    name := "\\psi_0(\\psi_2(\\omega))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[4,1]],
+    t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi (phi zero zero) zero))),
+    name := "\\psi_0(\\psi_2(\\varepsilon_0))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[3,0],[4,1],[5,2]],
+    t := psi (Z zero) (phi zero (add (Z (phi zero zero))
+      (psi (Z zero) (Z (phi zero zero))))),
+    name := "\\psi_0(\\psi_2(\\psi_0(\\Omega_2)))", ev := "oR" },
+  { m := [[0,0],[1,1],[2,2],[3,1]],
+    t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (Z zero))),
+    name := "\\psi_0(\\psi_2(\\Omega_1))", ev := "oR" }
 ]
 
 /-! ## Per-row machine checks (a successful build means every row is verified) -/
@@ -204,6 +304,7 @@ def regions : List RegionRow := [
 def evLink : String → String
   | "bisim6" => "../lean/Evidence/Bisim.lean"
   | "oStageC" => "../lean/Trans/StageC.lean"
+  | "oR" => "../lean/Trans/Recal.lean"
   | _ => ""
 
 /-- The matrix literal of a row, spelled exactly as it appears in the source of
@@ -244,13 +345,13 @@ def genTable (lineOf : String → Option Nat) (proofLine : String → Option (St
 
 バージョン: " ++ version ++ "
 
-> **⚠ 警告 (v0.1.41)**: 本表の翻訳 $`o`$ に系統的な較正誤りが発見されたため、
-> **証明列 (✅) を全行から一時撤去した**。BMS 順で `(0,0)(1,1)(2,1)(2,0)` 以上の行の
-> $`T(M)`$ 値と通称は**誤っている**
-> (例: 真の値は $`(0,0)(1,1)(2,1)(2,0) = \\zeta_\\omega`$、
-> $`(0,0)(1,1)(2,1)(3,1) = \\Gamma_0`$、$`(0,0)(1,1)(2,2) = \\psi_0(\\Omega_2)`$ —
-> P進大好きbot 氏のペア数列停止性証明の変換写像による)。
-> それ未満の行は変換写像と一致することを確認済み。表は再構築中。
+> **⚠ 較正事故の記録 (v0.1.41–v0.1.48)**: 旧翻訳 $`o`$ は
+> `(0,0)(1,1)(2,1)(2,0)` 以上で系統的に誤った値を与えていた
+> (旧 ✅ 付き行を含む。経緯は [plan/README.md](../plan/README.md) の
+> 「較正事故」節)。現在の表の全行は、P進大好きbot 氏のペア数列停止性証明の
+> 変換写像 (の Lean 移植 oR) と一致することが**ビルド時 #guard で強制**されている。
+> 証明列 (✅) は意味証明書 (SemanticCert) の存在する行のみに機械付与され、
+> oR 由来の値は**予想ティア** (オラクル較正済み・意味論の証明は未了) である。
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -266,6 +367,9 @@ Arch. Math. Logic 30 (1991), §2) の対応表。検査の設計は
 - **その他の弱いエビデンス** (いずれも有限個の $`n`$ の計算検査であり、
   **較正誤りを検出できない**ことが今回実証された):
   - $`o`$ = 翻訳関数がこの行列で定義され $`o(M) = t`$ が成立 (E1)。
+  - oR = オラクル較正済み候補値: P進大好きbot 氏のペア数列停止性証明の
+    変換写像の Lean 移植 (oR = dict∘TransPort) の値と一致 (予想ティア)。
+    全行が oR と一致することはビルド時 #guard で強制される。
   - bisim6 = 深さ 6 の双模倣 (展開列と基本列が一致する領域で有効)。
   - oStageC = Stage C の候補翻訳 oStageC? の値の一致。
 
