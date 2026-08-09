@@ -180,8 +180,14 @@ def omLog : Term → Term
       -- D6 (0→6).  It also does not move the four D1 failures I predicted it would fix.
       -- Neither form dominates, so the skip condition is not settled and the next step
       -- on it is a search for those four matrices, not a third guess.  §5.2.
-      if (summands (TM.Term.splitFin x).1).any (fun g => TM.Term.isFP zero g)
-      then plus x one else x
+      -- MEASURED at three points that separate the two obvious readings:
+      --   x = ε₀     +1   (both readings agree)
+      --   x = ε₀+1   +1   (`isFP zero x` says no, and FAILS)
+      --   x = ε₀·2   NO   (the summand test says yes, and FAILS)
+      -- so the test is ONE fixed-point summand, not "any" and not "x itself".
+      match summands (TM.Term.splitFin x).1 with
+      | [g] => if TM.Term.isFP zero g then plus x one else x
+      | _ => x
   | t => t
 
 /-- **The fixed point a subscript collapses ON, found through `φ̄(0,·)` layers.**
@@ -758,12 +764,64 @@ without touching order is what tests that.  D4 back to 0 says the map is again e
 only notations.  Everything the old corpus measured is unchanged — 0/0/0/234, `openCases`
 0, `mixed` 0 — so nothing that passed before broke.
 
-AND A REFUTED REFINEMENT, kept because it is the obvious one.  `omLog`'s skip test is
-written on the SUMMANDS of `x`; the mathematically clean version tests `isFP zero x`
-itself, since `ω^(ε₀·2) ≠ ε₀·2` means a sum of fixed points is not one.  Measured, it
-improves D5 (51 → 35 pairs, 14 → 10 terms) and BREAKS D6 (0 → 6), and it does not move
-the four D1 failures I predicted it would fix.  Neither form dominates, so the condition
-is NOT settled; the next step is a search for those four matrices, not a third guess. -/
+### §5.3 THE SKIP CONDITION, SETTLED — and a count-versus-set error of my own
+
+CANDIDATE 10's skip test fires when ANY summand of `x`'s infinite part is a fixed point.
+The mathematically clean refinement tests `isFP zero x` itself, since `ω^(ε₀·2) ≠ ε₀·2`
+means a sum of fixed points is not one.  Measured, it improves D5 (51 → 35 pairs) and
+BREAKS D6 (0 → 6), so neither form dominates.
+
+**I FIRST REPORTED THAT IT "DOES NOT MOVE THE FOUR D1 FAILURES AT ALL", AND THAT WAS
+WRONG — I COMPARED COUNTS, NOT SETS.**  Both forms fail on four terms and the two sets
+are DISJOINT:
+
+    candidate 10 fails on   φ̄(a, φ̄(0, ε₀·2))      a ∈ {1, 2, ω}, and one with +1
+    candidate 11 fails on   φ̄(a, φ̄(0, ε₀+1))      the same three shapes
+
+This is the exact error this file has been insisting on since candidate 4 — "the residue
+is the predicted SET and not merely the predicted COUNT" — committed by the author of
+that sentence, one section later, on a number he had just been handed.  It is recorded
+rather than corrected silently because the sentence is worth less than the demonstration
+that it is easy to violate.
+
+AND SEEING THE SETS GAVE THE CONDITION IMMEDIATELY.  Three points separate the readings:
+
+    x = ε₀      +1     both readings agree
+    x = ε₀+1    +1     `isFP zero x` says no, and fails
+    x = ε₀·2    NO     the ANY-summand test says yes, and fails
+
+so the test is ONE fixed-point summand — neither "any" nor "`x` itself".  CANDIDATE 12.
+
+### §5.4 THE PREDICTION MADE BEFORE THE MEASUREMENT, AND WHAT IT SETTLED
+
+The 4 (D1) and the 14 (D5) were decoded before either was counted.  D1 ⊆ D5, and the
+14 split as
+
+    α  4 terms   φ̄(a, φ̄(0,ε₀·2))            the skip condition — also all of D1
+    β 10 terms   φ̄(a, b) with a ∈ {2, ω}    encoding correct, EXPANSION leaves the image
+
+STATED BEFORE FIXING: if α and β are two causes rather than one seen through two
+dimensions, then candidate 12 sends D1 to 0, leaves D6 at 0, and drops D5 from 14 terms
+to exactly the 10 of β.  MEASURED AFTER: D1 = 0, D6 = 0, D5 = 35 pairs over 10 terms,
+and the 10 are β by name.  **Two causes, and β is now isolated with nothing else in it.**
+
+                              baseline (cand 8)   cand 10    cand 12
+    D1 round trip               16 / 269           4 / 269    0 / 269
+    D2 table rows                0 / 5             0 / 5      0 / 5
+    D3 discriminators            0 / 3             0 / 3      0 / 3
+    D4 NON-STANDARD             12 / 267           0 / 267    0 / 267
+    D5 image closure           130 / 1076         51 / 1076  35 / 1076   → 10 terms
+    D6 order preservation     1923 / 72361         0 / 72361  0 / 72361
+
+The old corpus is unchanged throughout: 0/0/0/234, `openCases` 0, `mixed` 0.
+
+### §5.5 β — WHAT IS LEFT, NOT YET DIAGNOSED
+
+Ten terms, every one of the shape `φ̄(a, b)` with `a ∈ {2, ω}`: a LADDER of two or more
+levels.  Their own encodings are right — they pass D1, D4 and D6 — and their expansions
+leave the image of `sqv`.  No cause is claimed here; the next step is the one that has
+worked twice and reasoning-from-failures has failed twice, namely searching for the true
+matrices of `expand (sqv t) n` and reading the rule off them. -/
 
 def nestedFP : Term → Bool
   | .zero => false
@@ -800,6 +858,23 @@ def corpusW : List Term := corpus ++ nested
 #guard (corpus.filter nestedFP).length == 0
 #guard (nested.filter nestedFP).length == 25
 #guard (nested.filter (fun t => !(TM.Term.inT t))).length == 0
+
+/-! ## §6 ONE NOTATION FACT, THREE DEFECTS
+
+`φ̄(0,·)` ENUMERATES PAST ITS OWN FIXED POINTS: `φ̄(0,ε₀)` is `ω^(ε₀+1)`, not `ω^(ε₀)`,
+because `ω^(ε₀) = ε₀` is already `φ̄(1,0)` and the enumeration skips it.  In one night
+that single fact caused three separate defects, in three lanes:
+
+  * it made Row A's registered term look wrong — `Evidence.WF.rowA = φ̄(0,ε₀)` read
+    naively as `ω^(ε₀) = ε₀` says the row is degenerate; `Rows/TM.lean` names it
+    `ω^(ε₀+1)` and the registry is correct (Cert.lean checkpoint, 2026-08-10);
+  * it is the veblen2 lane's 13-of-234 `repAdd`-versus-(C) split;
+  * it is §5.2's cause A — `omLog` returning `x` where the skip makes the exponent
+    `x+1`, invisible below the first fixed point and wrong above it.
+
+A fact with three defects to its name in one night will have a fourth.  The question to
+ask of any clause that touches `φ̄(0,·)`: does it assume `φ̄(0,x) = ω^x`?  Below ε₀ that
+is true, which is exactly why it survives every test written below ε₀. -/
 
 -- §5.2's four searched/predicted witnesses, as guards
 #guard sqv (phi one (phi zero (phi one zero))) == [[0,0],[1,1],[2,0],[3,1],[2,0]]
