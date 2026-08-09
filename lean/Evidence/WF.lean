@@ -12963,7 +12963,42 @@ indistinguishable.**  The figure above is the independent detector's, which has 
 WHAT REMAINS: `hside`.  Not termination.  Core (C) needs `lt b (phi a (g 0))` where `g` is the
 recursive call's sequence for `b` — `g 0 < b` while `φ̄(a, g 0) > b` is required, i.e. the step UP
 in the first argument must outrun the step DOWN in the second.  Its neighbourhood is §15.21's
-`b ≠ 0` tracking and §15.23's undershoot family. -/
+`b ≠ 0` tracking and §15.23's undershoot family.
+
+`hside` MEASURED BEFORE ANY PROOF ATTEMPT, AND IT IS NOT UNIFORMLY TRUE.  Same corpus, and the
+sites are the GENUINE core (C) sites — limit matrices whose term is `φ̄(a,b)` with `b` a `CNV`
+limit AND whose first expansion is really `φ̄(a,c)` with the SAME `a`.  That last filter is
+load-bearing: without it, `φ̄(0,b) = ω^b` rows whose expansion is a `repAdd` are counted, and they
+produced three spurious "failures" in a first pass.  DECODE THE MEMBERS — again.
+
+    core (C) sites, depth 4                             1019
+    `hside` FAILURES                                       2
+    sites with `φ̄(a, g 0) = b`                             2
+    sites where those two DISAGREE                         0    ← exact characterisation
+    failures after ONE SHIFT, i.e. `lt b (φ̄(a, g 1))`      0    ← the repair
+      a ≠ 0    291 sites, 0 failures
+      a = 0    728 sites, 2 failures   — so `a = 0` does NOT characterise them
+
+**THE EXCEPTION IS THE FIXED POINT, EXACTLY.**  The two failures are `b = ω` with `g 0 = 1` and
+`b = ω^ω` with `g 0 = ω`; in both, `φ̄(a, g 0)` IS `b`, so the clause asks `lt b b` and is refused.
+Everywhere else the step clears.
+
+THE MARGIN'S SHAPE, since it decides whether one discharge exists or the case splits:
+
+    `g 0 < b` on EVERY site                    0 violations   (clause 2, as expected)
+    `le b (g 0)` — inner argument dominates    0 sites        ← never; no easy sub-case
+
+So the `φ̄` wrapper always does the lifting — there is no region where the second argument alone
+already exceeds `b` — and the only failure is the boundary where the lift lands exactly on `b`.
+
+**THE REPAIR IS ALREADY IN THIS FILE.**  §15.12's `lim_clauses_shift` takes the four clauses for
+`g` and returns them for `fun n => g (n+1)`, which is precisely what the failing sites need, and
+0 of 1019 fail after one shift.  So core (C) splits two ways and the second way is built.
+
+WHAT IS NOT ESTABLISHED, STATED SO THE MEASUREMENT IS NOT OVERREAD: that ONE shift always
+suffices.  `0 failures at depth 4` is a measurement, not a theorem, and a row outside the corpus
+could need two.  The honest form for the branch is the hypothesis `∃ k, lt b (φ̄(a, g k))` — true
+at `k = 1` on everything measured, claiming nothing about `k = 1` in general. -/
 
 /-- The four `Certified.lim` clauses, as one predicate. -/
 def LimClauses (t : Term) (fs : Nat → Term) : Prop :=
