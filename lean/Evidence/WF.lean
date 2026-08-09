@@ -12338,6 +12338,81 @@ theorem plus_ofNat_succ (s : Term) (hs : CNV s = true) (m : Nat) :
 #guard toList (ofNat 3) == [one, one, one]
 
 
+/-! ### §15.25 THE ORDER AS A TERMINATION MEASURE — packaging `acc_inT_below_cnv`
+
+WHY THIS EXISTS.  A consumer (`Evidence/SqV.lean`'s `encvF`) needs a termination argument, and
+TWO ARITHMETIC MEASURES DIED POINTING IN OPPOSITE DIRECTIONS: `deg` at `omLog`, and `tdepth` at
+`predOr` — witness `t = 3 ⊕ 3` has `tdepth 4` while `predOr t = ofNat 5` has `tdepth 5`, because
+**`predOr` flattens and flattening deepens**.  The order needs no arithmetic at all: `predOr`
+takes a PREDECESSOR, so the VALUE strictly decreases, and §15.1's `acc_inT_below_cnv` already
+proves accessibility for every genuine term of 𝔗(M) below a `CNV` bound, with NO fragment
+hypothesis on the term itself.  This section is the packaging; the theorem was already there.
+
+**`CNV` IS REQUIRED ONLY OF THE BOUND, NEVER OF A TARGET.**  That is the design question a
+consumer must have answered before it proves anything, so it is stated first.  The obligation is
+    target is `inT`, and `lt` its PARENT
+and nothing more: `belowC_step` turns that into membership below `v` by `lt_trans_inT` (§8.5),
+using `inT_of_cnv` on the bound.  A recursion therefore never has to re-establish `CNV` as it
+descends — which matters because `CNV` is preserved at `predOr` on a MEASURED sample of only two
+movers, far too thin to have rested a design on.
+
+THE MEASUREMENT THAT LICENSED THE ROUTE (certificate lane, call graph from the D7 domain):
+    169 distinct legal starts (all `inT`, all `CNV`), 40 distinct recursion targets,
+    over-approximated by taking ALL branches:
+        targets not `inT`      0        targets not `lt` start   0        targets not `CNV`  0
+    CONTROL: from 42 JUNK starts, 10 DO produce non-`inT` targets.
+The control is what makes this a property of LEGAL STARTS rather than of the instrument — and it
+refutes the natural inference that `encvF` being TOTAL means its arguments can be junk.  Totality
+says it is DEFINED on junk; it says nothing about what a legal input produces.  Every term that
+killed the two arithmetic measures was fed in directly, not produced by the recursion.
+CORROBORATION from this lane, on the site where both measures died: `predOr` preserves `inT`
+(0 violations), preserves `CNV` (0), and takes a genuine `RT`-step — `inT` target and strictly
+below — 0 violations.  THIN: only 5 of 44 `inT` terms move under `predOr` in a 1010-term corpus.
+When the hypothesis class is that rare, a wider corpus must be GENERATED FOR the class rather
+than sieved from a general one, which is what the call graph above does and filtering cannot.
+
+WHAT THIS DOES NOT GIVE: A FUEL BOUND.  `Acc` proves the recursion stops; it does not say when.
+A statement of the form "fuel `f` suffices" needs a RANK, which accessibility does not provide —
+so this packaging serves a fuel-free redefinition by well-founded recursion, and NOT a proof that
+an existing fuelled version saturates.  Those are different obligations and the distinction is
+worth keeping. -/
+
+/-- The carrier for a well-founded recursion: genuine terms of 𝔗(M) strictly below a fixed
+    `CNV` bound.  `CNV` is required ONLY of the bound `v`, never of a member. -/
+def BelowC (v : Term) : Type := {t : Term // inT t = true ∧ lt t v = true}
+
+/-- **THE CARRIER IS CLOSED UNDER THE RECURSION'S OWN OBLIGATION.**  A consumer proves only
+    "target is `inT` and `lt` its PARENT"; membership below `v` follows by transitivity on `inT`.
+    This is why no `CNV` is needed at a target. -/
+def belowC_step {v : Term} (hv : CNV v = true) (y : BelowC v)
+    {x : Term} (hx : inT x = true) (hxy : lt x y.1 = true) : BelowC v :=
+  ⟨x, hx, lt_trans_inT hx y.2.1 (inT_of_cnv v hv) hxy y.2.2⟩
+
+private theorem acc_belowC_aux {v : Term} :
+    ∀ (a : Term), Acc RT a → ∀ (y : BelowC v), y.1 = a →
+      Acc (fun (x z : BelowC v) => lt x.1 z.1 = true) y := by
+  intro a ha
+  induction ha with
+  | intro a _ IH =>
+    intro y hy
+    refine Acc.intro _ (fun x hx => ?_)
+    exact IH x.1 ⟨x.2.1, hy ▸ hx⟩ x rfl
+
+/-- **THE RECURSION PRINCIPLE.**  `lt` is well-founded on the genuine terms of 𝔗(M) below any
+    `CNV` bound — so a function may recurse on any step that strictly decreases the VALUE, with
+    no arithmetic measure at all.  Packages §15.1's `acc_inT_below_cnv`, which is already
+    unconditional in the term. -/
+theorem wf_lt_belowC {v : Term} (hv : CNV v = true) :
+    WellFounded (fun (x y : BelowC v) => lt x.1 y.1 = true) :=
+  ⟨fun y => acc_belowC_aux y.1 (acc_inT_below_cnv hv y.1 y.2.1 y.2.2) y rfl⟩
+
+/-- The same, as the `≺` a consumer can hand to `termination_by`. -/
+instance belowC_wf {v : Term} (hv : CNV v = true) :
+    WellFoundedRelation (BelowC v) where
+  rel := fun x y => lt x.1 y.1 = true
+  wf := wf_lt_belowC hv
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
