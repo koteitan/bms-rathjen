@@ -10,8 +10,14 @@ Policy (see plan/README.md):
 
 Meaning of the columns:
   proof : the namespace of Rows/Proofs.lean that proves E3 for this row, i.e.
-          `∀ n, o (M[n]) = t[n+1]`.  This is the actual claim of the row, proved
-          for every n — the only column that is a proof rather than a check.
+          `∀ n, o (M[n]) = t[k(n)]` for that row's own index k.  This is the
+          actual claim of the row, proved for every n — the only column that is
+          a proof rather than a check.
+          THE INDEX IS PER-ROW, NOT `n+1`.  This comment used to say `t[n+1]`;
+          measured over the nine E3 proofs, four are `n+1`, one is `n+2` (R5),
+          two are plain `n` (R4 = ε_ω, R8) and two use a bespoke `oval`.  Read
+          the row's own `e3_val` before comparing anything against `fsN`;
+          applying `+1` uniformly makes `fsN` look wrong above ε₀ when it is not.
   hasO  : the translation `o` is defined on this matrix and o(M) = t holds (E1).
           The whole domain of `o` is additionally checked over a corpus by
           `checkAll` (E2 order embedding + E3 mutual cofinality), see

@@ -8,9 +8,22 @@ validated by computational checks of E3 (expansion vs fundamental sequence) —
 see Evidence/Check.lean and Evidence/Bisim.lean.
 
 Index convention: the BMS expansion M[n] lays down the copies B(0)…B(n), i.e.
-n+1 of them, so the index is shifted by one against the T(M) side:
+n+1 of them, so the index is typically shifted by one against the T(M) side:
     o(M[n])  corresponds to  (o M)[n+1]
-The per-row E3 statements use this convention.
+
+BUT THE SHIFT IS NOT UNIFORM ACROSS ROWS, and this comment used to claim it was.
+Measured over the nine E3 proofs in Rows/Proofs.lean and Rows/ProofsB.lean
+(2026-08-10): four state `fsN t0 (n+1)`, one states `(n+2)` (R5), TWO state plain
+`n` (R4 = ε_ω, R8), and two use a bespoke `oval`.  So `+1` is the common case and
+not the convention; each row's E3 theorem states its own index and that statement
+is the authority.
+
+Do NOT apply `+1` uniformly when measuring against `fsN` — it produces mass
+disagreement that reads as "fsN is wrong above ε₀", and fsN is not wrong.  At
+ε_ω, `fsN (φ̄(1,ω)) n` agrees with the WF lane's calibrated `fsEW n` exactly, at
+shift 0.  The non-uniformity is the same phenomenon Evidence/WF.lean §15.22
+records for core (C) and table/index-shift-2026-08-10.txt measures: the index is
+matrix-determined and no property of the term computes it.
 
 Current domain:
   Stage A: the one-row-effective region (all rows below row 0 are zero),
