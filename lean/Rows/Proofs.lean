@@ -25,6 +25,7 @@ Each row lives in a namespace named after the matrix itself and provides
 -/
 import Evidence.StageA
 import Evidence.StageB
+import Rows.TM
 
 namespace Rows.Proofs
 
@@ -245,5 +246,45 @@ theorem e3 :
   Evidence.StageB.e3_F4afamily 0 0
 
 end «(0,0)(1,1)(2,1)(1,1)»
+
+/-! ## Row-linkage guards
+
+Each guard pins the table rows of Rows/TM.lean that cite a namespace of this
+file: some row cites the name, and EVERY row citing it carries exactly this
+namespace's matrix and term.  This closes the only unchecked step of the table's
+✅ column — the string link between a row and its proof. -/
+
+def rowLinked (nm : String) (M : BMS.Matrix) (t : Term) : Bool :=
+  Rows.rows.any (·.proof == nm) &&
+  Rows.rows.all fun r => r.proof != nm || (r.m == M && r.t == t)
+
+#guard rowLinked "«(empty)»" «(empty)».M «(empty)».t
+#guard rowLinked "«(0)»" «(0)».M «(0)».t
+#guard rowLinked "«(0)(0)»" «(0)(0)».M «(0)(0)».t
+#guard rowLinked "«(0)(1)»" «(0)(1)».M «(0)(1)».t
+#guard rowLinked "«(0)(1)(0)(1)»" «(0)(1)(0)(1)».M «(0)(1)(0)(1)».t
+#guard rowLinked "«(0)(1)(1)»" «(0)(1)(1)».M «(0)(1)(1)».t
+#guard rowLinked "«(0)(1)(2)»" «(0)(1)(2)».M «(0)(1)(2)».t
+#guard rowLinked "«(0)(1)(2)(3)»" «(0)(1)(2)(3)».M «(0)(1)(2)(3)».t
+#guard rowLinked "«(0,0)(1,1)(0,0)»" «(0,0)(1,1)(0,0)».M «(0,0)(1,1)(0,0)».t
+#guard rowLinked "«(0,0)(1,1)(2,1)(0,0)»" «(0,0)(1,1)(2,1)(0,0)».M «(0,0)(1,1)(2,1)(0,0)».t
+#guard rowLinked "«(0,0)(1,1)(2,1)(3,1)(0,0)»"
+  «(0,0)(1,1)(2,1)(3,1)(0,0)».M «(0,0)(1,1)(2,1)(3,1)(0,0)».t
+#guard rowLinked "«(0,0)(1,1)(2,1)(1,0)»" «(0,0)(1,1)(2,1)(1,0)».M «(0,0)(1,1)(2,1)(1,0)».t
+#guard rowLinked "«(0,0)(1,1)(2,1)(3,1)(1,0)»"
+  «(0,0)(1,1)(2,1)(3,1)(1,0)».M «(0,0)(1,1)(2,1)(3,1)(1,0)».t
+#guard rowLinked "«(0,0)(1,1)(2,1)(2,0)»" «(0,0)(1,1)(2,1)(2,0)».M «(0,0)(1,1)(2,1)(2,0)».t
+#guard rowLinked "«(0,0)(1,1)(2,1)(1,1)»" «(0,0)(1,1)(2,1)(1,1)».M «(0,0)(1,1)(2,1)(1,1)».t
+
+-- the rows proved in Rows/ProofsB.lean, pinned here (this file can import both)
+#guard rowLinked "R1" Rows.ProofsB.R1.m0 Rows.ProofsB.R1.t0
+#guard rowLinked "R2" Rows.ProofsB.R2.m0 Rows.ProofsB.R2.t0
+#guard rowLinked "R3" Rows.ProofsB.R3.m0 Rows.ProofsB.R3.t0
+#guard rowLinked "R4" Rows.ProofsB.R4.m0 Rows.ProofsB.R4.t0
+#guard rowLinked "R5" Rows.ProofsB.R5.m0 Rows.ProofsB.R5.t0
+#guard rowLinked "R6" Rows.ProofsB.R6.m0 Rows.ProofsB.R6.t0
+#guard rowLinked "R7" Rows.ProofsB.R7.m0 Rows.ProofsB.R7.t0
+#guard rowLinked "R8" Rows.ProofsB.R8.m0 Rows.ProofsB.R8.t0
+#guard rowLinked "R9" Rows.ProofsB.R9.m0 Rows.ProofsB.R9.t0
 
 end Rows.Proofs
