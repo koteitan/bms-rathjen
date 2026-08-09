@@ -88,6 +88,15 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
     setsid nohup .venv/bin/python -m server > /tmp/kimina-rathjen.log 2>&1 &
   ```
 
+  **FRESHNESS CANARY: put `#check @<a name you know is NEW>` at the top of every
+  snippet you send.** A canary on an OLD name passes against a stale environment
+  and tells you nothing — the same inverted-check trap as health-checking by
+  substring, in its other direction. Incident 6 was found exactly this way: a
+  `#check` on a name committed minutes earlier came back `Unknown identifier`
+  while every older name in the same snippet resolved, so :12346 had been serving
+  a stale WF olean for the whole session's snippet checks. Full-file POSTs
+  re-elaborate from source and were unaffected, which is that discipline's real
+  reason for existing.
   Health check: POST `{"snippets":[{"id":"t","code":"import BMS\n#check @BMS.expand?"}]}`
   to `http://localhost:12346/api/check`. **Do NOT health-check by substring-matching
   the name in the response** — an "unknown identifier NAME" ERROR contains the name

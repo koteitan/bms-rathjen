@@ -12590,4 +12590,164 @@ theorem lt_phi_fst {a b : Term} (ha : CNV a = true) : lt a (phi a b) = true :=
 #guard Kset (Z zero) (psi (Z zero) (Z zero)) == [Z zero]
 #guard lt (Z zero) (psi (Z zero) (Z zero)) == false    -- so 2.1(vi)'s `K_κ α < α` FAILS
 
+/-! ### §15.27 THREE ORDER FACTS FOR THE LANDING THEOREMS
+
+Routed by the certificate lane for `land_omLog` and `land_fpDeep`.  All three are proved; two
+are proved in a form STRICTLY STRONGER than requested, and one is RESTATED — read the second
+note before using it, because the requested form cannot be written in this file at all.
+
+    F1a   CNV b → le (splitFin b).1 b                    `le_splitFin_fst`
+    F1b   CNV s → g a component of s → le g s            `le_toList_self`
+    F2    CNV x → x ≠ 0 → lt (succT x) (phi zero x)      `lt_succT_phi_zero`
+
+F1b IS STATED WITH `toList`, NOT `summands`, AND THIS IS FORCED, NOT A PREFERENCE.  `summands`
+is defined in `Evidence/SqV.lean`, which IMPORTS this file; naming it here would invert the
+import.  The requester's form is recovered by `summands t = toList t` for `CNV t`, which is
+theirs to prove and is immediate: the two definitions differ only at `add u v`, where `summands`
+recurses into `u` and `toList` does not, and `CNV (add u v)` gives `u.isAP` while
+`isAP (add _ _) = false` — so `u` is never itself a sum and the recursion is trivial.  THE
+BRIDGE IS NOT ASSUMED HERE AND NOTHING BELOW DEPENDS ON IT.
+
+F1a IS PROVED THROUGH A STRONGER FACT AND `splitFin`'s `m` NEVER ENTERS.  `le_ofList_take` says
+EVERY prefix of the component list is `le` the whole, for EVERY `k`; F1a is the instance at
+`k = length − m`.  Stating it at the general `k` removed the trailing-1 count from the proof
+entirely — the arithmetic of `m` was never the content, the prefix structure was.  This also
+means a second caller wanting a different prefix needs no new theorem.
+
+F2's SIDE CONDITION IS LOAD-BEARING AND THE CONTROL IS BELOW.  At `x = 0` both sides are `1`
+(`succT 0 = 1 = φ̄00 = phi zero zero`), so the strict form is FALSE there; the `#guard` at the
+end of the section is that negative control, and without it the disequality would read as
+decoration.  `le_succT_phi_zero` is the weakened form the requester offered to accept — `le`,
+unconditional — and it is proved too, so the choice between them is theirs and needs no further
+round trip.  The `x = 0` instance of the `le` form is exactly the equality `1 = ω^0`.
+
+WHAT THE PROOFS ACTUALLY CONSUME, since it is less than the request suggested.  All three
+reduce to two facts about heads that were already here: `lt_atom_add` (§12) turns `le u (u ⊕ v)`
+into `le u u`, and `hdLe_eq` (§7) turns `CNV`'s fourth conjunct into `le (hdOf v) u`.  F2 needs
+`lt_phi_of_le` (§15.4) and NOTHING about `succT` beyond its head — `succT` appends a trailing
+`1`, so `lt_add_phi` reduces the goal to the head before `succT` is ever unfolded.  No new
+induction on the order was required; the only new inductions are on term structure. -/
+
+/-- A head component is `le` its own sum: `u` is additively principal, hence an atom,
+    so `lt_atom_add` turns the comparison into `le u u`. -/
+theorem le_head_add {u : Term} (hAP : u.isAP = true) (v : Term) :
+    le u (add u v) = true :=
+  le_of_lt (by rw [lt_atom_add (isAtom_of_isAP hAP)]; exact le_self u)
+
+/-- **The head is `le` the whole.** -/
+theorem le_hdOf_self : ∀ (s : Term), CNV s = true → le (hdOf s) s = true := by
+  intro s hs
+  cases s with
+  | zero => exact le_self _
+  | M => exact le_self _
+  | omg _ => exact le_self _
+  | psi _ _ => exact le_self _
+  | Z _ => exact le_self _
+  | phi _ _ => exact le_self _
+  | add u v => exact le_head_add (cnv_add hs).1 v
+
+/-- **Components descend below the head** — `CNV`'s fourth conjunct, propagated down the sum. -/
+theorem le_toList_hdOf : ∀ (s : Term), CNV s = true → ∀ g ∈ toList s, le g (hdOf s) = true := by
+  intro s
+  induction s with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ g hg; cases hg
+  | phi a b _ _ =>
+    intro _ g hg
+    rw [show toList (phi a b) = [phi a b] from rfl] at hg
+    cases hg with
+    | head _ => exact le_self _
+    | tail _ h => cases h
+  | add u v _ ihv =>
+    intro hs g hg
+    obtain ⟨_, _, hcnv, hdvu⟩ := cnv_add hs
+    rw [show toList (add u v) = u :: toList v from rfl] at hg
+    cases hg with
+    | head _ => exact le_self _
+    | tail _ hg =>
+      have hvz : v ≠ zero := by
+        intro hc; rw [hc, show toList (zero : Term) = [] from rfl] at hg; cases hg
+      have h2 : le (hdOf v) u = true := by rw [← hdLe_eq v u hvz]; exact hdvu
+      exact le_trans (frag_toList v (frag_of_cnv v hcnv) g hg)
+        (frag_of_cnv _ (cnv_hdOf hcnv)) (frag_of_cnv u (cnv_add hs).2.1)
+        (ihv hcnv g hg) h2
+
+/-- **F1b — every component is `le` the sum.**  See the section header: the requester's
+    `summands` form follows from this by a bridge that cannot be stated in this file. -/
+theorem le_toList_self : ∀ (s : Term), CNV s = true → ∀ g ∈ toList s, le g s = true := by
+  intro s hs g hg
+  exact le_trans (frag_toList s (frag_of_cnv s hs) g hg)
+    (frag_of_cnv _ (cnv_hdOf hs)) (frag_of_cnv s hs)
+    (le_toList_hdOf s hs g hg) (le_hdOf_self s hs)
+
+/-- **Any prefix of the component list is `le` the whole**, at every `k`.  F1a is one instance. -/
+theorem le_ofList_take : ∀ (s : Term), CNV s = true → ∀ k,
+    le (ofList ((toList s).take k)) s = true := by
+  intro s
+  induction s with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero =>
+    intro _ k
+    rw [show ((toList (zero : Term)).take k) = [] from by cases k <;> rfl]
+    exact le_self _
+  | phi a b _ _ =>
+    intro _ k
+    cases k with
+    | zero => exact le_zero_any _
+    | succ k =>
+      rw [show ((toList (phi a b)).take (k + 1)) = [phi a b] from by cases k <;> rfl]
+      exact le_self _
+  | add u v _ ihv =>
+    intro hs k
+    obtain ⟨hAPu, _, hcnv, _⟩ := cnv_add hs
+    cases k with
+    | zero => exact le_zero_any _
+    | succ k =>
+      rw [show ((toList (add u v)).take (k + 1)) = u :: (toList v).take k from rfl]
+      have ih := ihv hcnv k
+      generalize hd : (toList v).take k = r at ih ⊢
+      cases r with
+      | nil => exact le_head_add hAPu v
+      | cons w rest => exact le_add_tail ih
+
+/-- **F1a — `splitFin`'s infinite part is `le` the term it was split from.** -/
+theorem le_splitFin_fst {b : Term} (hb : CNV b = true) : le (splitFin b).1 b = true :=
+  le_ofList_take b hb _
+
+/-- **F2 — `x ⊕ 1 < ω^x` for `x ≠ 0`.**  The side condition is load-bearing: at `x = 0`
+    both sides are `1`, and the `#guard` below is that negative control. -/
+theorem lt_succT_phi_zero {x : Term} (hx : CNV x = true) (hz : x ≠ zero) :
+    lt (succT x) (phi zero x) = true := by
+  have hhd : lt (hdOf x) (phi zero x) = true :=
+    lt_phi_of_le (cnv_hdOf hx) hx (le_hdOf_self x hx)
+  cases x with
+  | zero => exact absurd rfl hz
+  | M => exact Bool.noConfusion hx
+  | omg _ => exact Bool.noConfusion hx
+  | psi _ _ => exact Bool.noConfusion hx
+  | Z _ => exact Bool.noConfusion hx
+  | phi a b =>
+    show lt (add (phi a b) one) (phi zero (phi a b)) = true
+    rw [lt_add_phi]; exact hhd
+  | add u v =>
+    show lt (add u (succT v)) (phi zero (add u v)) = true
+    rw [lt_add_phi]; exact hhd
+
+/-- **F2, weakened to `le` and UNCONDITIONAL** — the offered fallback, proved so the choice
+    costs no round trip.  The `x = 0` instance is exactly the equality `1 = ω^0`. -/
+theorem le_succT_phi_zero {x : Term} (hx : CNV x = true) :
+    le (succT x) (phi zero x) = true := by
+  by_cases hz : x = zero
+  · rw [hz]; exact le_self _
+  · exact le_of_lt (lt_succT_phi_zero hx hz)
+
+#guard lt (succT zero) (phi zero zero) == false   -- F2's side condition, as a NEGATIVE CONTROL
+#guard le (succT zero) (phi zero zero) == true    -- ... and why the `le` form survives it
+
 end Evidence.WF
