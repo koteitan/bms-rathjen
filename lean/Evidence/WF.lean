@@ -1972,7 +1972,362 @@ theorem cof_eps0_needs_inT :
     show ((junk == tower n) : Bool) = false from by cases n <;> rfl] at hn
   exact Bool.noConfusion hn
 
+/-! ## §10 The CNF segment below ε₀ is WELL-FOUNDED — the Gentzen argument
+    (STAGE 2a of the ε₀ certificate, certificate lane 2026-08-09)
+
+WHAT THIS IS FOR.  §9 settles the COFINALITY clause of the ε₀ row.  The other
+open clause is `∀ n, Certified ((0,0)(1,1)[n]) (tower n)`, and the expansion
+closure of the tower matrices is the WHOLE standard one-row region — every CNF
+term below ε₀ — so the certificate family has to be built by a recursion along the
+expansion, i.e. along the term order.  Nothing in §1–§4 supplies that: `LexLt` is
+a fixed-length vector order, and below ε₀ the exponents are unbounded terms.  This
+section supplies the missing recursion principle in the only form that exists,
+the classical structural (Gentzen/Schütte) argument.
+
+THE ORDER IS NOT WELL-FOUNDED WITHOUT THE DESCENDING CONDITION.  This is not a
+technicality: clause 2.3.16 compares two sums along the spine, so with 2.3.10
+reading only the head one gets the genuine infinite descent
+
+    1 ⊕ ω  >  1 ⊕ 1 ⊕ ω  >  1 ⊕ 1 ⊕ 1 ⊕ ω  >  …
+
+(each step: the heads `1` agree, so the tails are compared, and `1 ⊕ ω < ω`
+because 2.3.10 sees only the head `1`).  Every one of those terms is in `Frag`.
+So `Frag` alone — the hypothesis of §7 — is NOT enough for well-foundedness, and
+`CN` below carries 2.1(iii)'s descending condition as well.  `cn_desc_needed`
+keeps the descent as a kernel-checked mutant.
+
+THE ARGUMENT.  `RC x y := CN x ∧ x < y`.  The theorem is `∀ t, CN t → Acc RC t`,
+and the whole content is the single outer induction
+
+    ∀ a, Acc RC a → Acc RC (ω^a) ∧ ∀ v, CN v → Acc RC v → Acc RC (ω^a ⊕ v)
+
+whose step first proves, by a STRUCTURAL induction on `x`,
+
+    C : ∀ x, CN x → x < ω^a → Acc RC x
+
+(the `⊕` case of `C` is where §7's `lt_of_le_of_lt` — hence `lt_trans`, hence THE
+KEYSTONE — is spent: the tail of a CNF sum is below `ω^a` because its head is `≤`
+the head of the sum, which is `< ω^a`).  `Acc RC (ω^a)` is then literally `C`, and
+the `⊕` half follows by an inner induction on `Acc v`.  The final theorem is a
+recursion on the degree, because the `⊕` case needs the EXPONENT of the head, not
+the head itself. -/
+
+/-- `ω^·`-shape: the terms `φ̄0β`. -/
+def isPow : Term → Bool
+  | phi a _ => a == zero
+  | _ => false
+
+/-- The descending condition of 2.1(iii), read off the head of the tail: every
+    component of `b` is `≤ a`.  `0` is excluded because a `⊕` has ≥ 2 components. -/
+def hdLe (b a : Term) : Bool :=
+  match b with
+  | zero => false
+  | add c _ => le c a
+  | t => le t a
+
+/-- **The Cantor normal forms below ε₀**: `0`, `ω^β = φ̄0β` with `β` in CNF, and
+    formal sums of such with the components descending.  This is exactly `Frag`
+    intersected with 2.1(iii)'s descending condition and `α = 0` in every `φ̄αβ`
+    — i.e. the shapes §9 puts below ε₀, made honest. -/
+def CN : Term → Bool
+  | zero => true
+  | phi a b => (a == zero) && CN b
+  | add a b => isPow a && CN a && CN b && hdLe b a
+  | _ => false
+
+theorem cn_phi {a b : Term} (h : CN (phi a b) = true) : a = zero ∧ CN b = true := by
+  simp only [CN, Bool.and_eq_true, beq_iff_eq] at h
+  exact h
+
+theorem cn_add {a b : Term} (h : CN (add a b) = true) :
+    isPow a = true ∧ CN a = true ∧ CN b = true ∧ hdLe b a = true := by
+  simp only [CN, Bool.and_eq_true] at h
+  exact ⟨h.1.1.1, h.1.1.2, h.1.2, h.2⟩
+
+theorem eq_pow_of_isPow : ∀ {a : Term}, isPow a = true → ∃ e, a = phi zero e
+  | zero, h => Bool.noConfusion h
+  | M, h => Bool.noConfusion h
+  | add _ _, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi x y, h => ⟨y, by simp only [isPow, beq_iff_eq] at h; rw [h]⟩
+
+theorem frag_of_cn : ∀ (t : Term), CN t = true → Frag t = true
+  | zero, _ => rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi a b, h => by
+    obtain ⟨ha, hb⟩ := cn_phi h
+    subst ha
+    show (Frag zero && Frag b) = true
+    rw [frag_of_cn b hb]
+    rfl
+  | add a b, h => by
+    obtain ⟨_, ha, hb, _⟩ := cn_add h
+    show (Frag a && Frag b) = true
+    rw [frag_of_cn a ha, frag_of_cn b hb]
+    rfl
+
+/-! ### §10.1 The three clause bodies, at the DEFAULT fuel
+
+§7.2 states them at `f + 1`; the Acc argument compares terms whose degrees are
+unrelated, so it needs them for `lt` itself.  §5 is what makes that possible. -/
+
+/-- 2.3.10 for `lt`: a sum is below a `φ̄` exactly when its head is. -/
+theorem lt_add_phi (a b p q : Term) : lt (add a b) (phi p q) = lt a (phi p q) := by
+  have hb := deg_pos b
+  show ltF (fuelOf (add a b) (phi p q)) (add a b) (phi p q) = _
+  rw [show fuelOf (add a b) (phi p q)
+        = (2 * ((add a b).deg + (phi p q).deg) + 7) + 1 from by
+      show 2 * ((add a b).deg + (phi p q).deg) + 8 = _; omega,
+    ltF_succ_add_phi]
+  exact (lt_eq_ltF a (phi p q) _
+    (by show a.deg + (phi p q).deg ≤ 2 * ((1 + a.deg + b.deg) + (phi p q).deg) + 7; omega)).symm
+
+/-- 2.3.11 for `lt`: a `φ̄` is below a sum exactly when it is `≤` the head. -/
+theorem lt_phi_add (p q u v : Term) : lt (phi p q) (add u v) = le (phi p q) u := by
+  have hv := deg_pos v
+  show ltF (fuelOf (phi p q) (add u v)) (phi p q) (add u v) = _
+  rw [show fuelOf (phi p q) (add u v)
+        = (2 * ((phi p q).deg + (add u v).deg) + 7) + 1 from by
+      show 2 * ((phi p q).deg + (add u v).deg) + 8 = _; omega,
+    ltF_succ_phi_add]
+  rw [show ltF (2 * ((phi p q).deg + (add u v).deg) + 7) (phi p q) u = lt (phi p q) u from
+    (lt_eq_ltF (phi p q) u _
+      (by show (phi p q).deg + u.deg ≤ 2 * ((phi p q).deg + (1 + u.deg + v.deg)) + 7;
+          omega)).symm]
+  rfl
+
+/-- 2.3.16 for `lt`. -/
+theorem lt_add_add {c d u v : Term} (h : add c d ≠ add u v) :
+    lt (add c d) (add u v) = (if c = u then lt d v else lt c u) := by
+  have hc := deg_pos c; have hd := deg_pos d; have hu := deg_pos u; have hv := deg_pos v
+  show ltF (fuelOf (add c d) (add u v)) (add c d) (add u v) = _
+  rw [show fuelOf (add c d) (add u v)
+        = (2 * ((add c d).deg + (add u v).deg) + 7) + 1 from by
+      show 2 * ((add c d).deg + (add u v).deg) + 8 = _; omega,
+    ltF_succ_add_add _ h]
+  by_cases hcu : c = u
+  · rw [if_pos hcu, if_pos hcu]
+    exact (lt_eq_ltF d v _
+      (by show d.deg + v.deg ≤ 2 * ((1 + c.deg + d.deg) + (1 + u.deg + v.deg)) + 7; omega)).symm
+  · rw [if_neg hcu, if_neg hcu]
+    exact (lt_eq_ltF c u _
+      (by show c.deg + u.deg ≤ 2 * ((1 + c.deg + d.deg) + (1 + u.deg + v.deg)) + 7; omega)).symm
+
+/-- 2.3.13(ii) for `lt`: `ω^·` is strictly monotone, and reflects the order. -/
+theorem lt_pow (e a : Term) : lt (phi zero e) (phi zero a) = lt e a := by
+  by_cases hea : e = a
+  · subst hea; rw [lt_irrefl, lt_irrefl]
+  · have hne : phi zero e ≠ phi zero a := by
+      intro h; injection h with h1 h2; exact hea h2
+    show ltF (fuelOf (phi zero e) (phi zero a)) (phi zero e) (phi zero a) = _
+    rw [show fuelOf (phi zero e) (phi zero a)
+          = (2 * ((phi zero e).deg + (phi zero a).deg) + 7) + 1 from by
+        show 2 * ((phi zero e).deg + (phi zero a).deg) + 8 = _; omega,
+      ltF_succ_phi_phi _ hne, if_pos rfl]
+    exact (lt_eq_ltF e a _
+      (by show e.deg + a.deg ≤ 2 * ((1 + 1 + e.deg) + (1 + 1 + a.deg)) + 7; omega)).symm
+
+/-- **The tail of a CNF sum inherits any `φ̄`-bound on its head.**  This is where
+    §7's transitivity is spent, and it is the step the whole argument turns on. -/
+theorem lt_tail {a b p q : Term} (h : CN (add a b) = true) (hfpq : Frag (phi p q) = true)
+    (hlt : lt a (phi p q) = true) : lt b (phi p q) = true := by
+  obtain ⟨_, hcna, hcnb, hdesc⟩ := cn_add h
+  have hfa : Frag a = true := frag_of_cn a hcna
+  cases b with
+  | zero => exact Bool.noConfusion hdesc
+  | M => exact Bool.noConfusion hcnb
+  | omg _ => exact Bool.noConfusion hcnb
+  | psi _ _ => exact Bool.noConfusion hcnb
+  | Z _ => exact Bool.noConfusion hcnb
+  | phi x y =>
+    exact lt_of_le_of_lt (frag_of_cn _ hcnb) hfa hfpq hdesc hlt
+  | add c d =>
+    obtain ⟨_, hcnc, _, _⟩ := cn_add hcnb
+    rw [lt_add_phi]
+    exact lt_of_le_of_lt (frag_of_cn c hcnc) hfa hfpq hdesc hlt
+
+/-! ### §10.2 Accessibility -/
+
+/-- The relation the certificate recursion descends along. -/
+def RC (x y : Term) : Prop := CN x = true ∧ lt x y = true
+
+theorem acc_zero : Acc RC zero := by
+  refine Acc.intro _ (fun x hx => ?_)
+  have h := hx.2
+  rw [show lt x zero = false from ltF_right_zero _ x] at h
+  exact Bool.noConfusion h
+
+/-- **THE GENTZEN STEP.**  Simultaneously: `ω^a` is accessible, and prefixing `ω^a`
+    to an accessible CNF tail keeps it accessible. -/
+private theorem acc_pow_aux : ∀ (a : Term), Acc RC a → CN a = true →
+    Acc RC (phi zero a) ∧ ∀ v, CN v = true → Acc RC v → Acc RC (add (phi zero a) v) := by
+  intro a ha
+  induction ha with
+  | intro a _ IH =>
+    intro hcna
+    have hfpa : Frag (phi zero a) = true := by
+      show (Frag zero && Frag a) = true
+      rw [frag_of_cn a hcna]
+      rfl
+    have C : ∀ x, CN x = true → lt x (phi zero a) = true → Acc RC x := by
+      intro x
+      induction x with
+      | zero => intro _ _; exact acc_zero
+      | M => intro hcn _; exact Bool.noConfusion hcn
+      | omg _ _ => intro hcn _; exact Bool.noConfusion hcn
+      | psi _ _ _ _ => intro hcn _; exact Bool.noConfusion hcn
+      | Z _ _ => intro hcn _; exact Bool.noConfusion hcn
+      | phi p q _ _ =>
+        intro hcn hlt
+        obtain ⟨hp, hq⟩ := cn_phi hcn
+        subst hp
+        rw [lt_pow] at hlt
+        exact (IH q ⟨hq, hlt⟩ hq).1
+      | add c d _ ihd =>
+        intro hcn hlt
+        obtain ⟨hpow, hcnc, hcnd, _⟩ := cn_add hcn
+        obtain ⟨e, hce⟩ := eq_pow_of_isPow hpow
+        subst hce
+        have hhead : lt (phi zero e) (phi zero a) = true := by rw [← lt_add_phi]; exact hlt
+        have htail : lt d (phi zero a) = true := lt_tail hcn hfpa hhead
+        have hcne : CN e = true := (cn_phi hcnc).2
+        have hea : lt e a = true := by rw [← lt_pow]; exact hhead
+        exact (IH e ⟨hcne, hea⟩ hcne).2 d hcnd (ihd hcnd htail)
+    refine ⟨Acc.intro _ (fun x hx => C x hx.1 hx.2), ?_⟩
+    intro v hcnv hav
+    revert hcnv
+    induction hav with
+    | intro v _ IHv =>
+      intro hcnv
+      refine Acc.intro _ (fun x hx => ?_)
+      obtain ⟨hcn, hlt⟩ := hx
+      cases x with
+      | zero => exact acc_zero
+      | M => exact Bool.noConfusion hcn
+      | omg _ => exact Bool.noConfusion hcn
+      | psi _ _ => exact Bool.noConfusion hcn
+      | Z _ => exact Bool.noConfusion hcn
+      | phi p q =>
+        obtain ⟨hp, _⟩ := cn_phi hcn
+        subst hp
+        rw [lt_phi_add] at hlt
+        simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlt
+        rcases hlt with h1 | h1
+        · rw [h1]
+          exact Acc.intro _ (fun y hy => C y hy.1 hy.2)
+        · exact C _ hcn h1
+      | add c d =>
+        obtain ⟨hpow, hcnc, hcnd, _⟩ := cn_add hcn
+        by_cases heq : add c d = add (phi zero a) v
+        · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+        rw [lt_add_add heq] at hlt
+        by_cases hc : c = phi zero a
+        · subst hc
+          rw [if_pos rfl] at hlt
+          exact IHv d ⟨hcnd, hlt⟩ hcnd
+        · rw [if_neg hc] at hlt
+          exact C _ hcn (by rw [lt_add_phi]; exact hlt)
+
+private theorem acc_of_cn_aux : ∀ (n : Nat) (t : Term), t.deg ≤ n → CN t = true → Acc RC t := by
+  intro n
+  induction n with
+  | zero => intro t hd _; have := deg_pos t; omega
+  | succ n ih =>
+    intro t hd hcn
+    cases t with
+    | zero => exact acc_zero
+    | M => exact Bool.noConfusion hcn
+    | omg _ => exact Bool.noConfusion hcn
+    | psi _ _ => exact Bool.noConfusion hcn
+    | Z _ => exact Bool.noConfusion hcn
+    | phi p q =>
+      obtain ⟨hp, hq⟩ := cn_phi hcn
+      subst hp
+      have hdq : q.deg ≤ n := by
+        have : (1 : Nat) + 1 + q.deg ≤ n + 1 := hd
+        omega
+      exact (acc_pow_aux q (ih q hdq hq) hq).1
+    | add c d =>
+      obtain ⟨hpow, hcnc, hcnd, _⟩ := cn_add hcn
+      obtain ⟨e, hce⟩ := eq_pow_of_isPow hpow
+      subst hce
+      have hcne : CN e = true := (cn_phi hcnc).2
+      have hde : e.deg ≤ n := by
+        have : 1 + (1 + 1 + e.deg) + d.deg ≤ n + 1 := hd
+        omega
+      have hdd : d.deg ≤ n := by
+        have : 1 + (1 + 1 + e.deg) + d.deg ≤ n + 1 := hd
+        omega
+      exact (acc_pow_aux e (ih e hde hcne) hcne).2 d hcnd (ih d hdd hcnd)
+
+/-- **WELL-FOUNDEDNESS OF THE CNF SEGMENT BELOW ε₀.**  Every Cantor normal form is
+    accessible in the order of 𝔗(M).  This is the recursion principle the ε₀
+    certificate family runs on. -/
+theorem acc_cn (t : Term) (h : CN t = true) : Acc RC t := acc_of_cn_aux t.deg t (Nat.le_refl _) h
+
+/-- The two-sided relation, so that the statement is a `WellFounded` on all of
+    `Term` and can be handed to `WellFounded.fix` directly: outside the CNF
+    segment a term simply has no predecessors. -/
+def RCn (x y : Term) : Prop := CN x = true ∧ CN y = true ∧ lt x y = true
+
+private theorem acc_rcn_of_acc_rc : ∀ (t : Term), Acc RC t → Acc RCn t := by
+  intro t ht
+  induction ht with
+  | intro t _ ih => exact Acc.intro _ (fun y hy => ih y ⟨hy.1, hy.2.2⟩)
+
+theorem wf_RCn : WellFounded RCn := by
+  refine ⟨fun t => ?_⟩
+  by_cases h : CN t = true
+  · exact acc_rcn_of_acc_rc t (acc_cn t h)
+  · exact Acc.intro _ (fun y hy => absurd hy.2.1 h)
+
+/-! ### §10.3 The mutant: the descending condition is load-bearing
+
+`Frag` alone does not give well-foundedness.  The witnesses are the terms
+`1 ⊕ 1 ⊕ … ⊕ ω`, all in `Frag`, all failing `CN`, and each strictly below the
+previous one. -/
+
+private def desc : Nat → Term
+  | 0 => omega
+  | n + 1 => add one (desc n)
+
+#guard (List.range 6).all (fun n => Frag (desc n))
+#guard CN (desc 0) = true
+#guard (List.range 6).all (fun n => !CN (desc (n + 1)))
+#guard (List.range 6).all (fun n => lt (desc (n + 1)) (desc n))
+
+private theorem lt_desc : ∀ n, lt (desc (n + 1)) (desc n) = true := by
+  intro n
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    show lt (add one (desc (n + 1))) (add one (desc n)) = true
+    rw [lt_add_add (by intro h; injection h with h1 h2; exact ne_of_ltF ih h2), if_pos rfl]
+    exact ih
+
+/-- **The mutant.**  Dropping the descending condition — i.e. asking for
+    well-foundedness on `Frag` instead of on `CN` — makes the statement FALSE. -/
+theorem cn_desc_needed : ¬ (∀ t, Frag t = true → Acc (fun x y => lt x y = true) t) := by
+  intro hwf
+  have key : ∀ t, Acc (fun x y => lt x y = true) t → ∀ n, t = desc n → False := by
+    intro t ht
+    induction ht with
+    | intro t _ ih =>
+      intro n hn
+      subst hn
+      exact ih (desc (n + 1)) (lt_desc n) (n + 1) rfl
+  exact key (desc 0) (hwf (desc 0) rfl) 0 rfl
+
 /-! ## §8 STAGE 3 — the `ψ`/`Z` clauses: what is left  (NOTHING PROVED BELOW)
+
+(§9 and §10 were added later and sit ABOVE this section on purpose: this map is
+kept last so that "NOTHING PROVED BELOW" stays literally true of the file tail.
+The numbering therefore runs §1–§7, §9, §10, §8.)
 
 This is a map in the style of §6, for §6's own item 3 — the version of §7 that
 `cert_sound` needs.  It is not speculation: every claim marked MEASURED comes from
