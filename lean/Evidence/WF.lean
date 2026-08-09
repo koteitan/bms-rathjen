@@ -8324,6 +8324,53 @@ theorem lt_trans_mixed {s x v : Term} (hs : Frag2 s = true) (hx : inT x = true)
 #guard inT (add zero M) == false            -- … and this is what `inT` rules out
 #guard CN one == true
 
+/-! ### §8.7 SCOPING NOTE: why §8.5 does NOT extend §10, and what the sweeps cover
+
+Recorded because it is the first thing anyone will try after Stage 3b, and it is
+wrong.  Linearity and well-foundedness move in OPPOSITE directions along the
+fragments of this file:
+
+    Frag  ⊂  Frag2  ⊂  FragR          linearity WIDENS  (§7 → §8.2 → §8.5)
+    CN    ⊂  Frag                     accessibility NARROWS  (§10)
+
+§10.3's `cn_desc_needed` shows `Frag` is already too wide for well-foundedness: the
+witnesses `1 ⊕ 1 ⊕ … ⊕ ω` descend forever and are all in `Frag`.  They are therefore
+in `Frag2` and in `FragR` as well (guards below), so NO amount of Stage-3a/3b
+widening helps — `∀ t, FragR t = true → Acc RC t` is FALSE, by the same witnesses.
+What §10 needs is 2.1(iii)'s DESCENDING condition, which `CN` carries and none of
+`Frag` / `Frag2` / `FragR` does.  Stage 3b's contribution to a future
+well-foundedness result is therefore not its fragment but its ORDER THEORY: §10's
+Gentzen step spends `lt_of_le_of_lt`, and past ε₀ the corresponding step would spend
+`lt_trans3` / `lt_trichotomy3` on the wider region.
+
+So the fragment for any accessibility result above ε₀ is "`FragR` ∩ descending",
+i.e. essentially `inT` — NOT `FragR`. -/
+
+#guard (List.range 6).all (fun n => Frag2 (desc n))
+#guard (List.range 6).all (fun n => FragR (desc n))
+#guard !inT (desc 1)
+
+/-! WHAT THE UNCONSTRAINED-MIDDLE SWEEP COVERS (§8.6's open caveat).
+
+§8.6 proves the mixed statement with `inT` on the middle.  The version with the
+middle entirely unconstrained is still open, and the search behind "no
+counterexample" is this, so that the claim is not read as wider than the check:
+
+  * the test is EXACT per middle term, not sampled over endpoint pairs: because
+    `Frag2` is linearly ordered (`lt_trichotomy2`), a middle `x` admits a violation
+    iff the LARGEST `s` with `le s x` fails to be below the SMALLEST `v` with
+    `lt x v`.  So one comparison per middle decides all |A|·|C| pairs at once.
+  * coverage: ALL 578 middles of degree ≤ 5 and ALL 3042 of degree ≤ 6, against the
+    154 resp. 556 `Frag2` endpoints of those degrees; plus a 1-in-20 sample, 843 of
+    the 16850 middles of degree ≤ 7, against all 2278 `Frag2` endpoints there.
+    Zero violations anywhere.
+  * this is NOT vacuous: `lt_not_asymm_raw` and `lt_not_trans_raw` show the ambient
+    raw order genuinely has 2- and 3-cycles, so the statement survives in spite of
+    the surrounding order being neither asymmetric nor transitive — which is
+    evidence that the `Frag2` endpoints are doing real work, not that the
+    configuration is impossible.
+  * degree ≥ 8 is NOT covered, and no proof is claimed. -/
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
