@@ -7616,6 +7616,96 @@ theorem expand_rowA (n : Nat) : BMS.expand? [[0, 0], [1, 1], [1, 0]] n = some (e
     map_const_flatten]
   rfl
 
+/-! ### §18.1 THE ε₀-PREFIXED FAMILY — what Row A's certificate runs on
+
+`lim_clauses_fsA` (WF §15.11.2) supplies the 𝔗(M) premises at every intermediate
+value ε₀·(k+1), with the sequence `fsAin k = sumSeq eps0T tower k` — RIGHT-NESTED,
+`ε₀ ⊕ (ε₀ ⊕ … ⊕ tower n)`, which is a different TERM from `add (repAdd ε₀ (k-1)) (tower n)`
+even though it is the same ordinal (that lane's §15.11 `#guard`s both shapes; the
+wrong one is green on all four order clauses and fails only against the matrix).
+
+So the certificate cannot be built row by row: `eps0M k`'s expansions are
+`(0,0)(1,1) ++ (eps0M (k-1))'s expansions`, and THOSE are `k` copies of the ε₀ row
+followed by a padded CNF row.  The family the recursion actually closes over is
+
+    famM k c = (k copies of the ε₀ row) ++ padRow (sq c)     for `CN c`
+
+with value `sumSeq eps0T (fun _ => c) k`-shaped, i.e. `ε₀ ⊕ (… ⊕ c)`.  §17.4's
+locality theorem is what makes its expansions computable: the ε₀ blocks are inert,
+so `famM k c` expands by expanding `padRow (sq c)`, which is §11–§12's business.
+This subsection is that family's BMS side; the certificate itself is the next step
+and needs, besides these, only `lim_clauses_sum_iter` for the limit clause and a
+`plus`-associativity step for the successor clause. -/
+
+theorem sq_head_zero : ∀ (c : TM.Term), CN c = true → ∀ a t, sq c = a :: t → a = 0 := by
+  intro c
+  induction c with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ a t h; exact absurd h (by simp [sq])
+  | phi x y _ _ =>
+    intro hcn a t h
+    rw [sq_phi] at h
+    injection h with h1 _
+    exact h1.symm
+  | add u v ihu _ =>
+    intro hcn a t h
+    obtain ⟨hpow, hcu, _, _⟩ := Evidence.WF.cn_add hcn
+    obtain ⟨e, he⟩ := Evidence.WF.eq_pow_of_isPow hpow
+    subst he
+    rw [sq_add, sq_phi, List.cons_append] at h
+    injection h with h1 _
+    exact h1.symm
+
+/-- `k` copies of the ε₀ row. -/
+def epsBlocks (k : Nat) : Matrix := (List.replicate k [[0, 0], [1, 1]]).flatten
+
+theorem epsBlocks_succ (k : Nat) : epsBlocks (k + 1) = [[0, 0], [1, 1]] ++ epsBlocks k := by
+  show (List.replicate (k + 1) [[0, 0], [1, 1]]).flatten = _
+  rw [List.replicate_succ]; rfl
+
+/-- The family: `k` copies of the ε₀ row, then the padded CNF row of `c`. -/
+def famM (k : Nat) (c : TM.Term) : Matrix := epsBlocks k ++ padRow (sq c)
+
+theorem famM_zero (c : TM.Term) : famM 0 c = padRow (sq c) := rfl
+
+theorem famM_succ (k : Nat) (c : TM.Term) :
+    famM (k + 1) c = [[0, 0], [1, 1]] ++ famM k c := by
+  show epsBlocks (k + 1) ++ padRow (sq c) = _
+  rw [epsBlocks_succ, List.append_assoc]
+  rfl
+
+theorem famM_root (k : Nat) (c : TM.Term) (hcn : CN c = true) (hc : sq c ≠ []) : ∀ y, BMS.ent (famM k c) 0 y = 0 := by
+  intro y
+  cases k with
+  | succ j =>
+    show ((famM (j+1) c).getD 0 []).getD y 0 = 0
+    rw [famM_succ]
+    show (([0, 0] : List Nat)).getD y 0 = 0
+    cases y with
+    | zero => rfl
+    | succ m => cases m with | zero => rfl | succ p => rfl
+  | zero =>
+    show ((padRow (sq c)).getD 0 []).getD y 0 = 0
+    cases h : sq c with
+    | nil => exact absurd h hc
+    | cons a t =>
+      show (([a, 0] : List Nat)).getD y 0 = 0
+      cases y with
+      | zero => show a = 0; exact sq_head_zero c hcn a t h
+      | succ m => cases m with | zero => rfl | succ p => rfl
+
+theorem famM_ne_nil (k : Nat) (c : TM.Term) (hc : sq c ≠ []) : famM k c ≠ [] := by
+  cases k with
+  | succ j => rw [famM_succ]; simp
+  | zero =>
+    show padRow (sq c) ≠ []
+    cases h : sq c with
+    | nil => exact absurd h hc
+    | cons a t => simp [padRow]
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
