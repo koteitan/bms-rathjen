@@ -9361,6 +9361,186 @@ theorem lt_phi_of_le {x y u : Term} (hx : CNV x = true) (hy : CNV y = true)
 theorem lt_phi_self {x : Term} (hx : CNV x = true) (u : Term) : lt x (phi u x) = true :=
   lt_phi_of_le hx hx (le_self x)
 
+
+/-! ### §15.6 CORE (B): an exceptional first term, then an iteration
+
+MEASURED (`Trans.oR` on `BMS.expand`, per §15.5's rule that the matrix — not cofinality —
+determines the sequence):
+
+    ε₁, row (0,0)(1,1)(1,1)   ε₀,  ω^(ε₀·2),  ω^(ω^(ε₀·2)),  …
+    ε₂, row (0,0)(1,1)(1,1)(1,1)   ε₁,  ω^(ε₁·2),  …          — the same shape
+    ζ₀, row (0,0)(1,1)(2,1)   ε₀,  φ̄1(ε₀),  φ̄1(φ̄1(ε₀)),  …
+
+All three are `fsGen v u base`: an exceptional first term `v`, then `φ̄ u` iterated from
+`base`.  ζ₀ is the DEGENERATE case `v = base = ε₀` with `u = 1`; ε₁ has `u = 0` and
+`base = ε₀·2`.  Making the first term a PARAMETER rather than a special case is what lets one
+template absorb the ε₁/ζ₀ difference instead of forcing a fourth shape — and note the base of
+the iteration may itself be a `repAdd` term (`ε₀·2`), so shapes (A) and (B) COMPOSE.
+
+The three row-specific hypotheses `H1`/`H2`/`H3` are the 2.3.13 sub-clauses of cofinality:
+`H1` handles `p = a` (the second argument drops), `H2` handles `p < a` (the first argument is
+at most `u`), `H3` handles `p > a` (2.3.13(iii) gives `s ≤ b`, so `b` must sit below the
+sequence).  `hvb : le v base` is what bridges the boundary at `m = 0`, where `fs 1` is
+`φ̄ u base` rather than `φ̄ u (fs 0)`. -/
+
+/-- Iterate `φ̄ u` from `base`. -/
+def iterPhi (u base : Term) : Nat → Term
+  | 0 => base
+  | n + 1 => phi u (iterPhi u base n)
+
+/-- Core (B): an exceptional first term `v`, then an iteration of `φ̄ u` from `base`.
+    `ζ₀` is the degenerate case `v = base`; `ε₁` has `base = ε₀·2`. -/
+def fsGen (v u base : Term) : Nat → Term
+  | 0 => v
+  | n + 1 => iterPhi u base (n + 1)
+
+theorem cnv_iterPhi {u base : Term} (hu : CNV u = true) (hb : CNV base = true) :
+    ∀ n, CNV (iterPhi u base n) = true
+  | 0 => hb
+  | n + 1 => by
+    show (CNV u && CNV (iterPhi u base n)) = true
+    rw [hu, cnv_iterPhi hu hb n]; rfl
+
+/-- Every iterate stays below the row, given `u < a` (2.3.13(i)). -/
+theorem lt_iterPhi {u base a b : Term} (hua : lt u a = true) (hbt : lt base (phi a b) = true) :
+    ∀ n, lt (iterPhi u base n) (phi a b) = true
+  | 0 => hbt
+  | n + 1 => by
+    have hne : phi u (iterPhi u base n) ≠ phi a b := by
+      intro hc; injection hc with h1 _
+      rw [h1, lt_irrefl] at hua; exact Bool.noConfusion hua
+    show lt (phi u (iterPhi u base n)) (phi a b) = true
+    rw [lt_phi_phi hne, if_neg (by intro hc; rw [hc, lt_irrefl] at hua; exact Bool.noConfusion hua),
+      if_pos hua]
+    exact lt_iterPhi hua hbt n
+
+theorem le_fsGen_iter {v u base : Term} (hvb : le v base = true) :
+    ∀ m, le (fsGen v u base m) (iterPhi u base m) = true
+  | 0 => hvb
+  | _ + 1 => le_self _
+
+theorem lt_fsGen_step {v u base : Term} (hv : CNV v = true) (hu : CNV u = true)
+    (hb : CNV base = true) (hvb : le v base = true) :
+    ∀ n, lt (fsGen v u base n) (fsGen v u base (n + 1)) = true
+  | 0 => by
+    show lt v (phi u base) = true
+    exact lt_phi_of_le hv hb hvb
+  | n + 1 => by
+    show lt (iterPhi u base (n + 1)) (phi u (iterPhi u base (n + 1))) = true
+    exact lt_phi_self (cnv_iterPhi hu hb (n + 1)) u
+
+/-- `φ̄` is monotone in the shape cofinality needs: `p ≤ u` and `q ≤ X` put `φ̄ p q` at or
+    below `φ̄ u X`. -/
+theorem le_phi_of_le {p q u X : Term} (_hp : CNV p = true) (hq : CNV q = true)
+    (hu : CNV u = true) (hX : CNV X = true) (hpu : le p u = true) (hqX : le q X = true) :
+    le (phi p q) (phi u X) = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hpu
+  rcases hpu with rfl | hlt
+  · simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hqX ⊢
+    rcases hqX with rfl | hq2
+    · exact Or.inl rfl
+    · refine Or.inr ?_
+      have hne : phi p q ≠ phi p X := by
+        intro hc; injection hc with _ h2; exact ne_of_ltF hq2 h2
+      rw [lt_phi_phi hne, if_pos rfl]; exact hq2
+  · refine le_of_lt ?_
+    have hne : phi p q ≠ phi u X := by
+      intro hc; injection hc with h1 _; rw [h1, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+    rw [lt_phi_phi hne, if_neg (by intro hc; rw [hc, lt_irrefl] at hlt; exact Bool.noConfusion hlt),
+      if_pos hlt]
+    exact lt_phi_of_le hq hX hqX
+
+theorem cnv_fsGen {v u base : Term} (hv : CNV v = true) (hu : CNV u = true)
+    (hb : CNV base = true) : ∀ n, CNV (fsGen v u base n) = true
+  | 0 => hv
+  | n + 1 => cnv_iterPhi hu hb (n + 1)
+
+private theorem cof_fsGen_aux {v u base a b : Term}
+    (hv : CNV v = true) (hu : CNV u = true) (hbse : CNV base = true)
+    (hcnt : CNV (phi a b) = true) (hvb : le v base = true)
+    (H1 : ∀ q, CNV q = true → lt q b = true → le (phi a q) v = true)
+    (H2 : ∀ p, CNV p = true → lt p a = true → le p u = true)
+    (H3 : le b v = true) :
+    ∀ (n : Nat) (s : Term), s.deg ≤ n → CNV s = true → lt s (phi a b) = true →
+      ∃ m, le s (fsGen v u base m) = true := by
+  intro n
+  induction n with
+  | zero => intro s hd _ _; have := deg_pos s; omega
+  | succ n ih =>
+    intro s hd hs hlt
+    cases s with
+    | M => exact Bool.noConfusion hs
+    | omg _ => exact Bool.noConfusion hs
+    | psi _ _ => exact Bool.noConfusion hs
+    | Z _ => exact Bool.noConfusion hs
+    | zero =>
+      refine ⟨0, ?_⟩
+      show le zero v = true
+      by_cases hvz : v = zero
+      · rw [hvz]; exact le_self zero
+      · exact le_zero_left hvz
+    | phi p q =>
+      obtain ⟨hcp, hcq⟩ := cnv_phi hs
+      have hne : phi p q ≠ phi a b := ne_of_ltF hlt
+      rw [lt_phi_phi hne] at hlt
+      have hdq : q.deg ≤ n := by
+        have e : (phi p q).deg = 1 + p.deg + q.deg := rfl
+        have := deg_pos p; omega
+      by_cases hpa : p = a
+      · rw [if_pos hpa] at hlt
+        subst hpa
+        exact ⟨0, H1 q hcq hlt⟩
+      · rw [if_neg hpa] at hlt
+        by_cases hpl : lt p a = true
+        · rw [if_pos hpl] at hlt
+          obtain ⟨m, hm⟩ := ih q hdq hcq hlt
+          refine ⟨m + 1, ?_⟩
+          show le (phi p q) (phi u (iterPhi u base m)) = true
+          have hqX : le q (iterPhi u base m) = true :=
+            le_trans (frag_of_cnv _ hcq) (frag_of_cnv _ (cnv_fsGen hv hu hbse m))
+              (frag_of_cnv _ (cnv_iterPhi hu hbse m)) hm (le_fsGen_iter hvb m)
+          exact le_phi_of_le hcp hcq hu (cnv_iterPhi hu hbse m) (H2 p hcp hpl) hqX
+        · rw [if_neg hpl] at hlt
+          exact ⟨0, le_trans (frag_of_cnv _ hs) (frag_of_cnv _ (cnv_phi hcnt).2)
+            (frag_of_cnv _ hv) hlt H3⟩
+    | add c d =>
+      obtain ⟨hAPc, hcc, hcd, _⟩ := cnv_add hs
+      rw [lt_add_phi] at hlt
+      have hdc : c.deg ≤ n := by
+        have e : (add c d).deg = 1 + c.deg + d.deg := rfl
+        have := deg_pos d; omega
+      obtain ⟨m, hm⟩ := ih c hdc hcc hlt
+      refine ⟨m + 1, ?_⟩
+      show le (add c d) (phi u (iterPhi u base m)) = true
+      refine le_of_lt ?_
+      rw [lt_add_phi]
+      exact lt_phi_of_le hcc (cnv_iterPhi hu hbse m)
+        (le_trans (frag_of_cnv _ hcc) (frag_of_cnv _ (cnv_fsGen hv hu hbse m))
+          (frag_of_cnv _ (cnv_iterPhi hu hbse m)) hm (le_fsGen_iter hvb m))
+
+/-- **CORE (B).**  The four `Certified.lim` premises for a row whose closed form is an
+    exceptional first term followed by an iteration of `φ̄ u` from `base`. -/
+theorem lim_clauses_fsGen {v u base a b : Term}
+    (hv : CNV v = true) (hu : CNV u = true) (hbse : CNV base = true)
+    (hcnt : CNV (phi a b) = true)
+    (hvb : le v base = true) (hua : lt u a = true)
+    (hvt : lt v (phi a b) = true) (hbt : lt base (phi a b) = true)
+    (H1 : ∀ q, CNV q = true → lt q b = true → le (phi a q) v = true)
+    (H2 : ∀ p, CNV p = true → lt p a = true → le p u = true)
+    (H3 : le b v = true) :
+    (∀ n, CNV (fsGen v u base n) = true)
+  ∧ (∀ n, lt (fsGen v u base n) (phi a b) = true)
+  ∧ (∀ n, lt (fsGen v u base n) (fsGen v u base (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (phi a b) = true → ∃ m, le s (fsGen v u base m) = true) :=
+  ⟨cnv_fsGen hv hu hbse,
+   fun n => match n with
+     | 0 => hvt
+     | k + 1 => lt_iterPhi hua hbt (k + 1),
+   lt_fsGen_step hv hu hbse hvb,
+   fun s hin hlt =>
+     cof_fsGen_aux hv hu hbse hcnt hvb H1 H2 H3 s.deg s (Nat.le_refl _)
+       (cnv_of_lt_cnv hin hcnt hlt) hlt⟩
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
