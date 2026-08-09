@@ -97,6 +97,10 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   a stale WF olean for the whole session's snippet checks. Full-file POSTs
   re-elaborate from source and were unaffected, which is that discipline's real
   reason for existing.
+  **The canary name must be new RELATIVE TO THE ENVIRONMENT BEING CHECKED, not new
+  in absolute terms** — pick the newest name you have just committed. Do NOT write
+  a specific identifier into this file: whichever one is named here becomes an old
+  name and canaries nothing, silently.
   Health check: POST `{"snippets":[{"id":"t","code":"import BMS\n#check @BMS.expand?"}]}`
   to `http://localhost:12346/api/check`. **Do NOT health-check by substring-matching
   the name in the response** — an "unknown identifier NAME" ERROR contains the name
@@ -185,6 +189,13 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   cheaper and more reliable than the coordinator auditing its own relays, which
   is the thing that failed twice. Tell a lane receiving a relayed claim to measure
   it first, and it will catch what you dropped.
+- **DESCRIBE STATE FROM THE REPOSITORY, NOT FROM A LANE'S REPORT.** A checkpoint
+  describes the world as it was when the lane started writing it; by the time it
+  is read, the work it announces is committed. The coordinator once described a
+  queue — "they still owe the bridge" — in the same turn as committing the file
+  that contained the bridge, and routed from that model until a lane checked
+  `git show HEAD:` and corrected it. **Lane reports are the input; `HEAD` is the
+  state.** Grep the committed file before saying what is outstanding.
 - **When a lane reports a MEASUREMENT, ask WHICH CORPUS before building on it.**
   The count-vs-set rule below has a twin: a number can be honest, verifiable and
   useless because the corpus could not reach the failure class. It happened —
