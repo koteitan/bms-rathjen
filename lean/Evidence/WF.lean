@@ -12435,7 +12435,23 @@ target is cheap to PROVE, not on whether it is true.
 THE TRADE, STATED SO IT IS A CHOICE RATHER THAN A DEFAULT: the unbounded form makes `CNV`
 LOAD-BEARING at every step, where the bounded form needs only `inT`.  If any clause of the
 landing theorem turns out hard for `CNV` but easy for `inT`, §15.25's bounded form is the
-fallback and costs the consumer one extra `lt`-chaining step, which `belowC_step` already does. -/
+fallback and costs the consumer one extra `lt`-chaining step, which `belowC_step` already does.
+
+RESOLVED — THE UNBOUNDED FORM IS THE ONE `encv'` TAKES, and the criterion stated above is what
+decided it rather than taste.  `CNV` at each target is not merely cheap, it is PROVED:
+`cnv_omLog`, `cnv_fpDeep` and `cnv_mem_summands` are all on the certificate lane's file and NONE
+of them needed an order fact.  So the bounded form's one advantage — asking only `inT` — buys
+nothing here, while its cost is real: `encv'` recurses on a term with NO EXTERNAL CEILING (the
+targets are `predOr a`, the summands of `splitFin b`, and the `omLog`/`fpDeep` outputs), so
+`BelowC` would require inventing a `v` and carrying `lt t v` through every clause.  `wf_lt_cnv`
+needs no `v`, and `carrierV_step` takes exactly the pair the landing theorems deliver.
+
+THE BOUNDED FORM IS NOT RETIRED, AND THE TWO ANSWER DIFFERENT QUESTIONS — worth separating,
+because the earlier answer from this lane was "stay on `BelowC`" and that answer has NOT been
+reversed.  §15.25 + `cnv_of_belowC` settles whether a BOUNDED consumer needs `inT`-gated order
+facts: it does not, because `CNV` is free on the carrier.  §15.25.1 settles which carrier an
+UNBOUNDED recursion should use: this one, because there is no bound to supply.  A recursion that
+does have a ceiling should still take §15.25 and should not have to rediscover it. -/
 
 /-! If the landing theorem delivers `CNV` at every target — which the certificate lane measures
     free, 0 violations across 39/28/24 movers — then the BOUND DISAPPEARS.  `acc_cnv_inT` needs
