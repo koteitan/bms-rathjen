@@ -1650,4 +1650,41 @@ theorem tdepth_headD (b : Term) :
     exact tdepth_summands b y (by rw [h]; exact List.mem_cons_self)
 
 
+
+/-! ### §11.1 `tdepth_predOr` — what it reduces to, and the lemma that does not exist
+
+`predOr t` is `t` when `splitFin`'s finite part is 0, and `plus (splitFin t).1 (ofNat m)`
+when it is `m+1`.  MEASURED, on the 40 terms of `allM` whose finite part is nonzero and
+on a family with finite tails up to length 11:
+
+    predOr t = ofList ((toList t).take ((toList t).length - 1))     0 violations
+    predOr t = t                          when the finite part is 0, 0 violations
+
+**With that identity, `tdepth_predOr` is `tdepth_ofList_take` and nothing else** — the
+machinery of §11 is the right machinery, which is what proving this lemma second was
+meant to find out.
+
+WHAT IS MISSING IS THE IDENTITY, NOT THE BOUND.  Proving it needs two facts about `plus`
+that the repo does not have: `toList (ofNat m) = List.replicate m one`, and that `plus`'s
+`filter (le b1)` is the identity when every component of the left argument is `≥ 1` —
+which is true because components are additively principal, but is a statement about
+NORMAL FORMS.  So the direct route (W5) is not available here the way it was for
+`tdepth_ofList_take`: there, inducting on the term avoided the roundtrip; here the
+statement itself is about what `plus` computes.
+
+NAMED RATHER THAN WORKED AROUND.  The cheap workaround would be to restate
+`tdepth_predOr` with a hypothesis that `splitFin`'s finite part is 0 — true on most of
+the corpus, and it would make the lemma close today.  It is the same invisible narrowing
+as the `inT` fix: `encvF`'s ladder calls `predOr` precisely when there IS a finite part,
+so the hypothesis would exclude the case the lemma exists for. -/
+
+def dropLast1 (t : Term) : Term := ofList ((toList t).take ((toList t).length - 1))
+
+#guard (allM.filter (fun t => (TM.Term.splitFin t).2 >= 1 && !(predOr t == dropLast1 t))).length == 0
+#guard (allM.filter (fun t => (TM.Term.splitFin t).2 == 0 && !(predOr t == t))).length == 0
+#guard (allM.filter (fun t => (TM.Term.splitFin t).2 >= 1)).length == 40
+#guard (((List.range 12).map (fun k => plus (phi one zero) (ofNat k))).filter
+          (fun t => if (TM.Term.splitFin t).2 >= 1 then !(predOr t == dropLast1 t)
+                    else !(predOr t == t))).length == 0
+
 end Evidence.SqV
