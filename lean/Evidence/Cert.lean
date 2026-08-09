@@ -7706,6 +7706,99 @@ theorem famM_ne_nil (k : Nat) (c : TM.Term) (hc : sq c ≠ []) : famM k c ≠ []
     | nil => exact absurd h hc
     | cons a t => simp [padRow]
 
+/-! ### §18.2 THE FAMILY'S VALUE, and the successor step
+
+`famV k c` is the value of `famM k c`: `k` copies of ε₀ in front of `c`, RIGHT-NESTED,
+matching `Evidence.WF.sumSeq` (the shape that lane's §15.11 warns is the only correct
+one — the left-nested `add (repAdd ε₀ (k-1)) c` is the same ordinal, a different term,
+and green on all four order clauses).  `sumSeq_famV` is the bridge: their sequence IS
+this family's value, so their clause bundles apply verbatim.
+
+`famV` has to special-case `c = 0`, and the reason is not bookkeeping: `add ε₀ 0` is
+NOT a term of 𝔗(M) (2.1(iii) needs the tail additively principal), so the nesting
+must stop at `repAdd ε₀ (k-1)` rather than nest through zero.  That is the same
+formation condition the whole file turns on, showing up in a definition for once.
+
+`plus_famV_one` is the SUCCESSOR case of the certificate recursion: appending `1`
+commutes with the ε₀-prefix, including through the `c = 0` boundary.
+
+WHAT REMAINS FOR THE ELEVENTH ✅, with no further input needed from the WF lane:
+  * the recursion `certIn_fam : ∀ k c, CN c → CertifiedIn DomI (famM k c) (famV k c)`,
+    which is LEXICOGRAPHIC on `(k, c)` — at `c = 0` with `k ≥ 1` it recurses to
+    `(k-1, tower n)`, since `epsBlocks (k+1) = epsBlocks k ++ (the ε₀ row)` and the
+    LAST block is what expands;
+  * its limit case needs `lim_clauses_sum` ITERATED over a general `c` — NOT
+    `lim_clauses_sum_iter`, which iterates at `v = repAdd u k` and so serves only the
+    `c = 0` case.  The iteration is an induction on `k` whose step needs
+    `hdLe (famV j c) ε₀`, immediate because `famV j c` has head ε₀ for `j ≥ 1`;
+  * two small facts about the CNF region I have not needed before: `CN c → CNV c`,
+    and `hdLe c ε₀` for CN `c` (every CNF head is an ω-power below ε₀).
+Then `certIn_rowA` is `CertifiedIn.lim fsA` over `expand_rowA`, and registration is
+the §16.2 pattern. -/
+
+open Evidence.WF (eps0T)
+
+/-- The value of `famM k c`: `k` copies of ε₀ in front of `c`, right-nested. -/
+def famV : Nat → TM.Term → TM.Term
+  | 0, c => c
+  | k + 1, TM.Term.zero => repAdd eps0T k
+  | k + 1, c => add eps0T (famV k c)
+
+theorem famV_zero (c : TM.Term) : famV 0 c = c := rfl
+
+theorem famV_succ_ne (k : Nat) {c : TM.Term} (hc : c ≠ zero) :
+    famV (k + 1) c = add eps0T (famV k c) := by
+  cases c with
+  | zero => exact absurd rfl hc
+  | M => rfl | omg _ => rfl | phi _ _ => rfl | psi _ _ => rfl | Z _ => rfl
+  | add _ _ => rfl
+
+theorem famV_zero_arg (k : Nat) : famV (k + 1) zero = repAdd eps0T k := rfl
+
+theorem famV_ne_zero : ∀ (k : Nat) {c : TM.Term}, c ≠ zero → famV k c ≠ zero := by
+  intro k
+  induction k with
+  | zero => intro c hc; exact hc
+  | succ j ih =>
+    intro c hc
+    rw [famV_succ_ne j hc]
+    intro h; exact TM.Term.noConfusion h
+
+theorem plus_repAdd_one : ∀ (j : Nat), plus (repAdd eps0T j) one = famV (j + 1) one := by
+  intro j
+  induction j with
+  | zero => rfl
+  | succ i ih =>
+    show plus (add eps0T (repAdd eps0T i)) one = _
+    rw [plus_one_add (le_one_ap (show isAP eps0T = true from rfl)), ih,
+      famV_succ_ne (i + 1) (show (one : TM.Term) ≠ zero from by intro h; exact TM.Term.noConfusion h)]
+
+/-- The successor step: appending `1` commutes with the ε₀-prefix. -/
+theorem plus_famV_one : ∀ (k : Nat) (p : TM.Term),
+    plus (famV k p) one = famV k (plus p one) := by
+  intro k
+  induction k with
+  | zero => intro p; rfl
+  | succ j ih =>
+    intro p
+    by_cases hp : p = zero
+    · subst hp
+      rw [famV_zero_arg j, show plus (zero : TM.Term) one = one from rfl]
+      exact plus_repAdd_one j
+    · rw [famV_succ_ne j hp, plus_one_add (le_one_ap (show isAP eps0T = true from rfl)), ih p,
+        famV_succ_ne j (plus_one_ne_zero p)]
+
+/-- The bridge to `Evidence.WF.sumSeq`: the lane's sequence IS the family's value. -/
+theorem sumSeq_famV : ∀ (k : Nat) (g : Nat → TM.Term), (∀ n, g n ≠ zero) → ∀ n,
+    Evidence.WF.sumSeq eps0T g k n = famV k (g n) := by
+  intro k
+  induction k with
+  | zero => intro g _ n; rfl
+  | succ j ih =>
+    intro g hg n
+    show add eps0T (Evidence.WF.sumSeq eps0T g j n) = _
+    rw [ih g hg n, famV_succ_ne j (hg n)]
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
