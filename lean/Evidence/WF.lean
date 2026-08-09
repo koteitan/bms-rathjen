@@ -12037,6 +12037,20 @@ NOT ESTABLISHED, and the record says so: four witnesses inside core (C); no pred
 +1 is unidentified — ε₀'s matrix sequence starts at 1 and the row skips that first value, which
 cofinality does not force.
 
+CROSS-LANE AGREEMENT, WHICH IS EVIDENCE OF A DIFFERENT KIND FROM A WIDER SWEEP.  The certificate
+lane, decoding its `sqv` gate failures, found independently that at `a ≠ 0` the block after the
+ladder denotes the ω-EXPONENT of the subscript rather than the subscript — a rule that is
+INVISIBLE exactly at ε-numbers, since `ω^ε₀ = ε₀`.  This lane's index shift is ANOMALOUS exactly
+at ε-numbers.  Neither lane could see the other's evidence, the instruments are different
+(`sqv` decoding versus `oR` on `BMS.expand`), and both land on `φ̄(a,·)` with `a ≠ 0`.
+AND THE SEPARATING PREDICATE IS SYNTACTIC — §15.18's own criterion — so `isFP` is not merely too
+weak to pay for, THERE IS NOTHING TO PAY FOR: no `TM/FS` import is implicated either way.
+Re-reading the three shifts with that in hand: ω's `−1` IS NOT A SHIFT AT ALL (at `n = 0` it
+would index `b[−1]`, which does not exist; its cause is `fsC`'s 1-basedness, proved as
+`fsC_omega`), and ζ₀ is not a core-(C) case.  What is left is TWO values in TWO classes.  This
+does not make a rule — two witnesses at 0 and one at +1 is the count C4 says not to trust — and
+it changes nothing about the parameter, since even a proved rule would buy only self-dispatch.
+
 **WHY THE PARAMETER IS NOT A SHORTCOMING.**  Taking the shift explicitly at each call site is not
 merely more honest than computing it — IT IS THE ACCURATE REPRESENTATION.  C2 says the MATRIX
 fixes the sequence, and the shift is exactly the part of the sequence that no property of the
@@ -12201,6 +12215,51 @@ SO THE SCOPING QUESTION IS SMALLER AGAIN, AND ITS ANSWER IS NOT "WHICH ENDPOINT"
 endpoints may be free.  The only constraint needed anywhere is that the MIDDLE be `Frag2`** —
 which is the shape §7's lexicographic method was built for, and the opposite of the unconstrained
 middle the obstacle was recorded as.
+
+`(T)` IS TRUE ON JUNK ENDPOINTS, AND §7's METHOD STILL CANNOT PROVE IT — the obstruction is in
+the METHOD, not the statement, and the two must not be confused.  MEASURED at degree ≤ 5 (290
+terms, 110 `Frag2`, 180 not):
+
+    `(T)` with a NON-`Frag2` endpoint on the LEFT     0 counterexamples
+    `(T)` with a NON-`Frag2` endpoint on the RIGHT    0 counterexamples
+    CONTROL (reversed conclusion)                    fires on all 180
+    non-`Frag2` terms HAVING an incomparable partner in this very corpus  14
+
+That last line is the point: the corpus DEMONSTRABLY REACHES the region where comparability
+fails, and `(T)` holds there anyway.
+
+CONFIRMED BY A SECOND, INDEPENDENT AND WIDER RUN (coordinator, same day, own script).  The two
+runs were written separately and agree; recorded together because this measurement decides a
+claim in the published legend, and a number that decides a published claim is worth checking
+twice.
+
+    this lane   290 terms (110 `Frag2` / 180 not), one junk endpoint at a time
+                counterexamples 0        control fires 180
+    coordinator 1010 terms (302 `Frag2` / 708 not), BOTH endpoints over all 1010
+                counterexamples 0        control fires 36,285,900
+
+The coordinator's corpus came out at exactly the 1010/302 this lane measures for the same
+generator, so it is the same set — but with both endpoints ranging over all 708 non-`Frag2`
+terms, which is strictly wider than this lane's run and removes the under-sampling this lane
+flagged in its own first attempt.
+
+WHY THE METHOD FAILS ANYWAY.  §8.2's `trans_aux2` proves transitivity by a lexicographic
+induction whose φ̄/φ̄/φ̄ case — 2.3.13's nine sub-clauses — invokes COMPARABILITY ON THE ENDPOINTS'
+FIRST ARGUMENTS (`Comp p t`, `Comp p r`, `Comp r t`; see the transcription at WF 6334/6355/6381),
+with the `Frag2` destructors of `a` and `c` supplying its hypotheses.  Comparability is FALSE off
+`Frag2` — `frag2_stops_at_psi` (§8.4) exhibits two distinct ψ terms neither of which is `lt` the
+other, and its header measures 40 such pairs at degree ≤ 5 and 72 at degree ≤ 6.  A `Frag2`
+MIDDLE does not supply those calls; they are about the endpoints.  So the induction consumes a
+hypothesis that is false exactly where `(T)` is being extended to, while `(T)` itself does not
+need it.
+
+THE OBVIOUS REPAIR IS AVAILABLE AND INAPPLICABLE, which is worth recording so nobody spends a
+turn on it.  Putting `inT` on the endpoints would let §15.1's `cnv_of_lt_cnv`-style argument
+upgrade an endpoint below a `Frag2` term to `Frag2`, and the induction would go through.  But
+§14.3a of `Evidence/Cert.lean` ALREADY discharges uniqueness on `DomI`, i.e. for gate-passing
+certificates, whose values are `inT` by construction; the undershoot's open case is exactly the
+certificates that FAIL the gate.  So the `inT` version is true, provable, and covers only what is
+already covered.
 
 WHAT IS NOT DONE: `T1`, `T2` and `(T)` are HYPOTHESES here, not theorems.  Everything above is
 swept to degree 7 with controls, which is evidence and not proof; only the REDUCTION is proved.
