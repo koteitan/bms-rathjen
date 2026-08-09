@@ -1414,4 +1414,57 @@ theorem encvF_phi_base (a b : Term) (f d : Nat)
   rw [if_neg (by rw [h]; exact Bool.noConfusion), hz]
   rfl
 
+
+/-! ### §10.1 The helpers' congruences, and what is left of `encvF_saturate`
+
+Naming the branches forced four helpers into existence, and the fuel-independence of
+each is now a one-line lemma instead of a rewrite buried in a page of `let`s.  That is
+the return on naming a branch: the statement you can write is the statement you can
+reason about.
+
+WITH THESE, `encvF_saturate` ASSEMBLES COMPLETELY — the `stable_aux` induction on a
+bound, every constructor, and the `phi` case's four fuel sites, all closed.  It is NOT in
+this file, because it still depends on the five `tdepth` lemmas of §9.1 and those are
+`sorry` stubs; a half-proof behind `sorry` builds green and reads as done.  What remains
+between here and a proved `encvF_saturate` is exactly those five and nothing else:
+
+    tdepth_predOr    tdepth (predOr a) ≤ tdepth a
+    tdepth_omLog     tdepth (omLog g) ≤ tdepth g              margin 0 — the tight one
+    tdepth_summands  g ∈ summands (splitFin b).1 → tdepth g ≤ tdepth b
+    tdepth_headD     the same for the list's head
+    tdepth_fpDeep    fpDeep a t = some g → tdepth g ≤ tdepth t
+
+A `rfl` IS NEEDED AFTER EACH `rw` in §10's equations, and the reason reads as a failure
+the second time someone meets it: the branch condition discharges the `if`, but the two
+sides are then only DEFINITIONALLY equal, because the right-hand sides NAME the helpers
+where the unfolded left-hand side has their bodies inline. -/
+
+theorem ladderOf_congr (a : Term) (f g d : Nat)
+    (h : encvF f (predOr a) (d + 2) = encvF g (predOr a) (d + 2)) :
+    ladderOf a f d = ladderOf a g d := by simp only [ladderOf, h]
+
+theorem unitOf_congr (a : Term) (f g d : Nat)
+    (h : encvF f (predOr a) (d + 2) = encvF g (predOr a) (d + 2)) :
+    unitOf a f d = unitOf a g d := by simp only [unitOf, ladderOf_congr a f g d h]
+
+theorem repsOf_congr (a b : Term) (f g d : Nat)
+    (h : encvF f (predOr a) (d + 2) = encvF g (predOr a) (d + 2)) :
+    repsOf a b f d = repsOf a b g d := by simp only [repsOf, unitOf_congr a f g d h]
+
+/-- The map congruence the assembly needs.  `ih` FIRST — see §10's header. -/
+theorem blocksOf_congr (a : Term) (f g d : Nat)
+    (h : encvF f (predOr a) (d + 2) = encvF g (predOr a) (d + 2)) :
+    ∀ (hs : List Term),
+      (∀ x ∈ hs, encvF f (if a == zero then x else omLog x) 0
+               = encvF g (if a == zero then x else omLog x) 0) →
+      blocksOf a f d hs = blocksOf a g d hs := by
+  intro hs hx
+  simp only [blocksOf]
+  refine congrArg List.flatten ?_
+  induction hs with
+  | nil => rfl
+  | cons x xs ih =>
+    rw [List.map_cons, List.map_cons, ih (fun y hy => hx y (List.mem_cons_of_mem x hy)),
+      ladderOf_congr a f g d h, hx x (List.mem_cons_self)]
+
 end Evidence.SqV
