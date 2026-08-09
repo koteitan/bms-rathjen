@@ -94,6 +94,11 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   is mid-write, the coordinator's build will fail on THAT file — commit the
   other lane's verified file alone (no version bump, so no table regeneration)
   rather than waiting or committing an unverified state.
+  **On any build failure, read WHICH FILE failed before deciding.** If it is
+  another lane's file — tracked and mid-write, or a new UNTRACKED file it is
+  drafting — the file you are committing may still be sound, and it is sound
+  exactly when the build reached (and passed) it before failing. Do not commit
+  first and check afterwards; that has worked by luck.
 - Generate the table to a scratch path and `diff` before installing it:
   running `gentable` while a lane is mid-write truncated `table/r1-tm.md` once.
 
