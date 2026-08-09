@@ -2537,16 +2537,23 @@ What §14 measures and does not prove:
 whole obligation is this theorem, and §13's table is the record that the arithmetic
 alternative does not exist rather than that it was not looked for.
 
-**STATED AS ONE THEOREM WITH FOUR CLAUSE OBLIGATIONS**, so that veblen2's packaging
-consumes a single hypothesis and what is owed is visible in one place:
+**THE SHAPE, NEGOTIATED WITH THE CONSUMER BEFORE ANYTHING WAS PROVED** — which is the
+order that matters, since the producer adapting costs one statement and the consumer
+adapting costs a proof:
 
-    landing : ∀ t, inT t → CNV t → ∀ u ∈ targets t, inT u ∧ CNV u ∧ lt u t
+    land_predOr {t} (inT t) (predOr t ≠ t)      : inT (predOr t) ∧ lt (predOr t) t
+    land_omLog  {t} (inT t) (the site's guard)  : inT (omLog t)  ∧ lt (omLog t) t
+    land_fpDeep {t x} (inT t) (x from fpDeep)   : inT x ∧ lt x t
 
-`targets` is §14's OVER-APPROXIMATION — all branches' targets, not the taken one — so the
-theorem is stronger than the recursion needs and is exactly what was measured.
+Per site, one STEP, `lt` strictly, parent as literally passed.  **No `CNV` at the target**
+and **no chain clause**: `belowC_step` (WF §15.25) takes a single step and returns carrier
+membership, deriving `lt x v` against the ORIGINAL start through `lt_trans_inT`.  §15.2's
+depth-≥2 measurement was worth running — it is the step-versus-chain check — and it came
+back clean AND provable on the consumer's side, so the obligation is zero.
 
-`CNV` IS IN THE CONCLUSION, not only the hypothesis, and the reason is that veblen2's
-packaging may need it at the target.  Measured over the 169-term pool (every member `CNV`):
+`CNV` IS REQUIRED ONCE, OF THE BOUND, at the top-level start, which the 169-term pool
+satisfies.  **Nothing rests on the 2-mover `CNV`-preservation sample.**  Measured anyway,
+since it was free:
 
                           movers   `CNV` lost   `RT`-step failed
         predOr              39          0              0
@@ -2555,7 +2562,18 @@ packaging may need it at the target.  Measured over the 169-term pool (every mem
         summands             —          0              0
 
 **`CNV` survives every site.**  veblen2's own evidence was 2 movers from filtering; the
-call graph gives 39, 28 and 24, on the sample that actually arises.
+call graph gives 39, 28 and 24, on the sample that actually arises.  It is recorded rather
+than relied on.
+
+**AND `targets` IS A MEASUREMENT SCAFFOLD, NOT A STEP IN THE ARGUMENT.**  It is eyeballed
+against §10's three equations and over-approximates; that caveat looks like an open hole in
+the trusted path and is not one.  When `encv'` is defined by well-founded recursion, **Lean
+generates a decrease obligation at each ACTUAL recursive call, from the syntax of the
+definition** — not from `targets`.  If `targets` over-approximates, the extra entries were
+only ever measured and go unused; **if it MISSED a call, the definition does not elaborate**
+— loudly, not silently.  Its job was to say in advance whether those obligations would be
+dischargeable, which is what it did.  The trusted statement is `landing`, and that is a
+theorem.
 
 FOUR CLAUSES, one per recursion site of §10's named equations:
 
@@ -2637,13 +2655,20 @@ complete: the `hyu` derivation — `y` additively principal and `≤ u` — clos
 sub-cases of `v`, reading 2.1(iii)'s fourth conjunct in the `add` case and its `isAP v && le v u`
 form in the five leaf cases.
 
-**WHAT IS LEFT IS ONE `simp` PROBLEM, not a mathematical one**: assembling
-`inT (add u (ofList (y :: ys)))` from its five parts.  `simp only [TM.Term.inT]` unfolds the
-INNER `inT y` as well as the outer, so the hypothesis `inT y` no longer matches; and a `show`
-cannot state the goal uniformly because 2.1(iii)'s fourth conjunct branches on whether the
-tail is an `add`.  The fix is an introduction lemma —
-`isAP u → inT u → inT y → isAP y → le y u → inT (add u y)` — which does the case analysis
-once instead of at every use.  That is the next step and it is bookkeeping. -/
+**AND IT CLOSED THE MOMENT THE CATEGORY CHANGED.**  Four attempts failed the same way:
+`simp only [TM.Term.inT]` unfolds the INNER `inT y` as well as the outer so the hypothesis
+stops matching, and a `show` cannot state the goal uniformly because 2.1(iii)'s fourth
+conjunct branches on whether the tail is an `add`.  **Four tactic variations, one category —
+"the goal's shape is not uniform" — and the rule says suspect the category after ONE.**  The
+fix is the INTRODUCTION LEMMAS below, doing that case analysis once where the shape is known
+rather than at every use:
+
+    inT_add_intro      isAP u → inT u → inT y → isAP y → le y u → inT (u ⊕ y)
+    inT_add_intro_add  isAP u → inT u → inT (y ⊕ z) → le y u → inT (u ⊕ (y ⊕ z))
+
+The first kills the `add` case of `y` from `isAP y`; the second is 2.1(iii) read directly,
+where the fourth conjunct is `le y u` with no branch.  With them, both branches of
+`inT_ofList_take` are one `exact`. -/
 
 theorem head_of_take {l : List Term} {j : Nat} {y : Term} {ys : List Term}
     (h : l.take j = y :: ys) : ∃ rest, l = y :: rest := by
@@ -2704,5 +2729,89 @@ def deepTargets (t : Term) : List Term :=
 #guard (startsW.filter (fun t => !((deepTargets t).isEmpty))).length == 145
 #guard (startsW.filter (fun t => !((deepTargets t).all (fun u => TM.Term.lt u t)))).length == 0
 #guard (startsW.filter (fun t => !((deepTargets t).all (fun u => TM.Term.inT u)))).length == 0
+
+
+
+theorem inT_add_intro {u y : Term} (hu : TM.Term.isAP u = true) (hiu : TM.Term.inT u = true)
+    (hiy : TM.Term.inT y = true) (hay : TM.Term.isAP y = true) (hle : TM.Term.le y u = true) :
+    TM.Term.inT (TM.Term.add u y) = true := by
+  cases y with
+  | add c d => simp only [TM.Term.isAP] at hay; exact absurd hay (by simp)
+  | zero => simp only [TM.Term.isAP] at hay; exact absurd hay (by simp)
+  | M => show (TM.Term.isAP u && TM.Term.inT u && TM.Term.inT TM.Term.M &&
+               (TM.Term.isAP TM.Term.M && TM.Term.le TM.Term.M u)) = true
+         rw [hu, hiu, hiy, hay, hle]; rfl
+  | omg a => show (TM.Term.isAP u && TM.Term.inT u && TM.Term.inT (TM.Term.omg a) &&
+               (TM.Term.isAP (TM.Term.omg a) && TM.Term.le (TM.Term.omg a) u)) = true
+             rw [hu, hiu, hiy, hay, hle]; rfl
+  | psi a b => show (TM.Term.isAP u && TM.Term.inT u && TM.Term.inT (TM.Term.psi a b) &&
+               (TM.Term.isAP (TM.Term.psi a b) && TM.Term.le (TM.Term.psi a b) u)) = true
+               rw [hu, hiu, hiy, hay, hle]; rfl
+  | Z a => show (TM.Term.isAP u && TM.Term.inT u && TM.Term.inT (TM.Term.Z a) &&
+               (TM.Term.isAP (TM.Term.Z a) && TM.Term.le (TM.Term.Z a) u)) = true
+           rw [hu, hiu, hiy, hay, hle]; rfl
+  | phi a b => show (TM.Term.isAP u && TM.Term.inT u && TM.Term.inT (TM.Term.phi a b) &&
+               (TM.Term.isAP (TM.Term.phi a b) && TM.Term.le (TM.Term.phi a b) u)) = true
+               rw [hu, hiu, hiy, hay, hle]; rfl
+
+theorem inT_add_intro_add {u y z : Term} (hu : TM.Term.isAP u = true)
+    (hiu : TM.Term.inT u = true) (hiyz : TM.Term.inT (TM.Term.add y z) = true)
+    (hle : TM.Term.le y u = true) :
+    TM.Term.inT (TM.Term.add u (TM.Term.add y z)) = true := by
+  show (TM.Term.isAP u && TM.Term.inT u && TM.Term.inT (TM.Term.add y z) && TM.Term.le y u) = true
+  rw [hu, hiu, hiyz, hle]; rfl
+
+/-- **`inT` SURVIVES `ofList ∘ take`** — the summands clause's first half. -/
+theorem inT_ofList_take : ∀ (b : Term) (k : Nat),
+    TM.Term.inT b = true → TM.Term.inT (ofList ((toList b).take k)) = true := by
+  intro b
+  induction b with
+  | zero => intro k _; simp only [toList, List.take_nil, ofList]; rfl
+  | M => intro k h; cases k <;> simp only [toList, List.take, List.take_nil, ofList] <;> first | rfl | exact h
+  | omg _ _ => intro k h; cases k <;> simp only [toList, List.take, List.take_nil, ofList] <;> first | rfl | exact h
+  | psi _ _ _ _ => intro k h; cases k <;> simp only [toList, List.take, List.take_nil, ofList] <;> first | rfl | exact h
+  | Z _ _ => intro k h; cases k <;> simp only [toList, List.take, List.take_nil, ofList] <;> first | rfl | exact h
+  | phi _ _ _ _ => intro k h; cases k <;> simp only [toList, List.take, List.take_nil, ofList] <;> first | rfl | exact h
+  | add u v _ ihv =>
+    intro k h
+    simp only [TM.Term.inT, Bool.and_eq_true] at h
+    obtain ⟨⟨⟨hap, hiu⟩, hiv⟩, hlast⟩ := h
+    cases k with
+    | zero => simp only [toList, List.take_zero, ofList]; rfl
+    | succ j =>
+      simp only [toList, List.take_succ_cons]
+      cases hL : (toList v).take j with
+      | nil => simp only [ofList]; exact hiu
+      | cons y ys =>
+        have hiy : TM.Term.inT (ofList (y :: ys)) = true := by
+          have := ihv j hiv; rwa [hL] at this
+        obtain ⟨rest, hv⟩ := head_of_take hL
+        have hyu : TM.Term.isAP y = true ∧ TM.Term.le y u = true := by
+          cases v with
+          | zero => simp only [toList] at hv; exact absurd hv (by simp)
+          | add c d =>
+            simp only [toList] at hv
+            injection hv with h1 _
+            subst h1
+            refine ⟨?_, hlast⟩
+            simp only [TM.Term.inT, Bool.and_eq_true] at hiv
+            exact hiv.1.1.1
+          | M => simp only [toList] at hv; injection hv with h1 _; subst h1
+                 simp only [Bool.and_eq_true] at hlast; exact hlast
+          | omg _ => simp only [toList] at hv; injection hv with h1 _; subst h1
+                     simp only [Bool.and_eq_true] at hlast; exact hlast
+          | psi _ _ => simp only [toList] at hv; injection hv with h1 _; subst h1
+                       simp only [Bool.and_eq_true] at hlast; exact hlast
+          | Z _ => simp only [toList] at hv; injection hv with h1 _; subst h1
+                   simp only [Bool.and_eq_true] at hlast; exact hlast
+          | phi _ _ => simp only [toList] at hv; injection hv with h1 _; subst h1
+                       simp only [Bool.and_eq_true] at hlast; exact hlast
+        cases ys with
+        | nil =>
+          simp only [ofList] at hiy ⊢
+          exact inT_add_intro hap hiu hiy hyu.1 hyu.2
+        | cons w ws =>
+          simp only [ofList] at hiy ⊢
+          exact inT_add_intro_add hap hiu hiy hyu.2
 
 end Evidence.SqV
