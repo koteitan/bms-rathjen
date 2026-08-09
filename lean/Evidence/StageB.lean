@@ -6063,4 +6063,65 @@ example (n : Nat) : o? (BMS.expand [[0,0],[1,1],[2,0],[2,0]] n)
   Trans.o? (BMS.expand (M7 q) n) == some (fsN (t7 q) (n+1))
 #guard (List.range 5).all fun q => Trans.o? (M7 q) == some (t7 q)
 
+
+/-! ## §17 PLAN for the base-generalization (no code yet)
+
+FINDING THAT REDIRECTS THE LAST GROWER.  The remaining class-IV shape,
+`(0,0)(1,1)…(a,1)(a+1,0)(a,1) = φ̄(a,ω+1)`, is NOT a "grower" like F6/F7: it is F3
+with the base `φ̄(a,0)` replaced by `φ̄(a,ω)`.  Two checks settle it —
+`fsN (φ̄(a,ω+1)) 1 = phiNF (ofNat q) (φ̄(a,ω)+1)`, which is `fs_raw3` with `zt q`
+replaced by `φ̄(a,ω)`; and `o?(M[n]) = fsN t (n+1)` is FALSE for every n, i.e. it is a
+NO-SHIFT family exactly as F3 is.  Proving it standalone would duplicate §6+§7 for one
+instance; it should fall out of the generalization below.  So class IV closes WITH
+unit 2, not before it.
+
+THE ABSTRACT BASE.  Inspecting every use of `zt q` in §6–§7 and §10–§13, the
+development depends on the base only through its LEVEL, not through its argument:
+replace `zt q = φ̄(ofNat (q+1), zero)` by
+
+    Zb := phi (ofNat (q+1)) C     for an ARBITRARY C : Term
+
+and every step still goes through, because what the proofs actually use is
+
+    (H1)  ofNat (q+1) ≠ zero                       — `omegaNF_phi_ne_zero`
+    (H2)  ∀ k ≤ q, lt (ofNat k) (ofNat (q+1))      — `phiNF_collapse`, `chainP_collapse`,
+                                                     and the `logPhi` "k < a" branch
+    (H3)  ∀ k ≤ q+1, ltF f (ofNat (q+1)) (ofNat k) = false   — `ltF_ofNat_not`, clause 2.3.13(iii)
+    (H4)  (Zb == one) = false                      — `splitFin_phi_ne_one`, `splitFin_add_one`
+    (H5)  le one Zb = true                         — `plus_zt_one` (`plus Zb one = add Zb one`)
+
+(H1)–(H3) are statements about the level alone and hold verbatim; (H4)–(H5) are the
+only two that mention C, and both hold for any C with `(phi (ofNat (q+1)) C == one) = false`,
+i.e. for every C except the impossible `C = zero ∧ q+1 = 0`.  So the hypothesis bundle
+is a single side condition, and the natural signature is
+
+    variable (q : Nat) (C : Term) (hC : ((phi (ofNat (q+1)) C : Term) == one) = false)
+
+RE-STATEMENT INVENTORY (what has to be re-proved with `Zb` in place of `zt q`):
+
+  from §7  : `zt_bne_one`, `plus_zt_one`, `le_one_zt`, `ltF_one_zt`, `omegaNF_add_zt`,
+             `xbase`/`bse`/`sbse`/`twr` and the (A)–(E) chain (`step_zt`, `VV_one`,
+             `step_add_zt`, `step_twr`, `ltF_*_not`, `le_twr_zt`, `VV_succ2`),
+             `phiNF_zt_one`, `fs_raw3`/`fs_t3`, and the (G) `ltF` comparisons
+  from §10 : `xbaseK`/`bseK`/`sbseK`/`twrK` and their (A)–(G) copies (already level-
+             parameterized, so this is the SECOND parameter, not a rewrite)
+  from §12 : `phiNF_zt_oneK` (the down-branch), `o?_ladder_col`'s base values
+  UNCHANGED: everything about `ups`/`lad`/`frep`/`repM`/`chainP`/`twB`/`oLAux_*` —
+             the BMS side and the chain machinery never mention the base at all.
+
+MIGRATION.  Add the `Zb`-versions beside the existing ones and derive the current
+statements as the instance `C := zero` (`zt q = phi (ofNat (q+1)) zero` is `rfl`), so
+nothing already committed is touched or re-verified; a later cleanup can delete the
+originals, as §10's `…_top` bridges already anticipate for the level parameter.
+
+WHAT IT BUYS.  Class IV's `(b,·)` shapes with `b < a` (§14's first three lines),
+class IV's last grower (above), and — per §11.2 — the same shapes in classes II, III,
+V and VI, each over its own base.  That is most of the two-column region from one
+development, which is why it is worth doing before any further per-shape work.
+
+SIZE.  The (A)–(G) chain is ~600 lines at §7's density and ~350 at §10's (the level
+parameter is already threaded there).  Two sessions, plus one for the instances.  No
+research risk: every step is a re-statement, and the two C-dependent hypotheses are
+discharged by `rfl` for each concrete base. -/
+
 end Evidence.StageB
