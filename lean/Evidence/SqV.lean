@@ -1316,8 +1316,13 @@ THIS IS A PLAN, NOT A PROOF.  The seven facts are `#eval`-measured on 169 + 57 t
 none of them is proved; `tdepth_omLog` is now known FALSE as stated.  They are stated here so that the proof is written against measured
 lemmas rather than guessed ones — the same order this file has used for the encoding. -/
 
+/-- Constructor nesting depth.  **`M` HAS DEPTH 1, NOT 0** — see §9.2: `M` is the only
+    thing that can appear in a `toList` with depth 0, because `zero` never does, and
+    `ofList` adds a level per element.  "Appears in a list" must imply "depth ≥ 1" for
+    the measure to be sound under `ofList` at all.  `M` at 0 was an accident of treating
+    it like `zero`: both are leaf constructors, but only one is ever a list element. -/
 def tdepth : Term → Nat
-  | .zero => 0 | .M => 0
+  | .zero => 0 | .M => 1
   | .omg a => 1 + tdepth a
   | .Z a => 1 + tdepth a
   | .psi a b => 1 + max (tdepth a) (tdepth b)
@@ -1499,12 +1504,69 @@ theorem blocksOf_congr (a : Term) (f g d : Nat)
       ladderOf_congr a f g d h, hx x (List.mem_cons_self)]
 
 
--- §9.2's counterexample, banked: `tdepth_omLog` is FALSE as stated
-#guard tdepth (phi zero TM.Term.M) == 1
-#guard tdepth (omLog (phi zero TM.Term.M)) == 2
-#guard !(tdepth (omLog (phi zero TM.Term.M)) <= tdepth (phi zero TM.Term.M))
+-- §9.2's counterexample, banked as a LIVE NEGATIVE CONTROL rather than as prose:
+-- `tdepthOld` is the refuted measure and exists only to keep the refutation checkable.
+def tdepthOld : Term → Nat
+  | .zero => 0 | .M => 0
+  | .omg a => 1 + tdepthOld a
+  | .Z a => 1 + tdepthOld a
+  | .psi a b => 1 + max (tdepthOld a) (tdepthOld b)
+  | .phi a b => 1 + max (tdepthOld a) (tdepthOld b)
+  | .add a b => 1 + max (tdepthOld a) (tdepthOld b)
+
+#guard !(tdepthOld (omLog (phi zero TM.Term.M)) <= tdepthOld (phi zero TM.Term.M))
+#guard (tdepthOld (phi zero TM.Term.M), tdepthOld (omLog (phi zero TM.Term.M))) == (1, 2)
+#guard tdepth (omLog (phi zero TM.Term.M)) <= tdepth (phi zero TM.Term.M)
 #guard TM.Term.inT (phi zero TM.Term.M) == false
--- and `M` is the ONLY head other than `zero` with depth 0
-#guard (tdepth TM.Term.M, tdepth (TM.Term.Z zero), tdepth (TM.Term.omg zero)) == (0, 1, 1)
+-- under the refuted measure `M` was the only head but `zero` with depth 0; under the
+-- current one no head has depth 0 but `zero`, which is what makes it sound under `ofList`
+#guard (tdepthOld TM.Term.M, tdepth TM.Term.M, tdepth (TM.Term.Z zero)) == (0, 1, 1)
+
+
+/-! ### §9.3 The `M`-corpus — the blind region, now measured
+
+§9.2's witness existed because no corpus in this file contained `M`.  That is now a KNOWN
+blind region rather than an unknown one, so it is filled: 22 terms with `M` at every
+position the encoder can reach — argument, subscript, summand, under `Z`/`psi`/`omg`, and
+nested — of which only 6 are `inT`.  Illegal terms belong here: `encvF` is called on
+intermediates that need not be legal, which is the whole reason §9.2's fix must not be an
+`inT` hypothesis.
+
+    all six non-increase facts        0 violations of 234 distinct terms
+    minFuel ≤ tdepth                  0
+    tdepth t ≤ 2 * t.deg + 8          0, worst slack 9
+    worst `omLog` margin              0
+
+The BOUND is the one that gets harder when a measure goes up, so it was re-checked rather
+than assumed: it survives with slack 9 against a constant of 8. -/
+
+def mCorpus : List Term :=
+  [TM.Term.M, phi zero TM.Term.M, phi one TM.Term.M, phi TM.Term.M zero,
+   phi TM.Term.M TM.Term.M, plus TM.Term.M one, plus TM.Term.M (phi one zero),
+   phi zero (plus TM.Term.M one), phi zero (plus TM.Term.M (phi one zero)),
+   phi zero (phi zero TM.Term.M), phi zero (phi TM.Term.M zero),
+   phi one (plus TM.Term.M one), phi (ofNat 2) TM.Term.M,
+   plus (phi one zero) TM.Term.M, phi zero (plus (phi one zero) TM.Term.M),
+   TM.Term.Z TM.Term.M, phi zero (TM.Term.Z TM.Term.M), TM.Term.psi TM.Term.M zero,
+   phi zero (TM.Term.psi TM.Term.M zero), phi zero (TM.Term.omg TM.Term.M),
+   phi zero (plus (phi TM.Term.M zero) one), phi zero (phi zero (phi zero TM.Term.M))]
+
+def allM : List Term := (corpusW ++ deeper ++ stress ++ mCorpus).eraseDups
+
+#eval (allM.length, (mCorpus.filter (fun t => TM.Term.inT t)).length,
+       allM.foldl (fun m t => min m (2 * t.deg + 8 - tdepth t)) 999,
+       allM.foldl (fun m t => min m (tdepth t - tdepth (omLog t))) 99)
+
+#guard (allM.filter (fun t => !(tdepth (omLog t) <= tdepth t))).length == 0
+#guard (allM.filter (fun t => !(tdepth (predOr t) <= tdepth t))).length == 0
+#guard (allM.filter (fun t =>
+          !((summands (TM.Term.splitFin t).1).all (fun g => tdepth g <= tdepth t)))).length == 0
+#guard (allM.filter (fun t =>
+          !(tdepth ((summands (TM.Term.splitFin t).1).headD zero) <= tdepth t))).length == 0
+#guard (allM.filter (fun t => !((List.range 3).all (fun i =>
+          match fpDeep (ofNat i) t with | none => true | some g => tdepth g <= tdepth t)))).length == 0
+#guard (allM.filter (fun t =>
+          !(((List.range 60).find? (fun f => encvF f t 0 == encv t 0)).getD 99 <= tdepth t))).length == 0
+#guard (allM.filter (fun t => !(tdepth t <= 2 * t.deg + 8))).length == 0
 
 end Evidence.SqV
