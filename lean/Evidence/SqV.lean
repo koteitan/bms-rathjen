@@ -3,6 +3,7 @@ import Trans.Pair
 import Trans.Recal
 import TM.FS
 import Evidence.WF
+import Evidence.Cert
 /-
 Evidence/SqV.lean — the term-to-matrix map for the Veblen region (STARTED)
 
@@ -1172,11 +1173,19 @@ a measurement and a proof that this file exists to keep visible.  Note what the 
 the blocker is: it is not a defect in the encoding — seven dimensions say the encoding is
 right — it is that the DEFINITION is not in a form an induction can use.
 
-BLOCKER 2 — `Certified` IS IN `Evidence/Cert.lean`, WHICH DOES NOT IMPORT THIS FILE.
-`sqv_decomp` as an expansion identity lives here and needs nothing from `Cert`.  The
-bridge that turns it into `Certified (sqv t) t` needs both, and the import must therefore
-run `Cert → SqV`, which changes `Cert`'s build dependencies.  That is a coordinator
-decision, not one to take by writing an `import` line.
+BLOCKER 2 — RESOLVED, AND THE ARROW POINTS **SqV → Cert**, NEVER THE REVERSE.
+`import Evidence.Cert` is now at the head of this file and the bridge to
+`Certified (sqv t) t` will be written HERE.  It is more natural to put a theorem about
+`Certified` next to `Certified`, so the reason not to is recorded:
+
+**`Cert.lean` is the PROOF PATH — `certIn_rows_inT` is the gate that mints every ✅.
+`SqV.lean` is CANDIDATE TIER.**  If `Cert` imported `SqV`, a candidate-tier measurement
+file would sit inside the registry's dependency cone: these `#eval`s would run on every
+`Cert` build, a change to a corpus could break the gate's build, and — the part that
+matters — an `SqV` lemma would become CITABLE INSIDE A CERTIFICATE.  Pointing the arrow
+this way makes that structurally impossible rather than a matter of remembering.  It is
+the same reason `Trans.oR` may not appear in a certificate's justification, enforced by
+the module graph instead of by a rule.
 
 NEITHER IS A HYPOTHESIS I COULD ADD TO MAKE THE STATEMENT CLOSE, and I have not added
 one.  A domain restriction that hides blocker 1 would be invisible at the use site, which
@@ -1196,5 +1205,69 @@ def sat (t : Term) (k : Nat) : Bool := encvF (2 * t.deg + 8 + k) t 0 == encv t 0
 #guard sqv (phi one (ofNat 0)) == [[0,0],[1,1]]
 #guard sqv (phi one (ofNat 1)) == [[0,0],[1,1],[1,1]]
 #guard sqv (phi one (ofNat 2)) == [[0,0],[1,1],[1,1],[1,1]]
+
+
+/-! ### §9.1 THE MEASURE FOR SATURATION — `deg` is the wrong one, and `tdepth` is right
+
+The `ltF_stable` / `starF_stable` pair (WF §5) is the template: strong induction on a
+BOUND, both fuels stepped down together, each recursive call justified by showing its
+arguments stay under the bound.  Its measure is `deg`.  **`deg` DOES NOT WORK HERE**, and
+the reason is measured rather than suspected:
+
+    omLog raises `deg`      on 4 of 169 distinct terms      7→9, 11→13, 9→11
+    predOr raises `deg`     on 0
+    summands raise `deg`    on 0
+
+`omLog (φ̄(0,x)) = x+1` in the skip case, and `deg (add x one)` exceeds `deg (φ̄(0,x))` by
+a constant — so the one clause §6's notation fact forced into the encoder is also the one
+that breaks the obvious measure.
+
+WHAT THE FUEL IS ACTUALLY FOR.  Measured over all 169 distinct terms: the minimal
+saturating fuel is at most **6**, while `encv` chooses `2 * deg + 8`, which ranges from 10
+to 62 — a factor of ten of slack, which is why D8 is green everywhere.  The recursion is
+shallow; `deg` is simply not what it is deep in.
+
+THE MEASURE IS CONSTRUCTOR NESTING DEPTH, and it is exact:
+
+    minFuel t ≤ tdepth t                      0 failures of 169   (equal on the samples)
+    omLog does not raise `tdepth`             0 failures
+    predOr does not raise `tdepth`            0 failures
+    summands do not raise `tdepth`            0 failures
+
+All three of `encvF`'s non-structural recursion targets are non-increasing in `tdepth`,
+which is exactly what the `stable_aux` induction needs at each of its three sites.  So the
+saturation proof is: induct on a bound `n ≥ tdepth t`, step both fuels, and discharge the
+three sites with the three lemmas above — plus `tdepth t ≤ 2 * t.deg + 8`, so that the
+fuel `encv` chooses is above the bound.
+
+THIS IS A PLAN, NOT A PROOF.  The four facts are `#eval`-measured on 169 terms and none
+of them is proved.  They are stated here so that the proof is written against measured
+lemmas rather than guessed ones — the same order this file has used for the encoding. -/
+
+def tdepth : Term → Nat
+  | .zero => 0 | .M => 0
+  | .omg a => 1 + tdepth a
+  | .Z a => 1 + tdepth a
+  | .psi a b => 1 + max (tdepth a) (tdepth b)
+  | .phi a b => 1 + max (tdepth a) (tdepth b)
+  | .add a b => 1 + max (tdepth a) (tdepth b)
+
+def minFuel (t : Term) : Option Nat := (List.range 60).find? (fun f => encvF f t 0 == encv t 0)
+
+def distinctTerms : List Term := (corpusW ++ deeper).eraseDups
+
+#eval ("max minimal fuel, chosen fuel min/max",
+       distinctTerms.foldl (fun m t => max m ((minFuel t).getD 99)) 0,
+       distinctTerms.foldl (fun m t => min m (2 * t.deg + 8)) 999,
+       distinctTerms.foldl (fun m t => max m (2 * t.deg + 8)) 0)
+
+#guard (distinctTerms.filter (fun t => !((minFuel t).getD 99 <= tdepth t))).length == 0
+#guard (distinctTerms.filter (fun t => !(tdepth (omLog t) <= tdepth t))).length == 0
+#guard (distinctTerms.filter (fun t => !(tdepth (predOr t) <= tdepth t))).length == 0
+#guard (distinctTerms.filter (fun t =>
+          !((summands (TM.Term.splitFin t).1).all (fun g => tdepth g <= tdepth t)))).length == 0
+#guard (distinctTerms.filter (fun t => !(tdepth t <= 2 * t.deg + 8))).length == 0
+-- and the NEGATIVE control: `deg` really does fail, so §9.1 is not a statement about nothing
+#guard (distinctTerms.filter (fun t => !((omLog t).deg <= t.deg))).length == 4
 
 end Evidence.SqV
