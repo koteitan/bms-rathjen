@@ -12135,6 +12135,69 @@ theorem lim_clauses_phi_zero {a : Term} (hcna : CNV a = true) (g : Nat → Term)
 #guard fsPhiZero omega (fun n => ofNat (n+2)) 0 == phi (ofNat 2) zero
 
 
+/-! ### §15.23 THE UNDERSHOOT STEP — swept past degree 6, and REDUCED
+
+THE TASK.  `Evidence/Cert.lean` §14/§15 closes the OVERSHOOT half of certificate uniqueness
+unconditionally, and records the UNDERSHOOT half as blocked on one missing lemma:
+
+    le s x = true → lt x v = true → lt s v = true        (s, v ∈ Frag2 ; x ARBITRARY)
+
+— transitivity with a genuinely UNCONSTRAINED MIDDLE, reported there as swept to degree 6
+without counterexample but NOT proved.  Two results here: the sweep goes further, and the
+statement does not need what it says it needs.
+
+SWEPT PAST DEGREE 6.  Corpus: every term over ALL SEVEN constructors of degree ≤ 7 — 1010 terms,
+of which 302 are `Frag2` — with `x` ranging over all 1010 and `s`, `v` over the 302.
+
+    counterexamples to the missing lemma                     0
+    POSITIVE CONTROL — the same sweep with `lt s v` replaced
+    by `lt v s`, which SHOULD fail almost everywhere        1009 of 1010
+
+The control is what makes the zero informative; without it the sweep cannot distinguish "true"
+from "the test never fires".  So the statement survives degree 7, one past where it was left.
+
+**AND IT DOES NOT NEED AN UNCONSTRAINED MIDDLE.**  CONTRAPOSE.  If `¬ lt s v` then `le v s` by
+comparability on `Frag2` (§8.5), and the goal becomes a contradiction from
+
+    le v s   (both Frag2)      le s x   (middle s ∈ Frag2)      lt x v
+
+in which THE UNCONSTRAINED TERM `x` HAS MOVED FROM THE MIDDLE TO AN ENDPOINT.  That is precisely
+the technique Cert.lean §15's header already names as the one that works — "put the unconstrained
+object on the side of the relation that the decision procedure reads LAST" — applied to the step
+that header says is blocked.  What remains are two facts with a `Frag2` MIDDLE:
+
+    (T1)  le a b → le b c → le a c        a, b ∈ Frag2 ;  c ARBITRARY
+    (T2)  le a b → lt b a → False         a ∈ Frag2    ;  b ARBITRARY
+
+`undershoot_reduction` below is the derivation, MACHINE-CHECKED, with `T1`/`T2` as hypotheses.
+
+T1 AND T2 SWEPT, same corpus, each with its own control:
+    T1 counterexamples 0        control (reversed conclusion) fires 45752
+    T2 counterexamples 0        control fires 302 — i.e. every `Frag2` term
+
+WHAT IS NOT DONE: `T1` and `T2` are HYPOTHESES here, not theorems.  They are swept to degree 7
+with controls, which is evidence and not proof.  The scoping question §15.19-style is therefore
+NOT "may the middle be unconstrained" — it is "WHICH ENDPOINT may be free", and that is a
+strictly smaller question than the one the file currently records as the obstacle. -/
+
+/-- **THE UNDERSHOOT STEP REDUCES TO TWO CONSTRAINED-MIDDLE FACTS.**  Cert.lean §14/§15 records
+    the missing step as transitivity with a genuinely UNCONSTRAINED MIDDLE.  Contraposing moves
+    the unconstrained term OUT of the middle and onto an ENDPOINT — which is exactly Cert.lean's
+    own "probe discipline", put the unconstrained object where the decision procedure reads it
+    LAST.  `T1` and `T2` below both have a `Frag2` MIDDLE.  This theorem is the reduction,
+    machine-checked; `T1`/`T2` themselves are hypotheses here, swept but not proved. -/
+theorem undershoot_reduction
+    (T1 : ∀ a b c : Term, Frag2 a = true → Frag2 b = true →
+            le a b = true → le b c = true → le a c = true)
+    (T2 : ∀ a b : Term, Frag2 a = true → le a b = true → lt b a = true → False)
+    {s x v : Term} (hs : Frag2 s = true) (hv : Frag2 v = true)
+    (h1 : le s x = true) (h2 : lt x v = true) : lt s v = true := by
+  by_cases hsv : lt s v = true
+  · exact hsv
+  · exact absurd (T2 v x hv (T1 v s x hv hs (le_of_not_lt2 hs hv (by simpa using hsv)) h1) h2)
+      (by simp)
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):

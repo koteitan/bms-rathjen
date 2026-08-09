@@ -163,6 +163,13 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   rarely the one you would pick. Re-deriving now costs more than grepping.
   Related but distinct: when the ancestor exists for a narrower fragment, widen
   it by RE-DERIVING, not by porting (constitution W3).
+- **The same applies to METHODS, not just lemmas.** When a step looks blocked,
+  grep the section headers for how this file has handled the same shape before.
+  The undershoot step sat recorded as blocked while §15's own header already
+  named the technique that dissolves it — "put the unconstrained object on the
+  side of the relation the decision procedure reads LAST" — and called it a
+  reusable discipline. A file that documents its methods will hand you the
+  answer before you design one.
 
 ## Publishing rules (public repo)
 
