@@ -10800,6 +10800,376 @@ theorem lim_clauses_fsE1in : ∀ m,
   CNV (fsE1in m k) && lt (fsE1in m k) (fsE1 m) && lt (fsE1in m k) (fsE1in m (k+1))))
 
 
+/-! ### §15.15 THE ε-HIERARCHY OVER THE CNF REGION, AS TWO THEOREMS — and the last two rows
+
+WHAT THE MEASUREMENT TURNED THIS SECTION INTO.  The five intermediate families still owed
+after §15.14 are not five jobs: MEASURED, THE ROWS CONTAIN EACH OTHER.
+
+    ζ₀ level 1's sequence       IS  fsEE   — the ε_{ε₀} ROW's
+    ε_{ε₀} level 1's sequence   IS  fsEWW  — the ε_{ω^ω} ROW's
+    ε_{ω^ω} level 1's sequence  IS  fsEW2  — the ε_{ω²} ROW's
+    ε_{ω²}, ε_{ω^ω}, ε_{ε₀} level 0's sequence IS fsEW — the ε_ω ROW's
+    ζ₀ level 0 IS ε₀ (`tower`);   ε_{ζ₀+1} level 0 IS ζ₀ (`fsZeta0`)
+
+8 of 8 exact.  So the outstanding work is one chain,
+ε_{ζ₀+1} ⊃ ζ₀ ⊃ ε_{ε₀} ⊃ ε_{ω^ω} ⊃ ε_{ω²} ⊃ ε_ω, in which every §15.12 row reappears as a
+LEVEL of a later one.  That is also an independent consistency check on §15.12: six theorems
+proved separately turn out to be each other's intermediate values and to agree at every
+measured index.
+
+WHAT REPLACES THE FIVE FAMILIES: TWO THEOREMS FOR THE WHOLE ε-HIERARCHY.  One layer deeper
+the rows met are ε_β for β running over the CNF region, and the Veblen dichotomy is clean —
+`φ̄(1,β)` is core (B) when β is a SUCCESSOR and core (C) when β is a LIMIT:
+
+    lim_clauses_epsSuccC b   (kindC b = true)   fsGen (φ̄1 (predC b)) 0 (φ̄1(predC b) ⊕ …)
+    lim_clauses_epsLim   b   (kindC b = false)  φ̄1 (fsC b k)
+
+CALIBRATION, WITH A POSITIVE CONTROL.  Harvested every matrix two expansion-levels below the
+six rows, kept the 51 whose `oR` value is `φ̄(1,β)` with β a nonzero CNF term — 23 successor
+indices, 28 limit indices, 37 distinct index terms — and checked each against the theorem its
+own `kindC` selects:
+
+    48 of 51 exact at every n ≤ 4         — every case with β ≠ ω
+     3 of  3 FAIL, all of them β = ω      — the same index, three times over
+
+The failures are informative, not a defect: β = ω is exactly §15.12's refuted candidate (i).
+`fsC ω k = ofNat (k+1)`, so `lim_clauses_epsLim ω` would give ε₁, ε₂, ε₃ — green on all four
+clauses and not what the matrix gives.  ε_ω therefore keeps its own theorem
+(`lim_clauses_epsOmega`), and THE GENERAL LIMIT LEMMA IS CORRECT AT EVERY CNF LIMIT INDEX
+EXCEPT ω.  Anyone adding an ε-row should test `β = ω` first.
+
+NOTHING NEW WAS NEEDED FOR THE SUCCESSOR CASE'S `H1`.  It asks that below β nothing exceeds
+`predC β`, which is §12's `le_predC_of_lt` verbatim — the general form of §15.13's
+`below_ofNat_cnv`.  It was found by grep rather than written; that is the third time tonight
+a lemma about to be written already existed.
+
+TWO MORE GUESSES OF MINE REFUTED BY MEASUREMENT, and they are why `lim_clauses_iterG` takes
+parameters where §15.14 had constants:
+  (a) ζ₀'s levels are NOT plain `φ̄1` iterated over `tower`.  There is a +1 SHIFT at the 0→1
+      transition — level 0 is `tower k`, level 1 is `φ̄1(tower (k+1))` — and only from level 1
+      up is it plain iteration.  That is §15.12's ε_{ε₀} shift, one layer in.
+  (b) ε_{ζ₀+1} has §15.14's ε₁ shape at (ζ₀, fsZeta0) EXCEPT that §15.14's index-0 exception
+      IS ABSENT.  Measured directly as absent, not merely as "the alternative fits".  So the
+      exceptional first term is NOT generic and must be a PARAMETER; templating ε₁ and
+      instantiating it here would have failed mid-proof. -/
+
+theorem le_zero_any (x : Term) : le zero x = true := by
+  by_cases h : x = zero
+  · rw [h]; exact le_self zero
+  · exact le_zero_left h
+
+/-! #### §15.15.1 The ε-hierarchy at a CNF index: successor and limit -/
+
+/-- ε_β's sequence for β a CNF SUCCESSOR: core (B) over `φ̄1 (predC β)`. -/
+def fsEsuccC (b : Term) : Nat → Term :=
+  fsGen (phi one (predC b)) zero (add (phi one (predC b)) (phi one (predC b)))
+
+/-- **THE ε-SUCCESSOR AT ANY CNF INDEX.**  §15.13's `lim_clauses_epsSucc` is the case
+    `b = ofNat (k+1)`.  `H1` is §12's `le_predC_of_lt`; `H3` is §15.13's `lt_cn_eps0`. -/
+theorem lim_clauses_epsSuccC (b : Term) (hcn : CN b = true) (hk : kindC b = true) :
+    (∀ n, CNV (fsEsuccC b n) = true)
+  ∧ (∀ n, lt (fsEsuccC b n) (phi one b) = true)
+  ∧ (∀ n, lt (fsEsuccC b n) (fsEsuccC b (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (phi one b) = true → ∃ n, le s (fsEsuccC b n) = true) := by
+  have hcnpb : CNV (predC b) = true := cnv_of_cn _ (cn_predC b hcn hk)
+  have hcnb : CNV b = true := cnv_of_cn b hcn
+  have hv : CNV (phi one (predC b)) = true := by
+    show (CNV one && CNV (predC b)) = true
+    rw [hcnpb]; rfl
+  have hAP : (phi one (predC b)).isAP = true := rfl
+  have hbase : CNV (add (phi one (predC b)) (phi one (predC b))) = true := by
+    show ((phi one (predC b)).isAP && CNV (phi one (predC b)) && CNV (phi one (predC b))
+          && hdLe (phi one (predC b)) (phi one (predC b))) = true
+    rw [hv, hAP, hdLe_of_isAP hAP, le_self]; rfl
+  have hcnt : CNV (phi one b) = true := by
+    show (CNV one && CNV b) = true
+    rw [hcnb]; rfl
+  have hvb : le (phi one (predC b)) (add (phi one (predC b)) (phi one (predC b))) = true := by
+    refine le_of_lt ?_
+    rw [lt_atom_add (s := phi one (predC b)) rfl]
+    exact le_self _
+  have hvt : lt (phi one (predC b)) (phi one b) = true := lt_phi_arg (lt_predC b hcn hk)
+  exact lim_clauses_fsGen hv rfl hbase hcnt hvb (by decide) hvt
+    (by rw [lt_add_phi]; exact hvt)
+    (fun q hq hlt =>
+      le_phi_of_le rfl hq rfl hcnpb (le_self one)
+        (le_predC_of_lt b hcn hk q (inT_of_cnv q hq) hlt))
+    (fun p hp hlt => by rw [below_one_cnv p hp hlt]; exact le_self _)
+    (le_of_lt (lt_of_lt_of_le (frag_of_cnv _ hcnb) (frag_of_cnv _ cnv_eps0T)
+      (frag_of_cnv _ hv) (lt_cn_eps0 b hcn)
+      (le_phi_of_le rfl rfl rfl hcnpb (le_self one) (le_zero_any (predC b)))))
+
+/-- ε_β's sequence for β a CNF LIMIT: core (C) over β's own `fsC`. -/
+def fsEpsLim (b : Term) : Nat → Term := fun k => phi one (fsC b k)
+
+/-- **THE ε-LIMIT AT ANY CNF INDEX — EXCEPT ω.**  The exclusion is not a hypothesis of the
+    theorem, which is true as stated; it is a warning about USE.  At `b = ω` the four clauses
+    still hold (`fsC ω k = ofNat (k+1)` is CNV, below, increasing and cofinal) but the row's
+    expansions are `ofNat k`, so applying this at ω proves a true statement about the WRONG
+    sequence.  ε_ω's own theorem is `lim_clauses_epsOmega` (§15.12). -/
+theorem lim_clauses_epsLim (b : Term) (hcn : CN b = true) (hk : kindC b = false)
+    (hbz : b ≠ zero) :
+    (∀ k, CNV (fsEpsLim b k) = true)
+  ∧ (∀ k, lt (fsEpsLim b k) (phi one b) = true)
+  ∧ (∀ k, lt (fsEpsLim b k) (fsEpsLim b (k + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (phi one b) = true → ∃ k, le s (fsEpsLim b k) = true) :=
+  let h := lim_clauses_cnv b hcn hk hbz
+  lim_clauses_phi_arg (fsC b) rfl (cnv_of_cn b hcn) h.1 h.2.1 h.2.2.1 h.2.2.2
+    (lt_of_lt_of_le (frag_of_cnv _ (cnv_of_cn b hcn)) (frag_of_cnv _ cnv_eps0T)
+      (frag_of_cnv _ (by
+        show (CNV one && CNV (fsC b 0)) = true
+        rw [h.1 0]; rfl))
+      (lt_cn_eps0 b hcn)
+      (le_phi_of_le rfl rfl rfl (h.1 0) (le_self one) (le_zero_any (fsC b 0))))
+
+/-! #### §15.15.2 Core (C) iterated, with the first argument, base and inner sequence all
+    PARAMETERS.  §15.14's `lim_clauses_iterI` is the instance `(0, ε₀·2, fsA1x)`; it is left
+    standing, like `lim_clauses_sum_iter`, because it is already verified and cited.  The
+    parameters are forced by findings (a) and (b) in the header, not chosen for generality. -/
+
+def iterSeq (a : Term) (h : Nat → Term) : Nat → Nat → Term
+  | 0, k => h k
+  | m + 1, k => phi a (iterSeq a h m k)
+
+/-- **CORE (C) ITERATED, GENERALLY.**  Returns `hside` beside the four clauses, for the same
+    reason §15.14 does: the next level needs it and it is not derivable from the clauses.
+    Here it propagates by `lt_phi_arg`, which — unlike §15.14's `lt_pow` — holds at every
+    first argument, and that is what lets `a` be a parameter. -/
+theorem lim_clauses_iterG {a base : Term} (h : Nat → Term)
+    (hcna : CNV a = true) (hcnb : CNV base = true)
+    (h1 : ∀ k, CNV (h k) = true) (h2 : ∀ k, lt (h k) base = true)
+    (h3 : ∀ k, lt (h k) (h (k + 1)) = true)
+    (h4 : ∀ s, inT s = true → lt s base = true → ∃ k, le s (h k) = true)
+    (hside : lt base (phi a (h 0)) = true) :
+    ∀ m, ((∀ k, CNV (iterSeq a h m k) = true)
+        ∧ (∀ k, lt (iterSeq a h m k) (iterPhi a base m) = true)
+        ∧ (∀ k, lt (iterSeq a h m k) (iterSeq a h m (k + 1)) = true)
+        ∧ (∀ s, inT s = true → lt s (iterPhi a base m) = true →
+              ∃ k, le s (iterSeq a h m k) = true))
+        ∧ lt (iterPhi a base m) (phi a (iterSeq a h m 0)) = true := by
+  intro m
+  induction m with
+  | zero => exact ⟨⟨h1, h2, h3, h4⟩, hside⟩
+  | succ m ih =>
+    obtain ⟨⟨i1, i2, i3, i4⟩, hs⟩ := ih
+    refine ⟨lim_clauses_phi_arg (iterSeq a h m) hcna (cnv_iterPhi hcna hcnb m)
+      i1 i2 i3 i4 hs, ?_⟩
+    show lt (phi a (iterPhi a base m)) (phi a (phi a (iterSeq a h m 0))) = true
+    exact lt_phi_arg hs
+
+/-! #### §15.15.3 The last two rows: ζ₀'s and ε_{ζ₀+1}'s intermediate values -/
+
+theorem fsZeta0_ne_zero : ∀ n, fsZeta0 n ≠ zero
+  | 0 => by intro h; exact Term.noConfusion h
+  | _ + 1 => by intro h; exact Term.noConfusion h
+
+/-- ε₀'s clauses at the SHIFTED index — finding (a): ζ₀'s iteration starts from `tower (k+1)`,
+    not `tower k`. -/
+private theorem eps0_shift :
+    (∀ k, CNV (tower (k + 1)) = true) ∧ (∀ k, lt (tower (k + 1)) eps0T = true)
+  ∧ (∀ k, lt (tower (k + 1)) (tower (k + 1 + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s eps0T = true → ∃ k, le s (tower (k + 1)) = true) :=
+  lim_clauses_shift lim_clauses_eps0.1 lim_clauses_eps0.2.1
+    lim_clauses_eps0.2.2.1 lim_clauses_eps0.2.2.2
+
+def fsZeta0in : Nat → Nat → Term
+  | 0, k => tower k
+  | m + 1, k => iterSeq one (fun j => tower (j + 1)) (m + 1) k
+
+/-- **THE FOUR PREMISES FOR EVERY INTERMEDIATE VALUE OF THE ζ₀ ROW.** -/
+theorem lim_clauses_fsZeta0in : ∀ m,
+    (∀ k, CNV (fsZeta0in m k) = true)
+  ∧ (∀ k, lt (fsZeta0in m k) (fsZeta0 m) = true)
+  ∧ (∀ k, lt (fsZeta0in m k) (fsZeta0in m (k + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsZeta0 m) = true → ∃ k, le s (fsZeta0in m k) = true)
+  | 0 => lim_clauses_eps0
+  | m + 1 => (lim_clauses_iterG (fun j => tower (j + 1)) rfl cnv_eps0T
+      eps0_shift.1 eps0_shift.2.1 eps0_shift.2.2.1 eps0_shift.2.2.2 (by decide) (m + 1)).1
+
+/-- ζ₀·2's clauses, from §15.11's SUM COMBINATOR over ζ₀'s own sequence.  This is where the
+    two halves of the section meet: the combinator built for row A supplies the base of the
+    ε_{ζ₀+1} iteration. -/
+private theorem zeta0_sum :
+    (∀ k, CNV (add zeta0 (fsZeta0 k)) = true)
+  ∧ (∀ k, lt (add zeta0 (fsZeta0 k)) (add zeta0 zeta0) = true)
+  ∧ (∀ k, lt (add zeta0 (fsZeta0 k)) (add zeta0 (fsZeta0 (k + 1))) = true)
+  ∧ (∀ s, inT s = true → lt s (add zeta0 zeta0) = true →
+        ∃ k, le s (add zeta0 (fsZeta0 k)) = true) :=
+  lim_clauses_sum fsZeta0 cnv_zeta0 rfl cnv_zeta0 (by decide)
+    lim_clauses_zeta0.1 lim_clauses_zeta0.2.1 lim_clauses_zeta0.2.2.1
+    lim_clauses_zeta0.2.2.2 fsZeta0_ne_zero
+
+def fsEZin : Nat → Nat → Term
+  | 0, k => fsZeta0 k
+  | m + 1, k => iterSeq zero (fun j => add zeta0 (fsZeta0 j)) (m + 1) k
+
+/-- **THE FOUR PREMISES FOR EVERY INTERMEDIATE VALUE OF THE ε_{ζ₀+1} ROW.**  §15.14's shape
+    at (ζ₀, fsZeta0) and WITHOUT its index-0 exception — finding (b). -/
+theorem lim_clauses_fsEZin : ∀ m,
+    (∀ k, CNV (fsEZin m k) = true)
+  ∧ (∀ k, lt (fsEZin m k) (fsEZ m) = true)
+  ∧ (∀ k, lt (fsEZin m k) (fsEZin m (k + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsEZ m) = true → ∃ k, le s (fsEZin m k) = true)
+  | 0 => lim_clauses_zeta0
+  | m + 1 => (lim_clauses_iterG (fun j => add zeta0 (fsZeta0 j)) rfl
+      (show CNV baseZ1 = true by decide)
+      zeta0_sum.1 zeta0_sum.2.1 zeta0_sum.2.2.1 zeta0_sum.2.2.2 (by decide) (m + 1)).1
+
+/-! Receipts.  The `== false` lines are findings (a) and (b) and the ω exclusion, pinned. -/
+
+#guard fsEsuccC (ofNat 3) 0 == phi one (ofNat 2)
+#guard fsEsuccC (add omega one) 0 == phi one omega
+#guard fsEsuccC (add omega (add one one)) 0 == phi one (add omega one)
+#guard fsEpsLim (phi zero (ofNat 2)) 0 == phi one omega
+#guard fsEpsLim omega 0 == phi one one                  -- ω: ε₁, but the row's is ε₀ …
+#guard (fsEpsLim omega 0 == fsEW 0) == false            -- … so NEVER apply epsLim at ω
+#guard fsZeta0in 0 2 == tower 2
+#guard fsZeta0in 1 0 == phi one (tower 1)               -- (a) the +1 shift …
+#guard (fsZeta0in 1 0 == phi one (tower 0)) == false    -- … it is NOT tower 0
+#guard fsEZin 0 1 == phi one eps0T
+#guard fsEZin 1 0 == phi zero (add zeta0 eps0T)         -- (b) no index-0 exception …
+#guard (fsEZin 1 0 == phi zero zeta0) == false          -- … unlike ε₁ in §15.14
+#guard (List.range 4).all (fun m => (List.range 4).all (fun k =>
+  CNV (fsZeta0in m k) && lt (fsZeta0in m k) (fsZeta0 m)
+    && lt (fsZeta0in m k) (fsZeta0in m (k+1))))
+#guard (List.range 4).all (fun m => (List.range 4).all (fun k =>
+  CNV (fsEZin m k) && lt (fsEZin m k) (fsEZ m) && lt (fsEZin m k) (fsEZin m (k+1))))
+
+
+/-! ### §15.16 THE LAST THREE INTERMEDIATE FAMILIES — ε_{ω²}, ε_{ω^ω}, ε_{ε₀}
+
+With §15.15's two ε-theorems these cost almost nothing, and that is the payoff of the
+containment chain rather than a coincidence: each of the three rows has LEVEL 0 EQUAL TO THE
+ε_ω ROW (`lim_clauses_epsOmega`, §15.12), and every level above it is `lim_clauses_epsLim` at
+that level's own CNF index.  The only work left is naming the index — `fsC ω² m = ω·(m+1)`,
+`fsC ω^ω m = ω^(m+1)`, and §9's `tower (m+1)` — and discharging `CN`, `kindC = false` and
+`≠ 0` for it.  For the third, §14's `cn_tower` and `kindC_tower` already existed.
+
+MEASURED ON THE FINAL DEFINITIONS: all three exact at every `m, k ≤ 4`.  AND THE NEGATIVE
+CONTROL THAT MATTERS HERE: applying `lim_clauses_epsLim` at LEVEL 0 — where the index is ω —
+is measured FALSE.  That is §15.15's ω exclusion biting exactly where it was predicted to,
+and it is why level 0 is a separate case in each of the three definitions rather than part of
+a uniform formula. -/
+
+theorem cn_omega : CN omega = true := rfl
+
+theorem cn_repAdd_omega (m : Nat) : CN (repAdd omega m) = true :=
+  cn_repAdd (p := zero) (q := one) cn_omega m
+
+theorem kindC_repAdd_omega : ∀ m, kindC (repAdd omega m) = false
+  | 0 => rfl
+  | m + 1 => by
+    show kindC (repAdd omega m) = false
+    exact kindC_repAdd_omega m
+
+theorem cn_ofNat : ∀ k, CN (ofNat k) = true
+  | 0 => rfl
+  | k + 1 => by
+    rw [ofNat_succ_eq k]
+    exact cn_repAdd (p := zero) (q := zero) rfl k
+
+theorem fsC_omegaSq (m : Nat) : fsC omegaSq m = repAdd omega m := by
+  show fsC (phi zero (ofNat 2)) m = _
+  rw [fsC_phi_succ (x := zero) (y := ofNat 2) rfl rfl m]
+  rfl
+
+theorem fsC_omegaOmega (m : Nat) : fsC omegaOmega m = phi zero (ofNat (m + 1)) := by
+  show fsC (phi zero omega) m = _
+  rw [fsC_phi_lim (x := zero) (y := omega) rfl rfl m, fsC_omega m]
+
+/-- ε_{ω²}'s intermediates.  Level 0 is the ε_ω row; level `m+1` is ε at the CNF limit
+    `ω·(m+2)`. -/
+def fsEW2in : Nat → Nat → Term
+  | 0, k => fsEW k
+  | m + 1, k => fsEpsLim (fsC omegaSq (m + 1)) k
+
+/-- **THE FOUR PREMISES FOR EVERY INTERMEDIATE VALUE OF THE ε_{ω²} ROW.** -/
+theorem lim_clauses_fsEW2in : ∀ m,
+    (∀ k, CNV (fsEW2in m k) = true)
+  ∧ (∀ k, lt (fsEW2in m k) (fsEW2 m) = true)
+  ∧ (∀ k, lt (fsEW2in m k) (fsEW2in m (k + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsEW2 m) = true → ∃ k, le s (fsEW2in m k) = true)
+  | 0 => lim_clauses_epsOmega
+  | m + 1 => lim_clauses_epsLim (fsC omegaSq (m + 1))
+      (by rw [fsC_omegaSq]; exact cn_repAdd_omega (m + 1))
+      (by rw [fsC_omegaSq]; exact kindC_repAdd_omega (m + 1))
+      (by rw [fsC_omegaSq]; exact repAdd_ne_zero zero one (m + 1))
+
+/-- ε_{ω^ω}'s intermediates.  Level 1 is the ε_{ω²} row — see §15.15's chain. -/
+def fsEWWin : Nat → Nat → Term
+  | 0, k => fsEW k
+  | m + 1, k => fsEpsLim (fsC omegaOmega (m + 1)) k
+
+/-- **THE FOUR PREMISES FOR EVERY INTERMEDIATE VALUE OF THE ε_{ω^ω} ROW.** -/
+theorem lim_clauses_fsEWWin : ∀ m,
+    (∀ k, CNV (fsEWWin m k) = true)
+  ∧ (∀ k, lt (fsEWWin m k) (fsEWW m) = true)
+  ∧ (∀ k, lt (fsEWWin m k) (fsEWWin m (k + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsEWW m) = true → ∃ k, le s (fsEWWin m k) = true)
+  | 0 => lim_clauses_epsOmega
+  | m + 1 => lim_clauses_epsLim (fsC omegaOmega (m + 1))
+      (by rw [fsC_omegaOmega]
+          show ((zero : Term) == zero && CN (ofNat (m + 2))) = true
+          rw [cn_ofNat (m + 2)]; rfl)
+      (by rw [fsC_omegaOmega, ofNat_succ_eq (m + 1)]; rfl)
+      (by rw [fsC_omegaOmega]; intro hc; exact Term.noConfusion hc)
+
+/-- ε_{ε₀}'s intermediates.  Level 1 is the ε_{ω^ω} row. -/
+def fsEEin : Nat → Nat → Term
+  | 0, k => fsEW k
+  | m + 1, k => fsEpsLim (tower (m + 2)) k
+
+/-- **THE FOUR PREMISES FOR EVERY INTERMEDIATE VALUE OF THE ε_{ε₀} ROW.** -/
+theorem lim_clauses_fsEEin : ∀ m,
+    (∀ k, CNV (fsEEin m k) = true)
+  ∧ (∀ k, lt (fsEEin m k) (fsEE m) = true)
+  ∧ (∀ k, lt (fsEEin m k) (fsEEin m (k + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsEE m) = true → ∃ k, le s (fsEEin m k) = true)
+  | 0 => lim_clauses_epsOmega
+  | m + 1 => lim_clauses_epsLim (tower (m + 2)) (cn_tower (m + 2)) (kindC_tower (m + 1))
+      (tower_ne_zero (m + 2))
+
+/-! Receipts.  The last line is the ω exclusion again: level 0 is NOT `fsEpsLim ω`. -/
+
+#guard fsEW2in 0 2 == fsEW 2
+#guard fsEW2in 1 0 == phi one (add omega one)
+#guard fsEWWin 1 0 == phi one omega
+#guard fsEEin 1 0 == phi one omega
+#guard (fsEW2in 0 0 == fsEpsLim omega 0) == false
+#guard (List.range 4).all (fun m => (List.range 4).all (fun k =>
+  CNV (fsEW2in m k) && lt (fsEW2in m k) (fsEW2 m) && lt (fsEW2in m k) (fsEW2in m (k+1))))
+#guard (List.range 4).all (fun m => (List.range 4).all (fun k =>
+  CNV (fsEWWin m k) && lt (fsEWWin m k) (fsEWW m) && lt (fsEWWin m k) (fsEWWin m (k+1))))
+#guard (List.range 4).all (fun m => (List.range 4).all (fun k =>
+  CNV (fsEEin m k) && lt (fsEEin m k) (fsEE m) && lt (fsEEin m k) (fsEEin m (k+1))))
+
+
+/-! #### §15.16.1 The row `ω^(ζ₀+1)` — §15.11's iterated SUM at `u = ζ₀`
+
+§15.7's row `φ̄0(ζ₀)` has the `repAdd` shape, so its intermediate values are ζ₀·(k+1) and
+their sequences are SUMS — exactly what §15.11 was built for, one head up from ε₀.  MEASURED:
+`oR (BMS.expand (BMS.expand rowZ k) n) = sumSeq ζ₀ fsZeta0 k n` at every `k, n ≤ 4`, with the
+left-nested variant FALSE, the same term-shape control §15.11 records.  This is the last
+Veblen row to be closed, and it costs one application. -/
+
+def fsZin (k : Nat) : Nat → Term := sumSeq zeta0 fsZeta0 k
+
+/-- **THE FOUR PREMISES FOR EVERY INTERMEDIATE VALUE OF THE `ω^(ζ₀+1)` ROW.** -/
+theorem lim_clauses_fsZin (k : Nat) :
+    (∀ n, CNV (fsZin k n) = true)
+  ∧ (∀ n, lt (fsZin k n) (fsZ k) = true)
+  ∧ (∀ n, lt (fsZin k n) (fsZin k (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (fsZ k) = true → ∃ n, le s (fsZin k n) = true) :=
+  lim_clauses_sum_iter fsZeta0 cnv_zeta0 rfl lim_clauses_zeta0.1 lim_clauses_zeta0.2.1
+    lim_clauses_zeta0.2.2.1 lim_clauses_zeta0.2.2.2 fsZeta0_ne_zero k
+
+#guard fsZin 0 2 == fsZeta0 2
+#guard fsZin 2 1 == add zeta0 (add zeta0 (fsZeta0 1))
+#guard (fsZin 2 1 == add (repAdd zeta0 1) (fsZeta0 1)) == false   -- right-nested, not left
+#guard (List.range 4).all (fun k => (List.range 4).all (fun n =>
+  CNV (fsZin k n) && lt (fsZin k n) (fsZ k) && lt (fsZin k n) (fsZin k (n+1))))
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
