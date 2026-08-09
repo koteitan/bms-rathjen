@@ -30,3 +30,10 @@ jobs:
         run: |
           lake exe gentable > "$RUNNER_TEMP/r1-tm.md"
           diff -u ../table/r1-tm.md "$RUNNER_TEMP/r1-tm.md"
+
+      # Every matrix in the table must be a STANDARD Bashicu matrix.  No Lean
+      # check asks this — E1, the oR gate, bisim6, the sort orders and inT are
+      # all satisfiable by a non-standard matrix — and one non-standard row did
+      # get published (withdrawn at v0.1.82).  yaBMS is already built above.
+      - name: standard form of every row
+        run: scripts/standard-audit.sh "$RUNNER_TEMP/yaBMS/c"
