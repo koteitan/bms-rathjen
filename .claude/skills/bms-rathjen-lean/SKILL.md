@@ -195,6 +195,12 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   side of the relation the decision procedure reads LAST" — and called it a
   reusable discipline. A file that documents its methods will hand you the
   answer before you design one.
+  **A template's value is the QUESTIONS IT FORCES, not the code it saves.**
+  Reading `ltF_stable` before designing `encvF_saturate` did not supply the
+  induction skeleton — that would have been reconstructed anyway. It supplied
+  "what is its measure, and does mine work?", and the answer was that `deg`
+  fails on exactly four terms. Ask a template what it assumes, not just what it
+  does.
 
 ## Publishing rules (public repo)
 
