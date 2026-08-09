@@ -11390,6 +11390,257 @@ theorem le_plus_one_of_lt_cnv {a v : Term} (ha : CNV a = true) (hv : CNV v = tru
 #guard predC (add omega one) == omega       -- on a CN parameter it is correct
 
 
+/-! ### §15.18 CORE (C') — THE FIRST ARGUMENT MOVES, and it is a RESTRICTED template
+
+WHAT THIS IS.  The four rows between ζ₀ and Γ₀ are φ̄-only — no `ψ`, no `Z` — so they continue
+the Veblen band rather than entering the collapsing region.  Two of them are existing templates
+with their first argument at 2 instead of 1; the other two need the MIRROR of core (C):
+
+    (C)   fs n = φ̄ a (g n)     inner sequence in the SECOND argument   — §15.10
+    (C')  fs n = φ̄ (g n) b     inner sequence in the FIRST argument    — here, and b = 0 ONLY
+
+(C') IS FALSE FOR b ≠ 0, AND NOT NARROWLY.  MEASURED: for the row `φ̄(ω,1)`, the term `φ̄(ω,0)`
+lies below it and `le (φ̄(ω,0)) (φ̄(k+2,1))` fails at every k ≤ 13.  But one uncaught term is the
+weak form of the reason, and a reader who sees only that will try a faster `g`.  THE REASON IS A
+UNIFORM CAP:
+
+    whenever `g n < a` and `b < φ̄(a,0)`,   φ̄(g n, b) < φ̄(a,0)
+
+MEASURED for a = ω at b = 1 and b = ζ₀, and for a = ε₀.  So the ENTIRE sequence is bounded by
+`φ̄(a,0)`, which is strictly below `φ̄(a,b)` as soon as b > 0: NO CHOICE OF `g` REPAIRS IT.  The
+cap genuinely needs `b < φ̄(a,0)` — at `b = φ̄(a,0)` it fails, measured — which is why that
+hypothesis is stated rather than dropped as harmless.
+
+`hside` HAS NO ANALOGUE HERE; IT VANISHES.  (C) needs it because 2.3.13(iii) hands cofinality
+back `s ≤ b`, and at b = 0 that forces `s = 0`, so the case closes itself.  (C') is therefore
+SIMPLER than (C) — on the RESTRICTED statement, which is the only one that is true.
+
+WHAT REPLACES IT IN COFINALITY: the index is pushed one step up so the first arguments compare
+STRICTLY.  2.3.13(ii) needs `lt p (g m)`, while `g`'s own cofinality yields only `le p (g m₂)`;
+taking `m = m₁ + m₂ + 1` and using that `g` increases converts one into the other.  That is the
+whole difference from §15.10's `cof_phiArg_aux`.
+
+THE ω EXCEPTION IS RETIRED HERE, NOT DOCUMENTED.  `ζ_ω = φ̄(2,ω)` has the same exception §15.12
+records at `φ̄(1,ω)`, and the cause is neither the first argument nor an ordinal fact: it is an
+OFF-BY-ONE IN `fsC` AT ω.  `fsC ω n = ofNat (n+1)` is already proved as `fsC_omega` (§15.12.1),
+so β = ω is not a case to avoid but a case to instantiate with a shift — which is what
+`lim_clauses_zetaOmega` does, by passing `ofNat` rather than `fsC ω`.  `fsC` ITSELF IS NOT
+CHANGED: §15.15's two theorems are calibrated 129/129 against the current convention and moving
+it would invalidate all of them at once.
+NOT MERGED with §15.12's `tower (n+1)` shift.  They look alike, but one is about where `tower 0`
+sits and the other about ω, and there is no evidence they share a cause.
+
+MEASURED before instantiating and again on the final definitions: all four sequences exact
+(n ≤ 6, and n ≤ 5 for the two deepest), all four row terms exact against `Rows/TM.lean`, and
+three negative controls FALSE — `φ̄(2, fsC ω n)` for ζ_ω, and the off-by-one variants for
+`φ̄(ω,0)` and `φ̄(ε₀,0)`. -/
+
+private theorem lt_g_mono {g : Nat → Term} (hg1 : ∀ n, CNV (g n) = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true) : ∀ (i d : Nat), lt (g i) (g (i + d + 1)) = true
+  | i, 0 => hg3 i
+  | i, d + 1 => by
+    have h1 := lt_g_mono hg1 hg3 i d
+    exact lt_trans (frag_of_cnv _ (hg1 i)) (frag_of_cnv _ (hg1 (i + d + 1)))
+      (frag_of_cnv _ (hg1 (i + d + 1 + 1))) h1 (hg3 (i + d + 1))
+
+private theorem lt_zero_phi (x y : Term) : lt zero (phi x y) = true := by
+  show ltF (fuelOf zero (phi x y)) zero (phi x y) = true
+  exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (phi x y).deg) + 8; omega)
+    (by intro hc; exact Term.noConfusion hc)
+
+/-- 2.3.13(ii) at a zero second argument: `φ̄·0` is strictly monotone in the FIRST argument. -/
+private theorem lt_phiz_of_lt {p x : Term} (h : lt p x = true) :
+    lt (phi p zero) (phi x zero) = true := by
+  have hne : p ≠ x := ne_of_ltF h
+  rw [lt_phi_phi (by intro hc; injection hc with h1 _; exact hne h1), if_neg hne, if_pos h]
+  exact lt_zero_phi _ _
+
+private theorem lt_seq_mono {g : Nat → Term} (hg1 : ∀ n, CNV (g n) = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true) (i d : Nat) :
+    lt (phi (g i) zero) (phi (g (i + d + 1)) zero) = true :=
+  lt_phiz_of_lt (lt_g_mono hg1 hg3 i d)
+
+private theorem cof_phiArg1_aux {a : Term} (g : Nat → Term)
+    (hg1 : ∀ n, CNV (g n) = true) (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s a = true → ∃ n, le s (g n) = true) :
+    ∀ (n : Nat) (s : Term), s.deg ≤ n → CNV s = true → lt s (phi a zero) = true →
+      ∃ m, le s (phi (g m) zero) = true := by
+  intro n
+  induction n with
+  | zero => intro s hd _ _; have := deg_pos s; omega
+  | succ n ih =>
+    intro s hd hs hlt
+    cases s with
+    | M => exact Bool.noConfusion hs
+    | omg _ => exact Bool.noConfusion hs
+    | psi _ _ => exact Bool.noConfusion hs
+    | Z _ => exact Bool.noConfusion hs
+    | zero => exact ⟨0, le_zero_any _⟩
+    | phi p q =>
+      obtain ⟨hcp, hcq⟩ := cnv_phi hs
+      have hne : phi p q ≠ phi a zero := ne_of_ltF hlt
+      rw [lt_phi_phi hne] at hlt
+      have hdq : q.deg ≤ n := by
+        have e : (phi p q).deg = 1 + p.deg + q.deg := rfl
+        have := deg_pos p; omega
+      by_cases hpa : p = a
+      · -- 2.3.13(i): the second argument would have to drop below `0`.  THIS IS THE CASE THAT
+        -- FORCES `b = 0`: at `b > 0` it is live and the uniform cap defeats it.
+        rw [if_pos hpa, show lt q zero = false from ltF_right_zero _ _] at hlt
+        exact Bool.noConfusion hlt
+      · rw [if_neg hpa] at hlt
+        by_cases hpl : lt p a = true
+        · rw [if_pos hpl] at hlt
+          obtain ⟨m1, hm1⟩ := ih q hdq hcq hlt
+          obtain ⟨m2, hm2⟩ := hg4 p (inT_of_cnv p hcp) hpl
+          have hM1 : lt (g m1) (g (m1 + m2 + 1)) = true := lt_g_mono hg1 hg3 m1 m2
+          have hM2 : lt (g m2) (g (m1 + m2 + 1)) = true := by
+            have h := lt_g_mono hg1 hg3 m2 m1
+            rwa [show m2 + m1 + 1 = m1 + m2 + 1 from by omega] at h
+          have hpM : lt p (g (m1 + m2 + 1)) = true :=
+            lt_of_le_of_lt (frag_of_cnv _ hcp) (frag_of_cnv _ (hg1 m2))
+              (frag_of_cnv _ (hg1 (m1 + m2 + 1))) hm2 hM2
+          have hqM : lt q (phi (g (m1 + m2 + 1)) zero) = true := by
+            refine lt_of_le_of_lt (frag_of_cnv _ hcq)
+              (frag_of_cnv _ (show CNV (phi (g m1) zero) = true from by
+                show (CNV (g m1) && CNV zero) = true; rw [hg1 m1]; rfl))
+              (frag_of_cnv _ (show CNV (phi (g (m1 + m2 + 1)) zero) = true from by
+                show (CNV (g (m1 + m2 + 1)) && CNV zero) = true; rw [hg1 (m1 + m2 + 1)]; rfl))
+              hm1 ?_
+            exact lt_phiz_of_lt hM1
+          refine ⟨m1 + m2 + 1, le_of_lt ?_⟩
+          have hne2 : p ≠ g (m1 + m2 + 1) := ne_of_ltF hpM
+          rw [lt_phi_phi (by intro hc; injection hc with h1 _; exact hne2 h1),
+            if_neg hne2, if_pos hpM]
+          exact hqM
+        · rw [if_neg hpl, show le (phi p q) zero = false from by
+            show ((phi p q == zero) || lt (phi p q) zero) = false
+            rw [show ((phi p q : Term) == zero) = false from rfl,
+              show lt (phi p q) zero = false from ltF_right_zero _ _]
+            rfl] at hlt
+          exact Bool.noConfusion hlt
+    | add c d =>
+      obtain ⟨hAPc, hcc, hcd, _⟩ := cnv_add hs
+      rw [lt_add_phi] at hlt
+      have hdc : c.deg ≤ n := by
+        have e : (add c d).deg = 1 + c.deg + d.deg := rfl
+        have := deg_pos d; omega
+      obtain ⟨m, hm⟩ := ih c hdc hcc hlt
+      refine ⟨m + 1, le_of_lt ?_⟩
+      rw [lt_add_phi]
+      exact lt_of_le_of_lt (frag_of_cnv _ hcc)
+        (frag_of_cnv _ (show CNV (phi (g m) zero) = true from by
+          show (CNV (g m) && CNV zero) = true; rw [hg1 m]; rfl))
+        (frag_of_cnv _ (show CNV (phi (g (m + 1)) zero) = true from by
+          show (CNV (g (m + 1)) && CNV zero) = true; rw [hg1 (m + 1)]; rfl))
+        hm (lt_seq_mono hg1 hg3 m 0)
+
+/-- **CORE (C'), THE MIRROR OF §15.10 — RESTRICTED TO `b = 0`, AND THE RESTRICTION IS REAL.**
+    Given `g` witnessing the four premises for `a`, the sequence `n ↦ φ̄(g n, 0)` witnesses them
+    for `φ̄(a,0)`.  Do NOT read `b = 0` as conservative: for `b > 0` the whole sequence is capped
+    by `φ̄(a,0) < φ̄(a,b)` and no `g` repairs it — see the section header. -/
+theorem lim_clauses_phi_arg1 {a : Term} (g : Nat → Term)
+    (hg1 : ∀ n, CNV (g n) = true) (hg2 : ∀ n, lt (g n) a = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s a = true → ∃ n, le s (g n) = true)
+    (hcna : CNV a = true) :
+    (∀ n, CNV (phi (g n) zero) = true)
+  ∧ (∀ n, lt (phi (g n) zero) (phi a zero) = true)
+  ∧ (∀ n, lt (phi (g n) zero) (phi (g (n + 1)) zero) = true)
+  ∧ (∀ s, inT s = true → lt s (phi a zero) = true →
+        ∃ m, le s (phi (g m) zero) = true) :=
+  ⟨fun n => by show (CNV (g n) && CNV zero) = true; rw [hg1 n]; rfl,
+   fun n => lt_phiz_of_lt (hg2 n),
+   fun n => lt_phiz_of_lt (hg3 n),
+   fun s hin hlt =>
+     cof_phiArg1_aux g hg1 hg3 hg4 s.deg s (Nat.le_refl _)
+       (cnv_of_lt_cnv hin (by show (CNV a && CNV zero) = true; rw [hcna]; rfl) hlt) hlt⟩
+
+/-! #### §15.18.1 The four rows between ζ₀ and Γ₀ -/
+
+def zetaOmega : Term := phi (ofNat 2) omega          -- ζ_ω, row (0,0)(1,1)(2,1)(2,0)
+def fsZW (n : Nat) : Term := phi (ofNat 2) (ofNat n) -- ζ_n — `ofNat`, NOT `fsC ω`; see header
+
+/-- **ζ_ω** — core (C) at first argument 2, the shape ε_ω has at 1, with the ω shift applied. -/
+theorem lim_clauses_zetaOmega :
+    (∀ n, CNV (fsZW n) = true) ∧ (∀ n, lt (fsZW n) zetaOmega = true)
+  ∧ (∀ n, lt (fsZW n) (fsZW (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s zetaOmega = true → ∃ n, le s (fsZW n) = true) :=
+  lim_clauses_phi_arg ofNat (by decide) rfl cnv_ofNat lt_ofNat_omega lt_ofNat_step
+    cof_ofNat (by decide)
+
+def phi30 : Term := phi (ofNat 3) zero               -- φ̄(3,0), row (0,0)(1,1)(2,1)(2,1)
+def fsP30 (n : Nat) : Term := fsGen zeta0 (ofNat 2) zeta0 n
+
+/-- **φ̄(3,0)** — core (B) at `u = 2`, the shape ζ₀ has at `u = 1`.  `H2` is §15.13's
+    `below_ofNat_cnv` at k = 2. -/
+theorem lim_clauses_phi30 :
+    (∀ n, CNV (fsP30 n) = true) ∧ (∀ n, lt (fsP30 n) phi30 = true)
+  ∧ (∀ n, lt (fsP30 n) (fsP30 (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s phi30 = true → ∃ n, le s (fsP30 n) = true) :=
+  lim_clauses_fsGen cnv_zeta0 (by decide) cnv_zeta0 (by decide) (le_self _) (by decide)
+    (by decide) (by decide)
+    (fun q _ hlt => by
+      rw [show lt q zero = false from ltF_right_zero _ _] at hlt; exact Bool.noConfusion hlt)
+    (fun p hp hlt => below_ofNat_cnv 2 p hp hlt)
+    (le_zero_any _)
+
+private theorem le_ofNat_step2 (n : Nat) : le (ofNat n) (ofNat (n + 2)) = true :=
+  le_trans (frag_of_cnv _ (cnv_ofNat n)) (frag_of_cnv _ (cnv_ofNat (n + 1)))
+    (frag_of_cnv _ (cnv_ofNat (n + 2))) (le_of_lt (lt_ofNat_step n))
+    (le_of_lt (lt_ofNat_step (n + 1)))
+
+def phiW0 : Term := phi omega zero                   -- φ̄(ω,0), row (0,0)(1,1)(2,1)(3,0)
+def fsPW0 (n : Nat) : Term := phi (ofNat (n + 2)) zero
+
+/-- **φ̄(ω,0)** — the first instance of core (C'). -/
+theorem lim_clauses_phiW0 :
+    (∀ n, CNV (fsPW0 n) = true) ∧ (∀ n, lt (fsPW0 n) phiW0 = true)
+  ∧ (∀ n, lt (fsPW0 n) (fsPW0 (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s phiW0 = true → ∃ n, le s (fsPW0 n) = true) :=
+  lim_clauses_phi_arg1 (fun n => ofNat (n + 2))
+    (fun n => cnv_ofNat (n + 2)) (fun n => lt_ofNat_omega (n + 2))
+    (fun n => lt_ofNat_step (n + 2))
+    (fun s hin hlt => by
+      obtain ⟨n, hn⟩ := cof_ofNat s hin hlt
+      exact ⟨n, le_trans_inT hin (inT_of_cnv _ (cnv_ofNat n))
+        (inT_of_cnv _ (cnv_ofNat (n + 2))) hn (le_ofNat_step2 n)⟩)
+    rfl
+
+def phiE0 : Term := phi eps0T zero                   -- φ̄(ε₀,0), row (0,0)(1,1)(2,1)(3,0)(4,1)
+def fsPE0 (n : Nat) : Term := phi (tower (n + 1)) zero
+
+/-- **φ̄(ε₀,0)** — core (C') through §9's ω-tower, shifted, reusing §15.15's `eps0_shift`. -/
+theorem lim_clauses_phiE0 :
+    (∀ n, CNV (fsPE0 n) = true) ∧ (∀ n, lt (fsPE0 n) phiE0 = true)
+  ∧ (∀ n, lt (fsPE0 n) (fsPE0 (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s phiE0 = true → ∃ n, le s (fsPE0 n) = true) :=
+  lim_clauses_phi_arg1 (fun n => tower (n + 1))
+    eps0_shift.1 eps0_shift.2.1 eps0_shift.2.2.1 eps0_shift.2.2.2 cnv_eps0T
+
+/-! Receipts.  The `== false` lines are the three refuted candidates and the b ≠ 0 cap. -/
+
+#guard fsZW 0 == zeta0
+#guard fsZW 1 == phi (ofNat 2) one
+#guard (fsZW 0 == phi (ofNat 2) (fsC omega 0)) == false   -- the ω off-by-one, at a = 2
+#guard fsP30 1 == phi (ofNat 2) zeta0
+#guard fsPW0 0 == phi (ofNat 2) zero
+#guard (fsPW0 0 == phi (ofNat 1) zero) == false
+#guard fsPE0 0 == phi omega zero
+#guard (fsPE0 0 == phi (tower 0) zero) == false
+-- the uniform cap: at b = 1 the whole (C') sequence stays under φ̄(ω,0) < φ̄(ω,1)
+#guard (List.range 6).all (fun k => lt (phi (ofNat (k+2)) one) (phi omega zero))
+#guard lt (phi omega zero) (phi omega one) == true
+#guard (List.range 5).all (fun n =>
+  CNV (fsPW0 n) && lt (fsPW0 n) phiW0 && lt (fsPW0 n) (fsPW0 (n+1)))
+#guard (List.range 4).all (fun n =>
+  CNV (fsPE0 n) && lt (fsPE0 n) phiE0 && lt (fsPE0 n) (fsPE0 (n+1)))
+#guard (List.range 5).all (fun n =>
+  CNV (fsZW n) && lt (fsZW n) zetaOmega && lt (fsZW n) (fsZW (n+1)))
+#guard (List.range 4).all (fun n =>
+  CNV (fsP30 n) && lt (fsP30 n) phi30 && lt (fsP30 n) (fsP30 (n+1)))
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
