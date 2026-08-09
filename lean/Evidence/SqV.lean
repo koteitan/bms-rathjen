@@ -2537,6 +2537,26 @@ What §14 measures and does not prove:
 whole obligation is this theorem, and §13's table is the record that the arithmetic
 alternative does not exist rather than that it was not looked for.
 
+**STATED AS ONE THEOREM WITH FOUR CLAUSE OBLIGATIONS**, so that veblen2's packaging
+consumes a single hypothesis and what is owed is visible in one place:
+
+    landing : ∀ t, inT t → CNV t → ∀ u ∈ targets t, inT u ∧ CNV u ∧ lt u t
+
+`targets` is §14's OVER-APPROXIMATION — all branches' targets, not the taken one — so the
+theorem is stronger than the recursion needs and is exactly what was measured.
+
+`CNV` IS IN THE CONCLUSION, not only the hypothesis, and the reason is that veblen2's
+packaging may need it at the target.  Measured over the 169-term pool (every member `CNV`):
+
+                          movers   `CNV` lost   `RT`-step failed
+        predOr              39          0              0
+        omLog               28          0              0
+        fpDeep              24          0              0
+        summands             —          0              0
+
+**`CNV` survives every site.**  veblen2's own evidence was 2 movers from filtering; the
+call graph gives 39, 28 and 24, on the sample that actually arises.
+
 FOUR CLAUSES, one per recursion site of §10's named equations:
 
     the summands   g ∈ summands (splitFin b).1        →  inT g,  lt g (φ̄(a,b))
@@ -2572,5 +2592,52 @@ theorem inT_mem_summands : ∀ (t g : Term),
     rcases hg with hh | hh
     · exact ihu g hd.1 hh
     · exact ihv g hd.2 hh
+
+
+def cnvPool : List Term := pool.filter (fun t => Evidence.WF.CNV t)
+
+#guard cnvPool.length == 169
+#guard (cnvPool.filter (fun t => !(predOr t == t))).length == 39
+#guard (cnvPool.filter (fun t => !(predOr t == t) && !(Evidence.WF.CNV (predOr t)))).length == 0
+#guard (cnvPool.filter (fun t => !(omLog t == t))).length == 28
+#guard (cnvPool.filter (fun t => !(omLog t == t) && !(Evidence.WF.CNV (omLog t)))).length == 0
+#guard (cnvPool.filter (fun t => !((List.range 3).all (fun i =>
+          match fpDeep (ofNat i) t with | none => true | some g => Evidence.WF.CNV g)))).length == 0
+#guard (cnvPool.filter (fun t =>
+          !((summands (TM.Term.splitFin t).1).all (fun g =>
+              Evidence.WF.CNV g && TM.Term.inT g)))).length == 0
+
+
+/-! ### §15.1 `inT` UNDER `ofList ∘ take` — measured, and the proof's shape
+
+The summands clause needs `inT ((splitFin b).1)`, and `(splitFin b).1` is
+`ofList ((toList b).take j)`.  Measured before attempting, over 221 `inT` terms of
+`startsW ++ junk`:
+
+    inT b → inT (ofList ((toList b).take k)),  k ≤ 5      0 violations of 221
+    the same for CNV                                       0 violations
+    CONTROL: from the 42 NON-`inT` terms                  38 FAIL
+
+**The hypothesis is load-bearing, not decoration** — without `inT b` the conclusion is
+false on 38 of 42, which is the shape a corpus of legal terms alone could never have shown.
+
+THE PROOF, by the house technique (induct on the TERM): `zero` and the five leaves close,
+and so does the `add` case when the prefix is empty — `ofList [u] = u`, and `inT u` is the
+second conjunct of 2.1(iii).  **What remains is the non-empty prefix**, where the goal is
+2.1(iii) for `add u (ofList (y :: ys))` and the fourth conjunct needs the head `y` to be
+additively principal and `≤ u`.  That is exactly what `inT (add u v)`'s own fourth conjunct
+says about `v`'s head, and `y` IS `v`'s head — the bookkeeping is relating `take`'s first
+element to `toList v`'s first element through the `cases` on `v`.
+
+Not in the file until it closes; the measurement is. -/
+
+def inTpool : List Term := (startsW ++ junk).eraseDups
+
+#guard ((inTpool.filter (fun t => TM.Term.inT t)).filter (fun t =>
+          !((List.range 6).all (fun k => TM.Term.inT (ofList ((toList t).take k)))))).length == 0
+#guard ((inTpool.filter (fun t => Evidence.WF.CNV t)).filter (fun t =>
+          !((List.range 6).all (fun k => Evidence.WF.CNV (ofList ((toList t).take k)))))).length == 0
+#guard ((inTpool.filter (fun t => !(TM.Term.inT t))).filter (fun t =>
+          !((List.range 6).all (fun k => TM.Term.inT (ofList ((toList t).take k)))))).length == 38
 
 end Evidence.SqV
