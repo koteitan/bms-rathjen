@@ -178,6 +178,16 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **LANE PROTOCOL: THE VERDICT IS THE LAST THING A LANE DOES, AND ACKS CARRY NO
+  WORK.** After sending a verdict a lane makes no further writes to that file
+  until the coordinator acks. Five sha mismatches in one evening, the last five
+  lines wide; **the bytes were never wrong and every verdict was true when
+  sent** — what kept passing was the moment, which the sha convention cannot
+  catch and only the hold can. The coordinator half is the harder one: an ack
+  that also assigns work **has no unambiguous END** — "resume, and also do X"
+  makes the hold expire the instant the lane starts X, so the file moves before
+  the coordinator can read the sha. Ack and task travel as separate messages;
+  a lane receiving an ack with work in it treats it as "ack, then wait".
 - **TWO INSTRUMENTS AGREEING ON 0 IS NOT CORROBORATION UNLESS BOTH HAVE
   CONTROLS.** A `branchOf` dispatch classifier's `FIFTH` bucket was dead code —
   it tested `kindV b` first and routed every successor `b` away before the

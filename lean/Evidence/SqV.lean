@@ -1173,6 +1173,22 @@ a measurement and a proof that this file exists to keep visible.  Note what the 
 the blocker is: it is not a defect in the encoding — seven dimensions say the encoding is
 right — it is that the DEFINITION is not in a form an induction can use.
 
+**QUALIFIED LATER, AND THE QUALIFICATION BELONGS HERE RATHER THAN ONLY AT §20/§21: THE BLOCKER IS
+REAL BUT NOT TOTAL.**  §16 retired it by redefining `encv` fuel-free, so the paragraph above stands
+as history.  But §20 and §21 then unfolded `fpDeepF` — a fuel recursion — at a SYMBOLIC index
+anyway, twice, and neither needed a saturation lemma:
+
+  * §20 `fpDeep_none_of_empty`: **the branch is decided at the FIRST step**, so the fuel is `f + 1`
+    for an arbitrary `f` and never has to be known.
+  * §21 `fpDeepF_tower`: **induct on the FUEL with the term's index universally quantified**, so
+    the two indices are stepped down together and never compared.
+
+**Fuel obstructs only when the recursion must be FOLLOWED to a depth the fuel has to cover.**  A
+clause that terminates immediately unfolds once at any positive fuel; a recursion whose parameter
+is universally quantified inducts on the fuel instead.  What made §9's blocker bite was neither of
+those — it was an induction on `n` that had to compare `encvF 22` against `encvF 30` for the SAME
+term, and that is the one shape these two techniques do not cover.
+
 BLOCKER 2 — RESOLVED, AND THE ARROW POINTS **SqV → Cert**, NEVER THE REVERSE.
 `import Evidence.Cert` is now at the head of this file and the bridge to
 `Certified (sqv t) t` will be written HERE.  It is more natural to put a theorem about
@@ -4600,8 +4616,15 @@ followed; a clause that terminates immediately unfolds once at any positive fuel
 of copies encodes as copies of the encoding, for ANY additively principal summand — and it needs
 NO induction on the encoder, because `summands_repAdd` delivers the whole list and `encv'_add`
 consumes it in one step.  `encv'_ofNat_succ` (`ω^(n+1)`'s block above) is the instance at `x = 1`;
-row A is the instance at `x = ε₀`.  The lemma was written for this row and subsumes the earlier
-one, which is the ordinary way a file's second use of a shape finds the right generality.
+row A is the instance at `x = ε₀`.
+
+**AND THAT ORDER IS THE POINT, NOT AN ACCIDENT: THE GENERAL LEMMA WAS NOT VISIBLE FROM THE FIRST
+INSTANCE AND WAS OBVIOUS FROM THE SECOND.**  Row A's proof is `encv'_add` plus `summands_repAdd`
+at `ε₀`; nothing in it suggests the summand is a parameter, because with one caller there is no
+evidence about which parts vary.  The second caller supplied that evidence for free.  **This is an
+argument for writing the SPECIFIC lemma first and generalising when a second caller appears** — the
+opposite of the instinct to generalise immediately, and this file has now done it deliberately
+rather than by omission.
 
 THE ROW IS STATED TWICE AND BRIDGED ONCE, as in §19: `encvC_epsOmegaOmega` against the carrier,
 `encv'_epsOmegaOmega` against the total wrapper, and `encv'_fsEWW` against the table's own
@@ -4728,5 +4751,248 @@ theorem encv'_fsEWW (n : Nat) :
   show encv' (phi one (Evidence.WF.fsC Evidence.WF.omegaOmega n)) 0 = _
   rw [Evidence.WF.fsC_omegaOmega]
   exact encv'_epsOmegaOmega n
+
+/-! ## §21 `ε_{ε₀}` — THE FIRST ROW THAT GENUINELY NEEDS AN INDUCTION ON `n`
+
+Four rows fell without one.  This one does not, and the reason is NOT the summand list — §20's
+family finding says every Veblen row's subscript summand list is a replicate, `ε_{ε₀}`'s included
+(a singleton).  **The difference is that the single summand is `tower (n+1)`, so the BLOCK's own
+encoding grows with `n` rather than repeating**, and the value is an increasing ladder:
+
+    encv' (tower n) d       = ladderCols d (n+1)              = (d,0), (d+1,0), …, (d+n,0)
+    encv' (fsEE n)  0       = (0,0) :: (1,1) :: ladderCols 2 (n+1)
+
+`ladderCols` exists so the index arithmetic lives in ONE place: `ladderCols_succ` and
+`shiftD_ladderCols` are the only two lemmas that ever see a `+`, and every row proof composes them
+instead of re-deriving `i + d + e = i + (d + e)`.
+
+**AND THE FUEL RECURSION IS UNFOLDED AT A SYMBOLIC INDEX FOR THE SECOND TIME, BY THE OTHER OF THE
+TWO TECHNIQUES.**  §20's `fpDeep_none_of_empty` worked because the branch is decided at the first
+step.  Here `fpDeep` must DESCEND the whole tower, so that does not apply — and `fpDeepF_tower`
+inducts on the FUEL with the tower's height universally quantified, so the fuel and the height are
+stepped down together and never have to be related.  §9's blocker is qualified in place with both
+techniques named; what it feared — comparing `encvF 22` against `encvF 30` for the same term — is
+the one shape neither covers, and no row has needed it.
+
+**`fpDeepF_tower` IS STATED OVER AN ARBITRARY FIRST ARGUMENT** with `isFP a (tower m) = false` as a
+hypothesis, because `a = 0` (inside the tower) and `a = 1` (at the row's head) both occur and the
+proof is identical.  Second-caller generality again, this time noticed before writing rather than
+after — §20's note is what made me look. -/
+
+theorem splitFin_isAP {x : Term} (hx : x.isAP = true) (hne : (x == one) = false) :
+    TM.Term.splitFin x = (x, 0) := splitFin_repAdd hx hne 0
+
+theorem isFP_zero_tower : ∀ n, TM.Term.isFP zero (Evidence.WF.tower n) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem tower_ne_one : ∀ n, (Evidence.WF.tower (n + 1) == one) = false := by
+  intro n
+  have : Evidence.WF.tower (n + 1) ≠ one := by
+    intro hc
+    have h0 := Evidence.WF.tower_ne_zero n
+    injection hc with _ h2
+    exact h0 h2
+  simpa using this
+
+theorem summands_splitFin_tower_succ (k : Nat) :
+    summands (TM.Term.splitFin (Evidence.WF.tower (k + 1))).1 = [Evidence.WF.tower (k + 1)] := by
+  rw [splitFin_isAP (x := Evidence.WF.tower (k + 1)) rfl (tower_ne_one k)]; rfl
+
+/-- **`fpDeep` NEVER FIRES INSIDE AN ω-TOWER** — induction on the FUEL with the height
+    universally quantified, so the fuel never has to be related to the height. -/
+theorem fpDeepF_tower (a : Term) (ha : ∀ m, TM.Term.isFP a (Evidence.WF.tower m) = false) :
+    ∀ (f n : Nat), fpDeepF f a (Evidence.WF.tower n) = none
+  | 0, _ => rfl
+  | f + 1, 0 => by
+    show (if TM.Term.isFP a (phi zero zero) then some (phi zero zero)
+          else (summands (TM.Term.splitFin zero).1).findSome? (fpDeepF f a)) = none
+    rw [show TM.Term.isFP a (phi zero zero) = false from ha 0]
+    rfl
+  | f + 1, n + 1 => by
+    show (if TM.Term.isFP a (Evidence.WF.tower (n + 1)) then some (Evidence.WF.tower (n + 1))
+          else (summands (TM.Term.splitFin (Evidence.WF.tower n)).1).findSome?
+                 (fpDeepF f a)) = none
+    rw [ha (n + 1)]
+    simp only [Bool.false_eq_true, if_false]
+    cases n with
+    | zero => rfl
+    | succ k =>
+      rw [summands_splitFin_tower_succ k, List.findSome?_cons, fpDeepF_tower a ha f (k + 1)]
+      rfl
+
+theorem isFP_one_tower : ∀ n, TM.Term.isFP one (Evidence.WF.tower n) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem fpDeep_zero_tower (n : Nat) : fpDeep zero (Evidence.WF.tower n) = none :=
+  fpDeepF_tower zero isFP_zero_tower _ n
+
+theorem fpDeep_one_tower (n : Nat) : fpDeep one (Evidence.WF.tower n) = none :=
+  fpDeepF_tower one isFP_one_tower _ n
+
+theorem cnv_tower : ∀ n, Evidence.WF.CNV (Evidence.WF.tower n) = true
+  | 0 => rfl
+  | n + 1 => by
+    show (Evidence.WF.CNV zero && Evidence.WF.CNV (Evidence.WF.tower n)) = true
+    rw [cnv_tower n]; rfl
+
+/-- The increasing column ladder `(d,0), (d+1,0), …` of length `k` — the shape every
+    tower-indexed row emits, kept as one definition so the arithmetic lives in one place. -/
+def ladderCols (d k : Nat) : List Col2 := (List.range k).map (fun i => ((i + d, 0) : Col2))
+
+theorem ladderCols_succ (d k : Nat) : ladderCols d (k + 1) = (d, 0) :: ladderCols (d + 1) k := by
+  show (List.range (k + 1)).map (fun i => ((i + d, 0) : Col2)) = _
+  rw [List.range_succ_eq_map, List.map_cons, List.map_map]
+  show ((0 + d, 0) : Col2) :: (List.range k).map (fun i => ((i + 1 + d, 0) : Col2))
+     = ((d, 0) : Col2) :: (List.range k).map (fun i => ((i + (d + 1), 0) : Col2))
+  simp only [Nat.zero_add]
+  congr 1
+  apply List.map_congr_left
+  intro i _
+  congr 1
+  omega
+
+theorem shiftD_ladderCols (e d k : Nat) : shiftD e (ladderCols d k) = ladderCols (d + e) k := by
+  show ((List.range k).map (fun i => ((i + d, 0) : Col2))).map (fun c => (c.1 + e, c.2)) = _
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro i _
+  show ((i + d + e, 0) : Col2) = ((i + (d + e), 0) : Col2)
+  congr 1
+  omega
+
+theorem encv'_tower_succ (n d : Nat) :
+    encv' (Evidence.WF.tower (n + 1)) d
+      = (d, 0) :: shiftD (d + 1) (encv' (Evidence.WF.tower n) 0) := by
+  show (if h : Evidence.WF.CNV (Evidence.WF.tower (n + 1)) = true
+        then encvC ⟨Evidence.WF.tower (n + 1), h⟩ d else []) = _
+  rw [dif_pos (cnv_tower (n + 1))]
+  cases n with
+  | zero =>
+    show encvC ⟨phi zero one, cnv_tower 1⟩ d = _
+    have hgs : summands (TM.Term.splitFin one).1 = [] := rfl
+    have hat : (summands (TM.Term.splitFin one).1).attach = [] :=
+      List.eq_nil_of_length_eq_zero (by rw [List.length_attach, hgs]; rfl)
+    have hfd : ∀ pf, fpDeepC zero ((summands (TM.Term.splitFin one).1).headD zero) pf = none :=
+      fun pf => fpDeepC_none pf rfl
+    rw [encvC]
+    dsimp only
+    rw [show TM.Term.isFP zero ((summands (TM.Term.splitFin one).1).headD zero) = false from rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [hfd, hat, show encv' (Evidence.WF.tower 0) 0 = [((0, 0) : Col2)] from encv'_one 0]
+    dsimp only
+    split
+    · simp [shiftD, show (TM.Term.splitFin one).2 = 1 from rfl]
+    · exact absurd hgs (by simp_all)
+  | succ k =>
+    show encvC ⟨phi zero (Evidence.WF.tower (k + 1)), cnv_tower (k + 2)⟩ d = _
+    have hgs := summands_splitFin_tower_succ k
+    have hm2 : (TM.Term.splitFin (Evidence.WF.tower (k + 1))).2 = 0 := by
+      rw [splitFin_isAP (x := Evidence.WF.tower (k + 1)) rfl (tower_ne_one k)]
+    have hhd : (summands (TM.Term.splitFin (Evidence.WF.tower (k + 1))).1).headD zero
+        = Evidence.WF.tower (k + 1) := by rw [hgs]; rfl
+    have hfp : TM.Term.isFP zero
+        ((summands (TM.Term.splitFin (Evidence.WF.tower (k + 1))).1).headD zero) = false := by
+      rw [hhd]; exact isFP_zero_tower (k + 1)
+    have hfd : ∀ pf, fpDeepC zero
+        ((summands (TM.Term.splitFin (Evidence.WF.tower (k + 1))).1).headD zero) pf = none :=
+      fun pf => fpDeepC_none pf (by rw [hhd]; exact fpDeep_zero_tower (k + 1))
+    rw [encvC]
+    dsimp only
+    rw [hfp]
+    simp only [Bool.false_eq_true, if_false]
+    rw [hfd, hm2]
+    simp only [encvC_eq_encv', show (zero == zero) = true from rfl, if_true]
+    rw [List.attach_map_val
+          (l := summands (TM.Term.splitFin (Evidence.WF.tower (k + 1))).1)
+          (f := fun y => ([] : List Col2) ++ shiftD (d + 1) (encv' y 0))]
+    rw [hgs]
+    simp only [List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil,
+      List.nil_append, List.append_nil, List.replicate_zero]
+
+/-- **THE ω-TOWER'S ENCODING IS THE INCREASING LADDER** — the first row family in this file that
+    genuinely needs an induction on `n`, because the block's own encoding grows with `n` rather
+    than repeating. -/
+theorem encv'_tower : ∀ (n d : Nat), encv' (Evidence.WF.tower n) d = ladderCols d (n + 1)
+  | 0, d => by
+    rw [show encv' (Evidence.WF.tower 0) d = [((d, 0) : Col2)] from encv'_one d,
+        ladderCols_succ d 0]
+    rfl
+  | n + 1, d => by
+    rw [encv'_tower_succ n d, encv'_tower n 0, shiftD_ladderCols, Nat.zero_add,
+        ladderCols_succ d (n + 1)]
+
+theorem omLog_tower_succ : ∀ n, omLog (Evidence.WF.tower (n + 1)) = Evidence.WF.tower n
+  | 0 => rfl
+  | k + 1 => by
+    show (match summands (TM.Term.splitFin (Evidence.WF.tower (k + 1))).1 with
+          | [g] => if TM.Term.isFP zero g then plus (Evidence.WF.tower (k + 1)) one
+                   else Evidence.WF.tower (k + 1)
+          | _ => Evidence.WF.tower (k + 1)) = _
+    rw [summands_splitFin_tower_succ k]
+    show (if TM.Term.isFP zero (Evidence.WF.tower (k + 1)) then
+            plus (Evidence.WF.tower (k + 1)) one else Evidence.WF.tower (k + 1)) = _
+    rw [isFP_zero_tower (k + 1)]
+    rfl
+
+theorem cnv_phi_one_tower (n : Nat) :
+    Evidence.WF.CNV (phi one (Evidence.WF.tower n)) = true := by
+  show (Evidence.WF.CNV one && Evidence.WF.CNV (Evidence.WF.tower n)) = true
+  rw [cnv_tower n]; rfl
+
+/-- **THE `ε_{ε₀}` ROW'S ENCODER FACT, FOR EVERY `n`.** -/
+theorem encv'_epsEps0 (n : Nat) :
+    encv' (phi one (Evidence.WF.tower (n + 1))) 0
+      = (0, 0) :: (1, 1) :: ladderCols 2 (n + 1) := by
+  show (if h : Evidence.WF.CNV (phi one (Evidence.WF.tower (n + 1))) = true
+        then encvC ⟨phi one (Evidence.WF.tower (n + 1)), h⟩ 0 else []) = _
+  rw [dif_pos (cnv_phi_one_tower (n + 1))]
+  have hgs := summands_splitFin_tower_succ n
+  have hm2 : (TM.Term.splitFin (Evidence.WF.tower (n + 1))).2 = 0 := by
+    rw [splitFin_isAP (x := Evidence.WF.tower (n + 1)) rfl (tower_ne_one n)]
+  have hhd : (summands (TM.Term.splitFin (Evidence.WF.tower (n + 1))).1).headD zero
+      = Evidence.WF.tower (n + 1) := by rw [hgs]; rfl
+  have hfp : TM.Term.isFP one
+      ((summands (TM.Term.splitFin (Evidence.WF.tower (n + 1))).1).headD zero) = false := by
+    rw [hhd]; exact isFP_one_tower (n + 1)
+  have hfd : ∀ pf, fpDeepC one
+      ((summands (TM.Term.splitFin (Evidence.WF.tower (n + 1))).1).headD zero) pf = none :=
+    fun pf => fpDeepC_none pf (by rw [hhd]; exact fpDeep_one_tower (n + 1))
+  rw [encvC]
+  dsimp only
+  rw [hfp]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hfd, hm2, encvC_predOr_one]
+  simp only [encvC_eq_encv', show (one == zero) = false from rfl, Bool.false_eq_true, if_false]
+  rw [List.attach_map_val
+        (l := summands (TM.Term.splitFin (Evidence.WF.tower (n + 1))).1)
+        (f := fun y => ((0 + 1, 1) :: bumpAt (0 + 2) ([] : List Col2))
+                ++ shiftD (0 + 2) (encv' (omLog y) 0))]
+  rw [hgs]
+  simp only [List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil]
+  rw [omLog_tower_succ n, encv'_tower n 0, shiftD_ladderCols, Nat.zero_add]
+  simp only [List.replicate_zero, List.flatten_nil, List.append_nil]
+  rfl
+
+/-- The row as the table states it: `fsEE n = φ̄(1, tower (n+1))` by definition. -/
+theorem encv'_fsEE (n : Nat) :
+    encv' (Evidence.WF.fsEE n) 0 = (0, 0) :: (1, 1) :: ladderCols 2 (n + 1) :=
+  encv'_epsEps0 n
+
+#guard (List.range 7).all (fun n => encv' (Evidence.WF.tower n) 0 == ladderCols 0 (n+1))
+#guard (List.range 7).all (fun n =>
+  encv' (Evidence.WF.fsEE n) 0 == (0,0) :: (1,1) :: ladderCols 2 (n+1))
+#guard (List.range 7).all (fun n => encv (Evidence.WF.fsEE n) 0 == encv' (Evidence.WF.fsEE n) 0)
+-- the family finding of §20, banked: every Veblen row's subscript summand list is a REPLICATE
+#guard (List.range 5).all (fun n => (summands (TM.Term.splitFin (ofNat n)).1).length == 0)
+#guard (List.range 5).all (fun n =>
+  (summands (TM.Term.splitFin (Evidence.WF.fsC Evidence.WF.omegaSq n)).1).length == n + 1)
+#guard (List.range 5).all (fun n =>
+  (summands (TM.Term.splitFin (Evidence.WF.fsC Evidence.WF.omegaOmega n)).1).length == 1)
+#guard (List.range 5).all (fun n =>
+  (summands (TM.Term.splitFin (Evidence.WF.tower (n+1))).1).length == 1)
+#guard (List.range 4).all (fun n =>
+  (summands (TM.Term.splitFin (Evidence.WF.fsZeta0 n)).1).length == 1)
 
 end Evidence.SqV
