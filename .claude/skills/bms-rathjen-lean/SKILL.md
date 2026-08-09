@@ -153,6 +153,13 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `git show HEAD:<path>` and diff each signature, and diff the declaration-name
   lists both ways — removals should be exactly the specialised versions their
   general replacements subsume, and nothing else.
+- **The REQUESTER's half of routing: state the shape you NEED and the weaker shape
+  you could LIVE WITH, in the same message.** The producer cannot know how much
+  slack exists unless you say. Twice tonight a routed fact came back STRONGER than
+  requested — `le_plus_one_of_lt_cnv` without the limit hypothesis, `lt a (φ̄(a,b))`
+  with no restriction — and both times the mechanism was the requester having named
+  the fallback: aiming at the general statement was safe because a restricted one
+  would still have landed. No incentive to under-reach, no risk in over-reaching.
 - **RELAYING BETWEEN LANES IS ITSELF AN INSTRUMENT, and the coordinator is the
   only one who can check it.** A lane's measurement carries a scope; restating it
   for the other lane drops the scope unless you copy it deliberately. Happened

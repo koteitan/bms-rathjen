@@ -12413,6 +12413,151 @@ instance belowC_wf {v : Term} (hv : CNV v = true) :
   wf := wf_lt_belowC hv
 
 
+/-! #### §15.25.1 THE UNBOUNDED FORM — when the landing theorem also delivers `CNV`
+
+§15.25 packages the BOUNDED principle: `CNV` at a fixed bound `v`, `inT` and `lt t v` at each
+member.  The certificate lane's landing theorem turned out to deliver `CNV` AT EVERY TARGET as
+well — measured free, 0 violations across 39 / 28 / 24 movers at the three sites, on the call
+graph rather than on a filtered corpus.  **With `CNV` at the target the bound disappears
+entirely**: `acc_cnv_inT` needs no `v`, so there is no `lt t v` invariant to carry and no
+transitivity step.  Both forms are kept — the bounded one asks less of the consumer, the
+unbounded one is simpler to consume — and which is right depends only on whether `CNV` at each
+target is cheap to PROVE, not on whether it is true.
+
+THE TRADE, STATED SO IT IS A CHOICE RATHER THAN A DEFAULT: the unbounded form makes `CNV`
+LOAD-BEARING at every step, where the bounded form needs only `inT`.  If any clause of the
+landing theorem turns out hard for `CNV` but easy for `inT`, §15.25's bounded form is the
+fallback and costs the consumer one extra `lt`-chaining step, which `belowC_step` already does. -/
+
+/-! If the landing theorem delivers `CNV` at every target — which the certificate lane measures
+    free, 0 violations across 39/28/24 movers — then the BOUND DISAPPEARS.  `acc_cnv_inT` needs
+    no `v` at all, so the carrier is just the `CNV` terms and there is no `lt t v` to maintain. -/
+
+def CarrierV : Type := {t : Term // CNV t = true}
+
+private theorem acc_carrierV_aux :
+    ∀ (a : Term), Acc RT a → ∀ (y : CarrierV), y.1 = a →
+      Acc (fun (x z : CarrierV) => lt x.1 z.1 = true) y := by
+  intro a ha
+  induction ha with
+  | intro a _ IH =>
+    intro y hy
+    refine Acc.intro _ (fun x hx => ?_)
+    exact IH x.1 ⟨inT_of_cnv x.1 x.2, hy ▸ hx⟩ x rfl
+
+/-- **THE UNBOUNDED RECURSION PRINCIPLE.**  `lt` is well-founded on the whole `CNV` region — no
+    bound, no `lt t v` invariant.  A consumer whose landing theorem yields `CNV` at each target
+    needs only `CNV u` and `lt u t`. -/
+theorem wf_lt_cnv : WellFounded (fun (x y : CarrierV) => lt x.1 y.1 = true) :=
+  ⟨fun y => acc_carrierV_aux y.1 (acc_cnv_inT y.1 y.2) y rfl⟩
+
+/-- The step: exactly the certificate lane's landing conclusion, minus the part not needed. -/
+def carrierV_step (y : CarrierV) {x : Term} (hx : CNV x = true) (_hxy : lt x y.1 = true) :
+    CarrierV := ⟨x, hx⟩
+
+instance : WellFoundedRelation CarrierV where
+  rel := fun x y => lt x.1 y.1 = true
+  wf := wf_lt_cnv
+
+/-! ### §15.26 THE VEBLEN HIERARCHY EXCEEDS ITS OWN LEVEL — `a < φ̄(a,b)`
+
+REQUESTED by the certificate lane: the `lt` halves of its landing theorem reduce to two sub-term
+facts, and §15.5's `lt_phi_self` supplies one of them (`b < φ̄(a,b)`, every first argument, all of
+`CNV`).  This is the other.
+
+WHY IT DOES NOT FOLLOW FROM WHAT WAS THERE.  §15.5's `lt_phi_of_le` moves the SECOND argument:
+`le x y → lt x (φ̄(u,y))`.  Using it here would need `le a b`, which is false in general —
+`φ̄(1,0)` has `a = 1`, `b = 0`.  And `lt_phi_arg` varies the second argument too.  The fact wanted
+is about the FIRST, and nothing in §15 addressed it.
+
+MEASURED FIRST, over the 51 `CNV` terms of a closure corpus:
+    `lt a (φ̄(a,b))`                              0 violations of 2601 pairs
+    CONTROL — the reverse `lt (φ̄(a,b)) a`        fails on all 2601
+    strengthened `le x a → lt x (φ̄(a,b))`        0 violations, 67626 non-vacuous triples
+    the same WITHOUT the `le x a` hypothesis      8759 violations — so it is load-bearing
+
+THE STRENGTHENING IS WHAT THE INDUCTION NEEDS, exactly as §15.5's is for the second argument, and
+for the same reason: the `φ̄` case of 2.3.13 hands the hypothesis back at a DIFFERENT first
+argument, so the bare statement does not carry itself.
+
+WHAT IS PLEASANT IN THE PROOF, and worth pointing at: of 2.3.13's three branches, TWO ARE
+IMPOSSIBLE and are discharged by the induction hypothesis rather than by computation.  At `p = a`
+the hypothesis `le (φ̄ p q) a` together with `p < φ̄(p,q)` — the IH at the first argument — gives
+`p < p`.  At `p > a` the same two give `φ̄(p,q) < p < φ̄(p,q)`.  Only the middle branch `p < a` does
+any work, and it is one application of the IH at the second argument.  So the statement is
+carried entirely by its own strengthening. -/
+
+private theorem lt_phi_fst_aux : ∀ (n : Nat) (x a b : Term), x.deg ≤ n →
+    CNV x = true → CNV a = true → le x a = true → lt x (phi a b) = true := by
+  intro n
+  induction n with
+  | zero => intro x _ _ hd; have := deg_pos x; omega
+  | succ n ih =>
+    intro x a b hd hx ha hle
+    cases x with
+    | M => exact Bool.noConfusion hx
+    | omg _ => exact Bool.noConfusion hx
+    | psi _ _ => exact Bool.noConfusion hx
+    | Z _ => exact Bool.noConfusion hx
+    | zero => exact lt_zero_phi _ _
+    | phi p q =>
+      obtain ⟨hcp, hcq⟩ := cnv_phi hx
+      have e : (phi p q).deg = 1 + p.deg + q.deg := rfl
+      have hdp : p.deg ≤ n := by have := deg_pos q; omega
+      have hdq : q.deg ≤ n := by have := deg_pos p; omega
+      have hp : lt p (phi p q) = true := ih p p q hdp hcp hcp (le_self p)
+      have hcontra : ∀ _ : p = a, False := by
+        intro hpa
+        subst hpa
+        have h2 : lt p p = true :=
+          lt_of_lt_of_le (frag_of_cnv _ hcp) (frag_of_cnv _ hx) (frag_of_cnv _ hcp) hp hle
+        rw [lt_irrefl] at h2; exact Bool.noConfusion h2
+      have hne : phi p q ≠ phi a b := by
+        intro hc; injection hc with h1 _; exact hcontra h1
+      rw [lt_phi_phi hne, if_neg (fun h => hcontra h)]
+      by_cases hpl : lt p a = true
+      · rw [if_pos hpl]
+        have hqa : le q a = true :=
+          le_of_lt (lt_of_lt_of_le (frag_of_cnv _ hcq) (frag_of_cnv _ hx) (frag_of_cnv _ ha)
+            (lt_phi_self hcq p) hle)
+        exact ih q a b hdq hcq ha hqa
+      · exfalso
+        have hap : lt a p = true := by
+          rcases lt_comparable (frag_of_cnv _ hcp) (frag_of_cnv _ ha) with h | h | h
+          · exact absurd h hpl
+          · exact absurd h.symm (fun hc => hcontra hc.symm)
+          · exact h
+        have h1 : lt (phi p q) p = true :=
+          lt_of_le_of_lt (frag_of_cnv _ hx) (frag_of_cnv _ ha) (frag_of_cnv _ hcp) hle hap
+        have h2 : lt p p = true :=
+          lt_trans (frag_of_cnv _ hcp) (frag_of_cnv _ hx) (frag_of_cnv _ hcp) hp h1
+        rw [lt_irrefl] at h2; exact Bool.noConfusion h2
+    | add c d =>
+      obtain ⟨hAPc, hcc, hcd, _⟩ := cnv_add hx
+      have e : (add c d).deg = 1 + c.deg + d.deg := rfl
+      have hdc : c.deg ≤ n := by have := deg_pos d; omega
+      rw [lt_add_phi]
+      have hcx : lt c (add c d) = true := by
+        rw [lt_atom_add (isAtom_of_isAP hAPc)]; exact le_self c
+      have hca : le c a = true :=
+        le_of_lt (lt_of_lt_of_le (frag_of_cnv _ hcc) (frag_of_cnv _ hx) (frag_of_cnv _ ha) hcx hle)
+      exact ih c a b hdc hcc ha hca
+
+/-- `x ≤ a` puts `x` strictly below `φ̄(a,b)` for EVERY second argument — the mirror of §15.5's
+    `lt_phi_of_le`, which is about the second argument. -/
+theorem lt_phi_of_le_fst {x a b : Term} (hx : CNV x = true) (ha : CNV a = true)
+    (hle : le x a = true) : lt x (phi a b) = true :=
+  lt_phi_fst_aux x.deg x a b (Nat.le_refl _) hx ha hle
+
+/-- **THE VEBLEN HIERARCHY EXCEEDS ITS OWN LEVEL: `a < φ̄(a,b)`.**  The companion of §15.5's
+    `lt_phi_self` (`b < φ̄(a,b)`); together they put BOTH arguments strictly below the value. -/
+theorem lt_phi_fst {a b : Term} (ha : CNV a = true) : lt a (phi a b) = true :=
+  lt_phi_of_le_fst ha ha (le_self a)
+
+#guard lt eps0T (phi eps0T zero) == true
+#guard lt (ofNat 2) (phi (ofNat 2) zero) == true
+#guard lt omega (phi omega zero) == true
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
