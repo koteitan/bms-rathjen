@@ -88,11 +88,22 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   timeout first.
 - After editing `BMS/ TM/ Trans/` libs: `lake build` + restart the rathjen
   instance (header cache). `Rows/` snippets sent as full text need no restart.
-- **The coordinator must restart :12346 after every `lake build`.** The server
-  silently keeps serving the oleans it started with, so a lane that verifies
-  against it after a rebuild gets stale-environment failures that look like
-  real errors (measured: a server started before a build could not resolve any
-  name added by it). Health-check against a name you know is new.
+- **The coordinator must restart :12346 after every `lake build`, and must
+  VERIFY the restart rather than assume it.** The server silently keeps serving
+  the oleans it started with, so a lane that verifies against it after a rebuild
+  gets stale-environment failures that look like real errors.
+  The failure mode is NOT a skipped restart — it happened four times with the
+  restart present, because putting the restart in the SAME command as the build
+  races the build's own olean writes. Run it after `lake build` returns, then
+  check mtimes:
+
+  ```sh
+  stat -c '%Y %n' .lake/build/lib/lean/Evidence/*.olean   # every one must be
+  stat -c '%Y' /proc/$(ss -tlnp | grep -oP '12346.*pid=\K[0-9]+' | head -1)
+  ```
+
+  The server's start time must exceed every olean mtime. Then health-check
+  against a name you know is NEW, by `severity`, never by substring.
 - Parallel agents never run `lake build`; coordinator builds once. When a lane
   is mid-write, the coordinator's build will fail on THAT file — commit the
   other lane's verified file alone (no version bump, so no table regeneration)
