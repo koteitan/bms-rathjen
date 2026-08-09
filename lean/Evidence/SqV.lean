@@ -3302,4 +3302,309 @@ def cnvBounds : List Term := cnvPool ++ [phi omega zero, phi (phi one zero) zero
 #guard (cnvBounds.filter (fun v => Evidence.WF.CNV v)).length == 172
 #guard (ncAll.flatMap (fun t => (cnvBounds.filter (fun v => lt t v)).map (fun v => (t, v)))).length == 0
 
+/-! ### §15.6 `land_omLog` AND `land_fpDeep` — THE `CNV` HALVES
+
+Both need NO order fact, which is why they are here while F1a/F1b/F2 are with the WF lane.
+
+`omLog` lands on the ω-exponent `x` of `g = φ̄(0,x)`, or — at the fixed-point skip — on `x+1`.
+`CNV x` is `cnv_phi`; `CNV (x+1)` is `plus_one_eq_succT` then `cnv_succT`, the same two WF lemmas
+that closed `land_predOr`.  **The `succT` chain has now paid for the `CNV` recommendation twice.**
+
+`fpDeep` descends through `φ̄` layers into the summands of a subscript's infinite part, so its
+`CNV` half is the descent's two closure facts — `cnv_ofList_take` (§15.5) for `(splitFin x).1`,
+and `cnv_mem_summands` for a summand of it — under `findSome_mem` (§11), which is already proved
+and was written for the `tdepth` measure that died.  A lemma from an abandoned branch, reused
+whole: that is the second time §11's `tdepth` work has been salvageable despite the measure it
+was built for being refuted. -/
+
+section
+open Evidence.WF (CNV cnv_add cnv_phi succT cnv_succT plus_one_eq_succT)
+
+theorem cnv_mem_summands : ∀ (t g : Term),
+    CNV t = true → g ∈ summands t → CNV g = true := by
+  intro t
+  induction t with
+  | zero => intro g _ hg; simp only [summands] at hg; exact absurd hg (List.not_mem_nil)
+  | M => intro _ h _; exact Bool.noConfusion h
+  | omg _ _ => intro _ h _; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro _ h _; exact Bool.noConfusion h
+  | Z _ _ => intro _ h _; exact Bool.noConfusion h
+  | phi _ _ _ _ => intro g h hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact h
+  | add u v ihu ihv =>
+    intro g h hg
+    obtain ⟨_, hcu, hcv, _⟩ := cnv_add h
+    simp only [summands, List.mem_append] at hg
+    rcases hg with hh | hh
+    · exact ihu g hcu hh
+    · exact ihv g hcv hh
+
+/-- **`land_omLog`'s `CNV` HALF.**  `omLog` lands on the ω-exponent or on its successor, and
+    both are `CNV` — `cnv_phi` for the first, `cnv_succT` for the second. -/
+theorem cnv_omLog {g : Term} (hg : CNV g = true) : CNV (omLog g) = true := by
+  cases g with
+  | zero => exact hg
+  | M => exact hg
+  | omg _ => exact hg
+  | psi _ _ => exact hg
+  | Z _ => exact hg
+  | add _ _ => exact hg
+  | phi a x =>
+    cases a with
+    | zero =>
+      have hx : CNV x = true := (cnv_phi hg).2
+      show CNV (match summands (TM.Term.splitFin x).1 with
+                | [c] => if TM.Term.isFP zero c then plus x one else x
+                | _ => x) = true
+      cases hs : summands (TM.Term.splitFin x).1 with
+      | nil => exact hx
+      | cons c rest =>
+        cases rest with
+        | nil =>
+          show CNV (if TM.Term.isFP zero c then plus x one else x) = true
+          by_cases h : TM.Term.isFP zero c = true
+          · rw [if_pos h, plus_one_eq_succT x hx]; exact cnv_succT x hx
+          · rw [if_neg h]; exact hx
+        | cons _ _ => exact hx
+    | M => exact hg
+    | omg _ => exact hg
+    | psi _ _ => exact hg
+    | Z _ => exact hg
+    | add _ _ => exact hg
+    | phi _ _ => exact hg
+
+/-- **`land_fpDeep`'s `CNV` HALF.**  The descent goes through `φ̄` layers into summands, and
+    `CNV` survives both — `cnv_ofList_take` and `cnv_mem_summands`, under §11's `findSome_mem`. -/
+theorem cnv_fpDeepF : ∀ (f : Nat) (a t z : Term), CNV t = true →
+    fpDeepF f a t = some z → CNV z = true := by
+  intro f
+  induction f with
+  | zero => intro a t z _ h; simp only [fpDeepF] at h; exact absurd h (by simp)
+  | succ f ih =>
+    intro a t z ht h
+    simp only [fpDeepF] at h
+    by_cases hfp : TM.Term.isFP a t = true
+    · rw [if_pos hfp] at h; injection h with h1; rw [← h1]; exact ht
+    · rw [if_neg hfp] at h
+      cases t with
+      | zero => exact absurd h (by simp)
+      | M => exact absurd h (by simp)
+      | omg _ => exact absurd h (by simp)
+      | psi _ _ => exact absurd h (by simp)
+      | Z _ => exact absurd h (by simp)
+      | add _ _ => exact absurd h (by simp)
+      | phi c x =>
+        have hx : CNV x = true := (cnv_phi ht).2
+        obtain ⟨g, hgm, hgf⟩ := findSome_mem (fpDeepF f a) _ z h
+        exact ih a g z (cnv_mem_summands _ g (cnv_ofList_take x _ hx) hgm) hgf
+
+theorem cnv_fpDeep {a t z : Term} (ht : CNV t = true) (h : fpDeep a t = some z) :
+    CNV z = true := cnv_fpDeepF (t.deg + 4) a t z ht h
+
+end
+
+/-! The order facts the two `lt` halves still need, banked before they are proved.  `F2`'s side
+    condition is MEASURED, not guessed — the control at `x = 0` fires, where both sides are `1`. -/
+
+def cnvAll : List Term := (cnvPool ++ gpool.filter (fun t => Evidence.WF.CNV t)).eraseDups
+
+#guard cnvAll.length == 215
+#guard (cnvAll.filter (fun b => !(le (TM.Term.splitFin b).1 b))).length == 0
+#guard (cnvAll.filter (fun s => !((summands s).all (fun g => le g s)))).length == 0
+#guard ((cnvAll.filter (fun x => !(x == zero))).filter (fun x =>
+          !(lt (Evidence.WF.succT x) (phi zero x)))).length == 0
+#guard (cnvAll.filter (fun x => !(x == zero))).length == 214
+#guard lt (Evidence.WF.succT zero) (phi zero zero) == false
+
+
+/-! ### §15.7 TWO OF THE FIVE ROUTED ORDER FACTS WERE ALREADY IN THE REPO
+
+I sent five order facts to the WF lane.  Before waiting on them I priced each against what WF
+ALREADY proves, and **two of the five needed no new lemma at all** — they are compositions of
+lemmas that were sitting there.  Withdrawn from the request rather than left pending, because a
+peer proving what already exists is the most expensive kind of duplicated work: it also creates a
+second lemma with the same content and no marker saying which one to use.
+
+    F2   CNV x -> x /= 0 -> lt (succT x) (phi zero x)     `lt_succT_phi`      PROVED HERE
+    F1a  CNV b -> le ((splitFin b).1) b                   `le_splitFin_fst`   PROVED HERE
+    F1b  CNV s -> g in summands s -> le g s               REDUCES to F3 + F4
+    F3   CNV (add u v) -> lt u (add u v)                  still with the WF lane
+    F4   CNV (add u v) -> lt v (add u v)                  still with the WF lane
+
+**F2 IS `le_succT_of_lt` PLUS A CONSTRUCTOR.**  WF §12 already proves `lt a v -> le (succT a) v`
+on `CNV` — nothing lies strictly between `a` and `a+1` — and `lt_phi_self` supplies `lt x φ̄(0,x)`.
+That gives `le`, not `lt`.  The gap closes on the SYNTAX: `le s t` is `s == t || lt s t`, and for
+`x /= 0` the term `succT x` is `add`-headed while `phi zero x` is `phi`-headed, so equality is
+impossible and the `le` collapses to `lt`.  **And that is exactly why `x /= 0` is the side
+condition** — at `x = 0`, `succT 0 = one = phi zero zero = phi zero 0`, the two ARE the same term,
+and the fact is false.  The measured control and the proof's obstruction are the same obstruction,
+which is the strongest form of agreement between a measurement and a proof this file has had.
+
+**F1a IS `splitFin_rebuild` PLUS `lt_succT`.**  §15.5 already proves `b = γ + m` for
+`(γ, m) = splitFin b`, and `plus_ofNat_step` says each of the `m` steps is a `succT`.  So `le γ b`
+is an induction on `m` over `lt_succT` and `le_trans_inT` — no new order content, only the
+`plus`/`toList` machinery §15.5 built for `predOr`.  **`splitFin_rebuild` has now paid for itself
+twice**, which is the argument for having proved it as a standalone identity rather than inlining
+it into `succT_predOr`.
+
+WHAT IS ACTUALLY OWED IS TWO FACTS, NOT FIVE, and both are about `add` — the one shape whose order
+behaviour §15.5's machinery says nothing about, since `plus` normalises sums and these two are
+about the raw constructor.  F1b then follows from them by induction over `summands`. -/
+
+section
+open Evidence.WF (CNV succT lt_succT le_succT_of_lt lt_phi_self le_of_lt le_self
+  le_trans_inT inT_of_cnv)
+
+theorem lt_succT_phi {x : Term} (hx : CNV x = true) (hz : x ≠ zero) :
+    lt (succT x) (phi zero x) = true := by
+  have hcp : CNV (phi zero x) = true := by show (CNV zero && CNV x) = true; rw [hx]; rfl
+  have hle := le_succT_of_lt x hx (phi zero x) hcp (lt_phi_self hx zero)
+  have hne : ¬ (succT x = phi zero x) := by
+    cases x with
+    | zero => exact absurd rfl hz
+    | M => intro h; exact absurd h (by simp [Evidence.WF.succT])
+    | omg a => intro h; exact absurd h (by simp [Evidence.WF.succT])
+    | psi a b => intro h; exact absurd h (by simp [Evidence.WF.succT])
+    | Z a => intro h; exact absurd h (by simp [Evidence.WF.succT])
+    | phi a b => intro h; exact absurd h (by simp [Evidence.WF.succT])
+    | add a b => intro h; exact absurd h (by simp [Evidence.WF.succT])
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
+  rcases hle with h | h
+  · exact absurd h hne
+  · exact h
+
+theorem le_plus_ofNat (g : Term) (hg : CNV g = true) : ∀ m, le g (plus g (ofNat m)) = true := by
+  intro m
+  induction m with
+  | zero => exact le_self g
+  | succ m ih =>
+    have h1 : CNV (plus g (ofNat m)) = true := (plus_ofNat_spec g hg m).1
+    have h2 : lt (plus g (ofNat m)) (plus g (ofNat (m + 1))) = true := by
+      rw [plus_ofNat_step g hg m]; exact lt_succT _ h1
+    exact le_trans_inT (inT_of_cnv _ hg) (inT_of_cnv _ h1)
+      (inT_of_cnv _ (plus_ofNat_spec g hg (m + 1)).1) ih (le_of_lt h2)
+
+theorem le_splitFin_fst (b : Term) (hb : CNV b = true) :
+    le (TM.Term.splitFin b).1 b = true := by
+  have hcg : CNV (TM.Term.splitFin b).1 = true :=
+    cnv_ofList_take b ((toList b).length
+      - ((toList b).reverse.takeWhile (fun x => x == one)).length) hb
+  have h := le_plus_ofNat _ hcg (TM.Term.splitFin b).2
+  rwa [splitFin_rebuild b hb] at h
+
+end
+
+/-! ### §15.8 `land_omLog`'s `lt` HALF — PROVED, AND IT NEEDED NEITHER F3 NOR F4
+
+The remaining two order facts turned out not to gate this site.  `land_omLog`'s own statement is
+`lt (omLog g) g` — against the SUMMAND, not against the parent `φ̄(a,b)` — and the step from `g`
+to the parent is the consumer's composition, which is where F1b lives.  So the site itself closes
+on `lt_phi_self` and §15.7's `lt_succT_phi`, both of which exist:
+
+    omLog φ̄(0,x) = x        (ordinary)   `lt_phi_self`     lt x φ̄(0,x)
+    omLog φ̄(0,x) = x+1      (FP skip)    `lt_succT_phi`    lt (x+1) φ̄(0,x)
+
+**AND THE SKIP BRANCH'S GUARD DISCHARGES `lt_succT_phi`'s SIDE CONDITION FOR FREE.**  §15.7 needs
+`x ≠ 0`, and the skip fires only when `summands ((splitFin x).1)` is a ONE-ELEMENT list.  At
+`x = 0` that list is EMPTY — `splitFin 0 = (0, 0)` and `summands 0 = []` — so the guard cannot
+hold.  The side condition that the measurement found and the syntax explained is discharged by
+the definition's own branch condition.  Three independent things saying `x = 0` is the exception.
+
+**THE `φ̄(0,·)` FORM NEEDS NO "IT MOVES" HYPOTHESIS AT ALL**, so it is stated separately: at that
+shape BOTH branches descend, and `omLog g ≠ g` is only needed to rule out the shapes where `omLog`
+is the identity.  Weakening a hypothesis where the proof permits it is the same option-value rule
+as §15's, read in the other direction — the caller that has the shape should not have to supply a
+disequality the shape already implies. -/
+
+section
+open Evidence.WF (CNV cnv_phi succT plus_one_eq_succT lt_phi_self)
+
+/-- At `φ̄(0,x)` BOTH branches of `omLog` descend — no "it moves" hypothesis. -/
+theorem lt_omLog_phi_zero {x : Term} (hx : CNV x = true) :
+    lt (omLog (phi zero x)) (phi zero x) = true := by
+  show lt (match summands (TM.Term.splitFin x).1 with
+           | [c] => if TM.Term.isFP zero c then plus x one else x
+           | _ => x) (phi zero x) = true
+  cases hs : summands (TM.Term.splitFin x).1 with
+  | nil => exact lt_phi_self hx zero
+  | cons c rest =>
+    cases rest with
+    | nil =>
+      show lt (if TM.Term.isFP zero c then plus x one else x) (phi zero x) = true
+      by_cases h : TM.Term.isFP zero c = true
+      · rw [if_pos h, plus_one_eq_succT x hx]
+        refine lt_succT_phi hx ?_
+        intro hz
+        rw [hz] at hs
+        exact absurd hs (by simp [TM.Term.splitFin, toList, ofList, summands])
+      · rw [if_neg h]; exact lt_phi_self hx zero
+    | cons _ _ => exact lt_phi_self hx zero
+
+/-- **`land_omLog`'s `lt` HALF.** -/
+theorem lt_omLog {g : Term} (hg : CNV g = true) (hmv : omLog g ≠ g) :
+    lt (omLog g) g = true := by
+  cases g with
+  | zero => exact absurd rfl hmv
+  | M => exact absurd rfl hmv
+  | omg _ => exact absurd rfl hmv
+  | psi _ _ => exact absurd rfl hmv
+  | Z _ => exact absurd rfl hmv
+  | add _ _ => exact absurd rfl hmv
+  | phi a x =>
+    cases a with
+    | zero => exact lt_omLog_phi_zero (cnv_phi hg).2
+    | M => exact absurd rfl hmv
+    | omg _ => exact absurd rfl hmv
+    | psi _ _ => exact absurd rfl hmv
+    | Z _ => exact absurd rfl hmv
+    | add _ _ => exact absurd rfl hmv
+    | phi _ _ => exact absurd rfl hmv
+
+end
+
+
+/-! ### §15.9 THE `summands`/`toList` BRIDGE — and a COLLISION worth recording
+
+WF §15.27 landed F1a, F1b and F2 while §15.7 was being written, and §15.7 PROVES TWO OF THEM
+INDEPENDENTLY.  That is a duplication, it is mine, and it is recorded rather than quietly tidied:
+I sent five facts and only afterwards priced them against what WF already had, which is the wrong
+order.  The withdrawal message went out after the peer had already started.  **The rule this
+teaches is not "price before asking" — I did eventually price them — it is PRICE BEFORE SENDING,
+because a request is not free to retract once the other lane has begun.**
+
+The duplicates come out when WF §15.27 is built; the sections stay as they are until then, since
+deleting a proof that currently compiles in favour of one that is not yet in an olean would leave
+the file red.  WF's forms are the ones to keep — F1a through `le_ofList_take` at a GENERAL prefix
+`k`, which removes `splitFin`'s trailing-1 count from the proof entirely, where §15.7's route
+inducts on exactly that count.  The peer's statement is better than mine and the reason is
+instructive: **the arithmetic of `m` was never the content, the prefix structure was.**
+
+WHAT ONLY THIS FILE CAN PROVE, and WF §15.27 says so explicitly: F1b is stated there with
+`toList`, because `summands` is defined HERE and WF is upstream.  Naming it there would invert
+the import direction that Cert/SqV/WF have been careful about since 2026-08-09.  So the bridge is
+the one piece of F1b that had to come back down. -/
+
+theorem summands_of_isAP {t : Term} (h : t.isAP = true) : summands t = [t] := by
+  cases t <;> first | rfl | (simp only [TM.Term.isAP] at h; exact absurd h (by simp))
+
+/-- **THE BRIDGE WF §15.27 LEFT HERE, AND IT COULD ONLY BE HERE.**  `summands` is defined in
+    this file, which imports WF, so WF cannot name it; F1b is stated there with `toList`.  The
+    two definitions differ only at `add u v` — `summands` recurses into `u`, `toList` does not —
+    and `CNV (add u v)` gives `u.isAP` while `isAP (add _ _) = false`, so `u` is never a sum and
+    the extra recursion is the identity. -/
+theorem summands_eq_toList : ∀ (t : Term), Evidence.WF.CNV t = true → summands t = toList t := by
+  intro t
+  induction t with
+  | zero => intro _; rfl
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | phi _ _ _ _ => intro _; rfl
+  | add u v _ ihv =>
+    intro h
+    obtain ⟨hAPu, _, hcnv, _⟩ := Evidence.WF.cnv_add h
+    show summands u ++ summands v = u :: toList v
+    rw [summands_of_isAP hAPu, ihv hcnv]
+    rfl
+
 end Evidence.SqV
