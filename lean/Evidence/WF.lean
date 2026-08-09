@@ -9716,6 +9716,107 @@ theorem inT_of_cnv : ∀ (t : Term), CNV t = true → inT t = true
       show (a.isAP && inT a && inT (phi x y) && ((phi x y).isAP && le (phi x y) a)) = true
       rw [hAP, hia, hib, show le (phi x y) a = true from hd]; rfl
 
+/-! ### §15.10 CORE (C): the ε_λ rows, as a COMBINATOR
+
+MEASURED: the four limit-argument rows apply `φ̄1` to the SECOND argument's own fundamental
+sequence — `ε_ω → ε_n`, `ε_{ω^ω} → ε_{ω^(n+1)}`, `ε_{ε₀} → ε_{tower n}`.  So (C) is not four
+row proofs but ONE theorem that CONSUMES a row's `lim_clauses` and PRODUCES the next row's,
+which is why the inner sequences already exist in this file: §9's `tower` for `ε_{ε₀}`, and
+`ω^(n+1)` for `ε_{ω^ω}`.  The rows are built from each other, and the combinator says so.
+
+TWO THINGS FOUND BY DESIGNING RATHER THAN WRITING, both now hypotheses rather than surprises:
+`hside : lt b (φ̄ a (g 0))` — 2.3.13(iii) hands cofinality back `s ≤ b`, and nothing among `g`'s
+four clauses puts `b` below the sequence; and `inT_of_cnv` (§15.9), without which the inner
+row's `inT`-stated cofinality cannot be applied to a term known only to be `CNV`. -/
+
+theorem lt_phi_arg {a x y : Term} (h : lt x y = true) : lt (phi a x) (phi a y) = true := by
+  have hne : phi a x ≠ phi a y := by
+    intro hc; injection hc with _ h2; exact ne_of_ltF h h2
+  rw [lt_phi_phi hne, if_pos rfl]; exact h
+
+private theorem cof_phiArg_aux {a b : Term} (g : Nat → Term)
+    (hcna : CNV a = true) (hcnb : CNV b = true)
+    (hg1 : ∀ n, CNV (g n) = true) (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s b = true → ∃ n, le s (g n) = true)
+    (hside : lt b (phi a (g 0)) = true) :
+    ∀ (n : Nat) (s : Term), s.deg ≤ n → CNV s = true → lt s (phi a b) = true →
+      ∃ m, le s (phi a (g m)) = true := by
+  intro n
+  induction n with
+  | zero => intro s hd _ _; have := deg_pos s; omega
+  | succ n ih =>
+    intro s hd hs hlt
+    cases s with
+    | M => exact Bool.noConfusion hs
+    | omg _ => exact Bool.noConfusion hs
+    | psi _ _ => exact Bool.noConfusion hs
+    | Z _ => exact Bool.noConfusion hs
+    | zero =>
+      exact ⟨0, le_zero_left (by intro hc; exact Term.noConfusion hc)⟩
+    | phi p q =>
+      obtain ⟨hcp, hcq⟩ := cnv_phi hs
+      have hne : phi p q ≠ phi a b := ne_of_ltF hlt
+      rw [lt_phi_phi hne] at hlt
+      have hdq : q.deg ≤ n := by
+        have e : (phi p q).deg = 1 + p.deg + q.deg := rfl
+        have := deg_pos p; omega
+      by_cases hpa : p = a
+      · rw [if_pos hpa] at hlt
+        subst hpa
+        obtain ⟨m, hm⟩ := hg4 q (inT_of_cnv q hcq) hlt
+        exact ⟨m, le_phi_of_le hcp hcq hcp (hg1 m) (le_self p) hm⟩
+      · rw [if_neg hpa] at hlt
+        by_cases hpl : lt p a = true
+        · rw [if_pos hpl] at hlt
+          obtain ⟨m, hm⟩ := ih q hdq hcq hlt
+          refine ⟨m + 1, le_of_lt ?_⟩
+          have hne2 : phi p q ≠ phi a (g (m + 1)) := by
+            intro hc; injection hc with h1 _; exact hpa h1
+          rw [lt_phi_phi hne2, if_neg hpa, if_pos hpl]
+          exact lt_of_le_of_lt (frag_of_cnv _ hcq)
+            (frag_of_cnv _ (by show (CNV a && CNV (g m)) = true; rw [hcna, hg1 m]; rfl))
+            (frag_of_cnv _ (by show (CNV a && CNV (g (m+1))) = true; rw [hcna, hg1 (m+1)]; rfl))
+            hm (lt_phi_arg (hg3 m))
+        · rw [if_neg hpl] at hlt
+          exact ⟨0, le_of_lt (lt_of_le_of_lt (frag_of_cnv _ hs) (frag_of_cnv _ hcnb)
+            (frag_of_cnv _ (by show (CNV a && CNV (g 0)) = true; rw [hcna, hg1 0]; rfl))
+            hlt hside)⟩
+    | add c d =>
+      obtain ⟨hAPc, hcc, hcd, _⟩ := cnv_add hs
+      rw [lt_add_phi] at hlt
+      have hdc : c.deg ≤ n := by
+        have e : (add c d).deg = 1 + c.deg + d.deg := rfl
+        have := deg_pos d; omega
+      obtain ⟨m, hm⟩ := ih c hdc hcc hlt
+      refine ⟨m + 1, le_of_lt ?_⟩
+      rw [lt_add_phi]
+      exact lt_of_le_of_lt (frag_of_cnv _ hcc)
+        (frag_of_cnv _ (by show (CNV a && CNV (g m)) = true; rw [hcna, hg1 m]; rfl))
+        (frag_of_cnv _ (by show (CNV a && CNV (g (m+1))) = true; rw [hcna, hg1 (m+1)]; rfl))
+        hm (lt_phi_arg (hg3 m))
+
+/-- **CORE (C), a COMBINATOR.**  Given a sequence `g` witnessing the four `Certified.lim`
+    premises for `b`, the sequence `n ↦ φ̄ a (g n)` witnesses them for `φ̄ a b`.  So one row's
+    clauses PRODUCE the next row's, which is why the ε_λ rows are built from each other.
+    `hside` is the side condition identified before the proof: 2.3.13(iii) hands back `s ≤ b`,
+    and nothing in `g`'s four clauses puts `b` below the sequence. -/
+theorem lim_clauses_phi_arg {a b : Term} (g : Nat → Term)
+    (hcna : CNV a = true) (hcnb : CNV b = true)
+    (hg1 : ∀ n, CNV (g n) = true) (hg2 : ∀ n, lt (g n) b = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s b = true → ∃ n, le s (g n) = true)
+    (hside : lt b (phi a (g 0)) = true) :
+    (∀ n, CNV (phi a (g n)) = true)
+  ∧ (∀ n, lt (phi a (g n)) (phi a b) = true)
+  ∧ (∀ n, lt (phi a (g n)) (phi a (g (n + 1))) = true)
+  ∧ (∀ s, inT s = true → lt s (phi a b) = true → ∃ m, le s (phi a (g m)) = true) :=
+  ⟨fun n => by show (CNV a && CNV (g n)) = true; rw [hcna, hg1 n]; rfl,
+   fun n => lt_phi_arg (hg2 n),
+   fun n => lt_phi_arg (hg3 n),
+   fun s hin hlt =>
+     cof_phiArg_aux g hcna hcnb hg1 hg3 hg4 hside s.deg s (Nat.le_refl _)
+       (cnv_of_lt_cnv hin (by show (CNV a && CNV b) = true; rw [hcna, hcnb]; rfl) hlt) hlt⟩
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
