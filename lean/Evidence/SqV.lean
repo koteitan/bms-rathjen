@@ -989,7 +989,15 @@ is a minority of the corpus and the file should say so rather than let "D7 green
 "green everywhere":
 
     D7 domain          24 DISTINCT terms (48 list entries)
-      11 named rows    ε₀, ε₁, ε₂, ε₃, ε_ω, ε_{ω²}, ε_{ω^ω}, ε_{ε₀}, ζ₀, ε_{ζ₀}, φ̄(ω,0)
+      11 named rows    φ̄(1,0), φ̄(1,1), φ̄(1,2), φ̄(1,3), φ̄(1,ω), φ̄(1,ω²), φ̄(1,ω^ω),
+                       φ̄(1,ε₀), φ̄(2,0), φ̄(1,ζ₀), φ̄(ω,0)
+                       — TERMS, not ordinal names.  An earlier draft called the tenth
+                       `ε_{ζ₀}`; the table names that row `ε_{ζ₀+1}`, and under the skip
+                       convention the table is right, since ζ₀ is already a fixed point
+                       of `φ̄(1,·)` so `φ̄(1,ζ₀)` is the NEXT ε-number after it.  §6's
+                       fact has caused three defects tonight; an off-by-one ordinal name
+                       in a header is the fourth waiting to happen, so the domain is
+                       written as terms throughout.
       13 CN limits     paired with `Evidence.WF.fsC` (37 entries)
     no bundle         145 of the 169 distinct terms
 
@@ -1106,5 +1114,63 @@ the same denominators, and changing them now would break every historical row fo
 #guard ((List.range 6).map (fun k =>
   ((corpusW ++ deeper).eraseDups.filter (fun t => fpReach t == some k)).length))
     == [111, 10, 5, 5, 5, 0]
+
+
+/-! ## §9 `sqv_decomp` STARTED, AND THE TWO THINGS IT IS BLOCKED ON
+
+THE FIRST ROW.  `φ̄(1,ω)` is the cleanest: `sqv (φ̄(1,ω)) = (0,0)(1,1)(2,0)`, its
+expansions are `(0,0)(1,1)(1,1)^n` (Cert.lean §20's `expand_epsOmega`, proved), and
+`fsEW n = φ̄(1, ofNat n)` by definition, so D7 at this row reduces to one ENCODER fact:
+
+    sqv (φ̄(1, ofNat n))  =  (0,0)(1,1) ++ (1,1)^n
+
+Its `n = 0` case is `rfl`.  Its induction step does not go through, and the reason is not
+about this row.
+
+BLOCKER 1 — `sqv` IS DEFINED WITH FUEL AND NOTHING PROVES THE FUEL IS ENOUGH.
+`encv t d = encvF (2 * t.deg + 8) t d`, so the fuel VARIES WITH THE TERM: at
+`φ̄(1, ofNat n)` for n = 0,1,2,3 it is 18, 22, 30, 38.  An induction on `n` therefore
+compares `encvF 22` against `encvF 30`, and no lemma relates them.  What is needed is
+
+    encvF f t d = encvF (f+1) t d          for f at or above the chosen fuel
+
+which is a structural induction over `f` and `t` together, with the `mkBlocks` closure
+and `fpDeep`'s own fuel inside it.  It is provable and it is real work.
+
+NO DIMENSION MEASURED THIS, so D8 now does — and it is green, with the controls firing:
+
+    D8 fuel saturation    0 of 284 fail          `encvF (chosen + k) t 0 = encv t 0`, k ≤ 5
+    control fuel 1        234 of 284 DIFFER
+    control fuel 3         52 of 284 DIFFER
+
+So the fuel is enough IN FACT on everything measured, and that is exactly the gap between
+a measurement and a proof that this file exists to keep visible.  Note what the shape of
+the blocker is: it is not a defect in the encoding — seven dimensions say the encoding is
+right — it is that the DEFINITION is not in a form an induction can use.
+
+BLOCKER 2 — `Certified` IS IN `Evidence/Cert.lean`, WHICH DOES NOT IMPORT THIS FILE.
+`sqv_decomp` as an expansion identity lives here and needs nothing from `Cert`.  The
+bridge that turns it into `Certified (sqv t) t` needs both, and the import must therefore
+run `Cert → SqV`, which changes `Cert`'s build dependencies.  That is a coordinator
+decision, not one to take by writing an `import` line.
+
+NEITHER IS A HYPOTHESIS I COULD ADD TO MAKE THE STATEMENT CLOSE, and I have not added
+one.  A domain restriction that hides blocker 1 would be invisible at the use site, which
+is the objection to narrowing rather than naming. -/
+
+def sat (t : Term) (k : Nat) : Bool := encvF (2 * t.deg + 8 + k) t 0 == encv t 0
+
+#eval (((corpusW ++ deeper).filter (fun t => !((List.range 6).all (sat t)))).length,
+       ((corpusW ++ deeper).filter (fun t => !(encvF 1 t 0 == encv t 0))).length,
+       ((corpusW ++ deeper).filter (fun t => !(encvF 3 t 0 == encv t 0))).length)
+
+#guard ((corpusW ++ deeper).filter (fun t => !((List.range 6).all (sat t)))).length == 0
+#guard ((corpusW ++ deeper).filter (fun t => !(encvF 1 t 0 == encv t 0))).length == 234
+#guard ((corpusW ++ deeper).filter (fun t => !(encvF 3 t 0 == encv t 0))).length == 52
+
+-- the ε_ω row's encoder fact at n = 0, 1, 2 — the `∀ n` form is what blocker 1 blocks
+#guard sqv (phi one (ofNat 0)) == [[0,0],[1,1]]
+#guard sqv (phi one (ofNat 1)) == [[0,0],[1,1],[1,1]]
+#guard sqv (phi one (ofNat 2)) == [[0,0],[1,1],[1,1],[1,1]]
 
 end Evidence.SqV
