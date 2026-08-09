@@ -144,11 +144,26 @@ TWO CLASSES REMAIN, and they are sharper than anything candidate 1 could have to
       candidate; (e) and (f) interact, and the next iteration should fix (e) first
       and re-measure before touching (f).
 
+(e) IS CANDIDATE 3 AND (f) IS CANDIDATE 4 (`omLog`, below).  §3 records what (f)
+actually turned out to be, which is NOT specific to the finite part: at `a ≠ 0` the
+whole subscript block denotes the ω-EXPONENT of the subscript.  Writing (f) down as a
+statement about finite parts was reading the class off the smallest witness — right
+about the rows it was measured on, and one generalisation short.
+
 -/
 
 /-- Bump the columns that sit exactly at depth `d` to level 1. -/
 def bumpAt (d : Nat) (cs : List Col2) : List Col2 :=
   cs.map (fun c => if c.1 == d then (c.1, 1) else c)
+
+/-- **The ω-exponent of an additively principal term.**  `ω^x ↦ x`; a term that is its
+    own ω-power — every `φ̄(c,·)` with `c ≠ 0`, since `ω^ε₀ = ε₀` — goes to itself.
+    §3's cause 1: at `a ≠ 0` the block after the ladder denotes the EXPONENT of the
+    subscript, not the subscript.  At `a = 0` it does not, so this is applied on one
+    side of that branch only. -/
+def omLog : Term → Term
+  | .phi .zero x => x
+  | t => t
 
 /-- `t` minus one when it has a trailing `1`; `t` itself otherwise. -/
 def predOr (t : Term) : Term :=
@@ -173,7 +188,10 @@ def encvF : Nat → Term → Nat → List Col2
         let sub : List Col2 :=
           match bm.1 with
           | zero => []
-          | b' => shiftD (if a == zero then d + 1 else d + 2) (encvF f b' 0)
+          | b' =>
+            -- CANDIDATE 4 (§3, cause 1): at `a ≠ 0` the block is the ω-EXPONENT
+            let b'' := if a == zero then b' else omLog b'
+            shiftD (if a == zero then d + 1 else d + 2) (encvF f b'' 0)
         -- the trailing finite part repeats the LADDER TAIL, not a single marker column
         let unit : List Col2 := if a == zero then [(d + 1, 0)] else ladder
         let reps : List Col2 := (List.replicate bm.2 unit).flatten
@@ -289,6 +307,18 @@ here by WHERE THE DISAGREEMENT LIVES, not by how hard they look.
     routing-side    (a shape the branch table routes)         0
     undecided                                                 0
 
+CANDIDATE 4 THEN FIXED CAUSE 1 AND THE RESIDUE IS EXACTLY WHAT THIS SECTION PREDICTED:
+
+                        candidate 1   candidate 2   candidate 3   candidate 4
+    round trip / 234         90            34            16             4
+    table rows / 5            3             1             1             0
+    discriminators / 3        2             2             1             1
+
+The four survivors are the four members of cause 2, by name — `φ̄(0,ε₀+1)` and
+`φ̄(a,ε₀+ε₀)` for `a ∈ {1,2,ω}` — and nothing that passed before broke.  That the
+residue is the predicted SET and not merely the predicted COUNT is the check worth
+having: a count can come out right by two errors cancelling.  Cause 2 is untouched.
+
 ZERO ROUTING-SIDE, and the reason is structural rather than lucky: every failure is a
 matrix that `oR` decodes to a DIFFERENT TERM, so the disagreement is always about what
 the map computes, never about which clause a shape should take.  A routing-side failure
@@ -346,9 +376,14 @@ lane, not a claim about `oR`. -/
 #guard Trans.oR [[0,0],[1,1],[2,1],[2,0],[2,0]] == some (phi (ofNat 2) (phi zero (ofNat 2)))
 #guard Trans.oR [[0,0],[1,1],[2,1],[3,0],[2,0]] == some (phi omega omega)
 
--- CAUSE 1, the defect: `sqv` emits the matrix of the row one ω-power up.
-#guard sqv (phi one omega) == [[0,0],[1,1],[2,0],[3,0]]
-#guard Trans.oR (sqv (phi one omega)) == some (phi one (phi zero omega))
+-- CAUSE 1, FIXED (candidate 4).  The `#guard` two lines above is the baseline that
+-- makes this one mean something: candidate 3 emitted (0,0)(1,1)(2,0)(3,0), which is the
+-- ε_{ω^ω} row, and the map now emits the ε_ω row the table lists.
+#guard sqv (phi one omega) == [[0,0],[1,1],[2,0]]
+#guard Trans.oR (sqv (phi one omega)) == some (phi one omega)
+#guard sqv (phi (ofNat 2) omega) == [[0,0],[1,1],[2,1],[2,0]]
+#guard sqv (phi omega omega) == [[0,0],[1,1],[2,1],[3,0],[2,0]]
+#guard sqv (phi one (plus omega one)) == [[0,0],[1,1],[2,0],[1,1]]
 
 -- CAUSE 2: the ladder column separates the summands, and `sqv` omits it.
 #guard Trans.oR [[0,0],[1,1],[2,0],[3,1],[1,1],[2,0],[3,1]]
