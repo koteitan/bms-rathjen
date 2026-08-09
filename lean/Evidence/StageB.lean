@@ -5604,4 +5604,141 @@ theorem e3_F6family (q : Nat) :
   Trans.o? (BMS.expand (M6 q) n) == some (fsN (t6 q) (n+1))
 #guard (List.range 5).all fun q => Trans.o? (M6 q) == some (t6 q)
 
+/-! ## §16 The family F7 : `(0,0)(1,1)…(a,1)(a+1,0)(a+1,0)` = `φ̄(a,ω²)`
+
+The second grower of §14.  The last column repeats the `(a+1,0)` column, so `t = 0`,
+every ascension amount vanishes, and the bad root is the `(a,1)` column: the bad part
+is the TWO-column block `(a,1)(a+1,0)`, repeated identically.  It is the first
+compound `repM` block in the file; each copy is one `blocksP` block, headed by a
+row-1 = 1 column, so the fold is a `phiStep` per copy and the value is `φ̄(a, ω·(n+1))`. -/
+
+def M7 (q : Nat) : Matrix := M1 q ++ [[q+2, 0], [q+2, 0]]
+
+/-- The repeated two-column block. -/
+def bl2 (o : Nat) : Matrix := [[o, 1], [o+1, 0]]
+
+theorem len_M7 (q : Nat) : (M7 q).length = q + 4 := by
+  show ((M1 q) ++ [[q+2,0],[q+2,0]]).length = q + 4
+  rw [List.length_append, len_M1]
+  rfl
+
+theorem ent_M7_lt (q x y : Nat) (h : x < q + 2) : BMS.ent (M7 q) x y = BMS.ent (M1 q) x y := by
+  show (((M1 q ++ [[q+2,0],[q+2,0]]).getD x []).getD y 0) = (((M1 q).getD x []).getD y 0)
+  rw [getD_append_lt' _ _ x (by rw [len_M1]; omega)]
+
+theorem ent_M7_c (q y j : Nat) (hj : j ≤ 1) :
+    BMS.ent (M7 q) (q+2+j) y = ([q+2,0] : BMS.Col).getD y 0 := by
+  show (((M1 q ++ [[q+2,0],[q+2,0]]).getD (q+2+j) []).getD y 0) = _
+  rw [getD_append_ge' _ _ (q+2+j) (by rw [len_M1]; omega), len_M1]
+  rcases Nat.eq_or_lt_of_le hj with h1 | h1
+  · rw [show q+2+j - (q+2) = 1 from by omega]
+    rfl
+  · rw [show q+2+j - (q+2) = 0 from by omega]
+    rfl
+
+theorem ent_M7_0 (q x : Nat) (h : x ≤ q+1) : BMS.ent (M7 q) x 0 = x := by
+  rw [ent_M7_lt q x 0 (by omega), ent_M1_0 q x h]
+
+theorem ent_M7_1 (q x : Nat) (h1 : 1 ≤ x) (h2 : x ≤ q+1) : BMS.ent (M7 q) x 1 = 1 := by
+  rw [ent_M7_lt q x 1 (by omega), ent_M1_1 q x h1 h2]
+
+theorem ent_M7_c0 (q j : Nat) (hj : j ≤ 1) : BMS.ent (M7 q) (q+2+j) 0 = q+2 := by
+  rw [ent_M7_c q 0 j hj]; rfl
+
+theorem parent0_M7_top (q : Nat) : BMS.parent (M7 q) 0 (q+3) = some (q+1) := by
+  show (((List.range (q+3)).filter
+      (fun p => decide (BMS.ent (M7 q) p 0 < BMS.ent (M7 q) (q+3) 0))).max?) = some (q+1)
+  rw [Evidence.StageA.max?_filter_range,
+    show BMS.ent (M7 q) (q+3) 0 = q+2 from ent_M7_c0 q 1 (by omega)]
+  refine Evidence.StageA.lastSome_spec _ (q+3) (q+1) (by omega) ?_ ?_
+  · rw [ent_M7_0 q (q+1) (by omega)]
+    exact decide_eq_true (by omega)
+  · intro r hr1 hr2
+    have hr : r = q+2 := by omega
+    subst hr
+    rw [show BMS.ent (M7 q) (q+2) 0 = q+2 from ent_M7_c0 q 0 (by omega)]
+    exact decide_eq_false (by omega)
+
+theorem delta_M7 (q y : Nat) : BMS.delta (M7 q) (q+1) 0 y = 0 := by
+  show (if y < 0 then _ else 0) = 0
+  rw [if_neg (by omega)]
+
+theorem take_M7 (q : Nat) : (M7 q).take (q+1) = ([0,0] : BMS.Col) :: ups 1 q := by
+  show (M1 q ++ [[q+2,0],[q+2,0]]).take (q+1) = _
+  rw [List.take_append_of_le_length (by rw [len_M1]; omega), take_M1 q q (by omega)]
+
+theorem getLast_M7 (q : Nat) : (M7 q).getLast? = some ([q+2, 0] : BMS.Col) := by
+  show (M1 q ++ [[q+2,0],[q+2,0]]).getLast? = _
+  rw [Evidence.StageA.getLast?_append_right _ _ (by
+    intro hc
+    have := congrArg List.length hc
+    simp at this)]
+  rfl
+
+/-- **The F7 expansion**: the two-column block `(a,1)(a+1,0)`, repeated `n+1` times. -/
+theorem expand_M7 (q n : Nat) :
+    BMS.expand? (M7 q) n
+      = some ((([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1)) := by
+  have hpar : BMS.parent (M7 q) 0 ((M7 q).length - 1) = some (q+1) := by
+    rw [len_M7, show q + 4 - 1 = q + 3 from by omega]
+    exact parent0_M7_top q
+  have hlen1 : (M7 q).length - 1 - (q+1) = 2 := by rw [len_M7]; omega
+  have hbad : ∀ (c : Nat), (List.range 2).map (fun x =>
+      (List.range ([q+2,0] : BMS.Col).length).map (fun y => BMS.ent (M7 q) ((q+1)+x) y
+        + c * BMS.delta (M7 q) (q+1) 0 y
+          * (if BMS.ascends (M7 q) (q+1) ((q+1)+x) y = true then 1 else 0)))
+      = bl2 (q+1) := by
+    intro c
+    have hcol : ∀ x, (List.range ([q+2,0] : BMS.Col).length).map
+        (fun y => BMS.ent (M7 q) ((q+1)+x) y
+          + c * BMS.delta (M7 q) (q+1) 0 y
+            * (if BMS.ascends (M7 q) (q+1) ((q+1)+x) y = true then 1 else 0))
+        = ([BMS.ent (M7 q) ((q+1)+x) 0, BMS.ent (M7 q) ((q+1)+x) 1] : BMS.Col) := by
+      intro x
+      show [BMS.ent (M7 q) ((q+1)+x) 0 + c * BMS.delta (M7 q) (q+1) 0 0 * _,
+            BMS.ent (M7 q) ((q+1)+x) 1 + c * BMS.delta (M7 q) (q+1) 0 1 * _] = _
+      rw [delta_M7, delta_M7]
+      simp
+    rw [List.map_congr_left (fun x _ => hcol x)]
+    show [([BMS.ent (M7 q) ((q+1)+0) 0, BMS.ent (M7 q) ((q+1)+0) 1] : BMS.Col),
+          ([BMS.ent (M7 q) ((q+1)+1) 0, BMS.ent (M7 q) ((q+1)+1) 1] : BMS.Col)] = bl2 (q+1)
+    rw [show (q+1)+0 = q+1 from by omega,
+      show (q+1)+1 = q+2 from by omega,
+      ent_M7_0 q (q+1) (by omega), ent_M7_1 q (q+1) (by omega) (by omega),
+      show BMS.ent (M7 q) (q+2) 0 = q+2 from ent_M7_c0 q 0 (by omega),
+      show BMS.ent (M7 q) (q+2) 1 = 0 from by rw [ent_M7_c q 1 0 (by omega)]; rfl]
+    rfl
+  simp only [BMS.expand?, getLast_M7, Option.bind_eq_bind, Option.bind_some, lnz_succ_zero,
+    hpar, Option.pure_def, hlen1, take_M7]
+  rw [List.map_congr_left (fun c _ => hbad c), flat_range]
+
+/-! ### F7, the value side — measured, not yet proved
+
+The expansion above is `((0,0) :: ups 1 a-1) ++ repM (bl2 a) (n+1)`.  Only the leading
+`(0,0)` has row-0 entry 0, so the whole matrix is ONE `blocksP` block and the value is
+`ω^(oLAux 1 (ups 0 (a-1) ++ repM (bl2 (a-1)) (n+1)))`.  `oLAux_chainR` then applies
+with `R o := repM (bl2 o) (n+1)` and `p = a-1`, and the base is
+
+    oLAux fuel (1+q) (repM (bl2 0) (n+1)) = φ̄(a, ω·(n+1))
+
+because at offset 0 every copy starts with `(0,1)`, so each copy is its own block,
+headed by a row-1 = 1 column: the fold is one `phiStep` per copy over the tail value
+`oLAux _ (L+1) [[0,0]] = 1`, giving `φ̄(L,ω)`, `φ̄(L,ω·2)`, … (the `logPhi` returns
+`some ω` at each step, and `plus ω (ω^1) = ω·2`).  The chain then collapses onto it.
+The term is `t7 q = φ̄(a, ω²)` with `fsN (φ̄(a,ω²)) k = φ̄(a, ω·k)`, so this is another
+shift-1 EQUALITY family.  Both halves are `#guard`ed below; what is missing is the
+`blocksP`/fold pair for the two-column block, in the shape of `blocksP_repM_M1` and
+`foldl_repM_M1`. -/
+
+#guard (List.range 4).all fun q => (List.range 4).all fun n =>
+  BMS.expand? (M7 q) n == some ((([0,0] : BMS.Col) :: ups 1 q) ++ repM (bl2 (q+1)) (n+1))
+#guard (List.range 4).all fun q => (List.range 4).all fun n =>
+  Trans.o? (BMS.expand (M7 q) n)
+    == some (fsN (phi (ofNat (q+1)) (phi zero (ofNat 2))) (n+1))
+#guard (List.range 4).all fun q =>
+  Trans.o? (M7 q) == some (phi (ofNat (q+1)) (phi zero (ofNat 2)))
+-- the third grower, for the record: (a,1) after F2, bad root 0, step a
+#guard (List.range 4).all fun q =>
+  Trans.o? (M2 q ++ [[q+1,1]]) == some (phi (ofNat (q+1)) (plus omega one))
+
 end Evidence.StageB
