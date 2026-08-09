@@ -1,0 +1,380 @@
+import TM
+/-
+Trans/Dict.lean — the Buchholz → 𝔗(M) dictionary  (candidate / 予想 tier)
+
+Purpose.  The gold-standard oracle for the 2-row fragment of BMS is p-adic-lover-bot's
+translation `Trans` from the PSS termination proof (naruyoko's implementation; the CLI
+`pss2bp` in this workflow).  Its target is *Buchholz's* notation system OT_B, written
+`D_u a` (= ψ_u(a) of Buchholz 1986), not Rathjen's 𝔗(M).  To compare the oracle with
+this repository's 𝔗(M) side, one needs a dictionary
+
+    dict : OT_B → 𝔗(M)      (an order-isomorphism onto its image, value-preserving)
+
+and that is what this file provides, together with machine checks of its
+order-preservation and of the anchor values recorded in `table/oracle-audit-2026-08-09.txt`.
+
+## The correspondence adopted, and why
+
+Buchholz's D_u is NOT Rathjen's ψ_{Ω_{u+1}}.  The two systems have different "ground":
+
+  * Buchholz OT_B has no Veblen function; the whole Veblen hierarchy is *encoded* by
+    Ω-powers inside the argument of D_0 (ψ_0(Ω^{1+α}·(1+β)) = φ(1+α, β), …).
+  * Rathjen's 𝔗(M) ([R91] 2.1) has the binary Veblen φ̄ as a primitive on all of (0,M),
+    so its ψ_κ starts only where Veblen stops: ψ_{Z0}(0) = Γ₀ (this repository's own
+    reading — see the Γ-closure clause of `psiSeed`/`iterGamma` in TM/FS.lean), and
+    SC ∩ (Ω_u, Ω_{u+1}) = range(ψ_{Z u}) ([R91] 2.1: SC = {M} ∪ {ψκα} ∪ {Zα}).
+
+So the dictionary is a genuine ordinal-value computation, not a homomorphism of the
+term algebras.  It is fixed by the following facts, all of which are re-checked as
+`#guard`s at the bottom:
+
+  (D1)  ψ_u(a) = ω^(Ω_u + a)                     whenever a < Ω_{u+1}   (Ω_0 := 0)
+        e.g. ψ_1(0) = Ω_1, ψ_1(1) = Ω_1·ω, ψ_1(Ω_1) = Ω_1², ψ_0(β) = ω^β (β < Ω_1).
+  (D2)  For a ≥ Ω_{u+1} one reads the base-W CNF of a (W := Ω_{u+1}):
+              a = W^{α₁}·c₁ + … + W^{α_k}·c_k + ρ,   α₁ > … > α_k ≥ 1,  ρ < W,
+        and folds left to right, starting from
+              base := 0 (u = 0)   |   Ω_u + 1 (u ≥ 1),
+        with, for the i-th component (c = 1 + γ):
+          * α < W  (Veblen range):  acc := φ(α, base + γ)      for i = 1
+                                    acc := φ(α, acc + c)       for i > 1
+          * α ≥ W  (strongly critical range): acc := ψ_{Z u}(idx) where, with the
+            index step  Δ := W^(α ⊖ W) · c,
+                                    idx := Δ ⊖ 1               for i = 1
+                                    idx := idx + Δ             for i > 1
+        and finally  ψ_u(a) = ω^(Ω_u + acc + ρ).
+        (⊖ is left subtraction; components descend, so all α ≥ W come first.)
+
+Why (D2)'s two ranges: ψ_u(W^α·c) is strongly critical exactly when α ≥ W, and the
+strongly critical ordinals of (Ω_u, Ω_{u+1}) are, in 𝔗(M), exactly the ψ_{Z u}-terms.
+The index step W^(α ⊖ W)·c is forced by the θ-picture ψ_0(Ω^x·(1+γ)) = θ(x, γ)
+together with the fixed-point behaviour of ψ_{Z0} recorded in TM/FS.lean:
+        θ(Ω, γ)   = Γ_γ                  = ψ_{Z0}(γ)                (W^0·(1+γ) ⊖ 1)
+        θ(Ω+1, γ) = the (1+γ)-th fixed point of ξ ↦ Γ_ξ = ψ_{Z0}(Ω_1·(1+γ))
+                    (`fsN`'s ψκα clause diagonalises exactly at these indices)
+        θ(Ω·2, 0) = ψ_{Z0}(Ω_1^{Ω_1}),   θ(Ω_2, γ) = ψ_{Z0}(Ω_2·(1+γ)).
+An index step by *multiplication* W·(α ⊖ W) instead would identify
+D_0(Ω_2 × 2) with D_0(Ω_2 + D_1 D_1 Ω_1) — the injectivity `#guard`s at the bottom
+are what caught this, and they keep the choice pinned.
+
+The additive continuation `idx + Δ` for i > 1 (rather than the semantically equal
+W^(α ⊖ W)·(acc + c)) is what the 𝔗(M) normal form demands: K_κ of the latter would
+contain the argument of the previous ψ, violating the formation condition of
+[R91] 2.1(vi).  Both denote the same ordinal; only the former is a term of 𝔗(M).
+
+Sample values produced by `dict` (all in the `#guard` block; the Buchholz side is
+verbatim `pss2bp` output for the matrix named in the comment):
+
+    D_0 Ω_1            = φ̄(1,0)   = ε₀            (0,0)(1,1)
+    D_0 D_1 Ω_1        = φ̄(2,0)   = ζ₀            (0,0)(1,1)(2,1)
+    D_0 D_1(Ω_1+1)     = φ̄(2,ω)   = ζ_ω           (0,0)(1,1)(2,1)(2,0)   ← was ε_{ζ₀·ω}
+    D_0 D_1(Ω_1×2)     = φ̄(3,0)                   (0,0)(1,1)(2,1)(2,1)   ← was ζ₁
+    D_0 D_1 D_1 1      = φ̄(ω,0)                   (0,0)(1,1)(2,1)(3,0)
+    D_0 D_1 D_1 Ω_1    = ψ_{Z0}(0) = Γ₀           (0,0)(1,1)(2,1)(3,1)   ← was φ̄(3,0)
+    D_0 Ω_2            = ψ_{Z0}(Z 1)              (0,0)(1,1)(2,2)        ← was φ̄(ω,0)
+
+## Status
+
+Candidate (予想) tier.  `dict` is validated by (i) the anchor values above against the
+oracle audit, (ii) order-preservation over systematically generated term families
+(which doubles as a cross-audit of the [R91] 2.3 transcription in TM/Order.lean), and
+(iii) `inT`-wellformedness of every produced term.  No semantic proof is claimed.
+
+Note: the import precedes this comment because the kimina server extracts the header
+imports from the top of a posted snippet.
+-/
+
+namespace Trans
+namespace Dict
+
+open TM (Term)
+open TM.Term
+
+/-! ## 1. Buchholz terms (OT_B)
+
+`D u a` is Buchholz's ψ_u(a); `sum` is the right-nested formal sum.  This mirrors the
+representation of naruyoko's `common.js` (0 | {sub,inner} | array). -/
+
+inductive BT where
+  | zero
+  | D (u : Nat) (a : BT)
+  | sum (a b : BT)
+deriving DecidableEq, Repr, BEq
+
+namespace BT
+
+/-- The components of a formal sum. -/
+def toL : BT → List BT
+  | .zero => []
+  | .sum a b => toL a ++ toL b
+  | t => [t]
+
+/-- Rebuild a term from its components. -/
+def ofL : List BT → BT
+  | [] => .zero
+  | [a] => a
+  | a :: rest => .sum a (ofL rest)
+
+/-- Symbol count (recursion fuel bound). -/
+def size : BT → Nat
+  | .zero => 1
+  | .D _ a => 1 + size a
+  | .sum a b => 1 + size a + size b
+
+def isP : BT → Bool
+  | .D _ _ => true
+  | _ => false
+
+/-- `lessThanBuchholz` of common.js, on the uniform component-list view:
+    compare component-wise, and on a common prefix the shorter list is smaller.
+    Principal components compare lexicographically on (subscript, argument). -/
+def ltL : Nat → List BT → List BT → Bool
+  | 0, _, _ => false
+  | fuel + 1, l1, l2 =>
+    match l1, l2 with
+    | [], [] => false
+    | [], _ :: _ => true
+    | _ :: _, [] => false
+    | .D u a :: ps, .D v b :: qs =>
+      if u < v then true
+      else if v < u then false
+      else if a == b then ltL fuel ps qs
+      else ltL fuel (toL a) (toL b)
+    | _, _ => false            -- junk: a non-principal component
+
+def lt (s t : BT) : Bool := ltL (size s + size t + 2) (toL s) (toL t)
+def le (s t : BT) : Bool := s == t || lt s t
+
+/-- `G(a,u)` of common.js (the coefficient set of the normal-form condition). -/
+def GB (u : Nat) : BT → List BT
+  | .zero => []
+  | .sum a b => GB u a ++ GB u b
+  | .D v a => if u ≤ v then a :: GB u a else []
+
+/-- `isStandardBuchholz` of common.js: components nonzero and descending, and
+    every element of G(a,u) below a. -/
+def isStd : BT → Bool
+  | .zero => true
+  | .D u a => isStd a && (GB u a).all (fun e => lt e a)
+  | .sum a b =>
+    isP a && isStd a && isStd b &&
+    (match b with
+     | .sum c _ => le c a
+     | _ => isP b && le b a)
+
+/-! Abbreviations for the guards. -/
+
+/-- 1 = D_0 0. -/
+def one : BT := .D 0 .zero
+/-- Ω_k = D_k 0 (k ≥ 1). -/
+def Om (k : Nat) : BT := .D k .zero
+/-- ω = D_0 1. -/
+def omega : BT := .D 0 one
+/-- The natural number n as a sum of 1s. -/
+def ofNat (n : Nat) : BT := ofL (List.replicate n one)
+/-- a + b. -/
+def add (a b : BT) : BT := ofL (toL a ++ toL b)
+
+end BT
+
+/-! ## 2. 𝔗(M)-side ordinal arithmetic used by the dictionary -/
+
+/-- Ω_u as a 𝔗(M) term: Ω_0 = 0 (a formal bottom for the uniform clauses),
+    Ω_{u+1} = Z u ([R91] 2.1(vii): Z enumerates the regulars). -/
+def reg : Nat → Term
+  | 0 => zero
+  | u + 1 => Z (TM.Term.ofNat u)
+
+/-- The ω-exponent of an additively principal term: p = ω^(logOm p).
+    φ̄0β denotes φ_0(β°) = ω^(β°) with the shift β° of [R91] 2.7; every other AP term
+    (φ̄αβ with α ≠ 0, ψκα, Zα, M) is an ε-number, hence its own ω-exponent. -/
+def logOm : Term → Term
+  | phi zero b => if phiShifted zero b then plus b TM.Term.one else b
+  | t => t
+
+/-- h ⊖ w: the unique h' with w + h' = h (w ∈ AP, w ≤ h). -/
+def subAP (w h : Term) : Term :=
+  match toList h with
+  | [] => zero
+  | p :: rest => if p == w then ofList rest else h
+
+/-- p / w for p ∈ AP with w ≤ p and w ∈ SC: p = ω^g gives p/w = ω^(g ⊖ w). -/
+def divAP (w p : Term) : Term := omegaNF (subAP w (logOm p))
+
+/-- w · y for w ∈ SC: w·ω^h = ω^(w+h), distributed over the components of y. -/
+def mulL (w y : Term) : Term :=
+  ofList ((toList y).map (fun p => omegaNF (plus w (logOm p))))
+
+/-- The unique δ with 1 + δ = c (c ≠ 0). -/
+def sub1 (c : Term) : Term :=
+  match toList c with
+  | [] => zero
+  | p :: rest => if p == TM.Term.one then ofList rest else c
+
+/-- Base-w Cantor normal form of a term given by its component list:
+    the (exponent, coefficient) pairs with exponent ≥ 1 in descending order,
+    together with the tail ρ < w.  Components with equal exponent are merged. -/
+def wcnf (w : Term) : List Term → List (Term × Term) × Term
+  | [] => ([], zero)
+  | p :: rest =>
+    if lt p w then ([], ofList (p :: rest))
+    else
+      let g := logOm p
+      let l := toList g
+      let a := ofList ((l.filter (fun q => !lt q w)).map (divAP w))
+      let c := omegaNF (ofList (l.filter (fun q => lt q w)))
+      match wcnf w rest with
+      | ((a', c') :: ps, tl) =>
+        if a == a' then ((a, plus c c') :: ps, tl) else ((a, c) :: (a', c') :: ps, tl)
+      | ([], tl) => ([(a, c)], tl)
+
+/-- Buchholz's ψ_u applied to an argument already translated to 𝔗(M) — clauses
+    (D1)/(D2) of the header. -/
+def collapse (u : Nat) (x : Term) : Term :=
+  let w := reg (u + 1)
+  let b := reg u
+  let base : Term := if u == 0 then zero else plus b TM.Term.one
+  let pr := wcnf w (toList x)
+  let st := pr.1.foldl (init := ((none : Option Term), (none : Option Term)))
+    fun s ac =>
+      let a := ac.1
+      let c := ac.2
+      if le w a then
+        -- strongly critical range: an index step Δ = W^(a ⊖ w)·c for ψ_{Z u}
+        let e := mulL w (subAP w a)          -- w·(a ⊖ w), the ω-exponent of W^(a ⊖ w)
+        let d := mulL e c                    -- Δ = ω^(w·(a ⊖ w))·c
+        let i := match s.1 with
+          | none => sub1 d
+          | some i0 => plus i0 d
+        (some i, some (psi w i))
+      else
+        -- Veblen range
+        let bse := match s.2 with | none => base | some v => v
+        let cc := match s.2 with | none => sub1 c | some _ => c
+        (s.1, some (phiNF a (plus bse cc)))
+  omegaNF (plus b (plus (st.2.getD zero) pr.2))
+
+/-- The dictionary. -/
+def dict : BT → Term
+  | .zero => zero
+  | .D u a => collapse u (dict a)
+  | .sum a b => plus (dict a) (dict b)
+
+/-! ## 3. Acceptance record
+
+Three layers, all re-verified by a successful build:
+
+  (A) anchors — every row of `table/oracle-audit-2026-08-09.txt` (both sections),
+      the Buchholz side being verbatim `pss2bp` output for the matrix in the comment;
+  (B) wellformedness — every produced term satisfies `inT` ([R91] 2.1);
+  (C) order-preservation and injectivity over systematically generated corpora.
+      (C) is simultaneously a cross-audit of the [R91] 2.3 transcription in
+      TM/Order.lean: a disagreement is either a `dict` bug or an `lt` bug.
+      Result at the time of writing: no disagreement on 30k+ pairs. -/
+
+namespace Test
+
+open BT
+
+private def e0 : Term := phi TM.Term.one zero                 -- ε₀  = φ̄(1,0)
+private def z0 : Term := phi (TM.Term.ofNat 2) zero           -- ζ₀  = φ̄(2,0)
+private def G0 : Term := psi (Z zero) zero                    -- Γ₀  = ψ_{Z0}(0)
+private def w2 : Term := psi (Z zero) (Z TM.Term.one)         -- ψ_{Z0}(Ω₂)
+
+/-! ### (A) anchors — audit section 1 (rows that survived v0.1.42) -/
+
+#guard dict (D 0 (Om 1))                    == e0                              -- (0,0)(1,1)
+#guard dict (add (D 0 (Om 1)) one)          == plus e0 TM.Term.one             -- …(0,0)
+#guard dict (D 0 (add (Om 1) one))          == phi zero e0                     -- …(1,0)
+#guard dict (D 0 (add (Om 1) (Om 1)))       == phi TM.Term.one TM.Term.one     -- …(1,1)
+#guard dict (D 0 (D 1 one))                 == phi TM.Term.one TM.Term.omega   -- (2,0)
+#guard dict (D 0 (D 1 (ofNat 2)))           == phi TM.Term.one (phi zero (TM.Term.ofNat 2))
+#guard dict (D 0 (D 1 omega))               == phi TM.Term.one (phi zero TM.Term.omega)
+#guard dict (D 0 (D 1 (D 0 (Om 1))))        == phi TM.Term.one e0              -- (2,0)(3,1)
+#guard dict (D 0 (D 1 (Om 1)))              == z0                              -- (2,1)
+#guard dict (add (D 0 (D 1 (Om 1))) one)    == plus z0 TM.Term.one             -- (2,1)(0,0)
+#guard dict (D 0 (add (D 1 (Om 1)) one))    == phi zero z0                     -- (2,1)(1,0)
+#guard dict (D 0 (add (D 1 (Om 1)) (Om 1))) == phi TM.Term.one z0              -- (2,1)(1,1)
+
+/-! ### (A) anchors — audit section 2 (the region withdrawn in v0.1.41/42).
+
+These are the values the miscalibrated `o?` got wrong; each line is the oracle's. -/
+
+#guard dict (D 0 (D 1 (add (Om 1) one)))    == phi (TM.Term.ofNat 2) TM.Term.omega
+                                            -- (2,1)(2,0) = ζ_ω   (o? said ε_{ζ₀·ω})
+#guard dict (D 0 (D 1 (add (Om 1) (Om 1)))) == phi (TM.Term.ofNat 3) zero
+                                            -- (2,1)(2,1) = φ̄(3,0) (o? said ζ₁)
+#guard dict (D 0 (D 1 (D 1 one)))           == phi TM.Term.omega zero
+                                            -- (2,1)(3,0) = φ̄(ω,0) (o? said ζ_ω)
+#guard dict (D 0 (D 1 (D 1 (D 0 (Om 1)))))  == phi e0 zero                     -- (2,1)(3,0)(4,1)
+#guard dict (D 0 (D 1 (D 1 (Om 1))))        == G0
+                                            -- (2,1)(3,1) = Γ₀    (o? said φ̄(3,0))
+#guard dict (add (D 0 (D 1 (D 1 (Om 1)))) one) == plus G0 TM.Term.one          -- (2,1)(3,1)(0,0)
+#guard dict (D 0 (add (D 1 (D 1 (Om 1))) one)) == phi zero G0                  -- (2,1)(3,1)(1,0)
+#guard dict (D 0 (Om 2))                    == w2
+                                            -- (2,2) = ψ₀(Ω₂)     (o? said φ̄(ω,0))
+#guard dict (D 0 (add (Om 2) (Om 1)))       == phi TM.Term.one w2              -- (2,2)(1,1)
+#guard dict (D 0 (add (Om 2) (D 1 (Om 1)))) == phi (TM.Term.ofNat 2) w2        -- (2,2)(1,1)(2,1)
+#guard dict (D 0 (add (Om 2) (D 1 (D 1 (Om 1)))))
+                                            == psi (Z zero) (plus (Z TM.Term.one) TM.Term.one)
+                                            -- (2,2)(1,1)(2,1)(3,1)
+#guard dict (D 0 (add (Om 2) (D 1 (Om 2))))
+       == psi (Z zero) (plus (Z TM.Term.one) (phi TM.Term.one (Z zero)))       -- (2,2)(1,1)(2,2)
+#guard dict (D 0 (add (Om 2) (Om 2)))
+       == psi (Z zero) (plus (Z TM.Term.one) (Z TM.Term.one))                  -- (2,2)(2,2)
+#guard dict (D 0 (add (Om 2) (add (Om 2) (Om 2))))
+       == psi (Z zero) (plus (Z TM.Term.one) (plus (Z TM.Term.one) (Z TM.Term.one)))
+                                                                               -- (2,2)(2,2)(2,2)
+#guard dict (D 0 (D 2 one))                 == psi (Z zero) (phi zero (Z TM.Term.one))
+                                                                               -- (2,2)(3,0)
+#guard dict (D 0 (D 2 (Om 1)))
+       == psi (Z zero) (phi zero (plus (Z TM.Term.one) (Z zero)))              -- (2,2)(3,1)
+
+-- the audit rows are standard Buchholz terms (`isStandardBuchholz` of common.js)
+#guard [D 0 (Om 1), D 0 (add (Om 1) one), D 0 (D 1 (Om 1)), D 0 (D 1 (add (Om 1) one)),
+        D 0 (D 1 (D 1 (Om 1))), D 0 (Om 2), D 0 (add (Om 2) (D 1 (Om 2))),
+        D 0 (D 2 (Om 1))].all isStd
+
+-- the miscalibrated readings are NOT produced (the memorial of the v0.1.41 incident)
+#guard dict (D 0 (D 1 (add (Om 1) (Om 1)))) != phi (TM.Term.ofNat 2) TM.Term.one
+#guard dict (D 0 (D 1 (add (Om 1) one)))
+       != phi TM.Term.one (phi zero (phi (TM.Term.ofNat 2) zero))
+#guard dict (D 0 (Om 2)) != phi TM.Term.omega zero
+
+/-! ### (B)/(C) corpora -/
+
+private def dedup (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def dsucc (n : Nat) (l : List BT) : List BT :=
+  (List.range n).flatMap (fun u => l.map (fun a => BT.D u a))
+private def sums (l : List BT) : List BT := l.flatMap (fun a => l.map (fun b => BT.add a b))
+private def every (k : Nat) (l : List BT) : List BT :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+
+private def lvl0 : List BT := [.zero, one, ofNat 2, omega, Om 1, Om 2, Om 3]
+private def lvl1 : List BT := dedup ((lvl0 ++ dsucc 4 lvl0).filter isStd)
+private def lvl2 : List BT := dedup ((lvl1 ++ dsucc 4 lvl1).filter isStd)
+/-- Nesting corpus: D_u-towers of depth ≤ 3 over the seeds. -/
+private def cD : List BT := every 5 (dedup ((dsucc 3 lvl2).filter isStd))
+/-- Sum corpus: standard binary sums of the depth-2 terms. -/
+private def cS : List BT := every 5 (dedup ((sums (every 3 lvl2)).filter isStd))
+
+-- (B) every produced term is a term of 𝔗(M)
+#guard lvl2.all fun a => TM.Term.inT (dict a)
+#guard cD.all fun a => TM.Term.inT (dict a)
+#guard cS.all fun a => TM.Term.inT (dict a)
+
+-- (C) order preservation, both directions, over all pairs
+private def okPair (a b : BT) : Bool := BT.lt a b == TM.Term.lt (dict a) (dict b)
+#guard lvl2.all fun a => lvl2.all fun b => okPair a b
+#guard cD.all fun a => cD.all fun b => okPair a b
+#guard cS.all fun a => cS.all fun b => okPair a b
+
+-- (C) injectivity (implied by the above under trichotomy, checked separately anyway)
+#guard lvl2.all fun a => lvl2.all fun b => (a == b) == (dict a == dict b)
+#guard cD.all fun a => cD.all fun b => (a == b) == (dict a == dict b)
+#guard cS.all fun a => cS.all fun b => (a == b) == (dict a == dict b)
+
+end Test
+
+end Dict
+end Trans
