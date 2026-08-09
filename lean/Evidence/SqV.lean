@@ -2413,6 +2413,13 @@ def junk : List Term :=
 
 /-! ## §14 THE RECURSION NEVER LEAVES 𝔗(M) FROM A LEGAL START  (2026-08-10)
 
+**A DISCIPLINE WHOSE PAYOFF IS INVISIBLE UNTIL THE THING IT PROTECTS AGAINST HAPPENS IS
+EXACTLY THE KIND NOBODY ADOPTS FROM REASONING.**  This file's measurements are `#eval`s and
+`#guard`s rather than recorded numbers, and that looked like bookkeeping until the object
+they measure was REDEFINED — at which point they re-run and nothing is lost, where a file
+of prose numbers would have had to be re-measured or discarded.  The habit had to be paid
+for once before it could be argued for.
+
 The coordinator's assumption that `encvF`'s intermediates "need not be `inT`" was inferred
 from `encvF` being TOTAL and not measured.  **Totality says `encvF` is DEFINED on junk; it
 does not say a legal input produces junk arguments.**  Those are different claims, and the
@@ -2723,7 +2730,15 @@ twice.**  So it is measured directly.
 
 **Not vacuous**: 145 of the 169 starts have a depth-≥2 target, up to 4 each.  The chain
 property is measured as a chain, against the literal starting term, not inferred from the
-steps. -/
+steps.
+
+**AND IT IS INSURANCE THAT TURNED OUT NOT TO BE NEEDED, NOT EVIDENCE THAT IS BEING USED.**
+`belowC_step` takes a SINGLE step and derives `lt x v` against the original start itself,
+through `lt_trans_inT` — so there is no chain obligation on this side and this measurement
+discharges nothing.  **It is kept, labelled, rather than deleted**: the next person will
+otherwise wonder whether a chain clause is owed and re-derive that it is not.  What it was
+worth was the check itself — "measured on steps, claimed for chains" is the shape that has
+cost this file twice, and it cost one `#eval` to rule out here. -/
 
 def targets1F : Term → List Term
   | .add u v => [u, v]
@@ -2844,9 +2859,19 @@ needs the sub-term facts first.  Over the 97 `φ̄`-headed terms of `startsW`:
     lt (omLog g) (φ̄(a,b))      same g                            0
 
 **The first two are what the other three reduce to**: `lt (predOr a) a` composed with
-`lt a (φ̄(a,b))` through `lt_trans_inT`, and likewise for the subscript side.  So the
-per-site obligation is the site's own step and the sub-term fact, and the sub-term fact is
-the same one twice. -/
+`lt a (φ̄(a,b))` through `lt_trans_inT`, and likewise for the subscript side.
+
+**AND ONE OF THE TWO IS ALREADY PROVED, THE OTHER IS NOT AND IS NOT MINE.**
+
+  * SUBSCRIPT SIDE — `Evidence.WF.lt_phi_self (hx : CNV x) (u) : lt x (φ̄(u,x))`, WF §15.5.
+    Exactly `lt b (φ̄(a,b))`, for every first argument, on all of `CNV`.  Available.
+  * FIRST-ARGUMENT SIDE — `lt a (φ̄(a,b))` does NOT follow from what exists.
+    `lt_phi_of_le` gives `lt x (φ̄(u,y))` from `le x y`, which here would need `le a b` —
+    false in general (`φ̄(1,0)`: `a = 1`, `b = 0`).  Measured true at 0 of 97, but it is an
+    ORDER fact about the Veblen hierarchy — "the value at level `a` exceeds `a`" — and
+    order theory is the WF lane's, not this file's.
+
+So the `lt` half is one available lemma and one routed request, rather than five clauses. -/
 
 def phis : List (Term × Term) :=
   startsW.filterMap (fun t => match t with | .phi a b => some (a, b) | _ => none)
@@ -2861,5 +2886,37 @@ def phis : List (Term × Term) :=
           (fun g => TM.Term.lt g (TM.Term.phi p.1 p.2))))).length == 0
 #guard (phis.filter (fun p => !((summands (TM.Term.splitFin p.2).1).all
           (fun g => TM.Term.lt (omLog g) (TM.Term.phi p.1 p.2))))).length == 0
+
+
+/-! ### §15.4 `land_predOr`'s `inT` HALF — measured, with a control that fires on everything
+
+`predOr t` is `plus ((splitFin t).1) (ofNat m)` when the finite part is `m+1`, so the site's
+`inT` half is `inT_ofList_take` (proved, §15.1) composed with one `plus` fact.  Measured over
+the 221 `inT` terms of `pool ++ junk`:
+
+    inT g → inT (plus g (ofNat m)),  m ≤ 4         0 violations of 221
+    inT ((splitFin t).1)                            0            (agrees with §15.1)
+    inT t → inT (predOr t)                          0            the site itself
+    CONTROL: the same from NON-`inT` g            42 of 42 FAIL
+
+**The control fires on every member** — not most, all.  A hypothesis whose removal breaks
+the conclusion on 100% of a 42-term class is as load-bearing as a hypothesis gets, and it is
+the sharpest control in this file.  It is also the second time the junk corpus has been the
+RIGHT corpus for a control while being the wrong one for a claim: a corpus of legal terms
+cannot contain a single witness for either.
+
+WHAT REMAINS FOR THIS SITE: `inT g → inT (plus g (ofNat m))`.  `plus g (ofNat m)` is
+`ofList ((toList g).filter (le 1) ++ replicate m 1)` — the same shape `inT_ofList_take`
+handles, with an appended tail of `1`s, so §15.1's two introduction lemmas should carry it. -/
+
+def gpool : List Term := (pool ++ junk).eraseDups
+
+#guard ((gpool.filter (fun t => TM.Term.inT t)).filter (fun g =>
+          !((List.range 5).all (fun m => TM.Term.inT (TM.Term.plus g (ofNat m)))))).length == 0
+#guard ((gpool.filter (fun t => !(TM.Term.inT t))).filter (fun g =>
+          !((List.range 5).all (fun m => TM.Term.inT (TM.Term.plus g (ofNat m)))))).length == 42
+#guard (gpool.filter (fun t => !(TM.Term.inT t))).length == 42
+#guard ((gpool.filter (fun t => TM.Term.inT t)).filter (fun t =>
+          !(TM.Term.inT (predOr t)))).length == 0
 
 end Evidence.SqV

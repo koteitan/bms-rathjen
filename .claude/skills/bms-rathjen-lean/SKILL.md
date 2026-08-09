@@ -194,6 +194,15 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   gave the correct condition on sight where the counts had given nothing. The
   rule the lanes are held to (decode a member before reporting a bucket) applies
   to the coordinator's reading of their reports, not only to their own work.
+- **Commit messages carry the reasoning, not just the change — and the reason is
+  that they are the only artifact read IN ORDER.** File state is read once, at
+  whatever version you find; messages are read as a sequence, so a superseded
+  claim in one needs its correction in a later one, not only in a diff. Tonight a
+  lane caught a wrong target-shape claim in a commit message by reading the
+  history the way a later reader would rather than the way its author did — and
+  that is only possible because the messages are substantive. **If they were
+  "fix" and "wip" there would be nothing to read wrongly, and also nothing to
+  catch.**
 - **Read the SNAPSHOT, not the working file.** `git add` freezes the bytes; the
   lane keeps writing. Any math check done by `grep`/`sed` on the path afterwards
   is a check of the lane's CURRENT file, not of what is staged. Once, a commit
