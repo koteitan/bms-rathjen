@@ -1281,8 +1281,39 @@ answer" was nearly certain to pass, and **D8's information was carried by its CO
 is an order of magnitude, the control IS the measurement.  Contrast `tdepth_omLog` above,
 whose margin is 0 and whose measurement therefore carries its own information.
 
+### §9.2 `tdepth_omLog` IS FALSE — the measure is refuted, by a term the corpus cannot hold
+
+Proved FIRST because it is the only one of the five that can refute the measure: its
+margin is 0, so there is no slack anywhere.  It does not hold.
+
+    φ̄(0, M)        tdepth = 1        `tdepth M = 0`, and `φ̄(0,·)` adds one
+    omLog of it    M ⊕ 1             tdepth = 2
+                                     2 > 1 — VIOLATION
+
+The mechanism is the one §9.1 predicted and the corpus could not exhibit: `omLog` goes
+through `plus`, `plus` through `ofList`, and `ofList` adds a level per list element.  `M`
+is the one head with `tdepth 0` OTHER than `zero`, and `zero` never appears in a `toList`,
+so `M` is the only witness — which is why 226 corpus, nested, deeper and stress terms all
+passed.  **The corpus contains no `M`: the region this file measures stops below it.**
+`inT (φ̄(0,M)) = false`, so the witness is not a legal 𝔗(M) term either.
+
+A CANDIDATE FIX, MEASURED AND NOT APPLIED: give `M` depth 1 rather than 0.  Over 223
+distinct terms (corpus + nested + deeper + stress + the probes, the counterexample
+included) all six non-increase facts and `minFuel ≤ tdepth` hold with 0 violations, while
+the current `tdepth` has exactly 1 on the same set — and the worst `omLog` margin is still
+0, so the fix adds no slack and is minimal rather than coarsening.
+
+WHY NOT THE OTHER FIX.  `inT` as a hypothesis would also exclude the witness, and it is
+the wrong move: it narrows the induction, and every recursion site inside `encvF` would
+then owe an `inT`-closure proof — `omLog g`, `predOr a`, each summand — which is a new
+obligation nowhere in evidence, invisible at the use site.  Changing a constant in a
+measure this file introduced is smaller than changing what the theorem is about.
+
+NEITHER IS APPLIED HERE.  The measure is the object the whole §9 plan rests on and the
+coordinator asked to hear before it changes.
+
 THIS IS A PLAN, NOT A PROOF.  The seven facts are `#eval`-measured on 169 + 57 terms and
-none of them is proved.  They are stated here so that the proof is written against measured
+none of them is proved; `tdepth_omLog` is now known FALSE as stated.  They are stated here so that the proof is written against measured
 lemmas rather than guessed ones — the same order this file has used for the encoding. -/
 
 def tdepth : Term → Nat
@@ -1466,5 +1497,14 @@ theorem blocksOf_congr (a : Term) (f g d : Nat)
   | cons x xs ih =>
     rw [List.map_cons, List.map_cons, ih (fun y hy => hx y (List.mem_cons_of_mem x hy)),
       ladderOf_congr a f g d h, hx x (List.mem_cons_self)]
+
+
+-- §9.2's counterexample, banked: `tdepth_omLog` is FALSE as stated
+#guard tdepth (phi zero TM.Term.M) == 1
+#guard tdepth (omLog (phi zero TM.Term.M)) == 2
+#guard !(tdepth (omLog (phi zero TM.Term.M)) <= tdepth (phi zero TM.Term.M))
+#guard TM.Term.inT (phi zero TM.Term.M) == false
+-- and `M` is the ONLY head other than `zero` with depth 0
+#guard (tdepth TM.Term.M, tdepth (TM.Term.Z zero), tdepth (TM.Term.omg zero)) == (0, 1, 1)
 
 end Evidence.SqV
