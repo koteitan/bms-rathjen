@@ -94,7 +94,15 @@ def toMatrix (cs : List Col2) : BMS.Matrix := cs.map (fun c => [c.1, c.2])
 /-- Shift a block to a greater first-row depth; the second row is untouched. -/
 def shiftD (d : Nat) (cs : List Col2) : List Col2 := cs.map (fun c => (c.1 + d, c.2))
 
-/-! ## §1 THE CANDIDATE
+/-! READ THE DENOMINATORS AS LIST LENGTHS, NOT SET SIZES.  Every "of 234" / "of 269" /
+"of 1076" below counts LIST ENTRIES, and the lists contain duplicates — `corpus` is 234
+entries over 119 DISTINCT terms.  No verdict is affected (zero over a multiset is zero
+over its set) but every COVERAGE claim is, and coverage is what this file is about.  §8
+has the full table; the candidate comparison in §1/§3 keeps its original denominators
+deliberately, so that candidates 1–13 stay comparable.  Everything from §5 on states the
+distinct count.
+
+## §1 THE CANDIDATE
 
 CANDIDATE 1.  The three established clauses, with the OPEN clause filled in by the
 `a = 1` data read as "root, then a marker for `a`, then `b` one level deeper".
@@ -988,9 +996,9 @@ where a bundle exists.  That set is exactly what `sqv_decomp` will be applied to
 is a minority of the corpus and the file should say so rather than let "D7 green" read as
 "green everywhere":
 
-    D7 domain          24 DISTINCT terms (48 list entries)
-      11 named rows    φ̄(1,0), φ̄(1,1), φ̄(1,2), φ̄(1,3), φ̄(1,ω), φ̄(1,ω²), φ̄(1,ω^ω),
-                       φ̄(1,ε₀), φ̄(2,0), φ̄(1,ζ₀), φ̄(ω,0)
+    D7 domain          26 DISTINCT terms
+      13 named rows    φ̄(0,ε₀), φ̄(0,ζ₀), φ̄(1,0), φ̄(1,1), φ̄(1,2), φ̄(1,3), φ̄(1,ω),
+                       φ̄(1,ω²), φ̄(1,ω^ω), φ̄(1,ε₀), φ̄(2,0), φ̄(1,ζ₀), φ̄(ω,0)
                        — TERMS, not ordinal names.  An earlier draft called the tenth
                        `ε_{ζ₀}`; the table names that row `ε_{ζ₀+1}`, and under the skip
                        convention the table is right, since ζ₀ is already a fixed point
@@ -999,7 +1007,21 @@ is a minority of the corpus and the file should say so rather than let "D7 green
                        in a header is the fourth waiting to happen, so the domain is
                        written as terms throughout.
       13 CN limits     paired with `Evidence.WF.fsC` (37 entries)
-    no bundle         145 of the 169 distinct terms
+    no bundle         143 of the 169 distinct terms
+
+**WHICH TABLE ROWS THE THEOREM THEREFORE REACHES — the sentence that matters more than
+the denominator.**  Of the twelve table rows above ε₀:
+
+    9 LIMIT rows      all in the D7 domain, all green
+                      φ̄(0,ε₀) [Row A], φ̄(0,ζ₀), φ̄(1,1), φ̄(1,ω), φ̄(1,ω²), φ̄(1,ω^ω),
+                      φ̄(1,ε₀), φ̄(2,0), φ̄(1,ζ₀)
+    3 SUCCESSOR rows  ε₀+1, φ̄(1,ω)+1, ζ₀+1 — no fundamental sequence exists or is
+                      needed; `Certified.succ` takes them
+
+So the domain covers EVERY row above ε₀ that needs a sequence.  `φ̄(0,ε₀)` and `φ̄(0,ζ₀)`
+were outside the first draft of this list and are in it because the question "which rows
+does it reach" was asked — their bundles (`fsA`, `fsZ`, both `repAdd`) existed and were
+simply not paired here.  A domain stated as a count would not have found them.
 
 **THE DISTINCT COUNT IS THE ONE THAT MEANS ANYTHING, AND IT IS NOT THE ONE THIS FILE HAS
 BEEN REPORTING** — see §8.
@@ -1015,10 +1037,12 @@ which needed `fsN` shifted by 2 and ε₁ for which no `fsN` shift exists at all
 bundles are calibrated against the matrices, so this is confirmation that they are, not a
 new fact; but it means `sqv_decomp` will not have to carry a per-row index. -/
 
-open Evidence.WF (fsC tower fsEW fsEW2 fsEWW fsEE fsZeta0 fsEZ fsEsucc)
+open Evidence.WF (fsC tower fsEW fsEW2 fsEWW fsEE fsZeta0 fsEZ fsEsucc fsA fsZ)
 
 def bundles : List (Term × (Nat → Term)) :=
-  [(phi one zero, tower),
+  [(phi zero (phi one zero), fsA),                    -- Row A, ω^(ε₀+1)
+   (phi zero (phi (ofNat 2) zero), fsZ),              -- φ̄(0,ζ₀)
+   (phi one zero, tower),
    (phi one one, fsEsucc 0),
    (phi one (ofNat 2), fsEsucc 1),
    (phi one (ofNat 3), fsEsucc 2),
@@ -1046,7 +1070,7 @@ def cnLims : List Term :=
 #guard (cnLims.filter (fun t => !((List.range 4).all (fun n =>
           Trans.oR (BMS.expand (sqv t) n) == some (fsC t n))))).length == 0
 #guard (bundles.filter (fun p => !((List.range 4).all (fun n =>
-          Trans.oR (BMS.expand (sqv p.1) n) == some (p.2 (n + 1)))))).length == 11
+          Trans.oR (BMS.expand (sqv p.1) n) == some (p.2 (n + 1)))))).length == 13
 #guard (cnLims.filter (fun t => !((List.range 4).all (fun n =>
           Trans.oR (BMS.expand (sqv t) n) == some (fsC t (n + 1)))))).length == 37
 
@@ -1110,7 +1134,7 @@ the same denominators, and changing them now would break every historical row fo
 #guard corpus.eraseDups.length == 119
 #guard corpusW.eraseDups.length == 154
 #guard (corpusW ++ deeper).eraseDups.length == 169
-#guard ((bundles.map (fun p => p.1)) ++ cnLims).eraseDups.length == 24
+#guard ((bundles.map (fun p => p.1)) ++ cnLims).eraseDups.length == 26
 #guard ((List.range 6).map (fun k =>
   ((corpusW ++ deeper).eraseDups.filter (fun t => fpReach t == some k)).length))
     == [111, 10, 5, 5, 5, 0]
