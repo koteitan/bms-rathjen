@@ -4527,6 +4527,34 @@ theorem neg_control_omega_pow_pow_times_two :
 #guard expOf [1, 0, 0] == [2]
 #guard expOf [0, 2, 1] == [1, 1, 0]
 #guard BMS.expand (qM [expOf [1, 0, 0]]) 1 == qM [expOf [0, 2, 0]]
+/-! ## §6 The registry
+
+gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate. -/
+
+/-- The registered certified rows. -/
+def certRows : List (Matrix × Term) :=
+  [([], Term.zero), ([[0]], one), ([[0], [0]], ofNat 2), ([[0], [1]], omega),
+   ([[0], [1], [0], [1]], add omega omega), ([[0], [1], [1]], phi zero (ofNat 2)),
+   ([[0], [1], [2]], phi zero omega),
+   ([[0], [1], [2], [3]], phi zero (phi zero omega))]
+
+/-- Every registered pair carries a derivation.  Extending `certRows` without
+    extending this proof breaks the build — the label cannot outrun the
+    certificates. -/
+theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 := by
+  intro p hp
+  simp only [certRows, List.mem_cons] at hp
+  rcases hp with h | h | h | h | h | h | h | h | h
+  · rw [h]; exact cert_empty
+  · rw [h]; exact cert_one
+  · rw [h]; exact cert_two
+  · rw [h]; exact cert_omega
+  · rw [h]; exact cert_omega2
+  · rw [h]; exact cert_omega_sq
+  · rw [h]; exact cert_omega_pow
+  · rw [h]; exact cert_omega_pow_pow
+  · cases h
+
 /-! ## §7 The negative control, as a theorem
 
 The standing control of the header — "try to certify `(0)(1) ↦ ω+5`" — is no
@@ -5050,91 +5078,105 @@ theorem cert_sq : ∀ (t : Term), CN t = true → Certified (StageA.oneRow (sq t
   intro t hcn
   exact key t (Evidence.WF.acc_cn t hcn) hcn
 
-/-! ## §12 THE ZERO-PADDED ROW — the pad is inert  (STAGE 2c)
+/-! ### §9.2 ITEM 1 — THE PAD IS INERT
 
-The ε₀ row expands to the ZERO-PADDED matrices `(0,0)(1,0)…(n,0)`, not to the
-one-row `(0)(1)…(n)` that §11 certifies, so the family has to be transported
-across the pad.  It transports because the BM4 rule never looks at the second row:
+`towerM n` is the one-row matrix `(0)(1)…(n)` with a second row of zeros, and the
+BM4 rule ignores that row.  The three reasons, now theorems:
 
-  * `BMS.lnz [a,0] = BMS.lnz [a]` — the lowest NONZERO row of a padded column is
-    still row 0 (or the column is all zero in both cases);
-  * `BMS.parent` at row 0 reads only row-0 entries, so it is literally the same
-    computation (`parent_padRow`);
-  * the ascension amount vanishes: with the lowest nonzero row `t = 0`,
-    `BMS.delta M r 0 y = 0` for EVERY `y` (`StageA.delta_zero`), so the padded
-    entries are copied unchanged and the second row stays zero.
+  * `lnz [a,0] = lnz [a]` (`lnz_pad1`): a trailing zero row never becomes the lowest
+    nonzero row, so the `kind` trichotomy is unchanged (`kind_oneRow2_succ`,
+    `kind_oneRow2_lim`);
+  * the parent at row 0 reads row 0 only (`parent_oneRow2_row0`), so the bad root of
+    a padded one-row matrix is the bad root of its unpadded shadow;
+  * `t = 0` for these matrices, and `delta M r 0 y = 0` for every `y`
+    (`StageA.delta_zero`), so the ascension is trivial and the bad part is copied
+    verbatim.
 
-`expand_padRow` is therefore `StageA.expand_oneRow` with the block height raised
-from 1 to 2, and it needs the same hypotheses and no others. -/
+Consequently `expand_oneRow2` is `StageA.expand_oneRow` with the pad carried along,
+and `expand_oneRow2_succ` is the successor rule.  These are what the certificate
+family of §9.4 runs on: `Certified` is then built for the PADDED matrices directly,
+which is strictly cheaper than transporting the unpadded certificates of §2–§5.15
+across an induction on the derivation (that route additionally needs "the expansion
+of a one-row matrix is a one-row matrix", which nothing else uses). -/
 
-/-- The one-row matrix `s` with a second row of zeros. -/
-def padRow (s : List Nat) : Matrix := s.map (fun a => [a, 0])
+open Evidence.StageA (oneRow repL mkBlock)
 
-theorem padRow_append (u v : List Nat) : padRow (u ++ v) = padRow u ++ padRow v := by
-  simp [padRow]
+/-- Append a zero row to every column. -/
+def pad (M : Matrix) : Matrix := M.map (fun c => c ++ [0])
 
-theorem length_padRow (s : List Nat) : (padRow s).length = s.length := List.length_map _
+/-- A height-2 matrix whose row 1 is zero. -/
+def oneRow2 (s : List Nat) : Matrix := s.map (fun a => [a, 0])
 
-theorem ent_padRow : ∀ (s : List Nat) (p : Nat), BMS.ent (padRow s) p 0 = s.getD p 0
-  | [], _ => rfl
-  | _ :: _, 0 => rfl
-  | a :: t, p + 1 => by
-    have h1 : BMS.ent (padRow (a :: t)) (p + 1) 0 = BMS.ent (padRow t) p 0 := by
-      show ((([a, 0] : List Nat) :: padRow t).getD (p + 1) []).getD 0 0
-          = ((padRow t).getD p []).getD 0 0
-      simp
-    rw [h1, ent_padRow t p, List.getD_cons_succ]
+theorem oneRow2_eq (s : List Nat) : oneRow2 s = pad (oneRow s) := by
+  show s.map (fun a => [a, 0]) = (s.map (fun a => [a])).map (fun c => c ++ [0])
+  rw [List.map_map]; rfl
 
-theorem ent_padRow_one : ∀ (s : List Nat) (p : Nat), BMS.ent (padRow s) p 1 = 0
-  | [], _ => rfl
-  | _ :: _, 0 => rfl
-  | a :: t, p + 1 => by
-    have h1 : BMS.ent (padRow (a :: t)) (p + 1) 1 = BMS.ent (padRow t) p 1 := by
-      show ((([a, 0] : List Nat) :: padRow t).getD (p + 1) []).getD 1 0
-          = ((padRow t).getD p []).getD 1 0
-      simp
-    rw [h1, ent_padRow_one t p]
+theorem oneRow2_append (u v : List Nat) : oneRow2 (u ++ v) = oneRow2 u ++ oneRow2 v :=
+  List.map_append
 
-theorem padRow_repL (B : List Nat) : ∀ k, padRow (StageA.repL B k) = Trans.repM (padRow B) k
+theorem length_oneRow2 (s : List Nat) : (oneRow2 s).length = s.length := List.length_map _
+
+theorem oneRow2_repL (B : List Nat) : ∀ k, oneRow2 (repL B k) = Trans.repM (oneRow2 B) k
   | 0 => rfl
   | k + 1 => by
-    show padRow (B ++ StageA.repL B k) = padRow B ++ Trans.repM (padRow B) k
-    rw [padRow_append, padRow_repL B k]
+    show oneRow2 (B ++ repL B k) = oneRow2 B ++ Trans.repM (oneRow2 B) k
+    rw [oneRow2_append, oneRow2_repL B k]
 
-/-- The bad root is computed from row 0 alone, so the pad does not move it. -/
-theorem parent_padRow (s : List Nat) (x : Nat) :
-    BMS.parent (padRow s) 0 x = BMS.parent (StageA.oneRow s) 0 x := by
+theorem ent_oneRow2_0 : ∀ (s : List Nat) (p : Nat), BMS.ent (oneRow2 s) p 0 = s.getD p 0
+  | [], p => by cases p <;> rfl
+  | _ :: _, 0 => rfl
+  | a :: t, p + 1 => by
+    have h1 : BMS.ent (oneRow2 (a :: t)) (p + 1) 0 = BMS.ent (oneRow2 t) p 0 := by
+      show ((([a, 0] : List Nat) :: oneRow2 t).getD (p + 1) []).getD 0 0
+          = ((oneRow2 t).getD p []).getD 0 0
+      rw [List.getD_cons_succ]
+    rw [h1, ent_oneRow2_0 t p, List.getD_cons_succ]
+
+theorem ent_oneRow2_1 : ∀ (s : List Nat) (p : Nat), BMS.ent (oneRow2 s) p 1 = 0
+  | [], p => by cases p <;> rfl
+  | _ :: _, 0 => rfl
+  | a :: t, p + 1 => by
+    show ((([a, 0] : List Nat) :: oneRow2 t).getD (p + 1) []).getD 1 0 = 0
+    rw [List.getD_cons_succ]
+    exact ent_oneRow2_1 t p
+
+/-- The pad is invisible to the row-0 parent: `parent` at row 0 reads row 0 only. -/
+theorem parent_oneRow2_row0 (s : List Nat) (x : Nat) :
+    BMS.parent (oneRow2 s) 0 x = BMS.parent (oneRow s) 0 x := by
   show ((List.range x).filter
-      (fun p => decide (BMS.ent (padRow s) p 0 < BMS.ent (padRow s) x 0))).max?
-    = ((List.range x).filter
-      (fun p => decide (BMS.ent (StageA.oneRow s) p 0
-        < BMS.ent (StageA.oneRow s) x 0))).max?
-  simp only [ent_padRow, StageA.ent_oneRow]
+      (fun p => decide (BMS.ent (oneRow2 s) p 0 < BMS.ent (oneRow2 s) x 0))).max?
+     = ((List.range x).filter
+      (fun p => decide (BMS.ent (oneRow s) p 0 < BMS.ent (oneRow s) x 0))).max?
+  simp only [ent_oneRow2_0, StageA.ent_oneRow]
 
-/-- **`StageA.expand_oneRow` for the padded row.** -/
-theorem expand_padRow {A B : List Nat} {c b0 : Nat} {B' : List Nat}
+/-- `lnz` ignores a trailing zero row. -/
+theorem lnz_pad1 (c : Nat) : BMS.lnz [c, 0] = BMS.lnz [c] := by
+  cases c with
+  | zero => rfl
+  | succ _ => rfl
+
+/-- **The BM4 expansion on the padded one-row region** (the pad is inert). -/
+theorem expand_oneRow2 {A B : List Nat} {c b0 : Nat} {B' : List Nat}
     (hB : B = b0 :: B') (hb0 : b0 < c) (hrest : ∀ x ∈ B', c ≤ x) (hc : c ≠ 0) (n : Nat) :
-    BMS.expand? (padRow ((A ++ B) ++ [c])) n = some (padRow (A ++ StageA.repL B (n + 1))) := by
-  have hBlen : B.length = B'.length + 1 := by rw [hB]; simp
-  have hL : (padRow ((A ++ B) ++ [c])).getLast? = some [c, 0] := by
-    rw [padRow_append]
+    BMS.expand? (oneRow2 ((A ++ B) ++ [c])) n = some (oneRow2 (A ++ repL B (n + 1))) := by
+  have hL : (oneRow2 ((A ++ B) ++ [c])).getLast? = some [c, 0] := by
+    rw [oneRow2_append]
     exact List.getLast?_concat
-  have hlnz : BMS.lnz [c, 0] = some 0 := by
+  have hlnz : BMS.lnz ([c, 0] : List Nat) = some 0 := by
+    rw [lnz_pad1]
     cases c with
     | zero => exact absurd rfl hc
     | succ k => rfl
-  have hlength : (padRow ((A ++ B) ++ [c])).length = (StageA.oneRow ((A ++ B) ++ [c])).length := by
-    rw [length_padRow, StageA.length_oneRow]
-  have hpar : BMS.parent (padRow ((A ++ B) ++ [c])) 0
-      ((padRow ((A ++ B) ++ [c])).length - 1) = some A.length := by
-    rw [hlength, parent_padRow]
+  have hpar : BMS.parent (oneRow2 ((A ++ B) ++ [c])) 0 ((oneRow2 ((A ++ B) ++ [c])).length - 1)
+      = some A.length := by
+    rw [parent_oneRow2_row0, length_oneRow2, ← StageA.length_oneRow]
     exact StageA.parent_oneRow hB hb0 hrest
-  have hlen : (padRow ((A ++ B) ++ [c])).length - 1 - A.length = B.length := by
-    rw [length_padRow, List.length_append, List.length_append]
+  have hlen : (oneRow2 ((A ++ B) ++ [c])).length - 1 - A.length = B.length := by
+    rw [length_oneRow2, List.length_append, List.length_append]
     simp only [List.length_cons, List.length_nil]
     omega
-  have htake : List.take A.length (padRow ((A ++ B) ++ [c])) = padRow A := by
-    rw [List.append_assoc, padRow_append, ← length_padRow A]
+  have htake : List.take A.length (oneRow2 ((A ++ B) ++ [c])) = oneRow2 A := by
+    rw [List.append_assoc, oneRow2_append, ← length_oneRow2 A]
     exact List.take_left
   have hgd : ∀ x, x < B.length → ((A ++ B) ++ [c]).getD (A.length + x) 0 = B.getD x 0 := by
     intro x hx
@@ -5143,16 +5185,16 @@ theorem expand_padRow {A B : List Nat} {c b0 : Nat} {B' : List Nat}
     congr 1
     omega
   have hblk : List.map (fun x => List.map
-        (fun y => BMS.ent (padRow ((A ++ B) ++ [c])) (A.length + x) y)
-        (List.range ([c, 0] : List Nat).length)) (List.range B.length) = padRow B := by
+        (fun y => BMS.ent (oneRow2 ((A ++ B) ++ [c])) (A.length + x) y)
+        (List.range ([c, 0] : List Nat).length)) (List.range B.length) = oneRow2 B := by
     have h1 : ∀ x ∈ List.range B.length,
-        List.map (fun y => BMS.ent (padRow ((A ++ B) ++ [c])) (A.length + x) y)
+        List.map (fun y => BMS.ent (oneRow2 ((A ++ B) ++ [c])) (A.length + x) y)
           (List.range ([c, 0] : List Nat).length) = [B.getD x 0, 0] := by
       intro x hx
       have hx' : x < B.length := List.mem_range.mp hx
-      show [BMS.ent (padRow ((A ++ B) ++ [c])) (A.length + x) 0,
-            BMS.ent (padRow ((A ++ B) ++ [c])) (A.length + x) 1] = [B.getD x 0, 0]
-      rw [ent_padRow, ent_padRow_one, hgd x hx']
+      show [BMS.ent (oneRow2 ((A ++ B) ++ [c])) (A.length + x) 0,
+            BMS.ent (oneRow2 ((A ++ B) ++ [c])) (A.length + x) 1] = [B.getD x 0, 0]
+      rw [ent_oneRow2_0, ent_oneRow2_1, hgd x hx']
     rw [List.map_congr_left h1]
     show (List.range B.length).map (fun x => [B.getD x 0, 0]) = B.map (fun a => [a, 0])
     calc (List.range B.length).map (fun x => [B.getD x 0, 0])
@@ -5163,240 +5205,45 @@ theorem expand_padRow {A B : List Nat} {c b0 : Nat} {B' : List Nat}
       _ = B.map (fun a => [a, 0]) := by rw [List.take_length]
   simp only [BMS.expand?, hL, Option.bind_eq_bind, Option.bind_some, hlnz, hpar, Option.pure_def,
     StageA.delta_zero, Nat.mul_zero, Nat.zero_mul, Nat.add_zero]
-  rw [hlen, htake, hblk, Trans.flat_range, ← padRow_repL, ← padRow_append]
+  rw [hlen, htake, hblk, Trans.flat_range, ← oneRow2_repL, ← oneRow2_append]
 
-/-! ### §12.1 The padded CNF family -/
-
-theorem getLast?_padRow_concat (s : List Nat) (c : Nat) :
-    (padRow (s ++ [c])).getLast? = some [c, 0] := by
-  rw [padRow_append]
-  exact List.getLast?_concat
-
-theorem expand_padSq (t : Term) (hcn : CN t = true) (hk : kindC t = false) (hz : t ≠ zero)
-    (n : Nat) :
-    BMS.expand? (padRow (sq t)) n = some (padRow (sq (fsC t n))) := by
-  obtain ⟨A, B, c, b0, B', h1, h2, h3, h4, h5, h6⟩ := sq_decomp t hcn hk hz
-  rw [h1, expand_padRow h2 h3 h4 h5 n, h6]
-
-theorem kind_padSq_lim (t : Term) (hcn : CN t = true) (hk : kindC t = false) (hz : t ≠ zero) :
-    BMS.kind (padRow (sq t)) = .lim := by
-  obtain ⟨A, B, c, b0, B', h1, h2, h3, h4, h5, _⟩ := sq_decomp t hcn hk hz
-  show (match (padRow (sq t)).getLast? with
-        | none => BMS.Kind.zero
-        | some L => match BMS.lnz L with | none => BMS.Kind.succ | some _ => BMS.Kind.lim)
-      = BMS.Kind.lim
-  rw [h1, getLast?_padRow_concat]
-  cases c with
-  | zero => exact absurd rfl h5
-  | succ k => rfl
-
-theorem expand_padSq_succ (t : Term) (hcn : CN t = true) (hk : kindC t = true) (n : Nat) :
-    BMS.expand? (padRow (sq t)) n = some (padRow (sq (predC t))) := by
-  have hsq := sq_predC t hcn hk
-  have hL : (padRow (sq t)).getLast? = some [0, 0] := by
-    rw [hsq]; exact getLast?_padRow_concat _ _
-  have hdl : (padRow (sq t)).dropLast = padRow (sq (predC t)) := by
-    rw [hsq, padRow_append]
-    show (padRow (sq (predC t)) ++ [[0, 0]]).dropLast = padRow (sq (predC t))
-    exact List.dropLast_concat
-  show (do
-    let L ← (padRow (sq t)).getLast?
-    match BMS.lnz L with
-    | none => pure (padRow (sq t)).dropLast
-    | some t' => _) = _
-  simp only [hL, Option.bind_eq_bind, Option.bind_some,
-    show BMS.lnz ([0, 0] : List Nat) = none from rfl, Option.pure_def]
+/-- The successor rule on the padded one-row region: the last column is dropped. -/
+theorem expand_oneRow2_succ (s : List Nat) (n : Nat) :
+    BMS.expand? (oneRow2 (s ++ [0])) n = some (oneRow2 s) := by
+  have hL : (oneRow2 (s ++ [0])).getLast? = some [0, 0] := by
+    rw [oneRow2_append]; exact List.getLast?_concat
+  have hlnz : BMS.lnz ([0, 0] : List Nat) = none := rfl
+  have hdl : (oneRow2 (s ++ [0])).dropLast = oneRow2 s := by
+    rw [oneRow2_append]
+    show (oneRow2 s ++ [[0, 0]]).dropLast = oneRow2 s
+    rw [List.dropLast_concat]
+  simp only [BMS.expand?, hL, Option.bind_eq_bind, Option.bind_some, hlnz, Option.pure_def]
   rw [hdl]
 
-theorem kind_padSq_succ (t : Term) (hcn : CN t = true) (hk : kindC t = true) :
-    BMS.kind (padRow (sq t)) = .succ := by
-  have hsq := sq_predC t hcn hk
-  show (match (padRow (sq t)).getLast? with
+theorem kind_oneRow2_succ (s : List Nat) : BMS.kind (oneRow2 (s ++ [0])) = .succ := by
+  have hL : (oneRow2 (s ++ [0])).getLast? = some [0, 0] := by
+    rw [oneRow2_append]; exact List.getLast?_concat
+  show (match (oneRow2 (s ++ [0])).getLast? with
         | none => BMS.Kind.zero
-        | some L => match BMS.lnz L with | none => BMS.Kind.succ | some _ => BMS.Kind.lim)
-      = BMS.Kind.succ
-  rw [hsq, getLast?_padRow_concat]
+        | some L => match BMS.lnz L with | none => .succ | some _ => .lim) = .succ
+  rw [hL]
   rfl
 
-/-- **The padded CNF certificate family** — `cert_sq` transported across the pad. -/
-theorem cert_padSq : ∀ (t : Term), CN t = true → Certified (padRow (sq t)) t := by
-  have key : ∀ (t : Term), Acc Evidence.WF.RC t → CN t = true →
-      Certified (padRow (sq t)) t := by
-    intro t ht
-    induction ht with
-    | intro t _ ih =>
-      intro hcn
-      by_cases hz : t = zero
-      · subst hz; exact Certified.zero
-      by_cases hk : kindC t = true
-      · have hcnp : CN (predC t) = true := Evidence.WF.cn_predC t hcn hk
-        have hltp : lt (predC t) t = true := Evidence.WF.lt_predC t hcn hk
-        have hpred : Certified (padRow (sq (predC t))) (predC t) :=
-          ih (predC t) ⟨hcnp, hltp⟩ hcnp
-        have hres : Certified (padRow (sq t)) (plus (predC t) one) :=
-          Certified.succ (kind_padSq_succ t hcn hk) (fun n => by
-            show Certified ((BMS.expand? (padRow (sq t)) n).getD []) (predC t)
-            rw [expand_padSq_succ t hcn hk n]
-            exact hpred)
-        rw [plus_predC t hcn hk] at hres
-        exact hres
-      · have hk' : kindC t = false := by simpa using hk
-        obtain ⟨hcnfs, hltfs, hstep, hcof⟩ := Evidence.WF.lim_clauses t hcn hk' hz
-        refine Certified.lim (fsC t) (kind_padSq_lim t hcn hk' hz) (fun n => ?_) hltfs hstep hcof
-        show Certified ((BMS.expand? (padRow (sq t)) n).getD []) (fsC t n)
-        rw [expand_padSq t hcn hk' hz n]
-        exact ih (fsC t n) ⟨hcnfs n, hltfs n⟩ (hcnfs n)
-  intro t hcn
-  exact key t (Evidence.WF.acc_cn t hcn) hcn
-
-/-! ## §13 ε₀ — THE ROW `(0,0)(1,1)`  (STAGE 3)
-
-The first TWO-ROW row of the table with a real checkmark, and the first row whose
-value is not in the one-row region.
-
-    cert_eps0 : Certified [[0,0],[1,1]] (φ̄10)
-
-Everything it needs is now a theorem:
-
-  `kind_eps0_row`                 (§9)   the row is a limit row
-  `expand_eps0_row`               (§9)   its expansions are the padded towers
-  `cert_padSq` + `sq_tower`       (§12)  each of those is certified, with value `tower n`
-  `Evidence.WF.lt_tower_eps0`     (WF §9) the towers are below ε₀
-  `Evidence.WF.lt_tower_step`     (WF §9) they increase
-  `Evidence.WF.cof_eps0`          (WF §9) they are COFINAL among the terms of 𝔗(M) below ε₀
-
-The last one is the only premise that is not a computation, and it is the one that
-makes the certificate a semantic claim rather than a bookkeeping identity. -/
-
-theorem sq_tower : ∀ n, sq (Evidence.WF.tower n) = List.range (n + 1)
-  | 0 => rfl
-  | n + 1 => by
-    have h : List.range (n + 1 + 1) = 0 :: (List.range (n + 1)).map Nat.succ :=
-      List.range_succ_eq_map
-    show 0 :: (sq (Evidence.WF.tower n)).map (· + 1) = List.range (n + 1 + 1)
-    rw [h, sq_tower n]
-
-theorem towerM_eq (n : Nat) : towerM n = padRow (sq (Evidence.WF.tower n)) := by
-  rw [sq_tower n]
-  rfl
-
-/-- Every expansion of the ε₀ row is certified, with the ω-tower as its value. -/
-theorem cert_tower (n : Nat) : Certified (towerM n) (Evidence.WF.tower n) := by
-  rw [towerM_eq n]
-  exact cert_padSq _ (Evidence.WF.cn_tower n)
-
-/-- **ε₀.**  The row `(0,0)(1,1)` of the table, certified. -/
-theorem cert_eps0 : Certified [[0, 0], [1, 1]] (phi one zero) := by
-  refine Certified.lim Evidence.WF.tower kind_eps0_row (fun n => ?_)
-    Evidence.WF.lt_tower_eps0 Evidence.WF.lt_tower_step Evidence.WF.cof_eps0
-  show Certified ((BMS.expand? [[0, 0], [1, 1]] n).getD []) (Evidence.WF.tower n)
-  rw [show (BMS.expand? [[0, 0], [1, 1]] n).getD [] = towerM n from expand_eps0_row n]
-  exact cert_tower n
-
-/-! ### §13.1 The negative control for the ε₀ row
-
-The expansion values are forced (`expand_eps0_row` + `cert_tower`), so an attempt
-to certify a COMPRESSED value for `(0,0)(1,1)` — say ε₀·2 — has to discharge the
-cofinality clause with the same `fs' = tower`.  That clause is refutable, and the
-witness is ε₀ itself: it is a term of 𝔗(M), it is below ε₀·2, and no tower
-overtakes it (clause 2.3.13(iii) sends `φ̄10 ≤ δ` down the tower's exponent and
-never fires).  This is the §7 control transposed to the new row, and — like
-`Evidence.WF.cof_eps0_needs_inT` — it is a kernel-checked theorem, not a `#guard`. -/
-
-theorem ltF_eps0_tower : ∀ (n f : Nat), ltF f (phi one zero) (Evidence.WF.tower n) = false := by
-  intro n
-  induction n with
-  | zero =>
-    intro f
-    cases f with
-    | zero => rfl
-    | succ g =>
-      show (if ((phi one zero) == one) = true then false
-            else if ((one : Term) == zero) = true then ltF g zero zero
-            else if ltF g one zero = true then ltF g zero one
-            else (((phi one zero) == zero) || ltF g (phi one zero) zero)) = false
-      rw [if_neg (by intro hc; exact Bool.noConfusion hc),
-        if_neg (by intro hc; exact Bool.noConfusion hc), ltF_lt_zero]
-      simp only [Bool.false_eq_true, if_false]
-      rw [ltF_lt_zero]
-      rfl
-  | succ n ih =>
-    intro f
-    cases f with
-    | zero => rfl
-    | succ g =>
-      show (if ((phi one zero) == Evidence.WF.tower (n + 1)) = true then false
-            else if ((one : Term) == zero) = true then ltF g zero (Evidence.WF.tower n)
-            else if ltF g one zero = true then ltF g zero (Evidence.WF.tower (n + 1))
-            else (((phi one zero) == Evidence.WF.tower n)
-                  || ltF g (phi one zero) (Evidence.WF.tower n))) = false
-      rw [if_neg (by intro hc; exact Bool.noConfusion hc),
-        if_neg (by intro hc; exact Bool.noConfusion hc), ltF_lt_zero]
-      simp only [Bool.false_eq_true, if_false]
-      rw [ih g, show ((phi one zero == Evidence.WF.tower n) : Bool) = false from by
-        cases n <;> rfl]
-      rfl
-
-/-- No tower overtakes ε₀. -/
-theorem le_eps0_tower (n : Nat) : le (phi one zero) (Evidence.WF.tower n) = false := by
-  show ((phi one zero == Evidence.WF.tower n) || lt (phi one zero) (Evidence.WF.tower n)) = false
-  rw [show lt (phi one zero) (Evidence.WF.tower n) = false from ltF_eps0_tower n _,
-    show ((phi one zero == Evidence.WF.tower n) : Bool) = false from by cases n <;> rfl]
-  rfl
-
-/-- **The negative control for the ε₀ row, machine-checked.**  The cofinality
-    clause that a certificate `Certified [[0,0],[1,1]] (ε₀·2)` would need — with the
-    expansion values `fs' n = tower n`, which are FORCED by `cert_tower` — is
-    FALSE: ε₀ is a term of 𝔗(M) below ε₀·2 that no `fs' n` overtakes. -/
-theorem neg_control_eps0_times_two :
-    ¬ (∀ s, inT s = true → lt s (add (phi one zero) (phi one zero)) = true →
-        ∃ n, le s (Evidence.WF.tower n) = true) := by
-  intro hcof
-  obtain ⟨n, hn⟩ := hcof (phi one zero) (by decide) (by decide)
-  rw [le_eps0_tower n] at hn
-  exact Bool.noConfusion hn
-
-/-! ### §13.2 Evidence -/
-
-#guard BMS.kind [[0, 0], [1, 1]] == BMS.Kind.lim
-#guard (List.range 5).all (fun n => BMS.expand [[0, 0], [1, 1]] n == towerM n)
-#guard inT (phi one zero) == true
-#guard lt (phi one zero) (add (phi one zero) (phi one zero)) == true
-#guard (List.range 12).all (fun n => le (phi one zero) (Evidence.WF.tower n) == false)
-
-/-! ## §6 The registry
-
-gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate.
-
-MOVED TO THE END OF THE FILE (certificate lane, 2026-08-09).  It used to sit
-between §5.15 and §7, but the ε₀ row's certificate is built in §13 and Lean needs
-it in scope before `certRows_ok` can cite it.  Registry and gate stay together;
-nothing outside this file depends on their position. -/
-
-/-- The registered certified rows. -/
-def certRows : List (Matrix × Term) :=
-  [([], Term.zero), ([[0]], one), ([[0], [0]], ofNat 2), ([[0], [1]], omega),
-   ([[0], [1], [0], [1]], add omega omega), ([[0], [1], [1]], phi zero (ofNat 2)),
-   ([[0], [1], [2]], phi zero omega),
-   ([[0], [1], [2], [3]], phi zero (phi zero omega)),
-   ([[0, 0], [1, 1]], phi one zero)]
-
-/-- Every registered pair carries a derivation.  Extending `certRows` without
-    extending this proof breaks the build — the label cannot outrun the
-    certificates. -/
-theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 := by
-  intro p hp
-  simp only [certRows, List.mem_cons] at hp
-  rcases hp with h | h | h | h | h | h | h | h | h | h
-  · rw [h]; exact cert_empty
-  · rw [h]; exact cert_one
-  · rw [h]; exact cert_two
-  · rw [h]; exact cert_omega
-  · rw [h]; exact cert_omega2
-  · rw [h]; exact cert_omega_sq
-  · rw [h]; exact cert_omega_pow
-  · rw [h]; exact cert_omega_pow_pow
-  · rw [h]; exact cert_eps0
-  · cases h
+theorem kind_oneRow2_lim (s : List Nat) {c : Nat} (hc : c ≠ 0) :
+    BMS.kind (oneRow2 (s ++ [c])) = .lim := by
+  have hL : (oneRow2 (s ++ [c])).getLast? = some [c, 0] := by
+    rw [oneRow2_append]; exact List.getLast?_concat
+  have hlnz : BMS.lnz ([c, 0] : List Nat) = some 0 := by
+    rw [lnz_pad1]
+    cases c with
+    | zero => exact absurd rfl hc
+    | succ k => rfl
+  show (match (oneRow2 (s ++ [c])).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match BMS.lnz L with | none => .succ | some _ => .lim) = .lim
+  rw [hL]
+  show (match BMS.lnz ([c, 0] : List Nat) with
+        | none => BMS.Kind.succ | some _ => BMS.Kind.lim) = .lim
+  rw [hlnz]
 
 end Evidence.Cert
