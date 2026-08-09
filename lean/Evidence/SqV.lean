@@ -1792,13 +1792,31 @@ theorem tdepth_fpDeep (a t g : Term) (h : fpDeep a t = some g) : tdepth g ≤ td
 
 (S) MENTIONS NO `isAP`, NO `CNV`, NO `le` — pure list combinatorics, which is what makes
 it a candidate to replace both routed `plus` lemmas.  Measured over every order-preserving
-sub-list of 16 base lists, including shapes built to attack the index-shift argument (a
-deep element LAST, where its index contribution to the max is largest; deep elements
+sub-list of 16 base lists, including shapes built to attack the position argument (a
+deep element LAST, where a positional model would weight it most; deep elements
 interleaved; a seven-element list of `1`s):
 
     448 sublist pairs      0 violations
     control (reverse)      400 of 448 FAIL — the test discriminates
     tightest margin        0 — it is exact somewhere, so (S) is tight, not slack
+
+**AND THE REASONING FIRST OFFERED FOR (S) IS FALSE, WHICH THE MEASUREMENT DID NOT SHOW.**
+The proposed formula was `tdepth (ofList [a₁…aₙ]) = max over i of ((i−1) + tdepth aᵢ)`,
+giving the head weight 0.  It is refuted — 44 of 578 for veblen2, and directly:
+
+    tdepth (add deep M) = 6      with tdepth deep = 5, tdepth M = 1
+    the formula gives     5
+
+because `ofList [a,b] = add a b` has depth `1 + max (tdepth a) (tdepth b)` and the `1+`
+sits on the `add` NODE, applying to BOTH branches.  (S) survives because the correct
+weights are still monotone in position — a different argument from the one offered.
+
+**THE GENERAL FORM, and it is the sharpest thing to come out of this exchange: A
+MEASUREMENT THAT CONFIRMS A LEMMA DOES NOT CONFIRM THE REASONING OFFERED FOR IT.**  The
+448 pairs were about (S).  The formula was never what was measured, and I reported the
+numbers as showing it — attaching correct evidence to the wrong statement, which is the
+count-versus-set error in a new place.  The proof of (S) in §11.5 does not use the
+formula and never did.
 
 **THE SECOND HALF DOES NEED THE ROUNDTRIP.**  `ofList (toList t) = t` is measured true on
 all 234 terms of `allM`, so it is a fact — and it is a NORMAL-FORM fact, which means (S)
@@ -1888,5 +1906,11 @@ theorem tdepth_ofList_sublist : ∀ (b : Term) (L : List Term),
         rw [hL'] at hv
         simp only [tdepth] at hv ⊢
         omega
+
+
+-- the refuted formula, banked as a live control: it is NOT what the 448 pairs measured
+def deepW : Term := phi (ofNat 2) (phi one (phi zero omega))
+#guard (tdepth deepW, tdepth TM.Term.M, tdepth (TM.Term.add deepW TM.Term.M)) == (5, 1, 6)
+#guard !(tdepth (TM.Term.add deepW TM.Term.M) == max (0 + tdepth deepW) (1 + tdepth TM.Term.M))
 
 end Evidence.SqV
