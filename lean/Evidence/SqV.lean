@@ -1320,7 +1320,14 @@ lemmas rather than guessed ones — the same order this file has used for the en
     thing that can appear in a `toList` with depth 0, because `zero` never does, and
     `ofList` adds a level per element.  "Appears in a list" must imply "depth ≥ 1" for
     the measure to be sound under `ofList` at all.  `M` at 0 was an accident of treating
-    it like `zero`: both are leaf constructors, but only one is ever a list element. -/
+    it like `zero`: both are leaf constructors, but only one is ever a list element.
+
+    AND WHAT IT MUST NOT DEPEND ON: **a termination lemma should not know what a legal
+    term is.**  `inT` would also have excluded §9.2's counterexample, and it is the wrong
+    kind of fix — it couples the fuel lemma to a property of 𝔗(M) that has nothing to do
+    with fuel, and every consumer inherits the coupling.  `tdepth` is internal to this
+    proof, with no consumer and no external calibration; changing it changes an
+    instrument, where changing a hypothesis changes what is claimed. -/
 def tdepth : Term → Nat
   | .zero => 0 | .M => 1
   | .omg a => 1 + tdepth a
@@ -1534,7 +1541,7 @@ intermediates that need not be legal, which is the whole reason §9.2's fix must
 
     all six non-increase facts        0 violations of 234 distinct terms
     minFuel ≤ tdepth                  0
-    tdepth t ≤ 2 * t.deg + 8          0, worst slack 9
+    tdepth t ≤ 2 * t.deg + 8          0, worst slack 9 — IT SURVIVES BY ONE
     worst `omLog` margin              0
 
 The BOUND is the one that gets harder when a measure goes up, so it was re-checked rather
@@ -1568,5 +1575,79 @@ def allM : List Term := (corpusW ++ deeper ++ stress ++ mCorpus).eraseDups
 #guard (allM.filter (fun t =>
           !(((List.range 60).find? (fun f => encvF f t 0 == encv t 0)).getD 99 <= tdepth t))).length == 0
 #guard (allM.filter (fun t => !(tdepth t <= 2 * t.deg + 8))).length == 0
+
+
+/-! ## §11 TWO OF THE FIVE `tdepth` LEMMAS, PROVED
+
+`tdepth_summands` and `tdepth_headD` — and `headD` falls out of `summands`, so it is two
+statements for one proof, as expected.  The route avoids the `ofList (toList b) = b`
+roundtrip entirely: `TM.Lemmas` has only the other direction and a `CNV`-restricted
+version, and neither is needed if the bound is proved about `ofList ((toList b).take k)`
+directly, by induction on `b`.  Naming what was NOT needed is worth as much here as
+naming what was: the roundtrip would have been a lemma about normal forms inside a
+lemma about termination, which is the coupling §9.2 rejected in a different place.
+
+STILL OPEN: `tdepth_predOr`, `tdepth_omLog`, `tdepth_fpDeep`.  `tdepth_omLog` is the one
+with margin 0 and it is the one already refuted once (§9.2); it is now a statement about
+the CORRECTED measure and is unproved, not known true. -/
+
+open TM.Term (toList ofList)
+theorem tdepth_mem_summands : ∀ (t g : Term), g ∈ summands t → tdepth g ≤ tdepth t := by
+  intro t
+  induction t with
+  | zero => intro g hg; simp only [summands] at hg; exact absurd hg (List.not_mem_nil)
+  | M => intro g hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact Nat.le_refl _
+  | omg _ _ => intro g hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact Nat.le_refl _
+  | psi _ _ _ _ => intro g hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact Nat.le_refl _
+  | Z _ _ => intro g hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact Nat.le_refl _
+  | phi _ _ _ _ => intro g hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact Nat.le_refl _
+  | add u v ihu ihv =>
+    intro g hg
+    simp only [summands, List.mem_append] at hg
+    simp only [tdepth]
+    rcases hg with h | h
+    · exact Nat.le_trans (ihu g h) (by omega)
+    · exact Nat.le_trans (ihv g h) (by omega)
+
+theorem tdepth_ofList_take : ∀ (b : Term) (k : Nat),
+    tdepth (ofList ((toList b).take k)) ≤ tdepth b := by
+  intro b
+  induction b with
+  | zero => intro k; simp only [toList, List.take_nil, ofList]; exact Nat.le_refl _
+  | M => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, tdepth] <;> omega
+  | omg _ _ => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, tdepth] <;> omega
+  | psi _ _ _ _ => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, tdepth] <;> omega
+  | Z _ _ => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, tdepth] <;> omega
+  | phi _ _ _ _ => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, tdepth] <;> omega
+  | add u v _ ihv =>
+    intro k
+    cases k with
+    | zero => simp only [toList, List.take_zero, ofList, tdepth]; omega
+    | succ j =>
+      have hv := ihv j
+      simp only [toList, List.take_succ_cons]
+      cases h : (toList v).take j with
+      | nil => simp only [ofList, tdepth]; omega
+      | cons y ys =>
+        show tdepth (TM.Term.add u (ofList (y :: ys))) ≤ tdepth (TM.Term.add u v)
+        rw [h] at hv
+        simp only [tdepth] at hv ⊢
+        omega
+
+theorem tdepth_splitFin_fst (b : Term) : tdepth ((TM.Term.splitFin b).1) ≤ tdepth b :=
+  tdepth_ofList_take b _
+
+theorem tdepth_summands (b : Term) :
+    ∀ g ∈ summands (TM.Term.splitFin b).1, tdepth g ≤ tdepth b :=
+  fun g hg => Nat.le_trans (tdepth_mem_summands _ g hg) (tdepth_splitFin_fst b)
+
+theorem tdepth_headD (b : Term) :
+    tdepth ((summands (TM.Term.splitFin b).1).headD zero) ≤ tdepth b := by
+  cases h : summands (TM.Term.splitFin b).1 with
+  | nil => exact Nat.zero_le _
+  | cons y ys =>
+    show tdepth y ≤ tdepth b
+    exact tdepth_summands b y (by rw [h]; exact List.mem_cons_self)
+
 
 end Evidence.SqV
