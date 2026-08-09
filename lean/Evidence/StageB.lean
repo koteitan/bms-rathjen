@@ -118,12 +118,18 @@ R3 at a = 1, R7 at a = 2) — PROVED for symbolic a = q+1, `e3_F3family`.
   `ltF_etow_not_lt`, `W_succ2`) in Rows/ProofsB.lean are the q = 0 and q = 1 cases of
   exactly (A)–(G); §7 is those two developments generalized in `q`.
 
-FRONTIER (not proved here):
+FRONTIER (not proved here) — §8 is the feasibility map, read it before extending:
   * A genuinely region-wide theorem additionally needs a 2-row standardness
     invariant and an invariant carried on the `oLAux` accumulator (`logPhi k acc`
     defined and `acc` a φ_k-value), since the Stage-B value function is an
     accumulator fold, not a plain sum.  No relation to `BMS.Standard` is claimed
     anywhere in this file.
+  * §8 measures both.  Its main finding is NEGATIVE: the Stage-A predicate `stdSeq`
+    does not lift — a `stdPair` built the same way is false, not merely unproved
+    (§8.2, with the counterexamples `#guard`ed there).  The accumulator invariant
+    above is confirmed, and the missing prerequisite is a fuel-free `oLAux`
+    (§8.3).  §8.5 names the recommended next target, the family
+    `(0,0)(1,1)…(a,1)(b,r)` with its closed forms already `#guard`ed.
 
 References: [R91] = M. Rathjen, "Proof-theoretic analysis of KPM", Arch. Math.
 Logic 30 (1991) 377–403.
@@ -2097,5 +2103,265 @@ example (k : Nat) : lt (fsN (phi (ofNat 3) one) (k+1)) (oval3 2 (k+1)) = true :=
 #guard (List.range 4).all fun q => (List.range 5).all fun k =>
   lt (fsN (t3 q) (k+1)) (oval3 q (k+1))
 #guard (List.range 4).all fun q => (List.range 4).all fun m => VV q (m+2) == twr q m
+
+
+/-! ## §8 FEASIBILITY MAP — a region-wide Stage-B theorem (assessment, no proofs)
+
+This section is a MAP, not mathematics.  It records what one theorem covering ALL
+standard 2-row matrices below `(0,0)(1,1)(2,2)` (row-1 entries ≤ 1) would require,
+measured against the machinery of §1–§7, and it names the largest target that is
+actually reachable next.  The `#guard`s at the end are the machine-checked part of
+the assessment; the standardness verdicts come from the yaBMS BM4 reference
+implementation (`c/bms -s`, <https://github.com/koteitan/yaBMS>), which is the same
+evidence standard `Evidence/StageA.lean` uses for `stdSeq`.
+
+RECOMMENDATION (details in §8.6): do NOT attempt the region theorem yet.  Its
+blocking problem is not the length of the proof but the hypothesis: the Stage-A
+style standardness predicate does not lift (§8.2, measured).  The largest honest
+target is F4 of §8.5 — the "ladder + one column" family, whose closed forms are
+pinned by `#guard` below.
+
+### §8.1 What the region contains
+
+Window: every 2-row matrix whose first column is `(0,0)`, with row-0 entries < 4,
+row-1 entries < 2 and length ≤ 5 — 4681 matrices.
+
+  4681  matrices in the window
+   153  standard (yaBMS)
+   107  of those are limits (`BMS.kind = lim`; the 46 successors need an `esucc`
+        statement, not E3 — cf. `Evidence.StageA.esucc_general`)
+     8  are literal instances of the three families proved here (F1/F2/F3)
+
+  the 107 limits split as
+    18  row-1-all-zero          — Stage A's region (`e3_general`), modulo a bridge
+                                  between `oneRow s` and a 2-row matrix with row 1
+                                  identically zero, which is not proved anywhere
+    17  ladder, or ladder + one column   (the F1/F2/F3 instances and the F4 gap)
+    72  neither — of which 35 are "ladder + two columns" and 37 need three or more.
+
+The window truncates every family at a = 3 and length 5, so these are shape
+statistics, not a measure of the (infinite) region.
+
+### §8.2 Q1 — the standardness invariant.  MAIN FINDING, and it is negative
+
+`stdSeq` (StageA §6) = "starts with 0" + "every block is `stdSeq` after `dec`" +
+`descB (blockVals s)`, i.e. a syntactic recursion plus ONE semantic condition:
+the block values descend weakly (Cantor normal form).  The obvious lift was tried
+and measured over the whole 4681-matrix window.
+
+Three syntactic conditions, each NECESSARY (0 false negatives over the window):
+
+  C1  every column after the first with row-0 entry 0 has row-1 entry 0
+      (accepts 2801, 2648 false positives)
+  C2  row 0 grows by at most 1: `r0 (x+1) ≤ r0 x + 1`
+      (accepts 793, 640 false positives)
+  C3  `r1 x ≤ r1 (P₀ x) + 1`, and `r1 x = 0` when x has no row-0 parent
+      (accepts 2801, 2648 false positives)
+
+  C1 ∧ C2 ∧ C3 accepts 449 of 4681: still 296 false positives, 0 false negatives.
+
+Adding the Stage-A-style value condition — "no absorption": a `(0,0)`-block's
+summand `ω^v` must be ≤ the last component of the accumulator, and at a
+`(0,1)`-block at level k the accumulator must be 0 or a φ_k-value (a raw `φ̄(c,·)`
+with `ofNat k ≤ c`, which is exactly what makes `logPhi (ofNat k) acc` total) —
+brings the count to 227 accepted, 75 false positives, and INTRODUCES A FALSE
+NEGATIVE:
+
+  `(0,0)(1,1)(1,0)(2,1)(2,0)` is standard (yaBMS = 1) but its inner fold absorbs:
+  the `(1,1)` column contributes ε₀ = `φ̄(1,0)`, and the next block contributes
+  `ω^(ε₀+1) = φ̄(0,φ̄(1,0))`, which swallows it (`plus` drops the smaller summand).
+  Its value is `φ̄(0,φ̄(0,φ̄(1,0)))` — the ε₀ is nowhere in it, yet the column is
+  required for the parent structure of the columns after it.
+
+So the Stage-A intuition "standard = the value is in normal form" is not merely
+unproved on Stage B, it is FALSE.  The reason is structural and worth stating:
+
+  * below ε₀ neither `ω^·` nor `φ_k` has a fixed point inside the region, so
+    "the value is in CNF" and "the matrix is irredundant" coincide — that is why
+    `stdSeq` works at all;
+  * on Stage B both have fixed points inside the region.  Hence (a) different
+    matrices can carry the same value — `o?((0,0)(1,0)(2,1)) = o?((0,0)(1,1))
+    = φ̄(1,0)`, and the first of the two is non-standard (yaBMS = 0) although it
+    passes C1–C3 and every value condition tried; and (b) a standard matrix may
+    contain columns that contribute nothing to the value (the false negative
+    above).  A predicate that only looks at the value cannot see either.
+
+  Positive by-product, measured: `o?` IS injective on the 153 standard matrices of
+  the window.  So the failure is entirely about which matrices are standard, not
+  about the translation.
+
+What this leaves for a region-wide theorem:
+
+  (i)  take `BMS.Standard` (reachability, `BMS/Standard.lean`) as the hypothesis
+       and induct on the reachability derivation.  Then "expand? preserves the
+       invariant" is free — it is the definition — and the whole difficulty moves
+       to the value side (§8.3).  This is also what yaBMS itself does: `isstd`
+       builds the diagonal ancestor of the input and re-expands towards it, i.e.
+       it decides reachability, not a local predicate.
+  (ii) find a genuine ancestor-structure predicate.  C1–C3 are a start (necessary,
+       0 false negatives over 4681) but 296/4528 of the non-standard matrices in
+       the window survive them; closing that gap is a BMS research question, not a
+       Lean question, and this repo has no candidate for it.
+
+  Either way the hypothesis is NOT a `stdSeq`-shaped `stdPair`, and writing one
+  would be writing something false.
+
+### §8.3 Q2 — the accumulator invariant, and the shape of the statement
+
+Prerequisite that does not exist yet: `oLAux` has no fuel-free form.  Every value
+lemma in §2–§7 carries an explicit fuel budget (`(q+2)*m + 1`, `(q+1)*m + 1`, …)
+threaded by hand from the matrix length; a region-wide induction cannot carry
+those.  StageA solved the same problem once with `oPrAux_fuel` + `oV`
+(`oV s = oPrAux (s.length+1) s`), ~40 lines.  Measured here: `oLAux f k m` is
+constant in `f` for `f ≥ m.length` over the whole expansion fan of the boundary
+matrix (guarded below), so the analogue `oLAux_fuel` + `oLV` is available on the
+same terms.  This is the cheapest genuinely useful next lemma in the file and it
+is a prerequisite for every route in §8.2.
+
+The invariant the value recursion needs is the one the F3 hand-off note guessed:
+at every `(0,1)`-block at level k the accumulator is 0 or a φ_k-value.  Measured
+true over the whole standard corpus.  It is exactly what makes `logPhi (ofNat k)
+acc` total and makes `phiStep` a genuine successor step rather than a collapse.
+
+Does the §7 tower machinery generalize to it?  Partly, and the split is sharp:
+
+  * `twB`, `twB_phi`, `deg_twB`, `ltF_twB_mono` are base- and level-generic
+    already and will be reused verbatim — every Stage-B fundamental sequence at a
+    successor level is such a tower.
+  * `bse`/`xbase`/`sbse`, and `zt`/`VV`, are closed forms of ONE family and do not
+    generalize at all.  For an arbitrary standard matrix the tower base is
+    "whatever the accumulator was", which has no closed form.
+
+  CONSEQUENCE FOR THE GOAL STATEMENT.  A region-wide theorem cannot have
+  "per-matrix closed forms": there is no schema to write them in.  What it can
+  have is the package stated relative to `o?` itself,
+
+      ∀ n, lt (o?(M[n])) (o? M)
+    ∧ ∀ n, ∃ k, lt (o?(M[n])) (fsN (o? M) (k+1))
+    ∧ ∀ k, ∃ n, lt (fsN (o? M) (k+1)) (o?(M[n]))
+
+  i.e. `Evidence.checkE3i` made universal.  Note the existential witnesses: the
+  shifts are NOT uniform over the region (F2 uses kw n = n+1, nw k = k+2; F1 uses
+  n+2, k+1; F3 uses n+1, k+1; row R5 of Rows/ProofsB uses n+3, k), so either the
+  witnesses are existential or the statement carries a witness function computed
+  from the matrix.  Part (a) of the package degenerates to `o?` being defined on
+  the expansion — a domain-closure statement, not a value statement.
+
+### §8.4 Q3 — inventory: what is already matrix-generic
+
+Generic, usable as-is for any shape (≈ 500 of the ≈ 1960 lines of §1–§7):
+
+  §1  `ups`/`tailU`/`runq` and their `len`/`take`/`decP`/`r0`/`inFrag` lemmas
+  §3  `ofNat_inj`, `ofNat_bne`, `ofNat_ne_zero`, `ltF_ofNat_mono`, `lt_ofNat_mono`
+  §4  ALL of it — `downFrom`, `iterParent_desc`, `filter_downFrom`: the bad root at
+      row 1 for a symbolic parameter.  This is the only part of the BMS side that
+      is already general.
+  §5  `chainP`, `chainP_add`, `chainP_collapse`, `iterParent_zero`,
+      `kindT_ofNat_succ`, `predT_ofNat_succ`, `ltF_iterT_bound'`
+  §6  `oLAux_chainV` (already stated for an arbitrary block function `B`),
+      `len_frep_gen`, `getD_append_lt'`/`_ge'`
+  §7  `twB` + its five lemmas, `ltF_ofNat_not`, `plus_self`, `splitFin_add_pair`,
+      `phiNF_add_pair`, `splitFin_add_one`, `ltF_M_add_phi`, `zero_bne_ofNat`
+  plus, from Rows/ProofsB: `frep`/`flat_frep`/`decP_frep`/`r0_frep`/`inFrag_frep`,
+      `blocksP_*`, `oLAux_single`, `oLAux_cons'`, `oLAux_zs`, `o?_pair`,
+      `plus_drop`, `lt_of_ltF`, `ltF_phi_same`/`_fst`/`_snd`/`_eq`.
+
+Family-shape-specific, re-proved from scratch for each of M1/M2/M3 (≈ 1460 lines,
+of which the BMS-side expansion computation alone — `ent_*`, `parent*_*`,
+`ascends_*`, `delta_*`, `lnz_*`, `getLast_*`, `expand_*` — is ≈ 830 lines, ≈ 42%
+of §1–§7):
+
+  §2  the M2 expansion;  §5  the M1 expansion + `oLAux_chain` + `valE1`;
+  §6  the M3 expansion + `valV3`/`valE3`;  §3/§5/§7 the per-term-shape `fsN`
+  computations (`fs_t`, `fs_t1`, `fs_t3`) and `ltF` comparison chains.
+
+  So: the single biggest new piece of work for ANY route is doing the BM4
+  expansion once, symbolically, for an arbitrary matrix of the fragment — bad root
+  (§4 covers the row-1 case), Δ₀, the ascension matrix, and the `frep` shape of the
+  result.  Nothing in §2/§5/§6 can be reused for that; only §4 can.
+
+### §8.5 Q4 — the recommended intermediate: F4, "ladder + one column"
+
+    M1 q ++ [[b, r]]      (a = q+1, the ladder `(0,0)(1,1)…(a,1)` plus one column)
+
+Every such matrix with `b ≥ 1`, and `(b,r) = (0,0)`, is standard (yaBMS, checked
+for a = 1..6 and all b ≤ a+1); `(0,1)` is excluded by C1.  Measured closed forms,
+writing `Z = φ̄(a,0) = zt q` (all `#guard`ed below for a ≤ 6):
+
+    r = 0,  b = 0        Z + 1                    successor — `expand?` drops the
+                                                  column; an `esucc`-style claim
+    r = 0,  b = 1        φ̄(0, Z)                  R2 is the a = 1 instance
+    r = 0,  2 ≤ b ≤ a    φ̄(b-1, φ̄(0, Z))          (0,0)(1,1)(2,1)(2,0) is a = b = 2
+    r = 0,  b = a+1      φ̄(a, ω)                  = F2, PROVED (`e3_family`)
+    r = 1,  1 ≤ b < a    φ̄(b, Z)                  no table row yet; smallest is
+                                                  (0,0)(1,1)(2,1)(3,1)(1,1), a = 3
+    r = 1,  b = a        φ̄(a, 1)                  = F3, PROVED (`e3_F3family`)
+    r = 1,  b = a+1      φ̄(a+1, 0)                = F1 at a+1, PROVED
+
+So F4 is F1 ∪ F2 ∪ F3 plus exactly three new limit cases and one successor case,
+in a single two-parameter statement.  It would take the table from 7 covered rows
+to 8 (R2 joins) and, more to the point, would be the first Stage-B theorem whose
+value is not a fixed closed form but a function of a second parameter.
+
+Why it is the right size: the three new cases all have the same BMS-side shape as
+F2/F3 (bad root by §4, one `frep` of a ladder block), and their terms are one or
+two `φ̄` layers over `Z` — the `chainP`/`twB` machinery already covers the term
+side.  Cost estimate, calibrated on F3 (one case, one session, with all machinery
+already present): 2–3 sessions.  The natural continuation, "ladder + two columns",
+covers 35 of the 72 uncovered limits in the window and is the next unit after that.
+
+### §8.6 Recommendation
+
+  Full region theorem  — NOT tractable now, and the blocker is the hypothesis, not
+    the proof length: §8.2 shows there is no `stdSeq`-shaped predicate to hypothesize
+    (it is false, not merely unproved), and the only sound alternative,
+    `BMS.Standard` by reachability induction, additionally needs the symbolic BM4
+    expansion of §8.4 (≈ the largest single piece of work in the file) and a
+    statement shape without closed forms (§8.3).  Estimate: 6+ sessions, with one
+    genuine research risk (the value invariant under an arbitrary expansion step).
+
+  Intermediate family-union  — RECOMMENDED: F4 of §8.5, 2–3 sessions, no research
+    risk, closed forms already machine-checked below.
+
+  Cheap prerequisite, worth doing first in either case (~40 lines, no risk):
+    `oLAux_fuel` + `oLV`, the fuel-free value function of §8.3.
+
+Nothing in this section is proved; the `#guard`s below fix the three factual claims
+the assessment rests on (the redundancy phenomenon, the absorbing standard matrix,
+and the F4 closed forms), so that a later session can re-check them without rerunning
+yaBMS. -/
+
+-- §8.2  two different matrices, one value: the redundancy phenomenon.  yaBMS says
+-- (0,0)(1,0)(2,1) is NOT standard and (0,0)(1,1) is, yet both translate to φ̄(1,0).
+#guard o? [[0,0],[1,0],[2,1]] == o? [[0,0],[1,1]]
+#guard o? [[0,0],[1,1]] == some (phi one zero)
+
+-- §8.2  the false negative: (0,0)(1,1)(1,0)(2,1)(2,0) is standard (yaBMS) and its
+-- value has lost the ε₀ that the (1,1) column contributed — the fold absorbs.
+#guard o? [[0,0],[1,1],[1,0]] == some (phi zero (phi one zero))
+#guard o? [[0,0],[1,1],[1,0],[2,1],[2,0]] == some (phi zero (phi zero (phi one zero)))
+
+-- §8.3  `oLAux` is constant in the fuel above the length, over the expansion fan of
+-- the boundary matrix (the evidence for the missing `oLAux_fuel`).
+#guard (Evidence.corpus [[0,0],[1,1],[2,2]] 3 3).all fun m => (List.range 3).all fun k =>
+  Trans.Pair.oLAux (m.length + 1) (k+1) m == Trans.Pair.oLAux (3 * m.length + 7) (k+1) m
+
+-- §8.5  the conjectured closed forms of F4, for a = q+1 ≤ 6 and every 1 ≤ b ≤ a+1
+#guard (List.range 6).all fun q => (List.range (q+2)).all fun i =>
+  let b := i+1
+  let Z : Term := phi (ofNat (q+1)) zero
+  Trans.o? (M1 q ++ [[b,0]]) == some
+    (if b == q+2 then phi (ofNat (q+1)) omega
+     else if b == 1 then phi zero Z
+     else phi (ofNat (b-1)) (phi zero Z))
+#guard (List.range 6).all fun q => (List.range (q+2)).all fun i =>
+  let b := i+1
+  let Z : Term := phi (ofNat (q+1)) zero
+  Trans.o? (M1 q ++ [[b,1]]) == some
+    (if b == q+2 then phi (ofNat (q+2)) zero
+     else if b == q+1 then phi (ofNat (q+1)) one
+     else phi (ofNat b) Z)
+#guard (List.range 6).all fun q =>
+  Trans.o? (M1 q ++ [[0,0]]) == some (plus (phi (ofNat (q+1)) zero) one)
 
 end Evidence.StageB
