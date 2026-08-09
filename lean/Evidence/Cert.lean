@@ -1397,6 +1397,40 @@ theorem cert_omega_sq : Certified [[0], [1], [1]] (phi zero (ofNat 2)) := by
   obtain ⟨m, k, hk⟩ := below_omega_sq _ s hs h
   exact ⟨m, by rw [hk]; simp [TM.Term.le, lt_wm_step m 0 k 0]⟩
 
+/-! ### The route from here to ω^ω (design note, nothing proved below)
+
+The families above stop at ω².  What blocks the next rows is NOT the same thing
+in each case, and the difference decides the roadmap:
+
+  * ω^ω, ω^(ω^ω), … : reachable with NO new well-foundedness.  `cert_wm`'s
+    recursion is the lexicographic one on `(m, k)` — the count of ω-blocks, then
+    of units.  A term below ω^(k+1) is `ω^k·c + β` with `β < ω^k`, so the same
+    recursion at level k is lexicographic on a (k+1)-tuple of counts, which is
+    not uniform in k.  The uniform form carries the earlier levels as a PREFIX
+    PARAMETER instead:
+
+      A k : ∀ (prefix P whose components are all ≥ ω^k, already certified),
+              ∀ β < ω^k, Certified (matrix of P+β) (P+β)
+
+    `A 0` is the hypothesis on P; `A (k+1)` follows from `A k` by ordinary
+    induction on the coefficient c, the limit node `P + ω^k·(c+1)` taking its
+    expansions from the c-step with the extended prefix `P + ω^k·c`.  So the
+    induction is structural in k with an inner `Nat` induction — no `Acc`, no
+    multiset ordering.  The cost is generalising the region machinery: the
+    classification below ω^k (the `below_*` family), the block encoding
+    `ω^j ↦ 0 :: List.replicate j 1`, and prefix-relative expansion lemmas from
+    `StageA.expand_oneRow`.  §5's `ltF_ofList_head` / `ltF_ofList_prefix` are
+    already stated for arbitrary sums and carry over unchanged.
+
+  * ε₀ : genuinely blocked.  Its expansions are the ω-towers, whose exponents
+    are themselves unbounded terms, so no fixed level k bounds the region and
+    the prefix induction above has nothing to recurse on.  That case needs
+    well-foundedness of the T(M) order on the CNF segment (the classical
+    `Acc (ω^a + b)` argument), which in this repo would additionally need
+    transitivity of `lt` — not proved anywhere yet.
+
+An earlier report from this lane said ω^ω needed the Hydra/multiset ordering;
+that was too pessimistic — only ε₀ needs the well-foundedness stage. -/
 
 /-! ## §6 The registry
 
