@@ -11684,6 +11684,77 @@ the ζ₀..Γ₀ rows, whose large ordinals sit in the FIRST argument of `φ̄` 
   le (phi zero (phi zero (ofNat 2))) (phi zero (fsC omegaOmega n))) == true   -- control: (C) works
 
 
+/-! ### §15.19 THE DEEPER-LAYER ASSEMBLY — the map, the measure, and what blocks it
+
+WHAT THE ASSEMBLY WOULD BE.  §15.4–§15.18 give one theorem per SHAPE, and the CALLER picks.
+The assembly is the single recursive theorem that picks for itself: a `Term → Nat → Term`
+defined by the case split below, with a proof that it satisfies the four `Certified.lim`
+clauses at every `CNV` limit.  It is NOT built, and the reason is at the end of this section.
+
+THE BRANCH LIST IS COMPLETE BY MEASUREMENT, not by inspection.  MEASURED 2026-08-10, `Trans.oR`
+on `BMS.expand`, over the 712 LIMIT rows three expansion-levels below eleven Veblen rows:
+
+     80   sums `u ⊕ w`                      lim_clauses_sum       §15.11   (0 move the head)
+    546   φ̄ with first argument PRESERVED    lim_clauses_phi_arg   §15.10   core (C)
+     31   φ̄0(X), expansion not a φ̄          lim_clauses_repAdd    §15.4    (all first arg 0)
+     10   φ̄(1,b) with `b` a CN successor    lim_clauses_epsSuccC  §15.15
+     11   φ̄(a,0), first arg strictly down   lim_clauses_phi_arg1  §15.18   core (C')
+   rest   base cases (ε₀ / ω / the CN region)                     §9, §14, §15.12
+
+Every row in the layer falls in one of these; NOTHING in it needed a new template.
+
+THESE COUNTS COME FROM A CLASSIFIER, AND THE CLASSIFIER WAS WRONG THREE TIMES BEFORE THEM.
+Successor rows were counted as sum-branch violations until the `kind = lim` filter went in;
+rows whose expansions are not `φ̄` terms (φ̄0(1) = ω, whose expansions are naturals) were counted
+as first-argument movers; and template (B)'s EXCEPTIONAL FIRST TERM makes every (B) row read as
+a mover, which produced a spurious bucket of 39 "unroutable" rows whose first member decodes to
+`φ̄(1,1)` = ε₁ — a row proved in §15.8.  DECODE A MEMBER BEFORE TRUSTING A COUNT HERE.
+
+THE TERMINATION MEASURE, AND WHERE IT DOES NOT REACH.  The recursion is on the row's value `t`,
+with measure `Term.deg t`.  One measure covers all three recursive branches although they
+consume DIFFERENT parts — the sum branch descends the TAIL, core (C) the SECOND argument, core
+(C') the FIRST — because `deg` of a compound is `1 +` the sum of its parts, so every descent is
+strict; `deg_pos` gives the floor.  The remaining branches are TERMINAL and recurse on nothing.
+
+  **`deg` DOES NOT JUSTIFY THE SECOND USE OF THE THEOREM, and this is the one caveat.**  A row
+  also needs its INTERMEDIATE values certified — the same four clauses at each `fs n` — and
+  those are NOT smaller.  `lim_clauses_repAdd` hands `fs n = X·(n+1)`, whose `deg` GROWS with
+  `n` and exceeds `deg (φ̄0 X)` for large `n`.  So long as that second use is a FRESH
+  INSTANTIATION rather than a recursive call it is sound, and that is how §15.11–§15.16 do it.
+  But anyone restating the assembly as ONE well-founded recursion covering both uses will find
+  `deg` fails — and it fails only at large `n`, which is the worst place to discover it.
+
+WHAT BLOCKS THE ASSEMBLY: `kindV` AND `predV`.  The case split must send `φ̄(a,0)` to core (B)
+when `a` is a SUCCESSOR and to core (C') when `a` is a LIMIT.  `kindC` cannot decide it —
+MEASURED on exactly the first arguments that occur as `φ̄(a,0)` rows:
+
+    kindC 2 = kindC 3 = true     (successors)   CORRECT  — and `CN` holds for both
+    kindC ω = false              (limit)        CORRECT  — `CN ω` holds
+    kindC ε₀ = kindC ζ₀ = true                  **WRONG — both are LIMITS**, `CN` fails for both
+
+which is W3 exactly: correct on the CN first arguments, silently wrong on the CNV-but-not-CN
+ones.  AND THE MISROUTE IS NOT HYPOTHETICAL: `φ̄(ε₀,0)` IS a row, proved in §15.18 as
+`lim_clauses_phiE0` by core (C') over §9's tower.  A `kindC`-driven dispatch would call ε₀ a
+successor, take (B), and iterate `φ̄(predC ε₀) = φ̄0` — reproducing §15.3's `fsV` failure on a row
+this file has already proved correct.
+
+So the single recursive assembly needs a correct kind predicate on `CNV`, and its (B) branch a
+correct predecessor besides: TWO NEW CLASSIFICATION FUNCTIONS.  That is a scoping decision
+rather than a lemma, and §15.17 deferred it deliberately after showing that TURNING a statement
+can make the broken function vanish.  Whether the same trick applies here is open.
+
+NONE OF §15.4–§15.18 NEEDS EITHER FUNCTION.  They take the branch from the CALLER, so the
+per-shape interface — which is what `Evidence/Cert.lean` consumes — is complete and unaffected.
+What is missing is only the convenience of a self-dispatching theorem. -/
+
+#guard (kindC (ofNat 2), kindC (ofNat 3), kindC omega) == (true, true, false)  -- CN: correct
+#guard kindC eps0T == true                    -- ε₀ is a LIMIT; kindC says successor …
+#guard kindC zeta0 == true                    -- … and ζ₀ likewise
+#guard (CN eps0T, CN zeta0) == (false, false) -- both outside the region kindC is calibrated on
+#guard predC eps0T == zero                    -- and the (B) branch would iterate from here
+#guard fsPE0 0 == phi omega zero              -- whereas §15.18 proves φ̄(ε₀,0) is (C')
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
