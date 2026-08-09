@@ -11745,7 +11745,22 @@ can make the broken function vanish.  Whether the same trick applies here is ope
 
 NONE OF §15.4–§15.18 NEEDS EITHER FUNCTION.  They take the branch from the CALLER, so the
 per-shape interface — which is what `Evidence/Cert.lean` consumes — is complete and unaffected.
-What is missing is only the convenience of a self-dispatching theorem. -/
+What is missing is only the convenience of a self-dispatching theorem.
+(§15.20 supplies `kindV` and removes this blocker; the `predV` half of it was never real.)
+
+A FIFTH SHAPE WAS PROPOSED AND IS UNREACHED — NOT IMPOSSIBLE, AND THE DIFFERENCE MATTERS.  For
+`φ̄(a,b)` with `a` a LIMIT and `b` a successor one might expect `fs n = φ̄(g n, C)` with `C`
+constant in `n` and different from `b` — moving one argument while REPLACING the other, which is
+neither (C) nor (C').  MEASURED, and the honest verdict is NEITHER CONFIRMED NOR REFUTED:
+searching 258 limit rows at depth 3 below eleven Veblen roots, the distinct FIRST arguments
+occurring with a NONZERO second argument are `{0, 1, 2, 3}` — NOT ONE IS A LIMIT.  So no term of
+that form occurs, and there is nothing to read a sequence off.
+THIS DOES NOT CLAIM `φ̄(limit, nonzero)` IS ABSENT FROM 𝔗(M) — it is not; the claim is only that
+it is absent from the closure of the TABLE'S ROWS at the depth measured.  And §15.18's cap does
+NOT forbid it: the cap needs `b < φ̄(a,0)`, which fails exactly there.  STANDING INSTRUCTION: if a
+future row produces a limit first argument with a nonzero second argument, MEASURE ITS
+EXPANSIONS FIRST — that is the case this shape was proposed for, and deriving it from the order
+side instead is the error this project has paid for twice. -/
 
 #guard (kindC (ofNat 2), kindC (ofNat 3), kindC omega) == (true, true, false)  -- CN: correct
 #guard kindC eps0T == true                    -- ε₀ is a LIMIT; kindC says successor …
@@ -11753,6 +11768,110 @@ What is missing is only the convenience of a self-dispatching theorem. -/
 #guard (CN eps0T, CN zeta0) == (false, false) -- both outside the region kindC is calibrated on
 #guard predC eps0T == zero                    -- and the (B) branch would iterate from here
 #guard fsPE0 0 == phi omega zero              -- whereas §15.18 proves φ̄(ε₀,0) is (C')
+
+
+/-! ### §15.20 `kindV` — the successor/limit test on `CNV`, and why `predV` does not exist
+
+WHAT THIS UNBLOCKS.  §15.19 records that the assembly cannot dispatch `φ̄(a,0)` between core (B)
+and core (C') because `kindC` calls ε₀ and ζ₀ successors.  THE FIX IS ONE CONJUNCT, found by
+reading `kindC` beside `CN`:
+
+    CN    : | phi a b => (a == zero) && CN b          -- CN FORCES the first argument to zero
+    kindC : | phi _ b => b == zero                    -- so `b == zero` alone suffices THERE
+    kindV : | phi a b => (a == zero) && (b == zero)   -- the conjunct CN made redundant, restored
+
+`kindC` is therefore not a function that happens to be correct on `CN`; it is the correct rule
+with a test that `CN` discharges for free.  Outside `CN` that test is missing, and every `φ̄ a 0`
+with `a ≠ 0` — every ε, ζ, … — is called a successor.
+
+CALIBRATED AGAINST A PROVED LEMMA, NOT AGAINST ANOTHER PREDICATE.  §15.17's `le_succT_of_lt`
+proves nothing lies strictly between `p` and `succT p`, so `succT` IS the immediate successor and
+"t is a successor" means "t = succT p for some p" — a ground truth independent of both kind
+functions.  MEASURED over a 3723-term `CNV` corpus:
+
+    successors 303, limits 3419      POSITIVE CONTROL — both classes populated
+    kindV disagreements with truth     0
+    kindC disagreements with truth   204
+
+A FIRST GROUND TRUTH WAS DEGENERATE, AND THE CONTROL IS WHAT CAUGHT IT.  Defining "successor" as
+"has an immediate predecessor IN THE CORPUS" makes EVERY term a successor, because a finite set
+always has a maximal element below any point: it returned 50 successors and 0 limits out of 51,
+and the disagreement counts it produced — 41 for `kindV`, 34 for `kindC` — were meaningless.
+Recorded because those numbers looked exactly like a result.
+
+`predV` DOES NOT EXIST, AND THAT IS A THEOREM HERE.  `predC` returns `0` on a bare `φ̄ a b`, which
+is what §15.19's misroute turns on — but `kindV` never routes one there.  `succT_predC` proves
+`succT (predC t) = t` for every `CNV` term with `kindV t`, i.e. `predC` IS the predecessor
+wherever a correct kind test sends it.  So §15.19's blocker was ONE broken function, not two, and
+`predC ε₀ = 0` was never a defect in `predC`.
+
+AND THE AGREEMENT IS PROVED, NOT MEASURED.  `kindV_eq_kindC_of_cn` gets `kindV = kindC` on all of
+`CN` from `cn_phi` alone, so nobody has to re-audit the two functions against each other.  The
+"where they must NOT agree" half is exactly `φ̄ a 0` with `a ≠ 0` — the dispatch §15.19 needs. -/
+
+def kindV : Term → Bool
+  | phi a b => (a == zero) && (b == zero)
+  | add _ v => kindV v
+  | _ => false
+
+theorem kindV_eq_kindC_of_cn : ∀ (t : Term), CN t = true → kindV t = kindC t := by
+  intro t
+  induction t with
+  | zero => intro _; rfl
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | phi a b _ _ =>
+    intro h
+    have ha : a = zero := (cn_phi h).1
+    subst ha
+    rfl
+  | add u v _ ihv =>
+    intro h
+    obtain ⟨_, _, hcnv, _⟩ := cn_add h
+    show kindV v = kindC v
+    exact ihv hcnv
+
+theorem succT_predC : ∀ (t : Term), CNV t = true → kindV t = true → succT (predC t) = t := by
+  intro t
+  induction t with
+  | zero => intro _ h; exact Bool.noConfusion h
+  | M => intro h _; exact Bool.noConfusion h
+  | omg _ _ => intro h _; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h _; exact Bool.noConfusion h
+  | Z _ _ => intro h _; exact Bool.noConfusion h
+  | phi a b _ _ =>
+    intro _ hk
+    simp only [kindV, Bool.and_eq_true, beq_iff_eq] at hk
+    obtain ⟨ha, hb⟩ := hk
+    subst ha; subst hb
+    rfl
+  | add u v _ ihv =>
+    intro hcn hk
+    obtain ⟨hAPu, hcnu, hcnv, hdesc⟩ := cnv_add hcn
+    have hkv : kindV v = true := hk
+    show succT (if (v == one) = true then u else add u (predC v)) = add u v
+    by_cases hv1 : (v == one) = true
+    · rw [if_pos hv1]
+      have : v = one := by simpa using hv1
+      rw [this]
+      cases u with
+      | zero => exact Bool.noConfusion hAPu
+      | add _ _ => exact Bool.noConfusion hAPu
+      | M => rfl
+      | omg _ => rfl
+      | phi _ _ => rfl
+      | psi _ _ => rfl
+      | Z _ => rfl
+    · rw [if_neg hv1]
+      show add u (succT (predC v)) = add u v
+      rw [ihv hcnv hkv]
+
+#guard (kindV one, kindV (ofNat 2), kindV (ofNat 3)) == (true, true, true)
+#guard (kindV omega, kindV eps0T, kindV zeta0, kindV (phi one one)) == (false, false, false, false)
+#guard (kindC eps0T, kindC zeta0) == (true, true)
+#guard succT (predC (ofNat 3)) == ofNat 3
 
 
 /-! ### §8 receipts (samples of the measurements quoted above) -/
