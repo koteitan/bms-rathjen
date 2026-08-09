@@ -161,6 +161,14 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   — which was FALSE, 569 of 578, because "relevant" was carrying the hypothesis.
   **Quote the qualifier verbatim, or say you are dropping it.** The receiving lane
   cannot see the original and will prove what you wrote.
+  **And the asymmetry that makes this bite: a lane can check its own measurement,
+  and can check a lemma it is handed — but it CANNOT check a hypothesis that was
+  never relayed.** There is nothing in the artifact to notice. Both of the cases
+  above were caught only because the receiving lane MEASURED the claim before
+  proving it, which means **measure-before-proving doubles as the relay check** —
+  cheaper and more reliable than the coordinator auditing its own relays, which
+  is the thing that failed twice. Tell a lane receiving a relayed claim to measure
+  it first, and it will catch what you dropped.
 - **When a lane reports a COUNT, ask for the SET before acting on it.** The
   coordinator cannot verify a count from a report — the members are not in it —
   so accepting one is accepting an unverified claim, and repeating it in an
