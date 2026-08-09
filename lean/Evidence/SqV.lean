@@ -1951,7 +1951,16 @@ since `tdepth_ofList_sublist` only ever consumes a sublist — and cautioned tha
 THE SEPARATING HYPOTHESIS IS MEASURED, not guessed: every violation has a NON-AP component,
 and restricted to terms all of whose components are additively principal, **(W) holds with
 0 violations of 235**.  So the normal-form content does come back — as 2.1(iii)'s AP
-condition rather than as the roundtrip, which is a different disguise for the same thing.
+condition rather than as the roundtrip.
+
+**THE THIRD DISGUISE.  The same 2.1(iii) content has now arrived as `inT`, as `CNV`, and as
+"AP components".**  Someone meeting it a fourth time should recognise it rather than
+re-derive that it is not free, and the recognition test is the one that settled all three:
+**is the hypothesis dischargeable where the function is actually CALLED?**  For a TOTAL
+function the answer is usually no — `encvF` is total, the 8 witnesses are terms it can be
+called on, so the hypothesis is not merely awkward, it is FALSE at the call site.  That is
+a stronger objection than the earlier ones, which were "this would narrow invisibly"; this
+one is "this would not apply".
 
 **AND THE LEMMAS SURVIVE THE REGION THAT KILLS THE ROUTE — THIRD TIME TONIGHT.**  All six
 `tdepth` facts hold on the 8 `add`-headed terms (0 violations), none of which is `inT` or
@@ -2004,9 +2013,19 @@ anything was designed:
     x = 1, y = 1        predOr (x ⊕ y) = 1        x ⊕ predOr y = 1 ⊕ 0
     x = M, y = 1        predOr (x ⊕ y) = M        x ⊕ predOr y = M ⊕ 0
 
-**THE BOUND SURVIVES THE DEGENERATE CASE EVEN THOUGH THE IDENTITY DOES NOT**: there
-`predOr (add x y) = x` and `tdepth x ≤ 1 + max (tdepth x) (tdepth y)` immediately.  So the
-induction is a case split on `predOr y = zero`, with the identity used only off it.
+**THE BOUND SURVIVES THE DEGENERATE CASE EVEN THOUGH THE IDENTITY DOES NOT.**  But the
+degenerate case splits FURTHER, and my first reading of it was wrong — corrected here
+rather than built on:
+
+    predOr y ≠ 0              predOr (add x y) = add x (predOr y)     0 violations
+    predOr y = 0, y ≠ 0       predOr (add x y) = x                    0 of 4
+    y = 0                     NEITHER — `predOr (1 ⊕ 0) = 0` but `predOr (ε₀ ⊕ 0) = ε₀ ⊕ 0`
+
+I had written the degenerate branch as "`= x`" without the `y ≠ 0` side condition; `y = 0`
+makes `add x y` a non-normal term whose trailing ones are `x`'s own, so `predOr` there
+depends on `x` and not on the shape of the `add`.  The BOUND still holds in all three (0
+violations everywhere measured) — `tdepth (ε₀ ⊕ 0) = 3 = tdepth (add ε₀ 0)`, exactly — so
+the induction is a THREE-way split and the third branch is the awkward one.
 
 WHAT THIS ROUTE NEEDS, AND WHY IT IS THE RIGHT ONE: two facts about how `splitFin`
 recurses through `add` — **facts about `splitFin`'s own definition, not about normal
@@ -2033,5 +2052,11 @@ def probeXY : List (Term × Term) :=
 -- off the degenerate case the identity holds
 #guard (probeXY.filter (fun p => !(predOr p.2 == zero)
           && !(predOr (TM.Term.add p.1 p.2) == TM.Term.add p.1 (predOr p.2)))).length == 0
+
+
+#guard (probeXY.filter (fun p => predOr p.2 == zero && !(p.2 == zero)
+          && !(predOr (TM.Term.add p.1 p.2) == p.1))).length == 0
+#guard !(predOr (TM.Term.add (phi one zero) zero) == phi one zero)
+#guard tdepth (predOr (TM.Term.add (phi one zero) zero)) <= tdepth (TM.Term.add (phi one zero) zero)
 
 end Evidence.SqV
