@@ -5438,11 +5438,34 @@ GUARDED certificates, so `certIn_eps0_unique` reads
 
     every `DomF`-guarded certificate of `(0,0)(1,1)` has value ε₀ — and no other.
 
-WHAT IS STILL OPEN (for §15, and stated as a finding rather than hidden): a
-certificate whose SUB-values are junk is not excluded by anything proved here, so
+WHERE THIS SITS IN THE LITERATURE (added 2026-08-09, after koteitan identified it).
+This section and §15 are the Lean instance of condition (a) of P進大好きbot's
+命題10, 「変換写像による解析」.  The correspondence with that article is exact:
+
+    (b) cof = 0 case                   ↔  `Certified.zero`
+    (c) cof = 1 case                   ↔  `Certified.succ` (value `plus t' 1`)
+    (d) cof = ω case                   ↔  `Certified.lim` (increasing, bounded, cofinal)
+    (e) dom = min(cof, 2)              ↔  the `BMS.kind` trichotomy
+    (a) Trans restricted to the standard forms is a BIJECTION onto an ordinal
+                                       ↔  NOTHING, before this section
+
+He records that for Bashicu matrices (b)(c)(d) are easy while (a) is 極めて困難,
+and that injectivity is normally reduced to UNIQUENESS OF A NORMAL-FORM
+REPRESENTATION.  §15.9's `cert_not_single_valued` is a machine-checked
+demonstration that (b)(c)(d) really do not imply (a) — the ω row satisfies all
+three with two different values — and `DomF` is exactly that prescribed reduction
+to normal forms.  These theorems are therefore not extra rigour: they are the
+condition the literature flags as the hard one.
+
+WHAT IS STILL OPEN (stated as a finding rather than hidden).  A certificate whose
+SUB-values are junk is not excluded by anything proved here, so
 `certIn_eps0_unique` does not yet imply `¬ Certified [[0,0],[1,1]] u` for `u ≠ ε₀`.
 The half of that which IS reachable today — no certificate of the ε₀ row can carry
-a value ABOVE ε₀, junk sub-values and all — is §15. -/
+a value ABOVE ε₀, junk sub-values and all — is §15.  The honest remainder is
+therefore: VALUES BELOW THE REGISTERED ONE, CERTIFIED THROUGH JUNK SUB-VALUES, ARE
+NOT YET EXCLUDED; that waits on transitivity through unconstrained terms (see the
+§15 header for the exact lemma that is missing — it is NOT simply "ψ/Z in the
+fragment"). -/
 
 /-! ### §14.1 Guarded certificates -/
 
@@ -5473,6 +5496,19 @@ theorem certifiedIn_forget {Dom : Term → Prop} :
   | zero => exact Certified.zero
   | succ hk _ _ ih => exact Certified.succ hk ih
   | lim fs hk _ hlt hstep hcof _ ih => exact Certified.lim fs hk ih hlt hstep hcof
+
+/-- The guard can always be WEAKENED.  This is what makes the choice of guard a
+    late decision rather than an early one: a certificate guarded by `DomF`
+    (`Frag2 ∧ inT`, where the order theory lives today) is in particular guarded by
+    `DomI` (`inT` alone, what the doctrine asks for and what will still make sense
+    when the table reaches the `ψ`/`Z` rows, whose values are NOT in `Frag2`). -/
+theorem certifiedIn_mono {Dom Dom' : Term → Prop} (himp : ∀ t, Dom t → Dom' t) :
+    ∀ {M : Matrix} {t : Term}, CertifiedIn Dom M t → CertifiedIn Dom' M t := by
+  intro M t h
+  induction h with
+  | zero => exact CertifiedIn.zero
+  | succ hk _ hd ih => exact CertifiedIn.succ hk ih (himp _ hd)
+  | lim fs hk _ hlt hstep hcof hd ih => exact CertifiedIn.lim fs hk ih hlt hstep hcof (himp _ hd)
 
 /-- The empty matrix is a zero row — this is what makes the `zero` case of the
     uniqueness induction, and the two constructor-clash cases, go through. -/
@@ -5549,6 +5585,14 @@ exactly where the fragment stops. -/
 /-- The concrete guard: the fragment carrying a linear order, plus the formation
     conditions of 𝔗(M). -/
 def DomF (t : Term) : Prop := Evidence.WF.Frag2 t = true ∧ inT t = true
+
+/-- The guard the DOCTRINE asks for (plan/README.md design input 2): the values are
+    TERMS OF 𝔗(M), nothing more.  Uniqueness is not available on it yet — that needs
+    a linear order on the values, i.e. `ψ`/`Z` order theory — but a registry gate
+    stated with `DomI` keeps its meaning for every future row.  See §6.1. -/
+def DomI (t : Term) : Prop := inT t = true
+
+theorem domF_le_domI : ∀ (t : Term), DomF t → DomI t := fun _ h => h.2
 
 /-- **Single-valuedness, unconditionally, on `DomF`.** -/
 theorem cert_unique_frag2 {M : Matrix} {t u : Term}
@@ -5747,7 +5791,10 @@ it is the half the table's ✅ needs most:
     no_cert_above_eps0 : ∀ u, lt ε₀ u = true → ¬ Certified [[0,0],[1,1]] u
 
 — no hypothesis on `u` beyond being above ε₀, and NO hypothesis whatsoever on the
-values inside the hypothetical certificate.  §13.1's caveat ("this control refutes
+values inside the hypothetical certificate.  §15.10 generalises it off the ε₀ row:
+`no_cert_above_pow` / `no_cert_above_pow_one` refute every value above `ω^t` for
+EVERY limit row of the certified region, and `certRows_no_overshoot` states the
+uniform consequence for the registry.  §13.1's caveat ("this control refutes
 that instantiation, not `¬ Certified [[0,0],[1,1]] (ε₀·2)` itself") is thereby
 retired for everything at or above ε₀·2; the ε₀ row's ✅ now means "this value, and
 nothing bigger, whatever certificate you bring".
@@ -5759,12 +5806,29 @@ inductive does not constrain, so possibly junk carrying `ψ`/`Z`, where no
 transitivity is available (WF §8.2 stops at `ψ`; that is Stage 3b).  The upper half
 avoids this completely, and that is the design of the whole section:
 
-    THE PROBE DISCIPLINE.  Every statement below has the form `le s v = false`
-    with the junk value `v` on the RIGHT.  The term `s` on the left is always one
-    the PROOF chooses (`ω^(t+1)`, `ω^t`, ε₀ — all Cantor normal forms or ε₀), and
-    the only order facts consumed relate two such chosen terms, inside `Frag`,
-    where §7 of WF gives transitivity, asymmetry and comparability with no `inT`.
-    Nothing is ever chained through a certified value.
+    THE PROBE DISCIPLINE (a reusable technique, not a trick for this row).  Every
+    statement below has the form `le s v = false` with the junk value `v` on the
+    RIGHT.  The term `s` on the left is always one the PROOF chooses (`ω^(t+1)`,
+    `ω^t`, ε₀ — all Cantor normal forms or ε₀), and the only order facts consumed
+    relate two such chosen terms, inside `Frag`, where §7 of WF gives transitivity,
+    asymmetry and comparability with no `inT`.  Nothing is ever chained through a
+    certified value.  Any argument that has to bound what a certificate can do, in
+    a region where the order theory does not yet cover every term, can be built
+    this way: put the unconstrained object on the side of the relation that the
+    decision procedure reads LAST, and quantify over probes you supply yourself.
+
+    THE EXACT LEMMA THAT IS MISSING for the other half, so that nobody has to
+    re-derive it: the undershoot argument needs
+
+        le s x = true → lt x v = true → lt s v = true       (s, v in Frag2; x ARBITRARY)
+
+    — transitivity through an UNCONSTRAINED middle term.  Widening the fragment
+    (Stage 3b / FragR) does not by itself supply this: one would also have to know
+    that every certified value lies in the wider fragment, and §15.7 only bounds
+    the value's leftmost component, not its tail.  What §15 CAN give the fragment
+    lane for free: a certified value of this region is never `ψ`-, `Z`-, `M`- or
+    `ω̄`-headed, because every such term is above every `φ̄` term, so the probe
+    `ω^(t+1)` would be `≤` it, which `no_overshoot` forbids.
 
 THE INVARIANT (`no_overshoot`).  For a Cantor normal form `t`, no term of 𝔗(M) ∩
 `Frag` that is additively principal and `≥ ω^(t+1)` is `≤` any value certified for
@@ -6553,6 +6617,57 @@ theorem cert_below_bound_eps0 (v : Term) (h : Certified [[0, 0], [1, 1]] v) :
             rw [lt_eps0_bnd]; exact Bool.or_true _))] at hk2
       exact Bool.noConfusion hk2
 
+/-- **NOTHING ABOVE `ω^t` IS CERTIFIABLE FOR A LIMIT ROW OF THE REGION**, abstractly
+    in the region: the row's own cofinality clause hands the probe `ω^t` down to one
+    expansion, where §15.7's invariant forbids it (the sub-bound `ω^(fsC t k + 1)` is
+    `≤ ω^t`, the limit absorbing the `+1`).  No hypothesis on `u` beyond being above
+    `ω^t`, and none at all on the values inside the hypothetical certificate. -/
+theorem no_cert_above_pow_gen (R : Term → BMS.Matrix)
+    (hov : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
+      ∀ (t : Term), CN t = true → N = R t →
+        ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+          le (phi zero (plus t one)) s = true → le s v = false)
+    (hRel : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero → ∀ n,
+        BMS.expand (R t) n = R (fsC t n))
+    (t : Term) (hcn : CN t = true) (hk : kindC t = false) (hz : t ≠ zero)
+    (hkind : BMS.kind (R t) = .lim) (u : Term) (hu : lt (phi zero t) u = true) :
+    ¬ Certified (R t) u := by
+  intro h
+  obtain ⟨fs, hall, _, _, hcof⟩ := certified_lim_inv h hkind
+  obtain ⟨hcnfs, hltfs, _, _⟩ := Evidence.WF.lim_clauses t hcn hk hz
+  obtain ⟨k, hk2⟩ := hcof (phi zero t) (inT_of_cn _ (cn_pow hcn)) hu
+  have hc : Certified (R (fsC t k)) (fs k) := by rw [← hRel t hcn hk hz k]; exact hall k
+  rw [hov hc (fsC t k) (hcnfs k) rfl (phi zero t) (inT_of_cn _ (cn_pow hcn))
+    (frag_pow_cn hcn) rfl
+    (Evidence.WF.le_pow (le_plus_one_of_lt_lim (hcnfs k) hcn hk (hltfs k)))] at hk2
+  exact Bool.noConfusion hk2
+
+/-- The padded limit rows (the ε₀ row's expansions are of this shape). -/
+theorem no_cert_above_pow (t : Term) (hcn : CN t = true) (hk : kindC t = false) (hz : t ≠ zero)
+    (u : Term) (hu : lt (phi zero t) u = true) : ¬ Certified (padRow (sq t)) u :=
+  no_cert_above_pow_gen (fun t => padRow (sq t)) no_overshoot
+    (fun t hcn hkc hz n => by
+      show (BMS.expand? (padRow (sq t)) n).getD [] = _
+      rw [expand_padSq t hcn hkc hz n]; rfl)
+    t hcn hk hz (kind_padSq_lim t hcn hk hz) u hu
+
+/-- The unpadded limit rows — five of the registered rows (ω, ω·2, ω², ω^ω, ω^(ω^ω)). -/
+theorem no_cert_above_pow_one (t : Term) (hcn : CN t = true) (hk : kindC t = false)
+    (hz : t ≠ zero) (u : Term) (hu : lt (phi zero t) u = true) :
+    ¬ Certified (StageA.oneRow (sq t)) u :=
+  no_cert_above_pow_gen (fun t => StageA.oneRow (sq t)) no_overshoot_one
+    (fun t hcn hkc hz n => by
+      show (BMS.expand? (StageA.oneRow (sq t)) n).getD [] = _
+      rw [expand_sq t hcn hkc hz n]; rfl)
+    t hcn hk hz (kind_sq_lim t hcn hk hz) u hu
+
+/-- Sample: the ω row admits no value above ω^ω, with no hypothesis on the
+    competing certificate.  Every CNF limit row of the registry is this instance. -/
+theorem no_cert_above_omega_pow (u : Term) (hu : lt (phi zero omega) u = true) :
+    ¬ Certified [[0], [1]] u :=
+  no_cert_above_pow_one omega (by decide) (by decide)
+    (by intro hc; exact Term.noConfusion hc) u hu
+
 /-! ### §15.9 THE MUTANT: why §14's guard is not decoration
 
 `Certified` is NOT single-valued on the raw type `Term`, and the witness is §8's
@@ -6691,6 +6806,13 @@ theorem certIn_rows : ∀ p ∈ certRows, CertifiedIn DomF p.1 p.2 := by
   · rw [h]; exact certIn_sq (phi zero (phi zero omega)) (by decide)
   · rw [h]; exact certIn_eps0
   · cases h
+
+/-- The same registry, guarded only by the formation conditions.  This is the
+    statement a future gate should use (§6.1 note): it does not mention `Frag2`, so
+    it survives the arrival of the `ψ`/`Z` rows, and `certRows_ok` is its image
+    under `certifiedIn_forget`. -/
+theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 :=
+  fun p hp => certifiedIn_mono domF_le_domI (certIn_rows p hp)
 
 /-- **THE TABLE'S ✅, READ AS UNIQUENESS.**  For every registered row, a guarded
     certificate can only carry the registered value. -/
