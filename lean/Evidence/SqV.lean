@@ -2640,4 +2640,43 @@ def inTpool : List Term := (startsW ++ junk).eraseDups
 #guard ((inTpool.filter (fun t => !(TM.Term.inT t))).filter (fun t =>
           !((List.range 6).all (fun k => TM.Term.inT (ofList ((toList t).take k)))))).length == 38
 
+
+/-! ### §15.2 THE CHAIN, MEASURED DIRECTLY — not step-by-step
+
+veblen2's caution, and it is the sharpest of the exchange: `landing` gives `lt u t` for each
+STEP, while `belowC_step` needs `lt u r` against the FIXED START.  Transitivity supplies it
+— but **"a property measured on single steps and claimed for a chain" is the same shape of
+error as "measured on a domain and claimed for what is reachable", which has cost this file
+twice.**  So it is measured directly.
+
+    169 starts | 40 distinct targets | 24 of them at DEPTH ≥ 2
+    starts that actually HAVE a depth-≥2 target        145 of 169
+    depth-≥2 targets failing `lt u start`                0
+    depth-≥2 targets failing `inT u`                     0
+
+**Not vacuous**: 145 of the 169 starts have a depth-≥2 target, up to 4 each.  The chain
+property is measured as a chain, against the literal starting term, not inferred from the
+steps. -/
+
+def targets1F : Term → List Term
+  | .add u v => [u, v]
+  | .phi a b =>
+      let gs := summands (TM.Term.splitFin b).1
+      let hd := gs.headD zero
+      (if a == zero then [] else [predOr a])
+      ++ gs.map (fun g => if a == zero then g else omLog g)
+      ++ [hd]
+      ++ (match fpDeep a hd with | some z => [z] | none => [])
+  | _ => []
+
+def targets1 (t : Term) : List Term := (targets1F t).eraseDups
+
+def deepTargets (t : Term) : List Term :=
+  (targets t).filter (fun u => !((targets1 t).any (fun v => v == u)))
+
+#guard (startsW.flatMap deepTargets).eraseDups.length == 24
+#guard (startsW.filter (fun t => !((deepTargets t).isEmpty))).length == 145
+#guard (startsW.filter (fun t => !((deepTargets t).all (fun u => TM.Term.lt u t)))).length == 0
+#guard (startsW.filter (fun t => !((deepTargets t).all (fun u => TM.Term.inT u)))).length == 0
+
 end Evidence.SqV
