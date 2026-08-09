@@ -1785,4 +1785,60 @@ theorem tdepth_fpDeepF : ∀ (f : Nat) (a t g : Term),
 theorem tdepth_fpDeep (a t g : Term) (h : fpDeep a t = some g) : tdepth g ≤ tdepth t :=
   tdepth_fpDeepF _ a t g h
 
+
+/-! ### §11.4 THE COORDINATOR'S ROUTE (S), MEASURED BEFORE IT IS PROVED
+
+    (S)   L'.Sublist L  →  tdepth (ofList L') ≤ tdepth (ofList L)
+
+(S) MENTIONS NO `isAP`, NO `CNV`, NO `le` — pure list combinatorics, which is what makes
+it a candidate to replace both routed `plus` lemmas.  Measured over every order-preserving
+sub-list of 16 base lists, including shapes built to attack the index-shift argument (a
+deep element LAST, where its index contribution to the max is largest; deep elements
+interleaved; a seven-element list of `1`s):
+
+    448 sublist pairs      0 violations
+    control (reverse)      400 of 448 FAIL — the test discriminates
+    tightest margin        0 — it is exact somewhere, so (S) is tight, not slack
+
+**THE SECOND HALF DOES NEED THE ROUNDTRIP.**  `ofList (toList t) = t` is measured true on
+all 234 terms of `allM`, so it is a fact — and it is a NORMAL-FORM fact, which means (S)
+buys the LEFT side of `tdepth_predOr` only.  Relating `toList g ++ replicate (k+1) one`
+back to `t` still wants it.
+
+**AND THE `k = 0` BRANCH IS ALREADY CLOSED — neither routed lemma touches it.**
+`ofNat 0 = zero`, `toList zero = []`, so `plus g zero = g` by `plus`'s own `[] => s`
+branch, and the goal is then `tdepth_ofList_take`, which §11 proves.  Confirmed
+computationally on all 234.  So what the other lane must deliver is the `k ≥ 1` branch
+alone. -/
+
+def subsOf {α : Type} (l : List α) : List (List α) :=
+  (List.range (2 ^ l.length)).map (fun m =>
+    (l.zipIdx.filter (fun p => (m / (2 ^ p.2)) % 2 == 1)).map (fun p => p.1))
+
+def deepT : Term := phi (ofNat 2) (phi one (phi zero omega))
+
+def sBases : List (List Term) :=
+  [[one, phi one zero], [phi one zero, one, one], [TM.Term.M, one],
+   [phi (ofNat 2) zero, phi one zero, one, one],
+   [phi one zero, phi one zero, one], [TM.Term.Z zero, TM.Term.M, one],
+   [phi zero omega, one, one, one], [phi one zero, TM.Term.M, one, one],
+   [one, one, one, one, deepT], [deepT, one, one, one, one],
+   [one, deepT, one, deepT, one], [TM.Term.M, one, one, one, deepT],
+   [phi one zero, one, TM.Term.M, one, phi one zero, one],
+   [one, one, one, one, one, one, one], [deepT, deepT, one, one],
+   [one, one, deepT, TM.Term.Z zero, one]]
+
+def sPairs : List (List Term × List Term) :=
+  sBases.flatMap (fun l => (subsOf l).map (fun s => (s, l)))
+
+#eval (sPairs.length,
+       (sPairs.filter (fun p => !(tdepth (ofList p.1) <= tdepth (ofList p.2)))).length,
+       (sPairs.filter (fun p => !(tdepth (ofList p.2) <= tdepth (ofList p.1)))).length,
+       sPairs.foldl (fun m p => min m (tdepth (ofList p.2) - tdepth (ofList p.1))) 99)
+
+#guard (sPairs.filter (fun p => !(tdepth (ofList p.1) <= tdepth (ofList p.2)))).length == 0
+#guard (sPairs.filter (fun p => !(tdepth (ofList p.2) <= tdepth (ofList p.1)))).length == 400
+#guard (allM.filter (fun t => !(ofList (toList t) == t))).length == 0
+#guard (ofNat 0 == zero) && (allM.filter (fun t => !(plus t (ofNat 0) == t))).length == 0
+
 end Evidence.SqV
