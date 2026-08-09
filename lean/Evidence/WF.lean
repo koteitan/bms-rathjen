@@ -3519,6 +3519,18 @@ WHAT CHANGES, AND THE MEASUREMENTS THAT SAY SO.
     `inT` or not — but §7's route to asymmetry goes through comparability, so
     that observation does not by itself make asymmetry cheaper.)
 
+    CORRECTION (2026-08-09, Phase B): the parenthetical is FALSE as stated.  It is
+    a degree ≤ 6 measurement and it does not survive degree 7 — the gate sweep
+    found 68 unordered violating pairs there, the smallest being `φ̄(ψ_M M)M` and
+    `φ̄(ψ_(ψ_M M)0)M`, of degrees 5 and 7, which is exactly why a degree-6 sweep
+    cannot see it.  Both are BELOW each other.  `lt_not_asymm_raw` in §8.5.5 is
+    that witness as a theorem, and raw `lt` is not transitive either
+    (`lt_not_trans_raw`, a degree ≤ 6 witness).  Every one of these terms fails
+    `inT` — and fails `FragR` — at exactly the `κ ∈ R` conjunct, so nothing above
+    or in §8.5 depends on the retracted sentence; it is further evidence that
+    `κ ∈ R` is the right restriction.  Read the sentence as: "asymmetry held
+    everywhere AT DEGREE ≤ 6".
+
  3. AND IT IS ESSENTIALLY ONE CLAUSE OF `inT`.  Re-running the sweep with single
     conditions of [R91] 2.1 deleted (terms admitted / incomparable pairs /
     transitivity violations):
@@ -5022,6 +5034,3240 @@ def TransCase (A B C : Term) (n m f' : Nat) : Prop :=
 #guard Frag2 (omg M) == true && FragR (omg M) == true
 #guard FragR (Z (psi M zero)) == false            -- hereditary, not just top-level
 #guard inT (psi (Z zero) zero) == true && FragR (psi (Z zero) zero) == true
+
+/-! ### §8.5 STAGE 3b, EXECUTED: `FragR` carries a strict linear order
+
+WHAT IS PROVED.  Everything §7 proves for `Frag` and §8.2 for `Frag2`, now for
+`FragR` — §8.4's fragment, in which `ψ` and `Z` are admitted subject only to
+[R91] 2.1(vi)'s `κ ∈ R`, hereditarily: `ltF_asymm3`, `ltF_comparable3`,
+`trans_ltF3`, and the `lt` forms `lt_asymm3` / `lt_comparable3` / `lt_trans3` /
+`lt_trichotomy3` / `le_trans3` / `le_of_not_lt3` / `lt_of_not_le3`.  Since
+`inT ⊆ FragR` (`inT_le_fragR`), §8.5.4 reads all of it off for the genuine terms of
+𝔗(M); `lt_trichotomy_inT` is the statement §6's map set as the target of D2.
+
+HOW IT WAS PRODUCED, and what that means for reading it.  §8.4 decomposed the two
+inductions into case lemmas provable IN ISOLATION, each taking its induction
+hypotheses as ordinary parameters (`AsymCase` / `CompCase` / `TransCase`).  The
+cases below were then proved independently and in parallel against that interface,
+and this section is their assembly.  Each case therefore stands on its own and can
+be re-checked on its own — which is the property that made the repair below
+findable.
+
+THE ONE REPAIR.  Of the cases returned as verified, `t28_psi_Z_Z` did NOT compile
+on re-checking, alone or in company: it ended at `simp [h4]` with the goal at fuel
+`f' + 1` while `h4` lives at `f'`, so clause 2.3.6 was never unfolded.  It is
+repaired in place, the repair is marked in the proof, and everything else is as
+returned.  Recorded because the claim was "80 of 80 verified" and 79 is the number
+that survived re-checking; the assembly below is what re-checked them.
+
+WHAT §8.4 PREDICTED, AND WHAT HELD.  The measure is §7.4's, unchanged; the two
+stages are §7.3's and §7.4's, unchanged; `le (star d) d` was never needed anywhere,
+as §8.4(ii) predicted against §8.3.2's earlier and withdrawn claim; `κ ∈ R` is
+consumed only in the `ψ`-vs-`ψ` comparability case, as §8.4(iii) said; and no case
+needed the K_κ conjunct, so the fragment never had to be shrunk to `FragR && inT`.
+The empirical gate behind the design is `table/order-sweep-2026-08-09.txt` and its
+Phase-B extension; what is below is a theorem and does not depend on either. -/
+
+/-! #### §8.5.1 The case lemmas, as proved against §8.4's interface
+
+Each block keeps the marker and verification note it was returned with, so a
+per-case provenance trail survives in the file. -/
+
+-- Stage 3b Phase B: collected case proofs from the fan-out (13 agents, 80 cases, 0 unproved).
+-- Each block is the source an agent compiled against `import Evidence.WF` + `open TM TM.Term Evidence.WF`
+-- on kimina 12346 at commit a4ef664 (v0.1.74). Assembly is psiz1's Phase B.
+
+-- ===== [S1-S4] S1 : starClosed : StarClosed =====
+-- verdict: kimina OK — POST http://localhost:12346/api/check, response.messages = [] (verified twice: alone as snippet id `s1a`, and jointly with S2/S3/S4/S1b as snippet id `final`)
+-- notes: Induction on f, then cases on t, exactly as the assignment predicted. The two ite cases (add, phi) use §8.3's `starF_succ_add` / `starF_succ_phi` to expose the `if`, then `cases ltF g (starF g a) (starF g b)` followed by a defeq `show FragR (starF g _) = true` — i.e. verbatim the pattern of `starF_z
+
+/-- **S1** `StarClosed` — the one genuinely new obligation of §8.4(ii): the
+    fragment contains `α*`, so the induction hypotheses can be applied to it. -/
+theorem starClosed : StarClosed := by
+  intro f
+  induction f with
+  | zero => intro t _; rfl
+  | succ g ih =>
+    intro t h
+    cases t with
+    | zero => rfl
+    | M => rfl
+    | psi k a => exact h
+    | Z a => exact h
+    | omg a => exact ih a (fragR_omg h)
+    | add a b =>
+      rw [starF_succ_add]
+      cases ltF g (starF g a) (starF g b)
+      · show FragR (starF g a) = true
+        exact ih a (fragR_add h).1
+      · show FragR (starF g b) = true
+        exact ih b (fragR_add h).2
+    | phi a b =>
+      rw [starF_succ_phi]
+      cases ltF g (starF g a) (starF g b)
+      · show FragR (starF g a) = true
+        exact ih a (fragR_phi h).1
+      · show FragR (starF g b) = true
+        exact ih b (fragR_phi h).2
+
+-- ===== [S1-S4] S1b : star_fragR (default-fuel corollary of S1) =====
+-- verdict: kimina OK — snippet id `final`, response.messages = []
+-- notes: One-line corollary at the default fuel (`star t = starF (2 * t.deg + 8) t`). Not requested, but every caller outside the fuel layer will want this form, and it costs nothing. Include or drop at the integrator's discretion.
+theorem star_fragR (t : Term) (h : FragR t = true) : FragR (star t) = true :=
+  starClosed _ t h
+
+-- ===== [S1-S4] S2 : lvlUp : LvlUp =====
+-- verdict: kimina OK — verified alone as snippet id `s2` and jointly as `final`; response.messages = []
+-- notes: All 49 shape pairs written out. 13 are killed by NSum (`Bool.noConfusion hx/hy`), 29 by the level hypothesis, and the 7 that survive are: `0 < M/ω̄/φ̄/ψ/Z` (five uses of §7.1's `ltF_left_zero`) and the seven constant clauses `φ̄/ψ/Z < M`, `φ̄/ψ/Z < ω̄`, `M < ω̄` — every one of them `rfl`, i.e. liter
+
+/-- **S2** `LvlUp` — level strictly up implies below (§8.4's level table). -/
+theorem lvlUp : LvlUp := by
+  intro f x y hx hy hlt
+  cases x with
+  | add a b => exact Bool.noConfusion hx
+  | zero =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact absurd hlt (by simp [lvl])
+    | M => exact ltF_left_zero (by omega) (by intro hc; exact Term.noConfusion hc)
+    | omg c => exact ltF_left_zero (by omega) (by intro hc; exact Term.noConfusion hc)
+    | phi c d => exact ltF_left_zero (by omega) (by intro hc; exact Term.noConfusion hc)
+    | psi p c => exact ltF_left_zero (by omega) (by intro hc; exact Term.noConfusion hc)
+    | Z c => exact ltF_left_zero (by omega) (by intro hc; exact Term.noConfusion hc)
+  | M =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact absurd hlt (by simp [lvl])
+    | M => exact absurd hlt (by simp [lvl])
+    | omg c => rfl
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+  | omg a =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact absurd hlt (by simp [lvl])
+    | M => exact absurd hlt (by simp [lvl])
+    | omg c => exact absurd hlt (by simp [lvl])
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+  | phi a b =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact absurd hlt (by simp [lvl])
+    | M => rfl
+    | omg c => rfl
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+  | psi k a =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact absurd hlt (by simp [lvl])
+    | M => rfl
+    | omg c => rfl
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+  | Z a =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact absurd hlt (by simp [lvl])
+    | M => rfl
+    | omg c => rfl
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+
+-- ===== [S1-S4] S3 : lvlDown : LvlDown =====
+-- verdict: kimina OK — verified alone as snippet id `s3` and jointly as `final`; response.messages = []
+-- notes: Mirror image of S2, same 49-way enumeration. Surviving pairs: 5 uses of §7.1's `ltF_right_zero` (`x ≮ 0` for x = M/ω̄/φ̄/ψ/Z), plus the 7 constant clauses `M ≮ φ̄/ψ/Z`, `ω̄ ≮ φ̄/ψ/Z`, `ω̄ ≮ M` — again all `rfl`, i.e. §8.1's `ltF_succ_M_phi`, `ltF_succ_M_psi`, `ltF_succ_M_Z`, `ltF_succ_omg_phi`, `ltF
+
+/-- **S3** `LvlDown` — level strictly down implies not below. -/
+theorem lvlDown : LvlDown := by
+  intro f x y hx hy hlt
+  cases x with
+  | add a b => exact Bool.noConfusion hx
+  | zero =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact absurd hlt (by simp [lvl])
+    | M => exact absurd hlt (by simp [lvl])
+    | omg c => exact absurd hlt (by simp [lvl])
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+  | M =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact ltF_right_zero _ _
+    | M => exact absurd hlt (by simp [lvl])
+    | omg c => exact absurd hlt (by simp [lvl])
+    | phi c d => rfl
+    | psi p c => rfl
+    | Z c => rfl
+  | omg a =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact ltF_right_zero _ _
+    | M => rfl
+    | omg c => exact absurd hlt (by simp [lvl])
+    | phi c d => rfl
+    | psi p c => rfl
+    | Z c => rfl
+  | phi a b =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact ltF_right_zero _ _
+    | M => exact absurd hlt (by simp [lvl])
+    | omg c => exact absurd hlt (by simp [lvl])
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+  | psi k a =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact ltF_right_zero _ _
+    | M => exact absurd hlt (by simp [lvl])
+    | omg c => exact absurd hlt (by simp [lvl])
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+  | Z a =>
+    cases y with
+    | add c d => exact Bool.noConfusion hy
+    | zero => exact ltF_right_zero _ _
+    | M => exact absurd hlt (by simp [lvl])
+    | omg c => exact absurd hlt (by simp [lvl])
+    | phi c d => exact absurd hlt (by simp [lvl])
+    | psi p c => exact absurd hlt (by simp [lvl])
+    | Z c => exact absurd hlt (by simp [lvl])
+
+-- ===== [S1-S4] S4 : inT_le_fragR : ∀ (t : Term), inT t = true → FragR t = true =====
+-- verdict: kimina OK — verified alone as snippet id `s4` and jointly as `final`; response.messages = []
+-- notes: Structural, in the exact style of §8.4's `frag2_le_fragR`. THE Kset CONJUNCT IS NEVER TOUCHED, as instructed: in the `psi` case only `h.1.1.1.1 : k.isR = true`, `h.1.1.1.2 : inT k = true` and `h.1.1.2 : inT a = true` are taken, and `(Kset k a).all …` is left as `h.2`, untouched. FINDING WORTH RECORD
+
+/-- **S4** `inT_le_fragR` — `𝔗(M)` sits inside the Stage-3b fragment, so every
+    `inT` form is a corollary of the `FragR` order theory.  Only the `ψ` case has
+    content: 2.1(vi)'s `κ.isR` is exactly `FragR`'s side condition, and the `Kset`
+    conjunct is never touched. -/
+theorem inT_le_fragR : ∀ (t : Term), inT t = true → FragR t = true
+  | zero, _ => rfl
+  | M, _ => rfl
+  | add a b, h => by
+    simp only [inT, Bool.and_eq_true] at h
+    show (FragR a && FragR b) = true
+    rw [inT_le_fragR a h.1.1.2, inT_le_fragR b h.1.2]; rfl
+  | omg a, h => by
+    simp only [inT, Bool.and_eq_true] at h
+    exact inT_le_fragR a h.1
+  | phi a b, h => by
+    simp only [inT, Bool.and_eq_true] at h
+    show (FragR a && FragR b) = true
+    rw [inT_le_fragR a h.1.1.1, inT_le_fragR b h.1.1.2]; rfl
+  | psi k a, h => by
+    simp only [inT, Bool.and_eq_true] at h
+    show (k.isR && FragR k && FragR a) = true
+    rw [h.1.1.1.1, inT_le_fragR k h.1.1.1.2, inT_le_fragR a h.1.1.2]; rfl
+  | Z a, h => inT_le_fragR a h
+
+-- ===== [A1-A5] A1i : a1_zero_left =====
+-- verdict: kimina OK (messages: [], both standalone and in the consolidated snippet)
+-- notes: A1 の zero 側。§8.2 asym の `exact ltF_right_zero _ b` をそのまま転写。IH は一切消費しない。zero vs anything は左右で結論が別物なので 2 本に分けた (A1i / A1ii)。
+theorem a1_zero_left : ∀ (b : Term) (n f' : Nat), AsymCase zero b n f' := by
+  intro b n f' _ _ _ _ _ _ _
+  exact ltF_right_zero _ b
+
+-- ===== [A1-A5] A1ii : a1_zero_right =====
+-- verdict: kimina OK (messages: [])
+-- notes: 仮説 ltF (f'+1) a zero = true が ltF_right_zero と矛盾するので vacuous。§8.2 の `rw [ltF_right_zero] at h; exact Bool.noConfusion h` と同一。
+theorem a1_zero_right : ∀ (a : Term) (n f' : Nat), AsymCase a zero n f' := by
+  intro a n f' _ _ _ _ _ _ h
+  rw [ltF_right_zero] at h; exact Bool.noConfusion h
+
+-- ===== [A1-A5] C1i : c1_zero_left =====
+-- verdict: kimina OK (messages: [])
+-- notes: 2.3.1。CompCase は §8.2 の 3 択 (lt ∨ eq ∨ lt) ではなく A ≠ B 込みの 2 択なので、§8.2 の `Or.inl` 系がそのまま、`Or.inr (Or.inr _)` は `Or.inr _` に潰れる。ltF_left_zero の 1 ≤ f'+1 は omega。
+theorem c1_zero_left : ∀ (b : Term) (n f' : Nat), CompCase zero b n f' := by
+  intro b n f' _ _ _ _ _ _ hne
+  exact Or.inl (ltF_left_zero (by omega) (Ne.symm hne))
+
+-- ===== [A1-A5] C1ii : c1_zero_right =====
+-- verdict: kimina OK (messages: [])
+-- notes: 同上の右版。hne : a ≠ zero がそのまま ltF_left_zero の引数になる。
+theorem c1_zero_right : ∀ (a : Term) (n f' : Nat), CompCase a zero n f' := by
+  intro a n f' _ _ _ _ _ _ hne
+  exact Or.inr (ltF_left_zero (by omega) hne)
+
+-- ===== [A1-A5] A2 : a2_add_add =====
+-- verdict: kimina OK (messages: [])
+-- notes: 2.3.16 対 2.3.16。§8.2 cmp_aux2 の該当ブロックを frag2_add -> fragR_add に置換しただけ。hab は ne_of_ltF h から取る (§8.2 では外側で用意していたもの)。eA/eB/deg_pos は omega 用の帳簿で、これを落とすと omega が落ちることをミュータント mut_A2 で確認済み。
+theorem a2_add_add : ∀ (p q r s : Term) (n f' : Nat),
+    AsymCase (add p q) (add r s) n f' := by
+  intro p q r s n f' hfa hfb hd hnf IHa _ h
+  have hab : add p q ≠ add r s := ne_of_ltF h
+  have hfp := (fragR_add hfa).1; have hfq := (fragR_add hfa).2
+  have hfr := (fragR_add hfb).1; have hfs := (fragR_add hfb).2
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+  rw [ltF_succ_add_add _ hab] at h
+  rw [ltF_succ_add_add _ (Ne.symm hab)]
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl] at h
+    rw [if_pos rfl]
+    exact IHa q s hfq hfs (by omega) f' hnf h
+  · rw [if_neg hpr] at h
+    rw [if_neg (Ne.symm hpr)]
+    exact IHa p r hfp hfr (by omega) f' hnf h
+
+-- ===== [A1-A5] C2 : c2_add_add =====
+-- verdict: kimina OK (messages: [])
+-- notes: A2 の comparability 版。hab は CompCase が引数として供給する (§8.2 では by_cases で作っていた) ので by_cases hab が不要になり、その分短い。
+theorem c2_add_add : ∀ (p q r s : Term) (n f' : Nat),
+    CompCase (add p q) (add r s) n f' := by
+  intro p q r s n f' hfa hfb hd hnf _ IHc hab
+  have hfp := (fragR_add hfa).1; have hfq := (fragR_add hfa).2
+  have hfr := (fragR_add hfb).1; have hfs := (fragR_add hfb).2
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+  rw [ltF_succ_add_add _ hab, ltF_succ_add_add _ (Ne.symm hab)]
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl, if_pos rfl]
+    have hqs : q ≠ s := fun hc => hab (by rw [hc])
+    rcases IHc q s hfq hfs (by omega) f' hnf with h1 | h1 | h1
+    · exact Or.inl h1
+    · exact absurd h1 hqs
+    · exact Or.inr h1
+  · rw [if_neg hpr, if_neg (Ne.symm hpr)]
+    rcases IHc p r hfp hfr (by omega) f' hnf with h1 | h1 | h1
+    · exact Or.inl h1
+    · exact absurd h1 hpr
+    · exact Or.inr h1
+
+-- ===== [A1-A5] A3 : a3_add_nsum =====
+-- verdict: kimina OK (messages: [])
+-- notes: 2.3.10 forward / 2.3.11 backward。t は OPAQUE な非和のまま (psi と Z も含む) — これが §8.2 の設計どおり、和がらみのケースを一切ばらさずに済む理由。t ≠ zero と NSum t は schema の前に通常の引数として置いた (§8.4 が「induction hypotheses as ordinary parameters」と言っているのと同じ扱い)。FragR q は使わない。
+theorem a3_add_nsum : ∀ (p q t : Term) (n f' : Nat), t ≠ zero → NSum t = true →
+    AsymCase (add p q) t n f' := by
+  intro p q t n f' h0 ht hfa hfb hd hnf IHa _ h
+  have hfp := (fragR_add hfa).1
+  have dp := deg_pos p; have dq := deg_pos q; have dt := deg_pos t
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  rw [ltF_succ_add_nsum _ h0 ht] at h
+  rw [ltF_succ_nsum_add _ h0 ht]
+  have hne : t ≠ p := by
+    intro hc; rw [hc, ltF_irrefl] at h; exact Bool.noConfusion h
+  have h2 : ltF f' t p = false := IHa p t hfp hfb (by omega) f' hnf h
+  simp [hne, h2]
+
+-- ===== [A1-A5] C3 : c3_add_nsum =====
+-- verdict: kimina OK (messages: [])
+-- notes: A3 の comparability 版。A ≠ B は使わない (2.3.10/2.3.11 は頭部だけで決まるため)。
+theorem c3_add_nsum : ∀ (p q t : Term) (n f' : Nat), t ≠ zero → NSum t = true →
+    CompCase (add p q) t n f' := by
+  intro p q t n f' h0 ht hfa hfb hd hnf _ IHc _
+  have hfp := (fragR_add hfa).1
+  have dp := deg_pos p; have dq := deg_pos q; have dt := deg_pos t
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  rw [ltF_succ_add_nsum _ h0 ht, ltF_succ_nsum_add _ h0 ht]
+  rcases IHc p t hfp hfb (by omega) f' hnf with h1 | h1 | h1
+  · exact Or.inl h1
+  · exact Or.inr (by simp [h1])
+  · exact Or.inr (by simp [h1])
+
+-- ===== [A1-A5] A4 : a4_nsum_add =====
+-- verdict: kimina OK (messages: [])
+-- notes: 2.3.11 forward / 2.3.10 backward。s は OPAQUE な非和。h1 : s = c の枝は ltF_irrefl で潰れる (§8.2 と同一)。
+theorem a4_nsum_add : ∀ (s c d : Term) (n f' : Nat), s ≠ zero → NSum s = true →
+    AsymCase s (add c d) n f' := by
+  intro s c d n f' h0 hs hfa hfb hd hnf IHa _ h
+  have hfc := (fragR_add hfb).1
+  have dc := deg_pos c; have dd := deg_pos d; have ds := deg_pos s
+  have eB : (add c d).deg = 1 + c.deg + d.deg := rfl
+  rw [ltF_succ_nsum_add _ h0 hs] at h
+  rw [ltF_succ_add_nsum _ h0 hs]
+  simp only [Bool.or_eq_true, beq_iff_eq] at h
+  rcases h with h1 | h1
+  · rw [← h1]; exact ltF_irrefl _ _
+  · exact IHa s c hfa hfc (by omega) f' hnf h1
+
+-- ===== [A1-A5] C4 : c4_nsum_add =====
+-- verdict: kimina OK (messages: [])
+-- notes: A4 の comparability 版。s = c でも s < c でも s <= c なので最初の 2 枝がともに Or.inl になる。
+theorem c4_nsum_add : ∀ (s c d : Term) (n f' : Nat), s ≠ zero → NSum s = true →
+    CompCase s (add c d) n f' := by
+  intro s c d n f' h0 hs hfa hfb hd hnf _ IHc _
+  have hfc := (fragR_add hfb).1
+  have dc := deg_pos c; have dd := deg_pos d; have ds := deg_pos s
+  have eB : (add c d).deg = 1 + c.deg + d.deg := rfl
+  rw [ltF_succ_nsum_add _ h0 hs, ltF_succ_add_nsum _ h0 hs]
+  rcases IHc s c hfa hfc (by omega) f' hnf with h1 | h1 | h1
+  · exact Or.inl (by simp [h1])
+  · exact Or.inl (by simp [h1])
+  · exact Or.inr h1
+
+-- ===== [A1-A5] A5 : a5_lvl =====
+-- verdict: kimina OK (messages: [])
+-- notes: レベルが異なる非和どうし。§8.4 の指示どおり S3 = LvlDown を仮説として取った。実測: 必要なのは S3 だけで S2 は不要 (lvl x < lvl y なら結論そのもの、lvl y < lvl x なら仮説 h が矛盾)。lvl x ≠ lvl y は load-bearing — 落とすと omega が破れることをミュータント mut_A5_drop_lvl_ne で確認済み。なお lvl zero = 0 なので本補題は zero がらみのレベル差も覆っており、A1/C1 と無害に重複する。
+theorem a5_lvl : ∀ (x y : Term) (n f' : Nat), LvlDown →
+    NSum x = true → NSum y = true → lvl x ≠ lvl y → AsymCase x y n f' := by
+  intro x y n f' hdn hnx hny hlv _ _ _ _ _ _ h
+  rcases Nat.lt_or_ge (lvl x) (lvl y) with hl | hl
+  · exact hdn f' y x hny hnx hl
+  · rw [hdn f' x y hnx hny (by omega)] at h; exact Bool.noConfusion h
+
+-- ===== [A1-A5] C5 : c5_lvl =====
+-- verdict: kimina OK (messages: [])
+-- notes: C5 は対称に S2 = LvlUp だけを消費する。IH_ASYM / IH_COMP も A ≠ B も使わない。
+theorem c5_lvl : ∀ (x y : Term) (n f' : Nat), LvlUp →
+    NSum x = true → NSum y = true → lvl x ≠ lvl y → CompCase x y n f' := by
+  intro x y n f' hup hnx hny hlv _ _ _ _ _ _ _
+  rcases Nat.lt_or_ge (lvl x) (lvl y) with hl | hl
+  · exact Or.inl (hup f' x y hnx hny hl)
+  · exact Or.inr (hup f' y x hny hnx (by omega))
+
+-- ===== [A1-A5] AUX-sum-cases : fragR_sum_cases =====
+-- verdict: kimina OK (messages: []) — 担当外の補助。assembler がこれなしでは分岐できないので添付
+-- notes: GAP の指摘でもある: WF.lean には frag2_sum_cases / frag2_nsum_cases はあるが FragR 版が存在しない (#check で確認)。Phase B の assembler は 0 / 和 / 非和 の三分岐にこれを必要とする。frag2 版と違い psi と Z も非和側に落ちる (Frag2 ではここが simp で潰れていた) 点だけが差分。
+theorem fragR_sum_cases {t : Term} (h : FragR t = true) :
+    t = zero
+    ∨ (∃ x y, t = add x y ∧ FragR x = true ∧ FragR y = true)
+    ∨ (t ≠ zero ∧ NSum t = true) := by
+  cases t with
+  | zero => exact Or.inl rfl
+  | add x y => exact Or.inr (Or.inl ⟨x, y, rfl, (fragR_add h).1, (fragR_add h).2⟩)
+  | M => exact Or.inr (Or.inr ⟨by intro hc; exact Term.noConfusion hc, rfl⟩)
+  | omg x => exact Or.inr (Or.inr ⟨by intro hc; exact Term.noConfusion hc, rfl⟩)
+  | phi x y => exact Or.inr (Or.inr ⟨by intro hc; exact Term.noConfusion hc, rfl⟩)
+  | psi k x => exact Or.inr (Or.inr ⟨by intro hc; exact Term.noConfusion hc, rfl⟩)
+  | Z x => exact Or.inr (Or.inr ⟨by intro hc; exact Term.noConfusion hc, rfl⟩)
+
+-- ===== [A1-A5] AUX-nsum-cases : fragR_nsum_cases =====
+-- verdict: kimina OK (messages: [])
+-- notes: 担当外の補助。5 分岐 (M / omg / phi / psi / Z)。psi の枝が k.isR = true を運び出す点が重要 — §8.4(iii) が「kappa in R が本質的に効くのは 2.3.14 の comparability だけ」と言っている、その isR をここで取り出す。同レベル (level 1) の 9 組を担当するエージェントはこれを使うことになる。
+theorem fragR_nsum_cases {t : Term} (h : FragR t = true) (h0 : t ≠ zero)
+    (hn : NSum t = true) :
+    t = M
+    ∨ (∃ x, t = omg x ∧ FragR x = true)
+    ∨ (∃ x y, t = phi x y ∧ FragR x = true ∧ FragR y = true)
+    ∨ (∃ k x, t = psi k x ∧ k.isR = true ∧ FragR k = true ∧ FragR x = true)
+    ∨ (∃ x, t = Z x ∧ FragR x = true) := by
+  cases t with
+  | zero => exact absurd rfl h0
+  | add x y => simp [NSum] at hn
+  | M => exact Or.inl rfl
+  | omg x => exact Or.inr (Or.inl ⟨x, rfl, fragR_omg h⟩)
+  | phi x y => exact Or.inr (Or.inr (Or.inl ⟨x, y, rfl, (fragR_phi h).1, (fragR_phi h).2⟩))
+  | psi k x =>
+    exact Or.inr (Or.inr (Or.inr (Or.inl
+      ⟨k, x, rfl, (fragR_psi h).1, (fragR_psi h).2.1, (fragR_psi h).2.2⟩)))
+  | Z x => exact Or.inr (Or.inr (Or.inr (Or.inr ⟨x, rfl, fragR_Z h⟩)))
+
+-- ===== [A1-A5] INTEG : cmp_aux3_skeleton =====
+-- verdict: kimina OK (messages: []) — 統合テスト。A1..A5/C1..C5 が実際に組み上がることの受領証
+-- notes: 担当外だが最も重要な受領証: 私の 12 本 + S2/S3 + fragR_sum_cases だけで Stage I 全体の骨格が実際に閉じ、残るのは SA/SC (レベルが等しい非和どうし) だけであることを機械検証した。これで「証明はできたが interface が噛み合わない」という失敗モードが排除される。IHa/IHc の型は IH_ASYM n / IH_COMP n と defeq なのでそのまま渡せる (unfold 不要)。CompCase は 2 択なので `wrap` で 3 択に持ち上げている。
+theorem cmp_aux3_skeleton
+    (SA : ∀ (x y : Term) (n f' : Nat), x ≠ zero → y ≠ zero →
+            NSum x = true → NSum y = true → lvl x = lvl y → AsymCase x y n f')
+    (SC : ∀ (x y : Term) (n f' : Nat), x ≠ zero → y ≠ zero →
+            NSum x = true → NSum y = true → lvl x = lvl y → CompCase x y n f') :
+    ∀ (n : Nat),
+    (∀ (a b : Term), FragR a = true → FragR b = true → a.deg + b.deg ≤ n →
+      ∀ f, n ≤ f → ltF f a b = true → ltF f b a = false)
+  ∧ (∀ (a b : Term), FragR a = true → FragR b = true → a.deg + b.deg ≤ n →
+      ∀ f, n ≤ f → (ltF f a b = true ∨ a = b ∨ ltF f b a = true)) := by
+  intro n
+  induction n with
+  | zero =>
+    exact ⟨by intro a b _ _ hd; have := deg_pos a; have := deg_pos b; omega,
+           by intro a b _ _ hd; have := deg_pos a; have := deg_pos b; omega⟩
+  | succ n IH =>
+    obtain ⟨IHa, IHc⟩ := IH
+    constructor
+    · intro a b hfa hfb hd f hf h
+      obtain ⟨f', rfl⟩ : ∃ f', f = f' + 1 := ⟨f - 1, by omega⟩
+      have hf' : n ≤ f' := by omega
+      rcases fragR_sum_cases hfa with rfl | ⟨p, q, rfl, hfp, hfq⟩ | ⟨ha0, hna⟩
+      · exact a1_zero_left b n f' hfa hfb hd hf' IHa IHc h
+      · rcases fragR_sum_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨hb0, hnb⟩
+        · exact a1_zero_right _ n f' hfa hfb hd hf' IHa IHc h
+        · exact a2_add_add p q r s n f' hfa hfb hd hf' IHa IHc h
+        · exact a3_add_nsum p q b n f' hb0 hnb hfa hfb hd hf' IHa IHc h
+      · rcases fragR_sum_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨hb0, hnb⟩
+        · exact a1_zero_right _ n f' hfa hfb hd hf' IHa IHc h
+        · exact a4_nsum_add a r s n f' ha0 hna hfa hfb hd hf' IHa IHc h
+        · by_cases hlv : lvl a = lvl b
+          · exact SA a b n f' ha0 hb0 hna hnb hlv hfa hfb hd hf' IHa IHc h
+          · exact a5_lvl a b n f' lvlDown hna hnb hlv hfa hfb hd hf' IHa IHc h
+    · intro a b hfa hfb hd f hf
+      obtain ⟨f', rfl⟩ : ∃ f', f = f' + 1 := ⟨f - 1, by omega⟩
+      have hf' : n ≤ f' := by omega
+      by_cases hab : a = b
+      · exact Or.inr (Or.inl hab)
+      have wrap : (ltF (f' + 1) a b = true ∨ ltF (f' + 1) b a = true) →
+          (ltF (f' + 1) a b = true ∨ a = b ∨ ltF (f' + 1) b a = true) := by
+        rintro (h1 | h1)
+        · exact Or.inl h1
+        · exact Or.inr (Or.inr h1)
+      rcases fragR_sum_cases hfa with rfl | ⟨p, q, rfl, hfp, hfq⟩ | ⟨ha0, hna⟩
+      · exact wrap (c1_zero_left b n f' hfa hfb hd hf' IHa IHc hab)
+      · rcases fragR_sum_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨hb0, hnb⟩
+        · exact wrap (c1_zero_right _ n f' hfa hfb hd hf' IHa IHc hab)
+        · exact wrap (c2_add_add p q r s n f' hfa hfb hd hf' IHa IHc hab)
+        · exact wrap (c3_add_nsum p q b n f' hb0 hnb hfa hfb hd hf' IHa IHc hab)
+      · rcases fragR_sum_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨hb0, hnb⟩
+        · exact wrap (c1_zero_right _ n f' hfa hfb hd hf' IHa IHc hab)
+        · exact wrap (c4_nsum_add a r s n f' ha0 hna hfa hfb hd hf' IHa IHc hab)
+        · by_cases hlv : lvl a = lvl b
+          · exact wrap (SC a b n f' ha0 hb0 hna hnb hlv hfa hfb hd hf' IHa IHc hab)
+          · exact wrap (c5_lvl a b n f' lvlUp hna hnb hlv hfa hfb hd hf' IHa IHc hab)
+
+-- ===== [A6-A10] A6 : a6 — AsymCase M M (M vs M, trivially excluded) =====
+-- verdict: kimina OK (messages: [] apart from info); id a6.lean and again inside the combined all.lean run
+-- notes: Verified snippet = the exact two header lines (import Evidence.WF / open TM TM.Term Evidence.WF) followed by this text and nothing else. Consumes no induction hypothesis: ltF_irrefl kills the hypothesis ltF (f'+1) M M = true. Scratch file /tmp/claude-1000/-home-koteitan-proofs-bms-rathjen/4fa63956-9
+/-- CASE A-6 (M vs M): 2.3 is irreflexive, so the hypothesis is already absurd. -/
+theorem a6 : ∀ (n f' : Nat), AsymCase M M n f' := by
+  intro n f' _ _ _ _ _ _ h
+  rw [ltF_irrefl] at h
+  exact Bool.noConfusion h
+
+-- ===== [A6-A10] C6 : c6 — CompCase M M (M vs M, trivially excluded) =====
+-- verdict: kimina OK; id c6.lean and again inside all.lean
+-- notes: Vacuous by the CompCase schema's own A ≠ B parameter (§8.4 says that hypothesis is discharged by the caller, exactly as in §7.3). Scratch file .../scratchpad/c6.lean.
+/-- CASE C-6 (M vs M): excluded by the caller's `A ≠ B`. -/
+theorem c6 : ∀ (n f' : Nat), CompCase M M n f' := by
+  intro n f' _ _ _ _ _ _ hne
+  exact absurd rfl hne
+
+-- ===== [A6-A10] A7 : a7 — AsymCase (omg x) (omg y)  [2.3.12] =====
+-- verdict: kimina OK; id a7.lean and again inside all.lean
+-- notes: Transcription of §8.2.1's ω̄/ω̄ block with Frag2 ↦ FragR (frag2_omg ↦ fragR_omg). Uses ltF_succ_omg_omg (the one Stage-3a rule that is not rfl) and IH_ASYM at x,y; the degree drop is 2, supplied by the two rfl equations eA/eB plus deg_pos. IH_COMP unused. Reachability receipt (verified as a #guard):
+/-- CASE A-7 (ω̄ vs ω̄): 2.3.12, one step of `IH_ASYM`. -/
+theorem a7 : ∀ (x y : Term) (n f' : Nat), AsymCase (omg x) (omg y) n f' := by
+  intro x y n f' hfa hfb hd hnf IHa _ h
+  have hab : omg x ≠ omg y := ne_of_ltF h
+  have dx := deg_pos x; have dy := deg_pos y
+  have eA : (omg x).deg = 1 + x.deg := rfl
+  have eB : (omg y).deg = 1 + y.deg := rfl
+  rw [ltF_succ_omg_omg _ hab] at h
+  rw [ltF_succ_omg_omg _ (Ne.symm hab)]
+  exact IHa x y (fragR_omg hfa) (fragR_omg hfb) (by omega) f' hnf h
+
+-- ===== [A6-A10] C7 : c7 — CompCase (omg x) (omg y)  [2.3.12] =====
+-- verdict: kimina OK; id c7.lean and again inside all.lean
+-- notes: §8.2.1's comparability ω̄/ω̄ block with Frag2 ↦ FragR and the three-way Or of IH_COMP collapsed onto CompCase's two-way Or (the middle branch is killed by hxy, derived from the schema's A ≠ B). IH_ASYM unused. Scratch file .../scratchpad/c7.lean.
+/-- CASE C-7 (ω̄ vs ω̄): 2.3.12, one step of `IH_COMP`. -/
+theorem c7 : ∀ (x y : Term) (n f' : Nat), CompCase (omg x) (omg y) n f' := by
+  intro x y n f' hfa hfb hd hnf _ IHc hab
+  have dx := deg_pos x; have dy := deg_pos y
+  have eA : (omg x).deg = 1 + x.deg := rfl
+  have eB : (omg y).deg = 1 + y.deg := rfl
+  rw [ltF_succ_omg_omg _ hab, ltF_succ_omg_omg _ (Ne.symm hab)]
+  have hxy : x ≠ y := fun hc => hab (by rw [hc])
+  rcases IHc x y (fragR_omg hfa) (fragR_omg hfb) (by omega) f' hnf with h1 | h1 | h1
+  · exact Or.inl h1
+  · exact absurd h1 hxy
+  · exact Or.inr h1
+
+-- ===== [A6-A10] A8 : a8 — AsymCase (phi p q) (phi r s)  [2.3.13] =====
+-- verdict: kimina OK; id a8.lean and again inside all.lean
+-- notes: Line-for-line transcription of §8.2.1's φ̄/φ̄ asymmetry block (WF.lean:3865-3897), which is itself §7.3's; the only changes are Frag2 ↦ FragR (frag2_phi ↦ fragR_phi) and the schema's parameter names. Both IH_ASYM and IH_COMP are consumed (IH_COMP only in the 13(iii) branch, exactly as §7 explains). 
+/-- CASE A-8 (φ̄ vs φ̄): 2.3.13's three sub-clauses, §8.2.1's block verbatim with
+    `Frag2 ↦ FragR`.  13(iii) is where `IH_COMP` is consumed. -/
+theorem a8 : ∀ (p q r s : Term) (n f' : Nat), AsymCase (phi p q) (phi r s) n f' := by
+  intro p q r s n f' hfa hfb hd hnf IHa IHc h
+  have hab : phi p q ≠ phi r s := ne_of_ltF h
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  obtain ⟨hfr, hfs⟩ := fragR_phi hfb
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s
+  rw [ltF_succ_phi_phi _ hab] at h
+  rw [ltF_succ_phi_phi _ (Ne.symm hab)]
+  simp only [Term.deg] at hd
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl] at h
+    rw [if_pos rfl]
+    exact IHa q s hfq hfs (by omega) f' hnf h
+  · rw [if_neg hpr] at h
+    rw [if_neg (Ne.symm hpr)]
+    by_cases hlt : ltF f' p r = true
+    · -- 13(i) forward: the reverse comparison lands in 13(iii)
+      rw [if_pos hlt] at h
+      have hrp : ltF f' r p = false := IHa p r hfp hfr (by omega) f' hnf hlt
+      rw [if_neg (by simp [hrp])]
+      have hne : phi r s ≠ q := by
+        intro hc; rw [hc, ltF_irrefl] at h; exact Bool.noConfusion h
+      have h2 : ltF f' (phi r s) q = false :=
+        IHa q (phi r s) hfq hfb (by simp only [Term.deg]; omega) f' hnf h
+      simp [hne, h2]
+    · -- 13(iii) forward: "neither `=` nor `<`" must be turned into `>` — comparability
+      rw [if_neg hlt] at h
+      have hrp : ltF f' r p = true := by
+        rcases IHc p r hfp hfr (by omega) f' hnf with h1 | h1 | h1
+        · exact absurd h1 hlt
+        · exact absurd h1 hpr
+        · exact h1
+      rw [if_pos hrp]
+      simp only [Bool.or_eq_true, beq_iff_eq] at h
+      rcases h with h1 | h1
+      · rw [← h1]; exact ltF_irrefl _ _
+      · exact IHa (phi p q) s hfa hfs (by simp only [Term.deg]; omega) f' hnf h1
+
+-- ===== [A6-A10] C8 : c8 — CompCase (phi p q) (phi r s)  [2.3.13] =====
+-- verdict: kimina OK; id c8.lean and again inside all.lean
+-- notes: Transcription of §8.2.1's φ̄/φ̄ comparability block (WF.lean:3963-3992) with Frag2 ↦ FragR and IH_COMP's three-way Or mapped onto CompCase's two-way Or (Or.inr (Or.inr X) ↦ Or.inr X). Scratch file .../scratchpad/c8.lean.
+/-- CASE C-8 (φ̄ vs φ̄): 2.3.13, §8.2.1's comparability block verbatim with
+    `Frag2 ↦ FragR`.  `IH_ASYM` is consumed to know the reverse comparison does
+    not also land in 13(i). -/
+theorem c8 : ∀ (p q r s : Term) (n f' : Nat), CompCase (phi p q) (phi r s) n f' := by
+  intro p q r s n f' hfa hfb hd hnf IHa IHc hab
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  obtain ⟨hfr, hfs⟩ := fragR_phi hfb
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s
+  rw [ltF_succ_phi_phi _ hab, ltF_succ_phi_phi _ (Ne.symm hab)]
+  simp only [Term.deg] at hd
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl, if_pos rfl]
+    have hqs : q ≠ s := fun hc => hab (by rw [hc])
+    rcases IHc q s hfq hfs (by omega) f' hnf with h1 | h1 | h1
+    · exact Or.inl h1
+    · exact absurd h1 hqs
+    · exact Or.inr h1
+  · rw [if_neg hpr, if_neg (Ne.symm hpr)]
+    rcases IHc p r hfp hfr (by omega) f' hnf with h1 | h1 | h1
+    · have hrp : ltF f' r p = false := IHa p r hfp hfr (by omega) f' hnf h1
+      rw [if_pos h1, if_neg (by simp [hrp])]
+      rcases IHc q (phi r s) hfq hfb (by simp only [Term.deg]; omega) f' hnf
+        with h2 | h2 | h2
+      · exact Or.inl h2
+      · exact Or.inr (by simp [h2])
+      · exact Or.inr (by simp [h2])
+    · exact absurd h1 hpr
+    · have hpr2 : ltF f' p r = false := IHa r p hfr hfp (by omega) f' hnf h1
+      rw [if_neg (by simp [hpr2]), if_pos h1]
+      rcases IHc (phi p q) s hfa hfs (by simp only [Term.deg]; omega) f' hnf
+        with h2 | h2 | h2
+      · exact Or.inl (by simp [h2])
+      · exact Or.inl (by simp [h2])
+      · exact Or.inr h2
+
+-- ===== [A6-A10] A9a : a9_phi_psi — AsymCase (phi a b) (psi k c)  [2.3.5 forward, 2.3.4 backward] =====
+-- verdict: kimina OK; id a9f.lean and again inside all.lean
+-- notes: Uses ltF_succ_phi_psi (2.3.5) and ltF_succ_psi_phi (2.3.4) as the design named. NO K_kappa and no isR conjunct is touched — FragR is passed along unused except through fragR_phi, consistent with §8.4(iii) ('everywhere else FragR is passed along unused'). Degree bookkeeping: from (1+a+b)+(1+k+c) ≤ n+
+/-- CASE A-9 (φ̄ vs ψ), forward direction.  2.3.5 says `φ̄αβ < ψκγ` iff BOTH
+    components are below `ψκγ`; 2.3.4 says `ψκγ < φ̄αβ` iff it is `≤` one of them.
+    Both components being strictly below kills all four disjuncts of 2.3.4 —
+    two by irreflexivity, two by `IH_ASYM`. -/
+theorem a9_phi_psi : ∀ (a b k c : Term) (n f' : Nat), AsymCase (phi a b) (psi k c) n f' := by
+  intro a b k c n f' hfa hfb hd hnf IHa _ h
+  obtain ⟨hfa1, hfa2⟩ := fragR_phi hfa
+  have da := deg_pos a; have db := deg_pos b
+  have dk := deg_pos k; have dc := deg_pos c
+  rw [ltF_succ_phi_psi] at h
+  rw [ltF_succ_psi_phi]
+  simp only [Term.deg] at hd
+  simp only [Bool.and_eq_true] at h
+  obtain ⟨h1, h2⟩ := h
+  have e1 : ltF f' (psi k c) a = false :=
+    IHa a (psi k c) hfa1 hfb (by simp only [Term.deg]; omega) f' hnf h1
+  have e2 : ltF f' (psi k c) b = false :=
+    IHa b (psi k c) hfa2 hfb (by simp only [Term.deg]; omega) f' hnf h2
+  have n1 : psi k c ≠ a := Ne.symm (ne_of_ltF h1)
+  have n2 : psi k c ≠ b := Ne.symm (ne_of_ltF h2)
+  simp [n1, n2, e1, e2]
+
+-- ===== [A6-A10] A9b : a9_psi_phi — AsymCase (psi k c) (phi a b)  [the other direction of the same pair] =====
+-- verdict: kimina OK; id a9r.lean and again inside all.lean
+-- notes: Supplied because AsymCase is a DIRECTED schema (ltF A B = true → ltF B A = false), so a caller that splits both a and b by shape gets the ordered pair (ψ, φ̄) as a separate obligation. Logically it is interderivable with a9_phi_psi (both say ¬(A<B ∧ B<A)), so Phase B may drop one and derive it, but 
+/-- CASE A-9 (φ̄ vs ψ), reverse direction.  Each of 2.3.4's four disjuncts kills
+    one conjunct of 2.3.5 — the two `=` disjuncts by irreflexivity, the two `<`
+    disjuncts by `IH_ASYM`. -/
+theorem a9_psi_phi : ∀ (k c a b : Term) (n f' : Nat), AsymCase (psi k c) (phi a b) n f' := by
+  intro k c a b n f' hfa hfb hd hnf IHa _ h
+  obtain ⟨hfb1, hfb2⟩ := fragR_phi hfb
+  have da := deg_pos a; have db := deg_pos b
+  have dk := deg_pos k; have dc := deg_pos c
+  rw [ltF_succ_psi_phi] at h
+  rw [ltF_succ_phi_psi]
+  simp only [Term.deg] at hd
+  simp only [Bool.or_eq_true, beq_iff_eq] at h
+  rcases h with ((h1 | h1) | h1) | h1
+  · rw [← h1]; simp [ltF_irrefl]
+  · rw [← h1]; simp [ltF_irrefl]
+  · have e : ltF f' a (psi k c) = false :=
+      IHa (psi k c) a hfa hfb1 (by simp only [Term.deg]; omega) f' hnf h1
+    simp [e]
+  · have e : ltF f' b (psi k c) = false :=
+      IHa (psi k c) b hfa hfb2 (by simp only [Term.deg]; omega) f' hnf h1
+    simp [e]
+
+-- ===== [A6-A10] C9 : c9 — CompCase (phi a b) (psi k c)  [2.3.5 / 2.3.4] =====
+-- verdict: kimina OK; id c9.lean and again inside all.lean
+-- notes: Consumes only IH_COMP (IH_ASYM and the A ≠ B parameter are both unused, hence the two `_` binders — a φ̄ is never a ψ so distinctness is automatic). This is the whole content of §8.4(iii)'s claim that isR is essential ONLY at ψ-vs-ψ: the mixed level-1 pair needs nothing but comparability of a compon
+/-- CASE C-9 (φ̄ vs ψ).  Compare each component of the `φ̄` with the `ψ`: if both
+    are strictly below, 2.3.5 fires; the first one that is not gives 2.3.4.
+    (`A ≠ B` is not needed — a `φ̄` is never a `ψ`.) -/
+theorem c9 : ∀ (a b k c : Term) (n f' : Nat), CompCase (phi a b) (psi k c) n f' := by
+  intro a b k c n f' hfa hfb hd hnf _ IHc _
+  obtain ⟨hfa1, hfa2⟩ := fragR_phi hfa
+  have da := deg_pos a; have db := deg_pos b
+  have dk := deg_pos k; have dc := deg_pos c
+  rw [ltF_succ_phi_psi, ltF_succ_psi_phi]
+  simp only [Term.deg] at hd
+  rcases IHc a (psi k c) hfa1 hfb (by simp only [Term.deg]; omega) f' hnf with h1 | h1 | h1
+  · rcases IHc b (psi k c) hfa2 hfb (by simp only [Term.deg]; omega) f' hnf with h2 | h2 | h2
+    · exact Or.inl (by simp [h1, h2])
+    · exact Or.inr (by simp [h2])
+    · exact Or.inr (by simp [h2])
+  · exact Or.inr (by simp [h1])
+  · exact Or.inr (by simp [h1])
+
+-- ===== [A6-A10] A10a : a10_phi_Z — AsymCase (phi a b) (Z e)  [2.3.5 forward, 2.3.4 backward] =====
+-- verdict: kimina OK; id a10f.lean and again inside all.lean
+-- notes: a9_phi_psi with ltF_succ_phi_psi/ltF_succ_psi_phi replaced by ltF_succ_phi_Z/ltF_succ_Z_phi; no starF is reached (2.3.5/2.3.4 do not route through it), so nothing here touches the starF layer or needs StarClosed. Reachability receipt: FragR (phi zero zero) && FragR (Z zero) && lt (phi zero zero) (Z 
+/-- CASE A-10 (φ̄ vs Z), forward direction.  Same clause pair as A-9 (2.3.5 /
+    2.3.4) — `Z` is the other `SC` shape and 2.3 treats the two alike. -/
+theorem a10_phi_Z : ∀ (a b e : Term) (n f' : Nat), AsymCase (phi a b) (Z e) n f' := by
+  intro a b e n f' hfa hfb hd hnf IHa _ h
+  obtain ⟨hfa1, hfa2⟩ := fragR_phi hfa
+  have da := deg_pos a; have db := deg_pos b
+  have de := deg_pos e
+  rw [ltF_succ_phi_Z] at h
+  rw [ltF_succ_Z_phi]
+  simp only [Term.deg] at hd
+  simp only [Bool.and_eq_true] at h
+  obtain ⟨h1, h2⟩ := h
+  have e1 : ltF f' (Z e) a = false :=
+    IHa a (Z e) hfa1 hfb (by simp only [Term.deg]; omega) f' hnf h1
+  have e2 : ltF f' (Z e) b = false :=
+    IHa b (Z e) hfa2 hfb (by simp only [Term.deg]; omega) f' hnf h2
+  have n1 : Z e ≠ a := Ne.symm (ne_of_ltF h1)
+  have n2 : Z e ≠ b := Ne.symm (ne_of_ltF h2)
+  simp [n1, n2, e1, e2]
+
+-- ===== [A6-A10] A10b : a10_Z_phi — AsymCase (Z e) (phi a b)  [the other direction of the same pair] =====
+-- verdict: kimina OK; id a10r.lean and again inside all.lean
+-- notes: Same remark as A9b: AsymCase is directed, so the ordered pair (Z, φ̄) is a separate obligation for a caller that splits both sides by shape. Reachability receipt: FragR (phi (Z zero) zero) && lt (Z zero) (phi (Z zero) zero). Scratch file .../scratchpad/a10r.lean.
+/-- CASE A-10 (φ̄ vs Z), reverse direction. -/
+theorem a10_Z_phi : ∀ (e a b : Term) (n f' : Nat), AsymCase (Z e) (phi a b) n f' := by
+  intro e a b n f' hfa hfb hd hnf IHa _ h
+  obtain ⟨hfb1, hfb2⟩ := fragR_phi hfb
+  have da := deg_pos a; have db := deg_pos b
+  have de := deg_pos e
+  rw [ltF_succ_Z_phi] at h
+  rw [ltF_succ_phi_Z]
+  simp only [Term.deg] at hd
+  simp only [Bool.or_eq_true, beq_iff_eq] at h
+  rcases h with ((h1 | h1) | h1) | h1
+  · rw [← h1]; simp [ltF_irrefl]
+  · rw [← h1]; simp [ltF_irrefl]
+  · have hx : ltF f' a (Z e) = false :=
+      IHa (Z e) a hfa hfb1 (by simp only [Term.deg]; omega) f' hnf h1
+    simp [hx]
+  · have hx : ltF f' b (Z e) = false :=
+      IHa (Z e) b hfa hfb2 (by simp only [Term.deg]; omega) f' hnf h1
+    simp [hx]
+
+-- ===== [A6-A10] C10 : c10 — CompCase (phi a b) (Z e)  [2.3.5 / 2.3.4] =====
+-- verdict: kimina OK; id c10.lean and again inside all.lean
+-- notes: c9 with the Z rules. Consumes only IH_COMP; IH_ASYM and A ≠ B unused. Scratch file .../scratchpad/c10.lean.
+/-- CASE C-10 (φ̄ vs Z). -/
+theorem c10 : ∀ (a b e : Term) (n f' : Nat), CompCase (phi a b) (Z e) n f' := by
+  intro a b e n f' hfa hfb hd hnf _ IHc _
+  obtain ⟨hfa1, hfa2⟩ := fragR_phi hfa
+  have da := deg_pos a; have db := deg_pos b
+  have de := deg_pos e
+  rw [ltF_succ_phi_Z, ltF_succ_Z_phi]
+  simp only [Term.deg] at hd
+  rcases IHc a (Z e) hfa1 hfb (by simp only [Term.deg]; omega) f' hnf with h1 | h1 | h1
+  · rcases IHc b (Z e) hfa2 hfb (by simp only [Term.deg]; omega) f' hnf with h2 | h2 | h2
+    · exact Or.inl (by simp [h1, h2])
+    · exact Or.inr (by simp [h2])
+    · exact Or.inr (by simp [h2])
+  · exact Or.inr (by simp [h1])
+  · exact Or.inr (by simp [h1])
+
+-- ===== [A11-hard] A11 : a11 =====
+-- verdict: kimina http://localhost:12346/api/check — snippet id "a11": {"env":6}, messages [] (no output at all). Re-verified in a combined snippet with C11: `#print axioms a11` reports [propext, Quot.sound] — n
+-- notes: ASYMMETRY, ψ vs ψ, 2.3.14. Structure is §7.3's φ̄/φ̄ asymmetry block with `ltF_succ_phi_phi` replaced by `ltF_succ_psi_psi`, but the three sub-clauses of 2.3.14 recurse differently from 2.3.13 — 14(i) is `κ < ψπβ` (head vs WHOLE right) and 14(iii) is `ψκα < π` (whole left vs HEAD), with no `==` disj
+
+
+theorem a11 : ∀ (k a p b : Term) (n f' : Nat), AsymCase (psi k a) (psi p b) n f' := by
+  intro k a p b n f' hfa hfb hd hnf IHa IHc h
+  have hab : psi k a ≠ psi p b := ne_of_ltF h
+  obtain ⟨hkR, hfk, hfa'⟩ := fragR_psi hfa
+  obtain ⟨hpR, hfp, hfb'⟩ := fragR_psi hfb
+  have dk := deg_pos k; have da := deg_pos a
+  have dp := deg_pos p; have db := deg_pos b
+  simp only [Term.deg] at hd
+  rw [ltF_succ_psi_psi _ hab] at h
+  rw [ltF_succ_psi_psi _ (Ne.symm hab)]
+  by_cases hkp : k = p
+  · subst hkp
+    rw [if_pos rfl] at h
+    rw [if_pos rfl]
+    exact IHa a b hfa' hfb' (by omega) f' hnf h
+  · rw [if_neg hkp] at h
+    rw [if_neg (Ne.symm hkp)]
+    by_cases hlt : ltF f' k p = true
+    · rw [if_pos hlt] at h
+      have hpk : ltF f' p k = false := IHa k p hfk hfp (by omega) f' hnf hlt
+      rw [if_neg (by simp [hpk])]
+      exact IHa k (psi p b) hfk hfb (by simp only [Term.deg]; omega) f' hnf h
+    · rw [if_neg hlt] at h
+      have hpk : ltF f' p k = true := by
+        rcases IHc k p hfk hfp (by omega) f' hnf with h1 | h1 | h1
+        · exact absurd h1 hlt
+        · exact absurd h1 hkp
+        · exact h1
+      rw [if_pos hpk]
+      exact IHa (psi k a) p hfa hfp (by simp only [Term.deg]; omega) f' hnf h
+
+-- ===== [A11-hard] C11 : c11 =====
+-- verdict: kimina http://localhost:12346/api/check — snippet id "c11": {"env":9}, messages [] (no output at all). Re-verified in a combined snippet with A11: `#print axioms c11` reports [propext, Quot.sound] — n
+-- notes: COMPARABILITY, ψ vs ψ, 2.3.14 — the C-ψψ of §8.4.2's third `#check`, and THE place κ ∈ R is consumed. It is consumed TWICE, once per head, and in a sharper way than §8.4(iii) describes.  §8.4(iii) says the role of κ ∈ R is to make the two heads comparable. That is NOT what the proof needs: head comp
+
+
+theorem c11 : ∀ (k a p b : Term) (n f' : Nat), CompCase (psi k a) (psi p b) n f' := by
+  intro k a p b n f' hfa hfb hd hnf IHa IHc hab
+  obtain ⟨hkR, hfk, hfa'⟩ := fragR_psi hfa
+  obtain ⟨hpR, hfp, hfb'⟩ := fragR_psi hfb
+  have dk := deg_pos k; have da := deg_pos a
+  have dp := deg_pos p; have db := deg_pos b
+  simp only [Term.deg] at hd
+  rw [ltF_succ_psi_psi _ hab, ltF_succ_psi_psi _ (Ne.symm hab)]
+  by_cases hkp : k = p
+  · subst hkp
+    rw [if_pos rfl, if_pos rfl]
+    have hne : a ≠ b := fun hc => hab (by rw [hc])
+    rcases IHc a b hfa' hfb' (by omega) f' hnf with h1 | h1 | h1
+    · exact Or.inl h1
+    · exact absurd h1 hne
+    · exact Or.inr h1
+  · rw [if_neg hkp, if_neg (Ne.symm hkp)]
+    rcases IHc k p hfk hfp (by omega) f' hnf with h1 | h1 | h1
+    · have hpk : ltF f' p k = false := IHa k p hfk hfp (by omega) f' hnf h1
+      rw [if_pos h1, if_neg (by simp [hpk])]
+      have hne : k ≠ psi p b := by
+        intro hc; rw [hc] at hkR; exact Bool.noConfusion hkR
+      rcases IHc k (psi p b) hfk hfb (by simp only [Term.deg]; omega) f' hnf with h2 | h2 | h2
+      · exact Or.inl h2
+      · exact absurd h2 hne
+      · exact Or.inr h2
+    · exact absurd h1 hkp
+    · have hkp2 : ltF f' k p = false := IHa p k hfp hfk (by omega) f' hnf h1
+      rw [if_neg (by simp [hkp2]), if_pos h1]
+      have hne : p ≠ psi k a := by
+        intro hc; rw [hc] at hpR; exact Bool.noConfusion hpR
+      rcases IHc (psi k a) p hfa hfp (by simp only [Term.deg]; omega) f' hnf with h2 | h2 | h2
+      · exact Or.inl h2
+      · exact absurd h2 (Ne.symm hne)
+      · exact Or.inr h2
+
+-- ===== [A12-hard] A12 : a12 — AsymCase (psi k a) (Z d) n f' =====
+-- verdict: kimina http://localhost:12346/api/check — messages: [] (0 errors); #print axioms a12 → [propext, Quot.sound], no sorryAx
+-- notes: The assigned forward/backward case. Structure exactly as specified: `by_cases` on the 2.3.8 test `(k == Z d) || ltF f' k (Z d)`. If it fires, `ltF_succ_Z_psi` reduces the goal to `false = false` and no IH is used at all (this is the `k ≤ Zd` immediate branch). Otherwise `ltF_succ_psi_Z` gives `(ψκα 
+/-- CASE A12 — ASYMMETRY, `ψκα` against `Zδ`.
+    Forward is 2.3.8 (`κ ≤ Zδ`) or 2.3.6 (`ψκα ≤ δ*`); backward is 2.3.8 or 2.3.9.
+    Depends on S1 (`StarClosed`), taken as a hypothesis. -/
+theorem a12 : ∀ (k a d : Term) (n f' : Nat), StarClosed →
+    AsymCase (psi k a) (Z d) n f' := by
+  intro k a d n f' hSC hFA hFB hd hnf IHa _IHc h
+  have hFd : FragR d = true := fragR_Z hFB
+  have hFs : FragR (starF f' d) = true := hSC f' d hFd
+  have hds : (starF f' d).deg ≤ d.deg := deg_starF f' d
+  have hbound : (psi k a).deg + (starF f' d).deg ≤ n := by
+    simp only [Term.deg] at hd ⊢; omega
+  by_cases hc : ((k == Z d) || ltF f' k (Z d)) = true
+  · -- 2.3.8: `κ ≤ Zδ` makes the backward comparison `false` outright.
+    rw [ltF_succ_Z_psi, if_pos hc]
+  · rw [ltF_succ_psi_Z, if_neg hc] at h
+    rw [ltF_succ_Z_psi, if_neg hc]
+    simp only [Bool.or_eq_true, beq_iff_eq] at h
+    rcases h with h1 | h1
+    · rw [← h1]; exact ltF_irrefl _ _
+    · exact IHa (psi k a) (starF f' d) hFA hFs hbound f' hnf h1
+
+-- ===== [A12-hard] A21 : a21 — AsymCase (Z d) (psi k a) n f' (mirror orientation) =====
+-- verdict: kimina http://localhost:12346/api/check — messages: [] (0 errors); #print axioms a21 → [propext, Quot.sound], no sorryAx
+-- notes: NOT literally in my assignment, but delivered because Stage I's `cases a; cases b` reaches BOTH orientations and AsymCase is not symmetric in its statement — A12 alone does not discharge `Zδ < ψκα ⟹ ¬(ψκα < Zδ)`. Same architecture: if the 2.3.8 test fires the hypothesis `ltF (f'+1) (Z d) (psi k a) =
+/-- CASE A21 — ASYMMETRY, the mirror orientation `Zδ` against `ψκα`. -/
+theorem a21 : ∀ (d k a : Term) (n f' : Nat), StarClosed →
+    AsymCase (Z d) (psi k a) n f' := by
+  intro d k a n f' hSC hFA hFB hd hnf IHa _IHc h
+  have hFd : FragR d = true := fragR_Z hFA
+  have hFs : FragR (starF f' d) = true := hSC f' d hFd
+  have hds : (starF f' d).deg ≤ d.deg := deg_starF f' d
+  have hbound : (starF f' d).deg + (psi k a).deg ≤ n := by
+    simp only [Term.deg] at hd ⊢; omega
+  by_cases hc : ((k == Z d) || ltF f' k (Z d)) = true
+  · rw [ltF_succ_Z_psi, if_pos hc] at h; exact Bool.noConfusion h
+  · rw [ltF_succ_Z_psi, if_neg hc] at h
+    rw [ltF_succ_psi_Z, if_neg hc]
+    have h2 : ltF f' (psi k a) (starF f' d) = false :=
+      IHa (starF f' d) (psi k a) hFs hFB hbound f' hnf h
+    have hne : psi k a ≠ starF f' d := by
+      intro hcc; rw [← hcc, ltF_irrefl] at h; exact Bool.noConfusion h
+    simp [hne, h2]
+
+-- ===== [A12-hard] C12 : c12 — CompCase (psi k a) (Z d) n f' =====
+-- verdict: kimina http://localhost:12346/api/check — messages: [] (0 errors); #print axioms c12 → [propext, Quot.sound], no sorryAx
+-- notes: The assigned comparability case. The `A ≠ B` argument of CompCase is NOT needed (a ψ is never a Z), so it is bound as `_hne`. If the 2.3.8 test fires, 2.3.6's clause returns `true` unconditionally and the left disjunct is `rfl`. Otherwise one call of IH_COMP at (ψκα, δ*) decides everything: its firs
+/-- CASE C12 — COMPARABILITY, `ψκα` against `Zδ`.  Either 2.3.8 fires, or both
+    directions are decided by `IH_COMP` at `(ψκα, δ*)`, whose degree sum is strictly
+    smaller (`deg_starF`, and the clause has stripped the `Z`). -/
+theorem c12 : ∀ (k a d : Term) (n f' : Nat), StarClosed →
+    CompCase (psi k a) (Z d) n f' := by
+  intro k a d n f' hSC hFA hFB hd hnf _IHa IHc _hne
+  have hFd : FragR d = true := fragR_Z hFB
+  have hFs : FragR (starF f' d) = true := hSC f' d hFd
+  have hds : (starF f' d).deg ≤ d.deg := deg_starF f' d
+  have hbound : (psi k a).deg + (starF f' d).deg ≤ n := by
+    simp only [Term.deg] at hd ⊢; omega
+  by_cases hc : ((k == Z d) || ltF f' k (Z d)) = true
+  · exact Or.inl (by rw [ltF_succ_psi_Z, if_pos hc])
+  · rcases IHc (psi k a) (starF f' d) hFA hFs hbound f' hnf with h1 | h1 | h1
+    · exact Or.inl (by rw [ltF_succ_psi_Z, if_neg hc]; simp [h1])
+    · exact Or.inl (by rw [ltF_succ_psi_Z, if_neg hc]; simp [h1])
+    · exact Or.inr (by rw [ltF_succ_Z_psi, if_neg hc]; exact h1)
+
+-- ===== [A12-hard] C21 : c21 — CompCase (Z d) (psi k a) n f' (mirror orientation) =====
+-- verdict: kimina http://localhost:12346/api/check — messages: [] (0 errors); #print axioms c21 → [propext, Quot.sound], no sorryAx
+-- notes: Mirror of C12, delivered for the same reason as A21 (Stage I's double `cases` reaches `Z` on the left with `ψ` on the right). Identical proof with the two disjuncts swapped; note the FragR hypotheses swap roles (`hFA : FragR (Z d)`, `hFB : FragR (psi k a)`), which is why `fragR_Z hFA` and `IHc … hFB
+/-- CASE C21 — COMPARABILITY, the mirror orientation `Zδ` against `ψκα`. -/
+theorem c21 : ∀ (d k a : Term) (n f' : Nat), StarClosed →
+    CompCase (Z d) (psi k a) n f' := by
+  intro d k a n f' hSC hFA hFB hd hnf _IHa IHc _hne
+  have hFd : FragR d = true := fragR_Z hFA
+  have hFs : FragR (starF f' d) = true := hSC f' d hFd
+  have hds : (starF f' d).deg ≤ d.deg := deg_starF f' d
+  have hbound : (psi k a).deg + (starF f' d).deg ≤ n := by
+    simp only [Term.deg] at hd ⊢; omega
+  by_cases hc : ((k == Z d) || ltF f' k (Z d)) = true
+  · exact Or.inr (by rw [ltF_succ_psi_Z, if_pos hc])
+  · rcases IHc (psi k a) (starF f' d) hFB hFs hbound f' hnf with h1 | h1 | h1
+    · exact Or.inr (by rw [ltF_succ_psi_Z, if_neg hc]; simp [h1])
+    · exact Or.inr (by rw [ltF_succ_psi_Z, if_neg hc]; simp [h1])
+    · exact Or.inl (by rw [ltF_succ_Z_psi, if_neg hc]; exact h1)
+
+-- ===== [A13-hard] A13 : a13 — ASYMMETRY, Z vs Z (2.3.15) =====
+-- verdict: kimina @ http://localhost:12346/api/check — snippet id a13_alone returned {"env":29} with NO messages (success). Also verified inside the combined snippet 'final' ({"env":5}, no messages).
+-- notes: Statement is exactly §8.4's schema with StarClosed (case S1) added as an ordinary hypothesis, as assigned. Proof sketch: strip Z with ltF_succ_Z_Z (distinctness from ne_of_ltF). Forward in 15(i) (ltF f' x y = true): IH_ASYM on (x,y) kills the reverse branch condition, so the reverse is 15(ii), and i
+
+/-- CASE A13 (§8.4, STAGE I): ASYMMETRY, `Z` against `Z` — clause 2.3.15. -/
+theorem a13 : ∀ (x y : Term) (n f' : Nat), StarClosed → AsymCase (Z x) (Z y) n f' := by
+  intro x y n f' S1 hfa hfb hd hnf IHa IHc h
+  have hab : Z x ≠ Z y := ne_of_ltF h
+  have hxy : x ≠ y := fun hc => hab (by rw [hc])
+  have hdx : (Z x).deg = 1 + x.deg := rfl
+  have hdy : (Z y).deg = 1 + y.deg := rfl
+  have hfx : FragR x = true := fragR_Z hfa
+  have hfy : FragR y = true := fragR_Z hfb
+  have hsx : FragR (starF f' x) = true := S1 f' x hfx
+  have hsy : FragR (starF f' y) = true := S1 f' y hfy
+  have dsx := deg_starF f' x
+  have dsy := deg_starF f' y
+  rw [ltF_succ_Z_Z _ hab] at h
+  rw [ltF_succ_Z_Z _ (Ne.symm hab)]
+  by_cases hlt : ltF f' x y = true
+  · -- 15(i) forward: α < β, so the reverse comparison lands in 15(ii)
+    rw [if_pos hlt] at h
+    have hyx : ltF f' y x = false := IHa x y hfx hfy (by omega) f' hnf hlt
+    rw [if_neg (by simp [hyx])]
+    have hne : Z y ≠ starF f' x := Ne.symm (ne_of_ltF h)
+    have h2 : ltF f' (Z y) (starF f' x) = false :=
+      IHa (starF f' x) (Z y) hsx hfb (by omega) f' hnf h
+    simp [hne, h2]
+  · -- 15(ii) forward: comparability turns "not α < β" into "β < α", so the
+    -- reverse comparison lands in 15(i)
+    rw [if_neg hlt] at h
+    have hyx : ltF f' y x = true := by
+      rcases IHc x y hfx hfy (by omega) f' hnf with h1 | h1 | h1
+      · exact absurd h1 hlt
+      · exact absurd h1 hxy
+      · exact h1
+    rw [if_pos hyx]
+    simp only [Bool.or_eq_true, beq_iff_eq] at h
+    rcases h with h1 | h1
+    · rw [← h1]; exact ltF_irrefl _ _
+    · exact IHa (Z x) (starF f' y) hfa hsy (by omega) f' hnf h1
+
+-- ===== [A13-hard] C13 : c13 — COMPARABILITY, Z vs Z (2.3.15) =====
+-- verdict: kimina @ http://localhost:12346/api/check — snippet id c13_alone returned {"env":6} with NO messages (success). Also verified inside the combined snippet 'final' ({"env":5}, no messages).
+-- notes: Statement is exactly §8.4's CompCase schema with StarClosed added as an ordinary hypothesis. Proof: Z x ≠ Z y gives x ≠ y, so IH_COMP on (x,y) splits into ltF f' x y or ltF f' y x (the middle disjunct is absurd). In the first branch IH_ASYM pins the reverse to 15(ii), and IH_COMP applied at (α*, Zβ)
+
+/-- CASE C13 (§8.4, STAGE I): COMPARABILITY, `Z` against `Z` — clause 2.3.15. -/
+theorem c13 : ∀ (x y : Term) (n f' : Nat), StarClosed → CompCase (Z x) (Z y) n f' := by
+  intro x y n f' S1 hfa hfb hd hnf IHa IHc hab
+  have hxy : x ≠ y := fun hc => hab (by rw [hc])
+  have hdx : (Z x).deg = 1 + x.deg := rfl
+  have hdy : (Z y).deg = 1 + y.deg := rfl
+  have hfx : FragR x = true := fragR_Z hfa
+  have hfy : FragR y = true := fragR_Z hfb
+  have hsx : FragR (starF f' x) = true := S1 f' x hfx
+  have hsy : FragR (starF f' y) = true := S1 f' y hfy
+  have dsx := deg_starF f' x
+  have dsy := deg_starF f' y
+  rw [ltF_succ_Z_Z _ hab, ltF_succ_Z_Z _ (Ne.symm hab)]
+  rcases IHc x y hfx hfy (by omega) f' hnf with h1 | h1 | h1
+  · -- α < β: forward is 15(i), reverse is 15(ii); `α*` vs `Zβ` decides both
+    have hyx : ltF f' y x = false := IHa x y hfx hfy (by omega) f' hnf h1
+    rw [if_pos h1, if_neg (by simp [hyx])]
+    rcases IHc (starF f' x) (Z y) hsx hfb (by omega) f' hnf with h2 | h2 | h2
+    · exact Or.inl h2
+    · exact Or.inr (by simp [h2])
+    · exact Or.inr (by simp [h2])
+  · exact absurd h1 hxy
+  · -- β < α: the mirror image
+    have hxy2 : ltF f' x y = false := IHa y x hfy hfx (by omega) f' hnf h1
+    rw [if_pos h1, if_neg (by simp [hxy2])]
+    rcases IHc (starF f' y) (Z x) hsy hfa (by omega) f' hnf with h2 | h2 | h2
+    · exact Or.inr h2
+    · exact Or.inl (by simp [h2])
+    · exact Or.inl (by simp [h2])
+
+-- ===== [T1-T10] T1 : t1 =====
+-- verdict: kimina OK (messages [] — no error/warning), 0.19s standalone, 0.73s in the combined 10-theorem snippet
+-- notes: Sum/Sum/Sum, i.e. §8.2 trans_aux2 case (1) (2.3.16 three times along the spine). Verbatim transcription of §8.2 with Frag2 destructors replaced by fragR_add and with the two uses of ltF_asymm2 replaced by the Asym3 PARAMETER (ASYM). NOTE the one non-cosmetic difference from §8.2: Asym3 takes its fue
+theorem t1 : ∀ (p q r s t u : Term) (n m f' : Nat),
+    TransCase (add p q) (add r s) (add t u) n m f' := by
+  intro p q r s t u n m f' hfa hfb hfc hb hm hf ASYM COMP TR1 TR2 h1 h2
+  have hfp := (fragR_add hfa).1; have hfq := (fragR_add hfa).2
+  have hfr := (fragR_add hfb).1; have hfs := (fragR_add hfb).2
+  have hft := (fragR_add hfc).1; have hfu := (fragR_add hfc).2
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s
+  have dt := deg_pos t; have du := deg_pos u
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+  have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+  have hac : add p q ≠ add t u := by
+    intro hcc
+    rw [← hcc] at h2
+    rw [ASYM _ _ hfa hfb (f' + 1) (by omega) h1] at h2
+    exact Bool.noConfusion h2
+  have hab1 : add p q ≠ add r s := ne_of_ltF h1
+  have hab2 : add r s ≠ add t u := ne_of_ltF h2
+  rw [ltF_succ_add_add _ hab1] at h1
+  rw [ltF_succ_add_add _ hab2] at h2
+  rw [ltF_succ_add_add _ hac]
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl] at h1
+    by_cases hrt : p = t
+    · subst hrt
+      rw [if_pos rfl] at h2
+      rw [if_pos rfl]
+      exact TR1 q s u hfq hfs hfu (by omega) f' (by omega) h1 h2
+    · rw [if_neg hrt] at h2
+      rw [if_neg hrt]
+      exact h2
+  · rw [if_neg hpr] at h1
+    by_cases hrt : r = t
+    · subst hrt
+      rw [if_pos rfl] at h2
+      rw [if_neg hpr]
+      exact h1
+    · rw [if_neg hrt] at h2
+      have hpt : p ≠ t := by
+        intro hcc; subst hcc
+        rw [ASYM _ _ hfp hfr f' (by omega) h1] at h2; exact Bool.noConfusion h2
+      rw [if_neg hpt]
+      exact TR1 p r t hfp hfr hft (by omega) f' (by omega) h1 h2
+
+-- ===== [T1-T10] T2 : t2 =====
+-- verdict: kimina OK (messages []), 0.07s
+-- notes: Sum/Sum/non-sum, §8.2 case (2). The opaque non-sum C forces two EXTRA HYPOTHESES ahead of the schema — `c ≠ zero` and `NSum c = true` — exactly the pair that §8.2's frag2_sum_cases delivers in its third branch (⟨hc0, hnc⟩); the Stage-3b assembler will get them from the FragR analogue of frag2_sum_ca
+theorem t2 : ∀ (p q r s c : Term) (n m f' : Nat),
+    c ≠ zero → NSum c = true → TransCase (add p q) (add r s) c n m f' := by
+  intro p q r s c n m f' hc0 hnc hfa hfb hfc hb hm hf ASYM COMP TR1 TR2 h1 h2
+  have hfp := (fragR_add hfa).1; have hfq := (fragR_add hfa).2
+  have hfr := (fragR_add hfb).1; have hfs := (fragR_add hfb).2
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s; have dc := deg_pos c
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+  have hab1 : add p q ≠ add r s := ne_of_ltF h1
+  rw [ltF_succ_add_add _ hab1] at h1
+  rw [ltF_succ_add_nsum _ hc0 hnc] at h2
+  rw [ltF_succ_add_nsum _ hc0 hnc]
+  by_cases hpr : p = r
+  · subst hpr; exact h2
+  · rw [if_neg hpr] at h1
+    exact TR1 p r c hfp hfr hfc (by omega) f' (by omega) h1 h2
+
+-- ===== [T1-T10] T3 : t3 =====
+-- verdict: kimina OK (messages []), 0.11s
+-- notes: Sum/non-sum/Sum, §8.2 case (3). Extra hypotheses `b ≠ zero`, `NSum b = true` for the opaque middle non-sum (same provenance as T2). `hac` must be derived BEFORE h1/h2 are rewritten, since the derivation feeds h1 and h2 to Asym3 in their unrewritten form. Note the hypothesis name `hb` (B.deg ≤ n+1) c
+theorem t3 : ∀ (p q b t u : Term) (n m f' : Nat),
+    b ≠ zero → NSum b = true → TransCase (add p q) b (add t u) n m f' := by
+  intro p q b t u n m f' hb0 hnb hfa hfb hfc hb hm hf ASYM COMP TR1 TR2 h1 h2
+  have hfp := (fragR_add hfa).1; have hfq := (fragR_add hfa).2
+  have hft := (fragR_add hfc).1; have hfu := (fragR_add hfc).2
+  have dp := deg_pos p; have dq := deg_pos q
+  have db := deg_pos b; have dt := deg_pos t; have du := deg_pos u
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+  have hac : add p q ≠ add t u := by
+    intro hcc
+    rw [← hcc] at h2
+    rw [ASYM _ _ hfa hfb (f' + 1) (by omega) h1] at h2
+    exact Bool.noConfusion h2
+  rw [ltF_succ_add_nsum _ hb0 hnb] at h1
+  rw [ltF_succ_nsum_add _ hb0 hnb] at h2
+  rw [ltF_succ_add_add _ hac]
+  simp only [Bool.or_eq_true, beq_iff_eq] at h2
+  have hpt : ltF f' p t = true := by
+    rcases h2 with h3 | h3
+    · rw [← h3]; exact h1
+    · exact TR2 p t hfp hft (by omega) f' (by omega) h1 h3
+  rw [if_neg (ne_of_ltF hpt)]
+  exact hpt
+
+-- ===== [T1-T10] T4 : t4 =====
+-- verdict: kimina OK (messages []), 0.09s
+-- notes: Sum/non-sum/non-sum, §8.2 case (4). §8.2's local `LOW` abbreviation (fuel step-down via ltF_stable) is inlined as the `hBC` have, since a case lemma cannot share §8.2's local haves. This is the only place T1-T7 needs ltF_stable in the downward direction; the degree side conditions are discharged by 
+theorem t4 : ∀ (p q b c : Term) (n m f' : Nat),
+    b ≠ zero → NSum b = true → c ≠ zero → NSum c = true →
+    TransCase (add p q) b c n m f' := by
+  intro p q b c n m f' hb0 hnb hc0 hnc hfa hfb hfc hb hm hf ASYM COMP TR1 TR2 h1 h2
+  have hfp := (fragR_add hfa).1; have hfq := (fragR_add hfa).2
+  have dp := deg_pos p; have dq := deg_pos q
+  have db := deg_pos b; have dc := deg_pos c
+  have eA : (add p q).deg = 1 + p.deg + q.deg := rfl
+  have hBC : ltF f' b c = true := by
+    rw [ltF_stable b c f' (f' + 1) (by omega) (by omega)]; exact h2
+  rw [ltF_succ_add_nsum _ hb0 hnb] at h1
+  rw [ltF_succ_add_nsum _ hc0 hnc]
+  exact TR2 p c hfp hfc (by omega) f' (by omega) h1 hBC
+
+-- ===== [T1-T10] T5 : t5 =====
+-- verdict: kimina OK (messages []), 0.07s
+-- notes: non-sum/Sum/Sum, §8.2 case (5). Extra hypotheses `a ≠ zero`, `NSum a = true`. Verbatim §8.2; neither Asym3 nor Comp3 is consumed. Reachability witness: lt M (add (omg M) M) && lt (add (omg M) M) (add (omg (omg M)) M).
+theorem t5 : ∀ (a r s t u : Term) (n m f' : Nat),
+    a ≠ zero → NSum a = true → TransCase a (add r s) (add t u) n m f' := by
+  intro a r s t u n m f' ha0 hna hfa hfb hfc hb hm hf ASYM COMP TR1 TR2 h1 h2
+  have hfr := (fragR_add hfb).1; have hfs := (fragR_add hfb).2
+  have hft := (fragR_add hfc).1; have hfu := (fragR_add hfc).2
+  have da := deg_pos a
+  have dr := deg_pos r; have ds := deg_pos s
+  have dt := deg_pos t; have du := deg_pos u
+  have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+  have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+  have hab2 : add r s ≠ add t u := ne_of_ltF h2
+  rw [ltF_succ_nsum_add _ ha0 hna] at h1
+  rw [ltF_succ_add_add _ hab2] at h2
+  rw [ltF_succ_nsum_add _ ha0 hna]
+  by_cases hrt : r = t
+  · subst hrt; exact h1
+  · rw [if_neg hrt] at h2
+    simp only [Bool.or_eq_true, beq_iff_eq] at h1
+    rcases h1 with h3 | h3
+    · rw [h3]; simp [h2]
+    · have h4 : ltF f' a t = true :=
+        TR1 a r t hfa hfr hft (by omega) f' (by omega) h3 h2
+      simp [h4]
+
+-- ===== [T1-T10] T6 : t6 =====
+-- verdict: kimina OK (messages []), 0.08s
+-- notes: non-sum/Sum/non-sum, §8.2 case (6). §8.2's local `UP` (fuel step-up) is inlined as the closing `rw [ltF_stable a c (f' + 1) f' …]` on the GOAL rather than as a separate have — same content, one line shorter. Both A and C are opaque non-sums, so this one statement covers all 25 ψ/Z-inclusive (A,C) sh
+theorem t6 : ∀ (a r s c : Term) (n m f' : Nat),
+    a ≠ zero → NSum a = true → c ≠ zero → NSum c = true →
+    TransCase a (add r s) c n m f' := by
+  intro a r s c n m f' ha0 hna hc0 hnc hfa hfb hfc hb hm hf ASYM COMP TR1 TR2 h1 h2
+  have hfr := (fragR_add hfb).1; have hfs := (fragR_add hfb).2
+  have da := deg_pos a; have dc := deg_pos c
+  have dr := deg_pos r; have ds := deg_pos s
+  have eB : (add r s).deg = 1 + r.deg + s.deg := rfl
+  rw [ltF_succ_nsum_add _ ha0 hna] at h1
+  rw [ltF_succ_add_nsum _ hc0 hnc] at h2
+  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+  have h4 : ltF f' a c = true := by
+    rcases h1 with h3 | h3
+    · rw [h3]; exact h2
+    · exact TR1 a r c hfa hfr hfc (by omega) f' (by omega) h3 h2
+  rw [ltF_stable a c (f' + 1) f' (by omega) (by omega)]
+  exact h4
+
+-- ===== [T1-T10] T7 : t7 =====
+-- verdict: kimina OK (messages []), 0.08s
+-- notes: non-sum/non-sum/Sum, §8.2 case (7). Four extra hypotheses (A and B both opaque non-sums). §8.2's `LOW` is inlined as `hAB`. This is the last of the seven sum-involving triples; together T1-T7 plus the three zero cases (a = 0 immediate by ltF_left_zero, b = 0 / c = 0 contradictory by ltF_right_zero —
+theorem t7 : ∀ (a b t u : Term) (n m f' : Nat),
+    a ≠ zero → NSum a = true → b ≠ zero → NSum b = true →
+    TransCase a b (add t u) n m f' := by
+  intro a b t u n m f' ha0 hna hb0 hnb hfa hfb hfc hbd hm hf ASYM COMP TR1 TR2 h1 h2
+  have hft := (fragR_add hfc).1; have hfu := (fragR_add hfc).2
+  have da := deg_pos a; have db := deg_pos b
+  have dt := deg_pos t; have du := deg_pos u
+  have eC : (add t u).deg = 1 + t.deg + u.deg := rfl
+  have hAB : ltF f' a b = true := by
+    rw [ltF_stable a b f' (f' + 1) (by omega) (by omega)]; exact h1
+  rw [ltF_succ_nsum_add _ hb0 hnb] at h2
+  rw [ltF_succ_nsum_add _ ha0 hna]
+  simp only [Bool.or_eq_true, beq_iff_eq] at h2
+  rcases h2 with h3 | h3
+  · rw [← h3]; simp [hAB]
+  · have h4 : ltF f' a t = true :=
+      TR2 a t hfa hft (by omega) f' (by omega) hAB h3
+    simp [h4]
+
+-- ===== [T1-T10] T8 : t8 =====
+-- verdict: kimina OK (messages []), 0.01s
+-- notes: THE LEVEL-RAISING CASE. Takes LvlUp (= case S2) as an ordinary parameter, exactly as TransCase takes Asym3/Comp3, and discharges the goal in one application: neither induction hypothesis, neither Stage-I fact, and neither h1 nor h2 is used. CHECKED NON-VACUOUS: LvlUp is genuinely provable — `example
+theorem t8 : ∀ (a b c : Term) (n m f' : Nat),
+    LvlUp → NSum a = true → NSum c = true → lvl a < lvl c →
+    TransCase a b c n m f' := by
+  intro a b c n m f' HLU hna hnc hlv hfa hfb hfc hbd hm hf ASYM COMP TR1 TR2 h1 h2
+  exact HLU f' a c hna hnc hlv
+
+-- ===== [T1-T10] T9 : t9 =====
+-- verdict: kimina OK (messages []), 0.07s
+-- notes: ω̄/ω̄/ω̄ (level 3), [R91] 2.3.12 three times — the transcription of §8.2 case (8)'s ω̄ sub-branch with frag2_omg replaced by fragR_omg. One call of IH_TR1; Comp3 unused, Asym3 used only for `hac`. Reachability witness: lt (omg M) (omg (omg M)) && lt (omg (omg M)) (omg (omg (omg M))).
+theorem t9 : ∀ (x y z : Term) (n m f' : Nat),
+    TransCase (omg x) (omg y) (omg z) n m f' := by
+  intro x y z n m f' hfa hfb hfc hbd hm hf ASYM COMP TR1 TR2 h1 h2
+  have hfx := fragR_omg hfa; have hfy := fragR_omg hfb; have hfz := fragR_omg hfc
+  have dx := deg_pos x; have dy := deg_pos y; have dz := deg_pos z
+  have eA : (omg x).deg = 1 + x.deg := rfl
+  have eB : (omg y).deg = 1 + y.deg := rfl
+  have eC : (omg z).deg = 1 + z.deg := rfl
+  have hac : omg x ≠ omg z := by
+    intro hcc
+    rw [← hcc] at h2
+    rw [ASYM _ _ hfa hfb (f' + 1) (by omega) h1] at h2
+    exact Bool.noConfusion h2
+  have hne1 : omg x ≠ omg y := ne_of_ltF h1
+  have hne2 : omg y ≠ omg z := ne_of_ltF h2
+  rw [ltF_succ_omg_omg _ hne1] at h1
+  rw [ltF_succ_omg_omg _ hne2] at h2
+  rw [ltF_succ_omg_omg _ hac]
+  exact TR1 x y z hfx hfy hfz (by omega) f' (by omega) h1 h2
+
+-- ===== [T1-T10] T10 : t10 =====
+-- verdict: kimina OK (messages []), 0.00s
+-- notes: M/M/M (level 2), the deliberately vacuous case: level 2 has exactly one inhabitant, so h1 : ltF (f'+1) M M = true contradicts ltF_irrefl and the goal is discharged from h1 alone. This is the ONE case in the batch that is vacuous, and by design — §8.4(iv) says 'level 2 forces a = b = M, impossible'. 
+theorem t10 : ∀ (n m f' : Nat), TransCase M M M n m f' := by
+  intro n m f' hfa hfb hfc hbd hm hf ASYM COMP TR1 TR2 h1 h2
+  rw [ltF_irrefl] at h1
+  exact Bool.noConfusion h1
+
+-- ===== [T11-T19] T11 : t11 (φ̄/φ̄/φ̄) =====
+-- verdict: kimina 12346: OK (no messages), 0.99s; #print axioms t11 = [propext, Quot.sound]
+-- notes: Transcription of §8.2 case (8) (WF.lean lines 4218-4332) with three substitutions and nothing else: Frag2 destructors -> fragR_phi; ltF_comparable2 hfp hft (by omega) -> Comp p t hfp hft f' (by omega); ltF_asymm2 hft hfp (by omega) h -> Asym t p hft hfp f' (by omega) h. §8.2's ambient LOW/UP are re-
+theorem t11 : ∀ (p q r s t u : Term) (n m f' : Nat),
+    TransCase (phi p q) (phi r s) (phi t u) n m f' := by
+  intro p q r s t u n m f' hfa hfb hfc hb hm hf Asym Comp TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  obtain ⟨hfr, hfs⟩ := fragR_phi hfb
+  obtain ⟨hft, hfu⟩ := fragR_phi hfc
+  have dp := deg_pos p; have dq := deg_pos q; have dr := deg_pos r
+  have ds := deg_pos s; have dt := deg_pos t; have du := deg_pos u
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (phi r s).deg = 1 + r.deg + s.deg := rfl
+  have eC : (phi t u).deg = 1 + t.deg + u.deg := rfl
+  have LOW : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF (f' + 1) x y = true → ltF f' x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y f' (f' + 1) hxy (by omega)]; exact h
+  have UP : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF f' x y = true → ltF (f' + 1) x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y (f' + 1) f' (by omega) hxy]; exact h
+  have hac : phi p q ≠ phi t u := by
+    intro hc
+    have hno := Asym (phi r s) (phi t u) hfb hfc (f' + 1) (by omega) h2
+    rw [hc, hno] at h1
+    exact Bool.noConfusion h1
+  have hAB : ltF f' (phi p q) (phi r s) = true := LOW (phi p q) (phi r s) (by omega) h1
+  have hBC : ltF f' (phi r s) (phi t u) = true := LOW (phi r s) (phi t u) (by omega) h2
+  have hab1 : phi p q ≠ phi r s := ne_of_ltF h1
+  have hab2 : phi r s ≠ phi t u := ne_of_ltF h2
+  rw [ltF_succ_phi_phi _ hab1] at h1
+  rw [ltF_succ_phi_phi _ hab2] at h2
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl] at h1
+    by_cases hrt : p = t
+    · subst hrt
+      rw [if_pos rfl] at h2
+      rw [ltF_succ_phi_phi _ hac, if_pos rfl]
+      exact TR1 q s u hfq hfs hfu (by omega) f' (by omega) h1 h2
+    · rw [if_neg hrt] at h2
+      by_cases hrt2 : ltF f' p t = true
+      · rw [if_pos hrt2] at h2
+        rw [ltF_succ_phi_phi _ hac, if_neg hrt, if_pos hrt2]
+        exact TR1 q s (phi t u) hfq hfs hfc (by omega) f' (by omega) h1 h2
+      · rw [if_neg hrt2] at h2
+        rw [ltF_succ_phi_phi _ hac, if_neg hrt, if_neg hrt2]
+        simp only [Bool.or_eq_true, beq_iff_eq] at h2
+        rcases h2 with h3 | h3
+        · rw [← h3]; simp [hAB]
+        · have h4 : ltF f' (phi p q) u = true :=
+            TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3
+          simp [h4]
+  · rw [if_neg hpr] at h1
+    by_cases hpr2 : ltF f' p r = true
+    · rw [if_pos hpr2] at h1
+      by_cases hrt : r = t
+      · subst hrt
+        rw [if_pos rfl] at h2
+        rw [ltF_succ_phi_phi _ hac, if_neg hpr, if_pos hpr2]
+        exact TR2 q (phi r u) hfq hfc (by omega) f' (by omega) h1 hBC
+      · rw [if_neg hrt] at h2
+        by_cases hrt2 : ltF f' r t = true
+        · rw [if_pos hrt2] at h2
+          have hpt : ltF f' p t = true :=
+            TR1 p r t hfp hfr hft (by omega) f' (by omega) hpr2 hrt2
+          rw [ltF_succ_phi_phi _ hac, if_neg (ne_of_ltF hpt), if_pos hpt]
+          exact TR2 q (phi t u) hfq hfc (by omega) f' (by omega) h1 hBC
+        · rw [if_neg hrt2] at h2
+          rcases Comp p t hfp hft f' (by omega) with hc1 | hc1 | hc1
+          · rw [ltF_succ_phi_phi _ hac, if_neg (ne_of_ltF hc1), if_pos hc1]
+            exact TR2 q (phi t u) hfq hfc (by omega) f' (by omega) h1 hBC
+          · subst hc1
+            rw [ltF_succ_phi_phi _ hac, if_pos rfl]
+            simp only [Bool.or_eq_true, beq_iff_eq] at h2
+            rcases h2 with h3 | h3
+            · rw [← h3]; exact h1
+            · exact TR2 q u hfq hfu (by omega) f' (by omega) h1 h3
+          · have hpt : p ≠ t := by
+              intro hc; rw [hc, ltF_irrefl] at hc1; exact Bool.noConfusion hc1
+            have hnp : ltF f' p t = false := Asym t p hft hfp f' (by omega) hc1
+            rw [ltF_succ_phi_phi _ hac, if_neg hpt, if_neg (by simp [hnp])]
+            simp only [Bool.or_eq_true, beq_iff_eq] at h2
+            rcases h2 with h3 | h3
+            · rw [← h3]; simp [hAB]
+            · have h4 : ltF f' (phi p q) u = true :=
+                TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3
+              simp [h4]
+    · rw [if_neg hpr2] at h1
+      have hrp : ltF f' r p = true := by
+        rcases Comp p r hfp hfr f' (by omega) with h3 | h3 | h3
+        · exact absurd h3 hpr2
+        · exact absurd h3 hpr
+        · exact h3
+      by_cases hrt : r = t
+      · subst hrt
+        rw [if_pos rfl] at h2
+        rw [ltF_succ_phi_phi _ hac, if_neg hpr, if_neg hpr2]
+        simp only [Bool.or_eq_true, beq_iff_eq] at h1
+        rcases h1 with h3 | h3
+        · rw [h3]; simp [h2]
+        · have h4 : ltF f' (phi p q) u = true :=
+            TR1 (phi p q) s u hfa hfs hfu (by omega) f' (by omega) h3 h2
+          simp [h4]
+      · rw [if_neg hrt] at h2
+        by_cases hrt2 : ltF f' r t = true
+        · rw [if_pos hrt2] at h2
+          simp only [Bool.or_eq_true, beq_iff_eq] at h1
+          have h4 : ltF f' (phi p q) (phi t u) = true := by
+            rcases h1 with h3 | h3
+            · rw [h3]; exact h2
+            · exact TR1 (phi p q) s (phi t u) hfa hfs hfc
+                (by omega) f' (by omega) h3 h2
+          exact UP (phi p q) (phi t u) (by omega) h4
+        · rw [if_neg hrt2] at h2
+          have htr : ltF f' t r = true := by
+            rcases Comp r t hfr hft f' (by omega) with h3 | h3 | h3
+            · exact absurd h3 hrt2
+            · exact absurd h3 hrt
+            · exact h3
+          have htp : ltF f' t p = true :=
+            TR1 t r p hft hfr hfp (by omega) f' (by omega) htr hrp
+          have hpt : p ≠ t := by
+            intro hc; rw [← hc, ltF_irrefl] at htp; exact Bool.noConfusion htp
+          have hnp : ltF f' p t = false := Asym t p hft hfp f' (by omega) htp
+          rw [ltF_succ_phi_phi _ hac, if_neg hpt, if_neg (by simp [hnp])]
+          simp only [Bool.or_eq_true, beq_iff_eq] at h2
+          rcases h2 with h3 | h3
+          · rw [← h3]; simp [hAB]
+          · have h4 : ltF f' (phi p q) u = true :=
+              TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3
+            simp [h4]
+
+-- ===== [T11-T19] T12 : t12 (φ̄/φ̄/ψ) =====
+-- verdict: kimina 12346: OK (no messages), 0.37s; #print axioms t12 = [propext, Quot.sound]
+-- notes: Hypothesis 1 by 2.3.13 (ltF_succ_phi_phi), hypothesis 2 by 2.3.5 (ltF_succ_phi_psi, giving r < C and s < C), goal by 2.3.5 again, i.e. componentwise p < C and q < C. 13(ii): p = r gives p < C free from h2, and q < s < C by IH_TR1 with middle s (s.deg ≤ n follows from B.deg = 1+r.deg+s.deg ≤ n+1 and 
+theorem t12 : ∀ (p q r s k w : Term) (n m f' : Nat),
+    TransCase (phi p q) (phi r s) (psi k w) n m f' := by
+  intro p q r s k w n m f' hfa hfb hfc hb hm hf _Asym _Comp TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  obtain ⟨hfr, hfs⟩ := fragR_phi hfb
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s
+  have dk := deg_pos k; have dw := deg_pos w
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (phi r s).deg = 1 + r.deg + s.deg := rfl
+  have eC : (psi k w).deg = 1 + k.deg + w.deg := rfl
+  have hBC : ltF f' (phi r s) (psi k w) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  have hab1 : phi p q ≠ phi r s := ne_of_ltF h1
+  have h2' : ltF f' r (psi k w) = true ∧ ltF f' s (psi k w) = true := by
+    rw [ltF_succ_phi_psi] at h2; simpa only [Bool.and_eq_true] using h2
+  rw [ltF_succ_phi_phi _ hab1] at h1
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl] at h1
+    rw [ltF_succ_phi_psi]
+    simp only [Bool.and_eq_true]
+    exact ⟨h2'.1, TR1 q s (psi k w) hfq hfs hfc (by omega) f' (by omega) h1 h2'.2⟩
+  · rw [if_neg hpr] at h1
+    by_cases hpr2 : ltF f' p r = true
+    · rw [if_pos hpr2] at h1
+      rw [ltF_succ_phi_psi]
+      simp only [Bool.and_eq_true]
+      exact ⟨TR1 p r (psi k w) hfp hfr hfc (by omega) f' (by omega) hpr2 h2'.1,
+             TR2 q (psi k w) hfq hfc (by omega) f' (by omega) h1 hBC⟩
+    · rw [if_neg hpr2] at h1
+      simp only [Bool.or_eq_true, beq_iff_eq] at h1
+      have hAC : ltF f' (phi p q) (psi k w) = true := by
+        rcases h1 with h3 | h3
+        · rw [h3]; exact h2'.2
+        · exact TR1 (phi p q) s (psi k w) hfa hfs hfc (by omega) f' (by omega) h3 h2'.2
+      rw [ltF_stable _ _ (f' + 1) f' (by omega) (by omega)]
+      exact hAC
+
+-- ===== [T11-T19] T13 : t13 (φ̄/φ̄/Z) =====
+-- verdict: kimina 12346: OK (no messages), 0.35s; #print axioms t13 = [propext, Quot.sound]
+-- notes: T12 verbatim with the ψ endpoint replaced by a Z endpoint: ltF_succ_phi_psi -> ltF_succ_phi_Z. 2.3.5 has literally the same body for both SC shapes (§8.3's comment on ltF_succ_phi_psi / ltF_succ_phi_Z), so the proof text is identical modulo that rewrite name. Consumes IH_TR1 and IH_TR2 only.
+theorem t13 : ∀ (p q r s d : Term) (n m f' : Nat),
+    TransCase (phi p q) (phi r s) (Z d) n m f' := by
+  intro p q r s d n m f' hfa hfb hfc hb hm hf _Asym _Comp TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  obtain ⟨hfr, hfs⟩ := fragR_phi hfb
+  have dp := deg_pos p; have dq := deg_pos q
+  have dr := deg_pos r; have ds := deg_pos s
+  have dd := deg_pos d
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (phi r s).deg = 1 + r.deg + s.deg := rfl
+  have eC : (Z d).deg = 1 + d.deg := rfl
+  have hBC : ltF f' (phi r s) (Z d) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  have hab1 : phi p q ≠ phi r s := ne_of_ltF h1
+  have h2' : ltF f' r (Z d) = true ∧ ltF f' s (Z d) = true := by
+    rw [ltF_succ_phi_Z] at h2; simpa only [Bool.and_eq_true] using h2
+  rw [ltF_succ_phi_phi _ hab1] at h1
+  by_cases hpr : p = r
+  · subst hpr
+    rw [if_pos rfl] at h1
+    rw [ltF_succ_phi_Z]
+    simp only [Bool.and_eq_true]
+    exact ⟨h2'.1, TR1 q s (Z d) hfq hfs hfc (by omega) f' (by omega) h1 h2'.2⟩
+  · rw [if_neg hpr] at h1
+    by_cases hpr2 : ltF f' p r = true
+    · rw [if_pos hpr2] at h1
+      rw [ltF_succ_phi_Z]
+      simp only [Bool.and_eq_true]
+      exact ⟨TR1 p r (Z d) hfp hfr hfc (by omega) f' (by omega) hpr2 h2'.1,
+             TR2 q (Z d) hfq hfc (by omega) f' (by omega) h1 hBC⟩
+    · rw [if_neg hpr2] at h1
+      simp only [Bool.or_eq_true, beq_iff_eq] at h1
+      have hAC : ltF f' (phi p q) (Z d) = true := by
+        rcases h1 with h3 | h3
+        · rw [h3]; exact h2'.2
+        · exact TR1 (phi p q) s (Z d) hfa hfs hfc (by omega) f' (by omega) h3 h2'.2
+      rw [ltF_stable _ _ (f' + 1) f' (by omega) (by omega)]
+      exact hAC
+
+-- ===== [T11-T19] T14 : t14 (φ̄/ψ/φ̄) =====
+-- verdict: kimina 12346: OK (no messages), 0.43s; #print axioms t14 = [propext, Quot.sound]
+-- notes: Hypothesis 1 by 2.3.5 (p < B and q < B), hypothesis 2 by 2.3.4 (ltF_succ_psi_phi: B ≤ t or B ≤ u), goal by 2.3.13. The whole case turns on one derived disjunction hPT: either p < t (when B ≤ t, by IH_TR2 with x = p, z = t) or both q < u and A < u (when B ≤ u, by IH_TR2 twice). Reading the goal's 13-
+theorem t14 : ∀ (p q k w t u : Term) (n m f' : Nat),
+    TransCase (phi p q) (psi k w) (phi t u) n m f' := by
+  intro p q k w t u n m f' hfa hfb hfc hb hm hf Asym _Comp _TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  obtain ⟨hft, hfu⟩ := fragR_phi hfc
+  have dp := deg_pos p; have dq := deg_pos q
+  have dk := deg_pos k; have dw := deg_pos w
+  have dt := deg_pos t; have du := deg_pos u
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (psi k w).deg = 1 + k.deg + w.deg := rfl
+  have eC : (phi t u).deg = 1 + t.deg + u.deg := rfl
+  have hAB : ltF f' (phi p q) (psi k w) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h1
+  have hBC : ltF f' (psi k w) (phi t u) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  have hac : phi p q ≠ phi t u := by
+    intro hc
+    have hno := Asym (psi k w) (phi t u) hfb hfc (f' + 1) (by omega) h2
+    rw [hc, hno] at h1
+    exact Bool.noConfusion h1
+  have h1' : ltF f' p (psi k w) = true ∧ ltF f' q (psi k w) = true := by
+    have h := h1; rw [ltF_succ_phi_psi] at h; simpa only [Bool.and_eq_true] using h
+  have hB : psi k w = t ∨ psi k w = u ∨ ltF f' (psi k w) t = true
+      ∨ ltF f' (psi k w) u = true := by
+    have h := h2; rw [ltF_succ_psi_phi] at h
+    simp only [Bool.or_eq_true, beq_iff_eq] at h
+    rcases h with ((h3 | h3) | h3) | h3
+    · exact Or.inl h3
+    · exact Or.inr (Or.inl h3)
+    · exact Or.inr (Or.inr (Or.inl h3))
+    · exact Or.inr (Or.inr (Or.inr h3))
+  have hqC : ltF f' q (phi t u) = true :=
+    TR2 q (phi t u) hfq hfc (by omega) f' (by omega) h1'.2 hBC
+  have hPT : ltF f' p t = true ∨ (ltF f' q u = true ∧ ltF f' (phi p q) u = true) := by
+    rcases hB with h3 | h3 | h3 | h3
+    · exact Or.inl (by rw [← h3]; exact h1'.1)
+    · exact Or.inr ⟨by rw [← h3]; exact h1'.2, by rw [← h3]; exact hAB⟩
+    · exact Or.inl (TR2 p t hfp hft (by omega) f' (by omega) h1'.1 h3)
+    · exact Or.inr ⟨TR2 q u hfq hfu (by omega) f' (by omega) h1'.2 h3,
+                    TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3⟩
+  rw [ltF_succ_phi_phi _ hac]
+  by_cases hpt : p = t
+  · rw [if_pos hpt]
+    rcases hPT with h3 | h3
+    · exfalso; rw [hpt, ltF_irrefl] at h3; exact Bool.noConfusion h3
+    · exact h3.1
+  · rw [if_neg hpt]
+    by_cases hpt2 : ltF f' p t = true
+    · rw [if_pos hpt2]; exact hqC
+    · rw [if_neg hpt2]
+      rcases hPT with h3 | h3
+      · exact absurd h3 hpt2
+      · simp [h3.2]
+
+-- ===== [T11-T19] T15 : t15 (φ̄/ψ/ψ) =====
+-- verdict: kimina 12346: OK (no messages), 0.25s; #print axioms t15 = [propext, Quot.sound]
+-- notes: The φ̄-first / SC-SC pattern: hypothesis 1 by 2.3.5 makes A's two components sit below B, the goal by 2.3.5 asks for them below C, and IH_TR2 (middle stays B, the endpoints p and q are strict subterms of A so the degree sum drops) closes both. Hypothesis 2 is never unfolded — the ψ-vs-ψ clause 2.3.1
+theorem t15 : ∀ (p q k w j v : Term) (n m f' : Nat),
+    TransCase (phi p q) (psi k w) (psi j v) n m f' := by
+  intro p q k w j v n m f' hfa hfb hfc hb hm hf _Asym _Comp _TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  have dp := deg_pos p; have dq := deg_pos q
+  have dk := deg_pos k; have dw := deg_pos w
+  have dj := deg_pos j; have dv := deg_pos v
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (psi k w).deg = 1 + k.deg + w.deg := rfl
+  have eC : (psi j v).deg = 1 + j.deg + v.deg := rfl
+  rw [ltF_succ_phi_psi] at h1
+  simp only [Bool.and_eq_true] at h1
+  have hBC : ltF f' (psi k w) (psi j v) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  rw [ltF_succ_phi_psi]
+  simp only [Bool.and_eq_true]
+  exact ⟨TR2 p (psi j v) hfp hfc (by omega) f' (by omega) h1.1 hBC,
+         TR2 q (psi j v) hfq hfc (by omega) f' (by omega) h1.2 hBC⟩
+
+-- ===== [T11-T19] T16 : t16 (φ̄/ψ/Z) =====
+-- verdict: kimina 12346: OK (no messages), 0.20s; #print axioms t16 = [propext, Quot.sound]
+-- notes: Same pattern as T15. Notably hypothesis 2 (the ψ-vs-Z clause 2.3.8/2.3.6, which is one of the three that recurse through starF) is used only as an opaque `ltF f' B C = true` — it is never destructured, so this case creates no starF obligation. Consumes IH_TR2 only.
+theorem t16 : ∀ (p q k w d : Term) (n m f' : Nat),
+    TransCase (phi p q) (psi k w) (Z d) n m f' := by
+  intro p q k w d n m f' hfa hfb hfc hb hm hf _Asym _Comp _TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  have dp := deg_pos p; have dq := deg_pos q
+  have dk := deg_pos k; have dw := deg_pos w
+  have dd := deg_pos d
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (psi k w).deg = 1 + k.deg + w.deg := rfl
+  have eC : (Z d).deg = 1 + d.deg := rfl
+  rw [ltF_succ_phi_psi] at h1
+  simp only [Bool.and_eq_true] at h1
+  have hBC : ltF f' (psi k w) (Z d) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  rw [ltF_succ_phi_Z]
+  simp only [Bool.and_eq_true]
+  exact ⟨TR2 p (Z d) hfp hfc (by omega) f' (by omega) h1.1 hBC,
+         TR2 q (Z d) hfq hfc (by omega) f' (by omega) h1.2 hBC⟩
+
+-- ===== [T11-T19] T17 : t17 (φ̄/Z/φ̄) =====
+-- verdict: kimina 12346: OK (no messages), 0.41s; #print axioms t17 = [propext, Quot.sound]
+-- notes: T14 verbatim with the ψ middle replaced by a Z middle: ltF_succ_phi_psi -> ltF_succ_phi_Z and ltF_succ_psi_phi -> ltF_succ_Z_phi. 2.3.5 and 2.3.4 have the same body for both SC shapes, so nothing else changes. Consumes Asym3 (only for A ≠ C) and IH_TR2.
+theorem t17 : ∀ (p q e t u : Term) (n m f' : Nat),
+    TransCase (phi p q) (Z e) (phi t u) n m f' := by
+  intro p q e t u n m f' hfa hfb hfc hb hm hf Asym _Comp _TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  obtain ⟨hft, hfu⟩ := fragR_phi hfc
+  have dp := deg_pos p; have dq := deg_pos q
+  have de := deg_pos e
+  have dt := deg_pos t; have du := deg_pos u
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (Z e).deg = 1 + e.deg := rfl
+  have eC : (phi t u).deg = 1 + t.deg + u.deg := rfl
+  have hAB : ltF f' (phi p q) (Z e) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h1
+  have hBC : ltF f' (Z e) (phi t u) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  have hac : phi p q ≠ phi t u := by
+    intro hc
+    have hno := Asym (Z e) (phi t u) hfb hfc (f' + 1) (by omega) h2
+    rw [hc, hno] at h1
+    exact Bool.noConfusion h1
+  have h1' : ltF f' p (Z e) = true ∧ ltF f' q (Z e) = true := by
+    have h := h1; rw [ltF_succ_phi_Z] at h; simpa only [Bool.and_eq_true] using h
+  have hB : Z e = t ∨ Z e = u ∨ ltF f' (Z e) t = true ∨ ltF f' (Z e) u = true := by
+    have h := h2; rw [ltF_succ_Z_phi] at h
+    simp only [Bool.or_eq_true, beq_iff_eq] at h
+    rcases h with ((h3 | h3) | h3) | h3
+    · exact Or.inl h3
+    · exact Or.inr (Or.inl h3)
+    · exact Or.inr (Or.inr (Or.inl h3))
+    · exact Or.inr (Or.inr (Or.inr h3))
+  have hqC : ltF f' q (phi t u) = true :=
+    TR2 q (phi t u) hfq hfc (by omega) f' (by omega) h1'.2 hBC
+  have hPT : ltF f' p t = true ∨ (ltF f' q u = true ∧ ltF f' (phi p q) u = true) := by
+    rcases hB with h3 | h3 | h3 | h3
+    · exact Or.inl (by rw [← h3]; exact h1'.1)
+    · exact Or.inr ⟨by rw [← h3]; exact h1'.2, by rw [← h3]; exact hAB⟩
+    · exact Or.inl (TR2 p t hfp hft (by omega) f' (by omega) h1'.1 h3)
+    · exact Or.inr ⟨TR2 q u hfq hfu (by omega) f' (by omega) h1'.2 h3,
+                    TR2 (phi p q) u hfa hfu (by omega) f' (by omega) hAB h3⟩
+  rw [ltF_succ_phi_phi _ hac]
+  by_cases hpt : p = t
+  · rw [if_pos hpt]
+    rcases hPT with h3 | h3
+    · exfalso; rw [hpt, ltF_irrefl] at h3; exact Bool.noConfusion h3
+    · exact h3.1
+  · rw [if_neg hpt]
+    by_cases hpt2 : ltF f' p t = true
+    · rw [if_pos hpt2]; exact hqC
+    · rw [if_neg hpt2]
+      rcases hPT with h3 | h3
+      · exact absurd h3 hpt2
+      · simp [h3.2]
+
+-- ===== [T11-T19] T18 : t18 (φ̄/Z/ψ) =====
+-- verdict: kimina 12346: OK (no messages), 0.21s; #print axioms t18 = [propext, Quot.sound]
+-- notes: Same pattern as T15/T16; hypothesis 2 (2.3.9, the Z-vs-ψ clause that goes through δ*) is used opaquely and never destructured. Consumes IH_TR2 only.
+theorem t18 : ∀ (p q e k w : Term) (n m f' : Nat),
+    TransCase (phi p q) (Z e) (psi k w) n m f' := by
+  intro p q e k w n m f' hfa hfb hfc hb hm hf _Asym _Comp _TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  have dp := deg_pos p; have dq := deg_pos q
+  have de := deg_pos e
+  have dk := deg_pos k; have dw := deg_pos w
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (Z e).deg = 1 + e.deg := rfl
+  have eC : (psi k w).deg = 1 + k.deg + w.deg := rfl
+  rw [ltF_succ_phi_Z] at h1
+  simp only [Bool.and_eq_true] at h1
+  have hBC : ltF f' (Z e) (psi k w) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  rw [ltF_succ_phi_psi]
+  simp only [Bool.and_eq_true]
+  exact ⟨TR2 p (psi k w) hfp hfc (by omega) f' (by omega) h1.1 hBC,
+         TR2 q (psi k w) hfq hfc (by omega) f' (by omega) h1.2 hBC⟩
+
+-- ===== [T11-T19] T19 : t19 (φ̄/Z/Z) =====
+-- verdict: kimina 12346: OK (no messages), 0.19s; #print axioms t19 = [propext, Quot.sound]
+-- notes: Same pattern as T15/T16/T18; hypothesis 2 is 2.3.15 (the clause that routes through starF TWICE) and is used opaquely. Consumes IH_TR2 only.
+theorem t19 : ∀ (p q e d : Term) (n m f' : Nat),
+    TransCase (phi p q) (Z e) (Z d) n m f' := by
+  intro p q e d n m f' hfa hfb hfc hb hm hf _Asym _Comp _TR1 TR2 h1 h2
+  obtain ⟨hfp, hfq⟩ := fragR_phi hfa
+  have dp := deg_pos p; have dq := deg_pos q
+  have de := deg_pos e; have dd := deg_pos d
+  have eA : (phi p q).deg = 1 + p.deg + q.deg := rfl
+  have eB : (Z e).deg = 1 + e.deg := rfl
+  have eC : (Z d).deg = 1 + d.deg := rfl
+  rw [ltF_succ_phi_Z] at h1
+  simp only [Bool.and_eq_true] at h1
+  have hBC : ltF f' (Z e) (Z d) = true := by
+    rw [ltF_stable _ _ f' (f' + 1) (by omega) (by omega)]; exact h2
+  rw [ltF_succ_phi_Z]
+  simp only [Bool.and_eq_true]
+  exact ⟨TR2 p (Z d) hfp hfc (by omega) f' (by omega) h1.1 hBC,
+         TR2 q (Z d) hfq hfc (by omega) f' (by omega) h1.2 hBC⟩
+
+-- ===== [T20-T28] T20 : t20_psi_phi_phi =====
+-- verdict: kimina http://localhost:12346/api/check — messages [] (clean); also clean in the combined 8-theorem snippet; #print axioms → [propext, Quot.sound]
+-- notes: ψφφ. h1 read by 2.3.4 (ltF_succ_psi_phi), h2 by 2.3.13 (ltF_succ_phi_phi), goal emitted by 2.3.4. Three h2-branches: (ii) c=t → ψ≤c gives disjunct t, ψ≤d chains through d<u by IH_TR1 (middle d, d.deg ≤ n from hbn); (i) c<t → ψ≤c chains to t by IH_TR1 (middle c), ψ≤d gives ψ<φtu at f' then UP; (iii) 
+theorem t20_psi_phi_phi : ∀ (k a c d t u : Term) (n m f' : Nat),
+    TransCase (psi k a) (phi c d) (phi t u) n m f' := by
+  intro k a c d t u n m f'
+  intro hfa hfb hfc hbn hacm hf _hA _hC htr1 htr2 h1 h2
+  obtain ⟨hfc0, hfd⟩ := fragR_phi hfb
+  obtain ⟨hft, hfu⟩ := fragR_phi hfc
+  have dk := deg_pos k; have da := deg_pos a
+  have dc := deg_pos c; have dd := deg_pos d
+  have dt := deg_pos t; have du := deg_pos u
+  simp only [Term.deg] at hbn hacm hf
+  have LOW : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF (f' + 1) x y = true → ltF f' x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y f' (f' + 1) hxy (by omega)]; exact h
+  have UP : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF f' x y = true → ltF (f' + 1) x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y (f' + 1) f' (by omega) hxy]; exact h
+  have hAB : ltF f' (psi k a) (phi c d) = true :=
+    LOW _ _ (by simp only [Term.deg]; omega) h1
+  have hne2 : phi c d ≠ phi t u := ne_of_ltF h2
+  rw [ltF_succ_psi_phi] at h1
+  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+  rw [ltF_succ_phi_phi _ hne2] at h2
+  by_cases hct : c = t
+  · subst hct
+    rw [if_pos rfl] at h2
+    rw [ltF_succ_psi_phi]
+    rcases h1 with ((h3 | h3) | h3) | h3
+    · simp [h3]
+    · have h4 : ltF f' (psi k a) u = true := by rw [h3]; exact h2
+      simp [h4]
+    · simp [h3]
+    · have h4 : ltF f' (psi k a) u = true :=
+        htr1 (psi k a) d u hfa hfd hfu (by omega) f' (by simp only [Term.deg]; omega) h3 h2
+      simp [h4]
+  · rw [if_neg hct] at h2
+    by_cases hlt : ltF f' c t = true
+    · rw [if_pos hlt] at h2
+      rcases h1 with ((h3 | h3) | h3) | h3
+      · rw [ltF_succ_psi_phi]
+        have h4 : ltF f' (psi k a) t = true := by rw [h3]; exact hlt
+        simp [h4]
+      · exact UP _ _ (by simp only [Term.deg]; omega) (by rw [h3]; exact h2)
+      · rw [ltF_succ_psi_phi]
+        have h4 : ltF f' (psi k a) t = true :=
+          htr1 (psi k a) c t hfa hfc0 hft (by omega) f' (by simp only [Term.deg]; omega) h3 hlt
+        simp [h4]
+      · exact UP _ _ (by simp only [Term.deg]; omega)
+          (htr1 (psi k a) d (phi t u) hfa hfd hfc (by omega) f'
+            (by simp only [Term.deg]; omega) h3 h2)
+    · rw [if_neg hlt] at h2
+      simp only [Bool.or_eq_true, beq_iff_eq] at h2
+      rw [ltF_succ_psi_phi]
+      rcases h2 with h3 | h3
+      · have h4 : ltF f' (psi k a) u = true := by rw [← h3]; exact hAB
+        simp [h4]
+      · have h4 : ltF f' (psi k a) u = true :=
+          htr2 (psi k a) u hfa hfu (by simp only [Term.deg]; omega) f'
+            (by simp only [Term.deg]; omega) hAB h3
+        simp [h4]
+
+-- ===== [T20-T28] T21 : t21_psi_phi_psi =====
+-- verdict: kimina — messages [] (clean); clean in combined snippet; axioms [propext, Quot.sound]
+-- notes: ψφψ. h1 by 2.3.4, h2 by 2.3.5 (ltF_succ_phi_psi) which hands over BOTH c<ψqe and d<ψqe. Whichever component of φcd dominates ψka, that component is already below ψqe, so one IH_TR1 (middle c or d, both of degree ≤ n) finishes at fuel f' and UP lifts it. Consumes IH_TR1 only.
+theorem t21_psi_phi_psi : ∀ (k a c d q e : Term) (n m f' : Nat),
+    TransCase (psi k a) (phi c d) (psi q e) n m f' := by
+  intro k a c d q e n m f'
+  intro hfa hfb hfc hbn hacm hf _hA _hC htr1 _htr2 h1 h2
+  obtain ⟨hfc0, hfd⟩ := fragR_phi hfb
+  have dk := deg_pos k; have da := deg_pos a
+  have dc := deg_pos c; have dd := deg_pos d
+  have dq := deg_pos q; have de := deg_pos e
+  simp only [Term.deg] at hbn hacm hf
+  have UP : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF f' x y = true → ltF (f' + 1) x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y (f' + 1) f' (by omega) hxy]; exact h
+  rw [ltF_succ_psi_phi] at h1
+  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+  rw [ltF_succ_phi_psi] at h2
+  simp only [Bool.and_eq_true] at h2
+  obtain ⟨h2c, h2d⟩ := h2
+  refine UP _ _ (by simp only [Term.deg]; omega) ?_
+  rcases h1 with ((h3 | h3) | h3) | h3
+  · rw [h3]; exact h2c
+  · rw [h3]; exact h2d
+  · exact htr1 (psi k a) c (psi q e) hfa hfc0 hfc (by omega) f'
+      (by simp only [Term.deg]; omega) h3 h2c
+  · exact htr1 (psi k a) d (psi q e) hfa hfd hfc (by omega) f'
+      (by simp only [Term.deg]; omega) h3 h2d
+
+-- ===== [T20-T28] T22 : t22_psi_phi_Z =====
+-- verdict: kimina — messages [] (clean); clean in combined snippet; axioms [propext, Quot.sound]
+-- notes: ψφZ. Identical to T21 with the other SC shape: 2.3.5 is ltF_succ_phi_Z here. Note NO starF appears — the goal ψka < Zz is produced at fuel f' by IH_TR1 and lifted by UP, so 2.3.6/2.3.8 never has to be unfolded. Consumes IH_TR1 only.
+theorem t22_psi_phi_Z : ∀ (k a c d z : Term) (n m f' : Nat),
+    TransCase (psi k a) (phi c d) (Z z) n m f' := by
+  intro k a c d z n m f'
+  intro hfa hfb hfc hbn hacm hf _hA _hC htr1 _htr2 h1 h2
+  obtain ⟨hfc0, hfd⟩ := fragR_phi hfb
+  have dk := deg_pos k; have da := deg_pos a
+  have dc := deg_pos c; have dd := deg_pos d
+  have dz := deg_pos z
+  simp only [Term.deg] at hbn hacm hf
+  have UP : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF f' x y = true → ltF (f' + 1) x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y (f' + 1) f' (by omega) hxy]; exact h
+  rw [ltF_succ_psi_phi] at h1
+  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+  rw [ltF_succ_phi_Z] at h2
+  simp only [Bool.and_eq_true] at h2
+  obtain ⟨h2c, h2d⟩ := h2
+  refine UP _ _ (by simp only [Term.deg]; omega) ?_
+  rcases h1 with ((h3 | h3) | h3) | h3
+  · rw [h3]; exact h2c
+  · rw [h3]; exact h2d
+  · exact htr1 (psi k a) c (Z z) hfa hfc0 hfc (by omega) f'
+      (by simp only [Term.deg]; omega) h3 h2c
+  · exact htr1 (psi k a) d (Z z) hfa hfd hfc (by omega) f'
+      (by simp only [Term.deg]; omega) h3 h2d
+
+-- ===== [T20-T28] T23 : t23_psi_psi_phi =====
+-- verdict: kimina — messages [] (clean); clean in combined snippet; axioms [propext, Quot.sound]
+-- notes: ψψφ. h2 by 2.3.4 says ψpb ≤ t or ψpb ≤ u; ψka < ψpb (h1, lowered by §5) then transports to the SAME component by IH_TR2 (middle stays ψpb; t resp. u replaces φtu, so a.deg+c.deg strictly drops), and the goal is emitted by 2.3.4. h1 is never unfolded, so 2.3.14 and κ∈R are not touched. Consumes IH_TR
+theorem t23_psi_psi_phi : ∀ (k a p b t u : Term) (n m f' : Nat),
+    TransCase (psi k a) (psi p b) (phi t u) n m f' := by
+  intro k a p b t u n m f'
+  intro hfa hfb hfc hbn hacm hf _hA _hC _htr1 htr2 h1 h2
+  obtain ⟨hft, hfu⟩ := fragR_phi hfc
+  have dk := deg_pos k; have da := deg_pos a
+  have dp := deg_pos p; have db := deg_pos b
+  have dt := deg_pos t; have du := deg_pos u
+  simp only [Term.deg] at hbn hacm hf
+  have LOW : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF (f' + 1) x y = true → ltF f' x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y f' (f' + 1) hxy (by omega)]; exact h
+  have hAB : ltF f' (psi k a) (psi p b) = true :=
+    LOW _ _ (by simp only [Term.deg]; omega) h1
+  rw [ltF_succ_psi_phi] at h2
+  simp only [Bool.or_eq_true, beq_iff_eq] at h2
+  rw [ltF_succ_psi_phi]
+  rcases h2 with ((h3 | h3) | h3) | h3
+  · have h4 : ltF f' (psi k a) t = true := by rw [← h3]; exact hAB
+    simp [h4]
+  · have h4 : ltF f' (psi k a) u = true := by rw [← h3]; exact hAB
+    simp [h4]
+  · have h4 : ltF f' (psi k a) t = true :=
+      htr2 (psi k a) t hfa hft (by simp only [Term.deg]; omega) f'
+        (by simp only [Term.deg]; omega) hAB h3
+    simp [h4]
+  · have h4 : ltF f' (psi k a) u = true :=
+      htr2 (psi k a) u hfa hfu (by simp only [Term.deg]; omega) f'
+        (by simp only [Term.deg]; omega) hAB h3
+    simp [h4]
+
+-- ===== [T20-T28] T25 : t25_psi_psi_Z =====
+-- verdict: kimina — messages [] (clean); clean in combined snippet; axioms [propext, Quot.sound]
+-- notes: ψψZ. Split on WHICH clause h2 (ψpb < Zz) used. If 2.3.8 fired (p ≤ Zz) the proof never touches starF: 2.3.14 on h1 gives k=p (then the goal's own 2.3.8 guard is hpz verbatim), k<p (then k<p≤Zz by IH_TR1, middle p, and the goal fires 2.3.8), or ψka<p (then ψka<Zz at f' by IH_TR1 and UP). If 2.3.6 fir
+theorem t25_psi_psi_Z : ∀ (k a p b z : Term) (n m f' : Nat),
+    TransCase (psi k a) (psi p b) (Z z) n m f' := by
+  intro k a p b z n m f'
+  intro hfa hfb hfc hbn hacm hf _hA _hC htr1 htr2 h1 h2
+  obtain ⟨_hkR, hfk, _hfa'⟩ := fragR_psi hfa
+  obtain ⟨_hpR, hfp, _hfb'⟩ := fragR_psi hfb
+  have hfz : FragR z = true := fragR_Z hfc
+  have dk := deg_pos k; have da := deg_pos a
+  have dp := deg_pos p; have db := deg_pos b
+  have dz := deg_pos z
+  simp only [Term.deg] at hbn hacm hf
+  -- the fragment is closed under `α*` (§8.4(ii), case S1), inline
+  have hstar : ∀ (g : Nat) (s : Term), FragR s = true → FragR (starF g s) = true := by
+    intro g
+    induction g with
+    | zero => intro s _; rfl
+    | succ g ih =>
+      intro s hs
+      cases s with
+      | zero => exact rfl
+      | M => exact rfl
+      | psi kk aa => exact hs
+      | Z aa => exact hs
+      | omg aa => exact ih aa hs
+      | add aa bb =>
+        obtain ⟨ha', hb'⟩ := fragR_add hs
+        rw [starF_succ_add]
+        cases ltF g (starF g aa) (starF g bb)
+        · show FragR (starF g aa) = true
+          exact ih aa ha'
+        · show FragR (starF g bb) = true
+          exact ih bb hb'
+      | phi aa bb =>
+        obtain ⟨ha', hb'⟩ := fragR_phi hs
+        rw [starF_succ_phi]
+        cases ltF g (starF g aa) (starF g bb)
+        · show FragR (starF g aa) = true
+          exact ih aa ha'
+        · show FragR (starF g bb) = true
+          exact ih bb hb'
+  have LOW : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF (f' + 1) x y = true → ltF f' x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y f' (f' + 1) hxy (by omega)]; exact h
+  have UP : ∀ (x y : Term), x.deg + y.deg ≤ f' →
+      ltF f' x y = true → ltF (f' + 1) x y = true := by
+    intro x y hxy h
+    rw [ltF_stable x y (f' + 1) f' (by omega) hxy]; exact h
+  have hAB : ltF f' (psi k a) (psi p b) = true :=
+    LOW _ _ (by simp only [Term.deg]; omega) h1
+  rw [ltF_succ_psi_Z] at h2
+  by_cases hpz : (p == Z z || ltF f' p (Z z)) = true
+  · -- 2.3.8 on the right: `p ≤ Zz`, so everything below `p` is below `Zz`
+    have key : ∀ (x : Term), FragR x = true → x.deg + p.deg + (Z z).deg ≤ f' →
+        ltF f' x p = true → ltF f' x (Z z) = true := by
+      intro x hx hxd hxp
+      simp only [Bool.or_eq_true, beq_iff_eq] at hpz
+      rcases hpz with h4 | h4
+      · rw [← h4]; exact hxp
+      · exact htr1 x p (Z z) hx hfp hfc (by omega) f' hxd hxp h4
+    have hne1 : psi k a ≠ psi p b := ne_of_ltF h1
+    rw [ltF_succ_psi_psi _ hne1] at h1
+    by_cases hkp : k = p
+    · subst hkp
+      rw [ltF_succ_psi_Z, if_pos hpz]
+    · rw [if_neg hkp] at h1
+      by_cases hklt : ltF f' k p = true
+      · rw [if_pos hklt] at h1
+        have hkz : ltF f' k (Z z) = true :=
+          key k hfk (by simp only [Term.deg]; omega) hklt
+        rw [ltF_succ_psi_Z, if_pos (by simp [hkz])]
+      · rw [if_neg hklt] at h1
+        exact UP _ _ (by simp only [Term.deg]; omega)
+          (key (psi k a) hfa (by simp only [Term.deg]; omega) h1)
+  · -- 2.3.6 on the right: `ψpb ≤ z*`
+    rw [if_neg hpz] at h2
+    simp only [Bool.or_eq_true, beq_iff_eq] at h2
+    by_cases hkz : (k == Z z || ltF f' k (Z z)) = true
+    · rw [ltF_succ_psi_Z, if_pos hkz]
+    · rw [ltF_succ_psi_Z, if_neg hkz]
+      have hds := deg_starF f' z
+      have h4 : ltF f' (psi k a) (starF f' z) = true := by
+        rcases h2 with h3 | h3
+        · rw [← h3]; exact hAB
+        · exact htr2 (psi k a) (starF f' z) hfa (hstar f' z hfz)
+            (by simp only [Term.deg]; omega) f' (by simp only [Term.deg]; omega) hAB h3
+      simp [h4]
+
+-- ===== [T20-T28] T26 : t26_psi_Z_phi =====
+-- verdict: kimina — messages [] (clean); clean in combined snippet; axioms [propext, Quot.sound]
+-- notes: ψZφ. Structurally identical to T23 with the middle SC shape swapped: h2 read by 2.3.4 (ltF_succ_Z_phi), h1 left folded and only lowered to fuel f', then IH_TR2 moves ψka past Zy to the dominating component of φtu. h1's ψ-vs-Z clause is never unfolded, so no starF. Consumes IH_TR2 only.
+theorem t26_psi_Z_phi : ∀ (k a y t u : Term) (n m f' : Nat),
+    TransCase (psi k a) (Z y) (phi t u) n m f' := by
+  intro k a y t u n m f'
+  intro hfa hfb hfc hbn hacm hf _hA _hC _htr1 htr2 h1 h2
+  obtain ⟨hft, hfu⟩ := fragR_phi hfc
+  have dk := deg_pos k; have da := deg_pos a
+  have dy := deg_pos y
+  have dt := deg_pos t; have du := deg_pos u
+  simp only [Term.deg] at hbn hacm hf
+  have LOW : ∀ (x w : Term), x.deg + w.deg ≤ f' →
+      ltF (f' + 1) x w = true → ltF f' x w = true := by
+    intro x w hxw h
+    rw [ltF_stable x w f' (f' + 1) hxw (by omega)]; exact h
+  have hAB : ltF f' (psi k a) (Z y) = true :=
+    LOW _ _ (by simp only [Term.deg]; omega) h1
+  rw [ltF_succ_Z_phi] at h2
+  simp only [Bool.or_eq_true, beq_iff_eq] at h2
+  rw [ltF_succ_psi_phi]
+  rcases h2 with ((h3 | h3) | h3) | h3
+  · have h4 : ltF f' (psi k a) t = true := by rw [← h3]; exact hAB
+    simp [h4]
+  · have h4 : ltF f' (psi k a) u = true := by rw [← h3]; exact hAB
+    simp [h4]
+  · have h4 : ltF f' (psi k a) t = true :=
+      htr2 (psi k a) t hfa hft (by simp only [Term.deg]; omega) f'
+        (by simp only [Term.deg]; omega) hAB h3
+    simp [h4]
+  · have h4 : ltF f' (psi k a) u = true :=
+      htr2 (psi k a) u hfa hfu (by simp only [Term.deg]; omega) f'
+        (by simp only [Term.deg]; omega) hAB h3
+    simp [h4]
+
+-- ===== [T20-T28] T27 : t27_psi_Z_psi =====
+-- verdict: kimina — messages [] (clean); clean in combined snippet; axioms [propext, Quot.sound]
+-- notes: ψZψ, the hardest of the eight. h2 (Zy < ψqe) can only be 2.3.9, so its guard q ≤ Zy is FALSE and h2 delivers y* < ψqe. Then h1 splits: (2.3.6) ψka ≤ y* chains to ψqe by IH_TR1 with middle y* — legal since (starF f' y).deg ≤ y.deg ≤ n — then UP; (2.3.8) k ≤ Zy, and here the goal must be emitted by 2.
+theorem t27_psi_Z_psi : ∀ (k a y q e : Term) (n m f' : Nat),
+    TransCase (psi k a) (Z y) (psi q e) n m f' := by
+  intro k a y q e n m f'
+  intro hfa hfb hfc hbn hacm hf _hA hC htr1 htr2 h1 h2
+  obtain ⟨_hkR, hfk, _hfa'⟩ := fragR_psi hfa
+  obtain ⟨_hqR, hfq, _hfe⟩ := fragR_psi hfc
+  have hfy : FragR y = true := fragR_Z hfb
+  have dk := deg_pos k; have da := deg_pos a
+  have dy := deg_pos y
+  have dq := deg_pos q; have de := deg_pos e
+  simp only [Term.deg] at hbn hacm hf
+  -- the fragment is closed under `α*` (§8.4(ii), case S1), inline
+  have hstar : ∀ (g : Nat) (s : Term), FragR s = true → FragR (starF g s) = true := by
+    intro g
+    induction g with
+    | zero => intro s _; rfl
+    | succ g ih =>
+      intro s hs
+      cases s with
+      | zero => exact rfl
+      | M => exact rfl
+      | psi kk aa => exact hs
+      | Z aa => exact hs
+      | omg aa => exact ih aa hs
+      | add aa bb =>
+        obtain ⟨ha', hb'⟩ := fragR_add hs
+        rw [starF_succ_add]
+        cases ltF g (starF g aa) (starF g bb)
+        · show FragR (starF g aa) = true
+          exact ih aa ha'
+        · show FragR (starF g bb) = true
+          exact ih bb hb'
+      | phi aa bb =>
+        obtain ⟨ha', hb'⟩ := fragR_phi hs
+        rw [starF_succ_phi]
+        cases ltF g (starF g aa) (starF g bb)
+        · show FragR (starF g aa) = true
+          exact ih aa ha'
+        · show FragR (starF g bb) = true
+          exact ih bb hb'
+  have LOW : ∀ (x w : Term), x.deg + w.deg ≤ f' →
+      ltF (f' + 1) x w = true → ltF f' x w = true := by
+    intro x w hxw h
+    rw [ltF_stable x w f' (f' + 1) hxw (by omega)]; exact h
+  have UP : ∀ (x w : Term), x.deg + w.deg ≤ f' →
+      ltF f' x w = true → ltF (f' + 1) x w = true := by
+    intro x w hxw h
+    rw [ltF_stable x w (f' + 1) f' (by omega) hxw]; exact h
+  have hBC : ltF f' (Z y) (psi q e) = true :=
+    LOW _ _ (by simp only [Term.deg]; omega) h2
+  have hds := deg_starF f' y
+  -- 2.3.9 on the right: the `κ ≤ γ` guard must have failed, or `Zy < ψqe` is false
+  rw [ltF_succ_Z_psi] at h2
+  by_cases hqy : (q == Z y || ltF f' q (Z y)) = true
+  · rw [if_pos hqy] at h2; exact Bool.noConfusion h2
+  · rw [if_neg hqy] at h2
+    -- h2 : ltF f' (starF f' y) (psi q e) = true
+    rw [ltF_succ_psi_Z] at h1
+    by_cases hkY : (k == Z y || ltF f' k (Z y)) = true
+    · -- 2.3.8 on the left: `k ≤ Zy`, and `Zy < q` because 2.3.9's guard failed
+      have keyk : ∀ (w : Term), FragR w = true → k.deg + w.deg ≤ m →
+          k.deg + (Z y).deg + w.deg ≤ f' → ltF f' (Z y) w = true → ltF f' k w = true := by
+        intro w hw hwm hwf hzw
+        simp only [Bool.or_eq_true, beq_iff_eq] at hkY
+        rcases hkY with h5 | h5
+        · rw [h5]; exact hzw
+        · exact htr2 k w hfk hw hwm f' hwf h5 hzw
+      have hZq : ltF f' (Z y) q = true := by
+        rcases hC q (Z y) hfq hfb f' (by simp only [Term.deg]; omega) with h5 | h5 | h5
+        · exact absurd (by simp [h5]) hqy
+        · exact absurd (by simp [h5]) hqy
+        · exact h5
+      have hkq : ltF f' k q = true :=
+        keyk q hfq (by omega) (by simp only [Term.deg]; omega) hZq
+      have hkqe : ltF f' k (psi q e) = true :=
+        keyk (psi q e) hfc (by simp only [Term.deg]; omega)
+          (by simp only [Term.deg]; omega) hBC
+      have hkqne : k ≠ q := ne_of_ltF hkq
+      have hne : psi k a ≠ psi q e := by
+        intro hc; injection hc with h5 _; exact hkqne h5
+      rw [ltF_succ_psi_psi _ hne, if_neg hkqne, if_pos hkq]
+      exact hkqe
+    · -- 2.3.6 on the left: `ψka ≤ y*`, and `y* < ψqe` by 2.3.9
+      rw [if_neg hkY] at h1
+      simp only [Bool.or_eq_true, beq_iff_eq] at h1
+      refine UP _ _ (by simp only [Term.deg]; omega) ?_
+      rcases h1 with h3 | h3
+      · rw [h3]; exact h2
+      · exact htr1 (psi k a) (starF f' y) (psi q e) hfa (hstar f' y hfy) hfc
+          (by omega) f' (by simp only [Term.deg]; omega) h3 h2
+
+-- ===== [T20-T28] T28 : t28_psi_Z_Z =====
+-- verdict: kimina — messages [] (clean); clean in combined snippet; axioms [propext, Quot.sound]
+-- notes: ψZZ, the case that routes through starF on both sides. Split on h1's 2.3.8 guard first: if k ≤ Zy then k ≤ Zy < Zz gives k < Zz by IH_TR2 (middle Zy) and the goal fires its own 2.3.8 — no starF needed. Otherwise h1 gives ψka ≤ y* and h2 is 2.3.15: (i) y<z, y* < Zz, so ψka ≤ y* < Zz by IH_TR1 with mi
+theorem t28_psi_Z_Z : ∀ (k a y z : Term) (n m f' : Nat),
+    TransCase (psi k a) (Z y) (Z z) n m f' := by
+  intro k a y z n m f'
+  intro hfa hfb hfc hbn hacm hf _hA _hC htr1 htr2 h1 h2
+  obtain ⟨_hkR, hfk, _hfa'⟩ := fragR_psi hfa
+  have hfy : FragR y = true := fragR_Z hfb
+  have hfz : FragR z = true := fragR_Z hfc
+  have dk := deg_pos k; have da := deg_pos a
+  have dy := deg_pos y; have dz := deg_pos z
+  simp only [Term.deg] at hbn hacm hf
+  -- the fragment is closed under `α*` (§8.4(ii), case S1), inline
+  have hstar : ∀ (g : Nat) (s : Term), FragR s = true → FragR (starF g s) = true := by
+    intro g
+    induction g with
+    | zero => intro s _; rfl
+    | succ g ih =>
+      intro s hs
+      cases s with
+      | zero => exact rfl
+      | M => exact rfl
+      | psi kk aa => exact hs
+      | Z aa => exact hs
+      | omg aa => exact ih aa hs
+      | add aa bb =>
+        obtain ⟨ha', hb'⟩ := fragR_add hs
+        rw [starF_succ_add]
+        cases ltF g (starF g aa) (starF g bb)
+        · show FragR (starF g aa) = true
+          exact ih aa ha'
+        · show FragR (starF g bb) = true
+          exact ih bb hb'
+      | phi aa bb =>
+        obtain ⟨ha', hb'⟩ := fragR_phi hs
+        rw [starF_succ_phi]
+        cases ltF g (starF g aa) (starF g bb)
+        · show FragR (starF g aa) = true
+          exact ih aa ha'
+        · show FragR (starF g bb) = true
+          exact ih bb hb'
+  have LOW : ∀ (x w : Term), x.deg + w.deg ≤ f' →
+      ltF (f' + 1) x w = true → ltF f' x w = true := by
+    intro x w hxw h
+    rw [ltF_stable x w f' (f' + 1) hxw (by omega)]; exact h
+  have UP : ∀ (x w : Term), x.deg + w.deg ≤ f' →
+      ltF f' x w = true → ltF (f' + 1) x w = true := by
+    intro x w hxw h
+    rw [ltF_stable x w (f' + 1) f' (by omega) hxw]; exact h
+  have hAB : ltF f' (psi k a) (Z y) = true :=
+    LOW _ _ (by simp only [Term.deg]; omega) h1
+  have hBC : ltF f' (Z y) (Z z) = true :=
+    LOW _ _ (by simp only [Term.deg]; omega) h2
+  have hdsy := deg_starF f' y
+  have hdsz := deg_starF f' z
+  rw [ltF_succ_psi_Z] at h1
+  by_cases hkY : (k == Z y || ltF f' k (Z y)) = true
+  · -- 2.3.8 on the left: `k ≤ Zy < Zz`, so 2.3.8 fires for the conclusion too
+    have hkz : ltF f' k (Z z) = true := by
+      simp only [Bool.or_eq_true, beq_iff_eq] at hkY
+      rcases hkY with h5 | h5
+      · rw [h5]; exact hBC
+      · exact htr2 k (Z z) hfk hfc (by simp only [Term.deg]; omega) f'
+          (by simp only [Term.deg]; omega) h5 hBC
+    rw [ltF_succ_psi_Z, if_pos (by simp [hkz])]
+  · -- 2.3.6 on the left: `ψka ≤ y*`
+    rw [if_neg hkY] at h1
+    simp only [Bool.or_eq_true, beq_iff_eq] at h1
+    have hne2 : Z y ≠ Z z := ne_of_ltF h2
+    rw [ltF_succ_Z_Z _ hne2] at h2
+    by_cases hyz : ltF f' y z = true
+    · -- 2.3.15(i): `y* < Zz`, and `ψka ≤ y*`
+      rw [if_pos hyz] at h2
+      refine UP _ _ (by simp only [Term.deg]; omega) ?_
+      rcases h1 with h3 | h3
+      · rw [h3]; exact h2
+      · exact htr1 (psi k a) (starF f' y) (Z z) hfa (hstar f' y hfy) hfc
+          (by omega) f' (by simp only [Term.deg]; omega) h3 h2
+    · -- 2.3.15(ii): `Zy ≤ z*`, and `ψka < Zy`
+      rw [if_neg hyz] at h2
+      simp only [Bool.or_eq_true, beq_iff_eq] at h2
+      have h4 : ltF f' (psi k a) (starF f' z) = true := by
+        rcases h2 with h3 | h3
+        · rw [← h3]; exact hAB
+        · exact htr2 (psi k a) (starF f' z) hfa (hstar f' z hfz)
+            (by simp only [Term.deg]; omega) f' (by simp only [Term.deg]; omega) hAB h3
+      -- PHASE B REPAIR (psiz1): the returned proof ended at `simp [h4]`, which cannot
+      -- close the goal — it is at fuel `f' + 1` while `h4` lives at `f'`, so clause
+      -- 2.3.6 has to be unfolded first.  Everything else in this proof is as returned.
+      rw [ltF_succ_psi_Z]
+      by_cases hkz : ((k == Z z) || ltF f' k (Z z)) = true
+      · rw [if_pos hkz]
+      · rw [if_neg hkz]; simp [h4]
+
+-- ===== [T29-T36] T29 : c29 — Zφφ =====
+-- verdict: kimina 12346: 0 errors (messages [] apart from none); also compiles in the combined 8-theorem snippet
+-- notes: 2.3.4 on the left (ltF_succ_Z_phi: Zx ≤ c or Zx ≤ d) against the three branches of 2.3.13 on the right (ltF_succ_phi_phi). 13(ii) c=e: Zx ≤ c settles disjunct 1/3, Zx ≤ d goes through IH_TR1 with middle d. 13(i): Zx ≤ c uses IH_TR1 with middle c; Zx ≤ d gives Zx < φeg AT FUEL f' and is lifted by ltF
+theorem c29 : ∀ (x c d e g : Term) (n m f' : Nat), TransCase (Z x) (phi c d) (phi e g) n m f' := by
+  intro x c d e g n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  have dx := deg_pos x; have dc := deg_pos c; have dd := deg_pos d
+  have de := deg_pos e; have dg := deg_pos g
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (phi c d).deg = 1 + c.deg + d.deg := rfl
+  have eC : (phi e g).deg = 1 + e.deg + g.deg := rfl
+  obtain ⟨hFc, hFd⟩ := fragR_phi hB
+  obtain ⟨hFe, hFg⟩ := fragR_phi hC
+  have hAB : ltF f' (Z x) (phi c d) = true := by
+    rw [ltF_stable (Z x) (phi c d) f' (f' + 1) (by omega) (by omega)]; exact h1
+  have hBne : phi c d ≠ phi e g := ne_of_ltF h2
+  rw [ltF_succ_phi_phi _ hBne] at h2
+  rw [ltF_succ_Z_phi] at h1
+  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+  by_cases hce : c = e
+  · subst hce
+    rw [if_pos rfl] at h2
+    rw [ltF_succ_Z_phi]
+    rcases h1 with ((h3 | h3) | h3) | h3
+    · simp [h3]
+    · have k : ltF f' (Z x) g = true := by rw [h3]; exact h2
+      simp [k]
+    · simp [h3]
+    · have k : ltF f' (Z x) g = true :=
+        htr1 (Z x) d g hA hFd hFg (by omega) f' (by omega) h3 h2
+      simp [k]
+  · rw [if_neg hce] at h2
+    by_cases hce2 : ltF f' c e = true
+    · rw [if_pos hce2] at h2
+      rcases h1 with ((h3 | h3) | h3) | h3
+      · rw [ltF_succ_Z_phi]
+        have k : ltF f' (Z x) e = true := by rw [h3]; exact hce2
+        simp [k]
+      · have k : ltF f' (Z x) (phi e g) = true := by rw [h3]; exact h2
+        rw [ltF_stable (Z x) (phi e g) (f' + 1) f' (by omega) (by omega)]
+        exact k
+      · rw [ltF_succ_Z_phi]
+        have k : ltF f' (Z x) e = true :=
+          htr1 (Z x) c e hA hFc hFe (by omega) f' (by omega) h3 hce2
+        simp [k]
+      · have k : ltF f' (Z x) (phi e g) = true :=
+          htr1 (Z x) d (phi e g) hA hFd hC (by omega) f' (by omega) h3 h2
+        rw [ltF_stable (Z x) (phi e g) (f' + 1) f' (by omega) (by omega)]
+        exact k
+    · rw [if_neg hce2] at h2
+      simp only [Bool.or_eq_true, beq_iff_eq] at h2
+      have k : ltF f' (Z x) g = true := by
+        rcases h2 with h4 | h4
+        · rw [← h4]; exact hAB
+        · exact htr2 (Z x) g hA hFg (by omega) f' (by omega) hAB h4
+      rw [ltF_succ_Z_phi]
+      simp [k]
+
+-- ===== [T29-T36] T30 : c30 — ZφZ =====
+-- verdict: kimina 12346: 0 errors; also compiles in the combined 8-theorem snippet
+-- notes: 2.3.5 on the right (ltF_succ_phi_Z) hands over BOTH components below Zz, and 2.3.4 on the left puts Zx ≤ c or ≤ d; one IH_TR1 with the matching component as middle finishes AT FUEL f', and ltF_stable lifts to f'+1 — the goal's 2.3.15 clause is never unfolded, so no starF reasoning at all. Consumes I
+theorem c30 : ∀ (x c d z : Term) (n m f' : Nat), TransCase (Z x) (phi c d) (Z z) n m f' := by
+  intro x c d z n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  have dx := deg_pos x; have dc := deg_pos c; have dd := deg_pos d; have dz := deg_pos z
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (phi c d).deg = 1 + c.deg + d.deg := rfl
+  have eC : (Z z).deg = 1 + z.deg := rfl
+  obtain ⟨hFc, hFd⟩ := fragR_phi hB
+  rw [ltF_succ_phi_Z] at h2
+  simp only [Bool.and_eq_true] at h2
+  obtain ⟨h2c, h2d⟩ := h2
+  rw [ltF_succ_Z_phi] at h1
+  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+  have key : ltF f' (Z x) (Z z) = true := by
+    rcases h1 with ((h3 | h3) | h3) | h3
+    · rw [h3]; exact h2c
+    · rw [h3]; exact h2d
+    · exact htr1 (Z x) c (Z z) hA hFc hC (by omega) f' (by omega) h3 h2c
+    · exact htr1 (Z x) d (Z z) hA hFd hC (by omega) f' (by omega) h3 h2d
+  rw [ltF_stable (Z x) (Z z) (f' + 1) f' (by omega) (by omega)]
+  exact key
+
+-- ===== [T29-T36] T31 : c31 — Zφψ =====
+-- verdict: kimina 12346: 0 errors; also compiles in the combined 8-theorem snippet
+-- notes: Literally T30 with the ψ form of 2.3.5 (ltF_succ_phi_psi); same route: 2.3.4 on the left + one IH_TR1 with middle c or d, result obtained at fuel f' and lifted by ltF_stable, so the goal's 2.3.9 clause (and its starF) is never unfolded. Asym3/Comp3/StarClosed NOT used; q.isR not consumed. Receipt: Z
+theorem c31 : ∀ (x c d q e : Term) (n m f' : Nat), TransCase (Z x) (phi c d) (psi q e) n m f' := by
+  intro x c d q e n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  have dx := deg_pos x; have dc := deg_pos c; have dd := deg_pos d
+  have dq := deg_pos q; have de := deg_pos e
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (phi c d).deg = 1 + c.deg + d.deg := rfl
+  have eC : (psi q e).deg = 1 + q.deg + e.deg := rfl
+  obtain ⟨hFc, hFd⟩ := fragR_phi hB
+  rw [ltF_succ_phi_psi] at h2
+  simp only [Bool.and_eq_true] at h2
+  obtain ⟨h2c, h2d⟩ := h2
+  rw [ltF_succ_Z_phi] at h1
+  simp only [Bool.or_eq_true, beq_iff_eq] at h1
+  have key : ltF f' (Z x) (psi q e) = true := by
+    rcases h1 with ((h3 | h3) | h3) | h3
+    · rw [h3]; exact h2c
+    · rw [h3]; exact h2d
+    · exact htr1 (Z x) c (psi q e) hA hFc hC (by omega) f' (by omega) h3 h2c
+    · exact htr1 (Z x) d (psi q e) hA hFd hC (by omega) f' (by omega) h3 h2d
+  rw [ltF_stable (Z x) (psi q e) (f' + 1) f' (by omega) (by omega)]
+  exact key
+
+-- ===== [T29-T36] T32 : c32 — Zψφ =====
+-- verdict: kimina 12346: 0 errors; also compiles in the combined 8-theorem snippet
+-- notes: 2.3.4 on the right (ltF_succ_psi_phi) gives B ≤ e or B ≤ g; A < B < (that component) is one IH_TR2 (middle stays B, z' is a proper subterm of C so A.deg+z'.deg ≤ m−1), and the conclusion is the matching disjunct of 2.3.4 for Z (ltF_succ_Z_phi). h1 is used ONLY through ltF_stable, so its 2.3.9 clause
+theorem c32 : ∀ (x p b e g : Term) (n m f' : Nat), TransCase (Z x) (psi p b) (phi e g) n m f' := by
+  intro x p b e g n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  have dx := deg_pos x; have dp := deg_pos p; have db := deg_pos b
+  have de := deg_pos e; have dg := deg_pos g
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (psi p b).deg = 1 + p.deg + b.deg := rfl
+  have eC : (phi e g).deg = 1 + e.deg + g.deg := rfl
+  obtain ⟨hFe, hFg⟩ := fragR_phi hC
+  have hAB : ltF f' (Z x) (psi p b) = true := by
+    rw [ltF_stable (Z x) (psi p b) f' (f' + 1) (by omega) (by omega)]; exact h1
+  rw [ltF_succ_psi_phi] at h2
+  simp only [Bool.or_eq_true, beq_iff_eq] at h2
+  have key : ltF f' (Z x) e = true ∨ ltF f' (Z x) g = true := by
+    rcases h2 with ((h3 | h3) | h3) | h3
+    · exact Or.inl (by rw [← h3]; exact hAB)
+    · exact Or.inr (by rw [← h3]; exact hAB)
+    · exact Or.inl (htr2 (Z x) e hA hFe (by omega) f' (by omega) hAB h3)
+    · exact Or.inr (htr2 (Z x) g hA hFg (by omega) f' (by omega) hAB h3)
+  rw [ltF_succ_Z_phi]
+  rcases key with k | k
+  · simp [k]
+  · simp [k]
+
+-- ===== [T29-T36] T33 : c33 — Zψψ =====
+-- verdict: kimina 12346: 0 errors; also compiles in the combined 8-theorem snippet
+-- notes: Both halves of 2.3.9 for the goal. BODY (x* < ψπc): from h1's body x* < ψκb plus B < C, one IH_TR2 with x' = starF f' x — legal because deg_starF gives (starF f' x).deg ≤ x.deg = A.deg−1, so the degree SUM drops. GUARD (¬(π ≤ Zx)): 2.3.14 splits three ways — κ=π reuses h1's own guard verbatim (rw [←
+theorem c33 : ∀ (x p b q c : Term) (n m f' : Nat), TransCase (Z x) (psi p b) (psi q c) n m f' := by
+  intro x p b q c n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  -- the fragment is closed under `α*` (§8.4's `StarClosed`), proved here in isolation
+  have SC : StarClosed := by
+    intro f
+    induction f with
+    | zero => intro t _; rfl
+    | succ f ih =>
+      intro t h
+      cases t with
+      | zero => exact rfl
+      | M => exact rfl
+      | psi k a => exact h
+      | Z a => exact h
+      | omg a => exact ih a h
+      | add a b =>
+        obtain ⟨ha, hb⟩ := fragR_add h
+        show FragR (if ltF f (starF f a) (starF f b) then starF f b else starF f a) = true
+        cases ltF f (starF f a) (starF f b)
+        · show FragR (starF f a) = true
+          exact ih a ha
+        · show FragR (starF f b) = true
+          exact ih b hb
+      | phi a b =>
+        obtain ⟨ha, hb⟩ := fragR_phi h
+        show FragR (if ltF f (starF f a) (starF f b) then starF f b else starF f a) = true
+        cases ltF f (starF f a) (starF f b)
+        · show FragR (starF f a) = true
+          exact ih a ha
+        · show FragR (starF f b) = true
+          exact ih b hb
+  have dx := deg_pos x; have dp := deg_pos p; have db := deg_pos b
+  have dq := deg_pos q; have dc := deg_pos c
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (psi p b).deg = 1 + p.deg + b.deg := rfl
+  have eC : (psi q c).deg = 1 + q.deg + c.deg := rfl
+  have hFx : FragR x = true := fragR_Z hA
+  obtain ⟨hpR, hFp, hFb⟩ := fragR_psi hB
+  obtain ⟨hqR, hFq, hFc⟩ := fragR_psi hC
+  have dsx := deg_starF f' x
+  have hAB : ltF f' (Z x) (psi p b) = true := by
+    rw [ltF_stable (Z x) (psi p b) f' (f' + 1) (by omega) (by omega)]; exact h1
+  have hBC : ltF f' (psi p b) (psi q c) = true := by
+    rw [ltF_stable (psi p b) (psi q c) f' (f' + 1) (by omega) (by omega)]; exact h2
+  rw [ltF_succ_Z_psi] at h1
+  by_cases hp : ((p == Z x) || ltF f' p (Z x)) = true
+  · rw [if_pos hp] at h1; exact Bool.noConfusion h1
+  · rw [if_neg hp] at h1
+    have hp1 : p ≠ Z x := fun hcc => hp (by simp [hcc])
+    have hp2 : ltF f' p (Z x) ≠ true := fun hh => hp (by simp [hh])
+    -- `Z x < κ`: comparability, with both alternatives excluded by the guard of 2.3.9
+    have hAp : ltF f' (Z x) p = true := by
+      rcases hcomp p (Z x) hFp hA f' (by omega) with k | k | k
+      · exact absurd k hp2
+      · exact absurd k hp1
+      · exact k
+    -- the body of the goal's clause: `x* < ψπc`, from `x* < ψκb < ψπc`
+    have hSx : FragR (starF f' x) = true := SC f' x hFx
+    have hsecond : ltF f' (starF f' x) (psi q c) = true :=
+      htr2 (starF f' x) (psi q c) hSx hC (by omega) f' (by omega) h1 hBC
+    -- the guard of the goal: either the two heads coincide, or `Z x < π`
+    have hAq : ltF f' (Z x) q = true ∨ p = q := by
+      have hne : psi p b ≠ psi q c := ne_of_ltF h2
+      rw [ltF_succ_psi_psi _ hne] at h2
+      by_cases hpq : p = q
+      · exact Or.inr hpq
+      · rw [if_neg hpq] at h2
+        by_cases hpq2 : ltF f' p q = true
+        · exact Or.inl (htr1 (Z x) p q hA hFp hFq (by omega) f' (by omega) hAp hpq2)
+        · rw [if_neg hpq2] at h2
+          exact Or.inl (htr2 (Z x) q hA hFq (by omega) f' (by omega) hAB h2)
+    have hcond : ¬ (((q == Z x) || ltF f' q (Z x)) = true) := by
+      rcases hAq with k | k
+      · have hqx : ltF f' q (Z x) = false := hasym (Z x) q hA hFq f' (by omega) k
+        have hqne : q ≠ Z x := fun hcc => (ne_of_ltF k) hcc.symm
+        simp [hqx, hqne]
+      · rw [← k]; exact hp
+    rw [ltF_succ_Z_psi, if_neg hcond]
+    exact hsecond
+
+-- ===== [T29-T36] T34 : c34 — ZψZ =====
+-- verdict: kimina 12346: 0 errors; also compiles in the combined 8-theorem snippet
+-- notes: The one case where the goal is 2.3.15. Split on 2.3.8's guard in h2. GUARD TRUE (κ ≤ Zz): Comp3 turns h1's guard into Zx < κ, IH_TR1 with middle κ (proper subterm of B) gives Zx < Zz AT FUEL f', lifted by ltF_stable — 2.3.15 is never unfolded, which is what avoids having to compare x with z. GUARD F
+theorem c34 : ∀ (x p b z : Term) (n m f' : Nat), TransCase (Z x) (psi p b) (Z z) n m f' := by
+  intro x p b z n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  -- the fragment is closed under `α*` (§8.4's `StarClosed`), proved here in isolation
+  have SC : StarClosed := by
+    intro f
+    induction f with
+    | zero => intro t _; rfl
+    | succ f ih =>
+      intro t h
+      cases t with
+      | zero => exact rfl
+      | M => exact rfl
+      | psi k a => exact h
+      | Z a => exact h
+      | omg a => exact ih a h
+      | add a b =>
+        obtain ⟨ha, hb⟩ := fragR_add h
+        show FragR (if ltF f (starF f a) (starF f b) then starF f b else starF f a) = true
+        cases ltF f (starF f a) (starF f b)
+        · show FragR (starF f a) = true
+          exact ih a ha
+        · show FragR (starF f b) = true
+          exact ih b hb
+      | phi a b =>
+        obtain ⟨ha, hb⟩ := fragR_phi h
+        show FragR (if ltF f (starF f a) (starF f b) then starF f b else starF f a) = true
+        cases ltF f (starF f a) (starF f b)
+        · show FragR (starF f a) = true
+          exact ih a ha
+        · show FragR (starF f b) = true
+          exact ih b hb
+  have dx := deg_pos x; have dp := deg_pos p; have db := deg_pos b; have dz := deg_pos z
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (psi p b).deg = 1 + p.deg + b.deg := rfl
+  have eC : (Z z).deg = 1 + z.deg := rfl
+  have hFx : FragR x = true := fragR_Z hA
+  have hFz : FragR z = true := fragR_Z hC
+  obtain ⟨hpR, hFp, hFb⟩ := fragR_psi hB
+  have dsx := deg_starF f' x
+  have dsz := deg_starF f' z
+  have hAB : ltF f' (Z x) (psi p b) = true := by
+    rw [ltF_stable (Z x) (psi p b) f' (f' + 1) (by omega) (by omega)]; exact h1
+  have hBC : ltF f' (psi p b) (Z z) = true := by
+    rw [ltF_stable (psi p b) (Z z) f' (f' + 1) (by omega) (by omega)]; exact h2
+  have hac : Z x ≠ Z z := by
+    intro hcc
+    rw [hcc] at hAB
+    rw [hasym (Z z) (psi p b) hC hB f' (by omega) hAB] at hBC
+    exact Bool.noConfusion hBC
+  rw [ltF_succ_Z_psi] at h1
+  by_cases hp : ((p == Z x) || ltF f' p (Z x)) = true
+  · rw [if_pos hp] at h1; exact Bool.noConfusion h1
+  · rw [if_neg hp] at h1
+    have hp1 : p ≠ Z x := fun hcc => hp (by simp [hcc])
+    have hp2 : ltF f' p (Z x) ≠ true := fun hh => hp (by simp [hh])
+    -- `Z x < κ`: comparability, with both alternatives excluded by the guard of 2.3.9
+    have hAp : ltF f' (Z x) p = true := by
+      rcases hcomp p (Z x) hFp hA f' (by omega) with k | k | k
+      · exact absurd k hp2
+      · exact absurd k hp1
+      · exact k
+    rw [ltF_succ_psi_Z] at h2
+    by_cases hpz : ((p == Z z) || ltF f' p (Z z)) = true
+    · -- 2.3.8 on the right: `Z x < κ ≤ Z z`, so the conclusion needs no clause at all
+      have k : ltF f' (Z x) (Z z) = true := by
+        simp only [Bool.or_eq_true, beq_iff_eq] at hpz
+        rcases hpz with h3 | h3
+        · rw [← h3]; exact hAp
+        · exact htr1 (Z x) p (Z z) hA hFp hC (by omega) f' (by omega) hAp h3
+      rw [ltF_stable (Z x) (Z z) (f' + 1) f' (by omega) (by omega)]
+      exact k
+    · -- 2.3.6 on the right: `ψκb ≤ z*`
+      rw [if_neg hpz] at h2
+      rw [ltF_succ_Z_Z _ hac]
+      by_cases hxz : ltF f' x z = true
+      · -- 15(i): `x* < ψκb < Z z`
+        rw [if_pos hxz]
+        have hSx : FragR (starF f' x) = true := SC f' x hFx
+        exact htr2 (starF f' x) (Z z) hSx hC (by omega) f' (by omega) h1 hBC
+      · -- 15(ii): `Z x < ψκb ≤ z*`
+        rw [if_neg hxz]
+        have hSz : FragR (starF f' z) = true := SC f' z hFz
+        simp only [Bool.or_eq_true, beq_iff_eq] at h2
+        have k : ltF f' (Z x) (starF f' z) = true := by
+          rcases h2 with h3 | h3
+          · rw [← h3]; exact hAB
+          · exact htr2 (Z x) (starF f' z) hA hSz (by omega) f' (by omega) hAB h3
+        simp [k]
+
+-- ===== [T29-T36] T35 : c35 — ZZφ =====
+-- verdict: kimina 12346: 0 errors; also compiles in the combined 8-theorem snippet
+-- notes: Same route as T32 with B = Z y: 2.3.4 on the right gives B ≤ e or B ≤ g, one IH_TR2 (middle B, z' a proper subterm of C) yields the matching disjunct of 2.3.4 on the left. h1's 2.3.15 clause is used only through ltF_stable, so no starF appears. Asym3/Comp3/StarClosed NOT used. Receipt: Z0 < Z(Z0) < 
+theorem c35 : ∀ (x y e g : Term) (n m f' : Nat), TransCase (Z x) (Z y) (phi e g) n m f' := by
+  intro x y e g n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  have dx := deg_pos x; have dy := deg_pos y
+  have de := deg_pos e; have dg := deg_pos g
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (Z y).deg = 1 + y.deg := rfl
+  have eC : (phi e g).deg = 1 + e.deg + g.deg := rfl
+  obtain ⟨hFe, hFg⟩ := fragR_phi hC
+  have hAB : ltF f' (Z x) (Z y) = true := by
+    rw [ltF_stable (Z x) (Z y) f' (f' + 1) (by omega) (by omega)]; exact h1
+  rw [ltF_succ_Z_phi] at h2
+  simp only [Bool.or_eq_true, beq_iff_eq] at h2
+  have key : ltF f' (Z x) e = true ∨ ltF f' (Z x) g = true := by
+    rcases h2 with ((h3 | h3) | h3) | h3
+    · exact Or.inl (by rw [← h3]; exact hAB)
+    · exact Or.inr (by rw [← h3]; exact hAB)
+    · exact Or.inl (htr2 (Z x) e hA hFe (by omega) f' (by omega) hAB h3)
+    · exact Or.inr (htr2 (Z x) g hA hFg (by omega) f' (by omega) hAB h3)
+  rw [ltF_succ_Z_phi]
+  rcases key with k | k
+  · simp [k]
+  · simp [k]
+
+-- ===== [T29-T36] T36 : c36 — ZZψ =====
+-- verdict: kimina 12346: 0 errors; also compiles in the combined 8-theorem snippet
+-- notes: GUARD of the goal (¬(π ≤ Zx)) is proved WITHOUT transitivity through A: h2's own guard plus Comp3 give Zy < π, then IH_TR2 with z' = π (proper subterm of C) gives Zx < π, and Asym3 + ne_of_ltF close it. BODY: split h1 by 2.3.15. 15(i) (x* < Zy): IH_TR2 with x' = starF f' x, z' = C gives exactly the 
+theorem c36 : ∀ (x y q c : Term) (n m f' : Nat), TransCase (Z x) (Z y) (psi q c) n m f' := by
+  intro x y q c n m f' hA hB hC hBn hACm hf hasym hcomp htr1 htr2 h1 h2
+  -- the fragment is closed under `α*` (§8.4's `StarClosed`), proved here in isolation
+  have SC : StarClosed := by
+    intro f
+    induction f with
+    | zero => intro t _; rfl
+    | succ f ih =>
+      intro t h
+      cases t with
+      | zero => exact rfl
+      | M => exact rfl
+      | psi k a => exact h
+      | Z a => exact h
+      | omg a => exact ih a h
+      | add a b =>
+        obtain ⟨ha, hb⟩ := fragR_add h
+        show FragR (if ltF f (starF f a) (starF f b) then starF f b else starF f a) = true
+        cases ltF f (starF f a) (starF f b)
+        · show FragR (starF f a) = true
+          exact ih a ha
+        · show FragR (starF f b) = true
+          exact ih b hb
+      | phi a b =>
+        obtain ⟨ha, hb⟩ := fragR_phi h
+        show FragR (if ltF f (starF f a) (starF f b) then starF f b else starF f a) = true
+        cases ltF f (starF f a) (starF f b)
+        · show FragR (starF f a) = true
+          exact ih a ha
+        · show FragR (starF f b) = true
+          exact ih b hb
+  have dx := deg_pos x; have dy := deg_pos y; have dq := deg_pos q; have dc := deg_pos c
+  have eA : (Z x).deg = 1 + x.deg := rfl
+  have eB : (Z y).deg = 1 + y.deg := rfl
+  have eC : (psi q c).deg = 1 + q.deg + c.deg := rfl
+  have hFx : FragR x = true := fragR_Z hA
+  have hFy : FragR y = true := fragR_Z hB
+  obtain ⟨hqR, hFq, hFc⟩ := fragR_psi hC
+  have dsx := deg_starF f' x
+  have dsy := deg_starF f' y
+  have hAB : ltF f' (Z x) (Z y) = true := by
+    rw [ltF_stable (Z x) (Z y) f' (f' + 1) (by omega) (by omega)]; exact h1
+  have hBC : ltF f' (Z y) (psi q c) = true := by
+    rw [ltF_stable (Z y) (psi q c) f' (f' + 1) (by omega) (by omega)]; exact h2
+  rw [ltF_succ_Z_psi] at h2
+  by_cases hq : ((q == Z y) || ltF f' q (Z y)) = true
+  · rw [if_pos hq] at h2; exact Bool.noConfusion h2
+  · rw [if_neg hq] at h2
+    have hq1 : q ≠ Z y := fun hcc => hq (by simp [hcc])
+    have hq2 : ltF f' q (Z y) ≠ true := fun hh => hq (by simp [hh])
+    -- `Z y < q`: comparability, with both alternatives excluded by the guard
+    have hByq : ltF f' (Z y) q = true := by
+      rcases hcomp q (Z y) hFq hB f' (by omega) with k | k | k
+      · exact absurd k hq2
+      · exact absurd k hq1
+      · exact k
+    have hAq : ltF f' (Z x) q = true :=
+      htr2 (Z x) q hA hFq (by omega) f' (by omega) hAB hByq
+    have hqx : ltF f' q (Z x) = false := hasym (Z x) q hA hFq f' (by omega) hAq
+    have hqne : q ≠ Z x := fun hcc => (ne_of_ltF hAq) hcc.symm
+    have hcond : ¬ (((q == Z x) || ltF f' q (Z x)) = true) := by simp [hqx, hqne]
+    have hxy : Z x ≠ Z y := ne_of_ltF h1
+    rw [ltF_succ_Z_Z _ hxy] at h1
+    by_cases hxy2 : ltF f' x y = true
+    · rw [if_pos hxy2] at h1
+      have hSx : FragR (starF f' x) = true := SC f' x hFx
+      have k : ltF f' (starF f' x) (psi q c) = true :=
+        htr2 (starF f' x) (psi q c) hSx hC (by omega) f' (by omega) h1 hBC
+      rw [ltF_succ_Z_psi, if_neg hcond]
+      exact k
+    · rw [if_neg hxy2] at h1
+      have hSy : FragR (starF f' y) = true := SC f' y hFy
+      simp only [Bool.or_eq_true, beq_iff_eq] at h1
+      have k : ltF f' (Z x) (psi q c) = true := by
+        rcases h1 with h3 | h3
+        · rw [h3]; exact h2
+        · exact htr1 (Z x) (starF f' y) (psi q c) hA hSy hC (by omega) f' (by omega) h3 h2
+      rw [ltF_stable (Z x) (psi q c) (f' + 1) f' (by omega) (by omega)]
+      exact k
+
+-- ===== [T24-hard] T24 : ψ/ψ/ψ — three applications of 2.3.14 (§8.4 STAGE II; §8.4.2 lists this shape as "CASE T-14") =====
+-- verdict: kimina http://localhost:12346/api/check — {"id":"t24-final","response":{"env":10}} : NO messages at all (not even a linter warning). Separate POST: `#print axioms t24` → 't24' depends on axioms: [prop
+-- notes: SHAPE OF THE PROOF (9 leaves = 3 sub-clauses of 2.3.14 for A<B  x  3 for B<C). Write A = psi k a, B = psi p b, C = psi q c; L1/L2/L3 = which sub-clause decides A<B (L1 = 14(ii) k=p, L2 = 14(i) k<p, L3 = 14(iii) otherwise), R1/R2/R3 likewise for B<C.   L1R1 (k=p=q): goal is 14(ii); IH_TR1 a b c throu
+
+
+/-- **CASE T24 (ψ/ψ/ψ)** of §8.4 — three applications of 2.3.14.  The analogue of
+    §7.4's case (8), one level up. -/
+theorem t24 : ∀ (k a p b q c : Term) (n m f' : Nat),
+    TransCase (psi k a) (psi p b) (psi q c) n m f' := by
+  intro k a p b q c n m f' hA hB hC hBn hACm hf ASYM COMP TR1 TR2 h1 h2
+  obtain ⟨_, hFk, hFa⟩ := fragR_psi hA
+  obtain ⟨_, hFp, hFb⟩ := fragR_psi hB
+  obtain ⟨_, hFq, hFc⟩ := fragR_psi hC
+  have dk := deg_pos k; have da := deg_pos a
+  have dp := deg_pos p; have db := deg_pos b
+  have dq := deg_pos q; have dc := deg_pos c
+  have eA : (psi k a).deg = 1 + k.deg + a.deg := rfl
+  have eB : (psi p b).deg = 1 + p.deg + b.deg := rfl
+  have eC : (psi q c).deg = 1 + q.deg + c.deg := rfl
+  -- the two hypotheses, moved down to the fuel the clause bodies hand out (§5)
+  have hAB : ltF f' (psi k a) (psi p b) = true := ltF_mono (by omega) (by omega) h1
+  have hBC : ltF f' (psi p b) (psi q c) = true := ltF_mono (by omega) (by omega) h2
+  have hne1 : psi k a ≠ psi p b := ne_of_ltF h1
+  have hne2 : psi p b ≠ psi q c := ne_of_ltF h2
+  have hac : psi k a ≠ psi q c := by
+    intro hcon
+    rw [hcon] at h1
+    rw [ASYM _ _ hC hB (f' + 1) (by omega) h1] at h2
+    exact Bool.noConfusion h2
+  rw [ltF_succ_psi_psi _ hne1] at h1
+  rw [ltF_succ_psi_psi _ hne2] at h2
+  by_cases hkp : k = p
+  · -- 14(ii) on the left: κ = π
+    subst hkp
+    rw [if_pos rfl] at h1
+    by_cases hkq : k = q
+    · subst hkq
+      rw [if_pos rfl] at h2
+      rw [ltF_succ_psi_psi _ hac, if_pos rfl]
+      exact TR1 a b c hFa hFb hFc (by omega) f' (by omega) h1 h2
+    · rw [if_neg hkq] at h2
+      by_cases hkq2 : ltF f' k q = true
+      · rw [if_pos hkq2] at h2
+        rw [ltF_succ_psi_psi _ hac, if_neg hkq, if_pos hkq2]
+        exact h2
+      · rw [if_neg hkq2] at h2
+        rw [ltF_succ_psi_psi _ hac, if_neg hkq, if_neg hkq2]
+        exact TR2 (psi k a) q hA hFq (by omega) f' (by omega) hAB h2
+  · rw [if_neg hkp] at h1
+    by_cases hkp2 : ltF f' k p = true
+    · -- 14(i) on the left: κ < π, and then κ < ψπβ carries everything
+      rw [if_pos hkp2] at h1
+      have hkC : ltF f' k (psi q c) = true :=
+        TR2 k (psi q c) hFk hC (by omega) f' (by omega) h1 hBC
+      have hkq : ltF f' k q = true := by
+        by_cases hpq : p = q
+        · subst hpq; exact hkp2
+        · rw [if_neg hpq] at h2
+          by_cases hpq2 : ltF f' p q = true
+          · rw [if_pos hpq2] at h2
+            exact TR1 k p q hFk hFp hFq (by omega) f' (by omega) hkp2 hpq2
+          · rw [if_neg hpq2] at h2
+            exact TR2 k q hFk hFq (by omega) f' (by omega) h1 h2
+      rw [ltF_succ_psi_psi _ hac, if_neg (ne_of_ltF hkq), if_pos hkq]
+      exact hkC
+    · -- 14(iii) on the left: π < κ and ψκα < π
+      rw [if_neg hkp2] at h1
+      by_cases hpq : p = q
+      · subst hpq
+        rw [ltF_succ_psi_psi _ hac, if_neg hkp, if_neg hkp2]
+        exact h1
+      · rw [if_neg hpq] at h2
+        by_cases hpq2 : ltF f' p q = true
+        · -- ψκα < π < ψπ'γ: no branch analysis at all
+          rw [if_pos hpq2] at h2
+          have hACf : ltF f' (psi k a) (psi q c) = true :=
+            TR1 (psi k a) p (psi q c) hA hFp hC (by omega) f' (by omega) h1 h2
+          exact ltF_mono (by omega) (by omega) hACf
+        · rw [if_neg hpq2] at h2
+          have hpk : ltF f' p k = true := by
+            rcases COMP k p hFk hFp f' (by omega) with h | h | h
+            · exact absurd h hkp2
+            · exact absurd h hkp
+            · exact h
+          have hqp : ltF f' q p = true := by
+            rcases COMP p q hFp hFq f' (by omega) with h | h | h
+            · exact absurd h hpq2
+            · exact absurd h hpq
+            · exact h
+          have hqk : ltF f' q k = true :=
+            TR1 q p k hFq hFp hFk (by omega) f' (by omega) hqp hpk
+          have hkq : k ≠ q := by
+            intro hcon; rw [hcon, ltF_irrefl] at hqk; exact Bool.noConfusion hqk
+          have hkq2 : ltF f' k q = false := ASYM q k hFq hFk f' (by omega) hqk
+          rw [ltF_succ_psi_psi _ hac, if_neg hkq, if_neg (by simp [hkq2])]
+          exact TR2 (psi k a) q hA hFq (by omega) f' (by omega) hAB h2
+
+-- ===== [T37-hard] T37 : t37_Z_Z_Z =====
+-- verdict: kimina http://localhost:12346/api/check — messages [] (0 errors, 0 warnings), time 0.31s; re-run twice with identical result. `#print axioms t37_Z_Z_Z` → `[propext, Quot.sound]` (no sorryAx).
+-- notes: PROVED, first compile, no retries. The exact snippet verified is the two prescribed header lines (`import Evidence.WF` / `open TM TM.Term Evidence.WF`) followed verbatim by the `source` field; it is on disk at /tmp/claude-1000/t37/t37.lean (92 lines) and defines nothing of its own. S1 is taken as th
+theorem t37_Z_Z_Z (hS1 : StarClosed) :
+    ∀ (x y z : Term) (n m f' : Nat), TransCase (Z x) (Z y) (Z z) n m f' := by
+  intro x y z n m f'
+  intro hfa hfb hfc hb hm hf hasym hcomp hTR1 hTR2 h1 h2
+  have hx : FragR x = true := fragR_Z hfa
+  have hy : FragR y = true := fragR_Z hfb
+  have hz : FragR z = true := fragR_Z hfc
+  have dx := deg_pos x
+  have dy := deg_pos y
+  have dz := deg_pos z
+  have dsx := deg_starF f' x
+  have dsy := deg_starF f' y
+  have dsz := deg_starF f' z
+  simp only [Term.deg] at hb hm hf
+  have LOW : ∀ (u v : Term), u.deg + v.deg ≤ f' →
+      ltF (f' + 1) u v = true → ltF f' u v = true := by
+    intro u v huv h
+    rw [ltF_stable u v f' (f' + 1) huv (by omega)]; exact h
+  have UP : ∀ (u v : Term), u.deg + v.deg ≤ f' →
+      ltF f' u v = true → ltF (f' + 1) u v = true := by
+    intro u v huv h
+    rw [ltF_stable u v (f' + 1) f' (by omega) huv]; exact h
+  have hne1 : Z x ≠ Z y := ne_of_ltF h1
+  have hne2 : Z y ≠ Z z := ne_of_ltF h2
+  have hne3 : Z x ≠ Z z := by
+    intro hc
+    have hcon := hasym (Z x) (Z y) hfa hfb (f' + 1) (by simp only [Term.deg]; omega) h1
+    rw [hc] at hcon
+    rw [hcon] at h2
+    exact Bool.noConfusion h2
+  have hAB : ltF f' (Z x) (Z y) = true := LOW _ _ (by simp only [Term.deg]; omega) h1
+  have hBC : ltF f' (Z y) (Z z) = true := LOW _ _ (by simp only [Term.deg]; omega) h2
+  -- the shared ending of the two 15(ii) branches: `Zx < Zy ≤ γ*` gives `Zx ≤ γ*`
+  have KEY : ((Z y == starF f' z) || ltF f' (Z y) (starF f' z)) = true →
+      ((Z x == starF f' z) || ltF f' (Z x) (starF f' z)) = true := by
+    intro h
+    simp only [Bool.or_eq_true, beq_iff_eq] at h ⊢
+    rcases h with h3 | h3
+    · exact Or.inr (by rw [← h3]; exact hAB)
+    · exact Or.inr (hTR2 (Z x) (starF f' z) hfa (hS1 f' z hz)
+        (by simp only [Term.deg]; omega) f' (by simp only [Term.deg]; omega) hAB h3)
+  rw [ltF_succ_Z_Z _ hne1] at h1
+  rw [ltF_succ_Z_Z _ hne2] at h2
+  by_cases hP : ltF f' x y = true
+  · -- 15(i) on the left: `α < β` and `α* < Zβ`
+    rw [if_pos hP] at h1
+    -- the first pass through `starF`: `α* < Zβ < Zγ`, middle `Zβ` unchanged
+    have hstar : ltF f' (starF f' x) (Z z) = true :=
+      hTR2 (starF f' x) (Z z) (hS1 f' x hx) hfc
+        (by simp only [Term.deg]; omega) f' (by simp only [Term.deg]; omega) h1 hBC
+    by_cases hR : ltF f' x z = true
+    · rw [ltF_succ_Z_Z _ hne3, if_pos hR]
+      exact hstar
+    · rw [ltF_succ_Z_Z _ hne3, if_neg hR]
+      have hQ : ¬ (ltF f' y z = true) := fun hq =>
+        hR (hTR1 x y z hx hy hz (by omega) f' (by omega) hP hq)
+      rw [if_neg hQ] at h2
+      exact KEY h2
+  · -- 15(ii) on the left: `Zα ≤ β*`
+    rw [if_neg hP] at h1
+    simp only [Bool.or_eq_true, beq_iff_eq] at h1
+    by_cases hQ : ltF f' y z = true
+    · -- 15(i) on the right: `β* < Zγ`.  `Zα ≤ β* < Zγ` composes with MIDDLE `β*`,
+      -- which is legal for IH_TR1 because `deg_starF` keeps `β*.deg ≤ β.deg ≤ n`.
+      rw [if_pos hQ] at h2
+      have h4 : ltF f' (Z x) (Z z) = true := by
+        rcases h1 with h3 | h3
+        · rw [h3]; exact h2
+        · exact hTR1 (Z x) (starF f' y) (Z z) hfa (hS1 f' y hy) hfc
+            (by omega) f' (by simp only [Term.deg]; omega) h3 h2
+      exact UP (Z x) (Z z) (by simp only [Term.deg]; omega) h4
+    · -- neither: comparability turns `¬(α<β)`, `¬(β<γ)` into `γ < β < α`, so `¬(α<γ)`
+      rw [if_neg hQ] at h2
+      have hyx : ltF f' y x = true := by
+        rcases hcomp x y hx hy f' (by omega) with h3 | h3 | h3
+        · exact absurd h3 hP
+        · exact absurd (by rw [h3]) hne1
+        · exact h3
+      have hzy : ltF f' z y = true := by
+        rcases hcomp y z hy hz f' (by omega) with h3 | h3 | h3
+        · exact absurd h3 hQ
+        · exact absurd (by rw [h3]) hne2
+        · exact h3
+      have hzx : ltF f' z x = true :=
+        hTR1 z y x hz hy hx (by omega) f' (by omega) hzy hyx
+      have hxz : ltF f' x z = false := hasym z x hz hx f' (by omega) hzx
+      have hR : ¬ (ltF f' x z = true) := by rw [hxz]; exact fun hc => Bool.noConfusion hc
+      rw [ltF_succ_Z_Z _ hne3, if_neg hR]
+      exact KEY h2
+
+/-! #### §8.5.2 Assembly: closing `cmp_aux3` and `trans_aux3`
+
+The case lemmas above are stated so that the two inductions are pure dispatch.  What
+is left is exactly the routing: the three-way split `0` / sum / non-sum, and inside
+the non-sums the level analysis of §8.4(iv).  `cmp_aux3_skeleton` already does
+Stage I's routing down to the same-level non-sum pairs; `SA_all` / `SC_all` supply
+those, and `trans_aux3` below does Stage II's routing in the same style. -/
+
+/-- `CompCase` is symmetric up to `Or.symm`.  The fan-out returned one orientation
+    for the `φ̄`-vs-`ψ` and `φ̄`-vs-`Z` pairs; this supplies the other. -/
+theorem compCase_symm {A B : Term} {n f' : Nat} (h : CompCase A B n f') :
+    CompCase B A n f' := by
+  intro hB hA hd hnf IHa IHc hne
+  exact (h hA hB (by omega) hnf IHa IHc (Ne.symm hne)).symm
+
+/-! The level classifiers: a non-zero non-sum of `FragR` is `M` at level 2, an `ω̄`
+    at level 3, and one of `φ̄` / `ψ` / `Z` at level 1.  Splitting by LEVEL first is
+    what keeps the all-non-sum dispatch at 27 shape triples instead of 125. -/
+
+private theorem fragR_lvl2_eq {t : Term} (h : FragR t = true) (h0 : t ≠ zero)
+    (hn : NSum t = true) (hl : lvl t = 2) : t = M := by
+  rcases fragR_nsum_cases h h0 hn with rfl | ⟨x, rfl, _⟩ | ⟨x, y, rfl, _, _⟩
+    | ⟨k, x, rfl, _, _, _⟩ | ⟨x, rfl, _⟩
+  · rfl
+  · simp [lvl] at hl
+  · simp [lvl] at hl
+  · simp [lvl] at hl
+  · simp [lvl] at hl
+
+private theorem fragR_lvl3_cases {t : Term} (h : FragR t = true) (h0 : t ≠ zero)
+    (hn : NSum t = true) (hl : lvl t = 3) : ∃ x, t = omg x ∧ FragR x = true := by
+  rcases fragR_nsum_cases h h0 hn with rfl | ⟨x, rfl, hx⟩ | ⟨x, y, rfl, _, _⟩
+    | ⟨k, x, rfl, _, _, _⟩ | ⟨x, rfl, _⟩
+  · simp [lvl] at hl
+  · exact ⟨x, rfl, hx⟩
+  · simp [lvl] at hl
+  · simp [lvl] at hl
+  · simp [lvl] at hl
+
+private theorem fragR_lvl1_cases {t : Term} (h : FragR t = true) (h0 : t ≠ zero)
+    (hn : NSum t = true) (hl : lvl t = 1) :
+    (∃ x y, t = phi x y ∧ FragR x = true ∧ FragR y = true)
+    ∨ (∃ k x, t = psi k x ∧ k.isR = true ∧ FragR k = true ∧ FragR x = true)
+    ∨ (∃ x, t = Z x ∧ FragR x = true) := by
+  rcases fragR_nsum_cases h h0 hn with rfl | ⟨x, rfl, _⟩ | hp | hp | hp
+  · simp [lvl] at hl
+  · simp [lvl] at hl
+  · exact Or.inl hp
+  · exact Or.inr (Or.inl hp)
+  · exact Or.inr (Or.inr hp)
+
+/-! `SA_all` / `SC_all`: the same-level non-sum pairs, which is all
+    `cmp_aux3_skeleton` still needs.  Of the 25 shape pairs, 14 are killed by the
+    level equality and the remaining 11 are the case lemmas A6–A13 / C6–C13. -/
+
+private theorem SA_all : ∀ (x y : Term) (n f' : Nat), x ≠ zero → y ≠ zero →
+    NSum x = true → NSum y = true → lvl x = lvl y → AsymCase x y n f' := by
+  intro x y n f' hx0 hy0 hnx hny hlv hfx hfy hd hnf IHa IHc h
+  rcases fragR_nsum_cases hfx hx0 hnx with rfl | ⟨u, rfl, hfu⟩ | ⟨u, v, rfl, hfu, hfv⟩
+    | ⟨k, u, rfl, hkR, hfk, hfu⟩ | ⟨u, rfl, hfu⟩
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · exact a6 n f' hfx hfy hd hnf IHa IHc h
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · exact a7 u w n f' hfx hfy hd hnf IHa IHc h
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · exact a8 u v w z n f' hfx hfy hd hnf IHa IHc h
+    · exact a9_phi_psi u v j w n f' hfx hfy hd hnf IHa IHc h
+    · exact a10_phi_Z u v w n f' hfx hfy hd hnf IHa IHc h
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · exact a9_psi_phi k u w z n f' hfx hfy hd hnf IHa IHc h
+    · exact a11 k u j w n f' hfx hfy hd hnf IHa IHc h
+    · exact a12 k u w n f' starClosed hfx hfy hd hnf IHa IHc h
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · exact a10_Z_phi u w z n f' hfx hfy hd hnf IHa IHc h
+    · exact a21 u j w n f' starClosed hfx hfy hd hnf IHa IHc h
+    · exact a13 u w n f' starClosed hfx hfy hd hnf IHa IHc h
+
+private theorem SC_all : ∀ (x y : Term) (n f' : Nat), x ≠ zero → y ≠ zero →
+    NSum x = true → NSum y = true → lvl x = lvl y → CompCase x y n f' := by
+  intro x y n f' hx0 hy0 hnx hny hlv hfx hfy hd hnf IHa IHc hne
+  rcases fragR_nsum_cases hfx hx0 hnx with rfl | ⟨u, rfl, hfu⟩ | ⟨u, v, rfl, hfu, hfv⟩
+    | ⟨k, u, rfl, hkR, hfk, hfu⟩ | ⟨u, rfl, hfu⟩
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · exact c6 n f' hfx hfy hd hnf IHa IHc hne
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · exact c7 u w n f' hfx hfy hd hnf IHa IHc hne
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · exact c8 u v w z n f' hfx hfy hd hnf IHa IHc hne
+    · exact c9 u v j w n f' hfx hfy hd hnf IHa IHc hne
+    · exact c10 u v w n f' hfx hfy hd hnf IHa IHc hne
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · exact compCase_symm (c9 w z k u n f') hfx hfy hd hnf IHa IHc hne
+    · exact c11 k u j w n f' hfx hfy hd hnf IHa IHc hne
+    · exact c12 k u w n f' starClosed hfx hfy hd hnf IHa IHc hne
+  · rcases fragR_nsum_cases hfy hy0 hny with rfl | ⟨w, rfl, _⟩ | ⟨w, z, rfl, _, _⟩
+      | ⟨j, w, rfl, _, _, _⟩ | ⟨w, rfl, _⟩
+    · simp [lvl] at hlv
+    · simp [lvl] at hlv
+    · exact compCase_symm (c10 w z u n f') hfx hfy hd hnf IHa IHc hne
+    · exact c21 u j w n f' starClosed hfx hfy hd hnf IHa IHc hne
+    · exact c13 u w n f' starClosed hfx hfy hd hnf IHa IHc hne
+
+/-- **STAGE I, closed.**  Asymmetry and comparability on `FragR`, simultaneously,
+    by induction on `a.deg + b.deg` — §7.3's shape, as §8.4(ii) predicted. -/
+private theorem cmp_aux3 : ∀ (n : Nat),
+    (∀ (a b : Term), FragR a = true → FragR b = true → a.deg + b.deg ≤ n →
+      ∀ f, n ≤ f → ltF f a b = true → ltF f b a = false)
+  ∧ (∀ (a b : Term), FragR a = true → FragR b = true → a.deg + b.deg ≤ n →
+      ∀ f, n ≤ f → (ltF f a b = true ∨ a = b ∨ ltF f b a = true)) :=
+  cmp_aux3_skeleton SA_all SC_all
+
+/-- **ASYMMETRY on `FragR`**, same fuel. -/
+theorem ltF_asymm3 {a b : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    {f : Nat} (hf : a.deg + b.deg ≤ f) (h : ltF f a b = true) : ltF f b a = false :=
+  (cmp_aux3 (a.deg + b.deg)).1 a b hfa hfb (Nat.le_refl _) f hf h
+
+/-- **COMPARABILITY on `FragR`**, same fuel. -/
+theorem ltF_comparable3 {a b : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    {f : Nat} (hf : a.deg + b.deg ≤ f) :
+    ltF f a b = true ∨ a = b ∨ ltF f b a = true :=
+  (cmp_aux3 (a.deg + b.deg)).2 a b hfa hfb (Nat.le_refl _) f hf
+
+theorem asym3 : Asym3 := fun _ _ ha hb _ hf h => ltF_asymm3 ha hb hf h
+theorem comp3 : Comp3 := fun _ _ ha hb _ hf => ltF_comparable3 ha hb hf
+
+/-- **STAGE II, closed.**  Transitivity by §7.4's lexicographic measure
+    `(b.deg, a.deg + c.deg)`, spelled out as an outer recursion on the middle
+    degree with an inner induction on `a.deg + c.deg`. -/
+private theorem trans_aux3 : ∀ (n : Nat) (m : Nat) (a b c : Term),
+    FragR a = true → FragR b = true → FragR c = true →
+    b.deg ≤ n → a.deg + c.deg ≤ m →
+    ∀ f, a.deg + b.deg + c.deg ≤ f →
+    ltF f a b = true → ltF f b c = true → ltF f a c = true
+  | 0 => by
+    intro _ _ b _ _ _ _ hb _ _ _ _ _
+    exfalso; have := deg_pos b; omega
+  | n + 1 => by
+    intro m
+    induction m with
+    | zero =>
+      intro a _ c _ _ _ _ hm _ _ _ _
+      exfalso; have := deg_pos a; have := deg_pos c; omega
+    | succ m ihm =>
+      intro a b c hfa hfb hfc hb hm f hf h1 h2
+      have TR1 : IH_TR1 n :=
+        fun x y z hx hy hz hyd g hg =>
+          trans_aux3 n (x.deg + z.deg) x y z hx hy hz hyd (Nat.le_refl _) g hg
+      have TR2 : IH_TR2 b m :=
+        fun x z hx hz hd g hg => ihm x b z hx hfb hz hb hd g hg
+      have da := deg_pos a; have db := deg_pos b; have dc := deg_pos c
+      obtain ⟨f', rfl⟩ : ∃ f', f = f' + 1 := ⟨f - 1, by omega⟩
+      have hbz : b ≠ zero := by
+        intro hc; rw [hc, ltF_right_zero] at h1; exact Bool.noConfusion h1
+      have hcz : c ≠ zero := by
+        intro hc; rw [hc, ltF_right_zero] at h2; exact Bool.noConfusion h2
+      rcases fragR_sum_cases hfa with rfl | ⟨p, q, rfl, hfp, hfq⟩ | ⟨ha0, hna⟩
+      · exact ltF_left_zero (by omega) hcz
+      · rcases fragR_sum_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨hb0, hnb⟩
+        · exact absurd rfl hbz
+        · rcases fragR_sum_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨hc0, hnc⟩
+          · exact absurd rfl hcz
+          · exact t1 p q r s t u n m f' hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+          · exact t2 p q r s c n m f' hc0 hnc hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+        · rcases fragR_sum_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨hc0, hnc⟩
+          · exact absurd rfl hcz
+          · exact t3 p q b t u n m f' hb0 hnb hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+          · exact t4 p q b c n m f' hb0 hnb hc0 hnc hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+      · rcases fragR_sum_cases hfb with rfl | ⟨r, s, rfl, hfr, hfs⟩ | ⟨hb0, hnb⟩
+        · exact absurd rfl hbz
+        · rcases fragR_sum_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨hc0, hnc⟩
+          · exact absurd rfl hcz
+          · exact t5 a r s t u n m f' ha0 hna hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+          · exact t6 a r s c n m f' ha0 hna hc0 hnc hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+        · rcases fragR_sum_cases hfc with rfl | ⟨t, u, rfl, hft, hfu⟩ | ⟨hc0, hnc⟩
+          · exact absurd rfl hcz
+          · exact t7 a b t u n m f' ha0 hna hb0 hnb hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+          · -- all three non-sums: §8.4(iv)'s level analysis
+            by_cases hlv : lvl a < lvl c
+            · exact t8 a b c n m f' lvlUp hna hnc hlv hfa hfb hfc hb hm hf
+                asym3 comp3 TR1 TR2 h1 h2
+            · have hab : ¬ (lvl b < lvl a) := by
+                intro hcc
+                rw [lvlDown f' a b hna hnb hcc] at h1; exact Bool.noConfusion h1
+              have hbc : ¬ (lvl c < lvl b) := by
+                intro hcc
+                rw [lvlDown f' b c hnb hnc hcc] at h2; exact Bool.noConfusion h2
+              rcases fragR_nsum_cases hfa ha0 hna with rfl | ⟨x, rfl, hfx⟩
+                | ⟨p, q, rfl, hfp, hfq⟩ | ⟨k, u, rfl, hkR, hfk, hfu⟩ | ⟨x, rfl, hfx⟩
+              · -- a = M, level 2 : `M < b` and `b < c` pin both to `M`
+                have ea : lvl M = 2 := rfl
+                obtain rfl : b = M := fragR_lvl2_eq hfb hb0 hnb (by omega)
+                obtain rfl : c = M := fragR_lvl2_eq hfc hc0 hnc (by omega)
+                exact t10 n m f' hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+              · -- a = ω̄^x, level 3
+                have ea : lvl (omg x) = 3 := rfl
+                obtain ⟨y, rfl, hfy⟩ := fragR_lvl3_cases hfb hb0 hnb (by omega)
+                have eb : lvl (omg y) = 3 := rfl
+                obtain ⟨z, rfl, hfz⟩ := fragR_lvl3_cases hfc hc0 hnc (by omega)
+                exact t9 x y z n m f' hfa hfb hfc hb hm hf asym3 comp3 TR1 TR2 h1 h2
+              · -- a = (phi p q), level 1
+                have ea : lvl (phi p q) = 1 := rfl
+                rcases fragR_lvl1_cases hfb hb0 hnb (by omega) with
+                    ⟨r, s, rfl, hfr, hfs⟩ | ⟨j, w, rfl, hjR, hfj, hfw⟩ | ⟨w, rfl, hfw⟩
+                · have eb : lvl (phi r s) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact t11 p q r s t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t12 p q r s j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t13 p q r s w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                · have eb : lvl (psi j w) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact t14 p q j w t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t15 p q j w j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t16 p q j w w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                · have eb : lvl (Z w) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact t17 p q w t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t18 p q w j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t19 p q w w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+              · -- a = (psi k u), level 1
+                have ea : lvl (psi k u) = 1 := rfl
+                rcases fragR_lvl1_cases hfb hb0 hnb (by omega) with
+                    ⟨r, s, rfl, hfr, hfs⟩ | ⟨j, w, rfl, hjR, hfj, hfw⟩ | ⟨w, rfl, hfw⟩
+                · have eb : lvl (phi r s) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact t20_psi_phi_phi k u r s t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t21_psi_phi_psi k u r s j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t22_psi_phi_Z k u r s w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                · have eb : lvl (psi j w) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact t23_psi_psi_phi k u j w t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t24 k u j w j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t25_psi_psi_Z k u j w w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                · have eb : lvl (Z w) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact t26_psi_Z_phi k u w t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t27_psi_Z_psi k u w j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t28_psi_Z_Z k u w w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+              · -- a = (Z x), level 1
+                have ea : lvl (Z x) = 1 := rfl
+                rcases fragR_lvl1_cases hfb hb0 hnb (by omega) with
+                    ⟨r, s, rfl, hfr, hfs⟩ | ⟨j, w, rfl, hjR, hfj, hfw⟩ | ⟨w, rfl, hfw⟩
+                · have eb : lvl (phi r s) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact c29 x r s t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact c31 x r s j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact c30 x r s w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                · have eb : lvl (psi j w) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact c32 x j w t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact c33 x j w j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact c34 x j w w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                · have eb : lvl (Z w) = 1 := rfl
+                  rcases fragR_lvl1_cases hfc hc0 hnc (by omega) with
+                      ⟨t, u2, rfl, hft, hfu⟩ | ⟨j2, w2, rfl, _hj2, _hfj2, _hfw2⟩ | ⟨w2, rfl, _hfw2b⟩
+                  · exact c35 x w t u2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact c36 x w j2 w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+                  · exact t37_Z_Z_Z starClosed x w w2 n m f' hfa hfb hfc hb hm hf
+                      asym3 comp3 TR1 TR2 h1 h2
+
+/-- **TRANSITIVITY on `FragR`**, same fuel.  STAGE 3b, closed. -/
+theorem trans_ltF3 {a b c : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (hfc : FragR c = true) {f : Nat} (hf : a.deg + b.deg + c.deg ≤ f)
+    (h1 : ltF f a b = true) (h2 : ltF f b c = true) : ltF f a c = true :=
+  trans_aux3 b.deg (a.deg + c.deg) a b c hfa hfb hfc (Nat.le_refl _) (Nat.le_refl _) f hf h1 h2
+
+theorem trans3 : Trans3 := fun _ _ _ ha hb hc _ hf h1 h2 => trans_ltF3 ha hb hc hf h1 h2
+
+/-! #### §8.5.3 The user-facing statements, about `lt` -/
+
+/-- **ASYMMETRY.** -/
+theorem lt_asymm3 {a b : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (h : lt a b = true) : lt b a = false := by
+  rw [lt_eq_ltF a b (a.deg + b.deg) (Nat.le_refl _)] at h
+  rw [lt_eq_ltF b a (a.deg + b.deg) (by omega)]
+  exact ltF_asymm3 hfa hfb (Nat.le_refl _) h
+
+/-- **COMPARABILITY.** -/
+theorem lt_comparable3 {a b : Term} (hfa : FragR a = true) (hfb : FragR b = true) :
+    lt a b = true ∨ a = b ∨ lt b a = true := by
+  rw [lt_eq_ltF a b (a.deg + b.deg) (Nat.le_refl _),
+      lt_eq_ltF b a (a.deg + b.deg) (by omega)]
+  exact ltF_comparable3 hfa hfb (Nat.le_refl _)
+
+/-- **TRANSITIVITY** on `FragR` — Stage 3b's keystone. -/
+theorem lt_trans3 {a b c : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (hfc : FragR c = true) (h1 : lt a b = true) (h2 : lt b c = true) : lt a c = true := by
+  have da := deg_pos a; have db := deg_pos b; have dc := deg_pos c
+  rw [lt_eq_ltF a b (a.deg + b.deg + c.deg) (by omega)] at h1
+  rw [lt_eq_ltF b c (a.deg + b.deg + c.deg) (by omega)] at h2
+  rw [lt_eq_ltF a c (a.deg + b.deg + c.deg) (by omega)]
+  exact trans_ltF3 hfa hfb hfc (Nat.le_refl _) h1 h2
+
+/-- **`FragR` is a strict LINEAR order**: exactly one of `<`, `=`, `>`. -/
+theorem lt_trichotomy3 {a b : Term} (hfa : FragR a = true) (hfb : FragR b = true) :
+    (lt a b = true ∧ a ≠ b ∧ lt b a = false)
+  ∨ (lt a b = false ∧ a = b ∧ lt b a = false)
+  ∨ (lt a b = false ∧ a ≠ b ∧ lt b a = true) := by
+  rcases lt_comparable3 hfa hfb with h | h | h
+  · exact Or.inl ⟨h, ne_of_ltF h, lt_asymm3 hfa hfb h⟩
+  · subst h; exact Or.inr (Or.inl ⟨lt_irrefl a, rfl, lt_irrefl a⟩)
+  · refine Or.inr (Or.inr ⟨lt_asymm3 hfb hfa h, ?_, h⟩)
+    intro hc; rw [hc, lt_irrefl] at h; exact Bool.noConfusion h
+
+theorem lt_of_le_of_lt3 {a b c : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (hfc : FragR c = true) (h1 : le a b = true) (h2 : lt b c = true) : lt a c = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h1
+  rcases h1 with rfl | h1
+  · exact h2
+  · exact lt_trans3 hfa hfb hfc h1 h2
+
+theorem lt_of_lt_of_le3 {a b c : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (hfc : FragR c = true) (h1 : lt a b = true) (h2 : le b c = true) : lt a c = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h2
+  rcases h2 with rfl | h2
+  · exact h1
+  · exact lt_trans3 hfa hfb hfc h1 h2
+
+theorem le_of_not_lt3 {a b : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (h : lt a b = false) : le b a = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq]
+  rcases lt_comparable3 hfa hfb with h1 | h1 | h1
+  · rw [h1] at h; exact Bool.noConfusion h
+  · exact Or.inl h1.symm
+  · exact Or.inr h1
+
+theorem lt_of_not_le3 {a b : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (h : le a b = false) : lt b a = true := by
+  simp only [TM.Term.le, Bool.or_eq_false_iff, beq_eq_false_iff_ne, ne_eq] at h
+  rcases lt_comparable3 hfa hfb with h1 | h1 | h1
+  · rw [h1] at h; exact absurd h.2 (by simp)
+  · exact absurd h1 h.1
+  · exact h1
+
+theorem le_trans3 {a b c : Term} (hfa : FragR a = true) (hfb : FragR b = true)
+    (hfc : FragR c = true) (h1 : le a b = true) (h2 : le b c = true) : le a c = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h1 h2 ⊢
+  rcases h1 with rfl | h1
+  · exact h2
+  · rcases h2 with rfl | h2
+    · exact Or.inr h1
+    · exact Or.inr (lt_trans3 hfa hfb hfc h1 h2)
+
+/-! #### §8.5.4 The `inT` corollaries, and what subsumes what
+
+`inT_le_fragR` (S4) makes every statement above apply to the genuine terms of
+𝔗(M) — which is what `Evidence/Cert.lean`'s eventual `cert_sound` wants, and what
+§6's map called for.  `Frag ⊆ Frag2 ⊆ FragR` (`frag_le_frag2`, `frag2_le_fragR`),
+so §7 and §8.2 are both special cases; they are kept because their statements carry
+no side condition at all and their mutants document that. -/
+
+theorem lt_trans_inT {a b c : Term} (ha : inT a = true) (hb : inT b = true)
+    (hc : inT c = true) (h1 : lt a b = true) (h2 : lt b c = true) : lt a c = true :=
+  lt_trans3 (inT_le_fragR a ha) (inT_le_fragR b hb) (inT_le_fragR c hc) h1 h2
+
+theorem lt_asymm_inT {a b : Term} (ha : inT a = true) (hb : inT b = true)
+    (h : lt a b = true) : lt b a = false :=
+  lt_asymm3 (inT_le_fragR a ha) (inT_le_fragR b hb) h
+
+theorem lt_comparable_inT {a b : Term} (ha : inT a = true) (hb : inT b = true) :
+    lt a b = true ∨ a = b ∨ lt b a = true :=
+  lt_comparable3 (inT_le_fragR a ha) (inT_le_fragR b hb)
+
+theorem le_trans_inT {a b c : Term} (ha : inT a = true) (hb : inT b = true)
+    (hc : inT c = true) (h1 : le a b = true) (h2 : le b c = true) : le a c = true :=
+  le_trans3 (inT_le_fragR a ha) (inT_le_fragR b hb) (inT_le_fragR c hc) h1 h2
+
+/-- **The order on 𝔗(M) is a strict LINEAR order** — the statement §6's map set as
+    the target of D2, now unconditional on anything but the formation conditions. -/
+theorem lt_trichotomy_inT {a b : Term} (ha : inT a = true) (hb : inT b = true) :
+    (lt a b = true ∧ a ≠ b ∧ lt b a = false)
+  ∨ (lt a b = false ∧ a = b ∧ lt b a = false)
+  ∨ (lt a b = false ∧ a ≠ b ∧ lt b a = true) :=
+  lt_trichotomy3 (inT_le_fragR a ha) (inT_le_fragR b hb)
+
+/-- §8.2 is subsumed: `Frag2 ⊆ FragR`. -/
+theorem lt_trans_of_frag2 {a b c : Term} (ha : Frag2 a = true) (hb : Frag2 b = true)
+    (hc : Frag2 c = true) (h1 : lt a b = true) (h2 : lt b c = true) : lt a c = true :=
+  lt_trans3 (frag2_le_fragR a ha) (frag2_le_fragR b hb) (frag2_le_fragR c hc) h1 h2
+
+/-! #### §8.5.5 Evidence, and the mutant that fixes a false caption of §8
+
+§8 item 2 says of the raw language: "Asymmetry, by contrast, held everywhere, `inT`
+or not".  THAT IS A DEGREE ≤ 6 MEASUREMENT AND IT IS FALSE IN GENERAL.  The
+Phase-B gate sweep found 68 unordered violating pairs at degree 7; the smallest
+witness is below, and Lean checks it here.  The two terms have degrees 5 and 7,
+which is exactly why a degree-6 sweep cannot see it.
+
+STAGE 3b IS UNAFFECTED: both witnesses fail `FragR` (and fail `inT`) at precisely
+the `κ ∈ R` conjunct — `ψ_M M` and `ψ_(ψ_M M) 0` have head `M ∉ R`.  So this is one
+more piece of evidence that `κ ∈ R` is the right restriction, which is why it is
+recorded here rather than merely fixed in the prose. -/
+
+#guard lt (phi (psi M M) M) (phi (psi (psi M M) zero) M) == true
+#guard lt (phi (psi (psi M M) zero) M) (phi (psi M M) M) == true
+#guard FragR (phi (psi M M) M) == false
+#guard FragR (phi (psi (psi M M) zero) M) == false
+#guard inT (phi (psi M M) M) == false
+#guard inT (phi (psi (psi M M) zero) M) == false
+#guard (phi (psi M M) M).deg == 5
+#guard (phi (psi (psi M M) zero) M).deg == 7
+
+/-- **Raw `lt` is NOT asymmetric**, contrary to §8 item 2's parenthetical, which was
+    a degree ≤ 6 observation.  Both witnesses lie outside `FragR`. -/
+theorem lt_not_asymm_raw :
+    ¬ (∀ (a b : Term), lt a b = true → lt b a = false) := by
+  intro h
+  have hbad := h (phi (psi M M) M) (phi (psi (psi M M) zero) M) rfl
+  have hc : lt (phi (psi (psi M M) zero) M) (phi (psi M M) M) = true := rfl
+  rw [hc] at hbad
+  exact Bool.noConfusion hbad
+
+/-- **Raw `lt` is NOT transitive** either — a degree ≤ 6 witness, so this one the
+    earlier sweeps could have seen but did not look for (§8.2.5 searched only for
+    triples whose endpoints were incomparable, and these two ARE comparable).
+    Both endpoints again fail `FragR` at `κ ∈ R`. -/
+theorem lt_not_trans_raw :
+    ¬ (∀ (a b c : Term), lt a b = true → lt b c = true → lt a c = true) := by
+  intro h
+  have hbad := h (Z (psi (psi M zero) zero)) (psi (psi M zero) M) (Z (psi M zero)) rfl rfl
+  have hc : lt (Z (psi (psi M zero) zero)) (Z (psi M zero)) = false := rfl
+  rw [hc] at hbad
+  exact Bool.noConfusion hbad
+
+#guard FragR (Z (psi (psi M zero) zero)) == false
+#guard FragR (psi (psi M zero) M) == false
+
+/-! NON-VACUITY of Stage 3b: a sample inside `FragR` that `Frag2` cannot reach,
+    exercising `ψ` and `Z` and the `starF` clauses. -/
+
+private def fragRSample : List Term :=
+  [zero, one, M, omg M, Om, Z Om, psi Om zero, psi Om one, psi (Z Om) zero,
+   add (psi Om zero) one, phi one (psi Om zero)]
+
+#guard fragRSample.all (fun t => FragR t)
+#guard !fragRSample.all (fun t => Frag2 t)
+#guard fragRSample.all (fun s => fragRSample.all (fun t => !(lt s t && lt t s)))
+#guard fragRSample.all (fun s => fragRSample.all (fun t => lt s t || s == t || lt t s))
+#guard fragRSample.all (fun s => fragRSample.all (fun t => fragRSample.all (fun u =>
+         !(lt s t && lt t u) || lt s u)))
 
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
