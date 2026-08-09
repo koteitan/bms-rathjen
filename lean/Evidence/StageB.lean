@@ -6258,4 +6258,37 @@ example (q k j : Nat) : omegaNF (chainP 1 k (twrK q k j)) = twrK q k (j+1) := by
   !(decide (k ≤ q))
     || (omegaNF (chainP 1 k (add (Zb q omega) (Zb q omega))) == bseB q omega k)
 
+/-! ### Slice 2 finding: (E) needs a SECOND `C`-hypothesis, and why
+
+Steps (A), (C), (D) above need only `(Zb q C == one) = false`, and (D) needs nothing.
+Step (E) does not follow that pattern, and the reason is worth recording before the
+next slice writes it.
+
+§7's `ltF_phi_not_zt` proves `ltF f (φ̄(a',b)) (zt q) = false` by walking clause
+2.3.13: the `a' = a` branch is excluded, the `a' < a` branch recurses, and the third
+branch — `φ̄(a',b) ≤ δ` where δ is the TARGET'S ARGUMENT — is discharged because for
+`zt q` that argument is `zero`, so `ltF f _ zero = false` holds outright
+(`ltF_lt_zero`).  With the base `Zb q C = φ̄(a,C)` the third branch becomes
+`ltF f (φ̄(a',b)) C`, which is NOT automatically false: for `C = ω` and the term
+`φ̄(0,0) = 1` it is TRUE.  It is false for the terms that actually occur (the tower
+values all exceed `Zb q C > C`), but that is a fact about those terms, not about the
+clause, so it has to be assumed or derived.
+
+Refined bundle for slice 2 (still discharged by `rfl`/`decide` at every concrete base,
+including `C = ω` and `C = φ̄(0,2)`):
+
+    hC1 : ((Zb q C : Term) == one) = false                    -- (A)(C), already in use
+    hC2 : ∀ f, ltF f (xbaseB q C k) C = false                 -- (E), the third branch
+
+`hC2` at the tower's base suffices: `ltF_twrB_not` inducts on the tower and each step
+reduces to its argument, landing on `xbaseB`.  For `C = zero` both are the §7 facts
+(`zt_bne_one`, `ltF_lt_zero`), so the instance bridges are unaffected.
+
+Step (F) will need a third, of a different kind: `fsN (φ̄(a, C+1))` branches on
+`splitFin (plus C one)` and `predT (plus C one)`, i.e. on the SHAPE of `C` as a formal
+sum, where (A)–(E) only ever needed its order position.  For `C = zero` that is §7's
+`splitFin_add_one` route and for `C` additively principal it is the same lemma; the
+honest statement is a hypothesis `(splitFin (plus C one)).1 = C ∨ C = zero`, or simply
+`C.isAP = true ∨ C = zero`, which covers every base the region produces. -/
+
 end Evidence.StageB
