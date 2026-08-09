@@ -10078,6 +10078,332 @@ theorem lim_clauses_fsA (k : Nat) :
     && !(fsAin k n == zero)))
 
 
+/-! ### §15.12 THE REMAINING VEBLEN ROWS — every `hasO` row below Γ₀, instantiated
+
+WHAT THIS CLOSES.  §15.4 did `φ̄0(ε₀)`, §15.7 `φ̄0(ζ₀)`, §15.8 `ε₁`.  The `hasO` LIMIT rows of
+`Rows/TM.lean` below Γ₀ that still lacked their four `Certified.lim` premises were six.  All
+six are here, and every one is an INSTANCE of a template already proved — (B)
+`lim_clauses_fsGen` or (C) `lim_clauses_phi_arg`.  No fourth ROW shape appeared, so §15.5's
+three-shape prediction stands against the complete `hasO` list, not merely against the rows
+that suggested it.  (§15.11's combinator is not a fourth shape either; see its header.)
+
+MEASURED FIRST, ALL SIX, per §15.5's rule that the MATRIX determines the sequence.
+`Trans.oR` on `BMS.expand`, exact at every `n ≤ 7`, and the row terms re-checked against
+`Rows/TM.lean`'s registered terms in the same sweep:
+
+    matrix                  term        template  sequence
+    (0,0)(1,1)(2,0)         φ̄(1,ω)      (C)       φ̄1(ofNat n)
+    (0,0)(1,1)(2,0)(2,0)    φ̄(1,ω²)     (C)       φ̄1(fsC ω² n)
+    (0,0)(1,1)(2,0)(3,0)    φ̄(1,ω^ω)    (C)       φ̄1(fsC ω^ω n)
+    (0,0)(1,1)(2,0)(3,1)    φ̄(1,ε₀)     (C)       φ̄1(tower (n+1))
+    (0,0)(1,1)(2,1)         φ̄(2,0)      (B)       fsGen ε₀ 1 ε₀
+    (0,0)(1,1)(2,1)(1,1)    φ̄(1,ζ₀)     (B)       fsGen ζ₀ 0 (ζ₀ ⊕ ζ₀)
+
+THREE CANDIDATES WERE REFUTED BY THAT MEASUREMENT, and each is what one writes WITHOUT it.
+All three are `#guard`ed below as negative controls, so a later edit cannot quietly restore
+one of them.
+
+  (i)  ε_ω is NOT `φ̄1(fsC ω n)`.  `fsC ω n = ofNat (n+1)`, so that sequence is ε₁, ε₂, ε₃ —
+       CNV, below the row, strictly increasing and cofinal: ALL FOUR CLAUSES GREEN.  The
+       n-th expansion is ε_n.  This is the sharp form §15.5 records, met head-on: the inner
+       row's own sequence is off by one, and NOTHING IN THE FOUR CLAUSES SAYS SO.
+  (ii) ε_{ε₀} is NOT `φ̄1(tower n)` but `φ̄1(tower (n+1))` — the same shift, at ε₀'s sequence.
+  (iii) ε_{ζ₀+1} is NOT TEMPLATE (C) AT ALL.  Its term `φ̄(1,ζ₀)` reads as "apply φ̄1 to ζ₀",
+       and ζ₀'s own sequence is proved three declarations above it — but the expansions are
+       ζ₀, ω^(ζ₀·2), ω^(ω^(ζ₀·2)), …, i.e. template (B) at base ζ₀·2: ε₁'s shape (§15.8)
+       with ζ₀ in place of ε₀.  Here the SHAPE was wrong, not merely the index, and the
+       wrong shape is the one the term's own syntax suggests.
+
+THE INDEX IS NOT UNIFORM, AND NO RULE PREDICTS IT.  ε_{ω²} and ε_{ω^ω} take `fsC b n`
+UNSHIFTED; ε_ω takes `ofNat n`, which is `fsC ω` shifted DOWN; ε_{ε₀} takes `tower (n+1)`,
+which is ε₀'s sequence shifted UP.  Three different offsets among four rows of the SAME
+template.  That is the index-level form of §15.5's finding, and it is why every row is
+measured rather than derived.
+
+WHAT IS OUTSIDE, recorded so the next lane meets it before designing for it.
+`(0,0)(1,1)(2,1)(3,0)`, whose `oR` value is `φ̄(ω,0)`, expands to φ̄(2,0), φ̄(3,0), φ̄(4,0), …:
+the FIRST argument moves, and no one of (A)/(B)/(C) covers that.  This is NOT a
+counterexample to the three-shape prediction — that row is `ev := "oR"`, candidate tier, not
+one of the `hasO` rows the prediction was made over — but a first-argument template is what
+the candidate-tier rows above ζ₀ are going to want. -/
+
+/-! #### §15.12.1 `ofNat` as a `repAdd`, and the four clauses for ω's sequence
+
+`ofNat` is built from `plus` (2.6(ii)), which filters and re-concatenates component lists,
+so nothing about it is available to the order theory until it is identified with a `repAdd`.
+That identification is the only fiddly part of the ε_ω row; everything after it is one
+application of core (C). -/
+
+theorem toList_repAdd_one : ∀ n, toList (repAdd one n) = List.replicate (n + 1) one
+  | 0 => rfl
+  | n + 1 => by
+    show one :: toList (repAdd one n) = _
+    rw [toList_repAdd_one n]; rfl
+
+theorem filter_replicate_one : ∀ k,
+    (List.replicate k one).filter (fun a => le one a) = List.replicate k one
+  | 0 => rfl
+  | k + 1 => by
+    show one :: ((List.replicate k one).filter (fun a => le one a)) = _
+    rw [filter_replicate_one k]; rfl
+
+theorem replicate_snoc_one : ∀ k, List.replicate k one ++ [one] = List.replicate (k + 1) one
+  | 0 => rfl
+  | k + 1 => by
+    show one :: (List.replicate k one ++ [one]) = _
+    rw [replicate_snoc_one k]; rfl
+
+theorem ofList_replicate_one : ∀ k, ofList (List.replicate (k + 1) one) = repAdd one k
+  | 0 => rfl
+  | k + 1 => by
+    show add one (ofList (List.replicate (k + 1) one)) = _
+    rw [ofList_replicate_one k]; rfl
+
+/-- **`n+1` IS `1·(n+1)`.**  `ofNat` goes through `plus`, whose filter keeps every component
+    `a` with `1 ≤ a`; on a `repAdd one` every component IS `1`, so nothing is dropped and the
+    concatenation is the next `repAdd`. -/
+theorem ofNat_succ_eq : ∀ n, ofNat (n + 1) = repAdd one n
+  | 0 => rfl
+  | n + 1 => by
+    show plus (ofNat (n + 1)) one = repAdd one (n + 1)
+    rw [ofNat_succ_eq n]
+    show ofList ((toList (repAdd one n)).filter (fun a => le one a) ++ [one]) = _
+    rw [toList_repAdd_one n, filter_replicate_one (n + 1), replicate_snoc_one (n + 1),
+      ofList_replicate_one (n + 1)]
+
+/-- ω's CNF fundamental sequence IS `ofNat`, SHIFTED UP BY ONE.  This equation is what makes
+    the ε_ω row's negative control precise rather than rhetorical: the row's sequence is
+    `ofNat n`, so it is `fsC ω` at `n-1`, not at `n`. -/
+theorem fsC_omega (n : Nat) : fsC omega n = ofNat (n + 1) := by
+  rw [show omega = phi zero one from rfl, fsC_phi_succ (x := zero) (y := one) rfl rfl n,
+    ofNat_succ_eq n]
+  rfl
+
+theorem cnv_ofNat : ∀ n, CNV (ofNat n) = true
+  | 0 => rfl
+  | n + 1 => by
+    rw [ofNat_succ_eq n]
+    exact cnv_repAdd (p := zero) (q := zero) rfl n
+
+theorem lt_ofNat_omega : ∀ n, lt (ofNat n) omega = true
+  | 0 => rfl
+  | n + 1 => by
+    rw [ofNat_succ_eq n]
+    show lt (repAdd (phi zero zero) n) (phi zero one) = true
+    rw [lt_repAdd_phi zero zero zero one n]
+    rfl
+
+theorem lt_ofNat_step : ∀ n, lt (ofNat n) (ofNat (n + 1)) = true
+  | 0 => rfl
+  | n + 1 => by
+    rw [ofNat_succ_eq n, ofNat_succ_eq (n + 1)]
+    exact lt_repAdd_step zero zero n
+
+/-- Cofinality for `ofNat` at ω, from §14's, at the shifted index. -/
+theorem cof_ofNat (s : Term) (hin : inT s = true) (hlt : lt s omega = true) :
+    ∃ n, le s (ofNat n) = true := by
+  obtain ⟨n, hn⟩ :=
+    (lim_clauses omega rfl rfl (by intro h; exact Term.noConfusion h)).2.2.2 s hin hlt
+  exact ⟨n + 1, by rw [← fsC_omega n]; exact hn⟩
+
+/-! #### §15.12.2 Two adapters
+
+`lim_clauses` (§14) is stated on `CN`, and the Veblen combinators consume `CNV`; and three of
+the six rows below need an inner sequence at a SHIFTED index.  Both adapters are trivial —
+they exist so that the shift is a named step a reader can see, rather than an ad-hoc `n+1`
+buried in a row's instantiation. -/
+
+theorem lim_clauses_cnv (t : Term) (hcn : CN t = true) (hk : kindC t = false) (hz : t ≠ zero) :
+    (∀ n, CNV (fsC t n) = true)
+  ∧ (∀ n, lt (fsC t n) t = true)
+  ∧ (∀ n, lt (fsC t n) (fsC t (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s t = true → ∃ n, le s (fsC t n) = true) :=
+  ⟨fun n => cnv_of_cn _ ((lim_clauses t hcn hk hz).1 n),
+   (lim_clauses t hcn hk hz).2.1,
+   (lim_clauses t hcn hk hz).2.2.1,
+   (lim_clauses t hcn hk hz).2.2.2⟩
+
+/-- The four clauses survive shifting the sequence UP by one — cofinality because the
+    sequence increases, so overtaking at `n` still overtakes at `n+1`.  NOTE what this does
+    NOT say: it does not license CHOOSING a shift.  Which shift a row takes is fixed by its
+    matrix and is measured, never derived (§15.12's header lists three different ones). -/
+theorem lim_clauses_shift {b : Term} {g : Nat → Term}
+    (hg1 : ∀ n, CNV (g n) = true) (hg2 : ∀ n, lt (g n) b = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true)
+    (hg4 : ∀ s, inT s = true → lt s b = true → ∃ n, le s (g n) = true) :
+    (∀ n, CNV (g (n + 1)) = true)
+  ∧ (∀ n, lt (g (n + 1)) b = true)
+  ∧ (∀ n, lt (g (n + 1)) (g (n + 1 + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s b = true → ∃ n, le s (g (n + 1)) = true) :=
+  ⟨fun n => hg1 (n + 1), fun n => hg2 (n + 1), fun n => hg3 (n + 1),
+   fun s hin hlt => by
+     obtain ⟨n, hn⟩ := hg4 s hin hlt
+     exact ⟨n, le_trans_inT hin (inT_of_cnv _ (hg1 n)) (inT_of_cnv _ (hg1 (n + 1))) hn
+       (le_of_lt (hg3 n))⟩⟩
+
+/-- `below_one_cnv` one step up: below `2` every `CNV` term is `≤ 1`.  A sum cannot occur,
+    because its head would have to be below `1` and hence `0`, which is not additively
+    principal.  This is ζ₀'s `H2`. -/
+theorem below_two_cnv (s : Term) (hs : CNV s = true) (hlt : lt s (ofNat 2) = true) :
+    le s one = true := by
+  rw [show ofNat 2 = add one one from rfl] at hlt
+  cases s with
+  | M => exact Bool.noConfusion hs
+  | omg _ => exact Bool.noConfusion hs
+  | psi _ _ => exact Bool.noConfusion hs
+  | Z _ => exact Bool.noConfusion hs
+  | zero => exact le_zero_left (by intro h; exact Term.noConfusion h)
+  | phi p q => rw [lt_atom_add rfl] at hlt; exact hlt
+  | add c d =>
+    exfalso
+    obtain ⟨hAPc, hcnc, hcnd, hdesc⟩ := cnv_add hs
+    by_cases heq : add c d = add one one
+    · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+    rw [lt_add_add heq] at hlt
+    by_cases hc1 : c = one
+    · rw [if_pos hc1] at hlt
+      rw [below_one_cnv d hcnd hlt] at hdesc
+      exact Bool.noConfusion hdesc
+    · rw [if_neg hc1] at hlt
+      rw [below_one_cnv c hcnc hlt] at hAPc
+      exact Bool.noConfusion hAPc
+
+/-! #### §15.12.3 The four (C) rows: `ε_ω`, `ε_{ω²}`, `ε_{ω^ω}`, `ε_{ε₀}` -/
+
+def epsOmega : Term := phi one omega              -- ε_ω, row (0,0)(1,1)(2,0)
+def fsEW (n : Nat) : Term := phi one (ofNat n)    -- ε_n — MEASURED; NOT φ̄1(fsC ω n)
+
+/-- **THE FOUR PREMISES FOR `ε_ω`.**  Core (C) at `a = 1`, `b = ω`, with `ofNat` — the
+    sequence the matrix gives, which is `fsC ω` shifted DOWN; see the negative control. -/
+theorem lim_clauses_epsOmega :
+    (∀ n, CNV (fsEW n) = true)
+  ∧ (∀ n, lt (fsEW n) epsOmega = true)
+  ∧ (∀ n, lt (fsEW n) (fsEW (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s epsOmega = true → ∃ n, le s (fsEW n) = true) :=
+  lim_clauses_phi_arg ofNat rfl rfl cnv_ofNat lt_ofNat_omega lt_ofNat_step cof_ofNat
+    (by decide)
+
+def omegaSq : Term := phi zero (ofNat 2)          -- ω²
+def omegaOmega : Term := phi zero omega           -- ω^ω
+
+def epsOmegaSq : Term := phi one omegaSq          -- ε_{ω²}, row (0,0)(1,1)(2,0)(2,0)
+def fsEW2 (n : Nat) : Term := phi one (fsC omegaSq n)
+
+/-- **THE FOUR PREMISES FOR `ε_{ω²}`.**  Core (C) with the inner sequence UNSHIFTED — the
+    offset that ε_ω does not have. -/
+theorem lim_clauses_epsOmegaSq :
+    (∀ n, CNV (fsEW2 n) = true)
+  ∧ (∀ n, lt (fsEW2 n) epsOmegaSq = true)
+  ∧ (∀ n, lt (fsEW2 n) (fsEW2 (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s epsOmegaSq = true → ∃ n, le s (fsEW2 n) = true) :=
+  let h := lim_clauses_cnv omegaSq rfl rfl (by intro hc; exact Term.noConfusion hc)
+  lim_clauses_phi_arg (fsC omegaSq) rfl rfl h.1 h.2.1 h.2.2.1 h.2.2.2 (by decide)
+
+def epsOmegaOmega : Term := phi one omegaOmega    -- ε_{ω^ω}, row (0,0)(1,1)(2,0)(3,0)
+def fsEWW (n : Nat) : Term := phi one (fsC omegaOmega n)
+
+/-- **THE FOUR PREMISES FOR `ε_{ω^ω}`.** -/
+theorem lim_clauses_epsOmegaOmega :
+    (∀ n, CNV (fsEWW n) = true)
+  ∧ (∀ n, lt (fsEWW n) epsOmegaOmega = true)
+  ∧ (∀ n, lt (fsEWW n) (fsEWW (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s epsOmegaOmega = true → ∃ n, le s (fsEWW n) = true) :=
+  let h := lim_clauses_cnv omegaOmega rfl rfl (by intro hc; exact Term.noConfusion hc)
+  lim_clauses_phi_arg (fsC omegaOmega) rfl rfl h.1 h.2.1 h.2.2.1 h.2.2.2 (by decide)
+
+def epsEps0 : Term := phi one eps0T               -- ε_{ε₀}, row (0,0)(1,1)(2,0)(3,1)
+def fsEE (n : Nat) : Term := phi one (tower (n + 1))
+
+/-- **THE FOUR PREMISES FOR `ε_{ε₀}`.**  Core (C) over §9's ω-tower, SHIFTED UP by one —
+    the third of the three distinct offsets this template takes. -/
+theorem lim_clauses_epsEps0 :
+    (∀ n, CNV (fsEE n) = true)
+  ∧ (∀ n, lt (fsEE n) epsEps0 = true)
+  ∧ (∀ n, lt (fsEE n) (fsEE (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s epsEps0 = true → ∃ n, le s (fsEE n) = true) :=
+  let h := lim_clauses_shift lim_clauses_eps0.1 lim_clauses_eps0.2.1
+    lim_clauses_eps0.2.2.1 lim_clauses_eps0.2.2.2
+  lim_clauses_phi_arg (fun n => tower (n + 1)) rfl cnv_eps0T h.1 h.2.1 h.2.2.1 h.2.2.2
+    (by decide)
+
+/-! #### §15.12.4 The two (B) rows: `ζ₀` and `ε_{ζ₀+1}` -/
+
+/-- ζ₀'s sequence: iterate `φ̄1` from ε₀.  §15.6 MEASURED this; it is instantiated here.
+    (Not to be confused with §15.7's `fsZ`, which is the sequence of the DIFFERENT row
+    `φ̄0(ζ₀)` and is a `repAdd`.) -/
+def fsZeta0 (n : Nat) : Term := fsGen eps0T one eps0T n
+
+/-- **THE FOUR PREMISES FOR `ζ₀`**, row `(0,0)(1,1)(2,1)`.  Core (B) in its DEGENERATE form
+    `v = base`, the case §15.6 built the `v` parameter for.  `H1` is vacuous (`b = 0`, and
+    nothing is below `0`), `H2` is `below_two_cnv`, `H3` is `0 ≤ ε₀`. -/
+theorem lim_clauses_zeta0 :
+    (∀ n, CNV (fsZeta0 n) = true)
+  ∧ (∀ n, lt (fsZeta0 n) zeta0 = true)
+  ∧ (∀ n, lt (fsZeta0 n) (fsZeta0 (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s zeta0 = true → ∃ n, le s (fsZeta0 n) = true) :=
+  lim_clauses_fsGen cnv_eps0T rfl cnv_eps0T cnv_zeta0 (le_self _) (by decide)
+    (by decide) (by decide)
+    (fun q _ hlt => by
+      rw [show lt q zero = false from ltF_right_zero _ _] at hlt; exact Bool.noConfusion hlt)
+    (fun p hp hlt => below_two_cnv p hp hlt)
+    (le_zero_left (by intro hc; exact Term.noConfusion hc))
+
+def epsZeta0 : Term := phi one zeta0              -- ε_{ζ₀+1}, row (0,0)(1,1)(2,1)(1,1)
+def baseZ1 : Term := add zeta0 zeta0              -- ζ₀·2
+def fsEZ (n : Nat) : Term := fsGen zeta0 zero baseZ1 n
+
+/-- **THE FOUR PREMISES FOR `ε_{ζ₀+1}`**, row `(0,0)(1,1)(2,1)(1,1)`.  THE SHAPE HERE WAS THE
+    SURPRISE: the term `φ̄(1,ζ₀)` invites core (C) over ζ₀'s sequence, which is proved
+    immediately above — but the expansions are ε₁'s shape (§15.8) with ζ₀ in place of ε₀, so
+    this is core (B) at `u = 0`, `base = ζ₀·2`.  Only the measurement distinguishes them. -/
+theorem lim_clauses_epsZeta0 :
+    (∀ n, CNV (fsEZ n) = true)
+  ∧ (∀ n, lt (fsEZ n) epsZeta0 = true)
+  ∧ (∀ n, lt (fsEZ n) (fsEZ (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s epsZeta0 = true → ∃ n, le s (fsEZ n) = true) :=
+  lim_clauses_fsGen cnv_zeta0 rfl (by decide) (by decide)
+    (by decide) (by decide) (by decide) (by decide)
+    (fun q hq hlt => le_of_lt (by
+      show lt (phi one q) (phi (ofNat 2) zero) = true
+      rw [lt_phi_phi (by intro hc; injection hc with h1 _; exact Term.noConfusion h1),
+        if_neg (by intro hc; exact Term.noConfusion hc),
+        if_pos (show lt one (ofNat 2) = true from by decide)]
+      exact hlt))
+    (fun p hp hlt => by rw [below_one_cnv p hp hlt]; exact le_self _)
+    (le_self _)
+
+/-! Receipts.  The `== false` lines are the THREE REFUTED CANDIDATES of §15.12's header,
+    pinned so that a later edit cannot quietly restore one: each is a legitimate sequence
+    that passes all four clauses (or, for (iii), a legitimate template) and is NOT the one
+    the matrix gives. -/
+
+#guard fsEW 0 == eps0T                                  -- ε_ω's expansions start at ε₀ …
+#guard fsEW 1 == phi one one                            -- … then ε₁
+#guard (fsEW 0 == phi one (fsC omega 0)) == false        -- (i) NOT φ̄1(fsC ω n): that starts at ε₁
+#guard fsC omega 0 == ofNat 1                            -- … because fsC ω is ofNat shifted up
+#guard fsEW2 0 == phi one omega
+#guard fsEWW 0 == phi one omega
+#guard fsEE 0 == phi one omega                           -- ε_{ε₀} starts at φ̄(1,ω) …
+#guard (fsEE 0 == phi one (tower 0)) == false             -- (ii) … NOT at φ̄(1,1) = ε₁
+#guard fsZeta0 0 == eps0T
+#guard fsZeta0 1 == phi one eps0T
+#guard fsEZ 0 == zeta0
+#guard fsEZ 1 == phi zero (add zeta0 zeta0)              -- ω^(ζ₀·2): template (B), not (C)
+#guard (fsEZ 1 == phi one (fsZeta0 1)) == false           -- (iii) NOT core (C) over ζ₀'s sequence
+#guard (List.range 5).all (fun n =>
+  CNV (fsEW n) && lt (fsEW n) epsOmega && lt (fsEW n) (fsEW (n+1)))
+#guard (List.range 5).all (fun n =>
+  CNV (fsEW2 n) && lt (fsEW2 n) epsOmegaSq && lt (fsEW2 n) (fsEW2 (n+1)))
+#guard (List.range 5).all (fun n =>
+  CNV (fsEWW n) && lt (fsEWW n) epsOmegaOmega && lt (fsEWW n) (fsEWW (n+1)))
+#guard (List.range 5).all (fun n =>
+  CNV (fsEE n) && lt (fsEE n) epsEps0 && lt (fsEE n) (fsEE (n+1)))
+#guard (List.range 5).all (fun n =>
+  CNV (fsZeta0 n) && lt (fsZeta0 n) zeta0 && lt (fsZeta0 n) (fsZeta0 (n+1)))
+#guard (List.range 4).all (fun n =>
+  CNV (fsEZ n) && lt (fsEZ n) epsZeta0 && lt (fsEZ n) (fsEZ (n+1)))
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
