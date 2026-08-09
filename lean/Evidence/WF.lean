@@ -2723,7 +2723,7 @@ theorem cn_fsC : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero 
     rw [le_trans hfrag1 hfrag2 (frag_of_cn u hcnu) hhd hvu]
     rfl
 
-/-! ### §11.4 Evidence, and the frontier: COFINALITY
+/-! ### §11.4 Evidence, and where the fourth clause went
 
 MEASURED (not proved here).  `fsC t n = fsN t (n + 1)` for every term of the
 sample below and every `n ≤ 5` — i.e. `fsC` IS `TM/FS.lean`'s fundamental
@@ -2734,36 +2734,13 @@ import direction that lets `Evidence/Cert.lean` import this file).  Stage 2c can
 either prove that identity in `Cert.lean` — where `fsN` is in scope — or bypass
 `fsN` completely, since `Certified.lim` takes an arbitrary `fs'`.
 
-THE FRONTIER — the fourth clause, cofinality:
-
-    cof_fsC : CN t = true → kindC t = false → t ≠ zero →
-              ∀ s, inT s = true → lt s t = true → ∃ n, le s (fsC t n) = true
-
-Route (worked out, not executed), by structural induction on `t`, with the `s`
-analysis of §9's `tower_bound` inside each case:
-
-  * `t = ξ ⊕ ρ`.  `t[n] = ξ ⊕ ρ[n]`.  If `s` is a sum with head `ξ`, its tail is
-    below `ρ` and the induction hypothesis at `ρ` applies; if its head is below
-    `ξ`, or `s` is additively principal with `s ≤ ξ`, then already `s < t[0]`.
-  * `t = ω^β` with `β` a limit.  `t[n] = ω^(β[n])`.  Clause 2.3.13 reduces
-    `s < ω^β` for `s = φ̄pq` to `q < β` (p = 0) or `s < β` (p ≠ 0, since a CNF `β`
-    is never `φ̄pq` with `p ≠ 0`), and both are handed to the hypothesis at `β`;
-    the `⊕` case needs only the HEAD, plus `lt_fsC_step` to turn the `≤` the
-    hypothesis returns into the `<` that clause 2.3.10 wants.
-  * `t = ω^(β+1)`.  `t[n] = ω^β·(n+1)`, and this is the only case that COUNTS:
-    `s` is a sum of components each `≤ ω^β`, so `n` is its number of components.
-    Needs the successor inversion `q < β+1 → inT q → q ≤ β` (an analogue of
-    `below_one`, which is its `β = 0` instance).
-
-Three auxiliary facts the route needs, none of them in the file yet:
-    (J)  a `ψ`, `Z`, `M` or `ω̄^·` is never below a CN term  (structural induction
-         on the CN term; the `ψ`-vs-`φ̄` clause 2.3.4 recurses into the exponent,
-         which is CN, so it terminates) — this is what kills the junk shapes of
-         `s`, exactly as §9's `ltF_sc_one` does for the tower bound;
-    (K)  `x < ω^x` for CN `x`;
-    (L)  the successor inversion above.
-`inT` is again load-bearing and again for §9's reason: `φ̄(0 ⊕ M)0` is below every
-`ω^β` with `β ≥ 1` and above nothing the sequence reaches. -/
+THE FOURTH CLAUSE, COFINALITY, is proved: `cof_fsC` in §14.  It needed three
+auxiliaries, all in §12 — (J) `lt_junkAP_cn`, (K) `lt_pow_self`, (L)
+`le_predC_of_lt` — and one structural theorem, §13's `cn_of_lt_cn`: below a
+Cantor normal form there is nothing but Cantor normal forms.  §13 is what removed
+the case bash: once every `s` in range is known to be `CN`, it is `Frag`, so §7's
+transitivity applies to it and the seven-constructor analysis collapses to three
+shapes.  `lim_clauses` (§14.1) packages all four. -/
 
 private def cnSample : List Term :=
   [omega, phi zero omega, phi zero (ofNat 2), add omega omega, phi zero (phi zero omega),
@@ -2787,6 +2764,699 @@ theorem fsC_tower_zero : ∀ k, fsC (tower (k + 1)) 0 = tower k
     rw [fsC_phi_lim hne hk]
     show phi zero (fsC (tower (k + 1)) 0) = phi zero (tower k)
     rw [fsC_tower_zero k]
+
+/-! ## §12 The three auxiliaries the cofinality clause needs  (STAGE 2b, part 2)
+
+§11.4 named them (J), (K), (L).  All three are proved here; what is left after
+this section is the cofinality induction itself. -/
+
+/-- The shapes that are not CNF and not sums: `M`, `ω̄^·`, `ψ`, `Z`.  These are
+    exactly the terms the `⊕`/`φ̄` clauses can never place below a CNF term. -/
+def junkAP : Term → Bool
+  | M => true
+  | omg _ => true
+  | psi _ _ => true
+  | Z _ => true
+  | _ => false
+
+/-- Everything that is not `0` and not a sum: the left-hand shapes for which
+    clause 2.3.11 decides `s < ⊕(…)` by `s ≤ α₁`. -/
+def isAtom : Term → Bool
+  | zero => false
+  | add _ _ => false
+  | _ => true
+
+theorem cn_ne_junkAP {s b : Term} (hs : junkAP s = true) (hb : CN b = true) :
+    (s == b) = false := by
+  cases s <;> cases b <;>
+    first
+      | rfl
+      | exact Bool.noConfusion hs
+      | exact Bool.noConfusion hb
+
+/-- 2.3.11 for `lt`, for every left-hand shape at once. -/
+theorem lt_atom_add {s : Term} (hs : isAtom s = true) (u v : Term) :
+    lt s (add u v) = le s u := by
+  have hv := deg_pos v
+  have key : ∀ (G : Nat), ltF (G + 1) s (add u v) = ((s == u) || ltF G s u) := by
+    intro G
+    cases s with
+    | zero => exact Bool.noConfusion hs
+    | add _ _ => exact Bool.noConfusion hs
+    | M => rfl
+    | omg _ => rfl
+    | phi _ _ => rfl
+    | psi _ _ => rfl
+    | Z _ => rfl
+  show ltF (fuelOf s (add u v)) s (add u v) = _
+  rw [show fuelOf s (add u v) = (2 * (s.deg + (add u v).deg) + 7) + 1 from by
+      show 2 * (s.deg + (add u v).deg) + 8 = _; omega, key]
+  rw [show ltF (2 * (s.deg + (add u v).deg) + 7) s u = lt s u from
+    (lt_eq_ltF s u _
+      (by show s.deg + u.deg ≤ 2 * (s.deg + (1 + u.deg + v.deg)) + 7; omega)).symm]
+  rfl
+
+/-- **(J)** A `ψ`, `Z`, `M` or `ω̄^·` is never below a Cantor normal form. -/
+theorem lt_junkAP_cn : ∀ (y : Term), CN y = true → ∀ (f : Nat) (s : Term),
+    junkAP s = true → ltF f s y = false := by
+  intro y
+  induction y with
+  | M => intro hb; exact Bool.noConfusion hb
+  | omg _ _ => intro hb; exact Bool.noConfusion hb
+  | psi _ _ _ _ => intro hb; exact Bool.noConfusion hb
+  | Z _ _ => intro hb; exact Bool.noConfusion hb
+  | zero =>
+    intro _ f s hs
+    cases f with
+    | zero => rfl
+    | succ g =>
+      cases s with
+      | zero => exact Bool.noConfusion hs
+      | add _ _ => exact Bool.noConfusion hs
+      | M => rfl
+      | omg _ => rfl
+      | phi _ _ => exact Bool.noConfusion hs
+      | psi _ _ => rfl
+      | Z _ => rfl
+  | phi x b _ ihb =>
+    intro hcn f s hs
+    have hx : x = zero := (cn_phi hcn).1
+    have hcnb : CN b = true := (cn_phi hcn).2
+    subst hx
+    cases f with
+    | zero => rfl
+    | succ g =>
+      cases s with
+      | zero => exact Bool.noConfusion hs
+      | add _ _ => exact Bool.noConfusion hs
+      | phi _ _ => exact Bool.noConfusion hs
+      | M => rfl
+      | omg _ => rfl
+      | psi k a =>
+        show ((psi k a == zero) || (psi k a == b) || ltF g (psi k a) zero
+                || ltF g (psi k a) b) = false
+        rw [cn_ne_junkAP (s := psi k a) rfl hcnb, ltF_right_zero, ihb hcnb g (psi k a) rfl]
+        rfl
+      | Z a =>
+        show ((Z a == zero) || (Z a == b) || ltF g (Z a) zero || ltF g (Z a) b) = false
+        rw [cn_ne_junkAP (s := Z a) rfl hcnb, ltF_right_zero, ihb hcnb g (Z a) rfl]
+        rfl
+  | add u v ihu _ =>
+    intro hcn f s hs
+    obtain ⟨_, hcnu, _, _⟩ := cn_add hcn
+    cases f with
+    | zero => rfl
+    | succ g =>
+      have hkey : ltF (g + 1) s (add u v) = ((s == u) || ltF g s u) := by
+        cases s with
+        | zero => exact Bool.noConfusion hs
+        | add _ _ => exact Bool.noConfusion hs
+        | phi _ _ => exact Bool.noConfusion hs
+        | M => rfl
+        | omg _ => rfl
+        | psi _ _ => rfl
+        | Z _ => rfl
+      rw [hkey, cn_ne_junkAP hs hcnu, ihu hcnu g s hs]
+      rfl
+
+/-- **(K)** Every Cantor normal form is below `ω` raised to itself. -/
+theorem lt_pow_self : ∀ (x : Term), CN x = true → lt x (phi zero x) = true := by
+  intro x
+  induction x with
+  | M => intro hcn; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn; exact Bool.noConfusion hcn
+  | zero =>
+    intro _
+    exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (one : Term).deg) + 8; omega)
+      (by decide)
+  | phi p q _ ihq =>
+    intro hcn
+    have hp : p = zero := (cn_phi hcn).1
+    subst hp
+    rw [lt_pow]
+    exact ihq (cn_phi hcn).2
+  | add u v ihu _ =>
+    intro hcn
+    obtain ⟨hpow, hcnu, hcnv, _⟩ := cn_add hcn
+    obtain ⟨e, he⟩ := eq_pow_of_isPow hpow
+    subst he
+    have h1 : lt e (phi zero e) = true := by
+      have := ihu hcnu
+      rw [lt_pow] at this
+      exact this
+    have h2 : lt (phi zero e) (add (phi zero e) v) = true := by
+      rw [lt_atom_add rfl]
+      exact le_self _
+    have hfrag : Frag (add (phi zero e) v) = true := frag_of_cn _ hcn
+    rw [lt_add_phi, lt_pow]
+    exact lt_trans (frag_of_cn e (cn_phi hcnu).2) (frag_of_cn _ hcnu) hfrag h1 h2
+
+/-! ### §12.1 Two monotonicity steps for sums -/
+
+theorem le_add_tail {u d e : Term} (h : le d e = true) : le (add u d) (add u e) = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h ⊢
+  rcases h with rfl | h
+  · exact Or.inl rfl
+  · refine Or.inr ?_
+    rw [lt_add_add (by intro hc; injection hc with h1 h2; exact ne_of_ltF h h2), if_pos rfl]
+    exact h
+
+theorem lt_add_head {c d u v : Term} (h : c ≠ u) (hlt : lt c u = true) :
+    lt (add c d) (add u v) = true := by
+  rw [lt_add_add (by intro hc; injection hc with h1 h2; exact h h1), if_neg h]
+  exact hlt
+
+/-- The `⊕`-step both branches of `le_predC_of_lt` use on an atomic `q`: clause
+    2.3.11 decides `q < ξ ⊕ ρ` and `q < ξ ⊕ ρ'` by the SAME test `q ≤ ξ`. -/
+private theorem atom_step {q u v w : Term} (hs : isAtom q = true)
+    (h : lt q (add u v) = true) : le q (add u w) = true := by
+  rw [lt_atom_add hs] at h
+  show ((q == add u w) || lt q (add u w)) = true
+  rw [lt_atom_add hs, h]
+  exact Bool.or_true _
+
+/-- **(L)** The successor inversion: nothing of 𝔗(M) lies strictly between the
+    predecessor of a CNF successor and the successor itself.  `below_one` (§9.3)
+    is the instance `β = 1`. -/
+theorem le_predC_of_lt : ∀ (b : Term), CN b = true → kindC b = true →
+    ∀ (q : Term), inT q = true → lt q b = true → le q (predC b) = true := by
+  intro b
+  induction b with
+  | M => intro hcn; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn; exact Bool.noConfusion hcn
+  | zero => intro _ hk; exact Bool.noConfusion hk
+  | phi x y _ _ =>
+    intro hcn hk q hq hlt
+    have hx : x = zero := (cn_phi hcn).1
+    have hy : y = zero := by
+      have hh : (y == zero) = true := hk
+      simpa using hh
+    subst hx; subst hy
+    have : q = zero := below_one q hq _ hlt
+    subst this
+    rfl
+  | add u v _ ihv =>
+    intro hcn hk q hq hlt
+    obtain ⟨hpow, hcnu, hcnv, hdesc⟩ := cn_add hcn
+    obtain ⟨e, he⟩ := eq_pow_of_isPow hpow
+    subst he
+    have hkv : kindC v = true := hk
+    show le q (if (v == one) = true then phi zero e else add (phi zero e) (predC v)) = true
+    by_cases hv : (v == one) = true
+    · rw [if_pos hv]
+      have hveq : v = one := by simpa using hv
+      subst hveq
+      cases q with
+      | zero =>
+        show ((zero == phi zero e) || lt zero (phi zero e)) = true
+        rw [show lt zero (phi zero e) = true from
+          ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (phi zero e).deg) + 8; omega)
+            (by intro hc; exact Term.noConfusion hc)]
+        exact Bool.or_true _
+      | M => rw [lt_atom_add rfl] at hlt; exact hlt
+      | omg _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | psi _ _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | Z _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | phi _ _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | add c d =>
+        obtain ⟨_, _, hind⟩ := inT_add hq
+        by_cases heq : add c d = add (phi zero e) one
+        · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+        rw [lt_add_add heq] at hlt
+        by_cases hcu : c = phi zero e
+        · rw [if_pos hcu] at hlt
+          have hdz : d = zero := below_one d hind _ hlt
+          subst hdz
+          exfalso
+          have hbad : inT (add c zero) = false := by
+            show (c.isAP && inT c && inT zero && ((zero : Term).isAP && le zero c)) = false
+            rw [show ((zero : Term).isAP && le zero c) = false from rfl, Bool.and_false]
+          rw [hbad] at hq
+          exact Bool.noConfusion hq
+        · rw [if_neg hcu] at hlt
+          show ((add c d == phi zero e) || lt (add c d) (phi zero e)) = true
+          rw [lt_add_phi, hlt]
+          exact Bool.or_true _
+    · rw [if_neg hv]
+      cases q with
+      | zero =>
+        show ((zero == add (phi zero e) (predC v)) || lt zero (add (phi zero e) (predC v))) = true
+        rw [show lt zero (add (phi zero e) (predC v)) = true from
+          ltF_left_zero
+            (by show 1 ≤ 2 * ((zero : Term).deg + (add (phi zero e) (predC v)).deg) + 8; omega)
+            (by intro hc; exact Term.noConfusion hc)]
+        exact Bool.or_true _
+      | M => exact atom_step rfl hlt
+      | omg _ => exact atom_step rfl hlt
+      | psi _ _ => exact atom_step rfl hlt
+      | Z _ => exact atom_step rfl hlt
+      | phi _ _ => exact atom_step rfl hlt
+      | add c d =>
+        obtain ⟨_, _, hind⟩ := inT_add hq
+        by_cases heq : add c d = add (phi zero e) v
+        · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+        rw [lt_add_add heq] at hlt
+        by_cases hcu : c = phi zero e
+        · rw [if_pos hcu] at hlt
+          subst hcu
+          exact le_add_tail (ihv hcnv hkv d hind hlt)
+        · rw [if_neg hcu] at hlt
+          show ((add c d == add (phi zero e) (predC v))
+                  || lt (add c d) (add (phi zero e) (predC v))) = true
+          rw [lt_add_head hcu hlt]
+          exact Bool.or_true _
+
+/-! ## §13 Below a Cantor normal form there is nothing but Cantor normal forms
+
+This is the structural theorem the cofinality induction needs, and it is the
+strongest form of §9's shape analysis: §9 showed that the terms 2.3 puts below ε₀
+have CNF SHAPE along the head spine; here the whole term is pinned, with `inT` as
+the only extra hypothesis (and it is indispensable for §9's reason — `0 ⊕ M` is
+below `1`).
+
+Once it is available every `s` occurring in a cofinality proof is `CN`, hence
+`Frag`, hence §7's transitivity applies to it — which is what makes the remaining
+clause tractable at all.
+
+The induction is on `s.deg + c.deg`: the `φ̄` case keeps `s` and shrinks the bound
+(2.3.13(iii) hands `φ̄pq ≤ δ` back with the SAME left-hand side), so no structural
+induction on `s` alone can work. -/
+
+/-- 2.3.13 for `lt`, all three sub-clauses. -/
+theorem lt_phi_phi {a b c d : Term} (h : phi a b ≠ phi c d) :
+    lt (phi a b) (phi c d) =
+      (if a = c then lt b d
+       else if lt a c = true then lt b (phi c d) else le (phi a b) d) := by
+  have ha := deg_pos a; have hb := deg_pos b; have hc := deg_pos c; have hd := deg_pos d
+  show ltF (fuelOf (phi a b) (phi c d)) (phi a b) (phi c d) = _
+  rw [show fuelOf (phi a b) (phi c d) = (2 * ((phi a b).deg + (phi c d).deg) + 7) + 1 from by
+      show 2 * ((phi a b).deg + (phi c d).deg) + 8 = _; omega,
+    ltF_succ_phi_phi _ h]
+  by_cases hac : a = c
+  · rw [if_pos hac, if_pos hac]
+    exact (lt_eq_ltF b d _
+      (by show b.deg + d.deg ≤ 2 * ((1 + a.deg + b.deg) + (1 + c.deg + d.deg)) + 7; omega)).symm
+  · rw [if_neg hac, if_neg hac,
+      show ltF (2 * ((phi a b).deg + (phi c d).deg) + 7) a c = lt a c from
+        (lt_eq_ltF a c _
+          (by show a.deg + c.deg ≤ 2 * ((1 + a.deg + b.deg) + (1 + c.deg + d.deg)) + 7;
+              omega)).symm]
+    by_cases hlt : lt a c = true
+    · rw [if_pos hlt, if_pos hlt]
+      exact (lt_eq_ltF b (phi c d) _
+        (by show b.deg + (1 + c.deg + d.deg)
+              ≤ 2 * ((1 + a.deg + b.deg) + (1 + c.deg + d.deg)) + 7; omega)).symm
+    · rw [if_neg hlt, if_neg hlt,
+        show ltF (2 * ((phi a b).deg + (phi c d).deg) + 7) (phi a b) d = lt (phi a b) d from
+          (lt_eq_ltF (phi a b) d _
+            (by show (1 + a.deg + b.deg) + d.deg
+                  ≤ 2 * ((1 + a.deg + b.deg) + (1 + c.deg + d.deg)) + 7; omega)).symm]
+      rfl
+
+theorem le_of_lt {x y : Term} (h : lt x y = true) : le x y = true := by
+  show ((x == y) || lt x y) = true
+  rw [h]; exact Bool.or_true _
+
+theorem hdLe_of_isAP : ∀ {a : Term}, a.isAP = true → ∀ c, hdLe a c = le a c
+  | zero, h, _ => Bool.noConfusion h
+  | add _ _, h, _ => Bool.noConfusion h
+  | M, _, _ => rfl
+  | omg _, _, _ => rfl
+  | phi _ _, _, _ => rfl
+  | psi _ _, _, _ => rfl
+  | Z _, _, _ => rfl
+
+theorem isAtom_of_isAP : ∀ {a : Term}, a.isAP = true → isAtom a = true
+  | zero, h => Bool.noConfusion h
+  | add _ _, h => Bool.noConfusion h
+  | M, _ => rfl
+  | omg _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+
+theorem isPow_of_cn_isAP : ∀ {a : Term}, CN a = true → a.isAP = true → isPow a = true
+  | zero, _, h => Bool.noConfusion h
+  | add _ _, _, h => Bool.noConfusion h
+  | M, h, _ => Bool.noConfusion h
+  | omg _, h, _ => Bool.noConfusion h
+  | psi _ _, h, _ => Bool.noConfusion h
+  | Z _, h, _ => Bool.noConfusion h
+  | phi x _, h, _ => by
+    have hx : x = zero := (cn_phi h).1
+    rw [hx]; rfl
+
+/-- The descending conjunct of 2.1(iii) IS `hdLe`. -/
+theorem hdLe_of_inT_add : ∀ {a b : Term}, inT (add a b) = true → hdLe b a = true := by
+  intro a b h
+  simp only [inT, Bool.and_eq_true] at h
+  have h4 := h.2
+  cases b with
+  | zero => exact Bool.noConfusion h4
+  | add _ _ => exact h4
+  | M => exact h4
+  | omg _ => exact h4
+  | phi _ _ => exact h4
+  | psi _ _ => exact h4
+  | Z _ => exact h4
+
+/-- A strict bound turns into a `hdLe` bound (for a nonzero left-hand side). -/
+theorem hdLe_of_lt_cn : ∀ (y : Term), CN y = true → ∀ (s : Term), s ≠ zero → inT s = true →
+    lt s y = true → hdLe s y = true := by
+  intro y hcn s hz hin hlt
+  cases s with
+  | zero => exact absurd rfl hz
+  | M => exact le_of_lt hlt
+  | omg _ => exact le_of_lt hlt
+  | phi _ _ => exact le_of_lt hlt
+  | psi _ _ => exact le_of_lt hlt
+  | Z _ => exact le_of_lt hlt
+  | add c d =>
+    obtain ⟨hap, _, _⟩ := inT_add hin
+    show le c y = true
+    cases y with
+    | zero =>
+      rw [show lt (add c d) zero = false from ltF_right_zero _ _] at hlt
+      exact Bool.noConfusion hlt
+    | M => exact Bool.noConfusion hcn
+    | omg _ => exact Bool.noConfusion hcn
+    | psi _ _ => exact Bool.noConfusion hcn
+    | Z _ => exact Bool.noConfusion hcn
+    | phi p q =>
+      rw [lt_add_phi] at hlt
+      show ((c == phi p q) || lt c (phi p q)) = true
+      rw [hlt]; exact Bool.or_true _
+    | add u v =>
+      show ((c == add u v) || lt c (add u v)) = true
+      rw [lt_atom_add (isAtom_of_isAP hap)]
+      by_cases heq : add c d = add u v
+      · injection heq with h1 h2
+        rw [h1]
+        show ((u == add u v) || ((u == u) || lt u u)) = true
+        simp
+      · rw [lt_add_add heq] at hlt
+        by_cases hcu : c = u
+        · rw [hcu]
+          show ((u == add u v) || ((u == u) || lt u u)) = true
+          simp
+        · rw [if_neg hcu] at hlt
+          show ((c == add u v) || ((c == u) || lt c u)) = true
+          rw [hlt]; simp
+
+/-- **The structural theorem.**  A term of 𝔗(M) whose head does not exceed a
+    Cantor normal form is itself a Cantor normal form. -/
+theorem cn_of_inT_hdLe : ∀ (n : Nat) (s c : Term), s.deg + c.deg ≤ n →
+    inT s = true → CN c = true → hdLe s c = true → CN s = true := by
+  intro n
+  induction n with
+  | zero =>
+    intro s c hd _ _ _
+    have := deg_pos s; have := deg_pos c; omega
+  | succ n ih =>
+    intro s c hd hin hcn hle
+    have hjunk : ∀ (x : Term), junkAP x = true → hdLe x c = true → False := by
+      intro x hx hxc
+      have hx' : le x c = true := by
+        cases x with
+        | M => exact hxc
+        | omg _ => exact hxc
+        | psi _ _ => exact hxc
+        | Z _ => exact hxc
+        | zero => exact Bool.noConfusion hx
+        | add _ _ => exact Bool.noConfusion hx
+        | phi _ _ => exact Bool.noConfusion hx
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hx'
+      rcases hx' with h1 | h1
+      · rw [h1] at hx
+        cases c <;> first | exact Bool.noConfusion hx | exact Bool.noConfusion hcn
+      · rw [show lt x c = false from lt_junkAP_cn c hcn _ x hx] at h1
+        exact Bool.noConfusion h1
+    cases s with
+    | zero => rfl
+    | M => exact absurd (hjunk M rfl hle) (by simp)
+    | omg a => exact absurd (hjunk (omg a) rfl hle) (by simp)
+    | psi k a => exact absurd (hjunk (psi k a) rfl hle) (by simp)
+    | Z a => exact absurd (hjunk (Z a) rfl hle) (by simp)
+    | add c' d' =>
+      obtain ⟨hap, hinc, hind⟩ := inT_add hin
+      have hdd : hdLe d' c' = true := hdLe_of_inT_add hin
+      have hcc : hdLe c' c = true := by rw [hdLe_of_isAP hap]; exact hle
+      have hdegc : c'.deg + c.deg ≤ n := by
+        have := deg_pos d'
+        have h2 : 1 + c'.deg + d'.deg + c.deg ≤ n + 1 := hd
+        omega
+      have hcnc : CN c' = true := ih c' c hdegc hinc hcn hcc
+      have hdegd : d'.deg + c'.deg ≤ n := by
+        have := deg_pos c
+        have h2 : 1 + c'.deg + d'.deg + c.deg ≤ n + 1 := hd
+        omega
+      have hcnd : CN d' = true := ih d' c' hdegd hind hcnc hdd
+      show (isPow c' && CN c' && CN d' && hdLe d' c') = true
+      rw [hcnc, hcnd, hdd, isPow_of_cn_isAP hcnc hap]
+      rfl
+    | phi p q =>
+      obtain ⟨hinp, hinq⟩ := inT_phi hin
+      have hle' : le (phi p q) c = true := hle
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle'
+      rcases hle' with h1 | h1
+      · rw [h1]; exact hcn
+      · cases c with
+        | zero =>
+          rw [show lt (phi p q) zero = false from ltF_right_zero _ _] at h1
+          exact Bool.noConfusion h1
+        | M => exact Bool.noConfusion hcn
+        | omg _ => exact Bool.noConfusion hcn
+        | psi _ _ => exact Bool.noConfusion hcn
+        | Z _ => exact Bool.noConfusion hcn
+        | add u v =>
+          obtain ⟨_, hcnu, _, _⟩ := cn_add hcn
+          rw [lt_atom_add rfl] at h1
+          have hdeg : (phi p q).deg + u.deg ≤ n := by
+            have := deg_pos v
+            have h2 : (phi p q).deg + (1 + u.deg + v.deg) ≤ n + 1 := hd
+            omega
+          exact ih (phi p q) u hdeg hin hcnu h1
+        | phi x b =>
+          have hx : x = zero := (cn_phi hcn).1
+          have hcnb : CN b = true := (cn_phi hcn).2
+          subst hx
+          have hne : phi p q ≠ phi zero b := by
+            intro hc; rw [hc, lt_irrefl] at h1; exact Bool.noConfusion h1
+          rw [lt_phi_phi hne] at h1
+          by_cases hpz : p = zero
+          · rw [if_pos hpz] at h1
+            have hdeg : q.deg + b.deg ≤ n := by
+              have := deg_pos p
+              have h2 : (1 + p.deg + q.deg) + (1 + 1 + b.deg) ≤ n + 1 := hd
+              omega
+            have hcnq : CN q = true := by
+              by_cases hqz : q = zero
+              · rw [hqz]; rfl
+              · exact ih q b hdeg hinq hcnb (hdLe_of_lt_cn b hcnb q hqz hinq h1)
+            show ((p == zero) && CN q) = true
+            rw [hcnq, hpz]
+            rfl
+          · rw [if_neg hpz,
+              if_neg (by rw [show lt p zero = false from ltF_right_zero _ _]
+                         exact Bool.noConfusion)] at h1
+            have hdeg : (phi p q).deg + b.deg ≤ n := by
+              have h2 : (phi p q).deg + (1 + 1 + b.deg) ≤ n + 1 := hd
+              omega
+            exact ih (phi p q) b hdeg hin hcnb h1
+
+/-- **The form the cofinality proof uses.** -/
+theorem cn_of_lt_cn {s y : Term} (hin : inT s = true) (hcn : CN y = true)
+    (hlt : lt s y = true) : CN s = true := by
+  by_cases hz : s = zero
+  · rw [hz]; rfl
+  · exact cn_of_inT_hdLe (s.deg + y.deg) s y (Nat.le_refl _) hin hcn
+      (hdLe_of_lt_cn y hcn s hz hin hlt)
+
+/-- …hence `Frag`, hence §7's whole order theory applies to it. -/
+theorem frag_of_lt_cn {s y : Term} (hin : inT s = true) (hcn : CN y = true)
+    (hlt : lt s y = true) : Frag s = true :=
+  frag_of_cn s (cn_of_lt_cn hin hcn hlt)
+
+/-! ## §14 COFINALITY of the CNF fundamental sequence  (STAGE 2b, completed)
+
+The fourth and last clause of `Certified.lim`, for every CNF limit below ε₀ at
+once.  With §13 in hand the shape of `s` is no longer a case bash over the seven
+constructors: `cn_of_lt_cn` says every `s` in range is already CNF, so only `0`,
+`ω^ρ` and `ξ ⊕ ρ` occur, and §7's order theory applies to all of them.
+
+The three cases of `t` are of quite different character:
+
+  * `t = ξ ⊕ ρ` — hand the tail to the hypothesis at `ρ`, the rest to clause
+    2.3.16; no counting, no arithmetic.
+  * `t = ω^β` with `β` a limit — hand the exponent to the hypothesis at `β`.  The
+    `⊕` case needs `lt_fsC_step` to convert the `≤` the hypothesis returns into
+    the `<` that clause 2.3.10 wants (index `n+1` instead of `n`).
+  * `t = ω^(β+1)` — the only case that COUNTS: `t[n] = ω^β·(n+1)`, and the index
+    is the number of components of `s`.  This is `cof_repAdd`, a separate
+    induction, and it is where §12's successor inversion `le_predC_of_lt` is
+    spent. -/
+
+theorem le_pow {e a : Term} (h : le e a = true) : le (phi zero e) (phi zero a) = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at h ⊢
+  rcases h with rfl | h
+  · exact Or.inl rfl
+  · exact Or.inr (by rw [lt_pow]; exact h)
+
+theorem le_zero_left {x : Term} (h : x ≠ zero) : le zero x = true :=
+  le_of_lt (ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + x.deg) + 8; omega) h)
+
+/-- The counting case: a CNF term below `ω^(β+1)` is a sum of at most `n+1`
+    components each `≤ ω^β`, hence `≤ ω^β·(n+1)`. -/
+theorem cof_repAdd : ∀ (s : Term), CN s = true → inT s = true → ∀ (b : Term),
+    CN b = true → kindC b = true → lt s (phi zero b) = true →
+    ∃ n, le s (repAdd (phi zero (predC b)) n) = true := by
+  intro s
+  induction s with
+  | M => intro hcn; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn; exact Bool.noConfusion hcn
+  | zero =>
+    intro _ _ b _ _ _
+    exact ⟨0, le_zero_left (by intro h; exact Term.noConfusion h)⟩
+  | phi p r _ _ =>
+    intro hcn hin b hcnb hkb hlt
+    have hp : p = zero := (cn_phi hcn).1
+    subst hp
+    rw [lt_pow] at hlt
+    exact ⟨0, le_pow (le_predC_of_lt b hcnb hkb r (inT_phi hin).2 hlt)⟩
+  | add c d _ ihd =>
+    intro hcn hin b hcnb hkb hlt
+    obtain ⟨hpow, hcnc, hcnd, _⟩ := cn_add hcn
+    obtain ⟨_, hinc, hind⟩ := inT_add hin
+    obtain ⟨e, he⟩ := eq_pow_of_isPow hpow
+    subst he
+    have hfb : Frag (phi zero b) = true := frag_of_cn _ (by
+      show (((zero : Term) == zero) && CN b) = true
+      rw [hcnb]; rfl)
+    have hhead : lt (phi zero e) (phi zero b) = true := by rw [← lt_add_phi]; exact hlt
+    have htail : lt d (phi zero b) = true := lt_tail hcn hfb hhead
+    obtain ⟨n, hn⟩ := ihd hcnd hind b hcnb hkb htail
+    have hce : le (phi zero e) (phi zero (predC b)) = true := by
+      refine le_pow (le_predC_of_lt b hcnb hkb e (inT_phi hinc).2 ?_)
+      rw [← lt_pow]; exact hhead
+    refine ⟨n + 1, ?_⟩
+    show le (add (phi zero e) d) (add (phi zero (predC b)) (repAdd (phi zero (predC b)) n)) = true
+    simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hce
+    rcases hce with hce | hce
+    · rw [hce]
+      exact le_add_tail hn
+    · exact le_of_lt (lt_add_head (ne_of_ltF hce) hce)
+
+/-- **THE COFINALITY CLAUSE, for every CNF limit below ε₀.** -/
+theorem cof_fsC : ∀ (t : Term), CN t = true → kindC t = false → t ≠ zero →
+    ∀ s, inT s = true → lt s t = true → ∃ n, le s (fsC t n) = true := by
+  intro t
+  induction t with
+  | M => intro hcn; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn; exact Bool.noConfusion hcn
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | phi x b _ ihb =>
+    intro hcn hk _ s hins hlt
+    have hx : x = zero := (cn_phi hcn).1
+    have hcnb : CN b = true := (cn_phi hcn).2
+    subst hx
+    have hy : (b == zero) = false := hk
+    have hbz : b ≠ zero := by intro h; rw [h] at hy; exact Bool.noConfusion hy
+    have hcns : CN s = true := cn_of_lt_cn hins hcn hlt
+    by_cases hkb : kindC b = true
+    · obtain ⟨n, hn⟩ := cof_repAdd s hcns hins b hcnb hkb hlt
+      exact ⟨n, by rw [fsC_phi_succ hy hkb]; exact hn⟩
+    · have hkb' : kindC b = false := by simpa using hkb
+      cases s with
+      | M => exact Bool.noConfusion hcns
+      | omg _ => exact Bool.noConfusion hcns
+      | psi _ _ => exact Bool.noConfusion hcns
+      | Z _ => exact Bool.noConfusion hcns
+      | zero =>
+        exact ⟨0, by
+          rw [fsC_phi_lim hy hkb']
+          exact le_zero_left (by intro h; exact Term.noConfusion h)⟩
+      | phi p r =>
+        have hp : p = zero := (cn_phi hcns).1
+        subst hp
+        rw [lt_pow] at hlt
+        obtain ⟨n, hn⟩ := ihb hcnb hkb' hbz r (inT_phi hins).2 hlt
+        exact ⟨n, by rw [fsC_phi_lim hy hkb']; exact le_pow hn⟩
+      | add c d =>
+        obtain ⟨hpow, hcnc, hcnd, _⟩ := cn_add hcns
+        obtain ⟨_, hinc, _⟩ := inT_add hins
+        obtain ⟨e, he⟩ := eq_pow_of_isPow hpow
+        subst he
+        have hhead : lt (phi zero e) (phi zero b) = true := by rw [← lt_add_phi]; exact hlt
+        have hlte : lt e b = true := by rw [← lt_pow]; exact hhead
+        obtain ⟨n, hn⟩ := ihb hcnb hkb' hbz e (inT_phi hinc).2 hlte
+        refine ⟨n + 1, ?_⟩
+        rw [fsC_phi_lim hy hkb']
+        refine le_of_lt ?_
+        rw [lt_add_phi, lt_pow]
+        exact lt_of_le_of_lt (frag_of_cn e (cn_phi hcnc).2)
+          (frag_of_cn _ (cn_fsC b hcnb hkb' hbz n))
+          (frag_of_cn _ (cn_fsC b hcnb hkb' hbz (n + 1))) hn
+          (lt_fsC_step b hcnb hkb' hbz n)
+  | add u v _ ihv =>
+    intro hcn hk _ s hins hlt
+    obtain ⟨hpow, hcnu, hcnv, hdesc⟩ := cn_add hcn
+    have hkv : kindC v = false := hk
+    have hvz : v ≠ zero := by intro h; rw [h] at hdesc; exact Bool.noConfusion hdesc
+    obtain ⟨e, he⟩ := eq_pow_of_isPow hpow
+    subst he
+    have hfz : fsC v 0 ≠ zero := fsC_ne_zero v hcnv hkv hvz 0
+    cases s with
+    | zero =>
+      exact ⟨0, le_zero_left (by intro h; exact Term.noConfusion h)⟩
+    | M => exact ⟨0, atom_step rfl hlt⟩
+    | omg _ => exact ⟨0, atom_step rfl hlt⟩
+    | psi _ _ => exact ⟨0, atom_step rfl hlt⟩
+    | Z _ => exact ⟨0, atom_step rfl hlt⟩
+    | phi _ _ => exact ⟨0, atom_step rfl hlt⟩
+    | add c d =>
+      obtain ⟨_, _, hind⟩ := inT_add hins
+      by_cases heq : add c d = add (phi zero e) v
+      · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+      rw [lt_add_add heq] at hlt
+      by_cases hcu : c = phi zero e
+      · rw [if_pos hcu] at hlt
+        obtain ⟨n, hn⟩ := ihv hcnv hkv hvz d hind hlt
+        exact ⟨n, by rw [hcu]; exact le_add_tail hn⟩
+      · rw [if_neg hcu] at hlt
+        exact ⟨0, le_of_lt (lt_add_head hcu hlt)⟩
+
+/-! ### §14.1 The four clauses of `Certified.lim`, assembled
+
+For every CNF limit `t` below ε₀ the sequence `fsC t` satisfies every premise of
+`Certified.lim` that does not mention a matrix.  What Stage 2c still owes is the
+BMS side: that `BMS.expand` of the matrix of `t` is the matrix of `fsC t n`. -/
+
+theorem lim_clauses (t : Term) (hcn : CN t = true) (hk : kindC t = false) (hz : t ≠ zero) :
+    (∀ n, CN (fsC t n) = true)
+  ∧ (∀ n, lt (fsC t n) t = true)
+  ∧ (∀ n, lt (fsC t n) (fsC t (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s t = true → ∃ n, le s (fsC t n) = true) :=
+  ⟨cn_fsC t hcn hk hz, lt_fsC t hcn hk hz, lt_fsC_step t hcn hk hz, cof_fsC t hcn hk hz⟩
+
+/-- Specialised to the ω-towers: the values of `(0,0)(1,1)[n]`.  `tower (k+1)` is
+    a CNF limit, so `lim_clauses` applies to it verbatim. -/
+theorem cn_tower : ∀ k, CN (tower k) = true
+  | 0 => rfl
+  | k + 1 => by
+    show (((zero : Term) == zero) && CN (tower k)) = true
+    rw [cn_tower k]; rfl
+
+theorem kindC_tower : ∀ k, kindC (tower (k + 1)) = false
+  | 0 => rfl
+  | _ + 1 => rfl
 
 /-! ## §8 STAGE 3 — the `ψ`/`Z` clauses: what is left  (NOTHING PROVED BELOW)
 
