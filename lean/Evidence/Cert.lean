@@ -8202,6 +8202,186 @@ theorem lt_famV_tower (k n : Nat) : lt (famV k (Evidence.WF.tower n)) (repAdd ep
   rwa [show Evidence.WF.fsAin k n = famV k (Evidence.WF.tower n) from
     sumSeq_famV k Evidence.WF.tower Evidence.WF.tower_ne_zero n] at this
 
+/-! ### §19.2 THE CEILING
+
+The §15.7 induction, transposed to the family.  Same probe discipline: the junk value
+is on the RIGHT of `le s v` throughout, the probe is always one the proof chooses, and
+the only order facts relate two chosen terms.  What changed is the bound arithmetic —
+`ω^(famV k c + 1)` rather than `ω^(t+1)` — and the `lim` case now splits in two, by
+`kind_famM`: the ε₀-block rows (`c = 0`, `k ≥ 1`), whose expansions are `famM (k-1)
+(tower n)`, and the CNF-limit rows, whose expansions are `famM k (fsC c n)`.  Both
+close through `Evidence.WF.le_plus_one_of_lt_cnv` — which, arriving without a limit
+hypothesis, is why nothing here has to classify a CNV term. -/
+
+theorem cnv_famV' (k : Nat) (c : TM.Term) (hcn : CN c = true) : CNV (famV k c) = true := by
+  by_cases hz : c = zero
+  · subst hz
+    cases k with
+    | zero => rfl
+    | succ j => rw [famV_zero_arg]; exact Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T j
+  · exact cnv_famV k c hcn hz
+
+theorem plus_one_ne_self : ∀ (t : TM.Term), CNV t = true → t ≠ plus t one := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ h; exact TM.Term.noConfusion h
+  | phi x y _ _ =>
+    intro _
+    rw [plus_one_ap rfl (le_one_ap (show isAP (phi x y) = true from rfl))]
+    intro h; exact TM.Term.noConfusion h
+  | add a b _ ihb =>
+    intro hcnv
+    obtain ⟨hap, _, hcb, hdb⟩ := Evidence.WF.cnv_add hcnv
+    rw [plus_one_add (le_one_ap hap)]
+    intro h
+    injection h with _ h2
+    exact ihb hcb h2
+
+/-- `x < x+1` on the Veblen fragment. -/
+theorem lt_self_plus_one_cnv (t : TM.Term) (hcnv : CNV t = true) :
+    lt t (plus t one) = true := by
+  have hle := le_self_plus_one_cnv t hcnv
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
+  rcases hle with h | h
+  · exact absurd h (plus_one_ne_self t hcnv)
+  · exact h
+
+theorem frag_bnd_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) :
+    Evidence.WF.Frag (phi zero (plus (famV k c) one)) = true :=
+  Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ (cnv_famV' k c hcn)))
+
+theorem frag_pow_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) :
+    Evidence.WF.Frag (phi zero (famV k c)) = true :=
+  Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ (cnv_famV' k c hcn))
+
+/-- The bound at a sub-parameter is below the bound at the parameter, whenever the
+    sub-parameter's VALUE is below (which is what `lt_famV_fsC` / `lt_famV_tower` give). -/
+theorem le_bnd_of_lt_famV {x y : TM.Term} (hx : CNV x = true) (hy : CNV y = true)
+    (h : lt x y = true) : le (phi zero (plus x one)) (phi zero y) = true :=
+  Evidence.WF.le_pow (Evidence.WF.le_plus_one_of_lt_cnv hx hy h)
+
+theorem le_pow_famV_bnd (k : Nat) (c : TM.Term) (hcn : CN c = true) :
+    le (phi zero (famV k c)) (phi zero (plus (famV k c) one)) = true :=
+  Evidence.WF.le_pow (le_self_plus_one_cnv _ (cnv_famV' k c hcn))
+
+theorem lt_pow_famV_bnd (k : Nat) (c : TM.Term) (hcn : CN c = true) :
+    lt (phi zero (famV k c)) (phi zero (plus (famV k c) one)) = true := by
+  rw [Evidence.WF.lt_pow]
+  exact lt_self_plus_one_cnv _ (cnv_famV' k c hcn)
+
+theorem inT_pow_famV (k : Nat) (c : TM.Term) (hcn : CN c = true) :
+    inT (phi zero (famV k c)) = true :=
+  Evidence.WF.inT_of_cnv _ (by
+    show (CNV zero && CNV (famV k c)) = true
+    rw [cnv_famV' k c hcn]; rfl)
+
+/-- **THE CEILING FOR THE ε₀-PREFIXED REGION.** -/
+theorem no_overshoot_fam : ∀ {N : Matrix} {v : TM.Term}, Certified N v →
+    ∀ (k : Nat) (c : TM.Term), CN c = true → N = famM k c →
+      ∀ (s : TM.Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+        le (phi zero (plus (famV k c) one)) s = true → le s v = false := by
+  intro N v h
+  induction h with
+  | zero =>
+    intro k c _ _ s _ _ hap _
+    show ((s == zero) || lt s zero) = false
+    rw [show lt s zero = false from Evidence.WF.ltF_right_zero _ s,
+      show ((s == zero) : Bool) = false from by
+        cases s <;> first | exact Bool.noConfusion hap | rfl]
+    rfl
+  | @succ M w hk hall ih =>
+    intro k c hcn hN s hin hfr hap hb
+    have hkm : BMS.kind (famM k c) = .succ := by rw [← hN]; exact hk
+    have hcase : c ≠ zero ∧ kindC c = true := by
+      rcases kind_famM k c hcn with ⟨hz, _, _⟩ | ⟨_, hne, hkc⟩ | ⟨hl, _⟩
+      · rw [hz] at hkm; exact absurd hkm (by simp)
+      · exact ⟨hne, hkc⟩
+      · rw [hl] at hkm; exact absurd hkm (by simp)
+    obtain ⟨hzc, hkc⟩ := hcase
+    have hcnp : CN (predC c) = true := Evidence.WF.cn_predC c hcn hkc
+    have hexp : BMS.expand M 0 = famM k (predC c) := by
+      rw [hN, famM_eq]
+      show (BMS.expand? (epsBlocks k ++ padRow (sq c)) 0).getD [] = _
+      rw [expand?_append_root _ _ (padRow_ne_nil hcn hzc)
+        (fun y => famM_root 0 c hcn (sq_ne_nil hcn hzc) y) 0, expand_padSq_succ c hcn hkc 0]
+      rfl
+    have hbp : le (phi zero (plus (famV k (predC c)) one)) s = true := by
+      refine Evidence.WF.le_trans (frag_bnd_famV k (predC c) hcnp)
+        (frag_bnd_famV k c hcn) hfr ?_ hb
+      rw [show famV k c = plus (famV k (predC c)) one from by
+        rw [plus_famV_one, plus_predC c hcn hkc]]
+      exact Evidence.WF.le_pow
+        (le_self_plus_one_cnv _ (cnv_plus_one _ (cnv_famV' k (predC c) hcnp)))
+    have hiv : le s w = false := ih 0 k (predC c) hcnp hexp s hin hfr hap hbp
+    rcases cert_hd (hall 0) with hzw | hzw
+    · rw [hzw, show plus (zero : TM.Term) one = one from rfl]
+      exact not_le_one hin hap hb
+    · rw [le_ap_hd hap (plus w one), hd_plus_one (le_one_ap (isAP_hd w hzw)), ← le_ap_hd hap w]
+      exact hiv
+  | @lim M v fs hk hall hlt hstep hcof ih =>
+    intro k c hcn hN s hin hfr hap hb
+    have hkm : BMS.kind (famM k c) = .lim := by rw [← hN]; exact hk
+    have hcase : (c = zero ∧ k ≠ 0) ∨ (c ≠ zero ∧ kindC c = false) := by
+      rcases kind_famM k c hcn with ⟨hz, _, _⟩ | ⟨hs, _, _⟩ | ⟨_, hd⟩
+      · rw [hz] at hkm; exact absurd hkm (by simp)
+      · rw [hs] at hkm; exact absurd hkm (by simp)
+      · exact hd
+    have key : ∀ (s' : TM.Term), inT s' = true → Evidence.WF.Frag s' = true → isAP s' = true →
+        le (phi zero (famV k c)) s' = true → ∀ n, le s' (fs n) = false := by
+      intro s' hin' hfr' hap' hb' n
+      rcases hcase with ⟨hz, hk0⟩ | ⟨hzc, hkc⟩
+      · subst hz
+        cases k with
+        | zero => exact absurd rfl hk0
+        | succ j =>
+          have hexp : BMS.expand M n = famM j (Evidence.WF.tower n) := by
+            rw [hN, famM_zero_arg, epsBlocks_succ_right]
+            show (BMS.expand? (epsBlocks j ++ [[0, 0], [1, 1]]) n).getD [] = _
+            rw [expand?_append_root _ _ (by simp) eps0row_root n, expand?_eps0_row n]
+            show epsBlocks j ++ towerM n = _
+            rw [towerM_eq n]
+            rfl
+          refine ih n j (Evidence.WF.tower n) (Evidence.WF.cn_tower n) hexp s' hin' hfr' hap' ?_
+          refine Evidence.WF.le_trans (frag_bnd_famV j _ (Evidence.WF.cn_tower n))
+            (frag_pow_famV (j + 1) zero rfl) hfr' ?_ hb'
+          rw [famV_zero_arg]
+          exact le_bnd_of_lt_famV (cnv_famV' j _ (Evidence.WF.cn_tower n))
+            (Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T j) (lt_famV_tower j n)
+      · obtain ⟨hcnfs, _, _, _⟩ := Evidence.WF.lim_clauses c hcn hkc hzc
+        have hexp : BMS.expand M n = famM k (fsC c n) := by
+          rw [hN, famM_eq]
+          show (BMS.expand? (epsBlocks k ++ padRow (sq c)) n).getD [] = _
+          rw [expand?_append_root _ _ (padRow_ne_nil hcn hzc)
+            (fun y => famM_root 0 c hcn (sq_ne_nil hcn hzc) y) n, expand_padSq c hcn hkc hzc n]
+          rfl
+        refine ih n k (fsC c n) (hcnfs n) hexp s' hin' hfr' hap' ?_
+        refine Evidence.WF.le_trans (frag_bnd_famV k _ (hcnfs n)) (frag_pow_famV k c hcn) hfr' ?_ hb'
+        exact le_bnd_of_lt_famV (cnv_famV' k _ (hcnfs n)) (cnv_famV' k c hcn)
+          (lt_famV_fsC k c hcn hzc hkc n)
+    have hbt : le (phi zero (famV k c)) s = true :=
+      Evidence.WF.le_trans (frag_pow_famV k c hcn) (frag_bnd_famV k c hcn) hfr
+        (le_pow_famV_bnd k c hcn) hb
+    cases hlev : le s v with
+    | false => rfl
+    | true =>
+      exfalso
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
+      rcases hlev with rfl | hlts
+      · have hltv : lt (phi zero (famV k c)) s = true :=
+          Evidence.WF.lt_of_lt_of_le (frag_pow_famV k c hcn) (frag_bnd_famV k c hcn) hfr
+            (lt_pow_famV_bnd k c hcn) hb
+        obtain ⟨n, hn⟩ := hcof (phi zero (famV k c)) (inT_pow_famV k c hcn) hltv
+        rw [key (phi zero (famV k c)) (inT_pow_famV k c hcn) (frag_pow_famV k c hcn) rfl
+          (Evidence.WF.le_self _) n] at hn
+        exact Bool.noConfusion hn
+      · obtain ⟨n, hn⟩ := hcof s hin hlts
+        rw [key s hin hfr hap hbt n] at hn
+        exact Bool.noConfusion hn
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
@@ -8250,7 +8430,8 @@ def certRows : List (Matrix × Term) :=
    ([[0], [1], [2]], phi zero omega),
    ([[0], [1], [2], [3]], phi zero (phi zero omega)),
    ([[0, 0], [1, 1]], phi one zero),
-   ([[0, 0], [1, 1], [0, 0]], plus (phi one zero) one)]
+   ([[0, 0], [1, 1], [0, 0]], plus (phi one zero) one),
+   ([[0, 0], [1, 1], [1, 0]], Evidence.WF.rowA)]
 
 /-- **THE GATE.**  Every registered pair carries a derivation whose values are all
     terms of 𝔗(M).  Extending `certRows` without extending this proof breaks the
@@ -8259,7 +8440,7 @@ def certRows : List (Matrix × Term) :=
 theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 := by
   intro p hp
   simp only [certRows, List.mem_cons] at hp
-  rcases hp with h | h | h | h | h | h | h | h | h | h | h
+  rcases hp with h | h | h | h | h | h | h | h | h | h | h | h
   · rw [h]; exact CertifiedIn.zero
   · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq one (by decide))
   · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (ofNat 2) (by decide))
@@ -8271,6 +8452,7 @@ theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 := by
     exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero (phi zero omega)) (by decide))
   · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0
   · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0_succ_F
+  · rw [h]; exact certIn_rowA
   · cases h
 
 /-- The old gate, now a COROLLARY of the guarded one: forget the guard.  Kept
@@ -8305,7 +8487,7 @@ theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.
     le (phi zero (plus p.2 one)) u = false := by
   intro p hp u h
   simp only [certRows, List.mem_cons] at hp
-  rcases hp with e | e | e | e | e | e | e | e | e | e | e
+  rcases hp with e | e | e | e | e | e | e | e | e | e | e | e
   · subst e; exact cert_below_bound_one zero (by decide) u h
   · subst e; exact cert_below_bound_one one (by decide) u h
   · subst e; exact cert_below_bound_one (ofNat 2) (by decide) u h
@@ -8341,6 +8523,66 @@ theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.
     · exact le_pow_one_false (by intro hc; exact Term.noConfusion hc)
     · intro w hw
       exact cert_eps0_row_ceiling (by decide) rfl rfl hbnd w hw
+  · -- Row A: the ceiling for the ε₀-prefixed region (§19.2), at each expansion
+    subst e
+    show le (phi zero (plus Evidence.WF.rowA one)) u = false
+    have hceil : ∀ (n : Nat) (w : Term), Certified (eps0M n) w →
+        ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+          le (phi zero (plus (Evidence.WF.fsA n) one)) s = true → le s w = false := by
+      intro n w hw s hin hfr hap hbb
+      exact no_overshoot_fam hw (n + 1) zero rfl (famM_zero_arg (n + 1)).symm s hin hfr hap hbb
+    obtain ⟨fs, hall, _, _, hcof⟩ :=
+      certified_lim_inv h (show BMS.kind [[0, 0], [1, 1], [1, 0]] = .lim from rfl)
+    have hcert : ∀ n, Certified (eps0M n) (fs n) := by
+      intro n
+      have hx := hall n
+      rwa [show BMS.expand [[0, 0], [1, 1], [1, 0]] n = eps0M n from by
+        show (BMS.expand? [[0, 0], [1, 1], [1, 0]] n).getD [] = _
+        rw [expand_rowA n]; rfl] at hx
+    have hbound : ∀ (n : Nat) (X : Term), CNV X = true → le Evidence.WF.rowA X = true →
+        le (phi zero (plus (Evidence.WF.fsA n) one)) (phi zero X) = true := by
+      intro n X hcx hlex
+      refine Evidence.WF.le_pow (Evidence.WF.le_trans
+        (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ (Evidence.WF.cnv_repAdd
+          Evidence.WF.cnv_eps0T n)))
+        (Evidence.WF.frag_of_cnv _ Evidence.WF.cnv_rowA)
+        (Evidence.WF.frag_of_cnv _ hcx) ?_ hlex)
+      exact Evidence.WF.le_plus_one_of_lt_cnv
+        (Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T n) Evidence.WF.cnv_rowA
+        ((Evidence.WF.lim_clauses_rowA).2.1 n)
+    cases hlev : le (phi zero (plus Evidence.WF.rowA one)) u with
+    | false => rfl
+    | true =>
+      exfalso
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
+      rcases hlev with rfl | hlt
+      · -- u = ω^(rowA+1): probe with ω^rowA, strictly below it
+        have hltu : lt (phi zero Evidence.WF.rowA)
+            (phi zero (plus Evidence.WF.rowA one)) = true := by
+          rw [Evidence.WF.lt_pow]
+          exact lt_self_plus_one_cnv _ Evidence.WF.cnv_rowA
+        obtain ⟨n, hn⟩ := hcof (phi zero Evidence.WF.rowA)
+          (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV Evidence.WF.rowA) = true
+            rw [Evidence.WF.cnv_rowA]; rfl)) hltu
+        rw [hceil n (fs n) (hcert n) _ (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV Evidence.WF.rowA) = true
+            rw [Evidence.WF.cnv_rowA]; rfl))
+          (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ Evidence.WF.cnv_rowA)) rfl
+          (hbound n Evidence.WF.rowA Evidence.WF.cnv_rowA (Evidence.WF.le_self _))] at hn
+        exact Bool.noConfusion hn
+      · obtain ⟨n, hn⟩ := hcof (phi zero (plus Evidence.WF.rowA one))
+          (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV (plus Evidence.WF.rowA one)) = true
+            rw [cnv_plus_one _ Evidence.WF.cnv_rowA]; rfl)) hlt
+        rw [hceil n (fs n) (hcert n) _ (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV (plus Evidence.WF.rowA one)) = true
+            rw [cnv_plus_one _ Evidence.WF.cnv_rowA]; rfl))
+          (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _
+            (cnv_plus_one _ Evidence.WF.cnv_rowA))) rfl
+          (hbound n (plus Evidence.WF.rowA one) (cnv_plus_one _ Evidence.WF.cnv_rowA)
+            (le_self_plus_one_cnv _ Evidence.WF.cnv_rowA))] at hn
+        exact Bool.noConfusion hn
   · cases e
 
 end Evidence.Cert
