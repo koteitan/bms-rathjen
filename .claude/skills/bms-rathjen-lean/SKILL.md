@@ -115,6 +115,16 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   first and check afterwards; that has worked by luck.
 - Generate the table to a scratch path and `diff` before installing it:
   running `gentable` while a lane is mid-write truncated `table/r1-tm.md` once.
+  `gentable` writes to STDOUT and must be run from `lean/`:
+  `lake exe gentable > ../table/r1-tm.md`.
+- **Grep before writing a lemma.** Five times in one session a lemma a lane was
+  about to write already existed — usually stated for an earlier, narrower
+  fragment (CN before CNV) or by a retired agent for a neighbouring row. Search
+  `Evidence/` for the statement SHAPE (the conclusion's head symbol and the main
+  hypothesis), not for the name you would have chosen; the existing name is
+  rarely the one you would pick. Re-deriving now costs more than grepping.
+  Related but distinct: when the ancestor exists for a narrower fragment, widen
+  it by RE-DERIVING, not by porting (constitution W3).
 
 ## Publishing rules (public repo)
 
