@@ -2208,15 +2208,13 @@ What this leaves for a region-wide theorem:
 
 ### §8.3 Q2 — the accumulator invariant, and the shape of the statement
 
-Prerequisite that does not exist yet: `oLAux` has no fuel-free form.  Every value
-lemma in §2–§7 carries an explicit fuel budget (`(q+2)*m + 1`, `(q+1)*m + 1`, …)
-threaded by hand from the matrix length; a region-wide induction cannot carry
-those.  StageA solved the same problem once with `oPrAux_fuel` + `oV`
-(`oV s = oPrAux (s.length+1) s`), ~40 lines.  Measured here: `oLAux f k m` is
-constant in `f` for `f ≥ m.length` over the whole expansion fan of the boundary
-matrix (guarded below), so the analogue `oLAux_fuel` + `oLV` is available on the
-same terms.  This is the cheapest genuinely useful next lemma in the file and it
-is a prerequisite for every route in §8.2.
+Prerequisite that did not exist when this map was written: `oLAux` had no fuel-free
+form.  Every value lemma in §2–§7 carries an explicit fuel budget (`(q+2)*m + 1`,
+`(q+1)*m + 1`, …) threaded by hand from the matrix length; a region-wide induction
+cannot carry those.  StageA solved the same problem once with `oPrAux_fuel` + `oV`
+(`oV s = oPrAux (s.length+1) s`).  DONE — §9 below proves the analogue
+(`oLAux_fuel`, `oLV`, `oLV_eq`, `oLAux_eq_oLV`); the measurement that suggested it
+is still guarded below.
 
 The invariant the value recursion needs is the one the F3 hand-off note guessed:
 at every `(0,1)`-block at level k the accumulator is 0 or a φ_k-value.  Measured
@@ -2324,7 +2322,7 @@ covers 35 of the 72 uncovered limits in the window and is the next unit after th
     risk, closed forms already machine-checked below.
 
   Cheap prerequisite, worth doing first in either case (~40 lines, no risk):
-    `oLAux_fuel` + `oLV`, the fuel-free value function of §8.3.
+    `oLAux_fuel` + `oLV`, the fuel-free value function of §8.3.  DONE in §9.
 
 Nothing in this section is proved; the `#guard`s below fix the three factual claims
 the assessment rests on (the redundancy phenomenon, the absorbing standard matrix,
@@ -2363,5 +2361,149 @@ yaBMS. -/
      else phi (ofNat b) Z)
 #guard (List.range 6).all fun q =>
   Trans.o? (M1 q ++ [[0,0]]) == some (plus (phi (ofNat (q+1)) zero) one)
+
+
+/-! ## §9 The fuel-free value function `oLV` (the prerequisite named in §8.3)
+
+`Trans.Pair.oLAux` carries recursion fuel, and every value lemma of §2–§7 threads an
+explicit budget by hand (`(q+2)*m + 1`, `(q+1)*m + 1`, …) from the length of the
+matrix.  As in the one-row region (`Evidence.StageA.oPrAux_fuel` / `oV`), the fuel
+stops mattering as soon as it reaches the length of the sequence, so on that range
+`oLAux` is a genuine function `oLV` of the level and the sequence, with a recursion
+equation free of fuel.  `oLAux_eq_oLV` converts any fuelled statement of this file
+into the fuel-free form.
+
+The two ingredients the one-row development already had and this one did not:
+`blocksP` flattens back to its input (so a block is never longer than the sequence),
+and the `oLAux` fold is a `foldl` rather than a `map`+`foldr`, so the congruence step
+needs `foldl_congrP` instead of `List.map_congr_left`. -/
+
+theorem headD_append_tail_flattenP (l : List (List BMS.Col)) :
+    l.headD [] ++ l.tail.flatten = l.flatten := by
+  cases l <;> rfl
+
+theorem blocksP_flatten : ∀ s : List BMS.Col, (Trans.Pair.blocksP s).flatten = s
+  | [] => rfl
+  | c :: rest => by
+    cases rest with
+    | nil => rfl
+    | cons h t =>
+      by_cases hy : Trans.Pair.r0 h = 0
+      · rw [blocksP_cons_zero c h t hy]
+        show c :: (Trans.Pair.blocksP (h :: t)).flatten = c :: h :: t
+        rw [blocksP_flatten (h :: t)]
+      · rw [blocksP_cons_nz c h t hy]
+        show (c :: (Trans.Pair.blocksP (h :: t)).headD [])
+            ++ (Trans.Pair.blocksP (h :: t)).tail.flatten = c :: h :: t
+        rw [List.cons_append, headD_append_tail_flattenP, blocksP_flatten (h :: t)]
+
+theorem length_le_of_mem_flattenP :
+    ∀ (l : List (List BMS.Col)) (b : List BMS.Col), b ∈ l → b.length ≤ l.flatten.length
+  | [], _, h => absurd h (by simp)
+  | c :: l', b, h => by
+    rcases List.mem_cons.mp h with h | h
+    · subst h
+      show b.length ≤ (b ++ l'.flatten).length
+      rw [List.length_append]
+      omega
+    · have := length_le_of_mem_flattenP l' b h
+      show b.length ≤ (c ++ l'.flatten).length
+      rw [List.length_append]
+      omega
+
+theorem blocksP_length_le {s b : List BMS.Col} (h : b ∈ Trans.Pair.blocksP s) :
+    b.length ≤ s.length := by
+  have := length_le_of_mem_flattenP (Trans.Pair.blocksP s) b h
+  rwa [blocksP_flatten] at this
+
+theorem decP_length (t : List BMS.Col) : (Trans.Pair.decP t).length = t.length :=
+  List.length_map _
+
+theorem foldl_congrP {α β : Type _} (f g : β → α → β) : ∀ (l : List α) (init : β),
+    (∀ acc a, a ∈ l → f acc a = g acc a) → l.foldl f init = l.foldl g init
+  | [], _, _ => rfl
+  | a :: t, init, h => by
+    show t.foldl f (f init a) = t.foldl g (g init a)
+    rw [h init a (List.Mem.head _)]
+    exact foldl_congrP f g t (g init a) (fun acc x hx => h acc x (List.mem_cons_of_mem a hx))
+
+theorem oLAux_fuel : ∀ (f g k : Nat) (s : List BMS.Col), s.length ≤ f → s.length ≤ g →
+    Trans.Pair.oLAux f k s = Trans.Pair.oLAux g k s
+  | 0, g, k, s, hf, _ => by
+    have hs : s = [] := by
+      cases s with
+      | nil => rfl
+      | cons a t => simp at hf
+    subst hs
+    rw [oLAux_nil, oLAux_nil]
+  | f + 1, 0, k, s, _, hg => by
+    have hs : s = [] := by
+      cases s with
+      | nil => rfl
+      | cons a t => simp at hg
+    subst hs
+    rw [oLAux_nil, oLAux_nil]
+  | f + 1, g + 1, k, s, hf, hg => by
+    rw [oLAux_cons', oLAux_cons']
+    refine foldl_congrP _ _ _ _ ?_
+    intro acc b hb
+    have hbl : b.length ≤ s.length := blocksP_length_le hb
+    cases b with
+    | nil => rfl
+    | cons c t =>
+      have h1 : (Trans.Pair.decP t).length ≤ f := by
+        rw [decP_length]; simp at hf hbl ⊢; omega
+      have h2 : (Trans.Pair.decP t).length ≤ g := by
+        rw [decP_length]; simp at hg hbl ⊢; omega
+      show (if Trans.Pair.r1 c == 0 then
+              plus acc (omegaNF (Trans.Pair.oLAux f 1 (Trans.Pair.decP t)))
+            else Trans.Pair.phiStep (ofNat k) acc (Trans.Pair.oLAux f (k+1) (Trans.Pair.decP t)))
+          = (if Trans.Pair.r1 c == 0 then
+              plus acc (omegaNF (Trans.Pair.oLAux g 1 (Trans.Pair.decP t)))
+            else Trans.Pair.phiStep (ofNat k) acc (Trans.Pair.oLAux g (k+1) (Trans.Pair.decP t)))
+      rw [oLAux_fuel f g 1 (Trans.Pair.decP t) h1 h2,
+        oLAux_fuel f g (k+1) (Trans.Pair.decP t) h1 h2]
+
+/-- The value of a column sequence at level `k`, with the fuel fixed to a
+    sufficient amount: the 2-row analogue of `Evidence.StageA.oV`. -/
+def oLV (k : Nat) (s : List BMS.Col) : Term := Trans.Pair.oLAux (s.length + 1) k s
+
+theorem oLAux_eq_oLV {f k : Nat} {s : List BMS.Col} (hf : s.length ≤ f) :
+    Trans.Pair.oLAux f k s = oLV k s := oLAux_fuel f (s.length + 1) k s hf (by omega)
+
+theorem oLV_nil (k : Nat) : oLV k [] = zero := rfl
+
+/-- The recursion equation of `oLV`, free of fuel. -/
+theorem oLV_eq (k : Nat) (s : List BMS.Col) :
+    oLV k s = (Trans.Pair.blocksP s).foldl (init := zero) (fun acc b =>
+      match b with
+      | [] => acc
+      | c :: t =>
+        if Trans.Pair.r1 c == 0 then plus acc (omegaNF (oLV 1 (Trans.Pair.decP t)))
+        else Trans.Pair.phiStep (ofNat k) acc (oLV (k+1) (Trans.Pair.decP t))) := by
+  show Trans.Pair.oLAux (s.length + 1) k s = _
+  rw [oLAux_cons']
+  refine foldl_congrP _ _ _ _ ?_
+  intro acc b hb
+  have hbl : b.length ≤ s.length := blocksP_length_le hb
+  cases b with
+  | nil => rfl
+  | cons c t =>
+    have h1 : (Trans.Pair.decP t).length ≤ s.length := by
+      rw [decP_length]; simp at hbl ⊢; omega
+    show (if Trans.Pair.r1 c == 0 then
+            plus acc (omegaNF (Trans.Pair.oLAux s.length 1 (Trans.Pair.decP t)))
+          else Trans.Pair.phiStep (ofNat k) acc
+            (Trans.Pair.oLAux s.length (k+1) (Trans.Pair.decP t))) = _
+    rw [oLAux_eq_oLV h1, oLAux_eq_oLV h1]
+
+/-- `o?` on the Stage-B fragment, in fuel-free form. -/
+theorem o?_oLV {m : Matrix} (h1 : onlyRow0 m = false) (h2 : Trans.Pair.inFrag m = true) :
+    o? m = some (oLV 1 m) := o?_pair h1 h2
+
+#guard (Evidence.corpus [[0,0],[1,1],[2,2]] 3 3).all fun m => (List.range 3).all fun k =>
+  oLV (k+1) m == Trans.Pair.oLAux (3 * m.length + 7) (k+1) m
+#guard (List.range 4).all fun q => (List.range 4).all fun n =>
+  Trans.o? (BMS.expand (M3 q) n) == some (oLV 1 (BMS.expand (M3 q) n))
 
 end Evidence.StageB
