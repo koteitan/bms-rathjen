@@ -2310,4 +2310,38 @@ def badHosts : List Term :=
 #guard (badHosts.filter (fun t =>
           !((List.range 6).all (fun k => encvF (2 * t.deg + 8 + k) t 0 == encv t 0)))).length == 0
 
+
+/-! ### §12.1 THE FOURTH OPTION IS REFUTED BY THE SAME WITNESS
+
+The coordinator proposed closing A and B from §11.7's measured identities rather than from
+a `plus` bound — `predOr (add x y) = add x (predOr y)` when `predOr y ≠ 0` — so that `g`
+never appears and never has to remember where it sat.  The reasoning is right and the
+identity is false:
+
+    x = y = ofNat 3, and `predOr y = ofNat 2 ≠ 0`, so branch A applies
+        LHS  predOr (add x y)     = ofNat 5                     tdepth 5
+        RHS  add x (predOr y)     = ofNat 3 ⊕ ofNat 2           tdepth 4
+
+**5 violations of the 8 applicable pairs** once `add`-headed components are in the corpus.
+§11.7's "0 violations of 15" was measured on 15 pairs with none — the same blindness as
+§11.4's roundtrip, now in the A/B measurement itself.
+
+**AND THE TWO REFUTATIONS ARE ONE FACT.**  Note the tdepths: the RHS is 4 = `tdepth t`, so
+IF the identity held the bound would follow.  The identity fails because `predOr` FLATTENS
+— `plus (ofNat 3) (ofNat 2)` is a flat chain of five where `add x (predOr y)` keeps the
+balanced shape — and flattening is exactly what deepens.  §12's counterexample and this one
+are the same mechanism seen from the two sides of the equation.
+
+SO ALL THREE ROUTES TO `tdepth_predOr` ARE CLOSED: the `plus` bound (forgetting), the
+identity through `splitFin` (AP components), and the recursion identity (flattening).  The
+statement is FALSE, so this is not a search for a fourth route — there is nothing to
+prove. -/
+
+#guard !(predOr (TM.Term.add (ofNat 3) (ofNat 3))
+          == TM.Term.add (ofNat 3) (predOr (ofNat 3)))
+#guard (tdepth (predOr (TM.Term.add (ofNat 3) (ofNat 3))),
+        tdepth (TM.Term.add (ofNat 3) (predOr (ofNat 3))),
+        tdepth (TM.Term.add (ofNat 3) (ofNat 3))) == (5, 4, 4)
+#guard !(predOr (ofNat 3) == zero)
+
 end Evidence.SqV
