@@ -5457,15 +5457,22 @@ three with two different values — and `DomF` is exactly that prescribed reduct
 to normal forms.  These theorems are therefore not extra rigour: they are the
 condition the literature flags as the hard one.
 
-WHAT IS STILL OPEN (stated as a finding rather than hidden).  A certificate whose
-SUB-values are junk is not excluded by anything proved here, so
-`certIn_eps0_unique` does not yet imply `¬ Certified [[0,0],[1,1]] u` for `u ≠ ε₀`.
-The half of that which IS reachable today — no certificate of the ε₀ row can carry
-a value ABOVE ε₀, junk sub-values and all — is §15.  The honest remainder is
-therefore: VALUES BELOW THE REGISTERED ONE, CERTIFIED THROUGH JUNK SUB-VALUES, ARE
-NOT YET EXCLUDED; that waits on transitivity through unconstrained terms (see the
-§15 header for the exact lemma that is missing — it is NOT simply "ψ/Z in the
-fragment"). -/
+WHAT IS STILL OPEN (updated 2026-08-09, after Stage 3b landed in `Evidence/WF.lean`
+§8.5).  Uniqueness is now discharged on `DomI` (§14.3a) — the registry gate's own
+guard — so the open set has shrunk to exactly one shape: A CERTIFICATE THAT FAILS
+THE GATE, i.e. one whose values leave 𝔗(M) somewhere below the top, could still in
+principle carry a value BELOW the registered one.  Two things are worth knowing
+about that remainder rather than leaving a reader to guess:
+
+  * §15's ceiling covers exactly those certificates FROM ABOVE, unconditionally, so
+    the gap is one-sided.
+  * The mixed-transitivity lemma the ψ/Z lane proved on this lane's request
+    (`Evidence.WF.lt_of_le_of_lt_mixed`) does NOT close it, and it is worth saying
+    why instead of letting the name suggest otherwise: that lemma requires `inT` on
+    the MIDDLE term, and the middle term in the missing step is exactly a value that
+    is not in 𝔗(M).  Its hypothesis fails precisely where it would be used.  Closing
+    the last shape needs transitivity with a genuinely unconstrained middle, which
+    the ψ/Z lane reports as swept without counterexample but NOT proved. -/
 
 /-! ### §14.1 Guarded certificates -/
 
@@ -5594,12 +5601,38 @@ def DomI (t : Term) : Prop := inT t = true
 
 theorem domF_le_domI : ∀ (t : Term), DomF t → DomI t := fun _ h => h.2
 
-/-- **Single-valuedness, unconditionally, on `DomF`.** -/
+/-! #### §14.3a THE DISCHARGE ON `DomI` — Stage 3b closes the undershoot
+    (certificate lane, 2026-08-09, after `Evidence/WF.lean` §8.5)
+
+When §14 was written the order theory reached only `Frag2`, so uniqueness had to be
+discharged on `DomF = Frag2 ∧ inT`: a competing certificate was excluded only if its
+values avoided `ψ` and `Z` as well as being terms of 𝔗(M).  `Evidence.WF.lt_trichotomy_inT`
+now gives a strict LINEAR ORDER on 𝔗(M) itself, so the discharge runs on `DomI` — the
+registry gate's own guard (§6) — and the theorem covers every certificate the registry
+accepts, ψ/Z rows included.
+
+THIS CLOSES THE UNDERSHOOT HALF that the §15 header named as open.  Uniqueness is
+symmetric: the `lim` case refutes `lt t u` and `lt u t` by the same two lines, so ONE
+comparability fact settles values above and below at once.  What §15 adds on top is
+the UNGUARDED ceiling — certificates that fail the gate, where no comparability is
+available at all.  `cert_unique_frag2` is now a corollary through `certifiedIn_mono`. -/
+
+/-- **Single-valuedness on `DomI`** — the guard the registry gate uses: every value
+    in the derivation is a term of 𝔗(M), nothing more.  All three order facts come
+    from `Evidence/WF.lean` §8.5.4, which needs no fragment hypothesis. -/
+theorem cert_unique_inT {M : Matrix} {t u : Term}
+    (h1 : CertifiedIn DomI M t) (h2 : CertifiedIn DomI M u) : t = u :=
+  cert_unique_in (Dom := DomI) rfl (fun h => h)
+    (fun ha hb => Evidence.WF.lt_comparable_inT ha hb)
+    (fun ha hb hc => Evidence.WF.lt_of_le_of_lt3 (Evidence.WF.inT_le_fragR _ ha)
+      (Evidence.WF.inT_le_fragR _ hb) (Evidence.WF.inT_le_fragR _ hc)) h1 h2
+
+/-- **Single-valuedness, unconditionally, on `DomF`** — now the `certifiedIn_mono`
+    image of `cert_unique_inT`.  Kept verbatim: its statement is what §14.3's mutant
+    discussion and the table legend were written against. -/
 theorem cert_unique_frag2 {M : Matrix} {t u : Term}
     (h1 : CertifiedIn DomF M t) (h2 : CertifiedIn DomF M u) : t = u :=
-  cert_unique_in (Dom := DomF) ⟨rfl, rfl⟩ (fun h => h.2)
-    (fun ha hb => Evidence.WF.lt_comparable2 ha.1 hb.1)
-    (fun ha hb hc => Evidence.WF.lt_of_le_of_lt2 ha.1 hb.1 hc.1) h1 h2
+  cert_unique_inT (certifiedIn_mono domF_le_domI h1) (certifiedIn_mono domF_le_domI h2)
 
 /-! ### §14.4 The region is not empty: the CNF family is guarded
 
@@ -5727,11 +5760,14 @@ theorem certIn_eps0 : CertifiedIn DomF [[0, 0], [1, 1]] (phi one zero) := by
   rw [show (BMS.expand? [[0, 0], [1, 1]] n).getD [] = towerM n from expand_eps0_row n]
   exact certIn_tower n
 
-/-- **THE ε₀ ROW HAS ONE GUARDED VALUE.**  Every `DomF`-guarded certificate of
-    `(0,0)(1,1)` carries the value ε₀ — the row's ✅ means "this value and no other"
-    as soon as the competing certificate keeps its values inside 𝔗(M) ∩ `Frag2`. -/
-theorem certIn_eps0_unique (u : Term) (h : CertifiedIn DomF [[0, 0], [1, 1]] u) :
-    u = phi one zero := (cert_unique_frag2 certIn_eps0 h).symm
+/-- **THE ε₀ ROW HAS ONE GUARDED VALUE.**  Every certificate of `(0,0)(1,1)` whose
+    values are terms of 𝔗(M) — the registry gate's condition — carries the value ε₀.
+    (Stated on `DomF` when §14 was written; `DomI` since §14.3a, which is strictly
+    stronger and is the guard the gate actually imposes.  The `DomF` case is the
+    `certifiedIn_mono` image.) -/
+theorem certIn_eps0_unique (u : Term) (h : CertifiedIn DomI [[0, 0], [1, 1]] u) :
+    u = phi one zero :=
+  (cert_unique_inT (certifiedIn_mono domF_le_domI certIn_eps0) h).symm
 
 /-! ### §14.5 EVERY REGISTERED ROW, not just ε₀
 
@@ -5817,18 +5853,26 @@ avoids this completely, and that is the design of the whole section:
     this way: put the unconstrained object on the side of the relation that the
     decision procedure reads LAST, and quantify over probes you supply yourself.
 
-    THE EXACT LEMMA THAT IS MISSING for the other half, so that nobody has to
-    re-derive it: the undershoot argument needs
+    WHAT HAPPENED TO THE OTHER HALF (updated 2026-08-09, after Stage 3b).  This
+    header used to record the missing lemma as
 
         le s x = true → lt x v = true → lt s v = true       (s, v in Frag2; x ARBITRARY)
 
-    — transitivity through an UNCONSTRAINED middle term.  Widening the fragment
-    (Stage 3b / FragR) does not by itself supply this: one would also have to know
-    that every certified value lies in the wider fragment, and §15.7 only bounds
-    the value's leftmost component, not its tail.  What §15 CAN give the fragment
-    lane for free: a certified value of this region is never `ψ`-, `Z`-, `M`- or
-    `ω̄`-headed, because every such term is above every `φ̄` term, so the probe
-    `ω^(t+1)` would be `≤` it, which `no_overshoot` forbids.
+    Stage 3b then delivered something better for the case that matters:
+    `Evidence.WF.lt_trichotomy_inT`, a strict LINEAR ORDER on 𝔗(M) itself.  With it,
+    §14.3a discharges uniqueness on `DomI`, and since uniqueness is symmetric that
+    settles the undershoot AND the overshoot in one line — FOR CERTIFICATES THAT
+    PASS THE GATE.  So the scope of this section changed: §15 is no longer "the half
+    that is reachable", it is what survives for certificates that FAIL the gate,
+    where the values leave 𝔗(M) and no comparability is available at all.
+
+    The lemma quoted above is still missing, and the ψ/Z lane's `lt_of_le_of_lt_mixed`
+    is NOT it: that lemma asks for `inT` on the middle term, and the middle term in
+    the missing step is exactly a value outside 𝔗(M).  What §15 gives the fragment
+    lane for free, in case it helps them attack the unconstrained version: a
+    certified value of this region is never `ψ`-, `Z`-, `M`- or `ω̄`-headed, because
+    every such term is above every `φ̄` term, so the probe `ω^(t+1)` would be `≤` it,
+    which `no_overshoot` forbids.
 
 THE INVARIANT (`no_overshoot`).  For a Cantor normal form `t`, no term of 𝔗(M) ∩
 `Frag` that is additively principal and `≥ ω^(t+1)` is `≤` any value certified for
@@ -6777,6 +6821,13 @@ computed, and it is strictly stronger than the old gate: `certRows_ok` is now it
 image under `certifiedIn_forget`, so every consumer of the old statement is
 unaffected.
 
+WHAT THE GATE BUYS (2026-08-09, after Stage 3b).  Since `Evidence/WF.lean` §8.5
+gives a strict linear order on 𝔗(M), the gate's own guard is now enough for
+UNIQUENESS: `certRows_unique_gate` (§6.1) says a registered row's value is the only
+value ANY gate-passing certificate can carry — above or below.  Registration and
+uniqueness therefore ask for exactly the same thing, which is the property one wants
+of a gate.
+
 WHY `DomI` AND NOT `DomF`.  `DomF = Frag2 ∧ inT` is the guard uniqueness is
 discharged on today (§14.3), but `Frag2` EXCLUDES `ψ` and `Z` — the shapes the
 whole T(M) table is aiming at.  A `DomF` gate would refuse the first `ψ` row (Γ₀)
@@ -6827,11 +6878,20 @@ theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 :=
 
 /-! ### §6.1 The registry, read as uniqueness and as a ceiling (certificate lane) -/
 
-/-- **THE TABLE'S ✅, READ AS UNIQUENESS.**  For every registered row, a guarded
-    certificate can only carry the registered value. -/
+/-- **THE TABLE'S ✅, READ AS UNIQUENESS — at the gate's own guard.**  For every
+    registered row, ANY certificate that passes the gate (values hereditarily in
+    𝔗(M)) carries the registered value and no other.  With `certRows_no_overshoot`
+    below, this is the pair that makes the ✅ a claim about the VALUE: nothing else
+    is certifiable at gate quality, and nothing above it is certifiable at all. -/
+theorem certRows_unique_gate :
+    ∀ p ∈ certRows, ∀ (u : Term), CertifiedIn DomI p.1 u → u = p.2 :=
+  fun p hp _ h => (cert_unique_inT (certIn_rows_inT p hp) h).symm
+
+/-- The `DomF` form, kept verbatim (the legend was written against it): a corollary
+    of `certRows_unique_gate`, since a `DomF`-guarded certificate is `DomI`-guarded. -/
 theorem certRows_unique_guarded :
     ∀ p ∈ certRows, ∀ (u : Term), CertifiedIn DomF p.1 u → u = p.2 :=
-  fun p hp _ h => (cert_unique_frag2 (certIn_rows p hp) h).symm
+  fun p hp u h => certRows_unique_gate p hp u (certifiedIn_mono domF_le_domI h)
 
 
 /-- **THE TABLE'S ✅, READ AS AN UPPER BOUND.**  For every registered row, NO
