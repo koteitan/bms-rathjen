@@ -137,6 +137,15 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `git show HEAD:<path>` and diff each signature, and diff the declaration-name
   lists both ways — removals should be exactly the specialised versions their
   general replacements subsume, and nothing else.
+- **When a lane reports a COUNT, ask for the SET before acting on it.** The
+  coordinator cannot verify a count from a report — the members are not in it —
+  so accepting one is accepting an unverified claim, and repeating it in an
+  ack amplifies it. This happened: a lane reported that a candidate fix "does not
+  move the four failures at all", the coordinator singled that sentence out as a
+  good result, and the two failing sets turned out to be DISJOINT. Seeing the sets
+  gave the correct condition on sight where the counts had given nothing. The
+  rule the lanes are held to (decode a member before reporting a bucket) applies
+  to the coordinator's reading of their reports, not only to their own work.
 - **Read the SNAPSHOT, not the working file.** `git add` freezes the bytes; the
   lane keeps writing. Any math check done by `grep`/`sed` on the path afterwards
   is a check of the lane's CURRENT file, not of what is staged. Once, a commit
