@@ -175,7 +175,16 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   a route was proposed on the strength of "0 violations of 15", the 15 contained
   no `add`-headed components, and the route was false at exactly those. The lane
   did not hide the corpus; nobody asked. **"How many?" and "over what?" are two
-  questions and only the second is ever omitted.**
+  questions and only the second is ever omitted.** The reason is structural: the
+  count travels with the claim and the corpus stays in the head of whoever ran it.
+  **So the fix belongs on the REPORTING side — SHIP THE CORPUS WITH THE NUMBER.**
+  One clause, and nobody has to remember to ask.
+  **The same collapse has a second form: "defined on X" is not "produces X".** A
+  total function is DEFINED on junk; that does not mean a legal input makes it
+  produce junk arguments. Measured: from 169 legal starts, `encvF`'s recursion
+  yields 0 targets outside 𝔗(M), while 10 of 42 junk starts do — so the junk
+  behaviour was real and never occurred. Do not infer the reachable set from the
+  domain.
 - **When a lane reports a COUNT, ask for the SET before acting on it.** The
   coordinator cannot verify a count from a report — the members are not in it —
   so accepting one is accepting an unverified claim, and repeating it in an
