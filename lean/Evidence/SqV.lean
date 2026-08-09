@@ -1984,4 +1984,54 @@ def addHead : List Term :=
 #guard (addHead.filter (fun t => !(tdepth (omLog t) <= tdepth t))).length == 0
 #guard (addHead.filter (fun t => TM.Term.inT t)).length == 0
 
+
+/-! ### §11.7 THE HOUSE TECHNIQUE ON `tdepth_predOr` — the recursion, measured
+
+(W) is dropped: it gives `Sublist (toList g) (toList a)`, which is the half that was
+already free, while the assembly also needs `replicate m one` positioned AFTER those
+components — i.e. `toList a = toList g ++ replicate m one`, the decomposition, which is
+the equality again.
+
+SO: induct on `a`.  The `add` case's candidate recursion, measured on 15 pairs before
+anything was designed:
+
+    predOr (add x y) = add x (predOr y)          5 violations of 15
+    (splitFin (add x y)).2 = (splitFin y).2      the same 5
+
+**AND THE 5 ARE EXACTLY THE CASES WHERE `predOr y = zero`**, where the right-hand side
+`add x zero` is a non-normal form and the left-hand side is plain `x`:
+
+    x = 1, y = 1        predOr (x ⊕ y) = 1        x ⊕ predOr y = 1 ⊕ 0
+    x = M, y = 1        predOr (x ⊕ y) = M        x ⊕ predOr y = M ⊕ 0
+
+**THE BOUND SURVIVES THE DEGENERATE CASE EVEN THOUGH THE IDENTITY DOES NOT**: there
+`predOr (add x y) = x` and `tdepth x ≤ 1 + max (tdepth x) (tdepth y)` immediately.  So the
+induction is a case split on `predOr y = zero`, with the identity used only off it.
+
+WHAT THIS ROUTE NEEDS, AND WHY IT IS THE RIGHT ONE: two facts about how `splitFin`
+recurses through `add` — **facts about `splitFin`'s own definition, not about normal
+forms**.  That is the coordinator's tell for this route being the right one; if the
+induction turns out to need "components are AP", the route has collapsed into the one
+being avoided and it stops there. -/
+
+def probeXY : List (Term × Term) :=
+  [(one, one), (one, plus one one), (phi one zero, one), (phi one zero, plus one one),
+   (one, phi one zero), (one, plus (phi one zero) one), (TM.Term.M, one),
+   (phi one zero, plus (phi one zero) one), (one, zero), (phi one zero, zero),
+   (TM.Term.M, plus one one), (one, plus one (plus one one)),
+   (phi (ofNat 2) zero, plus (phi one zero) (plus one one)),
+   (TM.Term.add one one, one), (one, TM.Term.add one one)]
+
+#guard (probeXY.filter (fun p =>
+          !(predOr (TM.Term.add p.1 p.2) == TM.Term.add p.1 (predOr p.2)))).length == 5
+-- and every violation is a `predOr y = zero` case, where the BOUND still holds
+#guard (probeXY.filter (fun p =>
+          !(predOr (TM.Term.add p.1 p.2) == TM.Term.add p.1 (predOr p.2)))).all
+       (fun p => predOr p.2 == zero)
+#guard (probeXY.filter (fun p =>
+          !(tdepth (predOr (TM.Term.add p.1 p.2)) <= tdepth (TM.Term.add p.1 p.2)))).length == 0
+-- off the degenerate case the identity holds
+#guard (probeXY.filter (fun p => !(predOr p.2 == zero)
+          && !(predOr (TM.Term.add p.1 p.2) == TM.Term.add p.1 (predOr p.2)))).length == 0
+
 end Evidence.SqV
