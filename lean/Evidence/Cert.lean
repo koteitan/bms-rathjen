@@ -5374,6 +5374,313 @@ theorem neg_control_eps0_times_two :
 #guard lt (phi one zero) (add (phi one zero) (phi one zero)) == true
 #guard (List.range 12).all (fun n => le (phi one zero) (Evidence.WF.tower n) == false)
 
+/-! ## §14 UNIQUENESS OF THE CERTIFIED VALUE  (`cert_sound`, part 1)
+    (certificate lane, 2026-08-09)
+
+THE GAP THIS CLOSES, AND THE ONE IT DOES NOT.  Until now `Certified M t` was an
+EXISTENCE statement: the table's ✅ said "this value fits", not "this value and no
+other".  §13.1's caveat is exactly that.  This section proves single-valuedness —
+but the honest statement needs one restriction, and the restriction is forced:
+
+  **`Certified` is NOT single-valued on the raw type `Term`.**  §8's junk term
+  `1 + M` is below ω and above every finite term, so `Certified [[0],[1]] (add one M)`
+  discharges all four `lim` clauses with the very same `fs' n = ofNat (n+1)` that
+  `cert_omega` uses (the cofinality clause quantifies over `inT` terms, and the
+  only ones below `1 + M` are `0` and `1`).  See `junk_omega_row` in §14.5 — it is
+  a THEOREM, not a `#guard`.  So no theorem of the form
+  `Certified M t → Certified M u → t = u` can be true, and design input 2 of
+  plan/README.md ("quantify over `inT` terms, not raw terms") is not a stylistic
+  preference: it is the difference between a true and a false statement.
+
+WHERE THE `inT` GUARD HAS TO SIT.  The obvious repair — hypothesise `inT t` and
+`inT u` on the two top values — is NOT enough: the `lim` case compares `t` with `u`
+through the two expansion families, and the induction hypothesis is about the
+values of the SUB-derivations, which the constructors do not constrain at all.  So
+the guard has to hold ALL THE WAY DOWN.  Rather than change `Certified` (that would
+invalidate every certificate in this file), §14.1 defines the guarded predicate
+`CertifiedIn Dom` — the same three clauses with `Dom` demanded of every value —
+together with the forgetful map `certifiedIn_forget : CertifiedIn Dom M t → Certified M t`.
+`CertifiedIn` is a NEW definition; `Certified` is untouched.
+
+WHAT EACH HYPOTHESIS OF `cert_unique_in` IS FOR (the audit trail asked for):
+
+  `hdz`   `Dom 0`         — only to give `Dom (fs' k)` when the k-th expansion is
+                            certified by the `zero` constructor (which carries no
+                            `Dom`, its value being forced).
+  `hinT`  `Dom a → inT a` — consumed EXACTLY TWICE, and only in the `lim` case: to
+                            feed `t` to `u`'s cofinality clause and `u` to `t`'s.
+                            This is the `inT` guard of design input 2.
+  `hcomp` comparability   — `lim` case only: it turns "neither is below the other"
+                            into `t = u`.
+  `hlelt` `≤ ∘ <  ⊆  <`   — `lim` case only: with `lt_irrefl` it converts
+                            `t ≤ fs' k` (from cofinality) and `fs' k < t` (from the
+                            boundedness clause) into `t < t`.
+  NOTHING                 — the `zero` and `succ` cases consume no order fact at
+                            all.  `zero`: both values are `0` because `kind [] = .zero`
+                            excludes the other two constructors.  `succ`: `BMS.kind M`
+                            is a FUNCTION of `M`, so both derivations end in the same
+                            constructor, and the induction hypothesis at the 0-th
+                            expansion gives `t' = u'`, hence `plus t' 1 = plus u' 1`
+                            — no injectivity of `plus` is needed.
+
+§14.3 discharges the four hypotheses on `Dom = DomF := Frag2 ∧ inT`, where §8.2 of
+`Evidence/WF.lean` proves comparability and `≤∘<⊆<` with NO `inT` needed, and §14.4
+shows the region is not empty: the whole CNF family, and with it the ε₀ row, carries
+GUARDED certificates, so `certIn_eps0_unique` reads
+
+    every `DomF`-guarded certificate of `(0,0)(1,1)` has value ε₀ — and no other.
+
+WHAT IS STILL OPEN (for §15, and stated as a finding rather than hidden): a
+certificate whose SUB-values are junk is not excluded by anything proved here, so
+`certIn_eps0_unique` does not yet imply `¬ Certified [[0,0],[1,1]] u` for `u ≠ ε₀`.
+The half of that which IS reachable today — no certificate of the ε₀ row can carry
+a value ABOVE ε₀, junk sub-values and all — is §15. -/
+
+/-! ### §14.1 Guarded certificates -/
+
+/-- `Certified` with every certified value in `Dom`.  The `zero` clause needs no
+    guard: its value is forced.  `Certified` itself is untouched — see the §14 header. -/
+inductive CertifiedIn (Dom : Term → Prop) : Matrix → Term → Prop
+  | zero : CertifiedIn Dom [] Term.zero
+  | succ {M : Matrix} {t : Term} :
+      BMS.kind M = .succ →
+      (∀ n, CertifiedIn Dom (BMS.expand M n) t) →
+      Dom (plus t one) →
+      CertifiedIn Dom M (plus t one)
+  | lim {M : Matrix} {t : Term} (fs' : Nat → Term) :
+      BMS.kind M = .lim →
+      (∀ n, CertifiedIn Dom (BMS.expand M n) (fs' n)) →
+      (∀ n, lt (fs' n) t = true) →
+      (∀ n, lt (fs' n) (fs' (n + 1)) = true) →
+      (∀ s, inT s = true → lt s t = true → ∃ n, le s (fs' n) = true) →
+      Dom t →
+      CertifiedIn Dom M t
+
+/-- A guarded certificate is a certificate: nothing is gained by the guard except
+    the guard itself. -/
+theorem certifiedIn_forget {Dom : Term → Prop} :
+    ∀ {M : Matrix} {t : Term}, CertifiedIn Dom M t → Certified M t := by
+  intro M t h
+  induction h with
+  | zero => exact Certified.zero
+  | succ hk _ _ ih => exact Certified.succ hk ih
+  | lim fs hk _ hlt hstep hcof _ ih => exact Certified.lim fs hk ih hlt hstep hcof
+
+/-- The empty matrix is a zero row — this is what makes the `zero` case of the
+    uniqueness induction, and the two constructor-clash cases, go through. -/
+theorem kind_nil : BMS.kind ([] : Matrix) = .zero := rfl
+
+theorem dom_of_certifiedIn {Dom : Term → Prop} (hdz : Dom Term.zero) :
+    ∀ {M : Matrix} {t : Term}, CertifiedIn Dom M t → Dom t := by
+  intro M t h
+  cases h with
+  | zero => exact hdz
+  | succ _ _ hd => exact hd
+  | lim _ _ _ _ _ _ hd => exact hd
+
+/-! ### §14.2 THE UNIQUENESS THEOREM, abstract in the order facts -/
+
+/-- **`Certified` is single-valued on `Dom`.**  See the §14 header for what each
+    hypothesis is consumed by; `hinT`, `hcomp` and `hlelt` are used ONLY in the
+    `lim` case, and `hdz` only to produce `Dom` for a sub-value certified by `zero`. -/
+theorem cert_unique_in {Dom : Term → Prop}
+    (hdz : Dom Term.zero)
+    (hinT : ∀ {a : Term}, Dom a → inT a = true)
+    (hcomp : ∀ {a b : Term}, Dom a → Dom b → lt a b = true ∨ a = b ∨ lt b a = true)
+    (hlelt : ∀ {a b c : Term}, Dom a → Dom b → Dom c →
+        le a b = true → lt b c = true → lt a c = true) :
+    ∀ {M : Matrix} {t : Term}, CertifiedIn Dom M t →
+      ∀ {u : Term}, CertifiedIn Dom M u → t = u := by
+  intro M t h
+  induction h with
+  | zero =>
+    intro u h2
+    cases h2 with
+    | zero => rfl
+    | succ hk _ _ => rw [kind_nil] at hk; exact absurd hk (by simp)
+    | lim _ hk _ _ _ _ _ => rw [kind_nil] at hk; exact absurd hk (by simp)
+  | @succ M t hk _ _ ih =>
+    intro u h2
+    cases h2 with
+    | zero => rw [kind_nil] at hk; exact absurd hk (by simp)
+    | succ _ hall2 _ => rw [ih 0 (hall2 0)]
+    | lim _ hk2 _ _ _ _ _ => rw [hk] at hk2; exact absurd hk2 (by simp)
+  | @lim M t fs' hk hall hlt hstep hcof hd ih =>
+    intro u h2
+    cases h2 with
+    | zero => rw [kind_nil] at hk; exact absurd hk (by simp)
+    | succ hk2 _ _ => rw [hk] at hk2; exact absurd hk2 (by simp)
+    | @lim _ u fs'' hk2 hall2 hlt2 hstep2 hcof2 hd2 =>
+      -- the two families agree pointwise: the induction hypothesis at each expansion
+      have heq : ∀ n, fs' n = fs'' n := fun n => ih n (hall2 n)
+      rcases hcomp hd hd2 with h | h | h
+      · -- t < u : u's cofinality clause overtakes t at some k, but fs' k < t
+        obtain ⟨k, hk'⟩ := hcof2 t (hinT hd) h
+        rw [← heq k] at hk'
+        have : lt t t = true :=
+          hlelt hd (dom_of_certifiedIn hdz (hall k)) hd hk' (hlt k)
+        rw [Evidence.WF.lt_irrefl] at this
+        exact absurd this (by simp)
+      · exact h
+      · -- u < t : symmetric, through t's cofinality clause
+        obtain ⟨k, hk'⟩ := hcof u (hinT hd2) h
+        have hlt' : lt (fs' k) u = true := by rw [heq k]; exact hlt2 k
+        have : lt u u = true :=
+          hlelt hd2 (dom_of_certifiedIn hdz (hall k)) hd2 hk' hlt'
+        rw [Evidence.WF.lt_irrefl] at this
+        exact absurd this (by simp)
+
+/-! ### §14.3 The discharge on `Frag2`
+
+`Evidence/WF.lean` §8.2 proves comparability and `≤∘<⊆<` on `Frag2` — the φ̄-fragment
+extended by `M` and `ω̄^·` — with NO `inT` hypothesis, so the only thing `DomF` adds
+to `Frag2` is the `inT` guard that `hinT` needs.  This is the widest region today's
+order theory supports: §8.2's MUTANT 2 (`frag2_stops_at_psi`) records that `ψ` is
+exactly where the fragment stops. -/
+
+/-- The concrete guard: the fragment carrying a linear order, plus the formation
+    conditions of 𝔗(M). -/
+def DomF (t : Term) : Prop := Evidence.WF.Frag2 t = true ∧ inT t = true
+
+/-- **Single-valuedness, unconditionally, on `DomF`.** -/
+theorem cert_unique_frag2 {M : Matrix} {t u : Term}
+    (h1 : CertifiedIn DomF M t) (h2 : CertifiedIn DomF M u) : t = u :=
+  cert_unique_in (Dom := DomF) ⟨rfl, rfl⟩ (fun h => h.2)
+    (fun ha hb => Evidence.WF.lt_comparable2 ha.1 hb.1)
+    (fun ha hb hc => Evidence.WF.lt_of_le_of_lt2 ha.1 hb.1 hc.1) h1 h2
+
+/-! ### §14.4 The region is not empty: the CNF family is guarded
+
+`cert_padSq` re-proved with the guard.  The only new obligation is `DomF` of each
+value, and every value in that induction is a Cantor normal form: `Frag2` by
+`frag_of_cn` + `frag_le_frag2`, and `inT` by `inT_of_cn` below (the formation
+conditions 2.1(iii)/(v) are literally what `CN` demands, plus `β < M`, which holds
+of every CNF term because a `φ̄` and a `⊕`-head are below `M` by clauses 2.3.2/2.3.10). -/
+
+theorem ltF_cn_M : ∀ (t : Term), CN t = true → ∀ f, t.deg ≤ f → ltF f t M = true := by
+  intro t
+  induction t with
+  | zero => intro _ f hf; cases f with | zero => simp [Term.deg] at hf | succ g => rfl
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | phi a b _ _ =>
+    intro _ f hf
+    cases f with
+    | zero => simp [Term.deg] at hf
+    | succ g => rfl
+  | add a b iha _ =>
+    intro hcn f hf
+    obtain ⟨_, hca, _, _⟩ := Evidence.WF.cn_add hcn
+    cases f with
+    | zero => simp [Term.deg] at hf
+    | succ g =>
+      have hg : a.deg ≤ g := by
+        have : (add a b).deg = 1 + a.deg + b.deg := rfl
+        omega
+      show (if (add a b == M) = true then false else ltF g a M) = true
+      rw [show ((add a b == M) : Bool) = false from rfl]
+      simpa using iha hca g hg
+
+theorem lt_cn_M (t : Term) (h : CN t = true) : lt t M = true := by
+  rw [Evidence.WF.lt_eq_ltF t M (t.deg + M.deg) (Nat.le_refl _)]
+  exact ltF_cn_M t h _ (by omega)
+
+/-- Every Cantor normal form satisfies the formation conditions of 𝔗(M). -/
+theorem inT_of_cn : ∀ (t : Term), CN t = true → inT t = true := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; rfl
+  | phi a b _ ihb =>
+    intro hcn
+    obtain ⟨ha, hb⟩ := Evidence.WF.cn_phi hcn
+    subst ha
+    show (inT zero && inT b && lt zero M && lt b M) = true
+    rw [ihb hb, lt_cn_M b hb, show inT zero = true from rfl,
+      show lt zero M = true from by
+        rw [Evidence.WF.lt_eq_ltF zero M ((zero : Term).deg + M.deg) (Nat.le_refl _)]; rfl]
+    rfl
+  | add a b iha ihb =>
+    intro hcn
+    obtain ⟨hpow, hca, hcb, hhd⟩ := Evidence.WF.cn_add hcn
+    obtain ⟨e, he⟩ := Evidence.WF.eq_pow_of_isPow hpow
+    have hap : isAP a = true := by rw [he]; rfl
+    cases b with
+    | zero => exact Bool.noConfusion hhd
+    | add c d =>
+      show (isAP a && inT a && inT (add c d) && le c a) = true
+      rw [hap, iha hca, ihb hcb, show le c a = true from hhd]; rfl
+    | M => exact Bool.noConfusion hcb
+    | omg _ => exact Bool.noConfusion hcb
+    | psi _ _ => exact Bool.noConfusion hcb
+    | Z _ => exact Bool.noConfusion hcb
+    | phi x y =>
+      have hx : x = zero := (Evidence.WF.cn_phi hcb).1
+      subst hx
+      show (isAP a && inT a && inT (phi zero y) && (isAP (phi zero y) && le (phi zero y) a)) = true
+      rw [hap, iha hca, ihb hcb, show isAP (phi zero y) = true from rfl,
+        show le (phi zero y) a = true from hhd]
+      rfl
+
+theorem domF_of_cn (t : Term) (h : CN t = true) : DomF t :=
+  ⟨Evidence.WF.frag_le_frag2 t (Evidence.WF.frag_of_cn t h), inT_of_cn t h⟩
+
+/-- **The padded CNF family, guarded** — `cert_padSq` with `DomF` at every value. -/
+theorem certIn_padSq : ∀ (t : Term), CN t = true → CertifiedIn DomF (padRow (sq t)) t := by
+  have key : ∀ (t : Term), Acc Evidence.WF.RC t → CN t = true →
+      CertifiedIn DomF (padRow (sq t)) t := by
+    intro t ht
+    induction ht with
+    | intro t _ ih =>
+      intro hcn
+      by_cases hz : t = zero
+      · subst hz; exact CertifiedIn.zero
+      by_cases hk : kindC t = true
+      · have hcnp : CN (predC t) = true := Evidence.WF.cn_predC t hcn hk
+        have hltp : lt (predC t) t = true := Evidence.WF.lt_predC t hcn hk
+        have hpred : CertifiedIn DomF (padRow (sq (predC t))) (predC t) :=
+          ih (predC t) ⟨hcnp, hltp⟩ hcnp
+        have hres : CertifiedIn DomF (padRow (sq t)) (plus (predC t) one) :=
+          CertifiedIn.succ (kind_padSq_succ t hcn hk) (fun n => by
+            show CertifiedIn DomF ((BMS.expand? (padRow (sq t)) n).getD []) (predC t)
+            rw [expand_padSq_succ t hcn hk n]
+            exact hpred)
+            (by rw [plus_predC t hcn hk]; exact domF_of_cn t hcn)
+        rw [plus_predC t hcn hk] at hres
+        exact hres
+      · have hk' : kindC t = false := by simpa using hk
+        obtain ⟨hcnfs, hltfs, hstep, hcof⟩ := Evidence.WF.lim_clauses t hcn hk' hz
+        refine CertifiedIn.lim (fsC t) (kind_padSq_lim t hcn hk' hz) (fun n => ?_) hltfs hstep hcof
+          (domF_of_cn t hcn)
+        show CertifiedIn DomF ((BMS.expand? (padRow (sq t)) n).getD []) (fsC t n)
+        rw [expand_padSq t hcn hk' hz n]
+        exact ih (fsC t n) ⟨hcnfs n, hltfs n⟩ (hcnfs n)
+  intro t hcn
+  exact key t (Evidence.WF.acc_cn t hcn) hcn
+
+theorem certIn_tower (n : Nat) : CertifiedIn DomF (towerM n) (Evidence.WF.tower n) := by
+  rw [towerM_eq n]
+  exact certIn_padSq _ (Evidence.WF.cn_tower n)
+
+/-- **ε₀, guarded.**  `cert_eps0` with `DomF` at every value. -/
+theorem certIn_eps0 : CertifiedIn DomF [[0, 0], [1, 1]] (phi one zero) := by
+  refine CertifiedIn.lim Evidence.WF.tower kind_eps0_row (fun n => ?_)
+    Evidence.WF.lt_tower_eps0 Evidence.WF.lt_tower_step Evidence.WF.cof_eps0 ⟨rfl, by decide⟩
+  show CertifiedIn DomF ((BMS.expand? [[0, 0], [1, 1]] n).getD []) (Evidence.WF.tower n)
+  rw [show (BMS.expand? [[0, 0], [1, 1]] n).getD [] = towerM n from expand_eps0_row n]
+  exact certIn_tower n
+
+/-- **THE ε₀ ROW HAS ONE GUARDED VALUE.**  Every `DomF`-guarded certificate of
+    `(0,0)(1,1)` carries the value ε₀ — the row's ✅ means "this value and no other"
+    as soon as the competing certificate keeps its values inside 𝔗(M) ∩ `Frag2`. -/
+theorem certIn_eps0_unique (u : Term) (h : CertifiedIn DomF [[0, 0], [1, 1]] u) :
+    u = phi one zero := (cert_unique_frag2 certIn_eps0 h).symm
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate.
