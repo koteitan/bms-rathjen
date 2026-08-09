@@ -9019,6 +9019,29 @@ and strictly increases; and it is COFINAL — every one of the 1687 `inT` terms 
 ≤ 8 that is below such a `t` is `≤ fsN t n` for some `n ≤ 12`.  So the target is true and
 this is a cost question, not a risk question.
 
+THE DIRECT ROUTE WAS BUILT AND TESTED, NOT MERELY ARGUED ABOUT — and it FAILS, on exactly
+the fixed-point terms.  A direct term-level sequence `fsV` (no `isFP`, no `phiShifted`,
+no `splitFin`; just `kindV`, `predC`, `repAdd` and a three-line `iterPhi`) satisfies
+clauses 1–3 on all 78 `CNV` limits of degree ≤ 12.  It fails clause 4.  THE WITNESS:
+
+    t = φ̄0(φ̄10)   ("ω^ε₀" as a TERM; `CNV t`, and `t` is a limit)
+    s = φ̄10       (ε₀;  `lt s t = true`, so `s` is one of the terms cofinality must reach)
+    fsV t n  =  ω, ω^ω, ω^(ω^ω), …    — the ω-tower, and `le s (fsV t n)` is FALSE for
+                                        every n < 40: the sequence never reaches ε₀
+    fsN t n  =  0, ε₀, ε₀⊕ε₀, ε₀⊕ε₀⊕ε₀, …  = ε₀·n — reaches it at n = 1
+
+and `phiShifted 0 ε₀ = isFP 0 ε₀ = true` are precisely the flags that send `fsN` down its
+shifted branch.  This is NOT a case of tuning a sequence until a proof closes: `fsV` is a
+legitimately defined sequence that is genuinely not cofinal below this term, because the
+predecessors of `φ̄0(ε₀)` include `ε₀` itself and no `φ̄0(·)`-sequence built from below `ε₀`
+can reach it.  The fix is to use the sequence that IS cofinal, and that is `fsN`.
+
+DEFINITIONAL HYGIENE the direct attempt also exposed: the sum clause must guard against a
+zero tail.  `fsV (⊕ u v) n = ⊕ u (fsV v n)` builds `⊕ u 0` when `fsV v n = 0`, and `⊕ u 0`
+is not a term of 𝔗(M) at all (2.1(iii) wants ≥ 2 additively principal components).  §11
+never meets this because every CNF limit has a non-zero `fsC` at every index; at the
+Veblen level `ε₀ ⊕ ε₀` does meet it, since `fsN ε₀ 0 = 0`.
+
 WHY §11's DIRECTNESS IS NOT AVAILABLE (§11's note explains that `fsC` exists to avoid
 `phiShifted`/`isFP`/`splitFin`, "which does nothing at all when `α = 0`").  That vacuity
 is a property of the CNF REGION, not of `α = 0`: MEASURED, `phiShifted 0 k = isFP 0 k =
