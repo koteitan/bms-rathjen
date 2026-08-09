@@ -555,4 +555,91 @@ def mixed : List Term :=
 #guard BMS.cmpM [[0,0],[1,0],[2,1],[1,0],[2,1]] [[0,0],[1,1],[1,0],[2,1]] == Ordering.lt
 #guard !(Trans.oR (sqv (phi zero (plus (phi one zero) (phi one zero)))) == none)
 
+/-! ## §5 THE TWO DIMENSIONS `sqv_decomp` WILL USE  (measurement, 2026-08-10)
+
+§4.1 established that a gate suite reading all-zero is a statement about the dimensions
+it measures.  The coordinator named the two this file had not measured, and they are
+the two a certificate actually consumes: `Certified.lim`'s identity premise is
+`∀ n, Certified (expand M n) (fs' n)`, so the map must carry the T(M) sequence to the
+BMS expansion, and the (B) family construction leans on order.  **Both were measured
+BEFORE any proof was attempted, and they do not agree with each other.**
+
+ORDER PRESERVATION — PASSES.  Over all 234² = 54756 corpus pairs,
+
+    lt t u  =  (cmpM (sqv t) (sqv u) == .lt)          0 disagreements
+
+with the CONTROL (the same claim with the matrices swapped) failing 53446 of 54756, so
+the test discriminates rather than being satisfied by everything.
+
+EXPANSION — FAILS, and this is why nothing is proved yet.  Stated without any
+fundamental sequence, so that it is about `sqv` alone: is every expansion of an encoded
+matrix again an encoding?
+
+    oR (expand (sqv t) n) = some u   and   sqv u = expand (sqv t) n
+                                                   83 of 936 pairs FAIL, over 21 terms
+
+(t over the corpus, n ≤ 3; control: the same with `expand (sqv t) (n+1)` on the right,
+which holds for 312, so a third of the pairs would accept a wrong matrix and the 853
+that pass are not passing by accident.)  A worked failure:
+
+    t = ε₁, n = 2   expand (sqv ε₁) 2 = (0,0)(1,1)(1,0)(2,1)(2,0)(3,1)
+                    oR of it = φ̄(0, φ̄(0, ε₀·2))
+                    sqv of THAT = (0,0)(1,0)(2,1)(2,0)(3,1)      one column short
+
+So `sqv` is wrong on a NESTED `φ̄(0,·)` whose inner subscript collapses, even though it
+is right on the inner term itself — `sqv (φ̄(0,ε₀·2))` is the discriminator and passes.
+The corpus never nests that way, which is why every gate in §2–§4.1 is clean.
+
+AND THE INDEX SHIFT IS MATRIX-DETERMINED — a THIRD instrument saying so.  Measuring
+against `TM.Term.fsN` first gave 612 of 624 failures, which is what sent me to the
+fs-free form above.  **That number says nothing about `fsN`**: it is a UNIFORM shift
+measured against a phenomenon that is not uniform.  Asking instead which shift `s` makes
+
+    oR (expand (sqv t) n) = some (fsN t (n+s))            hold for all n ≤ 3
+
+gives, per row:
+
+    ε_ω = φ̄(1,ω)       s = 0
+    φ̄(ω,0)             s = 2
+    ε₀, ω^ω, ζ₀        s = 1
+    ε₁ = φ̄(1,1)        NO s in 0..3 works at all
+
+Three different shifts and one row where no shift exists — and for that row the WF
+lane's own sequence does fit, at shift 0: `oR (expand (sqv ε₁) n) = fsEsucc 0 n` for
+n ≤ 3, so ε₁ is a DIFFERENT sequence rather than a displaced one.  `fsEW` likewise fits
+ε_ω at shift 0, agreeing with `fsN` there.  So `fsN` is not the wrong instrument; the
+shift is simply not a function of the term.
+
+`Rows/Proofs.lean` says the same thing from a third side: its nine E3 proofs use FOUR
+conventions — `fsN t (n+1)` four times, `fsN t (n+2)` once, `fsN t n` twice, and two
+bespoke sequences.  An earlier version of this paragraph said the repo states every E3
+row with `+1`, which is wrong; the headers of `Trans/TM.lean` and `Rows/TM.lean` said so
+and were corrected in 37cd066.  It is kept as a correction rather than deleted because
+reading the repo's own statement form is the right move and it was the statement form
+that was wrong.
+
+This is the same non-uniformity WF §15.22 measures inside core (C) and
+`table/index-shift-2026-08-10.txt` measures on five pairs, now seen from the encoding.
+The reading all three support: **the index is matrix-determined and no property of the
+term computes it.**  ε₁'s line above is `sqv`'s own defect (the nested case), not a
+shift and not `fsEsucc`'s.
+
+The four `#guard`s below are that table, including the NEGATIVE one: a check that
+`fsEsucc 0` fits ε₁ cannot show that no `fsN` shift does, and it is the second claim
+that carries the paragraph.
+
+CONSEQUENCE: `sqv_decomp` is NOT started.  Proving the recursion against a map that
+fails image closure on 21 corpus terms would prove something false or carry a hypothesis
+excluding them, which is the same objection that stopped the proof at candidate 4. -/
+
+-- the per-row shift, and the row where none exists
+#guard (List.range 4).all (fun n => Trans.oR (BMS.expand (sqv (phi one omega)) n)
+          == some (TM.Term.fsN (phi one omega) n))
+#guard (List.range 4).all (fun n => Trans.oR (BMS.expand (sqv (phi omega zero)) n)
+          == some (TM.Term.fsN (phi omega zero) (n + 2)))
+#guard (List.range 4).all (fun s => !((List.range 4).all (fun n =>
+          Trans.oR (BMS.expand (sqv (phi one one)) n) == some (TM.Term.fsN (phi one one) (n + s)))))
+#guard (List.range 4).all (fun n => Trans.oR (BMS.expand (sqv (phi one one)) n)
+          == some (Evidence.WF.fsEsucc 0 n))
+
 end Evidence.SqV
