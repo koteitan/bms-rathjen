@@ -33,6 +33,12 @@ Master plan: `plan/README.md`. Target list & staging: `rathjen-ordinals.md`
   to `Certified` is the natural move and it is the wrong one.
 - `Rows.version` in `Rows/TM.lean` is rendered into the table header; bump it
   together with every /commitbump and regenerate the table before committing.
+- **ANY edit to `Rows/TM.lean` requires regenerating the table — including a
+  COMMENT-ONLY edit.** The generated table deep-links every row to its source
+  line (`../lean/Rows/TM.lean#L86`), so adding lines anywhere above the row list
+  moves all of them. Six lines added to the header comment moved 102 table lines
+  with no value, name or ✅ changing, and CI's "gentable up-to-date" step would
+  have failed. "Only row changes change the table" is false.
 
 ## Definition-fidelity rules
 
