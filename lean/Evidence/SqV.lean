@@ -1345,4 +1345,73 @@ def stress : List Term :=
 -- the margin is TIGHT: zero at the worst term, so `tdepth` is not merely sufficient
 #guard stress.foldl (fun m t => min m (tdepth t - tdepth (omLog t))) 99 == 0
 
+
+/-! ## §10 THE THREE DEFINING EQUATIONS OF `encvF`'s `phi` CLAUSE, AS REWRITE RULES
+
+Written the way `Evidence/WF.lean` §11.0 writes `fsC`'s: **do not unfold — state one
+named equation per branch, discharge the branch condition once, and let every consumer
+rewrite with a left-hand side that is stable.**
+
+The reason is the same one §11.0 gives, met here from the other side.  `simp only [encvF]`
+unfolds the `phi` clause everywhere it occurs and then normalises the result; the `if`s
+get pushed around and the `let`-bodies inlined, and a congruence lemma that is CORRECT no
+longer matches syntactically.  Two rounds of `rw` ordering did not fix that and were not
+going to: the problem is that the consumer sees the `if`-chain at all.  With these three,
+no consumer ever does — and `sqv_decomp` can cite the branch it is in rather than
+re-unfolding.
+
+A GOTCHA WORTH THE LINE IT COSTS, found the expensive way while proving the map
+congruence these equations replace: when a rewrite occurs BOTH at the head and under the
+binder of a `List.map` in the tail, **apply the induction hypothesis FIRST**.  Rewriting
+the head first also rewrites inside the tail map, and the induction hypothesis' left-hand
+side is then gone.  `List.map_cons, List.map_cons, ih, …` — never `…, ih`. -/
+
+def ladderOf (a : Term) (f d : Nat) : List Col2 :=
+  if a == zero then [] else (d + 1, 1) :: bumpAt (d + 2) (encvF f (predOr a) (d + 2))
+
+def unitOf (a : Term) (f d : Nat) : List Col2 :=
+  if a == zero then [((d + 1, 0) : Col2)] else ladderOf a f d
+
+def repsOf (a b : Term) (f d : Nat) : List Col2 :=
+  (List.replicate (TM.Term.splitFin b).2 (unitOf a f d)).flatten
+
+def blocksOf (a : Term) (f d : Nat) (hs : List Term) : List Col2 :=
+  (hs.map (fun g => ladderOf a f d ++ shiftD (if a == zero then d + 1 else d + 2)
+    (encvF f (if a == zero then g else omLog g) 0))).flatten
+
+/-- The COLLAPSE branch: the head summand is a fixed point of `φ̄a`. -/
+theorem encvF_phi_collapse (a b : Term) (f d : Nat)
+    (h : TM.Term.isFP a ((summands (TM.Term.splitFin b).1).headD zero) = true) :
+    encvF (f + 1) (TM.Term.phi a b) d
+      = encvF f ((summands (TM.Term.splitFin b).1).headD zero) d
+        ++ (if ((summands (TM.Term.splitFin b).1).length == 1) = true then unitOf a f d
+            else blocksOf a f d ((summands (TM.Term.splitFin b).1).drop 1))
+        ++ repsOf a b f d := by
+  show (if TM.Term.isFP a ((summands (TM.Term.splitFin b).1).headD zero) = true then _ else _) = _
+  rw [if_pos h]
+  rfl
+
+/-- The DEEP branch: not a fixed point at the top, but one sits below through `φ̄` layers. -/
+theorem encvF_phi_deep (a b : Term) (f d : Nat) (z : Term)
+    (h : TM.Term.isFP a ((summands (TM.Term.splitFin b).1).headD zero) = false)
+    (hz : fpDeep a ((summands (TM.Term.splitFin b).1).headD zero) = some z) :
+    encvF (f + 1) (TM.Term.phi a b) d
+      = encvF f z d ++ blocksOf a f d (summands (TM.Term.splitFin b).1) ++ repsOf a b f d := by
+  show (if TM.Term.isFP a ((summands (TM.Term.splitFin b).1).headD zero) = true then _ else _) = _
+  rw [if_neg (by rw [h]; exact Bool.noConfusion), hz]
+  rfl
+
+/-- The BASE branch: no fixed point anywhere below the subscript. -/
+theorem encvF_phi_base (a b : Term) (f d : Nat)
+    (h : TM.Term.isFP a ((summands (TM.Term.splitFin b).1).headD zero) = false)
+    (hz : fpDeep a ((summands (TM.Term.splitFin b).1).headD zero) = none) :
+    encvF (f + 1) (TM.Term.phi a b) d
+      = (d, 0) :: ((match summands (TM.Term.splitFin b).1 with
+                    | [] => ladderOf a f d
+                    | _ => blocksOf a f d (summands (TM.Term.splitFin b).1))
+                   ++ repsOf a b f d) := by
+  show (if TM.Term.isFP a ((summands (TM.Term.splitFin b).1).headD zero) = true then _ else _) = _
+  rw [if_neg (by rw [h]; exact Bool.noConfusion), hz]
+  rfl
+
 end Evidence.SqV
