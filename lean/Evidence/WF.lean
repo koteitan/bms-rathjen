@@ -11874,6 +11874,133 @@ theorem succT_predC : ∀ (t : Term), CNV t = true → kindV t = true → succT 
 #guard succT (predC (ofNat 3)) == ofNat 3
 
 
+/-! ### §15.21 CORE (B) AT ANY SUCCESSOR FIRST ARGUMENT — and `hside` is NOT about `a` varying
+
+WHAT `kindV` UNBLOCKED.  §15.19's dispatch must split `φ̄(a,0)` between core (B) (`a` a successor)
+and core (C') (`a` a limit); §15.20 supplies the test.  This section takes the (B) half AT A
+GENERAL SUCCESSOR — §15.12's `lim_clauses_zeta0` and §15.18's `lim_clauses_phi30` were its
+instances at `a = 2` and `a = 3`.
+
+STATED AT `succT p`, NOT AT `predC a`, which removes `predC` from the statement entirely.  Every
+`kindV`-successor `a` satisfies `a = succT (predC a)` (§15.20's `succT_predC`), so a caller
+holding `a` instantiates `p := predC a`, and the theorem never mentions the function §15.19's
+misroute turned on.
+
+MEASURED BEFORE BUILDING, and the negative control is what makes it a result:
+    φ̄(a,0), a = 2,3,4,5,6   sequence = fsGen (φ̄(p,0)) p (φ̄(p,0)),  p = a−1     ALL EXACT
+    the SAME candidate at a = ω (a LIMIT)                                       FALSE
+so the `kindV` guard is load-bearing, not decorative.  And a = 4,5,6 are reachable exactly as the
+expansions of the `φ̄(ω,0)` row — SO THIS THEOREM ALSO SUPPLIES THAT ROW'S INTERMEDIATE VALUES.
+
+`hside` IS NOT ABOUT `a` VARYING — A NEGATIVE, recorded because a shared proof was worth hoping
+for.  The hypothesis was that `hside`'s general difficulty is what changes when the first
+argument varies, hence the same question as (C')-versus-(C).  IT IS NOT.  `hside` tracks `b ≠ 0`:
+    core (C)    `a` FIXED,  `b` arbitrary    NEEDS `hside` — 2.3.13(iii) hands back `s ≤ b`
+    core (C')   `a` VARIES, `b = 0`          NO `hside`    — `s ≤ 0` forces `s = 0`
+The two vary in OPPOSITE directions with respect to `a`, and the fact that discharges the case is
+the `b = 0` vacuity, which appears explicitly in `cof_phiArg1_aux`'s `p = a` branch.  Different
+questions; no shared proof to be had.  NOTE the evidence is structural, not statistical: every
+(C') instance has `b = 0`, so the cases alone cannot separate the two hypotheses — what separates
+them is which fact the PROOF consumes.
+
+WHERE `fsC` MUST NOT BE ROUTED.  `fsC`'s own first test is `b == zero` — the same
+conjunct-dropped rule as `kindC`'s — so `fsC ε₀ n = 0` is `fsC`'s OWN defect, not `kindC`'s by
+proxy.  Every use in §15.15/§15.16 is guarded by `CN b`, where the missing conjunct is redundant.
+A dispatch that routed a VEBLEN term into `fsC` would meet the same trap in a second location. -/
+
+theorem lt_succT : ∀ (p : Term), CNV p = true → lt p (succT p) = true := by
+  intro p
+  induction p with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; exact lt_zero_phi _ _
+  | phi a b _ _ =>
+    intro _
+    show lt (phi a b) (add (phi a b) one) = true
+    rw [lt_atom_add (s := phi a b) rfl]; exact le_self _
+  | add u v _ ihv =>
+    intro h
+    obtain ⟨hAPu, hcnu, hcnv, _⟩ := cnv_add h
+    have ih := ihv hcnv
+    show lt (add u v) (add u (succT v)) = true
+    rw [lt_add_add (by intro hc; injection hc with _ h2; exact ne_of_ltF ih h2), if_pos rfl]
+    exact ih
+
+theorem succT_ne_zero : ∀ (v : Term), succT v ≠ zero := by
+  intro v; cases v <;> (intro hc; exact Term.noConfusion hc)
+
+/-- `succT` appends a trailing `1`, so it PRESERVES the head. -/
+theorem hdOf_succT : ∀ (v : Term), v ≠ zero → hdOf (succT v) = hdOf v := by
+  intro v hv
+  cases v with
+  | zero => exact absurd rfl hv
+  | M => rfl | omg _ => rfl | phi _ _ => rfl | psi _ _ => rfl | Z _ => rfl
+  | add _ _ => rfl
+
+theorem hdLe_succT {v u : Term} (hv : v ≠ zero) (h : hdLe v u = true) :
+    hdLe (succT v) u = true := by
+  rw [hdLe_eq _ _ (succT_ne_zero v), hdOf_succT v hv, ← hdLe_eq v u hv]
+  exact h
+
+theorem cnv_succT : ∀ (p : Term), CNV p = true → CNV (succT p) = true := by
+  intro p
+  induction p with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; rfl
+  | phi a b _ _ =>
+    intro h
+    show ((phi a b).isAP && CNV (phi a b) && CNV one && hdLe one (phi a b)) = true
+    rw [h, show (phi a b).isAP = true from rfl,
+      show hdLe one (phi a b) = true from le_one_of_cnv_ne_zero (phi a b) h
+        (by intro hc; exact Term.noConfusion hc)]
+    rfl
+  | add u v _ ihv =>
+    intro h
+    obtain ⟨hAPu, hcnu, hcnv, hdesc⟩ := cnv_add h
+    show (u.isAP && CNV u && CNV (succT v) && hdLe (succT v) u) = true
+    rw [hAPu, hcnu, ihv hcnv,
+      show hdLe (succT v) u = true from
+        hdLe_succT (by intro hc; rw [hc] at hdesc; exact Bool.noConfusion hdesc) hdesc]
+    rfl
+
+theorem below_succT_cnv {x p : Term} (hx : CNV x = true) (hp : CNV p = true)
+    (hlt : lt x (succT p) = true) : le x p = true := by
+  by_cases hpx : lt p x = true
+  · exfalso
+    have h1 : le (succT p) x = true := le_succT_of_lt p hp x hx hpx
+    have h2 : lt x x = true :=
+      lt_of_lt_of_le (frag_of_cnv _ hx) (frag_of_cnv _ (cnv_succT p hp)) (frag_of_cnv _ hx) hlt h1
+    rw [lt_irrefl] at h2; exact Bool.noConfusion h2
+  · exact le_of_not_lt (frag_of_cnv _ hp) (frag_of_cnv _ hx) (by simpa using hpx)
+
+theorem lim_clauses_phi_zero_succ {p : Term} (hcnp : CNV p = true) :
+    (∀ n, CNV (fsGen (phi p zero) p (phi p zero) n) = true)
+  ∧ (∀ n, lt (fsGen (phi p zero) p (phi p zero) n) (phi (succT p) zero) = true)
+  ∧ (∀ n, lt (fsGen (phi p zero) p (phi p zero) n)
+            (fsGen (phi p zero) p (phi p zero) (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (phi (succT p) zero) = true →
+        ∃ n, le s (fsGen (phi p zero) p (phi p zero) n) = true) := by
+  have hv : CNV (phi p zero) = true := by
+    show (CNV p && CNV zero) = true; rw [hcnp]; rfl
+  have hsp : lt p (succT p) = true := lt_succT p hcnp
+  have hcnt : CNV (phi (succT p) zero) = true := by
+    show (CNV (succT p) && CNV zero) = true; rw [cnv_succT p hcnp]; rfl
+  exact lim_clauses_fsGen hv hcnp hv hcnt (le_self _) hsp
+    (lt_phiz_of_lt hsp) (lt_phiz_of_lt hsp)
+    (fun q _ hlt => by
+      rw [show lt q zero = false from ltF_right_zero _ _] at hlt; exact Bool.noConfusion hlt)
+    (fun x hx hlt => below_succT_cnv hx hcnp hlt)
+    (le_zero_any _)
+
+#guard fsGen (phi (ofNat 2) zero) (ofNat 2) (phi (ofNat 2) zero) 1 == phi (ofNat 2) zeta0
+#guard succT (ofNat 2) == ofNat 3
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
