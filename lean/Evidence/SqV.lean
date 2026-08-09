@@ -2525,4 +2525,52 @@ def pool : List Term := (startsW ++ allTargets).eraseDups
           match fpDeep (ofNat i) t with
           | none => true | some g => TM.Term.inT g && (g == t || TM.Term.lt g t))))).length == 0
 
+
+/-! ## §15 THE CLAUSE-WISE LANDING THEOREM  (started)
+
+What §14 measures and does not prove:
+
+    ∀ t, inT t → CNV t → every argument `encvF` recurses on is `inT` and `lt t`
+
+**Measured on 169 starts and 40 targets, 0 violations, with the junk control firing at
+10 of 42.  NOT PROVED.  "The route is open" is not "the termination is proved"** — the
+whole obligation is this theorem, and §13's table is the record that the arithmetic
+alternative does not exist rather than that it was not looked for.
+
+FOUR CLAUSES, one per recursion site of §10's named equations:
+
+    the summands   g ∈ summands (splitFin b).1        →  inT g,  lt g (φ̄(a,b))
+    the head       (summands (splitFin b).1).headD 0  →  same
+    predOr         predOr a                            →  inT,  lt · (φ̄(a,b))
+    omLog          omLog g for a summand g             →  same
+    fpDeep         fpDeep a hd = some z                →  inT z, lt z (φ̄(a,b))
+
+`predOr`'s case is pre-cleared by veblen2's measurement (0 violations, `inT` and `CNV`
+preserved, full `RT`-step on their 5 movers, thickened to 39 by §14.1's call graph) —
+measured, not proved.
+
+PROVED SO FAR: `inT` passes to the summands, structurally, the same shape as
+`tdepth_mem_summands`.  The `add` case reads `inT (u ⊕ v) = isAP u && inT u && inT v && …`
+straight off 2.1(iii) and takes the two conjuncts it needs. -/
+
+theorem inT_mem_summands : ∀ (t g : Term),
+    TM.Term.inT t = true → g ∈ summands t → TM.Term.inT g = true := by
+  intro t
+  induction t with
+  | zero => intro g _ hg; simp only [summands] at hg; exact absurd hg (List.not_mem_nil)
+  | M => intro g h hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact h
+  | omg _ _ => intro g h hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact h
+  | psi _ _ _ _ => intro g h hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact h
+  | Z _ _ => intro g h hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact h
+  | phi _ _ _ _ => intro g h hg; simp only [summands, List.mem_singleton] at hg; rw [hg]; exact h
+  | add u v ihu ihv =>
+    intro g h hg
+    simp only [summands, List.mem_append] at hg
+    have hd : TM.Term.inT u = true ∧ TM.Term.inT v = true := by
+      simp only [TM.Term.inT, Bool.and_eq_true] at h
+      exact ⟨h.1.1.2, h.1.2⟩
+    rcases hg with hh | hh
+    · exact ihu g hd.1 hh
+    · exact ihv g hd.2 hh
+
 end Evidence.SqV
