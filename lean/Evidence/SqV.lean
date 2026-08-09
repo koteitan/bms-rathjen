@@ -3416,82 +3416,25 @@ def cnvAll : List Term := (cnvPool ++ gpool.filter (fun t => Evidence.WF.CNV t))
 #guard lt (Evidence.WF.succT zero) (phi zero zero) == false
 
 
-/-! ### §15.7 TWO OF THE FIVE ROUTED ORDER FACTS WERE ALREADY IN THE REPO
+/-! ### §15.7 WITHDRAWN — F1a AND F2 ARE WF §15.27's, AND THE DUPLICATION IS RECORDED IN §15.9
 
-I sent five order facts to the WF lane.  Before waiting on them I priced each against what WF
-ALREADY proves, and **two of the five needed no new lemma at all** — they are compositions of
-lemmas that were sitting there.  Withdrawn from the request rather than left pending, because a
-peer proving what already exists is the most expensive kind of duplicated work: it also creates a
-second lemma with the same content and no marker saying which one to use.
+This section held `lt_succT_phi`, `le_plus_ofNat` and `le_splitFin_fst`: independent proofs of F2
+and F1a, written while veblen2 was proving the same two facts in WF §15.27.  **They are deleted
+rather than kept, because two lemmas with the same content and nothing saying which to use is
+worse than either alone** — that is the exact cost I named when withdrawing the request.
 
-    F2   CNV x -> x /= 0 -> lt (succT x) (phi zero x)     `lt_succT_phi`      PROVED HERE
-    F1a  CNV b -> le ((splitFin b).1) b                   `le_splitFin_fst`   PROVED HERE
-    F1b  CNV s -> g in summands s -> le g s               REDUCES to F3 + F4
-    F3   CNV (add u v) -> lt u (add u v)                  still with the WF lane
-    F4   CNV (add u v) -> lt v (add u v)                  still with the WF lane
+WHAT IS KEPT IS THE COMPARISON, because the peer's statements are better and the reason is
+transferable.  My F1a inducted on `splitFin`'s trailing-1 count `m`, through `plus_ofNat_step`;
+`le_ofList_take` proves EVERY prefix of the component list is `le` the whole, at a general `k`,
+and F1a is one instance.  **The arithmetic of `m` was never the content — the prefix structure
+was**, and a statement at the general `k` serves the next caller too.  My F2 and theirs happen to
+agree exactly on the obstruction: `le` comes from "nothing lies strictly between `a` and `a+1`",
+and the step to `lt` is that `succT x` is `add`-headed while `phi zero x` is `phi`-headed, which
+is precisely why `x = 0` — where the two ARE the same term — is the exception.
 
-**F2 IS `le_succT_of_lt` PLUS A CONSTRUCTOR.**  WF §12 already proves `lt a v -> le (succT a) v`
-on `CNV` — nothing lies strictly between `a` and `a+1` — and `lt_phi_self` supplies `lt x φ̄(0,x)`.
-That gives `le`, not `lt`.  The gap closes on the SYNTAX: `le s t` is `s == t || lt s t`, and for
-`x /= 0` the term `succT x` is `add`-headed while `phi zero x` is `phi`-headed, so equality is
-impossible and the `le` collapses to `lt`.  **And that is exactly why `x /= 0` is the side
-condition** — at `x = 0`, `succT 0 = one = phi zero zero = phi zero 0`, the two ARE the same term,
-and the fact is false.  The measured control and the proof's obstruction are the same obstruction,
-which is the strongest form of agreement between a measurement and a proof this file has had.
-
-**F1a IS `splitFin_rebuild` PLUS `lt_succT`.**  §15.5 already proves `b = γ + m` for
-`(γ, m) = splitFin b`, and `plus_ofNat_step` says each of the `m` steps is a `succT`.  So `le γ b`
-is an induction on `m` over `lt_succT` and `le_trans_inT` — no new order content, only the
-`plus`/`toList` machinery §15.5 built for `predOr`.  **`splitFin_rebuild` has now paid for itself
-twice**, which is the argument for having proved it as a standalone identity rather than inlining
-it into `succT_predOr`.
-
-WHAT IS ACTUALLY OWED IS TWO FACTS, NOT FIVE, and both are about `add` — the one shape whose order
-behaviour §15.5's machinery says nothing about, since `plus` normalises sums and these two are
-about the raw constructor.  F1b then follows from them by induction over `summands`. -/
-
-section
-open Evidence.WF (CNV succT lt_succT le_succT_of_lt lt_phi_self le_of_lt le_self
-  le_trans_inT inT_of_cnv)
-
-theorem lt_succT_phi {x : Term} (hx : CNV x = true) (hz : x ≠ zero) :
-    lt (succT x) (phi zero x) = true := by
-  have hcp : CNV (phi zero x) = true := by show (CNV zero && CNV x) = true; rw [hx]; rfl
-  have hle := le_succT_of_lt x hx (phi zero x) hcp (lt_phi_self hx zero)
-  have hne : ¬ (succT x = phi zero x) := by
-    cases x with
-    | zero => exact absurd rfl hz
-    | M => intro h; exact absurd h (by simp [Evidence.WF.succT])
-    | omg a => intro h; exact absurd h (by simp [Evidence.WF.succT])
-    | psi a b => intro h; exact absurd h (by simp [Evidence.WF.succT])
-    | Z a => intro h; exact absurd h (by simp [Evidence.WF.succT])
-    | phi a b => intro h; exact absurd h (by simp [Evidence.WF.succT])
-    | add a b => intro h; exact absurd h (by simp [Evidence.WF.succT])
-  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
-  rcases hle with h | h
-  · exact absurd h hne
-  · exact h
-
-theorem le_plus_ofNat (g : Term) (hg : CNV g = true) : ∀ m, le g (plus g (ofNat m)) = true := by
-  intro m
-  induction m with
-  | zero => exact le_self g
-  | succ m ih =>
-    have h1 : CNV (plus g (ofNat m)) = true := (plus_ofNat_spec g hg m).1
-    have h2 : lt (plus g (ofNat m)) (plus g (ofNat (m + 1))) = true := by
-      rw [plus_ofNat_step g hg m]; exact lt_succT _ h1
-    exact le_trans_inT (inT_of_cnv _ hg) (inT_of_cnv _ h1)
-      (inT_of_cnv _ (plus_ofNat_spec g hg (m + 1)).1) ih (le_of_lt h2)
-
-theorem le_splitFin_fst (b : Term) (hb : CNV b = true) :
-    le (TM.Term.splitFin b).1 b = true := by
-  have hcg : CNV (TM.Term.splitFin b).1 = true :=
-    cnv_ofList_take b ((toList b).length
-      - ((toList b).reverse.takeWhile (fun x => x == one)).length) hb
-  have h := le_plus_ofNat _ hcg (TM.Term.splitFin b).2
-  rwa [splitFin_rebuild b hb] at h
-
-end
+    F1a   `Evidence.WF.le_splitFin_fst`, and `le_ofList_take` for the general prefix
+    F1b   `Evidence.WF.le_toList_self`, bridged to `summands` by §15.9
+    F2    `Evidence.WF.lt_succT_phi_zero`, with `le_succT_phi_zero` as the unconditional form -/
 
 /-! ### §15.8 `land_omLog`'s `lt` HALF — PROVED, AND IT NEEDED NEITHER F3 NOR F4
 
@@ -3532,7 +3475,7 @@ theorem lt_omLog_phi_zero {x : Term} (hx : CNV x = true) :
       show lt (if TM.Term.isFP zero c then plus x one else x) (phi zero x) = true
       by_cases h : TM.Term.isFP zero c = true
       · rw [if_pos h, plus_one_eq_succT x hx]
-        refine lt_succT_phi hx ?_
+        refine Evidence.WF.lt_succT_phi_zero hx ?_
         intro hz
         rw [hz] at hs
         exact absurd hs (by simp [TM.Term.splitFin, toList, ofList, summands])
@@ -3606,5 +3549,163 @@ theorem summands_eq_toList : ∀ (t : Term), Evidence.WF.CNV t = true → summan
     show summands u ++ summands v = u :: toList v
     rw [summands_of_isAP hAPu, ihv hcnv]
     rfl
+
+/-! ### §15.10 `land_fpDeep`'s `lt` HALF — THE LAST CLAUSE, AND IT IS `le`, NOT `lt`
+
+`fpDeep a t` returns `t` ITSELF when `t` is already a fixed point of `φ̄(a,·)` — 6 of the 24
+triples in the call graph — so the honest conclusion at this site is `le`, not `lt`.  **Claiming
+`lt` here would be an overclaim that the corpus itself refutes**, and the consumer loses nothing:
+the parent of this recursion is `φ̄(a,b)`, not `t`, and the step from `t` to the parent is strict
+by `lt_phi_of_le`.  This is the mirror of §15.8 — state each clause against its own argument and
+let the composition to the parent supply the strictness.
+
+THE DESCENT IS THE SAME INDUCTION AS `cnv_fpDeepF`, with one order fact per layer: a summand of
+`(splitFin x).1` is `lt φ̄(c,x)`, which is F1b (bridged) composed with F1a and `lt_phi_of_le`.
+**Every piece of that is now a theorem** — WF §15.27 for the two `le` facts, §15.9 for the bridge.
+
+WHAT IT COST TO GET THE LAST CLAUSE: nothing new.  All three landing clauses now stand on the
+same four WF facts (`lt_phi_self`, `lt_phi_of_le`, `le_toList_self`, `le_ofList_take`) plus the
+`succT` chain, and no arithmetic measure anywhere — which was the whole point of abandoning §13's
+family.  What remains for a fuel-free `encv'` is the `add` clause's F3/F4 and the carrier. -/
+
+section
+open Evidence.WF (CNV cnv_phi le_self le_of_lt le_trans_inT lt_trans_inT inT_of_cnv
+  le_toList_self le_splitFin_fst lt_phi_of_le)
+
+/-- F1b in the form this file's recursion uses, through §15.9's bridge. -/
+theorem le_summands_self {s g : Term} (hs : CNV s = true) (hg : g ∈ summands s) :
+    le g s = true := by
+  rw [summands_eq_toList s hs] at hg
+  exact le_toList_self s hs g hg
+
+/-- A summand of the subscript's infinite part is strictly below the term it came from. -/
+theorem lt_summand_phi {c x g : Term} (hcx : CNV (phi c x) = true)
+    (hg : g ∈ summands ((TM.Term.splitFin x).1)) : lt g (phi c x) = true := by
+  have hx : CNV x = true := (cnv_phi hcx).2
+  have hsf : CNV (TM.Term.splitFin x).1 = true :=
+    cnv_ofList_take x ((toList x).length
+      - ((toList x).reverse.takeWhile (fun y => y == one)).length) hx
+  have hg' : CNV g = true := cnv_mem_summands _ g hsf hg
+  exact lt_phi_of_le hg' hx
+    (le_trans_inT (inT_of_cnv _ hg') (inT_of_cnv _ hsf) (inT_of_cnv _ hx)
+      (le_summands_self hsf hg) (le_splitFin_fst hx))
+
+/-- **`land_fpDeep`'s `lt` HALF.**  `le`, because `fpDeep` can return its own argument. -/
+theorem le_fpDeepF : ∀ (f : Nat) (a t z : Term), CNV t = true →
+    fpDeepF f a t = some z → le z t = true := by
+  intro f
+  induction f with
+  | zero => intro a t z _ h; simp only [fpDeepF] at h; exact absurd h (by simp)
+  | succ f ih =>
+    intro a t z ht h
+    simp only [fpDeepF] at h
+    by_cases hfp : TM.Term.isFP a t = true
+    · rw [if_pos hfp] at h; injection h with h1; rw [← h1]; exact le_self t
+    · rw [if_neg hfp] at h
+      cases t with
+      | zero => exact absurd h (by simp)
+      | M => exact absurd h (by simp)
+      | omg _ => exact absurd h (by simp)
+      | psi _ _ => exact absurd h (by simp)
+      | Z _ => exact absurd h (by simp)
+      | add _ _ => exact absurd h (by simp)
+      | phi c x =>
+        have hx : CNV x = true := (cnv_phi ht).2
+        have hsf : CNV (TM.Term.splitFin x).1 = true :=
+          cnv_ofList_take x ((toList x).length
+            - ((toList x).reverse.takeWhile (fun y => y == one)).length) hx
+        obtain ⟨g, hgm, hgf⟩ := findSome_mem (fpDeepF f a) _ z h
+        have hg' : CNV g = true := cnv_mem_summands _ g hsf hgm
+        have hz : CNV z = true := cnv_fpDeepF f a g z hg' hgf
+        exact le_trans_inT (inT_of_cnv _ hz) (inT_of_cnv _ hg') (inT_of_cnv _ ht)
+          (ih a g z hg' hgf) (le_of_lt (lt_summand_phi ht hgm))
+
+theorem le_fpDeep {a t z : Term} (ht : CNV t = true) (h : fpDeep a t = some z) :
+    le z t = true := le_fpDeepF (t.deg + 4) a t z ht h
+
+end
+
+/-! `fpDeep` returns its own argument on 6 of the 24 call-graph triples `(z, hd, parent)` — 3 of
+    the 18 distinct `(z, hd)` pairs — which is why the conclusion is `le` and not `lt`. -/
+
+def fpTriples : List (Term × Term × Term) :=
+  (cnvPool.filterMap (fun t => match t with
+    | .phi a b => match fpDeep a ((summands (TM.Term.splitFin b).1).headD zero) with
+                  | some z => some (z, (summands (TM.Term.splitFin b).1).headD zero, t)
+                  | none => none
+    | _ => none)).eraseDups
+
+#guard fpTriples.length == 24
+#guard (fpTriples.filter (fun p => p.1 == p.2.1)).length == 6
+#guard ((fpTriples.map (fun p => (p.1, p.2.1))).eraseDups).length == 18
+#guard (((fpTriples.map (fun p => (p.1, p.2.1))).eraseDups).filter (fun p => p.1 == p.2)).length == 3
+-- and the two halves agree with the measurement: every target is `CNV` and `le` its argument
+#guard (fpTriples.filter (fun p => !(Evidence.WF.CNV p.1 && le p.1 p.2.1))).length == 0
+
+/-! ### §15.11 THE `add` CLAUSE — `le` IS THE ORDER PART, THE REST IS `deg`
+
+F3 and F4 were routed as `lt` facts, and that over-asked.  **Both split into an `le` fact and a
+DISEQUALITY, and the disequality is structural, not order**: `deg (add u v) = 1 + deg u + deg v`
+with `deg` positive, so neither component can BE the sum.  `le s t` is `s == t || lt s t`, so `le`
+plus the disequality is exactly `lt`.  That halves the request, and it halves it asymmetrically:
+
+    F3   le u (add u v)   `Evidence.WF.le_head_add`, already shipped   +  u ≠ add u v   here
+    F4   le v (add u v)   the ONE piece still missing                  +  v ≠ add u v   here
+
+`le_toList_self` nearly gives F4 and cannot: `u` IS a component of `add u v`, which is why F3
+falls out at once, but `v` is not, because `toList (add u v) = u :: toList v` FLATTENS the tail.
+**The flattening is the whole gap** — the same flattening that killed `tdepth` at `predOr` in §13,
+where flattening deepened a measure.  It is worth noticing that the one structural fact this file
+keeps colliding with is that `toList` does not see a sum as a thing.
+
+So F3 is proved here and F4 waits on one `le`.  Sent to the WF lane BEFORE proving F3 rather than
+after — §15.9's collision was retracted too late, and the fix for that is not "price before
+asking" but PRICE BEFORE SENDING. -/
+
+section
+open Evidence.WF (CNV cnv_add le_head_add)
+
+theorem deg_pos : ∀ (t : Term), 0 < t.deg := by
+  intro t; cases t <;> simp [TM.Term.deg] <;> omega
+
+/-- A component is never its own sum — `deg` decides it, with no order content. -/
+theorem ne_add_left (u v : Term) : u ≠ TM.Term.add u v := by
+  intro h
+  have := congrArg TM.Term.deg h
+  simp only [TM.Term.deg] at this
+  have := deg_pos v
+  omega
+
+theorem ne_add_right (u v : Term) : v ≠ TM.Term.add u v := by
+  intro h
+  have := congrArg TM.Term.deg h
+  simp only [TM.Term.deg] at this
+  have := deg_pos u
+  omega
+
+/-- `le` plus a disequality is `lt` — `le` is literally `== || lt`. -/
+theorem lt_of_le_of_ne {a b : Term} (hle : le a b = true) (hne : a ≠ b) : lt a b = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
+  rcases hle with h | h
+  · exact absurd h hne
+  · exact h
+
+/-- **F3 — the `add` clause's head recursion decreases.** -/
+theorem lt_head_add {u v : Term} (h : CNV (TM.Term.add u v) = true) :
+    lt u (TM.Term.add u v) = true :=
+  lt_of_le_of_ne (le_head_add (cnv_add h).1 v) (ne_add_left u v)
+
+end
+
+#guard (cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.length == 72
+#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
+          (fun p => !(lt p.1 (TM.Term.add p.1 p.2)))).length == 0
+#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
+          (fun p => !(lt p.2 (TM.Term.add p.1 p.2)))).length == 0
+-- the residual: `le v (add u v)` is what F4 still needs, and `v` is not a component of the sum
+#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
+          (fun p => !(le p.2 (TM.Term.add p.1 p.2)))).length == 0
+#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
+          (fun p => (toList (TM.Term.add p.1 p.2)).any (fun x => x == p.2))).length != 72
 
 end Evidence.SqV

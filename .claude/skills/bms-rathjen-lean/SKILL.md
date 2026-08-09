@@ -194,8 +194,23 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   is read, the work it announces is committed. The coordinator once described a
   queue — "they still owe the bridge" — in the same turn as committing the file
   that contained the bridge, and routed from that model until a lane checked
-  `git show HEAD:` and corrected it. **Lane reports are the input; `HEAD` is the
-  state.** Grep the committed file before saying what is outstanding.
+  `git show HEAD:` and corrected it.
+  **BUT HEAD IS STALE IN THE OTHER DIRECTION TOO, and that half bites harder: HEAD
+  lags every lane's uncommitted work, and in this project the lanes cannot commit.
+  The coordinator is the only path from verified-on-disk to HEAD.** Read state
+  only from HEAD and verified work waits indefinitely with nothing in your model
+  saying it is ready. The reconciler is mechanical:
+
+      HEAD is authoritative for what has LANDED.
+      A lane report is the only signal that something is READY to land.
+      `git status` reconciles them: report says done + DIRTY tree for that lane's
+      file -> commit it. Report says done + CLEAN tree -> it is already in and
+      your model is behind.
+
+  **And grep for the CONCEPT, not the name you expect.** Checking for
+  `lt_fpDeep` and concluding the clause was unproved missed `le_fpDeep`, which was
+  sitting on disk — the check was aimed at the right thing with a pattern that
+  presumed its name.
 - **When a lane reports a MEASUREMENT, ask WHICH CORPUS before building on it.**
   The count-vs-set rule below has a twin: a number can be honest, verifiable and
   useless because the corpus could not reach the failure class. It happened —
