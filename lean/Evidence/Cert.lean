@@ -8494,7 +8494,13 @@ point is that guards must exclude should hold itself to that.
 
 So the family under the ladder is ε_k-PREFIXED, not ε₀-prefixed: `no_overshoot_fam`
 (§19.2) does not cover the (B) rows, and the ceiling has to generalise along the same
-index.  That is now a measurement rather than the guess §20 left open. -/
+index.  That is now a measurement rather than the guess §20 left open.
+
+RETRACTED (§20.3, immediately below).  The last paragraph is WRONG: measuring the rungs
+fixed their sequence but said nothing about the closure, and the closure shows the family
+is not ε_k-prefixed at all — it is the TAIL that widens, not the prefix.  The paragraph is
+kept rather than deleted because it is the conclusion a reader arrives at from Row A, and
+its refutation is worth more standing next to it than gone. -/
 
 #guard (List.range 3).all (fun k => (List.range 4).all (fun n =>
   Trans.o? (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc k n)))
