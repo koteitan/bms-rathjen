@@ -11903,6 +11903,15 @@ questions; no shared proof to be had.  NOTE the evidence is structural, not stat
 (C') instance has `b = 0`, so the cases alone cannot separate the two hypotheses — what separates
 them is which fact the PROOF consumes.
 
+AND THE MISSING CASE IS NOT UNMEASURED, IT IS UNMEASURABLE — a distinction worth stating here
+rather than left to a reader's charity.  One would test the two hypotheses apart with a (C')
+instance at `b ≠ 0`; NO SUCH INSTANCE CAN EXIST, because §15.18's uniform cap forbids it — for
+`b > 0` the whole first-argument sequence is bounded by `φ̄(a,0) < φ̄(a,b)` and no choice of `g`
+repairs it.  So "I did not measure it" would be the wrong report; the correct one is that the
+discriminating experiment is ruled out by a proved obstruction, and the negative above therefore
+rests on the proof and can rest on nothing else.  A sweep reported without that distinction reads
+as a corpus a later reader might think to widen; this one cannot be widened.
+
 WHERE `fsC` MUST NOT BE ROUTED.  `fsC`'s own first test is `b == zero` — the same
 conjunct-dropped rule as `kindC`'s — so `fsC ε₀ n = 0` is `fsC`'s OWN defect, not `kindC`'s by
 proxy.  Every use in §15.15/§15.16 is guarded by `CN b`, where the missing conjunct is redundant.
@@ -12175,10 +12184,27 @@ T1 AND T2 SWEPT, same corpus, each with its own control:
     T1 counterexamples 0        control (reversed conclusion) fires 45752
     T2 counterexamples 0        control fires 302 — i.e. every `Frag2` term
 
-WHAT IS NOT DONE: `T1` and `T2` are HYPOTHESES here, not theorems.  They are swept to degree 7
-with controls, which is evidence and not proof.  The scoping question §15.19-style is therefore
-NOT "may the middle be unconstrained" — it is "WHICH ENDPOINT may be free", and that is a
-strictly smaller question than the one the file currently records as the obstacle. -/
+AND THE TWO LEAVES COLLAPSE TO ONE.  Swept on the same corpus, each with its control:
+
+    one-sided ASYMMETRY   `lt a b → lt b a → False`   a ∈ Frag2 ; b ARBITRARY
+        counterexamples 0        control fires 301
+    (T) `le a b → le b c → le a c`   with `b` ∈ Frag2 and BOTH `a`, `c` ARBITRARY
+        counterexamples 0        control fires 302
+
+`T1` is `(T)` with `a` additionally `Frag2`.  `T2` follows from `(T)`'s `lt`/`le` companion plus
+`lt_irrefl`: from `lt b a` and `le a b`, transitivity THROUGH THE `Frag2` MIDDLE `a` gives
+`lt b b`.  So the whole undershoot step rests on ONE family — TRANSITIVITY WITH A `Frag2` MIDDLE
+AND ARBITRARY ENDPOINTS, in the `le/le → le` and `lt/le → lt` forms that one `ltF` induction
+normally yields together.
+
+SO THE SCOPING QUESTION IS SMALLER AGAIN, AND ITS ANSWER IS NOT "WHICH ENDPOINT": **BOTH
+endpoints may be free.  The only constraint needed anywhere is that the MIDDLE be `Frag2`** —
+which is the shape §7's lexicographic method was built for, and the opposite of the unconstrained
+middle the obstacle was recorded as.
+
+WHAT IS NOT DONE: `T1`, `T2` and `(T)` are HYPOTHESES here, not theorems.  Everything above is
+swept to degree 7 with controls, which is evidence and not proof; only the REDUCTION is proved.
+No attempt has been made on `(T)` itself. -/
 
 /-- **THE UNDERSHOOT STEP REDUCES TO TWO CONSTRAINED-MIDDLE FACTS.**  Cert.lean §14/§15 records
     the missing step as transitivity with a genuinely UNCONSTRAINED MIDDLE.  Contraposing moves
