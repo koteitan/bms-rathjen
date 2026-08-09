@@ -7513,6 +7513,109 @@ theorem kind_append (A B : Matrix) (hB : B ≠ []) : BMS.kind (A ++ B) = BMS.kin
                 | some _ => BMS.Kind.lim)
     rw [hL]
 
+/-! ## §18 ROW A — `ω^(ε₀+1)` = `(0,0)(1,1)(1,0)`, THE BMS SIDE  (2026-08-10)
+
+The first LIMIT row above ε₀.  Its 𝔗(M) side is `Evidence.WF.lim_clauses_rowA`
+(WF §15.4): the four `Certified.lim` premises for the DATABASE term `φ̄0(ε₀)` — not
+the ordinal column's `ω^(ε₀+1)`, §16.4's trap — with the sequence `fsA n = ε₀·(n+1)`.
+This section supplies the BMS side, and it is complete:
+
+  `eps0M k`         the matrix of ε₀·(k+1): the ε₀ row repeated `k+1` times
+  `eps0M_root`      its first column is a root column — the hypothesis §17 needs
+  `kind_eps0M`      it is a limit row, by `kind_append` and induction
+  `expand_eps0M_succ`  its expansions are `(0,0)(1,1) ++ (the previous one's)`, by §17.4
+  `expand_rowA`     THE ROW'S EXPANSION IDENTITY, for every `n`
+
+`expand_rowA` is the interesting one and it is a computation, not an induction: the
+row's last column is `(1,0)`, so `t = 0`, so `delta` is `0` at every row — the
+ascension amount VANISHES — and the bad part `(0,0)(1,1)` is copied `n+1` times
+unchanged.  §16.1 `#guard`s the first three values; this proves all of them.
+
+WHAT IS STILL MISSING, and it is 𝔗(M)-side, so it is a REQUEST not a gap here: the
+row's certificate needs `CertifiedIn DomI (eps0M n) (fsA n)` for every `n`, i.e. the
+INTERMEDIATE values ε₀·(k+1) each need their own four premises, with the sequence
+`n ↦ ε₀·k ⊕ tower n` (the value of `eps0M (k-1) ++ towerM n`, which is what
+`expand_eps0M_succ` produces).  In bundled form that is one lemma:
+
+    from the four premises for `v` with sequence `g`, the four premises for `u ⊕ v`
+    with sequence `fun n => plus u (g n)`
+
+whose only hard clause is cofinality — every `inT` term below `u ⊕ v` is overtaken by
+some `u ⊕ g n`.  With that, Row A closes by `CertifiedIn.lim` and the registry gains
+its eleventh row. -/
+
+/-- The matrix of ε₀·(k+1): the ε₀ row repeated `k+1` times. -/
+def eps0M (k : Nat) : Matrix := (List.replicate (k + 1) [[0, 0], [1, 1]]).flatten
+
+theorem eps0M_zero : eps0M 0 = [[0, 0], [1, 1]] := rfl
+
+theorem eps0M_succ (k : Nat) : eps0M (k + 1) = [[0, 0], [1, 1]] ++ eps0M k := by
+  show (List.replicate (k + 2) [[0, 0], [1, 1]]).flatten = _
+  rw [List.replicate_succ]
+  rfl
+
+theorem eps0M_ne_nil (k : Nat) : eps0M k ≠ [] := by
+  cases k with
+  | zero => simp [eps0M]
+  | succ j => rw [eps0M_succ]; simp
+
+theorem eps0M_root (k : Nat) : ∀ y, BMS.ent (eps0M k) 0 y = 0 := by
+  intro y
+  have h : eps0M k = [[0, 0]] ++ ((eps0M k).drop 1) := by
+    cases k with
+    | zero => rfl
+    | succ j => rw [eps0M_succ]; rfl
+  show ((eps0M k).getD 0 []).getD y 0 = 0
+  rw [h]
+  show (([0, 0] : List Nat)).getD y 0 = 0
+  cases y with
+  | zero => rfl
+  | succ m => cases m with | zero => rfl | succ p => rfl
+
+theorem kind_eps0M (k : Nat) : BMS.kind (eps0M k) = .lim := by
+  induction k with
+  | zero => rfl
+  | succ j ih => rw [eps0M_succ, kind_append _ _ (eps0M_ne_nil j)]; exact ih
+
+theorem expand_eps0M_succ (k n : Nat) :
+    BMS.expand? (eps0M (k + 1)) n = (BMS.expand? (eps0M k) n).map (fun m => [[0, 0], [1, 1]] ++ m) := by
+  rw [eps0M_succ]
+  exact expand?_append_root _ _ (eps0M_ne_nil k) (eps0M_root k) n
+
+theorem map_const_flatten : ∀ (m : Nat) (B : Matrix),
+    ((List.range m).map (fun _ => B)).flatten = (List.replicate m B).flatten := by
+  intro m B
+  induction m with
+  | zero => rfl
+  | succ j ih =>
+    rw [List.range_succ, List.map_append, List.flatten_append, ih, List.replicate_succ',
+      List.flatten_append]
+    rfl
+
+/-- **The row `(0,0)(1,1)(1,0)` expands to the ε₀·(n+1) matrices.**  The ascension
+    amount vanishes (`t = 0`, so `delta` is `0` at every row), so the bad part
+    `(0,0)(1,1)` is copied `n+1` times unchanged. -/
+theorem expand_rowA (n : Nat) : BMS.expand? [[0, 0], [1, 1], [1, 0]] n = some (eps0M n) := by
+  have hblk : ∀ (a : Nat), ((List.range 2).map (fun x =>
+      (List.range 2).map (fun y =>
+        BMS.ent [[0, 0], [1, 1], [1, 0]] (0 + x) y +
+          a * BMS.delta [[0, 0], [1, 1], [1, 0]] 0 0 y *
+            (if BMS.ascends [[0, 0], [1, 1], [1, 0]] 0 (0 + x) y then 1 else 0))))
+      = ([[0, 0], [1, 1]] : Matrix) := by
+    intro a; rfl
+  show some (([[0, 0], [1, 1], [1, 0]] : Matrix).take 0 ++
+      ((List.range (n + 1)).map (fun a =>
+        (List.range 2).map (fun x =>
+          (List.range 2).map (fun y =>
+            BMS.ent [[0, 0], [1, 1], [1, 0]] (0 + x) y +
+              a * BMS.delta [[0, 0], [1, 1], [1, 0]] 0 0 y *
+                (if BMS.ascends [[0, 0], [1, 1], [1, 0]] 0 (0 + x) y then 1 else 0))))).flatten)
+    = some (eps0M n)
+  rw [List.map_congr_left (l := List.range (n + 1))
+      (g := fun _ => ([[0, 0], [1, 1]] : Matrix)) (fun a _ => hblk a),
+    map_const_flatten]
+  rfl
+
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
