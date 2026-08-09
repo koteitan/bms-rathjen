@@ -178,6 +178,19 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **A REQUEST TO CHARACTERISE SOMETHING IS WORTH ONE `#eval` BEFORE IT IS WORTH
+  ONE THEOREM — the characterisation may already be a composition of things you
+  have.** Asked for the 𝔗(M)-side facts about `summands (fsC ω² n)` because the
+  row's subscript "was neither empty nor a replicate", a lane `#eval`ed the list
+  first and found `fsC ω² n = repAdd ω n` — a replicate, uniform, length `n+1`,
+  no degeneracy at `n = 0`. The premise of the task was false, and both halves
+  were already proved, one per lane (`fsC_omegaSq` in `Evidence/WF.lean`,
+  `summands_repAdd` in `Evidence/SqV.lean`); they compose in one `rw`.
+  **Going straight to the proof would have produced a true, green,
+  correctly-formed lemma duplicating two existing ones** — the wrong-form
+  failure reached without anyone ever stating a wrong form. Measuring first
+  did not shape the statement, **it deleted it**. A compound-looking argument
+  (`φ̄(0,1+1)`) says nothing about the shape of its fundamental sequence.
 - **THERE ARE THREE WAYS `Classical.choice` ARRIVES, AND ONLY THE FIRST IS OURS.**
   (1) *tactic-introduced* — the six `Evidence/WF.lean` sites; cleanable, cleaned.
   (2) *lemma-inherited* — the cited lemma itself carries choice.

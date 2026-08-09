@@ -3958,9 +3958,17 @@ IT BRIEFLY DID, AND THE REASON IS THE PART WORTH KEEPING.  When §16 was written
 — `acc_cnv_inT` carried it, so `wf_lt_cnv` and the instance did, so anything recursing on them
 must.  The inheritance was real.  **The SOURCE was not where the inheritance chain suggested.**
 veblen2 found it: `acc_cnv_aux`'s base case closed the non-arithmetic goal `Acc RV t` with a bare
-`omega` against contradictory hypotheses, and `omega` off an arithmetic goal routes through
-`Classical.byContradiction`.  `exact absurd hd (by have := deg_pos t; omega)` is otherwise
-identical and clean.  Two lines, and the whole chain below it went constructive.
+`omega` against contradictory hypotheses, and `exact absurd hd (by have := deg_pos t; omega)` is
+otherwise identical and clean.  Two lines, and the whole chain below it went constructive.
+
+**AND THE OBVIOUS EXPLANATION OF *WHY* IS WITHDRAWN, WHICH IS THE PART THAT NEEDS SAYING.**  Both
+lanes wrote down "a decision tactic closing a NON-ARITHMETIC goal by contradiction imports choice"
+— it is tidy, it fits the six real sites, and **it does not reproduce.**  Bare `simp`, `simpa`,
+`omega`, `decide` and `simp at h` on a contradictory hypothesis with a non-arithmetic goal all come
+back `[propext]` when probed directly.  The six sites were genuinely tainted; **the trigger is
+uncharacterised.**  So there is no tactic-shape rule to follow while writing a proof, and looking
+for one is the wrong move: **write the proof you want and MEASURE the result.**  The detector is
+`#print axioms` and nothing else.
 
 **A CLEAN DEPENDENCY SET IS NOT EVIDENCE THAT A THEOREM IS CLEAN.**  Every named thing
 `acc_cnv_aux` uses — `acc_sum`, `acc_phi_v`, `acc_zero_v`, `cnv_phi`, `cnv_add`, `deg_pos` — was
@@ -4169,9 +4177,9 @@ retreat when something that looks like it went through did not.**  The verdict h
 unfiltered full-file check, read by severity.
 
 WHAT GENERALISES: `splitFin_ofNat` handles every `φ̄(a, ofNat n)` subscript, and the three
-"rewrite the whole dependent term" moves are reusable as stated.  A row whose subscript HAS
-summands will need the `attach` list rather than `[]` — that is where a named-equation layer may
-still earn its place, but it was not needed for the shape §9 called the cleanest. -/
+"rewrite the whole dependent term" moves are reusable as stated.  **The named-equation layer was
+predicted here for the row whose `attach` list is REAL — §18 is that row, and the layer was not
+needed there either.  It is RETIRED; see §18's closing note.** -/
 
 theorem takeWhile_replicate_one : ∀ n,
     (List.replicate n one).takeWhile (fun x => x == one) = List.replicate n one := by
@@ -4274,5 +4282,133 @@ theorem encv'_epsOmega (n : Nat) :
 #guard (List.range 8).all (fun n =>
   encv' (phi one (ofNat n)) 0 == (0,0) :: List.replicate (n+1) ((1,1) : Col2))
 #guard (List.range 8).all (fun n => encv (phi one (ofNat n)) 0 == encv' (phi one (ofNat n)) 0)
+
+/-! ## §18 ROW A — THE FIRST ROW WHOSE SUBSCRIPT HAS SUMMANDS, AND THE `add` CLAUSE IS THE
+     TWO-COMPONENT ONE AFTER ALL
+
+§17 closed `ε_ω`, whose subscript `ofNat n` contributes NO summands, so the `attach` list was
+empty and a length argument sufficed.  The coordinator's test for whether a named-equation layer
+earns its place is a row where the list is REAL.  `ω^(ε₀+1)` is that row: its fundamental sequence
+is `ε₀·(n+1) = repAdd ε₀ n` (WF's `fsA`), an `add`-headed term with `n+1` summands.
+
+**THE LAYER IS REFUSED A THIRD TIME, AND THIS TIME FOR A BETTER REASON THAN THE OTHER TWO.**  What
+the `add` clause needs is not a named equation for its branches — it is `encv'_add`:
+
+    encv' (u ⊕ v) d  =  (summands (u ⊕ v)).flatMap (fun g => encv' g d)
+
+**which converts the whole clause out of the proof-carrying world in one step.**  `attach`'s
+membership proofs vanish because `encvC ⟨x, hx⟩ d = encv' x d` for ANY proof `hx` — `encv'` is the
+total wrapper, so the subtype's payload is irrelevant to the VALUE — and then
+`l.attach.flatMap (fun g => f g.1) = l.flatMap f` is a plain `List` fact.  **The dependent
+structure is not reasoned about; it is left behind.**
+
+That is the same move as §17's, one level up: §17 rewrote a dependent TERM to a same-typed value,
+this rewrites a dependent CLAUSE to a proof-free function.  Both work because the proofs were
+never load-bearing for the value — only for the termination, which the definition already
+discharged.
+
+**AND §15.12's RESTRUCTURE IS VINDICATED IN A WAY I DID NOT ANTICIPATE.**  I changed the `add`
+clause from two components to `summands` to avoid needing F4, and recorded that F4 turned out to be
+true and proved so the change was a CHOICE.  It buys something else: `encv'_add` is stated over
+`summands`, so a row's subscript decomposes in ONE step regardless of how the sum is bracketed,
+and `summands_repAdd` gives the whole list at once.  The two-component form would have needed an
+induction over the bracketing here.  A choice made for one reason paying for a different one is
+worth recording as luck rather than foresight — I did not see this when I made it.
+
+**THE NAMED-EQUATION LAYER IS RETIRED, NOT DEFERRED.**  It was predicted three times and refused
+three times, each refusal on a proof attempt rather than on an opinion:
+
+    §17  `ε_ω`        the `attach` list is EMPTY      → a length argument on a `Nat`
+    §17  `fpDeep`     the match BINDS its equation    → `fpDeepC`, proofs pushed into the data
+    §18  row A        the `attach` list is REAL       → `encv'_add`, the clause left proof-free
+
+**Each prediction named a real obstruction and got the route wrong**, which is why both wrong
+predictions stay written down: the third attempt had somewhere to stand because the first two had
+said exactly what was in the way.  What replaced the layer is one sentence rather than a
+three-lemma apparatus, and it is not a fact about this encoder:
+
+**IN ANY DEFINITION BY WELL-FOUNDED RECURSION, THE PROOFS THREADED THROUGH THE CARRIER ARE
+LOAD-BEARING FOR TERMINATION AND NEVER FOR THE VALUE — the definition discharged termination once,
+at elaboration, so a consumer reasoning about the VALUE may leave those proofs behind rather than
+route around them.**  That is why `encvC ⟨x, hx⟩ d = encv' x d` holds for ANY `hx`, why `attach`'s
+membership can be discarded, and why a named-equation layer — which routes AROUND the proofs — was
+solving a problem that did not need solving.  `encvC_eq_encv'` is the sentence as a theorem.
+
+A layer refused three times on measurement is a firmer record than one adopted once on prediction;
+if a later row needs it, it will need it for a reason none of these three had, and that reason
+should be stated before the layer is written. -/
+
+theorem flatMap_attach {α β : Type} (l : List α) (f : α → List β) :
+    l.attach.flatMap (fun g => f g.1) = l.flatMap f := by
+  rw [← List.flatMap_map Subtype.val f l.attach]
+  congr 1
+  simp
+
+theorem flatMap_replicate {α β : Type} (x : α) (f : α → List β) : ∀ m,
+    (List.replicate m x).flatMap f = (List.replicate m (f x)).flatten
+  | 0 => rfl
+  | m + 1 => by
+    rw [List.replicate_succ, List.flatMap_cons, flatMap_replicate x f m,
+        List.replicate_succ, List.flatten_cons]
+
+/-- **THE PROOF IS IRRELEVANT TO THE VALUE.**  `encv'` is `encvC` with the `CNV` proof supplied
+    by `dif_pos`, so any two proofs give the same list — which is what lets `attach`'s membership
+    proofs be discarded rather than reasoned about. -/
+theorem encvC_eq_encv' {x : Term} (hx : Evidence.WF.CNV x = true) (d : Nat) :
+    encvC ⟨x, hx⟩ d = encv' x d := by
+  show _ = (if hh : Evidence.WF.CNV x = true then encvC ⟨x, hh⟩ d else [])
+  rw [dif_pos hx]
+
+/-- **THE `add` CLAUSE, PROOF-FREE** — the whole clause converted out of the dependent world. -/
+theorem encv'_add {u v : Term} (h : Evidence.WF.CNV (TM.Term.add u v) = true) (d : Nat) :
+    encv' (TM.Term.add u v) d
+      = (summands (TM.Term.add u v)).flatMap (fun g => encv' g d) := by
+  show (if hh : Evidence.WF.CNV (TM.Term.add u v) = true
+        then encvC ⟨TM.Term.add u v, hh⟩ d else []) = _
+  rw [dif_pos h, encvC]
+  dsimp only
+  simp only [encvC_eq_encv']
+  exact flatMap_attach (summands (TM.Term.add u v)) (fun g => encv' g d)
+
+theorem summands_repAdd {x : Term} (hx : x.isAP = true) : ∀ n,
+    summands (Evidence.WF.repAdd x n) = List.replicate (n + 1) x
+  | 0 => summands_of_isAP hx
+  | n + 1 => by
+    show summands x ++ summands (Evidence.WF.repAdd x n) = _
+    rw [summands_of_isAP hx, summands_repAdd hx n, List.replicate_succ]
+    rfl
+
+theorem cnv_repAdd_eps0T : ∀ n, Evidence.WF.CNV (Evidence.WF.repAdd Evidence.WF.eps0T n) = true
+  | 0 => rfl
+  | n + 1 => by
+    show (TM.Term.isAP Evidence.WF.eps0T && Evidence.WF.CNV Evidence.WF.eps0T
+          && Evidence.WF.CNV (Evidence.WF.repAdd Evidence.WF.eps0T n)
+          && Evidence.WF.hdLe (Evidence.WF.repAdd Evidence.WF.eps0T n) Evidence.WF.eps0T) = true
+    have hh : Evidence.WF.hdLe (Evidence.WF.repAdd Evidence.WF.eps0T n) Evidence.WF.eps0T = true :=
+      Evidence.WF.hdLe_repAdd_self (p := one) (q := zero) n
+    rw [cnv_repAdd_eps0T n, hh]
+    rfl
+
+/-- `ε₀`'s own encoder value — `ε_ω`'s row at `n = 0`, since `φ̄(1, ofNat 0) = φ̄(1,0) = ε₀`. -/
+theorem encv'_eps0T : encv' Evidence.WF.eps0T 0 = [((0, 0) : Col2), (1, 1)] :=
+  encv'_epsOmega 0
+
+/-- **ROW A's ENCODER FACT, FOR EVERY `n`** — `ω^(ε₀+1)`'s fundamental sequence is `ε₀·(n+1)`,
+    so this is the first row that exercises the `add` clause with a NON-EMPTY `attach` list. -/
+theorem encv'_rowA : ∀ n, encv' (Evidence.WF.fsA n) 0
+    = (List.replicate (n + 1) [((0, 0) : Col2), (1, 1)]).flatten
+  | 0 => encv'_eps0T
+  | n + 1 => by
+    show encv' (TM.Term.add Evidence.WF.eps0T (Evidence.WF.repAdd Evidence.WF.eps0T n)) 0 = _
+    rw [encv'_add (cnv_repAdd_eps0T (n + 1)) 0,
+        show summands (TM.Term.add Evidence.WF.eps0T (Evidence.WF.repAdd Evidence.WF.eps0T n))
+             = List.replicate (n + 2) Evidence.WF.eps0T from summands_repAdd rfl (n + 1),
+        flatMap_replicate, encv'_eps0T]
+
+#guard (List.range 6).all (fun n =>
+  encv' (Evidence.WF.fsA n) 0 == (List.replicate (n+1) [((0,0) : Col2), (1,1)]).flatten)
+#guard (List.range 6).all (fun n => encv (Evidence.WF.fsA n) 0 == encv' (Evidence.WF.fsA n) 0)
+#guard Evidence.WF.fsA 2 == TM.Term.add Evidence.WF.eps0T
+         (TM.Term.add Evidence.WF.eps0T Evidence.WF.eps0T)
 
 end Evidence.SqV
