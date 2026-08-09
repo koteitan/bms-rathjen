@@ -29,6 +29,7 @@ import Trans.Pair
 import Trans.StageC
 import Evidence.Check
 import Evidence.Bisim
+import Evidence.Cert
 
 namespace Rows
 
@@ -38,7 +39,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.42"
+def version : String := "v0.1.43"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -252,9 +253,10 @@ Arch. Math. Logic 30 (1991), §2) の対応表。検査の設計は
 
 エビデンス凡例:
 
-- **証明列**: 一時撤去中 (上記警告を参照)。従来の ✅ は「o?-値についての
-  Lean 定理」を意味していたが、o? 自身の較正誤りにより行の意味論
-  (行列の順序数 = 表記の値) は保証されないことが判明した。
+- **証明列**: ✅ = [意味証明書](../lean/Evidence/Cert.lean) `Certified M t`
+  (行列の値が t であることの、展開閉包全体を含む閉じた帰納) が Lean に存在する行。
+  ビルドが証明書レジストリから機械的に付与し、手で宣言することはできない。
+  旧来の「o?-値についての定理」ベースの ✅ は較正事故により撤去した (警告参照)。
 - **その他の弱いエビデンス** (いずれも有限個の $`n`$ の計算検査であり、
   **較正誤りを検出できない**ことが今回実証された):
   - $`o`$ = 翻訳関数がこの行列で定義され $`o(M) = t`$ が成立 (E1)。
@@ -273,8 +275,12 @@ Arch. Math. Logic 30 (1991), §2) の対応表。検査の設計は
       match lineOf (rowKey r) with
       | some n => "[`" ++ bms ++ "`](../lean/Rows/TM.lean#L" ++ toString n ++ ")"
       | none => "`" ++ bms ++ "`"
-    -- v0.1.41: checkmarks suspended table-wide pending the recalibration
-    let proofCell := ""
+    -- v0.1.43: the proof column is computed from the semantic-certificate
+    -- registry (Evidence/Cert.lean) — a mark can no longer be declared by hand
+    let proofCell :=
+      if Evidence.Cert.certRows.any (fun p => p.1 == r.m && p.2 == r.t) then
+        "[✅](../lean/Evidence/Cert.lean)"
+      else ""
     let _ := proofLine
     -- the weak-evidence column lists o and bisim6, each linked separately
     let weak := String.intercalate "+"
