@@ -169,6 +169,13 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   cheaper and more reliable than the coordinator auditing its own relays, which
   is the thing that failed twice. Tell a lane receiving a relayed claim to measure
   it first, and it will catch what you dropped.
+- **When a lane reports a MEASUREMENT, ask WHICH CORPUS before building on it.**
+  The count-vs-set rule below has a twin: a number can be honest, verifiable and
+  useless because the corpus could not reach the failure class. It happened —
+  a route was proposed on the strength of "0 violations of 15", the 15 contained
+  no `add`-headed components, and the route was false at exactly those. The lane
+  did not hide the corpus; nobody asked. **"How many?" and "over what?" are two
+  questions and only the second is ever omitted.**
 - **When a lane reports a COUNT, ask for the SET before acting on it.** The
   coordinator cannot verify a count from a report — the members are not in it —
   so accepting one is accepting an unverified claim, and repeating it in an
