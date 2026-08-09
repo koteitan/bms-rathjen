@@ -9185,40 +9185,58 @@ theorem le_eps0T_of_lt_rowA {x : Term} (hx : CNV x = true) (hAP : x.isAP = true)
       rw [show lt a zero = false from ltF_right_zero _ _]; exact Bool.noConfusion)] at hlt
     exact hlt
 
-theorem hdOf_le_eps0T {s : Term} (hs : CNV s = true) (hlt : lt s rowA = true) :
-    le (hdOf s) eps0T = true := by
+/-- Heads are bounded as soon as additively principal predecessors are. -/
+theorem hdOf_le_of_bound {c d p q : Term}
+    (hb : ∀ x, CNV x = true → x.isAP = true → lt x (phi c d) = true → le x (phi p q) = true)
+    {s : Term} (hs : CNV s = true) (hlt : lt s (phi c d) = true) :
+    le (hdOf s) (phi p q) = true := by
   cases s with
   | M => exact Bool.noConfusion hs
   | omg _ => exact Bool.noConfusion hs
   | psi _ _ => exact Bool.noConfusion hs
   | Z _ => exact Bool.noConfusion hs
   | zero =>
-    show ((zero : Term) == eps0T || lt zero eps0T) = true
-    rw [show lt zero eps0T = true from by
-      show ltF (fuelOf zero eps0T) zero eps0T = true
-      exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + eps0T.deg) + 8; omega)
+    show ((zero : Term) == phi p q || lt zero (phi p q)) = true
+    rw [show lt zero (phi p q) = true from by
+      show ltF (fuelOf zero (phi p q)) zero (phi p q) = true
+      exact ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + (phi p q).deg) + 8; omega)
         (by intro hc; exact Term.noConfusion hc)]
     exact Bool.or_true _
-  | phi a b => exact le_eps0T_of_lt_rowA hs rfl hlt
-  | add c d =>
-    obtain ⟨hAPc, hcnc, _, _⟩ := cnv_add hs
-    rw [show rowA = phi zero eps0T from rfl, lt_add_phi] at hlt
-    exact le_eps0T_of_lt_rowA hcnc hAPc hlt
+  | phi a b => exact hb _ hs rfl hlt
+  | add x y =>
+    obtain ⟨hAPx, hcnx, _, _⟩ := cnv_add hs
+    rw [lt_add_phi] at hlt
+    exact hb _ hcnx hAPx hlt
+
+/-- **THE PER-ROW TEMPLATE.**  For a `φ̄`-shaped limit `t` whose additively principal
+    predecessors are all `≤ u`, the closed form `u·(n+1)` satisfies all four
+    `Certified.lim` premises.  A row of this shape now costs only the two hypotheses. -/
+theorem lim_clauses_repAdd {c d p q : Term}
+    (hcnu : CNV (phi p q) = true) (hut : lt (phi p q) (phi c d) = true)
+    (hcnt : CNV (phi c d) = true)
+    (hb : ∀ x, CNV x = true → x.isAP = true → lt x (phi c d) = true → le x (phi p q) = true) :
+    (∀ n, CNV (repAdd (phi p q) n) = true)
+  ∧ (∀ n, lt (repAdd (phi p q) n) (phi c d) = true)
+  ∧ (∀ n, lt (repAdd (phi p q) n) (repAdd (phi p q) (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s (phi c d) = true →
+        ∃ n, le s (repAdd (phi p q) n) = true) :=
+  ⟨fun n => cnv_repAdd hcnu n,
+   fun n => by rw [lt_repAdd_phi]; exact hut,
+   fun n => lt_repAdd_step p q n,
+   fun s hin hlt =>
+     le_repAdd_of_head hcnu rfl s (cnv_of_lt_cnv hin hcnt hlt)
+       (hdOf_le_of_bound hb (cnv_of_lt_cnv hin hcnt hlt) hlt)⟩
 
 /-- **THE FOUR `Certified.lim` PREMISES for the row `(0,0)(1,1)(1,0)`**, bundled for the
-    consumer exactly as §14's `lim_clauses` bundles them for a CNF limit. -/
+    consumer exactly as §14's `lim_clauses` bundles them for a CNF limit — now an INSTANCE
+    of the template above, so the row costs only its two hypotheses. -/
 theorem lim_clauses_rowA :
     (∀ n, CNV (fsA n) = true)
   ∧ (∀ n, lt (fsA n) rowA = true)
   ∧ (∀ n, lt (fsA n) (fsA (n + 1)) = true)
   ∧ (∀ s, inT s = true → lt s rowA = true → ∃ n, le s (fsA n) = true) :=
-  ⟨fun n => cnv_repAdd cnv_eps0T n,
-   fun n => by rw [show fsA n = repAdd (phi one zero) n from rfl,
-                  show rowA = phi zero eps0T from rfl, lt_repAdd_phi]; exact lt_eps0T_rowA,
-   fun n => lt_repAdd_step one zero n,
-   fun s hin hlt =>
-     le_repAdd_of_head cnv_eps0T rfl s (cnv_of_lt_cnv hin cnv_rowA hlt)
-       (hdOf_le_eps0T (cnv_of_lt_cnv hin cnv_rowA hlt) hlt)⟩
+  lim_clauses_repAdd cnv_eps0T lt_eps0T_rowA cnv_rowA
+    (fun _ hx hAP hlt => le_eps0T_of_lt_rowA hx hAP hlt)
 
 #guard CNV rowA && inT rowA                       -- the row's term is a genuine CNV term
 #guard lt eps0T rowA == true                      -- ε₀ lies BELOW it — the fixed-point trap
