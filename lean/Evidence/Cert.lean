@@ -2159,16 +2159,16 @@ private theorem ltF_omg_phi : ∀ (f : Nat) (a c d : Term), ltF f (omg a) (phi c
     already differs from `p` inside `p`, and then it is below EVERY extension of
     `p` — which is the only thing the cofinality clause needs of it. -/
 private theorem below_pre : ∀ (f : Nat) (p : List Nat) (j : Nat) (s : Term), inT s = true →
-    ltF f s (pwv (p ++ [j + 1])) = true →
-    (∃ e, (∀ x ∈ e, x ≤ j) ∧ s = pwv (p ++ e)) ∨
+    ltF f s (pwv (p ++ [j])) = true →
+    (∃ e, (∀ x ∈ e, x < j) ∧ s = pwv (p ++ e)) ∨
     (∀ g, 2 * s.deg + 2 ≤ g → ∀ t : List Nat, t ≠ [] → ltF g s (pwv (p ++ t)) = true)
   | 0, p, j, s, _, h => by
-    exact absurd h (by rw [show ltF 0 s (pwv (p ++ [j+1])) = false from rfl]; simp)
+    exact absurd h (by rw [show ltF 0 s (pwv (p ++ [j])) = false from rfl]; simp)
   | f + 1, [], j, s, hs, h => by
-    obtain ⟨e, he, hse⟩ := below_pw (j + 1) (f + 1) s hs h
-    exact Or.inl ⟨e, fun x hx => by have := he x hx; omega, by rw [hse]; rfl⟩
+    obtain ⟨e, he, hse⟩ := below_pw j (f + 1) s hs h
+    exact Or.inl ⟨e, he, by rw [hse]; rfl⟩
   | f + 1, x :: p', j, s, hs, h => by
-    have htgt : pwv ((x :: p') ++ [j + 1]) = add (pw x) (pwv (p' ++ [j + 1])) :=
+    have htgt : pwv ((x :: p') ++ [j]) = add (pw x) (pwv (p' ++ [j])) :=
       pwv_cons (by simp)
     have hext : ∀ t : List Nat, t ≠ [] →
         pwv ((x :: p') ++ t) = add (pw x) (pwv (p' ++ t)) := by
@@ -2239,17 +2239,17 @@ private theorem below_pre : ∀ (f : Nat) (p : List Nat) (j : Nat) (s : Term), i
           simp
     | add a b =>
       obtain ⟨hap, ha, hb⟩ := inT_add hs
-      cases hxo : ((add a b) == add (pw x) (pwv (p' ++ [j + 1]))) with
+      cases hxo : ((add a b) == add (pw x) (pwv (p' ++ [j]))) with
       | true =>
-        have heq : add a b = add (pw x) (pwv (p' ++ [j+1])) := by simpa using hxo
+        have heq : add a b = add (pw x) (pwv (p' ++ [j])) := by simpa using hxo
         rw [heq, ltF_irrefl] at h
         exact Bool.noConfusion h
       | false =>
-        have h2 : (if (a == pw x) = true then ltF f b (pwv (p' ++ [j+1]))
+        have h2 : (if (a == pw x) = true then ltF f b (pwv (p' ++ [j]))
                    else ltF f a (pw x)) = true := by
-          rw [show ltF (f+1) (add a b) (add (pw x) (pwv (p' ++ [j+1])))
-                = (if ((add a b) == add (pw x) (pwv (p' ++ [j+1]))) = true then false
-                   else if (a == pw x) = true then ltF f b (pwv (p' ++ [j+1]))
+          rw [show ltF (f+1) (add a b) (add (pw x) (pwv (p' ++ [j])))
+                = (if ((add a b) == add (pw x) (pwv (p' ++ [j]))) = true then false
+                   else if (a == pw x) = true then ltF f b (pwv (p' ++ [j]))
                    else ltF f a (pw x) : Bool) from rfl, hxo] at h
           simpa using h
         cases haz : (a == pw x) with
@@ -2310,8 +2310,9 @@ private theorem cof_pre (p : List Nat) (j : Nat) (s : Term) (hs : inT s = true)
     intro z hz
     obtain ⟨k, _, hk⟩ := List.mem_map.mp hz
     rw [← hk]; exact pw_isAP k
-  rcases below_pre _ p j s hs h with ⟨e, he, hse⟩ | h'
-  · refine ⟨e.length, ?_⟩
+  rcases below_pre _ p (j + 1) s hs h with ⟨e, he0, hse⟩ | h'
+  · have he : ∀ x ∈ e, x ≤ j := fun x hx => by have := he0 x hx; omega
+    refine ⟨e.length, ?_⟩
     have hsplit : ∀ (q : List Nat), pwv (p ++ q) = ofList (p.map pw ++ q.map pw) := by
       intro q
       show ofList ((p ++ q).map pw) = _
@@ -2802,6 +2803,405 @@ theorem neg_control_omega_pow_times_two :
 -- the fundamental sequence of the new row, as `cert_omega_pow` uses it
 #guard BMS.expand ([[0], [1], [2]] : Matrix) 3 == pwM [4]
 #guard Trans.oPr (pwM [4]) == pw 4
+
+/-! ## §5.8 Towards ω^(ω^ω): the second layer
+
+The region below ω^(ω^ω) is the CNF sums whose EXPONENTS are the terms of §5.7:
+`qv E` for a list `E` of level-1 exponent lists.  Everything below is the level-1
+development read one level up, through `StageA.mkBlock`, which is the sequence
+operation `s ↦ 0 :: s.map (·+1)` implementing `α ↦ ω^α` on the BMS side.
+
+`PwLt` packages a level-1 comparison together with a fuel budget that survives
+being wrapped in `ω^·`; it is the interface between the two layers, and the
+reason it is needed is the one recorded at the head of §5.7 — there is no
+fuel-monotonicity lemma, so a comparison must be carried as a statement about
+ALL sufficiently large fuel, never as a single `lt … = true`. -/
+
+/-- `ω^{α}` for a level-1 exponent list. -/
+def qw (e : List Nat) : Term := phi zero (pwv e)
+
+/-- The value of a list of level-1 exponents. -/
+def qv (E : List (List Nat)) : Term := ofList (E.map qw)
+
+/-- The one-row sequence of a list of level-1 exponents. -/
+def qSeq (E : List (List Nat)) : List Nat := (E.map (fun e => StageA.mkBlock (pwSeq e))).flatten
+
+/-- The matrix of a list of level-1 exponents. -/
+def qM (E : List (List Nat)) : Matrix := StageA.oneRow (qSeq E)
+
+-- the second layer agrees with the translation, as the first one does
+#guard Trans.oPr (qM [[1], [0]]) == qv [[1], [0]]
+#guard Trans.oPr (qM [[2, 0], [1]]) == qv [[2, 0], [1]]
+#guard Trans.oPr (qM [[1, 1, 0], [0], []]) == qv [[1, 1, 0], [0], []]
+#guard qM [[1]] == ([[0], [1], [2]] : Matrix)
+#guard qv [[1]] == phi zero omega
+-- the row (0)(1)(2)(3) is the LIMIT of this layer, not a member of it
+#guard Trans.oPr ([[0], [1], [2], [3]] : Matrix) == phi zero (phi zero omega)
+#guard BMS.expand ([[0], [1], [2], [3]] : Matrix) 2 == qM [[3]]
+-- the three node kinds, and the two limit steps
+#guard BMS.kind (qM [[1, 0], []]) == BMS.Kind.succ
+#guard BMS.kind (qM [[1, 0]]) == BMS.Kind.lim
+#guard BMS.kind (qM [[1, 1]]) == BMS.Kind.lim
+#guard BMS.expand (qM [[1, 0]]) 2 == qM [[1], [1], [1]]
+#guard BMS.expand (qM [[1, 1]]) 2 == qM [[1, 0, 0, 0]]
+#guard BMS.expand (qM [[2], [1, 0]]) 2 == qM [[2], [1], [1], [1]]
+#guard BMS.expand (qM [[2], []]) 3 == qM [[2]]
+
+/-! ### Level-1 comparisons with a fuel budget that survives `ω^·` -/
+
+/-- `pwv a < pwv b`, as a statement about every sufficiently large fuel. -/
+def PwLt (a b : List Nat) : Prop :=
+  ∀ f, 2 * ((pwv a).deg + (pwv b).deg) + 4 ≤ f → ltF f (pwv a) (pwv b) = true
+
+private theorem lt_of_pwLt {a b : List Nat} (h : PwLt a b) : lt (pwv a) (pwv b) = true :=
+  h _ (by show 2 * ((pwv a).deg + (pwv b).deg) + 4 ≤ 2 * ((pwv a).deg + (pwv b).deg) + 8; omega)
+
+private theorem pwLt_zero {b : List Nat} (hb : b ≠ []) : PwLt [] b := by
+  intro f hf
+  exact ltF_zero (by have := deg_pos (pwv b); omega) (pwv_ne_zero b hb)
+
+private theorem pwLt_ext (p : List Nat) (y : Nat) (r : List Nat) (hp : p ≠ []) :
+    PwLt p (p ++ y :: r) := by
+  intro f hf
+  have hd : p.length ≤ (pwv p).deg := deg_pwv_len p
+  show ltF f (ofList (p.map pw)) (ofList ((p ++ y :: r).map pw)) = true
+  rw [List.map_append]
+  refine ltF_ofList_prefix (p.map pw) (pw y) (r.map pw) (by
+    intro hc
+    have hl := congrArg List.length hc
+    simp only [List.length_map, List.length_nil] at hl
+    exact hp (by cases p with | nil => rfl | cons _ _ => simp at hl)) (pw_map_isAP p) f ?_
+  simp only [List.length_map]
+  omega
+
+private theorem pwLt_head (p : List Nat) (x y : Nat) (r r' : List Nat) (hxy : x < y) :
+    PwLt (p ++ x :: r) (p ++ y :: r') := by
+  intro f hf
+  have h1 : p.length ≤ (pwv (p ++ x :: r)).deg := by
+    have h := deg_pwv_len (p ++ x :: r)
+    simp only [List.length_append, List.length_cons] at h
+    omega
+  have h2 : x + 2 ≤ (pwv (p ++ x :: r)).deg :=
+    deg_pwv_mem (List.mem_append_right p (by simp))
+  show ltF f (ofList ((p ++ x :: r).map pw)) (ofList ((p ++ y :: r').map pw)) = true
+  rw [List.map_append, List.map_append]
+  refine ltF_ofList_head (p.map pw) (pw x) (pw y) (r.map pw) (r'.map pw) (x + 3)
+    (pw_isAP x) (pw_isAP y) (fun g hg => ltF_pw_lt hxy g hg) f ?_
+  simp only [List.length_map]
+  omega
+
+/-- The bridge between the layers: a level-1 comparison, wrapped in `ω^·`. -/
+private theorem ltF_qw_of_pwLt {a b : List Nat} (h : PwLt a b) :
+    ∀ f, 2 * ((qw a).deg + (qw b).deg) + 4 ≤ f → ltF f (qw a) (qw b) = true := by
+  intro f hf
+  have hda : (qw a).deg = 2 + (pwv a).deg := by
+    show 1 + (zero : Term).deg + (pwv a).deg = _
+    show 1 + 1 + (pwv a).deg = _
+    omega
+  have hdb : (qw b).deg = 2 + (pwv b).deg := by
+    show 1 + (zero : Term).deg + (pwv b).deg = _
+    show 1 + 1 + (pwv b).deg = _
+    omega
+  cases f with
+  | zero => have := deg_pos (qw a); omega
+  | succ g => exact ltF_phi_same (h g (by omega))
+
+private theorem lt_qw_of_pwLt {a b : List Nat} (h : PwLt a b) : lt (qw a) (qw b) = true :=
+  ltF_qw_of_pwLt h _
+    (by show 2 * ((qw a).deg + (qw b).deg) + 4 ≤ 2 * ((qw a).deg + (qw b).deg) + 8; omega)
+
+/-! ### Shape lemmas for the second layer -/
+
+private theorem qw_isAP (e : List Nat) : (qw e).isAP = true := rfl
+
+private theorem qw_ne_zero (e : List Nat) : qw e ≠ zero := by intro hc; exact Term.noConfusion hc
+
+private theorem qv_nil : qv [] = zero := rfl
+
+private theorem qv_single (e : List Nat) : qv [e] = qw e := rfl
+
+private theorem qv_cons {e : List Nat} {E : List (List Nat)} (h : E ≠ []) :
+    qv (e :: E) = add (qw e) (qv E) := by
+  show ofList (qw e :: E.map qw) = add (qw e) (ofList (E.map qw))
+  refine ofList_cons ?_
+  cases E with
+  | nil => exact absurd rfl h
+  | cons _ _ => simp
+
+private theorem qw_map_isAP (E : List (List Nat)) : ∀ z ∈ E.map qw, z.isAP = true := by
+  intro z hz
+  obtain ⟨e, _, he⟩ := List.mem_map.mp hz
+  rw [← he]; exact qw_isAP e
+
+private theorem toList_qv (E : List (List Nat)) : toList (qv E) = E.map qw :=
+  toList_ofList (qw_map_isAP E)
+
+private theorem qv_isAP : ∀ (E : List (List Nat)), (qv E).isAP = true → ∃ e, E = [e]
+  | [], h => by rw [show qv [] = zero from rfl] at h; exact absurd h (by simp [isAP])
+  | [e], _ => ⟨e, rfl⟩
+  | e :: e' :: r, h => by
+    rw [qv_cons (by simp)] at h
+    exact absurd h (by simp [isAP])
+
+private theorem qv_ne_zero : ∀ (E : List (List Nat)), E ≠ [] → qv E ≠ zero
+  | [], h => absurd rfl h
+  | [e], _ => by rw [show qv [e] = qw e from rfl]; exact qw_ne_zero e
+  | e :: e' :: r, _ => by rw [qv_cons (by simp)]; intro hc; exact Term.noConfusion hc
+
+private theorem deg_qw (e : List Nat) : (pwv e).deg + 2 ≤ (qw e).deg := by
+  show (pwv e).deg + 2 ≤ 1 + (zero : Term).deg + (pwv e).deg
+  show (pwv e).deg + 2 ≤ 1 + 1 + (pwv e).deg
+  omega
+
+private theorem deg_qv_len (E : List (List Nat)) : E.length ≤ (qv E).deg := by
+  have h := deg_ofList_len (E.map qw)
+  simpa using h
+
+private theorem deg_qv_mem {E : List (List Nat)} {e : List Nat} (h : e ∈ E) :
+    (qw e).deg ≤ (qv E).deg :=
+  deg_ofList_mem (E.map qw) (qw e) (List.mem_map_of_mem h)
+
+private theorem le_one_qw : ∀ (e : List Nat), le one (qw e) = true
+  | [] => rfl
+  | k :: r => by
+    have h : lt one (qw (k :: r)) = true := by
+      refine lt_of_ltF (N := 2) (fun f hf => ?_) (by omega)
+      cases f with
+      | zero => omega
+      | succ g =>
+        exact ltF_phi_same (ltF_zero (by omega) (pwv_ne_zero (k :: r) (by simp)))
+    show ((one == qw (k :: r)) || lt one (qw (k :: r))) = true
+    rw [h]
+    simp
+
+private theorem filter_le_one_qw : ∀ (E : List (List Nat)),
+    (E.map qw).filter (fun a => le one a) = E.map qw
+  | [] => rfl
+  | e :: r => by
+    show (qw e :: r.map qw).filter _ = _
+    rw [List.filter_cons_of_pos (le_one_qw e), filter_le_one_qw r]
+    rfl
+
+private theorem plus_qv_one (E : List (List Nat)) : plus (qv E) one = qv (E ++ [[]]) := by
+  unfold plus
+  rw [show toList (one : Term) = [one] from rfl]
+  show ofList ((toList (qv E)).filter (fun a => le one a) ++ [one]) = qv (E ++ [[]])
+  rw [toList_qv, filter_le_one_qw]
+  show ofList (E.map qw ++ [qw []]) = ofList ((E ++ [[]]).map qw)
+  rw [List.map_append]
+  rfl
+
+/-! ### The matrices of the second layer, and the three node kinds
+
+`mkBlock s = 0 :: s.map (·+1)` is `α ↦ ω^α` on the BMS side, so the last block of
+`qM (E ++ [e])` is the level-1 sequence of `e` shifted up by one.  Its last entry
+therefore decides the node kind: `e = []` gives the column `(0)` (successor);
+`e` ending in `0` gives `(1)`; `e` ending in `k+1` gives `(2)`. -/
+
+private theorem mkBlock_append (s t : List Nat) :
+    StageA.mkBlock (s ++ t) = StageA.mkBlock s ++ t.map (· + 1) := by
+  show 0 :: (s ++ t).map (· + 1) = (0 :: s.map (· + 1)) ++ t.map (· + 1)
+  rw [List.map_append]
+  rfl
+
+private theorem repL_map_succ (B : List Nat) : ∀ m,
+    (StageA.repL B m).map (· + 1) = StageA.repL (B.map (· + 1)) m
+  | 0 => rfl
+  | m + 1 => by
+    show (B ++ StageA.repL B m).map (· + 1) = B.map (· + 1) ++ StageA.repL (B.map (· + 1)) m
+    rw [List.map_append, repL_map_succ B m]
+
+private theorem blockOf_map_succ (k : Nat) :
+    (blockOf k).map (· + 1) = 1 :: List.replicate k 2 := by
+  show (0 :: (List.replicate k 1)).map (· + 1) = _
+  rw [List.map_cons, List.map_replicate]
+
+private theorem qSeq_append (E E' : List (List Nat)) :
+    qSeq (E ++ E') = qSeq E ++ qSeq E' := by
+  show ((E ++ E').map _).flatten = _
+  rw [List.map_append, List.flatten_append]
+  rfl
+
+private theorem qSeq_single (e : List Nat) : qSeq [e] = StageA.mkBlock (pwSeq e) := by
+  show ((List.map _ [e]).flatten) = _
+  simp
+
+private theorem qSeq_snoc (E : List (List Nat)) (e : List Nat) :
+    qSeq (E ++ [e]) = qSeq E ++ StageA.mkBlock (pwSeq e) := by
+  rw [qSeq_append, qSeq_single]
+
+private theorem qSeq_replicate (e : List Nat) : ∀ c,
+    qSeq (List.replicate c e) = StageA.repL (StageA.mkBlock (pwSeq e)) c
+  | 0 => rfl
+  | c + 1 => by
+    rw [List.replicate_succ, show (e :: List.replicate c e) = [e] ++ List.replicate c e from rfl,
+      qSeq_append, qSeq_single, qSeq_replicate e c]
+    rfl
+
+/-! #### Node 1: the exponent `0` — a successor -/
+
+private theorem qM_snoc_zero (E : List (List Nat)) : qM (E ++ [[]]) = qM E ++ [[0]] := by
+  show StageA.oneRow (qSeq (E ++ [[]])) = _
+  rw [qSeq_snoc, show StageA.mkBlock (pwSeq ([] : List Nat)) = [0] from rfl,
+    StageA.oneRow_append]
+  rfl
+
+private theorem kind_qM_succ (E : List (List Nat)) : BMS.kind (qM (E ++ [[]])) = .succ := by
+  show (match (qM (E ++ [[]])).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match BMS.lnz L with
+          | none => BMS.Kind.succ
+          | some _ => BMS.Kind.lim) = _
+  rw [qM_snoc_zero, List.getLast?_concat]
+  rfl
+
+private theorem expand_qM_succ (E : List (List Nat)) (n : Nat) :
+    BMS.expand (qM (E ++ [[]])) n = qM E := by
+  have hL : (qM (E ++ [[]])).getLast? = some [0] := by
+    rw [qM_snoc_zero]; exact List.getLast?_concat
+  have hexp : BMS.expand? (qM (E ++ [[]])) n = some ((qM (E ++ [[]])).dropLast) := by
+    simp only [BMS.expand?, hL, Option.bind_eq_bind, Option.bind_some,
+      show BMS.lnz ([0] : BMS.Col) = none from rfl, Option.pure_def]
+  show (BMS.expand? (qM (E ++ [[]])) n).getD [] = _
+  rw [hexp]
+  show (qM (E ++ [[]])).dropLast = qM E
+  rw [qM_snoc_zero]
+  exact List.dropLast_concat
+
+/-! #### Node 2: a successor exponent `β+1` — a limit, expansions `ω^β·(n+1)` -/
+
+private theorem qM_snoc_sexp (E : List (List Nat)) (e : List Nat) :
+    qM (E ++ [e ++ [0]]) = StageA.oneRow ((qSeq E ++ StageA.mkBlock (pwSeq e)) ++ [1]) := by
+  show StageA.oneRow (qSeq (E ++ [e ++ [0]])) = _
+  rw [qSeq_snoc, pwSeq_snoc, show blockOf 0 = [0] from rfl, mkBlock_append,
+    show ([0] : List Nat).map (· + 1) = [1] from rfl, List.append_assoc]
+
+private theorem kind_qM_sexp (E : List (List Nat)) (e : List Nat) :
+    BMS.kind (qM (E ++ [e ++ [0]])) = .lim := by
+  have hL : (qM (E ++ [e ++ [0]])).getLast? = some [1] := by
+    rw [qM_snoc_sexp, StageA.oneRow_append]
+    exact List.getLast?_concat
+  show (match (qM (E ++ [e ++ [0]])).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match BMS.lnz L with
+          | none => BMS.Kind.succ
+          | some _ => BMS.Kind.lim) = _
+  rw [hL]
+  rfl
+
+private theorem expand_qM_sexp (E : List (List Nat)) (e : List Nat) (n : Nat) :
+    BMS.expand (qM (E ++ [e ++ [0]])) n = qM (E ++ List.replicate (n + 1) e) := by
+  have hexp := StageA.expand_oneRow (A := qSeq E) (B := StageA.mkBlock (pwSeq e)) (c := 1)
+    (b0 := 0) (B' := (pwSeq e).map (· + 1)) rfl (by omega)
+    (by
+      intro x hx
+      obtain ⟨y, _, hy⟩ := List.mem_map.mp hx
+      omega)
+    (by omega) n
+  show (BMS.expand? (qM (E ++ [e ++ [0]])) n).getD [] = _
+  rw [qM_snoc_sexp, hexp]
+  show StageA.oneRow (qSeq E ++ StageA.repL (StageA.mkBlock (pwSeq e)) (n+1))
+      = qM (E ++ List.replicate (n+1) e)
+  rw [← qSeq_replicate, ← qSeq_append]
+  rfl
+
+/-! #### Node 3: a limit exponent — a limit, expansions `ω^{β[n]}` (ONE copy) -/
+
+private theorem qM_snoc_lexp (E : List (List Nat)) (e : List Nat) (k : Nat) :
+    qM (E ++ [e ++ [k + 1]])
+      = StageA.oneRow (((qSeq E ++ StageA.mkBlock (pwSeq e)) ++ (1 :: List.replicate k 2))
+          ++ [2]) := by
+  show StageA.oneRow (qSeq (E ++ [e ++ [k+1]])) = _
+  rw [qSeq_snoc, pwSeq_snoc, blockOf_succ, ← List.append_assoc, mkBlock_append,
+    show ([1] : List Nat).map (· + 1) = [2] from rfl, mkBlock_append, blockOf_map_succ]
+  simp only [List.append_assoc]
+
+private theorem kind_qM_lexp (E : List (List Nat)) (e : List Nat) (k : Nat) :
+    BMS.kind (qM (E ++ [e ++ [k + 1]])) = .lim := by
+  have hL : (qM (E ++ [e ++ [k+1]])).getLast? = some [2] := by
+    rw [qM_snoc_lexp, StageA.oneRow_append]
+    exact List.getLast?_concat
+  show (match (qM (E ++ [e ++ [k+1]])).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match BMS.lnz L with
+          | none => BMS.Kind.succ
+          | some _ => BMS.Kind.lim) = _
+  rw [hL]
+  rfl
+
+private theorem expand_qM_lexp (E : List (List Nat)) (e : List Nat) (k n : Nat) :
+    BMS.expand (qM (E ++ [e ++ [k + 1]])) n = qM (E ++ [e ++ List.replicate (n + 1) k]) := by
+  have hexp := StageA.expand_oneRow (A := qSeq E ++ StageA.mkBlock (pwSeq e))
+    (B := 1 :: List.replicate k 2) (c := 2) (b0 := 1) (B' := List.replicate k 2) rfl (by omega)
+    (by intro x hx; have := List.eq_of_mem_replicate hx; omega) (by omega) n
+  show (BMS.expand? (qM (E ++ [e ++ [k+1]])) n).getD [] = _
+  rw [qM_snoc_lexp, hexp]
+  show StageA.oneRow ((qSeq E ++ StageA.mkBlock (pwSeq e))
+        ++ StageA.repL (1 :: List.replicate k 2) (n+1))
+      = qM (E ++ [e ++ List.replicate (n+1) k])
+  show _ = StageA.oneRow (qSeq (E ++ [e ++ List.replicate (n+1) k]))
+  rw [qSeq_snoc, pwSeq_append, pwSeq_replicate, mkBlock_append, repL_map_succ, blockOf_map_succ]
+  simp only [List.append_assoc]
+
+/-! ### Status of the second layer, and the obstacle (2026-08-09, certificate lane)
+
+WHAT IS PROVED ABOVE.  The representation, pinned by `#guard` against
+`Trans.oPr` exactly as the count vector of §5.6 was; the interface `PwLt`
+between the layers; all shape lemmas; and — the part that is usually the
+expensive one — the COMPLETE node analysis:
+
+    node                     kind      expansion
+    E ++ [[]]                succ      E                       `expand_qM_succ`
+    E ++ [e ++ [0]]          lim       E ++ (n+1) copies of e   `expand_qM_sexp`
+    E ++ [e ++ [k+1]]        lim       E ++ [e ++ (n+1)·k]      `expand_qM_lexp`
+
+so the BMS side of ω^(ω^ω) is finished and machine-checked.  What is missing is
+the 𝔗(M) side: the classification of the terms below `qw b`, and with it the
+cofinality clauses.
+
+THE OBSTACLE, precisely.  At level 1 the classification recursion
+(`below_pw`/`tail_pw`) peels the components of a sum and updates the bound to the
+current head; to put the pieces back together it needs
+
+    component ≤ head  and  head ≤ bound   ⟹   component ≤ bound.
+
+At level 1 the bound is a NATURAL NUMBER (the exponent), so this step is `omega`
+and costs nothing.  At level 2 the bound is a TERM (a level-1 value), and the
+step is exactly TRANSITIVITY OF `lt` ON THE TERMS OF 𝔗(M) — the theorem this
+repository does not have.  Every route around it that I tried reintroduces it:
+
+  * carrying only the head's bound and re-deriving the rest from `inT` moves the
+    transitivity into the pointwise comparison, where it reappears as
+    "a_i ≤ a_1 and a_1 ≤ β ⟹ a_i ≤ β";
+  * a bespoke lexicographic relation `LexNat` on `List Nat` with its own
+    transitivity proof works, but then `PwLt ↔ LexNat` has to be proved in BOTH
+    directions, and the hard direction IS the missing classification.
+
+So ω^(ω^ω) is blocked on the SAME theorem as ε₀ and as `cert_sound`, namely
+transitivity of `lt` on `inT` terms plus its inversion lemmas.  That is not a
+guess: it is where this section stopped.
+
+WHAT THE NEXT LANE NEEDS, on top of transitivity:
+
+  1. `below_lvl1 : ∀ f b s, inT s = true → ltF f s (pwv b) = true → ∃ a, s = pwv a`
+     — a standalone induction on the fuel, no lex data; needed to refute the
+     `psi`/`Z` cases and to name the AP components at level 2.
+  2. `cof_pre_F` — `cof_pre` restated with the conclusion `∀ g ≥ N, ltF g s … `
+     instead of `le s … = true`.  The proof already produces the strong form
+     (both of its branches are STRICT and fuel-uniform); only the statement and
+     the two fuel bounds change.  It is needed because a level-2 comparison
+     wraps a level-1 comparison in `ω^·`, which shifts the fuel.
+  3. `below_pre` with `p ≠ []` added to its second disjunct, so that the branch
+     can be instantiated at `t = []` (giving `s < pwv p`, not merely
+     `s < pwv (p ++ t)` for nonempty `t`).  Every branch of the present proof
+     already establishes it; only the statement changes.
+  4. Then `below_q` / `tail_q` / `below_pre2` / `cof_pre2` mirror §5.7, and the
+     certificate recursion is: OUTER well-founded recursion on the level-1 count
+     vector under `Evidence.WF.LexLt` — whose two step lemmas `lexLt_succ_step`
+     and `lexLt_lim_step` are EXACTLY the two limit steps in the table above, so
+     `Evidence/WF.lean` finally earns its keep here — with an INNER structural
+     recursion on the level-2 rest.  No `Acc` is needed at level 1; it is needed
+     at level 2, and WF.lean is the reason it is available. -/
 /-! ## §6 The registry
 
 gentable marks ✅ exactly on the rows listed here; `certRows_ok` is the gate. -/
