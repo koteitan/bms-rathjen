@@ -8487,7 +8487,10 @@ measured at k = 1, 2, 3 before anything was designed:
 
 The second `#guard` is the one worth having.  A check that only confirms the surviving
 candidate cannot say that the others were excluded — and here the excluded candidate is
-the one a reader would most naturally have written down.
+the one a reader would most naturally have written down.  It reports the outcome PER k
+rather than negating the universal: `!all` would also have passed if the failure were at
+k = 2 alone, which is a weaker statement than the paragraph above makes.  A section whose
+point is that guards must exclude should hold itself to that.
 
 So the family under the ladder is ε_k-PREFIXED, not ε₀-prefixed: `no_overshoot_fam`
 (§19.2) does not cover the (B) rows, and the ceiling has to generalise along the same
@@ -8495,8 +8498,44 @@ index.  That is now a measurement rather than the guess §20 left open. -/
 
 #guard (List.range 3).all (fun k => (List.range 4).all (fun n =>
   Trans.o? (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc k n)))
-#guard !((List.range 3).all (fun k => (List.range 4).all (fun n =>
+#guard ((List.range 3).map (fun k => (List.range 4).all (fun n =>
   Trans.o? (BMS.expand (epsM (k + 1)) n) == some (Evidence.WF.fsEsucc 0 n))))
+    == [true, false, false]
+
+/-- The expansion closure to depth 3, sampling `n ≤ 2` — a measurement helper. -/
+def clo3 (m : BMS.Matrix) : List BMS.Matrix :=
+  Nat.rec [m] (fun _ acc =>
+    (acc ++ acc.flatMap (fun x => (List.range 3).map (BMS.expand x))).eraseDups) 3
+
+/-! ### §20.3 THE TAIL WIDENS — why the (B) rows are NOT an ε_k-prefixed family
+
+§20.2 fixed the rungs' closed form.  The natural next design — `famM` with the ε-BLOCK
+COUNT as a second index, i.e. the ε₀-prefixed region generalising to an ε_k-prefixed one
+— is REFUTED by the closure, and it is worth recording because it is the design a reader
+arrives at from Row A:
+
+    ε₁'s expansion closure to depth 3 is 30 matrices
+      18 are `famM`-shaped   (ε₀ blocks followed by a padded CNF row)
+      12 are NOT             e.g. (0,0)(1,1)(1,0)(2,1),  (0,0)(1,1)(1,0)(2,1)(2,0)(3,1)
+
+The twelve are the ε₀ row followed by columns carrying second-row 1 at depth ≥ 2, and
+their values are ω^(ε₀·2), ω^(ω^(ε₀·2)), … — CNF-over-ε₀ terms.  Those are `padRow (sq c)`
+for NO `CN c`, because `sq` is defined on the CNF region and these exponents contain ε₀.
+
+SO IT IS THE TAIL THAT WIDENS, NOT THE PREFIX.  The (B) family is "blocks followed by a
+tail over the VEBLEN region", and encoding that tail is exactly `Evidence/SqV.lean`'s job.
+A rung index does not reach the defect, which is why no amount of measuring rungs would
+have exposed it — §20.2's measurements were necessary and not sufficient.
+
+CONSEQUENCE FOR THE CEILING: the generalised ceiling WILL subsume `no_overshoot_fam`
+(Row A's region is its CNF-tail special case), so when it exists Row A's ✅ should come
+to rest on it and the special case should go — one ceiling is cheaper to trust than two.
+It cannot be built before the tail encoding exists. -/
+
+#guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
+  (fun m => (List.range 6).any (fun k =>
+    m.take (2 * k) == (List.replicate k [[0, 0], [1, 1]]).flatten &&
+    (m.drop (2 * k)).all (fun c => c.getD 1 0 == 0)))).length) == (30, 18)
 
 /-! ## §6 The registry
 
