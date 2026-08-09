@@ -9541,6 +9541,57 @@ theorem lim_clauses_fsGen {v u base a b : Term}
      cof_fsGen_aux hv hu hbse hcnt hvb H1 H2 H3 s.deg s (Nat.le_refl _)
        (cnv_of_lt_cnv hin hcnt hlt) hlt⟩
 
+/-! #### §15.7 The row `ω^(ζ₀+1)` — template (A) again, at `u = ζ₀`
+
+MEASURED (independently recomputed): the row `(0,0)(1,1)(2,1)(1,0)` has database term `φ̄0(ζ₀)`
+and expansions `ζ₀, ζ₀·2, ζ₀·3, …`, i.e. Row A's shape with `ζ₀` in place of `ε₀`.  Row A's
+head bound generalises to any `φ̄ p q` with `0 < p`, so both rows are instances of one lemma. -/
+
+/-- Row A's head bound, generalised: below `ω^u` with `u = φ̄ p q` and `p > 0`, every
+    additively principal `CNV` term is `≤ u`.  The two cases are 2.3.13(ii) (`a = 0`, where
+    `0 < p` lets 13(i) carry `b < u` back) and 2.3.13(iii) (`a ≠ 0`, which gives it directly). -/
+theorem le_pow_head {p q x : Term} (_hu : CNV (phi p q) = true) (hp : lt zero p = true)
+    (hx : CNV x = true) (hAP : x.isAP = true)
+    (hlt : lt x (phi zero (phi p q)) = true) : le x (phi p q) = true := by
+  obtain ⟨a, b, rfl⟩ := eq_phi_of_isAP_cnv hx hAP
+  have hne : phi a b ≠ phi zero (phi p q) := ne_of_ltF hlt
+  rw [lt_phi_phi hne] at hlt
+  by_cases haz : a = zero
+  · rw [if_pos haz] at hlt
+    subst haz
+    have hne2 : phi zero b ≠ phi p q := by
+      intro hc; injection hc with h1 _
+      rw [← h1, lt_irrefl] at hp; exact Bool.noConfusion hp
+    refine le_of_lt ?_
+    rw [lt_phi_phi hne2, if_neg (by intro hc; rw [← hc, lt_irrefl] at hp; exact Bool.noConfusion hp),
+      if_pos hp]
+    exact hlt
+  · rw [if_neg haz, if_neg (by
+      rw [show lt a zero = false from ltF_right_zero _ _]; exact Bool.noConfusion)] at hlt
+    exact hlt
+
+def zeta0 : Term := phi (ofNat 2) zero          -- ζ₀ = φ̄(2,0)
+def rowZ : Term := phi zero zeta0               -- the row's database term, φ̄0(ζ₀)
+def fsZ (n : Nat) : Term := repAdd zeta0 n      -- ζ₀·(n+1)
+
+theorem cnv_zeta0 : CNV zeta0 = true := by decide
+theorem cnv_rowZ : CNV rowZ = true := by decide
+theorem lt_zeta0_rowZ : lt zeta0 rowZ = true := by decide
+
+/-- **THE FOUR `Certified.lim` PREMISES for the row `(0,0)(1,1)(2,1)(1,0)`.** -/
+theorem lim_clauses_rowZ :
+    (∀ n, CNV (fsZ n) = true)
+  ∧ (∀ n, lt (fsZ n) rowZ = true)
+  ∧ (∀ n, lt (fsZ n) (fsZ (n + 1)) = true)
+  ∧ (∀ s, inT s = true → lt s rowZ = true → ∃ n, le s (fsZ n) = true) :=
+  lim_clauses_repAdd cnv_zeta0 lt_zeta0_rowZ cnv_rowZ
+    (fun _ hx hAP hlt => le_pow_head cnv_zeta0 (by decide) hx hAP hlt)
+
+#guard CNV rowZ && inT rowZ
+#guard lt zeta0 rowZ == true
+#guard fsZ 0 == zeta0
+#guard (List.range 5).all (fun n => CNV (fsZ n) && lt (fsZ n) rowZ && lt (fsZ n) (fsZ (n+1)))
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
