@@ -2905,9 +2905,22 @@ the sharpest control in this file.  It is also the second time the junk corpus h
 RIGHT corpus for a control while being the wrong one for a claim: a corpus of legal terms
 cannot contain a single witness for either.
 
-WHAT REMAINS FOR THIS SITE: `inT g → inT (plus g (ofNat m))`.  `plus g (ofNat m)` is
-`ofList ((toList g).filter (le 1) ++ replicate m 1)` — the same shape `inT_ofList_take`
-handles, with an appended tail of `1`s, so §15.1's two introduction lemmas should carry it. -/
+**AND THE CORPUS WAS NEVER THE ERROR; THE ROLE WAS.**  The 263-term junk corpus was the
+wrong instrument for claims about what `encvF` meets (§14: 0 of 13 witnesses arise) and is
+the RIGHT one for controls, twice — 38 of 42 at §15.1 and 42 of 42 here.  A corpus of legal
+terms cannot contain a single witness for either control.  Both roles are now serving.
+
+WHAT REMAINS FOR THIS SITE, AND IT REDUCES TO TWO ONE-STEP FACTS.  Measured over the same
+221 `inT` terms before designing anything:
+
+    plus g (ofNat (m+1)) = plus (plus g (ofNat m)) one        0 violations of 221
+    inT s → inT (plus s one)                                  0 violations
+    CONTROL: the second from NON-`inT` s                     37 of 42 FAIL
+
+**So the `m`-indexed fact is an induction on `m` over a single-step lemma**, rather than a
+statement about `ofList` of a filtered list with an appended tail.  That is the third time
+a per-site obligation has collapsed to one shared fact plus a step, and the second time
+measuring the recursion first turned a list-shaped problem into a numeric one. -/
 
 def gpool : List Term := (pool ++ junk).eraseDups
 
@@ -2918,5 +2931,14 @@ def gpool : List Term := (pool ++ junk).eraseDups
 #guard (gpool.filter (fun t => !(TM.Term.inT t))).length == 42
 #guard ((gpool.filter (fun t => TM.Term.inT t)).filter (fun t =>
           !(TM.Term.inT (predOr t)))).length == 0
+
+
+#guard ((gpool.filter (fun t => TM.Term.inT t)).filter (fun g =>
+          !((List.range 4).all (fun m =>
+             TM.Term.plus g (ofNat (m+1)) == TM.Term.plus (TM.Term.plus g (ofNat m)) one)))).length == 0
+#guard ((gpool.filter (fun t => TM.Term.inT t)).filter (fun s =>
+          !(TM.Term.inT (TM.Term.plus s one)))).length == 0
+#guard ((gpool.filter (fun t => !(TM.Term.inT t))).filter (fun s =>
+          !(TM.Term.inT (TM.Term.plus s one)))).length == 37
 
 end Evidence.SqV
