@@ -1,5 +1,6 @@
 import Trans.TM
 import Trans.Pair
+import Trans.Recal
 import TM.FS
 import Evidence.WF
 /-
@@ -50,6 +51,26 @@ occurrence past its §15 is prose, in the §15.3 note explaining why a GENERAL `
 theory would need them.  That lane escaped the machinery by going PER ROW with closed
 forms: a closed form is written for one term, and no term has to ask whether it is a
 fixed point of itself.
+
+PRICED AGAINST veblen2's SYNTACTIC CRITERION (2026-08-10, at the coordinator's ask).
+That lane decided the φ̄0 branch split — a fixed-point question — with a purely SYNTACTIC
+test, 0 disagreements over 3723 terms and no `isFP`.  Does it transfer to the encoding?
+MEASURED, and the answer is exactly half:
+
+    at a = 0   `isFP zero b` agrees with the shape test
+               `(isSC b ∧ b ≠ 0) ∨ (b = φ̄(c,·) ∧ c ≠ 0)`  on ALL 234 corpus terms
+    at a = 1   the same shape test DISAGREES on 36 of 234, always by over-reporting
+
+WHY, in one line: `isFP a g` tests `lt a c` for `g = φ̄(c,·)`, and at `a = 0` that
+degenerates to `c ≠ 0` — a shape test — while at `a ≥ 1` it is a genuine comparison of
+two terms.  The sharpest witness is the pair `isFP 1 (φ̄(1,0)) = false` against
+`isFP 1 (φ̄(2,0)) = true`: ε₀ is not a fixed point of φ̄1 and ζ₀ is, the shape test cannot
+tell them apart, and the difference is precisely whether `c > a`.
+
+SO THE ENCODING NEEDS MORE THAN THE ROUTING DOES, and the reason is not that the encoding
+is harder in general: the routing only ever asks the question AT a = 0, where it is
+syntactic.  A total map asks it at every `a` it encounters.  That is the same
+totality argument as below, now with the exact boundary measured rather than asserted.
 
 `sqv` cannot escape it, and not because of how it is written.  A TOTAL map over the
 region must decide, for every input, which clause applies — and "is `b` a fixed point
@@ -149,18 +170,69 @@ def encvF : Nat → Term → Nat → List Col2
         let bm := TM.Term.splitFin b
         let ladder : List Col2 :=
           if a == zero then [] else (d + 1, 1) :: bumpAt (d + 2) (encvF f (predOr a) (d + 2))
-        let lvl : Nat := if a == zero then 0 else 1
         let sub : List Col2 :=
           match bm.1 with
           | zero => []
-          | b' => shiftD (d + 1) (encvF f b' 0)
-        let reps : List Col2 := List.replicate bm.2 (d + 1, lvl)
+          | b' => shiftD (if a == zero then d + 1 else d + 2) (encvF f b' 0)
+        -- the trailing finite part repeats the LADDER TAIL, not a single marker column
+        let unit : List Col2 := if a == zero then [(d + 1, 0)] else ladder
+        let reps : List Col2 := (List.replicate bm.2 unit).flatten
         (d, 0) :: (ladder ++ sub ++ reps)
   | _ + 1, _, _ => []
 
 def encv (t : Term) (d : Nat) : List Col2 := encvF (2 * t.deg + 8) t d
 
 def sqv (t : Term) : BMS.Matrix := toMatrix (encv t 0)
+
+/-! ### §1.1 `Trans.o?` IS RETRACTED ABOVE A THRESHOLD — a permanent negative control
+    (2026-08-10; my first reading of this was wrong, and the correction is the point)
+
+Candidate 3 fixes failure class (e) and refines class (a) (the trailing finite part
+repeats the LADDER TAIL, not a single marker column — four witnesses: `φ̄(1,1)`,
+`φ̄(2,1)`, `φ̄(3,1)`, `φ̄(ω,1)`).  After both, `sqv` reproduces the `t2m` corpus exactly on
+those rows — and the round-trip gate still failed them.
+
+I REPORTED THAT AS A CONTRADICTION BETWEEN TWO PEER INSTRUMENTS.  IT IS NOT.
+`Trans.o?` is the OLD, RETRACTED translation, and I was using it outside its validated
+region.  Measured over the 51 rows of `Rows.rows` (by the coordinator, reproduced here
+on my own guards):
+
+    o? = none  (out of domain)                      23
+    o? defined and AGREES with oR                   21
+    o? defined and DISAGREES with oR                 7    ← silently wrong
+
+The seven begin at exactly `(0,0)(1,1)(2,1)(2,0)`, which is the threshold named in the
+table's own accident warning, and the values `o?` returns there are the RETRACTED ones
+verbatim — `(0,0)(1,1)(2,1)(2,1) ↦ ζ₁` is the row on which the calibration accident was
+FIRST DETECTED.  `t2m` agrees with `oR` and with the table on both witnesses.  So the
+instruments were never peers: one is calibrated and one is withdrawn.
+
+WHAT THE TWO `#guard`s BELOW NOW MEAN.  They are no longer evidence about a matrix's
+value — banking a retracted value as a datum is exactly the accident's mechanism.  They
+are a PERMANENT NEGATIVE CONTROL: they record that `o?` disagrees with `oR` above the
+threshold, and they will fail if anyone ever "fixes" `o?` by making it agree, or reaches
+for it in this region again.
+
+THE INSTRUMENT RULE, so the next reader does not repeat it: `Trans.o?` is valid strictly
+BELOW `(0,0)(1,1)(2,1)(2,0)`; `Trans.oR` is the instrument for the φ̄(a ≥ 2) region.  This
+file's gate 1 now uses `oR`, and the number moved 31 → 16 — HALF THE FAILURES WERE THE
+INSTRUMENT, not the map.
+
+AUDIT OF MY OWN GUARDS, run after the correction: every matrix that `Evidence/Cert.lean`
+§16.4, §16.5, §20.1 and §20.2 measure with `o?` agrees with `oR` — all eight named
+matrices and all three expansion families, checked one by one.  None of them enforces a
+retracted value.  The `t2m`-derived tables in §16.4/§16.5 are also safe, since `t2m`
+agrees with `oR`.
+
+WHAT SURFACED IT, and the part worth keeping: `sqv (o? (sqv t)) == sqv t` holds for 0 of
+the 31 failures.  A gate that only confirmed agreement would have passed all of this
+silently, and I would have tuned `sqv` toward the retracted values — reproducing the
+calibration accident from the inside, on the row where it was first detected. -/
+
+#guard !(Trans.o? [[0, 0], [1, 1], [2, 1], [2, 1]]
+          == Trans.oR [[0, 0], [1, 1], [2, 1], [2, 1]])
+#guard Trans.oR [[0, 0], [1, 1], [2, 1], [2, 1]] == some (phi (ofNat 3) zero)
+#guard Trans.oR [[0, 0], [1, 1], [2, 1], [1, 1], [2, 1]] == some (phi (ofNat 2) one)
 
 /-! ## §2 THE GATE
 
@@ -192,8 +264,11 @@ def corpus : List Term :=
   (bases.flatMap (fun b => [phi zero b, phi one b, phi (ofNat 2) b, phi omega b])) ++
   (bases.flatMap (fun a => bases.map (fun b => plus a b))) ++ bases
 
--- GATE 1: the round trip through the repository's own translation
-#eval (corpus.filter (fun t => !(Trans.o? (sqv t) == some t))).length
+-- GATE 1: the round trip through the repository's CALIBRATED translation.
+-- `Trans.oR`, NOT `Trans.o?` — see §1.1: `o?` is retracted above a threshold and
+-- returns a wrong term there rather than `none`, so a gate built on it would have
+-- been enforcing pre-accident values.
+#eval (corpus.filter (fun t => !(Trans.oR (sqv t) == some t))).length
 
 -- GATE 2: the table's own rows, matched exactly
 #eval (twelveRows.filter (fun p => !(sqv p.2 == p.1))).length
