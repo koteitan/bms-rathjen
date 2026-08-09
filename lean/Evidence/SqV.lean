@@ -2920,7 +2920,15 @@ WHAT REMAINS FOR THIS SITE, AND IT REDUCES TO TWO ONE-STEP FACTS.  Measured over
 **So the `m`-indexed fact is an induction on `m` over a single-step lemma**, rather than a
 statement about `ofList` of a filtered list with an appended tail.  That is the third time
 a per-site obligation has collapsed to one shared fact plus a step, and the second time
-measuring the recursion first turned a list-shaped problem into a numeric one. -/
+measuring the recursion first turned a list-shaped problem into a numeric one.
+
+**AND THAT IS A DIFFERENT RULE FROM THE MEASURE-FIRST ONE THIS FILE HAS BEEN APPLYING.**
+Measure-first is about not building the wrong design: measure, then decide.  This is stronger —
+**measuring the recursion does not only CONFIRM which shape the problem has, it can CHANGE it.**
+I had budgeted an `ofList`-of-a-filtered-list-with-an-appended-tail problem and measured my way to
+an induction on a natural number.  The first rule avoids a wrong answer; this one finds a CHEAPER
+QUESTION than the one you were about to answer, and the two are worth keeping apart because the
+second only pays off if you measure BEFORE designing rather than before building. -/
 
 def gpool : List Term := (pool ++ junk).eraseDups
 
@@ -2953,9 +2961,19 @@ together with `lt_phi_of_le_fst`.  Both are `CNV`-GATED, and so is §15.5's `lt_
 
 So `land_predOr`'s `lt` half needs `CNV` AT THE PARENT.  §15's negotiated shape has `inT t`, and
 the `BelowC` carrier transports `inT t` and `lt t v` and NOT `CNV t` — so at a depth-2 step the
-hypothesis is not there.  **The bounded form and the `lt` half do not compose.**  That is a
-hypothesis strengthening on an interface the consumer already accepted, so it went to veblen2 as
-a request.  Nothing here depends on the answer: `lt (predOr a) a` is needed under every option.
+hypothesis is not there.  **The bounded form and the `lt` half do not compose** — or so it
+looked.  That is a hypothesis strengthening on an interface the consumer already accepted, so it
+went to veblen2 as a request rather than being taken.  Nothing here depended on the answer:
+`lt (predOr a) a` is needed under every option.
+
+**RESOLVED, AND NOT THE WAY EITHER LANE EXPECTED: THE PREMISE WAS FALSE.**  `cnv_of_lt_cnv`
+(below) gives `CNV` on `BelowC` for free, so the `lt` half composes there after all and the
+interface stands unchanged.  The carrier did move to `CarrierV` in the end — but for a
+STRUCTURAL reason that has nothing to do with this paragraph: `encv'` recurses with no external
+ceiling, so a bounded carrier would make it invent a `v` and thread `lt s v` through every clause
+for nothing.  **Two different questions with two different answers**, which is why the file keeps
+both rather than editing one into the other.  Not taking the strengthened hypothesis myself is
+what left room for both answers to be found.
 
 **AND I DID NOT ASSUME THE `inT` ANALOGUES ARE FALSE — I MEASURED THEM.**  The corpora hold
 exactly ONE `inT`-non-`CNV` `φ̄`-headed term, so the class was GENERATED for the purpose rather
@@ -2970,17 +2988,38 @@ recommendation sent with it was `CNV` — not from preference but because **the 
 all on the `CNV` side**: `plus_one_eq_succT`, `lt_succT`, `cnv_succT` (WF 11367 / 11920 / 11956)
 are what turn both halves below into three lines, and the `inT` side has no `succT` chain at all.
 
-**THE THIRD OPTION, WHICH WOULD MAKE THE QUESTION DISAPPEAR**, measured because it costs one
-`#eval` and would save an interface change.  If `inT t → CNV v → lt t v → CNV t` held, `CNV`
-would be free on `BelowC v` and the two forms would coincide:
+**THE THIRD OPTION — AND IT WAS ALREADY A THEOREM, WHICH IS WHY THE INTERFACE NEVER CHANGED.**
+I conjectured that `inT t → CNV v → lt t v → CNV t` would make the question disappear, and
+measured it.  It is `Evidence.WF.cnv_of_lt_cnv` (WF §15.1), character for character, proved long
+before I asked, and `cnv_of_belowC` is the accessor veblen2 named on top of it.  **So `CNV` is
+FREE on `BelowC`, both A and B collapse, and the negotiated `inT` interface never had to move.**
+
+**AND MY MEASUREMENT WAS VACUOUS — recorded because the number reads clean and is not.**
 
     generated `inT`-non-`CNV` terms   63  ×  `CNV` bounds  172   =  10836 pairs
-    pairs with `lt t v`                                              0
+    pairs with `lt t v`                                              0     ← ANTECEDENT count
 
-No `inT`-non-`CNV` term is below ANY `CNV` term.  Targeted probes agree — `ψ_{Z0}(0)`, `ψ_{Z1}(0)`,
-`ψ_{Z(Z0)}(0)`, `Z0`, `Z1`, `Zω` are none of them below `φ̄(1,0)` or `φ̄(φ̄(1,0),0)`, which is the
-reading that `CNV` tops out at the Veblen closure of `0` and everything else starts at or above it.
-**It is a measurement and it is an ORDER fact, so it is routed, not claimed.**
+Zero violations because **zero instances**.  The antecedent never fires, so the implication was
+not confirmed on 10836 cases; there were no cases.  Under the control discipline this file
+enforces — a test that only ever returns negatives is indistinguishable from one that always
+returns false — it would need a positive control, and **no positive control can exist, because
+`cnv_of_lt_cnv` forbids the instances one would need.**  THE VACUITY WAS THE THEOREM SHOWING
+THROUGH THE MEASUREMENT.
+
+THE DISCRIMINATOR, now `constitution.md` C4, because "0 violations" reads identically in the good
+branch and the worthless one:
+
+    on a vacuous result, ask whether THE VACUITY IS ITSELF PROVABLE
+      provable  → the measurement confirmed a theorem, and no positive control can exist
+      not       → the test is broken or the corpus cannot reach the case, and you know NOTHING;
+                  report "my corpus cannot reach this", never "measured clean"
+
+This is the good branch.  The targeted probes — `ψ_{Z0}(0)`, `ψ_{Z1}(0)`, `ψ_{Z(Z0)}(0)`, `Z0`,
+`Z1`, `Zω`, none below `φ̄(1,0)` or `φ̄(φ̄(1,0),0)` — were me reading the theorem off the corpus
+without knowing it was a theorem.  **What the route was worth is that conjecturing the statement
+and measuring it FOUND a theorem no search phrased from my problem would have surfaced**:
+`cnv_of_lt_cnv` does not read like an answer to "is `CNV` free on my carrier".  That works even
+when the fact is not in the file, which is why it beat both lanes' greps.
 
 **WHAT THE MEASUREMENT POINTED AT, AND WHAT THE PROOF ACTUALLY DID — they are not the same, and
 the difference is worth recording.**  The measurement that opened the route was that `predOr`
@@ -3642,76 +3681,60 @@ def fpTriples : List (Term × Term × Term) :=
 -- and the two halves agree with the measurement: every target is `CNV` and `le` its argument
 #guard (fpTriples.filter (fun p => !(Evidence.WF.CNV p.1 && le p.1 p.2.1))).length == 0
 
-/-! ### §15.11 THE `add` CLAUSE — `le` IS THE ORDER PART, THE REST IS `deg`
+/-! ### §15.11 SUPERSEDED — WF §15.28 PROVES F3 AND F4 AS `lt`, AND MY REDUCTION WAS UNNEEDED
 
-F3 and F4 were routed as `lt` facts, and that over-asked.  **Both split into an `le` fact and a
-DISEQUALITY, and the disequality is structural, not order**: `deg (add u v) = 1 + deg u + deg v`
-with `deg` positive, so neither component can BE the sum.  `le s t` is `s == t || lt s t`, so `le`
-plus the disequality is exactly `lt`.  That halves the request, and it halves it asymmetrically:
+This section reduced F3 and F4 to one `le` fact plus two structural disequalities (`deg` decides
+that a component is never its own sum) and routed the `le`.  **The reduction was correct and it
+was unnecessary: `lt_head_add_cnv` and `lt_tail_add` were already proved as `lt`.**  They landed
+before the de-scope message did, so I was one commit behind, not wrong — but the consumer needs
+neither disequality, so `deg_pos`, `ne_add_left`, `ne_add_right` and my `lt_head_add` are deleted
+rather than kept.
 
-    F3   le u (add u v)   `Evidence.WF.le_head_add`, already shipped   +  u ≠ add u v   here
-    F4   le v (add u v)   the ONE piece still missing                  +  v ≠ add u v   here
+    F3   `Evidence.WF.lt_head_add_cnv` {u v} (CNV (u ⊕ v))  : lt u (u ⊕ v)
+         `Evidence.WF.lt_head_add`     {u} (u.isAP) (v)     : lt u (u ⊕ v)   -- CNV not needed
+    F4   `Evidence.WF.lt_tail_add`     (v u) (CNV (u ⊕ v))  : lt v (u ⊕ v)
 
-`le_toList_self` nearly gives F4 and cannot: `u` IS a component of `add u v`, which is why F3
-falls out at once, but `v` is not, because `toList (add u v) = u :: toList v` FLATTENS the tail.
-**The flattening is the whole gap** — the same flattening that killed `tdepth` at `predOr` in §13,
-where flattening deepened a measure.  It is worth noticing that the one structural fact this file
-keeps colliding with is that `toList` does not see a sum as a thing.
+**WHAT SURVIVES IS `lt_of_le_of_ne`, AND IT IS USED TWICE BELOW** — `lt_zero_phi` and
+`lt_summand_add`.  `le s t` is literally `s == t || lt s t`, so this is Bool bookkeeping, not
+order theory, which is why it belongs here and not upstream.
 
-So F3 is proved here and F4 waits on one `le`.  Sent to the WF lane BEFORE proving F3 rather than
-after — §15.9's collision was retracted too late, and the fix for that is not "price before
-asking" but PRICE BEFORE SENDING. -/
+**THE CONTROL THAT DID NOT FIRE TURNED OUT TO BE A RESULT.**  I proposed `v ≠ 0` as F3's side
+condition, probed it, found `lt u (u ⊕ 0)` returns TRUE — `lt` compares SYNTAX — and reported "my
+control did not fire" rather than dressing the probe up.  veblen2's proof shows why it CANNOT
+fire: `hdLe zero u = false` by `rfl`, so `CNV (u ⊕ 0) = false` and the hypothesis already excludes
+the case.  **That is C4's discriminator applied to a CONTROL instead of a measurement**, and it
+lands the same way: a control that fails to fire is worthless unless its failure is PROVABLE, in
+which case it tells you the hypothesis is doing the work.  And the same `rfl` discharges F4's
+`v = 0` case — second time in one batch that the probe finding a side condition and the case
+discharging it were one fact seen from two sides. -/
 
 section
-open Evidence.WF (CNV cnv_add le_head_add)
+open Evidence.WF (CNV)
 
-theorem deg_pos : ∀ (t : Term), 0 < t.deg := by
-  intro t; cases t <;> simp [TM.Term.deg] <;> omega
-
-/-- A component is never its own sum — `deg` decides it, with no order content. -/
-theorem ne_add_left (u v : Term) : u ≠ TM.Term.add u v := by
-  intro h
-  have := congrArg TM.Term.deg h
-  simp only [TM.Term.deg] at this
-  have := deg_pos v
-  omega
-
-theorem ne_add_right (u v : Term) : v ≠ TM.Term.add u v := by
-  intro h
-  have := congrArg TM.Term.deg h
-  simp only [TM.Term.deg] at this
-  have := deg_pos u
-  omega
-
-/-- `le` plus a disequality is `lt` — `le` is literally `== || lt`. -/
+/-- `le` plus a disequality is `lt` — `le` is literally `== || lt`.  Bool bookkeeping. -/
 theorem lt_of_le_of_ne {a b : Term} (hle : le a b = true) (hne : a ≠ b) : lt a b = true := by
   simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
   rcases hle with h | h
   · exact absurd h hne
   · exact h
 
-/-- **F3 — the `add` clause's head recursion decreases.** -/
-theorem lt_head_add {u v : Term} (h : CNV (TM.Term.add u v) = true) :
-    lt u (TM.Term.add u v) = true :=
-  lt_of_le_of_ne (le_head_add (cnv_add h).1 v) (ne_add_left u v)
-
 end
 
-#guard (cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.length == 72
-#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
-          (fun p => !(lt p.1 (TM.Term.add p.1 p.2)))).length == 0
-#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
-          (fun p => !(lt p.2 (TM.Term.add p.1 p.2)))).length == 0
--- the residual: `le v (add u v)` is what F4 still needs, and `v` is not a component of the sum
-#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
-          (fun p => !(le p.2 (TM.Term.add p.1 p.2)))).length == 0
-#guard ((cnvAll.filterMap (fun t => match t with | .add u v => some (u, v) | _ => none)).eraseDups.filter
-          (fun p => (toList (TM.Term.add p.1 p.2)).any (fun x => x == p.2))).length != 72
+-- the probe that could not fire, and why: `lt` compares syntax, but `CNV` excludes the term
+#guard lt one (TM.Term.add one zero) == true
+#guard Evidence.WF.CNV (TM.Term.add one zero) == false
 
-/-! ### §15.12 F4 IS NOT NEEDED — THE `add` CLAUSE SHOULD RECURSE ON SUMMANDS, NOT COMPONENTS
+/-! ### §15.12 THE `add` CLAUSE RECURSES ON SUMMANDS, NOT COMPONENTS — and F4 was the wrong question
 
 §15.11 reduced F4 to one `le` fact and routed it.  **It should not have been routed at all**, and
 the reason is a change to `encv'`, not to the order theory.
+
+**F4 IS TRUE AND IS PROVED (`lt_tail_add`, WF §15.28), SO THIS IS NOT A CLAIM THAT THE FACT WAS
+UNOBTAINABLE — the request was answerable and was still the wrong question.**  That is what makes
+it the clean instance of the rule rather than the lucky one: a FALSE request would have proved
+nothing about the pattern.  The restructure below is therefore a CHOICE, not a necessity; it is
+kept because one uniform clause over `summands` is simpler than two over components, and because
+its decrease is a constructor clash instead of an induction on the order.
 
 `encvF`'s `add` clause is `encvF f u d ++ encvF f v d` — it recurses on the RAW components, so the
 tail `v` is a target and `v` is not a component of `add u v` (§15.11: only 33 of 72).  But the
@@ -3739,8 +3762,8 @@ step rather than by strengthening the order theory:
     land_fpDeep   `le`, because `fpDeep` can return its argument ⇒  no overclaim to defend
     the `add` clause  recurses on summands, not components      ⇒  F4 not needed at all
 
-`lt_head_add` (§15.11, F3) is kept: it is one line from `le_head_add`, it is true, and a caller
-who does want the two-component form should not have to rediscover it. -/
+A caller who does want the two-component form has `lt_head_add_cnv` and `lt_tail_add` upstream;
+§15.11's duplicate is deleted. -/
 
 section
 open Evidence.WF (CNV)
@@ -3869,6 +3892,14 @@ theorem lt_fpDeep_phi {a b z : Term} (h : CNV (phi a b) = true)
   lt_of_le_of_lt_cnv (cnv_fpDeep (cnv_headD (cnv_phi h).2) hz) (cnv_headD (cnv_phi h).2) h
     (le_fpDeep (cnv_headD (cnv_phi h).2) hz) (lt_headD_phi h)
 
+/-- The same site, taking the target's `CNV` and `le` DIRECTLY rather than the `fpDeep` equation.
+    This is the form `fpDeepC` hands over, and taking it this way is what keeps the dependent
+    match out of `encvC`. -/
+theorem lt_fpDeep_phi' {a b z : Term} (h : CNV (phi a b) = true) (hcz : CNV z = true)
+    (hle : le z ((summands (TM.Term.splitFin b).1).headD zero) = true) :
+    lt z (phi a b) = true :=
+  lt_of_le_of_lt_cnv hcz (cnv_headD (cnv_phi h).2) h hle (lt_headD_phi h)
+
 end
 
 /-! ## §16 THE FUEL-FREE ENCODER — `encv'`, BY WELL-FOUNDED RECURSION ON THE ORDER
@@ -3910,20 +3941,58 @@ fuelled value.  That is a deliberate difference and not a defect: the Veblen-reg
 only ever applied inside `CNV`, and a function that is honest about its domain is better than one
 that returns a value it cannot justify.  The agreement above is stated ON `CNV` for that reason.
 
-**THE AXIOM SET CHANGES, AND THE CHANGE IS INHERITED, NOT INTRODUCED.**  Every theorem in this
-file is `[propext, Quot.sound]`; `encvC` and `encv'` are `[propext, Classical.choice, Quot.sound]`.
-The extra axiom is not mine and not the definition's — `Evidence.WF.acc_cnv_inT` already carries
-it, so `wf_lt_cnv` and the `WellFoundedRelation` instance do too, and anything recursing on them
-must.  Recorded rather than passed over: a file that reports axioms should say when the set grows
-and where the growth came from.
+**THE AXIOM SET DOES NOT CHANGE.  THE WHOLE FILE IS `[propext, Quot.sound]`, `encvC` AND `encv'`
+INCLUDED, WITH NO EXCEPTION** — measured after WF's rebuild, not assumed from the recursion
+principle.
 
-**WHAT THIS SETTLES ABOUT THE CARRIER, AND ON THE CONSUMER'S OWN CRITERION.**  WF §15.25.1 says
-the choice between the bounded `BelowC` and the unbounded `CarrierV` "depends only on whether
-`CNV` at each target is cheap to PROVE, not on whether it is true."  It was cheap — `cnv_predOr`,
-`cnv_omLog`, `cnv_fpDeep`, `cnv_mem_summands`, none of which needed an order fact.  So the
-criterion resolves to `CarrierV`, and `encv'` gets to be `Term → Nat → List Col2` with no bound
-threaded through it.  Under `BelowC` the change is mechanical — `belowC_step` in place of the
-subtype constructor, plus a bound parameter — and it is the WF lane's call to make. -/
+IT BRIEFLY DID, AND THE REASON IS THE PART WORTH KEEPING.  When §16 was written, `encvC` and
+`encv'` came out `[propext, Classical.choice, Quot.sound]`, and I recorded the growth as INHERITED
+— `acc_cnv_inT` carried it, so `wf_lt_cnv` and the instance did, so anything recursing on them
+must.  The inheritance was real.  **The SOURCE was not where the inheritance chain suggested.**
+veblen2 found it: `acc_cnv_aux`'s base case closed the non-arithmetic goal `Acc RV t` with a bare
+`omega` against contradictory hypotheses, and `omega` off an arithmetic goal routes through
+`Classical.byContradiction`.  `exact absurd hd (by have := deg_pos t; omega)` is otherwise
+identical and clean.  Two lines, and the whole chain below it went constructive.
+
+**A CLEAN DEPENDENCY SET IS NOT EVIDENCE THAT A THEOREM IS CLEAN.**  Every named thing
+`acc_cnv_aux` uses — `acc_sum`, `acc_phi_v`, `acc_zero_v`, `cnv_phi`, `cnv_add`, `deg_pos` — was
+`[propext, Quot.sound]` while `acc_cnv_aux` itself was not, **because the axiom entered through a
+TACTIC, which has no name to bisect.**  Bisecting the dependency graph cannot reach it; the
+technique that does is rebuilding the lemma line by line and printing axioms of the rebuild.
+Recorded here because a file that reports axioms should also record how an axiom can appear from
+nowhere — and because "all its dependencies are clean" is the reasoning that would have stopped
+the search one step short.
+
+**AND WELL-FOUNDED RECURSION DID NOT COST THE AXIOM.**  I wrote that `Classical.choice` was "the
+price of well-founded recursion" and it was not — it was one tactic call in one base case.  A
+price attributed to a technique, when it belonged to a line, is the same error as a name
+attributed to a statement: **an explanation that fits is not an explanation that is true.**
+
+**THE CARRIER IS `CarrierV`, DECIDED BY THE WF LANE, AND THE DECIDING REASON IS NOT THE ONE I
+GAVE.**  I argued from WF §15.25.1's own criterion — the choice "depends only on whether `CNV` at
+each target is cheap to PROVE, not on whether it is true" — and it was cheap: `cnv_predOr`,
+`cnv_omLog`, `cnv_fpDeep`, `cnv_mem_summands`, none needing an order fact.  That criterion is
+satisfied but it only says the bounded form's advantage buys nothing.  **The reason the unbounded
+form WINS is structural and it is veblen2's: `encv'` recurses with NO EXTERNAL CEILING.**  Its
+targets are `predOr a`, the summands of `splitFin b`, and the `omLog`/`fpDeep` outputs — sub-terms
+of the input, bounded by nothing given to the function.  `BelowC v` would make it invent a `v`
+(`succT t`, say) and thread `lt s v` through every clause via `belowC_step` for no return.
+`wf_lt_cnv` needs no `v`, and `carrierV_step` takes exactly `CNV x` and `lt x y.1` — the pair the
+landing theorems deliver.
+
+**AND THE TWO CARRIER ANSWERS IN THIS FILE ARE NOT A CONTRADICTION, THEY ARE TWO QUESTIONS.**
+§15.5's `cnv_of_belowC` answers "does a BOUNDED consumer need `inT`-gated order facts?" — no.
+This answers "which carrier for an UNBOUNDED recursion?" — this one.  Both are recorded, because a
+later reader meeting only one of them would draw the wrong conclusion from it. -/
+
+/-- **`fpDeep`'s RESULT WITH ITS PROOFS ATTACHED** — the dependent match happens HERE, once, in a
+    helper with no recursion in it, so `encvC` can match on an ordinary `Option`.  `List.attach`
+    plays the same trick for the summands, which is why the `add` clause never had this problem. -/
+def fpDeepC (a t : Term) (ht : Evidence.WF.CNV t = true) :
+    Option {z : Term // Evidence.WF.CNV z = true ∧ le z t = true} :=
+  match hfd : fpDeep a t with
+  | some z => some ⟨z, cnv_fpDeep ht hfd, le_fpDeep ht hfd⟩
+  | none => none
 
 def encvC (p : Evidence.WF.CarrierV) (d : Nat) : List Col2 :=
   match hp : p.1 with
@@ -3958,9 +4027,10 @@ def encvC (p : Evidence.WF.CarrierV) (d : Nat) : List Col2 :=
               else mk ((summands (TM.Term.splitFin b).1).attach.drop 1))
           ++ reps
       else
-        match hfd : fpDeep a ((summands (TM.Term.splitFin b).1).headD zero) with
+        match fpDeepC a ((summands (TM.Term.splitFin b).1).headD zero)
+                (cnv_headD (Evidence.WF.cnv_phi (hp ▸ p.2)).2) with
         | some z =>
-            encvC ⟨z, cnv_fpDeep (cnv_headD (Evidence.WF.cnv_phi (hp ▸ p.2)).2) hfd⟩ d
+            encvC ⟨z.1, z.2.1⟩ d
               ++ mk (summands (TM.Term.splitFin b).1).attach ++ reps
         | none =>
             (d, 0) :: ((match summands (TM.Term.splitFin b).1 with
@@ -3973,7 +4043,7 @@ decreasing_by
   · rw [hp]; exact lt_predOr_phi (hp ▸ p.2)
   · rw [hp]; exact lt_blockArg_phi (hp ▸ p.2) g.2
   · rw [hp]; exact lt_headD_phi (hp ▸ p.2)
-  · rw [hp]; exact lt_fpDeep_phi (hp ▸ p.2) hfd
+  · rw [hp]; exact lt_fpDeep_phi' (hp ▸ p.2) z.2.1 z.2.2
 
 /-- The fuel-free encoder as a total function: `encvC` on `CNV`, `[]` elsewhere. -/
 def encv' (t : Term) (d : Nat) : List Col2 :=
@@ -3989,5 +4059,200 @@ def agreeCorpus : List Term := (corpusW ++ deeper ++ nested).eraseDups
 #guard (cnvAll.filter (fun t =>
           !((List.range 4).all (fun d => encv' t d == encv t d)))).length == 0
 #guard (agreeCorpus.filter (fun t => !(toMatrix (encv' t 0) == sqv t))).length == 0
+
+/-! ## §17 `sqv_decomp` — §9's BLOCKER 1 IS GONE, AND WHAT REPLACES IT IS SMALLER
+
+§9 recorded two blockers.  Blocker 2 (import direction) was resolved there.  **Blocker 1 —
+"`sqv` is defined with fuel and nothing proves the fuel is enough" — no longer exists**, because
+§16's `encv'` has no fuel.  §9's own diagnosis was that the obstacle "is not a defect in the
+encoding — seven dimensions say the encoding is right — it is that the DEFINITION is not in a
+form an induction can use."  The definition is now in such a form.
+
+**`encvF_saturate` NEVER HAS TO BE PROVED.**  §9 named it as the missing lemma
+(`encvF f t d = encvF (f+1) t d` above the chosen fuel, "provable and real work") and WF §15.25
+warned that accessibility gives no fuel bound, so a fuel-free redefinition and a saturation proof
+are DIFFERENT obligations.  Redefining discharged the obligation instead of proving it.
+
+WHAT IS ACTUALLY LEFT, and it is a layer rather than a theorem.  The ε_ω row's encoder fact is
+
+    encv' (φ̄(1, ofNat n)) 0  =  (0,0) :: (1,1)ⁿ⁺¹
+
+and its arithmetic is now available: `splitFin_ofNat` below says `splitFin (ofNat n) = (0, n)`,
+so the subscript contributes no summands and `reps` is `n` copies of the ladder.  The row is then
+one branch walk — `isFP 1 0 = false`, `fpDeep 1 0 = none`, both computed.
+
+**BUT `encvC` CANNOT BE UNFOLDED BY `rw` AT A SPECIALISED ARGUMENT**, and the reason is structural,
+not a tactic accident: the clause carries `CNV` PROOF TERMS whose TYPES mention `splitFin b`, so
+rewriting `splitFin (ofNat n)` inside it fails with "motive is not type correct".  `simp only`
+gets past the outer occurrences and stalls at the ones under `.attach`'s membership proof.
+
+**THIS IS §10's PROBLEM AGAIN AND §10 ALREADY SOLVED IT — for `encvF`.**  §10 states
+`encvF_phi_collapse`, `encvF_phi_deep`, `encvF_phi_base` as NAMED EQUATIONS, each proved by
+`show (if … then _ else _) = _; rw [if_pos/if_neg, hz]; rfl`, precisely so that no consumer ever
+unfolds the definition.  `encvC` needs the same three, stated with `splitFin b` left SYMBOLIC —
+the branch conditions as hypotheses about `(summands (splitFin b).1).headD 0` rather than about a
+specialised `b`, so nothing has to be rewritten under a dependent proof.  That is the next piece
+of work, it is bounded, and it is the same shape as work already in this file.
+
+**ONE THING IN `encvC` HAD TO CHANGE FIRST, AND WITH IT THE ROW CLOSES IN THREE TACTICS.**
+§10's `rw [if_pos/if_neg]; rfl` idiom works on plain `if`s.  `encvC`'s `fpDeep` site was not an
+`if` — it was
+
+    match hfd : fpDeep a hd with | some z => encvC ⟨z, cnv_fpDeep … hfd⟩ d | none => …
+
+**a match that BINDS its own equation, because the target's `CNV` proof is built from `hfd`.**  A
+hypothesis `fpDeep a hd = none` cannot rewrite that scrutinee: the binder makes it dependent, and
+the branch is exactly where the proof term lives.  Deciding the outer `isFP` `if` first does not
+help — it lands you inside this match.
+
+THE FIX IS TO PUSH THE PROOFS INTO THE DATA, so the clause matches non-dependently:
+
+    def fpDeepC (a t) (ht : CNV t) : Option {z // CNV z = true ∧ le z t = true} :=
+      match hfd : fpDeep a t with
+      | some z => some ⟨z, cnv_fpDeep ht hfd, le_fpDeep ht hfd⟩
+      | none   => none
+
+The dependent match happens ONCE, inside a helper with no recursion in it, and `encvC` then
+matches on an ordinary `Option` whose payload already carries what the recursive call needs —
+the same trick `List.attach` plays for the summands, which is why the `add` clause has no such
+problem.  `cnv_fpDeep` and `le_fpDeep` (§15.6, §15.10) are exactly the two facts the subtype
+wants, so nothing new has to be proved to make the change.
+
+**THE ROW IS PROVED.  `encvC_epsOmega` BELOW, FOR EVERY `n`, AND NO NAMED-EQUATION LAYER WAS
+NEEDED IN THE END** — but the route is not the one I predicted twice, and both wrong predictions
+named a real obstruction, so both stay.
+
+`fpDeepC` removed ONE of two proof-carrying constructs.  The other is `List.attach`: the summands'
+membership proof has a TYPE mentioning `summands (splitFin b).1`, so `rw [splitFin_ofNat]` under it
+is still a dependent rewrite and still fails with "motive is not type correct".
+
+**THE TRICK IS TO REWRITE THE DEPENDENT TERM ITSELF, NOT WHAT IT DEPENDS ON.**  `gs.attach` and
+`([] : List {x // x ∈ gs})` have the SAME type, so replacing one by the other is not dependent —
+and that equation is proved by a LENGTH argument, `(gs.attach).length = gs.length = 0`, which
+touches only a `Nat`.  **Where a rewrite is blocked by a dependent type, rewrite the whole
+dependent term to a value of the same type and prove THAT equation by a non-dependent route.**
+The `fpDeepC` result and the `predOr` call go the same way: `encvC_predOr_one` rewrites the entire
+`encvC ⟨predOr one, pf⟩` call rather than the `predOr one` inside it, with `Subtype.ext` supplying
+the carrier equality.
+
+    rw [encvC]; dsimp only; rw [hfp]; simp only […]; rw [hfd, hat, hm2, encvC_predOr_one]
+    dsimp only; split
+
+is the whole proof, plus `flatten_replicate_singleton` for the `reps` block and a `split` whose
+second branch contradicts `summands (splitFin (ofNat n)).1 = []`.
+
+**AND I BRIEFLY BELIEVED IT HAD CLOSED ONE ROUND EARLIER, WHEN IT HAD NOT.**  I filtered the
+checker's messages by line number to isolate the new ones, the filter bound sat above the lines
+the test occupied, and it reported CLEAN for three variants that all failed.  **A FILTERED GREEN
+IS NOT A GREEN.**  The file's rule — verify the whole artifact, read the raw result — exists for
+exactly this, and I broke it on a throwaway probe and then believed the probe.  The verdict here
+is from an unfiltered check.
+
+WHAT GENERALISES: `splitFin_ofNat` handles every `φ̄(a, ofNat n)` subscript, and the three
+"rewrite the whole dependent term" moves are reusable as stated.  A row whose subscript HAS
+summands will need the `attach` list rather than `[]` — that is where a named-equation layer may
+still earn its place, but it was not needed for the shape §9 called the cleanest. -/
+
+theorem takeWhile_replicate_one : ∀ n,
+    (List.replicate n one).takeWhile (fun x => x == one) = List.replicate n one := by
+  intro n
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [List.replicate_succ,
+        List.takeWhile_cons_of_pos (p := fun x => x == one) (by simp), ih]
+
+/-- **`ofNat n` IS ALL FINITE PART** — no infinite part, and the count is `n`.  The subscript
+    arithmetic of every `φ̄(a, ofNat n)` row reduces to this. -/
+theorem splitFin_ofNat (n : Nat) : TM.Term.splitFin (ofNat n) = (zero, n) := by
+  show (ofList ((toList (ofNat n)).take ((toList (ofNat n)).length
+          - ((toList (ofNat n)).reverse.takeWhile (fun x => x == one)).length)),
+        ((toList (ofNat n)).reverse.takeWhile (fun x => x == one)).length) = _
+  rw [Evidence.WF.toList_ofNat n, List.reverse_replicate, takeWhile_replicate_one,
+      List.length_replicate, Nat.sub_self, List.take_zero]
+  rfl
+
+#guard (List.range 8).all (fun n => TM.Term.splitFin (ofNat n) == (zero, n))
+-- the branch walk the ε_ω row takes, computed
+#guard TM.Term.isFP one zero == false
+#guard fpDeep one zero == none
+-- and the row itself, at four points; the `∀ n` form is what the named-equation layer unlocks
+#guard encv' (phi one (ofNat 0)) 0 == (0,0) :: List.replicate 1 ((1,1) : Col2)
+#guard encv' (phi one (ofNat 1)) 0 == (0,0) :: List.replicate 2 ((1,1) : Col2)
+#guard encv' (phi one (ofNat 2)) 0 == (0,0) :: List.replicate 3 ((1,1) : Col2)
+#guard encv' (phi one (ofNat 5)) 0 == (0,0) :: List.replicate 6 ((1,1) : Col2)
+
+
+theorem cnv_phi_one_ofNat (n : Nat) : Evidence.WF.CNV (phi one (ofNat n)) = true := by
+  show (Evidence.WF.CNV one && Evidence.WF.CNV (ofNat n)) = true
+  rw [Evidence.WF.cnv_ofNat n]; rfl
+
+
+theorem flatten_replicate_singleton {α : Type} (x : α) : ∀ n,
+    (List.replicate n [x]).flatten = List.replicate n x
+  | 0 => rfl
+  | n + 1 => by
+    rw [List.replicate_succ, List.flatten_cons, flatten_replicate_singleton x n,
+        List.replicate_succ]
+    rfl
+
+theorem predOr_one : predOr one = zero := by
+  show (match TM.Term.splitFin one with | (_, 0) => one | (g, k + 1) => plus g (ofNat k)) = _
+  rw [show TM.Term.splitFin one = (zero, 1) from by
+        have := splitFin_ofNat 1; rwa [show ofNat 1 = one from rfl] at this]
+  rfl
+
+theorem fpDeepC_none {a t : Term} (ht : Evidence.WF.CNV t = true) (h : fpDeep a t = none) :
+    fpDeepC a t ht = none := by
+  unfold fpDeepC
+  split
+  · rename_i z hx; rw [h] at hx; exact absurd hx (by simp)
+  · rfl
+
+/-- The `predOr` recursive call at `a = 1`, rewritten WHOLE — `Subtype.ext` supplies the carrier
+    equality, so `predOr one` is never rewritten underneath its own `CNV` proof. -/
+theorem encvC_predOr_one (pf : Evidence.WF.CNV (predOr one) = true) (d : Nat) :
+    encvC ⟨predOr one, pf⟩ d = [] := by
+  have hs : (⟨predOr one, pf⟩ : Evidence.WF.CarrierV)
+      = ⟨zero, by rw [predOr_one] at pf; exact pf⟩ := Subtype.ext predOr_one
+  rw [hs, encvC]
+
+/-- **THE ε_ω ROW'S ENCODER FACT, FOR EVERY `n`** — §9's first row, and what blocker 1 blocked.
+    No induction on `n`: `splitFin (ofNat n) = (0, n)` leaves the subscript with no summands, so
+    the clause is one branch walk and `reps` is `n` copies of the ladder. -/
+theorem encvC_epsOmega (n : Nat) (h : Evidence.WF.CNV (phi one (ofNat n)) = true) :
+    encvC ⟨phi one (ofNat n), h⟩ 0 = (0, 0) :: List.replicate (n + 1) ((1, 1) : Col2) := by
+  have hgs : summands (TM.Term.splitFin (ofNat n)).1 = [] := by rw [splitFin_ofNat]; rfl
+  have hat : (summands (TM.Term.splitFin (ofNat n)).1).attach = [] :=
+    List.eq_nil_of_length_eq_zero (by rw [List.length_attach, hgs]; rfl)
+  have hm2 : (TM.Term.splitFin (ofNat n)).2 = n := by rw [splitFin_ofNat]
+  have hfp : TM.Term.isFP one ((summands (TM.Term.splitFin (ofNat n)).1).headD zero) = false := by
+    rw [hgs]; rfl
+  have hfd : ∀ pf, fpDeepC one ((summands (TM.Term.splitFin (ofNat n)).1).headD zero) pf = none :=
+    fun pf => fpDeepC_none pf (by rw [hgs]; rfl)
+  rw [encvC]
+  dsimp only
+  rw [hfp]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hfd, hat, hm2, encvC_predOr_one]
+  dsimp only
+  split
+  · show (0, 0) :: ([((1, 1) : Col2)] ++ (List.replicate n [((1, 1) : Col2)]).flatten)
+      = (0, 0) :: List.replicate (n + 1) ((1, 1) : Col2)
+    rw [flatten_replicate_singleton, List.replicate_succ]
+    rfl
+  · exact absurd hgs (by simp_all)
+
+theorem encv'_epsOmega (n : Nat) :
+    encv' (phi one (ofNat n)) 0 = (0, 0) :: List.replicate (n + 1) ((1, 1) : Col2) := by
+  show (if h : Evidence.WF.CNV (phi one (ofNat n)) = true
+        then encvC ⟨phi one (ofNat n), h⟩ 0 else []) = _
+  rw [dif_pos (cnv_phi_one_ofNat n)]
+  exact encvC_epsOmega n _
+
+-- The ε_ω row at eight points.  The `∀ n` form is NOT proved — §17 says why, and what is left.
+#guard (List.range 8).all (fun n =>
+  encv' (phi one (ofNat n)) 0 == (0,0) :: List.replicate (n+1) ((1,1) : Col2))
+#guard (List.range 8).all (fun n => encv (phi one (ofNat n)) 0 == encv' (phi one (ofNat n)) 0)
 
 end Evidence.SqV

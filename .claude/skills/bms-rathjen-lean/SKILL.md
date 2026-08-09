@@ -131,6 +131,46 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   timeout first.
 - After editing `BMS/ TM/ Trans/` libs: `lake build` + restart the rathjen
   instance (header cache). `Rows/` snippets sent as full text need no restart.
+- **A FILTERED GREEN IS NOT A GREEN.** Filtering the checker's messages by line
+  number to isolate "the new ones" will hide real errors whenever the bound is
+  wrong, and it reports CLEAN rather than reporting nothing. It happened on a
+  throwaway probe of three tactic variants — all three printed clean, the
+  theorem went into the file, and only `#print axioms` returning `sorryAx`
+  caught it. **The rule about checking the whole artifact and reading the raw
+  result applies to disposable probes too**: the status of the tool does not
+  lower how much its output gets trusted. Filter by `severity`, never by line
+  number or substring.
+- **`#print axioms` IS THE BACKSTOP, NOT JUST AN AUDIT.** In that incident the
+  build passed, the file contained no `sorry` token, and the line count grew as
+  expected; `sorryAx` in the axiom list was the only surviving trace. Print
+  axioms BY NAME for every declaration a report claims, before believing the
+  report — including your own.
+- **`omega` CLOSING A NON-ARITHMETIC GOAL SILENTLY IMPORTS `Classical.choice`
+  INTO THAT DECLARATION AND EVERYTHING DOWNSTREAM.** The base case of an
+  accessibility induction typically has contradictory hypotheses and the goal
+  `Acc R t`; `have := deg_pos t; omega` closes it through
+  `Classical.byContradiction`. Write `exact absurd hd (by have := deg_pos t; omega)`
+  — `omega` stays on an arithmetic goal, nothing else changes. Two sites in
+  `Evidence/WF.lean` (`acc_of_cn_aux`, `acc_cnv_aux`) put choice into `acc_cnv`,
+  `acc_cnv_inT`, `acc_inT_below_cnv`, `wf_lt_cnv`, `wf_lt_belowC`, `belowC_wf`
+  and thence into `Evidence/SqV.lean`'s `encvC`/`encv'`; the fix was `+15/-2`
+  and made all of them `[propext, Quot.sound]`. Suspect any decision procedure
+  (`omega`, `decide`, `simp_arith`, `trivial`) used to discharge a contradiction
+  on a Prop-valued goal. **Guard the fix in the source** — shortening it back to
+  a bare `omega` is the natural edit and silently undoes it.
+- **WHEN A DEPENDENCY BISECT SAYS "EVERY CHILD CLEAN, PARENT DIRTY", THE ANSWER IS
+  IN THE PARENT'S TACTICS.** That reads as impossible and is not: a
+  tactic-generated axiom has no constant to bisect, so the standard technique
+  terminates with nothing to point at. **A clean dependency set is not evidence
+  that a theorem is clean.** The technique that works is to rebuild the
+  declaration line by line as a probe, printing axioms at each stage.
+  Consumers see the taint with no indication of which upstream line caused it,
+  so this is worth doing at the point of surprise rather than later.
+- **Sweep for axiom hazards by OUTCOME, not by grep.** `#print axioms` over the
+  public surface answers the question; grepping `omega` cannot, because the
+  hazard is defined by what the GOAL was. A clean grep reads as a clean sweep and
+  is not one. Report the full list including legitimate uses of choice — a sweep
+  that reports only hits is indistinguishable from one that found nothing.
 - **The coordinator must restart :12346 after every `lake build`, and must
   VERIFY the restart rather than assume it.** The server silently keeps serving
   the oleans it started with, so a lane that verifies against it after a rebuild
@@ -250,6 +290,16 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   that is only possible because the messages are substantive. **If they were
   "fix" and "wip" there would be nothing to read wrongly, and also nothing to
   catch.**
+- **NEVER RUN A MUTATING GIT COMMAND ON A LANE-OWNED FILE WHILE THAT LANE IS
+  ACTIVE.** `git stash push -- <lane file>`, `git checkout -- <lane file>`,
+  `git restore` — each reverts the lane's working file mid-edit. Done once, to
+  isolate one file for verification; restored within seconds and byte-identical,
+  so nothing was lost, but a write inside that window would have made the lane's
+  own file look corrupted **for a reason the lane could not diagnose**. To verify
+  one file in isolation, build the tree as it stands and read the axioms by name —
+  the other lane's in-flight file either builds or names itself in the error.
+  Tell the lane if it happens anyway: a file changing under an agent with no
+  message is otherwise attributed to itself.
 - **Read the SNAPSHOT, not the working file.** `git add` freezes the bytes; the
   lane keeps writing. Any math check done by `grep`/`sed` on the path afterwards
   is a check of the lane's CURRENT file, not of what is staged. Once, a commit

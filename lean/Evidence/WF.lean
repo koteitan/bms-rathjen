@@ -134,10 +134,13 @@ private theorem acc_lexLt : ∀ (n : Nat) (l : List Nat), l.length = n → Acc L
   | 0, l, hl => by
     cases l with
     | nil => exact Acc.intro [] (fun y hy => absurd hy not_lexLt_nil)
-    | cons a t => simp at hl
+    -- `exact absurd …`, NOT `simp at hl`: closing the NON-ARITHMETIC goal `Acc LexLt l` by
+    -- reducing a hypothesis to `False` imports `Classical.choice`, exactly as a bare `omega`
+    -- does — see §10's `acc_of_cn_aux`.  Discharging the contradiction explicitly does not.
+    | cons a t => exact absurd hl (Nat.succ_ne_zero t.length)
   | n + 1, l, hl => by
     cases l with
-    | nil => simp at hl
+    | nil => exact Nat.noConfusion hl
     | cons a t =>
       have ht : t.length = n := by simp only [List.length_cons] at hl; omega
       exact acc_cons_aux n (fun l' hl' => acc_lexLt n l' hl') a a (Nat.le_refl a) t ht
@@ -2239,7 +2242,18 @@ private theorem acc_pow_aux : ∀ (a : Term), Acc RC a → CN a = true →
 private theorem acc_of_cn_aux : ∀ (n : Nat) (t : Term), t.deg ≤ n → CN t = true → Acc RC t := by
   intro n
   induction n with
-  | zero => intro t hd _; have := deg_pos t; omega
+  -- `exact absurd …`, NOT `omega` on the goal directly.  **`omega` closing a NON-ARITHMETIC goal
+  -- (`Acc RC t`) from contradictory hypotheses routes through `Classical.byContradiction` and pulls
+  -- `Classical.choice` into this lemma and into EVERYTHING DOWNSTREAM OF IT** — including a
+  -- consumer's well-founded definition, where it is invisible at the use site.  Sending the same
+  -- contradiction through `absurd` keeps `omega` on an arithmetic goal and costs nothing.
+  -- MEASURED, NOT PREDICTED — six names came clean when the twin (`acc_cnv_aux`) was fixed:
+  --   acc_cnv · acc_cnv_inT · acc_inT_below_cnv · wf_lt_cnv · wf_lt_belowC · belowC_wf
+  -- and with them the certificate lane's `encvC` / `encv'`, verified independently by the
+  -- coordinator after a full build.  A repo-wide sweep then found four such roots in this file
+  -- (here, `acc_cnv_aux`, the three `cof_*_aux`, `acc_lexLt`) tainting 34 declarations, of which
+  -- 28 were the `lim_clauses_*` row supply.  DO NOT "simplify" it back to a bare `omega`.
+  | zero => intro t hd _; exact absurd hd (by have := deg_pos t; omega)
   | succ n ih =>
     intro t hd hcn
     cases t with
@@ -8606,7 +8620,12 @@ private theorem acc_phi_v : ∀ (a : Term), Acc RV a → CNV a = true →
 private theorem acc_cnv_aux : ∀ (n : Nat) (t : Term), t.deg ≤ n → CNV t = true → Acc RV t := by
   intro n
   induction n with
-  | zero => intro t hd _; have := deg_pos t; omega
+  -- `exact absurd …`, NOT a bare `omega` — see §10's `acc_of_cn_aux` for the full reason.
+  -- THIS is the site that mattered: the bare `omega` here put `Classical.choice` into `acc_cnv`,
+  -- `acc_cnv_inT`, `acc_inT_below_cnv`, `wf_lt_cnv`, `wf_lt_belowC` and hence into the certificate
+  -- lane's `encvC`/`encv'`, while `acc_sum`, `acc_phi_v`, `acc_zero_v`, `cnv_phi`, `cnv_add` and
+  -- `deg_pos` were all clean — which is why bisecting the DEPENDENCIES never found it.
+  | zero => intro t hd _; exact absurd hd (by have := deg_pos t; omega)
   | succ n ih =>
     intro t hd hcn
     cases t with
@@ -9465,7 +9484,9 @@ private theorem cof_fsGen_aux {v u base a b : Term}
       ∃ m, le s (fsGen v u base m) = true := by
   intro n
   induction n with
-  | zero => intro s hd _ _; have := deg_pos s; omega
+  -- `exact absurd …`, NOT a bare `omega`: see §10's `acc_of_cn_aux`.  The goal here is the
+  -- cofinality existential, which is NOT arithmetic, so a bare `omega` imports `Classical.choice`.
+  | zero => intro s hd _ _; exact absurd hd (by have := deg_pos s; omega)
   | succ n ih =>
     intro s hd hs hlt
     cases s with
@@ -9743,7 +9764,9 @@ private theorem cof_phiArg_aux {a b : Term} (g : Nat → Term)
       ∃ m, le s (phi a (g m)) = true := by
   intro n
   induction n with
-  | zero => intro s hd _ _; have := deg_pos s; omega
+  -- `exact absurd …`, NOT a bare `omega`: see §10's `acc_of_cn_aux`.  The goal here is the
+  -- cofinality existential, which is NOT arithmetic, so a bare `omega` imports `Classical.choice`.
+  | zero => intro s hd _ _; exact absurd hd (by have := deg_pos s; omega)
   | succ n ih =>
     intro s hd hs hlt
     cases s with
@@ -11467,7 +11490,9 @@ private theorem cof_phiArg1_aux {a : Term} (g : Nat → Term)
       ∃ m, le s (phi (g m) zero) = true := by
   intro n
   induction n with
-  | zero => intro s hd _ _; have := deg_pos s; omega
+  -- `exact absurd …`, NOT a bare `omega`: see §10's `acc_of_cn_aux`.  The goal here is the
+  -- cofinality existential, which is NOT arithmetic, so a bare `omega` imports `Classical.choice`.
+  | zero => intro s hd _ _; exact absurd hd (by have := deg_pos s; omega)
   | succ n ih =>
     intro s hd hs hlt
     cases s with
