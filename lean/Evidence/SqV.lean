@@ -2941,4 +2941,365 @@ def gpool : List Term := (pool ++ junk).eraseDups
 #guard ((gpool.filter (fun t => !(TM.Term.inT t))).filter (fun s =>
           !(TM.Term.inT (TM.Term.plus s one)))).length == 37
 
+/-! ### §15.5 `land_predOr` — BOTH HALVES PROVED, AND THE INTERFACE FINDING THAT CAME WITH THEM
+
+**THE FINDING FIRST, BECAUSE IT IS A STRENGTHENED HYPOTHESIS AND THOSE GET REPORTED, NOT TAKEN.**
+§15.3 routed `lt a (φ̄(a,b))` to the WF lane and it came back (`Evidence.WF.lt_phi_fst`, WF §15.26),
+together with `lt_phi_of_le_fst`.  Both are `CNV`-GATED, and so is §15.5's `lt_phi_self`:
+
+    lt_phi_self       (hx : CNV x)                         : lt x (φ̄(u,x))
+    lt_phi_fst        (ha : CNV a)                         : lt a (φ̄(a,b))
+    lt_phi_of_le_fst  (hx : CNV x) (ha : CNV a) (le x a)   : lt x (φ̄(a,b))
+
+So `land_predOr`'s `lt` half needs `CNV` AT THE PARENT.  §15's negotiated shape has `inT t`, and
+the `BelowC` carrier transports `inT t` and `lt t v` and NOT `CNV t` — so at a depth-2 step the
+hypothesis is not there.  **The bounded form and the `lt` half do not compose.**  That is a
+hypothesis strengthening on an interface the consumer already accepted, so it went to veblen2 as
+a request.  Nothing here depends on the answer: `lt (predOr a) a` is needed under every option.
+
+**AND I DID NOT ASSUME THE `inT` ANALOGUES ARE FALSE — I MEASURED THEM.**  The corpora hold
+exactly ONE `inT`-non-`CNV` `φ̄`-headed term, so the class was GENERATED for the purpose rather
+than sieved, which is the rule §15.25 states in WF and which this file has now used three times:
+
+    generated `inT`-non-`CNV` `φ̄` terms                        40
+    of those, `lt b (φ̄(a,b))` fails on                          0
+    of those, `lt a (φ̄(a,b))` fails on                          0
+
+They are TRUE and they do not EXIST.  So it is a cost question, not a truth question, and the
+recommendation sent with it was `CNV` — not from preference but because **the repo's machinery is
+all on the `CNV` side**: `plus_one_eq_succT`, `lt_succT`, `cnv_succT` (WF 11367 / 11920 / 11956)
+are what turn both halves below into three lines, and the `inT` side has no `succT` chain at all.
+
+**THE THIRD OPTION, WHICH WOULD MAKE THE QUESTION DISAPPEAR**, measured because it costs one
+`#eval` and would save an interface change.  If `inT t → CNV v → lt t v → CNV t` held, `CNV`
+would be free on `BelowC v` and the two forms would coincide:
+
+    generated `inT`-non-`CNV` terms   63  ×  `CNV` bounds  172   =  10836 pairs
+    pairs with `lt t v`                                              0
+
+No `inT`-non-`CNV` term is below ANY `CNV` term.  Targeted probes agree — `ψ_{Z0}(0)`, `ψ_{Z1}(0)`,
+`ψ_{Z(Z0)}(0)`, `Z0`, `Z1`, `Zω` are none of them below `φ̄(1,0)` or `φ̄(φ̄(1,0),0)`, which is the
+reading that `CNV` tops out at the Veblen closure of `0` and everything else starts at or above it.
+**It is a measurement and it is an ORDER fact, so it is routed, not claimed.**
+
+**WHAT THE MEASUREMENT POINTED AT, AND WHAT THE PROOF ACTUALLY DID — they are not the same, and
+the difference is worth recording.**  The measurement that opened the route was that `predOr`
+IS the repo's own structural predecessor:
+
+    `predOr t ≠ t`  ↔  `kindV t`                    0 violations of 169 + 215 `CNV` terms
+    `predOr t = predC t`  where `kindV t`           0 violations of 39 + 40
+
+That said "reuse `succT_predC`".  The proof below does NOT use `predC` — `succT (predOr t) = t`
+comes out directly from `splitFin_rebuild`, so the bridge lemma was never needed.  The guards stay
+as an independent cross-check that my `predOr` and WF's `predC` agree where both are defined; what
+the measurement bought was the STRUCTURE (`predOr` is a successor's predecessor), not the route.
+
+THE CHAIN, and every step of it is a fact about `plus`/`toList`, not about the order:
+
+    trailing_ones            the trailing `1`s of a component list split off  (pure `List`)
+    cnv_toList_isAP          every component of a `CNV` term is additively principal
+    ofList_toList_cnv        `ofList` inverts `toList` on `CNV`
+    cnv_ofList_take          §15.1's measurement, `CNV` side — and EASIER than the `inT` side,
+                             because `CNV`'s `add` clause is uniform where 2.1(iii) branches
+    plus_ofNat_spec          `plus g (ofNat m)` is `CNV` and its list is `toList g ++ 1ᵐ`
+    plus_ofNat_step          `plus g (ofNat (m+1)) = succT (plus g (ofNat m))`  ← §15.4's fact
+    splitFin_rebuild         `plus (splitFin t).1 (ofNat (splitFin t).2) = t`
+    succT_predOr             `succT (predOr t) = t` when the finite part is a successor
+    cnv_predOr / lt_predOr   the two halves
+
+**§15.4's two measured facts are `plus_ofNat_step` and `plus_ofNat_spec.1`, and both are proved.**
+The `m`-indexed one is the induction §15.4 predicted; the single step is `ofList_toList_snoc`. -/
+
+section
+open Evidence.WF (CNV cnv_add succT cnv_succT lt_succT plus_ofNat_succ toList_ofNat
+  ofList_toList_snoc toList_ne_nil hdLe hdOf hdLe_eq hdLe_of_isAP)
+
+/-- The trailing `1`s of a component list split off cleanly.  Pure `List`, no term content —
+    it is the only place `splitFin`'s `takeWhile` has to be unfolded. -/
+theorem trailing_ones : ∀ (r : List Term),
+    (r.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate ((r.takeWhile (fun x => x == one)).length) one = r.reverse := by
+  intro r
+  induction r with
+  | nil => rfl
+  | cons a t ih =>
+    by_cases h : (a == one) = true
+    · have ha : a = one := by simpa using h
+      rw [List.dropWhile_cons_of_pos (p := fun x => x == one) h,
+          List.takeWhile_cons_of_pos (p := fun x => x == one) h,
+          List.length_cons, List.replicate_succ', ← List.append_assoc, ih,
+          List.reverse_cons, ha]
+    · rw [List.dropWhile_cons_of_neg (p := fun x => x == one) (by simpa using h),
+          List.takeWhile_cons_of_neg (p := fun x => x == one) (by simpa using h),
+          List.length_nil, show List.replicate 0 one = [] from rfl, List.append_nil]
+
+/-- Every component of a `CNV` term is additively principal. -/
+theorem cnv_toList_isAP : ∀ (t : Term), CNV t = true → ∀ x ∈ toList t, x.isAP = true := by
+  intro t
+  induction t with
+  | zero => intro _ x hx; simp only [toList] at hx; exact absurd hx (List.not_mem_nil)
+  | M => intro h _ _; exact Bool.noConfusion h
+  | omg _ _ => intro h _ _; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h _ _; exact Bool.noConfusion h
+  | Z _ _ => intro h _ _; exact Bool.noConfusion h
+  | phi p q _ _ => intro _ x hx; simp only [toList, List.mem_singleton] at hx; rw [hx]; rfl
+  | add c d _ ihd =>
+    intro h x hx
+    obtain ⟨hAPc, _, hcnd, _⟩ := cnv_add h
+    simp only [toList, List.mem_cons] at hx
+    rcases hx with hx | hx
+    · rw [hx]; exact hAPc
+    · exact ihd hcnd x hx
+
+/-- `ofList` inverts `toList` on `CNV`.  (`add u 0` is the counterexample off `CNV`.) -/
+theorem ofList_toList_cnv : ∀ (t : Term), CNV t = true → ofList (toList t) = t := by
+  intro t
+  induction t with
+  | zero => intro _; rfl
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | phi _ _ _ _ => intro _; rfl
+  | add c d _ ihd =>
+    intro h
+    obtain ⟨_, _, hcnd, hdesc⟩ := cnv_add h
+    have hdz : d ≠ zero := by intro hc; rw [hc] at hdesc; exact Bool.noConfusion hdesc
+    have hne := toList_ne_nil d hcnd hdz
+    show ofList (c :: toList d) = TM.Term.add c d
+    cases hl : toList d with
+    | nil => exact absurd hl hne
+    | cons e rest =>
+      show TM.Term.add c (ofList (e :: rest)) = TM.Term.add c d
+      rw [← hl, ihd hcnd]
+
+theorem cnv_add_intro {u y : Term} (hu : u.isAP = true) (hcu : CNV u = true)
+    (hcy : CNV y = true) (hhd : hdLe y u = true) : CNV (TM.Term.add u y) = true := by
+  show (u.isAP && CNV u && CNV y && hdLe y u) = true
+  rw [hu, hcu, hcy, hhd]; rfl
+
+/-- The head of a component list IS the term's head component. -/
+theorem hdOf_of_toList : ∀ {d e : Term} {rst : List Term},
+    toList d = e :: rst → hdOf d = e := by
+  intro d e rst h
+  cases d with
+  | zero => exact absurd h (by simp [toList])
+  | add a b => injection h with h1 _
+  | M => injection h with h1 _
+  | omg _ => injection h with h1 _
+  | psi _ _ => injection h with h1 _
+  | Z _ => injection h with h1 _
+  | phi _ _ => injection h with h1 _
+
+theorem hdLe_ofList_cons {e : Term} (he : e.isAP = true) (rest : List Term) (c : Term) :
+    hdLe (ofList (e :: rest)) c = TM.Term.le e c := by
+  cases rest with
+  | nil => exact hdLe_of_isAP he c
+  | cons w ws => rfl
+
+/-- **`CNV` SURVIVES `ofList ∘ take`** — §15.1's measurement, on the `CNV` side.  ONE
+    introduction lemma suffices where the `inT` side needed two, because `CNV`'s `add` clause
+    does not branch on the tail's shape. -/
+theorem cnv_ofList_take : ∀ (b : Term) (k : Nat),
+    CNV b = true → CNV (ofList ((toList b).take k)) = true := by
+  intro b
+  induction b with
+  | zero => intro k _; simp only [toList, List.take_nil, ofList]; rfl
+  | M => intro _ h; exact Bool.noConfusion h
+  | omg _ _ => intro _ h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro _ h; exact Bool.noConfusion h
+  | Z _ _ => intro _ h; exact Bool.noConfusion h
+  | phi p q _ _ =>
+    intro k h
+    cases k <;> simp only [toList, List.take, List.take_nil, ofList] <;> first | rfl | exact h
+  | add c d _ ihd =>
+    intro k h
+    obtain ⟨hAPc, hcnc, hcnd, hdesc⟩ := cnv_add h
+    cases k with
+    | zero => simp only [toList, List.take_zero, ofList]; rfl
+    | succ j =>
+      simp only [toList, List.take_succ_cons]
+      cases hL : (toList d).take j with
+      | nil => simp only [ofList]; exact hcnc
+      | cons e rest =>
+        have hce : CNV (ofList (e :: rest)) = true := by
+          have := ihd j hcnd; rwa [hL] at this
+        obtain ⟨rst, hd⟩ := head_of_take hL
+        have hdz : d ≠ zero := by
+          intro hc; rw [hc] at hd; simp only [toList] at hd; exact absurd hd (by simp)
+        have hhd : hdOf d = e := hdOf_of_toList hd
+        have hec : TM.Term.le e c = true := by
+          rw [hdLe_eq d c hdz, hhd] at hdesc; exact hdesc
+        have heAP : e.isAP = true := by
+          have : e ∈ toList d := by rw [hd]; exact List.mem_cons_self
+          exact cnv_toList_isAP d hcnd e this
+        exact cnv_add_intro hAPc hcnc hce (by rw [hdLe_ofList_cons heAP rest c]; exact hec)
+
+/-- `plus g (ofNat m)` is `CNV`, and its component list is `toList g` with `m` ones appended. -/
+theorem plus_ofNat_spec : ∀ (g : Term), CNV g = true → ∀ m,
+    CNV (plus g (ofNat m)) = true ∧
+      toList (plus g (ofNat m)) = toList g ++ List.replicate m one := by
+  intro g hg m
+  induction m with
+  | zero => exact ⟨hg, (List.append_nil _).symm⟩
+  | succ m ih =>
+    have hEq : plus g (ofNat (m + 1)) = ofList (toList g ++ List.replicate (m + 1) one) := by
+      rw [plus_ofNat_succ g hg m, toList_ofNat (m + 1)]
+    have hAP : ∀ x ∈ toList g ++ List.replicate (m + 1) one, x.isAP = true := by
+      intro x hx
+      rcases List.mem_append.mp hx with h | h
+      · exact cnv_toList_isAP g hg x h
+      · rw [List.eq_of_mem_replicate h]; rfl
+    have hSucc : plus g (ofNat (m + 1)) = succT (plus g (ofNat m)) := by
+      rw [← ofList_toList_snoc (plus g (ofNat m)) ih.1, ih.2, hEq,
+          List.append_assoc, ← List.replicate_succ']
+    exact ⟨by rw [hSucc]; exact cnv_succT _ ih.1, by rw [hEq, TM.Term.toList_ofList hAP]⟩
+
+/-- **§15.4'S `m`-INDEXED FACT** — the induction it predicted, over `ofList_toList_snoc`. -/
+theorem plus_ofNat_step (g : Term) (hg : CNV g = true) (m : Nat) :
+    plus g (ofNat (m + 1)) = succT (plus g (ofNat m)) := by
+  have ih := plus_ofNat_spec g hg m
+  rw [← ofList_toList_snoc (plus g (ofNat m)) ih.1, ih.2,
+      plus_ofNat_succ g hg m, toList_ofNat (m + 1), List.append_assoc, ← List.replicate_succ']
+
+theorem take_of_append_replicate {X : List Term} {k : Nat} {l : List Term}
+    (h : X ++ List.replicate k one = l) : l.take (l.length - k) = X := by
+  subst h
+  rw [List.length_append, List.length_replicate,
+      show X.length + k - k = X.length from by omega, List.take_left]
+
+/-- `splitFin`'s first component, as a `dropWhile` on the reversed component list. -/
+theorem splitFin_fst (t : Term) :
+    (TM.Term.splitFin t).1
+      = ofList (((toList t).reverse.dropWhile (fun x => x == one)).reverse) := by
+  have hF1 : ((toList t).reverse.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate (((toList t).reverse.takeWhile (fun x => x == one)).length) one
+      = toList t := by
+    have h := trailing_ones (toList t).reverse
+    rwa [List.reverse_reverse] at h
+  show ofList ((toList t).take
+      ((toList t).length - ((toList t).reverse.takeWhile (fun x => x == one)).length)) = _
+  rw [take_of_append_replicate hF1]
+
+/-- **`splitFin` REBUILDS ITS ARGUMENT** — `t = γ + m` for `(γ, m) = splitFin t`. -/
+theorem splitFin_rebuild (t : Term) (ht : CNV t = true) :
+    plus (TM.Term.splitFin t).1 (ofNat (TM.Term.splitFin t).2) = t := by
+  have hcg : CNV (TM.Term.splitFin t).1 = true :=
+    cnv_ofList_take t ((toList t).length
+      - ((toList t).reverse.takeWhile (fun x => x == one)).length) ht
+  have hF1 : ((toList t).reverse.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate (((toList t).reverse.takeWhile (fun x => x == one)).length) one
+      = toList t := by
+    have h := trailing_ones (toList t).reverse
+    rwa [List.reverse_reverse] at h
+  have hAP : ∀ x ∈ ((toList t).reverse.dropWhile (fun x => x == one)).reverse, x.isAP = true := by
+    intro x hx
+    exact cnv_toList_isAP t ht x (by rw [← hF1]; exact List.mem_append_left _ hx)
+  have hg : toList (TM.Term.splitFin t).1
+      = ((toList t).reverse.dropWhile (fun x => x == one)).reverse := by
+    rw [splitFin_fst t, TM.Term.toList_ofList hAP]
+  have hspec := plus_ofNat_spec _ hcg (TM.Term.splitFin t).2
+  have hto : toList (plus (TM.Term.splitFin t).1 (ofNat (TM.Term.splitFin t).2)) = toList t := by
+    rw [hspec.2, hg]; exact hF1
+  rw [← ofList_toList_cnv _ hspec.1, hto, ofList_toList_cnv t ht]
+
+theorem predOr_eq {t : Term} {m : Nat} (hm : (TM.Term.splitFin t).2 = m + 1) :
+    predOr t = plus (TM.Term.splitFin t).1 (ofNat m) := by
+  show (match TM.Term.splitFin t with | (_, 0) => t | (g, k + 1) => plus g (ofNat k)) = _
+  cases hs : TM.Term.splitFin t with
+  | mk g k =>
+    rw [hs] at hm
+    have hk : k = m + 1 := hm
+    subst hk
+    rfl
+
+theorem predOr_eq_self {t : Term} (hm : (TM.Term.splitFin t).2 = 0) : predOr t = t := by
+  show (match TM.Term.splitFin t with | (_, 0) => t | (g, k + 1) => plus g (ofNat k)) = _
+  cases hs : TM.Term.splitFin t with
+  | mk g k => rw [hs] at hm; have hk : k = 0 := hm; subst hk; rfl
+
+/-- **`predOr` IS A SUCCESSOR'S PREDECESSOR** — the fact the `predC` measurement pointed at,
+    proved without `predC`. -/
+theorem succT_predOr {t : Term} (ht : CNV t = true) {m : Nat}
+    (hm : (TM.Term.splitFin t).2 = m + 1) : succT (predOr t) = t := by
+  have hcg : CNV (TM.Term.splitFin t).1 = true :=
+    cnv_ofList_take t ((toList t).length
+      - ((toList t).reverse.takeWhile (fun x => x == one)).length) ht
+  rw [predOr_eq hm, ← plus_ofNat_step _ hcg m, ← hm]
+  exact splitFin_rebuild t ht
+
+/-- **`land_predOr`'s `CNV` HALF.**  No hypothesis that `predOr` moves — it holds either way. -/
+theorem cnv_predOr {t : Term} (ht : CNV t = true) : CNV (predOr t) = true := by
+  cases hm : (TM.Term.splitFin t).2 with
+  | zero => rw [predOr_eq_self hm]; exact ht
+  | succ m =>
+    have hcg : CNV (TM.Term.splitFin t).1 = true :=
+      cnv_ofList_take t ((toList t).length
+        - ((toList t).reverse.takeWhile (fun x => x == one)).length) ht
+    rw [predOr_eq hm]
+    exact (plus_ofNat_spec _ hcg m).1
+
+/-- **`land_predOr`'s `lt` HALF**, against the site's own argument.  The parent `φ̄(a,b)` is one
+    `lt_phi_of_le_fst` away and that lemma is `CNV`-gated, which is the finding above. -/
+theorem lt_predOr {t : Term} (ht : CNV t = true) (hmv : predOr t ≠ t) :
+    lt (predOr t) t = true := by
+  cases hm : (TM.Term.splitFin t).2 with
+  | zero => exact absurd (predOr_eq_self hm) hmv
+  | succ m =>
+    have h := lt_succT (predOr t) (cnv_predOr ht)
+    rwa [succT_predOr ht hm] at h
+
+end
+
+/-! The `predC` cross-check, kept because it is independent of the proof above: my `predOr` and
+    WF's `predC` agree wherever both are defined, so the two lanes' notions of "step down by one"
+    are the same notion. -/
+
+#guard (cnvPool.filter (fun t => (!(predOr t == t)) != (Evidence.WF.kindV t))).length == 0
+#guard ((gpool.filter (fun t => Evidence.WF.CNV t)).filter
+          (fun t => (!(predOr t == t)) != (Evidence.WF.kindV t))).length == 0
+#guard (gpool.filter (fun t => Evidence.WF.CNV t)).length == 215
+#guard ((cnvPool.filter (fun t => Evidence.WF.kindV t)).filter
+          (fun t => !(predOr t == Evidence.WF.predC t))).length == 0
+#guard (cnvPool.filter (fun t => Evidence.WF.kindV t)).length == 39
+#guard ((gpool.filter (fun t => Evidence.WF.CNV t && Evidence.WF.kindV t)).filter
+          (fun t => !(predOr t == Evidence.WF.predC t))).length == 0
+#guard (gpool.filter (fun t => Evidence.WF.CNV t && Evidence.WF.kindV t)).length == 40
+
+/-! The finding's evidence: the `inT`-non-`CNV` class, GENERATED rather than sieved. -/
+
+def ncArgs : List Term := [TM.Term.M, TM.Term.Z TM.Term.M, TM.Term.Z zero,
+  TM.Term.omg TM.Term.M, TM.Term.psi TM.Term.M zero, TM.Term.psi (TM.Term.Z TM.Term.M) zero,
+  TM.Term.add TM.Term.M one, phi zero (TM.Term.Z TM.Term.M)]
+
+def ncSeeds : List Term := ncArgs ++ [zero, one, omega]
+
+def ncPhis2 : List (Term × Term) :=
+  (ncSeeds.flatMap (fun a => ncSeeds.map (fun b => (a, b)))).filter
+    (fun p => TM.Term.inT (phi p.1 p.2) && !(Evidence.WF.CNV (phi p.1 p.2)))
+
+def ncAll : List Term :=
+  (((gpool ++ inTpool).eraseDups ++ ncArgs
+    ++ ncSeeds.flatMap (fun a => ncSeeds.map (fun b => phi a b))
+    ++ ncArgs.flatMap (fun a => ncArgs.map (fun b => TM.Term.add a b))).eraseDups).filter
+  (fun t => TM.Term.inT t && !(Evidence.WF.CNV t))
+
+def cnvBounds : List Term := cnvPool ++ [phi omega zero, phi (phi one zero) zero,
+  phi (phi (phi one zero) zero) zero]
+
+-- the corpora hold ONE such `phi` term, so the class is generated
+#guard (((gpool ++ inTpool).eraseDups).filter
+          (fun t => TM.Term.inT t && !(Evidence.WF.CNV t))).length == 6
+#guard ((((gpool ++ inTpool).eraseDups).filter
+          (fun t => TM.Term.inT t && !(Evidence.WF.CNV t))).filter
+          (fun t => match t with | .phi _ _ => true | _ => false)).length == 1
+#guard ncPhis2.eraseDups.length == 40
+#guard (ncPhis2.eraseDups.filter (fun p => !(lt p.2 (phi p.1 p.2)))).length == 0
+#guard (ncPhis2.eraseDups.filter (fun p => !(lt p.1 (phi p.1 p.2)))).length == 0
+-- and the third option: no `inT`-non-`CNV` term is below ANY `CNV` term
+#guard ncAll.length == 63
+#guard cnvBounds.length == 172
+#guard (cnvBounds.filter (fun v => Evidence.WF.CNV v)).length == 172
+#guard (ncAll.flatMap (fun t => (cnvBounds.filter (fun v => lt t v)).map (fun v => (t, v)))).length == 0
+
 end Evidence.SqV
