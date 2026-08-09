@@ -200,7 +200,7 @@ def fpDeepF : Nat → Term → Term → Option Term
   | f + 1, a, t =>
       if TM.Term.isFP a t then some t
       else match t with
-        | .phi .zero x => (summands (TM.Term.splitFin x).1).findSome? (fpDeepF f a)
+        | .phi _ x => (summands (TM.Term.splitFin x).1).findSome? (fpDeepF f a)
         | _ => none
 
 def fpDeep (a t : Term) : Option Term := fpDeepF (t.deg + 4) a t
@@ -243,7 +243,7 @@ def encvF : Nat → Term → Nat → List Col2
       -- correctly and emitted a NON-STANDARD matrix.
       if TM.Term.isFP a (gs.headD zero) then
         encvF f (gs.headD zero) d
-          ++ (if gs.length == 1 then [((d + 1, if a == zero then 0 else 1) : Col2)]
+          ++ (if gs.length == 1 then (if a == zero then [((d + 1, 0) : Col2)] else ladder)
               else mkBlocks (gs.drop 1))
           ++ reps
       else
@@ -819,9 +819,55 @@ The old corpus is unchanged throughout: 0/0/0/234, `openCases` 0, `mixed` 0.
 
 Ten terms, every one of the shape `φ̄(a, b)` with `a ∈ {2, ω}`: a LADDER of two or more
 levels.  Their own encodings are right — they pass D1, D4 and D6 — and their expansions
-leave the image of `sqv`.  No cause is claimed here; the next step is the one that has
-worked twice and reasoning-from-failures has failed twice, namely searching for the true
-matrices of `expand (sqv t) n` and reading the rule off them. -/
+leave the image of `sqv`.
+
+### §5.6 β, DIAGNOSED AND FIXED — one predicted half and one that was not
+
+STATED BEFORE THE SEARCH, as a prediction: β would be the failure-class-(a) mechanism
+(the LADDER TAIL repeating) appearing at the ladder position rather than the subscript
+position, with `sqv` emitting a single marker column where a repeat belongs.
+
+HALF RIGHT, and the other half was the more interesting one.
+
+  β2 — CONFIRMED.  The collapse clause appends `[(d+1, 0 or 1)]`, ONE column, where it
+  must append the LADDER.  For `a ≤ 1` the ladder IS one column (`predOr 1 = 0`, so its
+  tail is empty), which is why 234 corpus terms and every earlier candidate agreed with
+  the single-column form.  The fifth appearance of the night's pattern: a distinction
+  that a region collapses.
+      φ̄(2, φ̄(ω,0))   wants (0,0)(1,1)(2,1)(3,0)(1,1)(2,1)   — `(1,1)(2,1)` is the ladder
+      candidate 12 gave (0,0)(1,1)(2,1)(3,0)(1,1)
+
+  β1 — NOT PREDICTED, and it is §5.2's cause B one layer up.  `fpDeep` descends only
+  through `φ̄(0,·)`, so a fixed point sitting under a `φ̄(1,·)` is invisible:
+      φ̄(1, φ̄(1,ζ₀))  wants (0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)
+      candidate 12 gave (0,0)(1,1)(2,0)(3,1)(4,1)(3,1)
+  Dropping the `c == zero` restriction — descend through ANY `φ̄` layer — finds ζ₀ and
+  the existing branch produces the rest unchanged.  I had fixed cause B for the layer
+  the corpus could see and stated it as if it were the rule.
+
+ABLATION, because "both changes together fix it" does not say both were needed:
+
+    β1 alone        D5  35 → 20 pairs, 10 → 5 terms
+    β1 and β2       D5  35 →  0 pairs, 10 → 0 terms
+
+CANDIDATE 13 — ALL SIX GREEN on `corpusW`:
+
+                              cand 8      cand 12     cand 13
+    D1 round trip             16 / 269    0 / 269     0 / 269
+    D2 table rows              0 / 5      0 / 5       0 / 5
+    D3 discriminators          0 / 3      0 / 3       0 / 3
+    D4 NON-STANDARD           12 / 267    0 / 267     0 / 267
+    D5 image closure         130 / 1076  35 / 1076    0 / 1076
+    D6 order preservation   1923 / 72361  0 / 72361   0 / 72361
+
+Old corpus unchanged: 0/0/0/234, `openCases` 0, `mixed` 0.
+
+AND WHAT GREEN MEANS, MEASURED RATHER THAN ASSUMED (§5.1a).  `corpusW`'s fixed-point
+depth distribution is `[169, 10, 5, 5, 0]`: it reaches depths 0–3 and stops at 4.  The
+`deeper` probe supplies depth 4 — 5 such terms, all `inT` — and all six dimensions are
+green there too, `bms -s` included.  **That is the first time in this file that widening
+the corpus did not find something**, which is a weak positive and is reported as one:
+five terms is a check, not a sweep. -/
 
 def nestedFP : Term → Bool
   | .zero => false
@@ -849,6 +895,55 @@ def nested : List Term :=
   ++ mids.map (fun m => phi one (plus m one))
 
 def corpusW : List Term := corpus ++ nested
+
+/-! ### §5.1a THE DEEPER CLASS — where `corpusW` itself stops
+
+`nestedFP` is a yes/no test, and answering it with 25 of 35 says the widened corpus
+reaches the class the OLD one could not.  It says nothing about where the NEW one stops,
+and every green suite in this file so far has been green because of exactly that.  So
+the same question is asked one level up, as a NUMBER rather than a predicate:
+`fpReach t` is how many `φ̄` layers you descend, through subscripts, before meeting a
+fixed point of `φ̄0` — `none` if there is none.  The distribution over `corpusW` is the
+map of what the corpus can and cannot see, and the smallest `k` whose count is 0 is the
+first class no dimension of this file can currently reach. -/
+
+def fpReachF : Nat → Term → Option Nat
+  | 0, _ => none
+  | f + 1, t =>
+      if TM.Term.isFP zero t then some 0
+      else match t with
+        | .phi _ x => ((summands (TM.Term.splitFin x).1).findSome? (fpReachF f)).map (· + 1)
+        | .add u v =>
+            match fpReachF f u, fpReachF f v with
+            | some a, some b => some (min a b)
+            | some a, none => some a
+            | none, some b => some b
+            | none, none => none
+        | _ => none
+
+def fpReach (t : Term) : Option Nat := fpReachF (t.deg + 4) t
+
+-- the distribution: how many corpusW terms reach a fixed point at depth 0, 1, 2, 3, 4
+#eval (List.range 5).map (fun k => (corpusW.filter (fun t => fpReach t == some k)).length)
+
+/-! `corpusW` gives `[169, 10, 5, 5, 0]` — it reaches depths 0 through 3 and STOPS AT 4,
+so "all six green" means "green on depths 0–3" and nothing more.  `deeper` is the probe
+at depth 4, kept OUTSIDE `corpusW` so the baseline table stays comparable.  It is 15
+terms of which 5 are at depth 4, all `inT`, and it is a SMALL probe — five terms is a
+check, not a sweep. -/
+
+def deeper : List Term :=
+  (mids.map (fun m => phi zero (phi zero (phi zero m))))
+  ++ (mids.map (fun m => phi one (phi zero (phi zero m))))
+  ++ (mids.map (fun m => phi (ofNat 2) (phi zero (phi zero m))))
+
+#eval ((List.range 7).map (fun k => (deeper.filter (fun t => fpReach t == some k)).length),
+       (deeper.filter (fun t => !(TM.Term.inT t))).length,
+       (deeper.filter (fun t => !(Trans.oR (sqv t) == some t))).length)
+
+#guard (deeper.filter (fun t => fpReach t == some 4)).length == 5
+#guard (deeper.filter (fun t => !(TM.Term.inT t))).length == 0
+#guard (deeper.filter (fun t => !(Trans.oR (sqv t) == some t))).length == 0
 
 #eval (corpus.length, (corpus.filter nestedFP).length,
        nested.length, (nested.filter nestedFP).length)
