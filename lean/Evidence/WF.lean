@@ -8950,6 +8950,41 @@ theorem acc_inT_below_cnv {v : Term} (hv : CNV v = true) (t : Term)
     (hin : inT t = true) (hlt : lt t v = true) : Acc RT t :=
   acc_cnv_inT t (cnv_of_lt_cnv hin hv hlt)
 
+
+/-! #### §15.2 The forms a consumer applies
+
+§13 exports `cn_of_lt_cn` AND `frag_of_lt_cn`, because the ε₀ cofinality proof consumes
+the second, not the first.  The Veblen-region analogue needs the same courtesy, and the
+`≤` forms besides: `Evidence/Cert.lean` states almost every order fact with `le` (its
+classification lemmas produce `le s (fs n)`), so a Veblen-region cofinality proof will
+apply these shapes rather than the `lt` ones.  All four are one-liners over §15.1; they
+exist so that a consumer never has to re-derive the packaging. -/
+
+/-- …hence `Frag`, hence §7's whole order theory applies to it.  This mirrors §13's
+    `frag_of_lt_cn`, which is the form the ε₀ cofinality proof actually consumes. -/
+theorem frag_of_lt_cnv {s y : Term} (hin : inT s = true) (hcn : CNV y = true)
+    (hlt : lt s y = true) : Frag s = true :=
+  frag_of_cnv s (cnv_of_lt_cnv hin hcn hlt)
+
+/-- The `≤` forms.  `Evidence/Cert.lean` states almost every order fact with `le` (its
+    classification lemmas produce `le s (fs n)`), so these are the shapes a Veblen-region
+    cofinality proof will actually apply. -/
+theorem cnv_of_le_cnv {s y : Term} (hin : inT s = true) (hcn : CNV y = true)
+    (hle : le s y = true) : CNV s = true := by
+  simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
+  rcases hle with rfl | hlt
+  · exact hcn
+  · exact cnv_of_lt_cnv hin hcn hlt
+
+theorem frag_of_le_cnv {s y : Term} (hin : inT s = true) (hcn : CNV y = true)
+    (hle : le s y = true) : Frag s = true :=
+  frag_of_cnv s (cnv_of_le_cnv hin hcn hle)
+
+/-- Accessibility in the `≤` form, for the same reason. -/
+theorem acc_inT_le_cnv {v : Term} (hv : CNV v = true) (t : Term)
+    (hin : inT t = true) (hle : le t v = true) : Acc RT t :=
+  acc_cnv_inT t (cnv_of_le_cnv hin hv hle)
+
 /-! Receipts for §15.1's calibration. -/
 
 #guard CNV (psi (Z zero) zero) == false        -- Γ₀ is the supremum, not a member
