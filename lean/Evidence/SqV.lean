@@ -2247,4 +2247,67 @@ the obstacle is that `g` has forgotten how it sat inside `a`. -/
           !(tdepth (TM.Term.plus g (ofNat k)) <= max (tdepth g) (k + 1)))
           (TM.Term.splitFin t).1 ((TM.Term.splitFin t).2 - 1))).length == 12
 
+
+/-! ## §12 `tdepth_predOr` IS FALSE, AND WITH IT `tdepth` AS THE MEASURE  (2026-08-10)
+
+The coordinator proposed measuring the goal itself, (D'), before choosing a decomposition.
+**It is false**, and the witness kills more than the branch:
+
+    t = (1 ⊕ (1⊕1)) ⊕ (1 ⊕ (1⊕1))        i.e. `add (ofNat 3) (ofNat 3)`
+        tdepth t        = 4
+        splitFin t      = (ofNat 3, 3)
+        predOr t        = ofNat 5
+        tdepth (predOr t) = 5              **5 > 4**
+
+THE MECHANISM is §11.6's, one level up.  `toList t = [ofNat 3, 1, 1, 1]` — the FIRST
+component is `add`-headed, so `splitFin` returns `g = ofNat 3` and `k = 2`, and
+`plus (ofNat 3) (ofNat 2) = ofNat 5` is a FLAT chain of five, deeper than the balanced
+`add` of two threes it came from.  **`predOr` can flatten, and flattening deepens.**
+
+**AND IT REFUTES THE MEASURE, NOT ONLY THE LEMMA.**  Hosting the witness as a `φ̄`
+argument breaks D8's key inequality directly:
+
+    minFuel ≤ tdepth on 9 host terms       6 VIOLATIONS
+    e.g. `φ̄(t, 0)` needs fuel 6 with tdepth 5
+
+So `tdepth` is NOT a valid measure for `encvF_saturate`: the induction on a bound
+`n ≥ tdepth t` cannot be discharged at the `predOr` site, and no repair of `tdepth_predOr`
+alone would fix it — the site's obligation is false.
+
+WHAT SURVIVES, and it is most of the work:
+  * §10's three named equations and §10.1's four congruences — no `tdepth` in them;
+  * `encvF_saturate`'s ASSEMBLY — every case, needing only that SOME measure works;
+  * `tdepth_summands`, `tdepth_headD`, `tdepth_fpDeep`, `tdepth_ofList_take`,
+    `tdepth_ofList_sublist`, `tdepth_ofList_toList`, `tdepth_pos` — all still true and
+    proved; they are facts about `tdepth`, and `tdepth` is still a function.
+WHAT DIES: `tdepth` as THE measure, and with it §9.1's plan and D8's green.
+
+**THE SATURATION ITSELF IS NOT REFUTED.**  `encvF (2*deg+8+k) t 0 = encv t 0` still holds
+on the host terms (0 violations, k ≤ 5).  The fuel `encv` chooses is still enough; what is
+wrong is the claim that `tdepth` bounds what it needs to be.
+
+NOTHING IS REPAIRED HERE.  The measure was changed once already (§9.2, `M` at depth 1) on
+an argument that the proof then consumed; a second repair without the coordinator is
+exactly what the standing instruction forbids. -/
+
+def badPredOr : Term := TM.Term.add (ofNat 3) (ofNat 3)
+
+def badHosts : List Term :=
+  [phi badPredOr zero, phi badPredOr one, phi badPredOr (phi one zero),
+   phi zero badPredOr, phi one badPredOr, phi badPredOr badPredOr,
+   phi (phi badPredOr zero) zero, TM.Term.add badPredOr one, phi badPredOr (ofNat 2)]
+
+-- the counterexample, banked as a live control
+#guard (tdepth badPredOr, tdepth (predOr badPredOr)) == (4, 5)
+#guard !(tdepth (predOr badPredOr) <= tdepth badPredOr)
+#guard (TM.Term.splitFin badPredOr).2 == 3
+#guard (TM.Term.inT badPredOr, Evidence.WF.CNV badPredOr,
+        (toList badPredOr).all (fun c => TM.Term.isAP c)) == (false, false, false)
+-- and the measure's own obligation failing at the host
+#guard (badHosts.filter (fun t =>
+          !(((List.range 80).find? (fun f => encvF f t 0 == encv t 0)).getD 199 <= tdepth t))).length == 6
+-- while the SATURATION still holds there
+#guard (badHosts.filter (fun t =>
+          !((List.range 6).all (fun k => encvF (2 * t.deg + 8 + k) t 0 == encv t 0)))).length == 0
+
 end Evidence.SqV
