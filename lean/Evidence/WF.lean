@@ -11641,6 +11641,49 @@ theorem lim_clauses_phiE0 :
   CNV (fsP30 n) && lt (fsP30 n) phi30 && lt (fsP30 n) (fsP30 (n+1)))
 
 
+/-! #### §15.18.2 ROUTING THE `φ̄0` BRANCHES — BOTH DIRECTIONS ARE BLOCKED
+
+A term `φ̄0(X)` is served by one of two templates, and X fixes which:
+
+    X = 1, or X = φ̄(p,q) with p ≠ 0   →  `lim_clauses_repAdd` (§15.4),  fs n = X·(n+1)
+    otherwise                          →  `lim_clauses_phi_arg` (§15.10) at a = 0,
+                                          fs n = φ̄0(g n) for X's own sequence g
+
+THIS CRITERION IS NOT A HYPOTHESIS OF ANY THEOREM AND MUST NOT BECOME ONE.  Each branch is
+already blocked at the other's terms — and, which a reader will otherwise miss, BY A DIFFERENT
+CLAUSE IN EACH DIRECTION:
+
+  * A NON-CRITERION X CANNOT ENTER THE repAdd BRANCH.  `lim_clauses_repAdd`'s HEAD BOUND —
+    §15.7's `le_pow_head`, which needs `0 < p` — is FALSE there.  MEASURED: at X = ω the bound
+    fails, and over a 3723-term `CNV` corpus the bound and the criterion agree exactly.
+    (At a 51-term corpus THREE terms appear to pass the bound without the criterion; all three
+    fail at 3723.  The small sweep is undersampled, not evidence of a gap — recorded because
+    it is the shape that gets reported as a finding.)
+  * A CRITERION X CANNOT ENTER THE (C) BRANCH.  COFINALITY fails: `φ̄0` skips fixed points, so
+    `φ̄0(g n)` has supremum X, strictly below `φ̄0(X)`.  MEASURED: at X = ε₀ the witness `s = ε₀`
+    is below the row and `le ε₀ (φ̄0(tower n))` is FALSE for every n ≤ 24; at X = ζ₀ likewise
+    to n ≤ 19.  This is §15.3's `fsV` counterexample, which already recorded it to n < 40 —
+    the guard was measured before this section existed.
+    POSITIVE CONTROL: at a non-criterion X (= ω^ω) the (C) branch IS cofinal, so the test
+    discriminates rather than failing everywhere.
+  * X = 1 IS BLOCKED FROM (C) FOR A THIRD REASON: `kindC 1 = true`, so `1` is a successor and
+    there is no inner limit sequence for (C) to consume at all.
+
+So a mis-route is an unprovable side condition, never a wrong sequence carrying four green
+clauses.  THE WITNESSES for the criterion's positive class, stated precisely because
+understating a claim is also mis-stating it: it is witnessed at `p = 1` (ε₀) and at `p = 2`
+(ζ₀), besides `X = 1`; what the sampling did not reach is `p ≥ 3`.  Nor will it be reached from
+the ζ₀..Γ₀ rows, whose large ordinals sit in the FIRST argument of `φ̄` rather than inside a
+`φ̄0` — that probe is structurally empty and does not need re-running. -/
+
+#guard lt eps0T (phi zero eps0T) == true                          -- ε₀ is below its own row …
+#guard ((List.range 25).any (fun n => le eps0T (phi zero (tower n)))) == false  -- … never caught
+#guard ((List.range 20).any (fun n => le zeta0 (phi zero (fsZeta0 n)))) == false
+#guard kindC one == true                                          -- 1 is a successor, so no (C)
+#guard (List.range 12).any (fun n =>
+  le (phi zero (phi zero (ofNat 2))) (phi zero (fsC omegaOmega n))) == true   -- control: (C) works
+
+
 /-! ### §8 receipts (samples of the measurements quoted above) -/
 
 -- STAGE 3 needs `inT`, and the conjunct it needs is `κ ∈ R` of 2.1(vi):
