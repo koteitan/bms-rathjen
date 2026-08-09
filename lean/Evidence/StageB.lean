@@ -3552,6 +3552,16 @@ def t4c (q c : Nat) : Term := phi (ofNat (c+1)) (phi zero (zt q))
 
 theorem kindT_t4b (q : Nat) : kindT (phi zero (zt q)) = KindT.isLim := rfl
 
+theorem phiShifted_t4b_gen (_q L : Nat) : phiShifted (ofNat L) (phi zero omega) = false := by
+  show (isFP (ofNat L) (splitFin (phi zero omega)).1
+        || (((phi zero omega : Term) == zero) && (ofNat L).isSC)) = false
+  rw [splitFin_phi_ne_one (show ((phi zero omega : Term) == one) = false from rfl)]
+  show ((((phi zero omega : Term).isSC && lt (ofNat L) (phi zero omega))
+        || lt (ofNat L) zero)
+        || (((phi zero omega : Term) == zero) && (ofNat L).isSC)) = false
+  rw [lt_lt_zero]
+  simp [isSC]
+
 theorem phiShifted_t4b (q L : Nat) : phiShifted (ofNat L) (phi zero (zt q)) = false := by
   show (isFP (ofNat L) (splitFin (phi zero (zt q))).1
         || (((phi zero (zt q) : Term) == zero) && (ofNat L).isSC)) = false
@@ -5258,5 +5268,340 @@ theorem esucc_M2z (q n : Nat) :
 #guard (List.range 5).all fun q => Trans.o? (M2 q ++ [[0,0]]) == some (plus (t0 q) one)
 #guard (List.range 4).all fun q => (List.range 4).all fun n =>
   Trans.o? (BMS.expand (M2 q ++ [[0,0]]) n) == some (t0 q)
+
+/-! ## §15 The family F6 : `(0,0)(1,1)…(a,1)(a+1,0)(a+2,0)` = `φ̄(a,ω^ω)`
+
+The first of the three "second-argument growers" of §14: the last column has row-1
+entry 0, so `t = 0` and every ascension amount vanishes; the bad root is the `(a+1,0)`
+column, so the bad part is that single column and the expansion is the ladder followed
+by `n+1` COPIES OF IT (no shift).  The run of identical row-0-positive columns reads as
+the natural number `n+1`, which the ladder's chain turns into `φ̄(a, ω^(n+1))`. -/
+
+def M6 (q : Nat) : Matrix := M2 q ++ [[q+3, 0]]
+
+theorem M2_eq (q : Nat) : M2 q = M1 q ++ [([q+2,0] : BMS.Col)] := by
+  show ([0,0] : BMS.Col) :: (ups 1 (q+1) ++ [[1+(q+1),0]]) = _
+  rw [show 1+(q+1) = q+2 from by omega]
+  rfl
+
+theorem len_M6 (q : Nat) : (M6 q).length = q + 4 := by
+  show ((M2 q) ++ [[q+3,0]]).length = q + 4
+  rw [List.length_append, len_M2]
+  rfl
+
+theorem ent_M6_lt (q x y : Nat) (h : x < q + 3) : BMS.ent (M6 q) x y = BMS.ent (M2 q) x y := by
+  show (((M2 q ++ [[q+3,0]]).getD x []).getD y 0) = (((M2 q).getD x []).getD y 0)
+  rw [getD_append_lt' _ _ x (by rw [len_M2]; omega)]
+
+theorem ent_M6_top (q y : Nat) : BMS.ent (M6 q) (q+3) y = ([q+3,0] : BMS.Col).getD y 0 := by
+  show (((M2 q ++ [[q+3,0]]).getD (q+3) []).getD y 0) = _
+  rw [getD_append_ge' _ _ (q+3) (by rw [len_M2]; omega), len_M2,
+    show q + 3 - (q+3) = 0 from by omega]
+  rfl
+
+theorem ent_M6_0 (q x : Nat) (h : x ≤ q+3) : BMS.ent (M6 q) x 0 = x := by
+  rcases Nat.lt_or_ge x (q+3) with h1 | h1
+  · rw [ent_M6_lt q x 0 h1, ent_M2_0 q x (by omega)]
+  · have hx : x = q+3 := by omega
+    subst hx
+    rw [ent_M6_top q 0]
+    rfl
+
+theorem parent0_M6_top (q : Nat) : BMS.parent (M6 q) 0 (q+3) = some (q+2) := by
+  show (((List.range (q+3)).filter
+      (fun p => decide (BMS.ent (M6 q) p 0 < BMS.ent (M6 q) (q+3) 0))).max?) = some (q+2)
+  rw [Evidence.StageA.max?_filter_range]
+  refine Evidence.StageA.lastSome_spec _ (q+3) (q+2) (by omega) ?_ ?_
+  · rw [ent_M6_0 q (q+2) (by omega), ent_M6_0 q (q+3) (by omega)]
+    exact decide_eq_true (by omega)
+  · intro r hr1 hr2
+    omega
+
+theorem delta_M6 (q y : Nat) : BMS.delta (M6 q) (q+2) 0 y = 0 := by
+  show (if y < 0 then _ else 0) = 0
+  rw [if_neg (by omega)]
+
+theorem take_M6 (q : Nat) : (M6 q).take (q+2) = M1 q := by
+  show (M2 q ++ [[q+3,0]]).take (q+2) = _
+  rw [List.take_append_of_le_length (by rw [len_M2]; omega), M2_eq q,
+    List.take_append_of_le_length (by rw [len_M1]; omega),
+    show q+2 = (M1 q).length from (len_M1 q).symm, List.take_length]
+
+theorem getLast_M6 (q : Nat) : (M6 q).getLast? = some ([q+3, 0] : BMS.Col) :=
+  List.getLast?_concat
+
+/-- **The F6 expansion**: the ladder, then `n+1` copies of the same `(a+1,0)` column. -/
+theorem expand_M6 (q n : Nat) :
+    BMS.expand? (M6 q) n = some (M1 q ++ repM [([q+2,0] : BMS.Col)] (n+1)) := by
+  have hpar : BMS.parent (M6 q) 0 ((M6 q).length - 1) = some (q+2) := by
+    rw [len_M6, show q + 4 - 1 = q + 3 from by omega]
+    exact parent0_M6_top q
+  have hlen1 : (M6 q).length - 1 - (q+2) = 1 := by rw [len_M6]; omega
+  have hbad : ∀ (c : Nat), (List.range 1).map (fun x =>
+      (List.range ([q+3,0] : BMS.Col).length).map (fun y => BMS.ent (M6 q) ((q+2)+x) y
+        + c * BMS.delta (M6 q) (q+2) 0 y
+          * (if BMS.ascends (M6 q) (q+2) ((q+2)+x) y = true then 1 else 0)))
+      = [([q+2,0] : BMS.Col)] := by
+    intro c
+    show [(List.range 2).map (fun y => BMS.ent (M6 q) ((q+2)+0) y
+      + c * BMS.delta (M6 q) (q+2) 0 y
+        * (if BMS.ascends (M6 q) (q+2) ((q+2)+0) y = true then 1 else 0))] = _
+    show [[BMS.ent (M6 q) ((q+2)+0) 0 + c * BMS.delta (M6 q) (q+2) 0 0
+            * (if BMS.ascends (M6 q) (q+2) ((q+2)+0) 0 = true then 1 else 0),
+           BMS.ent (M6 q) ((q+2)+0) 1 + c * BMS.delta (M6 q) (q+2) 0 1
+            * (if BMS.ascends (M6 q) (q+2) ((q+2)+0) 1 = true then 1 else 0)]] = _
+    rw [show (q+2)+0 = q+2 from by omega, delta_M6, delta_M6,
+      ent_M6_0 q (q+2) (by omega),
+      show BMS.ent (M6 q) (q+2) 1 = 0 from by
+        rw [ent_M6_lt q (q+2) 1 (by omega), M2_eq q]
+        show (((M1 q ++ [([q+2,0] : BMS.Col)]).getD (q+2) []).getD 1 0) = 0
+        rw [getD_append_ge' _ _ (q+2) (by rw [len_M1]; omega), len_M1,
+          show q + 2 - (q+2) = 0 from by omega]
+        rfl]
+    simp
+  simp only [BMS.expand?, getLast_M6, Option.bind_eq_bind, Option.bind_some, lnz_succ_zero,
+    hpar, Option.pure_def, hlen1, take_M6]
+  rw [List.map_congr_left (fun c _ => hbad c), flat_range]
+
+/-! ### F6, the value: a run of identical columns reads as a natural number -/
+
+theorem repM_zero_eq : ∀ (o m : Nat),
+    repM ([([o,0] : BMS.Col)] : Matrix) m = List.replicate m ([o,0] : BMS.Col)
+  | _, 0 => rfl
+  | o, m + 1 => by
+    show ([o,0] : BMS.Col) :: repM ([([o,0] : BMS.Col)] : Matrix) m = _
+    rw [repM_zero_eq o m]
+    rfl
+
+theorem decP_repM_zero (o m : Nat) :
+    Trans.Pair.decP (repM ([([o+1,0] : BMS.Col)] : Matrix) m)
+      = repM ([([o,0] : BMS.Col)] : Matrix) m := by
+  rw [repM_zero_eq (o+1) m, repM_zero_eq o m]
+  show (List.replicate m ([o+1,0] : BMS.Col)).map _ = _
+  rw [List.map_replicate]
+  rfl
+
+theorem r0_repM_zero (o m : Nat) (ho : 1 ≤ o) :
+    ∀ cc ∈ repM ([([o,0] : BMS.Col)] : Matrix) m, Trans.Pair.r0 cc ≠ 0 := by
+  rw [repM_zero_eq o m]
+  intro cc hcc
+  rw [List.eq_of_mem_replicate hcc]
+  show o ≠ 0
+  omega
+
+theorem blocksP_zeros : ∀ k,
+    Trans.Pair.blocksP (List.replicate (k+1) ([0,0] : BMS.Col))
+      = List.replicate (k+1) ([[0,0]] : Matrix)
+  | 0 => rfl
+  | k + 1 => by
+    show Trans.Pair.blocksP (([0,0] : BMS.Col)
+      :: (([0,0] : BMS.Col) :: List.replicate k ([0,0] : BMS.Col))) = _
+    rw [blocksP_cons_zero [0,0] [0,0] (List.replicate k ([0,0] : BMS.Col)) rfl]
+    show ([[0,0]] : Matrix) :: Trans.Pair.blocksP (List.replicate (k+1) ([0,0] : BMS.Col)) = _
+    rw [blocksP_zeros k]
+    rfl
+
+theorem zsF_zero_col (g k : Nat) (acc : Term) :
+    zsF g k acc ([[0,0]] : Matrix) = plus acc one := by
+  show plus acc (omegaNF (Trans.Pair.oLAux g 1 (Trans.Pair.decP []))) = _
+  rw [show Trans.Pair.decP ([] : List BMS.Col) = [] from rfl, oLAux_nil]
+  rfl
+
+theorem foldl_zeros (g k : Nat) : ∀ (m i : Nat),
+    (List.replicate m ([[0,0]] : Matrix)).foldl (zsF g k) (ofNat i) = ofNat (i + m)
+  | 0, i => by simp
+  | m + 1, i => by
+    rw [List.replicate_succ, List.foldl_cons, zsF_zero_col,
+      show plus (ofNat i) one = ofNat (i+1) from rfl, foldl_zeros g k m (i+1)]
+    congr 1
+    omega
+
+theorem oLAux_repM_zero (m fuel k : Nat) (hf : 1 ≤ fuel) :
+    Trans.Pair.oLAux fuel k (repM ([([0,0] : BMS.Col)] : Matrix) m) = ofNat m := by
+  cases m with
+  | zero =>
+    show Trans.Pair.oLAux fuel k ([] : Matrix) = _
+    rw [oLAux_nil]
+    rfl
+  | succ m' =>
+    cases fuel with
+    | zero => omega
+    | succ g =>
+      rw [oLAux_cons', repM_zero_eq 0 (m'+1), blocksP_zeros m']
+      have h := foldl_zeros g k (m'+1) 0
+      rw [show ofNat 0 = zero from rfl] at h
+      rw [h]
+      congr 1
+      omega
+
+/-- The term of the family: `φ̄(a, ω^ω)`. -/
+def t6 (q : Nat) : Term := phi (ofNat (q+1)) (phi zero omega)
+
+theorem omegaNF_ofNat (m : Nat) : omegaNF (ofNat m) = phi zero (ofNat m) := by
+  rw [omegaNF_of_le_M (show lt M (ofNat m) = false from by
+      rw [← mulNat_one_ofNat m]
+      exact lt_M_mulNat_one m)]
+  exact phiNF_ofNat isSC_zero m
+
+theorem fs_t6 (q k : Nat) : fsN (t6 q) k = phiNF (ofNat (q+1)) (phi zero (ofNat k)) := by
+  show fsN (phi (ofNat (q+1)) (phi zero omega)) k = _
+  rw [fsN_phi_lim (show phiShifted (ofNat (q+1)) (phi zero omega) = false from
+      phiShifted_t4b_gen q (q+1)) (show kindT (phi zero omega) = KindT.isLim from rfl) k,
+    show fsN (phi zero omega) k = phi zero (ofNat k) from by
+      rw [fsN_phi_lim (show phiShifted zero omega = false from
+          phiShifted_omega (show (zero : Term).isSC = false from rfl))
+        (show kindT (omega : Term) = KindT.isLim from rfl) k,
+        show fsN (omega : Term) k = ofNat k from by
+          show fsN (phi zero one) k = _
+          rw [fsN]
+          simp only [show phiShifted zero one = false from
+              phiShifted_of_splitFin_zero isSC_zero rfl, Bool.false_or,
+            show (kindT (one : Term) == KindT.isSucc) = true from rfl, if_true]
+          show mulNat (omegaNF (predT one)) k = ofNat k
+          rw [show predT (one : Term) = zero from rfl]
+          show mulNat (omegaNF zero) k = ofNat k
+          rw [show omegaNF zero = one from rfl, mulNat_one_ofNat]]
+      exact phiNF_ofNat isSC_zero k]
+
+theorem fs_t6_succ (q m : Nat) :
+    fsN (t6 q) (m+1) = phi (ofNat (q+1)) (phi zero (ofNat (m+1))) := by
+  rw [fs_t6]
+  exact phiNF_phi_gen (isSC_ofNat (q+1)) (lt_lt_zero (ofNat (q+1)))
+
+theorem onlyRow0_E6 (q n : Nat) :
+    onlyRow0 (M1 q ++ repM ([([q+2,0] : BMS.Col)] : Matrix) (n+1)) = false := by
+  rw [onlyRow0_append, onlyRow0_M1 q]
+  rfl
+
+theorem inFrag_repM_zero : ∀ (o m : Nat),
+    Trans.Pair.inFrag (repM ([([o,0] : BMS.Col)] : Matrix) m) = true
+  | _, 0 => rfl
+  | o, m + 1 => by
+    show Trans.Pair.inFrag (([o,0] : BMS.Col)
+      :: repM ([([o,0] : BMS.Col)] : Matrix) m) = true
+    rw [inFrag_cons, inFrag_repM_zero o m]
+    rfl
+
+theorem len_repM_zero : ∀ (o m : Nat),
+    (repM ([([o,0] : BMS.Col)] : Matrix) m).length = m
+  | _, 0 => rfl
+  | o, m + 1 => by
+    show (([o,0] : BMS.Col) :: repM ([([o,0] : BMS.Col)] : Matrix) m).length = m+1
+    rw [List.length_cons, len_repM_zero o m]
+
+/-- **E3 for F6**, as an equality at the repository shift. -/
+theorem e3_val6 (q n : Nat) : o? (BMS.expand (M6 q) n) = some (fsN (t6 q) (n+1)) := by
+  have ht : ∀ cc ∈ (ups 1 (q+1) ++ repM ([([q+2,0] : BMS.Col)] : Matrix) (n+1)),
+      Trans.Pair.r0 cc ≠ 0 := by
+    intro cc hcc
+    rcases List.mem_append.mp hcc with h1 | h1
+    · exact r0_ups (q+1) 1 (by omega) cc h1
+    · exact r0_repM_zero (q+2) (n+1) (by omega) cc h1
+  have hE : BMS.expand (M6 q) n = M1 q ++ repM ([([q+2,0] : BMS.Col)] : Matrix) (n+1) := by
+    show (BMS.expand? (M6 q) n).getD [] = _
+    rw [expand_M6]; rfl
+  have hfrag : Trans.Pair.inFrag
+      (M1 q ++ repM ([([q+2,0] : BMS.Col)] : Matrix) (n+1)) = true := by
+    rw [inFrag_append, show Trans.Pair.inFrag (M1 q) = true from inFrag_lad (q+1) 0,
+      inFrag_repM_zero (q+2) (n+1)]
+    rfl
+  have hlen : (M1 q ++ repM ([([q+2,0] : BMS.Col)] : Matrix) (n+1)).length = q+2+(n+1) := by
+    rw [List.length_append, len_M1, len_repM_zero (q+2) (n+1)]
+  rw [hE, o?_pair (onlyRow0_E6 q n) hfrag, hlen]
+  show some (Trans.Pair.oLAux (q+2+(n+1)+1) 1 (([0,0] : BMS.Col)
+    :: (ups 1 (q+1) ++ repM ([([q+2,0] : BMS.Col)] : Matrix) (n+1)))) = _
+  rw [oLAux_single (q+2+(n+1)) 1 [0,0] _ ht]
+  show some (plus zero (omegaNF (Trans.Pair.oLAux (q+2+(n+1)) 1
+    (Trans.Pair.decP (ups 1 (q+1)
+      ++ repM ([([q+2,0] : BMS.Col)] : Matrix) (n+1)))))) = _
+  rw [decP_append, decP_ups (q+1) 0, decP_repM_zero (q+1) (n+1),
+    oLAux_chainR (R := fun o => repM ([([o,0] : BMS.Col)] : Matrix) (n+1))
+      (fun o => decP_repM_zero o (n+1))
+      (fun o ho cc hcc => r0_repM_zero o (n+1) ho cc hcc)
+      (N := 1) (L := q+2) (v := ofNat (n+1))
+      (fun f hf => oLAux_repM_zero (n+1) f (q+2) hf) (q+1) 1 (q+2+(n+1)) (by omega) (by omega),
+    chainP_add q 1 1 (ofNat (n+1)),
+    show chainP (1+q) 1 (ofNat (n+1)) = phi (ofNat (q+1)) (phi zero (ofNat (n+1))) from by
+      show Trans.Pair.phiStep (ofNat (1+q)) zero (ofNat (n+1)) = _
+      rw [phiStep_zero, show ((ofNat (n+1) : Term) == zero) = false from by
+        simpa using ofNat_ne_zero n]
+      simp only [Bool.false_eq_true, if_false]
+      rw [omegaNF_ofNat (n+1), show (1:Nat)+q = q+1 from by omega]
+      exact phiNF_phi_gen (isSC_ofNat (q+1)) (lt_lt_zero (ofNat (q+1))),
+    chainP_collapse q 1 (q+1) (phi zero (ofNat (n+1))) (by omega),
+    plus_zero_left (isAP_omegaNF _),
+    omegaNF_phi_ne_zero (ofNat_ne_zero q), fs_t6_succ q n]
+
+/-! ### The F6 package -/
+
+theorem ltF_ofNat_omega : ∀ (m f : Nat), m + 2 ≤ f → ltF f (ofNat m) omega = true
+  | 0, f, hf => ltF_zero (by omega) (by intro hc; exact Term.noConfusion hc)
+  | 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      rw [ofNat_one]
+      exact ltF_phi_same (ltF_zero (by omega) (by intro hc; exact Term.noConfusion hc))
+  | m + 2, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      rw [ofNat_shape m]
+      show (if ((add one (ofNat (m+1)) : Term) == omega) = true then false
+            else ltF g one omega) = true
+      simp only [show ((add one (ofNat (m+1)) : Term) == omega) = false from rfl,
+        Bool.false_eq_true, if_false]
+      exact ltF_ofNat_omega 1 g (by omega)
+
+theorem deg_fs6 (q m : Nat) : m ≤ (fsN (t6 q) (m+1)).deg := by
+  rw [fs_t6_succ]
+  show m ≤ 1 + (ofNat (q+1)).deg + (1 + (zero : Term).deg + (ofNat (m+1)).deg)
+  have := deg_ofNat (m+1)
+  omega
+
+def oval6 (q n : Nat) : Term := fsN (t6 q) (n+1)
+
+theorem e3_lt6 (q n : Nat) : lt (oval6 q n) (t6 q) = true := by
+  refine lt_of_ltF (N := n+5) (fun f hf => by
+    rw [show oval6 q n = fsN (t6 q) (n+1) from rfl, fs_t6_succ]
+    cases f with
+    | zero => omega
+    | succ g =>
+      cases g with
+      | zero => omega
+      | succ h =>
+        exact ltF_phi_same (ltF_phi_same (ltF_ofNat_omega (n+1) h (by omega)))) ?_
+  have h1 : n ≤ (fsN (t6 q) (n+1)).deg := deg_fs6 q n
+  show n+5 ≤ 2 * ((oval6 q n).deg + (t6 q).deg) + 8
+  show n+5 ≤ 2 * ((fsN (t6 q) (n+1)).deg
+    + (1 + (ofNat (q+1)).deg + (phi zero omega : Term).deg)) + 8
+  omega
+
+/-- **(b)/(c)** the fundamental sequence is strictly increasing here. -/
+theorem e3_over6 (q n : Nat) : lt (oval6 q n) (fsN (t6 q) (n+2)) = true := by
+  refine lt_of_ltF (N := n+5) (fun f hf => by
+    rw [show oval6 q n = fsN (t6 q) (n+1) from rfl, fs_t6_succ, fs_t6_succ]
+    cases f with
+    | zero => omega
+    | succ g =>
+      cases g with
+      | zero => omega
+      | succ h =>
+        exact ltF_phi_same (ltF_phi_same (ltF_ofNat_succ (n+1) h (by omega)))) ?_
+  have h1 : n ≤ (fsN (t6 q) (n+1)).deg := deg_fs6 q n
+  show n+5 ≤ 2 * ((fsN (t6 q) (n+1)).deg + (fsN (t6 q) (n+2)).deg) + 8
+  omega
+
+/-- **E3 for the F6 family**: `(0,0)(1,1)…(a,1)(a+1,0)(a+2,0) = φ̄(a,ω^ω)`. -/
+theorem e3_F6family (q : Nat) :
+    (∀ n, o? (BMS.expand (M6 q) n) = some (oval6 q n))
+    ∧ (∀ n, lt (oval6 q n) (t6 q) = true)
+    ∧ (∀ n, lt (oval6 q n) (fsN (t6 q) (n + 2)) = true)
+    ∧ (∀ k, lt (fsN (t6 q) (k + 1)) (oval6 q (k + 1)) = true) :=
+  ⟨e3_val6 q, e3_lt6 q, e3_over6 q, fun k => e3_over6 q k⟩
+
+#guard (List.range 4).all fun q => (List.range 4).all fun n =>
+  Trans.o? (BMS.expand (M6 q) n) == some (fsN (t6 q) (n+1))
+#guard (List.range 5).all fun q => Trans.o? (M6 q) == some (t6 q)
 
 end Evidence.StageB

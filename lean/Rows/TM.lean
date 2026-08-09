@@ -38,7 +38,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.32"
+def version : String := "v0.1.33"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -108,6 +108,9 @@ def rows : List Row := [
     proof := "R4", hasO := true },
   { m := [[0,0],[1,1],[2,0],[0,0]], t := add (phi one omega) one,
     name := "\\varepsilon_\\omega+1", proof := "«(0,0)(1,1)(2,0)(0,0)»", hasO := true },
+  { m := [[0,0],[1,1],[2,0],[3,0]], t := phi one (phi zero omega),
+    name := "\\varepsilon_{\\omega^\\omega}", proof := "«(0,0)(1,1)(2,0)(3,0)»",
+    hasO := true },
   { m := [[0,0],[1,1],[2,0],[3,1]], t := phi one e0,
     name := "\\varepsilon_{\\varepsilon_0}", proof := "R5", hasO := true },
   { m := [[0,0],[1,1],[2,1]], t := phi (ofNat 2) zero, name := "\\zeta_0",
@@ -255,6 +258,13 @@ def regions : List RegionRow := [
     proof := "e3_family",
     proofFile := "Evidence/StageB.lean",
     note := "1 パラメータ族の一括証明。a=1,2 が表の ε_ω, ζ_ω 行、a≥3 は表の先へ無限に続く" },
+  { bms := "(0,0)(1,1)…(a,1)(a+1,0)(a+2,0), a≥1",
+    tm := "\\bar{\\varphi}(a,\\omega^\\omega)",
+    nm := "\\varepsilon_{\\omega^\\omega},\\ \\zeta_{\\omega^\\omega},\\ldots",
+    boundT := phi omega zero,
+    proof := "e3_F6family",
+    proofFile := "Evidence/StageB.lean",
+    note := "梯子+2列族。a=1 が表の ε_{ω^ω} 行" },
   { bms := "(0,0)(1,1)…(a,1)(a+1,0)(a+2,1), a≥1",
     tm := "\\bar{\\varphi}(a,\\varepsilon_0)",
     nm := "\\varepsilon_{\\varepsilon_0},\\ \\zeta_{\\varepsilon_0},\\ldots",

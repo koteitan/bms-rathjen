@@ -278,6 +278,21 @@ theorem esucc (n : Nat) : o? (BMS.expand M n) = some (predT t) :=
 
 end «(0,0)(1,1)(2,0)(0,0)»
 
+/-! ### Row `(0,0)(1,1)(2,0)(3,0)` = `φ̄(1,ω^ω)` = `ε_{ω^ω}`, the `a = 1` instance of the
+F6 family (`Evidence.StageB.e3_F6family`, a shift-1 equality family). -/
+
+namespace «(0,0)(1,1)(2,0)(3,0)»
+
+def M : Matrix := [[0,0],[1,1],[2,0],[3,0]]
+def t : Term := phi one (phi zero omega)
+
+theorem e1 : o? M = some t := rfl
+
+theorem e3 (n : Nat) : o? (BMS.expand M n) = some (fsN t (n + 1)) :=
+  (Evidence.StageB.e3_F6family 0).1 n
+
+end «(0,0)(1,1)(2,0)(3,0)»
+
 /-! ## Row-linkage guards
 
 Each guard pins the table rows of Rows/TM.lean that cite a namespace of this
@@ -309,6 +324,7 @@ def rowLinked (nm : String) (M : BMS.Matrix) (t : Term) : Bool :=
 #guard rowLinked "«(0,0)(1,1)(2,1)(3,0)(4,1)»"
   «(0,0)(1,1)(2,1)(3,0)(4,1)».M «(0,0)(1,1)(2,1)(3,0)(4,1)».t
 #guard rowLinked "«(0,0)(1,1)(2,0)(0,0)»" «(0,0)(1,1)(2,0)(0,0)».M «(0,0)(1,1)(2,0)(0,0)».t
+#guard rowLinked "«(0,0)(1,1)(2,0)(3,0)»" «(0,0)(1,1)(2,0)(3,0)».M «(0,0)(1,1)(2,0)(3,0)».t
 
 -- the rows proved in Rows/ProofsB.lean, pinned here (this file can import both)
 #guard rowLinked "R1" Rows.ProofsB.R1.m0 Rows.ProofsB.R1.t0
