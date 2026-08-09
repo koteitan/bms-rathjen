@@ -40,7 +40,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.1.81"
+def version : String := "v0.1.82"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -147,9 +147,16 @@ def rows : List Row := [
     name := "\\Gamma_0+1", ev := "oR" },
   { m := [[0,0],[1,1],[2,1],[3,1],[1,0]], t := phi zero (psi (Z zero) zero),
     name := "\\omega^{\\Gamma_0+1}", ev := "oR" },
-  { m := [[0,0],[1,1],[2,1],[3,2]], t := psi (Z zero) (phi (phi zero zero) (Z zero)),
-    name := "\\psi_0(\\varepsilon_{\\Omega+1})", ev := "oR",
-    note := "Bachmann–Howard 順序数" },
+  -- WITHDRAWN v0.1.82: the Bachmann–Howard row was listed as
+  --   (0,0)(1,1)(2,1)(3,2)  ↦  ψ_{Z0}(φ̄(1,Ω))
+  -- but that MATRIX IS NOT STANDARD.  Two independent implementations agree:
+  -- yaBMS `./bms -s` returns 0, and naruyoko's `isStandardPair` returns false.
+  -- Its oracle image `D_0 D_1 D_1 D_2 0` is not a standard Buchholz term either,
+  -- so the oR value carried no meaning for it.  It was the only non-standard
+  -- matrix among the 51 rows (see scripts/standard-audit.sh, which now checks
+  -- every row against the reference implementation).  Re-add the row when the
+  -- STANDARD matrix for the Bachmann–Howard ordinal has been identified by the
+  -- oracle rather than by hand.
   { m := [[0,0],[1,1],[2,2]], t := psi (Z zero) (Z (phi zero zero)),
     name := "\\psi_0(\\Omega_2)", ev := "oR",
     note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正" },
