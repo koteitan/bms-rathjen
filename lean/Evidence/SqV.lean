@@ -156,15 +156,6 @@ about the rows it was measured on, and one generalisation short.
 def bumpAt (d : Nat) (cs : List Col2) : List Col2 :=
   cs.map (fun c => if c.1 == d then (c.1, 1) else c)
 
-/-- **The ω-exponent of an additively principal term.**  `ω^x ↦ x`; a term that is its
-    own ω-power — every `φ̄(c,·)` with `c ≠ 0`, since `ω^ε₀ = ε₀` — goes to itself.
-    §3's cause 1: at `a ≠ 0` the block after the ladder denotes the EXPONENT of the
-    subscript, not the subscript.  At `a = 0` it does not, so this is applied on one
-    side of that branch only. -/
-def omLog : Term → Term
-  | .phi .zero x => x
-  | t => t
-
 /-- The additive summands of a term, left to right; `0` has none.  §3's cause 2: the
     summands of a SUBSCRIPT are separated by a repeat of the ladder, so the encoder has
     to see them individually rather than encode the sum as one block. -/
@@ -172,6 +163,41 @@ def summands : Term → List Term
   | .zero => []
   | .add u v => summands u ++ summands v
   | t => [t]
+
+/-- **The ω-exponent of an additively principal term.**  `ω^x ↦ x`; a term that is its
+    own ω-power — every `φ̄(c,·)` with `c ≠ 0`, since `ω^ε₀ = ε₀` — goes to itself.
+    §3's cause 1: at `a ≠ 0` the block after the ladder denotes the EXPONENT of the
+    subscript, not the subscript.  At `a = 0` it does not, so this is applied on one
+    side of that branch only. -/
+def omLog : Term → Term
+  | .phi .zero x =>
+      -- CANDIDATE 9 (§5.2): T(M)'s `φ̄(0,·)` SKIPS the fixed points, so `φ̄(0,ε₀)` is
+      -- `ω^(ε₀+1)` and its ω-exponent is `ε₀+1`, not `ε₀`.  Below a fixed point the
+      -- two agree, which is why every corpus term was insensitive to this.
+      -- MEASURED, and the mathematically obvious refinement is REFUTED: replacing this
+      -- summand test by `isFP zero x` — on the grounds that `ω^(ε₀·2) ≠ ε₀·2`, so a sum
+      -- of fixed points is not one — improves D5 (51→35 pairs, 14→10 terms) and BREAKS
+      -- D6 (0→6).  It also does not move the four D1 failures I predicted it would fix.
+      -- Neither form dominates, so the skip condition is not settled and the next step
+      -- on it is a search for those four matrices, not a third guess.  §5.2.
+      if (summands (TM.Term.splitFin x).1).any (fun g => TM.Term.isFP zero g)
+      then plus x one else x
+  | t => t
+
+/-- **The fixed point a subscript collapses ON, found through `φ̄(0,·)` layers.**
+    `isFP a t` sees only the top constructor, so `φ̄(0,ε₀)` — which is `ω^(ε₀+1)`, not a
+    fixed point — hides the ε₀ that the matrix language collapses on.  §5's nesting
+    defect is exactly that: the corpus is one Veblen application deep, so no term ever
+    had a fixed point one layer down.  Fuel for the same reason `encvF` has it. -/
+def fpDeepF : Nat → Term → Term → Option Term
+  | 0, _, _ => none
+  | f + 1, a, t =>
+      if TM.Term.isFP a t then some t
+      else match t with
+        | .phi .zero x => (summands (TM.Term.splitFin x).1).findSome? (fpDeepF f a)
+        | _ => none
+
+def fpDeep (a t : Term) : Option Term := fpDeepF (t.deg + 4) a t
 
 /-- `t` minus one when it has a trailing `1`; `t` itself otherwise. -/
 def predOr (t : Term) : Term :=
@@ -215,7 +241,13 @@ def encvF : Nat → Term → Nat → List Col2
               else mkBlocks (gs.drop 1))
           ++ reps
       else
-        (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
+        -- CANDIDATE 10 (§5.2): the head summand is not itself a fixed point, but one
+        -- sits below it through `φ̄(0,·)` layers.  Then the collapse head is THAT fixed
+        -- point and the subscript follows WHOLE — not with its first summand dropped,
+        -- which is the difference from the direct-collapse branch above.
+        match fpDeep a (gs.headD zero) with
+        | some g => encvF f g d ++ mkBlocks gs ++ reps
+        | none => (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
   | _ + 1, _, _ => []
 
 def encv (t : Term) (d : Nat) : List Col2 := encvF (2 * t.deg + 8) t d
@@ -684,7 +716,54 @@ attacked separately.
 
 Nothing is fixed against this baseline yet.  It exists so that the fix has something to
 be measured against, which is what candidates 1–8 each had and what a fix invented from
-the 21 witnesses of §5 would not. -/
+the 21 witnesses of §5 would not.
+
+### §5.2 THE NESTING FIX — candidates 9 and 10, measured against that baseline
+
+TWO CAUSES, both found by SEARCHING for the true matrix rather than reading a rule off
+the failures.  The enumerate-then-`bms -s` method of §4 was reused: each target has many
+decodings under `oR` and exactly one standard one.
+
+  CAUSE A (`a ≠ 0`) — `omLog` ignored the SKIP.  T(M)'s `φ̄(0,·)` enumerates past its own
+  fixed points, so `φ̄(0,ε₀)` is `ω^(ε₀+1)` and its ω-exponent is `ε₀+1`, not `ε₀`.  Below
+  a fixed point the two coincide, which is why 234 corpus terms were insensitive.
+      φ̄(1, φ̄(0,ε₀))  =  (0,0)(1,1)(2,0)(3,1)(2,0)        searched, unique standard
+
+  CAUSE B (`a = 0`) — `isFP` sees only the top constructor, so a fixed point one
+  `φ̄(0,·)` layer down is invisible and the subscript never collapses.  `fpDeep` descends
+  through those layers; when it finds one, the collapse head is THAT fixed point and the
+  subscript follows WHOLE — not with its first summand dropped, which is what separates
+  this from the direct-collapse branch.
+      φ̄(0, φ̄(0,ε₀))     =  (0,0)(1,1)(1,0)(2,1)(2,0)             searched
+      φ̄(0, φ̄(0,ε₀·2))   =  (0,0)(1,1)(1,0)(2,1)(2,0)(3,1)        from §5's expansion
+      φ̄(0, φ̄(0,φ̄(0,ε₀))) = (0,0)(1,1)(1,0)(2,1)(2,0)(3,1)(3,0)   PREDICTED, then checked
+      φ̄(0, φ̄(0,ε₀+1))   =  (0,0)(1,1)(1,0)(2,1)(2,0)(2,0)        PREDICTED, then checked
+
+  The last two were computed from the rule before being looked up, which is the only
+  reason it is stated at four points rather than fitted to two.
+
+RESULT ON THE WIDENED CORPUS:
+
+                              baseline (cand 8)    cand 10
+    D1 round trip               16 / 269            4 / 269
+    D2 table rows                0 / 5              0 / 5
+    D3 discriminators            0 / 3              0 / 3
+    D4 NON-STANDARD             12 / 267            0 / 267
+    D5 image closure           130 / 1076          51 / 1076    51 → 14 terms
+    D6 order preservation     1923 / 72361          0 / 72361
+
+D6 returning to 0 is the load-bearing line: §5.1 predicted the order failures were
+DOWNSTREAM of the nesting defect rather than a second defect, and fixing the nesting
+without touching order is what tests that.  D4 back to 0 says the map is again emitting
+only notations.  Everything the old corpus measured is unchanged — 0/0/0/234, `openCases`
+0, `mixed` 0 — so nothing that passed before broke.
+
+AND A REFUTED REFINEMENT, kept because it is the obvious one.  `omLog`'s skip test is
+written on the SUMMANDS of `x`; the mathematically clean version tests `isFP zero x`
+itself, since `ω^(ε₀·2) ≠ ε₀·2` means a sum of fixed points is not one.  Measured, it
+improves D5 (51 → 35 pairs, 14 → 10 terms) and BREAKS D6 (0 → 6), and it does not move
+the four D1 failures I predicted it would fix.  Neither form dominates, so the condition
+is NOT settled; the next step is a search for those four matrices, not a third guess. -/
 
 def nestedFP : Term → Bool
   | .zero => false
@@ -721,6 +800,14 @@ def corpusW : List Term := corpus ++ nested
 #guard (corpus.filter nestedFP).length == 0
 #guard (nested.filter nestedFP).length == 25
 #guard (nested.filter (fun t => !(TM.Term.inT t))).length == 0
+
+-- §5.2's four searched/predicted witnesses, as guards
+#guard sqv (phi one (phi zero (phi one zero))) == [[0,0],[1,1],[2,0],[3,1],[2,0]]
+#guard sqv (phi zero (phi zero (phi one zero))) == [[0,0],[1,1],[1,0],[2,1],[2,0]]
+#guard sqv (phi zero (phi zero (phi zero (phi one zero))))
+         == [[0,0],[1,1],[1,0],[2,1],[2,0],[3,1],[3,0]]
+#guard sqv (phi zero (phi zero (plus (phi one zero) one)))
+         == [[0,0],[1,1],[1,0],[2,1],[2,0],[2,0]]
 
 -- the per-row shift, and the row where none exists
 #guard (List.range 4).all (fun n => Trans.oR (BMS.expand (sqv (phi one omega)) n)
