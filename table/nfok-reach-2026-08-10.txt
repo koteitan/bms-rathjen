@@ -1,0 +1,57 @@
+`NfOK` EXCLUDES A CERTIFIED ROW — measured 2026-08-10
+=====================================================
+
+Measured before routing the general Veblen certificate through
+`Evidence.WF.asm_generalB'`, and it changes the plan.
+
+    agreeCorpus  169 distinct CNV terms   NfOK fails on 34
+    cnvAll       215 distinct CNV terms   NfOK fails on 34
+
+    Evidence.WF.NfOK Evidence.WF.rowA  =  FALSE
+    rowA = phi(0, phi(phi(0,0),0)) = φ̄(0, ε₀) = ω^(ε₀+1)
+
+**`rowA` IS AN ALREADY-REGISTERED, ALREADY-CERTIFIED ✅ ROW.**  It is the eleventh
+entry of `Evidence.Cert.certRows`, and its certificate does not go through the
+assembly at all.  Every other registered row is `NfOK`; `rowA` is the one that is
+not:
+
+    0, 1, 2, ω, ω·2, ω², ω^ω, ω^(ω^ω), ε₀, ε₀+1        NfOK = true
+    ω^(ε₀+1)                                            NfOK = FALSE
+
+WHAT THIS MEANS
+---------------
+`NfOK` is the recursion-local normality predicate built (WF §15.38) so that
+`asm_generalB'` would not be vacuous.  It encodes `phiNF a b = φ̄(a,b)` at every
+`φ̄` node the recursion visits.
+
+`φ̄(0, ε₀)` is **exactly the fixed-point-skip term**: `φ̄` enumerates the additively
+principal numbers SKIPPING the fixed points of `ω^·`, so `φ̄(0,ε₀) = ω^(ε₀+1) > ε₀`,
+while `phiNF 0 ε₀ = φ̄(1,0) = ε₀`.  It is the same term that refuted the assembly's
+old global `Hnf` (WF §15.31, §15.37).
+
+So the situation is sharper than "the assembly carries a side condition":
+
+* **`NfOK` is NOT NECESSARY for certification.**  `rowA` is certified without it.
+  The condition is an artifact of core (C)'s `hside`, not a property of certifiable
+  rows.
+* **`asm_generalB'`'s reach is strictly smaller than the Veblen band** — 34 of 169
+  corpus terms, 20%, are outside it, and at least one of them is a published ✅.
+* Therefore **the general certificate `∀ t, CNV t → Certified (sqv' t) t` cannot be
+  routed entirely through `asm_generalB'`.**  The `φ̄(a, ·)`-at-a-fixed-point cases
+  need a different supplier for their fundamental sequence.
+
+WHAT IS NOT CLAIMED
+-------------------
+That the general certificate is impossible.  `Certified.lim` takes `fs'` as a
+PARAMETER; the assembly is one way to produce it, not the only way.  `rowA`'s own
+certificate is the existence proof that the excluded cases are reachable by other
+means.
+
+NEXT
+----
+Either (a) supply `fs'` for the non-`NfOK` cases directly — `rowA`'s certificate
+shows the shape — or (b) weaken core (C)'s requirement so the assembly covers them,
+which is the `hside` question again and is where this stopped once already.
+**Measure which of the 34 are actually needed for the 13 table rows before doing
+either**: the corpus is not the table, and the general theorem only has to cover
+what `sqv'` sends to a row.
