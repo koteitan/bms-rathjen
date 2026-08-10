@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.2.8"
+def version : String := "v0.2.9"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -359,7 +359,7 @@ def genTable (lineOf : String → Option Nat) (proofLine : String → Option (St
 バージョン: " ++ version ++ "
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
-Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
+Rathjen の表記系 $`\\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
 Arch. Math. Logic 30 (1991), §2) の対応。
 
 **証明列 ✅ の意味は下の [エビデンス](#エビデンス) を、設計の手順と失敗の記録は
@@ -367,7 +367,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 ## 対応表
 
-| BMS | $`T(M)`$ | 通称 | 証明 | その他の弱いエビデンス | 備考 |
+| BMS | $`\\mathfrak{T}(M)`$ | 通称 | 証明 | その他の弱いエビデンス | 備考 |
 |---|---|---|---|---|---|
 "
   let rowStr (r : Row) : String :=
@@ -412,7 +412,7 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 - [E.cofinal — 展開と基本列の相互共終](#ecofinal--展開と基本列の相互共終)
 - [証明書の強さと、その限界](#証明書の強さとその限界)
 - [その他の弱いエビデンス](#その他の弱いエビデンス)
-- [定義](#定義)
+- [定義](#定義): [D.TM](#dtm--tm-の項) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
 
 ## E.zero / E.succ / E.lim — ✅ の実体
 
@@ -538,6 +538,31 @@ P.T は**真だが、このリポジトリの手法では証明できない**。
 | `oStageC` | Stage C の候補翻訳の値の一致 |
 
 # 定義
+
+## D.TM — $`\\mathfrak{T}(M)`$ の項
+
+$`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ の項は次で生成される
+(Rathjen 1991 §2.1):
+
+| 構成子 | 条件 |
+|---|---|
+| $`0`$, $`M`$ | |
+| $`\\alpha_1 \\oplus \\dots \\oplus \\alpha_n`$ | $`n \\ge 2`$、各 $`\\alpha_i`$ は加法的主要、$`\\alpha_n \\le \\dots \\le \\alpha_1`$ |
+| $`\\bar\\omega^{\\alpha}`$ | $`M < \\alpha`$ |
+| $`\\bar\\varphi(\\alpha, \\beta)`$ | $`\\alpha, \\beta < M`$ |
+| $`\\psi_\\kappa(\\alpha)`$ | $`\\kappa`$ は正則、$`\\alpha < M`$、$`K_\\kappa \\alpha < \\alpha`$ |
+| $`Z(\\alpha)`$ | 正則基数の名前 |
+
+**$`\\bar\\varphi`$ は $`\\omega^\\cdot`$ の不動点を飛ばして数える。** $`\\bar\\varphi(0,\\beta)`$
+は最初の不動点未満では $`\\omega^\\beta`$ だが、
+
+```math
+\\bar\\varphi(0, \\varepsilon_0) = \\omega^{\\varepsilon_0 + 1} \\ne \\varepsilon_0
+```
+
+これが一意な正規形を与える。**不動点の下では 2 つの読みが一致するので、そこだけで
+較正した関数・コーパス・読者は上で静かに誤る** — この事実はこのリポジトリで 5 つの
+欠陥を起こした。
 
 ## D.CertifiedIn / D.DomI
 
