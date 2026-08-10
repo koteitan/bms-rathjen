@@ -194,6 +194,15 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **AFTER VERIFYING A STAGED HASH, NEVER `git add` THAT PATH AGAIN.** The second
+  `git add` re-stages whatever is on disk NOW, silently discarding the snapshot
+  you verified. This defeated the fix for the rule below on its first use: the
+  staged hash was checked, then the same command re-added the lane file
+  alongside two docs, and the commit shipped bytes 25 lines newer than the
+  message claimed. **Stage lane files and doc files in SEPARATE `git add`
+  invocations, verify the lane file's staged hash last, and go straight to
+  `git commit`** — or re-verify `git show :path | sha256sum` immediately before
+  committing, since that is the only reading that survives an intervening add.
 - **COMPARE `git show :path | sha256sum` AGAINST THE VERDICT BEFORE COMPOSING THE
   COMMIT MESSAGE, NOT AFTER STAGING.** Checking the file's hash on disk and then
   `git add`ing it leaves a window the lane can write into; the commit then
