@@ -8919,4 +8919,72 @@ theorem expand_epsOmegaOmega (n : Nat) :
   BMS.expand [[0, 0], [1, 1], [2, 0], [3, 0]] n
     == [[0, 0], [1, 1]] ++ (List.replicate (n + 1) ([[2, 0]] : Matrix)).flatten)
 
+/-! ### §20.2 `ε_{ε₀}`'s EXPANSION IDENTITY — THE ROW WHOSE BLOCK GROWS
+
+The other four Veblen rows are `take k ++ (n+1) copies of a CONSTANT block`.  This one is not, and
+the structural reason is ONE NUMBER: `expand?` sets `t := lnz (M.getLast?)`, and `delta M r t y` is
+`if y < t then … else 0`.
+
+    row              last row   lnz   delta      block
+    ω^(ε₀+1)         [1,0]       0    ≡ 0        constant
+    ε_ω              [2,0]       0    ≡ 0        constant
+    ε_{ω²}           [2,0]       0    ≡ 0        constant
+    ε_{ω^ω}          [3,0]       0    ≡ 0        constant
+    ε_{ε₀}           [3,1]       1    ≠ 0        GROWS
+
+**`t = 0` ⟺ constant block, exactly.**  "The block grows" and "the last row's last nonzero column
+is not 0" are ONE fact, not two.  So the constant-block route — `hblk : ∀ a, … = <const>` then
+`map_congr_left` + `map_const_flatten` — cannot be reused, and `flatten_map_singleton` is the lemma
+for singleton blocks instead.
+
+**THE ERROR THAT COST A SESSION WAS `delta`'s THIRD ARGUMENT, NOT THE ROOT OR THE HEIGHT.**  Root 2
+and height 1 were inferred correctly from the neighbours; `delta … 2 0 y` was copied from them and
+should be `delta … 2 1 y`.  **The four neighbours all happen to have `t = 0`, so the copied `0` was
+invisible** — and it is invisible precisely because `t = 0` is what makes their blocks constant.
+The one parameter that differs is the one that explains why they differ.
+
+**AND THE TWO SIDES AGREE ABOUT WHICH ROW IS DIFFERENT, EACH FOR ITS OWN REASON.**
+
+    matrix side   (List.range (n+1)).map (fun a => [2 + a, 0])
+    term side     `ladderCols 2 (n+1)` = (List.range (n+1)).map (fun i => (i + 2, 0))
+
+the same expression up to `Col2` versus `List Nat`.  `Evidence/SqV.lean` §21 found this row odd
+because the BLOCK's own encoding grows with `n`; the matrix side finds it odd because `lnz` of its
+last row is nonzero.  **Compare `SqV.lean` §23, where "it is a tower" is true of the ordinals and
+FALSE of the matrices.**  The correspondence sometimes transfers a shape and sometimes does not,
+and one example of each is the minimum honest presentation.
+
+`2 + a`, not `a + 2`: the entry is `ent M 2 0 + a * delta M 2 1 0 * 1` with `ent M 2 0 = 2`, so the
+`a` lands on the right and `rfl` cares. -/
+
+theorem expand_epsEps0 (n : Nat) :
+    BMS.expand? [[0, 0], [1, 1], [2, 0], [3, 1]] n
+      = some ([[0, 0], [1, 1]] ++ ((List.range (n + 1)).map (fun a => [2 + a, 0]))) := by
+  have hblk : ∀ (a : Nat), ((List.range 1).map (fun x =>
+      (List.range 2).map (fun y =>
+        BMS.ent [[0, 0], [1, 1], [2, 0], [3, 1]] (2 + x) y +
+          a * BMS.delta [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 y *
+            (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 1]] 2 (2 + x) y then 1 else 0))))
+      = ([[2 + a, 0]] : Matrix) := by
+    intro a; simp [BMS.ent, BMS.delta, BMS.ascends, List.range_succ, List.range_zero]
+  show some (([[0, 0], [1, 1], [2, 0], [3, 1]] : Matrix).take 2 ++
+      ((List.range (n + 1)).map (fun a =>
+        (List.range 1).map (fun x =>
+          (List.range 2).map (fun y =>
+            BMS.ent [[0, 0], [1, 1], [2, 0], [3, 1]] (2 + x) y +
+              a * BMS.delta [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 y *
+                (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 1]] 2 (2 + x) y then 1 else 0))))).flatten)
+    = _
+  rw [List.map_congr_left (l := List.range (n + 1))
+      (g := fun a => ([[2 + a, 0]] : Matrix)) (fun a _ => hblk a),
+    flatten_map_singleton (fun a => [2 + a, 0])]
+  rfl
+
+#guard (List.range 6).all (fun n =>
+  BMS.expand [[0, 0], [1, 1], [2, 0], [3, 1]] n
+    == [[0, 0], [1, 1]] ++ ((List.range (n + 1)).map (fun a => [2 + a, 0])))
+-- `t = 0` iff the block is constant: the four constant rows and the one that grows
+#guard (BMS.lnz [1, 0] == some 0) && (BMS.lnz [2, 0] == some 0) && (BMS.lnz [3, 0] == some 0)
+#guard BMS.lnz [3, 1] == some 1
+
 end Evidence.Cert
