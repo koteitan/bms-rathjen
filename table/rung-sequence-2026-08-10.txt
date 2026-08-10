@@ -142,3 +142,35 @@ STILL OPEN: the bridge itself.  Unfolding `Trans.oR`/`Trans.Recal.oR`/`Trans.o?`
 reaches an algorithm-equivalence obligation for which `Trans/Recal.lean` exports no
 lemma.  The exact failing point is kept as a comment in
 `lean/scripts/reader_agreement.lean` rather than as a broken proof.
+
+
+APPENDED — BOTH ROUTES ARE CLOSED, AND THE SECOND REASON IS STRUCTURAL
+======================================================================
+
+Route (b), proving `oR_rungM` directly in `oR` without touching `o?`, was tried.
+It is closed too, and the reason is a fact about this project rather than about
+this theorem.
+
+    file                 theorems   #guards
+    Trans/Recal.lean            0        24
+    Trans/Dict.lean             0        44
+    Trans/Pair.lean             0        23
+    Trans/StageC.lean           0        83
+    Trans/Lemmas.lean           8         0
+
+`oR = (1 + ·) ∘ dict ∘ transPort ∘ ofMatrix` is a pipeline of whole-matrix
+computations, and **every `oR` fact in this repository is a `#guard` or a `decide`
+at a concrete matrix.**  There is no equation for `oR (M ++ block)`, so an `∀ n`
+statement has nothing to induct on.  The base `oR (rungM 0 0) = some (fsEsucc 0 0)`
+is `rfl`; the step has no lemma to take.
+
+**THIS IS NOT A GAP IN A PROOF, IT IS A MISSING LAYER.**  `oR` is a VALIDATED
+COMPUTATION — 174 `#guard`s across `Trans/`, an oracle table, negative controls —
+and validation at points is not an API.  Anything quantified over `n` on the `oR`
+side is blocked until `Trans/Recal.lean` grows equation lemmas, and the size of
+that work is set by `ofMatrix` / `transPort` / `dict`, not by any ordinal question.
+
+WHAT SURVIVES: `expand_epsM_succ` (all k, all n), `rungM_zero`, `rungM_succ`, the
+`n = 0` reading, and §21.1's 24-point measurement.  **The ordinal side of
+`cert_epsN` is settled.  The reader side is where this line stops**, and it stops
+for a reason that would block any other `∀ n` fact about `oR` equally.

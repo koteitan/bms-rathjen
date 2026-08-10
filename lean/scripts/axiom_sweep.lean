@@ -45,9 +45,9 @@ checks are needed and **neither substitutes for the other**:
 A canary alone reports clean for a reason unrelated to the server being current — the same shape
 as every other inverted check in this repo's history.  Pair them.
 
-## EXPECTATION — what this printed on 2026-08-10, after `Cert` §21
+## EXPECTATION — what this printed on 2026-08-10, after `Cert` §21.2
 
-    scanned 3008 | sorryAx 0 | Classical.choice 236
+    scanned 3011 | sorryAx 0 | Classical.choice 236
 
 Third baseline.  History, because the round trip is the useful part:
 

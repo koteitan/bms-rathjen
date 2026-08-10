@@ -9290,4 +9290,50 @@ The `#guard` below is the measurement, standing without the theorem.
 #guard (List.range 4).all fun k => (List.range 6).all fun n =>
   Trans.oR (rungM k n) == some (Evidence.WF.fsEsucc k n)
 
+/-! ### §21.2 WHY `oR_rungM` CANNOT BE PROVED TODAY BY EITHER ROUTE — a structural fact about `Trans`
+
+§21.1 leaves `Trans.oR (rungM k n) = some (fsEsucc k n)` measured at 24 points and unproved.
+Both available routes were tried and both are closed, for DIFFERENT reasons, and the second one is
+a fact about this project rather than about this theorem.
+
+**ROUTE (a), through the row lemmas, is closed because the readers are not related.**  The
+`Rows/` facts are proved in `Trans.o?`; unfolding lands on `oR M = o? M`, and `Trans/Recal.lean`
+exports no bridge.  Worse, `o?` is RETRACTED: `lean/scripts/reader_agreement.lean` measures 607
+matrices and finds **11 that are strictly BELOW the boundary this repo documents and already
+disagree** — so a bridge stated at the documented boundary would be false, and any bridge at all
+would inherit a known-wrong function into the path the ✅ marks depend on.
+
+**ROUTE (b), directly in `oR`, is closed because `oR` HAS NO EQUATIONAL API AT ALL.**  Counted:
+
+    file                 theorems   #guards
+    Trans/Recal.lean            0        24
+    Trans/Dict.lean             0        44
+    Trans/Pair.lean             0        23
+    Trans/StageC.lean           0        83
+    Trans/Lemmas.lean           8         0
+
+`oR = (1 + ·) ∘ dict ∘ transPort ∘ ofMatrix` is a pipeline of whole-matrix computations, and
+**every `oR` fact in this repository is a `#guard` or a `decide` at a concrete matrix.**  There is
+no equation for `oR (M ++ block)`, so there is nothing to induct on — which is exactly what an
+`∀ n` statement needs.  The base case `oR (rungM 0 0) = some (fsEsucc 0 0)` is `rfl`; the step has
+no lemma to take.
+
+**THIS IS NOT A GAP IN A PROOF, IT IS A MISSING LAYER.**  `oR` is a VALIDATED COMPUTATION — 174
+`#guard`s across `Trans/`, an oracle table, negative controls — and validation at points is not an
+API.  Anything quantified over `n` on the `oR` side is blocked until `Trans/Recal.lean` grows
+equation lemmas, and that is a piece of work whose size is set by `ofMatrix`/`transPort`/`dict`,
+not by any ordinal question.
+
+The pieces that DO exist and survive this: `expand_epsM_succ` (all `k`, all `n`), `rungM_zero`,
+`rungM_succ`, the `n = 0` reading, and §21.1's measurement.  The ordinal side is settled; the
+reader side is where this line stops.
+-/
+
+theorem rungM_succ (k n : Nat) :
+    rungM k (n + 1) = rungM k n ++ rungBlock k n := by
+  simp [rungM, List.range_succ]
+
+theorem oR_rungM_zero_base :
+    Trans.oR (rungM 0 0) = some (Evidence.WF.fsEsucc 0 0) := rfl
+
 end Evidence.Cert
