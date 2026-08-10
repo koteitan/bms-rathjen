@@ -376,5 +376,28 @@ private def okPair (a b : BT) : Bool := BT.lt a b == TM.Term.lt (dict a) (dict b
 
 end Test
 
+/-! ### The equational layer for `dict`
+
+`dict` is a structural recursion, so each clause holds by `rfl`.  Stating them as named
+theorems is not decoration: a proof about `dict (f n)` for an open `n` cannot unfold `dict`
+by computation, and these are what `rw` fires on.  Same reason as `ofMatrix_append` in
+`Trans/Recal.lean` — see the note there. -/
+
+#guard dict BT.zero == TM.Term.zero
+#guard dict (.D 0 .zero) == collapse 0 (dict .zero)
+#guard dict (.D 2 (.D 1 .zero)) == collapse 2 (dict (.D 1 .zero))
+#guard dict (.sum (.D 0 .zero) (.D 1 .zero)) ==
+  TM.Term.plus (dict (.D 0 .zero)) (dict (.D 1 .zero))
+#guard dict (.sum (.D 2 (.D 0 .zero)) (.D 0 (.D 1 .zero))) ==
+  TM.Term.plus (dict (.D 2 (.D 0 .zero))) (dict (.D 0 (.D 1 .zero)))
+
+theorem dict_zero : dict BT.zero = TM.Term.zero := rfl
+
+theorem dict_D (u : Nat) (a : BT) :
+    dict (.D u a) = collapse u (dict a) := rfl
+
+theorem dict_sum (a b : BT) :
+    dict (.sum a b) = TM.Term.plus (dict a) (dict b) := rfl
+
 end Dict
 end Trans

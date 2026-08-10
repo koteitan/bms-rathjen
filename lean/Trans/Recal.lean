@@ -858,6 +858,46 @@ theorem ofMatrix_append (M N : BMS.Matrix) :
       cases hN : (n :: N).all (fun c => decide (c.length ≤ 2)) <;>
       simp
 
+/-- `transPort` unfolded once.  `transPort` is defined through a fuel argument and a state
+monad; this exposes the body so a proof about an open argument has something to `rw` with. -/
+def transPortRhs (M : PS) : Dict.BT :=
+  (runAux (transFuel M) M none).run' []
+
+#guard transPort [(0, 0)] == transPortRhs [(0, 0)]
+#guard transPort [(0, 0), (1, 1)] == transPortRhs [(0, 0), (1, 1)]
+#guard transPort [(0, 0), (1, 1), (1, 0), (2, 1)] ==
+  transPortRhs [(0, 0), (1, 1), (1, 0), (2, 1)]
+
+theorem transPort_eq_runAux (M : PS) :
+    transPort M = transPortRhs M := rfl
+
 end Recal
+
+/-! ### `oR` distributes over `++` (through the parser layer)
+
+Immediate from `Recal.ofMatrix_append`, and the reason that lemma was worth proving: the
+row families the table is built from (`rungM`, `blockRow`) are defined by appending blocks,
+so every reader statement about them factors through this. -/
+
+def oRAppendRhs (M N : BMS.Matrix) : Option TM.Term :=
+  if (M ++ N).isEmpty then some TM.Term.zero
+  else (Recal.ofMatrixAppendRhs M N).map fun p =>
+    TM.Term.plus TM.Term.one (Dict.dict (Recal.transPort p))
+
+#guard oR ([[0, 0], [1, 1]] ++ [[2, 0]]) ==
+  oRAppendRhs [[0, 0], [1, 1]] [[2, 0]]
+#guard oR (([] : BMS.Matrix) ++ [[0, 0], [1, 1]]) ==
+  oRAppendRhs [] [[0, 0], [1, 1]]
+#guard oR ([[0, 0], [1, 1]] ++ []) ==
+  oRAppendRhs [[0, 0], [1, 1]] []
+#guard oR (([] : BMS.Matrix) ++ []) == oRAppendRhs [] []
+#guard oR ([[0, 0, 7]] ++ [[1, 1]]) ==
+  oRAppendRhs [[0, 0, 7]] [[1, 1]]
+
+theorem oR_append (M N : BMS.Matrix) :
+    oR (M ++ N) = oRAppendRhs M N := by
+  unfold oR Recal.oR Recal.oRB oRAppendRhs
+  rw [Recal.ofMatrix_append]
+  simp [Function.comp_def]
 
 end Trans

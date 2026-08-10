@@ -9541,4 +9541,91 @@ theorem inst_zeta (n : Nat) : BMS.expand? ([[0,0],[1,1],[2,1]] ++ [[1,0]]) n
 #print axioms inst_rowA
 #print axioms inst_zeta
 
+/-! ### §21.3 A THIRD ROUTE TO `oR_rungM`: build the reader chain link by link
+
+§21.2 closed both routes that go *around* the reader.  This section takes the reader apart
+instead.  `Trans.oR` is a composition of three stages, so for `k = 0` the target factors into
+four links:
+
+    rungM 0 n  --ofMatrix-->  rungPS n  --transPort-->  rungBT n  --dict-->  fsEsucc 0 n
+
+Each link is a statement about an *open* `n`, which is exactly what `#guard` cannot give and
+what §21.1's 24-point measurement was standing in for.
+
+**LINK 1 IS NOW A THEOREM** (`ofMatrix_rungM_zero`).  It goes through `Trans.Recal.ofMatrix_append`
+and `rungM_succ` by induction — the append lemma was proved precisely so that a family defined by
+appending blocks could be read symbolically, and this is its first consumer.
+
+**LINKS 2 AND 3 ARE STILL MEASUREMENTS, AND BOTH WERE ATTEMPTED.**  The `#guard`s below record
+them.  The equational layers they need now exist (`Trans.Recal.transPort_eq_runAux`, and
+`Trans.Dict.dict_zero` / `dict_D` / `dict_sum`), so the obstacle is no longer the absence of
+anything to rewrite with — but neither link is a tactic away, and it is worth writing down why so
+the next attempt does not rediscover it.
+
+**LINK 2 — the fuel is a function of the list.**  `transPort M = (runAux (transFuel M) M none).run' []`,
+`runAux` consumes from the FRONT, and `rungPS (n+1)` appends at the BACK.  So the induction
+hypothesis concerns a prefix, and by the time the run reaches the appended tail it is no longer in
+the initial state.  `transFuel p` and `transFuel (p ++ q)` are also different numbers, so any
+append lemma that ignores the fuel is false.  What is actually needed: `runAux` on `p ++ q` with an
+ARBITRARY incoming state, plus fuel monotonicity above the threshold.
+
+**LINK 3 — `collapse` is a normaliser, not a constructor.**  `Trans.Dict.collapse` runs `wcnf`,
+folds, and then `omegaNF`, so `dict (rungBT n)` and `fsEsucc 0 n` are NOT definitionally equal at
+any index and no amount of `rw` with the three `dict` clauses closes the gap.  Three independent
+attempts all ended by unfolding `collapse` into its `wcnf`/`foldl` machinery and dying on `whnf`
+heartbeats.  Closing link 3 needs an equational law for `collapse 0 (plus (Z zero) ·)` at the
+shapes that occur here — i.e. a theory of the normaliser, which does not exist yet.
+
+Two conjectures were measured and BOTH ARE FALSE; they are recorded so nobody spends time on them:
+
+    collapse 0 (plus (collapse 1 zero) y)  =  phi zero y        -- false
+    fsEsucc 0 (n+1)                        =  phi zero (fsEsucc 0 n)   -- false, breaks at n = 0
+
+The second fails because of `fsGen`: `fsEsucc 0 0 = epsN 0` while `fsEsucc 0 (n+1) =
+iterPhi zero (add (epsN 0) (epsN 0)) (n+1)`, so the ordinal side steps by `phi zero` only from
+n ≥ 1 and the 0 → 1 step changes shape.  An induction stated against `iterPhi` directly avoids
+that discontinuity; one stated against `fsEsucc` does not.
+
+Also measured: `collapse 1 zero = Z zero`, and the base case agrees —
+`dict (rungBT 0) = fsEsucc 0 0 = phi (phi zero zero) zero`.
+
+Nothing on this route needs the retracted `o?`, which is why it is open at all where (a) and (b)
+are closed.  But "open" here means *not refuted*, not *nearly done*.
+
+`rungPS` and `rungBT` are the closed forms of the two intermediate stages — read off the
+measurement, in the same way `fsEsucc` was read off the ordinal side in §21.1. -/
+
+/-- The parser stage of the reader, on the `k = 0` rung family. -/
+def rungPS : Nat → Trans.Recal.PS
+  | 0 => [(0, 0), (1, 1)]
+  | n + 1 => rungPS n ++ [(((n + 1 : Nat) : Int), 0), (((n + 2 : Nat) : Int), 1)]
+
+#guard (List.range 8).all fun n =>
+  Trans.Recal.ofMatrix (rungM 0 n) == some (rungPS n)
+
+theorem ofMatrix_rungM_zero (n : Nat) :
+    Trans.Recal.ofMatrix (rungM 0 n) = some (rungPS n) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [rungM_succ, Trans.Recal.ofMatrix_append]
+    have hM : (rungM 0 n).isEmpty = false := by rfl
+    simp [Trans.Recal.ofMatrixAppendRhs, hM, rungBlock, rungPS, ih]
+    rfl
+
+#print axioms ofMatrix_rungM_zero
+
+/-- The Buchholz stage of the reader, on the `k = 0` rung family. -/
+def rungBT : Nat → Trans.Dict.BT
+  | 0 => .D 0 (.D 1 .zero)
+  | n + 1 => .D 0 (.sum (.D 1 .zero) (rungBT n))
+
+-- Link 2, unproved: `transPort_rungPS`.
+#guard (List.range 8).all fun n =>
+  Trans.Recal.transPort ((Trans.Recal.ofMatrix (rungM 0 n)).getD []) == rungBT n
+
+-- Link 3, unproved: `dict_rungBT`.
+#guard (List.range 8).all fun n =>
+  Trans.Dict.dict (rungBT n) == Evidence.WF.fsEsucc 0 n
+
 end Evidence.Cert
