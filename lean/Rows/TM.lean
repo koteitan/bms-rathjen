@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.2.6"
+def version : String := "v0.2.7"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -416,13 +416,31 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 
 ## E.certified — ✅ の実体
 
+**表の ✅ 列は $`\\mathrm{Certified}\\;M\\;t`$ が存在する行にだけ機械的に付く。**
+これは帰納的述語で、導入規則は 3 つ:
+
 ```math
-\\mathrm{Certified}\\;M\\;t
+\\frac{}{\\mathrm{Certified}\\;[\\,]\\;0}
+\\qquad
+\\frac{\\mathrm{kind}\\,M = \\mathrm{succ}
+\\qquad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;t}
+{\\mathrm{Certified}\\;M\\;(t+1)}
 ```
 
-$`M`$ の展開木を根から $`[\\,]`$ / $`0`$ まで降りる導出の存在
-([D.Certified](#dcertified))。翻訳写像にも順序型にも言及せず、**展開の再帰だけ**で
-「$`M`$ が $`t`$ を表す」を述べる。**表の ✅ 列はこれが存在する行にだけ機械的に付く。**
+```math
+\\frac{\\mathrm{kind}\\,M = \\mathrm{lim}
+\\quad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)
+\\quad \\forall n.\\;f_n < t
+\\quad \\forall n.\\;f_n < f_{n+1}
+\\quad \\forall s \\in \\mathfrak{T}(M).\\;s < t \\to \\exists n.\\;s \\le f_n}
+{\\mathrm{Certified}\\;M\\;t}
+```
+
+極限規則の 5 前提のうち**同一性を述べるのは
+$`\\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)`$ の 1 つだけ**で、残る 4 つは
+列 $`f`$ の性質である。**性質をいくつ検査しても値は決まらない**
+([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた。
+$`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
 
 **状態: Lean の定理。11 行で証明済み。** 較正事故のあと、$`o`$ に言及しない形へ移した
 結果である — $`o`$ を含む主張は $`o`$ が誤っていれば道連れになる。
@@ -508,33 +526,6 @@ P.T は**真だが、このリポジトリの手法では証明できない**。
 | `oStageC` | Stage C の候補翻訳の値の一致 |
 
 # 定義
-
-## D.Certified
-
-$`\\mathrm{Certified}\\;M\\;t`$ は帰納的述語で、導入規則は 3 つ:
-
-```math
-\\frac{}{\\mathrm{Certified}\\;[\\,]\\;0}
-\\qquad
-\\frac{\\mathrm{kind}\\,M = \\mathrm{succ}
-\\qquad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;t}
-{\\mathrm{Certified}\\;M\\;(t+1)}
-```
-
-```math
-\\frac{\\mathrm{kind}\\,M = \\mathrm{lim}
-\\quad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)
-\\quad \\forall n.\\;f_n < t
-\\quad \\forall n.\\;f_n < f_{n+1}
-\\quad \\forall s \\in \\mathfrak{T}(M).\\;s < t \\to \\exists n.\\;s \\le f_n}
-{\\mathrm{Certified}\\;M\\;t}
-```
-
-極限規則の 5 前提のうち**同一性を述べるのは
-$`\\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)`$ の 1 つだけ**で、残る 4 つは
-列 $`f`$ の性質である。**性質をいくつ検査しても値は決まらない**
-([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた。
-$`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
 
 ## D.CertifiedIn / D.DomI
 
