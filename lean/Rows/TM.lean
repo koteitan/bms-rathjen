@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.2.7"
+def version : String := "v0.2.8"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -408,24 +408,35 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 は目標であってエビデンスではないので、ここには書かず
 [plan/README.md](../plan/README.md) にある。
 
-- [E.certified — ✅ の実体](#ecertified--✅-の実体)
+- [E.zero / E.succ / E.lim — ✅ の実体](#ezero--esucc--elim--✅-の実体)
 - [E.cofinal — 展開と基本列の相互共終](#ecofinal--展開と基本列の相互共終)
 - [証明書の強さと、その限界](#証明書の強さとその限界)
 - [その他の弱いエビデンス](#その他の弱いエビデンス)
 - [定義](#定義)
 
-## E.certified — ✅ の実体
+## E.zero / E.succ / E.lim — ✅ の実体
 
 **表の ✅ 列は $`\\mathrm{Certified}\\;M\\;t`$ が存在する行にだけ機械的に付く。**
-これは帰納的述語で、導入規則は 3 つ:
+$`\\mathrm{Certified}`$ は帰納的述語で、**行の $`\\mathrm{kind}`$ によってどの規則が
+適用されるかが決まる**。
+
+### E.zero
 
 ```math
 \\frac{}{\\mathrm{Certified}\\;[\\,]\\;0}
-\\qquad
+```
+
+### E.succ — $`\\mathrm{kind}\\,M = \\mathrm{succ}`$ の行
+
+```math
 \\frac{\\mathrm{kind}\\,M = \\mathrm{succ}
 \\qquad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;t}
 {\\mathrm{Certified}\\;M\\;(t+1)}
 ```
+
+すべての展開が同じ $`t`$ を認証するなら、この行は $`t+1`$。
+
+### E.lim — $`\\mathrm{kind}\\,M = \\mathrm{lim}`$ の行
 
 ```math
 \\frac{\\mathrm{kind}\\,M = \\mathrm{lim}
@@ -436,14 +447,15 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 {\\mathrm{Certified}\\;M\\;t}
 ```
 
-極限規則の 5 前提のうち**同一性を述べるのは
+前提は 5 つ。**同一性を述べるのは
 $`\\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)`$ の 1 つだけ**で、残る 4 つは
 列 $`f`$ の性質である。**性質をいくつ検査しても値は決まらない**
 ([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた。
 $`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
 
-**状態: Lean の定理。11 行で証明済み。** 較正事故のあと、$`o`$ に言及しない形へ移した
-結果である — $`o`$ を含む主張は $`o`$ が誤っていれば道連れになる。
+**状態: いずれも Lean の定理。合わせて 11 行で証明済み。** 較正事故のあと、
+$`o`$ に言及しない形へ移した結果である — $`o`$ を含む主張は $`o`$ が誤っていれば
+道連れになる。
 
 ## E.cofinal — 展開と基本列の相互共終
 
