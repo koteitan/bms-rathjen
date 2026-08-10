@@ -9336,4 +9336,209 @@ theorem rungM_succ (k n : Nat) :
 theorem oR_rungM_zero_base :
     Trans.oR (rungM 0 0) = some (Evidence.WF.fsEsucc 0 0) := rfl
 
+/-! ## §22 THE BLOCK FAMILY — `expand_rowA` GENERALISED TO AN ARBITRARY BLOCK
+
+`expand_rowA` says `expand? ([[0,0],[1,1]] ++ [[1,0]]) n` is that block repeated
+`n+1` times.  Measured (`table/nfok-reach-2026-08-10.txt`), the row `ω^(ζ₀+1)` has
+**exactly the same shape one level up**: `[[0,0],[1,1],[2,1]] ++ [[1,0]]`, expanding to
+its own 3-row block repeated.  So the theorem generalises over the block.
+
+    expand_blockRow (B) (hB : B ≠ []) (hWF : BMS.WF 2 B)
+      (hzero : ent B 0 0 = 0)
+      (hpos : ∀ i, 0 < i → i < B.length → 0 < ent B i 0) (n) :
+      expand? (B ++ [[1,0]]) n = some (blockM B n)
+
+The three conditions on `B` were **found by measurement, not guessed**: `blockWorks`
+(does the identity hold) and `blockShape` (do the conditions hold) agree on all 3615
+sample blocks, `#guard`ed below.
+
+**AND THE CONSUMER TEST IS PART OF THE DELIVERABLE.**  `inst_rowA` and `inst_zeta`
+discharge the hypotheses at the two concrete blocks this was built for.  They are
+here because a hypothesis a caller cannot discharge is a hypothesis that makes the
+theorem unusable — this file has published a vacuous theorem once already (WF §15.37)
+and the only instrument that detects that is a consumer.  Note the discharges are
+written out longhand: this project has NO MATHLIB, so `fin_cases` / `interval_cases`
+do not exist and `BMS.WF 2 B` has no `Decidable` instance, so `by decide` does not
+apply to it either.
+-/
+
+def blockM (B : Matrix) (n : Nat) : Matrix :=
+  (List.replicate (n + 1) B).flatten
+
+/-- The bounded expansion identity used for measurement. -/
+def blockWorks (B : Matrix) : Bool :=
+  (List.range 5).all fun n =>
+    BMS.expand? (B ++ [[1, 0]]) n == some (blockM B n)
+
+/-- The structural condition suggested by the measurements. -/
+def blockShape : Matrix → Bool
+  | [] => false
+  | c :: cs =>
+      c.length == 2 && c.getD 0 0 == 0 &&
+        cs.all (fun d => d.length == 2 && decide (0 < d.getD 0 0))
+
+/-! The two requested controls, checked before the proof. -/
+
+#guard blockWorks [[0, 0], [1, 1]]
+#guard (List.range 5).all (fun n =>
+  blockM [[0, 0], [1, 1]] n == Evidence.Cert.eps0M n)
+#guard blockWorks [[0, 0], [1, 1], [2, 1]]
+
+/-! Search all blocks of length 1--3 whose columns have length 0--3 and entries
+    in `{0,1}`.  On all 3,615 blocks, the expansion identity agrees exactly with
+    `blockShape`: every column has height two, the first bottom entry is zero,
+    and all later bottom entries are positive. -/
+
+def sampleCols : List (List Nat) :=
+  [[]] ++
+  (List.range 2).map (fun a => [a]) ++
+  (List.range 2).flatMap (fun a => (List.range 2).map (fun b => [a, b])) ++
+  (List.range 2).flatMap (fun a => (List.range 2).flatMap (fun b =>
+    (List.range 2).map (fun c => [a, b, c])))
+
+def sampleBlocks : List Matrix :=
+  sampleCols.map (fun a => [a]) ++
+  sampleCols.flatMap (fun a => sampleCols.map (fun b => [a, b])) ++
+  sampleCols.flatMap (fun a => sampleCols.flatMap (fun b =>
+    sampleCols.map (fun c => [a, b, c])))
+
+#guard sampleBlocks.length == 3615
+#guard sampleBlocks.all (fun B => blockWorks B == blockShape B)
+
+private theorem range_map_getD_self {α : Type} [Inhabited α] (l : List α) :
+    (List.range l.length).map (fun i => l.getD i default) = l := by
+  apply List.ext_getElem
+  · simp
+  · intro i hi₁ hi₂
+    simp only [List.getElem_map, List.getElem_range, List.getD_eq_getElem?_getD]
+    rw [List.getElem?_eq_getElem hi₂]
+    rfl
+
+private theorem rebuild_two_rows (B : Matrix) (hWF : BMS.WF 2 B) :
+    (List.range B.length).map (fun x =>
+      (List.range 2).map (fun y => BMS.ent B x y)) = B := by
+  calc
+    (List.range B.length).map (fun x =>
+        (List.range 2).map (fun y => BMS.ent B x y))
+      = (List.range B.length).map (fun x => B.getD x []) := by
+          apply List.map_congr_left
+          intro x hx
+          have hxl : x < B.length := List.mem_range.mp hx
+          have hxget : B.getD x [] = B[x] := by
+            rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hxl]
+            rfl
+          have hc : (B.getD x []).length = 2 := by
+            rw [hxget]
+            exact hWF B[x] (List.getElem_mem hxl)
+          show (List.range 2).map (fun y => (B.getD x []).getD y 0) = B.getD x []
+          rw [Evidence.StageA.range_map_getD 2 (B.getD x []) (by omega)]
+          apply List.take_of_length_le
+          omega
+    _ = B := range_map_getD_self B
+
+/-- Once the bad root is column zero, a well-formed two-row block is copied
+    unchanged because the final column `[1,0]` has `t = 0`. -/
+private theorem expand_blockRow_of_parent (B : Matrix) (hWF : BMS.WF 2 B)
+    (hpar : BMS.parent (B ++ [[1, 0]]) 0 B.length = some 0) (n : Nat) :
+    BMS.expand? (B ++ [[1, 0]]) n = some (blockM B n) := by
+  have hblk : ∀ a : Nat,
+      (List.range B.length).map (fun x =>
+        (List.range 2).map (fun y =>
+          BMS.ent (B ++ [[1, 0]]) x y +
+            a * BMS.delta (B ++ [[1, 0]]) 0 0 y *
+              (if BMS.ascends (B ++ [[1, 0]]) 0 x y then 1 else 0))) = B := by
+    intro a
+    have hmap : (List.range B.length).map (fun x =>
+        (List.range 2).map (fun y =>
+          BMS.ent (B ++ [[1, 0]]) x y +
+            a * BMS.delta (B ++ [[1, 0]]) 0 0 y *
+              (if BMS.ascends (B ++ [[1, 0]]) 0 x y then 1 else 0))) =
+        (List.range B.length).map (fun x =>
+          (List.range 2).map (fun y => BMS.ent B x y)) := by
+      apply List.map_congr_left
+      intro x hx
+      apply List.map_congr_left
+      intro y _
+      have hxl : x < B.length := List.mem_range.mp hx
+      simp only [BMS.delta, Nat.not_lt_zero, if_false, Nat.mul_zero, Nat.zero_mul,
+        Nat.add_zero]
+      unfold BMS.ent
+      have hget : (B ++ [[1, 0]]).getD x [] = B.getD x [] := by
+        simp [List.getD_eq_getElem?_getD, List.getElem?_append_left hxl]
+      rw [hget]
+    rw [hmap]
+    exact rebuild_two_rows B hWF
+  have hlast : (B ++ [[1, 0]]).getLast? = some [1, 0] := by simp
+  simp only [BMS.expand?, hlast, Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+  rw [show BMS.lnz [1, 0] = some 0 from rfl]
+  simp only
+  have hlen : (B ++ [[1, 0]]).length - 1 = B.length := by simp
+  rw [hlen, hpar]
+  simp only [Option.bind_some, List.take_zero, List.nil_append, Nat.zero_add, Nat.sub_zero,
+    List.length_cons, List.length_nil]
+  rw [List.map_congr_left (l := List.range (n + 1))
+      (g := fun _ => B) (fun a _ => hblk a), Evidence.Cert.map_const_flatten]
+  rfl
+
+private theorem ent_append_left_blk (B C : Matrix) (x y : Nat) (hx : x < B.length) :
+    BMS.ent (B ++ C) x y = BMS.ent B x y := by
+  unfold BMS.ent
+  have hget : (B ++ C).getD x [] = B.getD x [] := by
+    simp [List.getD_eq_getElem?_getD, List.getElem?_append_left hx]
+  rw [hget]
+
+private theorem parent_blockRow_zero (B : Matrix) (hB : B ≠ [])
+    (hzero : BMS.ent B 0 0 = 0)
+    (hpos : ∀ i, 0 < i → i < B.length → 0 < BMS.ent B i 0) :
+    BMS.parent (B ++ [[1, 0]]) 0 B.length = some 0 := by
+  have hlen : 0 < B.length := List.length_pos_iff.mpr hB
+  have hlast : BMS.ent (B ++ [[1, 0]]) B.length 0 = 1 := by
+    rw [Evidence.Cert.ent_append B [[1, 0]] B.length 0 (Nat.le_refl _)]
+    simp [BMS.ent]
+  show ((List.range B.length).filter (fun p => decide
+    (BMS.ent (B ++ [[1, 0]]) p 0 < BMS.ent (B ++ [[1, 0]]) B.length 0))).max? = some 0
+  rw [Evidence.StageA.max?_filter_range]
+  apply Evidence.StageA.lastSome_spec _ B.length 0 hlen
+  · have hfirst : BMS.ent (B ++ [[1, 0]]) 0 0 = 0 := by
+      rw [ent_append_left_blk B [[1, 0]] 0 0 hlen, hzero]
+    simp [hfirst, hlast]
+  · intro q hq hqB
+    have hqent : BMS.ent (B ++ [[1, 0]]) q 0 = BMS.ent B q 0 :=
+      ent_append_left_blk B [[1, 0]] q 0 hqB
+    have hqpos := hpos q hq hqB
+    simp [hqent, hlast]
+    omega
+
+/-- A block whose columns have height two and whose row 0 has its unique zero
+    at the first column is copied `n + 1` times when `[1,0]` is appended. -/
+theorem expand_blockRow (B : Matrix) (hB : B ≠ []) (hWF : BMS.WF 2 B)
+    (hzero : BMS.ent B 0 0 = 0)
+    (hpos : ∀ i, 0 < i → i < B.length → 0 < BMS.ent B i 0) (n : Nat) :
+    BMS.expand? (B ++ [[1, 0]]) n = some (blockM B n) :=
+  expand_blockRow_of_parent B hWF (parent_blockRow_zero B hB hzero hpos) n
+
+#print axioms expand_blockRow
+
+
+-- COORDINATOR CHECK: the two instances this was built for.
+theorem inst_rowA (n : Nat) : BMS.expand? ([[0,0],[1,1]] ++ [[1,0]]) n
+    = some (blockM [[0,0],[1,1]] n) :=
+  expand_blockRow [[0,0],[1,1]] (by simp)
+    (by intro c hc; simp at hc; rcases hc with h|h <;> subst h <;> rfl)
+    (by rfl)
+    (by intro i h1 h2
+        match i, h1, h2 with
+        | 1, _, _ => decide) n
+theorem inst_zeta (n : Nat) : BMS.expand? ([[0,0],[1,1],[2,1]] ++ [[1,0]]) n
+    = some (blockM [[0,0],[1,1],[2,1]] n) :=
+  expand_blockRow [[0,0],[1,1],[2,1]] (by simp)
+    (by intro c hc; simp at hc; rcases hc with h|h|h <;> subst h <;> rfl)
+    (by rfl)
+    (by intro i h1 h2
+        match i, h1, h2 with
+        | 1, _, _ => decide
+        | 2, _, _ => decide) n
+#print axioms inst_rowA
+#print axioms inst_zeta
+
 end Evidence.Cert
