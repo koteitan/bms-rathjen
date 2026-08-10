@@ -129,7 +129,20 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   `{"snippets":[…], "timeout": 300}`. With it the same file checks in ~78 s.
   Do not restart the server or bisect the file on a 500 near 31 s — raise the
   timeout first.
-- After editing `BMS/ TM/ Trans/` libs: `lake build` + restart the rathjen
+- **USE `leanman`, NOT BARE `lake build` OR HAND-ROLLED kimina POSTs.** Global
+  skill `leanman`. `leanman check -C <project> FILE.lean` takes a SHARED lock so
+  parallel checks are safe; `leanman build` takes an EXCLUSIVE one, so a build
+  can never race a check or another build. **Judge by the EXIT CODE, never the
+  output** — 0 green, 1 `sorry`, 2 error, 124 timeout, 143 killed; `lean` prints
+  nothing on success, so empty output proves nothing. `leanman kill <id>`, never
+  `pkill -f lean`. Measured need: a bare `lake build` here blocked **9m20s at
+  `user 0m0.5s`** — not computing, waiting on lake's lock while several kimina
+  REPLs elaborated `Evidence/WF.lean` (13800 lines) concurrently. **Full-file
+  POSTs on `WF.lean` are no longer cheap**, and they contend with the build.
+  For a proof that might not terminate use `--backend lean`: on the kimina
+  backend a timeout reaps the client while the elaboration runs on inside the
+  resident REPL, slowing every other agent ~10x.
+- After editing `BMS/ TM/ Trans/` libs: `leanman build` + restart the rathjen
   instance (header cache). `Rows/` snippets sent as full text need no restart.
 - **A FILTERED GREEN IS NOT A GREEN.** Filtering the checker's messages by line
   number to isolate "the new ones" will hide real errors whenever the bound is
@@ -248,6 +261,27 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   existed at the right generality** — the tenth ancestor-already-exists of the
   session, and the only one where the false record was the lane's own note rather
   than a guessed name.
+- **A THEOREM WHOSE HYPOTHESES CANNOT BE MET COMPILES EXACTLY LIKE ONE WHOSE
+  HYPOTHESES CAN. THE ONLY INSTRUMENT THAT DETECTS IT IS A CONSUMER.** The
+  `asm_general*` assembly was verified, cleanly axiomed, four of five branches
+  discharged, every hypothesis honestly stated — and vacuous, because `Hnf` is
+  refuted by a counterexample three sections above it in the same file. **This
+  is NOT the C4 vacuity already catalogued**: there an antecedent failed to fire
+  *on a corpus*, and widening the corpus might have fired it; here it cannot
+  fire at all. **Route a real consumer through any theorem whose hypotheses you
+  wrote yourself, before proving more of it.** Two lanes hit this on unrelated
+  work in one session (`sqv_decomp`'s five suppliers, the assembly's four
+  branches); both times the cost was bounded only because the consumer was
+  written at item one rather than item ten.
+- **GUARDING A HYPOTHESIS BY ITS CASE DOES NOT RELATIVISE IT TO THE TERMS THAT
+  CASE CAN RECEIVE.** A guard sits at BRANCH level; the quantifier sits at
+  THEOREM level; a structural recursion only ever visits sub-terms of the `t` it
+  is applied to. So a caller with one row is asked about terms their row never
+  reaches — including exactly the ones the guard was written to exclude.
+  **Relativise hypotheses to sub-terms of the recursion's argument, not merely
+  to the case that consumes them.** And distinguish the damage before fixing:
+  a hypothesis that is TRUE but unproved is badly *placed*; one that is FALSE is
+  badly *stated*, and only the second invalidates the theorem.
 - **AN ASSUMED BRANCH IS WORTH RE-READING ONCE THE RECURSION EXISTS.** The cost
   of an assumption is invisible at the point where it was made: the theorem
   compiles, the hypothesis looks reasonable, and nothing flags it. `asm_general`
