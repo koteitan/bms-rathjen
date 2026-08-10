@@ -5601,52 +5601,76 @@ def fsVDirectBundleFailures : List Term :=
 #eval (fsVDirectBundleFailures.length,
   fsVDirectBundleFailures.map TM.Term.toStr)
 
-/-! ### §25.2 `fsV1` — a sequence FUNCTION, and the residue is one branch
 
-§25.1 measured every existing fundamental-sequence function against
-`expand (sqv' t) n = sqv' (f t n)` and none was clean (best: `fsN`+1 at 27 of 95).
-`fsV1` is built instead from the case analysis `encv'` itself uses, with the six
-proved rows (§17–§21 and `cert_eps0`) as its specification.
+/-! ### §25.2 `fsV` — THE SEQUENCE FUNCTION, MEASURED CLEAN ON ALL 95
 
-    fsV1        22 failures of 95      -- better than every prior candidate
+§25 proves `LimClauses` cannot supply `SqvDecomp`'s sequence (`limClauses_not_enough`),
+so it has to be computed from `t`.  §25.1 measured every existing fundamental-sequence
+function and none was clean: `fsC` 54 failures of 95, `fsN` at shift 0 92, at shift +1
+27, `fsVDirect` 54.
 
-**AND THE RESIDUE IS LOCALISED TO ONE BRANCH.**  Bucketing the 22 by which `encv'`
-clause the term takes:
+`fsV` is built from the case analysis `encv'` itself uses, and it is clean:
 
-    collapse      1
-    deep          3
-    base-empty    0
-    base-block   17     ← the `mkBlocks` site
-    add           1
-    other         0
+    #guard decompFailures fsV == []          -- 0 of 95
 
-So 17 of 22 are the same clause, and `base-empty` — the clause four of the five
-proved rows go through — is clean.  **The remaining work is the block site, not the
-recursion.**
+    fsV eps0T           = tower              #guard at n < 8
+    fsV epsOmega        = fsEW
+    fsV rowA            = fsA
+    fsV epsOmegaSq      = fsEW2
+    fsV epsOmegaOmega   = fsEWW
+    fsV epsEps0         = fsEE
 
-`fsV1` is NOT proved to satisfy the decomposition.  It is a definition with a
-measured failure set, which is what §25 said had to exist before anything could be
-proved: `LimClauses` cannot supply the sequence (`limClauses_not_enough`), so the
-sequence has to be computed from `t`, and this is the first function that computes
-it for most of the corpus.
+**It reproduces all six previously proved rows' sequences exactly** — they were its
+specification and they are now its calibration points, so a future edit that breaks a
+row breaks the build.
 
-The `#guard` on 22 is deliberate.  If someone improves `fsV1` the guard fails and
-the number has to be re-read rather than silently drifting — the opposite of the
-sweep's floor, which must NOT be frozen because there a fall is an improvement.
-Here a fall is also an improvement, and the point is to make it visible.
+HOW IT GOT THERE, because the intermediate is the interesting part.  A first version
+(`fsV1`) reached 22 failures of 95, and bucketing them by which `encv'` clause the
+failing term takes localised the residue to ONE branch:
+
+    collapse 1 · deep 3 · base-empty 0 · base-block 17 · add 1 · other 0
+
+17 of 22 in the `mkBlocks` site, and `base-empty` — the clause four of the five proved
+rows go through — already clean.  The fix is the `Bool` flag threaded through `fsVF`:
+it records whether the term is at the ROOT or is the exponent encoded by a nonzero-index
+`mkBlocks` site, and those two need different sequences.  **A single failure count would
+not have shown that; the histogram did.**
+
+**NOT PROVED.**  `decompFailures fsV == []` is a `#guard` over 95 terms, not
+`∀ t, CNV t → ∀ n, expand (sqv' t) n = sqv' (fsV t n)`.  What exists is the function
+the theorem needs, with its calibration pinned by executable checks.
+
+KNOWN FOLLOW-UP: `fsVF` carries fuel (`2 * t.deg + 8`), exactly as `encvF` did before
+§16 replaced it with the fuel-free `encv'`.  The same move is available here and the
+same reason applies — a fuel-carrying definition cannot be inducted over.
 -/
 
-def fsV1 : Term → Nat → Term
-  | .add u v, n =>
-      let w := fsV1 v n
+def unOmLogV : Term → Term
+  | .zero => TM.Term.zero
+  | t@(.phi a _) => if a == TM.Term.zero then .phi TM.Term.zero t else t
+  | t => .phi TM.Term.zero t
+
+/-- Expansion-tracking recursion.  The Boolean records whether the term is at
+    the root or is the exponent encoded by a nonzero-index `mkBlocks` site. -/
+def fsVF : Nat → Bool → Term → Nat → Term
+  | 0, _, _, _ => TM.Term.zero
+  | f + 1, true, .add u v, n =>
+      let w := fsVF f true v n
       if w == TM.Term.zero then u else .add u w
-  | .phi a b, n =>
+  | f + 1, true, t, n =>
+      if omLog t == t then unOmLogV (fsVF f false t n)
+      else if t == TM.Term.omega then TM.Term.ofNat n
+      else fsVF f false t n
+  | f + 1, false, .add u v, n =>
+      let w := fsVF f false v n
+      if w == TM.Term.zero then u else .add u w
+  | f + 1, false, .phi a b, n =>
       if a == TM.Term.zero && b == TM.Term.zero then TM.Term.zero
       else if b == TM.Term.zero then
         if Evidence.WF.kindV a then
           let p := Evidence.WF.predC a
           Evidence.WF.fsGen (.phi p TM.Term.zero) p (.phi p TM.Term.zero) n
-        else .phi (fsV1 a (n + 1)) TM.Term.zero
+        else .phi (fsVF f false a (n + 1)) TM.Term.zero
       else if Evidence.WF.kindV b then
         let c := .phi a (Evidence.WF.predC b)
         if a == TM.Term.zero then Evidence.WF.repAdd c n
@@ -5655,29 +5679,48 @@ def fsV1 : Term → Nat → Term
           let v := if p == TM.Term.zero then c else .phi p c
           let base := if p == TM.Term.zero then .add c c else v
           Evidence.WF.fsGen v p base n
-        else .phi (fsV1 a (n + 1)) c
-      else .phi a (fsV1 b n)
-  | _, _ => TM.Term.zero
+        else .phi (fsVF f false a (n + 1)) c
+      else
+        let gs := summands (TM.Term.splitFin b).1
+        let head := gs.headD TM.Term.zero
+        if TM.Term.isFP a head then
+          if gs.length == 1 then
+            if a == TM.Term.zero then Evidence.WF.repAdd head n
+            else .phi a (fsVF f false b n)
+          else
+            let tail : List Term := match n, gs.getLast? with
+              | 0, _ => []
+              | _, some g => [fsVF f false g n]
+              | _, none => []
+            .phi a (TM.Term.ofList (gs.dropLast ++ tail))
+        else match fpDeep a head with
+          | some _ => .phi a (fsVF f false b n)
+          | none =>
+              if a == TM.Term.zero || gs.isEmpty then
+                .phi a (fsVF f false b n)
+              else .phi a (fsVF f true b n)
+  | _ + 1, false, _, _ => TM.Term.zero
 
-def fsV1Failures : List Term := decompFailures fsV1
+/-- The term sequence selected by the expansion structure of `sqv' t`. -/
+def fsV (t : Term) (n : Nat) : Term :=
+  fsVF (2 * t.deg + 8) false t n
 
+-- Measurement corpus: all 95 `NfOK` limits in `agreeCorpus`.
 #guard nfOKLimitCorpus.length == 95
-#guard fsV1Failures.length == 22
+#guard decompFailures fsV == []
 
-def encBranch : Term → String
-  | .phi a b =>
-      let bm := TM.Term.splitFin b
-      let gs := summands bm.1
-      let head := gs.headD TM.Term.zero
-      if TM.Term.isFP a head then "collapse"
-      else match fpDeep a head with
-        | some _ => "deep"
-        | none => if gs.isEmpty then "base-empty" else "base-block"
-  | .add _ _ => "add"
-  | _ => "other"
-
-#guard (["collapse","deep","base-empty","base-block","add","other"].map
-  (fun b => (b, (fsV1Failures.filter (fun t => encBranch t == b)).length)))
-  == [("collapse",1),("deep",3),("base-empty",0),("base-block",17),("add",1),("other",0)]
+-- The six previously proved rows are the defining calibration points.
+#guard (List.range 8).all (fun n =>
+  fsV Evidence.WF.eps0T n == Evidence.WF.tower n)
+#guard (List.range 8).all (fun n =>
+  fsV Evidence.WF.epsOmega n == Evidence.WF.fsEW n)
+#guard (List.range 8).all (fun n =>
+  fsV Evidence.WF.rowA n == Evidence.WF.fsA n)
+#guard (List.range 8).all (fun n =>
+  fsV Evidence.WF.epsOmegaSq n == Evidence.WF.fsEW2 n)
+#guard (List.range 8).all (fun n =>
+  fsV Evidence.WF.epsOmegaOmega n == Evidence.WF.fsEWW n)
+#guard (List.range 8).all (fun n =>
+  fsV Evidence.WF.epsEps0 n == Evidence.WF.fsEE n)
 
 end Evidence.SqV
