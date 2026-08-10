@@ -41,6 +41,14 @@ for (const f of process.argv.slice(2)) {
   }
   const j = rest.join("\n");
   for (const m of j.matchAll(/\$`([^`]+)`\$/g)) {
+    // GitHub DOUBLE-escapes < and > inside inline math: `a<b` is delivered to
+    // the renderer as `a&lt;b`, which KaTeX cannot parse.  It renders fine
+    // locally, so only this rule catches it.  Inside a ```math fence they are
+    // safe -- the transformation is specific to the inline form.
+    if (/[<>]/.test(m[1])) {
+      bad++;
+      console.log(f, "INLINE < or > (GitHub sends &lt;/&gt;; write \\lt / \\gt):", m[1].slice(0, 50));
+    }
     try { katex.renderToString(m[1], { displayMode: false, throwOnError: true }); }
     catch (e) { bad++; console.log(f, "INLINE:", m[1].slice(0, 40), "|", e.message.slice(0, 60)); }
   }

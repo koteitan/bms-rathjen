@@ -149,9 +149,9 @@ $`o(M[n]) = o(M)[n{+}1]`$ がそのまま成り立ち、成り立つ領域では
 
 | E3 (相互共終形) | `Certified` 側 |
 |---|---|
-| $`\forall n.\ o(M[n]) <_T t`$ | 第 2 連言 $`\forall n.\ f_n < t`$ そのもの |
-| $`\forall k\,\exists n.\ t[k] <_T o(M[n])`$ | 第 4 連言で $`s = t[k]`$ と取れば出る |
-| $`\forall n\,\exists k.\ o(M[n]) <_T t[k]`$ | 基本列が $`t`$ に共終であることから出る |
+| $`\forall n.\ o(M[n]) \lt_T t`$ | 第 2 連言 $`\forall n.\ f_n \lt t`$ そのもの |
+| $`\forall k\,\exists n.\ t[k] \lt_T o(M[n])`$ | 第 4 連言で $`s = t[k]`$ と取れば出る |
+| $`\forall n\,\exists k.\ o(M[n]) \lt_T t[k]`$ | 基本列が $`t`$ に共終であることから出る |
 
 **しかも `Certified` 側は $`o`$ に一度も触れない。** E3 は $`o`$ を経由するので、読み手が
 誤っていれば道連れになる — 較正事故のあと $`o`$ 抜きの形へ移した理由がこれである。
