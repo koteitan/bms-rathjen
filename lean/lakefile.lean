@@ -38,7 +38,7 @@ package «bms-rathjen» where
   srcDir := "."
   globs := #[Glob.andSubmodules `Test]
 
-/-- Table generation: row database → table/r1-tm.md. -/
+/-- Table generation: row database → table/table-r1.md. -/
 lean_exe gentable where
   root := `Main
 

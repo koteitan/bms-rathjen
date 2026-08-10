@@ -28,8 +28,8 @@ jobs:
       - name: gentable up-to-date
         working-directory: lean
         run: |
-          lake exe gentable > "$RUNNER_TEMP/r1-tm.md"
-          diff -u ../table/r1-tm.md "$RUNNER_TEMP/r1-tm.md"
+          lake exe gentable > "$RUNNER_TEMP/table-r1.md"
+          diff -u ../table/table-r1.md "$RUNNER_TEMP/table-r1.md"
 
       # Every matrix in the table must be a STANDARD Bashicu matrix.  No Lean
       # check asks this — E1, the oR gate, bisim6, the sort orders and inT are

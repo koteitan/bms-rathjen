@@ -5,8 +5,8 @@
 
 読む場所は目的で分かれる。
 
-- **[対応表 (R1: BMS × T(M))](table/r1-tm.md)** — 表だけならファイル冒頭。
-  行が満たす命題は同ファイルの[エビデンス節](table/r1-tm.md#エビデンス) (`E.` / `P.` / `D.`)
+- **[対応表 (R1: BMS × T(M))](table/table-r1.md)** — 表だけならファイル冒頭。
+  行が満たす命題は同ファイルの[エビデンス節](table/table-r1.md#エビデンス) (`E.` / `P.` / `D.`)
 - [設計方法と記録](plan/README.md) — どう作るか、何を撤回したか
 - [作業原則 (constitutions)](plan/constitutions.md) — 一度誤った値を公開した経験から得た原則。1 枚
 - [Rathjen の表記系一覧 (強さ順)](rathjen-ordinals.md) — R1〜R5 と最終ターゲット
@@ -36,7 +36,7 @@
 3. 値が 𝔗(M) の外に出るものも含め、**いかなる**証明書も掲載値より上の値を与えない
 
 まだ排除できていないものと、較正事故 (v0.1.41) の経緯は
-[計画](plan/README.md) と[表のエビデンス節](table/r1-tm.md#エビデンス)に明記してある。
+[計画](plan/README.md) と[表のエビデンス節](table/table-r1.md#エビデンス)に明記してある。
 整礎性の証明は要求せず、「行列 = 順序数」の主張は整礎性を仮定した条件付きで
 形式化する方針だが、Γ₀ 未満については整礎性も証明済み。
 
@@ -44,6 +44,6 @@
 
 ```sh
 cd lean && lake build                      # 全行の検査 (#guard) を含む
-lake exe gentable > ../table/r1-tm.md      # 表の再生成
+lake exe gentable > ../table/table-r1.md      # 表の再生成
 YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 ```

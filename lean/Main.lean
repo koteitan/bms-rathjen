@@ -1,4 +1,4 @@
-/- gentable: generates table/r1-tm.md from the row database (to standard output).
+/- gentable: generates table/table-r1.md from the row database (to standard output).
 
    Each table row links to the line of Rows/TM.lean that defines it.  The line
    numbers are resolved here, by reading that file, so that they cannot drift out

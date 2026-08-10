@@ -551,9 +551,9 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   exactly when the build reached (and passed) it before failing. Do not commit
   first and check afterwards; that has worked by luck.
 - Generate the table to a scratch path and `diff` before installing it:
-  running `gentable` while a lane is mid-write truncated `table/r1-tm.md` once.
+  running `gentable` while a lane is mid-write truncated `table/table-r1.md` once.
   `gentable` writes to STDOUT and must be run from `lean/`:
-  `lake exe gentable > ../table/r1-tm.md`.
+  `lake exe gentable > ../table/table-r1.md`.
 - **Grep before writing a lemma.** Five times in one session a lemma a lane was
   about to write already existed — usually stated for an earlier, narrower
   fragment (CN before CNV) or by a retired agent for a neighbouring row. Search

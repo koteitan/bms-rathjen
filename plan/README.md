@@ -15,11 +15,11 @@ Rathjen の順序数崩壊関数の対応表を、Lean による機械検証付�
 [constitutions.md](constitutions.md) を参照。
 
 **この文書は「どう作るか」を書く。表の行が満たす命題そのものは
-[../table/r1-tm.md](../table/r1-tm.md) の「エビデンス」節にある。**
+[../table/table-r1.md](../table/table-r1.md) の「エビデンス」節にある。**
 
 | 読みたいもの | 読む場所 |
 |---|---|
-| 対応表だけ | [../table/r1-tm.md](../table/r1-tm.md) 冒頭の表 |
+| 対応表だけ | [../table/table-r1.md](../table/table-r1.md) 冒頭の表 |
 | 表が何を満たしているのか | 同ファイルの「エビデンス」節 (`E.` / `P.` / `D.`) |
 | 設計方法・失敗の記録 | この文書と [constitutions.md](constitutions.md) |
 
@@ -55,7 +55,7 @@ Rathjen の順序数崩壊関数の対応表を、Lean による機械検証付�
 
 | | 何を指すか | どこにあるか |
 |---|---|---|
-| `E.` / `P.` / `D.` | 表の行が満たす命題・補助命題・定義。名前は Lean の識別子 | [../table/r1-tm.md](../table/r1-tm.md) の「エビデンス」節 |
+| `E.` / `P.` / `D.` | 表の行が満たす命題・補助命題・定義。名前は Lean の識別子 | [../table/table-r1.md](../table/table-r1.md) の「エビデンス」節 |
 | E1 / E2 / E3 / G / MT | **行ごとに何を証明しにいくか**という設計上の分類 | この文書 (下記) |
 
 `E.` などは**結果**の名前で、E1 などは**作業**の名前である。表の主張は前者だけで
@@ -248,7 +248,7 @@ bms-rathjen/
 ├── plan/
 │   └── README.md             # 本計画書
 ├── table/                    # 対応表 (GitHub MathJax; 自動生成物。手編集しない)
-│   └── r1-tm.md              # BMS × T(M) 対応表
+│   └── table-r1.md              # BMS × T(M) 対応表
 ├── lean/                     # Lean 4 (lake) プロジェクト
 │   ├── lean-toolchain        # leanprover/lean4:v4.30.0
 │   ├── lakefile.lean         # lean_lib: BMS, TM, Trans, Rows, Evidence / lean_exe: gentable
@@ -277,7 +277,7 @@ bms-rathjen/
 │   │   └── TM.lean           # 一般定理 (E2 順序埋め込み、G 構造定理、MT。長期目標)
 │   ├── Test/
 │   │   └── CrossCheck.lean   # #eval によるスモークテスト (展開・比較の具体例)
-│   └── Main.lean             # lean_exe gentable: 行 DB → table/r1-tm.md を標準出力に生成
+│   └── Main.lean             # lean_exe gentable: 行 DB → table/table-r1.md を標準出力に生成
 ├── scripts/
 │   └── crosscheck.sh         # yaBMS (C 実装) と Lean の展開/比較/標準形判定の突き合わせ
 └── .github/
@@ -311,7 +311,7 @@ bms-rathjen/
     `rows_sorted_B`(BMS 順に整列), `rows_sorted_T`($`T(M)`$ 順に整列),
     `rows_nf`(全項が正規形)を `decide` で検査。
     行の追加・挿入時も自動で全行再検査される。
-- **Main.lean (gentable)**: `lake exe gentable > ../table/r1-tm.md` で表を生成する。
+- **Main.lean (gentable)**: `lake exe gentable > ../table/table-r1.md` で表を生成する。
   表の唯一の情報源は Rows/ であり、`table/` は生成物としてコミットする。
 - **依存関係**: 当面は外部依存なし(mathlib 不使用)で始める。
   構文的な E1〜E3・G には core の `Decidable` と `List` で足りる見込み。
@@ -328,7 +328,7 @@ bms-rathjen/
 4. **S3 変換**: `Trans/TM` の $`o`$ を、まず既知の予想対応の浅い部分
    ($`\psi(I)`$ 以下 → 3 行行列の先頭部分)から定義
 5. **S4 行の量産**: `Rows/TM` に行を追加しながら E1/E3 補題を付け、
-   `gentable` で `table/r1-tm.md` を生成
+   `gentable` で `table/table-r1.md` を生成
 6. **S5 一般定理**: E2・E3 一般形・G を標準形上で証明し、
    mathlib 導入後に MT を記述(長期)
 

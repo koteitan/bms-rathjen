@@ -15,7 +15,7 @@
 
 set -e
 root=$(cd "$(dirname "$0")/.." && pwd)
-table="$root/table/r1-tm.md"
+table="$root/table/table-r1.md"
 bmsdir=${1:-"$HOME/proofs/yaBMS/c"}
 bms="$bmsdir/bms"
 

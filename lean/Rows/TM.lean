@@ -2,7 +2,7 @@
 Rows/TM.lean — the row database of the correspondence table (R1: BMS × T(M))
 
 Policy (see plan/README.md):
-  - This file is the single source of truth for the table; table/r1-tm.md is
+  - This file is the single source of truth for the table; table/table-r1.md is
     generated from it by `gentable`.
   - Only rows that pass the machine checks are listed.  The per-row checks are the
     `#guard`s in the middle of this file, so a successful build means every listed
@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.2.2"
+def version : String := "v0.2.3"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -342,7 +342,7 @@ def regionLine (regionProofLine : String → String → Option Nat) (g : RegionR
   "| **" ++ g.bms ++ "** | " ++ cell g.tm ++ " | " ++ cell g.nm ++ " | " ++
     proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
 
-/-- The contents of table/r1-tm.md.
+/-- The contents of table/table-r1.md.
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
     defines it, `proofLine` maps a proof namespace to the file (path relative to
     lean/) and line of the row-proof file that declares it (Rows/Proofs.lean or
@@ -429,8 +429,24 @@ $`<_B`$ を BMS の順序、$`<_T`$ を $`\\mathfrak{T}(M)`$ の順序、$`\\mat
 \\mathrm{otype}\\bigl(\\{\\, s \\in \\mathrm{NF} : s <_T t \\,\\},\\ <_T\\bigr)
 ```
 
-左辺は「行列 $`M`$ の表す順序数」、右辺は「項 $`t`$ の表す順序数」。
-**これが「$`M`$ と $`t`$ が対応する」の意味である。**
+$`\\mathrm{otype}(X, <)`$ は**順序型** — 整列順序集合 $`(X, <)`$ と順序同型な
+順序数のこと。$`\\mathrm{otype}`$ が定義できるのは $`<`$ が $`X`$ 上で整礎な
+全順序のときだけで、$`\\mathrm{wf}`$ の仮定はそのためにある。例:
+
+```math
+\\mathrm{otype}(\\{0,1,2\\},\\ <) = 3,
+\\qquad
+\\mathrm{otype}(\\mathbb{N},\\ <) = \\omega,
+\\qquad
+\\mathrm{otype}(\\{\\,s : s <_T \\varepsilon_0\\,\\},\\ <_T) = \\varepsilon_0
+```
+
+つまり左辺は「$`M`$ より小さい標準形行列を全部集めたときの長さ」であり、
+それが**行列 $`M`$ の表す順序数の定義**である。右辺は同じことを項の側でしたもの。
+**この 2 つが等しいというのが「$`M`$ と $`t`$ が対応する」の意味である。**
+
+外部の順序数論に「$`M`$ の値」を尋ねるのではなく、**両側の下方集合の長さが
+一致する**と言うだけなので、$`o`$ のような翻訳写像に一切依存しない。
 
 **状態: 未証明。** mathlib (順序型) が要り、$`\\mathrm{wf}`$ は仮定として切り出す
 (紙の上では Rathjen 1994 の整列証明として既知)。以下の E は、これを支えるため、
