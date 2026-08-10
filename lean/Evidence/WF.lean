@@ -13508,4 +13508,77 @@ theorem lim_clauses_phi_arg_nf {a b : Term} (hcna : CNV a = true) (hcnb : CNV b 
     (by show lt b (phi a (g (0 + k))) = true
         rw [show 0 + k = k from by omega]; exact hk)
 
+/-! ### §15.34 THE ASSEMBLY — §15.19's self-dispatching theorem
+
+**WHAT IT DOES NOT GIVE, FIRST, BECAUSE IT IS THE PART A READER WILL OVERSTATE.**  `asm_general`
+**proves nothing `Evidence/Cert.lean` could not already assemble by hand.**  Every row it covers
+was already coverable by picking a template from §15.4–§15.18 and discharging that template's
+hypotheses at the call site.  Its value is narrower and worth stating exactly: **a row becomes ONE
+lemma instead of a caller-side case analysis**, so the marginal cost of the next row is an
+application rather than a decision the caller must get right.  That is a change to the cost of
+growth, not to what is provable.
+
+WHAT IT ASSUMES, AND EACH IS A BRANCH PROVED ELSEWHERE OR DELIBERATELY DEFERRED:
+
+    Hzero  `φ̄(a,0)`                cores (B) and (C') — §15.21, §15.18
+    Hsucc  `φ̄(a,b)`, `b` a successor  §15.15's template
+    Hnf    normality, GUARDED       required only when `b ≠ 0`, `b` a limit, and `b = φ̄(c,d)`
+
+**THE FIFTH SHAPE LIVES INSIDE `Hsucc`.**  §15.19's unreached case — `a` a limit with `b` a
+successor — is a `b`-successor row, so it is exactly one of the instances `Hsucc` covers.  It is
+therefore CARRIED as a hypothesis and never invented: a consumer with such a row must supply its
+sequence, and §15.29's measurement says no such row arises below depth 4.  **That is the shape
+this file has refused to guess three times and still refuses.**
+
+`Hnf` IS GUARDED BY THE CASE THAT NEEDS IT, not by the theorem that contains the case.  The sum
+branch cannot be asked for normality — it is not in scope there — and neither can `b = 0` or a
+successor `b`.  This is `hside_general`'s `∀ c d, b = φ̄(c,d) → …` one level up: **every hypothesis
+that is not there is one a consumer does not have to discharge.**
+
+WHAT IS RECURSIVE, AND IT IS STRUCTURAL (§15.29): the sum branch descends to the tail, core (C) to
+the second argument.  No `deg`, no `CarrierV`, no well-founded recursion — and core (C) now
+carries no `hside`, because §15.33 discharges it internally. -/
+
+theorem asm_general
+    (Hzero : ∀ (a : Term), CNV (phi a zero) = true → kindV (phi a zero) = false →
+        ∃ fs : Nat → Term, LimClauses (phi a zero) fs ∧ ∀ n, fs n ≠ zero)
+    (Hsucc : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = true →
+        ∃ fs : Nat → Term, LimClauses (phi a b) fs ∧ ∀ n, fs n ≠ zero)
+    (Hnf : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = false →
+        ∀ c d, b = phi c d → phiNF a b = phi a b) :
+    ∀ (t : Term), CNV t = true → kindV t = false → t ≠ zero →
+      ∃ fs : Nat → Term, LimClauses t fs ∧ ∀ n, fs n ≠ zero := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | phi p q _ ihq =>
+    intro h hk _
+    obtain ⟨hcnp, hcnq⟩ := cnv_phi h
+    by_cases hq : q = zero
+    · subst hq; exact Hzero p h hk
+    · by_cases hkq : kindV q = true
+      · exact Hsucc p q h hq hkq
+      · have hkq' : kindV q = false := by
+          cases hh : kindV q with
+          | true => exact absurd hh hkq
+          | false => rfl
+        obtain ⟨g, hg, _⟩ := ihq hcnq hkq' hq
+        obtain ⟨g', hg'⟩ := lim_clauses_phi_arg_nf hcnp hcnq (Hnf p q h hq hkq') g hg
+        exact ⟨fun n => phi p (g' n), hg', fun n => by intro hc; exact Term.noConfusion hc⟩
+  | add u v _ ihv =>
+    intro h hk _
+    obtain ⟨hAPu, hcnu, hcnv, hdvu⟩ := cnv_add h
+    have hvz : v ≠ zero := by
+      intro hc
+      rw [hc, show hdLe (zero : Term) u = false from rfl] at hdvu
+      exact Bool.noConfusion hdvu
+    obtain ⟨g, hg, hgz⟩ := ihv hcnv hk hvz
+    exact ⟨fun n => add u (g n),
+      lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
+      fun n => by intro hc; exact Term.noConfusion hc⟩
+
 end Evidence.WF
