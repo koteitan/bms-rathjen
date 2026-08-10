@@ -13581,6 +13581,42 @@ theorem asm_general
       lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
       fun n => by intro hc; exact Term.noConfusion hc⟩
 
+/-! ### §15.37 THE ASSEMBLY IS VACUOUS AS STATED — found by trying to call it
+
+**READ THIS BEFORE USING `asm_general`, `asm_generalC` OR `asm_generalB`.  THEIR HYPOTHESIS `Hnf`
+IS FALSE, SO ALL THREE ARE VACUOUSLY TRUE AND CANNOT BE INSTANTIATED BY ANYONE.**
+
+Found by routing one concrete row through the assembly — `ε_{ω²} = φ̄(1, ω²)`, whose `b` is a limit
+so it takes core (C).  `refine asm_generalB ?_ ?_ epsOmegaSq …` leaves exactly two goals, and they
+are the hypotheses **universally quantified over ALL `a` and `b`**, not over the sub-terms the
+row's recursion visits.  The second is refuted by this file's own §15.31 counterexample:
+
+    Hnf at a = 0, b = ε₀ = φ̄(1,0):
+        CNV (φ̄(0,ε₀)) = true        guard met
+        ε₀ ≠ 0                       guard met
+        kindV ε₀ = false             guard met  (ε₀ is a limit)
+        ε₀ is a `φ̄`                  inner guard met, c = 1, d = 0
+      ⟹ Hnf demands  phiNF 0 ε₀ = φ̄(0,ε₀)   which is **FALSE**
+
+So no consumer can ever supply `Hnf`.  **The theorems are true, honestly stated, verified, and
+useless.**
+
+WHY THE GUARDING DID NOT SAVE IT, WHICH IS THE LESSON.  §15.34 guards `Hnf` by the CASE that needs
+it — `b ≠ 0`, `b` a limit, `b = φ̄(c,d)` — and that is the right shape at the BRANCH level.  But
+the hypothesis is still quantified over **all** `a` and `b` at the THEOREM level, while the
+recursion only ever visits sub-terms of the `t` it is applied to.  **Guarding a hypothesis by its
+case does not relativise it to the terms that case can actually receive.**  A caller with one row
+is asked about terms their row never reaches — including the ones the guard was written to exclude.
+
+THE FIX'S SHAPE, NOT YET BUILT: relativise both hypotheses to sub-terms of `t`, so that a row
+supplies them only where its own recursion descends.  The `Hsucc` goal has the same defect and the
+same fix; it is additionally the fifth shape, so it stays carried either way.
+
+**AND THIS IS WHY THE ROW TEST WAS WORTH RUNNING AT ROW ONE.**  Nothing in the construction could
+have shown it: every branch is proved, every hypothesis is honest, the axioms are clean, and the
+file's own counterexample sits three sections above the theorem it refutes.  **A theorem whose
+hypotheses cannot be met compiles exactly like one whose hypotheses can.** -/
+
 /-! ### §15.36 CORE (B) DISCHARGED — four of five branches, and the `Hsucc` gap named
 
 COVERAGE CHECKED BEFORE WIRING, and the two remaining hypotheses came out opposite ways.
