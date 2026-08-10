@@ -13372,6 +13372,31 @@ sequences this project BUILDS rather than about `LimClauses`: `hside` at `k = 0`
 sample, the `k = 1` shift, and now `c < a`.  The habit that catches them is not a better corpus —
 it is asking what the HYPOTHESES say, and then constructing against them.
 
+**AND THIS ONE IS THE SHARPEST BECAUSE THE MEASUREMENT WAS GOOD.**  The other three had something
+off about them — corpus-bounded, canonical-only, a 36-pair sample.  `c < a` was 0 of 112 with a
+live positive control: denominated, non-vacuous, controlled, **and it would have licensed writing
+`k = 0`.**  It passes every check in this file's discipline and is still false.
+
+    A WELL-CONTROLLED MEASUREMENT OVER A POPULATION WE BUILT IS STILL A MEASUREMENT ABOUT US.
+
+**THE FAILURE MODES SCATTER AND THE PROOF DOES NOT.**  `c = a` fails by a hair — `φ̄(a, g 0) = b`
+exactly, the lift landing ON `b` at a fixed-point boundary.  `c < a` fails because `d` outruns
+`φ̄(a, g 0)` when the sequence starts low, landing far BELOW, with `b` not a fixed point of
+anything.  Different phenomena — and `hside_cLtA` is `hside_cEqA` plus one `lt_phi_of_le`.
+**A scattered phenomenon does not imply a scattered proof**, and predicting proof difficulty from
+failure-mode similarity is the same category error as predicting a fundamental sequence's shape
+from its argument's shape (§15.29's `ε_{ω²}` brief).
+
+**AND THERE IS NO INDUCTION IN ANY OF THE THREE BRANCHES.**  The expected difficulty was a measure:
+`d` shrinks in the second argument while `g`'s index grows, two motions with no obvious trade-off.
+There is nothing to trade — **the existential absorbs the index and the order absorbs the
+shrinkage.**  That is the second time in this project, on unrelated problems in different lanes,
+that a measure hunt ended by finding there was nothing to measure: the certificate lane lost both
+arithmetic termination measures for `encv'` and the route turned out to be the order
+(`acc_inT_below_cnv`, `wf_lt_cnv`).  **Two independent instances is where a coincidence becomes a
+technique: before hunting a measure, check whether an existential and an order already cover the
+two motions separately.**
+
 WHAT `hside_general` NEEDS, AND WHERE:
   * normality **only in the `φ̄` case** — its hypothesis is `∀ c d, b = φ̄(c,d) → phiNF a b = φ̄(a,b)`,
     so the `add` branch pays nothing, which is §15.29's "keep the cost where the falsity is" made
@@ -13427,5 +13452,60 @@ theorem hside_general {a b : Term} (hcna : CNV a = true) (hcnb : CNV b = true)
         · exact absurd rfl hca
         · exact h
       exact hside_cLtA hcnd hlt g hg
+
+/-! ### §15.33 THE WIRING — core (C) loses its `hside` hypothesis
+
+`lim_clauses_phi_arg` wants the side condition AT INDEX 0; `hside_general` delivers it at some
+index `k`.  The wiring is therefore a **k-FOLD** shift, and §15.12's `lim_clauses_shift` — which
+shifts by one — is not enough on its own: **§15.31 and §15.32 show `k` is unbounded**, since a
+legitimate `g` may be delayed arbitrarily.  One shift was the right repair for the corpus and the
+wrong primitive for the theorem, which is the same distinction those sections keep drawing.
+
+`lim_clauses_shift_k` needs `CNV b` where the one-step version does not: clause 4's `s` arrives
+only `inT`, and transitivity to the shifted index wants it `Frag`.  `cnv_of_lt_cnv` supplies that
+from `CNV b` — §15.1 paying for §15.33, which is the same fact certsound's carrier question turned
+on.
+
+**AFTER THIS, CORE (C) COSTS A CALLER ONLY NORMALITY.**  No `hside`, no index, no shift: the side
+condition is discharged inside and the index absorbed.  §15.19's core (C) row count was 546 and
+the branch map's 1019 sites all now route through one theorem. -/
+
+private theorem le_g_mono {g : Nat → Term} (hg1 : ∀ n, CNV (g n) = true)
+    (hg3 : ∀ n, lt (g n) (g (n + 1)) = true) : ∀ (i d : Nat), le (g i) (g (i + d)) = true
+  | _, 0 => le_self _
+  | i, d + 1 => by
+    have ih := le_g_mono hg1 hg3 i d
+    rw [show i + (d + 1) = (i + d) + 1 from by omega]
+    exact le_trans (frag_of_cnv _ (hg1 i)) (frag_of_cnv _ (hg1 (i + d)))
+      (frag_of_cnv _ (hg1 (i + d + 1))) ih (le_of_lt (hg3 (i + d)))
+
+/-- **SHIFT BY `k`.**  The one-step `lim_clauses_shift` iterated, proved directly because the
+    index arithmetic is cleaner than the iteration. -/
+theorem lim_clauses_shift_k {b : Term} (hcnb : CNV b = true) {g : Nat → Term}
+    (hg : LimClauses b g) (k : Nat) : LimClauses b (fun n => g (n + k)) := by
+  obtain ⟨h1, h2, h3, h4⟩ := hg
+  refine ⟨fun n => h1 _, fun n => h2 _, fun n => ?_, fun s hin hlt => ?_⟩
+  · show lt (g (n + k)) (g (n + 1 + k)) = true
+    rw [show n + 1 + k = (n + k) + 1 from by omega]
+    exact h3 _
+  · obtain ⟨m, hm⟩ := h4 s hin hlt
+    refine ⟨m, ?_⟩
+    show le s (g (m + k)) = true
+    exact le_trans (frag_of_cnv s (cnv_of_lt_cnv hin hcnb hlt)) (frag_of_cnv _ (h1 m))
+      (frag_of_cnv _ (h1 (m + k))) hm (le_g_mono h1 h3 m k)
+
+/-- **CORE (C) WITH NO `hside` HYPOTHESIS.**  The caller supplies normality and nothing else; the
+    side condition is discharged internally by `hside_general` and its index absorbed by the
+    shift.  This is the form the assembly's core (C) branch consumes. -/
+theorem lim_clauses_phi_arg_nf {a b : Term} (hcna : CNV a = true) (hcnb : CNV b = true)
+    (hnf : ∀ c d, b = phi c d → phiNF a b = phi a b)
+    (g : Nat → Term) (hg : LimClauses b g) :
+    ∃ g' : Nat → Term, LimClauses (phi a b) (fun n => phi a (g' n)) := by
+  obtain ⟨k, hk⟩ := hside_general hcna hcnb hnf g hg
+  refine ⟨fun n => g (n + k), ?_⟩
+  obtain ⟨h1, h2, h3, h4⟩ := lim_clauses_shift_k hcnb hg k
+  exact lim_clauses_phi_arg (fun n => g (n + k)) hcna hcnb h1 h2 h3 h4
+    (by show lt b (phi a (g (0 + k))) = true
+        rw [show 0 + k = k from by omega]; exact hk)
 
 end Evidence.WF

@@ -62,10 +62,19 @@ and cannot be removed at all.  The residue is one `have`, attackable in isolatio
 **A run that differs from this is a CHANGE, not a discovery.**  The baseline is here so no reader
 has to re-derive whether a number is good news.  Which way to read a difference:
 
-    sorryAx > 0             a regression, and the only one of the three that is unambiguous
+    sorryAx > 0             a regression — but see the caveat below, which is the ONLY thing
+                            that makes it ambiguous
     Classical.choice ↑      something new became classical — find it and decide, do not assume
     Classical.choice ↓      an improvement, OR the namespace filter stopped seeing something
     scanned ↓               declarations vanished from the sweep before you celebrate the rest
+
+**CHECK THE ERROR COUNT BEFORE BELIEVING A `sorryAx`.**  Lean fills a FAILED ELABORATION with
+`sorryAx`, so a declaration whose elaboration errored reports `[propext, sorryAx, Quot.sound]`
+with no `sorry` anywhere in the file.  Observed: a missing type annotation on a bound function
+produced exactly that reading in the same POST as the error.  So `sorryAx > 0` is unambiguous
+ONLY on a build with 0 errors — on a broken build it is a false alarm, and it fires on the one
+number this repo treats as never-move.  Read the error count first; if it is not 0, the axiom
+figures mean nothing at all.
 
 CROSS-CHECKED: a second, independently written implementation scanned 3242 (it filtered
 `.isInternal` names differently) and reported **the same 236 hit set**.  Different denominators,

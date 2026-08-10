@@ -140,6 +140,22 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   result applies to disposable probes too**: the status of the tool does not
   lower how much its output gets trusted. Filter by `severity`, never by line
   number or substring.
+- **A `sorryAx` READING IS MEANINGLESS UNLESS THE ERROR COUNT IS 0.** Lean fills
+  a FAILED ELABORATION with `sorryAx`, so a declaration whose elaboration errored
+  prints `[propext, sorryAx, Quot.sound]` with no `sorry` anywhere in the file —
+  observed from a missing type annotation on a bound function, in the same POST
+  as the error. **`sorryAx > 0` is the one number this repo treats as an
+  unconditional regression, and this is how it false-alarms.** Read the error
+  count first; on a broken build the axiom figures mean nothing at all. Recorded
+  in `lean/scripts/axiom_sweep.lean`'s reading rules too.
+- **A `sorryAx` READING IS MEANINGLESS UNLESS THE ERROR COUNT IS 0.** Lean fills
+  a FAILED ELABORATION with `sorryAx`, so a declaration whose elaboration errored
+  prints `[propext, sorryAx, Quot.sound]` with **no `sorry` anywhere in the
+  file** — observed from a missing type annotation on a bound function, in the
+  same POST as the error. **`sorryAx > 0` is the one number this repo treats as
+  an unconditional regression, and this is how it false-alarms.** Read the error
+  count first; on a broken build the axiom figures mean nothing at all. Also in
+  `lean/scripts/axiom_sweep.lean`'s reading rules.
 - **`#print axioms` IS THE BACKSTOP, NOT JUST AN AUDIT.** In that incident the
   build passed, the file contained no `sorry` token, and the line count grew as
   expected; `sorryAx` in the axiom list was the only surviving trace. Print
