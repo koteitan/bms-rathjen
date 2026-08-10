@@ -8966,7 +8966,34 @@ theorem expand_epsEps0 (n : Nat) :
           a * BMS.delta [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 y *
             (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 1]] 2 (2 + x) y then 1 else 0))))
       = ([[2 + a, 0]] : Matrix) := by
-    intro a; simp [BMS.ent, BMS.delta, BMS.ascends, List.range_succ, List.range_zero]
+    -- CHOICE-FREE ON PURPOSE.  `simp [BMS.ent, BMS.delta, BMS.ascends, …]` closes this too and
+    -- costs one `Classical.choice` in the whole theorem; `rfl`, an explicit `show` of the reduced
+    -- block and a fully-listed `simp only` all fail.  What works is to `change` to the two
+    -- entries written out, rewrite each atom by a `show … from rfl`, and leave `simp only` nothing
+    -- but arithmetic.  Do not "simplify" this back — the axiom set is the reason it is long.
+    intro a
+    change [[
+      BMS.ent [[0, 0], [1, 1], [2, 0], [3, 1]] 2 0 +
+        a * BMS.delta [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 0 *
+          (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 1]] 2 2 0 then 1 else 0),
+      BMS.ent [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 +
+        a * BMS.delta [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 1 *
+          (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 1]] 2 2 1 then 1 else 0)
+    ]] = [[2 + a, 0]]
+    rw [show BMS.ent [[0, 0], [1, 1], [2, 0], [3, 1]] 2 0 = 2 from rfl,
+      show BMS.delta [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 0 = 1 from rfl,
+      show BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 1]] 2 2 0 = true from rfl,
+      show BMS.ent [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 = 0 from rfl,
+      show BMS.delta [[0, 0], [1, 1], [2, 0], [3, 1]] 2 1 1 = 0 from rfl]
+    simp only [if_true, Nat.mul_one, Nat.mul_zero, Nat.zero_mul, Nat.zero_add]
+  have hflat (l : List Nat) :
+      ((l.map (fun a => ([[2 + a, 0]] : Matrix))).flatten) = l.map (fun a => [2 + a, 0]) := by
+    induction l with
+    | nil => rfl
+    | cons a t ih =>
+        show [([2 + a, 0] : List Nat)] ++ ((t.map (fun x => ([[2 + x, 0]] : Matrix))).flatten) =
+          [2 + a, 0] :: t.map (fun x => [2 + x, 0])
+        rw [ih]; rfl
   show some (([[0, 0], [1, 1], [2, 0], [3, 1]] : Matrix).take 2 ++
       ((List.range (n + 1)).map (fun a =>
         (List.range 1).map (fun x =>
@@ -8976,8 +9003,7 @@ theorem expand_epsEps0 (n : Nat) :
                 (if BMS.ascends [[0, 0], [1, 1], [2, 0], [3, 1]] 2 (2 + x) y then 1 else 0))))).flatten)
     = _
   rw [List.map_congr_left (l := List.range (n + 1))
-      (g := fun a => ([[2 + a, 0]] : Matrix)) (fun a _ => hblk a),
-    flatten_map_singleton (fun a => [2 + a, 0])]
+      (g := fun a => ([[2 + a, 0]] : Matrix)) (fun a _ => hblk a), hflat]
   rfl
 
 #guard (List.range 6).all (fun n =>

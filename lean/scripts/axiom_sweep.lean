@@ -45,19 +45,27 @@ checks are needed and **neither substitutes for the other**:
 A canary alone reports clean for a reason unrelated to the server being current — the same shape
 as every other inverted check in this repo's history.  Pair them.
 
-## EXPECTATION — what this printed on 2026-08-10, at HEAD 93f6a30
+## EXPECTATION — what this printed on 2026-08-10, after the `SqvDecomp` integration
 
-    scanned 2982 | sorryAx 0 | Classical.choice 237
+    scanned 2989 | sorryAx 0 | Classical.choice 236
 
-Superseding the first baseline, `scanned 2972 | sorryAx 0 | Classical.choice 236`
-at HEAD 485c0b0.  **The move is accounted for**, which is the only reason a baseline
-may be rewritten rather than investigated: `Evidence.Cert.expand_epsEps0` (commit
-93f6a30) is `[propext, Classical.choice, Quot.sound]`.  The `simp` closing its
-`hblk` brings it in; `rfl`, an explicit `show` of the reduced block, and a
-fully-listed `simp only` were each tried and each fails to close, so the `simp` is
-doing real work.  Taken knowingly: `Cert` already carried 236 including
-`certIn_rows_inT`, whose choice is genuine and instance-inherited from Lean core
-and cannot be removed at all.  The residue is one `have`, attackable in isolation.
+Third baseline.  History, because the round trip is the useful part:
+
+    2972 | 0 | 236   HEAD 485c0b0
+    2982 | 0 | 237   HEAD 93f6a30 — `Evidence.Cert.expand_epsEps0` landed with one
+                     `Classical.choice`, taken knowingly.  Its `hblk` was closed by
+                     `simp [BMS.ent, BMS.delta, BMS.ascends, …]`; `rfl`, an explicit
+                     `show` of the reduced block and a fully-listed `simp only` were
+                     each tried and each failed, so the `simp` was doing real work.
+    2989 | 0 | 236   the choice is GONE.  `hblk` now `change`s to the two entries
+                     written out, rewrites each atom by a `show … from rfl`, and
+                     leaves `simp only` nothing but arithmetic.
+
+**The residue certsound flagged as "attackable in isolation" was attackable**, and
+what found it was a codex worker taking a wrong turn: told to cite the proved
+`expand_epsEps0`, it re-derived the block computation by hand instead, and the
+hand version came out choice-free.  Once lifted into `Cert`, its own detour became
+unnecessary — the `SqvDecomp` row that motivated it is now five lines.
 
 **A run that differs from this is a CHANGE, not a discovery.**  The baseline is here so no reader
 has to re-derive whether a number is good news.  Which way to read a difference:

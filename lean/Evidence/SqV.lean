@@ -5205,12 +5205,133 @@ theorem sqv_decomp_rowA : SqvDecomp Evidence.WF.rowA Evidence.WF.fsA := by
 #guard (List.range 6).all (fun n => sqv' (Evidence.WF.fsA n) == Evidence.Cert.eps0M n)
 #guard (List.range 6).all (fun n =>
   BMS.expand (sqv' Evidence.WF.rowA) n == sqv' (Evidence.WF.fsA n))
--- the three rows whose `Cert` expansion identity is missing, recorded as matrices
 #guard sqv' Evidence.WF.epsOmegaSq == [[0, 0], [1, 1], [2, 0], [2, 0]]
 #guard sqv' (phi one Evidence.WF.omegaOmega) == [[0, 0], [1, 1], [2, 0], [3, 0]]
 #guard sqv' (phi one (phi one zero)) == [[0, 0], [1, 1], [2, 0], [3, 1]]
 -- the two residues differ in shape: `epsM n` grows a ladder, `eps0M n` repeats one block
 #guard Evidence.Cert.epsM 2 == [[0, 0], [1, 1], [1, 1], [1, 1]]
 #guard Evidence.Cert.eps0M 2 == [[0, 0], [1, 1], [0, 0], [1, 1], [0, 0], [1, 1]]
+
+/-! ## §24 THE REMAINING THREE ROWS — `SqvDecomp` FOR ALL FIVE
+
+§22 closed `ε_ω` and §18.1's row A.  The other three waited on their `Cert`-side `expand?`
+identity, which was the binding constraint rather than the shape of anything here; all five now
+exist, so these are assembly.
+
+**`sqv'` OF A ROW CANNOT BE PROVED BY `decide` OR `rfl`.**  `encv'` is defined by WELL-FOUNDED
+RECURSION, so the kernel cannot unfold it — `#eval` prints a value because it runs compiled code,
+and that is not the same thing.  Every `encv'` value in this file comes from a named equation, and
+`sqv'_epsEps0` below needs one that did not exist: `encv'_epsEps0` is about the row's FUNDAMENTAL
+SEQUENCE `φ̄(1, tower (n+1))`, and the row itself is `φ̄(1, ε₀)`, a different term.
+-/
+
+theorem sqv'_epsOmegaSq :
+    sqv' Evidence.WF.epsOmegaSq = [[0, 0], [1, 1], [2, 0], [2, 0]] := by
+  show toMatrix (encv' (phi one (phi zero (ofNat (1 + 1)))) 0) = _
+  rw [encv'_epsOmegaOmega 1]
+  rfl
+
+theorem sqv'_fsEW2 (n : Nat) :
+    sqv' (Evidence.WF.fsEW2 n)
+      = [[0, 0]] ++ (List.replicate (n + 1) ([[1, 1], [2, 0]] : BMS.Matrix)).flatten := by
+  show toMatrix (encv' (Evidence.WF.fsEW2 n) 0) = _
+  rw [encv'_fsEW2 n]
+  show ([0, 0] : List Nat) ::
+      ((List.replicate (n + 1) [((1, 1) : Col2), (2, 0)]).flatten).map (fun c => [c.1, c.2])
+    = [[0, 0]] ++ (List.replicate (n + 1) ([[1, 1], [2, 0]] : BMS.Matrix)).flatten
+  rw [List.map_flatten, List.map_replicate]
+  rfl
+
+theorem sqv_decomp_epsOmegaSq : SqvDecomp Evidence.WF.epsOmegaSq Evidence.WF.fsEW2 := by
+  intro n
+  rw [sqv'_epsOmegaSq, sqv'_fsEW2]
+  show (BMS.expand? [[0, 0], [1, 1], [2, 0], [2, 0]] n).getD [] = _
+  rw [Evidence.Cert.expand_epsOmegaSq n]
+  rfl
+
+theorem sqv'_epsOmegaOmega :
+    sqv' Evidence.WF.epsOmegaOmega = [[0, 0], [1, 1], [2, 0], [3, 0]] := by
+  show toMatrix (encv' (phi one (Evidence.WF.tower (1 + 1))) 0) = _
+  rw [encv'_epsEps0 1]
+  rfl
+
+theorem sqv'_fsEWW (n : Nat) :
+    sqv' (Evidence.WF.fsEWW n)
+      = [[0, 0], [1, 1]] ++ (List.replicate (n + 1) ([[2, 0]] : BMS.Matrix)).flatten := by
+  show toMatrix (encv' (Evidence.WF.fsEWW n) 0) = _
+  rw [encv'_fsEWW n]
+  show ([0, 0] : List Nat) :: [1, 1] ::
+      (List.replicate (n + 1) ((2, 0) : Col2)).map (fun c => [c.1, c.2])
+    = [[0, 0], [1, 1]] ++ (List.replicate (n + 1) ([[2, 0]] : BMS.Matrix)).flatten
+  rw [List.map_replicate, flatten_replicate_singleton]
+  rfl
+
+theorem sqv_decomp_epsOmegaOmega : SqvDecomp Evidence.WF.epsOmegaOmega Evidence.WF.fsEWW := by
+  intro n
+  rw [sqv'_epsOmegaOmega, sqv'_fsEWW]
+  show (BMS.expand? [[0, 0], [1, 1], [2, 0], [3, 0]] n).getD [] = _
+  rw [Evidence.Cert.expand_epsOmegaOmega n]
+  rfl
+
+/-- The encoder fact for the ROW `φ̄(1,ε₀)`, which no lemma supplied: `encv'_epsEps0` is about
+    `φ̄(1, tower (n+1))`, and `epsEps0 == fsEE 0` is FALSE. -/
+theorem encv'_epsEps0_row :
+    encv' Evidence.WF.epsEps0 0 = [((0, 0) : Col2), (1, 1), (2, 0), (3, 1)] := by
+  show (if h : Evidence.WF.CNV (phi one Evidence.WF.eps0T) = true
+        then encvC ⟨phi one Evidence.WF.eps0T, h⟩ 0 else []) = _
+  rw [dif_pos (show Evidence.WF.CNV (phi one Evidence.WF.eps0T) = true from rfl)]
+  have hgs : summands (TM.Term.splitFin Evidence.WF.eps0T).1 = [Evidence.WF.eps0T] := by
+    rw [splitFin_isAP (x := Evidence.WF.eps0T) rfl rfl]; rfl
+  have hm2 : (TM.Term.splitFin Evidence.WF.eps0T).2 = 0 := by
+    rw [splitFin_isAP (x := Evidence.WF.eps0T) rfl rfl]
+  have hhd : (summands (TM.Term.splitFin Evidence.WF.eps0T).1).headD zero = Evidence.WF.eps0T := by
+    rw [hgs]; rfl
+  have hfp : TM.Term.isFP one
+      ((summands (TM.Term.splitFin Evidence.WF.eps0T).1).headD zero) = false := by
+    rw [hhd]; rfl
+  have hfd : ∀ pf, fpDeepC one
+      ((summands (TM.Term.splitFin Evidence.WF.eps0T).1).headD zero) pf = none :=
+    fun pf => fpDeepC_none pf (by rw [hhd]; rfl)
+  rw [encvC]
+  dsimp only
+  rw [hfp]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hfd, hm2, encvC_predOr_one]
+  simp only [encvC_eq_encv', show (one == zero) = false from rfl, Bool.false_eq_true, if_false]
+  rw [List.attach_map_val
+    (l := summands (TM.Term.splitFin Evidence.WF.eps0T).1)
+    (f := fun y => ((0 + 1, 1) :: bumpAt (0 + 2) ([] : List Col2)) ++
+      shiftD (0 + 2) (encv' (omLog y) 0))]
+  rw [hgs]
+  simp only [List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil]
+  rw [show omLog Evidence.WF.eps0T = Evidence.WF.eps0T from rfl, encv'_eps0T]
+  rfl
+
+theorem sqv'_epsEps0 :
+    sqv' Evidence.WF.epsEps0 = [[0, 0], [1, 1], [2, 0], [3, 1]] := by
+  show toMatrix (encv' Evidence.WF.epsEps0 0) = _
+  rw [encv'_epsEps0_row]
+  rfl
+
+theorem sqv'_fsEE (n : Nat) :
+    sqv' (Evidence.WF.fsEE n)
+      = [[0, 0], [1, 1]] ++ ((List.range (n + 1)).map (fun a => [2 + a, 0])) := by
+  show toMatrix (encv' (Evidence.WF.fsEE n) 0) = _
+  rw [encv'_fsEE n]
+  simp [toMatrix, ladderCols, List.map_map, Nat.add_comm]
+
+theorem sqv_decomp_epsEps0 : SqvDecomp Evidence.WF.epsEps0 Evidence.WF.fsEE := by
+  intro n
+  rw [sqv'_epsEps0, sqv'_fsEE]
+  show (BMS.expand? [[0, 0], [1, 1], [2, 0], [3, 1]] n).getD [] = _
+  rw [Evidence.Cert.expand_epsEps0 n]
+  rfl
+
+#guard (List.range 6).all (fun n =>
+  BMS.expand (sqv' Evidence.WF.epsOmegaSq) n == sqv' (Evidence.WF.fsEW2 n))
+#guard (List.range 6).all (fun n =>
+  BMS.expand (sqv' Evidence.WF.epsOmegaOmega) n == sqv' (Evidence.WF.fsEWW n))
+#guard (List.range 6).all (fun n =>
+  BMS.expand (sqv' Evidence.WF.epsEps0) n == sqv' (Evidence.WF.fsEE n))
 
 end Evidence.SqV
