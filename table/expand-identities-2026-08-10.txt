@@ -1,0 +1,113 @@
+EXPANSION IDENTITIES FOR THE FIVE VEBLEN ROWS — scout, 2026-08-10
+=================================================================
+
+Measurement record for the `Evidence/Cert.lean` side of `SqvDecomp`.  Two of the
+five identities existed, two were written (commit f355bad), one is scouted and
+named but NOT written.  Everything below was measured, not inferred.
+
+WHY THIS FILE EXISTS
+--------------------
+`SqvDecomp t fs' := ∀ n, BMS.expand (sqv' t) n = sqv' (fs' n)` needs, per row, a
+`Cert`-side identity saying what `expand?` of that row's matrix IS.  The encoder
+facts (`Evidence/SqV.lean` §17–§21) are the other half and were all proved first.
+
+The binding constraint on the remaining rows turned out to be these identities,
+NOT the shape of the assembly — which was found by one grep of `Cert.lean`'s
+`expand_` theorems after five encoder facts had been proved on the assumption
+that the consumer side was uniform across the rows it serves.  It is not.
+
+THE FIVE ROWS
+-------------
+    row                sqv' t                        Cert identity
+    ω^(ε₀+1)           [[0,0],[1,1],[1,0]]           expand_rowA          Cert:7831
+    ε_ω                [[0,0],[1,1],[2,0]]           expand_epsOmega      Cert:8547
+    ε_{ω²}             [[0,0],[1,1],[2,0],[2,0]]     expand_epsOmegaSq    f355bad
+    ε_{ω^ω}            [[0,0],[1,1],[2,0],[3,0]]     expand_epsOmegaOmega f355bad
+    ε_{ε₀}             [[0,0],[1,1],[2,0],[3,1]]     NOT WRITTEN — see below
+
+FOUR OF THE FIVE ARE ONE SHAPE
+------------------------------
+    expand? M n = some (take k M ++ (replicate (n+1) B).flatten)
+
+    row                k   B
+    ω^(ε₀+1)           0   [[0,0],[1,1]]
+    ε_ω                1   [[1,1]]
+    ε_{ω²}             1   [[1,1],[2,0]]
+    ε_{ω^ω}            2   [[2,0]]
+
+The `n` vs `n+1` discrepancy is absorbed by the take index rather than being a
+second parameter.
+
+WHAT IS SHARED AND WHAT IS NOT — the reason no general lemma was written
+------------------------------------------------------------------------
+Shared, and parameterisable:
+    hblk : ∀ a, (…) = <constant block>      by `intro a; rfl`
+    then  rw [map_congr_left …, map_const_flatten]; rfl
+
+NOT parameterisable: the `show`.  It asserts how `expand?` REDUCES for a specific
+`M`, and the root index and block width are computed from `M` by the definition.
+A general lemma would have to take that reduction as a hypothesis — which is the
+whole content.  It would save three lines of about twenty.
+
+COORDINATOR DECISION (2026-08-10): write the four specific identities.  A lemma
+whose hypothesis is its content does not earn a name, and the per-row `show` is
+`rfl`-dischargeable, so the cost of NOT generalising is three lines per row.
+
+Four callers made the shared part and the unshared part visible at the same time.
+That is the honest outcome of "write the specific lemma first and generalise when
+a second caller appears": here callers two through four said do not.
+
+ε_{ε₀} IS A DIFFERENT SHAPE, AND BOTH SIDES AGREE THAT IT IS
+-------------------------------------------------------------
+    expand [[0,0],[1,1],[2,0],[3,1]] n
+      == [[0,0],[1,1]] ++ (range (n+1)).map (fun a => [a+2, 0])     true, n < 5
+
+The block GROWS with the index instead of repeating, so no constant-block
+statement can express it: the block's CONSTANCY is what varies, and a lemma over
+a constant `B` cannot express a `B` indexed by position.
+
+`Cert.lean` already has  towerM n = (range (n+1)).map (fun a => [a, 0])  and the
+tail above is `towerM` SHIFTED BY 2 exactly.  So state the identity over a
+base-parameterised `towerM`, `(range (n+1)).map (fun a => [a + b, 0])` with
+`b = 0` recovering `towerM`, rather than defining a second name for one shape.
+(Ninth time in this session that the ancestor already existed.)
+
+THE TWO-SIDED AGREEMENT, AND ITS OPPOSITE
+------------------------------------------
+`Evidence/SqV.lean` §21 found ε_{ε₀} to be the first row needing an induction on
+`n`, because the BLOCK's own encoding grows.  The matrix side independently says
+the same row is the different one, and the two expressions coincide:
+
+    matrix side   (range (n+1)).map (fun a => [a + b, 0])
+    term side     ladderCols d (n+1) = (range (n+1)).map (fun i => (i + d, 0))
+
+Same expression up to `Col2` versus `List Nat`.  THE CORRESPONDENCE TRANSFERS
+THIS SHAPE EXACTLY.
+
+Contrast `Evidence/SqV.lean` §23, where it transfers not at all: `oR` of the ε_n
+rungs' expansions is `ω^(ε₀·2)`, `ω^(ω^(ε₀·2))`, … — genuinely a tower — while
+the matrices are a two-column-per-step family `[j,0],[j+1,1]`, which is neither
+`towerM` (one column per step) nor `famM` (alternating).  "IT IS A TOWER" IS TRUE
+OF THE ORDINALS AND FALSE OF THE MATRICES.
+
+Both cases are recorded together deliberately.  This repo exists to establish the
+correspondence between the two sides; a reader with only one example will
+generalise from it, and either generalisation is wrong.
+
+THE CHECK, AND WHERE IT HAD TO LIVE
+------------------------------------
+All three new identities were `#guard`ed against `sqv'` at n < 5 BEFORE being
+proved:
+
+    expand [[0,0],[1,1],[2,0],[2,0]] n == sqv' (fsEW2 n)   true ×5
+    expand [[0,0],[1,1],[2,0],[3,0]] n == sqv' (fsEWW n)   true ×5
+    expand [[0,0],[1,1],[2,0],[3,1]] n == sqv' (fsEE  n)   true ×5
+
+No finding — all three are the right statements.  A check that passes is still
+evidence, and here it is the evidence that three `rfl`-shaped theorems are about
+the matrices we think they are: a wrong matrix would have built green.
+
+The guards live in `Evidence/SqV.lean`, not beside the theorems, because `Cert`
+must never cite `sqv'` — the import arrow is `SqV → Cert` and it is enforced by
+the module graph rather than by anyone remembering.  §20.1 records the split so a
+reader does not conclude the check was skipped.
