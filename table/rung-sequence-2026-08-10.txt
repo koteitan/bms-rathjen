@@ -52,3 +52,47 @@ so the open question is the ORDINAL side: what closed form does `oR (rungM k n)`
 take, and is that family increasing, below `fsEW (k+1)`, and cofinal in it.
 **Measure the closed form before stating it.**  The `fsC` reading above is the
 first candidate anyone would write down and it is false.
+
+
+APPENDED — THE CLOSED FORM IS `fsEsucc`, AND THE BLOCKER IS A READER BRIDGE
+===========================================================================
+
+Measured over k = 0..3, n = 0..5, all 24 points:
+
+    Trans.oR (Evidence.Cert.rungM k n) == some (Evidence.WF.fsEsucc k n)     ALL TRUE
+
+So the closed form is the WF lane's own `fsEsucc`, which `Evidence/Cert.lean`
+§20.2 had already identified as "tower over ε_k·2" and measured at k = 1, 2, 3 —
+without anyone connecting it to `rungM`.  Eleventh ancestor-already-existed of
+this session.  The `#guard` now lives in `Cert` §21.1, so it cannot go stale.
+
+Also proved, in a scratch file that cannot be landed as-is because it needs
+`Rows.ProofsB` and `Cert` may not import `Rows`:
+
+    fsEsucc_zero_eq_R3_oval (n) : Evidence.WF.fsEsucc 0 n = Rows.ProofsB.R3.oval n   [propext]
+
+WHAT ACTUALLY BLOCKS `oR_rungM`
+-------------------------------
+Not the ordinal mathematics.  The identity reduces, via `expand_epsM_succ_total`
+and `Rows.ProofsB.R3.e3_val`, to exactly:
+
+    Trans.oR (BMS.expand Rows.ProofsB.R3.m0 n) = Trans.o? (BMS.expand Rows.ProofsB.R3.m0 n)
+
+`Trans/Recal.lean` has **no symbolic bridge from the recalibrated `oR` to the
+retracted `o?`**.  The row lemmas prove the `o?` reading; the certificate side
+speaks `oR`.
+
+**A bridge cannot be stated unconditionally.**  `o?` is the RETRACTED translation
+and is wrong at and above `(0,0)(1,1)(2,1)(2,0)`, so any `oR = o?` lemma has to
+carry a hypothesis confining it to where the two agree.  That is a real piece of
+work, not a rewrite, and it is a DIFFERENT KIND of obstruction from everything
+else in this file: the ordinal side is settled and the two halves of the project
+simply speak different readers.
+
+NEXT, IF THIS LINE IS RESUMED
+-----------------------------
+Either (a) prove the confined `oR = o?` bridge and state precisely where it holds,
+or (b) reprove `R3.e3_val`-style row facts directly in `oR`, bypassing `o?`.
+(b) avoids inheriting a retracted function into the certificate path, which is the
+reason `o?` was retracted in the first place; (a) is cheaper if the agreement
+region is easy to characterise.  **Measure the agreement region before choosing.**

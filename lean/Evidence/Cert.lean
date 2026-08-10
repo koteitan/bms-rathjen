@@ -9266,4 +9266,28 @@ theorem expand_epsM_succ_total (k n : Nat) :
   rw [expand_epsM_succ]
   rfl
 
+/-! ### §21.1 THE ORDINAL SIDE — the closed form is `fsEsucc`, and the blocker is a READER BRIDGE
+
+`table/rung-sequence-2026-08-10.txt` refuted the obvious candidate: `oR` of the rungs' expansions
+is NOT `fsC` of the row's term (true only at `n = 0`).  Measured against the WF lane's own
+`fsEsucc` instead, it holds everywhere tested — **eleventh time in this project that the ancestor
+already existed**, and §20.2 already named `fsEsucc` as the closed form for `k = 1, 2, 3` without
+anyone connecting it to `rungM`.
+
+**WHAT BLOCKS THE THEOREM IS NOT THE ORDINAL MATHEMATICS.**  `oR_rungM` reduces, via
+`expand_epsM_succ_total` and `Rows.ProofsB.R3.e3_val`, to
+
+    Trans.oR (BMS.expand R3.m0 n) = Trans.o? (BMS.expand R3.m0 n)
+
+and `Trans/Recal.lean` contains **no symbolic bridge from the recalibrated `oR` to the retracted
+`o?`**.  The row lemmas prove the `o?` reading; the certificate side speaks `oR`.  A bridge would
+have to be stated only where the two agree — `o?` is wrong at and above `(0,0)(1,1)(2,1)(2,0)` —
+so this is a real piece of work and not a rewrite.
+
+The `#guard` below is the measurement, standing without the theorem.
+-/
+
+#guard (List.range 4).all fun k => (List.range 6).all fun n =>
+  Trans.oR (rungM k n) == some (Evidence.WF.fsEsucc k n)
+
 end Evidence.Cert
