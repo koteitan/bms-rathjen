@@ -190,6 +190,18 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   coordinator has a half of it. **Do not amend to fix it** — this repo is pushed
   at times of the user's choosing, and rewriting a possibly-public commit trades
   one wrong record for a worse one. Correct forward with an explicit commit.
+- **A SCATTERED PHENOMENON DOES NOT IMPLY A SCATTERED PROOF — do not predict
+  proof difficulty from failure-mode similarity.** Coordinator heuristic offered
+  and refuted the same hour: "if `c < a`'s failures cluster at the fixed-point
+  boundary like `c = a`'s, the route follows; if they scatter, it is genuinely
+  new." They scattered — `c = a` fails by a hair with `φ̄(a, g 0) = b` exactly,
+  `c < a` fails because `d` outruns a low-starting sequence and `b` is not a
+  fixed point of anything — **and the same route closed both, four lines apart.**
+  Two motions that look like they need trading off (here `d` shrinking against
+  `g`'s index growing) may need no measure at all: **the existential absorbs the
+  index and the order absorbs the shrinkage.** That is the same answer the
+  encoder side reached when its termination measures died and the route turned
+  out to be the order.
 - **AN UNUSED HYPOTHESIS IS A TELL THAT THE STATEMENT IS WRONG.** A proof that
   resists may be reporting a defect in its own statement rather than a hard
   piece of mathematics. The signal that distinguishes them: **you cannot find a
