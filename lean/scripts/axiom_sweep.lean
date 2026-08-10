@@ -116,6 +116,7 @@ run_cmd do
   let mut total := 0
   let mut choice : Array Name := #[]
   let mut sorries : Array Name := #[]
+  let mut native : Array Name := #[]
   for (n, ci) in env.constants.toList do
     if n.isInternal then continue
     unless ours.any (fun r => r.isPrefixOf n) do continue
@@ -125,7 +126,18 @@ run_cmd do
       let ax ← liftCoreM (Lean.collectAxioms n)
       if ax.contains ``sorryAx then sorries := sorries.push n
       if ax.contains ``Classical.choice then choice := choice.push n
+      -- `native_decide` does NOT introduce `Lean.ofReduceBool` on this toolchain; it mints a
+      -- PER-DECLARATION axiom `<decl>._native.native_decide.ax_N_N`.  So match the name, and
+      -- keep the `ofReduce*` constants too for toolchains that do use them.  Verified against
+      -- a real `native_decide` theorem — a guard for an axiom name nobody emits is not a guard.
+      if ax.any (fun a =>
+           let str := a.toString
+           (str.splitOn "native_decide").length > 1
+             || (str.splitOn "ofReduceBool").length > 1
+             || (str.splitOn "ofReduceNat").length > 1) then
+        native := native.push n
     | _ => pure ()
-  logInfo s!"scanned {total} | sorryAx {sorries.size} | Classical.choice {choice.size}"
+  logInfo s!"scanned {total} | sorryAx {sorries.size} | Classical.choice {choice.size} | native {native.size}"
   for s in sorries do logInfo s!"SORRY {s}"
   for c in choice do logInfo s!"CHOICE {c}"
+  for m in native do logInfo s!"NATIVE {m}"
