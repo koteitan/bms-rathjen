@@ -203,6 +203,14 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   invocations, verify the lane file's staged hash last, and go straight to
   `git commit`** — or re-verify `git show :path | sha256sum` immediately before
   committing, since that is the only reading that survives an intervening add.
+  **The general form, which is a category of its own: A CHECK'S RESULT HAS A
+  LIFETIME, AND A LATER ACTION THAT LOOKS UNRELATED CAN EXPIRE IT.** The
+  verification was correct when it ran; staging a documentation file destroyed
+  its meaning, and nothing at the point of verification could have shown that.
+  This is the rest of the file's instrument failures one level up — there the
+  reading was wrong, here the reading was right and was silently invalidated.
+  Ask of any check you rely on: **what could happen between this reading and the
+  claim it licenses?**
 - **COMPARE `git show :path | sha256sum` AGAINST THE VERDICT BEFORE COMPOSING THE
   COMMIT MESSAGE, NOT AFTER STAGING.** Checking the file's hash on disk and then
   `git add`ing it leaves a window the lane can write into; the commit then
