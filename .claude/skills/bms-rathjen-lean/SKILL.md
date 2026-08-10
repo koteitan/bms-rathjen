@@ -326,6 +326,21 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   not reach it — **the base is not what differs, the per-step block is.**
   Check the matrix shape by `#eval` before reusing a certificate family whose
   ORDINAL description matches.
+- **A WORKER CANNOT SEE WHAT YOU LANDED. TELL IT THE NAMES, EVERY TIME.** When the
+  coordinator commits a worker's verified output into the module, the module moves
+  forward under the worker between checks — and nothing in its view says so. Twice
+  in one session a worker spent turns re-deriving something already committed: a
+  fuel-free definition it had itself written, and a counterexample it had itself
+  proved (the second time hitting `maximum recursion depth` on a proof that
+  succeeds in the landed version). **Every ack that lands work must list the exact
+  names now importable**, and every task prompt must say "grep the module before
+  writing against it". The worker is not being careless; it has no way to know.
+- **A THREAD THAT HAS COMMITTED TO A DIRECTION DOES NOT TURN ON INSTRUCTION.** Three
+  messages into one worker thread failed to stop a lemma with no consumer; it grew
+  to 310 lines and never closed. **Stop it and re-issue the task as the INITIAL
+  prompt of a fresh thread**, where the correction is a premise rather than a
+  contradiction of what the thread has already built. The fresh thread complied on
+  the first turn and refuted the target statement instead of bending it.
 - **LANE PROTOCOL: THE VERDICT IS THE LAST THING A LANE DOES, AND ACKS CARRY NO
   WORK.** After sending a verdict a lane makes no further writes to that file
   until the coordinator acks. Five sha mismatches in one evening, the last five
