@@ -45,9 +45,9 @@ checks are needed and **neither substitutes for the other**:
 A canary alone reports clean for a reason unrelated to the server being current — the same shape
 as every other inverted check in this repo's history.  Pair them.
 
-## EXPECTATION — what this printed on 2026-08-10, after the `SqvDecomp` integration
+## EXPECTATION — what this printed on 2026-08-10, after §15.38
 
-    scanned 2989 | sorryAx 0 | Classical.choice 236
+    scanned 3003 | sorryAx 0 | Classical.choice 236
 
 Third baseline.  History, because the round trip is the useful part:
 

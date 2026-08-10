@@ -13804,4 +13804,161 @@ theorem asm_generalC
       lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
       fun n => by intro hc; exact Term.noConfusion hc⟩
 
+/-! ## §15.38 THE ASSEMBLY, MADE NON-VACUOUS — and the row test that §15.37 asked for
+
+§15.37 records that `asm_general`, `asm_generalC` and `asm_generalB` are VACUOUSLY TRUE: their
+`Hnf` premise quantifies over every `a` and `b` in 𝔗(M), and is refuted at `a = 0`, `b = ε₀` by
+§15.31's counterexample.  The `example` below is that refutation, so the defect stays checkable
+rather than remembered.
+
+**THE FIX IS THE ONE §15.37 SPECIFIES: relativise the premise to the terms the recursion visits.**
+`NfOK` is a structurally recursive `Bool` predicate whose clauses mirror the assembly's own
+descent, so a caller supplies it **for their row only** and discharges it by `decide`.
+
+Two things this makes literal that were previously arguments in prose:
+
+* **`phiLocalNfOK a b` is vacuous unless `b` is itself a `φ̄` AND a `kindV` limit.**  When `b` is a
+  successor the branch goes to `Hsucc`, so no normality is needed there — the guard is in the
+  predicate rather than in a docstring.
+* **`asm_generalB'` assumes strictly less than `asm_generalB`**: `Hsucc0` is gone entirely,
+  discharged inside by §15.36's route (`cnv_predC`, `succT_predC`, `lim_clauses_phi_zero_succ`).
+  Only `Hsucc` remains, and that is the fifth shape, carried on purpose.
+
+`asm_epsOmegaSq` is the row test.  It applies the assembly at a real row and discharges every goal
+but `Hsucc` by `decide`.  **That is the claim §15.34's docstring made and could not support**: the
+theorem now has a consumer.  Note the `Hsucc0` in its signature is unused — kept only to show that
+a caller written against the old interface needs strictly less than it thought.
+-/
+
+/-- The normality side condition at ONE `φ̄` node.  Vacuous unless the second argument is itself a
+    `φ̄` term and a `kindV` limit — a successor `b` routes to `Hsucc` and needs nothing. -/
+def phiLocalNfOK (a b : Term) : Bool :=
+  match b with
+  | .phi _ _ => kindV b || decide (phiNF a b = phi a b)
+  | _ => true
+
+/-- Recursion-local, decidable replacement for the global `Hnf` premise of `asm_generalB`.  Its
+    clauses follow the assembly's structural descent, so a row supplies it for its own tree only. -/
+def NfOK : Term → Bool
+  | .zero => true
+  | .M => true
+  | .add u v => NfOK u && NfOK v
+  | .omg a => NfOK a
+  | .phi a b => phiLocalNfOK a b && NfOK a && NfOK b
+  | .psi k a => NfOK k && NfOK a
+  | .Z a => NfOK a
+
+private theorem phiLocalNfOK_spec {a b : Term}
+    (h : phiLocalNfOK a b = true) (hb : b ≠ zero) (hk : kindV b = false) :
+    ∀ c d, b = phi c d → phiNF a b = phi a b := by
+  intro c d heq
+  subst b
+  simp [phiLocalNfOK, hk] at h
+  exact h
+
+private theorem nfOK_phi {a b : Term} (h : NfOK (phi a b) = true) :
+    phiLocalNfOK a b = true ∧ NfOK a = true ∧ NfOK b = true := by
+  have hh : (phiLocalNfOK a b = true ∧ NfOK a = true) ∧ NfOK b = true := by
+    simpa [NfOK, Bool.and_eq_true] using h
+  exact ⟨hh.1.1, hh.1.2, hh.2⟩
+
+private theorem nfOK_add {u v : Term} (h : NfOK (add u v) = true) :
+    NfOK u = true ∧ NfOK v = true := by
+  simpa [NfOK, Bool.and_eq_true] using h
+
+private theorem fsGen_phi_ne_zero_local (p : Term) :
+    ∀ n, fsGen (phi p zero) p (phi p zero) n ≠ zero
+  | 0 => by intro hc; exact Term.noConfusion hc
+  | n + 1 => by
+    show iterPhi p (phi p zero) (n + 1) ≠ zero
+    intro hc
+    exact Term.noConfusion hc
+
+/-- **THE ASSEMBLY WITH A PREMISE A CALLER CAN ACTUALLY MEET.**  `asm_generalB` with its
+    impossible global normality premise replaced by `NfOK` on the one input tree, and with
+    `Hsucc0` discharged rather than assumed. -/
+theorem asm_generalB'
+    (Hsucc : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = true →
+        ∃ fs : Nat → Term, LimClauses (phi a b) fs ∧ ∀ n, fs n ≠ zero) :
+    ∀ (t : Term), NfOK t = true → CNV t = true → kindV t = false → t ≠ zero →
+      ∃ fs : Nat → Term, LimClauses t fs ∧ ∀ n, fs n ≠ zero := by
+  intro t
+  induction t with
+  | M => intro _ h; exact Bool.noConfusion h
+  | omg _ _ => intro _ h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro _ h; exact Bool.noConfusion h
+  | Z _ _ => intro _ h; exact Bool.noConfusion h
+  | zero => intro _ _ _ hz; exact absurd rfl hz
+  | phi p q ihp ihq =>
+    intro hnf h hk _
+    obtain ⟨hnfLocal, hnfp, hnfq⟩ := nfOK_phi hnf
+    obtain ⟨hcnp, hcnq⟩ := cnv_phi h
+    by_cases hq : q = zero
+    · subst hq
+      by_cases hkp : kindV p = true
+      · have hcnpp : CNV (predC p) = true := cnv_predC p hcnp hkp
+        have hsp : succT (predC p) = p := succT_predC p hcnp hkp
+        refine ⟨fsGen (phi (predC p) zero) (predC p) (phi (predC p) zero), ?_,
+                fsGen_phi_ne_zero_local (predC p)⟩
+        have hlc := lim_clauses_phi_zero_succ hcnpp
+        rw [hsp] at hlc
+        exact hlc
+      · have hkp' : kindV p = false := by
+          cases hh : kindV p with
+          | true => exact absurd hh hkp
+          | false => rfl
+        have hpz : p ≠ zero := by
+          intro hc; rw [hc] at hk; exact Bool.noConfusion hk
+        obtain ⟨g, hg, _⟩ := ihp hnfp hcnp hkp' hpz
+        exact ⟨fun n => phi (g n) zero,
+          lim_clauses_phi_arg1 g hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hcnp,
+          fun n => by intro hc; exact Term.noConfusion hc⟩
+    · by_cases hkq : kindV q = true
+      · exact Hsucc p q h hq hkq
+      · have hkq' : kindV q = false := by
+          cases hh : kindV q with
+          | true => exact absurd hh hkq
+          | false => rfl
+        obtain ⟨g, hg, _⟩ := ihq hnfq hcnq hkq' hq
+        obtain ⟨g', hg'⟩ := lim_clauses_phi_arg_nf hcnp hcnq
+          (phiLocalNfOK_spec hnfLocal hq hkq') g hg
+        exact ⟨fun n => phi p (g' n), hg', fun n => by intro hc; exact Term.noConfusion hc⟩
+  | add u v ihu ihv =>
+    intro hnf h hk _
+    obtain ⟨_, hnfv⟩ := nfOK_add hnf
+    obtain ⟨hAPu, hcnu, hcnv, hdvu⟩ := cnv_add h
+    have hvz : v ≠ zero := by
+      intro hc
+      rw [hc, show hdLe (zero : Term) u = false from rfl] at hdvu
+      exact Bool.noConfusion hdvu
+    obtain ⟨g, hg, hgz⟩ := ihv hnfv hcnv hk hvz
+    exact ⟨fun n => add u (g n),
+      lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
+      fun n => by intro hc; exact Term.noConfusion hc⟩
+
+/-- **THE ROW TEST §15.37 ASKED FOR.**  A real row calls the assembly and discharges everything
+    but `Hsucc` by `decide`.  `Hsucc0` is in the signature and UNUSED: a caller written against
+    the old interface needs strictly less than it thought. -/
+theorem asm_epsOmegaSq
+    (Hsucc0 : ∀ (a : Term), CNV (phi a zero) = true → kindV a = true →
+        ∃ fs : Nat → Term, LimClauses (phi a zero) fs ∧ ∀ n, fs n ≠ zero)
+    (Hsucc : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = true →
+        ∃ fs : Nat → Term, LimClauses (phi a b) fs ∧ ∀ n, fs n ≠ zero) :
+    ∃ fs : Nat → Term, LimClauses epsOmegaSq fs ∧ ∀ n, fs n ≠ zero := by
+  apply asm_generalB' Hsucc epsOmegaSq
+  · decide
+  · decide
+  · decide
+  · decide
+
+-- §15.31's counterexample, kept executable: the OLD global `Hnf` is false here.
+example : phiNF zero (phi one zero) ≠ phi zero (phi one zero) := by decide
+
+-- CONTROLS.  `NfOK` must be FALSE at that same term, or it would be vacuous in the other
+-- direction, and TRUE at the rows that must be able to call the assembly.
+#guard NfOK (phi zero (phi one zero)) == false
+#guard NfOK epsOmegaSq == true
+#guard NfOK epsOmegaOmega == true
+#guard NfOK epsEps0 == true
+
 end Evidence.WF
