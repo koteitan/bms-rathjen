@@ -235,6 +235,19 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   index and the order absorbs the shrinkage.** That is the same answer the
   encoder side reached when its termination measures died and the route turned
   out to be the order.
+- **`rw [← h]` REWRITES EVERY OCCURRENCE, INCLUDING INSIDE SUBTERMS OF THE
+  VARIABLE ITSELF.** Rewriting a goal backwards over `p` also hits the `p` inside
+  `predC p`, which is rarely what you want. **Transport the lemma instead**
+  (`rw [h] at hlc`) rather than the goal. Cost of getting it wrong is not a
+  failed tactic but a failed elaboration — see the `sorryAx` rule above, which
+  this triggered twice.
+- **CHECK A RECORDED CLAIM BEFORE ACTING ON IT, INCLUDING YOUR OWN.** A lane had
+  written that §15.20 supplies `succT (predC ·)` only for `kindC`; it is stated
+  at `kindV`, exactly the predicate the assembly dispatches on, so core (B)
+  needed no bridge at all. **The alternative was re-deriving a lemma that already
+  existed at the right generality** — the tenth ancestor-already-exists of the
+  session, and the only one where the false record was the lane's own note rather
+  than a guessed name.
 - **AN ASSUMED BRANCH IS WORTH RE-READING ONCE THE RECURSION EXISTS.** The cost
   of an assumption is invisible at the point where it was made: the theorem
   compiles, the hypothesis looks reasonable, and nothing flags it. `asm_general`
