@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.3.0
+バージョン: v0.3.1
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -238,10 +238,17 @@ $`M`$ は最小の弱 Mahlo 基数。$`\mathfrak{T}(M)`$ は**次の規則で閉
 {\alpha_1 \oplus \dots \oplus \alpha_n \in \mathfrak{T}(M)}
 ```
 
-ここで $`AP`$ は加法的主要な項 $`\{M\} \cup \{\bar\omega^\alpha\} \cup
-\{\bar\varphi(\alpha,\beta)\} \cup SC`$、$`SC = \{M\} \cup \{\psi_\kappa\alpha\}
-\cup \{Z\alpha\}`$、$`R = \{Z\alpha\}`$。$`\oplus`$ の条件 (成分が $`AP`$、降順) が
-一意な正規形を与える。
+ここで $`AP`$ は加法的主要な項、$`SC`$ は強クリティカルな項、$`R`$ は正則:
+
+```math
+AP = \{M\} \cup \{\bar\omega^\alpha\} \cup \{\bar\varphi(\alpha,\beta)\} \cup SC,
+\qquad
+SC = \{M\} \cup \{\psi_\kappa\alpha\} \cup \{Z\alpha\},
+\qquad
+R = \{Z\alpha\}
+```
+
+$`\oplus`$ の条件 (成分が $`AP`$、降順) が一意な正規形を与える。
 
 **$`\bar\varphi`$ は $`\omega^\cdot`$ の不動点を飛ばして数える。**
 $`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だが、

@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.3.0"
+def version : String := "v0.3.1"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -570,10 +570,17 @@ $`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ は**次の規則で�
 {\\alpha_1 \\oplus \\dots \\oplus \\alpha_n \\in \\mathfrak{T}(M)}
 ```
 
-ここで $`AP`$ は加法的主要な項 $`\\{M\\} \\cup \\{\\bar\\omega^\\alpha\\} \\cup
-\\{\\bar\\varphi(\\alpha,\\beta)\\} \\cup SC`$、$`SC = \\{M\\} \\cup \\{\\psi_\\kappa\\alpha\\}
-\\cup \\{Z\\alpha\\}`$、$`R = \\{Z\\alpha\\}`$。$`\\oplus`$ の条件 (成分が $`AP`$、降順) が
-一意な正規形を与える。
+ここで $`AP`$ は加法的主要な項、$`SC`$ は強クリティカルな項、$`R`$ は正則:
+
+```math
+AP = \\{M\\} \\cup \\{\\bar\\omega^\\alpha\\} \\cup \\{\\bar\\varphi(\\alpha,\\beta)\\} \\cup SC,
+\\qquad
+SC = \\{M\\} \\cup \\{\\psi_\\kappa\\alpha\\} \\cup \\{Z\\alpha\\},
+\\qquad
+R = \\{Z\\alpha\\}
+```
+
+$`\\oplus`$ の条件 (成分が $`AP`$、降順) が一意な正規形を与える。
 
 **$`\\bar\\varphi`$ は $`\\omega^\\cdot`$ の不動点を飛ばして数える。**
 $`\\bar\\varphi(0,\\beta)`$ は最初の不動点未満では $`\\omega^\\beta`$ だが、
