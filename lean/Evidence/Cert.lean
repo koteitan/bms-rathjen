@@ -9562,7 +9562,23 @@ them.  The equational layers they need now exist (`Trans.Recal.transPort_eq_runA
 anything to rewrite with — but neither link is a tactic away, and it is worth writing down why so
 the next attempt does not rediscover it.
 
-**LINK 2 IS CLOSED, AND NOT FOR WANT OF EFFORT: `runAux` DOES NOT DECOMPOSE OVER `++`.**
+**LINK 2: THE APPEND ROUTE IS CLOSED, BUT LINK 2 ITSELF IS NOT.**  This paragraph said "link 2
+is closed" for one commit; that was too strong, and the correction is the useful part.  What is
+closed is the route through `++`.  `runAux`'s OWN recursion descends by
+`predP M = if M.length == 1 then M else M.dropLast` — one pair at a time, off the END — and an
+induction along THAT is a different proof with no append lemma in it.  Measured:
+
+    predP (rungPS (n+1))  =  rungPS n ++ [(n+1, 0)]
+    rungPS (n+1)          =  rungPS n ++ [(n+1, 0), (n+2, 1)]
+
+So `rungPS` steps by TWO pairs while the recursion steps by ONE: the family is simply too coarse
+to sit on the recursion, and the repair is a one-pair-at-a-time ladder `L` with `rungPS n = L (2n+1)`
+and `predP (L (m+1)) = L m`.  Then the induction hypothesis is literally the recursive call's
+argument, and the memo table threads the way the recursion already threads it instead of having to
+be quantified over.  NOT YET ATTEMPTED.
+
+The rest of this paragraph is why the append route specifically is dead, and it stays true:
+`runAux` DOES NOT DECOMPOSE OVER `++`.
 The obvious plan was an append lemma for `runAux` carrying an arbitrary incoming state, plus fuel
 monotonicity.  The fuel half is now proved (`Trans.Recal.transFuel_append` /`maxE_append`:
 `transFuel (p ++ q) = 40 + 6*(|p| + |q| + max (maxE p) (maxE q))`).  The append half cannot be
