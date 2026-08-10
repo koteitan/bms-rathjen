@@ -6013,4 +6013,67 @@ theorem encvC_head (p : Evidence.WF.CarrierV) (d : Nat)
 #print axioms encv'_add_append
 #print axioms sqv'_add_append
 
+/-! ### §25.4 `deg` FACTS FOR `summands` AND `splitFin`
+
+Four order facts about the degree measure, salvaged from an attempt at a lemma this
+project does not need (see below).  They are general and independently useful:
+`summands` and `splitFin` never increase `deg`, and `ofList ∘ take` does not either.
+
+**WHY THEY ARE HERE AND NOT IN A SATURATION PROOF.**  A worker built these to feed
+`fsVF f block t n = fsVC p block n` — the fuel-saturation lemma for `fsV`.  §16
+records that this project met exactly that obligation once, named it
+`encvF_saturate`, called it "provable and real work", and then **never proved it,
+because redefining fuel-free discharged the obligation instead.**  `fsVC` and `fsV'`
+(§25.3) are that redefinition, so the lemma has no consumer.  It was attempted three
+times anyway and did not close; the four `deg` facts are what survives, and they are
+kept because they are true and cheap, not because the attempt was justified.
+-/
+
+theorem deg_mem_summands : ∀ (t g : Term), g ∈ summands t → g.deg ≤ t.deg := by
+  intro t
+  induction t with
+  | zero => intro g hg; simp only [summands] at hg; contradiction
+  | add u v ihu ihv =>
+      intro g hg
+      simp only [summands, List.mem_append] at hg
+      rcases hg with hg | hg
+      · exact Nat.le_trans (ihu g hg) (by simp only [Term.deg]; omega)
+      · exact Nat.le_trans (ihv g hg) (by simp only [Term.deg]; omega)
+  | phi a b => intro g hg; simp only [summands, List.mem_singleton] at hg; subst g; omega
+  | M => intro g hg; simp only [summands, List.mem_singleton] at hg; subst g; omega
+  | omg a => intro g hg; simp only [summands, List.mem_singleton] at hg; subst g; omega
+  | psi k a => intro g hg; simp only [summands, List.mem_singleton] at hg; subst g; omega
+  | Z a => intro g hg; simp only [summands, List.mem_singleton] at hg; subst g; omega
+
+theorem deg_ofList_take : ∀ (t : Term) (k : Nat),
+    (ofList ((toList t).take k)).deg ≤ t.deg := by
+  intro t
+  induction t with
+  | zero => intro k; simp only [toList, List.take_nil, ofList, Term.deg]; exact Nat.le_refl _
+  | M => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, Term.deg] <;> exact Nat.le_refl _
+  | omg a => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, Term.deg] <;> omega
+  | phi a b => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, Term.deg] <;> omega
+  | psi q a => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, Term.deg] <;> omega
+  | Z a => intro k; cases k <;> simp only [toList, List.take, List.take_nil, ofList, Term.deg] <;> omega
+  | add u v _ ihv =>
+      intro k
+      cases k with
+      | zero => simp only [toList, List.take_zero, ofList, Term.deg]; omega
+      | succ j =>
+          have hv := ihv j
+          simp only [toList, List.take_succ_cons]
+          cases h : (toList v).take j with
+          | nil => simp only [ofList, Term.deg]; omega
+          | cons y ys =>
+              rw [h] at hv
+              simp only [ofList, Term.deg] at hv ⊢
+              omega
+
+theorem deg_splitFin_fst (t : Term) : t.splitFin.1.deg ≤ t.deg :=
+  deg_ofList_take t _
+
+theorem deg_summands_splitFin (t g : Term)
+    (hg : g ∈ summands t.splitFin.1) : g.deg ≤ t.deg :=
+  Nat.le_trans (deg_mem_summands _ g hg) (deg_splitFin_fst t)
+
 end Evidence.SqV
