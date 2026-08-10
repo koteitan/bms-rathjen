@@ -13581,6 +13581,106 @@ theorem asm_general
       lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
       fun n => by intro hc; exact Term.noConfusion hc⟩
 
+/-! ### §15.36 CORE (B) DISCHARGED — four of five branches, and the `Hsucc` gap named
+
+COVERAGE CHECKED BEFORE WIRING, and the two remaining hypotheses came out opposite ways.
+
+**`Hsucc0` (core (B), `φ̄(a,0)` with `a` a successor) IS FULLY COVERED.**  §15.21's
+`lim_clauses_phi_zero_succ` proves it at `a = succT p`, and §15.20 supplies the bridge at exactly
+the predicate the assembly dispatches on:
+
+    succT_predC : CNV t → kindV t = true → succT (predC t) = t          `kindV`, not `kindC`
+    cnv_predC   : CNV a → kindV a = true → CNV (predC a)
+
+so `p := predC a` discharges it for every `a` the branch can receive.  `asm_generalB` below does
+that, and **four of five branches are now recursive or proved.**
+
+**`Hsucc` (`φ̄(a,b)` with `b` a successor) IS NOT COVERED, AND THE GAP IS THREEFOLD.**  §15.15's
+`lim_clauses_epsSuccC (b) (CN b) (kindC b)` proves the clauses for `φ̄(one, b)` — the hypothesis
+quantifies over all `a` and all `CNV` successors `b`:
+
+    (i)   the template fixes `a = 1`; the hypothesis allows any `a`
+    (ii)  the template needs `CN b`; the hypothesis allows `CNV b`
+    (iii) the template tests `kindC b`; the assembly dispatches on `kindV b`
+
+**Gap (i) is where the FIFTH SHAPE lives** — `a` a limit with `b` a successor is precisely an `a`
+the template cannot take.  So `Hsucc` stays a hypothesis, **named rather than narrowed**: the
+assembly is not restricted to `a = 1` to make it dischargeable.
+
+`Hnf` also stays, deliberately and for a different reason: normality is a genuine side condition
+on the CONSUMER, decidable, discharged per row by `decide`.  It is not infrastructure this file
+owes. -/
+
+private theorem fsGen_phi_ne_zero (p : Term) :
+    ∀ n, fsGen (phi p zero) p (phi p zero) n ≠ zero
+  | 0 => by intro hc; exact Term.noConfusion hc
+  | n + 1 => by
+    show iterPhi p (phi p zero) (n + 1) ≠ zero
+    intro hc; exact Term.noConfusion hc
+
+/-- **THE ASSEMBLY WITH FOUR OF FIVE BRANCHES DISCHARGED.**  Sum, core (C) and core (C') recurse;
+    core (B) is proved through `succT_predC`.  Only `Hsucc` — where the fifth shape lives — and
+    the consumer's own normality remain.  As with `asm_general`: this proves nothing
+    `Evidence/Cert.lean` could not assemble by hand; it makes a row one lemma instead of a
+    caller-side case analysis. -/
+theorem asm_generalB
+    (Hsucc : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = true →
+        ∃ fs : Nat → Term, LimClauses (phi a b) fs ∧ ∀ n, fs n ≠ zero)
+    (Hnf : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = false →
+        ∀ c d, b = phi c d → phiNF a b = phi a b) :
+    ∀ (t : Term), CNV t = true → kindV t = false → t ≠ zero →
+      ∃ fs : Nat → Term, LimClauses t fs ∧ ∀ n, fs n ≠ zero := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | phi p q ihp ihq =>
+    intro h hk _
+    obtain ⟨hcnp, hcnq⟩ := cnv_phi h
+    by_cases hq : q = zero
+    · subst hq
+      by_cases hkp : kindV p = true
+      · have hcnpp : CNV (predC p) = true := cnv_predC p hcnp hkp
+        have hsp : succT (predC p) = p := succT_predC p hcnp hkp
+        refine ⟨fsGen (phi (predC p) zero) (predC p) (phi (predC p) zero), ?_,
+                fsGen_phi_ne_zero (predC p)⟩
+        have hlc := lim_clauses_phi_zero_succ hcnpp
+        rw [hsp] at hlc
+        exact hlc
+      · have hkp' : kindV p = false := by
+          cases hh : kindV p with
+          | true => exact absurd hh hkp
+          | false => rfl
+        have hpz : p ≠ zero := by
+          intro hc; rw [hc] at hk; exact Bool.noConfusion hk
+        obtain ⟨g, hg, _⟩ := ihp hcnp hkp' hpz
+        exact ⟨fun n => phi (g n) zero,
+          lim_clauses_phi_arg1 g hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hcnp,
+          fun n => by intro hc; exact Term.noConfusion hc⟩
+    · by_cases hkq : kindV q = true
+      · exact Hsucc p q h hq hkq
+      · have hkq' : kindV q = false := by
+          cases hh : kindV q with
+          | true => exact absurd hh hkq
+          | false => rfl
+        obtain ⟨g, hg, _⟩ := ihq hcnq hkq' hq
+        obtain ⟨g', hg'⟩ := lim_clauses_phi_arg_nf hcnp hcnq (Hnf p q h hq hkq') g hg
+        exact ⟨fun n => phi p (g' n), hg', fun n => by intro hc; exact Term.noConfusion hc⟩
+  | add u v _ ihv =>
+    intro h hk _
+    obtain ⟨hAPu, hcnu, hcnv, hdvu⟩ := cnv_add h
+    have hvz : v ≠ zero := by
+      intro hc
+      rw [hc, show hdLe (zero : Term) u = false from rfl] at hdvu
+      exact Bool.noConfusion hdvu
+    obtain ⟨g, hg, hgz⟩ := ihv hcnv hk hvz
+    exact ⟨fun n => add u (g n),
+      lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
+      fun n => by intro hc; exact Term.noConfusion hc⟩
+
 /-! ### §15.35 THE ASSEMBLY WITH CORE (C') DISCHARGED — three recursive branches, two assumed
 
 `asm_general` assumes `Hzero` for the whole of `φ̄(a,0)`.  **Half of that is not an assumption: it
