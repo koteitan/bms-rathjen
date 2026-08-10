@@ -5723,4 +5723,294 @@ def fsV (t : Term) (n : Nat) : Term :=
 #guard (List.range 8).all (fun n =>
   fsV Evidence.WF.epsEps0 n == Evidence.WF.fsEE n)
 
+/-! ### §25.3 TOWARD `sqvDecomp_general` — the ε₀ case and the `add` clause
+
+The target is `∀ t, CNV t → kindV t = false → t ≠ 0 → ∀ n,
+expand (sqv' t) n = sqv' (fsV t n)`.  §25.2 built `fsV` and measured it clean on all
+95; this section proves the first cases against it.
+
+**PROVED HERE:**
+
+* `sqvDecomp_eps0_fsV` — the ε₀ case.  Not an arbitrary starting point: ε₀ is where
+  three of the four candidate sequences of §25.1 failed FIRST, because `cert_eps0`
+  uses `tower` and none of `fsC` / `fsN` / `fsVDirect` computes it.  `fsV_eps0` shows
+  `fsV` does.
+* `sqv'_add_append` and its two supporting lemmas — the `add` clause, i.e. the
+  structural half of the sum branch.
+* `encvC_head`, `fpDeepC_some_ne_zero` and the `fpDeepF` lemma under it —
+  infrastructure the `φ̄` branches need.
+
+**NOT PROVED:** the general statement.  The remaining clauses are the `φ̄` ones, which
+is where §25.2's failure histogram put the last obstruction before `fsV` was fixed
+(`base-block`, the `mkBlocks` site).
+
+`fsV` still carries fuel through `fsVF`, and §25.2 records why that has to be dealt
+with before an induction over the term can close: a fuel-carrying definition cannot
+be inducted over, which is §9's blocker in its original form.  §16 solved that once by
+redefining fuel-free rather than by proving a saturation lemma, and the same move is
+available here.
+-/
+
+theorem fsGen_zero_one_eq_tower :
+    ∀ n, Evidence.WF.fsGen one zero one n = Evidence.WF.tower n
+  | 0 => rfl
+  | n + 1 => by
+      show Evidence.WF.iterPhi zero one (n + 1) = Evidence.WF.tower (n + 1)
+      induction n with
+      | zero => rfl
+      | succ n ih =>
+          show phi zero (Evidence.WF.iterPhi zero one (n + 1)) =
+            phi zero (Evidence.WF.tower (n + 1))
+          rw [ih]
+
+theorem fsV_eps0 (n : Nat) :
+    fsV Evidence.WF.eps0T n = Evidence.WF.tower n := by
+  unfold fsV
+  rw [show Evidence.WF.eps0T = phi one zero from rfl]
+  change Evidence.WF.fsGen one zero one n = Evidence.WF.tower n
+  exact fsGen_zero_one_eq_tower n
+
+theorem sqv'_eps0 : sqv' Evidence.WF.eps0T = [[0, 0], [1, 1]] := by
+  unfold sqv'
+  rw [encv'_eps0T]
+  rfl
+
+theorem sqv'_tower (n : Nat) :
+    sqv' (Evidence.WF.tower n) = Evidence.Cert.towerM n := by
+  unfold sqv'
+  rw [encv'_tower n 0]
+  unfold toMatrix ladderCols Evidence.Cert.towerM
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro i _
+  rfl
+
+theorem sqvDecomp_eps0_fsV (n : Nat) :
+    BMS.expand (sqv' Evidence.WF.eps0T) n =
+      sqv' (fsV Evidence.WF.eps0T n) := by
+  rw [sqv'_eps0, fsV_eps0, sqv'_tower]
+  exact Evidence.Cert.expand_eps0_row n
+
+theorem flatMap_encv'_summands {t : Term}
+    (hcnv : Evidence.WF.CNV t = true) (d : Nat) :
+    (summands t).flatMap (fun g => encv' g d) = encv' t d := by
+  cases t with
+  | zero =>
+      unfold encv'
+      rw [dif_pos hcnv, encvC]
+      rfl
+  | phi a b => simp only [summands, List.flatMap_cons, List.flatMap_nil, List.append_nil]
+  | add u v => exact (encv'_add hcnv d).symm
+  | M => exact Bool.noConfusion hcnv
+  | omg a => exact Bool.noConfusion hcnv
+  | psi k a => exact Bool.noConfusion hcnv
+  | Z a => exact Bool.noConfusion hcnv
+
+theorem encv'_add_append {u v : Term}
+    (hcnv : Evidence.WF.CNV (add u v) = true) (d : Nat) :
+    encv' (add u v) d = encv' u d ++ encv' v d := by
+  obtain ⟨_, hu, hv, _⟩ := Evidence.WF.cnv_add hcnv
+  rw [encv'_add hcnv d, summands, List.flatMap_append,
+    flatMap_encv'_summands hu d, flatMap_encv'_summands hv d]
+
+theorem sqv'_add_append {u v : Term}
+    (hcnv : Evidence.WF.CNV (add u v) = true) :
+    sqv' (add u v) = sqv' u ++ sqv' v := by
+  unfold sqv' toMatrix
+  rw [encv'_add_append hcnv 0, List.map_append]
+
+/-- Fuel-free form of the expansion-tracking sequence.  The second component of
+    the termination measure orders the same-term transition from block mode to
+    ordinary mode. -/
+def fsVC (p : Evidence.WF.CarrierV) (block : Bool) (n : Nat) : Term :=
+  match hb : block with
+  | true =>
+      match hp : p.1 with
+      | .add u v =>
+          let w := fsVC ⟨v, (Evidence.WF.cnv_add (hp ▸ p.2)).2.2.1⟩ true n
+          if w == zero then u else .add u w
+      | t =>
+          let w := fsVC p false n
+          if omLog t == t then unOmLogV w
+          else if t == omega then ofNat n
+          else w
+  | false =>
+      match hp : p.1 with
+      | .add u v =>
+          let w := fsVC ⟨v, (Evidence.WF.cnv_add (hp ▸ p.2)).2.2.1⟩ false n
+          if w == zero then u else .add u w
+      | .phi a b =>
+          let ha := (Evidence.WF.cnv_phi (hp ▸ p.2)).1
+          let hbcn := (Evidence.WF.cnv_phi (hp ▸ p.2)).2
+          if a == zero && b == zero then zero
+          else if b == zero then
+            if Evidence.WF.kindV a then
+              let q := Evidence.WF.predC a
+              Evidence.WF.fsGen (.phi q zero) q (.phi q zero) n
+            else .phi (fsVC ⟨a, ha⟩ false (n + 1)) zero
+          else if Evidence.WF.kindV b then
+            let c := .phi a (Evidence.WF.predC b)
+            if a == zero then Evidence.WF.repAdd c n
+            else if Evidence.WF.kindV a then
+              let q := Evidence.WF.predC a
+              let v := if q == zero then c else .phi q c
+              let base := if q == zero then .add c c else v
+              Evidence.WF.fsGen v q base n
+            else .phi (fsVC ⟨a, ha⟩ false (n + 1)) c
+          else
+            let gs := summands b.splitFin.1
+            let head := gs.headD zero
+            if TM.Term.isFP a head then
+              if gs.length == 1 then
+                if a == zero then Evidence.WF.repAdd head n
+                else .phi a (fsVC ⟨b, hbcn⟩ false n)
+              else
+                let tail : List Term := match hn : n, hg : gs.getLast? with
+                  | 0, _ => []
+                  | _, some g =>
+                      [fsVC ⟨g, cnv_mem_summands b.splitFin.1 g
+                        (cnv_ofList_take b _ hbcn) (by
+                          apply List.mem_of_mem_getLast?
+                          rw [hg]
+                          simp)⟩ false n]
+                  | _, none => []
+                .phi a (ofList (gs.dropLast ++ tail))
+            else match fpDeep a head with
+              | some _ => .phi a (fsVC ⟨b, hbcn⟩ false n)
+              | none =>
+                  if a == zero || gs.isEmpty then .phi a (fsVC ⟨b, hbcn⟩ false n)
+                  else .phi a (fsVC ⟨b, hbcn⟩ true n)
+      | _ => zero
+termination_by (p, if block then 1 else 0)
+decreasing_by
+  · apply Prod.Lex.left
+    change lt v p.1 = true
+    exact hp.symm ▸ Evidence.WF.lt_tail_add v u (hp ▸ p.2)
+  · apply Prod.Lex.right
+    decide
+  · apply Prod.Lex.left
+    change lt v p.1 = true
+    exact hp.symm ▸ Evidence.WF.lt_tail_add v u (hp ▸ p.2)
+  · apply Prod.Lex.left
+    change lt a p.1 = true
+    exact hp.symm ▸ Evidence.WF.lt_phi_fst ha
+  · apply Prod.Lex.left
+    change lt a p.1 = true
+    exact hp.symm ▸ Evidence.WF.lt_phi_fst ha
+  · apply Prod.Lex.left
+    change lt b p.1 = true
+    exact hp.symm ▸ Evidence.WF.lt_phi_self hbcn a
+  · apply Prod.Lex.left
+    change lt g p.1 = true
+    apply hp.symm ▸ lt_summand_phi (hp ▸ p.2)
+    apply List.mem_of_mem_getLast?
+    rw [hg]
+    simp
+  · apply Prod.Lex.left
+    change lt b p.1 = true
+    exact hp.symm ▸ Evidence.WF.lt_phi_self hbcn a
+  · apply Prod.Lex.left
+    change lt b p.1 = true
+    exact hp.symm ▸ Evidence.WF.lt_phi_self hbcn a
+
+/-- Total fuel-free sequence; outside `CNV` it returns zero, as `fsV` does on
+    the region relevant to the theorem. -/
+def fsV' (t : Term) (n : Nat) : Term :=
+  if h : Evidence.WF.CNV t = true then fsVC ⟨t, h⟩ false n else zero
+
+#guard nfOKLimitCorpus.all (fun t =>
+  (List.range 8).all (fun n => fsV' t n == fsV t n))
+
+theorem fpDeepF_some_ne_zero (f : Nat) (a t z : Term)
+    (h : fpDeepF f a t = some z) : z ≠ zero := by
+  induction f generalizing a t z with
+  | zero => cases h
+  | succ f ih =>
+      simp only [fpDeepF] at h
+      split at h
+      · rename_i hfp
+        injection h with hzt
+        subst z
+        intro ht
+        subst t
+        exact Bool.noConfusion hfp
+      · split at h
+        · rename_i c x ht
+          obtain ⟨g, _, hg⟩ := List.exists_of_findSome?_eq_some h
+          exact ih a g z hg
+        · contradiction
+
+theorem fpDeepC_some_ne_zero {a t : Term} (ht : Evidence.WF.CNV t = true)
+    {z : {z : Term // Evidence.WF.CNV z = true ∧ le z t = true}}
+    (h : fpDeepC a t ht = some z) : z.1 ≠ zero := by
+  unfold fpDeepC at h
+  split at h
+  · rename_i w hfd
+    injection h with hw
+    exact hw ▸ fpDeepF_some_ne_zero _ a t w hfd
+  · contradiction
+
+private theorem head?_append_of_head {α : Type} {l r : List α} {x : α}
+    (h : l.head? = some x) : (l ++ r).head? = some x := by
+  cases l <;> simp_all
+
+theorem encvC_head (p : Evidence.WF.CarrierV) (d : Nat)
+    (hz : p.1 ≠ zero) : (encvC p d).head? = some (d, 0) := by
+  fun_induction encvC p d
+  case case1 hp => exact (hz hp).elim
+  case case2 p d u v hp ih =>
+    have hcnv : Evidence.WF.CNV (add u v) = true := hp ▸ p.2
+    obtain ⟨huAP, hu, _, _⟩ := Evidence.WF.cnv_add hcnv
+    have hu0 : u ≠ zero := by
+      intro huz
+      subst u
+      exact Bool.noConfusion huAP
+    have humem : u ∈ summands (add u v) := by
+      rw [summands, summands_of_isAP huAP]
+      simp
+    have hhead := ih ⟨u, humem⟩ hu0
+    rw [encvC_eq_encv'] at hhead
+    simp only [encvC_eq_encv']
+    rw [show (summands (add u v)).attach.flatMap (fun g => encv' g.1 d) =
+        (summands (add u v)).flatMap (fun g => encv' g d) from
+      flatMap_attach (summands (add u v)) (fun g => encv' g d)]
+    rw [← encv'_add hcnv d, encv'_add_append hcnv d]
+    exact head?_append_of_head hhead
+  case case3 p d a b hp ladder unit reps mk hfp ih1 ih2 ih3 =>
+    have hhead0 : (summands b.splitFin.1).headD zero ≠ zero := by
+      intro hzero
+      rw [hzero] at hfp
+      exact Bool.noConfusion hfp
+    exact head?_append_of_head (head?_append_of_head (ih3 hhead0))
+  case case4 p d a b hp ladder unit reps mk hfp z hdeep ih1 ih2 ih3 =>
+    have hz0 := fpDeepC_some_ne_zero _ hdeep
+    exact head?_append_of_head (head?_append_of_head (ih3 hz0))
+  case case5 => rfl
+  case case6 p d hzero hadd hphi =>
+    cases hpval : p.1 with
+    | zero => exact (hzero hpval).elim
+    | add u v => exact (hadd u v hpval).elim
+    | phi a b => exact (hphi a b hpval).elim
+    | M =>
+        have hbad : Evidence.WF.CNV M = true := hpval ▸ p.2
+        exact Bool.noConfusion hbad
+    | omg a =>
+        have hbad : Evidence.WF.CNV (omg a) = true := hpval ▸ p.2
+        exact Bool.noConfusion hbad
+    | psi k a =>
+        have hbad : Evidence.WF.CNV (psi k a) = true := hpval ▸ p.2
+        exact Bool.noConfusion hbad
+    | Z a =>
+        have hbad : Evidence.WF.CNV (Z a) = true := hpval ▸ p.2
+        exact Bool.noConfusion hbad
+
+#print axioms fsGen_zero_one_eq_tower
+#print axioms fsV_eps0
+#print axioms sqv'_eps0
+#print axioms sqv'_tower
+#print axioms sqvDecomp_eps0_fsV
+#print axioms flatMap_encv'_summands
+#print axioms encv'_add_append
+#print axioms sqv'_add_append
+
 end Evidence.SqV
