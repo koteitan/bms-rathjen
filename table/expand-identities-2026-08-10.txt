@@ -111,3 +111,66 @@ The guards live in `Evidence/SqV.lean`, not beside the theorems, because `Cert`
 must never cite `sqv'` — the import arrow is `SqV → Cert` and it is enforced by
 the module graph rather than by anyone remembering.  §20.1 records the split so a
 reader does not conclude the check was skipped.
+
+
+APPENDED 2026-08-10 — ε_{ε₀}'s PROOF IS NOT BLOCKED; THE OBSTRUCTIONS ARE RESOLVED
+==================================================================================
+
+The certificate lane attempted the identity, did not close it, wrote nothing, and
+named two obstructions exactly.  Both are now read off `expand?`'s definition
+rather than inferred, and the guessed (root, height) turns out to have been RIGHT.
+
+`BMS/Expand.lean:61` computes, for `L = M.getLast?` and `t = lnz L`:
+
+    r := parent M t (X-1),   h := L.length,   block height := X - 1 - r
+    entry (a) x y := ent M (r+x) y + a * delta M r t y * (ascends M r (r+x) y)
+    result := M.take r ++ ((range (n+1)).map bad).flatten
+
+MEASURED for M = [[0,0],[1,1],[2,0],[3,1]]:
+
+    lnz [3,1] = some 1        t = 1     <- NOT 0
+    parent M 1 3 = some 2     r = 2
+    M.length = 4              block height = 4 - 1 - 2 = 1,  width h = 2
+
+    blocks at a = 0,1,2  =  [[2,0]], [[3,0]], [[4,0]]        exactly the expansion
+
+THE SINGLE ERROR WAS THE THIRD ARGUMENT OF `delta`, NOT THE ROOT.  The attempt
+used `delta M 2 0 y`, copied from the four neighbouring rows.  It must be
+`delta M 2 1 y`.  With `t = 0` the guard `y < t` is never satisfied, so `delta`
+is identically 0 and the block cannot grow — which is why the constant-block
+template fits the other four and cannot fit this one.
+
+    row                last row   lnz   delta   block
+    ω^(ε₀+1)           [1,0]       0     ≡ 0    constant
+    ε_ω                [2,0]       0     ≡ 0    constant
+    ε_{ω²}             [2,0]       0     ≡ 0    constant
+    ε_{ω^ω}            [3,0]       0     ≡ 0    constant
+    ε_{ε₀}             [3,1]       1     ≠ 0    GROWS
+
+**`t = 0` ⟺ constant block, exactly.**  "The block grows" and "the last row's last
+nonzero column is not 0" are the same fact, not two facts.  That is the structural
+reason ε_{ε₀} is the odd row on the matrix side, and it matches §21's reason on the
+term side (the single summand is `tower (n+1)`, so the block's own encoding grows).
+
+ARGUMENT ORDER, the other obstruction, confirmed: `ent M 2 0 = 2` and
+`delta M 2 1 0 = ent M 3 0 - ent M 2 0 = 1`, so the entry computes as `2 + a`.
+State the right-hand side as `(range (n+1)).map (fun a => [2 + a, 0])`.  The term
+side's `ladderCols` writes `i + d`; this needs `d + i`.  Same list, and `rfl` cares.
+
+So the identity's statement and its `show` are both determined:
+
+    take 2 = [[0,0],[1,1]]
+    bad a  = (range 1).map (fun x => (range 2).map (fun y =>
+               ent M (2+x) y + a * delta M 2 1 y * (if ascends M 2 (2+x) y then 1 else 0)))
+    RHS    = [[0,0],[1,1]] ++ ((range (n+1)).map (fun a => [[2 + a, 0]])).flatten
+
+`hblk`'s `∀ a, … = <constant>` shape does NOT apply here — the block depends on `a`,
+which is the point — so the proof cannot follow the other four's `map_congr_left`
++ `map_const_flatten` route.  `flatten_map_singleton` (Cert:4684, private, same
+file) is the lemma that turns the singleton blocks into the map.
+
+THE LESSON THE LANE DREW ON ITSELF, kept because it is the ninth instance:
+it inferred a shape from four neighbours instead of measuring the fifth, having
+written the rule against exactly that three sections earlier.  The `#eval` that
+resolves it is the same one that caught the subscript, the ladder, and the `Cert`
+expansion gap.  Reading `expand?`'s own definition — five lines — was enough.
