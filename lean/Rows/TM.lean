@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.3.2"
+def version : String := "v0.3.3"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -423,16 +423,21 @@ $`\\mathrm{Certified}`$ は帰納的述語で、**行の $`\\mathrm{kind}`$ に�
 
 ### E.zero
 
+空行列の行。前提は無く、無条件に成り立つ。
+
 ```math
-\\frac{}{\\mathrm{Certified}\\;[\\,]\\;0}
+\\mathrm{Certified}\\;[\\,]\\;0
 ```
 
 ### E.succ
 
 ```math
-\\frac{\\mathrm{kind}\\,M = \\mathrm{succ}
-\\qquad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;t}
-{\\mathrm{Certified}\\;M\\;(t+1)}
+\\begin{aligned}
+&\\mathrm{kind}\\,M = \\mathrm{succ} \\;\\Longrightarrow \\cr
+&\\quad \\Bigl[\\; \\mathrm{Certified}\\;M\\;u \\;\\Longleftrightarrow\\;
+   \\exists t.\\; u = t+1 \\cr
+&\\qquad\\qquad\\quad \\land\\; \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;t \\;\\Bigr]
+\\end{aligned}
 ```
 
 すべての展開が同じ $`t`$ を認証するなら、この行は $`t+1`$。
@@ -440,19 +445,32 @@ $`\\mathrm{Certified}`$ は帰納的述語で、**行の $`\\mathrm{kind}`$ に�
 ### E.lim
 
 ```math
-\\frac{\\mathrm{kind}\\,M = \\mathrm{lim}
-\\quad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)
-\\quad \\forall n.\\;f_n < t
-\\quad \\forall n.\\;f_n < f_{n+1}
-\\quad \\forall s \\in \\mathfrak{T}(M).\\;s < t \\to \\exists n.\\;s \\le f_n}
-{\\mathrm{Certified}\\;M\\;t}
+\\begin{aligned}
+&\\mathrm{kind}\\,M = \\mathrm{lim} \\;\\Longrightarrow \\cr
+&\\quad \\Bigl[\\; \\mathrm{Certified}\\;M\\;t \\;\\Longleftrightarrow\\;
+   \\exists f : \\mathbb{N} \\to \\mathfrak{T}(M).\\;
+   \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n) \\cr
+&\\qquad\\qquad\\quad \\land\\; \\forall n.\\;f_n < t \\cr
+&\\qquad\\qquad\\quad \\land\\; \\forall n.\\;f_n < f_{n+1} \\cr
+&\\qquad\\qquad\\quad \\land\\; \\forall s \\in \\mathfrak{T}(M).\\;s < t \\to \\exists n.\\;s \\le f_n \\;\\Bigr]
+\\end{aligned}
 ```
 
-前提は 5 つ。**同一性を述べるのは
-$`\\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)`$ の 1 つだけ**で、残る 4 つは
-列 $`f`$ の性質である。**性質をいくつ検査しても値は決まらない**
-([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた。
-$`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
+**$`f`$ は $`\\exists`$ で束縛された列である** — $`\\mathbb{N}`$ の各点に
+$`\\mathfrak{T}(M)`$ の項を 1 つ与える写像であり、どこかに定義された特定の列ではない。
+**表を読むときに $`f`$ の定義を探す必要はない。無いのが正しく、行ごとに証明が
+自分で 1 つ選んで与える。**
+
+**ただし選べるのは見かけだけである。** 第 1 の連言
+$`\\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)`$ は
+$`f_n`$ が $`M[n]`$ に対して証明された値**そのもの**であることを要求するので、
+$`f`$ を決めているのは**行列のほう**である。
+
+4 つの連言のうち **$`f_n`$ の値を決めるのはこの第 1 のものだけ**で、残る 3 つは
+$`f`$ の**性質**しか述べていない。**性質をいくつ検査しても値は決まらない**
+([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた —
+性質が全部緑になる列を見つけて、それを値だと思った。実際には
+$`\\mathfrak{T}(M)`$ の標準基本列に合わせる必要はどこにも無く、合わせようとしたのが誤りだった。
 
 ### ✅ が検査していないもの
 
