@@ -9974,4 +9974,527 @@ theorem transPort_rungPS_of_L
 
 end Ladder
 
+
+/-! ### §21.5 `redP` IS THE IDENTITY ON THE LADDER — §21.4's named blocker, closed
+
+§21.4 left link 2 one lemma away and named the first thing missing:
+`redP (L m) = L m`, needing an induction for `red` along the ladder rather than along the way
+`L` is built.  That is this section, and `redP_L` is now a theorem for every `m`.
+
+`redP` is where `transPort` decides what it is looking at, so an induction on `runAux` could not
+start without it.  Everything under it here — `trMax`, `ppair`, `brF`, `firstNodes`, `joints`,
+`fAnc` and the `incrFirst` versions of each — is the reduction machinery COMPUTED on `L m`, and
+none of it was statable on the append route.
+
+**STILL OPEN, unchanged and still one lemma:** `transPort_LBT (m) : transPort (L m) = LBT m`
+(measured at 13 points in §21.4).  `transPort_rungPS_of_L` consumes it and finishes the chain, so
+closing it turns §21.1's 24-point measurement into a theorem for every `n`.
+
+AXIOMS.  All 40 are `[propext, Quot.sound]`.  Twelve of them — `redP_L` included — carried
+`Classical.choice` when first written, and every one was cleaned by rewriting the PROOF only: 40
+statements diffed before and after, zero differences.  Second time in this file's history that the
+whole dirty set turned out to be tactics rather than mathematics.  Do not shorten these proofs
+back; see plan/constitutions.md 失敗形 2 の七番目 for why the obvious debugging method
+(tracing dependencies) cannot find this, and plan/worker-spec.md for the two known sources.
+-/
+
+section Ladder2
+open Trans.Recal
+open Trans.Dict
+#guard (List.range 40).all fun m => redP (L m) == L m
+
+theorem L_add_two (m : Nat) :
+    L (m + 2) = L 1 ++ incrFirst (L m) 1 := by
+  induction m with
+  | zero => rfl
+  | succ m ih =>
+    rw [show m + 1 + 2 = (m + 2) + 1 by omega, L_succ (m + 2), ih]
+    rw [show m + 1 = m + 1 by rfl, L_succ m]
+    simp only [incrFirst, List.map_append, List.map_singleton,
+      List.append_assoc]
+    congr 1
+    have hm : (m + 1) % 2 = (m + 3) % 2 := by omega
+    simp [hm]
+    omega
+
+theorem fpar0_L_one_zero (m : Nat) :
+    fpar0 (L (m + 2)) 1 0 = 0 := by
+  have g00 := gp0_L (m + 2) 0 (by omega)
+  have g01 := gp0_L (m + 2) 1 (by omega)
+  simp at g00 g01
+  unfold fpar0
+  rw [if_neg (by simp [lenI]; omega)]
+  simp only [fpar0Aux]
+  rw [if_neg (by omega)]
+  rw [show (1 : Int) - 1 = 0 by omega]
+  rw [g01, g00, if_pos (by omega)]
+
+theorem fpar1_L_one_zero (m : Nat) :
+    fpar (L (m + 2)) 1 1 0 = 0 := by
+  have g10 := gp1_L (m + 2) 0 (by omega)
+  have g11 := gp1_L (m + 2) 1 (by omega)
+  simp at g10 g11
+  unfold fpar
+  rw [if_neg (by simp [lenI]; omega)]
+  rw [if_neg (by decide)]
+  simp only [fpar1Aux]
+  rw [fpar0_L_one_zero, if_neg (by omega), g10, g11,
+    if_pos (by omega)]
+
+theorem isParentP_L_one_zero (m : Nat) :
+    isParentP (L (m + 2)) 1 1 0 = true := by
+  have hlen : (0 : Int) < lenI (L (m + 2)) := by
+    simp [lenI]
+    omega
+  unfold isParentP
+  rw [fpar1_L_one_zero]
+  rw [show decide ((0 : Int) ≤ 0) = true by rfl]
+  rw [show decide ((0 : Int) < lenI (L (m + 2))) = true by
+    simp [hlen]]
+  rfl
+
+theorem isParentP_L_two_one (m : Nat) :
+    isParentP (L (m + 2)) 1 2 1 = false := by
+  have hp := fpar1_L_even_prev (m + 2) 0 (by omega)
+  have hp' : fpar (L (m + 2)) 1 2 1 = -1 := by simpa using hp
+  unfold isParentP
+  rw [hp']
+  simp [lenI]
+
+theorem trMax_L_add_two (m : Nat) : trMax (L (m + 2)) = 1 := by
+  unfold trMax
+  simp only [trMaxAux]
+  rw [if_neg (by simp [lenI]; omega)]
+  rw [show (0 : Int) + 1 = 1 by omega]
+  rw [isParentP_L_one_zero]
+  simp only [Bool.not_true]
+  rw [if_neg (by decide)]
+  rw [length_L]
+  simp only [trMaxAux]
+  rw [if_neg (by simp [lenI]; omega)]
+  rw [show (1 : Int) + 1 = 2 by omega]
+  rw [isParentP_L_two_one]
+  rfl
+
+theorem fpar_zero_zero (M : PS) : fpar M 0 0 0 = -1 := by
+  unfold fpar
+  by_cases hbad : (0 : Int) < 0 ∨ (0 : Int) ≥ lenI M
+  · rw [if_pos hbad]
+  · rw [if_neg hbad]
+    rw [if_pos (by rfl)]
+    simp only [fpar0Aux]
+    rw [if_pos (by omega)]
+
+theorem fpar0Aux_eq_neg_one_of_lt
+    (f : Nat) (M : PS) (tgt j : Int)
+    (h : fpar0Aux f M tgt j 0 < 0) :
+    fpar0Aux f M tgt j 0 = -1 := by
+  induction f generalizing j with
+  | zero => rfl
+  | succ f ih =>
+    simp only [fpar0Aux] at h ⊢
+    split
+    · rfl
+    · rename_i hj
+      split
+      · rename_i hfound
+        simp [hj, hfound] at h
+      · rename_i hfound
+        simp [hj, hfound] at h ⊢
+        exact ih (j - 1) h
+
+theorem fpar_row0_eq_neg_one_of_lt
+    (M : PS) (j : Int) (h : fpar M 0 j 0 < 0) :
+    fpar M 0 j 0 = -1 := by
+  unfold fpar at h ⊢
+  by_cases hv : j < 0 ∨ j ≥ lenI M
+  · rw [if_pos hv] at h ⊢
+  · rw [if_neg hv] at h ⊢
+    rw [if_pos (by decide)] at h ⊢
+    exact fpar0Aux_eq_neg_one_of_lt _ _ _ _ h
+
+theorem gp0_incrFirst_of_valid
+    (M : PS) (a j : Int) (hj0 : 0 ≤ j) (hj : j.toNat < M.length) :
+    gp0 (incrFirst M a) j = gp0 M j + a := by
+  unfold gp0 incrFirst
+  rw [if_neg (by omega), if_neg (by omega)]
+  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD]
+  rw [List.getElem?_map]
+  have he : M[j.toNat]? = some M[j.toNat] :=
+    List.getElem?_eq_getElem hj
+  rw [he]
+  simp
+
+theorem fpar0Aux_incrFirst
+    (f : Nat) (M : PS) (a tgt j k : Int)
+    (hk : 0 ≤ k) (hj : j < lenI M) :
+    fpar0Aux f (incrFirst M a) (tgt + a) j k =
+      fpar0Aux f M tgt j k := by
+  induction f generalizing j with
+  | zero => rfl
+  | succ f ih =>
+    simp only [fpar0Aux]
+    by_cases hstop : j < k
+    · rw [if_pos hstop, if_pos hstop]
+    · rw [if_neg hstop, if_neg hstop]
+      have hj0 : 0 ≤ j := by omega
+      have hjnat : j.toNat < M.length := by
+        simp [lenI] at hj
+        omega
+      rw [gp0_incrFirst_of_valid M a j hj0 hjnat]
+      by_cases hfound : gp0 M j < tgt
+      · rw [if_pos (by omega), if_pos hfound]
+      · rw [if_neg (by omega), if_neg hfound]
+        exact ih (j - 1) (by omega)
+
+theorem fpar_row0_incrFirst
+    (M : PS) (a j k : Int) (hk : 0 ≤ k)
+    (hj0 : 0 ≤ j) (hj : j < lenI M) :
+    fpar (incrFirst M a) 0 j k = fpar M 0 j k := by
+  have hlen : lenI (incrFirst M a) = lenI M := by
+    simp [lenI, incrFirst]
+  have hjnat : j.toNat < M.length := by
+    simp [lenI] at hj
+    omega
+  have hgp := gp0_incrFirst_of_valid M a j hj0 hjnat
+  unfold fpar
+  rw [hlen]
+  rw [if_neg (by omega), if_pos (by decide)]
+  rw [if_neg (by omega), if_pos (by decide)]
+  rw [hgp]
+  rw [show (incrFirst M a).length = M.length by simp [incrFirst]]
+  exact fpar0Aux_incrFirst _ _ _ _ _ _ hk (by omega)
+
+def ladderParent (k : Nat) : Nat :=
+  if k % 2 = 1 then k - 1 else k - 2
+
+theorem fpar_L_pos_ladderParent
+    (m k : Nat) (hk0 : 0 < k) (hk : k ≤ m) :
+    fpar (L m) 0 (k : Int) 0 = (ladderParent k : Nat) := by
+  unfold ladderParent
+  split
+  · rename_i hodd
+    have heq : k = 2 * (k / 2) + 1 := by omega
+    rw [heq] at hk ⊢
+    simpa using fpar_L_odd m (k / 2) hk
+  · rename_i hnodd
+    have heven : k % 2 = 0 := by omega
+    have heq : k = 2 * ((k - 2) / 2) + 2 := by omega
+    rw [heq] at hk ⊢
+    simpa using fpar_L_even m ((k - 2) / 2) hk
+
+theorem ladderParent_lt (k : Nat) (h : 0 < k) : ladderParent k < k := by
+  unfold ladderParent
+  split <;> omega
+
+theorem isAncAux_incrFirst_L (a : Int) (k : Nat) : ∀ (m f : Nat),
+    k ≤ m → k < f →
+      isAncAux f (incrFirst (L m) a) 0 (k : Int) 0 = true := by
+  refine Nat.strongRecOn (motive := fun k => ∀ (m f : Nat),
+    k ≤ m → k < f →
+      isAncAux f (incrFirst (L m) a) 0 (k : Int) 0 = true) k ?_
+  intro k ih m f hkm hkf
+  cases f with
+  | zero => exact (Nat.not_lt_zero k hkf).elim
+  | succ f =>
+    unfold isAncAux
+    by_cases hk0 : k = 0
+    · subst k
+      rw [if_pos (by rfl)]
+    · have hkpos : 0 < k := by omega
+      have hp := fpar_L_pos_ladderParent m k hkpos hkm
+      have hps :
+          fpar (incrFirst (L m) a) 0 (k : Int) 0 =
+            (ladderParent k : Nat) := by
+        rw [fpar_row0_incrFirst]
+        · exact hp
+        · omega
+        · omega
+        · simp [lenI]
+          omega
+      have h0k : (0 : Int) ≠ (k : Int) := by omega
+      rw [show ((0 : Int) == (k : Int)) = false by simp [h0k]]
+      rw [hps]
+      have hpn : ((ladderParent k : Nat) : Int) ≠ -1 := by omega
+      simp [hpn]
+      have hpk : ladderParent k < k := ladderParent_lt k hkpos
+      apply ih (ladderParent k)
+      · exact hpk
+      · exact Nat.le_trans (Nat.le_of_lt hpk) hkm
+      · omega
+
+theorem isAnc_incrFirst_L (a : Int) (m k : Nat) (hk : k ≤ m) :
+    isAnc (incrFirst (L m) a) 0 (k : Int) 0 = true := by
+  unfold isAnc
+  rw [if_neg]
+  · have h := isAncAux_incrFirst_L a k m (m + 2) hk (by omega)
+    rw [show (incrFirst (L m) a).length = m + 1 by
+      simp [incrFirst]]
+    exact h
+  · simp [lenI, incrFirst]
+
+theorem fAncAux_incrFirst_L_getLast (a : Int) (k : Nat) :
+    ∀ (m f : Nat) (acc : List Int),
+      k ≤ m → k < f → acc.getLast? = some (k : Int) →
+      (fAncAux f (incrFirst (L m) a) 0 (k : Int) 0 acc).getLast? =
+        some 0 := by
+  refine Nat.strongRecOn (motive := fun k =>
+    ∀ (m f : Nat) (acc : List Int),
+      k ≤ m → k < f → acc.getLast? = some (k : Int) →
+      (fAncAux f (incrFirst (L m) a) 0 (k : Int) 0 acc).getLast? =
+        some 0) k ?_
+  intro k ih m f acc hkm hkf hlast
+  cases f with
+  | zero => exact (Nat.not_lt_zero k hkf).elim
+  | succ f =>
+    unfold fAncAux
+    by_cases hk0 : k = 0
+    · subst k
+      rw [show ((0 : Nat) : Int) = 0 by rfl]
+      rw [fpar_zero_zero]
+      rw [if_neg (by omega)]
+      exact hlast
+    · have hkpos : 0 < k := by omega
+      have hp := fpar_L_pos_ladderParent m k hkpos hkm
+      have hps :
+          fpar (incrFirst (L m) a) 0 (k : Int) 0 =
+            (ladderParent k : Nat) := by
+        rw [fpar_row0_incrFirst]
+        · exact hp
+        · omega
+        · omega
+        · simp [lenI]
+          omega
+      rw [hps]
+      rw [if_pos (by omega)]
+      have hpk : ladderParent k < k := ladderParent_lt k hkpos
+      apply ih (ladderParent k)
+      · exact hpk
+      · exact Nat.le_trans (Nat.le_of_lt hpk) hkm
+      · omega
+      · simp
+
+theorem fAnc_incrFirst_L_getLast (a : Int) (m : Nat) :
+    (fAnc (incrFirst (L m) a) 0 (m : Int) 0).getLast? = some 0 := by
+  unfold fAnc
+  rw [if_neg]
+  · rw [show (incrFirst (L m) a).length = m + 1 by
+      simp [incrFirst]]
+    exact fAncAux_incrFirst_L_getLast a m m (m + 2) [(m : Int)]
+      (Nat.le_refl m) (by omega) (by simp)
+  · simp [lenI, incrFirst]
+    omega
+
+theorem drop_two_L_add_two (m : Nat) :
+    (L (m + 2)).drop 2 = incrFirst (L m) 1 := by
+  rw [L_add_two]
+  simp [L]
+
+theorem slice_incrFirst_L_full (a : Int) (m : Nat) :
+    slice (incrFirst (L m) a) 0 ((m + 1 : Nat) : Int) =
+      incrFirst (L m) a := by
+  unfold slice
+  rw [show (0 : Int).toNat = 0 by rfl]
+  simp only [List.drop_zero]
+  rw [show (((m + 1 : Nat) : Int) - 0).toNat = m + 1 by omega]
+  rw [show m + 1 = (incrFirst (L m) a).length by simp [incrFirst]]
+  simp
+
+theorem ppair_incrFirst_L (a : Int) (m : Nat) :
+    ppair (incrFirst (L m) a) = [incrFirst (L m) a] := by
+  unfold ppair
+  rw [show (incrFirst (L m) a).length = m + 1 by simp [incrFirst]]
+  simp only [ppairAux]
+  rw [show lenI (incrFirst (L m) a) - 1 = (m : Int) by
+    simp [lenI, incrFirst]]
+  rw [if_neg (by omega)]
+  rw [fAnc_incrFirst_L_getLast]
+  simp only [Option.getD_some]
+  rw [show (0 : Int) - 1 = -1 by omega]
+  rw [if_pos (by omega)]
+  rw [show (m : Int) + 1 = ((m + 1 : Nat) : Int) by omega]
+  rw [slice_incrFirst_L_full]
+
+theorem brF_L_add_two (m : Nat) :
+    brF (L (m + 2)) = [incrFirst (L m) 1] := by
+  unfold brF
+  rw [trMax_L_add_two]
+  rw [show ((1 : Int) + 1).toNat = 2 by rfl]
+  rw [drop_two_L_add_two]
+  exact ppair_incrFirst_L 1 m
+
+theorem firstNodes_L_add_two (m : Nat) :
+    firstNodes (L (m + 2)) = [2, ((m + 3 : Nat) : Int)] := by
+  unfold firstNodes
+  rw [brF_L_add_two, trMax_L_add_two]
+  simp [idxSum, incrFirst]
+  omega
+
+theorem joints_L_add_two (m : Nat) : joints (L (m + 2)) = [0] := by
+  unfold joints
+  rw [firstNodes_L_add_two]
+  have hp := fpar_L_even (m + 2) 0 (by omega)
+  have hp' : fpar (L (m + 2)) 0 2 0 = 0 := by simpa using hp
+  change [fpar (L (m + 2)) 0 2 0] = [0]
+  rw [hp']
+
+theorem incrFirst_one_neg_one (M : PS) :
+    incrFirst (incrFirst M 1) (-1) = M := by
+  simp only [incrFirst, List.map_map]
+  induction M with
+  | nil => rfl
+  | cons c M ih =>
+    rw [List.map_cons, ih]
+    congr 1
+    cases c
+    simp
+    omega
+
+theorem gp0_incrFirst_L_zero (m : Nat) :
+    gp0 (incrFirst (L m) 1) 0 = 1 := by
+  rw [gp0_incrFirst_of_valid]
+  · have h := gp0_L m 0 (by omega)
+    simp at h
+    rw [h]
+    omega
+  · omega
+  · simp
+
+theorem gp1_incrFirst_L_zero (m : Nat) :
+    gp1 (incrFirst (L m) 1) 0 = 0 := by
+  simp [gp1, incrFirst, L]
+
+theorem isZeroP_incrFirst_L_succ (m : Nat) :
+    isZeroP (incrFirst (L (m + 1)) 1) = false := by
+  unfold isZeroP
+  simp [incrFirst]
+
+theorem isPrincipalP_incrFirst_L_succ (m : Nat) :
+    isPrincipalP (incrFirst (L (m + 1)) 1) = true := by
+  have ha := isAnc_incrFirst_L 1 (m + 1) (m + 1) (by omega)
+  have ha' :
+      isAnc (incrFirst (L (m + 1)) 1) 0
+        (lenI (incrFirst (L (m + 1)) 1) - 1) 0 = true := by
+    rw [show lenI (incrFirst (L (m + 1)) 1) - 1 =
+      ((m + 1 : Nat) : Int) by
+      simp [lenI, incrFirst]]
+    exact ha
+  unfold isPrincipalP
+  rw [isZeroP_incrFirst_L_succ, ha']
+  rfl
+
+theorem red_L_zero (f : Nat) : red f (L 0) = L 0 := by
+  cases f <;> rfl
+
+theorem red_succ_incrFirst_L (f m : Nat) :
+    red (f + 1) (incrFirst (L m) 1) = red f (L m) := by
+  cases m with
+  | zero =>
+    rw [show incrFirst (L 0) 1 = [(1, 0)] by rfl]
+    conv =>
+      lhs
+      rw [red]
+    rw [if_pos (by rfl)]
+    exact (red_L_zero f).symm
+  | succ m =>
+    conv =>
+      lhs
+      rw [red]
+    rw [isZeroP_incrFirst_L_succ]
+    rw [if_neg (by decide)]
+    rw [isPrincipalP_incrFirst_L_succ]
+    rw [if_pos (by decide)]
+    rw [gp0_incrFirst_L_zero, gp1_incrFirst_L_zero]
+    rw [if_neg (by decide)]
+    rw [if_pos (by decide)]
+    rw [show -(1 : Int) = -1 by rfl]
+    rw [incrFirst_one_neg_one]
+
+theorem isZeroP_L_add_two (m : Nat) : isZeroP (L (m + 2)) = false := by
+  unfold isZeroP
+  rw [length_L]
+  rw [show (m + 2 + 1 == 1) = false by simp]
+  rfl
+
+theorem isPrincipalP_L_add_two (m : Nat) :
+    isPrincipalP (L (m + 2)) = true := by
+  rw [show m + 2 = (m + 1) + 1 by omega]
+  exact isPrincipalP_L_succ (m + 1)
+
+theorem gp0_L_zero (m : Nat) : gp0 (L m) 0 = 0 := by
+  have h := gp0_L m 0 (by omega)
+  simpa using h
+
+theorem gp1_L_zero (m : Nat) : gp1 (L m) 0 = 0 := by
+  have h := gp1_L m 0 (by omega)
+  simpa using h
+
+theorem cons_derp_incrFirst_L (m : Nat) :
+    (1, 0) :: derp (incrFirst (L m) 1) = incrFirst (L m) 1 := by
+  unfold derp incrFirst L
+  rw [show m + 1 = 1 + m by omega, List.range_add]
+  simp [List.map_map]
+
+theorem red_add_two_L (f m : Nat) :
+    red (f + 2) (L (m + 2)) =
+      L 1 ++ incrFirst (red f (L m)) 1 := by
+  conv =>
+    lhs
+    rw [red]
+  rw [isZeroP_L_add_two]
+  rw [if_neg (by decide)]
+  rw [isPrincipalP_L_add_two]
+  rw [if_pos (by decide)]
+  rw [gp0_L_zero, gp1_L_zero]
+  rw [if_pos (by decide)]
+  rw [show lenI (L (m + 2)) - 1 = ((m + 2 : Nat) : Int) by
+    simp [lenI]]
+  rw [trMax_L_add_two]
+  rw [if_neg (by simp; omega)]
+  rw [brF_L_add_two, firstNodes_L_add_two, joints_L_add_two]
+  simp only [List.length_cons, List.length_nil]
+  rw [show List.range 1 = [0] by rfl]
+  simp only [List.foldl_cons, List.foldl_nil]
+  dsimp only [List.getD]
+  have hbr : (([incrFirst (L m) 1] : List PS)[0]?.getD []) =
+      incrFirst (L m) 1 := by rfl
+  simp only [hbr]
+  rw [gp1_incrFirst_L_zero]
+  rw [if_pos (by rfl)]
+  rw [show (([0] : List Int)[0]?.getD 0) = 0 by rfl]
+  change jjSeq 0 1 ++
+      incrFirst (red (f + 1)
+        ((1, 0) :: derp (incrFirst (L m) 1))) 1 =
+    L 1 ++ incrFirst (red f (L m)) 1
+  rw [cons_derp_incrFirst_L, red_succ_incrFirst_L]
+  rfl
+
+theorem red_L_one (f : Nat) : red f (L 1) = L 1 := by
+  cases f <;> rfl
+
+theorem red_two_mul_L (f m : Nat) : red (2 * f) (L m) = L m := by
+  induction f generalizing m with
+  | zero => rfl
+  | succ f ih =>
+    cases m with
+    | zero => exact red_L_zero (2 * (f + 1))
+    | succ m =>
+      cases m with
+      | zero => exact red_L_one (2 * (f + 1))
+      | succ m =>
+        rw [show 2 * (f + 1) = 2 * f + 2 by omega]
+        rw [show m + 1 + 1 = m + 2 by omega]
+        rw [red_add_two_L, ih]
+        exact (L_add_two m).symm
+
+theorem redP_L (m : Nat) : redP (L m) = L m := by
+  unfold redP
+  rw [show redFuel (L m) =
+      2 * (20 + 2 * ((L m).length + maxE (L m))) by
+    unfold redFuel
+    omega]
+  exact red_two_mul_L _ m
+
+end Ladder2
+
 end Evidence.Cert

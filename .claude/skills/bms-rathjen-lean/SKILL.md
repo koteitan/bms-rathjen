@@ -551,6 +551,35 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   the other lane's in-flight file either builds or names itself in the error.
   Tell the lane if it happens anyway: a file changing under an agent with no
   message is otherwise attributed to itself.
+- **FREEZE A WORKER'S FILE BEFORE MEASURING IT, AND CHECK THE HASH ON BOTH SIDES.**
+  The rule above is about git-tracked lane files; this one is about a codex
+  worker's scratch workdir, where there is no staging step to freeze anything.
+  Measured a worker's `ladder.lean`, got exit 0, reported it — and the same path
+  was exit 2 minutes later, because the worker never stopped writing. Nothing had
+  expired: the SUBJECT moved while the verdict stayed attached to the path.
+
+  ```sh
+  cp "$WORKDIR/f.lean" "$SCRATCH/frozen.lean"
+  sha256sum "$SCRATCH/frozen.lean"          # before
+  leanman check -C "$PROJECT" --backend lean "$SCRATCH/frozen.lean"; echo "exit=$?"
+  sha256sum "$SCRATCH/frozen.lean"          # after — must match
+  diff -q "$WORKDIR/f.lean" "$SCRATCH/frozen.lean"   # did the source move too?
+  ```
+
+  Report the verdict against the FROZEN copy, never the live path. If the source
+  moved during the check, say so — the measurement is still valid, but it is
+  valid about a file the worker has already replaced.
+
+  Distinguish this from the constitution's *a check's result has a lifetime*:
+  there, a later action of MINE expired a still-true verdict. Here the verdict was
+  never about a stable object. Same symptom, different cause, different fix —
+  freeze the object rather than shorten the window.
+
+- **Do not poll on every idle notification.** Workers emit idle pings mid-task and
+  keep writing; answering each one costs a turn and measures a moving file. Arm a
+  background wait on the actual condition instead — the theorem's name appearing,
+  or the file's hash holding still for a minute — and let it notify.
+
 - **Read the SNAPSHOT, not the working file.** `git add` freezes the bytes; the
   lane keeps writing. Any math check done by `grep`/`sed` on the path afterwards
   is a check of the lane's CURRENT file, not of what is staged. Once, a commit
