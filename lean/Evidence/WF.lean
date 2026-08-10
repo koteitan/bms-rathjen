@@ -12998,7 +12998,83 @@ already exceeds `b` — and the only failure is the boundary where the lift land
 WHAT IS NOT ESTABLISHED, STATED SO THE MEASUREMENT IS NOT OVERREAD: that ONE shift always
 suffices.  `0 failures at depth 4` is a measurement, not a theorem, and a row outside the corpus
 could need two.  The honest form for the branch is the hypothesis `∃ k, lt b (φ̄(a, g k))` — true
-at `k = 1` on everything measured, claiming nothing about `k = 1` in general. -/
+at `k = 1` on everything measured, claiming nothing about `k = 1` in general.
+
+### THE UNIFORM HALF IS FALSE ON `CNV` — A COUNTEREXAMPLE, AND A WRONG REASON CORRECTED
+
+The natural decomposition is `hside = le b (φ̄(a, g 0)) ∧ b ≠ φ̄(a, g 0)`: a UNIFORM half measured
+at 0 violations of 1019, and a branch condition failing exactly at the two witnesses.  **The
+uniform half does not hold on `CNV`, and the 0-of-1019 was corpus-bounded.**
+
+    a = 0,  b = ε₀,  g = ε₀'s own sequence from `eps0_shift`, so g 0 = ω
+        le ε₀ (φ̄(0, ω)) = FALSE          because ω^ω < ε₀
+        le ε₀ (φ̄(1, ω)) = true           the failure is specific to a = 0
+
+and the site is not exotic: `inT (φ̄(0,ε₀)) = true`, `CNV (φ̄(0,ε₀)) = true`.
+
+**THE FIRST EXPLANATION OF THIS WAS WRONG AND IS RECORDED BECAUSE THE ERROR IS THE FILE'S OWN
+RECURRING ONE.**  This lane wrote that `φ̄(0,ε₀)` "is `ω^ε₀ = ε₀`, hence not a normal form".  It is
+not.  **`φ̄` enumerates the additively principal numbers SKIPPING the fixed points of `ω^·`**, so
+
+    lt ε₀ (φ̄(0,ε₀))   = true      φ̄(0,ε₀) is ω^(ε₀+1), STRICTLY GREATER than ε₀
+    lt (φ̄(0,ε₀)) ε₀   = false
+
+That is the fixed-point skip READ BACKWARDS — the same fact `TM/Terms.lean`'s header exists for,
+and the FIFTH defect it has caused.  Below a fixed point the skipping and non-skipping readings
+coincide, so a reader calibrated only there cannot feel the difference.  **Ask it of every new
+function that reaches ε₀.**
+
+**THE STRUCTURAL POINT, IN ITS CORRECTED FORM.**  `phiNF` is not a normaliser rewriting a term to
+an equal one: `phiNF` is [R91] 2.6(vi)'s φ, which RE-COUNTS fixed points, while `φ̄` is the raw
+constructor that SKIPS them, so **`phiNF a b` and `φ̄(a,b)` denote DIFFERENT ORDINALS** —
+`phiNF 0 ε₀ = φ̄(1,0) = ε₀` against `φ̄(0,ε₀) = ω^(ε₀+1)`.  Hence the accurate statement is NOT
+"`CNV` admits terms that reduce" but:
+
+    `CNV` admits `φ̄(a,b)` AT PAIRS WHERE THE RAW AND NORMALISED FUNCTIONS DISAGREE.
+
+**THE HYPOTHESIS, NAMED NOT NARROWED.**  The assembly stays quantified over `CNV` as §15.19
+describes; core (C) carries `phiNF a b = φ̄(a,b)` as an explicit hypothesis.  It is DECIDABLE, so a
+row discharges it by `decide` and a consumer pays nothing — and unlike a domain restriction it is
+visible at the use site.
+
+    sites violating `phiNF a b = φ̄(a,b)`, depth 4        0 of 1019
+    POSITIVE CONTROL — the predicate CAN be false        `φ̄(0,ε₀)`, `φ̄(1,ζ₀)`: both FALSE
+    pairs where it HOLDS and the uniform half fails      0 of 32
+    pairs where it FAILS and the uniform half fails      4 of 4   (ε₀, ε_ω, ζ₀ at a=0; ζ₀ at a=1)
+
+The second sample is 36 `(a,b)` pairs whose `b` comes from sequences THIS FILE HAS PROVED, so `g`
+is the one `Certified.lim` supplies rather than one chosen to suit.  **The hypothesis is therefore
+NOT REFUTED as sufficient — it is not shown sufficient**, and the distinction is the point: it
+excludes every counterexample found in two independent experiments, which is grounds to STATE the
+theorem with it, not grounds to assume the proof goes through.
+
+    normal pairs, `hside` fails at k = 0           2      ("0",ω) and ("0",ω^ω)
+    normal pairs, `hside` fails after ONE SHIFT    0
+    NON-NORMAL pairs, `hside` fails                4
+    NON-NORMAL pairs, total                        4      ← non-normal ⟺ fails
+
+**THE REPRODUCTION IS INDEPENDENT, AND THAT IS A CONTROL THAT COULD HAVE FAILED.**  The two
+failing normal pairs are the SAME TWO WITNESSES the 1019-site corpus produced — but this sample
+reaches them by a different route: different `b`s, sequences taken from proved `lim_clauses_*`
+lemmas rather than from the closure, and first arguments enumerated rather than encountered.  Two
+constructions with nothing shared but the theory landing on the identical pair is evidence; had
+the second produced a third witness, or missed one of the two, the characterisation would have
+been wrong.  It did neither.
+
+**AND `("1", ζ₀)` IS THE LOAD-BEARING NEGATIVE.**  It closes the question of whether the split is
+really about the first argument: non-normality bites at `a = 1` too, so **the branch splits on
+NORMALITY and not on `a = 0`** — `a = 0` was where the counterexample happened to live, not what
+distinguishes the cases.  Both this lane and the coordinator were drawn to `a = 0` first.
+
+**ε_ω AND ζ₀ ARE OUTSIDE THE CORPUS, WHICH UPGRADES THE `k = 1` EVIDENCE — AND THE `∃ k` STAYS.**
+Neither is a site, and one shift still repairs every normal failure among them.  That is better
+evidence for `k = 1` than the closure alone gave; it is not a reason to WRITE `k = 1`, and the
+reason sits next to the `∃ k` above precisely so this paragraph cannot be read as licence to
+simplify it.
+
+AND NO `a ≠ 0` SHORTCUT.  The counterexample is `a = 0`-only, which invites the thought that
+`a ≠ 0` needs no hypothesis.  **It does not follow**: `lt b (φ̄(a,0))` still fails on 107 of the
+291 `a ≠ 0` sites, so the second argument is load-bearing throughout.  Two different facts. -/
 
 /-- The four `Certified.lim` clauses, as one predicate. -/
 def LimClauses (t : Term) (fs : Nat → Term) : Prop :=

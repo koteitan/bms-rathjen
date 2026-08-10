@@ -178,6 +178,18 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **THE FAILURE NO CONTROL CATCHES: AN EXPLANATION ATTACHED TO A CORRECT
+  MEASUREMENT.** Both of one lane's substantive errors in a session were of this
+  kind — the numbers were right and the sentence wrapped round them was wrong
+  (`CarrierV` as "the fact that makes the assembly possible now"; `φ̄(0,ε₀)` as
+  "is ε₀, not a normal form"). **A control tests whether the instrument can
+  fire, not whether the story about the result is true**, so measurement
+  discipline and axiom hygiene both leave this flank open. What caught both was
+  **someone restating the claim back in a form its author could check** — which
+  is an argument for relaying claims verbatim and for the coordinator
+  re-deriving a lane's reason rather than only its number. Corollary for the
+  coordinator: your own version of this is amplifying a scoped observation into
+  a justification (below), and it has the same detector.
 - **A WORD THAT IS TRUE OF THE ORDINALS CAN BE FALSE OF THE MATRICES — this is
   the correspondence the repo exists to establish, so never assume it.**
   `expand (epsM 1) k` has `oR` equal to `ω^(ε₀·2)`, `ω^(ω^(ε₀·2))`, … — a tower,
