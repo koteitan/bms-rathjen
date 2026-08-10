@@ -6076,4 +6076,149 @@ theorem deg_summands_splitFin (t g : Term)
     (hg : g ∈ summands t.splitFin.1) : g.deg ≤ t.deg :=
   Nat.le_trans (deg_mem_summands _ g hg) (deg_splitFin_fst t)
 
+/-! ### §25.5 THE GENERAL STATEMENT OVER `CNV` ALONE IS FALSE — refuted, not unproved
+
+`sqvDecomp_eps0_fsV'` is §25.3's ε₀ case restated against the FUEL-FREE `fsV'`, so the
+form a proof can induct over is usable.
+
+Then the general statement was attacked and **turned out to be false**:
+
+    ¬ (∀ t, CNV t → kindV t = false → t ≠ 0 → ∀ n,
+         expand (sqv' t) n = sqv' (fsV' t n))
+
+`no_sqvDecomp_general` proves it with an explicit witness at `n = 0`:
+
+    cexT = φ̄(1, ζ₀) = ε_{ζ₀+1}      CNV cexT = true      NfOK cexT = FALSE
+    expand (sqv' cexT) 0 = (0,0)(1,1)(2,1)
+    sqv' (fsV' cexT 0)   = (0,0)(1,1)(2,0)(3,1)
+
+**That witness is one of the two rows `table/nfok-reach-2026-08-10.txt` had already
+measured as outside the assembly's reach** — the fixed-point-skip shape, where `phiNF`
+and `φ̄` disagree.  So the corpus measurement "11 of the 13 target rows are `NfOK`,
+2 are not" now has a theorem on the other side: **without `NfOK`, the general
+decomposition is not merely unproved, it is refuted, and the refuting term is one of
+those 2.**
+
+**CONSEQUENCE: the statement to prove carries `NfOK t = true`.** The two skip rows keep
+the separate route `rowA` already demonstrates, whose first brick is `Cert` §22's
+`expand_blockRow`.  That hypothesis was going to be added on the strength of a corpus
+measurement; it is now added on the strength of a counterexample.
+-/
+
+theorem sqvDecomp_eps0_fsV' (n : Nat) :
+    BMS.expand (Evidence.SqV.sqv' Evidence.WF.eps0T) n
+      = Evidence.SqV.sqv' (Evidence.SqV.fsV' Evidence.WF.eps0T n) := by
+  rw [Evidence.SqV.sqv'_eps0]
+  unfold Evidence.SqV.fsV'
+  rw [dif_pos (by decide)]
+  unfold Evidence.SqV.fsVC
+  change BMS.expand [[0, 0], [1, 1]] n =
+    Evidence.SqV.sqv' (Evidence.WF.fsGen TM.Term.one TM.Term.zero TM.Term.one n)
+  rw [Evidence.SqV.fsGen_zero_one_eq_tower, Evidence.SqV.sqv'_tower]
+  exact Evidence.Cert.expand_eps0_row n
+
+namespace Counterexample
+
+def cexB : TM.Term := phi (add one one) zero
+def cexT : TM.Term := phi one cexB
+
+theorem encv_b :
+    encv' cexB 0 = [((0, 0) : Col2), (1, 1), (2, 1)] := by
+  unfold cexB encv'
+  rw [dif_pos (show Evidence.WF.CNV (phi (add one one) zero) = true from rfl)]
+  have hgs : summands (TM.Term.splitFin zero).1 = [] := rfl
+  have hat : (summands (TM.Term.splitFin zero).1).attach = [] :=
+    List.eq_nil_of_length_eq_zero (by rw [List.length_attach, hgs]; rfl)
+  have hm2 : (TM.Term.splitFin zero).2 = 0 := rfl
+  have hfp : TM.Term.isFP (add one one)
+      ((summands (TM.Term.splitFin zero).1).headD zero) = false := rfl
+  have hfd : ∀ pf, fpDeepC (add one one)
+      ((summands (TM.Term.splitFin zero).1).headD zero) pf = none :=
+    fun pf => fpDeepC_none pf (by rw [hgs]; rfl)
+  rw [encvC]
+  dsimp only
+  rw [hfp]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hfd, hat, hm2]
+  simp only [encvC_eq_encv', show ((add one one) == zero) = false from rfl,
+    Bool.false_eq_true, if_false]
+  rw [show predOr (add one one) = one from rfl,
+    show encv' one 2 = [((2, 0) : Col2)] from encv'_one 2]
+  split
+  · rfl
+  · exact absurd hgs (by simp_all)
+
+theorem encv_t :
+    encv' cexT 0 = [((0, 0) : Col2), (1, 1), (2, 1), (1, 1)] := by
+  unfold cexT encv'
+  rw [dif_pos (show Evidence.WF.CNV (phi one cexB) = true from rfl)]
+  have hgs : summands (TM.Term.splitFin cexB).1 = [cexB] := rfl
+  have hhd : (summands (TM.Term.splitFin cexB).1).headD zero = cexB := by rw [hgs]; rfl
+  have hm2 : (TM.Term.splitFin cexB).2 = 0 := rfl
+  rw [encvC]
+  dsimp only
+  rw [show TM.Term.isFP one
+      ((summands (TM.Term.splitFin cexB).1).headD zero) = true from by rw [hhd]; rfl]
+  simp only [if_true]
+  rw [hm2, encvC_eq_encv', hhd, encv_b,
+    show ((summands (TM.Term.splitFin cexB).1).length == 1) = true from by rw [hgs]; rfl,
+    Evidence.SqV.encvC_predOr_one]
+  simp only [if_true, List.replicate_zero, List.flatten_nil, List.append_nil]
+  rfl
+
+theorem fs_b (h : Evidence.WF.CNV cexB = true) :
+    fsVC ⟨cexB, h⟩ false 0 = Evidence.WF.eps0T := by
+  unfold cexB
+  rw [fsVC]
+  dsimp only
+  rfl
+
+theorem fs_t : fsV' cexT 0 = Evidence.WF.epsEps0 := by
+  unfold cexT fsV'
+  rw [dif_pos (show Evidence.WF.CNV (phi one cexB) = true from rfl)]
+  have hgs : summands (TM.Term.splitFin cexB).1 = [cexB] := rfl
+  have hhd : (summands (TM.Term.splitFin cexB).1).headD zero = cexB := by rw [hgs]; rfl
+  rw [fsVC]
+  dsimp only
+  rw [show TM.Term.isFP one
+      ((summands (TM.Term.splitFin cexB).1).headD zero) = true from by rw [hhd]; rfl]
+  simp only [Bool.false_eq_true, if_false, if_true]
+  rw [show ((summands (TM.Term.splitFin cexB).1).length == 1) = true from by rw [hgs]; rfl]
+  simp only [if_true]
+  rw [fs_b]
+  rfl
+
+theorem sqv_t :
+    sqv' cexT = [[0, 0], [1, 1], [2, 1], [1, 1]] := by
+  unfold sqv' toMatrix
+  rw [encv_t]
+  rfl
+
+theorem lhs_t :
+    BMS.expand (sqv' cexT) 0 = [[0, 0], [1, 1], [2, 1]] := by
+  rw [sqv_t]
+  rfl
+
+theorem rhs_t :
+    sqv' (fsV' cexT 0) = [[0, 0], [1, 1], [2, 0], [3, 1]] := by
+  rw [fs_t, Evidence.SqV.sqv'_epsEps0]
+
+theorem refutes_general_at_zero :
+    BMS.expand (sqv' cexT) 0 ≠ sqv' (fsV' cexT 0) := by
+  rw [lhs_t, rhs_t]
+  decide
+
+theorem cnv_t : Evidence.WF.CNV cexT = true := rfl
+theorem limit_t : Evidence.WF.kindV cexT = false := rfl
+theorem nonzero_t : cexT ≠ zero := by decide
+
+theorem no_sqvDecomp_general :
+    ¬ (∀ {x : TM.Term}, Evidence.WF.CNV x = true →
+      Evidence.WF.kindV x = false → x ≠ zero → ∀ n : Nat,
+      BMS.expand (sqv' x) n = sqv' (fsV' x n)) := by
+  intro h
+  exact refutes_general_at_zero (h cnv_t limit_t nonzero_t 0)
+
+end Counterexample
+
 end Evidence.SqV
