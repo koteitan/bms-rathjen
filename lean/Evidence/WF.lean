@@ -13006,6 +13006,12 @@ The natural decomposition is `hside = le b (φ̄(a, g 0)) ∧ b ≠ φ̄(a, g 0)
 at 0 violations of 1019, and a branch condition failing exactly at the two witnesses.  **The
 uniform half does not hold on `CNV`, and the 0-of-1019 was corpus-bounded.**
 
+**RETRACTED IN FULL BY §15.31 — THE DECOMPOSITION ABOVE IS NOT MERELY UNPROVED, IT IS WRONG.**
+It fails for a second and worse reason than the counterexample below: `LimClauses b g` does not
+pin `g 0` at all, so `le b (φ̄(a, g 0))` is false for legitimate sequences with no normality
+defect anywhere.  The `k = 0` form is unsalvageable and the target is the `∃ k` form.  Read
+§15.31 before using anything in this subsection.
+
     a = 0,  b = ε₀,  g = ε₀'s own sequence from `eps0_shift`, so g 0 = ω
         le ε₀ (φ̄(0, ω)) = FALSE          because ω^ω < ε₀
         le ε₀ (φ̄(1, ω)) = true           the failure is specific to a = 0
@@ -13071,6 +13077,12 @@ Neither is a site, and one shift still repairs every normal failure among them. 
 evidence for `k = 1` than the closure alone gave; it is not a reason to WRITE `k = 1`, and the
 reason sits next to the `∃ k` above precisely so this paragraph cannot be read as licence to
 simplify it.
+
+**AND §15.31 GIVES THE REASON THAT WAS MISSING HERE: "one shift repairs every failure" IS A
+PROPERTY OF THE CANONICAL SEQUENCES, NOT OF `LimClauses`.**  With an arbitrary legitimate `g` no
+fixed `k` works at all, because `g` may be delayed arbitrarily.  So this measurement is about the
+sequences this project BUILDS, not about the object the theorem quantifies over — the third time
+in this section that a number turned out to be about our construction rather than about 𝔗(M).
 
 AND NO `a ≠ 0` SHORTCUT.  The counterexample is `a = 0`-only, which invites the thought that
 `a ≠ 0` needs no hypothesis.  **It does not follow**: `lt b (φ̄(a,0))` still fails on 107 of the
@@ -13216,5 +13228,119 @@ theorem asm_spike2
     exact ⟨fun n => add u (g n),
       lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
       fun n => by intro hc; exact Term.noConfusion hc⟩
+
+/-! ### §15.31 `LimClauses` DOES NOT PIN `g 0` — so the `∃ k` is FORCED, not a repair
+
+§15.29 proposed `hside = le b (φ̄(a, g 0)) ∧ b ≠ φ̄(a, g 0)` and measured the uniform half at 0
+violations of 1019.  **That decomposition is retracted.  It is false, and for a reason no corpus
+could have reached: every sequence in every corpus we have is CANONICAL, and the counterexample
+is a sequence nobody would build.**
+
+THE COUNTEREXAMPLE — a legitimate sequence that starts low.  Take `b = ω^ω` and
+
+    g n  =  φ̄(0, n)        i.e.   1, ω, ω², ω³, …
+
+    increasing        measured true, n = 0..5      (clause 3)
+    below `b`         measured true, n = 0..5      (clause 2)
+    cofinal in ω^ω    yes, ω^k → ω^ω               (clause 4)
+    `CNV (g n)`       yes                          (clause 1)
+
+so `g` satisfies all four clauses, and
+
+    le ω^ω (φ̄(0, g 0))  =  le ω^ω (φ̄(0,1))  =  le ω^ω ω  =  **FALSE**
+    le ω^ω (φ̄(0, g k))  for k = 0..5         =  [false, true, true, true, true, true]
+
+**Compare the corpus witness at the same `b`.**  There the canonical `g 0` is `ω` and
+`φ̄(0,ω) = b` — failure by EQUALITY, at the fixed-point boundary.  Here `φ̄(0,1) = ω` is STRICTLY
+below `b`: same `a`, same `b`, normality holding, failing by a margin rather than by a hair.
+
+**`LimClauses b g` CONSTRAINS `g` GLOBALLY AND NOWHERE POINTWISE.**  Increasing, below `b`,
+cofinal — nothing whatever about where the sequence STARTS.  So no statement of the form
+`… (g 0) …` is provable from it, and no fixed `k` works either, because `g` may be delayed
+arbitrarily.  **`∃ k` is not a repair for two boundary witnesses; it is the only form the
+hypotheses can support.**
+
+WHAT WAS NOT DONE, AND IS THE POINT.  The tempting fix is to add `d ≤ g 0`, or "`g` is the
+canonical sequence", to the hypotheses.  **A hypothesis added to make one's own statement true is
+not a hypothesis — it is a definition of the cases where the answer was already known**, and it is
+the narrowing objection wearing a hypothesis's clothes.  The statement was wrong; the fix is a
+different statement.
+
+THE CORRECTED TARGET:
+
+    ∀ a b g,  CNV … →  phiNF a b = φ̄(a,b) →  LimClauses b g →  ∃ k, lt b (φ̄(a, g k))
+
+`lt` not `le`; `∃ k` not `k = 0`.  Checked against the two normal witnesses: the `k = 0` instance
+is FALSE at both, and the statement is true at `k = 1`.  False where it must be false.
+
+AND COFINALITY — CLAUSE 4, THE ONE THE FIRST ATTEMPT NEVER USED — DOES THE WORK `g 0` CANNOT.
+Two of the three `φ̄`-branches close below, and the `add` branch with them:
+
+    a < c    excluded by normality                       §15.30, proved
+    c = a    `hside_cEqA`                                proved below
+    b = add  `hside_add`                                 proved below
+    c < a    descent in the second argument              OPEN — 112 of 1019 sites, route unknown
+
+THE BRANCH MAP, measured on §15.29's 1019 core (C) sites, **with a positive control on EVERY
+bucket and not only on the one reporting 0** — a bucket reporting 112 can be reporting 112 of the
+wrong thing just as easily as a bucket reporting 0 can be dead:
+
+    b = add u v      377        control: `add ω ω`      at a = 0   → isAdd
+    c = a            530        control: `φ̄(1,0)`       at a = 1   → cEqA
+    c < a            112        control: `φ̄(0,0)`       at a = 1   → cLtA
+    a < c              0        control: `φ̄(1,0)`       at a = 0   → aLtC
+
+**AND THE ZERO IS THE SAME FACT AS §15.30, NOT A SECOND CONFIRMATION OF IT.**  `not_lt_fst_of_phiNF`
+proves normality forbids `a < c`; every one of the 1019 sites is normal; so the bucket is empty
+BECAUSE of the theorem, not independently of it.  Worth naming as a habit, because the opposite
+reading is the tempting one: **when a proof and a corpus agree, ask whether they are independent
+evidence or the same fact seen twice.**  Counting them as two confirmations inflates the evidence;
+saying they are one fact from both ends is the stronger and truer claim.  This section has three
+instances — this one, `le b (g 0)`, and the two witnesses reproduced by an independent
+construction (that third one IS independent, which is why it counts differently).
+
+**`c < a` IS REACHED, AND THAT IS THE HONEST NEGATIVE.**  112 sites is not a `core (C')`-shaped
+zero and cannot be deferred as "no instance in the corpus".  §15.29 distinguishes two kinds of
+zero — unreached-but-proved-elsewhere (C'), and no-instance-anywhere (the fifth shape); this is
+the third kind, **reached and unproved**, which is the only one that is simply work.
+
+**`∃ k` IS FORCED IN BOTH BRANCHES PROVED BELOW, NOT JUST AVAILABLE.**  Each takes a `k` produced
+by clause 4 at a point that depends on the sequence, so neither admits `k = 0` for general `g`.
+That answers the question of whether the assembly's core (C) hypothesis is `∃ k` throughout: for
+these two it is, and the shift wiring can consume it uniformly.  `c < a` is not yet known. -/
+
+/-- **CORE (C)'s `c = a` BRANCH.**  `b = φ̄(a,d)`, and the needed `k` comes from COFINALITY:
+    `d < b` and `d` is `inT`, so clause 4 gives `n` with `d ≤ g n`, and clause 3 gives
+    `d < g (n+1)`.  Nothing here is available at `k = 0`. -/
+theorem hside_cEqA {a d : Term} (hcnd : CNV d = true)
+    (g : Nat → Term) (hg : LimClauses (phi a d) g) :
+    ∃ k, lt (phi a d) (phi a (g k)) = true := by
+  obtain ⟨hg1, _, hg3, hg4⟩ := hg
+  have hdb : lt d (phi a d) = true := lt_phi_self hcnd a
+  obtain ⟨n, hn⟩ := hg4 d (inT_of_cnv d hcnd) hdb
+  refine ⟨n + 1, ?_⟩
+  have hlt : lt d (g (n + 1)) = true :=
+    lt_of_le_of_lt (frag_of_cnv d hcnd) (frag_of_cnv _ (hg1 n))
+      (frag_of_cnv _ (hg1 (n + 1))) hn (hg3 n)
+  have hne : phi a d ≠ phi a (g (n + 1)) := by
+    intro hc; injection hc with _ h2; exact ne_of_ltF hlt h2
+  rw [lt_phi_phi hne, if_pos rfl]
+  exact hlt
+
+/-- **THE `b = add u v` BRANCH.**  `lt_add_phi` reduces it to the head, and the head is below the
+    sum by `lt_head_add` (§15.28's F3), so clause 4 applies to `u` exactly as it did to `d`. -/
+theorem hside_add {a u v : Term} (hcn : CNV (add u v) = true)
+    (g : Nat → Term) (hg : LimClauses (add u v) g) :
+    ∃ k, lt (add u v) (phi a (g k)) = true := by
+  obtain ⟨hg1, _, hg3, hg4⟩ := hg
+  obtain ⟨hAPu, hcnu, _, _⟩ := cnv_add hcn
+  have hub : lt u (add u v) = true := lt_head_add hAPu v
+  obtain ⟨n, hn⟩ := hg4 u (inT_of_cnv u hcnu) hub
+  refine ⟨n + 1, ?_⟩
+  have hlt : lt u (g (n + 1)) = true :=
+    lt_of_le_of_lt (frag_of_cnv u hcnu) (frag_of_cnv _ (hg1 n))
+      (frag_of_cnv _ (hg1 (n + 1))) hn (hg3 n)
+  rw [lt_add_phi]
+  exact lt_phi_of_le hcnu (hg1 (n + 1)) (le_of_lt hlt)
 
 end Evidence.WF

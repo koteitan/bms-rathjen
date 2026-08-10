@@ -178,6 +178,16 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **AN UNUSED HYPOTHESIS IS A TELL THAT THE STATEMENT IS WRONG.** A proof that
+  resists may be reporting a defect in its own statement rather than a hard
+  piece of mathematics. The signal that distinguishes them: **you cannot find a
+  use for one of the hypotheses you were given.** `hside` was attacked for a
+  long stretch in the `le b (φ̄(a, g 0))` form, which is false; cofinality —
+  clause 4 of `LimClauses` — was the clause that could not be used. Restated as
+  `∃ k, lt b (φ̄(a, g k))`, two branches fell out of clause 4 in a dozen lines
+  each. **Before grinding, list the hypotheses and point at where each one is
+  consumed.** Any that has no consumer is either superfluous or the one the
+  statement should have been built around.
 - **THE FAILURE NO CONTROL CATCHES: AN EXPLANATION ATTACHED TO A CORRECT
   MEASUREMENT.** Both of one lane's substantive errors in a session were of this
   kind — the numbers were right and the sentence wrapped round them was wrong
