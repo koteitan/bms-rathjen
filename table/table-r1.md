@@ -94,7 +94,7 @@ $`\mathrm{Certified}`$ は帰納的述語で、**行の $`\mathrm{kind}`$ によ
 \frac{}{\mathrm{Certified}\;[\,]\;0}
 ```
 
-### E.succ — $`\mathrm{kind}\,M = \mathrm{succ}`$ の行
+### E.succ
 
 ```math
 \frac{\mathrm{kind}\,M = \mathrm{succ}
@@ -104,7 +104,7 @@ $`\mathrm{Certified}`$ は帰納的述語で、**行の $`\mathrm{kind}`$ によ
 
 すべての展開が同じ $`t`$ を認証するなら、この行は $`t+1`$。
 
-### E.lim — $`\mathrm{kind}\,M = \mathrm{lim}`$ の行
+### E.lim
 
 ```math
 \frac{\mathrm{kind}\,M = \mathrm{lim}
@@ -121,7 +121,7 @@ $`\forall n.\;\mathrm{Certified}\;(M[n])\;(f_n)`$ の 1 つだけ**で、残る 
 ([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた。
 $`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
 
-## E.cofinal — 展開と基本列の相互共終
+## E.cofinal (展開と基本列の相互共終)
 
 BMS の展開列と $`\mathfrak{T}(M)`$ の基本列は、**同じ順序数への異なる共終列**に
 なり得る (例: $`\varepsilon_1`$ へ BMS は
@@ -199,7 +199,7 @@ P.T は**真だが、このリポジトリの手法では証明できない**。
 
 # 定義
 
-## D.TM — $`\mathfrak{T}(M)`$
+## D.TM ($`\mathfrak{T}(M)`$)
 
 $`M`$ は最小の弱 Mahlo 基数。$`\mathfrak{T}(M)`$ は**次の規則で閉じた最小の項集合**
 (Rathjen 1991 §2.1):
