@@ -1,0 +1,54 @@
+THE RUNG FAMILY'S SEQUENCE IS NOT `fsC` — measured 2026-08-10
+=============================================================
+
+Measured before dispatching any proof work at `cert_epsN`, and it refutes the
+obvious statement of it.
+
+THE OBVIOUS STATEMENT, AND WHY IT IS WRONG
+------------------------------------------
+`Evidence/SqV.lean` §23 leaves `cert_epsOmega` carrying one hypothesis:
+
+    cert_epsN (n) : Certified (Evidence.Cert.epsM n) (Evidence.WF.fsEW n)
+
+Read naively, its `Certified.lim` identity premise would be discharged by showing
+the BMS expansions of `epsM n` denote the T(M) fundamental sequence `fsC` of the
+row's term.  MEASURED, `Trans.oR (BMS.expand (epsM (k+1)) n) == some (fsC (fsEW (k+1)) n)`:
+
+    k = 0 :  [true, false, false]
+    k = 1 :  [true, false, false]
+    k = 2 :  [true, false, false]
+
+**Only n = 0 agrees.**  Concretely at k = 0:
+
+    fsC (ε_1) n              = ε₀,  ε₀+ε₀,  ε₀+ε₀+ε₀, …          (ε₀·(n+1))
+    oR (expand (epsM 1) n)   = ε₀,  ω^(ε₀·2),  …                  a TOWER over ε₀·2
+
+This is exactly what `Evidence/Cert.lean` §20 records in prose and what the ε_n
+ladder finding in `Evidence/SqV.lean` §23 measured from the other side: *the ε_ω
+row's expansions are the ladder's own rungs, but each RUNG's expansions leave the
+ladder for a tower family one level down.*  Here it is, as numbers, on the object
+`cert_epsN` is about.
+
+WHAT THIS DOES AND DOES NOT RULE OUT
+------------------------------------
+It does NOT rule out `cert_epsN`.  `Certified.lim` takes the sequence `fs'` as a
+PARAMETER — the identity premise is `∀ n, Certified (expand M n) (fs' n)`, and the
+order clauses only require `fs'` to be increasing, below the row, and cofinal.
+**Any cofinal increasing sequence is admissible**, so the certificate may use the
+tower family rather than `fsC`.
+
+It DOES rule out the proof anyone would try first, and it would have been found
+only after building the wrong identity — which is why it was measured first.
+
+CONSEQUENCE FOR THE NEXT PIECE OF WORK
+--------------------------------------
+`Cert` §21 supplies the expansion half for all `k` and all `n`:
+
+    expand_epsM_succ (k n) : expand? (epsM (k+1)) n = some (rungM k n)
+    rungM k n = epsM k ++ ((List.range n).map (rungBlock k)).flatten
+    rungBlock k j = [j+1, 0] :: List.replicate (k+1) [j+2, 1]
+
+so the open question is the ORDINAL side: what closed form does `oR (rungM k n)`
+take, and is that family increasing, below `fsEW (k+1)`, and cofinal in it.
+**Measure the closed form before stating it.**  The `fsC` reading above is the
+first candidate anyone would write down and it is false.
