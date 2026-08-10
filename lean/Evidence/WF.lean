@@ -13076,6 +13076,68 @@ AND NO `a ≠ 0` SHORTCUT.  The counterexample is `a = 0`-only, which invites th
 `a ≠ 0` needs no hypothesis.  **It does not follow**: `lt b (φ̄(a,0))` still fails on 107 of the
 291 `a ≠ 0` sites, so the second argument is load-bearing throughout.  Two different facts. -/
 
+/-! ### §15.30 NORMALITY, EXTRACTED — the first piece of core (C)'s `hside`
+
+§15.29 settles that core (C) carries `phiNF a b = φ̄(a,b)` as a hypothesis.  This section proves
+what that hypothesis CONTAINS, and the answer is exactly one inequality — which is why the
+hypothesis is the right one rather than merely an available one.
+
+WHERE IT BITES, and the case analysis is `lt_phi_phi` (§8) instantiated, not a new fact.  With
+`b = φ̄(c,d)` and target `le b (φ̄(a, g 0))`:
+
+    lt (φ̄(c,d)) (φ̄(a, g 0))  =  if c = a      then  lt d (g 0)
+                                else if c < a  then  lt d (φ̄(a, g 0))
+                                else                 le (φ̄(c,d)) (g 0)
+
+**THE THIRD BRANCH IS `le b (g 0)`, AND IT IS FALSE FOR EVERY FUNDAMENTAL SEQUENCE** — clause 2
+gives `g 0 < b`.  So the whole of core (C)'s difficulty is concentrated in one branch, the branch
+is unconditionally impossible, and it is entered exactly when `a < c`.
+
+`not_lt_fst_of_phiNF` below proves that normality forbids `a < c`.  So the hypothesis does not
+merely exclude the ε₀ counterexample of §15.29 — **it excludes the only branch of the comparison
+that could fail**, which is a much better reason to carry it than "no counterexample survives".
+The measured `le b (g 0)` = 0 sites of §15.29 is this fact seen from the corpus.
+
+WHAT REMAINS, NAMED: the other two branches, which are genuine obligations and not yet proved.
+
+    c = a   `lt d (g 0)`             `b = φ̄(a,d)`, and `g 0` must already clear `d`
+    c < a   `lt d (φ̄(a, g 0))`       a descent in the second argument
+
+Neither is impossible-looking and neither is done.  The `b = add u v` case is separate and reduces
+to the head by `lt_add_phi`. -/
+
+/-- A term is never `φ̄` of itself in the second argument: the degree grows. -/
+theorem ne_phi_snd (a t : Term) : t ≠ phi a t := by
+  intro h
+  have hd : (phi a t).deg = 1 + a.deg + t.deg := rfl
+  rw [← h] at hd
+  have := deg_pos a
+  omega
+
+/-- **NORMALITY EXTRACTED.**  If `φ̄(a, φ̄(c,d))` is a normal form then `a` does NOT lie strictly
+    below `c` — `phiNF` sends `φ̄(a, φ̄(c,d))` to `φ̄(c,d)` exactly when `a < c`, and a term is never
+    `φ̄` of itself.  This is the one inequality the hypothesis of §15.29 carries, and by the case
+    analysis above it is precisely the one that rules out core (C)'s impossible branch. -/
+theorem not_lt_fst_of_phiNF {a c d : Term}
+    (h : phiNF a (phi c d) = phi a (phi c d)) : lt a c = false := by
+  by_cases hlt : lt a c = true
+  · exfalso
+    have hb : phiNF a (phi c d) = phi c d := by
+      show (if (phi c d).isSC && lt a (phi c d) then phi c d
+            else match (phi c d : Term) with
+                 | phi c' _ => if lt a c' then phi c d else phiNFsucc a (phi c d)
+                 | _ => phiNFsucc a (phi c d)) = phi c d
+      by_cases hsc : ((phi c d : Term).isSC && lt a (phi c d)) = true
+      · rw [if_pos hsc]
+      · rw [if_neg hsc]
+        show (if lt a c then phi c d else phiNFsucc a (phi c d)) = phi c d
+        rw [if_pos hlt]
+    rw [hb] at h
+    exact ne_phi_snd a (phi c d) h
+  · cases hh : lt a c with
+    | true => exact absurd hh hlt
+    | false => rfl
+
 /-- The four `Certified.lim` clauses, as one predicate. -/
 def LimClauses (t : Term) (fs : Nat → Term) : Prop :=
   (∀ n, CNV (fs n) = true) ∧ (∀ n, lt (fs n) t = true)
