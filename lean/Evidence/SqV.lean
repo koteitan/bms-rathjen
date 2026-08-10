@@ -5334,4 +5334,161 @@ theorem sqv_decomp_epsEps0 : SqvDecomp Evidence.WF.epsEps0 Evidence.WF.fsEE := b
 #guard (List.range 6).all (fun n =>
   BMS.expand (sqv' Evidence.WF.epsEps0) n == sqv' (Evidence.WF.fsEE n))
 
+/-! ## §25 THE GENERAL CERTIFICATE — what the route measurement says, and the one
+    theorem that decides the architecture
+
+The goal is `∀ t, CNV t → Certified (sqv' t) t`: one theorem instead of one per row.
+Measured payoff at the time of writing: 13 unregistered table rows have `sqv' t = m`.
+
+**MEASUREMENT 1 — `kind` agrees everywhere.**  One of `Certified.lim`'s five premises,
+settled: `BMS.kind (sqv' t)` matches `Evidence.WF.kindV t` on all 169 terms of
+`agreeCorpus`, 0 failures.
+
+**MEASUREMENT 2 — `NfOK t` ⟺ `t` CONTAINS NO SKIP NODE**, exactly, on both corpora
+(169 and 215, 0 disagreements).  A "skip node" is a `φ̄(a,b)` at which `phiNF` and the
+raw constructor disagree — `φ̄` enumerates the additive principals SKIPPING the fixed
+points of `ω^·`, so `φ̄(0,ε₀) = ω^(ε₀+1) ≠ ε₀ = phiNF 0 ε₀`.  34 of 169 are such terms,
+and **`Evidence.WF.rowA` is one of them** — an already-registered ✅ whose certificate
+does not go through the assembly.  So `NfOK` is *not* necessary for certification; it
+is core (C)'s side condition.  Of the 13 target rows, **11 are `NfOK` and 2 are not**
+(`ω^(ζ₀+1)`, `ε_{ζ₀+1}`), and those two are `rowA`'s shape.
+See `table/nfok-reach-2026-08-10.txt`.
+
+**AND THE ARCHITECTURAL FINDING, WHICH IS A THEOREM AND NOT A MEASUREMENT.**
+`Evidence.WF.asm_generalB'` exports `∃ fs, LimClauses t fs`.  That existential
+**cannot** discharge `SqvDecomp`'s identity premise, because `LimClauses` is closed
+under a tail shift (`lim_clauses_shift_k`) while `SqvDecomp` is index-sensitive:
+
+    LimClauses ε_ω (fun n => fsEW (n+1))        holds
+    SqvDecomp  ε_ω (fun n => fsEW (n+1))        FAILS at n = 0
+
+`limClauses_not_enough` below proves both halves.  Of the 95 `NfOK` limits in the
+corpus, only 10 have a sequence the assembly interface determines; 85 are opaque to
+it.  **So the general certificate needs a sequence FUNCTION that tracks expansion —
+`fsV : Term → Nat → Term` with `expand (sqv' t) n = sqv' (fsV t n)` — and then a proof
+that it satisfies `LimClauses`.  The existential interface is the wrong direction**,
+and the five proved rows already work the right way round: each names its own `fs`
+and proves the decomposition against that name.
+-/
+
+def kindAgrees (t : Term) : Bool :=
+  if t == zero then BMS.kind (sqv' t) == BMS.Kind.zero
+  else if Evidence.WF.kindV t then BMS.kind (sqv' t) == BMS.Kind.succ
+  else BMS.kind (sqv' t) == BMS.Kind.lim
+
+def kindFailures : List Term := agreeCorpus.filter (fun t => !(kindAgrees t))
+
+def nfFailures : List Term := agreeCorpus.filter (fun t => !(Evidence.WF.NfOK t))
+
+/-- A term contains a Veblen node whose argument is already a fixed-point shape
+    for that node's index, so the raw constructor invokes the skip convention. -/
+def hasSkip : Term → Bool
+  | .zero | .M => false
+  | .add u v => hasSkip u || hasSkip v
+  | .omg a => hasSkip a
+  | .phi a b => TM.Term.isFP a b || hasSkip a || hasSkip b
+  | .psi k a => hasSkip k || hasSkip a
+  | .Z a => hasSkip a
+
+/-- Whether `asm_generalB'` reaches a branch whose returned sequence is hidden
+    behind a propositional existential: `Hsucc`, or core (C)'s shifted tail. -/
+def asmSequenceOpaque : Term → Bool
+  | .phi p q =>
+      if q == zero then
+        if Evidence.WF.kindV p then false else asmSequenceOpaque p
+      else true
+  | .add _ v => asmSequenceOpaque v
+  | _ => false
+
+/-- The part of `asm_generalB'`'s witness that is computationally determined by
+    its proof.  Opaque branches return `none`; no replacement sequence is guessed. -/
+def asmSequence? : Term → Nat → Option Term
+  | .phi p q, n =>
+      if q == zero then
+        if Evidence.WF.kindV p then
+          some (Evidence.WF.fsGen
+            (phi (Evidence.WF.predC p) zero)
+            (Evidence.WF.predC p)
+            (phi (Evidence.WF.predC p) zero) n)
+        else (asmSequence? p n).map (fun x => phi x zero)
+      else none
+  | .add u v, n => (asmSequence? v n).map (fun x => add u x)
+  | _, _ => none
+
+def nfOKCorpus : List Term :=
+  agreeCorpus.filter (fun t => Evidence.WF.NfOK t)
+
+def nfOKLimitCorpus : List Term := nfOKCorpus.filter (fun t =>
+  !(t == zero) && !(Evidence.WF.kindV t))
+
+def opaqueAsmCorpus : List Term :=
+  nfOKLimitCorpus.filter asmSequenceOpaque
+
+def determinedAsmCorpus : List Term :=
+  nfOKLimitCorpus.filter (fun t => !(asmSequenceOpaque t))
+
+def determinedDecompFailures : List Term := determinedAsmCorpus.filter (fun t =>
+  !((List.range 4).all (fun n => match asmSequence? t n with
+    | some s => BMS.expand (sqv' t) n == sqv' s
+    | none => false)))
+
+-- Measurement corpus: `agreeCorpus`, 169 distinct CNV terms.
+#guard agreeCorpus.length == 169
+#guard kindFailures.length == 0
+#guard nfFailures.length == 34
+#guard nfFailures.head? == some Evidence.WF.rowA
+
+
+-- First five corpus failures, rendered by the term system's own printer.
+#guard (nfFailures.take 5).map (fun t => t.toStr) ==
+  ["phi(0,phi(phi(0,0),0))",
+   "phi(0,phi(phi(0,0),phi(0,0)))",
+   "phi(0,phi(phi(0,0)+phi(0,0),0))",
+   "phi(phi(0,0),phi(phi(0,0)+phi(0,0),0))",
+   "phi(0,phi(0,phi(phi(0,0),0)))"]
+#eval (nfFailures.take 5).map (fun t => t.toStr)
+
+-- Exact measured separator on both existing CNV corpora:
+-- `NfOK t` holds exactly when `t` contains no skip node.
+#guard (agreeCorpus.filter (fun t =>
+  !(Evidence.WF.NfOK t == !(hasSkip t)))).length == 0
+#guard cnvAll.length == 215
+#guard (cnvAll.filter (fun t => !(Evidence.WF.NfOK t))).length == 34
+#guard (cnvAll.filter (fun t =>
+  !(Evidence.WF.NfOK t == !(hasSkip t)))).length == 0
+
+-- Route measurement for the requested general decomposition.
+#guard nfOKCorpus.length == 135
+#guard nfOKLimitCorpus.length == 95
+#guard opaqueAsmCorpus.length == 85
+#guard determinedAsmCorpus.length == 10
+#guard determinedDecompFailures.length == 0
+#eval (opaqueAsmCorpus.take 5).map (fun t => t.toStr)
+
+-- `LimClauses` is closed under a tail shift (`lim_clauses_shift_k`), but
+-- decomposition is index-sensitive.  Thus the existential assembly interface
+-- does not determine the sequence needed by `SqvDecomp`.
+#guard !(BMS.expand (sqv' Evidence.WF.epsOmega) 0 ==
+  sqv' (Evidence.WF.fsEW (0 + 1)))
+
+/-- The assembly's exported `LimClauses` predicate does not determine the
+    index-sensitive sequence required by `SqvDecomp`: even a one-step tail of
+    a valid sequence is still valid, but no longer matches expansion at zero. -/
+theorem limClauses_not_enough :
+    Evidence.WF.LimClauses Evidence.WF.epsOmega
+      (fun n => Evidence.WF.fsEW (n + 1)) ∧
+    ¬ SqvDecomp Evidence.WF.epsOmega
+      (fun n => Evidence.WF.fsEW (n + 1)) := by
+  constructor
+  · exact Evidence.WF.lim_clauses_shift_k (by decide)
+      Evidence.WF.lim_clauses_epsOmega 1
+  · intro h
+    have h0 := h 0
+    change BMS.expand (sqv' (phi one omega)) 0 =
+      sqv' (Evidence.WF.fsEW 1) at h0
+    rw [sqv_decomp_epsOmega 0, sqv'_fsEW, sqv'_fsEW] at h0
+    exact (by decide : Evidence.Cert.epsM 0 ≠ Evidence.Cert.epsM 1) h0
+
+#print axioms limClauses_not_enough
+
 end Evidence.SqV
