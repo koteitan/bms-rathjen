@@ -871,6 +871,45 @@ def transPortRhs (M : PS) : Dict.BT :=
 theorem transPort_eq_runAux (M : PS) :
     transPort M = transPortRhs M := rfl
 
+/-! ### The fuel on an append
+
+`transPort M` runs `runAux` with fuel `transFuel M`, and `transFuel` is a FUNCTION OF THE LIST.
+So for any statement about `transPort (p ++ q)` the fuel on the two sides differs, and an append
+lemma that ignores this is false before it is even attempted.  These two put the exact number on
+the table.  Measured consequence: the fuel grows only in the lengths and the largest entry, so
+appending a fixed block adds a fixed amount.
+
+**They do NOT give an append lemma for `runAux` itself, and no such lemma exists** — see
+`Evidence/Cert.lean` §21.3 for the structural reason, which is not about effort. -/
+
+private def pairMax (c : Int × Int) : Nat :=
+  Nat.max c.1.toNat c.2.toNat
+
+private theorem foldl_pairMax (M : PS) (a : Nat) :
+    M.foldl (fun b c => Nat.max b (pairMax c)) a = Nat.max a (maxE M) := by
+  induction M generalizing a with
+  | nil => simp [maxE]
+  | cons c M ih =>
+    rw [List.foldl_cons, ih]
+    rw [show maxE (c :: M) = Nat.max (pairMax c) (maxE M) by
+      change
+        List.foldl (fun b d => Nat.max b (pairMax d))
+            (Nat.max 0 (pairMax c)) M =
+          Nat.max (pairMax c) (maxE M)
+      simpa using ih (pairMax c)]
+    simp only [Nat.max_assoc]
+
+theorem maxE_append (p q : PS) :
+    maxE (p ++ q) = Nat.max (maxE p) (maxE q) := by
+  unfold maxE
+  rw [List.foldl_append]
+  exact foldl_pairMax q (maxE p)
+
+theorem transFuel_append (p q : PS) :
+    transFuel (p ++ q) =
+      40 + 6 * (p.length + q.length + Nat.max (maxE p) (maxE q)) := by
+  simp [transFuel, maxE_append, Nat.add_assoc]
+
 end Recal
 
 /-! ### `oR` distributes over `++` (through the parser layer)

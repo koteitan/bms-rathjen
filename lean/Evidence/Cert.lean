@@ -9562,12 +9562,22 @@ them.  The equational layers they need now exist (`Trans.Recal.transPort_eq_runA
 anything to rewrite with — but neither link is a tactic away, and it is worth writing down why so
 the next attempt does not rediscover it.
 
-**LINK 2 — the fuel is a function of the list.**  `transPort M = (runAux (transFuel M) M none).run' []`,
-`runAux` consumes from the FRONT, and `rungPS (n+1)` appends at the BACK.  So the induction
-hypothesis concerns a prefix, and by the time the run reaches the appended tail it is no longer in
-the initial state.  `transFuel p` and `transFuel (p ++ q)` are also different numbers, so any
-append lemma that ignores the fuel is false.  What is actually needed: `runAux` on `p ++ q` with an
-ARBITRARY incoming state, plus fuel monotonicity above the threshold.
+**LINK 2 IS CLOSED, AND NOT FOR WANT OF EFFORT: `runAux` DOES NOT DECOMPOSE OVER `++`.**
+The obvious plan was an append lemma for `runAux` carrying an arbitrary incoming state, plus fuel
+monotonicity.  The fuel half is now proved (`Trans.Recal.transFuel_append` /`maxE_append`:
+`transFuel (p ++ q) = 40 + 6*(|p| + |q| + max (maxE p) (maxE q))`).  The append half cannot be
+written, for two structural reasons:
+
+  - every structural test in `runAux` — `fpar`, `adm`, `predP` — is made on the WHOLE list, so a
+    run on `p ++ q` never contains a run on `p`;
+  - the recursion threads a MEMO TABLE, so each call's result depends on what the preceding calls
+    put there.  "Arbitrary incoming state" is therefore not a parameter one can quantify over
+    innocently — the state is the memo table, and it is exactly what carries the dependence.
+
+An "append" statement CAN be written and proved by `rfl`, but only by keeping `let M := p ++ q`
+inside the right-hand side; it names the body rather than decomposing it, and is worth nothing to
+the induction.  That was measured, not assumed.  So link 2 is not a harder version of link 1 — the
+lemma the route needs does not exist, and a fourth attempt should not be commissioned.
 
 **LINK 3 — `collapse` is a normaliser, not a constructor.**  `Trans.Dict.collapse` runs `wcnf`,
 folds, and then `omegaNF`, so `dict (rungBT n)` and `fsEsucc 0 n` are NOT definitionally equal at
