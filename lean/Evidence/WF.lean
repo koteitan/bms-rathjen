@@ -13343,4 +13343,89 @@ theorem hside_add {a u v : Term} (hcn : CNV (add u v) = true)
   rw [lt_add_phi]
   exact lt_phi_of_le hcnu (hg1 (n + 1)) (le_of_lt hlt)
 
+/-! ### §15.32 CORE (C)'s `hside`, COMPLETE — and `c < a` wants `∃ k` too
+
+The last branch, and with it the whole of core (C)'s side condition.  **`hside_general` below is
+the generic case §15.29 set out to prove**, in the `∃ k` form §15.31 showed is forced.
+
+`c < a` MEASURED FIRST, AND THE MEASUREMENT WAS MISLEADING IN THE NOW-FAMILIAR WAY:
+
+    `c < a` sites                                     112 of 1019
+    `lt d (φ̄(a, g 0))` FAILS at k = 0                   0
+    POSITIVE CONTROL (perturbed predicate)            112 failures — the test can fire
+
+0 of 112 at `k = 0` invites writing the branch without an `∃ k`.  **It is canonical sequences
+again.**  Take `a = 1`, `b = φ̄(0, ζ₀)`, so `c = 0` and `d = ζ₀`, with the legitimate `g 0 = 0`:
+
+    row `φ̄(1, φ̄(0,ζ₀))` is NORMAL          `phiNF 1 (φ̄(0,ζ₀)) = φ̄(1, φ̄(0,ζ₀))`   measured true
+    `b` is a `CNV` limit                    `CNV b` true, `kindV b` false
+    `0` is a legitimate `g 0`               `CNV 0` true, `lt 0 b` true
+    `lt ζ₀ (φ̄(1, 0))` = `lt ζ₀ ε₀`        **FALSE**
+    `lt ζ₀ (φ̄(1, ζ₀))`                     true — a large enough index recovers it
+
+**Normality holds and does not save it**, exactly as in §15.31.  So `c < a` needs `∃ k` as well:
+**the branch hypothesis is UNIFORM across all three reachable branches**, and the shift wiring
+consumes one form.  That was the question worth answering before either was written.
+
+**FOURTH INSTANCE.**  This section now has four corpus-measured zeros that were about the
+sequences this project BUILDS rather than about `LimClauses`: `hside` at `k = 0`, the normality
+sample, the `k = 1` shift, and now `c < a`.  The habit that catches them is not a better corpus —
+it is asking what the HYPOTHESES say, and then constructing against them.
+
+WHAT `hside_general` NEEDS, AND WHERE:
+  * normality **only in the `φ̄` case** — its hypothesis is `∀ c d, b = φ̄(c,d) → phiNF a b = φ̄(a,b)`,
+    so the `add` branch pays nothing, which is §15.29's "keep the cost where the falsity is" made
+    literal in the statement.
+  * `b = 0` is impossible under `LimClauses` (clause 2 would give `lt (g 0) 0`), so it is
+    discharged rather than assumed away.
+  * the `c` versus `a` trichotomy comes from `le_of_not_lt`; normality supplies `lt a c = false`
+    and the case split does the rest. -/
+
+/-- **CORE (C)'s `c < a` BRANCH.**  Same cofinality route as `hside_cEqA`, one step longer:
+    clause 4 puts `d` below some `g (n+1)`, and `lt_phi_of_le` lifts that to `φ̄(a, g (n+1))`. -/
+theorem hside_cLtA {a c d : Term} (hcnd : CNV d = true) (hca : lt c a = true)
+    (g : Nat → Term) (hg : LimClauses (phi c d) g) :
+    ∃ k, lt (phi c d) (phi a (g k)) = true := by
+  obtain ⟨hg1, _, hg3, hg4⟩ := hg
+  have hdb : lt d (phi c d) = true := lt_phi_self hcnd c
+  obtain ⟨n, hn⟩ := hg4 d (inT_of_cnv d hcnd) hdb
+  refine ⟨n + 1, ?_⟩
+  have hlt : lt d (g (n + 1)) = true :=
+    lt_of_le_of_lt (frag_of_cnv d hcnd) (frag_of_cnv _ (hg1 n))
+      (frag_of_cnv _ (hg1 (n + 1))) hn (hg3 n)
+  have hca' : c ≠ a := ne_of_ltF hca
+  have hne : phi c d ≠ phi a (g (n + 1)) := by
+    intro hcc; injection hcc with h1 _; exact hca' h1
+  rw [lt_phi_phi hne, if_neg hca', if_pos hca]
+  exact lt_phi_of_le hcnd (hg1 (n + 1)) (le_of_lt hlt)
+
+/-- **CORE (C)'s SIDE CONDITION, GENERALLY.**  For every `CNV` `b` with a `LimClauses` sequence
+    `g`, and normality of `φ̄(a,b)` where `b` is itself a `φ̄`, some index of the sequence lifts
+    past `b`.  `∃ k` and not `k = 0`: §15.31 and §15.32 both show no fixed index can work. -/
+theorem hside_general {a b : Term} (hcna : CNV a = true) (hcnb : CNV b = true)
+    (hnf : ∀ c d, b = phi c d → phiNF a b = phi a b)
+    (g : Nat → Term) (hg : LimClauses b g) :
+    ∃ k, lt b (phi a (g k)) = true := by
+  cases b with
+  | M => exact Bool.noConfusion hcnb
+  | omg _ => exact Bool.noConfusion hcnb
+  | psi _ _ => exact Bool.noConfusion hcnb
+  | Z _ => exact Bool.noConfusion hcnb
+  | zero =>
+    exact absurd (hg.2.1 0) (by rw [show lt (g 0) zero = false from ltF_right_zero _ _]
+                                exact Bool.noConfusion)
+  | add u v => exact hside_add hcnb g hg
+  | phi c d =>
+    obtain ⟨hcnc, hcnd⟩ := cnv_phi hcnb
+    have hac : lt a c = false := not_lt_fst_of_phiNF (hnf c d rfl)
+    by_cases hca : c = a
+    · subst hca; exact hside_cEqA hcnd g hg
+    · have hle : le c a = true := le_of_not_lt (frag_of_cnv a hcna) (frag_of_cnv c hcnc) hac
+      have hlt : lt c a = true := by
+        simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hle
+        rcases hle with rfl | h
+        · exact absurd rfl hca
+        · exact h
+      exact hside_cLtA hcnd hlt g hg
+
 end Evidence.WF
