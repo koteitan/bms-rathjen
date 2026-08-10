@@ -13581,4 +13581,91 @@ theorem asm_general
       lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
       fun n => by intro hc; exact Term.noConfusion hc⟩
 
+/-! ### §15.35 THE ASSEMBLY WITH CORE (C') DISCHARGED — three recursive branches, two assumed
+
+`asm_general` assumes `Hzero` for the whole of `φ̄(a,0)`.  **Half of that is not an assumption: it
+is the FIRST-ARGUMENT recursion, and the induction hypothesis for it was already in scope and
+being discarded.**  `asm_generalC` uses it.
+
+    branch                        `asm_general`     `asm_generalC`
+    sum          `add u v`        recursive         recursive
+    core (C)     `b` a limit      recursive         recursive
+    core (C')    `φ̄(a,0)`, `a` a limit   ASSUMED     **recursive** — via `lim_clauses_phi_arg1`
+    core (B)     `φ̄(a,0)`, `a` a succ    ASSUMED     assumed  (`Hsucc0`)
+    successor    `b` a successor         ASSUMED     assumed  (`Hsucc`)
+
+**Three of five branches are now discharged by the recursion itself**, and `asm_generalC` assumes
+strictly less than `asm_general` — the earlier form is kept because a consumer holding both
+`φ̄(a,0)` cases together may prefer the single `Hzero`.
+
+WHY (C') WAS AVAILABLE ALL ALONG: `a` is a structural subterm of `φ̄(a,0)`, so `induction t` gives
+its clauses for free; `lim_clauses_phi_arg1` (§15.18) turns them into the row's.  **The hypothesis
+was assumed because the branch list was written before the induction, and never revisited.**  A
+reminder that an assumed branch is worth re-reading once the recursion exists — the cost of the
+assumption is invisible at the point where it was made.
+
+WHAT IS STILL ASSUMED, AND WHY EACH:
+  * `Hsucc0` — core (B), `φ̄(a,0)` with `a` a successor.  §15.21's `lim_clauses_phi_zero_succ`
+    proves it AT `a = succT p`; wiring it in needs `a = succT (pred a)` for a `kindV` successor,
+    which §15.20 supplies only for `kindC`.  **Bounded, and not done.**
+  * `Hsucc` — `b` a successor.  §15.15's template covers the `CN` instances; **the FIFTH SHAPE
+    lives here** and is deliberately not discharged.
+  * `Hnf` — normality.  A genuine side condition, decidable, discharged by a row with `decide`. -/
+
+theorem asm_generalC
+    (Hsucc0 : ∀ (a : Term), CNV (phi a zero) = true → kindV a = true →
+        ∃ fs : Nat → Term, LimClauses (phi a zero) fs ∧ ∀ n, fs n ≠ zero)
+    (Hsucc : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = true →
+        ∃ fs : Nat → Term, LimClauses (phi a b) fs ∧ ∀ n, fs n ≠ zero)
+    (Hnf : ∀ (a b : Term), CNV (phi a b) = true → b ≠ zero → kindV b = false →
+        ∀ c d, b = phi c d → phiNF a b = phi a b) :
+    ∀ (t : Term), CNV t = true → kindV t = false → t ≠ zero →
+      ∃ fs : Nat → Term, LimClauses t fs ∧ ∀ n, fs n ≠ zero := by
+  intro t
+  induction t with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _ _ hz; exact absurd rfl hz
+  | phi p q ihp ihq =>
+    intro h hk _
+    obtain ⟨hcnp, hcnq⟩ := cnv_phi h
+    by_cases hq : q = zero
+    · subst hq
+      by_cases hkp : kindV p = true
+      · exact Hsucc0 p h hkp
+      · have hkp' : kindV p = false := by
+          cases hh : kindV p with
+          | true => exact absurd hh hkp
+          | false => rfl
+        have hpz : p ≠ zero := by
+          intro hc
+          rw [hc] at hk
+          exact Bool.noConfusion hk
+        obtain ⟨g, hg, _⟩ := ihp hcnp hkp' hpz
+        exact ⟨fun n => phi (g n) zero,
+          lim_clauses_phi_arg1 g hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hcnp,
+          fun n => by intro hc; exact Term.noConfusion hc⟩
+    · by_cases hkq : kindV q = true
+      · exact Hsucc p q h hq hkq
+      · have hkq' : kindV q = false := by
+          cases hh : kindV q with
+          | true => exact absurd hh hkq
+          | false => rfl
+        obtain ⟨g, hg, _⟩ := ihq hcnq hkq' hq
+        obtain ⟨g', hg'⟩ := lim_clauses_phi_arg_nf hcnp hcnq (Hnf p q h hq hkq') g hg
+        exact ⟨fun n => phi p (g' n), hg', fun n => by intro hc; exact Term.noConfusion hc⟩
+  | add u v _ ihv =>
+    intro h hk _
+    obtain ⟨hAPu, hcnu, hcnv, hdvu⟩ := cnv_add h
+    have hvz : v ≠ zero := by
+      intro hc
+      rw [hc, show hdLe (zero : Term) u = false from rfl] at hdvu
+      exact Bool.noConfusion hdvu
+    obtain ⟨g, hg, hgz⟩ := ihv hcnv hk hvz
+    exact ⟨fun n => add u (g n),
+      lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
+      fun n => by intro hc; exact Term.noConfusion hc⟩
+
 end Evidence.WF
