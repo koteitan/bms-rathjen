@@ -235,6 +235,17 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   index and the order absorbs the shrinkage.** That is the same answer the
   encoder side reached when its termination measures died and the route turned
   out to be the order.
+- **AN ASSUMED BRANCH IS WORTH RE-READING ONCE THE RECURSION EXISTS.** The cost
+  of an assumption is invisible at the point where it was made: the theorem
+  compiles, the hypothesis looks reasonable, and nothing flags it. `asm_general`
+  assumed core (C') because §15.19's branch list predated the recursion and was
+  never revisited once it existed — while `a` is a structural subterm of
+  `φ̄(a,0)`, so `induction t` had been handing the clauses over for free and the
+  IH was being **discarded with an underscore**. **Sibling of the rule below,
+  with the opposite conclusion: an unused HYPOTHESIS means the statement is
+  wrong; an unused INDUCTION hypothesis means it is weaker than it needs to be.**
+  Grep your own proofs for `_` in the induction-hypothesis position before
+  accepting a hypothesis list as final.
 - **AN UNUSED HYPOTHESIS IS A TELL THAT THE STATEMENT IS WRONG.** A proof that
   resists may be reporting a defect in its own statement rather than a hard
   piece of mathematics. The signal that distinguishes them: **you cannot find a
