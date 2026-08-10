@@ -45,9 +45,19 @@ checks are needed and **neither substitutes for the other**:
 A canary alone reports clean for a reason unrelated to the server being current — the same shape
 as every other inverted check in this repo's history.  Pair them.
 
-## EXPECTATION — what this printed on 2026-08-10, at HEAD 485c0b0
+## EXPECTATION — what this printed on 2026-08-10, at HEAD 93f6a30
 
-    scanned 2972 | sorryAx 0 | Classical.choice 236
+    scanned 2982 | sorryAx 0 | Classical.choice 237
+
+Superseding the first baseline, `scanned 2972 | sorryAx 0 | Classical.choice 236`
+at HEAD 485c0b0.  **The move is accounted for**, which is the only reason a baseline
+may be rewritten rather than investigated: `Evidence.Cert.expand_epsEps0` (commit
+93f6a30) is `[propext, Classical.choice, Quot.sound]`.  The `simp` closing its
+`hblk` brings it in; `rfl`, an explicit `show` of the reduced block, and a
+fully-listed `simp only` were each tried and each fails to close, so the `simp` is
+doing real work.  Taken knowingly: `Cert` already carried 236 including
+`certIn_rows_inT`, whose choice is genuine and instance-inherited from Lean core
+and cannot be removed at all.  The residue is one `have`, attackable in isolation.
 
 **A run that differs from this is a CHANGE, not a discovery.**  The baseline is here so no reader
 has to re-derive whether a number is good news.  Which way to read a difference:
