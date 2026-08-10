@@ -9013,4 +9013,257 @@ theorem expand_epsEps0 (n : Nat) :
 #guard (BMS.lnz [1, 0] == some 0) && (BMS.lnz [2, 0] == some 0) && (BMS.lnz [3, 0] == some 0)
 #guard BMS.lnz [3, 1] == some 1
 
+/-! ## §21 THE RUNG FAMILY — `expand?` FOR EVERY `epsM (k+1)`, NOT ONE ROW AT A TIME
+
+§20 records that the ε_ω row's expansions are the ladder's own rungs, but that **each RUNG's
+expansions leave the ladder** for a tower family one level down, and that is why
+`Certified (epsM n) (fsEW n)` does NOT reduce to `Certified (epsM (n-1)) …`.  `Evidence/SqV.lean`
+§23 names `cert_epsN` as the one obligation `cert_epsOmega` still carries, and the certificate
+lane's scout found the rungs' expansions are a **two-column-per-step family** that is neither
+`towerM` (one column per step) nor `famM` (alternating) — so no existing certificate family
+reaches it.
+
+**THIS SECTION SUPPLIES THE EXPANSION HALF OF THAT FAMILY, FOR ALL `k` AND ALL `n`.**  Measured
+first, as always:
+
+    expand (epsM 1) n : [[0,0],[1,1]] · +[1,0],[2,1] · +[2,0],[3,1] · …
+    expand (epsM 2) n : [[0,0],[1,1],[1,1]] · +[1,0],[2,1],[2,1] · …
+    expand (epsM 3) n : [[0,0],[1,1],[1,1],[1,1]] · +[1,0],[2,1],[2,1],[2,1] · …
+
+so block `j` is one row `[j+1,0]` then `k+1` copies of `[j+2,1]`.  The `#guard` below checks the
+family against `BMS.expand` at 20 points before anything is proved about it — a `rfl`-shaped
+computational identity is exactly where a wrong matrix builds green.
+
+**`t = lnz [1,1] = 1` HERE, NOT 0.**  §20.2's `t = 0 ⟺ constant block` is why the five
+single-row identities could use a constant-block template and this one cannot: `delta` is not
+identically zero, so the blocks grow, and `hblk` needs an induction rather than a `change` to a
+literal.
+
+Choice-free on purpose, like `expand_epsEps0`: `simp [BMS.ent, BMS.delta, BMS.ascends, …]` would
+close several of these steps and cost a `Classical.choice` each time.
+
+**WHAT THIS DOES NOT GIVE.**  It is the EXPANSION half only.  `cert_epsN` also needs the order
+clauses and `kind`, and then the certificates of the rungs' own expansions — which is the tower
+family one level down that §20 warns about.  This removes one obstruction from that section; it
+does not close it.
+-/
+
+def rungBlock (k j : Nat) : BMS.Matrix :=
+  [j + 1, 0] :: List.replicate (k + 1) [j + 2, 1]
+
+def rungM (k n : Nat) : BMS.Matrix :=
+  Evidence.Cert.epsM k ++ ((List.range n).map (rungBlock k)).flatten
+
+#guard (List.range 4).all (fun k => (List.range 5).all (fun n =>
+  BMS.expand (Evidence.Cert.epsM (k + 1)) n == rungM k n))
+
+private theorem flatten_replicate_singleton (k : Nat) (c : BMS.Col) :
+    (List.replicate k [c]).flatten = List.replicate k c := by
+  induction k with
+  | zero => rfl
+  | succ k ih =>
+      rw [List.replicate_succ, List.flatten_cons, ih]
+      rw [show k + 1 = Nat.succ k from by omega, List.replicate_succ]
+      rfl
+
+private theorem epsM_eq_replicate (k : Nat) :
+    Evidence.Cert.epsM k = [([0, 0] : BMS.Col)] ++ List.replicate (k + 1) [1, 1] := by
+  unfold Evidence.Cert.epsM
+  rw [flatten_replicate_singleton]
+  rfl
+
+private def epsRep (q : Nat) : BMS.Matrix :=
+  ([0, 0] : BMS.Col) :: List.replicate q [1, 1]
+
+private theorem epsM_eq_epsRep (k : Nat) :
+    Evidence.Cert.epsM k = epsRep (k + 1) := epsM_eq_replicate k
+
+private theorem length_epsRep (q : Nat) : (epsRep q).length = q + 1 := by
+  unfold epsRep
+  rw [List.length_cons, List.length_replicate]
+
+private theorem ent_epsRep_succ (q i y : Nat) (hi : i < q) :
+    BMS.ent (epsRep q) (i + 1) y = ([1, 1] : BMS.Col).getD y 0 := by
+  have hget : (List.replicate q ([1, 1] : BMS.Col)).getD i [] = [1, 1] := by
+    rw [List.getD_eq_getElem?_getD, List.getElem?_replicate_of_lt hi]
+    rfl
+  unfold epsRep BMS.ent
+  rw [List.getD_cons_succ, hget]
+
+private theorem filter_epsRep_lt_one (q i : Nat) (hi : i < q) :
+    (List.range (i + 1)).filter
+      (fun p => decide (BMS.ent (epsRep q) p 0 < 1)) = [0] := by
+  induction i with
+  | zero => rfl
+  | succ i ih =>
+      rw [List.range_succ, List.filter_append, ih (by omega)]
+      rw [List.filter_cons]
+      rw [show BMS.ent (epsRep q) (i + 1) 0 = 1 from
+        ent_epsRep_succ q i 0 (by omega)]
+      rfl
+
+private theorem parent_epsRep_zero (q i : Nat) (hi : i < q) :
+    BMS.parent (epsRep q) 0 (i + 1) = some 0 := by
+  show ((List.range (i + 1)).filter (fun p =>
+    decide (BMS.ent (epsRep q) p 0 < BMS.ent (epsRep q) (i + 1) 0))).max? = some 0
+  rw [show BMS.ent (epsRep q) (i + 1) 0 = 1 from ent_epsRep_succ q i 0 hi,
+    filter_epsRep_lt_one q i hi]
+  rfl
+
+private theorem parent_epsRep_one (k : Nat) :
+    BMS.parent (epsRep (k + 2)) 1 (k + 2) = some 0 := by
+  have hp : BMS.parent (epsRep (k + 2)) 0 (k + 2) = some 0 := by
+    rw [show k + 2 = (k + 1) + 1 from by omega]
+    exact parent_epsRep_zero (k + 2) (k + 1) (by omega)
+  have hp0 : BMS.parent (epsRep (k + 2)) 0 0 = none := rfl
+  show ((BMS.iterParent (BMS.parent (epsRep (k + 2)) 0) (k + 2) (k + 2)).filter
+    (fun p => decide (BMS.ent (epsRep (k + 2)) p 1 <
+      BMS.ent (epsRep (k + 2)) (k + 2) 1))).max? = some 0
+  rw [show BMS.iterParent (BMS.parent (epsRep (k + 2)) 0) (k + 2) (k + 2) =
+      0 :: BMS.iterParent (BMS.parent (epsRep (k + 2)) 0) (k + 1) 0 from
+        Evidence.Cert.iterParent_cons hp,
+    Evidence.Cert.iterParent_nil hp0,
+    List.filter_cons,
+    show BMS.ent (epsRep (k + 2)) 0 1 = 0 from rfl,
+    show BMS.ent (epsRep (k + 2)) (k + 2) 1 = 1 from by
+      rw [show k + 2 = (k + 1) + 1 from by omega]
+      exact ent_epsRep_succ (k + 2) (k + 1) 1 (by omega)]
+  rfl
+
+private theorem getLast_epsRep (q : Nat) :
+    (epsRep (q + 1)).getLast? = some [1, 1] := by
+  unfold epsRep
+  rw [List.replicate_succ']
+  change (([0, 0] :: List.replicate q [1, 1]) ++ [[1, 1]]).getLast? = some [1, 1]
+  exact List.getLast?_concat
+
+private theorem delta_epsRep_zero (k : Nat) :
+    BMS.delta (epsRep (k + 2)) 0 1 0 = 1 := by
+  show (if 0 < 1 then
+      BMS.ent (epsRep (k + 2)) ((epsRep (k + 2)).length - 1) 0 -
+        BMS.ent (epsRep (k + 2)) 0 0 else 0) = 1
+  rw [if_pos (by omega),
+    show (epsRep (k + 2)).length - 1 = k + 2 from by rw [length_epsRep]; omega,
+    show k + 2 = (k + 1) + 1 from by omega,
+    ent_epsRep_succ (k + 2) (k + 1) 0 (by omega)]
+  rfl
+
+private theorem ascends_epsRep_zero (q j : Nat) (hj : j < q) :
+    BMS.ascends (epsRep q) 0 j 0 = true := by
+  cases j with
+  | zero => rfl
+  | succ i =>
+      have hp : BMS.parent (epsRep q) 0 (i + 1) = some 0 :=
+        parent_epsRep_zero q i (by omega)
+      show ((i + 1 == 0) ||
+        (BMS.iterParent (BMS.parent (epsRep q) 0) (i + 1) (i + 1)).contains 0) = true
+      rw [show BMS.iterParent (BMS.parent (epsRep q) 0) (i + 1) (i + 1) =
+        0 :: BMS.iterParent (BMS.parent (epsRep q) 0) i 0 from
+          Evidence.Cert.iterParent_cons hp]
+      rfl
+
+private def rawRungBlock (k a : Nat) : BMS.Matrix :=
+  (List.range (k + 2)).map (fun x =>
+    (List.range 2).map (fun y =>
+      BMS.ent (epsRep (k + 2)) (0 + x) y +
+        a * BMS.delta (epsRep (k + 2)) 0 1 y *
+          (if BMS.ascends (epsRep (k + 2)) 0 (0 + x) y then 1 else 0)))
+
+private theorem rawRungBlock_eq (k a : Nat) :
+    rawRungBlock k a =
+      ([a, 0] : BMS.Col) :: List.replicate (k + 1) [a + 1, 1] := by
+  have hrow0 : (List.range 2).map (fun y =>
+      BMS.ent (epsRep (k + 2)) (0 + 0) y +
+        a * BMS.delta (epsRep (k + 2)) 0 1 y *
+          (if BMS.ascends (epsRep (k + 2)) 0 (0 + 0) y then 1 else 0)) =
+      ([a, 0] : BMS.Col) := by
+    change [
+      BMS.ent (epsRep (k + 2)) 0 0 +
+        a * BMS.delta (epsRep (k + 2)) 0 1 0 *
+          (if BMS.ascends (epsRep (k + 2)) 0 0 0 then 1 else 0),
+      BMS.ent (epsRep (k + 2)) 0 1 +
+        a * BMS.delta (epsRep (k + 2)) 0 1 1 *
+          (if BMS.ascends (epsRep (k + 2)) 0 0 1 then 1 else 0)] = [a, 0]
+    rw [show BMS.ent (epsRep (k + 2)) 0 0 = 0 from rfl,
+      delta_epsRep_zero k,
+      show BMS.ascends (epsRep (k + 2)) 0 0 0 = true from rfl,
+      show BMS.ent (epsRep (k + 2)) 0 1 = 0 from rfl,
+      show BMS.delta (epsRep (k + 2)) 0 1 1 = 0 from rfl]
+    simp only [if_true, Nat.mul_one, Nat.mul_zero, Nat.zero_mul, Nat.zero_add]
+  have hrowSucc : ∀ i, i < k + 1 → (List.range 2).map (fun y =>
+      BMS.ent (epsRep (k + 2)) (0 + (i + 1)) y +
+        a * BMS.delta (epsRep (k + 2)) 0 1 y *
+          (if BMS.ascends (epsRep (k + 2)) 0 (0 + (i + 1)) y then 1 else 0)) =
+      ([a + 1, 1] : BMS.Col) := by
+    intro i hi
+    rw [Nat.zero_add]
+    change [
+      BMS.ent (epsRep (k + 2)) (i + 1) 0 +
+        a * BMS.delta (epsRep (k + 2)) 0 1 0 *
+          (if BMS.ascends (epsRep (k + 2)) 0 (i + 1) 0 then 1 else 0),
+      BMS.ent (epsRep (k + 2)) (i + 1) 1 +
+        a * BMS.delta (epsRep (k + 2)) 0 1 1 *
+          (if BMS.ascends (epsRep (k + 2)) 0 (i + 1) 1 then 1 else 0)] = [a + 1, 1]
+    rw [show BMS.ent (epsRep (k + 2)) (i + 1) 0 = 1 from
+        ent_epsRep_succ (k + 2) i 0 (by omega),
+      delta_epsRep_zero k,
+      show BMS.ascends (epsRep (k + 2)) 0 (i + 1) 0 = true from
+        ascends_epsRep_zero (k + 2) (i + 1) (by omega),
+      show BMS.ent (epsRep (k + 2)) (i + 1) 1 = 1 from
+        ent_epsRep_succ (k + 2) i 1 (by omega),
+      show BMS.delta (epsRep (k + 2)) 0 1 1 = 0 from rfl]
+    simp only [if_true, Nat.mul_one, Nat.mul_zero, Nat.zero_mul, Nat.add_comm]
+  unfold rawRungBlock
+  rw [show List.range (k + 2) = 0 :: (List.range (k + 1)).map Nat.succ from
+      List.range_succ_eq_map,
+    List.map_cons, hrow0, List.map_map]
+  rw [List.map_congr_left (l := List.range (k + 1))
+    (g := fun _ => ([a + 1, 1] : BMS.Col)) (fun i hi => by
+      exact hrowSucc i (by simpa using List.mem_range.mp hi)),
+    List.map_const', List.length_range]
+
+private theorem expand_epsRep (k n : Nat) :
+    BMS.expand? (epsRep (k + 2)) n =
+      some (((List.range (n + 1)).map (rawRungBlock k)).flatten) := by
+  simp only [BMS.expand?, getLast_epsRep (k + 1), Option.bind_eq_bind,
+    Option.bind_some, show BMS.lnz ([1, 1] : BMS.Col) = some 1 from rfl,
+    length_epsRep, Nat.add_sub_cancel, parent_epsRep_one, Option.pure_def,
+    Nat.sub_zero, List.take_zero, List.nil_append]
+  rfl
+
+private theorem rawRungBlock_zero (k : Nat) :
+    rawRungBlock k 0 = Evidence.Cert.epsM k := by
+  rw [rawRungBlock_eq, epsM_eq_epsRep]
+  rfl
+
+private theorem rawRungBlock_succ (k j : Nat) :
+    rawRungBlock k (j + 1) = rungBlock k j := by
+  rw [rawRungBlock_eq]
+  rfl
+
+private theorem flatten_rawRungBlocks (k n : Nat) :
+    ((List.range (n + 1)).map (rawRungBlock k)).flatten = rungM k n := by
+  unfold rungM
+  rw [List.range_succ_eq_map, List.map_cons, List.flatten_cons,
+    rawRungBlock_zero, List.map_map]
+  rw [List.map_congr_left (l := List.range n)
+    (f := rawRungBlock k ∘ Nat.succ) (g := rungBlock k)
+    (fun j _ => rawRungBlock_succ k j)]
+
+theorem expand_epsM_succ (k n : Nat) :
+    BMS.expand? (Evidence.Cert.epsM (k + 1)) n = some (rungM k n) := by
+  rw [epsM_eq_epsRep, show (k + 1) + 1 = k + 2 from by omega,
+    expand_epsRep, flatten_rawRungBlocks]
+
+theorem rungM_zero (k : Nat) : rungM k 0 = Evidence.Cert.epsM k := by
+  unfold rungM
+  change Evidence.Cert.epsM k ++ [] = Evidence.Cert.epsM k
+  exact List.append_nil _
+
+theorem expand_epsM_succ_total (k n : Nat) :
+    BMS.expand (Evidence.Cert.epsM (k + 1)) n = rungM k n := by
+  show (BMS.expand? (Evidence.Cert.epsM (k + 1)) n).getD [] = rungM k n
+  rw [expand_epsM_succ]
+  rfl
+
 end Evidence.Cert
