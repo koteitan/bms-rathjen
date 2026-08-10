@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.2.3"
+def version : String := "v0.2.4"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -429,24 +429,7 @@ $`<_B`$ を BMS の順序、$`<_T`$ を $`\\mathfrak{T}(M)`$ の順序、$`\\mat
 \\mathrm{otype}\\bigl(\\{\\, s \\in \\mathrm{NF} : s <_T t \\,\\},\\ <_T\\bigr)
 ```
 
-$`\\mathrm{otype}(X, <)`$ は**順序型** — 整列順序集合 $`(X, <)`$ と順序同型な
-順序数のこと。$`\\mathrm{otype}`$ が定義できるのは $`<`$ が $`X`$ 上で整礎な
-全順序のときだけで、$`\\mathrm{wf}`$ の仮定はそのためにある。例:
-
-```math
-\\mathrm{otype}(\\{0,1,2\\},\\ <) = 3,
-\\qquad
-\\mathrm{otype}(\\mathbb{N},\\ <) = \\omega,
-\\qquad
-\\mathrm{otype}(\\{\\,s : s <_T \\varepsilon_0\\,\\},\\ <_T) = \\varepsilon_0
-```
-
-つまり左辺は「$`M`$ より小さい標準形行列を全部集めたときの長さ」であり、
-それが**行列 $`M`$ の表す順序数の定義**である。右辺は同じことを項の側でしたもの。
-**この 2 つが等しいというのが「$`M`$ と $`t`$ が対応する」の意味である。**
-
-外部の順序数論に「$`M`$ の値」を尋ねるのではなく、**両側の下方集合の長さが
-一致する**と言うだけなので、$`o`$ のような翻訳写像に一切依存しない。
+$`\\mathrm{otype}(X, <)`$ は整列順序集合 $`(X, <)`$ に順序同型な順序数を返す関数。
 
 **状態: 未証明。** mathlib (順序型) が要り、$`\\mathrm{wf}`$ は仮定として切り出す
 (紙の上では Rathjen 1994 の整列証明として既知)。以下の E は、これを支えるため、

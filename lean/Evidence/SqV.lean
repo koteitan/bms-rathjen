@@ -5601,4 +5601,83 @@ def fsVDirectBundleFailures : List Term :=
 #eval (fsVDirectBundleFailures.length,
   fsVDirectBundleFailures.map TM.Term.toStr)
 
+/-! ### §25.2 `fsV1` — a sequence FUNCTION, and the residue is one branch
+
+§25.1 measured every existing fundamental-sequence function against
+`expand (sqv' t) n = sqv' (f t n)` and none was clean (best: `fsN`+1 at 27 of 95).
+`fsV1` is built instead from the case analysis `encv'` itself uses, with the six
+proved rows (§17–§21 and `cert_eps0`) as its specification.
+
+    fsV1        22 failures of 95      -- better than every prior candidate
+
+**AND THE RESIDUE IS LOCALISED TO ONE BRANCH.**  Bucketing the 22 by which `encv'`
+clause the term takes:
+
+    collapse      1
+    deep          3
+    base-empty    0
+    base-block   17     ← the `mkBlocks` site
+    add           1
+    other         0
+
+So 17 of 22 are the same clause, and `base-empty` — the clause four of the five
+proved rows go through — is clean.  **The remaining work is the block site, not the
+recursion.**
+
+`fsV1` is NOT proved to satisfy the decomposition.  It is a definition with a
+measured failure set, which is what §25 said had to exist before anything could be
+proved: `LimClauses` cannot supply the sequence (`limClauses_not_enough`), so the
+sequence has to be computed from `t`, and this is the first function that computes
+it for most of the corpus.
+
+The `#guard` on 22 is deliberate.  If someone improves `fsV1` the guard fails and
+the number has to be re-read rather than silently drifting — the opposite of the
+sweep's floor, which must NOT be frozen because there a fall is an improvement.
+Here a fall is also an improvement, and the point is to make it visible.
+-/
+
+def fsV1 : Term → Nat → Term
+  | .add u v, n =>
+      let w := fsV1 v n
+      if w == TM.Term.zero then u else .add u w
+  | .phi a b, n =>
+      if a == TM.Term.zero && b == TM.Term.zero then TM.Term.zero
+      else if b == TM.Term.zero then
+        if Evidence.WF.kindV a then
+          let p := Evidence.WF.predC a
+          Evidence.WF.fsGen (.phi p TM.Term.zero) p (.phi p TM.Term.zero) n
+        else .phi (fsV1 a (n + 1)) TM.Term.zero
+      else if Evidence.WF.kindV b then
+        let c := .phi a (Evidence.WF.predC b)
+        if a == TM.Term.zero then Evidence.WF.repAdd c n
+        else if Evidence.WF.kindV a then
+          let p := Evidence.WF.predC a
+          let v := if p == TM.Term.zero then c else .phi p c
+          let base := if p == TM.Term.zero then .add c c else v
+          Evidence.WF.fsGen v p base n
+        else .phi (fsV1 a (n + 1)) c
+      else .phi a (fsV1 b n)
+  | _, _ => TM.Term.zero
+
+def fsV1Failures : List Term := decompFailures fsV1
+
+#guard nfOKLimitCorpus.length == 95
+#guard fsV1Failures.length == 22
+
+def encBranch : Term → String
+  | .phi a b =>
+      let bm := TM.Term.splitFin b
+      let gs := summands bm.1
+      let head := gs.headD TM.Term.zero
+      if TM.Term.isFP a head then "collapse"
+      else match fpDeep a head with
+        | some _ => "deep"
+        | none => if gs.isEmpty then "base-empty" else "base-block"
+  | .add _ _ => "add"
+  | _ => "other"
+
+#guard (["collapse","deep","base-empty","base-block","add","other"].map
+  (fun b => (b, (fsV1Failures.filter (fun t => encBranch t == b)).length)))
+  == [("collapse",1),("deep",3),("base-empty",0),("base-block",17),("add",1),("other",0)]
+
 end Evidence.SqV
