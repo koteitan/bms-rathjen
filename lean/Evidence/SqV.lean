@@ -3022,7 +3022,7 @@ returns false — it would need a positive control, and **no positive control ca
 `cnv_of_lt_cnv` forbids the instances one would need.**  THE VACUITY WAS THE THEOREM SHOWING
 THROUGH THE MEASUREMENT.
 
-THE DISCRIMINATOR, now `constitution.md` C4, because "0 violations" reads identically in the good
+THE DISCRIMINATOR, now `plan/constitutions.md` C4, because "0 violations" reads identically in the good
 branch and the worthless one:
 
     on a vacuous result, ask whether THE VACUITY IS ITSELF PROVABLE

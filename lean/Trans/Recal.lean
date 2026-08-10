@@ -812,7 +812,7 @@ namespace Recal
 
 /-! ## 6. THE EQUATIONAL LAYER — first brick
 
-`constitution.md` S3 records what this file was: 24 `#guard`s and **zero theorems**, so no fact
+`plan/constitutions.md` S3 records what this file was: 24 `#guard`s and **zero theorems**, so no fact
 quantified over a parameter could be proved on the `oR` side at all.  Validation at points is not
 an API.  This is the first equation.
 
