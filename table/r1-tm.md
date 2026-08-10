@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.2.0
+バージョン: v0.2.1
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`T(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -70,84 +70,89 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 # エビデンス
 
-対応表の行が満たすべき命題を、上位のものから並べる。名前は Lean の識別子で、
-`E.` は表の主張を支える定理、`P.` はその補助命題、`D.` は定義。
-すべて [`lean/Evidence/Cert.lean`](../lean/Evidence/Cert.lean) にある。
+対応表の各行 $`(M, t)`$ について、レジストリ
+$`\mathrm{certRows}`$ に登録された行が満たす命題。名前は Lean の識別子で、
+`E.` は表の主張を支える定理、`P.` はその補助命題、`D.` は定義。実装は
+[`lean/Evidence/Cert.lean`](../lean/Evidence/Cert.lean)。
 
-## D.Certified — 行列が項を表すこと
-
-```
-Certified : Matrix → Term → Prop
-  zero : Certified [] 0
-  succ : kind M = .succ → (∀ n, Certified (expand M n) t) → Certified M (t + 1)
-  lim  : kind M = .lim → (fs' : Nat → Term) →
-         (∀ n, Certified (expand M n) (fs' n))       -- 同一性
-         (∀ n, lt (fs' n) t)                          -- fs' は t 未満
-         (∀ n, lt (fs' n) (fs' (n+1)))                -- fs' は増加
-         (∀ s, inT s → lt s t → ∃ n, le s (fs' n))    -- fs' は共終
-         → Certified M t
-```
-
-帰納型なので、`Certified M t` を持つとは **`M` の展開木を根から降りて `[]`/`0`
-に至る導出が実在する**ということ。外部の意味論も整礎性も使わず、BMS の展開と
-$`T(M)`$ の順序だけで書かれている。
-
-`fs'` は**パラメータ**であって、特定の基本列に合わせる必要はない。5 前提のうち
-**同一性を述べるのは 1 つだけ**で、残る 4 つは列の性質である
-(性質をいくつ検査しても値は決まらない — [plan/constitutions.md](../plan/constitutions.md) C2)。
-
-## D.CertifiedIn / D.DomI — 値の側を $`T(M)`$ に閉じ込めたもの
-
-`Certified` は認証される値に制約を課さないので、生の `Term` 上では
-$`T(M)`$ の項でない値 (例: `(0)(1)` に対する `1+M`) も認証されうる
-(`P.cert_not_single_valued`)。`CertifiedIn Dom` は導出に現れる値すべてが
-`Dom` に属することを要求する版で、`DomI` は「$`T(M)`$ の項である」を表す。
-
-## D.certRows — レジストリ
-
-登録された (行列, 項) の対のリスト。**✅ はこのリストへの登録から機械的に
-付与される**もので、手で書くことはできない。
+- [E.certIn_rows_inT — 登録の条件 (ゲート)](#ecertin_rows_int--登録の条件-ゲート)
+- [E.certRows_unique_gate — 一意性](#ecertrows_unique_gate--一意性)
+- [E.certRows_no_overshoot — 上限 (無条件)](#ecertrows_no_overshoot--上限-無条件)
+- [E.no_cert_above_eps0 — ε₀ 行の鋭い上限](#eno_cert_above_eps0--ε₀-行の鋭い上限)
+- [まだ排除できていないこと](#まだ排除できていないこと)
+- [その他の弱いエビデンス](#その他の弱いエビデンス)
+- [定義](#定義): [D.Certified](#dcertified--行列が項を表すこと) ·
+  [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi--値の側を-tm-に閉じ込めたもの) ·
+  [D.certRows](#dcertrows--レジストリ)
 
 ## E.certIn_rows_inT — 登録の条件 (ゲート)
 
-```
-certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2
+```math
+\forall (M,t) \in \mathrm{certRows}.\;\; \mathrm{CertifiedIn}\;\mathrm{DomI}\;M\;t
 ```
 
-登録されたすべての行が、内部に現れる値がすべて $`T(M)`$ の項である証明書を持つ。
-**これがレジストリのゲートであり、これを満たさない行は登録できない。**
-`certRows` を拡張してこの証明を拡張しなければビルドが壊れる。
+登録されたすべての行が、**導出に現れる値がすべて $`\mathfrak{T}(M)`$ の項である**
+証明書を持つ。これがレジストリのゲートであり、これを満たさない行は登録できない。
+$`\mathrm{certRows}`$ を拡張してこの証明を拡張しなければビルドが壊れる。
+
+証明列 ✅ はこのゲートから機械的に付与されるもので、手で書くことはできない。
 
 ## E.certRows_unique_gate — 一意性
 
-ゲートが要求する範囲の証明書 — 値が遺伝的に $`T(M)`$ の項であるもの — では、
-**登録値以外の値は取り得ない**。上下いずれの側も排除されている。登録の条件と
-一意性の条件が同じ `DomI` であることに注意。
+```math
+\forall (M,t) \in \mathrm{certRows}.\;\forall u.\;\;
+\mathrm{CertifiedIn}\;\mathrm{DomI}\;M\;u \;\Longrightarrow\; u = t
+```
+
+ゲートが要求する範囲の証明書 — 値が遺伝的に $`\mathfrak{T}(M)`$ の項であるもの —
+では、**登録値以外の値は取り得ない**。上下いずれの側も排除されている。
+登録の条件 (E.certIn_rows_inT) と一意性の条件が**同じ $`\mathrm{DomI}`$**
+であることに注意。
 
 ## E.certRows_no_overshoot — 上限 (無条件)
 
-値が $`T(M)`$ の外に出るものも含め、**いかなる**証明書も登録値より上の値 —
-具体的には ω^(値+1) 以上 — を与えない。
+```math
+\forall (M,t) \in \mathrm{certRows}.\;\forall u.\;\;
+\mathrm{Certified}\;M\;u \;\Longrightarrow\; \bar\varphi(0,\,t+1) \not\le u
+```
+
+値が $`\mathfrak{T}(M)`$ の外に出るものも含め、**いかなる**証明書も
+$`\bar\varphi(0, t+1) = \omega^{t+1}`$ 以上の値を与えない。
+$`\mathrm{DomI}`$ の仮定が無いことに注意 — これは無条件である。
 
 ## E.no_cert_above_eps0 — ε₀ 行の鋭い上限
 
-ε₀ の行では、ε₀ より上の値は一切認証され得ない。
+```math
+\forall u.\;\; \varepsilon_0 < u \;\Longrightarrow\;
+\neg\,\mathrm{Certified}\;[(0,0)(1,1)]\;u
+```
+
+ε₀ の行では、**ε₀ より上の値は一切認証され得ない**。E.certRows_no_overshoot が
+$`\omega^{t+1}`$ 以上を塞ぐのに対し、この行では $`t`$ の直上から塞がれている。
 
 ## まだ排除できていないこと
 
-登録値より**下**の値が、$`T(M)`$ の外へ出る部分値を経由して認証される可能性
-(ゲートを通らない証明書)。上側は `E.certRows_no_overshoot` により無条件に
-塞がっているので、**残る穴は片側のみ**である。
+登録値より**下**の値が、$`\mathfrak{T}(M)`$ の外へ出る部分値を経由して
+認証される可能性 (ゲートを通らない証明書):
 
-`P.undershoot_reduction` により、この穴は葉 1 枚に還元済み:
+```math
+\exists u.\;\; u < t \;\wedge\; \mathrm{Certified}\;M\;u
+\;\wedge\; \neg\,\mathrm{CertifiedIn}\;\mathrm{DomI}\;M\;u \;\;?
+```
 
-> **P.T** `a ≤ b → b ≤ c → a ≤ c` — 中間項 `b` が `Frag2`、両端点は任意
+上側は E.certRows_no_overshoot により無条件に塞がっているので、**残る穴は片側のみ**。
 
-`P.T` は**真だが、このリポジトリの手法では証明できない**。真であること: 7 構成子
-にわたる 1010 項の掃引で反例 0、結論を反転した陽性対照は 3628 万回発火する。
-証明できないこと: 辞書式帰納法が両端点の第 1 引数の比較可能性を消費するが、
-それは `Frag2` の外で偽である (`P.frag2_stops_at_psi`)。端点に `inT` を課せば
-証明できるが、**開いている場合は `inT` でない場合**なので適用できない。
+P.undershoot_reduction により、この穴は葉 1 枚に還元済み:
+
+> **P.T** $`a \le b \;\to\; b \le c \;\to\; a \le c`$ — 中間項 $`b`$ が
+> $`\mathrm{Frag2}`$、**両端点は任意**
+
+P.T は**真だが、このリポジトリの手法では証明できない**。真であること: 7 構成子に
+わたる 1010 項の掃引で反例 0、結論を反転した陽性対照は 3628 万回発火する。
+証明できないこと: 辞書式帰納法が両端点の第 1 引数の比較可能性を消費するが、それは
+$`\mathrm{Frag2}`$ の外で偽である (P.frag2_stops_at_psi)。端点に $`\mathrm{inT}`$
+を課せば証明できるが、**開いている場合は $`\mathrm{inT}`$ でない場合**なので
+適用できない。
 
 ## その他の弱いエビデンス
 
@@ -160,6 +165,64 @@ certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2
 | `oR` | オラクル較正済みの候補値 (P進大好きbot 氏の変換写像の Lean 移植)。全行一致をビルド時 `#guard` で強制 |
 | `bisim6` | 深さ 6 の双模倣 |
 | `oStageC` | Stage C の候補翻訳の値の一致 |
+
+# 定義
+
+## D.Certified — 行列が項を表すこと
+
+$`\mathrm{Certified}\;M\;t`$ は「行列 $`M`$ が項 $`t`$ を表す」ことを、
+外部の意味論を使わず**展開の再帰だけ**で述べた帰納的述語。導入規則は 3 つ:
+
+```math
+\frac{}{\mathrm{Certified}\;[\,]\;0}
+\qquad
+\frac{\mathrm{kind}\,M = \mathrm{succ}
+\qquad \forall n.\;\mathrm{Certified}\;(M[n])\;t}
+{\mathrm{Certified}\;M\;(t+1)}
+```
+
+```math
+\frac{\mathrm{kind}\,M = \mathrm{lim}
+\quad \forall n.\;\mathrm{Certified}\;(M[n])\;(f_n)
+\quad \forall n.\;f_n < t
+\quad \forall n.\;f_n < f_{n+1}
+\quad \forall s \in \mathfrak{T}(M).\;s < t \to \exists n.\;s \le f_n}
+{\mathrm{Certified}\;M\;t}
+```
+
+帰納型なので、$`\mathrm{Certified}\;M\;t`$ を持つとは
+**$`M`$ の展開木を根から降りて $`[\,]`$ / $`0`$ に至る導出が実在する**ということ。
+整礎性は前提していない。
+
+極限規則の 5 前提のうち**同一性を述べるのは
+$`\forall n.\;\mathrm{Certified}\;(M[n])\;(f_n)`$ の 1 つだけ**で、
+残る 4 つは列 $`f`$ の性質である。**性質をいくつ検査しても値は決まらない**
+([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを
+取り違えて起きた。$`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
+
+## D.CertifiedIn / D.DomI — 値の側を $`\mathfrak{T}(M)`$ に閉じ込めたもの
+
+```math
+\mathrm{DomI}(t) \;:\equiv\; t \in \mathfrak{T}(M)
+```
+
+$`\mathrm{Certified}`$ は認証される値に制約を課さないので、生の項の上では
+$`\mathfrak{T}(M)`$ の項でない値も認証されうる。実例 (P.cert_not_single_valued):
+
+```math
+\mathrm{Certified}\;[(0)(1)]\;\omega
+\qquad\text{かつ}\qquad
+\mathrm{Certified}\;[(0)(1)]\;(1+M)
+```
+
+$`\mathrm{CertifiedIn}\;\mathrm{Dom}`$ は**導出に現れる値すべて**が
+$`\mathrm{Dom}`$ に属することを要求する版。ゲート (E.certIn_rows_inT) が
+$`\mathrm{DomI}`$ を要求するのは、この一価性の破れを塞ぐためである。
+
+## D.certRows — レジストリ
+
+登録された $`(M, t)`$ の対のリスト。**✅ はこのリストへの登録から機械的に付与される**。
+E.certIn_rows_inT がその登録条件であり、リストを伸ばすには証明を伸ばすしかない。
 
 # 実装
 
