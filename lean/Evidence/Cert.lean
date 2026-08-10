@@ -9654,4 +9654,324 @@ def rungBT : Nat → Trans.Dict.BT
 #guard (List.range 8).all fun n =>
   Trans.Dict.dict (rungBT n) == Evidence.WF.fsEsucc 0 n
 
+
+/-! ### §21.4 THE LADDER — the reader's structural functions, decided for every index
+
+§21.3's link 2 stalled because `rungPS` steps by TWO pairs while `runAux`'s own recursion
+(`predP M = if M.length == 1 then M else M.dropLast`) steps by ONE.  The family was too coarse to
+sit on the recursion.  `L` is the one-pair-at-a-time refinement: `rungPS n = L (2*n+1)`, and
+`predP (L (m+1)) = L m`, so an induction along `L` IS an induction along the recursion and the
+memo table threads the way the recursion already threads it -- which is exactly what the append
+route could never have.
+
+What this section gives is the layer under that induction: `gp0`, `gp1`, `fpar`, `isAnc`,
+`isPrincipalP`, `isAdm` and `adm` COMPUTED on `L m` for every `m`.  On the append route none of
+these could be stated at all.
+
+**STILL OPEN, and named:** `transPort_LBT (m : Nat) : transPort (L m) = LBT m` (measured at 13
+points by the `#guard` below).  `transPort_rungPS_of_L` isolates the rest of the chain against it,
+so the goal is one lemma away rather than a route away.  The first missing control-flow fact is
+`redP (L m) = L m`, which needs a fuel-parametric induction for `red` including the shifted tail
+its principal-reduction branch builds.
+
+AXIOMS.  All of these were `Classical.choice`-dirty when first written and are now
+`[propext, Quot.sound]`.  The cause was tactics, not mathematics, in TWO shapes: `omega` closing a
+NON-arithmetic goal (the recorded pattern -- fixed by `rw [if_neg (by omega), ...]` or
+`intro h; exact absurd h (by omega)`, keeping `omega` on arithmetic subgoals), and -- new --
+`simp only [beq_self_eq_true, if_true]` on an `if`, fixed by `rw [if_pos (by rfl)]`.  Not one
+statement changed.  Do not shorten these back; see plan/constitutions.md 失敗形 2 の七番目.
+-/
+
+section Ladder
+open Trans.Recal
+open Trans.Dict
+
+
+
+
+/-- The prefix of length `m + 1` of the one-pair-at-a-time rung ladder. -/
+def L (m : Nat) : Trans.Recal.PS :=
+  (List.range (m + 1)).map fun k =>
+    ((((k + 1) / 2 : Nat) : Int), ((k % 2 : Nat) : Int))
+
+#guard L 1 == [(0, 0), (1, 1)]
+#guard (List.range 12).all fun n => rungPS n == L (2 * n + 1)
+#guard (List.range 12).all fun m => predP (L (m + 1)) == L m
+
+theorem L_one : L 1 = [(0, 0), (1, 1)] := rfl
+
+theorem predP_L_zero : predP (L 0) = L 0 := rfl
+
+theorem L_succ (m : Nat) :
+    L (m + 1) = L m ++
+      [((((m + 2) / 2 : Nat) : Int), (((m + 1) % 2 : Nat) : Int))] := by
+  simp [L, List.range_succ, Nat.add_assoc]
+  omega
+
+theorem predP_L_succ (m : Nat) : predP (L (m + 1)) = L m := by
+  rw [L_succ]
+  simp [predP, L]
+
+theorem rungPS_eq_L (n : Nat) : rungPS n = L (2 * n + 1) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [rungPS, ih]
+    have hL :
+        L (2 * (n + 1) + 1) =
+          L (2 * n + 1) ++
+            [(((n + 1 : Nat) : Int), 0), (((n + 2 : Nat) : Int), 1)] := by
+      rw [show 2 * (n + 1) + 1 = (2 * n + 2) + 1 by omega]
+      rw [L_succ (2 * n + 2), L_succ (2 * n + 1)]
+      simp only [List.append_assoc, List.singleton_append]
+      have hp0 :
+          (((((2 * n + 3) / 2 : Nat) : Int), (((2 * n + 2) % 2 : Nat) : Int))) =
+            (((n + 1 : Nat) : Int), 0) := by
+        have hd : (2 * n + 3) / 2 = n + 1 := by omega
+        have hm : (2 * n + 2) % 2 = 0 := by omega
+        rw [hd, hm]
+        simp
+      have hp1 :
+          (((((2 * n + 4) / 2 : Nat) : Int), (((2 * n + 3) % 2 : Nat) : Int))) =
+            (((n + 2 : Nat) : Int), 1) := by
+        have hd : (2 * n + 4) / 2 = n + 2 := by omega
+        have hm : (2 * n + 3) % 2 = 1 := by omega
+        rw [hd, hm]
+        simp
+      rw [hp0, hp1]
+    exact hL.symm
+
+#guard (List.range 8).all fun n =>
+  Trans.Recal.transPort (rungPS n) == rungBT n
+
+private def halfBT : Nat → Trans.Dict.BT
+  | 0 => .D 0 .zero
+  | n + 1 => .D 0 (.sum (.D 1 .zero) (halfBT n))
+
+/-- Closed form of the reader on every prefix of the ladder. -/
+def LBT : Nat → Trans.Dict.BT
+  | 0 => .zero
+  | m + 1 =>
+      if m % 2 = 0 then rungBT (m / 2) else halfBT ((m + 1) / 2)
+
+#guard (List.range 13).all fun m => transPort (L m) == LBT m
+
+theorem LBT_two_mul_add_one (n : Nat) : LBT (2 * n + 1) = rungBT n := by
+  simp [LBT]
+
+@[simp] theorem length_L (m : Nat) : (L m).length = m + 1 := by
+  simp [L]
+
+theorem gp0_L (m k : Nat) (h : k ≤ m) :
+    gp0 (L m) (k : Int) = (((k + 1) / 2 : Nat) : Int) := by
+  have hk : k < m + 1 := by omega
+  have hk0 : ¬ (k : Int) < 0 := by simp
+  simp [gp0, L, hk, hk0]
+
+theorem gp1_L (m k : Nat) (h : k ≤ m) :
+    gp1 (L m) (k : Int) = ((k % 2 : Nat) : Int) := by
+  have hk : k < m + 1 := by omega
+  have hk0 : ¬ (k : Int) < 0 := by simp
+  simp [gp1, L, hk, hk0]
+
+theorem fpar_L_odd (m n : Nat) (h : 2 * n + 1 ≤ m) :
+    fpar (L m) 0 (2 * n + 1 : Nat) 0 = (2 * n : Nat) := by
+  have h0 : 2 * n ≤ m := by omega
+  have gt : gp0 (L m) (2 * n + 1 : Nat) = (n + 1 : Nat) := by
+    simpa only [show (2 * n + 2) / 2 = n + 1 by omega] using
+      gp0_L m (2 * n + 1) h
+  have gc : gp0 (L m) (2 * n : Nat) = (n : Nat) := by
+    simpa only [show (2 * n + 1) / 2 = n by omega] using
+      gp0_L m (2 * n) h0
+  unfold fpar
+  rw [if_neg]
+  · rw [if_pos (by rfl)]
+    rw [show (L m).length + 1 = (m + 1) + 1 by simp]
+    simp only [fpar0Aux]
+    have hj : ((2 * n + 1 : Nat) : Int) - 1 = ((2 * n : Nat) : Int) := by
+      omega
+    rw [hj, gt, gc]
+    simp
+    rw [if_neg (by omega), if_pos (by omega)]
+  · simp [lenI]
+    constructor <;> omega
+
+theorem fpar_L_even (m n : Nat) (h : 2 * n + 2 ≤ m) :
+    fpar (L m) 0 (2 * n + 2 : Nat) 0 = (2 * n : Nat) := by
+  have h0 : 2 * n ≤ m := by omega
+  have h1 : 2 * n + 1 ≤ m := by omega
+  have gt : gp0 (L m) (2 * n + 2 : Nat) = (n + 1 : Nat) := by
+    simpa only [show (2 * n + 3) / 2 = n + 1 by omega] using
+      gp0_L m (2 * n + 2) h
+  have gc1 : gp0 (L m) (2 * n + 1 : Nat) = (n + 1 : Nat) := by
+    simpa only [show (2 * n + 2) / 2 = n + 1 by omega] using
+      gp0_L m (2 * n + 1) h1
+  have gc0 : gp0 (L m) (2 * n : Nat) = (n : Nat) := by
+    simpa only [show (2 * n + 1) / 2 = n by omega] using
+      gp0_L m (2 * n) h0
+  unfold fpar
+  rw [if_neg]
+  · rw [if_pos (by rfl)]
+    rw [show (L m).length + 1 = (m + 1) + 1 by simp]
+    simp only [fpar0Aux]
+    have hj1 : ((2 * n + 2 : Nat) : Int) - 1 = ((2 * n + 1 : Nat) : Int) := by
+      omega
+    rw [hj1, gt, gc1]
+    have hj0 : ((2 * n + 1 : Nat) : Int) - 1 = ((2 * n : Nat) : Int) := by
+      omega
+    rw [hj0, gc0]
+    simp
+    rw [if_neg (by omega), if_neg (by omega), if_pos (by omega)]
+  · simp [lenI]
+    constructor <;> omega
+
+private def parN (k : Nat) : Nat :=
+  if k % 2 = 1 then k - 1 else k - 2
+
+theorem fpar_L_pos (m k : Nat) (hk0 : 0 < k) (hk : k ≤ m) :
+    fpar (L m) 0 (k : Int) 0 = (parN k : Nat) := by
+  unfold parN
+  split
+  · rename_i hodd
+    have heq : k = 2 * (k / 2) + 1 := by omega
+    rw [heq] at hk ⊢
+    simpa using fpar_L_odd m (k / 2) hk
+  · rename_i hnodd
+    have heven : k % 2 = 0 := by omega
+    have heq : k = 2 * ((k - 2) / 2) + 2 := by omega
+    rw [heq] at hk ⊢
+    simpa using fpar_L_even m ((k - 2) / 2) hk
+
+theorem parN_lt (k : Nat) (h : 0 < k) : parN k < k := by
+  unfold parN
+  split <;> omega
+
+theorem isAncAux_L (k : Nat) : ∀ (m f : Nat),
+    k ≤ m → k < f → isAncAux f (L m) 0 (k : Int) 0 = true := by
+  refine Nat.strongRecOn (motive := fun k => ∀ (m f : Nat),
+    k ≤ m → k < f → isAncAux f (L m) 0 (k : Int) 0 = true) k ?_
+  intro k ih m f hkm hkf
+  cases f with
+  | zero => exact (Nat.not_lt_zero k hkf).elim
+  | succ f =>
+    unfold isAncAux
+    by_cases hk0 : k = 0
+    · subst k
+      rw [if_pos (by rfl)]
+    · have hkpos : 0 < k := by omega
+      have hp := fpar_L_pos m k hkpos hkm
+      have h0k : (0 : Int) ≠ (k : Int) := by omega
+      rw [show ((0 : Int) == (k : Int)) = false by simp [h0k]]
+      rw [hp]
+      have hpn : ((parN k : Nat) : Int) ≠ -1 := by omega
+      simp [hpn]
+      have hpk : parN k < k := parN_lt k hkpos
+      apply ih (parN k)
+      · exact hpk
+      · exact Nat.le_trans (Nat.le_of_lt hpk) hkm
+      · omega
+
+theorem isAnc_L (m k : Nat) (hk : k ≤ m) :
+    isAnc (L m) 0 (k : Int) 0 = true := by
+  unfold isAnc
+  rw [if_neg]
+  · have h := isAncAux_L k m (m + 2) hk (by omega)
+    simpa using h
+  · simp [lenI]
+
+theorem isPrincipalP_L_succ (m : Nat) : isPrincipalP (L (m + 1)) = true := by
+  have ha := isAnc_L (m + 1) (m + 1) (by omega)
+  have ha' : isAnc (L (m + 1)) 0 ((m : Int) + 1) 0 = true := by
+    simpa using ha
+  unfold isPrincipalP isZeroP
+  simp [lenI, ha']
+
+theorem fpar1_L_even_prev (m n : Nat) (h : 2 * n + 2 ≤ m) :
+    fpar (L m) 1 (2 * n + 2 : Nat) (2 * n + 1 : Nat) = -1 := by
+  have h1 : 2 * n + 1 ≤ m := by omega
+  have gt : gp0 (L m) (2 * n + 2 : Nat) = (n + 1 : Nat) := by
+    simpa only [show (2 * n + 3) / 2 = n + 1 by omega] using
+      gp0_L m (2 * n + 2) h
+  have gc1 : gp0 (L m) (2 * n + 1 : Nat) = (n + 1 : Nat) := by
+    simpa only [show (2 * n + 2) / 2 = n + 1 by omega] using
+      gp0_L m (2 * n + 1) h1
+  have hrow0 :
+      fpar0 (L m) (2 * n + 2 : Nat) (2 * n + 1 : Nat) = -1 := by
+    unfold fpar0
+    rw [if_neg]
+    · rw [show (L m).length + 1 = (m + 1) + 1 by simp]
+      simp only [fpar0Aux]
+      have hj1 : ((2 * n + 2 : Nat) : Int) - 1 = ((2 * n + 1 : Nat) : Int) := by
+        omega
+      rw [hj1, gt, gc1]
+      have hj0 : ((2 * n + 1 : Nat) : Int) - 1 = ((2 * n : Nat) : Int) := by
+        omega
+      rw [hj0]
+      simp
+      intro hbad
+      exact absurd hbad (by omega)
+    · simp [lenI]
+      constructor <;> omega
+  unfold fpar
+  rw [if_neg]
+  · simp only [OfNat.ofNat]
+    rw [show (L m).length + 1 = (m + 1) + 1 by simp]
+    simp only [fpar1Aux]
+    rw [hrow0]
+    simp
+    intro hbad
+    exact absurd hbad (by omega)
+  · simp [lenI]
+    constructor <;> omega
+
+theorem isAdm_L_even (m n : Nat) (h : 2 * n ≤ m) :
+    isAdm (L m) (2 * n : Nat) = true := by
+  cases n with
+  | zero =>
+    have hlen_eq : lenI (L m) = (m + 1 : Nat) := by simp [lenI]
+    have hlen : 0 ≤ lenI (L m) := by rw [hlen_eq]; omega
+    simp [isAdm, isUnadmitted, isParentP, hlen]
+  | succ n =>
+    have hp := fpar1_L_even_prev m n (by omega)
+    have hparent :
+        isParentP (L m) 1 (2 * n + 2 : Nat) (2 * n + 1 : Nat) = false := by
+      unfold isParentP
+      rw [hp]
+      simp [lenI]
+      omega
+    unfold isAdm isUnadmitted
+    rw [show (2 * (n + 1) : Nat) = 2 * n + 2 by omega]
+    have hprev : ((2 * n + 2 : Nat) : Int) - 1 = ((2 * n + 1 : Nat) : Int) := by
+      omega
+    rw [hprev, hparent]
+    simp [lenI]
+    omega
+
+theorem adm_L_even (m n : Nat) (h : 2 * n ≤ m) :
+    adm (L m) (2 * n : Nat) = (2 * n : Nat) := by
+  have ha := isAdm_L_even m n h
+  unfold adm
+  rw [show (L m).length + 2 = (m + 1) + 2 by simp]
+  simp only [admAux]
+  rw [if_neg (by omega)]
+  rw [show isAdm (L m) (2 * n : Nat) = true from ha]
+  rfl
+
+/- Step 2 remains open at exactly:
+
+    theorem transPort_LBT (m : Nat) : transPort (L m) = LBT m
+
+The first missing control-flow lemma is `redP (L m) = L m`.  Proving it
+requires a fuel-parametric induction for `red`, including the shifted tail
+that its principal reduction branch constructs.
+-/
+
+/-- Step 3, isolated from the still-open reader lemma of Step 2. -/
+theorem transPort_rungPS_of_L
+    (hL : ∀ m, transPort (L m) = LBT m) (n : Nat) :
+    transPort (rungPS n) = rungBT n := by
+  rw [rungPS_eq_L, hL, LBT_two_mul_add_one]
+
+end Ladder
+
 end Evidence.Cert
