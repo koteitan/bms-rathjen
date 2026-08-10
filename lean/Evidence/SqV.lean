@@ -5491,4 +5491,114 @@ theorem limClauses_not_enough :
 
 #print axioms limClauses_not_enough
 
+/-! ### §25.1 NO EXISTING SEQUENCE TRACKS EXPANSION — the candidate table
+
+§25 proves the assembly's existential cannot supply `SqvDecomp`'s sequence, so the
+general certificate needs a FUNCTION `fsV : Term → Nat → Term` with
+`expand (sqv' t) n = sqv' (fsV t n)`.  Every function this project already has was
+measured against that, over `nfOKLimitCorpus` (95 terms):
+
+    candidate                 failures / 95   first failure
+    fsC                            54         ε₀
+    fsN at shift 0                 92         ε₀
+    fsN at shift +1                27         φ̄(ω,0)
+    fsVDirect (WF §15.3's form)    54         ε₀
+
+**NONE IS CLEAN.**  The best is `fsN`+1 at 27 failures, and it fails on a term this
+table has a certified row for.
+
+**AND THE FIRST FAILURE IS THE TELL.**  Three of the four fail first at ε₀ — a row
+that IS certified (`cert_eps0`).  Its certificate uses `tower` as `fs'`, not `fsC`.
+So the expansion-tracking sequence is **determined by the matrix**, and no
+term-level fundamental-sequence function in this project computes it.
+
+That is the specification of what must be defined, not a reason to stop: `fsV` has
+to be built by the same case analysis `encv'` uses, and the five proved rows
+(§17–§21) are its specification — each names its own sequence and proves the
+decomposition against that name.
+-/
+
+def decompFailures (f : Term → Nat → Term) : List Term :=
+  nfOKLimitCorpus.filter (fun t =>
+    !((List.range 4).all (fun n =>
+      BMS.expand (sqv' t) n == sqv' (f t n))))
+
+def fsCFailures : List Term := decompFailures Evidence.WF.fsC
+
+def fsN0Failures : List Term := decompFailures TM.Term.fsN
+
+def fsN1Failures : List Term :=
+  decompFailures (fun t n => TM.Term.fsN t (n + 1))
+
+/-- The direct recursive Veblen sequence tested in WF §15.3.  This is the
+    historical candidate verbatim, including its corrected zero-tail guard. -/
+def fsVDirect : Term → Nat → Term
+  | .add u v, n =>
+      let w := fsVDirect v n
+      if w == TM.Term.zero then u else .add u w
+  | .phi a b, n =>
+      if a == TM.Term.zero && b == TM.Term.zero then TM.Term.zero
+      else if b == TM.Term.zero then
+        if Evidence.WF.kindV a then
+          Evidence.WF.iterPhi (Evidence.WF.predC a) TM.Term.zero n
+        else .phi (fsVDirect a n) TM.Term.zero
+      else if Evidence.WF.kindV b then
+        if a == TM.Term.zero then
+          Evidence.WF.repAdd (.phi TM.Term.zero (Evidence.WF.predC b)) n
+        else if Evidence.WF.kindV a then
+          Evidence.WF.iterPhi (Evidence.WF.predC a)
+            (.add (.phi a (Evidence.WF.predC b)) TM.Term.one) n
+        else
+          .phi (fsVDirect a n)
+            (.add (.phi a (Evidence.WF.predC b)) TM.Term.one)
+      else .phi a (fsVDirect b n)
+  | _, _ => TM.Term.zero
+
+def fsVDirectFailures : List Term := decompFailures fsVDirect
+
+def fiveBundles : List (Term × (Nat → Term)) :=
+  [(Evidence.WF.epsOmega, Evidence.WF.fsEW),
+   (Evidence.WF.rowA, Evidence.WF.fsA),
+   (Evidence.WF.epsOmegaSq, Evidence.WF.fsEW2),
+   (Evidence.WF.epsOmegaOmega, Evidence.WF.fsEWW),
+   (Evidence.WF.epsEps0, Evidence.WF.fsEE)]
+
+def fsVDirectBundleFailures : List Term :=
+  fiveBundles.filterMap (fun p =>
+    if (List.range 4).all (fun n => fsVDirect p.1 n == p.2 n)
+    then none else some p.1)
+
+#guard nfOKLimitCorpus.length == 95
+
+#guard fsCFailures.length == 54
+#guard fsCFailures.head? == some Evidence.WF.eps0T
+#guard fsN0Failures.length == 92
+#guard fsN0Failures.head? == some Evidence.WF.eps0T
+#guard fsN1Failures.length == 27
+#guard fsN1Failures.head? == some Evidence.WF.phiW0
+#guard fsVDirectFailures.length == 54
+#guard fsVDirectFailures.head? == some Evidence.WF.eps0T
+#guard fsVDirectBundleFailures ==
+  [Evidence.WF.epsOmega, Evidence.WF.rowA, Evidence.WF.epsEps0]
+
+#guard !(BMS.expand (sqv' Evidence.WF.eps0T) 0 ==
+  sqv' (Evidence.WF.fsC Evidence.WF.eps0T 0))
+#guard !(BMS.expand (sqv' Evidence.WF.eps0T) 0 ==
+  sqv' (TM.Term.fsN Evidence.WF.eps0T 0))
+#guard !(BMS.expand (sqv' Evidence.WF.phiW0) 0 ==
+  sqv' (TM.Term.fsN Evidence.WF.phiW0 1))
+#guard !(BMS.expand (sqv' Evidence.WF.eps0T) 0 ==
+  sqv' (fsVDirect Evidence.WF.eps0T 0))
+
+#eval (fsCFailures.length,
+  (fsCFailures.take 1).map TM.Term.toStr)
+#eval (fsN0Failures.length,
+  (fsN0Failures.take 1).map TM.Term.toStr)
+#eval (fsN1Failures.length,
+  (fsN1Failures.take 1).map TM.Term.toStr)
+#eval (fsVDirectFailures.length,
+  (fsVDirectFailures.take 1).map TM.Term.toStr)
+#eval (fsVDirectBundleFailures.length,
+  fsVDirectBundleFailures.map TM.Term.toStr)
+
 end Evidence.SqV
