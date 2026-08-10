@@ -55,3 +55,40 @@ which is the `hside` question again and is where this stopped once already.
 **Measure which of the 34 are actually needed for the 13 table rows before doing
 either**: the corpus is not the table, and the general theorem only has to cover
 what `sqv'` sends to a row.
+
+
+APPENDED — THE CORPUS IS NOT THE TABLE: 11 OF THE 13 TARGET ROWS PASS
+=====================================================================
+
+The question that decides the route, measured:
+
+    rows with  CNV t  &&  sqv' t == m  &&  not already registered      13
+    of those, NfOK                                                     11
+    of those, NOT NfOK                                                  2
+
+The two failures:
+
+    ω^(ζ₀+1)     = φ̄(0, ζ₀)   -- phi(0, phi(phi(0,0)+phi(0,0), 0))
+    ε_{ζ₀+1}     = φ̄(1, ζ₀)   -- phi(phi(0,0), phi(phi(0,0)+phi(0,0), 0))
+
+**Both are the fixed-point-skip shape — the same shape as `rowA` = φ̄(0, ε₀).**
+`φ̄(a, X)` where `X` is a fixed point of `ω^·`: `phiNF` re-counts and `φ̄` skips, so
+the two functions disagree and `NfOK` is false there.
+
+SO THE ROUTE SPLITS TWO WAYS, AND BOTH HAVE A PRECEDENT
+--------------------------------------------------------
+* **11 rows** — `asm_generalB'` supplies `fs'` and its three order clauses, given
+  `NfOK t` by `decide`.  Nothing new is needed on the sequence side.
+* **2 rows** — the skip cases, which is exactly what `rowA` is, and `rowA` is
+  ALREADY CERTIFIED through `certIn_fam` / `famM k c` (`Cert` §18).  **The template
+  for the excluded cases is the certificate the table already carries.**
+
+"20% of the corpus fails" and "2 of the 13 rows fail" are different facts, and only
+the second one is about the deliverable.  The corpus is 169 terms this project
+assembled for encoder measurement; the table is what the ✅ marks live on.
+
+WHAT THIS DOES NOT SAY
+----------------------
+That `famM` reaches those two.  `rowA` is `famV k c` for some `k, c`; whether
+φ̄(0,ζ₀) and φ̄(1,ζ₀) are too is UNMEASURED.  Measure before assuming — the family
+was built around ε₀, and ζ₀ is one level up.
