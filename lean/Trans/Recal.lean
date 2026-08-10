@@ -807,4 +807,57 @@ end Recal
 /-- Exported name (the reading the recalibrated table is to be built from). -/
 def oR (m : BMS.Matrix) : Option TM.Term := Recal.oR m
 
+
+namespace Recal
+
+/-! ## 6. THE EQUATIONAL LAYER — first brick
+
+`constitution.md` S3 records what this file was: 24 `#guard`s and **zero theorems**, so no fact
+quantified over a parameter could be proved on the `oR` side at all.  Validation at points is not
+an API.  This is the first equation.
+
+`ofMatrix` is the parser at the bottom of `oR = (1 + ·) ∘ dict ∘ transPort ∘ ofMatrix`, so it is
+where an equational layer has to start.  The `#guard`s below include the two degenerate cases and
+a malformed-height case, because the raw `Matrix = List (List Nat)` type admits columns this
+parser rejects — `lean/scripts/reader_agreement.lean` found that the hard way.
+
+NOT ON THE CRITICAL PATH FOR THE TABLE.  `Certified` never mentions a reader, so the certificate
+side does not need this; it is needed by E1-shaped statements quantified over `n`.
+-/
+
+def ofMatrixAppendRhs (M N : BMS.Matrix) : Option PS :=
+  if M.isEmpty then ofMatrix N
+  else if N.isEmpty then ofMatrix M
+  else (ofMatrix M).bind fun p => (ofMatrix N).map fun q => p ++ q
+
+#guard ofMatrix ([[0, 0], [1, 1]] ++ [[2, 0]]) ==
+  ofMatrixAppendRhs [[0, 0], [1, 1]] [[2, 0]]
+#guard ofMatrix (([] : BMS.Matrix) ++ [[0, 0], [1, 1]]) ==
+  ofMatrixAppendRhs [] [[0, 0], [1, 1]]
+#guard ofMatrix ([[0, 0], [1, 1]] ++ []) ==
+  ofMatrixAppendRhs [[0, 0], [1, 1]] []
+#guard ofMatrix ([[0, 0, 7]] ++ [[1, 1]]) ==
+  ofMatrixAppendRhs [[0, 0, 7]] [[1, 1]]
+#guard ofMatrix ([[0, 0]] ++ [[1, 1, 7]]) ==
+  ofMatrixAppendRhs [[0, 0]] [[1, 1, 7]]
+
+theorem ofMatrix_append (M N : BMS.Matrix) :
+    ofMatrix (M ++ N) = ofMatrixAppendRhs M N := by
+  cases M with
+  | nil => rfl
+  | cons m M =>
+    cases N with
+    | nil =>
+      rw [List.append_nil]
+      rfl
+    | cons n N =>
+      unfold ofMatrixAppendRhs ofMatrix
+      simp only [List.isEmpty_cons, Bool.not_false, Bool.true_and,
+        List.all_append, List.map_append]
+      cases hM : (m :: M).all (fun c => decide (c.length ≤ 2)) <;>
+      cases hN : (n :: N).all (fun c => decide (c.length ≤ 2)) <;>
+      simp
+
+end Recal
+
 end Trans
