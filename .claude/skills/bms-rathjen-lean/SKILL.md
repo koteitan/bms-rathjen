@@ -178,6 +178,18 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   declaration line by line as a probe, printing axioms at each stage.
   Consumers see the taint with no indication of which upstream line caused it,
   so this is worth doing at the point of surprise rather than later.
+- **COMPARE `git show :path | sha256sum` AGAINST THE VERDICT BEFORE COMPOSING THE
+  COMMIT MESSAGE, NOT AFTER STAGING.** Checking the file's hash on disk and then
+  `git add`ing it leaves a window the lane can write into; the commit then
+  asserts a sha it does not contain. Happened once: verdict `b886241…`/13323
+  lines, committed `12476f1…`/13346 lines, message claiming the former was
+  "verified from the staged bytes". The mathematics was fine — the extra lines
+  were the theorem bodies — but **the provenance line is the one that licenses
+  trusting the rest**, so a false one is worse than a missing one. The rule is
+  not "lanes must hold"; it is **nobody asserts what nobody measured**, and the
+  coordinator has a half of it. **Do not amend to fix it** — this repo is pushed
+  at times of the user's choosing, and rewriting a possibly-public commit trades
+  one wrong record for a worse one. Correct forward with an explicit commit.
 - **AN UNUSED HYPOTHESIS IS A TELL THAT THE STATEMENT IS WRONG.** A proof that
   resists may be reporting a defect in its own statement rather than a hard
   piece of mathematics. The signal that distinguishes them: **you cannot find a
