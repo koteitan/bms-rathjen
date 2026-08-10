@@ -92,3 +92,45 @@ WHAT THIS DOES NOT SAY
 That `famM` reaches those two.  `rowA` is `famV k c` for some `k, c`; whether
 φ̄(0,ζ₀) and φ̄(1,ζ₀) are too is UNMEASURED.  Measure before assuming — the family
 was built around ε₀, and ζ₀ is one level up.
+
+
+APPENDED — THE TWO SKIP ROWS' SHAPES, MEASURED
+===============================================
+
+`certIn_rowA` is NOT a `famM` instance.  It is `CertifiedIn.lim fsA` over
+`expand_rowA`; the `famM`/`certIn_fam` family discharges its IDENTITY PREMISE,
+because `expand rowA n = eps0M n` and those are family members.  So the template
+for a skip row is: **`Certified.lim` with a hand-supplied `fs'`, whose expansions
+land in an already-certified family.**  The right question is therefore not "is the
+row a `famM`" but "what do its expansions look like".  Measured:
+
+    POSITIVE CONTROL — rowA, whose route is known to work
+      sqv' rowA = [[0,0],[1,1],[1,0]]
+      expansions: [[0,0],[1,1]] · +[[0,0],[1,1]] · +[[0,0],[1,1]] · …
+                  a FIXED 2-row block, repeated n+1 times   (= eps0M n)
+
+    ω^(ζ₀+1) = φ̄(0,ζ₀)
+      sqv' = [[0,0],[1,1],[2,1],[1,0]]
+      expansions: [[0,0],[1,1],[2,1]] repeated n+1 times
+      **EXACTLY rowA's pattern, one level up: a fixed 3-row block instead of 2.**
+
+    ε_{ζ₀+1} = φ̄(1,ζ₀)
+      sqv' = [[0,0],[1,1],[2,1],[1,1]]
+      expansions: [[0,0],[1,1],[2,1]] ++ [1,0],[2,1],[3,1] ++ [2,0],[3,1],[4,1] ++ …
+      a GROWING family, one row `[j,0]` then `[j+1,1],[j+2,1]`
+      — the same KIND as `rungM` (Cert §21), whose `expand?` identity is proved
+        for all k and all n.
+
+SO BOTH HAVE A PRECEDENT AND NEITHER NEEDS A NEW IDEA
+------------------------------------------------------
+* **ω^(ζ₀+1)** needs `eps0M`'s family generalised from the block `[[0,0],[1,1]]`
+  to an arbitrary already-certified block.  Bounded.
+* **ε_{ζ₀+1}** needs a certificate for a `rungM`-shaped family with a 3-row block.
+  `Cert` §21 already proves the `expand?` identity for the 2-row version at all `k`
+  and all `n`; this is its sibling.
+
+**The `famM k c` search came back 34 "any" / 0 "applicable" with an EMPTY witness
+list — including for `rowA` itself.**  That control did not fire, so the search was
+uninformative, and the reason is the one above: `rowA` is not a `famM` instance, so
+no search for one could have found it.  Recorded because a 0 from a test whose
+control never fires is the failure this repo has catalogued five times.
