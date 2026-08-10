@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.2.9"
+def version : String := "v0.3.0"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -412,7 +412,7 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 - [E.cofinal — 展開と基本列の相互共終](#ecofinal--展開と基本列の相互共終)
 - [証明書の強さと、その限界](#証明書の強さとその限界)
 - [その他の弱いエビデンス](#その他の弱いエビデンス)
-- [定義](#定義): [D.TM](#dtm--tm-の項) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
+- [定義](#定義): [D.TM](#dtm--mathfraktm) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
 
 ## E.zero / E.succ / E.lim — ✅ の実体
 
@@ -539,30 +539,51 @@ P.T は**真だが、このリポジトリの手法では証明できない**。
 
 # 定義
 
-## D.TM — $`\\mathfrak{T}(M)`$ の項
+## D.TM — $`\\mathfrak{T}(M)`$
 
-$`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ の項は次で生成される
+$`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ は**次の規則で閉じた最小の項集合**
 (Rathjen 1991 §2.1):
 
-| 構成子 | 条件 |
-|---|---|
-| $`0`$, $`M`$ | |
-| $`\\alpha_1 \\oplus \\dots \\oplus \\alpha_n`$ | $`n \\ge 2`$、各 $`\\alpha_i`$ は加法的主要、$`\\alpha_n \\le \\dots \\le \\alpha_1`$ |
-| $`\\bar\\omega^{\\alpha}`$ | $`M < \\alpha`$ |
-| $`\\bar\\varphi(\\alpha, \\beta)`$ | $`\\alpha, \\beta < M`$ |
-| $`\\psi_\\kappa(\\alpha)`$ | $`\\kappa`$ は正則、$`\\alpha < M`$、$`K_\\kappa \\alpha < \\alpha`$ |
-| $`Z(\\alpha)`$ | 正則基数の名前 |
+```math
+\\frac{}{0 \\in \\mathfrak{T}(M)}
+\\qquad
+\\frac{}{M \\in \\mathfrak{T}(M)}
+\\qquad
+\\frac{\\alpha \\in \\mathfrak{T}(M) \\quad M < \\alpha}
+{\\bar\\omega^{\\alpha} \\in \\mathfrak{T}(M)}
+\\qquad
+\\frac{\\alpha \\in \\mathfrak{T}(M)}{Z(\\alpha) \\in \\mathfrak{T}(M)}
+```
 
-**$`\\bar\\varphi`$ は $`\\omega^\\cdot`$ の不動点を飛ばして数える。** $`\\bar\\varphi(0,\\beta)`$
-は最初の不動点未満では $`\\omega^\\beta`$ だが、
+```math
+\\frac{\\alpha, \\beta \\in \\mathfrak{T}(M) \\quad \\alpha, \\beta < M}
+{\\bar\\varphi(\\alpha, \\beta) \\in \\mathfrak{T}(M)}
+\\qquad
+\\frac{\\kappa, \\alpha \\in \\mathfrak{T}(M) \\quad \\kappa \\in R
+\\quad \\alpha < M \\quad K_\\kappa \\alpha < \\alpha}
+{\\psi_\\kappa(\\alpha) \\in \\mathfrak{T}(M)}
+```
+
+```math
+\\frac{\\alpha_1, \\dots, \\alpha_n \\in AP \\quad n \\ge 2
+\\quad \\alpha_n \\le \\dots \\le \\alpha_1}
+{\\alpha_1 \\oplus \\dots \\oplus \\alpha_n \\in \\mathfrak{T}(M)}
+```
+
+ここで $`AP`$ は加法的主要な項 $`\\{M\\} \\cup \\{\\bar\\omega^\\alpha\\} \\cup
+\\{\\bar\\varphi(\\alpha,\\beta)\\} \\cup SC`$、$`SC = \\{M\\} \\cup \\{\\psi_\\kappa\\alpha\\}
+\\cup \\{Z\\alpha\\}`$、$`R = \\{Z\\alpha\\}`$。$`\\oplus`$ の条件 (成分が $`AP`$、降順) が
+一意な正規形を与える。
+
+**$`\\bar\\varphi`$ は $`\\omega^\\cdot`$ の不動点を飛ばして数える。**
+$`\\bar\\varphi(0,\\beta)`$ は最初の不動点未満では $`\\omega^\\beta`$ だが、
 
 ```math
 \\bar\\varphi(0, \\varepsilon_0) = \\omega^{\\varepsilon_0 + 1} \\ne \\varepsilon_0
 ```
 
-これが一意な正規形を与える。**不動点の下では 2 つの読みが一致するので、そこだけで
-較正した関数・コーパス・読者は上で静かに誤る** — この事実はこのリポジトリで 5 つの
-欠陥を起こした。
+**不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
+上で静かに誤る** — この事実はこのリポジトリで 5 つの欠陥を起こした。
 
 ## D.CertifiedIn / D.DomI
 
