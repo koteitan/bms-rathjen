@@ -96,3 +96,49 @@ or (b) reprove `R3.e3_val`-style row facts directly in `oR`, bypassing `o?`.
 (b) avoids inheriting a retracted function into the certificate path, which is the
 reason `o?` was retracted in the first place; (a) is cheaper if the agreement
 region is easy to characterise.  **Measure the agreement region before choosing.**
+
+
+APPENDED — WHERE THE TWO READERS ACTUALLY AGREE, AND A CORRECTION TO THIS REPO
+==============================================================================
+
+Corpus: 607 distinct matrices, assembled only from project-owned data — all 51
+`Rows.rows` matrices, `epsM`/`eps0M` (k<8), `towerM` (k<10), `famM k c` (k<6,
+c from zero/one/omega/eps0T/tower j/epsN j), `rungM` (k<6, n<8), and two levels
+of closure of the table rows under `BMS.expand` at 0..3, deduplicated.
+
+    agree 255 · disagree 352
+
+    predicate                          trueAgree  trueDisagree  falseAgree  falseDisagree
+    width < 4                                 20             1         235            351
+    no second entry > 1                      255            86           0            266
+    < (0,0)(1,1)(2,1)(2,0)                   255            11           0            341
+    both of the previous two                 255            11           0            341
+    < (0,0)(1,1)(2,1)(1,1)(2,1)              255             0           0            352
+
+Only the last is a perfect separator.  Controls fire: `!agrees boundary` and
+`!agrees loopBoundary` both hold, so this is not measured on a corpus where the
+readers never disagree.
+
+**CORRECTION TO A DOCUMENTED FACT.**  Several files in this repo say `o?` is wrong
+"at and above `(0,0)(1,1)(2,1)(2,0)`".  Measured, **11 matrices STRICTLY BELOW that
+matrix already disagree**, the first being the loop-back matrix
+`(0,0)(1,1)(2,1)(1,1)(2,1)`.  A bridge stated at the recorded boundary would be
+FALSE.  The recorded boundary is where the ORACLE audit found `o?`'s first wrong
+VALUE; it is not where the two readers first diverge, and those are different
+facts that the documentation ran together.
+
+**AND THE ORDER CUT ALONE IS NOT ENOUGH.**  `Matrix = List (List Nat)` admits
+malformed heights: `[[0], [1,0,0]]` is below the loop boundary and the readers
+still disagree, because the recalibrated reader rejects its height-three column
+while `o?`'s one-row fallback accepts it.  The bridge's hypothesis needs a
+well-formedness conjunct as well as the order cut.
+
+Standardness does not separate: the yaBMS `bms -s` reference classified all 607 as
+standard, `(255, 352, 0, 0)`.  `BMS.Standard` is a reachability `Prop` with no
+decision procedure here, which is why that check went through the reference
+executable rather than a Lean predicate.
+
+STILL OPEN: the bridge itself.  Unfolding `Trans.oR`/`Trans.Recal.oR`/`Trans.o?`
+reaches an algorithm-equivalence obligation for which `Trans/Recal.lean` exports no
+lemma.  The exact failing point is kept as a comment in
+`lean/scripts/reader_agreement.lean` rather than as a broken proof.
