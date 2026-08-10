@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.3.1
+バージョン: v0.3.2
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -77,10 +77,11 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 [plan/README.md](../plan/README.md) にある。
 
 - [E.zero / E.succ / E.lim — ✅ の実体](#ezero--esucc--elim--✅-の実体)
-- [E.cofinal — 展開と基本列の相互共終](#ecofinal--展開と基本列の相互共終)
+  - [✅ が検査していないもの](#-が検査していないもの)
+- [E.cofinal (展開と基本列の相互共終)](#ecofinal-展開と基本列の相互共終)
 - [証明書の強さと、その限界](#証明書の強さとその限界)
 - [その他の弱いエビデンス](#その他の弱いエビデンス)
-- [定義](#定義): [D.TM](#dtm--mathfraktm) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
+- [定義](#定義): [D.TM](#dtm-mathfraktm) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
 
 ## E.zero / E.succ / E.lim — ✅ の実体
 
@@ -120,6 +121,27 @@ $`\forall n.\;\mathrm{Certified}\;(M[n])\;(f_n)`$ の 1 つだけ**で、残る 
 列 $`f`$ の性質である。**性質をいくつ検査しても値は決まらない**
 ([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた。
 $`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
+
+### ✅ が検査していないもの
+
+第 5 前提 $`\forall s \in \mathfrak{T}(M).\;s < t \to \exists n.\;s \le f_n`$ は
+**$`f`$ が $`t`$ に共終**だと言っている。これと第 2・第 3 前提から
+$`\sup_n f_n = t`$ が出る。**$`\mathfrak{T}(M)`$ 側の共終性は証明の中にある。**
+
+言っていないのは BMS 側である:
+
+```math
+\sup_n |M[n]| = |M|
+```
+
+これが無いと $`\sup_n f_n = t`$ から $`|M| = t`$ へ渡れない。そして本リポジトリに
+$`|M[n]| < |M|`$ も展開列の共終性も**補題として存在しない**。BMS を順序数表記として
+読むとき極限行の値が展開の上限であることは**読み方の定義**であって、定理ではないからである。
+✅ はこの読み方を仮定した上で $`\mathfrak{T}(M)`$ 側を尽くしている。
+
+なお下の E.cofinal は**この穴を埋めるものではない**。あちらは
+$`\mathfrak{T}(M)`$ の**標準基本列**と展開列の関係であり、$`f`$ は標準基本列である
+必要がないので、E.cofinal を確かめても ✅ の根拠は増えない。両者は別の主張である。
 
 ## E.cofinal (展開と基本列の相互共終)
 

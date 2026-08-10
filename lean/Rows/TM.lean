@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.3.1"
+def version : String := "v0.3.2"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -409,10 +409,11 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 [plan/README.md](../plan/README.md) にある。
 
 - [E.zero / E.succ / E.lim — ✅ の実体](#ezero--esucc--elim--✅-の実体)
-- [E.cofinal — 展開と基本列の相互共終](#ecofinal--展開と基本列の相互共終)
+  - [✅ が検査していないもの](#-が検査していないもの)
+- [E.cofinal (展開と基本列の相互共終)](#ecofinal-展開と基本列の相互共終)
 - [証明書の強さと、その限界](#証明書の強さとその限界)
 - [その他の弱いエビデンス](#その他の弱いエビデンス)
-- [定義](#定義): [D.TM](#dtm--mathfraktm) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
+- [定義](#定義): [D.TM](#dtm-mathfraktm) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
 
 ## E.zero / E.succ / E.lim — ✅ の実体
 
@@ -426,7 +427,7 @@ $`\\mathrm{Certified}`$ は帰納的述語で、**行の $`\\mathrm{kind}`$ に�
 \\frac{}{\\mathrm{Certified}\\;[\\,]\\;0}
 ```
 
-### E.succ — $`\\mathrm{kind}\\,M = \\mathrm{succ}`$ の行
+### E.succ
 
 ```math
 \\frac{\\mathrm{kind}\\,M = \\mathrm{succ}
@@ -436,7 +437,7 @@ $`\\mathrm{Certified}`$ は帰納的述語で、**行の $`\\mathrm{kind}`$ に�
 
 すべての展開が同じ $`t`$ を認証するなら、この行は $`t+1`$。
 
-### E.lim — $`\\mathrm{kind}\\,M = \\mathrm{lim}`$ の行
+### E.lim
 
 ```math
 \\frac{\\mathrm{kind}\\,M = \\mathrm{lim}
@@ -453,11 +454,28 @@ $`\\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n)`$ の 1 つだけ**で、�
 ([plan/constitutions.md](../plan/constitutions.md) C2)。較正事故はここを取り違えた。
 $`f`$ は**パラメータ**であって、特定の基本列に合わせる必要はない。
 
-**状態: いずれも Lean の定理。合わせて 11 行で証明済み。** 較正事故のあと、
-$`o`$ に言及しない形へ移した結果である — $`o`$ を含む主張は $`o`$ が誤っていれば
-道連れになる。
+### ✅ が検査していないもの
 
-## E.cofinal — 展開と基本列の相互共終
+第 5 前提 $`\\forall s \\in \\mathfrak{T}(M).\\;s < t \\to \\exists n.\\;s \\le f_n`$ は
+**$`f`$ が $`t`$ に共終**だと言っている。これと第 2・第 3 前提から
+$`\\sup_n f_n = t`$ が出る。**$`\\mathfrak{T}(M)`$ 側の共終性は証明の中にある。**
+
+言っていないのは BMS 側である:
+
+```math
+\\sup_n |M[n]| = |M|
+```
+
+これが無いと $`\\sup_n f_n = t`$ から $`|M| = t`$ へ渡れない。そして本リポジトリに
+$`|M[n]| < |M|`$ も展開列の共終性も**補題として存在しない**。BMS を順序数表記として
+読むとき極限行の値が展開の上限であることは**読み方の定義**であって、定理ではないからである。
+✅ はこの読み方を仮定した上で $`\\mathfrak{T}(M)`$ 側を尽くしている。
+
+なお下の E.cofinal は**この穴を埋めるものではない**。あちらは
+$`\\mathfrak{T}(M)`$ の**標準基本列**と展開列の関係であり、$`f`$ は標準基本列である
+必要がないので、E.cofinal を確かめても ✅ の根拠は増えない。両者は別の主張である。
+
+## E.cofinal (展開と基本列の相互共終)
 
 BMS の展開列と $`\\mathfrak{T}(M)`$ の基本列は、**同じ順序数への異なる共終列**に
 なり得る (例: $`\\varepsilon_1`$ へ BMS は
@@ -474,10 +492,6 @@ $`\\varepsilon_0, \\varepsilon_0^2, \\varepsilon_0^{\\varepsilon_0},\\dots`$ で
 ```
 
 両側が互いに追い越し合えば上限は一致するので、**$`M`$ と $`t`$ が同じ極限を指す**。
-
-**状態: Lean の定理。行ごとに証明済みのものがある** (一般形は無い)。
-添字のずれは**行ごとに違う** — 測定では $`n{+}1`$ が 4 行、$`n{+}2`$ が 1 行、
-$`n`$ が 2 行、専用が 2 行。一様な $`{+}1`$ は誤り。
 
 ## 証明書の強さと、その限界
 
@@ -539,7 +553,7 @@ P.T は**真だが、このリポジトリの手法では証明できない**。
 
 # 定義
 
-## D.TM — $`\\mathfrak{T}(M)`$
+## D.TM ($`\\mathfrak{T}(M)`$)
 
 $`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ は**次の規則で閉じた最小の項集合**
 (Rathjen 1991 §2.1):
