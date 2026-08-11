@@ -7135,4 +7135,54 @@ exactly that inverse, and it is not available as things stand.
 Neither test settles the remaining ~172: a pool miss is not a proof of non-existence.
 -/
 
+/-! ### §K3.2 `certIn_cnv` AS STATED IS FALSE — `sqv'` is not injective on `CNV ∩ NfOK`
+
+The goal `∀ t, CNV t → CertifiedIn Dom (sqv' t) t` cannot hold, and the reason is not the
+sequence function at all.
+
+Over a generated pool of 974 `CNV && NfOK` terms, `sqv'` produces only **928 distinct
+matrices**: 92 ordered collision pairs.  Every one of the 92 is **strictly ordered** —
+`lt a b = true` — so these are not two spellings of one ordinal that `sqv'` is right to
+identify.  `φ̄` skipping fixed points does create such spellings, which is why this was
+checked rather than assumed; the check says none of these are that.  (Controls: `ordEquiv`
+is true on `(ε₀, ε₀)` and false on `(0, ε₀)`.)
+
+The smallest pair, both `CNV`, both `NfOK`:
+
+    a = φ̄(φ̄(0,φ̄(0,0)), 0)              deg 7
+    b = φ̄(φ̄(0,φ̄(0,0)) + φ̄(0,0), 0)     deg 11
+    lt a b = true,  a ≠ b,  sqv' a = sqv' b = (0,0)(1,1)(2,1)(3,0)
+
+**The refutation.**  `certifiedIn_unique` is proved above with no condition on `Dom`:
+two certificates for the same matrix are equal.  If `certIn_cnv` held it would give
+`CertifiedIn Dom (sqv' a) a` and `CertifiedIn Dom (sqv' b) b`, and since `sqv' a = sqv' b`
+those are two certificates for one matrix, so `a = b` — false.
+
+Not mechanised: `sqv'` does not reduce in the kernel (`decide` and `rfl` both get stuck on
+it, same as §K3), so the equality of the two images is a `#guard` below and the argument
+above is on paper.  The `#guard`s are the part that could be wrong, and they are cheap to
+re-run.
+
+**What this changes.**  Chasing a decidable subclass of `CNV` on which `SqvDecomp` holds
+was the wrong repair, and so was fixing `fsV`: even with a perfect sequence function the
+statement fails, because two strictly-ordered terms compete for one matrix.  The Veblen
+certificate family needs `sqv'` replaced by an injective map, or the goal restated over
+the image with a canonical representative chosen per matrix.  Which of those is a design
+decision and is NOT taken here.
+
+Related: `o?` round-trips only 118 of these 974 terms, so it is not the canonicaliser
+either.
+-/
+
+def collA : TM.Term := TM.Term.phi (TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero
+def collB : TM.Term := TM.Term.phi (TM.Term.add (TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero TM.Term.zero)) (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero
+
+#guard Evidence.WF.CNV collA && Evidence.WF.NfOK collA
+#guard Evidence.WF.CNV collB && Evidence.WF.NfOK collB
+#guard collA != collB
+#guard TM.Term.lt collA collB          -- strictly ordered, not two spellings of one ordinal
+#guard !(TM.Term.lt collB collA)
+#guard sqv' collA == sqv' collB        -- ... yet one and the same matrix
+#guard sqv' collA == [[0, 0], [1, 1], [2, 1], [3, 0]]
+
 end Evidence.SqV
