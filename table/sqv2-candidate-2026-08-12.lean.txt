@@ -1,0 +1,54 @@
+import Evidence.SqV
+
+open TM (Term)
+open TM.Term
+
+namespace CX19
+
+abbrev Col2 := Nat × Nat
+
+def toMatrix (cs : List Col2) : BMS.Matrix :=
+  cs.map (fun c => [c.1, c.2])
+
+/-- Finite Veblen indices use the table's predecessor convention.  At and above
+    `omega`, retaining the whole index makes a trailing successor visible. -/
+def indexBody (a : Term) : Term :=
+  if TM.Term.lt a omega then Evidence.SqV.predOr a else a
+
+/-- The `Evidence.SqV.encvF` construction with the repaired index-ladder input. -/
+def encv2F : Nat → Term → Nat → List Col2
+  | 0, _, _ => []
+  | _ + 1, .zero, _ => []
+  | f + 1, .add u v, d => encv2F f u d ++ encv2F f v d
+  | f + 1, .phi a b, d =>
+      let bm := TM.Term.splitFin b
+      let gs := Evidence.SqV.summands bm.1
+      let ladder : List Col2 :=
+        if a == zero then []
+        else (d + 1, 1) :: Evidence.SqV.bumpAt (d + 2)
+          (encv2F f (indexBody a) (d + 2))
+      let unit : List Col2 := if a == zero then [(d + 1, 0)] else ladder
+      let reps : List Col2 := (List.replicate bm.2 unit).flatten
+      let mkBlocks : List Term → List Col2 := fun hs =>
+        (hs.map (fun g =>
+          ladder ++ Evidence.SqV.shiftD (if a == zero then d + 1 else d + 2)
+            (encv2F f (if a == zero then g else Evidence.SqV.omLog g) 0))).flatten
+      if TM.Term.isFP a (gs.headD zero) then
+        encv2F f (gs.headD zero) d
+          ++ (if gs.length == 1
+              then (if a == zero then [((d + 1, 0) : Col2)] else ladder)
+              else mkBlocks (gs.drop 1))
+          ++ reps
+      else
+        match Evidence.SqV.fpDeep a (gs.headD zero) with
+        | some g => encv2F f g d ++ mkBlocks gs ++ reps
+        | none => (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
+  | _ + 1, _, _ => []
+
+def encv2 (t : Term) (d : Nat) : List Col2 :=
+  encv2F (2 * t.deg + 8) t d
+
+def sqv2 (t : Term) : BMS.Matrix :=
+  toMatrix (encv2 t 0)
+
+end CX19

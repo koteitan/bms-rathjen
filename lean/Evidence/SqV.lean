@@ -7256,6 +7256,38 @@ Which side is right was settled against the table, not guessed: row
 `(0,0)(1,1)(2,1)(3,0)` is `φ̄(ω,0)`, so `sqv'` is CORRECT on `φ̄(ω,0)` and wrong on the
 successor.  Any repair must keep that value and must not break the `certRows` agreement.
 
+
+### §K3.5 A candidate repair, and the second disagreement it does NOT fix
+
+`table/sqv2-candidate-2026-08-12.lean.txt` (not built, kept as a record) changes one line:
+
+    indexBody a := if lt a omega then predOr a else a
+
+— finite Veblen indices keep the `predOr` convention, and at or above `ω` the whole index
+is retained, so a trailing successor stays visible.  Measured against `sqv'` on the same
+27-term sample:
+
+    successor pairs distinguished   3 of 3   (`sqv'` distinguishes 0)
+    distinct images                 27 of 27 sample terms  (injective here)
+    inversions                       0       (`sqv'` has 2)
+    controls                         constant map 351/351 collapsed; an ideal rank map 0/0
+    φ̄(ω,0)                          unchanged at (0,0)(1,1)(2,1)(3,0)
+
+**But it is not landed, because requirement 1 is not met.**  Against the generated table —
+51 rows, 17 of them height-2 with a `CNV` term — BOTH maps disagree on exactly one row:
+
+    φ̄(ε₀,0)     table  (0,0)(1,1)(2,1)(3,0)(4,1)
+                both   (0,0)(1,1)(2,1)(3,1)
+
+`sqv2` does not make this worse and does not fix it.  So there is a SECOND defect,
+independent of the successor one, and it was invisible until the table was used as the
+oracle instead of `certRows` — which contributes only 3 usable rows and passed both maps.
+
+That is the fourth corpus today to pass a map with a demonstrable defect
+(`nfOKLimitCorpus`, `agreeCorpus`, `certRows`, and the 3-row filter of `certRows`).  The
+generated table is the one that caught it, and it caught it because it was not assembled
+from things that already worked.
+
 -/
 
 end Evidence.SqV
