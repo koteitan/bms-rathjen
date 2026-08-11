@@ -22,9 +22,7 @@
     および有限検査器 (順序埋め込み・相互共終・双模倣)
   - `Rows/` 対応表の行データベースと行ごとの機械検査
 - `table/` — 生成物 (手編集しない)
-- `scripts/crosscheck.sh` — yaBMS との出力照合
-- `scripts/standard-audit.sh` — 表の全行が**標準形の行列**であることの検査
-- `scripts/oracle-audit.sh` — 表の全行を変換写像 (オラクル) と突き合わせる
+- `scripts/` — 検査器。**それぞれ自己試験を持つ** (下記)
 
 ## 表の ✅ が主張していること
 
@@ -47,3 +45,31 @@ cd lean && lake build                      # 全行の検査 (#guard) を含む
 lake exe gentable > ../table/table-r1.md      # 表の再生成
 YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 ```
+
+## 検査器と、その試験
+
+**この repo の検査器は、自分自身の試験を持っている。** 理由は
+[constitutions C0](plan/constitutions.md) にある — 一晩に自作の検査器が 5 回誤り、
+そのうち**事前に試験してあった 1 つだけが最初から正しかった**。残る 4 つは、
+誤った答えを出した後で試験を書いている。
+
+| 検査器 | 何を測るか | 試験の走らせ方 |
+|---|---|---|
+| `lean/scripts/axiom_sweep.lean` | リポジトリ全体が何に依存しているか | ファイル内の `#guard` と、`axioms_of` の自己試験が規則を共有 |
+| `lean/scripts/axioms_of.lean` | 宣言ごとの公理 | `lake env lean scripts/axioms_of.lean` — 4 分類 + 5 集計を検査 |
+| `scripts/check-math.js` | 数式が GitHub で壊れるか、リンクとアンカーが生きているか | 引数に `.md` を渡す。アンカー規則は GitHub 実測の 7 例で自己試験 |
+| `scripts/settled.sh` | 作業役がファイルを書き終えたか | `scripts/settled.sh --self-test` — 5 ケース |
+| `scripts/standard-audit.sh` | 表の全行が標準形の行列か | |
+| `scripts/crosscheck.sh` | BMS の実装が yaBMS の C 実装と一致するか | 112 例そのものが試験 |
+| `scripts/oracle-audit.sh` | 表の全行が変換写像と一致するか | |
+
+**試験は両側を見る。** 欠陥を検出できることだけ確かめても、**常に赤を返す検査器と
+区別がつかない**。正常な対照で沈黙することまで見て、初めて検出したと言える。
+`check-math.js` は 5 種類の欠陥 + 正常な文書、`settled.sh` は 5 ケース、
+`axioms_of.lean` は公理なし・propext のみ・選択公理・`native_decide`・`sorry` の
+5 種類を振り分ける。
+
+**そして試験自体も、故意に壊して確かめてある。** 今夜、自己試験が 2 回とも盲目だった
+— 片方は集計の層を通っていなかった (そこにバグがあった)、もう片方は陽性対照が無く、
+計数を潰しても「0 件」で通った。**「自己試験が通った」は、その試験を壊してみるまで
+根拠にならない。**
