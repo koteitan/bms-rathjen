@@ -7057,4 +7057,47 @@ example {t : TM.Term} {fs : Nat → TM.Term}
 #print axioms kind_sqv'_lim
 #print axioms kind_sqv'
 
+/-! ## §K3 The `SqvDecomp` identity fails WIDELY, not in a corner (2026-08-12)
+
+`no_sqvDecomp_general` and `no_sqvDecomp_general_nfOK` refute the universally closed
+statement.  Neither says how OFTEN it fails, and §25's `#guard decompFailures fsV == []`
+— 0 failures over `nfOKLimitCorpus`, 95 terms — reads like "rare corner".  It is not.
+
+**Measured.**  Two independently generated corpora of `CNV && NfOK && limit && nonzero`
+terms.  Corpus A (126 terms, built to contain `nfCex`): 25 failures.  Corpus B (893
+terms, a different atom pool and size bound, overlapping A in only 41 terms): **244
+failures, 27%**.  Both detectors were shown to fire on `nfCex` and stay silent on
+`eps0T` before the counts were believed.
+
+**A separating predicate was fitted to corpus A and did NOT survive corpus B**: exact
+split there (25/101), 180 false negatives here.  Recorded because the fit looked
+convincing — 4 branches, 126 terms, 0 error — and only a hold-out corpus showed it was
+a restatement of the data.  Do not accept the next such predicate without one.
+
+**And the counterexample below is much smaller and much simpler than `nfCex`.**  Degree
+7, no sum anywhere, argument literally `zero`.  So "at least two infinite summands",
+which corpus A supported as a necessary condition, is false.  `fsV` and `fsV'` agree on
+this term for n < 8, so it is not a fuel artefact either.
+-/
+
+/-- `φ̄(φ̄(φ̄(0,0),0),0)` — degree 7, `CNV`, `NfOK`, a limit, and no sum in it. -/
+def smallCex : TM.Term :=
+  TM.Term.phi (TM.Term.phi (TM.Term.phi TM.Term.zero TM.Term.zero) TM.Term.zero) TM.Term.zero
+
+#guard Evidence.WF.CNV smallCex && Evidence.WF.NfOK smallCex
+#guard !(Evidence.WF.kindV smallCex) && smallCex != TM.Term.zero
+-- neither existing corpus reaches it, which is why §25's guard is green
+#guard !(nfOKLimitCorpus.contains smallCex) && !(agreeCorpus.contains smallCex)
+-- not a fuel artefact: the two sequence functions agree here
+#guard (List.range 8).all (fun n => fsV' smallCex n == fsV smallCex n)
+
+-- `sqv'` and `fsV'` do not reduce in the kernel, so this is recorded as `#guard`
+-- (elaborator evaluation), NOT as a theorem.  Nothing rests on it being one: the
+-- universally closed statement is already refuted as a THEOREM by
+-- `no_sqvDecomp_general_nfOK` above.  What is new here is the SIZE and the FREQUENCY.
+#guard !(BMS.expand (sqv' smallCex) 0 == sqv' (fsV' smallCex 0))
+#guard !(BMS.expand (sqv' smallCex) 0 == sqv' (fsV smallCex 0))
+#guard BMS.expand (sqv' smallCex) 0 == [[0, 0], [1, 1], [2, 1]]
+#guard sqv' (fsV' smallCex 0) == [[0, 0], [1, 1], [2, 1], [3, 0]]
+
 end Evidence.SqV
