@@ -7323,6 +7323,37 @@ That is the fourth corpus today to pass a map with a demonstrable defect
 generated table is the one that caught it, and it caught it because it was not assembled
 from things that already worked.
 
+
+### §K3.6 How to verify a row that has no proof
+
+`SqvDecomp` is false in general (§K1) — but where it HOLDS it is a verification method,
+and that is worth separating from the failed goal it came from.  To check a candidate
+matrix `m` for a term `t` without any proof of the row:
+
+    expand m with the BMS reference implementation, and compare with sqv' of t's
+    fundamental sequence.
+
+This uses BMS as a third source that neither `oR` nor `sqv'` is built from.  Two rows
+checked this way, both settled:
+
+`φ̄(ε₀,0)`, where `oR` and `sqv'` disagreed — `ε₀[n] = ω, ω^ω, …`, and `oR`'s matrix
+expands to `φ̄(ω,0), φ̄(ω^ω,0), …`.  `oR` is right (§K3.5).
+
+`φ̄(ω^ω,0)`, which no row covers at all, so nobody had checked it:
+
+    fs (φ̄(ω^ω,0))   = ε₀, φ̄(ω,0), φ̄(ω²,0), …
+    sqv' of those    = (0,0)(1,1)(2,1)(3,0),  (0,0)(1,1)(2,1)(3,0)(3,0),  …
+    (0,0)(1,1)(2,1)(3,0)(4,0)[0] = (0,0)(1,1)(2,1)(3,0)
+                             [1] = (0,0)(1,1)(2,1)(3,0)(3,0)
+
+The expansions ARE the images of the fundamental sequence, up to the usual index shift.
+So `sqv' (φ̄(ω^ω,0)) = (0,0)(1,1)(2,1)(3,0)(4,0)` is correct, and any repair must keep it.
+
+**A guess this refuted.**  Seeing `(3,0)(3,0)` I took the repeated column for a sum and
+suspected the value was far too small.  It is not a sum: `sqv' (φ̄(ω²,0))` is exactly
+`(0,0)(1,1)(2,1)(3,0)(3,0)`.  Reading BMS semantics off a column pattern is guessing;
+one `#eval` settled it the other way.
+
 -/
 
 end Evidence.SqV
