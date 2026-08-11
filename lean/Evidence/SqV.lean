@@ -7433,6 +7433,36 @@ would rank a constant map first.
 that matrix and compare against images of the fundamental sequence.  It verifies a value;
 it does not search for one.
 
+
+### §K3.10 Why only three values are known, and what would produce a fourth
+
+The ε-branch repair needs correct values to fit.  Three exist:
+
+    φ̄(ω,0)    (0,0)(1,1)(2,1)(3,0)          a proved table row
+    φ̄(ε₀,0)   (0,0)(1,1)(2,1)(3,0)(4,1)     §K3.5, settled by expansion
+    φ̄(ω^ω,0)  (0,0)(1,1)(2,1)(3,0)(4,0)     §K3.6, no row covers it
+
+A fourth was attempted — `φ̄(ε₁,0)`, the second ε-number index, which is what would show
+the branch's rule rather than one instance of it.  **It cannot be derived by §K3.6**, and
+the reason is worth stating because it bounds the whole method.
+
+§K3.6 compares a candidate matrix's expansions against `sqv'` of the term's fundamental
+sequence.  That works only while the fundamental sequence stays inside the region where
+`sqv'` is known right.  For `φ̄(ε₀,0)` it does: the sequence is
+`φ̄(ω,0), φ̄(ω^ω,0), …`, all PLAIN indices (first Veblen argument zero), which is exactly
+the case `sqv'` gets right.  For `φ̄(ε₁,0)` the sequence begins with a term that already
+carries an ε-number index, so the comparison would be against values the branch is
+supposed to fix.  Circular.
+
+**What would break the circle**: the method extends downward by induction, since an
+ε-index's own fundamental sequence eventually reaches plain indices.  Verifying
+`φ̄(ε₁,0)` therefore means verifying its sequence's terms first, and those in turn — a
+chain, not a single check.  That is the honest price, and it is why three values took a
+day and the fourth did not arrive.
+
+Until a fourth exists, any ε-branch fitted to the three is fitted to three points.  §K3.7
+is what happens then.
+
 -/
 
 end Evidence.SqV
