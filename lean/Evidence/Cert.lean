@@ -10497,4 +10497,753 @@ theorem redP_L (m : Nat) : redP (L m) = L m := by
 
 end Ladder2
 
+
+/-! ### §21.6 THE CHAIN IS CLOSED — `transPort` on the ladder, and therefore on the rungs
+
+§21.5 left exactly one lemma open on the `transPort` link.  This section proves it:
+`transPort_rungPS` at the end is `∀ n`.  So of the four links
+
+    rungM 0 n --ofMatrix--> rungPS n --transPort--> rungBT n --dict--> fsEsucc 0 n
+         [1] theorem            [2] THEOREM (here)        [3] STILL OPEN
+
+link 1 (§21.3 `ofMatrix_rungM_zero`) and link 2 (here) are theorems, and **link 3 is not**.
+`dict_rungBT : dict (rungBT n) = fsEsucc 0 n` remains a `#guard` at 8 points, for the reason
+§21.3 records: `Trans.Dict.collapse` is a NORMALISER (`wcnf`, `foldl`, `omegaNF`), so the two
+sides are never definitionally equal and the three `dict` clauses cannot close the gap.  Three
+attempts died there.  **§21.1's `oR (rungM k n) = fsEsucc k n` is therefore still a
+measurement, not a theorem** — this section removes the second obstruction, not the last one.
+
+WHY THIS ONE WORKED WHERE FOUR ATTEMPTS DID NOT.  The obstruction was never the fuel —
+that was measured and turned out to be a non-issue on this family (see §21.4).  It was the
+MEMO TABLE: `runAux` threads it, so a run is not determined by its list argument alone, and
+that is exactly why no append lemma can exist (§21.3).  The move here is to stop treating the
+memo as an obstacle and give it an INVARIANT: `Sound tbl` says every entry the table already
+holds agrees with `spec`.  Carrying `Sound` through the induction turns the thing that killed
+the append route into the thing that makes this induction go.  `step_odd`, `hit_case` and
+`zero_case` are its three branches, and `runAux_L_main` is the induction itself, generalised
+over fuel, request and table.
+
+`W` is the Buchholz-side value as one `Nat`-indexed family, `spec` is the reader's specified
+output including the request parameter, and `m_lt_transFuel` supplies the fuel bound that
+`runAux_L_main` needs — the only place fuel appears at all.
+
+AXIOMS.  Every theorem here is `[propext, Quot.sound]` or axiom-free; 7 of the 65 depend on
+no axiom whatsoever.  No `Classical.choice`, no `native_decide`, no `sorry`.  Measured on the
+submission before transplant, and again after.
+
+PROVENANCE.  Written by a claude-opus-5 worker, against the same brief given simultaneously
+to a codex worker; both reached the target with identical axiom cleanliness.  This submission
+was taken for three reasons: it closes the chain to `transPort_rungPS` rather than stopping at
+`transPort_LBT`; it names the memo invariant instead of only satisfying it; and it is
+documented.  The comparison is recorded in `table/model-comparison-2026-08-11.txt`, including
+what it does not establish.
+-/
+
+section Ladder3
+open Trans.Recal
+open Trans.Dict
+/-! ## 1. The Buchholz side of the ladder, as one Nat-indexed family -/
+
+/-- `W k` is the value the reader takes on `L k` for `k ≥ 1`, extended by `W 0 = D_0 0`
+    (which is the value of the *marked* reader at the bottom of an even ladder). -/
+def W : Nat → BT
+  | 0 => .D 0 .zero
+  | 1 => .D 0 (.D 1 .zero)
+  | k + 2 => .D 0 (.sum (.D 1 .zero) (W k))
+
+/-- The value of the marked reader below an odd ladder. -/
+def V : BT := .D 1 .zero
+
+#guard (List.range 13).all fun m => (m == 0) || (LBT m == W m)
+
+theorem W_add_two (k : Nat) : W (k + 2) = .D 0 (.sum (.D 1 .zero) (W k)) := rfl
+
+/-! ### `LBT` is `W` -/
+
+theorem LBT_step (m : Nat) (h : 1 ≤ m) :
+    LBT (m + 2) = .D 0 ((BT.D 1 BT.zero).sum (LBT m)) := by
+  rcases Nat.mod_two_eq_zero_or_one m with hm | hm
+  · obtain ⟨p, hp⟩ : ∃ p, m = 2 * p + 2 := ⟨(m - 2) / 2, by omega⟩
+    subst hp
+    simp only [LBT]
+    rw [if_neg (by omega), if_neg (by omega)]
+    rw [show (2 * p + 3 + 1) / 2 = (2 * p + 1 + 1) / 2 + 1 by omega]
+    rfl
+  · obtain ⟨n, hn⟩ : ∃ n, m = 2 * n + 1 := ⟨m / 2, by omega⟩
+    subst hn
+    simp only [LBT]
+    rw [if_pos (by omega), if_pos (by omega)]
+    rw [show (2 * n + 2) / 2 = 2 * n / 2 + 1 by omega]
+    rfl
+
+theorem LBT_W (m : Nat) : LBT (m + 1) = W (m + 1) := by
+  refine Nat.strongRecOn (motive := fun m => LBT (m + 1) = W (m + 1)) m ?_
+  clear m
+  intro m ih
+  match m with
+  | 0 => rfl
+  | 1 => rfl
+  | k + 2 =>
+    rw [show k + 2 + 1 = (k + 1) + 2 by omega, LBT_step (k + 1) (by omega), ih k (by omega)]
+    rfl
+
+/-! ### Structure of `W` under `toL`, `size`, `replMark`, `isMarkedB` -/
+
+theorem toL_W (k : Nat) : (W k).toL = [W k] := by
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+theorem size_W (k : Nat) : k + 2 ≤ BT.size (W k) := by
+  refine Nat.strongRecOn (motive := fun k => k + 2 ≤ BT.size (W k)) k ?_
+  clear k
+  intro k ih
+  match k with
+  | 0 => decide
+  | 1 => decide
+  | j + 2 =>
+    have h := ih j (by omega)
+    have hs : BT.size (W (j + 2)) = 1 + (1 + BT.size (BT.D 1 BT.zero) + BT.size (W j)) := rfl
+    have h2 : BT.size (BT.D 1 BT.zero) = 2 := rfl
+    omega
+
+theorem beq_Dsum_W0 (x : BT) : (BT.D 0 ((BT.D 1 BT.zero).sum x) == W 0) = false := rfl
+theorem beq_Dsum_W1 (x : BT) : (BT.D 0 ((BT.D 1 BT.zero).sum x) == W 1) = false := rfl
+
+/-- One rung of `replMark` down an even `W`. -/
+theorem replMark_W_even (n : Nat) : ∀ f : Nat, 2 * n + 2 ≤ f →
+    replMark f (W (2 * n)) (W 0) (W 1) = some (W (2 * n + 1)) := by
+  induction n with
+  | zero =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | f + 1 => rfl
+  | succ n ih =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | 1 => exact absurd hf (by omega)
+    | f + 2 =>
+      have hstep := ih f (by omega)
+      rw [show 2 * (n + 1) = 2 * n + 2 by omega, W_add_two]
+      show ((replMark (f + 1) (BT.sum (BT.D 1 BT.zero) (W (2 * n))) (W 0) (W 1)).map
+        (fun aa => BT.D 0 aa)) = _
+      show ((match (BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n)))).getLast? with
+        | none => none
+        | some last => (replMark f last (W 0) (W 1)).map
+            (fun ll => BT.ofL ((BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n)))).dropLast ++ [ll]))).map
+        (fun aa => BT.D 0 aa)) = _
+      rw [show BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n))) = [BT.D 1 BT.zero, W (2 * n)] by
+        show [BT.D 1 BT.zero] ++ BT.toL (W (2 * n)) = _
+        rw [toL_W]; rfl]
+      show (Option.map (fun aa => BT.D 0 aa)
+              (Option.map (fun ll => BT.ofL ([BT.D 1 BT.zero] ++ [ll]))
+                (replMark f (W (2 * n)) (W 0) (W 1)))) = _
+      rw [hstep]
+      rfl
+
+/-- One rung of `replMark` down an odd `W`. -/
+theorem replMark_W_odd (n : Nat) : ∀ f : Nat, 2 * n + 3 ≤ f →
+    replMark f (W (2 * n + 1)) (W 1) (W 2) = some (W (2 * n + 2)) := by
+  induction n with
+  | zero =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | f + 1 => rfl
+  | succ n ih =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | 1 => exact absurd hf (by omega)
+    | f + 2 =>
+      have hstep := ih f (by omega)
+      rw [show 2 * (n + 1) + 1 = (2 * n + 1) + 2 by omega, W_add_two]
+      show ((replMark (f + 1) (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1))) (W 1) (W 2)).map
+        (fun aa => BT.D 0 aa)) = _
+      show ((match (BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1)))).getLast? with
+        | none => none
+        | some last => (replMark f last (W 1) (W 2)).map
+            (fun ll => BT.ofL
+              ((BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1)))).dropLast ++ [ll]))).map
+        (fun aa => BT.D 0 aa)) = _
+      rw [show BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1))) = [BT.D 1 BT.zero, W (2 * n + 1)] by
+        show [BT.D 1 BT.zero] ++ BT.toL (W (2 * n + 1)) = _
+        rw [toL_W]; rfl]
+      show (Option.map (fun aa => BT.D 0 aa)
+              (Option.map (fun ll => BT.ofL ([BT.D 1 BT.zero] ++ [ll]))
+                (replMark f (W (2 * n + 1)) (W 1) (W 2)))) = _
+      rw [hstep]
+      rfl
+
+theorem isMarkedBAux_W_even (n : Nat) : ∀ f : Nat, 2 * n + 2 ≤ f →
+    isMarkedBAux f (some (W (2 * n))) (W 0) = true := by
+  induction n with
+  | zero =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | f + 1 => rfl
+  | succ n ih =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | 1 => exact absurd hf (by omega)
+    | f + 2 =>
+      have hstep := ih f (by omega)
+      rw [show 2 * (n + 1) = 2 * n + 2 by omega, W_add_two]
+      simp only [isMarkedBAux]
+      rw [beq_Dsum_W0, if_neg (by simp)]
+      rw [show nextMarkedB (BT.D 0 (BT.sum (BT.D 1 BT.zero) (W (2 * n))))
+            = some (BT.sum (BT.D 1 BT.zero) (W (2 * n))) from rfl]
+      simp only [isMarkedBAux]
+      rw [show (BT.sum (BT.D 1 BT.zero) (W (2 * n)) == W 0) = false from rfl, if_neg (by simp)]
+      rw [show nextMarkedB (BT.sum (BT.D 1 BT.zero) (W (2 * n))) = some (W (2 * n)) by
+        show (BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n)))).getLast? = _
+        rw [show BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n))) = [BT.D 1 BT.zero, W (2 * n)] by
+          show [BT.D 1 BT.zero] ++ BT.toL (W (2 * n)) = _
+          rw [toL_W]; rfl]
+        rfl]
+      exact hstep
+
+theorem isMarkedBAux_W_odd (n : Nat) : ∀ f : Nat, 2 * n + 3 ≤ f →
+    isMarkedBAux f (some (W (2 * n + 1))) (W 1) = true := by
+  induction n with
+  | zero =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | f + 1 => rfl
+  | succ n ih =>
+    intro f hf
+    match f with
+    | 0 => exact absurd hf (by omega)
+    | 1 => exact absurd hf (by omega)
+    | f + 2 =>
+      have hstep := ih f (by omega)
+      rw [show 2 * (n + 1) + 1 = (2 * n + 1) + 2 by omega, W_add_two]
+      simp only [isMarkedBAux]
+      rw [beq_Dsum_W1, if_neg (by simp)]
+      rw [show nextMarkedB (BT.D 0 (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1))))
+            = some (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1))) from rfl]
+      simp only [isMarkedBAux]
+      rw [show (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1)) == W 1) = false from rfl, if_neg (by simp)]
+      rw [show nextMarkedB (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1))) = some (W (2 * n + 1)) by
+        show (BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1)))).getLast? = _
+        rw [show BT.toL (BT.sum (BT.D 1 BT.zero) (W (2 * n + 1)))
+              = [BT.D 1 BT.zero, W (2 * n + 1)] by
+          show [BT.D 1 BT.zero] ++ BT.toL (W (2 * n + 1)) = _
+          rw [toL_W]; rfl]
+        rfl]
+      exact hstep
+
+theorem isMarkedB_W_even (n : Nat) : isMarkedB (W (2 * n)) (W 0) = true := by
+  unfold isMarkedB
+  exact isMarkedBAux_W_even n _ (by have := size_W (2 * n); omega)
+
+theorem isMarkedB_W_odd (n : Nat) : isMarkedB (W (2 * n + 1)) (W 1) = true := by
+  unfold isMarkedB
+  exact isMarkedBAux_W_odd n _ (by have := size_W (2 * n + 1); omega)
+
+theorem isMarkedB_V_W_one : isMarkedB V (W 1) = false := by decide
+
+/-! ## 2. The specification: value of `Trans`/`Mark` on every rung of the ladder -/
+
+/-- The value of `Mark q` on `L m` once the mark has fallen off the bottom. -/
+def Wbot (m : Nat) : BT := if m % 2 = 0 then W 0 else V
+
+/-- `Mark q` on `L m`: the mark `q` drops the ladder by `2 * ((q+1)/2)` rungs. -/
+def specM (m q : Nat) : BT :=
+  if m = 0 then BT.zero
+  else if 2 * ((q + 1) / 2) ≤ m then W (m - 2 * ((q + 1) / 2))
+  else Wbot m
+
+/-- `Trans` (`req = none`) and `Mark q` (`req = some q`) on `L m`. -/
+def spec (m : Nat) (req : Option Nat) : BT := specM m (req.getD 0)
+
+-- the specification is the measured value, at every rung and every mark reachable
+#guard (List.range 11).all fun m =>
+  (Id.run ((runAux (transFuel (L m) + 60) (L m) none).run' []) == spec m none) &&
+  ((List.range (m + 4)).all fun q =>
+    Id.run ((runAux (transFuel (L m) + 60) (L m) (some (q : Int))).run' []) == spec m (some q))
+
+theorem spec_none (m : Nat) : spec m none = specM m 0 := rfl
+theorem spec_some (m q : Nat) : spec m (some q) = specM m q := rfl
+
+theorem specM_zero (q : Nat) : specM 0 q = BT.zero := by simp [specM]
+
+theorem specM_pos_zero (m : Nat) (h : 1 ≤ m) : specM m 0 = W m := by
+  unfold specM
+  rw [if_neg (by omega), if_pos (by omega)]
+  congr 1
+
+/-! ## 3. Control flow of the reader on the ladder -/
+
+theorem mrun_bind (x : MM BT) (k : BT → MM BT) (s : Memo) :
+    (x >>= k).run s = (k (x.run s).1).run (x.run s).2 := rfl
+
+theorem mrun_get (k : Memo → MM BT) (s : Memo) :
+    ((get : MM Memo) >>= k).run s = (k s).run s := rfl
+
+theorem isReducedP_L (m : Nat) : isReducedP (L m) = true := by
+  unfold isReducedP
+  rw [redP_L]
+  exact beq_iff_eq.mpr rfl
+
+theorem lenI_L (m : Nat) : lenI (L m) = (m : Int) + 1 := by
+  simp [lenI]
+
+theorem lenI_L_sub_one (m : Nat) : lenI (L m) - 1 = (m : Int) := by
+  rw [lenI_L]; omega
+
+theorem gp1_L_top (m : Nat) : gp1 (L m) (m : Int) = ((m % 2 : Nat) : Int) :=
+  gp1_L m m (Nat.le_refl m)
+
+theorem runAux_L_zero_run (f : Nat) (rq : Option Int) (tbl : Memo) :
+    (runAux (f + 1) (L 0) rq).run tbl
+      = match tbl.find? (fun p => p.1 == (L 0, rq)) with
+        | some p => (p.2, tbl)
+        | none => (BT.zero, ((L 0, rq), BT.zero) :: tbl) := by
+  simp only [runAux]
+  rw [mrun_get]
+  cases hfind : tbl.find? (fun p => p.1 == (L 0, rq)) with
+  | none =>
+    rw [if_neg (by simp [isReducedP_L])]
+    rw [if_pos (by decide)]
+    rw [if_pos (by decide)]
+    rfl
+  | some p => rfl
+
+/-! ## 4. The memo table -/
+
+/-- The requests the reader ever makes on the ladder are non-negative. -/
+def cast? (r : Option Nat) : Option Int := r.map (fun q : Nat => (q : Int))
+
+theorem cast?_none : cast? none = none := rfl
+theorem cast?_some (q : Nat) : cast? (some q) = some (q : Int) := rfl
+
+/-- A memo table is sound when every entry keyed on the ladder holds the specified value. -/
+def Sound (tbl : Memo) : Prop :=
+  ∀ p ∈ tbl, ∀ (k : Nat) (r : Option Nat), p.1 = (L k, cast? r) → p.2 = spec k r
+
+theorem Sound_nil : Sound [] := by
+  intro p hp
+  exact absurd hp (by simp)
+
+theorem L_inj {m k : Nat} (h : L m = L k) : m = k := by
+  have h2 := congrArg List.length h
+  rw [length_L, length_L] at h2
+  omega
+
+theorem cast?_inj {r1 r2 : Option Nat} (h : cast? r1 = cast? r2) : r1 = r2 := by
+  cases r1 with
+  | none =>
+    cases r2 with
+    | none => rfl
+    | some b => exact absurd h (by simp [cast?])
+  | some a =>
+    cases r2 with
+    | none => exact absurd h (by simp [cast?])
+    | some b =>
+      have h1 : ((a : Nat) : Int) = ((b : Nat) : Int) := Option.some.inj h
+      have h2 : a = b := by omega
+      rw [h2]
+
+theorem Sound_cons (tbl : Memo) (hs : Sound tbl) (m : Nat) (req : Option Nat) (v : BT)
+    (hv : v = spec m req) : Sound (((L m, cast? req), v) :: tbl) := by
+  intro p hp k r hk
+  rcases List.mem_cons.mp hp with h | h
+  · subst h
+    have hk' : (L m, cast? req) = (L k, cast? r) := hk
+    have hm : m = k := L_inj (congrArg Prod.fst hk')
+    have hr : req = r := cast?_inj (congrArg Prod.snd hk')
+    subst hm
+    subst hr
+    exact hv
+  · exact hs p h k r hk
+
+theorem Sound_find (tbl : Memo) (hs : Sound tbl) (m : Nat) (req : Option Nat)
+    (p : (PS × Option Int) × BT)
+    (h : tbl.find? (fun q => q.1 == (L m, cast? req)) = some p) : p.2 = spec m req := by
+  have hmem : p ∈ tbl := List.mem_of_find?_eq_some h
+  have hb := List.find?_some h
+  simp only [] at hb
+  exact hs p hmem m req (eq_of_beq hb)
+
+/-! ## 5. Arithmetic of the specification -/
+
+theorem specM_lt (m q : Nat) (h1 : 1 ≤ m) (h2 : 2 * ((q + 1) / 2) ≤ m) :
+    specM m q = W (m - 2 * ((q + 1) / 2)) := by
+  unfold specM
+  rw [if_neg (by omega), if_pos h2]
+
+theorem specM_ge_bot (m q : Nat) (h1 : 1 ≤ m) (h2 : m < 2 * ((q + 1) / 2)) :
+    specM m q = Wbot m := by
+  unfold specM
+  rw [if_neg (by omega), if_neg (by omega)]
+
+theorem specM_c1_even (n : Nat) : specM (2 * n + 1) (2 * n) = W 1 := by
+  rw [specM_lt (2 * n + 1) (2 * n) (by omega) (by omega)]
+  congr 1
+  omega
+
+theorem specM_c1_odd (n : Nat) : specM (2 * n + 2) (2 * n + 2) = W 0 := by
+  rw [specM_lt (2 * n + 2) (2 * n + 2) (by omega) (by omega)]
+  congr 1
+  omega
+
+theorem specM_even_ge (n q : Nat) (h : 2 * n + 1 ≤ q) : specM (2 * n + 2) q = W 0 := by
+  by_cases hc : 2 * ((q + 1) / 2) ≤ 2 * n + 2
+  · rw [specM_lt (2 * n + 2) q (by omega) hc]
+    congr 1
+    omega
+  · rw [specM_ge_bot (2 * n + 2) q (by omega) (by omega)]
+    unfold Wbot
+    rw [if_pos (by omega)]
+
+theorem specM_odd_ge (n q : Nat) (h : 2 * n + 3 ≤ q) : specM (2 * n + 3) q = V := by
+  rw [specM_ge_bot (2 * n + 3) q (by omega) (by omega)]
+  unfold Wbot
+  rw [if_neg (by omega)]
+
+theorem spec_one_succ (q : Nat) : spec 1 (some (q + 1)) = V := by
+  rw [spec_some, specM_ge_bot 1 (q + 1) (by omega) (by omega)]
+  unfold Wbot
+  rw [if_neg (by omega)]
+
+theorem spec_pos_none (m : Nat) (h : 1 ≤ m) : spec m none = W m := by
+  rw [spec_none, specM_pos_zero m h]
+
+theorem beq_W_zero (j : Nat) : (W j == BT.zero) = false := by
+  match j with
+  | 0 => rfl
+  | 1 => rfl
+  | _ + 2 => rfl
+
+/-! ## 6. The reader's decisions on `L m`, computed -/
+
+theorem gp1_L_even (n : Nat) : gp1 (L (2 * n + 2)) ((2 * n + 2 : Nat) : Int) = 0 := by
+  have h := gp1_L (2 * n + 2) (2 * n + 2) (Nat.le_refl _)
+  rw [show (2 * n + 2) % 2 = 0 by omega] at h
+  simpa using h
+
+theorem gp1_L_oddv (n : Nat) : gp1 (L (2 * n + 3)) ((2 * n + 3 : Nat) : Int) = 1 := by
+  have h := gp1_L (2 * n + 3) (2 * n + 3) (Nat.le_refl _)
+  rw [show (2 * n + 3) % 2 = 1 by omega] at h
+  simpa using h
+
+theorem gp1_L_odd_j0 (n : Nat) : gp1 (L (2 * n + 3)) ((2 * n + 2 : Nat) : Int) = 0 := by
+  have h := gp1_L (2 * n + 3) (2 * n + 2) (by omega)
+  rw [show (2 * n + 2) % 2 = 0 by omega] at h
+  simpa using h
+
+theorem fpar_even_top (n : Nat) :
+    fpar (L (2 * n + 2)) 0 ((2 * n + 2 : Nat) : Int) 0 = ((2 * n : Nat) : Int) :=
+  fpar_L_even (2 * n + 2) n (Nat.le_refl _)
+
+theorem fpar_odd_top (n : Nat) :
+    fpar (L (2 * n + 3)) 0 ((2 * n + 3 : Nat) : Int) 0 = ((2 * n + 2 : Nat) : Int) := by
+  have h := fpar_L_odd (2 * n + 3) (n + 1) (by omega)
+  rw [show 2 * (n + 1) + 1 = 2 * n + 3 by omega, show 2 * (n + 1) = 2 * n + 2 by omega] at h
+  exact h
+
+theorem adm_even_j0 (n : Nat) :
+    adm (L (2 * n + 2)) ((2 * n : Nat) : Int) = ((2 * n : Nat) : Int) :=
+  adm_L_even (2 * n + 2) n (by omega)
+
+theorem adm_odd_j0 (n : Nat) :
+    adm (L (2 * n + 3)) ((2 * n + 2 : Nat) : Int) = ((2 * n + 2 : Nat) : Int) := by
+  have h := adm_L_even (2 * n + 3) (n + 1) (by omega)
+  rw [show 2 * (n + 1) = 2 * n + 2 by omega] at h
+  exact h
+
+theorem ty_even (n : Nat) :
+    transTypeMain (L (2 * n + 2)) ((2 * n : Nat) : Int) ((2 * n + 2 : Nat) : Int) = 1 := by
+  unfold transTypeMain
+  rw [gp1_L_even n, if_pos (by rfl)]
+  rw [isAdm_L_even (2 * n + 2) n (by omega), if_pos (by rfl)]
+
+theorem ty_odd (n : Nat) :
+    transTypeMain (L (2 * n + 3)) ((2 * n + 2 : Nat) : Int) ((2 * n + 3 : Nat) : Int) = 6 := by
+  unfold transTypeMain
+  rw [gp1_L_oddv n, gp1_L_odd_j0 n]
+  rw [if_neg (by decide)]
+  rw [if_neg (by omega)]
+  rw [if_neg (by omega)]
+
+theorem mkC2_even (n : Nat) :
+    mkC2 (L (2 * n + 2)) ((2 * n : Nat) : Int) ((2 * n + 2 : Nat) : Int) 1 (W 1) = W 2 := by
+  show BT.D 0 (bplus (BT.D 1 BT.zero)
+    (BT.D (gp1 (L (2 * n + 2)) ((2 * n + 2 : Nat) : Int)).toNat BT.zero)) = W 2
+  rw [gp1_L_even n]
+  rfl
+
+theorem mkC2_odd (n : Nat) :
+    mkC2 (L (2 * n + 3)) ((2 * n + 2 : Nat) : Int) ((2 * n + 3 : Nat) : Int) 6 (W 0) = W 1 := by
+  show BT.D 0 (BT.D (gp1 (L (2 * n + 3)) ((2 * n + 3 : Nat) : Int)).toNat BT.zero) = W 1
+  rw [gp1_L_oddv n]
+  rfl
+
+/-! ## 7. One rung of the recursion -/
+
+theorem runAux_hit (f m : Nat) (rq : Option Int) (tbl : Memo)
+    (p : (PS × Option Int) × BT)
+    (hfind : tbl.find? (fun x => x.1 == (L m, rq)) = some p) :
+    (runAux (f + 1) (L m) rq).run tbl = (p.2, tbl) := by
+  simp only [runAux]
+  rw [mrun_get, hfind]
+  rfl
+
+theorem step_one (f : Nat) (req : Option Nat) (tbl : Memo) (hs : Sound tbl)
+    (ih : ∀ (r : Option Nat) (t : Memo), Sound t →
+      ((runAux f (L 0) (cast? r)).run t).1 = spec 0 r ∧
+      Sound ((runAux f (L 0) (cast? r)).run t).2)
+    (hfind : tbl.find? (fun p => p.1 == (L 1, cast? req)) = none) :
+    ((runAux (f + 1) (L 1) (cast? req)).run tbl).1 = spec 1 req ∧
+    Sound ((runAux (f + 1) (L 1) (cast? req)).run tbl).2 := by
+  have h1 := ih none tbl hs
+  rw [cast?_none, show spec 0 none = BT.zero from rfl] at h1
+  simp only [runAux]
+  rw [mrun_get, hfind]
+  rw [if_neg (by simp [isReducedP_L])]
+  rw [if_neg (by decide)]
+  rw [if_neg (by rw [show isPrincipalP (L 1) = true from isPrincipalP_L_succ 0]; simp)]
+  rw [show predP (L 1) = L 0 from predP_L_succ 0]
+  rw [mrun_bind, h1.1]
+  rw [if_pos (by rfl)]
+  rw [show gp1 (L 1) (lenI (L 1) - 1) = 1 from by decide]
+  cases req with
+  | none =>
+    rw [cast?_none, spec_pos_none 1 (by omega)]
+    exact ⟨rfl, Sound_cons _ h1.2 1 none (W 1) (spec_pos_none 1 (by omega)).symm⟩
+  | some q =>
+    rw [cast?_some]
+    cases q with
+    | zero =>
+      have hv : spec 1 (some 0) = W 1 := by rw [spec_some, specM_pos_zero 1 (by omega)]
+      rw [hv]
+      exact ⟨rfl, Sound_cons _ h1.2 1 (some 0) (W 1) hv.symm⟩
+    | succ q =>
+      rw [spec_one_succ q]
+      exact ⟨rfl, Sound_cons _ h1.2 1 (some (q + 1)) V (spec_one_succ q).symm⟩
+
+theorem step_even (f n : Nat) (req : Option Nat) (tbl : Memo) (hs : Sound tbl)
+    (ih : ∀ (r : Option Nat) (t : Memo), Sound t →
+      ((runAux f (L (2 * n + 1)) (cast? r)).run t).1 = spec (2 * n + 1) r ∧
+      Sound ((runAux f (L (2 * n + 1)) (cast? r)).run t).2)
+    (hfind : tbl.find? (fun p => p.1 == (L (2 * n + 2), cast? req)) = none) :
+    ((runAux (f + 1) (L (2 * n + 2)) (cast? req)).run tbl).1 = spec (2 * n + 2) req ∧
+    Sound ((runAux (f + 1) (L (2 * n + 2)) (cast? req)).run tbl).2 := by
+  have h1 := ih none tbl hs
+  rw [cast?_none, spec_pos_none (2 * n + 1) (by omega)] at h1
+  have h2 := ih (some (2 * n)) _ h1.2
+  rw [cast?_some, spec_some, specM_c1_even n] at h2
+  simp only [runAux]
+  rw [mrun_get, hfind]
+  rw [if_neg (by simp [isReducedP_L])]
+  rw [if_neg (by rw [lenI_L_sub_one]; simp only [beq_iff_eq]; omega)]
+  rw [if_neg (by
+    rw [show isPrincipalP (L (2 * n + 2)) = true from isPrincipalP_L_succ (2 * n + 1)]; simp)]
+  rw [show predP (L (2 * n + 2)) = L (2 * n + 1) from predP_L_succ (2 * n + 1)]
+  rw [mrun_bind, h1.1, beq_W_zero, if_neg (by simp)]
+  rw [lenI_L_sub_one, fpar_even_top n, adm_even_j0 n, ty_even n]
+  rw [mrun_bind, h2.1, mkC2_even n]
+  cases req with
+  | none =>
+    have hfuel : 2 * n + 3 ≤ BT.size (W (2 * n + 1)) + (BT.size (W 1) + BT.size (W 2) + 4) := by
+      have := size_W (2 * n + 1); omega
+    rw [replMark_W_odd n _ hfuel]
+    have hv : spec (2 * n + 2) none = W (2 * n + 2) := spec_pos_none _ (by omega)
+    rw [hv]
+    exact ⟨rfl, Sound_cons _ h2.2 (2 * n + 2) none (W (2 * n + 2)) hv.symm⟩
+  | some q =>
+    rw [cast?_some]
+    dsimp only
+    by_cases hq : q ≤ 2 * n
+    · have h3 := ih (some q) _ h2.2
+      rw [cast?_some, spec_some, specM_lt (2 * n + 1) q (by omega) (by omega),
+        show 2 * n + 1 - 2 * ((q + 1) / 2) = 2 * (n - (q + 1) / 2) + 1 by omega] at h3
+      rw [if_pos (show ((q : Nat) : Int) < ((2 * n + 2 : Nat) : Int) by omega)]
+      rw [mrun_bind, h3.1]
+      rw [isMarkedB_W_odd (n - (q + 1) / 2), if_pos (by rfl)]
+      have hfuel : 2 * (n - (q + 1) / 2) + 3 ≤
+          BT.size (W (2 * (n - (q + 1) / 2) + 1)) + (BT.size (W 1) + BT.size (W 2) + 4) := by
+        have := size_W (2 * (n - (q + 1) / 2) + 1); omega
+      rw [replMark_W_odd (n - (q + 1) / 2) _ hfuel]
+      have hv : spec (2 * n + 2) (some q) = W (2 * (n - (q + 1) / 2) + 2) := by
+        rw [spec_some, specM_lt (2 * n + 2) q (by omega) (by omega)]
+        congr 1
+        omega
+      rw [hv]
+      exact ⟨rfl, Sound_cons _ h3.2 (2 * n + 2) (some q) _ hv.symm⟩
+    · by_cases hq2 : q = 2 * n + 1
+      · subst hq2
+        have h3 := ih (some (2 * n + 1)) _ h2.2
+        rw [cast?_some, spec_some, specM_ge_bot (2 * n + 1) (2 * n + 1) (by omega) (by omega),
+          show Wbot (2 * n + 1) = V from by unfold Wbot; rw [if_neg (by omega)]] at h3
+        rw [if_pos (show ((2 * n + 1 : Nat) : Int) < ((2 * n + 2 : Nat) : Int) by omega)]
+        rw [mrun_bind, h3.1]
+        rw [isMarkedB_V_W_one, if_neg (by simp)]
+        rw [gp1_L_even n]
+        have hv : spec (2 * n + 2) (some (2 * n + 1)) = W 0 := by
+          rw [spec_some]; exact specM_even_ge n (2 * n + 1) (by omega)
+        rw [hv]
+        exact ⟨rfl, Sound_cons _ h3.2 (2 * n + 2) (some (2 * n + 1)) (W 0) hv.symm⟩
+      · rw [if_neg (show ¬(((q : Nat) : Int) < ((2 * n + 2 : Nat) : Int)) by omega)]
+        rw [gp1_L_even n]
+        have hv : spec (2 * n + 2) (some q) = W 0 := by
+          rw [spec_some]; exact specM_even_ge n q (by omega)
+        rw [hv]
+        exact ⟨rfl, Sound_cons _ h2.2 (2 * n + 2) (some q) (W 0) hv.symm⟩
+
+theorem replMark_W_evenN (k : Nat) (hk : k % 2 = 0) (f : Nat) (hf : k + 2 ≤ f) :
+    replMark f (W k) (W 0) (W 1) = some (W (k + 1)) := by
+  obtain ⟨j, hj⟩ : ∃ j, k = 2 * j := ⟨k / 2, by omega⟩
+  subst hj
+  exact replMark_W_even j f hf
+
+theorem isMarkedB_W_evenN (k : Nat) (hk : k % 2 = 0) : isMarkedB (W k) (W 0) = true := by
+  obtain ⟨j, hj⟩ : ∃ j, k = 2 * j := ⟨k / 2, by omega⟩
+  subst hj
+  exact isMarkedB_W_even j
+
+theorem step_odd (f n : Nat) (req : Option Nat) (tbl : Memo) (hs : Sound tbl)
+    (ih : ∀ (r : Option Nat) (t : Memo), Sound t →
+      ((runAux f (L (2 * n + 2)) (cast? r)).run t).1 = spec (2 * n + 2) r ∧
+      Sound ((runAux f (L (2 * n + 2)) (cast? r)).run t).2)
+    (hfind : tbl.find? (fun p => p.1 == (L (2 * n + 3), cast? req)) = none) :
+    ((runAux (f + 1) (L (2 * n + 3)) (cast? req)).run tbl).1 = spec (2 * n + 3) req ∧
+    Sound ((runAux (f + 1) (L (2 * n + 3)) (cast? req)).run tbl).2 := by
+  have h1 := ih none tbl hs
+  rw [cast?_none, spec_pos_none (2 * n + 2) (by omega)] at h1
+  have h2 := ih (some (2 * n + 2)) _ h1.2
+  rw [cast?_some, spec_some, specM_c1_odd n] at h2
+  simp only [runAux]
+  rw [mrun_get, hfind]
+  rw [if_neg (by simp [isReducedP_L])]
+  rw [if_neg (by rw [lenI_L_sub_one]; simp only [beq_iff_eq]; omega)]
+  rw [if_neg (by
+    rw [show isPrincipalP (L (2 * n + 3)) = true from isPrincipalP_L_succ (2 * n + 2)]; simp)]
+  rw [show predP (L (2 * n + 3)) = L (2 * n + 2) from predP_L_succ (2 * n + 2)]
+  rw [mrun_bind, h1.1, beq_W_zero, if_neg (by simp)]
+  rw [lenI_L_sub_one, fpar_odd_top n, adm_odd_j0 n, ty_odd n]
+  rw [mrun_bind, h2.1, mkC2_odd n]
+  cases req with
+  | none =>
+    have hfuel : 2 * n + 2 + 2 ≤
+        BT.size (W (2 * n + 2)) + (BT.size (W 0) + BT.size (W 1) + 4) := by
+      have := size_W (2 * n + 2); omega
+    rw [replMark_W_evenN (2 * n + 2) (by omega) _ hfuel]
+    have hv : spec (2 * n + 3) none = W (2 * n + 3) := spec_pos_none _ (by omega)
+    rw [hv]
+    exact ⟨rfl, Sound_cons _ h2.2 (2 * n + 3) none (W (2 * n + 2 + 1)) (by rw [hv])⟩
+  | some q =>
+    rw [cast?_some]
+    dsimp only
+    by_cases hq : q ≤ 2 * n + 2
+    · have h3 := ih (some q) _ h2.2
+      rw [cast?_some, spec_some, specM_lt (2 * n + 2) q (by omega) (by omega)] at h3
+      rw [if_pos (show ((q : Nat) : Int) < ((2 * n + 3 : Nat) : Int) by omega)]
+      rw [mrun_bind, h3.1]
+      rw [isMarkedB_W_evenN (2 * n + 2 - 2 * ((q + 1) / 2)) (by omega), if_pos (by rfl)]
+      have hfuel : 2 * n + 2 - 2 * ((q + 1) / 2) + 2 ≤
+          BT.size (W (2 * n + 2 - 2 * ((q + 1) / 2))) + (BT.size (W 0) + BT.size (W 1) + 4) := by
+        have := size_W (2 * n + 2 - 2 * ((q + 1) / 2)); omega
+      rw [replMark_W_evenN (2 * n + 2 - 2 * ((q + 1) / 2)) (by omega) _ hfuel]
+      have hv : spec (2 * n + 3) (some q) = W (2 * n + 2 - 2 * ((q + 1) / 2) + 1) := by
+        rw [spec_some, specM_lt (2 * n + 3) q (by omega) (by omega)]
+        congr 1
+        omega
+      rw [hv]
+      exact ⟨rfl, Sound_cons _ h3.2 (2 * n + 3) (some q) _ hv.symm⟩
+    · rw [if_neg (show ¬(((q : Nat) : Int) < ((2 * n + 3 : Nat) : Int)) by omega)]
+      rw [gp1_L_oddv n]
+      have hv : spec (2 * n + 3) (some q) = V := by
+        rw [spec_some]; exact specM_odd_ge n q (by omega)
+      rw [hv]
+      exact ⟨rfl, Sound_cons _ h2.2 (2 * n + 3) (some q) V hv.symm⟩
+
+/-! ## 8. The induction along the ladder -/
+
+theorem hit_case (f m : Nat) (req : Option Nat) (tbl : Memo) (hs : Sound tbl)
+    (p : (PS × Option Int) × BT)
+    (hfind : tbl.find? (fun x => x.1 == (L m, cast? req)) = some p) :
+    ((runAux (f + 1) (L m) (cast? req)).run tbl).1 = spec m req ∧
+    Sound ((runAux (f + 1) (L m) (cast? req)).run tbl).2 := by
+  rw [runAux_hit f m (cast? req) tbl p hfind]
+  exact ⟨Sound_find tbl hs m req p hfind, hs⟩
+
+theorem zero_case (f : Nat) (req : Option Nat) (tbl : Memo) (hs : Sound tbl)
+    (hfind : tbl.find? (fun p => p.1 == (L 0, cast? req)) = none) :
+    ((runAux (f + 1) (L 0) (cast? req)).run tbl).1 = spec 0 req ∧
+    Sound ((runAux (f + 1) (L 0) (cast? req)).run tbl).2 := by
+  rw [runAux_L_zero_run, hfind]
+  have hv : (BT.zero : BT) = spec 0 req := by
+    rw [spec]
+    unfold specM
+    rw [if_pos (by rfl)]
+  exact ⟨hv, Sound_cons tbl hs 0 req BT.zero hv⟩
+
+/-- The reader on every rung of the ladder, for every mark, with any sound memo table
+    and any fuel deep enough for the descent. -/
+theorem runAux_L_main : ∀ (f m : Nat), m < f → ∀ (req : Option Nat) (tbl : Memo), Sound tbl →
+    ((runAux f (L m) (cast? req)).run tbl).1 = spec m req ∧
+    Sound ((runAux f (L m) (cast? req)).run tbl).2 := by
+  intro f
+  induction f with
+  | zero => intro m hm; exact absurd hm (by omega)
+  | succ f ih =>
+    intro m hm req tbl hs
+    match m, hm with
+    | 0, _ =>
+      cases hfind : tbl.find? (fun p => p.1 == (L 0, cast? req)) with
+      | some p => exact hit_case f 0 req tbl hs p hfind
+      | none => exact zero_case f req tbl hs hfind
+    | 1, hm =>
+      cases hfind : tbl.find? (fun p => p.1 == (L 1, cast? req)) with
+      | some p => exact hit_case f 1 req tbl hs p hfind
+      | none => exact step_one f req tbl hs (fun r t ht => ih 0 (by omega) r t ht) hfind
+    | (k + 2), hm =>
+      rcases Nat.mod_two_eq_zero_or_one k with hk | hk
+      · obtain ⟨n, hn⟩ : ∃ n, k = 2 * n := ⟨k / 2, by omega⟩
+        subst hn
+        cases hfind : tbl.find? (fun p => p.1 == (L (2 * n + 2), cast? req)) with
+        | some p => exact hit_case f (2 * n + 2) req tbl hs p hfind
+        | none =>
+          exact step_even f n req tbl hs (fun r t ht => ih (2 * n + 1) (by omega) r t ht) hfind
+      · obtain ⟨n, hn⟩ : ∃ n, k = 2 * n + 1 := ⟨k / 2, by omega⟩
+        subst hn
+        cases hfind : tbl.find? (fun p => p.1 == (L (2 * n + 1 + 2), cast? req)) with
+        | some p => exact hit_case f (2 * n + 1 + 2) req tbl hs p hfind
+        | none =>
+          exact step_odd f n req tbl hs (fun r t ht => ih (2 * n + 2) (by omega) r t ht) hfind
+
+theorem m_lt_transFuel (m : Nat) : m < transFuel (L m) := by
+  unfold transFuel
+  rw [length_L]
+  omega
+
+theorem transPort_L (m : Nat) : transPort (L m) = spec m none := by
+  have h := runAux_L_main (transFuel (L m)) m (m_lt_transFuel m) none [] Sound_nil
+  rw [cast?_none] at h
+  exact h.1
+
+/-! ## 9. The target -/
+
+theorem transPort_LBT (m : Nat) : transPort (L m) = LBT m := by
+  rw [transPort_L m]
+  cases m with
+  | zero => rfl
+  | succ k => rw [spec_pos_none (k + 1) (by omega), LBT_W k]
+
+/-- §21.1's 24-point measurement, as a theorem for every `n`. -/
+theorem transPort_rungPS (n : Nat) : transPort (rungPS n) = rungBT n :=
+  transPort_rungPS_of_L transPort_LBT n
+
+/-! ## 10. Axioms -/
+
+end Ladder3
+
 end Evidence.Cert

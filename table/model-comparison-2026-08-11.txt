@@ -1,0 +1,101 @@
+COMPARISON: codex vs claude-opus-5 on one Lean target
+recorded 2026-08-11 04:0x, HEAD a849d58, table v0.3.4
+
+TARGET      Evidence.Cert.transPort_LBT (m) : transPort (L m) = LBT m
+            the last open link of the reader chain; transPort_rungPS_of_L
+            already consumes it.  True at 13 measured points.
+
+DESIGN      One brief, sent to both arms at the same time.  The two prompts
+            differ ONLY in the workdir path and the -m label; the body is
+            byte-identical otherwise.
+              arm-codex   codex        /tmp/.../cx6
+              arm-claude  claude-opus-5 /tmp/.../cl1
+
+WHY NOW     Earlier tonight's Claude workers cannot be compared against
+            tonight's codex workers: they got worse briefs, at a time when I
+            had the route wrong, and without the native_decide prohibition.
+            The confound is mine, not theirs.  By now the brief carries
+            everything that was learned:
+              - the dead route (append / runAux) named WITH its reason
+              - the fuel measured and tabulated, incl. the three
+                insensitivity checks, so neither arm has to find it
+              - the 62 names already in the library
+              - plan/worker-spec.md for every standing rule
+            So brief quality is equalised, and what differs is the model.
+
+NOT CONTROLLED, and it matters
+            - single trial, one target, no repetition
+            - the target may be easy or impossible; unknown at issue time
+            - the two harnesses differ (codex runs in a sandbox via the
+              codex-rescue subagent; the Claude arm is an in-process subagent
+              with the normal tool set)
+            - I wrote the brief after five codex sessions and zero recent
+              Claude sessions, so its phrasing may fit codex's habits
+            So this can support "both reached / neither reached / one reached"
+            as an observation.  It cannot support a general quality ranking.
+
+MEASURED    reached the target (theorem present, exit 0 verified by me)
+            axioms: Classical.choice / native_decide / sorry
+            obedience: did it follow the three-step shape, or invent
+                       adjacent work
+            volume: lines, theorems
+            honesty: did it report a non-zero exit plainly
+
+PRIOR OBSERVATIONS, uncontrolled, from tonight
+            - neither codex nor Claude reported back spontaneously; every
+              verdict tonight came from me re-running the check
+            - two "clean-looking" proofs were rejected this way
+            - threads that had committed to a direction did not turn on
+              instruction: 3 Claude threads and 1 codex thread, 4 of 4
+            - fresh threads followed the initial brief in both families
+            - codex documented a limitation of its own artifact unprompted
+              (its "append" lemma's docstring says it does NOT split the run)
+
+RESULT      BOTH ARMS REACHED THE TARGET.  Single trial.
+
+                                    codex (cx6)     claude-opus-5 (cl1)
+            transPort_LBT present   yes             yes
+            statement as specified  yes             yes      (no added hypotheses)
+            exit code (re-run by me) 0              0
+            hash stable across check yes            yes
+            axioms, ALL theorems    propext /       propext /
+                                    Quot.sound      Quot.sound
+              of which axiom-free   10 of 43        7 of 65
+            Classical.choice        0               0
+            native_decide           0               0
+            sorry                   0               0
+            forbidden routes used   none            none
+            library names redefined 0 of 62         0 of 62
+            lines / theorems        837 / 43        774 / 65
+            wall clock to quiet     ~60 min         ~40 min
+
+            The one visible difference is HOW they used the fuel result I
+            handed them: codex leans on it heavily (45 mentions of transFuel),
+            claude uses it 6 times and assembles the induction differently.
+            Same destination, different road.  Neither is better by any
+            measurement I made.
+
+WHAT THIS SETTLES, AND ONLY THIS
+            Earlier tonight three Claude workers failed nine attempts on this
+            same area.  That was NOT a capability gap.  Given the same brief --
+            dead route named with its reason, fuel measured and tabulated,
+            62 library names listed, standing rules in worker-spec.md -- both
+            models cleared it on the first try.  The nine failures were mine:
+            I asked for a lemma that could not exist, and I omitted the
+            native_decide prohibition.
+
+WHAT IT DOES NOT SETTLE
+            Everything in NOT CONTROLLED above.  One target, one trial.  No
+            claim about quality ordering is supported, and none is made.
+
+MY OWN INSTRUMENT FAILED FOUR TIMES TONIGHT, all in the green direction
+            - the axiom sweep did not look for native_decide at all
+            - the math checker was blind to inline math spanning a newline
+            - the settle detector read a 60s pause as "finished", twice
+            - the axiom tally counted 'depends on axioms: [...]' but not
+              'does not depend on any axioms', dropping 17 of 108 theorems --
+              and those 17 were the CLEANEST ones
+            The last is the sharpest: an instrument that discards the best
+            results as unmeasured.  Every one of these read as green or as
+            complete when it was neither.
+
