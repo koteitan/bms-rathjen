@@ -399,5 +399,59 @@ theorem dict_D (u : Nat) (a : BT) :
 theorem dict_sum (a b : BT) :
     dict (.sum a b) = TM.Term.plus (dict a) (dict b) := rfl
 
+
+/-! ## §4 THE ANCHOR WHERE THIS DICTIONARY DISAGREES WITH ITS OWN SOURCES
+
+This file's header states the dictionary's purpose: an order-isomorphism onto its image.
+**That is a goal, not a theorem** — it is checked by the `#guard`s above and proved nowhere.
+At one measured point the dictionary and the sources it was built from give DIFFERENT
+ordinals, and the difference is not notation.
+
+The point is BMS `(0,0)(1,1)(2,2)`.  Its Buchholz value is `ψ₀(ψ₂(0))`, and three
+independent things agree on that: this repository's own port of naruyoko's pss2bp
+(the `#guard` below computes it), Hexirp's published analysis, and the spreadsheet.
+The disagreement is entirely in the step FROM Buchholz TO 𝔗(M):
+
+    dict     ψ_Ω(Z 1)             = ψ_Ω(χ₁(0)) = ψ_Ω(Ω₂)
+    sources  ψ_Ω(φ̄(1, Ω+1))       = ψ_Ω(ε_{Ω+1})
+
+Both are `inT`-valid, they are not equal, and the sources' value is STRICTLY SMALLER.
+The sources are P進大好きbot's diary and the BMS-vs-Rathjen spreadsheet — both unproved,
+which is why this section proves only what is decidable here: that the two values differ
+and how they compare.  Which is CORRECT is a separate question, and one this file cannot
+settle.
+
+**But the dictionary's own claim can be refuted without appealing to any source, and it
+has been.** A bounded search over 3174 standard Buchholz terms (size ≤ 7, subscripts ≤ 3,
+sums ≤ 3 summands) and their 5035551 ordered pairs found **281 pairs where `a <_B b` but
+the images do not satisfy `dict a <_T dict b`**.  Zero images left `inT`.  So the failure
+is order INVERSION, not escape from the notation.  The Buchholz order came from naruyoko's
+`lessThanBuchholz`, called as an external tool; see `scripts/external-check.py` for the
+sources and how to run it.
+
+Consequence for the table: values produced through `oR` are affected, because
+`oR = (1 + ·) ∘ dict ∘ oRB`.  `oRB` — the BMS → Buchholz half — is NOT affected; it agrees
+with the spreadsheet on 374 of 376 entries, and the two exceptions are the spreadsheet
+writing non-standard terms.
+-/
+
+def anchorBT : BT := BT.D 0 (BT.D 2 BT.zero)
+
+/-- What the sources give for the same Buchholz value: `ψ_Ω(ε_{Ω+1})`. -/
+def anchorSrc : TM.Term := TM.Term.psi (TM.Term.Z TM.Term.zero)
+  (TM.Term.phi TM.Term.one (TM.Term.add (TM.Term.Z TM.Term.zero) TM.Term.one))
+
+-- `anchorBT` は BMS `(0,0)(1,1)(2,2)` の Buchholz 値である。ここでは検算できない
+-- (`Trans/Recal.lean` がこのファイルを import する側なので、依存が逆になる)。
+-- 検算は `Trans/Recal.lean` 側の #guard と `scripts/external-check.py` にある。
+#guard inT (dict anchorBT) && inT anchorSrc
+
+theorem dict_anchor_ne_sources : dict anchorBT ≠ anchorSrc := by decide
+
+theorem sources_lt_dict_anchor : TM.Term.lt anchorSrc (dict anchorBT) = true := by decide
+
+theorem dict_anchor_both_inT : inT (dict anchorBT) = true ∧ inT anchorSrc = true := by
+  constructor <;> decide
+
 end Dict
 end Trans
