@@ -11246,4 +11246,330 @@ theorem transPort_rungPS (n : Nat) : transPort (rungPS n) = rungBT n :=
 
 end Ladder3
 
+
+/-! ### §21.7 LINK 3, AND THE CHAIN IS CLOSED
+
+    rungM 0 n --ofMatrix--> rungPS n --transPort--> rungBT n --dict--> fsEsucc 0 n
+         [1] §21.3            [2] §21.6              [3] HERE
+
+`dict_rungBT` is the last one.  All four links are now theorems for every `n`.
+
+WHY THREE ATTEMPTS FAILED BEFORE THIS ONE.  They were looking for an UNCONDITIONAL
+equational law for `collapse`, and there is none — `collapse` is a normaliser (`wcnf`, `foldl`,
+`omegaNF`), so it obeys different laws on different shapes.  Measured over 14 terms spanning the
+boundary, `TM.Term.le (epsN 0) x` predicts the law exactly (5 false, 9 true, zero disagreements):
+
+    le (epsN 0) x = true   ⟹  collapse 0 (plus (Z zero) (phi zero x)) = phi zero (phi zero x)
+    le (epsN 0) x = false  ⟹  it FAILS   (at zero, 1, 3, ω, ω^ω)
+
+`collapse_step_bounded` is that law with its side conditions, and the rest is discharging them
+along the family — where every argument is `≥ epsN 0` because the family starts at `epsN 0 + epsN 0`.
+
+THE SAME MOVE AS §21.6, TWICE IN A ROW.  There the obstacle was the memo table and the answer
+was to give it an invariant (`Sound`) instead of fighting it; here the obstacle is `collapse`'s
+normalisation and the answer is to give it a side condition instead of demanding it hold
+everywhere.  **When a normaliser refuses to satisfy an equation, ask what it preserves, not
+what it equals.**
+
+Two conjectures refuted on the way, recorded so they are not retried:
+
+    collapse 0 (plus (collapse 1 zero) y) = phi zero y
+    fsEsucc 0 (n+1) = phi zero (fsEsucc 0 n)         -- breaks at n = 0 because of `fsGen`
+
+The induction is stated against `iterPhi` (`dict_rungBT_iterPhi`), not against `fsEsucc`; stating
+it against `fsEsucc` forces a case split at 0 → 1 and an earlier attempt blew up in that branch.
+
+AXIOMS.  All five theorems `[propext, Quot.sound]`.  No `Classical.choice`, no `native_decide`,
+no `sorry`.
+-/
+
+section Link3
+open Trans.Recal
+open Trans.Dict
+private def collapseStepInput (x : TM.Term) : TM.Term :=
+  collapse 0 (TM.Term.plus (TM.Term.Z TM.Term.zero) (TM.Term.phi TM.Term.zero x))
+
+private def collapseStepOutput (x : TM.Term) : TM.Term :=
+  TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero x)
+
+private def collapseStepTest (x : TM.Term) : Bool :=
+  TM.Term.le (Evidence.WF.epsN 0) x &&
+    (collapseStepInput x == collapseStepOutput x)
+
+private def collapseStepCorpus : List TM.Term :=
+  [ TM.Term.zero
+  , TM.Term.one
+  , TM.Term.ofNat 3
+  , TM.Term.omega
+  , TM.Term.phi TM.Term.zero TM.Term.omega
+  , Evidence.WF.epsN 0
+  , TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)
+  , TM.Term.phi TM.Term.zero (Evidence.WF.epsN 0)
+  , Evidence.WF.iterPhi TM.Term.zero
+      (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) 3
+  , TM.Term.Z TM.Term.zero
+  , TM.Term.M
+  , TM.Term.omg (TM.Term.Z TM.Term.zero)
+  ]
+
+#eval collapseStepCorpus.map fun x =>
+  (TM.Term.le (Evidence.WF.epsN 0) x,
+    collapseStepInput x == collapseStepOutput x)
+
+#guard TM.Term.le (Evidence.WF.epsN 0) (TM.Term.Z TM.Term.zero) == true
+#guard collapseStepInput (TM.Term.Z TM.Term.zero) !=
+  collapseStepOutput (TM.Term.Z TM.Term.zero)
+
+#eval (collapseStepInput (TM.Term.Z TM.Term.zero)).toStr
+#eval (collapseStepOutput (TM.Term.Z TM.Term.zero)).toStr
+
+#guard (collapseStepCorpus.take 5).all fun x =>
+  !TM.Term.le (Evidence.WF.epsN 0) x &&
+    !(collapseStepInput x == collapseStepOutput x)
+
+#guard ((collapseStepCorpus.drop 5).take 4).all fun x => collapseStepTest x
+
+#guard (collapseStepCorpus.drop 9).all fun x =>
+  TM.Term.le (Evidence.WF.epsN 0) x &&
+    !(collapseStepInput x == collapseStepOutput x)
+
+theorem collapse_step_bounded (x : TM.Term)
+    (hcn : Evidence.WF.CNV x = true)
+    (hx : TM.Term.le (Evidence.WF.epsN 0) x = true)
+    (hz : TM.Term.lt (TM.Term.phi TM.Term.zero x) (TM.Term.Z TM.Term.zero) = true) :
+    collapse 0 (TM.Term.plus (TM.Term.Z TM.Term.zero) (TM.Term.phi TM.Term.zero x))
+      = TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero x) := by
+  have hx0 : x ≠ TM.Term.zero := by
+    intro h
+    subst x
+    have hepsZero :
+        TM.Term.le (Evidence.WF.epsN 0) TM.Term.zero = false := by decide
+    rw [hepsZero] at hx
+    exact Bool.noConfusion hx
+  have hxback : TM.Term.lt x (Evidence.WF.epsN 0) = false := by
+    simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hx
+    rcases hx with heq | hlt
+    · rw [← heq]
+      exact Evidence.WF.lt_irrefl _
+    · exact Evidence.WF.lt_asymm
+        (Evidence.WF.frag_of_cnv _ (Evidence.WF.cnv_epsN 0))
+        (Evidence.WF.frag_of_cnv _ hcn) hlt
+  have hphiEps :
+      TM.Term.lt (TM.Term.phi TM.Term.zero x) (Evidence.WF.epsN 0) = false := by
+    show TM.Term.lt (TM.Term.phi TM.Term.zero x)
+      (TM.Term.phi TM.Term.one TM.Term.zero) = false
+    rw [Evidence.WF.lt_phi_phi
+      (by intro h; injection h with h0 _; exact TM.Term.noConfusion h0),
+      if_neg (by intro h; exact TM.Term.noConfusion h), if_pos (by decide)]
+    simpa [Evidence.WF.epsN] using hxback
+  have hlePhiEps :
+      TM.Term.le (TM.Term.phi TM.Term.zero x) (Evidence.WF.epsN 0) = false := by
+    unfold TM.Term.le
+    rw [hphiEps, Bool.or_false]
+    exact beq_eq_false_iff_ne.mpr (by
+      intro h
+      change TM.Term.phi TM.Term.zero x = TM.Term.phi TM.Term.one TM.Term.zero at h
+      injection h with h0 _
+      exact TM.Term.noConfusion h0)
+  have hlePhiZ :
+      TM.Term.le (TM.Term.phi TM.Term.zero x) (TM.Term.Z TM.Term.zero) = true :=
+    Evidence.WF.le_of_lt hz
+  have hplus :
+      TM.Term.plus (TM.Term.Z TM.Term.zero) (TM.Term.phi TM.Term.zero x) =
+        TM.Term.add (TM.Term.Z TM.Term.zero) (TM.Term.phi TM.Term.zero x) := by
+    unfold TM.Term.plus
+    simp only [TM.Term.toList, List.filter_cons, hlePhiZ,
+      if_true, List.filter_nil]
+    rfl
+  have hwcnf :
+      wcnf (TM.Term.Z TM.Term.zero)
+          [TM.Term.Z TM.Term.zero, TM.Term.phi TM.Term.zero x] =
+        ([(TM.Term.one, TM.Term.one)], TM.Term.phi TM.Term.zero x) := by
+    have hzz :
+        TM.Term.lt (TM.Term.Z TM.Term.zero) (TM.Term.Z TM.Term.zero) = false :=
+      Evidence.WF.lt_irrefl _
+    have hdiv :
+        divAP (TM.Term.Z TM.Term.zero) (TM.Term.Z TM.Term.zero) = TM.Term.one := by
+      decide
+    have htail :
+        wcnf (TM.Term.Z TM.Term.zero) [TM.Term.phi TM.Term.zero x] =
+          ([], TM.Term.phi TM.Term.zero x) := by
+      rw [wcnf, if_pos hz]
+      rfl
+    rw [wcnf, if_neg (by rw [hzz]; exact Bool.noConfusion)]
+    simp only [logOm, TM.Term.toList, hzz, Bool.not_false,
+      if_true, List.filter_cons, List.filter_nil, List.map_cons, List.map_nil,
+      hdiv, TM.Term.ofList, htail]
+    rfl
+  have hplusDrop :
+      TM.Term.plus (Evidence.WF.epsN 0) (TM.Term.phi TM.Term.zero x) =
+        TM.Term.phi TM.Term.zero x := by
+    have hlePhiEps' :
+        TM.Term.le (TM.Term.phi TM.Term.zero x)
+          (TM.Term.phi TM.Term.one TM.Term.zero) = false := by
+      simpa [Evidence.WF.epsN] using hlePhiEps
+    unfold TM.Term.plus
+    simp only [Evidence.WF.epsN, TM.Term.ofNat, TM.Term.toList, List.filter_cons,
+      hlePhiEps', List.filter_nil]
+    rfl
+  have hleZOne :
+      TM.Term.le (TM.Term.Z TM.Term.zero) TM.Term.one = false := by decide
+  have hsub1One : sub1 TM.Term.one = TM.Term.zero := by decide
+  have hphiNFOne :
+      TM.Term.phiNF TM.Term.one TM.Term.zero = Evidence.WF.epsN 0 := by decide
+  have hsplit :
+      TM.Term.splitFin (TM.Term.phi TM.Term.zero x) =
+        (TM.Term.phi TM.Term.zero x, 0) := by
+    have hneOne :
+        (TM.Term.phi TM.Term.zero x == TM.Term.one) = false := by
+      simp only [TM.Term.one, beq_eq_false_iff_ne]
+      intro h
+      injection h with _ hxz
+      exact hx0 hxz
+    simp [TM.Term.splitFin, TM.Term.toList, TM.Term.ofList, hneOne]
+  have hphiNFArg :
+      TM.Term.phiNF TM.Term.zero (TM.Term.phi TM.Term.zero x) =
+        TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero x) := by
+    unfold TM.Term.phiNF
+    simp only [TM.Term.isSC, Bool.false_and, Bool.false_eq_true, if_false,
+      Evidence.WF.lt_irrefl]
+    unfold TM.Term.phiNFsucc
+    rw [hsplit]
+    unfold TM.Term.phiNFdefault
+    rfl
+  have homegaPhi :
+      TM.Term.omegaNF (TM.Term.phi TM.Term.zero x) =
+        TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero x) := by
+    unfold TM.Term.omegaNF
+    have hM :
+        TM.Term.lt TM.Term.M (TM.Term.phi TM.Term.zero x) = false := by rfl
+    rw [if_neg (by rw [hM]; exact Bool.noConfusion)]
+    rw [if_neg (by intro h; exact TM.Term.noConfusion (beq_iff_eq.mp h))]
+    exact hphiNFArg
+  unfold collapse
+  simp only [reg, TM.Term.ofNat, hplus, TM.Term.toList, hwcnf]
+  simp only [List.foldl_cons, List.foldl_nil]
+  rw [if_neg (by rw [hleZOne]; exact Bool.noConfusion)]
+  rw [if_pos (by rfl)]
+  rw [hsub1One, TM.Term.plus_zero, hphiNFOne]
+  change TM.Term.omegaNF
+    (TM.Term.plus TM.Term.zero
+      (TM.Term.plus (Evidence.WF.epsN 0) (TM.Term.phi TM.Term.zero x))) = _
+  rw [hplusDrop]
+  rw [show TM.Term.plus TM.Term.zero (TM.Term.phi TM.Term.zero x) =
+    TM.Term.phi TM.Term.zero x from rfl]
+  exact homegaPhi
+
+
+theorem le_eps0_iterPhi (n : Nat) :
+    TM.Term.le (Evidence.WF.epsN 0)
+      (Evidence.WF.iterPhi TM.Term.zero
+        (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n) = true := by
+  have hcnBase :
+      Evidence.WF.CNV
+        (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) = true := by
+    show ((Evidence.WF.epsN 0).isAP &&
+      Evidence.WF.CNV (Evidence.WF.epsN 0) &&
+      Evidence.WF.CNV (Evidence.WF.epsN 0) &&
+      Evidence.WF.hdLe (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) = true
+    rw [Evidence.WF.cnv_epsN, Evidence.WF.hdLe_of_isAP (by rfl),
+      Evidence.WF.le_self]
+    rfl
+  induction n with
+  | zero =>
+      change TM.Term.le (Evidence.WF.epsN 0)
+        (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) = true
+      refine Evidence.WF.le_of_lt ?_
+      rw [Evidence.WF.lt_atom_add (s := Evidence.WF.epsN 0) rfl]
+      exact Evidence.WF.le_self _
+  | succ n ih =>
+      refine Evidence.WF.le_of_lt (Evidence.WF.lt_phi_of_le
+        (Evidence.WF.cnv_epsN 0)
+        (Evidence.WF.cnv_iterPhi rfl hcnBase n) ih)
+
+
+theorem iterPhi_step_below_Z (n : Nat) :
+    TM.Term.lt
+      (TM.Term.phi TM.Term.zero
+        (Evidence.WF.iterPhi TM.Term.zero
+          (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n))
+      (TM.Term.Z TM.Term.zero) = true := by
+  let x := Evidence.WF.iterPhi TM.Term.zero
+    (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n
+  have hxcn : Evidence.WF.CNV x = true := by
+    have hbase :
+        Evidence.WF.CNV
+          (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) = true := by
+      show ((Evidence.WF.epsN 0).isAP &&
+        Evidence.WF.CNV (Evidence.WF.epsN 0) &&
+        Evidence.WF.CNV (Evidence.WF.epsN 0) &&
+        Evidence.WF.hdLe (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) = true
+      rw [Evidence.WF.cnv_epsN, Evidence.WF.hdLe_of_isAP (by rfl),
+        Evidence.WF.le_self]
+      rfl
+    exact Evidence.WF.cnv_iterPhi rfl hbase n
+  have hphi :
+      TM.Term.lt (TM.Term.phi TM.Term.zero x) (Evidence.WF.epsN 1) = true := by
+    exact (Evidence.WF.lim_clauses_epsSucc 0).2.1 (n + 1)
+  exact Evidence.WF.lt_trans_inT
+    (Evidence.WF.inT_of_cnv _ (by
+      show (Evidence.WF.CNV TM.Term.zero && Evidence.WF.CNV x) = true
+      rw [hxcn]
+      rfl))
+    (Evidence.WF.inT_of_cnv _ (Evidence.WF.cnv_epsN 1))
+    (by rfl) hphi (by decide)
+
+
+theorem dict_rungBT_iterPhi (n : Nat) :
+    Trans.Dict.dict (rungBT (n + 1)) =
+      Evidence.WF.iterPhi TM.Term.zero
+        (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) (n + 1) := by
+  induction n with
+  | zero => decide
+  | succ n ih =>
+      rw [rungBT, Trans.Dict.dict_D, Trans.Dict.dict_sum,
+        Trans.Dict.dict_D, Trans.Dict.dict_zero]
+      rw [show collapse 1 TM.Term.zero = TM.Term.Z TM.Term.zero from by decide]
+      rw [ih]
+      change collapse 0
+        (TM.Term.plus (TM.Term.Z TM.Term.zero)
+          (TM.Term.phi TM.Term.zero
+            (Evidence.WF.iterPhi TM.Term.zero
+              (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n))) =
+        TM.Term.phi TM.Term.zero
+          (TM.Term.phi TM.Term.zero
+            (Evidence.WF.iterPhi TM.Term.zero
+              (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n))
+      have hbase :
+          Evidence.WF.CNV
+            (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) = true := by
+        show ((Evidence.WF.epsN 0).isAP &&
+          Evidence.WF.CNV (Evidence.WF.epsN 0) &&
+          Evidence.WF.CNV (Evidence.WF.epsN 0) &&
+          Evidence.WF.hdLe (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) = true
+        rw [Evidence.WF.cnv_epsN, Evidence.WF.hdLe_of_isAP (by rfl),
+          Evidence.WF.le_self]
+        rfl
+      have hcnIter :
+          Evidence.WF.CNV
+            (Evidence.WF.iterPhi TM.Term.zero
+              (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n) = true :=
+        Evidence.WF.cnv_iterPhi (u := TM.Term.zero)
+          (base := TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0))
+          rfl hbase n
+      exact collapse_step_bounded
+        (Evidence.WF.iterPhi TM.Term.zero
+          (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n)
+        hcnIter (le_eps0_iterPhi n) (iterPhi_step_below_Z n)
+
+
+theorem dict_rungBT (n : Nat) :
+    Trans.Dict.dict (rungBT n) = Evidence.WF.fsEsucc 0 n := by
+  cases n with
+  | zero => decide
+  | succ n =>
+      exact dict_rungBT_iterPhi n
+
+end Link3
+
 end Evidence.Cert
