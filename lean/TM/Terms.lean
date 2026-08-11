@@ -9,6 +9,30 @@ Cited below as [R91]; definition numbers are those of that paper.
   1. the terms Φαβ are omitted, and
   2. the hierarchy χ is replaced by the single function Z (= α ↦ χ_α(0)).
 
+     **THIS SIMPLIFICATION LOSES THE Ω HIERARCHY, discovered 2026-08-12.**  In the
+     source system χ is genuinely 2-ary and the two arguments do different jobs
+     (P進大好きbot, "Cheatsheet on Properties of OCFs",
+     <https://googology.fandom.com/wiki/User_blog:P進大好きbot/Cheatsheet_on_Properties_of_OCFs>):
+
+         χ_0(α)   = Ω_{1+α}                    -- SECOND argument enumerates the Ω's
+         χ_1(0)   = I, the least weakly inaccessible cardinal
+         χ_1(1)   = I_2
+
+     So the second argument walks the Ω hierarchy and the first walks degrees of
+     inaccessibility.  Fixing the second to 0 keeps Ω = χ_0(0) = Z 0 and every
+     χ_α(0), but **Ω_2 = χ_0(1) is not expressible**: `Z 1` is χ_1(0) = I, which is
+     far larger.
+
+     This is not hypothetical.  `Trans/Dict.lean` mapped Buchholz ψ₂(0) to `Z 1`
+     where the sources say ε_{Ω+1}; §4 there proves the two differ.  Writing `Z 1`
+     for "Ω_2" is the same confusion one level up.  Table rows at and above
+     `(0,0)(1,1)(2,2)` live in the region that needs Ω_2, so their values cannot be
+     stated correctly in this type as it stands.
+
+     Repairing this means making χ 2-ary, which changes `Term` and therefore
+     everything above it.  Not attempted here; recorded so that nobody reads
+     `Z 1` as Ω_2.
+
 Term constructors ([R91] 2.1):
   0, M
   ⊕(α₁,…,αₙ)   (n ≥ 2, αᵢ ∈ AP, αₙ ≤ … ≤ α₁)     formal sum
