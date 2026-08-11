@@ -7354,6 +7354,28 @@ suspected the value was far too small.  It is not a sum: `sqv' (φ̄(ω²,0))` i
 `(0,0)(1,1)(2,1)(3,0)(3,0)`.  Reading BMS semantics off a column pattern is guessing;
 one `#eval` settled it the other way.
 
+
+### §K3.7 Sample size is part of the measurement, not a speed setting
+
+The candidate that finally agrees with all 17 table rows (`sqv3`, worker cx20) reads
+**0 inversions on a 27-term sample and 583 on a 217-term sample**:
+
+    sample 27   pool 186    sqv' 2 inversions      sqv3 0
+    sample 217  pool 1517   sqv' 57, 7 collapses   sqv3 583, 0 collapses
+
+It is injective — 217 terms, 217 distinct images — and it trades those collisions for ten
+times as many order inversions.  So it is not landable: 17 table rows are 17 points, the
+order is the whole structure.
+
+**How the small sample got chosen is the reusable part.**  The brief said "a 27-term
+sample runs in one second", which was true and was about COST.  It was read as the sample
+size, because it was the only number given.  A sample chosen for how fast it runs measures
+whatever that size happens to reach.  State the size the phenomenon requires, separately
+from the time it takes; if they conflict, the conflict is information.
+
+Same shape as the fitted separator earlier in this file: a measurement that looked clean
+because its corpus could not express the failure.  Third instance today.
+
 -/
 
 end Evidence.SqV
