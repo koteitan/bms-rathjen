@@ -7223,6 +7223,39 @@ contained only the pool, the sample and the scan.  The same measurement had been
 out at 300s because it was appended to a file whose earlier `#eval`s re-ran a
 2163-element quadratic scan every time.  Sample first, and put the sample in its own
 file.
+
+### §K3.4 The root cause of fault 1 is one expression
+
+`sqv'` gives `φ̄(a,0)` and `φ̄(a+1,0)` the same matrix for every index tried
+(ω, ε₀, ω^ω — two of them are `#guard`ed above, so they turn red when this is fixed).
+`φ_a(0)` and `φ_{a+1}(0)` are nowhere near each other, so it is not a convention.
+
+Located: `encvC`'s `.phi a b` case builds its ladder from
+
+    encvC ⟨predOr a, _⟩ (d + 2)
+
+and `predOr` is *"`t` minus one when it has a trailing `1`; `t` itself otherwise"*, so it
+sends a LIMIT and its SUCCESSOR to one term:
+
+    predOr ω  = ω     predOr (ω+1)  = ω
+    predOr ε₀ = ε₀    predOr (ε₀+1) = ε₀
+
+The clause keeps nothing else about `a`.  `predOr` is not at fault — it is documented to
+do exactly this and other callers want it; the φ̄ clause is what must stop relying on it
+alone.
+
+**The information is present and is discarded locally**, which is what makes this a
+repair rather than a redesign:
+
+    encv' ω 0      = [(0,0), (1,0)]
+    encv' (ω+1) 0  = [(0,0), (1,0), (0,0)]
+
+`encv'` distinguishes them at the top level; only the φ̄ clause collapses them.
+
+Which side is right was settled against the table, not guessed: row
+`(0,0)(1,1)(2,1)(3,0)` is `φ̄(ω,0)`, so `sqv'` is CORRECT on `φ̄(ω,0)` and wrong on the
+successor.  Any repair must keep that value and must not break the `certRows` agreement.
+
 -/
 
 end Evidence.SqV
