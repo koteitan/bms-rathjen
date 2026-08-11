@@ -9284,7 +9284,15 @@ and `Trans/Recal.lean` contains **no symbolic bridge from the recalibrated `oR` 
 have to be stated only where the two agree — `o?` is wrong at and above `(0,0)(1,1)(2,1)(2,0)` —
 so this is a real piece of work and not a rewrite.
 
-The `#guard` below is the measurement, standing without the theorem.
+**RESOLVED IN §21.8 for k = 0.** `oR_rungM_zero (n) : Trans.oR (rungM 0 n) = some (fsEsucc 0 n)`
+is now a theorem for every `n`, so the `#guard` below is no longer the only thing standing at
+k = 0.  It stays as the measurement for k = 1, 2, 3, which remain unproved: §21.3–§21.8 build
+the ladder for the k = 0 family only, and nothing there is parameterised in `k`.
+
+What made it possible was not a bridge from `oR` to the retracted `o?` — route (a) and route (b)
+are still closed exactly as §21.2 says.  It was building the reader's own equational layer from
+the bottom (`ofMatrix`, `transPort`, `dict`) and inducting along `runAux`'s recursion rather
+than along the way the family is constructed.
 -/
 
 #guard (List.range 4).all fun k => (List.range 6).all fun n =>
@@ -11571,5 +11579,106 @@ theorem dict_rungBT (n : Nat) :
       exact dict_rungBT_iterPhi n
 
 end Link3
+
+
+/-! ### §21.8 THE CHAIN, COMPOSED — §21.1's measurement is now a theorem
+
+    Trans.oR (rungM 0 n) = some (fsEsucc 0 n)     for every n
+
+§21.1 carried this as a 24-point `#guard` and said what blocked it: `Trans/Recal.lean` had
+174 `#guard`s and ZERO theorems, so no `∀ n` fact about the reader was provable at all.  That
+was a missing LAYER, not a gap in a proof.  The layer now exists, and this is the first
+statement quantified over an infinite family that the reader satisfies as a theorem.
+
+The four links (§21.3 `ofMatrix_rungM_zero`, §21.6 `transPort_rungPS`, §21.7 `dict_rungBT`)
+compose here.  Two small facts were still needed and are proved above:
+
+  * `rungM_ne_empty` — to take `oR`'s non-empty branch (axiom-free);
+  * `one_plus_fsEsucc` — `oR` prepends `1 +`, and it is ABSORBED on this family.
+    `one_plus_phi` is the general form: `plus one (phi a b) = phi a b` whenever
+    `le (phi a b) one = false`, which holds here because every value is at least ε₀
+    (`fsEsucc_not_le_one`).
+
+WHAT THIS DOES **NOT** DO.  It puts no ✅ on any row.  ✅ comes from `Certified`, which never
+mentions a reader — that separation is the calibration accident's doctrine and it is
+deliberate.  What this buys is evidence about the INSTRUMENT: 23 of the table's 51 rows carry
+values that exist only because `oR` produced them, and until now `oR` was backed by
+measurement at points and nothing else.  One infinite family is now backed by a proof.
+
+AXIOMS.  `[propext, Quot.sound]` or less throughout; `rungM_ne_empty` depends on no axiom at
+all.  No `Classical.choice`, no `native_decide`, no `sorry`.
+-/
+
+section Composed
+open Trans.Recal
+open Trans.Dict
+theorem one_plus_phi (a b : TM.Term)
+    (h : TM.Term.le (TM.Term.phi a b) TM.Term.one = false) :
+    TM.Term.plus TM.Term.one (TM.Term.phi a b) = TM.Term.phi a b := by
+  unfold TM.Term.plus
+  change TM.Term.ofList
+    (([TM.Term.one].filter (fun x => TM.Term.le (TM.Term.phi a b) x)) ++
+      [TM.Term.phi a b]) = TM.Term.phi a b
+  rw [List.filter_cons_of_neg (by
+    intro ht
+    rw [h] at ht
+    exact Bool.noConfusion ht)]
+  rfl
+
+#guard TM.Term.plus TM.Term.one (TM.Term.phi TM.Term.zero TM.Term.one) ==
+  TM.Term.phi TM.Term.zero TM.Term.one
+
+theorem fsEsucc_not_le_one (n : Nat) :
+    TM.Term.le (Evidence.WF.fsEsucc 0 n) TM.Term.one = false := by
+  cases n with
+  | zero => decide
+  | succ n =>
+      apply le_pow_one_false
+      intro hzero
+      have hle := le_eps0_iterPhi n
+      rw [hzero] at hle
+      exact Bool.noConfusion hle
+
+#guard (List.range 8).all fun n =>
+  TM.Term.le (Evidence.WF.fsEsucc 0 n) TM.Term.one == false
+
+theorem one_plus_fsEsucc (n : Nat) :
+    TM.Term.plus TM.Term.one (Evidence.WF.fsEsucc 0 n) =
+      Evidence.WF.fsEsucc 0 n := by
+  cases n with
+  | zero =>
+      exact one_plus_phi TM.Term.one TM.Term.zero (fsEsucc_not_le_one 0)
+  | succ n =>
+      exact one_plus_phi TM.Term.zero
+        (Evidence.WF.iterPhi TM.Term.zero
+          (TM.Term.add (Evidence.WF.epsN 0) (Evidence.WF.epsN 0)) n)
+        (fsEsucc_not_le_one (n + 1))
+
+#guard (List.range 8).all fun n =>
+  TM.Term.plus TM.Term.one (Evidence.WF.fsEsucc 0 n) == Evidence.WF.fsEsucc 0 n
+
+theorem rungM_ne_empty (n : Nat) : (rungM 0 n).isEmpty = false := by
+  rfl
+
+#guard (List.range 6).all fun n => (rungM 0 n).isEmpty == false
+
+theorem oR_rungM_zero (n : Nat) :
+    Trans.oR (rungM 0 n) = some (Evidence.WF.fsEsucc 0 n) := by
+  unfold Trans.oR Trans.Recal.oR
+  rw [if_neg (by
+    intro h
+    rw [rungM_ne_empty] at h
+    exact Bool.noConfusion h)]
+  unfold Trans.Recal.oRB
+  rw [ofMatrix_rungM_zero]
+  change some (TM.Term.plus TM.Term.one
+    (Trans.Dict.dict (Trans.Recal.transPort (rungPS n)))) =
+      some (Evidence.WF.fsEsucc 0 n)
+  rw [transPort_rungPS, dict_rungBT, one_plus_fsEsucc]
+
+#guard (List.range 24).all fun n =>
+  Trans.oR (rungM 0 n) == some (Evidence.WF.fsEsucc 0 n)
+
+end Composed
 
 end Evidence.Cert
