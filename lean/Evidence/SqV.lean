@@ -7406,6 +7406,33 @@ would have meant columns emitted at the wrong depth, repairable by a shift.  The
 consistent direction, so the branch emits the wrong columns, which is a different and
 larger repair.
 
+
+### §K3.9 A control that passes vacuously, and why the decomposition cannot be the oracle
+
+Trying to use §K3.6's method as a general self-check — "`f` is right on `t` when
+`expand (f t) n = f (fs t n)`" — needs a control, and **the obvious one is worthless**:
+
+    constant map `fun _ => []`   scores 195 of 195
+
+Both sides reduce to the same fixed matrix, so a constant map satisfies the identity
+everywhere.  "The scan reports a violation on a broken map" has to be checked with a map
+that is broken WITHOUT being degenerate.  A perturbation works — `sqv'` with one column
+appended scores 0 of 195 at every shift — and that is the control the file uses.
+
+With a control that fires, the scores are:
+
+    shift 0   sqv'  75 / 195      sqv3  60 / 195
+    shift 1   sqv'  37 / 195      sqv3  43 / 195
+
+Neither map satisfies the decomposition on two thirds of the sampled limits, which is
+§K1 restated on a corpus that reaches.  So the identity **cannot** adjudicate between
+candidate encodings: it is too broken to rank them, and it has a degenerate solution that
+would rank a constant map first.
+
+§K3.6 remains usable, but only per row and only with a candidate matrix in hand: expand
+that matrix and compare against images of the fundamental sequence.  It verifies a value;
+it does not search for one.
+
 -/
 
 end Evidence.SqV
