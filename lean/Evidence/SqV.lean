@@ -7185,4 +7185,32 @@ def collB : TM.Term := TM.Term.phi (TM.Term.add (TM.Term.phi TM.Term.zero (TM.Te
 #guard sqv' collA == sqv' collB        -- ... yet one and the same matrix
 #guard sqv' collA == [[0, 0], [1, 1], [2, 1], [3, 0]]
 
+/-! ### §K3.3 `sqv'` also INVERTS order, and the sum clause is implicated
+
+Non-injectivity already refutes `certIn_cnv`.  This is worse and is the reason a
+"canonical representative per matrix" repair will not rescue it either: `sqv'` is not
+order-preserving.
+
+A 27-term sample of `CNV && NfOK` terms, 351 ordered pairs, `n/a` sampling only —
+enough to show inversions EXIST, not a census:
+
+    control, constant map   351 ordered, 351 collapsed, 0 inverted   (the scan fires)
+    sqv'                    351 ordered,   0 collapsed, 2 inverted
+
+Witness (`lt a b = true`, both `CNV`, both `NfOK`):
+
+    a = φ̄(φ̄(φ̄(0,0),0), φ̄(φ̄(0,0),0)) + φ̄(φ̄(φ̄(0,0),0), φ̄(φ̄(0,0),0))
+    b = φ̄(φ̄(φ̄(0,0),0) + φ̄(0,0), φ̄(0,φ̄(0,0)))
+
+`sqv' a` has 12 columns, `sqv' b` has 5, and `BMS.cmpM (sqv' a) (sqv' b)` is not `lt`.
+`a` is a SUM and `sqv'` sends a sum to the concatenation of the summands' matrices, so the
+sum clause overshoots.  That is where to look, if anyone rebuilds this map.
+
+**Cost note, since it is the reusable part.**  This took one second once the file
+contained only the pool, the sample and the scan.  The same measurement had been timing
+out at 300s because it was appended to a file whose earlier `#eval`s re-ran a
+2163-element quadratic scan every time.  Sample first, and put the sample in its own
+file.
+-/
+
 end Evidence.SqV
