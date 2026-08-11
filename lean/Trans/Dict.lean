@@ -421,19 +421,64 @@ which is why this section proves only what is decidable here: that the two value
 and how they compare.  Which is CORRECT is a separate question, and one this file cannot
 settle.
 
-**But the dictionary's own claim can be refuted without appealing to any source, and it
-has been.** A bounded search over 3174 standard Buchholz terms (size ≤ 7, subscripts ≤ 3,
-sums ≤ 3 summands) and their 5035551 ordered pairs found **281 pairs where `a <_B b` but
-the images do not satisfy `dict a <_T dict b`**.  Zero images left `inT`.  So the failure
-is order INVERSION, not escape from the notation.  The Buchholz order came from naruyoko's
-`lessThanBuchholz`, called as an external tool; see `scripts/external-check.py` for the
-sources and how to run it.
+**RETRACTED (2026-08-12): the order-inversion refutation that stood here.**  It claimed
+281 inversions among 3174 standard Buchholz terms.  Every one of them was an artefact of
+a WRONG CORPUS, and the section now records what actually happened, because the mistake
+is more useful than the claim was.
 
-Consequence for the table: values produced through `oR` are affected, because
-`oR = (1 + ·) ∘ dict ∘ oRB`.  `oRB` — the BMS → Buchholz half — is NOT affected; it agrees
-with the spreadsheet on 374 of 376 entries, and the two exceptions are the spreadsheet
-writing non-standard terms.
+The corpus was filtered by naruyoko's `isStandardBuchholz`, called as an external oracle.
+Its helper has a callback-arity bug:
+
+    function G(a,u){
+      if (a instanceof Array) return a.flatMap(G);   // <-- flatMap passes (elem, INDEX, arr)
+      ...u<=a.sub?[a.inner].concat(G(a.inner,u)):[];
+    }
+
+`Array.prototype.flatMap` hands its callback `(element, index, array)`, so on a sum the
+parameter `u` receives the array INDEX.  The k-th summand is visited at level `k` instead
+of the level being threaded through.  This repository's `BT.isStd` threads `u` correctly
+and therefore disagreed — which is how the bug was found, from a worker's note that the
+two predicates differed on one term.
+
+Re-running the identical search with the corrected predicate:
+
+    corpus            3193 standard terms (size ≤ 7, subscripts ≤ 3, sums ≤ 3 summands)
+    ordered pairs     5096028
+    dict inversions   0
+    images ∉ inT      0
+    control           a constant map inverts all 5096028 — the scan does fire
+
+The two corpora differ by 25 terms: the bug wrongly ADMITTED 3 and wrongly REJECTED 22.
+**All 281 reported inversions came from the 3 wrongly admitted terms**, which are not
+Buchholz normal forms at all, so they were never evidence of anything.  They are pinned
+below as negative controls.
+
+So `dict`'s order-preservation is **not refuted, and not proved either**.  It survives a
+5-million-pair search, which is what the `#guard`s above always claimed and no more.
+
+What still stands is the anchor disagreement above: `anchorBT` IS a normal form
+(`#guard` below), so `dict_anchor_ne_sources` is unaffected.  The table's values above
+Γ₀ therefore rest on a translation that disagrees with both outside sources at its first
+measured point — a reason to warn, but no longer a proof of defect.
+
+`oRB` — the BMS → Buchholz half — was never in question; `scripts/xlsx-buchholz-check.py`
+measures it against the spreadsheet's Buchholz column as terms.
 -/
+
+/-! The three terms the buggy oracle admitted.  Every retracted inversion involved one
+    of them.  Kept as permanent negative controls: if `BT.isStd` ever starts accepting
+    these, the corpus that refuted `dict` becomes reachable again. -/
+
+def badStd1 : BT := .D 0 (.sum (.D 1 .zero) (.D 0 (.D 2 .zero)))
+def badStd2 : BT := .D 0 (.sum (.D 1 .zero) (.D 0 (.D 3 .zero)))
+def badStd3 : BT := .D 0 (.sum (.D 2 .zero) (.D 0 (.D 3 .zero)))
+
+theorem badStd_not_standard :
+    BT.isStd badStd1 = false ∧ BT.isStd badStd2 = false ∧ BT.isStd badStd3 = false := by
+  refine ⟨?_, ?_, ?_⟩ <;> decide
+
+-- and the shape the oracle got right, for contrast: the anchor is a normal form.
+#guard BT.isStd (BT.D 0 (BT.D 2 BT.zero))
 
 def anchorBT : BT := BT.D 0 (BT.D 2 BT.zero)
 
