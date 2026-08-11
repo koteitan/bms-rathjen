@@ -7185,6 +7185,18 @@ def collB : TM.Term := TM.Term.phi (TM.Term.add (TM.Term.phi TM.Term.zero (TM.Te
 #guard sqv' collA == sqv' collB        -- ... yet one and the same matrix
 #guard sqv' collA == [[0, 0], [1, 1], [2, 1], [3, 0]]
 
+-- and the successor of a Veblen index is not seen at all (§K3.3)
+#guard sqv' (TM.Term.phi (TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero)
+    == sqv' (TM.Term.phi (TM.Term.add (TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero TM.Term.zero)) (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero)
+#guard sqv' (TM.Term.phi (TM.Term.phi (TM.Term.phi TM.Term.zero TM.Term.zero) TM.Term.zero) TM.Term.zero)
+    == sqv' (TM.Term.phi (TM.Term.add (TM.Term.phi (TM.Term.phi TM.Term.zero TM.Term.zero) TM.Term.zero) (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero)
+
+-- the successor of a Veblen index is not seen at all
+#guard sqv' (TM.Term.phi (TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero)
+    == sqv' (TM.Term.phi (TM.Term.add (TM.Term.phi TM.Term.zero (TM.Term.phi TM.Term.zero TM.Term.zero)) (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero)
+#guard sqv' (TM.Term.phi (TM.Term.phi (TM.Term.phi TM.Term.zero TM.Term.zero) TM.Term.zero) TM.Term.zero)
+    == sqv' (TM.Term.phi (TM.Term.add (TM.Term.phi (TM.Term.phi TM.Term.zero TM.Term.zero) TM.Term.zero) (TM.Term.phi TM.Term.zero TM.Term.zero)) TM.Term.zero)
+
 /-! ### §K3.3 `sqv'` also INVERTS order, and the sum clause is implicated
 
 Non-injectivity already refutes `certIn_cnv`.  This is worse and is the reason a
