@@ -7376,6 +7376,36 @@ from the time it takes; if they conflict, the conflict is information.
 Same shape as the fitted separator earlier in this file: a measurement that looked clean
 because its corpus could not express the failure.  Third instance today.
 
+
+### §K3.8 Where the candidate's new inversions live
+
+`sqv3`'s 583 inversions are ALL new: it shares none of `sqv'`'s 57.  So the ε-index branch
+repairs every pair `sqv'` gets wrong and breaks a different set — it is doing something
+right and overshooting, not simply doing worse.
+
+Classifying each inverting pair by (left, right), where a term is `eps-index` when it is
+`φ̄(a,_)` with `a = φ̄(x,_)`, `x ≠ 0`:
+
+    principal/eps-index < principal/eps-index   252
+    sum/plain           < principal/eps-index    99
+    principal/plain     < principal/eps-index    96
+    sum/plain           < sum/plain              60
+    principal/plain     < sum/plain              48
+    principal/eps-index < sum/plain              28
+
+475 involve an ε-index, 108 involve none.  **Two separate things**, so two separate
+repairs: 447 of the 583 have an ε-index on the RIGHT, i.e. the new value comes out too
+small relative to terms below it; and 108 are pure sum-vs-plain, untouched by the branch,
+which means the sum clause was already fragile and this change moved it into view.  Its
+own witness is in §K3.3.
+
+**Not a level shift.**  In the largest bucket the image lengths go
+`(6,8) (6,10) (6,14) (9,8) (9,10) (11,8) (11,10) (10,14) …` — the smaller term's image is
+sometimes shorter and sometimes longer than the larger term's.  A consistent direction
+would have meant columns emitted at the wrong depth, repairable by a shift.  There is no
+consistent direction, so the branch emits the wrong columns, which is a different and
+larger repair.
+
 -/
 
 end Evidence.SqV
