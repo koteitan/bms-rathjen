@@ -7100,4 +7100,39 @@ def smallCex : TM.Term :=
 #guard BMS.expand (sqv' smallCex) 0 == [[0, 0], [1, 1], [2, 1]]
 #guard sqv' (fsV' smallCex 0) == [[0, 0], [1, 1], [2, 1], [3, 0]]
 
+/-! ### §K3.1 Which sequence function, and is the matrix side even reachable?
+
+Measured on corpus B (893 terms), same detector, `n < 4`:
+
+    fsV'   244 / 893        fsV   244 / 893
+    fsN    754 / 893        fun t n => fsN t (n+1)   583 / 893
+
+So this is not a bug local to `SqV`'s helper: `TM/FS.lean`'s own `fsN` is far worse,
+and the best term-side sequence available still misses 27%.
+
+**The failure has a consistent shape.**  Where a witness could be found, the matrix side
+DECREMENTS the last summand and `fsV` DROPS it:
+
+    t          φ̄(φ̄(0,0), φ̄(0,φ̄(0,0)) + φ̄(0,φ̄(0,0)))
+    wanted     φ̄(φ̄(0,0), φ̄(0,φ̄(0,0)) + φ̄(0,0))
+    fsV' t 0   φ̄(φ̄(0,0), φ̄(0,φ̄(0,0)))
+
+**Is the expanded matrix even the image of a term?**  Two tests, and they disagree,
+which is the useful part.
+
+  * Searching a 2163-term `CNV` pool for `u` with `sqv' u = expand (sqv' t) 0` succeeds
+    for **72** of the 244.  That is a genuine existence witness: for those, some
+    term-side sequence COULD match and `fsV` is simply choosing wrong.
+  * Reading back with the repository's own reader — `sqv' (o? m) = m` — succeeds for
+    only **11**.
+
+Both directions of both tests were controlled (a real image is recognised, a fabricated
+matrix is rejected).  So the gap is not measurement error: **`Trans.o?` is not a left
+inverse of `sqv'` on this region.**  That matters more than the count, because the
+obvious repair — define the sequence as "expand the matrix and read it back" — needs
+exactly that inverse, and it is not available as things stand.
+
+Neither test settles the remaining ~172: a pool miss is not a proof of non-existence.
+-/
+
 end Evidence.SqV
