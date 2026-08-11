@@ -7279,9 +7279,22 @@ is retained, so a trailing successor stays visible.  Measured against `sqv'` on 
     φ̄(ε₀,0)     table  (0,0)(1,1)(2,1)(3,0)(4,1)
                 both   (0,0)(1,1)(2,1)(3,1)
 
-`sqv2` does not make this worse and does not fix it.  So there is a SECOND defect,
-independent of the successor one, and it was invisible until the table was used as the
-oracle instead of `certRows` — which contributes only 3 usable rows and passed both maps.
+`sqv2` neither causes nor fixes it.  **But calling this a second defect in `sqv'` would
+be wrong, and the row itself says why**: its proof column is EMPTY and its evidence is
+`oR`, the reader.  So this is two of this repository's own maps disagreeing on a row that
+nobody has proved — `oR` says `(0,0)(1,1)(2,1)(3,0)(4,1)`, `sqv'` and `sqv2` say
+`(0,0)(1,1)(2,1)(3,1)`, and neither is independently verified there.  The row's note even
+records that its value was corrected once already.
+
+What IS established is the shape of the disagreement: `sqv'` sends `φ̄(ε₀,0)` to the matrix
+the table assigns to `ψ_Ω(0)`, i.e. past the whole Veblen region into the collapse region.
+If `oR` is right, `sqv'` overshoots badly at exactly the indices that are themselves
+ε-numbers; measured, `φ̄(a,0)` is fine for `a = ω` and `a = ω^ω` (first Veblen argument
+zero) and wrong for `a = ε₀ = φ̄(1,0)`.
+
+**The next step is an oracle, not a patch.**  Deciding between `oR` and `sqv'` here needs
+evidence neither of them provides — E3-style expansion evidence for that row, or the
+external implementations.  Until then, landing `sqv2` would silently pick a side.
 
 That is the fourth corpus today to pass a map with a demonstrable defect
 (`nfOKLimitCorpus`, `agreeCorpus`, `certRows`, and the 3-row filter of `certRows`).  The
