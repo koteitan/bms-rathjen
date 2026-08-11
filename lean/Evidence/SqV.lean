@@ -7292,9 +7292,31 @@ If `oR` is right, `sqv'` overshoots badly at exactly the indices that are themse
 ε-numbers; measured, `φ̄(a,0)` is fine for `a = ω` and `a = ω^ω` (first Veblen argument
 zero) and wrong for `a = ε₀ = φ̄(1,0)`.
 
-**The next step is an oracle, not a patch.**  Deciding between `oR` and `sqv'` here needs
-evidence neither of them provides — E3-style expansion evidence for that row, or the
-external implementations.  Until then, landing `sqv2` would silently pick a side.
+**SETTLED, by expansion behaviour on the BMS side, which needs neither map.**  Expanding
+the two candidate matrices with the reference implementation:
+
+    oR's   (0,0)(1,1)(2,1)(3,0)(4,1)[0] -> (0,0)(1,1)(2,1)(3,0)            = φ̄(ω,0)
+                                     [1] -> (0,0)(1,1)(2,1)(3,0)(4,0)      = φ̄(ω^ω,0)
+                                     [2] -> (0,0)(1,1)(2,1)(3,0)(4,0)(5,0)
+
+    sqv''s (0,0)(1,1)(2,1)(3,1)[0]      -> (0,0)(1,1)(2,1)                 = φ̄(2,0)
+                                    [1]  -> (0,0)(1,1)(2,1)(3,0)(4,1)(5,1)
+                                    [2]  -> ... longer still
+
+`ε₀[n]` is `ω, ω^ω, ω^ω^ω, …`, so `φ̄(ε₀,0)`'s fundamental sequence is
+`φ̄(ω,0), φ̄(ω^ω,0), φ̄(ω^ω^ω,0), …` — **exactly `oR`'s expansions**, up to the index shift
+this repository already documents.  `sqv'`'s matrix instead expands to `φ̄(2,0)` and then
+grows past `oR`'s whole matrix, which is how something in the collapse region behaves and
+matches the table's `ψ_Ω(0)` for it.
+
+So `oR` and the table are RIGHT here and `sqv'` is WRONG, and this IS a second defect in
+`sqv'` after all — at ε-number indices it overshoots out of the Veblen region.  The
+evidence is BMS-side expansion, independent of both maps, which is what was missing.
+
+**Consequence for the candidate**: `sqv2` fixes the successor fault and the inversions but
+inherits this one, so it is still not landable.  A complete repair has to handle an index
+that is itself an ε-number, and `φ̄(ε₀,0) = (0,0)(1,1)(2,1)(3,0)(4,1)` is now a fixed
+target rather than an open question.
 
 That is the fourth corpus today to pass a map with a demonstrable defect
 (`nfOKLimitCorpus`, `agreeCorpus`, `certRows`, and the 3-row filter of `certRows`).  The
