@@ -35,6 +35,7 @@ Rathjen の順序数崩壊関数の対応表を、Lean による機械検証付�
 - [記号: `E.` / `P.` / `D.`](#記号-e--p--d-とこの文書の設計ラベル)
 - [ディレクトリ構成](#ディレクトリ構成) と[各部の役割](#各部の役割と方針)
 - [作業ステージ](#作業ステージ-r1-内の順序) / [記述ルール](#記述ルール)
+- [外部の実装と形式化](#外部の実装と形式化-2026-08-12-に調べたもの) — 検算に使える機械実装と、他の証明支援系での先行形式化
 
 **較正事故と、そこから育った運用** — なぜ今の形なのか
 
@@ -381,6 +382,25 @@ bms-rathjen/
 
 R2 ($`T(K)`$, *Proof theory of reflection*) 以降は `TK/`・`Trans/TK.lean`・
 `Rows/TK.lean`・`table/r2-tk.md` を同じ形で追加してスケールさせる。
+
+## 外部の実装と形式化 (2026-08-12 に調べたもの)
+
+**機械実装** — 検算に使える。リポジトリには取り込まず、外部ツールとして呼ぶ。
+
+| 何 | 何をするか | この repo との関係 |
+|---|---|---|
+| [pss-vs-buchholz](https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz) | BMS → Buchholz。Buchholz 側の `parseBuchholz` / `equalBuchholz` / `lessThanBuchholz` / **`isStandardBuchholz`** / `fundBuchholz` | **`Trans/Recal.lean` の移植元**。関数名がそのまま対応する (`fpar`, `Pred`, `Derp`, `IncrFirst`, `Adm`, `TrMax`, `Br`, `FirstNodes`, `Joints`, `Red`) |
+| [padicBotRathjen](https://github.com/Naruyoko/googology/tree/main/padicBotRathjen) | Rathjen $`\mathfrak{T}(M)`$ の**独立実装**。項・`inT`/`inOT`・`lessThan`・`pred`・`deg`・`fund`・`dom`・`FGH` | **`TM/` の外部対照**。χ を階層のまま持つ (この repo は `Z a = χ_a(0)` に潰している)。**CC BY-SA 3.0** (実装ページに表示あり) |
+
+読むなら <https://naruyoko.github.io/googology/> が読みやすい。
+
+**証明支援系での形式化** — いま直接効くものは無い。行き詰まったときに構造を見る先。
+
+| 何 | 何を形式化しているか | 評価 |
+|---|---|---|
+| [hydra-battles](https://github.com/rocq-community/hydra-battles) (Coq) | `Epsilon0/` (Cantor 標準形 + Ketonen-Solovay)、`Gamma0/` (Veblen 標準形、**draft**)、`OrdinalNotations/` (比較関数つき整礎データ型の一般枠組み) | **既存で唯一 Γ₀ 未満の Veblen 標準形を扱う形式化。** ただし該当部分は本人が draft と書いている。参考になるとすれば `OrdinalNotations/` の抽象化で、`certIn_sq` を `CN` から `CNV` へ持ち上げる構造の手本になりうる |
+| [agda-veblen](https://github.com/choukh/agda-veblen) (Agda) | Brouwer 順序数上の Veblen 関数。φ が normal・単調・整礎保存であることを証明。Γ₀ を第 1 節の不動点として定義 | **対象が違う** — 表記系ではなく順序数論。この repo は Rathjen の構文的な項を扱う。φ の不動点まわりの整理だけは見る価値があるかもしれない |
+| [AndrasKovacs の gist](https://gist.github.com/AndrasKovacs/8d445c8457ea0967e807c726b2ce5a3a) (Agda) | 樹状順序数の宇宙階層、Madore 流の ψ、FGH。BHO・Γ₀ に到達 | **構成が全く違う。** 設計を借りる余地は小さい |
 
 ## 記述ルール
 
