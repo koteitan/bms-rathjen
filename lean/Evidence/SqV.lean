@@ -6221,4 +6221,840 @@ theorem no_sqvDecomp_general :
 
 end Counterexample
 
+/-! ## §K1 `SqvDecomp` is false even under `NfOK` (worker cx10, landed 2026-08-12)
+
+One of the three gaps for `certIn_cnv` was "the general `SqvDecomp` clause, perhaps
+recoverable by adding `NfOK`".  It is not: the witness below is `CNV`, `NfOK`, a limit,
+nonzero, and still breaks the clause at `n = 0`.  The existing `no_sqvDecomp_general`
+above refutes the un-strengthened statement; this refutes the strengthened one, so the
+route is closed rather than merely unproved.
+-/
+
+open TM.Term
+
+/-!
+The requested theorem is false even with `NfOK`.  The witness is a
+multi-summand instance of the `collapse` clause.
+-/
+
+def nfCex : TM.Term :=
+  phi zero (add Evidence.WF.eps0T
+    (add Evidence.WF.eps0T Evidence.WF.eps0T))
+
+def nfCexFs : TM.Term :=
+  phi zero (add Evidence.WF.eps0T Evidence.WF.eps0T)
+
+#guard Evidence.WF.NfOK nfCex
+#guard Evidence.WF.CNV nfCex
+#guard !(Evidence.WF.kindV nfCex)
+#guard nfCex != zero
+#guard BMS.expand (Evidence.SqV.sqv' Evidence.WF.eps0T) 0 ==
+  Evidence.SqV.sqv' (Evidence.SqV.fsV' Evidence.WF.eps0T 0)
+#guard BMS.expand (Evidence.SqV.sqv' nfCex) 0 !=
+  Evidence.SqV.sqv' (Evidence.SqV.fsV' nfCex 0)
+
+#eval (Evidence.SqV.summands
+  (TM.Term.splitFin (add Evidence.WF.eps0T
+    (add Evidence.WF.eps0T Evidence.WF.eps0T))).1).length
+#eval BMS.expand (Evidence.SqV.sqv' nfCex) 0
+#eval Evidence.SqV.sqv' (Evidence.SqV.fsV' nfCex 0)
+
+theorem nfCex_cnv : Evidence.WF.CNV nfCex = true := by decide
+
+theorem nfCex_nf : Evidence.WF.NfOK nfCex = true := by decide
+
+theorem nfCex_lim : Evidence.WF.kindV nfCex = false := by decide
+
+theorem nfCex_nz : nfCex ≠ zero := by decide
+
+/-- The witness enters the `collapse` clause with three split summands. -/
+theorem sqvDecomp_collapse_witness :
+    let gs := Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T
+        (add Evidence.WF.eps0T Evidence.WF.eps0T))).1
+    TM.Term.isFP zero (gs.headD zero) = true ∧ gs.length = 3 := by
+  decide
+
+theorem nfCex_sqv : Evidence.SqV.sqv' nfCex =
+    [[0, 0], [1, 1], [1, 0], [2, 1], [1, 0], [2, 1]] := by
+  have hgs : Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T
+        (add Evidence.WF.eps0T Evidence.WF.eps0T))).1 =
+      [Evidence.WF.eps0T, Evidence.WF.eps0T, Evidence.WF.eps0T] := rfl
+  have hhd : (Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T
+        (add Evidence.WF.eps0T Evidence.WF.eps0T))).1).headD zero =
+      Evidence.WF.eps0T := by rw [hgs]; rfl
+  have hm2 : (TM.Term.splitFin (add Evidence.WF.eps0T
+      (add Evidence.WF.eps0T Evidence.WF.eps0T))).2 = 0 := rfl
+  unfold nfCex Evidence.SqV.sqv' Evidence.SqV.encv'
+  rw [dif_pos (show Evidence.WF.CNV (phi zero (add Evidence.WF.eps0T
+      (add Evidence.WF.eps0T Evidence.WF.eps0T))) = true from rfl),
+    Evidence.SqV.encvC]
+  dsimp only
+  rw [show TM.Term.isFP zero
+      ((Evidence.SqV.summands
+        (TM.Term.splitFin (add Evidence.WF.eps0T
+          (add Evidence.WF.eps0T Evidence.WF.eps0T))).1).headD zero) = true by
+        rw [hhd]; rfl]
+  simp only [if_true]
+  rw [hm2, Evidence.SqV.encvC_eq_encv', hhd, Evidence.SqV.encv'_eps0T]
+  rw [show ((Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T
+        (add Evidence.WF.eps0T Evidence.WF.eps0T))).1).length == 1) = false by
+        rw [hgs]; rfl]
+  simp only [Bool.false_eq_true, if_false, Evidence.SqV.encvC_eq_encv',
+    beq_self_eq_true, List.replicate_zero, List.flatten_nil, List.append_nil]
+  simp only [if_pos True.intro, Nat.zero_add, List.nil_append]
+  rw [List.map_drop, List.attach_map_val
+    (l := Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T
+        (add Evidence.WF.eps0T Evidence.WF.eps0T))).1)
+    (f := fun y => Evidence.SqV.shiftD 1 (Evidence.SqV.encv' y 0))]
+  rw [hgs]
+  simp only [List.drop, List.map_cons, List.map_nil, List.flatten_cons,
+    List.flatten_nil, Evidence.SqV.encv'_eps0T, Evidence.SqV.shiftD]
+  rfl
+
+theorem nfCex_fs : Evidence.SqV.fsV' nfCex 0 = nfCexFs := by
+  unfold nfCex Evidence.SqV.fsV'
+  rw [dif_pos (show Evidence.WF.CNV (phi zero (add Evidence.WF.eps0T
+      (add Evidence.WF.eps0T Evidence.WF.eps0T))) = true from rfl),
+    Evidence.SqV.fsVC]
+  dsimp only
+  rfl
+
+theorem nfCexFs_sqv : Evidence.SqV.sqv' nfCexFs =
+    [[0, 0], [1, 1], [1, 0], [2, 1]] := by
+  have hgs : Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T Evidence.WF.eps0T)).1 =
+      [Evidence.WF.eps0T, Evidence.WF.eps0T] := rfl
+  have hhd : (Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T Evidence.WF.eps0T)).1).headD zero =
+      Evidence.WF.eps0T := by rw [hgs]; rfl
+  have hm2 : (TM.Term.splitFin
+      (add Evidence.WF.eps0T Evidence.WF.eps0T)).2 = 0 := rfl
+  unfold nfCexFs Evidence.SqV.sqv' Evidence.SqV.encv'
+  rw [dif_pos (show Evidence.WF.CNV
+      (phi zero (add Evidence.WF.eps0T Evidence.WF.eps0T)) = true from rfl),
+    Evidence.SqV.encvC]
+  dsimp only
+  rw [show TM.Term.isFP zero
+      ((Evidence.SqV.summands
+        (TM.Term.splitFin (add Evidence.WF.eps0T Evidence.WF.eps0T)).1).headD zero) = true by
+        rw [hhd]; rfl]
+  simp only [if_true]
+  rw [hm2, Evidence.SqV.encvC_eq_encv', hhd, Evidence.SqV.encv'_eps0T]
+  rw [show ((Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T Evidence.WF.eps0T)).1).length == 1) = false by
+        rw [hgs]; rfl]
+  simp only [Bool.false_eq_true, if_false, Evidence.SqV.encvC_eq_encv',
+    beq_self_eq_true, List.replicate_zero, List.flatten_nil, List.append_nil]
+  simp only [if_pos True.intro, Nat.zero_add, List.nil_append]
+  rw [List.map_drop, List.attach_map_val
+    (l := Evidence.SqV.summands
+      (TM.Term.splitFin (add Evidence.WF.eps0T Evidence.WF.eps0T)).1)
+    (f := fun y => Evidence.SqV.shiftD 1 (Evidence.SqV.encv' y 0))]
+  rw [hgs]
+  simp only [List.drop, List.map_cons, List.map_nil, List.flatten_cons,
+    List.flatten_nil, Evidence.SqV.encv'_eps0T, Evidence.SqV.shiftD]
+  rfl
+
+theorem nfCex_lhs :
+    BMS.expand (Evidence.SqV.sqv' nfCex) 0 =
+      [[0, 0], [1, 1], [1, 0], [2, 1], [1, 0]] := by
+  rw [nfCex_sqv]
+  rfl
+
+theorem nfCex_rhs :
+    Evidence.SqV.sqv' (Evidence.SqV.fsV' nfCex 0) =
+      [[0, 0], [1, 1], [1, 0], [2, 1]] := by
+  rw [nfCex_fs]
+  exact nfCexFs_sqv
+
+theorem nfCex_refutes :
+    BMS.expand (Evidence.SqV.sqv' nfCex) 0 ≠
+      Evidence.SqV.sqv' (Evidence.SqV.fsV' nfCex 0) := by
+  rw [nfCex_lhs, nfCex_rhs]
+  decide
+
+/-- The exact requested statement, universally closed, is refuted. -/
+theorem no_sqvDecomp_general_nfOK :
+    ¬ (∀ {t : TM.Term}, Evidence.WF.NfOK t = true →
+      Evidence.WF.CNV t = true → Evidence.WF.kindV t = false →
+      t ≠ TM.Term.zero → ∀ n : Nat,
+      BMS.expand (Evidence.SqV.sqv' t) n =
+        Evidence.SqV.sqv' (Evidence.SqV.fsV' t n)) := by
+  intro h
+  exact nfCex_refutes (h nfCex_nf nfCex_cnv nfCex_lim nfCex_nz 0)
+
+#print axioms nfCex_cnv
+#print axioms nfCex_nf
+#print axioms nfCex_lim
+#print axioms nfCex_nz
+#print axioms sqvDecomp_collapse_witness
+#print axioms nfCex_sqv
+#print axioms nfCex_fs
+#print axioms nfCexFs_sqv
+#print axioms nfCex_lhs
+#print axioms nfCex_rhs
+#print axioms nfCex_refutes
+#print axioms no_sqvDecomp_general_nfOK
+
+
+/-! ## §K2 `kind` agreement for `sqv'` (worker cx11, landed 2026-08-12)
+
+The second of the three gaps: `sqv'` must send zero / successor / limit terms to matrices
+of the matching `BMS.kind`.  Proved for every `CNV` term.  This is the half of
+`certIn_cnv` that does NOT need the order clauses, and it is now closed.
+-/
+
+#guard agreeCorpus.length == 169
+#guard kindFailures.length == 0
+
+
+private theorem mem_bumpAt_fst {e : Nat} {cs : List Col2} {c : Col2}
+    (hc : c ∈ bumpAt e cs) : ∃ z ∈ cs, c.1 = z.1 := by
+  simp only [bumpAt, List.mem_map] at hc
+  obtain ⟨z, hz, rfl⟩ := hc
+  split <;> exact ⟨z, hz, rfl⟩
+
+private theorem mem_shiftD_fst {e : Nat} {cs : List Col2} {c : Col2}
+    (hc : c ∈ shiftD e cs) : ∃ z ∈ cs, c.1 = z.1 + e := by
+  simp only [shiftD, List.mem_map] at hc
+  obtain ⟨z, hz, rfl⟩ := hc
+  exact ⟨z, hz, rfl⟩
+
+private theorem ladder_fst_gt (a : TM.Term) (d : Nat) (cs : List Col2)
+    (hcs : ∀ c ∈ cs, d + 2 ≤ c.1) :
+    ∀ c ∈ (if a == TM.Term.zero then []
+      else (d + 1, 1) :: bumpAt (d + 2) cs), d < c.1 := by
+  intro c hc
+  by_cases ha : (a == TM.Term.zero) = true
+  · rw [if_pos ha] at hc
+    exact absurd hc (by simp)
+  · rw [if_neg ha] at hc
+    simp only [List.mem_cons] at hc
+    rcases hc with rfl | hc
+    · omega
+    · obtain ⟨z, hz, heq⟩ := mem_bumpAt_fst hc
+      rw [heq]
+      exact Nat.lt_of_lt_of_le (by omega) (hcs z hz)
+
+private theorem unit_fst_gt (a : TM.Term) (d : Nat) (ladder : List Col2)
+    (hladder : ∀ c ∈ ladder, d < c.1) :
+    ∀ c ∈ (if a == TM.Term.zero then [(d + 1, 0)] else ladder), d < c.1 := by
+  intro c hc
+  by_cases ha : (a == TM.Term.zero) = true
+  · rw [if_pos ha] at hc
+    have heq : c = (d + 1, 0) := by simpa using hc
+    subst c
+    omega
+  · rw [if_neg ha] at hc
+    exact hladder c hc
+
+private theorem reps_fst_gt (d n : Nat) (unit : List Col2)
+    (hunit : ∀ c ∈ unit, d < c.1) :
+    ∀ c ∈ (List.replicate n unit).flatten, d < c.1 := by
+  intro c hc
+  obtain ⟨l, hl, hc⟩ := List.mem_flatten.mp hc
+  have hlu : l = unit := List.eq_of_mem_replicate hl
+  subst l
+  exact hunit c hc
+
+private theorem blocks_fst_gt {α : Type} (d e : Nat) (ladder : List Col2)
+    (f : α → List Col2) (hs : List α)
+    (hladder : ∀ c ∈ ladder, d < c.1) (he : d < e) :
+    ∀ c ∈ (hs.map (fun g => ladder ++ shiftD e (f g))).flatten, d < c.1 := by
+  intro c hc
+  obtain ⟨block, hblock, hc⟩ := List.mem_flatten.mp hc
+  obtain ⟨g, _, rfl⟩ := List.mem_map.mp hblock
+  simp only [List.mem_append] at hc
+  rcases hc with hc | hc
+  · exact hladder c hc
+  · obtain ⟨z, _, heq⟩ := mem_shiftD_fst hc
+    rw [heq]
+    omega
+
+private theorem eq_zero_of_cnv_summands_nil {t : TM.Term}
+    (hcn : Evidence.WF.CNV t = true) (hs : summands t = []) : t = TM.Term.zero := by
+  cases t with
+  | zero => rfl
+  | phi a b => simp [summands] at hs
+  | add u v =>
+      have hu := (Evidence.WF.cnv_add hcn).1
+      rw [summands, summands_of_isAP hu] at hs
+      simp at hs
+  | M => exact Bool.noConfusion hcn
+  | omg a => exact Bool.noConfusion hcn
+  | psi k a => exact Bool.noConfusion hcn
+  | Z a => exact Bool.noConfusion hcn
+
+private theorem mem_summands_ne_zero {t g : TM.Term} (hg : g ∈ summands t) :
+    g ≠ TM.Term.zero := by
+  intro heq
+  subst g
+  induction t <;> simp_all [summands]
+
+private theorem encvC_ne_nil (p : Evidence.WF.CarrierV) (d : Nat)
+    (hz : p.1 ≠ TM.Term.zero) : encvC p d ≠ [] := by
+  intro heq
+  have hh := encvC_head p d hz
+  rw [heq] at hh
+  contradiction
+
+private theorem reps_ne_nil (n : Nat) (unit : List Col2)
+    (hn : n ≠ 0) (hu : unit ≠ []) : (List.replicate n unit).flatten ≠ [] := by
+  cases n with
+  | zero => exact absurd rfl hn
+  | succ n =>
+      cases unit with
+      | nil => exact absurd rfl hu
+      | cons c cs => simp
+
+private theorem blocks_ne_nil {α : Type} (ladder : List Col2) (e : Nat)
+    (f : α → List Col2) (hs : List α) (hhs : hs ≠ [])
+    (hblock : ∀ g ∈ hs, ladder ++ shiftD e (f g) ≠ []) :
+    (hs.map (fun g => ladder ++ shiftD e (f g))).flatten ≠ [] := by
+  cases hs with
+  | nil => exact absurd rfl hhs
+  | cons g gs =>
+      simp only [List.map_cons, List.flatten_cons]
+      exact List.append_ne_nil_of_left_ne_nil (hblock g (by simp)) _
+
+private theorem attach_drop_one_ne_nil {α : Type} {l : List α} (hlen : 2 ≤ l.length) :
+    l.attach.drop 1 ≠ [] := by
+  intro heq
+  have hh := congrArg List.length heq
+  simp only [List.length_drop, List.length_attach, List.length_nil] at hh
+  omega
+
+private theorem getLast_ne_base_of_suffix (d : Nat) (pre suf : List Col2)
+    (hne : suf ≠ []) (hgt : ∀ c ∈ suf, d < c.1) :
+    (pre ++ suf).getLast? ≠ some (d, 0) := by
+  rw [Evidence.StageA.getLast?_append_right pre suf hne]
+  intro hlast
+  have hm : (d, 0) ∈ suf := List.mem_of_getLast? hlast
+  have := hgt (d, 0) hm
+  omega
+
+theorem encvC_fst_ge (p : Evidence.WF.CarrierV) (d : Nat) :
+    ∀ c ∈ encvC p d, d ≤ c.1 := by
+  fun_induction encvC p d
+  case case1 => simp
+  case case2 p d u v hp ih =>
+    intro c hc
+    simp only [List.mem_flatMap] at hc
+    obtain ⟨g, _, hc⟩ := hc
+    exact ih g c hc
+  case case3 p d a b hp ladder unit reps mk hfp ih1 ih2 ih3 =>
+    have hladder : ∀ c ∈ ladder, d < c.1 := by
+      simpa only [ladder] using ladder_fst_gt a d _ ih1
+    have hunit : ∀ c ∈ unit, d < c.1 := by
+      simpa only [unit] using unit_fst_gt a d ladder hladder
+    have hreps : ∀ c ∈ reps, d < c.1 := by
+      simpa only [reps] using reps_fst_gt d b.splitFin.2 unit hunit
+    have he : d < (if a == TM.Term.zero then d + 1 else d + 2) := by
+      split <;> omega
+    have hmk (hs) : ∀ c ∈ mk hs, d < c.1 := by
+      simpa only [mk] using blocks_fst_gt d
+        (if a == TM.Term.zero then d + 1 else d + 2) ladder
+        (fun g => encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1, by
+          split
+          · exact cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2
+          · exact cnv_omLog (cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2)⟩ 0)
+        hs hladder he
+    intro c hc
+    simp only [List.mem_append] at hc
+    rcases hc with (hc | hc) | hc
+    · exact ih3 c hc
+    · by_cases hlen : ((summands b.splitFin.1).length == 1) = true
+      · rw [if_pos hlen] at hc
+        exact Nat.le_of_lt (hunit c hc)
+      · rw [if_neg hlen] at hc
+        exact Nat.le_of_lt (hmk _ c hc)
+    · exact Nat.le_of_lt (hreps c hc)
+  case case4 p d a b hp ladder unit reps mk hfp z hdeep ih1 ih2 ih3 =>
+    have hladder : ∀ c ∈ ladder, d < c.1 := by
+      simpa only [ladder] using ladder_fst_gt a d _ ih1
+    have hunit : ∀ c ∈ unit, d < c.1 := by
+      simpa only [unit] using unit_fst_gt a d ladder hladder
+    have hreps : ∀ c ∈ reps, d < c.1 := by
+      simpa only [reps] using reps_fst_gt d b.splitFin.2 unit hunit
+    have he : d < (if a == TM.Term.zero then d + 1 else d + 2) := by
+      split <;> omega
+    have hmk (hs) : ∀ c ∈ mk hs, d < c.1 := by
+      simpa only [mk] using blocks_fst_gt d
+        (if a == TM.Term.zero then d + 1 else d + 2) ladder
+        (fun g => encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1, by
+          split
+          · exact cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2
+          · exact cnv_omLog (cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2)⟩ 0)
+        hs hladder he
+    intro c hc
+    simp only [List.mem_append] at hc
+    rcases hc with (hc | hc) | hc
+    · exact ih3 c hc
+    · exact Nat.le_of_lt (hmk _ c hc)
+    · exact Nat.le_of_lt (hreps c hc)
+  case case5 p d a b hp ladder unit reps mk hfp hdeep ih1 ih2 =>
+    have hladder : ∀ c ∈ ladder, d < c.1 := by
+      simpa only [ladder] using ladder_fst_gt a d _ ih1
+    have hunit : ∀ c ∈ unit, d < c.1 := by
+      simpa only [unit] using unit_fst_gt a d ladder hladder
+    have hreps : ∀ c ∈ reps, d < c.1 := by
+      simpa only [reps] using reps_fst_gt d b.splitFin.2 unit hunit
+    have he : d < (if a == TM.Term.zero then d + 1 else d + 2) := by
+      split <;> omega
+    have hmk (hs) : ∀ c ∈ mk hs, d < c.1 := by
+      simpa only [mk] using blocks_fst_gt d
+        (if a == TM.Term.zero then d + 1 else d + 2) ladder
+        (fun g => encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1, by
+          split
+          · exact cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2
+          · exact cnv_omLog (cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi (hp ▸ p.2)).2) g.2)⟩ 0)
+        hs hladder he
+    intro c hc
+    simp only [List.mem_cons, List.mem_append] at hc
+    rcases hc with rfl | hc
+    · exact Nat.le_refl d
+    · rcases hc with hc | hc
+      · split at hc
+        · exact Nat.le_of_lt (hladder c hc)
+        · exact Nat.le_of_lt (hmk _ c hc)
+      · exact Nat.le_of_lt (hreps c hc)
+  case case6 p d hzero hadd hphi =>
+    intro c hc
+    simp at hc
+
+theorem encvC_phi_last_eq_base_iff {a b : TM.Term}
+    (hcn : Evidence.WF.CNV (TM.Term.phi a b) = true) (d : Nat) :
+    (encvC ⟨TM.Term.phi a b, hcn⟩ d).getLast? = some (d, 0) ↔
+      Evidence.WF.kindV (TM.Term.phi a b) = true := by
+  let ladder : List Col2 :=
+    if a == TM.Term.zero then []
+    else (d + 1, 1) :: bumpAt (d + 2)
+      (encvC ⟨predOr a, cnv_predOr (Evidence.WF.cnv_phi hcn).1⟩ (d + 2))
+  let unit : List Col2 := if a == TM.Term.zero then [(d + 1, 0)] else ladder
+  let reps : List Col2 := (List.replicate b.splitFin.2 unit).flatten
+  let mk : List {x // x ∈ summands b.splitFin.1} → List Col2 := fun hs =>
+    (hs.map (fun g =>
+      ladder ++ shiftD (if a == TM.Term.zero then d + 1 else d + 2)
+        (encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1,
+          by
+            split
+            · exact cnv_mem_summands _ g.1
+                (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2
+            · exact cnv_omLog (cnv_mem_summands _ g.1
+                (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2)⟩ 0))).flatten
+  have hladder : ∀ c ∈ ladder, d < c.1 := by
+    apply ladder_fst_gt a d _
+    exact encvC_fst_ge _ _
+  have hunit : ∀ c ∈ unit, d < c.1 := by
+    simpa only [unit] using unit_fst_gt a d ladder hladder
+  have hreps : ∀ c ∈ reps, d < c.1 := by
+    simpa only [reps] using reps_fst_gt d b.splitFin.2 unit hunit
+  have he : d < (if a == TM.Term.zero then d + 1 else d + 2) := by
+    split <;> omega
+  have hmk (hs) : ∀ c ∈ mk hs, d < c.1 := by
+    simpa only [mk] using blocks_fst_gt d
+      (if a == TM.Term.zero then d + 1 else d + 2) ladder
+      (fun g => encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1, by
+        split
+        · exact cnv_mem_summands _ g.1
+            (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2
+        · exact cnv_omLog (cnv_mem_summands _ g.1
+            (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2)⟩ 0)
+      hs hladder he
+  have hunit_ne : unit ≠ [] := by
+    by_cases ha : (a == TM.Term.zero) = true
+    · simp [unit, ha]
+    · simp [unit, ladder, ha]
+  have hblock (g : {x // x ∈ summands b.splitFin.1}) :
+      ladder ++ shiftD (if a == TM.Term.zero then d + 1 else d + 2)
+        (encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1, by
+          split
+          · exact cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2
+          · exact cnv_omLog (cnv_mem_summands _ g.1
+              (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2)⟩ 0) ≠ [] := by
+    by_cases ha : (a == TM.Term.zero) = true
+    · have hgcn : Evidence.WF.CNV g.1 = true := cnv_mem_summands _ g.1
+          (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2
+      have henc : encvC ⟨g.1, hgcn⟩ 0 ≠ [] :=
+        encvC_ne_nil _ _ (mem_summands_ne_zero g.2)
+      have hshift : shiftD (d + 1) (encvC ⟨g.1, hgcn⟩ 0) ≠ [] := by
+        intro hmap
+        exact henc (List.map_eq_nil_iff.mp hmap)
+      have hshift' : shiftD (if a == TM.Term.zero then d + 1 else d + 2)
+          (encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1, by
+            by_cases hh : (a == TM.Term.zero) = true
+            · rw [if_pos hh]
+              exact hgcn
+            · rw [if_neg hh]
+              exact cnv_omLog hgcn⟩ 0) ≠ [] := by
+        simpa only [if_pos ha] using hshift
+      exact List.append_ne_nil_of_right_ne_nil ladder hshift'
+    · have hladder_ne : ladder ≠ [] := by simp [ladder, ha]
+      exact List.append_ne_nil_of_left_ne_nil hladder_ne _
+  have hmk_ne (hs : List {x // x ∈ summands b.splitFin.1}) (hhs : hs ≠ []) :
+      mk hs ≠ [] := by
+    simpa only [mk] using blocks_ne_nil ladder
+      (if a == TM.Term.zero then d + 1 else d + 2)
+      (fun g => encvC ⟨if a == TM.Term.zero then g.1 else omLog g.1, by
+        split
+        · exact cnv_mem_summands _ g.1
+            (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2
+        · exact cnv_omLog (cnv_mem_summands _ g.1
+            (cnv_ofList_take b _ (Evidence.WF.cnv_phi hcn).2) g.2)⟩ 0)
+      hs hhs (fun g _ => hblock g)
+  rw [encvC]
+  dsimp only
+  split
+  · rename_i hfp
+    change ((encvC ⟨(summands b.splitFin.1).headD TM.Term.zero,
+        cnv_headD (Evidence.WF.cnv_phi hcn).2⟩ d ++
+        (if (summands b.splitFin.1).length == 1 then unit
+         else mk ((summands b.splitFin.1).attach.drop 1)) ++ reps).getLast?
+          = some (d, 0) ↔ Evidence.WF.kindV (TM.Term.phi a b) = true)
+    have hsum : summands b.splitFin.1 ≠ [] := by
+      intro hs
+      rw [hs] at hfp
+      exact Bool.noConfusion hfp
+    have hkind : Evidence.WF.kindV (TM.Term.phi a b) ≠ true := by
+      intro hk
+      simp only [Evidence.WF.kindV, Bool.and_eq_true, beq_iff_eq] at hk
+      rcases hk with ⟨ha, hb⟩
+      subst a
+      subst b
+      exact Bool.noConfusion hfp
+    let mid := if (summands b.splitFin.1).length == 1 then unit
+      else mk ((summands b.splitFin.1).attach.drop 1)
+    have hmid_gt : ∀ c ∈ mid, d < c.1 := by
+      intro c hc
+      dsimp only [mid] at hc
+      split at hc
+      · exact hunit c hc
+      · exact hmk _ c hc
+    have hmid_ne : mid ≠ [] := by
+      dsimp only [mid]
+      by_cases hlen : ((summands b.splitFin.1).length == 1) = true
+      · rw [if_pos hlen]
+        exact hunit_ne
+      · rw [if_neg hlen]
+        have hzero : (summands b.splitFin.1).length ≠ 0 := by
+          intro hz
+          exact hsum (List.length_eq_zero_iff.mp hz)
+        have hone : (summands b.splitFin.1).length ≠ 1 := by
+          intro ho
+          apply hlen
+          exact beq_iff_eq.mpr ho
+        have htwo : 2 ≤ (summands b.splitFin.1).length := by omega
+        exact hmk_ne _ (attach_drop_one_ne_nil htwo)
+    have hsuf_ne : mid ++ reps ≠ [] :=
+      List.append_ne_nil_of_left_ne_nil hmid_ne reps
+    have hsuf_gt : ∀ c ∈ mid ++ reps, d < c.1 := by
+      intro c hc
+      simp only [List.mem_append] at hc
+      rcases hc with hc | hc
+      · exact hmid_gt c hc
+      · exact hreps c hc
+    rw [show (if (summands b.splitFin.1).length == 1 then unit
+        else mk ((summands b.splitFin.1).attach.drop 1)) = mid from rfl,
+      List.append_assoc]
+    constructor
+    · intro hlast
+      exact absurd hlast (getLast_ne_base_of_suffix d _ _ hsuf_ne hsuf_gt)
+    · intro hk
+      exact absurd hk hkind
+  · split
+    · rename_i z hdeep
+      change ((encvC ⟨z.1, z.2.1⟩ d ++ mk (summands b.splitFin.1).attach ++ reps).getLast?
+        = some (d, 0) ↔ Evidence.WF.kindV (TM.Term.phi a b) = true)
+      have hsum : summands b.splitFin.1 ≠ [] := by
+        intro hs
+        have hhead : (summands b.splitFin.1).headD TM.Term.zero = TM.Term.zero := by
+          rw [hs]
+          rfl
+        have hle : TM.Term.le z.1 TM.Term.zero = true := by
+          simpa only [hhead] using z.2.2
+        have hz : z.1 = TM.Term.zero := by
+          simp only [TM.Term.le, show TM.Term.lt z.1 TM.Term.zero = false from
+            Evidence.WF.ltF_right_zero _ _, Bool.or_false, beq_iff_eq] at hle
+          exact hle
+        exact (fpDeepC_some_ne_zero _ hdeep) hz
+      have hkind : Evidence.WF.kindV (TM.Term.phi a b) ≠ true := by
+        intro hk
+        simp only [Evidence.WF.kindV, Bool.and_eq_true, beq_iff_eq] at hk
+        rcases hk with ⟨ha, hb⟩
+        subst a
+        subst b
+        exact hsum rfl
+      have hatt : (summands b.splitFin.1).attach ≠ [] := by
+        simpa using hsum
+      have hmk_att_ne : mk (summands b.splitFin.1).attach ≠ [] := hmk_ne _ hatt
+      have hsuf_ne : mk (summands b.splitFin.1).attach ++ reps ≠ [] :=
+        List.append_ne_nil_of_left_ne_nil hmk_att_ne reps
+      have hsuf_gt : ∀ c ∈ mk (summands b.splitFin.1).attach ++ reps, d < c.1 := by
+        intro c hc
+        simp only [List.mem_append] at hc
+        rcases hc with hc | hc
+        · exact hmk _ c hc
+        · exact hreps c hc
+      rw [List.append_assoc]
+      constructor
+      · intro hlast
+        exact absurd hlast (getLast_ne_base_of_suffix d _ _ hsuf_ne hsuf_gt)
+      · intro hk
+        exact absurd hk hkind
+    · change (((d, 0) :: ((match summands b.splitFin.1 with
+          | [] => ladder
+          | _ => mk (summands b.splitFin.1).attach) ++ reps)).getLast?
+        = some (d, 0) ↔ Evidence.WF.kindV (TM.Term.phi a b) = true)
+      let body := match summands b.splitFin.1 with
+        | [] => ladder
+        | _ => mk (summands b.splitFin.1).attach
+      let rest := body ++ reps
+      change (((d, 0) :: rest).getLast? = some (d, 0) ↔
+        Evidence.WF.kindV (TM.Term.phi a b) = true)
+      have hbody_gt : ∀ c ∈ body, d < c.1 := by
+        intro c hc
+        dsimp only [body] at hc
+        split at hc
+        · exact hladder c hc
+        · exact hmk _ c hc
+      have hrest_gt : ∀ c ∈ rest, d < c.1 := by
+        intro c hc
+        dsimp only [rest] at hc
+        simp only [List.mem_append] at hc
+        rcases hc with hc | hc
+        · exact hbody_gt c hc
+        · exact hreps c hc
+      have hrest_of_kind (hk : Evidence.WF.kindV (TM.Term.phi a b) = true) : rest = [] := by
+        simp only [Evidence.WF.kindV, Bool.and_eq_true, beq_iff_eq] at hk
+        rcases hk with ⟨ha, hb⟩
+        subst a
+        subst b
+        rfl
+      have hkind_of_rest (hr : rest = []) :
+          Evidence.WF.kindV (TM.Term.phi a b) = true := by
+        have hh := List.append_eq_nil_iff.mp (show body ++ reps = [] from hr)
+        have hbody_nil : body = [] := hh.1
+        have hreps_nil : reps = [] := hh.2
+        have hfin : b.splitFin.2 = 0 := by
+          cases hn : b.splitFin.2 with
+          | zero => rfl
+          | succ n =>
+              exact absurd hreps_nil
+                (reps_ne_nil b.splitFin.2 unit (by rw [hn]; omega) hunit_ne)
+        have ha_sum : a = TM.Term.zero ∧ summands b.splitFin.1 = [] := by
+          dsimp only [body] at hbody_nil
+          split at hbody_nil
+          · rename_i hsum
+            have ha : (a == TM.Term.zero) = true := by
+              cases hane : (a == TM.Term.zero) with
+              | true => rfl
+              | false =>
+                  exact absurd hbody_nil (by simp [ladder, hane])
+            exact ⟨eq_of_beq ha, hsum⟩
+          · rename_i g gs hsum
+            have hatt : (summands b.splitFin.1).attach ≠ [] := by
+              simpa using hsum
+            exact absurd hbody_nil (hmk_ne _ hatt)
+        have hbcn := (Evidence.WF.cnv_phi hcn).2
+        have hbase : b.splitFin.1 = TM.Term.zero :=
+          eq_zero_of_cnv_summands_nil (cnv_ofList_take b _ hbcn) ha_sum.2
+        have hreb := splitFin_rebuild b hbcn
+        have hb : b = TM.Term.zero := by
+          rw [hbase, hfin] at hreb
+          exact hreb.symm
+        rw [ha_sum.1, hb]
+        rfl
+      constructor
+      · intro hlast
+        by_cases hr : rest = []
+        · exact hkind_of_rest hr
+        · exact absurd hlast
+            (getLast_ne_base_of_suffix d [(d, 0)] rest hr hrest_gt)
+      · intro hk
+        rw [hrest_of_kind hk]
+        rfl
+
+theorem encv'_last_eq_base_iff : ∀ {t : TM.Term}, Evidence.WF.CNV t = true → ∀ d,
+    (encv' t d).getLast? = some (d, 0) ↔ Evidence.WF.kindV t = true := by
+  intro t hcn d
+  induction t generalizing d with
+  | zero =>
+      unfold encv'
+      rw [dif_pos hcn, encvC]
+      dsimp only
+      constructor
+      · intro h
+        contradiction
+      · intro h
+        exact Bool.noConfusion h
+  | phi a b iha ihb =>
+      unfold encv'
+      rw [dif_pos hcn]
+      exact encvC_phi_last_eq_base_iff hcn d
+  | add u v ihu ihv =>
+      obtain ⟨_, _, hcnv, hdesc⟩ := Evidence.WF.cnv_add hcn
+      have hvz : v ≠ TM.Term.zero := by
+        intro hv
+        rw [hv, show Evidence.WF.hdLe TM.Term.zero u = false from rfl] at hdesc
+        exact Bool.noConfusion hdesc
+      have hvne : encv' v d ≠ [] := by
+        unfold encv'
+        rw [dif_pos hcnv]
+        exact encvC_ne_nil _ d hvz
+      rw [encv'_add_append hcn d,
+        Evidence.StageA.getLast?_append_right (encv' u d) (encv' v d) hvne]
+      exact ihv hcnv d
+  | M => exact Bool.noConfusion hcn
+  | omg a iha => exact Bool.noConfusion hcn
+  | psi k a ihk iha => exact Bool.noConfusion hcn
+  | Z a iha => exact Bool.noConfusion hcn
+
+private theorem lnz_pair_eq_none_iff (x y : Nat) :
+    BMS.lnz [x, y] = none ↔ x = 0 ∧ y = 0 := by
+  cases x with
+  | zero =>
+      cases y with
+      | zero =>
+          have h : BMS.lnz [0, 0] = none := by rfl
+          rw [h]
+          simp
+      | succ y =>
+          have h : BMS.lnz [0, y + 1] = some 1 := by rfl
+          rw [h]
+          simp
+  | succ x =>
+      cases y with
+      | zero =>
+          have h : BMS.lnz [x + 1, 0] = some 0 := by rfl
+          rw [h]
+          simp
+      | succ y =>
+          have h : BMS.lnz [x + 1, y + 1] = some 1 := by rfl
+          rw [h]
+          simp
+
+theorem kind_sqv'_zero : BMS.kind (sqv' TM.Term.zero) = BMS.Kind.zero := by
+  unfold sqv' encv'
+  rw [dif_pos (show Evidence.WF.CNV TM.Term.zero = true from rfl), encvC]
+  dsimp only [toMatrix]
+  rfl
+
+theorem kind_sqv'_succ {t : TM.Term} (hcn : Evidence.WF.CNV t = true)
+    (hk : Evidence.WF.kindV t = true) :
+    BMS.kind (sqv' t) = BMS.Kind.succ := by
+  have hlast : (encv' t 0).getLast? = some (0, 0) :=
+    (encv'_last_eq_base_iff hcn 0).2 hk
+  have hmatrix : (toMatrix (encv' t 0)).getLast? = some [0, 0] := by
+    unfold toMatrix
+    rw [List.getLast?_map, hlast]
+    rfl
+  unfold sqv' BMS.kind
+  rw [hmatrix]
+  rfl
+
+theorem kind_sqv'_lim {t : TM.Term} (hcn : Evidence.WF.CNV t = true)
+    (hk : Evidence.WF.kindV t = false) (hz : t ≠ TM.Term.zero) :
+    BMS.kind (sqv' t) = BMS.Kind.lim := by
+  have hne : encv' t 0 ≠ [] := by
+    unfold encv'
+    rw [dif_pos hcn]
+    exact encvC_ne_nil _ 0 hz
+  cases hlast : (encv' t 0).getLast? with
+  | none =>
+      exact absurd (List.getLast?_eq_none_iff.mp hlast) hne
+  | some c =>
+      have hcne : c ≠ (0, 0) := by
+        intro hc
+        subst c
+        have hh := (encv'_last_eq_base_iff hcn 0).1 hlast
+        rw [hk] at hh
+        exact Bool.noConfusion hh
+      have hlnz : BMS.lnz [c.1, c.2] ≠ none := by
+        intro hh
+        have hc := (lnz_pair_eq_none_iff c.1 c.2).1 hh
+        exact hcne (Prod.ext hc.1 hc.2)
+      cases heq : BMS.lnz [c.1, c.2] with
+      | none => exact absurd heq hlnz
+      | some n =>
+          have hmatrix : (toMatrix (encv' t 0)).getLast? = some [c.1, c.2] := by
+            unfold toMatrix
+            rw [List.getLast?_map, hlast]
+            rfl
+          unfold sqv' BMS.kind
+          rw [hmatrix]
+          change (match BMS.lnz [c.1, c.2] with
+            | none => BMS.Kind.succ
+            | some _ => BMS.Kind.lim) = BMS.Kind.lim
+          rw [heq]
+
+theorem kind_sqv' {t : TM.Term} (hcn : Evidence.WF.CNV t = true) :
+    BMS.kind (sqv' t) =
+      (if t = TM.Term.zero then BMS.Kind.zero
+       else if Evidence.WF.kindV t = true then BMS.Kind.succ else BMS.Kind.lim) := by
+  by_cases hz : t = TM.Term.zero
+  · rw [if_pos hz]
+    subst t
+    exact kind_sqv'_zero
+  · rw [if_neg hz]
+    cases hk : Evidence.WF.kindV t with
+    | true =>
+        rw [if_pos (by rfl)]
+        exact kind_sqv'_succ hcn hk
+    | false =>
+        rw [if_neg (by intro h; exact Bool.noConfusion h)]
+        exact kind_sqv'_lim hcn hk hz
+
+example : BMS.kind (sqv' TM.Term.zero) = BMS.Kind.zero := kind_sqv'_zero
+
+example : BMS.kind (sqv' TM.Term.one) = BMS.Kind.succ :=
+  kind_sqv'_succ rfl rfl
+
+example : BMS.kind (sqv' Evidence.WF.eps0T) = BMS.Kind.lim :=
+  kind_sqv'_lim rfl rfl (by intro h; exact TM.Term.noConfusion h)
+
+example {t : TM.Term} {fs : Nat → TM.Term}
+    (hcn : Evidence.WF.CNV t = true) (hk : Evidence.WF.kindV t = false)
+    (hz : t ≠ TM.Term.zero)
+    (hrec : ∀ n, Evidence.Cert.Certified (BMS.expand (sqv' t) n) (fs n))
+    (hlt : ∀ n, TM.Term.lt (fs n) t = true)
+    (hstep : ∀ n, TM.Term.lt (fs n) (fs (n + 1)) = true)
+    (hcof : ∀ s, TM.Term.inT s = true → TM.Term.lt s t = true →
+      ∃ n, TM.Term.le s (fs n) = true) :
+    Evidence.Cert.Certified (sqv' t) t :=
+  Evidence.Cert.Certified.lim fs (kind_sqv'_lim hcn hk hz) hrec hlt hstep hcof
+
+#print axioms mem_bumpAt_fst
+#print axioms mem_shiftD_fst
+#print axioms ladder_fst_gt
+#print axioms unit_fst_gt
+#print axioms reps_fst_gt
+#print axioms blocks_fst_gt
+#print axioms eq_zero_of_cnv_summands_nil
+#print axioms mem_summands_ne_zero
+#print axioms encvC_ne_nil
+#print axioms reps_ne_nil
+#print axioms blocks_ne_nil
+#print axioms attach_drop_one_ne_nil
+#print axioms getLast_ne_base_of_suffix
+#print axioms encvC_fst_ge
+#print axioms encvC_phi_last_eq_base_iff
+#print axioms encv'_last_eq_base_iff
+#print axioms lnz_pair_eq_none_iff
+#print axioms kind_sqv'_zero
+#print axioms kind_sqv'_succ
+#print axioms kind_sqv'_lim
+#print axioms kind_sqv'
+
 end Evidence.SqV
