@@ -1,0 +1,197 @@
+/-
+Rows/Selected.lean — the E-proof shortlist, with each row's statement pinned
+
+WHY THIS FILE EXISTS.  The table's rightmost column names 23 rows to prove E for.  A
+selection in prose is not a target: **the E3 index is per row**, and applying a uniform
+`+1` against `fsN` is the mistake this repository has made more than once (see the header
+of `Rows/TM.lean`).  So before any proof is attempted, every selected row that `o?` reaches
+gets its index MEASURED and pinned here, and its E1 proved.
+
+WHAT IS PROVED HERE, and it is only E1.  `theorem e1 : o? M = some t := rfl` — the
+translation is defined on the matrix and gives the table's term.  That is a theorem, not a
+check.  E3 (`∀ n, o? (M[n]) = fsN t (n+k)`) is NOT proved for any row here; what is here is
+its exact statement with `k` fixed, verified on `n < 8` by `#guard`.
+
+WHICH ROWS.  The six rows of the shortlist that `o?` reaches AND agrees with the table on.
+They are exactly the rows of families 1–3 of `diff.md`, i.e. six of the nine where an
+external table disagrees with this one.  That is a coincidence worth stating: the disputed
+rows are the ones the existing machinery can still speak about, because `o?` was withdrawn
+only from `(0,0)(1,1)(2,1)(1,1)(2,1)` upward and families 1–3 sit below it.  The remaining
+selected rows are out of `o?`'s reach — the three of family 4 and `φ̄(ω,0)`, `φ̄(ε₀,0)`, `Γ₀`
+are in the withdrawn region (`o?` answers, and is wrong), and the six `(2,2)` rows have no
+`o?` value at all.  They need the `oR` equation layer, which does not exist yet.
+
+THE INDEX IS NOT UNIFORM, measured:  1, 1, 2, (none), 1, 1.
+
+THE FOURTH ROW HAS NO UNIFORM INDEX AT ALL, and that is the sharpest thing in this file.
+`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)` agrees with `fsN` at shift 2
+from `n = 1` on, but its 0-th expansion is **not a member of `fsN t` at all** (searched to
+30).  `fsN t 1` is `ζ₀` and `fsN t 2` jumps past the 0-th expansion value, which lies
+strictly between them.  So this row cannot get a ✅ with `fsN` as its fundamental sequence:
+`Certified.lim` demands `fs' n` be the certified value of the n-th expansion for EVERY n.
+It needs a bespoke sequence, like the ε₁ row (`R3`) already does.
+-/
+import Rows.TM
+import Rows.Proofs
+
+namespace Rows
+namespace Selected
+
+open BMS (Matrix)
+open TM (Term)
+open TM.Term
+open Trans (o?)
+
+/-! ## diff.md 族 1 -/
+
+namespace F1
+
+def M : Matrix := [[0,0],[1,1],[2,0],[1,1],[1,0],[2,1],[3,0],[1,0],[2,1]]
+def t : Term := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
+  (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) zero)))
+
+theorem e1 : o? M = some t := rfl
+
+/-- E3 の主張。**未証明**。添字は測定値で、`n < 8` で確かめてある。 -/
+def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
+
+#guard kindT t == KindT.isLim
+#guard (List.range 8).all fun n => o? (BMS.expand M n) == some (fsN t (n + 1))
+-- CTRL 隣の添字では合わない (合ってしまうなら試験が効いていない)
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
+
+end F1
+
+/-! ## diff.md 族 2 -/
+
+namespace F2a
+
+def M : Matrix := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0]]
+def t : Term := phi (phi zero zero) (add (phi (phi zero zero)
+  (phi (add (phi zero zero) (phi zero zero)) zero)) (phi zero (phi zero zero)))
+
+theorem e1 : o? M = some t := rfl
+
+def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
+
+#guard kindT t == KindT.isLim
+#guard (List.range 8).all fun n => o? (BMS.expand M n) == some (fsN t (n + 1))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
+
+end F2a
+
+namespace F2b
+
+def M : Matrix := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]]
+def t : Term := phi (phi zero zero) (add (phi (phi zero zero)
+  (phi (add (phi zero zero) (phi zero zero)) zero)) (phi (phi zero zero) zero))
+
+theorem e1 : o? M = some t := rfl
+
+/-- **添字は 2 で、隣の F2a は 1 である。** 同じ族の隣り合う 2 行で違う。 -/
+def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 2))
+
+#guard kindT t == KindT.isLim
+#guard (List.range 8).all fun n => o? (BMS.expand M n) == some (fsN t (n + 2))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 1)))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 3)))
+
+end F2b
+
+/-! ## diff.md 族 3 -/
+
+namespace F3a
+
+def M : Matrix :=
+  [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]]
+def t : Term := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
+  (phi (add (phi zero zero) (phi zero zero)) zero))))
+
+theorem e1 : o? M = some t := rfl
+
+/-- **この行だけ一様な添字が無い。** `n ≥ 1` では 2 で合うが、`n = 0` の値は `fsN t` の
+    項ではない (30 項まで探して不在)。`fsN t 1 = ζ₀` と `fsN t 2` の間に落ちる。 -/
+def e3ClaimFrom1 : Prop := ∀ n, o? (BMS.expand M (n + 1)) = some (fsN t (n + 2))
+
+#guard kindT t == KindT.isLim
+#guard (List.range 8).all fun n => o? (BMS.expand M (n + 1)) == some (fsN t (n + 2))
+-- n = 0 は基本列の上に無い。**これが「一様な添字が無い」の実体である。**
+#guard (List.range 30).all fun j => !(o? (BMS.expand M 0) == some (fsN t j))
+-- そしてその値は fsN t 1 と fsN t 2 の間にある (飛ばされている)
+#guard match o? (BMS.expand M 0) with
+       | some v => lt (fsN t 1) v && lt v (fsN t 2)
+       | none => false
+
+end F3a
+
+namespace F3b
+
+def M : Matrix :=
+  [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]]
+def t : Term := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
+  (add (phi (add (phi zero zero) (phi zero zero)) zero) (phi (phi zero zero) zero)))))
+
+theorem e1 : o? M = some t := rfl
+
+def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
+
+#guard kindT t == KindT.isLim
+#guard (List.range 8).all fun n => o? (BMS.expand M n) == some (fsN t (n + 1))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
+
+end F3b
+
+namespace F3c
+
+def M : Matrix :=
+  [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]]
+def t : Term := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
+  (add (phi (add (phi zero zero) (phi zero zero)) zero)
+    (phi (add (phi zero zero) (phi zero zero)) zero)))))
+
+theorem e1 : o? M = some t := rfl
+
+def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
+
+#guard kindT t == KindT.isLim
+#guard (List.range 8).all fun n => o? (BMS.expand M n) == some (fsN t (n + 1))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
+#guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
+
+end F3c
+
+/-! ## 行との対応
+
+**この 6 つが表の行そのものであることを固定する。** 名前で結んでいると、表の行が動いた
+ときに証明が別の行を指したまま通る。 -/
+
+def isRow (M : Matrix) (t : Term) : Bool := rows.any fun r => r.m == M && r.t == t
+
+#guard isRow F1.M F1.t
+#guard isRow F2a.M F2a.t
+#guard isRow F2b.M F2b.t
+#guard isRow F3a.M F3a.t
+#guard isRow F3b.M F3b.t
+#guard isRow F3c.M F3c.t
+-- CTRL 存在しない対は結ばれない
+#guard !(isRow F1.M F2a.t)
+
+/-! ## 残りの選定行が、なぜここに無いか
+
+`o?` が届かないか、届いても撤回領域で誤った値を返す。**測定して数で固定する。** -/
+
+def selected : List Row := rows.filter fun r => r.sel != ""
+def reached : List Row := selected.filter fun r => o? r.m == some r.t
+
+#guard selected.length == 23
+#guard reached.length == 11            -- 既証明 5 + ここの 6
+#guard (reached.filter fun r => r.proof == "").length == 6
+-- `o?` が値を返すのに表と違う行 (撤回領域)、と `o?` が未定義の行
+#guard (selected.filter fun r => (o? r.m).isSome && !(o? r.m == some r.t)).length == 6
+#guard (selected.filter fun r => (o? r.m).isNone).length == 6
+
+end Selected
+end Rows

@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.4.0"
+def version : String := "v0.4.1"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -499,7 +499,7 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 
 ## E 証明の対象行
 
-全 60 行の E を証明するのは大きすぎるので、**手で選んだ 22 行から始める**。網羅ではない。
+全 60 行の E を証明するのは大きすぎるので、**手で選んだ 23 行から始める**。網羅ではない。
 選定の基準は「相が変わるところ」— これまで出てこなかった構成子が初めて現れる行、
 違う変数を使い始める行 — と、外部の表と食い違う行である。表の一番右の列にその理由を
 書いてある。印は相が属する側を表す。
