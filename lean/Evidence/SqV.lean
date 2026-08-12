@@ -399,24 +399,17 @@ def aboveBelow (f : Term → BMS.Matrix) : Nat × Nat :=
 -- the single settled value the corpus above omits, stated as a value rather than a count
 #eval (sqv (phi (phi one zero) zero), Trans.oR (sqv (phi (phi one zero) zero)))
 
--- GATE 4 (2026-08-13, RECORDED not gated — see §K3.20): every table row's term must be in
--- NORMAL FORM.  This needs no oracle at all, and it fires: 4 of the 51 rows carry a term
--- that `Evidence.WF.NfOK` rejects, and for three of them the C reference implementation
--- confirms the row is wrong — their term denotes a fixed point, so it collapses to the
--- value of the row's own `[0]` expansion, which a limit cannot do.
+-- The "GATE 4" written here on 2026-08-13 is WITHDRAWN — see §K3.20.  It read
+-- `Evidence.WF.NfOK` as "the term is in normal form" and reported four rows as defective.
+-- `NfOK` is a side condition for the fundamental-sequence assembly (`asm_generalB`), vacuous
+-- unless the second argument of a `φ̄` is itself a `φ̄` and a `kindV` limit; `NfOK t = false`
+-- says nothing about whether `t` is a correct value.  The rows are right.
 --
---     (0,0)(1,1)(1,0)         φ̄(0,ε₀)           bms: [n] = ε₀, ε₀·2, ε₀·3 → ε₀·ω
---     (0,0)(1,1)(2,1)(1,0)    φ̄(0,φ̄(2,0))       bms: [n] = X, X·2, X·3   → X·ω
---     (0,0)(1,1)(2,1)(1,1)    φ̄(1,φ̄(2,0))       bms: [n] is a tower over X
---     (0,0)(1,1)(2,2)(2,0)    a ψ row, no proof column
---
--- Left ungated because fixing the rows means fixing `Trans.oR`, which computes these
--- values and which the rows' E1 proofs are stated against.  The check itself lives at the
--- bottom of `Rows/TM.lean`, next to the rows — this file cannot import `Rows`.
---
--- One witness of the class is available here, and it needs nothing but the predicate:
-#eval (Evidence.WF.NfOK (phi zero (phi one zero)),          -- ω^ε₀, a table row's term
-       Evidence.WF.NfOK (phi one zero))                     -- ε₀ itself, control
+-- What the episode leaves behind is a real gate-shaped hole, still open: GATE 1 is a round
+-- trip through `oR`, GATES 2 and 3 match `sqv` against the table, so no gate here can see an
+-- error in `oR` or in the table.  The external comparison in
+-- `scripts/hexirp-rathjen-check.py` is the only check that can, and it is not automatable
+-- into CI because the source is a copyrighted document read from outside the repo.
 
 /-! ## §3 THE SIXTEEN, DECODED  (measurement, 2026-08-10)
 
@@ -8033,56 +8026,63 @@ Recorded as a trade, and the trade is against it: a scalar figure of merit is wo
 than one collapse, because the collapse is at a single known term and the threshold ranks
 every future candidate.  **`sqv7` remains the best point found.**
 
-### §K3.20 Four table rows are not in normal form, and three of them are wrong
+### §K3.20 WITHDRAWN — a false alarm, and the warning against it was already written
 
-Found by comparing against an independent third-party BMS ↔ Rathjen correspondence table
-(2272 height-2 and 2627 height-3 rows).  The comparison needed a dictionary, and the
-dictionary checks out: on ten hand-verified samples it is exactly
+**What this section said, and it was wrong.**  That four table rows carried a non-normal-form
+term, that three of them were wrong, and that the C reference confirmed it.  All of it is
+retracted.  The rows are right and an independent third-party table agrees with **all 17**
+comparable rows.
 
-    their φ̄(a,b) = our φ̄(1+a,b)      their ω-power w(x) = our φ̄(0,1+x)
-    their Ω = our Z, ψ and + and 0 literal
+**The mistake, in one line.**  `Evidence.WF.NfOK` was read as "the term is in normal form".
+It is not.  Its own docstring: a "recursion-local, decidable replacement for the global
+`Hnf` premise of `asm_generalB`", and `phiLocalNfOK a b` is **vacuous unless `b` is itself a
+`φ̄` term and a `kindV` limit**.  It is a side condition for the fundamental-sequence
+assembly.  `NfOK t = false` says nothing whatever about whether `t` is a well-formed or
+correct value, and four rows failing it is not a finding.
 
-and **all 2272 of their height-2 terms pass our `NfOK`**, which a wrong dictionary would
-not produce.  But the finding does not rest on that table, and the record here does not
-either — everything below is confirmed by the C reference implementation, or internal.
+**Why the C reference seemed to confirm it.**  It did settle what the matrices denote —
+`(0,0)(1,1)(1,0)[n] = ε₀, ε₀·2, ε₀·3 …`, so `ε₀·ω`.  What it could not settle, and what was
+assumed instead, is what `φ̄(0,ε₀)` denotes **here**.  `φ̄` is [R91] 2.6(vi), the Veblen
+function that **re-counts fixed points**, so `φ̄(0,ε₀)` is not `ω^ε₀`.  The repo says so in
+three places that were all in reach:
 
-**The internal statement.**  Four of the 51 table rows carry a term `Evidence.WF.NfOK`
-rejects (control: 47 pass, and the predicate does reject a planted non-normal term).  For a
-term to be non-normal here is not cosmetic: `φ̄(0,x)` with `x` a fixed point of `ω^·`
-denotes `x` itself, so the row denotes the same ordinal as a smaller matrix.
+    the row's own `name` field       `\omega^{\varepsilon_0+1}`
+    `Term.fsN (φ̄(0,ε₀))`             `0, ε₀, ε₀·2, ε₀·3 …`  — matches the matrix exactly
+    `scripts/external-check.py`      "φ̄ は不動点を飛ばすので、資料の φ_0(φ_1(0)+1) は
+                                      リポジトリの φ̄(0,ε₀) と同じものである"
 
-**The C reference settles three of them, and the argument needs no ordinal arithmetic.**
-A limit matrix cannot denote the value of its own `[0]` expansion:
+and that last one goes on to say that neglecting it once produced **97 spurious
+disagreements out of 98**.  The warning was written, in the file that was open, and the
+same hole was walked into again.
 
-    (0,0)(1,1)(1,0)        ours ω^ε₀ = ε₀        bms [n] = ε₀, ε₀·2, ε₀·3 …  so ε₀·ω
-    (0,0)(1,1)(2,1)(1,0)   ours ω^X = X          bms [n] = X, X·2, X·3 …     so X·ω
-    (0,0)(1,1)(2,1)(1,1)   ours ε_X = X          bms [n] is a tower over X
+**The dictionary, corrected.**  The bridge is the repo's own `phiNF`, which is exactly the
+fixed-point re-counting: `phiNF 0 (ε₀+1) = φ̄(0,ε₀)`.  So the third-party `φ(a,b)` maps to
+`phiNF (1+a) b`, not to raw `φ̄(1+a,b)`.  With that one change:
 
-with `X = φ̄(2,0)`.  In each case our value is exactly the `[0]` expansion's value.  All
-three matrices are standard (`bms -s` = 1).  The third-party table gives `ω^(ε₀+1)`,
-`ω^(X+1)` and `ε_{X+1}` — the successor in the second argument, which is what the
-expansions say.  The fourth row is a ψ row with an empty proof column; the third-party
-table disagrees with it too, but our `Z` ↔ their `Ω` correspondence is validated only at
-`Ω` itself, so that one is recorded as unresolved rather than as an error.
+                                     raw `phi`   via `phiNF`
+    their Veblen-fragment rows (390)   264 agree   379 agree
+    `oR` outputs failing `NfOK`          96           5
+    our table rows comparable (17)     14 / 3      **17 / 0**
 
-**Scope, stated honestly.**  Inside the fragment where the dictionary IS validated (both
-terms `CNV`): of our 17 comparable rows, 14 agree and 3 disagree — the three above.  Over
-their 390 Veblen-fragment height-2 rows, `oR` agrees on 264 and disagrees on 126, and 96 of
-those 126 are cases where `oR`'s own output fails `NfOK`.  Outside the fragment the
-dictionary is unvalidated and no count from there is claimed.
+**What actually survives, and it is worth having.**
 
-**What this says about the gates.**  GATE 1 is a round trip through `oR`, so it cannot see
-an error in `oR`; GATE 2 and GATE 3 match `sqv` against the table, so they cannot see an
-error in the table.  Every gate in this file compares two things that were built from each
-other.  The normal-form check is the first that compares the table against nothing at all,
-and it fires on the first run.  Sixth instance of the lesson, and the sharpest: not "the
-corpus cannot contain what it wasn't built to contain" but **"the oracle cannot contradict
-what it was derived from"**.
+* All four settled values of §K3.14 are confirmed by a source built independently of both
+  `oR` and `sqv`: `φ̄(ω,0)`, `φ̄(ε₀,0)`, `φ̄(ω^ω,0)`.
+* §K3.18's finding is corroborated exactly.  `sqv φ̄(ε₀,0) = (0,0)(1,1)(2,1)(3,1)`, and that
+  matrix is `ψ_Ω(0)` — which is what `oR` returns AND what the third-party table assigns,
+  independently, to the same matrix.
+* `oR` agrees on 379 of their 390 Veblen-fragment height-2 rows.  The residual 11 are a real
+  and much smaller signal, and they are the thing to look at next.
+* `scripts/hexirp-rathjen-check.py` makes the comparison reproducible, with the `phiNF`
+  bridge and this failure recorded in it.
 
-Added beside the others as GATE 4, RECORDED and not gated: fixing the rows means fixing
-`Trans.oR`, which computes these values and which the rows' E1 proofs are stated against.
-That is a repair, not a one-line edit, and it is the next substantial piece of work in this
-file.
+**The lesson, and it is not the one §K3.20 claimed.**  §K3.17 said the gates all compare
+things built from each other and celebrated a check that compared the table "against nothing
+at all".  That check was a misread predicate.  The actual rule this cost: **before reporting
+that an external source disagrees, normalise both sides into one notation and verify the
+normaliser on a case where the answer is already known.**  Every disagreement here was a
+notational difference, which is the same thing that happened at 97/98, and the repo already
+knew it.
 
 -/
 

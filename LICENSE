@@ -1,0 +1,55 @@
+# License
+
+Copyright (c) koteitan and contributors.
+
+This work is licensed under the **Creative Commons Attribution-ShareAlike 3.0
+Unported License (CC BY-SA 3.0)**.
+
+To view a copy of this license, visit
+<https://creativecommons.org/licenses/by-sa/3.0/>; the legal code is at
+<https://creativecommons.org/licenses/by-sa/3.0/legalcode>.
+
+CC BY-SA 3.0 was chosen to match the license of the Googology Wiki (Fandom),
+which is where the external analyses this project checks itself against are
+published, so that material can flow in both directions without a license
+mismatch.
+
+**Attribution.** If you reuse this work, credit
+"koteitan, bms-rathjen (<https://github.com/koteitan/bms-rathjen>)"
+and indicate whether you changed anything.
+
+**Note for reusers of the Lean sources.** CC BY-SA is a content license, not a
+software license: it has no source-provision clause, no patent grant, and is not
+compatible with the GNU GPL or most other software copyleft. If you want to reuse
+`lean/` inside a software project under a different license, please open an issue
+— relicensing that part is a decision the maintainer can make.
+
+---
+
+## External sources
+
+This repository does **not** contain any of the documents below. They are read
+from a local directory supplied at run time (see `scripts/external-check.py` and
+`scripts/hexirp-rathjen-check.py`), and cited by URL. The source is authoritative;
+a local copy is only a copy.
+
+Licensed CC BY-SA 3.0 (Googology Wiki / Fandom):
+
+- Hexirp, 「バシク行列システムの解析」(1–3) and 「バシク行列システムと Rathjen の
+  弱マーロの psi の対応」 — <https://googology.fandom.com/ja/wiki/ユーザー:Hexirp/執筆した記事の一覧>
+- P進大好きbot, 「超限変数拡張ブーフホルツのψ関数観察日記」 —
+  <https://googology.fandom.com/ja/wiki/ユーザーブログ:P進大好きbot/超限変数拡張ブーフホルツのψ関数観察日記>
+
+Other external material, cited but not included:
+
+- M. Rathjen's papers on T(M), χ and ψ (1990, 1991, 1994) — copyrighted; cited
+  bibliographically only.
+- "BMS vs Rathjen's OCF" spreadsheet —
+  <https://docs.google.com/spreadsheets/d/1UkVwMxbo_i9JVh9suHZF6ycp2yaIrHRZR0XZceB5BRs/edit>
+- Naruyoko, googology implementations — <https://github.com/Naruyoko/googology/>.
+  `lean/Trans/Recal.lean` is a **port** of `pss-vs-buchholz/common.js`; the
+  function names correspond one to one (see `scripts/external-check.py`).
+  `padicBotRathjen/` is used only as an external cross-check, never copied.
+- yaBMS (koteitan), the C reference implementation of BMS expansion —
+  <https://github.com/koteitan/yaBMS>. Used as an oracle via `scripts/crosscheck.sh`
+  and `scripts/standard-audit.sh`.
