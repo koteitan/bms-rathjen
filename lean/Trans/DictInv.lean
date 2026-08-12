@@ -29,17 +29,30 @@ SCOPE, and it is drawn where the derivation is verified rather than where it is
 convenient.  The Veblen fragment, `Z δ` for a numeral δ, and `ψ_{Z δ}(i)` for `i < Z δ`.
 Outside that it returns `none`, never a wrong answer.
 
-The `ψ` branch above is derived by reading `collapse`'s strongly critical case at `a = w`,
-which makes `e = 0`, `d = c` and `i = c ⊖ 1`.  That reading is only valid while `i < w`.
-For `i ≥ w` the correct `a` is a different one — `ψ_Ω(Ω₂)` inverts to `D 0 (D 2 0)`, i.e.
-`a = Ω₂`, not `a = Ω` — and a first version that ignored this produced twelve wrong table
-rows, all differing in the same way (`Z(1)` against `φ̄(1,Ω)`).  It now returns `none`
-there.  **That is the interesting region**: `(0,0)(1,1)(2,2)` and everything §Γ₀ of the
-table warns about live in it, and the round trip cannot yet speak about them.
+Three things were got wrong first and fixed by the round trip failing, in this order:
+
+  * `i < w` (`a = w`, so `e = 0`, `d = c`, `i = c ⊖ 1`) is only one case.  For `i ≥ w`
+    the pair `(a,c)` is exactly what `wcnf w (1+i)` reports: `a = w + A`, `c = C`.  A
+    version that put the multiplicity into `a` instead of `c` missed eight rows.
+  * an AP term above `Ω` is `ω^(Z u + y)` for SOME `u`, not always `u = 0`; applying
+    `D 1` to a term above `Ω₂` turns `Ω₂` into `φ̄(1,Ω)` and missed six more.
+  * `collapse` accumulates `i = (d₁ ⊖ 1) + d₂ + …` over several strongly critical pairs,
+    so every pair `wcnf` reports is used, not just the first.
+
+WHAT IS STILL `none`, and why it is the interesting part.  Twelve table rows, every one
+with an index of the form `Ω₂ + …`.  They fail on an inner subterm, not on the index
+decomposition: `invF` cannot yet name an ε-number strictly between `Z k` and `Z (k+1)`
+that is not of the form `ω^(Z k + y)` — `φ̄(1,Ω)` is the smallest — because `logOm` of it
+is itself, `subAP` has nothing to strip, and the recursion regresses to the same term
+until the fuel runs out.  Such terms come out of `collapse`'s VEBLEN branch above `Ω`
+(base `= Ω+1`), which this file does not invert yet.
+
+`(0,0)(1,1)(2,2)` and everything §Γ₀ of the table warns about live in that region, so the
+round trip still cannot speak about the place where `dict` is actually in doubt.
 
 MEASURED (see the section at the bottom):
     generated CNV corpus, 750 terms      dict ∘ dictInv = id on 750, none on 0
-    table rows, 51                       28 round trip, 23 none, 0 wrong
+    table rows, 51                       39 round trip, 12 none, 0 wrong
     BT pool, 117 standard terms          115 syntactically equal, 117 equal as values
 -/
 import Trans.Dict
@@ -68,22 +81,42 @@ def invF : Nat → Term → Option BT
   | f+1, .psi (.Z d) i =>
       -- collapse u の強臨界枝を a = w で読むと e = 0, d = c, i = c⊖1。
       -- よって ψ_w(i) ← x = w^w·(1+i)、成分ごとに w^w·q = ω^(w·w + logOm q)。
-      -- i < w のときだけ。この枝の導出は `a = w`(⇒ e = 0, d = c) を仮定しており、
-      -- i ≥ w では正しい `a` が違う: ψ_Ω(Ω₂) の逆は `D 0 (D 2 0)` で a = Ω₂ である。
-      -- そこを埋めるまでは誤答ではなく `none` を返す。
-      match (if lt i (Z d) then natOfT d else none) with
+      match natOfT d with
       | none => none
       | some u =>
         let w : Term := Z d
-        let c := plus TM.Term.one i
-        (((toList c).mapM (fun q =>
-            (invF f (plus (mulL w w) (logOm q))).map (BT.D (u+1))))).map
-          (fun l => BT.D u (BT.ofL l))
+        let P := plus TM.Term.one i
+        if lt i w then
+          -- `a = w` ⇒ e = 0, d = c, i = c ⊖ 1。成分ごとに w^w·q = ω^(w·w + logOm q)。
+          (((toList P).mapM (fun q =>
+              (invF f (plus (mulL w w) (logOm q))).map (BT.D (u+1))))).map
+            (fun l => BT.D u (BT.ofL l))
+        else
+          -- i ≥ w。d = ω^(w·(a⊖w))·c を (a,c) について解くのは、まさに `wcnf` の逆である。
+          -- `wcnf w (1+i)` が一組 (A,C) と空の尾部を返すなら a = w + A、c = C。
+          -- 多重度は `a` ではなく `c` に入る — 最初に `a` へ入れて表を 8 行外した。
+          -- 組は 1 つとは限らない。`collapse` の畳み込みは強臨界の組ごとに
+          -- i = (d₁ ⊖ 1) + d₂ + … と積むので、1+i の組を全部使えばよい。
+          match wcnf w (toList P) with
+          | ([], _) => none
+          | (ps, tl) =>
+            if tl == zero then
+              let x := ofList (ps.flatMap (fun AC =>
+                (toList AC.2).map (fun q =>
+                  omegaNF (plus (mulL w (plus w AC.1)) (logOm q)))))
+              (invF f x).map (BT.D u)
+            else none
   | f+1, (.add u v) => ((toList (.add u v)).mapM (invF f)).map BT.ofL
   | f+1, (.phi a b) =>
       if !(lt (.phi a b) (Z .zero)) then
-        -- Ω 以上の加法主要項は ω^(Ω+y)。D 0 は ψ₀ なのでここでは潰してしまう。
-        (invF f (subAP (Z .zero) (logOm (.phi a b)))).map (BT.D 1)
+        -- Ω 以上の加法主要項は ω^(Z u + y) で、BT では `D (u+1) (inv y)` である。
+        -- どの階層かを探す必要がある: Ω₂ 以上の項に `D 1` を当てると Ω₂ が φ̄(1,Ω) に
+        -- 化ける (表を 6 行外した)。上限 8 は表と併走コーパスの Z 添字より十分大きく、
+        -- 外れたときは誤答ではなく `none` になる。`D 0` は ψ₀ なのでここでは潰す。
+        let g := logOm (.phi a b)
+        match (List.range 8).reverse.find? (fun k => le (Z (TM.Term.ofNat k)) g) with
+        | some k => (invF f (subAP (Z (TM.Term.ofNat k)) g)).map (BT.D (k+1))
+        | none => none
       else if a == zero then (invF f (logOm (.phi a b))).map (BT.D 0)
       else
         -- 意味上の第 2 引数 (β° of [R91] 2.7)。φ̄ は不動点を飛ばすので b そのものではない。
