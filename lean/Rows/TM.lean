@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.3.4"
+def version : String := "v0.4.0"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -57,6 +57,11 @@ structure Row where
   hasO : Bool := false -- o(M) = t holds (E1)
   ev : String := ""    -- the remaining, weaker evidence
   note : String := ""
+  /-- Why this row is on the E-proof shortlist ("" = not on it).  Starts with the side
+      the phase change belongs to: **M** BMS, **T** 𝔗(M), **B** Buchholz, **D** disputed
+      against an external table.  Chosen by hand, not exhaustively — see the section
+      "E 証明の対象行" of the generated table. -/
+  sel : String := ""
 
 /-- If the term is a natural number n (a sum of n copies of 1 = φ̄00), return n. -/
 def natOf? (t : Term) : Option Nat :=
@@ -94,7 +99,8 @@ def rows : List Row := [
   { m := [[0]], t := one, name := "1", proof := "«(0)»", hasO := true, ev := "bisim6" },
   { m := [[0],[0]], t := ofNat 2, name := "2", proof := "«(0)(0)»", hasO := true, ev := "bisim6" },
   { m := [[0],[1]], t := omega, name := "\\omega", proof := "«(0)(1)»", hasO := true,
-    ev := "bisim6" },
+    ev := "bisim6",
+    sel := "**M** 1 行行列で成分が増える最初。**T** φ̄ の第 2 引数が 0 でなくなる最初" },
   { m := [[0],[1],[0],[1]], t := add omega omega, name := "\\omega\\cdot 2",
     proof := "«(0)(1)(0)(1)»", hasO := true, ev := "bisim6" },
   { m := [[0],[1],[1]], t := phi zero (ofNat 2), name := "\\omega^2",
@@ -105,17 +111,27 @@ def rows : List Row := [
     name := "\\omega^{\\omega^\\omega}", proof := "«(0)(1)(2)(3)»", hasO := true,
     ev := "bisim6" },
   { m := [[0,0],[1,1]], t := e0, name := "\\varepsilon_0", proof := "R1",
-    hasO := true, ev := "bisim6", note := "2 行の最初の極限" },
+    hasO := true, ev := "bisim6", note := "2 行の最初の極限",
+    sel := "**M** 2 行の最初。**T** φ̄ の第 1 引数が 0 でなくなる最初。**B** Ω₁ の最初" },
   { m := [[0,0],[1,1],[0,0]], t := add e0 one, name := "\\varepsilon_0+1",
     proof := "«(0,0)(1,1)(0,0)»", hasO := true },
   { m := [[0,0],[1,1],[1,0]], t := phi zero e0,
-    name := "\\omega^{\\varepsilon_0+1}", proof := "R2", hasO := true, ev := "bisim6" },
+    name := "\\omega^{\\varepsilon_0+1}", proof := "R2", hasO := true, ev := "bisim6",
+    sel := "**T** φ̄ が不動点を飛ばす最初 (φ̄(0,ε₀) は ε₀ ではない)" },
   { m := [[0,0],[1,1],[1,1]], t := phi one one, name := "\\varepsilon_1", proof := "R3",
     hasO := true },
   { m := [[0,0],[1,1],[2,0]], t := phi one omega, name := "\\varepsilon_\\omega",
-    proof := "R4", hasO := true },
+    proof := "R4", hasO := true,
+    sel := "**M** 0 行目が 2 になる最初" },
   { m := [[0,0],[1,1],[2,0],[0,0]], t := add (phi one omega) one,
     name := "\\varepsilon_\\omega+1", proof := "«(0,0)(1,1)(2,0)(0,0)»", hasO := true },
+  -- 食い違い行 (diff.md 族 1)。値は oR から機械抽出。
+  { m := [[0,0],[1,1],[2,0],[1,1],[1,0],[2,1],[3,0],[1,0],[2,1]],
+    t := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
+      (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) zero))),
+    name := "\\bar{\\varphi}(0,\\bar{\\varphi}(1,\\omega+1)+\\bar{\\varphi}(1,\\omega)+\\bar{\\varphi}(1,0))",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 1)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,0],[2,0]], t := phi one (phi zero (ofNat 2)),
     name := "\\varepsilon_{\\omega^2}", proof := "«(0,0)(1,1)(2,0)(2,0)»", hasO := true },
   { m := [[0,0],[1,1],[2,0],[3,0]], t := phi one (phi zero omega),
@@ -124,13 +140,48 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,0],[3,1]], t := phi one e0,
     name := "\\varepsilon_{\\varepsilon_0}", proof := "R5", hasO := true },
   { m := [[0,0],[1,1],[2,1]], t := phi (ofNat 2) zero, name := "\\zeta_0",
-    proof := "R6", hasO := true },
+    proof := "R6", hasO := true,
+    sel := "**M** (2,1) の最初。**B** ψ₁ が入れ子になる最初" },
   { m := [[0,0],[1,1],[2,1],[0,0]], t := add (phi (ofNat 2) zero) one,
     name := "\\zeta_0+1", proof := "«(0,0)(1,1)(2,1)(0,0)»", hasO := true },
   { m := [[0,0],[1,1],[2,1],[1,0]], t := phi zero (phi (ofNat 2) zero),
     name := "\\omega^{\\zeta_0+1}", proof := "«(0,0)(1,1)(2,1)(1,0)»", hasO := true },
   { m := [[0,0],[1,1],[2,1],[1,1]], t := phi one (phi (ofNat 2) zero),
     name := "\\varepsilon_{\\zeta_0+1}", proof := "«(0,0)(1,1)(2,1)(1,1)»", hasO := true },
+  -- 食い違い行 (diff.md 族 2、2 行)。族 2 は 1 段ずれで、先方の 1 行目の値が oR の
+  -- 2 行目の値に一致する。値は oR から機械抽出。
+  { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0]],
+    t := phi (phi zero zero) (add (phi (phi zero zero)
+      (phi (add (phi zero zero) (phi zero zero)) zero)) (phi zero (phi zero zero))),
+    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\omega)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 2)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
+  { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]],
+    t := phi (phi zero zero) (add (phi (phi zero zero)
+      (phi (add (phi zero zero) (phi zero zero)) zero)) (phi (phi zero zero) zero)),
+    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\bar{\\varphi}(1,0))",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 2)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
+  -- 食い違い行 (diff.md 族 3、3 行)。ここだけ当方の値が先方より大きい。
+  { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]],
+    t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
+      (phi (add (phi zero zero) (phi zero zero)) zero)))),
+    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)))))",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 3)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
+  { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]],
+    t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
+      (add (phi (add (phi zero zero) (phi zero zero)) zero) (phi (phi zero zero) zero))))),
+    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(1,0)))))",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 3)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
+  { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]],
+    t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
+      (add (phi (add (phi zero zero) (phi zero zero)) zero)
+        (phi (add (phi zero zero) (phi zero zero)) zero))))),
+    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(2,0)))))",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 3)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   -- The rows below were withdrawn in v0.1.42 (the o? calibration failure; see
   -- table/oracle-audit-2026-08-09.txt and plan/README.md) and RESTORED in v0.1.48
   -- with the oracle-calibrated values of oR = dict ∘ TransPort (Trans/Recal.lean,
@@ -142,13 +193,36 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,1],[2,1]],
     t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero))) zero,
     name := "\\bar{\\varphi}(3,0)", ev := "oR", note := "旧値 ζ₁ を訂正 (較正事故の初検出行)" },
+  -- 食い違い行 (diff.md 族 4、3 行)。φ̄(3,ω) の直上をどう数えるかで割れている。
+  { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]],
+    t := phi (phi zero zero) (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
+      (phi zero (phi zero zero))),
+    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(3,\\omega))",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 4)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
+  { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1]],
+    t := phi (add (phi zero zero) (phi zero zero))
+      (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
+        (phi zero (phi zero zero))),
+    name := "\\bar{\\varphi}(2,\\bar{\\varphi}(3,\\omega))",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 4)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
+  { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1],[2,1]],
+    t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
+      (add (phi zero (phi zero zero)) (phi zero zero)),
+    name := "\\bar{\\varphi}(3,\\omega+1)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 4)",
+    sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (phi zero (phi zero zero)) zero,
-    name := "\\bar{\\varphi}(\\omega,0)", ev := "oR", note := "旧値 ζ_ω を訂正" },
+    name := "\\bar{\\varphi}(\\omega,0)", ev := "oR", note := "旧値 ζ_ω を訂正",
+    sel := "**T** φ̄ の第 1 引数が数字でなくなる最初" },
   { m := [[0,0],[1,1],[2,1],[3,0],[4,1]], t := phi (phi (phi zero zero) zero) zero,
-    name := "\\bar{\\varphi}(\\varepsilon_0,0)", ev := "oR", note := "旧値 ζ_{ε₀} を訂正" },
+    name := "\\bar{\\varphi}(\\varepsilon_0,0)", ev := "oR", note := "旧値 ζ_{ε₀} を訂正",
+    sel := "**T** φ̄ の第 1 引数が ε 数になる最初" },
   { m := [[0,0],[1,1],[2,1],[3,1]], t := psi (Z zero) zero,
     name := "\\Gamma_0", ev := "oR",
-    note := "ψ 項の初登場。旧値 φ̄(3,0) を訂正" },
+    note := "ψ 項の初登場。旧値 φ̄(3,0) を訂正",
+    sel := "**M** (3,1) の最初。**T** ψ の最初。**B** ψ₁ の 3 重入れ子の最初" },
   { m := [[0,0],[1,1],[2,1],[3,1],[0,0]], t := add (psi (Z zero) zero) (phi zero zero),
     name := "\\Gamma_0+1", ev := "oR" },
   { m := [[0,0],[1,1],[2,1],[3,1],[1,0]], t := phi zero (psi (Z zero) zero),
@@ -165,7 +239,8 @@ def rows : List Row := [
   -- oracle rather than by hand.
   { m := [[0,0],[1,1],[2,2]], t := psi (Z zero) (Z (phi zero zero)),
     name := "\\psi_0(\\Omega_2)", ev := "oR",
-    note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正" },
+    note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正",
+    sel := "**M** 1 行目に 2 が現れる最初。**T** Z の最初。**B** Ω₂ の最初" },
   { m := [[0,0],[1,1],[2,2],[1,1]],
     t := phi (phi zero zero) (psi (Z zero) (Z (phi zero zero))),
     name := "\\varepsilon_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
@@ -174,10 +249,12 @@ def rows : List Row := [
     name := "\\zeta_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,1],[3,1]],
     t := psi (Z zero) (add (Z (phi zero zero)) (phi zero zero)),
-    name := "\\Gamma_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
+    name := "\\Gamma_{\\psi_0(\\Omega_2)+1}", ev := "oR",
+    sel := "**T** ψ の引数に Z と和が同居する最初" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero)) (phi (phi zero zero) (Z zero))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2))", ev := "oR",
+    sel := "**T** Ω が φ̄ の引数に現れる最初。**B** ψ₁ の引数に Ω₂ が入る最初" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,2],[1,1],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (add (phi (phi zero zero) (Z zero)) (phi (phi zero zero) (Z zero)))),
@@ -223,14 +300,16 @@ def rows : List Row := [
     name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_1(\\Omega_2)))", ev := "oR" },
   { m := [[0,0],[1,1],[2,2],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero)) (Z (phi zero zero))),
-    name := "\\psi_0(\\Omega_2\\cdot 2)", ev := "oR", note := "旧値 φ̄(ω²,0) を訂正" },
+    name := "\\psi_0(\\Omega_2\\cdot 2)", ev := "oR", note := "旧値 φ̄(ω²,0) を訂正",
+    sel := "**B** ψ₀ の引数が和になる最初" },
   { m := [[0,0],[1,1],[2,2],[2,2],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (add (Z (phi zero zero)) (Z (phi zero zero)))),
     name := "\\psi_0(\\Omega_2\\cdot 3)", ev := "oR" },
   { m := [[0,0],[1,1],[2,2],[3,0]],
     t := psi (Z zero) (phi zero (Z (phi zero zero))),
-    name := "\\psi_0(\\psi_2(1))", ev := "oR", note := "旧値 φ̄(ω^ω,0) を訂正" },
+    name := "\\psi_0(\\psi_2(1))", ev := "oR", note := "旧値 φ̄(ω^ω,0) を訂正",
+    sel := "**M** (2,2) の後に (3,0) が来る最初。**T** Z が ω 冪の中に入る最初" },
   { m := [[0,0],[1,1],[2,2],[3,0],[3,0]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi zero zero))),
     name := "\\psi_0(\\psi_2(2))", ev := "oR" },
@@ -246,7 +325,8 @@ def rows : List Row := [
     name := "\\psi_0(\\psi_2(\\psi_0(\\Omega_2)))", ev := "oR" },
   { m := [[0,0],[1,1],[2,2],[3,1]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (Z zero))),
-    name := "\\psi_0(\\psi_2(\\Omega_1))", ev := "oR" }
+    name := "\\psi_0(\\psi_2(\\Omega_1))", ev := "oR",
+    sel := "**B** ψ₂ の引数に Ω₁ が入る最初。表の最上行" }
 ]
 
 /-! ## Per-row machine checks (a successful build means every row is verified) -/
@@ -340,7 +420,7 @@ def regionLine (regionProofLine : String → String → Option Nat) (g : RegionR
   let cell (s : String) : String :=
     if g.plainCells || s == "" then s else "$`" ++ s ++ "`$"
   "| **" ++ g.bms ++ "** | " ++ cell g.tm ++ " | " ++ cell g.nm ++ " | " ++
-    proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
+    proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |  |\n"
 
 /-- The contents of table/table-r1.md.
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
@@ -367,8 +447,8 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 ## 対応表
 
-| BMS | $`\\mathfrak{T}(M)`$ | 通称 | 証明 | その他の弱いエビデンス | 備考 |
-|---|---|---|---|---|---|
+| BMS | $`\\mathfrak{T}(M)`$ | 通称 | 証明 | その他の弱いエビデンス | 備考 | [E 対象](#e-証明の対象行) |
+|---|---|---|---|---|---|---|
 "
   let rowStr (r : Row) : String :=
     let bms := if r.m.isEmpty then "(空)" else BMS.showMatrix r.m
@@ -389,7 +469,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
       (((if r.hasO then [linked "o" "../lean/Trans/TM.lean"] else []) ++
         (if r.ev == "" then [] else [linked r.ev (evLink r.ev)])))
     "| " ++ bmsCell ++ " | $`" ++ tex r.t ++ "`$ | $`" ++ r.name ++ "`$ | " ++
-      proofCell ++ " | " ++ weak ++ " | " ++ r.note ++ " |\n"
+      proofCell ++ " | " ++ weak ++ " | " ++ r.note ++ " | " ++ r.sel ++ " |\n"
   -- interleave: emit a region row just before the first row whose term reaches its bound
   let step (st : List RegionRow × String) (r : Row) : List RegionRow × String :=
     let (gs, acc) := st
@@ -408,6 +488,7 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 は目標であってエビデンスではないので、ここには書かず
 [plan/README.md](../plan/README.md) にある。
 
+- [E 証明の対象行](#e-証明の対象行)
 - [E.zero / E.succ / E.lim — ✅ の実体](#ezero--esucc--elim---の実体)
   - [✅ が検査していないもの](#-が検査していないもの)
 - [E.cofinal (展開と基本列の相互共終)](#ecofinal-展開と基本列の相互共終)
@@ -415,6 +496,35 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 - [その他の弱いエビデンス](#その他の弱いエビデンス)
 - [**Γ₀ より上の行について — 値を信用しないこと**](#γ₀-より上の行について--値を信用しないこと)
 - [定義](#定義): [D.TM](#dtm-mathfraktm) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
+
+## E 証明の対象行
+
+全 60 行の E を証明するのは大きすぎるので、**手で選んだ 22 行から始める**。網羅ではない。
+選定の基準は「相が変わるところ」— これまで出てこなかった構成子が初めて現れる行、
+違う変数を使い始める行 — と、外部の表と食い違う行である。表の一番右の列にその理由を
+書いてある。印は相が属する側を表す。
+
+| 印 | 側 | 何を見ているか |
+|---|---|---|
+| **M** | BMS | 行列の形。行数、成分が取る値、初めて現れる列の型 |
+| **T** | $`\\mathfrak{T}(M)`$ | 項の構成子。$`\\bar\\varphi`$ の引数の種類、$`\\psi`$、$`Z`$、$`\\Omega`$ |
+| **B** | Buchholz $`\\mathrm{OT}_B`$ | $`\\psi_u`$ の添字 $`u`$、入れ子、引数が和になるところ |
+| **D** | — | 外部の表と食い違う 9 行。値そのものが未決 ([diff.md](../diff.md)) |
+
+**D の 9 行は他と性格が違う。** ほかの印は「ここが証明できれば周りも同じ理屈で通る」
+という意味だが、D は「どちらが正しいか分かっていない」という意味である。9 行はすべて
+Veblen 断片にあるので $`\\psi`$・$`Z`$ の領域には入らない。決着に要るのは行ごとの
+添字を固定した上での
+
+```math
+\\mathrm{oR}\\,(M[n]) = \\mathrm{fsN}\\,(\\mathrm{oR}\\,M)\\,n
+```
+
+で、これは ✅ の行が満たしている E3 そのものである。
+
+**選定は手作業で、網羅を主張しない。** 相の変わり目を機械で数え上げれば、ここに無い行も
+出てくる。ここにあるのは「まずこれだけやれば、各側の主要な段差を一度は通る」という
+出発点である。
 
 ## E.zero / E.succ / E.lim — ✅ の実体
 
