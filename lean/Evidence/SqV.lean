@@ -7558,6 +7558,37 @@ So the correction is not a prefix swap plus a uniform lift; the later columns' d
 depend on the structure they sit under.  Worth recording because two of three came out
 right, which is exactly the ratio that makes a wrong rule look like a working one.
 
+
+### §K3.12 A FOURTH verified value, and the first with `b ≠ 0`
+
+    φ̄(ε₀,1)  =  (0,0)(1,1)(2,1)(3,0)(4,1)(1,1)(2,1)(3,0)(4,1)      standard
+
+Obtained by the route §K3.11 named, walked.  Write `P = (0,0)(1,1)(2,1)(3,0)(4,1)`, the
+verified `φ̄(ε₀,0)`.  Reading `fs (φ̄(ε₀,1))` with a map already corrected at `φ̄(ε₀,0)`:
+
+    n=2  P ++ (1,1)(2,1)(3,0)                  n=4  P ++ (1,1)(2,1)(3,0)(4,0)(5,0)
+    n=3  P ++ (1,1)(2,1)(3,0)(4,0)             n=5  P ++ (1,1)(2,1)(3,0)(4,0)(5,0)(6,0)
+
+and expanding the candidate with the reference implementation gives exactly those, at
+shift 2:
+
+    candidate[0] = image(fs 2)    candidate[1] = image(fs 3)    candidate[2] = image(fs 4)
+
+**Two caveats, both load-bearing.**  It depends on the corrected map being right on the
+terms `φ̄(a_n, φ̄(ε₀,0))`, whose indices `a_n = 0, 1, ω, …` are all plain — the case that
+agrees with all 17 table rows, 9 of which have `b ≠ 0`.  And the shift is 2, wider than
+the shifts seen elsewhere here; nothing depends on its size, but it is not 0.
+
+**What it immediately shows.**  The corrected map produces
+`(0,0)(1,1)(2,1)(3,1)(1,1)(2,1)(3,1)` for this term — the OLD, wrong `φ̄(ε₀,0)` prefix.  So
+fixing `φ̄(ε₀,0)` does not propagate into `b ≠ 0` positions: the ε-index correction is
+applied where the term IS `φ̄(ε,0)` and not where such a term appears as an argument.  That
+is a sharper statement of the defect than "583 inversions", and it is the first constraint
+on the rule off the `b = 0` face — the thing §K3.11 said was missing.
+
+Also settled in passing: the earlier splice attempt failed because it lifted the tail by
+one.  The images keep their tail at depth 1 unshifted; only the prefix changes length.
+
 -/
 
 end Evidence.SqV
