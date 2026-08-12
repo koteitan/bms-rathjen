@@ -7527,7 +7527,22 @@ So no row in the table sits off the `b = 0` face of the ε-index rule.  That is 
 how the rows were chosen; it is why three verified values were all that could be extracted
 in the first place.  A constraining value has to come from a §K3.6 chain on some
 `φ̄(ε₀, b)` with `b ≠ 0` whose fundamental sequence stays inside the verified region —
-and whether such a term exists at reachable size is itself unmeasured.
+and such a term is reachable.  The route, measured rather than sketched:
+
+    fs (φ̄(ε₀,1)) [n]  =  φ̄(a_n, φ̄(ε₀,0))     with  a_n = 0, 1, ω, …
+
+Every `a_n` is PLAIN — first Veblen argument zero — which is the case `sqv'` handles
+correctly, and the table's nine `b ≠ 0` rows are all plain-index and all agree with `sqv'`.
+So the images of this fundamental sequence are computable in trusted territory **except**
+that each term carries `φ̄(ε₀,0)` as its second argument, and that is precisely where
+`sqv'` is wrong.  Reading them with `sqv'` reproduces the defect and the check goes
+circular a second time, one level deeper than §K3.10's.
+
+**What breaks it**: read the sequence with a map already corrected at `φ̄(ε₀,0)` — the
+candidate is, by construction — and then find the matrix whose expansions are those
+images.  That is a search rather than an evaluation, and it is the first step here that
+costs more than a `#eval`.  It is also the only route on the board: the table has nothing
+(0 rows), and every cheaper check has now been shown circular.
 
 -/
 
