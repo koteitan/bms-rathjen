@@ -7544,6 +7544,20 @@ images.  That is a search rather than an evaluation, and it is the first step he
 costs more than a `#eval`.  It is also the only route on the board: the table has nothing
 (0 rows), and every cheaper check has now been shown circular.
 
+**A shortcut tried and refuted.**  The wrong `φ̄(ε₀,0)` value is a LITERAL PREFIX of each
+image of `fs (φ̄(ε₀,1))`, so the obvious move is to swap in the correct value and lift the
+later columns by one, since the correct value is one column longer.  Checked against the
+reference implementation, two of the three spliced matrices are standard and in increasing
+order — and the third is NOT STANDARD:
+
+    (0,0)(1,1)(2,1)(3,0)(4,1)(2,0)                std
+    (0,0)(1,1)(2,1)(3,0)(4,1)(2,1)                std
+    (0,0)(1,1)(2,1)(3,0)(4,1)(2,1)(3,1)(4,0)      NOT standard
+
+So the correction is not a prefix swap plus a uniform lift; the later columns' depths
+depend on the structure they sit under.  Worth recording because two of three came out
+right, which is exactly the ratio that makes a wrong rule look like a working one.
+
 -/
 
 end Evidence.SqV
