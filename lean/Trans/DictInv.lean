@@ -25,14 +25,21 @@ TWO PLACES WHERE THE OBVIOUS READING IS WRONG, both found by the round trip fail
     every row of the shape `φ̄(1,ζ₀) = ε_{ζ₀+1}` fails — the same trap as §K3.20 and as
     `TM/FS.lean`'s provenance check, for the third time in one day.
 
-SCOPE.  The Veblen fragment plus `Ω`.  Above that (`ψ`, `Z δ` for δ ≠ 0) it returns
-`none` rather than a wrong answer, and that is the honest state: 26 of the 51 table rows
-are outside it.  Extending it to the ψ range is what makes the round trip a real gate on
-the region where `dict` is actually in doubt.
+SCOPE, and it is drawn where the derivation is verified rather than where it is
+convenient.  The Veblen fragment, `Z δ` for a numeral δ, and `ψ_{Z δ}(i)` for `i < Z δ`.
+Outside that it returns `none`, never a wrong answer.
+
+The `ψ` branch above is derived by reading `collapse`'s strongly critical case at `a = w`,
+which makes `e = 0`, `d = c` and `i = c ⊖ 1`.  That reading is only valid while `i < w`.
+For `i ≥ w` the correct `a` is a different one — `ψ_Ω(Ω₂)` inverts to `D 0 (D 2 0)`, i.e.
+`a = Ω₂`, not `a = Ω` — and a first version that ignored this produced twelve wrong table
+rows, all differing in the same way (`Z(1)` against `φ̄(1,Ω)`).  It now returns `none`
+there.  **That is the interesting region**: `(0,0)(1,1)(2,2)` and everything §Γ₀ of the
+table warns about live in it, and the round trip cannot yet speak about them.
 
 MEASURED (see the section at the bottom):
     generated CNV corpus, 750 terms      dict ∘ dictInv = id on 750, none on 0
-    table rows, 51                       25 round trip, 26 none, 0 wrong
+    table rows, 51                       28 round trip, 23 none, 0 wrong
     BT pool, 117 standard terms          115 syntactically equal, 117 equal as values
 -/
 import Trans.Dict
@@ -45,6 +52,11 @@ open TM (Term)
 open TM.Term
 
 
+/-- The index of `Z d` / `ψ_{Z d}` as a numeral, when it is one. -/
+def natOfT (t : Term) : Option Nat :=
+  if t == zero then some 0
+  else if (toList t).all (· == TM.Term.one) then some (toList t).length else none
+
 /-- `dict` の逆。導出は `wcnf`/`collapse` の読みから:
       p = ω^g,  g = Ω·a + r   ⇒  p = Ω^a·ω^r
       dict (D 1 x) = ω^(Ω + dict x)  ⇒  Ω^a·q = D 1 (inv (Ω·(a⊖1) + logOm q))
@@ -52,7 +64,21 @@ open TM.Term
 def invF : Nat → Term → Option BT
   | 0, _ => none
   | _+1, .zero => some BT.zero
-  | _+1, .Z .zero => some (BT.D 1 BT.zero)
+  | _+1, .Z d => (natOfT d).map (fun u => BT.D (u+1) BT.zero)
+  | f+1, .psi (.Z d) i =>
+      -- collapse u の強臨界枝を a = w で読むと e = 0, d = c, i = c⊖1。
+      -- よって ψ_w(i) ← x = w^w·(1+i)、成分ごとに w^w·q = ω^(w·w + logOm q)。
+      -- i < w のときだけ。この枝の導出は `a = w`(⇒ e = 0, d = c) を仮定しており、
+      -- i ≥ w では正しい `a` が違う: ψ_Ω(Ω₂) の逆は `D 0 (D 2 0)` で a = Ω₂ である。
+      -- そこを埋めるまでは誤答ではなく `none` を返す。
+      match (if lt i (Z d) then natOfT d else none) with
+      | none => none
+      | some u =>
+        let w : Term := Z d
+        let c := plus TM.Term.one i
+        (((toList c).mapM (fun q =>
+            (invF f (plus (mulL w w) (logOm q))).map (BT.D (u+1))))).map
+          (fun l => BT.D u (BT.ofL l))
   | f+1, (.add u v) => ((toList (.add u v)).mapM (invF f)).map BT.ofL
   | f+1, (.phi a b) =>
       if !(lt (.phi a b) (Z .zero)) then
@@ -98,6 +124,8 @@ def corpus : List Term := (grow (grow pool0)).filter fun t =>
 #eval (Rows.rows.countP fun r => rt r.t,
        Rows.rows.countP fun r => (dictInv r.t).isNone,
        Rows.rows.length)
+#eval (Rows.rows.filter fun r => !(rt r.t) && (dictInv r.t).isSome).map fun r =>
+  (r.name, r.t.toStr, ((dictInv r.t).map fun b => (dict b).toStr).getD "?")
 #guard Rows.rows.all fun r => rt r.t || (dictInv r.t).isNone
 
 -- the other direction, from the BT side
