@@ -48,6 +48,14 @@ line, which `phiNFdefault` folds away), and φ̄(A,B) for A ≥ Ω needs an argu
 that the term does not carry.  Both are rejected structurally — by the shape, not by
 trying `dict` and comparing — so the round-trip guards stay non-circular.
 
+HOW HIGH IT GOES.  `BT` writes `D u` for every natural `u` and has no `Ω_ω`, so the whole
+of it is what Buchholz's OT_B reaches below ψ₀(Ω_ω), the Takeuti-Feferman-Buchholz ordinal;
+`dictInv` covers that with no level cap of its own, `Z` indices being numerals.  Above the
+numerals — `Z ω`, which `dict` cannot produce — it answers `none`.  There is no silent
+ceiling in between: a constant search bound of 8 used to translate `ψ₉(Ω₁₀) = φ̄(1,Z8)` to
+`φ̄(1,Z7)`, a wrong answer rather than a `none`, and `levelOf` now takes its bound from the
+term and refuses at it.
+
 MEASURED (see the acceptance section at the bottom; the controls are next to the counts):
     generated CNV corpus, 750 terms   dict ∘ dictInv = id on 750, none on 0
     corpus above Ω, 89 terms          50 round trip, 39 none, 0 wrong
@@ -70,12 +78,17 @@ def natOfT (t : Term) : Option Nat :=
   else if (toList t).all (· == TM.Term.one) then some (toList t).length else none
 
 /-- 項が住む階層。`collapse u` の値は `reg u ≤ · < reg (u+1)` に落ちるので、
-    `Z k ≤ t` を満たす最大の k で u = k+1、`t < Ω` なら u = 0。上限 8 は表と併走コーパスの
-    Z 添字より十分大きく、外れたときは誤答ではなく `none` になる。 -/
-def levelOf (t : Term) : Nat :=
-  match (List.range 8).reverse.find? (fun k => le (Z (TM.Term.ofNat k)) t) with
-  | some k => k + 1
-  | none => 0
+    `Z k ≤ t` を満たす最大の k で u = k+1、`t < Ω` なら u = 0。
+
+    **探索の上限は項から取り、天井に当たったら拒否する。** 上限を定数 8 に固定していた版は、
+    `ψ₉(Ω₁₀) = φ̄(1,Z8)` を `φ̄(1,Z7)` に訳した — `none` ではなく誤答である。`deg` は
+    Z の添字が数字である限り十分大きく、数字でない添字 (`Z ω` など、`dict` が作れない項)
+    では天井に当たって `none` になる。どちらの側にも黙った打ち切りが無い。 -/
+def levelOf (t : Term) : Option Nat :=
+  let n := t.deg + 2
+  match (List.range n).reverse.find? (fun k => le (Z (TM.Term.ofNat k)) t) with
+  | some k => if k + 1 == n then none else some (k + 1)
+  | none => some 0
 
 /-- 底 w の CNF の組 (a, c) から、`collapse u` の引数 x の成分を組み立てる:
     `w^a·c = ω^(w·a + r)` を c の各項 `ω^r` について。`wcnf` のちょうど逆である。 -/
@@ -175,7 +188,7 @@ def invF : Nat → Term → Option BT
           | h :: _ :: _ =>
             (match h with
              | .psi (.Z d) _ => natOfT d
-             | .phi a1 _ => if a1 == zero then none else some (levelOf h)
+             | .phi a1 _ => if a1 == zero then none else levelOf h
              | _ => none).bind fun u => (vebPairs u f h).map fun prs => (u, prs)
           | _ => none          -- 尾部が無いなら組も無い (g = 0 を含む)
         match split with
@@ -187,19 +200,21 @@ def invF : Nat → Term → Option BT
           -- `D (u+1) (inv y)`、Ω 未満なら ψ₀ そのもの。どの階層かは探す必要がある:
           -- Ω₂ 以上の項に `D 1` を当てると Ω₂ が φ̄(1,Ω) に化ける (表を 6 行外した)。
           if !(lt (.phi a b) (Z .zero)) then
-            match (List.range 8).reverse.find? (fun k => le (Z (TM.Term.ofNat k)) g) with
-            | some k => (invF f (subAP (Z (TM.Term.ofNat k)) g)).map (BT.D (k+1))
-            | none => none
+            match levelOf g with
+            | some (k+1) => (invF f (subAP (Z (TM.Term.ofNat k)) g)).map (BT.D (k+1))
+            | _ => none
           else (invF f g).map (BT.D 0)
       else
         -- `collapse u` の VEBLEN 枝の逆。**階層 u は項から決まる。** ここを u = 0 に
         -- 固定していたのが Ω₂ より上が `none` だった理由で、`φ̄(1,Ω) = ψ₁(Ω₂)` は
         -- この枝の u = 1、最小の例である。
         let t : Term := .phi a b
-        let u := levelOf t
-        match vebPairs u (f+1) t with
+        match levelOf t with
         | none => none
-        | some prs => (invF f (xOf (Z (TM.Term.ofNat u)) prs)).map (BT.D u)
+        | some u =>
+          match vebPairs u (f+1) t with
+          | none => none
+          | some prs => (invF f (xOf (Z (TM.Term.ofNat u)) prs)).map (BT.D u)
   | _+1, _ => none
 
 def dictInv (t : Term) : Option BT := invF (2 * t.deg + 12) t
@@ -266,6 +281,23 @@ term.  `ψ_Ω(Z1+1)` is the smallest place where `wcnf` reports a nonempty tail.
 -- CTRL the level must be READ, not assumed: `φ̄(1,Ω)` and `φ̄(1,0)` differ only in the
 -- level, and a version that fixed `u = 0` returned `none` on the first and this on the second.
 #guard dictInv (phi TM.Term.one zero) == some (BT.D 0 (BT.Om 1))
+
+/-! ### The level search has no silent ceiling.
+A constant bound of 8 translated `ψ₉(Ω₁₀) = φ̄(1,Z8)` to `φ̄(1,Z7)` — a WRONG answer, not a
+`none`, which is the one thing the scope claim must never allow.  `levelOf` now takes its
+bound from the term and refuses when the bound is reached, so the ceiling is visible on
+both sides: numeral `Z` indices go through, and a non-numeral one (`Z ω`, which `dict`
+cannot produce) comes back `none` instead of being rounded down to the largest numeral. -/
+
+#guard ((List.range 13).drop 1).all fun u =>
+  dictInv (dict (BT.D u (BT.Om (u+1)))) == some (BT.D u (BT.Om (u+1)))
+#guard ((List.range 13).drop 1).all fun u => dictInv (dict (BT.D u BT.one)) == some (BT.D u BT.one)
+-- the exact term the constant bound got wrong
+#guard dictInv (phi TM.Term.one (Z (TM.Term.ofNat 8))) == some (BT.D 9 (BT.Om 10))
+-- CTRL above the numerals there is nothing to find, and it says so
+#guard dictInv (Z TM.Term.omega) == none
+#guard dictInv (psi (Z TM.Term.omega) zero) == none
+#guard dictInv (phi TM.Term.one (Z TM.Term.omega)) == none
 
 -- the table: every row, including the `(0,0)(1,1)(2,2)` region the table warns about
 #guard Rows.rows.all fun r => rt r.t
