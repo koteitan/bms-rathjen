@@ -10,6 +10,7 @@
 - [設計方法と記録](plan/README.md) — どう作るか、何を撤回したか
 - [作業原則 (constitutions)](plan/constitutions.md) — 一度誤った値を公開した経験から得た原則。1 枚
 - [Rathjen の表記系一覧 (強さ順)](rathjen-ordinals.md) — R1〜R5 と最終ターゲット
+- [外部の対応表との差分](diff.md) — 一致した範囲と、未決の 9 行
 
 ## 構成
 
