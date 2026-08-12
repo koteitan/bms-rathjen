@@ -221,25 +221,26 @@ The Γ₀ row additionally required unfolding that source's `Γ⁰(s,n)` map, an
 one below ours (`ours[n] = Γ⁰(0, n+1)`).
 -/
 
-/-! ### The ψ region, checked as far as it can be without more of the source
+/-! ### The ψ region: the source's article agrees with this file
 
-The same source's "Up to φ(1,0,0,0)" table covers `ψ_Ω(a)` with `a` varying.  Four shapes
-were compared against `fsN` here; three agree and one differs:
+Its "Up to φ(1,0,0,0)" table gives `ψ_Ω(a)` for varying `a`, and its expansion column is
+`Γ⁰(0, 1+1+⋯)` at `Γ₀`.  Unfolding its own `Γ⁰`:
 
-    ψ_Ω(ω)      pass the index through      ψ_Ω(0), ψ_Ω(1), ψ_Ω(2) …        agrees
-    ψ_Ω(Ω)      diagonalise                 ψ_Ω(0), ψ_Ω(ψ_Ω(0)) …           agrees
-    ψ_Ω(Ω+1)    seed ψ_Ω(Ω)+1                                               agrees
-    ψ_Ω(1)      source seeds ω^(Γ₀+1)       this file seeds Γ₀+1            DIFFERS
+    Γ⁰(0,0) = 0,  Γ⁰(0,1) = φ₀(0) = 1,  Γ⁰(0,2) = φ₁(0) = ε₀,  Γ⁰(0,3) = φ_{ε₀}(0)
 
-Not treated as a defect, and the reason is in the source itself: it writes two different
-seeds for the two successor rows (`ω^(prev+1)` at `a = 1`, `prev+1` at `a = Ω+1`), both
-sequences are cofinal in the same ordinal, and the author states at the top of the page
-that the tables may contain errors.  One table cell is not a reason to change a
-fundamental sequence that the row proofs are stated against.
+which is `fsN` here, offset by one.  Pass-through (`ψ_Ω(ω)`), diagonalisation
+(`ψ_Ω(Ω)`) and the successor seed (`ψ_Ω(Ω+1)`) agree as well.
 
-What would settle it is the source's `ψ⁻` and `index` maps, which its EXPANSION section
-uses for exactly this clause and which are not transcribed here.  Until then the ψ clause
-of `fsN` has no external witness; the φ̄ region and `cofT` do.
+The author's reference implementation (`padicBotRathjen`, reachable through
+`scripts/padicbot-oracle.js`) computes something else there — `fund(Γ₀, ·)` is
+`2, ζ₀, φ_{ζ₀}(0), …`, two levels further along, and over 51 ψ-region terms it agrees
+with `fsN` on 21.  Every difference is the Γ-closure seed.  Where the implementation and
+the article disagree, the article is the definition, and it is the one that matches here.
+
+Above `Ω` the implementation's sequences run through the `Ω` hierarchy
+(`ψ_{χ₁(0)}(0)` expands by `φ¹_·(0)`), which this type cannot write at all: [R91] §2
+collapses `χ` to `α ↦ χ_α(0)` so `Ω₂` has no term (`plan/chi-2ary.md`).  Nothing to adopt
+there either.
 -/
 
 /-! ### `cofT` against the same source's `dom`
