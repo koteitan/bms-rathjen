@@ -498,5 +498,40 @@ theorem sources_lt_dict_anchor : TM.Term.lt anchorSrc (dict anchorBT) = true := 
 theorem dict_anchor_both_inT : inT (dict anchorBT) = true ∧ inT anchorSrc = true := by
   constructor <;> decide
 
+/-! ## 5. `reg 2` の測定 (2026-08-13) — 何が直り、何が直らないか
+
+**`reg (u+1) = Z u` は $`u \geq 1`$ で誤っている。** Buchholz の $`\Omega_{u+1}`$ を
+`Z u` に送るが、`Z 1` は $`\chi_1(0) = I`$ であって $`\Omega_2 = \chi_0(1)`$ では
+ない。そして $`\Omega_2`$ は $`\mathfrak{T}(M)`$ に項を持たない ([R91] §2 が
+$`\chi`$ を $`\alpha \mapsto \chi_\alpha(0)`$ に潰しているため; `plan/chi-2ary.md`)。
+
+**測定。** 第三者の対応表 (Hexirp 氏。`scripts/hexirp-rathjen-check.py` で再実行できる)
+と突き合わせられる表の行は 41。`reg 2` だけを差し替えて全行を計算した:
+
+    reg 2                資料と一致した行
+    Z 1 (現状)                 20 / 41
+    φ̄(1,Ω) = ε_{Ω+1}          33 / 41      ← 13 行が直る
+    φ̄(1,Ω+1)                  20 / 41
+    (対照として 2 つ)
+
+**残る 8 行は全部 $`\Omega_2`$ の倍数である。** 資料が言う対応は
+
+    Ω₂     ↦ ε_{Ω+1} = φ̄(1,Ω)
+    Ω₂·2   ↦ ε_{Ω+2} = φ̄(1,Ω+1)
+    Ω₂·3   ↦ ε_{Ω+3}
+
+で、これは $`\Omega_2`$ 単独の像から決まらない。`collapse` の強臨界枝は
+$`d = \mathrm{mulL}\ e\ c`$ で和しか作れないので、$`\varepsilon_{\Omega+1}\cdot 2`$
+は出せても $`\varepsilon_{\Omega+2}`$ は出せない。**`reg` の置換では原理的に届かない。**
+
+**したがって直し方は「$`\Omega`$ 階層のところだけ compositional をやめる」ことになる。**
+$`\Omega_2`$ の倍数を引数の中で見つけて $`\varepsilon`$ の添字に変換する必要があり、
+それは `reg` ではなく `collapse` の側の変更である。
+
+**まだ入れていない。** 入れると表の 23 行の値が変わる。値を動かすのは較正事故を起こした
+操作そのものなので、13 行が直り 8 行が残るという状態で入れる判断は保留する。
+判定器 (上の表) は残してあるので、`collapse` を直した版が来たら同じ数字で測れる。
+-/
+
 end Dict
 end Trans
