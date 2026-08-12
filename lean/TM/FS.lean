@@ -112,7 +112,17 @@ def cofT : Term → Term
   | psi k a =>
     match kindT a with
     | .isLim => let p := cofT a; if lt p k then p else omega
-    | _ => omega
+    | _ =>
+      -- α が零・後続でも ω とは限らない。ψκα の共終度は κ 自身の添字で決まる。
+      -- P進大好きbot 氏の `dom` の ψ 節 (index(κ) = (λ,c), c ≠ 0 の場合) を当方の
+      -- `Z δ` で読むと、**δ が極限なら cof(ψ_{Zδ}α) = cof δ** である。
+      --     ψ_{Z Ω}(0)   cof = Ω     (2026-08-13 まで ω と答えていた)
+      --     ψ_{Z (Ω+1)}(0), ψ_{Z ω}(0), ψ_{Z 2}(0), ψ_Ω(0)   cof = ω
+      -- 19 例で同氏の独立実装と突き合わせ、現行 16/19 → 19/19。
+      match k with
+      | Z d => if kindT d == .isLim then (let p := cofT d; if lt p M then p else omega)
+               else omega
+      | _ => omega
   | _ => omega   -- never used on zero or successors
 
 /-- Term-indexed fundamental sequence t[s]
@@ -243,10 +253,14 @@ usual reason.  The measurement below records what ignoring that costs, and the n
 the point: a rule that uses `b` instead of `β°` still agrees on 2460 of 2572 terms — it
 breaks on 4%.  A corpus that did not reach fixed points would have certified it.
 
-    our (kindT, cofT) against the source's rules   2572 / 2572,  0 unhandled
-    CTRL "always ω"                                2261 / 2572
-    CTRL `b` in place of `β°`                      2460 / 2572
-    CTRL `a` and `b` swapped                       2406 / 2572
+    our (kindT, cofT) against the source's rules    169 / 169,  0 unhandled
+    CTRL "always ω"                                  99 / 169
+    CTRL `b` in place of `β°`                       134 / 169
+    CTRL `a` and `b` swapped                        149 / 169
+
+  The corpus was 2572 terms until 2026-08-13 and agreed 2572/2572 — while `cofT` was
+  wrong at `ψ_{Z Ω}(0)`.  The seeds had no composite `Z` index, so the defect was outside
+  it.  It is smaller now and reaches further; the named guards below pin the witness.
 -/
 
 /-- The source's `dom`, rebuilt from `kindT` and `cofT`. -/
@@ -277,19 +291,38 @@ def domSpec (t : Term) : Option Term :=
       else some db
   | .psi k a =>
       let da := domOf a
-      if zeroOrOne da then some omega
+      if zeroOrOne da then
+        -- α が零・後続の場合。κ = Z δ で δ が極限なら ω ではなく cof δ である。
+        (match k with
+         | .Z d => if kindT d == .isLim then (let p := cofT d; some (if lt p M then p else omega))
+                   else some omega
+         | _ => some omega)
       else if lt da k then some da else some omega
   | _ => none
 
-private def domPool0 : List Term := [zero, one, phi one zero, phi zero one, Z zero]
+-- **種に `Z` の複合添字を入れること。** 入れずに測ると `cofT` の ψ 節の欠陥
+-- (`ψ_{Z Ω}(0)` の共終度が ω ではなく Ω) が corpus に現れず、2572/2572 が
+-- 「合っている」ではなく「届いていない」を意味してしまう (2026-08-13 に実際そうなった)。
+private def domPool0 : List Term :=
+  [zero, one, phi one zero, phi zero one, Z zero, Z one, Z (Z zero),
+   Z (plus (Z zero) one), Z (phi zero one), psi (Z zero) zero]
 private def domGrow (p : List Term) : List Term :=
   (p ++ (p.flatMap fun x => p.map fun y => phi x y)
      ++ (p.flatMap fun x => p.map fun y => plus x y)
-     ++ (p.map fun x => psi (Z zero) x)).eraseDups
+     ++ (p.map fun x => psi (Z zero) x) ++ (p.map fun x => psi (Z x) zero)).eraseDups
 def domCorpus : List Term :=
-  (domGrow (domGrow domPool0)).filter fun t => inT t && !(t == zero)
+  (domGrow domPool0).filter fun t => inT t && !(t == zero)
 
 #guard domCorpus.all fun t => domSpec t == some (domOf t)
+
+-- **名指しの証人。** 2026-08-13 まで `cofT` はここで `ω` と答えていた。
+-- 独立実装 (`scripts/padicbot-oracle.js`) は `Ω` と言う。corpus が届かなければ
+-- 上の一致は「合っている」ではなく「見ていない」を意味するので、個別に固定する。
+#guard cofT (psi (Z (Z zero)) zero) == Z zero          -- ψ_{Z Ω}(0) の共終度は Ω
+#guard cofT (psi (Z zero) zero) == omega               -- ψ_Ω(0) は ω
+#guard cofT (psi (Z (plus (Z zero) one)) zero) == omega -- ψ_{Z (Ω+1)}(0) は ω
+#guard cofT (psi (Z (phi zero one)) zero) == omega      -- ψ_{Z ω}(0) は ω
+#guard domCorpus.contains (psi (Z (Z zero)) zero)       -- 証人が母集団に居ること
 #eval (domCorpus.length,
        domCorpus.countP fun t => domSpec t == some (domOf t),
        domCorpus.countP fun t => (domSpec t).isNone)
