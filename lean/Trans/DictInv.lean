@@ -1,59 +1,58 @@
 /-
-Trans/DictInv.lean — the inverse of `dict`, on the Veblen fragment (2026-08-13)
+Trans/DictInv.lean — Rathjen 𝔗(M) → Buchholz OT_B, the inverse of `dict` (2026-08-13)
 
-WHY.  `dict : BT → Term` is the second stage of `oR` and the weakest link in this
-repository: `Trans/Dict.lean` calls itself "candidate / 予想 tier", its order-preservation
-is measurement rather than theorem, and at `(0,0)(1,1)(2,2)` it disagrees with every
-external source that has been checked.  Every gate in `Evidence/SqV.lean` compares two
-things built from each other — GATE 1 is a round trip through `oR`, GATES 2 and 3 match
-`sqv` against the table — so none of them can see an error in `dict`.  A round trip
-through an INVERSE is the first check on `dict` that needs no external oracle.
+WHAT IT IS.  `dictInv : Term → Option BT` maps a term of Rathjen's 𝔗(M) to the standard
+Buchholz term denoting the same ordinal, or `none` where no Buchholz term does.  It is a
+translation in the direction nothing else in this repository goes: `oR = (1+·) ∘ dict ∘
+oRB` runs BMS → Buchholz → 𝔗(M), and this is the return leg of the second stage.
 
-HOW IT WAS DERIVED — from `wcnf`/`collapse`, not guessed:
+WHY IT IS ALSO THE FIRST HONEST CHECK ON `dict`.  `Trans/Dict.lean` calls itself
+"candidate / 予想 tier"; its order-preservation is measurement, not theorem.  Every gate
+in `Evidence/SqV.lean` compares two things built from each other — GATE 1 is a round trip
+through `oR`, GATES 2 and 3 match `sqv` against the table — so none of them can see an
+error in `dict`.  A round trip through an inverse needs no external oracle, and it now
+reaches every row of the table, `(0,0)(1,1)(2,2)` included.
+
+HOW IT WAS DERIVED — read off `wcnf`/`collapse`, not guessed:
 
     wcnf w splits each AP component p of the argument as p = ω^g with g = w·a + r,
-    and reports the pair (a, c) with c = ω^r; that is p = Ω^a·c.
-    collapse 0 turns a single pair (a,c) into φ̄(a, c⊖1), so  φ̄(a,b) ↦ D 0 (Ω^a·(1+b)).
-    dict (D 1 x) = ω^(Ω + dict x), measured; so  Ω^a·q = D 1 (inv (Ω·(a⊖1) + logOm q)).
+    and reports the pair (a, c) with c = ω^r; that is p = w^a·c.
+    collapse u folds the pairs left to right from base = 0 (u = 0) or reg u + 1 (u ≥ 1),
+    Veblen range (a < w):  acc := φ(a, base + (c⊖1)),  then  acc := φ(a, acc + c)
+    strongly critical (a ≥ w):  acc := ψ_{Z u}(i),  i := (Δ₁⊖1) + Δ₂ + …
+    and returns ω^(reg u + acc + ρ) with ρ the base-w tail.
 
-TWO PLACES WHERE THE OBVIOUS READING IS WRONG, both found by the round trip failing:
+So the inverse is three readings, each of which was got wrong first and fixed by a
+measurement, in this order:
 
-  * An AP term ≥ Ω must NOT go through `D 0`.  `D 0` is ψ₀, which collapses there; the
-    right clause is ω^(Ω+y) = `D 1 (inv y)`.  Without it `φ̄(ω,0)` fails.
-  * The second argument of `φ̄` is not `b` but the SEMANTIC argument `β°` of [R91] 2.7,
-    because `φ̄` re-counts fixed points.  `phiShifted` is exactly that test.  Without it
-    every row of the shape `φ̄(1,ζ₀) = ε_{ζ₀+1}` fails — the same trap as §K3.20 and as
-    `TM/FS.lean`'s provenance check, for the third time in one day.
+  * WHICH LEVEL.  An AP term above Ω is ω^(Z u + y) for SOME u, not always u = 0, and
+    the Veblen branch runs at every level too.  `levelOf` reads u off the term.  Fixing
+    `u = 0` left `φ̄(1,Ω) = ψ₁(Ω₂)` — the smallest ε-number strictly between Z 0 and Z 1
+    that is not of the form ω^(Z 0 + y) — with no preimage at all, and with it the twelve
+    table rows indexed by `Ω₂ + …`.
+  * WHICH ARGUMENT.  The second argument of φ̄ is not `b` but the SEMANTIC argument β°
+    of [R91] 2.7, because φ̄ re-counts fixed points.  Without it every row of the shape
+    `φ̄(1,ζ₀) = ε_{ζ₀+1}` fails — the same trap as §K3.20 of `Evidence/SqV.lean` and as
+    `TM/FS.lean`'s provenance check.
+  * HOW MANY PAIRS.  `collapse` folds; the inverse must peel.  Reading the whole of β°
+    as one coefficient gives the right VALUE (`dict` is not injective) but a Buchholz
+    term that is not standard — `ε_{ζ₀+1}` comes out as ψ₀(Ω·(ζ₀+1)) instead of
+    ψ₀(Ω²+Ω), and `ω^(ε₀+1)` as ψ₀(ε₀+1) instead of ψ₀(Ω+1), both of which fail
+    Buchholz's `G₀ < a`.  Fourteen table rows were of that kind.  The `isStd` guard at
+    the bottom is what pins this, and peeling also turned the BT-side left inverse from
+    328/336 into 336/336 exact.
 
-SCOPE, and it is drawn where the derivation is verified rather than where it is
-convenient.  The Veblen fragment, `Z δ` for a numeral δ, and `ψ_{Z δ}(i)` for `i < Z δ`.
-Outside that it returns `none`, never a wrong answer.
+WHERE IT SAYS `none`, and why that is right rather than a gap.  `dict` is not onto 𝔗(M).
+The rejected shapes are φ̄(A,·) with A ∈ SC: φ̄(A,0) denotes A itself ([R91] 2.6(vi) last
+line, which `phiNFdefault` folds away), and φ̄(A,B) for A ≥ Ω needs an argument ≥ reg u + 1
+that the term does not carry.  Both are rejected structurally — by the shape, not by
+trying `dict` and comparing — so the round-trip guards stay non-circular.
 
-Three things were got wrong first and fixed by the round trip failing, in this order:
-
-  * `i < w` (`a = w`, so `e = 0`, `d = c`, `i = c ⊖ 1`) is only one case.  For `i ≥ w`
-    the pair `(a,c)` is exactly what `wcnf w (1+i)` reports: `a = w + A`, `c = C`.  A
-    version that put the multiplicity into `a` instead of `c` missed eight rows.
-  * an AP term above `Ω` is `ω^(Z u + y)` for SOME `u`, not always `u = 0`; applying
-    `D 1` to a term above `Ω₂` turns `Ω₂` into `φ̄(1,Ω)` and missed six more.
-  * `collapse` accumulates `i = (d₁ ⊖ 1) + d₂ + …` over several strongly critical pairs,
-    so every pair `wcnf` reports is used, not just the first.
-
-WHAT IS STILL `none`, and why it is the interesting part.  Twelve table rows, every one
-with an index of the form `Ω₂ + …`.  They fail on an inner subterm, not on the index
-decomposition: `invF` cannot yet name an ε-number strictly between `Z k` and `Z (k+1)`
-that is not of the form `ω^(Z k + y)` — `φ̄(1,Ω)` is the smallest — because `logOm` of it
-is itself, `subAP` has nothing to strip, and the recursion regresses to the same term
-until the fuel runs out.  Such terms come out of `collapse`'s VEBLEN branch above `Ω`
-(base `= Ω+1`), which this file does not invert yet.
-
-`(0,0)(1,1)(2,2)` and everything §Γ₀ of the table warns about live in that region, so the
-round trip still cannot speak about the place where `dict` is actually in doubt.
-
-MEASURED (see the section at the bottom):
-    generated CNV corpus, 750 terms      dict ∘ dictInv = id on 750, none on 0
-    table rows, 51                       39 round trip, 12 none, 0 wrong
-    BT pool, 117 standard terms          115 syntactically equal, 117 equal as values
+MEASURED (see the acceptance section at the bottom; the controls are next to the counts):
+    generated CNV corpus, 750 terms   dict ∘ dictInv = id on 750, none on 0
+    corpus above Ω, 89 terms          50 round trip, 39 none, 0 wrong
+    table rows, 51                    51 round trip, 0 none, 0 wrong, 51 standard
+    BT pool, 336 standard terms       dictInv ∘ dict = id on all 336, term for term
 -/
 import Trans.Dict
 import Rows.TM
@@ -70,62 +69,137 @@ def natOfT (t : Term) : Option Nat :=
   if t == zero then some 0
   else if (toList t).all (· == TM.Term.one) then some (toList t).length else none
 
+/-- 項が住む階層。`collapse u` の値は `reg u ≤ · < reg (u+1)` に落ちるので、
+    `Z k ≤ t` を満たす最大の k で u = k+1、`t < Ω` なら u = 0。上限 8 は表と併走コーパスの
+    Z 添字より十分大きく、外れたときは誤答ではなく `none` になる。 -/
+def levelOf (t : Term) : Nat :=
+  match (List.range 8).reverse.find? (fun k => le (Z (TM.Term.ofNat k)) t) with
+  | some k => k + 1
+  | none => 0
+
+/-- 底 w の CNF の組 (a, c) から、`collapse u` の引数 x の成分を組み立てる:
+    `w^a·c = ω^(w·a + r)` を c の各項 `ω^r` について。`wcnf` のちょうど逆である。 -/
+def xOf (w : Term) (prs : List (Term × Term)) : Term :=
+  ofList (prs.flatMap fun ac =>
+    (toList ac.2).map fun q => omegaNF (plus (mulL w ac.1) (logOm q)))
+
+/-- `collapse u` の強臨界枝を逆に読む。`i = (Δ₁⊖1) + Δ₂ + …`、`Δⱼ = w^(aⱼ⊖w)·cⱼ` なので、
+    `wcnf w (1+i)` の組がそのまま `(aⱼ⊖w, cⱼ)` である。多重度は `a` ではなく `c` に入る
+    — 最初に `a` へ入れて表を 8 行外した。
+
+    **尾部 ρ もひとつの組である。** `a = w` ちょうどのとき `Δ = w^0·c = c` は w 未満に
+    落ち、`wcnf` はそれを組ではなく尾部として返す。つまり尾部は組 `(w, ρ)` であり、
+    それを捨てていたのが `Γ_{ψ₀(Ω₂)+1} = ψ_Ω(Z1+1)` が `none` だった理由。こう読むと
+    `i < w` の場合 (組が無く尾部が 1+i) も同じ式になるので、枝は 1 本でよい。 -/
+def scPairs (w i : Term) : List (Term × Term) :=
+  let (ps, tl) := wcnf w (toList (plus TM.Term.one i))
+  ps.map (fun ac => (plus w ac.1, ac.2)) ++ (if tl == zero then [] else [(w, tl)])
+
+/-- `collapse u` の畳み込みの値 V を、それを作った組の列に戻す。
+
+    畳み込みは `acc := φ(a, base + (c⊖1))` で始まり `acc := φ(a, acc + c)` と重なるので、
+    **β° の頭が前段の値なら、そこで切って残りが係数である**。切らずに β° 全部を係数と
+    読んでも `dict` の値は合う (`dict` は単射でない) が、出てくる Buchholz 項が標準形に
+    ならない: `ε_{ζ₀+1} = φ̄(1,ζ₀)` は切れば `ψ₀(Ω²+Ω)`、切らなければ `ψ₀(Ω·(ζ₀+1))` で、
+    後者は `G₀` の条件を満たさない。表の 14 行がそれだった。
+
+    前段の値と読めるのは、指数が今の a より大きい組の値だけである: `φ̄(a₁,·)` で a < a₁、
+    または強臨界枝の `ψ_{Z u}(·)` (指数は w 以上なので必ず大きい)。 -/
+def vebPairs (u : Nat) : Nat → Term → Option (List (Term × Term))
+  | 0, _ => none
+  | _+1, .psi (.Z d) i => if natOfT d == some u then some (scPairs (Z d) i) else none
+  | f+1, .phi a b =>
+      if a == zero then none
+      else
+        -- 意味上の第 2 引数 (β° of [R91] 2.7)。φ̄ は不動点を飛ばすので b そのものではない。
+        -- ここを b にすると φ̄(1,ζ₀) 型の行が全部落ちる (今日 3 度目の同じ罠)。
+        let bs := if phiShifted a b then plus b TM.Term.one else b
+        -- 第 1 の組として読む。u = 0 なら base = 0 なので β° 全部が c⊖1。
+        -- u ≥ 1 なら base = reg u + 1 で、`plus base cc` は cc の頭が 1 より大きいと
+        -- "+1" を、reg u より大きいと base ごと呑むから、剥がし方は頭で決まる:
+        --   頭 = reg u  → 剥がす      頭 > reg u  → base は呑まれている。bs がそのまま c
+        --   頭 < reg u  → base を通っていない。この枝の値ではない
+        -- c = 0 も届いていない印である (c = 1 + cc ≥ 1)。確かめずに剥がすと φ̄(Ω,0) や
+        -- φ̄(Z1,Γ₀) — Veblen 枝が届かない項 — に誤答を返す (Ω より上の母集団で 15 件)。
+        -- u = 0 側の除外は別の理由: a ∈ SC のとき φ̄(a,0) は a 自身を表す冗長な項で
+        -- ([R91] 2.6(vi) 末尾、`phiNFdefault` がそう畳む)、`dict` は決して出さない。
+        let first : Option (List (Term × Term)) :=
+          if u == 0 then
+            (if b == zero && a.isSC then none else some [(a, plus TM.Term.one bs)])
+          else
+            match toList bs with
+            | [] => none
+            | q :: rest =>
+              if q == reg u then (let c := ofList rest
+                                  if c == zero then none else some [(a, c)])
+              else if lt (reg u) q then some [(a, bs)]
+              else none
+        match toList bs with
+        | [] => first
+        | h :: rest =>
+          let later : Bool := !rest.isEmpty &&
+            (match h with
+             | .phi a1 _ => !(a1 == zero) && lt a a1
+             | .psi (.Z d) _ => natOfT d == some u
+             | _ => false)
+          if later then
+            match vebPairs u f h with
+            | some ps => some (ps ++ [(a, ofList rest)])
+            | none => first
+          else first
+  | _+1, _ => none
+
 /-- `dict` の逆。導出は `wcnf`/`collapse` の読みから:
-      p = ω^g,  g = Ω·a + r   ⇒  p = Ω^a·ω^r
-      dict (D 1 x) = ω^(Ω + dict x)  ⇒  Ω^a·q = D 1 (inv (Ω·(a⊖1) + logOm q))
+      p = ω^g,  g = w·a + r   ⇒  p = w^a·ω^r
+      dict (D (u+1) x) = ω^(reg (u+1) + dict x)
       collapse 0 (Ω^a·c) = φ̄(a, c⊖1)  ⇒  φ̄(a,b) ↦ D 0 (Ω^a·(1+b)) -/
 def invF : Nat → Term → Option BT
   | 0, _ => none
   | _+1, .zero => some BT.zero
   | _+1, .Z d => (natOfT d).map (fun u => BT.D (u+1) BT.zero)
   | f+1, .psi (.Z d) i =>
-      -- collapse u の強臨界枝を a = w で読むと e = 0, d = c, i = c⊖1。
-      -- よって ψ_w(i) ← x = w^w·(1+i)、成分ごとに w^w·q = ω^(w·w + logOm q)。
       match natOfT d with
       | none => none
-      | some u =>
-        let w : Term := Z d
-        let P := plus TM.Term.one i
-        if lt i w then
-          -- `a = w` ⇒ e = 0, d = c, i = c ⊖ 1。成分ごとに w^w·q = ω^(w·w + logOm q)。
-          (((toList P).mapM (fun q =>
-              (invF f (plus (mulL w w) (logOm q))).map (BT.D (u+1))))).map
-            (fun l => BT.D u (BT.ofL l))
-        else
-          -- i ≥ w。d = ω^(w·(a⊖w))·c を (a,c) について解くのは、まさに `wcnf` の逆である。
-          -- `wcnf w (1+i)` が一組 (A,C) と空の尾部を返すなら a = w + A、c = C。
-          -- 多重度は `a` ではなく `c` に入る — 最初に `a` へ入れて表を 8 行外した。
-          -- 組は 1 つとは限らない。`collapse` の畳み込みは強臨界の組ごとに
-          -- i = (d₁ ⊖ 1) + d₂ + … と積むので、1+i の組を全部使えばよい。
-          match wcnf w (toList P) with
-          | ([], _) => none
-          | (ps, tl) =>
-            if tl == zero then
-              let x := ofList (ps.flatMap (fun AC =>
-                (toList AC.2).map (fun q =>
-                  omegaNF (plus (mulL w (plus w AC.1)) (logOm q)))))
-              (invF f x).map (BT.D u)
-            else none
+      | some u => (invF f (xOf (Z d) (scPairs (Z d) i))).map (BT.D u)
   | f+1, (.add u v) => ((toList (.add u v)).mapM (invF f)).map BT.ofL
   | f+1, (.phi a b) =>
-      if !(lt (.phi a b) (Z .zero)) then
-        -- Ω 以上の加法主要項は ω^(Z u + y) で、BT では `D (u+1) (inv y)` である。
-        -- どの階層かを探す必要がある: Ω₂ 以上の項に `D 1` を当てると Ω₂ が φ̄(1,Ω) に
-        -- 化ける (表を 6 行外した)。上限 8 は表と併走コーパスの Z 添字より十分大きく、
-        -- 外れたときは誤答ではなく `none` になる。`D 0` は ψ₀ なのでここでは潰す。
+      if a == zero then
+        -- ω 冪。`collapse u` は `omegaNF (reg u + acc + ρ)` を返し、acc は base より
+        -- 大きいので reg u は呑まれる。つまり ω 冪の指数の頭が畳み込みの値なら、
+        -- **そこで切った残りが `wcnf` の尾部 ρ である**。切らずに指数全部を潰すと値は
+        -- 合うが標準形にならない: `ω^(ε₀+1)` は切れば `ψ₀(Ω+1)`、切らなければ
+        -- `ψ₀(ε₀+1)` で、後者の `G₀` は Ω を含むので条件を満たさない。
         let g := logOm (.phi a b)
-        match (List.range 8).reverse.find? (fun k => le (Z (TM.Term.ofNat k)) g) with
-        | some k => (invF f (subAP (Z (TM.Term.ofNat k)) g)).map (BT.D (k+1))
-        | none => none
-      else if a == zero then (invF f (logOm (.phi a b))).map (BT.D 0)
+        let split : Option (Nat × List (Term × Term)) :=
+          match toList g with
+          | h :: _ :: _ =>
+            (match h with
+             | .psi (.Z d) _ => natOfT d
+             | .phi a1 _ => if a1 == zero then none else some (levelOf h)
+             | _ => none).bind fun u => (vebPairs u f h).map fun prs => (u, prs)
+          | _ => none          -- 尾部が無いなら組も無い (g = 0 を含む)
+        match split with
+        | some (u, prs) =>
+          (invF f (ofList (toList (xOf (Z (TM.Term.ofNat u)) prs)
+                           ++ (toList g).tail))).map (BT.D u)
+        | none =>
+          -- 頭が畳み込みの値でないなら組は無い。Ω 以上なら ω^(Z u + y) で
+          -- `D (u+1) (inv y)`、Ω 未満なら ψ₀ そのもの。どの階層かは探す必要がある:
+          -- Ω₂ 以上の項に `D 1` を当てると Ω₂ が φ̄(1,Ω) に化ける (表を 6 行外した)。
+          if !(lt (.phi a b) (Z .zero)) then
+            match (List.range 8).reverse.find? (fun k => le (Z (TM.Term.ofNat k)) g) with
+            | some k => (invF f (subAP (Z (TM.Term.ofNat k)) g)).map (BT.D (k+1))
+            | none => none
+          else (invF f g).map (BT.D 0)
       else
-        -- 意味上の第 2 引数 (β° of [R91] 2.7)。φ̄ は不動点を飛ばすので b そのものではない。
-        -- ここを b にすると φ̄(1,ζ₀) 型の行が全部落ちる (今日 3 度目の同じ罠)。
-        let bs := if phiShifted a b then plus b TM.Term.one else b
-        let c := plus TM.Term.one bs
-        (((toList c).mapM (fun q =>
-            (invF f (plus (mulL (Z .zero) (sub1 a)) (logOm q))).map (BT.D 1)))).map
-          (fun l => BT.D 0 (BT.ofL l))
+        -- `collapse u` の VEBLEN 枝の逆。**階層 u は項から決まる。** ここを u = 0 に
+        -- 固定していたのが Ω₂ より上が `none` だった理由で、`φ̄(1,Ω) = ψ₁(Ω₂)` は
+        -- この枝の u = 1、最小の例である。
+        let t : Term := .phi a b
+        let u := levelOf t
+        match vebPairs u (f+1) t with
+        | none => none
+        | some prs => (invF f (xOf (Z (TM.Term.ofNat u)) prs)).map (BT.D u)
   | _+1, _ => none
 
 def dictInv (t : Term) : Option BT := invF (2 * t.deg + 12) t
@@ -153,26 +227,71 @@ def corpus : List Term := (grow (grow pool0)).filter fun t =>
                              | some b => dict b == TM.Term.add t t
                              | none => false)
 
--- the table: everything it is defined on round-trips; the rest is honestly `none`
+/-! ### Above Ω, which is the only region worth adding.  The corpus above is Veblen-only
+and therefore says nothing about the clauses that were wrong.  This one is built from
+`Z`, `ψ` and `φ̄(·,Ω)` so that both new readings are exercised: the Veblen branch of
+`collapse u` for `u ≥ 1`, and the `wcnf` tail. -/
+
+private def poolHi : List Term :=
+  [zero, TM.Term.one, Om, Z TM.Term.one, psi Om zero, phi TM.Term.one Om]
+private def growHi (p : List Term) : List Term :=
+  (p ++ (p.flatMap fun x => p.map fun y => phi x y)
+     ++ (p.flatMap fun x => p.map fun y => psi (Z x) y)
+     ++ (p.flatMap fun x => p.map fun y => TM.Term.add x y)).eraseDups
+def corpusHi : List Term := (growHi poolHi).filter fun t => TM.Term.inT t && !(t == zero)
+
+-- `dict` is not onto 𝔗(M), so `none` is the honest answer on part of this corpus (the
+-- rejected shapes are listed below); what must never happen is a WRONG answer.
+#guard corpusHi.all fun t => rt t || (dictInv t).isNone
+#eval (corpusHi.length, corpusHi.countP rt, corpusHi.countP fun t => (dictInv t).isNone)
+#eval ((corpusHi.filter fun t => (dictInv t).isNone).take 8).map (·.toStr)
+-- CTRL the same perturbation, above Ω
+#guard corpusHi.all fun t => !(match dictInv t with
+                               | some b => dict b == TM.Term.add t t
+                               | none => false)
+-- CTRL the fuel is not what produces the `none`s: ten times as much changes no answer.
+#guard corpus.all fun t => invF (20 * t.deg + 120) t == dictInv t
+#guard corpusHi.all fun t => invF (20 * t.deg + 120) t == dictInv t
+#guard Rows.rows.all fun r => invF (20 * r.t.deg + 120) r.t == dictInv r.t
+
+/-! ### The two clauses that used to be missing, pinned by name.
+`φ̄(1,Ω) = ψ₁(Ω₂)` is the smallest ε-number strictly between `Z 0` and `Z 1` that is not
+of the form `ω^(Z 0 + y)`; it is the whole reason the level `u` has to be read off the
+term.  `ψ_Ω(Z1+1)` is the smallest place where `wcnf` reports a nonempty tail. -/
+
+#guard dictInv (phi TM.Term.one Om) == some (BT.D 1 (BT.Om 2))
+#guard dict (BT.D 1 (BT.Om 2)) == phi TM.Term.one Om
+#guard dictInv (psi Om (plus (Z TM.Term.one) TM.Term.one))
+       == some (BT.D 0 (BT.add (BT.Om 2) (BT.D 1 (BT.D 1 (BT.Om 1)))))
+-- CTRL the level must be READ, not assumed: `φ̄(1,Ω)` and `φ̄(1,0)` differ only in the
+-- level, and a version that fixed `u = 0` returned `none` on the first and this on the second.
+#guard dictInv (phi TM.Term.one zero) == some (BT.D 0 (BT.Om 1))
+
+-- the table: every row, including the `(0,0)(1,1)(2,2)` region the table warns about
+#guard Rows.rows.all fun r => rt r.t
 #eval (Rows.rows.countP fun r => rt r.t,
        Rows.rows.countP fun r => (dictInv r.t).isNone,
        Rows.rows.length)
 #eval (Rows.rows.filter fun r => !(rt r.t) && (dictInv r.t).isSome).map fun r =>
   (r.name, r.t.toStr, ((dictInv r.t).map fun b => (dict b).toStr).getD "?")
-#guard Rows.rows.all fun r => rt r.t || (dictInv r.t).isNone
+-- and the answers are STANDARD Buchholz terms, not merely terms that `dict` maps back.
+-- This is the guard that forced the fold to be peeled apart rather than read as one pair:
+-- fourteen rows came back as value-correct non-standard terms before it was added.
+#guard Rows.rows.all fun r => match dictInv r.t with | some b => BT.isStd b | none => false
 
 -- the other direction, from the BT side
-private def seeds : List BT := [BT.zero, BT.one, BT.Om 1, BT.omega]
+private def seeds : List BT := [BT.zero, BT.one, BT.Om 1, BT.Om 2, BT.omega]
 private def bgrow (p : List BT) : List BT :=
-  (p ++ (p.flatMap fun x => [BT.D 0 x, BT.D 1 x])
+  (p ++ (p.flatMap fun x => [BT.D 0 x, BT.D 1 x, BT.D 2 x])
      ++ (p.flatMap fun x => p.map fun y => BT.add x y)).eraseDups
 def btPool : List BT := (bgrow (bgrow seeds)).filter BT.isStd
--- as VALUES it is exact; syntactically two terms come back in a different representation,
--- which is what `dict` not being injective looks like and is not an error.
-#guard btPool.all fun b => match dictInv (dict b) with
-                           | some c => dict c == dict b
-                           | none => false
+-- **`dictInv ∘ dict = id` on the nose**, term for term, not merely as values.  It was
+-- 328/336 as long as the fold was read as a single pair; peeling the fold made the other
+-- eight exact as well, which is the same defect the `isStd` guard above catches.
+#guard btPool.all fun b => dictInv (dict b) == some b
 #eval (btPool.length, btPool.countP fun b => dictInv (dict b) == some b)
+-- CTRL the pool must reach the new region: `D 2` terms, and terms whose `dict` is ≥ Ω.
+#eval (btPool.countP fun b => !(lt (dict b) Om), btPool.countP fun b => !(lt (dict b) (Z TM.Term.one)))
 
 end Dict
 end Trans
