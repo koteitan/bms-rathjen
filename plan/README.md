@@ -386,10 +386,13 @@ R2 ($`T(K)`$, *Proof theory of reflection*) 以降は `TK/`・`Trans/TK.lean`・
 ## 外部の実装と形式化 (2026-08-12 に調べたもの)
 
 **機械実装** — 検算に使える。リポジトリには取り込まず、外部ツールとして呼ぶ。
+**naruyoko 氏の実装はいずれも CC BY-SA 3.0。** ただし `Trans/Recal.lean` だけは
+「呼ぶ」ではなく**移植**であり、二次的著作物なので ShareAlike がこのリポジトリに及ぶ
+(それが [LICENSE](../LICENSE) が CC BY-SA 3.0 である理由)。
 
 | 何 | 何をするか | この repo との関係 |
 |---|---|---|
-| [pss-vs-buchholz](https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz) | BMS → Buchholz。Buchholz 側の `parseBuchholz` / `equalBuchholz` / `lessThanBuchholz` / **`isStandardBuchholz`** / `fundBuchholz` | **`Trans/Recal.lean` の移植元**。関数名がそのまま対応する (`fpar`, `Pred`, `Derp`, `IncrFirst`, `Adm`, `TrMax`, `Br`, `FirstNodes`, `Joints`, `Red`) |
+| [pss-vs-buchholz](https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz) | BMS → Buchholz。Buchholz 側の `parseBuchholz` / `equalBuchholz` / `lessThanBuchholz` / **`isStandardBuchholz`** / `fundBuchholz` | **`Trans/Recal.lean` の移植元**。関数名がそのまま対応する (`fpar`, `Pred`, `Derp`, `IncrFirst`, `Adm`, `TrMax`, `Br`, `FirstNodes`, `Joints`, `Red`)。**CC BY-SA 3.0** ([implementation.html](https://github.com/Naruyoko/googology/blob/main/pss-vs-buchholz/implementation.html) に明記、`common.js` が名指し) |
 | [padicBotRathjen](https://github.com/Naruyoko/googology/tree/main/padicBotRathjen) | Rathjen $`\mathfrak{T}(M)`$ の**独立実装**。項・`inT`/`inOT`・`lessThan`・`pred`・`deg`・`fund`・`dom`・`FGH` | **`TM/` の外部対照**。χ を階層のまま持つ (この repo は `Z a = χ_a(0)` に潰している)。**CC BY-SA 3.0** (実装ページに表示あり) |
 
 読むなら <https://naruyoko.github.io/googology/> が読みやすい。

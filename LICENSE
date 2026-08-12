@@ -9,20 +9,25 @@ To view a copy of this license, visit
 <https://creativecommons.org/licenses/by-sa/3.0/>; the legal code is at
 <https://creativecommons.org/licenses/by-sa/3.0/legalcode>.
 
-CC BY-SA 3.0 was chosen to match the license of the Googology Wiki (Fandom),
-which is where the external analyses this project checks itself against are
-published, so that material can flow in both directions without a license
-mismatch.
+CC BY-SA 3.0 is **required**, not merely chosen. `lean/Trans/Recal.lean` is a port
+of `common.js` from Naruyoko's `pss-vs-buchholz`, which is licensed CC BY-SA 3.0
+(see the External sources section below). A port is a derivative work, so the
+ShareAlike condition applies to this repository. It also happens to match the
+license of the Googology Wiki (Fandom), where the external analyses this project
+checks itself against are published, so material can flow in both directions
+without a license mismatch.
 
 **Attribution.** If you reuse this work, credit
 "koteitan, bms-rathjen (<https://github.com/koteitan/bms-rathjen>)"
-and indicate whether you changed anything.
+and indicate whether you changed anything. If what you reuse includes
+`lean/Trans/Recal.lean` or anything derived from it, credit Naruyoko as well.
 
 **Note for reusers of the Lean sources.** CC BY-SA is a content license, not a
 software license: it has no source-provision clause, no patent grant, and is not
-compatible with the GNU GPL or most other software copyleft. If you want to reuse
-`lean/` inside a software project under a different license, please open an issue
-— relicensing that part is a decision the maintainer can make.
+compatible with the GNU GPL or most other software copyleft. This is a real cost
+and it cannot simply be undone — `lean/Trans/Recal.lean` carries ShareAlike from
+upstream, so relicensing it is not the maintainer's to grant. The rest of `lean/`
+is this project's own work; if you need it under different terms, open an issue.
 
 ---
 
@@ -46,10 +51,18 @@ Other external material, cited but not included:
   bibliographically only.
 - "BMS vs Rathjen's OCF" spreadsheet —
   <https://docs.google.com/spreadsheets/d/1UkVwMxbo_i9JVh9suHZF6ycp2yaIrHRZR0XZceB5BRs/edit>
-- Naruyoko, googology implementations — <https://github.com/Naruyoko/googology/>.
-  `lean/Trans/Recal.lean` is a **port** of `pss-vs-buchholz/common.js`; the
-  function names correspond one to one (see `scripts/external-check.py`).
-  `padicBotRathjen/` is used only as an external cross-check, never copied.
+- Naruyoko, `pss-vs-buchholz` — **CC BY-SA 3.0**, stated in
+  <https://github.com/Naruyoko/googology/blob/main/pss-vs-buchholz/implementation.html>
+  and in `transTabulator.html`: "The program (common.js, implementation.js) and
+  the site … is licensed by Creative Commons Attribution-ShareAlike 3.0 Unported
+  License". `lean/Trans/Recal.lean` is a **port of `common.js`** — the function
+  names correspond one to one (`fpar`, `Pred`, `Derp`, `IncrFirst`, `Adm`,
+  `TrMax`, `Br`, `FirstNodes`, `Joints`, `Red`; see `scripts/external-check.py`
+  and `plan/README.md`). This is the derivative work that makes ShareAlike bind
+  on this repository.
+- Naruyoko, `padicBotRathjen` — CC BY-SA 3.0. Used only as an external
+  cross-check of `TM/`'s order, normal form and fundamental sequences; never
+  copied into this repository.
 - yaBMS (koteitan), the C reference implementation of BMS expansion —
   <https://github.com/koteitan/yaBMS>. Used as an oracle via `scripts/crosscheck.sh`
   and `scripts/standard-audit.sh`.

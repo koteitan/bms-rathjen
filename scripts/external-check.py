@@ -40,11 +40,16 @@
 残る 2 件は xlsx 側が**非標準形**だった (シート「(0,0)(1,1)(2,2)(3,3) まで」B28 と B35)。
 
 **naruyoko 氏の実装群** — ブラウザで読むなら <https://naruyoko.github.io/googology/>、
-出典として引くなら <https://github.com/Naruyoko/googology/tree/main/>:
+出典として引くなら <https://github.com/Naruyoko/googology/tree/main/>。
+**ライセンスは CC BY-SA 3.0** で、`pss-vs-buchholz/implementation.html` と
+`transTabulator.html` に "The program (common.js, …) … is licensed by Creative Commons
+Attribution-ShareAlike 3.0 Unported License" と明記されている (`common.js` が名指し):
 
   pss-vs-buchholz/common.js    BMS → Buchholz。**このリポジトリの `Trans/Recal.lean` の
       移植元**で、関数名がそのまま対応する (fpar, Pred, Derp, IncrFirst, Adm, TrMax,
-      Br, FirstNodes, Joints, Red)。Buchholz 側も一式ある:
+      Br, FirstNodes, Joints, Red)。**移植は二次的著作物なので、このリポジトリが
+      CC BY-SA 3.0 なのは選択ではなく ShareAlike の帰結である** (`LICENSE` 参照)。
+      Buchholz 側も一式ある:
       parseBuchholz / normalizeBuchholz / equalBuchholz / lessThanBuchholz /
       **isStandardBuchholz** / fundBuchholz / domBuchholz。
       項は `D_0(...)` または `p_0(...)` と書く (`ψ` は受け付けない)。
