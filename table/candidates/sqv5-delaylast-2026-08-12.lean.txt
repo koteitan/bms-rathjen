@@ -1,0 +1,107 @@
+-- CANDIDATE ENCODER, not built.  Saved 2026-08-12 before a machine restart.
+--
+-- Measured on the standard harness (pool 1517 CNV && NfOK terms, sample 217,
+-- 23436 ordered pairs), against `Evidence.SqV.sqv'`:
+--
+--                          collapses   inversions   injective
+--     Evidence.SqV.sqv'         7          57          no
+--     cx20's sqv3 / sqv4        0         583          yes
+--     unguarded eps ladder      0        2996          yes
+--     sqv5 (this file)          0           0          yes   <-- 217 distinct images
+--
+-- and it meets the three settled targets (`#guard`s at the bottom).
+--
+-- STILL UNVERIFIED AT SAVE TIME: the 17-row table check, and the fourth (suspect)
+-- value `φ̄(ε₀,1)`.  Run:
+--     python3 scripts/map-vs-table.py --map "CX22.sqv5" --out /tmp/mt.lean
+--     leanman check -m mt -C lean --backend lean /tmp/mt.lean       (want: fails 0 of 17)
+--
+-- THE ONE CHANGE from cx20's version, and why.  cx20's `delayLevelOne` expanded EVERY
+-- level-one column of the index encoding; the verified values say only the LAST one
+-- moves.  Comparing the two ladders directly at d = 1:
+--
+--     index    sqv's tail          cx20's eps tail
+--     ω        (3,1)(4,0)          (3,1)(4,0)(5,0)      one column too many
+--     ε₀       (3,1)(4,1)          (3,1)(4,0)(5,1)      correct
+--     ω^ω      (3,1)(4,0)(5,0)     (3,1)(4,0)(5,0)(6,0) one column too many
+--
+-- So the ε form overshoots by a column on plain indices, which is why applying it
+-- unguarded gave 2996.  `delayLast` keeps `sqv'`'s ladder and moves only the trailing
+-- level-one marker, which reproduces the ε₀ tail without lengthening the others.
+--
+-- Records: lean/Evidence/SqV.lean §K3 .. §K3.13.
+
+import Evidence.SqV
+
+open TM (Term)
+open TM.Term
+
+namespace CX22
+
+abbrev Col2 := Nat × Nat
+
+def toMatrix (cs : List Col2) : BMS.Matrix :=
+  cs.map (fun c => [c.1, c.2])
+
+def indexBody (a : Term) : Term :=
+  if TM.Term.lt a omega then Evidence.SqV.predOr a else a
+
+/-- In `phi a zero`, recognize the indices `a = phi c _` with nonzero first
+    Veblen argument. -/
+def epsIndexShape : Term → Bool
+  | .phi c _ => c != zero
+  | _ => false
+
+/-- Expand ONLY the final level-one column: `(x,1)` at the end becomes `(x,0),(x+1,1)`.
+    cx20's `delayLevelOne` did this to every level-one column; the verified values say
+    only the last one moves. -/
+def delayLast (cs : List Col2) : List Col2 :=
+  match cs.reverse with
+  | (x, 1) :: rest => (rest.reverse) ++ [(x, 0), (x + 1, 1)]
+  | _ => cs
+
+def encv5F : Nat → Term → Nat → List Col2
+  | 0, _, _ => []
+  | _ + 1, .zero, _ => []
+  | f + 1, .add u v, d => encv5F f u d ++ encv5F f v d
+  | f + 1, .phi a b, d =>
+      let bm := TM.Term.splitFin b
+      let gs := Evidence.SqV.summands bm.1
+      let ladder : List Col2 :=
+        if a == zero then []
+        else
+          let base := (d + 1, 1) :: Evidence.SqV.bumpAt (d + 2)
+            (encv5F f (indexBody a) (d + 2))
+          if epsIndexShape a then delayLast base else base
+      let unit : List Col2 := if a == zero then [(d + 1, 0)] else ladder
+      let reps : List Col2 := (List.replicate bm.2 unit).flatten
+      let mkBlocks : List Term → List Col2 := fun hs =>
+        (hs.map (fun g =>
+          ladder ++ Evidence.SqV.shiftD (if a == zero then d + 1 else d + 2)
+            (encv5F f (if a == zero then g else Evidence.SqV.omLog g) 0))).flatten
+      if TM.Term.isFP a (gs.headD zero) then
+        encv5F f (gs.headD zero) d
+          ++ (if gs.length == 1
+              then (if a == zero then [((d + 1, 0) : Col2)] else ladder)
+              else mkBlocks (gs.drop 1))
+          ++ reps
+      else
+        match Evidence.SqV.fpDeep a (gs.headD zero) with
+        | some g => encv5F f g d ++ mkBlocks gs ++ reps
+        | none => (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
+  | _ + 1, _, _ => []
+
+def encv4 (t : Term) (d : Nat) : List Col2 :=
+  encv5F (2 * t.deg + 8) t d
+
+def sqv5 (t : Term) : BMS.Matrix :=
+  toMatrix (encv4 t 0)
+
+-- The three independently settled values.
+#guard sqv5 (phi omega zero) == [[0, 0], [1, 1], [2, 1], [3, 0]]
+#guard sqv5 (phi Evidence.WF.eps0T zero) ==
+  [[0, 0], [1, 1], [2, 1], [3, 0], [4, 1]]
+#guard sqv5 (phi Evidence.WF.omegaOmega zero) ==
+  [[0, 0], [1, 1], [2, 1], [3, 0], [4, 0]]
+
+end CX22
