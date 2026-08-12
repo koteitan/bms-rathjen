@@ -7657,6 +7657,57 @@ map — from the reference implementation alone, or from a proved row.  The tabl
 expansions.  Until then the fourth value stays recorded and unused, and the guard-removed
 map is not a repair.
 
+
+### §K3.14 A candidate that passes everything measured, and what it changes
+
+`table/candidates/sqv5-delaylast-2026-08-12.lean.txt`.  One change from the previous
+candidates: `sqv'`'s own ladder, with ONLY the trailing level-one column expanded when the
+Veblen index is an ε-number.  cx20's version expanded every level-one column; the verified
+values say only the last one moves, and that single column is the whole difference.
+
+    index    sqv's tail          cx20's eps tail
+    ω        (3,1)(4,0)          (3,1)(4,0)(5,0)       one column too many
+    ε₀       (3,1)(4,1)          (3,1)(4,0)(5,1)       correct
+    ω^ω      (3,1)(4,0)(5,0)     (3,1)(4,0)(5,0)(6,0)  one column too many
+
+Measured (pool 1517, sample 217, 23436 ordered pairs; the constant-map control collapses
+all 23436):
+
+                          table   collapses   inversions   injective
+    Evidence.SqV.sqv'     16/17        7           57          no
+    cx20's sqv3 / sqv4    17/17        0          583          yes
+    unguarded eps ladder  17/17        0         2996          yes
+    sqv5                  17/17        0            0          yes (217/217)
+
+and all four settled values, `φ̄(ω,0)`, `φ̄(ε₀,0)`, `φ̄(ω^ω,0)`, `φ̄(ε₀,1)`.
+
+**§K3.13's conflict dissolves.**  It reduced to "either the fourth value is wrong or the
+architecture cannot do both", then to "the ladder formula is wrong".  The last was right
+and the first was the wrong half of the disjunction: a formula exists that meets all four
+values AND inverts nothing.  The fourth value is vindicated, not refuted.
+
+**§K3.2's refutation of `certIn_cnv` does NOT transfer.**  Its witness was two strictly
+ordered `CNV ∩ NfOK` terms with one `sqv'` image; `sqv5` separates them:
+
+    sqv5 φ̄(φ̄(0,ω),0)         = (0,0)(1,1)(2,1)(3,0)          the table's φ̄(ω,0)
+    sqv5 φ̄(φ̄(0,ω)+1,0)       = (0,0)(1,1)(2,1)(3,0)(2,1)
+
+So the goal is not refuted for `sqv5`.  It is also **not proved**, and the obstacle has
+MOVED rather than gone:
+
+    nfCex     (§K1's witness)   sqv' breaks decomposition, sqv5 breaks it too
+    smallCex  (§K3's witness)   sqv' breaks it, sqv5 does NOT
+    a reaching corpus, 162 limits: decomposition failures  sqv' 53, sqv5 12
+
+`SqvDecomp` is still false — `no_sqvDecomp_general_nfOK` stands against `sqv5` as well.
+So `certIn_cnv` is blocked by the decomposition identity now, not by injectivity, and that
+is a different and smaller obstacle than the one this file opened with.
+
+**Not landed.**  Replacing `sqv'` changes every value the proofs above are stated against;
+that is a migration with its own failure modes, and 0 inversions on one sample is not a
+reason to start it today.  What is banked is the candidate, the harness that judges it
+(`table/candidates/harness-2026-08-12.lean.txt`), and the numbers.
+
 -/
 
 end Evidence.SqV

@@ -1,0 +1,65 @@
+-- HARNESS for judging a candidate term→matrix encoder.  Not built; concatenate it after
+-- a candidate file and run with `leanman check -C lean --backend lean`.
+--
+-- It exists because the scratch copy was lost to a machine restart and rebuilding it cost
+-- more than keeping it.  Everything here is measurement; no claims.
+--
+-- WHAT IT MEASURES, and why each control is the one it is:
+--
+--   * inversions / collapses over a sample of `CNV && NfOK` terms.  The constant map is a
+--     control that FIRES (it collapses every ordered pair).  Note it is NOT a control for
+--     identity-shaped checks — see §K3.9 — but it is the right one here.
+--   * injectivity: distinct images vs sample size.
+--   * the four settled values, three of which are independent and the fourth (`φ̄(ε₀,1)`)
+--     recorded as suspect in §K3.13.
+--
+-- SAMPLE SIZE IS PART OF THE MEASUREMENT (§K3.7).  A 27-term sample reported 0 inversions
+-- for a map that has 583 at 217 terms.  The size below is chosen for what it reaches, not
+-- for how fast it runs.
+--
+-- Replace `CAND` with the candidate's fully qualified name before running.
+
+import Rows.TM
+import Evidence.SqV
+
+namespace Harness
+open TM (Term)
+
+def o : Term := TM.Term.phi TM.Term.zero TM.Term.zero
+def w : Term := TM.Term.phi TM.Term.zero o
+def e0 : Term := TM.Term.phi o TM.Term.zero
+def ww : Term := TM.Term.phi TM.Term.zero w
+
+def pool0 : List Term := [TM.Term.zero, o, w, e0, TM.Term.phi o w]
+def grow (p : List Term) : List Term :=
+  (p ++ (p.flatMap fun x => p.map fun y => TM.Term.phi x y)
+     ++ (p.flatMap fun x => p.map fun y => TM.Term.add x y)).eraseDups
+def pool : List Term :=
+  (grow (grow pool0)).filter fun t => Evidence.WF.CNV t && Evidence.WF.NfOK t
+def smpl : List Term := (pool.zipIdx.filter fun p => p.2 % 7 == 0).map Prod.fst
+
+def scan (f : Term → BMS.Matrix) : Nat × Nat × Nat :=
+  let im := smpl.map fun u => (u, f u)
+  im.foldl (fun acc p =>
+    im.foldl (fun acc2 q =>
+      let (ord, col, inv) := acc2
+      if TM.Term.lt p.1 q.1 then
+        if p.2 == q.2 then (ord+1, col+1, inv)
+        else if BMS.cmpM p.2 q.2 == Ordering.lt then (ord+1, col, inv)
+        else (ord+1, col, inv+1)
+      else acc2) acc) (0, 0, 0)
+
+def distinct (f : Term → BMS.Matrix) : Nat := (smpl.map f).eraseDups.length
+
+#eval s!"pool {pool.length}  sample {smpl.length}"
+#eval s!"CTRL constant map (must collapse every pair): {scan (fun _ => [])}"
+#eval s!"sqv' baseline (ordered, collapsed, inverted): {scan Evidence.SqV.sqv'}"
+
+#eval s!"CAND (ordered, collapsed, inverted): {scan CAND}"
+#eval s!"CAND distinct images: {distinct CAND} of {smpl.length}"
+#eval s!"T1 φ̄(ω,0)    {CAND (TM.Term.phi w TM.Term.zero)}   want [[0,0],[1,1],[2,1],[3,0]]"
+#eval s!"T2 φ̄(ε₀,0)   {CAND (TM.Term.phi e0 TM.Term.zero)}   want [[0,0],[1,1],[2,1],[3,0],[4,1]]"
+#eval s!"T3 φ̄(ω^ω,0)  {CAND (TM.Term.phi ww TM.Term.zero)}   want [[0,0],[1,1],[2,1],[3,0],[4,0]]"
+#eval s!"T4 φ̄(ε₀,1)   {CAND (TM.Term.phi e0 o)}   SUSPECT, see §K3.13; was [[0,0],[1,1],[2,1],[3,0],[4,1],[1,1],[2,1],[3,0],[4,1]]"
+
+end Harness
