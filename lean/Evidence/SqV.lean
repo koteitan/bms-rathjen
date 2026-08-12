@@ -7494,11 +7494,28 @@ is what happened last time a rule fit its evidence exactly.  It is written down 
 deriving it took a measurement chain that should not be repeated, not because it is
 believed.
 
-**The test it can fail, which needs no fourth value**: implement it and re-measure the
-candidate's 583 inversions at sample 217.  A right rule should drop them sharply while
-TABLE stays 0 of 17 and the three targets hold.  Staying near 583 refutes it, and then it
-should be dropped rather than patched — the alternative is fitting a second rule to the
-residue, which is how the separator in §K3.7 turned into a restatement of its own corpus.
+**TESTED, AND PARTLY REFUTED — same day, so the hypothesis never had time to become an
+assumption.**
+
+The candidate already implements this rule, but only under a guard: it reshapes the index
+encoding when `b == zero`.  All three verified values have `b = 0`, so the rule had been
+tested exactly where it was fitted and nowhere else.  The 583 inversions are terms with
+`b ≠ 0`.
+
+Removing the guard — applying the same tail rule for every `b` — gives:
+
+    sqv'                      57 inversions
+    candidate, guard kept    583
+    candidate, guard removed 2996
+
+So the rule is right at `b = 0` and wrong elsewhere, by a factor of five.  It is not "the
+ε-index rule"; it is the ε-index rule AT `b = 0`, which is the only place three data points
+could ever have constrained it.  What the tail should be when `b ≠ 0` is untouched by any
+verified value, and finding out needs a verified value with `b ≠ 0` — a different chain
+from §K3.10's, and one nobody has walked.
+
+Kept rather than deleted: the derivation cost a measurement chain, and the refutation is
+the useful half.
 
 -/
 
