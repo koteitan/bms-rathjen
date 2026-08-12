@@ -211,6 +211,83 @@ The Γ₀ row additionally required unfolding that source's `Γ⁰(s,n)` map, an
 one below ours (`ours[n] = Γ⁰(0, n+1)`).
 -/
 
+/-! ### `cofT` against the same source's `dom`
+
+That source also defines a cofinality map `dom : OT → OT` with values `0` (zero), `1`
+(successor), `ω` (countable limit) and `s` (uncountable regular).  This file splits the
+same information across `kindT` and `cofT`, so put them back together and compare.
+
+The `φ` clause must be read with the SEMANTIC second argument `β°` ([R91] 2.7), for the
+usual reason.  The measurement below records what ignoring that costs, and the number is
+the point: a rule that uses `b` instead of `β°` still agrees on 2460 of 2572 terms — it
+breaks on 4%.  A corpus that did not reach fixed points would have certified it.
+
+    our (kindT, cofT) against the source's rules   2572 / 2572,  0 unhandled
+    CTRL "always ω"                                2261 / 2572
+    CTRL `b` in place of `β°`                      2460 / 2572
+    CTRL `a` and `b` swapped                       2406 / 2572
+-/
+
+/-- The source's `dom`, rebuilt from `kindT` and `cofT`. -/
+def domOf (t : Term) : Term :=
+  if t == zero then zero
+  else match kindT t with
+       | .isSucc => one
+       | .isZero => zero
+       | .isLim  => cofT t
+
+private def zeroOrOne (d : Term) : Bool := d == zero || d == one
+
+/-- The source's clauses, written in this file's constructors.  `none` where the source
+    says nothing about a shape this type has. -/
+def domSpec (t : Term) : Option Term :=
+  match t with
+  | .zero => some zero
+  | .add _ b => some (domOf b)
+  | .Z _ => some t
+  | .M => some t
+  | .phi a b =>
+      let bs := if phiShifted a b then plus b one else b
+      let da := domOf a
+      let db := domOf bs
+      if zeroOrOne db then
+        if zeroOrOne da then some (if da == zero && db == zero then one else omega)
+        else some da
+      else some db
+  | .psi k a =>
+      let da := domOf a
+      if zeroOrOne da then some omega
+      else if lt da k then some da else some omega
+  | _ => none
+
+private def domPool0 : List Term := [zero, one, phi one zero, phi zero one, Z zero]
+private def domGrow (p : List Term) : List Term :=
+  (p ++ (p.flatMap fun x => p.map fun y => phi x y)
+     ++ (p.flatMap fun x => p.map fun y => plus x y)
+     ++ (p.map fun x => psi (Z zero) x)).eraseDups
+def domCorpus : List Term :=
+  (domGrow (domGrow domPool0)).filter fun t => inT t && !(t == zero)
+
+#guard domCorpus.all fun t => domSpec t == some (domOf t)
+#eval (domCorpus.length,
+       domCorpus.countP fun t => domSpec t == some (domOf t),
+       domCorpus.countP fun t => (domSpec t).isNone)
+-- the three controls, as counts rather than as guards: each must be strictly below the
+-- corpus size, and the middle one is the interesting number (see above).
+#eval (domCorpus.countP fun t => omega == domOf t,
+       domCorpus.countP fun t =>
+         (match t with
+          | .phi a b =>
+              let da := domOf a; let db := domOf b
+              if zeroOrOne db then
+                (if zeroOrOne da then some (if da == zero && db == zero then one else omega)
+                 else some da)
+              else some db
+          | _ => domSpec t) == some (domOf t),
+       domCorpus.countP fun t =>
+         (match t with | .phi a b => domSpec (phi b a) | _ => domSpec t) == some (domOf t))
+#guard domCorpus.countP (fun t => omega == domOf t) < domCorpus.length
+
 private def fsRow (t : Term) (l : List Term) : Bool :=
   (l.zipIdx.all fun p => fsN t p.2 == p.1)
 
