@@ -7627,9 +7627,21 @@ Both are strict total orders there, so an inversion count measures the map and n
 comparators.  This had been waved away twice as "unlikely because `sqv'` manages 57", which
 is an argument, not a measurement; the measurement cost one `#eval`.
 
-**So one reading is left: the fourth value is wrong.**  Its derivation used a candidate map
-that the same section shows to be wrong on the very term being derived, which is enough to
-account for it.
+**RETRACTED, one measurement later.**  I concluded the fourth value must be wrong.  Then I
+noticed that the value coincides exactly with what the UNGUARDED ladder formula emits —
+`(0,0) ++ ladder ++ ladder` at `d = 0` — so "the value is wrong" and "the formula is wrong"
+were never separated by anything measured.
+
+They separate like this: do the unguarded map's inversions involve terms where the
+ε-ladder actually fires?
+
+    2996 inversions.  Eps-ladder fires in one or both sides: 2996.  Neither side: 0.
+
+**So the ladder FORMULA is wrong in general**, and fitting all four verified values does
+not save it.  The fourth value stands or falls on its own derivation, which this does not
+touch — what falls is the inference from "meets more evidence" to "one of the values must
+be bad".  Twenty-one points, and a formula can hit every one of them while being wrong
+everywhere between.
 
 
 **One of the three is now excluded.**  If table-agreement and order were incompatible, the
