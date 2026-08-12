@@ -7473,6 +7473,33 @@ day and the fourth did not arrive.
 Until a fourth exists, any ε-branch fitted to the three is fitted to three points.  §K3.7
 is what happens then.
 
+
+### §K3.11 A rule derived from the three verified values — UNTESTED
+
+Writing `sqv' (φ̄(a,0))` as `(0,0)(1,1)(2,1) ++ tail`, and comparing the tail against two
+ways of reading the index's own encoding:
+
+    index a    correct tail    drop 1 (encv' a 2)    encv' a 3
+    ω          (3,0)           (3,0)        yes      (3,0)(4,0)       no
+    ω^ω        (3,0)(4,0)      (3,0)(4,0)   yes      (3,0)(4,0)(5,0)  no
+    ε₀         (3,0)(4,1)      (3,1)        no       (3,0)(4,1)       yes
+
+So a conditional rule fits all three:
+
+    plain index (first Veblen argument 0):  tail = drop 1 (encv' a (d+2))   -- current
+    ε-number index:                          tail = encv' a (d+3)           -- no drop, one deeper
+
+**This is fitted to three points and is recorded as a hypothesis, not a finding.**  §K3.7
+is what happened last time a rule fit its evidence exactly.  It is written down because
+deriving it took a measurement chain that should not be repeated, not because it is
+believed.
+
+**The test it can fail, which needs no fourth value**: implement it and re-measure the
+candidate's 583 inversions at sample 217.  A right rule should drop them sharply while
+TABLE stays 0 of 17 and the three targets hold.  Staying near 583 refutes it, and then it
+should be dropped rather than patched — the alternative is fitting a second rule to the
+residue, which is how the separator in §K3.7 turned into a restatement of its own corpus.
+
 -/
 
 end Evidence.SqV
