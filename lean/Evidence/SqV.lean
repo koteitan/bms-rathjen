@@ -7589,6 +7589,40 @@ on the rule off the `b = 0` face — the thing §K3.11 said was missing.
 Also settled in passing: the earlier splice attempt failed because it lifted the tail by
 one.  The images keep their tail at depth 1 unshifted; only the prefix changes length.
 
+
+### §K3.13 Meeting MORE verified values made the order worse — the fourth value is suspect
+
+Removing the `b == 0` guard makes the candidate meet every check available:
+
+              table rows   verified targets   injective   inversions
+    sqv'         16/17            3/4             no          57
+    sqv3         17/17            3/4            yes         583
+    no guard     17/17            4/4            yes        2996
+
+So 17 table rows and 4 independently derived values — 21 points — are satisfied by the map
+that inverts order fifty times more than the one failing a row.  Passing more of the
+evidence made the structure worse, monotonically, at each step.
+
+**That is a reason to doubt the fourth value, not to celebrate the map.**  §K3.12 flagged
+its derivation as depending on the corrected map being right on `φ̄(a_n, φ̄(ε₀,0))`.  That
+map is `sqv4` — which is itself under test, and which §K3.12 also showed to be WRONG on
+`φ̄(ε₀,1)`.  Using a candidate to derive the value that judges it is the circularity this
+file has walked into twice before (§K3.10, §K3.11), one level further out each time.
+
+Three readings, none settled:
+
+  * the fourth value is wrong, and the guard-removed map fits an artefact;
+  * the fourth value is right and `sqv`'s architecture cannot be both table-correct and
+    order-preserving, which would make this a design question rather than a clause;
+  * `TM.Term.lt` and `BMS.cmpM` disagree somewhere independent of all this — unlikely,
+    since `sqv'` manages 57 inversions, but not excluded.
+
+**What would separate them**: a `b ≠ 0` value derived WITHOUT any candidate map — from the
+reference implementation alone, or from a proved row.  The table has none (§K3.11), so
+this needs the BMS side to supply the fundamental sequence too, not just the expansions.
+Until then the fourth value stays recorded and unused, and the guard-removed map is not a
+repair.
+
 -/
 
 end Evidence.SqV
