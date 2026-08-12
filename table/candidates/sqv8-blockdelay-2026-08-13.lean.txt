@@ -1,0 +1,69 @@
+-- CANDIDATE sqv8 — 2026-08-13.  MEASURED AND SET ASIDE; kept for its numbers.
+-- Concatenate after `sqv5-delaylast-2026-08-12.lean.txt`; not built.
+--
+-- One change from sqv7: extend the per-summand epsilon rule INTO the block construction,
+-- so a multiplicative block whose summand is an epsilon number is delayed too.  This
+-- separates §K3.15's collapse pair and makes the encoder injective on the whole
+-- population — and it is still not an improvement:
+--
+--              collapses  inversions  settled  table  round trips  end segment  distinct
+--     sqv7          1         58        4/4    17/17    299/456       yes       455/456
+--     sqv8          0         58        4/4    17/17    297/456       NO        456/456
+--
+-- The two round trips it loses are ε₁·ε₁ and ω^(ε₁·ε₁) — the ε₁ analogues of the very pair
+-- it fixed at ε₀.  It relocates the defect one level up rather than removing it.  Worse,
+-- it destroys the end-segment structure: sqv8's failures start at index 45 and successes
+-- continue to 298, so it has no threshold, and §K3.17's threshold height is the one figure
+-- of merit here that ranks candidates without a trade.
+--
+-- Records: lean/Evidence/SqV.lean §K3.19.
+
+namespace R27
+open TM (Term)
+open TM.Term
+
+-- mode 3: decide `delayLast` PER SUMMAND of the ladder payload, not on the index as a
+-- whole.  §K3.16 established that `epsIndexShape` is the right epsilon test; the threshold
+-- term φ̄(ε₀+1,0) shows it is being asked about the wrong thing — ε₀+1 is not an epsilon
+-- number, but the ε₀ inside it is, and its block is what needs the delayed shape.
+--
+-- For a = ε₀ this coincides with sqv5: `delayLast ((d+1,1) :: X) = (d+1,1) :: delayLast X`
+-- whenever X ≠ [], and the payload is a single summand.  They part company exactly at the
+-- sums, which is where the threshold sits.
+def encF (blk : Bool) : Nat → Term → Nat → List CX22.Col2
+  | 0, _, _ => []
+  | _ + 1, .zero, _ => []
+  | f + 1, .add u v, d => encF blk f u d ++ encF blk f v d
+  | f + 1, .phi a b, d =>
+      let bm := TM.Term.splitFin b
+      let gs := Evidence.SqV.summands bm.1
+      let ladder : List CX22.Col2 :=
+        if a == zero then []
+        else
+          (d + 1, 1) :: ((Evidence.SqV.summands (CX22.indexBody a)).flatMap fun g =>
+            let e := Evidence.SqV.bumpAt (d + 2) (encF blk f g (d + 2))
+            if TM.Term.isFP zero g then CX22.delayLast e else e)
+      let unit : List CX22.Col2 := if a == zero then [(d + 1, 0)] else ladder
+      let reps : List CX22.Col2 := (List.replicate bm.2 unit).flatten
+      let mkBlocks : List Term → List CX22.Col2 := fun hs =>
+        (hs.map (fun g =>
+          let body := Evidence.SqV.shiftD (if a == zero then d + 1 else d + 2)
+            (encF blk f (if a == zero then g else Evidence.SqV.omLog g) 0)
+          ladder ++ (if blk && a == zero && TM.Term.isFP zero g then CX22.delayLast body
+                     else body))).flatten
+      if TM.Term.isFP a (gs.headD zero) then
+        encF blk f (gs.headD zero) d
+          ++ (if gs.length == 1
+              then (if a == zero then [((d + 1, 0) : CX22.Col2)] else ladder)
+              else mkBlocks (gs.drop 1))
+          ++ reps
+      else
+        match Evidence.SqV.fpDeep a (gs.headD zero) with
+        | some g => encF blk f g d ++ mkBlocks gs ++ reps
+        | none => (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
+  | _ + 1, _, _ => []
+
+def sqv8 (t : Term) : BMS.Matrix := CX22.toMatrix (encF true (2 * t.deg + 8) t 0)
+def sqv7 (t : Term) : BMS.Matrix := CX22.toMatrix (encF false (2 * t.deg + 8) t 0)
+
+end R27

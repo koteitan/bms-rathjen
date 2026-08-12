@@ -7977,6 +7977,43 @@ limit into a red build; printing it stops "0 failures" being read as "covered".
 
     deepCorpus  191 terms,  sqv round trips 65,  above/below (126, 0),  control (0, 191)
 
+### §K3.19 The last collapse is a boundary case, and buying it costs the threshold
+
+`sqv7`'s only remaining collapse is `φ̄(ε₀·ε₀,0)` against `φ̄(ε₁,0)`.  Decomposed:
+
+    ε₁      enc at 2   (2,0)(3,1)(3,1)        bumped (2,1)(3,1)(3,1)
+                       delayed                (2,1)(3,1)(3,0)(4,1)
+    ε₀·ε₀   enc at 2   (2,0)(3,1)(3,0)(4,1)   bumped (2,1)(3,1)(3,0)(4,1)   no delay
+
+**`delayLast`'s output shape `(x,0)(x+1,1)` is the same string the encoder uses for a
+multiplicative block** — `shiftD (d+1) (enc ε₀ 0)` with `enc ε₀ 0 = (0,0)(1,1)`.  The
+ε-marker and the multiplication-marker coincide.
+
+**It is a boundary case, not a family.**  Testing `ε_n·ε_n` against `ε_{n+1}`:
+
+    n = 0   collides       n = 1, 2, 3   do not      (control: φ̄(ε_n,0) vs φ̄(ε_{n+1},0)
+                                                      never collide, n = 0..3)
+
+Only `ε₀` collides, because `ε₀ = φ̄(1,0)` has the shortest possible encoding — exactly the
+two columns `delayLast` produces.
+
+**`sqv8`, and why it is not an improvement.**  Extending the per-summand rule into the
+block construction (delay a block whose summand is an ε-number) separates the pair:
+
+                collapses   inversions   settled   table   round trips   end segment
+    sqv7             1          58        4/4      17/17     299/456        yes
+    sqv8             0          58        4/4      17/17     297/456        **no**
+
+`sqv8` is injective on the whole population, 456/456.  But the two round trips it loses are
+`ε₁·ε₁` and `ω^(ε₁·ε₁)` — precisely the ε₁ analogues of the pair it fixed at ε₀.  It did
+not remove the defect; it moved it up one level.  And it destroys the property §K3.17
+identified as the one clean figure of merit: `sqv8`'s failures are no longer an end segment
+(first failure at index 45, last success at 298), so it no longer has a threshold at all.
+
+Recorded as a trade, and the trade is against it: a scalar figure of merit is worth more
+than one collapse, because the collapse is at a single known term and the threshold ranks
+every future candidate.  **`sqv7` remains the best point found.**
+
 -/
 
 end Evidence.SqV
