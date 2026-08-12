@@ -7717,6 +7717,22 @@ Four fewer decomposition failures, bought with 40 inversions and a collision.  R
 The axes keep trading against each other — that is the third such trade in this section —
 and `sqv5` remains the best point found.
 
+**Where `sqv5`'s 12 remaining decomposition failures come from — partly settled.**
+
+They are NOT index-shift artefacts.  Trying shifts 1, 2 and 3 rescues **0 of the 12**, and
+the check discriminates: of the 150 terms correct at shift 0, none is also correct at
+shift 1, so a shift genuinely changes the answer rather than being absorbed.
+
+Asking whether `expand (sqv5 t) 0` is the `sqv5`-image of any term (controls: a real image
+is found, a fabricated matrix is not), over a 238-term `CNV` search space: **2 of 12** are.
+For those two, a term with the right image exists and `fsV'` picks a different one — so
+they are `fsV'`'s fault, not the encoder's.
+
+The other 10 are undecided, and the reason is a limit of this measurement rather than a
+result: 238 terms is a tenth of the space used for earlier searches here, and a pool miss
+has never been evidence of non-existence in this file.  Widening it is the next step if
+this line is resumed.
+
 **Not landed.**  Replacing `sqv'` changes every value the proofs above are stated against;
 that is a migration with its own failure modes, and 0 inversions on one sample is not a
 reason to start it today.  What is banked is the candidate, the harness that judges it
