@@ -7617,6 +7617,21 @@ Three readings, none settled:
   * `TM.Term.lt` and `BMS.cmpM` disagree somewhere independent of all this — unlikely,
     since `sqv'` manages 57 inversions, but not excluded.
 
+**The third is now measured rather than dismissed.**  On a 60-term sample of `CNV && NfOK`
+terms and their images:
+
+    TM.Term.lt   irreflexive 0, asymmetry 0, trichotomy 0, transitivity 0
+    BMS.cmpM     asymmetry 0, transitivity 0
+
+Both are strict total orders there, so an inversion count measures the map and not the
+comparators.  This had been waved away twice as "unlikely because `sqv'` manages 57", which
+is an argument, not a measurement; the measurement cost one `#eval`.
+
+**So one reading is left: the fourth value is wrong.**  Its derivation used a candidate map
+that the same section shows to be wrong on the very term being derived, which is enough to
+account for it.
+
+
 **One of the three is now excluded.**  If table-agreement and order were incompatible, the
 table's own rows would show it: some pair of rows would have its terms in one order and its
 matrices in the other.  Measured over all 17 rows — **0 such pairs**.  So the table is
