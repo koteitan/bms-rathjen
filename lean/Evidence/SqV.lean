@@ -7730,8 +7730,16 @@ they are `fsV'`'s fault, not the encoder's.
 
 The other 10 are undecided, and the reason is a limit of this measurement rather than a
 result: 238 terms is a tenth of the space used for earlier searches here, and a pool miss
-has never been evidence of non-existence in this file.  Widening it is the next step if
-this line is resumed.
+has never been evidence of non-existence in this file.
+
+**Widening it was tried and does not finish.**  Three rounds of the generator with degree
+capped at 20 times out at 300s and again at 1500s, even with the images precomputed once
+instead of per query (the naive version recomputed `sqv5` for every failure against every
+candidate).  The cost is in building the pool, not in the search over it.  So the ten stay
+undecided, and settling them needs a different method — a targeted construction of the
+candidate term rather than an enumeration.  Recorded as a cost, since "we did not find one"
+and "we could not afford to look" are different statements and only the second is true
+here.
 
 **Not landed.**  Replacing `sqv'` changes every value the proofs above are stated against;
 that is a migration with its own failure modes, and 0 inversions on one sample is not a
