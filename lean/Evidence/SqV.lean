@@ -364,6 +364,41 @@ def corpus : List Term :=
 -- the corpus size, so that "0 failures" is never read as "0 tested"
 #eval corpus.length
 
+-- ...and, since 2026-08-13, the reach, so that "0 failures" is never read as "covered"
+-- either.  §K3.17: GATE 1 is green because `corpus` applies `φ̄` with only four fixed first
+-- arguments, so it never reaches a NESTED first argument.  It is not smaller or shallower
+-- than the corpus that breaks the gate — both have max degree 23 and max `φ̄` nesting 4 —
+-- and it does not contain `φ̄(ε₀,0)`, one of the four values §K3 spent the most to settle.
+--
+-- `sqv` FAILS GATE 1 on `φ̄(ε₀,0)`: it returns (0,0)(1,1)(2,1)(3,1), which `oR` sends to
+-- ψ_Ω(0), a term STRICTLY ABOVE `φ̄(ε₀,0)`.  The table's value (0,0)(1,1)(2,1)(3,0)(4,1)
+-- round-trips exactly.  Two independent sources now agree against `sqv` here: `oR`, and
+-- the C reference implementation's expansion (§K3.16).
+--
+-- These two numbers are RECORDED, not gated — the second is nonzero and is the measure of
+-- how far the encoder is calibrated, not a regression to fix in place.
+def deepBases : List Term := [zero, one, phi one zero]
+def deepGrow (p : List Term) : List Term :=
+  (p ++ (p.flatMap fun x => p.map fun y => phi x y)
+     ++ (p.flatMap fun x => p.map fun y => plus x y)).eraseDups
+def deepCorpus : List Term :=
+  (deepGrow (deepGrow deepBases)).filter fun t =>
+    Evidence.WF.CNV t && Evidence.WF.NfOK t && !(t == zero)
+-- (round trips, failures) — the failures are an END SEGMENT of the order, so the first
+-- number is the height at which `sqv` stops being calibrated.
+#eval (deepCorpus.countP (fun t => Trans.oR (sqv t) == some t), deepCorpus.length)
+-- (failures ABOVE the term, failures BELOW it) for `sqv`, then the same for the constant
+-- map as a control.  `sqv` is entirely above; the control is entirely below, so the two
+-- buckets do tell each other apart.
+def aboveBelow (f : Term → BMS.Matrix) : Nat × Nat :=
+  deepCorpus.foldl (fun (a, b) t =>
+    match Trans.oR (f t) with
+    | some u => if u == t then (a, b) else if TM.Term.lt t u then (a + 1, b) else (a, b + 1)
+    | none => (a, b)) (0, 0)
+#eval (aboveBelow sqv, aboveBelow (fun _ => []))
+-- the single settled value the corpus above omits, stated as a value rather than a count
+#eval (sqv (phi (phi one zero) zero), Trans.oR (sqv (phi (phi one zero) zero)))
+
 /-! ## §3 THE SIXTEEN, DECODED  (measurement, 2026-08-10)
 
 Every earlier failure count was contaminated by the retracted oracle (§1.1), so these
@@ -7909,6 +7944,38 @@ which is where the threshold sat.
 `φ̄(ε₀·ε₀, 0)` and `φ̄(ε₁, 0)` still share `(0,0)(1,1)(2,1)(3,1)(3,0)(4,1)`, and `ε₀·ε₀ < ε₁`.
 The collapse, the inversion family and the round-trip threshold are now the same defect at
 the same place, which is a considerably better position than four independent ones.
+
+### §K3.18 "Overshoots" checked with the order, and `sqv` itself fails GATE 1
+
+§K3.17 called the round-trip failures overshoots.  That was read off the SHAPE of the
+returned term — not `CNV` — which is a statement about representation, not about size: a ψ
+term can perfectly well denote an ordinal inside the Veblen region.  Checking with the
+order instead, over the 185-term corpus, as (round trips, `oR` result ABOVE `t`, BELOW `t`):
+
+    sqv                    (59, 126, 0)
+    sqv5                   (101, 84, 0)
+    constant map, control  (0, 0, 185)
+
+Not one failure is below.  The control is entirely below, so the buckets do tell each other
+apart, and "overshoot" is now a statement about ordinals rather than about syntax.
+
+**`sqv` fails GATE 1, on the value this section worked hardest for.**
+
+    sqv φ̄(ε₀,0)  = (0,0)(1,1)(2,1)(3,1)   oR ↦ ψ_Ω(0),  strictly above φ̄(ε₀,0)
+    table value  = (0,0)(1,1)(2,1)(3,0)(4,1)   oR ↦ φ̄(ε₀,0),  exactly
+
+Note `(0,0)(1,1)(2,1)(3,1)` is also what §K3.16's `mode 0` produced — the library encoder
+carries the un-delayed ladder, and this is the same defect seen from the fifth axis.  Two
+sources that are neither the table nor `sqv` now agree against it: `oR` here, and the C
+reference implementation's expansion in §K3.16.  GATE 1 reads green only because `corpus`
+omits `φ̄(ε₀,0)`.
+
+The gate is left as it is and a second, RECORDED (not gated) measurement is added beside
+it: the deeper corpus's round-trip count, the above/below split with its control, and
+`sqv`'s value at `φ̄(ε₀,0)` printed as a value.  Gating it would turn a known, documented
+limit into a red build; printing it stops "0 failures" being read as "covered".
+
+    deepCorpus  191 terms,  sqv round trips 65,  above/below (126, 0),  control (0, 191)
 
 -/
 
