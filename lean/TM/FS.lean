@@ -79,7 +79,35 @@ def isFP (a g : Term) : Bool :=
    | phi c _ => lt a c
    | _ => false)
 
-/-- Does the semantic argument of φ̄ a b become a successor b+1 (case analysis of [R91] 2.7)? -/
+/-- Does the semantic argument of φ̄ a b become a successor b+1 (case analysis of [R91] 2.7)?
+
+    [R91] 2.7 verbatim, for α, β < M:
+
+        φ̄αβ = φ_α(1)      if β = 0 and α ∈ SC
+            = φ_α(β+1)    if β = γ+n and φ_αγ = γ
+            = φ_α(β)      otherwise
+
+    The two disjuncts below are those two cases, in that order.
+
+    KNOWN GAP, recorded rather than patched.  Taken literally the lemma makes φ̄α0 and
+    φ̄α1 denote the SAME ordinal φ_α(1) whenever α ∈ SC: case 1 gives φ_α(1) for β = 0,
+    and case 2 does not fire at β = 1 because neither 0 nor 1 is a fixed point of φ_α.
+    That cannot be right — 2.8's proof builds an F : 𝔗(M) → T(M) order-preserving for <
+    and ∈, and 2.3.13(ii) makes φ̄α0 < φ̄α1 — so the shift must persist above β = 0, i.e.
+    the second disjunct should read `a.isSC`.  Independent evidence: translating to
+    naruyoko's implementation of P進大好きbot's Rathjen-type notation, the literal
+    reading collapses six terms onto four and disagrees on 8 of 742 adjacent pairs,
+    while `a.isSC` collapses none and disagrees on 0 of 742.
+
+    NOT CHANGED, because the change is unreachable from R1 and `fsN` and some sixty
+    StageB/ProofsB lemmas are built on this definition.  MEASURED (the guards live in
+    `Trans/DictInv.lean`, the only file that can see all the populations at once): the
+    two readings differ only on φ̄(A,B) with A ∈ SC and B ≠ 0, and that shape occurs in
+    0 of the 51 table rows, 0 of the 750 CNV-corpus terms, and 0 of a 336-term pool of
+    `dict` values.  It occurs in 12 of the 89 terms of a corpus above Ω, and 4 of those
+    12 do have a Buchholz preimage — so the gap is not outside `dict`'s image, only
+    above everything R1 measures.  `dict` itself cannot see it at all: its only route
+    here is `logOm`'s `φ̄(0,·)` clause, and the two readings agree at α = 0. -/
 def phiShifted (a b : Term) : Bool :=
   isFP a (splitFin b).1 || (b == zero && a.isSC)
 

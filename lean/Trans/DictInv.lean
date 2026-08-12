@@ -293,5 +293,42 @@ def btPool : List BT := (bgrow (bgrow seeds)).filter BT.isStd
 -- CTRL the pool must reach the new region: `D 2` terms, and terms whose `dict` is ≥ Ω.
 #eval (btPool.countP fun b => !(lt (dict b) Om), btPool.countP fun b => !(lt (dict b) (Z TM.Term.one)))
 
+/-! ### How far the [R91] 2.7 gap reaches.
+
+`TM/FS.lean`'s `phiShifted` transcribes 2.7 literally, and the note there records why the
+second disjunct ought to be `a.isSC` rather than `b == zero && a.isSC` — taken literally
+2.7 sends φ̄α0 and φ̄α1 to the same ordinal for α ∈ SC.  This file is the only one that can
+see the table, both corpora and a pool of `dict` values at once, so the reach is measured
+here.  The two readings differ exactly on φ̄(A,B) with A ∈ SC and B ≠ 0.
+
+`dict` ITSELF IS UNTOUCHED: its only route to `phiShifted` is `logOm`'s `phi zero b`
+clause, and at `a = 0` the two readings coincide because `0 ∉ SC`.  `dictInv` and `fsN`
+do call it with a general first argument, so they are the ones that would move. -/
+
+#guard (zero : Term).isSC == false     -- why `dict` cannot see the gap
+
+private def sh2 (a b : Term) : Bool := isFP a (splitFin b).1 || a.isSC
+private def splits : Term → Bool
+  | phi a b => phiShifted a b != sh2 a b
+  | _ => false
+private def subterms : Term → List Term
+  | .add a b => .add a b :: (subterms a ++ subterms b)
+  | .omg a => .omg a :: subterms a
+  | .phi a b => .phi a b :: (subterms a ++ subterms b)
+  | .psi k a => .psi k a :: (subterms k ++ subterms a)
+  | .Z a => .Z a :: subterms a
+  | t => [t]
+
+-- out of reach: no table row, no CNV-corpus term, no value in the 336-term `dict` pool
+#guard Rows.rows.all fun r => !((subterms r.t).any splits)
+#guard corpus.all fun t => !((subterms t).any splits)
+#guard btPool.all fun b => !((subterms (dict b)).any splits)
+-- CTRL the test is not vacuous, and the reach is stated honestly: above Ω the shape
+-- occurs in 12 of 89 terms, and 4 of those 12 DO have a Buchholz preimage — so the gap
+-- is inside `dict`'s image, merely above everything R1 measures.
+#eval (corpusHi.length, corpusHi.countP fun t => (subterms t).any splits,
+       corpusHi.countP splits, (corpusHi.filter splits).countP fun t => (dictInv t).isSome)
+#eval (corpusHi.filter fun t => splits t && (dictInv t).isSome).map (·.toStr)
+
 end Dict
 end Trans
