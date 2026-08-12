@@ -7853,6 +7853,63 @@ it says what such a ladder must satisfy: it must reproduce the tower-limit shape
 ε-indices **without lowering the matrix**, which `delayLast` cannot do because trading a
 trailing `(x,1)` for `(x,0)(x+1,1)` is a descent in `cmpM`.
 
+### §K3.17 A fifth axis with an independent oracle, and what it says about GATE 1
+
+The four axes above (table rows, settled values, order, decomposition) all judge the
+encoder against things assembled for it.  `Trans.oR` does not: it is the calibrated
+BMS → TM translation, built from `oRB` and `dict`, and it knows nothing about `sqv`.  So
+`oR (sqv t) = some t` is a fifth axis, and it is the only one whose oracle was not written
+with this encoder in view.  It is also GATE 1 at the top of this file.
+
+**Its failures are never in-region.**  Over the 456-term `CNV ∩ NfOK` population, split
+into (round trips, returns a DIFFERENT `CNV` term, leaves the fragment):
+
+    sqv'  (131, 0, 325)        sqv5  (236, 0, 220)
+    constant map, control      (0, 185, 0)   — the middle category is reachable
+
+The middle column is 0 for every encoder measured.  An encoder either hits the term exactly
+or overshoots the Veblen fragment altogether; it never lands on a neighbour.
+
+**And they are an exact end segment.**  Sorting the population ascending, `first failing
+index = last succeeding index + 1` for every encoder measured — on the 185 base terms
+`sqv'/sqv` break at 59 and `sqv5` at 101; on the 456 closed terms `sqv5` breaks at 236 and
+`sqv7` at 299.  So this axis is a **scalar**: each encoder has a height, and the heights
+are totally ordered.  That is the first figure of merit in this section that ranks
+candidates without a trade.
+
+**GATE 1's corpus does not reach.**  `sqv` scores 228/228 on it and 59/185 on the corpus
+used here — and the difference is not size or depth: both have max degree 23 and max φ̄
+nesting 4.  Of the 185, the 48 that are also in GATE 1's corpus fail 0 times and the 137
+that are not fail 126 times.  `corpus` applies `φ̄` with only four fixed first arguments
+`{0, 1, 2, ω}` over a handpicked base list, so it never reaches `φ̄(a, b)` with a nested
+`a` — and it does **not contain `φ̄(ε₀,0)`**, one of the four values this section spent the
+most to settle.  A gate that omits the hardest value it is supposed to protect will read
+green through the defect it was built to catch.  Fifth instance of the same lesson, and the
+first where the corpus in question is one this file already relied on.
+
+**`sqv7`, and it dominates.**  `table/candidates/sqv7-persummand-2026-08-13.lean.txt`.
+One change: decide `delayLast` per SUMMAND of the ladder payload rather than on the index
+as a whole.  §K3.16 showed `epsIndexShape` is the right test; the threshold term showed it
+was being asked about the wrong thing, since `ε₀+1` is not an ε-number but the `ε₀` inside
+it is:
+
+    φ̄(ε₀+1,0)   sqv5  (0,0)(1,1)(2,1)(3,1)(2,1)
+                sqv7  (0,0)(1,1)(2,1)(3,0)(4,1)(2,1)   = φ̄(ε₀,0)'s image + (2,1)
+
+                collapses   inversions   settled values   table   round trips
+    sqv5             1          58            4/4         17/17     236/456
+    sqv7             1          58            4/4         17/17     299/456
+
+They differ on exactly 63 terms and the round trip gains exactly 63 — every change is a
+gain, none a regression.  For a single-summand index the two coincide, since
+`delayLast ((d+1,1) :: X) = (d+1,1) :: delayLast X` when `X ≠ []`; they part at the sums,
+which is where the threshold sat.
+
+**What is left is one term.**  `sqv7`'s threshold term is §K3.15's collapse witness itself:
+`φ̄(ε₀·ε₀, 0)` and `φ̄(ε₁, 0)` still share `(0,0)(1,1)(2,1)(3,1)(3,0)(4,1)`, and `ε₀·ε₀ < ε₁`.
+The collapse, the inversion family and the round-trip threshold are now the same defect at
+the same place, which is a considerably better position than four independent ones.
+
 -/
 
 end Evidence.SqV

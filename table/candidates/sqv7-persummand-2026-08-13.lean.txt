@@ -1,0 +1,96 @@
+-- CANDIDATE ENCODER sqv7 — 2026-08-13.  Not built; concatenate after
+-- `sqv5-delaylast-2026-08-12.lean.txt` (it reuses CX22's helpers) and run with
+-- `leanman check -C lean --backend lean`.
+--
+-- ONE CHANGE from sqv5, and it is a strict improvement on every axis measured:
+-- decide `delayLast` per SUMMAND of the ladder payload instead of on the index as a whole.
+--
+--                 collapses  inversions  settled values  table  round trips (oR)
+--     sqv5             1         58          4/4         17/17     236/456
+--     sqv7             1         58          4/4         17/17     299/456
+--
+--   (fsV'-closed population, 456 NfOK terms, every ordered pair, no sampling.)
+--
+-- sqv7 differs from sqv5 on exactly 63 of the 456, and the round trip gains exactly 63.
+-- Every change is a gain; none is a regression.
+--
+-- WHY.  §K3.16 established that `epsIndexShape` is the correct epsilon-number test — it
+-- agrees with the repo's `isFP zero` on all 688 terms.  The threshold term φ̄(ε₀+1,0)
+-- showed it was being asked about the wrong thing: ε₀+1 is not an epsilon number, so no
+-- delay fired, but the ε₀ inside it is one and its block needed the delayed shape.
+--
+--     φ̄(ε₀+1,0)   sqv5  (0,0)(1,1)(2,1)(3,1)(2,1)
+--                 sqv7  (0,0)(1,1)(2,1)(3,0)(4,1)(2,1)   = φ̄(ε₀,0)'s image + (2,1)
+--
+-- For a single-summand index the two coincide, since
+-- `delayLast ((d+1,1) :: X) = (d+1,1) :: delayLast X` when X ≠ [].  They part company at
+-- the sums, which is exactly where the threshold sat.
+--
+-- WHAT IS LEFT.  The round-trip failures are still an exact end segment (first failure at
+-- index 299, last success at 298 in ascending order), and the new threshold term is
+-- §K3.15's collapse witness itself:
+--
+--     φ̄(ε₀·ε₀, 0)  and  φ̄(ε₁, 0)  share  (0,0)(1,1)(2,1)(3,1)(3,0)(4,1)
+--
+-- so the collapse and the threshold are now the same defect, at one term.  ε₀·ε₀ < ε₁ and
+-- the images must separate; sqv7 does not separate them.  §K3.16's requirement stands:
+-- a ladder must reproduce the tower-limit shape at epsilon indices WITHOUT descending in
+-- `cmpM`, and `delayLast` descends (of 688 ladders it lowers 318, fixes 370, raises none).
+--
+-- Records: lean/Evidence/SqV.lean §K3.15 .. §K3.17.
+
+namespace R21
+open TM (Term)
+open TM.Term
+
+-- mode 3: decide `delayLast` PER SUMMAND of the ladder payload, not on the index as a
+-- whole.  §K3.16 established that `epsIndexShape` is the right epsilon test; the threshold
+-- term φ̄(ε₀+1,0) shows it is being asked about the wrong thing — ε₀+1 is not an epsilon
+-- number, but the ε₀ inside it is, and its block is what needs the delayed shape.
+--
+-- For a = ε₀ this coincides with sqv5: `delayLast ((d+1,1) :: X) = (d+1,1) :: delayLast X`
+-- whenever X ≠ [], and the payload is a single summand.  They part company exactly at the
+-- sums, which is where the threshold sits.
+def encF (per : Bool) : Nat → Term → Nat → List CX22.Col2
+  | 0, _, _ => []
+  | _ + 1, .zero, _ => []
+  | f + 1, .add u v, d => encF per f u d ++ encF per f v d
+  | f + 1, .phi a b, d =>
+      let bm := TM.Term.splitFin b
+      let gs := Evidence.SqV.summands bm.1
+      let ladder : List CX22.Col2 :=
+        if a == zero then []
+        else if per then
+          (d + 1, 1) :: ((Evidence.SqV.summands (CX22.indexBody a)).flatMap fun g =>
+            let e := Evidence.SqV.bumpAt (d + 2) (encF per f g (d + 2))
+            if TM.Term.isFP zero g then CX22.delayLast e else e)
+        else
+          let base := (d + 1, 1) :: Evidence.SqV.bumpAt (d + 2)
+            (encF per f (CX22.indexBody a) (d + 2))
+          if CX22.epsIndexShape a then CX22.delayLast base else base
+      let unit : List CX22.Col2 := if a == zero then [(d + 1, 0)] else ladder
+      let reps : List CX22.Col2 := (List.replicate bm.2 unit).flatten
+      let mkBlocks : List Term → List CX22.Col2 := fun hs =>
+        (hs.map (fun g =>
+          ladder ++ Evidence.SqV.shiftD (if a == zero then d + 1 else d + 2)
+            (encF per f (if a == zero then g else Evidence.SqV.omLog g) 0))).flatten
+      if TM.Term.isFP a (gs.headD zero) then
+        encF per f (gs.headD zero) d
+          ++ (if gs.length == 1
+              then (if a == zero then [((d + 1, 0) : CX22.Col2)] else ladder)
+              else mkBlocks (gs.drop 1))
+          ++ reps
+      else
+        match Evidence.SqV.fpDeep a (gs.headD zero) with
+        | some g => encF per f g d ++ mkBlocks gs ++ reps
+        | none => (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
+  | _ + 1, _, _ => []
+
+def sqv7 (t : Term) : BMS.Matrix := CX22.toMatrix (encF true (2 * t.deg + 8) t 0)
+def sqv5' (t : Term) : BMS.Matrix := CX22.toMatrix (encF false (2 * t.deg + 8) t 0)
+
+-- Population, statistics and the two §K3.15 witnesses: see
+-- `table/candidates/harness-2026-08-12.lean.txt`.  The mode switch that isolated the trade
+-- between the settled values and the order is `ladder-modes-2026-08-13.lean.txt`.
+
+end R21
