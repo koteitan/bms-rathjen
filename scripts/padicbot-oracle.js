@@ -52,6 +52,25 @@
 // **`TM/Order.lean` の初めての外部検算であり、742 対中 742 で一致する。**
 // [R91] 2.3 の転記に外部の裏が付いた。
 //
+// **標準形の検査 (2026-08-13)。** `inT` を絞らない母集団 4688 項を訳し、先方の `inT` を
+// 通るものについて当方の `inT` と先方の `inOT` を突き合わせた。
+//
+//     当方 inT 真 / 先方 inOT 真     1780
+//     当方 inT 真 / 先方 inOT 偽        0     ← **当方が緩い例は無い**
+//     当方 inT 偽 / 先方 inOT 真      164     内訳は下記
+//     当方 inT 偽 / 先方 inOT 偽     1702
+//
+//     164 の内訳   `x+0` 型の不正な和        35   当方が正しく弾く
+//                  翻訳の潰れ                 3   こちらの問題
+//                  昇順の和 (1+ω 型)        126   [R91] 2.1(iii) が降順を要求
+//
+// **先方の `inOT` は昇順の和を通す。** `1+ω` は `inT` も `inOT` も真になり、しかも
+// `1+ω < ω` と判定される — 順序数としては等しいので、一意な表記になっていない。
+// 当方は `inT` で弾き、`plus 1 ω` は `ω` に正規化する。**この点では論文が当方の側**。
+//
+// したがって当方の標準形に誤りは見つかっていない。緩い側 0 件、厳しい側は 164 件すべて
+// 説明が付き、うち 161 件は当方が正しい。
+//
 // **食い違い 7 件は全部こちらの翻訳の誤りだった。** 当方の `lt` は最初から
 // φ̄(Ω,0) < φ̄(Ω,1) を正しく言っており、潰していたのは β° の側である。
 // **外部と食い違ったら翻訳を先に疑うこと** — 今日その順序を守らずに三度撤回している
@@ -75,7 +94,7 @@ function load(implDir) {
     "style:{},value:'',innerHTML:'',appendChild:function(){}}}," +
     "addEventListener:function(){},createElement:function(){return {style:{}}}};\n";
   const src = stub + fs.readFileSync(p, "utf8") +
-    "\nmodule.exports={Term:Term,inT:inT,lessThan:lessThan,equal:equal};\n";
+    "\nmodule.exports={Term:Term,inT:inT,lessThan:lessThan,equal:equal,dom:dom,fund:fund,index:index,inOT:inOT,inPT:inPT,inST:inST,inRT:inRT};\n";
   const tmp = path.join(require("os").tmpdir(), "padicbot-oracle-loaded.js");
   fs.writeFileSync(tmp, src);
   delete require.cache[tmp];
