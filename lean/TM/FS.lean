@@ -211,6 +211,27 @@ The Γ₀ row additionally required unfolding that source's `Γ⁰(s,n)` map, an
 one below ours (`ours[n] = Γ⁰(0, n+1)`).
 -/
 
+/-! ### The ψ region, checked as far as it can be without more of the source
+
+The same source's "Up to φ(1,0,0,0)" table covers `ψ_Ω(a)` with `a` varying.  Four shapes
+were compared against `fsN` here; three agree and one differs:
+
+    ψ_Ω(ω)      pass the index through      ψ_Ω(0), ψ_Ω(1), ψ_Ω(2) …        agrees
+    ψ_Ω(Ω)      diagonalise                 ψ_Ω(0), ψ_Ω(ψ_Ω(0)) …           agrees
+    ψ_Ω(Ω+1)    seed ψ_Ω(Ω)+1                                               agrees
+    ψ_Ω(1)      source seeds ω^(Γ₀+1)       this file seeds Γ₀+1            DIFFERS
+
+Not treated as a defect, and the reason is in the source itself: it writes two different
+seeds for the two successor rows (`ω^(prev+1)` at `a = 1`, `prev+1` at `a = Ω+1`), both
+sequences are cofinal in the same ordinal, and the author states at the top of the page
+that the tables may contain errors.  One table cell is not a reason to change a
+fundamental sequence that the row proofs are stated against.
+
+What would settle it is the source's `ψ⁻` and `index` maps, which its EXPANSION section
+uses for exactly this clause and which are not transcribed here.  Until then the ψ clause
+of `fsN` has no external witness; the φ̄ region and `cofT` do.
+-/
+
 /-! ### `cofT` against the same source's `dom`
 
 That source also defines a cofinality map `dom : OT → OT` with values `0` (zero), `1`
