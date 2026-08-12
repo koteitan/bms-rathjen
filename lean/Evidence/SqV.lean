@@ -7393,11 +7393,21 @@ Classifying each inverting pair by (left, right), where a term is `eps-index` wh
     principal/plain     < sum/plain              48
     principal/eps-index < sum/plain              28
 
-475 involve an ε-index, 108 involve none.  **Two separate things**, so two separate
-repairs: 447 of the 583 have an ε-index on the RIGHT, i.e. the new value comes out too
-small relative to terms below it; and 108 are pure sum-vs-plain, untouched by the branch,
-which means the sum clause was already fragile and this change moved it into view.  Its
-own witness is in §K3.3.
+**CORRECTED.**  The table above classifies by the OUTERMOST constructor only, and read
+that way it says 475 pairs involve an ε-index and 108 do not — two separate repairs.  That
+is wrong.  Asking whether an ε-index occurs ANYWHERE in either term:
+
+    583 of 583 contain one.  Zero do not.  The sum-vs-sum bucket is 60 of 60.
+
+A sum whose summands carry ε-number indices was filed as `sum/plain` because only its head
+was inspected.  So there is **one** defect here, not two: every new inversion is in the
+branch's territory.  447 of the 583 have an ε-index on the RIGHT, i.e. the new value lands
+too small relative to terms below it.
+
+The same caution applies to §K3.3's witness, which was attributed to the sum clause: its
+left side is `φ̄(φ̄(ε₀,·), ·) + itself`, whose summands are ε-index terms, so "the sum
+clause overshoots" was a guess from the shape rather than a measurement.  What is measured
+there is only that the pair inverts under `sqv'`.
 
 **Not a level shift.**  In the largest bucket the image lengths go
 `(6,8) (6,10) (6,14) (9,8) (9,10) (11,8) (11,10) (10,14) …` — the smaller term's image is
