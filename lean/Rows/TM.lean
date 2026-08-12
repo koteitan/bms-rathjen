@@ -738,4 +738,29 @@ $`\\mathrm{DomI}`$ を要求するのは、この一価性の破れを塞ぐた�
 "
   header ++ body ++ footer
 
+/-! ## GATE 4 — every row's term must be in normal form (2026-08-13)
+
+RECORDED, not gated; it currently FAILS on 4 of the 51 rows.  The full record is
+`Evidence/SqV.lean` §K3.20.  In short: a term like `φ̄(0,x)` with `x` a fixed point of `ω^·`
+denotes `x` itself, so such a row denotes the same ordinal as a smaller matrix.  Three of
+the four are confirmed wrong by the C reference implementation — the row's value equals the
+value of its own `[0]` expansion, which a limit cannot do:
+
+    (0,0)(1,1)(1,0)        φ̄(0,ε₀) = ε₀      bms [n] = ε₀, ε₀·2, ε₀·3 …   so ε₀·ω
+    (0,0)(1,1)(2,1)(1,0)   φ̄(0,X)  = X       bms [n] = X, X·2, X·3 …      so X·ω
+    (0,0)(1,1)(2,1)(1,1)   φ̄(1,X)  = X       bms [n] is a tower over X    (X = φ̄(2,0))
+
+Left ungated because the repair is to `Trans.oR`, which computes these values and which the
+rows' E1 proofs are stated against.
+
+Why this check and not another: GATE 1 is a round trip through `oR`, so it cannot see an
+error in `oR`; GATES 2 and 3 match `sqv` against the table, so they cannot see an error in
+the table.  This is the first check on the table that compares it against nothing at all.
+-/
+#eval (rows.countP (fun r => !(Evidence.WF.NfOK r.t)), rows.length)
+#eval (rows.filter (fun r => !(Evidence.WF.NfOK r.t))).map (fun r => (r.m, r.t.toStr, r.proof))
+-- CTRL: the predicate is not vacuous on this population, and it does reject a planted term
+#eval (rows.countP (fun r => Evidence.WF.NfOK r.t),
+       !(Evidence.WF.NfOK (TM.Term.phi TM.Term.zero (TM.Term.phi (TM.Term.ofNat 1) TM.Term.zero))))
+
 end Rows

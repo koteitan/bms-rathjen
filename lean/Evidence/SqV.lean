@@ -399,6 +399,25 @@ def aboveBelow (f : Term → BMS.Matrix) : Nat × Nat :=
 -- the single settled value the corpus above omits, stated as a value rather than a count
 #eval (sqv (phi (phi one zero) zero), Trans.oR (sqv (phi (phi one zero) zero)))
 
+-- GATE 4 (2026-08-13, RECORDED not gated — see §K3.20): every table row's term must be in
+-- NORMAL FORM.  This needs no oracle at all, and it fires: 4 of the 51 rows carry a term
+-- that `Evidence.WF.NfOK` rejects, and for three of them the C reference implementation
+-- confirms the row is wrong — their term denotes a fixed point, so it collapses to the
+-- value of the row's own `[0]` expansion, which a limit cannot do.
+--
+--     (0,0)(1,1)(1,0)         φ̄(0,ε₀)           bms: [n] = ε₀, ε₀·2, ε₀·3 → ε₀·ω
+--     (0,0)(1,1)(2,1)(1,0)    φ̄(0,φ̄(2,0))       bms: [n] = X, X·2, X·3   → X·ω
+--     (0,0)(1,1)(2,1)(1,1)    φ̄(1,φ̄(2,0))       bms: [n] is a tower over X
+--     (0,0)(1,1)(2,2)(2,0)    a ψ row, no proof column
+--
+-- Left ungated because fixing the rows means fixing `Trans.oR`, which computes these
+-- values and which the rows' E1 proofs are stated against.  The check itself lives at the
+-- bottom of `Rows/TM.lean`, next to the rows — this file cannot import `Rows`.
+--
+-- One witness of the class is available here, and it needs nothing but the predicate:
+#eval (Evidence.WF.NfOK (phi zero (phi one zero)),          -- ω^ε₀, a table row's term
+       Evidence.WF.NfOK (phi one zero))                     -- ε₀ itself, control
+
 /-! ## §3 THE SIXTEEN, DECODED  (measurement, 2026-08-10)
 
 Every earlier failure count was contaminated by the retracted oracle (§1.1), so these
@@ -8013,6 +8032,57 @@ identified as the one clean figure of merit: `sqv8`'s failures are no longer an 
 Recorded as a trade, and the trade is against it: a scalar figure of merit is worth more
 than one collapse, because the collapse is at a single known term and the threshold ranks
 every future candidate.  **`sqv7` remains the best point found.**
+
+### §K3.20 Four table rows are not in normal form, and three of them are wrong
+
+Found by comparing against an independent third-party BMS ↔ Rathjen correspondence table
+(2272 height-2 and 2627 height-3 rows).  The comparison needed a dictionary, and the
+dictionary checks out: on ten hand-verified samples it is exactly
+
+    their φ̄(a,b) = our φ̄(1+a,b)      their ω-power w(x) = our φ̄(0,1+x)
+    their Ω = our Z, ψ and + and 0 literal
+
+and **all 2272 of their height-2 terms pass our `NfOK`**, which a wrong dictionary would
+not produce.  But the finding does not rest on that table, and the record here does not
+either — everything below is confirmed by the C reference implementation, or internal.
+
+**The internal statement.**  Four of the 51 table rows carry a term `Evidence.WF.NfOK`
+rejects (control: 47 pass, and the predicate does reject a planted non-normal term).  For a
+term to be non-normal here is not cosmetic: `φ̄(0,x)` with `x` a fixed point of `ω^·`
+denotes `x` itself, so the row denotes the same ordinal as a smaller matrix.
+
+**The C reference settles three of them, and the argument needs no ordinal arithmetic.**
+A limit matrix cannot denote the value of its own `[0]` expansion:
+
+    (0,0)(1,1)(1,0)        ours ω^ε₀ = ε₀        bms [n] = ε₀, ε₀·2, ε₀·3 …  so ε₀·ω
+    (0,0)(1,1)(2,1)(1,0)   ours ω^X = X          bms [n] = X, X·2, X·3 …     so X·ω
+    (0,0)(1,1)(2,1)(1,1)   ours ε_X = X          bms [n] is a tower over X
+
+with `X = φ̄(2,0)`.  In each case our value is exactly the `[0]` expansion's value.  All
+three matrices are standard (`bms -s` = 1).  The third-party table gives `ω^(ε₀+1)`,
+`ω^(X+1)` and `ε_{X+1}` — the successor in the second argument, which is what the
+expansions say.  The fourth row is a ψ row with an empty proof column; the third-party
+table disagrees with it too, but our `Z` ↔ their `Ω` correspondence is validated only at
+`Ω` itself, so that one is recorded as unresolved rather than as an error.
+
+**Scope, stated honestly.**  Inside the fragment where the dictionary IS validated (both
+terms `CNV`): of our 17 comparable rows, 14 agree and 3 disagree — the three above.  Over
+their 390 Veblen-fragment height-2 rows, `oR` agrees on 264 and disagrees on 126, and 96 of
+those 126 are cases where `oR`'s own output fails `NfOK`.  Outside the fragment the
+dictionary is unvalidated and no count from there is claimed.
+
+**What this says about the gates.**  GATE 1 is a round trip through `oR`, so it cannot see
+an error in `oR`; GATE 2 and GATE 3 match `sqv` against the table, so they cannot see an
+error in the table.  Every gate in this file compares two things that were built from each
+other.  The normal-form check is the first that compares the table against nothing at all,
+and it fires on the first run.  Sixth instance of the lesson, and the sharpest: not "the
+corpus cannot contain what it wasn't built to contain" but **"the oracle cannot contradict
+what it was derived from"**.
+
+Added beside the others as GATE 4, RECORDED and not gated: fixing the rows means fixing
+`Trans.oR`, which computes these values and which the rows' E1 proofs are stated against.
+That is a repair, not a one-line edit, and it is the next substantial piece of work in this
+file.
 
 -/
 
