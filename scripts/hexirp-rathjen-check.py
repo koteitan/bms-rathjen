@@ -22,13 +22,19 @@
 **辞書。** 先方と当方は記法が違う。10 例を手で確かめて決めた対応は
 
     先方 phi(a,b) = 当方 phiNF(1+a, b)     先方 w(x) = 当方 phiNF(0, 1+x)   (w(0) = ω)
-    先方 W       = 当方 Z                  psi・+・0 は字面どおり
+    先方 W(0)    = 当方 Z 0 = Ω            psi・+・0 は字面どおり
+    先方 W(x), x≠0                          **訳せない** (下記)
 
 **`phiNF` であって `phi` ではない。** 当方の φ̄ は不動点を飛ばし、先方の φ は飛ばさない。
 先方の φ(0,ε₀+1) と当方の φ̄(0,ε₀) は**同じもの**である (`phiNF 0 (ε₀+1) = φ̄(0,ε₀)`)。
 生の `phi` で組むと差が全部「食い違い」に化ける。
 
-`W` ↔ `Z` は `Ω` そのものでしか検証していない。だから **`--veblen-only` を既定にし、
+**`W(x)` は `x = 0` のときしか訳せない。** 先方の `W(k)` は $Ω_{1+k}$ だが、
+$Ω_2 = χ_0(1)$ は 𝔗(M) に項を持たない ([R91] §2 が χ を α ↦ χ_α(0) に潰しているため。
+`plan/chi-2ary.md`)。当方の `Z 1` は χ_1(0) = I で別の順序数なので、`Z (tr x)` と訳すと
+黙って誤った項を作る。2026-08-13 まで実際そうしていた。今は例外にして数に出す。
+
+だから **`--veblen-only` を既定にし、
 両辺が `CNV` の行だけを数える**。断片の外は辞書が未検証で、そこの不一致は食い違いでは
 なく「比較していない」である。この区別を落とさないために、出力は必ず両方を印字する。
 
@@ -138,7 +144,13 @@ def to_lean(t):
     if f == "psi":
         return f"(TM.Term.psi {to_lean(a[0])} {to_lean(a[1])})"
     if f == "W":
-        return f"(TM.Term.Z {to_lean(a[0])})"
+        # **W(x) は x = 0 のときしか訳せない。** 先方の W(k) は Ω_{1+k} で、
+        # Ω₂ = χ_0(1) は 𝔗(M) に無い ([R91] §2 は χ を α ↦ χ_α(0) に潰している。
+        # plan/chi-2ary.md)。当方の `Z 1` は χ_1(0) = I であって Ω₂ ではないので、
+        # `Z (tr x)` と訳すと**別の順序数を黙って作る**。訳せないものは訳さない。
+        if a[0] == ("n", 0):
+            return "(TM.Term.Z TM.Term.zero)"
+        raise ValueError("W(x) with x != 0 has no 𝔗(M) term (Omega_2 is not expressible)")
     raise ValueError(f"知らない関数記号: {f}")
 
 
@@ -194,11 +206,12 @@ def vebl : List (BMS.Matrix × TM.Term) := rows.filter fun p => Evidence.WF.CNV 
 -- 陰性対照: 一つの行列を全部の目標に当てても当たってはならない。
 #eval s!"対照 固定した行列を全目標に: {{vebl.countP fun p => Trans.oR [[9,9]] == some p.2}}"
 
--- 当方の表との突き合わせ。断片内だけを食い違いとして数える。
+-- 当方の表との突き合わせ。辞書が訳せなかった行は先方の側に無いので、ここに来た行は
+-- すべて W(0) しか使っていない = 辞書が検証済みの範囲である。CNV で絞る必要はもう無い。
 def ours : List (BMS.Matrix × TM.Term) := Rows.rows.map fun r => (r.m, r.t)
 def cmp : List (BMS.Matrix × TM.Term × TM.Term) := ours.filterMap fun p =>
   match rows.find? fun q => q.1 == p.1 with
-  | some q => if Evidence.WF.CNV p.2 && Evidence.WF.CNV q.2 then some (p.1, p.2, q.2) else none
+  | some q => some (p.1, p.2, q.2)
   | none => none
 #eval s!"当方の表 {{ours.length}} 行中、断片内で比較できるもの {{cmp.length}}"
 #eval s!"  一致 {{cmp.countP fun c => c.2.1 == c.2.2}}   食い違い {{cmp.countP fun c => !(c.2.1 == c.2.2)}}"
@@ -265,7 +278,15 @@ def self_test():
     os.unlink(p)
     if len(ok) != 1 or bad != 1:
         fails.append(f"壊れた行の計上: ok={len(ok)} bad={bad} (1 と 1 のはず)")
-    # 5. 対照: 知らない記号は例外になる (黙って通さない)
+    # 5. W(0) は訳せ、W(x≠0) は拒否されること。ここが緩むと Ω₂ が I に化ける
+    if to_lean(parse_term("W(0)")) != "(TM.Term.Z TM.Term.zero)":
+        fails.append("W(0) が Z 0 になっていない")
+    try:
+        to_lean(parse_term("W(1)"))
+        fails.append("W(1) を訳してしまった (Omega_2 は 𝔗(M) に無い)")
+    except ValueError:
+        pass
+    # 6. 対照: 知らない記号は例外になる (黙って通さない)
     try:
         to_lean(parse_term("Q(0)"))
         fails.append("知らない記号 Q が素通りした")
@@ -274,8 +295,8 @@ def self_test():
 
     for f in fails:
         print("  失敗:", f)
-    print(f"hexirp-rathjen-check 自己試験: {5 - len(set(fails))}/5" if fails
-          else "hexirp-rathjen-check 自己試験: 5/5 (辞書・吸収・行列・壊れた行・未知記号)")
+    print(f"hexirp-rathjen-check 自己試験: 失敗 {len(set(fails))}" if fails
+          else "hexirp-rathjen-check 自己試験: 6/6 (辞書・吸収・行列・壊れた行・W の拒否・未知記号)")
     return 1 if fails else 0
 
 
