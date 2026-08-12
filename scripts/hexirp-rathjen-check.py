@@ -41,6 +41,30 @@ $Ω_2 = χ_0(1)$ は 𝔗(M) に項を持たない ([R91] §2 が χ を α ↦ 
 **`NfOK` を辞書の傍証に使ってはならない。** `NfOK` は基本列の組み立て定理の側条件であって
 正規形の述語ではない。2026-08-13 の誤報はこれを取り違えたことから出た。辞書の傍証は
 「当方の表と一致するか」であり、`--out` の出力の最後の 2 行がそれである。
+
+**測定 (2026-08-13、高さ 2 の 1249 行)。**
+
+    Veblen 断片 390 行     oR 一致 379、食い違い 11
+    断片の外 859 行        辞書が未検証なので数えない
+    当方の表 41 行         一致 20、食い違い 21
+
+**表側の 21 は `(0,0)(1,1)(2,2)` から始まり、既知の `dict` の Ω₂ 問題である**
+(`lean/Trans/Dict.lean` §5)。当方は ψ_{Z0}(Z1)、先方は ψ_{Z0}(φ̄(1,Ω))。一致数 20/41 は
+§5 が「`reg` を `Z 1` にした場合」として記録した数と同じで、新しい情報ではない。
+
+**断片内の 11 のうち 2 件は先方の誤りで、それは先方の表だけで決まる。** 一致率では
+どちらが正しいかは決まらないので、BMS の順序で並べ直して隣接対の狭義単調性を両側に
+当てる (下の `sorted`/`adj`)。結果:
+
+    先方が単調でない対 2      oR が単調でない対 0
+    先方が潰す対       2      oR が潰す対       0
+    相異なる値  先方 388 / 390、oR 390 / 390     対照 (逆向き) 389/389 で総崩れ
+
+つまり先方は隣り合う 2 対に同じ項を与えている。正しい表記の写像は単射なので、そこは
+先方の誤りである。**残り 9 件は未決** — 双方とも単調かつ単射で、一致率も内部整合性も
+これ以上は分けない。展開と基本列で当てる試験も書いたが 0/0 で分かれなかった。これは
+E3 の添字が行ごとに違うという既知の事実 (`fsN` に一律のずらしを当てるな) の現れであって、
+どちらかの証拠ではない。
 """
 import argparse
 import html
@@ -192,19 +216,44 @@ namespace HexirpCheck
 TAIL = """
 def rows : List (BMS.Matrix × TM.Term) := {chunks}
 
--- 辞書が正しいことの傍証: 先方の項が当方の正規形を通るか。ずれていれば通らない。
-#eval s!"行 {{rows.length}};  先方の項が NfOK: {{rows.countP fun p => Evidence.WF.NfOK p.2}}"
+#eval s!"行 {{rows.length}}"
 
 -- 辞書が検証済みの断片だけを数える (docstring 参照)。外側は「比較していない」。
 def vebl : List (BMS.Matrix × TM.Term) := rows.filter fun p => Evidence.WF.CNV p.2
 #eval s!"Veblen 断片 {{vebl.length}} 行:  oR 一致 {{vebl.countP fun p => Trans.oR p.1 == some p.2}}"
-#eval s!"  そのうち oR の出力自身が NfOK に落ちるもの: {{vebl.countP fun p => !(Trans.oR p.1 == some p.2) && (match Trans.oR p.1 with | some u => !(Evidence.WF.NfOK u) | none => true)}}"
 #eval s!"断片の外 {{rows.length - vebl.length}} 行: 辞書が未検証なので数えない"
 
 -- 陽性対照: 目標を歪めれば一致は消えなければならない。
 #eval s!"対照 目標を t+t に歪める: {{vebl.countP fun p => Trans.oR p.1 == some (TM.Term.add p.2 p.2)}}"
 -- 陰性対照: 一つの行列を全部の目標に当てても当たってはならない。
 #eval s!"対照 固定した行列を全目標に: {{vebl.countP fun p => Trans.oR [[9,9]] == some p.2}}"
+
+/-! ## 食い違いを裁く道具: 単調性と単射性
+
+食い違ったとき「どちらが正しいか」は一致率では決まらない。**BMS の順序で並べ直し、
+隣接対で狭義単調かを両側について見る。** 正しい BMS → 順序数 の写像は単調な単射だから、
+自分の順序と矛盾する側が誤っている。隣接対で足りるのは 𝔗(M) の順序が推移的だからである。
+
+`NfOK` は使わない。あれは基本列の組み立て定理の側条件であって正規形の述語ではなく、
+2026-08-13 の誤報 (`Evidence/SqV.lean` §K3.20) はそれを取り違えたことから出た。 -/
+
+def sorted : List (BMS.Matrix × TM.Term) :=
+  vebl.mergeSort (fun p q => BMS.cmpM p.1 q.1 != Ordering.gt)
+def adj : List ((BMS.Matrix × TM.Term) × (BMS.Matrix × TM.Term)) :=
+  (sorted.zip sorted.tail).filter fun c => BMS.cmpM c.1.1 c.2.1 == Ordering.lt
+
+#eval s!"隣接対 {{adj.length}}"
+#eval s!"  先方が単調でない対 {{adj.countP fun c => !(TM.Term.lt c.1.2 c.2.2)}}" ++
+      s!"   oR が単調でない対 {{adj.countP fun c => match Trans.oR c.1.1, Trans.oR c.2.1 with
+        | some u, some v => !(TM.Term.lt u v) | _, _ => true}}"
+#eval s!"  先方が潰す対 {{adj.countP fun c => c.1.2 == c.2.2}}" ++
+      s!"   oR が潰す対 {{adj.countP fun c => Trans.oR c.1.1 == Trans.oR c.2.1}}"
+#eval s!"  相異なる値: 先方 {{(vebl.map (·.2)).eraseDups.length}}" ++
+      s!"   oR {{(vebl.filterMap fun p => Trans.oR p.1).eraseDups.length}}   (行数 {{vebl.length}})"
+-- CTRL 並べ替えが効いていること: 逆向きに見れば総崩れになる
+#eval s!"対照 逆向きに見た先方: {{adj.countP fun c => !(TM.Term.lt c.2.2 c.1.2)}} / {{adj.length}}"
+#eval (adj.filter fun c => !(TM.Term.lt c.1.2 c.2.2)).map fun c =>
+  (c.1.1, c.1.2.toStr, c.2.1, c.2.2.toStr, (Trans.oR c.2.1).map (·.toStr))
 
 -- 当方の表との突き合わせ。辞書が訳せなかった行は先方の側に無いので、ここに来た行は
 -- すべて W(0) しか使っていない = 辞書が検証済みの範囲である。CNV で絞る必要はもう無い。
