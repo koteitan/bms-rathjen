@@ -76,18 +76,10 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 
 ## ライセンス
 
-**CC BY-SA 3.0** ([LICENSE](LICENSE))。これは選択ではなく帰結である。
-`lean/Trans/Recal.lean` は naruyoko 氏の [pss-vs-buchholz](https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz)
-の `common.js` の移植で、同氏の実装は CC BY-SA 3.0
-([implementation.html](https://github.com/Naruyoko/googology/blob/main/pss-vs-buchholz/implementation.html)
-に明記、`common.js` が名指し) — 移植は二次的著作物なので ShareAlike が及ぶ。
-Googology Wiki (Fandom) とも同じライセンスなので、突き合わせに使う外部の解析との間で
-素材が双方向に行き来できる。
+**CC BY-SA 3.0** ([LICENSE](LICENSE))。
 
-外部資料はリポジトリに入れない。実行時にディレクトリを渡して読み、URL で引用する
-(`scripts/external-check.py`、`scripts/hexirp-rathjen-check.py`)。出典が正で、
-ローカルの控えは複製にすぎない。
+`lean/Trans/Recal.lean` は naruyoko 氏の
+[pss-vs-buchholz](https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz)
+の `common.js` の移植 (CC BY-SA 3.0)。
 
-CC BY-SA はコンテンツ向けで、ソース提供条項も特許条項も無く、GPL 系と互換性が無い。
-`Trans/Recal.lean` は上流から ShareAlike を引き継ぐので付け替えられない。`lean/` の
-残りは本プロジェクト自身の著作物なので、別の条件が要る場合は issue を。
+外部資料はリポジトリに入れず、URL で引用する。

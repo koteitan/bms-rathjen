@@ -386,9 +386,7 @@ R2 ($`T(K)`$, *Proof theory of reflection*) 以降は `TK/`・`Trans/TK.lean`・
 ## 外部の実装と形式化 (2026-08-12 に調べたもの)
 
 **機械実装** — 検算に使える。リポジトリには取り込まず、外部ツールとして呼ぶ。
-**naruyoko 氏の実装はいずれも CC BY-SA 3.0。** ただし `Trans/Recal.lean` だけは
-「呼ぶ」ではなく**移植**であり、二次的著作物なので ShareAlike がこのリポジトリに及ぶ
-(それが [LICENSE](../LICENSE) が CC BY-SA 3.0 である理由)。
+naruyoko 氏の実装はいずれも CC BY-SA 3.0 (`Trans/Recal.lean` はその移植)。
 
 | 何 | 何をするか | この repo との関係 |
 |---|---|---|

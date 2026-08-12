@@ -1,68 +1,15 @@
-# License
-
 Copyright (c) koteitan and contributors.
 
-This work is licensed under the **Creative Commons Attribution-ShareAlike 3.0
-Unported License (CC BY-SA 3.0)**.
+This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
+Unported License (CC BY-SA 3.0).
 
-To view a copy of this license, visit
-<https://creativecommons.org/licenses/by-sa/3.0/>; the legal code is at
-<https://creativecommons.org/licenses/by-sa/3.0/legalcode>.
+    https://creativecommons.org/licenses/by-sa/3.0/
+    https://creativecommons.org/licenses/by-sa/3.0/legalcode
 
-CC BY-SA 3.0 is **required**, not merely chosen. `lean/Trans/Recal.lean` is a port
-of `common.js` from Naruyoko's `pss-vs-buchholz`, which is licensed CC BY-SA 3.0
-(see the External sources section below). A port is a derivative work, so the
-ShareAlike condition applies to this repository. It also happens to match the
-license of the Googology Wiki (Fandom), where the external analyses this project
-checks itself against are published, so material can flow in both directions
-without a license mismatch.
+Attribution: koteitan, bms-rathjen, https://github.com/koteitan/bms-rathjen
 
-**Attribution.** If you reuse this work, credit
-"koteitan, bms-rathjen (<https://github.com/koteitan/bms-rathjen>)"
-and indicate whether you changed anything. If what you reuse includes
-`lean/Trans/Recal.lean` or anything derived from it, credit Naruyoko as well.
+`lean/Trans/Recal.lean` is a port of `common.js` from Naruyoko's pss-vs-buchholz
+(CC BY-SA 3.0), https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz
+— credit Naruyoko when reusing it.
 
-**Note for reusers of the Lean sources.** CC BY-SA is a content license, not a
-software license: it has no source-provision clause, no patent grant, and is not
-compatible with the GNU GPL or most other software copyleft. This is a real cost
-and it cannot simply be undone — `lean/Trans/Recal.lean` carries ShareAlike from
-upstream, so relicensing it is not the maintainer's to grant. The rest of `lean/`
-is this project's own work; if you need it under different terms, open an issue.
-
----
-
-## External sources
-
-This repository does **not** contain any of the documents below. They are read
-from a local directory supplied at run time (see `scripts/external-check.py` and
-`scripts/hexirp-rathjen-check.py`), and cited by URL. The source is authoritative;
-a local copy is only a copy.
-
-Licensed CC BY-SA 3.0 (Googology Wiki / Fandom):
-
-- Hexirp, 「バシク行列システムの解析」(1–3) and 「バシク行列システムと Rathjen の
-  弱マーロの psi の対応」 — <https://googology.fandom.com/ja/wiki/ユーザー:Hexirp/執筆した記事の一覧>
-- P進大好きbot, 「超限変数拡張ブーフホルツのψ関数観察日記」 —
-  <https://googology.fandom.com/ja/wiki/ユーザーブログ:P進大好きbot/超限変数拡張ブーフホルツのψ関数観察日記>
-
-Other external material, cited but not included:
-
-- M. Rathjen's papers on T(M), χ and ψ (1990, 1991, 1994) — copyrighted; cited
-  bibliographically only.
-- "BMS vs Rathjen's OCF" spreadsheet —
-  <https://docs.google.com/spreadsheets/d/1UkVwMxbo_i9JVh9suHZF6ycp2yaIrHRZR0XZceB5BRs/edit>
-- Naruyoko, `pss-vs-buchholz` — **CC BY-SA 3.0**, stated in
-  <https://github.com/Naruyoko/googology/blob/main/pss-vs-buchholz/implementation.html>
-  and in `transTabulator.html`: "The program (common.js, implementation.js) and
-  the site … is licensed by Creative Commons Attribution-ShareAlike 3.0 Unported
-  License". `lean/Trans/Recal.lean` is a **port of `common.js`** — the function
-  names correspond one to one (`fpar`, `Pred`, `Derp`, `IncrFirst`, `Adm`,
-  `TrMax`, `Br`, `FirstNodes`, `Joints`, `Red`; see `scripts/external-check.py`
-  and `plan/README.md`). This is the derivative work that makes ShareAlike bind
-  on this repository.
-- Naruyoko, `padicBotRathjen` — CC BY-SA 3.0. Used only as an external
-  cross-check of `TM/`'s order, normal form and fundamental sequences; never
-  copied into this repository.
-- yaBMS (koteitan), the C reference implementation of BMS expansion —
-  <https://github.com/koteitan/yaBMS>. Used as an oracle via `scripts/crosscheck.sh`
-  and `scripts/standard-audit.sh`.
+External documents are cited by URL and are not included in this repository.
