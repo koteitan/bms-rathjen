@@ -7617,11 +7617,18 @@ Three readings, none settled:
   * `TM.Term.lt` and `BMS.cmpM` disagree somewhere independent of all this — unlikely,
     since `sqv'` manages 57 inversions, but not excluded.
 
-**What would separate them**: a `b ≠ 0` value derived WITHOUT any candidate map — from the
-reference implementation alone, or from a proved row.  The table has none (§K3.11), so
-this needs the BMS side to supply the fundamental sequence too, not just the expansions.
-Until then the fourth value stays recorded and unused, and the guard-removed map is not a
-repair.
+**One of the three is now excluded.**  If table-agreement and order were incompatible, the
+table's own rows would show it: some pair of rows would have its terms in one order and its
+matrices in the other.  Measured over all 17 rows — **0 such pairs**.  So the table is
+order-consistent with itself, and "the architecture cannot do both" is refuted at least on
+the points the table fixes.  The conflict is not between the table and the order; it is
+about what a map does BETWEEN the fixed points.
+
+**What would separate the remaining two**: a `b ≠ 0` value derived WITHOUT any candidate
+map — from the reference implementation alone, or from a proved row.  The table has none
+(§K3.11), so this needs the BMS side to supply the fundamental sequence too, not just the
+expansions.  Until then the fourth value stays recorded and unused, and the guard-removed
+map is not a repair.
 
 -/
 
