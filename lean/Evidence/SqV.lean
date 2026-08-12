@@ -7517,6 +7517,18 @@ from §K3.10's, and one nobody has walked.
 Kept rather than deleted: the derivation cost a measurement chain, and the refutation is
 the useful half.
 
+**And the table cannot supply the missing constraint.**  Of its 17 height-2 `CNV` rows:
+
+    with an ε-number index          1     (that is `φ̄(ε₀,0)` itself)
+    with `b ≠ 0`                    9
+    with BOTH                       0
+
+So no row in the table sits off the `b = 0` face of the ε-index rule.  That is not a gap in
+how the rows were chosen; it is why three verified values were all that could be extracted
+in the first place.  A constraining value has to come from a §K3.6 chain on some
+`φ̄(ε₀, b)` with `b ≠ 0` whose fundamental sequence stays inside the verified region —
+and whether such a term exists at reachable size is itself unmeasured.
+
 -/
 
 end Evidence.SqV
