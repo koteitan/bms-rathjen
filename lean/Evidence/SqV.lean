@@ -7703,6 +7703,20 @@ MOVED rather than gone:
 So `certIn_cnv` is blocked by the decomposition identity now, not by injectivity, and that
 is a different and smaller obstacle than the one this file opened with.
 
+**One refinement tried and rejected.**  `sqv5`'s 12 remaining decomposition failures
+include `φ̄(φ̄(ε₀,0)+1, 0)`, whose index is a SUM — and `epsIndexShape` only inspects
+`.phi c _`, so a sum index containing an ε-number is not recognised.  (Third time today a
+classifier looked only at a term's head; this one is inside the candidate.)  Making it
+inspect the leading summand:
+
+                     decomp failures   inversions   collapses   injective
+    sqv5                   12               0           0        217/217
+    sqv6 (sum-aware)        8              40           1        216/217
+
+Four fewer decomposition failures, bought with 40 inversions and a collision.  Rejected.
+The axes keep trading against each other — that is the third such trade in this section —
+and `sqv5` remains the best point found.
+
 **Not landed.**  Replacing `sqv'` changes every value the proofs above are stated against;
 that is a migration with its own failure modes, and 0 inversions on one sample is not a
 reason to start it today.  What is banked is the candidate, the harness that judges it
