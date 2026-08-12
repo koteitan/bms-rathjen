@@ -48,10 +48,8 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 
 ## 検査器と、その試験
 
-**この repo の検査器は、自分自身の試験を持っている。** 理由は
-[constitutions C0](plan/constitutions.md) にある — 一晩に自作の検査器が 5 回誤り、
-そのうち**事前に試験してあった 1 つだけが最初から正しかった**。残る 4 つは、
-誤った答えを出した後で試験を書いている。
+検査器はそれぞれ自己試験を持つ。方針は [constitutions C0](plan/constitutions.md) と
+[設計方法と記録](plan/README.md#検査器の試験) にある。
 
 | 検査器 | 何を測るか | 試験の走らせ方 |
 |---|---|---|
@@ -63,17 +61,6 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 | `scripts/crosscheck.sh` | BMS の実装が yaBMS の C 実装と一致するか | 112 例そのものが試験 |
 | `scripts/oracle-audit.sh` | 表の全行が変換写像と一致するか | |
 
-**試験は両側を見る。** 欠陥を検出できることだけ確かめても、**常に赤を返す検査器と
-区別がつかない**。正常な対照で沈黙することまで見て、初めて検出したと言える。
-`check-math.js` は 5 種類の欠陥 + 正常な文書、`settled.sh` は 5 ケース、
-`axioms_of.lean` は公理なし・propext のみ・選択公理・`native_decide`・`sorry` の
-5 種類を振り分ける。
-
-**そして試験自体も、故意に壊して確かめてある。** 今夜、自己試験が 2 回とも盲目だった
-— 片方は集計の層を通っていなかった (そこにバグがあった)、もう片方は陽性対照が無く、
-計数を潰しても「0 件」で通った。**「自己試験が通った」は、その試験を壊してみるまで
-根拠にならない。**
-
 ## ライセンス
 
 **CC BY-SA 3.0** ([LICENSE](LICENSE))。
@@ -81,5 +68,3 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 `lean/Trans/Recal.lean` は naruyoko 氏の
 [pss-vs-buchholz](https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz)
 の `common.js` の移植 (CC BY-SA 3.0)。
-
-外部資料はリポジトリに入れず、URL で引用する。
