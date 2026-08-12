@@ -4,18 +4,30 @@
 -- It exists because the scratch copy was lost to a machine restart and rebuilding it cost
 -- more than keeping it.  Everything here is measurement; no claims.
 --
+-- REVISED 2026-08-13 — see §K3.15.  The first version's pool was closed under `phi` and
+-- `add` only, and it certified `sqv5` as inversion-free and injective.  The decomposition
+-- identity quantifies over `fsV'`-images, which are neither `phi` nor `add` applications,
+-- so every term the identity mentions was outside the population doing the certifying.
+-- Closing the pool under `fsV'` turns 0 collapses / 0 inversions into 1 / 58.
+--
+-- TWO RULES, both learned by breaking them:
+--
+--   1. CLOSE THE POPULATION UNDER THE OPERATIONS THE CLAIM QUANTIFIES OVER.  Not under
+--      the operations that are convenient to generate with.
+--   2. DO NOT SAMPLE WHEN COUNTING COLLAPSES.  A 99-term sample of the 688 below reports
+--      0 collapses while an explicit witness sits inside the pool.  Sampling is fine for
+--      a cheap first look and is not evidence of absence.  §K3.7 is the same lesson at a
+--      different size (27 terms reported 0 inversions for a map that has 583 at 217).
+--
 -- WHAT IT MEASURES, and why each control is the one it is:
 --
---   * inversions / collapses over a sample of `CNV && NfOK` terms.  The constant map is a
---     control that FIRES (it collapses every ordered pair).  Note it is NOT a control for
+--   * collapses / inversions over EVERY ordered pair.  The constant map is a control that
+--     FIRES (it collapses every ordered pair).  Note it is NOT a control for
 --     identity-shaped checks — see §K3.9 — but it is the right one here.
---   * injectivity: distinct images vs sample size.
+--   * injectivity: distinct images vs population size.
 --   * the four settled values, three of which are independent and the fourth (`φ̄(ε₀,1)`)
---     recorded as suspect in §K3.13.
---
--- SAMPLE SIZE IS PART OF THE MEASUREMENT (§K3.7).  A 27-term sample reported 0 inversions
--- for a map that has 583 at 217 terms.  The size below is chosen for what it reaches, not
--- for how fast it runs.
+--     recorded as suspect in §K3.13 and vindicated in §K3.14.
+--   * the two §K3.15 witnesses, which any successor encoder must separate.
 --
 -- Replace `CAND` with the candidate's fully qualified name before running.
 
@@ -24,42 +36,58 @@ import Evidence.SqV
 
 namespace Harness
 open TM (Term)
+open TM.Term
 
-def o : Term := TM.Term.phi TM.Term.zero TM.Term.zero
-def w : Term := TM.Term.phi TM.Term.zero o
-def e0 : Term := TM.Term.phi o TM.Term.zero
-def ww : Term := TM.Term.phi TM.Term.zero w
+def o : Term := phi zero zero
+def w : Term := phi zero o
+def e0 : Term := phi o zero
+def ww : Term := phi zero w
 
-def pool0 : List Term := [TM.Term.zero, o, w, e0, TM.Term.phi o w]
+-- The generated part: two rounds of `phi`/`add` over a small base.
+def pool0 : List Term := [zero, o, e0, phi o zero]
 def grow (p : List Term) : List Term :=
-  (p ++ (p.flatMap fun x => p.map fun y => TM.Term.phi x y)
+  (p ++ (p.flatMap fun x => p.map fun y => phi x y)
      ++ (p.flatMap fun x => p.map fun y => TM.Term.add x y)).eraseDups
+def base : List Term := (grow (grow pool0)).filter fun t => Evidence.WF.CNV t
+
+-- RULE 1: close it under the operation the decomposition identity quantifies over.
 def pool : List Term :=
-  (grow (grow pool0)).filter fun t => Evidence.WF.CNV t && Evidence.WF.NfOK t
-def smpl : List Term := (pool.zipIdx.filter fun p => p.2 % 7 == 0).map Prod.fst
+  (base ++ base.flatMap fun t => (List.range 3).map fun n => Evidence.SqV.fsV' t n)
+    |>.eraseDups |>.filter fun t => Evidence.WF.CNV t && !(t == zero)
+def poolN : List Term := pool.filter Evidence.WF.NfOK
 
-def scan (f : Term → BMS.Matrix) : Nat × Nat × Nat :=
-  let im := smpl.map fun u => (u, f u)
-  im.foldl (fun acc p =>
-    im.foldl (fun acc2 q =>
-      let (ord, col, inv) := acc2
-      if TM.Term.lt p.1 q.1 then
-        if p.2 == q.2 then (ord+1, col+1, inv)
-        else if BMS.cmpM p.2 q.2 == Ordering.lt then (ord+1, col, inv)
-        else (ord+1, col, inv+1)
-      else acc2) acc) (0, 0, 0)
+-- RULE 2: no sampling.  Images are computed once and compared pairwise; recomputing the
+-- encoder per pair is what made the earlier widened search time out.
+def stat (f : Term → BMS.Matrix) (l : List Term) : Nat × Nat :=
+  let im := (l.map fun u => (u, f u)).toArray
+  im.foldl (fun acc p => im.foldl (fun (c, i) q =>
+    if TM.Term.lt p.1 q.1 then
+      if p.2 == q.2 then (c + 1, i)
+      else if BMS.cmpM p.2 q.2 == Ordering.lt then (c, i) else (c, i + 1)
+    else (c, i)) acc) (0, 0)
 
-def distinct (f : Term → BMS.Matrix) : Nat := (smpl.map f).eraseDups.length
+def distinct (f : Term → BMS.Matrix) (l : List Term) : Nat := (l.map f).eraseDups.length
 
-#eval s!"pool {pool.length}  sample {smpl.length}"
-#eval s!"CTRL constant map (must collapse every pair): {scan (fun _ => [])}"
-#eval s!"sqv' baseline (ordered, collapsed, inverted): {scan Evidence.SqV.sqv'}"
+#eval s!"pool {pool.length}  of which NfOK {poolN.length}  (base was {base.length})"
+#eval s!"CTRL constant map on NfOK (must collapse every pair): {stat (fun _ => []) poolN}"
+#eval s!"sqv' baseline on NfOK (collapses, inversions): {stat Evidence.SqV.sqv' poolN}"
 
-#eval s!"CAND (ordered, collapsed, inverted): {scan CAND}"
-#eval s!"CAND distinct images: {distinct CAND} of {smpl.length}"
-#eval s!"T1 φ̄(ω,0)    {CAND (TM.Term.phi w TM.Term.zero)}   want [[0,0],[1,1],[2,1],[3,0]]"
-#eval s!"T2 φ̄(ε₀,0)   {CAND (TM.Term.phi e0 TM.Term.zero)}   want [[0,0],[1,1],[2,1],[3,0],[4,1]]"
-#eval s!"T3 φ̄(ω^ω,0)  {CAND (TM.Term.phi ww TM.Term.zero)}   want [[0,0],[1,1],[2,1],[3,0],[4,0]]"
-#eval s!"T4 φ̄(ε₀,1)   {CAND (TM.Term.phi e0 o)}   SUSPECT, see §K3.13; was [[0,0],[1,1],[2,1],[3,0],[4,1],[1,1],[2,1],[3,0],[4,1]]"
+#eval s!"CAND on CNV ∩ NfOK (collapses, inversions): {stat CAND poolN}"
+#eval s!"CAND on CNV        (collapses, inversions): {stat CAND pool}"
+#eval s!"CAND distinct: {distinct CAND poolN} of {poolN.length} (NfOK), {distinct CAND pool} of {pool.length} (CNV)"
+
+-- The four settled values.
+#eval s!"T1 φ̄(ω,0)    {CAND (phi w zero)}   want [[0,0],[1,1],[2,1],[3,0]]"
+#eval s!"T2 φ̄(ε₀,0)   {CAND (phi e0 zero)}   want [[0,0],[1,1],[2,1],[3,0],[4,1]]"
+#eval s!"T3 φ̄(ω^ω,0)  {CAND (phi ww zero)}   want [[0,0],[1,1],[2,1],[3,0],[4,0]]"
+#eval s!"T4 φ̄(ε₀,1)   {CAND (phi e0 o)}   want [[0,0],[1,1],[2,1],[3,0],[4,1],[1,1],[2,1],[3,0],[4,1]]"
+
+-- §K3.15's witnesses: `sqv5` fails both.  A successor must separate them, in this order.
+def e0sq : Term := phi (phi zero (TM.Term.add e0 e0)) zero     -- φ̄(ε₀·ε₀, 0)
+def e1   : Term := phi (phi o o) zero                          -- φ̄(ε₁, 0)
+def wE   : Term := phi (phi zero (phi zero (TM.Term.add e0 e0))) zero  -- φ̄(ω^(ε₀·ε₀), 0)
+#eval s!"W1 order holds: {TM.Term.lt e0sq e1 && TM.Term.lt wE e1}  (if false, the witnesses are stale)"
+#eval s!"W1 collapse φ̄(ε₀·ε₀,0) vs φ̄(ε₁,0): {CAND e0sq == CAND e1}   want false"
+#eval s!"W2 inversion φ̄(ω^(ε₀·ε₀),0) vs φ̄(ε₁,0): {BMS.cmpM (CAND wE) (CAND e1) != Ordering.lt}   want false"
 
 end Harness

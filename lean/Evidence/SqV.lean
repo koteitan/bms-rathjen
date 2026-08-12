@@ -7746,6 +7746,57 @@ that is a migration with its own failure modes, and 0 inversions on one sample i
 reason to start it today.  What is banked is the candidate, the harness that judges it
 (`table/candidates/harness-2026-08-12.lean.txt`), and the numbers.
 
+### §K3.15 The candidate's headline numbers were measured on the wrong population
+
+§K3.14 reports `sqv5` as **0 collapses, 0 inversions, injective 217/217**.  That is true of
+the population it was measured on and false of the one the claim needs.  The harness pool
+is closed under `phi` and `add`.  The decomposition identity quantifies over `fsV'`-images,
+and `fsV'` is not `phi`/`add` — so every term the identity actually mentions was outside
+the population that certified the encoder.
+
+Closing the same 238-term corpus under `fsV' · n` for `n < 3` gives 688 terms, and
+comparing **every** ordered pair rather than a sample:
+
+                                collapses   inversions   distinct
+    constant map (control)        103740         0          —
+    sqv5   on CNV ∩ NfOK (456)         1        58        455/456
+    sqv5   on CNV        (688)         4       108        684/688
+    sqv'   on CNV ∩ NfOK (456)        29       702           —
+
+Two things follow, and they point in opposite directions.
+
+**The headline is withdrawn.**  `sqv5` is not injective on `CNV ∩ NfOK` and does not embed
+the order there.  The witnesses are small and both terms are `CNV ∩ NfOK`:
+
+    collapse    φ̄(ε₀·ε₀, 0)  and  φ̄(ε₁, 0)   share  (0,0)(1,1)(2,1)(3,1)(3,0)(4,1)
+    inversion   φ̄(ω^(ε₀·ε₀), 0) < φ̄(ε₁, 0),  but the smaller term's image is two
+                columns longer:  …(4,1)(4,0)(5,1)  against  …(3,0)(4,1)
+
+**The ranking is not.**  `sqv5` still beats `sqv'` by 12x on inversions and 29x on
+collapses on the identical population, and the numbers §K3.14 reports are reproducible on
+the pool it used — of the 58 inversions, **0 have both terms in that pool**.  Every one of
+them involves an `fsV'`-image.  So the earlier measurement was not wrong about what it
+measured; it measured the wrong set, and it was the sampling that hid the rest (a 99-term
+sample of the 688 still reports 0 collapses, with the explicit witness sitting in the pool).
+
+**Cause: the same head-only classifier, for the fourth time in this section.**
+`epsIndexShape` matches `.phi c _` with `c ≠ 0`, so `ε₁ = φ̄(1,1)` gets `delayLast` and
+`ω^(ε₀·ε₀) = φ̄(0, …)` does not; the un-delayed ladder of the syntactically deeper term
+overshoots the delayed ladder of the ordinally larger one.  §K3.14 rejected `sqv6` for
+exactly this defect in its classifier without noticing the defect was already in `sqv5`.
+
+**Method, banked.**  A population must be closed under the operations the claim quantifies
+over.  This is the same failure as §K3.9's vacuous control and §K3.7's undersized sample,
+in a third dress: there, a corpus built from things that already worked could not contain
+what did not; here, a corpus closed under the wrong operations could not contain the
+counterexamples to a statement about `fsV'`.  The harness is fixed accordingly.
+
+**What this does NOT change.**  `no_sqvDecomp_general_nfOK` and §K3.2's refutation for
+`sqv'` stand — they are theorems and explicit witnesses, not sampled measurements.  The
+open goal `certIn_cnv` remains open for `sqv5`, but the obstacle is back to injectivity
+rather than only decomposition: §K3.14's claim that it had moved was resting on the
+withdrawn number.
+
 -/
 
 end Evidence.SqV
