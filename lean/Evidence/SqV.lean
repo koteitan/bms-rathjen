@@ -7779,11 +7779,9 @@ them involves an `fsV'`-image.  So the earlier measurement was not wrong about w
 measured; it measured the wrong set, and it was the sampling that hid the rest (a 99-term
 sample of the 688 still reports 0 collapses, with the explicit witness sitting in the pool).
 
-**Cause: the same head-only classifier, for the fourth time in this section.**
-`epsIndexShape` matches `.phi c _` with `c ≠ 0`, so `ε₁ = φ̄(1,1)` gets `delayLast` and
-`ω^(ε₀·ε₀) = φ̄(0, …)` does not; the un-delayed ladder of the syntactically deeper term
-overshoots the delayed ladder of the ordinally larger one.  §K3.14 rejected `sqv6` for
-exactly this defect in its classifier without noticing the defect was already in `sqv5`.
+**Cause: see §K3.16.**  The first attribution written here — a head-only classifier, as in
+§K3.14's rejected `sqv6` — is wrong and is retracted there.  `epsIndexShape` is the correct
+test.
 
 **Method, banked.**  A population must be closed under the operations the claim quantifies
 over.  This is the same failure as §K3.9's vacuous control and §K3.7's undersized sample,
@@ -7796,6 +7794,64 @@ counterexamples to a statement about `fsV'`.  The harness is fixed accordingly.
 open goal `certIn_cnv` remains open for `sqv5`, but the obstacle is back to injectivity
 rather than only decomposition: §K3.14's claim that it had moved was resting on the
 withdrawn number.
+
+### §K3.16 The trade is one expression wide, and it is decided against order-preservation
+
+§K3.15 blamed the collapse on a head-only classifier.  **That is wrong and is retracted.**
+`epsIndexShape` matches `.phi c _` with `c ≠ 0`; the repo's own fixed-point test is
+`isFP zero`, and over the 688-term population the two **disagree on 0** terms (both true on
+516; the control "always true" disagrees on 172).  In Veblen normal form the ε-numbers are
+exactly `φ̄(c, ·)` with `c ≠ 0` — `φ̄(0,x) = ω^x` is barred from NF when `x` is an ε-number
+— so looking only at the head IS the correct ε test here.  The pattern was matched, not the
+defect.
+
+**The recursion is not at fault either.**  Of the 58 inversions, all 58 have both terms
+`φ̄`-headed with indices ordered `a < b`, and the number in which `sqv5` inverts the INDEX
+pair is **0**.  The encoder gets every index pair right and the ladder wrapping them wrong.
+
+**Isolating `delayLast` behind a switch** (`mode 0` never, `mode 1` on ε-indices `= sqv5`,
+`mode 2` always; the control confirms mode 1 reproduces `sqv5` on all 456, and the modes
+differ from each other on 265 / 432 terms):
+
+                            collapses   inversions   settled values   table rows
+    mode 0  never delay          0           0             2/4          16/17
+    mode 1  = sqv5               1          58             4/4          17/17
+    mode 2  always delay         0          58             2/4            —
+
+So the entire trade between the verified values and the order is that one expression.
+
+**Which side is right, decided by a source that is neither map.**  The single row mode 0
+misses is `φ̄(ε₀,0)`, whose table value carries no proof — the row `map-vs-table.py`'s own
+header names as the one where `oR` and `sqv'` disagreed.  Both candidate matrices are
+standard (`bms -s`; the control `(0,0)(3,3)` returns 0).  But `φ̄(·,0)` is continuous, so
+`φ̄(ε₀,0) = sup_n φ̄(ω↑↑n, 0)`, and both maps agree on the tower.  Expanding each candidate
+with the C reference:
+
+    table value  (0,0)(1,1)(2,1)(3,0)(4,1)
+      [0] (0,0)(1,1)(2,1)(3,0)          = φ̄(ω,0)
+      [1] (0,0)(1,1)(2,1)(3,0)(4,0)     = φ̄(ω^ω,0)
+      [2] …(5,0)                        = φ̄(ω^ω^ω,0)      the tower, exactly
+
+    mode 0 value (0,0)(1,1)(2,1)(3,1)
+      [0] (0,0)(1,1)(2,1)               below φ̄(ω,0)
+      [1] (0,0)(1,1)(2,1)(3,0)(4,1)(5,1)  a different shape, and it CONTAINS the
+                                          table value — so mode 0 places φ̄(ε₀,0) too high
+
+The value stands and `delayLast` is required.
+
+**Mechanism, in one line.**  `delayLast` is not order-preserving: over the 236324 ordered
+pairs of ladders it breaks 84 (controls: identity breaks 0, dropping the last column breaks
+2068).  And it never raises a matrix — of 688 ladders it lowers 318 and fixes 370, and
+raises none.  Applying it only to ε-indices therefore lowers exactly the ordinally largest
+indices, which is the inversion; applying it everywhere still breaks 84 pairs, which is why
+mode 2 inverts too.
+
+**So §K3.13's conflict is real.**  §K3.14 declared it dissolved on the strength of the
+number §K3.15 withdrew.  Within this switch no setting is both value-correct and
+order-preserving.  This does not rule out a different ladder — it rules out this one, and
+it says what such a ladder must satisfy: it must reproduce the tower-limit shape at
+ε-indices **without lowering the matrix**, which `delayLast` cannot do because trading a
+trailing `(x,1)` for `(x,0)(x+1,1)` is a descent in `cmpM`.
 
 -/
 

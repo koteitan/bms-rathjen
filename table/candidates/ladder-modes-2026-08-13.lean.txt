@@ -1,0 +1,72 @@
+-- LADDER MODE SWITCH — the instrument that isolated §K3.16's trade.  Not built;
+-- concatenate it after `table/candidates/sqv5-delaylast-2026-08-12.lean.txt` and run with
+-- `leanman check -C lean --backend lean`.
+--
+-- `sqv5` differs from the order-perfect variant in exactly one expression, the `delayLast`
+-- applied to the ladder of an epsilon-number index.  Putting that expression behind a mode
+-- switch is what turned "the axes trade against each other" into a number:
+--
+--                             collapses   inversions   settled values   table rows
+--     mode 0  never delay          0           0             2/4          16/17
+--     mode 1  = sqv5               1          58             4/4          17/17
+--     mode 2  always delay         0          58             2/4            -
+--
+--   measured over the fsV'-closed population (688 terms, 456 of them NfOK, every ordered
+--   pair, no sampling — see the harness for why both of those matter).
+--
+-- The control that makes the table readable is the first #eval: mode 1 must reproduce
+-- `CX22.sqv5` on every term, and the modes must differ from each other.  Without it a row
+-- of zeros could mean the switch is not wired up.
+--
+-- Records: lean/Evidence/SqV.lean §K3.15, §K3.16.
+
+namespace R16
+open TM (Term)
+open TM.Term
+
+-- The encoder with `delayLast` under a switch, so the ladder can be isolated.
+--   mode 0 : never delay      (sqv5's ladder without the epsilon guard)
+--   mode 1 : delay when the index is an epsilon number   (= CX22.sqv5)
+--   mode 2 : always delay     (§K3.14's "unguarded eps ladder")
+def encF (mode : Nat) : Nat → Term → Nat → List CX22.Col2
+  | 0, _, _ => []
+  | _ + 1, .zero, _ => []
+  | f + 1, .add u v, d => encF mode f u d ++ encF mode f v d
+  | f + 1, .phi a b, d =>
+      let bm := TM.Term.splitFin b
+      let gs := Evidence.SqV.summands bm.1
+      let ladder : List CX22.Col2 :=
+        if a == zero then []
+        else
+          let base := (d + 1, 1) :: Evidence.SqV.bumpAt (d + 2)
+            (encF mode f (CX22.indexBody a) (d + 2))
+          if mode == 2 || (mode == 1 && CX22.epsIndexShape a) then CX22.delayLast base else base
+      let unit : List CX22.Col2 := if a == zero then [(d + 1, 0)] else ladder
+      let reps : List CX22.Col2 := (List.replicate bm.2 unit).flatten
+      let mkBlocks : List Term → List CX22.Col2 := fun hs =>
+        (hs.map (fun g =>
+          ladder ++ Evidence.SqV.shiftD (if a == zero then d + 1 else d + 2)
+            (encF mode f (if a == zero then g else Evidence.SqV.omLog g) 0))).flatten
+      if TM.Term.isFP a (gs.headD zero) then
+        encF mode f (gs.headD zero) d
+          ++ (if gs.length == 1
+              then (if a == zero then [((d + 1, 0) : CX22.Col2)] else ladder)
+              else mkBlocks (gs.drop 1))
+          ++ reps
+      else
+        match Evidence.SqV.fpDeep a (gs.headD zero) with
+        | some g => encF mode f g d ++ mkBlocks gs ++ reps
+        | none => (d, 0) :: ((match gs with | [] => ladder | _ => mkBlocks gs) ++ reps)
+  | _ + 1, _, _ => []
+
+def enc (mode : Nat) (t : Term) : BMS.Matrix :=
+  CX22.toMatrix (encF mode (2 * t.deg + 8) t 0)
+
+-- sanity: mode 1 must BE sqv5
+
+-- Population, statistic and settled values: take them from
+-- `table/candidates/harness-2026-08-12.lean.txt`, which carries the two rules this cost
+-- (close the population under the operations the claim quantifies over; do not sample when
+-- counting collapses) and the two §K3.15 witnesses.
+
+end R16

@@ -29,6 +29,13 @@
 --     recorded as suspect in §K3.13 and vindicated in §K3.14.
 --   * the two §K3.15 witnesses, which any successor encoder must separate.
 --
+-- WHAT A SUCCESSOR MUST DO (§K3.16).  `sqv5` fails W1 and W2 below, and the reason is one
+-- expression: `delayLast` never raises a matrix (of 688 ladders it lowers 318 and fixes
+-- 370), so applying it at ε-indices lowers exactly the ordinally largest ones.  A ladder
+-- that reproduces the tower-limit shape at ε-indices WITHOUT descending in `cmpM` would
+-- pass everything here; `table/candidates/ladder-modes-2026-08-13.lean.txt` is the switch
+-- that measures the trade.
+--
 -- Replace `CAND` with the candidate's fully qualified name before running.
 
 import Rows.TM
