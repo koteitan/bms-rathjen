@@ -728,6 +728,26 @@ $`\\mathrm{DomI}`$ を要求するのは、この一価性の破れを塞ぐた�
 "
   header ++ body ++ footer
 
+/-! ## GATE 5 — no row may sit at a position where `fsN` is meaningless (2026-08-13)
+
+`fsN` is the Nat-indexed fundamental sequence and is only defined where the cofinality is
+countable.  Outside that it does not fail loudly: over a 110-term corpus, 27 terms have
+uncountable cofinality and `fsN · 3` returns a plausible-looking term for 24 of them
+(`φ̄(Ω,0)` has cofinality `Ω` and `fsN · 3 = φ̄(0,Ω)`).  So a row placed there would carry
+an E3 statement about a sequence that means nothing, and nothing would say so.
+
+This became live on 2026-08-13: fixing `cofT`'s ψ clause (`ψ_{Z δ}(α)` for `δ` a limit has
+cofinality `cof δ`, not `ω`) enlarged the set of such positions.  No current row is
+affected — the guard below passes — but it passes as a check rather than as luck.
+-/
+#guard rows.all fun r =>
+  match TM.Term.kindT r.t with
+  | .isLim => TM.Term.cofT r.t == TM.Term.omega
+  | _ => true
+-- CTRL the predicate is reachable: such terms exist and the check would fire on them
+#guard !(TM.Term.cofT (TM.Term.psi (TM.Term.Z (TM.Term.Z TM.Term.zero)) TM.Term.zero)
+         == TM.Term.omega)
+
 /-! ## The "GATE 4" that was here on 2026-08-13 is WITHDRAWN — see `Evidence/SqV.lean` §K3.20
 
 It claimed four rows carried a non-normal-form term and that three of them were wrong.  It
