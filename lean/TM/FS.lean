@@ -8,6 +8,11 @@ each set is closed under) — the same shape as Buchholz-style systems and as §
 p-adic-lover-bot's pair-sequence paper.  Checking E3 (the expansion of a matrix
 against the fundamental sequence of its term) is what validates this definition.
 
+Since 2026-08-13 there is also an EXTERNAL witness for the region below Γ₀: twelve
+rows of the expansion column of P進大好きbot's "Rathjen-type Ordinal Notation" agree
+with `fsN` here.  See the provenance section at the bottom of this file — including
+the dictionary, which is not the identity.
+
 Contents:
   kindT : classification into zero / successor / limit
           (a term is a successor when its additive tail is 1 = φ̄00)
@@ -181,6 +186,58 @@ def fsN : Term → Nat → Term
   | _, _ => zero   -- never used on zero, successors, Z or M
   termination_by t n => (sizeOf t, n)
   decreasing_by all_goals simp_wf <;> omega
+
+/-! ## Provenance check against an independent Rathjen-type notation (2026-08-13)
+
+This file's header says [R91] has no fundamental sequences and that the definitions here
+are a design choice of this repository.  They now have an external witness.
+
+P進大好きbot, "Rathjen-type Ordinal Notation" (Googology Wiki, 2019, CC BY-SA 3.0),
+<https://googology.fandom.com/wiki/User_blog:P%E9%80%B2%E5%A4%A7%E5%A5%BD%E3%81%8Dbot/Rathjen-type_Ordinal_Notation>
+defines `dom` and an expansion map for a system that extends Rathjen's, and its "Up to
+Γ₀" analysis table lists (term, ordinal, expansion) triples.  Below `M` the systems should
+agree, and on the twelve rows of that table where the expansion is unambiguous, they do.
+
+DICTIONARY, and it is NOT the identity.  That source writes the PLAIN Veblen function
+`φ⁰_a(b)`; this repository writes Rathjen's `φ̄`, which re-counts fixed points ([R91]
+2.6(vi)).  The bridge is `phiNF`, verified here on three values whose answer is already
+known — `phiNF 1 0 = φ̄(1,0) = ε₀`, `phiNF 0 (ε₀+1) = φ̄(0,ε₀)`, `phiNF 2 0 = φ̄(2,0) = ζ₀`.
+Reading `φ⁰` as `φ̄` directly instead turns every fixed-point row into a spurious
+disagreement; that mistake was made once here, see `Evidence/SqV.lean` §K3.20.
+
+The right-hand sides below are HAND-TRANSLATED from that table's prose (`1+1+⋯`,
+`φ⁰₀(⋯φ⁰₀(0)⋯)`), so they carry the risk of a reading error, not of a transcription error.
+The Γ₀ row additionally required unfolding that source's `Γ⁰(s,n)` map, and its indices sit
+one below ours (`ours[n] = Γ⁰(0, n+1)`).
+-/
+
+private def fsRow (t : Term) (l : List Term) : Bool :=
+  (l.zipIdx.all fun p => fsN t p.2 == p.1)
+
+-- The twelve rows of that table whose expansion column is unambiguous.
+#guard
+  let w := phi zero one
+  let e0 := phi one zero
+  let ww := phi zero w
+  [ fsRow w [zero, one, ofNat 2, ofNat 3],                          -- ω        1+1+⋯
+    fsRow (plus w one) [w, w, w],                                   -- ω+1      ω
+    fsRow (plus w w) [w, plus w one, plus w (ofNat 2)],             -- ω+ω      ω+1+1+⋯
+    fsRow (phi zero (ofNat 2)) [zero, w, plus w w],                 -- ω²       ω+ω+⋯
+    fsRow ww [one, w, phi zero (ofNat 2), phi zero (ofNat 3)],      -- ω^ω      φ⁰₀(1+1+⋯)
+    fsRow e0 [zero, one, w, ww],                                    -- ε₀       the tower
+    fsRow (phi zero e0) [zero, e0, plus e0 e0],                     -- ω^(ε₀+1) ε₀+ε₀+⋯
+    fsRow (phi one w) [e0, phi one one, phi one (ofNat 2)],         -- ε_ω      φ⁰₁(1+1+⋯)
+    fsRow (phi one e0) [e0, phi one one, phi one w, phi one ww],    -- ε_{ε₀}   φ⁰₁(tower)
+    fsRow (phi (ofNat 2) zero)                                      -- ζ₀       φ⁰₁(⋯φ⁰₁(0)⋯)
+      [zero, e0, phi one e0, phi one (phi one e0)],
+    fsRow (phi w zero)                                              -- φ_ω(0)   φ⁰_{1+1+⋯}(0)
+      [one, e0, phi (ofNat 2) zero, phi (ofNat 3) zero],
+    fsRow (psi (Z zero) zero)                                       -- Γ₀       Γ⁰(0,1+1+⋯)
+      [one, e0, phi e0 zero, phi (phi e0 zero) zero] ].all id
+
+-- Negative control.  Without it a `#guard` over `fsRow` cannot be told apart from one
+-- that always says `true` — every list above could be empty and it would still pass.
+#guard ! (fsRow (phi zero one) [one, one, one])
 
 end Term
 end TM
