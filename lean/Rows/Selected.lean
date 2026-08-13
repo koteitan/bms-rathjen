@@ -912,11 +912,79 @@ theorem phiStep_A (X : Term) (hX : (X == zero) = false) :
   unfold Trans.Pair.phiStep
   rw [show Trans.Pair.logPhi TM.Term.one A = some A from rfl, hX]
 
+/-- 段 0: 一番内側。 -/
+theorem s0 (m : Nat) :
+    plus zero (omegaNF (plus A (iterT zero (m+2)))) = phi zero (add A (iterT zero (m+2))) := by
+  have hz : plus A (iterT zero (m+2)) = add A (iterT zero (m+2)) := Z0_eq (m+1)
+  have h1 : phiNF zero (plus A (iterT zero (m+2)))
+      = phi zero (add A (iterT zero (m+2))) := Z1_shape m
+  rw [show omegaNF (plus A (iterT zero (m+2))) = phiNF zero (plus A (iterT zero (m+2))) from by
+        rw [hz]; rfl, h1]
+  rfl
+
+/-- 段 1: `phiStep` が 1 枚。 -/
+theorem s1 (X : Term) (h2 : omegaNF (phi zero (add A X)) = phi zero (phi zero (add A X))) :
+    Trans.Pair.phiStep TM.Term.one A (phi zero (add A X))
+      = phi TM.Term.one (phi zero (phi zero (add A X))) := by
+  rw [phiStep_A _ rfl, h2, plus_absorb _ _ (le_Z2 X)]
+  rfl
+
+/-- 段 2: `φ̄(1,·)` の上では `plus zero` も `omegaNF` も素通り。 -/
+theorem s2 (V : Term) : plus zero (omegaNF (phi TM.Term.one V)) = phi TM.Term.one V := rfl
+
+/-- 段 3: 2 枚目の `phiStep`。 -/
+theorem s3 (X : Term) :
+    Trans.Pair.phiStep TM.Term.one A (phi TM.Term.one (phi zero (phi zero (add A X))))
+      = phi TM.Term.one (phi TM.Term.one (phi zero (phi zero (add A X)))) := by
+  rw [phiStep_A _ rfl,
+      show omegaNF (phi TM.Term.one (phi zero (phi zero (add A X))))
+        = phi TM.Term.one (phi zero (phi zero (add A X))) from rfl,
+      plus_absorb _ _ (le_Z3 X)]
+  rfl
+
+theorem e2p (X : Term) : phiNF zero (phi zero (add A X)) = phi zero (phi zero (add A X)) := by
+  show phiNFsucc zero (phi zero (add A X)) = _
+  unfold phiNFsucc
+  rw [show splitFin (phi zero (add A X)) = (phi zero (add A X), 0) from by
+    unfold splitFin
+    rw [show (phi zero (add A X)).toList = [phi zero (add A X)] from rfl]
+    simp only [List.reverse_cons, List.reverse_nil, List.nil_append, List.takeWhile_cons,
+      show (phi zero (add A X) == TM.Term.one) = false from rfl,
+      List.length_nil, Nat.sub_zero]
+    rfl]
+  rfl
+
+set_option maxHeartbeats 2000000 in
+theorem arith_succ (m : Nat) : valExpr (m+1) = Z4 (m+1) := by
+  show plus zero (omegaNF (Trans.Pair.phiStep TM.Term.one A
+    (plus zero (omegaNF (Trans.Pair.phiStep TM.Term.one A
+      (plus zero (omegaNF (plus A (iterT zero (m+2)))))))))) = _
+  rw [s0 m]
+  rw [s1 (iterT zero (m+2)) (e2p (iterT zero (m+2)))]
+  rw [s2 (phi zero (phi zero (add A (iterT zero (m+2)))))]
+  rw [s3 (iterT zero (m+2))]
+  rw [s2 (phi TM.Term.one (phi zero (phi zero (add A (iterT zero (m+2))))))]
+  show _ = phiNF TM.Term.one (Z3 (m+1))
+  rw [show Z3 (m+1) = phiNF TM.Term.one (Z2 (m+1)) from rfl,
+      show Z2 (m+1) = phiNF zero (Z1 (m+1)) from rfl, Z1_shape m,
+      e2p (iterT zero (m+2))]
+  rfl
+
+set_option maxRecDepth 40000 in
+set_option maxHeartbeats 4000000 in
+/-- **算術。証明済み。** `fsN` は整礎再帰なので定義的には簡約しない。先に `fsN_t_eq` で
+    `Z4` に置き換えると、残りは `phiNF`・`omegaNF`・`plus` だけの構造的な計算になる。
+    n = 0 は塔がちょうど 1 になって段の形が崩れるが、閉じているのでそのまま計算できる。 -/
+theorem arith : arithClaim
+  | 0 => by rw [fsN_t_eq 0]; rfl
+  | m+1 => by rw [arith_succ m, fsN_t_eq (m+1)]
+
 /-- 残るのはこれだけ。6 段の降下。 -/
 def valClaim : Prop := ∀ n, o? (BMS.expand M n) = some (valExpr n)
 
-theorem e3_of (hv : valClaim) (ha : arithClaim) : e3Claim := by
-  intro n; rw [hv n, ha n]
+/-- **残りは値側 1 本だけ。** -/
+theorem e3_of (hv : valClaim) : e3Claim := by
+  intro n; rw [hv n, arith n]
 
 #guard (List.range 6).all fun n => BMS.expand M n == P ++ zeroLad 6 n
 #guard (List.range 4).all fun n => o? (BMS.expand M n) == some (valExpr n)
