@@ -816,6 +816,49 @@ def valExpr (n : Nat) : Term :=
        通らない (項の形が違う)。順序は plus → omegaNF → phiNF である。 -/
 def arithClaim : Prop := ∀ n, valExpr n = fsN t (n + 1)
 
+def Z0 (n : Nat) : Term := plus A (iterT zero (n+1))
+def Z1 (n : Nat) : Term := phiNF zero (Z0 n)
+def Z2 (n : Nat) : Term := phiNF zero (Z1 n)
+def Z3 (n : Nat) : Term := phiNF TM.Term.one (Z2 n)
+def Z4 (n : Nat) : Term := phiNF TM.Term.one (Z3 n)
+
+/-- `t = φ̄(1, φ̄(1, φ̄(0, φ̄(0, ζ₀+ε₀))))`。各層の引数は極限でずれも無いので
+    `fsN_phi_lim` が 4 回当たり、最後は和の節と ε₀ の基本列。 -/
+theorem fsN_t_eq (n : Nat) : fsN t (n+1) = Z4 n := by
+  show fsN (phi TM.Term.one (phi TM.Term.one (phi zero (phi zero (add A e0))))) (n+1) = _
+  rw [Rows.ProofsB.fsN_phi_lim rfl rfl, Rows.ProofsB.fsN_phi_lim rfl rfl,
+      Rows.ProofsB.fsN_phi_lim rfl rfl, Rows.ProofsB.fsN_phi_lim rfl rfl,
+      fsN_add, fsN_e0]
+  rfl
+
+theorem lt_tower_A (m : Nat) : lt (iterT zero m) A = true :=
+  lt_iterT_bd Rows.ProofsB.isSC_zero rfl
+    (fun f _ => Rows.ProofsB.ltF_zero (by omega) (by intro h; exact Term.noConfusion h)) m
+
+theorem Z0_eq (n : Nat) : Z0 n = add A (iterT zero (n+1)) := by
+  have hb : le (iterT zero (n+1)) A = true := by
+    show ((iterT zero (n+1) == A) || lt (iterT zero (n+1)) A) = true
+    rw [lt_tower_A (n+1)]; exact Bool.or_true _
+  have hT : iterT zero (n+1) = phi zero (iterT zero n) :=
+    Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero n
+  show plus A (iterT zero (n+1)) = _
+  rw [hT] at hb ⊢
+  show ofList ((toList A).filter (fun a => le (phi zero (iterT zero n)) a)
+        ++ [phi zero (iterT zero n)]) = _
+  rw [show toList A = [A] from rfl]
+  simp only [List.filter_cons, hb, List.filter_nil]
+  rfl
+
+theorem tower_ne_one (m : Nat) : (iterT zero (m+2) == TM.Term.one) = false := by
+  have h := Rows.ProofsB.iterT_ne_zero Rows.ProofsB.isSC_zero m
+  rw [Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero (m+1)]
+  simp [TM.Term.one, h]
+
+/-! 項側は済んだ (`fsN_t_eq`)。算術に残るのは `valExpr n = Z4 n`、すなわち
+    `plus zero`・`omegaNF`・`phiStep` の 3 種類の畳み込みを 5 層はがすことである。
+    層ごとの形は `Z1 (m+1) = φ̄(0, A + 塔)` から始まるが、**n = 0 は別扱いが要る**
+    (塔が 1 になり `splitFin` が畳む。上の注意 1)。 -/
+
 /-- 残るのはこれだけ。6 段の降下。 -/
 def valClaim : Prop := ∀ n, o? (BMS.expand M n) = some (valExpr n)
 
