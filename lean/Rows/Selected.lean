@@ -854,7 +854,24 @@ theorem tower_ne_one (m : Nat) : (iterT zero (m+2) == TM.Term.one) = false := by
   rw [Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero (m+1)]
   simp [TM.Term.one, h]
 
-/-! 項側は済んだ (`fsN_t_eq`)。算術に残るのは `valExpr n = Z4 n`、すなわち
+/-! ### 層をはがす補題のうち、どれが一般でどれが具体形を要るか (測定・部分証明済み)
+
+`W` を記号のままにして 7 つ試したところ、**一般に `rfl` で通るのは 4 つだけ**だった。
+
+    omegaNF (add A W) = phiNF zero (add A W)              一般。頭が A で決まる
+    plus zero (phi zero V) = phi zero V                   一般
+    plus zero (phi 1 V) = phi 1 V                         一般
+    omegaNF (phi 1 V) = phi 1 V                           一般
+    omegaNF (phi zero V) = phi zero (phi zero V)          **`V ≠ 0` が要る** (証明済み)
+    phiStep 1 A (phi zero V) = phi 1 (phi zero (phi zero V))   **具体形が要る**
+    phiStep 1 A (phi 1 V) = phi 1 (phi 1 V)                    **具体形が要る**
+
+最後の 2 つが要求するのは `plus A X = X`、つまり A が呑まれることで、これは
+`le X A = false` すなわち `lt A X`。`lt A (phi zero X)` は [R91] 2.3.4 で `A ≤ X` に落ち、
+X が `add A …` の形なら和の節が `A == A` で即決する — **だから V を記号のままにはできず、
+`add A (塔)` という具体形まで開く必要がある**。逆に言えばそこまで開けば安い。
+
+項側は済んだ (`fsN_t_eq`)。算術に残るのは `valExpr n = Z4 n`、すなわち
     `plus zero`・`omegaNF`・`phiStep` の 3 種類の畳み込みを 5 層はがすことである。
     層ごとの形は `Z1 (m+1) = φ̄(0, A + 塔)` から始まるが、**n = 0 は別扱いが要る**
     (塔が 1 になり `splitFin` が畳む。上の注意 1)。 -/
