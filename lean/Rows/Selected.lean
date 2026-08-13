@@ -43,6 +43,22 @@ Where the work actually was, in case the next row looks similar:
 `e3` inherits `Classical.choice` from StageB's fold machinery through the value side;
 `arith` and the tower bounds are `[propext, Quot.sound]`.
 
+HOW DEEP EACH ROW GOES, measured for all six.  This is the thing that decides how much work
+a row is, and it is not visible from the term:
+
+    row   展開の形                          `decP` の段数
+    F1    梯子 (2,0)(3,0)…                  2   ← 済
+    F2b   梯子 (3,0)(4,0)…                  2   ← 済
+    F2a   (1,1) の反復 (`runq`)             ?
+    F3b   梯子 (6,0)(7,0)…                  6   梯子の底が段ごとに 1 下がる。n に依らない
+    F3c   2 列ブロック (o,0)(o+1,1)、歩幅 2  ?   `frep` の形
+    F3a   3 列ブロック (4,0)(5,1)(6,1)      n とともに増える  ← ここだけ質が違う
+
+F1 と F2b が 2 段で底に着いたのは偶然で、残りは違う。F3b と F3c は**深さが n に依らない**
+ので機械的に長いだけだが、F3a はブロックが `decP` のたびに 1 下がって 0 に達すると自分が
+分裂を始めるため、**深さが反復回数とともに増える**。そこは `Evidence/StageB.lean` §5 の
+`oLAux_chain` / `frep` の仕事である。
+
 FAMILY 2's SECOND ROW has the same ladder — `expand_F2b` is proved, and it is four lines
 because the generic ladder lemmas moved out of `F1` into this namespace.  ITS VALUE SIDE IS
 SHAPED DIFFERENTLY, and that is the thing to know before starting it: in family 1 one
@@ -696,6 +712,34 @@ def e3ClaimFrom1 : Prop := ∀ n, o? (BMS.expand M (n + 1)) = some (fsN t (n + 2
 #guard match o? (BMS.expand M 0) with
        | some v => lt (fsN t 1) v && lt v (fsN t 2)
        | none => false
+
+/-! ### 行列の側 — 梯子ではなく 3 列ブロックの反復
+
+最後の列 `(5,0)` の `lnz` は 0 なので `delta` が全て 0 で、**複製は上昇しない**。
+悪い部分は 3 列 `(4,0)(5,1)(6,1)` で、それがそのまま n+1 回並ぶ。 -/
+
+def blk : Matrix := [[4,0],[5,1],[6,1]]
+
+theorem flat_const : ∀ (k : Nat), ((List.range k).map fun _ => blk).flatten = Trans.repM blk k
+  | 0 => rfl
+  | k+1 => by
+    rw [List.range_succ_eq_map, List.map_cons, List.flatten_cons, List.map_map]
+    show blk ++ ((List.range k).map fun _ => blk).flatten = blk ++ Trans.repM blk k
+    rw [flat_const k]
+
+/-- **行列の側。証明済み。** -/
+theorem expand_F3a (n : Nat) : BMS.expand M n = M.take 8 ++ Trans.repM blk (n+1) := by
+  show (BMS.expand? M n).getD [] = _
+  have h : BMS.expand? M n
+      = some (M.take 8 ++ ((List.range (n+1)).map fun a =>
+          ([[4 + a*0*1, 0 + a*0*1], [5 + a*0*1, 1 + a*0*1],
+            [6 + a*0*1, 1 + a*0*1]] : Matrix)).flatten) := rfl
+  have hf : (fun a => ([[4 + a*0*1, 0 + a*0*1], [5 + a*0*1, 1 + a*0*1],
+      [6 + a*0*1, 1 + a*0*1]] : Matrix)) = (fun _ => blk) := by funext a; simp [blk]
+  rw [h, hf, flat_const (n+1)]
+  rfl
+
+#guard (List.range 6).all fun n => BMS.expand M n == M.take 8 ++ Trans.repM blk (n+1)
 
 end F3a
 
