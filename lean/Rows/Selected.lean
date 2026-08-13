@@ -61,6 +61,48 @@ def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
 
+/-! ### 分解: E3 を 3 つに割る
+
+行列の側は `M[n] = P ++ (2,0)(3,0)…(n+1,0)` で、値の側はその梯子が ω 塔を積む。
+項の側は `fsN t` が最後の加数 ε₀ の基本列を走る。**項の側だけは今証明できる**ので、
+残る 2 つが何であるかがはっきりする。 -/
+
+/-- 展開の共通の頭。`M` から最後の `(2,1)` を落としたもの。 -/
+def P : Matrix := [[0,0],[1,1],[2,0],[1,1],[1,0],[2,1],[3,0],[1,0]]
+/-- 梯子 `(o,0)(o+1,0)…`、`k` 本。 -/
+def zeroLad (o : Nat) : Nat → Matrix
+  | 0 => []
+  | k + 1 => ([o,0] : BMS.Col) :: zeroLad (o+1) k
+
+def A : Term := phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero))
+def B : Term := phi (phi zero zero) (phi zero (phi zero zero))
+def e0 : Term := phi (phi zero zero) zero
+
+theorem t_eq : t = phi zero (add A (add B e0)) := rfl
+
+/-- **項の側。証明済み。** `t` の基本列は最後の加数 ε₀ の基本列を走る。 -/
+theorem fsN_add (a b : Term) (n : Nat) : fsN (add a b) n = plus a (fsN b n) := by rw [fsN]
+
+theorem fsN_t (n : Nat) : fsN t n = phiNF zero (plus A (plus B (fsN e0 n))) := by
+  rw [t_eq, Rows.ProofsB.fsN_phi_lim (a := zero) (b := add A (add B e0)) rfl rfl n,
+      fsN_add, fsN_add]
+
+/-- 行列の側。**未証明。** -/
+def expandClaim : Prop := ∀ n, BMS.expand M n = P ++ zeroLad 2 n
+/-- 値の側。**未証明。** -/
+def valClaim : Prop := ∀ n, o? (P ++ zeroLad 2 n) = some (phiNF zero (plus A (plus B (fsN e0 (n+1)))))
+
+/-- 3 つが揃えば E3 が出る。**この含意だけは証明してある**ので、残りは 2 つの補題である。 -/
+theorem e3_of (he : expandClaim) (hv : valClaim) : e3Claim := by
+  intro n
+  rw [he n, hv n, fsN_t (n+1)]
+
+#guard (List.range 8).all fun n => BMS.expand M n == P ++ zeroLad 2 n
+#guard (List.range 8).all fun n =>
+  o? (P ++ zeroLad 2 n) == some (phiNF zero (plus A (plus B (fsN e0 (n+1)))))
+-- CTRL 頭を 1 列削れば合わなくなる
+#guard (List.range 8).any fun n => !(BMS.expand M n == P.dropLast ++ zeroLad 2 n)
+
 end F1
 
 /-! ## diff.md 族 2 -/
