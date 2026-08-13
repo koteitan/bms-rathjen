@@ -637,9 +637,53 @@ theorem val (n : Nat) :
 /-- φ̄(1,ζ₀)。連鎖の各段が積む先。 -/
 def Bt : Term := phi (phi zero zero) (phi (add (phi zero zero) (phi zero zero)) zero)
 
-/-- 残る算術。**未証明。** 連鎖が `φ̄(1, φ̄(1,ζ₀) + k)` になることと、
-    `fsN ω k = k` の 2 本で閉じる。前者は `splitFin` が末尾の 1 を k 個取るところが
-    記号 k のままでは落ちないので、そこに帰納が要る。 -/
+theorem fsN_omega (k : Nat) : fsN TM.Term.omega k = ofNat k := by
+  show fsN (phi zero TM.Term.one) k = _
+  rw [fsN]
+  show mulNat (omegaNF zero) k = ofNat k
+  exact Rows.ProofsB.mulNat_one_ofNat k
+
+theorem plus_Bt_eq (k : Nat) :
+    plus Bt (ofNat (k+1)) = ofList (Bt :: List.replicate (k+1) TM.Term.one) := by
+  unfold plus
+  rw [Rows.ProofsB.toList_ofNat (k+1), List.replicate_succ]
+  show ofList ((toList Bt).filter (fun a => le TM.Term.one a)
+    ++ (TM.Term.one :: List.replicate k TM.Term.one)) = _
+  rw [show toList Bt = [Bt] from rfl]
+  simp only [List.filter_cons, show le TM.Term.one Bt = true from rfl, List.filter_nil]
+  simp [List.replicate_succ]
+
+theorem toList_plus_Bt : ∀ (k : Nat),
+    toList (plus Bt (ofNat k)) = Bt :: List.replicate k TM.Term.one
+  | 0 => rfl
+  | k+1 => by
+    rw [plus_Bt_eq k, toList_ofList]
+    intro x hx
+    rcases List.mem_cons.mp hx with h | h
+    · subst h; rfl
+    · rw [List.eq_of_mem_replicate h]; rfl
+theorem takeWhile_rep : ∀ (k : Nat),
+    (List.replicate k TM.Term.one ++ [Bt]).takeWhile (fun x => x == TM.Term.one)
+      = List.replicate k TM.Term.one
+  | 0 => rfl
+  | k+1 => by
+    rw [List.replicate_succ, List.cons_append, List.takeWhile_cons,
+        show (TM.Term.one == TM.Term.one) = true from rfl, takeWhile_rep k]
+    simp [List.replicate_succ]
+
+theorem splitFin_Bt (k : Nat) : splitFin (plus Bt (ofNat k)) = (Bt, k) := by
+  have hl := toList_plus_Bt k
+  show (ofList ((toList (plus Bt (ofNat k))).take
+        ((toList (plus Bt (ofNat k))).length -
+          ((toList (plus Bt (ofNat k))).reverse.takeWhile (fun x => x == TM.Term.one)).length)),
+      ((toList (plus Bt (ofNat k))).reverse.takeWhile (fun x => x == TM.Term.one)).length) = _
+  rw [hl, List.reverse_cons, List.reverse_replicate, takeWhile_rep k]
+  simp
+  rfl
+
+/-- 残る算術。**未証明。** `fsN ω k = k` と `splitFin (φ̄(1,ζ₀)+k) = (φ̄(1,ζ₀), k)` は
+    上で証明した。残るのは `phiNF 1 (φ̄(1,ζ₀)+k) = φ̄(1, φ̄(1,ζ₀)+k)` で、
+    `k = 0` と `k ≥ 1` で `plus` の形が変わるので場合分けが要る。 -/
 def arithClaim : Prop := ∀ n, plus zero (omegaNF (chain (n+1))) = fsN t (n+1)
 
 theorem e3_of (ha : arithClaim) : ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1)) := by
