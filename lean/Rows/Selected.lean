@@ -681,13 +681,98 @@ theorem splitFin_Bt (k : Nat) : splitFin (plus Bt (ofNat k)) = (Bt, k) := by
   simp
   rfl
 
-/-- 残る算術。**未証明。** `fsN ω k = k` と `splitFin (φ̄(1,ζ₀)+k) = (φ̄(1,ζ₀), k)` は
-    上で証明した。残るのは `phiNF 1 (φ̄(1,ζ₀)+k) = φ̄(1, φ̄(1,ζ₀)+k)` で、
-    `k = 0` と `k ≥ 1` で `plus` の形が変わるので場合分けが要る。 -/
-def arithClaim : Prop := ∀ n, plus zero (omegaNF (chain (n+1))) = fsN t (n+1)
+theorem plus_Bt_add (k : Nat) : plus Bt (ofNat (k+1)) = add Bt (ofNat (k+1)) := by
+  rw [plus_Bt_eq k]
+  show add Bt (ofList (List.replicate (k+1) TM.Term.one)) = _
+  rw [show ofList (List.replicate (k+1) TM.Term.one) = mulNat TM.Term.one (k+1) from rfl,
+      Rows.ProofsB.mulNat_one_ofNat (k+1)]
 
-theorem e3_of (ha : arithClaim) : ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1)) := by
-  intro n; rw [val n, ha n]
+theorem phiNF_one_Bt : ∀ (k : Nat),
+    phiNF (ofNat 1) (plus Bt (ofNat k)) = phi (ofNat 1) (plus Bt (ofNat k))
+  | 0 => rfl
+  | k+1 => by
+    have hadd := plus_Bt_add k
+    have hsp : splitFin (add Bt (ofNat (k+1))) = (Bt, k+1) := by
+      rw [← hadd]; exact splitFin_Bt (k+1)
+    rw [hadd]
+    show phiNFsucc (ofNat 1) (add Bt (ofNat (k+1))) = _
+    unfold phiNFsucc
+    rw [hsp]
+    rfl
+
+theorem filter_rep : ∀ (k : Nat),
+    (List.replicate k TM.Term.one).filter (fun a => le TM.Term.one a)
+      = List.replicate k TM.Term.one
+  | 0 => rfl
+  | k+1 => by
+    rw [List.replicate_succ, List.filter_cons,
+        show le TM.Term.one TM.Term.one = true from rfl, filter_rep k]
+    simp [List.replicate_succ]
+
+theorem plus_succ (k : Nat) :
+    plus (plus Bt (ofNat k)) TM.Term.one = plus Bt (ofNat (k+1)) := by
+  rw [plus_Bt_eq k]
+  show ofList ((toList (plus Bt (ofNat k))).filter (fun a => le TM.Term.one a)
+    ++ [TM.Term.one]) = _
+  rw [toList_plus_Bt k]
+  simp only [List.filter_cons, show le TM.Term.one Bt = true from rfl, filter_rep k]
+  rw [List.replicate_succ']
+  simp
+
+theorem chain_shape : ∀ (k : Nat), chain k = phiNF (ofNat 1) (plus Bt (ofNat k))
+  | 0 => rfl
+  | k+1 => by
+    show stepA (chain k) = _
+    rw [chain_shape k, phiNF_one_Bt k]
+    unfold stepA Trans.Pair.phiStep
+    rw [show Trans.Pair.logPhi (ofNat 1) (phi (ofNat 1) (plus Bt (ofNat k)))
+          = some (plus Bt (ofNat k)) from by
+        show (if ((ofNat 1) == (ofNat 1)) = true then
+          some (if phiShifted (ofNat 1) (plus Bt (ofNat k)) then _ else _) else _) = _
+        rw [show phiShifted (ofNat 1) (plus Bt (ofNat k)) = false from by
+          show (isFP (ofNat 1) (splitFin (plus Bt (ofNat k))).1
+            || ((plus Bt (ofNat k)) == zero && (ofNat 1).isSC)) = false
+          rw [splitFin_Bt k]
+          show (isFP (ofNat 1) Bt || ((plus Bt (ofNat k)) == zero && (ofNat 1).isSC)) = false
+          rw [show isFP (ofNat 1) Bt = false from rfl,
+              show ((ofNat 1) : Term).isSC = false from rfl]
+          simp]
+        rfl]
+    show phiNF (ofNat 1) (plus (plus Bt (ofNat k)) TM.Term.one) = _
+    rw [plus_succ k]
+
+theorem fsN_t_eq (j : Nat) : fsN t (j+1) = phiNF (ofNat 1) (plus Bt (ofNat (j+1))) := by
+  show fsN (phi (ofNat 1) (add Bt TM.Term.omega)) (j+1) = _
+  rw [Rows.ProofsB.fsN_phi_lim rfl rfl, fsN_add, fsN_omega]
+
+/-- **算術。証明済み。** -/
+theorem arith (n : Nat) : plus zero (omegaNF (chain (n+1))) = fsN t (n+1) := by
+  rw [chain_shape (n+1), fsN_t_eq n, phiNF_one_Bt (n+1)]
+  rfl
+
+/-- **E3。証明済み。** -/
+theorem e3 : ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1)) := by
+  intro n; rw [val n, arith n]
+
+/-! ### 外部の表の値は、同じ試験を通らない -/
+
+/-- 先方の値 ([diff.md](../../table/diff.md) 族 2 の 248 行目)。先方の構文解析器で訳した。 -/
+def tHex : Term := phiNF (ofNat 1) (add (phiNF (ofNat 1) (add (phiNF (ofNat 2) zero) (ofNat 1)))
+  (phiNF (ofNat 1) zero))
+
+#guard !(o? M == some tHex)
+#guard kindT tHex == KindT.isLim
+#guard (List.range 6).all fun k => (List.range 8).any fun n =>
+  !(o? (BMS.expand M n) == some (fsN tHex (n + k)))
+-- **この行だけ 0 番目が偶然当たる。** `fsN tHex 1` に一致する。それでも E3 は
+-- 全 n で固定の添字を要求するので、上のずらしの不成立で反証は足りている。
+-- 1 番目から先は先方の基本列に載らない (30 項まで探索)。
+#guard (List.range 4).all fun n => (List.range 30).all fun j =>
+  !(o? (BMS.expand M (n+1)) == some (fsN tHex j))
+#guard (List.range 30).any fun j => o? (BMS.expand M 0) == some (fsN tHex j)
+-- CTRL 同じ探索は当方の値では全部当たる
+#guard (List.range 4).all fun n => (List.range 30).any fun j =>
+  o? (BMS.expand M n) == some (fsN t j)
 
 #guard (List.range 6).all fun n =>
   plus zero (omegaNF (chain (n+1))) == fsN t (n+1)
