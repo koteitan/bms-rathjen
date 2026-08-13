@@ -208,7 +208,14 @@ theorem fsN_e0 (m : Nat) : fsN e0 m = iterT zero m := by
   show TM.Term.iterPhiAt zero zero m = iterT zero m
   exact iterPhiAt_zero m
 
-/-! ### ブロックの 2 形。族をまたいで使う。 -/
+/-! ### ブロックの 2 形。族をまたいで使う。
+
+**`show` を使わないこと。** F3b の値側は `show` で段ごとに式を書き直していたとき
+554 秒でも終わらず (8M heartbeats を使い切る)、`show` を全部外して `d1`..`d5` が
+cons の形を直接出すようにしたら **3 秒**になった。`show` は毎回入れ子の式全体を
+書き直すので、Lean が 12 列の行列リテラルの上で `oLV` と `decP` を展開しながら
+defeq 検査をやり直す。下の 2 つの補題は左辺が構文的に当たる形にしてあるので、
+降下は `rw` の連鎖 1 本で書ける。 -/
 
 /-- 単一ブロック (先頭が `(0,0)`)。 -/
 theorem oLV_single (j : Nat) (c : BMS.Col) (rest : Matrix)
