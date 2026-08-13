@@ -1272,11 +1272,11 @@ theorem decP_twos (k : Nat) : Trans.Pair.decP (twos k) = ones k := by
 
 theorem blocksP_cons_zero (c h : BMS.Col) (t : List BMS.Col) (hz : Trans.Pair.r0 h = 0) :
     Trans.Pair.blocksP (c :: h :: t) = [c] :: Trans.Pair.blocksP (h :: t) := by
-  show (match Trans.Pair.blocksP (h :: t), (h :: t).head? with
-        | acc, some hh =>
-          if Trans.Pair.r0 hh == 0 then [c] :: acc else (c :: acc.headD []) :: acc.tail
-        | _, none => [[c]]) = _
-  simp [hz]
+  show (if Trans.Pair.r0 h == 0 then [c] :: Trans.Pair.blocksP (h :: t)
+        else (c :: (Trans.Pair.blocksP (h :: t)).headD []) ::
+          (Trans.Pair.blocksP (h :: t)).tail) = _
+  rw [show (Trans.Pair.r0 h == 0) = true from by rw [hz]; rfl]
+  rfl
 
 theorem blocksP_cons_nz (c h : BMS.Col) (t : List BMS.Col) (hz : Trans.Pair.r0 h ≠ 0) :
     Trans.Pair.blocksP (c :: h :: t)

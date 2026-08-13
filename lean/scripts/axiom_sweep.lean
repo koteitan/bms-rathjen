@@ -71,6 +71,12 @@ Third baseline.  History, because the round trip is the useful part:
                      declarations of the file report `[propext, Quot.sound]`.
                      **Cleaning this means cleaning StageB's fold machinery**, which
                      is a different job from the one that produced the file.
+    4234 | 0 | 148   `Rows.ProofsB.blocksP_cons_zero` no longer closes its Bool branch
+                     with unrestricted `simp`.  An explicit rewrite of
+                     `r0 h == 0` removes `Classical.choice` from that lemma and from
+                     the entire StageB chain through `blocksP_append`, `oLV_eq` and
+                     `oLAux_eq_oLV`.  The selected-row proofs that inherit this chain
+                     now report `[propext, Quot.sound]`.
 
 **The residue certsound flagged as "attackable in isolation" was attackable**, and
 what found it was a codex worker taking a wrong turn: told to cite the proved
