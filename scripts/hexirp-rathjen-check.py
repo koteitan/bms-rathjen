@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hexirp 氏の BMS↔Rathjen 対応表と、このリポジトリの `Trans.oR` を突き合わせる。
+"""Hexirp 氏の BMS4↔OCF 対応表と、このリポジトリの `Trans.oR` を突き合わせる。
 
 **なぜあるか。** 表の値のうち、単一の翻訳 `oR` からしか来ていないものを、外部の独立な
 資料と突き合わせるため。2026-08-13 にこの突き合わせを一度その場限りのスクリプトで行い、
@@ -10,10 +10,16 @@
 **資料はリポジトリに入れない。** CC BY-SA 3.0 であり、出典が正でローカルの控えは複製に
 すぎない。ディレクトリを渡して読む。無ければ理由を表示して飛ばす。
 
-  Hexirp「バシク行列システムとRathjenの弱マーロのpsiの対応」
+  Hexirp「バシク行列システム４と全部盛りオクフ・ベータの対応」
       <https://googology.fandom.com/ja/wiki/ユーザー:Hexirp/執筆した記事の一覧> から辿る
-      高さ 2 が 2272 行、高さ 3 が 2627 行。BMS 行列 → T(M) 項。
-      ライセンス CC BY-SA 3.0 (Fandom)。
+      高さ 2 が 2272 行、高さ 3 が 2627 行。ライセンス CC BY-SA 3.0 (Fandom)。
+
+      **行き先は Rathjen の 𝔗(M) ではなく「全部盛り」の OCF である。** 題名がそう言って
+      いる。だから `W(x)` が訳せないのは翻訳の穴ではなく**系の違い**で、先方の側に
+      Ω 階層があり 𝔗(M) には無い、というだけのことである。当方が突き合わせているのは
+      両者が重なる Veblen 断片に限られる。
+      (ローカルの控えの `<title>` は「バシク行列システムとRathjenの弱マーロのpsiの対応」
+      という別の題名を持つ。古い版か作業用の題名と思われる。正は上の題名。)
 
   python3 scripts/hexirp-rathjen-check.py --papers <資料を置いたディレクトリ> --out /tmp/hx.lean
   cd lean && leanman check -C $PWD --backend lean /tmp/hx.lean
@@ -203,7 +209,7 @@ def read_pairs(path):
 # --- Lean の出力 ------------------------------------------------------------
 
 HEAD = """-- 生成物: scripts/hexirp-rathjen-check.py
--- 出典: Hexirp「バシク行列システムとRathjenの弱マーロのpsiの対応」CC BY-SA 3.0
+-- 出典: Hexirp「バシク行列システム４と全部盛りオクフ・ベータの対応」CC BY-SA 3.0
 --   {url}
 -- 資料そのものはリポジトリに入れない。ここにあるのは当方の記法へ翻訳した対だけである。
 import Rows.TM
