@@ -56,7 +56,7 @@ $`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ �
 | [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L230) | $`\psi_{\Omega}(0)`$ | $`\Gamma_0`$ |  | [oR](../lean/Trans/Recal.lean) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 | **M** (3,1) の最初。**T** ψ の最初。**B** ψ₁ の 3 重入れ子の最初 |
 | [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L234) | $`\psi_{\Omega}(0)+1`$ | $`\Gamma_0+1`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
 | [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L236) | $`\bar{\varphi}(0,\psi_{\Omega}(0))`$ | $`\omega^{\Gamma_0+1}`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L248) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_0(\Omega_2)`$ |  | [oR](../lean/Trans/Recal.lean) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正 | **M** 1 行目に 2 が現れる最初。**T** Z の最初。**B** Ω₂ の最初 |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L248) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_0(\Omega_2)`$ | [fₙ](../lean/Rows/G4.lean#L6) | [oR](../lean/Trans/Recal.lean) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正 | **M** 1 行目に 2 が現れる最初。**T** Z の最初。**B** Ω₂ の最初 |
 | [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L252) | $`\bar{\varphi}(1,\psi_{\Omega}(Z(1)))`$ | $`\varepsilon_{\psi_0(\Omega_2)+1}`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)`](../lean/Rows/TM.lean#L255) | $`\bar{\varphi}(2,\psi_{\Omega}(Z(1)))`$ | $`\zeta_{\psi_0(\Omega_2)+1}`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L258) | $`\psi_{\Omega}(Z(1)+1)`$ | $`\Gamma_{\psi_0(\Omega_2)+1}`$ |  | [oR](../lean/Trans/Recal.lean) |  | **T** ψ の引数に Z と和が同居する最初 |

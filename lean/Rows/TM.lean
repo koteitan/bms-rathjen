@@ -55,7 +55,7 @@ structure Row where
   name : String        -- common name (MathJax)
   proof : String := "" -- key of the E3 proof; resolved to a file+line by gentable and
                        -- rendered as the E3 mark.  Searched in Rows/Proofs.lean,
-                       -- Rows/ProofsB.lean, Rows/Selected.lean, Rows/G3.lean,
+                       -- Rows/ProofsB.lean, Rows/Selected.lean, Rows/G3.lean, Rows/G4.lean,
                        -- in that order.
                        -- ("" = no all-n proof yet.)  A key that resolves to nothing
                        -- prints no mark, so a renamed namespace loses the mark
@@ -246,7 +246,7 @@ def rows : List Row := [
   -- STANDARD matrix for the Bachmann–Howard ordinal has been identified by the
   -- reference implementation rather than by hand.
   { m := [[0,0],[1,1],[2,2]], t := psi (Z zero) (Z (phi zero zero)),
-    name := "\\psi_0(\\Omega_2)", ev := "oR",
+    name := "\\psi_0(\\Omega_2)", proof := "namespace G4", ev := "oR",
     note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正",
     sel := "**M** 1 行目に 2 が現れる最初。**T** Z の最初。**B** Ω₂ の最初" },
   { m := [[0,0],[1,1],[2,2],[1,1]],
