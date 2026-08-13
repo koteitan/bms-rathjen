@@ -19,12 +19,22 @@ no matrix and no `o?` left in it:
     val_F1      o? (P ++ zeroLad 2 n) = …, given `arithClaim`              proved
     fsN_t       fsN t n = φ̄(0, A+B+fsN e0 n)                               proved
     e3_of       those give E3                                              proved
+    lt_tower_A  lt (iterT zero m) (φ̄(1,ω+1))                               proved
+    lt_tower_B  lt (iterT zero m) (φ̄(1,ω))                                 proved
+    plus_shape  (A+B)+T = A+(B+T) for T the tower                          proved
+    fsN_e0      fsN ε₀ m = iterT zero m                                    proved
     arithClaim  plus 0 (ω^(A+B+iterT 0 (n+1))) = φ̄(0, A+(B+fsN e0 (n+1)))  OPEN
 
-`arithClaim` is where the ordinal content sits.  `plus` is decided by comparing against the
-HEAD of its right argument, and that head is the tower `iterT zero (n+1)`, so the identity
-is really "the tower stays below `ε_ω`" — `le (iterT zero (n+1)) A` and the same for `B`.
-Everything about the BM4 expansion and about the translation is already discharged.
+THE ORDINAL CONTENT IS PROVED.  `plus` is decided by comparing against the HEAD of its
+right argument, and that head is the tower, so what the identity needed was "the tower
+stays below ε_ω".  That is `lt_tower_A`/`lt_tower_B`, and `plus_shape` is what they buy.
+`Rows.ProofsB.lt_iterT_bound` only bounds the tower by `φ̄(c,0)`; `ltF_phi_fst` already
+takes a general second argument, so `lt_iterT_bd` here widens it to `φ̄(c,d)` — that is the
+whole of the generalisation.
+
+WHAT IS LEFT IN `arithClaim` IS NORMALISATION, NOT ORDINALS: `omegaNF W = phiNF zero W`
+(i.e. `lt M W = false`) and `plus zero X = X`.  Both are about how the notation folds, and
+`phiNF`'s fixed-point branch has to be handled because at n = 0 the tower is `1`.
 
 WHICH ROWS.  The six rows of the shortlist that `o?` reaches AND agrees with the table on.
 They are exactly the rows of families 1–3 of `diff.md`, i.e. six of the nine where an
@@ -203,10 +213,79 @@ theorem tail_eq (n : Nat) :
   rw [Rows.ProofsB.decP_append, decP_zeroLad n 1]
   rfl
 
-/-- 残るのはこれだけ: **塔が ε_ω の下に留まる**という項の算術。行列も `o?` も出てこない。
-    `plus` は頭の成分の比較で決まるので、`le (iterT zero (n+1)) A` などが要る。 -/
+/-! #### 塔の評価
+
+`Rows.ProofsB.lt_iterT_bound` は行き先が `φ̄(c,0)` に限られている。`ltF_phi_fst` の
+第 2 引数はもともと一般なので、そのまま `φ̄(c,d)` に広げられる。 -/
+
+
+
+theorem ltF_iterT_bd {a c d : Term} (ha : a.isSC = false) (hac : (a == c) = false)
+    (hlt : ∀ f, 2 ≤ f → TM.Term.ltF f a c = true) :
+    ∀ (m f : Nat), m + 2 ≤ f → TM.Term.ltF f (iterT a m) (phi c d) = true
+  | 0, f, hf => Rows.ProofsB.ltF_zero (by omega) (by intro hh; exact Term.noConfusion hh)
+  | m + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      rw [Rows.ProofsB.iterT_succ ha m]
+      exact Rows.ProofsB.ltF_phi_fst hac (hlt g (by omega)) (ltF_iterT_bd ha hac hlt m g (by omega))
+
+theorem lt_iterT_bd {a c d : Term} (ha : a.isSC = false) (hac : (a == c) = false)
+    (hlt : ∀ f, 2 ≤ f → TM.Term.ltF f a c = true) (m : Nat) :
+    lt (iterT a m) (phi c d) = true := by
+  show TM.Term.ltF (TM.Term.fuelOf (iterT a m) (phi c d)) (iterT a m) (phi c d) = true
+  refine ltF_iterT_bd ha hac hlt m _ ?_
+  show m + 2 ≤ 2 * ((iterT a m).deg + (phi c d).deg) + 8
+  have := Rows.ProofsB.deg_iterT ha m
+  omega
+
+/-- **塔は ε_{ω+1} の下に留まる。** -/
+theorem lt_tower_A (m : Nat) : lt (iterT zero m) A = true :=
+  lt_iterT_bd Rows.ProofsB.isSC_zero rfl (fun f hf => Rows.ProofsB.ltF_zero_one f hf) m
+/-- **塔は ε_ω の下に留まる。** -/
+theorem lt_tower_B (m : Nat) : lt (iterT zero m) B = true :=
+  lt_iterT_bd Rows.ProofsB.isSC_zero rfl (fun f hf => Rows.ProofsB.ltF_zero_one f hf) m
+
+theorem iterPhiAt_zero : ∀ m, TM.Term.iterPhiAt zero zero m = iterT zero m
+  | 0 => rfl
+  | m+1 => by
+    show phiNF zero (TM.Term.iterPhiAt zero zero m) = phiNF zero (iterT zero m)
+    rw [iterPhiAt_zero m]
+
+theorem fsN_e0 (m : Nat) : fsN e0 m = iterT zero m := by
+  show fsN (phi (phi zero zero) zero) m = _
+  rw [fsN]
+  show TM.Term.iterPhiAt zero zero m = iterT zero m
+  exact iterPhiAt_zero m
+
+/-- 残るのはこれだけ。**順序数の中身 — 塔が ε_ω の下に留まること — は上で証明した**
+    (`lt_tower_A` / `lt_tower_B` / `plus_shape` / `fsN_e0`)。残っているのは
+    `omegaNF W = phiNF zero W` すなわち `lt M W = false` と、`plus zero X = X` の
+    正規化 2 つで、これは順序数の事実ではなく表記の畳み方の問題である。 -/
 def arithClaim : Prop := ∀ n, plus zero (omegaNF (plus (plus A B) (iterT zero (n+1))))
   = phiNF zero (plus A (plus B (fsN e0 (n+1))))
+
+/-- 両辺の引数が同じ 3 項和になる。`plus` は右引数の頭との比較で決まり、その頭が塔で、
+    塔は `lt_tower_A` / `lt_tower_B` で A・B の下にある。 -/
+theorem plus_shape (m : Nat) :
+    plus (plus A B) (iterT zero (m+1)) = plus A (plus B (iterT zero (m+1))) := by
+  have hA : le (iterT zero (m+1)) A = true := by
+    show ((iterT zero (m+1) == A) || lt (iterT zero (m+1)) A) = true
+    rw [lt_tower_A (m+1)]; exact Bool.or_true _
+  have hB : le (iterT zero (m+1)) B = true := by
+    show ((iterT zero (m+1) == B) || lt (iterT zero (m+1)) B) = true
+    rw [lt_tower_B (m+1)]; exact Bool.or_true _
+  have hT : iterT zero (m+1) = phi zero (iterT zero m) :=
+    Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero m
+  rw [hT] at hA hB ⊢
+  show ofList ((toList (plus A B)).filter (fun a => le (phi zero (iterT zero m)) a)
+        ++ [phi zero (iterT zero m)])
+      = plus A (ofList (([B]).filter (fun a => le (phi zero (iterT zero m)) a)
+        ++ [phi zero (iterT zero m)]))
+  rw [show toList (plus A B) = [A, B] from rfl]
+  simp only [List.filter_cons, hA, hB, List.filter_nil, if_pos rfl]
+  rfl
 
 /-- **値の側。上の算術一つに落ちる。** -/
 theorem val_F1 (ha : arithClaim) (n : Nat) :
