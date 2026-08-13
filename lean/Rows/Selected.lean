@@ -12,10 +12,19 @@ defined on the matrix and gives the table's term.  E3 is not proved for any row;
 row its exact statement is here with the index `k` fixed and verified on `n < 8`, together
 with a control that the neighbouring indices fail.
 
-FAMILY 1 IS FURTHER ALONG: its E3 is split into three, and two of the three are proved.
-The matrix side (`expand_F1`) and the term side (`fsN_t`) are theorems; `e3_of` shows they
-reduce E3 to the value side alone (`valClaim`), which is the half every `e3_val*` of
-`Evidence/StageB.lean` spends a hundred lines on.
+FAMILY 1 IS FURTHER ALONG.  Its E3 is now reduced to ONE ORDINAL-ARITHMETIC IDENTITY, with
+no matrix and no `o?` left in it:
+
+    expand_F1   BMS.expand M n = P ++ zeroLad 2 n                          proved
+    val_F1      o? (P ++ zeroLad 2 n) = …, given `arithClaim`              proved
+    fsN_t       fsN t n = φ̄(0, A+B+fsN e0 n)                               proved
+    e3_of       those give E3                                              proved
+    arithClaim  plus 0 (ω^(A+B+iterT 0 (n+1))) = φ̄(0, A+(B+fsN e0 (n+1)))  OPEN
+
+`arithClaim` is where the ordinal content sits.  `plus` is decided by comparing against the
+HEAD of its right argument, and that head is the tower `iterT zero (n+1)`, so the identity
+is really "the tower stays below `ε_ω`" — `le (iterT zero (n+1)) A` and the same for `B`.
+Everything about the BM4 expansion and about the translation is already discharged.
 
 WHICH ROWS.  The six rows of the shortlist that `o?` reaches AND agrees with the table on.
 They are exactly the rows of families 1–3 of `diff.md`, i.e. six of the nine where an
@@ -128,13 +137,127 @@ theorem expand_F1 (n : Nat) : BMS.expand M n = P ++ zeroLad 2 n := by
       = (fun a => ([[1+a,0]] : Matrix)) := by funext a; simp
   rw [h, hf, lad_flatten (n+1)]
   rfl
-/-- 値の側。**未証明。** -/
+/-- 値の側。 -/
 def valClaim : Prop := ∀ n, o? (P ++ zeroLad 2 n) = some (phiNF zero (plus A (plus B (fsN e0 (n+1)))))
 
-/-- 3 つが揃えば E3 が出る。**この含意だけは証明してある**ので、残りは 2 つの補題である。 -/
-theorem e3_of (hv : valClaim) : e3Claim := by
+/-! #### 値の側の証明
+
+`o?` は `blocksP` 上の畳み込みで、梯子は `(0,0)` で始まる 1 ブロックになるから
+`blocksP_append` で切れる。前半は閉じた計算、後半は梯子で、梯子の値は ω 塔である。
+燃料は `oLV` (`Evidence/StageB.lean` §9) に移して消す。 -/
+
+open Evidence.StageB (oLV)
+open Rows.ProofsB (iterT)
+
+theorem r0_zeroLad : ∀ (k o : Nat), 1 ≤ o → ∀ c ∈ zeroLad o k, Trans.Pair.r0 c ≠ 0
+  | 0, _, _, _, hc => by simp [zeroLad] at hc
+  | k+1, o, ho, c, hc => by
+    rcases List.mem_cons.mp hc with h | h
+    · subst h; show o ≠ 0; omega
+    · exact r0_zeroLad k (o+1) (by omega) c h
+
+theorem decP_zeroLad : ∀ (k o : Nat), Trans.Pair.decP (zeroLad (o+1) k) = zeroLad o k
+  | 0, _ => rfl
+  | k+1, o => by
+    show ([o+1-1, 0] : BMS.Col) :: Trans.Pair.decP (zeroLad (o+1+1) k)
+        = ([o,0] : BMS.Col) :: zeroLad (o+1) k
+    have h : o + 1 - 1 = o := by omega
+    rw [h, decP_zeroLad k (o+1)]
+
+theorem inFrag_zeroLad : ∀ (k o : Nat), Trans.Pair.inFrag (zeroLad o k) = true
+  | 0, _ => rfl
+  | k+1, o => by
+    have ih : (List.all (zeroLad (o+1) k) fun c =>
+        decide (List.length c ≤ 2) && decide (Trans.Pair.r1 c ≤ 1)) = true := inFrag_zeroLad k (o+1)
+    show Trans.Pair.inFrag (([o,0] : BMS.Col) :: zeroLad (o+1) k) = true
+    unfold Trans.Pair.inFrag
+    rw [List.all_cons, ih]
+    rfl
+
+theorem onlyRow0_append_false (u v : Matrix) (h : Trans.onlyRow0 u = false) :
+    Trans.onlyRow0 (u ++ v) = false := by
+  unfold Trans.onlyRow0 at h ⊢
+  rw [List.all_append, h]; rfl
+
+theorem omegaNF_iterT : ∀ m, omegaNF (iterT zero m) = iterT zero (m+1)
+  | 0 => rfl
+  | m+1 => Rows.ProofsB.omegaNF_iterT_zero m
+
+/-- 梯子の値は ω 塔。 -/
+theorem oLV_zeroLad : ∀ (m k : Nat), oLV k (zeroLad 0 m) = iterT zero m
+  | 0, _ => rfl
+  | m+1, k => by
+    rw [Evidence.StageB.oLV_eq]
+    show (Trans.Pair.blocksP (([0,0] : BMS.Col) :: zeroLad 1 m)).foldl _ _ = _
+    rw [Rows.ProofsB.blocksP_single ([0,0] : BMS.Col) (zeroLad 1 m) (r0_zeroLad m 1 (by omega))]
+    show plus zero (omegaNF (oLV 1 (Trans.Pair.decP (zeroLad 1 m)))) = _
+    rw [decP_zeroLad m 0, oLV_zeroLad m 1, omegaNF_iterT m]
+    exact Rows.ProofsB.plus_zero_left (by
+      rw [Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero m]; rfl)
+
+/-- 1 段降りたあとの固定の頭。`decP` は行 0 を 1 下げる。 -/
+def Q : List BMS.Col := [[0,1],[1,0],[0,1],[0,0],[1,1],[2,0]]
+
+theorem tail_eq (n : Nat) :
+    Trans.Pair.decP (P.tail ++ zeroLad 2 n) = Q ++ zeroLad 0 (n+1) := by
+  rw [Rows.ProofsB.decP_append, decP_zeroLad n 1]
+  rfl
+
+/-- 残るのはこれだけ: **塔が ε_ω の下に留まる**という項の算術。行列も `o?` も出てこない。
+    `plus` は頭の成分の比較で決まるので、`le (iterT zero (n+1)) A` などが要る。 -/
+def arithClaim : Prop := ∀ n, plus zero (omegaNF (plus (plus A B) (iterT zero (n+1))))
+  = phiNF zero (plus A (plus B (fsN e0 (n+1))))
+
+/-- **値の側。上の算術一つに落ちる。** -/
+theorem val_F1 (ha : arithClaim) (n : Nat) :
+    o? (P ++ zeroLad 2 n) = some (phiNF zero (plus A (plus B (fsN e0 (n+1))))) := by
+  have hlen : (P ++ zeroLad 2 n).length ≤ (P ++ zeroLad 2 n).length + 1 := by omega
+  have h0 : Trans.onlyRow0 (P ++ zeroLad 2 n) = false :=
+    onlyRow0_append_false P (zeroLad 2 n) rfl
+  have hf : Trans.Pair.inFrag (P ++ zeroLad 2 n) = true := by
+    rw [Rows.ProofsB.inFrag_append, inFrag_zeroLad n 2]; rfl
+  have hstep : o? (P ++ zeroLad 2 n) = some (oLV 1 (P ++ zeroLad 2 n)) := by
+    show (if Trans.onlyRow0 _ = true then _ else Trans.oPair? _) = _
+    simp only [h0, Bool.false_eq_true, if_false]
+    show (if Trans.Pair.inFrag _ = true then some (if Trans.onlyRow0 _ = true then _ else
+      Trans.Pair.oLAux ((P ++ zeroLad 2 n).length + 1) 1 (P ++ zeroLad 2 n)) else none) = _
+    simp only [hf, h0, Bool.false_eq_true, if_true, if_false]
+    rw [Evidence.StageB.oLAux_eq_oLV hlen]
+  rw [hstep]
+  congr 1
+  -- 頭の (0,0) を剥がす: 残りは全部 r0 ≠ 0
+  have hP : ∀ x ∈ P.tail, Trans.Pair.r0 x ≠ 0 := by decide
+  have htail : ∀ x ∈ (P.tail ++ zeroLad 2 n), Trans.Pair.r0 x ≠ 0 := by
+    intro x hx
+    rcases List.mem_append.mp hx with h | h
+    · exact hP x h
+    · exact r0_zeroLad n 2 (by omega) x h
+  rw [Evidence.StageB.oLV_eq]
+  show (Trans.Pair.blocksP (([0,0] : BMS.Col) :: (P.tail ++ zeroLad 2 n))).foldl _ _ = _
+  rw [Rows.ProofsB.blocksP_single ([0,0] : BMS.Col) _ htail]
+  show plus zero (omegaNF (oLV 1 (Trans.Pair.decP (P.tail ++ zeroLad 2 n)))) = _
+  rw [tail_eq n]
+  -- Q は閉じた計算、梯子は 1 ブロック
+  rw [Evidence.StageB.oLV_eq,
+      Evidence.StageB.blocksP_append Q (zeroLad 0 (n+1)) (Or.inr ⟨[0,0], zeroLad 1 n, rfl, rfl⟩),
+      List.foldl_append,
+      show zeroLad 0 (n+1) = ([0,0] : BMS.Col) :: zeroLad 1 n from rfl,
+      Rows.ProofsB.blocksP_single ([0,0] : BMS.Col) (zeroLad 1 n) (r0_zeroLad n 1 (by omega)),
+      ← Evidence.StageB.oLV_eq 1 Q]
+  have hQ : oLV 1 Q = plus A B := rfl
+  rw [hQ]
+  show plus zero (omegaNF (plus (plus A B) (omegaNF (oLV 1 (Trans.Pair.decP (zeroLad 1 n)))))) = _
+  rw [decP_zeroLad n 0, oLV_zeroLad n 1, omegaNF_iterT n]
+  exact ha n
+
+/-- **E3 は算術一つに落ちた。** 行列側・値側・項側の 3 つを継ぐ。 -/
+theorem e3_of (ha : arithClaim) : e3Claim := by
   intro n
-  rw [expand_F1 n, hv n, fsN_t (n+1)]
+  rw [expand_F1 n, val_F1 ha n, fsN_t (n+1)]
+
+#guard (List.range 8).all fun n =>
+  plus zero (omegaNF (plus (plus A B) (iterT zero (n+1))))
+    == phiNF zero (plus A (plus B (fsN e0 (n+1))))
 
 #guard (List.range 8).all fun n => BMS.expand M n == P ++ zeroLad 2 n
 #guard (List.range 8).all fun n =>

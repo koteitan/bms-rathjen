@@ -60,6 +60,17 @@ Third baseline.  History, because the round trip is the useful part:
     2989 | 0 | 236   the choice is GONE.  `hblk` now `change`s to the two entries
                      written out, rewrites each atom by a `show … from rfl`, and
                      leaves `simp only` nothing but arithmetic.
+    3757 | 0 | 239   HEAD after `Rows/Selected.lean` — three, and all three are
+                     INHERITED, not new.  `Rows.Selected.F1.oLV_zeroLad` and the two
+                     that use it (`val_F1`, `e3_of`) go through
+                     `Evidence.StageB.oLV_eq` / `oLAux_eq_oLV` / `blocksP_append`,
+                     each of which already carried `Classical.choice` before this file
+                     existed (measured with `#print axioms` on each).  Nothing in
+                     `Selected.lean` itself takes a classical step: its own `omega`s
+                     and `decide`s are choice-free, which is why the other ten
+                     declarations of the file report `[propext, Quot.sound]`.
+                     **Cleaning this means cleaning StageB's fold machinery**, which
+                     is a different job from the one that produced the file.
 
 **The residue certsound flagged as "attackable in isolation" was attackable**, and
 what found it was a codex worker taking a wrong turn: told to cite the proved
