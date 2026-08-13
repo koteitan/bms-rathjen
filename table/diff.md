@@ -9,11 +9,13 @@
 出典 (資料はこのリポジトリに入れない。CC BY-SA 3.0):
 
 - Hexirp「バシク行列システム４と全部盛りオクフ・ベータの対応」
-  <https://googology.fandom.com/ja/wiki/ユーザー:Hexirp/執筆した記事の一覧> から辿る
+  <https://googology.fandom.com/ja/wiki/ユーザー:Hexirp/ブログ> の
+  「2023-09-16 の解析」〜「2023-11-18 の解析」を集めたもの
 
-**行き先は Rathjen の $`\mathfrak{T}(M)`$ ではなく「全部盛り」の OCF である。** だから
-`W(x)` が訳せないのは翻訳の穴ではなく系の違いで、突き合わせているのは両者が重なる
-Veblen 断片に限られる。
+**行き先は Rathjen の $`\mathfrak{T}(M)`$ ではなく「全部盛り」の OCF である**が、
+**Rathjen 由来の部分では Rathjen と一致するはず**、と著者が述べている。だから重なる範囲での
+食い違いは系の違いではなく本物の食い違いである。`W(x)` が訳せないのはその重なりの外で、
+突き合わせているのは両者が重なる Veblen 断片に限られる。
 
 再現手順は `scripts/hexirp-rathjen-check.py` の冒頭にある。
 
