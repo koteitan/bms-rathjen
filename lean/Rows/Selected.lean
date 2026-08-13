@@ -43,6 +43,14 @@ Where the work actually was, in case the next row looks similar:
 `e3` inherits `Classical.choice` from StageB's fold machinery through the value side;
 `arith` and the tower bounds are `[propext, Quot.sound]`.
 
+FAMILY 2's SECOND ROW has the same ladder — `expand_F2b` is proved, and it is four lines
+because the generic ladder lemmas moved out of `F1` into this namespace.  ITS VALUE SIDE IS
+SHAPED DIFFERENTLY, and that is the thing to know before starting it: in family 1 one
+`decP` puts a `(0,0)` immediately before the ladder, so `blocksP` cuts there and the ladder
+is its own block; here the column before the ladder is `(1,0)`, so the ladder JOINS that
+block, the cut is one column earlier at a `(0,1)`, and `r1 = 1` there means the fold emits
+`phiStep` where family 1 emitted `plus`.  Both shapes are `#guard`ed below.
+
 WHICH ROWS.  The six rows of the shortlist that `o?` reaches AND agrees with the table on.
 They are exactly the rows of families 1–3 of `diff.md`, i.e. six of the nine where an
 external table disagrees with this one.  That is a coincidence worth stating: the disputed
@@ -72,6 +80,109 @@ open BMS (Matrix)
 open TM (Term)
 open TM.Term
 open Trans (o?)
+open Evidence.StageB (oLV)
+open Rows.ProofsB (iterT)
+
+/-! ## 共通の道具
+
+梯子 `(o,0)(o+1,0)…`、その `decP`・`blocksP`・値、そして ω 塔の評価。族をまたいで使う。 -/
+
+/-- 梯子 `(o,0)(o+1,0)…`、`k` 本。 -/
+def zeroLad (o : Nat) : Nat → Matrix
+  | 0 => []
+  | k + 1 => ([o,0] : BMS.Col) :: zeroLad (o+1) k
+
+/-- **項の側。証明済み。** `t` の基本列は最後の加数 ε₀ の基本列を走る。 -/
+theorem fsN_add (a b : Term) (n : Nat) : fsN (add a b) n = plus a (fsN b n) := by rw [fsN]
+
+theorem zeroLad_succ : ∀ (k o : Nat), zeroLad o (k+1) = zeroLad o k ++ [([o+k, 0] : BMS.Col)]
+  | 0, o => by show _ = [] ++ _; rw [List.nil_append]; simp [zeroLad]
+  | k+1, o => by
+    show ([o,0] : BMS.Col) :: zeroLad (o+1) (k+1) = ([o,0] : BMS.Col) :: zeroLad (o+1) k ++ _
+    rw [zeroLad_succ k (o+1)]
+    have h : o + 1 + k = o + (k+1) := by omega
+    rw [h]
+    rfl
+
+theorem lad_flatten : ∀ (k o : Nat),
+    ((List.range k).map fun a => ([[o+a,0]] : Matrix)).flatten = zeroLad o k
+  | 0, _ => rfl
+  | k+1, o => by
+    rw [List.range_succ, List.map_append, List.flatten_append, lad_flatten k o,
+        zeroLad_succ k o]
+    rfl
+
+theorem r0_zeroLad : ∀ (k o : Nat), 1 ≤ o → ∀ c ∈ zeroLad o k, Trans.Pair.r0 c ≠ 0
+  | 0, _, _, _, hc => by simp [zeroLad] at hc
+  | k+1, o, ho, c, hc => by
+    rcases List.mem_cons.mp hc with h | h
+    · subst h; show o ≠ 0; omega
+    · exact r0_zeroLad k (o+1) (by omega) c h
+
+theorem decP_zeroLad : ∀ (k o : Nat), Trans.Pair.decP (zeroLad (o+1) k) = zeroLad o k
+  | 0, _ => rfl
+  | k+1, o => by
+    show ([o+1-1, 0] : BMS.Col) :: Trans.Pair.decP (zeroLad (o+1+1) k)
+        = ([o,0] : BMS.Col) :: zeroLad (o+1) k
+    have h : o + 1 - 1 = o := by omega
+    rw [h, decP_zeroLad k (o+1)]
+
+theorem inFrag_zeroLad : ∀ (k o : Nat), Trans.Pair.inFrag (zeroLad o k) = true
+  | 0, _ => rfl
+  | k+1, o => by
+    have ih : (List.all (zeroLad (o+1) k) fun c =>
+        decide (List.length c ≤ 2) && decide (Trans.Pair.r1 c ≤ 1)) = true := inFrag_zeroLad k (o+1)
+    show Trans.Pair.inFrag (([o,0] : BMS.Col) :: zeroLad (o+1) k) = true
+    unfold Trans.Pair.inFrag
+    rw [List.all_cons, ih]
+    rfl
+
+theorem onlyRow0_append_false (u v : Matrix) (h : Trans.onlyRow0 u = false) :
+    Trans.onlyRow0 (u ++ v) = false := by
+  unfold Trans.onlyRow0 at h ⊢
+  rw [List.all_append, h]; rfl
+
+theorem omegaNF_iterT : ∀ m, omegaNF (iterT zero m) = iterT zero (m+1)
+  | 0 => rfl
+  | m+1 => Rows.ProofsB.omegaNF_iterT_zero m
+
+/-- 梯子の値は ω 塔。 -/
+theorem oLV_zeroLad : ∀ (m k : Nat), oLV k (zeroLad 0 m) = iterT zero m
+  | 0, _ => rfl
+  | m+1, k => by
+    rw [Evidence.StageB.oLV_eq]
+    show (Trans.Pair.blocksP (([0,0] : BMS.Col) :: zeroLad 1 m)).foldl _ _ = _
+    rw [Rows.ProofsB.blocksP_single ([0,0] : BMS.Col) (zeroLad 1 m) (r0_zeroLad m 1 (by omega))]
+    show plus zero (omegaNF (oLV 1 (Trans.Pair.decP (zeroLad 1 m)))) = _
+    rw [decP_zeroLad m 0, oLV_zeroLad m 1, omegaNF_iterT m]
+    exact Rows.ProofsB.plus_zero_left (by
+      rw [Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero m]; rfl)
+
+theorem ltF_iterT_bd {a c d : Term} (ha : a.isSC = false) (hac : (a == c) = false)
+    (hlt : ∀ f, 2 ≤ f → TM.Term.ltF f a c = true) :
+    ∀ (m f : Nat), m + 2 ≤ f → TM.Term.ltF f (iterT a m) (phi c d) = true
+  | 0, f, hf => Rows.ProofsB.ltF_zero (by omega) (by intro hh; exact Term.noConfusion hh)
+  | m + 1, f, hf => by
+    cases f with
+    | zero => omega
+    | succ g =>
+      rw [Rows.ProofsB.iterT_succ ha m]
+      exact Rows.ProofsB.ltF_phi_fst hac (hlt g (by omega)) (ltF_iterT_bd ha hac hlt m g (by omega))
+
+theorem lt_iterT_bd {a c d : Term} (ha : a.isSC = false) (hac : (a == c) = false)
+    (hlt : ∀ f, 2 ≤ f → TM.Term.ltF f a c = true) (m : Nat) :
+    lt (iterT a m) (phi c d) = true := by
+  show TM.Term.ltF (TM.Term.fuelOf (iterT a m) (phi c d)) (iterT a m) (phi c d) = true
+  refine ltF_iterT_bd ha hac hlt m _ ?_
+  show m + 2 ≤ 2 * ((iterT a m).deg + (phi c d).deg) + 8
+  have := Rows.ProofsB.deg_iterT ha m
+  omega
+
+theorem iterPhiAt_zero : ∀ m, TM.Term.iterPhiAt zero zero m = iterT zero m
+  | 0 => rfl
+  | m+1 => by
+    show phiNF zero (TM.Term.iterPhiAt zero zero m) = phiNF zero (iterT zero m)
+    rw [iterPhiAt_zero m]
 
 /-! ## diff.md 族 1 -/
 
@@ -122,10 +233,6 @@ def tHex : Term := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero z
 
 /-- 展開の共通の頭。`M` から最後の `(2,1)` を落としたもの。 -/
 def P : Matrix := [[0,0],[1,1],[2,0],[1,1],[1,0],[2,1],[3,0],[1,0]]
-/-- 梯子 `(o,0)(o+1,0)…`、`k` 本。 -/
-def zeroLad (o : Nat) : Nat → Matrix
-  | 0 => []
-  | k + 1 => ([o,0] : BMS.Col) :: zeroLad (o+1) k
 
 def A : Term := phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero))
 def B : Term := phi (phi zero zero) (phi zero (phi zero zero))
@@ -133,8 +240,6 @@ def e0 : Term := phi (phi zero zero) zero
 
 theorem t_eq : t = phi zero (add A (add B e0)) := rfl
 
-/-- **項の側。証明済み。** `t` の基本列は最後の加数 ε₀ の基本列を走る。 -/
-theorem fsN_add (a b : Term) (n : Nat) : fsN (add a b) n = plus a (fsN b n) := by rw [fsN]
 
 theorem fsN_t (n : Nat) : fsN t n = phiNF zero (plus A (plus B (fsN e0 n))) := by
   rw [t_eq, Rows.ProofsB.fsN_phi_lim (a := zero) (b := add A (add B e0)) rfl rfl n,
@@ -149,22 +254,7 @@ def expandClaim : Prop := ∀ n, BMS.expand M n = P ++ zeroLad 2 n
 悪い部分は 1 列だけ、上昇量は行 0 で 1、行 1 で 0 になる。つまり `a` 番目の複製は
 `(1+a, 0)` の 1 列である。あとは `flatten ∘ map` を梯子に直せばよい。 -/
 
-theorem zeroLad_succ : ∀ (k o : Nat), zeroLad o (k+1) = zeroLad o k ++ [([o+k, 0] : BMS.Col)]
-  | 0, o => by show _ = [] ++ _; rw [List.nil_append]; simp [zeroLad]
-  | k+1, o => by
-    show ([o,0] : BMS.Col) :: zeroLad (o+1) (k+1) = ([o,0] : BMS.Col) :: zeroLad (o+1) k ++ _
-    rw [zeroLad_succ k (o+1)]
-    have h : o + 1 + k = o + (k+1) := by omega
-    rw [h]
-    rfl
 
-theorem lad_flatten : ∀ k,
-    ((List.range k).map fun a => ([[1+a,0]] : Matrix)).flatten = zeroLad 1 k
-  | 0 => rfl
-  | k+1 => by
-    rw [List.range_succ, List.map_append, List.flatten_append, lad_flatten k,
-        zeroLad_succ k 1]
-    rfl
 
 /-- **行列の側。証明済み。** -/
 theorem expand_F1 (n : Nat) : BMS.expand M n = P ++ zeroLad 2 n := by
@@ -174,7 +264,7 @@ theorem expand_F1 (n : Nat) : BMS.expand M n = P ++ zeroLad 2 n := by
           ((List.range (n+1)).map fun a => ([[1 + a*1*1, 0 + a*0*1]] : Matrix)).flatten) := rfl
   have hf : (fun a => ([[1 + a*1*1, 0 + a*0*1]] : Matrix))
       = (fun a => ([[1+a,0]] : Matrix)) := by funext a; simp
-  rw [h, hf, lad_flatten (n+1)]
+  rw [h, hf, lad_flatten (n+1) 1]
   rfl
 /-- 値の側。 -/
 def valClaim : Prop := ∀ n, o? (P ++ zeroLad 2 n) = some (phiNF zero (plus A (plus B (fsN e0 (n+1)))))
@@ -185,54 +275,12 @@ def valClaim : Prop := ∀ n, o? (P ++ zeroLad 2 n) = some (phiNF zero (plus A (
 `blocksP_append` で切れる。前半は閉じた計算、後半は梯子で、梯子の値は ω 塔である。
 燃料は `oLV` (`Evidence/StageB.lean` §9) に移して消す。 -/
 
-open Evidence.StageB (oLV)
-open Rows.ProofsB (iterT)
 
-theorem r0_zeroLad : ∀ (k o : Nat), 1 ≤ o → ∀ c ∈ zeroLad o k, Trans.Pair.r0 c ≠ 0
-  | 0, _, _, _, hc => by simp [zeroLad] at hc
-  | k+1, o, ho, c, hc => by
-    rcases List.mem_cons.mp hc with h | h
-    · subst h; show o ≠ 0; omega
-    · exact r0_zeroLad k (o+1) (by omega) c h
 
-theorem decP_zeroLad : ∀ (k o : Nat), Trans.Pair.decP (zeroLad (o+1) k) = zeroLad o k
-  | 0, _ => rfl
-  | k+1, o => by
-    show ([o+1-1, 0] : BMS.Col) :: Trans.Pair.decP (zeroLad (o+1+1) k)
-        = ([o,0] : BMS.Col) :: zeroLad (o+1) k
-    have h : o + 1 - 1 = o := by omega
-    rw [h, decP_zeroLad k (o+1)]
 
-theorem inFrag_zeroLad : ∀ (k o : Nat), Trans.Pair.inFrag (zeroLad o k) = true
-  | 0, _ => rfl
-  | k+1, o => by
-    have ih : (List.all (zeroLad (o+1) k) fun c =>
-        decide (List.length c ≤ 2) && decide (Trans.Pair.r1 c ≤ 1)) = true := inFrag_zeroLad k (o+1)
-    show Trans.Pair.inFrag (([o,0] : BMS.Col) :: zeroLad (o+1) k) = true
-    unfold Trans.Pair.inFrag
-    rw [List.all_cons, ih]
-    rfl
 
-theorem onlyRow0_append_false (u v : Matrix) (h : Trans.onlyRow0 u = false) :
-    Trans.onlyRow0 (u ++ v) = false := by
-  unfold Trans.onlyRow0 at h ⊢
-  rw [List.all_append, h]; rfl
 
-theorem omegaNF_iterT : ∀ m, omegaNF (iterT zero m) = iterT zero (m+1)
-  | 0 => rfl
-  | m+1 => Rows.ProofsB.omegaNF_iterT_zero m
 
-/-- 梯子の値は ω 塔。 -/
-theorem oLV_zeroLad : ∀ (m k : Nat), oLV k (zeroLad 0 m) = iterT zero m
-  | 0, _ => rfl
-  | m+1, k => by
-    rw [Evidence.StageB.oLV_eq]
-    show (Trans.Pair.blocksP (([0,0] : BMS.Col) :: zeroLad 1 m)).foldl _ _ = _
-    rw [Rows.ProofsB.blocksP_single ([0,0] : BMS.Col) (zeroLad 1 m) (r0_zeroLad m 1 (by omega))]
-    show plus zero (omegaNF (oLV 1 (Trans.Pair.decP (zeroLad 1 m)))) = _
-    rw [decP_zeroLad m 0, oLV_zeroLad m 1, omegaNF_iterT m]
-    exact Rows.ProofsB.plus_zero_left (by
-      rw [Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero m]; rfl)
 
 /-- 1 段降りたあとの固定の頭。`decP` は行 0 を 1 下げる。 -/
 def Q : List BMS.Col := [[0,1],[1,0],[0,1],[0,0],[1,1],[2,0]]
@@ -249,25 +297,7 @@ theorem tail_eq (n : Nat) :
 
 
 
-theorem ltF_iterT_bd {a c d : Term} (ha : a.isSC = false) (hac : (a == c) = false)
-    (hlt : ∀ f, 2 ≤ f → TM.Term.ltF f a c = true) :
-    ∀ (m f : Nat), m + 2 ≤ f → TM.Term.ltF f (iterT a m) (phi c d) = true
-  | 0, f, hf => Rows.ProofsB.ltF_zero (by omega) (by intro hh; exact Term.noConfusion hh)
-  | m + 1, f, hf => by
-    cases f with
-    | zero => omega
-    | succ g =>
-      rw [Rows.ProofsB.iterT_succ ha m]
-      exact Rows.ProofsB.ltF_phi_fst hac (hlt g (by omega)) (ltF_iterT_bd ha hac hlt m g (by omega))
 
-theorem lt_iterT_bd {a c d : Term} (ha : a.isSC = false) (hac : (a == c) = false)
-    (hlt : ∀ f, 2 ≤ f → TM.Term.ltF f a c = true) (m : Nat) :
-    lt (iterT a m) (phi c d) = true := by
-  show TM.Term.ltF (TM.Term.fuelOf (iterT a m) (phi c d)) (iterT a m) (phi c d) = true
-  refine ltF_iterT_bd ha hac hlt m _ ?_
-  show m + 2 ≤ 2 * ((iterT a m).deg + (phi c d).deg) + 8
-  have := Rows.ProofsB.deg_iterT ha m
-  omega
 
 /-- **塔は ε_{ω+1} の下に留まる。** -/
 theorem lt_tower_A (m : Nat) : lt (iterT zero m) A = true :=
@@ -276,11 +306,6 @@ theorem lt_tower_A (m : Nat) : lt (iterT zero m) A = true :=
 theorem lt_tower_B (m : Nat) : lt (iterT zero m) B = true :=
   lt_iterT_bd Rows.ProofsB.isSC_zero rfl (fun f hf => Rows.ProofsB.ltF_zero_one f hf) m
 
-theorem iterPhiAt_zero : ∀ m, TM.Term.iterPhiAt zero zero m = iterT zero m
-  | 0 => rfl
-  | m+1 => by
-    show phiNF zero (TM.Term.iterPhiAt zero zero m) = phiNF zero (iterT zero m)
-    rw [iterPhiAt_zero m]
 
 theorem fsN_e0 (m : Nat) : fsN e0 m = iterT zero m := by
   show fsN (phi (phi zero zero) zero) m = _
@@ -456,10 +481,50 @@ theorem e1 : o? M = some t := rfl
 /-- **添字は 2 で、隣の F2a は 1 である。** 同じ族の隣り合う 2 行で違う。 -/
 def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 2))
 
+/-! ### 行列の側 — 族 1 と同じ梯子
+
+最後の列 `(3,1)` の `lnz` は 1、その親は列 9、悪い部分は 1 列で上昇量は行 0 で 1、
+行 1 で 0。`a` 番目の複製は `(2+a, 0)` の 1 列である。 -/
+
+def P : Matrix := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0]]
+
+/-- **行列の側。証明済み。** -/
+theorem expand_F2b (n : Nat) : BMS.expand M n = P ++ zeroLad 3 n := by
+  show (BMS.expand? M n).getD [] = _
+  have h : BMS.expand? M n
+      = some (M.take 9 ++
+          ((List.range (n+1)).map fun a => ([[2 + a*1*1, 0 + a*0*1]] : Matrix)).flatten) := rfl
+  have hf : (fun a => ([[2 + a*1*1, 0 + a*0*1]] : Matrix))
+      = (fun a => ([[2+a,0]] : Matrix)) := by funext a; simp
+  rw [h, hf, lad_flatten (n+1) 2]
+  rfl
+
 #guard kindT t == KindT.isLim
 #guard (List.range 8).all fun n => o? (BMS.expand M n) == some (fsN t (n + 2))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 1)))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 3)))
+
+/-! ### 値の側は族 1 と形が違う
+
+族 1 では `decP` を 1 回とると梯子の直前が `(0,0)` になり、`blocksP` がそこで切れて
+梯子が独立したブロックになった。ここは違う: `decP (P.tail)` の末尾が `(1,0)` で、梯子は
+`(2,0)` から始まるので**同じブロックに合流する**。切れ目はもう一つ手前の `(0,1)` で、
+その列は `r1 = 1` なので `plus` ではなく `phiStep` が出る。
+
+    最後のブロック = (0,1) (1,0) (2,0) (3,0) …
+    → phiStep (ofNat 1) V (oLV 2 (decP ((1,0) :: zeroLad 2 n)))
+    → decP がもう一段下げて zeroLad 0 (n+1)、その値は ω 塔
+
+つまり残りは `phiStep` を畳む仕事で、族 1 の `plus` の場所に来る。 -/
+
+/-- 梯子を含む最後のブロック。 -/
+def lastBlock (n : Nat) : List BMS.Col := ([0,1] : BMS.Col) :: ([1,0] : BMS.Col) :: zeroLad 2 n
+
+#guard (List.range 6).all fun n =>
+  Trans.Pair.decP (P.tail ++ zeroLad 3 n) ==
+    [[0,1],[1,1],[0,1],[1,0],[2,1],[3,1],[2,1]] ++ lastBlock n
+#guard (List.range 6).all fun n =>
+  Trans.Pair.decP (([1,0] : BMS.Col) :: zeroLad 2 n) == zeroLad 0 (n+1)
 
 end F2b
 
