@@ -979,12 +979,127 @@ theorem arith : arithClaim
   | 0 => by rw [fsN_t_eq 0]; rfl
   | m+1 => by rw [arith_succ m, fsN_t_eq (m+1)]
 
-/-- 残るのはこれだけ。6 段の降下。 -/
-def valClaim : Prop := ∀ n, o? (BMS.expand M n) = some (valExpr n)
+def T1 (n : Nat) : Matrix := [[1,0],[2,1],[3,1],[2,1],[3,0],[4,1],[5,1]] ++ zeroLad 4 (n+1)
+def T2 (n : Nat) : Matrix := [[1,1],[2,1],[1,1],[2,0],[3,1],[4,1]] ++ zeroLad 3 (n+1)
+def T3 (n : Nat) : Matrix := [[1,0],[2,1],[3,1]] ++ zeroLad 2 (n+1)
+def T4 (n : Nat) : Matrix := [[1,1],[2,1]] ++ zeroLad 1 (n+1)
 
-/-- **残りは値側 1 本だけ。** -/
-theorem e3_of (hv : valClaim) : e3Claim := by
-  intro n; rw [hv n, arith n]
+/-- 単一ブロック (先頭が `(0,0)`)。 -/
+theorem oLV_single (j : Nat) (c : BMS.Col) (rest : Matrix)
+    (h : ∀ x ∈ rest, Trans.Pair.r0 x ≠ 0) (hr1 : (Trans.Pair.r1 c == 0) = true) :
+    oLV j (c :: rest) = plus zero (omegaNF (oLV 1 (Trans.Pair.decP rest))) := by
+  rw [Evidence.StageB.oLV_eq, Rows.ProofsB.blocksP_single c rest h]
+  show (if (Trans.Pair.r1 c == 0) = true then _ else _) = _
+  rw [hr1]
+  rfl
+
+/-- `U` の後にもう 1 ブロック (先頭が `(0,1)`)。 -/
+theorem oLV_U (j : Nat) (c : BMS.Col) (tl : Matrix)
+    (hc : Trans.Pair.r0 c = 0) (hr1 : (Trans.Pair.r1 c == 0) = false)
+    (ht : ∀ x ∈ tl, Trans.Pair.r0 x ≠ 0) :
+    oLV j (U ++ (c :: tl))
+      = Trans.Pair.phiStep (ofNat j) (oLV j U) (oLV (j+1) (Trans.Pair.decP tl)) := by
+  rw [Evidence.StageB.oLV_eq,
+      Evidence.StageB.blocksP_append U (c :: tl) (Or.inr ⟨c, tl, rfl, hc⟩),
+      List.foldl_append, Rows.ProofsB.blocksP_single c tl ht,
+      ← Evidence.StageB.oLV_eq j U]
+  show (if (Trans.Pair.r1 c == 0) = true then _ else _) = _
+  rw [hr1]
+  rfl
+
+theorem r0_L (o k : Nat) (l : Matrix) (hl : ∀ x ∈ l, Trans.Pair.r0 x ≠ 0) (ho : 1 ≤ o) :
+    ∀ x ∈ l ++ zeroLad o k, Trans.Pair.r0 x ≠ 0 := by
+  intro x hx
+  rcases List.mem_append.mp hx with h | h
+  · exact hl x h
+  · exact r0_zeroLad k o ho x h
+
+/-- 梯子の段。ここで塔が出る。 -/
+theorem oLV_U_lad (n : Nat) : oLV 1 (U ++ zeroLad 0 (n+1)) = plus A (iterT zero (n+1)) := by
+  rw [Evidence.StageB.oLV_eq,
+      Evidence.StageB.blocksP_append U (zeroLad 0 (n+1))
+        (Or.inr ⟨[0,0], zeroLad 1 n, rfl, rfl⟩),
+      List.foldl_append,
+      show zeroLad 0 (n+1) = ([0,0] : BMS.Col) :: zeroLad 1 n from rfl,
+      Rows.ProofsB.blocksP_single ([0,0] : BMS.Col) (zeroLad 1 n) (r0_zeroLad n 1 (by omega)),
+      ← Evidence.StageB.oLV_eq 1 U]
+  show plus (oLV 1 U) (omegaNF (oLV 1 (Trans.Pair.decP (zeroLad 1 n)))) = _
+  rw [decP_zeroLad n 0, oLV_zeroLad n 1, omegaNF_iterT n]
+  rfl
+
+/-! 段ごとの `decP`。cons の形で出すので `show` が要らない。 -/
+
+theorem d1 (n : Nat) :
+    Trans.Pair.decP (P.tail ++ zeroLad 6 n) = U ++ (([0,1] : BMS.Col) :: T1 n) := by
+  rw [Rows.ProofsB.decP_append, decP_zeroLad n 5]; rfl
+theorem d2 (n : Nat) : Trans.Pair.decP (T1 n) = ([0,0] : BMS.Col) :: T2 n := by
+  rw [show T1 n = [[1,0],[2,1],[3,1],[2,1],[3,0],[4,1],[5,1]] ++ zeroLad 4 (n+1) from rfl,
+      Rows.ProofsB.decP_append, decP_zeroLad (n+1) 3]; rfl
+theorem d3 (n : Nat) : Trans.Pair.decP (T2 n) = U ++ (([0,1] : BMS.Col) :: T3 n) := by
+  rw [show T2 n = [[1,1],[2,1],[1,1],[2,0],[3,1],[4,1]] ++ zeroLad 3 (n+1) from rfl,
+      Rows.ProofsB.decP_append, decP_zeroLad (n+1) 2]; rfl
+theorem d4 (n : Nat) : Trans.Pair.decP (T3 n) = ([0,0] : BMS.Col) :: T4 n := by
+  rw [show T3 n = [[1,0],[2,1],[3,1]] ++ zeroLad 2 (n+1) from rfl,
+      Rows.ProofsB.decP_append, decP_zeroLad (n+1) 1]; rfl
+theorem d5 (n : Nat) : Trans.Pair.decP (T4 n) = U ++ zeroLad 0 (n+1) := by
+  rw [show T4 n = [[1,1],[2,1]] ++ zeroLad 1 (n+1) from rfl,
+      Rows.ProofsB.decP_append, decP_zeroLad (n+1) 0]; rfl
+
+theorem r0_T1 (n : Nat) : ∀ x ∈ T1 n, Trans.Pair.r0 x ≠ 0 :=
+  r0_L 4 (n+1) _ (by decide) (by omega)
+theorem r0_T2 (n : Nat) : ∀ x ∈ T2 n, Trans.Pair.r0 x ≠ 0 :=
+  r0_L 3 (n+1) _ (by decide) (by omega)
+theorem r0_T3 (n : Nat) : ∀ x ∈ T3 n, Trans.Pair.r0 x ≠ 0 :=
+  r0_L 2 (n+1) _ (by decide) (by omega)
+theorem r0_T4 (n : Nat) : ∀ x ∈ T4 n, Trans.Pair.r0 x ≠ 0 :=
+  r0_L 1 (n+1) _ (by decide) (by omega)
+
+set_option maxHeartbeats 2000000 in
+/-- **値の側。** 5 段の降下。`show` を使わず `rw` の連鎖だけで降りる。 -/
+theorem val (n : Nat) : o? (BMS.expand M n) = some (valExpr n) := by
+  have hlen : (P ++ zeroLad 6 n).length ≤ (P ++ zeroLad 6 n).length + 1 := by omega
+  have h0 : Trans.onlyRow0 (P ++ zeroLad 6 n) = false :=
+    onlyRow0_append_false P (zeroLad 6 n) rfl
+  have hf : Trans.Pair.inFrag (P ++ zeroLad 6 n) = true := by
+    rw [Rows.ProofsB.inFrag_append, inFrag_zeroLad n 6]; rfl
+  have hP : ∀ x ∈ P.tail, Trans.Pair.r0 x ≠ 0 := by decide
+  rw [expand_F3b n]
+  have hstep : o? (P ++ zeroLad 6 n) = some (oLV 1 (P ++ zeroLad 6 n)) := by
+    show (if Trans.onlyRow0 _ = true then _ else Trans.oPair? _) = _
+    simp only [h0, Bool.false_eq_true, if_false]
+    show (if Trans.Pair.inFrag _ = true then some (if Trans.onlyRow0 _ = true then _ else
+      Trans.Pair.oLAux ((P ++ zeroLad 6 n).length + 1) 1 (P ++ zeroLad 6 n)) else none) = _
+    simp only [hf, h0, Bool.false_eq_true, if_true, if_false]
+    rw [Evidence.StageB.oLAux_eq_oLV hlen]
+  rw [hstep]
+  congr 1
+  rw [show P ++ zeroLad 6 n = ([0,0] : BMS.Col) :: (P.tail ++ zeroLad 6 n) from rfl,
+      oLV_single _ _ _ (r0_L 6 n P.tail hP (by omega)) rfl, d1 n,
+      oLV_U _ _ _ rfl rfl (r0_T1 n), d2 n,
+      oLV_single _ _ _ (r0_T2 n) rfl, d3 n,
+      oLV_U _ _ _ rfl rfl (r0_T3 n), d4 n,
+      oLV_single _ _ _ (r0_T4 n) rfl, d5 n, oLV_U_lad n]
+  rfl
+
+/-- **E3。証明済み。** 行列側・値側・項側・算術を継ぐ。 -/
+theorem e3 : e3Claim := by
+  intro n; rw [val n, arith n]
+
+/-! ### 外部の表の値は、同じ試験を通らない -/
+
+/-- 先方の値 ([diff.md](../../table/diff.md) 族 3 の 266 行目)。先方の構文解析器で訳した。 -/
+def tHex : Term := phiNF (ofNat 1) (phiNF (ofNat 1) (phiNF zero
+  (add (phiNF (ofNat 2) zero) (phiNF (ofNat 1) zero))))
+
+#guard !(o? M == some tHex)
+#guard kindT tHex == KindT.isLim
+#guard (List.range 6).all fun k => (List.range 8).any fun n =>
+  !(o? (BMS.expand M n) == some (fsN tHex (n + k)))
+#guard (List.range 4).all fun n => (List.range 30).all fun j =>
+  !(o? (BMS.expand M n) == some (fsN tHex j))
+-- CTRL 同じ探索は当方の値では当たる
+#guard (List.range 4).all fun n => (List.range 30).any fun j =>
+  o? (BMS.expand M n) == some (fsN t j)
 
 #guard (List.range 6).all fun n => BMS.expand M n == P ++ zeroLad 6 n
 #guard (List.range 4).all fun n => o? (BMS.expand M n) == some (valExpr n)
