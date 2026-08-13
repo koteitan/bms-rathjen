@@ -56,6 +56,7 @@ structure Row where
   proof : String := "" -- key of the E3 proof; resolved to a file+line by gentable and
                        -- rendered as the E3 mark.  Searched in Rows/Proofs.lean,
                        -- Rows/ProofsB.lean, Rows/Selected.lean, Rows/G3.lean, Rows/G4.lean,
+                       -- Rows/G5.lean,
                        -- in that order.
                        -- ("" = no all-n proof yet.)  A key that resolves to nothing
                        -- prints no mark, so a renamed namespace loses the mark
@@ -261,7 +262,7 @@ def rows : List Row := [
     sel := "**T** ψ の引数に Z と和が同居する最初" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero)) (phi (phi zero zero) (Z zero))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2))", ev := "oR",
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2))", proof := "namespace G5", ev := "oR",
     sel := "**T** Ω が φ̄ の引数に現れる最初。**B** ψ₁ の引数に Ω₂ が入る最初" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,2],[1,1],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero))

@@ -5,4 +5,5 @@ import Rows.ProofsB
 import Rows.Selected
 import Rows.G3
 import Rows.G4
+import Rows.G5
 import Trans.DictInv   -- dict の逆 (Veblen 断片)。掃引に見せるためここから import する
