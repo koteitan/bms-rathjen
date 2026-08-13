@@ -92,6 +92,28 @@ def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
 
+/-! ### 外部の表の値は、同じ試験を通らない
+
+`e3` は当方の値についての定理である。それだけでは「先方が誤り」とは言えないので、
+**先方の値に同じ試験を当てる**。先方の 145 行目は末尾が `phi(0,1)` = ε₁ で、当方は
+`phi(0,0)` = ε₀ である。 -/
+
+/-- 先方の値 ([diff.md](../../diff.md) 族 1)。末尾だけが当方と違う。 -/
+def tHex : Term := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
+  (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) (phi zero zero))))
+
+#guard !(o? M == some tHex)
+#guard kindT tHex == KindT.isLim          -- 極限なので基本列を持つ。試験は空回りしない
+-- どのずらしでも E3 は立たない
+#guard (List.range 6).all fun k => (List.range 8).any fun n =>
+  !(o? (BMS.expand M n) == some (fsN tHex (n + k)))
+-- ずらし以前に、展開の像が先方の値の基本列に現れない (30 項まで)
+#guard (List.range 4).all fun n => (List.range 30).all fun j =>
+  !(o? (BMS.expand M n) == some (fsN tHex j))
+-- CTRL 同じ探索は当方の値では当たる
+#guard (List.range 4).all fun n => (List.range 30).any fun j =>
+  o? (BMS.expand M n) == some (fsN t j)
+
 /-! ### 分解: E3 を 3 つに割る
 
 行列の側は `M[n] = P ++ (2,0)(3,0)…(n+1,0)` で、値の側はその梯子が ω 塔を積む。
