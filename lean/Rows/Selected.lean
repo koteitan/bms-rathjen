@@ -233,7 +233,7 @@ def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
 **先方の値に同じ試験を当てる**。先方の 145 行目は末尾が `phi(0,1)` = ε₁ で、当方は
 `phi(0,0)` = ε₀ である。 -/
 
-/-- 先方の値 ([diff.md](../../diff.md) 族 1)。末尾だけが当方と違う。 -/
+/-- 先方の値 ([diff.md](../../table/diff.md) 族 1)。末尾だけが当方と違う。 -/
 def tHex : Term := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
   (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) (phi zero zero))))
 
@@ -673,7 +673,7 @@ theorem e3 : e3Claim := by
 
 /-! ### 外部の表の値は、同じ試験を通らない -/
 
-/-- 先方の値 ([diff.md](../../diff.md) 族 2 の 249 行目) を先方の構文解析器で訳したもの。 -/
+/-- 先方の値 ([diff.md](../../table/diff.md) 族 2 の 249 行目) を先方の構文解析器で訳したもの。 -/
 def tHex : Term := phiNF (ofNat 1) (add (phiNF (ofNat 1) (add (phiNF (ofNat 2) zero) (ofNat 1)))
   (phiNF (ofNat 1) (ofNat 1)))
 

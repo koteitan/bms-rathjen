@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.5.0"
+def version : String := "v0.5.1"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -130,7 +130,7 @@ def rows : List Row := [
     t := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
       (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) zero))),
     name := "\\bar{\\varphi}(0,\\bar{\\varphi}(1,\\omega+1)+\\bar{\\varphi}(1,\\omega)+\\bar{\\varphi}(1,0))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 1)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 1)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,0],[2,0]], t := phi one (phi zero (ofNat 2)),
     name := "\\varepsilon_{\\omega^2}", proof := "«(0,0)(1,1)(2,0)(2,0)»", hasO := true },
@@ -154,33 +154,33 @@ def rows : List Row := [
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\omega)",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 2)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]],
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi (phi zero zero) zero)),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\bar{\\varphi}(1,0))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 2)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   -- 食い違い行 (diff.md 族 3、3 行)。ここだけ当方の値が先方より大きい。
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (phi (add (phi zero zero) (phi zero zero)) zero)))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)))))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 3)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero) (phi (phi zero zero) zero))))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(1,0)))))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 3)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero)
         (phi (add (phi zero zero) (phi zero zero)) zero))))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(2,0)))))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 3)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   -- The rows below were withdrawn in v0.1.42 (the o? calibration failure; see
   -- table/oracle-audit-2026-08-09.txt and plan/README.md) and RESTORED in v0.1.48
@@ -198,20 +198,20 @@ def rows : List Row := [
     t := phi (phi zero zero) (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(3,\\omega))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 4)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1]],
     t := phi (add (phi zero zero) (phi zero zero))
       (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
         (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(2,\\bar{\\varphi}(3,\\omega))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 4)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1],[2,1]],
     t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (add (phi zero (phi zero zero)) (phi zero zero)),
     name := "\\bar{\\varphi}(3,\\omega+1)",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](../diff.md) 族 4)",
+    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (phi zero (phi zero zero)) zero,
     name := "\\bar{\\varphi}(\\omega,0)", ev := "oR", note := "旧値 ζ_ω を訂正",
@@ -509,7 +509,7 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 | **M** | BMS | 行列の形。行数、成分が取る値、初めて現れる列の型 |
 | **T** | $`\\mathfrak{T}(M)`$ | 項の構成子。$`\\bar\\varphi`$ の引数の種類、$`\\psi`$、$`Z`$、$`\\Omega`$ |
 | **B** | Buchholz $`\\mathrm{OT}_B`$ | $`\\psi_u`$ の添字 $`u`$、入れ子、引数が和になるところ |
-| **D** | — | 外部の表と食い違う 9 行。値そのものが未決 ([diff.md](../diff.md)) |
+| **D** | — | 外部の表と食い違う 9 行。値そのものが未決 ([diff.md](diff.md)) |
 
 **D の 9 行は他と性格が違う。** ほかの印は「ここが証明できれば周りも同じ理屈で通る」
 という意味だが、D は「どちらが正しいか分かっていない」という意味である。9 行はすべて

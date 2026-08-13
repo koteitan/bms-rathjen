@@ -218,7 +218,7 @@ oR (BMS.expand M n) = fsN (oR M) n
 
 行頭の印 — 🚨 未着手 / 🚨🤖 着手中 (葉のみ。🤖 の数 = 走っているエージェントの数) / ✅ 完了
 
-- 🚨 **選定 23 行に E を付ける** ([table-r1.md](table/table-r1.md) の「E 対象」列)
+- 🚨 **選定 23 行に E を付ける** ([table-r1.md](table-r1.md) の「E 対象」列)
   - 用語
     - E1 — `o M = t`
     - E3 — `∀n, o (M[n]) = fs t (行ごとの添字)`
