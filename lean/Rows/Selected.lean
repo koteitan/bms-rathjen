@@ -7,10 +7,15 @@ selection in prose is not a target: **the E3 index is per row**, and applying a 
 of `Rows/TM.lean`).  So before any proof is attempted, every selected row that `o?` reaches
 gets its index MEASURED and pinned here, and its E1 proved.
 
-WHAT IS PROVED HERE, and it is only E1.  `theorem e1 : o? M = some t := rfl` — the
-translation is defined on the matrix and gives the table's term.  That is a theorem, not a
-check.  E3 (`∀ n, o? (M[n]) = fsN t (n+k)`) is NOT proved for any row here; what is here is
-its exact statement with `k` fixed, verified on `n < 8` by `#guard`.
+WHAT IS PROVED HERE.  `e1 : o? M = some t := rfl` for all six rows — the translation is
+defined on the matrix and gives the table's term.  E3 is not proved for any row; for each
+row its exact statement is here with the index `k` fixed and verified on `n < 8`, together
+with a control that the neighbouring indices fail.
+
+FAMILY 1 IS FURTHER ALONG: its E3 is split into three, and two of the three are proved.
+The matrix side (`expand_F1`) and the term side (`fsN_t`) are theorems; `e3_of` shows they
+reduce E3 to the value side alone (`valClaim`), which is the half every `e3_val*` of
+`Evidence/StageB.lean` spends a hundred lines on.
 
 WHICH ROWS.  The six rows of the shortlist that `o?` reaches AND agrees with the table on.
 They are exactly the rows of families 1–3 of `diff.md`, i.e. six of the nine where an
@@ -87,15 +92,49 @@ theorem fsN_t (n : Nat) : fsN t n = phiNF zero (plus A (plus B (fsN e0 n))) := b
   rw [t_eq, Rows.ProofsB.fsN_phi_lim (a := zero) (b := add A (add B e0)) rfl rfl n,
       fsN_add, fsN_add]
 
-/-- 行列の側。**未証明。** -/
+/-- 行列の側。 -/
 def expandClaim : Prop := ∀ n, BMS.expand M n = P ++ zeroLad 2 n
+
+/-! #### 行列の側の証明
+
+`expand?` を `M` で計算すると、最後の列 `(2,1)` の `lnz` が 1、その親が列 7 で、
+悪い部分は 1 列だけ、上昇量は行 0 で 1、行 1 で 0 になる。つまり `a` 番目の複製は
+`(1+a, 0)` の 1 列である。あとは `flatten ∘ map` を梯子に直せばよい。 -/
+
+theorem zeroLad_succ : ∀ (k o : Nat), zeroLad o (k+1) = zeroLad o k ++ [([o+k, 0] : BMS.Col)]
+  | 0, o => by show _ = [] ++ _; rw [List.nil_append]; simp [zeroLad]
+  | k+1, o => by
+    show ([o,0] : BMS.Col) :: zeroLad (o+1) (k+1) = ([o,0] : BMS.Col) :: zeroLad (o+1) k ++ _
+    rw [zeroLad_succ k (o+1)]
+    have h : o + 1 + k = o + (k+1) := by omega
+    rw [h]
+    rfl
+
+theorem lad_flatten : ∀ k,
+    ((List.range k).map fun a => ([[1+a,0]] : Matrix)).flatten = zeroLad 1 k
+  | 0 => rfl
+  | k+1 => by
+    rw [List.range_succ, List.map_append, List.flatten_append, lad_flatten k,
+        zeroLad_succ k 1]
+    rfl
+
+/-- **行列の側。証明済み。** -/
+theorem expand_F1 (n : Nat) : BMS.expand M n = P ++ zeroLad 2 n := by
+  show (BMS.expand? M n).getD [] = _
+  have h : BMS.expand? M n
+      = some (M.take 7 ++
+          ((List.range (n+1)).map fun a => ([[1 + a*1*1, 0 + a*0*1]] : Matrix)).flatten) := rfl
+  have hf : (fun a => ([[1 + a*1*1, 0 + a*0*1]] : Matrix))
+      = (fun a => ([[1+a,0]] : Matrix)) := by funext a; simp
+  rw [h, hf, lad_flatten (n+1)]
+  rfl
 /-- 値の側。**未証明。** -/
 def valClaim : Prop := ∀ n, o? (P ++ zeroLad 2 n) = some (phiNF zero (plus A (plus B (fsN e0 (n+1)))))
 
 /-- 3 つが揃えば E3 が出る。**この含意だけは証明してある**ので、残りは 2 つの補題である。 -/
-theorem e3_of (he : expandClaim) (hv : valClaim) : e3Claim := by
+theorem e3_of (hv : valClaim) : e3Claim := by
   intro n
-  rw [he n, hv n, fsN_t (n+1)]
+  rw [expand_F1 n, hv n, fsN_t (n+1)]
 
 #guard (List.range 8).all fun n => BMS.expand M n == P ++ zeroLad 2 n
 #guard (List.range 8).all fun n =>
