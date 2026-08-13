@@ -46,14 +46,19 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.0"
+def version : String := "v0.7.6"
 
 /-- One row of the correspondence table. -/
 structure Row where
   m : Matrix           -- the BMS matrix
   t : Term             -- the T(M) term
   name : String        -- common name (MathJax)
-  proof : String := "" -- namespace of the E3 proof in Rows/Proofs.lean ("" = none yet)
+  proof : String := "" -- key of the E3 proof; resolved to a file+line by gentable and
+                       -- rendered as the E3 mark.  Searched in Rows/Proofs.lean,
+                       -- Rows/ProofsB.lean, Rows/Selected.lean, in that order.
+                       -- ("" = no all-n proof yet.)  A key that resolves to nothing
+                       -- prints no mark, so a renamed namespace loses the mark
+                       -- instead of lying about it.
   hasO : Bool := false -- o(M) = t holds (E1)
   ev : String := ""    -- the remaining, weaker evidence
   note : String := ""
@@ -130,7 +135,7 @@ def rows : List Row := [
     t := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
       (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) zero))),
     name := "\\bar{\\varphi}(0,\\bar{\\varphi}(1,\\omega+1)+\\bar{\\varphi}(1,\\omega)+\\bar{\\varphi}(1,0))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 1)",
+    proof := "namespace F1", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,0],[2,0]], t := phi one (phi zero (ofNat 2)),
     name := "\\varepsilon_{\\omega^2}", proof := "«(0,0)(1,1)(2,0)(2,0)»", hasO := true },
@@ -154,37 +159,37 @@ def rows : List Row := [
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\omega)",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 2)",
+    proof := "namespace F2a", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]],
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi (phi zero zero) zero)),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\bar{\\varphi}(1,0))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 2)",
+    proof := "namespace F2b", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
-  -- 食い違い行 (diff.md 族 3、3 行)。ここだけ当方の値が先方より大きい。
+  -- 食い違い行 (diff.md 族 3、3 行)。ここだけ当方の値が先方より大きい。3 行とも決着済み。
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (phi (add (phi zero zero) (phi zero zero)) zero)))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)))))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 3)",
+    proof := "namespace F3a", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero) (phi (phi zero zero) zero))))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(1,0)))))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 3)",
+    proof := "namespace F3b", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero)
         (phi (add (phi zero zero) (phi zero zero)) zero))))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(2,0)))))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 3)",
+    proof := "namespace F3c", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   -- The rows below were withdrawn in v0.1.42 (the o? calibration failure; see
-  -- table/oracle-audit-2026-08-09.txt and plan/README.md) and RESTORED in v0.1.48
-  -- with the oracle-calibrated values of oR = dict ∘ TransPort (Trans/Recal.lean,
+  -- table/refimpl-audit-2026-08-09.txt and plan/README.md) and RESTORED in v0.1.48
+  -- with the reference-calibrated values of oR = dict ∘ TransPort (Trans/Recal.lean,
   -- candidate tier, gated by the oR #guard below).  Terms were machine-extracted
   -- from oR, never hand-derived.
   { m := [[0,0],[1,1],[2,1],[2,0]],
@@ -214,7 +219,8 @@ def rows : List Row := [
     ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (phi zero (phi zero zero)) zero,
-    name := "\\bar{\\varphi}(\\omega,0)", ev := "oR", note := "旧値 ζ_ω を訂正",
+    name := "\\bar{\\varphi}(\\omega,0)", proof := "namespace G1", ev := "oR",
+    note := "旧値 ζ_ω を訂正",
     sel := "**T** φ̄ の第 1 引数が数字でなくなる最初" },
   { m := [[0,0],[1,1],[2,1],[3,0],[4,1]], t := phi (phi (phi zero zero) zero) zero,
     name := "\\bar{\\varphi}(\\varepsilon_0,0)", ev := "oR", note := "旧値 ζ_{ε₀} を訂正",
@@ -231,12 +237,12 @@ def rows : List Row := [
   --   (0,0)(1,1)(2,1)(3,2)  ↦  ψ_{Z0}(φ̄(1,Ω))
   -- but that MATRIX IS NOT STANDARD.  Two independent implementations agree:
   -- yaBMS `./bms -s` returns 0, and naruyoko's `isStandardPair` returns false.
-  -- Its oracle image `D_0 D_1 D_1 D_2 0` is not a standard Buchholz term either,
+  -- Its reference implementation image `D_0 D_1 D_1 D_2 0` is not a standard Buchholz term either,
   -- so the oR value carried no meaning for it.  It was the only non-standard
   -- matrix among the 51 rows (see scripts/standard-audit.sh, which now checks
   -- every row against the reference implementation).  Re-add the row when the
   -- STANDARD matrix for the Bachmann–Howard ordinal has been identified by the
-  -- oracle rather than by hand.
+  -- reference implementation rather than by hand.
   { m := [[0,0],[1,1],[2,2]], t := psi (Z zero) (Z (phi zero zero)),
     name := "\\psi_0(\\Omega_2)", ev := "oR",
     note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正",
@@ -308,7 +314,8 @@ def rows : List Row := [
     name := "\\psi_0(\\Omega_2\\cdot 3)", ev := "oR" },
   { m := [[0,0],[1,1],[2,2],[3,0]],
     t := psi (Z zero) (phi zero (Z (phi zero zero))),
-    name := "\\psi_0(\\psi_2(1))", ev := "oR", note := "旧値 φ̄(ω^ω,0) を訂正",
+    name := "\\psi_0(\\psi_2(1))", proof := "namespace G2", ev := "oR",
+    note := "旧値 φ̄(ω^ω,0) を訂正",
     sel := "**M** (2,2) の後に (3,0) が来る最初。**T** Z が ω 冪の中に入る最初" },
   { m := [[0,0],[1,1],[2,2],[3,0],[3,0]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi zero zero))),
@@ -334,7 +341,7 @@ def rows : List Row := [
 -- E1: every row marked `hasO` really has the matching value of `o`
 #guard rows.all fun r => !r.hasO || Trans.o? r.m == some r.t
 
--- G2 (v0.1.47): every row matches the oracle-calibrated reading oR = dict ∘ TransPort
+-- G2 (v0.1.47): every row matches the reference-calibrated reading oR = dict ∘ TransPort
 -- (candidate-tier calibration, but a mandatory consistency gate: re-introducing a
 --  miscalibrated value — e.g. the historical ζ₁ row — turns the build red here)
 #guard rows.all fun r => Trans.oR r.m == some r.t
@@ -383,7 +390,7 @@ def regions : List RegionRow := [
     proof := "e3_general",
     evLabel := "checkAll",
     evPath := "../lean/Test/TransTest.lean",
-    note := "区間の全標準行列 (stdSeq) の E3 を一般定理で一括証明" }
+    note := "区間の全標準行列 (stdSeq) について、展開の値を一般定理で一括証明" }
   -- WITHDRAWN (v0.1.42): the nine family/umbrella region rows (F1/F2/F3/F4/F5/F6/F7,
   -- successor family, E1 umbrella) were removed with the calibration audit — their
   -- o?-internal theorems are true but the displayed values are miscalibrated from
@@ -442,8 +449,11 @@ def genTable (lineOf : String → Option Nat) (proofLine : String → Option (St
 Rathjen の表記系 $`\\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
 Arch. Math. Logic 30 (1991), §2) の対応。
 
-**証明列 ✅ の意味は下の [エビデンス](#エビデンス) を、設計の手順と失敗の記録は
-[plan/](../plan/) を参照。**
+**証明列は 2 段ある。** ✅ はその行が証明書を持つ行。$`f_n`$ は、その行の展開が
+取る値の列 $`f_n`$ が**すべての $`n`$ について閉じた式で分かっている**行である。
+$`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ にならない — どちらも
+意味は下の[エビデンス](#エビデンス)にある。**印はどちらもビルドが計算して付ける**
+(宣言ではない)。設計の手順と失敗の記録は [plan/](../plan/) にある。
 
 ## 対応表
 
@@ -462,8 +472,15 @@ Arch. Math. Logic 30 (1991), §2) の対応。
     let proofCell :=
       if Evidence.Cert.certRows.any (fun p => p.1 == r.m && p.2 == r.t) then
         "[✅](../lean/Evidence/Cert.lean)"
-      else ""
-    let _ := proofLine
+      else if r.proof == "" then ""
+      else
+        -- fₙ found: the value of every expansion is known in closed form, for all n,
+        -- but there is no semantic certificate yet.  The link is
+        -- resolved by reading the proof files, so a key that no longer occurs there
+        -- prints nothing rather than an unbacked mark.
+        match proofLine r.proof with
+        | some (f, n) => "[fₙ](../lean/" ++ f ++ "#L" ++ toString n ++ ")"
+        | none => ""
     -- the weak-evidence column lists o and bisim6, each linked separately
     let weak := String.intercalate "+"
       (((if r.hasO then [linked "o" "../lean/Trans/TM.lean"] else []) ++
@@ -490,6 +507,7 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 
 - [E 証明の対象行](#e-証明の対象行)
 - [E.zero / E.succ / E.lim — ✅ の実体](#ezero--esucc--elim---の実体)
+  - [表の $`f_n`$ 印](#表の-f_n-印)
   - [✅ が検査していないもの](#-が検査していないもの)
 - [E.cofinal (展開と基本列の相互共終)](#ecofinal-展開と基本列の相互共終)
 - [証明書の強さと、その限界](#証明書の強さとその限界)
@@ -509,7 +527,7 @@ Lean に無いもの — 順序型による主定理、順序埋め込みの一�
 | **M** | BMS | 行列の形。行数、成分が取る値、初めて現れる列の型 |
 | **T** | $`\\mathfrak{T}(M)`$ | 項の構成子。$`\\bar\\varphi`$ の引数の種類、$`\\psi`$、$`Z`$、$`\\Omega`$ |
 | **B** | Buchholz $`\\mathrm{OT}_B`$ | $`\\psi_u`$ の添字 $`u`$、入れ子、引数が和になるところ |
-| **D** | — | 外部の表と食い違う 9 行。値そのものが未決 ([diff.md](diff.md)) |
+| **D** | — | 外部の表と食い違う 9 行。うち 6 行は決着済み、3 行が未決 ([diff.md](diff.md)) |
 
 **D の 9 行は他と性格が違う。** ほかの印は「ここが証明できれば周りも同じ理屈で通る」
 という意味だが、D は「どちらが正しいか分かっていない」という意味である。9 行はすべて
@@ -520,7 +538,13 @@ Veblen 断片にあるので $`\\psi`$・$`Z`$ の領域には入らない。決
 \\mathrm{oR}\\,(M[n]) = \\mathrm{fsN}\\,(\\mathrm{oR}\\,M)\\,n
 ```
 
-で、これは ✅ の行が満たしている E3 そのものである。
+である。$`M[n]`$ は行列の $`n`$ 番目の展開、$`\\mathrm{fsN}`$ は $`\\mathfrak{T}(M)`$ 側の
+基本列で、**添字は行ごとに違う** — 一律に $`n+1`$ ではない。これは $`f_n`$ 印の中身
+そのものである。
+
+**9 行のうち 6 行は決着した** ($`f_n`$ 印の付いた 6 行、[diff.md](diff.md) の族 1・2・3)。
+当方の値は全 $`n`$ でこの等式を満たし、外部の表の値はどのずらしでも満たさない。残るのは
+族 4 の 3 行である。
 
 **選定は手作業で、網羅を主張しない。** 相の変わり目を機械で数え上げれば、ここに無い行も
 出てくる。ここにあるのは「まずこれだけやれば、各側の主要な段差を一度は通る」という
@@ -528,9 +552,15 @@ Veblen 断片にあるので $`\\psi`$・$`Z`$ の領域には入らない。決
 
 ## E.zero / E.succ / E.lim — ✅ の実体
 
-**表の ✅ 列は $`\\mathrm{Certified}\\;M\\;t`$ が存在する行にだけ機械的に付く。**
+**表の ✅ 列は証明書レジストリに登録された行にだけ機械的に付く。登録の条件は
+$`\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;t`$** — 下の 3 規則を、**導出に現れる値が
+すべて $`\\mathfrak{T}(M)`$ の項である**という条件付きで満たすことである
+([D.CertifiedIn / D.DomI](#dcertifiedin--ddomi))。素の
+$`\\mathrm{Certified}\\;M\\;t`$ はそこからの系であって、**逆は無い**。
+
 $`\\mathrm{Certified}`$ は帰納的述語で、**行の $`\\mathrm{kind}`$ によってどの規則が
-適用されるかが決まる**。
+適用されるかが決まる**。以下の 3 規則が ✅ の中身のすべてで、**行がこれを満たせば
+✅ になる**。
 
 ### E.zero
 
@@ -593,6 +623,26 @@ $`\\mathfrak{T}(M)`$ の項を 1 つ与える写像であり、どこかに定�
 ならないので、$`f`$ を選んでいるのは**行列**であって $`\\mathfrak{T}(M)`$ 側の都合ではない。
 だから $`f`$ が $`\\mathfrak{T}(M)`$ の標準基本列と一致する必要はどこにも無い。
 
+### 表の $`f_n`$ 印
+
+**$`f_n`$ 印は、第 1 連言の「値の側」だけが済んだ行に付く。** その行については
+
+```math
+\\forall n.\\; o\\,(M[n]) = \\mathrm{fsN}\\,t\\,k(n)
+```
+
+が Lean の定理である。$`\\mathrm{fsN}\\,t`$ は $`\\mathfrak{T}(M)`$ 側の基本列、$`k`$ は
+その行の添字で、**行ごとに違う** (一律に $`n+1`$ ではない)。**有限個の $`n`$ を試したの
+ではなく、すべての $`n`$ についての定理**である。
+
+**これは $`f_n`$ が何であるかを言うだけで、$`M[n]`$ がその値を認証することは言って
+いない。** 第 1 連言が要求するのは後者であり、残る 3 連言は手つかずである。つまり
+$`f_n`$ 印は ✅ の材料の一部であって、✅ に近いことを意味しない。
+
+**印はビルドが計算する。** 行が指す名前空間を証明ファイルから探し、見つかった行番号に
+リンクする。名前空間を消したり改名したりすると印そのものが消えるので、実体の無い印は
+残らない。
+
 ### ✅ が検査していないもの
 
 第 5 前提 $`\\forall s \\in \\mathfrak{T}(M).\\;s \\lt t \\to \\exists n.\\;s \\le f_n`$ は
@@ -613,7 +663,7 @@ $`|M[n]| \\lt |M|`$ も展開列の共終性も**補題として存在しない*
 なお下の E.cofinal は**この穴を埋めるものではない**。あちらは
 $`\\mathfrak{T}(M)`$ の**標準基本列**と展開列の関係であり、$`f`$ は標準基本列である
 必要がないので、E.cofinal を確かめても ✅ の根拠は増えない。両者は別の主張である
-(詳細は [plan/README.md の E3 節](../plan/README.md#e3-展開と基本列の整合--本体のエビデンス))。
+(詳細は[設計の記録](../plan/README.md#e3-展開と基本列の整合--本体のエビデンス))。
 
 ## E.cofinal (展開と基本列の相互共終)
 
@@ -622,7 +672,7 @@ $`\\mathfrak{T}(M)`$ の**標準基本列**と BMS の展開列を突き合わ�
 $`\\mathrm{Certified}`$ の第 4 連言として既に、しかも $`o`$ に触れない形で入っている。
 
 この形をなぜ等式ではなく相互共終で立てるのか、等式で立てると何を取り違えるのかは
-**設計の話なので** [plan/README.md の E3 節](../plan/README.md#e3-展開と基本列の整合--本体のエビデンス)
+**設計の話なので**、[設計の記録](../plan/README.md#e3-展開と基本列の整合--本体のエビデンス)
 にある。
 
 ## 証明書の強さと、その限界
@@ -672,7 +722,7 @@ $`\\omega^{t+1}`$ 以上を与えない。$`\\mathrm{DomI}`$ の仮定が無い�
 | 記号 | 意味 |
 |---|---|
 | `o` | 翻訳関数がこの行列で定義され $`o(M) = t`$ (両辺を同じ写像で計算するので較正誤りは検出できない) |
-| `oR` | オラクル較正済みの候補値。**2 段の合成**で、定義域は BMS の 2 行断片 (下記)。全行一致をビルド時 `#guard` で強制 |
+| `oR` | 参照実装で較正済みの候補値。**2 段の合成**で、定義域は BMS の 2 行断片 (下記)。全行一致をビルド時 `#guard` で強制 |
 | `bisim6` | 深さ 6 の双模倣 |
 | `oStageC` | Stage C の候補翻訳の値の一致 |
 
@@ -681,7 +731,7 @@ $`\\omega^{t+1}`$ 以上を与えない。$`\\mathrm{DomI}`$ の仮定が無い�
 `oR` は変換写像そのものではなく、**2 段の合成**である。
 
 ```math
-\\mathrm{BMS}\\ \\xrightarrow{\\ \\text{oracle}\\ }\\ \\mathrm{OT}_B
+\\mathrm{BMS}\\ \\xrightarrow{\\ \\mathrm{transPort}\\ }\\ \\mathrm{OT}_B
 \\ \\xrightarrow{\\ \\mathrm{dict}\\ }\\ \\mathfrak{T}(M)
 ```
 
@@ -826,6 +876,11 @@ $`\\mathfrak{T}(M)`$ の項でない値も認証されうる (P.cert_not_single_
 $`\\mathrm{CertifiedIn}\\;\\mathrm{Dom}`$ は**導出に現れる値すべて**が
 $`\\mathrm{Dom}`$ に属することを要求する版。E.certified の一意性が
 $`\\mathrm{DomI}`$ を要求するのは、この一価性の破れを塞ぐためである。
+
+**そして $`\\mathrm{DomI}`$ は表の登録ゲートでもある。** レジストリに行を足すには
+$`\\mathrm{CertifiedIn}\\;\\mathrm{DomI}`$ の導出が要り、それを足さずに一覧だけ伸ばすと
+ビルドが落ちる。忘却写像は $`\\mathrm{CertifiedIn}\\to\\mathrm{Certified}`$ の一方向
+だけなので、素の $`\\mathrm{Certified}`$ を作っても登録はできない。
 
 # 実装
 
