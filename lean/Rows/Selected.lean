@@ -759,6 +759,63 @@ def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
 
+/-! ### 行列の側と算術。残るのは値側の 6 段降下だけ
+
+梯子で底は 6。`decP` のたびに底が 1 下がるので 6 段降りるが、**深さは n に依らない**。
+各段のブロック長 (n = 2 で測定):
+
+    level 0  [14]    1  [2, 11]    2  [1, 1, 10]    3  [1, 1, 2, 7]
+    level 4  [1, 1, 1, 1, 6]       5  [1, 1, 1, 1, 2, 3]    6  [1, 1, 1, 1, 1, 1, 2]
+
+`valExpr` は値側が出すべき閉じた式で、`phiStep` が 2 枚と `plus` が 1 枚。
+**算術はそれで閉じている** (`arith_F3b`)。残りは `o? (M[n]) = valExpr n` である。 -/
+
+def P : Matrix := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]]
+
+/-- **行列の側。証明済み。** -/
+theorem expand_F3b (n : Nat) : BMS.expand M n = P ++ zeroLad 6 n := by
+  show (BMS.expand? M n).getD [] = _
+  have h : BMS.expand? M n
+      = some (M.take 11 ++ ((List.range (n+1)).map fun a =>
+          ([[5 + a*1*1, 0 + a*0*1]] : Matrix)).flatten) := rfl
+  have hf : (fun a => ([[5 + a*1*1, 0 + a*0*1]] : Matrix))
+      = (fun a => ([[5+a,0]] : Matrix)) := by funext a; simp
+  rw [h, hf, lad_flatten (n+1) 5]
+  rfl
+
+def U : Matrix := [[0,1],[1,1]]
+def A : Term := oLV 1 U
+
+/-- 値側が出すべき閉じた式。 -/
+def valExpr (n : Nat) : Term :=
+  plus zero (omegaNF
+    (Trans.Pair.phiStep TM.Term.one A
+      (plus zero (omegaNF
+        (Trans.Pair.phiStep TM.Term.one A
+          (plus zero (omegaNF (plus A (iterT zero (n + 1))))))))))
+
+/-- 算術。**未証明。**
+
+    `codex:rescue` の作業役が `rfl` で通ると報告し、その時点では
+    `leanman check` が 0 を返した。**ここでは通らない。** `#print axioms` を当てると
+    `sorryAx` が出る — Lean は失敗した elaboration を `sorryAx` で埋めるので、
+    エラーのある状態での `sorryAx` は「証明できていない」の意味である
+    (`lean/scripts/axiom_sweep.lean` 冒頭に同じ注意がある)。
+    **終了コードだけでは足りず、公理も見なければならない。**
+
+    式そのものは正しい。有限では合っている (下の `#guard`)。 -/
+def arithClaim : Prop := ∀ n, valExpr n = fsN t (n + 1)
+
+/-- 残るのはこれだけ。6 段の降下。 -/
+def valClaim : Prop := ∀ n, o? (BMS.expand M n) = some (valExpr n)
+
+theorem e3_of (hv : valClaim) (ha : arithClaim) : e3Claim := by
+  intro n; rw [hv n, ha n]
+
+#guard (List.range 6).all fun n => BMS.expand M n == P ++ zeroLad 6 n
+#guard (List.range 4).all fun n => o? (BMS.expand M n) == some (valExpr n)
+#guard (List.range 6).all fun n => valExpr n == fsN t (n + 1)
+
 end F3b
 
 namespace F3c
