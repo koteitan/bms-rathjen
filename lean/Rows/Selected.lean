@@ -876,6 +876,42 @@ X が `add A …` の形なら和の節が `A == A` で即決する — **だか
     層ごとの形は `Z1 (m+1) = φ̄(0, A + 塔)` から始まるが、**n = 0 は別扱いが要る**
     (塔が 1 になり `splitFin` が畳む。上の注意 1)。 -/
 
+theorem Z1_shape (m : Nat) : Z1 (m+1) = phi zero (add A (iterT zero (m+2))) := by
+  have hT : iterT zero (m+2) = phi zero (iterT zero (m+1)) :=
+    Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero (m+1)
+  have hone : (phi zero (iterT zero (m+1)) == TM.Term.one) = false := by
+    rw [← hT]; exact tower_ne_one m
+  show phiNF zero (Z0 (m+1)) = _
+  rw [Z0_eq (m+1), hT]
+  show phiNFsucc zero (add A (phi zero (iterT zero (m+1)))) = _
+  unfold phiNFsucc
+  rw [show splitFin (add A (phi zero (iterT zero (m+1))))
+        = (add A (phi zero (iterT zero (m+1))), 0) from by
+    unfold splitFin
+    rw [show (add A (phi zero (iterT zero (m+1)))).toList
+          = [A, phi zero (iterT zero (m+1))] from rfl]
+    simp only [List.reverse_cons, List.reverse_nil, List.nil_append, List.cons_append,
+      List.takeWhile_cons, hone, List.length_nil, Nat.sub_zero]
+    rfl]
+  rfl
+
+/-- A が呑まれる。`X` が加法主要項で `X > A` のとき。 -/
+theorem plus_absorb (a b : Term) (h : le (phi a b) A = false) :
+    plus A (phi a b) = phi a b := by
+  show ofList ((toList A).filter (fun x => le (phi a b) x) ++ [phi a b]) = _
+  rw [show toList A = [A] from rfl]
+  simp only [List.filter_cons, h, List.filter_nil]
+  rfl
+
+theorem le_Z2 (W : Term) : le (phi zero (phi zero (add A W))) A = false := rfl
+theorem le_Z3 (V : Term) : le (phi TM.Term.one (phi zero (phi zero (add A V)))) A = false := rfl
+
+/-- `phiStep` を一度だけ開く。`logPhi 1 A = some A` と `X ≠ 0`。 -/
+theorem phiStep_A (X : Term) (hX : (X == zero) = false) :
+    Trans.Pair.phiStep TM.Term.one A X = phiNF TM.Term.one (plus A (omegaNF X)) := by
+  unfold Trans.Pair.phiStep
+  rw [show Trans.Pair.logPhi TM.Term.one A = some A from rfl, hX]
+
 /-- 残るのはこれだけ。6 段の降下。 -/
 def valClaim : Prop := ∀ n, o? (BMS.expand M n) = some (valExpr n)
 
