@@ -208,6 +208,38 @@ theorem fsN_e0 (m : Nat) : fsN e0 m = iterT zero m := by
   show TM.Term.iterPhiAt zero zero m = iterT zero m
   exact iterPhiAt_zero m
 
+/-! ### ブロックの 2 形。族をまたいで使う。 -/
+
+/-- 単一ブロック (先頭が `(0,0)`)。 -/
+theorem oLV_single (j : Nat) (c : BMS.Col) (rest : Matrix)
+    (h : ∀ x ∈ rest, Trans.Pair.r0 x ≠ 0) (hr1 : (Trans.Pair.r1 c == 0) = true) :
+    oLV j (c :: rest) = plus zero (omegaNF (oLV 1 (Trans.Pair.decP rest))) := by
+  rw [Evidence.StageB.oLV_eq, Rows.ProofsB.blocksP_single c rest h]
+  show (if (Trans.Pair.r1 c == 0) = true then _ else _) = _
+  rw [hr1]
+  rfl
+
+/-- 前置き `Q` の後にもう 1 ブロック (先頭が `r0 = 0`、`r1 ≠ 0`)。 -/
+theorem oLV_pre (j : Nat) (Q : Matrix) (c : BMS.Col) (tl : Matrix)
+    (hc : Trans.Pair.r0 c = 0) (hr1 : (Trans.Pair.r1 c == 0) = false)
+    (ht : ∀ x ∈ tl, Trans.Pair.r0 x ≠ 0) :
+    oLV j (Q ++ (c :: tl))
+      = Trans.Pair.phiStep (ofNat j) (oLV j Q) (oLV (j+1) (Trans.Pair.decP tl)) := by
+  rw [Evidence.StageB.oLV_eq,
+      Evidence.StageB.blocksP_append Q (c :: tl) (Or.inr ⟨c, tl, rfl, hc⟩),
+      List.foldl_append, Rows.ProofsB.blocksP_single c tl ht,
+      ← Evidence.StageB.oLV_eq j Q]
+  show (if (Trans.Pair.r1 c == 0) = true then _ else _) = _
+  rw [hr1]
+  rfl
+
+theorem r0_L (o k : Nat) (l : Matrix) (hl : ∀ x ∈ l, Trans.Pair.r0 x ≠ 0) (ho : 1 ≤ o) :
+    ∀ x ∈ l ++ zeroLad o k, Trans.Pair.r0 x ≠ 0 := by
+  intro x hx
+  rcases List.mem_append.mp hx with h | h
+  · exact hl x h
+  · exact r0_zeroLad k o ho x h
+
 /-! ## diff.md 族 1 -/
 
 namespace F1
@@ -485,6 +517,130 @@ def e3Claim : Prop := ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1))
 #guard (List.range 8).all fun n => o? (BMS.expand M n) == some (fsN t (n + 1))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t n))
 #guard (List.range 8).any fun n => !(o? (BMS.expand M n) == some (fsN t (n + 2)))
+
+/-! ### 行列側・値側は済。残るのは算術 2 本 -/
+
+def P : Matrix := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1]]
+def Ua : Matrix := [[0,1],[1,1]]
+def Ba : Matrix := [[0,1],[1,0],[2,1],[3,1],[2,1]]
+def Va : Term := oLV 1 (Ua ++ Ba)
+def stepA (x : Term) : Term := Trans.Pair.phiStep (ofNat 1) x zero
+def chain : Nat → Term
+  | 0 => Va
+  | k+1 => stepA (chain k)
+
+theorem flat_const_11 : ∀ (k : Nat),
+    ((List.range k).map fun _ => ([[1,1]] : Matrix)).flatten = Trans.repM [[1,1]] k
+  | 0 => rfl
+  | k+1 => by
+    rw [List.range_succ, List.map_append, List.flatten_append, flat_const_11 k]
+    show Trans.repM ([[1,1]] : Matrix) k ++ ([[1,1]] : Matrix) = _
+    rw [Trans.repM_append]
+
+/-- **行列の側。** 悪い部分は 1 列 `(1,1)`、上昇なし。 -/
+theorem expand_F2a (n : Nat) : BMS.expand M n = P ++ Trans.repM ([[1,1]] : Matrix) n := by
+  show (BMS.expand? M n).getD [] = _
+  have h : BMS.expand? M n
+      = some (M.take 8 ++ ((List.range (n+1)).map fun a =>
+          ([[1 + a*0*1, 1 + a*0*1]] : Matrix)).flatten) := rfl
+  have hf : (fun a => ([[1 + a*0*1, 1 + a*0*1]] : Matrix)) = (fun _ => ([[1,1]] : Matrix)) := by
+    funext a; simp
+  rw [h, hf, flat_const_11 (n+1)]
+  rfl
+
+/-- 反復されたブロックの連鎖。`(0,1)` は `r0 = 0` なので 1 列ずつ独立したブロックになり、
+    畳み込みは `phiStep` を 1 回ずつ積む。 -/
+theorem chain_eq : ∀ (k : Nat),
+    oLV 1 (Ua ++ Ba ++ Trans.repM ([[0,1]] : Matrix) k) = chain k
+  | 0 => rfl
+  | k+1 => by
+    rw [← Trans.repM_append ([[0,1]] : Matrix) k, ← List.append_assoc,
+        Evidence.StageB.oLV_eq,
+        Evidence.StageB.blocksP_append (Ua ++ Ba ++ Trans.repM ([[0,1]] : Matrix) k)
+          ([[0,1]] : Matrix) (Or.inr ⟨[0,1], [], rfl, rfl⟩),
+        List.foldl_append,
+        Rows.ProofsB.blocksP_single ([0,1] : BMS.Col) [] (by simp),
+        ← Evidence.StageB.oLV_eq 1 (Ua ++ Ba ++ Trans.repM ([[0,1]] : Matrix) k),
+        chain_eq k]
+    rfl
+
+theorem decP_rep : ∀ (k : Nat),
+    Trans.Pair.decP (Trans.repM ([[1,1]] : Matrix) k) = Trans.repM ([[0,1]] : Matrix) k
+  | 0 => rfl
+  | k+1 => by
+    show Trans.Pair.decP (([[1,1]] : Matrix) ++ Trans.repM ([[1,1]] : Matrix) k) = _
+    rw [Rows.ProofsB.decP_append, decP_rep k]
+    rfl
+
+theorem dA (n : Nat) :
+    Trans.Pair.decP (P.tail ++ Trans.repM ([[1,1]] : Matrix) n)
+      = Ua ++ Ba ++ Trans.repM ([[0,1]] : Matrix) (n+1) := by
+  rw [Rows.ProofsB.decP_append, decP_rep n]
+  rfl
+
+set_option maxHeartbeats 2000000 in
+/-- **値の側。** -/
+theorem val (n : Nat) :
+    o? (BMS.expand M n) = some (plus zero (omegaNF (chain (n+1)))) := by
+  have hlen : (P ++ Trans.repM ([[1,1]] : Matrix) n).length
+      ≤ (P ++ Trans.repM ([[1,1]] : Matrix) n).length + 1 := by omega
+  have hrep : ∀ (k : Nat), ∀ x ∈ Trans.repM ([[1,1]] : Matrix) k, Trans.Pair.r0 x ≠ 0 := by
+    intro k
+    induction k with
+    | zero => intro x hx; simp [Trans.repM] at hx
+    | succ k ih =>
+      intro x hx
+      have h : x ∈ ([[1,1]] : Matrix) ++ Trans.repM ([[1,1]] : Matrix) k := hx
+      rcases List.mem_append.mp h with h1 | h1
+      · rw [List.mem_singleton.mp h1]; decide
+      · exact ih x h1
+  have h0 : Trans.onlyRow0 (P ++ Trans.repM ([[1,1]] : Matrix) n) = false :=
+    onlyRow0_append_false P _ rfl
+  have hfr : ∀ (k : Nat), Trans.Pair.inFrag (Trans.repM ([[1,1]] : Matrix) k) = true := by
+    intro k
+    induction k with
+    | zero => rfl
+    | succ k ih =>
+      show Trans.Pair.inFrag (([[1,1]] : Matrix) ++ Trans.repM ([[1,1]] : Matrix) k) = true
+      rw [Rows.ProofsB.inFrag_append, ih]; rfl
+  have hf : Trans.Pair.inFrag (P ++ Trans.repM ([[1,1]] : Matrix) n) = true := by
+    rw [Rows.ProofsB.inFrag_append, hfr n]; rfl
+  have hP : ∀ x ∈ P.tail, Trans.Pair.r0 x ≠ 0 := by decide
+  rw [expand_F2a n]
+  have hstep : o? (P ++ Trans.repM ([[1,1]] : Matrix) n)
+      = some (oLV 1 (P ++ Trans.repM ([[1,1]] : Matrix) n)) := by
+    show (if Trans.onlyRow0 _ = true then _ else Trans.oPair? _) = _
+    simp only [h0, Bool.false_eq_true, if_false]
+    show (if Trans.Pair.inFrag _ = true then some (if Trans.onlyRow0 _ = true then _ else
+      Trans.Pair.oLAux ((P ++ Trans.repM ([[1,1]] : Matrix) n).length + 1) 1
+        (P ++ Trans.repM ([[1,1]] : Matrix) n)) else none) = _
+    simp only [hf, h0, Bool.false_eq_true, if_true, if_false]
+    rw [Evidence.StageB.oLAux_eq_oLV hlen]
+  rw [hstep]
+  congr 1
+  have htail : ∀ x ∈ (P.tail ++ Trans.repM ([[1,1]] : Matrix) n), Trans.Pair.r0 x ≠ 0 := by
+    intro x hx
+    rcases List.mem_append.mp hx with h | h
+    · exact hP x h
+    · exact hrep n x h
+  rw [show P ++ Trans.repM ([[1,1]] : Matrix) n
+        = ([0,0] : BMS.Col) :: (P.tail ++ Trans.repM ([[1,1]] : Matrix) n) from rfl,
+      oLV_single _ _ _ htail rfl, dA n, chain_eq (n+1)]
+
+/-- φ̄(1,ζ₀)。連鎖の各段が積む先。 -/
+def Bt : Term := phi (phi zero zero) (phi (add (phi zero zero) (phi zero zero)) zero)
+
+/-- 残る算術。**未証明。** 連鎖が `φ̄(1, φ̄(1,ζ₀) + k)` になることと、
+    `fsN ω k = k` の 2 本で閉じる。前者は `splitFin` が末尾の 1 を k 個取るところが
+    記号 k のままでは落ちないので、そこに帰納が要る。 -/
+def arithClaim : Prop := ∀ n, plus zero (omegaNF (chain (n+1))) = fsN t (n+1)
+
+theorem e3_of (ha : arithClaim) : ∀ n, o? (BMS.expand M n) = some (fsN t (n + 1)) := by
+  intro n; rw [val n, ha n]
+
+#guard (List.range 6).all fun n =>
+  plus zero (omegaNF (chain (n+1))) == fsN t (n+1)
+#guard (List.range 6).all fun k => chain k == phiNF (ofNat 1) (plus Bt (ofNat k))
 
 end F2a
 
@@ -984,38 +1140,11 @@ def T2 (n : Nat) : Matrix := [[1,1],[2,1],[1,1],[2,0],[3,1],[4,1]] ++ zeroLad 3 
 def T3 (n : Nat) : Matrix := [[1,0],[2,1],[3,1]] ++ zeroLad 2 (n+1)
 def T4 (n : Nat) : Matrix := [[1,1],[2,1]] ++ zeroLad 1 (n+1)
 
-/-- 単一ブロック (先頭が `(0,0)`)。 -/
-theorem oLV_single (j : Nat) (c : BMS.Col) (rest : Matrix)
-    (h : ∀ x ∈ rest, Trans.Pair.r0 x ≠ 0) (hr1 : (Trans.Pair.r1 c == 0) = true) :
-    oLV j (c :: rest) = plus zero (omegaNF (oLV 1 (Trans.Pair.decP rest))) := by
-  rw [Evidence.StageB.oLV_eq, Rows.ProofsB.blocksP_single c rest h]
-  show (if (Trans.Pair.r1 c == 0) = true then _ else _) = _
-  rw [hr1]
-  rfl
 
-/-- `U` の後にもう 1 ブロック (先頭が `(0,1)`)。 -/
-theorem oLV_U (j : Nat) (c : BMS.Col) (tl : Matrix)
-    (hc : Trans.Pair.r0 c = 0) (hr1 : (Trans.Pair.r1 c == 0) = false)
-    (ht : ∀ x ∈ tl, Trans.Pair.r0 x ≠ 0) :
-    oLV j (U ++ (c :: tl))
-      = Trans.Pair.phiStep (ofNat j) (oLV j U) (oLV (j+1) (Trans.Pair.decP tl)) := by
-  rw [Evidence.StageB.oLV_eq,
-      Evidence.StageB.blocksP_append U (c :: tl) (Or.inr ⟨c, tl, rfl, hc⟩),
-      List.foldl_append, Rows.ProofsB.blocksP_single c tl ht,
-      ← Evidence.StageB.oLV_eq j U]
-  show (if (Trans.Pair.r1 c == 0) = true then _ else _) = _
-  rw [hr1]
-  rfl
 
-theorem r0_L (o k : Nat) (l : Matrix) (hl : ∀ x ∈ l, Trans.Pair.r0 x ≠ 0) (ho : 1 ≤ o) :
-    ∀ x ∈ l ++ zeroLad o k, Trans.Pair.r0 x ≠ 0 := by
-  intro x hx
-  rcases List.mem_append.mp hx with h | h
-  · exact hl x h
-  · exact r0_zeroLad k o ho x h
 
 /-- 梯子の段。ここで塔が出る。 -/
-theorem oLV_U_lad (n : Nat) : oLV 1 (U ++ zeroLad 0 (n+1)) = plus A (iterT zero (n+1)) := by
+theorem oLV_pre_lad (n : Nat) : oLV 1 (U ++ zeroLad 0 (n+1)) = plus A (iterT zero (n+1)) := by
   rw [Evidence.StageB.oLV_eq,
       Evidence.StageB.blocksP_append U (zeroLad 0 (n+1))
         (Or.inr ⟨[0,0], zeroLad 1 n, rfl, rfl⟩),
@@ -1075,10 +1204,10 @@ theorem val (n : Nat) : o? (BMS.expand M n) = some (valExpr n) := by
   congr 1
   rw [show P ++ zeroLad 6 n = ([0,0] : BMS.Col) :: (P.tail ++ zeroLad 6 n) from rfl,
       oLV_single _ _ _ (r0_L 6 n P.tail hP (by omega)) rfl, d1 n,
-      oLV_U _ _ _ rfl rfl (r0_T1 n), d2 n,
+      oLV_pre _ U _ _ rfl rfl (r0_T1 n), d2 n,
       oLV_single _ _ _ (r0_T2 n) rfl, d3 n,
-      oLV_U _ _ _ rfl rfl (r0_T3 n), d4 n,
-      oLV_single _ _ _ (r0_T4 n) rfl, d5 n, oLV_U_lad n]
+      oLV_pre _ U _ _ rfl rfl (r0_T3 n), d4 n,
+      oLV_single _ _ _ (r0_T4 n) rfl, d5 n, oLV_pre_lad n]
   rfl
 
 /-- **E3。証明済み。** 行列側・値側・項側・算術を継ぐ。 -/
