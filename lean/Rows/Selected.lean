@@ -184,6 +184,14 @@ theorem iterPhiAt_zero : ∀ m, TM.Term.iterPhiAt zero zero m = iterT zero m
     show phiNF zero (TM.Term.iterPhiAt zero zero m) = phiNF zero (iterT zero m)
     rw [iterPhiAt_zero m]
 
+def e0 : Term := phi (phi zero zero) zero
+
+theorem fsN_e0 (m : Nat) : fsN e0 m = iterT zero m := by
+  show fsN (phi (phi zero zero) zero) m = _
+  rw [fsN]
+  show TM.Term.iterPhiAt zero zero m = iterT zero m
+  exact iterPhiAt_zero m
+
 /-! ## diff.md 族 1 -/
 
 namespace F1
@@ -236,7 +244,6 @@ def P : Matrix := [[0,0],[1,1],[2,0],[1,1],[1,0],[2,1],[3,0],[1,0]]
 
 def A : Term := phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero))
 def B : Term := phi (phi zero zero) (phi zero (phi zero zero))
-def e0 : Term := phi (phi zero zero) zero
 
 theorem t_eq : t = phi zero (add A (add B e0)) := rfl
 
@@ -307,11 +314,6 @@ theorem lt_tower_B (m : Nat) : lt (iterT zero m) B = true :=
   lt_iterT_bd Rows.ProofsB.isSC_zero rfl (fun f hf => Rows.ProofsB.ltF_zero_one f hf) m
 
 
-theorem fsN_e0 (m : Nat) : fsN e0 m = iterT zero m := by
-  show fsN (phi (phi zero zero) zero) m = _
-  rw [fsN]
-  show TM.Term.iterPhiAt zero zero m = iterT zero m
-  exact iterPhiAt_zero m
 
 /-- `plus` を畳んだ形。`plus_shape` の証明が両辺で辿り着く先そのもの。 -/
 theorem W_eq (m : Nat) :
@@ -525,6 +527,149 @@ def lastBlock (n : Nat) : List BMS.Col := ([0,1] : BMS.Col) :: ([1,0] : BMS.Col)
     [[0,1],[1,1],[0,1],[1,0],[2,1],[3,1],[2,1]] ++ lastBlock n
 #guard (List.range 6).all fun n =>
   Trans.Pair.decP (([1,0] : BMS.Col) :: zeroLad 2 n) == zeroLad 0 (n+1)
+
+/-- 切れ目より前の 7 列。閉じた計算。 -/
+def U : List BMS.Col := [[0,1],[1,1],[0,1],[1,0],[2,1],[3,1],[2,1]]
+/-- `logPhi 1` がそこから取り出す値 = φ̄(1,ζ₀)。 -/
+def b2 : Term := phi (phi zero zero) (phi (add (phi zero zero) (phi zero zero)) zero)
+
+theorem logPhi_U : Trans.Pair.logPhi TM.Term.one (oLV 1 U) = some b2 := rfl
+
+theorem tail_eq (n : Nat) :
+    Trans.Pair.decP (P.tail ++ zeroLad 3 n) = U ++ lastBlock n := by
+  rw [Rows.ProofsB.decP_append, decP_zeroLad n 2]
+  rfl
+
+theorem decP_lastTail (n : Nat) :
+    Trans.Pair.decP (([1,0] : BMS.Col) :: zeroLad 2 n) = zeroLad 0 (n+1) := by
+  show ([0,0] : BMS.Col) :: Trans.Pair.decP (zeroLad 2 n) = _
+  rw [decP_zeroLad n 1]
+  rfl
+
+/-- **値の側。証明済み。** 族 1 の `plus` の位置に `phiStep` が来る。 -/
+theorem val_F2b (n : Nat) :
+    o? (P ++ zeroLad 3 n)
+      = some (plus zero (omegaNF (Trans.Pair.phiStep TM.Term.one (oLV 1 U) (iterT zero (n+1))))) := by
+  have hlen : (P ++ zeroLad 3 n).length ≤ (P ++ zeroLad 3 n).length + 1 := by omega
+  have h0 : Trans.onlyRow0 (P ++ zeroLad 3 n) = false :=
+    onlyRow0_append_false P (zeroLad 3 n) rfl
+  have hf : Trans.Pair.inFrag (P ++ zeroLad 3 n) = true := by
+    rw [Rows.ProofsB.inFrag_append, inFrag_zeroLad n 3]; rfl
+  have hstep : o? (P ++ zeroLad 3 n) = some (oLV 1 (P ++ zeroLad 3 n)) := by
+    show (if Trans.onlyRow0 _ = true then _ else Trans.oPair? _) = _
+    simp only [h0, Bool.false_eq_true, if_false]
+    show (if Trans.Pair.inFrag _ = true then some (if Trans.onlyRow0 _ = true then _ else
+      Trans.Pair.oLAux ((P ++ zeroLad 3 n).length + 1) 1 (P ++ zeroLad 3 n)) else none) = _
+    simp only [hf, h0, Bool.false_eq_true, if_true, if_false]
+    rw [Evidence.StageB.oLAux_eq_oLV hlen]
+  rw [hstep]
+  congr 1
+  have hP : ∀ x ∈ P.tail, Trans.Pair.r0 x ≠ 0 := by decide
+  have htail : ∀ x ∈ (P.tail ++ zeroLad 3 n), Trans.Pair.r0 x ≠ 0 := by
+    intro x hx
+    rcases List.mem_append.mp hx with h | h
+    · exact hP x h
+    · exact r0_zeroLad n 3 (by omega) x h
+  rw [Evidence.StageB.oLV_eq]
+  show (Trans.Pair.blocksP (([0,0] : BMS.Col) :: (P.tail ++ zeroLad 3 n))).foldl _ _ = _
+  rw [Rows.ProofsB.blocksP_single ([0,0] : BMS.Col) _ htail]
+  show plus zero (omegaNF (oLV 1 (Trans.Pair.decP (P.tail ++ zeroLad 3 n)))) = _
+  have hb : ∀ x ∈ (([1,0] : BMS.Col) :: zeroLad 2 n), Trans.Pair.r0 x ≠ 0 := by
+    intro x hx
+    rcases List.mem_cons.mp hx with h | h
+    · subst h; decide
+    · exact r0_zeroLad n 2 (by omega) x h
+  rw [tail_eq n, Evidence.StageB.oLV_eq,
+      Evidence.StageB.blocksP_append U (lastBlock n)
+        (Or.inr ⟨[0,1], ([1,0] : BMS.Col) :: zeroLad 2 n, rfl, rfl⟩),
+      List.foldl_append,
+      show lastBlock n = ([0,1] : BMS.Col) :: (([1,0] : BMS.Col) :: zeroLad 2 n) from rfl,
+      Rows.ProofsB.blocksP_single ([0,1] : BMS.Col) _ hb,
+      ← Evidence.StageB.oLV_eq 1 U]
+  show plus zero (omegaNF (Trans.Pair.phiStep (ofNat 1) (oLV 1 U)
+    (oLV (1+1) (Trans.Pair.decP (([1,0] : BMS.Col) :: zeroLad 2 n))))) = _
+  rw [decP_lastTail n, oLV_zeroLad (n+1) 2]
+  rfl
+
+/-! ### 算術 -/
+
+theorem lt_tower_b2 (m : Nat) : lt (iterT zero m) b2 = true :=
+  lt_iterT_bd Rows.ProofsB.isSC_zero rfl (fun f hf => Rows.ProofsB.ltF_zero_one f hf) m
+
+theorem plus_b2 (m : Nat) :
+    plus b2 (iterT zero (m+1)) = add b2 (iterT zero (m+1)) := by
+  have hb : le (iterT zero (m+1)) b2 = true := by
+    show ((iterT zero (m+1) == b2) || lt (iterT zero (m+1)) b2) = true
+    rw [lt_tower_b2 (m+1)]; exact Bool.or_true _
+  have hT : iterT zero (m+1) = phi zero (iterT zero m) :=
+    Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero m
+  rw [hT] at hb ⊢
+  show ofList ((toList b2).filter (fun a => le (phi zero (iterT zero m)) a)
+        ++ [phi zero (iterT zero m)]) = _
+  rw [show toList b2 = [b2] from rfl]
+  simp only [List.filter_cons, hb, List.filter_nil]
+  rfl
+
+theorem phiNF_one_shape (a b : Term) :
+    phiNF TM.Term.one (add b2 (phi a b)) = phi TM.Term.one (add b2 (phi a b)) := by
+  show phiNFsucc TM.Term.one (add b2 (phi a b)) = _
+  unfold phiNFsucc
+  cases hT : (phi a b == TM.Term.one) with
+  | true =>
+    have h : phi a b = TM.Term.one := by simpa using hT
+    rw [show splitFin (add b2 (phi a b)) = (b2, 1) from by rw [h]; rfl]
+    rfl
+  | false =>
+    have h0 : splitFin (add b2 (phi a b)) = (add b2 (phi a b), 0) := by
+      unfold splitFin
+      rw [show (add b2 (phi a b)).toList = [b2, phi a b] from rfl]
+      simp only [List.reverse_cons, List.takeWhile_append, hT]
+      simp [hT]
+      rfl
+    rw [h0]; rfl
+
+theorem fsN_t (m : Nat) : fsN t (m+2) = phiNF TM.Term.one (plus b2 (iterT zero (m+2))) := by
+  show fsN (phi TM.Term.one (add b2 e0)) (m+2) = _
+  rw [Rows.ProofsB.fsN_phi_lim (a := TM.Term.one) (b := add b2 e0) rfl rfl (m+2),
+      fsN_add, fsN_e0 (m+2)]
+
+theorem phiStep_eq (n : Nat) :
+    Trans.Pair.phiStep TM.Term.one (oLV 1 U) (iterT zero (n+1))
+      = phiNF TM.Term.one (plus b2 (omegaNF (iterT zero (n+1)))) := by
+  have hz : (iterT zero (n+1) == zero) = false := by
+    have h := Rows.ProofsB.iterT_ne_zero Rows.ProofsB.isSC_zero n
+    simpa using h
+  unfold Trans.Pair.phiStep
+  rw [logPhi_U, hz]
+
+/-- **算術。証明済み。** -/
+theorem arith (n : Nat) :
+    plus zero (omegaNF (Trans.Pair.phiStep TM.Term.one (oLV 1 U) (iterT zero (n+1))))
+      = fsN t (n+2) := by
+  rw [fsN_t n, phiStep_eq n, omegaNF_iterT (n+1), plus_b2 (n+1),
+      Rows.ProofsB.iterT_succ Rows.ProofsB.isSC_zero (n+1), phiNF_one_shape]
+  rfl
+
+/-- **E3。証明済み。** -/
+theorem e3 : e3Claim := by
+  intro n
+  rw [expand_F2b n, val_F2b n, arith n]
+
+/-! ### 外部の表の値は、同じ試験を通らない -/
+
+/-- 先方の値 ([diff.md](../../diff.md) 族 2 の 249 行目) を先方の構文解析器で訳したもの。 -/
+def tHex : Term := phiNF (ofNat 1) (add (phiNF (ofNat 1) (add (phiNF (ofNat 2) zero) (ofNat 1)))
+  (phiNF (ofNat 1) (ofNat 1)))
+
+#guard !(o? M == some tHex)
+#guard kindT tHex == KindT.isLim
+#guard (List.range 6).all fun k => (List.range 8).any fun n =>
+  !(o? (BMS.expand M n) == some (fsN tHex (n + k)))
+#guard (List.range 4).all fun n => (List.range 30).all fun j =>
+  !(o? (BMS.expand M n) == some (fsN tHex j))
+-- CTRL 同じ探索は当方の値では当たる
+#guard (List.range 4).all fun n => (List.range 30).any fun j =>
+  o? (BMS.expand M n) == some (fsN t j)
 
 end F2b
 
