@@ -25,8 +25,9 @@ def lineFinder (path : String) : IO (String → Option Nat) := do
 def main : IO Unit := do
   let dir := ((← sourcePath).dropEnd "Rows/TM.lean".length).toString
   let rowLine ← lineFinder (dir ++ "Rows/TM.lean")
-  -- per-row proofs may live in either proof file; the first hit wins
-  let proofFiles := ["Rows/Proofs.lean", "Rows/ProofsB.lean", "Rows/Selected.lean"]
+  -- per-row proofs may live in any listed proof file; the first hit wins
+  let proofFiles :=
+    ["Rows/Proofs.lean", "Rows/ProofsB.lean", "Rows/Selected.lean", "Rows/G3.lean"]
   let finders ← proofFiles.mapM fun f => do pure (f, ← lineFinder (dir ++ f))
   let proofLine (key : String) : Option (String × Nat) :=
     finders.firstM fun (f, find) => (find key).map (f, ·)

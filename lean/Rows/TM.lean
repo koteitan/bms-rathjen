@@ -55,7 +55,8 @@ structure Row where
   name : String        -- common name (MathJax)
   proof : String := "" -- key of the E3 proof; resolved to a file+line by gentable and
                        -- rendered as the E3 mark.  Searched in Rows/Proofs.lean,
-                       -- Rows/ProofsB.lean, Rows/Selected.lean, in that order.
+                       -- Rows/ProofsB.lean, Rows/Selected.lean, Rows/G3.lean,
+                       -- in that order.
                        -- ("" = no all-n proof yet.)  A key that resolves to nothing
                        -- prints no mark, so a renamed namespace loses the mark
                        -- instead of lying about it.
@@ -223,7 +224,8 @@ def rows : List Row := [
     note := "旧値 ζ_ω を訂正",
     sel := "**T** φ̄ の第 1 引数が数字でなくなる最初" },
   { m := [[0,0],[1,1],[2,1],[3,0],[4,1]], t := phi (phi (phi zero zero) zero) zero,
-    name := "\\bar{\\varphi}(\\varepsilon_0,0)", ev := "oR", note := "旧値 ζ_{ε₀} を訂正",
+    name := "\\bar{\\varphi}(\\varepsilon_0,0)", proof := "namespace G3", ev := "oR",
+    note := "旧値 ζ_{ε₀} を訂正",
     sel := "**T** φ̄ の第 1 引数が ε 数になる最初" },
   { m := [[0,0],[1,1],[2,1],[3,1]], t := psi (Z zero) zero,
     name := "\\Gamma_0", ev := "oR",
