@@ -6,7 +6,7 @@
 # NON-STANDARD matrix, (0,0)(1,1)(2,1)(3,2).  It had passed every check in the
 # repository, because none of them asked about standard form.  A non-standard
 # matrix is not a notation of the system at all, so any value attached to it is
-# meaningless -- the oracle's own image for it was a non-standard Buchholz term.
+# meaningless -- the reference implementation's own image for it was a non-standard Buchholz term.
 #
 # Usage:   scripts/standard-audit.sh [path-to-yaBMS-c-dir]
 # Exit 0 if every row is standard, 1 otherwise (suitable for CI).

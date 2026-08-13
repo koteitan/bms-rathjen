@@ -10,7 +10,7 @@ WHY IT IS ALSO THE FIRST HONEST CHECK ON `dict`.  `Trans/Dict.lean` calls itself
 "candidate / 予想 tier"; its order-preservation is measurement, not theorem.  Every gate
 in `Evidence/SqV.lean` compares two things built from each other — GATE 1 is a round trip
 through `oR`, GATES 2 and 3 match `sqv` against the table — so none of them can see an
-error in `dict`.  A round trip through an inverse needs no external oracle, and it now
+error in `dict`.  A round trip through an inverse needs no external reference implementation, and it now
 reaches every row of the table, `(0,0)(1,1)(2,2)` included.
 
 HOW IT WAS DERIVED — read off `wcnf`/`collapse`, not guessed:

@@ -413,7 +413,7 @@ def aboveBelow (f : Term → BMS.Matrix) : Nat × Nat :=
 
 /-! ## §3 THE SIXTEEN, DECODED  (measurement, 2026-08-10)
 
-Every earlier failure count was contaminated by the retracted oracle (§1.1), so these
+Every earlier failure count was contaminated by the retracted reference implementation (§1.1), so these
 sixteen are the first honest measurement of what `sqv` gets wrong.  They are separated
 here by WHERE THE DISAGREEMENT LIVES, not by how hard they look.
 
@@ -7464,7 +7464,7 @@ consistent direction, so the branch emits the wrong columns, which is a differen
 larger repair.
 
 
-### §K3.9 A control that passes vacuously, and why the decomposition cannot be the oracle
+### §K3.9 A control that passes vacuously, and why the decomposition cannot be the reference implementation
 
 Trying to use §K3.6's method as a general self-check — "`f` is right on `t` when
 `expand (f t) n = f (fs t n)`" — needs a control, and **the obvious one is worthless**:
@@ -7900,12 +7900,12 @@ it says what such a ladder must satisfy: it must reproduce the tower-limit shape
 ε-indices **without lowering the matrix**, which `delayLast` cannot do because trading a
 trailing `(x,1)` for `(x,0)(x+1,1)` is a descent in `cmpM`.
 
-### §K3.17 A fifth axis with an independent oracle, and what it says about GATE 1
+### §K3.17 A fifth axis with an independent reference implementation, and what it says about GATE 1
 
 The four axes above (table rows, settled values, order, decomposition) all judge the
 encoder against things assembled for it.  `Trans.oR` does not: it is the calibrated
 BMS → TM translation, built from `oRB` and `dict`, and it knows nothing about `sqv`.  So
-`oR (sqv t) = some t` is a fifth axis, and it is the only one whose oracle was not written
+`oR (sqv t) = some t` is a fifth axis, and it is the only one whose reference implementation was not written
 with this encoder in view.  It is also GATE 1 at the top of this file.
 
 **Its failures are never in-region.**  Over the 456-term `CNV ∩ NfOK` population, split

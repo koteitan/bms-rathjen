@@ -7214,7 +7214,7 @@ the data; here is the part of the data that REFUTES the obvious recursion
 run on matrices of the repository's own expansion closure, `F(a,b)` for `φ̄ab`.  (The
 guards below were switched from `Trans.o?` to `Trans.oR` on 2026-08-10: `o?` is the
 RETRACTED pre-calibration reader and is wrong above ζ₀ — see `Evidence/SqV.lean` §1.1.
-Every matrix here was audited and the two oracles agree on all of them, so no datum
+Every matrix here was audited and the two reference implementations agree on all of them, so no datum
 changed; the instrument did.):
 
     F(1,0)      = ε₀        ↦ (0,0)(1,1)
@@ -9327,7 +9327,7 @@ no equation for `oR (M ++ block)`, so there is nothing to induct on — which is
 no lemma to take.
 
 **THIS IS NOT A GAP IN A PROOF, IT IS A MISSING LAYER.**  `oR` is a VALIDATED COMPUTATION — 174
-`#guard`s across `Trans/`, an oracle table, negative controls — and validation at points is not an
+`#guard`s across `Trans/`, a reference-implementation table, negative controls — and validation at points is not an
 API.  Anything quantified over `n` on the `oR` side is blocked until `Trans/Recal.lean` grows
 equation lemmas, and that is a piece of work whose size is set by `ofMatrix`/`transPort`/`dict`,
 not by any ordinal question.

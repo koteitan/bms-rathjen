@@ -260,7 +260,7 @@ which is `fsN` here, offset by one.  Pass-through (`ψ_Ω(ω)`), diagonalisation
 (`ψ_Ω(Ω)`) and the successor seed (`ψ_Ω(Ω+1)`) agree as well.
 
 The author's reference implementation (`padicBotRathjen`, reachable through
-`scripts/padicbot-oracle.js`) computes something else there — `fund(Γ₀, ·)` is
+`scripts/padicbot-ref.js`) computes something else there — `fund(Γ₀, ·)` is
 `2, ζ₀, φ_{ζ₀}(0), …`, two levels further along, and over 51 ψ-region terms it agrees
 with `fsN` on 21.  Every difference is the Γ-closure seed.  Where the implementation and
 the article disagree, the article is the definition, and it is the one that matches here.
@@ -345,7 +345,7 @@ def domCorpus : List Term :=
 #guard domCorpus.all fun t => domSpec t == some (domOf t)
 
 -- **名指しの証人。** 2026-08-13 まで `cofT` はここで `ω` と答えていた。
--- 独立実装 (`scripts/padicbot-oracle.js`) は `Ω` と言う。corpus が届かなければ
+-- 独立実装 (`scripts/padicbot-ref.js`) は `Ω` と言う。corpus が届かなければ
 -- 上の一致は「合っている」ではなく「見ていない」を意味するので、個別に固定する。
 #guard cofT (psi (Z (Z zero)) zero) == Z zero          -- ψ_{Z Ω}(0) の共終度は Ω
 #guard cofT (psi (Z zero) zero) == omega               -- ψ_Ω(0) は ω

@@ -1,4 +1,4 @@
-// padicbot-oracle.js — naruyoko 氏の `padicBotRathjen/implementation.js` を node から
+// padicbot-ref.js — naruyoko 氏の `padicBotRathjen/implementation.js` を node から
 // 呼べるようにする薄い包み。
 //
 // **なぜあるか。** `TM/Order.lean` の順序は [R91] 2.3 の転記であり、ψ・Z の領域では
@@ -10,8 +10,8 @@
 // **資料は取り込まない。** CC BY-SA 3.0 であり、パスを渡して読む。
 //   https://github.com/Naruyoko/googology/tree/main/padicBotRathjen
 //
-//   node scripts/padicbot-oracle.js --self-test
-//   node scripts/padicbot-oracle.js --impl ~/proofs/naruyoko-googology/padicBotRathjen
+//   node scripts/padicbot-ref.js --self-test
+//   node scripts/padicbot-ref.js --impl ~/proofs/naruyoko-googology/padicBotRathjen
 //
 // **表記 (実測、2026-08-13)。** 先方は P進大好きbot 氏のブログと同じ 3 部構成である:
 //
@@ -106,7 +106,7 @@ function load(implDir) {
     "addEventListener:function(){},createElement:function(){return {style:{}}}};\n";
   const src = stub + fs.readFileSync(p, "utf8") +
     "\nmodule.exports={Term:Term,inT:inT,lessThan:lessThan,equal:equal,dom:dom,fund:fund,index:index,inOT:inOT,inPT:inPT,inST:inST,inRT:inRT};\n";
-  const tmp = path.join(require("os").tmpdir(), "padicbot-oracle-loaded.js");
+  const tmp = path.join(require("os").tmpdir(), "padicbot-ref-loaded.js");
   fs.writeFileSync(tmp, src);
   delete require.cache[tmp];
   return require(tmp);
@@ -138,8 +138,8 @@ function selfTest(implDir) {
     fails.push("lessThan が 1 < W を正しく判定しない");
 
   fails.forEach((f) => console.log("  失敗:", f));
-  console.log(fails.length ? `padicbot-oracle 自己試験: 失敗 ${fails.length}`
-                           : "padicbot-oracle 自己試験: 5/5 (記法・χ≠Ω階層・inT・構文例外・順序の向き)");
+  console.log(fails.length ? `padicbot-ref 自己試験: 失敗 ${fails.length}`
+                           : "padicbot-ref 自己試験: 5/5 (記法・χ≠Ω階層・inT・構文例外・順序の向き)");
   return fails.length ? 1 : 0;
 }
 

@@ -2,16 +2,16 @@ import TM
 /-
 Trans/Dict.lean — the Buchholz → 𝔗(M) dictionary  (candidate / 予想 tier)
 
-Purpose.  The gold-standard oracle for the 2-row fragment of BMS is p-adic-lover-bot's
+Purpose.  The gold-standard reference implementation for the 2-row fragment of BMS is p-adic-lover-bot's
 translation `Trans` from the PSS termination proof (naruyoko's implementation; the CLI
 `pss2bp` in this workflow).  Its target is *Buchholz's* notation system OT_B, written
-`D_u a` (= ψ_u(a) of Buchholz 1986), not Rathjen's 𝔗(M).  To compare the oracle with
+`D_u a` (= ψ_u(a) of Buchholz 1986), not Rathjen's 𝔗(M).  To compare the reference implementation with
 this repository's 𝔗(M) side, one needs a dictionary
 
     dict : OT_B → 𝔗(M)      (an order-isomorphism onto its image, value-preserving)
 
 and that is what this file provides, together with machine checks of its
-order-preservation and of the anchor values recorded in `table/oracle-audit-2026-08-09.txt`.
+order-preservation and of the anchor values recorded in `table/refimpl-audit-2026-08-09.txt`.
 
 ## The correspondence adopted, and why
 
@@ -75,7 +75,7 @@ verbatim `pss2bp` output for the matrix named in the comment):
 ## Status
 
 Candidate (予想) tier.  `dict` is validated by (i) the anchor values above against the
-oracle audit, (ii) order-preservation over systematically generated term families
+reference-implementation audit, (ii) order-preservation over systematically generated term families
 (which doubles as a cross-audit of the [R91] 2.3 transcription in TM/Order.lean), and
 (iii) `inT`-wellformedness of every produced term.  No semantic proof is claimed.
 
@@ -263,7 +263,7 @@ def dict : BT → Term
 
 Three layers, all re-verified by a successful build:
 
-  (A) anchors — every row of `table/oracle-audit-2026-08-09.txt` (both sections),
+  (A) anchors — every row of `table/refimpl-audit-2026-08-09.txt` (both sections),
       the Buchholz side being verbatim `pss2bp` output for the matrix in the comment;
   (B) wellformedness — every produced term satisfies `inT` ([R91] 2.1);
   (C) order-preservation and injectivity over systematically generated corpora.
@@ -297,7 +297,7 @@ private def w2 : Term := psi (Z zero) (Z TM.Term.one)         -- ψ_{Z0}(Ω₂)
 
 /-! ### (A) anchors — audit section 2 (the region withdrawn in v0.1.41/42).
 
-These are the values the miscalibrated `o?` got wrong; each line is the oracle's. -/
+These are the values the miscalibrated `o?` got wrong; each line is the reference implementation's. -/
 
 #guard dict (D 0 (D 1 (add (Om 1) one)))    == phi (TM.Term.ofNat 2) TM.Term.omega
                                             -- (2,1)(2,0) = ζ_ω   (o? said ε_{ζ₀·ω})
@@ -426,7 +426,7 @@ settle.
 a WRONG CORPUS, and the section now records what actually happened, because the mistake
 is more useful than the claim was.
 
-The corpus was filtered by naruyoko's `isStandardBuchholz`, called as an external oracle.
+The corpus was filtered by naruyoko's `isStandardBuchholz`, called as an external reference implementation.
 Its helper has a callback-arity bug:
 
     function G(a,u){
@@ -465,7 +465,7 @@ measured point — a reason to warn, but no longer a proof of defect.
 measures it against the spreadsheet's Buchholz column as terms.
 -/
 
-/-! The three terms the buggy oracle admitted.  Every retracted inversion involved one
+/-! The three terms the buggy reference implementation admitted.  Every retracted inversion involved one
     of them.  Kept as permanent negative controls: if `BT.isStd` ever starts accepting
     these, the corpus that refuted `dict` becomes reachable again. -/
 
@@ -477,7 +477,7 @@ theorem badStd_not_standard :
     BT.isStd badStd1 = false ∧ BT.isStd badStd2 = false ∧ BT.isStd badStd3 = false := by
   refine ⟨?_, ?_, ?_⟩ <;> decide
 
--- and the shape the oracle got right, for contrast: the anchor is a normal form.
+-- and the shape the reference implementation got right, for contrast: the anchor is a normal form.
 #guard BT.isStd (BT.D 0 (BT.D 2 BT.zero))
 
 def anchorBT : BT := BT.D 0 (BT.D 2 BT.zero)

@@ -9308,7 +9308,7 @@ previous ε as its parameter:
 and note this makes shapes (A) and (B) COMPOSE rather than compete: the base of the (B)
 iteration is `v ⊕ v = repAdd v 1`, an (A) term.  Core (B) therefore takes an ARBITRARY CNV
 base, not a choice between constants.  CAVEAT: these values are `oR`, which is
-candidate-tier — oracle-calibrated and build-guarded against every table row, but not a
+candidate-tier — reference-calibrated and build-guarded against every table row, but not a
 theorem.  If an expansion certifies a value `oR` does not predict, that is a finding about
 `oR`, not a licence to tune the sequence.  -/
 
