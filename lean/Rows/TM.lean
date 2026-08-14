@@ -54,10 +54,6 @@ open BMS (Matrix)
 open TM (Term)
 open TM.Term
 
-/-- Version of the table (the repository version of the /commitbump workflow).
-    Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.33"
-
 /-- One row of the correspondence table. -/
 structure Row where
   m : Matrix           -- the BMS matrix
@@ -480,14 +476,14 @@ def regionLine (regionProofLine : String → String → Option Nat) (g : RegionR
     The prose is NOT here: `head` and `tail` are the verbatim contents of
     `Rows/head.md` and `Rows/tail.md`, which `gentable` reads at run time.  Editing
     the prose therefore needs no Lean rebuild — and no doubled backslashes.
-    `{{version}}` in `head` is replaced by `version`.
+    The version string lives in `head.md` too, so a bump needs no rebuild.
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
     defines it, `proofLine` maps a proof namespace to the file and line that declares
     it, and `regionProofLine` maps a region proof file and theorem name to its line. -/
 def genTable (head tail : String)
     (lineOf : String → Option Nat) (proofLine : String → Option (String × Nat))
     (regionProofLine : String → String → Option Nat) : String :=
-  let header := head.replace "{{version}}" version
+  let header := head
   let rowStr (r : Row) : String :=
     let bms := if r.m.isEmpty then "(空)" else BMS.showMatrix r.m
     -- the BMS cell links to the line of Rows/TM.lean that defines this row
@@ -569,4 +565,3 @@ the dictionary goes through `phiNF` rather than raw `phi`.
 once produced 97 spurious disagreements out of 98.  It was not read.
 -/
 
-end Rows

@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.33
+バージョン: v0.7.34
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -33,67 +33,67 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 | BMS | $`\mathfrak{T}(M)`$ | Buchholz | 証明 | その他の弱いエビデンス | 備考 |
 |---|---|---|---|---|---|
-| [`(空)`](../lean/Rows/TM.lean#L116) | $`0`$ | $`0`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L44)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 空行列 |
-| [`(0)`](../lean/Rows/TM.lean#L118) | $`1`$ | $`1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L57)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(0)`](../lean/Rows/TM.lean#L119) | $`2`$ | $`2`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L70)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)`](../lean/Rows/TM.lean#L120) | $`\omega`$ | $`\omega`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L83)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(0)(1)`](../lean/Rows/TM.lean#L123) | $`\omega+\omega`$ | $`\omega\cdot 2`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L96)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(1)`](../lean/Rows/TM.lean#L125) | $`\bar{\varphi}(0,2)`$ | $`\omega^2`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L109)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(2)`](../lean/Rows/TM.lean#L127) | $`\bar{\varphi}(0,\omega)`$ | $`\omega^\omega`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L122)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0)(1)(2)(3)`](../lean/Rows/TM.lean#L129) | $`\bar{\varphi}(0,\bar{\varphi}(0,\omega))`$ | $`\omega^{\omega^\omega}`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L135)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(空)`](../lean/Rows/TM.lean#L112) | $`0`$ | $`0`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L44)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 空行列 |
+| [`(0)`](../lean/Rows/TM.lean#L114) | $`1`$ | $`1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L57)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(0)`](../lean/Rows/TM.lean#L115) | $`2`$ | $`2`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L70)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)`](../lean/Rows/TM.lean#L116) | $`\omega`$ | $`\omega`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L83)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(0)(1)`](../lean/Rows/TM.lean#L119) | $`\omega+\omega`$ | $`\omega\cdot 2`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L96)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(1)`](../lean/Rows/TM.lean#L121) | $`\bar{\varphi}(0,2)`$ | $`\omega^2`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L109)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(2)`](../lean/Rows/TM.lean#L123) | $`\bar{\varphi}(0,\omega)`$ | $`\omega^\omega`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L122)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0)(1)(2)(3)`](../lean/Rows/TM.lean#L125) | $`\bar{\varphi}(0,\bar{\varphi}(0,\omega))`$ | $`\omega^{\omega^\omega}`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L135)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
 | **<(0,0)(1,1)** | $`\lt\bar{\varphi}(1,0)`$ | $`\lt\varepsilon_0`$ |  | [checkAll](../lean/Test/TransTest.lean) | 区間の全標準行列 (stdSeq) について、展開の値を一般定理で一括証明 |
-| [`(0,0)(1,1)`](../lean/Rows/TM.lean#L132) | $`\bar{\varphi}(1,0)`$ | $`\varepsilon_0`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L343)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 2 行の最初の極限 |
-| [`(0,0)(1,1)(0,0)`](../lean/Rows/TM.lean#L135) | $`\bar{\varphi}(1,0)+1`$ | $`\varepsilon_0+1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L152)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(1,0)`](../lean/Rows/TM.lean#L137) | $`\bar{\varphi}(0,\bar{\varphi}(1,0))`$ | $`\omega^{\varepsilon_0+1}`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L189)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L140) | $`\bar{\varphi}(1,1)`$ | $`\varepsilon_1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L345)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)`](../lean/Rows/TM.lean#L142) | $`\bar{\varphi}(1,\omega)`$ | $`\varepsilon_\omega`$ |  | [fₙ](../lean/Rows/Proofs.lean#L346)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)(0,0)`](../lean/Rows/TM.lean#L145) | $`\bar{\varphi}(1,\omega)+1`$ | $`\varepsilon_\omega+1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L269)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)(1,1)(1,0)(2,1)(3,0)(1,0)(2,1)`](../lean/Rows/TM.lean#L148) | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ |  | [fₙ](../lean/Rows/Selected.lean#L312) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1) |
-| [`(0,0)(1,1)(2,0)(2,0)`](../lean/Rows/TM.lean#L154) | $`\bar{\varphi}(1,\bar{\varphi}(0,2))`$ | $`\varepsilon_{\omega^2}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L299)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)(3,0)`](../lean/Rows/TM.lean#L156) | $`\bar{\varphi}(1,\bar{\varphi}(0,\omega))`$ | $`\varepsilon_{\omega^\omega}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L284)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L159) | $`\bar{\varphi}(1,\bar{\varphi}(1,0))`$ | $`\varepsilon_{\varepsilon_0}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L252)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L161) | $`\bar{\varphi}(2,0)`$ | $`\zeta_0`$ |  | [fₙ](../lean/Rows/Proofs.lean#L348)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(0,0)`](../lean/Rows/TM.lean#L164) | $`\bar{\varphi}(2,0)+1`$ | $`\zeta_0+1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L164)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(1,0)`](../lean/Rows/TM.lean#L166) | $`\bar{\varphi}(0,\bar{\varphi}(2,0))`$ | $`\omega^{\zeta_0+1}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L191)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(1,1)`](../lean/Rows/TM.lean#L168) | $`\bar{\varphi}(1,\bar{\varphi}(2,0))`$ | $`\varepsilon_{\zeta_0+1}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L234)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)`](../lean/Rows/TM.lean#L172) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\omega)`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\omega)`$ |  | [fₙ](../lean/Rows/Selected.lean#L573) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L178) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\bar{\varphi}(1,0))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\bar{\varphi}(1,0))`$ |  | [fₙ](../lean/Rows/Selected.lean#L843) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)`](../lean/Rows/TM.lean#L185) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)))))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)))))`$ |  | [fₙ](../lean/Rows/Selected.lean#L1046) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)`](../lean/Rows/TM.lean#L191) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(1,0)))))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(1,0)))))`$ |  | [fₙ](../lean/Rows/Selected.lean#L1348) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)(7,1)`](../lean/Rows/TM.lean#L197) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ |  | [fₙ](../lean/Rows/Selected.lean#L1685) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
-| [`(0,0)(1,1)(2,1)(2,0)`](../lean/Rows/TM.lean#L209) | $`\bar{\varphi}(2,\omega)`$ | $`\zeta_\omega`$ |  |  | 旧値 ε_{ζ₀·ω} を訂正 (較正事故) |
-| [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L212) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ |  |  | 旧値 ζ₁ を訂正 (較正事故の初検出行) |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)`](../lean/Rows/TM.lean#L216) | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ |  | [fₙ](../lean/Rows/G9.lean#L6) | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L222) | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ |  | [fₙ](../lean/Rows/G10.lean#L6) | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L229) | $`\bar{\varphi}(3,\omega+1)`$ | $`\bar{\varphi}(3,\omega+1)`$ |  |  | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
-| [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L235) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [fₙ](../lean/Rows/Selected.lean#L2114) | 旧値 ζ_ω を訂正 |
-| [`(0,0)(1,1)(2,1)(3,0)(4,1)`](../lean/Rows/TM.lean#L239) | $`\bar{\varphi}(\bar{\varphi}(1,0),0)`$ | $`\bar{\varphi}(\varepsilon_0,0)`$ |  | [fₙ](../lean/Rows/G3.lean#L6) | 旧値 ζ_{ε₀} を訂正 |
-| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L243) | $`\psi_{\Omega}(0)`$ | $`\Gamma_0`$ |  | [fₙ](../lean/Rows/G7.lean#L6) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 |
-| [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L247) | $`\psi_{\Omega}(0)+1`$ | $`\Gamma_0+1`$ |  |  |  |
-| [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L249) | $`\bar{\varphi}(0,\psi_{\Omega}(0))`$ | $`\omega^{\Gamma_0+1}`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L261) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正 |
-| [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L265) | $`\bar{\varphi}(1,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(0))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(1,1)(2,1)`](../lean/Rows/TM.lean#L268) | $`\bar{\varphi}(2,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L271) | $`\psi_{\Omega}(Z(1)+1)`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(1,1)(2,2)`](../lean/Rows/TM.lean#L275) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(1,\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)))`$ |  | [fₙ](../lean/Rows/G5.lean#L7) |  |
-| [`(0,0)(1,1)(2,2)(1,1)(2,2)(1,1)(2,2)`](../lean/Rows/TM.lean#L279) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))+\psi_{1}(\psi_{2}(0)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,0)`](../lean/Rows/TM.lean#L283) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(0)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,0)(2,0)`](../lean/Rows/TM.lean#L287) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(0)+\psi_{0}(0)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,0)(3,0)`](../lean/Rows/TM.lean#L291) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{0}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,0)(3,1)`](../lean/Rows/TM.lean#L295) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{1}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L299) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L304) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)(2,1)`](../lean/Rows/TM.lean#L308) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)+\psi_{1}(0)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)(3,1)`](../lean/Rows/TM.lean#L312) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(0,\Omega+\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L317) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L322) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | 旧値 φ̄(ω²,0) を訂正 |
-| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L327) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L331) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)))`$ |  | [fₙ](../lean/Rows/Selected.lean#L3557) | 旧値 φ̄(ω^ω,0) を訂正 |
-| [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L336) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+1))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)+\psi_{0}(0)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L339) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{0}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L342) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{1}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L345) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L349) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) |  |
+| [`(0,0)(1,1)`](../lean/Rows/TM.lean#L128) | $`\bar{\varphi}(1,0)`$ | $`\varepsilon_0`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L343)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 2 行の最初の極限 |
+| [`(0,0)(1,1)(0,0)`](../lean/Rows/TM.lean#L131) | $`\bar{\varphi}(1,0)+1`$ | $`\varepsilon_0+1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L152)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(1,0)`](../lean/Rows/TM.lean#L133) | $`\bar{\varphi}(0,\bar{\varphi}(1,0))`$ | $`\omega^{\varepsilon_0+1}`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L189)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
+| [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L136) | $`\bar{\varphi}(1,1)`$ | $`\varepsilon_1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L345)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)`](../lean/Rows/TM.lean#L138) | $`\bar{\varphi}(1,\omega)`$ | $`\varepsilon_\omega`$ |  | [fₙ](../lean/Rows/Proofs.lean#L346)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)(0,0)`](../lean/Rows/TM.lean#L141) | $`\bar{\varphi}(1,\omega)+1`$ | $`\varepsilon_\omega+1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L269)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)(1,1)(1,0)(2,1)(3,0)(1,0)(2,1)`](../lean/Rows/TM.lean#L144) | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ |  | [fₙ](../lean/Rows/Selected.lean#L312) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1) |
+| [`(0,0)(1,1)(2,0)(2,0)`](../lean/Rows/TM.lean#L150) | $`\bar{\varphi}(1,\bar{\varphi}(0,2))`$ | $`\varepsilon_{\omega^2}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L299)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)(3,0)`](../lean/Rows/TM.lean#L152) | $`\bar{\varphi}(1,\bar{\varphi}(0,\omega))`$ | $`\varepsilon_{\omega^\omega}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L284)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L155) | $`\bar{\varphi}(1,\bar{\varphi}(1,0))`$ | $`\varepsilon_{\varepsilon_0}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L252)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L157) | $`\bar{\varphi}(2,0)`$ | $`\zeta_0`$ |  | [fₙ](../lean/Rows/Proofs.lean#L348)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(0,0)`](../lean/Rows/TM.lean#L160) | $`\bar{\varphi}(2,0)+1`$ | $`\zeta_0+1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L164)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(1,0)`](../lean/Rows/TM.lean#L162) | $`\bar{\varphi}(0,\bar{\varphi}(2,0))`$ | $`\omega^{\zeta_0+1}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L191)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(1,1)`](../lean/Rows/TM.lean#L164) | $`\bar{\varphi}(1,\bar{\varphi}(2,0))`$ | $`\varepsilon_{\zeta_0+1}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L234)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)`](../lean/Rows/TM.lean#L168) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\omega)`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\omega)`$ |  | [fₙ](../lean/Rows/Selected.lean#L573) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L174) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\bar{\varphi}(1,0))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\bar{\varphi}(1,0))`$ |  | [fₙ](../lean/Rows/Selected.lean#L843) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)`](../lean/Rows/TM.lean#L181) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)))))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)))))`$ |  | [fₙ](../lean/Rows/Selected.lean#L1046) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)`](../lean/Rows/TM.lean#L187) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(1,0)))))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(1,0)))))`$ |  | [fₙ](../lean/Rows/Selected.lean#L1348) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)(7,1)`](../lean/Rows/TM.lean#L193) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ |  | [fₙ](../lean/Rows/Selected.lean#L1685) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
+| [`(0,0)(1,1)(2,1)(2,0)`](../lean/Rows/TM.lean#L205) | $`\bar{\varphi}(2,\omega)`$ | $`\zeta_\omega`$ |  |  | 旧値 ε_{ζ₀·ω} を訂正 (較正事故) |
+| [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L208) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ |  |  | 旧値 ζ₁ を訂正 (較正事故の初検出行) |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)`](../lean/Rows/TM.lean#L212) | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ |  | [fₙ](../lean/Rows/G9.lean#L6) | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L218) | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ |  | [fₙ](../lean/Rows/G10.lean#L6) | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L225) | $`\bar{\varphi}(3,\omega+1)`$ | $`\bar{\varphi}(3,\omega+1)`$ |  |  | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
+| [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L231) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [fₙ](../lean/Rows/Selected.lean#L2114) | 旧値 ζ_ω を訂正 |
+| [`(0,0)(1,1)(2,1)(3,0)(4,1)`](../lean/Rows/TM.lean#L235) | $`\bar{\varphi}(\bar{\varphi}(1,0),0)`$ | $`\bar{\varphi}(\varepsilon_0,0)`$ |  | [fₙ](../lean/Rows/G3.lean#L6) | 旧値 ζ_{ε₀} を訂正 |
+| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L239) | $`\psi_{\Omega}(0)`$ | $`\Gamma_0`$ |  | [fₙ](../lean/Rows/G7.lean#L6) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 |
+| [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L243) | $`\psi_{\Omega}(0)+1`$ | $`\Gamma_0+1`$ |  |  |  |
+| [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L245) | $`\bar{\varphi}(0,\psi_{\Omega}(0))`$ | $`\omega^{\Gamma_0+1}`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L257) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正 |
+| [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L261) | $`\bar{\varphi}(1,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(0))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,1)`](../lean/Rows/TM.lean#L264) | $`\bar{\varphi}(2,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L267) | $`\psi_{\Omega}(Z(1)+1)`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,2)`](../lean/Rows/TM.lean#L271) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(1,\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)))`$ |  | [fₙ](../lean/Rows/G5.lean#L7) |  |
+| [`(0,0)(1,1)(2,2)(1,1)(2,2)(1,1)(2,2)`](../lean/Rows/TM.lean#L275) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))+\psi_{1}(\psi_{2}(0)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,0)`](../lean/Rows/TM.lean#L279) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(0)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,0)(2,0)`](../lean/Rows/TM.lean#L283) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(0)+\psi_{0}(0)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,0)(3,0)`](../lean/Rows/TM.lean#L287) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{0}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,0)(3,1)`](../lean/Rows/TM.lean#L291) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{1}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L295) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L300) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,1)(2,1)`](../lean/Rows/TM.lean#L304) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)+\psi_{1}(0)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,1)(3,1)`](../lean/Rows/TM.lean#L308) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(0,\Omega+\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L313) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L318) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | 旧値 φ̄(ω²,0) を訂正 |
+| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L323) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L327) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)))`$ |  | [fₙ](../lean/Rows/Selected.lean#L3557) | 旧値 φ̄(ω^ω,0) を訂正 |
+| [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L332) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+1))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)+\psi_{0}(0)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L335) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{0}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L338) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{1}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L341) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L345) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) |  |
 
 # 証明の仕様
 

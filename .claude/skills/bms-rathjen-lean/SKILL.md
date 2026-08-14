@@ -31,8 +31,10 @@ Master plan: `plan/README.md`. Target list & staging: `rathjen-ordinals.md`
   makes "`oR` must not appear in a certificate's justification" a property of the
   module graph instead of a rule someone has to remember. Putting the bridge next
   to `Certified` is the natural move and it is the wrong one.
-- `Rows.version` in `Rows/TM.lean` is rendered into the table header; bump it
-  together with every /commitbump and regenerate the table before committing.
+- The table's version string sits in `Rows/head.md`, which `gentable` reads at run
+  time. Bump it with every /commitbump and regenerate — **no `lake build` needed**
+  for a version bump or for any prose change; `head.md` and `tail.md` are plain
+  Markdown (single backslashes).
 - **ANY edit to `Rows/TM.lean` requires regenerating the table — including a
   COMMENT-ONLY edit.** The generated table deep-links every row to its source
   line (`../lean/Rows/TM.lean#L86`), so adding lines anywhere above the row list

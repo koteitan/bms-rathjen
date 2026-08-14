@@ -134,7 +134,7 @@ E.cert が言っていないこと、T.unique / T.bound / T.eps0 である。
 | 直したいもの | 直す場所 | 要る手順 |
 |---|---|---|
 | 表の行 (行列・値・備考) | `lean/Rows/TM.lean` の `rows` | `lake build` してから `gentable` |
-| 表より上の本文 | `lean/Rows/head.md` | `gentable` だけ |
+| 表より上の本文・バージョン | `lean/Rows/head.md` | `gentable` だけ |
 | 表より下の本文 | `lean/Rows/tail.md` | `gentable` だけ |
 | 列の作り方・印の付け方 | `lean/Rows/TM.lean` の `genTable` | `lake build` してから `gentable` |
 
@@ -143,7 +143,9 @@ cd lean && lake exe gentable > ../table/table-r1.md
 ```
 
 本文は**素の Markdown** である。バックスラッシュを 2 つ書く必要は無い。
-`head.md` の `{{version}}` だけが生成時に置き換わる。
+置換も無い — `head.md` の中身がそのまま出る。
+
+**バージョンも `head.md` に直接書いてある。** 上げるのに `lake build` は要らない。
 
 `table/diff.md` と `table/misc.md` は生成物ではない。手で書く。
 
