@@ -131,7 +131,7 @@ FRONTIER (not proved here) — §8 is the feasibility map, read it before extend
     (§8.3).  §8.5 names the recommended next target, the family
     `(0,0)(1,1)…(a,1)(b,r)` with its closed forms already `#guard`ed.
 
-References: [R91] = M. Rathjen, "Proof-theoretic analysis of KPM", Arch. Math.
+References: [Rathjen, 1991] = M. Rathjen, "Proof-theoretic analysis of KPM", Arch. Math.
 Logic 30 (1991) 377–403.
 -/
 

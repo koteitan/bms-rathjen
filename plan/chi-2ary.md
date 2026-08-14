@@ -6,7 +6,7 @@
 **誤っていた根拠。** 「表の $`(0,0)(1,1)(2,2)`$ 以上の行は現在の型では値を書けない」。
 書ける。資料が与える値 $`\psi_\Omega(\varepsilon_{\Omega+1})`$ は現行の型で
 `inT = true` であり、`dict` の値 $`\psi_\Omega(Z1)`$ より真に小さいことも計算で出る。
-そもそも [R91] の目的は $`\mathfrak{T}(M)`$ が KPM に十分であることなので、
+そもそも [Rathjen, 1991] の目的は $`\mathfrak{T}(M)`$ が KPM に十分であることなので、
 PTO(KPM) 未満の可算順序数はすべて項を持つ。**表の値は最初から書けていた。**
 
 **では何が書けないのか。** $`\Omega_2`$ を「潰す先の正則基数として」名指すこと。
@@ -40,8 +40,8 @@ R1 の範囲では何も増やさない。よって (b) を採る。この文書
 
 ## 何が欠けているか (出典つき)
 
-現行の `Term` は [R91] §2 の $`\mathfrak{T}(M)`$ に忠実であり、そこが問題である。
-[R91] は §2 の前置きでこう書いている:
+現行の `Term` は [Rathjen, 1991] §2 の $`\mathfrak{T}(M)`$ に忠実であり、そこが問題である。
+[Rathjen, 1991] は §2 の前置きでこう書いている:
 
 > $`\mathfrak{T}(M)`$ differs from $`T(M)`$ in some minor aspects:
 > 1. The terms $`\Phi\alpha\beta`$ are completely omitted.
@@ -53,7 +53,7 @@ R1 の範囲では何も増やさない。よって (b) を採る。この文書
 > $`\kappa`$ ranges over regular cardinals $`\lt  M`$ of the shape
 > $`\chi_\nu(0)`$ and $`\chi_\nu(\gamma+1)`$
 
-[R90] 5.1(i) が同じことを定義として述べる:
+[Rathjen, 1990] 5.1(i) が同じことを定義として述べる:
 
 ```math
 R := \{\chi_\alpha(0) : \alpha < M^+\} \cup \{\chi_\alpha(\beta+1) : \alpha < M^+ \wedge \beta < M\}
@@ -71,10 +71,10 @@ R := \{\chi_\alpha(0) : \alpha < M^+\} \cup \{\chi_\alpha(\beta+1) : \alpha < M^
 「$`\pi = \chi_\gamma(\delta)`$ で $`\mathrm{cof}(\delta) \leq 1`$」と同じことを言っている。
 $`\chi_\alpha`$ は正規関数なので極限の第 2 引数は下から到達でき、名前を要しない:
 
-> [R90] 3.6. Lemma. For every $`\alpha \lt  M^+`$, $`\chi_\alpha : M \to M`$ is a normal
+> [Rathjen, 1990] 3.6. Lemma. For every $`\alpha \lt  M^+`$, $`\chi_\alpha : M \to M`$ is a normal
 > function with $`\mathrm{dom}(\chi_\alpha) = M`$.
 
-## 順序規則 ([R90] 3.14, 3.15)
+## 順序規則 ([Rathjen, 1990] 3.14, 3.15)
 
 $`\mu = \chi_\alpha(\beta)`$、$`\nu =_{NF} \chi_\gamma(\delta)`$ のとき $`\mu \lt  \nu`$ は
 次のいずれかと同値:
@@ -95,7 +95,7 @@ $`\mu =_{NF} \bar\varphi\alpha\beta \lt  M`$ で $`0 \lt  \alpha`$、$`\nu =_{NF
 \mu < \nu \iff (\gamma = 0 \wedge \mu < \delta) \ \vee\ (0 < \gamma \wedge \alpha,\beta < \nu)
 ```
 
-**現行の規則は 3.14 の $`\beta = \delta = 0`$ 特殊化である。** [R91] 2.3.15 は
+**現行の規則は 3.14 の $`\beta = \delta = 0`$ 特殊化である。** [Rathjen, 1991] 2.3.15 は
 
 ```math
 Z\alpha < Z\beta \iff (\alpha < \beta \wedge \alpha^* < Z\beta) \ \vee\ (\beta < \alpha \wedge Z\alpha < \beta^*)
@@ -114,7 +114,7 @@ $`\chi_\alpha(0)`$ として保存される。
 2. **整形式条件**を `inT` に足す: 第 2 引数は $`0`$ または後続。
 3. **`TM/Order.lean` の 2.3.15 を 3.14 に差し替える。** 3.15 ($`\bar\varphi`$ 対 $`\chi`$)
    も要る。ここだけは機械的でない。
-4. `*` と $`K_\kappa`$ を第 2 引数に対応させる ([R91] 2.2 の対応物を [R90] から取る)。
+4. `*` と $`K_\kappa`$ を第 2 引数に対応させる ([Rathjen, 1991] 2.2 の対応物を [Rathjen, 1990] から取る)。
 5. `TM/FS.lean` の `psiSeed` / `cofT` / `fsN` の `Z` 節。$`\chi_\alpha`$ が正規関数で
    あることから基本列が決まる。
 6. 表の $`(0,0)(1,1)(2,2)`$ 以上の値を書き直す。**ここが目的**であり、

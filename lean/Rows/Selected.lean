@@ -1469,7 +1469,7 @@ theorem tower_ne_one (m : Nat) : (iterT zero (m+2) == TM.Term.one) = false := by
     phiStep 1 A (phi 1 V) = phi 1 (phi 1 V)                    **具体形が要る**
 
 最後の 2 つが要求するのは `plus A X = X`、つまり A が呑まれることで、これは
-`le X A = false` すなわち `lt A X`。`lt A (phi zero X)` は [R91] 2.3.4 で `A ≤ X` に落ち、
+`le X A = false` すなわち `lt A X`。`lt A (phi zero X)` は [Rathjen, 1991] 2.3.4 で `A ≤ X` に落ち、
 X が `add A …` の形なら和の節が `A == A` で即決する — **だから V を記号のままにはできず、
 `add A (塔)` という具体形まで開く必要がある**。逆に言えばそこまで開けば安い。
 
@@ -2200,7 +2200,7 @@ theorem predP_LG (m : Nat) : Trans.Recal.predP (LG (m+1)) = LG m := by
     collapse 0 (φ̄(0, Ω·j)) = φ̄(j, 0)         j ≥ 2  (Ω 単体では φ̄(1,0))
 
 Ω = `Z 0` = `collapse 1 0`。側条件が要ることの対照は下の `#guard` にある。
-第 2 法則の `j = 1` が外れるのは `logOm` が [R91] 2.7 の不動点ずらしを踏むためで、
+第 2 法則の `j = 1` が外れるのは `logOm` が [Rathjen, 1991] 2.7 の不動点ずらしを踏むためで、
 **この族で唯一 `phiShifted` が真になる点**である。 -/
 
 def Omg : Term := Z zero

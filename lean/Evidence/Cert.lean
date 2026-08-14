@@ -33,7 +33,7 @@ A derivation of `Certified M t` therefore contains certificates for the entire
 expansion closure of M — "islands" (rows whose expansions leave the proven
 region, the mechanism of the calibration failure) are impossible by
 construction.  What remains conditional is only the BMS side's well-foundedness
-and the target notation's own correctness ([R91]), exactly as the plan's
+and the target notation's own correctness ([Rathjen, 1991]), exactly as the plan's
 conditional main theorem MT always stated.
 
 The table's proof column is driven by `certRows` + `certRows_ok`: gentable marks
@@ -43,7 +43,7 @@ Labels are computed from certificates, never declared.
 
 DEFINITION CHANGE (2026-08-09, certificate lane).  The cofinality premise now
 reads `∀ s, inT s = true → lt s t = true → ∃ n, le s (fs' n) = true`: the
-quantifier ranges over the TERMS OF 𝔗(M) ([R91] 2.1, the predicate `inT` of
+quantifier ranges over the TERMS OF 𝔗(M) ([Rathjen, 1991] 2.1, the predicate `inT` of
 TM/NF.lean), not over all inhabitants of the free inductive type `Term`.
 
   Why.  Without the guard the `lim` constructor is VACUOUS — not merely hard to
@@ -139,7 +139,7 @@ private theorem ltF_lt_zero (f : Nat) (a : Term) : ltF f a zero = false := by
 private theorem lt_of_ltF {x y : Term} {N : Nat} (h : ∀ f, N ≤ f → ltF f x y = true)
     (hN : N ≤ 2 * (x.deg + y.deg) + 8) : lt x y = true := h _ hN
 
-/-! ### Destructuring the formation conditions `inT` ([R91] 2.1) -/
+/-! ### Destructuring the formation conditions `inT` ([Rathjen, 1991] 2.1) -/
 
 private theorem isAP_ne_zero {a : Term} (h : a.isAP = true) : a ≠ zero := by
   intro hc; rw [hc] at h; exact Bool.noConfusion h
@@ -744,7 +744,7 @@ it.  §4's `wp`/`omp` are the case `m = 1`. -/
 
 /-! ### Lexicographic comparison of formal sums
 
-Two general clauses of [R91] 2.3 do all the work below: a sum is compared with a
+Two general clauses of [Rathjen, 1991] 2.3 do all the work below: a sum is compared with a
 non-sum by its head (2.3.10/2.3.11), and two sums are compared componentwise
 (2.3.16).  `x.isAP` is needed exactly where a one-component sum `ofList [x]`
 collapses to `x`. -/
@@ -7166,7 +7166,7 @@ theorem cert_eps0_succ : Certified [[0, 0], [1, 1], [0, 0]] (plus (phi one zero)
     (asked for by the coordinator after the `(0,0)(1,1)(1,0)` finding)
 
 The trap of the §16 header is not a one-off.  Its criterion is exact and already in
-the codebase: `TM.Term.isFP a g` ([R91] 2.6(vi)) decides whether `g` is an
+the codebase: `TM.Term.isFP a g` ([Rathjen, 1991] 2.6(vi)) decides whether `g` is an
 a-fixed-point shape, i.e. whether `φ̄ag` COLLAPSES to `g` under the Veblen rules —
 `φ̄0(φ̄10) = ω^(ε₀) = ε₀` is the instance the ε₀ campaign ran into.  A term of the row
 database is at risk exactly when some subterm `φ̄ab` of it satisfies `isFP a b`.

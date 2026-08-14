@@ -1596,7 +1596,7 @@ cofinality clause is FALSE, not merely unprovable.  `inT` kills it at
 recorded in the header of `Evidence/Cert.lean`, and `cof_eps0_needs_inT` at the end
 of the section is its kernel-checked mutant. -/
 
-/-- ε₀ = φ̄10.  (`φ̄` is the RAW Veblen function of [R91] 2.1(v), so `φ̄10 = φ₁(0)`;
+/-- ε₀ = φ̄10.  (`φ̄` is the RAW Veblen function of [Rathjen, 1991] 2.1(v), so `φ̄10 = φ₁(0)`;
     `phiNF` would return the same term here — `0` is not `SC` and has no fixed-point
     shape, so 2.6(vi) falls through to its default line.) -/
 def eps0 : Term := phi one zero
@@ -2344,7 +2344,7 @@ theorem cn_desc_needed : ¬ (∀ t, Frag t = true → Acc (fun x y => lt x y = t
 
 `Certified.lim` takes an ARBITRARY sequence `fs'` — it does not have to be
 `TM/FS.lean`'s `fsN`.  On the CNF segment that is a large saving: `fsN` routes
-every `φ̄` through `phiShifted` / `isFP` / `splitFin` (the [R91] 2.7 recalibration,
+every `φ̄` through `phiShifted` / `isFP` / `splitFin` (the [Rathjen, 1991] 2.7 recalibration,
 which is about Veblen fixed points and does nothing at all when `α = 0`), so
 proving anything about it below ε₀ means dragging that machinery along.  `fsC`
 below is the Cantor-normal-form sequence written directly:
@@ -3546,7 +3546,7 @@ WHAT CHANGES, AND THE MEASUREMENTS THAT SAY SO.
     everywhere AT DEGREE ≤ 6".
 
  3. AND IT IS ESSENTIALLY ONE CLAUSE OF `inT`.  Re-running the sweep with single
-    conditions of [R91] 2.1 deleted (terms admitted / incomparable pairs /
+    conditions of [Rathjen, 1991] 2.1 deleted (terms admitted / incomparable pairs /
     transitivity violations):
 
         inT as written                        171 /   0 /  0
@@ -4622,7 +4622,7 @@ theorem ltF_succ_Z_Z (f : Nat) {a b : Term} (h : Z a ≠ Z b) :
         else ((Z a == starF f b) || ltF f (Z a) (starF f b))) = _
   rw [if_neg (by simpa using h)]
 
-/-! #### §8.3.1 The `starF` unfolding rules ([R91] 2.2)
+/-! #### §8.3.1 The `starF` unfolding rules ([Rathjen, 1991] 2.2)
 
 `starF` is where 3b differs from everything before it: the recursion of `ltF` goes
 THROUGH it, so its clauses need the same treatment `ltF`'s got in §7.2 / §8.1. -/
@@ -4643,7 +4643,7 @@ theorem starF_succ_phi (f : Nat) (a b : Term) :
     starF (f + 1) (phi a b)
       = (if ltF f (starF f a) (starF f b) then starF f b else starF f a) := rfl
 
-/-- **`α*` is `0` or strongly critical** — [R91] 2.2 read as a range statement.
+/-- **`α*` is `0` or strongly critical** — [Rathjen, 1991] 2.2 read as a range statement.
     This is the one `starF` fact that needs NO formation condition: it is pure
     structure, and it is what tells 3b's `ψ`/`Z` clauses that the term they recurse
     into through `starF` is again one of the shapes the table above covers.
@@ -4889,7 +4889,7 @@ immediate from the level lemma) or pins all three to one level.  Level 2 forces
 triples over `{φ̄, ψ, Z}`, and MEASURED, all 27 are reachable — as are all 9 level-1
 pairs for comparability — so no case in the list below is vacuous. -/
 
-/-- The Stage-3b fragment: every `ψ`-subterm has a head in `R` ([R91] 2.1(vi)'s
+/-- The Stage-3b fragment: every `ψ`-subterm has a head in `R` ([Rathjen, 1991] 2.1(vi)'s
     `κ ∈ R`, hereditarily, and nothing else).  Purely syntactic, unlike `inT`. -/
 def FragR : Term → Bool
   | zero => true
@@ -5053,7 +5053,7 @@ def TransCase (A B C : Term) (n m f' : Nat) : Prop :=
 
 WHAT IS PROVED.  Everything §7 proves for `Frag` and §8.2 for `Frag2`, now for
 `FragR` — §8.4's fragment, in which `ψ` and `Z` are admitted subject only to
-[R91] 2.1(vi)'s `κ ∈ R`, hereditarily: `ltF_asymm3`, `ltF_comparable3`,
+[Rathjen, 1991] 2.1(vi)'s `κ ∈ R`, hereditarily: `ltF_asymm3`, `ltF_comparable3`,
 `trans_ltF3`, and the `lt` forms `lt_asymm3` / `lt_comparable3` / `lt_trans3` /
 `lt_trichotomy3` / `le_trans3` / `le_of_not_lt3` / `lt_of_not_le3`.  Since
 `inT ⊆ FragR` (`inT_le_fragR`), §8.5.4 reads all of it off for the genuine terms of
@@ -6246,7 +6246,7 @@ theorem t8 : ∀ (a b c : Term) (n m f' : Nat),
 
 -- ===== [T1-T10] T9 : t9 =====
 -- verdict: kimina OK (messages []), 0.07s
--- notes: ω̄/ω̄/ω̄ (level 3), [R91] 2.3.12 three times — the transcription of §8.2 case (8)'s ω̄ sub-branch with frag2_omg replaced by fragR_omg. One call of IH_TR1; Comp3 unused, Asym3 used only for `hac`. Reachability witness: lt (omg M) (omg (omg M)) && lt (omg (omg M)) (omg (omg (omg M))).
+-- notes: ω̄/ω̄/ω̄ (level 3), [Rathjen, 1991] 2.3.12 three times — the transcription of §8.2 case (8)'s ω̄ sub-branch with frag2_omg replaced by fragR_omg. One call of IH_TR1; Comp3 unused, Asym3 used only for `hac`. Reachability witness: lt (omg M) (omg (omg M)) && lt (omg (omg M)) (omg (omg (omg M))).
 theorem t9 : ∀ (x y z : Term) (n m f' : Nat),
     TransCase (omg x) (omg y) (omg z) n m f' := by
   intro x y z n m f' hfa hfb hfc hbd hm hf ASYM COMP TR1 TR2 h1 h2
@@ -13031,7 +13031,7 @@ coincide, so a reader calibrated only there cannot feel the difference.  **Ask i
 function that reaches ε₀.**
 
 **THE STRUCTURAL POINT, IN ITS CORRECTED FORM.**  `phiNF` is not a normaliser rewriting a term to
-an equal one: `phiNF` is [R91] 2.6(vi)'s φ, which RE-COUNTS fixed points, while `φ̄` is the raw
+an equal one: `phiNF` is [Rathjen, 1991] 2.6(vi)'s φ, which RE-COUNTS fixed points, while `φ̄` is the raw
 constructor that SKIPS them, so **`phiNF a b` and `φ̄(a,b)` denote DIFFERENT ORDINALS** —
 `phiNF 0 ε₀ = φ̄(1,0) = ε₀` against `φ̄(0,ε₀) = ω^(ε₀+1)`.  Hence the accurate statement is NOT
 "`CNV` admits terms that reduce" but:

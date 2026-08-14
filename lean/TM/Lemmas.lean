@@ -76,7 +76,7 @@ theorem lt_M_phiNF (a b : Term) : lt M (phiNF a b) = false := by
       | rfl
       | (apply lt_M_of_isSC; simp_all)
 
-/-- Below M, `ω^·` is the normalized Veblen function at 0 ([R91] 2.6(vii)). -/
+/-- Below M, `ω^·` is the normalized Veblen function at 0 ([Rathjen, 1991] 2.6(vii)). -/
 theorem omegaNF_of_le_M {X : Term} (h : lt M X = false) : omegaNF X = phiNF zero X := by
   unfold omegaNF
   rw [h]

@@ -2,7 +2,7 @@
 Test/TMLinearity.lean — exhaustive linearity check for the order <
 
 Confirms, exhaustively over a finite set of representative terms, that the order
-of [R91] 2.3 (as implemented by the decision procedure) is irreflexive, total
+of [Rathjen, 1991] 2.3 (as implemented by the decision procedure) is irreflexive, total
 (trichotomy) and transitive.  A general proof belongs to Evidence; this is a
 sanity check of the implementation.
 -/

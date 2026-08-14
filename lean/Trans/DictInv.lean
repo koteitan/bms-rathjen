@@ -31,7 +31,7 @@ measurement, in this order:
     that is not of the form ω^(Z 0 + y) — with no preimage at all, and with it the twelve
     table rows indexed by `Ω₂ + …`.
   * WHICH ARGUMENT.  The second argument of φ̄ is not `b` but the SEMANTIC argument β°
-    of [R91] 2.7, because φ̄ re-counts fixed points.  Without it every row of the shape
+    of [Rathjen, 1991] 2.7, because φ̄ re-counts fixed points.  Without it every row of the shape
     `φ̄(1,ζ₀) = ε_{ζ₀+1}` fails — the same trap as §K3.20 of `Evidence/SqV.lean` and as
     `TM/FS.lean`'s provenance check.
   * HOW MANY PAIRS.  `collapse` folds; the inverse must peel.  Reading the whole of β°
@@ -43,7 +43,7 @@ measurement, in this order:
     328/336 into 336/336 exact.
 
 WHERE IT SAYS `none`, and why that is right rather than a gap.  `dict` is not onto 𝔗(M).
-The rejected shapes are φ̄(A,·) with A ∈ SC: φ̄(A,0) denotes A itself ([R91] 2.6(vi) last
+The rejected shapes are φ̄(A,·) with A ∈ SC: φ̄(A,0) denotes A itself ([Rathjen, 1991] 2.6(vi) last
 line, which `phiNFdefault` folds away), and φ̄(A,B) for A ≥ Ω needs an argument ≥ reg u + 1
 that the term does not carry.  Both are rejected structurally — by the shape, not by
 trying `dict` and comparing — so the round-trip guards stay non-circular.
@@ -124,7 +124,7 @@ def vebPairs (u : Nat) : Nat → Term → Option (List (Term × Term))
   | f+1, .phi a b =>
       if a == zero then none
       else
-        -- 意味上の第 2 引数 (β° of [R91] 2.7)。φ̄ は不動点を飛ばすので b そのものではない。
+        -- 意味上の第 2 引数 (β° of [Rathjen, 1991] 2.7)。φ̄ は不動点を飛ばすので b そのものではない。
         -- ここを b にすると φ̄(1,ζ₀) 型の行が全部落ちる (今日 3 度目の同じ罠)。
         let bs := if phiShifted a b then plus b TM.Term.one else b
         -- 第 1 の組として読む。u = 0 なら base = 0 なので β° 全部が c⊖1。
@@ -135,7 +135,7 @@ def vebPairs (u : Nat) : Nat → Term → Option (List (Term × Term))
         -- c = 0 も届いていない印である (c = 1 + cc ≥ 1)。確かめずに剥がすと φ̄(Ω,0) や
         -- φ̄(Z1,Γ₀) — Veblen 枝が届かない項 — に誤答を返す (Ω より上の母集団で 15 件)。
         -- u = 0 側の除外は別の理由: a ∈ SC のとき φ̄(a,0) は a 自身を表す冗長な項で
-        -- ([R91] 2.6(vi) 末尾、`phiNFdefault` がそう畳む)、`dict` は決して出さない。
+        -- ([Rathjen, 1991] 2.6(vi) 末尾、`phiNFdefault` がそう畳む)、`dict` は決して出さない。
         let first : Option (List (Term × Term)) :=
           if u == 0 then
             (if b == zero && a.isSC then none else some [(a, plus TM.Term.one bs)])
@@ -333,7 +333,7 @@ def btPool : List BT := (bgrow (bgrow seeds)).filter BT.isStd
 -- CTRL the pool must reach the new region: `D 2` terms, and terms whose `dict` is ≥ Ω.
 #eval (btPool.countP fun b => !(lt (dict b) Om), btPool.countP fun b => !(lt (dict b) (Z TM.Term.one)))
 
-/-! ### How far the [R91] 2.7 gap reaches.
+/-! ### How far the [Rathjen, 1991] 2.7 gap reaches.
 
 `TM/FS.lean`'s `phiShifted` transcribes 2.7 literally, and the note there records why the
 second disjunct ought to be `a.isSC` rather than `b == zero && a.isSC` — taken literally

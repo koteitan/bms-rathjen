@@ -3,9 +3,9 @@ TM/Terms.lean — the terms of Rathjen's notation system 𝔗(M)
 
 Primary source: M. Rathjen, "Proof-theoretic analysis of KPM",
 Archive for Mathematical Logic 30 (1991) 377–403, §2 (pp. 382–384).
-Cited below as [R91]; definition numbers are those of that paper.
+Cited below as [Rathjen, 1991]; definition numbers are those of that paper.
 
-[R91] §2: 𝔗(M) is a lightweight variant of T(M) of [R90] in which
+[Rathjen, 1991] §2: 𝔗(M) is a lightweight variant of T(M) of [Rathjen, 1990] in which
   1. the terms Φαβ are omitted, and
   2. the hierarchy χ is replaced by the single function Z (= α ↦ χ_α(0)).
 
@@ -33,7 +33,7 @@ Cited below as [R91]; definition numbers are those of that paper.
      everything above it.  Not attempted here; recorded so that nobody reads
      `Z 1` as Ω_2.
 
-Term constructors ([R91] 2.1):
+Term constructors ([Rathjen, 1991] 2.1):
   0, M
   ⊕(α₁,…,αₙ)   (n ≥ 2, αᵢ ∈ AP, αₙ ≤ … ≤ α₁)     formal sum
   ω̄^α          (M < α)                            additively principal above M
@@ -89,7 +89,7 @@ deriving DecidableEq, Repr
 
 namespace Term
 
-/-- The degree Gα ([R91] 2.4): the number of symbols 0, M, ⊕, ω̄, φ̄, ψ, Z.
+/-- The degree Gα ([Rathjen, 1991] 2.4): the number of symbols 0, M, ⊕, ω̄, φ̄, ψ, Z.
     Strictly, a chain of ⊕ counts as one symbol, but this is only used as an
     upper bound for recursion fuel, so counting one per `add` is fine
     (it only overestimates the true Gα). -/
@@ -103,20 +103,20 @@ def deg : Term → Nat
   | Z a => 1 + a.deg
 
 /-- Shape of the additively principal terms AP
-    ([R91] 2.1: AP = {M} ∪ {ω̄^α} ∪ {φ̄αβ} ∪ SC). -/
+    ([Rathjen, 1991] 2.1: AP = {M} ∪ {ω̄^α} ∪ {φ̄αβ} ∪ SC). -/
 def isAP : Term → Bool
   | zero => false
   | add _ _ => false
   | _ => true
 
-/-- Shape of the strongly critical terms SC ([R91] 2.1: SC = {M} ∪ {ψκα} ∪ {Zα}). -/
+/-- Shape of the strongly critical terms SC ([Rathjen, 1991] 2.1: SC = {M} ∪ {ψκα} ∪ {Zα}). -/
 def isSC : Term → Bool
   | M => true
   | psi _ _ => true
   | Z _ => true
   | _ => false
 
-/-- Shape of the regular terms R ([R91] 2.1 (vii): R = {Zα}). -/
+/-- Shape of the regular terms R ([Rathjen, 1991] 2.1 (vii): R = {Zα}). -/
 def isR : Term → Bool
   | Z _ => true
   | _ => false

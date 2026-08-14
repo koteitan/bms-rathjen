@@ -8042,7 +8042,7 @@ correct value, and four rows failing it is not a finding.
 
 **Why the C reference seemed to confirm it.**  It did settle what the matrices denote —
 `(0,0)(1,1)(1,0)[n] = ε₀, ε₀·2, ε₀·3 …`, so `ε₀·ω`.  What it could not settle, and what was
-assumed instead, is what `φ̄(0,ε₀)` denotes **here**.  `φ̄` is [R91] 2.6(vi), the Veblen
+assumed instead, is what `φ̄(0,ε₀)` denotes **here**.  `φ̄` is [Rathjen, 1991] 2.6(vi), the Veblen
 function that **re-counts fixed points**, so `φ̄(0,ε₀)` is not `ω^ε₀`.  The repo says so in
 three places that were all in reach:
 

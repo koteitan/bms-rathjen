@@ -19,10 +19,10 @@ Buchholz's D_u is NOT Rathjen's ψ_{Ω_{u+1}}.  The two systems have different "
 
   * Buchholz OT_B has no Veblen function; the whole Veblen hierarchy is *encoded* by
     Ω-powers inside the argument of D_0 (ψ_0(Ω^{1+α}·(1+β)) = φ(1+α, β), …).
-  * Rathjen's 𝔗(M) ([R91] 2.1) has the binary Veblen φ̄ as a primitive on all of (0,M),
+  * Rathjen's 𝔗(M) ([Rathjen, 1991] 2.1) has the binary Veblen φ̄ as a primitive on all of (0,M),
     so its ψ_κ starts only where Veblen stops: ψ_{Z0}(0) = Γ₀ (this repository's own
     reading — see the Γ-closure clause of `psiSeed`/`iterGamma` in TM/FS.lean), and
-    SC ∩ (Ω_u, Ω_{u+1}) = range(ψ_{Z u}) ([R91] 2.1: SC = {M} ∪ {ψκα} ∪ {Zα}).
+    SC ∩ (Ω_u, Ω_{u+1}) = range(ψ_{Z u}) ([Rathjen, 1991] 2.1: SC = {M} ∪ {ψκα} ∪ {Zα}).
 
 So the dictionary is a genuine ordinal-value computation, not a homomorphism of the
 term algebras.  It is fixed by the following facts, all of which are re-checked as
@@ -59,7 +59,7 @@ are what caught this, and they keep the choice pinned.
 The additive continuation `idx + Δ` for i > 1 (rather than the semantically equal
 W^(α ⊖ W)·(acc + c)) is what the 𝔗(M) normal form demands: K_κ of the latter would
 contain the argument of the previous ψ, violating the formation condition of
-[R91] 2.1(vi).  Both denote the same ordinal; only the former is a term of 𝔗(M).
+[Rathjen, 1991] 2.1(vi).  Both denote the same ordinal; only the former is a term of 𝔗(M).
 
 Sample values produced by `dict` (all in the `#guard` block; the Buchholz side is
 verbatim `pss2bp` output for the matrix named in the comment):
@@ -76,7 +76,7 @@ verbatim `pss2bp` output for the matrix named in the comment):
 
 Candidate (予想) tier.  `dict` is validated by (i) the anchor values above against the
 reference-implementation audit, (ii) order-preservation over systematically generated term families
-(which doubles as a cross-audit of the [R91] 2.3 transcription in TM/Order.lean), and
+(which doubles as a cross-audit of the [Rathjen, 1991] 2.3 transcription in TM/Order.lean), and
 (iii) `inT`-wellformedness of every produced term.  No semantic proof is claimed.
 
 Note: the import precedes this comment because the kimina server extracts the header
@@ -179,13 +179,13 @@ end BT
 /-! ## 2. 𝔗(M)-side ordinal arithmetic used by the dictionary -/
 
 /-- Ω_u as a 𝔗(M) term: Ω_0 = 0 (a formal bottom for the uniform clauses),
-    Ω_{u+1} = Z u ([R91] 2.1(vii): Z enumerates the regulars). -/
+    Ω_{u+1} = Z u ([Rathjen, 1991] 2.1(vii): Z enumerates the regulars). -/
 def reg : Nat → Term
   | 0 => zero
   | u + 1 => Z (TM.Term.ofNat u)
 
 /-- The ω-exponent of an additively principal term: p = ω^(logOm p).
-    φ̄0β denotes φ_0(β°) = ω^(β°) with the shift β° of [R91] 2.7; every other AP term
+    φ̄0β denotes φ_0(β°) = ω^(β°) with the shift β° of [Rathjen, 1991] 2.7; every other AP term
     (φ̄αβ with α ≠ 0, ψκα, Zα, M) is an ε-number, hence its own ω-exponent. -/
 def logOm : Term → Term
   | phi zero b => if phiShifted zero b then plus b TM.Term.one else b
@@ -265,9 +265,9 @@ Three layers, all re-verified by a successful build:
 
   (A) anchors — every row of `table/refimpl-audit-2026-08-09.txt` (both sections),
       the Buchholz side being verbatim `pss2bp` output for the matrix in the comment;
-  (B) wellformedness — every produced term satisfies `inT` ([R91] 2.1);
+  (B) wellformedness — every produced term satisfies `inT` ([Rathjen, 1991] 2.1);
   (C) order-preservation and injectivity over systematically generated corpora.
-      (C) is simultaneously a cross-audit of the [R91] 2.3 transcription in
+      (C) is simultaneously a cross-audit of the [Rathjen, 1991] 2.3 transcription in
       TM/Order.lean: a disagreement is either a `dict` bug or an `lt` bug.
       Result at the time of writing: no disagreement on 30k+ pairs. -/
 
@@ -502,7 +502,7 @@ theorem dict_anchor_both_inT : inT (dict anchorBT) = true ∧ inT anchorSrc = tr
 
 **`reg (u+1) = Z u` は $`u \geq 1`$ で誤っている。** Buchholz の $`\Omega_{u+1}`$ を
 `Z u` に送るが、`Z 1` は $`\chi_1(0) = I`$ であって $`\Omega_2 = \chi_0(1)`$ では
-ない。そして $`\Omega_2`$ は $`\mathfrak{T}(M)`$ に項を持たない ([R91] §2 が
+ない。そして $`\Omega_2`$ は $`\mathfrak{T}(M)`$ に項を持たない ([Rathjen, 1991] §2 が
 $`\chi`$ を $`\alpha \mapsto \chi_\alpha(0)`$ に潰しているため; `plan/chi-2ary.md`)。
 
 **測定。** 第三者の対応表 (Hexirp 氏。`scripts/hexirp-rathjen-check.py` で再実行できる)

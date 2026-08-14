@@ -45,7 +45,7 @@ predicate; §7–§8 the BM4 expansion on the one-row region (all ascension amou
 vanish there, so the rule is "copy the bad part n+1 times"); §9–§10 the induction on
 the last block; §11 the two theorems; §12 checks.
 
-References: [R91] = M. Rathjen, "Proof-theoretic analysis of KPM", Arch. Math. Logic
+References: [Rathjen, 1991] = M. Rathjen, "Proof-theoretic analysis of KPM", Arch. Math. Logic
 30 (1991) 377–403 (term system 𝔗(M), normal operations 2.6); the BMS side follows
 koteitan's formula-only definition of BM4 as transcribed in BMS/Expand.lean.
 -/
@@ -368,7 +368,7 @@ theorem blocks0_isBlock {s : List Nat} (h : s = [] ∨ s.head? = some 0) :
 
 Every value of `oV` is a formal sum whose components are all of the form `φ̄0γ`
 (this is exactly the CNF region below ε₀).  On such terms the normal operations
-of [R91] 2.6 collapse to the obvious ones: `ω^t = φ̄0t`.
+of [Rathjen, 1991] 2.6 collapse to the obvious ones: `ω^t = φ̄0t`.
 -/
 
 /-- Every additive component of `t` is of the form `φ̄0γ`. -/

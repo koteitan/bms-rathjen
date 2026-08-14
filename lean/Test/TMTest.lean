@@ -94,7 +94,7 @@ def wMp1 : Term := omg Mp1             -- ω̄^(M+1)
 #guard omegaNF e0 = e0                 -- ω^ε₀ = ε₀
 #guard omegaNF one = phi zero one      -- ω^1 = ω
 
--- the fixed-point shift of φαβ (middle of [R91] 2.6(vi)):
+-- the fixed-point shift of φαβ (middle of [Rathjen, 1991] 2.6(vi)):
 --   φ0(ε₀+1) steps down to φ̄0(ε₀+0) = φ̄0ε₀
 #guard phiNF zero (plus e0 one) = phi zero e0
 

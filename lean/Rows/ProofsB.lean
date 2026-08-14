@@ -50,7 +50,7 @@ column and `oLAux` folds `phiStep`, whose value at level k is `φ̄(k, m)`; this
 `φ̄(k, ofNat i)`.  §16 gives the ω-tower over a fixed base used by R3 (and R7 has its
 ε-tower analogue inside its namespace).
 
-References: [R91] = M. Rathjen, "Proof-theoretic analysis of KPM", Arch. Math.
+References: [Rathjen, 1991] = M. Rathjen, "Proof-theoretic analysis of KPM", Arch. Math.
 Logic 30 (1991) 377–403.
 -/
 

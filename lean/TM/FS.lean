@@ -1,9 +1,9 @@
 /-
 TM/FS.lean — fundamental sequences for 𝔗(M)
 
-IMPORTANT: [R91] contains no definition of fundamental sequences.  This file is a
+IMPORTANT: [Rathjen, 1991] contains no definition of fundamental sequences.  This file is a
 design choice of this repository.  It follows the standard route of reading the
-cofinal sequences off the closure structure of the sets C_κ(α,β) of [R90] (what
+cofinal sequences off the closure structure of the sets C_κ(α,β) of [Rathjen, 1990] (what
 each set is closed under) — the same shape as Buchholz-style systems and as §4 of
 p-adic-lover-bot's pair-sequence paper.  Checking E3 (the expansion of a matrix
 against the fundamental sequence of its term) is what validates this definition.
@@ -26,7 +26,7 @@ Contents:
 Rationale, case by case:
   ⊕      : propagate into the last component (the standard rule for sums).
   ω̄^γ   : γ successor → ω̄^{γ'}·n; γ limit → ω̄^{γ[·]} (propagate into the exponent).
-  φ̄ a b : by the correspondence φ̄αβ = φα(β°) of [R91] 2.7, first recover the
+  φ̄ a b : by the correspondence φ̄αβ = φα(β°) of [Rathjen, 1991] 2.7, first recover the
            semantic argument
              β° = β+1  (b a fixed-point shape plus a finite part, or b = 0 ∧ a ∈ SC)
              β         (otherwise)
@@ -72,16 +72,16 @@ def predT (t : Term) : Term :=
   let l := toList t
   if l.getLast? == some one then ofList l.dropLast else zero
 
-/-- Is `g` of a-fixed-point shape: g ∈ SC ∧ a < g, or g = φ̄cδ ∧ a < c ([R91] 2.6(vi))? -/
+/-- Is `g` of a-fixed-point shape: g ∈ SC ∧ a < g, or g = φ̄cδ ∧ a < c ([Rathjen, 1991] 2.6(vi))? -/
 def isFP (a g : Term) : Bool :=
   (g.isSC && lt a g) ||
   (match g with
    | phi c _ => lt a c
    | _ => false)
 
-/-- Does the semantic argument of φ̄ a b become a successor b+1 (case analysis of [R91] 2.7)?
+/-- Does the semantic argument of φ̄ a b become a successor b+1 (case analysis of [Rathjen, 1991] 2.7)?
 
-    [R91] 2.7 verbatim, for α, β < M:
+    [Rathjen, 1991] 2.7 verbatim, for α, β < M:
 
         φ̄αβ = φ_α(1)      if β = 0 and α ∈ SC
             = φ_α(β+1)    if β = γ+n and φ_αγ = γ
@@ -227,7 +227,7 @@ def fsN : Term → Nat → Term
 
 /-! ## Provenance check against an independent Rathjen-type notation (2026-08-13)
 
-This file's header says [R91] has no fundamental sequences and that the definitions here
+This file's header says [Rathjen, 1991] has no fundamental sequences and that the definitions here
 are a design choice of this repository.  They now have an external witness.
 
 P進大好きbot, "Rathjen-type Ordinal Notation" (Googology Wiki, 2019, CC BY-SA 3.0),
@@ -237,7 +237,7 @@ defines `dom` and an expansion map for a system that extends Rathjen's, and its 
 agree, and on the twelve rows of that table where the expansion is unambiguous, they do.
 
 DICTIONARY, and it is NOT the identity.  That source writes the PLAIN Veblen function
-`φ⁰_a(b)`; this repository writes Rathjen's `φ̄`, which re-counts fixed points ([R91]
+`φ⁰_a(b)`; this repository writes Rathjen's `φ̄`, which re-counts fixed points ([Rathjen, 1991]
 2.6(vi)).  The bridge is `phiNF`, verified here on three values whose answer is already
 known — `phiNF 1 0 = φ̄(1,0) = ε₀`, `phiNF 0 (ε₀+1) = φ̄(0,ε₀)`, `phiNF 2 0 = φ̄(2,0) = ζ₀`.
 Reading `φ⁰` as `φ̄` directly instead turns every fixed-point row into a spurious
@@ -266,7 +266,7 @@ with `fsN` on 21.  Every difference is the Γ-closure seed.  Where the implement
 the article disagree, the article is the definition, and it is the one that matches here.
 
 Above `Ω` the implementation's sequences run through the `Ω` hierarchy
-(`ψ_{χ₁(0)}(0)` expands by `φ¹_·(0)`), which this type cannot write at all: [R91] §2
+(`ψ_{χ₁(0)}(0)` expands by `φ¹_·(0)`), which this type cannot write at all: [Rathjen, 1991] §2
 collapses `χ` to `α ↦ χ_α(0)` so `Ω₂` has no term (`plan/chi-2ary.md`).  Nothing to adopt
 there either.
 -/
@@ -277,7 +277,7 @@ That source also defines a cofinality map `dom : OT → OT` with values `0` (zer
 (successor), `ω` (countable limit) and `s` (uncountable regular).  This file splits the
 same information across `kindT` and `cofT`, so put them back together and compare.
 
-The `φ` clause must be read with the SEMANTIC second argument `β°` ([R91] 2.7), for the
+The `φ` clause must be read with the SEMANTIC second argument `β°` ([Rathjen, 1991] 2.7), for the
 usual reason.  The measurement below records what ignoring that costs, and the number is
 the point: a rule that uses `b` instead of `β°` still agrees on 2460 of 2572 terms — it
 breaks on 4%.  A corpus that did not reach fixed points would have certified it.

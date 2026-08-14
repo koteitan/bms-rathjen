@@ -1,15 +1,15 @@
 /-
-TM/Order.lean — the order < and the map * of 𝔗(M) ([R91] 2.2, 2.3)
+TM/Order.lean — the order < and the map * of 𝔗(M) ([Rathjen, 1991] 2.2, 2.3)
 
-The 16 clauses of [R91] 2.3 are implemented as a recursive decision procedure by
-case analysis on the shapes of the terms.  Since * ([R91] 2.2) uses the order (max)
+The 16 clauses of [Rathjen, 1991] 2.3 are implemented as a recursive decision procedure by
+case analysis on the shapes of the terms.  Since * ([Rathjen, 1991] 2.2) uses the order (max)
 and the order uses * (κ⁻ = δ*), the two are mutually recursive.  Termination is
 secured by fuel (an upper bound on the recursion depth): every recursive call
 strictly decreases the sum of the degrees of the two arguments, so the sum of the
 degrees is enough fuel.
 
 The clause each branch implements is named in its comment.  Completeness of the
-decision (trichotomy) corresponds to a theorem of [R91] and is left as future work;
+decision (trichotomy) corresponds to a theorem of [Rathjen, 1991] and is left as future work;
 here the priority is a faithful transcription as a computation.
 -/
 import TM.Terms
@@ -19,7 +19,7 @@ namespace Term
 
 mutual
 
-/-- α* ([R91] 2.2).  `fuel` bounds the depth of the mutual recursion. -/
+/-- α* ([Rathjen, 1991] 2.2).  `fuel` bounds the depth of the mutual recursion. -/
 def starF : Nat → Term → Term
   | 0, _ => zero
   | fuel + 1, t =>
@@ -38,7 +38,7 @@ def starF : Nat → Term → Term
     | psi k a => psi k a                 -- 2.2(v): α* = α for α ∈ SC, α < M
     | Z a => Z a                         -- 2.2(v)
 
-/-- Decision of the order s < t ([R91] 2.3). -/
+/-- Decision of the order s < t ([Rathjen, 1991] 2.3). -/
 def ltF : Nat → Term → Term → Bool
   | 0, _, _ => false
   | fuel + 1, s, t =>
@@ -107,7 +107,7 @@ def le (s t : Term) : Bool := s == t || lt s t
 /-- α* -/
 def star (t : Term) : Term := starF (2 * t.deg + 8) t
 
-/-- κ⁻ ([R91] 2.3): δ* when κ = Zδ.  Never used on terms outside R (returns 0). -/
+/-- κ⁻ ([Rathjen, 1991] 2.3): δ* when κ = Zδ.  Never used on terms outside R (returns 0). -/
 def kminus : Term → Term
   | Z d => star d
   | _ => zero

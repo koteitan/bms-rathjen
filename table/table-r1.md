@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.18
+バージョン: v0.7.20
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -109,22 +109,22 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 \mathrm{DomI}(\alpha) \;:\equiv\; \alpha \in \mathfrak{T}(M)
 ```
 
-$`\mathrm{CertifiedIn}(\mathrm{Dom}, M, t)`$ は次の 3 規則で閉じた最小の関係である。
-
 $`\mathrm{DomI}(\alpha)`$ は「$`\alpha`$ が $`\mathfrak{T}(M)`$ の**正規形の項**である」
 という述語である。$`\mathfrak{T}(M)`$ は Rathjen が最小の弱 Mahlo 基数 $`M`$ の上の
 崩壊関数 $`\psi_\kappa`$ と $`Z`$ で組んだ順序数表記で ([D.TM](#dtm))、
-その形成条件 ([R91] 2.1) が**正規形の条件を兼ねている** — 和は加法的主要な成分の降順のみ、
+その形成条件 ([Rathjen, 1991] 2.1) が**正規形の条件を兼ねている** — 和は加法的主要な成分の降順のみ、
 $`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \alpha`$ のときだけ。
-だから 1 つの順序数を表す項は 1 つしかない ([R91] 2.8(i))。
+だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
 
-### E.zero
+$`\mathrm{CertifiedIn}(\mathrm{Dom}, M, t)`$ は次の 3 規則で閉じた最小の関係である。
+
+### D.CertifiedIn.zero
 
 ```math
 \mathrm{CertifiedIn}(\mathrm{Dom}, [\;], 0)
 ```
 
-### E.succ
+### D.CertifiedIn.succ
 
 ```math
 \begin{aligned}
@@ -135,7 +135,7 @@ $`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \a
 \end{aligned}
 ```
 
-### E.lim
+### D.CertifiedIn.lim
 
 $`f : \mathbb{N} \to \mathfrak{T}(M)`$ について:
 
@@ -153,7 +153,7 @@ $`f : \mathbb{N} \to \mathfrak{T}(M)`$ について:
 
 ## D.Dom
 
-E.zero / E.succ / E.lim のパラメータ。**項**の述語である。
+D.CertifiedIn.zero / .succ / .lim のパラメータ。**項**の述語である。
 
 ```math
 \mathrm{Dom} \;:\; \text{項} \to \{\text{真}, \text{偽}\}
@@ -175,7 +175,7 @@ $`\bar\varphi(\alpha,\beta)`$・$`\psi_\kappa(\alpha)`$・$`\oplus`$
 
 ## E.fs
 
-弱いエビデンスの $`f_n`$ 印の中身。E.lim の前提
+弱いエビデンスの $`f_n`$ 印の中身。[D.CertifiedIn.lim](#dcertifiedinlim) の前提
 $`\forall n.\;\mathrm{CertifiedIn}(\mathrm{Dom}, M[n], f_n)`$ の**値の側だけ**を言う。
 
 ```math
@@ -187,13 +187,13 @@ $`\mathrm{fsN}(t, \cdot)`$ は $`\mathfrak{T}(M)`$ 側の基本列、$`k`$ は�
 **行ごとに違う** (一律に $`n+1`$ ではない)。有限個の $`n`$ を試したのではなく、
 すべての $`n`$ についての定理である。
 
-**$`M[n]`$ がその値を認証することは言っていない。** E.lim が要求するのは後者であり、
+**$`M[n]`$ がその値を認証することは言っていない。** 上の前提が要求するのは後者であり、
 残る 3 前提は手つかずである。E.fs は E.cert の材料の一部であって、E.cert に近いことを
 意味しない。
 
 ## E.cert が言っていないこと
 
-E.lim の共終性の前提と $`f_n \lt t`$・$`f_n \lt f_{n+1}`$ から $`\sup_n f_n = t`$ が
+[D.CertifiedIn.lim](#dcertifiedinlim) の共終性の前提と $`f_n \lt t`$・$`f_n \lt f_{n+1}`$ から $`\sup_n f_n = t`$ が
 出る。$`\mathfrak{T}(M)`$ 側の共終性は証明の中にある。
 
 言っていないのは BMS 側である:
@@ -252,8 +252,8 @@ R = \{Z(\alpha)\}
 
 $`\oplus`$ の条件 (成分が $`AP`$、降順) が一意な正規形を与える。
 
-**$`Z`$ は [R91] 自身の記号である** (2.1(vii))。1990 年の $`T(M)`$ は 2 引数の
-$`\chi`$ の階層を持つが、[R91] はそれを 1 本の $`Z`$ に置き換えた:
+**$`Z`$ は [Rathjen, 1991] 自身の記号である** (2.1(vii))。1990 年の $`T(M)`$ は 2 引数の
+$`\chi`$ の階層を持つが、[Rathjen, 1991] はそれを 1 本の $`Z`$ に置き換えた:
 
 ```math
 Z(\alpha) \;=\; \chi_\alpha(0)
@@ -264,7 +264,7 @@ $`\Omega`$ 階層を枚挙するのに、それが 0 に固定されているか
 $`\chi_1(0)`$、すなわち最小の弱到達不能基数 $`I`$ であって $`\Omega_2`$ ではない
 ([値についての注意](#値についての注意))。
 
-**$`\bar\varphi`$ は $`\omega^\cdot`$ の不動点を飛ばして数える** ([R91] 2.6(vi))。
+**$`\bar\varphi`$ は $`\omega^\cdot`$ の不動点を飛ばして数える** ([Rathjen, 1991] 2.6(vi))。
 $`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だが、
 
 ```math

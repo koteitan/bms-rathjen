@@ -99,7 +99,7 @@ def blocksP : List BMS.Col → List (List BMS.Col)
 
 /-- logφ_k: the largest β with φ_k(β) ≤ t, `none` when t < φ_k(0).
     A raw term φ̄ a b denotes φ_a(b°) with b° = b+1 iff `phiShifted a b`
-    ([R91] 2.7), whence the shift in the a = k case; for a > k the term is a
+    ([Rathjen, 1991] 2.7), whence the shift in the a = k case; for a > k the term is a
     φ_k-fixed point and is its own logarithm; for a < k and for sums the
     logarithm is decided by the argument resp. the head component. -/
 def logPhi (k : Term) : Term → Option Term
