@@ -56,7 +56,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.16"
+def version : String := "v0.7.17"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -570,29 +570,29 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 ## E.cert
 
 ```math
-\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;t
+\\mathrm{CertifiedIn}(\\mathrm{DomI}, M, t)
 ```
 
 ```math
 \\mathrm{DomI}(\\alpha) \\;:\\equiv\\; \\alpha \\in \\mathfrak{T}(M)
 ```
 
-$`\\mathrm{CertifiedIn}\\;\\mathrm{Dom}`$ は次の 3 規則で閉じた最小の関係である。
+$`\\mathrm{CertifiedIn}(\\mathrm{Dom}, M, t)`$ は次の 3 規則で閉じた最小の関係である。
 
 ### E.zero
 
 ```math
-\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;[\\;]\\;0
+\\mathrm{CertifiedIn}(\\mathrm{Dom}, [\\;], 0)
 ```
 
 ### E.succ
 
 ```math
 \\begin{aligned}
-&\\mathrm{kind}\\,M = \\mathrm{succ} \\cr
-\\land\\;\\;&\\forall n \\in \\mathbb{N}.\\; \\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M[n]\\;t \\cr
+&\\mathrm{kind}(M) = \\mathrm{succ} \\cr
+\\land\\;\\;&\\forall n \\in \\mathbb{N}.\\; \\mathrm{CertifiedIn}(\\mathrm{Dom}, M[n], t) \\cr
 \\land\\;\\;&\\mathrm{Dom}(t+1) \\cr
-\\longrightarrow\\;\\;&\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M\\;(t+1)
+\\longrightarrow\\;\\;&\\mathrm{CertifiedIn}(\\mathrm{Dom}, M, t+1)
 \\end{aligned}
 ```
 
@@ -602,27 +602,49 @@ $`f : \\mathbb{N} \\to \\mathfrak{T}(M)`$ について:
 
 ```math
 \\begin{aligned}
-&\\mathrm{kind}\\,M = \\mathrm{lim} \\cr
+&\\mathrm{kind}(M) = \\mathrm{lim} \\cr
 \\land\\;\\;&\\mathrm{Dom}(t) \\cr
-\\land\\;\\;&\\forall n.\\; \\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M[n]\\;f_n \\cr
+\\land\\;\\;&\\forall n.\\; \\mathrm{CertifiedIn}(\\mathrm{Dom}, M[n], f_n) \\cr
 \\land\\;\\;&\\forall n.\\; f_n \\lt t \\cr
 \\land\\;\\;&\\forall n.\\; f_n \\lt f_{n+1} \\cr
 \\land\\;\\;&\\forall s \\in \\mathfrak{T}(M).\\; s \\lt t \\;\\to\\; \\exists n.\\; s \\le f_n \\cr
-\\longrightarrow\\;\\;&\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M\\;t
+\\longrightarrow\\;\\;&\\mathrm{CertifiedIn}(\\mathrm{Dom}, M, t)
 \\end{aligned}
 ```
+
+## D.Dom
+
+E.zero / E.succ / E.lim のパラメータ。**項**の述語である。
+
+```math
+\\mathrm{Dom} \\;:\\; \\text{項} \\to \\{\\text{真}, \\text{偽}\\}
+```
+
+ここで**項**とは $`0`$・$`M`$・$`\\bar\\omega^\\alpha`$・$`Z(\\alpha)`$・
+$`\\bar\\varphi(\\alpha,\\beta)`$・$`\\psi_\\kappa(\\alpha)`$・$`\\oplus`$
+で組んだもので、[D.TM](#dtm) の形成条件は課さない。だから $`\\mathrm{Dom}`$ は
+「$`\\mathfrak{T}(M)`$ に入っているか」を**問える**。
+
+入れるのは 2 つだけである。1 つは [E.cert](#ecert) の $`\\mathrm{DomI}`$、
+もう 1 つは [T.bound](#tbound) で使う
+
+```math
+\\top(\\alpha) \\;:\\equiv\\; \\text{真}
+```
+
+である。
 
 ## E.fs
 
 弱いエビデンスの $`f_n`$ 印の中身。E.lim の前提
-$`\\forall n.\\;\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M[n]\\;f_n`$ の**値の側だけ**を言う。
+$`\\forall n.\\;\\mathrm{CertifiedIn}(\\mathrm{Dom}, M[n], f_n)`$ の**値の側だけ**を言う。
 
 ```math
-\\forall n.\\; r\\,(M[n]) = \\mathrm{fsN}\\;t\\;k(n)
+\\forall n.\\; r(M[n]) = \\mathrm{fsN}(t, k(n))
 ```
 
 $`r`$ は読み手で、行によって `o?` か `oR` である (両方が定義される所では一致する)。
-$`\\mathrm{fsN}\\,t`$ は $`\\mathfrak{T}(M)`$ 側の基本列、$`k`$ はその行の添字で
+$`\\mathrm{fsN}(t, \\cdot)`$ は $`\\mathfrak{T}(M)`$ 側の基本列、$`k`$ はその行の添字で
 **行ごとに違う** (一律に $`n+1`$ ではない)。有限個の $`n`$ を試したのではなく、
 すべての $`n`$ についての定理である。
 
@@ -669,7 +691,7 @@ $`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ は**次の規則で�
 {\\bar\\varphi(\\alpha, \\beta) \\in \\mathfrak{T}(M)}
 \\qquad
 \\frac{\\kappa, \\alpha \\in \\mathfrak{T}(M) \\quad \\kappa \\in R
-\\quad \\alpha < M \\quad K_\\kappa \\alpha < \\alpha}
+\\quad \\alpha < M \\quad K_\\kappa(\\alpha) < \\alpha}
 {\\psi_\\kappa(\\alpha) \\in \\mathfrak{T}(M)}
 ```
 
@@ -684,9 +706,9 @@ $`AP`$ は加法的主要、$`SC`$ は強クリティカル、$`R`$ は正則:
 ```math
 AP = \\{M\\} \\cup \\{\\bar\\omega^\\alpha\\} \\cup \\{\\bar\\varphi(\\alpha,\\beta)\\} \\cup SC,
 \\qquad
-SC = \\{M\\} \\cup \\{\\psi_\\kappa\\alpha\\} \\cup \\{Z\\alpha\\},
+SC = \\{M\\} \\cup \\{\\psi_\\kappa(\\alpha)\\} \\cup \\{Z(\\alpha)\\},
 \\qquad
-R = \\{Z\\alpha\\}
+R = \\{Z(\\alpha)\\}
 ```
 
 $`\\oplus`$ の条件 (成分が $`AP`$、降順) が一意な正規形を与える。
@@ -703,7 +725,7 @@ $`\\bar\\varphi(0,\\beta)`$ は最初の不動点未満では $`\\omega^\\beta`$
 
 ## D.expand
 
-$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開 (BM4 の規則)。$`\\mathrm{kind}\\,M`$ は
+$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開 (BM4 の規則)。$`\\mathrm{kind}(M)`$ は
 行が空か・後続か・極限かを言う。定義は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
 
 # 定理
@@ -716,7 +738,7 @@ E.cert が証明された行について、追加で言えること。
 値を取り得ない。上下いずれの側も排除されている。
 
 ```math
-\\forall u.\\;\\;\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;u \\;\\Longrightarrow\\; u = t
+\\forall u.\\;\\;\\mathrm{CertifiedIn}(\\mathrm{DomI}, M, u) \\;\\Longrightarrow\\; u = t
 ```
 
 ## T.bound
@@ -724,14 +746,14 @@ E.cert が証明された行について、追加で言えること。
 $`\\mathrm{Dom}`$ を何の制約も課さないものに取り替えた関係を $`\\mathrm{Certified}`$ と書く。
 
 ```math
-\\mathrm{Certified} \\;:\\equiv\\; \\mathrm{CertifiedIn}\\;\\top
+\\mathrm{Certified}(M, t) \\;:\\equiv\\; \\mathrm{CertifiedIn}(\\top, M, t)
 ```
 
 値が $`\\mathfrak{T}(M)`$ の外に出るものも含め、いかなる証明書も $`\\omega^{t+1}`$ 以上を
 与えない。
 
 ```math
-\\forall u.\\;\\;\\mathrm{Certified}\\;M\\;u \\;\\Longrightarrow\\; \\bar\\varphi(0,\\,t+1) \\not\\le u
+\\forall u.\\;\\;\\mathrm{Certified}(M, u) \\;\\Longrightarrow\\; \\bar\\varphi(0,\\,t+1) \\not\\le u
 ```
 
 ## T.eps0
@@ -740,7 +762,7 @@ $`\\varepsilon_0`$ の行では、その直上から塞がれている。
 
 ```math
 \\forall u.\\;\\; \\varepsilon_0 < u \\;\\Longrightarrow\\;
-\\neg\\,\\mathrm{Certified}\\;[(0,0)(1,1)]\\;u
+\\neg\\,\\mathrm{Certified}([(0,0)(1,1)], u)
 ```
 
 **まだ排除できていないのは片側だけである** — $`t`$ より**下**の値が、
