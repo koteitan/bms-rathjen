@@ -24,27 +24,29 @@
 ### D.Certified.succ
 
 ```math
-\begin{aligned}
-&\mathrm{kind}(S) = \text{後続} \cr
-\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{Certified}(S[n], t) \cr
-\land\;\;&t+1 \in \mathfrak{T}(M) \cr
-\longrightarrow\;\;&\mathrm{Certified}(S, t+1)
-\end{aligned}
+\begin{array}{l}
+\phantom{{}\land\;} \mathrm{kind}(S) = \text{後続} \cr
+{}\land\; \forall n \in \mathbb{N}.\; \mathrm{Certified}(S[n], t) \cr
+{}\land\; t+1 \in \mathfrak{T}(M) \cr
+{}\longrightarrow\; \mathrm{Certified}(S, t+1)
+\end{array}
 ```
 
 ### D.Certified.lim
 
 ```math
-\begin{aligned}
-\forall f : \mathbb{N} \to \mathfrak{T}(M).\;\;
-&\mathrm{kind}(S) = \text{極限} \cr
-\land\;\;&t \in \mathfrak{T}(M) \cr
-\land\;\;&\forall n.\; \mathrm{Certified}(S[n], f_n) \cr
-\land\;\;&\forall n.\; f_n \lt t \cr
-\land\;\;&\forall n.\; f_n \lt f_{n+1} \cr
-\land\;\;&\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
-\longrightarrow\;\;&\mathrm{Certified}(S, t)
-\end{aligned}
+\forall f : \mathbb{N} \to \mathfrak{T}(M).\;
+\left(
+\begin{array}{l}
+\phantom{{}\land\;} \mathrm{kind}(S) = \text{極限} \cr
+{}\land\; t \in \mathfrak{T}(M) \cr
+{}\land\; \forall n.\; \mathrm{Certified}(S[n], f_n) \cr
+{}\land\; \forall n.\; f_n \lt t \cr
+{}\land\; \forall n.\; f_n \lt f_{n+1} \cr
+{}\land\; \forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
+{}\longrightarrow\; \mathrm{Certified}(S, t)
+\end{array}
+\right)
 ```
 
 $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
