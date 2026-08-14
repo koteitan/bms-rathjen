@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.9"
+def version : String := "v0.7.10"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -56,7 +56,7 @@ structure Row where
   proof : String := "" -- key of the E3 proof; resolved to a file+line by gentable and
                        -- rendered as the E3 mark.  Searched in Rows/Proofs.lean,
                        -- Rows/ProofsB.lean, Rows/Selected.lean, Rows/G3.lean, Rows/G4.lean,
-                       -- Rows/G5.lean, Rows/G6.lean, Rows/G7.lean, Rows/G8.lean,
+                       -- Rows/G5.lean, Rows/G6.lean, Rows/G7.lean, Rows/G8.lean, Rows/G9.lean,
                        -- in that order.
                        -- ("" = no all-n proof yet.)  A key that resolves to nothing
                        -- prints no mark, so a renamed namespace loses the mark
@@ -205,7 +205,7 @@ def rows : List Row := [
     t := phi (phi zero zero) (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(3,\\omega))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
+    proof := "namespace G9", ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1]],
     t := phi (add (phi zero zero) (phi zero zero))

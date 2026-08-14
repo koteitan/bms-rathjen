@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.9
+バージョン: v0.7.10
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -48,7 +48,7 @@ $`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ �
 | [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)(7,1)`](../lean/Rows/TM.lean#L185) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ | [fₙ](../lean/Rows/Selected.lean#L1685) | [oR](../lean/Trans/Recal.lean) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) | **D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側 |
 | [`(0,0)(1,1)(2,1)(2,0)`](../lean/Rows/TM.lean#L197) | $`\bar{\varphi}(2,\omega)`$ | $`\zeta_\omega`$ |  | [oR](../lean/Trans/Recal.lean) | 旧値 ε_{ζ₀·ω} を訂正 (較正事故) |  |
 | [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L200) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ |  | [oR](../lean/Trans/Recal.lean) | 旧値 ζ₁ を訂正 (較正事故の初検出行) |  |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)`](../lean/Rows/TM.lean#L204) | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ |  | [oR](../lean/Trans/Recal.lean) | 外部の表と食い違う ([diff.md](diff.md) 族 4) | **D** 外部の表と食い違う 9 行の 1 つ |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)`](../lean/Rows/TM.lean#L204) | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | [fₙ](../lean/Rows/G9.lean#L6) | [oR](../lean/Trans/Recal.lean) | 外部の表と食い違う ([diff.md](diff.md) 族 4) | **D** 外部の表と食い違う 9 行の 1 つ |
 | [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L210) | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ |  | [oR](../lean/Trans/Recal.lean) | 外部の表と食い違う ([diff.md](diff.md) 族 4) | **D** 外部の表と食い違う 9 行の 1 つ |
 | [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L217) | $`\bar{\varphi}(3,\omega+1)`$ | $`\bar{\varphi}(3,\omega+1)`$ |  | [oR](../lean/Trans/Recal.lean) | 外部の表と食い違う ([diff.md](diff.md) 族 4) | **D** 外部の表と食い違う 9 行の 1 つ |
 | [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L223) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ | [fₙ](../lean/Rows/Selected.lean#L2114) | [oR](../lean/Trans/Recal.lean) | 旧値 ζ_ω を訂正 | **T** φ̄ の第 1 引数が数字でなくなる最初 |
