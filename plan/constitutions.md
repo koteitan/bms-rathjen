@@ -78,7 +78,7 @@
 章の中も同じで、粗いものから細かいものへ並べる。
 
 ```
-E.cert  →  D.Certified  →  D.TM  →  D.Term / D.Matrix / D.expand
+E.cert  →  D.Certified  →  D.TM  →  D.Matrix / D.expand
 ```
 
 これは前方参照を許すということである。**許してよい** — リンクを踏むかどうかは
@@ -104,8 +104,8 @@ E.cert  →  D.Certified  →  D.TM  →  D.Term / D.Matrix / D.expand
 
 | | |
 |---|---|
-| 悪い | $`\mathfrak{T}(M) \subseteq \mathcal{T}`$ は、次の規則で閉じた最小の部分集合**である**。 |
-| 良い | **Rathjen 表記の標準形** $`\mathfrak{T}(M) \subseteq \mathcal{T}`$ を、次の規則で閉じた最小の部分集合**と定義する**。 |
+| 悪い | $`\mathfrak{T}(M)`$ は、次の規則で閉じた最小の項集合**である**。 |
+| 良い | **Rathjen 表記の標準形** $`\mathfrak{T}(M)`$ を、次の規則で閉じた最小の項集合**と定義する**。 |
 
 **名前は登場した所に太字で書く。** 後から「これを $`X`$ と呼ぶ」と足さない —
 読み手はもうその段落を読み終えている。

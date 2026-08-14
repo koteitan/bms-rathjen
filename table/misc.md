@@ -7,7 +7,22 @@
 - $`f_n`$ 印が何を言っているか
 - [E.cert](table-r1.md#ecert) が言っていないこと
 - ✅ の付いた行について追加で言えること (T.unique / T.bound / T.eps0)
+- $`\mathcal{T}`$ — 形成条件を課す前の項の全体 (D.Term)
 - [D.TM](table-r1.md#dtm) の読み方 — Rathjen 表記の標準形、$`Z`$ の出自、$`\bar\varphi`$ の不動点
+
+## D.Term
+
+**Rathjen の項**の全体 $`\mathcal{T}`$ を、次の文法が生成する式の集合と定義する。
+形成条件は課さない — 課したものが [D.TM](table-r1.md#dtm) である。
+
+```math
+\alpha, \beta \;::=\;
+0 \;\mid\; M \;\mid\; \alpha \oplus \beta \;\mid\;
+\bar\omega^{\alpha} \;\mid\; \bar\varphi(\alpha, \beta) \;\mid\;
+\psi_{\alpha}(\beta) \;\mid\; Z(\alpha)
+```
+
+$`M`$ は最小の弱 Mahlo 基数を表す定数である。
 
 ## D.RawCertified
 

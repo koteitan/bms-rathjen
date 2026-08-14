@@ -36,7 +36,7 @@
 
 ```math
 \begin{aligned}
-\forall f : \mathbb{N} \to \mathcal{T}.\;\;
+\forall f : \mathbb{N} \to \mathfrak{T}(M).\;\;
 &\mathrm{kind}(S) = \text{極限} \cr
 \land\;\;&t \in \mathfrak{T}(M) \cr
 \land\;\;&\forall n.\; \mathrm{Certified}(S[n], f_n) \cr
@@ -55,8 +55,8 @@ $`\mathrm{Certified}(S, t)`$ が成り立つのは、上の 6 条件を満たす
 
 ## D.TM
 
-**Rathjen 表記の標準形** $`\mathfrak{T}(M) \subseteq \mathcal{T}`$ を、
-次の規則で閉じた最小の部分集合と定義する ([Rathjen, 1991] 2.1)。
+**Rathjen 表記の標準形** $`\mathfrak{T}(M)`$ を、次の規則で閉じた最小の項集合と
+定義する ([Rathjen, 1991] 2.1)。
 
 ```math
 \frac{}{0 \in \mathfrak{T}(M)}
@@ -94,20 +94,6 @@ SC = \{M\} \cup \{\psi_\kappa(\alpha)\} \cup \{Z(\alpha)\},
 R = \{Z(\alpha)\}
 ```
 
-
-## D.Term
-
-**Rathjen の項**の全体 $`\mathcal{T}`$ を、次の文法が生成する式の集合と定義する。
-形成条件は課さない — 課したものが [D.TM](#dtm) である。
-
-```math
-\alpha, \beta \;::=\;
-0 \;\mid\; M \;\mid\; \alpha \oplus \beta \;\mid\;
-\bar\omega^{\alpha} \;\mid\; \bar\varphi(\alpha, \beta) \;\mid\;
-\psi_{\alpha}(\beta) \;\mid\; Z(\alpha)
-```
-
-$`M`$ は最小の弱 Mahlo 基数を表す定数である。
 
 ## D.Matrix
 
