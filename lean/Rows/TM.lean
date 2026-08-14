@@ -56,7 +56,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.15"
+def version : String := "v0.7.16"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -564,12 +564,8 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 "
 # 証明の仕様
 
-対応表の 1 行 $`(M, t)`$ について、**証明列に ✅ が付く条件はこれだけ**である。
+対応表の 1 行 $`(M, t)`$ の証明列に ✅ が付く条件は [E.cert](#ecert) ただ 1 つである。
 ほかの列は ✅ の材料か、材料ですらない参考値である。
-
-- 命題 — [E.cert](#ecert) · [E.zero](#ezero) · [E.succ](#esucc) · [E.lim](#elim) · [E.fs](#efs)
-- 定義 — [D.TM](#dtm) · [D.expand](#dexpand)
-- 定理 — [T.unique](#tunique) · [T.bound](#tbound) · [T.eps0](#teps0)
 
 ## E.cert
 
@@ -579,8 +575,6 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 ```math
 \\mathrm{DomI}(\\alpha) \\;:\\equiv\\; \\alpha \\in \\mathfrak{T}(M)
-\\qquad\\qquad
-\\mathrm{Certified} \\;:\\equiv\\; \\mathrm{CertifiedIn}\\;\\top
 ```
 
 $`\\mathrm{CertifiedIn}\\;\\mathrm{Dom}`$ は次の 3 規則で閉じた最小の関係である。
@@ -727,8 +721,14 @@ E.cert が証明された行について、追加で言えること。
 
 ## T.bound
 
+$`\\mathrm{Dom}`$ を何の制約も課さないものに取り替えた関係を $`\\mathrm{Certified}`$ と書く。
+
+```math
+\\mathrm{Certified} \\;:\\equiv\\; \\mathrm{CertifiedIn}\\;\\top
+```
+
 値が $`\\mathfrak{T}(M)`$ の外に出るものも含め、いかなる証明書も $`\\omega^{t+1}`$ 以上を
-与えない。$`\\mathrm{DomI}`$ の仮定が無いことに注意。
+与えない。
 
 ```math
 \\forall u.\\;\\;\\mathrm{Certified}\\;M\\;u \\;\\Longrightarrow\\; \\bar\\varphi(0,\\,t+1) \\not\\le u
