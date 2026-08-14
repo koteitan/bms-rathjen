@@ -8,24 +8,34 @@ Policy (see plan/README.md):
     `#guard`s in the middle of this file, so a successful build means every listed
     row has been verified.
 
-Meaning of the columns:
-  proof : the namespace of Rows/Proofs.lean that proves E3 for this row, i.e.
-          `∀ n, o (M[n]) = t[k(n)]` for that row's own index k.  This is the
-          actual claim of the row, proved for every n — the only column that is
-          a proof rather than a check.
+THE RENDERED TABLE HAS SIX COLUMNS AND NO MORE — see plan/spec.md, which is the
+spec this generator answers to.  The proof column is ✅ or empty; everything that is
+a PREMISE of ✅ rather than ✅ itself goes to the weak-evidence column.
+
+Fields, and where each one surfaces:
+  m, t  : the two sides of the row.  `t` also decides the Buchholz cell — at and above
+          `buchCut` it is recomputed from `m` by `oRB` (the pss2bp port), below it the
+          row's own `name` is used.  See `buchOf` for why the cut is there.
+  name  : the common name (ε₀, ζ₀, Γ₀, ω^ω).  Rendered only below `buchCut`.
+  proof : the namespace that proves E.fs for this row, i.e.
+          `∀ n, oR (M[n]) = fsN t (k n)` for that row's own index k.  Rendered as the
+          fₙ mark IN THE WEAK-EVIDENCE COLUMN — it is a premise of ✅, not ✅.
           THE INDEX IS PER-ROW, NOT `n+1`.  This comment used to say `t[n+1]`;
           measured over the nine E3 proofs, four are `n+1`, one is `n+2` (R5),
           two are plain `n` (R4 = ε_ω, R8) and two use a bespoke `oval`.  Read
           the row's own `e3_val` before comparing anything against `fsN`;
           applying `+1` uniformly makes `fsN` look wrong above ε₀ when it is not.
-  hasO  : the translation `o` is defined on this matrix and o(M) = t holds (E1).
+  hasO  : the translation `o` is defined on this matrix and o(M) = t holds.
           The whole domain of `o` is additionally checked over a corpus by
-          `checkAll` (E2 order embedding + E3 mutual cofinality), see
-          Test/TransTest.lean.
+          `checkAll`, see Test/TransTest.lean.
   ev    : the remaining, weaker evidence.  "bisim6" = strict bisimulation to depth 6
           (valid in the region where the expansions and the fundamental sequences
-          agree up to the index shift of one).
+          agree up to the index shift of one).  `oR` was removed from this field on
+          2026-08-14: the 𝔗(M) column IS `oR`'s output, so listing it as evidence for
+          itself adds nothing (plan/constitutions.md C1).
 `hasO` and `ev` are finite computations; only `proof` covers all n.
+The ✅ column is not a field at all — it is looked up in `Evidence.Cert.certRows`, so
+it cannot be written by hand.
 
 The generated table itself is written in Japanese, since it is the user-facing
 document of this repository; only the comments here are in English.
@@ -66,8 +76,10 @@ structure Row where
   note : String := ""
   /-- Why this row is on the E-proof shortlist ("" = not on it).  Starts with the side
       the phase change belongs to: **M** BMS, **T** 𝔗(M), **B** Buchholz, **D** disputed
-      against an external table.  Chosen by hand, not exhaustively — see the section
-      "E 証明の対象行" of the generated table. -/
+      against an external table.  Chosen by hand, not exhaustively.
+      NOT RENDERED (plan/spec.md fixes the table at six columns).  It is the selector of
+      `Rows.Selected.selected`, and the reason for each choice is kept here rather than
+      in prose so that the shortlist and its justification cannot drift apart. -/
   sel : String := ""
 
 /-- If the term is a natural number n (a sum of n copies of 1 = φ̄00), return n. -/
@@ -137,7 +149,7 @@ def rows : List Row := [
     t := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
       (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) zero))),
     name := "\\bar{\\varphi}(0,\\bar{\\varphi}(1,\\omega+1)+\\bar{\\varphi}(1,\\omega)+\\bar{\\varphi}(1,0))",
-    proof := "namespace F1", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1)",
+    proof := "namespace F1", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,0],[2,0]], t := phi one (phi zero (ofNat 2)),
     name := "\\varepsilon_{\\omega^2}", proof := "«(0,0)(1,1)(2,0)(2,0)»", hasO := true },
@@ -161,33 +173,33 @@ def rows : List Row := [
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\omega)",
-    proof := "namespace F2a", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
+    proof := "namespace F2a", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]],
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi (phi zero zero) zero)),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\bar{\\varphi}(1,0))",
-    proof := "namespace F2b", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
+    proof := "namespace F2b", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   -- 食い違い行 (diff.md 族 3、3 行)。ここだけ当方の値が先方より大きい。3 行とも決着済み。
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (phi (add (phi zero zero) (phi zero zero)) zero)))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)))))",
-    proof := "namespace F3a", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
+    proof := "namespace F3a", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero) (phi (phi zero zero) zero))))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(1,0)))))",
-    proof := "namespace F3b", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
+    proof := "namespace F3b", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero)
         (phi (add (phi zero zero) (phi zero zero)) zero))))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(2,0)))))",
-    proof := "namespace F3c", ev := "oR", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
+    proof := "namespace F3c", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   -- The rows below were withdrawn in v0.1.42 (the o? calibration failure; see
   -- table/refimpl-audit-2026-08-09.txt and plan/README.md) and RESTORED in v0.1.48
@@ -196,46 +208,46 @@ def rows : List Row := [
   -- from oR, never hand-derived.
   { m := [[0,0],[1,1],[2,1],[2,0]],
     t := phi (add (phi zero zero) (phi zero zero)) (phi zero (phi zero zero)),
-    name := "\\zeta_\\omega", ev := "oR", note := "旧値 ε_{ζ₀·ω} を訂正 (較正事故)" },
+    name := "\\zeta_\\omega", note := "旧値 ε_{ζ₀·ω} を訂正 (較正事故)" },
   { m := [[0,0],[1,1],[2,1],[2,1]],
     t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero))) zero,
-    name := "\\bar{\\varphi}(3,0)", ev := "oR", note := "旧値 ζ₁ を訂正 (較正事故の初検出行)" },
+    name := "\\bar{\\varphi}(3,0)", note := "旧値 ζ₁ を訂正 (較正事故の初検出行)" },
   -- 食い違い行 (diff.md 族 4、3 行)。φ̄(3,ω) の直上をどう数えるかで割れている。
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]],
     t := phi (phi zero zero) (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(1,\\bar{\\varphi}(3,\\omega))",
-    proof := "namespace G9", ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
+    proof := "namespace G9", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1]],
     t := phi (add (phi zero zero) (phi zero zero))
       (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
         (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(2,\\bar{\\varphi}(3,\\omega))",
-    proof := "namespace G10", ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
+    proof := "namespace G10", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1],[2,1]],
     t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (add (phi zero (phi zero zero)) (phi zero zero)),
     name := "\\bar{\\varphi}(3,\\omega+1)",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
+    note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (phi zero (phi zero zero)) zero,
-    name := "\\bar{\\varphi}(\\omega,0)", proof := "namespace G1", ev := "oR",
+    name := "\\bar{\\varphi}(\\omega,0)", proof := "namespace G1",
     note := "旧値 ζ_ω を訂正",
     sel := "**T** φ̄ の第 1 引数が数字でなくなる最初" },
   { m := [[0,0],[1,1],[2,1],[3,0],[4,1]], t := phi (phi (phi zero zero) zero) zero,
-    name := "\\bar{\\varphi}(\\varepsilon_0,0)", proof := "namespace G3", ev := "oR",
+    name := "\\bar{\\varphi}(\\varepsilon_0,0)", proof := "namespace G3",
     note := "旧値 ζ_{ε₀} を訂正",
     sel := "**T** φ̄ の第 1 引数が ε 数になる最初" },
   { m := [[0,0],[1,1],[2,1],[3,1]], t := psi (Z zero) zero,
-    name := "\\Gamma_0", proof := "namespace G7", ev := "oR",
+    name := "\\Gamma_0", proof := "namespace G7",
     note := "ψ 項の初登場。旧値 φ̄(3,0) を訂正",
     sel := "**M** (3,1) の最初。**T** ψ の最初。**B** ψ₁ の 3 重入れ子の最初" },
   { m := [[0,0],[1,1],[2,1],[3,1],[0,0]], t := add (psi (Z zero) zero) (phi zero zero),
-    name := "\\Gamma_0+1", ev := "oR" },
+    name := "\\Gamma_0+1" },
   { m := [[0,0],[1,1],[2,1],[3,1],[1,0]], t := phi zero (psi (Z zero) zero),
-    name := "\\omega^{\\Gamma_0+1}", ev := "oR" },
+    name := "\\omega^{\\Gamma_0+1}" },
   -- WITHDRAWN v0.1.82: the Bachmann–Howard row was listed as
   --   (0,0)(1,1)(2,1)(3,2)  ↦  ψ_{Z0}(φ̄(1,Ω))
   -- but that MATRIX IS NOT STANDARD.  Two independent implementations agree:
@@ -247,96 +259,96 @@ def rows : List Row := [
   -- STANDARD matrix for the Bachmann–Howard ordinal has been identified by the
   -- reference implementation rather than by hand.
   { m := [[0,0],[1,1],[2,2]], t := psi (Z zero) (Z (phi zero zero)),
-    name := "\\psi_0(\\Omega_2)", proof := "namespace G4", ev := "oR",
+    name := "\\psi_0(\\Omega_2)", proof := "namespace G4",
     note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正",
     sel := "**M** 1 行目に 2 が現れる最初。**T** Z の最初。**B** Ω₂ の最初" },
   { m := [[0,0],[1,1],[2,2],[1,1]],
     t := phi (phi zero zero) (psi (Z zero) (Z (phi zero zero))),
-    name := "\\varepsilon_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
+    name := "\\varepsilon_{\\psi_0(\\Omega_2)+1}" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,1]],
     t := phi (add (phi zero zero) (phi zero zero)) (psi (Z zero) (Z (phi zero zero))),
-    name := "\\zeta_{\\psi_0(\\Omega_2)+1}", ev := "oR" },
+    name := "\\zeta_{\\psi_0(\\Omega_2)+1}" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,1],[3,1]],
     t := psi (Z zero) (add (Z (phi zero zero)) (phi zero zero)),
-    name := "\\Gamma_{\\psi_0(\\Omega_2)+1}", ev := "oR",
+    name := "\\Gamma_{\\psi_0(\\Omega_2)+1}",
     sel := "**T** ψ の引数に Z と和が同居する最初" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero)) (phi (phi zero zero) (Z zero))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2))", proof := "namespace G5", ev := "oR",
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2))", proof := "namespace G5",
     sel := "**T** Ω が φ̄ の引数に現れる最初。**B** ψ₁ の引数に Ω₂ が入る最初" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,2],[1,1],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (add (phi (phi zero zero) (Z zero)) (phi (phi zero zero) (Z zero)))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2)\\cdot 2)", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2)\\cdot 2)" },
   { m := [[0,0],[1,1],[2,2],[2,0]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (phi (phi zero zero) (Z zero)))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+1))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+1))" },
   { m := [[0,0],[1,1],[2,2],[2,0],[2,0]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero)) (phi zero zero)))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+2))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+2))" },
   { m := [[0,0],[1,1],[2,2],[2,0],[3,0]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero)) (phi zero (phi zero zero))))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\omega))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\omega))" },
   { m := [[0,0],[1,1],[2,2],[2,0],[3,1]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero)) (phi (phi zero zero) zero)))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\varepsilon_0))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\varepsilon_0))" },
   { m := [[0,0],[1,1],[2,2],[2,0],[3,1],[4,2]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero))
         (psi (Z zero) (Z (phi zero zero)))))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_0(\\Omega_2)))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_0(\\Omega_2)))" },
   { m := [[0,0],[1,1],[2,2],[2,1]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero)) (Z zero)))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\Omega_1))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\Omega_1))" },
   { m := [[0,0],[1,1],[2,2],[2,1],[2,1]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero)) (add (Z zero) (Z zero))))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\Omega_1\\cdot 2))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\Omega_1\\cdot 2))" },
   { m := [[0,0],[1,1],[2,2],[2,1],[3,1]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero))
         (phi zero (add (Z zero) (Z zero)))))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_1(\\Omega_1)))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_1(\\Omega_1)))" },
   { m := [[0,0],[1,1],[2,2],[2,1],[3,2]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero))
         (phi (phi zero zero) (Z zero))))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_1(\\Omega_2)))", ev := "oR" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_1(\\Omega_2)))" },
   { m := [[0,0],[1,1],[2,2],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero)) (Z (phi zero zero))),
-    name := "\\psi_0(\\Omega_2\\cdot 2)", proof := "namespace G6", ev := "oR",
+    name := "\\psi_0(\\Omega_2\\cdot 2)", proof := "namespace G6",
     note := "旧値 φ̄(ω²,0) を訂正",
     sel := "**B** ψ₀ の引数が和になる最初" },
   { m := [[0,0],[1,1],[2,2],[2,2],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (add (Z (phi zero zero)) (Z (phi zero zero)))),
-    name := "\\psi_0(\\Omega_2\\cdot 3)", ev := "oR" },
+    name := "\\psi_0(\\Omega_2\\cdot 3)" },
   { m := [[0,0],[1,1],[2,2],[3,0]],
     t := psi (Z zero) (phi zero (Z (phi zero zero))),
-    name := "\\psi_0(\\psi_2(1))", proof := "namespace G2", ev := "oR",
+    name := "\\psi_0(\\psi_2(1))", proof := "namespace G2",
     note := "旧値 φ̄(ω^ω,0) を訂正",
     sel := "**M** (2,2) の後に (3,0) が来る最初。**T** Z が ω 冪の中に入る最初" },
   { m := [[0,0],[1,1],[2,2],[3,0],[3,0]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi zero zero))),
-    name := "\\psi_0(\\psi_2(2))", ev := "oR" },
+    name := "\\psi_0(\\psi_2(2))" },
   { m := [[0,0],[1,1],[2,2],[3,0],[4,0]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi zero (phi zero zero)))),
-    name := "\\psi_0(\\psi_2(\\omega))", ev := "oR" },
+    name := "\\psi_0(\\psi_2(\\omega))" },
   { m := [[0,0],[1,1],[2,2],[3,0],[4,1]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (phi (phi zero zero) zero))),
-    name := "\\psi_0(\\psi_2(\\varepsilon_0))", ev := "oR" },
+    name := "\\psi_0(\\psi_2(\\varepsilon_0))" },
   { m := [[0,0],[1,1],[2,2],[3,0],[4,1],[5,2]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero))
       (psi (Z zero) (Z (phi zero zero))))),
-    name := "\\psi_0(\\psi_2(\\psi_0(\\Omega_2)))", ev := "oR" },
+    name := "\\psi_0(\\psi_2(\\psi_0(\\Omega_2)))" },
   { m := [[0,0],[1,1],[2,2],[3,1]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (Z zero))),
-    name := "\\psi_0(\\psi_2(\\Omega_1))", proof := "namespace G8", ev := "oR",
+    name := "\\psi_0(\\psi_2(\\Omega_1))", proof := "namespace G8",
     sel := "**B** ψ₂ の引数に Ω₁ が入る最初。表の最上行" }
 ]
 
@@ -408,8 +420,39 @@ def regions : List RegionRow := [
 def evLink : String → String
   | "bisim6" => "../lean/Evidence/Bisim.lean"
   | "oStageC" => "../lean/Trans/StageC.lean"
-  | "oR" => "../lean/Trans/Recal.lean"
   | _ => ""
+
+/-! ### The Buchholz column
+
+`Trans.Recal.oRB` is the Buchholz side of the reader — the port of p-adic-lover-bot's
+translation, whose output is verbatim `pss2bp --raw` (checked wholesale in
+`Trans/Recal.lean` §5B).  So the Buchholz column is not a second hand-written column: it
+is computed from the matrix, by the same route the audit checks.
+
+TWO THINGS THE PRINTER MUST NOT DO.  `oRB` is the term BEFORE `oR`'s `1 + ·`
+adjustment, so on the finite rows it is off by one (the row worth `2` reads
+`ψ_0(0) = 1`); and below `ψ_0(Ω_2)` the familiar names (ε₀, ζ₀, Γ₀, ω^ω) say more to a
+reader than a five-deep ψ nest does.  Both are handled by the same cut: the computed
+form is used at and above `ψ_0(Ω_2)`, the row's own `name` below it. -/
+
+/-- A Buchholz term as MathJax, in the ψ form: `D u a` is `ψ_u(a)`. -/
+def bhTex : Trans.Dict.BT → String
+  | .zero => "0"
+  | .D u a => "\\psi_{" ++ toString u ++ "}(" ++ bhTex a ++ ")"
+  | .sum a b => bhTex a ++ "+" ++ bhTex b
+
+/-- The first row at which the Buchholz column switches to the computed ψ form:
+    `ψ_Ω(Z 1)`, the 𝔗(M) side of Buchholz's `ψ_0(Ω_2)`. -/
+def buchCut : Term := psi (Z zero) (Z one)
+
+/-- The Buchholz cell of a row: computed from the matrix at and above `buchCut`,
+    the row's own common name below it, empty when the reader does not apply. -/
+def buchOf (r : Row) : String :=
+  if le buchCut r.t then
+    match Trans.Recal.oRB r.m with
+    | some b => bhTex b
+    | none => ""
+  else r.name
 
 /-- The matrix literal of a row, spelled exactly as it appears in the source of
     `rows` above.  `gentable` looks this up in this very file to turn each table
@@ -431,7 +474,7 @@ def regionLine (regionProofLine : String → String → Option Nat) (g : RegionR
   let cell (s : String) : String :=
     if g.plainCells || s == "" then s else "$`" ++ s ++ "`$"
   "| **" ++ g.bms ++ "** | " ++ cell g.tm ++ " | " ++ cell g.nm ++ " | " ++
-    proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |  |\n"
+    proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
 
 /-- The contents of table/table-r1.md.
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
@@ -453,16 +496,30 @@ def genTable (lineOf : String → Option Nat) (proofLine : String → Option (St
 Rathjen の表記系 $`\\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
 Arch. Math. Logic 30 (1991), §2) の対応。
 
-**証明列は 2 段ある。** ✅ はその行が証明書を持つ行。$`f_n`$ は、その行の展開が
-取る値の列 $`f_n`$ が**すべての $`n`$ について閉じた式で分かっている**行である。
-$`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ にならない — どちらも
-意味は下の[エビデンス](#エビデンス)にある。**印はどちらもビルドが計算して付ける**
-(宣言ではない)。設計の手順と失敗の記録は [plan/](../plan/) にある。
+**証明列の ✅ は[証明の仕様](#証明の仕様)の E.cert が Lean の定理であることを意味する。**
+それ以外の印は ✅ の材料であって ✅ ではない。**印はすべてビルドが計算して付ける**
+(手で書けない)。
+
+- 作り方・作業手順・資料の場所 — [plan/README.md](../plan/README.md)
+- 表を読むとき・書くときの原則 (注意書き) — [plan/constitutions.md](../plan/constitutions.md)
+- この表自身の仕様 — [plan/spec.md](../plan/spec.md)
+- 外部の対応表との差分 — [diff.md](diff.md)
+
+## 列の意味
+
+| 列 | 中身 |
+|---|---|
+| BMS | 行列。リンク先は行の定義 |
+| $`\\mathfrak{T}(M)`$ | Rathjen R1 の項 ([D.TM](#dtm)) |
+| Buchholz | Buchholz の $`\\mathrm{OT}_B`$ での値。$`\\psi_0(\\Omega_2)`$ 以上は変換写像 (pss2bp) の出力そのもの、それ未満は通称 |
+| 証明 | ✅ = [E.cert](#ecert) が定理。空欄 = まだ |
+| その他の弱いエビデンス | ✅ の材料。[一覧](#その他の弱いエビデンス) |
+| 備考 | その行に固有のこと |
 
 ## 対応表
 
-| BMS | $`\\mathfrak{T}(M)`$ | 通称 | 証明 | その他の弱いエビデンス | 備考 | [E 対象](#e-証明の対象行) |
-|---|---|---|---|---|---|---|
+| BMS | $`\\mathfrak{T}(M)`$ | Buchholz | 証明 | その他の弱いエビデンス | 備考 |
+|---|---|---|---|---|---|
 "
   let rowStr (r : Row) : String :=
     let bms := if r.m.isEmpty then "(空)" else BMS.showMatrix r.m
@@ -472,25 +529,29 @@ $`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ �
       | some n => "[`" ++ bms ++ "`](../lean/Rows/TM.lean#L" ++ toString n ++ ")"
       | none => "`" ++ bms ++ "`"
     -- v0.1.43: the proof column is computed from the semantic-certificate
-    -- registry (Evidence/Cert.lean) — a mark can no longer be declared by hand
+    -- registry (Evidence/Cert.lean) — a mark can no longer be declared by hand.
+    -- It is ✅ or nothing: the column answers one question only, "is E.cert proved".
     let proofCell :=
       if Evidence.Cert.certRows.any (fun p => p.1 == r.m && p.2 == r.t) then
         "[✅](../lean/Evidence/Cert.lean)"
-      else if r.proof == "" then ""
-      else
-        -- fₙ found: the value of every expansion is known in closed form, for all n,
-        -- but there is no semantic certificate yet.  The link is
-        -- resolved by reading the proof files, so a key that no longer occurs there
-        -- prints nothing rather than an unbacked mark.
+      else ""
+    -- fₙ: the value of every expansion is known in closed form, for all n.  It is a
+    -- premise of ✅ and not ✅ itself, so it belongs in the weak-evidence column.  The
+    -- link is resolved by reading the proof files, so a key that no longer occurs
+    -- there prints nothing rather than an unbacked mark.
+    let fnCell :=
+      if r.proof == "" then [] else
         match proofLine r.proof with
-        | some (f, n) => "[fₙ](../lean/" ++ f ++ "#L" ++ toString n ++ ")"
-        | none => ""
-    -- the weak-evidence column lists o and bisim6, each linked separately
+        | some (f, n) => ["[fₙ](../lean/" ++ f ++ "#L" ++ toString n ++ ")"]
+        | none => []
     let weak := String.intercalate "+"
-      (((if r.hasO then [linked "o" "../lean/Trans/TM.lean"] else []) ++
-        (if r.ev == "" then [] else [linked r.ev (evLink r.ev)])))
-    "| " ++ bmsCell ++ " | $`" ++ tex r.t ++ "`$ | $`" ++ r.name ++ "`$ | " ++
-      proofCell ++ " | " ++ weak ++ " | " ++ r.note ++ " | " ++ r.sel ++ " |\n"
+      (fnCell ++
+       (if r.hasO then [linked "o" "../lean/Trans/TM.lean"] else []) ++
+       (if r.ev == "" then [] else [linked r.ev (evLink r.ev)]))
+    let buch := buchOf r
+    "| " ++ bmsCell ++ " | $`" ++ tex r.t ++ "`$ | " ++
+      (if buch == "" then "" else "$`" ++ buch ++ "`$") ++ " | " ++
+      proofCell ++ " | " ++ weak ++ " | " ++ r.note ++ " |\n"
   -- interleave: emit a region row just before the first row whose term reaches its bound
   let step (st : List RegionRow × String) (r : Row) : List RegionRow × String :=
     let (gs, acc) := st
@@ -501,157 +562,98 @@ $`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ �
   let body := body ++ String.join (gsLeft.map (regionLine regionProofLine))
   let footer :=
 "
-# エビデンス
+# 証明の仕様
 
-対応表の 1 行 $`(M, t)`$ について、**Lean の定理として存在するもの**だけを挙げる。
-`E.` は行についての定理、`P.` はその補助命題、`D.` は定義。
-Lean に無いもの — 順序型による主定理、順序埋め込みの一般形、各表記系の構造定理 —
-は目標であってエビデンスではないので、ここには書かず
-[plan/README.md](../plan/README.md) にある。
+対応表の 1 行 $`(M, t)`$ について、**証明列に ✅ が付く条件はこれだけ**である。
+ほかの列は ✅ の材料か、材料ですらない参考値である。
 
-- [E 証明の対象行](#e-証明の対象行)
-- [E.zero / E.succ / E.lim — ✅ の実体](#ezero--esucc--elim---の実体)
-  - [表の $`f_n`$ 印](#表の-f_n-印)
-  - [✅ が検査していないもの](#-が検査していないもの)
-- [E.cofinal (展開と基本列の相互共終)](#ecofinal-展開と基本列の相互共終)
-- [証明書の強さと、その限界](#証明書の強さとその限界)
-- [その他の弱いエビデンス](#その他の弱いエビデンス)
-- [**Γ₀ より上の行について — 値を信用しないこと**](#γ₀-より上の行について--値を信用しないこと)
-- [定義](#定義): [D.TM](#dtm-mathfraktm) · [D.CertifiedIn / D.DomI](#dcertifiedin--ddomi)
+- 命題 — [E.cert](#ecert) · [E.zero](#ezero) · [E.succ](#esucc) · [E.lim](#elim) · [E.fs](#efs)
+- 定義 — [D.TM](#dtm) · [D.expand](#dexpand) · [D.Certified](#dcertified) · [D.DomI](#ddomi) · [D.CertifiedIn](#dcertifiedin)
+- 定理 — [T.unique](#tunique) · [T.bound](#tbound) · [T.eps0](#teps0)
 
-## E 証明の対象行
-
-全 60 行の E を証明するのは大きすぎるので、**手で選んだ 23 行から始める**。網羅ではない。
-選定の基準は「相が変わるところ」— これまで出てこなかった構成子が初めて現れる行、
-違う変数を使い始める行 — と、外部の表と食い違う行である。表の一番右の列にその理由を
-書いてある。印は相が属する側を表す。
-
-| 印 | 側 | 何を見ているか |
-|---|---|---|
-| **M** | BMS | 行列の形。行数、成分が取る値、初めて現れる列の型 |
-| **T** | $`\\mathfrak{T}(M)`$ | 項の構成子。$`\\bar\\varphi`$ の引数の種類、$`\\psi`$、$`Z`$、$`\\Omega`$ |
-| **B** | Buchholz $`\\mathrm{OT}_B`$ | $`\\psi_u`$ の添字 $`u`$、入れ子、引数が和になるところ |
-| **D** | — | 外部の表と食い違う 9 行。うち 6 行は決着済み、3 行が未決 ([diff.md](diff.md)) |
-
-**D の 9 行は他と性格が違う。** ほかの印は「ここが証明できれば周りも同じ理屈で通る」
-という意味だが、D は「どちらが正しいか分かっていない」という意味である。9 行はすべて
-Veblen 断片にあるので $`\\psi`$・$`Z`$ の領域には入らない。決着に要るのは行ごとの
-添字を固定した上での
+## E.cert
 
 ```math
-\\mathrm{oR}\\,(M[n]) = \\mathrm{fsN}\\,(\\mathrm{oR}\\,M)\\,n
+\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;t
 ```
 
-である。$`M[n]`$ は行列の $`n`$ 番目の展開、$`\\mathrm{fsN}`$ は $`\\mathfrak{T}(M)`$ 側の
-基本列で、**添字は行ごとに違う** — 一律に $`n+1`$ ではない。これは $`f_n`$ 印の中身
-そのものである。
+すなわち、下の 3 規則 E.zero / E.succ / E.lim で $`(M,t)`$ の導出が組め、かつ
+**その導出に現れる値がすべて $`\\mathfrak{T}(M)`$ の項**であること。
 
-**9 行のうち 6 行は決着した** ($`f_n`$ 印の付いた 6 行、[diff.md](diff.md) の族 1・2・3)。
-当方の値は全 $`n`$ でこの等式を満たし、外部の表の値はどのずらしでも満たさない。残るのは
-族 4 の 3 行である。
+規則は行の種別 $`\\mathrm{kind}\\,M`$ (空・後続・極限) で決まるので、1 行につき
+どれか 1 つだけが使われる。
 
-**選定は手作業で、網羅を主張しない。** 相の変わり目を機械で数え上げれば、ここに無い行も
-出てくる。ここにあるのは「まずこれだけやれば、各側の主要な段差を一度は通る」という
-出発点である。
+**素の $`\\mathrm{Certified}\\;M\\;t`$ ではない。** そちらは E.cert の系であって逆は無い
+([D.CertifiedIn](#dcertifiedin))。素の $`\\mathrm{Certified}`$ を証明しても ✅ は付かない。
 
-## E.zero / E.succ / E.lim — ✅ の実体
+## E.zero
 
-**表の ✅ 列は証明書レジストリに登録された行にだけ機械的に付く。登録の条件は
-$`\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;t`$** — 下の 3 規則を、**導出に現れる値が
-すべて $`\\mathfrak{T}(M)`$ の項である**という条件付きで満たすことである
-([D.CertifiedIn / D.DomI](#dcertifiedin--ddomi))。素の
-$`\\mathrm{Certified}\\;M\\;t`$ はそこからの系であって、**逆は無い**。
-
-$`\\mathrm{Certified}`$ は帰納的述語で、**行の $`\\mathrm{kind}`$ によってどの規則が
-適用されるかが決まる**。以下の 3 規則が ✅ の中身のすべてで、**行がこれを満たせば
-✅ になる**。
-
-### E.zero
-
-空行列の行。前提は無く、無条件に成り立つ。
+空行列の行。前提は無い。
 
 ```math
 \\mathrm{Certified}\\;[\\,]\\;0
 ```
 
-### E.succ
+## E.succ
 
 ```math
 \\begin{aligned}
 &\\mathrm{kind}\\,M = \\mathrm{succ} \\;\\Longrightarrow \\cr
 &\\quad \\Bigl[\\; \\mathrm{Certified}\\;M\\;u \\;\\Longleftrightarrow\\;
-   \\exists t.\\; u = t+1 \\cr
-&\\qquad\\qquad\\quad \\land\\; \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;t \\;\\Bigr]
+   \\exists t.\\; u = t+1 \\;\\land\\; \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;t \\;\\Bigr]
 \\end{aligned}
 ```
 
-すべての展開が同じ $`t`$ を認証するなら、この行は $`t+1`$。
+すべての展開が同じ $`t`$ を認証するなら、この行は $`t+1`$ である。
 
-### E.lim
+## E.lim
 
 ```math
 \\begin{aligned}
 &\\mathrm{kind}\\,M = \\mathrm{lim} \\;\\Longrightarrow \\cr
 &\\quad \\Bigl[\\; \\mathrm{Certified}\\;M\\;t \\;\\Longleftrightarrow\\;
-   \\exists f : \\mathbb{N} \\to \\mathfrak{T}(M).\\;
-   \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n) \\cr
+   \\exists f : \\mathbb{N} \\to \\mathfrak{T}(M).\\; \\cr
+&\\qquad\\qquad\\quad \\forall n.\\;\\mathrm{Certified}\\;(M[n])\\;(f_n) \\cr
 &\\qquad\\qquad\\quad \\land\\; \\forall n.\\;f_n < t \\cr
 &\\qquad\\qquad\\quad \\land\\; \\forall n.\\;f_n < f_{n+1} \\cr
 &\\qquad\\qquad\\quad \\land\\; \\forall s \\in \\mathfrak{T}(M).\\;s < t \\to \\exists n.\\;s \\le f_n \\;\\Bigr]
 \\end{aligned}
 ```
 
-**$`f`$ は $`\\exists`$ で束縛された列である** — $`\\mathbb{N}`$ の各点に
-$`\\mathfrak{T}(M)`$ の項を 1 つ与える写像であり、どこかに定義された特定の列ではない。
-**表を読むときに $`f`$ の定義を探す必要はない。無いのが正しく、行ごとに証明が
-自分で 1 つ選んで与える。**
+**$`f`$ はどこにも定義されていない。** $`\\exists`$ で束縛された列であり、行ごとに
+証明が 1 つ選んで与える。表を読むときに $`f`$ の定義を探す必要は無い。
 
-**ただし選べるのは見かけだけである。** 4 つの連言のうち
-**$`f_n`$ が何であるかを言うのは第 1 のものだけ**で、残る 3 つは
-「$`t`$ 未満」「増加」「$`t`$ に共終」という $`f`$ の**性質**を述べるにすぎない。
-そして性質は列を 1 つに絞らない。
-
-実例を挙げる。$`\\varepsilon_1`$ の行で基本列の候補を 3 つ立て、**3 つとも**
-各添字で増加・$`\\varepsilon_1`$ 未満・共終であることを実測で確認した。
-それでも正しい列はその 3 つのどれでもなく、**第 4 のもの**
-
-```math
-\\varepsilon_0,\\quad \\omega^{\\varepsilon_0 \\cdot 2},\\quad
-\\omega^{\\omega^{\\varepsilon_0 \\cdot 2}},\\quad \\dots
-```
-
-だった。**性質をいくつ確かめても列は決まらない**
+**選べるのは見かけだけである。** 4 連言のうち $`f_n`$ が何であるかを言うのは第 1 のもの
+だけで、残る 3 つは「$`t`$ 未満」「増加」「$`t`$ に共終」という**性質**にすぎない。
+性質は列を 1 つに絞らない — $`\\varepsilon_1`$ の行で 3 つの候補が 3 つとも 3 性質を
+満たし、正しい列はそのどれでもなかった
 ([plan/constitutions.md](../plan/constitutions.md) C2)。
 
-決めるのは第 1 の連言である。$`f_n`$ は $`M[n]`$ が認証した値**そのもの**でなければ
-ならないので、$`f`$ を選んでいるのは**行列**であって $`\\mathfrak{T}(M)`$ 側の都合ではない。
+決めるのは第 1 連言である。$`f_n`$ は $`M[n]`$ が認証した値**そのもの**でなければ
+ならないので、$`f`$ を選んでいるのは行列であって $`\\mathfrak{T}(M)`$ 側の都合ではない。
 だから $`f`$ が $`\\mathfrak{T}(M)`$ の標準基本列と一致する必要はどこにも無い。
 
-### 表の $`f_n`$ 印
+## E.fs
 
-**$`f_n`$ 印は、第 1 連言の「値の側」だけが済んだ行に付く。** その行については
+弱いエビデンスの $`f_n`$ 印の中身。**E.lim の第 1 連言の「値の側」だけ**を言う。
 
 ```math
-\\forall n.\\; o\\,(M[n]) = \\mathrm{fsN}\\,t\\,k(n)
+\\forall n.\\; r\\,(M[n]) = \\mathrm{fsN}\\;t\\;k(n)
 ```
 
-が Lean の定理である。$`\\mathrm{fsN}\\,t`$ は $`\\mathfrak{T}(M)`$ 側の基本列、$`k`$ は
-その行の添字で、**行ごとに違う** (一律に $`n+1`$ ではない)。**有限個の $`n`$ を試したの
-ではなく、すべての $`n`$ についての定理**である。
+$`r`$ は読み手で、行によって `o?` か `oR` である (両方が定義される所では一致する)。
+$`\\mathrm{fsN}\\,t`$ は $`\\mathfrak{T}(M)`$ 側の基本列、$`k`$ はその行の添字で
+**行ごとに違う** (一律に $`n+1`$ ではない)。有限個の $`n`$ を試したのではなく、
+すべての $`n`$ についての定理である。
 
-**これは $`f_n`$ が何であるかを言うだけで、$`M[n]`$ がその値を認証することは言って
-いない。** 第 1 連言が要求するのは後者であり、残る 3 連言は手つかずである。つまり
-$`f_n`$ 印は ✅ の材料の一部であって、✅ に近いことを意味しない。
+**$`M[n]`$ がその値を認証することは言っていない。** 第 1 連言が要求するのは後者であり、
+残る 3 連言は手つかずである。E.fs は E.cert の材料の一部であって、E.cert に近いことを
+意味しない。
 
-**印はビルドが計算する。** 行が指す名前空間を証明ファイルから探し、見つかった行番号に
-リンクする。名前空間を消したり改名したりすると印そのものが消えるので、実体の無い印は
-残らない。
+## E.cert が言っていないこと
 
-### ✅ が検査していないもの
-
-第 5 前提 $`\\forall s \\in \\mathfrak{T}(M).\\;s \\lt t \\to \\exists n.\\;s \\le f_n`$ は
-**$`f`$ が $`t`$ に共終**だと言っている。これと第 2・第 3 前提から
-$`\\sup_n f_n = t`$ が出る。**$`\\mathfrak{T}(M)`$ 側の共終性は証明の中にある。**
+E.lim の第 4 連言は $`f`$ が $`t`$ に共終だと言っており、第 2・第 3 連言と合わせて
+$`\\sup_n f_n = t`$ が出る。$`\\mathfrak{T}(M)`$ 側の共終性は証明の中にある。
 
 言っていないのは BMS 側である:
 
@@ -659,157 +661,14 @@ $`\\sup_n f_n = t`$ が出る。**$`\\mathfrak{T}(M)`$ 側の共終性は証明�
 \\sup_n |M[n]| = |M|
 ```
 
-これが無いと $`\\sup_n f_n = t`$ から $`|M| = t`$ へ渡れない。そして本リポジトリに
+これが無いと $`\\sup_n f_n = t`$ から $`|M| = t`$ へ渡れない。そしてこのリポジトリに
 $`|M[n]| \\lt |M|`$ も展開列の共終性も**補題として存在しない**。BMS を順序数表記として
-読むとき極限行の値が展開の上限であることは**読み方の定義**であって、定理ではないからである。
-✅ はこの読み方を仮定した上で $`\\mathfrak{T}(M)`$ 側を尽くしている。
-
-なお下の E.cofinal は**この穴を埋めるものではない**。あちらは
-$`\\mathfrak{T}(M)`$ の**標準基本列**と展開列の関係であり、$`f`$ は標準基本列である
-必要がないので、E.cofinal を確かめても ✅ の根拠は増えない。両者は別の主張である
-(詳細は[設計の記録](../plan/README.md#e3-展開と基本列の整合--本体のエビデンス))。
-
-## E.cofinal (展開と基本列の相互共終)
-
-$`\\mathfrak{T}(M)`$ の**標準基本列**と BMS の展開列を突き合わせる形の証拠。
-✅ の無い行のためのもので、**✅ の根拠ではない** — ✅ が要る共終性は
-$`\\mathrm{Certified}`$ の第 4 連言として既に、しかも $`o`$ に触れない形で入っている。
-
-この形をなぜ等式ではなく相互共終で立てるのか、等式で立てると何を取り違えるのかは
-**設計の話なので**、[設計の記録](../plan/README.md#e3-展開と基本列の整合--本体のエビデンス)
-にある。
-
-## 証明書の強さと、その限界
-
-E.certified がこの行について言えることの範囲を、定理として:
-
-**一意性** — 導出に現れる値がすべて $`\\mathfrak{T}(M)`$ の項である証明書の範囲では、
-この行は $`t`$ 以外の値を取り得ない。上下いずれの側も排除されている。
-
-```math
-\\forall u.\\;\\;\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;u \\;\\Longrightarrow\\; u = t
-```
-
-**上限 (無条件)** — 値が $`\\mathfrak{T}(M)`$ の外に出るものも含め、いかなる証明書も
-$`\\omega^{t+1}`$ 以上を与えない。$`\\mathrm{DomI}`$ の仮定が無いことに注意。
-
-```math
-\\forall u.\\;\\;\\mathrm{Certified}\\;M\\;u \\;\\Longrightarrow\\; \\bar\\varphi(0,\\,t+1) \\not\\le u
-```
-
-**ε₀ 行の鋭い上限** — この行では $`\\varepsilon_0`$ の直上から塞がれている。
-
-```math
-\\forall u.\\;\\; \\varepsilon_0 < u \\;\\Longrightarrow\\;
-\\neg\\,\\mathrm{Certified}\\;[(0,0)(1,1)]\\;u
-```
-
-**まだ排除できていないこと** — $`t`$ より**下**の値が、$`\\mathfrak{T}(M)`$ の外へ出る
-部分値を経由して認証される可能性:
-
-```math
-\\exists u.\\;\\; u < t \\;\\wedge\\; \\mathrm{Certified}\\;M\\;u
-\\;\\wedge\\; \\neg\\,\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;u \\;\\;?
-```
-
-上側は無条件に塞がっているので**残る穴は片側のみ**。P.undershoot_reduction により
-葉 1 枚に還元済み:
-
-> **P.T** $`a \\le b \\to b \\le c \\to a \\le c`$ — 中間項 $`b`$ が
-> $`\\mathrm{Frag2}`$、**両端点は任意**
-
-## その他の弱いエビデンス
-
-いずれも有限個の計算検査であり、較正誤りを検出できない。順序埋め込みも corpus 上の
-`Evidence.Check.checkE2` という計算検査としてのみ存在し、定理ではないのでここに置く。
-
-| 記号 | 意味 |
-|---|---|
-| `o` | 翻訳関数がこの行列で定義され $`o(M) = t`$ (両辺を同じ写像で計算するので較正誤りは検出できない) |
-| `oR` | 参照実装で較正済みの候補値。**2 段の合成**で、定義域は BMS の 2 行断片 (下記)。全行一致をビルド時 `#guard` で強制 |
-| `bisim6` | 深さ 6 の双模倣 |
-| `oStageC` | Stage C の候補翻訳の値の一致 |
-
-### `oR` が何の合成なのか
-
-`oR` は変換写像そのものではなく、**2 段の合成**である。
-
-```math
-\\mathrm{BMS}\\ \\xrightarrow{\\ \\mathrm{transPort}\\ }\\ \\mathrm{OT}_B
-\\ \\xrightarrow{\\ \\mathrm{dict}\\ }\\ \\mathfrak{T}(M)
-```
-
-1 段目が P進大好きbot 氏の変換写像 (PSS 停止性証明のもの、naruyoko 氏の実装) で、
-その行き先は **Buchholz の表記系 $`\\mathrm{OT}_B`$** — $`D_u a = \\psi_u(a)`$
-(Buchholz 1986) であって、Rathjen の $`\\mathfrak{T}(M)`$ ではない。
-2 段目 `dict` がこのリポジトリの用意する辞書である。像への順序同型で値を保つ**という
-主張**だが、**それは定理ではなく測定**である。
-
-**$`D_u`$ は Rathjen の $`\\psi_{\\Omega_{u+1}}`$ ではない。** 土台が違う:
-
-| | Veblen 関数 | $`\\psi`$ の始まり |
-|---|---|---|
-| Buchholz $`\\mathrm{OT}_B`$ | 持たない。Veblen 階層は $`D_0`$ の引数の中の $`\\Omega`$ 冪として符号化される | — |
-| Rathjen $`\\mathfrak{T}(M)`$ | 2 変数 $`\\bar\\varphi`$ が $`(0,M)`$ 全体で原始的 | Veblen が止まる所から。$`\\psi_{Z0}(0) = \\Gamma_0`$ |
-
-だから `dict` は名前の付け替えではなく、**本物の翻訳**である。
-
-**定義域は BMS の 2 行断片**である — 各列の高さが 2 以下で、行列が空でないもの。
-その外では `oR` は `none` を返す。表の行はすべてこの範囲に収まる。
-**表がこの断片の外へ伸びることは、いまの `oR` ではできない。**
-
-## Γ₀ より上の行について — 値を信用しないこと
-
-**この節の内容は 2026-08-12 に判明したもので、当該行の値はまだ直っていない。**
-
-`(0,0)(1,1)(2,2)` 以上の行の値は `oR = (1+\\cdot) \\circ \\mathrm{dict} \\circ \\mathrm{oRB}`
-から来ている。この `dict` について、次が証明されている (`lean/Trans/Dict.lean` §4)。
-
-**外部資料と食い違う。** BMS `(0,0)(1,1)(2,2)` の Buchholz 値 $`\\psi_0(\\psi_2(0))`$ には
-3 者が一致している (このリポジトリの pss2bp 移植、Hexirp 氏の解析、スプレッドシート)。
-食い違うのはそこから $`\\mathfrak{T}(M)`$ へ翻訳する段だけである。
-
-```math
-\\mathrm{dict} \\;\\longmapsto\\; \\psi_\\Omega(Z(1)) \\qquad
-\\text{資料} \\;\\longmapsto\\; \\psi_\\Omega(\\bar\\varphi(1, \\Omega+1))
-```
-
-両方とも正規形で、等しくなく、資料の値のほうが真に小さい (3 本とも `decide` で証明済み)。
-資料側には $`\\mathfrak{T}(M)`$ を直接与える 3 つ目の独立な資料が加わり
-(Hexirp 氏の BMS↔Rathjen 対応表、`scripts/hexirp-rathjen-check.py` で再実行できる)、
-そこでも同じ $`\\psi_\\Omega(\\bar\\varphi(1, \\Omega+1))`$ である。
-資料はいずれも未証明なので**どちらが正しいかはここでは決まらない**が、
-`dict` 側に立つ資料は 1 つも無い。
-
-**ここには「`dict` は順序を保存しないので翻訳として失格」と書いてあったが、取り消した
-(2026-08-12)。** 反例の母集団を外部の標準形判定器で作っており、その判定器に
-コールバックの引数取り違えのバグがあった。正しい判定器で作り直した母集団
-(標準形 3193 個、順序対 5096028 組) では**順序反転は 0 件**である。詳細と、
-誤って通っていた 3 項を固定した陰性対照は `Trans/Dict.lean` §4 にある。
-
-**根はもっと深い。** [`lean/TM/Terms.lean`](../lean/TM/Terms.lean) はこのリポジトリの
-$`\\chi`$ を `Z a = χ_a(0)` と 1 引数に潰している。しかし原典では $`\\chi`$ は 2 引数で、
-**第 2 引数が $`\\Omega`$ 階層を枚挙する**:
-
-```math
-\\chi_0(\\alpha) = \\Omega_{1+\\alpha}, \\qquad
-\\chi_1(0) = I \\;(\\text{最小の弱到達不能基数})
-```
-
-つまり `Z 1` は $`\\Omega_2`$ ではなく $`I`$ であり、
-**$`\\Omega_2 = \\chi_0(1)`$ は現在の型では書けない**。
-当該の行はその $`\\Omega_2`$ が要る領域にある。値を直すには型を変える必要があり、
-それは $`\\mathfrak{T}(M)`$ の項型とその上のすべてに波及するので、まだ着手していない。
-
-**したがって、これらの行の値は資料と食い違ったままであり、信用してはいけない。**
-✅ の付いた行は影響を受けない —
-✅ は `Certified` から来ており、読み手を一度も通らないからである。
-
-外部資料との突き合わせは [`scripts/external-check.py`](../scripts/external-check.py) で再実行できる。
+読むとき極限行の値が展開の上限であることは**読み方の定義**であって定理ではないからである。
+E.cert はこの読み方を仮定した上で $`\\mathfrak{T}(M)`$ 側を尽くしている。
 
 # 定義
 
-## D.TM ($`\\mathfrak{T}(M)`$)
+## D.TM
 
 $`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ は**次の規則で閉じた最小の項集合**
 (Rathjen 1991 §2.1):
@@ -840,7 +699,7 @@ $`M`$ は最小の弱 Mahlo 基数。$`\\mathfrak{T}(M)`$ は**次の規則で�
 {\\alpha_1 \\oplus \\dots \\oplus \\alpha_n \\in \\mathfrak{T}(M)}
 ```
 
-ここで $`AP`$ は加法的主要な項、$`SC`$ は強クリティカルな項、$`R`$ は正則:
+$`AP`$ は加法的主要、$`SC`$ は強クリティカル、$`R`$ は正則:
 
 ```math
 AP = \\{M\\} \\cup \\{\\bar\\omega^\\alpha\\} \\cup \\{\\bar\\varphi(\\alpha,\\beta)\\} \\cup SC,
@@ -852,7 +711,7 @@ R = \\{Z\\alpha\\}
 
 $`\\oplus`$ の条件 (成分が $`AP`$、降順) が一意な正規形を与える。
 
-**$`\\bar\\varphi`$ は $`\\omega^\\cdot`$ の不動点を飛ばして数える。**
+**$`\\bar\\varphi`$ は $`\\omega^\\cdot`$ の不動点を飛ばして数える** ([R91] 2.6(vi))。
 $`\\bar\\varphi(0,\\beta)`$ は最初の不動点未満では $`\\omega^\\beta`$ だが、
 
 ```math
@@ -862,14 +721,15 @@ $`\\bar\\varphi(0,\\beta)`$ は最初の不動点未満では $`\\omega^\\beta`$
 **不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
 上で静かに誤る。**
 
-## D.CertifiedIn / D.DomI
+## D.expand
 
-```math
-\\mathrm{DomI}(t) \\;:\\equiv\\; t \\in \\mathfrak{T}(M)
-```
+$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開 (BM4 の規則)。$`\\mathrm{kind}\\,M`$ は
+行が空か・後続か・極限かを言う。定義は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
 
-$`\\mathrm{Certified}`$ は認証される値に制約を課さないので、生の項の上では
-$`\\mathfrak{T}(M)`$ の項でない値も認証されうる (P.cert_not_single_valued):
+## D.Certified
+
+$`\\mathrm{Certified}`$ は E.zero / E.succ / E.lim を規則とする帰納的述語である。
+認証される値に制約を課さないので、$`\\mathfrak{T}(M)`$ の項でない値も認証されうる:
 
 ```math
 \\mathrm{Certified}\\;[(0)(1)]\\;\\omega
@@ -877,14 +737,101 @@ $`\\mathfrak{T}(M)`$ の項でない値も認証されうる (P.cert_not_single_
 \\mathrm{Certified}\\;[(0)(1)]\\;(1+M)
 ```
 
-$`\\mathrm{CertifiedIn}\\;\\mathrm{Dom}`$ は**導出に現れる値すべて**が
-$`\\mathrm{Dom}`$ に属することを要求する版。E.certified の一意性が
-$`\\mathrm{DomI}`$ を要求するのは、この一価性の破れを塞ぐためである。
+つまり素の $`\\mathrm{Certified}`$ は一価ではない。これが E.cert に $`\\mathrm{DomI}`$
+が要る理由である。
 
-**そして $`\\mathrm{DomI}`$ は表の登録ゲートでもある。** レジストリに行を足すには
-$`\\mathrm{CertifiedIn}\\;\\mathrm{DomI}`$ の導出が要り、それを足さずに一覧だけ伸ばすと
-ビルドが落ちる。忘却写像は $`\\mathrm{CertifiedIn}\\to\\mathrm{Certified}`$ の一方向
-だけなので、素の $`\\mathrm{Certified}`$ を作っても登録はできない。
+## D.DomI
+
+```math
+\\mathrm{DomI}(t) \\;:\\equiv\\; t \\in \\mathfrak{T}(M)
+```
+
+## D.CertifiedIn
+
+$`\\mathrm{CertifiedIn}\\;\\mathrm{Dom}`$ は、**導出に現れる値すべて**が $`\\mathrm{Dom}`$
+に属することを要求する版である。忘却写像は
+
+```math
+\\mathrm{CertifiedIn}\\;\\mathrm{Dom} \\;\\longrightarrow\\; \\mathrm{Certified}
+```
+
+の**一方向だけ**で、逆は無い。$`\\mathrm{CertifiedIn}\\;\\mathrm{DomI}`$ は表の登録
+ゲートでもある — レジストリに行を足すにはこの導出が要り、それを足さずに一覧だけ
+伸ばすとビルドが落ちる。
+
+# 定理
+
+E.cert が証明された行について、追加で言えること。
+
+## T.unique
+
+導出に現れる値がすべて $`\\mathfrak{T}(M)`$ の項である範囲では、この行は $`t`$ 以外の
+値を取り得ない。上下いずれの側も排除されている。
+
+```math
+\\forall u.\\;\\;\\mathrm{CertifiedIn}\\;\\mathrm{DomI}\\;M\\;u \\;\\Longrightarrow\\; u = t
+```
+
+## T.bound
+
+値が $`\\mathfrak{T}(M)`$ の外に出るものも含め、いかなる証明書も $`\\omega^{t+1}`$ 以上を
+与えない。$`\\mathrm{DomI}`$ の仮定が無いことに注意。
+
+```math
+\\forall u.\\;\\;\\mathrm{Certified}\\;M\\;u \\;\\Longrightarrow\\; \\bar\\varphi(0,\\,t+1) \\not\\le u
+```
+
+## T.eps0
+
+$`\\varepsilon_0`$ の行では、その直上から塞がれている。
+
+```math
+\\forall u.\\;\\; \\varepsilon_0 < u \\;\\Longrightarrow\\;
+\\neg\\,\\mathrm{Certified}\\;[(0,0)(1,1)]\\;u
+```
+
+**まだ排除できていないのは片側だけである** — $`t`$ より**下**の値が、
+$`\\mathfrak{T}(M)`$ の外へ出る部分値を経由して認証される可能性。上側は T.bound が
+無条件に塞いでいる。
+
+# その他の弱いエビデンス
+
+いずれも ✅ の材料であって ✅ ではない。$`f_n`$ 以外は有限個の計算検査であり、
+較正誤りを検出できない。
+
+| 記号 | 意味 | 全ての $`n`$? |
+|---|---|---|
+| $`f_n`$ | [E.fs](#efs) が Lean の定理 | はい |
+| `o` | 翻訳関数がこの行列で定義され $`o(M) = t`$ (両辺を同じ写像で計算するので較正誤りは検出できない) | いいえ |
+| `bisim6` | 深さ 6 の双模倣 | いいえ |
+| `checkAll` | 区間の全標準行列についての一般定理 | はい (区間全体) |
+
+**印はビルドが計算する。** ✅ は証明書レジストリから、$`f_n`$ は行が指す名前空間を
+証明ファイルから探して付ける。名前空間を消したり改名したりすると印そのものが消えるので、
+実体の無い印は残らない。
+
+# 値についての注意
+
+**$`\\psi_\\Omega(Z(1))`$ 以上の行の値は外部資料と食い違っており、まだ決着していない。**
+BMS `(0,0)(1,1)(2,2)` の Buchholz 値 $`\\psi_0(\\psi_2(0))`$ には 3 者が一致するが、
+そこから $`\\mathfrak{T}(M)`$ へ訳す段で割れる:
+
+```math
+\\text{当方} \\;\\longmapsto\\; \\psi_\\Omega(Z(1)) \\qquad
+\\text{資料} \\;\\longmapsto\\; \\psi_\\Omega(\\bar\\varphi(1, \\Omega+1))
+```
+
+**根は型にある。** このリポジトリは $`\\chi`$ を $`Z\\,a = \\chi_a(0)`$ と 1 引数に潰して
+いるが、原典の $`\\chi`$ は 2 引数で第 2 引数が $`\\Omega`$ 階層を枚挙する
+($`\\chi_0(\\alpha) = \\Omega_{1+\\alpha}`$、$`\\chi_1(0) = I`$)。つまり $`Z\\,1`$ は
+$`\\Omega_2`$ ではなく $`I`$ で、$`\\Omega_2 = \\chi_0(1)`$ は現在の型では書けない。
+直すには項型を変える必要がある。
+
+**✅ の付いた行は影響を受けない。** ✅ は $`\\mathrm{Certified}`$ から来ており、
+翻訳関数を一度も通らないからである。
+
+外部の対応表との差分は [diff.md](diff.md) に、再実行手順は
+[scripts/external-check.py](../scripts/external-check.py) にある。
 
 # 実装
 
