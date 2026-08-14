@@ -6,9 +6,10 @@
 読む場所は目的で分かれる。
 
 - **[対応表 (R1: BMS × T(M))](table/table-r1.md)** — 表だけならファイル冒頭。
-  行が満たす命題は同ファイルの[エビデンス節](table/table-r1.md#エビデンス) (`E.` / `P.` / `D.`)
-- [設計方法と記録](plan/README.md) — どう作るか、何を撤回したか
-- [作業原則 (constitutions)](plan/constitutions.md) — 一度誤った値を公開した経験から得た原則。1 枚
+  行が満たす命題は同ファイルの[証明の仕様](table/table-r1.md#証明の仕様) (`E.` / `D.` / `T.`)
+- [作業仕様](plan/README.md) — どう作るか。手順・命名規則・ビルド・資料の場所
+- [原則 (constitutions)](plan/constitutions.md) — 文書の書き方と、何を証拠と呼ぶか。1 枚
+- [表の仕様](plan/spec.md) — 対応表に何を載せるか
 - [Rathjen の表記系一覧 (強さ順)](rathjen-ordinals.md) — R1〜R5 と最終ターゲット
 - [外部の対応表との差分](table/diff.md) — 一致した範囲、証明で決着した 6 行、未決の 3 行
 
@@ -36,7 +37,7 @@ $`f_n`$ は行が指す名前空間を証明ファイルから探して付ける
 3. 値が 𝔗(M) の外に出るものも含め、**いかなる**証明書も掲載値より上の値を与えない
 
 まだ排除できていないものと、較正事故 (v0.1.41) の経緯は
-[計画](plan/README.md) と[表のエビデンス節](table/table-r1.md#エビデンス)に明記してある。
+[作業仕様](plan/README.md) と[表の証明の仕様](table/table-r1.md#証明の仕様)に明記してある。
 整礎性の証明は要求せず、「行列 = 順序数」の主張は整礎性を仮定した条件付きで
 形式化する方針だが、Γ₀ 未満については整礎性も証明済み。
 
@@ -50,8 +51,9 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 
 ## 検査器と、その試験
 
-検査器はそれぞれ自己試験を持つ。方針は [constitutions C0](plan/constitutions.md) と
-[設計方法と記録](plan/README.md#検査器の試験) にある。
+検査器はそれぞれ自己試験を持つ。方針は
+[原則 C5](plan/constitutions.md#c5-検査器は自分の試験を持つ)、一覧は
+[作業仕様](plan/README.md#突き合わせのスクリプト) にある。
 
 | 検査器 | 何を測るか | 試験の走らせ方 |
 |---|---|---|
@@ -74,7 +76,7 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 ## 参考文献
 
 **依拠しているものだけを挙げる** — 定義を写したもの、コードの移植元、値を突き合わせた相手、
-論証で引いたもの。読んだが採らなかったものは [plan/README.md](plan/README.md) の調査表にある。
+論証で引いたもの。読んだが採らなかったものは [plan/README-old.md](plan/README-old.md) の調査表にある。
 実装は当該ファイルが git に入った年を挙げ、突き合わせに使った版の日付を併記する。
 
 ### 定義の出典
