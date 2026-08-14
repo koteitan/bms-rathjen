@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.26
+バージョン: v0.7.27
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -193,31 +193,6 @@ SC = \{M\} \cup \{\psi_\kappa(\alpha)\} \cup \{Z(\alpha)\},
 R = \{Z(\alpha)\}
 ```
 
-**この形成条件が正規形の条件を兼ねている。** 和は成分が $`AP`$ で降順のときしか作れず、
-$`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \alpha`$ の
-ときしか作れない。だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
-
-**$`Z`$ は [Rathjen, 1991] 自身の記号である** (2.1(vii))。1990 年の $`T(M)`$ は 2 引数の
-$`\chi`$ の階層を持つが、[Rathjen, 1991] はそれを 1 本の $`Z`$ に置き換えた:
-
-```math
-Z(\alpha) \;=\; \chi_\alpha(0)
-```
-
-**したがって $`\Omega_2 = \chi_0(1)`$ はこの表記系では書けない。** $`\chi`$ の第 2 引数が
-$`\Omega`$ 階層を枚挙するのに、それが 0 に固定されているからである。$`Z(1)`$ は
-$`\chi_1(0)`$、すなわち最小の弱到達不能基数 $`I`$ であって $`\Omega_2`$ ではない
-([値についての注意](#値についての注意))。
-
-**$`\bar\varphi`$ は $`\omega^\cdot`$ の不動点を飛ばして数える** ([Rathjen, 1991] 2.6(vi))。
-$`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だが、
-
-```math
-\bar\varphi(0, \varepsilon_0) = \omega^{\varepsilon_0 + 1} \ne \varepsilon_0
-```
-
-**不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
-上で静かに誤る。**
 
 ## D.Term
 
