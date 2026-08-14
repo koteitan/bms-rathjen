@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.22
+バージョン: v0.7.23
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -205,86 +205,83 @@ $`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だ�
 **不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
 上で静かに誤る。**
 
-## D.Dom
+## D.Certified
 
-$`\mathrm{Dom}`$ は項の述語、すなわち $`\mathcal{T}`$ の部分集合である。
-
-```math
-\mathrm{Dom} \;\subseteq\; \mathcal{T}
-\qquad\qquad
-\mathrm{Dom}(\alpha) \;:\equiv\; \alpha \in \mathrm{Dom}
-```
-
-使うのは 2 つだけである。
+$`\mathrm{Certified}`$ は行列とその値の 2 項関係である。
 
 ```math
-\mathrm{DomI} \;=\; \mathfrak{T}(M)
-\qquad\qquad
-\top \;=\; \mathcal{T}
+\mathrm{Certified} \;\subseteq\; \mathcal{M} \times \mathfrak{T}(M)
 ```
 
-$`\mathrm{DomI}(\alpha)`$ は「$`\alpha`$ が $`\mathfrak{T}(M)`$ の正規形の項である」を、
-$`\top(\alpha)`$ は何も要求しないことを意味する。
+**次の 3 規則で閉じた最小の関係**として定める。値が $`\mathfrak{T}(M)`$ に入っている
+ことは規則の前提であり、導出のすべての節点に掛かる。
 
-## D.CertifiedIn
-
-$`\mathrm{CertifiedIn}`$ は 3 項関係である。
+### D.Certified.zero
 
 ```math
-\mathrm{CertifiedIn} \;\subseteq\;
-\mathcal{P}(\mathcal{T}) \times \mathcal{M} \times \mathcal{T}
+\mathrm{Certified}([\;], 0)
 ```
 
-$`\mathcal{P}(\mathcal{T})`$ は $`\mathcal{T}`$ の冪集合、つまり
-[D.Dom](#ddom) の全体である。以下
-$`(\mathrm{Dom}, M, t) \in \mathrm{CertifiedIn}`$ を
-$`\mathrm{CertifiedIn}(\mathrm{Dom}, M, t)`$ と書く。
-この関係を、**次の 3 規則で閉じた最小のもの**として定める。
-
-### D.CertifiedIn.zero
-
-```math
-\mathrm{CertifiedIn}(\mathrm{Dom}, [\;], 0)
-```
-
-### D.CertifiedIn.succ
+### D.Certified.succ
 
 ```math
 \begin{aligned}
 &\mathrm{kind}(M) = \text{後続} \cr
-\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{CertifiedIn}(\mathrm{Dom}, M[n], t) \cr
-\land\;\;&t+1 \in \mathrm{Dom} \cr
-\longrightarrow\;\;&\mathrm{CertifiedIn}(\mathrm{Dom}, M, t+1)
+\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{Certified}(M[n], t) \cr
+\land\;\;&t+1 \in \mathfrak{T}(M) \cr
+\longrightarrow\;\;&\mathrm{Certified}(M, t+1)
 \end{aligned}
 ```
 
-### D.CertifiedIn.lim
+### D.Certified.lim
 
 $`f : \mathbb{N} \to \mathcal{T}`$ について:
 
 ```math
 \begin{aligned}
 &\mathrm{kind}(M) = \text{極限} \cr
-\land\;\;&t \in \mathrm{Dom} \cr
-\land\;\;&\forall n.\; \mathrm{CertifiedIn}(\mathrm{Dom}, M[n], f_n) \cr
+\land\;\;&t \in \mathfrak{T}(M) \cr
+\land\;\;&\forall n.\; \mathrm{Certified}(M[n], f_n) \cr
 \land\;\;&\forall n.\; f_n \lt t \cr
 \land\;\;&\forall n.\; f_n \lt f_{n+1} \cr
 \land\;\;&\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
-\longrightarrow\;\;&\mathrm{CertifiedIn}(\mathrm{Dom}, M, t)
+\longrightarrow\;\;&\mathrm{Certified}(M, t)
 \end{aligned}
 ```
 
 $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
 
-## D.Certified
+## D.RawCertified
 
-$`\mathrm{Dom}`$ を $`\top`$ に固定した 2 項関係。
+上の 3 規則から $`\in \mathfrak{T}(M)`$ の前提を落とした 2 項関係。値は
+$`\mathcal{T}`$ のどこにあってもよい。
 
 ```math
-\mathrm{Certified} \;\subseteq\; \mathcal{M} \times \mathcal{T},
-\qquad
-\mathrm{Certified}(M, t) \;:\equiv\; \mathrm{CertifiedIn}(\top, M, t)
+\mathrm{RawCertified} \;\subseteq\; \mathcal{M} \times \mathcal{T}
 ```
+
+含意は片側だけである。
+
+```math
+\mathrm{Certified}(M, t) \;\Longrightarrow\; \mathrm{RawCertified}(M, t)
+\qquad\qquad
+\mathrm{RawCertified}(M, t) \;\not\Longrightarrow\; \mathrm{Certified}(M, t)
+```
+
+$`\mathrm{RawCertified}`$ は**一価ではない**。同じ行列が 2 つの値を取れる:
+
+```math
+\mathrm{RawCertified}([(0)(1)], \omega)
+\qquad\text{かつ}\qquad
+\mathrm{RawCertified}([(0)(1)], 1+M)
+```
+
+$`1+M \notin \mathfrak{T}(M)`$ である (和は降順でなければならない、[D.TM](#dtm))。
+これが $`\mathrm{Certified}`$ の側に $`\in \mathfrak{T}(M)`$ が要る理由である。
+
+**Lean 側の名前はこの文書と逆なので注意する。** `Evidence/Cert.lean` の
+`Certified` がここの $`\mathrm{RawCertified}`$、`CertifiedIn DomI` がここの
+$`\mathrm{Certified}`$ に当たる。
 
 # 証明の仕様
 
@@ -293,33 +290,18 @@ $`\mathrm{Dom}`$ を $`\top`$ に固定した 2 項関係。
 ## E.cert
 
 ```math
-\mathrm{CertifiedIn}(\mathrm{DomI}, M, t)
+\mathrm{Certified}(M, t)
 ```
 
-**$`\mathrm{Certified}(M, t)`$ では足りない。** 写像は
-
-```math
-\mathrm{CertifiedIn}(\mathrm{Dom}, M, t) \;\Longrightarrow\; \mathrm{Certified}(M, t)
-```
-
-の弱める向きだけで、逆は無い。$`\top`$ を入れると値が
-$`\mathfrak{T}(M)`$ の外へ出られるので一価でなくなる:
-
-```math
-\mathrm{Certified}([(0)(1)], \omega)
-\qquad\text{かつ}\qquad
-\mathrm{Certified}([(0)(1)], 1+M)
-```
-
-$`1+M \notin \mathfrak{T}(M)`$ である (和は降順でなければならない、[D.TM](#dtm))。
+$`\mathrm{RawCertified}(M, t)`$ では足りない ([D.RawCertified](#drawcertified))。
 
 **E.cert は表の登録ゲートでもある。** レジストリに行を足すにはこの導出が要り、
 証明を足さずに一覧だけ伸ばすとビルドが落ちる。
 
 ## E.fs
 
-弱いエビデンスの $`f_n`$ 印の中身。[D.CertifiedIn.lim](#dcertifiedinlim) の前提
-$`\forall n.\;\mathrm{CertifiedIn}(\mathrm{Dom}, M[n], f_n)`$ の**値の側だけ**を言う。
+弱いエビデンスの $`f_n`$ 印の中身。[D.Certified.lim](#dcertifiedlim) の前提
+$`\forall n.\;\mathrm{Certified}(M[n], f_n)`$ の**値の側だけ**を言う。
 
 ```math
 \forall n.\; r(M[n]) = \mathrm{fsN}(t, k(n))
@@ -336,7 +318,7 @@ $`\mathrm{fsN}(t, \cdot)`$ は $`\mathfrak{T}(M)`$ 側の基本列、$`k`$ は�
 
 ## E.cert が言っていないこと
 
-[D.CertifiedIn.lim](#dcertifiedinlim) の共終性の前提と $`f_n \lt t`$・$`f_n \lt f_{n+1}`$
+[D.Certified.lim](#dcertifiedlim) の共終性の前提と $`f_n \lt t`$・$`f_n \lt f_{n+1}`$
 から $`\sup_n f_n = t`$ が出る。$`\mathfrak{T}(M)`$ 側の共終性は証明の中にある。
 
 言っていないのは BMS 側である:
@@ -360,7 +342,7 @@ E.cert が証明された行について、追加で言えること。
 値を取り得ない。上下いずれの側も排除されている。
 
 ```math
-\forall u.\;\;\mathrm{CertifiedIn}(\mathrm{DomI}, M, u) \;\Longrightarrow\; u = t
+\forall u.\;\;\mathrm{Certified}(M, u) \;\Longrightarrow\; u = t
 ```
 
 ## T.bound
@@ -369,7 +351,7 @@ E.cert が証明された行について、追加で言えること。
 与えない。
 
 ```math
-\forall u.\;\;\mathrm{Certified}(M, u) \;\Longrightarrow\; \bar\varphi(0,\,t+1) \not\le u
+\forall u.\;\;\mathrm{RawCertified}(M, u) \;\Longrightarrow\; \bar\varphi(0,\,t+1) \not\le u
 ```
 
 ## T.eps0
@@ -378,7 +360,7 @@ $`\varepsilon_0`$ の行では、その直上から塞がれている。
 
 ```math
 \forall u.\;\; \varepsilon_0 < u \;\Longrightarrow\;
-\neg\,\mathrm{Certified}([(0,0)(1,1)], u)
+\neg\,\mathrm{RawCertified}([(0,0)(1,1)], u)
 ```
 
 **まだ排除できていないのは片側だけである** — $`t`$ より**下**の値が、

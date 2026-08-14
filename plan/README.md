@@ -129,7 +129,7 @@ Lean のコードを書くことである。
    読んで予想しない。`#eval` で 5〜10 個の `n` について実際の値を出す
 2. **翻訳を Lean で書く** — `L` と `LBT` を定義し、`ofMatrix_M` / `transPort_L` /
    `dict_LBT` を証明して `oR_M` に合成する
-3. **証明の仕様に従った証明を書く** — `E.cert` (`CertifiedIn(DomI, M, t)`) を証明し、
+3. **証明の仕様に従った証明を書く** — `E.cert` (`Certified(M, t)`) を証明し、
    `Evidence.Cert.certRows` に登録する。登録だけ足すとビルドが落ちる
 4. `Rows/TM.lean` に行を足し、`gentable` で表を作り直す
 
@@ -153,17 +153,17 @@ B が済んでいる区間の中の 1 行を、表に出したいとき。
 
 ## E.cert を証明する手順
 
-`E.cert` = `CertifiedIn(DomI, M, t)`。行の種別で使う規則が決まる。
+`E.cert` = `Certified(M, t)`。行の種別で使う規則が決まる。
 
 | `kind M` | 規則 | やること |
 |---|---|---|
-| 空 | `D.CertifiedIn.zero` | 無条件 |
-| 後続 | `D.CertifiedIn.succ` | 全展開が同じ $`t`$ を認証することを示す |
-| 極限 | `D.CertifiedIn.lim` | 列 $`f`$ を 1 つ与えて 4 連言を示す |
+| 空 | `D.Certified.zero` | 無条件 |
+| 後続 | `D.Certified.succ` | 全展開が同じ $`t`$ を認証することを示す |
+| 極限 | `D.Certified.lim` | 列 $`f`$ を 1 つ与えて 4 連言を示す |
 
 極限行が本体で、4 連言はこうである。
 
-1. $`\forall n.\ \mathrm{CertifiedIn}(\mathrm{DomI}, M[n], f_n)`$ — **展開そのものにも証明書が要る (再帰)**
+1. $`\forall n.\ \mathrm{Certified}(M[n], f_n)`$ — **展開そのものにも証明書が要る (再帰)**
 2. $`\forall n.\ f_n \lt t`$
 3. $`\forall n.\ f_n \lt f_{n+1}`$
 4. $`\forall s \in \mathfrak{T}(M).\ s \lt t \to \exists n.\ s \le f_n`$ — 共終性
