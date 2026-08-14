@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.12
+バージョン: v0.7.13
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -100,7 +100,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 ほかの列は ✅ の材料か、材料ですらない参考値である。
 
 - 命題 — [E.cert](#ecert) · [E.zero](#ezero) · [E.succ](#esucc) · [E.lim](#elim) · [E.fs](#efs)
-- 定義 — [D.TM](#dtm) · [D.expand](#dexpand) · [D.Certified](#dcertified) · [D.DomI](#ddomi) · [D.CertifiedIn](#dcertifiedin)
+- 定義 — [D.TM](#dtm) · [D.expand](#dexpand)
 - 定理 — [T.unique](#tunique) · [T.bound](#tbound) · [T.eps0](#teps0)
 
 ## E.cert
@@ -109,14 +109,37 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 \mathrm{CertifiedIn}\;\mathrm{DomI}\;M\;t
 ```
 
-すなわち、下の 3 規則 E.zero / E.succ / E.lim で $`(M,t)`$ の導出が組め、かつ
-**その導出に現れる値がすべて $`\mathfrak{T}(M)`$ の項**であること。
+読み下すと、次の 2 つを同時に満たすことである。
 
-規則は行の種別 $`\mathrm{kind}\,M`$ (空・後続・極限) で決まるので、1 行につき
-どれか 1 つだけが使われる。
+1. 下の 3 規則 E.zero / E.succ / E.lim で $`(M,t)`$ の導出が組める。
+   使う規則は行の種別 $`\mathrm{kind}\,M`$ (空・後続・極限) が決めるので、
+   1 行につきどれか 1 つだけである
+2. **その導出に現れる値が、1 つ残らず $`\mathfrak{T}(M)`$ の項である**
+   ($`\mathrm{DomI}(t) :\equiv t \in \mathfrak{T}(M)`$ が全ノードに掛かる)
 
-**素の $`\mathrm{Certified}\;M\;t`$ ではない。** そちらは E.cert の系であって逆は無い
-([D.CertifiedIn](#dcertifiedin))。素の $`\mathrm{Certified}`$ を証明しても ✅ は付かない。
+**2 を落とすと値が決まらない。** 3 規則だけを規則とする帰納的述語
+($`\mathrm{Certified}`$) は認証する値に何の制約も課さないので、
+$`\mathfrak{T}(M)`$ の項でない値も通ってしまう:
+
+```math
+\mathrm{Certified}\;[(0)(1)]\;\omega
+\qquad\text{かつ}\qquad
+\mathrm{Certified}\;[(0)(1)]\;(1+M)
+```
+
+$`1+M`$ は $`\mathfrak{T}(M)`$ の項ではない — 和は降順でなければならない
+([D.TM](#dtm)) — ので、2 がこれを弾く。
+
+**素の $`\mathrm{Certified}`$ を証明しても ✅ は付かない。** 写像は
+
+```math
+\mathrm{CertifiedIn}\;\mathrm{Dom} \;\longrightarrow\; \mathrm{Certified}
+```
+
+の**弱める向きだけ**で、逆は無いからである。
+
+**E.cert は表の登録ゲートでもある。** レジストリに行を足すにはこの導出が要り、
+証明を足さずに一覧だけ伸ばすとビルドが落ちる。
 
 ## E.zero
 
@@ -257,39 +280,6 @@ $`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だ�
 
 $`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開 (BM4 の規則)。$`\mathrm{kind}\,M`$ は
 行が空か・後続か・極限かを言う。定義は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
-
-## D.Certified
-
-$`\mathrm{Certified}`$ は E.zero / E.succ / E.lim を規則とする帰納的述語である。
-認証される値に制約を課さないので、$`\mathfrak{T}(M)`$ の項でない値も認証されうる:
-
-```math
-\mathrm{Certified}\;[(0)(1)]\;\omega
-\qquad\text{かつ}\qquad
-\mathrm{Certified}\;[(0)(1)]\;(1+M)
-```
-
-つまり素の $`\mathrm{Certified}`$ は一価ではない。これが E.cert に $`\mathrm{DomI}`$
-が要る理由である。
-
-## D.DomI
-
-```math
-\mathrm{DomI}(t) \;:\equiv\; t \in \mathfrak{T}(M)
-```
-
-## D.CertifiedIn
-
-$`\mathrm{CertifiedIn}\;\mathrm{Dom}`$ は、**導出に現れる値すべて**が $`\mathrm{Dom}`$
-に属することを要求する版である。忘却写像は
-
-```math
-\mathrm{CertifiedIn}\;\mathrm{Dom} \;\longrightarrow\; \mathrm{Certified}
-```
-
-の**一方向だけ**で、逆は無い。$`\mathrm{CertifiedIn}\;\mathrm{DomI}`$ は表の登録
-ゲートでもある — レジストリに行を足すにはこの導出が要り、それを足さずに一覧だけ
-伸ばすとビルドが落ちる。
 
 # 定理
 
