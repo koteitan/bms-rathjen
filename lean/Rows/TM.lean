@@ -56,7 +56,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.20"
+def version : String := "v0.7.21"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -584,7 +584,17 @@ $`\\mathrm{DomI}(\\alpha)`$ は「$`\\alpha`$ が $`\\mathfrak{T}(M)`$ の**正�
 $`\\psi_\\kappa(\\alpha)`$ は $`\\kappa`$ が正則かつ $`K_\\kappa(\\alpha) \\lt \\alpha`$ のときだけ。
 だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
 
-$`\\mathrm{CertifiedIn}(\\mathrm{Dom}, M, t)`$ は次の 3 規則で閉じた最小の関係である。
+$`\\mathrm{CertifiedIn}`$ は 3 項関係である。
+
+```math
+\\mathrm{CertifiedIn} \\;\\subseteq\\;
+(\\text{項} \\to \\{\\text{真}, \\text{偽}\\})
+\\times \\text{行列} \\times \\text{項}
+```
+
+第 1 引数が $`\\mathrm{Dom}`$ ([D.Dom](#ddom))、第 2 が BMS の行列 $`M`$
+([D.expand](#dexpand))、第 3 がその値 $`t`$ である。この関係を、**次の 3 規則で閉じた
+最小のもの**として定める。
 
 ### D.CertifiedIn.zero
 
@@ -762,7 +772,8 @@ E.cert が証明された行について、追加で言えること。
 
 ## T.bound
 
-$`\\mathrm{Dom}`$ を何の制約も課さないものに取り替えた関係を $`\\mathrm{Certified}`$ と書く。
+$`\\mathrm{Dom}`$ を何の制約も課さないものに取り替えた 2 項関係を
+$`\\mathrm{Certified} \\subseteq \\text{行列} \\times \\text{項}`$ と書く。
 
 ```math
 \\mathrm{Certified}(M, t) \\;:\\equiv\\; \\mathrm{CertifiedIn}(\\top, M, t)
