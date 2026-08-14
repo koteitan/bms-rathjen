@@ -10,4 +10,5 @@ import Rows.G6
 import Rows.G7
 import Rows.G8
 import Rows.G9
+import Rows.G10
 import Trans.DictInv   -- dict の逆 (Veblen 断片)。掃引に見せるためここから import する

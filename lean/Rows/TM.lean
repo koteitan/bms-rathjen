@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.10"
+def version : String := "v0.7.11"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -212,7 +212,7 @@ def rows : List Row := [
       (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
         (phi zero (phi zero zero))),
     name := "\\bar{\\varphi}(2,\\bar{\\varphi}(3,\\omega))",
-    ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
+    proof := "namespace G10", ev := "oR", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1],[2,1]],
     t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
