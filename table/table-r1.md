@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.21
+バージョン: v0.7.22
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -94,135 +94,54 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L345) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L349) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) |  |
 
-# 証明の仕様
-
-対応表の 1 行 $`(M, t)`$ の証明列に ✅ が付く条件は [E.cert](#ecert) ただ 1 つである。
-ほかの列は ✅ の材料か、材料ですらない参考値である。
-
-## E.cert
-
-```math
-\mathrm{CertifiedIn}(\mathrm{DomI}, M, t)
-```
-
-```math
-\mathrm{DomI}(\alpha) \;:\equiv\; \alpha \in \mathfrak{T}(M)
-```
-
-$`\mathrm{DomI}(\alpha)`$ は「$`\alpha`$ が $`\mathfrak{T}(M)`$ の**正規形の項**である」
-という述語である。$`\mathfrak{T}(M)`$ は Rathjen が最小の弱 Mahlo 基数 $`M`$ の上の
-崩壊関数 $`\psi_\kappa`$ と $`Z`$ で組んだ順序数表記で ([D.TM](#dtm))、
-その形成条件 ([Rathjen, 1991] 2.1) が**正規形の条件を兼ねている** — 和は加法的主要な成分の降順のみ、
-$`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \alpha`$ のときだけ。
-だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
-
-$`\mathrm{CertifiedIn}`$ は 3 項関係である。
-
-```math
-\mathrm{CertifiedIn} \;\subseteq\;
-(\text{項} \to \{\text{真}, \text{偽}\})
-\times \text{行列} \times \text{項}
-```
-
-第 1 引数が $`\mathrm{Dom}`$ ([D.Dom](#ddom))、第 2 が BMS の行列 $`M`$
-([D.expand](#dexpand))、第 3 がその値 $`t`$ である。この関係を、**次の 3 規則で閉じた
-最小のもの**として定める。
-
-### D.CertifiedIn.zero
-
-```math
-\mathrm{CertifiedIn}(\mathrm{Dom}, [\;], 0)
-```
-
-### D.CertifiedIn.succ
-
-```math
-\begin{aligned}
-&\mathrm{kind}(M) = \mathrm{succ} \cr
-\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{CertifiedIn}(\mathrm{Dom}, M[n], t) \cr
-\land\;\;&\mathrm{Dom}(t+1) \cr
-\longrightarrow\;\;&\mathrm{CertifiedIn}(\mathrm{Dom}, M, t+1)
-\end{aligned}
-```
-
-### D.CertifiedIn.lim
-
-$`f : \mathbb{N} \to \mathfrak{T}(M)`$ について:
-
-```math
-\begin{aligned}
-&\mathrm{kind}(M) = \mathrm{lim} \cr
-\land\;\;&\mathrm{Dom}(t) \cr
-\land\;\;&\forall n.\; \mathrm{CertifiedIn}(\mathrm{Dom}, M[n], f_n) \cr
-\land\;\;&\forall n.\; f_n \lt t \cr
-\land\;\;&\forall n.\; f_n \lt f_{n+1} \cr
-\land\;\;&\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
-\longrightarrow\;\;&\mathrm{CertifiedIn}(\mathrm{Dom}, M, t)
-\end{aligned}
-```
-
-## D.Dom
-
-D.CertifiedIn.zero / .succ / .lim のパラメータ。**項**の述語である。
-
-```math
-\mathrm{Dom} \;:\; \text{項} \to \{\text{真}, \text{偽}\}
-```
-
-ここで**項**とは $`0`$・$`M`$・$`\bar\omega^\alpha`$・$`Z(\alpha)`$・
-$`\bar\varphi(\alpha,\beta)`$・$`\psi_\kappa(\alpha)`$・$`\oplus`$
-で組んだもので、[D.TM](#dtm) の形成条件は課さない。だから $`\mathrm{Dom}`$ は
-「$`\mathfrak{T}(M)`$ に入っているか」を**問える**。
-
-入れるのは 2 つだけである。1 つは [E.cert](#ecert) の $`\mathrm{DomI}`$、
-もう 1 つは [T.bound](#tbound) で使う
-
-```math
-\top(\alpha) \;:\equiv\; \text{真}
-```
-
-である。
-
-## E.fs
-
-弱いエビデンスの $`f_n`$ 印の中身。[D.CertifiedIn.lim](#dcertifiedinlim) の前提
-$`\forall n.\;\mathrm{CertifiedIn}(\mathrm{Dom}, M[n], f_n)`$ の**値の側だけ**を言う。
-
-```math
-\forall n.\; r(M[n]) = \mathrm{fsN}(t, k(n))
-```
-
-$`r`$ は読み手で、行によって `o?` か `oR` である (両方が定義される所では一致する)。
-$`\mathrm{fsN}(t, \cdot)`$ は $`\mathfrak{T}(M)`$ 側の基本列、$`k`$ はその行の添字で
-**行ごとに違う** (一律に $`n+1`$ ではない)。有限個の $`n`$ を試したのではなく、
-すべての $`n`$ についての定理である。
-
-**$`M[n]`$ がその値を認証することは言っていない。** 上の前提が要求するのは後者であり、
-残る 3 前提は手つかずである。E.fs は E.cert の材料の一部であって、E.cert に近いことを
-意味しない。
-
-## E.cert が言っていないこと
-
-[D.CertifiedIn.lim](#dcertifiedinlim) の共終性の前提と $`f_n \lt t`$・$`f_n \lt f_{n+1}`$ から $`\sup_n f_n = t`$ が
-出る。$`\mathfrak{T}(M)`$ 側の共終性は証明の中にある。
-
-言っていないのは BMS 側である:
-
-```math
-\sup_n |M[n]| = |M|
-```
-
-これが無いと $`\sup_n f_n = t`$ から $`|M| = t`$ へ渡れない。そしてこのリポジトリに
-$`|M[n]| \lt |M|`$ も展開列の共終性も**補題として存在しない**。BMS を順序数表記として
-読むとき極限行の値が展開の上限であることは**読み方の定義**であって定理ではないからである。
-E.cert はこの読み方を仮定した上で $`\mathfrak{T}(M)`$ 側を尽くしている。
-
 # 定義
+
+証明の仕様で使う記号を、使う順に定める。
+
+## D.Term
+
+**項**の全体 $`\mathcal{T}`$ を、次の文法が生成する式の集合とする。
+形成条件は課さない — 課したものが [D.TM](#dtm) である。
+
+```math
+\alpha, \beta \;::=\;
+0 \;\mid\; M \;\mid\; \alpha \oplus \beta \;\mid\;
+\bar\omega^{\alpha} \;\mid\; \bar\varphi(\alpha, \beta) \;\mid\;
+\psi_{\alpha}(\beta) \;\mid\; Z(\alpha)
+```
+
+$`M`$ は最小の弱 Mahlo 基数を表す定数である。
+
+## D.Matrix
+
+**行列**の全体 $`\mathcal{M}`$。列は自然数の有限列、行列は列の有限列である。
+
+```math
+\mathcal{M} \;=\; \bigl(\mathbb{N}^{\ast}\bigr)^{\ast}
+```
+
+$`X^{\ast}`$ は $`X`$ の有限列全体を表す。列の本数も列の高さも固定しない。
+高さを揃える必要も無い。対応表の行はすべて高さ 2 以下の列からなる。
+
+## D.expand
+
+$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開、$`\mathrm{kind}(M)`$ は行の種別である。
+
+```math
+\cdot[\cdot] \;:\; \mathcal{M} \times \mathbb{N} \to \mathcal{M}
+\qquad\qquad
+\mathrm{kind} \;:\; \mathcal{M} \to
+\{\text{空}, \text{後続}, \text{極限}\}
+```
+
+規則は BM4 の展開規則そのもので、
+[koteitan「バシク行列の数式的定義」](https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Koteitan/%E3%83%90%E3%82%B7%E3%82%AF%E8%A1%8C%E5%88%97%E3%81%AE%E6%95%B0%E5%BC%8F%E7%9A%84%E5%AE%9A%E7%BE%A9)
+に従う。実装は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
 
 ## D.TM
 
-$`M`$ は最小の弱 Mahlo 基数。$`\mathfrak{T}(M)`$ は**次の規則で閉じた最小の項集合**
-(Rathjen 1991 §2.1):
+$`\mathfrak{T}(M) \subseteq \mathcal{T}`$ は、**次の規則で閉じた最小の部分集合**
+である ([Rathjen, 1991] 2.1)。
 
 ```math
 \frac{}{0 \in \mathfrak{T}(M)}
@@ -260,7 +179,9 @@ SC = \{M\} \cup \{\psi_\kappa(\alpha)\} \cup \{Z(\alpha)\},
 R = \{Z(\alpha)\}
 ```
 
-$`\oplus`$ の条件 (成分が $`AP`$、降順) が一意な正規形を与える。
+**この形成条件が正規形の条件を兼ねている。** 和は成分が $`AP`$ で降順のときしか作れず、
+$`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \alpha`$ の
+ときしか作れない。だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
 
 **$`Z`$ は [Rathjen, 1991] 自身の記号である** (2.1(vii))。1990 年の $`T(M)`$ は 2 引数の
 $`\chi`$ の階層を持つが、[Rathjen, 1991] はそれを 1 本の $`Z`$ に置き換えた:
@@ -284,10 +205,150 @@ $`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だ�
 **不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
 上で静かに誤る。**
 
-## D.expand
+## D.Dom
 
-$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開 (BM4 の規則)。$`\mathrm{kind}(M)`$ は
-行が空か・後続か・極限かを言う。定義は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
+$`\mathrm{Dom}`$ は項の述語、すなわち $`\mathcal{T}`$ の部分集合である。
+
+```math
+\mathrm{Dom} \;\subseteq\; \mathcal{T}
+\qquad\qquad
+\mathrm{Dom}(\alpha) \;:\equiv\; \alpha \in \mathrm{Dom}
+```
+
+使うのは 2 つだけである。
+
+```math
+\mathrm{DomI} \;=\; \mathfrak{T}(M)
+\qquad\qquad
+\top \;=\; \mathcal{T}
+```
+
+$`\mathrm{DomI}(\alpha)`$ は「$`\alpha`$ が $`\mathfrak{T}(M)`$ の正規形の項である」を、
+$`\top(\alpha)`$ は何も要求しないことを意味する。
+
+## D.CertifiedIn
+
+$`\mathrm{CertifiedIn}`$ は 3 項関係である。
+
+```math
+\mathrm{CertifiedIn} \;\subseteq\;
+\mathcal{P}(\mathcal{T}) \times \mathcal{M} \times \mathcal{T}
+```
+
+$`\mathcal{P}(\mathcal{T})`$ は $`\mathcal{T}`$ の冪集合、つまり
+[D.Dom](#ddom) の全体である。以下
+$`(\mathrm{Dom}, M, t) \in \mathrm{CertifiedIn}`$ を
+$`\mathrm{CertifiedIn}(\mathrm{Dom}, M, t)`$ と書く。
+この関係を、**次の 3 規則で閉じた最小のもの**として定める。
+
+### D.CertifiedIn.zero
+
+```math
+\mathrm{CertifiedIn}(\mathrm{Dom}, [\;], 0)
+```
+
+### D.CertifiedIn.succ
+
+```math
+\begin{aligned}
+&\mathrm{kind}(M) = \text{後続} \cr
+\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{CertifiedIn}(\mathrm{Dom}, M[n], t) \cr
+\land\;\;&t+1 \in \mathrm{Dom} \cr
+\longrightarrow\;\;&\mathrm{CertifiedIn}(\mathrm{Dom}, M, t+1)
+\end{aligned}
+```
+
+### D.CertifiedIn.lim
+
+$`f : \mathbb{N} \to \mathcal{T}`$ について:
+
+```math
+\begin{aligned}
+&\mathrm{kind}(M) = \text{極限} \cr
+\land\;\;&t \in \mathrm{Dom} \cr
+\land\;\;&\forall n.\; \mathrm{CertifiedIn}(\mathrm{Dom}, M[n], f_n) \cr
+\land\;\;&\forall n.\; f_n \lt t \cr
+\land\;\;&\forall n.\; f_n \lt f_{n+1} \cr
+\land\;\;&\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
+\longrightarrow\;\;&\mathrm{CertifiedIn}(\mathrm{Dom}, M, t)
+\end{aligned}
+```
+
+$`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
+
+## D.Certified
+
+$`\mathrm{Dom}`$ を $`\top`$ に固定した 2 項関係。
+
+```math
+\mathrm{Certified} \;\subseteq\; \mathcal{M} \times \mathcal{T},
+\qquad
+\mathrm{Certified}(M, t) \;:\equiv\; \mathrm{CertifiedIn}(\top, M, t)
+```
+
+# 証明の仕様
+
+対応表の 1 行 $`(M, t)`$ の証明列に ✅ が付く条件は、これただ 1 つである。
+
+## E.cert
+
+```math
+\mathrm{CertifiedIn}(\mathrm{DomI}, M, t)
+```
+
+**$`\mathrm{Certified}(M, t)`$ では足りない。** 写像は
+
+```math
+\mathrm{CertifiedIn}(\mathrm{Dom}, M, t) \;\Longrightarrow\; \mathrm{Certified}(M, t)
+```
+
+の弱める向きだけで、逆は無い。$`\top`$ を入れると値が
+$`\mathfrak{T}(M)`$ の外へ出られるので一価でなくなる:
+
+```math
+\mathrm{Certified}([(0)(1)], \omega)
+\qquad\text{かつ}\qquad
+\mathrm{Certified}([(0)(1)], 1+M)
+```
+
+$`1+M \notin \mathfrak{T}(M)`$ である (和は降順でなければならない、[D.TM](#dtm))。
+
+**E.cert は表の登録ゲートでもある。** レジストリに行を足すにはこの導出が要り、
+証明を足さずに一覧だけ伸ばすとビルドが落ちる。
+
+## E.fs
+
+弱いエビデンスの $`f_n`$ 印の中身。[D.CertifiedIn.lim](#dcertifiedinlim) の前提
+$`\forall n.\;\mathrm{CertifiedIn}(\mathrm{Dom}, M[n], f_n)`$ の**値の側だけ**を言う。
+
+```math
+\forall n.\; r(M[n]) = \mathrm{fsN}(t, k(n))
+```
+
+$`r`$ は読み手で、行によって `o?` か `oR` である (両方が定義される所では一致する)。
+$`\mathrm{fsN}(t, \cdot)`$ は $`\mathfrak{T}(M)`$ 側の基本列、$`k`$ はその行の添字で
+**行ごとに違う** (一律に $`n+1`$ ではない)。有限個の $`n`$ を試したのではなく、
+すべての $`n`$ についての定理である。
+
+**$`M[n]`$ がその値を認証することは言っていない。** 上の前提が要求するのは後者であり、
+残る 3 前提は手つかずである。E.fs は E.cert の材料の一部であって、E.cert に近いことを
+意味しない。
+
+## E.cert が言っていないこと
+
+[D.CertifiedIn.lim](#dcertifiedinlim) の共終性の前提と $`f_n \lt t`$・$`f_n \lt f_{n+1}`$
+から $`\sup_n f_n = t`$ が出る。$`\mathfrak{T}(M)`$ 側の共終性は証明の中にある。
+
+言っていないのは BMS 側である:
+
+```math
+\sup_n |M[n]| = |M|
+```
+
+これが無いと $`\sup_n f_n = t`$ から $`|M| = t`$ へ渡れない。そしてこのリポジトリに
+$`|M[n]| \lt |M|`$ も展開列の共終性も**補題として存在しない**。BMS を順序数表記として
+読むとき極限行の値が展開の上限であることは**読み方の定義**であって定理ではないからである。
+E.cert はこの読み方を仮定した上で $`\mathfrak{T}(M)`$ 側を尽くしている。
 
 # 定理
 
@@ -303,13 +364,6 @@ E.cert が証明された行について、追加で言えること。
 ```
 
 ## T.bound
-
-$`\mathrm{Dom}`$ を何の制約も課さないものに取り替えた 2 項関係を
-$`\mathrm{Certified} \subseteq \text{行列} \times \text{項}`$ と書く。
-
-```math
-\mathrm{Certified}(M, t) \;:\equiv\; \mathrm{CertifiedIn}(\top, M, t)
-```
 
 値が $`\mathfrak{T}(M)`$ の外に出るものも含め、いかなる証明書も $`\omega^{t+1}`$ 以上を
 与えない。
@@ -358,13 +412,10 @@ BMS `(0,0)(1,1)(2,2)` の Buchholz 値 $`\psi_0(\psi_2(0))`$ には 3 者が一�
 \text{資料} \;\longmapsto\; \psi_\Omega(\bar\varphi(1, \Omega+1))
 ```
 
-**根は型にある。** このリポジトリは $`\chi`$ を $`Z\,a = \chi_a(0)`$ と 1 引数に潰して
-いるが、原典の $`\chi`$ は 2 引数で第 2 引数が $`\Omega`$ 階層を枚挙する
-($`\chi_0(\alpha) = \Omega_{1+\alpha}`$、$`\chi_1(0) = I`$)。つまり $`Z\,1`$ は
-$`\Omega_2`$ ではなく $`I`$ で、$`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。
-直すには項型を変える必要がある。
+**根は型にある** ([D.TM](#dtm))。$`Z(1)`$ は $`\Omega_2`$ ではなく $`I`$ で、
+$`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型を変える必要がある。
 
-**✅ の付いた行は影響を受けない。** ✅ は $`\mathrm{Certified}`$ から来ており、
+**✅ の付いた行は影響を受けない。** ✅ は [E.cert](#ecert) から来ており、
 翻訳関数を一度も通らないからである。
 
 外部の対応表との差分は [diff.md](diff.md) に、再実行手順は
