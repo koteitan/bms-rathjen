@@ -127,12 +127,25 @@ E.cert が言っていないこと、T.unique / T.bound / T.eps0 である。
 たとえば「レジストリに登録しないと ✅ が付かない」は作業の話なので、
 この文書の[印は計算する。書かない](#印は計算する書かない)にだけ書く。
 
-## 手編集の禁止
+## どこを直すと table-r1.md が変わるか
 
-`table/table-r1.md` は `lake exe gentable` の生成物である。直接編集しない。
-表を直すときは `lean/Rows/TM.lean` を直して再生成する。
-ファイル先頭にその旨のコメントが入る。
-`table/diff.md` と `table/misc.md` は手で書く。
+`table/table-r1.md` は `lake exe gentable` の生成物である。**直接編集しない。**
+
+| 直したいもの | 直す場所 | 要る手順 |
+|---|---|---|
+| 表の行 (行列・値・備考) | `lean/Rows/TM.lean` の `rows` | `lake build` してから `gentable` |
+| 表より上の本文 | `lean/Rows/head.md` | `gentable` だけ |
+| 表より下の本文 | `lean/Rows/tail.md` | `gentable` だけ |
+| 列の作り方・印の付け方 | `lean/Rows/TM.lean` の `genTable` | `lake build` してから `gentable` |
+
+```sh
+cd lean && lake exe gentable > ../table/table-r1.md
+```
+
+本文は**素の Markdown** である。バックスラッシュを 2 つ書く必要は無い。
+`head.md` の `{{version}}` だけが生成時に置き換わる。
+
+`table/diff.md` と `table/misc.md` は生成物ではない。手で書く。
 
 ## この仕様に含まれないもの
 

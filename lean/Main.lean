@@ -38,4 +38,8 @@ def main : IO Unit := do
   let rfinders ← regionFiles.mapM fun f => do pure (f, ← lineFinder (dir ++ f))
   let regionProofLine (file key : String) : Option Nat :=
     (rfinders.lookup file).bind (· key)
-  IO.print (Rows.genTable rowLine proofLine regionProofLine)
+  -- the prose lives in plain Markdown next to the row DB, so editing it needs no
+  -- Lean rebuild and no doubled backslashes
+  let head ← IO.FS.readFile (dir ++ "Rows/head.md")
+  let tail ← IO.FS.readFile (dir ++ "Rows/tail.md")
+  IO.print (Rows.genTable head tail rowLine proofLine regionProofLine)

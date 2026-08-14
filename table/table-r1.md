@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.28
+バージョン: v0.7.29
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -192,6 +192,8 @@ SC = \{M\} \cup \{\psi_\kappa(\alpha)\} \cup \{Z(\alpha)\},
 \qquad
 R = \{Z(\alpha)\}
 ```
+
+$`\mathfrak{T}(M)`$ の要素を **Rathjen 表記の標準形**と呼ぶ。
 
 
 ## D.Term

@@ -16,9 +16,9 @@
 ## 構成
 
 - `lean/` — Lean 4 (v4.30.0, 外部依存なし) による形式化
-  - `BMS/` BM4 の行列・辞書式順序・展開・標準形
+  - `BMS/` BM4 の行列・辞書式順序・展開・バシク行列の標準形
     ([yaBMS](https://github.com/koteitan/yaBMS) の C 実装との突き合わせ済み)
-  - `TM/` Rathjen 𝔗(M) の項・順序・正規形 (Rathjen 1991 §2 に忠実)・基本列
+  - `TM/` Rathjen 𝔗(M) の項・順序・Rathjen 表記の標準形 (Rathjen 1991 §2 に忠実)・基本列
   - `Trans/` 翻訳関数 (o および、参照実装で較正済みの oR = dict∘TransPort)
   - `Evidence/` 意味証明書 (`Cert.lean`)、𝔗(M) の順序理論と整礎性 (`WF.lean`)、
     および有限検査器 (順序埋め込み・相互共終・双模倣)
@@ -61,7 +61,7 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 | `lean/scripts/axioms_of.lean` | 宣言ごとの公理 | `lake env lean scripts/axioms_of.lean` — 4 分類 + 5 集計を検査 |
 | `scripts/check-math.js` | 数式が GitHub で壊れるか、リンクとアンカーが生きているか | 引数に `.md` を渡す。アンカー規則は GitHub 実測の 7 例で自己試験 |
 | `scripts/settled.sh` | 作業役がファイルを書き終えたか | `scripts/settled.sh --self-test` — 5 ケース |
-| `scripts/standard-audit.sh` | 表の全行が標準形の行列か | |
+| `scripts/standard-audit.sh` | 表の全行がバシク行列の標準形か | |
 | `scripts/crosscheck.sh` | BMS の実装が yaBMS の C 実装と一致するか | 112 例そのものが試験 |
 | `scripts/refimpl-audit.sh` | 表の全行が変換写像と一致するか | |
 

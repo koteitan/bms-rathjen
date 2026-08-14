@@ -57,8 +57,8 @@ bms-rathjen/
 │   ├── table-r1.md        対応表 (生成物。手編集しない)
 │   └── diff.md            外部の対応表との差分
 ├── lean/
-│   ├── BMS/               BMS 側。行列・辞書式順序・展開・標準形
-│   ├── TM/                Rathjen 側。項・順序・正規形・基本列
+│   ├── BMS/               BMS 側。行列・辞書式順序・展開・バシク行列の標準形
+│   ├── TM/                Rathjen 側。項・順序・Rathjen 表記の標準形・基本列
 │   ├── Trans/             翻訳。BMS → Buchholz → T(M)
 │   ├── Rows/              表の行データベースと、行ごとの証明
 │   ├── Evidence/          一般定理。証明書・整礎性・有限検査器
@@ -213,9 +213,9 @@ B が済んでいる区間の中の 1 行を、表に出したいとき。
 
 | 何 | 何ができるか | この repo での使い道 |
 |---|---|---|
-| [yaBMS](https://github.com/koteitan/yaBMS) | BMS の展開・標準形判定・比較 (C 実装) | `scripts/crosscheck.sh` が `BMS/` と 112 例で照合 |
+| [yaBMS](https://github.com/koteitan/yaBMS) | BMS の展開・バシク行列の標準形判定・比較 (C 実装) | `scripts/crosscheck.sh` が `BMS/` と 112 例で照合 |
 | [pss-vs-buchholz](https://github.com/Naruyoko/googology/tree/main/pss-vs-buchholz) | BMS → Buchholz の変換写像 (`pss2bp`) | **`Trans/Recal.lean` の移植元**。表の Buchholz 列はこの出力 |
-| [padicBotRathjen](https://github.com/Naruyoko/googology/tree/main/padicBotRathjen) | $`\mathfrak{T}(M)`$ の独立実装 | `TM/` の順序・正規形・基本列の外部対照。`scripts/padicbot-ref.js` から呼ぶ |
+| [padicBotRathjen](https://github.com/Naruyoko/googology/tree/main/padicBotRathjen) | $`\mathfrak{T}(M)`$ の独立実装 | `TM/` の順序・Rathjen 表記の標準形・基本列の外部対照。`scripts/padicbot-ref.js` から呼ぶ |
 
 読むなら <https://naruyoko.github.io/googology/> が読みやすい。
 
@@ -227,9 +227,9 @@ B が済んでいる区間の中の 1 行を、表に出したいとき。
 | スクリプト | 何を見るか |
 |---|---|
 | `crosscheck.sh` | `BMS/` が yaBMS の C 実装と一致するか |
-| `standard-audit.sh` | 表の全行が標準形の行列か |
+| `standard-audit.sh` | 表の全行がバシク行列の標準形か |
 | `refimpl-audit.sh` | 表の全行が変換写像と一致するか |
-| `padicbot-ref.js` | `TM/` の順序・正規形を独立実装と突き合わせる |
+| `padicbot-ref.js` | `TM/` の順序・Rathjen 表記の標準形を独立実装と突き合わせる |
 | `hexirp-rathjen-check.py` | Hexirp の対応表との差分 |
 | `check-math.js` | `.md` の数式が GitHub で描画されるか |
 | `settled.sh` | 作業者がファイルを書き終えたか |

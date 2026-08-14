@@ -7,7 +7,7 @@
 - $`f_n`$ 印が何を言っているか
 - [E.cert](table-r1.md#ecert) が言っていないこと
 - ✅ の付いた行について追加で言えること (T.unique / T.bound / T.eps0)
-- [D.TM](table-r1.md#dtm) の読み方 — 正規形、$`Z`$ の出自、$`\bar\varphi`$ の不動点
+- [D.TM](table-r1.md#dtm) の読み方 — Rathjen 表記の標準形、$`Z`$ の出自、$`\bar\varphi`$ の不動点
 
 ## D.RawCertified
 
@@ -108,7 +108,7 @@ $`\mathfrak{T}(M)`$ の外へ出る部分値を経由して認証される可能
 
 ## D.TM の補足
 
-**この形成条件が正規形の条件を兼ねている。** 和は成分が $`AP`$ で降順のときしか作れず、
+**この形成条件が Rathjen 表記の標準形の条件を兼ねている。** 和は成分が $`AP`$ で降順のときしか作れず、
 $`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \alpha`$ の
 ときしか作れない。だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
 

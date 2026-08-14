@@ -56,7 +56,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.28"
+def version : String := "v0.7.29"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -477,51 +477,17 @@ def regionLine (regionProofLine : String → String → Option Nat) (g : RegionR
     proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
 
 /-- The contents of table/table-r1.md.
+    The prose is NOT here: `head` and `tail` are the verbatim contents of
+    `Rows/head.md` and `Rows/tail.md`, which `gentable` reads at run time.  Editing
+    the prose therefore needs no Lean rebuild — and no doubled backslashes.
+    `{{version}}` in `head` is replaced by `version`.
     `lineOf` maps the key of a row (see `rowKey`) to the line of Rows/TM.lean that
-    defines it, `proofLine` maps a proof namespace to the file (path relative to
-    lean/) and line of the row-proof file that declares it (Rows/Proofs.lean or
-    Rows/ProofsB.lean), and `regionProofLine` maps a region proof file and theorem
-    name to the line in that file; `gentable` supplies all three by reading those
-    files. -/
-def genTable (lineOf : String → Option Nat) (proofLine : String → Option (String × Nat))
+    defines it, `proofLine` maps a proof namespace to the file and line that declares
+    it, and `regionProofLine` maps a region proof file and theorem name to its line. -/
+def genTable (head tail : String)
+    (lineOf : String → Option Nat) (proofLine : String → Option (String × Nat))
     (regionProofLine : String → String → Option Nat) : String :=
-  let header :=
-"# BMS × Rathjen T(M) 対応表 (R1)
-
-<!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
-
-バージョン: " ++ version ++ "
-
-順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
-Rathjen の表記系 $`\\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
-Arch. Math. Logic 30 (1991), §2) の対応。
-
-**証明列の ✅ は[証明の仕様](#証明の仕様)の E.cert が Lean の定理であることを意味する。**
-それ以外の印は ✅ の材料であって ✅ ではない。**印はすべてビルドが計算して付ける**
-(手で書けない)。
-
-- 作り方・作業手順・資料の場所 — [plan/README.md](../plan/README.md)
-- 表を読むとき・書くときの原則 (注意書き) — [plan/constitutions.md](../plan/constitutions.md)
-- この表自身の仕様 — [plan/spec.md](../plan/spec.md)
-- 外部の対応表との差分 — [diff.md](diff.md)
-- 本筋から外した補足 — [misc.md](misc.md)
-
-## 列の意味
-
-| 列 | 中身 |
-|---|---|
-| BMS | 行列。リンク先は行の定義 |
-| $`\\mathfrak{T}(M)`$ | Rathjen R1 の項 ([D.TM](#dtm)) |
-| Buchholz | Buchholz の $`\\mathrm{OT}_B`$ での値。$`\\psi_0(\\Omega_2)`$ 以上は変換写像 (pss2bp) の出力そのもの、それ未満は通称 |
-| 証明 | ✅ = [E.cert](#ecert) が定理。空欄 = まだ |
-| その他の弱いエビデンス | ✅ の材料。[一覧](#その他の弱いエビデンス) |
-| 備考 | その行に固有のこと |
-
-## 対応表
-
-| BMS | $`\\mathfrak{T}(M)`$ | Buchholz | 証明 | その他の弱いエビデンス | 備考 |
-|---|---|---|---|---|---|
-"
+  let header := head.replace "{{version}}" version
   let rowStr (r : Row) : String :=
     let bms := if r.m.isEmpty then "(空)" else BMS.showMatrix r.m
     -- the BMS cell links to the line of Rows/TM.lean that defines this row
@@ -561,197 +527,8 @@ Arch. Math. Logic 30 (1991), §2) の対応。
     (rest, acc ++ String.join (due.map (regionLine regionProofLine)) ++ rowStr r)
   let (gsLeft, body) := rows.foldl step (regions, "")
   let body := body ++ String.join (gsLeft.map (regionLine regionProofLine))
-  let footer :=
-"
-# 証明の仕様
-
-対応表の 1 行 $`(S, t)`$ の証明列に ✅ が付く条件は、これただ 1 つである。
-
-## E.cert
-
-```math
-\\mathrm{Certified}(S, t)
-```
-
-# 定義
-
-## D.Certified
-
-$`\\mathrm{Certified}`$ は行列とその値の 2 項関係である。
-
-```math
-\\mathrm{Certified} \\;\\subseteq\\; \\mathcal{S} \\times \\mathfrak{T}(M)
-```
-
-**次の 3 規則で閉じた最小の関係**として定める。
-
-### D.Certified.zero
-
-```math
-\\mathrm{Certified}([\\;], 0)
-```
-
-### D.Certified.succ
-
-```math
-\\begin{aligned}
-&\\mathrm{kind}(S) = \\text{後続} \\cr
-\\land\\;\\;&\\forall n \\in \\mathbb{N}.\\; \\mathrm{Certified}(S[n], t) \\cr
-\\land\\;\\;&t+1 \\in \\mathfrak{T}(M) \\cr
-\\longrightarrow\\;\\;&\\mathrm{Certified}(S, t+1)
-\\end{aligned}
-```
-
-### D.Certified.lim
-
-$`f : \\mathbb{N} \\to \\mathcal{T}`$ について:
-
-```math
-\\begin{aligned}
-&\\mathrm{kind}(S) = \\text{極限} \\cr
-\\land\\;\\;&t \\in \\mathfrak{T}(M) \\cr
-\\land\\;\\;&\\forall n.\\; \\mathrm{Certified}(S[n], f_n) \\cr
-\\land\\;\\;&\\forall n.\\; f_n \\lt t \\cr
-\\land\\;\\;&\\forall n.\\; f_n \\lt f_{n+1} \\cr
-\\land\\;\\;&\\forall s \\in \\mathfrak{T}(M).\\; s \\lt t \\;\\to\\; \\exists n.\\; s \\le f_n \\cr
-\\longrightarrow\\;\\;&\\mathrm{Certified}(S, t)
-\\end{aligned}
-```
-
-$`\\lt`$ は $`\\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
-
-## D.TM
-
-$`\\mathfrak{T}(M) \\subseteq \\mathcal{T}`$ は、**次の規則で閉じた最小の部分集合**
-である ([Rathjen, 1991] 2.1)。
-
-```math
-\\frac{}{0 \\in \\mathfrak{T}(M)}
-\\qquad
-\\frac{}{M \\in \\mathfrak{T}(M)}
-\\qquad
-\\frac{\\alpha \\in \\mathfrak{T}(M) \\quad M < \\alpha}
-{\\bar\\omega^{\\alpha} \\in \\mathfrak{T}(M)}
-\\qquad
-\\frac{\\alpha \\in \\mathfrak{T}(M)}{Z(\\alpha) \\in \\mathfrak{T}(M)}
-```
-
-```math
-\\frac{\\alpha, \\beta \\in \\mathfrak{T}(M) \\quad \\alpha, \\beta < M}
-{\\bar\\varphi(\\alpha, \\beta) \\in \\mathfrak{T}(M)}
-\\qquad
-\\frac{\\kappa, \\alpha \\in \\mathfrak{T}(M) \\quad \\kappa \\in R
-\\quad \\alpha < M \\quad K_\\kappa(\\alpha) < \\alpha}
-{\\psi_\\kappa(\\alpha) \\in \\mathfrak{T}(M)}
-```
-
-```math
-\\frac{\\alpha_1, \\dots, \\alpha_n \\in AP \\quad n \\ge 2
-\\quad \\alpha_n \\le \\dots \\le \\alpha_1}
-{\\alpha_1 \\oplus \\dots \\oplus \\alpha_n \\in \\mathfrak{T}(M)}
-```
-
-$`AP`$ は加法的主要、$`SC`$ は強クリティカル、$`R`$ は正則:
-
-```math
-AP = \\{M\\} \\cup \\{\\bar\\omega^\\alpha\\} \\cup \\{\\bar\\varphi(\\alpha,\\beta)\\} \\cup SC,
-\\qquad
-SC = \\{M\\} \\cup \\{\\psi_\\kappa(\\alpha)\\} \\cup \\{Z(\\alpha)\\},
-\\qquad
-R = \\{Z(\\alpha)\\}
-```
-
-
-## D.Term
-
-**Rathjen の項**の全体 $`\\mathcal{T}`$ を、次の文法が生成する式の集合とする。
-形成条件は課さない — 課したものが [D.TM](#dtm) である。
-
-```math
-\\alpha, \\beta \\;::=\\;
-0 \\;\\mid\\; M \\;\\mid\\; \\alpha \\oplus \\beta \\;\\mid\\;
-\\bar\\omega^{\\alpha} \\;\\mid\\; \\bar\\varphi(\\alpha, \\beta) \\;\\mid\\;
-\\psi_{\\alpha}(\\beta) \\;\\mid\\; Z(\\alpha)
-```
-
-$`M`$ は最小の弱 Mahlo 基数を表す定数である。
-
-## D.Matrix
-
-**BMS の行列**の全体 $`\\mathcal{S}`$。行列は列の有限列、列は自然数の有限列である。
-
-```math
-\\mathcal{S} \\;=\\; \\bigl(\\mathbb{N}^{\\ast}\\bigr)^{\\ast}
-```
-
-$`X^{\\ast}`$ は $`X`$ の有限列全体を表す。列の本数も列の高さも固定しない。
-高さを揃える必要も無い。対応表の行はすべて高さ 2 以下の列からなる。
-
-記号は[数式的定義](https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Koteitan/%E3%83%90%E3%82%B7%E3%82%AF%E8%A1%8C%E5%88%97%E3%81%AE%E6%95%B0%E5%BC%8F%E7%9A%84%E5%AE%9A%E7%BE%A9)
-に合わせる — 行列を $`S`$、その $`x`$ 番目の列を $`S_x`$、その $`y`$ 成分を $`S_{xy}`$ と書く。
-$`M`$ は最小の弱 Mahlo 基数だけを指し、行列には使わない。
-
-## D.expand
-
-$`S[n]`$ は行列 $`S`$ の $`n`$ 番目の展開、$`\\mathrm{kind}(S)`$ は行の種別である。
-
-```math
-\\cdot[\\cdot] \\;:\\; \\mathcal{S} \\times \\mathbb{N} \\to \\mathcal{S}
-\\qquad\\qquad
-\\mathrm{kind} \\;:\\; \\mathcal{S} \\to
-\\{\\text{空}, \\text{後続}, \\text{極限}\\}
-```
-
-規則は BM4 の展開規則そのもので、
-[koteitan「バシク行列の数式的定義」](https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Koteitan/%E3%83%90%E3%82%B7%E3%82%AF%E8%A1%8C%E5%88%97%E3%81%AE%E6%95%B0%E5%BC%8F%E7%9A%84%E5%AE%9A%E7%BE%A9)
-に従う。実装は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
-
-# その他の弱いエビデンス
-
-いずれも ✅ の材料であって ✅ ではない。$`f_n`$ 以外は有限個の計算検査であり、
-較正誤りを検出できない。
-
-| 記号 | 意味 | 全ての $`n`$? |
-|---|---|---|
-| $`f_n`$ | [E.fs](misc.md#efs) が Lean の定理 | はい |
-| `o` | 翻訳関数がこの行列で定義され $`o(S) = t`$ (両辺を同じ写像で計算するので較正誤りは検出できない) | いいえ |
-| `bisim6` | 深さ 6 の双模倣 | いいえ |
-| `checkAll` | 区間の全標準行列についての一般定理 | はい (区間全体) |
-
-**印はビルドが計算する。** ✅ は証明書レジストリから、$`f_n`$ は行が指す名前空間を
-証明ファイルから探して付ける。名前空間を消したり改名したりすると印そのものが消えるので、
-実体の無い印は残らない。
-
-# 値についての注意
-
-**$`\\psi_\\Omega(Z(1))`$ 以上の行の値は外部資料と食い違っており、まだ決着していない。**
-BMS `(0,0)(1,1)(2,2)` の Buchholz 値 $`\\psi_0(\\psi_2(0))`$ には 3 者が一致するが、
-そこから $`\\mathfrak{T}(M)`$ へ訳す段で割れる:
-
-```math
-\\text{当方} \\;\\longmapsto\\; \\psi_\\Omega(Z(1)) \\qquad
-\\text{資料} \\;\\longmapsto\\; \\psi_\\Omega(\\bar\\varphi(1, \\Omega+1))
-```
-
-**根は型にある** ([D.TM](#dtm))。$`Z(1)`$ は $`\\Omega_2`$ ではなく $`I`$ で、
-$`\\Omega_2 = \\chi_0(1)`$ は現在の型では書けない。直すには項型を変える必要がある。
-
-**✅ の付いた行は影響を受けない。** ✅ は [E.cert](#ecert) から来ており、
-翻訳関数を一度も通らないからである。
-
-外部の対応表との差分は [diff.md](diff.md) に、再実行手順は
-[scripts/external-check.py](../scripts/external-check.py) にある。
-
-# 実装
-
-[行 DB と行ごとの検査](../lean/Rows/TM.lean) ·
-[BMS の展開](../lean/BMS/Expand.lean) ·
-[T(M) の項](../lean/TM/Terms.lean) ·
-[T(M) の順序](../lean/TM/Order.lean) ·
-[基本列](../lean/TM/FS.lean) ·
-[証明書](../lean/Evidence/Cert.lean)
-"
-  header ++ body ++ footer
+  let footer := tail
+  header ++ body ++ "\n" ++ footer
 
 /-! ## GATE 5 — no row may sit at a position where `fsN` is meaningless (2026-08-13)
 
