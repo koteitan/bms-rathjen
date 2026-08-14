@@ -642,3 +642,22 @@ are formalized conditionally on well-foundedness. A failing E2/E3 is a *finding*
   This SKILL.md and comments in Lean sources are the exception (working notes).
 - Math in .md uses GitHub-rendered MathJax; avoid `|` inside math in tables.
 - git commit/push only when the user says so.
+
+## Where the sources actually are on this machine
+
+`plan/README.md` cites everything by public URL, because it is published. The local
+copies live here, and **this file is the only place that may say so**
+(`plan/constitutions.md` W6).
+
+- **Index of every downloaded paper/article**: `~/proofs/papers/index.md` — read this
+  first; it is annotated with what each source is good for. (`reconstruct.md` calls it
+  `<git-root>/../index.md`; no such file exists, this is the one it means.)
+- Papers by author: `~/proofs/papers/rathjen/`, `~/proofs/papers/buchholz/`,
+  `~/proofs/papers/pbot/`, `~/proofs/papers/koteitan/`, `~/proofs/papers/hexirp/`
+- BM4 analysis spreadsheet: `~/proofs/papers/BM4-Analysis-2021.4.27.xlsx`
+- Reference implementations:
+  - yaBMS (C): `~/proofs/yaBMS/c/` — `scripts/crosscheck.sh` takes `YABMS=<path>/bms`
+  - pss2bp / pss-vs-buchholz: `~/proofs/naruyoko-googology/pss-vs-buchholz/`
+  - padicBotRathjen: `~/proofs/naruyoko-googology/padicBotRathjen/` —
+    `scripts/padicbot-ref.js --impl <that dir>`
+- Related formalizations of ours: `~/proofs/pss-proof/`, `~/proofs/lean-yapss/`
