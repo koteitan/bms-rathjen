@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.23
+バージョン: v0.7.24
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -94,195 +94,6 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L345) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L349) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) |  |
 
-# 定義
-
-証明の仕様で使う記号を、使う順に定める。
-
-## D.Term
-
-**項**の全体 $`\mathcal{T}`$ を、次の文法が生成する式の集合とする。
-形成条件は課さない — 課したものが [D.TM](#dtm) である。
-
-```math
-\alpha, \beta \;::=\;
-0 \;\mid\; M \;\mid\; \alpha \oplus \beta \;\mid\;
-\bar\omega^{\alpha} \;\mid\; \bar\varphi(\alpha, \beta) \;\mid\;
-\psi_{\alpha}(\beta) \;\mid\; Z(\alpha)
-```
-
-$`M`$ は最小の弱 Mahlo 基数を表す定数である。
-
-## D.Matrix
-
-**行列**の全体 $`\mathcal{M}`$。列は自然数の有限列、行列は列の有限列である。
-
-```math
-\mathcal{M} \;=\; \bigl(\mathbb{N}^{\ast}\bigr)^{\ast}
-```
-
-$`X^{\ast}`$ は $`X`$ の有限列全体を表す。列の本数も列の高さも固定しない。
-高さを揃える必要も無い。対応表の行はすべて高さ 2 以下の列からなる。
-
-## D.expand
-
-$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開、$`\mathrm{kind}(M)`$ は行の種別である。
-
-```math
-\cdot[\cdot] \;:\; \mathcal{M} \times \mathbb{N} \to \mathcal{M}
-\qquad\qquad
-\mathrm{kind} \;:\; \mathcal{M} \to
-\{\text{空}, \text{後続}, \text{極限}\}
-```
-
-規則は BM4 の展開規則そのもので、
-[koteitan「バシク行列の数式的定義」](https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Koteitan/%E3%83%90%E3%82%B7%E3%82%AF%E8%A1%8C%E5%88%97%E3%81%AE%E6%95%B0%E5%BC%8F%E7%9A%84%E5%AE%9A%E7%BE%A9)
-に従う。実装は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
-
-## D.TM
-
-$`\mathfrak{T}(M) \subseteq \mathcal{T}`$ は、**次の規則で閉じた最小の部分集合**
-である ([Rathjen, 1991] 2.1)。
-
-```math
-\frac{}{0 \in \mathfrak{T}(M)}
-\qquad
-\frac{}{M \in \mathfrak{T}(M)}
-\qquad
-\frac{\alpha \in \mathfrak{T}(M) \quad M < \alpha}
-{\bar\omega^{\alpha} \in \mathfrak{T}(M)}
-\qquad
-\frac{\alpha \in \mathfrak{T}(M)}{Z(\alpha) \in \mathfrak{T}(M)}
-```
-
-```math
-\frac{\alpha, \beta \in \mathfrak{T}(M) \quad \alpha, \beta < M}
-{\bar\varphi(\alpha, \beta) \in \mathfrak{T}(M)}
-\qquad
-\frac{\kappa, \alpha \in \mathfrak{T}(M) \quad \kappa \in R
-\quad \alpha < M \quad K_\kappa(\alpha) < \alpha}
-{\psi_\kappa(\alpha) \in \mathfrak{T}(M)}
-```
-
-```math
-\frac{\alpha_1, \dots, \alpha_n \in AP \quad n \ge 2
-\quad \alpha_n \le \dots \le \alpha_1}
-{\alpha_1 \oplus \dots \oplus \alpha_n \in \mathfrak{T}(M)}
-```
-
-$`AP`$ は加法的主要、$`SC`$ は強クリティカル、$`R`$ は正則:
-
-```math
-AP = \{M\} \cup \{\bar\omega^\alpha\} \cup \{\bar\varphi(\alpha,\beta)\} \cup SC,
-\qquad
-SC = \{M\} \cup \{\psi_\kappa(\alpha)\} \cup \{Z(\alpha)\},
-\qquad
-R = \{Z(\alpha)\}
-```
-
-**この形成条件が正規形の条件を兼ねている。** 和は成分が $`AP`$ で降順のときしか作れず、
-$`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \alpha`$ の
-ときしか作れない。だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
-
-**$`Z`$ は [Rathjen, 1991] 自身の記号である** (2.1(vii))。1990 年の $`T(M)`$ は 2 引数の
-$`\chi`$ の階層を持つが、[Rathjen, 1991] はそれを 1 本の $`Z`$ に置き換えた:
-
-```math
-Z(\alpha) \;=\; \chi_\alpha(0)
-```
-
-**したがって $`\Omega_2 = \chi_0(1)`$ はこの表記系では書けない。** $`\chi`$ の第 2 引数が
-$`\Omega`$ 階層を枚挙するのに、それが 0 に固定されているからである。$`Z(1)`$ は
-$`\chi_1(0)`$、すなわち最小の弱到達不能基数 $`I`$ であって $`\Omega_2`$ ではない
-([値についての注意](#値についての注意))。
-
-**$`\bar\varphi`$ は $`\omega^\cdot`$ の不動点を飛ばして数える** ([Rathjen, 1991] 2.6(vi))。
-$`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だが、
-
-```math
-\bar\varphi(0, \varepsilon_0) = \omega^{\varepsilon_0 + 1} \ne \varepsilon_0
-```
-
-**不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
-上で静かに誤る。**
-
-## D.Certified
-
-$`\mathrm{Certified}`$ は行列とその値の 2 項関係である。
-
-```math
-\mathrm{Certified} \;\subseteq\; \mathcal{M} \times \mathfrak{T}(M)
-```
-
-**次の 3 規則で閉じた最小の関係**として定める。値が $`\mathfrak{T}(M)`$ に入っている
-ことは規則の前提であり、導出のすべての節点に掛かる。
-
-### D.Certified.zero
-
-```math
-\mathrm{Certified}([\;], 0)
-```
-
-### D.Certified.succ
-
-```math
-\begin{aligned}
-&\mathrm{kind}(M) = \text{後続} \cr
-\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{Certified}(M[n], t) \cr
-\land\;\;&t+1 \in \mathfrak{T}(M) \cr
-\longrightarrow\;\;&\mathrm{Certified}(M, t+1)
-\end{aligned}
-```
-
-### D.Certified.lim
-
-$`f : \mathbb{N} \to \mathcal{T}`$ について:
-
-```math
-\begin{aligned}
-&\mathrm{kind}(M) = \text{極限} \cr
-\land\;\;&t \in \mathfrak{T}(M) \cr
-\land\;\;&\forall n.\; \mathrm{Certified}(M[n], f_n) \cr
-\land\;\;&\forall n.\; f_n \lt t \cr
-\land\;\;&\forall n.\; f_n \lt f_{n+1} \cr
-\land\;\;&\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
-\longrightarrow\;\;&\mathrm{Certified}(M, t)
-\end{aligned}
-```
-
-$`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
-
-## D.RawCertified
-
-上の 3 規則から $`\in \mathfrak{T}(M)`$ の前提を落とした 2 項関係。値は
-$`\mathcal{T}`$ のどこにあってもよい。
-
-```math
-\mathrm{RawCertified} \;\subseteq\; \mathcal{M} \times \mathcal{T}
-```
-
-含意は片側だけである。
-
-```math
-\mathrm{Certified}(M, t) \;\Longrightarrow\; \mathrm{RawCertified}(M, t)
-\qquad\qquad
-\mathrm{RawCertified}(M, t) \;\not\Longrightarrow\; \mathrm{Certified}(M, t)
-```
-
-$`\mathrm{RawCertified}`$ は**一価ではない**。同じ行列が 2 つの値を取れる:
-
-```math
-\mathrm{RawCertified}([(0)(1)], \omega)
-\qquad\text{かつ}\qquad
-\mathrm{RawCertified}([(0)(1)], 1+M)
-```
-
-$`1+M \notin \mathfrak{T}(M)`$ である (和は降順でなければならない、[D.TM](#dtm))。
-これが $`\mathrm{Certified}`$ の側に $`\in \mathfrak{T}(M)`$ が要る理由である。
-
-**Lean 側の名前はこの文書と逆なので注意する。** `Evidence/Cert.lean` の
-`Certified` がここの $`\mathrm{RawCertified}`$、`CertifiedIn DomI` がここの
-$`\mathrm{Certified}`$ に当たる。
-
 # 証明の仕様
 
 対応表の 1 行 $`(M, t)`$ の証明列に ✅ が付く条件は、これただ 1 つである。
@@ -366,6 +177,195 @@ $`\varepsilon_0`$ の行では、その直上から塞がれている。
 **まだ排除できていないのは片側だけである** — $`t`$ より**下**の値が、
 $`\mathfrak{T}(M)`$ の外へ出る部分値を経由して認証される可能性。上側は T.bound が
 無条件に塞いでいる。
+
+# 定義
+
+証明の仕様と定理で使う記号を、**粗いものから細かいものへ**定める。
+
+## D.Certified
+
+$`\mathrm{Certified}`$ は行列とその値の 2 項関係である。
+
+```math
+\mathrm{Certified} \;\subseteq\; \mathcal{M} \times \mathfrak{T}(M)
+```
+
+**次の 3 規則で閉じた最小の関係**として定める。値が $`\mathfrak{T}(M)`$ に入っている
+ことは規則の前提であり、導出のすべての節点に掛かる。
+
+### D.Certified.zero
+
+```math
+\mathrm{Certified}([\;], 0)
+```
+
+### D.Certified.succ
+
+```math
+\begin{aligned}
+&\mathrm{kind}(M) = \text{後続} \cr
+\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{Certified}(M[n], t) \cr
+\land\;\;&t+1 \in \mathfrak{T}(M) \cr
+\longrightarrow\;\;&\mathrm{Certified}(M, t+1)
+\end{aligned}
+```
+
+### D.Certified.lim
+
+$`f : \mathbb{N} \to \mathcal{T}`$ について:
+
+```math
+\begin{aligned}
+&\mathrm{kind}(M) = \text{極限} \cr
+\land\;\;&t \in \mathfrak{T}(M) \cr
+\land\;\;&\forall n.\; \mathrm{Certified}(M[n], f_n) \cr
+\land\;\;&\forall n.\; f_n \lt t \cr
+\land\;\;&\forall n.\; f_n \lt f_{n+1} \cr
+\land\;\;&\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
+\longrightarrow\;\;&\mathrm{Certified}(M, t)
+\end{aligned}
+```
+
+$`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
+
+## D.RawCertified
+
+上の 3 規則から $`\in \mathfrak{T}(M)`$ の前提を落とした 2 項関係。値は
+$`\mathcal{T}`$ のどこにあってもよい。
+
+```math
+\mathrm{RawCertified} \;\subseteq\; \mathcal{M} \times \mathcal{T}
+```
+
+含意は片側だけである。
+
+```math
+\mathrm{Certified}(M, t) \;\Longrightarrow\; \mathrm{RawCertified}(M, t)
+\qquad\qquad
+\mathrm{RawCertified}(M, t) \;\not\Longrightarrow\; \mathrm{Certified}(M, t)
+```
+
+$`\mathrm{RawCertified}`$ は**一価ではない**。同じ行列が 2 つの値を取れる:
+
+```math
+\mathrm{RawCertified}([(0)(1)], \omega)
+\qquad\text{かつ}\qquad
+\mathrm{RawCertified}([(0)(1)], 1+M)
+```
+
+$`1+M \notin \mathfrak{T}(M)`$ である (和は降順でなければならない、[D.TM](#dtm))。
+これが $`\mathrm{Certified}`$ の側に $`\in \mathfrak{T}(M)`$ が要る理由である。
+
+**Lean 側の名前はこの文書と逆なので注意する。** `Evidence/Cert.lean` の
+`Certified` がここの $`\mathrm{RawCertified}`$、`CertifiedIn DomI` がここの
+$`\mathrm{Certified}`$ に当たる。
+
+## D.TM
+
+$`\mathfrak{T}(M) \subseteq \mathcal{T}`$ は、**次の規則で閉じた最小の部分集合**
+である ([Rathjen, 1991] 2.1)。
+
+```math
+\frac{}{0 \in \mathfrak{T}(M)}
+\qquad
+\frac{}{M \in \mathfrak{T}(M)}
+\qquad
+\frac{\alpha \in \mathfrak{T}(M) \quad M < \alpha}
+{\bar\omega^{\alpha} \in \mathfrak{T}(M)}
+\qquad
+\frac{\alpha \in \mathfrak{T}(M)}{Z(\alpha) \in \mathfrak{T}(M)}
+```
+
+```math
+\frac{\alpha, \beta \in \mathfrak{T}(M) \quad \alpha, \beta < M}
+{\bar\varphi(\alpha, \beta) \in \mathfrak{T}(M)}
+\qquad
+\frac{\kappa, \alpha \in \mathfrak{T}(M) \quad \kappa \in R
+\quad \alpha < M \quad K_\kappa(\alpha) < \alpha}
+{\psi_\kappa(\alpha) \in \mathfrak{T}(M)}
+```
+
+```math
+\frac{\alpha_1, \dots, \alpha_n \in AP \quad n \ge 2
+\quad \alpha_n \le \dots \le \alpha_1}
+{\alpha_1 \oplus \dots \oplus \alpha_n \in \mathfrak{T}(M)}
+```
+
+$`AP`$ は加法的主要、$`SC`$ は強クリティカル、$`R`$ は正則:
+
+```math
+AP = \{M\} \cup \{\bar\omega^\alpha\} \cup \{\bar\varphi(\alpha,\beta)\} \cup SC,
+\qquad
+SC = \{M\} \cup \{\psi_\kappa(\alpha)\} \cup \{Z(\alpha)\},
+\qquad
+R = \{Z(\alpha)\}
+```
+
+**この形成条件が正規形の条件を兼ねている。** 和は成分が $`AP`$ で降順のときしか作れず、
+$`\psi_\kappa(\alpha)`$ は $`\kappa`$ が正則かつ $`K_\kappa(\alpha) \lt \alpha`$ の
+ときしか作れない。だから 1 つの順序数を表す項は 1 つしかない ([Rathjen, 1991] 2.8(i))。
+
+**$`Z`$ は [Rathjen, 1991] 自身の記号である** (2.1(vii))。1990 年の $`T(M)`$ は 2 引数の
+$`\chi`$ の階層を持つが、[Rathjen, 1991] はそれを 1 本の $`Z`$ に置き換えた:
+
+```math
+Z(\alpha) \;=\; \chi_\alpha(0)
+```
+
+**したがって $`\Omega_2 = \chi_0(1)`$ はこの表記系では書けない。** $`\chi`$ の第 2 引数が
+$`\Omega`$ 階層を枚挙するのに、それが 0 に固定されているからである。$`Z(1)`$ は
+$`\chi_1(0)`$、すなわち最小の弱到達不能基数 $`I`$ であって $`\Omega_2`$ ではない
+([値についての注意](#値についての注意))。
+
+**$`\bar\varphi`$ は $`\omega^\cdot`$ の不動点を飛ばして数える** ([Rathjen, 1991] 2.6(vi))。
+$`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だが、
+
+```math
+\bar\varphi(0, \varepsilon_0) = \omega^{\varepsilon_0 + 1} \ne \varepsilon_0
+```
+
+**不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
+上で静かに誤る。**
+
+## D.Term
+
+**Rathjen の項**の全体 $`\mathcal{T}`$ を、次の文法が生成する式の集合とする。
+形成条件は課さない — 課したものが [D.TM](#dtm) である。
+
+```math
+\alpha, \beta \;::=\;
+0 \;\mid\; M \;\mid\; \alpha \oplus \beta \;\mid\;
+\bar\omega^{\alpha} \;\mid\; \bar\varphi(\alpha, \beta) \;\mid\;
+\psi_{\alpha}(\beta) \;\mid\; Z(\alpha)
+```
+
+$`M`$ は最小の弱 Mahlo 基数を表す定数である。
+
+## D.Matrix
+
+**行列**の全体 $`\mathcal{M}`$。列は自然数の有限列、行列は列の有限列である。
+
+```math
+\mathcal{M} \;=\; \bigl(\mathbb{N}^{\ast}\bigr)^{\ast}
+```
+
+$`X^{\ast}`$ は $`X`$ の有限列全体を表す。列の本数も列の高さも固定しない。
+高さを揃える必要も無い。対応表の行はすべて高さ 2 以下の列からなる。
+
+## D.expand
+
+$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開、$`\mathrm{kind}(M)`$ は行の種別である。
+
+```math
+\cdot[\cdot] \;:\; \mathcal{M} \times \mathbb{N} \to \mathcal{M}
+\qquad\qquad
+\mathrm{kind} \;:\; \mathcal{M} \to
+\{\text{空}, \text{後続}, \text{極限}\}
+```
+
+規則は BM4 の展開規則そのもので、
+[koteitan「バシク行列の数式的定義」](https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Koteitan/%E3%83%90%E3%82%B7%E3%82%AF%E8%A1%8C%E5%88%97%E3%81%AE%E6%95%B0%E5%BC%8F%E7%9A%84%E5%AE%9A%E7%BE%A9)
+に従う。実装は [BMS/Expand.lean](../lean/BMS/Expand.lean)。
 
 # その他の弱いエビデンス
 
