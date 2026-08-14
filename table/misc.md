@@ -15,15 +15,15 @@
 $`\mathcal{T}`$ のどこにあってもよい。
 
 ```math
-\mathrm{RawCertified} \;\subseteq\; \mathcal{M} \times \mathcal{T}
+\mathrm{RawCertified} \;\subseteq\; \mathcal{S} \times \mathcal{T}
 ```
 
 含意は片側だけである。
 
 ```math
-\mathrm{Certified}(M, t) \;\Longrightarrow\; \mathrm{RawCertified}(M, t)
+\mathrm{Certified}(S, t) \;\Longrightarrow\; \mathrm{RawCertified}(S, t)
 \qquad\qquad
-\mathrm{RawCertified}(M, t) \;\not\Longrightarrow\; \mathrm{Certified}(M, t)
+\mathrm{RawCertified}(S, t) \;\not\Longrightarrow\; \mathrm{Certified}(S, t)
 ```
 
 $`\mathrm{RawCertified}`$ は**一価ではない**。同じ行列が 2 つの値を取れる:
@@ -44,10 +44,10 @@ $`\mathrm{Certified}`$ に当たる。
 ## E.fs
 
 弱いエビデンスの $`f_n`$ 印の中身。[D.Certified.lim](table-r1.md#dcertifiedlim) の前提
-$`\forall n.\;\mathrm{Certified}(M[n], f_n)`$ の**値の側だけ**を言う。
+$`\forall n.\;\mathrm{Certified}(S[n], f_n)`$ の**値の側だけ**を言う。
 
 ```math
-\forall n.\; r(M[n]) = \mathrm{fsN}(t, k(n))
+\forall n.\; r(S[n]) = \mathrm{fsN}(t, k(n))
 ```
 
 $`r`$ は読み手で、行によって `o?` か `oR` である (両方が定義される所では一致する)。
@@ -55,7 +55,7 @@ $`\mathrm{fsN}(t, \cdot)`$ は $`\mathfrak{T}(M)`$ 側の基本列、$`k`$ は�
 **行ごとに違う** (一律に $`n+1`$ ではない)。有限個の $`n`$ を試したのではなく、
 すべての $`n`$ についての定理である。
 
-**$`M[n]`$ がその値を認証することは言っていない。** 上の前提が要求するのは後者であり、
+**$`S[n]`$ がその値を認証することは言っていない。** 上の前提が要求するのは後者であり、
 残る 3 前提は手つかずである。E.fs は E.cert の材料の一部であって、E.cert に近いことを
 意味しない。
 
@@ -67,11 +67,11 @@ $`\mathrm{fsN}(t, \cdot)`$ は $`\mathfrak{T}(M)`$ 側の基本列、$`k`$ は�
 言っていないのは BMS 側である:
 
 ```math
-\sup_n |M[n]| = |M|
+\sup_n |S[n]| = |S|
 ```
 
-これが無いと $`\sup_n f_n = t`$ から $`|M| = t`$ へ渡れない。そしてこのリポジトリに
-$`|M[n]| \lt |M|`$ も展開列の共終性も**補題として存在しない**。BMS を順序数表記として
+これが無いと $`\sup_n f_n = t`$ から $`|S| = t`$ へ渡れない。そしてこのリポジトリに
+$`|S[n]| \lt |S|`$ も展開列の共終性も**補題として存在しない**。BMS を順序数表記として
 読むとき極限行の値が展開の上限であることは**読み方の定義**であって定理ではないからである。
 E.cert はこの読み方を仮定した上で $`\mathfrak{T}(M)`$ 側を尽くしている。
 
@@ -81,7 +81,7 @@ E.cert はこの読み方を仮定した上で $`\mathfrak{T}(M)`$ 側を尽く�
 値を取り得ない。上下いずれの側も排除されている。
 
 ```math
-\forall u.\;\;\mathrm{Certified}(M, u) \;\Longrightarrow\; u = t
+\forall u.\;\;\mathrm{Certified}(S, u) \;\Longrightarrow\; u = t
 ```
 
 ## T.bound
@@ -90,7 +90,7 @@ E.cert はこの読み方を仮定した上で $`\mathfrak{T}(M)`$ 側を尽く�
 与えない。
 
 ```math
-\forall u.\;\;\mathrm{RawCertified}(M, u) \;\Longrightarrow\; \bar\varphi(0,\,t+1) \not\le u
+\forall u.\;\;\mathrm{RawCertified}(S, u) \;\Longrightarrow\; \bar\varphi(0,\,t+1) \not\le u
 ```
 
 ## T.eps0

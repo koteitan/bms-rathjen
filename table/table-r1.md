@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.27
+バージョン: v0.7.28
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -97,12 +97,12 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 # 証明の仕様
 
-対応表の 1 行 $`(M, t)`$ の証明列に ✅ が付く条件は、これただ 1 つである。
+対応表の 1 行 $`(S, t)`$ の証明列に ✅ が付く条件は、これただ 1 つである。
 
 ## E.cert
 
 ```math
-\mathrm{Certified}(M, t)
+\mathrm{Certified}(S, t)
 ```
 
 # 定義
@@ -112,7 +112,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 $`\mathrm{Certified}`$ は行列とその値の 2 項関係である。
 
 ```math
-\mathrm{Certified} \;\subseteq\; \mathcal{M} \times \mathfrak{T}(M)
+\mathrm{Certified} \;\subseteq\; \mathcal{S} \times \mathfrak{T}(M)
 ```
 
 **次の 3 規則で閉じた最小の関係**として定める。
@@ -127,10 +127,10 @@ $`\mathrm{Certified}`$ は行列とその値の 2 項関係である。
 
 ```math
 \begin{aligned}
-&\mathrm{kind}(M) = \text{後続} \cr
-\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{Certified}(M[n], t) \cr
+&\mathrm{kind}(S) = \text{後続} \cr
+\land\;\;&\forall n \in \mathbb{N}.\; \mathrm{Certified}(S[n], t) \cr
 \land\;\;&t+1 \in \mathfrak{T}(M) \cr
-\longrightarrow\;\;&\mathrm{Certified}(M, t+1)
+\longrightarrow\;\;&\mathrm{Certified}(S, t+1)
 \end{aligned}
 ```
 
@@ -140,13 +140,13 @@ $`f : \mathbb{N} \to \mathcal{T}`$ について:
 
 ```math
 \begin{aligned}
-&\mathrm{kind}(M) = \text{極限} \cr
+&\mathrm{kind}(S) = \text{極限} \cr
 \land\;\;&t \in \mathfrak{T}(M) \cr
-\land\;\;&\forall n.\; \mathrm{Certified}(M[n], f_n) \cr
+\land\;\;&\forall n.\; \mathrm{Certified}(S[n], f_n) \cr
 \land\;\;&\forall n.\; f_n \lt t \cr
 \land\;\;&\forall n.\; f_n \lt f_{n+1} \cr
 \land\;\;&\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n \cr
-\longrightarrow\;\;&\mathrm{Certified}(M, t)
+\longrightarrow\;\;&\mathrm{Certified}(S, t)
 \end{aligned}
 ```
 
@@ -210,23 +210,27 @@ $`M`$ は最小の弱 Mahlo 基数を表す定数である。
 
 ## D.Matrix
 
-**行列**の全体 $`\mathcal{M}`$。列は自然数の有限列、行列は列の有限列である。
+**BMS の行列**の全体 $`\mathcal{S}`$。行列は列の有限列、列は自然数の有限列である。
 
 ```math
-\mathcal{M} \;=\; \bigl(\mathbb{N}^{\ast}\bigr)^{\ast}
+\mathcal{S} \;=\; \bigl(\mathbb{N}^{\ast}\bigr)^{\ast}
 ```
 
 $`X^{\ast}`$ は $`X`$ の有限列全体を表す。列の本数も列の高さも固定しない。
 高さを揃える必要も無い。対応表の行はすべて高さ 2 以下の列からなる。
 
+記号は[数式的定義](https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Koteitan/%E3%83%90%E3%82%B7%E3%82%AF%E8%A1%8C%E5%88%97%E3%81%AE%E6%95%B0%E5%BC%8F%E7%9A%84%E5%AE%9A%E7%BE%A9)
+に合わせる — 行列を $`S`$、その $`x`$ 番目の列を $`S_x`$、その $`y`$ 成分を $`S_{xy}`$ と書く。
+$`M`$ は最小の弱 Mahlo 基数だけを指し、行列には使わない。
+
 ## D.expand
 
-$`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開、$`\mathrm{kind}(M)`$ は行の種別である。
+$`S[n]`$ は行列 $`S`$ の $`n`$ 番目の展開、$`\mathrm{kind}(S)`$ は行の種別である。
 
 ```math
-\cdot[\cdot] \;:\; \mathcal{M} \times \mathbb{N} \to \mathcal{M}
+\cdot[\cdot] \;:\; \mathcal{S} \times \mathbb{N} \to \mathcal{S}
 \qquad\qquad
-\mathrm{kind} \;:\; \mathcal{M} \to
+\mathrm{kind} \;:\; \mathcal{S} \to
 \{\text{空}, \text{後続}, \text{極限}\}
 ```
 
@@ -242,7 +246,7 @@ $`M[n]`$ は行列 $`M`$ の $`n`$ 番目の展開、$`\mathrm{kind}(M)`$ は行
 | 記号 | 意味 | 全ての $`n`$? |
 |---|---|---|
 | $`f_n`$ | [E.fs](misc.md#efs) が Lean の定理 | はい |
-| `o` | 翻訳関数がこの行列で定義され $`o(M) = t`$ (両辺を同じ写像で計算するので較正誤りは検出できない) | いいえ |
+| `o` | 翻訳関数がこの行列で定義され $`o(S) = t`$ (両辺を同じ写像で計算するので較正誤りは検出できない) | いいえ |
 | `bisim6` | 深さ 6 の双模倣 | いいえ |
 | `checkAll` | 区間の全標準行列についての一般定理 | はい (区間全体) |
 
