@@ -56,7 +56,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.17"
+def version : String := "v0.7.18"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -579,6 +579,13 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 $`\\mathrm{CertifiedIn}(\\mathrm{Dom}, M, t)`$ は次の 3 規則で閉じた最小の関係である。
 
+$`\\mathrm{DomI}(\\alpha)`$ は「$`\\alpha`$ が $`\\mathfrak{T}(M)`$ の**正規形の項**である」
+という述語である。$`\\mathfrak{T}(M)`$ は Rathjen が最小の弱 Mahlo 基数 $`M`$ の上の
+崩壊関数 $`\\psi_\\kappa`$ と $`Z`$ で組んだ順序数表記で ([D.TM](#dtm))、
+その形成条件 ([R91] 2.1) が**正規形の条件を兼ねている** — 和は加法的主要な成分の降順のみ、
+$`\\psi_\\kappa(\\alpha)`$ は $`\\kappa`$ が正則かつ $`K_\\kappa(\\alpha) \\lt \\alpha`$ のときだけ。
+だから 1 つの順序数を表す項は 1 つしかない ([R91] 2.8(i))。
+
 ### E.zero
 
 ```math
@@ -712,6 +719,18 @@ R = \\{Z(\\alpha)\\}
 ```
 
 $`\\oplus`$ の条件 (成分が $`AP`$、降順) が一意な正規形を与える。
+
+**$`Z`$ は [R91] 自身の記号である** (2.1(vii))。1990 年の $`T(M)`$ は 2 引数の
+$`\\chi`$ の階層を持つが、[R91] はそれを 1 本の $`Z`$ に置き換えた:
+
+```math
+Z(\\alpha) \\;=\\; \\chi_\\alpha(0)
+```
+
+**したがって $`\\Omega_2 = \\chi_0(1)`$ はこの表記系では書けない。** $`\\chi`$ の第 2 引数が
+$`\\Omega`$ 階層を枚挙するのに、それが 0 に固定されているからである。$`Z(1)`$ は
+$`\\chi_1(0)`$、すなわち最小の弱到達不能基数 $`I`$ であって $`\\Omega_2`$ ではない
+([値についての注意](#値についての注意))。
 
 **$`\\bar\\varphi`$ は $`\\omega^\\cdot`$ の不動点を飛ばして数える** ([R91] 2.6(vi))。
 $`\\bar\\varphi(0,\\beta)`$ は最初の不動点未満では $`\\omega^\\beta`$ だが、
