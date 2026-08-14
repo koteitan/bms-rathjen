@@ -34,10 +34,9 @@
 
 ### D.Certified.lim
 
-$`f : \mathbb{N} \to \mathcal{T}`$ について:
-
 ```math
 \begin{aligned}
+\forall f : \mathbb{N} \to \mathcal{T}.\;\;
 &\mathrm{kind}(S) = \text{極限} \cr
 \land\;\;&t \in \mathfrak{T}(M) \cr
 \land\;\;&\forall n.\; \mathrm{Certified}(S[n], f_n) \cr
@@ -49,6 +48,10 @@ $`f : \mathbb{N} \to \mathcal{T}`$ について:
 ```
 
 $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
+
+$`\mathrm{Certified}`$ は 3 規則で閉じた**最小の**関係なので、極限行については逆も言える —
+$`\mathrm{Certified}(S, t)`$ が成り立つのは、上の 6 条件を満たす $`f`$ が**存在するとき、
+かつそのときに限る**。
 
 ## D.TM
 
