@@ -56,7 +56,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.14"
+def version : String := "v0.7.15"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -588,30 +588,34 @@ $`\\mathrm{CertifiedIn}\\;\\mathrm{Dom}`$ は次の 3 規則で閉じた最小�
 ### E.zero
 
 ```math
-\\frac{\\quad}{\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;[\\;]\\;0}
+\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;[\\;]\\;0
 ```
 
 ### E.succ
 
 ```math
-\\frac{\\;\\mathrm{kind}\\,M = \\mathrm{succ}
- \\qquad \\forall n \\in \\mathbb{N}.\\; \\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M[n]\\;t
- \\qquad \\mathrm{Dom}(t+1)\\;}
-{\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M\\;(t+1)}
+\\begin{aligned}
+&\\mathrm{kind}\\,M = \\mathrm{succ} \\cr
+\\land\\;\\;&\\forall n \\in \\mathbb{N}.\\; \\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M[n]\\;t \\cr
+\\land\\;\\;&\\mathrm{Dom}(t+1) \\cr
+\\longrightarrow\\;\\;&\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M\\;(t+1)
+\\end{aligned}
 ```
 
 ### E.lim
 
+$`f : \\mathbb{N} \\to \\mathfrak{T}(M)`$ について:
+
 ```math
-\\frac{\\;\\begin{array}{c}
-\\mathrm{kind}\\,M = \\mathrm{lim} \\qquad \\mathrm{Dom}(t)
- \\qquad f : \\mathbb{N} \\to \\mathfrak{T}(M) \\cr
-\\forall n.\\; \\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M[n]\\;f_n \\qquad
-\\forall n.\\; f_n \\lt t \\qquad
-\\forall n.\\; f_n \\lt f_{n+1} \\cr
-\\forall s \\in \\mathfrak{T}(M).\\; s \\lt t \\;\\to\\; \\exists n.\\; s \\le f_n
-\\end{array}\\;}
-{\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M\\;t}
+\\begin{aligned}
+&\\mathrm{kind}\\,M = \\mathrm{lim} \\cr
+\\land\\;\\;&\\mathrm{Dom}(t) \\cr
+\\land\\;\\;&\\forall n.\\; \\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M[n]\\;f_n \\cr
+\\land\\;\\;&\\forall n.\\; f_n \\lt t \\cr
+\\land\\;\\;&\\forall n.\\; f_n \\lt f_{n+1} \\cr
+\\land\\;\\;&\\forall s \\in \\mathfrak{T}(M).\\; s \\lt t \\;\\to\\; \\exists n.\\; s \\le f_n \\cr
+\\longrightarrow\\;\\;&\\mathrm{CertifiedIn}\\;\\mathrm{Dom}\\;M\\;t
+\\end{aligned}
 ```
 
 ## E.fs
