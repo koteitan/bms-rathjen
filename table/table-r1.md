@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.13
+バージョン: v0.7.14
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -109,88 +109,47 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 \mathrm{CertifiedIn}\;\mathrm{DomI}\;M\;t
 ```
 
-読み下すと、次の 2 つを同時に満たすことである。
-
-1. 下の 3 規則 E.zero / E.succ / E.lim で $`(M,t)`$ の導出が組める。
-   使う規則は行の種別 $`\mathrm{kind}\,M`$ (空・後続・極限) が決めるので、
-   1 行につきどれか 1 つだけである
-2. **その導出に現れる値が、1 つ残らず $`\mathfrak{T}(M)`$ の項である**
-   ($`\mathrm{DomI}(t) :\equiv t \in \mathfrak{T}(M)`$ が全ノードに掛かる)
-
-**2 を落とすと値が決まらない。** 3 規則だけを規則とする帰納的述語
-($`\mathrm{Certified}`$) は認証する値に何の制約も課さないので、
-$`\mathfrak{T}(M)`$ の項でない値も通ってしまう:
-
 ```math
-\mathrm{Certified}\;[(0)(1)]\;\omega
-\qquad\text{かつ}\qquad
-\mathrm{Certified}\;[(0)(1)]\;(1+M)
+\mathrm{DomI}(\alpha) \;:\equiv\; \alpha \in \mathfrak{T}(M)
+\qquad\qquad
+\mathrm{Certified} \;:\equiv\; \mathrm{CertifiedIn}\;\top
 ```
 
-$`1+M`$ は $`\mathfrak{T}(M)`$ の項ではない — 和は降順でなければならない
-([D.TM](#dtm)) — ので、2 がこれを弾く。
+$`\mathrm{CertifiedIn}\;\mathrm{Dom}`$ は次の 3 規則で閉じた最小の関係である。
 
-**素の $`\mathrm{Certified}`$ を証明しても ✅ は付かない。** 写像は
-
-```math
-\mathrm{CertifiedIn}\;\mathrm{Dom} \;\longrightarrow\; \mathrm{Certified}
-```
-
-の**弱める向きだけ**で、逆は無いからである。
-
-**E.cert は表の登録ゲートでもある。** レジストリに行を足すにはこの導出が要り、
-証明を足さずに一覧だけ伸ばすとビルドが落ちる。
-
-## E.zero
-
-空行列の行。前提は無い。
+### E.zero
 
 ```math
-\mathrm{Certified}\;[\,]\;0
+\frac{\quad}{\mathrm{CertifiedIn}\;\mathrm{Dom}\;[\;]\;0}
 ```
 
-## E.succ
+### E.succ
 
 ```math
-\begin{aligned}
-&\mathrm{kind}\,M = \mathrm{succ} \;\Longrightarrow \cr
-&\quad \Bigl[\; \mathrm{Certified}\;M\;u \;\Longleftrightarrow\;
-   \exists t.\; u = t+1 \;\land\; \forall n.\;\mathrm{Certified}\;(M[n])\;t \;\Bigr]
-\end{aligned}
+\frac{\;\mathrm{kind}\,M = \mathrm{succ}
+ \qquad \forall n \in \mathbb{N}.\; \mathrm{CertifiedIn}\;\mathrm{Dom}\;M[n]\;t
+ \qquad \mathrm{Dom}(t+1)\;}
+{\mathrm{CertifiedIn}\;\mathrm{Dom}\;M\;(t+1)}
 ```
 
-すべての展開が同じ $`t`$ を認証するなら、この行は $`t+1`$ である。
-
-## E.lim
+### E.lim
 
 ```math
-\begin{aligned}
-&\mathrm{kind}\,M = \mathrm{lim} \;\Longrightarrow \cr
-&\quad \Bigl[\; \mathrm{Certified}\;M\;t \;\Longleftrightarrow\;
-   \exists f : \mathbb{N} \to \mathfrak{T}(M).\; \cr
-&\qquad\qquad\quad \forall n.\;\mathrm{Certified}\;(M[n])\;(f_n) \cr
-&\qquad\qquad\quad \land\; \forall n.\;f_n < t \cr
-&\qquad\qquad\quad \land\; \forall n.\;f_n < f_{n+1} \cr
-&\qquad\qquad\quad \land\; \forall s \in \mathfrak{T}(M).\;s < t \to \exists n.\;s \le f_n \;\Bigr]
-\end{aligned}
+\frac{\;\begin{array}{c}
+\mathrm{kind}\,M = \mathrm{lim} \qquad \mathrm{Dom}(t)
+ \qquad f : \mathbb{N} \to \mathfrak{T}(M) \cr
+\forall n.\; \mathrm{CertifiedIn}\;\mathrm{Dom}\;M[n]\;f_n \qquad
+\forall n.\; f_n \lt t \qquad
+\forall n.\; f_n \lt f_{n+1} \cr
+\forall s \in \mathfrak{T}(M).\; s \lt t \;\to\; \exists n.\; s \le f_n
+\end{array}\;}
+{\mathrm{CertifiedIn}\;\mathrm{Dom}\;M\;t}
 ```
-
-**$`f`$ はどこにも定義されていない。** $`\exists`$ で束縛された列であり、行ごとに
-証明が 1 つ選んで与える。表を読むときに $`f`$ の定義を探す必要は無い。
-
-**選べるのは見かけだけである。** 4 連言のうち $`f_n`$ が何であるかを言うのは第 1 のもの
-だけで、残る 3 つは「$`t`$ 未満」「増加」「$`t`$ に共終」という**性質**にすぎない。
-性質は列を 1 つに絞らない — $`\varepsilon_1`$ の行で 3 つの候補が 3 つとも 3 性質を
-満たし、正しい列はそのどれでもなかった
-([plan/constitutions.md](../plan/constitutions.md) C2)。
-
-決めるのは第 1 連言である。$`f_n`$ は $`M[n]`$ が認証した値**そのもの**でなければ
-ならないので、$`f`$ を選んでいるのは行列であって $`\mathfrak{T}(M)`$ 側の都合ではない。
-だから $`f`$ が $`\mathfrak{T}(M)`$ の標準基本列と一致する必要はどこにも無い。
 
 ## E.fs
 
-弱いエビデンスの $`f_n`$ 印の中身。**E.lim の第 1 連言の「値の側」だけ**を言う。
+弱いエビデンスの $`f_n`$ 印の中身。E.lim の前提
+$`\forall n.\;\mathrm{CertifiedIn}\;\mathrm{Dom}\;M[n]\;f_n`$ の**値の側だけ**を言う。
 
 ```math
 \forall n.\; r\,(M[n]) = \mathrm{fsN}\;t\;k(n)
@@ -201,14 +160,14 @@ $`\mathrm{fsN}\,t`$ は $`\mathfrak{T}(M)`$ 側の基本列、$`k`$ はその行
 **行ごとに違う** (一律に $`n+1`$ ではない)。有限個の $`n`$ を試したのではなく、
 すべての $`n`$ についての定理である。
 
-**$`M[n]`$ がその値を認証することは言っていない。** 第 1 連言が要求するのは後者であり、
-残る 3 連言は手つかずである。E.fs は E.cert の材料の一部であって、E.cert に近いことを
+**$`M[n]`$ がその値を認証することは言っていない。** E.lim が要求するのは後者であり、
+残る 3 前提は手つかずである。E.fs は E.cert の材料の一部であって、E.cert に近いことを
 意味しない。
 
 ## E.cert が言っていないこと
 
-E.lim の第 4 連言は $`f`$ が $`t`$ に共終だと言っており、第 2・第 3 連言と合わせて
-$`\sup_n f_n = t`$ が出る。$`\mathfrak{T}(M)`$ 側の共終性は証明の中にある。
+E.lim の共終性の前提と $`f_n \lt t`$・$`f_n \lt f_{n+1}`$ から $`\sup_n f_n = t`$ が
+出る。$`\mathfrak{T}(M)`$ 側の共終性は証明の中にある。
 
 言っていないのは BMS 側である:
 
