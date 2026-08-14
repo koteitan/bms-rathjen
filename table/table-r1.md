@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.29
+バージョン: v0.7.30
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -109,13 +109,8 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 ## D.Certified
 
-$`\mathrm{Certified}`$ は行列とその値の 2 項関係である。
-
-```math
-\mathrm{Certified} \;\subseteq\; \mathcal{S} \times \mathfrak{T}(M)
-```
-
-**次の 3 規則で閉じた最小の関係**として定める。
+**証明書** $`\mathrm{Certified} \subseteq \mathcal{S} \times \mathfrak{T}(M)`$ を、
+次の 3 規則で閉じた最小の関係と定義する。
 
 ### D.Certified.zero
 
@@ -154,8 +149,8 @@ $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
 
 ## D.TM
 
-$`\mathfrak{T}(M) \subseteq \mathcal{T}`$ は、**次の規則で閉じた最小の部分集合**
-である ([Rathjen, 1991] 2.1)。
+**Rathjen 表記の標準形** $`\mathfrak{T}(M) \subseteq \mathcal{T}`$ を、
+次の規則で閉じた最小の部分集合と定義する ([Rathjen, 1991] 2.1)。
 
 ```math
 \frac{}{0 \in \mathfrak{T}(M)}
@@ -193,12 +188,10 @@ SC = \{M\} \cup \{\psi_\kappa(\alpha)\} \cup \{Z(\alpha)\},
 R = \{Z(\alpha)\}
 ```
 
-$`\mathfrak{T}(M)`$ の要素を **Rathjen 表記の標準形**と呼ぶ。
-
 
 ## D.Term
 
-**Rathjen の項**の全体 $`\mathcal{T}`$ を、次の文法が生成する式の集合とする。
+**Rathjen の項**の全体 $`\mathcal{T}`$ を、次の文法が生成する式の集合と定義する。
 形成条件は課さない — 課したものが [D.TM](#dtm) である。
 
 ```math
@@ -212,7 +205,7 @@ $`M`$ は最小の弱 Mahlo 基数を表す定数である。
 
 ## D.Matrix
 
-**BMS の行列**の全体 $`\mathcal{S}`$。行列は列の有限列、列は自然数の有限列である。
+**バシク行列**の全体 $`\mathcal{S}`$ を、**列** (自然数の有限列) の有限列全体と定義する。
 
 ```math
 \mathcal{S} \;=\; \bigl(\mathbb{N}^{\ast}\bigr)^{\ast}
@@ -227,7 +220,7 @@ $`M`$ は最小の弱 Mahlo 基数だけを指し、行列には使わない。
 
 ## D.expand
 
-$`S[n]`$ は行列 $`S`$ の $`n`$ 番目の展開、$`\mathrm{kind}(S)`$ は行の種別である。
+**展開** $`S[n]`$ と**行の種別** $`\mathrm{kind}(S)`$ を、次の型の写像と定義する。
 
 ```math
 \cdot[\cdot] \;:\; \mathcal{S} \times \mathbb{N} \to \mathcal{S}

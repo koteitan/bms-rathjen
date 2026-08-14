@@ -11,8 +11,9 @@
 
 ## D.RawCertified
 
-上の 3 規則から $`\in \mathfrak{T}(M)`$ の前提を落とした 2 項関係。値は
-$`\mathcal{T}`$ のどこにあってもよい。
+**制限なしの証明書** $`\mathrm{RawCertified} \subseteq \mathcal{S} \times \mathcal{T}`$ を、
+[D.Certified](table-r1.md#dcertified) の 3 規則から $`\in \mathfrak{T}(M)`$ の前提を
+落とした関係と定義する。値は $`\mathcal{T}`$ のどこにあってもよい。
 
 ```math
 \mathrm{RawCertified} \;\subseteq\; \mathcal{S} \times \mathcal{T}
