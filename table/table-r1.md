@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.8
+バージョン: v0.7.9
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -78,7 +78,7 @@ $`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ �
 | [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L327) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\omega))`$ | $`\psi_0(\psi_2(\omega))`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
 | [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L330) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\bar{\varphi}(1,0)))`$ | $`\psi_0(\psi_2(\varepsilon_0))`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
 | [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L333) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_0(\psi_2(\psi_0(\Omega_2)))`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
-| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L337) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_0(\psi_2(\Omega_1))`$ |  | [oR](../lean/Trans/Recal.lean) |  | **B** ψ₂ の引数に Ω₁ が入る最初。表の最上行 |
+| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L337) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_0(\psi_2(\Omega_1))`$ | [fₙ](../lean/Rows/G8.lean#L6) | [oR](../lean/Trans/Recal.lean) |  | **B** ψ₂ の引数に Ω₁ が入る最初。表の最上行 |
 
 # エビデンス
 
