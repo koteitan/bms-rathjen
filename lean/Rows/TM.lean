@@ -46,7 +46,7 @@ open TM.Term
 
 /-- Version of the table (the repository version of the /commitbump workflow).
     Bump this together with every commit; gentable renders it into the header. -/
-def version : String := "v0.7.7"
+def version : String := "v0.7.8"
 
 /-- One row of the correspondence table. -/
 structure Row where
@@ -56,7 +56,7 @@ structure Row where
   proof : String := "" -- key of the E3 proof; resolved to a file+line by gentable and
                        -- rendered as the E3 mark.  Searched in Rows/Proofs.lean,
                        -- Rows/ProofsB.lean, Rows/Selected.lean, Rows/G3.lean, Rows/G4.lean,
-                       -- Rows/G5.lean, Rows/G6.lean,
+                       -- Rows/G5.lean, Rows/G6.lean, Rows/G7.lean,
                        -- in that order.
                        -- ("" = no all-n proof yet.)  A key that resolves to nothing
                        -- prints no mark, so a renamed namespace loses the mark
@@ -229,7 +229,7 @@ def rows : List Row := [
     note := "旧値 ζ_{ε₀} を訂正",
     sel := "**T** φ̄ の第 1 引数が ε 数になる最初" },
   { m := [[0,0],[1,1],[2,1],[3,1]], t := psi (Z zero) zero,
-    name := "\\Gamma_0", ev := "oR",
+    name := "\\Gamma_0", proof := "namespace G7", ev := "oR",
     note := "ψ 項の初登場。旧値 φ̄(3,0) を訂正",
     sel := "**M** (3,1) の最初。**T** ψ の最初。**B** ψ₁ の 3 重入れ子の最初" },
   { m := [[0,0],[1,1],[2,1],[3,1],[0,0]], t := add (psi (Z zero) zero) (phi zero zero),

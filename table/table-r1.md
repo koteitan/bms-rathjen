@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.7
+バージョン: v0.7.8
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -53,7 +53,7 @@ $`f_n`$ を知ることは ✅ の前提の 1 つで、それだけでは ✅ �
 | [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L217) | $`\bar{\varphi}(3,\omega+1)`$ | $`\bar{\varphi}(3,\omega+1)`$ |  | [oR](../lean/Trans/Recal.lean) | 外部の表と食い違う ([diff.md](diff.md) 族 4) | **D** 外部の表と食い違う 9 行の 1 つ |
 | [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L223) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ | [fₙ](../lean/Rows/Selected.lean#L2114) | [oR](../lean/Trans/Recal.lean) | 旧値 ζ_ω を訂正 | **T** φ̄ の第 1 引数が数字でなくなる最初 |
 | [`(0,0)(1,1)(2,1)(3,0)(4,1)`](../lean/Rows/TM.lean#L227) | $`\bar{\varphi}(\bar{\varphi}(1,0),0)`$ | $`\bar{\varphi}(\varepsilon_0,0)`$ | [fₙ](../lean/Rows/G3.lean#L6) | [oR](../lean/Trans/Recal.lean) | 旧値 ζ_{ε₀} を訂正 | **T** φ̄ の第 1 引数が ε 数になる最初 |
-| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L231) | $`\psi_{\Omega}(0)`$ | $`\Gamma_0`$ |  | [oR](../lean/Trans/Recal.lean) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 | **M** (3,1) の最初。**T** ψ の最初。**B** ψ₁ の 3 重入れ子の最初 |
+| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L231) | $`\psi_{\Omega}(0)`$ | $`\Gamma_0`$ | [fₙ](../lean/Rows/G7.lean#L6) | [oR](../lean/Trans/Recal.lean) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 | **M** (3,1) の最初。**T** ψ の最初。**B** ψ₁ の 3 重入れ子の最初 |
 | [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L235) | $`\psi_{\Omega}(0)+1`$ | $`\Gamma_0+1`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
 | [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L237) | $`\bar{\varphi}(0,\psi_{\Omega}(0))`$ | $`\omega^{\Gamma_0+1}`$ |  | [oR](../lean/Trans/Recal.lean) |  |  |
 | [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L249) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_0(\Omega_2)`$ | [fₙ](../lean/Rows/G4.lean#L6) | [oR](../lean/Trans/Recal.lean) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正 | **M** 1 行目に 2 が現れる最初。**T** Z の最初。**B** Ω₂ の最初 |
