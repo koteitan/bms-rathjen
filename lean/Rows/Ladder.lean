@@ -449,4 +449,289 @@ theorem fpar1_three_zero (M : Trans.Recal.PS) (hlen : 4 ≤ M.length)
   rw [fpar1Aux_step,show Trans.Recal.fpar0 M 3 0=0 from by rw [fpar0_eq]; exact hp,
     if_neg (by omega),if_pos hq0]
 
+/-! ## 枝が何本でもよい畳み込み
+
+`red_fold_single` は枝が 1 本の場合しか扱わない。`Rows/G11.lean` の梯子は
+枝が 4 本・2 本になるので、`foldl` を開いたところで止める形も要る。 -/
+
+theorem red_fold_open (M : Trans.Recal.PS) (f : Nat) (tr : Int)
+    (hzero : Trans.Recal.isZeroP M=false)
+    (hprin : Trans.Recal.isPrincipalP M=true)
+    (hg0 : Trans.Recal.gp0 M 0=0) (hg1 : Trans.Recal.gp1 M 0=0)
+    (htr : Trans.Recal.trMax M=tr)
+    (hne : (tr==Trans.Recal.lenI M-1)=false) :
+    Trans.Recal.red (f+1) M
+      = (List.range (Trans.Recal.brF M).length).foldl
+          (init := Trans.Recal.jjSeq 0 tr) (fun r J =>
+            let bJ := (Trans.Recal.brF M).getD J []
+            let nJ : Int := if Trans.Recal.gp1 bJ 0==0 then -1
+              else Trans.Recal.fpar M 1 ((Trans.Recal.firstNodes M).getD J 0) 0
+            let jnJ := (Trans.Recal.joints M).getD J 0
+            r ++ Trans.Recal.incrFirst
+              (Trans.Recal.red f ((jnJ+1,nJ+1) :: Trans.Recal.derp bJ)) (jnJ-nJ)) := by
+  simp only [Trans.Recal.red]
+  rw [hzero]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [hg0,hg1]
+  rw [show ((0:Int)==0)=true from rfl]
+  simp only [Bool.and_self,if_true]
+  rw [htr,hne]
+  simp only [Bool.false_eq_true,if_false]
+
+theorem firstNodes_eq (M : Trans.Recal.PS) (br : List Trans.Recal.PS)
+    (hbr : Trans.Recal.brF M=br) :
+    Trans.Recal.firstNodes M
+      = (Trans.Recal.idxSum br).map (fun e => Trans.Recal.trMax M+1+e) := by
+  unfold Trans.Recal.firstNodes
+  rw [hbr]
+
+theorem joints_eq (M : Trans.Recal.PS) (br : List Trans.Recal.PS)
+    (hbr : Trans.Recal.brF M=br) :
+    Trans.Recal.joints M
+      = (((Trans.Recal.idxSum br).map
+          (fun e => Trans.Recal.trMax M+1+e)).dropLast).map
+            (fun e => Trans.Recal.fpar M 0 e 0) := by
+  unfold Trans.Recal.joints
+  rw [firstNodes_eq M br hbr]
+
+/-! ## 頭が主要でない 2 つの枝
+
+`gp0 M 0 ≠ 0` のとき `red` は畳み込まない。行 1 が `0` なら頭を `0` に正規化するだけ、
+`1` なら 1 列切り出して降り、戻ってきた列を落とす。どちらも梯子に依らない。 -/
+
+theorem red_shift (M : Trans.Recal.PS) (f : Nat)
+    (hzero : Trans.Recal.isZeroP M=false)
+    (hprin : Trans.Recal.isPrincipalP M=true)
+    (hg0 : (Trans.Recal.gp0 M 0==0)=false)
+    (hg1 : Trans.Recal.gp1 M 0=0) :
+    Trans.Recal.red (f+1) M
+      = Trans.Recal.red f (Trans.Recal.incrFirst M (-(Trans.Recal.gp0 M 0))) := by
+  simp only [Trans.Recal.red]
+  rw [hzero]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [hg0]
+  simp only [Bool.false_and,Bool.false_eq_true,if_false]
+  rw [hg1,show ((0:Int)==0)=true from rfl]
+  simp only [if_true]
+
+theorem red_head_one (M : Trans.Recal.PS) (f : Nat) (W : Trans.Recal.PS)
+    (hzero : Trans.Recal.isZeroP M=false)
+    (hprin : Trans.Recal.isPrincipalP M=true)
+    (hg0 : (Trans.Recal.gp0 M 0==0)=false)
+    (hg1 : Trans.Recal.gp1 M 0=1)
+    (hA : Trans.Recal.red f (((0:Int),(0:Int)) :: Trans.Recal.incrFirst M 1)
+      = ((0:Int),(0:Int)) :: W)
+    (hWlen : 1 ≤ W.length)
+    (hWprin : Trans.Recal.isPrincipalP W=true)
+    (hW : Trans.Recal.gp0 W 0=Trans.Recal.gp1 W 0) :
+    Trans.Recal.red (f+1) M=W := by
+  have hNdrop : (((0:Int),(0:Int)) :: W).drop 1=W := rfl
+  have hgw0 : Trans.Recal.gp0 (((0:Int),(0:Int)) :: W) 1=Trans.Recal.gp0 W 0 := rfl
+  have hgw1 : Trans.Recal.gp1 (((0:Int),(0:Int)) :: W) 1=Trans.Recal.gp1 W 0 := rfl
+  simp only [Trans.Recal.red]
+  rw [hzero]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [hg0]
+  simp only [Bool.false_and,Bool.false_eq_true,if_false]
+  rw [hg1,show ((1:Int)==0)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [show Trans.Recal.jjSeq 0 ((1:Int)-1)=[((0:Int),(0:Int))] from rfl]
+  show (let N := Trans.Recal.red f ([((0:Int),(0:Int))]++Trans.Recal.incrFirst M 1)
+    let jN : Int := Trans.Recal.lenI N-1
+    if decide ((1:Int) ≤ jN) && Trans.Recal.isPrincipalP (N.drop (1:Int).toNat) then
+      Trans.Recal.incrFirst (N.drop (1:Int).toNat)
+        (-(Trans.Recal.gp0 N 1)+Trans.Recal.gp1 N 1)
+    else M)=W
+  rw [show ([((0:Int),(0:Int))]++Trans.Recal.incrFirst M 1)
+      =((0:Int),(0:Int)) :: Trans.Recal.incrFirst M 1 from rfl,hA]
+  show (if decide ((1:Int) ≤ Trans.Recal.lenI (((0:Int),(0:Int)) :: W)-1)
+      && Trans.Recal.isPrincipalP ((((0:Int),(0:Int)) :: W).drop 1) then
+    Trans.Recal.incrFirst ((((0:Int),(0:Int)) :: W).drop 1)
+      (-(Trans.Recal.gp0 (((0:Int),(0:Int)) :: W) 1)
+        +Trans.Recal.gp1 (((0:Int),(0:Int)) :: W) 1)
+    else M)=W
+  rw [hNdrop,hgw0,hgw1,hW,hWprin,
+    show decide ((1:Int) ≤ Trans.Recal.lenI (((0:Int),(0:Int)) :: W)-1)=true from
+      decide_eq_true (by
+        unfold Trans.Recal.lenI
+        rw [List.length_cons]
+        omega)]
+  simp only [Bool.and_self,if_true]
+  rw [show -(Trans.Recal.gp1 W 0)+Trans.Recal.gp1 W 0=(0:Int) from by omega]
+  unfold Trans.Recal.incrFirst
+  rw [show (fun c : Int × Int => (c.1+0,c.2))=id from by
+    funext c
+    show (c.1+0,c.2)=c
+    rw [Int.add_zero]]
+  exact List.map_id _
+
+/-! ## 根がいくつか並んだあとに 1 本の鎖
+
+`Rows/G11.lean` の梯子は 1 つの主要ブロックにならない。`ppair` は先頭側に
+1 列ずつの根をいくつか出し、そのあと残り全部を 1 ブロックにする。
+その形を一度だけ書く。 -/
+
+theorem fAncAux_of_chain_at {p : Nat}
+    (hpar : ∀ k, p<k → k<M.length → Trans.Recal.fpar M 0 ((k:Nat):Int) 0
+      = ((par k : Nat) : Int))
+    (hlt : ∀ k, p<k → k<M.length → par k<k)
+    (hge : ∀ k, p<k → k<M.length → p ≤ par k)
+    (hroot : Trans.Recal.fpar M 0 ((p:Nat):Int) 0=-1) :
+    ∀ (f k : Nat) (acc : List Int), p ≤ k → k<M.length → k-p<f →
+      (Trans.Recal.fAncAux f M 0 ((k:Nat):Int) 0 (acc++[((k:Nat):Int)])).getLast?
+        = some ((p:Nat):Int) := by
+  intro f
+  induction f with
+  | zero => intro k _ _ _ h; exact absurd h (by omega)
+  | succ f ih =>
+    intro k acc hpk hk hkf
+    rw [fAncAux_step]
+    by_cases h0 : k=p
+    · subst h0
+      rw [hroot,if_neg (by omega)]
+      simp
+    · have hpk' : p<k := by omega
+      rw [hpar k hpk' hk,if_pos (by
+        have := hge k hpk' hk
+        omega)]
+      have := ih (par k) (acc++[((k:Nat):Int)])
+        (hge k hpk' hk)
+        (by have := hlt k hpk' hk; omega)
+        (by have := hlt k hpk' hk; have := hge k hpk' hk; omega)
+      simpa only [List.append_assoc] using this
+
+theorem ppairAux_roots (p : Nat) (hp : p<M.length)
+    (hroots : ∀ j, j<p → Trans.Recal.fpar M 0 ((j:Nat):Int) 0=-1) :
+    ∀ (f j : Nat) (acc : List Trans.Recal.PS), j ≤ p → j<f+1 →
+      Trans.Recal.ppairAux f M ((((j:Nat)):Int)-1) acc
+        = (List.range j).map
+            (fun i => Trans.Recal.slice M ((i:Nat):Int) ((((i:Nat)):Int)+1)) ++ acc := by
+  intro f
+  induction f with
+  | zero =>
+    intro j acc hj hjf
+    have : j=0 := by omega
+    subst this
+    show Trans.Recal.ppairAux 0 M ((((0:Nat)):Int)-1) acc=_
+    simp [Trans.Recal.ppairAux]
+  | succ f ih =>
+    intro j acc hj hjf
+    cases j with
+    | zero =>
+      rw [ppairAux_step,if_pos (by omega)]
+      simp
+    | succ j =>
+      rw [show ((((j+1:Nat)):Int)-1)=((j:Nat):Int) from by omega,
+        ppairAux_step,if_neg (by omega)]
+      rw [show Trans.Recal.fAnc M 0 ((j:Nat):Int) 0=[((j:Nat):Int)] from by
+        unfold Trans.Recal.fAnc
+        rw [if_neg (by
+          refine not_or.mpr ⟨by omega,?_⟩
+          unfold Trans.Recal.lenI
+          omega)]
+        obtain ⟨g,hg⟩ : ∃ g, M.length+1=g+1 := ⟨M.length,rfl⟩
+        rw [hg,fAncAux_step,hroots j (by omega),if_neg (by omega)]]
+      simp only [List.getLast?_singleton,Option.getD_some]
+      rw [ih j (Trans.Recal.slice M ((j:Nat):Int) (((j:Nat):Int)+1) :: acc)
+        (by omega) (by omega),List.range_succ,List.map_append]
+      simp
+
+/-- **根が `p` 本、そのあと 1 ブロック。** -/
+theorem ppair_roots_then_block (p : Nat) (hp : p<M.length)
+    (hroots : ∀ j, j<p → Trans.Recal.fpar M 0 ((j:Nat):Int) 0=-1)
+    (hpar : ∀ k, p<k → k<M.length → Trans.Recal.fpar M 0 ((k:Nat):Int) 0
+      = ((par k : Nat) : Int))
+    (hlt : ∀ k, p<k → k<M.length → par k<k)
+    (hge : ∀ k, p<k → k<M.length → p ≤ par k)
+    (hroot : Trans.Recal.fpar M 0 ((p:Nat):Int) 0=-1) :
+    Trans.Recal.ppair M
+      = (List.range p).map
+          (fun i => Trans.Recal.slice M ((i:Nat):Int) ((((i:Nat)):Int)+1))
+        ++ [Trans.Recal.slice M ((p:Nat):Int) ((M.length:Nat):Int)] := by
+  unfold Trans.Recal.ppair
+  rw [show Trans.Recal.lenI M-1=(((M.length-1:Nat)):Int) from by
+    unfold Trans.Recal.lenI; omega]
+  rw [show M.length+1=(M.length)+1 from rfl,ppairAux_step,if_neg (by omega)]
+  rw [show Trans.Recal.fAnc M 0 (((M.length-1:Nat)):Int) 0
+      = Trans.Recal.fAncAux (M.length+1) M 0 (((M.length-1:Nat)):Int) 0
+          ([]++[(((M.length-1:Nat)):Int)]) from by
+    unfold Trans.Recal.fAnc
+    rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+    rfl]
+  rw [fAncAux_of_chain_at hpar hlt hge hroot (M.length+1) (M.length-1) []
+    (by omega) (by omega) (by omega)]
+  simp only [Option.getD_some]
+  rw [show (((M.length-1:Nat)):Int)+1=((M.length:Nat):Int) from by omega]
+  rw [show ((p:Nat):Int)-1=((((p:Nat)):Int)-1) from rfl]
+  exact ppairAux_roots p hp hroots M.length p
+    [Trans.Recal.slice M ((p:Nat):Int) ((M.length:Nat):Int)] (by omega) (by omega)
+
+/-! ## 下限つきの親、そして根の判定
+
+`ppair_roots_then_block` を使う梯子では、下の数本は親を持たない。だから
+「`p` より上でだけ親が言える」形と、「これ以下に小さい値がないから根」という形が要る。 -/
+
+theorem fpar_of_gap_at {p : Nat}
+    (hg : ∀ k, k<M.length → Trans.Recal.gp0 M ((k:Nat):Int)=G k)
+    (hlt : ∀ k, p<k → k<M.length → par k<k)
+    (hge : ∀ k, p<k → k<M.length → p ≤ par k)
+    (hdrop : ∀ k, p<k → k<M.length → G (par k)<G k)
+    (hkeep : ∀ k i, p<k → k<M.length → par k<i → i<k → G k ≤ G i) :
+    ∀ k, p<k → k<M.length → Trans.Recal.fpar M 0 ((k:Nat):Int) 0
+      = ((par k : Nat) : Int) := by
+  intro k hk1 hk
+  unfold Trans.Recal.fpar
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  simp only [show ((0:Nat)==0)=true from rfl,if_true]
+  rw [hg k hk]
+  have e : ((k:Nat):Int)-1=(((k-1:Nat)):Int) := by omega
+  rw [e]
+  exact fpar0Aux_scan hg hk (hdrop k hk1 hk) (fun i h1 h2 => hkeep k i hk1 hk h1 h2)
+    (M.length+1) (k-1) (by have := hlt k hk1 hk; omega) (by omega) (by omega)
+
+theorem fpar0Aux_nofind
+    (hg : ∀ k, k<M.length → Trans.Recal.gp0 M ((k:Nat):Int)=G k)
+    {j : Nat} (hj : j<M.length) (hmin : ∀ i, i<j → G j ≤ G i) :
+    ∀ (f jj : Nat), jj<j → jj+2 ≤ f →
+      Trans.Recal.fpar0Aux f M (G j) ((jj:Nat):Int) 0=-1 := by
+  intro f
+  induction f with
+  | zero => intro jj _ h; exact absurd h (by omega)
+  | succ f ih =>
+    intro jj hjj hf
+    rw [fpar0Aux_step,if_neg (by omega),hg jj (by omega),
+      if_neg (by have := hmin jj hjj; omega)]
+    by_cases h0 : jj=0
+    · subst h0
+      rw [show ((0:Nat):Int)-1=-1 from by omega]
+      obtain ⟨g,hg2⟩ : ∃ g, f=g+1 := ⟨f-1,by omega⟩
+      rw [hg2,fpar0Aux_step,if_pos (by omega)]
+    · obtain ⟨u,rfl⟩ : ∃ u, jj=u+1 := ⟨jj-1,by omega⟩
+      rw [show (((u+1:Nat)):Int)-1=((u:Nat):Int) from by omega]
+      exact ih u (by omega) (by omega)
+
+/-- **根の判定。** 自分より下に小さい行 0 の値がなければ親は無い。 -/
+theorem fpar_root_of_min
+    (hg : ∀ k, k<M.length → Trans.Recal.gp0 M ((k:Nat):Int)=G k)
+    {j : Nat} (hj : j<M.length) (hmin : ∀ i, i<j → G j ≤ G i) :
+    Trans.Recal.fpar M 0 ((j:Nat):Int) 0=-1 := by
+  unfold Trans.Recal.fpar
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  simp only [show ((0:Nat)==0)=true from rfl,if_true]
+  rw [hg j hj]
+  by_cases h0 : j=0
+  · subst h0
+    rw [show ((0:Nat):Int)-1=-1 from by omega]
+    obtain ⟨g,hg2⟩ : ∃ g, M.length+1=g+1 := ⟨M.length,rfl⟩
+    rw [hg2,fpar0Aux_step,if_pos (by omega)]
+  · obtain ⟨u,rfl⟩ : ∃ u, j=u+1 := ⟨j-1,by omega⟩
+    rw [show (((u+1:Nat)):Int)-1=((u:Nat):Int) from by omega]
+    exact fpar0Aux_nofind hg hj hmin (M.length+1) u (by omega) (by omega)
+
 end Rows.Ladder
