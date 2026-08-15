@@ -4676,7 +4676,28 @@ WHAT ⟨A⟩ NEEDS (Stage 2c — the honest frontier of this lane).
      `Evidence.WF.cof_eps0_needs_inT`: an attempt to certify ε₀·2 or ε₀+ω for
      `(0,0)(1,1)` must be refuted by a genuine witness of 𝔗(M).  With `fs' = tower`
      forced by 1 above, the witness is any term below the compressed value that no
-     tower overtakes — e.g. ε₀ itself for ε₀·2. -/
+     tower overtakes — e.g. ε₀ itself for ε₀·2.
+
+WHAT HAPPENED TO 1 AND 2 (updated 2026-08-15).  Both landed and this header was
+left describing them as open, which is worth correcting rather than leaving for a
+reader to discover.
+
+  * ITEM 1 is §10's `padRow` and its computation lemmas (`ent_padRow`,
+    `parent_padRow`, `expand_padRow`) — the pad is inert, proved, not measured.
+  * ITEM 2 is §13's `certIn_sq`: `CertifiedIn DomF (oneRow (sq t)) t` for every
+    CNF `t`, by well-founded recursion.  The `stdSeq`-preservation gap named above
+    DISSOLVED rather than closed — `sq_decomp` produces the decomposition
+    `StageA.expand_oneRow` asks for at every CNF limit, with no standardness
+    predicate to propagate (§10's header).  The `fsN`/`fsC` gap dissolved the same
+    way: `Certified.lim` takes an arbitrary `fs'`, so §14's clauses for `fsC` are
+    used directly and `fsN` is never mentioned.
+  * §23 then made that recursion's SHAPE reusable, and `certIn_sq_via_region`
+    rebuilds item 2 as one instance of it.
+
+ITEM 3 IS STILL OPEN, and it is now the only one.  It is also the point where this
+lane meets `table/diff.md`'s family 4: the 326th disputed row cannot be decided by
+the expansion-sequence test (neither value lies on `fsN`), so a negative control of
+exactly the shape asked for here is what decides it. -/
 
 /-- `(0)(1)…(n)` with a second row of zeros: the n-th expansion of the ε₀ row. -/
 def towerM (n : Nat) : Matrix := (List.range (n + 1)).map (fun a => [a, 0])
