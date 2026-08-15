@@ -17,6 +17,11 @@ a linear order.
     cmpM_swap        cmpM N M = (cmpM M N).swap
     cmpM_trans       cmpM M N = .lt → cmpM N P = .lt → cmpM M P = .lt
     leM_trans        the `≠ .gt` form, which is what a normal form asks for
+
+§4 adds the three facts about `++` that the region's closure proof needs: a common prefix
+cancels, a proper prefix is strictly smaller, and extending the SMALLER side on the right
+keeps it smaller provided what is appended starts below everything on the other side —
+which for a matrix read as a forest means "starts at a shallower depth".
 -/
 
 namespace BMS
@@ -202,7 +207,52 @@ theorem cmpM_trans : ∀ (M N P : Matrix), cmpM M N = .lt → cmpM N P = .lt →
         show cmpM s u = .lt
         exact cmpM_trans s t u g1' g2
 
-/-! ## §4 The `≤` form, which is what a normal form asks for -/
+/-! ## §4 Appends
+
+The three facts the region's closure proof needs about `cmpM` and `++`.  A common prefix
+cancels; a proper prefix is strictly smaller; and extending the SMALLER side on the right
+keeps it smaller as long as whatever is appended starts below everything on the other
+side — which for a matrix read as a forest means "starts at a shallower depth". -/
+
+theorem cmpM_append_left : ∀ (X Y Z : Matrix), cmpM (X ++ Y) (X ++ Z) = cmpM Y Z
+  | [], _, _ => rfl
+  | c :: s, Y, Z => by
+    show (cmpCol c c).then (cmpM (s ++ Y) (s ++ Z)) = cmpM Y Z
+    rw [cmpCol_refl, cmpM_append_left s Y Z]
+    rfl
+
+theorem cmpM_prefix_lt : ∀ (X : Matrix) (c : Col) (Y : Matrix), cmpM X (X ++ (c :: Y)) = .lt
+  | [], _, _ => rfl
+  | d :: s, c, Y => by
+    show (cmpCol d d).then (cmpM s (s ++ (c :: Y))) = .lt
+    rw [cmpCol_refl, cmpM_prefix_lt s c Y]
+    rfl
+
+/-- 小さい側を右に伸ばしても小さいまま — 伸ばす先頭が相手のどの列より小さければ。 -/
+theorem cmpM_append_lt : ∀ (M N R : Matrix), cmpM M N = .lt →
+    (∀ d ∈ R.head?, ∀ c ∈ N, cmpCol d c = .lt) → cmpM (M ++ R) N = .lt
+  | [], [], _, h, _ => Ordering.noConfusion h
+  | _ :: _, [], _, h, _ => Ordering.noConfusion h
+  | [], c :: t, R, _, hg => by
+    show cmpM R (c :: t) = .lt
+    cases R with
+    | nil => rfl
+    | cons d u =>
+      show (cmpCol d c).then (cmpM u t) = .lt
+      rw [hg d rfl c (by simp)]
+      rfl
+  | m :: s, n :: t, R, h, hg => by
+    have h' : (cmpCol m n).then (cmpM s t) = .lt := h
+    show (cmpCol m n).then (cmpM (s ++ R) t) = .lt
+    cases hmn : cmpCol m n with
+    | gt => rw [hmn] at h'; exact Ordering.noConfusion h'
+    | lt => rfl
+    | eq =>
+      rw [hmn] at h'
+      show cmpM (s ++ R) t = .lt
+      exact cmpM_append_lt s t R h' (fun d hd c hc => hg d hd c (List.mem_cons_of_mem n hc))
+
+/-! ## §5 The `≤` form, which is what a normal form asks for -/
 
 /-- `M ≤ N` を `cmpM M N ≠ .gt` として読む。 -/
 def leM (M N : Matrix) : Bool := cmpM M N != .gt
