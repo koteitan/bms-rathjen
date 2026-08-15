@@ -1,11 +1,15 @@
 import Evidence.Region
-import Evidence.SqV
+import Trans.Recal
+import TM.FS
 /-
 Evidence/RegionV.lean — THE VALUE SIDE OF THE REGION BELOW ε_ω
 
 `Evidence/Region.lean` names the region and proves it closed under `BMS.expand`.  This
 file gives the region's VALUE in 𝔗(M) and its NORMAL FORM, and measures what is left for
-`certIn_region`'s three supplies.
+`certIn_region`'s three supplies.  It imports only `Region`, `Trans.Recal` and `TM.FS`, so
+that `Evidence/Cert.lean` — where the region's certificate will be assembled — can import
+it; the `fsV` half of §9's comparison lives in `Evidence/RegionSeq.lean` because
+`Evidence/SqV.lean` imports `Cert.lean` and the arrow must not reverse.
 
 THE VALUE IS ONE CLAUSE.  Reading the index as a Buchholz term, ψ₀(ξ) with ξ = Ω·k ⊕ η
 (η being Ω-free) has value
@@ -47,7 +51,7 @@ normal forms — which is the population that measurement should have been taken
 two closest are within ONE case each:
 
     fsN at shift 1     1 of 18 differs      the ε₁ row
-    fsV at shift 0     1 of 18 differs      ψ₀(Ω+ω)
+    fsV at shift 0     1 of 18 differs      ψ₀(Ω+ω)     (`Evidence/RegionSeq.lean`)
 
 Both survivors are genuine: at ε₁, `fsN`'s tower climbs over ω^(ε₀+1) and the matrix's
 over ε₀·2; at ψ₀(Ω+ω), `fsV` skips ε₀+1.  An index shift is harmless to the four clauses
@@ -142,9 +146,9 @@ def seqMiss (f : Term → Nat → Term) (sh : Nat) : Nat :=
     !((List.range 5).all fun n => sumVal (fs t n) == f (sumVal t) (n + sh))).length
 
 #guard seqMiss Term.fsN 1 == 1
-#guard seqMiss Evidence.SqV.fsV 0 == 1
 #guard seqMiss Term.fsN 0 == 13
-#guard seqMiss Evidence.SqV.fsV 1 == 13
+-- `fsV` の方は `Evidence/RegionSeq.lean` にある (`SqV.lean` は `Cert.lean` を import する
+-- ので、証明側から見える位置には置けない)。
 
 -- ε₁ の行の添字は標準形。
 #guard nf (.ps .nil (omPow 2))
@@ -154,5 +158,61 @@ def seqMiss (f : Term → Nat → Term) (sh : Nat) : Nat :=
 #guard sumVal (.ps .nil (omPow 2)) == phi one one
 -- ε_k の行の値は `φ̄(1,k)`。
 #guard (List.range 5).all fun k => sumVal (.ps .nil (omPow (k + 1))) == epsT k
+
+/-! ## §10 The zero and successor supplies
+
+`certIn_region`'s first two supplies ask what the value is when `BMS.kind S` is `zero` or
+`succ`.  `Region.kind_mat` says which index that is — `nil` and `ps r nil` — so both
+supplies reduce to two equations about `sumVal`.  `omegaNF zero = 1` is the whole content
+of the successor one: the last summand `ψ₀(0)` contributes exactly `1`, so a successor
+index's value is `sumVal r ⊕ 1` with `sumVal r` the value of its own expansion. -/
+
+theorem kindA_zero {t : A} (h : kindA t = BMS.Kind.zero) : t = .nil := by
+  cases t with
+  | nil => rfl
+  | om _ => exact BMS.Kind.noConfusion h
+  | ps r a => cases a with
+    | nil => exact BMS.Kind.noConfusion h
+    | om _ => exact BMS.Kind.noConfusion h
+    | ps _ _ => exact BMS.Kind.noConfusion h
+
+theorem kindA_succ {t : A} (h : kindA t = BMS.Kind.succ) : ∃ r, t = .ps r .nil := by
+  cases t with
+  | nil => exact BMS.Kind.noConfusion h
+  | om _ => exact BMS.Kind.noConfusion h
+  | ps r a => cases a with
+    | nil => exact ⟨r, rfl⟩
+    | om _ => exact BMS.Kind.noConfusion h
+    | ps _ _ => exact BMS.Kind.noConfusion h
+
+theorem sumVal_nil : sumVal .nil = zero := rfl
+
+/-- `ω^0 = 1` — 最後の加数 `ψ₀(0)` はちょうど `1` を出す。 -/
+theorem omegaNF_zero : omegaNF zero = one := by decide
+
+/-- **後続の値。** 最後の加数が `ψ₀(0)` なら値は `sumVal r ⊕ 1`。 -/
+theorem sumVal_succ (r : A) : sumVal (.ps r .nil) = plus (sumVal r) one := by
+  rw [sumVal_ps]
+  exact congrArg (plus (sumVal r)) omegaNF_zero
+
+/-- 後続の添字の展開はその前身。 -/
+theorem fs_succ (r : A) (n : Nat) : fs (.ps r .nil) n = r := rfl
+
+/-- 標準形は部分添字に遺伝する。 -/
+theorem nf_of_ps {r a : A} (h : nf (.ps r a) = true) : nf r = true ∧ nf a = true := by
+  have h1 : (nf r && nf a
+      && (match lastSm r with
+          | none => true | some none => true
+          | some (some b) => BMS.cmpM (mat a 0) (mat b 0) != .gt)
+      && (match firstArg a with
+          | none => true | some b => BMS.cmpM (mat b 0) (mat a 0) == .lt)) = true := h
+  have h2 := (Bool.and_eq_true _ _).mp h1
+  have h3 := (Bool.and_eq_true _ _).mp h2.1
+  exact (Bool.and_eq_true _ _).mp h3.1
+
+theorem topOK_of_ps {r a : A} (h : topOK (.ps r a) = true) : topOK r = true := h
+
+-- 値が 𝔗(M) の項であることは標準形なしでも成り立つ (母集団 91)。
+#guard corpus.all fun t => inT (sumVal t) == true
 
 end Evidence.Region

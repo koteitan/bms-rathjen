@@ -850,4 +850,100 @@ def kindA : A → BMS.Kind
   let u := fs t n
   u == .nil || (List.range 4).all fun m => BMS.expand? (mat u 0) m == some (mat (fs u m) 0)
 
+/-! ## §7 THE CLASSIFICATION — what the three supplies dispatch on
+
+`certIn_region` splits on `BMS.kind S`, so each supply needs to know which INDEX produced a
+matrix of that kind.  The answer is read straight off the index's last summand, and the
+proof is one fact about `mat`: the last column of a nonempty `mat a d` sits at depth `≥ d`,
+so at `d ≥ 1` it has a nonzero row-0 entry and `lnz` is never `none`.  Hence a top-level
+index is a successor exactly when its last summand is `ψ₀(0)` — the one summand whose block
+is the single column `(0,0)`. -/
+
+theorem getLast?_append_ne {α : Type} : ∀ (X Z : List α), Z ≠ [] →
+    (X ++ Z).getLast? = Z.getLast? := by
+  intro X
+  induction X with
+  | nil => intro Z _; rfl
+  | cons a t ih =>
+    intro Z hZ
+    show ((a :: (t ++ Z))).getLast? = _
+    rw [List.getLast?_cons_of_ne_nil (by
+      intro h
+      rcases List.append_eq_nil_iff.mp h with ⟨_, h2⟩
+      exact hZ h2)]
+    exact ih Z hZ
+
+/-- 空でない添字の行列の最後の列は、深さ以上の行 0 の値をもつ。 -/
+theorem mat_getLast : ∀ (a : A) (d : Nat), a ≠ .nil →
+    ∃ (x y : Nat), (mat a d).getLast? = some [x, y] ∧ d ≤ x := by
+  intro a
+  induction a with
+  | nil => intro d h; exact absurd rfl h
+  | om r _ =>
+    intro d _
+    refine ⟨d, 1, ?_, Nat.le_refl d⟩
+    show (mat r d ++ [[d, 1]]).getLast? = _
+    rw [getLast?_append_ne _ _ (by simp)]
+    rfl
+  | ps r a _ iha =>
+    intro d _
+    show ∃ x y, (mat r d ++ ([d, 0] :: mat a (d + 1))).getLast? = some [x, y] ∧ d ≤ x
+    rw [getLast?_append_ne _ _ (by simp)]
+    cases a with
+    | nil =>
+      refine ⟨d, 0, ?_, Nat.le_refl d⟩
+      rfl
+    | om b =>
+      obtain ⟨x, y, hx, hd⟩ := iha (d + 1) (by intro h; exact A.noConfusion h)
+      refine ⟨x, y, ?_, by omega⟩
+      rw [List.getLast?_cons_of_ne_nil (by
+        intro h
+        rw [h] at hx
+        exact absurd hx (by simp))]
+      exact hx
+    | ps b c =>
+      obtain ⟨x, y, hx, hd⟩ := iha (d + 1) (by intro h; exact A.noConfusion h)
+      refine ⟨x, y, ?_, by omega⟩
+      rw [List.getLast?_cons_of_ne_nil (by
+        intro h
+        rw [h] at hx
+        exact absurd hx (by simp))]
+      exact hx
+
+/-- **種別は添字が決める。** 最上位の添字は、最後の加数が `ψ₀(0)` のときちょうど後続。 -/
+theorem kind_mat : ∀ (t : A), topOK t = true → BMS.kind (mat t 0) = kindA t := by
+  intro t
+  cases t with
+  | nil => intro _; rfl
+  | om r => intro h; exact Bool.noConfusion h
+  | ps r a =>
+    intro _
+    cases a with
+    | nil =>
+      show BMS.kind (mat r 0 ++ [[0, 0]]) = BMS.Kind.succ
+      show (match (mat r 0 ++ [[0, 0]]).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match lnz L with | none => BMS.Kind.succ | some _ => BMS.Kind.lim)
+        = BMS.Kind.succ
+      rw [getLast?_append_ne _ _ (by simp)]
+      rfl
+    | om b => exact kind_mat_lim r (.om b) (by intro h; exact A.noConfusion h)
+    | ps b c => exact kind_mat_lim r (.ps b c) (by intro h; exact A.noConfusion h)
+where
+  /-- 最後の加数が `ψ₀(0)` でなければ極限。 -/
+  kind_mat_lim (r a : A) (ha : a ≠ .nil) : BMS.kind (mat (.ps r a) 0) = BMS.Kind.lim := by
+    obtain ⟨x, y, hx, hd⟩ := mat_getLast a 1 ha
+    show (match (mat r 0 ++ ([0, 0] :: mat a 1)).getLast? with
+      | none => BMS.Kind.zero
+      | some L => match lnz L with | none => BMS.Kind.succ | some _ => BMS.Kind.lim)
+      = BMS.Kind.lim
+    rw [getLast?_append_ne _ _ (by simp),
+      List.getLast?_cons_of_ne_nil (by intro h; rw [h] at hx; exact absurd hx (by simp)), hx]
+    show (match lnz ([x, y] : Col) with
+      | none => BMS.Kind.succ | some _ => BMS.Kind.lim) = BMS.Kind.lim
+    rw [lnz_pair]
+    cases y with
+    | zero => rw [if_neg (by omega), if_pos (by omega)]
+    | succ _ => rw [if_pos (by omega)]
+
 end Evidence.Region
