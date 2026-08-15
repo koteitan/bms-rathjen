@@ -1,3 +1,14 @@
+## 列の意味
+
+| 列 | 中身 |
+|---|---|
+| BMS | 行列。リンク先は行の定義 |
+| $`\mathfrak{T}(M)`$ | Rathjen R1 の項 ([D.TM](#dtm)) |
+| Buchholz | Buchholz の $`\mathrm{OT}_B`$ での値。$`\psi_0(\Omega_2)`$ 以上は変換写像 (pss2bp) の出力そのもの、それ未満は通称 |
+| 証明 | ✅ = [E.cert](#ecert) が定理。空欄 = まだ |
+| その他の弱いエビデンス | ✅ の材料。[一覧](#その他の弱いエビデンス) |
+| 備考 | その行に固有のこと |
+
 # 証明の仕様
 
 対応表の 1 行 $`(S, t)`$ の証明列に ✅ が付く条件は、これただ 1 つである。
@@ -212,3 +223,11 @@ X \text{ が } R \text{ で閉じている} \;\longrightarrow\; \mathrm{Cl}(R) \
 c \in \mathrm{Cl}(R) \;\longrightarrow\;
 \exists (P, c) \in R.\;\; P \subseteq \mathrm{Cl}(R)
 ```
+
+# 関連文書
+
+- 作り方・作業手順・資料の場所 — [plan/README.md](../plan/README.md)
+- 表を読むとき・書くときの原則 (注意書き) — [plan/constitutions.md](../plan/constitutions.md)
+- この表自身の仕様 — [plan/spec.md](../plan/spec.md)
+- 外部の対応表との差分 — [diff.md](diff.md)
+- 本筋から外した補足 — [misc.md](misc.md)

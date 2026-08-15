@@ -21,9 +21,9 @@ table/ に書かない。[plan/README.md](README.md) と
 
 ```
 # BMS × Rathjen T(M) 対応表 (R1)
-  バージョン / 1 段落の説明 / 他文書へのリンク 5 本
-## 列の意味
+  バージョン / 1 段落の説明
 ## 対応表
+## 列の意味
 # 証明の仕様
   E.cert ただ 1 つ
 # 定義
@@ -34,6 +34,8 @@ table/ に書かない。[plan/README.md](README.md) と
 # D.Cl
   規則の閉包。上のすべての定義が使う一般形
   ## T.Cl.closed / T.Cl.min / T.Cl.inv
+# 関連文書
+  他文書へのリンク 5 本
 ```
 
 ## 対応表の列
