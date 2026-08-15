@@ -225,7 +225,7 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1],[2,1]],
     t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (add (phi zero (phi zero zero)) (phi zero zero)),
-    name := "\\bar{\\varphi}(3,\\omega+1)",
+    name := "\\bar{\\varphi}(3,\\omega+1)", proof := "namespace G11",
     note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (phi zero (phi zero zero)) zero,

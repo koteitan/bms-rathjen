@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.44
+バージョン: v0.7.45
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -48,7 +48,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L208) | $`\bar{\varphi}(3,0)`$ | $`\bar{\varphi}(3,0)`$ |  |  | 旧値 ζ₁ を訂正 (較正事故の初検出行) |
 | [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)`](../lean/Rows/TM.lean#L212) | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ |  | [fₙ](../lean/Rows/G9.lean#L6) | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
 | [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L218) | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ |  | [fₙ](../lean/Rows/G10.lean#L6) | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L225) | $`\bar{\varphi}(3,\omega+1)`$ | $`\bar{\varphi}(3,\omega+1)`$ |  |  | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L225) | $`\bar{\varphi}(3,\omega+1)`$ | $`\bar{\varphi}(3,\omega+1)`$ |  | [fₙ](../lean/Rows/G11.lean#L36) | 外部の表と食い違う ([diff.md](diff.md) 族 4) |
 | [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L231) | $`\bar{\varphi}(\omega,0)`$ | $`\bar{\varphi}(\omega,0)`$ |  | [fₙ](../lean/Rows/Selected.lean#L2114) | 旧値 ζ_ω を訂正 |
 | [`(0,0)(1,1)(2,1)(3,0)(4,1)`](../lean/Rows/TM.lean#L235) | $`\bar{\varphi}(\bar{\varphi}(1,0),0)`$ | $`\bar{\varphi}(\varepsilon_0,0)`$ |  | [fₙ](../lean/Rows/G3.lean#L6) | 旧値 ζ_{ε₀} を訂正 |
 | [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L239) | $`\psi_{\Omega}(0)`$ | $`\Gamma_0`$ |  | [fₙ](../lean/Rows/G7.lean#L6) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 |

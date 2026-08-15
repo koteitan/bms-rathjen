@@ -7,10 +7,12 @@ import Rows.Ladder
 値は φ̄(3, ω+1)。`table/diff.md` の族 4 で未決の 2 行のうちの 1 つで、決着には
 `oR` を `n` で量化した等式が要る。
 
-**リンク 1 と 3 が定理になっている。残るのはリンク 2 だけである。**
+**3 つのリンクが全部定理になった。** `oR_M` が行を閉じる:
+
+    oR (expand M n) = some (fsN t (n+1))       全 n について
 
     展開 --ofMatrix--> 梯子 --transPort--> BT --dict--> 値
-            ✅ ofMatrix_M      🚧 未着手      ✅ dict_LBT
+            ✅ ofMatrix_M    ✅ transPort_L   ✅ dict_LBT
 
 この行は `G10` の梯子に **1 ブロックあたり 1 列足したもの**である (周期 6 → 7、
 基底も 1 列長い)。だからリンク 1 と 3 は `Rows/G10.lean` をなぞれば通る。
@@ -23,9 +25,9 @@ import Rows.Ladder
 後者のために `phiNF` の三項和の場合 (`splitFin_add_triple` / `phiNF_add_triple`) が
 要った。`Evidence/StageB.lean` の `splitFin_add_pair` は二項和までしか扱わない。
 
-リンク 2 は `runAux` 自身の再帰に沿った帰納で、`Rows/G10.lean` の「Six-phase reduction」
-以下を周期 7 で取り直す作業になる。`++` に沿った帰納は使えない
-(`Evidence/Cert.lean` §21.2)。
+リンク 2 は 2 段階だった。**還元は 4 つの形の輪** (`Cw`・`Q`・`A6`・`Zr`) で、
+梯子そのものが輪の 1 周目 (`L m = Cw 0 (m+6)`)。**読み出しは 7 相**で、うち 4 相は
+印を 2 つ持つ。`++` に沿った帰納は使えない (`Evidence/Cert.lean` §21.2)。
 -/
 
 open TM Term BMS Trans Rows Rows.Selected
@@ -3110,18 +3112,1369 @@ theorem repl_LBT_r0 (a f : Nat) (hf : 4*a+7 ≤ f) :
 #guard (List.range 5).all fun a =>
   Trans.Recal.replMark 60 (LBT (7*a+6)) D1z D11z==some (LBT (7*a+7))
 
+/-! ### Link 2, step 20: a mark one level down. -/
+
+theorem isMarkedB_under (u v : Nat) (y : Trans.Dict.BT)
+    (hne : ((Trans.Dict.BT.D u (.D v y))==(Trans.Dict.BT.D v y))=false) :
+    Trans.Recal.isMarkedB (.D u (.D v y)) (.D v y)=true := by
+  unfold Trans.Recal.isMarkedB
+  obtain ⟨w,hw⟩ : ∃ w, Trans.Dict.BT.size (Trans.Dict.BT.D u (.D v y))+2=w+1+1 :=
+    ⟨Trans.Dict.BT.size (Trans.Dict.BT.D u (.D v y)),by omega⟩
+  rw [hw]
+  show (if (Trans.Dict.BT.D u (.D v y))==(Trans.Dict.BT.D v y) then true
+    else Trans.Recal.isMarkedBAux (w+1) (Trans.Recal.nextMarkedB (.D u (.D v y)))
+      (Trans.Dict.BT.D v y))=true
+  rw [hne]
+  simp only [Bool.false_eq_true,if_false]
+  show (if (Trans.Dict.BT.D v y)==(Trans.Dict.BT.D v y) then true
+    else Trans.Recal.isMarkedBAux w (Trans.Recal.nextMarkedB (.D v y))
+      (Trans.Dict.BT.D v y))=true
+  rw [if_pos (G1.beq_BT_self _)]
+
+theorem replMark_under (f u v : Nat) (y cc : Trans.Dict.BT)
+    (hne : ((Trans.Dict.BT.D u (.D v y))==(Trans.Dict.BT.D v y))=false) :
+    Trans.Recal.replMark (f+2) (.D u (.D v y)) (.D v y) cc
+      = some (Trans.Dict.BT.D u cc) := by
+  rw [show f+2=(f+1)+1 by omega,Trans.Recal.replMark,hne]
+  simp only [Bool.false_eq_true,if_false]
+  rw [G1.replMark_self (f+1) v y cc (by omega)]
+  rfl
+
+#guard Trans.Recal.isMarkedB (.D 0 D1z) D1z
+#guard Trans.Recal.replMark 6 (.D 0 D1z) D1z D11z==some (.D 0 D11z)
+
+/-! ### Link 2, step 21: the memo.
+
+Four of the seven residues carry TWO marks, so `Allowed` is three-valued there.
+
+    r   markJ1   V1              markJ2   V2
+    0   k+5      D1 (D1 0)       —        —
+    1   k+6      D0 0            —        —
+    2   k+6      D1 0            k+5      D0 (D1 0)
+    3   k+5      D1 (D1 0)       k+4      D0 (D1 (D1 0))
+    4   k+4      D1 (D1 0+D1 0)  k+3      D0 (D1 (D1 0+D1 0))
+    5   k+2      D0 A0           —        —
+    6   k+6      D1 0            —        —
+-/
+
+def markJ1 (k : Nat) : Int :=
+  if k%7=0 ∨ k%7=3 then ((k+5:Nat):Int)
+  else if k%7=4 then ((k+4:Nat):Int)
+  else if k%7=5 then ((k+2:Nat):Int)
+  else ((k+6:Nat):Int)
+
+def markV1 (k : Nat) : Trans.Dict.BT :=
+  if k%7=0 ∨ k%7=3 then D11z
+  else if k%7=1 then D0z
+  else if k%7=4 then D1ss
+  else if k%7=5 then .D 0 A0
+  else D1z
+
+def hasTwo (k : Nat) : Prop := k%7=2 ∨ k%7=3 ∨ k%7=4
+
+def markJ2 (k : Nat) : Int :=
+  if k%7=2 then ((k+5:Nat):Int) else if k%7=3 then ((k+4:Nat):Int)
+  else ((k+3:Nat):Int)
+
+def markV2 (k : Nat) : Trans.Dict.BT :=
+  if k%7=2 then .D 0 D1z else if k%7=3 then .D 0 D11z else .D 0 D1ss
+
+def Allowed (k : Nat) (req : Option Int) : Prop :=
+  req=none ∨ req=some (markJ1 k) ∨ (hasTwo k ∧ req=some (markJ2 k))
+
+def Val (k : Nat) (req : Option Int) : Trans.Dict.BT :=
+  if req=none then LBT k else if req=some (markJ1 k) then markV1 k else markV2 k
+
+theorem markJ2_lt (k : Nat) (h : hasTwo k) : markJ2 k<markJ1 k := by
+  unfold hasTwo at h
+  unfold markJ1 markJ2
+  rcases h with h|h|h
+  · rw [if_pos h,if_neg (by omega),if_neg (by omega),if_neg (by omega)]; omega
+  · rw [if_neg (by omega),if_pos h,if_pos (by omega)]; omega
+  · rw [if_neg (by omega),if_neg (by omega),if_pos h,if_neg (by omega)]; omega
+
+theorem Allowed_none (k : Nat) : Allowed k none := Or.inl rfl
+theorem Allowed_m1 (k : Nat) : Allowed k (some (markJ1 k)) := Or.inr (Or.inl rfl)
+theorem Allowed_m2 (k : Nat) (h : hasTwo k) : Allowed k (some (markJ2 k)) :=
+  Or.inr (Or.inr ⟨h,rfl⟩)
+
+theorem Val_none (k : Nat) : Val k none=LBT k := by unfold Val; rw [if_pos rfl]
+theorem Val_m1 (k : Nat) : Val k (some (markJ1 k))=markV1 k := by
+  unfold Val
+  rw [if_neg (by simp),if_pos rfl]
+theorem Val_m2 (k : Nat) (h : hasTwo k) : Val k (some (markJ2 k))=markV2 k := by
+  unfold Val
+  rw [if_neg (by simp),if_neg (by
+    have := markJ2_lt k h
+    simp only [Option.some.injEq]
+    omega)]
+
+/-! #### `L 0` の下の 6 つの前置 -/
+
+abbrev P1 : Trans.Recal.PS := [((0:Int),(0:Int))]
+abbrev P2 : Trans.Recal.PS := [((0:Int),(0:Int)),((1:Int),(1:Int))]
+abbrev P3 : Trans.Recal.PS :=
+  [((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(1:Int))]
+abbrev P4 : Trans.Recal.PS :=
+  [((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(1:Int)),((2:Int),(1:Int))]
+abbrev P5 : Trans.Recal.PS :=
+  [((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(1:Int)),((2:Int),(1:Int)),
+   ((2:Int),(0:Int))]
+abbrev P6 : Trans.Recal.PS :=
+  [((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(1:Int)),((2:Int),(1:Int)),
+   ((2:Int),(0:Int)),((1:Int),(1:Int))]
+
+def AP (i : Nat) (req : Option Int) : Prop :=
+  if i=1 then req=none
+  else if i=5 then req=none ∨ req=some 0
+  else if i=6 then req=none ∨ req=some 5
+  else req=none ∨ req=some 1 ∨ req=some 0
+
+def VP (i : Nat) (req : Option Int) : Trans.Dict.BT :=
+  if i=1 then .zero
+  else if i=2 then (if req=some 1 then D1z else .D 0 D1z)
+  else if i=3 then (if req=some 1 then D11z else .D 0 D11z)
+  else if i=4 then (if req=some 1 then D1ss else .D 0 D1ss)
+  else if i=5 then .D 0 A0
+  else (if req=none then .D 0 B0 else D1z)
+
+def PP (i : Nat) : Trans.Recal.PS :=
+  if i=1 then P1 else if i=2 then P2 else if i=3 then P3
+  else if i=4 then P4 else if i=5 then P5 else P6
+
+def Good (p : (Trans.Recal.PS × Option Int) × Trans.Dict.BT) : Prop :=
+  (∀ k req, p.1=(L k,req) → Allowed k req → p.2=Val k req)
+  ∧ (∀ i req, 1 ≤ i → i ≤ 6 → p.1=(PP i,req) → AP i req → p.2=VP i req)
+
+def Sound (tbl : Trans.Recal.Memo) : Prop := ∀ p∈tbl, Good p
+
+theorem Sound_nil : Sound [] := by intro p hp; simp at hp
+
+theorem good_of_find {tbl : Trans.Recal.Memo} (hs : Sound tbl)
+    {key : Trans.Recal.PS × Option Int}
+    {p : (Trans.Recal.PS × Option Int) × Trans.Dict.BT}
+    (h : tbl.find? (fun z=>z.1==key)=some p) : Good p ∧ p.1=key := by
+  refine ⟨hs p (List.mem_of_find?_eq_some h),?_⟩
+  have hb : p.1==key := List.find?_some (p:=fun z=>z.1==key) (a:=p) h
+  exact eq_of_beq hb
+
+theorem Sound_cons {tbl : Trans.Recal.Memo} (hs : Sound tbl)
+    {p : (Trans.Recal.PS × Option Int) × Trans.Dict.BT} (hp : Good p) :
+    Sound (p::tbl) := by
+  intro q hq
+  rcases List.mem_cons.mp hq with h|h
+  · subst h; exact hp
+  · exact hs q h
+
+theorem length_PP (i : Nat) (h1 : 1 ≤ i) (h6 : i ≤ 6) : (PP i).length=i := by
+  unfold PP
+  rcases (show i=1 ∨ i=2 ∨ i=3 ∨ i=4 ∨ i=5 ∨ i=6 by omega) with rfl|rfl|rfl|rfl|rfl|rfl
+  · rfl
+  · rw [if_neg (by omega)]; rfl
+  · rw [if_neg (by omega),if_neg (by omega)]; rfl
+  · rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]; rfl
+  · rw [if_neg (by omega),if_neg (by omega),if_neg (by omega),if_neg (by omega)]; rfl
+  · rw [if_neg (by omega),if_neg (by omega),if_neg (by omega),if_neg (by omega),
+      if_neg (by omega)]
+    rfl
+
+theorem L_ne_PP (k i : Nat) (h1 : 1 ≤ i) (h6 : i ≤ 6) : L k≠PP i := by
+  intro h
+  have := congrArg List.length h
+  rw [length_L,length_PP i h1 h6] at this
+  omega
+
+theorem PP_inj (i j : Nat) (h1 : 1 ≤ i) (h6 : i ≤ 6) (g1 : 1 ≤ j) (g6 : j ≤ 6)
+    (h : PP i=PP j) : i=j := by
+  have := congrArg List.length h
+  rw [length_PP i h1 h6,length_PP j g1 g6] at this
+  exact this
+
+theorem L_inj (k k' : Nat) (h : L k=L k') : k=k' := by
+  have := congrArg List.length h
+  rw [length_L,length_L] at this
+  omega
+
+theorem good_L_entry (k : Nat) (req : Option Int) (hr : Allowed k req) :
+    Good ((L k,req),Val k req) := by
+  refine ⟨?_,?_⟩
+  · intro j r h _
+    have hL : L k=L j := congrArg Prod.fst h
+    have hkj := L_inj k j hL
+    subst hkj
+    have hreq : req=r := by simpa using congrArg Prod.snd h
+    subst hreq
+    rfl
+  · intro i r hi1 hi6 h _
+    exact absurd (congrArg Prod.fst h) (L_ne_PP k i hi1 hi6)
+
+theorem good_PP_entry (i : Nat) (req : Option Int) (hi1 : 1 ≤ i) (hi6 : i ≤ 6)
+    (hr : AP i req) : Good ((PP i,req),VP i req) := by
+  refine ⟨?_,?_⟩
+  · intro j r h _
+    exact absurd (congrArg Prod.fst h).symm (L_ne_PP j i hi1 hi6)
+  · intro j r hj1 hj6 h _
+    have hij := PP_inj i j hi1 hi6 hj1 hj6 (congrArg Prod.fst h)
+    subst hij
+    have hreq : req=r := by simpa using congrArg Prod.snd h
+    subst hreq
+    rfl
+
+theorem PP_1 : PP 1=P1 := rfl
+theorem PP_2 : PP 2=P2 := rfl
+theorem PP_3 : PP 3=P3 := rfl
+theorem PP_4 : PP 4=P4 := rfl
+theorem PP_5 : PP 5=P5 := rfl
+theorem PP_6 : PP 6=P6 := rfl
+
+theorem VP_1 (req : Option Int) : VP 1 req=Trans.Dict.BT.zero := rfl
+theorem VP_2_none : VP 2 none=Trans.Dict.BT.D 0 D1z := rfl
+theorem VP_2_one : VP 2 (some 1)=D1z := rfl
+theorem VP_2_zero : VP 2 (some 0)=Trans.Dict.BT.D 0 D1z := rfl
+theorem VP_3_none : VP 3 none=Trans.Dict.BT.D 0 D11z := rfl
+theorem VP_3_one : VP 3 (some 1)=D11z := rfl
+theorem VP_3_zero : VP 3 (some 0)=Trans.Dict.BT.D 0 D11z := rfl
+theorem VP_4_none : VP 4 none=Trans.Dict.BT.D 0 D1ss := rfl
+theorem VP_4_one : VP 4 (some 1)=D1ss := rfl
+theorem VP_4_zero : VP 4 (some 0)=Trans.Dict.BT.D 0 D1ss := rfl
+theorem VP_5 (req : Option Int) : VP 5 req=Trans.Dict.BT.D 0 A0 := rfl
+theorem VP_6_none : VP 6 none=Trans.Dict.BT.D 0 B0 := rfl
+theorem VP_6_five : VP 6 (some 5)=D1z := rfl
+
+theorem runAux_P1 (g : Nat) (tbl : Trans.Recal.Memo) (hs : Sound tbl) :
+    ((Trans.Recal.runAux (g+1) P1 none).run tbl).1=Trans.Dict.BT.zero
+      ∧ Sound ((Trans.Recal.runAux (g+1) P1 none).run tbl).2 := by
+  cases hf : tbl.find? (fun z=>z.1==(P1,(none:Option Int))) with
+  | some p =>
+    rw [G1.run_hit g P1 none tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    have := hg.2 1 none (by omega) (by omega) (by rw [PP_1]; exact he) (by
+      unfold AP
+      rw [if_pos rfl])
+    rw [VP_1] at this
+    exact ⟨this,hs⟩
+  | none =>
+    rw [G1.run_base g tbl hf]
+    refine ⟨rfl,Sound_cons hs ?_⟩
+    have h := good_PP_entry 1 none (by omega) (by omega) (by unfold AP; rw [if_pos rfl])
+    rw [PP_1,VP_1] at h
+    exact h
+
+theorem runAux_P2 (g : Nat) (req : Option Int) (hr : AP 2 req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl) :
+    ((Trans.Recal.runAux (g+2) P2 req).run tbl).1=VP 2 req
+      ∧ Sound ((Trans.Recal.runAux (g+2) P2 req).run tbl).2 := by
+  cases hf : tbl.find? (fun z=>z.1==(P2,req)) with
+  | some p =>
+    rw [show g+2=(g+1)+1 by omega,G1.run_hit (g+1) P2 req tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    exact ⟨hg.2 2 req (by omega) (by omega) (by rw [PP_2]; exact he) hr,hs⟩
+  | none =>
+    rw [show g+2=(g+1)+1 by omega,Trans.Recal.runAux]
+    simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+      modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+      MonadStateOf.get,Id.run,hf,
+      show Trans.Recal.isReducedP P2=true from by decide,
+      show Trans.Recal.isPrincipalP P2=true from by decide,
+      Bool.not_true,Bool.false_eq_true,if_false,
+      show Trans.Recal.lenI P2-1=(1:Int) from rfl,
+      show ((1:Int)==0)=false from rfl,
+      show Trans.Recal.predP P2=P1 from rfl]
+    cases hrun : (Trans.Recal.runAux (g+1) P1 none) tbl with
+    | mk t1 s =>
+      have ih1 := runAux_P1 g tbl hs
+      rw [show (Trans.Recal.runAux (g+1) P1 none).run tbl=(t1,s) from hrun] at ih1
+      have ht1 : t1=Trans.Dict.BT.zero := ih1.1
+      have hsm : Sound s := ih1.2
+      subst ht1
+      simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+        modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+        MonadStateOf.get,Id.run,hrun,
+        show ((Trans.Dict.BT.zero)==Trans.Dict.BT.zero)=true from rfl,if_true]
+      have hgood : ∀ r, AP 2 r → Good ((P2,r),VP 2 r) := fun r hrr => by
+        have := good_PP_entry 2 r (by omega) (by omega) hrr
+        rwa [PP_2] at this
+      unfold AP at hr
+      rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)] at hr
+      rcases hr with h|h|h
+      · subst h
+        rw [VP_2_none]
+        exact ⟨rfl,Sound_cons hsm (hgood none (by
+          unfold AP; rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+          exact Or.inl rfl))⟩
+      · subst h
+        simp only [show ((1:Int)==0)=false from rfl,Bool.false_eq_true,if_false]
+        rw [VP_2_one]
+        exact ⟨rfl,Sound_cons hsm (hgood (some 1) (by
+          unfold AP; rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+          exact Or.inr (Or.inl rfl)))⟩
+      · subst h
+        simp only [show ((0:Int)==0)=true from rfl,if_true]
+        rw [VP_2_zero]
+        exact ⟨rfl,Sound_cons hsm (hgood (some 0) (by
+          unfold AP; rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+          exact Or.inr (Or.inr rfl)))⟩
+
+theorem AP_mid (i : Nat) (hi : i=2 ∨ i=3 ∨ i=4) (req : Option Int) :
+    AP i req ↔ (req=none ∨ req=some 1 ∨ req=some 0) := by
+  unfold AP
+  rcases hi with rfl|rfl|rfl <;>
+    rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+
+theorem runAux_P3 (g : Nat) (req : Option Int) (hr : AP 3 req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl) :
+    ((Trans.Recal.runAux (g+3) P3 req).run tbl).1=VP 3 req
+      ∧ Sound ((Trans.Recal.runAux (g+3) P3 req).run tbl).2 := by
+  have hgood : ∀ r, AP 3 r → Good ((P3,r),VP 3 r) := fun r hrr => by
+    have := good_PP_entry 3 r (by omega) (by omega) hrr
+    rwa [PP_3] at this
+  have hAP2 : ∀ r, (r=none ∨ r=some 1 ∨ r=some 0) → AP 2 r :=
+    fun r h => (AP_mid 2 (by omega) r).mpr h
+  cases hf : tbl.find? (fun z=>z.1==(P3,req)) with
+  | some p =>
+    rw [show g+3=(g+2)+1 by omega,G1.run_hit (g+2) P3 req tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    exact ⟨hg.2 3 req (by omega) (by omega) (by rw [PP_3]; exact he) hr,hs⟩
+  | none =>
+    rw [show g+3=(g+2)+1 by omega,Trans.Recal.runAux]
+    simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+      modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+      MonadStateOf.get,Id.run,hf,
+      show Trans.Recal.isReducedP P3=true from by decide,
+      show Trans.Recal.isPrincipalP P3=true from by decide,
+      Bool.not_true,Bool.false_eq_true,if_false,
+      show Trans.Recal.lenI P3-1=(2:Int) from rfl,
+      show ((2:Int)==0)=false from rfl,
+      show Trans.Recal.predP P3=P2 from rfl]
+    cases hrun : (Trans.Recal.runAux (g+2) P2 none) tbl with
+    | mk t1 s =>
+      have ih1 := runAux_P2 g none (hAP2 none (Or.inl rfl)) tbl hs
+      rw [show (Trans.Recal.runAux (g+2) P2 none).run tbl=(t1,s) from hrun] at ih1
+      have ht1 : t1=Trans.Dict.BT.D 0 D1z := by rw [← VP_2_none]; exact ih1.1
+      have hsm : Sound s := ih1.2
+      subst ht1
+      cases hrun2 : (Trans.Recal.runAux (g+2) P2 (some 1)) s with
+      | mk c1 s2 =>
+        have ih2 := runAux_P2 g (some 1) (hAP2 _ (Or.inr (Or.inl rfl))) s hsm
+        rw [show (Trans.Recal.runAux (g+2) P2 (some 1)).run s=(c1,s2) from hrun2] at ih2
+        have hc1 : c1=D1z := by rw [← VP_2_one]; exact ih2.1
+        have hsm2 : Sound s2 := ih2.2
+        subst hc1
+        simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+          modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+          MonadStateOf.get,Id.run,hrun,hrun2,
+          show ((Trans.Dict.BT.D 0 D1z)==Trans.Dict.BT.zero)=false from rfl,
+          Bool.false_eq_true,if_false,
+          show Trans.Recal.fpar P3 0 2 0=1 from by decide,
+          show Trans.Recal.adm P3 1=1 from by decide,
+          show Trans.Recal.transTypeMain P3 1 2=3 from by decide,
+          show Trans.Recal.mkC2 P3 1 2 3 D1z=D11z from by decide]
+        rw [AP_mid 3 (by omega) req] at hr
+        rcases hr with h|h|h
+        · subst h
+          rw [VP_3_none]
+          exact ⟨rfl,Sound_cons hsm2 (hgood none ((AP_mid 3 (by omega) _).mpr
+            (Or.inl rfl)))⟩
+        · subst h
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          rw [if_pos (show (1:Int)<2 by omega)]
+          cases hrun3 : (Trans.Recal.runAux (g+2) P2 (some 1)) s2 with
+          | mk c0 s3 =>
+            have ih3 := runAux_P2 g (some 1) (hAP2 _ (Or.inr (Or.inl rfl))) s2 hsm2
+            rw [show (Trans.Recal.runAux (g+2) P2 (some 1)).run s2=(c0,s3)
+              from hrun3] at ih3
+            have hc0 : c0=D1z := by rw [← VP_2_one]; exact ih3.1
+            have hsm3 : Sound s3 := ih3.2
+            subst hc0
+            simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+              modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+              MonadStateOf.get,Id.run,hrun3,
+              show Trans.Recal.isMarkedB D1z D1z=true from by decide,if_true]
+            rw [VP_3_one]
+            exact ⟨rfl,Sound_cons hsm3 (hgood (some 1)
+              ((AP_mid 3 (by omega) _).mpr (Or.inr (Or.inl rfl))))⟩
+        · subst h
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          rw [if_pos (show (0:Int)<2 by omega)]
+          cases hrun3 : (Trans.Recal.runAux (g+2) P2 (some 0)) s2 with
+          | mk c0 s3 =>
+            have ih3 := runAux_P2 g (some 0) (hAP2 _ (Or.inr (Or.inr rfl))) s2 hsm2
+            rw [show (Trans.Recal.runAux (g+2) P2 (some 0)).run s2=(c0,s3)
+              from hrun3] at ih3
+            have hc0 : c0=Trans.Dict.BT.D 0 D1z := by rw [← VP_2_zero]; exact ih3.1
+            have hsm3 : Sound s3 := ih3.2
+            subst hc0
+            simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+              modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+              MonadStateOf.get,Id.run,hrun3,
+              show Trans.Recal.isMarkedB (Trans.Dict.BT.D 0 D1z) D1z=true from by decide,
+              if_true]
+            rw [VP_3_zero]
+            exact ⟨rfl,Sound_cons hsm3 (hgood (some 0)
+              ((AP_mid 3 (by omega) _).mpr (Or.inr (Or.inr rfl))))⟩
+
+theorem runAux_P4 (g : Nat) (req : Option Int) (hr : AP 4 req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl) :
+    ((Trans.Recal.runAux (g+4) P4 req).run tbl).1=VP 4 req
+      ∧ Sound ((Trans.Recal.runAux (g+4) P4 req).run tbl).2 := by
+  have hgood : ∀ r, AP 4 r → Good ((P4,r),VP 4 r) := fun r hrr => by
+    have := good_PP_entry 4 r (by omega) (by omega) hrr
+    rwa [PP_4] at this
+  have hAP3 : ∀ r, (r=none ∨ r=some 1 ∨ r=some 0) → AP 3 r :=
+    fun r h => (AP_mid 3 (by omega) r).mpr h
+  cases hf : tbl.find? (fun z=>z.1==(P4,req)) with
+  | some p =>
+    rw [show g+4=(g+3)+1 by omega,G1.run_hit (g+3) P4 req tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    exact ⟨hg.2 4 req (by omega) (by omega) (by rw [PP_4]; exact he) hr,hs⟩
+  | none =>
+    rw [show g+4=(g+3)+1 by omega,Trans.Recal.runAux]
+    simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+      modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+      MonadStateOf.get,Id.run,hf,
+      show Trans.Recal.isReducedP P4=true from by decide,
+      show Trans.Recal.isPrincipalP P4=true from by decide,
+      Bool.not_true,Bool.false_eq_true,if_false,
+      show Trans.Recal.lenI P4-1=(3:Int) from rfl,
+      show ((3:Int)==0)=false from rfl,
+      show Trans.Recal.predP P4=P3 from rfl]
+    cases hrun : (Trans.Recal.runAux (g+3) P3 none) tbl with
+    | mk t1 s =>
+      have ih1 := runAux_P3 g none (hAP3 none (Or.inl rfl)) tbl hs
+      rw [show (Trans.Recal.runAux (g+3) P3 none).run tbl=(t1,s) from hrun] at ih1
+      have ht1 : t1=Trans.Dict.BT.D 0 D11z := by rw [← VP_3_none]; exact ih1.1
+      have hsm : Sound s := ih1.2
+      subst ht1
+      cases hrun2 : (Trans.Recal.runAux (g+3) P3 (some 1)) s with
+      | mk c1 s2 =>
+        have ih2 := runAux_P3 g (some 1) (hAP3 _ (Or.inr (Or.inl rfl))) s hsm
+        rw [show (Trans.Recal.runAux (g+3) P3 (some 1)).run s=(c1,s2) from hrun2] at ih2
+        have hc1 : c1=D11z := by rw [← VP_3_one]; exact ih2.1
+        have hsm2 : Sound s2 := ih2.2
+        subst hc1
+        simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+          modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+          MonadStateOf.get,Id.run,hrun,hrun2,
+          show ((Trans.Dict.BT.D 0 D11z)==Trans.Dict.BT.zero)=false from rfl,
+          Bool.false_eq_true,if_false,
+          show Trans.Recal.fpar P4 0 3 0=1 from by decide,
+          show Trans.Recal.adm P4 1=1 from by decide,
+          show Trans.Recal.transTypeMain P4 1 3=3 from by decide,
+          show Trans.Recal.mkC2 P4 1 3 3 D11z=D1ss from by decide]
+        rw [AP_mid 4 (by omega) req] at hr
+        rcases hr with h|h|h
+        · subst h
+          rw [VP_4_none]
+          exact ⟨rfl,Sound_cons hsm2 (hgood none ((AP_mid 4 (by omega) _).mpr
+            (Or.inl rfl)))⟩
+        · subst h
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          rw [if_pos (show (1:Int)<3 by omega)]
+          cases hrun3 : (Trans.Recal.runAux (g+3) P3 (some 1)) s2 with
+          | mk c0 s3 =>
+            have ih3 := runAux_P3 g (some 1) (hAP3 _ (Or.inr (Or.inl rfl))) s2 hsm2
+            rw [show (Trans.Recal.runAux (g+3) P3 (some 1)).run s2=(c0,s3)
+              from hrun3] at ih3
+            have hc0 : c0=D11z := by rw [← VP_3_one]; exact ih3.1
+            have hsm3 : Sound s3 := ih3.2
+            subst hc0
+            simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+              modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+              MonadStateOf.get,Id.run,hrun3,
+              show Trans.Recal.isMarkedB D11z D11z=true from by decide,if_true]
+            rw [VP_4_one]
+            exact ⟨rfl,Sound_cons hsm3 (hgood (some 1)
+              ((AP_mid 4 (by omega) _).mpr (Or.inr (Or.inl rfl))))⟩
+        · subst h
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          rw [if_pos (show (0:Int)<3 by omega)]
+          cases hrun3 : (Trans.Recal.runAux (g+3) P3 (some 0)) s2 with
+          | mk c0 s3 =>
+            have ih3 := runAux_P3 g (some 0) (hAP3 _ (Or.inr (Or.inr rfl))) s2 hsm2
+            rw [show (Trans.Recal.runAux (g+3) P3 (some 0)).run s2=(c0,s3)
+              from hrun3] at ih3
+            have hc0 : c0=Trans.Dict.BT.D 0 D11z := by rw [← VP_3_zero]; exact ih3.1
+            have hsm3 : Sound s3 := ih3.2
+            subst hc0
+            simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+              modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+              MonadStateOf.get,Id.run,hrun3,
+              show Trans.Recal.isMarkedB (Trans.Dict.BT.D 0 D11z) D11z=true
+                from by decide,if_true]
+            rw [VP_4_zero]
+            exact ⟨rfl,Sound_cons hsm3 (hgood (some 0)
+              ((AP_mid 4 (by omega) _).mpr (Or.inr (Or.inr rfl))))⟩
+
+theorem AP_5i (req : Option Int) : AP 5 req ↔ (req=none ∨ req=some 0) := by
+  unfold AP
+  rw [if_neg (by omega),if_pos rfl]
+
+theorem AP_6i (req : Option Int) : AP 6 req ↔ (req=none ∨ req=some 5) := by
+  unfold AP
+  rw [if_neg (by omega),if_neg (by omega),if_pos rfl]
+
+theorem runAux_P5 (g : Nat) (req : Option Int) (hr : AP 5 req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl) :
+    ((Trans.Recal.runAux (g+5) P5 req).run tbl).1=VP 5 req
+      ∧ Sound ((Trans.Recal.runAux (g+5) P5 req).run tbl).2 := by
+  have hgood : ∀ r, AP 5 r → Good ((P5,r),VP 5 r) := fun r hrr => by
+    have := good_PP_entry 5 r (by omega) (by omega) hrr
+    rwa [PP_5] at this
+  have hAP4 : ∀ r, (r=none ∨ r=some 1 ∨ r=some 0) → AP 4 r :=
+    fun r h => (AP_mid 4 (by omega) r).mpr h
+  cases hf : tbl.find? (fun z=>z.1==(P5,req)) with
+  | some p =>
+    rw [show g+5=(g+4)+1 by omega,G1.run_hit (g+4) P5 req tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    exact ⟨hg.2 5 req (by omega) (by omega) (by rw [PP_5]; exact he) hr,hs⟩
+  | none =>
+    rw [show g+5=(g+4)+1 by omega,Trans.Recal.runAux]
+    simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+      modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+      MonadStateOf.get,Id.run,hf,
+      show Trans.Recal.isReducedP P5=true from by decide,
+      show Trans.Recal.isPrincipalP P5=true from by decide,
+      Bool.not_true,Bool.false_eq_true,if_false,
+      show Trans.Recal.lenI P5-1=(4:Int) from rfl,
+      show ((4:Int)==0)=false from rfl,
+      show Trans.Recal.predP P5=P4 from rfl]
+    cases hrun : (Trans.Recal.runAux (g+4) P4 none) tbl with
+    | mk t1 s =>
+      have ih1 := runAux_P4 g none (hAP4 none (Or.inl rfl)) tbl hs
+      rw [show (Trans.Recal.runAux (g+4) P4 none).run tbl=(t1,s) from hrun] at ih1
+      have ht1 : t1=Trans.Dict.BT.D 0 D1ss := by rw [← VP_4_none]; exact ih1.1
+      have hsm : Sound s := ih1.2
+      subst ht1
+      cases hrun2 : (Trans.Recal.runAux (g+4) P4 (some 1)) s with
+      | mk c1 s2 =>
+        have ih2 := runAux_P4 g (some 1) (hAP4 _ (Or.inr (Or.inl rfl))) s hsm
+        rw [show (Trans.Recal.runAux (g+4) P4 (some 1)).run s=(c1,s2) from hrun2] at ih2
+        have hc1 : c1=D1ss := by rw [← VP_4_one]; exact ih2.1
+        have hsm2 : Sound s2 := ih2.2
+        subst hc1
+        simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+          modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+          MonadStateOf.get,Id.run,hrun,hrun2,
+          show ((Trans.Dict.BT.D 0 D1ss)==Trans.Dict.BT.zero)=false from rfl,
+          Bool.false_eq_true,if_false,
+          show Trans.Recal.fpar P5 0 4 0=1 from by decide,
+          show Trans.Recal.adm P5 1=1 from by decide,
+          show Trans.Recal.transTypeMain P5 1 4=1 from by decide,
+          show Trans.Recal.mkC2 P5 1 4 1 D1ss=A0 from by decide]
+        rw [AP_5i req] at hr
+        rcases hr with h|h
+        · subst h
+          rw [VP_5]
+          exact ⟨rfl,Sound_cons hsm2 (hgood none ((AP_5i _).mpr (Or.inl rfl)))⟩
+        · subst h
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          rw [if_pos (show (0:Int)<4 by omega)]
+          cases hrun3 : (Trans.Recal.runAux (g+4) P4 (some 0)) s2 with
+          | mk c0 s3 =>
+            have ih3 := runAux_P4 g (some 0) (hAP4 _ (Or.inr (Or.inr rfl))) s2 hsm2
+            rw [show (Trans.Recal.runAux (g+4) P4 (some 0)).run s2=(c0,s3)
+              from hrun3] at ih3
+            have hc0 : c0=Trans.Dict.BT.D 0 D1ss := by rw [← VP_4_zero]; exact ih3.1
+            have hsm3 : Sound s3 := ih3.2
+            subst hc0
+            simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+              modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+              MonadStateOf.get,Id.run,hrun3,
+              show Trans.Recal.isMarkedB (Trans.Dict.BT.D 0 D1ss) D1ss=true
+                from by decide,if_true]
+            rw [VP_5]
+            exact ⟨rfl,Sound_cons hsm3 (hgood (some 0) ((AP_5i _).mpr (Or.inr rfl)))⟩
+
+theorem runAux_P6 (g : Nat) (req : Option Int) (hr : AP 6 req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl) :
+    ((Trans.Recal.runAux (g+6) P6 req).run tbl).1=VP 6 req
+      ∧ Sound ((Trans.Recal.runAux (g+6) P6 req).run tbl).2 := by
+  have hgood : ∀ r, AP 6 r → Good ((P6,r),VP 6 r) := fun r hrr => by
+    have := good_PP_entry 6 r (by omega) (by omega) hrr
+    rwa [PP_6] at this
+  cases hf : tbl.find? (fun z=>z.1==(P6,req)) with
+  | some p =>
+    rw [show g+6=(g+5)+1 by omega,G1.run_hit (g+5) P6 req tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    exact ⟨hg.2 6 req (by omega) (by omega) (by rw [PP_6]; exact he) hr,hs⟩
+  | none =>
+    rw [show g+6=(g+5)+1 by omega,Trans.Recal.runAux]
+    simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+      modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+      MonadStateOf.get,Id.run,hf,
+      show Trans.Recal.isReducedP P6=true from by decide,
+      show Trans.Recal.isPrincipalP P6=true from by decide,
+      Bool.not_true,Bool.false_eq_true,if_false,
+      show Trans.Recal.lenI P6-1=(5:Int) from rfl,
+      show ((5:Int)==0)=false from rfl,
+      show Trans.Recal.predP P6=P5 from rfl]
+    cases hrun : (Trans.Recal.runAux (g+5) P5 none) tbl with
+    | mk t1 s =>
+      have ih1 := runAux_P5 g none ((AP_5i _).mpr (Or.inl rfl)) tbl hs
+      rw [show (Trans.Recal.runAux (g+5) P5 none).run tbl=(t1,s) from hrun] at ih1
+      have ht1 : t1=Trans.Dict.BT.D 0 A0 := by rw [← VP_5 none]; exact ih1.1
+      have hsm : Sound s := ih1.2
+      subst ht1
+      cases hrun2 : (Trans.Recal.runAux (g+5) P5 (some 0)) s with
+      | mk c1 s2 =>
+        have ih2 := runAux_P5 g (some 0) ((AP_5i _).mpr (Or.inr rfl)) s hsm
+        rw [show (Trans.Recal.runAux (g+5) P5 (some 0)).run s=(c1,s2) from hrun2] at ih2
+        have hc1 : c1=Trans.Dict.BT.D 0 A0 := by rw [← VP_5 (some 0)]; exact ih2.1
+        have hsm2 : Sound s2 := ih2.2
+        subst hc1
+        simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+          modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+          MonadStateOf.get,Id.run,hrun,hrun2,
+          show ((Trans.Dict.BT.D 0 A0)==Trans.Dict.BT.zero)=false from rfl,
+          Bool.false_eq_true,if_false,
+          show Trans.Recal.fpar P6 0 5 0=0 from by decide,
+          show Trans.Recal.adm P6 0=0 from by decide,
+          show Trans.Recal.transTypeMain P6 0 5=5 from by decide,
+          show Trans.Recal.mkC2 P6 0 5 5 (Trans.Dict.BT.D 0 A0)
+            =Trans.Dict.BT.D 0 B0 from by decide]
+        rw [AP_6i req] at hr
+        rcases hr with h|h
+        · subst h
+          rw [VP_6_none]
+          exact ⟨rfl,Sound_cons hsm2 (hgood none ((AP_6i _).mpr (Or.inl rfl)))⟩
+        · subst h
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          rw [if_neg (show ¬((5:Int)<5) by omega),VP_6_five]
+          exact ⟨rfl,Sound_cons hsm2 (hgood (some 5) ((AP_6i _).mpr (Or.inr rfl)))⟩
+
+/-! #### 一段の型 -/
+
+theorem LBT_ne_zero (m : Nat) : ((LBT m)==Trans.Dict.BT.zero)=false := by
+  unfold LBT
+  rfl
+
+theorem lenI_L_succ (k : Nat) : Trans.Recal.lenI (L (k+1))-1=((k+1+6:Nat):Int) := by
+  rw [lenI_L]
+  omega
+
+theorem runAux_step (k g : Nat) (j0 : Int) (ty : Nat) (c2 : Trans.Dict.BT)
+    (req : Option Int) (hr : Allowed (k+1) req)
+    (hj0 : Trans.Recal.fpar (L (k+1)) 0 ((k+1+6:Nat):Int) 0=j0)
+    (hty : Trans.Recal.transTypeMain (L (k+1)) j0 ((k+1+6:Nat):Int)=ty)
+    (hadm : Trans.Recal.adm (L (k+1)) j0=markJ1 k)
+    (hc2 : Trans.Recal.mkC2 (L (k+1)) j0 ((k+1+6:Nat):Int) ty (markV1 k)=c2)
+    (hnone : (Trans.Recal.replMark
+        (Trans.Dict.BT.size (LBT k)
+          +(Trans.Dict.BT.size (markV1 k)+Trans.Dict.BT.size c2+4))
+        (LBT k) (markV1 k) c2).getD Trans.Dict.BT.zero=LBT (k+1))
+    (hm : ∀ m, req=some m →
+      (m=((k+1+6:Nat):Int)
+         ∧ Trans.Dict.BT.D
+             (Trans.Recal.gp1 (L (k+1)) ((k+1+6:Nat):Int)).toNat Trans.Dict.BT.zero
+           = Val (k+1) (some m))
+      ∨ (m<((k+1+6:Nat):Int) ∧ Allowed k (some m)
+         ∧ Trans.Recal.isMarkedB (Val k (some m)) (markV1 k)=true
+         ∧ (Trans.Recal.replMark
+              (Trans.Dict.BT.size (Val k (some m))
+                +(Trans.Dict.BT.size (markV1 k)+Trans.Dict.BT.size c2+4))
+              (Val k (some m)) (markV1 k) c2).getD Trans.Dict.BT.zero
+           = Val (k+1) (some m)))
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  cases hf : tbl.find? (fun z=>z.1==(L (k+1),req)) with
+  | some p =>
+    rw [show (k+1)+g+8=(k+g+8)+1 by omega,
+      G1.run_hit (k+g+8) (L (k+1)) req tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    exact ⟨hg.1 (k+1) req he hr,hs⟩
+  | none =>
+    rw [show (k+1)+g+8=(k+g+8)+1 by omega,Trans.Recal.runAux]
+    simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+      modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+      MonadStateOf.get,Id.run,hf,
+      isReducedP_L (k+1),prin_L (k+1),
+      Bool.not_true,Bool.false_eq_true,if_false,lenI_L_succ k,
+      show ((((k+1+6:Nat)):Int)==0)=false from beq_eq_false_iff_ne.mpr (by omega),
+      predP_L k]
+    cases hrun : (Trans.Recal.runAux (k+g+8) (L k) none) tbl with
+    | mk t1 s =>
+      have ih1 := ih none (Allowed_none k) tbl hs
+      rw [show (Trans.Recal.runAux (k+g+8) (L k) none).run tbl=(t1,s) from hrun] at ih1
+      have ht1 : t1=LBT k := by simpa only [Val_none] using ih1.1
+      have hsm : Sound s := ih1.2
+      subst ht1
+      cases hrun2 : (Trans.Recal.runAux (k+g+8) (L k) (some (markJ1 k))) s with
+      | mk c1 s2 =>
+        have ih2 := ih (some (markJ1 k)) (Allowed_m1 k) s hsm
+        rw [show (Trans.Recal.runAux (k+g+8) (L k) (some (markJ1 k))).run s=(c1,s2)
+          from hrun2] at ih2
+        have hc1 : c1=markV1 k := by simpa only [Val_m1] using ih2.1
+        have hsm2 : Sound s2 := ih2.2
+        subst hc1
+        simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+          modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+          MonadStateOf.get,Id.run,hrun,hrun2,LBT_ne_zero k,
+          Bool.false_eq_true,if_false,hj0,hty,hadm,hc2]
+        cases hreq : req with
+        | none =>
+          rw [Val_none,hnone]
+          have hgood : Good ((L (k+1),(none:Option Int)),Val (k+1) none) :=
+            good_L_entry (k+1) none (Allowed_none (k+1))
+          rw [Val_none] at hgood
+          exact ⟨rfl,Sound_cons hsm2 hgood⟩
+        | some m =>
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          have hgood : Good ((L (k+1),some m),Val (k+1) (some m)) :=
+            good_L_entry (k+1) (some m) (by rw [hreq] at hr; exact hr)
+          rcases hm m hreq with ⟨hme,hv⟩|⟨hlt,hal,hmk,hv⟩
+          · subst hme
+            rw [if_neg (show ¬((((k+1+6:Nat)):Int)<(((k+1+6:Nat)):Int)) by omega),hv]
+            exact ⟨rfl,Sound_cons hsm2 hgood⟩
+          · rw [if_pos hlt]
+            cases hrun3 : (Trans.Recal.runAux (k+g+8) (L k) (some m)) s2 with
+            | mk c0 s3 =>
+              have ih3 := ih (some m) hal s2 hsm2
+              rw [show (Trans.Recal.runAux (k+g+8) (L k) (some m)).run s2=(c0,s3)
+                from hrun3] at ih3
+              have hc0 : c0=Val k (some m) := ih3.1
+              have hsm3 : Sound s3 := ih3.2
+              subst hc0
+              simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+                modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+                MonadStateOf.get,Id.run,hrun3,hmk,if_true]
+              rw [hv]
+              exact ⟨rfl,Sound_cons hsm3 hgood⟩
+
+/-! #### 印の値、相ごと -/
+
+theorem markJ1_r0 (n : Nat) (h : n%7=0) : markJ1 n=((n+5:Nat):Int) := by
+  unfold markJ1; rw [if_pos (by omega)]
+theorem markJ1_r1 (n : Nat) (h : n%7=1) : markJ1 n=((n+6:Nat):Int) := by
+  unfold markJ1; rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+theorem markJ1_r2 (n : Nat) (h : n%7=2) : markJ1 n=((n+6:Nat):Int) := by
+  unfold markJ1; rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+theorem markJ1_r3 (n : Nat) (h : n%7=3) : markJ1 n=((n+5:Nat):Int) := by
+  unfold markJ1; rw [if_pos (by omega)]
+theorem markJ1_r4 (n : Nat) (h : n%7=4) : markJ1 n=((n+4:Nat):Int) := by
+  unfold markJ1; rw [if_neg (by omega),if_pos (by omega)]
+theorem markJ1_r5 (n : Nat) (h : n%7=5) : markJ1 n=((n+2:Nat):Int) := by
+  unfold markJ1; rw [if_neg (by omega),if_neg (by omega),if_pos (by omega)]
+theorem markJ1_r6 (n : Nat) (h : n%7=6) : markJ1 n=((n+6:Nat):Int) := by
+  unfold markJ1; rw [if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+
+theorem markV1_r0 (n : Nat) (h : n%7=0) : markV1 n=D11z := by
+  unfold markV1; rw [if_pos (by omega)]
+theorem markV1_r1 (n : Nat) (h : n%7=1) : markV1 n=D0z := by
+  unfold markV1; rw [if_neg (by omega),if_pos h]
+theorem markV1_r2 (n : Nat) (h : n%7=2) : markV1 n=D1z := by
+  unfold markV1
+  rw [if_neg (by omega),if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+theorem markV1_r3 (n : Nat) (h : n%7=3) : markV1 n=D11z := by
+  unfold markV1; rw [if_pos (by omega)]
+theorem markV1_r4 (n : Nat) (h : n%7=4) : markV1 n=D1ss := by
+  unfold markV1; rw [if_neg (by omega),if_neg (by omega),if_pos h]
+theorem markV1_r5 (n : Nat) (h : n%7=5) : markV1 n=.D 0 A0 := by
+  unfold markV1
+  rw [if_neg (by omega),if_neg (by omega),if_neg (by omega),if_pos h]
+theorem markV1_r6 (n : Nat) (h : n%7=6) : markV1 n=D1z := by
+  unfold markV1
+  rw [if_neg (by omega),if_neg (by omega),if_neg (by omega),if_neg (by omega)]
+
+theorem markJ2_r2 (n : Nat) (h : n%7=2) : markJ2 n=((n+5:Nat):Int) := by
+  unfold markJ2; rw [if_pos h]
+theorem markJ2_r3 (n : Nat) (h : n%7=3) : markJ2 n=((n+4:Nat):Int) := by
+  unfold markJ2; rw [if_neg (by omega),if_pos h]
+theorem markJ2_r4 (n : Nat) (h : n%7=4) : markJ2 n=((n+3:Nat):Int) := by
+  unfold markJ2; rw [if_neg (by omega),if_neg (by omega)]
+
+theorem markV2_r2 (n : Nat) (h : n%7=2) : markV2 n=.D 0 D1z := by
+  unfold markV2; rw [if_pos h]
+theorem markV2_r3 (n : Nat) (h : n%7=3) : markV2 n=.D 0 D11z := by
+  unfold markV2; rw [if_neg (by omega),if_pos h]
+theorem markV2_r4 (n : Nat) (h : n%7=4) : markV2 n=.D 0 D1ss := by
+  unfold markV2; rw [if_neg (by omega),if_neg (by omega)]
+
+theorem allowed_some (n : Nat) (req : Option Int) (hr : Allowed n req) (m : Int)
+    (hmm : req=some m) : m=markJ1 n ∨ (hasTwo n ∧ m=markJ2 n) := by
+  rcases hr with h|h|⟨h2,h⟩
+  · rw [hmm] at h; exact absurd h (by simp)
+  · rw [hmm] at h
+    exact Or.inl (by simpa using h)
+  · rw [hmm] at h
+    exact Or.inr ⟨h2,by simpa using h⟩
+
+theorem not_hasTwo (n : Nat) (h : ¬(n%7=2 ∨ n%7=3 ∨ n%7=4)) : ¬hasTwo n := by
+  unfold hasTwo; exact h
+
+theorem size_W (n : Nat) (b : Trans.Dict.BT) : (W n b).size=15*n+b.size := by
+  induction n with
+  | zero => simp [W]
+  | succ n ih =>
+    show (Trans.Dict.BT.sum A0 (.D 1 (.sum D1z (.D 0 (W n b))))).size=_
+    simp only [Trans.Dict.BT.size,ih]
+    omega
+
+theorem size_LBT_ge (m : Nat) : 15*(m/7)+1 ≤ (LBT m).size := by
+  unfold LBT
+  show 15*(m/7)+1 ≤ 1+(W (m/7) (Part (m%7))).size
+  rw [size_W]
+  have : 1 ≤ (Part (m%7)).size := by
+    unfold Part
+    split <;> simp [Trans.Dict.BT.size]
+  omega
+
+theorem size_pos (t : Trans.Dict.BT) : 1 ≤ t.size := by
+  cases t <;> simp [Trans.Dict.BT.size] <;> omega
+
+theorem runAux_L0 (g : Nat) (req : Option Int) (hr : Allowed 0 req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl) :
+    ((Trans.Recal.runAux (0+g+8) (L 0) req).run tbl).1=Val 0 req
+      ∧ Sound ((Trans.Recal.runAux (0+g+8) (L 0) req).run tbl).2 := by
+  have hj1 : markJ1 0=(5:Int) := by rw [markJ1_r0 0 (by omega)]; rfl
+  have hv1 : markV1 0=D11z := markV1_r0 0 (by omega)
+  cases hf : tbl.find? (fun z=>z.1==(L 0,req)) with
+  | some p =>
+    rw [show 0+g+8=(g+7)+1 by omega,G1.run_hit (g+7) (L 0) req tbl p hf]
+    obtain ⟨hg,he⟩ := good_of_find hs hf
+    exact ⟨hg.1 0 req he hr,hs⟩
+  | none =>
+    rw [show 0+g+8=(g+7)+1 by omega,Trans.Recal.runAux]
+    simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+      modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+      MonadStateOf.get,Id.run,hf,
+      isReducedP_L 0,prin_L 0,
+      Bool.not_true,Bool.false_eq_true,if_false,
+      show Trans.Recal.lenI (L 0)-1=(6:Int) from by rw [lenI_L]; omega,
+      show ((6:Int)==0)=false from rfl,
+      show Trans.Recal.predP (L 0)=P6 from rfl]
+    cases hrun : (Trans.Recal.runAux (g+7) P6 none) tbl with
+    | mk t1 s =>
+      have ih1 := runAux_P6 (g+1) none ((AP_6i _).mpr (Or.inl rfl)) tbl hs
+      rw [show g+1+6=g+7 by omega] at ih1
+      rw [show (Trans.Recal.runAux (g+7) P6 none).run tbl=(t1,s) from hrun] at ih1
+      have ht1 : t1=Trans.Dict.BT.D 0 B0 := by rw [← VP_6_none]; exact ih1.1
+      have hsm : Sound s := ih1.2
+      subst ht1
+      cases hrun2 : (Trans.Recal.runAux (g+7) P6 (some 5)) s with
+      | mk c1 s2 =>
+        have ih2 := runAux_P6 (g+1) (some 5) ((AP_6i _).mpr (Or.inr rfl)) s hsm
+        rw [show g+1+6=g+7 by omega] at ih2
+        rw [show (Trans.Recal.runAux (g+7) P6 (some 5)).run s=(c1,s2) from hrun2] at ih2
+        have hc1 : c1=D1z := by rw [← VP_6_five]; exact ih2.1
+        have hsm2 : Sound s2 := ih2.2
+        subst hc1
+        simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+          modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+          MonadStateOf.get,Id.run,hrun,hrun2,
+          show ((Trans.Dict.BT.D 0 B0)==Trans.Dict.BT.zero)=false from rfl,
+          Bool.false_eq_true,if_false,
+          show Trans.Recal.fpar (L 0) 0 6 0=5 from by
+            have := fpar_L_zero 0 6 (by omega) (by omega)
+            rw [show parN 6=5 from by decide] at this
+            simpa using this,
+          show Trans.Recal.adm (L 0) 5=5 from by
+            have := adm_L 0 5 (by omega) (by omega)
+            simpa using this,
+          show Trans.Recal.transTypeMain (L 0) 5 6=3 from by
+            have := transType_L_r0 0 (by omega)
+            simpa using this,
+          show Trans.Recal.mkC2 (L 0) 5 6 3 D1z=D11z from by
+            have := mkC2_L_r0 0 (by omega)
+            simpa using this]
+        rcases hr with h|h|⟨h2,_⟩
+        · subst h
+          rw [Val_none,show (Trans.Recal.replMark
+              (Trans.Dict.BT.size (Trans.Dict.BT.D 0 B0)
+                +(Trans.Dict.BT.size D1z+Trans.Dict.BT.size D11z+4))
+              (Trans.Dict.BT.D 0 B0) D1z D11z).getD Trans.Dict.BT.zero=LBT 0 from by
+            decide]
+          have hgood : Good ((L 0,(none:Option Int)),Val 0 none) :=
+            good_L_entry 0 none (Allowed_none 0)
+          rw [Val_none] at hgood
+          exact ⟨rfl,Sound_cons hsm2 hgood⟩
+        · subst h
+          simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+            modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+            MonadStateOf.get,Id.run]
+          rw [hj1,if_pos (show (5:Int)<6 by omega)]
+          cases hrun3 : (Trans.Recal.runAux (g+7) P6 (some 5)) s2 with
+          | mk c0 s3 =>
+            have ih3 := runAux_P6 (g+1) (some 5) ((AP_6i _).mpr (Or.inr rfl)) s2 hsm2
+            rw [show g+1+6=g+7 by omega] at ih3
+            rw [show (Trans.Recal.runAux (g+7) P6 (some 5)).run s2=(c0,s3)
+              from hrun3] at ih3
+            have hc0 : c0=D1z := by rw [← VP_6_five]; exact ih3.1
+            have hsm3 : Sound s3 := ih3.2
+            subst hc0
+            simp only [StateT.run,bind,StateT.bind,StateT.get,StateT.pure,pure,
+              modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet,get,getThe,
+              MonadStateOf.get,Id.run,hrun3,
+              show Trans.Recal.isMarkedB D1z D1z=true from by decide,if_true]
+            rw [show (Trans.Recal.replMark
+                (Trans.Dict.BT.size D1z
+                  +(Trans.Dict.BT.size D1z+Trans.Dict.BT.size D11z+4))
+                D1z D1z D11z).getD Trans.Dict.BT.zero=D11z from by decide,
+              show Val 0 (some (5:Int))=D11z from by
+                rw [← hj1,Val_m1,hv1]]
+            have hgood : Good ((L 0,some (5:Int)),D11z) := by
+              have hx := good_L_entry 0 (some (markJ1 0)) (Allowed_m1 0)
+              rw [Val_m1,hv1,hj1] at hx
+              exact hx
+            exact ⟨rfl,Sound_cons hsm3 hgood⟩
+        · exact absurd h2 (by unfold hasTwo; omega)
+
+theorem repl_eq_val (u : Nat) (y c2 : Trans.Dict.BT) (N : Nat) (hN : 1 ≤ N) :
+    (Trans.Recal.replMark N (.D u y) (.D u y) c2).getD Trans.Dict.BT.zero=c2 := by
+  obtain ⟨f,rfl⟩ : ∃ f, N=f+1 := ⟨N-1,by omega⟩
+  rw [G1.replMark_self (f+1) u y c2 (by omega)]
+  rfl
+
+theorem repl_under_val (v : Nat) (y c2 : Trans.Dict.BT) (N : Nat) (hN : 2 ≤ N)
+    (hne : ((Trans.Dict.BT.D 0 (.D v y))==(Trans.Dict.BT.D v y))=false) :
+    (Trans.Recal.replMark N (.D 0 (.D v y)) (.D v y) c2).getD Trans.Dict.BT.zero
+      = Trans.Dict.BT.D 0 c2 := by
+  obtain ⟨f,rfl⟩ : ∃ f, N=f+2 := ⟨N-2,by omega⟩
+  rw [replMark_under f 0 v y c2 hne]
+  rfl
+
+theorem gp1_L_top (k : Nat) : Trans.Recal.gp1 (L (k+1)) ((k+1+6:Nat):Int)=Gq (k+1+6) :=
+  gp1_L (k+1) (k+1+6) (by omega)
+
+theorem step_r0 (k g : Nat) (h : (k+1)%7=0) (req : Option Int) (hr : Allowed (k+1) req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  have hk6 : k%7=6 := by omega
+  refine runAux_step k g ((k+1+5:Nat):Int) 3 D11z req hr
+    (by rw [j0_L (k+1),parN_k6_r0 (k+1) h])
+    (transType_L_r0 (k+1) h)
+    (by rw [adm_L (k+1) (k+1+5) (by omega) (by omega),markJ1_r6 k hk6]; try omega)
+    (by rw [markV1_r6 k hk6]; exact mkC2_L_r0 (k+1) h)
+    ?_ ?_ tbl hs ih
+  · rw [markV1_r6 k hk6]
+    obtain ⟨a,rfl⟩ : ∃ a, k=7*a+6 := ⟨k/7,by omega⟩
+    rw [show 7*a+6+1=7*a+7 by omega,repl_LBT_r0 a _ (by
+      have hz := size_LBT_ge (7*a+6)
+      rw [show (7*a+6)/7=a by omega] at hz
+      have e1 : Trans.Dict.BT.size D1z=2 := rfl
+      have e2 : Trans.Dict.BT.size D11z=3 := rfl
+      omega)]
+    rfl
+  · intro m hmm
+    rcases allowed_some (k+1) req hr m hmm with hmk|⟨h2,_⟩
+    · rw [markJ1_r0 (k+1) h] at hmk
+      subst hmk
+      right
+      have hmj : ((k+1+5:Nat):Int)=markJ1 k := by rw [markJ1_r6 k hk6]; try omega
+      have hvk : Val k (some (((k+1+5:Nat)):Int))=D1z := by
+        rw [hmj,Val_m1,markV1_r6 k hk6]
+      have hvn : Val (k+1) (some (((k+1+5:Nat)):Int))=D11z := by
+        rw [show (((k+1+5:Nat)):Int)=markJ1 (k+1) from by rw [markJ1_r0 (k+1) h],
+          Val_m1,markV1_r0 (k+1) h]
+      refine ⟨by omega,?_,?_,?_⟩
+      · rw [hmj]; exact Allowed_m1 k
+      · rw [hvk,markV1_r6 k hk6]; decide
+      · rw [hvk,markV1_r6 k hk6,hvn]
+        exact repl_eq_val 1 .zero D11z _ (by
+          have := size_pos D1z
+          have := size_pos D11z
+          omega)
+    · exact absurd h2 (by unfold hasTwo; omega)
+
+theorem step_r1 (k g : Nat) (h : (k+1)%7=1) (req : Option Int) (hr : Allowed (k+1) req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  have hk : k%7=0 := by omega
+  refine runAux_step k g ((k+1+4:Nat):Int) 1 (.D 1 (.sum D1z D0z)) req hr
+    (by rw [j0_L (k+1),parN_k6_r1 (k+1) h])
+    (transType_L_r1 (k+1) h)
+    (by rw [adm_L (k+1) (k+1+4) (by omega) (by omega),markJ1_r0 k hk]; try omega)
+    (by rw [markV1_r0 k hk]; exact mkC2_L_r1 (k+1) h)
+    ?_ ?_ tbl hs ih
+  · rw [markV1_r0 k hk]
+    obtain ⟨a,rfl⟩ : ∃ a, k=7*a := ⟨k/7,by omega⟩
+    rw [show 7*a=7*a+0 from rfl,show 7*a+0+1=7*a+1 by omega,repl_LBT_r1 a _ (by
+      have hz := size_LBT_ge (7*a+0)
+      rw [show (7*a+0)/7=a by omega] at hz
+      have e1 : Trans.Dict.BT.size D11z=3 := rfl
+      have e2 : Trans.Dict.BT.size (Trans.Dict.BT.D 1 (.sum D1z D0z))=6 := rfl
+      omega)]
+    rfl
+  · intro m hmm
+    rcases allowed_some (k+1) req hr m hmm with hmk|⟨h2,_⟩
+    · rw [markJ1_r1 (k+1) h] at hmk
+      subst hmk
+      left
+      refine ⟨rfl,?_⟩
+      rw [gp1_L_top k,Gq_zero (k+1+6) (by omega),
+        show Val (k+1) (some (((k+1+6:Nat)):Int))=D0z from by
+          rw [show (((k+1+6:Nat)):Int)=markJ1 (k+1) from by rw [markJ1_r1 (k+1) h],
+            Val_m1,markV1_r1 (k+1) h]]
+      rfl
+    · exact absurd h2 (by unfold hasTwo; omega)
+
+theorem step_r6 (k g : Nat) (h : (k+1)%7=6) (req : Option Int) (hr : Allowed (k+1) req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  have hk : k%7=5 := by omega
+  refine runAux_step k g ((k+1+1:Nat):Int) 5 (.D 0 B0) req hr
+    (by rw [j0_L (k+1),parN_k6_r6 (k+1) h])
+    (transType_L_r6 (k+1) h)
+    (by rw [adm_L (k+1) (k+1+1) (by omega) (by omega),markJ1_r5 k hk]; try omega)
+    (by rw [markV1_r5 k hk]; exact mkC2_L_r6 (k+1) h)
+    ?_ ?_ tbl hs ih
+  · rw [markV1_r5 k hk]
+    obtain ⟨a,rfl⟩ : ∃ a, k=7*a+5 := ⟨k/7,by omega⟩
+    rw [show 7*a+5+1=7*a+6 by omega,repl_LBT_r6 a _ (by
+      have hz := size_LBT_ge (7*a+5)
+      rw [show (7*a+5)/7=a by omega] at hz
+      have e1 : Trans.Dict.BT.size (Trans.Dict.BT.D 0 A0)=10 := rfl
+      have e2 : Trans.Dict.BT.size (Trans.Dict.BT.D 0 B0)=13 := rfl
+      omega)]
+    rfl
+  · intro m hmm
+    rcases allowed_some (k+1) req hr m hmm with hmk|⟨h2,_⟩
+    · rw [markJ1_r6 (k+1) h] at hmk
+      subst hmk
+      left
+      refine ⟨rfl,?_⟩
+      rw [gp1_L_top k,Gq_one (k+1+6) (by omega),
+        show Val (k+1) (some (((k+1+6:Nat)):Int))=D1z from by
+          rw [show (((k+1+6:Nat)):Int)=markJ1 (k+1) from by rw [markJ1_r6 (k+1) h],
+            Val_m1,markV1_r6 (k+1) h]]
+      rfl
+    · exact absurd h2 (by unfold hasTwo; omega)
+
+theorem step_r2 (k g : Nat) (h : (k+1)%7=2) (req : Option Int) (hr : Allowed (k+1) req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  have hk : k%7=1 := by omega
+  refine runAux_step k g ((k+1+5:Nat):Int) 6 (.D 0 D1z) req hr
+    (by rw [j0_L (k+1),parN_k6_r2 (k+1) h])
+    (transType_L_r2 (k+1) h)
+    (by rw [adm_L (k+1) (k+1+5) (by omega) (by omega),markJ1_r1 k hk]; try omega)
+    (by rw [markV1_r1 k hk]; exact mkC2_L_r2 (k+1) h)
+    ?_ ?_ tbl hs ih
+  · rw [markV1_r1 k hk]
+    obtain ⟨a,rfl⟩ : ∃ a, k=7*a+1 := ⟨k/7,by omega⟩
+    rw [show 7*a+1+1=7*a+2 by omega,repl_LBT_r2 a _ (by
+      have hz := size_LBT_ge (7*a+1)
+      rw [show (7*a+1)/7=a by omega] at hz
+      have e1 : Trans.Dict.BT.size D0z=2 := rfl
+      have e2 : Trans.Dict.BT.size (Trans.Dict.BT.D 0 D1z)=3 := rfl
+      omega)]
+    rfl
+  · intro m hmm
+    rcases allowed_some (k+1) req hr m hmm with hmk|⟨h2,hmk⟩
+    · rw [markJ1_r2 (k+1) h] at hmk
+      subst hmk
+      left
+      refine ⟨rfl,?_⟩
+      rw [gp1_L_top k,Gq_one (k+1+6) (by omega),
+        show Val (k+1) (some (((k+1+6:Nat)):Int))=D1z from by
+          rw [show (((k+1+6:Nat)):Int)=markJ1 (k+1) from by rw [markJ1_r2 (k+1) h],
+            Val_m1,markV1_r2 (k+1) h]]
+      rfl
+    · rw [markJ2_r2 (k+1) h] at hmk
+      subst hmk
+      right
+      have hmj : ((k+1+5:Nat):Int)=markJ1 k := by rw [markJ1_r1 k hk]; try omega
+      have hvk : Val k (some (((k+1+5:Nat)):Int))=D0z := by
+        rw [hmj,Val_m1,markV1_r1 k hk]
+      have hvn : Val (k+1) (some (((k+1+5:Nat)):Int))=.D 0 D1z := by
+        rw [show (((k+1+5:Nat)):Int)=markJ2 (k+1) from by rw [markJ2_r2 (k+1) h],
+          Val_m2 (k+1) (by unfold hasTwo; omega),markV2_r2 (k+1) h]
+      refine ⟨by omega,?_,?_,?_⟩
+      · rw [hmj]; exact Allowed_m1 k
+      · rw [hvk,markV1_r1 k hk]; decide
+      · rw [hvk,markV1_r1 k hk,hvn]
+        exact repl_eq_val 0 .zero (.D 0 D1z) _ (by
+          have := size_pos D0z
+          have := size_pos (Trans.Dict.BT.D 0 D1z)
+          omega)
+
+theorem step_r3 (k g : Nat) (h : (k+1)%7=3) (req : Option Int) (hr : Allowed (k+1) req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  have hk : k%7=2 := by omega
+  refine runAux_step k g ((k+1+5:Nat):Int) 3 D11z req hr
+    (by rw [j0_L (k+1),parN_k6_r3 (k+1) h])
+    (transType_L_r3 (k+1) h)
+    (by rw [adm_L (k+1) (k+1+5) (by omega) (by omega),markJ1_r2 k hk]; try omega)
+    (by rw [markV1_r2 k hk]; exact mkC2_L_r3 (k+1) h)
+    ?_ ?_ tbl hs ih
+  · rw [markV1_r2 k hk]
+    obtain ⟨a,rfl⟩ : ∃ a, k=7*a+2 := ⟨k/7,by omega⟩
+    rw [show 7*a+2+1=7*a+3 by omega,repl_LBT_r3 a _ (by
+      have hz := size_LBT_ge (7*a+2)
+      rw [show (7*a+2)/7=a by omega] at hz
+      have e1 : Trans.Dict.BT.size D1z=2 := rfl
+      have e2 : Trans.Dict.BT.size D11z=3 := rfl
+      omega)]
+    rfl
+  · intro m hmm
+    rcases allowed_some (k+1) req hr m hmm with hmk|⟨h2,hmk⟩
+    · rw [markJ1_r3 (k+1) h] at hmk
+      subst hmk
+      right
+      have hmj : ((k+1+5:Nat):Int)=markJ1 k := by rw [markJ1_r2 k hk]; try omega
+      have hvk : Val k (some (((k+1+5:Nat)):Int))=D1z := by
+        rw [hmj,Val_m1,markV1_r2 k hk]
+      have hvn : Val (k+1) (some (((k+1+5:Nat)):Int))=D11z := by
+        rw [show (((k+1+5:Nat)):Int)=markJ1 (k+1) from by rw [markJ1_r3 (k+1) h],
+          Val_m1,markV1_r3 (k+1) h]
+      refine ⟨by omega,?_,?_,?_⟩
+      · rw [hmj]; exact Allowed_m1 k
+      · rw [hvk,markV1_r2 k hk]; decide
+      · rw [hvk,markV1_r2 k hk,hvn]
+        exact repl_eq_val 1 .zero D11z _ (by
+          have := size_pos D1z
+          have := size_pos D11z
+          omega)
+    · rw [markJ2_r3 (k+1) h] at hmk
+      subst hmk
+      right
+      have hmj : ((k+1+4:Nat):Int)=markJ2 k := by rw [markJ2_r2 k hk]; try omega
+      have hvk : Val k (some (((k+1+4:Nat)):Int))=.D 0 D1z := by
+        rw [hmj,Val_m2 k (by unfold hasTwo; omega),markV2_r2 k hk]
+      have hvn : Val (k+1) (some (((k+1+4:Nat)):Int))=.D 0 D11z := by
+        rw [show (((k+1+4:Nat)):Int)=markJ2 (k+1) from by rw [markJ2_r3 (k+1) h],
+          Val_m2 (k+1) (by unfold hasTwo; omega),markV2_r3 (k+1) h]
+      refine ⟨by omega,?_,?_,?_⟩
+      · rw [hmj]; exact Allowed_m2 k (by unfold hasTwo; omega)
+      · rw [hvk,markV1_r2 k hk]
+        exact isMarkedB_under 0 1 .zero rfl
+      · rw [hvk,markV1_r2 k hk,hvn]
+        exact repl_under_val 1 .zero D11z _ (by
+          have := size_pos (Trans.Dict.BT.D 0 D1z)
+          have := size_pos D1z
+          have := size_pos D11z
+          omega) rfl
+
+theorem step_r4 (k g : Nat) (h : (k+1)%7=4) (req : Option Int) (hr : Allowed (k+1) req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  have hk : k%7=3 := by omega
+  refine runAux_step k g ((k+1+4:Nat):Int) 3 D1ss req hr
+    (by rw [j0_L (k+1),parN_k6_r4 (k+1) h])
+    (transType_L_r4 (k+1) h)
+    (by rw [adm_L (k+1) (k+1+4) (by omega) (by omega),markJ1_r3 k hk]; try omega)
+    (by rw [markV1_r3 k hk]; exact mkC2_L_r4 (k+1) h)
+    ?_ ?_ tbl hs ih
+  · rw [markV1_r3 k hk]
+    obtain ⟨a,rfl⟩ : ∃ a, k=7*a+3 := ⟨k/7,by omega⟩
+    rw [show 7*a+3+1=7*a+4 by omega,repl_LBT_r4 a _ (by
+      have hz := size_LBT_ge (7*a+3)
+      rw [show (7*a+3)/7=a by omega] at hz
+      have e1 : Trans.Dict.BT.size D11z=3 := rfl
+      have e2 : Trans.Dict.BT.size D1ss=6 := rfl
+      omega)]
+    rfl
+  · intro m hmm
+    rcases allowed_some (k+1) req hr m hmm with hmk|⟨h2,hmk⟩
+    · rw [markJ1_r4 (k+1) h] at hmk
+      subst hmk
+      right
+      have hmj : ((k+1+4:Nat):Int)=markJ1 k := by rw [markJ1_r3 k hk]; try omega
+      have hvk : Val k (some (((k+1+4:Nat)):Int))=D11z := by
+        rw [hmj,Val_m1,markV1_r3 k hk]
+      have hvn : Val (k+1) (some (((k+1+4:Nat)):Int))=D1ss := by
+        rw [show (((k+1+4:Nat)):Int)=markJ1 (k+1) from by rw [markJ1_r4 (k+1) h],
+          Val_m1,markV1_r4 (k+1) h]
+      refine ⟨by omega,?_,?_,?_⟩
+      · rw [hmj]; exact Allowed_m1 k
+      · rw [hvk,markV1_r3 k hk]; decide
+      · rw [hvk,markV1_r3 k hk,hvn]
+        exact repl_eq_val 1 D1z D1ss _ (by
+          have := size_pos D11z
+          have := size_pos D1ss
+          omega)
+    · rw [markJ2_r4 (k+1) h] at hmk
+      subst hmk
+      right
+      have hmj : ((k+1+3:Nat):Int)=markJ2 k := by rw [markJ2_r3 k hk]; try omega
+      have hvk : Val k (some (((k+1+3:Nat)):Int))=.D 0 D11z := by
+        rw [hmj,Val_m2 k (by unfold hasTwo; omega),markV2_r3 k hk]
+      have hvn : Val (k+1) (some (((k+1+3:Nat)):Int))=.D 0 D1ss := by
+        rw [show (((k+1+3:Nat)):Int)=markJ2 (k+1) from by rw [markJ2_r4 (k+1) h],
+          Val_m2 (k+1) (by unfold hasTwo; omega),markV2_r4 (k+1) h]
+      refine ⟨by omega,?_,?_,?_⟩
+      · rw [hmj]; exact Allowed_m2 k (by unfold hasTwo; omega)
+      · rw [hvk,markV1_r3 k hk]
+        exact isMarkedB_under 0 1 D1z rfl
+      · rw [hvk,markV1_r3 k hk,hvn]
+        exact repl_under_val 1 D1z D1ss _ (by
+          have := size_pos (Trans.Dict.BT.D 0 D11z)
+          have := size_pos D11z
+          have := size_pos D1ss
+          omega) rfl
+
+theorem step_r5 (k g : Nat) (h : (k+1)%7=5) (req : Option Int) (hr : Allowed (k+1) req)
+    (tbl : Trans.Recal.Memo) (hs : Sound tbl)
+    (ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+      ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2) :
+    ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).1=Val (k+1) req
+      ∧ Sound ((Trans.Recal.runAux ((k+1)+g+8) (L (k+1)) req).run tbl).2 := by
+  have hk : k%7=4 := by omega
+  refine runAux_step k g ((k+1+3:Nat):Int) 1 A0 req hr
+    (by rw [j0_L (k+1),parN_k6_r5 (k+1) h])
+    (transType_L_r5 (k+1) h)
+    (by rw [adm_L (k+1) (k+1+3) (by omega) (by omega),markJ1_r4 k hk]; try omega)
+    (by rw [markV1_r4 k hk]; exact mkC2_L_r5 (k+1) h)
+    ?_ ?_ tbl hs ih
+  · rw [markV1_r4 k hk]
+    obtain ⟨a,rfl⟩ : ∃ a, k=7*a+4 := ⟨k/7,by omega⟩
+    rw [show 7*a+4+1=7*a+5 by omega,repl_LBT_r5 a _ (by
+      have hz := size_LBT_ge (7*a+4)
+      rw [show (7*a+4)/7=a by omega] at hz
+      have e1 : Trans.Dict.BT.size D1ss=6 := rfl
+      have e2 : Trans.Dict.BT.size A0=9 := rfl
+      omega)]
+    rfl
+  · intro m hmm
+    rcases allowed_some (k+1) req hr m hmm with hmk|⟨h2,_⟩
+    · rw [markJ1_r5 (k+1) h] at hmk
+      subst hmk
+      right
+      have hmj : ((k+1+2:Nat):Int)=markJ2 k := by rw [markJ2_r4 k hk]; try omega
+      have hvk : Val k (some (((k+1+2:Nat)):Int))=.D 0 D1ss := by
+        rw [hmj,Val_m2 k (by unfold hasTwo; omega),markV2_r4 k hk]
+      have hvn : Val (k+1) (some (((k+1+2:Nat)):Int))=.D 0 A0 := by
+        rw [show (((k+1+2:Nat)):Int)=markJ1 (k+1) from by rw [markJ1_r5 (k+1) h],
+          Val_m1,markV1_r5 (k+1) h]
+      refine ⟨by omega,?_,?_,?_⟩
+      · rw [hmj]; exact Allowed_m2 k (by unfold hasTwo; omega)
+      · rw [hvk,markV1_r4 k hk]
+        exact isMarkedB_under 0 1 (.sum D1z D1z) rfl
+      · rw [hvk,markV1_r4 k hk,hvn]
+        exact repl_under_val 1 (.sum D1z D1z) A0 _ (by
+          have := size_pos (Trans.Dict.BT.D 0 D1ss)
+          have := size_pos D1ss
+          have := size_pos A0
+          omega) rfl
+    · exact absurd h2 (by unfold hasTwo; omega)
+
+/-! ### Link 2, step 22: the reader follows the whole ladder. -/
+
+theorem runAux_L : ∀ (k g : Nat) (req : Option Int), Allowed k req →
+    ∀ tbl : Trans.Recal.Memo, Sound tbl →
+      ((Trans.Recal.runAux (k+g+8) (L k) req).run tbl).1=Val k req
+        ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) req).run tbl).2
+  | 0,g,req,hr,tbl,hs => runAux_L0 g req hr tbl hs
+  | k+1,g,req,hr,tbl,hs => by
+    have ih : ∀ r, Allowed k r → ∀ s : Trans.Recal.Memo, Sound s →
+        ((Trans.Recal.runAux (k+g+8) (L k) r).run s).1=Val k r
+          ∧ Sound ((Trans.Recal.runAux (k+g+8) (L k) r).run s).2 :=
+      fun r hrr s hss => runAux_L k g r hrr s hss
+    rcases (show (k+1)%7=0 ∨ (k+1)%7=1 ∨ (k+1)%7=2 ∨ (k+1)%7=3 ∨ (k+1)%7=4
+      ∨ (k+1)%7=5 ∨ (k+1)%7=6 by omega) with h|h|h|h|h|h|h
+    · exact step_r0 k g h req hr tbl hs ih
+    · exact step_r1 k g h req hr tbl hs ih
+    · exact step_r2 k g h req hr tbl hs ih
+    · exact step_r3 k g h req hr tbl hs ih
+    · exact step_r4 k g h req hr tbl hs ih
+    · exact step_r5 k g h req hr tbl hs ih
+    · exact step_r6 k g h req hr tbl hs ih
+
+/-- **リンク 2。** 読み手は 7 相の梯子を最後まで追う。 -/
+theorem transPort_L (m : Nat) : Trans.Recal.transPort (L m)=LBT m := by
+  have hb : m+8 ≤ Trans.Recal.transFuel (L m) := by
+    show m+8 ≤ 40+6*((L m).length+Trans.Recal.maxE (L m))
+    rw [length_L]
+    omega
+  have h : Trans.Recal.transFuel (L m)=m+(Trans.Recal.transFuel (L m)-m-8)+8 := by
+    omega
+  show ((Trans.Recal.runAux (Trans.Recal.transFuel (L m)) (L m) none).run []).1=_
+  rw [h]
+  simpa only [Val_none] using (runAux_L m _ none (Allowed_none m) [] Sound_nil).1
+
+/-! ### 行が閉じる。 -/
+
+theorem one_lt_Jt_succ (n : Nat) : lt TM.Term.one (Jt (n+1))=true :=
+  Evidence.WF.lt_trans_inT (by decide) (by decide) (Jt_inT (n+1))
+    (by decide) (Bph_lt_Jt_succ n)
+
+theorem le_Jt_succ_one (n : Nat) : le (Jt (n+1)) TM.Term.one=false := by
+  unfold le
+  rw [show ((Jt (n+1))==TM.Term.one)=false from beq_eq_false_iff_ne.mpr
+    (Ne.symm (Evidence.WF.ne_of_ltF (one_lt_Jt_succ n)))]
+  simp only [Bool.false_or]
+  exact Evidence.WF.lt_asymm_inT (by decide) (Jt_inT (n+1)) (one_lt_Jt_succ n)
+
+theorem one_plus_Jt_succ (n : Nat) : plus TM.Term.one (Jt (n+1))=Jt (n+1) := by
+  unfold plus
+  rw [show TM.Term.one.toList=[TM.Term.one] from rfl,Jt_succ_toList]
+  simp only [List.filter_cons,List.filter_nil,le_Jt_succ_one,Bool.false_eq_true,
+    if_false,List.nil_append,TM.Term.ofList]
+
+theorem one_plus_fs (n : Nat) : plus TM.Term.one (fsN t (n+1))=fsN t (n+1) := by
+  rw [fs_Jt,one_plus_Jt_succ]
+
+/-- **族 4 の 328 行目が `oR` の側で全 n について定理になった。** -/
+theorem oR_M (n : Nat) : Trans.oR (BMS.expand M n)=some (fsN t (n+1)) := by
+  show (if (BMS.expand M n).isEmpty then some TM.Term.zero
+        else ((Trans.Recal.ofMatrix (BMS.expand M n)).map
+          Trans.Recal.transPort).map
+            (fun u=>plus TM.Term.one (Trans.Dict.dict u)))=some (fsN t (n+1))
+  rw [show (BMS.expand M n).isEmpty=false from by
+    rw [expand_M]
+    rfl]
+  simp only [Bool.false_eq_true,if_false,ofMatrix_M,Option.map_some]
+  rw [transPort_L,dict_LBT,one_plus_fs]
+
+
 #guard (List.range 5).all fun n => Trans.Dict.wcnf Z0t [Kt n]==([(ofNat 2,Jt (n+1))],zero)
 #guard (List.range 5).all fun n =>
   Trans.Dict.collapse 0 (plus G9Dict.H (Kt n))==Jt (n+2)
 #guard (List.range 5).all fun n =>
   Trans.Dict.collapse 1 (add Z0t (Jt (n+1)))==Kt n
--- リンク 2 はまだ定理ではない。閉じた形が合っていることだけを測ってある
 #guard (List.range 30).all fun m => Trans.Recal.transPort (L m)==LBT m
 #guard (List.range 30).all fun m => Trans.Recal.redP (L m)==L m
 #guard (List.range 8).all fun n => Trans.oR (BMS.expand M n)==some (fsN t (n+1))
+#guard rest12.any fun r => r.m==M && r.t==t && r.proof=="namespace G11"
+#guard (rows.filter fun r => r.proof=="namespace G11").length==1
 
 #print axioms ofMatrix_M
 #print axioms dict_LBT
+#print axioms transPort_L
+#print axioms oR_M
 
 end G11
 end Rows.Selected
