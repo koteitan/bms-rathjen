@@ -272,6 +272,39 @@ theorem cmpM_gt_lt_len : ∀ (X Y Z : Matrix), cmpM X Y = .gt → cmpM X (Y ++ Z
       show (t.length + 1) < (s.length + 1)
       omega
 
+/-- **接頭辞の証拠。** `cmpM_gt_lt_len` と同じ帰納だが、長さではなく `Y` が `X` の
+    接頭辞であることそのものを返す。 -/
+theorem cmpM_gt_prefix : ∀ (X Y Z : Matrix), cmpM X Y = .gt → cmpM X (Y ++ Z) = .lt →
+    ∃ W, X = Y ++ W
+  | [], [], _, h, _ => Ordering.noConfusion h
+  | [], _ :: _, _, h, _ => Ordering.noConfusion h
+  | x :: s, [], _, _, _ => ⟨x :: s, rfl⟩
+  | x :: s, y :: t, Z, h1, h2 => by
+    have g1 : (cmpCol x y).then (cmpM s t) = .gt := h1
+    have g2 : (cmpCol x y).then (cmpM s (t ++ Z)) = .lt := h2
+    cases hxy : cmpCol x y with
+    | gt => rw [hxy] at g2; exact Ordering.noConfusion g2
+    | lt => rw [hxy] at g1; exact Ordering.noConfusion g1
+    | eq =>
+      rw [hxy] at g1 g2
+      obtain ⟨W, hW⟩ := cmpM_gt_prefix s t Z g1 g2
+      exact ⟨W, by rw [cmpCol_eq x y hxy, hW]; rfl⟩
+
+/-- 高さ 2 の列のなかで `(0,0)` は最小。 -/
+theorem cmpCol_min_zero (c : Col) (h : c.length = 2) :
+    (cmpCol c [0, 0] != Ordering.lt) = true := by
+  match c, h with
+  | [x, y], _ =>
+    show ((compare x 0).then ((compare y 0).then (cmpCol [] [])) != Ordering.lt) = true
+    cases hx : compare x 0 with
+    | lt => exact absurd (compare_eq_lt.mp hx) (by omega)
+    | gt => rfl
+    | eq =>
+      cases hy : compare y 0 with
+      | lt => exact absurd (compare_eq_lt.mp hy) (by omega)
+      | gt => rfl
+      | eq => rfl
+
 /-! ## §5 The `≤` form, which is what a normal form asks for -/
 
 /-- `M ≤ N` を `cmpM M N ≠ .gt` として読む。 -/
