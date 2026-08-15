@@ -7,10 +7,15 @@ import Rows.Ladder
 `oR` が要る 12 行の最後の 1 行。展開の値の列は標準基本列ではなく閉じた形 `fD`
 (`Rows/Selected.lean`) で、`Certified` の極限節はそれで構わない。
 
-**リンク 1 と 3 が定理になっている。残るのはリンク 2 だけである。**
+**リンク 1 と 3 が定理になっている。リンク 2 は還元側が定理になり、読み出し側が残る。**
 
     展開 --ofMatrix--> 梯子 --transPort--> BT --dict--> 値
-            ✅ ofMatrix_M      🚧 未着手      ✅ dict_LBT
+            ✅ ofMatrix_M    ✅ isReducedP_L   ✅ dict_LBT
+                             🚧 transPort_L
+
+還元の中身は **6 つの形の輪** で、`Aw E n` から出発して 6 歩で `Aw (E+3) (n-5)` に戻る。
+輪が長さを 5 減らし、ずらしを 3 増やす。答え `RA n` はずらしに依らない — これが
+`red_Aw_all` で、そこから `redP_L` と `isReducedP_L` が出る。
 
 この行の読み出し出力は高さ 3 の族の中では**最も単純**で、`W` は 1 つの構成子の
 繰り返しになる (`G10` は 6 相、`G11` は 7 相)。周期は 5 列、行 0 の値はブロックごとに
@@ -1280,6 +1285,1173 @@ theorem red_Y_of_A (c : Int) (i : Nat) (d : Int) (n f : Nat) (W : Trans.Recal.PS
 -- `Y` の段が実際に効くことの確認 (測定)
 #guard (List.range 5).all fun r => (List.range 8).all fun n =>
   Trans.Recal.redP (Y 2 (r+5) 1 n)==NF r n
+
+/-! ### Link 2, step 15: the window's own minimum, and its parent chain.
+
+Everything the recursion touches is `h :: Win i d n` for a head `h` strictly below the
+window.  Two facts about `Gp` carry the whole analysis: where the sequence attains its
+minimum from an offset on, and that the row-zero parent is `parN`. -/
+
+/-- The five residues, spelled out. -/
+theorem Gp_r (a : Nat) :
+    Gp (5*a+0)=((3*a:Nat):Int) ∧ Gp (5*a+1)=((3*a:Nat):Int)+1
+    ∧ Gp (5*a+2)=((3*a:Nat):Int)+2 ∧ Gp (5*a+3)=((3*a:Nat):Int)+1
+    ∧ Gp (5*a+4)=((3*a:Nat):Int)+2 := by
+  refine ⟨?_,?_,?_,?_,?_⟩
+  · rw [Gp_val a 0 (by omega),if_pos rfl,Int.add_zero]
+  · rw [Gp_val a 1 (by omega),if_neg (by omega),if_pos (Or.inl rfl)]
+  · rw [Gp_val a 2 (by omega),if_neg (by omega),if_neg (by omega)]
+  · rw [Gp_val a 3 (by omega),if_neg (by omega),if_pos (Or.inr rfl)]
+  · rw [Gp_val a 4 (by omega),if_neg (by omega),if_neg (by omega)]
+
+/-- `Gp` never drops below its value at an offset ≢ 2 (mod 5). -/
+theorem Gp_min_le (i t : Nat) (hi : i%5 ≠ 2) (h : i ≤ t) : Gp i ≤ Gp t := by
+  obtain ⟨a,r,hr,rfl⟩ : ∃ a r, r<5 ∧ i=5*a+r := ⟨i/5,i%5,by omega,by omega⟩
+  obtain ⟨b,s,hs,rfl⟩ : ∃ b s, s<5 ∧ t=5*b+s := ⟨t/5,t%5,by omega,by omega⟩
+  rw [show (5*a+r)%5=r by omega] at hi
+  have hab : a ≤ b := by omega
+  obtain ⟨e0,e1,e2,e3,e4⟩ := Gp_r a
+  obtain ⟨f0,f1,f2,f3,f4⟩ := Gp_r b
+  rcases (show r=0 ∨ r=1 ∨ r=3 ∨ r=4 by omega) with rfl|rfl|rfl|rfl <;>
+    rcases (show s=0 ∨ s=1 ∨ s=2 ∨ s=3 ∨ s=4 by omega) with rfl|rfl|rfl|rfl|rfl <;>
+    simp only [e0,e1,e2,e3,e4,f0,f1,f2,f3,f4] <;> push_cast <;> omega
+
+/-- Strictly, from an offset ≡ 0, 3, 4 (mod 5). -/
+theorem Gp_min_lt (i t : Nat) (hi1 : i%5 ≠ 1) (hi2 : i%5 ≠ 2) (h : i<t) : Gp i<Gp t := by
+  obtain ⟨a,r,hr,rfl⟩ : ∃ a r, r<5 ∧ i=5*a+r := ⟨i/5,i%5,by omega,by omega⟩
+  obtain ⟨b,s,hs,rfl⟩ : ∃ b s, s<5 ∧ t=5*b+s := ⟨t/5,t%5,by omega,by omega⟩
+  rw [show (5*a+r)%5=r by omega] at hi1 hi2
+  have hab : a ≤ b := by omega
+  obtain ⟨e0,e1,e2,e3,e4⟩ := Gp_r a
+  obtain ⟨f0,f1,f2,f3,f4⟩ := Gp_r b
+  rcases (show r=0 ∨ r=3 ∨ r=4 by omega) with rfl|rfl|rfl <;>
+    rcases (show s=0 ∨ s=1 ∨ s=2 ∨ s=3 ∨ s=4 by omega) with rfl|rfl|rfl|rfl|rfl <;>
+    simp only [e0,e1,e2,e3,e4,f0,f1,f2,f3,f4] <;> push_cast <;> omega
+
+/-- The row-zero parent drops the value. -/
+theorem Gp_parN_lt (t : Nat) (ht : 1 ≤ t) : Gp (parN t)<Gp t := by
+  unfold parN
+  by_cases h3 : t%5=3
+  · rw [if_pos h3]
+    exact (Gp_three t h3).1
+  · rw [if_neg h3]
+    exact Gp_lt_step t ht h3
+
+/-- …and nothing between the parent and the node drops it. -/
+theorem Gp_parN_keep (t j : Nat) (h1 : parN t<j) (h2 : j<t) : Gp t ≤ Gp j := by
+  unfold parN at h1
+  by_cases h3 : t%5=3
+  · rw [if_pos h3] at h1
+    obtain ⟨_,hle2,hle1⟩ := Gp_three t h3
+    rcases (show j=t-2 ∨ j=t-1 by omega) with rfl|rfl
+    · exact hle2
+    · exact hle1
+  · rw [if_neg h3] at h1
+    omega
+
+theorem getD_Win (i : Nat) (d : Int) (n k : Nat) (hk : k<n) :
+    (Win i d n).getD k (0,0)=(Gp (k+i)+d,Gq (k+i)) := by
+  unfold Win
+  rw [List.getD_eq_getElem?_getD,List.getElem?_map,List.getElem?_range hk]
+  rfl
+
+#guard (List.range 20).all fun i => (List.range 20).all fun t =>
+  !(decide (i%5 ≠ 2 ∧ i ≤ t)) || decide (Gp i ≤ Gp t)
+#guard (List.range 20).all fun i => (List.range 20).all fun t =>
+  !(decide (i%5 ≠ 1 ∧ i%5 ≠ 2 ∧ i<t)) || decide (Gp i<Gp t)
+
+/-! ### Link 2, step 16: one exceptional head over a window.
+
+`Y`, `Zr` and the branch itself are all `h :: Win i d n` with `h`'s row-zero value
+strictly below every column of the window.  That single hypothesis gives the parent
+chain, hence `isPrincipalP` and `ppair`, for all of them at once. -/
+
+/-- 例外的な頭 1 つの上に窓。 -/
+def Hd (h : Int × Int) (i : Nat) (d : Int) (n : Nat) : Trans.Recal.PS := h :: Win i d n
+
+theorem length_Hd (h : Int × Int) (i : Nat) (d : Int) (n : Nat) :
+    (Hd h i d n).length=n+1 := by
+  unfold Hd
+  rw [List.length_cons,length_Win]
+
+theorem gp0_Hd (h : Int × Int) (i : Nat) (d : Int) (n k : Nat) (hk : k<n+1) :
+    Trans.Recal.gp0 (Hd h i d n) ((k:Nat):Int)
+      = if k=0 then h.1 else Gp (k-1+i)+d := by
+  show (if (((k:Nat):Int)<0) then 0 else ((Hd h i d n).getD k (0,0)).1)=_
+  rw [if_neg (by omega)]
+  cases k with
+  | zero => rw [if_pos rfl]; rfl
+  | succ j =>
+    rw [if_neg (by omega)]
+    show ((Win i d n).getD j (0,0)).1=Gp (j+1-1+i)+d
+    rw [getD_Win i d n j (by omega),show j+1-1=j from rfl]
+
+theorem gp1_Hd (h : Int × Int) (i : Nat) (d : Int) (n k : Nat) (hk : k<n+1) :
+    Trans.Recal.gp1 (Hd h i d n) ((k:Nat):Int)
+      = if k=0 then h.2 else Gq (k-1+i) := by
+  show (if (((k:Nat):Int)<0) then 0 else ((Hd h i d n).getD k (0,0)).2)=_
+  rw [if_neg (by omega)]
+  cases k with
+  | zero => rw [if_pos rfl]; rfl
+  | succ j =>
+    rw [if_neg (by omega)]
+    show ((Win i d n).getD j (0,0)).2=Gq (j+1-1+i)
+    rw [getD_Win i d n j (by omega),show j+1-1=j from rfl]
+
+/-- The row-zero value, as a function of the index. -/
+def GH (c : Int) (i : Nat) (d : Int) (k : Nat) : Int :=
+  if k=0 then c else Gp (k-1+i)+d
+
+/-- The row-zero parent: the window's own parent when it stays inside, else the head. -/
+def parHd (i k : Nat) : Nat := if i ≤ parN (k-1+i) then parN (k-1+i)-i+1 else 0
+
+theorem parHd_lt (i k : Nat) (hi : 1 ≤ i) (hk : 1 ≤ k) : parHd i k<k := by
+  unfold parHd
+  by_cases hc : i ≤ parN (k-1+i)
+  · rw [if_pos hc]
+    have := parN_lt (k-1+i) (by omega)
+    omega
+  · rw [if_neg hc]
+    omega
+
+theorem GH_drop (c : Int) (i : Nat) (d : Int) (n k : Nat) (hi : 1 ≤ i) (hk : 1 ≤ k)
+    (hkn : k<n+1) (hh : ∀ t, i ≤ t → t<i+n → c<Gp t+d) :
+    GH c i d (parHd i k)<GH c i d k := by
+  have ht : 1 ≤ k-1+i := by omega
+  unfold parHd
+  by_cases hc : i ≤ parN (k-1+i)
+  · rw [if_pos hc]
+    have he : parN (k-1+i)-i+1-1+i=parN (k-1+i) := by omega
+    unfold GH
+    rw [if_neg (by omega),if_neg (by omega),he]
+    have := Gp_parN_lt (k-1+i) ht
+    omega
+  · rw [if_neg hc]
+    unfold GH
+    rw [if_pos rfl,if_neg (by omega)]
+    exact hh (k-1+i) (by omega) (by omega)
+
+theorem GH_keep (c : Int) (i : Nat) (d : Int) (k j : Nat) (hi : 1 ≤ i) (hk : 1 ≤ k)
+    (h1 : parHd i k<j) (h2 : j<k) : GH c i d k ≤ GH c i d j := by
+  have hj : 1 ≤ j := by omega
+  have hpar : parN (k-1+i)<j-1+i := by
+    unfold parHd at h1
+    by_cases hc : i ≤ parN (k-1+i)
+    · rw [if_pos hc] at h1; omega
+    · rw [if_neg hc] at h1; omega
+  unfold GH
+  rw [if_neg (by omega),if_neg (by omega)]
+  have := Gp_parN_keep (k-1+i) (j-1+i) hpar (by omega)
+  omega
+
+theorem chain_Hd (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hi : 1 ≤ i)
+    (hh : ∀ t, i ≤ t → t<i+n → h.1<Gp t+d) :
+    ∀ k, 1 ≤ k → k<(Hd h i d n).length →
+      Trans.Recal.fpar (Hd h i d n) 0 ((k:Nat):Int) 0=((parHd i k : Nat) : Int) :=
+  Rows.Ladder.fpar_of_gap
+    (G := GH h.1 i d) (par := parHd i)
+    (fun k hk => by
+      rw [length_Hd] at hk
+      rw [gp0_Hd h i d n k hk]
+      rfl)
+    (fun k hk1 _ => parHd_lt i k hi hk1)
+    (fun k hk1 hk => by
+      rw [length_Hd] at hk
+      exact GH_drop h.1 i d n k hi hk1 hk hh)
+    (fun k j hk1 _ h1 h2 => GH_keep h.1 i d k j hi hk1 h1 h2)
+
+theorem root_Hd (h : Int × Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.fpar (Hd h i d n) 0 ((0:Nat):Int) 0=-1 :=
+  Rows.Ladder.fpar_zero_of_gap
+    (G := GH h.1 i d)
+    (fun k hk => by
+      rw [length_Hd] at hk
+      rw [gp0_Hd h i d n k hk]
+      rfl)
+    (by rw [length_Hd]; omega)
+
+theorem isPrincipalP_Hd (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hi : 1 ≤ i)
+    (hn : 1 ≤ n) (hh : ∀ t, i ≤ t → t<i+n → h.1<Gp t+d) :
+    Trans.Recal.isPrincipalP (Hd h i d n)=true :=
+  Rows.Ladder.isPrincipalP_of_chain (chain_Hd h i d n hi hh)
+    (fun k hk1 _ => parHd_lt i k hi hk1) (root_Hd h i d n)
+    (by rw [length_Hd]; omega)
+
+theorem ppair_Hd (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hi : 1 ≤ i)
+    (hh : ∀ t, i ≤ t → t<i+n → h.1<Gp t+d) :
+    Trans.Recal.ppair (Hd h i d n)=[Hd h i d n] :=
+  Rows.Ladder.ppair_of_chain (chain_Hd h i d n hi hh)
+    (fun k hk1 _ => parHd_lt i k hi hk1) (root_Hd h i d n)
+    (by rw [length_Hd]; omega)
+
+/-- 窓そのものも、先頭を頭と見れば `Hd`。`i%5 ∈ {0,3,4}` のとき先頭は最小。 -/
+theorem Win_eq_Hd (i : Nat) (d : Int) (n : Nat) :
+    Win i d (n+1)=Hd (Gp i+d,Gq i) (i+1) d n := by
+  unfold Hd
+  rw [Win_cons]
+
+theorem ppair_Win (i : Nat) (d : Int) (n : Nat) (hi1 : i%5 ≠ 1) (hi2 : i%5 ≠ 2) :
+    Trans.Recal.ppair (Win i d (n+1))=[Win i d (n+1)] := by
+  rw [Win_eq_Hd]
+  exact ppair_Hd _ (i+1) d n (by omega)
+    (fun t ht _ => by
+      have := Gp_min_lt i t hi1 hi2 (by omega)
+      show Gp i+d<Gp t+d
+      omega)
+
+theorem isPrincipalP_Win (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n)
+    (hi1 : i%5 ≠ 1) (hi2 : i%5 ≠ 2) :
+    Trans.Recal.isPrincipalP (Win i d (n+1))=true := by
+  rw [Win_eq_Hd]
+  exact isPrincipalP_Hd _ (i+1) d n (by omega) hn
+    (fun t ht _ => by
+      have := Gp_min_lt i t hi1 hi2 (by omega)
+      show Gp i+d<Gp t+d
+      omega)
+
+#guard (List.range 6).all fun i => (List.range 8).all fun n =>
+  !(decide (i%5 ≠ 1 ∧ i%5 ≠ 2)) ||
+    (Trans.Recal.ppair (Win i 1 (n+1))==[Win i 1 (n+1)])
+
+/-! ### Link 2, step 17: two exceptional heads over a window.
+
+The folded ladders carry a `(0,0)` above `Hd`'s head.  The parent chain just shifts. -/
+
+/-- 頭 `(0,0)` と `(c,1)` の上に窓。畳み込みに入る形。 -/
+def A2 (c : Int) (i : Nat) (d : Int) (n : Nat) : Trans.Recal.PS :=
+  ((0:Int),(0:Int)) :: Hd (c,1) i d n
+
+theorem length_A2 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    (A2 c i d n).length=n+2 := by
+  unfold A2
+  rw [List.length_cons,length_Hd]
+
+theorem gp0_A2 (c : Int) (i : Nat) (d : Int) (n k : Nat) (hk : k<n+2) :
+    Trans.Recal.gp0 (A2 c i d n) ((k:Nat):Int)
+      = if k=0 then 0 else if k=1 then c else Gp (k-2+i)+d := by
+  show (if (((k:Nat):Int)<0) then 0 else ((A2 c i d n).getD k (0,0)).1)=_
+  rw [if_neg (by omega)]
+  cases k with
+  | zero => rw [if_pos rfl]; rfl
+  | succ j =>
+    rw [if_neg (by omega)]
+    show ((Hd (c,1) i d n).getD j (0,0)).1=_
+    have h := gp0_Hd (c,1) i d n j (by omega)
+    rw [show Trans.Recal.gp0 (Hd (c,1) i d n) ((j:Nat):Int)
+        = (if (((j:Nat):Int)<0) then 0 else ((Hd (c,1) i d n).getD j (0,0)).1) from rfl,
+      if_neg (by omega)] at h
+    rw [h,show j+1-2=j-1 from rfl]
+    cases j with
+    | zero => rw [if_pos rfl,if_pos rfl]
+    | succ jj => rw [if_neg (by omega),if_neg (by omega)]
+
+theorem gp1_A2 (c : Int) (i : Nat) (d : Int) (n k : Nat) (hk : k<n+2) :
+    Trans.Recal.gp1 (A2 c i d n) ((k:Nat):Int)
+      = if k=0 then 0 else if k=1 then 1 else Gq (k-2+i) := by
+  show (if (((k:Nat):Int)<0) then 0 else ((A2 c i d n).getD k (0,0)).2)=_
+  rw [if_neg (by omega)]
+  cases k with
+  | zero => rw [if_pos rfl]; rfl
+  | succ j =>
+    rw [if_neg (by omega)]
+    show ((Hd (c,1) i d n).getD j (0,0)).2=_
+    have h := gp1_Hd (c,1) i d n j (by omega)
+    rw [show Trans.Recal.gp1 (Hd (c,1) i d n) ((j:Nat):Int)
+        = (if (((j:Nat):Int)<0) then 0 else ((Hd (c,1) i d n).getD j (0,0)).2) from rfl,
+      if_neg (by omega)] at h
+    rw [h,show j+1-2=j-1 from rfl]
+    cases j with
+    | zero => rw [if_pos rfl,if_pos rfl]
+    | succ jj => rw [if_neg (by omega),if_neg (by omega)]
+
+def GA (c : Int) (i : Nat) (d : Int) (k : Nat) : Int :=
+  if k=0 then 0 else if k=1 then c else Gp (k-2+i)+d
+
+theorem GA_succ (c : Int) (i : Nat) (d : Int) (j : Nat) : GA c i d (j+1)=GH c i d j := by
+  unfold GA GH
+  cases j with
+  | zero => rfl
+  | succ jj => rfl
+
+def parA (i k : Nat) : Nat := if k ≤ 1 then 0 else parHd i (k-1)+1
+
+theorem parA_lt (i k : Nat) (hi : 1 ≤ i) (hk : 1 ≤ k) : parA i k<k := by
+  unfold parA
+  by_cases h1 : k ≤ 1
+  · rw [if_pos h1]; omega
+  · rw [if_neg h1]
+    have := parHd_lt i (k-1) hi (by omega)
+    omega
+
+theorem GA_drop (c : Int) (i : Nat) (d : Int) (n k : Nat) (hi : 1 ≤ i) (hc : 0<c)
+    (hk : 1 ≤ k) (hkn : k<n+2) (hh : ∀ t, i ≤ t → t<i+n → c<Gp t+d) :
+    GA c i d (parA i k)<GA c i d k := by
+  unfold parA
+  by_cases h1 : k ≤ 1
+  · rw [if_pos h1]
+    have hk1 : k=1 := by omega
+    subst hk1
+    show GA c i d 0<GA c i d 1
+    unfold GA
+    rw [if_pos rfl]
+    rw [show (if (1:Nat)=0 then (0:Int) else if (1:Nat)=1 then c else Gp (1-2+i)+d)=c
+      from rfl]
+    exact hc
+  · rw [if_neg h1]
+    obtain ⟨j,rfl⟩ : ∃ j, k=j+1 := ⟨k-1,by omega⟩
+    rw [show j+1-1=j from rfl,GA_succ,GA_succ]
+    exact GH_drop c i d n j hi (by omega) (by omega) hh
+
+theorem GA_keep (c : Int) (i : Nat) (d : Int) (k j : Nat) (hi : 1 ≤ i) (hk : 1 ≤ k)
+    (h1 : parA i k<j) (h2 : j<k) : GA c i d k ≤ GA c i d j := by
+  unfold parA at h1
+  by_cases hone : k ≤ 1
+  · rw [if_pos hone] at h1; omega
+  · rw [if_neg hone] at h1
+    obtain ⟨k1,rfl⟩ : ∃ k1, k=k1+1 := ⟨k-1,by omega⟩
+    obtain ⟨j1,rfl⟩ : ∃ j1, j=j1+1 := ⟨j-1,by omega⟩
+    rw [GA_succ,GA_succ]
+    rw [show k1+1-1=k1 from rfl] at h1
+    exact GH_keep c i d k1 j1 hi (by omega) (by omega) (by omega)
+
+theorem chain_A2 (c : Int) (i : Nat) (d : Int) (n : Nat) (hi : 1 ≤ i) (hc : 0<c)
+    (hh : ∀ t, i ≤ t → t<i+n → c<Gp t+d) :
+    ∀ k, 1 ≤ k → k<(A2 c i d n).length →
+      Trans.Recal.fpar (A2 c i d n) 0 ((k:Nat):Int) 0=((parA i k : Nat) : Int) :=
+  Rows.Ladder.fpar_of_gap
+    (G := GA c i d) (par := parA i)
+    (fun k hk => by
+      rw [length_A2] at hk
+      rw [gp0_A2 c i d n k hk]
+      rfl)
+    (fun k hk1 _ => parA_lt i k hi hk1)
+    (fun k hk1 hk => by
+      rw [length_A2] at hk
+      exact GA_drop c i d n k hi hc hk1 hk hh)
+    (fun k j hk1 _ h1 h2 => GA_keep c i d k j hi hk1 h1 h2)
+
+theorem root_A2 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.fpar (A2 c i d n) 0 ((0:Nat):Int) 0=-1 :=
+  Rows.Ladder.fpar_zero_of_gap
+    (G := GA c i d)
+    (fun k hk => by
+      rw [length_A2] at hk
+      rw [gp0_A2 c i d n k hk]
+      rfl)
+    (by rw [length_A2]; omega)
+
+theorem isPrincipalP_A2 (c : Int) (i : Nat) (d : Int) (n : Nat) (hi : 1 ≤ i) (hc : 0<c)
+    (hh : ∀ t, i ≤ t → t<i+n → c<Gp t+d) :
+    Trans.Recal.isPrincipalP (A2 c i d n)=true :=
+  Rows.Ladder.isPrincipalP_of_chain (chain_A2 c i d n hi hc hh)
+    (fun k hk1 _ => parA_lt i k hi hk1) (root_A2 c i d n)
+    (by rw [length_A2]; omega)
+
+/-! ### Link 2, step 18: the six shapes of the cycle.
+
+The recursion visits exactly six ladders, and they all live at window offsets 4, 5, 6:
+
+    Q1 e s = (1,1) :: Win 4 e s              V m = Q1 0 (m+1)
+    Aw E n = (0,0) :: (2,1) :: Win 4 E n
+    Q2 E k = (2,1) :: Win 5 E k
+    Bw D k = (0,0) :: (3,1) :: Win 5 D k
+    Zw D t = (2,0) :: Win 6 D t
+    Cw G t = (0,0) :: Win 6 G t
+
+`Q1 → Aw → Q2 → Bw → Zw → Cw → Q1` drops the length by five and raises the shift by
+three, and the shift never reaches the answer. -/
+
+def Q1 (e : Int) (s : Nat) : Trans.Recal.PS := Hd ((1:Int),(1:Int)) 4 e s
+def Aw (E : Int) (n : Nat) : Trans.Recal.PS := A2 2 4 E n
+def Q2 (E : Int) (k : Nat) : Trans.Recal.PS := Hd ((2:Int),(1:Int)) 5 E k
+def Bw (D : Int) (k : Nat) : Trans.Recal.PS := A2 3 5 D k
+def Zw (D : Int) (t : Nat) : Trans.Recal.PS := Hd ((2:Int),(0:Int)) 6 D t
+def Cw (G : Int) (t : Nat) : Trans.Recal.PS := Hd ((0:Int),(0:Int)) 6 G t
+
+/-- `Aw` の答え。 -/
+def RA (n : Nat) : Trans.Recal.PS :=
+  ((0:Int),(0:Int)) :: ((1:Int),(1:Int)) :: Win 4 0 n
+/-- `Q2` の答え。 -/
+def RQ (k : Nat) : Trans.Recal.PS := ((1:Int),(1:Int)) :: Win 5 (-1) k
+
+theorem Y_eq_Hd (c : Int) (i : Nat) (d : Int) (n : Nat) : Y c i d n=Hd (c,1) i d n := rfl
+theorem Zr_eq_Hd (c : Int) (i : Nat) (d : Int) (n : Nat) : Zr c i d n=Hd (c,0) i d n := rfl
+theorem A2_cons (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    A2 c i d n=((0:Int),(0:Int)) :: Y c i d n := rfl
+
+theorem Gp_4 : Gp 4=2 := by decide
+theorem Gp_5 : Gp 5=3 := by decide
+theorem Gp_6 : Gp 6=4 := by decide
+theorem Gp_7 : Gp 7=5 := by decide
+theorem Gp_8 : Gp 8=4 := by decide
+theorem Gq_3 : Gq 3=1 := by decide
+theorem Gq_4 : Gq 4=1 := by decide
+theorem Gq_5 : Gq 5=0 := by decide
+theorem Gq_6 : Gq 6=1 := by decide
+theorem Gq_7 : Gq 7=2 := by decide
+theorem Gq_8 : Gq 8=1 := by decide
+
+theorem Gp_ge_four (t : Nat) (ht : 4 ≤ t) : (2:Int) ≤ Gp t := by
+  have := Gp_min_le 4 t (by omega) ht
+  rw [Gp_4] at this
+  omega
+
+theorem Gp_ge_five (t : Nat) (ht : 5 ≤ t) : (3:Int) ≤ Gp t := by
+  have := Gp_min_le 5 t (by omega) ht
+  rw [Gp_5] at this
+  omega
+
+theorem Gp_ge_six (t : Nat) (ht : 6 ≤ t) : (4:Int) ≤ Gp t := by
+  have := Gp_min_le 6 t (by omega) ht
+  rw [Gp_6] at this
+  omega
+
+/-! #### 頭が窓より小さいこと -/
+
+theorem head_Q1 (e : Int) (s : Nat) (he : 0 ≤ e) :
+    ∀ t, 4 ≤ t → t<4+s → ((1:Int),(1:Int)).1<Gp t+e := by
+  intro t ht _
+  have := Gp_ge_four t ht
+  show (1:Int)<Gp t+e
+  omega
+
+theorem head_Aw (E : Int) (n : Nat) (hE : 1 ≤ E) :
+    ∀ t, 4 ≤ t → t<4+n → (2:Int)<Gp t+E := by
+  intro t ht _
+  have := Gp_ge_four t ht
+  omega
+
+theorem head_Q2 (E : Int) (k : Nat) (hE : 0 ≤ E) :
+    ∀ t, 5 ≤ t → t<5+k → ((2:Int),(1:Int)).1<Gp t+E := by
+  intro t ht _
+  have := Gp_ge_five t ht
+  show (2:Int)<Gp t+E
+  omega
+
+theorem head_Bw (D : Int) (k : Nat) (hD : 1 ≤ D) :
+    ∀ t, 5 ≤ t → t<5+k → (3:Int)<Gp t+D := by
+  intro t ht _
+  have := Gp_ge_five t ht
+  omega
+
+theorem head_Zw (D : Int) (t0 : Nat) (hD : (-1:Int) ≤ D) :
+    ∀ t, 6 ≤ t → t<6+t0 → ((2:Int),(0:Int)).1<Gp t+D := by
+  intro t ht _
+  have := Gp_ge_six t ht
+  show (2:Int)<Gp t+D
+  omega
+
+theorem head_Cw (G : Int) (t0 : Nat) (hG : (-3:Int) ≤ G) :
+    ∀ t, 6 ≤ t → t<6+t0 → ((0:Int),(0:Int)).1<Gp t+G := by
+  intro t ht _
+  have := Gp_ge_six t ht
+  show (0:Int)<Gp t+G
+  omega
+
+theorem head_RQ (k : Nat) :
+    ∀ t, 5 ≤ t → t<5+k → ((1:Int),(1:Int)).1<Gp t+(-1) := by
+  intro t ht _
+  have := Gp_ge_five t ht
+  show (1:Int)<Gp t+(-1)
+  omega
+
+/-! #### 主要性 -/
+
+theorem prin_Hd_any (c b : Int) (i : Nat) (d : Int) (n : Nat) (hi : 1 ≤ i)
+    (hb : (b==0)=false) (hh : ∀ t, i ≤ t → t<i+n → c<Gp t+d) :
+    Trans.Recal.isPrincipalP (Hd (c,b) i d n)=true := by
+  cases n with
+  | zero => exact Rows.Ladder.isPrincipalP_single c b hb
+  | succ nn => exact isPrincipalP_Hd (c,b) i d (nn+1) hi (by omega) hh
+
+theorem prin_Q1 (e : Int) (s : Nat) (he : 0 ≤ e) :
+    Trans.Recal.isPrincipalP (Q1 e s)=true :=
+  prin_Hd_any 1 1 4 e s (by omega) (by decide) (head_Q1 e s he)
+
+theorem prin_Q2 (E : Int) (k : Nat) (hE : 0 ≤ E) :
+    Trans.Recal.isPrincipalP (Q2 E k)=true :=
+  prin_Hd_any 2 1 5 E k (by omega) (by decide) (head_Q2 E k hE)
+
+theorem prin_RQ (k : Nat) : Trans.Recal.isPrincipalP (RQ k)=true :=
+  prin_Hd_any 1 1 5 (-1) k (by omega) (by decide) (head_RQ k)
+
+theorem prin_Zw (D : Int) (t : Nat) (hD : (-1:Int) ≤ D) (ht : 1 ≤ t) :
+    Trans.Recal.isPrincipalP (Zw D t)=true :=
+  isPrincipalP_Hd (2,0) 6 D t (by omega) ht (head_Zw D t hD)
+
+theorem prin_Cw (G : Int) (t : Nat) (hG : (-3:Int) ≤ G) (ht : 1 ≤ t) :
+    Trans.Recal.isPrincipalP (Cw G t)=true :=
+  isPrincipalP_Hd (0,0) 6 G t (by omega) ht (head_Cw G t hG)
+
+theorem prin_Aw (E : Int) (n : Nat) (hE : 1 ≤ E) :
+    Trans.Recal.isPrincipalP (Aw E n)=true :=
+  isPrincipalP_A2 2 4 E n (by omega) (by omega) (head_Aw E n hE)
+
+theorem prin_Bw (D : Int) (k : Nat) (hD : 1 ≤ D) :
+    Trans.Recal.isPrincipalP (Bw D k)=true :=
+  isPrincipalP_A2 3 5 D k (by omega) (by omega) (head_Bw D k hD)
+
+theorem prin_Win_three (s : Nat) : Trans.Recal.isPrincipalP (Win 3 0 (s+1))=true := by
+  rw [Win_eq_Hd]
+  exact prin_Hd_any (Gp 3+0) (Gq 3) 4 0 s (by omega) (by decide)
+    (fun t ht _ => by
+      have := Gp_ge_four t ht
+      show Gp 3+0<Gp t+0
+      rw [show Gp 3=1 from by decide]
+      omega)
+
+#guard (List.range 8).all fun s => Trans.Recal.isPrincipalP (Win 3 0 (s+1))
+#guard (List.range 8).all fun k => Trans.Recal.isPrincipalP (RQ k)
+
+/-! ### Link 2, step 19: the small indices.
+
+`trMax`, `joints` and `nJ` only ever look at columns 0–3. -/
+
+theorem gp0_Hd_0 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp0 (Hd h i d n) 0=h.1 := rfl
+theorem gp1_Hd_0 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp1 (Hd h i d n) 0=h.2 := rfl
+
+theorem gp0_Hd_1 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.gp0 (Hd h i d n) 1=Gp i+d := by
+  show (if ((1:Int)<0) then 0 else ((Hd h i d n).getD 1 (0,0)).1)=Gp i+d
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 0 (0,0)).1=Gp i+d
+  rw [getD_Win i d n 0 (by omega),Nat.zero_add]
+
+theorem gp1_Hd_1 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.gp1 (Hd h i d n) 1=Gq i := by
+  show (if ((1:Int)<0) then 0 else ((Hd h i d n).getD 1 (0,0)).2)=Gq i
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 0 (0,0)).2=Gq i
+  rw [getD_Win i d n 0 (by omega),Nat.zero_add]
+
+theorem gp0_Hd_2 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hn : 2 ≤ n) :
+    Trans.Recal.gp0 (Hd h i d n) 2=Gp (1+i)+d := by
+  show (if ((2:Int)<0) then 0 else ((Hd h i d n).getD 2 (0,0)).1)=Gp (1+i)+d
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 1 (0,0)).1=Gp (1+i)+d
+  rw [getD_Win i d n 1 (by omega)]
+
+theorem gp1_Hd_2 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hn : 2 ≤ n) :
+    Trans.Recal.gp1 (Hd h i d n) 2=Gq (1+i) := by
+  show (if ((2:Int)<0) then 0 else ((Hd h i d n).getD 2 (0,0)).2)=Gq (1+i)
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 1 (0,0)).2=Gq (1+i)
+  rw [getD_Win i d n 1 (by omega)]
+
+theorem gp0_Hd_3 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hn : 3 ≤ n) :
+    Trans.Recal.gp0 (Hd h i d n) 3=Gp (2+i)+d := by
+  show (if ((3:Int)<0) then 0 else ((Hd h i d n).getD 3 (0,0)).1)=Gp (2+i)+d
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 2 (0,0)).1=Gp (2+i)+d
+  rw [getD_Win i d n 2 (by omega)]
+
+theorem gp1_Hd_3 (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hn : 3 ≤ n) :
+    Trans.Recal.gp1 (Hd h i d n) 3=Gq (2+i) := by
+  show (if ((3:Int)<0) then 0 else ((Hd h i d n).getD 3 (0,0)).2)=Gq (2+i)
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 2 (0,0)).2=Gq (2+i)
+  rw [getD_Win i d n 2 (by omega)]
+
+theorem gp0_A2_0 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp0 (A2 c i d n) 0=0 := rfl
+theorem gp1_A2_0 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp1 (A2 c i d n) 0=0 := rfl
+theorem gp0_A2_1 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp0 (A2 c i d n) 1=c := rfl
+theorem gp1_A2_1 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp1 (A2 c i d n) 1=1 := rfl
+
+theorem gp0_A2_2 (c : Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.gp0 (A2 c i d n) 2=Gp i+d := by
+  show (if ((2:Int)<0) then 0 else ((A2 c i d n).getD 2 (0,0)).1)=Gp i+d
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 0 (0,0)).1=Gp i+d
+  rw [getD_Win i d n 0 (by omega),Nat.zero_add]
+
+theorem gp1_A2_2 (c : Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.gp1 (A2 c i d n) 2=Gq i := by
+  show (if ((2:Int)<0) then 0 else ((A2 c i d n).getD 2 (0,0)).2)=Gq i
+  rw [if_neg (by omega)]
+  show ((Win i d n).getD 0 (0,0)).2=Gq i
+  rw [getD_Win i d n 0 (by omega),Nat.zero_add]
+
+theorem lenI_Hd (h : Int × Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.lenI (Hd h i d n)=((n:Nat):Int)+1 := by
+  unfold Trans.Recal.lenI
+  rw [length_Hd]
+  omega
+
+theorem lenI_A2 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.lenI (A2 c i d n)=((n:Nat):Int)+2 := by
+  unfold Trans.Recal.lenI
+  rw [length_A2]
+  omega
+
+/-! #### `trMax` -/
+
+theorem trMax_A2_one (c : Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) (hc : 0<c)
+    (h2 : c<Gp i+d) (h3 : ¬((1:Int)<Gq i)) : Trans.Recal.trMax (A2 c i d n)=1 := by
+  have hlen : (A2 c i d n).length=n+2 := length_A2 c i d n
+  have e1 : Trans.Recal.trMax (A2 c i d n)=(((1:Nat)):Int) → Trans.Recal.trMax (A2 c i d n)=1 :=
+    fun h => by rw [h]; rfl
+  apply e1
+  refine Rows.Ladder.trMax_eq _ 1 (by omega) ?_ ?_
+  · intro j hj
+    have hj0 : j=0 := by omega
+    subst hj0
+    refine Rows.Ladder.isParentP_of_fpar _ _ _ _ (by omega)
+      (by rw [lenI_A2]; omega) ?_
+    have : Trans.Recal.fpar (A2 c i d n) 1 1 0=0 :=
+      Rows.Ladder.fpar1_one _ (by omega)
+        (by rw [gp0_A2_0,gp0_A2_1]; exact hc)
+        (by rw [gp1_A2_0,gp1_A2_1]; omega)
+    simpa using this
+  · refine Rows.Ladder.isParentP_of_ne _ _ _ _ (-1) ?_ (by omega)
+    have : Trans.Recal.fpar (A2 c i d n) 1 2 1=-1 :=
+      Rows.Ladder.fpar1_two_lb _ (by omega)
+        (by rw [gp0_A2_1,gp0_A2_2 c i d n hn]; exact h2)
+        (by rw [gp1_A2_1,gp1_A2_2 c i d n hn]; exact h3)
+    simpa using this
+
+theorem trMax_A2_zero (c : Int) (i : Nat) (d : Int) (hc : 0<c) :
+    Trans.Recal.trMax (A2 c i d 0)=1 := by
+  have e1 : Trans.Recal.trMax (A2 c i d 0)=(((1:Nat)):Int) →
+      Trans.Recal.trMax (A2 c i d 0)=1 := fun h => by rw [h]; rfl
+  apply e1
+  refine Rows.Ladder.trMax_eq _ 1 (by rw [length_A2]; omega) ?_ ?_
+  · intro j hj
+    have hj0 : j=0 := by omega
+    subst hj0
+    refine Rows.Ladder.isParentP_of_fpar _ _ _ _ (by omega)
+      (by rw [lenI_A2]; omega) ?_
+    have : Trans.Recal.fpar (A2 c i d 0) 1 1 0=0 :=
+      Rows.Ladder.fpar1_one _ (by rw [length_A2]; omega)
+        (by rw [gp0_A2_0,gp0_A2_1]; exact hc)
+        (by rw [gp1_A2_0,gp1_A2_1]; omega)
+    simpa using this
+  · refine Rows.Ladder.isParentP_of_ne _ _ _ _ (-1) ?_ (by omega)
+    have : Trans.Recal.fpar (A2 c i d 0) 1 2 1=-1 :=
+      Rows.Ladder.fpar_out _ 1 2 1 (by rw [lenI_A2]; omega)
+    simpa using this
+
+theorem trMax_Cw (G : Int) (t : Nat) (ht : 3 ≤ t) (hG : (-3:Int) ≤ G) :
+    Trans.Recal.trMax (Cw G t)=2 := by
+  have e1 : Trans.Recal.trMax (Cw G t)=(((2:Nat)):Int) → Trans.Recal.trMax (Cw G t)=2 :=
+    fun h => by rw [h]; rfl
+  apply e1
+  unfold Cw
+  refine Rows.Ladder.trMax_eq _ 2 (by rw [length_Hd]; omega) ?_ ?_
+  · intro j hj
+    rcases (show j=0 ∨ j=1 by omega) with rfl|rfl
+    · refine Rows.Ladder.isParentP_of_fpar _ _ _ _ (by omega)
+        (by rw [lenI_Hd]; omega) ?_
+      have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G t) 1 1 0=0 :=
+        Rows.Ladder.fpar1_one _ (by rw [length_Hd]; omega)
+          (by rw [gp0_Hd_0,gp0_Hd_1 _ 6 G t (by omega),Gp_6]; omega)
+          (by rw [gp1_Hd_0,gp1_Hd_1 _ 6 G t (by omega),Gq_6]; omega)
+      simpa using this
+    · refine Rows.Ladder.isParentP_of_fpar _ _ _ _ (by omega)
+        (by rw [lenI_Hd]; omega) ?_
+      have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G t) 1 2 1=1 :=
+        Rows.Ladder.fpar1_two_lb_eq _ (by rw [length_Hd]; omega)
+          (by rw [gp0_Hd_1 _ 6 G t (by omega),gp0_Hd_2 _ 6 G t (by omega),
+            show (1+6)=7 from rfl,Gp_6,Gp_7]; omega)
+          (by rw [gp1_Hd_1 _ 6 G t (by omega),gp1_Hd_2 _ 6 G t (by omega),
+            show (1+6)=7 from rfl,Gq_6,Gq_7]; omega)
+      simpa using this
+  · refine Rows.Ladder.isParentP_of_ne _ _ _ _ (-1) ?_ (by omega)
+    have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G t) 1 3 2=-1 :=
+      Rows.Ladder.fpar1_three_lb _ (by rw [length_Hd]; omega)
+        (by rw [gp0_Hd_2 _ 6 G t (by omega),gp0_Hd_3 _ 6 G t (by omega),
+          show (1+6)=7 from rfl,show (2+6)=8 from rfl,Gp_7,Gp_8]; omega)
+    simpa using this
+
+theorem trMax_Cw_one (G : Int) (hG : (-3:Int) ≤ G) : Trans.Recal.trMax (Cw G 1)=1 := by
+  have e1 : Trans.Recal.trMax (Cw G 1)=(((1:Nat)):Int) → Trans.Recal.trMax (Cw G 1)=1 :=
+    fun h => by rw [h]; rfl
+  apply e1
+  unfold Cw
+  refine Rows.Ladder.trMax_eq _ 1 (by rw [length_Hd]; omega) ?_ ?_
+  · intro j hj
+    have hj0 : j=0 := by omega
+    subst hj0
+    refine Rows.Ladder.isParentP_of_fpar _ _ _ _ (by omega)
+      (by rw [lenI_Hd]; omega) ?_
+    have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G 1) 1 1 0=0 :=
+      Rows.Ladder.fpar1_one _ (by rw [length_Hd]; omega)
+        (by rw [gp0_Hd_0,gp0_Hd_1 _ 6 G 1 (by omega),Gp_6]; omega)
+        (by rw [gp1_Hd_0,gp1_Hd_1 _ 6 G 1 (by omega),Gq_6]; omega)
+    simpa using this
+  · refine Rows.Ladder.isParentP_of_ne _ _ _ _ (-1) ?_ (by omega)
+    have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G 1) 1 2 1=-1 :=
+      Rows.Ladder.fpar_out _ 1 2 1 (by rw [lenI_Hd]; omega)
+    simpa using this
+
+theorem trMax_Cw_two (G : Int) (hG : (-3:Int) ≤ G) : Trans.Recal.trMax (Cw G 2)=2 := by
+  have e1 : Trans.Recal.trMax (Cw G 2)=(((2:Nat)):Int) → Trans.Recal.trMax (Cw G 2)=2 :=
+    fun h => by rw [h]; rfl
+  apply e1
+  unfold Cw
+  refine Rows.Ladder.trMax_eq _ 2 (by rw [length_Hd]; omega) ?_ ?_
+  · intro j hj
+    rcases (show j=0 ∨ j=1 by omega) with rfl|rfl
+    · refine Rows.Ladder.isParentP_of_fpar _ _ _ _ (by omega)
+        (by rw [lenI_Hd]; omega) ?_
+      have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G 2) 1 1 0=0 :=
+        Rows.Ladder.fpar1_one _ (by rw [length_Hd]; omega)
+          (by rw [gp0_Hd_0,gp0_Hd_1 _ 6 G 2 (by omega),Gp_6]; omega)
+          (by rw [gp1_Hd_0,gp1_Hd_1 _ 6 G 2 (by omega),Gq_6]; omega)
+      simpa using this
+    · refine Rows.Ladder.isParentP_of_fpar _ _ _ _ (by omega)
+        (by rw [lenI_Hd]; omega) ?_
+      have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G 2) 1 2 1=1 :=
+        Rows.Ladder.fpar1_two_lb_eq _ (by rw [length_Hd]; omega)
+          (by rw [gp0_Hd_1 _ 6 G 2 (by omega),gp0_Hd_2 _ 6 G 2 (by omega),
+            show (1+6)=7 from rfl,Gp_6,Gp_7]; omega)
+          (by rw [gp1_Hd_1 _ 6 G 2 (by omega),gp1_Hd_2 _ 6 G 2 (by omega),
+            show (1+6)=7 from rfl,Gq_6,Gq_7]; omega)
+      simpa using this
+  · refine Rows.Ladder.isParentP_of_ne _ _ _ _ (-1) ?_ (by omega)
+    have : Trans.Recal.fpar (Hd ((0:Int),(0:Int)) 6 G 2) 1 3 2=-1 :=
+      Rows.Ladder.fpar_out _ 1 3 2 (by rw [lenI_Hd]; omega)
+    simpa using this
+
+#guard (List.range 6).all fun n => Trans.Recal.trMax (Aw 1 (n+1))==1
+#guard (List.range 6).all fun k => Trans.Recal.trMax (Bw 2 (k+1))==1
+#guard (List.range 6).all fun t => Trans.Recal.trMax (Cw 0 (t+3))==2
+#guard Trans.Recal.trMax (Cw 0 1)==1
+#guard Trans.Recal.trMax (Cw 0 2)==2
+
+/-! ### Link 2, step 20: the branch, and the three folds. -/
+
+theorem drop_A2_two (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    (A2 c i d n).drop 2=Win i d n := rfl
+
+theorem drop_Hd_three (h : Int × Int) (i : Nat) (d : Int) (t : Nat) (ht : 2 ≤ t) :
+    (Hd h i d t).drop 3=Win (i+2) d (t-2) := by
+  show (Win i d t).drop 2=Win (i+2) d (t-2)
+  obtain ⟨u,rfl⟩ : ∃ u, t=u+2 := ⟨t-2,by omega⟩
+  rw [show (u+2)=(u+1)+1 from rfl,show ((Win i d ((u+1)+1)).drop 2)
+      =(((Win i d ((u+1)+1)).drop 1).drop 1) from by
+    rw [List.drop_drop]]
+  rw [Win_drop i d (u+1),Win_drop (i+1) d u,show i+1+1=i+2 from rfl,
+    show u+2-2=u from rfl]
+
+theorem brF_A2 (c : Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n)
+    (htr : Trans.Recal.trMax (A2 c i d n)=1) (hi1 : i%5 ≠ 1) (hi2 : i%5 ≠ 2) :
+    Trans.Recal.brF (A2 c i d n)=[Win i d n] := by
+  unfold Trans.Recal.brF
+  rw [htr,show ((1:Int)+1).toNat=2 from by rfl,drop_A2_two]
+  obtain ⟨u,rfl⟩ : ∃ u, n=u+1 := ⟨n-1,by omega⟩
+  exact ppair_Win i d u hi1 hi2
+
+theorem brF_Cw (G : Int) (t : Nat) (ht : 3 ≤ t) (hG : (-3:Int) ≤ G) :
+    Trans.Recal.brF (Cw G t)=[Win 8 G (t-2)] := by
+  unfold Trans.Recal.brF
+  rw [trMax_Cw G t ht hG,show ((2:Int)+1).toNat=3 from by rfl]
+  unfold Cw
+  rw [drop_Hd_three _ 6 G t (by omega),show (6+2)=8 from rfl]
+  obtain ⟨u,hu⟩ : ∃ u, t-2=u+1 := ⟨t-3,by omega⟩
+  rw [hu]
+  exact ppair_Win 8 G u (by omega) (by omega)
+
+theorem joint_Aw (E : Int) (n : Nat) (hE : 1 ≤ E) (hn : 1 ≤ n) :
+    Trans.Recal.fpar (Aw E n) 0 2 0=1 := by
+  have h := chain_A2 2 4 E n (by omega) (by omega) (head_Aw E n hE) 2 (by omega)
+    (by rw [length_A2]; omega)
+  rw [show parA 4 2=1 from by decide] at h
+  simpa using h
+
+theorem joint_Bw (D : Int) (k : Nat) (hD : 1 ≤ D) (hk : 1 ≤ k) :
+    Trans.Recal.fpar (Bw D k) 0 2 0=1 := by
+  have h := chain_A2 3 5 D k (by omega) (by omega) (head_Bw D k hD) 2 (by omega)
+    (by rw [length_A2]; omega)
+  rw [show parA 5 2=1 from by decide] at h
+  simpa using h
+
+theorem joint_Cw (G : Int) (t : Nat) (hG : (-3:Int) ≤ G) (ht : 3 ≤ t) :
+    Trans.Recal.fpar (Cw G t) 0 3 0=0 := by
+  have h := chain_Hd ((0:Int),(0:Int)) 6 G t (by omega) (head_Cw G t hG) 3 (by omega)
+    (by rw [length_Hd]; omega)
+  rw [show parHd 6 3=0 from by decide] at h
+  simpa using h
+
+theorem nJ_Aw (E : Int) (n : Nat) (hE : 1 ≤ E) (hn : 1 ≤ n) :
+    Trans.Recal.fpar (Aw E n) 1 2 0=0 := by
+  unfold Aw
+  exact Rows.Ladder.fpar1_two_zero _ (by rw [length_A2]; omega)
+    (joint_Aw E n hE hn)
+    (by rw [gp0_A2_0,gp0_A2_1]; omega)
+    (by rw [gp1_A2_1,gp1_A2_2 2 4 E n hn,Gq_4]; omega)
+    (by rw [gp1_A2_0,gp1_A2_2 2 4 E n hn,Gq_4]; omega)
+
+theorem nJ_Cw (G : Int) (t : Nat) (hG : (-3:Int) ≤ G) (ht : 3 ≤ t) :
+    Trans.Recal.fpar (Cw G t) 1 3 0=0 := by
+  unfold Cw
+  exact Rows.Ladder.fpar1_three_zero _ (by rw [length_Hd]; omega)
+    (joint_Cw G t hG ht)
+    (by rw [gp1_Hd_0,gp1_Hd_3 _ 6 G t (by omega),show (2+6)=8 from rfl,Gq_8]; omega)
+
+theorem isZeroP_A2 (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.isZeroP (A2 c i d n)=false := by
+  unfold Trans.Recal.isZeroP
+  rw [show ((A2 c i d n).length==1)=false from by rw [length_A2]; simp]
+  rfl
+
+theorem isZeroP_Hd_of_len (h : Int × Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.isZeroP (Hd h i d n)=false := by
+  unfold Trans.Recal.isZeroP
+  rw [show ((Hd h i d n).length==1)=false from by rw [length_Hd]; simp; omega]
+  rfl
+
+theorem gp1_Win_zero (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.gp1 (Win i d n) 0=Gq i := by
+  show (if ((0:Int)<0) then 0 else ((Win i d n).getD 0 (0,0)).2)=Gq i
+  rw [if_neg (by omega),getD_Win i d n 0 (by omega),Nat.zero_add]
+
+/-- 相 4 の畳み込み: `Aw` は 2 列を切り出して `Q2` に降りる。 -/
+theorem fold_Aw (E : Int) (n f : Nat) (hE : 1 ≤ E) (hn : 1 ≤ n) :
+    Trans.Recal.red (f+1) (Aw E n)
+      = Trans.Recal.jjSeq 0 1
+        ++ Trans.Recal.incrFirst (Trans.Recal.red f (Q2 E (n-1))) 1 := by
+  have htr : Trans.Recal.trMax (A2 2 4 E n)=1 :=
+    trMax_A2_one 2 4 E n hn (by omega) (by rw [Gp_4]; omega) (by rw [Gq_4]; omega)
+  have hNJ : (((1:Int)+1,(0:Int)+1) :: Trans.Recal.derp (Win 4 E n))=Q2 E (n-1) := by
+    obtain ⟨u,hu⟩ : ∃ u, n=u+1 := ⟨n-1,by omega⟩
+    subst hu
+    show ((1:Int)+1,(0:Int)+1) :: (Win 4 E (u+1)).drop 1=Q2 E (u+1-1)
+    rw [Win_drop 4 E u]
+    rfl
+  have key := Rows.Ladder.red_fold_single (A2 2 4 E n) f 1 0 1 (Win 4 E n)
+    (isZeroP_A2 2 4 E n) (prin_Aw E n hE)
+    (gp0_A2_0 2 4 E n) (gp1_A2_0 2 4 E n) htr
+    (by rw [lenI_A2]; exact beq_eq_false_iff_ne.mpr (by omega))
+    (brF_A2 2 4 E n hn htr (by omega) (by omega))
+    (by rw [show (1:Int)+1=2 from by omega]
+        exact joint_Aw E n hE hn)
+    (by rw [gp1_Win_zero 4 E n hn,Gq_4,show ((1:Int)==0)=false from rfl]
+        simp only [Bool.false_eq_true,if_false]
+        rw [show (1:Int)+1=2 from by omega]
+        exact nJ_Aw E n hE hn)
+  unfold Aw
+  rw [key,hNJ,show (1:Int)-0=1 from by omega]
+
+/-- 相 3 の畳み込み: `Bw` は 2 列を切り出して `Zw` に降りる。ずらしは 2。 -/
+theorem fold_Bw (D : Int) (k f : Nat) (hD : 1 ≤ D) (hk : 1 ≤ k) :
+    Trans.Recal.red (f+1) (Bw D k)
+      = Trans.Recal.jjSeq 0 1
+        ++ Trans.Recal.incrFirst (Trans.Recal.red f (Zw D (k-1))) 2 := by
+  have htr : Trans.Recal.trMax (A2 3 5 D k)=1 :=
+    trMax_A2_one 3 5 D k hk (by omega) (by rw [Gp_5]; omega) (by rw [Gq_5]; omega)
+  have hNJ : (((1:Int)+1,(-1:Int)+1) :: Trans.Recal.derp (Win 5 D k))=Zw D (k-1) := by
+    obtain ⟨u,hu⟩ : ∃ u, k=u+1 := ⟨k-1,by omega⟩
+    subst hu
+    show ((1:Int)+1,(-1:Int)+1) :: (Win 5 D (u+1)).drop 1=Zw D (u+1-1)
+    rw [Win_drop 5 D u]
+    rw [show ((1:Int)+1)=(2:Int) from by omega,show ((-1:Int)+1)=(0:Int) from by omega]
+    rfl
+  have key := Rows.Ladder.red_fold_single (A2 3 5 D k) f 1 (-1) 1 (Win 5 D k)
+    (isZeroP_A2 3 5 D k) (prin_Bw D k hD)
+    (gp0_A2_0 3 5 D k) (gp1_A2_0 3 5 D k) htr
+    (by rw [lenI_A2]; exact beq_eq_false_iff_ne.mpr (by omega))
+    (brF_A2 3 5 D k hk htr (by omega) (by omega))
+    (by rw [show (1:Int)+1=2 from by omega]
+        exact joint_Bw D k hD hk)
+    (by rw [gp1_Win_zero 5 D k hk,Gq_5,show ((0:Int)==0)=true from rfl]
+        simp only [if_true])
+  unfold Bw
+  rw [key,hNJ,show (1:Int)-(-1)=2 from by omega]
+
+/-- 相 2 の畳み込み: `Cw` は 3 列を切り出して `Q1` に降りる。ずらしは 0。 -/
+theorem fold_Cw (G : Int) (t f : Nat) (hG : (0:Int) ≤ G) (ht : 3 ≤ t) :
+    Trans.Recal.red (f+1) (Cw G t)
+      = Trans.Recal.jjSeq 0 2
+        ++ Trans.Recal.incrFirst (Trans.Recal.red f (Q1 (G+3) (t-3))) 0 := by
+  have htr : Trans.Recal.trMax (Cw G t)=2 := trMax_Cw G t ht (by omega)
+  have hNJ : (((0:Int)+1,(0:Int)+1) :: Trans.Recal.derp (Win 8 G (t-2)))
+      =Q1 (G+3) (t-3) := by
+    obtain ⟨u,hu⟩ : ∃ u, t=u+3 := ⟨t-3,by omega⟩
+    subst hu
+    show ((0:Int)+1,(0:Int)+1) :: (Win 8 G (u+3-2)).drop 1=Q1 (G+3) (u+3-3)
+    rw [show u+3-2=u+1 from rfl,Win_drop 8 G u,show u+3-3=u from rfl,
+      show Win 9 G u=Win 4 (G+3) u from by
+        rw [show (9:Nat)=4+5 from rfl,Win_add_five]]
+    rw [show ((0:Int)+1)=(1:Int) from by omega]
+    rfl
+  have key := Rows.Ladder.red_fold_single (Cw G t) f 2 0 0 (Win 8 G (t-2))
+    (by unfold Cw; exact isZeroP_Hd_of_len _ 6 G t (by omega))
+    (prin_Cw G t (by omega) (by omega))
+    (by unfold Cw; exact gp0_Hd_0 _ 6 G t) (by unfold Cw; exact gp1_Hd_0 _ 6 G t) htr
+    (by unfold Cw; rw [lenI_Hd]; exact beq_eq_false_iff_ne.mpr (by omega))
+    (brF_Cw G t ht (by omega))
+    (by rw [show (2:Int)+1=3 from by omega]
+        exact joint_Cw G t (by omega) ht)
+    (by rw [gp1_Win_zero 8 G (t-2) (by omega),Gq_8,show ((1:Int)==0)=false from rfl]
+        simp only [Bool.false_eq_true,if_false]
+        rw [show (2:Int)+1=3 from by omega]
+        exact nJ_Cw G t (by omega) ht)
+  rw [key,hNJ,show (0:Int)-0=0 from by omega]
+
+#guard (List.range 6).all fun n => Trans.Recal.brF (Aw 1 (n+1))==[Win 4 1 (n+1)]
+#guard (List.range 6).all fun k => Trans.Recal.brF (Bw 2 (k+1))==[Win 5 2 (k+1)]
+#guard (List.range 6).all fun t => Trans.Recal.brF (Cw 0 (t+3))==[Win 8 0 (t+1)]
+
+/-! ### Link 2, step 21: the two head steps, the base cases, and the glue. -/
+
+theorem Win_append (i : Nat) (d : Int) (a b : Nat) :
+    Win i d a++Win (i+a) d b=Win i d (a+b) := by
+  induction b with
+  | zero => simp [Win]
+  | succ b ih =>
+    rw [Win_succ (i+a) d b,← List.append_assoc,ih,show a+(b+1)=(a+b)+1 by omega,
+      Win_succ i d (a+b),show b+(i+a)=(a+b)+i by omega]
+
+theorem Win_zero_one : Win 0 0 1=([((0:Int),(0:Int))] : Trans.Recal.PS) := by decide
+theorem Win_zero_two :
+    Win 0 0 2=([((0:Int),(0:Int)),((1:Int),(1:Int))] : Trans.Recal.PS) := by decide
+theorem Win_zero_three :
+    Win 0 0 3=([((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(2:Int))]
+      : Trans.Recal.PS) := by decide
+
+theorem jj_one : Trans.Recal.jjSeq 0 1=([((0:Int),(0:Int)),((1:Int),(1:Int))]
+    : Trans.Recal.PS) := rfl
+theorem jj_two : Trans.Recal.jjSeq 0 2
+    =([((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(2:Int))] : Trans.Recal.PS) := rfl
+
+theorem V_eq_Q1 (m : Nat) : V m=Q1 0 (m+1) := by
+  rw [V_eq_Win,Win_cons]
+  show (Gp 3+0,Gq 3) :: Win 4 0 (m+1)=((1:Int),(1:Int)) :: Win 4 0 (m+1)
+  rw [show Gp 3=1 from by decide,Gq_3]
+  rfl
+
+theorem gp0_Win_zero (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.gp0 (Win i d n) 0=Gp i+d := by
+  show (if ((0:Int)<0) then 0 else ((Win i d n).getD 0 (0,0)).1)=Gp i+d
+  rw [if_neg (by omega),getD_Win i d n 0 (by omega),Nat.zero_add]
+
+theorem Win3_cons (s : Nat) : Win 3 0 (s+1)=((1:Int),(1:Int)) :: Win 4 0 s := by
+  rw [Win_cons]
+  show (Gp 3+0,Gq 3) :: Win 4 0 s=_
+  rw [show Gp 3=1 from by decide,Gq_3]
+  rfl
+
+/-- `Q1` の段。`Aw` の答えから頭を落とす。 -/
+theorem step_Q1 (e : Int) (s f : Nat) (he : 0 ≤ e)
+    (h : Trans.Recal.red f (Aw (e+1) s)=RA s) :
+    Trans.Recal.red (f+1) (Q1 e s)=Win 3 0 (s+1) := by
+  have hA : Trans.Recal.red f (((0:Int),(0:Int)) :: Y ((1:Int)+1) 4 (e+1) s)
+      =((0:Int),(0:Int)) :: Win 3 0 (s+1) := by
+    rw [Win3_cons,show ((1:Int)+1)=(2:Int) from by omega]
+    exact h
+  exact red_Y_of_A 1 4 e s f (Win 3 0 (s+1)) (by decide) (prin_Q1 e s he) hA
+    (by rw [length_Win]; omega) (prin_Win_three s)
+    (by rw [gp0_Win_zero 3 0 (s+1) (by omega),gp1_Win_zero 3 0 (s+1) (by omega),
+      show Gp 3=1 from by decide,Gq_3]
+        omega)
+
+/-- `Q2` の段。 -/
+theorem step_Q2 (E : Int) (k f : Nat) (hE : 0 ≤ E)
+    (h : Trans.Recal.red f (Bw (E+1) k)=((0:Int),(0:Int)) :: RQ k) :
+    Trans.Recal.red (f+1) (Q2 E k)=RQ k := by
+  have hA : Trans.Recal.red f (((0:Int),(0:Int)) :: Y ((2:Int)+1) 5 (E+1) k)
+      =((0:Int),(0:Int)) :: RQ k := by
+    rw [show ((2:Int)+1)=(3:Int) from by omega]
+    exact h
+  exact red_Y_of_A 2 5 E k f (RQ k) (by decide) (prin_Q2 E k hE) hA
+    (by unfold RQ; rw [List.length_cons]; omega) (prin_RQ k)
+    (by show Trans.Recal.gp0 (Hd ((1:Int),(1:Int)) 5 (-1) k) 0
+          =Trans.Recal.gp1 (Hd ((1:Int),(1:Int)) 5 (-1) k) 0
+        rw [gp0_Hd_0,gp1_Hd_0])
+
+/-- `Zw` の段。畳み込みではなく、頭を 0 に正規化して降りるだけ。 -/
+theorem step_Zw (D : Int) (t f : Nat) (hD : (-1:Int) ≤ D) (ht : 1 ≤ t) :
+    Trans.Recal.red (f+1) (Zw D t)=Trans.Recal.red f (Cw (D-2) t) :=
+  red_Zr_step 2 6 D t f ht (by decide) (prin_Zw D t hD ht)
+
+/-! #### 底 -/
+
+theorem base_Aw (E : Int) (f : Nat) : Trans.Recal.red (f+1) (Aw E 0)=RA 0 := by
+  have h := Rows.Ladder.red_jj (A2 2 4 E 0) f (isZeroP_A2 2 4 E 0)
+    (isPrincipalP_A2 2 4 E 0 (by omega) (by omega) (fun t _ ht => absurd ht (by omega)))
+    (gp0_A2_0 2 4 E 0) (gp1_A2_0 2 4 E 0)
+    (by rw [trMax_A2_zero 2 4 E (by omega),lenI_A2]; omega)
+  unfold Aw
+  rw [h,lenI_A2,show ((0:Nat):Int)+2-1=1 from by omega,jj_one]
+  rfl
+
+theorem base_Bw (D : Int) (f : Nat) :
+    Trans.Recal.red (f+1) (Bw D 0)=((0:Int),(0:Int)) :: RQ 0 := by
+  have h := Rows.Ladder.red_jj (A2 3 5 D 0) f (isZeroP_A2 3 5 D 0)
+    (isPrincipalP_A2 3 5 D 0 (by omega) (by omega) (fun t _ ht => absurd ht (by omega)))
+    (gp0_A2_0 3 5 D 0) (gp1_A2_0 3 5 D 0)
+    (by rw [trMax_A2_zero 3 5 D (by omega),lenI_A2]; omega)
+  unfold Bw
+  rw [h,lenI_A2,show ((0:Nat):Int)+2-1=1 from by omega,jj_one]
+  rfl
+
+theorem base_Zw (D : Int) (f : Nat) : Trans.Recal.red (f+1) (Zw D 0)=Win 0 0 1 := by
+  rw [Rows.Ladder.red_zeroP _ f (by rfl),Win_zero_one]
+  rfl
+
+theorem base_Cw_one (G : Int) (f : Nat) (hG : (-3:Int) ≤ G) :
+    Trans.Recal.red (f+1) (Cw G 1)=Win 0 0 2 := by
+  have h := Rows.Ladder.red_jj (Cw G 1) f
+    (by unfold Cw; exact isZeroP_Hd_of_len _ 6 G 1 (by omega))
+    (prin_Cw G 1 hG (by omega))
+    (by unfold Cw; exact gp0_Hd_0 _ 6 G 1) (by unfold Cw; exact gp1_Hd_0 _ 6 G 1)
+    (by rw [trMax_Cw_one G hG]; unfold Cw; rw [lenI_Hd]; omega)
+  rw [h,show Trans.Recal.lenI (Cw G 1)=2 from by unfold Cw; rw [lenI_Hd]; omega,
+    show (2:Int)-1=1 from by omega,jj_one,Win_zero_two]
+
+theorem base_Cw_two (G : Int) (f : Nat) (hG : (-3:Int) ≤ G) :
+    Trans.Recal.red (f+1) (Cw G 2)=Win 0 0 3 := by
+  have h := Rows.Ladder.red_jj (Cw G 2) f
+    (by unfold Cw; exact isZeroP_Hd_of_len _ 6 G 2 (by omega))
+    (prin_Cw G 2 hG (by omega))
+    (by unfold Cw; exact gp0_Hd_0 _ 6 G 2) (by unfold Cw; exact gp1_Hd_0 _ 6 G 2)
+    (by rw [trMax_Cw_two G hG]; unfold Cw; rw [lenI_Hd]; omega)
+  rw [h,show Trans.Recal.lenI (Cw G 2)=3 from by unfold Cw; rw [lenI_Hd]; omega,
+    show (3:Int)-1=2 from by omega,jj_two,Win_zero_three]
+
+/-! #### 貼り合わせ -/
+
+theorem glue_Aw (k : Nat) :
+    Trans.Recal.jjSeq 0 1++Trans.Recal.incrFirst (RQ k) 1=RA (k+1) := by
+  unfold RQ RA
+  rw [jj_one]
+  show ([((0:Int),(0:Int)),((1:Int),(1:Int))] : Trans.Recal.PS)
+    ++(((1:Int)+1,(1:Int)) :: Trans.Recal.incrFirst (Win 5 (-1) k) 1)
+    =((0:Int),(0:Int)) :: ((1:Int),(1:Int)) :: Win 4 0 (k+1)
+  rw [incrFirst_Win,show ((-1:Int)+1)=(0:Int) from by omega,
+    show ((1:Int)+1)=(2:Int) from by omega,Win_cons 4 0 k,Gp_4,Gq_4,
+    show Win (4+1) 0 k=Win 5 0 k from rfl,show ((2:Int)+0)=(2:Int) from by omega]
+  rfl
+
+theorem glue_Bw (k : Nat) :
+    Trans.Recal.jjSeq 0 1++Trans.Recal.incrFirst (Win 0 0 k) 2
+      =((0:Int),(0:Int)) :: RQ k := by
+  unfold RQ
+  rw [jj_one,incrFirst_Win,show ((0:Int)+2)=(2:Int) from by omega,
+    show Win 5 (-1) k=Win 0 2 k from by
+      rw [show (5:Nat)=0+5 from rfl,Win_add_five,show ((-1:Int)+3)=(2:Int) from by omega]]
+  rfl
+
+theorem glue_Cw (t : Nat) (ht : 2 ≤ t) :
+    Trans.Recal.jjSeq 0 2++Trans.Recal.incrFirst (Win 3 0 (t-2)) 0=Win 0 0 (t+1) := by
+  rw [jj_two,incrFirst_Win,show ((0:Int)+0)=(0:Int) from by omega,← Win_zero_three,
+    show (3:Nat)=0+3 from rfl,Win_append 0 0 3 (t-2),show 3+(t-2)=t+1 by omega]
+
+/-! ### Link 2, step 22: the cycle closes.
+
+`Aw E n` reduces to `RA n` — the shift `E` never reaches the answer.  The recursion
+descends five columns and raises the shift by three per turn, so the induction is on
+`n` with step five, and the five residues are the base cases. -/
+
+theorem red_Aw_of_Bw (E : Int) (n f : Nat) (hE : 1 ≤ E) (hn : 1 ≤ n)
+    (h : Trans.Recal.red f (Bw (E+1) (n-1))=((0:Int),(0:Int)) :: RQ (n-1)) :
+    Trans.Recal.red (f+2) (Aw E n)=RA n := by
+  rw [show f+2=(f+1)+1 by omega,fold_Aw E n (f+1) hE hn,
+    step_Q2 E (n-1) f (by omega) h,glue_Aw (n-1),show n-1+1=n by omega]
+
+theorem red_Bw_of_Zw (D : Int) (k f : Nat) (hD : 1 ≤ D) (hk : 1 ≤ k)
+    (h : Trans.Recal.red f (Zw D (k-1))=Win 0 0 k) :
+    Trans.Recal.red (f+1) (Bw D k)=((0:Int),(0:Int)) :: RQ k := by
+  rw [fold_Bw D k f hD hk,h,glue_Bw k]
+
+theorem red_Cw_of_Q1 (G : Int) (t f : Nat) (hG : (0:Int) ≤ G) (ht : 3 ≤ t)
+    (h : Trans.Recal.red f (Q1 (G+3) (t-3))=Win 3 0 (t-2)) :
+    Trans.Recal.red (f+1) (Cw G t)=Win 0 0 (t+1) := by
+  rw [fold_Cw G t f hG ht,h,glue_Cw t (by omega)]
+
+/-- **輪が閉じる。** `Aw` の答えはずらしに依らない。 -/
+theorem red_Aw_all (n : Nat) : ∀ (E : Int) (f : Nat), 1 ≤ E →
+    Trans.Recal.red (2*n+f+6) (Aw E n)=RA n := by
+  refine Nat.strongRecOn n ?_
+  intro n ih E f hE
+  rcases (show n=0 ∨ n=1 ∨ n=2 ∨ n=3 ∨ n=4 ∨ 5 ≤ n by omega) with rfl|rfl|rfl|rfl|rfl|h5
+  · rw [show 2*0+f+6=(f+5)+1 by omega]
+    exact base_Aw E (f+5)
+  · rw [show 2*1+f+6=((f+5)+1)+2 by omega]
+    exact red_Aw_of_Bw E 1 ((f+5)+1) hE (by omega) (base_Bw (E+1) (f+5))
+  · rw [show 2*2+f+6=(((f+6)+1)+1)+2 by omega]
+    refine red_Aw_of_Bw E 2 (((f+6)+1)+1) hE (by omega) ?_
+    exact red_Bw_of_Zw (E+1) 1 ((f+6)+1) (by omega) (by omega) (base_Zw (E+1) (f+6))
+  · rw [show 2*3+f+6=((((f+7)+1)+1)+1)+2 by omega]
+    refine red_Aw_of_Bw E 3 ((((f+7)+1)+1)+1) hE (by omega) ?_
+    refine red_Bw_of_Zw (E+1) 2 (((f+7)+1)+1) (by omega) (by omega) ?_
+    rw [step_Zw (E+1) 1 ((f+7)+1) (by omega) (by omega),
+      show E+1-2=E-1 from by omega]
+    exact base_Cw_one (E-1) (f+7) (by omega)
+  · rw [show 2*4+f+6=((((f+9)+1)+1)+1)+2 by omega]
+    refine red_Aw_of_Bw E 4 ((((f+9)+1)+1)+1) hE (by omega) ?_
+    refine red_Bw_of_Zw (E+1) 3 (((f+9)+1)+1) (by omega) (by omega) ?_
+    rw [step_Zw (E+1) 2 ((f+9)+1) (by omega) (by omega),
+      show E+1-2=E-1 from by omega]
+    exact base_Cw_two (E-1) (f+9) (by omega)
+  · obtain ⟨r,rfl⟩ : ∃ r, n=r+5 := ⟨n-5,by omega⟩
+    have hIH : Trans.Recal.red (2*r+(f+4)+6) (Aw (E+3) r)=RA r :=
+      ih r (by omega) (E+3) (f+4) (by omega)
+    have hQ1 : Trans.Recal.red ((2*r+(f+4)+6)+1) (Q1 (E+2) r)=Win 3 0 (r+1) := by
+      refine step_Q1 (E+2) r (2*r+(f+4)+6) (by omega) ?_
+      rw [show E+2+1=E+3 from by omega]
+      exact hIH
+    have hCw : Trans.Recal.red ((2*r+(f+4)+6)+2) (Cw (E-1) (r+3))=Win 0 0 (r+4) := by
+      refine red_Cw_of_Q1 (E-1) (r+3) ((2*r+(f+4)+6)+1) (by omega) (by omega) ?_
+      rw [show E-1+3=E+2 from by omega,show r+3-3=r from by omega,
+        show r+3-2=r+1 from by omega]
+      exact hQ1
+    have hZw : Trans.Recal.red ((2*r+(f+4)+6)+3) (Zw (E+1) (r+3))=Win 0 0 (r+4) := by
+      rw [show (2*r+(f+4)+6)+3=((2*r+(f+4)+6)+2)+1 by omega,
+        step_Zw (E+1) (r+3) ((2*r+(f+4)+6)+2) (by omega) (by omega),
+        show E+1-2=E-1 from by omega]
+      exact hCw
+    have hBw : Trans.Recal.red ((2*r+(f+4)+6)+4) (Bw (E+1) (r+4))
+        =((0:Int),(0:Int)) :: RQ (r+4) := by
+      refine red_Bw_of_Zw (E+1) (r+4) ((2*r+(f+4)+6)+3) (by omega) (by omega) ?_
+      rw [show r+4-1=r+3 from by omega]
+      exact hZw
+    rw [show 2*(r+5)+f+6=((2*r+(f+4)+6)+4)+2 by omega]
+    refine red_Aw_of_Bw E (r+5) ((2*r+(f+4)+6)+4) hE (by omega) ?_
+    rw [show r+5-1=r+4 from by omega]
+    exact hBw
+
+/-- `V m` は `red` の不動点。 -/
+theorem red_V (m f : Nat) : Trans.Recal.red (2*m+f+9) (V m)=V m := by
+  have h : Trans.Recal.red (2*(m+1)+f+6) (Aw ((0:Int)+1) (m+1))=RA (m+1) :=
+    red_Aw_all (m+1) ((0:Int)+1) f (by omega)
+  have key : Trans.Recal.red ((2*(m+1)+f+6)+1) (Q1 0 (m+1))=Win 3 0 (m+2) := by
+    have h2 := step_Q1 0 (m+1) (2*(m+1)+f+6) (by omega) h
+    rwa [show m+1+1=m+2 by omega] at h2
+  rw [V_eq_Q1 m,show 2*m+f+9=(2*(m+1)+f+6)+1 by omega,key,← V_eq_Win]
+  exact V_eq_Q1 m
+
+theorem red_L (m f : Nat) : Trans.Recal.red (2*m+f+10) (L m)=L m := by
+  rw [show 2*m+f+10=(2*m+f+9)+1 by omega,red_L_step m (2*m+f+9),red_V m f,
+    ← L_cons_V]
+
+/-- **リンク 2 の前半: 梯子は既約。** -/
+theorem redP_L (m : Nat) : Trans.Recal.redP (L m)=L m := by
+  unfold Trans.Recal.redP
+  obtain ⟨f,hf⟩ : ∃ f, Trans.Recal.redFuel (L m)=2*m+f+10 := by
+    refine ⟨Trans.Recal.redFuel (L m)-(2*m+10),?_⟩
+    have : 40+4*((L m).length+Trans.Recal.maxE (L m)) ≤ Trans.Recal.redFuel (L m) := by
+      unfold Trans.Recal.redFuel
+      omega
+    rw [length_L] at this
+    omega
+  rw [hf]
+  exact red_L m f
+
+theorem isReducedP_L (m : Nat) : Trans.Recal.isReducedP (L m)=true := by
+  unfold Trans.Recal.isReducedP
+  rw [redP_L]
+  simp
+
+#guard (List.range 12).all fun m => Trans.Recal.isReducedP (L m)
+#print axioms isReducedP_L
+#print axioms red_Aw_all
 
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero

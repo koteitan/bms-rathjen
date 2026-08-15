@@ -207,26 +207,84 @@ theorem fpar_zero_of_gap
   obtain ⟨j,hj⟩ : ∃ j, M.length=j+1 := ⟨M.length-1,by omega⟩
   rw [hj,fpar0Aux_step,if_pos (by omega)]
 
+/-! ## `trMax`, `firstNodes`, `joints`
+
+`trMax` は「`isParentP M 1 (j+1) j` が最初に破れる `j`」でしかない。
+枝が 1 本なら `firstNodes` と `joints` はそこから直ちに出る。 -/
+
+theorem trMaxAux_step (M : Trans.Recal.PS) (f : Nat) (j : Int) :
+    Trans.Recal.trMaxAux (f+1) M j
+      = if j ≥ Trans.Recal.lenI M then Trans.Recal.lenI M-1
+        else if !(Trans.Recal.isParentP M 1 (j+1) j) then j
+             else Trans.Recal.trMaxAux f M (j+1) := rfl
+
+/-- **`trMax` は最初に親でなくなる位置。** -/
+theorem trMax_eq (M : Trans.Recal.PS) (t : Nat) (hlen : t<M.length)
+    (hkeep : ∀ j : Nat, j<t →
+      Trans.Recal.isParentP M 1 (((j:Nat):Int)+1) ((j:Nat):Int)=true)
+    (hstop : Trans.Recal.isParentP M 1 (((t:Nat):Int)+1) ((t:Nat):Int)=false) :
+    Trans.Recal.trMax M=((t:Nat):Int) := by
+  have key : ∀ (f j : Nat), j ≤ t → t-j<f →
+      Trans.Recal.trMaxAux f M ((j:Nat):Int)=((t:Nat):Int) := by
+    intro f
+    induction f with
+    | zero => intro j _ h; exact absurd h (by omega)
+    | succ f ih =>
+      intro j hjt hf
+      rw [trMaxAux_step,if_neg (by unfold Trans.Recal.lenI; omega)]
+      by_cases hj : j=t
+      · subst hj
+        rw [hstop]
+        simp
+      · rw [hkeep j (by omega)]
+        simp only [Bool.not_true,Bool.false_eq_true,if_false]
+        rw [show ((j:Nat):Int)+1=(((j+1:Nat)):Int) from by omega]
+        exact ih (j+1) (by omega) (by omega)
+  show Trans.Recal.trMaxAux (M.length+1) M ((0:Nat):Int)=((t:Nat):Int)
+  exact key (M.length+1) 0 (by omega) (by omega)
+
+theorem firstNodes_single (M B : Trans.Recal.PS) (hbr : Trans.Recal.brF M=[B]) :
+    Trans.Recal.firstNodes M
+      = [Trans.Recal.trMax M+1,Trans.Recal.trMax M+1+((B.length:Nat):Int)] := by
+  unfold Trans.Recal.firstNodes Trans.Recal.idxSum
+  rw [hbr]
+  simp only [List.foldl_cons,List.foldl_nil,List.map_cons,List.map_nil,
+    List.nil_append,List.cons_append]
+  rw [show Trans.Recal.trMax M+1+0=Trans.Recal.trMax M+1 from by omega,
+    show (0:Int)+((B.length:Nat):Int)=((B.length:Nat):Int) from by omega]
+
+theorem joints_single (M B : Trans.Recal.PS) (hbr : Trans.Recal.brF M=[B]) :
+    Trans.Recal.joints M=[Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1) 0] := by
+  unfold Trans.Recal.joints
+  rw [firstNodes_single M B hbr]
+  rfl
+
 /-! ## 枝が 1 本の畳み込み
 
-`red` の第 1 分岐は、`trMax` が `1` で枝が 1 本のとき、`[(0,0),(1,1)]` を切り出して
+`red` の第 1 分岐は、枝が 1 本のとき `jjSeq 0 (trMax M)` を切り出して
 枝の再構成に降りるだけになる。梯子に依らない形で 1 度だけ書く。 -/
 
-theorem red_fold_one (M : Trans.Recal.PS) (f : Nat) (nJ jnJ : Int) (B : Trans.Recal.PS)
+theorem red_fold_single (M : Trans.Recal.PS) (f : Nat) (tr nJ jnJ : Int)
+    (B : Trans.Recal.PS)
     (hzero : Trans.Recal.isZeroP M=false)
     (hprin : Trans.Recal.isPrincipalP M=true)
     (hg0 : Trans.Recal.gp0 M 0=0) (hg1 : Trans.Recal.gp1 M 0=0)
-    (htr : Trans.Recal.trMax M=1)
-    (hne : ((1:Int)==Trans.Recal.lenI M-1)=false)
+    (htr : Trans.Recal.trMax M=tr)
+    (hne : (tr==Trans.Recal.lenI M-1)=false)
     (hbr : Trans.Recal.brF M=[B])
-    (hfn : (Trans.Recal.firstNodes M).getD 0 0=2)
-    (hjn : (Trans.Recal.joints M).getD 0 0=jnJ)
+    (hjn : Trans.Recal.fpar M 0 (tr+1) 0=jnJ)
     (hnJ : (if (Trans.Recal.gp1 B 0==0)=true then (-1:Int)
-            else Trans.Recal.fpar M 1 2 0)=nJ) :
+            else Trans.Recal.fpar M 1 (tr+1) 0)=nJ) :
     Trans.Recal.red (f+1) M
-      = Trans.Recal.jjSeq 0 1
+      = Trans.Recal.jjSeq 0 tr
         ++ Trans.Recal.incrFirst
              (Trans.Recal.red f ((jnJ+1,nJ+1) :: Trans.Recal.derp B)) (jnJ-nJ) := by
+  have hfn : (Trans.Recal.firstNodes M).getD 0 0=tr+1 := by
+    rw [firstNodes_single M B hbr,htr]
+    rfl
+  have hjn' : (Trans.Recal.joints M).getD 0 0=jnJ := by
+    rw [joints_single M B hbr,htr]
+    exact hjn
   simp only [Trans.Recal.red]
   rw [hzero]
   simp only [Bool.false_eq_true,if_false]
@@ -240,6 +298,155 @@ theorem red_fold_one (M : Trans.Recal.PS) (f : Nat) (nJ jnJ : Int) (B : Trans.Re
   rw [hbr]
   simp only [List.length_cons,List.length_nil,List.range_succ,List.range_zero,
     List.foldl_cons,List.foldl_nil,List.nil_append,List.getD_cons_zero]
-  rw [hfn,hjn,hnJ]
+  rw [hfn,hjn',hnJ]
+
+/-- 切り出しだけで終わる場合: `trMax` が末尾に届いている。 -/
+theorem red_jj (M : Trans.Recal.PS) (f : Nat)
+    (hzero : Trans.Recal.isZeroP M=false)
+    (hprin : Trans.Recal.isPrincipalP M=true)
+    (hg0 : Trans.Recal.gp0 M 0=0) (hg1 : Trans.Recal.gp1 M 0=0)
+    (htr : Trans.Recal.trMax M=Trans.Recal.lenI M-1) :
+    Trans.Recal.red (f+1) M=Trans.Recal.jjSeq 0 (Trans.Recal.lenI M-1) := by
+  simp only [Trans.Recal.red]
+  rw [hzero]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [hg0,hg1]
+  rw [show ((0:Int)==0)=true from rfl]
+  simp only [Bool.and_self,if_true]
+  rw [htr,show (Trans.Recal.lenI M-1==Trans.Recal.lenI M-1)=true from by simp]
+  simp only [if_true]
+
+/-- 零の梯子。 -/
+theorem red_zeroP (M : Trans.Recal.PS) (f : Nat) (h : Trans.Recal.isZeroP M=true) :
+    Trans.Recal.red (f+1) M=Trans.Recal.zeroPS := by
+  simp only [Trans.Recal.red]
+  rw [h]
+  simp only [if_true]
+
+/-- 長さ 1 の梯子は、行 1 が 0 でなければ主要。 -/
+theorem isPrincipalP_single (a b : Int) (hb : (b==0)=false) :
+    Trans.Recal.isPrincipalP [(a,b)]=true := by
+  unfold Trans.Recal.isPrincipalP Trans.Recal.isZeroP Trans.Recal.isAnc
+  rw [show Trans.Recal.gp1 [(a,b)] 0=b from rfl,hb]
+  simp only [Bool.and_false,Bool.not_false]
+  rw [if_neg (by unfold Trans.Recal.lenI; simp)]
+  rfl
+
+theorem fpar1_unfold (M : Trans.Recal.PS) (j k : Int)
+    (h : ¬(j<0 ∨ j ≥ Trans.Recal.lenI M)) :
+    Trans.Recal.fpar M 1 j k
+      = Trans.Recal.fpar1Aux (M.length+1) M (Trans.Recal.gp1 M j) j k := by
+  unfold Trans.Recal.fpar
+  rw [if_neg h]
+  rfl
+
+theorem fpar1Aux_step (M : Trans.Recal.PS) (f : Nat) (tgt j0 kk : Int) :
+    Trans.Recal.fpar1Aux (f+1) M tgt j0 kk
+      = (if Trans.Recal.fpar0 M j0 kk<kk then -1
+         else if Trans.Recal.gp1 M (Trans.Recal.fpar0 M j0 kk)<tgt then
+           Trans.Recal.fpar0 M j0 kk
+         else Trans.Recal.fpar1Aux f M tgt (Trans.Recal.fpar0 M j0 kk) kk) := rfl
+
+theorem fpar_out (M : Trans.Recal.PS) (i : Nat) (j k : Int)
+    (h : j ≥ Trans.Recal.lenI M) : Trans.Recal.fpar M i j k=-1 := by
+  unfold Trans.Recal.fpar
+  rw [if_pos (Or.inr h)]
+
+theorem isParentP_of_fpar (M : Trans.Recal.PS) (i : Nat) (j k : Int)
+    (hk0 : 0 ≤ k) (hk1 : k<Trans.Recal.lenI M) (h : Trans.Recal.fpar M i j k=k) :
+    Trans.Recal.isParentP M i j k=true := by
+  unfold Trans.Recal.isParentP
+  rw [h,decide_eq_true hk0,decide_eq_true hk1]
+  simp
+
+theorem isParentP_of_ne (M : Trans.Recal.PS) (i : Nat) (j k v : Int)
+    (h : Trans.Recal.fpar M i j k=v) (hv : v ≠ k) :
+    Trans.Recal.isParentP M i j k=false := by
+  unfold Trans.Recal.isParentP
+  rw [h,show (k==v)=false from beq_eq_false_iff_ne.mpr (fun hc => hv hc.symm)]
+  simp
+
+theorem fpar0_eq (M : Trans.Recal.PS) (j k : Int) :
+    Trans.Recal.fpar0 M j k=Trans.Recal.fpar M 0 j k := rfl
+
+/-! ### 小さい添字での親、値の比較だけから
+
+`trMax` と `joints`・`nJ` が要るのは添字 1・2・3 の親だけである。
+そこは走査が 1〜2 歩で終わるので、`gp0`・`gp1` の大小だけで決まる。 -/
+
+theorem fpar0_one (M : Trans.Recal.PS) (hlen : 2 ≤ M.length)
+    (h : Trans.Recal.gp0 M 0<Trans.Recal.gp0 M 1) : Trans.Recal.fpar0 M 1 0=0 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  rw [fpar0Aux_step,if_neg (by omega),show (1:Int)-1=0 from by omega,if_pos h]
+
+theorem fpar0_two_lb (M : Trans.Recal.PS) (hlen : 3 ≤ M.length)
+    (h : Trans.Recal.gp0 M 1<Trans.Recal.gp0 M 2) : Trans.Recal.fpar0 M 2 1=1 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  rw [show (2:Int)-1=1 from by omega,fpar0Aux_step,if_neg (by omega),if_pos h]
+
+theorem fpar0_one_lb (M : Trans.Recal.PS) (hlen : 2 ≤ M.length) :
+    Trans.Recal.fpar0 M 1 1=-1 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  rw [show (1:Int)-1=0 from by omega,fpar0Aux_step,if_pos (by omega)]
+
+theorem fpar0_three_lb (M : Trans.Recal.PS) (hlen : 4 ≤ M.length)
+    (h : ¬(Trans.Recal.gp0 M 2<Trans.Recal.gp0 M 3)) : Trans.Recal.fpar0 M 3 2=-1 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  obtain ⟨g,hg⟩ : ∃ g, M.length=g+1 := ⟨M.length-1,by omega⟩
+  rw [hg,show (3:Int)-1=2 from by omega,fpar0Aux_step,if_neg (by omega),if_neg h,
+    show (2:Int)-1=1 from by omega]
+  obtain ⟨g2,hg2⟩ : ∃ g2, g=g2+1 := ⟨g-1,by omega⟩
+  rw [hg2,fpar0Aux_step,if_pos (by omega)]
+
+theorem fpar1_one (M : Trans.Recal.PS) (hlen : 2 ≤ M.length)
+    (h : Trans.Recal.gp0 M 0<Trans.Recal.gp0 M 1)
+    (hq : Trans.Recal.gp1 M 0<Trans.Recal.gp1 M 1) : Trans.Recal.fpar M 1 1 0=0 := by
+  rw [fpar1_unfold M 1 0 (by unfold Trans.Recal.lenI; omega)]
+  rw [fpar1Aux_step,fpar0_one M hlen h,if_neg (by omega),if_pos hq]
+
+theorem fpar1_two_lb (M : Trans.Recal.PS) (hlen : 3 ≤ M.length)
+    (h : Trans.Recal.gp0 M 1<Trans.Recal.gp0 M 2)
+    (hq : ¬(Trans.Recal.gp1 M 1<Trans.Recal.gp1 M 2)) : Trans.Recal.fpar M 1 2 1=-1 := by
+  rw [fpar1_unfold M 2 1 (by unfold Trans.Recal.lenI; omega)]
+  obtain ⟨g,hg⟩ : ∃ g, M.length=g+1 := ⟨M.length-1,by omega⟩
+  rw [hg,fpar1Aux_step,fpar0_two_lb M hlen h,if_neg (by omega),if_neg hq]
+  obtain ⟨g2,hg2⟩ : ∃ g2, g=g2+1 := ⟨g-1,by omega⟩
+  rw [hg2,fpar1Aux_step,fpar0_one_lb M (by omega),if_pos (by omega)]
+
+theorem fpar1_two_lb_eq (M : Trans.Recal.PS) (hlen : 3 ≤ M.length)
+    (h : Trans.Recal.gp0 M 1<Trans.Recal.gp0 M 2)
+    (hq : Trans.Recal.gp1 M 1<Trans.Recal.gp1 M 2) : Trans.Recal.fpar M 1 2 1=1 := by
+  rw [fpar1_unfold M 2 1 (by unfold Trans.Recal.lenI; omega)]
+  rw [fpar1Aux_step,fpar0_two_lb M hlen h,if_neg (by omega),if_pos hq]
+
+theorem fpar1_three_lb (M : Trans.Recal.PS) (hlen : 4 ≤ M.length)
+    (h : ¬(Trans.Recal.gp0 M 2<Trans.Recal.gp0 M 3)) : Trans.Recal.fpar M 1 3 2=-1 := by
+  rw [fpar1_unfold M 3 2 (by unfold Trans.Recal.lenI; omega)]
+  rw [fpar1Aux_step,fpar0_three_lb M hlen h,if_pos (by omega)]
+
+theorem fpar1_two_zero (M : Trans.Recal.PS) (hlen : 3 ≤ M.length)
+    (hp : Trans.Recal.fpar M 0 2 0=1)
+    (h : Trans.Recal.gp0 M 0<Trans.Recal.gp0 M 1)
+    (hq1 : ¬(Trans.Recal.gp1 M 1<Trans.Recal.gp1 M 2))
+    (hq0 : Trans.Recal.gp1 M 0<Trans.Recal.gp1 M 2) : Trans.Recal.fpar M 1 2 0=0 := by
+  rw [fpar1_unfold M 2 0 (by unfold Trans.Recal.lenI; omega)]
+  obtain ⟨g,hg⟩ : ∃ g, M.length=g+1 := ⟨M.length-1,by omega⟩
+  rw [hg,fpar1Aux_step,show Trans.Recal.fpar0 M 2 0=1 from by rw [fpar0_eq]; exact hp,
+    if_neg (by omega),if_neg hq1]
+  obtain ⟨g2,hg2⟩ : ∃ g2, g=g2+1 := ⟨g-1,by omega⟩
+  rw [hg2,fpar1Aux_step,fpar0_one M (by omega) h,if_neg (by omega),if_pos hq0]
+
+theorem fpar1_three_zero (M : Trans.Recal.PS) (hlen : 4 ≤ M.length)
+    (hp : Trans.Recal.fpar M 0 3 0=0)
+    (hq0 : Trans.Recal.gp1 M 0<Trans.Recal.gp1 M 3) : Trans.Recal.fpar M 1 3 0=0 := by
+  rw [fpar1_unfold M 3 0 (by unfold Trans.Recal.lenI; omega)]
+  rw [fpar1Aux_step,show Trans.Recal.fpar0 M 3 0=0 from by rw [fpar0_eq]; exact hp,
+    if_neg (by omega),if_pos hq0]
 
 end Rows.Ladder
