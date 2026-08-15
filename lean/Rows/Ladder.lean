@@ -734,4 +734,107 @@ theorem fpar_root_of_min
     rw [show (((u+1:Nat)):Int)-1=((u:Nat):Int) from by omega]
     exact fpar0Aux_nofind hg hj hmin (M.length+1) u (by omega) (by omega)
 
+/-- 行 1 の親が根そのもの。 -/
+theorem fpar1_at_zero (M : Trans.Recal.PS) (j : Int) (hj0 : 0 ≤ j)
+    (hjl : j<Trans.Recal.lenI M) (hlen : 1 ≤ M.length)
+    (hp : Trans.Recal.fpar M 0 j 0=0)
+    (hq0 : Trans.Recal.gp1 M 0<Trans.Recal.gp1 M j) : Trans.Recal.fpar M 1 j 0=0 := by
+  rw [fpar1_unfold M j 0 (by omega)]
+  obtain ⟨g,hg⟩ : ∃ g, M.length+1=g+1 := ⟨M.length,rfl⟩
+  rw [hg,fpar1Aux_step,show Trans.Recal.fpar0 M j 0=0 from by rw [fpar0_eq]; exact hp,
+    if_neg (by omega),if_pos hq0]
+
+/-- 行 1 の親、行 0 の親が添字 1 のとき。 -/
+theorem fpar1_via_one (M : Trans.Recal.PS) (j : Int) (hj0 : 0 ≤ j)
+    (hjl : j<Trans.Recal.lenI M) (hlen : 2 ≤ M.length)
+    (hp : Trans.Recal.fpar M 0 j 0=1)
+    (h01 : Trans.Recal.gp0 M 0<Trans.Recal.gp0 M 1)
+    (hq1 : ¬(Trans.Recal.gp1 M 1<Trans.Recal.gp1 M j))
+    (hq0 : Trans.Recal.gp1 M 0<Trans.Recal.gp1 M j) : Trans.Recal.fpar M 1 j 0=0 := by
+  rw [fpar1_unfold M j 0 (by omega)]
+  obtain ⟨g,hg⟩ : ∃ g, M.length=g+1 := ⟨M.length-1,by omega⟩
+  rw [hg,fpar1Aux_step,show Trans.Recal.fpar0 M j 0=1 from by rw [fpar0_eq]; exact hp,
+    if_neg (by omega),if_neg hq1]
+  obtain ⟨g2,hg2⟩ : ∃ g2, g=g2+1 := ⟨g-1,by omega⟩
+  rw [hg2,fpar1Aux_step,fpar0_one M (by omega) h01,if_neg (by omega),if_pos hq0]
+
+/-! ## 枝が 4 本・2 本のときの `firstNodes` と `joints` -/
+
+theorem firstNodes_four (M B0 B1 B2 B3 : Trans.Recal.PS)
+    (hbr : Trans.Recal.brF M=[B0,B1,B2,B3]) :
+    Trans.Recal.firstNodes M
+      = [Trans.Recal.trMax M+1+0,
+         Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)),
+         Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)+((B1.length:Nat):Int)),
+         Trans.Recal.trMax M+1
+           +(0+((B0.length:Nat):Int)+((B1.length:Nat):Int)+((B2.length:Nat):Int)),
+         Trans.Recal.trMax M+1
+           +(0+((B0.length:Nat):Int)+((B1.length:Nat):Int)+((B2.length:Nat):Int)
+             +((B3.length:Nat):Int))] := by
+  rw [firstNodes_eq M _ hbr]
+  rfl
+
+theorem joints_four (M B0 B1 B2 B3 : Trans.Recal.PS)
+    (hbr : Trans.Recal.brF M=[B0,B1,B2,B3]) :
+    Trans.Recal.joints M
+      = [Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1+0) 0,
+         Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int))) 0,
+         Trans.Recal.fpar M 0
+           (Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)+((B1.length:Nat):Int))) 0,
+         Trans.Recal.fpar M 0
+           (Trans.Recal.trMax M+1
+             +(0+((B0.length:Nat):Int)+((B1.length:Nat):Int)+((B2.length:Nat):Int)))
+           0] := by
+  rw [joints_eq M _ hbr]
+  rfl
+
+theorem firstNodes_two (M B0 B1 : Trans.Recal.PS) (hbr : Trans.Recal.brF M=[B0,B1]) :
+    Trans.Recal.firstNodes M
+      = [Trans.Recal.trMax M+1+0,
+         Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)),
+         Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)+((B1.length:Nat):Int))] := by
+  rw [firstNodes_eq M _ hbr]
+  rfl
+
+theorem joints_two (M B0 B1 : Trans.Recal.PS) (hbr : Trans.Recal.brF M=[B0,B1]) :
+    Trans.Recal.joints M
+      = [Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1+0) 0,
+         Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int))) 0] := by
+  rw [joints_eq M _ hbr]
+  rfl
+
+theorem firstNodes_three (M B0 B1 B2 : Trans.Recal.PS)
+    (hbr : Trans.Recal.brF M=[B0,B1,B2]) :
+    Trans.Recal.firstNodes M
+      = [Trans.Recal.trMax M+1+0,
+         Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)),
+         Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)+((B1.length:Nat):Int)),
+         Trans.Recal.trMax M+1
+           +(0+((B0.length:Nat):Int)+((B1.length:Nat):Int)+((B2.length:Nat):Int))] := by
+  rw [firstNodes_eq M _ hbr]
+  rfl
+
+theorem joints_three (M B0 B1 B2 : Trans.Recal.PS)
+    (hbr : Trans.Recal.brF M=[B0,B1,B2]) :
+    Trans.Recal.joints M
+      = [Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1+0) 0,
+         Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int))) 0,
+         Trans.Recal.fpar M 0
+           (Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int)+((B1.length:Nat):Int)))
+           0] := by
+  rw [joints_eq M _ hbr]
+  rfl
+
+theorem firstNodes_one (M B0 : Trans.Recal.PS) (hbr : Trans.Recal.brF M=[B0]) :
+    Trans.Recal.firstNodes M
+      = [Trans.Recal.trMax M+1+0,
+         Trans.Recal.trMax M+1+(0+((B0.length:Nat):Int))] := by
+  rw [firstNodes_eq M _ hbr]
+  rfl
+
+theorem joints_one (M B0 : Trans.Recal.PS) (hbr : Trans.Recal.brF M=[B0]) :
+    Trans.Recal.joints M=[Trans.Recal.fpar M 0 (Trans.Recal.trMax M+1+0) 0] := by
+  rw [joints_eq M _ hbr]
+  rfl
+
 end Rows.Ladder
