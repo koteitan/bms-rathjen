@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.37
+バージョン: v0.7.38
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -110,7 +110,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 ## D.Certified
 
 **証明書** $`\mathrm{Certified} \subseteq \mathcal{S} \times \mathfrak{T}(M)`$ を、
-次の 3 規則で閉じた最小の関係と定義する。
+次の 3 規則の**閉包** ([D.Cl](#dcl)) と定義する。
 
 ### D.Certified.zero
 
@@ -153,7 +153,7 @@ $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
 
 ## D.TM
 
-**Rathjen 表記の標準形** $`\mathfrak{T}(M)`$ を、次の規則で閉じた最小の項集合と
+**Rathjen 表記の標準形** $`\mathfrak{T}(M)`$ を、次の規則の**閉包** ([D.Cl](#dcl)) と
 定義する ([Rathjen, 1991] 2.1)。
 
 ```math
@@ -280,8 +280,8 @@ $`X \subseteq U`$ が $`R`$ で**閉じている**とは:
 \forall (P, c) \in R.\;\; P \subseteq X \;\longrightarrow\; c \in X
 ```
 
-**$`R`$ で閉じた最小の集合** $`\mathrm{Cl}(R)`$ を、閉じている集合すべての共通部分と
-定義する。
+**$`R`$ の閉包** $`\mathrm{Cl}(R)`$ を、$`R`$ で閉じている集合すべての共通部分と
+定義する。閉包は $`R`$ で閉じている集合のうち**最小のもの**である。
 
 ```math
 \mathrm{Cl}(R) \;=\; \bigcap \bigl\{\, X \subseteq U \;\bigm|\;
