@@ -2595,26 +2595,21 @@ theorem isAdm_L_false (m j : Nat) (hj : 1 ≤ j) (h : j%5=1) (hjm : j+1<m+5) :
     isParentP_L_prev_true m (j+1) (by omega) (by omega) (Or.inr (by omega))]
   rfl
 
-theorem admAux_step (M : Trans.Recal.PS) (f : Nat) (j : Int) :
-    Trans.Recal.admAux (f+1) M j
-      = if j<0 then 0 else if Trans.Recal.isAdm M j then j
-        else Trans.Recal.admAux f M (j-1) := rfl
-
 theorem adm_L_self (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+5)
     (h : ¬(j%5=1 ∨ j%5=2)) :
     Trans.Recal.adm (L m) ((j:Nat):Int)=((j:Nat):Int) := by
   unfold Trans.Recal.adm
-  rw [length_L,show m+5+2=(m+5+1)+1 from rfl,admAux_step,if_neg (by omega),
+  rw [length_L,show m+5+2=(m+5+1)+1 from rfl,Rows.Ladder.admAux_step,if_neg (by omega),
     isAdm_L_true m j hj hjm h,if_pos rfl]
 
 theorem adm_L_down (m j : Nat) (hj : 2 ≤ j) (h : j%5=1) (hjm : j+1<m+5) :
     Trans.Recal.adm (L m) ((j:Nat):Int)=((j-1:Nat):Int) := by
   unfold Trans.Recal.adm
-  rw [length_L,show m+5+2=((m+5)+1)+1 from rfl,admAux_step,if_neg (by omega),
+  rw [length_L,show m+5+2=((m+5)+1)+1 from rfl,Rows.Ladder.admAux_step,if_neg (by omega),
     isAdm_L_false m j (by omega) h hjm]
   simp only [Bool.false_eq_true,if_false]
   rw [show m+6=(m+5)+1 from rfl,show ((j:Nat):Int)-1=((j-1:Nat):Int) from by omega,
-    admAux_step,if_neg (by omega),
+    Rows.Ladder.admAux_step,if_neg (by omega),
     isAdm_L_true m (j-1) (by omega) (by omega) (by omega),if_pos rfl]
 
 #guard (List.range 12).all fun m => (List.range (m+4)).all fun j =>

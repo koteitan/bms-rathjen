@@ -837,4 +837,9 @@ theorem joints_one (M B0 : Trans.Recal.PS) (hbr : Trans.Recal.brF M=[B0]) :
   rw [joints_eq M _ hbr]
   rfl
 
+theorem admAux_step (M : Trans.Recal.PS) (f : Nat) (j : Int) :
+    Trans.Recal.admAux (f+1) M j
+      = if j<0 then 0 else if Trans.Recal.isAdm M j then j
+        else Trans.Recal.admAux f M (j-1) := rfl
+
 end Rows.Ladder

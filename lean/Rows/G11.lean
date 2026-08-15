@@ -2464,6 +2464,652 @@ theorem isReducedP_L (m : Nat) : Trans.Recal.isReducedP (L m)=true := by
 
 #guard (List.range 12).all fun m => Trans.Recal.isReducedP (L m)
 
+/-! ### Link 2, step 17: every index of this ladder is admitted.
+
+`fpar (L m) 1 j (j-1)` hits only at `j ≡ 1 (mod 7)`, and then the successor's
+residue is 2, so the two `isParentP` tests are never both true. -/
+
+theorem fpar0_L_prev_hit (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7) (h0 : Gp (j-1)<Gp j) :
+    Trans.Recal.fpar0 (L m) ((j:Nat):Int) ((j-1:Nat):Int)=((j-1:Nat):Int) := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by rw [lenI_L]; omega),length_L,gp0_L m j hjm,
+    show ((j:Nat):Int)-1=((j-1:Nat):Int) from by omega,
+    Rows.Ladder.fpar0Aux_step,if_neg (by omega),gp0_L m (j-1) (by omega),if_pos h0]
+
+theorem fpar0_L_prev_miss (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7)
+    (h0 : ¬(Gp (j-1)<Gp j)) :
+    Trans.Recal.fpar0 (L m) ((j:Nat):Int) ((j-1:Nat):Int)=-1 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by rw [lenI_L]; omega),length_L,gp0_L m j hjm,
+    show ((j:Nat):Int)-1=((j-1:Nat):Int) from by omega,
+    show m+7+1=(m+7)+1 from rfl,
+    Rows.Ladder.fpar0Aux_step,if_neg (by omega),gp0_L m (j-1) (by omega),if_neg h0]
+  obtain ⟨g,hg⟩ : ∃ g, m+7=g+1 := ⟨m+6,by omega⟩
+  rw [hg,Rows.Ladder.fpar0Aux_step,if_pos (by omega)]
+
+theorem fpar0_L_self_stop (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7) :
+    Trans.Recal.fpar0 (L m) ((j-1:Nat):Int) ((j-1:Nat):Int)=-1 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by rw [lenI_L]; omega),length_L,show m+7+1=(m+7)+1 from rfl,
+    Rows.Ladder.fpar0Aux_step,if_pos (by omega)]
+
+theorem fpar1_L_prev_hit (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7)
+    (h0 : Gp (j-1)<Gp j) (h1 : Gq (j-1)<Gq j) :
+    Trans.Recal.fpar (L m) 1 ((j:Nat):Int) ((j-1:Nat):Int)=((j-1:Nat):Int) := by
+  rw [Rows.Ladder.fpar1_unfold (L m) _ _ (by rw [lenI_L]; omega),length_L,
+    show m+7+1=(m+7)+1 from rfl,
+    Rows.Ladder.fpar1Aux_step,fpar0_L_prev_hit m j hj hjm h0,if_neg (by omega),
+    gp1_L m (j-1) (by omega),gp1_L m j hjm,if_pos h1]
+
+theorem fpar1_L_prev_miss (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7)
+    (h0 : Gp (j-1)<Gp j) (h1 : ¬(Gq (j-1)<Gq j)) :
+    Trans.Recal.fpar (L m) 1 ((j:Nat):Int) ((j-1:Nat):Int)=-1 := by
+  rw [Rows.Ladder.fpar1_unfold (L m) _ _ (by rw [lenI_L]; omega),length_L,
+    show m+7+1=(m+7)+1 from rfl,
+    Rows.Ladder.fpar1Aux_step,fpar0_L_prev_hit m j hj hjm h0,if_neg (by omega),
+    gp1_L m (j-1) (by omega),gp1_L m j hjm,if_neg h1]
+  obtain ⟨g,hg⟩ : ∃ g, m+7=g+1 := ⟨m+6,by omega⟩
+  rw [hg,Rows.Ladder.fpar1Aux_step,fpar0_L_self_stop m j hj hjm,if_pos (by omega)]
+
+theorem fpar1_L_prev_nodrop (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7)
+    (h0 : ¬(Gp (j-1)<Gp j)) :
+    Trans.Recal.fpar (L m) 1 ((j:Nat):Int) ((j-1:Nat):Int)=-1 := by
+  rw [Rows.Ladder.fpar1_unfold (L m) _ _ (by rw [lenI_L]; omega),length_L,
+    show m+7+1=(m+7)+1 from rfl,
+    Rows.Ladder.fpar1Aux_step,fpar0_L_prev_miss m j hj hjm h0,if_pos (by omega)]
+
+/-- 行 1 の親は残余 1 のときだけ当たる。 -/
+theorem fpar1_L_prev (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7) :
+    Trans.Recal.fpar (L m) 1 ((j:Nat):Int) ((j-1:Nat):Int)
+      = if j%7=1 then ((j-1:Nat):Int) else -1 := by
+  obtain ⟨a,r,hr,rfl⟩ : ∃ a r, r<7 ∧ j=7*a+r := ⟨j/7,j%7,by omega,by omega⟩
+  rw [show (7*a+r)%7=r by omega]
+  obtain ⟨e0,e1,e2,e3,e4,e5,e6⟩ := Gp_r a
+  rcases (show r=0 ∨ r=1 ∨ r=2 ∨ r=3 ∨ r=4 ∨ r=5 ∨ r=6 by omega)
+    with rfl|rfl|rfl|rfl|rfl|rfl|rfl
+  · rw [if_neg (by omega)]
+    obtain ⟨b,rfl⟩ : ∃ b, a=b+1 := ⟨a-1,by omega⟩
+    obtain ⟨f0,f1,f2,f3,f4,f5,f6⟩ := Gp_r b
+    refine fpar1_L_prev_nodrop m (7*(b+1)+0) (by omega) (by omega) ?_
+    rw [show 7*(b+1)+0-1=7*b+6 by omega,f6]
+    rw [show 7*(b+1)+0=7*(b+1)+0 from rfl] at e0
+    rw [e0]
+    push_cast
+    omega
+  · rw [if_pos rfl]
+    refine fpar1_L_prev_hit m (7*a+1) (by omega) (by omega) ?_ ?_
+    · rw [show 7*a+1-1=7*a+0 by omega,e0,e1]; omega
+    · rw [show 7*a+1-1=7*a+0 by omega]
+      unfold Gq
+      rw [if_pos (by omega),if_neg (by omega)]
+      omega
+  · rw [if_neg (by omega)]
+    refine fpar1_L_prev_miss m (7*a+2) (by omega) (by omega) ?_ ?_
+    · rw [show 7*a+2-1=7*a+1 by omega,e1,e2]; omega
+    · rw [show 7*a+2-1=7*a+1 by omega]
+      unfold Gq
+      rw [if_neg (by omega),if_neg (by omega)]
+      omega
+  · rw [if_neg (by omega)]
+    refine fpar1_L_prev_nodrop m (7*a+3) (by omega) (by omega) ?_
+    rw [show 7*a+3-1=7*a+2 by omega,e2,e3]; omega
+  · rw [if_neg (by omega)]
+    refine fpar1_L_prev_nodrop m (7*a+4) (by omega) (by omega) ?_
+    rw [show 7*a+4-1=7*a+3 by omega,e3,e4]; omega
+  · rw [if_neg (by omega)]
+    refine fpar1_L_prev_nodrop m (7*a+5) (by omega) (by omega) ?_
+    rw [show 7*a+5-1=7*a+4 by omega,e4,e5]; omega
+  · rw [if_neg (by omega)]
+    refine fpar1_L_prev_miss m (7*a+6) (by omega) (by omega) ?_ ?_
+    · rw [show 7*a+6-1=7*a+5 by omega,e5,e6]; omega
+    · rw [show 7*a+6-1=7*a+5 by omega]
+      unfold Gq
+      rw [if_neg (by omega),if_neg (by omega)]
+      omega
+
+#guard (List.range 10).all fun m => (List.range (m+7)).all fun j =>
+  (j==0) || (Trans.Recal.fpar (L m) 1 ((j:Nat):Int) ((j-1:Nat):Int)
+    == (if j%7=1 then ((j-1:Nat):Int) else -1))
+
+theorem isParentP_L_prev_false (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7) (h : j%7 ≠ 1) :
+    Trans.Recal.isParentP (L m) 1 ((j:Nat):Int) (((j:Nat):Int)-1)=false := by
+  rw [show ((j:Nat):Int)-1=((j-1:Nat):Int) from by omega]
+  refine Rows.Ladder.isParentP_of_ne _ _ _ _ (-1) ?_ (by omega)
+  rw [fpar1_L_prev m j hj hjm,if_neg h]
+
+/-- **どの添字も入場可能。** -/
+theorem isAdm_L (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7) :
+    Trans.Recal.isAdm (L m) ((j:Nat):Int)=true := by
+  unfold Trans.Recal.isAdm Trans.Recal.isUnadmitted
+  rw [show decide (((j:Nat):Int)>Trans.Recal.lenI (L m))=false from
+    decide_eq_false (by rw [lenI_L]; omega)]
+  simp only [Bool.false_or]
+  by_cases h1 : j%7=1
+  · rw [show Trans.Recal.isParentP (L m) 1 (((j:Nat):Int)+1) ((j:Nat):Int)=false from by
+      by_cases hlt : j+1<m+7
+      · rw [show ((j:Nat):Int)+1=(((j+1:Nat)):Int) from by omega,
+          show ((j:Nat):Int)=(((j+1:Nat)):Int)-1 from by omega]
+        exact isParentP_L_prev_false m (j+1) (by omega) hlt (by omega)
+      · refine Rows.Ladder.isParentP_of_ne _ _ _ _ (-1) ?_ (by omega)
+        exact Rows.Ladder.fpar_out _ 1 _ _ (by rw [lenI_L]; omega)]
+    rw [Bool.and_false]
+    rfl
+  · rw [isParentP_L_prev_false m j hj hjm h1,Bool.false_and]
+    rfl
+
+theorem adm_L (m j : Nat) (hj : 1 ≤ j) (hjm : j<m+7) :
+    Trans.Recal.adm (L m) ((j:Nat):Int)=((j:Nat):Int) := by
+  unfold Trans.Recal.adm
+  rw [length_L,show m+7+2=(m+7+1)+1 from rfl,Rows.Ladder.admAux_step,if_neg (by omega),
+    isAdm_L m j hj hjm,if_pos rfl]
+
+#guard (List.range 10).all fun m => (List.range (m+7)).all fun j =>
+  Trans.Recal.isAdm (L m) ((j:Nat):Int)
+#guard (List.range 10).all fun m => (List.range (m+7)).all fun j =>
+  Trans.Recal.adm (L m) ((j:Nat):Int)==((j:Nat):Int)
+
+/-! ### Link 2, step 18: the row-zero parent of the ladder, and the seven phases. -/
+
+theorem parHd_one_eq (k : Nat) (hk : 1 ≤ k) : parHd 1 k=parN k := by
+  unfold parHd
+  rw [show k-1+1=k by omega]
+  by_cases h : 1 ≤ parN k
+  · rw [if_pos h]; omega
+  · rw [if_neg h]; omega
+
+theorem fpar_L_zero (m k : Nat) (hk : 1 ≤ k) (hkm : k<m+7) :
+    Trans.Recal.fpar (L m) 0 ((k:Nat):Int) 0=((parN k : Nat):Int) := by
+  rw [L_eq_Cw]
+  have h := joint_Cw 0 (m+6) (by omega) k hk (by omega)
+  rw [parHd_one_eq k hk] at h
+  exact h
+
+theorem Gq_zero (j : Nat) (h : j%7=0 ∨ j%7=4) : Gq j=0 := by
+  unfold Gq
+  rw [if_pos h]
+
+theorem Gq_one (j : Nat) (h : ¬(j%7=0 ∨ j%7=4)) : Gq j=1 := by
+  unfold Gq
+  rw [if_neg h]
+
+theorem parN_val (k : Nat) (r : Nat) (h : k%7=r) (hr : r<7) :
+    parN k=(if r=0 ∨ r=3 then k-2 else if r=4 then k-3 else if r=5 then k-5 else k-1) := by
+  unfold parN
+  rw [h]
+
+theorem j0_L (k : Nat) : Trans.Recal.fpar (L k) 0 ((k+6:Nat):Int) 0
+    = ((parN (k+6) : Nat):Int) := fpar_L_zero k (k+6) (by omega) (by omega)
+
+theorem parN_k6_r0 (k : Nat) (h : k%7=0) : parN (k+6)=k+5 := by
+  rw [parN_val (k+6) 6 (by omega) (by omega),if_neg (by omega),if_neg (by omega),
+    if_neg (by omega)]
+  omega
+theorem parN_k6_r1 (k : Nat) (h : k%7=1) : parN (k+6)=k+4 := by
+  rw [parN_val (k+6) 0 (by omega) (by omega),if_pos (by omega)]
+  omega
+theorem parN_k6_r2 (k : Nat) (h : k%7=2) : parN (k+6)=k+5 := by
+  rw [parN_val (k+6) 1 (by omega) (by omega),if_neg (by omega),if_neg (by omega),
+    if_neg (by omega)]
+  omega
+theorem parN_k6_r3 (k : Nat) (h : k%7=3) : parN (k+6)=k+5 := by
+  rw [parN_val (k+6) 2 (by omega) (by omega),if_neg (by omega),if_neg (by omega),
+    if_neg (by omega)]
+  omega
+theorem parN_k6_r4 (k : Nat) (h : k%7=4) : parN (k+6)=k+4 := by
+  rw [parN_val (k+6) 3 (by omega) (by omega),if_pos (by omega)]
+  omega
+theorem parN_k6_r5 (k : Nat) (h : k%7=5) : parN (k+6)=k+3 := by
+  rw [parN_val (k+6) 4 (by omega) (by omega),if_neg (by omega),if_pos (by omega)]
+  omega
+theorem parN_k6_r6 (k : Nat) (h : k%7=6) : parN (k+6)=k+1 := by
+  rw [parN_val (k+6) 5 (by omega) (by omega),if_neg (by omega),if_neg (by omega),
+    if_pos (by omega)]
+  omega
+
+#guard (List.range 20).all fun k =>
+  Trans.Recal.fpar (L k) 0 ((k+6:Nat):Int) 0
+    == ((if k%7=0 then k+5 else if k%7=1 then k+4 else if k%7=2 then k+5
+         else if k%7=3 then k+5 else if k%7=4 then k+4 else if k%7=5 then k+3
+         else k+1 : Nat):Int)
+
+/-! #### 相ごとの遷移型と `c2`
+
+    r   j0     ty   c1            c2
+    0   k+5    3    D1 0          D1 (D1 0)
+    1   k+4    1    D1 (D1 0)     D1 (D1 0 + D0 0)
+    2   k+5    6    D0 0          D0 (D1 0)
+    3   k+5    3    D1 0          D1 (D1 0)
+    4   k+4    3    D1 (D1 0)     D1 (D1 0 + D1 0)
+    5   k+3    1    D1 (D1 0+D1 0) A0
+    6   k+1    5    D0 A0         D0 (A0 + D1 0)
+-/
+
+theorem transType_L_r0 (k : Nat) (h : k%7=0) :
+    Trans.Recal.transTypeMain (L k) ((k+5:Nat):Int) ((k+6:Nat):Int)=3 := by
+  unfold Trans.Recal.transTypeMain
+  rw [gp1_L k (k+6) (by omega),gp1_L k (k+5) (by omega),
+    Gq_one (k+6) (by omega),Gq_one (k+5) (by omega),show ((1:Int)==0)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [if_pos (by omega),isAdm_L k (k+5) (by omega) (by omega),if_pos rfl]
+
+theorem transType_L_r1 (k : Nat) (h : k%7=1) :
+    Trans.Recal.transTypeMain (L k) ((k+4:Nat):Int) ((k+6:Nat):Int)=1 := by
+  unfold Trans.Recal.transTypeMain
+  rw [gp1_L k (k+6) (by omega),Gq_zero (k+6) (by omega),
+    show ((0:Int)==0)=true from rfl]
+  simp only [if_true]
+  rw [isAdm_L k (k+4) (by omega) (by omega),if_pos rfl]
+
+theorem transType_L_r2 (k : Nat) (h : k%7=2) :
+    Trans.Recal.transTypeMain (L k) ((k+5:Nat):Int) ((k+6:Nat):Int)=6 := by
+  unfold Trans.Recal.transTypeMain
+  rw [gp1_L k (k+6) (by omega),gp1_L k (k+5) (by omega),
+    Gq_one (k+6) (by omega),Gq_zero (k+5) (by omega),show ((1:Int)==0)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [if_neg (by omega),if_neg (by omega)]
+
+theorem transType_L_r3 (k : Nat) (h : k%7=3) :
+    Trans.Recal.transTypeMain (L k) ((k+5:Nat):Int) ((k+6:Nat):Int)=3 := by
+  unfold Trans.Recal.transTypeMain
+  rw [gp1_L k (k+6) (by omega),gp1_L k (k+5) (by omega),
+    Gq_one (k+6) (by omega),Gq_one (k+5) (by omega),show ((1:Int)==0)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [if_pos (by omega),isAdm_L k (k+5) (by omega) (by omega),if_pos rfl]
+
+theorem transType_L_r4 (k : Nat) (h : k%7=4) :
+    Trans.Recal.transTypeMain (L k) ((k+4:Nat):Int) ((k+6:Nat):Int)=3 := by
+  unfold Trans.Recal.transTypeMain
+  rw [gp1_L k (k+6) (by omega),gp1_L k (k+4) (by omega),
+    Gq_one (k+6) (by omega),Gq_one (k+4) (by omega),show ((1:Int)==0)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [if_pos (by omega),isAdm_L k (k+4) (by omega) (by omega),if_pos rfl]
+
+theorem transType_L_r5 (k : Nat) (h : k%7=5) :
+    Trans.Recal.transTypeMain (L k) ((k+3:Nat):Int) ((k+6:Nat):Int)=1 := by
+  unfold Trans.Recal.transTypeMain
+  rw [gp1_L k (k+6) (by omega),Gq_zero (k+6) (by omega),
+    show ((0:Int)==0)=true from rfl]
+  simp only [if_true]
+  rw [isAdm_L k (k+3) (by omega) (by omega),if_pos rfl]
+
+theorem transType_L_r6 (k : Nat) (h : k%7=6) :
+    Trans.Recal.transTypeMain (L k) ((k+1:Nat):Int) ((k+6:Nat):Int)=5 := by
+  unfold Trans.Recal.transTypeMain
+  rw [gp1_L k (k+6) (by omega),gp1_L k (k+1) (by omega),
+    Gq_one (k+6) (by omega),Gq_zero (k+1) (by omega),show ((1:Int)==0)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [if_neg (by omega),if_pos (by omega)]
+
+theorem mkC2_L_r0 (k : Nat) (h : k%7=0) :
+    Trans.Recal.mkC2 (L k) ((k+5:Nat):Int) ((k+6:Nat):Int) 3 D1z=D11z := by
+  unfold Trans.Recal.mkC2
+  rw [gp1_L k (k+6) (by omega),Gq_one (k+6) (by omega)]
+  rfl
+
+theorem mkC2_L_r1 (k : Nat) (h : k%7=1) :
+    Trans.Recal.mkC2 (L k) ((k+4:Nat):Int) ((k+6:Nat):Int) 1 D11z
+      =Trans.Dict.BT.D 1 (.sum D1z D0z) := by
+  unfold Trans.Recal.mkC2
+  rw [gp1_L k (k+6) (by omega),Gq_zero (k+6) (by omega)]
+  rfl
+
+theorem mkC2_L_r2 (k : Nat) (h : k%7=2) :
+    Trans.Recal.mkC2 (L k) ((k+5:Nat):Int) ((k+6:Nat):Int) 6 D0z
+      =Trans.Dict.BT.D 0 D1z := by
+  unfold Trans.Recal.mkC2
+  rw [gp1_L k (k+6) (by omega),Gq_one (k+6) (by omega)]
+  rfl
+
+theorem mkC2_L_r3 (k : Nat) (h : k%7=3) :
+    Trans.Recal.mkC2 (L k) ((k+5:Nat):Int) ((k+6:Nat):Int) 3 D1z=D11z := by
+  unfold Trans.Recal.mkC2
+  rw [gp1_L k (k+6) (by omega),Gq_one (k+6) (by omega)]
+  rfl
+
+theorem mkC2_L_r4 (k : Nat) (h : k%7=4) :
+    Trans.Recal.mkC2 (L k) ((k+4:Nat):Int) ((k+6:Nat):Int) 3 D11z=D1ss := by
+  unfold Trans.Recal.mkC2
+  rw [gp1_L k (k+6) (by omega),Gq_one (k+6) (by omega)]
+  rfl
+
+theorem mkC2_L_r5 (k : Nat) (h : k%7=5) :
+    Trans.Recal.mkC2 (L k) ((k+3:Nat):Int) ((k+6:Nat):Int) 1 D1ss=A0 := by
+  unfold Trans.Recal.mkC2
+  rw [gp1_L k (k+6) (by omega),Gq_zero (k+6) (by omega)]
+  rfl
+
+theorem mkC2_L_r6 (k : Nat) (h : k%7=6) :
+    Trans.Recal.mkC2 (L k) ((k+1:Nat):Int) ((k+6:Nat):Int) 5 (Trans.Dict.BT.D 0 A0)
+      =Trans.Dict.BT.D 0 B0 := by
+  unfold Trans.Recal.mkC2
+  rw [gp1_L k (k+6) (by omega),Gq_one (k+6) (by omega)]
+  rfl
+
+/-! ### Link 2, step 19: the replacement inside the reader output.
+
+`W`'s rightmost spine descends four constructors per complete block — one more
+than `G10`'s, which is the extra column. -/
+
+theorem repl_D0W : ∀ (a f r : Nat) (b bb c cc : Trans.Dict.BT),
+    (∀ g : Nat, r ≤ g → Trans.Recal.replMark g (.D 0 b) c cc=some (.D 0 bb)) →
+    (∀ n : Nat, ((Trans.Dict.BT.D 0 (W (n+1) b))==c)=false
+      ∧ ((Trans.Dict.BT.D 1 (.sum D1z (.D 0 (W n b))))==c)=false) →
+    4*a+r ≤ f →
+    Trans.Recal.replMark f (.D 0 (W a b)) c cc=some (.D 0 (W a bb))
+  | 0,f,r,b,bb,c,cc,hbase,_,hf => hbase f (by simpa using hf)
+  | a+1,f,r,b,bb,c,cc,hbase,hne,hf => by
+    obtain ⟨g,rfl⟩ : ∃ g,f=g+4 := ⟨f-4,by omega⟩
+    change Trans.Recal.replMark (g+4)
+      (.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (W a b)))))) c cc=
+      some (.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (W a bb))))))
+    rw [show g+4=(g+3)+1 by omega,Trans.Recal.replMark]
+    have hn:=(hne a).1
+    change ((Trans.Dict.BT.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (W a b))))))==c)=false at hn
+    rw [hn]
+    simp only [Bool.false_eq_true,if_false]
+    rw [show g+3=(g+2)+1 by omega,Trans.Recal.replMark]
+    rw [show Trans.Dict.BT.toL (.sum A0 (.D 1 (.sum D1z (.D 0 (W a b)))))
+      =[A0,.D 1 (.sum D1z (.D 0 (W a b)))] from rfl]
+    change ((Trans.Recal.replMark (g+2) (.D 1 (.sum D1z (.D 0 (W a b)))) c cc).map
+      (fun x=>Trans.Dict.BT.sum A0 x)).map (fun x=>Trans.Dict.BT.D 0 x)=_
+    rw [show g+2=(g+1)+1 by omega,Trans.Recal.replMark,(hne a).2]
+    simp only [Bool.false_eq_true,if_false]
+    change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+      (Option.map (fun x=>Trans.Dict.BT.sum A0 x)
+        (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+          (Option.map (fun ll=>Trans.Dict.BT.ofL
+              (([D1z,(Trans.Dict.BT.D 0 (W a b))] : List Trans.Dict.BT).dropLast++[ll]))
+            (Trans.Recal.replMark g (.D 0 (W a b)) c cc)))))=_
+    rw [repl_D0W a g r b bb c cc hbase hne (by omega)]
+    rfl
+
+theorem W_add (a b : Nat) (c : Trans.Dict.BT) : W a (W b c)=W (a+b) c := by
+  induction a with
+  | zero => simp [W]
+  | succ a ih =>
+    simp only [W,ih]
+    rw [show a+1+b=(a+b)+1 by omega,W]
+
+theorem LBT_r (a r : Nat) (hr : r<7) : LBT (7*a+r)=.D 0 (W a (Part r)) := by
+  unfold LBT
+  rw [show (7*a+r)/7=a by omega,show (7*a+r)%7=r by omega]
+
+theorem repl_LBT_r1 (a f : Nat) (hf : 4*a+3 ≤ f) :
+    Trans.Recal.replMark f (LBT (7*a+0)) D11z (.D 1 (.sum D1z D0z))
+      =some (LBT (7*a+1)) := by
+  rw [LBT_r a 0 (by omega),LBT_r a 1 (by omega)]
+  refine repl_D0W a f 3 (Part 0) (Part 1) D11z (.D 1 (.sum D1z D0z)) ?_ ?_ hf
+  · intro g hg
+    obtain ⟨h,rfl⟩ : ∃ h,g=h+3 := ⟨g-3,by omega⟩
+    change Trans.Recal.replMark (h+3) (.D 0 (.sum A0 D11z)) D11z
+      (.D 1 (.sum D1z D0z))=some (.D 0 (.sum A0 (.D 1 (.sum D1z D0z))))
+    rw [show h+3=(h+2)+1 by omega,Trans.Recal.replMark,
+      show ((Trans.Dict.BT.D 0 (.sum A0 D11z))==D11z)=false from rfl]
+    simp only [Bool.false_eq_true,if_false]
+    rw [show h+2=(h+1)+1 by omega,Trans.Recal.replMark,
+      show Trans.Dict.BT.toL (.sum A0 D11z)=[A0,D11z] from rfl]
+    change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+      (Option.map (fun ll=>Trans.Dict.BT.ofL
+          (([A0,D11z] : List Trans.Dict.BT).dropLast++[ll]))
+        (Trans.Recal.replMark (h+1) D11z D11z (.D 1 (.sum D1z D0z)))))=_
+    rw [G1.replMark_self (h+1) 1 D1z (.D 1 (.sum D1z D0z)) (by omega)]
+    rfl
+  · intro n
+    exact ⟨rfl,rfl⟩
+
+theorem repl_LBT_r2 (a f : Nat) (hf : 4*a+5 ≤ f) :
+    Trans.Recal.replMark f (LBT (7*a+1)) D0z (.D 0 D1z)=some (LBT (7*a+2)) := by
+  rw [LBT_r a 1 (by omega),LBT_r a 2 (by omega)]
+  refine repl_D0W a f 5 (Part 1) (Part 2) D0z (.D 0 D1z) ?_ ?_ hf
+  · intro g hg
+    obtain ⟨h,rfl⟩ : ∃ h,g=h+5 := ⟨g-5,by omega⟩
+    change Trans.Recal.replMark (h+5) (.D 0 (.sum A0 (.D 1 (.sum D1z D0z)))) D0z
+      (.D 0 D1z)=some (.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 D1z)))))
+    rw [show h+5=(h+4)+1 by omega,Trans.Recal.replMark,
+      show ((Trans.Dict.BT.D 0 (.sum A0 (.D 1 (.sum D1z D0z))))==D0z)=false from rfl]
+    simp only [Bool.false_eq_true,if_false]
+    rw [show h+4=(h+3)+1 by omega,Trans.Recal.replMark,
+      show Trans.Dict.BT.toL (.sum A0 (.D 1 (.sum D1z D0z)))
+        =[A0,.D 1 (.sum D1z D0z)] from rfl]
+    change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+      (Option.map (fun ll=>Trans.Dict.BT.ofL
+          (([A0,(Trans.Dict.BT.D 1 (.sum D1z D0z))] : List Trans.Dict.BT).dropLast++[ll]))
+        (Trans.Recal.replMark (h+3) (.D 1 (.sum D1z D0z)) D0z (.D 0 D1z))))=_
+    rw [show h+3=(h+2)+1 by omega,Trans.Recal.replMark,
+      show ((Trans.Dict.BT.D 1 (.sum D1z D0z))==D0z)=false from rfl]
+    simp only [Bool.false_eq_true,if_false]
+    change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+      (Option.map (fun ll=>Trans.Dict.BT.ofL
+          (([A0,(Trans.Dict.BT.D 1 (.sum D1z D0z))] : List Trans.Dict.BT).dropLast++[ll]))
+        (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+          (Trans.Recal.replMark (h+2) (.sum D1z D0z) D0z (.D 0 D1z)))))=_
+    rw [show h+2=(h+1)+1 by omega,Trans.Recal.replMark,
+      show Trans.Dict.BT.toL (.sum D1z D0z)=[D1z,D0z] from rfl]
+    change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+      (Option.map (fun ll=>Trans.Dict.BT.ofL
+          (([A0,(Trans.Dict.BT.D 1 (.sum D1z D0z))] : List Trans.Dict.BT).dropLast++[ll]))
+        (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+          (Option.map (fun ll=>Trans.Dict.BT.ofL
+              (([D1z,D0z] : List Trans.Dict.BT).dropLast++[ll]))
+            (Trans.Recal.replMark (h+1) D0z D0z (.D 0 D1z))))))=_
+    rw [G1.replMark_self (h+1) 0 .zero (.D 0 D1z) (by omega)]
+    rfl
+  · intro n
+    exact ⟨rfl,rfl⟩
+
+#guard (List.range 5).all fun a =>
+  Trans.Recal.replMark 60 (LBT (7*a+0)) D11z (.D 1 (.sum D1z D0z))==some (LBT (7*a+1))
+#guard (List.range 5).all fun a =>
+  Trans.Recal.replMark 60 (LBT (7*a+1)) D0z (.D 0 D1z)==some (LBT (7*a+2))
+
+/-- `Part` の中を 1 段深く降りる形。相 3・4・5 が共有する。 -/
+theorem repl_base_deep (h u : Nat) (y cc : Trans.Dict.BT)
+    (hn1 : ((Trans.Dict.BT.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (.D u y))))))
+            ==(Trans.Dict.BT.D u y))=false)
+    (hn2 : ((Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.D u y))))==(Trans.Dict.BT.D u y))=false)
+    (hn3 : ((Trans.Dict.BT.D 0 (.D u y))==(Trans.Dict.BT.D u y))=false) :
+    Trans.Recal.replMark (h+6) (.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (.D u y))))))
+      (.D u y) cc
+      = some (.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 cc))))) := by
+  rw [show h+6=(h+5)+1 by omega,Trans.Recal.replMark,hn1]
+  simp only [Bool.false_eq_true,if_false]
+  rw [show h+5=(h+4)+1 by omega,Trans.Recal.replMark,
+    show Trans.Dict.BT.toL (.sum A0 (.D 1 (.sum D1z (.D 0 (.D u y)))))
+      =[A0,.D 1 (.sum D1z (.D 0 (.D u y)))] from rfl]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.D u y))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Trans.Recal.replMark (h+4) (.D 1 (.sum D1z (.D 0 (.D u y))))
+        (.D u y) cc)))=_
+  rw [show h+4=(h+3)+1 by omega,Trans.Recal.replMark,hn2]
+  simp only [Bool.false_eq_true,if_false]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.D u y))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Trans.Recal.replMark (h+3) (.sum D1z (.D 0 (.D u y))) (.D u y) cc))))=_
+  rw [show h+3=(h+2)+1 by omega,Trans.Recal.replMark,
+    show Trans.Dict.BT.toL (.sum D1z (.D 0 (.D u y)))
+      =[D1z,.D 0 (.D u y)] from rfl]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.D u y))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Option.map (fun ll=>Trans.Dict.BT.ofL
+            (([D1z,(Trans.Dict.BT.D 0 (.D u y))] : List Trans.Dict.BT).dropLast++[ll]))
+          (Trans.Recal.replMark (h+2) (.D 0 (.D u y)) (.D u y) cc)))))=_
+  rw [show h+2=(h+1)+1 by omega,Trans.Recal.replMark,hn3]
+  simp only [Bool.false_eq_true,if_false]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.D u y))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Option.map (fun ll=>Trans.Dict.BT.ofL
+            (([D1z,(Trans.Dict.BT.D 0 (.D u y))] : List Trans.Dict.BT).dropLast++[ll]))
+          (Option.map (fun aa=>Trans.Dict.BT.D 0 aa)
+            (Trans.Recal.replMark (h+1) (.D u y) (.D u y) cc))))))=_
+  rw [G1.replMark_self (h+1) u y cc (by omega)]
+  rfl
+
+/-- `Part` の中の浅い側。相 6 が使う。 -/
+theorem repl_base_shallow (h u : Nat) (y cc : Trans.Dict.BT)
+    (hn1 : ((Trans.Dict.BT.D 0 (.sum A0 (.D 1 (.sum D1z (.D u y)))))
+            ==(Trans.Dict.BT.D u y))=false)
+    (hn2 : ((Trans.Dict.BT.D 1 (.sum D1z (.D u y)))==(Trans.Dict.BT.D u y))=false) :
+    Trans.Recal.replMark (h+5) (.D 0 (.sum A0 (.D 1 (.sum D1z (.D u y)))))
+      (.D u y) cc
+      = some (.D 0 (.sum A0 (.D 1 (.sum D1z cc)))) := by
+  rw [show h+5=(h+4)+1 by omega,Trans.Recal.replMark,hn1]
+  simp only [Bool.false_eq_true,if_false]
+  rw [show h+4=(h+3)+1 by omega,Trans.Recal.replMark,
+    show Trans.Dict.BT.toL (.sum A0 (.D 1 (.sum D1z (.D u y))))
+      =[A0,.D 1 (.sum D1z (.D u y))] from rfl]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D u y)))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Trans.Recal.replMark (h+3) (.D 1 (.sum D1z (.D u y))) (.D u y) cc)))=_
+  rw [show h+3=(h+2)+1 by omega,Trans.Recal.replMark,hn2]
+  simp only [Bool.false_eq_true,if_false]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D u y)))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Trans.Recal.replMark (h+2) (.sum D1z (.D u y)) (.D u y) cc))))=_
+  rw [show h+2=(h+1)+1 by omega,Trans.Recal.replMark,
+    show Trans.Dict.BT.toL (.sum D1z (.D u y))=[D1z,.D u y] from rfl]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D u y)))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Option.map (fun ll=>Trans.Dict.BT.ofL
+            (([D1z,(Trans.Dict.BT.D u y)] : List Trans.Dict.BT).dropLast++[ll]))
+          (Trans.Recal.replMark (h+1) (.D u y) (.D u y) cc)))))=_
+  rw [G1.replMark_self (h+1) u y cc (by omega)]
+  rfl
+
+theorem repl_LBT_r3 (a f : Nat) (hf : 4*a+6 ≤ f) :
+    Trans.Recal.replMark f (LBT (7*a+2)) D1z D11z=some (LBT (7*a+3)) := by
+  rw [LBT_r a 2 (by omega),LBT_r a 3 (by omega)]
+  refine repl_D0W a f 6 (Part 2) (Part 3) D1z D11z ?_ (fun n => ⟨rfl,rfl⟩) hf
+  intro g hg
+  obtain ⟨h,rfl⟩ : ∃ h,g=h+6 := ⟨g-6,by omega⟩
+  exact repl_base_deep h 1 .zero D11z rfl rfl rfl
+
+theorem repl_LBT_r4 (a f : Nat) (hf : 4*a+6 ≤ f) :
+    Trans.Recal.replMark f (LBT (7*a+3)) D11z D1ss=some (LBT (7*a+4)) := by
+  rw [LBT_r a 3 (by omega),LBT_r a 4 (by omega)]
+  refine repl_D0W a f 6 (Part 3) (Part 4) D11z D1ss ?_ (fun n => ⟨rfl,rfl⟩) hf
+  intro g hg
+  obtain ⟨h,rfl⟩ : ∃ h,g=h+6 := ⟨g-6,by omega⟩
+  exact repl_base_deep h 1 D1z D1ss rfl rfl rfl
+
+theorem repl_LBT_r5 (a f : Nat) (hf : 4*a+6 ≤ f) :
+    Trans.Recal.replMark f (LBT (7*a+4)) D1ss A0=some (LBT (7*a+5)) := by
+  rw [LBT_r a 4 (by omega),LBT_r a 5 (by omega)]
+  refine repl_D0W a f 6 (Part 4) (Part 5) D1ss A0 ?_ (fun n => ⟨rfl,rfl⟩) hf
+  intro g hg
+  obtain ⟨h,rfl⟩ : ∃ h,g=h+6 := ⟨g-6,by omega⟩
+  exact repl_base_deep h 1 (.sum D1z D1z) A0 rfl rfl rfl
+
+theorem repl_LBT_r6 (a f : Nat) (hf : 4*a+5 ≤ f) :
+    Trans.Recal.replMark f (LBT (7*a+5)) (.D 0 A0) (.D 0 B0)=some (LBT (7*a+6)) := by
+  rw [LBT_r a 5 (by omega),LBT_r a 6 (by omega)]
+  refine repl_D0W a f 5 (Part 5) (Part 6) (.D 0 A0) (.D 0 B0) ?_ (fun n => ⟨rfl,rfl⟩) hf
+  intro g hg
+  obtain ⟨h,rfl⟩ : ∃ h,g=h+5 := ⟨g-5,by omega⟩
+  exact repl_base_shallow h 0 A0 (.D 0 B0) rfl rfl
+
+theorem repl_LBT_r0 (a f : Nat) (hf : 4*a+7 ≤ f) :
+    Trans.Recal.replMark f (LBT (7*a+6)) D1z D11z=some (LBT (7*a+7)) := by
+  rw [LBT_r a 6 (by omega),show 7*a+7=7*(a+1)+0 by omega,LBT_r (a+1) 0 (by omega),
+    ← W_add a 1 (Part 0)]
+  refine repl_D0W a f 7 (Part 6) (W 1 (Part 0)) D1z D11z ?_ (fun n => ⟨rfl,rfl⟩) hf
+  intro g hg
+  obtain ⟨h,rfl⟩ : ∃ h,g=h+7 := ⟨g-7,by omega⟩
+  change Trans.Recal.replMark (h+7)
+    (.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (.sum A0 D1z)))))) D1z D11z
+    =some (.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (.sum A0 D11z))))))
+  rw [show h+7=(h+6)+1 by omega,Trans.Recal.replMark,
+    show ((Trans.Dict.BT.D 0 (.sum A0 (.D 1 (.sum D1z (.D 0 (.sum A0 D1z))))))==D1z)
+      =false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [show h+6=(h+5)+1 by omega,Trans.Recal.replMark,
+    show Trans.Dict.BT.toL (.sum A0 (.D 1 (.sum D1z (.D 0 (.sum A0 D1z)))))
+      =[A0,.D 1 (.sum D1z (.D 0 (.sum A0 D1z)))] from rfl]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.sum A0 D1z))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Trans.Recal.replMark (h+5) (.D 1 (.sum D1z (.D 0 (.sum A0 D1z)))) D1z D11z)))=_
+  rw [show h+5=(h+4)+1 by omega,Trans.Recal.replMark,
+    show ((Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.sum A0 D1z))))==D1z)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.sum A0 D1z))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Trans.Recal.replMark (h+4) (.sum D1z (.D 0 (.sum A0 D1z))) D1z D11z))))=_
+  rw [show h+4=(h+3)+1 by omega,Trans.Recal.replMark,
+    show Trans.Dict.BT.toL (.sum D1z (.D 0 (.sum A0 D1z)))
+      =[D1z,.D 0 (.sum A0 D1z)] from rfl]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.sum A0 D1z))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Option.map (fun ll=>Trans.Dict.BT.ofL
+            (([D1z,(Trans.Dict.BT.D 0 (.sum A0 D1z))]
+              : List Trans.Dict.BT).dropLast++[ll]))
+          (Trans.Recal.replMark (h+3) (.D 0 (.sum A0 D1z)) D1z D11z)))))=_
+  rw [show h+3=(h+2)+1 by omega,Trans.Recal.replMark,
+    show ((Trans.Dict.BT.D 0 (.sum A0 D1z))==D1z)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.sum A0 D1z))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Option.map (fun ll=>Trans.Dict.BT.ofL
+            (([D1z,(Trans.Dict.BT.D 0 (.sum A0 D1z))]
+              : List Trans.Dict.BT).dropLast++[ll]))
+          (Option.map (fun aa=>Trans.Dict.BT.D 0 aa)
+            (Trans.Recal.replMark (h+2) (.sum A0 D1z) D1z D11z))))))=_
+  rw [show h+2=(h+1)+1 by omega,Trans.Recal.replMark,
+    show Trans.Dict.BT.toL (.sum A0 D1z)=[A0,D1z] from rfl]
+  change (Option.map (fun x=>Trans.Dict.BT.D 0 x)
+    (Option.map (fun ll=>Trans.Dict.BT.ofL
+        (([A0,(Trans.Dict.BT.D 1 (.sum D1z (.D 0 (.sum A0 D1z))))]
+          : List Trans.Dict.BT).dropLast++[ll]))
+      (Option.map (fun aa=>Trans.Dict.BT.D 1 aa)
+        (Option.map (fun ll=>Trans.Dict.BT.ofL
+            (([D1z,(Trans.Dict.BT.D 0 (.sum A0 D1z))]
+              : List Trans.Dict.BT).dropLast++[ll]))
+          (Option.map (fun aa=>Trans.Dict.BT.D 0 aa)
+            (Option.map (fun ll=>Trans.Dict.BT.ofL
+                (([A0,D1z] : List Trans.Dict.BT).dropLast++[ll]))
+              (Trans.Recal.replMark (h+1) D1z D1z D11z)))))))=_
+  rw [G1.replMark_self (h+1) 1 .zero D11z (by omega)]
+  rfl
+
+#guard (List.range 5).all fun a =>
+  Trans.Recal.replMark 60 (LBT (7*a+2)) D1z D11z==some (LBT (7*a+3))
+#guard (List.range 5).all fun a =>
+  Trans.Recal.replMark 60 (LBT (7*a+3)) D11z D1ss==some (LBT (7*a+4))
+#guard (List.range 5).all fun a =>
+  Trans.Recal.replMark 60 (LBT (7*a+4)) D1ss A0==some (LBT (7*a+5))
+#guard (List.range 5).all fun a =>
+  Trans.Recal.replMark 60 (LBT (7*a+5)) (.D 0 A0) (.D 0 B0)==some (LBT (7*a+6))
+#guard (List.range 5).all fun a =>
+  Trans.Recal.replMark 60 (LBT (7*a+6)) D1z D11z==some (LBT (7*a+7))
+
 #guard (List.range 5).all fun n => Trans.Dict.wcnf Z0t [Kt n]==([(ofNat 2,Jt (n+1))],zero)
 #guard (List.range 5).all fun n =>
   Trans.Dict.collapse 0 (plus G9Dict.H (Kt n))==Jt (n+2)
