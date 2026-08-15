@@ -241,6 +241,37 @@ def seqMiss (f : Term → Nat → Term) (sh : Nat) : Nat :=
 -- ε_k の行の値は `φ̄(1,k)`。
 #guard (List.range 5).all fun k => sumVal (.ps .nil (omPow (k + 1))) == epsT k
 
+/-! ### §9.2 THE TWO ROWS' VALUES ARE THEOREMS, NOT GUARDS
+
+A `#guard` is a computation on a closed term; the certificate has to cite an EQUATION.
+These are the two the registry would name.  They need no normal form, no `oR`, and no part
+of §13 — so what a ✅ on these rows would assert about the VALUE is already fixed, and only
+the CERTIFICATE is outstanding. -/
+
+theorem omN_omPow : ∀ (k : Nat), omN (omPow k) = k
+  | 0 => rfl
+  | k + 1 => by show omN (omPow k) + 1 = k + 1; rw [omN_omPow k]
+
+theorem sumVal_omPow : ∀ (k : Nat), sumVal (omPow k) = zero
+  | 0 => rfl
+  | k + 1 => by show sumVal (omPow k) = zero; exact sumVal_omPow k
+
+theorem sumVal_omPow_succ : ∀ (k : Nat), sumVal (.ps .nil (omPow (k + 1))) = epsT k := by
+  intro k
+  show plus (sumVal .nil) (omegaNF (argVal (omPow (k + 1)))) = epsT k
+  have hom : omN (omPow (k + 1)) = k + 1 := omN_omPow (k + 1)
+  have hsum : sumVal (omPow (k + 1)) = zero := sumVal_omPow (k + 1)
+  show plus zero (omegaNF (if omN (omPow (k + 1)) = 0 then sumVal (omPow (k + 1))
+    else plus (epsT (omN (omPow (k + 1)) - 1)) (sumVal (omPow (k + 1))))) = epsT k
+  rw [hom, if_neg (by omega), hsum, show (k + 1 - 1) = k from rfl]
+  show plus zero (omegaNF (plus (epsT k) zero)) = epsT k
+  rw [show plus (epsT k) zero = epsT k from rfl]
+  show plus zero (omegaNF (phi one (ofNat k))) = phi one (ofNat k)
+  rfl
+
+/-- **ε₁ の行の値。** 表が主張する `φ̄(1,1)` に等しい。 -/
+theorem sumVal_eps1 : sumVal (.ps .nil (omPow 2)) = phi one one := sumVal_omPow_succ 1
+
 /-! ## §10 The zero and successor supplies
 
 `certIn_region`'s first two supplies ask what the value is when `BMS.kind S` is `zero` or
