@@ -791,6 +791,106 @@ theorem joints_L (m : Nat) : Trans.Recal.joints (L m)=[0] := by
 #guard (List.range 12).all fun m => Trans.Recal.brF (L m)==[V m]
 #guard (List.range 12).all fun m => Trans.Recal.ppair (V m)==[V m]
 
+/-! ### Link 2, step 8: the first level of `red`. -/
+
+theorem fpar0_eq (M : Trans.Recal.PS) (j k : Int) :
+    Trans.Recal.fpar0 M j k=Trans.Recal.fpar M 0 j k := rfl
+
+theorem fpar1_L_three_zero (m : Nat) : Trans.Recal.fpar (L m) 1 3 0=0 := by
+  unfold Trans.Recal.fpar
+  rw [if_neg (by rw [lenI_L]; omega)]
+  simp only [show ((1:Nat)==0)=false from rfl,Bool.false_eq_true,if_false]
+  rw [length_L]
+  show (let j1:=Trans.Recal.fpar0 (L m) 3 0
+    if j1<0 then -1 else if Trans.Recal.gp1 (L m) j1<Trans.Recal.gp1 (L m) 3 then j1
+    else Trans.Recal.fpar1Aux (m+5) (L m) (Trans.Recal.gp1 (L m) 3) j1 0)=0
+  rw [show Trans.Recal.fpar0 (L m) 3 0=0 from by
+    have h := fpar_L_zero m 3 (by omega)
+    unfold parL at h
+    rw [if_neg (by omega),if_pos (by omega)] at h
+    rw [fpar0_eq,show ((3:Int))=((3:Nat):Int) from rfl,h]
+    omega]
+  rw [if_neg (by omega),
+    show Trans.Recal.gp1 (L m) 0=0 from by
+      rw [show ((0:Int))=((0:Nat):Int) from rfl,gp1_L m 0 (by omega)]; rfl,
+    show Trans.Recal.gp1 (L m) 3=1 from by
+      rw [show ((3:Int))=((3:Nat):Int) from rfl,gp1_L m 3 (by omega)]; rfl,
+    if_pos (by omega)]
+
+theorem V_cons (m : Nat) : V m=((1:Int),(1:Int)) :: (V m).drop 1 := by
+  unfold V L
+  rfl
+
+theorem L_cons_V (m : Nat) :
+    L m=([((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(2:Int))] : Trans.Recal.PS)++V m := by
+  unfold V L
+  rfl
+
+theorem isZeroP_L (m : Nat) : Trans.Recal.isZeroP (L m)=false := by
+  unfold Trans.Recal.isZeroP
+  rw [show ((L m).length==1)=false from by rw [length_L]; simp]
+  rfl
+
+theorem gp0_L_zero (m : Nat) : Trans.Recal.gp0 (L m) 0=0 := by
+  rw [show ((0:Int))=((0:Nat):Int) from rfl,gp0_L m 0 (by omega)]
+  rfl
+
+theorem gp1_L_zero (m : Nat) : Trans.Recal.gp1 (L m) 0=0 := by
+  rw [show ((0:Int))=((0:Nat):Int) from rfl,gp1_L m 0 (by omega)]
+  rfl
+
+theorem gp1_V_zero (m : Nat) : Trans.Recal.gp1 (V m) 0=1 := by
+  rw [show ((0:Int))=((0:Nat):Int) from rfl]
+  show (if (((0:Nat):Int)<0) then 0 else ((V m).getD 0 (0,0)).2)=1
+  rw [if_neg (by omega)]
+  unfold V L
+  rfl
+
+/-- `red` の第 1 段。梯子は 3 列を切り出して、残りを 1 つの枝として再帰する。 -/
+theorem red_L_step (m f : Nat) :
+    Trans.Recal.red (f+1) (L m)
+      = ([((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(2:Int))] : Trans.Recal.PS)
+        ++ Trans.Recal.red f (V m) := by
+  simp only [Trans.Recal.red]
+  rw [isZeroP_L]
+  simp only [Bool.false_eq_true,if_false]
+  rw [isPrincipalP_L]
+  simp only [if_true]
+  rw [gp0_L_zero,gp1_L_zero]
+  rw [if_pos (by rfl)]
+  rw [trMax_L,lenI_L,
+    show ((2:Int)==(m:Int)+5-1)=false from beq_eq_false_iff_ne.mpr (by omega)]
+  simp only [Bool.false_eq_true,if_false]
+  rw [brF_L,firstNodes_L,joints_L]
+  simp only [List.length_cons,List.length_nil,List.range_succ,List.range_zero,
+    List.foldl_cons,List.foldl_nil,List.nil_append,List.getD_cons_zero]
+  rw [gp1_V_zero,show ((1:Int)==0)=false from by decide]
+  simp only [Bool.false_eq_true,if_false]
+  rw [fpar1_L_three_zero]
+  rw [show Trans.Recal.jjSeq 0 2
+      =([((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(2:Int))] : Trans.Recal.PS) from rfl]
+  simp only [Trans.Recal.derp]
+  rw [show ((0:Int)+1,(0:Int)+1) :: (V m).drop 1=V m from by
+    rw [show ((0:Int)+1)=(1:Int) from by omega]
+    exact (V_cons m).symm]
+  rw [show (0:Int)-0=0 from by omega]
+  rw [show Trans.Recal.incrFirst (Trans.Recal.red f (V m)) 0
+      =Trans.Recal.red f (V m) from by
+    unfold Trans.Recal.incrFirst
+    rw [show (fun c : Int × Int => (c.1+0,c.2))=id from by
+      funext c
+      show (c.1+0,c.2)=c
+      rw [Int.add_zero]]
+    exact List.map_id _]
+
+#guard (List.range 10).all fun m => Trans.Recal.fpar (L m) 1 3 0==0
+#guard (List.range 10).all fun m =>
+  L m==(([((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(2:Int))] : Trans.Recal.PS)++V m)
+#guard Trans.Recal.jjSeq 0 2==([((0:Int),(0:Int)),((1:Int),(1:Int)),((2:Int),(2:Int))]
+  : Trans.Recal.PS)
+-- 第 1 段の後に残るのは `red (V m) = V m` だけ (測定)
+#guard (List.range 10).all fun m => Trans.Recal.redP (V m)==V m
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
