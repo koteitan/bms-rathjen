@@ -891,6 +891,104 @@ theorem red_L_step (m f : Nat) :
 -- 第 1 段の後に残るのは `red (V m) = V m` だけ (測定)
 #guard (List.range 10).all fun m => Trans.Recal.redP (V m)==V m
 
+/-! ### Link 2, step 9: every ladder in the recursion is a WINDOW of one sequence.
+
+`red` walks through a family of ladders; all of them are the same doubly-infinite
+sequence `(Gp, Gq)` read from some offset, with the row-zero values shifted. -/
+
+theorem Gp_add_five (k : Nat) : Gp (k+5)=Gp k+3 := by
+  obtain ⟨a,r,hr,rfl⟩ : ∃ a r, r<5 ∧ k=5*a+r := ⟨k/5,k%5,by omega,by omega⟩
+  rw [show 5*a+r+5=5*(a+1)+r by omega,Gp_val (a+1) r hr,Gp_val a r hr]
+  push_cast
+  omega
+
+theorem Gq_add_five (k : Nat) : Gq (k+5)=Gq k := by
+  unfold Gq
+  rw [show (k+5)%5=k%5 by omega]
+
+/-- The ladder read from offset `i`, shifted by `d`, of length `n`. -/
+def Win (i : Nat) (d : Int) (n : Nat) : Trans.Recal.PS :=
+  (List.range n).map fun j => (Gp (j+i)+d,Gq (j+i))
+
+theorem length_Win (i : Nat) (d : Int) (n : Nat) : (Win i d n).length=n := by
+  simp [Win]
+
+theorem Win_succ (i : Nat) (d : Int) (n : Nat) :
+    Win i d (n+1)=Win i d n++[(Gp (n+i)+d,Gq (n+i))] := by
+  unfold Win
+  rw [List.range_succ,List.map_append]
+  rfl
+
+/-- Reading five later is a shift of three. -/
+theorem Win_add_five (i : Nat) (d : Int) (n : Nat) : Win (i+5) d n=Win i (d+3) n := by
+  unfold Win
+  apply List.map_congr_left
+  intro j _
+  show (Gp (j+(i+5))+d,Gq (j+(i+5)))=(Gp (j+i)+(d+3),Gq (j+i))
+  rw [show j+(i+5)=(j+i)+5 by omega,Gp_add_five,Gq_add_five]
+  congr 1
+  omega
+
+/-- Dropping a column advances the offset. -/
+theorem Win_drop (i : Nat) (d : Int) (n : Nat) : (Win i d (n+1)).drop 1=Win (i+1) d n := by
+  unfold Win
+  rw [List.range_succ_eq_map,List.map_cons,List.drop_succ_cons,List.drop_zero,
+    List.map_map]
+  apply List.map_congr_left
+  intro j _
+  show (Gp (j+1+i)+d,Gq (j+1+i))=(Gp (j+(i+1))+d,Gq (j+(i+1)))
+  rw [show j+1+i=j+(i+1) by omega]
+
+theorem incrFirst_Win (i : Nat) (d e : Int) (n : Nat) :
+    Trans.Recal.incrFirst (Win i d n) e=Win i (d+e) n := by
+  unfold Trans.Recal.incrFirst Win
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro j _
+  show ((Gp (j+i)+d)+e,Gq (j+i))=(Gp (j+i)+(d+e),Gq (j+i))
+  rw [Int.add_assoc]
+
+theorem L_eq_Win (m : Nat) : L m=Win 0 0 (m+5) := by
+  unfold Win
+  have : ∀ n : Nat, (List.range n).map (fun j => (Gp (j+0)+(0:Int),Gq (j+0)))
+      =(List.range n).map (fun j => (Gp j,Gq j)) := by
+    intro n
+    apply List.map_congr_left
+    intro j _
+    show (Gp (j+0)+(0:Int),Gq (j+0))=(Gp j,Gq j)
+    rw [Nat.add_zero,Int.add_zero]
+  rw [this]
+  induction m with
+  | zero => decide
+  | succ m ih =>
+    rw [show m+1+5=(m+5)+1 by omega,List.range_succ,List.map_append,← ih,
+      show L (m+1)=L m++[(p m,q m)] from L_succ m]
+    congr 1
+    show [(p m,q m)]=[(Gp (m+5),Gq (m+5))]
+    rw [← p_eq_Gp,← q_eq_Gq]
+
+theorem V_eq_Win (m : Nat) : V m=Win 3 0 (m+2) := by
+  unfold V
+  rw [L_eq_Win]
+  have : (m+5)=(m+2)+3 := by omega
+  rw [this]
+  clear this
+  induction (m+2) with
+  | zero => rfl
+  | succ n ih =>
+    rw [show n+1+3=(n+3)+1 by omega,Win_succ,List.drop_append_of_le_length (by
+      rw [length_Win]; omega),ih,Win_succ]
+
+#guard (List.range 10).all fun m => L m==Win 0 0 (m+5)
+#guard (List.range 10).all fun m => V m==Win 3 0 (m+2)
+#guard (List.range 8).all fun n => (List.range 6).all fun i => Win (i+5) 0 n==Win i 3 n
+#guard (List.range 8).all fun n => (List.range 6).all fun i =>
+  (Win i 0 (n+1)).drop 1==Win (i+1) 0 n
+-- `red` は shift を忘れる: 正規形は (i mod 5, n) だけで決まる (測定)
+#guard (List.range 5).all fun i => (List.range 4).all fun n =>
+  Trans.Recal.redP (((2:Int),(1:Int)) :: Win (i+5) 1 n)
+    == Trans.Recal.redP (((5:Int),(1:Int)) :: Win (i+5) 3 n)
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
