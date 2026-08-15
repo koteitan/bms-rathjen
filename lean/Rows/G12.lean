@@ -1188,6 +1188,99 @@ theorem red_Zr_step (c : Int) (i : Nat) (d : Int) (n f : Nat) (hn : 1 ≤ n)
   Trans.Recal.redP (Zr 2 (r+5) 1 (n+1))
     == Trans.Recal.redP (((0:Int),(0:Int)) :: Win (r+5) (-1) (n+1))
 
+/-! ### Link 2, step 14: the `Y` step goes through `A` and strips the head. -/
+
+theorem incrFirst_zero (M : Trans.Recal.PS) : Trans.Recal.incrFirst M 0=M := by
+  unfold Trans.Recal.incrFirst
+  rw [show (fun c : Int × Int => (c.1+0,c.2))=id from by
+    funext c
+    show (c.1+0,c.2)=c
+    rw [Int.add_zero]]
+  exact List.map_id _
+
+theorem length_Y (c : Int) (i : Nat) (d : Int) (n : Nat) : (Y c i d n).length=n+1 := by
+  unfold Y
+  rw [List.length_cons,length_Win]
+
+theorem gp0_Y_zero (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp0 (Y c i d n) 0=c := by
+  show (if ((0:Int)<0) then 0 else ((Y c i d n).getD 0 (0,0)).1)=c
+  rw [if_neg (by omega)]
+  rfl
+
+theorem gp1_Y_zero (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp1 (Y c i d n) 0=1 := by
+  show (if ((0:Int)<0) then 0 else ((Y c i d n).getD 0 (0,0)).2)=1
+  rw [if_neg (by omega)]
+  rfl
+
+theorem isZeroP_Y (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.isZeroP (Y c i d n)=false := by
+  unfold Trans.Recal.isZeroP
+  rw [show (Trans.Recal.gp1 (Y c i d n) 0==0)=false from by
+    rw [gp1_Y_zero]; rfl]
+  simp
+
+theorem incrFirst_Y (c : Int) (i : Nat) (d : Int) (n : Nat) (e : Int) :
+    Trans.Recal.incrFirst (Y c i d n) e=Y (c+e) i (d+e) n := by
+  unfold Trans.Recal.incrFirst Y
+  rw [List.map_cons]
+  congr 1
+  show Trans.Recal.incrFirst (Win i d n) e=_
+  rw [incrFirst_Win]
+
+/-- `Y` の段。`A` の結果から頭の `(0,0)` を落とすだけ。ずらしは `0` になる。 -/
+theorem red_Y_of_A (c : Int) (i : Nat) (d : Int) (n f : Nat) (W : Trans.Recal.PS)
+    (hc : (c==(0:Int))=false)
+    (hprin : Trans.Recal.isPrincipalP (Y c i d n)=true)
+    (hA : Trans.Recal.red f (((0:Int),(0:Int)) :: Y (c+1) i (d+1) n)
+      =((0:Int),(0:Int)) :: W)
+    (hWlen : 1 ≤ W.length)
+    (hWprin : Trans.Recal.isPrincipalP W=true)
+    (hW : Trans.Recal.gp0 W 0=Trans.Recal.gp1 W 0) :
+    Trans.Recal.red (f+1) (Y c i d n)=W := by
+  have hNdrop : (((0:Int),(0:Int)) :: W).drop 1=W := rfl
+  have hg0 : Trans.Recal.gp0 (((0:Int),(0:Int)) :: W) 1=Trans.Recal.gp0 W 0 := rfl
+  have hg1 : Trans.Recal.gp1 (((0:Int),(0:Int)) :: W) 1=Trans.Recal.gp1 W 0 := rfl
+  simp only [Trans.Recal.red]
+  rw [isZeroP_Y]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [gp0_Y_zero,gp1_Y_zero,hc]
+  simp only [Bool.false_and,Bool.false_eq_true,if_false]
+  rw [show ((1:Int)==0)=false from rfl]
+  simp only [Bool.false_eq_true,if_false]
+  rw [show Trans.Recal.jjSeq 0 ((1:Int)-1)=[((0:Int),(0:Int))] from rfl,
+    incrFirst_Y c i d n 1]
+  show (let N := Trans.Recal.red f ([((0:Int),(0:Int))]++Y (c+1) i (d+1) n)
+    let jN : Int := Trans.Recal.lenI N-1
+    if decide ((1:Int) ≤ jN) && Trans.Recal.isPrincipalP (N.drop (1:Int).toNat) then
+      Trans.Recal.incrFirst (N.drop (1:Int).toNat)
+        (-(Trans.Recal.gp0 N 1)+Trans.Recal.gp1 N 1)
+    else Y c i d n)=W
+  rw [show ([((0:Int),(0:Int))]++Y (c+1) i (d+1) n)
+      =((0:Int),(0:Int)) :: Y (c+1) i (d+1) n from rfl,hA]
+  show (if decide ((1:Int) ≤ Trans.Recal.lenI (((0:Int),(0:Int)) :: W)-1)
+      && Trans.Recal.isPrincipalP ((((0:Int),(0:Int)) :: W).drop 1) then
+    Trans.Recal.incrFirst ((((0:Int),(0:Int)) :: W).drop 1)
+      (-(Trans.Recal.gp0 (((0:Int),(0:Int)) :: W) 1)
+        +Trans.Recal.gp1 (((0:Int),(0:Int)) :: W) 1)
+    else Y c i d n)=W
+  rw [hNdrop,hg0,hg1,hW,hWprin,
+    show decide ((1:Int) ≤ Trans.Recal.lenI (((0:Int),(0:Int)) :: W)-1)=true from
+      decide_eq_true (by
+        unfold Trans.Recal.lenI
+        rw [List.length_cons]
+        omega)]
+  simp only [Bool.and_self,if_true]
+  rw [show -(Trans.Recal.gp1 W 0)+Trans.Recal.gp1 W 0=(0:Int) from by omega,
+    incrFirst_zero]
+
+-- `Y` の段が実際に効くことの確認 (測定)
+#guard (List.range 5).all fun r => (List.range 8).all fun n =>
+  Trans.Recal.redP (Y 2 (r+5) 1 n)==NF r n
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
