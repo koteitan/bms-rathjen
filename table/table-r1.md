@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.36
+バージョン: v0.7.37
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -287,6 +287,8 @@ $`X \subseteq U`$ が $`R`$ で**閉じている**とは:
 \mathrm{Cl}(R) \;=\; \bigcap \bigl\{\, X \subseteq U \;\bigm|\;
 X \text{ が } R \text{ で閉じている} \,\bigr\}
 ```
+
+下記の性質がある。
 
 ## T.Cl.closed
 

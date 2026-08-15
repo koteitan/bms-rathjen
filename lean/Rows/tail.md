@@ -191,6 +191,8 @@ $`X \subseteq U`$ が $`R`$ で**閉じている**とは:
 X \text{ が } R \text{ で閉じている} \,\bigr\}
 ```
 
+下記の性質がある。
+
 ## T.Cl.closed
 
 ```math
