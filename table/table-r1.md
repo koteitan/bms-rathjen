@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.39
+バージョン: v0.7.40
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -99,20 +99,18 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 \mathrm{Certified}(S, t)
 ```
 
-# 定義
-
-## D.Certified
+### D.Certified
 
 **証明書** $`\mathrm{Certified} \subseteq \mathcal{S} \times \mathfrak{T}(M)`$ を、
 次の 3 規則の**閉包** ([D.Cl](#dcl)) と定義する。
 
-### D.Certified.zero
+#### D.Certified.zero
 
 ```math
 \mathrm{Certified}([\;], 0)
 ```
 
-### D.Certified.succ
+#### D.Certified.succ
 
 ```math
 \begin{array}{l}
@@ -123,7 +121,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 \end{array}
 ```
 
-### D.Certified.lim
+#### D.Certified.lim
 
 ```math
 \forall f : \mathbb{N} \to \mathfrak{T}(M).\;
@@ -145,7 +143,7 @@ $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
 [T.Cl.inv](#tclinv) より逆も言える — $`\mathrm{Certified}(S, t)`$ が成り立つのは、
 上の 6 条件を満たす $`f`$ が**存在するとき、かつそのときに限る**。
 
-## D.TM
+### D.TM
 
 **Rathjen 表記の標準形** $`\mathfrak{T}(M)`$ を、次の規則の**閉包** ([D.Cl](#dcl)) と
 定義する ([Rathjen, 1991] 2.1)。
@@ -187,7 +185,7 @@ R = \{Z(\alpha)\}
 ```
 
 
-## D.Matrix
+### D.Matrix
 
 **バシク行列**の全体 $`\mathcal{S}`$ を、**列** (自然数の有限列) の有限列全体と定義する。
 
@@ -202,7 +200,7 @@ $`X^{\ast}`$ は $`X`$ の有限列全体を表す。列の本数も列の高さ
 に合わせる — 行列を $`S`$、その $`x`$ 番目の列を $`S_x`$、その $`y`$ 成分を $`S_{xy}`$ と書く。
 $`M`$ は最小の弱 Mahlo 基数だけを指し、行列には使わない。
 
-## D.expand
+### D.expand
 
 **展開** $`S[n]`$ と**行の種別** $`\mathrm{kind}(S)`$ を、次の型の写像と定義する。
 
