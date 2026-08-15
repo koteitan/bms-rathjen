@@ -4,6 +4,7 @@ import Evidence.Check
 import Evidence.StageA
 import Evidence.SqV
 import Evidence.CNVOps
+import Evidence.CmpM
 import Evidence.Region
 import Evidence.RegionV
 import Evidence.RegionSeq
