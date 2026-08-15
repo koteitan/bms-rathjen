@@ -252,6 +252,26 @@ theorem cmpM_append_lt : ∀ (M N R : Matrix), cmpM M N = .lt →
       show cmpM (s ++ R) t = .lt
       exact cmpM_append_lt s t R h' (fun d hd c hc => hg d hd c (List.mem_cons_of_mem n hc))
 
+/-- **右に伸ばした側と比べたときの長さの下界。** `X > Y` かつ `X < Y ++ Z` なら、`Y` は
+    `X` の真の接頭辞でしかありえないので `|Y| < |X|`。これが、標準形の不動点条件を
+    接頭辞へ制限するときの唯一の非自明な段である。 -/
+theorem cmpM_gt_lt_len : ∀ (X Y Z : Matrix), cmpM X Y = .gt → cmpM X (Y ++ Z) = .lt →
+    Y.length < X.length
+  | [], [], _, h, _ => Ordering.noConfusion h
+  | [], _ :: _, _, h, _ => Ordering.noConfusion h
+  | x :: s, [], _, _, _ => by simp
+  | x :: s, y :: t, Z, h1, h2 => by
+    have g1 : (cmpCol x y).then (cmpM s t) = .gt := h1
+    have g2 : (cmpCol x y).then (cmpM s (t ++ Z)) = .lt := h2
+    cases hxy : cmpCol x y with
+    | gt => rw [hxy] at g2; exact Ordering.noConfusion g2
+    | lt => rw [hxy] at g1; exact Ordering.noConfusion g1
+    | eq =>
+      rw [hxy] at g1 g2
+      have := cmpM_gt_lt_len s t Z g1 g2
+      show (t.length + 1) < (s.length + 1)
+      omega
+
 /-! ## §5 The `≤` form, which is what a normal form asks for -/
 
 /-- `M ≤ N` を `cmpM M N ≠ .gt` として読む。 -/

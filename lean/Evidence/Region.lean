@@ -1,4 +1,5 @@
 import BMS.Expand
+import Evidence.CmpM
 /-
 Evidence/Region.lean — THE REGION BELOW ε_ω, NAMED
 
@@ -855,6 +856,119 @@ def kindA : A → BMS.Kind
 #guard corpus.all fun t => (List.range 4).all fun n =>
   let u := fs t n
   u == .nil || (List.range 4).all fun m => BMS.expand? (mat u 0) m == some (mat (fs u m) 0)
+
+/-! ## §8 STRUCTURE — lengths, the first and last summand, and the depth shift
+
+The normal form of `Evidence/RegionV.lean` is a pair of `cmpM` inequalities between the
+matrices of ARGUMENTS, so showing the region closed under `fs` needs three structural
+facts: how many columns an index has, which summand comes first (it is the largest, the
+sum being descending), and that comparing at depth `d+1` is comparing at depth `d`. -/
+
+/-- 列の本数。深さによらない。 -/
+def len : A → Nat
+  | .nil => 0
+  | .om r => len r + 1
+  | .ps r a => len r + len a + 1
+
+theorem mat_len : ∀ (t : A) (d : Nat), (mat t d).length = len t := by
+  intro t
+  induction t with
+  | nil => intro d; rfl
+  | om r ih =>
+    intro d
+    show (mat r d ++ [[d, 1]]).length = len r + 1
+    rw [List.length_append, ih d]
+    rfl
+  | ps r a ihr iha =>
+    intro d
+    show (mat r d ++ ([d, 0] :: mat a (d + 1))).length = len r + len a + 1
+    rw [List.length_append, List.length_cons, ihr d, iha (d + 1)]
+    omega
+
+/-- 和の最後の (= 最小の) 加数。`some none` は Ω、`some (some a)` は `ψ₀(a)`。 -/
+def lastSm : A → Option (Option A)
+  | .nil => none
+  | .om _ => some none
+  | .ps _ a => some (some a)
+
+/-- 和の最初の (= 最大の) 加数。 -/
+def firstSm : A → Option (Option A)
+  | .nil => none
+  | .om r => match firstSm r with | some x => some x | none => some none
+  | .ps r a => match firstSm r with | some x => some x | none => some (some a)
+
+/-- 和の最初の `ψ₀` 加数の引数。Ω しかなければ `none`。 -/
+def firstArg : A → Option A
+  | .nil => none
+  | .om r => firstArg r
+  | .ps r a => match firstArg r with | some b => some b | none => some a
+
+/-- 最初の `ψ₀` 引数は、その節ぶんだけ短い。 -/
+theorem len_firstArg : ∀ (t d : A), firstArg t = some d → len d < len t := by
+  intro t
+  induction t with
+  | nil => intro d h; exact absurd h (by simp [firstArg])
+  | om r ih =>
+    intro d h
+    have hr : firstArg (A.om r) = firstArg r := rfl
+    rw [hr] at h
+    have := ih d h
+    show len d < len r + 1
+    omega
+  | ps r a ihr iha =>
+    intro d h
+    have he : firstArg (A.ps r a)
+        = (match firstArg r with | some b => some b | none => some a) := rfl
+    rw [he] at h
+    show len d < len r + len a + 1
+    cases hr : firstArg r with
+    | some b =>
+      rw [hr] at h
+      injection h with h1
+      subst h1
+      have := ihr b hr
+      omega
+    | none =>
+      rw [hr] at h
+      injection h with h1
+      subst h1
+      omega
+
+/-! ### The depth shift does not change the comparison -/
+
+theorem compare_add (x y e : Nat) : compare (x + e) (y + e) = compare x y := by
+  rw [BMS.compare_def, BMS.compare_def]
+  by_cases h : x < y
+  · rw [if_pos (by omega), if_pos h]
+  · rw [if_neg (by omega), if_neg h]
+    by_cases h2 : x = y
+    · rw [if_pos (by omega), if_pos h2]
+    · rw [if_neg (by omega), if_neg h2]
+
+theorem cmpCol_shc (e : Nat) (c c' : Col) (h : c.length = 2) (h' : c'.length = 2) :
+    cmpCol (shc e c) (shc e c') = cmpCol c c' := by
+  match c, h, c', h' with
+  | [x, y], _, [x', y'], _ =>
+    show (compare (x + e) (x' + e)).then (cmpCol [y] [y']) = (compare x x').then (cmpCol [y] [y'])
+    rw [compare_add]
+
+theorem cmpM_sh (e : Nat) : ∀ (M N : Matrix), (∀ c ∈ M, c.length = 2) →
+    (∀ c ∈ N, c.length = 2) → cmpM (sh e M) (sh e N) = cmpM M N
+  | [], [], _, _ => rfl
+  | [], _ :: _, _, _ => rfl
+  | _ :: _, [], _, _ => rfl
+  | c :: s, d :: t, hM, hN => by
+    show (cmpCol (shc e c) (shc e d)).then (cmpM (sh e s) (sh e t))
+      = (cmpCol c d).then (cmpM s t)
+    rw [cmpCol_shc e c d (hM c (by simp)) (hN d (by simp)),
+      cmpM_sh e s t (fun x hx => hM x (List.mem_cons_of_mem c hx))
+        (fun x hx => hN x (List.mem_cons_of_mem d hx))]
+
+/-- **深さをずらしても比較は変わらない。** -/
+theorem cmpM_mat_depth (X Y : A) (d e : Nat) :
+    cmpM (mat X (d + e)) (mat Y (d + e)) = cmpM (mat X d) (mat Y d) := by
+  rw [mat_sh X d e, mat_sh Y d e]
+  exact cmpM_sh e (mat X d) (mat Y d) (mat_col_len X d) (mat_col_len Y d)
 
 /-! ## §7 THE CLASSIFICATION — what the three supplies dispatch on
 

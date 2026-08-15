@@ -104,31 +104,33 @@ theorem sumVal_ps (r a : A) : sumVal (.ps r a) = plus (sumVal r) (omegaNF (argVa
 
 /-! ## §8 The normal form -/
 
-/-- 和の最後の (= 最小の) 加数。`some none` は Ω、`some (some a)` は `ψ₀(a)`。 -/
-def lastSm : A → Option (Option A)
-  | .nil => none
-  | .om _ => some none
-  | .ps _ a => some (some a)
+/-- `t` の中の **すべての** `ψ₀` 引数が `B` 未満か。 -/
+def argsLtM (B : Matrix) : A → Bool
+  | .nil => true
+  | .om r => argsLtM B r
+  | .ps r a => argsLtM B r && (BMS.cmpM (mat a 0) B == .lt) && argsLtM B a
 
-/-- 和の最初の (= 最大の) `ψ₀` 加数の引数。Ω しかなければ `none`。 -/
-def firstArg : A → Option A
-  | .nil => none
-  | .om r => firstArg r
-  | .ps r a => match firstArg r with | some b => some b | none => some a
+/-- 加数が降順か (直前の加数との比較)。 -/
+def descOK (r a : A) : Bool :=
+  match lastSm r with
+  | none => true | some none => true
+  | some (some b) => BMS.cmpM (mat a 0) (mat b 0) != .gt
 
-/-- **Buchholz の標準形。** 加数が降順で、かつ `ψ₀(a)` の中の `ψ₀` 引数が `a` 未満。
+/-- Ω は Ω の後ろにしか置けない。 -/
+def omOK (r : A) : Bool :=
+  match lastSm r with | none => true | some none => true | some (some _) => false
+
+/-- `ψ₀(a)` が Buchholz の標準形か — `a ∈ C₀(a)`、すなわち `a` の中のどの `ψ₀`
+    引数も `a` 未満。 -/
+def fpOK (a : A) : Bool := argsLtM (mat a 0) a
+
+/-- **Buchholz の標準形。** 加数が降順で、どの `ψ₀` 節も `a ∈ C₀(a)` を満たす。
     比較は **行列の辞書式順序** `BMS.cmpM` で書く。§9.1 が、値 `argVal` で書いた
     `nfV` はこれと同じ述語では **ない** ことを反例つきで示す。 -/
 def nf : A → Bool
   | .nil => true
-  | .om r => nf r && (match lastSm r with
-      | none => true | some none => true | some (some _) => false)
-  | .ps r a => nf r && nf a
-      && (match lastSm r with
-          | none => true | some none => true
-          | some (some b) => BMS.cmpM (mat a 0) (mat b 0) != .gt)
-      && (match firstArg a with
-          | none => true | some b => BMS.cmpM (mat b 0) (mat a 0) == .lt)
+  | .om r => nf r && omOK r
+  | .ps r a => nf r && nf a && descOK r a && fpOK a
 
 /-- 同じ形を **値の順序** で書いたもの。§9.1 の反例により `nf` とは別の述語である。 -/
 def nfV : A → Bool
@@ -271,12 +273,7 @@ theorem fs_succ (r : A) (n : Nat) : fs (.ps r .nil) n = r := rfl
 
 /-- 標準形は部分添字に遺伝する。 -/
 theorem nf_of_ps {r a : A} (h : nf (.ps r a) = true) : nf r = true ∧ nf a = true := by
-  have h1 : (nf r && nf a
-      && (match lastSm r with
-          | none => true | some none => true
-          | some (some b) => BMS.cmpM (mat a 0) (mat b 0) != .gt)
-      && (match firstArg a with
-          | none => true | some b => BMS.cmpM (mat b 0) (mat a 0) == .lt)) = true := h
+  have h1 : (nf r && nf a && descOK r a && fpOK a) = true := h
   have h2 := (Bool.and_eq_true _ _).mp h1
   have h3 := (Bool.and_eq_true _ _).mp h2.1
   exact (Bool.and_eq_true _ _).mp h3.1
@@ -358,5 +355,687 @@ theorem hsucc_supply : ∀ (S : BMS.Matrix) (v : Term), Reg S → Val S v →
     show (BMS.expand? (mat (.ps r .nil) 0) n).getD [] = mat r 0
     rw [expand_mat (.ps r .nil) htop (by intro h; exact A.noConfusion h) n]
     rfl
+
+/-! ## §13 TOWARD `Hclosed` — the algebra of `argsLtM`
+
+`nf` is a conjunction of local conditions at each node, and `fs t n` replaces `t`'s last
+summand `ψ₀(a)` by `fsP a n`.  So closure splits into: the untouched prefix (free), the
+junction (transitivity of `cmpM`), and `nf (fsP a n)`.
+
+The one non-obvious step is RESTRICTION.  `fpOK (ps b c)` bounds `b`'s arguments by
+`mat (ps b c) 0 = mat b 0 ++ Z`, and forming `ψ₀(b)` needs them bounded by `mat b 0`.
+`argsLtM_restrict` does that, and its content is `Evidence/CmpM.lean`'s `cmpM_gt_lt_len`:
+an argument sitting inside `b` is SHORTER than `b`, so it cannot be `≥ mat b 0` while
+being `< mat b 0 ++ Z`. -/
+
+theorem nf_ps_iff {r a : A} : nf (.ps r a) = true ↔
+    nf r = true ∧ nf a = true ∧ descOK r a = true ∧ fpOK a = true := by
+  constructor
+  · intro h
+    have h1 : (nf r && nf a && descOK r a && fpOK a) = true := h
+    have h2 := (Bool.and_eq_true _ _).mp h1
+    have h3 := (Bool.and_eq_true _ _).mp h2.1
+    have h4 := (Bool.and_eq_true _ _).mp h3.1
+    exact ⟨h4.1, h4.2, h3.2, h2.2⟩
+  · intro ⟨h1, h2, h3, h4⟩
+    show (nf r && nf a && descOK r a && fpOK a) = true
+    rw [h1, h2, h3, h4]
+    rfl
+
+theorem nf_om_iff {r : A} : nf (.om r) = true ↔ nf r = true ∧ omOK r = true := by
+  constructor
+  · intro h; exact (Bool.and_eq_true _ _).mp h
+  · intro ⟨h1, h2⟩; show (nf r && omOK r) = true; rw [h1, h2]; rfl
+
+theorem argsLtM_app (B : Matrix) : ∀ (s r : A),
+    argsLtM B (app r s) = (argsLtM B r && argsLtM B s) := by
+  intro s
+  induction s with
+  | nil => intro r; show argsLtM B r = (argsLtM B r && true); rw [Bool.and_true]
+  | om s ih => intro r; show argsLtM B (app r s) = _; rw [ih r]; rfl
+  | ps s a ih _ =>
+    intro r
+    show (argsLtM B (app r s) && (BMS.cmpM (mat a 0) B == .lt) && argsLtM B a) = _
+    rw [ih r]
+    show ((argsLtM B r && argsLtM B s) && (BMS.cmpM (mat a 0) B == .lt) && argsLtM B a)
+      = (argsLtM B r && (argsLtM B s && (BMS.cmpM (mat a 0) B == .lt) && argsLtM B a))
+    rw [Bool.and_assoc, Bool.and_assoc, Bool.and_assoc]
+
+/-- 上界を上げても成り立つ。 -/
+theorem argsLtM_mono {B B' : Matrix} (h : (BMS.cmpM B B' != Ordering.gt) = true) :
+    ∀ (t : A), argsLtM B t = true → argsLtM B' t = true := by
+  have key : ∀ X, (BMS.cmpM X B == Ordering.lt) = true → (BMS.cmpM X B' == Ordering.lt) = true := by
+    intro X hX
+    have hXB : BMS.cmpM X B = Ordering.lt := by
+      cases hc : BMS.cmpM X B with
+      | lt => rfl
+      | eq => rw [hc] at hX; exact Bool.noConfusion hX
+      | gt => rw [hc] at hX; exact Bool.noConfusion hX
+    cases hBB : BMS.cmpM B B' with
+    | gt => rw [hBB] at h; exact Bool.noConfusion h
+    | lt => rw [BMS.cmpM_trans X B B' hXB hBB]; rfl
+    | eq => rw [← BMS.cmpM_eq B B' hBB, hXB]; rfl
+  intro t
+  induction t with
+  | nil => intro _; rfl
+  | om r ih => exact ih
+  | ps r a ihr iha =>
+    intro ht
+    have h1 : (argsLtM B r && (BMS.cmpM (mat a 0) B == .lt) && argsLtM B a) = true := ht
+    have h2 := (Bool.and_eq_true _ _).mp h1
+    have h3 := (Bool.and_eq_true _ _).mp h2.1
+    show (argsLtM B' r && (BMS.cmpM (mat a 0) B' == .lt) && argsLtM B' a) = true
+    rw [ihr h3.1, key _ h3.2, iha h2.2]
+    rfl
+
+/-- 短いものは、接尾辞を切っても下にとどまる。 -/
+theorem cmpM_lt_restrict {X B Z : Matrix} (hlen : X.length < B.length)
+    (h : BMS.cmpM X (B ++ Z) = Ordering.lt) : BMS.cmpM X B = Ordering.lt := by
+  cases hc : BMS.cmpM X B with
+  | lt => rfl
+  | eq => exact absurd (congrArg List.length (BMS.cmpM_eq X B hc)) (by omega)
+  | gt => exact absurd (BMS.cmpM_gt_lt_len X B Z hc h) (by omega)
+
+/-- **上界を接頭辞へ制限する。** -/
+theorem argsLtM_restrict (B Z : Matrix) : ∀ (t : A), len t ≤ B.length →
+    argsLtM (B ++ Z) t = true → argsLtM B t = true := by
+  intro t
+  induction t with
+  | nil => intro _ _; rfl
+  | om r ih =>
+    intro hl ht
+    have hl' : len r + 1 ≤ B.length := hl
+    exact ih (by omega) ht
+  | ps r a ihr iha =>
+    intro hl ht
+    have hl' : len r + len a + 1 ≤ B.length := hl
+    have h1 : (argsLtM (B ++ Z) r && (BMS.cmpM (mat a 0) (B ++ Z) == .lt)
+      && argsLtM (B ++ Z) a) = true := ht
+    have h2 := (Bool.and_eq_true _ _).mp h1
+    have h3 := (Bool.and_eq_true _ _).mp h2.1
+    have hlt : BMS.cmpM (mat a 0) (B ++ Z) = Ordering.lt := by
+      cases hc : BMS.cmpM (mat a 0) (B ++ Z) with
+      | lt => rfl
+      | eq => rw [hc] at h3; exact Bool.noConfusion h3.2
+      | gt => rw [hc] at h3; exact Bool.noConfusion h3.2
+    show (argsLtM B r && (BMS.cmpM (mat a 0) B == .lt) && argsLtM B a) = true
+    rw [ihr (by omega) h3.1, iha (by omega) h2.2,
+      cmpM_lt_restrict (by rw [mat_len]; omega) hlt]
+    rfl
+
+/-- `ψ₀(b ⊕ ψ₀(c))` が標準形なら、`ψ₀(b)` の不動点条件も成り立つ。 -/
+theorem fpOK_left_ps {b c : A} (h : fpOK (.ps b c) = true) : fpOK b = true := by
+  have h1 : (argsLtM (mat (.ps b c) 0) b && _ && _) = true := h
+  have hb := ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h1).1).1
+  have he : mat (A.ps b c) 0 = mat b 0 ++ ([0, 0] :: mat c 1) := rfl
+  rw [he] at hb
+  exact argsLtM_restrict (mat b 0) _ b (by rw [mat_len]; exact Nat.le_refl _) hb
+
+theorem fpOK_left_om {b : A} (h : fpOK (.om b) = true) : fpOK b = true := by
+  have hb : argsLtM (mat (A.om b) 0) b = true := h
+  have he : mat (A.om b) 0 = mat b 0 ++ [[0, 1]] := rfl
+  rw [he] at hb
+  exact argsLtM_restrict (mat b 0) _ b (by rw [mat_len]; exact Nat.le_refl _) hb
+
+/-! ### §13.1 `Hclosed` at the successor index -/
+
+/-- 後続の添字は前身へ落ちるだけなので、標準形は自明に保たれる。 -/
+theorem nf_fs_succ {r : A} (h : nf (.ps r .nil) = true) (n : Nat) :
+    nf (fs (.ps r .nil) n) = true := (nf_ps_iff.mp h).1
+
+theorem topOK_fs_succ {r : A} (h : topOK (.ps r .nil) = true) (n : Nat) :
+    topOK (fs (.ps r .nil) n) = true := h
+
+/-! ### §13.2 The Ω tower
+
+`nf (om b)` forces `b` to be a run of `Ω`s, and then `iterOm b k` is `ψ₀(towArg b k)` with
+`towArg b (k+1) = b ⊕ ψ₀(towArg b k)`.  Everything follows from ONE strictly increasing
+chain, `towArg b k < towArg b (k+1)`, which is `cmpM_append_left` plus the depth shift. -/
+
+theorem argsLtM_omPow (B : Matrix) : ∀ (j : Nat), argsLtM B (omPow j) = true
+  | 0 => rfl
+  | j + 1 => argsLtM_omPow B j
+
+theorem omOK_omPow : ∀ (j : Nat), omOK (omPow j) = true
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem nf_omPow : ∀ (j : Nat), nf (omPow j) = true
+  | 0 => rfl
+  | j + 1 => by
+    show (nf (omPow j) && omOK (omPow j)) = true
+    rw [nf_omPow j, omOK_omPow j]
+    rfl
+
+theorem descOK_omPow (j : Nat) (a : A) : descOK (omPow j) a = true := by
+  cases j with
+  | zero => rfl
+  | succ _ => rfl
+
+/-- `nf (om b)` は `b` が Ω の列であることを強制する。 -/
+theorem om_all : ∀ (b : A), nf (.om b) = true → ∃ j, b = omPow j := by
+  intro b
+  induction b with
+  | nil => intro _; exact ⟨0, rfl⟩
+  | om b' ih =>
+    intro h
+    obtain ⟨hnb, _⟩ := nf_om_iff.mp h
+    obtain ⟨j, hj⟩ := ih hnb
+    exact ⟨j + 1, by rw [hj]; rfl⟩
+  | ps r a _ _ =>
+    intro h
+    exact absurd (nf_om_iff.mp h).2 (by intro hc; exact Bool.noConfusion hc)
+
+/-- 塔の引数。 -/
+def towArg (b : A) : Nat → A
+  | 0 => b
+  | k + 1 => .ps b (towArg b k)
+
+theorem iterOm_eq (b : A) : ∀ (k : Nat), iterOm b k = .ps .nil (towArg b k)
+  | 0 => rfl
+  | k + 1 => by
+    show A.ps .nil (app b (iterOm b k)) = _
+    rw [iterOm_eq b k]
+    rfl
+
+theorem mat_towArg_succ (b : A) (k d : Nat) :
+    mat (towArg b (k + 1)) d = mat b d ++ ([d, 0] :: mat (towArg b k) (d + 1)) := rfl
+
+/-- **塔は真に増える。** -/
+theorem towArg_lt (b : A) : ∀ (k : Nat),
+    BMS.cmpM (mat (towArg b k) 0) (mat (towArg b (k + 1)) 0) = Ordering.lt := by
+  intro k
+  induction k with
+  | zero =>
+    show BMS.cmpM (mat b 0) (mat b 0 ++ ([0, 0] :: mat (towArg b 0) 1)) = Ordering.lt
+    exact BMS.cmpM_prefix_lt _ _ _
+  | succ j ih =>
+    rw [mat_towArg_succ b j 0, mat_towArg_succ b (j + 1) 0,
+      show mat b 0 ++ ([0, 0] :: mat (towArg b j) 1)
+        = (mat b 0 ++ [[0, 0]]) ++ mat (towArg b j) 1 from by
+        rw [List.append_assoc]; rfl,
+      show mat b 0 ++ ([0, 0] :: mat (towArg b (j + 1)) 1)
+        = (mat b 0 ++ [[0, 0]]) ++ mat (towArg b (j + 1)) 1 from by
+        rw [List.append_assoc]; rfl,
+      BMS.cmpM_append_left,
+      show (1 : Nat) = 0 + 1 from rfl, cmpM_mat_depth]
+    exact ih
+
+/-- 塔の引数はもとの `Ω` 付き引数より小さい。 -/
+theorem towArg_lt_om (b : A) : ∀ (k : Nat),
+    BMS.cmpM (mat (towArg b k) 0) (mat (.om b) 0) = Ordering.lt := by
+  intro k
+  cases k with
+  | zero =>
+    show BMS.cmpM (mat b 0) (mat b 0 ++ [[0, 1]]) = Ordering.lt
+    exact BMS.cmpM_prefix_lt _ _ _
+  | succ j =>
+    rw [mat_towArg_succ b j 0, show mat (A.om b) 0 = mat b 0 ++ [[0, 1]] from rfl,
+      BMS.cmpM_append_left]
+    rfl
+
+theorem leM_of_lt {X Y : Matrix} (h : BMS.cmpM X Y = Ordering.lt) :
+    (BMS.cmpM X Y != Ordering.gt) = true := by rw [h]; rfl
+
+/-- 塔のどの段も標準形で、不動点条件を満たす。 -/
+theorem towArg_ok (j : Nat) : ∀ (k : Nat),
+    nf (towArg (omPow j) k) = true ∧ fpOK (towArg (omPow j) k) = true := by
+  intro k
+  induction k with
+  | zero => exact ⟨nf_omPow j, argsLtM_omPow _ j⟩
+  | succ i ih =>
+    refine ⟨nf_ps_iff.mpr ⟨nf_omPow j, ih.1, descOK_omPow j _, ih.2⟩, ?_⟩
+    show (argsLtM (mat (towArg (omPow j) (i + 1)) 0) (omPow j)
+      && (BMS.cmpM (mat (towArg (omPow j) i) 0)
+            (mat (towArg (omPow j) (i + 1)) 0) == Ordering.lt)
+      && argsLtM (mat (towArg (omPow j) (i + 1)) 0) (towArg (omPow j) i)) = true
+    rw [argsLtM_omPow, towArg_lt,
+      argsLtM_mono (leM_of_lt (towArg_lt (omPow j) i)) _ ih.2]
+    rfl
+
+/-! ### §13.3 The successor argument, and concatenation -/
+
+theorem lastSm_rep (b : A) : ∀ (n : Nat), lastSm (rep b n) = some (some b)
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem firstSm_rep (b : A) : ∀ (n : Nat), firstSm (rep b n) = some (some b)
+  | 0 => rfl
+  | k + 1 => by
+    show (match firstSm (rep b k) with | some x => some x | none => some (some b)) = _
+    rw [firstSm_rep b k]
+
+theorem descOK_rep (b : A) (n : Nat) : descOK (rep b n) b = true := by
+  show (match lastSm (rep b n) with
+    | none => true | some none => true
+    | some (some x) => BMS.cmpM (mat b 0) (mat x 0) != Ordering.gt) = true
+  rw [lastSm_rep]
+  show (BMS.cmpM (mat b 0) (mat b 0) != Ordering.gt) = true
+  rw [BMS.cmpM_refl]
+  rfl
+
+theorem nf_rep {b : A} (hb : nf b = true) (hfp : fpOK b = true) :
+    ∀ (n : Nat), nf (rep b n) = true
+  | 0 => nf_ps_iff.mpr ⟨rfl, hb, rfl, hfp⟩
+  | k + 1 => nf_ps_iff.mpr ⟨nf_rep hb hfp k, hb, descOK_rep b k, hfp⟩
+
+theorem argsLtM_rep {b : A} {B : Matrix} (h1 : (BMS.cmpM (mat b 0) B == Ordering.lt) = true)
+    (h2 : argsLtM B b = true) : ∀ (n : Nat), argsLtM B (rep b n) = true
+  | 0 => by
+    show (argsLtM B .nil && (BMS.cmpM (mat b 0) B == Ordering.lt) && argsLtM B b) = true
+    rw [h1, h2]; rfl
+  | k + 1 => by
+    show (argsLtM B (rep b k) && (BMS.cmpM (mat b 0) B == Ordering.lt) && argsLtM B b) = true
+    rw [argsLtM_rep h1 h2 k, h1, h2]; rfl
+
+/-- `rep b n` の行列は、最初のブロックのあと `(0,0)` から続く。 -/
+theorem mat_rep_split (b : A) : ∀ (n : Nat),
+    mat (rep b n) 0 = ([0, 0] :: mat b 1)
+    ∨ ∃ U, mat (rep b n) 0 = ([0, 0] :: mat b 1) ++ ([0, 0] :: U)
+  | 0 => Or.inl rfl
+  | k + 1 => by
+    have hstep : mat (rep b (k + 1)) 0 = mat (rep b k) 0 ++ ([0, 0] :: mat b 1) := rfl
+    rcases mat_rep_split b k with h | ⟨U, h⟩
+    · exact Or.inr ⟨mat b 1, by rw [hstep, h]⟩
+    · refine Or.inr ⟨U ++ ([0, 0] :: mat b 1), ?_⟩
+      rw [hstep, h, List.append_assoc, List.cons_append]
+      rfl
+
+/-- `mat (rep b n) 0` は `ψ₀(b ⊕ 1)` の行列より小さい。 -/
+theorem mat_rep_lt (b : A) (n : Nat) :
+    BMS.cmpM (mat (rep b n) 0) (mat (.ps .nil (.ps b .nil)) 0) = Ordering.lt := by
+  have hR : mat (A.ps .nil (A.ps b .nil)) 0 = ([0, 0] :: mat b 1) ++ [[1, 0]] := rfl
+  rw [hR]
+  rcases mat_rep_split b n with h | ⟨U, h⟩
+  · rw [h]; exact BMS.cmpM_prefix_lt _ _ _
+  · rw [h, BMS.cmpM_append_left]
+    show (BMS.cmpCol [0, 0] [1, 0]).then (BMS.cmpM U []) = Ordering.lt
+    rfl
+
+/-! ### §13.4 Concatenation preserves the normal form -/
+
+/-- `s` を `r` の後ろに置けるか。 -/
+def fits (r s : A) : Bool :=
+  match firstSm s with
+  | none => true
+  | some none => omOK r
+  | some (some y) => descOK r y
+
+theorem fits_of_firstSm_none {r s : A} (h : firstSm s = none) : fits r s = true := by
+  show (match firstSm s with
+    | none => true | some none => omOK r | some (some y) => descOK r y) = true
+  rw [h]
+
+theorem lastSm_app_ne {r s : A} (h : s ≠ .nil) : lastSm (app r s) = lastSm s := by
+  cases s with
+  | nil => exact absurd rfl h
+  | om _ => rfl
+  | ps _ _ => rfl
+
+theorem omOK_app {r s : A} (h : s ≠ .nil) : omOK (app r s) = omOK s := by
+  show (match lastSm (app r s) with
+    | none => true | some none => true | some (some _) => false)
+    = (match lastSm s with
+    | none => true | some none => true | some (some _) => false)
+  rw [lastSm_app_ne h]
+
+theorem descOK_app {r s a : A} (h : s ≠ .nil) : descOK (app r s) a = descOK s a := by
+  show (match lastSm (app r s) with
+    | none => true | some none => true
+    | some (some x) => BMS.cmpM (mat a 0) (mat x 0) != Ordering.gt)
+    = (match lastSm s with
+    | none => true | some none => true
+    | some (some x) => BMS.cmpM (mat a 0) (mat x 0) != Ordering.gt)
+  rw [lastSm_app_ne h]
+
+theorem fits_om {r s' : A} : firstSm s' ≠ none → fits r (.om s') = fits r s' := by
+  intro h
+  cases hx : firstSm s' with
+  | none => exact absurd hx h
+  | some x =>
+    show (match firstSm (A.om s') with
+      | none => true | some none => omOK r | some (some y) => descOK r y)
+      = (match firstSm s' with
+      | none => true | some none => omOK r | some (some y) => descOK r y)
+    rw [show firstSm (A.om s') = some x from by
+      show (match firstSm s' with | some y => some y | none => some none) = some x
+      rw [hx], hx]
+
+theorem fits_ps {r s' a : A} : firstSm s' ≠ none → fits r (.ps s' a) = fits r s' := by
+  intro h
+  cases hx : firstSm s' with
+  | none => exact absurd hx h
+  | some x =>
+    show (match firstSm (A.ps s' a) with
+      | none => true | some none => omOK r | some (some y) => descOK r y)
+      = (match firstSm s' with
+      | none => true | some none => omOK r | some (some y) => descOK r y)
+    rw [show firstSm (A.ps s' a) = some x from by
+      show (match firstSm s' with | some y => some y | none => some (some a)) = some x
+      rw [hx], hx]
+
+theorem firstSm_none_iff : ∀ (s : A), firstSm s = none ↔ s = .nil := by
+  intro s
+  cases s with
+  | nil => exact ⟨fun _ => rfl, fun _ => rfl⟩
+  | om s' =>
+    constructor
+    · intro h
+      exfalso
+      cases hx : firstSm s' with
+      | none => rw [show firstSm (A.om s') = some none from by
+                  show (match firstSm s' with | some y => some y | none => some none) = some none
+                  rw [hx]] at h
+                exact absurd h (by simp)
+      | some x => rw [show firstSm (A.om s') = some x from by
+                    show (match firstSm s' with | some y => some y | none => some none) = some x
+                    rw [hx]] at h
+                  exact absurd h (by simp)
+    · intro h; exact absurd h (by intro hc; exact A.noConfusion hc)
+  | ps s' a =>
+    constructor
+    · intro h
+      exfalso
+      cases hx : firstSm s' with
+      | none => rw [show firstSm (A.ps s' a) = some (some a) from by
+                  show (match firstSm s' with | some y => some y | none => some (some a))
+                    = some (some a)
+                  rw [hx]] at h
+                exact absurd h (by simp)
+      | some x => rw [show firstSm (A.ps s' a) = some x from by
+                    show (match firstSm s' with | some y => some y | none => some (some a))
+                      = some x
+                    rw [hx]] at h
+                  exact absurd h (by simp)
+    · intro h; exact absurd h (by intro hc; exact A.noConfusion hc)
+
+/-- **連結は標準形を保つ。** -/
+theorem nf_app : ∀ (s r : A), nf r = true → nf s = true → fits r s = true →
+    nf (app r s) = true := by
+  intro s
+  induction s with
+  | nil => intro r hr _ _; exact hr
+  | om s' ih =>
+    intro r hr hs hf
+    obtain ⟨hs', hom⟩ := nf_om_iff.mp hs
+    by_cases hnil : s' = .nil
+    · subst hnil
+      show nf (A.om (app r .nil)) = true
+      refine nf_om_iff.mpr ⟨hr, ?_⟩
+      have : fits r (A.om .nil) = omOK r := rfl
+      rw [this] at hf
+      exact hf
+    · have hne : firstSm s' ≠ none := fun hc => hnil ((firstSm_none_iff s').mp hc)
+      refine nf_om_iff.mpr ⟨ih r hr hs' (by rw [← fits_om hne]; exact hf), ?_⟩
+      rw [omOK_app hnil]
+      exact hom
+  | ps s' a ih _ =>
+    intro r hr hs hf
+    obtain ⟨hs', hna, hd, hfp⟩ := nf_ps_iff.mp hs
+    by_cases hnil : s' = .nil
+    · subst hnil
+      show nf (A.ps (app r .nil) a) = true
+      refine nf_ps_iff.mpr ⟨hr, hna, ?_, hfp⟩
+      have : fits r (A.ps .nil a) = descOK r a := rfl
+      rw [this] at hf
+      exact hf
+    · have hne : firstSm s' ≠ none := fun hc => hnil ((firstSm_none_iff s').mp hc)
+      refine nf_ps_iff.mpr ⟨ih r hr hs' (by rw [← fits_ps (a := a) hne]; exact hf), hna, ?_, hfp⟩
+      rw [descOK_app hnil]
+      exact hd
+
+/-! ### §13.5 `fsP` preserves the normal form
+
+Four claims at once, because they feed each other: the sequence member is a normal form,
+its arguments stay under `a`, its first summand is a `ψ₀` whose argument is strictly under
+`a`, and its whole matrix is under `ψ₀(a)`'s.  The last is what lets the `ψ₀(c)` case
+recurse without a structural split lemma. -/
+
+def FsPOK (a : A) (n : Nat) : Prop :=
+  nf (fsP a n) = true
+  ∧ argsLtM (mat a 0) (fsP a n) = true
+  ∧ (∃ c, firstSm (fsP a n) = some (some c)
+      ∧ BMS.cmpM (mat c 0) (mat a 0) = Ordering.lt)
+  ∧ BMS.cmpM (mat (fsP a n) 0) (mat (.ps .nil a) 0) = Ordering.lt
+
+theorem mat_ne_nil : ∀ (t : A) (d : Nat), t ≠ .nil → mat t d ≠ [] := by
+  intro t d h
+  cases t with
+  | nil => exact absurd rfl h
+  | om r => show mat r d ++ [[d, 1]] ≠ []; simp
+  | ps r a => show mat r d ++ ([d, 0] :: mat a (d + 1)) ≠ []; simp
+
+theorem cmpM_prefix_lt' (X Y : Matrix) (h : Y ≠ []) : BMS.cmpM X (X ++ Y) = Ordering.lt := by
+  cases Y with
+  | nil => exact absurd rfl h
+  | cons c U => exact BMS.cmpM_prefix_lt X c U
+
+theorem descOK_of_le {r c y : A} (h : (BMS.cmpM (mat y 0) (mat c 0) != Ordering.gt) = true)
+    (hd : descOK r c = true) : descOK r y = true := by
+  show (match lastSm r with
+    | none => true | some none => true
+    | some (some x) => BMS.cmpM (mat y 0) (mat x 0) != Ordering.gt) = true
+  have hd' : (match lastSm r with
+    | none => true | some none => true
+    | some (some x) => BMS.cmpM (mat c 0) (mat x 0) != Ordering.gt) = true := hd
+  cases hl : lastSm r with
+  | none => rfl
+  | some o => cases o with
+    | none => rfl
+    | some x =>
+      rw [hl] at hd'
+      exact BMS.leM_trans h hd'
+
+/-- 場合 3 に残る唯一の穴 — 引数 `c` が、新しい引数 `b ⊕ fsP c n` を超えないこと。 -/
+def CaseThree : Prop := ∀ (b c : A), c ≠ .nil → ∀ (n : Nat),
+    nf (.ps b c) = true → fpOK (.ps b c) = true → FsPOK c n →
+    (BMS.cmpM (mat c 0) (mat (app b (fsP c n)) 0) != Ordering.gt) = true
+
+theorem fsP_case3 (H : CaseThree) (b c : A) (hc : c ≠ .nil) (n : Nat)
+    (hnf : nf (.ps b c) = true) (hfp : fpOK (.ps b c) = true) (IH : FsPOK c n)
+    (hshape : fsP (.ps b c) n = .ps .nil (app b (fsP c n))) : FsPOK (.ps b c) n := by
+  obtain ⟨hnb, hnc, hdbc, hfpc⟩ := nf_ps_iff.mp hnf
+  obtain ⟨hns, hargs, ⟨c', hfs, hlt'⟩, hmat⟩ := IH
+  have hLa := H b c hc n hnf hfp ⟨hns, hargs, ⟨c', hfs, hlt'⟩, hmat⟩
+  have hfpb : fpOK b = true := fpOK_left_ps hfp
+  have hX : mat (app b (fsP c n)) 0 = mat b 0 ++ mat (fsP c n) 0 := mat_app _ _ _
+  have hA : mat (A.ps b c) 0 = mat b 0 ++ mat (A.ps .nil c) 0 := rfl
+  -- the new argument is strictly under the old one
+  have hXA : BMS.cmpM (mat (app b (fsP c n)) 0) (mat (A.ps b c) 0) = Ordering.lt := by
+    rw [hX, hA, BMS.cmpM_append_left]
+    exact hmat
+  -- `b` still admits what follows it
+  have hfits : fits b (fsP c n) = true := by
+    show (match firstSm (fsP c n) with
+      | none => true | some none => omOK b | some (some y) => descOK b y) = true
+    rw [hfs]
+    exact descOK_of_le (by rw [hlt']; rfl) hdbc
+  have hnX : nf (app b (fsP c n)) = true := nf_app _ b hnb hns hfits
+  have hbX : (BMS.cmpM (mat b 0) (mat (app b (fsP c n)) 0) != Ordering.gt) = true := by
+    rw [hX, cmpM_prefix_lt' _ _ (mat_ne_nil _ 0 (by
+      intro hcc; rw [hcc] at hfs; exact absurd hfs (by simp [firstSm])))]
+    rfl
+  have hfpX : fpOK (app b (fsP c n)) = true := by
+    show argsLtM (mat (app b (fsP c n)) 0) (app b (fsP c n)) = true
+    rw [argsLtM_app]
+    rw [argsLtM_mono hbX b hfpb, argsLtM_mono hLa _ hargs]
+    rfl
+  refine ⟨?_, ?_, ⟨app b (fsP c n), ?_, hXA⟩, ?_⟩
+  · rw [hshape]
+    exact nf_ps_iff.mpr ⟨rfl, hnX, rfl, hfpX⟩
+  · rw [hshape]
+    show (argsLtM (mat (A.ps b c) 0) .nil
+      && (BMS.cmpM (mat (app b (fsP c n)) 0) (mat (A.ps b c) 0) == Ordering.lt)
+      && argsLtM (mat (A.ps b c) 0) (app b (fsP c n))) = true
+    rw [hXA, argsLtM_mono (by rw [hXA]; rfl) _ hfpX]
+    rfl
+  · rw [hshape]; rfl
+  · rw [hshape]
+    show (BMS.cmpCol [0, 0] [0, 0]).then
+      (BMS.cmpM (mat (app b (fsP c n)) 1) (mat (A.ps b c) 1)) = Ordering.lt
+    rw [BMS.cmpCol_refl]
+    show BMS.cmpM (mat (app b (fsP c n)) 1) (mat (A.ps b c) 1) = Ordering.lt
+    rw [show (1 : Nat) = 0 + 1 from rfl, cmpM_mat_depth]
+    exact hXA
+
+/-- **`fsP` は標準形を保つ。** 場合 3 の穴 `CaseThree` だけを仮定として持つ。 -/
+theorem fsP_ok (H : CaseThree) : ∀ (a : A), a ≠ .nil → nf a = true → fpOK a = true →
+    ∀ (n : Nat), FsPOK a n := by
+  intro a
+  induction a with
+  | nil => intro h; exact absurd rfl h
+  | om b _ =>
+    intro _ hnf _ n
+    obtain ⟨j, hj⟩ := om_all b hnf
+    subst hj
+    have htw := towArg_ok j n
+    have hlt : BMS.cmpM (mat (towArg (omPow j) n) 0) (mat (A.om (omPow j)) 0) = Ordering.lt :=
+      towArg_lt_om (omPow j) n
+    have hshape : fsP (A.om (omPow j)) n = .ps .nil (towArg (omPow j) n) := by
+      show iterOm (omPow j) n = _
+      exact iterOm_eq _ n
+    refine ⟨?_, ?_, ⟨towArg (omPow j) n, ?_, hlt⟩, ?_⟩
+    · rw [hshape]; exact nf_ps_iff.mpr ⟨rfl, htw.1, rfl, htw.2⟩
+    · rw [hshape]
+      show (argsLtM (mat (A.om (omPow j)) 0) .nil
+        && (BMS.cmpM (mat (towArg (omPow j) n) 0) (mat (A.om (omPow j)) 0) == Ordering.lt)
+        && argsLtM (mat (A.om (omPow j)) 0) (towArg (omPow j) n)) = true
+      rw [hlt, argsLtM_mono (leM_of_lt hlt) _ htw.2]
+      rfl
+    · rw [hshape]; rfl
+    · rw [hshape]
+      show (BMS.cmpCol [0, 0] [0, 0]).then
+        (BMS.cmpM (mat (towArg (omPow j) n) 1) (mat (A.om (omPow j)) 1)) = Ordering.lt
+      rw [BMS.cmpCol_refl]
+      show BMS.cmpM (mat (towArg (omPow j) n) 1) (mat (A.om (omPow j)) 1) = Ordering.lt
+      rw [show (1 : Nat) = 0 + 1 from rfl, cmpM_mat_depth]
+      exact hlt
+  | ps b c _ ihc =>
+    intro _ hnf hfp n
+    cases c with
+    | nil =>
+      obtain ⟨hnb, _, _, _⟩ := nf_ps_iff.mp hnf
+      have hfpb : fpOK b = true := fpOK_left_ps hfp
+      have hA : mat (A.ps b .nil) 0 = mat b 0 ++ [[0, 0]] := rfl
+      have hbA : BMS.cmpM (mat b 0) (mat (A.ps b .nil) 0) = Ordering.lt := by
+        rw [hA]; exact BMS.cmpM_prefix_lt _ _ _
+      have hshape : fsP (A.ps b .nil) n = rep b n := rfl
+      refine ⟨?_, ?_, ⟨b, ?_, hbA⟩, ?_⟩
+      · rw [hshape]; exact nf_rep hnb hfpb n
+      · rw [hshape]
+        exact argsLtM_rep (by rw [hbA]; rfl) (argsLtM_mono (leM_of_lt hbA) b hfpb) n
+      · rw [hshape]; exact firstSm_rep b n
+      · rw [hshape]; exact mat_rep_lt b n
+    | om c' =>
+      obtain ⟨_, hnc, _, hfpc⟩ := nf_ps_iff.mp hnf
+      exact fsP_case3 H b (.om c') (by intro hcc; exact A.noConfusion hcc) n hnf hfp
+        (ihc (by intro hcc; exact A.noConfusion hcc) hnc hfpc n) rfl
+    | ps c1 c2 =>
+      obtain ⟨_, hnc, _, hfpc⟩ := nf_ps_iff.mp hnf
+      exact fsP_case3 H b (.ps c1 c2) (by intro hcc; exact A.noConfusion hcc) n hnf hfp
+        (ihc (by intro hcc; exact A.noConfusion hcc) hnc hfpc n) rfl
+
+/-! ### §13.6 `Hclosed` -/
+
+theorem topOK_app : ∀ (s r : A), topOK r = true → topOK s = true → topOK (app r s) = true := by
+  intro s
+  induction s with
+  | nil => intro r hr _; exact hr
+  | om s' _ => intro _ _ hs; exact Bool.noConfusion hs
+  | ps s' a ih _ =>
+    intro r hr hs
+    show topOK (app r s') = true
+    exact ih r hr hs
+
+theorem topOK_rep (b : A) : ∀ (n : Nat), topOK (rep b n) = true
+  | 0 => rfl
+  | k + 1 => by show topOK (rep b k) = true; exact topOK_rep b k
+
+theorem topOK_fsP : ∀ (a : A) (n : Nat), topOK (fsP a n) = true := by
+  intro a n
+  cases a with
+  | nil => rfl
+  | om b => show topOK (iterOm b n) = true; rw [iterOm_eq]; rfl
+  | ps b c => cases c with
+    | nil => exact topOK_rep b n
+    | om _ => rfl
+    | ps _ _ => rfl
+
+/-- **`Hclosed` の添字側。** -/
+theorem nf_fs (H : CaseThree) (t : A) (hnf : nf t = true) (htop : topOK t = true) (n : Nat) :
+    nf (fs t n) = true ∧ topOK (fs t n) = true := by
+  cases t with
+  | nil => exact ⟨rfl, rfl⟩
+  | om _ => exact Bool.noConfusion htop
+  | ps r a =>
+    obtain ⟨hnr, hna, hd, hfpa⟩ := nf_ps_iff.mp hnf
+    cases a with
+    | nil => exact ⟨hnr, htop⟩
+    | om a' =>
+      obtain ⟨hns, _, ⟨c, hfs, hlt⟩, _⟩ :=
+        fsP_ok H (.om a') (by intro hc; exact A.noConfusion hc) hna hfpa n
+      refine ⟨nf_app _ r hnr hns ?_, topOK_app _ r htop (topOK_fsP _ n)⟩
+      show (match firstSm (fsP (A.om a') n) with
+        | none => true | some none => omOK r | some (some y) => descOK r y) = true
+      rw [hfs]
+      exact descOK_of_le (by rw [hlt]; rfl) hd
+    | ps a1 a2 =>
+      obtain ⟨hns, _, ⟨c, hfs, hlt⟩, _⟩ :=
+        fsP_ok H (.ps a1 a2) (by intro hc; exact A.noConfusion hc) hna hfpa n
+      refine ⟨nf_app _ r hnr hns ?_, topOK_app _ r htop (topOK_fsP _ n)⟩
+      show (match firstSm (fsP (A.ps a1 a2) n) with
+        | none => true | some none => omOK r | some (some y) => descOK r y) = true
+      rw [hfs]
+      exact descOK_of_le (by rw [hlt]; rfl) hd
+
+/-- **`Hclosed`。** 領域は `BMS.expand` で閉じている。 -/
+theorem hclosed_supply (H : CaseThree) : ∀ (S : BMS.Matrix), Reg S → ∀ (n : Nat),
+    Reg (BMS.expand S n) := by
+  rintro S ⟨t, hnf, htop, rfl⟩ n
+  cases t with
+  | nil =>
+    refine ⟨.nil, rfl, rfl, ?_⟩
+    show (BMS.expand? [] n).getD [] = []
+    rfl
+  | om _ => exact Bool.noConfusion htop
+  | ps r a =>
+    obtain ⟨h1, h2⟩ := nf_fs H (.ps r a) hnf htop n
+    refine ⟨fs (.ps r a) n, h1, h2, ?_⟩
+    show (BMS.expand? (mat (A.ps r a) 0) n).getD [] = _
+    rw [expand_mat (.ps r a) htop (by intro hc; exact A.noConfusion hc) n]
+    rfl
+
+/-! ### §13.7 THE ONE REMAINING GAP, MEASURED
+
+`CaseThree` is the only hypothesis `fsP_ok` and `hclosed_supply` carry, and it is one
+inequality: when the argument's last summand is `ψ₀(c)` with `c ≠ 0`, the fundamental
+sequence replaces it by `ψ₀(b ⊕ fsP c n)`, and the NEW argument must not drop below `c`.
+
+    cmpM (mat c 0) (mat (app b (fsP c n)) 0) ≠ .gt
+
+Measured over the 294 normal forms of `closureCorpus`, which yield 102 instances of the
+shape, at `n ≤ 3`: **0 failures**.  Two weaker statements that would have implied it are
+REFUTED on the same population, so the inequality is not a corollary of either:
+
+    c ≤ fsP c n     27 of 102 fail   (it holds when `b = nil`, 0 of 42)
+    c ≤ b           66 of 102 fail
+
+The proof has to see both halves at once, which is why it is stated as an interface here
+rather than guessed at. -/
+
+def caseThreePairs : List (A × A) :=
+  (closureCorpus.filter nf).filterMap fun t =>
+    match t with
+    | .ps _ (.ps b c) => if c == .nil then none else some (b, c)
+    | _ => none
+
+#guard caseThreePairs.length == 102
+#guard caseThreePairs.all fun p => (List.range 4).all fun n =>
+  BMS.cmpM (mat p.2 0) (mat (app p.1 (fsP p.2 n)) 0) != Ordering.gt
+-- 弱い 2 つは反証される。
+#guard (caseThreePairs.filter fun p => !((List.range 4).all fun n =>
+  BMS.cmpM (mat p.2 0) (mat (fsP p.2 n) 0) != Ordering.gt)).length == 27
+#guard (caseThreePairs.filter fun p =>
+  BMS.cmpM (mat p.2 0) (mat p.1 0) == Ordering.gt).length == 66
 
 end Evidence.Region
