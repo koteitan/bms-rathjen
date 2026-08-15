@@ -1130,6 +1130,64 @@ ladders never exceed `1`, which is why its six-phase cycle has no analogue of an
   ==([((0:Int),(0:Int)),((1:Int),(1:Int)),((1:Int),(1:Int)),((2:Int),(1:Int))]
      : Trans.Recal.PS)
 
+/-! ### Link 2, step 13: the `Z` step is a renormalisation, not a fold. -/
+
+/-- 行 1 が 0 の頭を持つ梯子。相 0 の子孫。`Z` は Rathjen の記号なので `Zr`。 -/
+def Zr (c : Int) (i : Nat) (d : Int) (n : Nat) : Trans.Recal.PS := (c,0) :: Win i d n
+
+theorem length_Zr (c : Int) (i : Nat) (d : Int) (n : Nat) : (Zr c i d n).length=n+1 := by
+  unfold Zr
+  rw [List.length_cons,length_Win]
+
+theorem gp0_Zr_zero (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp0 (Zr c i d n) 0=c := by
+  show (if ((0:Int)<0) then 0 else ((Zr c i d n).getD 0 (0,0)).1)=c
+  rw [if_neg (by omega)]
+  rfl
+
+theorem gp1_Zr_zero (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.gp1 (Zr c i d n) 0=0 := by
+  show (if ((0:Int)<0) then 0 else ((Zr c i d n).getD 0 (0,0)).2)=0
+  rw [if_neg (by omega)]
+  rfl
+
+theorem isZeroP_Zr (c : Int) (i : Nat) (d : Int) (n : Nat) (hn : 1 ≤ n) :
+    Trans.Recal.isZeroP (Zr c i d n)=false := by
+  unfold Trans.Recal.isZeroP
+  rw [show ((Zr c i d n).length==1)=false from by rw [length_Zr]; simp; omega]
+  rfl
+
+theorem incrFirst_Zr (c : Int) (i : Nat) (d : Int) (n : Nat) :
+    Trans.Recal.incrFirst (Zr c i d n) (-c)=((0:Int),(0:Int)) :: Win i (d-c) n := by
+  unfold Trans.Recal.incrFirst Zr
+  rw [List.map_cons]
+  congr 1
+  · show ((c+(-c) : Int),(0:Int))=((0:Int),(0:Int))
+    rw [show c+(-c)=(0:Int) from by omega]
+  · show Trans.Recal.incrFirst (Win i d n) (-c)=_
+    rw [incrFirst_Win,show d+(-c)=d-c from by omega]
+
+/-- `Z` の段。頭の行 1 が 0 なので畳み込みではなく、頭を 0 に正規化して降りるだけ。 -/
+theorem red_Zr_step (c : Int) (i : Nat) (d : Int) (n f : Nat) (hn : 1 ≤ n)
+    (hc : (c==(0:Int))=false)
+    (hprin : Trans.Recal.isPrincipalP (Zr c i d n)=true) :
+    Trans.Recal.red (f+1) (Zr c i d n)
+      = Trans.Recal.red f (((0:Int),(0:Int)) :: Win i (d-c) n) := by
+  simp only [Trans.Recal.red]
+  rw [isZeroP_Zr c i d n hn]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [gp0_Zr_zero,gp1_Zr_zero,hc]
+  simp only [Bool.false_and,Bool.false_eq_true,if_false]
+  rw [show ((0:Int)==0)=true from rfl]
+  simp only [if_true]
+  rw [incrFirst_Zr]
+
+#guard (List.range 6).all fun n => (List.range 5).all fun r =>
+  Trans.Recal.redP (Zr 2 (r+5) 1 (n+1))
+    == Trans.Recal.redP (((0:Int),(0:Int)) :: Win (r+5) (-1) (n+1))
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
