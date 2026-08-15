@@ -459,9 +459,16 @@ $`f_n`$ が単調・有界・共終であることで、**$`f_n`$ が標準基�
         - ✅ 領域の値 `sumVal` と Buchholz の標準形 `nf`
           (`lean/Evidence/RegionV.lean`)。標準形 18 個で `oR` と一致、
           `fs` で閉じ、単射、`inT`、極限節の第 1・第 2 連言、種別の一致
-        - 🚨 残り: `Hzero`・`Hsucc` と `Hlim` の第 4 連言 (共終性)。
-          既存の列関数は標準形 18 個中 1 個だけ食い違う (`fsN` はずらし 1、
-          `fsV` はずらし 0) ので、`limClauses_transfer` の優越で渡す
+        - ✅ 種別の判定 `kind_mat` — 最後の加数が `ψ₀(0)` のときちょうど後続
+        - ✅ `CNV` が `plus` と $`\omega^\cdot`$ で閉じること
+          (`lean/Evidence/CNVOps.lean`)。`WF.lean` §7.6 が `Frag` に対して
+          持っていたものの 1 段上。**降順条件のぶんだけ証明が違う**
+        - ✅ 領域の値はつねに `CNV` — 標準形はいらない
+        - ✅ `Hzero` と `Hsucc` (`RegionV` §12)
+        - 🚨 `Hclosed` — `fs` が標準形を保つこと (測定済み、未証明)
+        - 🚨 `Hlim` の第 4 連言 (共終性)。既存の列関数は標準形 18 個中
+          1 個だけ食い違う (`fsN` はずらし 1、`fsV` はずらし 0) ので、
+          `limClauses_transfer` の優越で渡す
     - 🚨 行ごとの否定対照 — ε₀ 行は済 (`neg_control_eps0_times_two_strong`)。
       登録済みの行は §6.1 の一意性と §15.10 の天井から自動で出るので、残りはゲート待ち
   - 🚨 4. 外部の表との決着
