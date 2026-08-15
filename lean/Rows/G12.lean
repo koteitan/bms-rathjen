@@ -1035,6 +1035,69 @@ def NF : Nat → Nat → Trans.Recal.PS
   (List.range 5).all fun r => (List.range 8).all fun n =>
     Trans.Recal.redP (Y ((cd.1:Nat):Int) (r+5) cd.2 n)==NF r n
 
+/-! ### Link 2, step 11: the phase transition table
+
+The recursion alternates between two shapes, and their normal forms are linked:
+
+    Y c i d n = (c,1) :: Win i d n              redP (Y 2 (r+5) 1 n) = NF r n
+    A c i d n = (0,0) :: Y c i d n              redP (A 2 (r+5) 1 n) = (0,0) :: NF r n
+
+`red (Y …)` goes through `red (A …)` and strips the leading `(0,0)` with a zero shift, so
+the whole recursion is carried by `red (A …)`, whose fold descends one phase and one column:
+
+    phase r    trMax   joints    brF     nJ    NJ                      shift
+      0          1      [1]       1      -1    (2,0) :: Win (i+1) d (n-1)   2
+      1          1      [1]/[1,1] 1/2     0    …                            1
+      2          2      []/[1]    0/1     1    …                            0
+      3          1      [1]       1       0    (2,1) :: Win (i+1) d (n-1)   1
+      4          1      [1]       1       0    (2,1) :: Win (i+1) d (n-1)   1
+
+**PHASES 3 AND 4 CLOSE ON THE WINDOW ALGEBRA ALONE**, and the two identities that make
+them close are worth writing down because they are the reason the shift is 1:
+
+    (2,1) :: Win 4 1 (n-1) = Win 3 1 n            phase 3
+    (2,1) :: Win 0 3 (n-1) = Win 4 0 n            phase 4, through Win 5 0 = Win 0 3
+
+**PHASES 0, 1 AND 2 DO NOT.**  Phase 0's `NJ` has row-one `0`, not `1`, so it leaves the
+`Y` family; phase 1's branch SPLITS in two once `n ≥ 2`; phase 2 has `trMax = 2`.  Those
+three are what remain of link 2, and the reason they are harder is the row-one value `2`
+this family carries — `Rows/G10.lean`'s ladders never exceed `1`. -/
+
+-- A 族の正規形 (測定)
+#guard (List.range 5).all fun r => (List.range 12).all fun n =>
+  Trans.Recal.redP (((0:Int),(0:Int)) :: Y 2 (r+5) 1 n)==(((0:Int),(0:Int)) :: NF r n)
+/-- 窓の先頭を切り出す。 -/
+theorem Win_cons (i : Nat) (d : Int) (n : Nat) :
+    Win i d (n+1)=(Gp i+d,Gq i) :: Win (i+1) d n := by
+  unfold Win
+  rw [List.range_succ_eq_map,List.map_cons,List.map_map]
+  congr 1
+  · rw [Nat.zero_add]
+  · apply List.map_congr_left
+    intro j _
+    show (Gp (j+1+i)+d,Gq (j+1+i))=(Gp (j+(i+1))+d,Gq (j+(i+1)))
+    rw [show j+1+i=j+(i+1) by omega]
+
+/-- 相 3 が閉じる等式。 -/
+theorem phase3_cons (n : Nat) :
+    ((2:Int),(1:Int)) :: Win 4 1 n=Win 3 1 (n+1) := by
+  rw [Win_cons]
+  rfl
+
+/-- 相 4 が閉じる等式。`Win 5 0 = Win 0 3` を経由する。 -/
+theorem phase4_cons (n : Nat) :
+    ((2:Int),(1:Int)) :: Win 0 3 n=Win 4 0 (n+1) := by
+  rw [Win_cons,show Win (4+1) 0 n=Win 0 3 n from by
+    rw [show (4+1)=(0+5) by omega,Win_add_five]
+    rfl]
+  rfl
+
+-- 相 3・相 4 が閉じる 2 つの等式
+#guard (List.range 12).all fun n =>
+  (((2:Int),(1:Int)) :: Win 4 1 n)==Win 3 1 (n+1)
+#guard (List.range 12).all fun n =>
+  (((2:Int),(1:Int)) :: Win 0 3 n)==Win 4 0 (n+1)
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
