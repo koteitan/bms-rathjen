@@ -371,6 +371,213 @@ theorem Tf_drop (i : Nat) (d : Int) (m : Nat) :
 #guard (List.range 6).all fun m =>
   Trans.Recal.trMax (((0:Int),(0:Int)) :: ((2:Int),(1:Int)) :: Tf 1 1 m)==1
 
+/-! ### Link 2, step 3: the row-zero and row-one parents of the base columns. -/
+
+theorem fpar0_L_one (m : Nat) : Trans.Recal.fpar0 (L m) 1 0=0 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by rw [lenI_L]; omega),length_L]
+  simp only [Trans.Recal.fpar0Aux]
+  rfl
+
+theorem fpar0_L_two (m : Nat) : Trans.Recal.fpar0 (L m) 2 1=1 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by rw [lenI_L]; omega),length_L]
+  simp only [Trans.Recal.fpar0Aux]
+  rfl
+
+theorem fpar0_L_three (m : Nat) : Trans.Recal.fpar0 (L m) 3 2=-1 := by
+  unfold Trans.Recal.fpar0
+  rw [if_neg (by rw [lenI_L]; omega),length_L]
+  show (if (3:Int)-1<2 then -1
+        else if Trans.Recal.gp0 (L m) ((3:Int)-1)<Trans.Recal.gp0 (L m) 3 then (3:Int)-1
+        else Trans.Recal.fpar0Aux (m+5) (L m) (Trans.Recal.gp0 (L m) 3)
+          ((3:Int)-1-1) 2)=-1
+  rw [if_neg (by omega),
+    show Trans.Recal.gp0 (L m) ((3:Int)-1)=2 from rfl,
+    show Trans.Recal.gp0 (L m) 3=1 from rfl,
+    if_neg (by omega)]
+  simp only [Trans.Recal.fpar0Aux]
+  rw [if_pos (by omega)]
+
+theorem fpar1_L_one (m : Nat) : Trans.Recal.fpar (L m) 1 1 0=0 := by
+  unfold Trans.Recal.fpar
+  rw [if_neg (by rw [lenI_L]; omega)]
+  simp only [show ((1:Nat)==0)=false from rfl,Bool.false_eq_true,if_false]
+  rw [length_L]
+  show (let j1:=Trans.Recal.fpar0 (L m) 1 0
+    if j1<0 then -1 else if Trans.Recal.gp1 (L m) j1<1 then j1
+    else Trans.Recal.fpar1Aux (m+5) (L m) 1 j1 0)=0
+  rw [fpar0_L_one]
+  rfl
+
+theorem fpar1_L_two (m : Nat) : Trans.Recal.fpar (L m) 1 2 1=1 := by
+  unfold Trans.Recal.fpar
+  rw [if_neg (by rw [lenI_L]; omega)]
+  simp only [show ((1:Nat)==0)=false from rfl,Bool.false_eq_true,if_false]
+  rw [length_L]
+  show (let j1:=Trans.Recal.fpar0 (L m) 2 1
+    if j1<1 then -1 else if Trans.Recal.gp1 (L m) j1<2 then j1
+    else Trans.Recal.fpar1Aux (m+5) (L m) 2 j1 1)=1
+  rw [fpar0_L_two]
+  rfl
+
+theorem fpar1_L_three_lb (m : Nat) : Trans.Recal.fpar (L m) 1 3 2=-1 := by
+  unfold Trans.Recal.fpar
+  rw [if_neg (by rw [lenI_L]; omega)]
+  simp only [show ((1:Nat)==0)=false from rfl,Bool.false_eq_true,if_false]
+  rw [length_L]
+  show (let j1:=Trans.Recal.fpar0 (L m) 3 2
+    if j1<2 then -1 else if Trans.Recal.gp1 (L m) j1<1 then j1
+    else Trans.Recal.fpar1Aux (m+5) (L m) 1 j1 2)=-1
+  rw [fpar0_L_three]
+  rw [if_pos (by omega)]
+
+/-- `trMax` は `m` に依らず 2。梯子が一様であることの中身。 -/
+theorem trMax_L (m : Nat) : Trans.Recal.trMax (L m)=2 := by
+  show Trans.Recal.trMaxAux ((L m).length+1) (L m) 0=2
+  rw [length_L]
+  simp only [Trans.Recal.trMaxAux]
+  rw [if_neg (by rw [lenI_L]; omega)]
+  rw [show Trans.Recal.isParentP (L m) 1 (0+1) 0=true from by
+    unfold Trans.Recal.isParentP
+    rw [show Trans.Recal.fpar (L m) 1 (0+1) 0=0 from by simpa using fpar1_L_one m]
+    unfold Trans.Recal.lenI
+    rw [length_L]
+    rw [show decide ((0:Int)<((m+5:Nat):Int))=true from decide_eq_true (by omega)]
+    rfl]
+  simp only [Bool.not_true,Bool.false_eq_true,if_false]
+  rw [if_neg (by rw [lenI_L]; omega)]
+  rw [show Trans.Recal.isParentP (L m) 1 (0+1+1) (0+1)=true from by
+    unfold Trans.Recal.isParentP
+    rw [show Trans.Recal.fpar (L m) 1 (0+1+1) (0+1)=1 from by simpa using fpar1_L_two m]
+    unfold Trans.Recal.lenI
+    rw [length_L]
+    rw [show decide ((0:Int)≤0+1)=true from decide_eq_true (by omega),
+      show decide ((0:Int)+1<((m+5:Nat):Int))=true from decide_eq_true (by omega)]
+    rfl]
+  simp only [Bool.not_true,Bool.false_eq_true,if_false]
+  rw [if_neg (by rw [lenI_L]; omega)]
+  rw [show Trans.Recal.isParentP (L m) 1 (0+1+1+1) (0+1+1)=false from by
+    unfold Trans.Recal.isParentP
+    rw [show Trans.Recal.fpar (L m) 1 (0+1+1+1) (0+1+1)=-1 from by
+      simpa using fpar1_L_three_lb m]
+    simp]
+  simp
+
+/-! ### Link 2, step 4: the ladder's row-zero and row-one values in closed form.
+
+The base and the tail turn out to obey the SAME formula, which is what makes the
+parent structure uniform. -/
+
+/-- Row-zero value at index `k`, base and tail alike. -/
+def Gp (k : Nat) : Int :=
+  ((3*(k/5) : Nat) : Int) + (if k%5=0 then 0 else if k%5=1 ∨ k%5=3 then 1 else 2)
+
+/-- Row-one value at index `k`. -/
+def Gq (k : Nat) : Int := if k%5=0 then 0 else if k%5=2 then 2 else 1
+
+theorem getD_T (m k : Nat) (hk : k<m) : (T m).getD k (0,0)=(p k,q k) := by
+  unfold T
+  rw [List.getD_eq_getElem?_getD,List.getElem?_map,List.getElem?_range hk]
+  rfl
+
+theorem getD_L_tail (m k : Nat) : (L m).getD (k+5) (0,0)=(T m).getD k (0,0) := by
+  show (((0,0)::(1,1)::(2,2)::(1,1)::(2,1)::T m : Trans.Recal.PS)).getD (k+5) (0,0)
+    =(T m).getD k (0,0)
+  rw [show k+5=k+1+1+1+1+1 by omega]
+  simp only [List.getD_cons_succ]
+
+theorem p_eq_Gp (k : Nat) : p k=Gp (k+5) := by
+  unfold p Gp
+  rw [show (k+5)%5=k%5 by omega,show (k+5)/5=k/5+1 by omega]
+  by_cases h0 : k%5=0
+  · rw [if_pos h0,if_pos h0]
+    push_cast
+    omega
+  · rw [if_neg h0,if_neg h0]
+    by_cases h1 : k%5=1 ∨ k%5=3
+    · rw [if_pos h1,if_pos h1]
+      push_cast
+      omega
+    · rw [if_neg h1,if_neg h1]
+      push_cast
+      omega
+
+theorem q_eq_Gq (k : Nat) : q k=Gq (k+5) := by
+  unfold q Gq
+  rw [show (k+5)%5=k%5 by omega]
+
+theorem gp0_L (m k : Nat) (hk : k<m+5) : Trans.Recal.gp0 (L m) ((k:Nat):Int)=Gp k := by
+  show (if (((k:Nat):Int)<0) then 0 else ((L m).getD k (0,0)).1)=Gp k
+  rw [if_neg (by omega)]
+  match k, hk with
+  | 0, _ => rfl
+  | 1, _ => rfl
+  | 2, _ => rfl
+  | 3, _ => rfl
+  | 4, _ => rfl
+  | (j+5), h =>
+    rw [getD_L_tail,getD_T m j (by omega)]
+    exact p_eq_Gp j
+
+theorem gp1_L (m k : Nat) (hk : k<m+5) : Trans.Recal.gp1 (L m) ((k:Nat):Int)=Gq k := by
+  show (if (((k:Nat):Int)<0) then 0 else ((L m).getD k (0,0)).2)=Gq k
+  rw [if_neg (by omega)]
+  match k, hk with
+  | 0, _ => rfl
+  | 1, _ => rfl
+  | 2, _ => rfl
+  | 3, _ => rfl
+  | 4, _ => rfl
+  | (j+5), h =>
+    rw [getD_L_tail,getD_T m j (by omega)]
+    exact q_eq_Gq j
+
+/-! ### The parent rule, as arithmetic on `Gp`. -/
+
+theorem Gp_val (a r : Nat) (hr : r<5) :
+    Gp (5*a+r)=((3*a : Nat) : Int)+(if r=0 then 0 else if r=1 ∨ r=3 then 1 else 2) := by
+  unfold Gp
+  rw [show (5*a+r)/5=a by omega,show (5*a+r)%5=r by omega]
+
+theorem Gp_lt_step (k : Nat) (hk : 1 ≤ k) (h : k%5 ≠ 3) : Gp (k-1)<Gp k := by
+  obtain ⟨a,r,hr,rfl⟩ : ∃ a r, r<5 ∧ k=5*a+r := ⟨k/5,k%5,by omega,by omega⟩
+  rw [show (5*a+r)%5=r by omega] at h
+  rcases (show r=0 ∨ r=1 ∨ r=2 ∨ r=4 by omega) with rfl|rfl|rfl|rfl
+  · obtain ⟨b,rfl⟩ : ∃ b, a=b+1 := ⟨a-1,by omega⟩
+    rw [show 5*(b+1)+0-1=5*b+4 by omega,show 5*(b+1)+0=5*(b+1)+0 from rfl,
+      Gp_val b 4 (by omega),Gp_val (b+1) 0 (by omega)]
+    push_cast
+    omega
+  · rw [show 5*a+1-1=5*a+0 by omega,Gp_val a 0 (by omega),Gp_val a 1 (by omega)]
+    omega
+  · rw [show 5*a+2-1=5*a+1 by omega,Gp_val a 1 (by omega),Gp_val a 2 (by omega)]
+    omega
+  · rw [show 5*a+4-1=5*a+3 by omega,Gp_val a 3 (by omega),Gp_val a 4 (by omega)]
+    omega
+
+theorem Gp_three (k : Nat) (h : k%5=3) :
+    Gp (k-3)<Gp k ∧ Gp k ≤ Gp (k-2) ∧ Gp k ≤ Gp (k-1) := by
+  obtain ⟨a,r,hr,rfl⟩ : ∃ a r, r<5 ∧ k=5*a+r := ⟨k/5,k%5,by omega,by omega⟩
+  rw [show (5*a+r)%5=r by omega] at h
+  subst h
+  rw [show 5*a+3-3=5*a+0 by omega,show 5*a+3-2=5*a+1 by omega,
+    show 5*a+3-1=5*a+2 by omega,Gp_val a 0 (by omega),Gp_val a 1 (by omega),
+    Gp_val a 2 (by omega),Gp_val a 3 (by omega)]
+  refine ⟨by omega,by omega,by omega⟩
+
+#guard (List.range 8).all fun m => Trans.Recal.trMax (L m)==2
+#guard (List.range 40).all fun k =>
+  (k=0) || (if k%5=3 then decide (Gp (k-3)<Gp k) else decide (Gp (k-1)<Gp k))
+#guard (List.range 15).all fun m =>
+  (List.range (m+5)).all fun k => Trans.Recal.gp0 (L m) ((k:Nat):Int)==Gp k
+#guard (List.range 15).all fun m =>
+  (List.range (m+5)).all fun k => Trans.Recal.gp1 (L m) ((k:Nat):Int)==Gq k
+-- 行 0 の親は一様: k%5=3 なら k-3、それ以外は k-1
+#guard (List.range 15).all fun m => (List.range (m+5)).all fun k =>
+  Trans.Recal.fpar (L m) 0 ((k:Nat):Int) 0
+    == (if k=0 then -1 else if k%5=3 then ((k:Int)-3) else ((k:Int)-1))
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
