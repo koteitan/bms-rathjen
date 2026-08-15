@@ -11681,4 +11681,233 @@ theorem oR_rungM_zero (n : Nat) :
 
 end Composed
 
+/-! ## §23 THE REGION RECURSION — one certificate for a FAMILY, not one per row
+
+§16 priced the twelve Veblen-region rows and concluded that the obstacle "is not a missing
+lemma, it is a missing REGION".  This section supplies the region's SHAPE.  §13's
+`certIn_sq` already had it, written by hand for the CNF one-row family; `certIn_region`
+below is that proof with the family and the valuation made parameters, so a new family
+costs its three supplies and nothing else.
+
+WHAT A CALLER OWES.  A predicate `Reg` on matrices closed under `BMS.expand`, a valuation
+`Val`, and one supply per kind:
+
+    zero   the value of a kind-zero matrix is `0`
+    succ   the value is `u ⊕ 1`, every expansion has value `u`, and `u < t` in 𝔗(M)
+    lim    a sequence `f` with `Val (S[n]) (f n)` and the four `Certified.lim` clauses
+
+THE RECURSION IS ON THE VALUE, NOT ON THE MATRIX.  §15.25's `acc_cnv_inT` gives
+`Acc RT t` for every `CNV` term, and `RT x y = inT x ∧ lt x y` is exactly the obligation
+each supply already discharges.  Two arithmetic measures died on this file's own recursion
+(`deg` at `omLog`, `tdepth` at `predOr`); the order needs no arithmetic at all.
+
+WHAT IS STILL OWED, AND IT IS ONE THING.  The `lim` supply's fourth clause — cofinality of
+the ROW'S OWN sequence.  `Evidence/WF.lean` §15.39's `limClauses_transfer` reduces it to a
+DOMINATION against any sequence the WF file already handles, and §15.38's `asm_generalB'`
+supplies those for the whole Veblen fragment once its `Hsucc` hypothesis is discharged.
+
+MEASUREMENTS THAT SCOPE IT (2026-08-15, over `Rows.selected`; run from a snippet importing
+`Rows.G10`, which cannot be done from this file):
+
+    23  selected rows, ALL of kind `lim`                     — no successor row is selected
+    16  have a `CNV` value            7 do not (the ψ/Z rows) — those need Stage 3b
+     0  rows whose expansion closure (depth 2) leaves `oR` undefined
+     0  rows whose expansion values fail to be strictly increasing and below the value
+
+and on the ε₁ row specifically, `oR (expand [[0,0],[1,1],[1,1]] n) = some (fsE1 n)` AT
+SHIFT 0 — so `lim_clauses_eps1` is already the row's own sequence and its `hdom` is
+`le_self`.  `fsN` matches that row at no shift, which is why the transfer exists.
+
+A SEPARATE MEASUREMENT, worth recording because §15.3 refuted the natural guess for a
+DIFFERENT function: over a 121-term corpus of `CNV` limits built from the row values, their
+subterms and their `fsN` iterates (100 `φ̄`-shaped, 21 `⊕`-shaped), `TM.fsN` is `CNV`,
+strictly below, and strictly increasing with **0 violations** to `n ≤ 6`.  §15.3's
+counterexample is to a hand-rolled `fsV`, not to `fsN`. -/
+
+open Evidence.WF (RT acc_cnv_inT cnv_of_cn cn_predC lt_predC cn_fsC lim_clauses inT_of_cnv)
+
+/-- 種別 0 の行列は空行列だけ。`CertifiedIn.zero` が `[]` を要求するので要る。 -/
+theorem eq_nil_of_kind_zero (S : Matrix) (h : BMS.kind S = .zero) : S = [] := by
+  cases hs : S.getLast? with
+  | none =>
+    cases hS : S with
+    | nil => rfl
+    | cons a l =>
+      rw [hS] at hs
+      simp at hs
+  | some L =>
+    exfalso
+    have h' : BMS.kind S
+        = (match BMS.lnz L with
+           | none => BMS.Kind.succ
+           | some _ => BMS.Kind.lim) := by
+      show (match S.getLast? with
+        | none => BMS.Kind.zero
+        | some L => match BMS.lnz L with
+          | none => BMS.Kind.succ
+          | some _ => BMS.Kind.lim) = _
+      rw [hs]
+    rw [h'] at h
+    cases hL : BMS.lnz L with
+    | none => rw [hL] at h; exact BMS.Kind.noConfusion h
+    | some _ => rw [hL] at h; exact BMS.Kind.noConfusion h
+
+/-- **領域の再帰。** `Reg` は展開で閉じた行列の族、`Val` はその上の値付け。種別ごとの
+    供給を与えると、族のすべての行列が **ゲートと同じ `DomI` 付きの** 証明書を持つ。 -/
+theorem certIn_region {Reg : Matrix → Prop} {Val : Matrix → Term → Prop}
+    (Hclosed : ∀ S, Reg S → ∀ n, Reg (BMS.expand S n))
+    (Hzero : ∀ S t, Reg S → Val S t → BMS.kind S = .zero → t = TM.Term.zero)
+    (Hsucc : ∀ S t, Reg S → Val S t → BMS.kind S = .succ →
+        ∃ u, t = plus u TM.Term.one ∧ inT t = true ∧ inT u = true ∧ lt u t = true
+             ∧ ∀ n, Val (BMS.expand S n) u)
+    (Hlim : ∀ S t, Reg S → Val S t → BMS.kind S = .lim →
+        ∃ f : Nat → Term, inT t = true
+          ∧ (∀ n, Val (BMS.expand S n) (f n))
+          ∧ (∀ n, inT (f n) = true)
+          ∧ (∀ n, lt (f n) t = true)
+          ∧ (∀ n, lt (f n) (f (n+1)) = true)
+          ∧ (∀ s, inT s = true → lt s t = true → ∃ n, le s (f n) = true)) :
+    ∀ t, Acc RT t → ∀ S, Reg S → Val S t → CertifiedIn DomI S t := by
+  intro t ht
+  induction ht with
+  | intro t _ ih =>
+    intro S hreg hval
+    cases hk : BMS.kind S with
+    | zero =>
+      have hS : S = [] := eq_nil_of_kind_zero S hk
+      have h0 : t = TM.Term.zero := Hzero S t hreg hval hk
+      rw [hS, h0]
+      exact CertifiedIn.zero
+    | succ =>
+      obtain ⟨u, hu, hint, hinu, hltu, hexp⟩ := Hsucc S t hreg hval hk
+      subst hu
+      exact CertifiedIn.succ hk
+        (fun n => ih u ⟨hinu, hltu⟩ (BMS.expand S n) (Hclosed S hreg n) (hexp n)) hint
+    | lim =>
+      obtain ⟨f, hint, hexp, hinf, hltf, hstep, hcof⟩ := Hlim S t hreg hval hk
+      exact CertifiedIn.lim f hk
+        (fun n => ih (f n) ⟨hinf n, hltf n⟩ (BMS.expand S n) (Hclosed S hreg n) (hexp n))
+        hltf hstep hcof hint
+
+/-- 値が `CNV` なら停止性は `Evidence/WF.lean` §15.1 から来る。 -/
+theorem certIn_region_cnv {Reg : Matrix → Prop} {Val : Matrix → Term → Prop}
+    (Hclosed : ∀ S, Reg S → ∀ n, Reg (BMS.expand S n))
+    (Hzero : ∀ S t, Reg S → Val S t → BMS.kind S = .zero → t = TM.Term.zero)
+    (Hsucc : ∀ S t, Reg S → Val S t → BMS.kind S = .succ →
+        ∃ u, t = plus u TM.Term.one ∧ inT t = true ∧ inT u = true ∧ lt u t = true
+             ∧ ∀ n, Val (BMS.expand S n) u)
+    (Hlim : ∀ S t, Reg S → Val S t → BMS.kind S = .lim →
+        ∃ f : Nat → Term, inT t = true
+          ∧ (∀ n, Val (BMS.expand S n) (f n))
+          ∧ (∀ n, inT (f n) = true)
+          ∧ (∀ n, lt (f n) t = true)
+          ∧ (∀ n, lt (f n) (f (n+1)) = true)
+          ∧ (∀ s, inT s = true → lt s t = true → ∃ n, le s (f n) = true)) :
+    ∀ t, CNV t = true → ∀ S, Reg S → Val S t → CertifiedIn DomI S t :=
+  fun t hcnv => certIn_region Hclosed Hzero Hsucc Hlim t (acc_cnv_inT t hcnv)
+
+/-! ### §23.1 THE CONSUMER — §13's `certIn_sq`, rebuilt as ONE INSTANCE
+
+A theorem whose hypotheses cannot be met compiles exactly like a useful one; `Evidence/WF.lean`
+§15.37 records three of this repo's own that did, for weeks.  So the abstraction is applied
+to a family that exists.  `certIn_sq_via_region` runs all three branches and lands on `DomI`
+directly, where §13's version lands on `DomF` and needs `certifiedIn_mono` afterwards. -/
+
+/-- CNF 一行行列の族。 -/
+def RegSq (S : Matrix) : Prop := ∃ t, CN t = true ∧ S = Evidence.StageA.oneRow (sq t)
+/-- その上の値付け。 -/
+def ValSq (S : Matrix) (t : Term) : Prop := CN t = true ∧ S = Evidence.StageA.oneRow (sq t)
+
+theorem eq_zero_of_beq {u : Term} (h : (u == TM.Term.zero) = true) : u = TM.Term.zero :=
+  eq_of_beq h
+
+theorem ne_zero_of_beq {u : Term} (h : (u == TM.Term.zero) = false) : u ≠ TM.Term.zero := by
+  intro hc; subst hc; exact Bool.noConfusion h
+
+theorem regSq_closed : ∀ S, RegSq S → ∀ n, RegSq (BMS.expand S n) := by
+  rintro S ⟨t, hcn, rfl⟩ n
+  cases hbz : (t == TM.Term.zero) with
+  | true =>
+    have hz : t = TM.Term.zero := eq_zero_of_beq hbz
+    subst hz
+    exact ⟨TM.Term.zero, rfl, by rfl⟩
+  | false =>
+    have hz : t ≠ TM.Term.zero := ne_zero_of_beq hbz
+    cases hk : kindC t with
+    | true =>
+      refine ⟨predC t, cn_predC t hcn hk, ?_⟩
+      show (BMS.expand? (Evidence.StageA.oneRow (sq t)) n).getD [] = _
+      rw [expand_sq_succ t hcn hk n]
+      rfl
+    | false =>
+      refine ⟨fsC t n, cn_fsC t hcn hk hz n, ?_⟩
+      show (BMS.expand? (Evidence.StageA.oneRow (sq t)) n).getD [] = _
+      rw [expand_sq t hcn hk hz n]
+      rfl
+
+/-- 空行列の種別は 0 なので、`sq 0` の行は後続でも極限でもない。 -/
+theorem kind_sq_zero :
+    BMS.kind (Evidence.StageA.oneRow (sq TM.Term.zero)) = BMS.Kind.zero := rfl
+
+/-- **消費者。** §13 の `certIn_sq` を `certIn_region` の 1 つの実例として作り直す。 -/
+theorem certIn_sq_via_region : ∀ (t : Term), CN t = true →
+    CertifiedIn DomI (Evidence.StageA.oneRow (sq t)) t := by
+  intro t hcn
+  refine certIn_region_cnv (Val := ValSq) regSq_closed ?_ ?_ ?_ t (cnv_of_cn t hcn)
+    (Evidence.StageA.oneRow (sq t)) ⟨t, hcn, rfl⟩ ⟨hcn, rfl⟩
+  · rintro S u _ ⟨hcnu, rfl⟩ hk
+    cases hbz : (u == TM.Term.zero) with
+    | true => exact eq_zero_of_beq hbz
+    | false =>
+      exfalso
+      have hz : u ≠ TM.Term.zero := ne_zero_of_beq hbz
+      cases hku : kindC u with
+      | true => rw [kind_sq_succ u hcnu hku] at hk; exact BMS.Kind.noConfusion hk
+      | false => rw [kind_sq_lim u hcnu hku hz] at hk; exact BMS.Kind.noConfusion hk
+  · rintro S u _ ⟨hcnu, rfl⟩ hk
+    cases hbz : (u == TM.Term.zero) with
+    | true =>
+      exfalso
+      have hz : u = TM.Term.zero := eq_zero_of_beq hbz
+      subst hz
+      rw [kind_sq_zero] at hk
+      exact BMS.Kind.noConfusion hk
+    | false =>
+      have hz : u ≠ TM.Term.zero := ne_zero_of_beq hbz
+      cases hku : kindC u with
+      | true =>
+        refine ⟨predC u, (plus_predC u hcnu hku).symm, inT_of_cn _ hcnu,
+          inT_of_cn _ (cn_predC u hcnu hku), lt_predC u hcnu hku, fun n => ?_⟩
+        refine ⟨cn_predC u hcnu hku, ?_⟩
+        show (BMS.expand? (Evidence.StageA.oneRow (sq u)) n).getD [] = _
+        rw [expand_sq_succ u hcnu hku n]
+        rfl
+      | false =>
+        exfalso
+        rw [kind_sq_lim u hcnu hku hz] at hk
+        exact BMS.Kind.noConfusion hk
+  · rintro S u _ ⟨hcnu, rfl⟩ hk
+    cases hbz : (u == TM.Term.zero) with
+    | true =>
+      exfalso
+      have hz : u = TM.Term.zero := eq_zero_of_beq hbz
+      subst hz
+      rw [kind_sq_zero] at hk
+      exact BMS.Kind.noConfusion hk
+    | false =>
+      have hz : u ≠ TM.Term.zero := ne_zero_of_beq hbz
+      cases hku : kindC u with
+      | true =>
+        exfalso
+        rw [kind_sq_succ u hcnu hku] at hk
+        exact BMS.Kind.noConfusion hk
+      | false =>
+        obtain ⟨hcnfs, hltfs, hstep, hcof⟩ := lim_clauses u hcnu hku hz
+        exact ⟨fsC u, inT_of_cn _ hcnu,
+          (fun n => ⟨cn_fsC u hcnu hku hz n, by
+            show (BMS.expand? (Evidence.StageA.oneRow (sq u)) n).getD [] = _
+            rw [expand_sq u hcnu hku hz n]
+            rfl⟩),
+          (fun n => inT_of_cn _ (cn_fsC u hcnu hku hz n)), hltfs, hstep, hcof⟩
+
 end Evidence.Cert

@@ -13961,4 +13961,56 @@ example : phiNF zero (phi one zero) ≠ phi zero (phi one zero) := by decide
 #guard NfOK epsOmegaOmega == true
 #guard NfOK epsEps0 == true
 
+/-! ### §15.39 MOVING THE CLAUSES ONTO THE ROW'S OWN SEQUENCE
+
+WHAT THIS IS FOR.  `asm_generalB'` and every `lim_clauses_*` produce the four clauses for a
+sequence OF THIS FILE'S CHOOSING.  A certificate needs them for the sequence THE MATRIX
+PRODUCES, and the two are usually different objects: the ε₁ row's expansions are `fsE1`
+(shift 0, measured), but the ε₀ row's are the tower, and six of the twelve `oR` rows lie on
+no `fsN` at all (`table/diff.md`).  So the clauses have to MOVE.
+
+THREE OF THE FOUR CLAUSES MOVE FOR FREE — `CNV`, below-`t`, increasing are properties of `f`
+alone and a row proves them directly.  **COFINALITY IS THE ONLY ONE THAT NEEDS THE OLD
+SEQUENCE**, and it needs exactly one thing from it: that `f` OVERTAKES `g`.  That is what
+`limClauses_transfer` isolates.  The consumer therefore never re-proves a cofinality; it
+proves a domination, which is an ordinary induction on the row's own closed form.
+
+THE POINTWISE FORM IS THE USUAL ONE.  Where the row's sequence and the file's sequence are
+EQUAL — the ε₁ row is measured to be exactly `fsE1` — `hdom` is `le_self`. -/
+
+/-- **共終性の移送。** 証明済みの列 `g` の 4 連言を、行が実際に出す列 `f` へ移す。
+    新しい前提は「`f` が `g` を追い越す」ことだけで、共終性は `g` から来る。 -/
+theorem limClauses_transfer {t : Term} {f g : Nat → Term}
+    (hg : LimClauses t g)
+    (hfc : ∀ n, CNV (f n) = true)
+    (hfb : ∀ n, lt (f n) t = true)
+    (hfs : ∀ n, lt (f n) (f (n+1)) = true)
+    (hdom : ∀ n, ∃ m, le (g n) (f m) = true) :
+    LimClauses t f := by
+  refine ⟨hfc, hfb, hfs, ?_⟩
+  intro s hins hlt
+  obtain ⟨n, hn⟩ := hg.2.2.2 s hins hlt
+  obtain ⟨m, hm⟩ := hdom n
+  exact ⟨m, le_trans_inT hins (inT_of_cnv _ (hg.1 n)) (inT_of_cnv _ (hfc m)) hn hm⟩
+
+/-- 点ごとの優越で十分。列が一致している行 (ε₁ 行など) はこれを `le_self` で満たす。 -/
+theorem limClauses_transfer_pointwise {t : Term} {f g : Nat → Term}
+    (hg : LimClauses t g)
+    (hfc : ∀ n, CNV (f n) = true)
+    (hfb : ∀ n, lt (f n) t = true)
+    (hfs : ∀ n, lt (f n) (f (n+1)) = true)
+    (hdom : ∀ n, le (g n) (f n) = true) :
+    LimClauses t f :=
+  limClauses_transfer hg hfc hfb hfs (fun n => ⟨n, hdom n⟩)
+
+/-- **消費者。** ε₀ の塔を 1 つずらした列は `lim_clauses_eps0` の列とは別の列で、移送で
+    その 4 連言が出る。前提が満たせない定理は満たせる定理と同じようにコンパイルされるので
+    (§15.37)、消費者を通すことでしか区別できない。 -/
+theorem limClauses_eps0_shift : LimClauses eps0T (fun n => tower (n+1)) :=
+  limClauses_transfer_pointwise lim_clauses_eps0
+    (fun n => cnv_tower (n+1))
+    (fun n => lt_tower_eps0 (n+1))
+    (fun n => lt_tower_step (n+1))
+    (fun n => le_of_lt (lt_tower_step n))
+
 end Evidence.WF
