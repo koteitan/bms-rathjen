@@ -8683,9 +8683,14 @@ for every top-level index, with NO hypothesis on normal form and none on the pre
 `Evidence/RegionV.lean` carries the value `sumVal`, Buchholz's normal form, and the
 measurements for the three supplies.  ONE region carries TWO rows: ε₁'s row is
 `mat (ps nil (omPow 2)) 0`, and `epsM k` — §20's ladder rung, the ε_ω row's k-th expansion
-by `expand_epsOmega` — is `mat (ps nil (omPow (k+1))) 0`.  What is left for the ✅ is
-`Hzero`/`Hsucc` and the cofinality conjunct of `Hlim`; RegionV §9 measures the other five
-clean on all 18 normal forms. -/
+by `expand_epsOmega` — is `mat (ps nil (omPow (k+1))) 0`.
+
+STATE OF THE THREE SUPPLIES (RegionV).  `Hzero` and `Hsucc` are THEOREMS (§12); the value
+is always `CNV` (§11, via `Evidence/CNVOps.lean`); `Hclosed` is a theorem modulo ONE named
+inequality (§13, `CaseThree`, measured with 0 failures and with the two weaker statements
+that would imply it refuted).  `Hlim` is what remains: §9 measures five of its six
+conjuncts clean, and the sixth — cofinality — has a route through `Evidence/WF.lean`'s
+combinators, one per case of `fsP`, composed under `lim_clauses_sum`. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>

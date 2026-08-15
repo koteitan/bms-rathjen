@@ -68,10 +68,19 @@ fourth conjunct is a DOMINATION against one of these — `Evidence/WF.lean` §15
 
 WHAT IS PROVED HERE, AND WHAT IS LEFT.  §11 proves the value is ALWAYS `CNV` — no normal
 form needed, because `Evidence/CNVOps.lean` closes `CNV` under the only two operations
-`sumVal` uses.  §12 discharges `certIn_region`'s FIRST TWO SUPPLIES as theorems.  What
-remains for the ε₁ and ε_ω rows' ✅ is `Hclosed` (that `fs` preserves `nf`, measured), and
-`Hlim` — of whose six conjuncts §9 measures five clean and the sixth is the cofinality
-above.
+`sumVal` uses.  §12 discharges `certIn_region`'s FIRST TWO SUPPLIES as theorems.  §13
+proves `Hclosed` — the region closed under `BMS.expand` — from ONE inequality, `CaseThree`,
+which §13.7 states, measures (0 failures over its 102 instances) and refutes the two
+weaker statements that would have implied it.
+
+SO THE ✅ IS TWO NAMED THINGS AWAY:
+
+    CaseThree   §13.7's inequality, the last case of `Hclosed`
+    Hlim        the four limit clauses; §9 measures five of six conjuncts clean, and the
+                sixth (cofinality) has a route — `Evidence/WF.lean`'s combinators
+                `lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen`, one per
+                case of `fsP`, composed under `lim_clauses_sum`.  That route additionally
+                needs associativity of `plus`, which the repo does not have.
 -/
 
 namespace Evidence.Region
