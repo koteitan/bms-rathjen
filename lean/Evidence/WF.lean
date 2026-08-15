@@ -14174,4 +14174,138 @@ theorem le_predC_of_lt_v : ∀ (b : Term), CNV b = true → kindV b = true →
           rw [lt_add_head hcu hlt]
           exact Bool.or_true _
 
+/-! ### §15.41 `Hsucc`, TWO OF ITS THREE BRANCHES — and why the third is not §15.18's template
+
+§15.38's assembly has one hypothesis left, `Hsucc`: the four clauses for `φ̄(a,b)` when `b` is a
+`kindV` SUCCESSOR.  §15.36 named the gap as threefold — the template `lim_clauses_epsSuccC`
+fixes `a = 1`, needs `CN b` and tests `kindC b`.  With §15.40 the first two dissolve, and the
+branch splits three ways on `a`:
+
+    a a kindV successor    core (B) over `u = predC a`         `lim_clauses_phi_succ_succ`
+    a = 0                  `ω^(predC b)·(n+1)`, i.e. §15.4     `lim_clauses_phi_zero_succb`
+    a a limit, a ≠ 0       `φ̄(g n, φ̄(a, predC b))`             OPEN
+
+**THE THIRD BRANCH IS NOT §15.18's CORE (C'), AND THE HEADER THERE SAYS WHY IT LOOKS LIKE IT
+IS.**  §15.18 proves (C') only at `b = 0` and records that it is FALSE for `b ≠ 0` because of a
+uniform cap: `g n < a` and `b < φ̄(a,0)` force `φ̄(g n, b) < φ̄(a,0)`, so no `g` reaches `φ̄(a,b)`.
+The cap does not apply here, and the reason is worth stating rather than rediscovering: the
+third branch's second argument is **`φ̄(a, predC b)`, not `predC b`**, and `φ̄(a, predC b)` is not
+below `φ̄(a,0)` — it is above it.  So the sequence is a different shape, not a repair of a
+refuted one.  MEASURED for `a ∈ {ω, ε₀, ζ₀}`: `φ̄(g n, φ̄(a, predC b))` is `CNV`, strictly
+increasing and strictly below `φ̄(a,b)`, and it coincides with `TM.fsN (φ̄(a,b)) (n+1)`.
+What it needs is a cofinality proof of its own — core (C'') — which is not written.
+
+The two branches below are proved, and each is applied at a real term at the end of the
+section so that neither can be vacuous. -/
+
+/-- φ̄(a,b) の基本列、`b` が後続で `a` も後続のとき: `φ̄(predC a, ·)` の塔。 -/
+def fsSS (a b : Term) : Nat → Term :=
+  fsGen (phi a (predC b)) (predC a) (add (phi a (predC b)) (phi a (predC b)))
+
+theorem fsSS_ne_zero (a b : Term) : ∀ n, fsSS a b n ≠ zero
+  | 0 => by intro hc; exact Term.noConfusion hc
+  | n+1 => by
+    show iterPhi (predC a) (add (phi a (predC b)) (phi a (predC b))) (n+1) ≠ zero
+    intro hc
+    exact Term.noConfusion hc
+
+/-- **枝 1。** `a` と `b` がともに `kindV` の後続のとき、核 (B) がそのまま効く。 -/
+theorem lim_clauses_phi_succ_succ {a b : Term} (hcn : CNV (phi a b)=true)
+    (hka : kindV a=true) (hkb : kindV b=true) :
+    LimClauses (phi a b) (fsSS a b) := by
+  obtain ⟨hcna,hcnb⟩ := cnv_phi hcn
+  have hcnpa : CNV (predC a)=true := cnv_predC a hcna hka
+  have hcnpb : CNV (predC b)=true := cnv_predC b hcnb hkb
+  have hv : CNV (phi a (predC b))=true := by
+    show (CNV a && CNV (predC b))=true
+    rw [hcna,hcnpb]; rfl
+  have hAP : (phi a (predC b)).isAP=true := rfl
+  have hbase : CNV (add (phi a (predC b)) (phi a (predC b)))=true := by
+    show ((phi a (predC b)).isAP && CNV (phi a (predC b)) && CNV (phi a (predC b))
+      && hdLe (phi a (predC b)) (phi a (predC b)))=true
+    rw [hv,hAP,hdLe_of_isAP hAP,le_self]; rfl
+  have hvb : le (phi a (predC b)) (add (phi a (predC b)) (phi a (predC b)))=true := by
+    refine le_of_lt ?_
+    rw [lt_atom_add (s := phi a (predC b)) rfl]
+    exact le_self _
+  have hvt : lt (phi a (predC b)) (phi a b)=true :=
+    lt_phi_arg (lt_predC_v b hcnb hkb)
+  exact lim_clauses_fsGen hv hcnpa hbase hcn hvb (lt_predC_v a hcna hka) hvt
+    (by rw [lt_add_phi]; exact hvt)
+    (fun q hq hlt =>
+      le_phi_of_le hcna hq hcna hcnpb (le_self a)
+        (le_predC_of_lt_v b hcnb hkb q (inT_of_cnv q hq) hlt))
+    (fun p hp hlt => le_predC_of_lt_v a hcna hka p (inT_of_cnv p hp) hlt)
+    (by
+      have h := le_succT_of_lt (predC b) hcnpb (phi a (predC b)) hv
+        (lt_phi_self hcnpb a)
+      rwa [succT_predC b hcnb hkb] at h)
+
+/-! ### 枝 3: `a = 0` -/
+
+/-- `ω^b` の下にある加法的主要項は `ω^(predC b)` 以下である。 -/
+theorem hb_zero {b : Term} (hcnb : CNV b=true) (hkb : kindV b=true) :
+    ∀ x, CNV x=true → x.isAP=true → lt x (phi zero b)=true →
+      le x (phi zero (predC b))=true := by
+  intro x hx hAP hlt
+  obtain ⟨a,e,rfl⟩ := eq_phi_of_isAP_cnv hx hAP
+  obtain ⟨hcna,hcne⟩ := cnv_phi hx
+  have hcnpb : CNV (predC b)=true := cnv_predC b hcnb hkb
+  have hne : phi a e ≠ phi zero b := ne_of_ltF hlt
+  rw [lt_phi_phi hne] at hlt
+  by_cases haz : a=zero
+  · subst haz
+    rw [if_pos rfl] at hlt
+    exact le_pow (le_predC_of_lt_v b hcnb hkb e (inT_of_cnv e hcne) hlt)
+  · rw [if_neg haz,if_neg (show ¬(lt a zero=true) from by
+      rw [show lt a zero=false from ltF_right_zero _ _]
+      exact Bool.noConfusion)] at hlt
+    have hxne : ((phi a e)==b)=false := by
+      refine beq_eq_false_iff_ne.mpr ?_
+      intro hc
+      rw [← hc] at hkb
+      simp only [kindV,Bool.and_eq_true,beq_iff_eq] at hkb
+      exact haz hkb.1
+    have hxb : lt (phi a e) b=true := by
+      unfold le at hlt
+      rw [hxne] at hlt
+      simpa using hlt
+    have h1 : le (phi a e) (predC b)=true :=
+      le_predC_of_lt_v b hcnb hkb _ (inT_of_cnv _ hx) hxb
+    refine le_of_lt (lt_of_le_of_lt (frag_of_cnv _ hx) (frag_of_cnv _ hcnpb)
+      (frag_of_cnv _ ?_) h1 (lt_phi_self hcnpb zero))
+    show (CNV zero && CNV (predC b))=true
+    rw [hcnpb]
+    rfl
+
+/-- **枝 3。** `a = 0` で `b` が後続のとき、`ω^(predC b)·(n+1)`。 -/
+theorem lim_clauses_phi_zero_succb {b : Term} (hcn : CNV (phi zero b)=true)
+    (hkb : kindV b=true) :
+    LimClauses (phi zero b) (repAdd (phi zero (predC b))) := by
+  obtain ⟨_,hcnb⟩ := cnv_phi hcn
+  have hcnpb : CNV (predC b)=true := cnv_predC b hcnb hkb
+  have hcnu : CNV (phi zero (predC b))=true := by
+    show (CNV zero && CNV (predC b))=true
+    rw [hcnpb]; rfl
+  exact lim_clauses_repAdd hcnu
+    (by rw [lt_pow]; exact lt_predC_v b hcnb hkb) hcn (hb_zero hcnb hkb)
+
+theorem repAdd_phi_ne_zero (p q : Term) : ∀ n, repAdd (phi p q) n ≠ zero
+  | 0 => by intro hc; exact Term.noConfusion hc
+  | n+1 => by intro hc; exact Term.noConfusion hc
+
+/-! Non-vacuity: both branches applied at a real term. -/
+
+-- ζ₁ = φ̄(2,1): both arguments are `kindV` successors
+example : LimClauses (phi (ofNat 2) one) (fsSS (ofNat 2) one) :=
+  lim_clauses_phi_succ_succ (by decide) (by decide) (by decide)
+
+-- ω^(ε₀+1): the first argument is 0 and ε₀+1 is a successor
+example : LimClauses (phi zero (plus (phi one zero) one))
+    (repAdd (phi zero (predC (plus (phi one zero) one)))) :=
+  lim_clauses_phi_zero_succb (by decide) (by decide)
+
+#guard kindV (plus (phi one zero) one) == true    -- ε₀+1 IS a kindV successor …
+#guard kindV (phi one zero) == false              -- … and ε₀ is not, which is §15.20's point
+
 end Evidence.WF
