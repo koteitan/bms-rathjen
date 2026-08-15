@@ -37,6 +37,12 @@ the expansion closure taken to depth two — 0 failures, and the ONLY failure an
 `t = nil`, where `expand?` is `none` and the region's `Hzero` takes over.  The
 `#guard`s at the end of §5 are that measurement.
 
+AXIOMS.  `sorryAx 0`, `native 0`.  `expand_mat` carries `Classical.choice`, and it is the
+class the repo has already priced: `BMS.parent` is defined with `List.max?`, whose `Nat`
+instance is the INSTANCE-INHERITED root (`Std.instMaxEqOrOfLawfulOrderLeftLeaningMax`)
+that `Cert.lean`'s own `parent_zero_append` carries for the same reason.  Nothing here can
+be rewritten to avoid it; `kind_mat` and the whole value side of `RegionV` are choice-free.
+
 NO NORMAL-FORM CONDITION.  The identity needs neither descending summands nor any
 condition on the prefix `P` in `expand_blk`: the bad root of `P ++ (a block at depth d)`
 is the block's own root whatever `P` is, because `parent` takes the MAXIMUM earlier
