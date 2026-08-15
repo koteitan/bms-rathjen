@@ -578,6 +578,62 @@ theorem Gp_three (k : Nat) (h : k%5=3) :
   Trans.Recal.fpar (L m) 0 ((k:Nat):Int) 0
     == (if k=0 then -1 else if k%5=3 then ((k:Int)-3) else ((k:Int)-1))
 
+/-! ### Link 2, step 5: the row-zero parent, in closed form. -/
+
+/-- 行 0 の親。`k%5=3` のときだけ 3 つ戻り、それ以外は 1 つ戻る。 -/
+def parL (k : Nat) : Int :=
+  if k=0 then -1 else if k%5=3 then ((k:Int)-3) else ((k:Int)-1)
+
+theorem fpar0Aux_step (M : Trans.Recal.PS) (f : Nat) (tgt j0 kk : Int) :
+    Trans.Recal.fpar0Aux (f+1) M tgt j0 kk
+      = if j0<kk then -1 else if Trans.Recal.gp0 M j0<tgt then j0
+        else Trans.Recal.fpar0Aux f M tgt (j0-1) kk := rfl
+
+theorem fpar_L_zero (m k : Nat) (hk : k<m+5) :
+    Trans.Recal.fpar (L m) 0 ((k:Nat):Int) 0=parL k := by
+  unfold Trans.Recal.fpar parL
+  rw [if_neg (by rw [lenI_L]; omega)]
+  simp only [show ((0:Nat)==0)=true from rfl,if_true]
+  rw [length_L]
+  by_cases h0 : k=0
+  · subst h0
+    rw [if_pos rfl]
+    show Trans.Recal.fpar0Aux (m+5+1) (L m) (Trans.Recal.gp0 (L m) ((0:Nat):Int))
+      (((0:Nat):Int)-1) 0=-1
+    rw [show m+5+1=(m+5)+1 from rfl,fpar0Aux_step,if_pos (by omega)]
+  · rw [if_neg h0]
+    show Trans.Recal.fpar0Aux (m+5+1) (L m) (Trans.Recal.gp0 (L m) ((k:Nat):Int))
+      (((k:Nat):Int)-1) 0=_
+    rw [gp0_L m k hk]
+    by_cases h3 : k%5=3
+    · rw [if_pos h3]
+      obtain ⟨hlt,hle2,hle1⟩ := Gp_three k h3
+      have hk3 : 3 ≤ k := by omega
+      have c1 : ¬(((k:Nat):Int)-1<0) := by omega
+      have e1 : ((k:Nat):Int)-1=(((k-1:Nat)):Int) := by omega
+      have c2 : ¬(Gp (k-1)<Gp k) := by omega
+      have e2 : (((k-1:Nat)):Int)-1=(((k-2:Nat)):Int) := by omega
+      have c3 : ¬((((k-2:Nat)):Int)<0) := by omega
+      have c4 : ¬(Gp (k-2)<Gp k) := by omega
+      have e3 : (((k-2:Nat)):Int)-1=(((k-3:Nat)):Int) := by omega
+      have c5 : ¬((((k-3:Nat)):Int)<0) := by omega
+      have e4 : (((k-3:Nat)):Int)=(k:Int)-3 := by omega
+      rw [show m+5+1=(m+3)+1+1+1 by omega,fpar0Aux_step,if_neg c1,e1,
+        gp0_L m (k-1) (by omega),if_neg c2,fpar0Aux_step,e2,if_neg c3,
+        gp0_L m (k-2) (by omega),if_neg c4,fpar0Aux_step,e3,if_neg c5,
+        gp0_L m (k-3) (by omega),if_pos hlt,e4]
+    · rw [if_neg h3]
+      have hk1 : 1 ≤ k := by omega
+      have hlt := Gp_lt_step k hk1 h3
+      have c1 : ¬(((k:Nat):Int)-1<0) := by omega
+      have e1 : ((k:Nat):Int)-1=(((k-1:Nat)):Int) := by omega
+      have e2 : (((k-1:Nat)):Int)=(k:Int)-1 := by omega
+      rw [show m+5+1=(m+5)+1 from rfl,fpar0Aux_step,if_neg c1,e1,
+        gp0_L m (k-1) (by omega),if_pos hlt,e2]
+
+#guard (List.range 15).all fun m => (List.range (m+5)).all fun k =>
+  Trans.Recal.fpar (L m) 0 ((k:Nat):Int) 0 == parL k
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
