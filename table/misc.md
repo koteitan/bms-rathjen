@@ -8,7 +8,8 @@
 - [E.cert](table-r1.md#ecert) が言っていないこと
 - ✅ の付いた行について追加で言えること (T.unique / T.bound / T.eps0)
 - $`\mathcal{T}`$ — 形成条件を課す前の項の全体 (D.Term)
-- [D.Cl](table-r1.md#dcl) の読み方 — $`\forall f`$ が規則の族であること
+- **規則の閉包** $`\mathrm{Cl}(R)`$ の定義と性質 (D.Cl, T.Cl.*)、および
+  $`\forall f`$ が規則の族であることの読み方
 - [D.TM](table-r1.md#dtm) の読み方 — Rathjen 表記の標準形、$`Z`$ の出自、$`\bar\varphi`$ の不動点
 
 ## D.Term
@@ -153,13 +154,55 @@ $`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だ�
 **不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
 上で静かに誤る。**
 
+## D.Cl
+
+台集合 $`U`$ を固定する。**規則**とは対 $`(P, c)`$ であって $`P \subseteq U`$ (前件)、
+$`c \in U`$ (結論) のものと定義する。$`P`$ は有限とは限らない。
+規則の集合を $`R`$ と書く。
+
+$`X \subseteq U`$ が $`R`$ で**閉じている**とは:
+
+```math
+\forall (P, c) \in R.\;\; P \subseteq X \;\longrightarrow\; c \in X
+```
+
+**$`R`$ の閉包** $`\mathrm{Cl}(R)`$ を、$`R`$ で閉じている集合すべての共通部分と
+定義する。閉包は $`R`$ で閉じている集合のうち**最小のもの**である。
+
+```math
+\mathrm{Cl}(R) \;=\; \bigcap \bigl\{\, X \subseteq U \;\bigm|\;
+X \text{ が } R \text{ で閉じている} \,\bigr\}
+```
+
+下記の性質がある。
+
+### T.Cl.closed
+
+```math
+(P, c) \in R \;\land\; P \subseteq \mathrm{Cl}(R)
+\;\longrightarrow\; c \in \mathrm{Cl}(R)
+```
+
+### T.Cl.min
+
+```math
+X \text{ が } R \text{ で閉じている} \;\longrightarrow\; \mathrm{Cl}(R) \subseteq X
+```
+
+### T.Cl.inv
+
+```math
+c \in \mathrm{Cl}(R) \;\longrightarrow\;
+\exists (P, c) \in R.\;\; P \subseteq \mathrm{Cl}(R)
+```
+
 ## D.Cl の読み方
 
 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall f`$ は、$`f`$ ごとに
-規則が 1 本ずつあるという意味である ([D.Cl](table-r1.md#dcl) の $`R`$ が規則の族を含む)。
+規則が 1 本ずつあるという意味である ([D.Cl](#dcl) の $`R`$ が規則の族を含む)。
 
-- 規則を使う側 ([T.Cl.closed](table-r1.md#tclclosed)) では、$`f`$ を 1 つ選んで前件を潰す
-- 逆向き ([T.Cl.inv](table-r1.md#tclinv)) では、そういう $`f`$ が存在することが言える
+- 規則を使う側 ([T.Cl.closed](#tclclosed)) では、$`f`$ を 1 つ選んで前件を潰す
+- 逆向き ([T.Cl.inv](#tclinv)) では、そういう $`f`$ が存在することが言える
 
 **前件は有限とは限らない。** [D.Certified.succ](table-r1.md#dcertifiedsucc) の
 $`\forall n \in \mathbb{N}`$ の前件は可算無限個ある。だから「空集合から始めて

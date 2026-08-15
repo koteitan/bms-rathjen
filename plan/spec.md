@@ -30,9 +30,6 @@ table/ に書かない。[plan/README.md](README.md) と
 # その他の弱いエビデンス
 # 値についての注意
 # 実装
-# D.Cl
-  規則の閉包。上のすべての定義が使う一般形
-  ## T.Cl.closed / T.Cl.min / T.Cl.inv
 # 関連文書
   他文書へのリンク 5 本
 ```
@@ -125,7 +122,8 @@ GitHub の MathJax で描画されることが条件である。ローカルで�
 
 読み手が表を読むのに要らないものは [table/misc.md](../table/misc.md) へ送る。
 今そこにあるのは $`\mathrm{RawCertified}`$、$`f_n`$ 印の中身、
-E.cert が言っていないこと、T.unique / T.bound / T.eps0 である。
+E.cert が言っていないこと、T.unique / T.bound / T.eps0、
+規則の閉包 $`\mathrm{Cl}(R)`$ の定義と性質である。
 
 **設計・失敗・作業の話は table/ に入れない** (この文書の冒頭)。
 たとえば「レジストリに登録しないと ✅ が付かない」は作業の話なので、

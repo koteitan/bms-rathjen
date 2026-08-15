@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.41
+バージョン: v0.7.42
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -102,7 +102,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 ## D.Certified
 
 **証明書** $`\mathrm{Certified} \subseteq \mathcal{S} \times \mathfrak{T}(M)`$ を、
-次の 3 規則の**閉包** ([D.Cl](#dcl)) と定義する。
+次の 3 規則の**閉包** ([D.Cl](misc.md#dcl)) と定義する。
 
 ### D.Certified.zero
 
@@ -140,12 +140,12 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
 
-[T.Cl.inv](#tclinv) より逆も言える — $`\mathrm{Certified}(S, t)`$ が成り立つのは、
+[T.Cl.inv](misc.md#tclinv) より逆も言える — $`\mathrm{Certified}(S, t)`$ が成り立つのは、
 上の 6 条件を満たす $`f`$ が**存在するとき、かつそのときに限る**。
 
 ## D.TM
 
-**Rathjen 表記の標準形** $`\mathfrak{T}(M)`$ を、次の規則の**閉包** ([D.Cl](#dcl)) と
+**Rathjen 表記の標準形** $`\mathfrak{T}(M)`$ を、次の規則の**閉包** ([D.Cl](misc.md#dcl)) と
 定義する ([Rathjen, 1991] 2.1)。
 
 ```math
@@ -259,48 +259,6 @@ $`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型�
 [T(M) の順序](../lean/TM/Order.lean) ·
 [基本列](../lean/TM/FS.lean) ·
 [証明書](../lean/Evidence/Cert.lean)
-
-# D.Cl
-
-台集合 $`U`$ を固定する。**規則**とは対 $`(P, c)`$ であって $`P \subseteq U`$ (前件)、
-$`c \in U`$ (結論) のものと定義する。$`P`$ は有限とは限らない。
-規則の集合を $`R`$ と書く。
-
-$`X \subseteq U`$ が $`R`$ で**閉じている**とは:
-
-```math
-\forall (P, c) \in R.\;\; P \subseteq X \;\longrightarrow\; c \in X
-```
-
-**$`R`$ の閉包** $`\mathrm{Cl}(R)`$ を、$`R`$ で閉じている集合すべての共通部分と
-定義する。閉包は $`R`$ で閉じている集合のうち**最小のもの**である。
-
-```math
-\mathrm{Cl}(R) \;=\; \bigcap \bigl\{\, X \subseteq U \;\bigm|\;
-X \text{ が } R \text{ で閉じている} \,\bigr\}
-```
-
-下記の性質がある。
-
-## T.Cl.closed
-
-```math
-(P, c) \in R \;\land\; P \subseteq \mathrm{Cl}(R)
-\;\longrightarrow\; c \in \mathrm{Cl}(R)
-```
-
-## T.Cl.min
-
-```math
-X \text{ が } R \text{ で閉じている} \;\longrightarrow\; \mathrm{Cl}(R) \subseteq X
-```
-
-## T.Cl.inv
-
-```math
-c \in \mathrm{Cl}(R) \;\longrightarrow\;
-\exists (P, c) \in R.\;\; P \subseteq \mathrm{Cl}(R)
-```
 
 # 関連文書
 
