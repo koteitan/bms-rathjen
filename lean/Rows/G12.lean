@@ -199,6 +199,100 @@ theorem ofMatrix_M (n : Nat) :
   rw [map_blocks]
   rfl
 
+/-! ### Link 2 — what the reduction does, measured
+
+`redP (L m) = L m` is the first branch `runAux` tests, so link 2 cannot start without it.
+The recursion `red` takes on this ladder is, at each level, ONE branch (`brF` has length 1)
+and the fold rebuilds the prefix:
+
+    red (L m)   = jjSeq 0 2 ++ incrFirst (red (V m)) 0        V m = (L m).drop 3
+    red (V m)   = incrFirst ((red (Q m)).drop 1) 0            Q m = (0,0) :: incrFirst (V m) 1
+    red (Q m)   = jjSeq 0 1 ++ incrFirst (red ((2,1) :: TS 1 m)) 1
+
+with `trMax (L m) = 2` and `joints (L m) = [0]` CONSTANT in `m`, which is what makes the
+ladder uniform.  Below is the arithmetic the induction runs on; the induction itself is not
+done.  Everything here is a theorem, and the shapes above are pinned by `#guard`. -/
+
+/-! ### Link 2, step 1: the tail is 5-periodic up to a shift of 3. -/
+
+theorem p_add_five (k : Nat) : p (k+5)=p k+3 := by
+  unfold p
+  rw [show (k+5)%5=k%5 by omega,show (k+5)/5=k/5+1 by omega]
+  by_cases h0 : k%5=0
+  · rw [if_pos h0,if_pos h0]
+    push_cast
+    omega
+  · rw [if_neg h0,if_neg h0]
+    by_cases h1 : k%5=1 ∨ k%5=3
+    · rw [if_pos h1,if_pos h1]
+      push_cast
+      omega
+    · rw [if_neg h1,if_neg h1]
+      push_cast
+      omega
+
+theorem q_add_five (k : Nat) : q (k+5)=q k := by
+  unfold q
+  rw [show (k+5)%5=k%5 by omega]
+
+/-- The tail with every row-zero entry shifted by `d`. -/
+def TS (d : Int) (m : Nat) : Trans.Recal.PS :=
+  (List.range m).map fun k => (p k+d,q k)
+
+theorem TS_zero (m : Nat) : TS 0 m=T m := by
+  unfold TS T
+  apply List.map_congr_left
+  intro k _
+  simp
+
+theorem TS_succ (d : Int) (m : Nat) : TS d (m+1)=TS d m++[(p m+d,q m)] := by
+  unfold TS
+  rw [List.range_succ,List.map_append]
+  rfl
+
+theorem length_TS (d : Int) (m : Nat) : (TS d m).length=m := by simp [TS]
+
+theorem incrFirst_TS (d e : Int) (m : Nat) :
+    Trans.Recal.incrFirst (TS d m) e=TS (d+e) m := by
+  unfold Trans.Recal.incrFirst TS
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro k _
+  show ((p k+d)+e,q k)=(p k+(d+e),q k)
+  rw [Int.add_assoc]
+
+/-- The five-column period, as a statement about the shifted tail. -/
+theorem TS_add_five (d : Int) : ∀ m : Nat, TS d (m+5)=TS d 5++TS (d+3) m := by
+  intro m
+  induction m with
+  | zero => rfl
+  | succ m ih =>
+    rw [show m+1+5=(m+5)+1 by omega,TS_succ,ih,List.append_assoc]
+    congr 1
+    rw [TS_succ (d+3) m,p_add_five m,q_add_five m,
+      show p m+3+d=p m+(d+3) from by omega]
+
+/-- `S m` is the tail read as a ladder in its own right: `S (m+5) = L m`. -/
+def S (m : Nat) : Trans.Recal.PS := TS (-3) m
+
+theorem TS_neg3_five : TS (-3) 5=[(0,0),(1,1),(2,2),(1,1),(2,1)] := by decide
+
+theorem S_add_five (m : Nat) : S (m+5)=L m := by
+  show TS (-3) (m+5)=_
+  rw [TS_add_five]
+  show TS (-3) 5++TS ((-3)+3) m=L m
+  rw [show (-3:Int)+3=0 by omega,TS_zero]
+  unfold L
+  rw [TS_neg3_five]
+
+#guard (List.range 8).all fun m => S (m+5)==L m
+#guard (List.range 8).all fun m => TS 0 m==T m
+-- 上の測定を留めておく
+#guard (List.range 10).all fun m => Trans.Recal.trMax (L m)==2
+#guard (List.range 10).all fun m => Trans.Recal.joints (L m)==[0]
+#guard (List.range 10).all fun m => (Trans.Recal.brF (L m)).length==1
+#guard (List.range 10).all fun m => Trans.Recal.ppair (L m)==[L m]
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
