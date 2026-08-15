@@ -8668,7 +8668,24 @@ asks a region for a strictly smaller PARAMETER at each expansion, and never asks
 the parameter looks like — so `sqv`'s job is not a precondition of the ceiling, it is a
 precondition of DISCHARGING the ceiling on the (B) rows.  What §20.3 measures is
 exactly that remaining half: the twelve non-`famM` matrices are the region this file
-cannot yet name, and naming a region is all that is left. -/
+cannot yet name, and naming a region is all that is left.
+
+**THE REGION IS NOW NAMED** (2026-08-16), in `Evidence/Region.lean`.  It is not a `famM`
+with a wider tail and it is not a `φ̄` recursion: in BUCHHOLZ-TREE coordinates the whole
+closure is `ψ₀(ξ)` for `ξ < Ω·ω`, summed — width-two matrices read as a forest by their
+row-0 entries, with `(d,0)` a `ψ₀` node at depth `d` and `(d,1)` an `Ω`.  §16.5 said `enc`
+is compositional in those coordinates and not in `φ̄` ones; that is exactly why the twelve
+resisted naming here.  `Evidence.Region.expand_mat` is the closure theorem
+
+    BMS.expand? (mat t 0) n = some (mat (fs t n) 0)
+
+for every top-level index, with NO hypothesis on normal form and none on the prefix, and
+`Evidence/RegionV.lean` carries the value `sumVal`, Buchholz's normal form, and the
+measurements for the three supplies.  ONE region carries TWO rows: ε₁'s row is
+`mat (ps nil (omPow 2)) 0`, and `epsM k` — §20's ladder rung, the ε_ω row's k-th expansion
+by `expand_epsOmega` — is `mat (ps nil (omPow (k+1))) 0`.  What is left for the ✅ is
+`Hzero`/`Hsucc` and the cofinality conjunct of `Hlim`; RegionV §9 measures the other five
+clean on all 18 normal forms. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>
