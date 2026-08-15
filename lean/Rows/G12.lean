@@ -1,4 +1,5 @@
 import Rows.G10
+import Rows.Ladder
 
 /-!
 # G12 — Γ_{ψ₀(Ω₂)+1} の行 `(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`
@@ -634,7 +635,10 @@ theorem fpar_L_zero (m k : Nat) (hk : k<m+5) :
 #guard (List.range 15).all fun m => (List.range (m+5)).all fun k =>
   Trans.Recal.fpar (L m) 0 ((k:Nat):Int) 0 == parL k
 
-/-! ### Link 2, step 6: every index is a row-zero descendant of 0. -/
+/-! ### Link 2, step 6: the ladder is principal, and it is one block.
+
+Both come from `Rows/Ladder.lean`'s general lemmas: the only input is the row-zero
+parent chain, which step 5 computed. -/
 
 /-- The parent as a `Nat` index. -/
 def parN (k : Nat) : Nat := if k%5=3 then k-3 else k-1
@@ -654,54 +658,31 @@ theorem parN_lt (k : Nat) (hk : 1 ≤ k) : parN k<k := by
   · rw [if_pos h3]; omega
   · rw [if_neg h3]; omega
 
-theorem isAncAux_step (M : Trans.Recal.PS) (f i : Nat) (j0 kk : Int) :
-    Trans.Recal.isAncAux (f+1) M i j0 kk
-      = if kk==j0 then true
-        else if Trans.Recal.fpar M i j0 kk==-1 then false
-             else Trans.Recal.isAncAux f M i (Trans.Recal.fpar M i j0 kk) kk := rfl
+theorem chain_L (m : Nat) : ∀ k, 1 ≤ k → k<(L m).length →
+    Trans.Recal.fpar (L m) 0 ((k:Nat):Int) 0=((parN k : Nat) : Int) := by
+  intro k hk1 hk
+  rw [length_L] at hk
+  rw [fpar_L_zero m k hk,parL_eq k hk1]
 
-theorem isAncAux_L (m : Nat) : ∀ (f k : Nat), k<m+5 → k<f →
-    Trans.Recal.isAncAux f (L m) 0 ((k:Nat):Int) 0=true := by
-  intro f
-  induction f with
-  | zero => intro k _ h; exact absurd h (by omega)
-  | succ f ih =>
-    intro k hk hkf
-    rw [isAncAux_step]
-    by_cases h0 : k=0
-    · subst h0
-      rw [if_pos (by rfl)]
-    · rw [if_neg (by
-        intro hc
-        have : ((0:Int))=((k:Nat):Int) := by simpa using hc
-        omega)]
-      rw [fpar_L_zero m k hk,parL_eq k (by omega)]
-      rw [if_neg (by
-        intro hc
-        have : ((parN k : Nat) : Int)=-1 := by simpa using hc
-        omega)]
-      exact ih (parN k) (by have := parN_lt k (by omega); omega)
-        (by have := parN_lt k (by omega); omega)
+theorem chain_L_lt (m : Nat) : ∀ k, 1 ≤ k → k<(L m).length → parN k<k :=
+  fun k hk1 _ => parN_lt k hk1
 
-theorem isAnc_L (m : Nat) :
-    Trans.Recal.isAnc (L m) 0 (Trans.Recal.lenI (L m)-1) 0=true := by
-  unfold Trans.Recal.isAnc
-  rw [if_neg (by rw [lenI_L]; omega),length_L,lenI_L]
-  rw [show ((m:Int)+5)-1=(((m+4:Nat)):Int) from by omega]
-  exact isAncAux_L m (m+5+1) (m+4) (by omega) (by omega)
+theorem chain_L_zero (m : Nat) : Trans.Recal.fpar (L m) 0 ((0:Nat):Int) 0=-1 := by
+  rw [fpar_L_zero m 0 (by omega)]
+  unfold parL
+  rw [if_pos rfl]
 
-theorem isZeroP_L (m : Nat) : Trans.Recal.isZeroP (L m)=false := by
-  unfold Trans.Recal.isZeroP
-  rw [show ((L m).length==1)=false from by rw [length_L]; simp]
-  rfl
+theorem isPrincipalP_L (m : Nat) : Trans.Recal.isPrincipalP (L m)=true :=
+  Rows.Ladder.isPrincipalP_of_chain (chain_L m) (chain_L_lt m) (chain_L_zero m)
+    (by rw [length_L]; omega)
 
-theorem isPrincipalP_L (m : Nat) : Trans.Recal.isPrincipalP (L m)=true := by
-  unfold Trans.Recal.isPrincipalP
-  rw [isZeroP_L,isAnc_L]
-  rfl
+theorem ppair_L (m : Nat) : Trans.Recal.ppair (L m)=[L m] :=
+  Rows.Ladder.ppair_of_chain (chain_L m) (chain_L_lt m) (chain_L_zero m)
+    (by rw [length_L]; omega)
 
 #guard (List.range 12).all fun m => Trans.Recal.isPrincipalP (L m)
 #guard (List.range 12).all fun m => !(Trans.Recal.isZeroP (L m))
+#guard (List.range 12).all fun m => Trans.Recal.ppair (L m)==[L m]
 
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero

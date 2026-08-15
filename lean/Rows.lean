@@ -11,6 +11,7 @@ import Rows.G7
 import Rows.G8
 import Rows.G9
 import Rows.G10
+import Rows.Ladder
 import Rows.G11
 import Rows.G12
 import Rows.Fam4
