@@ -11748,6 +11748,19 @@ and on the ε₁ row specifically, `oR (expand [[0,0],[1,1],[1,1]] n) = some (fs
 SHIFT 0 — so `lim_clauses_eps1` is already the row's own sequence and its `hdom` is
 `le_self`.  `fsN` matches that row at no shift, which is why the transfer exists.
 
+**NO SELECTED ROW IS ONE STEP FROM THE CERTIFIED REGION** (2026-08-15), which is §16's
+finding with a number on it.  Testing each selected row's four depth-1 expansions for the
+shape `padRow (sq t)` with `CN t` — the region §10–§13 certify:
+
+    ε₀ row            0 of 4 outside      (and it is already registered)
+    every other row   4 of 4 outside
+
+So the gate is not one lemma away for any row, and `certIn_region` cannot be instantiated
+by reusing `certIn_sq`'s family.  What a row needs is ITS OWN `Reg`: a family of matrices
+closed under `BMS.expand` with a closed description, which is the same kind of object the
+`G`-family ladders are on the reader side.  §16 called this a missing REGION; the number
+above says how far away it is.
+
 A SEPARATE MEASUREMENT, worth recording because §15.3 refuted the natural guess for a
 DIFFERENT function: over a 121-term corpus of `CNV` limits built from the row values, their
 subterms and their `fsN` iterates (100 `φ̄`-shaped, 21 `⊕`-shaped), `TM.fsN` is `CNV`,
