@@ -29,7 +29,7 @@ def main : IO Unit := do
   let proofFiles :=
     ["Rows/Proofs.lean", "Rows/ProofsB.lean", "Rows/Selected.lean", "Rows/G3.lean",
       "Rows/G4.lean", "Rows/G5.lean", "Rows/G6.lean", "Rows/G7.lean", "Rows/G8.lean",
-      "Rows/G9.lean", "Rows/G10.lean"]
+      "Rows/G9.lean", "Rows/G10.lean", "Rows/G11.lean", "Rows/G12.lean"]
   let finders ← proofFiles.mapM fun f => do pure (f, ← lineFinder (dir ++ f))
   let proofLine (key : String) : Option (String × Nat) :=
     finders.firstM fun (f, find) => (find key).map (f, ·)

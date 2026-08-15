@@ -63,7 +63,7 @@ structure Row where
                        -- rendered as the E3 mark.  Searched in Rows/Proofs.lean,
                        -- Rows/ProofsB.lean, Rows/Selected.lean, Rows/G3.lean, Rows/G4.lean,
                        -- Rows/G5.lean, Rows/G6.lean, Rows/G7.lean, Rows/G8.lean, Rows/G9.lean,
-                       -- in that order.
+                       -- Rows/G10.lean, Rows/G11.lean, Rows/G12.lean, in that order.
                        -- ("" = no all-n proof yet.)  A key that resolves to nothing
                        -- prints no mark, so a renamed namespace loses the mark
                        -- instead of lying about it.
@@ -266,7 +266,7 @@ def rows : List Row := [
     name := "\\zeta_{\\psi_0(\\Omega_2)+1}" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,1],[3,1]],
     t := psi (Z zero) (add (Z (phi zero zero)) (phi zero zero)),
-    name := "\\Gamma_{\\psi_0(\\Omega_2)+1}",
+    name := "\\Gamma_{\\psi_0(\\Omega_2)+1}", proof := "namespace G12",
     sel := "**T** ψ の引数に Z と和が同居する最初" },
   { m := [[0,0],[1,1],[2,2],[1,1],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero)) (phi (phi zero zero) (Z zero))),
