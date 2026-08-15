@@ -684,6 +684,113 @@ theorem ppair_L (m : Nat) : Trans.Recal.ppair (L m)=[L m] :=
 #guard (List.range 12).all fun m => !(Trans.Recal.isZeroP (L m))
 #guard (List.range 12).all fun m => Trans.Recal.ppair (L m)==[L m]
 
+/-! ### Link 2, step 7: the single branch, and its own parent chain. -/
+
+/-- The ladder below `trMax`, i.e. the one branch `brF` returns. -/
+def V (m : Nat) : Trans.Recal.PS := (L m).drop 3
+
+theorem length_V (m : Nat) : (V m).length=m+2 := by
+  unfold V
+  rw [List.length_drop,length_L]
+  omega
+
+theorem getD_drop {α : Type} [Inhabited α] (l : List α) (n j : Nat) (d : α) :
+    (l.drop n).getD j d=l.getD (n+j) d := by
+  rw [List.getD_eq_getElem?_getD,List.getD_eq_getElem?_getD,List.getElem?_drop]
+
+theorem gp0_V (m j : Nat) (hj : j<m+2) :
+    Trans.Recal.gp0 (V m) ((j:Nat):Int)=Gp (j+3) := by
+  have h := gp0_L m (j+3) (by omega)
+  rw [show Trans.Recal.gp0 (L m) ((j+3:Nat):Int)
+      = (if (((j+3:Nat):Int)<0) then 0 else ((L m).getD (j+3) (0,0)).1) from rfl,
+    if_neg (by omega)] at h
+  show (if (((j:Nat):Int)<0) then 0 else ((V m).getD j (0,0)).1)=Gp (j+3)
+  rw [if_neg (by omega)]
+  unfold V
+  rw [getD_drop,show 3+j=j+3 by omega]
+  exact h
+
+/-- The branch's own parent: three back when the index is a multiple of five. -/
+def parV (j : Nat) : Nat := if j%5=0 then j-3 else j-1
+
+theorem parV_lt (j : Nat) (hj : 1 ≤ j) : parV j<j := by
+  unfold parV
+  by_cases h : j%5=0
+  · rw [if_pos h]; omega
+  · rw [if_neg h]; omega
+
+theorem gap_V_drop (j : Nat) (hj : 1 ≤ j) : Gp (parV j+3)<Gp (j+3) := by
+  unfold parV
+  by_cases h : j%5=0
+  · rw [if_pos h,show j-3+3=j by omega]
+    have := (Gp_three (j+3) (by omega)).1
+    rwa [show j+3-3=j by omega] at this
+  · rw [if_neg h,show j-1+3=j+2 by omega]
+    have := Gp_lt_step (j+3) (by omega) (by omega)
+    rwa [show j+3-1=j+2 by omega] at this
+
+theorem gap_V_keep (j i : Nat) (hj : 1 ≤ j) (h1 : parV j<i) (h2 : i<j) :
+    Gp (j+3) ≤ Gp (i+3) := by
+  unfold parV at h1
+  by_cases h : j%5=0
+  · rw [if_pos h] at h1
+    obtain ⟨_,hle2,hle1⟩ := Gp_three (j+3) (by omega)
+    rw [show j+3-2=j+1 by omega] at hle2
+    rw [show j+3-1=j+2 by omega] at hle1
+    rcases (show i=j-2 ∨ i=j-1 by omega) with rfl|rfl
+    · rw [show j-2+3=j+1 by omega]; exact hle2
+    · rw [show j-1+3=j+2 by omega]; exact hle1
+  · rw [if_neg h] at h1
+    omega
+
+theorem fpar_V_zero (m : Nat) : ∀ j, 1 ≤ j → j<(V m).length →
+    Trans.Recal.fpar (V m) 0 ((j:Nat):Int) 0=((parV j : Nat) : Int) :=
+  Rows.Ladder.fpar_of_gap
+    (fun k hk => by rw [length_V] at hk; exact gp0_V m k hk)
+    (fun k hk1 _ => parV_lt k hk1)
+    (fun k hk1 _ => gap_V_drop k hk1)
+    (fun k i hk1 _ h1 h2 => gap_V_keep k i hk1 h1 h2)
+
+theorem fpar_V_root (m : Nat) : Trans.Recal.fpar (V m) 0 ((0:Nat):Int) 0=-1 :=
+  Rows.Ladder.fpar_zero_of_gap
+    (G := fun k => Gp (k+3))
+    (fun k hk => by rw [length_V] at hk; exact gp0_V m k hk)
+    (by rw [length_V]; omega)
+
+theorem ppair_V (m : Nat) : Trans.Recal.ppair (V m)=[V m] :=
+  Rows.Ladder.ppair_of_chain (fpar_V_zero m) (fun k hk1 _ => parV_lt k hk1)
+    (fpar_V_root m) (by rw [length_V]; omega)
+
+theorem brF_L (m : Nat) : Trans.Recal.brF (L m)=[V m] := by
+  unfold Trans.Recal.brF
+  rw [trMax_L]
+  show Trans.Recal.ppair ((L m).drop 3)=_
+  exact ppair_V m
+
+theorem firstNodes_L (m : Nat) :
+    Trans.Recal.firstNodes (L m)=[3,(((m+5:Nat)):Int)] := by
+  unfold Trans.Recal.firstNodes Trans.Recal.idxSum
+  rw [brF_L,trMax_L]
+  simp only [List.foldl_cons,List.foldl_nil,length_V]
+  rw [show ([0]++[0+(((m+2:Nat)):Int)] : List Int)=[0,0+(((m+2:Nat)):Int)] from rfl]
+  simp only [List.map_cons,List.map_nil]
+  rw [show (2:Int)+1+0=3 from by omega,
+    show (2:Int)+1+(0+(((m+2:Nat)):Int))=(((m+5:Nat)):Int) from by omega]
+
+theorem joints_L (m : Nat) : Trans.Recal.joints (L m)=[0] := by
+  unfold Trans.Recal.joints
+  rw [firstNodes_L]
+  show [Trans.Recal.fpar (L m) 0 3 0]=[0]
+  rw [show (3:Int)=((3:Nat):Int) from rfl,fpar_L_zero m 3 (by omega)]
+  unfold parL
+  rw [if_neg (by omega),if_pos (by omega),
+    show ((3:Nat):Int)-3=0 from by omega]
+
+#guard (List.range 12).all fun m => Trans.Recal.firstNodes (L m)==[3,(((m+5:Nat)):Int)]
+#guard (List.range 12).all fun m => Trans.Recal.joints (L m)==[0]
+#guard (List.range 12).all fun m => Trans.Recal.brF (L m)==[V m]
+#guard (List.range 12).all fun m => Trans.Recal.ppair (V m)==[V m]
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 

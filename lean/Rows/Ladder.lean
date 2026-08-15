@@ -143,4 +143,68 @@ theorem ppair_of_chain
   obtain ⟨j,hj⟩ : ∃ j, M.length=j+1 := ⟨M.length-1,by omega⟩
   rw [hj,ppairAux_step,if_pos (by omega)]
 
+/-! ## 行 0 の親を `gp0` の形だけから出す
+
+`fpar M 0 k 0` は「`k-1` から下へ走査して最初に `gp0` が下がる位置」である。
+だから `gp0` の閉じた形と、親の位置での落差・その間での非落差だけあればよい。 -/
+
+theorem fpar0Aux_step (M : Trans.Recal.PS) (f : Nat) (tgt j0 kk : Int) :
+    Trans.Recal.fpar0Aux (f+1) M tgt j0 kk
+      = if j0<kk then -1 else if Trans.Recal.gp0 M j0<tgt then j0
+        else Trans.Recal.fpar0Aux f M tgt (j0-1) kk := rfl
+
+variable {G : Nat → Int}
+
+/-- 走査は親の位置で止まる。 -/
+theorem fpar0Aux_scan
+    (hg : ∀ k, k<M.length → Trans.Recal.gp0 M ((k:Nat):Int)=G k)
+    {k p : Nat} (hk : k<M.length) (hdrop : G p<G k)
+    (hkeep : ∀ i, p<i → i<k → G k ≤ G i) :
+    ∀ (f j : Nat), p ≤ j → j<k → j-p<f →
+      Trans.Recal.fpar0Aux f M (G k) ((j:Nat):Int) 0=((p:Nat):Int) := by
+  intro f
+  induction f with
+  | zero => intro j _ _ h; exact absurd h (by omega)
+  | succ f ih =>
+    intro j hpj hjk hf
+    rw [fpar0Aux_step,if_neg (by omega),hg j (by omega)]
+    by_cases hjp : j=p
+    · subst hjp
+      rw [if_pos hdrop]
+    · rw [if_neg (by
+        have := hkeep j (by omega) hjk
+        omega)]
+      have e : ((j:Nat):Int)-1=(((j-1:Nat)):Int) := by omega
+      rw [e]
+      exact ih (j-1) (by omega) (by omega) (by omega)
+
+/-- **行 0 の親、`gp0` の形から。** -/
+theorem fpar_of_gap
+    (hg : ∀ k, k<M.length → Trans.Recal.gp0 M ((k:Nat):Int)=G k)
+    (hlt : ∀ k, 1 ≤ k → k<M.length → par k<k)
+    (hdrop : ∀ k, 1 ≤ k → k<M.length → G (par k)<G k)
+    (hkeep : ∀ k i, 1 ≤ k → k<M.length → par k<i → i<k → G k ≤ G i) :
+    ∀ k, 1 ≤ k → k<M.length → Trans.Recal.fpar M 0 ((k:Nat):Int) 0
+      = ((par k : Nat) : Int) := by
+  intro k hk1 hk
+  unfold Trans.Recal.fpar
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  simp only [show ((0:Nat)==0)=true from rfl,if_true]
+  rw [hg k hk]
+  have e : ((k:Nat):Int)-1=(((k-1:Nat)):Int) := by omega
+  rw [e]
+  exact fpar0Aux_scan hg hk (hdrop k hk1 hk) (fun i h1 h2 => hkeep k i hk1 hk h1 h2)
+    (M.length+1) (k-1) (by have := hlt k hk1 hk; omega) (by omega) (by omega)
+
+/-- 根の親は `-1`。 -/
+theorem fpar_zero_of_gap
+    (hg : ∀ k, k<M.length → Trans.Recal.gp0 M ((k:Nat):Int)=G k)
+    (hlen : 1 ≤ M.length) :
+    Trans.Recal.fpar M 0 ((0:Nat):Int) 0=-1 := by
+  unfold Trans.Recal.fpar
+  rw [if_neg (by unfold Trans.Recal.lenI; omega)]
+  simp only [show ((0:Nat)==0)=true from rfl,if_true]
+  obtain ⟨j,hj⟩ : ∃ j, M.length=j+1 := ⟨M.length-1,by omega⟩
+  rw [hj,fpar0Aux_step,if_pos (by omega)]
+
 end Rows.Ladder
