@@ -428,13 +428,13 @@ $`f_n`$ が単調・有界・共終であることで、**$`f_n`$ が標準基�
     - ✅ 一行行列の証明書族
     - ✅ `fsN` と `fsC` の接続
     - ✅ ε₀ 行の残り 1 前提
-    - 🚨 Veblen 断片の共終性
+    - ✅ Veblen 断片の共終性 — **組み立てが仮定なしになった** (`asm_veblen`)
       - ✅ 組み立ての 5 枝のうち 4 枝 (`asm_generalB'`、`Evidence/WF.lean` §15.38)
-      - 🚨 残る 1 枝 `Hsucc` — φ̄(a,b) の b が後続。3 分岐の候補列は測定済み
-        - ✅ `predC` の順序 2 事実を `CNV`/`kindV` へ (`WF.lean` §15.40)
+      - ✅ 残る 1 枝 `Hsucc` — φ̄(a,b) の b が後続
+        - ✅ `predC` の順序 2 事実を `CNV`/`kindV` へ (§15.40)
         - ✅ 枝 1 — a が後続。核 (B) を `u = predC a` で回す
         - ✅ 枝 3 — a = 0。`ω^(predC b)·(n+1)`
-        - 🚨 枝 2 — a が極限。**§15.18 の核 (C') では通らない** (下記)。核 (C'') が要る
+        - ✅ 枝 2 — a が極限。**核 (C'')** (§15.42)。§15.18 の核 (C') とは別の形
     - 🚨 選定行のゲート `Certified(S, t)`
       - ✅ 領域の再帰 `certIn_region` (`Evidence/Cert.lean` §23)
       - ✅ 4 連言を行自身の列へ移す `limClauses_transfer` (`Evidence/WF.lean` §15.39)

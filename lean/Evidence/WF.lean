@@ -14308,4 +14308,232 @@ example : LimClauses (phi zero (plus (phi one zero) one))
 #guard kindV (plus (phi one zero) one) == true    -- ε₀+1 IS a kindV successor …
 #guard kindV (phi one zero) == false              -- … and ε₀ is not, which is §15.20's point
 
+/-! ### §15.42 CORE (C'') — `a` A LIMIT, `b` A SUCCESSOR, and the assembly loses its hypothesis
+
+§15.41 closed two of `Hsucc`'s three branches and named the third.  This is the third, and with
+it §15.38's `asm_generalB'` needs no hypothesis but the caller's own `NfOK`.
+
+**`Hsucc` CANNOT BE PROVED AS A STANDALONE LEMMA, AND THAT IS NOT A DEFECT.**  The third branch's
+sequence is built from a sequence FOR `a`, which only the assembly's own recursion supplies.  So
+the fix is not another hypothesis but a restructuring: in the `φ̄pq` case with `q` a successor,
+split three ways on `p` and, in the limit sub-case, call the induction hypothesis for `p` that
+`asm_generalB'` was already carrying and discarding.  `asm_veblen` below is that.
+
+WHY THIS IS NOT §15.18's REFUTED (C').  There the second argument is `b` and the cap
+`φ̄(g n, b) < φ̄(a,0)` bites whenever `b < φ̄(a,0)`.  Here it is `φ̄(a, predC b)`, which is ABOVE
+`φ̄(a,0)`, so the cap's hypothesis fails and the sequence really does reach `φ̄(a,b)`.  The
+cofinality proof below is §15.18's `cof_phiArg1_aux` with two dead cases brought back to life:
+at `b = 0` the sub-cases `p = a` and `¬ lt p a` are vacuous, and here they are the ones that
+carry `le b (φ̄(a, predC b))` — the same fact §15.41's branch 1 needed for `H3`. -/
+
+/-- 2.3.13(ii) at a FIXED second argument: `φ̄(·,X)` は第 1 引数について狭義単調。 -/
+theorem lt_phiX_of_lt {X p x : Term} (hX : CNV X=true) (h : lt p x=true) :
+    lt (phi p X) (phi x X)=true := by
+  have hne : p ≠ x := ne_of_ltF h
+  rw [lt_phi_phi (by intro hc; injection hc with h1 _; exact hne h1),if_neg hne,if_pos h]
+  exact lt_phi_self hX x
+
+/-- 核 (C'') の共終性。 -/
+theorem cofCC_aux {a b : Term} (g : Nat → Term)
+    (hcna : CNV a=true) (hcnb : CNV b=true) (hkb : kindV b=true)
+    (hg1 : ∀ n, CNV (g n)=true)
+    (hg3 : ∀ n, lt (g n) (g (n+1))=true)
+    (hg4 : ∀ s, inT s=true → lt s a=true → ∃ n, le s (g n)=true) :
+    ∀ (n : Nat) (s : Term), s.deg ≤ n → CNV s=true → lt s (phi a b)=true →
+      ∃ m, le s (phi (g m) (phi a (predC b)))=true := by
+  have hcnpb : CNV (predC b)=true := cnv_predC b hcnb hkb
+  have hcnX : CNV (phi a (predC b))=true := by
+    show (CNV a && CNV (predC b))=true
+    rw [hcna,hcnpb]; rfl
+  have hcnPh : ∀ m, CNV (phi (g m) (phi a (predC b)))=true := fun m => by
+    show (CNV (g m) && CNV (phi a (predC b)))=true
+    rw [hg1 m,hcnX]; rfl
+  have hbX : le b (phi a (predC b))=true := by
+    have h := le_succT_of_lt (predC b) hcnpb (phi a (predC b)) hcnX
+      (lt_phi_self hcnpb a)
+    rwa [succT_predC b hcnb hkb] at h
+  -- 「X 以下なら φ̄(g m, X) 未満」
+  have hstep : ∀ (m : Nat) (s : Term), CNV s=true →
+      le s (phi a (predC b))=true → le s (phi (g m) (phi a (predC b)))=true := by
+    intro m s hs hle
+    exact le_of_lt (lt_of_le_of_lt (frag_of_cnv _ hs) (frag_of_cnv _ hcnX)
+      (frag_of_cnv _ (hcnPh m)) hle (lt_phi_self hcnX (g m)))
+  intro n
+  induction n with
+  | zero => intro s hd _ _; exact absurd hd (by have := deg_pos s; omega)
+  | succ n ih =>
+    intro s hd hs hlt
+    cases s with
+    | M => exact Bool.noConfusion hs
+    | omg _ => exact Bool.noConfusion hs
+    | psi _ _ => exact Bool.noConfusion hs
+    | Z _ => exact Bool.noConfusion hs
+    | zero => exact ⟨0, le_zero_any _⟩
+    | phi p q =>
+      obtain ⟨hcp,hcq⟩ := cnv_phi hs
+      have hne : phi p q ≠ phi a b := ne_of_ltF hlt
+      rw [lt_phi_phi hne] at hlt
+      have hdq : q.deg ≤ n := by
+        have e : (phi p q).deg=1+p.deg+q.deg := rfl
+        have := deg_pos p; omega
+      by_cases hpa : p=a
+      · rw [if_pos hpa] at hlt
+        subst hpa
+        refine ⟨0,hstep 0 _ hs ?_⟩
+        exact le_phi_of_le hcp hcq hcp hcnpb (le_self p)
+          (le_predC_of_lt_v b hcnb hkb q (inT_of_cnv q hcq) hlt)
+      · rw [if_neg hpa] at hlt
+        by_cases hpl : lt p a=true
+        · rw [if_pos hpl] at hlt
+          obtain ⟨m1,hm1⟩ := ih q hdq hcq hlt
+          obtain ⟨m2,hm2⟩ := hg4 p (inT_of_cnv p hcp) hpl
+          have hM1 : lt (g m1) (g (m1+m2+1))=true := lt_g_mono hg1 hg3 m1 m2
+          have hM2 : lt (g m2) (g (m1+m2+1))=true := by
+            have h := lt_g_mono hg1 hg3 m2 m1
+            rwa [show m2+m1+1=m1+m2+1 from by omega] at h
+          have hpM : lt p (g (m1+m2+1))=true :=
+            lt_of_le_of_lt (frag_of_cnv _ hcp) (frag_of_cnv _ (hg1 m2))
+              (frag_of_cnv _ (hg1 (m1+m2+1))) hm2 hM2
+          have hqM : lt q (phi (g (m1+m2+1)) (phi a (predC b)))=true :=
+            lt_of_le_of_lt (frag_of_cnv _ hcq) (frag_of_cnv _ (hcnPh m1))
+              (frag_of_cnv _ (hcnPh (m1+m2+1))) hm1 (lt_phiX_of_lt hcnX hM1)
+          refine ⟨m1+m2+1,le_of_lt ?_⟩
+          have hne2 : p ≠ g (m1+m2+1) := ne_of_ltF hpM
+          rw [lt_phi_phi (by intro hc; injection hc with h1 _; exact hne2 h1),
+            if_neg hne2,if_pos hpM]
+          exact hqM
+        · rw [if_neg hpl] at hlt
+          refine ⟨0,hstep 0 _ hs ?_⟩
+          exact le_trans (frag_of_cnv _ hs) (frag_of_cnv _ hcnb) (frag_of_cnv _ hcnX)
+            hlt hbX
+    | add c d =>
+      obtain ⟨_,hcc,hcd,_⟩ := cnv_add hs
+      rw [lt_add_phi] at hlt
+      have hdc : c.deg ≤ n := by
+        have e : (add c d).deg=1+c.deg+d.deg := rfl
+        have := deg_pos d; omega
+      obtain ⟨m,hm⟩ := ih c hdc hcc hlt
+      refine ⟨m+1,le_of_lt ?_⟩
+      rw [lt_add_phi]
+      exact lt_of_le_of_lt (frag_of_cnv _ hcc) (frag_of_cnv _ (hcnPh m))
+        (frag_of_cnv _ (hcnPh (m+1))) hm (lt_phiX_of_lt hcnX (hg3 m))
+
+/-- **核 (C'')。** `a` が極限で `b` が後続のとき、`n ↦ φ̄(g n, φ̄(a, predC b))`。
+    §15.18 の核 (C') は `b = 0` に限られるが、こちらは第 2 引数が `predC b` ではなく
+    `φ̄(a, predC b)` なので、あちらの一様な上限に掛からない。 -/
+theorem lim_clauses_phi_lim_succ {a b : Term} (g : Nat → Term)
+    (hcn : CNV (phi a b)=true) (hkb : kindV b=true)
+    (hg1 : ∀ n, CNV (g n)=true) (hg2 : ∀ n, lt (g n) a=true)
+    (hg3 : ∀ n, lt (g n) (g (n+1))=true)
+    (hg4 : ∀ s, inT s=true → lt s a=true → ∃ n, le s (g n)=true) :
+    LimClauses (phi a b) (fun n => phi (g n) (phi a (predC b))) := by
+  obtain ⟨hcna,hcnb⟩ := cnv_phi hcn
+  have hcnpb : CNV (predC b)=true := cnv_predC b hcnb hkb
+  have hcnX : CNV (phi a (predC b))=true := by
+    show (CNV a && CNV (predC b))=true
+    rw [hcna,hcnpb]; rfl
+  have hXt : lt (phi a (predC b)) (phi a b)=true :=
+    lt_phi_arg (lt_predC_v b hcnb hkb)
+  refine ⟨fun n => by
+      show (CNV (g n) && CNV (phi a (predC b)))=true
+      rw [hg1 n,hcnX]; rfl,
+    fun n => ?_,
+    fun n => lt_phiX_of_lt hcnX (hg3 n),
+    fun s hin hlt =>
+      cofCC_aux g hcna hcnb hkb hg1 hg3 hg4 s.deg s (Nat.le_refl _)
+        (cnv_of_lt_cnv hin hcn hlt) hlt⟩
+  have hne : g n ≠ a := ne_of_ltF (hg2 n)
+  rw [lt_phi_phi (by intro hc; injection hc with h1 _; exact hne h1),
+    if_neg hne,if_pos (hg2 n)]
+  exact hXt
+
+/-- **THE ASSEMBLY, WITH NO HYPOTHESIS BUT `NfOK`.**  §15.38's `asm_generalB'` with `Hsucc`
+    discharged by §15.41's two branches and §15.42's third.  The third calls `ihp`, which
+    `asm_generalB'` had in scope and dropped. -/
+theorem asm_veblen :
+    ∀ (t : Term), NfOK t = true → CNV t = true → kindV t = false → t ≠ zero →
+      ∃ fs : Nat → Term, LimClauses t fs ∧ ∀ n, fs n ≠ zero := by
+  intro t
+  induction t with
+  | M => intro _ h; exact Bool.noConfusion h
+  | omg _ _ => intro _ h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro _ h; exact Bool.noConfusion h
+  | Z _ _ => intro _ h; exact Bool.noConfusion h
+  | zero => intro _ _ _ hz; exact absurd rfl hz
+  | phi p q ihp ihq =>
+    intro hnf h hk _
+    obtain ⟨hnfLocal, hnfp, hnfq⟩ := nfOK_phi hnf
+    obtain ⟨hcnp, hcnq⟩ := cnv_phi h
+    by_cases hq : q = zero
+    · subst hq
+      by_cases hkp : kindV p = true
+      · have hcnpp : CNV (predC p) = true := cnv_predC p hcnp hkp
+        have hsp : succT (predC p) = p := succT_predC p hcnp hkp
+        refine ⟨fsGen (phi (predC p) zero) (predC p) (phi (predC p) zero), ?_,
+                fsGen_phi_ne_zero_local (predC p)⟩
+        have hlc := lim_clauses_phi_zero_succ hcnpp
+        rw [hsp] at hlc
+        exact hlc
+      · have hkp' : kindV p = false := by
+          cases hh : kindV p with
+          | true => exact absurd hh hkp
+          | false => rfl
+        have hpz : p ≠ zero := by
+          intro hc; rw [hc] at hk; exact Bool.noConfusion hk
+        obtain ⟨g, hg, _⟩ := ihp hnfp hcnp hkp' hpz
+        exact ⟨fun n => phi (g n) zero,
+          lim_clauses_phi_arg1 g hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hcnp,
+          fun n => by intro hc; exact Term.noConfusion hc⟩
+    · by_cases hkq : kindV q = true
+      · -- §15.41 + §15.42: three ways on the FIRST argument
+        by_cases hkp : kindV p = true
+        · exact ⟨fsSS p q, lim_clauses_phi_succ_succ h hkp hkq, fsSS_ne_zero p q⟩
+        · by_cases hpz : p = zero
+          · subst hpz
+            exact ⟨repAdd (phi zero (predC q)),
+              lim_clauses_phi_zero_succb h hkq, repAdd_phi_ne_zero zero (predC q)⟩
+          · have hkp' : kindV p = false := by
+              cases hh : kindV p with
+              | true => exact absurd hh hkp
+              | false => rfl
+            obtain ⟨g, hg, _⟩ := ihp hnfp hcnp hkp' hpz
+            exact ⟨fun n => phi (g n) (phi p (predC q)),
+              lim_clauses_phi_lim_succ g h hkq hg.1 hg.2.1 hg.2.2.1 hg.2.2.2,
+              fun n => by intro hc; exact Term.noConfusion hc⟩
+      · have hkq' : kindV q = false := by
+          cases hh : kindV q with
+          | true => exact absurd hh hkq
+          | false => rfl
+        obtain ⟨g, hg, _⟩ := ihq hnfq hcnq hkq' hq
+        obtain ⟨g', hg'⟩ := lim_clauses_phi_arg_nf hcnp hcnq
+          (phiLocalNfOK_spec hnfLocal hq hkq') g hg
+        exact ⟨fun n => phi p (g' n), hg', fun n => by intro hc; exact Term.noConfusion hc⟩
+  | add u v ihu ihv =>
+    intro hnf h hk _
+    obtain ⟨_, hnfv⟩ := nfOK_add hnf
+    obtain ⟨hAPu, hcnu, hcnv, hdvu⟩ := cnv_add h
+    have hvz : v ≠ zero := by
+      intro hc
+      rw [hc, show hdLe (zero : Term) u = false from rfl] at hdvu
+      exact Bool.noConfusion hdvu
+    obtain ⟨g, hg, hgz⟩ := ihv hnfv hcnv hk hvz
+    exact ⟨fun n => add u (g n),
+      lim_clauses_sum g hcnu hAPu hcnv hdvu hg.1 hg.2.1 hg.2.2.1 hg.2.2.2 hgz,
+      fun n => by intro hc; exact Term.noConfusion hc⟩
+
+/-! Non-vacuity, again by a consumer.  §15.38's row test needed two hypotheses; the same row
+now needs none, and two more rows that `asm_epsOmegaSq` could not be stated for go through. -/
+
+theorem asm_epsOmegaSq' :
+    ∃ fs : Nat → Term, LimClauses epsOmegaSq fs ∧ ∀ n, fs n ≠ zero :=
+  asm_veblen epsOmegaSq (by decide) (by decide) (by decide) (by decide)
+
+theorem asm_epsOmegaOmega' :
+    ∃ fs : Nat → Term, LimClauses epsOmegaOmega fs ∧ ∀ n, fs n ≠ zero :=
+  asm_veblen epsOmegaOmega (by decide) (by decide) (by decide) (by decide)
+
+theorem asm_epsEps0' :
+    ∃ fs : Nat → Term, LimClauses epsEps0 fs ∧ ∀ n, fs n ≠ zero :=
+  asm_veblen epsEps0 (by decide) (by decide) (by decide) (by decide)
+
 end Evidence.WF
