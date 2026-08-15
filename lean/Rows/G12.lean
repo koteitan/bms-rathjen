@@ -989,6 +989,52 @@ theorem V_eq_Win (m : Nat) : V m=Win 3 0 (m+2) := by
   Trans.Recal.redP (((2:Int),(1:Int)) :: Win (i+5) 1 n)
     == Trans.Recal.redP (((5:Int),(1:Int)) :: Win (i+5) 3 n)
 
+/-! ### Link 2, step 10: the five normal forms
+
+`red` normalises a ladder `(c,1) :: Win i d n` to something that depends only on
+`i mod 5` and `n` — the head value `c` and the shift `d` are forgotten (measured over
+`c ∈ 2..4`, `d ∈ 0..3`; the forgetting is not unconditional, see the `#guard`s).
+
+FOUR OF THE FIVE NORMAL FORMS ARE A HEAD PLUS A WINDOW.  Phase 2 is the exception and
+carries a SECOND exceptional column, which is why a uniform closed form was not found by
+guessing and had to be read off the five cases:
+
+    NF 0 n = (1,1) :: Win 0 2 n
+    NF 1 n = (1,1) :: Win 1 1 n
+    NF 2 n = (1,1) :: (2,2) :: Win 3 1 (n-1)        ← two heads
+    NF 3 n = (1,1) :: Win 3 1 n
+    NF 4 n = (1,1) :: Win 4 0 n
+
+`NF` is a fixed point of `redP` (measured), which is the statement `redP_L` will consume:
+`red (V m) = V m` reduces to `red (Y 2 5 1 m) = NF 0 m`, and the induction that proves it
+walks the five phases with `n` decreasing. -/
+
+/-- The shape every level of `red`'s recursion has: one exceptional head over a window. -/
+def Y (c : Int) (i : Nat) (d : Int) (n : Nat) : Trans.Recal.PS := (c,1) :: Win i d n
+
+/-- The normal form of `Y`, by phase and length. -/
+def NF : Nat → Nat → Trans.Recal.PS
+  | 0, n => ((1:Int),(1:Int)) :: Win 0 2 n
+  | 1, n => ((1:Int),(1:Int)) :: Win 1 1 n
+  | 2, 0 => [((1:Int),(1:Int))]
+  | 2, n+1 => ((1:Int),(1:Int)) :: ((2:Int),(2:Int)) :: Win 3 1 n
+  | 3, n => ((1:Int),(1:Int)) :: Win 3 1 n
+  | _, n => ((1:Int),(1:Int)) :: Win 4 0 n
+
+-- 相ごとの正規形 (測定)
+#guard (List.range 5).all fun r => (List.range 14).all fun n =>
+  Trans.Recal.redP (Y 2 (r+5) 1 n)==NF r n
+-- オフセットは 5 で巡回する
+#guard (List.range 5).all fun r => (List.range 10).all fun n =>
+  (List.range 3).all fun a => Trans.Recal.redP (Y 2 (r+5*(a+1)) 1 n)==NF r n
+-- 正規形は不動点
+#guard (List.range 5).all fun r => (List.range 12).all fun n =>
+  Trans.Recal.redP (NF r n)==NF r n
+-- 頭と shift を忘れるのは無条件ではない: 成り立つ範囲を記録しておく
+#guard ([(2,0),(2,1),(2,2),(2,3),(3,1),(3,2),(3,3)] : List (Nat × Int)).all fun cd =>
+  (List.range 5).all fun r => (List.range 8).all fun n =>
+    Trans.Recal.redP (Y ((cd.1:Nat):Int) (r+5) cd.2 n)==NF r n
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
