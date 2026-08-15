@@ -33,6 +33,7 @@ table/ に書かない。[plan/README.md](README.md) と
 # 実装
 # D.Cl
   規則で閉じた最小の集合。上のすべての定義が使う一般形
+  ## T.Cl.closed / T.Cl.min / T.Cl.inv
 ```
 
 ## 対応表の列

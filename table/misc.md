@@ -8,6 +8,7 @@
 - [E.cert](table-r1.md#ecert) が言っていないこと
 - ✅ の付いた行について追加で言えること (T.unique / T.bound / T.eps0)
 - $`\mathcal{T}`$ — 形成条件を課す前の項の全体 (D.Term)
+- [D.Cl](table-r1.md#dcl) の読み方 — $`\forall f`$ が規則の族であること
 - [D.TM](table-r1.md#dtm) の読み方 — Rathjen 表記の標準形、$`Z`$ の出自、$`\bar\varphi`$ の不動点
 
 ## D.Term
@@ -149,3 +150,16 @@ $`\bar\varphi(0,\beta)`$ は最初の不動点未満では $`\omega^\beta`$ だ�
 
 **不動点の下では 2 つの読みが一致するので、そこだけで較正した関数・コーパス・読者は
 上で静かに誤る。**
+
+## D.Cl の読み方
+
+[D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall f`$ は、$`f`$ ごとに
+規則が 1 本ずつあるという意味である ([D.Cl](table-r1.md#dcl) の $`R`$ が規則の族を含む)。
+
+- 規則を使う側 ([T.Cl.closed](table-r1.md#tclclosed)) では、$`f`$ を 1 つ選んで前件を潰す
+- 逆向き ([T.Cl.inv](table-r1.md#tclinv)) では、そういう $`f`$ が存在することが言える
+
+**前件は有限とは限らない。** [D.Certified.succ](table-r1.md#dcertifiedsucc) の
+$`\forall n \in \mathbb{N}`$ の前件は可算無限個ある。だから「空集合から始めて
+有限回ずつ足していく」読み方では届かず、共通部分による定義が要る。
+

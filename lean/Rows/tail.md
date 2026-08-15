@@ -51,9 +51,8 @@
 
 $`\lt`$ は $`\mathfrak{T}(M)`$ の線形順序 ([Rathjen, 1991] 2.3)。
 
-$`\mathrm{Certified}`$ は 3 規則で閉じた**最小の**関係なので、極限行については逆も言える —
-$`\mathrm{Certified}(S, t)`$ が成り立つのは、上の 6 条件を満たす $`f`$ が**存在するとき、
-かつそのときに限る**。
+[T.Cl.inv](#tclinv) より逆も言える — $`\mathrm{Certified}(S, t)`$ が成り立つのは、
+上の 6 条件を満たす $`f`$ が**存在するとき、かつそのときに限る**。
 
 ## D.TM
 
@@ -174,12 +173,11 @@ $`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型�
 
 # D.Cl
 
-[D.Certified](#dcertified) と [D.TM](#dtm) の「次の規則で閉じた最小の…」の一般形。
-
 台集合 $`U`$ を固定する。**規則**とは対 $`(P, c)`$ であって $`P \subseteq U`$ (前件)、
-$`c \in U`$ (結論) のものと定義する。規則の集合を $`R`$ と書く。
+$`c \in U`$ (結論) のものと定義する。$`P`$ は有限とは限らない。
+規則の集合を $`R`$ と書く。
 
-$`X \subseteq U`$ が $`R`$ で**閉じている**とは、次が成り立つことと定義する。
+$`X \subseteq U`$ が $`R`$ で**閉じている**とは:
 
 ```math
 \forall (P, c) \in R.\;\; P \subseteq X \;\longrightarrow\; c \in X
@@ -193,33 +191,22 @@ $`X \subseteq U`$ が $`R`$ で**閉じている**とは、次が成り立つこ
 X \text{ が } R \text{ で閉じている} \,\bigr\}
 ```
 
-$`U`$ 自身が閉じているので右辺の族は空でなく、共通部分もまた閉じているので、
-$`\mathrm{Cl}(R)`$ は実際に最小である。使い方は 2 つある。
-
-**(1) 規則を使う。** $`\mathrm{Cl}(R)`$ は閉じているので:
+## T.Cl.closed
 
 ```math
 (P, c) \in R \;\land\; P \subseteq \mathrm{Cl}(R)
 \;\longrightarrow\; c \in \mathrm{Cl}(R)
 ```
 
-**(2) 最小性。** これが規則についての帰納法である:
+## T.Cl.min
 
 ```math
 X \text{ が } R \text{ で閉じている} \;\longrightarrow\; \mathrm{Cl}(R) \subseteq X
 ```
 
-(2) から**逆向き**が出る — $`c \in \mathrm{Cl}(R)`$ なら、$`c`$ を結論に持ち前件が
-$`\mathrm{Cl}(R)`$ に収まっている規則が $`R`$ の中に**存在する**。
+## T.Cl.inv
 
-## 規則の族と量化子
-
-[D.Certified.lim](#dcertifiedlim) の $`\forall f`$ は、$`f`$ ごとに規則が 1 本ずつ
-あるという意味である ($`R`$ が規則の族を含む)。だから
-
-- 規則を使う側 (1) では、$`f`$ を 1 つ選んで前件を潰す
-- 逆向き (2) では、そういう $`f`$ が**存在する**ことが言える
-
-**前件 $`P`$ は有限とは限らない。** [D.Certified.succ](#dcertifiedsucc) の
-$`\forall n \in \mathbb{N}`$ の前件は可算無限個ある。だから
-「空集合から始めて有限回ずつ足していく」読み方では届かず、上の共通部分による定義を使う。
+```math
+c \in \mathrm{Cl}(R) \;\longrightarrow\;
+\exists (P, c) \in R.\;\; P \subseteq \mathrm{Cl}(R)
+```
