@@ -171,3 +171,55 @@ $`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型�
 [T(M) の順序](../lean/TM/Order.lean) ·
 [基本列](../lean/TM/FS.lean) ·
 [証明書](../lean/Evidence/Cert.lean)
+
+# D.Cl
+
+[D.Certified](#dcertified) と [D.TM](#dtm) の「次の規則で閉じた最小の…」の一般形。
+
+台集合 $`U`$ を固定する。**規則**とは対 $`(P, c)`$ であって $`P \subseteq U`$ (前件)、
+$`c \in U`$ (結論) のものと定義する。規則の集合を $`R`$ と書く。
+
+$`X \subseteq U`$ が $`R`$ で**閉じている**とは、次が成り立つことと定義する。
+
+```math
+\forall (P, c) \in R.\;\; P \subseteq X \;\longrightarrow\; c \in X
+```
+
+**$`R`$ で閉じた最小の集合** $`\mathrm{Cl}(R)`$ を、閉じている集合すべての共通部分と
+定義する。
+
+```math
+\mathrm{Cl}(R) \;=\; \bigcap \bigl\{\, X \subseteq U \;\bigm|\;
+X \text{ が } R \text{ で閉じている} \,\bigr\}
+```
+
+$`U`$ 自身が閉じているので右辺の族は空でなく、共通部分もまた閉じているので、
+$`\mathrm{Cl}(R)`$ は実際に最小である。使い方は 2 つある。
+
+**(1) 規則を使う。** $`\mathrm{Cl}(R)`$ は閉じているので:
+
+```math
+(P, c) \in R \;\land\; P \subseteq \mathrm{Cl}(R)
+\;\longrightarrow\; c \in \mathrm{Cl}(R)
+```
+
+**(2) 最小性。** これが規則についての帰納法である:
+
+```math
+X \text{ が } R \text{ で閉じている} \;\longrightarrow\; \mathrm{Cl}(R) \subseteq X
+```
+
+(2) から**逆向き**が出る — $`c \in \mathrm{Cl}(R)`$ なら、$`c`$ を結論に持ち前件が
+$`\mathrm{Cl}(R)`$ に収まっている規則が $`R`$ の中に**存在する**。
+
+## 規則の族と量化子
+
+[D.Certified.lim](#dcertifiedlim) の $`\forall f`$ は、$`f`$ ごとに規則が 1 本ずつ
+あるという意味である ($`R`$ が規則の族を含む)。だから
+
+- 規則を使う側 (1) では、$`f`$ を 1 つ選んで前件を潰す
+- 逆向き (2) では、そういう $`f`$ が**存在する**ことが言える
+
+**前件 $`P`$ は有限とは限らない。** [D.Certified.succ](#dcertifiedsucc) の
+$`\forall n \in \mathbb{N}`$ の前件は可算無限個ある。だから
+「空集合から始めて有限回ずつ足していく」読み方では届かず、上の共通部分による定義を使う。
