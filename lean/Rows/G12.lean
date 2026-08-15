@@ -1098,6 +1098,38 @@ theorem phase4_cons (n : Nat) :
 #guard (List.range 12).all fun n =>
   (((2:Int),(1:Int)) :: Win 0 3 n)==Win 4 0 (n+1)
 
+/-! ### Link 2, step 12: the third family, and where the row-one `2` bites
+
+Phase 0's descendant has row-one `0`, so the recursion leaves `Y` for
+
+    Z c i d n = (c,0) :: Win i d n
+
+and phase 0 closes exactly when `red (Z 2 6 1 n) = (0,0) :: Win 1 0 n`, which is measured.
+`Z`'s normal forms are windows in three phases and not in the fourth:
+
+    NFZ 1 n = (0,0) :: Win 1 0 n
+    NFZ 3 n = (0,0) :: Win 3 0 n
+    NFZ 4 n = (0,0) :: Win 4 (-1) n
+    NFZ 2 n = (0,0) :: (1,1) :: (1,1) :: …        ← a DOUBLED column, not a window
+
+**PHASE 2 IS THE EXCEPTION IN EVERY FAMILY.**  `NF 2` carries a second head, `NFZ 2`
+carries a doubled column, phase 2 is the one with `trMax = 2`, and phase 1 — the phase whose
+branch reaches phase 2 — is the one whose branch splits.  All four are the same fact: `Gq 2`
+is `2`, and this is the only row-one value above `1` in the ladder.  `Rows/G10.lean`'s
+ladders never exceed `1`, which is why its six-phase cycle has no analogue of any of this. -/
+
+-- 相 0 が閉じる条件 (測定)
+#guard (List.range 12).all fun n =>
+  Trans.Recal.redP (((2:Int),(0:Int)) :: Win 6 1 n)==(((0:Int),(0:Int)) :: Win 1 0 n)
+#guard (List.range 10).all fun n =>
+  Trans.Recal.redP (((2:Int),(0:Int)) :: Win 8 1 n)==(((0:Int),(0:Int)) :: Win 3 0 n)
+#guard (List.range 10).all fun n =>
+  Trans.Recal.redP (((2:Int),(0:Int)) :: Win 9 1 n)==(((0:Int),(0:Int)) :: Win 4 (-1) n)
+-- 相 2 は窓にならない: 3 列目が 2 列目と同じ
+#guard Trans.Recal.redP (((2:Int),(0:Int)) :: Win 7 1 3)
+  ==([((0:Int),(0:Int)),((1:Int),(1:Int)),((1:Int),(1:Int)),((2:Int),(1:Int))]
+     : Trans.Recal.PS)
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
