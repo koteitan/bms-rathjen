@@ -207,4 +207,39 @@ theorem fpar_zero_of_gap
   obtain ⟨j,hj⟩ : ∃ j, M.length=j+1 := ⟨M.length-1,by omega⟩
   rw [hj,fpar0Aux_step,if_pos (by omega)]
 
+/-! ## 枝が 1 本の畳み込み
+
+`red` の第 1 分岐は、`trMax` が `1` で枝が 1 本のとき、`[(0,0),(1,1)]` を切り出して
+枝の再構成に降りるだけになる。梯子に依らない形で 1 度だけ書く。 -/
+
+theorem red_fold_one (M : Trans.Recal.PS) (f : Nat) (nJ jnJ : Int) (B : Trans.Recal.PS)
+    (hzero : Trans.Recal.isZeroP M=false)
+    (hprin : Trans.Recal.isPrincipalP M=true)
+    (hg0 : Trans.Recal.gp0 M 0=0) (hg1 : Trans.Recal.gp1 M 0=0)
+    (htr : Trans.Recal.trMax M=1)
+    (hne : ((1:Int)==Trans.Recal.lenI M-1)=false)
+    (hbr : Trans.Recal.brF M=[B])
+    (hfn : (Trans.Recal.firstNodes M).getD 0 0=2)
+    (hjn : (Trans.Recal.joints M).getD 0 0=jnJ)
+    (hnJ : (if (Trans.Recal.gp1 B 0==0)=true then (-1:Int)
+            else Trans.Recal.fpar M 1 2 0)=nJ) :
+    Trans.Recal.red (f+1) M
+      = Trans.Recal.jjSeq 0 1
+        ++ Trans.Recal.incrFirst
+             (Trans.Recal.red f ((jnJ+1,nJ+1) :: Trans.Recal.derp B)) (jnJ-nJ) := by
+  simp only [Trans.Recal.red]
+  rw [hzero]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [hg0,hg1]
+  rw [show ((0:Int)==0)=true from rfl]
+  simp only [Bool.and_self,if_true]
+  rw [htr,hne]
+  simp only [Bool.false_eq_true,if_false]
+  rw [hbr]
+  simp only [List.length_cons,List.length_nil,List.range_succ,List.range_zero,
+    List.foldl_cons,List.foldl_nil,List.nil_append,List.getD_cons_zero]
+  rw [hfn,hjn,hnJ]
+
 end Rows.Ladder
