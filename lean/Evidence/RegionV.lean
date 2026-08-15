@@ -1,4 +1,5 @@
 import Evidence.Region
+import Evidence.CNVOps
 import Trans.Recal
 import TM.FS
 /-
@@ -57,8 +58,14 @@ Both survivors are genuine: at ε₁, `fsN`'s tower climbs over ω^(ε₀+1) and
 over ε₀·2; at ψ₀(Ω+ω), `fsV` skips ε₀+1.  An index shift is harmless to the four clauses
 (monotonicity carries the cofinality clause across it), so what is owed for `Hlim`'s
 fourth conjunct is a DOMINATION against one of these — `Evidence/WF.lean` §15.39's
-`limClauses_transfer` — and not a new sequence.  That, plus `Hzero`/`Hsucc`, is the whole
-remaining distance to the ε₁ and ε_ω rows' ✅.
+`limClauses_transfer` — and not a new sequence.
+
+WHAT IS PROVED HERE, AND WHAT IS LEFT.  §11 proves the value is ALWAYS `CNV` — no normal
+form needed, because `Evidence/CNVOps.lean` closes `CNV` under the only two operations
+`sumVal` uses.  §12 discharges `certIn_region`'s FIRST TWO SUPPLIES as theorems.  What
+remains for the ε₁ and ε_ω rows' ✅ is `Hclosed` (that `fs` preserves `nf`, measured), and
+`Hlim` — of whose six conjuncts §9 measures five clean and the sixth is the cofinality
+above.
 -/
 
 namespace Evidence.Region
@@ -212,7 +219,80 @@ theorem nf_of_ps {r a : A} (h : nf (.ps r a) = true) : nf r = true ∧ nf a = tr
 
 theorem topOK_of_ps {r a : A} (h : topOK (.ps r a) = true) : topOK r = true := h
 
--- 値が 𝔗(M) の項であることは標準形なしでも成り立つ (母集団 91)。
-#guard corpus.all fun t => inT (sumVal t) == true
+/-! ## §11 The value is always `CNV`
+
+`Evidence/CNVOps.lean` gives `CNV` closed under `plus` and `ω^·`, which is exactly what
+`sumVal` is built from — so this needs no normal form at all, and the `#guard` over all 91
+indices was measuring a theorem.  It supplies `hfc` for `limClauses_transfer`, `inT` for the
+gate's guard, and `CNV` for `asm_veblen`. -/
+
+open Evidence.WF (CNV cnv_plus cnv_omegaNF cnv_ofNat inT_of_cnv)
+
+theorem cnv_one : CNV one = true := rfl
+
+theorem cnv_epsT (j : Nat) : CNV (epsT j) = true := by
+  show (CNV one && CNV (ofNat j)) = true
+  rw [cnv_one, cnv_ofNat j]
+  rfl
+
+/-- **領域の値はつねに `CNV`。** 標準形はいらない。 -/
+theorem cnv_sumVal : ∀ (t : A), CNV (sumVal t) = true := by
+  intro t
+  induction t with
+  | nil => rfl
+  | om r ih => exact ih
+  | ps r a ihr iha =>
+    rw [sumVal_ps]
+    refine cnv_plus ihr (cnv_omegaNF ?_)
+    show CNV (if omN a = 0 then sumVal a else plus (epsT (omN a - 1)) (sumVal a)) = true
+    by_cases h : omN a = 0
+    · rw [if_pos h]; exact iha
+    · rw [if_neg h]; exact cnv_plus (cnv_epsT _) iha
+
+/-- 値は 𝔗(M) の項 — ゲート自身の番人。 -/
+theorem inT_sumVal (t : A) : inT (sumVal t) = true := inT_of_cnv _ (cnv_sumVal t)
+
+/-! ## §12 THE FIRST TWO SUPPLIES, DISCHARGED
+
+`Reg`/`Val` are `certIn_region`'s two parameters at this region, and `Hzero`/`Hsucc` are
+now theorems.  Both go through `Region.kind_mat`: a kind-zero matrix comes only from the
+index `nil`, whose value is `0`; a kind-succ matrix comes only from `ps r nil`, whose value
+is `sumVal r ⊕ 1` and whose every expansion is `mat r 0` — the SAME matrix for every `n`,
+which is what `Certified.succ` wants.
+
+`Hlim` is what remains, and of its six conjuncts §9 measures five clean; the sixth is
+cofinality, for which the route is `Evidence/WF.lean` §15.39's `limClauses_transfer`. -/
+
+/-- 領域: 標準形の最上位添字の行列。 -/
+def Reg (S : BMS.Matrix) : Prop := ∃ t, nf t = true ∧ topOK t = true ∧ S = mat t 0
+
+/-- その上の値付け。 -/
+def Val (S : BMS.Matrix) (v : Term) : Prop :=
+  ∃ t, nf t = true ∧ topOK t = true ∧ S = mat t 0 ∧ v = sumVal t
+
+/-- **`Hzero`。** 種別 0 の行列は添字 `nil` から来て、値は `0`。 -/
+theorem hzero_supply : ∀ (S : BMS.Matrix) (v : Term), Reg S → Val S v →
+    BMS.kind S = BMS.Kind.zero → v = zero := by
+  rintro S v _ ⟨t, hnf, htop, rfl, rfl⟩ hk
+  rw [kind_mat t htop] at hk
+  rw [kindA_zero hk]
+  rfl
+
+/-- **`Hsucc`。** 種別後続の行列は `ps r nil` から来て、値は `sumVal r ⊕ 1`。 -/
+theorem hsucc_supply : ∀ (S : BMS.Matrix) (v : Term), Reg S → Val S v →
+    BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, Val (BMS.expand S n) u := by
+  rintro S v _ ⟨t, hnf, htop, rfl, rfl⟩ hk
+  rw [kind_mat t htop] at hk
+  obtain ⟨r, rfl⟩ := kindA_succ hk
+  refine ⟨sumVal r, sumVal_succ r, inT_sumVal _, inT_sumVal _, ?_, ?_⟩
+  · rw [sumVal_succ r, Evidence.WF.plus_one_eq_succT (sumVal r) (cnv_sumVal r)]
+    exact Evidence.WF.lt_succT (sumVal r) (cnv_sumVal r)
+  · intro n
+    refine ⟨r, (nf_of_ps hnf).1, topOK_of_ps htop, ?_, rfl⟩
+    show (BMS.expand? (mat (.ps r .nil) 0) n).getD [] = mat r 0
+    rw [expand_mat (.ps r .nil) htop (by intro h; exact A.noConfusion h) n]
+    rfl
 
 end Evidence.Region
