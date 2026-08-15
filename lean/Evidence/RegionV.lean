@@ -24,6 +24,12 @@ recursion, no `isFP` split and no collapsing clause: §16.5 refuted all three as
 a `φ̄`-shaped `sqv`, and in Buchholz coordinates they are `omegaNF`'s own business.  That
 is the same sentence as `Evidence/Region.lean`'s, on the value side.
 
+THE COMPARISON MUST BE THE MATRIX'S, NOT THE VALUE'S (§9.1).  Writing `nf`'s two
+comparisons with 𝔗(M)'s `le`/`lt` on `argVal` gives a DIFFERENT predicate: `argVal` sends
+`Ω` to `ε_{k-1}` and so forgets the level, and at `ψ₀(ψ₀(Ω) ⊕ ψ₀(0))` it accepts what
+Buchholz rejects.  The two agree on all 1614 indices of the closure corpus and the
+counterexample sits just outside it.
+
 THE NORMAL FORM IS BUCHHOLZ'S, AND IT HAS TWO HALVES.  `nf` asks
 
   (1) the summands descend — Ω before every ψ₀, and ψ₀(b) after ψ₀(a) only when b ≤ a;
@@ -110,7 +116,9 @@ def firstArg : A → Option A
   | .om r => firstArg r
   | .ps r a => match firstArg r with | some b => some b | none => some a
 
-/-- **Buchholz の標準形。** 加数が降順で、かつ `ψ₀(a)` の中の `ψ₀` 引数が `a` 未満。 -/
+/-- **Buchholz の標準形。** 加数が降順で、かつ `ψ₀(a)` の中の `ψ₀` 引数が `a` 未満。
+    比較は **行列の辞書式順序** `BMS.cmpM` で書く。§9.1 が、値 `argVal` で書いた
+    `nfV` はこれと同じ述語では **ない** ことを反例つきで示す。 -/
 def nf : A → Bool
   | .nil => true
   | .om r => nf r && (match lastSm r with
@@ -122,6 +130,18 @@ def nf : A → Bool
       && (match firstArg a with
           | none => true | some b => BMS.cmpM (mat b 0) (mat a 0) == .lt)
 
+/-- 同じ形を **値の順序** で書いたもの。§9.1 の反例により `nf` とは別の述語である。 -/
+def nfV : A → Bool
+  | .nil => true
+  | .om r => nfV r && (match lastSm r with
+      | none => true | some none => true | some (some _) => false)
+  | .ps r a => nfV r && nfV a
+      && (match lastSm r with
+          | none => true | some none => true
+          | some (some b) => le (argVal a) (argVal b))
+      && (match firstArg a with
+          | none => true | some b => lt (argVal b) (argVal a))
+
 /-! ## §9 The measurements
 
 The corpus is `Evidence/Region.lean`'s: every top-level index of size ≤ 3, 91 of them,
@@ -131,6 +151,50 @@ of which 18 are normal forms. -/
 def corpusNF : List A := corpus.filter nf
 
 #guard corpusNF.length == 18
+
+/-- 展開で 3 段閉じた、はるかに広い母集団 (1614 個)。 -/
+def closureCorpus : List A :=
+  let d1 := corpus ++ corpus.flatMap (fun t => (List.range 4).map (fun n => fs t n))
+  let d2 := d1 ++ d1.flatMap (fun t => (List.range 4).map (fun n => fs t n))
+  (d2 ++ d2.flatMap (fun t => (List.range 3).map (fun n => fs t n))).eraseDups
+
+#guard closureCorpus.length == 1614
+#guard (closureCorpus.filter nf).length == 294
+-- 広い母集団でも `fs` は標準形を保ち、値は reader と一致する。
+#guard (closureCorpus.filter nf).all fun t => (List.range 5).all fun n => nf (fs t n)
+#guard (closureCorpus.filter nf).all fun t => Trans.oR (mat t 0) == some (sumVal t)
+
+/-! ### §9.1 THE NORMAL FORM CANNOT BE WRITTEN IN THE VALUE'S ORDER
+
+`nfV` is `nf` with both comparisons moved from `BMS.cmpM` to 𝔗(M)'s `le`/`lt` on `argVal`.
+That would have been worth having: the limit clause's first conjunct is a 𝔗(M) inequality,
+so one order would have served both obligations.  **It is a different predicate, and the
+value's order is the wrong one.**
+
+    on all 1614 indices of `closureCorpus`   `nf` and `nfV` agree
+    at `ψ₀(ψ₀(Ω) ⊕ ψ₀(0))`                   `nf` = false, `nfV` = TRUE
+
+WHY, IN ONE LINE.  `argVal` sends `Ω` to `ε_{k-1}`, so it FORGETS THE LEVEL.  Buchholz's
+condition at that index asks whether `Ω < ψ₀(Ω) ⊕ ψ₀(0)`, and the answer is no; `nfV` asks
+whether `ε₀ < ε₀ ⊕ 1`, and the answer is yes.  The matrix's lexicographic order keeps the
+level in row 1 and gets it right.  `nfV` also FAILS TO BE CLOSED under `fs` at that index —
+all four of its expansions are rejected by both predicates — which is how the defect
+announced itself.
+
+AND THE AGREEMENT ON 1614 WAS NOT ENOUGH.  The corpus is the size-≤3 indices closed under
+`fs` three times; the counterexample sits just outside it, and the definition had already
+been switched on the strength of that agreement.  Same shape as this repo's earlier
+corpus accidents: **a measurement over a population we generated is a measurement about
+the population.** -/
+
+def cexNF : A := .ps .nil (.ps (.ps .nil (.om .nil)) .nil)
+
+#guard nf cexNF == false
+#guard nfV cexNF == true
+#guard closureCorpus.all fun t => nf t == nfV t
+#guard !(closureCorpus.contains cexNF)
+-- `nfV` の側は `fs` で閉じない。
+#guard (List.range 4).all fun n => nfV (fs cexNF n) == false
 
 -- 値は reader のものと一致する。
 #guard corpusNF.all fun t => Trans.oR (mat t 0) == some (sumVal t)
