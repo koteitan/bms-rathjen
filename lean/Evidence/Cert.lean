@@ -4694,10 +4694,19 @@ reader to discover.
   * §23 then made that recursion's SHAPE reusable, and `certIn_sq_via_region`
     rebuilds item 2 as one instance of it.
 
-ITEM 3 IS STILL OPEN, and it is now the only one.  It is also the point where this
-lane meets `table/diff.md`'s family 4: the 326th disputed row cannot be decided by
-the expansion-sequence test (neither value lies on `fsN`), so a negative control of
-exactly the shape asked for here is what decides it. -/
+  * ITEM 3 LANDED TOO, and an earlier revision of this note said otherwise.  §13.1's
+    `neg_control_eps0_times_two` is the control this item asks for, with ε₀ as the
+    witness, and §15.8's `neg_control_eps0_times_two_strong` is strictly stronger:
+    `¬ Certified [[0,0],[1,1]] (ε₀·2)` with no instantiation assumed at all.
+
+SO NOTHING IN THIS LIST IS OPEN.  What is open is the SAME THREE ITEMS FOR A ROW
+THAT IS NOT YET REGISTERED — a certificate needs its family (§23's `Reg` and the
+three supplies), and a negative control needs the certificate first, since §6.1's
+`certRows_unique_gate` and §15.10's `certRows_no_overshoot` deliver it for free
+once a row is registered.  That is where `table/diff.md`'s family 4 meets this
+lane: the 326th disputed row cannot be decided by the expansion-sequence test
+(neither value lies on `fsN`), so it waits on the certificate, not on a new idea
+about controls. -/
 
 /-- `(0)(1)…(n)` with a second row of zeros: the n-th expansion of the ε₀ row. -/
 def towerM (n : Nat) : Matrix := (List.range (n + 1)).map (fun a => [a, 0])
