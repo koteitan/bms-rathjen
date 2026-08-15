@@ -14013,4 +14013,165 @@ theorem limClauses_eps0_shift : LimClauses eps0T (fun n => tower (n+1)) :=
     (fun n => lt_tower_step (n+1))
     (fun n => le_of_lt (lt_tower_step n))
 
+/-! ### §15.40 `predC` ON `CNV`, WITH `kindV` — the two order facts `Hsucc` needs
+
+§15.20 proved `predC` IS the predecessor wherever `kindV` sends it (`succT_predC`) but left
+the two ORDER facts about it stated on `CN` / `kindC`, where §11 put them.  `Hsucc` — the last
+hypothesis of §15.38's assembly — needs both on `CNV` / `kindV`: they are what discharge core
+(B)'s `H1`, `H2` and `hua` at a general first argument.
+
+**THE INDUCTIONS CARRY OVER, AND THE ONE PLACE THEY DIFFER IS THE `⊕` HEAD.**  §11's proofs
+destructure the head as `φ̄0e` through `eq_pow_of_isPow`, which `CN` licenses and `CNV` does
+not: a `CNV` sum's head is only ADDITIVELY PRINCIPAL, so it can be `M`, `ψ`, `Z`, `ω̄^·` or a
+`φ̄ab` with `a ≠ 0`.  Everything §11 does with the head is therefore restated for an arbitrary
+`isAP` head, which costs three one-line lemmas (`lt_add_nsum`, `nsum_of_isAP`,
+`ne_zero_of_isAP`) and no new mathematics.
+
+`lt_add_nsum` is `lt_add_phi` with the target generalised from `φ̄pq` to any non-sum, which is
+what `ltF_succ_add_nsum` already says at the fuelled level. -/
+
+/-- 和と非和の比較は先頭だけで決まる。§7 の `lt_add_phi` の一般形。 -/
+theorem lt_predC_v : ∀ (b : Term), CNV b = true → kindV b = true →
+    lt (predC b) b = true := by
+  intro b
+  induction b with
+  | zero => intro _ hk; exact Bool.noConfusion hk
+  | M => intro hcn _; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn _; exact Bool.noConfusion hcn
+  | phi x y _ _ =>
+    intro _ hk
+    simp only [kindV,Bool.and_eq_true,beq_iff_eq] at hk
+    obtain ⟨hx,hy⟩ := hk
+    subst hx; subst hy
+    show lt zero (phi zero zero)=true
+    exact ltF_left_zero
+      (by show 1 ≤ 2*((zero:Term).deg+(one:Term).deg)+8; omega) (by decide)
+  | add u v _ ihv =>
+    intro hcn hk
+    obtain ⟨hAPu,_,hcnv,_⟩ := cnv_add hcn
+    show lt (if (v==one)=true then u else add u (predC v)) (add u v)=true
+    by_cases hv : (v==one)=true
+    · rw [if_pos hv,lt_atom_add (isAtom_of_isAP hAPu)]
+      exact le_self _
+    · rw [if_neg hv]
+      have hkv : kindV v=true := hk
+      have hlt : lt (predC v) v=true := ihv hcnv hkv
+      rw [lt_add_add (by
+        intro h
+        injection h with _ h2
+        exact ne_of_ltF hlt h2),if_pos rfl]
+      exact hlt
+
+/-- 和と非和の比較は先頭だけで決まる。`lt_add_phi` の一般形。 -/
+theorem lt_add_nsum {a b t : Term} (h0 : t ≠ zero) (ht : NSum t=true) :
+    lt (add a b) t=lt a t := by
+  have hb := deg_pos b
+  unfold lt
+  cases h:fuelOf (add a b) t with
+  | zero => simp [fuelOf] at h
+  | succ f =>
+    rw [ltF_succ_add_nsum f h0 ht]
+    have hf : a.deg+t.deg≤f := by
+      unfold fuelOf at h
+      simp only [Term.deg] at h ⊢
+      omega
+    rw [← lt_eq_ltF a t f hf]
+    rfl
+
+theorem nsum_of_isAP : ∀ {a : Term}, a.isAP=true → NSum a=true
+  | zero, h => Bool.noConfusion h
+  | add _ _, h => Bool.noConfusion h
+  | M, _ => rfl
+  | omg _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+
+theorem le_predC_of_lt_v : ∀ (b : Term), CNV b = true → kindV b = true →
+    ∀ (q : Term), inT q = true → lt q b = true → le q (predC b) = true := by
+  intro b
+  induction b with
+  | M => intro hcn; exact Bool.noConfusion hcn
+  | omg _ _ => intro hcn; exact Bool.noConfusion hcn
+  | psi _ _ _ _ => intro hcn; exact Bool.noConfusion hcn
+  | Z _ _ => intro hcn; exact Bool.noConfusion hcn
+  | zero => intro _ hk; exact Bool.noConfusion hk
+  | phi x y _ _ =>
+    intro _ hk q hq hlt
+    simp only [kindV,Bool.and_eq_true,beq_iff_eq] at hk
+    obtain ⟨hx,hy⟩ := hk
+    subst hx; subst hy
+    have : q=zero := below_one q hq _ hlt
+    subst this
+    rfl
+  | add u v _ ihv =>
+    intro hcn hk q hq hlt
+    obtain ⟨hAPu,_,hcnv,_⟩ := cnv_add hcn
+    have hkv : kindV v=true := hk
+    show le q (if (v==one)=true then u else add u (predC v))=true
+    by_cases hv : (v==one)=true
+    · rw [if_pos hv]
+      have hveq : v=one := by simpa using hv
+      subst hveq
+      cases q with
+      | zero =>
+        show ((zero==u) || lt zero u)=true
+        rw [show lt zero u=true from
+          ltF_left_zero (by show 1 ≤ 2*((zero:Term).deg+u.deg)+8; omega)
+            (ne_zero_of_isAP hAPu)]
+        exact Bool.or_true _
+      | M => rw [lt_atom_add rfl] at hlt; exact hlt
+      | omg _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | psi _ _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | Z _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | phi _ _ => rw [lt_atom_add rfl] at hlt; exact hlt
+      | add c d =>
+        obtain ⟨_,_,hind⟩ := inT_add hq
+        by_cases heq : add c d=add u one
+        · rw [heq,lt_irrefl] at hlt; exact Bool.noConfusion hlt
+        rw [lt_add_add heq] at hlt
+        by_cases hcu : c=u
+        · rw [if_pos hcu] at hlt
+          have hdz : d=zero := below_one d hind _ hlt
+          subst hdz
+          exfalso
+          have hbad : inT (add c zero)=false := by
+            show (c.isAP && inT c && inT zero && ((zero:Term).isAP && le zero c))=false
+            rw [show ((zero:Term).isAP && le zero c)=false from rfl,Bool.and_false]
+          rw [hbad] at hq
+          exact Bool.noConfusion hq
+        · rw [if_neg hcu] at hlt
+          show ((add c d==u) || lt (add c d) u)=true
+          rw [lt_add_nsum (ne_zero_of_isAP hAPu) (nsum_of_isAP hAPu),hlt]
+          exact Bool.or_true _
+    · rw [if_neg hv]
+      cases q with
+      | zero =>
+        show ((zero==add u (predC v)) || lt zero (add u (predC v)))=true
+        rw [show lt zero (add u (predC v))=true from
+          ltF_left_zero
+            (by show 1 ≤ 2*((zero:Term).deg+(add u (predC v)).deg)+8; omega)
+            (by intro hc; exact Term.noConfusion hc)]
+        exact Bool.or_true _
+      | M => exact atom_step rfl hlt
+      | omg _ => exact atom_step rfl hlt
+      | psi _ _ => exact atom_step rfl hlt
+      | Z _ => exact atom_step rfl hlt
+      | phi _ _ => exact atom_step rfl hlt
+      | add c d =>
+        obtain ⟨_,_,hind⟩ := inT_add hq
+        by_cases heq : add c d=add u v
+        · rw [heq,lt_irrefl] at hlt; exact Bool.noConfusion hlt
+        rw [lt_add_add heq] at hlt
+        by_cases hcu : c=u
+        · rw [if_pos hcu] at hlt
+          subst hcu
+          exact le_add_tail (ihv hcnv hkv d hind hlt)
+        · rw [if_neg hcu] at hlt
+          show ((add c d==add u (predC v)) || lt (add c d) (add u (predC v)))=true
+          rw [lt_add_head hcu hlt]
+          exact Bool.or_true _
+
 end Evidence.WF

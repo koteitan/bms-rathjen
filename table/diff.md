@@ -430,7 +430,9 @@ $`f_n`$ が単調・有界・共終であることで、**$`f_n`$ が標準基�
     - ✅ ε₀ 行の残り 1 前提
     - 🚨 Veblen 断片の共終性
       - ✅ 組み立ての 5 枝のうち 4 枝 (`asm_generalB'`、`Evidence/WF.lean` §15.38)
-      - 🚨🤖 残る 1 枝 `Hsucc` — φ̄(a,b) の b が後続。3 分岐の候補列は測定済み
+      - 🚨 残る 1 枝 `Hsucc` — φ̄(a,b) の b が後続。3 分岐の候補列は測定済み
+        - ✅ `predC` の順序 2 事実を `CNV`/`kindV` へ (`WF.lean` §15.40)
+        - 🚨 枝 1 (a が後続)・枝 2 (a が極限)・枝 3 (a = 0)
     - 🚨 選定行のゲート `Certified(S, t)`
       - ✅ 領域の再帰 `certIn_region` (`Evidence/Cert.lean` §23)
       - ✅ 4 連言を行自身の列へ移す `limClauses_transfer` (`Evidence/WF.lean` §15.39)
