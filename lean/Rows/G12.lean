@@ -293,6 +293,84 @@ theorem S_add_five (m : Nat) : S (m+5)=L m := by
 #guard (List.range 10).all fun m => (Trans.Recal.brF (L m)).length==1
 #guard (List.range 10).all fun m => Trans.Recal.ppair (L m)==[L m]
 
+
+/-! ### Link 2, step 2: the recursion is a FIVE-PHASE family, and `red` forgets the shift
+
+MEASURED, and it is what makes the induction finite.  Writing `D h d m` for
+`(h,1) :: Tf i d m`:
+
+    redP (D h d m)              is INDEPENDENT of `h` and of `d`
+    redP ((0,0) :: D h d m)     likewise, and equals `(0,0) ::` the former
+    trMax ((0,0) :: D h d m) = 1,  brF has length 1,  joints = [1]
+
+`red` normalises the shift away, so the whole recursion is indexed by the OFFSET `i` into
+the tail and by the remaining length `m` alone.  Each level drops one column and advances
+the offset by one; offsetting by five is a shift of three, so the offset lives mod 5.
+
+    red (L m) = jjSeq 0 2 ++ incrFirst (red (V m)) 0
+    red (V m) = incrFirst ((red (Q m)).drop 1) 0
+    red (Q m) = jjSeq 0 1 ++ incrFirst (red ((2,1) :: Tf 1 1 m)) 1
+    red ((h,1) :: Tf i d (m+1))  descends to  (h',1) :: Tf (i+1) d' m
+
+The three facts the descent runs on are theorems below; the induction over them is not
+written.  This is the same shape as `Rows/G10.lean`'s six-phase cycle, one phase shorter. -/
+
+/-- The tail read from offset `i`, with every row-zero entry shifted by `d`.
+    `red`'s recursion advances `i` by one and drops one column at each level. -/
+def Tf (i : Nat) (d : Int) (m : Nat) : Trans.Recal.PS :=
+  (List.range m).map fun k => (p (k+i)+d,q (k+i))
+
+theorem Tf_zero (d : Int) (m : Nat) : Tf 0 d m=TS d m := by
+  unfold Tf TS
+  apply List.map_congr_left
+  intro k _
+  rfl
+
+/-- The five-phase period: offsetting by five is a shift of three. -/
+theorem Tf_add_five (i : Nat) (d : Int) (m : Nat) : Tf (i+5) d m=Tf i (d+3) m := by
+  unfold Tf
+  apply List.map_congr_left
+  intro k _
+  show (p (k+(i+5))+d,q (k+(i+5)))=(p (k+i)+(d+3),q (k+i))
+  rw [show k+(i+5)=(k+i)+5 by omega,p_add_five,q_add_five]
+  congr 1
+  omega
+
+/-- One level of `red`'s recursion: drop a column, advance the offset. -/
+theorem Tf_drop (i : Nat) (d : Int) (m : Nat) :
+    (Tf i d (m+1)).drop 1=Tf (i+1) d m := by
+  unfold Tf
+  rw [List.range_succ_eq_map,List.map_cons,List.drop_succ_cons,List.drop_zero,
+    List.map_map]
+  apply List.map_congr_left
+  intro k _
+  show (p (k+1+i)+d,q (k+1+i))=(p (k+(i+1))+d,q (k+(i+1)))
+  rw [show k+1+i=k+(i+1) by omega]
+
+#guard (List.range 6).all fun m => (List.range 4).all fun dd =>
+  Tf 0 (dd:Int) m == TS (dd:Int) m
+#guard (List.range 6).all fun m => (List.range 3).all fun i => (List.range 4).all fun dd =>
+  Tf (i+5) (dd:Int) m == Tf i ((dd:Int)+3) m
+#guard (List.range 6).all fun m => (List.range 5).all fun i => (List.range 4).all fun dd =>
+  (Tf i (dd:Int) (m+1)).drop 1 == Tf (i+1) (dd:Int) m
+-- 正規形は先頭の値にも shift にも依らない (測定)
+#guard (List.range 5).all fun i => (List.range 4).all fun m =>
+  Trans.Recal.redP (((2:Int),(1:Int)) :: Tf i 1 m)
+    == Trans.Recal.redP (((5:Int),(1:Int)) :: Tf i 3 m)
+
+#guard (List.range 6).all fun m => (List.range 4).all fun dd =>
+  Tf 0 (dd:Int) m == TS (dd:Int) m
+#guard (List.range 6).all fun m => (List.range 3).all fun i => (List.range 4).all fun dd =>
+  Tf (i+5) (dd:Int) m == Tf i ((dd:Int)+3) m
+#guard (List.range 6).all fun m => (List.range 5).all fun i => (List.range 4).all fun dd =>
+  (Tf i (dd:Int) (m+1)).drop 1 == Tf (i+1) (dd:Int) m
+-- 正規形は先頭の値にも shift にも依らない (測定)
+#guard (List.range 5).all fun i => (List.range 4).all fun m =>
+  Trans.Recal.redP (((2:Int),(1:Int)) :: Tf i 1 m)
+    == Trans.Recal.redP (((5:Int),(1:Int)) :: Tf i 3 m)
+#guard (List.range 6).all fun m =>
+  Trans.Recal.trMax (((0:Int),(0:Int)) :: ((2:Int),(1:Int)) :: Tf 1 1 m)==1
+
 /-! ### Link 3: the dictionary and the closed expansion sequence `fD`. -/
 abbrev Z0t : Term := Z zero
 
