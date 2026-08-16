@@ -5069,4 +5069,145 @@ theorem rebuild_col (M : Matrix) (tr dq u s : Nat)
 
 end
 
+/-! ## §33 `hmid`, AND WHERE THE BRANCHES START
+
+§32 left one hypothesis undischarged — that everything between the diagonal and a branch root
+is at least as deep as that root — and needed two indices it did not compute.  Both come out
+of §30.
+
+`hmid_of_blocks` is §30's `blocks_min` moved from the suffix's indexing to the matrix's: the
+columns before block `J` are `((blocks X).take J).flatten`, which is a PREFIX of `X`
+(`ent_take_flatten`), and `X` is `M.drop (tr+1)` (`ent_drop`).  Nothing new is proved; the
+running minimum was already there.
+
+`firstNodes` and `joints` are then arithmetic.  `idxSum` is the list of partial sums of the
+branch lengths — `idxSum_fold` says so in closed form, by the one induction that unwinds the
+`foldl` — hence
+
+    firstNodes M .getD J = trMax M + 1 + (length of the branches before J)
+    joints M     .getD J = fpar M 0 (that) 0
+
+which is exactly the pair `rebuild_col` consumes: the first is the branch root's index in `M`,
+the second is its row-0 parent.
+
+With these the fold's `J`-th term is pinned to `bJ` for every `J`, and what is left of the
+whole `red` proof is putting the induction together. -/
+
+section
+open Trans.Recal
+
+/-- ブロック列の先頭 `J` 個を連ねたものは全体の接頭辞。 -/
+theorem take_flatten_prefix (Bs : List Matrix) (J : Nat) :
+    (Bs.take J).flatten ++ (Bs.drop J).flatten = Bs.flatten := by
+  rw [← List.flatten_append, List.take_append_drop]
+
+theorem ent_take_flatten (Bs : List Matrix) (J i : Nat)
+    (hi : i < ((Bs.take J).flatten).length) :
+    ent ((Bs.take J).flatten) i 0 = ent Bs.flatten i 0 := by
+  rw [← take_flatten_prefix Bs J, ent_append_left _ _ i 0 hi]
+
+/-- **`hmid`。** 対角と枝の間はすべてその枝の根より深い。 -/
+theorem hmid_of_blocks (M : Matrix) (tr J : Nat)
+    (hJ : J < (blocks (M.drop (tr + 1))).length) :
+    ∀ p, tr < p →
+      p < tr + 1 + (((blocks (M.drop (tr + 1))).take J).flatten).length →
+      ent ((blocks (M.drop (tr + 1))).getD J []) 0 0 ≤ ent M p 0 := by
+  intro p hp1 hp2
+  obtain ⟨i, rfl⟩ : ∃ i, p = tr + 1 + i := ⟨p - (tr + 1), by omega⟩
+  have hi : i < (((blocks (M.drop (tr + 1))).take J).flatten).length := by omega
+  have hbf : ent (((blocks (M.drop (tr + 1))).take J).flatten) i 0
+      = ent (M.drop (tr + 1)) i 0 := by
+    rw [ent_take_flatten _ J i hi,
+      blocks_flatten (M.drop (tr + 1)).length (M.drop (tr + 1)) (Nat.le_refl _)]
+  rw [show ent M (tr + 1 + i) 0 = ent (M.drop (tr + 1)) i 0 from (ent_drop M (tr + 1) i 0).symm,
+    ← hbf]
+  exact blocks_min (M.drop (tr + 1)).length (M.drop (tr + 1)) (Nat.le_refl _) J hJ i hi
+
+/-! ### `idxSum` は部分和 -/
+
+theorem idxSum_fold : ∀ (Q : List PS) (acc : List Int) (s : Int),
+    (Q.foldl (fun (a : List Int × Int) q => (a.1 ++ [a.2 + (q.length : Int)],
+        a.2 + (q.length : Int))) (acc, s)).1
+      = acc ++ (List.range Q.length).map
+          (fun J => s + ((((Q.take (J + 1)).flatten).length : Nat) : Int)) := by
+  intro Q
+  induction Q with
+  | nil => intro acc s; show acc = acc ++ []; rw [List.append_nil]
+  | cons q qs ih =>
+    intro acc s
+    show (qs.foldl _ (acc ++ [s + (q.length : Int)], s + (q.length : Int))).1 = _
+    rw [ih (acc ++ [s + (q.length : Int)]) (s + (q.length : Int)), List.append_assoc]
+    refine congrArg (acc ++ ·) ?_
+    show [s + (q.length : Int)] ++ (List.range qs.length).map
+        (fun J => s + (q.length : Int) + ((((qs.take (J + 1)).flatten).length : Nat) : Int))
+      = (List.range (qs.length + 1)).map
+        (fun J => s + (((((q :: qs).take (J + 1)).flatten).length : Nat) : Int))
+    have ht : ∀ J : Nat, s + (q.length : Int)
+        + ((((qs.take (J + 1)).flatten).length : Nat) : Int)
+        = s + (((((q :: qs).take (J + 1 + 1)).flatten).length : Nat) : Int) := by
+      intro J
+      rw [show ((q :: qs).take (J + 1 + 1)).flatten = q ++ (qs.take (J + 1)).flatten from by
+        rw [List.take_succ_cons, List.flatten_cons], List.length_append]
+      omega
+    have hh : ((((q :: qs).take (0 + 1)).flatten).length : Nat) = q.length := by simp
+    rw [List.range_succ_eq_map, List.map_cons, List.map_map, hh]
+    refine congrArg (fun l => (s + (q.length : Int)) :: l) ?_
+    exact List.map_congr_left (fun J _ => ht J)
+
+theorem idxSum_getD (Q : List PS) (J : Nat) (hJ : J ≤ Q.length) :
+    (idxSum Q).getD J 0 = ((((Q.take J).flatten).length : Nat) : Int) := by
+  show ((Q.foldl _ ([0], 0)).1).getD J 0 = _
+  rw [idxSum_fold Q [0] 0]
+  cases J with
+  | zero => rfl
+  | succ k =>
+    rw [getD_app_right _ _ _ (k + 1) (by simp),
+      show (k + 1) - ([(0 : Int)]).length = k from by simp]
+    rw [show ((List.range Q.length).map
+        (fun J => (0 : Int) + ((((Q.take (J + 1)).flatten).length : Nat) : Int))).getD k 0
+      = (0 : Int) + ((((Q.take (k + 1)).flatten).length : Nat) : Int) from
+        getD_map_range Q.length _ 0 k (by omega)]
+    omega
+
+theorem getD_map_lt {α β : Type _} (f : α → β) (l : List α) (da : α) (db : β) (J : Nat)
+    (h : J < l.length) : (l.map f).getD J db = f (l.getD J da) := by
+  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_map,
+    show l[J]? = some l[J] from List.getElem?_eq_getElem h]
+  rfl
+
+theorem getD_dropLast {α : Type _} (l : List α) (d : α) (J : Nat) (h : J + 1 < l.length) :
+    l.dropLast.getD J d = l.getD J d := by
+  rw [List.dropLast_eq_take, List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+    List.getElem?_take_of_lt (by omega)]
+
+theorem idxSum_length (Q : List PS) : (idxSum Q).length = Q.length + 1 := by
+  show ((Q.foldl (fun (a : List Int × Int) q => (a.1 ++ [a.2 + (q.length : Int)],
+      a.2 + (q.length : Int))) ([0], 0)).1).length = _
+  rw [idxSum_fold Q [0] 0, List.length_append, List.length_map, List.length_range]
+  simp
+  omega
+
+theorem firstNodes_length (M : PS) : (firstNodes M).length = (brF M).length + 1 := by
+  show ((idxSum (brF M)).map _).length = _
+  rw [List.length_map, idxSum_length]
+
+/-- **`firstNodes` の `J` 番目は `J` 番目の枝が始まる添字。** -/
+theorem firstNodes_getD (M : PS) (J : Nat) (hJ : J ≤ (brF M).length) :
+    (firstNodes M).getD J 0
+      = trMax M + 1 + ((((brF M).take J).flatten).length : Int) := by
+  show ((idxSum (brF M)).map (fun e => trMax M + 1 + e)).getD J 0 = _
+  rw [getD_map_lt _ _ (0 : Int) (0 : Int) J (by rw [idxSum_length]; omega),
+    idxSum_getD _ J hJ]
+
+/-- **`joints` の `J` 番目はその枝の根の行 0 の親。** -/
+theorem joints_getD (M : PS) (J : Nat) (hJ : J < (brF M).length) :
+    (joints M).getD J 0 = fpar M 0 ((firstNodes M).getD J 0) 0 := by
+  show ((firstNodes M).dropLast.map (fun e => fpar M 0 e 0)).getD J 0 = _
+  rw [getD_map_lt _ _ (0 : Int) (0 : Int) J (by
+      rw [List.length_dropLast, firstNodes_length]
+      omega),
+    getD_dropLast _ _ J (by rw [firstNodes_length]; omega)]
+
+end
+
 end Evidence.Region
