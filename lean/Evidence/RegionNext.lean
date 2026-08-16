@@ -642,20 +642,11 @@ theorem expand_prinB_deep (v w : Nat) (b c : B) (g : B) (n : Nat)
   rw [List.append_assoc, matB_app g b (d + 1)]
   rfl
 
-/-! ## §6 THE NEAR CASE — the bad root is the last node's PARENT
+/-! ## §6 `fsB` AS A SINGLE STEP
 
-§3.2's rule sends the iteration to the nearest ancestor of lower level.  When that ancestor
-is the last node's own parent, the depth gap is 1 and the two frame lemmas of §5 apply
-directly; `nearB` is exactly that condition, read down the last chain.
-
-MEASURED: 645 of the 877 matrices of §3.5's population are near, and 40 of the 52 rows.
-The other 232 need a frame with a depth gap `e ≥ 2` — ζ₀ `(0,0)(1,1)(2,1)` is the smallest,
-where the last node's parent is a `ψ₁` and the bad root is the `ψ₀` above it.  That is the
-one thing this section does NOT prove, and it is the next piece of work: `frame_parent0`
-places the row-0 bad root at the block's own root, which is true only when the last column
-sits at depth `d + 1`.
-
-Everything else — the value, the normal form, the limit clauses — comes after. -/
+`fsB` at a `ψ_v` node whose argument is not `0` is one expression, `stepBv`, and it pushes
+the prefix straight out — the seam `Region.fs`'s own `app r (fsP a n)` splits along.  That is
+all §6 is; the expansion identity itself is §13, after the frame lemma the far case needs. -/
 
 /-- 段 `v` の節に対する `fsB` の中身。 -/
 def stepBv (v : Nat) (r a : B) (n : Nat) : B :=
@@ -703,158 +694,10 @@ theorem stepBv_prefix (v : Nat) (r : B) (w : Nat) (b c : B) (n : Nat) :
       · rw [if_neg hv, if_neg hv]
         rfl
 
-/-- 悪い根が最後の節の**親**であること (深さの差が 1)。 -/
-def nearB (v : Nat) : B → Bool
-  | .nil => false
-  | .nd w _ .nil => (w == 0) || decide (v < w)
-  | .nd w _ c => nearB w c
-
-theorem nearB_low : ∀ (a : B) (v : Nat), nearB v a = true →
-    lastLvl a = 0 ∨ (decide (v < lastLvl a) || hasLowAnc (lastLvl a) a) = true := by
-  intro a
-  induction a with
-  | nil => intro v h; exact absurd h (by simp [nearB])
-  | nd w b c _ ihc =>
-    intro v h
-    cases c with
-    | nil =>
-      cases w with
-      | zero => exact Or.inl rfl
-      | succ k =>
-        refine Or.inr ?_
-        have hv : ((k + 1 == 0) || decide (v < k + 1)) = true := h
-        simp at hv
-        show (decide (v < k + 1) || hasLowAnc (k + 1) (.nd (k+1) b .nil)) = true
-        rw [show decide (v < k + 1) = true from by simp; omega]
-        rfl
-    | nd u b' c' =>
-      have h' : nearB w (.nd u b' c') = true := h
-      rcases ihc w h' with hz | hl
-      · exact Or.inl hz
-      · refine Or.inr ?_
-        show (decide (v < lastLvl (B.nd u b' c'))
-          || (decide (w < lastLvl (B.nd u b' c'))
-              || hasLowAnc (lastLvl (B.nd u b' c')) (.nd u b' c'))) = true
-        rw [hl]
-        exact Bool.or_true _
-
-/-- **近い場合の展開の等式。** 悪い根が最後の節の親なら、展開は `stepBv` で書ける。 -/
-theorem expand_blkB : ∀ (a : B) (v : Nat), nearB v a = true →
-    ∀ (P : Matrix) (d n : Nat),
-      expand? (P ++ matB (.nd v .nil a) d) n = some (P ++ matB (stepBv v .nil a n) d) := by
-  intro a
-  induction a with
-  | nil => intro v h; exact absurd h (by simp [nearB])
-  | nd w b c _ ihc =>
-    intro v h P d n
-    cases c with
-    | nil =>
-      cases w with
-      | zero =>
-        rw [expand_prinB_succ v b P d n]
-        refine congrArg some (congrArg (P ++ ·) (congrArg (matB · d) ?_))
-        show _ = if lastLvl (B.nd 0 b .nil) == 0 then repB (.nd v .nil (.nd 0 b .nil)) n else _
-        rw [if_pos (show (lastLvl (B.nd 0 b (B.nil)) == 0) = true from rfl)]
-        show _ = appB .nil (repNode v b n)
-        rw [appB_nil]
-      | succ k =>
-        have hvw : v < k + 1 := by
-          have : ((k + 1 == 0) || decide (v < k + 1)) = true := h
-          simp at this
-          omega
-        rw [expand_prinB_tower v (k + 1) hvw b P d n]
-        refine congrArg some (congrArg (P ++ ·) (congrArg (matB · d) ?_))
-        show _ = if lastLvl (B.nd (k+1) b .nil) == 0 then _
-                 else rwB (lastLvl (B.nd (k+1) b .nil)) n (.nd v .nil (.nd (k+1) b .nil))
-        rw [if_neg (show ¬((lastLvl (B.nd (k+1) b (B.nil)) == 0) = true) from by simp [lastLvl])]
-        show _ = (if hasLowAnc (k+1) (.nd (k+1) b .nil) then _
-                  else if v < k + 1 then appB .nil (iterD v (.nd (k+1) b .nil) n) else _)
-        rw [if_neg (show ¬(hasLowAnc (k+1) (B.nd (k+1) b (B.nil)) = true) from by simp [hasLowAnc]),
-          if_pos hvw, appB_nil, iterD_eq v (k+1) b n]
-    | nd u b' c' =>
-      have h' : nearB w (.nd u b' c') = true := h
-      have hstep := ihc w h'
-      rw [expand_prinB_deep v w b (.nd u b' c') (stepBv w .nil (.nd u b' c') n) n
-        (fun P' d' => hstep P' d' n) P d]
-      refine congrArg some (congrArg (P ++ ·) (congrArg (matB · d) ?_))
-      show B.nd v .nil (appB b (stepBv w .nil (.nd u b' c') n))
-        = if lastLvl (B.nd w b (.nd u b' c')) == 0 then
-            repB (.nd v .nil (.nd w b (.nd u b' c'))) n
-          else rwB (lastLvl (B.nd w b (.nd u b' c'))) n (.nd v .nil (.nd w b (.nd u b' c')))
-      rw [← stepBv_prefix w b u b' c' n]
-      by_cases h0 : (lastLvl (B.nd w b (.nd u b' c')) == 0) = true
-      · rw [if_pos h0,
-          show repB (B.nd v .nil (.nd w b (.nd u b' c'))) n
-            = B.nd v .nil (repB (.nd w b (.nd u b' c')) n) from by cases w <;> rfl]
-        refine congrArg (B.nd v .nil) ?_
-        show (if lastLvl (B.nd u b' c') == 0 then repB (.nd w b (.nd u b' c')) n else _) = _
-        rw [if_pos (show (lastLvl (B.nd u b' c') == 0) = true from h0)]
-      · rw [if_neg h0]
-        have hla : hasLowAnc (lastLvl (B.nd w b (.nd u b' c'))) (.nd w b (.nd u b' c')) = true := by
-          rcases nearB_low (.nd u b' c') w h' with hz | hl
-          · exact absurd (show (lastLvl (B.nd w b (.nd u b' c')) == 0) = true from by
-              show (lastLvl (B.nd u b' c') == 0) = true; rw [hz]; rfl) h0
-          · exact hl
-        rw [show rwB (lastLvl (B.nd w b (.nd u b' c'))) n (B.nd v .nil (.nd w b (.nd u b' c')))
-              = B.nd v .nil (rwB (lastLvl (B.nd w b (.nd u b' c'))) n (.nd w b (.nd u b' c'))) from by
-            show (if hasLowAnc (lastLvl (B.nd w b (.nd u b' c'))) (.nd w b (.nd u b' c')) then
-                    B.nd v .nil (rwB (lastLvl (B.nd w b (.nd u b' c'))) n (.nd w b (.nd u b' c')))
-                  else _) = _
-            rw [if_pos hla]]
-        refine congrArg (B.nd v .nil) ?_
-        show (if lastLvl (B.nd u b' c') == 0 then _
-              else rwB (lastLvl (B.nd u b' c')) n (.nd w b (.nd u b' c'))) = _
-        rw [if_neg (show ¬((lastLvl (B.nd u b' c') == 0) = true) from h0)]
-        rfl
-
 /-- 最上位の加数は `ψ₀` の節でなければならない (値が `Ω` 未満)。 -/
 def topOKB : B → Bool
   | .nil => true
   | .nd v r _ => (v == 0) && topOKB r
-
-/-- 悪い根が最後の節の親であること、最上位から見て。 -/
-def nearTopB : B → Bool
-  | .nil => false
-  | .nd _ _ .nil => true
-  | .nd v _ a => nearB v a
-
-/-- **一般化した領域は展開で閉じている — 近い場合。** -/
-theorem expand_matB : ∀ (t : B), topOKB t = true → nearTopB t = true → ∀ (n : Nat),
-    expand? (matB t 0) n = some (matB (fsB t n) 0) := by
-  intro t
-  cases t with
-  | nil => intro _ h; exact absurd h (by simp [nearTopB])
-  | nd v r a =>
-    cases a with
-    | nil =>
-      intro htop _ n
-      have hv : v = 0 := by
-        have : ((v == 0) && topOKB r) = true := htop
-        simp at this
-        exact this.1
-      subst hv
-      show expand? (matB r 0 ++ [[0, 0]]) n = some (matB (fsB (.nd 0 r .nil) n) 0)
-      rw [expand?_succ _ [0, 0] (by simp) (by rw [lnz_pair]; simp) n]
-      show some (matB r 0 ++ [[0, 0]]).dropLast = some (matB r 0)
-      simp
-    | nd w b c =>
-      intro _ hnear n
-      show expand? (matB r 0 ++ matB (.nd v .nil (.nd w b c)) 0) n = _
-      rw [expand_blkB (.nd w b c) v hnear (matB r 0) 0 n,
-        ← matB_app (stepBv v .nil (.nd w b c) n) r 0,
-        ← stepBv_prefix v r w b c n, ← fsB_eq_stepBv v r w b c n]
-
-/-! ### §6.1 HOW MUCH THE NEAR CASE COVERS -/
-
-#guard (popB.filter fun S =>
-  match decodeB S with | none => true | some t => nearTopB t).length == 645
-#guard (wideRows.filter fun M =>
-  match decodeB M with | none => true | some t => nearTopB t).length == 40
--- 残る 232 個は深さの差が 2 以上。最小は ζ₀。
-#guard (popB.filter fun S =>
-  match decodeB S with | none => false | some t => !(nearTopB t)).length == 232
-#guard (match decodeB [[0,0],[1,1],[2,1]] with | none => true | some t => nearTopB t) == false
-
 /-! ## §7 THE FAR CASE — the value side
 
 §6 closed the case where the bad root is the last node's parent.  When it is further out,
@@ -1044,5 +887,537 @@ theorem mem_iterParent0 (M : Matrix) : ∀ (fuel x q : Nat), x ≤ fuel →
         · refine List.mem_cons_of_mem _ ((ih r q (by omega)).mpr ⟨hlt, ?_⟩)
           intro p hp1 hp2
           exact h2 p hp1 (by omega)
+
+/-! ## §9 LEFT-MINIMA INSIDE A BLOCK ARE ANCESTORS, AND THEIR LEVELS
+
+§8 says the chain is the left-minima; this says what the left-minima of a `matB` block are.
+The induction is the same three-way split every proof in this file makes — inside the
+prefix, at the node, inside the argument — and the first case is VACUOUS: a column of the
+prefix cannot be a left-minimum of anything past the node, because the node sits at depth
+`d` and the prefix does not go above `d`.  So the left-minima are exactly the ancestors of
+the last node, and `hasLowAnc w a = false` is precisely "no ancestor has level below `w`". -/
+
+theorem ent_append_left (P Q : Matrix) (j y : Nat) (h : j < P.length) :
+    ent (P ++ Q) j y = ent P j y := by
+  show ((P ++ Q).getD j []).getD y 0 = _
+  rw [show (P ++ Q).getD j [] = P.getD j [] from by
+    simp [List.getD_eq_getElem?_getD, List.getElem?_append_left h]]
+  rfl
+
+theorem matB_len_pos : ∀ (a : B) (d : Nat), a ≠ .nil → 0 < (matB a d).length := by
+  intro a d h
+  cases a with
+  | nil => exact absurd rfl h
+  | nd u b c =>
+    show 0 < (matB b d ++ ([d, u] :: matB c (d + 1))).length
+    rw [List.length_append, List.length_cons]
+    omega
+
+theorem anc_lvl : ∀ (a : B), a ≠ .nil → hasLowAnc (lastLvl a) a = false → ∀ (d : Nat),
+    ∀ j, j < (matB a d).length - 1 →
+      (∀ p, j < p → p ≤ (matB a d).length - 1 →
+        ent (matB a d) j 0 < ent (matB a d) p 0) →
+      lastLvl a ≤ ent (matB a d) j 1 := by
+  intro a
+  induction a with
+  | nil => intro h; exact absurd rfl h
+  | nd u b c _ ihc =>
+    intro _ hlow d j hj hmin
+    have hXeq : matB (B.nd u b c) d = matB b d ++ ([d, u] :: matB c (d + 1)) := rfl
+    have hlenX : (matB (B.nd u b c) d).length
+        = (matB b d).length + ((matB c (d + 1)).length + 1) := by
+      rw [hXeq, List.length_append, List.length_cons]
+    have hentnb : ∀ y, ent (matB (B.nd u b c) d) (matB b d).length y
+        = ([d, u] : Col).getD y 0 := by
+      intro y
+      rw [hXeq, ent_append (matB b d) _ _ y (Nat.le_refl _),
+        show (matB b d).length - (matB b d).length = 0 from by omega]
+      rfl
+    have hlow_j : ∀ i, i < (matB b d).length →
+        i < (matB (B.nd u b c) d).length - 1 →
+        (∀ p, i < p → p ≤ (matB (B.nd u b c) d).length - 1 →
+          ent (matB (B.nd u b c) d) i 0 < ent (matB (B.nd u b c) d) p 0) → False := by
+      intro i hi _ hm
+      have hnbLE : (matB b d).length ≤ (matB (B.nd u b c) d).length - 1 := by
+        rw [hlenX]; omega
+      have h1 := hm (matB b d).length hi hnbLE
+      rw [hentnb 0, show ([d, u] : Col).getD 0 0 = d from rfl,
+        hXeq, ent_append_left (matB b d) _ i 0 hi] at h1
+      have h2 : d ≤ ent (matB b d) i 0 :=
+        matB_col_lb b d _ (getD_mem (matB b d) [] i hi)
+      omega
+    cases c with
+    | nil =>
+      refine absurd (hlow_j j ?_ hj hmin) (by simp)
+      rw [hlenX, show (matB (B.nil) (d + 1)).length = 0 from rfl] at hj
+      omega
+    | nd u' b' c' =>
+      rcases Nat.lt_trichotomy j (matB b d).length with hlt | heq | hgt
+      · exact absurd (hlow_j j hlt hj hmin) (by simp)
+      · subst heq
+        have hle : lastLvl (B.nd u' b' c') ≤ u := by
+          have hb : (decide (u < lastLvl (B.nd u' b' c'))
+            || hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u' b' c')) = false := hlow
+          have h1 : decide (u < lastLvl (B.nd u' b' c')) = false := by
+            cases hd : decide (u < lastLvl (B.nd u' b' c')) with
+            | false => rfl
+            | true => rw [hd] at hb; exact absurd hb (by simp)
+          have := of_decide_eq_false h1
+          omega
+        rw [hentnb 1, show ([d, u] : Col).getD 1 0 = u from rfl]
+        exact hle
+      · have hYpos : 0 < (matB (B.nd u' b' c') (d + 1)).length :=
+          matB_len_pos _ _ (by intro h; exact B.noConfusion h)
+        have hsplit : matB (B.nd u b c') d = matB (B.nd u b c') d := rfl
+        have hentX : ∀ i y, (matB b d).length + 1 ≤ i →
+            ent (matB (B.nd u b (.nd u' b' c')) d) i y
+              = ent (matB (B.nd u' b' c') (d + 1)) (i - ((matB b d).length + 1)) y := by
+          intro i y hi
+          have hs : matB (B.nd u b (.nd u' b' c')) d
+              = (matB b d ++ [[d, u]]) ++ matB (B.nd u' b' c') (d + 1) := by
+            rw [List.append_assoc]; rfl
+          have hp : (matB b d ++ [[d, u]]).length = (matB b d).length + 1 := by
+            rw [List.length_append]; simp
+          rw [hs, ent_append _ _ i y (by rw [hp]; exact hi), hp]
+        have hjb : (matB b d).length + 1 ≤ j := by omega
+        have hlenXY : (matB (B.nd u b (.nd u' b' c')) d).length - 1
+            = (matB b d).length + (matB (B.nd u' b' c') (d + 1)).length := by
+          rw [hlenX]; omega
+        have hlow' : hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u' b' c') = false := by
+          have hb : (decide (u < lastLvl (B.nd u' b' c'))
+            || hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u' b' c')) = false := hlow
+          cases hd : hasLowAnc (lastLvl (B.nd u' b' c')) (B.nd u' b' c') with
+          | false => rfl
+          | true => rw [hd] at hb; exact absurd hb (by simp)
+        have key := ihc (by intro h; exact B.noConfusion h) hlow' (d + 1)
+          (j - ((matB b d).length + 1))
+          (by rw [hlenXY] at hj; omega)
+          (by
+            intro p hp1 hp2
+            have hp : p + ((matB b d).length + 1)
+                ≤ (matB (B.nd u b (.nd u' b' c')) d).length - 1 := by
+              rw [hlenXY]; omega
+            have hh := hmin (p + ((matB b d).length + 1)) (by omega) hp
+            rw [hentX j 0 hjb, hentX (p + ((matB b d).length + 1)) 0 (by omega),
+              show p + ((matB b d).length + 1) - ((matB b d).length + 1) = p from by omega] at hh
+            exact hh)
+        rw [hentX j 1 hjb]
+        exact key
+
+/-! ## §10 SPLITTING THE BLOCK OFF ITS LAST COLUMN
+
+`plugB a .nil` removes the last node, and putting `ψ_(lastLvl a)(0)` back gives `a` again —
+so the block is its bad part followed by one column, `[d + 1 + lastDep a, lastLvl a]`.  That
+is the `Bk ++ [last]` shape the frame lemmas consume. -/
+
+theorem plugB_last : ∀ (a : B), a ≠ .nil → plugB a (.nd (lastLvl a) .nil .nil) = a := by
+  intro a
+  induction a with
+  | nil => intro h; exact absurd rfl h
+  | nd u b c _ ihc =>
+    intro _
+    cases c with
+    | nil =>
+      show appB b (.nd u .nil .nil) = _
+      rfl
+    | nd u' b' c' =>
+      show B.nd u b (plugB (.nd u' b' c') (.nd (lastLvl (B.nd u' b' c')) .nil .nil)) = _
+      rw [ihc (by intro h; exact B.noConfusion h)]
+
+theorem matB_last : ∀ (a : B), a ≠ .nil → ∀ (d : Nat),
+    matB a d = (matB a d).dropLast ++ [[d + lastDep a, lastLvl a]] := by
+  intro a ha d
+  have h := matB_plugB a ha (.nd (lastLvl a) .nil .nil) d
+  rw [plugB_last a ha] at h
+  rw [show matB (B.nd (lastLvl a) .nil .nil) (d + lastDep a)
+      = [[d + lastDep a, lastLvl a]] from rfl] at h
+  exact h
+
+/-- **ブロックは「悪い部分」と最後の列に割れる。** -/
+theorem matB_split (v : Nat) (a : B) (ha : a ≠ .nil) (d : Nat) :
+    matB (.nd v .nil a) d
+      = matB (.nd v .nil (plugB a .nil)) d ++ [[d + 1 + lastDep a, lastLvl a]] := by
+  rw [matB_bad v a ha d]
+  show [d, v] :: matB a (d + 1) = ([d, v] :: (matB a (d + 1)).dropLast) ++ _
+  rw [show ([d, v] :: (matB a (d + 1)).dropLast) ++ [[d + 1 + lastDep a, lastLvl a]]
+      = [d, v] :: ((matB a (d + 1)).dropLast ++ [[d + 1 + lastDep a, lastLvl a]]) from rfl,
+    ← matB_last a ha (d + 1)]
+
+/-! ## §11 THE FRAME LEMMA AT GAP `e`
+
+`Region.lean`'s `expand_frame_one` is the case `e = 1`, where `frame_parent0` settles the
+row-0 bad root in one step.  Here the gap is arbitrary and the chain has interior elements,
+so the row-1 bad root is found by §8 and §9 instead: the root is a left-minimum of every
+later index (hence in the chain, and its level is below the last column's), and every OTHER
+chain element has level at least the last column's (that is the caller's `hanc`).  So the
+maximum of the filtered chain is the root, and `delta` on row 0 is `e` — the `m`-th copy
+descends by `m·e`. -/
+
+theorem expand_frame_gap (P Bk : Matrix) (d v w e : Nat)
+    (hroot0 : ent Bk 0 0 = d) (hroot1 : ent Bk 0 1 = v) (hvw : v < w) (he : 1 ≤ e)
+    (hin : ∀ i, 0 < i → i < Bk.length → d + 1 ≤ ent Bk i 0)
+    (hlen2 : ∀ c ∈ Bk, c.length = 2) (hk : 0 < Bk.length)
+    (hanc : ∀ q, P.length < q → q < P.length + Bk.length →
+      LMin (P ++ (Bk ++ [[d + e, w]])) q (P.length + Bk.length) →
+      w ≤ ent (P ++ (Bk ++ [[d + e, w]])) q 1)
+    (n : Nat) :
+    expand? (P ++ (Bk ++ [[d + e, w]])) n
+      = some (P ++ ((List.range (n + 1)).map (fun m => sh (m * e) Bk)).flatten) := by
+  have hlen := frame_len P Bk [d + e, w]
+  have hP0 : ent (P ++ (Bk ++ [[d + e, w]])) P.length 0 = d := by
+    rw [show P.length = P.length + 0 from by omega, frame_ent P Bk [d + e, w] 0 0 hk]
+    exact hroot0
+  have hP1 : ent (P ++ (Bk ++ [[d + e, w]])) P.length 1 = v := by
+    rw [show P.length = P.length + 0 from by omega, frame_ent P Bk [d + e, w] 0 1 hk]
+    exact hroot1
+  have hL0 : ent (P ++ (Bk ++ [[d + e, w]])) (P.length + Bk.length) 0 = d + e :=
+    frame_ent_last P Bk [d + e, w] 0
+  have hL1 : ent (P ++ (Bk ++ [[d + e, w]])) (P.length + Bk.length) 1 = w :=
+    frame_ent_last P Bk [d + e, w] 1
+  have hroot : ∀ x, P.length < x → x ≤ P.length + Bk.length →
+      LMin (P ++ (Bk ++ [[d + e, w]])) P.length x := by
+    intro x h1 h2
+    refine ⟨h1, ?_⟩
+    intro p hp1 hp2
+    rw [hP0]
+    rcases Nat.lt_or_ge p (P.length + Bk.length) with hp | hp
+    · have hi : p - P.length < Bk.length := by omega
+      have hge := hin (p - P.length) (by omega) hi
+      rw [show p = P.length + (p - P.length) from by omega,
+        frame_ent P Bk [d + e, w] (p - P.length) 0 hi]
+      omega
+    · rw [show p = P.length + Bk.length from by omega, hL0]
+      omega
+  have hchain : ∀ x, P.length < x → x ≤ P.length + Bk.length →
+      P.length ∈ iterParent (parent (P ++ (Bk ++ [[d + e, w]])) 0) x x :=
+    fun x h1 h2 => (mem_iterParent0 _ x x P.length (Nat.le_refl x)).mpr (hroot x h1 h2)
+  have hp1 : parent (P ++ (Bk ++ [[d + e, w]])) 1 (P.length + Bk.length) = some P.length := by
+    show ((iterParent (parent (P ++ (Bk ++ [[d + e, w]])) 0)
+        (P.length + Bk.length) (P.length + Bk.length)).filter
+        (fun q => decide (ent (P ++ (Bk ++ [[d + e, w]])) q 1
+          < ent (P ++ (Bk ++ [[d + e, w]])) (P.length + Bk.length) 1))).max? = some P.length
+    rw [hL1]
+    refine List.max?_eq_some_iff.mpr ⟨?_, ?_⟩
+    · exact List.mem_filter.mpr ⟨hchain _ (by omega) (Nat.le_refl _),
+        decide_eq_true (by rw [hP1]; exact hvw)⟩
+    · intro z hz
+      obtain ⟨hz1, hz2⟩ := List.mem_filter.mp hz
+      rcases Nat.lt_or_ge P.length z with h | h
+      · exfalso
+        have hzL : z < P.length + Bk.length :=
+          iterParent_lt (fun x y hy => parent_lt _ 0 x y hy) _ _ z hz1
+        have hlm := (mem_iterParent0 _ (P.length + Bk.length) (P.length + Bk.length) z
+          (Nat.le_refl _)).mp hz1
+        have h1 := hanc z h hzL hlm
+        have h2 := of_decide_eq_true hz2
+        omega
+      · exact h
+  rw [expand?_lim _ [d + e, w] 1 P.length
+      (frame_getLast P Bk [d + e, w]) (by rw [lnz_pair, if_pos (by omega)])
+      (by rw [hlen]; simpa using hp1) n]
+  rw [take_left_len]
+  refine congrArg some (congrArg (P ++ ·) ?_)
+  have hblock : ∀ (m : Nat),
+      (List.range ((P ++ (Bk ++ [[d + e, w]])).length - 1 - P.length)).map (fun x =>
+        (List.range ([d + e, w] : Col).length).map fun y =>
+          ent (P ++ (Bk ++ [[d + e, w]])) (P.length + x) y
+            + m * delta (P ++ (Bk ++ [[d + e, w]])) P.length 1 y
+              * (if ascends (P ++ (Bk ++ [[d + e, w]])) P.length (P.length + x) y then 1 else 0))
+      = sh (m * e) Bk := by
+    intro m
+    rw [show (P ++ (Bk ++ [[d + e, w]])).length - 1 - P.length = Bk.length from by
+      rw [hlen]; omega]
+    show _ = Bk.map (shc (m * e))
+    refine Eq.trans (List.map_congr_left ?_) (map_getD_range_map [] (shc (m * e)) Bk)
+    intro x hx
+    rw [List.mem_range] at hx
+    rw [show (List.range ([d + e, w] : Col).length) = [0, 1] from rfl]
+    have hd0 : delta (P ++ (Bk ++ [[d + e, w]])) P.length 1 0 = e := by
+      show (if 0 < 1 then ent (P ++ (Bk ++ [[d + e, w]]))
+        ((P ++ (Bk ++ [[d + e, w]])).length - 1) 0 - _ else 0) = e
+      rw [if_pos (by omega), show (P ++ (Bk ++ [[d + e, w]])).length - 1
+        = P.length + Bk.length from by rw [hlen]; omega, hL0, hP0]
+      omega
+    have hd1 : delta (P ++ (Bk ++ [[d + e, w]])) P.length 1 1 = 0 := by
+      show (if 1 < 1 then _ else 0) = 0
+      rw [if_neg (by omega)]
+    have hasc : ascends (P ++ (Bk ++ [[d + e, w]])) P.length (P.length + x) 0 = true := by
+      match x, hx with
+      | 0, _ => show ((P.length + 0 == P.length) || _) = true
+                simp
+      | j + 1, hx =>
+        show ((P.length + (j + 1) == P.length) || _) = true
+        rw [show (iterParent (parent (P ++ (Bk ++ [[d + e, w]])) 0)
+            (P.length + (j + 1)) (P.length + (j + 1))).contains P.length = true from by
+          have := hchain (P.length + (j + 1)) (by omega) (by omega)
+          simpa using this]
+        exact Bool.or_true _
+    have hent : ∀ y, ent (P ++ (Bk ++ [[d + e, w]])) (P.length + x) y
+        = (Bk.getD x []).getD y 0 := by
+      intro y; rw [frame_ent P Bk [d + e, w] x y hx]; rfl
+    simp only [List.map_cons, List.map_nil, hd0, hd1, hasc, hent,
+      Nat.mul_zero, Nat.zero_mul, Nat.add_zero, Nat.mul_one, if_true]
+    rw [shc_len2 (m * e) (Bk.getD x []) (hlen2 _ (getD_mem Bk [] x hx))]
+  rw [List.map_congr_left (fun m _ => hblock m)]
+
+/-! ## §12 THE FAR CASE
+
+§11 instantiated at the region's own block.  `hanc` is §9 transported across the two
+appends, and the conclusion is `iterD` — the context iteration §3.2 measured. -/
+
+theorem expand_far (v : Nat) (a : B) (ha : a ≠ .nil)
+    (hvw : v < lastLvl a) (hlow : hasLowAnc (lastLvl a) a = false)
+    (P : Matrix) (d n : Nat) :
+    expand? (P ++ matB (.nd v .nil a) d) n = some (P ++ matB (iterD v a n) d) := by
+  have hMs : matB (.nd v .nil a) d
+      = matB (.nd v .nil (plugB a .nil)) d ++ [[d + (lastDep a + 1), lastLvl a]] := by
+    rw [matB_split v a ha d, show d + (lastDep a + 1) = d + 1 + lastDep a from by omega]
+  have hBkLen : (matB (.nd v .nil (plugB a .nil)) d).length = (matB a (d + 1)).length := by
+    rw [matB_bad v a ha d]
+    show ((matB a (d + 1)).dropLast).length + 1 = _
+    rw [List.length_dropLast]
+    have := matB_len_pos a (d + 1) ha
+    omega
+  have hM2 : P ++ (matB (.nd v .nil (plugB a .nil)) d
+        ++ [[d + (lastDep a + 1), lastLvl a]])
+      = (P ++ [[d, v]]) ++ matB a (d + 1) := by
+    rw [← hMs]
+    show P ++ ([d, v] :: matB a (d + 1)) = _
+    rw [List.append_assoc]
+    rfl
+  have hpre : (P ++ [[d, v]]).length = P.length + 1 := by rw [List.length_append]; simp
+  have hentTr : ∀ i y, ent (P ++ (matB (.nd v .nil (plugB a .nil)) d
+        ++ [[d + (lastDep a + 1), lastLvl a]])) (P.length + 1 + i) y
+      = ent (matB a (d + 1)) i y := by
+    intro i y
+    rw [hM2, ent_append (P ++ [[d, v]]) _ _ y (by rw [hpre]; omega), hpre,
+      show P.length + 1 + i - (P.length + 1) = i from by omega]
+  have hanc : ∀ q, P.length < q →
+      q < P.length + (matB (.nd v .nil (plugB a .nil)) d).length →
+      LMin (P ++ (matB (.nd v .nil (plugB a .nil)) d
+        ++ [[d + (lastDep a + 1), lastLvl a]])) q
+        (P.length + (matB (.nd v .nil (plugB a .nil)) d).length) →
+      lastLvl a ≤ ent (P ++ (matB (.nd v .nil (plugB a .nil)) d
+        ++ [[d + (lastDep a + 1), lastLvl a]])) q 1 := by
+    intro q h1 h2 hlm
+    obtain ⟨_, hlm2⟩ := hlm
+    have hq : q = P.length + 1 + (q - P.length - 1) := by omega
+    have hi : q - P.length - 1 < (matB a (d + 1)).length - 1 := by rw [hBkLen] at h2; omega
+    have key := anc_lvl a ha hlow (d + 1) (q - P.length - 1) hi (by
+      intro p hp1 hp2
+      have hp : P.length + 1 + p ≤ P.length + (matB (.nd v .nil (plugB a .nil)) d).length := by
+        rw [hBkLen]; omega
+      have hh := hlm2 (P.length + 1 + p) (by omega) hp
+      rw [hq, hentTr (q - P.length - 1) 0, hentTr p 0] at hh
+      exact hh)
+    rw [hq, hentTr (q - P.length - 1) 1]
+    exact key
+  rw [hMs, expand_frame_gap P (matB (.nd v .nil (plugB a .nil)) d) d v (lastLvl a)
+      (lastDep a + 1) (ent_blkB_root v (plugB a .nil) d) (ent_blkB_root1 v (plugB a .nil) d)
+      hvw (by omega) (blkB_in v (plugB a .nil) d) (blkB_len2 v (plugB a .nil) d)
+      (blkB_pos v (plugB a .nil) d) hanc n,
+    flatten_iterD_gen v a ha d n]
+
+/-! ## §13 THE EXPANSION IDENTITY, UNCONDITIONAL
+
+The recursion now has no hole.  At a `ψ_v` node with argument `a ≠ 0` there are three cases
+and `resB` says which:
+
+    lastLvl a = 0                      the last node is `ψ₀(0)` — repeat the parent (§5)
+    hasLowAnc (lastLvl a) a = true     a lower-level ancestor is DEEPER — descend (§5)
+    v < lastLvl a                      this node IS the bad root — §12's far case
+
+and `resB` propagates into the descent because `hasLowAnc w (nd u b c) = (u < w) ∨
+hasLowAnc w c` is the same disjunction the inner call needs.  At the TOP the node's level is
+`0`, so the third case holds whenever the first two fail — which is why `expand_matB` needs
+no hypothesis beyond `topOKB`.
+
+**`Hclosed` for the generalised region.**  This is `Region.expand_mat` one constructor
+wider, and it is what `certIn_region` asks for first. -/
+
+/-- 悪い根がこのブロックの中か、この節自身であること。 -/
+def resB (v : Nat) (a : B) : Bool :=
+  (lastLvl a == 0) || hasLowAnc (lastLvl a) a || decide (v < lastLvl a)
+
+theorem expand_blkB : ∀ (a : B), a ≠ .nil → ∀ (v : Nat), resB v a = true →
+    ∀ (P : Matrix) (d n : Nat),
+      expand? (P ++ matB (.nd v .nil a) d) n = some (P ++ matB (stepBv v .nil a n) d) := by
+  intro a
+  induction a with
+  | nil => intro h; exact absurd rfl h
+  | nd u b c _ ihc =>
+    intro _ v hres P d n
+    cases c with
+    | nil =>
+      cases u with
+      | zero =>
+        rw [expand_prinB_succ v b P d n]
+        refine congrArg some (congrArg (P ++ ·) (congrArg (matB · d) ?_))
+        show _ = if lastLvl (B.nd 0 b .nil) == 0 then repB (.nd v .nil (.nd 0 b .nil)) n else _
+        rw [if_pos (show (lastLvl (B.nd 0 b (B.nil)) == 0) = true from rfl)]
+        show _ = appB .nil (repNode v b n)
+        rw [appB_nil]
+      | succ k =>
+        have hlow : hasLowAnc (lastLvl (B.nd (k + 1) b .nil)) (.nd (k + 1) b .nil) = false := rfl
+        have hvw : v < lastLvl (B.nd (k + 1) b .nil) := by
+          have hb : ((lastLvl (B.nd (k+1) b .nil) == 0)
+            || hasLowAnc (lastLvl (B.nd (k+1) b .nil)) (.nd (k+1) b .nil)
+            || decide (v < lastLvl (B.nd (k+1) b .nil))) = true := hres
+          rw [show (lastLvl (B.nd (k+1) b (B.nil)) == 0) = false from rfl, hlow] at hb
+          simp at hb
+          exact hb
+        rw [expand_far v (.nd (k + 1) b .nil) (by intro h; exact B.noConfusion h) hvw hlow P d n]
+        refine congrArg some (congrArg (P ++ ·) (congrArg (matB · d) ?_))
+        show _ = if lastLvl (B.nd (k+1) b .nil) == 0 then _
+                 else rwB (lastLvl (B.nd (k+1) b .nil)) n (.nd v .nil (.nd (k+1) b .nil))
+        rw [if_neg (show ¬((lastLvl (B.nd (k+1) b (B.nil)) == 0) = true) from by simp [lastLvl])]
+        show _ = (if hasLowAnc (k+1) (.nd (k+1) b .nil) then _
+                  else if v < k + 1 then appB .nil (iterD v (.nd (k+1) b .nil) n) else _)
+        rw [if_neg (show ¬(hasLowAnc (k+1) (B.nd (k+1) b (B.nil)) = true) from by simp [hasLowAnc]),
+          if_pos (show v < k + 1 from hvw), appB_nil]
+    | nd u' b' c' =>
+      by_cases hdeep : ((lastLvl (B.nd u' b' c') == 0)
+          || hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u b (.nd u' b' c'))) = true
+      · -- 悪い根はもっと深い: 1 段落ちる
+        have h' : resB u (.nd u' b' c') = true := by
+          show ((lastLvl (B.nd u' b' c') == 0)
+            || hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u' b' c')
+            || decide (u < lastLvl (B.nd u' b' c'))) = true
+          have : ((lastLvl (B.nd u' b' c') == 0)
+            || (decide (u < lastLvl (B.nd u' b' c'))
+                || hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u' b' c'))) = true := hdeep
+          revert this
+          cases (lastLvl (B.nd u' b' c') == 0) <;>
+            cases (decide (u < lastLvl (B.nd u' b' c'))) <;>
+            cases (hasLowAnc (lastLvl (B.nd u' b' c')) (B.nd u' b' c')) <;> simp
+        have hstep := ihc (by intro h; exact B.noConfusion h) u h'
+        rw [expand_prinB_deep v u b (.nd u' b' c') (stepBv u .nil (.nd u' b' c') n) n
+          (fun P' d' => hstep P' d' n) P d]
+        refine congrArg some (congrArg (P ++ ·) (congrArg (matB · d) ?_))
+        show B.nd v .nil (appB b (stepBv u .nil (.nd u' b' c') n))
+          = if lastLvl (B.nd u b (.nd u' b' c')) == 0 then
+              repB (.nd v .nil (.nd u b (.nd u' b' c'))) n
+            else rwB (lastLvl (B.nd u b (.nd u' b' c'))) n (.nd v .nil (.nd u b (.nd u' b' c')))
+        rw [← stepBv_prefix u b u' b' c' n]
+        by_cases h0 : (lastLvl (B.nd u b (.nd u' b' c')) == 0) = true
+        · rw [if_pos h0,
+            show repB (B.nd v .nil (.nd u b (.nd u' b' c'))) n
+              = B.nd v .nil (repB (.nd u b (.nd u' b' c')) n) from by cases u <;> rfl]
+          refine congrArg (B.nd v .nil) ?_
+          show (if lastLvl (B.nd u' b' c') == 0 then repB (.nd u b (.nd u' b' c')) n else _) = _
+          rw [if_pos (show (lastLvl (B.nd u' b' c') == 0) = true from h0)]
+        · rw [if_neg h0]
+          have hla : hasLowAnc (lastLvl (B.nd u b (.nd u' b' c'))) (.nd u b (.nd u' b' c'))
+              = true := by
+            have : ((lastLvl (B.nd u' b' c') == 0)
+              || hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u b (.nd u' b' c'))) = true := hdeep
+            rw [show (lastLvl (B.nd u' b' c') == 0) = false from by
+              cases hz : (lastLvl (B.nd u' b' c') == 0) with
+              | false => rfl
+              | true => exact absurd (show (lastLvl (B.nd u b (.nd u' b' c')) == 0) = true from hz) h0]
+              at this
+            simpa using this
+          rw [show rwB (lastLvl (B.nd u b (.nd u' b' c'))) n
+                (B.nd v .nil (.nd u b (.nd u' b' c')))
+              = B.nd v .nil (rwB (lastLvl (B.nd u b (.nd u' b' c'))) n
+                  (.nd u b (.nd u' b' c'))) from by
+            show (if hasLowAnc (lastLvl (B.nd u b (.nd u' b' c'))) (.nd u b (.nd u' b' c')) then
+                    B.nd v .nil (rwB (lastLvl (B.nd u b (.nd u' b' c'))) n
+                      (.nd u b (.nd u' b' c')))
+                  else _) = _
+            rw [if_pos hla]]
+          refine congrArg (B.nd v .nil) ?_
+          show (if lastLvl (B.nd u' b' c') == 0 then _
+                else rwB (lastLvl (B.nd u' b' c')) n (.nd u b (.nd u' b' c'))) = _
+          rw [if_neg (show ¬((lastLvl (B.nd u' b' c') == 0) = true) from h0)]
+          rfl
+      · -- 悪い根はこの節: 差が `e` の骨組み
+        have hz : (lastLvl (B.nd u b (.nd u' b' c')) == 0) = false := by
+          cases hzz : (lastLvl (B.nd u' b' c') == 0) with
+          | false => exact hzz
+          | true => exact absurd (by rw [show (lastLvl (B.nd u' b' c') == 0) = true from hzz]; rfl) hdeep
+        have hlow : hasLowAnc (lastLvl (B.nd u b (.nd u' b' c'))) (.nd u b (.nd u' b' c'))
+            = false := by
+          cases hh : hasLowAnc (lastLvl (B.nd u b (.nd u' b' c'))) (B.nd u b (.nd u' b' c')) with
+          | false => rfl
+          | true =>
+            exact absurd (show ((lastLvl (B.nd u' b' c') == 0)
+              || hasLowAnc (lastLvl (B.nd u' b' c')) (.nd u b (.nd u' b' c'))) = true from by
+              rw [show hasLowAnc (lastLvl (B.nd u' b' c')) (B.nd u b (.nd u' b' c')) = true
+                from hh]
+              exact Bool.or_true _) hdeep
+        have hvw : v < lastLvl (B.nd u b (.nd u' b' c')) := by
+          have hb : ((lastLvl (B.nd u b (.nd u' b' c')) == 0)
+            || hasLowAnc (lastLvl (B.nd u b (.nd u' b' c'))) (.nd u b (.nd u' b' c'))
+            || decide (v < lastLvl (B.nd u b (.nd u' b' c')))) = true := hres
+          rw [hz, hlow] at hb
+          simp at hb
+          exact hb
+        rw [expand_far v (.nd u b (.nd u' b' c')) (by intro h; exact B.noConfusion h)
+          hvw hlow P d n]
+        refine congrArg some (congrArg (P ++ ·) (congrArg (matB · d) ?_))
+        show _ = if lastLvl (B.nd u b (.nd u' b' c')) == 0 then _
+                 else rwB (lastLvl (B.nd u b (.nd u' b' c'))) n
+                        (.nd v .nil (.nd u b (.nd u' b' c')))
+        rw [if_neg (show ¬((lastLvl (B.nd u b (.nd u' b' c')) == 0) = true) from by
+            rw [hz]; exact Bool.noConfusion)]
+        show _ = (if hasLowAnc (lastLvl (B.nd u b (.nd u' b' c'))) (.nd u b (.nd u' b' c')) then _
+                  else if v < lastLvl (B.nd u b (.nd u' b' c')) then
+                    appB .nil (iterD v (.nd u b (.nd u' b' c')) n) else _)
+        rw [if_neg (show ¬(hasLowAnc (lastLvl (B.nd u b (.nd u' b' c')))
+            (B.nd u b (.nd u' b' c')) = true) from by rw [hlow]; exact Bool.noConfusion),
+          if_pos hvw, appB_nil]
+
+/-- **一般化した領域は展開で閉じている。** 仮定は最上位の加数が `ψ₀` であることだけ。 -/
+theorem expand_matB : ∀ (t : B), topOKB t = true → t ≠ .nil → ∀ (n : Nat),
+    expand? (matB t 0) n = some (matB (fsB t n) 0) := by
+  intro t
+  cases t with
+  | nil => intro _ h; exact absurd rfl h
+  | nd v r a =>
+    cases a with
+    | nil =>
+      intro htop _ n
+      have hv : v = 0 := by
+        have hb : ((v == 0) && topOKB r) = true := htop
+        simp at hb
+        exact hb.1
+      subst hv
+      show expand? (matB r 0 ++ [[0, 0]]) n = some (matB (fsB (.nd 0 r .nil) n) 0)
+      rw [expand?_succ _ [0, 0] (by simp) (by rw [lnz_pair]; simp) n]
+      show some (matB r 0 ++ [[0, 0]]).dropLast = some (matB r 0)
+      simp
+    | nd w b c =>
+      intro htop _ n
+      have hv : v = 0 := by
+        have hb : ((v == 0) && topOKB r) = true := htop
+        simp at hb
+        exact hb.1
+      subst hv
+      have hres : resB 0 (.nd w b c) = true := by
+        show ((lastLvl (B.nd w b c) == 0) || hasLowAnc (lastLvl (B.nd w b c)) (.nd w b c)
+          || decide (0 < lastLvl (B.nd w b c))) = true
+        cases hz : (lastLvl (B.nd w b c) == 0) with
+        | true => rfl
+        | false =>
+          have : 0 < lastLvl (B.nd w b c) := by
+            cases hl : lastLvl (B.nd w b c) with
+            | zero => rw [hl] at hz; exact absurd hz (by simp)
+            | succ _ => omega
+          rw [show decide (0 < lastLvl (B.nd w b c)) = true from by simp; omega]
+          exact Bool.or_true _
+      show expand? (matB r 0 ++ matB (.nd 0 .nil (.nd w b c)) 0) n = _
+      rw [expand_blkB (.nd w b c) (by intro h; exact B.noConfusion h) 0 hres (matB r 0) 0 n,
+        ← matB_app (stepBv 0 .nil (.nd w b c) n) r 0,
+        ← stepBv_prefix 0 r w b c n, ← fsB_eq_stepBv 0 r w b c n]
+
+/-! ### §13.1 THE HYPOTHESIS IS NOT A RESTRICTION
+
+`topOKB` says the top-level summands are `ψ₀` nodes — the value is below `Ω`.  Every row of
+the table and every matrix of §3.5's population satisfies it, so `expand_matB` covers the
+whole population, not a fragment of it. -/
+
+#guard wideRows.all fun M => match decodeB M with | none => true | some t => topOKB t
+#guard popB.all fun S => match decodeB S with | none => true | some t => topOKB t
 
 end Evidence.Region
