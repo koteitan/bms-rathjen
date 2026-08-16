@@ -3702,4 +3702,83 @@ theorem ppairAux_blocksG : ∀ (f : Nat) (Bs : List Matrix) (P : Matrix) (acc : 
 
 end
 
+/-! ## §25 THE FOLD COLLAPSES — the matrix-level half
+
+§23 measured what `red`'s fold does to a `matB` matrix; this is the half of that case which
+is about the fold and not about trees.  `Rows/Ladder.lean`'s `red_fold_open` leaves
+
+    red (f+1) M = (List.range (brF M).length).foldl (init := jjSeq 0 tr) fun r J => r ++ <term J>
+
+and a `foldl` of appends is a `flatten` (`foldl_append_range`), so once every term returns
+its own branch the whole thing is `jjSeq 0 tr ++ (brF M).flatten`.  That is `red_fold_id`:
+its hypothesis `hterm` is exactly §23's third measurement — the rebuild
+`(jnJ+1, nJ+1) :: derp bJ` gives `bJ` back and the shift puts it where it was — and its
+`hsplit` is "the diagonal and the branches partition the matrix".
+
+    red_fold_id : … → (∀ J < br.length, <the fold's J-th term> = br.getD J [])
+                    → jjSeq 0 tr ++ br.flatten = M → red (f+1) M = M
+
+`red_diag_id` is the companion for a matrix that IS the diagonal, where `trMax` reaches the
+end and `red_jj` fires instead.
+
+WHAT IS LEFT is the tree half: for `M = psM (matB (nd 0 nil a) 0)` in normal form, produce
+`tr`, `br` and the three hypotheses — `trMax M` is the leftmost path, `brF M` the subtrees
+hanging off it (via §24's `ppairAux_blocksG`), and the row-1 parent of a branch root is the
+spine column one below its level. -/
+
+section
+open Trans.Recal
+
+theorem foldl_append_range (g : Nat → PS) : ∀ (n : Nat) (init : PS),
+    (List.range n).foldl (fun r J => r ++ g J) init
+      = init ++ ((List.range n).map g).flatten := by
+  intro n
+  induction n with
+  | zero => intro init; simp
+  | succ k ih =>
+    intro init
+    rw [List.range_succ, List.foldl_append, ih init, List.map_append, List.flatten_append]
+    simp [List.append_assoc]
+
+theorem fold_to_flatten (g : Nat → PS) (br : List PS) (init : PS)
+    (hg : ∀ J, J < br.length → g J = br.getD J []) :
+    (List.range br.length).foldl (fun r J => r ++ g J) init = init ++ br.flatten := by
+  rw [foldl_append_range g br.length init,
+    List.map_congr_left (fun J hJ => hg J (List.mem_range.mp hJ)),
+    map_getD_range ([] : PS) br]
+
+/-- **畳み込みが行列を再現する条件。** 各項が自分の枝を返せば `red` は恒等。 -/
+theorem red_fold_id (M : PS) (f : Nat) (tr : Int) (br : List PS)
+    (hzero : isZeroP M = false) (hprin : isPrincipalP M = true)
+    (hg0 : gp0 M 0 = 0) (hg1 : gp1 M 0 = 0)
+    (htr : trMax M = tr) (hne : (tr == lenI M - 1) = false)
+    (hbr : brF M = br)
+    (hterm : ∀ J, J < br.length →
+      incrFirst (red f (((joints M).getD J 0 + 1,
+          (if gp1 (br.getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0) + 1) :: derp (br.getD J [])))
+        ((joints M).getD J 0 - (if gp1 (br.getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0)) = br.getD J [])
+    (hsplit : jjSeq 0 tr ++ br.flatten = M) :
+    red (f + 1) M = M := by
+  rw [Rows.Ladder.red_fold_open M f tr hzero hprin hg0 hg1 htr hne, hbr]
+  show (List.range br.length).foldl (fun r J => r ++
+      incrFirst (red f (((joints M).getD J 0 + 1,
+          (if gp1 (br.getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0) + 1) :: derp (br.getD J [])))
+        ((joints M).getD J 0 - (if gp1 (br.getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0)))
+      (jjSeq 0 tr) = M
+  rw [fold_to_flatten _ br (jjSeq 0 tr) hterm, hsplit]
+
+/-- 枝が無い場合: 行列が対角そのもの。 -/
+theorem red_diag_id (M : PS) (f : Nat)
+    (hzero : isZeroP M = false) (hprin : isPrincipalP M = true)
+    (hg0 : gp0 M 0 = 0) (hg1 : gp1 M 0 = 0)
+    (htr : trMax M = lenI M - 1) (hM : jjSeq 0 (lenI M - 1) = M) :
+    red (f + 1) M = M := by
+  rw [Rows.Ladder.red_jj M f hzero hprin hg0 hg1 htr, hM]
+
+end
+
 end Evidence.Region
