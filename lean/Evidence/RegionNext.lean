@@ -1714,4 +1714,49 @@ def sumV (t : B) : Option Term := Trans.oR (matB t 0)
 
 end
 
+/-! ### §17.2 SUMS INSIDE AN ARGUMENT — the family, measured
+
+The chain rule of §17.1 does not reach sums.  Here is what a designed family shows.  Write
+`y v (·)` for a `B` node of level `v`; the reading is `oRB`.
+
+    B                          oRB
+    y0(y1(0)+y1(0))            y0(y1(0)+y1(0))                 unchanged
+    y0(y1(y1(0)+y1(0)))        y0(y1(y1(0)+y1(0)))             unchanged
+    y0(y1(y2(0)+y2(0)))        y0(y2(0)+y2(0))                 the node VANISHES
+    y0(y1(y2(0)+y1(0)))        y0(y2(0)+y1(y2(0)+y1(0)))       HOISTED, and copied inside
+    y0(y1(y2(0)+y1(0)+y1(0)))  y0(y2(0)+y1(y2(0)+y1(0)+y1(0))) same
+    y0(y1(y2(y1(0))+y1(0)))    y0(y2(y1(0))+y1(y2(y1(0))+y1(0)))
+    y0(y1(y2(y3(0))+y1(0)))    y0(y3(0)+y1(y3(0)+y1(0)))       §17.1 inside, then hoisting
+    y0(y1(y2(y1(0)+y1(0))))    y0(y2(y1(0)+y1(0)))             the node VANISHES
+    y0(y1(y2(0))+y1(0))        y0(y2(0)+y1(0))                 per summand, no hoisting out
+
+WHAT IS CONFIRMED.  §17.1's drop is the case where the node's argument has NO summand of its
+own level or below: then the node vanishes and its whole argument takes its place.  When the
+argument's last summand is at the node's level or below, the node survives, and any summands
+ABOVE its level are copied out in front of it — while ALSO staying inside.  That copy is what
+no per-node function can produce, and it is why §16's `collapse` misses those nodes.
+
+WHAT IS NOT SETTLED.  The top `ψ₀` never hoists (last line), though its summands are all
+above its level; so the rule is not simply "hoist what is above me".  Until that is pinned,
+the sum rule is a description of this family and nothing more.  It is recorded because the
+copy phenomenon is the thing to design against, not because it is the rule. -/
+
+section
+open TM TM.Term
+
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,1], [2,1]]
+  == some (.D 0 (.D 1 (.sum (.D 1 .zero) (.D 1 .zero))))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [2,2]]
+  == some (.D 0 (.sum (.D 2 .zero) (.D 2 .zero)))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [2,1]]
+  == some (.D 0 (.sum (.D 2 .zero) (.D 1 (.sum (.D 2 .zero) (.D 1 .zero)))))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [3,3], [2,1]]
+  == some (.D 0 (.sum (.D 3 .zero) (.D 1 (.sum (.D 3 .zero) (.D 1 .zero)))))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [3,1], [3,1]]
+  == some (.D 0 (.D 2 (.sum (.D 1 .zero) (.D 1 .zero))))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [1,1]]
+  == some (.D 0 (.sum (.D 2 .zero) (.D 1 .zero)))
+
+end
+
 end Evidence.Region
