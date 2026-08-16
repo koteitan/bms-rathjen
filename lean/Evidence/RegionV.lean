@@ -72,13 +72,19 @@ form needed, because `Evidence/CNVOps.lean` closes `CNV` under the only two oper
 proves `Hclosed` — **the region is closed under `BMS.expand`, unconditionally** — the last
 case, `CaseThree`, being closed in §13.7 by a length argument.
 
-SO THE ✅ IS ONE NAMED THING AWAY:
+§14 then reduces `Hlim` itself to TWO named holes, `ArgLim` and `PrefixLim` — the four
+clauses for one principal term and its sequence, and the fact that a fixed prefix on the
+left preserves them.  The associativity of `plus` that reduction needed is now proved
+(`Evidence/CNVOps.lean` §19).
 
-    Hlim        the four limit clauses; §9 measures five of six conjuncts clean, and the
-                sixth (cofinality) has a route — `Evidence/WF.lean`'s combinators
-                `lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen`, one per
-                case of `fsP`, composed under `lim_clauses_sum`.  That route additionally
-                needs associativity of `plus`, which the repo does not have.
+SO THE ✅ IS TWO NAMED THINGS AWAY, BOTH INSIDE `Hlim`:
+
+    ArgLim      `LimClauses (ω^(argVal a)) (fun n => sumVal (fsP a n))` — three cases,
+                one per case of `fsP`, and `Evidence/WF.lean`'s combinators
+                `lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen` are
+                aimed at exactly those three
+    PrefixLim   `LimClauses V g → LimClauses (P ⊕ V) (fun n => P ⊕ g n)` — true with no
+                side condition, needing left monotonicity of `plus` and a subtraction
 -/
 
 namespace Evidence.Region
@@ -325,7 +331,7 @@ theorem topOK_of_ps {r a : A} (h : topOK (.ps r a) = true) : topOK r = true := h
 indices was measuring a theorem.  It supplies `hfc` for `limClauses_transfer`, `inT` for the
 gate's guard, and `CNV` for `asm_veblen`. -/
 
-open Evidence.WF (CNV cnv_plus cnv_omegaNF cnv_ofNat inT_of_cnv)
+open Evidence.WF (CNV cnv_plus cnv_omegaNF cnv_ofNat inT_of_cnv plus_assoc LimClauses)
 
 theorem cnv_one : CNV one = true := rfl
 
@@ -1139,5 +1145,105 @@ def hdOf : A → A | .nil => .nil | .om r => r | .ps r _ => r
 -- 一方 `ψ₀(hdOf c) ≤ fsP c n` の側は 102 件すべてで成り立つ。
 #guard caseThreePairs.all fun p => (List.range 4).all fun n =>
   BMS.cmpM (mat (A.ps .nil (hdOf p.2)) 0) (mat (fsP p.2 n) 0) != Ordering.gt
+
+/-! ## §14 `Hlim`, REDUCED TO THE LAST SUMMAND
+
+`fs` acts on the last summand — `fs (r ⊕ ψ₀(a)) n = r ⊕ fsP a n` — so the value of an
+expansion is the value of the untouched prefix PLUS the value of the sequence member.
+Saying that at all requires
+
+    sumVal (app r s) = sumVal r ⊕ sumVal s
+
+and THAT requires associativity of `plus`, which the repo did not have; it is now
+`Evidence/CNVOps.lean` §19.  With it `Hlim` splits along the same seam as `Hclosed` did:
+
+    ArgLim      the four clauses for ONE principal term `ω^(argVal a)` and its
+                sequence `fsP a n` — the three cases of `fsP`, which is where
+                `Evidence/WF.lean`'s `lim_clauses_repAdd` / `lim_clauses_phi_arg` /
+                `lim_clauses_fsGen` are aimed
+    PrefixLim   adding a fixed prefix on the left preserves the four clauses —
+                `lim_clauses_sum` stated for a whole `plus` prefix instead of one summand
+
+`PrefixLim` is TRUE AS STATED (no side condition): `plus` is ordinal addition on `CNV`, so
+`P ⊕ x < P ⊕ y ↔ x < y`, and cofinality splits on whether `s ≤ P`.  It needs left
+monotonicity and a subtraction, neither of which is in the repo yet. -/
+
+theorem cnv_argVal (a : A) : CNV (argVal a) = true := by
+  show CNV (if omN a = 0 then sumVal a else plus (epsT (omN a - 1)) (sumVal a)) = true
+  by_cases h : omN a = 0
+  · rw [if_pos h]; exact cnv_sumVal a
+  · rw [if_neg h]; exact cnv_plus (cnv_epsT _) (cnv_sumVal a)
+
+theorem sumVal_app : ∀ (s r : A), sumVal (app r s) = plus (sumVal r) (sumVal s) := by
+  intro s
+  induction s with
+  | nil => intro r; rfl
+  | om s' ih => intro r; exact ih r
+  | ps s' a ih _ =>
+    intro r
+    show plus (sumVal (app r s')) (omegaNF (argVal a))
+      = plus (sumVal r) (plus (sumVal s') (omegaNF (argVal a)))
+    rw [ih r]
+    exact plus_assoc (cnv_sumVal r) (cnv_sumVal s') (cnv_omegaNF (cnv_argVal a))
+
+theorem sumVal_fs_lim {r a : A} (ha : a ≠ .nil) (n : Nat) :
+    sumVal (fs (.ps r a) n) = plus (sumVal r) (sumVal (fsP a n)) := by
+  have h : fs (.ps r a) n = app r (fsP a n) := by
+    cases a with
+    | nil => exact absurd rfl ha
+    | om _ => rfl
+    | ps _ _ => rfl
+  rw [h, sumVal_app]
+
+theorem kindA_lim {t : A} (htop : topOK t = true) (h : kindA t = BMS.Kind.lim) :
+    ∃ r a, a ≠ .nil ∧ t = .ps r a := by
+  cases t with
+  | nil => exact BMS.Kind.noConfusion h
+  | om _ => exact Bool.noConfusion htop
+  | ps r a => cases a with
+    | nil => exact BMS.Kind.noConfusion h
+    | om a' => exact ⟨r, .om a', by intro hc; exact A.noConfusion hc, rfl⟩
+    | ps a1 a2 => exact ⟨r, .ps a1 a2, by intro hc; exact A.noConfusion hc, rfl⟩
+
+/-- 最後の加数の極限節。 -/
+def ArgLim : Prop := ∀ (a : A), a ≠ .nil → nf a = true → fpOK a = true →
+    LimClauses (omegaNF (argVal a)) (fun n => sumVal (fsP a n))
+
+/-- 前置きを足しても極限節は保たれる。 -/
+def PrefixLim : Prop := ∀ (P V : Term) (g : Nat → Term),
+    CNV P = true → CNV V = true → LimClauses V g →
+    LimClauses (plus P V) (fun n => plus P (g n))
+
+/-- **`Hlim`。** 2 つの穴 `ArgLim`・`PrefixLim` だけを仮定として持つ。 -/
+theorem hlim_supply (HA : ArgLim) (HP : PrefixLim) :
+    ∀ (S : BMS.Matrix) (v : Term), Reg S → Val S v → BMS.kind S = BMS.Kind.lim →
+    ∃ f : Nat → Term, inT v = true
+      ∧ (∀ n, Val (BMS.expand S n) (f n))
+      ∧ (∀ n, inT (f n) = true)
+      ∧ (∀ n, lt (f n) v = true)
+      ∧ (∀ n, lt (f n) (f (n + 1)) = true)
+      ∧ (∀ s, inT s = true → lt s v = true → ∃ n, le s (f n) = true) := by
+  rintro S v _ ⟨t, hnf, htop, rfl, rfl⟩ hk
+  rw [kind_mat t htop] at hk
+  obtain ⟨r, a, ha, rfl⟩ := kindA_lim htop hk
+  obtain ⟨_, hna, _, hfpa⟩ := nf_ps_iff.mp hnf
+  have hlc : LimClauses (sumVal (A.ps r a)) (fun n => sumVal (fs (A.ps r a) n)) := by
+    have h := HP (sumVal r) (omegaNF (argVal a)) (fun n => sumVal (fsP a n))
+      (cnv_sumVal r) (cnv_omegaNF (cnv_argVal a)) (HA a ha hna hfpa)
+    have hf : (fun n => sumVal (fs (A.ps r a) n))
+        = (fun n => plus (sumVal r) (sumVal (fsP a n))) :=
+      funext (fun n => sumVal_fs_lim ha n)
+    show LimClauses (plus (sumVal r) (omegaNF (argVal a))) _
+    rw [hf]
+    exact h
+  obtain ⟨_, h2, h3, h4⟩ := hlc
+  refine ⟨fun n => sumVal (fs (A.ps r a) n), inT_sumVal _, ?_,
+    fun n => inT_sumVal _, h2, h3, h4⟩
+  intro n
+  obtain ⟨g1, g2⟩ := nf_fs (.ps r a) hnf htop n
+  refine ⟨fs (A.ps r a) n, g1, g2, ?_, rfl⟩
+  show (BMS.expand? (mat (A.ps r a) 0) n).getD [] = mat (fs (A.ps r a) n) 0
+  rw [expand_mat (.ps r a) htop (by intro hc; exact A.noConfusion hc) n]
+  rfl
 
 end Evidence.Region

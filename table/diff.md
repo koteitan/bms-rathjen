@@ -402,6 +402,8 @@ RegionV.hzero_supply     certIn_region の Hzero
 RegionV.hsucc_supply     certIn_region の Hsucc
 RegionV.caseThree        場合 3 の不等式。仮定は a ∈ C₀(a) だけ
 RegionV.hclosed_supply   certIn_region の Hclosed — 仮定なし
+WF.plus_assoc            plus が CNV 上で結合的 (`Evidence/CNVOps.lean` §19)
+RegionV.sumVal_app       和の値は前置きの値 ⊕ 後ろの値
 WF.cnv_plus / cnv_omegaNF  CNV が ⊕ と ω^· で閉じる (`Evidence/CNVOps.lean`)
 BMS.cmpM_trans ほか      BMS の順序が線形順序 (`Evidence/CmpM.lean`)
 ```
@@ -451,11 +453,34 @@ n を上げるのは右に足すだけ                            mat_fsP_mono
 
 **降順条件も `FsPOK` も値も使わない。** 使うのは Buchholz の `a ∈ C₀(a)` だけである。
 
-### 残る 1 つ
+### `plus` の結合律が入り、`Hlim` が 2 つに割れた (2026-08-16)
 
-**`Hlim`** — 極限節の 4 連言。6 連言のうち 5 つは測定済みで、共終性が残る。道は
-`Evidence/WF.lean` の組み合わせ子を `fsP` の 3 つの場合に当て、`lim_clauses_sum` で
-束ねること。**最初の障害は `plus` の結合律がこのリポジトリに無いこと**である。
+**最初の障害だった `plus` の結合律は片付いた** (`Evidence/CNVOps.lean` §19)。これは
+形式的な等式ではない。`plus` は [Rathjen, 1991] 2.6(ii) — 「β の頭より小さい α の成分を
+落としてから連結する」 — なので、結合律は**2 つのふるいについての主張**であり、降順条件が
+無ければ**偽**である。証明は `c1 ≤ b1` かどうかで 2 つに割れる。
+
+```
+c1 ≤ b1   外のふるいは、内のふるいが残したものを全部残す
+c1 > b1   内のふるいは見えない。c1 以上のものはもともと b1 以上
+```
+
+これで `sumVal (app r s) = sumVal r ⊕ sumVal s` が言える。`fs` は最後の加数にしか
+作用しないので、展開の値は**触っていない前置き ⊕ 列の第 n 項**である。よって `Hlim` は
+`Hclosed` と同じ継ぎ目で 2 つに割れる (`hlim_supply`、証明済み)。
+
+```
+ArgLim      主要項 ω^(argVal a) 1 つとその列 fsP a n についての 4 連言。
+            fsP の 3 場合に対応し、WF.lean の lim_clauses_repAdd /
+            lim_clauses_phi_arg / lim_clauses_fsGen はまさにその 3 つに向けてある
+PrefixLim   左に前置きを足しても 4 連言が保たれること
+```
+
+**`PrefixLim` は側条件なしで真である。** `plus` は `CNV` 上では順序数の加法なので
+`P ⊕ x < P ⊕ y ⟺ x < y` であり、共終性は `s ≤ P` かどうかで割れる。要るのは左単調性と
+引き算で、どちらもまだ repo に無い。
+
+### 残る 2 つ (どちらも `Hlim` の中)
 
 ### 残る行のどれが重いか (2026-08-16 の測定、`lean/Evidence/RegionNext.lean`)
 
@@ -495,19 +520,20 @@ nd v r a  =  r ⊕ psi_v(a)
 ### 残る作業の重さの順
 
 作業の全体の 🚨 のうち、**葉だけが実際の作業**である (内側の節は集計にすぎない)。
-いまの領域が 3070 行 (`Region` 1194 + `RegionV` 1143 + `CmpM` 382 + `CNVOps` 351) で、
-残る穴は 1 つ、というのが目盛りである。
+いまの領域が 3393 行 (`Region` 1194 + `RegionV` 1249 + `CmpM` 382 + `CNVOps` 568) で、
+残る穴は `Hlim` の中の 2 つ、というのが目盛りである。
 
 ```
 重い  326 行目          一般化した領域が丸ごと要る。いまの領域はその試作
-      Hlim              WF の組み合わせ子 3 つ + 側条件。plus の結合律が repo に無い
+      ArgLim            WF の組み合わせ子 3 つ + 側条件。fsP の 3 場合に対応
+      PrefixLim         plus の左単調性と引き算。側条件は要らない
       登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
 軽い  行ごとの否定対照   独立の作業ではない。登録に含まれる
 ```
 
 ### したがって 326 行目は依然として未決
 
-✅ が付かない限り、326 行目は決まらない。`Hlim` が埋まると
+✅ が付かない限り、326 行目は決まらない。`ArgLim` と `PrefixLim` が埋まると
 ε₁ 行と ε_ω 行に ✅ が付き、そこで初めて 326 行目の議論に必要な道具
 (展開の値の列が当方の値に共終であること) が族 4 でも使える形になる。
 
@@ -562,12 +588,19 @@ nd v r a  =  r ⊕ psi_v(a)
           通った。不動点条件が `b` を `c` の接頭辞に強制し、`fsP c 0` が
           `ψ₀(c)` の接頭辞で `c` より短くないので、尾は超えられない
           (`cmpM_le_of_len`)。弱い 3 つは全部反証済み
-        - 🚨 `Hlim` の 4 連言。6 連言のうち 5 つは測定済み。共終性は
-          `WF.lean` の組み合わせ子 (`lim_clauses_repAdd`・`lim_clauses_phi_arg`・
-          `lim_clauses_fsGen`) を `fsP` の 3 つの場合に当て、`lim_clauses_sum`
-          で束ねる道がある。ただし `plus` の結合律が repo に無い
+        - ✅ `plus` の結合律 (`Evidence/CNVOps.lean` §19)。形式的な等式ではなく
+          **2 つのふるいについての主張**で、降順条件が無ければ偽
+        - ✅ `sumVal (app r s) = sumVal r ⊕ sumVal s`。これで展開の値が
+          「触っていない前置き ⊕ 列の第 n 項」と書ける
+        - ✅ `Hlim` を 2 つに割る (`hlim_supply`)
+        - 🚨 `ArgLim` — 主要項 `ω^(argVal a)` 1 つとその列の 4 連言。
+          `fsP` の 3 場合に対応し、`WF.lean` の `lim_clauses_repAdd`・
+          `lim_clauses_phi_arg`・`lim_clauses_fsGen` がその 3 つに向けてある
+        - 🚨 `PrefixLim` — 左に前置きを足しても 4 連言が保たれること。
+          **側条件は要らない** (`plus` は `CNV` 上では順序数の加法)。
+          要るのは左単調性と引き算
         - 🚨 ε₁ 行と ε_ω 行を `certRows` へ登録し、表を再生成する。
-          **`Hlim` が埋まるまでは付けない**。機械的ではない: `certRows_no_overshoot`
+          **`ArgLim` と `PrefixLim` が埋まるまでは付けない**。機械的ではない: `certRows_no_overshoot`
           はこの領域用の `no_overshoot` の実例を要る (Row A の場合が約 50 行で
           `no_overshoot_fam` を引いている)
     - 🚨 行ごとの否定対照 — **独立の作業ではない**。ε₀ 行は済

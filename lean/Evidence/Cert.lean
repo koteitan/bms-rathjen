@@ -8693,9 +8693,14 @@ hard case, and `ψ₀(c)[0]` is a prefix of `ψ₀(c)` that is no shorter than `
 of `c` cannot overshoot it (`Evidence/CmpM.lean`'s `cmpM_le_of_len`).  Neither the
 descending condition nor the value is used.
 
-`Hlim` is what remains: §9 measures five of its six conjuncts clean, and the sixth —
-cofinality — has a route through `Evidence/WF.lean`'s combinators, one per case of `fsP`,
-composed under `lim_clauses_sum`. -/
+`Hlim` is what remains, and §14 has now REDUCED it.  `fs` acts on the last summand, so the
+value of an expansion is the untouched prefix plus the sequence member — which needed
+`sumVal (app r s) = sumVal r ⊕ sumVal s`, hence associativity of `plus`, which the repo did
+not have and now does (`Evidence/CNVOps.lean` §19).  What is left is two named holes inside
+`Hlim`: `ArgLim`, the four clauses for ONE principal term `ω^(argVal a)` and its sequence
+(three cases, one per case of `fsP`, and `Evidence/WF.lean`'s `lim_clauses_repAdd` /
+`lim_clauses_phi_arg` / `lim_clauses_fsGen` are aimed at exactly those three); and
+`PrefixLim`, that a fixed prefix on the left preserves the four clauses. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>
