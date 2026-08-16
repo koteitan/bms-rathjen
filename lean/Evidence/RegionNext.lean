@@ -5578,4 +5578,153 @@ def downMat (X : Matrix) : Matrix := X.map fun c => [c.getD 0 0 - ent X 0 0, c.g
 
 end
 
+/-! ## §38 TREE DEPTH
+
+`nrmM` is written in terms of `anc0` — the length of a column's row-0 parent chain, its TREE
+DEPTH — so proving `red = nrmM` needs that quantity to behave.  Three facts, and the proofs
+are the ones the name suggests.
+
+`anc0` is well defined at all: the chain from `i` is decreasing, so any fuel of at least `i`
+gives the same list (`iterParent_stable`), and `anc0` may therefore be unfolded one step
+(`anc0_succ`: a column's tree depth is its parent's plus one) without worrying about which
+fuel the definition happened to use.
+
+    anc0_spine : on a run whose row-0 parent is always the previous column, tree depth = index
+
+which is why `red`'s output starts `(0,0)(1,1)(2,2)…`: those columns' tree depths ARE their
+indices, and `nrmM` puts every column at `root level + tree depth`.
+
+    anc0_blk : inside a block sitting at position `s`, tree depth = the block root's plus the
+               tree depth within the block
+
+and that is what makes the recursion line up — the fold hands each branch to `red`, which
+re-depths it from ITS own root, and `anc0_blk` says that agrees with re-depthing the whole
+matrix at once.  Its ingredient is `parent_in_blk`: a column strictly inside a block finds its
+parent inside the same block, because the block's own root is always a candidate and every
+candidate outside sits further left. -/
+
+section
+open Trans.Recal
+
+/-- 親鎖は燃料に依らない (親は真に減るので、`i` 以上あれば足りる)。 -/
+theorem iterParent_stable (X : Matrix) : ∀ (f g i : Nat), i ≤ f → f ≤ g →
+    iterParent (parent X 0) f i = iterParent (parent X 0) g i := by
+  intro f
+  induction f with
+  | zero =>
+    intro g i hi _
+    have hi0 : i = 0 := by omega
+    subst hi0
+    cases g with
+    | zero => rfl
+    | succ h => rw [iterParent_nil (show parent X 0 0 = none from rfl)]; rfl
+  | succ f' ih =>
+    intro g i hi hfg
+    obtain ⟨g', rfl⟩ : ∃ g', g = g' + 1 := ⟨g - 1, by omega⟩
+    cases hp : parent X 0 i with
+    | none => rw [iterParent_nil hp, iterParent_nil hp]
+    | some p =>
+      have hpi : p < i := by
+        obtain ⟨hm, _⟩ := List.max?_eq_some_iff.mp hp
+        exact List.mem_range.mp (List.mem_filter.mp hm).1
+      rw [iterParent_cons hp, iterParent_cons hp, ih g' p (by omega) (by omega)]
+
+theorem anc0_zero (X : Matrix) : anc0 X 0 = 0 := by
+  show (iterParent (parent X 0) X.length 0).length = 0
+  cases hn : X.length with
+  | zero => rfl
+  | succ g => rw [iterParent_nil (show parent X 0 0 = none from rfl)]; rfl
+
+/-- 木の深さは親のそれに 1 を足したもの。 -/
+theorem anc0_succ (X : Matrix) (i p : Nat) (hi : i < X.length)
+    (h : parent X 0 i = some p) : anc0 X i = anc0 X p + 1 := by
+  have hpi : p < i := by
+    obtain ⟨hm, _⟩ := List.max?_eq_some_iff.mp h
+    exact List.mem_range.mp (List.mem_filter.mp hm).1
+  obtain ⟨g, hg⟩ : ∃ g, X.length = g + 1 := ⟨X.length - 1, by omega⟩
+  show (iterParent (parent X 0) X.length i).length = (iterParent (parent X 0) X.length p).length + 1
+  rw [hg, iterParent_cons h, List.length_cons,
+    iterParent_stable X g (g + 1) p (by omega) (by omega)]
+
+/-- 対角の上では木の深さは添字そのもの。 -/
+theorem anc0_spine (X : Matrix) (tr : Nat) (htr : tr < X.length)
+    (hpar : ∀ j, 1 ≤ j → j ≤ tr → parent X 0 j = some (j - 1)) :
+    ∀ j, j ≤ tr → anc0 X j = j := by
+  intro j
+  induction j with
+  | zero => intro _; exact anc0_zero X
+  | succ k ih =>
+    intro hk
+    rw [anc0_succ X (k + 1) k (by omega) (by
+      have := hpar (k + 1) (by omega) hk
+      rw [show k + 1 - 1 = k from by omega] at this
+      exact this), ih (by omega)]
+
+/-! ### ブロックの中の親は中に留まる -/
+
+/-- ブロックの内側の列は、そのブロックの中に親を持つ。 -/
+theorem parent_blk_some (Bk : Matrix) (q : Nat) (hq : 0 < q) (hqlen : q < Bk.length)
+    (hblk : BlkG Bk) : ∃ p, parent Bk 0 q = some p := by
+  have hmem : 0 ∈ (List.range q).filter (fun c => decide (ent Bk c 0 < ent Bk q 0)) :=
+    List.mem_filter.mpr ⟨List.mem_range.mpr hq, decide_eq_true (hblk.2 q hq hqlen)⟩
+  cases hp : parent Bk 0 q with
+  | none =>
+    exfalso
+    rw [List.max?_eq_none_iff.mp hp] at hmem
+    exact absurd hmem (by simp)
+  | some p => exact ⟨p, rfl⟩
+
+/-- ブロックが `s` の位置にあるとき、内側の列の親は `s` だけずれた同じもの。 -/
+theorem parent_in_blk (M : Matrix) (s : Nat) (Bk : Matrix) (q p : Nat)
+    (hpos : ∀ i, i < Bk.length → ent M (s + i) 0 = ent Bk i 0)
+    (hqlen : q < Bk.length) (hp : parent Bk 0 q = some p) :
+    parent M 0 (s + q) = some (s + p) := by
+  obtain ⟨hpm, hpmax⟩ := List.max?_eq_some_iff.mp hp
+  have hpq : p < q := List.mem_range.mp (List.mem_filter.mp hpm).1
+  have hplt : ent Bk p 0 < ent Bk q 0 := of_decide_eq_true (List.mem_filter.mp hpm).2
+  refine List.max?_eq_some_iff.mpr ⟨?_, ?_⟩
+  · refine List.mem_filter.mpr ⟨List.mem_range.mpr (by omega), decide_eq_true ?_⟩
+    rw [hpos p (by omega), hpos q hqlen]
+    exact hplt
+  · intro c hc
+    have hcr : c < s + q := List.mem_range.mp (List.mem_filter.mp hc).1
+    have hclt : ent M c 0 < ent M (s + q) 0 := of_decide_eq_true (List.mem_filter.mp hc).2
+    rcases Nat.lt_or_ge c s with hcs | hcs
+    · omega
+    · obtain ⟨p', rfl⟩ : ∃ p', c = s + p' := ⟨c - s, by omega⟩
+      have hp'q : p' < q := by omega
+      have : ent Bk p' 0 < ent Bk q 0 := by
+        rw [← hpos p' (by omega), ← hpos q hqlen]
+        exact hclt
+      have := hpmax p' (List.mem_filter.mpr
+        ⟨List.mem_range.mpr hp'q, decide_eq_true this⟩)
+      omega
+
+/-- **ブロックの中の木の深さは、ブロックの根の木の深さに足したもの。** -/
+theorem anc0_blk (M : Matrix) (s : Nat) (Bk : Matrix)
+    (hpos : ∀ i, i < Bk.length → ent M (s + i) 0 = ent Bk i 0)
+    (hblk : BlkG Bk) (hlen : s + Bk.length ≤ M.length) :
+    ∀ (n q : Nat), q ≤ n → q < Bk.length → anc0 M (s + q) = anc0 M s + anc0 Bk q := by
+  intro n
+  induction n with
+  | zero =>
+    intro q hq _
+    rw [show q = 0 from by omega, show s + 0 = s from by omega, anc0_zero Bk]
+    omega
+  | succ g ih =>
+    intro q hqn hq
+    rcases Nat.eq_zero_or_pos q with rfl | hqpos
+    · rw [show s + 0 = s from by omega, anc0_zero Bk]
+      omega
+    · obtain ⟨p, hp⟩ := parent_blk_some Bk q hqpos hq hblk
+      have hpq : p < q := by
+        obtain ⟨hm, _⟩ := List.max?_eq_some_iff.mp hp
+        exact List.mem_range.mp (List.mem_filter.mp hm).1
+      rw [anc0_succ M (s + q) (s + p) (by omega)
+          (parent_in_blk M s Bk q p hpos hq hp),
+        ih p (by omega) (by omega), anc0_succ Bk q p hq hp]
+      omega
+
+end
+
 end Evidence.Region
