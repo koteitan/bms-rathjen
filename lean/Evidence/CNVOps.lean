@@ -1414,4 +1414,167 @@ theorem omegaNF_mono (H : DnFacts) {x y : Term} (hx : CNV x = true) (hy : CNV y 
       exact le_trans (frag_of_cnv _ (cnv_dnArg hx)) (frag_of_cnv _ hx)
         (frag_of_cnv _ (cnv_dnArg hy)) (D1 x hx) (D2 x y hx hy h)
 
+/-! ## §28 `splitFin` REBUILDS ITS ARGUMENT, AND TWO OF `DnFacts` FALL OUT
+
+`splitFin t = (γ, m)` means `t = γ ⊕ m`, and once that is an equation D1 and D2 are one step
+each: `dnArg` is `γ ⊕ (m-1)`, so `t = succT (dnArg t)`, and `≤ succ` and `< succ → ≤` are
+`Evidence/WF.lean` §15.4's `lt_succT` and `le_succT_of_lt`.
+
+DUPLICATION, DELIBERATE AND TEMPORARY.  `Evidence/SqV.lean` §11 already proves
+`trailing_ones` … `splitFin_rebuild`; SqV is not upstream of this file (SqV imports `Cert`,
+which imports `WF` but not `CNVOps`), so they are re-proved here rather than imported.  When
+`Cert.lean` imports `Evidence/RegionV.lean` to assemble the region's certificate, `CNVOps`
+becomes upstream of SqV and **the SqV copy is the one to delete**.
+
+`cnv_ofList_toList` and `cnv_take_ofList` are §19's and §18's, so only the `takeWhile` half
+had to come across. -/
+
+theorem cnvL_isAP {t : Term} (h : CNV t = true) : ∀ x ∈ toList t, x.isAP = true := by
+  intro x hx
+  exact ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp (cnv_toList t h).1 x hx)).1
+
+theorem trailing_ones : ∀ (r : List Term),
+    (r.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate ((r.takeWhile (fun x => x == one)).length) one = r.reverse := by
+  intro r
+  induction r with
+  | nil => rfl
+  | cons a t ih =>
+    by_cases h : (a == one) = true
+    · have ha : a = one := by simpa using h
+      rw [List.dropWhile_cons_of_pos (p := fun x => x == one) h,
+          List.takeWhile_cons_of_pos (p := fun x => x == one) h,
+          List.length_cons, List.replicate_succ', ← List.append_assoc, ih,
+          List.reverse_cons, ha]
+    · rw [List.dropWhile_cons_of_neg (p := fun x => x == one) (by simpa using h),
+          List.takeWhile_cons_of_neg (p := fun x => x == one) (by simpa using h),
+          List.length_nil, show List.replicate 0 one = [] from rfl, List.append_nil]
+
+theorem plus_ofNat_spec : ∀ (g : Term), CNV g = true → ∀ m,
+    CNV (plus g (ofNat m)) = true ∧
+      toList (plus g (ofNat m)) = toList g ++ List.replicate m one := by
+  intro g hg m
+  induction m with
+  | zero => exact ⟨hg, (List.append_nil _).symm⟩
+  | succ m ih =>
+    have hEq : plus g (ofNat (m + 1)) = ofList (toList g ++ List.replicate (m + 1) one) := by
+      rw [plus_ofNat_succ g hg m, toList_ofNat (m + 1)]
+    have hAP : ∀ x ∈ toList g ++ List.replicate (m + 1) one, x.isAP = true := by
+      intro x hx
+      rcases List.mem_append.mp hx with h | h
+      · exact cnvL_isAP hg x h
+      · rw [List.eq_of_mem_replicate h]; rfl
+    have hSucc : plus g (ofNat (m + 1)) = succT (plus g (ofNat m)) := by
+      rw [← ofList_toList_snoc (plus g (ofNat m)) ih.1, ih.2, hEq,
+          List.append_assoc, ← List.replicate_succ']
+    exact ⟨by rw [hSucc]; exact cnv_succT _ ih.1, by rw [hEq, toList_ofList _ hAP]⟩
+
+theorem plus_ofNat_step (g : Term) (hg : CNV g = true) (m : Nat) :
+    plus g (ofNat (m + 1)) = succT (plus g (ofNat m)) := by
+  have ih := plus_ofNat_spec g hg m
+  rw [← ofList_toList_snoc (plus g (ofNat m)) ih.1, ih.2,
+      plus_ofNat_succ g hg m, toList_ofNat (m + 1), List.append_assoc, ← List.replicate_succ']
+
+theorem take_of_append_replicate {X : List Term} {k : Nat} {l : List Term}
+    (h : X ++ List.replicate k one = l) : l.take (l.length - k) = X := by
+  subst h
+  rw [List.length_append, List.length_replicate,
+      show X.length + k - k = X.length from by omega, List.take_left]
+
+theorem splitFin_fst (t : Term) :
+    (splitFin t).1 = ofList (((toList t).reverse.dropWhile (fun x => x == one)).reverse) := by
+  have hF1 : ((toList t).reverse.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate (((toList t).reverse.takeWhile (fun x => x == one)).length) one
+      = toList t := by
+    have h := trailing_ones (toList t).reverse
+    rwa [List.reverse_reverse] at h
+  show ofList ((toList t).take
+      ((toList t).length - ((toList t).reverse.takeWhile (fun x => x == one)).length)) = _
+  rw [take_of_append_replicate hF1]
+
+/-- **`splitFin` は引数を組み立て直す** — `(γ, m) = splitFin t` なら `t = γ ⊕ m`。 -/
+theorem splitFin_rebuild (t : Term) (ht : CNV t = true) :
+    plus (splitFin t).1 (ofNat (splitFin t).2) = t := by
+  have hcg : CNV (splitFin t).1 = true := cnv_splitFin ht
+  have hF1 : ((toList t).reverse.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate (((toList t).reverse.takeWhile (fun x => x == one)).length) one
+      = toList t := by
+    have h := trailing_ones (toList t).reverse
+    rwa [List.reverse_reverse] at h
+  have hAP : ∀ x ∈ ((toList t).reverse.dropWhile (fun x => x == one)).reverse, x.isAP = true := by
+    intro x hx
+    exact cnvL_isAP ht x (by rw [← hF1]; exact List.mem_append_left _ hx)
+  have hg : toList (splitFin t).1
+      = ((toList t).reverse.dropWhile (fun x => x == one)).reverse := by
+    rw [splitFin_fst t, toList_ofList _ hAP]
+  have hspec := plus_ofNat_spec _ hcg (splitFin t).2
+  have hto : toList (plus (splitFin t).1 (ofNat (splitFin t).2)) = toList t := by
+    rw [hspec.2, hg]; exact hF1
+  rw [← cnv_ofList_toList _ hspec.1, hto, cnv_ofList_toList t ht]
+
+/-- `dnArg` は `x` そのものか、`splitFin` の finite 部を 1 下げたもの。 -/
+theorem dnArg_or {x g : Term} {m : Nat} (hs : splitFin x = (g, m)) :
+    dnArg x = x ∨ (1 ≤ m ∧ dnArg x = plus g (ofNat (m - 1))) := by
+  unfold dnArg
+  rw [hs]
+  dsimp only
+  split
+  · rename_i hm
+    cases g <;> dsimp only <;> split <;>
+      first | exact Or.inr ⟨hm, rfl⟩ | exact Or.inl rfl
+  · exact Or.inl rfl
+
+/-- **D1** — `dnArg` は下げるだけ。 -/
+theorem dnArg_le {x : Term} (hx : CNV x = true) : le (dnArg x) x = true := by
+  cases hs : splitFin x with
+  | mk g m =>
+    rcases dnArg_or hs with h | ⟨hm, h⟩
+    · rw [h]; exact le_self _
+    · have hcg : CNV g = true := by
+        have h0 := cnv_splitFin hx; rw [hs] at h0; exact h0
+      have hreb : plus g (ofNat m) = x := by
+        have h0 := splitFin_rebuild x hx; rw [hs] at h0; exact h0
+      cases m with
+      | zero => exact absurd hm (by omega)
+      | succ k =>
+        rw [h, ← hreb, show k + 1 - 1 = k from rfl, plus_ofNat_step g hcg k]
+        exact le_of_lt (lt_succT _ (plus_ofNat_spec g hcg k).1)
+
+/-- **D2** — 下げるのは高々 1。 -/
+theorem dnArg_ge {x y : Term} (hx : CNV x = true) (hy : CNV y = true)
+    (h : lt x y = true) : le x (dnArg y) = true := by
+  cases hs : splitFin y with
+  | mk g m =>
+    rcases dnArg_or hs with hd | ⟨hm, hd⟩
+    · rw [hd]; exact le_of_lt h
+    · have hcg : CNV g = true := by
+        have h0 := cnv_splitFin hy; rw [hs] at h0; exact h0
+      have hreb : plus g (ofNat m) = y := by
+        have h0 := splitFin_rebuild y hy; rw [hs] at h0; exact h0
+      cases m with
+      | zero => exact absurd hm (by omega)
+      | succ k =>
+        have hz : CNV (plus g (ofNat k)) = true := (plus_ofNat_spec g hcg k).1
+        have hy' : y = succT (plus g (ofNat k)) := by
+          rw [← hreb, plus_ofNat_step g hcg k]
+        rw [hd, show k + 1 - 1 = k from rfl]
+        by_cases hle : le x (plus g (ofNat k)) = true
+        · exact hle
+        · exfalso
+          have hlt : lt (plus g (ofNat k)) x = true :=
+            lt_of_not_le (frag_of_cnv _ hx) (frag_of_cnv _ hz) (bool_false hle)
+          have hs2 : le (succT (plus g (ofNat k))) x = true :=
+            le_succT_of_lt _ hz x hx hlt
+          rw [hy'] at h
+          have hcon := lt_of_le_of_lt (frag_of_cnv _ (cnv_succT _ hz)) (frag_of_cnv _ hx)
+            (frag_of_cnv _ (cnv_succT _ hz)) hs2 h
+          rw [lt_irrefl] at hcon
+          exact Bool.noConfusion hcon
+
+/-- **残るのは D3 だけ。** -/
+theorem dnFacts_of
+    (D3 : ∀ x y, CNV x = true → CNV y = true → isFixP x = false → lt x y = true →
+      dnArg x ≠ dnArg y) : DnFacts :=
+  ⟨fun _ hx => dnArg_le hx, fun _ _ hx hy h => dnArg_ge hx hy h, D3⟩
+
 end Evidence.WF
