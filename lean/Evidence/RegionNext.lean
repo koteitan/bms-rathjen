@@ -3916,4 +3916,232 @@ theorem trMax_of (M : Matrix) (t : Nat) (hlen : t < M.length)
 
 end
 
+/-! ## §27 THE SPINE IS THE DIAGONAL
+
+§26 turned `trMax` into a local test on consecutive columns.  This turns that test into the
+shape of the first `trMax M + 1` columns, and it does so WITHOUT computing `trMax` from the
+tree — the run's own condition is enough, because `matB` bounds each step from the other
+side:
+
+    matB_step_depth : ent (matB t d) (j+1) 0  ≤  ent (matB t d) j 0 + 1
+    matB_step_lvl   : (the depth stepped up by exactly one)
+                      →  ent (matB t d) (j+1) 1  ≤  ent (matB t d) j 1 + 1     [needs `nfLe`]
+
+The first is the preorder: the next column is a child (one deeper), a sibling, or a return
+up the tree.  The second is the NORMAL FORM: the depth stepping up by one says the next
+column is a child, and §19 caps a child's level at its parent's plus one.  Squeeze either
+against `trMax`'s "strictly greater" and the step becomes an equality, so along the run
+
+    ent M j 0 = ent M 0 0 + j        and        ent M j 1 = ent M 0 1 + j
+
+(`spine_step`).  On `matB s 0` with `s` a single root of level 0 both bases are `0`, so the
+run is `(0,0)(1,1)(2,2)…` and `take_jjSeq` reads it off as `jjSeq 0 tr` — the `hsplit` half
+of §25's `red_fold_id`, and the reason `red` cuts a diagonal rather than an arbitrary path.
+
+`headLvl` (the leftmost summand's level) is what `matB`'s first column carries, and
+`headLvl_le` is the normal form seen from there. -/
+
+section
+open Trans.Recal
+
+theorem ent_nil (j y : Nat) : ent ([] : Matrix) j y = 0 := by
+  show ((([] : Matrix).getD j [])).getD y 0 = 0
+  rw [show ([] : Matrix).getD j [] = [] from by simp]
+  rfl
+
+/-- 最左の最上位の加数の段。 -/
+def headLvl : B → Nat
+  | .nil => 0
+  | .nd v .nil _ => v
+  | .nd _ r _ => headLvl r
+
+theorem matB_head0 : ∀ (t : B) (d : Nat), t ≠ .nil → ent (matB t d) 0 0 = d := by
+  intro t
+  induction t with
+  | nil => intro _ h; exact absurd rfl h
+  | nd v r a ihr _ =>
+    intro d _
+    cases r with
+    | nil => rfl
+    | nd v' r' a' =>
+      show ent (matB (B.nd v' r' a') d ++ ([d, v] :: matB a (d + 1))) 0 0 = d
+      rw [ent_append_left _ _ 0 0
+        (matB_len_pos (B.nd v' r' a') d (by intro h; exact B.noConfusion h))]
+      exact ihr d (by intro h; exact B.noConfusion h)
+
+theorem matB_head1 : ∀ (t : B) (d : Nat), t ≠ .nil → ent (matB t d) 0 1 = headLvl t := by
+  intro t
+  induction t with
+  | nil => intro _ h; exact absurd rfl h
+  | nd v r a ihr _ =>
+    intro d _
+    cases r with
+    | nil => rfl
+    | nd v' r' a' =>
+      show ent (matB (B.nd v' r' a') d ++ ([d, v] :: matB a (d + 1))) 0 1
+        = headLvl (B.nd v (B.nd v' r' a') a)
+      rw [ent_append_left _ _ 0 1
+        (matB_len_pos (B.nd v' r' a') d (by intro h; exact B.noConfusion h))]
+      show ent (matB (B.nd v' r' a') d) 0 1 = headLvl (B.nd v' r' a')
+      exact ihr d (by intro h; exact B.noConfusion h)
+
+/-- 標準形なら最左の段も上限以下。 -/
+theorem headLvl_le : ∀ (t : B) (m : Nat), nfLe m t = true → t ≠ .nil → headLvl t ≤ m := by
+  intro t
+  induction t with
+  | nil => intro _ _ h; exact absurd rfl h
+  | nd v r a ihr _ =>
+    intro m h _
+    obtain ⟨h1, h2, _⟩ := (nfLe_nd_iff m v r a).mp h
+    cases r with
+    | nil => exact h1
+    | nd v' r' a' =>
+      show headLvl (B.nd v' r' a') ≤ m
+      exact ihr m h2 (by intro hc; exact B.noConfusion hc)
+
+/-- 深さは 1 列で高々 1 しか増えない。 -/
+theorem matB_step_depth : ∀ (t : B) (d j : Nat),
+    ent (matB t d) (j + 1) 0 ≤ ent (matB t d) j 0 + 1 := by
+  intro t
+  induction t with
+  | nil => intro d j; show ent [] (j + 1) 0 ≤ _; rw [ent_zero_of_ge_len [] (j + 1) (by simp)]; omega
+  | nd v r a ihr iha =>
+    intro d j
+    have hX : matB (B.nd v r a) d = matB r d ++ ([d, v] :: matB a (d + 1)) := rfl
+    have hL : (matB r d).length = (matB r d).length := rfl
+    rcases Nat.lt_or_ge (j + 1) (matB r d).length with hj | hj
+    · rw [hX, ent_append_left _ _ (j + 1) 0 hj, ent_append_left _ _ j 0 (by omega)]
+      exact ihr d j
+    · rcases Nat.lt_or_ge j (matB r d).length with hj2 | hj2
+      · -- j is the last column of the prefix, j+1 is the node column
+        have hje : j + 1 = (matB r d).length := by omega
+        rw [hX, ent_append _ _ (j + 1) 0 (by omega), hje,
+          show (matB r d).length - (matB r d).length = 0 from by omega,
+          ent_append_left _ _ j 0 hj2]
+        have := matB_col_lb r d _ (getD_mem (matB r d) [] j hj2)
+        show d ≤ ent (matB r d) j 0 + 1
+        show d ≤ ((matB r d).getD j []).getD 0 0 + 1
+        omega
+      · -- both at or past the node column
+        rw [hX, ent_append _ _ (j + 1) 0 (by omega), ent_append _ _ j 0 hj2]
+        obtain ⟨i, hi⟩ : ∃ i, j = (matB r d).length + i := ⟨j - (matB r d).length, by omega⟩
+        rw [hi, show (matB r d).length + i - (matB r d).length = i from by omega,
+          show (matB r d).length + i + 1 - (matB r d).length = i + 1 from by omega]
+        cases i with
+        | zero =>
+          show ent ([d, v] :: matB a (d + 1)) 1 0 ≤ ent ([d, v] :: matB a (d + 1)) 0 0 + 1
+          show ent (matB a (d + 1)) 0 0 ≤ d + 1
+          cases a with
+          | nil => show ent [] 0 0 ≤ d + 1; rw [ent_zero_of_ge_len [] 0 (by simp)]; omega
+          | nd v'' r'' a'' =>
+            rw [matB_head0 (B.nd v'' r'' a'') (d + 1) (by intro hc; exact B.noConfusion hc)]
+            omega
+        | succ k =>
+          show ent ([d, v] :: matB a (d + 1)) (k + 2) 0
+            ≤ ent ([d, v] :: matB a (d + 1)) (k + 1) 0 + 1
+          exact iha (d + 1) k
+
+/-- **深さがちょうど 1 増えるなら段も高々 1 しか増えない。** 標準形が効くところ。 -/
+theorem matB_step_lvl : ∀ (t : B) (m d j : Nat), nfLe m t = true →
+    ent (matB t d) (j + 1) 0 = ent (matB t d) j 0 + 1 →
+    ent (matB t d) (j + 1) 1 ≤ ent (matB t d) j 1 + 1 := by
+  intro t
+  induction t with
+  | nil =>
+    intro m d j _ _
+    show ent [] (j + 1) 1 ≤ ent ([] : Matrix) j 1 + 1
+    rw [ent_nil, ent_nil]
+    omega
+  | nd v r a ihr iha =>
+    intro m d j hnf hstep
+    obtain ⟨_, hr, ha⟩ := (nfLe_nd_iff m v r a).mp hnf
+    have hX : matB (B.nd v r a) d = matB r d ++ ([d, v] :: matB a (d + 1)) := rfl
+    rcases Nat.lt_or_ge (j + 1) (matB r d).length with hj | hj
+    · rw [hX, ent_append_left _ _ (j + 1) 1 hj, ent_append_left _ _ j 1 (by omega)]
+      refine ihr m d j hr ?_
+      rw [hX, ent_append_left _ _ (j + 1) 0 hj, ent_append_left _ _ j 0 (by omega)] at hstep
+      exact hstep
+    · rcases Nat.lt_or_ge j (matB r d).length with hj2 | hj2
+      · exfalso
+        have hje : j + 1 = (matB r d).length := by omega
+        rw [hX, ent_append _ _ (j + 1) 0 (by omega), hje,
+          show (matB r d).length - (matB r d).length = 0 from by omega,
+          ent_append_left _ _ j 0 hj2] at hstep
+        have hlb : d ≤ ent (matB r d) j 0 :=
+          matB_col_lb r d _ (getD_mem (matB r d) [] j hj2)
+        have hstep' : d = ent (matB r d) j 0 + 1 := hstep
+        omega
+      · rw [hX, ent_append _ _ (j + 1) 1 (by omega), ent_append _ _ j 1 hj2]
+        obtain ⟨i, hi⟩ : ∃ i, j = (matB r d).length + i := ⟨j - (matB r d).length, by omega⟩
+        rw [hi, show (matB r d).length + i - (matB r d).length = i from by omega,
+          show (matB r d).length + i + 1 - (matB r d).length = i + 1 from by omega]
+        cases i with
+        | zero =>
+          show ent (matB a (d + 1)) 0 1 ≤ v + 1
+          cases a with
+          | nil =>
+            show ent ([] : Matrix) 0 1 ≤ v + 1
+            rw [ent_nil]
+            omega
+          | nd v'' r'' a'' =>
+            rw [matB_head1 (B.nd v'' r'' a'') (d + 1) (by intro hc; exact B.noConfusion hc)]
+            exact headLvl_le _ (v + 1) ha (by intro hc; exact B.noConfusion hc)
+        | succ k =>
+          show ent ([d, v] :: matB a (d + 1)) (k + 2) 1
+            ≤ ent ([d, v] :: matB a (d + 1)) (k + 1) 1 + 1
+          show ent (matB a (d + 1)) (k + 1) 1 ≤ ent (matB a (d + 1)) k 1 + 1
+          refine iha (v + 1) (d + 1) k ha ?_
+          rw [hX, ent_append _ _ (j + 1) 0 (by omega), ent_append _ _ j 0 hj2, hi,
+            show (matB r d).length + (k + 1) - (matB r d).length = k + 1 from by omega,
+            show (matB r d).length + (k + 1) + 1 - (matB r d).length = k + 2 from by omega] at hstep
+          exact hstep
+
+/-! ### the spine is the diagonal -/
+
+/-- 走りの上では深さも段もちょうど 1 ずつ増える。 -/
+theorem spine_step (t : B) (m d : Nat) (hnf : nfLe m t = true) (tr : Nat)
+    (hrun : ∀ j, j < tr → ent (matB t d) j 0 < ent (matB t d) (j + 1) 0
+      ∧ ent (matB t d) j 1 < ent (matB t d) (j + 1) 1) :
+    ∀ j, j ≤ tr → ent (matB t d) j 0 = ent (matB t d) 0 0 + j
+      ∧ ent (matB t d) j 1 = ent (matB t d) 0 1 + j := by
+  intro j
+  induction j with
+  | zero => intro _; exact ⟨by omega, by omega⟩
+  | succ k ih =>
+    intro hk
+    obtain ⟨h0, h1⟩ := ih (by omega)
+    obtain ⟨hr0, hr1⟩ := hrun k (by omega)
+    have hd : ent (matB t d) (k + 1) 0 = ent (matB t d) k 0 + 1 := by
+      have := matB_step_depth t d k
+      omega
+    have hl := matB_step_lvl t m d k hnf hd
+    exact ⟨by omega, by omega⟩
+
+theorem take_eq_map_range {α : Type _} (dd : α) : ∀ (n : Nat) (l : List α), n ≤ l.length →
+    l.take n = (List.range n).map (fun i => l.getD i dd) := by
+  intro n
+  induction n with
+  | zero => intro l _; rfl
+  | succ k ih =>
+    intro l h
+    rw [List.take_add_one, ih l (by omega), List.range_succ, List.map_append]
+    have : l[k]? = some (l.getD k dd) := by
+      rw [List.getD_eq_getElem?_getD, show l[k]? = some l[k] from
+        List.getElem?_eq_getElem (by omega)]
+      rfl
+    rw [this]
+    rfl
+
+/-- **対角の切り出し。** 走りの上では最初の `tr+1` 列が `jjSeq 0 tr` そのもの。 -/
+theorem take_jjSeq (M : Matrix) (tr : Nat) (hlen : tr < M.length)
+    (hcol : ∀ j, j ≤ tr → ent M j 0 = j ∧ ent M j 1 = j) :
+    (psM M).take (tr + 1) = jjSeq 0 ((tr : Nat) : Int) := by
+  rw [take_eq_map_range ((0 : Int), (0 : Int)) (tr + 1) (psM M) (by rw [psM_len]; omega),
+    jjSeq_zero tr]
+  refine List.map_congr_left (fun i hi => ?_)
+  have hile : i ≤ tr := by have := List.mem_range.mp hi; omega
+  rw [getD_psM, (hcol i hile).1, (hcol i hile).2]
+
+end
+
 end Evidence.Region
