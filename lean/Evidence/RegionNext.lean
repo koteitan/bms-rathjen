@@ -3134,4 +3134,336 @@ theorem red_canon_leaf (v d f : Nat) :
 
 end
 
+/-! ## §22 THE `red` PROOF: SUMS, THE DEPTH SHIFT, AND WHAT IS LEFT
+
+§21 did the base case.  Three more of §20's cases fall out of what is already proved, and
+after them exactly ONE is left.
+
+**`isAnc` at row 0 is "the parent chain reaches column 0".**  `isAncAux` follows `fpar`, which
+§18.1 identifies with `BMS.parent`, and §8 says the chain is the left-minima — so
+
+    isAncAux … j … = true   ↔   j = 0  ∨  every column in (0, j] is deeper than column 0
+
+(`isAncAux_imp` and `isAncAux_of_lmin`, the two directions).  Both branch conditions of `red`
+follow at once: a `matB` matrix with two or more top-level summands is NOT principal (the
+second summand's root is at depth 0 again, so column 0 is not a left-minimum of the last
+column), and one with a single root IS principal (everything after the root is deeper).
+
+**SUMS.**  `red` then takes the `ppair` branch, and §18.3 already says `ppair` is the
+top-level split, so the whole case is the induction hypothesis applied summand by summand:
+
+    red_canon_sum : (∀ q ∈ topSplit s, red f (psM (matB q 0)) = canon q)
+                    → red (f+1) (psM (matB s 0)) = canon s
+
+**THE DEPTH SHIFT.**  A single root of level 0 sitting at depth `d > 0` has `gp1 = 0`, so
+`red` takes `Rows/Ladder.lean`'s `red_shift` branch and slides the whole matrix back to depth
+0 — which is `matB` at depth 0, because `matB t d = sh d (matB t 0)` (§4) and `psM` turns `sh`
+into `incrFirst`:
+
+    red_canon_shift : red (f+1) (psM (matB (nd 0 nil a) d)) = red f (psM (matB (nd 0 nil a) 0))
+
+**WHAT IS LEFT IS ONE CASE: THE FOLD.**  A principal index whose root has level 0 at depth 0
+is the branch that cuts off the diagonal `jjSeq 0 (trMax M)` and folds over `brF M`.  The
+`v ≥ 1` case reduces to it as well (`red_head_pos` prepends a diagonal and pushes the tree
+out).  What that case needs, and what the measurements of §20 say, is:
+
+  * the initial run `0 … trMax M` is the tree's LEFTMOST PATH WITH LEVELS `0, 1, 2, …` — under
+    `nfFree` a child's level exceeds its parent's by at most one, so `isParentP … 1` at row 1
+    forces equality, and the run is literally `jjSeq 0 tr`;
+  * the branches `brF M` are the maximal subtrees hanging off that spine, so their joints are
+    spine columns, where INDEX = LEVEL;
+  * hence a branch root of level `u` has its row-1 parent at spine index `u - 1`, which is why
+    `red`'s reconstruction `(jnJ + 1, nJ + 1) :: derp bJ` puts back the level it removed. -/
+
+section
+open Trans.Recal
+
+/-! ### `isAnc` at row 0 is reaching column 0 along the parent chain -/
+
+theorem isAncAux_imp : ∀ (f : Nat) (M : Matrix) (j : Nat), j < M.length →
+    isAncAux f (psM M) 0 ((j : Nat) : Int) 0 = true → (j = 0 ∨ LMin M 0 j) := by
+  intro f
+  induction f with
+  | zero => intro M j _ h; exact absurd h (by simp [isAncAux])
+  | succ g ih =>
+    intro M j hj h
+    by_cases hj0 : j = 0
+    · exact Or.inl hj0
+    have hstep : isAncAux (g + 1) (psM M) 0 ((j : Nat) : Int) 0
+        = (if (0 : Int) == ((j : Nat) : Int) then true
+           else if fpar (psM M) 0 ((j : Nat) : Int) 0 == -1 then false
+           else isAncAux g (psM M) 0 (fpar (psM M) 0 ((j : Nat) : Int) 0) 0) := rfl
+    rw [hstep, if_neg (by
+      intro hc
+      have hcc : (0 : Int) = ((j : Nat) : Int) := of_decide_eq_true hc
+      exact hj0 (by omega))] at h
+    rw [fpar_zero, fpar0_eq_parent M j hj] at h
+    cases hp : parent M 0 j with
+    | none =>
+      rw [hp] at h
+      exact absurd h (by simp)
+    | some q =>
+      rw [hp] at h
+      have hqj : q < j := by
+        obtain ⟨hrm, _⟩ := List.max?_eq_some_iff.mp hp
+        exact List.mem_range.mp (List.mem_filter.mp hrm).1
+      have hlmq : LMin M q j := by
+        refine lmin_of_fpar0 M j q hj ?_
+        rw [fpar0_eq_parent M j hj, hp]
+      rw [show (((q : Nat) : Int) == -1) = false from decide_eq_false (by omega),
+        if_neg (by simp)] at h
+      rcases ih M q (by omega) h with rfl | hlm0
+      · exact Or.inr hlmq
+      · refine Or.inr ⟨by omega, ?_⟩
+        intro p hp1 hp2
+        rcases Nat.lt_or_ge p (q + 1) with hpq | hpq
+        · exact hlm0.2 p hp1 (by omega)
+        · exact Nat.lt_trans (hlm0.2 q hlm0.1 (Nat.le_refl q)) (hlmq.2 p (by omega) hp2)
+
+theorem isAnc_false_of_flat (M : Matrix) (b : Nat) (hb : 0 < b) (hlen : 1 < M.length)
+    (hble : b < M.length) (he : ent M b 0 ≤ ent M 0 0) :
+    isAnc (psM M) 0 (lenI (psM M) - 1) 0 = false := by
+  have hlenI : lenI (psM M) - 1 = ((M.length - 1 : Nat) : Int) := by
+    show (((psM M).length : Nat) : Int) - 1 = _
+    rw [psM_len]; omega
+  cases hres : isAnc (psM M) 0 (lenI (psM M) - 1) 0 with
+  | false => rfl
+  | true =>
+    exfalso
+    rw [hlenI] at hres
+    have hin : isAncAux ((psM M).length + 1) (psM M) 0 ((M.length - 1 : Nat) : Int) 0 = true := by
+      have : isAnc (psM M) 0 ((M.length - 1 : Nat) : Int) 0
+          = (if (0 : Int) < 0 ∨ (0 : Int) ≥ lenI (psM M) then false
+             else isAncAux ((psM M).length + 1) (psM M) 0 ((M.length - 1 : Nat) : Int) 0) := rfl
+      rw [this, if_neg (by
+        show ¬((0 : Int) < 0 ∨ (0 : Int) ≥ (((psM M).length : Nat) : Int))
+        rw [psM_len]; omega)] at hres
+      exact hres
+    rcases isAncAux_imp _ M (M.length - 1) (by omega) hin with hz | hlm
+    · omega
+    · exact absurd (hlm.2 b hb (by omega)) (by omega)
+
+/-! ### the non-principal branch -/
+
+theorem red_nonprin (M : PS) (f : Nat) (hzero : isZeroP M = false)
+    (hprin : isPrincipalP M = false) : red (f + 1) M = (ppair M).flatMap (red f) := by
+  simp only [Trans.Recal.red]
+  rw [hzero]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hprin]
+  simp only [Bool.false_eq_true, if_false]
+
+theorem matB_ne_nil_len (t : B) (h : t ≠ .nil) : 0 < (matB t 0).length := matB_len_pos t 0 h
+
+/-- 最上位の加数が 2 つ以上なら principal ではない。 -/
+theorem not_prin_sum (v : Nat) (r a : B) (hr : r ≠ .nil) :
+    isPrincipalP (psM (matB (.nd v r a) 0)) = false := by
+  have hM : matB (.nd v r a) 0 = matB r 0 ++ matB (.nd v .nil a) 0 := rfl
+  have hrlen : 0 < (matB r 0).length := matB_ne_nil_len r hr
+  have hblen : 0 < (matB (.nd v .nil a) 0).length :=
+    matB_ne_nil_len _ (by intro h; exact B.noConfusion h)
+  have hlen : (matB (.nd v r a) 0).length = (matB r 0).length + (matB (.nd v .nil a) 0).length := by
+    rw [hM, List.length_append]
+  have hent0 : ent (matB (.nd v r a) 0) 0 0 = ent (matB r 0) 0 0 := by
+    rw [hM]; exact ent_append_left _ _ 0 0 hrlen
+  have hentb : ent (matB (.nd v r a) 0) (matB r 0).length 0 = 0 := by
+    rw [hM, ent_append _ _ _ 0 (Nat.le_refl _),
+      show (matB r 0).length - (matB r 0).length = 0 from by omega]
+    rfl
+  show (!isZeroP (psM (matB (.nd v r a) 0))
+    && isAnc (psM (matB (.nd v r a) 0)) 0 (lenI (psM (matB (.nd v r a) 0)) - 1) 0) = false
+  rw [isAnc_false_of_flat _ (matB r 0).length hrlen (by omega) (by omega) (by
+    rw [hentb, hent0]
+    omega)]
+  exact Bool.and_false _
+
+theorem isZeroP_sum (v : Nat) (r a : B) (hr : r ≠ .nil) :
+    isZeroP (psM (matB (.nd v r a) 0)) = false := by
+  have hrlen : 0 < (matB r 0).length := matB_ne_nil_len r hr
+  have hblen : 0 < (matB (.nd v .nil a) 0).length :=
+    matB_ne_nil_len _ (by intro h; exact B.noConfusion h)
+  have hlen : (matB (.nd v r a) 0).length = (matB r 0).length + (matB (.nd v .nil a) 0).length := by
+    show (matB r 0 ++ matB (.nd v .nil a) 0).length = _
+    rw [List.length_append]
+  show ((psM (matB (.nd v r a) 0)).length == 1 && _) = false
+  rw [show ((psM (matB (.nd v r a) 0)).length == 1) = false from by
+    rw [psM_len]; exact decide_eq_false (by omega)]
+  rfl
+
+theorem topSplit_canon : ∀ (t : B), ∀ q ∈ topSplit t, canon q = psM (matB q (lvlB q)) := by
+  intro t
+  induction t with
+  | nil => intro q h; exact absurd (show q ∈ ([] : List B) from h) (by simp)
+  | nd v r a ihr _ =>
+    intro q h
+    rcases List.mem_append.mp h with h | h
+    · exact ihr q h
+    · rcases List.mem_cons.mp h with rfl | h
+      · show ((topSplit (B.nd v .nil a)).map fun z => psM (matB z (lvlB z))).flatten = _
+        show ([psM (matB (B.nd v .nil a) v)]).flatten = _
+        rw [List.flatten_cons, List.flatten_nil, List.append_nil]
+        rfl
+      · exact absurd (show q ∈ ([] : List B) from h) (by simp)
+
+/-- §20 の等式、最上位の加数が 2 つ以上の場合。 -/
+theorem red_canon_sum (v : Nat) (r a : B) (hr : r ≠ .nil) (f : Nat)
+    (ih : ∀ q ∈ topSplit (.nd v r a), red f (psM (matB q 0)) = canon q) :
+    red (f + 1) (psM (matB (.nd v r a) 0)) = canon (.nd v r a) := by
+  rw [red_nonprin _ f (isZeroP_sum v r a hr) (not_prin_sum v r a hr), ppair_matB,
+    List.flatMap_map]
+  show ((topSplit (.nd v r a)).map (fun q => red f (psM (matB q 0)))).flatten = _
+  rw [List.map_congr_left (fun q hq =>
+    (ih q hq).trans (topSplit_canon (.nd v r a) q hq))]
+  rfl
+
+/-! ### the depth shift -/
+
+theorem isAncAux_of_lmin : ∀ (f : Nat) (M : Matrix) (j : Nat), j < f → j < M.length →
+    (j = 0 ∨ LMin M 0 j) → isAncAux f (psM M) 0 ((j : Nat) : Int) 0 = true := by
+  intro f
+  induction f with
+  | zero => intro M j h _ _; exact absurd h (by omega)
+  | succ g ih =>
+    intro M j hf hj hor
+    have hstep : isAncAux (g + 1) (psM M) 0 ((j : Nat) : Int) 0
+        = (if (0 : Int) == ((j : Nat) : Int) then true
+           else if fpar (psM M) 0 ((j : Nat) : Int) 0 == -1 then false
+           else isAncAux g (psM M) 0 (fpar (psM M) 0 ((j : Nat) : Int) 0) 0) := rfl
+    rcases hor with rfl | hlm
+    · rw [hstep, if_pos (show ((0 : Int) == ((0 : Nat) : Int)) = true from rfl)]
+    · have hj0 : 0 < j := hlm.1
+      have hmem : 0 ∈ (List.range j).filter (fun p => decide (ent M p 0 < ent M j 0)) :=
+        List.mem_filter.mpr ⟨List.mem_range.mpr hj0,
+          decide_eq_true (hlm.2 j hj0 (Nat.le_refl j))⟩
+      cases hp : parent M 0 j with
+      | none =>
+        exfalso
+        have := List.max?_eq_none_iff.mp hp
+        rw [this] at hmem
+        exact absurd hmem (by simp)
+      | some q =>
+        have hqj : q < j := by
+          obtain ⟨hrm, _⟩ := List.max?_eq_some_iff.mp hp
+          exact List.mem_range.mp (List.mem_filter.mp hrm).1
+        rw [hstep, if_neg (by
+          intro hc
+          have hcc : (0 : Int) = ((j : Nat) : Int) := of_decide_eq_true hc
+          omega), fpar_zero, fpar0_eq_parent M j hj, hp,
+          show (((q : Nat) : Int) == -1) = false from decide_eq_false (by omega),
+          if_neg (by simp)]
+        refine ih M q (by omega) (by omega) ?_
+        rcases Nat.eq_or_lt_of_le (Nat.zero_le q) with hq0 | hq0
+        · exact Or.inl hq0.symm
+        · exact Or.inr ⟨hq0, fun p hp1 hp2 => hlm.2 p hp1 (by omega)⟩
+
+theorem prin_of_deep (M : Matrix) (hlen : 1 < M.length)
+    (hdeep : ∀ p, 0 < p → p < M.length → ent M 0 0 < ent M p 0) :
+    isPrincipalP (psM M) = true := by
+  have hlenI : lenI (psM M) - 1 = ((M.length - 1 : Nat) : Int) := by
+    show (((psM M).length : Nat) : Int) - 1 = _
+    rw [psM_len]; omega
+  show (!isZeroP (psM M) && isAnc (psM M) 0 (lenI (psM M) - 1) 0) = true
+  rw [show isZeroP (psM M) = false from by
+      show ((psM M).length == 1 && _) = false
+      rw [show ((psM M).length == 1) = false from by
+        rw [psM_len]; exact decide_eq_false (by omega)]
+      rfl,
+    hlenI,
+    show isAnc (psM M) 0 ((M.length - 1 : Nat) : Int) 0 = true from by
+      show (if (0 : Int) < 0 ∨ (0 : Int) ≥ lenI (psM M) then false
+            else isAncAux ((psM M).length + 1) (psM M) 0 ((M.length - 1 : Nat) : Int) 0) = true
+      rw [if_neg (by
+        show ¬((0 : Int) < 0 ∨ (0 : Int) ≥ (((psM M).length : Nat) : Int))
+        rw [psM_len]; omega)]
+      refine isAncAux_of_lmin _ M (M.length - 1) (by rw [psM_len]; omega) (by omega) ?_
+      exact Or.inr ⟨by omega, fun p hp1 hp2 => hdeep p hp1 (by omega)⟩]
+  rfl
+
+theorem matB_node_deep (v : Nat) (a : B) (d : Nat) : ∀ p, 0 < p →
+    p < (matB (.nd v .nil a) d).length →
+    ent (matB (.nd v .nil a) d) 0 0 < ent (matB (.nd v .nil a) d) p 0 := by
+  intro p hp hlen
+  obtain ⟨i, rfl⟩ : ∃ i, p = i + 1 := ⟨p - 1, by omega⟩
+  have hlen2 : (matB (.nd v .nil a) d).length = (matB a (d + 1)).length + 1 := by
+    show ([d, v] :: matB a (d + 1)).length = _
+    simp
+  have hi : i < (matB a (d + 1)).length := by omega
+  have hlb := matB_col_lb a (d + 1) _ (getD_mem (matB a (d + 1)) [] i hi)
+  show d < ((matB a (d + 1)).getD i []).getD 0 0
+  omega
+
+theorem getD_drop_one : ∀ (c : List Nat), (c.drop 1).getD 0 0 = c.getD 1 0
+  | [] => rfl
+  | _ :: _ => rfl
+
+theorem psM_sh (e : Nat) (X : Matrix) : psM (sh e X) = incrFirst (psM X) ((e : Nat) : Int) := by
+  show (X.map (shc e)).map _ = (X.map _).map _
+  rw [List.map_map, List.map_map]
+  refine List.map_congr_left (fun c _ => ?_)
+  show ((((shc e c).getD 0 0 : Nat) : Int), (((shc e c).getD 1 0 : Nat) : Int))
+    = ((((c.getD 0 0 : Nat) : Int) + ((e : Nat) : Int)), (((c.getD 1 0 : Nat) : Int)))
+  rw [show (shc e c).getD 0 0 = c.getD 0 0 + e from rfl,
+    show (shc e c).getD 1 0 = c.getD 1 0 from getD_drop_one c,
+    show (((c.getD 0 0 + e : Nat)) : Int) = (((c.getD 0 0 : Nat)) : Int) + ((e : Nat) : Int)
+      from by omega]
+
+theorem incrFirst_cancel : ∀ (Y : PS) (i : Int), incrFirst (incrFirst Y i) (-i) = Y := by
+  intro Y
+  induction Y with
+  | nil => intro _; rfl
+  | cons c cs ih =>
+    intro i
+    show ((c.1 + i) + -i, c.2) :: incrFirst (incrFirst cs i) (-i) = c :: cs
+    rw [ih i, show (c.1 + i) + -i = c.1 from by omega]
+
+theorem matB_depth (t : B) (d : Nat) : matB t d = sh d (matB t 0) := by
+  have h := matB_sh t 0 d
+  rw [show 0 + d = d from by omega] at h
+  exact h
+
+/-- §20 の等式、principal かつ根の段 0 で深さ `d > 0` の場合: 深さ 0 へ落ちる。 -/
+theorem red_canon_shift (a : B) (d f : Nat) (hd : 0 < d) (ha : a ≠ .nil) :
+    red (f + 1) (psM (matB (.nd 0 .nil a) d)) = red f (psM (matB (.nd 0 .nil a) 0)) := by
+  have hlen : 1 < (matB (.nd 0 .nil a) d).length := by
+    have := matB_len_pos a (d + 1) ha
+    show 1 < ([d, 0] :: matB a (d + 1)).length
+    simp
+    omega
+  have hg0 : gp0 (psM (matB (.nd 0 .nil a) d)) 0 = ((d : Nat) : Int) := by
+    show (if (0 : Int) < 0 then (0 : Int)
+          else ((psM (matB (.nd 0 .nil a) d)).getD (0 : Int).toNat (0, 0)).1) = _
+    rw [if_neg (by omega)]
+    show ((psM (matB (.nd 0 .nil a) d)).getD 0 (0, 0)).1 = _
+    rw [getD_psM]
+    rfl
+  have hg1 : gp1 (psM (matB (.nd 0 .nil a) d)) 0 = 0 := by
+    show (if (0 : Int) < 0 then (0 : Int)
+          else ((psM (matB (.nd 0 .nil a) d)).getD (0 : Int).toNat (0, 0)).2) = _
+    rw [if_neg (by omega)]
+    show ((psM (matB (.nd 0 .nil a) d)).getD 0 (0, 0)).2 = _
+    rw [getD_psM]
+    rfl
+  rw [Rows.Ladder.red_shift _ f
+    (by
+      show ((psM (matB (.nd 0 .nil a) d)).length == 1 && _) = false
+      rw [show ((psM (matB (.nd 0 .nil a) d)).length == 1) = false from by
+        rw [psM_len]; exact decide_eq_false (by omega)]
+      rfl)
+    (prin_of_deep _ hlen (matB_node_deep 0 a d))
+    (by rw [hg0]; exact decide_eq_false (by omega)) hg1, hg0,
+    matB_depth (.nd 0 .nil a) d, psM_sh, incrFirst_cancel]
+
+/-- §20 の等式、空の添字。 -/
+theorem red_canon_nil (d : Nat) : ∀ (f : Nat), red f (psM (matB .nil d)) = canon .nil := by
+  intro f
+  cases f with
+  | zero => rfl
+  | succ g =>
+    show red (g + 1) ([] : PS) = _
+    rw [red_nonprin [] g (by decide) (by decide),
+      show ppair ([] : PS) = [] from by decide]
+    rfl
+
+end
+
 end Evidence.Region
