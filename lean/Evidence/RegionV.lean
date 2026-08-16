@@ -1652,4 +1652,51 @@ theorem argLimLift_thm : ArgLimLift := argLimLift_of omegaLim
 /-- **`ArgLim` に残るのは土台 2 つ。** -/
 theorem argLim' (H1 : ArgLimRep) (H2 : ArgLimOm) : ArgLim := argLim H1 H2 argLimLift_thm
 
+/-! ### §15.8 THE `ψ₀(0)` CASE IS CLOSED
+
+`argVal (b ⊕ ψ₀(0)) = succT (argVal b)` — the last summand contributes exactly `ω^0 = 1` —
+and `sumVal (rep b n) = ω^(argVal b)·(n+1)`, because `plus` drops nothing when every
+component of the left argument is the right one's head (§33).  So the case is combinator (A)
+at `ω^(β+1)` with step `ω^β`, and §32 supplies its bound. -/
+
+section
+open Evidence.WF
+
+theorem sumVal_rep (b : A) : ∀ n, sumVal (rep b n) = repAdd (omegaNF (argVal b)) n
+  | 0 => by
+    show plus (sumVal A.nil) (omegaNF (argVal b)) = _
+    exact plus_zero_left (isAP_omegaNF _)
+  | k + 1 => by
+    show plus (sumVal (rep b k)) (omegaNF (argVal b)) = _
+    rw [sumVal_rep b k]
+    exact plus_repAdd_self (cnv_omegaNF (cnv_argVal b)) (isAP_omegaNF _) k
+
+/-- **場合 2 (9/80) は閉じた。** 組み合わせ子 (A)。 -/
+theorem argLimRep : ArgLimRep := by
+  intro b _ _
+  have hcb : CNV (argVal b) = true := cnv_argVal b
+  have hsb : CNV (succT (argVal b)) = true := cnv_succT _ hcb
+  have hav : argVal (A.ps b .nil) = succT (argVal b) := by
+    rw [argVal_ps]
+    show plus (argVal b) (omegaNF zero) = _
+    rw [omegaNF_zero]
+    exact plus_one_eq_succT _ hcb
+  have hseq : (fun n => sumVal (fsP (A.ps b .nil) n))
+      = (fun n => repAdd (omegaNF (argVal b)) n) :=
+    funext fun n => sumVal_rep b n
+  obtain ⟨p, q, hpq⟩ := eq_phi_of_isAP_cnv (cnv_omegaNF hcb) (isAP_omegaNF _)
+  obtain ⟨c, d, hcd⟩ := eq_phi_of_isAP_cnv (cnv_omegaNF hsb) (isAP_omegaNF _)
+  have key := lim_clauses_repAdd (c := c) (d := d) (p := p) (q := q)
+    (by rw [← hpq]; exact cnv_omegaNF hcb)
+    (by rw [← hpq, ← hcd]
+        exact omegaNF_mono dnFacts hcb hsb (lt_succT _ hcb))
+    (by rw [← hcd]; exact cnv_omegaNF hsb)
+    (by rw [← hpq, ← hcd]
+        exact fun x hx hax hlx => ap_le_omegaNF_of_lt_succT hcb hx hax hlx)
+  show LimClauses (omegaNF (argVal (A.ps b .nil))) (fun n => sumVal (fsP (A.ps b .nil) n))
+  rw [hav, hseq, hcd, hpq]
+  exact key
+
+end
+
 end Evidence.Region

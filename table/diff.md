@@ -527,7 +527,7 @@ argVal (b ⊕ fsP c n)  = argVal b ⊕ sumVal (fsP c n)
 ### 残る 3 つ (`ArgLim` の土台)
 
 ```
-ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd   🚨 上界は済
+ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd   ✅
 ArgLimOm     最後の加数が Ω。列は Ω の塔               組み合わせ子 (B) fsGen    🚨
 ArgLimLift   ω^· で持ち上げる段だけ                                              ✅
 ```
@@ -617,7 +617,6 @@ nd v r a  =  r ⊕ psi_v(a)
 
 ```
 重い  326 行目          一般化した領域が丸ごと要る。いまの領域はその試作
-      ArgLimRep         9/80。上界 hb は済んだ。残るのは列 = repAdd の形と組み立て
       ArgLimOm          2/80。組み合わせ子 (B)。塔の側条件 3 つ
       登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
 軽い  行ごとの否定対照   独立の作業ではない。登録に含まれる
@@ -712,7 +711,8 @@ nd v r a  =  r ⊕ psi_v(a)
           `u` 自身が `ω` 冪なので反射で済み、`a = 0` なら `succT b` を取る
           (`ω^b <= u < ω^X` で `b < X`、`X` は極限、そして D2 が `ω^(succT b) >= u` を出す)
         - ✅ **場合 3 (69/80) は閉じた** — `OmegaLim` も `ArgLimLift` も定理
-        - 🚨 `ArgLimRep` — 最後の加数が `ψ₀(0)` (9/80)。組み合わせ子 (A)
+        - ✅ `ArgLimRep` (9/80) — `argVal (b ⊕ ψ₀(0)) = succT (argVal b)` と
+          `sumVal (rep b n) = ω^(argVal b)·(n+1)`。組み合わせ子 (A) に §32 の上界
         - 🚨 `ArgLimOm` — 最後の加数が `Ω` (2/80)。組み合わせ子 (B)
         - ✅ 項の順序を成分列の辞書式順序として読む層 (`CNVOps` §20)。
           `plus` は成分列の操作なので、これが無いと `plus` の話ができない

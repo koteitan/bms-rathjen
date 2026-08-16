@@ -1993,4 +1993,32 @@ theorem ap_le_omegaNF_of_lt_succT {b x : Term} (hcb : CNV b = true) (hx : CNV x 
       rw [lt_irrefl] at hcon
       exact Bool.noConfusion hcon
 
+/-! ## §33 `u·(k+1) ⊕ u = u·(k+2)`
+
+The sequence identity `Evidence/RegionV.lean` §15.8 needs.  `plus` filters by the right
+argument's head, and every component of `repAdd u k` IS that head, so nothing is dropped. -/
+
+theorem toList_repAdd {u : Term} (hu : u.isAP = true) :
+    ∀ n, toList (repAdd u n) = List.replicate (n + 1) u
+  | 0 => by
+    show toList u = [u]
+    cases u <;> first | rfl | exact Bool.noConfusion hu
+  | k + 1 => by
+    show u :: toList (repAdd u k) = _
+    rw [toList_repAdd hu k]
+    rfl
+
+/-- `u·(k+1) ⊕ u = u·(k+2)`。 -/
+theorem plus_repAdd_self {u : Term} (hcu : CNV u = true) (hu : u.isAP = true) (k : Nat) :
+    plus (repAdd u k) u = repAdd u (k + 1) := by
+  have hto : toList u = [u] := by cases u <;> first | rfl | exact Bool.noConfusion hu
+  have hcr : CNV (repAdd u (k + 1)) = true := by
+    obtain ⟨p, q, hpq⟩ := eq_phi_of_isAP_cnv hcu hu
+    rw [hpq]; exact cnv_repAdd (by rw [← hpq]; exact hcu) (k + 1)
+  rw [plus_eq_of_toList (s := repAdd u k) (b1 := u) (rest := []) hto, hto,
+    toList_repAdd hu k,
+    filter_self_of_all _ _ (fun x hx => by rw [List.eq_of_mem_replicate hx]; exact le_self _),
+    ← List.replicate_succ' (n := k + 1) (a := u), ← toList_repAdd hu (k + 1),
+    cnv_ofList_toList _ hcr]
+
 end Evidence.WF
