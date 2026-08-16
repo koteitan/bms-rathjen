@@ -47,6 +47,9 @@ $`f_n`$ は行が指す名前空間を証明ファイルから探して付ける
 cd lean && lake build                      # 全行の検査 (#guard) を含む
 lake exe gentable > ../table/table-r1.md      # 表の再生成
 YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
+
+lake build orcli                              # 一度だけ
+../scripts/or "(0,0)(1,1)(2,1)"               # 行列 → 𝔗(M) 表記 (標準形も判定)
 ```
 
 ## 検査器と、その試験
@@ -61,6 +64,7 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 | `lean/scripts/axioms_of.lean` | 宣言ごとの公理 | `lake env lean scripts/axioms_of.lean` — 4 分類 + 5 集計を検査 |
 | `scripts/check-math.js` | 数式が GitHub で壊れるか、リンクとアンカーが生きているか | 引数に `.md` を渡す。アンカー規則は GitHub 実測の 7 例で自己試験 |
 | `scripts/settled.sh` | 作業役がファイルを書き終えたか | `scripts/settled.sh --self-test` — 5 ケース |
+| `scripts/or` | 行列 1 個の 𝔗(M) 表記と、それが標準形か | `scripts/or --self-test` — 6 ケース |
 | `scripts/standard-audit.sh` | 表の全行がバシク行列の標準形か | |
 | `scripts/crosscheck.sh` | BMS の実装が yaBMS の C 実装と一致するか | 112 例そのものが試験 |
 | `scripts/refimpl-audit.sh` | 表の全行が変換写像と一致するか | |

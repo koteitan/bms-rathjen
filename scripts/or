@@ -1,0 +1,157 @@
+#!/bin/sh
+# or — print the Rathjen 𝔗(M) notation of a Bashicu matrix, and check that the
+# matrix is in standard form.
+#
+#   scripts/or "(0,0)(1,1)(2,1)"
+#
+# The notation is computed by `orcli` (lean_exe orcli, lean/Test/ORCLI.lean),
+# which is `Trans.oR`.  Standard form is decided by the reference implementation
+# (yaBMS `bms -s`), the same instrument scripts/standard-audit.sh uses: this
+# repository deliberately does not carry a standardness algorithm of its own,
+# because a second, unvalidated one is exactly the kind of instrument it does not
+# trust (see plan/constitutions.md).
+#
+# Exit: 0 standard, 1 not standard, 2 could not answer.
+
+set -e
+
+usage() {
+  cat <<'EOF'
+usage: or "<BM>"                print <BM>'s Rathjen T(M) notation
+       or --help | -h | help    this message
+       or --self-test           run the tool against six known answers
+
+<BM> is consecutive parenthesised columns, e.g. "(0,0)(1,1)(2,1)".  The empty
+string is the empty matrix.  Always quote it -- parentheses are shell syntax.
+Expansion brackets ("...[2]") are not accepted.
+
+The matrix is checked for standard form.  When it is standard,
+
+    <Rathjen T(M) notation>
+
+is printed and the exit status is 0.  When it is not,
+
+    <Rathjen T(M) notation>
+    The BMS is not normal form.
+
+is printed and the exit status is 1.
+
+Exit status 2 means the question was not answered at all: the matrix does not
+parse, or it has a column of height 3 or more (outside the translation's domain
+-- oR is the 2-row fragment), or a helper is missing.
+
+notation
+  finite terms print as numerals, phi(a,b) is Rathjen's phi-bar, w is omega,
+  w^(a) is omega-bar to the a, psi_(k)(a) and Z(a) are as in [Rathjen, 1991],
+  Omega is Z(0), M is the weakly Mahlo cardinal, and + is the formal sum.
+
+environment
+  YABMS   directory holding the yaBMS `bms` binary
+          (default: $HOME/proofs/yaBMS/c, then $HOME/code/yaBMS/c)
+          yaBMS: https://github.com/koteitan/yaBMS  (build with `make` in c/)
+EOF
+}
+
+# --- self-test (constitutions.md C5: a tool that reports a verdict carries its
+# --- own test).  Each case is the tool run against itself, so it exercises the
+# --- exit codes as well as the text.
+tests=0
+bad=0
+
+check() {
+  desc=$1
+  want_status=$2
+  want_out=$3
+  shift 3
+  tests=$((tests + 1))
+  out=$("$0" "$@" 2>/dev/null) && status=0 || status=$?
+  if [ "$status" != "$want_status" ] || [ "$out" != "$want_out" ]; then
+    echo "or --self-test: FAIL — $desc"
+    echo "  want: status $want_status, stdout [$want_out]"
+    echo "  got : status $status, stdout [$out]"
+    bad=$((bad + 1))
+  fi
+}
+
+self_test() {
+  check "ζ₀, standard" 0 "phi(2,0)" "(0,0)(1,1)(2,1)"
+  check "the v0.1.82 non-standard matrix" 1 \
+"psi_(Omega)(phi(1,Omega))
+The BMS is not normal form." "(0,0)(1,1)(2,1)(3,2)"
+  check "the empty matrix is 0 and standard" 0 "0" ""
+  check "height 3 is outside oR's domain" 2 "" "(0,0,0)(1,1,1)"
+  check "an unparsable matrix" 2 "" "junk"
+  check "brackets are rejected" 2 "" "(0,0)(1,1)[2]"
+  echo "or --self-test: $tests cases, $bad failed"
+  [ "$bad" -eq 0 ]
+}
+
+if [ $# -eq 0 ]; then
+  usage
+  exit 0
+fi
+
+case "$1" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  --self-test)
+    self_test
+    exit $?
+    ;;
+esac
+
+if [ $# -ne 1 ]; then
+  echo "or: expected exactly one matrix, got $#" >&2
+  echo "or: try 'or --help'" >&2
+  exit 2
+fi
+
+bm=$1
+root=$(cd "$(dirname "$0")/.." && pwd)
+orcli="$root/lean/.lake/build/bin/orcli"
+
+if [ ! -x "$orcli" ]; then
+  echo "or: $orcli not found." >&2
+  echo "or: build it once with:  cd $root/lean && lake build orcli" >&2
+  exit 2
+fi
+
+bms=""
+if [ -n "${YABMS-}" ]; then
+  bms="$YABMS/bms"
+else
+  for d in "$HOME/proofs/yaBMS/c" "$HOME/code/yaBMS/c"; do
+    if [ -x "$d/bms" ]; then
+      bms="$d/bms"
+      break
+    fi
+  done
+fi
+if [ -z "$bms" ] || [ ! -x "$bms" ]; then
+  echo "or: yaBMS 'bms' not found; set YABMS to the directory holding it." >&2
+  echo "or: https://github.com/koteitan/yaBMS  (build with 'make' in its c/)" >&2
+  exit 2
+fi
+
+# The notation first: an unparsable matrix or one outside oR's domain is exit 2,
+# and orcli has already said which on stderr.
+notation=$("$orcli" "$bm") || exit 2
+
+# `bms -s` reports the verdict on stdout as 1 / 0 and always exits 0.
+verdict=$("$bms" -s "$bm" 2>/dev/null | tail -1)
+
+echo "$notation"
+
+case "$verdict" in
+  1) exit 0 ;;
+  0) ;;
+  *)
+    echo "or: could not read a standard-form verdict from bms (got '$verdict')" >&2
+    exit 2
+    ;;
+esac
+
+echo "The BMS is not normal form."
+exit 1

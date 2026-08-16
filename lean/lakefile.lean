@@ -45,3 +45,7 @@ lean_exe gentable where
 /-- The CLI used to cross-check against yaBMS (reads expand/cmp on standard input). -/
 lean_exe bmscli where
   root := `Test.CLI
+
+/-- `scripts/or`'s Lean half: one matrix on the command line → its 𝔗(M) notation. -/
+lean_exe orcli where
+  root := `Test.ORCLI
