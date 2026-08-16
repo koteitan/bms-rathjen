@@ -527,9 +527,9 @@ argVal (b ⊕ fsP c n)  = argVal b ⊕ sumVal (fsP c n)
 ### 残る 3 つ (`ArgLim` の土台)
 
 ```
-ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd
-ArgLimOm     最後の加数が Ω。列は Ω の塔               組み合わせ子 (B) fsGen
-ArgLimLift   ω^· で持ち上げる段だけ                    組み合わせ子 (C) phi_arg
+ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd   🚨
+ArgLimOm     最後の加数が Ω。列は Ω の塔               組み合わせ子 (B) fsGen    🚨
+ArgLimLift   ω^· で持ち上げる段だけ                                              ✅
 ```
 
 どれも `Evidence/WF.lean` に狙いを付けた組み合わせ子が 1 つずつある。
@@ -617,7 +617,6 @@ nd v r a  =  r ⊕ psi_v(a)
 
 ```
 重い  326 行目          一般化した領域が丸ごと要る。いまの領域はその試作
-      OmegaCofAP        69/80 の第 4 連言。加法主要な項 1 個の共終性
       ArgLimRep         9/80。組み合わせ子 (A) + 上界 hb。数え直しが 4 件
       ArgLimOm          2/80。組み合わせ子 (B)。塔の側条件 3 つ
       登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
@@ -709,7 +708,10 @@ nd v r a  =  r ⊕ psi_v(a)
         - ✅ 共終性は**加法主要な項 1 個**の話に落ちた (`omegaCof_of`)。
           一般の `s` は自分の頭を `repAdd` で覆えばよく、`lt_repAdd_phi` が
           「1 個が下なら反復も下」を与える。和の話は残らない
-        - 🚨 `OmegaCofAP` — `u` が加法主要で `u < ω^X` なら `∃n, u < ω^(g n)`
+        - ✅ `OmegaCofAP` (`RegionV` §15.7)。2 形しかない。`u = φ̄(a,b)` で `a ≠ 0` なら
+          `u` 自身が `ω` 冪なので反射で済み、`a = 0` なら `succT b` を取る
+          (`ω^b <= u < ω^X` で `b < X`、`X` は極限、そして D2 が `ω^(succT b) >= u` を出す)
+        - ✅ **場合 3 (69/80) は閉じた** — `OmegaLim` も `ArgLimLift` も定理
         - 🚨 `ArgLimRep` — 最後の加数が `ψ₀(0)` (9/80)。組み合わせ子 (A)
         - 🚨 `ArgLimOm` — 最後の加数が `Ω` (2/80)。組み合わせ子 (B)
         - ✅ 項の順序を成分列の辞書式順序として読む層 (`CNVOps` §20)。

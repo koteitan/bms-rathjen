@@ -1577,4 +1577,79 @@ theorem omegaCof_of (H : OmegaCofAP) : OmegaCof := by
     exact Evidence.WF.le_of_lt (Evidence.WF.lt_of_le_of_lt (Evidence.WF.frag_of_cnv _ hcs)
       (Evidence.WF.frag_of_cnv _ hcrep) (Evidence.WF.frag_of_cnv _ (cnv_omegaNF (h1 n))) hk hrep)
 
+/-! ### §15.7 THE LIFT CASE IS CLOSED
+
+`u` additively principal and `u < ω^X`.  Two shapes, and §26's equation decides which:
+
+    u = φ̄(a,b), a ≠ 0    `u` is its own `ω`-power, so `u < ω^X` reflects to `u < X` directly
+    u = φ̄(0,b)           take `succT b`.  `ω^b ≤ u < ω^X` reflects to `b < X`; `X` is a limit
+                         so `succT b < X`; and `ω^(succT b) ≥ φ̄(0,b) = u` because D2 says
+                         `dnArg` drops by at most one
+
+Either way cofinality of `g` puts the witness under some `g n`, and one more step of `g`
+makes the inequality STRICT.  So `OmegaCofAP` — and with §15.5 and §15.6 above it, `OmegaLim`
+and `ArgLimLift`, the 69/80 case — are theorems. -/
+
+section
+open Evidence.WF
+
+/-- **加法主要な項の共終性。** -/
+theorem omegaCofAP : OmegaCofAP := by
+  intro X g hX hlc u hu hapu hlt
+  obtain ⟨h1, h2, h3, h4⟩ := hlc
+  obtain ⟨a, b, rfl⟩ := eq_phi_of_isAP_cnv hu hapu
+  obtain ⟨hca, hcb⟩ := cnv_phi hu
+  by_cases haz : a = zero
+  · subst haz
+    have hbX : lt b X = true := by
+      refine omegaNF_lt_reflect hcb hX ?_
+      exact lt_of_le_of_lt (frag_of_cnv _ (cnv_omegaNF hcb)) (frag_of_cnv _ hu)
+        (frag_of_cnv _ (cnv_omegaNF hX)) (omegaNF_le_phi_zero hcb) hlt
+    have hsc : CNV (succT b) = true := cnv_succT _ hcb
+    have hsX : lt (succT b) X = true :=
+      limClauses_succ_lt hX ⟨h1, h2, h3, h4⟩ hcb hbX
+    obtain ⟨n, hn⟩ := h4 (succT b) (inT_of_cnv _ hsc) hsX
+    refine ⟨n + 1, ?_⟩
+    have hu' : le (phi zero b) (omegaNF (succT b)) = true := by
+      rw [omegaNF_eq hsc, if_neg (by rw [isFixP_succT]; intro hc; exact Bool.noConfusion hc)]
+      have hd := dnArg_ge hcb hsc (lt_succT b hcb)
+      by_cases he : b = dnArg (succT b)
+      · rw [← he]; exact le_self _
+      · exact le_of_lt (lt_phi_arg (lt_of_le_of_ne hd he))
+    have hm : le (omegaNF (succT b)) (omegaNF (g n)) = true := by
+      by_cases he : succT b = g n
+      · rw [he]; exact le_self _
+      · exact le_of_lt (omegaNF_mono dnFacts hsc (h1 n) (lt_of_le_of_ne hn he))
+    have hch : le (phi zero b) (omegaNF (g n)) = true :=
+      le_trans (frag_of_cnv _ hu) (frag_of_cnv _ (cnv_omegaNF hsc))
+        (frag_of_cnv _ (cnv_omegaNF (h1 n))) hu' hm
+    exact lt_of_le_of_lt (frag_of_cnv _ hu) (frag_of_cnv _ (cnv_omegaNF (h1 n)))
+      (frag_of_cnv _ (cnv_omegaNF (h1 (n + 1)))) hch
+      (omegaNF_mono dnFacts (h1 n) (h1 (n + 1)) (h3 n))
+  · have hfu : isFixP (phi a b) = true := lt_zero_left haz
+    have h5 : omegaNF (phi a b) = phi a b := by rw [omegaNF_eq hu, if_pos hfu]
+    have huX : lt (phi a b) X = true :=
+      omegaNF_lt_reflect hu hX (by rw [h5]; exact hlt)
+    obtain ⟨n, hn⟩ := h4 (phi a b) (inT_of_cnv _ hu) huX
+    refine ⟨n + 1, ?_⟩
+    have hm : le (phi a b) (omegaNF (g n)) = true := by
+      by_cases he : phi a b = g n
+      · rw [← h5, he]; exact le_self _
+      · rw [← h5]
+        exact le_of_lt (omegaNF_mono dnFacts hu (h1 n) (lt_of_le_of_ne hn he))
+    exact lt_of_le_of_lt (frag_of_cnv _ hu) (frag_of_cnv _ (cnv_omegaNF (h1 n)))
+      (frag_of_cnv _ (cnv_omegaNF (h1 (n + 1)))) hm
+      (omegaNF_mono dnFacts (h1 n) (h1 (n + 1)) (h3 n))
+
+end
+
+/-- **`OmegaLim` は定理。** -/
+theorem omegaLim : OmegaLim := omegaLim_of (omegaCof_of omegaCofAP)
+
+/-- **場合 3 (69/80) は閉じた。** -/
+theorem argLimLift_thm : ArgLimLift := argLimLift_of omegaLim
+
+/-- **`ArgLim` に残るのは土台 2 つ。** -/
+theorem argLim' (H1 : ArgLimRep) (H2 : ArgLimOm) : ArgLim := argLim H1 H2 argLimLift_thm
+
 end Evidence.Region

@@ -1775,4 +1775,66 @@ theorem omegaNF_ne_zero (y : Term) : omegaNF y ≠ zero := by
   rw [hc] at h0
   exact Bool.noConfusion h0
 
+/-! ## §31 THE ORDER READ BACK THROUGH `ω^·`, AND THE TARGET IS A LIMIT
+
+Three facts `Evidence/RegionV.lean` §15.7 needs to close cofinality:
+
+    omegaNF_le_phi_zero   `ω^b ≤ φ̄(0,b)`             — `ω^·` never overshoots the plain `φ̄0`
+    omegaNF_lt_reflect    `ω^x < ω^y → x < y`        — §27's monotonicity read backwards
+    limClauses_succ_lt    `z < X → succT z < X`      — the four clauses force `X` to be a LIMIT
+
+The last is the one worth naming: nothing in `LimClauses` SAYS `X` is a limit, but a strictly
+increasing cofinal sequence below it cannot exist otherwise, and the proof is one line of that
+argument — `z ≤ g n < g (n+1)`, so `succT z ≤ g (n+1) < X`. -/
+
+theorem isFixP_succT (b : Term) : isFixP (succT b) = false := by
+  cases b with
+  | zero => show lt zero zero = false; exact lt_irrefl zero
+  | add _ _ => rfl
+  | M => rfl
+  | omg _ => rfl
+  | phi _ _ => rfl
+  | psi _ _ => rfl
+  | Z _ => rfl
+
+/-- `ω^b` は `φ̄(0,b)` を超えない。 -/
+theorem omegaNF_le_phi_zero {b : Term} (hb : CNV b = true) :
+    le (omegaNF b) (phi zero b) = true := by
+  rw [omegaNF_eq hb]
+  by_cases hf : isFixP b = true
+  · rw [if_pos hf]; exact le_of_lt (lt_self_phi_zero b hb)
+  · rw [if_neg hf]
+    have h := dnArg_le hb
+    by_cases he : dnArg b = b
+    · rw [he]; exact le_self _
+    · exact le_of_lt (lt_phi_arg (lt_of_le_of_ne h he))
+
+/-- **`ω^·` は順序を反射する。** 単調性と三分律から。 -/
+theorem omegaNF_lt_reflect {x y : Term} (hx : CNV x = true) (hy : CNV y = true)
+    (h : lt (omegaNF x) (omegaNF y) = true) : lt x y = true := by
+  by_cases hlt : lt x y = true
+  · exact hlt
+  · exfalso
+    have hle : le y x = true :=
+      le_of_not_lt (frag_of_cnv _ hx) (frag_of_cnv _ hy) (bool_false hlt)
+    by_cases hyx : y = x
+    · rw [hyx, lt_irrefl] at h; exact Bool.noConfusion h
+    · have h2 : lt y x = true := lt_of_le_of_ne hle hyx
+      have h3 : lt (omegaNF y) (omegaNF x) = true := omegaNF_mono dnFacts hy hx h2
+      rw [lt_asymm (frag_of_cnv _ (cnv_omegaNF hx)) (frag_of_cnv _ (cnv_omegaNF hy)) h] at h3
+      exact Bool.noConfusion h3
+
+/-- **`LimClauses` の目標は極限。** 下にあるものの後続もまだ下にある。 -/
+theorem limClauses_succ_lt {X : Term} {g : Nat → Term} (hX : CNV X = true)
+    (hlc : LimClauses X g) {z : Term} (hz : CNV z = true) (h : lt z X = true) :
+    lt (succT z) X = true := by
+  obtain ⟨h1, h2, h3, h4⟩ := hlc
+  obtain ⟨n, hn⟩ := h4 z (inT_of_cnv _ hz) h
+  have hzg : lt z (g (n + 1)) = true :=
+    lt_of_le_of_lt (frag_of_cnv _ hz) (frag_of_cnv _ (h1 n)) (frag_of_cnv _ (h1 (n + 1)))
+      hn (h3 n)
+  have hs : le (succT z) (g (n + 1)) = true := le_succT_of_lt z hz (g (n + 1)) (h1 (n + 1)) hzg
+  exact lt_of_le_of_lt (frag_of_cnv _ (cnv_succT _ hz)) (frag_of_cnv _ (h1 (n + 1)))
+    (frag_of_cnv _ hX) hs (h2 (n + 1))
+
 end Evidence.WF
