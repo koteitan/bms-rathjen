@@ -855,4 +855,194 @@ theorem expand_matB : ∀ (t : B), topOKB t = true → nearTopB t = true → ∀
   match decodeB S with | none => false | some t => !(nearTopB t)).length == 232
 #guard (match decodeB [[0,0],[1,1],[2,1]] with | none => true | some t => nearTopB t) == false
 
+/-! ## §7 THE FAR CASE — the value side
+
+§6 closed the case where the bad root is the last node's parent.  When it is further out,
+the depth gap `e` is `lastDep a + 1` and each copy of the bad part descends by `e` rather
+than by 1.  The bad part itself is the block with its last column removed, and in the index
+that is `plugB a .nil` — the context with nothing in the hole.  So the whole value side is
+two equations: `plugB` swaps the last COLUMN (§7's `matB_plugB`), and iterating the context
+lays the copies down at depths `d, d+e, d+2e, …` (`flatten_iterD_gen`).
+
+Nothing here is about `BMS.expand` yet; this is what the frame lemma will have to produce. -/
+
+/-- 最後の節の (相対) 深さ。 -/
+def lastDep : B → Nat
+  | .nil => 0
+  | .nd _ _ .nil => 0
+  | .nd _ _ a => lastDep a + 1
+
+/-- **`plugB` は最後の列を差し替える。** -/
+theorem matB_plugB : ∀ (a : B), a ≠ .nil → ∀ (Y : B) (d : Nat),
+    matB (plugB a Y) d = (matB a d).dropLast ++ matB Y (d + lastDep a) := by
+  intro a
+  induction a with
+  | nil => intro h; exact absurd rfl h
+  | nd u b c _ ihc =>
+    intro _ Y d
+    cases c with
+    | nil =>
+      show matB (appB b Y) d = (matB b d ++ ([d, u] :: matB .nil (d + 1))).dropLast
+        ++ matB Y (d + 0)
+      rw [matB_app Y b d, show matB (B.nil) (d + 1) = [] from rfl,
+        show ([d, u] :: ([] : Matrix)) = [[d, u]] from rfl,
+        show (matB b d ++ [[d, u]]).dropLast = matB b d from by simp,
+        show d + 0 = d from rfl]
+    | nd u' b' c' =>
+      show matB b d ++ ([d, u] :: matB (plugB (.nd u' b' c') Y) (d + 1))
+        = (matB b d ++ ([d, u] :: matB (.nd u' b' c') (d + 1))).dropLast
+          ++ matB Y (d + (lastDep (.nd u' b' c') + 1))
+      rw [ihc (by intro h; exact B.noConfusion h) Y (d + 1)]
+      have hne : matB (B.nd u' b' c') (d + 1) ≠ [] := by
+        show matB b' (d+1) ++ ([d + 1, u'] :: matB c' (d + 2)) ≠ []
+        intro hc
+        exact absurd (List.append_eq_nil_iff.mp hc).2 (by simp)
+      rw [show (matB b d ++ ([d, u] :: matB (B.nd u' b' c') (d + 1))).dropLast
+          = matB b d ++ ([d, u] :: (matB (B.nd u' b' c') (d + 1)).dropLast) from by
+        rw [List.dropLast_append_of_ne_nil (by simp),
+          show ([d, u] :: matB (B.nd u' b' c') (d + 1)).dropLast
+            = [d, u] :: (matB (B.nd u' b' c') (d + 1)).dropLast from by
+          rw [List.dropLast_cons_of_ne_nil hne]]]
+      rw [List.append_assoc, show d + 1 + lastDep (B.nd u' b' c') = d + (lastDep (B.nd u' b' c') + 1)
+        from by omega]
+      rfl
+
+/-- 悪い根のブロック (最後の列を落としたもの)。 -/
+theorem matB_bad (v : Nat) (a : B) (ha : a ≠ .nil) (d : Nat) :
+    matB (.nd v .nil (plugB a .nil)) d = [d, v] :: (matB a (d + 1)).dropLast := by
+  show [d, v] :: matB (plugB a .nil) (d + 1) = _
+  rw [matB_plugB a ha .nil (d + 1), show matB (B.nil) (d + 1 + lastDep a) = [] from rfl,
+    List.append_nil]
+
+/-- **深さの差が `e` の塔の行列。** `m` 番目の複製は行 0 が `m*e` 深い。 -/
+theorem flatten_iterD_gen (v : Nat) (a : B) (ha : a ≠ .nil) : ∀ (d n : Nat),
+    ((List.range (n + 1)).map (fun m =>
+        sh (m * (lastDep a + 1)) (matB (.nd v .nil (plugB a .nil)) d))).flatten
+      = matB (iterD v a n) d := by
+  intro d n
+  induction n generalizing d with
+  | zero =>
+    rw [show (List.range (0 + 1)) = [0] from rfl]
+    show sh (0 * (lastDep a + 1)) (matB (.nd v .nil (plugB a .nil)) d) ++ [] = _
+    rw [List.append_nil, show 0 * (lastDep a + 1) = 0 from by omega,
+      ← matB_sh (.nd v .nil (plugB a .nil)) d 0]
+    rfl
+  | succ k ih =>
+    rw [flatten_range_succ]
+    show sh (0 * (lastDep a + 1)) (matB (.nd v .nil (plugB a .nil)) d)
+        ++ ((List.range (k + 1)).map (fun m =>
+             sh ((m + 1) * (lastDep a + 1)) (matB (.nd v .nil (plugB a .nil)) d))).flatten
+      = matB (.nd v .nil (plugB a (iterD v a k))) d
+    rw [show 0 * (lastDep a + 1) = 0 from by omega,
+      ← matB_sh (.nd v .nil (plugB a .nil)) d 0,
+      show ((List.range (k + 1)).map (fun m =>
+             sh ((m + 1) * (lastDep a + 1)) (matB (.nd v .nil (plugB a .nil)) d))).flatten
+        = ((List.range (k + 1)).map (fun m =>
+             sh (m * (lastDep a + 1))
+               (matB (.nd v .nil (plugB a .nil)) (d + (lastDep a + 1))))).flatten from by
+      refine congrArg List.flatten (List.map_congr_left ?_)
+      intro m _
+      rw [← matB_sh (.nd v .nil (plugB a .nil)) d ((m + 1) * (lastDep a + 1)),
+        ← matB_sh (.nd v .nil (plugB a .nil)) (d + (lastDep a + 1)) (m * (lastDep a + 1)),
+        show d + (m + 1) * (lastDep a + 1) = d + (lastDep a + 1) + m * (lastDep a + 1)
+          from by rw [Nat.succ_mul]; omega],
+      ih (d + (lastDep a + 1))]
+    show matB (.nd v .nil (plugB a .nil)) d ++ matB (iterD v a k) (d + (lastDep a + 1)) = _
+    rw [matB_bad v a ha d]
+    show [d, v] :: (matB a (d + 1)).dropLast ++ matB (iterD v a k) (d + (lastDep a + 1))
+      = [d, v] :: matB (plugB a (iterD v a k)) (d + 1)
+    rw [matB_plugB a ha (iterD v a k) (d + 1),
+      show d + 1 + lastDep a = d + (lastDep a + 1) from by omega]
+    rfl
+
+/-! ## §8 THE ROW-0 PARENT CHAIN IS THE LEFT-MINIMA
+
+This is the ingredient §6 did not need and the far case cannot do without.  `Region.lean`'s
+`frame_parent0` places the row-0 bad root at the block's own root, and that is true only
+because the last column sits at depth `d + 1` — one step, no chain.  With a gap the chain has
+interior steps, and the row-1 bad root is the largest chain element of level below the last
+node's.  So the chain has to be characterised, not just reached.
+
+    q ∈ iterParent (parent M 0) fuel x  ↔  q < x ∧ every column in (q, x] is DEEPER than q
+
+`parent M 0` takes the maximum earlier column with a smaller row-0 entry, so following it is
+scanning leftward and updating the depth record — and the set of records is exactly the set
+of left-minima.  On a `matB` matrix those are the tree ANCESTORS of the last node, which is
+why §3.2's rule is an ancestor walk; turning that into the level condition is the next step. -/
+
+/-- `q` は `x` から見て**左極小** — `q` より右で `x` まではすべて `q` より深い。 -/
+def LMin (M : Matrix) (q x : Nat) : Prop :=
+  q < x ∧ ∀ p, q < p → p ≤ x → ent M q 0 < ent M p 0
+
+/-- **行 0 の親鎖は左極小の列そのもの。** BMS の `parent` は「より浅い最大の列」なので、
+    鎖をたどることは左へ走査して深さの記録を更新することに等しい。 -/
+theorem mem_iterParent0 (M : Matrix) : ∀ (fuel x q : Nat), x ≤ fuel →
+    (q ∈ iterParent (parent M 0) fuel x ↔ LMin M q x) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro x q hx
+    constructor
+    · intro h; exact absurd h (by simp [iterParent])
+    · rintro ⟨h1, h2⟩; omega
+  | succ g ih =>
+    intro x q hx
+    cases hr : parent M 0 x with
+    | none =>
+      constructor
+      · intro h; rw [iterParent_nil hr] at h; exact absurd h (by simp)
+      · rintro ⟨h1, h2⟩
+        exfalso
+        have hq : q ∈ (List.range x).filter (fun p => decide (ent M p 0 < ent M x 0)) :=
+          List.mem_filter.mpr ⟨List.mem_range.mpr h1,
+            decide_eq_true (h2 x h1 (Nat.le_refl x))⟩
+        have : ((List.range x).filter (fun p => decide (ent M p 0 < ent M x 0))) = [] :=
+          List.max?_eq_none_iff.mp hr
+        rw [this] at hq
+        exact absurd hq (by simp)
+    | some r =>
+      obtain ⟨hrm, hrmax⟩ := List.max?_eq_some_iff.mp hr
+      rw [List.mem_filter, List.mem_range] at hrm
+      have hrx : r < x := hrm.1
+      have hrlt : ent M r 0 < ent M x 0 := of_decide_eq_true hrm.2
+      have hgap : ∀ p, r < p → p < x → ent M x 0 ≤ ent M p 0 := by
+        intro p h1 h2
+        rcases Nat.lt_or_ge (ent M p 0) (ent M x 0) with hc | hc
+        · exfalso
+          have hmem : p ∈ (List.range x).filter (fun p => decide (ent M p 0 < ent M x 0)) :=
+            List.mem_filter.mpr ⟨List.mem_range.mpr h2, decide_eq_true hc⟩
+          have := hrmax p hmem
+          omega
+        · exact hc
+      rw [iterParent_cons hr]
+      constructor
+      · intro h
+        rcases List.mem_cons.mp h with rfl | h
+        · refine ⟨hrx, ?_⟩
+          intro p h1 h2
+          rcases Nat.lt_or_ge p x with hp | hp
+          · have := hgap p h1 hp; omega
+          · have : p = x := by omega
+            subst this; exact hrlt
+        · obtain ⟨g1, g2⟩ := (ih r q (by omega)).mp h
+          refine ⟨by omega, ?_⟩
+          intro p h1 h2
+          rcases Nat.lt_or_ge r p with hp | hp
+          · have hqr : ent M q 0 < ent M r 0 := g2 r g1 (Nat.le_refl r)
+            rcases Nat.lt_or_ge p x with hp2 | hp2
+            · have := hgap p hp hp2; omega
+            · have : p = x := by omega
+              subst this; omega
+          · exact g2 p h1 hp
+      · rintro ⟨h1, h2⟩
+        have hqf : q ∈ (List.range x).filter (fun p => decide (ent M p 0 < ent M x 0)) :=
+          List.mem_filter.mpr ⟨List.mem_range.mpr h1,
+            decide_eq_true (h2 x h1 (Nat.le_refl x))⟩
+        have hqr : q ≤ r := hrmax q hqf
+        rcases Nat.eq_or_lt_of_le hqr with rfl | hlt
+        · exact List.mem_cons_self
+        · refine List.mem_cons_of_mem _ ((ih r q (by omega)).mpr ⟨hlt, ?_⟩)
+          intro p hp1 hp2
+          exact h2 p hp1 (by omega)
+
 end Evidence.Region
