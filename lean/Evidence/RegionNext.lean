@@ -3466,4 +3466,90 @@ theorem red_canon_nil (d : Nat) : ∀ (f : Nat), red f (psM (matB .nil d)) = can
 
 end
 
+/-! ## §23 THE FOLD, PINNED
+
+One case of §20 is left: a principal index whose root has level 0 at depth 0.  `red` cuts
+`jjSeq 0 (trMax M)` off the front and folds over `brF M`, rebuilding each branch as
+`(jnJ + 1, nJ + 1) :: derp bJ` and shifting the result by `jnJ - nJ`.  Four predictions,
+measured over the indices with at most 4 (resp. 5) nodes and levels below 3 (resp. 4) that
+obey the normal form off the top and are principal with root level 0 — 65 and 467 of them:
+
+    trMax M       = the LEFTMOST PATH whose levels go 0, 1, 2, …   65 / 65
+    (brF M).length = the maximal subtrees hanging off that path    65 / 65
+    (jnJ+1, nJ+1) :: derp bJ  =  bJ                              467 / 467
+    jnJ - nJ      = (branch root's depth) − (branch root's level) 467 / 467
+
+**THE THIRD ONE IS THE CRUX AND IT IS AN IDENTITY: the rebuild gives the branch back.**  It
+says two things at once — the joint is the branch root's tree parent (`jnJ + 1` is its depth)
+and the row-1 parent's INDEX is the branch root's level minus one.  The second holds because
+the joint lies on the diagonal spine, where index = level, and the normal form caps a child's
+level at its parent's plus one; so the nearest ancestor of strictly smaller level is spine
+column `u - 1`.
+
+With it the fold collapses.  Each term is `incrFirst (red f bJ) (jnJ - nJ)`, the induction
+hypothesis turns `red f bJ` into the branch re-rooted at its own level, and the fourth
+prediction says the shift puts it back exactly where it was — so the fold reproduces
+`M.drop (trMax M + 1)` and the diagonal reproduces `M.take (trMax M + 1)`.
+
+What the proof still needs is the block decomposition of that suffix, which is §18.3's
+`ppairAux_blocks` at arbitrary depth: the branch roots have NON-INCREASING depths as one
+walks right (down the spine's children first, then back up), which is what makes each of them
+a `ppair` cut. -/
+
+section
+open Trans.Recal
+
+/-- 対角の長さの予測: 左端の道で段が 1 ずつ上がる長さ。 -/
+partial def spineLen : B → Nat
+  | .nd u .nil b =>
+    match (topSplit b).head? with
+    | none => 0
+    | some q => if lvlB q == u + 1 then 1 + spineLen q else 0
+  | _ => 0
+
+/-- 枝の予測: 対角からぶら下がる極大部分木。 -/
+partial def branchesOf : B → List B
+  | .nd u .nil b =>
+    (match topSplit b with
+     | [] => []
+     | q :: rest => if lvlB q == u + 1 then branchesOf q ++ rest else (q :: rest))
+  | _ => []
+
+/-- 段 0 で principal、引数が空でない添字。 -/
+def enumPrin (L n : Nat) : List B := (enumFree L n).filter fun s => match s with
+  | .nd 0 .nil (.nd _ _ _) => true | _ => false
+
+/-- 枝の作り直しは枝そのものか。 -/
+def rebuildOK (s : B) : Bool :=
+  let M := psM (matB s 0)
+  let br := brF M
+  let fn := firstNodes M
+  let jn := joints M
+  (List.range br.length).all fun J =>
+    let bJ := br.getD J []
+    let nJ : Int := if gp1 bJ 0 == 0 then -1 else fpar M 1 (fn.getD J 0) 0
+    let jnJ := jn.getD J 0
+    ((jnJ + 1, nJ + 1) :: derp bJ) == bJ
+
+/-- ずらし量は「枝の根の深さ − 枝の根の段」か。 -/
+def shiftOK (s : B) : Bool :=
+  let M := psM (matB s 0)
+  let br := brF M
+  let fn := firstNodes M
+  let jn := joints M
+  (List.range br.length).all fun J =>
+    let bJ := br.getD J []
+    let nJ : Int := if gp1 bJ 0 == 0 then -1 else fpar M 1 (fn.getD J 0) 0
+    let jnJ := jn.getD J 0
+    (jnJ - nJ) == gp0 bJ 0 - gp1 bJ 0
+
+#guard (enumPrin 3 4).length == 65
+#guard (enumPrin 3 4).all fun s => trMax (psM (matB s 0)) == ((spineLen s : Nat) : Int)
+#guard (enumPrin 3 4).all fun s => (brF (psM (matB s 0))).length == (branchesOf s).length
+#guard (enumPrin 4 5).length == 467
+#guard (enumPrin 4 5).all rebuildOK
+#guard (enumPrin 4 5).all shiftOK
+
+end
+
 end Evidence.Region
