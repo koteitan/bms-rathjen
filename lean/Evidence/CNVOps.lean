@@ -1203,4 +1203,67 @@ theorem plus_zero_left {X : Term} (h : X.isAP = true) : plus zero X = X := by
   rw [hl]
   rfl
 
+/-! ## §26 THE THREE SHAPES OF `ω^·`, AS ONE EQUATION
+
+`omegaNF` on a `CNV` argument is `phiNF zero`, and `phiNF zero` is not one branch but
+three.  `Evidence/RegionV.lean` §15.3 measures that on the region's arguments; this is the
+equation behind it, and it is what a proof about `ω^·` has to case on:
+
+    x = φ̄(c,d) with c ≠ 0    ω^x = x              `x` is already a fixed point of `ω^·`
+    x = γ ⊕ m, γ a fixed
+        point, m ≥ 1          ω^x = φ̄(0, γ ⊕ (m-1))   `phiNFsucc` RE-COUNTS
+    otherwise                 ω^x = φ̄(0, x)
+
+`dnArg` is the middle column's argument, written by copying `phiNFsucc zero`'s own branch
+structure so that `phiNFsucc_zero_eq` is a case-by-case identity rather than a proof about
+`splitFin`.  Measured (`Evidence/RegionSeq.lean`): 0 failures over 462 `CNV` terms, with all
+three branches firing — 76 / 10 / 376. -/
+
+/-- `ω^·` が引数をそのまま返す形 — `x` が `ω^·` の不動点。 -/
+def isFixP (x : Term) : Bool := match x with | phi c _ => lt zero c | _ => false
+
+/-- 数え直したあとの引数。`phiNFsucc zero` の枝分けをそのまま写したもの。 -/
+def dnArg (x : Term) : Term :=
+  let (g, m) := splitFin x
+  if m ≥ 1 then
+    let down := plus g (ofNat (m - 1))
+    match g with
+    | phi d _ => if lt zero d then down else x
+    | _ => if g.isSC && lt zero g then down else x
+  else x
+
+theorem phiNFsucc_zero_eq (x : Term) : phiNFsucc zero x = phi zero (dnArg x) := by
+  unfold phiNFsucc dnArg
+  cases hs : splitFin x with
+  | mk g m =>
+    dsimp only
+    split
+    · cases g <;> dsimp only <;> split <;>
+        first | rfl | exact phiNFdefault_zero_eq x
+    · exact phiNFdefault_zero_eq x
+
+theorem omegaNF_cnv {a : Term} (h : CNV a = true) : omegaNF a = phiNF zero a := by
+  have hMa : lt M a = false :=
+    lt_asymm_inT (inT_of_cnv a h) (show inT (M : Term) = true from rfl) (cnv_lt_M a h)
+  have haM : (a == M) = false := by
+    cases hb : (a == M) with
+    | false => rfl
+    | true => rw [eq_of_beq hb] at h; exact Bool.noConfusion h
+  show (if lt M a then omg a else if a == M then M else phiNF zero a) = _
+  rw [if_neg (by rw [hMa]; exact Bool.noConfusion),
+    if_neg (by rw [haM]; exact Bool.noConfusion)]
+
+/-- **`ω^·` の形は 3 つ。** 不動点をそのまま返すか、`φ̄(0, ·)` を返すか。 -/
+theorem omegaNF_eq {x : Term} (h : CNV x = true) :
+    omegaNF x = if isFixP x then x else phi zero (dnArg x) := by
+  rw [omegaNF_cnv h]
+  have hsc : x.isSC = false := by cases x <;> first | rfl | exact Bool.noConfusion h
+  unfold phiNF isFixP
+  simp only [hsc, Bool.false_and, Bool.false_eq_true, if_false]
+  cases x <;> dsimp only <;>
+    first
+      | exact Bool.noConfusion h
+      | exact phiNFsucc_zero_eq _
+      | (split <;> first | rfl | exact phiNFsucc_zero_eq _)
+
 end Evidence.WF
