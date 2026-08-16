@@ -3781,4 +3781,139 @@ theorem red_diag_id (M : PS) (f : Nat)
 
 end
 
+/-! ## §26 `trMax` IS "DEPTH AND LEVEL BOTH GO UP"
+
+The tree half of §25 starts with the diagonal, and the diagonal is `trMax`, and `trMax` is
+`isParentP … 1` repeated.  That test unfolds to something completely local:
+
+    isParentP M 1 (j+1) j = true  ↔  ent M j 0 < ent M (j+1) 0  ∧  ent M j 1 < ent M (j+1) 1
+
+— the next column must be strictly deeper AND strictly higher.  The reason both searches
+collapse to one step is the LOWER BOUND: `isParentP … j` runs `fpar … j`, whose scan may not
+look further left than `j` itself, so `fpar0` either hits `j` on its first try or runs out of
+room, and `fpar1` then either accepts `j` or restarts a scan that has no room at all
+(`fpar0_self`).
+
+On a `matB` matrix the two halves say exactly what one expects of a tree: the next column in
+preorder is deeper precisely when it is a CHILD of this one, and under the normal form
+(§19) a child's level is at most one more than its parent's, so "strictly higher" pins it to
+EXACTLY one more.  That is why the run `0 … trMax M` comes out as `jjSeq 0 tr` and not merely
+as some increasing path.
+
+`trMax_of` packages it: give the position where the test first fails — or say the matrix ends
+there — and `trMax` is that position. -/
+
+section
+open Trans.Recal
+
+theorem lenI_psM (M : Matrix) : lenI (psM M) = ((M.length : Nat) : Int) := by
+  show (((psM M).length : Nat) : Int) = _
+  rw [psM_len]
+
+/-- 自分自身を下限にすると親は無い。 -/
+theorem fpar0_self (M : Matrix) (j : Nat) :
+    fpar0 (psM M) ((j : Nat) : Int) ((j : Nat) : Int) = -1 := by
+  by_cases h : ((j : Nat) : Int) < 0 ∨ ((j : Nat) : Int) ≥ lenI (psM M)
+  · show (if ((j : Nat) : Int) < 0 ∨ ((j : Nat) : Int) ≥ lenI (psM M) then (-1 : Int) else _) = _
+    rw [if_pos h]
+  · rw [fpar0_in _ _ _ h]
+    exact fpar0Aux_neg _ _ _ _ _ (by omega)
+
+/-- 隣の列が行 0 の親か。 -/
+theorem fpar0_succ (M : Matrix) (j : Nat) (hj : j + 1 < M.length) :
+    fpar0 (psM M) (((j : Nat) : Int) + 1) ((j : Nat) : Int)
+      = if ent M j 0 < ent M (j + 1) 0 then ((j : Nat) : Int) else -1 := by
+  rw [fpar0_in _ _ _ (by rw [lenI_psM]; omega),
+    show (((j : Nat) : Int) + 1) = ((j + 1 : Nat) : Int) from by omega, psM_gp0,
+    show ((j + 1 : Nat) : Int) - 1 = ((j : Nat) : Int) from by omega]
+  by_cases h : ent M j 0 < ent M (j + 1) 0
+  · rw [if_pos h]
+    exact fpar0Aux_hit _ _ _ _ _ (by omega) (by rw [psM_gp0]; omega)
+  · rw [if_neg h]
+    show (if ((j : Nat) : Int) < ((j : Nat) : Int) then (-1 : Int)
+          else if gp0 (psM M) ((j : Nat) : Int) < ((ent M (j + 1) 0 : Nat) : Int)
+               then ((j : Nat) : Int)
+               else fpar0Aux (psM M).length (psM M) ((ent M (j + 1) 0 : Nat) : Int)
+                      (((j : Nat) : Int) - 1) ((j : Nat) : Int)) = -1
+    rw [if_neg (by omega), psM_gp0, if_neg (by omega),
+      fpar0Aux_neg _ _ _ _ _ (by omega)]
+
+/-- **隣の列が行 1 の親であるのは、深さと段の両方が真に増えるときちょうど。** -/
+theorem fpar_one_succ (M : Matrix) (j : Nat) (hj : j + 1 < M.length) :
+    fpar (psM M) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int)
+      = if ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1
+        then ((j : Nat) : Int) else -1 := by
+  rw [Rows.Ladder.fpar1_unfold _ _ _ (by rw [lenI_psM]; omega)]
+  show (let z := fpar0 (psM M) (((j : Nat) : Int) + 1) ((j : Nat) : Int)
+        if z < ((j : Nat) : Int) then (-1 : Int)
+        else if gp1 (psM M) z < gp1 (psM M) (((j : Nat) : Int) + 1) then z
+        else fpar1Aux (psM M).length (psM M) (gp1 (psM M) (((j : Nat) : Int) + 1)) z
+               ((j : Nat) : Int)) = _
+  rw [fpar0_succ M j hj]
+  by_cases h0 : ent M j 0 < ent M (j + 1) 0
+  · rw [if_pos h0, if_neg (by omega),
+      show (((j : Nat) : Int) + 1) = ((j + 1 : Nat) : Int) from by omega,
+      psM_gp1, psM_gp1]
+    by_cases h1 : ent M j 1 < ent M (j + 1) 1
+    · rw [if_pos (by omega), if_pos ⟨h0, h1⟩]
+    · rw [if_neg (by omega), if_neg (by intro hc; exact h1 hc.2)]
+      show fpar1Aux (psM M).length (psM M) ((ent M (j + 1) 1 : Nat) : Int)
+        ((j : Nat) : Int) ((j : Nat) : Int) = -1
+      cases hL : (psM M).length with
+      | zero => rfl
+      | succ g =>
+        show (let z := fpar0 (psM M) ((j : Nat) : Int) ((j : Nat) : Int)
+              if z < ((j : Nat) : Int) then (-1 : Int) else _) = _
+        rw [fpar0_self M j, if_pos (by omega)]
+  · rw [if_neg h0, if_pos (by omega), if_neg (by intro hc; exact h0 hc.1)]
+
+/-- `isParentP` の同じ形。 -/
+theorem isParentP_succ_iff (M : Matrix) (j : Nat) (hj : j + 1 < M.length) :
+    isParentP (psM M) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int) = true
+      ↔ (ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1) := by
+  show (decide ((0 : Int) ≤ ((j : Nat) : Int)) && decide (((j : Nat) : Int) < lenI (psM M))
+    && (((j : Nat) : Int) == fpar (psM M) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int))) = true ↔ _
+  rw [decide_eq_true (show (0 : Int) ≤ ((j : Nat) : Int) from by omega),
+    decide_eq_true (show ((j : Nat) : Int) < lenI (psM M) from by rw [lenI_psM]; omega),
+    fpar_one_succ M j hj]
+  constructor
+  · intro h
+    by_cases hc : ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1
+    · exact hc
+    · exfalso
+      rw [if_neg hc] at h
+      simp at h
+  · intro hc
+    rw [if_pos hc]
+    show (true && true && (((j : Nat) : Int) == ((j : Nat) : Int))) = true
+    rw [beqI_self]
+    rfl
+
+/-- 右端では隣が無いので親でもない。 -/
+theorem isParentP_succ_oob (M : Matrix) (j : Nat) (hj : M.length ≤ j + 1) :
+    isParentP (psM M) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int) = false := by
+  refine isParentP_of_ne _ _ _ _ ?_
+  rw [fpar_oob _ _ _ _ (by rw [lenI_psM]; omega)]
+  exact decide_eq_false (by omega)
+
+/-- **`trMax` は「深さと段が両方増える」最初に破れる位置。** -/
+theorem trMax_of (M : Matrix) (t : Nat) (hlen : t < M.length)
+    (hkeep : ∀ j, j < t → ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1)
+    (hstop : M.length ≤ t + 1
+      ∨ ¬(ent M t 0 < ent M (t + 1) 0 ∧ ent M t 1 < ent M (t + 1) 1)) :
+    trMax (psM M) = ((t : Nat) : Int) := by
+  refine Rows.Ladder.trMax_eq (psM M) t (by rw [psM_len]; omega)
+    (fun j hj => (isParentP_succ_iff M j (by omega)).mpr (hkeep j hj)) ?_
+  rcases hstop with h | h
+  · exact isParentP_succ_oob M t h
+  · cases hres : isParentP (psM M) 1 (((t : Nat) : Int) + 1) ((t : Nat) : Int) with
+    | false => rfl
+    | true =>
+      rcases Nat.lt_or_ge (t + 1) M.length with hlt | hge
+      · exact absurd ((isParentP_succ_iff M t hlt).mp hres) h
+      · rw [isParentP_succ_oob M t hge] at hres
+        exact absurd hres (by simp)
+
+end
+
 end Evidence.Region
