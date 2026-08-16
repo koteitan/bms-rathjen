@@ -5,6 +5,7 @@
 | BMS | 行列。リンク先は行の定義 |
 | $`\mathfrak{T}(M)`$ | Rathjen R1 の項 ([D.TM](#dtm)) |
 | Buchholz | Buchholz の $`\mathrm{OT}_B`$ での値。**全行が変換写像 (pss2bp) の出力**を $`\psi`$ 形で書いたもの ($`oR`$ の $`1+\cdot`$ 補正込み) |
+| 通称 | 同じ順序数の通り名。$`\varepsilon_\alpha`$・$`\zeta_\alpha`$・$`\Gamma_\alpha`$・$`\omega^\alpha`$ を使う。通り名の無いところは $`\bar{\varphi}`$ のまま |
 | 証明 | ✅ = [E.cert](#ecert) が定理。空欄 = まだ |
 | その他の弱いエビデンス | ✅ の材料。[一覧](#その他の弱いエビデンス) |
 | 備考 | その行に固有のこと |

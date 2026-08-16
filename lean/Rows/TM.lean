@@ -8,16 +8,17 @@ Policy (see plan/README.md):
     `#guard`s in the middle of this file, so a successful build means every listed
     row has been verified.
 
-THE RENDERED TABLE HAS SIX COLUMNS AND NO MORE — see plan/spec.md, which is the
+THE RENDERED TABLE HAS SEVEN COLUMNS AND NO MORE — see plan/spec.md, which is the
 spec this generator answers to.  The proof column is ✅ or empty; everything that is
 a PREMISE of ✅ rather than ✅ itself goes to the weak-evidence column.
 
 Fields, and where each one surfaces:
   m, t  : the two sides of the row.  The Buchholz cell is computed from `m` alone, by
           `oRB` (the pss2bp port) plus `oR`'s `1 + ·`; see `buchOf`.
-  name  : the common name (ε₀, ζ₀, Γ₀, ω^ω).  NOT rendered since 2026-08-17 — the
-          Buchholz column is the ψ form everywhere — but kept as the fallback for a
-          matrix `oRB` does not apply to, and as the reading of the 𝔗(M) cell.
+  name  : the common name (ε₀, ζ₀, Γ₀, ω^ω).  Rendered as the 通称 column, which sits
+          to the right of Buchholz (restored 2026-08-17 after being folded into the
+          Buchholz column on 2026-08-14).  Also the Buchholz cell's fallback for a
+          matrix `oRB` does not apply to.
   proof : the namespace that proves E.fs for this row, i.e.
           `∀ n, oR (M[n]) = fsN t (k n)` for that row's own index k.  Rendered as the
           fₙ mark IN THE WEAK-EVIDENCE COLUMN — it is a premise of ✅, not ✅.
@@ -145,7 +146,7 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,0],[1,1],[1,0],[2,1],[3,0],[1,0],[2,1]],
     t := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
       (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) zero))),
-    name := "\\bar{\\varphi}(0,\\bar{\\varphi}(1,\\omega+1)+\\bar{\\varphi}(1,\\omega)+\\bar{\\varphi}(1,0))",
+    name := "\\omega^{\\varepsilon_{\\omega+1}+\\varepsilon_\\omega+\\varepsilon_0}",
     proof := "namespace F1", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,0],[2,0]], t := phi one (phi zero (ofNat 2)),
@@ -169,33 +170,33 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0]],
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi zero (phi zero zero))),
-    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\omega)",
+    name := "\\varepsilon_{\\varepsilon_{\\zeta_0+1}+\\omega}",
     proof := "namespace F2a", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]],
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi (phi zero zero) zero)),
-    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(2,0))+\\bar{\\varphi}(1,0))",
+    name := "\\varepsilon_{\\varepsilon_{\\zeta_0+1}+\\varepsilon_0}",
     proof := "namespace F2b", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   -- 食い違い行 (diff.md 族 3、3 行)。ここだけ当方の値が先方より大きい。3 行とも決着済み。
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (phi (add (phi zero zero) (phi zero zero)) zero)))),
-    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)))))",
+    name := "\\varepsilon_{\\varepsilon_{\\omega^{\\omega^{\\zeta_0+1}}}}",
     proof := "namespace F3a", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero) (phi (phi zero zero) zero))))),
-    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(1,0)))))",
+    name := "\\varepsilon_{\\varepsilon_{\\omega^{\\omega^{\\zeta_0+\\varepsilon_0}}}}",
     proof := "namespace F3b", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero)
         (phi (add (phi zero zero) (phi zero zero)) zero))))),
-    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(1,\\bar{\\varphi}(0,\\bar{\\varphi}(0,\\bar{\\varphi}(2,0)+\\bar{\\varphi}(2,0)))))",
+    name := "\\varepsilon_{\\varepsilon_{\\omega^{\\omega^{\\zeta_0\\cdot 2}}}}",
     proof := "namespace F3c", note := "外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   -- The rows below were withdrawn in v0.1.42 (the o? calibration failure; see
@@ -213,14 +214,14 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]],
     t := phi (phi zero zero) (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (phi zero (phi zero zero))),
-    name := "\\bar{\\varphi}(1,\\bar{\\varphi}(3,\\omega))",
+    name := "\\varepsilon_{\\bar{\\varphi}(3,\\omega)+1}",
     proof := "namespace G9", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1]],
     t := phi (add (phi zero zero) (phi zero zero))
       (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
         (phi zero (phi zero zero))),
-    name := "\\bar{\\varphi}(2,\\bar{\\varphi}(3,\\omega))",
+    name := "\\zeta_{\\bar{\\varphi}(3,\\omega)+1}",
     proof := "namespace G10", note := "外部の表と食い違う ([diff.md](diff.md) 族 4)",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1],[2,1]],
@@ -376,6 +377,49 @@ def rows : List Row := [
 -- every term satisfies the formation conditions
 #guard rows.all fun r => inT r.t
 
+/-! ### GATE — the 通称 column is CHECKED where it is not a bare `φ̄`
+
+`Row.name` is the one displayed cell written by hand, and it can be wrong in a way nothing
+else notices: `φ̄` re-counts fixed points ([Rathjen, 1991] 2.6(vi)), so the common name of
+`φ̄(1,ζ₀)` is `ε_{ζ₀+1}` and NOT `ε_{ζ₀}`.  `phiNF`/`omegaNF` are the standard (non-skipping)
+Veblen functions as 𝔗(M) terms, so the reading can be rebuilt and compared with the row's own
+term.  Every name below is one whose subscript form was derived rather than read off, and the
+last two guards are the negative control: dropping the shift breaks them. -/
+
+private def epsOf (x : Term) : Term := phiNF one x
+private def zetOf (x : Term) : Term := phiNF (ofNat 2) x
+private def powOf (x : Term) : Term := omegaNF x
+private def phi3w : Term := phi (ofNat 3) omega
+private def termOf (m : BMS.Matrix) : Term :=
+  ((rows.find? (fun r => r.m == m)).map (fun r => r.t)).getD TM.Term.M
+
+-- ω^(ε_{ω+1} + ε_ω + ε_0)
+#guard powOf (plus (epsOf (plus omega one)) (plus (epsOf omega) (epsOf zero)))
+  == termOf [[0,0],[1,1],[2,0],[1,1],[1,0],[2,1],[3,0],[1,0],[2,1]]
+-- ε_(ε_{ζ_0+1} + ω)
+#guard epsOf (plus (epsOf (plus (zetOf zero) one)) omega)
+  == termOf [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0]]
+-- ε_(ε_{ζ_0+1} + ε_0)
+#guard epsOf (plus (epsOf (plus (zetOf zero) one)) (epsOf zero))
+  == termOf [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]]
+-- ε_(ε_(ω^(ω^(ζ_0+1))))
+#guard epsOf (epsOf (powOf (powOf (plus (zetOf zero) one))))
+  == termOf [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]]
+-- ε_(ε_(ω^(ω^(ζ_0+ε_0))))
+#guard epsOf (epsOf (powOf (powOf (plus (zetOf zero) (epsOf zero)))))
+  == termOf [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]]
+-- ε_(ε_(ω^(ω^(ζ_0·2))))
+#guard epsOf (epsOf (powOf (powOf (plus (zetOf zero) (zetOf zero)))))
+  == termOf [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]]
+-- ε_(φ̄(3,ω)+1)
+#guard epsOf (plus phi3w one) == termOf [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]]
+-- ζ_(φ̄(3,ω)+1)
+#guard zetOf (plus phi3w one) == termOf [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1]]
+-- CTRL 不動点のずらしを落とすと合わない
+#guard epsOf (plus (epsOf (zetOf zero)) omega)
+  != termOf [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0]]
+#guard epsOf phi3w != termOf [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]]
+
 /-- A region row: asserts a claim about a whole FAMILY of matrices — an interval
     of standard matrices, or a parameterized family — rather than about one matrix.
     Rendered between the ordinary rows, just before the first row whose term
@@ -385,6 +429,7 @@ def rows : List Row := [
 structure RegionRow where
   bms : String         -- display text for the BMS cell
   tm : String          -- display math for the T(M) cell
+  bu : String          -- display math for the Buchholz cell
   nm : String          -- display math for the common-name cell
   boundT : Term        -- exclusive upper bound of the region (insertion point)
   proof : String := "" -- theorem name in `proofFile` ("" = pending)
@@ -398,7 +443,8 @@ structure RegionRow where
 def regions : List RegionRow := [
   { bms := "<(0,0)(1,1)",
     tm := "\\lt\\bar{\\varphi}(1,0)",
-    nm := "\\lt\\psi_{0}(\\psi_{1}(0))",
+    bu := "\\lt\\psi_{0}(\\psi_{1}(0))",
+    nm := "\\lt\\varepsilon_0",
     boundT := e0,
     proof := "e3_general",
     evLabel := "checkAll",
@@ -483,8 +529,8 @@ def regionLine (regionProofLine : String → String → Option Nat) (g : RegionR
   let _ := regionProofLine
   let cell (s : String) : String :=
     if g.plainCells || s == "" then s else "$`" ++ s ++ "`$"
-  "| **" ++ g.bms ++ "** | " ++ cell g.tm ++ " | " ++ cell g.nm ++ " | " ++
-    proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
+  "| **" ++ g.bms ++ "** | " ++ cell g.tm ++ " | " ++ cell g.bu ++ " | " ++ cell g.nm ++
+    " | " ++ proofCell ++ " | " ++ linked g.evLabel g.evPath ++ " | " ++ g.note ++ " |\n"
 
 /-- The contents of table/table-r1.md.
     The prose is NOT here: `head` and `tail` are the verbatim contents of
@@ -528,6 +574,7 @@ def genTable (head tail : String)
     let buch := buchOf r
     "| " ++ bmsCell ++ " | $`" ++ tex r.t ++ "`$ | " ++
       (if buch == "" then "" else "$`" ++ buch ++ "`$") ++ " | " ++
+      (if r.name == "" then "" else "$`" ++ r.name ++ "`$") ++ " | " ++
       proofCell ++ " | " ++ weak ++ " | " ++ r.note ++ " |\n"
   -- interleave: emit a region row just before the first row whose term reaches its bound
   let step (st : List RegionRow × String) (r : Row) : List RegionRow × String :=

@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.58
+バージョン: v0.7.60
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -14,5 +14,5 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 
 ## 対応表
 
-| BMS | $`\mathfrak{T}(M)`$ | Buchholz | 証明 | その他の弱いエビデンス | 備考 |
-|---|---|---|---|---|---|
+| BMS | $`\mathfrak{T}(M)`$ | Buchholz | 通称 | 証明 | その他の弱いエビデンス | 備考 |
+|---|---|---|---|---|---|---|

@@ -43,6 +43,7 @@ table/ に書かない。[plan/README.md](README.md) と
 | BMS | 行列 | `Row.m` |
 | $`\mathfrak{T}(M)`$ | Rathjen R1 の項 | `Row.t` |
 | Buchholz | Buchholz $`\mathrm{OT}_B`$ での値 | 下記 |
+| 通称 | 同じ順序数の通り名 | `Row.name` |
 | 証明 | ✅ か空欄 | 証明書レジストリ |
 | その他の弱いエビデンス | ✅ の材料 | 下記 |
 | 備考 | その行に固有のこと | `Row.note` |
@@ -59,11 +60,18 @@ $`\mathrm{Trans}((0,0)) = 0`$ から数え始めるが、このリポジトリ�
 $`1 + \alpha = \alpha`$ なので全く違わない。列を書くときに $`1 + \cdot`$ を
 Buchholz 側で当てるので、Buchholz 列は同じ行の $`\mathfrak{T}(M)`$ 列と全域で一致する。
 
-2026-08-17 まではこの列は $`\psi_0(\Omega_2)`$ 未満で通称
-($`\varepsilon_0`$、$`\zeta_0`$、$`\Gamma_0`$、$`\omega^\omega`$) を使っていた。
-通称は `Row.name` に残っており、$`\mathfrak{T}(M)`$ 列の
-$`\bar{\varphi}`$ の綴りが指すものでもあるが、Buchholz 列は上から下まで 1 つの記法で
-書く。空行列だけは変換写像の定義域の外なので、そこだけ通称 ($`0`$) が出る。
+2026-08-14 から 2026-08-17 まではこの列が $`\psi_0(\Omega_2)`$ 未満で通称を兼ねていた。
+いまは通称は**右隣の独立した列**である。空行列だけは変換写像の定義域の外なので、
+そこだけ Buchholz 列にも通称 ($`0`$) が出る。
+
+### 通称列
+
+同じ順序数の**通り名**。$`\varepsilon_\alpha`$・$`\zeta_\alpha`$・$`\Gamma_\alpha`$・
+$`\omega^\alpha`$ を使う。出どころは `Row.name` で、これは手で書く唯一の表示欄である
+($`\mathfrak{T}(M)`$ 列の $`\bar{\varphi}`$ は不動点を飛ばす版なので、通り名は
+機械的な書き換えでは出ない — 例えば $`\bar{\varphi}(0,\varepsilon_0)`$ の通り名は
+$`\omega^{\varepsilon_0}`$ ではなく $`\omega^{\varepsilon_0+1}`$ である)。
+通り名が無い順序数はそこだけ $`\bar{\varphi}`$ のままにする。
 
 ### 証明列
 
