@@ -385,7 +385,7 @@ theorem frame_getLast : (P ++ (Bk ++ [last])).getLast? = some last := by
   rw [show P ++ (Bk ++ [last]) = (P ++ Bk) ++ [last] from by rw [List.append_assoc]]
   simp
 
-variable (hroot : Bk.getD 0 [] = [d, 0])
+variable (hroot : ent Bk 0 0 = d)
   (hin : ∀ i, 0 < i → i < Bk.length → d + 1 ≤ ent Bk i 0)
   (hlast : last.getD 0 0 = d + 1)
   (hBk : 0 < Bk.length)
@@ -399,8 +399,7 @@ theorem frame_parent0 :
     rw [frame_ent_last P Bk last 0]; exact hlast
   have hr0 : ent (P ++ (Bk ++ [last])) P.length 0 = d := by
     rw [show P.length = P.length + 0 from by omega, frame_ent P Bk last 0 0 hBk]
-    show (Bk.getD 0 []).getD 0 0 = d
-    rw [hroot]; rfl
+    exact hroot
   show ((List.range (P.length + Bk.length)).filter
       (fun p => decide (ent (P ++ (Bk ++ [last])) p 0
         < ent (P ++ (Bk ++ [last])) (P.length + Bk.length) 0))).max? = some P.length
@@ -429,8 +428,7 @@ theorem frame_chain : ∀ (fuel x : Nat), x ≤ fuel → P.length < x → x < P.
     (iterParent (parent (P ++ (Bk ++ [last])) 0) fuel x).contains P.length = true := by
   have hr0 : ent (P ++ (Bk ++ [last])) P.length 0 = d := by
     rw [show P.length = P.length + 0 from by omega, frame_ent P Bk last 0 0 hBk]
-    show (Bk.getD 0 []).getD 0 0 = d
-    rw [hroot]; rfl
+    exact hroot
   have hstep : ∀ x, P.length < x → x < P.length + Bk.length →
       ∃ q, parent (P ++ (Bk ++ [last])) 0 x = some q ∧ P.length ≤ q ∧ q < x := by
     intro x h1 h2
@@ -561,7 +559,7 @@ theorem blk_in (b : A) (d : Nat) : ∀ i, 0 < i → i < (mat (.ps .nil b) d).len
 /-- **後続の底、抽象版。** `t = 0` なので `delta` が恒等的に 0 になり、増分が生じない。
     ブロックがそのまま `n+1` 回並ぶ。前置き `P` には条件がない。 -/
 theorem expand_frame_zero (P Bk : Matrix) (d : Nat)
-    (hroot : Bk.getD 0 [] = [d, 0])
+    (hroot : ent Bk 0 0 = d)
     (hin : ∀ i, 0 < i → i < Bk.length → d + 1 ≤ ent Bk i 0)
     (hlen2 : ∀ c ∈ Bk, c.length = 2)
     (hk : 0 < Bk.length) (n : Nat) :
@@ -600,85 +598,86 @@ theorem expand_frame_zero (P Bk : Matrix) (d : Nat)
   rw [List.map_congr_left (fun a _ => hblock a)]
 
 /-- **Ω の底、抽象版。** `t = 1` なので `delta` は行 0 で 1、行 1 で 0。根はブロック
-    全体の行 0 の祖先なので、`m` 番目の複製は行 0 が一様に `m` 上がる。 -/
-theorem expand_frame_one (P Bk : Matrix) (d : Nat)
-    (hroot : Bk.getD 0 [] = [d, 0])
+    全体の行 0 の祖先なので、`m` 番目の複製は行 0 が一様に `m` 上がる。
+
+    段は一般で、要るのは**根の段が最後の列の段より小さいこと** (`hvw`) だけである。
+    `Evidence/RegionNext.lean` の一般化した領域がこの形で使う。 -/
+theorem expand_frame_one (P Bk : Matrix) (d v w : Nat)
+    (hroot : ent Bk 0 0 = d) (hroot1 : ent Bk 0 1 = v) (hvw : v < w)
     (hin : ∀ i, 0 < i → i < Bk.length → d + 1 ≤ ent Bk i 0)
     (hlen2 : ∀ c ∈ Bk, c.length = 2)
     (hk : 0 < Bk.length) (n : Nat) :
-    expand? (P ++ (Bk ++ [[d + 1, 1]])) n
+    expand? (P ++ (Bk ++ [[d + 1, w]])) n
       = some (P ++ ((List.range (n + 1)).map (fun m => sh m Bk)).flatten) := by
-  have hlen := frame_len P Bk [d + 1, 1]
-  have hlast : (([d + 1, 1] : Col)).getD 0 0 = d + 1 := rfl
-  have hp0 : parent (P ++ (Bk ++ [[d + 1, 1]])) 0 (P.length + Bk.length) = some P.length :=
-    frame_parent0 P Bk d [d + 1, 1] hroot hin hlast hk
-  have hentP1 : ent (P ++ (Bk ++ [[d + 1, 1]])) P.length 1 = 0 := by
-    rw [show P.length = P.length + 0 from by omega, frame_ent P Bk [d + 1, 1] 0 1 hk]
-    show (Bk.getD 0 []).getD 1 0 = 0
-    rw [hroot]; rfl
-  have hentL1 : ent (P ++ (Bk ++ [[d + 1, 1]])) (P.length + Bk.length) 1 = 1 :=
-    frame_ent_last P Bk [d + 1, 1] 1
-  have hentL0 : ent (P ++ (Bk ++ [[d + 1, 1]])) (P.length + Bk.length) 0 = d + 1 :=
-    frame_ent_last P Bk [d + 1, 1] 0
-  have hentP0 : ent (P ++ (Bk ++ [[d + 1, 1]])) P.length 0 = d := by
-    rw [show P.length = P.length + 0 from by omega, frame_ent P Bk [d + 1, 1] 0 0 hk]
-    show (Bk.getD 0 []).getD 0 0 = d
-    rw [hroot]; rfl
-  have hp1 : parent (P ++ (Bk ++ [[d + 1, 1]])) 1 (P.length + Bk.length) = some P.length := by
-    show ((iterParent (parent (P ++ (Bk ++ [[d + 1, 1]])) 0)
+  have hlen := frame_len P Bk [d + 1, w]
+  have hlast : (([d + 1, w] : Col)).getD 0 0 = d + 1 := rfl
+  have hp0 : parent (P ++ (Bk ++ [[d + 1, w]])) 0 (P.length + Bk.length) = some P.length :=
+    frame_parent0 P Bk d [d + 1, w] hroot hin hlast hk
+  have hentP1 : ent (P ++ (Bk ++ [[d + 1, w]])) P.length 1 = v := by
+    rw [show P.length = P.length + 0 from by omega, frame_ent P Bk [d + 1, w] 0 1 hk]
+    exact hroot1
+  have hentL1 : ent (P ++ (Bk ++ [[d + 1, w]])) (P.length + Bk.length) 1 = w :=
+    frame_ent_last P Bk [d + 1, w] 1
+  have hentL0 : ent (P ++ (Bk ++ [[d + 1, w]])) (P.length + Bk.length) 0 = d + 1 :=
+    frame_ent_last P Bk [d + 1, w] 0
+  have hentP0 : ent (P ++ (Bk ++ [[d + 1, w]])) P.length 0 = d := by
+    rw [show P.length = P.length + 0 from by omega, frame_ent P Bk [d + 1, w] 0 0 hk]
+    exact hroot
+  have hp1 : parent (P ++ (Bk ++ [[d + 1, w]])) 1 (P.length + Bk.length) = some P.length := by
+    show ((iterParent (parent (P ++ (Bk ++ [[d + 1, w]])) 0)
         (P.length + Bk.length) (P.length + Bk.length)).filter
-        (fun q => decide (ent (P ++ (Bk ++ [[d + 1, 1]])) q 1
-          < ent (P ++ (Bk ++ [[d + 1, 1]])) (P.length + Bk.length) 1))).max? = some P.length
+        (fun q => decide (ent (P ++ (Bk ++ [[d + 1, w]])) q 1
+          < ent (P ++ (Bk ++ [[d + 1, w]])) (P.length + Bk.length) 1))).max? = some P.length
     rw [hentL1]
     obtain ⟨u, hu⟩ : ∃ u, P.length + Bk.length = u + 1 := ⟨P.length + Bk.length - 1, by omega⟩
     rw [hu, iterParent_cons (by rw [← hu]; exact hp0), List.filter_cons_of_pos (by
-      rw [hentP1]; simp)]
+      rw [hentP1]; exact decide_eq_true hvw)]
     refine List.max?_eq_some_iff.mpr ⟨by simp, ?_⟩
     intro z hz
     rcases List.mem_cons.mp hz with h | h
     · omega
     · exact Nat.le_of_lt (iterParent_lt
         (fun w v hv => parent_lt _ 0 w v hv) u P.length z (List.mem_filter.mp h).1)
-  rw [expand?_lim _ [d + 1, 1] 1 P.length
-      (frame_getLast P Bk [d + 1, 1]) (by rw [lnz_pair]; simp)
+  rw [expand?_lim _ [d + 1, w] 1 P.length
+      (frame_getLast P Bk [d + 1, w]) (by rw [lnz_pair, if_pos (by omega)])
       (by rw [hlen]; simpa using hp1) n]
   rw [take_left_len]
   refine congrArg some (congrArg (P ++ ·) ?_)
   have hblock : ∀ (a : Nat),
-      (List.range ((P ++ (Bk ++ [[d + 1, 1]])).length - 1 - P.length)).map (fun x =>
-        (List.range ([d + 1, 1] : Col).length).map fun y =>
-          ent (P ++ (Bk ++ [[d + 1, 1]])) (P.length + x) y
-            + a * delta (P ++ (Bk ++ [[d + 1, 1]])) P.length 1 y
-              * (if ascends (P ++ (Bk ++ [[d + 1, 1]])) P.length (P.length + x) y then 1 else 0))
+      (List.range ((P ++ (Bk ++ [[d + 1, w]])).length - 1 - P.length)).map (fun x =>
+        (List.range ([d + 1, w] : Col).length).map fun y =>
+          ent (P ++ (Bk ++ [[d + 1, w]])) (P.length + x) y
+            + a * delta (P ++ (Bk ++ [[d + 1, w]])) P.length 1 y
+              * (if ascends (P ++ (Bk ++ [[d + 1, w]])) P.length (P.length + x) y then 1 else 0))
       = sh a Bk := by
     intro a
-    rw [show (P ++ (Bk ++ [[d + 1, 1]])).length - 1 - P.length = Bk.length from by
+    rw [show (P ++ (Bk ++ [[d + 1, w]])).length - 1 - P.length = Bk.length from by
       rw [hlen]; omega]
     show _ = Bk.map (shc a)
     refine Eq.trans (List.map_congr_left ?_) (map_getD_range_map [] (shc a) Bk)
     intro x hx
     rw [List.mem_range] at hx
-    rw [show (List.range ([d + 1, 1] : Col).length) = [0, 1] from rfl]
-    have hd0 : delta (P ++ (Bk ++ [[d + 1, 1]])) P.length 1 0 = 1 := by
-      show (if 0 < 1 then ent (P ++ (Bk ++ [[d + 1, 1]]))
-        ((P ++ (Bk ++ [[d + 1, 1]])).length - 1) 0 - _ else 0) = 1
-      rw [if_pos (by omega), show (P ++ (Bk ++ [[d + 1, 1]])).length - 1
+    rw [show (List.range ([d + 1, w] : Col).length) = [0, 1] from rfl]
+    have hd0 : delta (P ++ (Bk ++ [[d + 1, w]])) P.length 1 0 = 1 := by
+      show (if 0 < 1 then ent (P ++ (Bk ++ [[d + 1, w]]))
+        ((P ++ (Bk ++ [[d + 1, w]])).length - 1) 0 - _ else 0) = 1
+      rw [if_pos (by omega), show (P ++ (Bk ++ [[d + 1, w]])).length - 1
         = P.length + Bk.length from by rw [hlen]; omega, hentL0, hentP0]
       omega
-    have hd1 : delta (P ++ (Bk ++ [[d + 1, 1]])) P.length 1 1 = 0 := by
+    have hd1 : delta (P ++ (Bk ++ [[d + 1, w]])) P.length 1 1 = 0 := by
       show (if 1 < 1 then _ else 0) = 0
       rw [if_neg (by omega)]
-    have hasc : ascends (P ++ (Bk ++ [[d + 1, 1]])) P.length (P.length + x) 0 = true := by
+    have hasc : ascends (P ++ (Bk ++ [[d + 1, w]])) P.length (P.length + x) 0 = true := by
       match x, hx with
       | 0, _ => show ((P.length + 0 == P.length) || _) = true
                 simp
       | j + 1, hx =>
         show ((P.length + (j + 1) == P.length) || _) = true
-        rw [frame_chain P Bk d [d + 1, 1] hroot hin hlast hk
+        rw [frame_chain P Bk d [d + 1, w] hroot hin hlast hk
           (P.length + (j + 1)) (P.length + (j + 1)) (Nat.le_refl _) (by omega) (by omega)]
         exact Bool.or_true _
-    have he : ∀ y, ent (P ++ (Bk ++ [[d + 1, 1]])) (P.length + x) y = (Bk.getD x []).getD y 0 := by
-      intro y; rw [frame_ent P Bk [d + 1, 1] x y hx]; rfl
+    have he : ∀ y, ent (P ++ (Bk ++ [[d + 1, w]])) (P.length + x) y = (Bk.getD x []).getD y 0 := by
+      intro y; rw [frame_ent P Bk [d + 1, w] x y hx]; rfl
     simp only [List.map_cons, List.map_nil, hd0, hd1, hasc, he,
       Nat.mul_zero, Nat.zero_mul, Nat.add_zero, Nat.mul_one, if_true]
     rw [shc_len2 a (Bk.getD x []) (hlen2 _ (getD_mem Bk [] x hx))]
@@ -689,7 +688,8 @@ theorem expand_prin_succ (b : A) (P : Matrix) (d n : Nat) :
     expand? (P ++ mat (.ps .nil (.ps b .nil)) d) n = some (P ++ mat (rep b n) d) := by
   rw [show P ++ mat (.ps .nil (.ps b .nil)) d
       = P ++ (mat (.ps .nil b) d ++ [[d + 1, 0]]) from rfl,
-    expand_frame_zero P (mat (.ps .nil b) d) d (blk_root b d) (blk_in b d)
+    expand_frame_zero P (mat (.ps .nil b) d) d (by rw [show ent (mat (.ps .nil b) d) 0 0
+        = ((mat (.ps .nil b) d).getD 0 []).getD 0 0 from rfl, blk_root b d]; rfl) (blk_in b d)
       (blk_len2 b d) (blk_pos b d) n, flatten_rep b d n]
 
 /-- **Ω の底。** 引数の最後の加数が `Ω` のとき、Buchholz の Ω 塔が出る。 -/
@@ -697,7 +697,12 @@ theorem expand_prin_om (b : A) (P : Matrix) (d n : Nat) :
     expand? (P ++ mat (.ps .nil (.om b)) d) n = some (P ++ mat (iterOm b n) d) := by
   rw [show P ++ mat (.ps .nil (.om b)) d
       = P ++ (mat (.ps .nil b) d ++ [[d + 1, 1]]) from rfl,
-    expand_frame_one P (mat (.ps .nil b) d) d (blk_root b d) (blk_in b d)
+    expand_frame_one P (mat (.ps .nil b) d) d 0 1
+      (by rw [show ent (mat (.ps .nil b) d) 0 0
+        = ((mat (.ps .nil b) d).getD 0 []).getD 0 0 from rfl, blk_root b d]; rfl)
+      (by rw [show ent (mat (.ps .nil b) d) 0 1
+        = ((mat (.ps .nil b) d).getD 0 []).getD 1 0 from rfl, blk_root b d]; rfl) (by omega)
+      (blk_in b d)
       (blk_len2 b d) (blk_pos b d) n, flatten_iterOm b d n]
 
 /-- **再帰。** 引数の最後の加数が `ψ₀(c)` (`c ≠ 0`) のとき、1 段深いところへ落ちる。
