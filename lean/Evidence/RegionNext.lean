@@ -4144,4 +4144,189 @@ theorem take_jjSeq (M : Matrix) (tr : Nat) (hlen : tr < M.length)
 
 end
 
+/-! ## §28 THE NORMAL FORM, SEEN FROM THE MATRIX
+
+§27's `matB_step_lvl` bounds a column's level by the PREVIOUS column's, which is the parent
+only when the previous column happens to be it.  The fold needs the general statement — a
+branch root's level against its joint's — and the joint is far to the left:
+
+    matB_lvl_le_par : `k` is the tree parent of `i`  →  level i ≤ level k + 1
+
+"tree parent" is spelled `LMin (matB t d) k i` together with `ent k 0 + 1 = ent i 0`, and by
+§8 and §18.1 that is exactly what `fpar0`/`BMS.parent` return.  The induction is the same
+three-way split as everywhere in this file, and two of the three cases are VACUOUS: a `k` in
+the prefix cannot be the parent of anything at or past the node column, because the node
+column sits at depth `d` and the prefix never goes above `d`.  The one real case is `k` = the
+node column, where the claim becomes "every top-level root of the argument has level at most
+`v + 1`" — which is `nfLe (v+1) a` read at the matrix (`matB_top_lvl`).
+
+`par_depth` is the other half of "tree parent": what `BMS.parent` returns is always EXACTLY
+one step shallower.  That needs no normal form — it follows from §27's `matB_step_depth`
+alone, since the column just after the parent is either `i` itself or too deep to be a
+candidate, and either way it caps `ent i 0` at `ent p 0 + 1`.
+
+Together, `lvl_le_fpar`: the level of a column is at most one more than the level of the
+column `fpar0` calls its parent.  That is the inequality that makes §23's measured identity
+`(jnJ+1, nJ+1) :: derp bJ = bJ` true — a branch root of level `u` hanging off a spine column
+of level (= index) `jnJ` has `u ≤ jnJ + 1`, so its row-1 parent is spine column `u - 1`. -/
+
+section
+open Trans.Recal
+
+theorem ent_oob (M : Matrix) (j y : Nat) (h : M.length ≤ j) : ent M j y = 0 := by
+  show ((M.getD j []).getD y 0) = 0
+  rw [show M.getD j [] = [] from by
+    simp [List.getD_eq_getElem?_getD, List.getElem?_eq_none h]]
+  rfl
+
+/-- **底の深さにいる列は最上位の加数の根なので、段は上限以下。** -/
+theorem matB_top_lvl : ∀ (a : B) (m e i : Nat), nfLe m a = true →
+    ent (matB a e) i 0 = e → ent (matB a e) i 1 ≤ m := by
+  intro a
+  induction a with
+  | nil => intro m e i _ _; show ent ([] : Matrix) i 1 ≤ m; rw [ent_nil]; omega
+  | nd v r b ihr ihb =>
+    intro m e i hnf hdep
+    obtain ⟨h1, hr, hb⟩ := (nfLe_nd_iff m v r b).mp hnf
+    have hX : matB (B.nd v r b) e = matB r e ++ ([e, v] :: matB b (e + 1)) := rfl
+    rcases Nat.lt_or_ge i (matB r e).length with hi | hi
+    · rw [hX, ent_append_left _ _ i 1 hi]
+      refine ihr m e i hr ?_
+      rw [hX, ent_append_left _ _ i 0 hi] at hdep
+      exact hdep
+    · rw [hX, ent_append _ _ i 1 hi]
+      obtain ⟨j, hj⟩ : ∃ j, i = (matB r e).length + j := ⟨i - (matB r e).length, by omega⟩
+      rw [hj, show (matB r e).length + j - (matB r e).length = j from by omega]
+      cases j with
+      | zero => exact h1
+      | succ k =>
+        rw [hX, ent_append _ _ i 0 hi, hj,
+          show (matB r e).length + (k + 1) - (matB r e).length = k + 1 from by omega] at hdep
+        have hdep' : ent (matB b (e + 1)) k 0 = e := hdep
+        show ent (matB b (e + 1)) k 1 ≤ m
+        rcases Nat.lt_or_ge k (matB b (e + 1)).length with hk | hk
+        · exfalso
+          have hlb : e + 1 ≤ ent (matB b (e + 1)) k 0 :=
+            matB_col_lb b (e + 1) _ (getD_mem (matB b (e + 1)) [] k hk)
+          omega
+        · rw [ent_oob _ k 1 hk]
+          omega
+
+/-- **標準形は「段は木の親の段 + 1 以下」として行列に現れる。** -/
+theorem matB_lvl_le_par : ∀ (t : B) (m d : Nat), nfLe m t = true → ∀ (k i : Nat),
+    LMin (matB t d) k i → ent (matB t d) k 0 + 1 = ent (matB t d) i 0 →
+    ent (matB t d) i 1 ≤ ent (matB t d) k 1 + 1 := by
+  intro t
+  induction t with
+  | nil =>
+    intro m d _ k i _ _
+    show ent ([] : Matrix) i 1 ≤ ent ([] : Matrix) k 1 + 1
+    rw [ent_nil, ent_nil]
+    omega
+  | nd v r a ihr iha =>
+    intro m d hnf k i hlm hdep
+    obtain ⟨h1, hr, ha⟩ := (nfLe_nd_iff m v r a).mp hnf
+    have hX : matB (B.nd v r a) d = matB r d ++ ([d, v] :: matB a (d + 1)) := rfl
+    have hki : k < i := hlm.1
+    rcases Nat.lt_or_ge i (matB r d).length with hi | hi
+    · -- both inside the prefix
+      rw [hX, ent_append_left _ _ i 1 hi, ent_append_left _ _ k 1 (by omega)]
+      refine ihr m d hr k i ⟨hki, ?_⟩ ?_
+      · intro p hp1 hp2
+        have := hlm.2 p hp1 hp2
+        rw [hX, ent_append_left _ _ k 0 (by omega), ent_append_left _ _ p 0 (by omega)] at this
+        exact this
+      · rw [hX, ent_append_left _ _ i 0 hi, ent_append_left _ _ k 0 (by omega)] at hdep
+        exact hdep
+    · rcases Nat.lt_or_ge k (matB r d).length with hk | hk
+      · -- k inside the prefix, i at or past the node column: impossible
+        exfalso
+        have hklb : d ≤ ent (matB r d) k 0 :=
+          matB_col_lb r d _ (getD_mem (matB r d) [] k hk)
+        have hkent : ent (matB (B.nd v r a) d) k 0 = ent (matB r d) k 0 := by
+          rw [hX, ent_append_left _ _ k 0 hk]
+        have hnode : ent (matB (B.nd v r a) d) (matB r d).length 0 = d := by
+          rw [hX, ent_append _ _ (matB r d).length 0 (by omega),
+            show (matB r d).length - (matB r d).length = 0 from by omega]
+          rfl
+        rcases Nat.eq_or_lt_of_le hi with hiL | hiL
+        · -- i is the node column
+          rw [hiL] at hnode
+          omega
+        · have := hlm.2 (matB r d).length (by omega) (by omega)
+          omega
+      · -- both at or past the node column
+        obtain ⟨ki, hki'⟩ : ∃ z, k = (matB r d).length + z := ⟨k - (matB r d).length, by omega⟩
+        obtain ⟨ii, hii'⟩ : ∃ z, i = (matB r d).length + z := ⟨i - (matB r d).length, by omega⟩
+        rw [hX, ent_append _ _ i 1 (by omega), ent_append _ _ k 1 (by omega), hki', hii',
+          show (matB r d).length + ki - (matB r d).length = ki from by omega,
+          show (matB r d).length + ii - (matB r d).length = ii from by omega]
+        rw [hX, ent_append _ _ i 0 (by omega), ent_append _ _ k 0 (by omega), hki', hii',
+          show (matB r d).length + ki - (matB r d).length = ki from by omega,
+          show (matB r d).length + ii - (matB r d).length = ii from by omega] at hdep
+        cases ki with
+        | zero =>
+          -- k is the node column
+          cases ii with
+          | zero => exact absurd hki' (by omega)
+          | succ jj =>
+            have hd' : d + 1 = ent (matB a (d + 1)) jj 0 := hdep
+            show ent (matB a (d + 1)) jj 1 ≤ v + 1
+            exact matB_top_lvl a (v + 1) (d + 1) jj ha hd'.symm
+        | succ jk =>
+          cases ii with
+          | zero => exact absurd hki' (by omega)
+          | succ jj =>
+            show ent (matB a (d + 1)) jj 1 ≤ ent (matB a (d + 1)) jk 1 + 1
+            refine iha (v + 1) (d + 1) ha jk jj ⟨by omega, ?_⟩ hdep
+            intro p hp1 hp2
+            have := hlm.2 ((matB r d).length + 1 + p) (by omega) (by omega)
+            rw [hX, ent_append _ _ ((matB r d).length + 1 + p) 0 (by omega),
+              ent_append _ _ k 0 (by omega), hki',
+              show (matB r d).length + (jk + 1) - (matB r d).length = jk + 1 from by omega,
+              show (matB r d).length + 1 + p - (matB r d).length = p + 1 from by omega] at this
+            exact this
+
+/-- **木の親はちょうど 1 段浅い。** 深さが 1 列で高々 1 しか増えないことから。 -/
+theorem par_depth (t : B) (d i p : Nat) (hp : parent (matB t d) 0 i = some p) :
+    ent (matB t d) p 0 + 1 = ent (matB t d) i 0 := by
+  obtain ⟨hmem, hmax⟩ := List.max?_eq_some_iff.mp hp
+  have hpi : p < i := List.mem_range.mp (List.mem_filter.mp hmem).1
+  have hlt : ent (matB t d) p 0 < ent (matB t d) i 0 :=
+    of_decide_eq_true (List.mem_filter.mp hmem).2
+  have hnext : ent (matB t d) i 0 ≤ ent (matB t d) (p + 1) 0 := by
+    rcases Nat.eq_or_lt_of_le hpi with heq | hlt2
+    · rw [show p + 1 = i from heq]
+      omega
+    · rcases Nat.lt_or_ge (ent (matB t d) (p + 1) 0) (ent (matB t d) i 0) with hc | hc
+      · exfalso
+        have : p + 1 ∈ (List.range i).filter
+            (fun q => decide (ent (matB t d) q 0 < ent (matB t d) i 0)) :=
+          List.mem_filter.mpr ⟨List.mem_range.mpr (by omega), decide_eq_true hc⟩
+        have := hmax _ this
+        omega
+      · exact hc
+  have hstep := matB_step_depth t d p
+  omega
+
+/-- `fpar0` が返した親に対する標準形の形。 -/
+theorem lvl_le_fpar (t : B) (m d : Nat) (hnf : nfLe m t = true) (i p : Nat)
+    (hi : i < (matB t d).length)
+    (hfp : fpar0 (psM (matB t d)) ((i : Nat) : Int) 0 = ((p : Nat) : Int)) :
+    ent (matB t d) i 1 ≤ ent (matB t d) p 1 + 1 := by
+  have hlm : LMin (matB t d) p i := lmin_of_fpar0 (matB t d) i p hi hfp
+  refine matB_lvl_le_par t m d hnf p i hlm ?_
+  refine par_depth t d i p ?_
+  rw [fpar0_eq_parent (matB t d) i hi] at hfp
+  cases hq : parent (matB t d) 0 i with
+  | none =>
+    rw [hq] at hfp
+    exact absurd (show (-1 : Int) = ((p : Nat) : Int) from hfp) (by omega)
+  | some q =>
+    rw [hq] at hfp
+    have : ((q : Nat) : Int) = ((p : Nat) : Int) := hfp
+    rw [show q = p from by omega]
+
+end
+
 end Evidence.Region
