@@ -1266,4 +1266,152 @@ theorem omegaNF_eq {x : Term} (h : CNV x = true) :
       | exact phiNFsucc_zero_eq _
       | (split <;> first | rfl | exact phiNFsucc_zero_eq _)
 
+/-! ## §27 `ω^·` IS STRICTLY MONOTONE, MODULO THREE `splitFin` FACTS
+
+`Evidence/RegionV.lean` §15.4's `OmegaLim` needs it for clauses 2 and 3.  With §26's
+equation the proof is four cases on whether each side is a fixed point, and every case
+turns on the same three elementary facts about `dnArg` — that it only ever goes DOWN, that
+it goes down by at most one, and that it cannot collapse two different arguments:
+
+    D1   dnArg x ≤ x
+    D2   x < y  →  x ≤ dnArg y
+    D3   x not a fixed point, x < y  →  dnArg x ≠ dnArg y
+
+They are bundled as `DnFacts` and left as the hypothesis, because each is a statement about
+where `splitFin` puts the trailing `1`s and none of them is about `ω^·` at all.  Measured in
+`Evidence/RegionSeq.lean`: 0 failures over 462 `CNV` terms and their 106491 ordered pairs,
+with the `dnArg x ≠ x` control firing on 10.
+
+The one fact proved outright here is `lt_self_phi_zero` — `z < φ̄(0,z)`, the reason a fixed
+point on one side and an ordinary term on the other still compare the right way. -/
+
+theorem lt_of_le_of_ne {a b : Term} (h : le a b = true) (hne : a ≠ b) : lt a b = true := by
+  have h' : ((a == b) || lt a b) = true := h
+  rw [show (a == b) = false from by
+    cases hb : (a == b) with
+    | false => rfl
+    | true => exact absurd (eq_of_beq hb) hne, Bool.false_or] at h'
+  exact h'
+
+theorem cnv_dnArg {x : Term} (h : CNV x = true) : CNV (dnArg x) = true := by
+  have hg : CNV (splitFin x).1 = true := cnv_splitFin h
+  unfold dnArg
+  cases hs : splitFin x with
+  | mk g m =>
+    rw [hs] at hg
+    dsimp only
+    split
+    · cases g <;> dsimp only <;> split <;>
+        first | exact h | exact cnv_plus hg (cnv_ofNat _)
+    · exact h
+
+/-- **`z < ω^z` の形** — `φ̄(0,z)` は `z` を真に超える。 -/
+theorem lt_self_phi_zero : ∀ (z : Term), CNV z = true → lt z (phi zero z) = true := by
+  intro z
+  induction z with
+  | M => intro h; exact Bool.noConfusion h
+  | omg _ _ => intro h; exact Bool.noConfusion h
+  | psi _ _ _ _ => intro h; exact Bool.noConfusion h
+  | Z _ _ => intro h; exact Bool.noConfusion h
+  | zero => intro _; exact lt_zero_left (by intro hc; exact Term.noConfusion hc)
+  | phi a b _ ihb =>
+    intro h
+    obtain ⟨hca, hcb⟩ := cnv_phi h
+    have hne : phi a b ≠ phi zero (phi a b) := by
+      intro hc
+      injection hc with _ h2
+      have hd := congrArg Term.deg h2
+      have he : (phi a b).deg = 1 + a.deg + b.deg := rfl
+      rw [he] at hd
+      omega
+    rw [lt_phi_phi hne]
+    by_cases haz : a = zero
+    · rw [if_pos haz, haz]
+      exact ihb hcb
+    · have hlz : ¬ (lt a zero = true) := by
+        rw [show lt a zero = false from ltF_right_zero _ a]
+        intro hc
+        exact Bool.noConfusion hc
+      rw [if_neg haz, if_neg hlz]
+      exact le_self _
+  | add u v ihu _ =>
+    intro h
+    obtain ⟨hap, hcu, hcv, _⟩ := cnv_add h
+    obtain ⟨p, q, rfl⟩ := eq_phi_of_isAP_cnv hcu hap
+    have huv : lt (phi p q) (add (phi p q) v) = true := by
+      rw [lt_phi_add]; exact le_self _
+    have hstep : lt (phi p q) (phi zero (add (phi p q) v)) = true := by
+      have h1 : lt (phi p q) (phi zero (phi p q)) = true := ihu hcu
+      have h2 : le (phi zero (phi p q)) (phi zero (add (phi p q) v)) = true :=
+        le_of_lt (lt_phi_arg huv)
+      exact lt_of_le_of_lt (frag_of_cnv _ hcu)
+        (frag_of_cnv _ (by show (CNV zero && CNV (phi p q)) = true; rw [hcu]; rfl))
+        (frag_of_cnv _ (by show (CNV zero && CNV (add (phi p q) v)) = true; rw [h]; rfl))
+        (le_of_lt h1) (lt_of_le_of_ne h2 (by
+          intro hc
+          injection hc with _ h2'
+          have hd := congrArg Term.deg h2'
+          have he : (add (phi p q) v).deg = 1 + (phi p q).deg + v.deg := rfl
+          have hv := deg_pos v
+          rw [he] at hd
+          omega))
+    rw [lt_add_phi]
+    exact hstep
+
+/-- 数え直しの土台 3 つ。どれも `splitFin` についての初等的な事実である。 -/
+def DnFacts : Prop :=
+  (∀ x, CNV x = true → le (dnArg x) x = true)
+  ∧ (∀ x y, CNV x = true → CNV y = true → lt x y = true → le x (dnArg y) = true)
+  ∧ (∀ x y, CNV x = true → CNV y = true → isFixP x = false → lt x y = true →
+      dnArg x ≠ dnArg y)
+
+theorem bool_false {b : Bool} (h : ¬ (b = true)) : b = false := by
+  cases hb : b with
+  | false => rfl
+  | true => exact absurd hb h
+
+/-- **`ω^·` は狭義単調** — `dnArg` の 3 つの土台から。 -/
+theorem omegaNF_mono (H : DnFacts) {x y : Term} (hx : CNV x = true) (hy : CNV y = true)
+    (h : lt x y = true) : lt (omegaNF x) (omegaNF y) = true := by
+  obtain ⟨D1, D2, D3⟩ := H
+  rw [omegaNF_eq hx, omegaNF_eq hy]
+  by_cases hfx : isFixP x = true
+  · rw [if_pos hfx]
+    by_cases hfy : isFixP y = true
+    · rw [if_pos hfy]; exact h
+    · rw [if_neg hfy]
+      have hcp : CNV (phi zero (dnArg y)) = true := by
+        show (CNV zero && CNV (dnArg y)) = true
+        rw [cnv_dnArg hy]; rfl
+      exact lt_of_le_of_lt (frag_of_cnv _ hx) (frag_of_cnv _ (cnv_dnArg hy))
+        (frag_of_cnv _ hcp) (D2 x y hx hy h) (lt_self_phi_zero _ (cnv_dnArg hy))
+  · rw [if_neg hfx]
+    by_cases hfy : isFixP y = true
+    · rw [if_pos hfy]
+      cases y with
+      | zero => exact Bool.noConfusion hfy
+      | M => exact Bool.noConfusion hfy
+      | omg _ => exact Bool.noConfusion hfy
+      | psi _ _ => exact Bool.noConfusion hfy
+      | Z _ => exact Bool.noConfusion hfy
+      | add _ _ => exact Bool.noConfusion hfy
+      | phi c d =>
+        have hc : lt zero c = true := hfy
+        have hzc : ¬ (zero = c) := by
+          intro hcc
+          rw [← hcc, lt_irrefl] at hc
+          exact Bool.noConfusion hc
+        have hne : phi zero (dnArg x) ≠ phi c d := by
+          intro hcc
+          injection hcc with h1 _
+          exact hzc h1
+        rw [lt_phi_phi hne, if_neg hzc, if_pos hc]
+        exact lt_of_le_of_lt (frag_of_cnv _ (cnv_dnArg hx)) (frag_of_cnv _ hx)
+          (frag_of_cnv _ hy) (D1 x hx) h
+    · rw [if_neg hfy]
+      refine lt_phi_arg ?_
+      refine lt_of_le_of_ne ?_ (D3 x y hx hy (bool_false hfx) h)
+      exact le_trans (frag_of_cnv _ (cnv_dnArg hx)) (frag_of_cnv _ hx)
+        (frag_of_cnv _ (cnv_dnArg hy)) (D1 x hx) (D2 x y hx hy h)
+
 end Evidence.WF

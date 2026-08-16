@@ -40,8 +40,26 @@ def cnvCorpus : List Term :=
   !Evidence.WF.isFixP x && Evidence.WF.dnArg x != x).length == 10
 #guard (cnvCorpus.filter fun x =>
   !Evidence.WF.isFixP x && Evidence.WF.dnArg x == x).length == 376
--- `ω^·` の狭義単調性 — 未証明、総当たりで 0 失敗。
+-- `ω^·` の狭義単調性 — `CNVOps` §27 で `DnFacts` から出る。総当たりでも 0 失敗。
 #guard (cnvCorpus.flatMap fun x => cnvCorpus.filter fun y =>
   lt x y && !(lt (omegaNF x) (omegaNF y))).length == 0
+
+/-! ### `DnFacts` の 3 つ (`CNVOps` §27)
+
+どれも `splitFin` が末尾の `1` をどこに置くかの話で、`ω^·` の話ではない。 -/
+
+-- D1: `dnArg` は下げるだけ。
+#guard cnvCorpus.all fun x => le (Evidence.WF.dnArg x) x
+-- D2: `x < y` なら `x ≤ dnArg y` — 下げるのは高々 1。
+#guard (cnvCorpus.flatMap fun x => cnvCorpus.filter fun y =>
+  lt x y && !(le x (Evidence.WF.dnArg y))).length == 0
+-- D3: `x` が不動点でなければ `dnArg` は 2 つを潰さない。
+#guard (cnvCorpus.flatMap fun x => cnvCorpus.filter fun y =>
+  !Evidence.WF.isFixP x && lt x y && Evidence.WF.dnArg x == Evidence.WF.dnArg y).length == 0
+-- 対照: `dnArg x ≠ x` が 10 件、`lt` の組が 106491 組。D2/D3 は空虚ではない。
+#guard (cnvCorpus.filter fun x => Evidence.WF.dnArg x != x).length == 10
+#guard (cnvCorpus.flatMap fun x => cnvCorpus.filter fun y => lt x y).length == 106491
+-- `CNVOps` §27 で証明済みの `z < φ̄(0,z)` も、母集団で確認しておく。
+#guard cnvCorpus.all fun z => lt z (phi zero z)
 
 end Evidence.Region
