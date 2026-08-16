@@ -4432,4 +4432,333 @@ theorem psM_split (M : Matrix) (n : Nat) :
 
 end
 
+/-! ## §30 `brF`, AND `hsplit` CLOSED
+
+The last structural piece.  `brF M` is `ppair` of what follows the diagonal, and §24 says
+`ppair` returns a block list once two things hold: each block's first column is strictly
+shallower than the rest of ITS OWN block, and no column before a block is shallower than that
+block's root.  Both are true of the RUNNING-MINIMUM decomposition, and that decomposition is
+what `peel` computes:
+
+    peel dd X    the maximal prefix of X strictly deeper than dd, and the rest
+    blocks X     peel at the head's depth, then recurse on the rest
+
+`peel`'s stopping condition gives the second property directly — the next block's root is the
+first column not deeper than this one's, so the roots never go up as one walks right, and a
+column can only be shallower than a later root if it is a root itself, which it is not.
+
+    ppair_blocksG : ppair (psM X) = (blocks X).map psM
+    brF_blocks    : brF (psM Mat) = (blocks (Mat.drop (runLen Mat + 1))).map psM
+    brF_flatten   : (brF (psM Mat)).flatten = (psM Mat).drop (runLen Mat + 1)
+
+and with §29's diagonal that is §25's second hypothesis outright:
+
+    hsplit_matB : jjSeq 0 (runLen …) ++ (brF …).flatten = psM (matB (nd 0 nil a) 0)
+
+NOTHING HERE IS ABOUT TREES.  `blocks` is defined on the matrix and the proofs never mention
+`B`; what makes the decomposition the right one on a region matrix is only §27's step bounds,
+which is why the same machinery will serve the branches at any depth.
+
+What is left of the whole `red` proof is `hterm` — that the fold's `J`-th term returns the
+`J`-th branch.  §23 measured it as an identity and §28 supplies the inequality it rests on. -/
+
+section
+open Trans.Recal
+
+/-- `dd` より深い列の極大な接頭辞と、その残り。 -/
+def peel (dd : Nat) : Matrix → Matrix × Matrix
+  | [] => ([], [])
+  | c :: cs =>
+    if dd < c.getD 0 0 then (c :: (peel dd cs).1, (peel dd cs).2) else ([], c :: cs)
+
+theorem peel_nil (dd : Nat) : peel dd [] = ([], []) := rfl
+
+theorem peel_cons_pos (dd : Nat) (c : Col) (cs : Matrix) (h : dd < c.getD 0 0) :
+    peel dd (c :: cs) = (c :: (peel dd cs).1, (peel dd cs).2) := by
+  show (if dd < c.getD 0 0 then (c :: (peel dd cs).1, (peel dd cs).2)
+        else ([], c :: cs)) = _
+  rw [if_pos h]
+
+theorem peel_cons_neg (dd : Nat) (c : Col) (cs : Matrix) (h : ¬(dd < c.getD 0 0)) :
+    peel dd (c :: cs) = ([], c :: cs) := by
+  show (if dd < c.getD 0 0 then (c :: (peel dd cs).1, (peel dd cs).2)
+        else ([], c :: cs)) = _
+  rw [if_neg h]
+
+theorem peel_append : ∀ (dd : Nat) (X : Matrix), (peel dd X).1 ++ (peel dd X).2 = X := by
+  intro dd X
+  induction X with
+  | nil => rfl
+  | cons c cs ih =>
+    by_cases h : dd < c.getD 0 0
+    · rw [peel_cons_pos dd c cs h]
+      show c :: ((peel dd cs).1 ++ (peel dd cs).2) = c :: cs
+      rw [ih]
+    · rw [peel_cons_neg dd c cs h]
+      rfl
+
+theorem peel_len2 : ∀ (dd : Nat) (X : Matrix), (peel dd X).2.length ≤ X.length := by
+  intro dd X
+  induction X with
+  | nil => exact Nat.le_refl _
+  | cons c cs ih =>
+    by_cases h : dd < c.getD 0 0
+    · rw [peel_cons_pos dd c cs h, List.length_cons]
+      exact Nat.le_trans ih (by omega)
+    · rw [peel_cons_neg dd c cs h]
+      exact Nat.le_refl _
+
+theorem peel_deep : ∀ (dd : Nat) (X : Matrix) (i : Nat), i < (peel dd X).1.length →
+    dd < ent (peel dd X).1 i 0 := by
+  intro dd X
+  induction X with
+  | nil => intro i h; rw [peel_nil] at h; exact absurd h (by simp)
+  | cons c cs ih =>
+    intro i h
+    by_cases hc : dd < c.getD 0 0
+    · rw [peel_cons_pos dd c cs hc]
+      rw [peel_cons_pos dd c cs hc, List.length_cons] at h
+      cases i with
+      | zero => exact hc
+      | succ k =>
+        show dd < ent (peel dd cs).1 k 0
+        exact ih k (by omega)
+    · rw [peel_cons_neg dd c cs hc] at h
+      exact absurd h (by simp)
+
+theorem peel_stop : ∀ (dd : Nat) (X : Matrix), 0 < (peel dd X).2.length →
+    ent (peel dd X).2 0 0 ≤ dd := by
+  intro dd X
+  induction X with
+  | nil => intro h; rw [peel_nil] at h; exact absurd h (by simp)
+  | cons c cs ih =>
+    intro h
+    by_cases hc : dd < c.getD 0 0
+    · rw [peel_cons_pos dd c cs hc]
+      rw [peel_cons_pos dd c cs hc] at h
+      exact ih h
+    · rw [peel_cons_neg dd c cs hc]
+      show c.getD 0 0 ≤ dd
+      omega
+
+/-- 走る最小値で切ったブロック列。 -/
+def blocks : Matrix → List Matrix
+  | [] => []
+  | c :: cs => (c :: (peel (c.getD 0 0) cs).1) :: blocks (peel (c.getD 0 0) cs).2
+  termination_by X => X.length
+  decreasing_by
+    have h := peel_len2 (c.getD 0 0) cs
+    simp only [List.length_cons]
+    omega
+
+theorem blocks_nil : blocks [] = [] := by rw [blocks]
+
+theorem blocks_cons (c : Col) (cs : Matrix) :
+    blocks (c :: cs)
+      = (c :: (peel (c.getD 0 0) cs).1) :: blocks (peel (c.getD 0 0) cs).2 := by
+  rw [blocks]
+
+theorem blocks_flatten : ∀ (n : Nat) (X : Matrix), X.length ≤ n → (blocks X).flatten = X := by
+  intro n
+  induction n with
+  | zero =>
+    intro X h
+    rw [show X = [] from List.eq_nil_of_length_eq_zero (by omega), blocks_nil]
+    rfl
+  | succ g ih =>
+    intro X h
+    cases X with
+    | nil => rw [blocks_nil]; rfl
+    | cons c cs =>
+      rw [blocks_cons c cs, List.flatten_cons,
+        ih (peel (c.getD 0 0) cs).2 (by
+          have := peel_len2 (c.getD 0 0) cs
+          rw [List.length_cons] at h
+          omega)]
+      show c :: ((peel (c.getD 0 0) cs).1 ++ (peel (c.getD 0 0) cs).2) = c :: cs
+      rw [peel_append]
+
+theorem blocks_head_blkG (c : Col) (cs : Matrix) :
+    BlkG (c :: (peel (c.getD 0 0) cs).1) := by
+  refine ⟨by simp, ?_⟩
+  intro p hp hlen
+  obtain ⟨k, rfl⟩ : ∃ k, p = k + 1 := ⟨p - 1, by omega⟩
+  show ent (c :: (peel (c.getD 0 0) cs).1) 0 0 < ent (peel (c.getD 0 0) cs).1 k 0
+  refine peel_deep (c.getD 0 0) cs k ?_
+  rw [List.length_cons] at hlen
+  omega
+
+theorem blocks_blkG : ∀ (n : Nat) (X : Matrix), X.length ≤ n → ∀ Bk ∈ blocks X, BlkG Bk := by
+  intro n
+  induction n with
+  | zero =>
+    intro X h Bk hBk
+    rw [show X = [] from List.eq_nil_of_length_eq_zero (by omega), blocks_nil] at hBk
+    exact absurd hBk (by simp)
+  | succ g ih =>
+    intro X h Bk hBk
+    cases X with
+    | nil => rw [blocks_nil] at hBk; exact absurd hBk (by simp)
+    | cons c cs =>
+      rw [blocks_cons c cs] at hBk
+      rcases List.mem_cons.mp hBk with rfl | hBk
+      · exact blocks_head_blkG c cs
+      · refine ih (peel (c.getD 0 0) cs).2 ?_ Bk hBk
+        have := peel_len2 (c.getD 0 0) cs
+        rw [List.length_cons] at h
+        omega
+
+theorem blocks_root_le : ∀ (n : Nat) (X : Matrix), X.length ≤ n → ∀ k, k < (blocks X).length →
+    ent ((blocks X).getD k []) 0 0 ≤ ent X 0 0 := by
+  intro n
+  induction n with
+  | zero =>
+    intro X h k hk
+    rw [show X = [] from List.eq_nil_of_length_eq_zero (by omega), blocks_nil] at hk
+    exact absurd hk (by simp)
+  | succ g ih =>
+    intro X h k hk
+    cases X with
+    | nil => rw [blocks_nil] at hk; exact absurd hk (by simp)
+    | cons c cs =>
+      rw [blocks_cons c cs] at hk ⊢
+      cases k with
+      | zero => exact Nat.le_refl _
+      | succ j =>
+        show ent ((blocks (peel (c.getD 0 0) cs).2).getD j []) 0 0 ≤ ent (c :: cs) 0 0
+        have hlen : (peel (c.getD 0 0) cs).2.length ≤ g := by
+          have := peel_len2 (c.getD 0 0) cs
+          rw [List.length_cons] at h
+          omega
+        have hj : j < (blocks (peel (c.getD 0 0) cs).2).length := by
+          rw [List.length_cons] at hk; omega
+        have h1 := ih (peel (c.getD 0 0) cs).2 hlen j hj
+        have h2 : ent (peel (c.getD 0 0) cs).2 0 0 ≤ c.getD 0 0 := by
+          refine peel_stop (c.getD 0 0) cs ?_
+          rcases Nat.eq_or_lt_of_le (Nat.zero_le (peel (c.getD 0 0) cs).2.length) with he | he
+          · exfalso
+            rw [show (peel (c.getD 0 0) cs).2 = [] from
+              List.eq_nil_of_length_eq_zero he.symm, blocks_nil] at hj
+            exact absurd hj (by simp)
+          · exact he
+        show _ ≤ c.getD 0 0
+        omega
+
+theorem blocks_min : ∀ (n : Nat) (X : Matrix), X.length ≤ n → ∀ k, k < (blocks X).length →
+    ∀ i, i < (((blocks X).take k).flatten).length →
+      ent ((blocks X).getD k []) 0 0 ≤ ent (((blocks X).take k).flatten) i 0 := by
+  intro n
+  induction n with
+  | zero =>
+    intro X h k hk
+    rw [show X = [] from List.eq_nil_of_length_eq_zero (by omega), blocks_nil] at hk
+    exact absurd hk (by simp)
+  | succ g ih =>
+    intro X h k hk i hi
+    cases X with
+    | nil => rw [blocks_nil] at hk; exact absurd hk (by simp)
+    | cons c cs =>
+      rw [blocks_cons c cs] at hk hi ⊢
+      cases k with
+      | zero => exact absurd hi (by simp)
+      | succ j =>
+        have hlenr : (peel (c.getD 0 0) cs).2.length ≤ g := by
+          have := peel_len2 (c.getD 0 0) cs
+          rw [List.length_cons] at h
+          omega
+        have hj : j < (blocks (peel (c.getD 0 0) cs).2).length := by
+          rw [List.length_cons] at hk; omega
+        have hB0 : BlkG (c :: (peel (c.getD 0 0) cs).1) := blocks_head_blkG c cs
+        have hroot : ent ((blocks (peel (c.getD 0 0) cs).2).getD j []) 0 0 ≤ c.getD 0 0 := by
+          have h1 := blocks_root_le g (peel (c.getD 0 0) cs).2 hlenr j hj
+          have h2 : ent (peel (c.getD 0 0) cs).2 0 0 ≤ c.getD 0 0 := by
+            refine peel_stop (c.getD 0 0) cs ?_
+            rcases Nat.eq_or_lt_of_le (Nat.zero_le (peel (c.getD 0 0) cs).2.length) with he | he
+            · exfalso
+              rw [show (peel (c.getD 0 0) cs).2 = [] from
+                List.eq_nil_of_length_eq_zero he.symm, blocks_nil] at hj
+              exact absurd hj (by simp)
+            · exact he
+          omega
+        show ent ((blocks (peel (c.getD 0 0) cs).2).getD j []) 0 0
+          ≤ ent ((c :: (peel (c.getD 0 0) cs).1)
+              ++ ((blocks (peel (c.getD 0 0) cs).2).take j).flatten) i 0
+        rcases Nat.lt_or_ge i (c :: (peel (c.getD 0 0) cs).1).length with hlt | hge
+        · rw [ent_append_left _ _ i 0 hlt]
+          rcases Nat.eq_or_lt_of_le (Nat.zero_le i) with hi0 | hi0
+          · rw [← hi0]
+            show _ ≤ c.getD 0 0
+            omega
+          · have := hB0.2 i hi0 hlt
+            show _ ≤ ent (c :: (peel (c.getD 0 0) cs).1) i 0
+            have hc : ent (c :: (peel (c.getD 0 0) cs).1) 0 0 = c.getD 0 0 := rfl
+            omega
+        · rw [ent_append _ _ i 0 hge]
+          refine ih (peel (c.getD 0 0) cs).2 hlenr j hj _ ?_
+          rw [List.take_succ_cons, List.flatten_cons, List.length_append] at hi
+          omega
+
+theorem len_le_flatten_lenG : ∀ (Bs : List Matrix), (∀ Bk ∈ Bs, BlkG Bk) →
+    Bs.length ≤ Bs.flatten.length := by
+  intro Bs
+  induction Bs with
+  | nil => intro _; simp
+  | cons X Xs ihx =>
+    intro hb
+    have hX : 0 < X.length := (hb X (by simp)).1
+    have := ihx (fun Y hY => hb Y (by simp [hY]))
+    rw [List.flatten_cons, List.length_append, List.length_cons]
+    omega
+
+theorem ppair_ofBlocks (Bs : List Matrix) (hb : ∀ Bk ∈ Bs, BlkG Bk)
+    (hm : ∀ k, k < Bs.length → ∀ i, i < ((Bs.take k).flatten).length →
+      ent (Bs.getD k []) 0 0 ≤ ent ((Bs.take k).flatten) i 0) :
+    ppair (psM Bs.flatten) = Bs.map psM := by
+  show ppairAux ((psM Bs.flatten).length + 1) (psM Bs.flatten)
+    (lenI (psM Bs.flatten) - 1) [] = _
+  rw [lenI_psM, show (psM Bs.flatten) = psM (Bs.flatten ++ []) from by rw [List.append_nil],
+    ppairAux_blocksG _ Bs [] [] hb hm (by
+      rw [List.append_nil, psM_len]
+      exact Nat.le_trans (len_le_flatten_lenG Bs hb) (by omega))]
+  simp
+
+/-- **`ppair` は走る最小値で切ったブロック列。** -/
+theorem ppair_blocksG (X : Matrix) : ppair (psM X) = (blocks X).map psM := by
+  have hf : (blocks X).flatten = X := blocks_flatten X.length X (Nat.le_refl _)
+  have h := ppair_ofBlocks (blocks X) (blocks_blkG X.length X (Nat.le_refl _))
+    (blocks_min X.length X (Nat.le_refl _))
+  rw [hf] at h
+  exact h
+
+/-- **`brF` は対角の後ろのブロック列。** -/
+theorem brF_blocks (Mat : Matrix) (h : 0 < Mat.length) :
+    brF (psM Mat) = (blocks (Mat.drop (runLen Mat + 1))).map psM := by
+  show ppair ((psM Mat).drop (trMax (psM Mat) + 1).toNat) = _
+  rw [trMax_runLen Mat h,
+    show (((runLen Mat : Nat) : Int) + 1).toNat = runLen Mat + 1 from by omega,
+    show (psM Mat).drop (runLen Mat + 1) = psM (Mat.drop (runLen Mat + 1)) from by
+      show (Mat.map _).drop _ = (Mat.drop _).map _
+      rw [List.map_drop],
+    ppair_blocksG]
+
+/-- 枝を連ねると対角の後ろになる。 -/
+theorem brF_flatten (Mat : Matrix) (h : 0 < Mat.length) :
+    (brF (psM Mat)).flatten = (psM Mat).drop (runLen Mat + 1) := by
+  rw [brF_blocks Mat h, ← psM_flatten,
+    blocks_flatten (Mat.drop (runLen Mat + 1)).length _ (Nat.le_refl _)]
+  show (Mat.drop (runLen Mat + 1)).map _ = (Mat.map _).drop _
+  rw [List.map_drop]
+
+/-- **§25 の `hsplit`。** 対角と枝で領域の行列がちょうど割れる。 -/
+theorem hsplit_matB (a : B) (hnf : nfLe 1 a = true) :
+    jjSeq 0 ((runLen (matB (.nd 0 .nil a) 0) : Nat) : Int)
+      ++ (brF (psM (matB (.nd 0 .nil a) 0))).flatten = psM (matB (.nd 0 .nil a) 0) := by
+  have hne : (B.nd 0 .nil a) ≠ .nil := by intro h; exact B.noConfusion h
+  have hpos : 0 < (matB (B.nd 0 .nil a) 0).length := matB_len_pos _ 0 hne
+  rw [← take_jjSeq (matB (B.nd 0 .nil a) 0) (runLen (matB (B.nd 0 .nil a) 0))
+      (runLen_lt _ hpos) (spine_diag_matB a hnf),
+    brF_flatten _ hpos, psM_split]
+
+end
+
 end Evidence.Region
