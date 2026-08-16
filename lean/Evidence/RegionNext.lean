@@ -1630,4 +1630,88 @@ def okCollapse (t : B) : Bool :=
 
 end
 
+/-! ## §17 THE ARGUMENT NEEDS ITS OWN VALUATION — and the reading rule, measured
+
+§16 excluded `Dict.collapse v` as the node function.  That exclusion was measured against
+the WRONG input.  `Evidence/RegionV.lean` already makes the distinction the measurement
+missed: `sumVal` is the value of an index read as a TOP-LEVEL sum, `argVal` the value of the
+same index read as an ARGUMENT, and they differ (there, by reading a run of `Ω`s as `ε`).
+§14–§16 fed `collapse` the sum valuation.
+
+With the argument valuation instead — take `oRB` of `ψ₀(a)`'s matrix and strip the outer
+`ψ₀` — the recursion
+
+    sumV (nd v r a)  =  sumV r ⊕ collapse v (argV a)
+
+holds at **696 of 847** nodes, against 618 for the sum valuation.  And the two disagree
+exactly where one would expect:
+
+    y2(0)        argV  Ω        sumV  Ω₂
+    y1(y2(0))    argV  Ω₂       sumV  ε_Ω
+
+THE READING RULE (measured on a designed family, `#guard`s below).  Along a chain of nodes
+with levels `v₁, v₂, …` under the top `ψ₀`:
+
+    drop a node whose level is STRICTLY BELOW the next node's level;
+    a kept node's subscript is the RANK of its level among the distinct levels
+    seen along the chain up to it (the top counting as rank 0).
+
+    (0,0)(1,2)              ψ₀(ψ₁(0))         levels {0,2}: rank of 2 is 1
+    (0,0)(1,1)(2,2)         ψ₀(ψ₂(0))         1 < 2 so the ψ₁ node goes; rank of 2 is 2
+    (0,0)(1,1)(2,2)(3,3)    ψ₀(ψ₃(0))         two nodes go
+    (0,0)(1,1)(2,2)(3,1)    ψ₀(ψ₂(ψ₁(0)))     the last node is kept, at rank 1
+    (0,0)(1,2)(2,2)         ψ₀(ψ₁(ψ₁(0)))     2 is not < 2, so both are kept, both rank 1
+
+That is why §15's `encB` — which reads the row-1 entry AS the subscript and keeps every node
+— disagrees, and why the disagreement starts at `(0,0)(1,1)(2,2)`: it is the smallest matrix
+with a strictly increasing pair of levels on the chain.
+
+WHAT IS STILL OPEN.  The rule above is for CHAINS.  Sums inside an argument are not covered
+by it — `(0,0)(1,1)(2,2)(2,1)` reads as `ψ₀(ψ₂(0) ⊕ ψ₁(ψ₂(0) ⊕ ψ₁(0)))`, which the chain
+rule does not produce — and that is exactly the 151 of 847 the recursion above still misses.
+So the next step is the rule for sums, not another candidate for the node function. -/
+
+section
+open TM TM.Term
+
+/-- 引数として読んだときの Buchholz 項 (測定用): `ψ₀(a)` の行列を訳して外側を剥がす。 -/
+def argBT (a : B) : Option Trans.Dict.BT :=
+  match Trans.Recal.oRB (matB (.nd 0 .nil a) 0) with
+  | some (.D 0 u) => some u
+  | _ => none
+
+def argV (a : B) : Option Term := (argBT a).map Trans.Dict.dict
+def sumV (t : B) : Option Term := Trans.oR (matB t 0)
+
+-- `argBT` は `nil` 以外で定義される (`ψ₀(0)` の行列は `(0)` で、`oRB` は `0` を返す)。
+#guard (valCorpus.filter fun a => (argBT a).isSome).length == 847
+#guard (valCorpus.filter fun a => (argBT a).isNone) == [B.nil]
+-- 引数の値付けで再帰は 696 / 847。
+#guard (valCorpus.filter fun t => match t with
+  | .nil => false
+  | .nd v r a =>
+    match sumV (.nd v r a), sumV r, argV a with
+    | some x, some y, some z => x == plus y (Trans.Dict.collapse v z)
+    | _, _, _ => false).length == 696
+#guard (valCorpus.filter fun t => match t with | .nil => false | _ => true).length == 847
+-- 引数の値付けは和の値付けと違う。
+#guard argV (.nd 2 .nil .nil) == some (Z zero)
+#guard sumV (.nd 2 .nil .nil) == some (Z one)
+#guard argV (.nd 1 .nil (.nd 2 .nil .nil)) == some (Z one)
+#guard sumV (.nd 1 .nil (.nd 2 .nil .nil)) == some (phi one (Z zero))
+
+/-! ### §17.1 THE READING RULE ON A CHAIN -/
+
+#guard Trans.Recal.oRB [[0,0], [1,2]] == some (.D 0 (.D 1 .zero))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,1]] == some (.D 0 (.D 1 (.D 1 .zero)))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2]] == some (.D 0 (.D 2 .zero))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [3,3]] == some (.D 0 (.D 3 .zero))
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [3,1]] == some (.D 0 (.D 2 (.D 1 .zero)))
+#guard Trans.Recal.oRB [[0,0], [1,2], [2,2]] == some (.D 0 (.D 1 (.D 1 .zero)))
+-- 和は鎖の規則では出ない。
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2], [2,1]]
+  == some (.D 0 (.sum (.D 2 .zero) (.D 1 (.sum (.D 2 .zero) (.D 1 .zero)))))
+
+end
+
 end Evidence.Region
