@@ -5727,4 +5727,105 @@ theorem anc0_blk (M : Matrix) (s : Nat) (Bk : Matrix)
 
 end
 
+/-! ## §39 THE SPINE, WITHOUT ANY DEPTH HYPOTHESIS
+
+§27 got the spine's shape out of `matB`'s two step bounds.  §37 says the class is `LvlOKb`
+alone, so the spine has to come out of that — and it does, because the run's own condition
+supplies what the depth bound used to.
+
+The run says consecutive depths increase, and that alone makes column `j` the PARENT of column
+`j + 1` (`parent_succ_of_lt`: it is a candidate, and no index between them exists).  With the
+parent identified, `LvlOKb` caps the level at the previous one plus one while the run forces
+it strictly higher — so it goes up by exactly one, and
+
+    spine_lvl  : level = index along the run
+    spine_anc0 : tree depth = index along the run   (§38's `anc0_spine`, same parent chain)
+
+Note what is NOT assumed: nothing about depths beyond "they increase".  §27's `spine_diag_matB`
+needed `matB_step_depth` to pin the depth to the index as well; here the depths may do
+anything increasing, which is exactly the freedom `auxMat` needs.
+
+`nrmBlk_take` reads the consequence off `nrmM`: since `nrmM` puts every column at
+`root level + tree depth` and the run has root level 0 and tree depth = index, the first
+`tr + 1` columns of the answer are `jjSeq 0 tr` — the diagonal `red` cuts. -/
+
+section
+open Trans.Recal
+
+/-- 隣が浅ければそれが親 (最大の候補だから)。 -/
+theorem parent_succ_of_lt (M : Matrix) (j : Nat) (h : ent M j 0 < ent M (j + 1) 0) :
+    parent M 0 (j + 1) = some j := by
+  refine List.max?_eq_some_iff.mpr ⟨?_, ?_⟩
+  · exact List.mem_filter.mpr ⟨List.mem_range.mpr (by omega), decide_eq_true h⟩
+  · intro b hb
+    have := List.mem_range.mp (List.mem_filter.mp hb).1
+    omega
+
+/-- `LvlOKb` を 1 点で使う。 -/
+theorem lvlOKb_at (M : Matrix) (h : LvlOKb M = true) (i p : Nat) (hi : i < M.length)
+    (hp : parent M 0 i = some p) : ent M i 1 ≤ ent M p 1 + 1 := by
+  have := List.all_eq_true.mp h i (List.mem_range.mpr hi)
+  rw [hp] at this
+  exact of_decide_eq_true this
+
+/-- **走りの上では段は添字そのもの。** 深さについては何も要らない。 -/
+theorem spine_lvl (M : Matrix) (tr : Nat) (h0 : ent M 0 1 = 0)
+    (hlvl : LvlOKb M = true) (hlen : tr < M.length)
+    (hrun : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1) :
+    ∀ j, j ≤ tr → ent M j 1 = j := by
+  intro j
+  induction j with
+  | zero => intro _; exact h0
+  | succ k ih =>
+    intro hk
+    have hpk := ih (by omega)
+    have hr := hrun k (by omega)
+    have hpar : parent M 0 (k + 1) = some k := parent_succ_of_lt M k hr.1
+    have hle := lvlOKb_at M hlvl (k + 1) k (by omega) hpar
+    omega
+
+/-- 走りの上の親は 1 つ左。 -/
+theorem spine_parent (M : Matrix) (tr : Nat)
+    (hrun : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1) :
+    ∀ j, 1 ≤ j → j ≤ tr → parent M 0 j = some (j - 1) := by
+  intro j hj1 hjtr
+  obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  rw [show k + 1 - 1 = k from by omega]
+  exact parent_succ_of_lt M k (hrun k (by omega)).1
+
+/-- **走りの上では木の深さも添字そのもの。** -/
+theorem spine_anc0 (M : Matrix) (tr : Nat) (hlen : tr < M.length)
+    (hrun : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1) :
+    ∀ j, j ≤ tr → anc0 M j = j :=
+  anc0_spine M tr hlen (spine_parent M tr hrun)
+
+/-- 走りの上での `nrmM` の列 — 対角そのもの。 -/
+theorem nrmBlk_spine (M : Matrix) (tr : Nat) (h0 : ent M 0 1 = 0)
+    (hlvl : LvlOKb M = true) (hlen : tr < M.length)
+    (hrun : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1) :
+    ∀ j, j ≤ tr → (nrmBlk M).getD j (0, 0) = (((j : Nat) : Int), ((j : Nat) : Int)) := by
+  intro j hj
+  show ((List.range M.length).map (fun i =>
+    (((ent M 0 1 + anc0 M i : Nat) : Int), ((ent M i 1 : Nat) : Int)))).getD j (0, 0) = _
+  rw [getD_map_range M.length _ (0, 0) j (by omega), h0,
+    spine_anc0 M tr hlen hrun j hj, spine_lvl M tr h0 hlvl hlen hrun j hj,
+    show 0 + j = j from by omega]
+
+theorem nrmBlk_length (M : Matrix) : (nrmBlk M).length = M.length := by
+  show ((List.range M.length).map _).length = _
+  rw [List.length_map, List.length_range]
+
+/-- **`nrmM` の頭は対角そのもの。** -/
+theorem nrmBlk_take (M : Matrix) (tr : Nat) (h0 : ent M 0 1 = 0)
+    (hlvl : LvlOKb M = true) (hlen : tr < M.length)
+    (hrun : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1) :
+    (nrmBlk M).take (tr + 1) = jjSeq 0 ((tr : Nat) : Int) := by
+  rw [take_eq_map_range ((0 : Int), (0 : Int)) (tr + 1) (nrmBlk M)
+      (by rw [nrmBlk_length]; omega),
+    jjSeq_zero tr]
+  exact List.map_congr_left (fun i hi => nrmBlk_spine M tr h0 hlvl hlen hrun i
+    (by have := List.mem_range.mp hi; omega))
+
+end
+
 end Evidence.Region
