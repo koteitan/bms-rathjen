@@ -5430,4 +5430,80 @@ def enumPrin1 : List B := (enumFree 3 4).filter fun s => match s with
 
 end
 
+/-! ## §36 WHAT `red` REALLY COMPUTES: DEPTH BECOMES TREE DEPTH
+
+§35 found that `red`'s own recursion leaves §31's class: the matrix `red_head_pos` builds has
+a depth jump at the junction, so `StepOK` fails, and so does it for the matrices the fold then
+hands to the recursive call.  A statement that is not closed under the recursion cannot be the
+induction hypothesis, so this is the third and last restatement — and this one is closed.
+
+    anc0 X i    the number of proper row-0 ancestors of column i — its TREE DEPTH
+    nrmBlk X    every column moved to depth (root's level + its tree depth), levels kept
+    nrmM X      that, block by block
+
+**`red` re-depths.**  It throws the input's depths away and rebuilds them from the tree: the
+spine becomes `0, 1, 2, …` because a spine node's tree depth IS its index, a branch root lands
+at its parent's index plus one because that is ITS tree depth, and so on down.  The only thing
+carried over from the input is the tree and the levels.  `shiftToLvl` and `canonM` were the
+same statement seen from inside the class where depth already equalled tree depth plus a
+constant — the guards below show `nrmM = canonM` there.
+
+MEASURED on three populations:
+
+    normal-form indices, 4 depths      red = nrmM,  and nrmM = canonM
+    `auxMat` of them (StepOK BROKEN)   red = nrmM
+    NON-normal-form indices, 243       red = nrmM at ZERO of them
+
+The last is the control that says which hypothesis is doing the work: it is the LEVEL
+condition, not the depth one.  `(0,0)(1,2)` has a level-2 node under a level-0 one; `red`
+lowers it to `(0,0)(1,1)` while `nrmM`, which keeps levels, does not — so `red = nrmM` needs
+`LvlOK` and needs nothing about `StepOK`. -/
+
+section
+open Trans.Recal
+/-- 木の深さ = 行 0 の親鎖の長さ。 -/
+def anc0 (X : Matrix) (i : Nat) : Nat := (iterParent (parent X 0) X.length i).length
+
+/-- ブロックを「根の段 + 木の深さ」の位置へ置き直したもの。 -/
+def nrmBlk (X : Matrix) : PS :=
+  (List.range X.length).map fun i =>
+    (((ent X 0 1 + anc0 X i : Nat) : Int), ((ent X i 1 : Nat) : Int))
+
+/-- 行列をブロックごとに置き直したもの — **`red` の値**。 -/
+def nrmM (X : Matrix) : PS := ((blocks X).map nrmBlk).flatten
+
+/-- 対角の行列。 -/
+def diagMat (k : Nat) : Matrix := (List.range k).map fun j => [j, j]
+
+/-- `red_head_pos` が作る行列 (行列版)。 -/
+def auxMat (X : Matrix) : Matrix := diagMat (ent X 0 1) ++ sh (ent X 0 1) X
+
+/-- 段が 1 以上の principal な添字。 -/
+def enumPrinPos : List B := (enumFree 3 4).filter fun s => match s with
+  | .nd u .nil _ => u ≥ 1 | _ => false
+
+/-- 標準形でない添字 (対照)。 -/
+def enumBad : List B :=
+  ((List.range 5).flatMap (enumNodes 3)).filter fun t => t != .nil && !(nfFree t)
+
+-- 標準形の母集団では `red` の値であり、§31 の `canonM` と同じもの。
+#guard (enumFree 3 4).all fun s => (List.range 3).all fun d =>
+  redP (psM (matB s d)) == nrmM (matB s d)
+#guard (enumFree 3 4).all fun s => (List.range 3).all fun d =>
+  nrmM (matB s d) == canonM (matB s d)
+-- **`StepOK` を壊す `auxMat` でも成り立つ。**
+#guard enumPrinPos.length == 278
+#guard enumPrinPos.all fun s => (List.range 3).all fun d =>
+  redP (psM (auxMat (matB s d))) == nrmM (auxMat (matB s d))
+#guard !(enumPrinPos.all fun s => (List.range 3).all fun d =>
+  (List.range ((auxMat (matB s d)).length)).all fun j =>
+    ent (auxMat (matB s d)) (j + 1) 0 ≤ ent (auxMat (matB s d)) j 0 + 1)
+-- CTRL 標準形でない添字では **1 つも** 成り立たない。
+#guard enumBad.length == 243
+#guard (enumBad.filter fun s => redP (psM (matB s 0)) == nrmM (matB s 0)).length == 0
+#guard redP (psM [[0, 0], [1, 2]]) == psM [[0, 0], [1, 1]]
+#guard nrmM [[0, 0], [1, 2]] == psM [[0, 0], [1, 2]]
+
+end
+
 end Evidence.Region
