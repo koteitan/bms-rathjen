@@ -2070,13 +2070,22 @@ theorem parent0_none_of_zero (M : Matrix) (s : Nat) (h : ent M s 0 = 0) :
   rw [h]
   simp
 
+/-- 自分より浅い列が前に無いなら親は無い。 -/
+theorem parent0_none_of_min (M : Matrix) (s : Nat) (h : ∀ i, i < s → ent M s 0 ≤ ent M i 0) :
+    parent M 0 s = none := by
+  refine List.max?_eq_none_iff.mpr (List.filter_eq_nil_iff.mpr ?_)
+  intro p hp
+  have := h p (List.mem_range.mp hp)
+  simp
+  omega
+
 theorem getLast?_cons_of_ne_nil {α : Type _} (a : α) : ∀ (l : List α), l ≠ [] →
     (a :: l).getLast? = l.getLast?
   | [], h => absurd rfl h
   | _ :: _, _ => List.getLast?_cons_cons
 
-/-- **親鎖の終点は最初の深さ 0 の列。** -/
-theorem iterParent0_last (M : Matrix) (s : Nat) (hs : ent M s 0 = 0) :
+/-- **親鎖の終点は、親を持たない最初の列。** -/
+theorem iterParent0_last (M : Matrix) (s : Nat) (hs : parent M 0 s = none) :
     ∀ (fuel x : Nat), x ≤ fuel → s < x → LMin M s x →
       (iterParent (parent M 0) fuel x).getLast? = some s := by
   intro fuel
@@ -2099,7 +2108,7 @@ theorem iterParent0_last (M : Matrix) (s : Nat) (hs : ent M s 0 = 0) :
       have hsr : s ≤ r := hrmax s hmem
       rw [iterParent_cons hr]
       rcases Nat.eq_or_lt_of_le hsr with rfl | hlt
-      · rw [iterParent_nil (parent0_none_of_zero M s hs)]
+      · rw [iterParent_nil hs]
         rfl
       · have hrest : (iterParent (parent M 0) g r).getLast? = some s :=
           ih r (by omega) hlt ⟨hlt, fun p h1 h2 => hlm.2 p h1 (by omega)⟩
@@ -2157,7 +2166,7 @@ theorem fAnc_eq (M : Matrix) (x : Nat) (hlen : x < M.length) :
   rfl
 
 /-- **ブロックの根に達する。** 深さ 0 の列 `s` が `x` の左極小なら `fAnc` の終点は `s`。 -/
-theorem fAnc_last (M : Matrix) (s x : Nat) (hs : ent M s 0 = 0) (hlen : x < M.length)
+theorem fAnc_last (M : Matrix) (s x : Nat) (hs : parent M 0 s = none) (hlen : x < M.length)
     (hsx : s < x) (hlm : LMin M s x) :
     ((fAnc (psM M) 0 (x : Int) 0).getLast?).getD 0 = ((s : Nat) : Int) := by
   rw [fAnc_eq M x hlen]
@@ -2172,9 +2181,9 @@ theorem fAnc_last (M : Matrix) (s x : Nat) (hs : ent M s 0 = 0) (hlen : x < M.le
   rfl
 
 /-- 自分が深さ 0 なら `fAnc` の終点は自分。 -/
-theorem fAnc_last_self (M : Matrix) (x : Nat) (hs : ent M x 0 = 0) (hlen : x < M.length) :
+theorem fAnc_last_self (M : Matrix) (x : Nat) (hs : parent M 0 x = none) (hlen : x < M.length) :
     ((fAnc (psM M) 0 (x : Int) 0).getLast?).getD 0 = ((x : Nat) : Int) := by
-  rw [fAnc_eq M x hlen, iterParent_nil (parent0_none_of_zero M x hs)]
+  rw [fAnc_eq M x hlen, iterParent_nil hs]
   rfl
 
 /-! ### §18.2 THE SCOPING MEASUREMENT
@@ -2331,13 +2340,15 @@ theorem ppairAux_blocks : ∀ (f : Nat) (Bs : List Matrix) (P : Matrix) (acc : L
             = ((Bs'.flatten.length : Nat) : Int) := by
         rcases Nat.lt_or_ge Bs'.flatten.length (Bs'.flatten.length + Bk.length - 1)
           with hlt | hge
-        · refine fAnc_last _ Bs'.flatten.length _ hroot hj1 hlt ⟨hlt, ?_⟩
+        · refine fAnc_last _ Bs'.flatten.length _ (parent0_none_of_zero _ _ hroot)
+            hj1 hlt ⟨hlt, ?_⟩
           intro p h1 h2
           rw [hroot, hentR p (by omega), hentBk (p - Bs'.flatten.length) (by omega)]
           exact hBk.2.2 (p - Bs'.flatten.length) (by omega) (by omega)
         · have heq : Bs'.flatten.length + Bk.length - 1 = Bs'.flatten.length := by omega
           rw [heq]
-          exact fAnc_last_self _ Bs'.flatten.length hroot (by rw [heq] at hj1; exact hj1)
+          exact fAnc_last_self _ Bs'.flatten.length (parent0_none_of_zero _ _ hroot)
+            (by rw [heq] at hj1; exact hj1)
       show (if (((Bs' ++ [Bk]).flatten.length : Int) - 1) < 0 then acc
             else ppairAux g (psM ((Bs' ++ [Bk]).flatten ++ P))
               (((fAnc (psM ((Bs' ++ [Bk]).flatten ++ P)) 0
@@ -3549,6 +3560,145 @@ def shiftOK (s : B) : Bool :=
 #guard (enumPrin 4 5).length == 467
 #guard (enumPrin 4 5).all rebuildOK
 #guard (enumPrin 4 5).all shiftOK
+
+end
+
+/-! ## §24 `ppair` AT ARBITRARY DEPTH
+
+§18.3 proved `ppair` is the block decomposition when every block's root sits at depth 0.
+The fold needs it one level down: the suffix `M.drop (trMax M + 1)` is a run of subtrees
+whose roots sit at the depths of the spine's children, and those depths DECREASE as one
+walks right — first the deepest spine node's children, then back up.  So the hypothesis
+"every root is at depth 0" becomes "every block's root is no deeper than any column before
+it", which is exactly what makes `parent … = none` there and hence what makes `ppairAux`
+cut at that column.
+
+Everything else in the §18.3 proof was already about depths rather than about zero, so
+generalising it took only replacing `ent … = 0` by `parent … = none` in `iterParent0_last`,
+`fAnc_last` and `fAnc_last_self` (done in place — `parent0_none_of_zero` supplies the old
+form at the old call sites) and adding `parent0_none_of_min`. -/
+
+section
+open Trans.Recal
+
+theorem take_app_left {α : Type _} : ∀ (L R : List α) (n : Nat), n ≤ L.length →
+    (L ++ R).take n = L.take n := by
+  intro L
+  induction L with
+  | nil => intro R n h; rw [show n = 0 from by simp at h; omega]; rfl
+  | cons x xs ih =>
+    intro R n h
+    cases n with
+    | zero => rfl
+    | succ k =>
+      show x :: (xs ++ R).take k = x :: xs.take k
+      rw [ih R k (by simp at h; omega)]
+
+/-- 深さを問わないブロック: 先頭の列が同じブロックの他のどの列よりも浅い。 -/
+def BlkG (Bk : Matrix) : Prop :=
+  0 < Bk.length ∧ ∀ p, 0 < p → p < Bk.length → ent Bk 0 0 < ent Bk p 0
+
+/-- **`ppair` はブロックの並びをそのまま返す (深さは任意)。**
+    第 2 の仮定は「各ブロックの根は、それより前のどの列よりも浅くない」。 -/
+theorem ppairAux_blocksG : ∀ (f : Nat) (Bs : List Matrix) (P : Matrix) (acc : List PS),
+    (∀ Bk ∈ Bs, BlkG Bk) →
+    (∀ k, k < Bs.length → ∀ i, i < ((Bs.take k).flatten).length →
+      ent (Bs.getD k []) 0 0 ≤ ent ((Bs.take k).flatten) i 0) →
+    Bs.length ≤ f →
+    ppairAux f (psM (Bs.flatten ++ P)) ((Bs.flatten.length : Int) - 1) acc
+      = Bs.map psM ++ acc := by
+  intro f
+  induction f with
+  | zero =>
+    intro Bs P acc _ _ hlen
+    have : Bs = [] := List.eq_nil_of_length_eq_zero (by omega)
+    subst this
+    rfl
+  | succ g ih =>
+    intro Bs P acc hb hmin hlen
+    rcases List.eq_nil_or_concat Bs with rfl | ⟨Bs', Bk, hcon⟩
+    · show (if ((([] : List Matrix).flatten.length : Int) - 1) < 0 then acc else _) = _
+      rw [if_pos (by simp)]
+      rfl
+    · rw [show Bs = Bs' ++ [Bk] from by rw [hcon, List.concat_eq_append]] at hb hmin hlen ⊢
+      have hBk : BlkG Bk := hb Bk (by simp)
+      have hb' : ∀ X ∈ Bs', BlkG X := fun X hX => hb X (by simp [hX])
+      have hpos : 0 < Bk.length := hBk.1
+      have hflat : (Bs' ++ [Bk]).flatten = Bs'.flatten ++ Bk := by
+        rw [List.flatten_append]; simp
+      have hM : (Bs' ++ [Bk]).flatten ++ P = Bs'.flatten ++ (Bk ++ P) := by
+        rw [hflat, List.append_assoc]
+      have hlenf : ((Bs' ++ [Bk]).flatten.length : Int)
+          = ((Bs'.flatten.length + Bk.length : Nat) : Int) := by
+        rw [hflat, List.length_append]
+      have hMlen : ((Bs' ++ [Bk]).flatten ++ P).length
+          = Bs'.flatten.length + Bk.length + P.length := by
+        rw [hflat, List.length_append, List.length_append]
+      have hentR : ∀ i, Bs'.flatten.length ≤ i →
+          ent ((Bs' ++ [Bk]).flatten ++ P) i 0
+            = ent (Bk ++ P) (i - Bs'.flatten.length) 0 := by
+        intro i hi; rw [hM]; exact ent_append _ _ i 0 hi
+      have hentBk : ∀ i, i < Bk.length → ent (Bk ++ P) i 0 = ent Bk i 0 :=
+        fun i hi => ent_append_left _ _ i 0 hi
+      have hentL : ∀ i, i < Bs'.flatten.length →
+          ent ((Bs' ++ [Bk]).flatten ++ P) i 0 = ent Bs'.flatten i 0 := by
+        intro i hi; rw [hM]; exact ent_append_left _ _ i 0 hi
+      have hroot : ent ((Bs' ++ [Bk]).flatten ++ P) Bs'.flatten.length 0 = ent Bk 0 0 := by
+        rw [hentR _ (Nat.le_refl _),
+          show Bs'.flatten.length - Bs'.flatten.length = 0 from by omega, hentBk 0 hpos]
+      have hkey : ∀ i, i < Bs'.flatten.length → ent Bk 0 0 ≤ ent Bs'.flatten i 0 := by
+        intro i hi
+        have h := hmin Bs'.length (by simp) i
+        rw [show ((Bs' ++ [Bk]).take Bs'.length) = Bs' from by
+            rw [take_app_left _ _ _ (Nat.le_refl _), List.take_length],
+          show ((Bs' ++ [Bk]).getD Bs'.length []) = Bk from by
+            rw [getD_app_right _ _ _ _ (Nat.le_refl _),
+              show Bs'.length - Bs'.length = 0 from by omega]
+            rfl] at h
+        exact h hi
+      have hnop : parent ((Bs' ++ [Bk]).flatten ++ P) 0 Bs'.flatten.length = none := by
+        refine parent0_none_of_min _ _ ?_
+        intro i hi
+        rw [hroot, hentL i hi]
+        exact hkey i hi
+      have hj1 : Bs'.flatten.length + Bk.length - 1
+          < ((Bs' ++ [Bk]).flatten ++ P).length := by rw [hMlen]; omega
+      have hfa : ((fAnc (psM ((Bs' ++ [Bk]).flatten ++ P)) 0
+          ((Bs'.flatten.length + Bk.length - 1 : Nat) : Int) 0).getLast?).getD 0
+            = ((Bs'.flatten.length : Nat) : Int) := by
+        rcases Nat.lt_or_ge Bs'.flatten.length (Bs'.flatten.length + Bk.length - 1)
+          with hlt | hge
+        · refine fAnc_last _ Bs'.flatten.length _ hnop hj1 hlt ⟨hlt, ?_⟩
+          intro p h1 h2
+          rw [hroot, hentR p (by omega), hentBk (p - Bs'.flatten.length) (by omega)]
+          exact hBk.2 (p - Bs'.flatten.length) (by omega) (by omega)
+        · have heq : Bs'.flatten.length + Bk.length - 1 = Bs'.flatten.length := by omega
+          rw [heq]
+          exact fAnc_last_self _ Bs'.flatten.length hnop (by rw [heq] at hj1; exact hj1)
+      have hmin' : ∀ k, k < Bs'.length → ∀ i, i < ((Bs'.take k).flatten).length →
+          ent (Bs'.getD k []) 0 0 ≤ ent ((Bs'.take k).flatten) i 0 := by
+        intro k hk i hi
+        have h := hmin k (by simp; omega) i
+        rw [take_app_left _ _ _ (by omega), getD_app_left _ _ _ _ hk] at h
+        exact h hi
+      show (if (((Bs' ++ [Bk]).flatten.length : Int) - 1) < 0 then acc
+            else ppairAux g (psM ((Bs' ++ [Bk]).flatten ++ P))
+              (((fAnc (psM ((Bs' ++ [Bk]).flatten ++ P)) 0
+                  (((Bs' ++ [Bk]).flatten.length : Int) - 1) 0).getLast?).getD 0 - 1)
+              (slice (psM ((Bs' ++ [Bk]).flatten ++ P))
+                (((fAnc (psM ((Bs' ++ [Bk]).flatten ++ P)) 0
+                  (((Bs' ++ [Bk]).flatten.length : Int) - 1) 0).getLast?).getD 0)
+                ((((Bs' ++ [Bk]).flatten.length : Int) - 1) + 1) :: acc)) = _
+      rw [hlenf, if_neg (by omega),
+        show (((Bs'.flatten.length + Bk.length : Nat) : Int) - 1)
+          = ((Bs'.flatten.length + Bk.length - 1 : Nat) : Int) from by omega,
+        hfa,
+        show ((Bs'.flatten.length + Bk.length - 1 : Nat) : Int) + 1
+          = ((Bs'.flatten.length + Bk.length : Nat) : Int) from by omega,
+        hM, slice_block Bs'.flatten Bk P,
+        ih Bs' (Bk ++ P) (psM Bk :: acc) hb' hmin' (by
+          rw [List.length_append] at hlen; simp at hlen ⊢; omega)]
+      simp
 
 end
 
