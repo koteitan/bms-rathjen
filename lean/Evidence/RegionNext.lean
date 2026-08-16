@@ -5295,4 +5295,139 @@ theorem redM_sum (f : Nat) (X : Matrix) (hzero : isZeroP (psM X) = false)
 
 end
 
+/-! ## §35 THE LEVEL-POSITIVE CASE NEEDS A LOOSER SPINE
+
+The one-block case splits four ways, and three are short.  The fourth — a root of LEVEL ≥ 1 —
+sends `red` through `red_head_pos`, which prepends a diagonal and pushes the block out:
+
+    auxA X = jjSeq 0 (u-1) ++ incrFirst (psM X) u
+
+and MEASURED (278 indices × 3 depths), its reduct is
+
+    red (auxA X) = jjSeq 0 (u-1) ++ shiftToLvl X
+
+which is exactly what the surrounding dance needs.  **But `auxA X` is not one of §31's
+matrices.**  Its root is `(0,0)` and its levels still run `0, 1, 2, …`, yet at the junction the
+DEPTH jumps from `u-1` to `d+u`, so `StepOK` fails and §27's diagonal argument does not apply
+— the third guard below records that `trMax` does not stop where a diagonal would.
+
+What survives is what the two searches actually use.  `fpar0` on the spine only needs the
+spine's DEPTHS TO INCREASE, not to equal the index (`fpar0_spine'`); and `fpar1`'s stopping
+test only reads LEVELS, which do equal the index (`fpar1Aux_spine'`, `fpar_one_spine'`).  So
+the primed lemmas replace §32's, with "depth = index" weakened to "depth increases" and
+"level = index" kept.
+
+`red_fold_to` is the matching generalisation of §25's `red_fold_id`: it drops the requirement
+that each fold term give its own branch back, and concludes `jjSeq 0 tr ++ cs.flatten` for
+whatever the terms are.  On a diagonal-rooted matrix the terms ARE the branches and one
+recovers §25; on `auxA X` they are the branches re-rooted, which is the point. -/
+
+section
+open Trans.Recal
+
+/-- **畳み込みは対角のあとに各項を並べる。** 各項が何であるかは問わない版。 -/
+theorem red_fold_to (M : PS) (f : Nat) (tr : Int) (cs : List PS)
+    (hzero : isZeroP M = false) (hprin : isPrincipalP M = true)
+    (hg0 : gp0 M 0 = 0) (hg1 : gp1 M 0 = 0)
+    (htr : trMax M = tr) (hne : (tr == lenI M - 1) = false)
+    (hlen : (brF M).length = cs.length)
+    (hterm : ∀ J, J < cs.length →
+      incrFirst (red f (((joints M).getD J 0 + 1,
+          (if gp1 ((brF M).getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0) + 1) :: derp ((brF M).getD J [])))
+        ((joints M).getD J 0 - (if gp1 ((brF M).getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0)) = cs.getD J []) :
+    red (f + 1) M = jjSeq 0 tr ++ cs.flatten := by
+  rw [Rows.Ladder.red_fold_open M f tr hzero hprin hg0 hg1 htr hne, hlen]
+  show (List.range cs.length).foldl (fun r J => r ++
+      incrFirst (red f (((joints M).getD J 0 + 1,
+          (if gp1 ((brF M).getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0) + 1) :: derp ((brF M).getD J [])))
+        ((joints M).getD J 0 - (if gp1 ((brF M).getD J []) 0 == 0 then (-1 : Int)
+           else fpar M 1 ((firstNodes M).getD J 0) 0)))
+      (jjSeq 0 tr) = _
+  rw [fold_to_flatten _ cs (jjSeq 0 tr) hterm]
+
+/-- 対角の深さが真に増えていれば行 0 の親は 1 つ左 — 深さが添字と等しくなくてよい。 -/
+theorem fpar0_spine' (M : Matrix) (tr : Nat)
+    (hdep : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0)
+    (j : Nat) (hj : 1 ≤ j) (hjtr : j ≤ tr) (hlen : j < M.length) :
+    fpar0 (psM M) ((j : Nat) : Int) 0 = ((j - 1 : Nat) : Int) := by
+  rw [fpar0_in _ _ _ (by rw [lenI_psM]; omega), psM_gp0,
+    show ((j : Nat) : Int) - 1 = ((j - 1 : Nat) : Int) from by omega]
+  refine fpar0Aux_hit _ _ _ _ _ (by omega) ?_
+  rw [psM_gp0]
+  have := hdep (j - 1) (by omega)
+  rw [show j - 1 + 1 = j from by omega] at this
+  omega
+
+/-- 段が添字と等しい対角を下りると、段が `u` 未満の最初の列は添字 `u-1`。 -/
+theorem fpar1Aux_spine' (M : Matrix) (tr u : Nat)
+    (hdep : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0)
+    (hlvl : ∀ j, j ≤ tr → ent M j 1 = j)
+    (hu : 1 ≤ u) (htr : tr < M.length) :
+    ∀ (f q : Nat), u ≤ q → q ≤ tr → q - u < f →
+      fpar1Aux f (psM M) ((u : Nat) : Int) ((q : Nat) : Int) 0 = ((u - 1 : Nat) : Int) := by
+  intro f
+  induction f with
+  | zero => intro q _ _ h; exact absurd h (by omega)
+  | succ g ih =>
+    intro q h1 h2 h3
+    have hpar : fpar0 (psM M) ((q : Nat) : Int) 0 = ((q - 1 : Nat) : Int) :=
+      fpar0_spine' M tr hdep q (by omega) h2 (by omega)
+    show (let z := fpar0 (psM M) ((q : Nat) : Int) 0
+          if z < 0 then (-1 : Int)
+          else if gp1 (psM M) z < ((u : Nat) : Int) then z
+          else fpar1Aux g (psM M) ((u : Nat) : Int) z 0) = _
+    rw [hpar, if_neg (by omega), psM_gp1, hlvl (q - 1) (by omega)]
+    by_cases hq : q = u
+    · rw [if_pos (by omega), hq]
+    · rw [if_neg (by omega)]
+      exact ih (q - 1) (by omega) (by omega) (by omega)
+
+/-- **段が添字と等しい対角にぶら下がる列の行 1 の親は、その段の 1 つ下の列。** -/
+theorem fpar_one_spine' (M : Matrix) (tr u p x : Nat)
+    (hdep : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0)
+    (hlvl : ∀ j, j ≤ tr → ent M j 1 = j)
+    (hu : 1 ≤ u) (htr : tr < M.length) (hx : x < M.length)
+    (hpar : fpar0 (psM M) ((x : Nat) : Int) 0 = ((p : Nat) : Int))
+    (hptr : p ≤ tr) (hup : u ≤ p + 1) (hlvlx : ent M x 1 = u) :
+    fpar (psM M) 1 ((x : Nat) : Int) 0 = ((u - 1 : Nat) : Int) := by
+  rw [Rows.Ladder.fpar1_unfold _ _ _ (by rw [lenI_psM]; omega), psM_gp1, hlvlx]
+  show (let z := fpar0 (psM M) ((x : Nat) : Int) 0
+        if z < 0 then (-1 : Int)
+        else if gp1 (psM M) z < ((u : Nat) : Int) then z
+        else fpar1Aux (psM M).length (psM M) ((u : Nat) : Int) z 0) = _
+  rw [hpar, if_neg (by omega), psM_gp1, hlvl p hptr]
+  by_cases hp : p < u
+  · rw [if_pos (by omega)]
+    have : p = u - 1 := by omega
+    rw [this]
+  · rw [if_neg (by omega)]
+    refine fpar1Aux_spine' M tr u hdep hlvl hu htr (psM M).length p (by omega) hptr ?_
+    rw [psM_len]
+    omega
+
+/-! ### 段が 1 以上の場合に `red` が作る行列 -/
+
+/-- `red_head_pos` が作る行列: 対角を前置きして押し出したもの。 -/
+def auxA (X : Matrix) : PS :=
+  jjSeq 0 (gp1 (psM X) 0 - 1) ++ incrFirst (psM X) (gp1 (psM X) 0)
+
+/-- その `red` の値 (測定)。 -/
+def auxTarget (X : Matrix) : PS := jjSeq 0 (gp1 (psM X) 0 - 1) ++ shiftToLvl X
+
+/-- 段が 1 以上の principal な添字。 -/
+def enumPrin1 : List B := (enumFree 3 4).filter fun s => match s with
+  | .nd u .nil _ => u ≥ 1 | _ => false
+
+#guard enumPrin1.length == 278
+#guard enumPrin1.all fun s => (List.range 3).all fun d =>
+  redP (auxA (matB s d)) == auxTarget (matB s d)
+-- 前置きした対角の**深さ**は添字と等しくない (根が深さ 0 でないから)。
+#guard !(enumPrin1.all fun s => (List.range 3).all fun d =>
+  trMax (auxA (matB s d)) == gp1 (psM (matB s d)) 0 - 1)
+
+end
+
 end Evidence.Region
