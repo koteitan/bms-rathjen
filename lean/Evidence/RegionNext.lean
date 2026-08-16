@@ -1571,4 +1571,63 @@ def encB : B → Trans.Dict.BT
 
 end
 
+/-! ## §16 THE NODE FUNCTION IS NEITHER OF THE TWO CANDIDATES
+
+§14 says the value is compositional in `B`'s coordinates — the prefix splits off and the
+node function `f v x` exists — and §15 says the index cannot simply be read as a Buchholz
+term.  Two candidates for `f` remain, and both are now excluded with numbers.
+
+**(a) `ω^(Ω_{v-1} ⊕ ·)`.**  §14 already settles it: that IS `f` below `Ω_{v+1}` and never
+above, so it covers 88 of the 519 nodes and the other 431 are collapses.
+
+**(b) `Trans/Dict.lean`'s `collapse v`.**  This is the repository's own Buchholz-to-`𝔗(M)`
+collapsing, and it does much better — 398 of 519, INCLUDING all 88 where (a) works.  But it
+is not `f` either, and its smallest failure is the same matrix §15 found:
+
+    (0,0)(1,1)(2,2)     f          ψ_Ω(Ω₂)
+                        collapse   ψ_Ω(ε_Ω)
+
+— the only matrix of three columns or fewer where they differ.  Composing `collapse` down
+the whole index reproduces `dict ∘ encB` exactly, 618 of 848, as it must.
+
+SO BOTH FAILURES ARE THE SAME FAILURE.  `transPort` — the BMS → Buchholz map — is not a tree
+read at all: it is naruyoko's `Trans`/`Mark` recursion with seven case types, marks and
+memoisation (`Trans/Recal.lean` §3), and at `(0,0)(1,1)(2,2)` it takes the branch that builds
+`ψ₀(ψ_v(0))` out of the LAST column's row-1 entry alone.  No per-node function of `B` can
+imitate that by looking only at `(v, value of the argument)` — except that, measured, one
+does on this corpus (§14's 847 keys with no conflict).  What is missing is a closed form for
+it, and the two obvious ones are gone.
+
+That is where the value side stands: specified (§14), with the shortcut (§15) and both
+candidates (§16) excluded.  `Hclosed` (§13) does not depend on any of it. -/
+
+section
+open TM TM.Term
+
+/-- 節だけを集めたもの (前置きなし)。 -/
+def nodeCorpus : List B :=
+  valCorpus.filter fun t => match t with | .nd _ .nil _ => true | _ => false
+
+/-- 候補 (b): 節の関数は `Dict.collapse` か。 -/
+def okCollapse (t : B) : Bool :=
+  match t with
+  | .nd v .nil a =>
+    match Trans.oR (matB t 0), Trans.oR (matB a 0) with
+    | some x, some y => x == Trans.Dict.collapse v y
+    | _, _ => false
+  | _ => false
+
+#guard nodeCorpus.length == 519
+#guard (nodeCorpus.filter okCollapse).length == 398
+-- (a) が当たる 88 個は (b) も当てる。
+#guard ((nodeCorpus.filter fun t => match t with
+  | .nd v .nil a => match Trans.oR (matB a 0) with | some y => belowOm v y | none => false
+  | _ => false).filter okCollapse).length == 88
+-- (b) が外す 3 列以下の節は 1 つだけで、§15 と同じ行列。
+#guard (nodeCorpus.filter fun t =>
+  !(okCollapse t) && (matB t 0).length ≤ 3).map (fun t => matB t 0)
+  == [[[0,0], [1,1], [2,2]]]
+
+end
+
 end Evidence.Region
