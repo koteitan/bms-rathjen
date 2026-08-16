@@ -408,6 +408,8 @@ WF.lt_ofList             項の順序は成分列の辞書式順序 (§20)
 WF.lt_plus_right         plus は右の引数について真に単調
 WF.cof_plus              前置きの下でも共終
 RegionV.prefixLim        PrefixLim — 側条件なしで真
+RegionV.argVal_ps        引数の値も前置き ⊕ 最後の加数に分かれる
+RegionV.argLim           ArgLim は再帰。残るのは 3 つの土台だけ
 WF.cnv_plus / cnv_omegaNF  CNV が ⊕ と ω^· で閉じる (`Evidence/CNVOps.lean`)
 BMS.cmpM_trans ほか      BMS の順序が線形順序 (`Evidence/CmpM.lean`)
 ```
@@ -497,7 +499,40 @@ lt s t  =  ltL (toList s) (toList t)
 
 これで `hlim_supply` に残る仮定は `ArgLim` 1 つだけである。
 
-### 残る 1 つ (`Hlim` の中)
+### `ArgLim` は再帰だった。残るのは 3 つの土台 (2026-08-16)
+
+**先に測った** (Cert.lean §22 の作法)。閉包の標準形の引数 80 個について、
+`omegaNF (argVal a)` は **1 つの形ではない**。
+
+```
+74   φ̄(0, argVal a)     ふつうの場合
+ 2   argVal a そのもの   もともと ω^· の不動点
+ 4   数え直し            argVal a = γ ⊕ m (γ が不動点) なので φ̄(0, γ ⊕ (m-1)) に落ちる
+```
+
+これが、`ArgLim` の目標を 1 本の `phi` で書けない理由であり、`fsP` の 3 場合を
+別々に扱わないといけない理由である。内訳は `Ω` / `ψ₀(0)` / `ψ₀(c)` で 2 / 9 / 69。
+
+**ただし 3 番目は独立ではない。** `fsP (b ⊕ ψ₀(c)) n = ψ₀(b ⊕ fsP c n)` で、
+
+```
+argVal (b ⊕ ψ₀(c))    = argVal b ⊕ ω^(argVal c)
+argVal (b ⊕ fsP c n)  = argVal b ⊕ sumVal (fsP c n)
+```
+
+なので、引数側の 4 連言は**内側の `ArgLim` に前置きを足したもの**である。つまり
+`PrefixLim` がそのまま効く。`argLim` はその再帰で、証明済み。
+
+### 残る 3 つ (`ArgLim` の土台)
+
+```
+ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd
+ArgLimOm     最後の加数が Ω。列は Ω の塔               組み合わせ子 (B) fsGen
+ArgLimLift   ω^· で持ち上げる段だけ                    組み合わせ子 (C) phi_arg
+```
+
+どれも `Evidence/WF.lean` に狙いを付けた組み合わせ子が 1 つずつある。障害は
+`omegaNF` の数え直し (上の 4 件) で、目標の項が `phi c d` の形に素直に落ちないこと。
 
 ### 残る行のどれが重いか (2026-08-16 の測定、`lean/Evidence/RegionNext.lean`)
 
@@ -537,19 +572,21 @@ nd v r a  =  r ⊕ psi_v(a)
 ### 残る作業の重さの順
 
 作業の全体の 🚨 のうち、**葉だけが実際の作業**である (内側の節は集計にすぎない)。
-いまの領域が 3970 行 (`Region` 1194 + `RegionV` 1255 + `CmpM` 382 + `CNVOps` 1139) で、
-残る穴は `Hlim` の中の `ArgLim` 1 つ、というのが目盛りである。
+いまの領域が 4139 行 (`Region` 1194 + `RegionV` 1424 + `CmpM` 382 + `CNVOps` 1139) で、
+残る穴は `ArgLim` の土台 3 つ、というのが目盛りである。
 
 ```
 重い  326 行目          一般化した領域が丸ごと要る。いまの領域はその試作
-      ArgLim            WF の組み合わせ子 3 つ + 側条件。fsP の 3 場合に対応
+      ArgLimLift        69/80。組み合わせ子 (C) + 側条件 hside
+      ArgLimRep         9/80。組み合わせ子 (A) + 上界 hb。omegaNF の数え直しが要る
+      ArgLimOm          2/80。組み合わせ子 (B)。塔の側条件 3 つ
       登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
 軽い  行ごとの否定対照   独立の作業ではない。登録に含まれる
 ```
 
 ### したがって 326 行目は依然として未決
 
-✅ が付かない限り、326 行目は決まらない。`ArgLim` が埋まると
+✅ が付かない限り、326 行目は決まらない。`ArgLim` の土台 3 つが埋まると
 ε₁ 行と ε_ω 行に ✅ が付き、そこで初めて 326 行目の議論に必要な道具
 (展開の値の列が当方の値に共終であること) が族 4 でも使える形になる。
 
@@ -609,16 +646,20 @@ nd v r a  =  r ⊕ psi_v(a)
         - ✅ `sumVal (app r s) = sumVal r ⊕ sumVal s`。これで展開の値が
           「触っていない前置き ⊕ 列の第 n 項」と書ける
         - ✅ `Hlim` を 2 つに割る (`hlim_supply`)
-        - 🚨 `ArgLim` — 主要項 `ω^(argVal a)` 1 つとその列の 4 連言。
-          `fsP` の 3 場合に対応し、`WF.lean` の `lim_clauses_repAdd`・
-          `lim_clauses_phi_arg`・`lim_clauses_fsGen` がその 3 つに向けてある
+        - ✅ `ArgLim` は再帰である (`argLim`)。場合 3 の引数側は内側の
+          `ArgLim` に前置きを足したものなので、`PrefixLim` がそのまま効く
+        - ✅ 測定: `omegaNF (argVal a)` は 3 つの形を持つ (74 / 2 / 4)。
+          目標を 1 本の `phi` で書けない理由がこれ
+        - 🚨 `ArgLimLift` — `ω^·` で持ち上げる段 (69/80)。組み合わせ子 (C)
+        - 🚨 `ArgLimRep` — 最後の加数が `ψ₀(0)` (9/80)。組み合わせ子 (A)
+        - 🚨 `ArgLimOm` — 最後の加数が `Ω` (2/80)。組み合わせ子 (B)
         - ✅ 項の順序を成分列の辞書式順序として読む層 (`CNVOps` §20)。
           `plus` は成分列の操作なので、これが無いと `plus` の話ができない
         - ✅ `plus` の 2 つの単調性 (§21) と前置きの下での共終性 (§23)
         - ✅ `PrefixLim` — 左に前置きを足しても 4 連言が保たれる。
           **側条件は要らなかった**
         - 🚨 ε₁ 行と ε_ω 行を `certRows` へ登録し、表を再生成する。
-          **`ArgLim` が埋まるまでは付けない**。機械的ではない: `certRows_no_overshoot`
+          **`ArgLim` の土台 3 つが埋まるまでは付けない**。機械的ではない: `certRows_no_overshoot`
           はこの領域用の `no_overshoot` の実例を要る (Row A の場合が約 50 行で
           `no_overshoot_fam` を引いている)
     - 🚨 行ごとの否定対照 — **独立の作業ではない**。ε₀ 行は済

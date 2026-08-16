@@ -8702,9 +8702,14 @@ with NO side condition), on top of a new layer — §20 reads the term order off
 list, which is what lets `plus`, a list operation, be reasoned about at all.
 
 What is left is `ArgLim`: the four clauses for ONE principal term `ω^(argVal a)` and its
-sequence `fsP a n`.  Three cases, one per case of `fsP`, and `Evidence/WF.lean`'s
-`lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen` are aimed at exactly
-those three. -/
+sequence `fsP a n` — and §15 shows that is itself a RECURSION, the `ψ₀(c)` case reducing to
+the inner `ArgLim` plus the same prefix combinator.  So THREE BASE FACTS remain, one per
+case of `fsP`, and `Evidence/WF.lean` has one combinator aimed at each: `lim_clauses_repAdd`
+for `ψ₀(0)`, `lim_clauses_fsGen` for `Ω`, `lim_clauses_phi_arg` for the `ω^·` step.
+
+§15's measurement is the reason they cannot be merged: over the 80 normal-form arguments the
+closure corpus yields, `omegaNF (argVal a)` has THREE shapes — 74 ordinary `φ̄(0, argVal a)`,
+2 already fixed points of `ω^·`, and 4 that `omegaNF` re-counts down. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>

@@ -80,12 +80,13 @@ left preserves them.  The associativity of `plus` that reduction needed is now p
 `PrefixLim` — `LimClauses V g → LimClauses (P ⊕ V) (fun n => P ⊕ g n)` — is now PROVED
 (`Evidence/CNVOps.lean` §23), with no side condition.
 
-SO THE ✅ IS ONE NAMED THING AWAY:
+§15 then shows `ArgLim` is itself a RECURSION: the third case of `fsP` reduces to the inner
+`ArgLim` plus that same prefix combinator.  So the ✅ is THREE BASE FACTS away, one per case
+of `fsP`, and `Evidence/WF.lean` has one combinator aimed at each:
 
-    ArgLim      `LimClauses (ω^(argVal a)) (fun n => sumVal (fsP a n))` — three cases,
-                one per case of `fsP`, and `Evidence/WF.lean`'s combinators
-                `lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen` are
-                aimed at exactly those three
+    ArgLimRep   last summand `ψ₀(0)`   — sequence `ψ₀(b)·(n+1)`, combinator (A)
+    ArgLimOm    last summand `Ω`       — sequence the Ω-tower, combinator (B)
+    ArgLimLift  the `ω^·` step only    — combinator (C)
 -/
 
 namespace Evidence.Region
@@ -1251,5 +1252,173 @@ theorem hlim_supply (HA : ArgLim) :
   show (BMS.expand? (mat (A.ps r a) 0) n).getD [] = mat (fs (A.ps r a) n) 0
   rw [expand_mat (.ps r a) htop (by intro hc; exact A.noConfusion hc) n]
   rfl
+
+/-! ## §15 `ArgLim` IS A RECURSION, AND ITS THREE BASE CASES
+
+MEASURED FIRST (Cert.lean §22's discipline).  Over the 80 normal-form ARGUMENTS the closure
+corpus yields, `omegaNF (argVal a)` has THREE shapes, not one:
+
+    74   `φ̄(0, argVal a)`      the ordinary case
+     2   `argVal a` itself     `argVal a` is already a fixed point of `ω^·`
+     4   re-counted            `argVal a = γ ⊕ m` with `γ` a fixed point, so
+                               `omegaNF` steps down to `φ̄(0, γ ⊕ (m-1))`
+
+— which is why the target of `ArgLim` cannot be written as one `phi` and why the three
+cases of `fsP` have to be taken separately.  The split is 2 / 9 / 69 over `Ω` / `ψ₀(0)` /
+`ψ₀(c)` with `c ≠ 0`.
+
+WHAT IS NOT SEPARATE IS THE THIRD CASE.  `fsP (b ⊕ ψ₀(c)) n = ψ₀(b ⊕ fsP c n)`, and
+
+    argVal (b ⊕ ψ₀(c))   = argVal b ⊕ ω^(argVal c)
+    argVal (b ⊕ fsP c n) = argVal b ⊕ sumVal (fsP c n)
+
+so the ARGUMENT's four clauses are the inner `ArgLim`'s four clauses with a fixed prefix on
+the left — `Evidence/CNVOps.lean` §23.  `argLim` below is that recursion; what is left is
+three BASE facts, one per case of `fsP`, and `Evidence/WF.lean` has one combinator aimed at
+each: `lim_clauses_repAdd` (A) for `ψ₀(0)`, `lim_clauses_fsGen` (B) for `Ω`,
+`lim_clauses_phi_arg` (C) for the lift. -/
+
+theorem omN_app : ∀ (s r : A), omN (app r s) = omN r + omN s := by
+  intro s
+  induction s with
+  | nil => intro r; show omN r = omN r + 0; omega
+  | om s' ih => intro r; show omN (app r s') + 1 = omN r + (omN s' + 1); rw [ih r]; omega
+  | ps s' a ih _ => intro r; show omN (app r s') = omN r + omN s'; exact ih r
+
+theorem omN_rep (b : A) : ∀ (n : Nat), omN (rep b n) = 0
+  | 0 => rfl
+  | k + 1 => by show omN (rep b k) = 0; exact omN_rep b k
+
+theorem omN_fsP : ∀ (c : A) (n : Nat), c ≠ .nil → omN (fsP c n) = 0 := by
+  intro c n h
+  cases c with
+  | nil => exact absurd rfl h
+  | om b => show omN (iterOm b n) = 0; rw [iterOm_eq]; rfl
+  | ps b d => cases d with
+    | nil => exact omN_rep b n
+    | om _ => rfl
+    | ps _ _ => rfl
+
+/-- **引数の値は前置きと最後の加数に分かれる。** `Ω` の段の読み替えも前置きに入る。 -/
+theorem argVal_ps (b c : A) : argVal (.ps b c) = plus (argVal b) (omegaNF (argVal c)) := by
+  show (if omN b = 0 then sumVal (A.ps b c)
+        else plus (epsT (omN b - 1)) (sumVal (A.ps b c)))
+      = plus (argVal b) (omegaNF (argVal c))
+  by_cases h : omN b = 0
+  · rw [if_pos h]
+    show plus (sumVal b) (omegaNF (argVal c)) = plus (argVal b) (omegaNF (argVal c))
+    show plus (sumVal b) (omegaNF (argVal c))
+      = plus (if omN b = 0 then sumVal b else plus (epsT (omN b - 1)) (sumVal b))
+          (omegaNF (argVal c))
+    rw [if_pos h]
+  · rw [if_neg h]
+    show plus (epsT (omN b - 1)) (plus (sumVal b) (omegaNF (argVal c)))
+      = plus (if omN b = 0 then sumVal b else plus (epsT (omN b - 1)) (sumVal b))
+          (omegaNF (argVal c))
+    rw [if_neg h]
+    exact (plus_assoc (cnv_epsT _) (cnv_sumVal b) (cnv_omegaNF (cnv_argVal c))).symm
+
+/-- 同じ分解を `app` の側で。`s` は `Ω` を含まない (`fsP` の像はそう)。 -/
+theorem argVal_app {s : A} (hs : omN s = 0) (b : A) :
+    argVal (app b s) = plus (argVal b) (sumVal s) := by
+  show (if omN (app b s) = 0 then sumVal (app b s)
+        else plus (epsT (omN (app b s) - 1)) (sumVal (app b s)))
+      = plus (argVal b) (sumVal s)
+  rw [omN_app s b, hs, Nat.add_zero, sumVal_app]
+  by_cases h : omN b = 0
+  · rw [if_pos h]
+    show plus (sumVal b) (sumVal s)
+      = plus (if omN b = 0 then sumVal b else plus (epsT (omN b - 1)) (sumVal b)) (sumVal s)
+    rw [if_pos h]
+  · rw [if_neg h]
+    show plus (epsT (omN b - 1)) (plus (sumVal b) (sumVal s))
+      = plus (if omN b = 0 then sumVal b else plus (epsT (omN b - 1)) (sumVal b)) (sumVal s)
+    rw [if_neg h]
+    exact (plus_assoc (cnv_epsT _) (cnv_sumVal b) (cnv_sumVal s)).symm
+
+/-! ### §15.1 The three cases, as named holes -/
+
+/-- 場合 2 — 最後の加数が `ψ₀(0)`。列は `ψ₀(b)` の反復。 -/
+def ArgLimRep : Prop := ∀ (b : A), nf (.ps b .nil) = true → fpOK (.ps b .nil) = true →
+    LimClauses (omegaNF (argVal (.ps b .nil))) (fun n => sumVal (fsP (.ps b .nil) n))
+
+/-- 場合 1 — 最後の加数が `Ω`。列は `Ω` の塔。 -/
+def ArgLimOm : Prop := ∀ (b : A), nf (.om b) = true → fpOK (.om b) = true →
+    LimClauses (omegaNF (argVal (.om b))) (fun n => sumVal (fsP (.om b) n))
+
+/-- 場合 3 — 引数の列を `ω^·` で持ち上げる段だけ。 -/
+def ArgLimLift : Prop := ∀ (b c : A), c ≠ .nil → nf (.ps b c) = true → fpOK (.ps b c) = true →
+    LimClauses (argVal (.ps b c)) (fun n => argVal (app b (fsP c n))) →
+    LimClauses (omegaNF (argVal (.ps b c))) (fun n => sumVal (fsP (.ps b c) n))
+
+/-- **`ArgLim` は再帰である。** 場合 3 の引数側の 4 連言は、内側の `ArgLim` に
+    `Evidence/CNVOps.lean` §23 の前置き組み合わせ子を当てて出る。 -/
+theorem argLim (H1 : ArgLimRep) (H2 : ArgLimOm) (H3 : ArgLimLift) : ArgLim := by
+  intro a
+  induction a with
+  | nil => intro h; exact absurd rfl h
+  | om b _ => intro _ hnf hfp; exact H2 b hnf hfp
+  | ps b c _ ihc =>
+    intro _ hnf hfp
+    cases c with
+    | nil => exact H1 b hnf hfp
+    | om c' =>
+      obtain ⟨_, hnc, _, hfpc⟩ := nf_ps_iff.mp hnf
+      refine H3 b (.om c') (by intro h; exact A.noConfusion h) hnf hfp ?_
+      have hIH := ihc (by intro h; exact A.noConfusion h) hnc hfpc
+      have hpre := lim_clauses_prefix (P := argVal b) (V := omegaNF (argVal (.om c')))
+        (cnv_argVal b) (cnv_omegaNF (cnv_argVal (.om c'))) _ hIH
+      rw [← argVal_ps b (.om c')] at hpre
+      have hfun : (fun n => plus (argVal b) (sumVal (fsP (A.om c') n)))
+          = (fun n => argVal (app b (fsP (A.om c') n))) :=
+        funext fun n => (argVal_app (omN_fsP (.om c') n (by intro h; exact A.noConfusion h)) b).symm
+      rw [hfun] at hpre
+      exact hpre
+    | ps c1 c2 =>
+      obtain ⟨_, hnc, _, hfpc⟩ := nf_ps_iff.mp hnf
+      refine H3 b (.ps c1 c2) (by intro h; exact A.noConfusion h) hnf hfp ?_
+      have hIH := ihc (by intro h; exact A.noConfusion h) hnc hfpc
+      have hpre := lim_clauses_prefix (P := argVal b) (V := omegaNF (argVal (.ps c1 c2)))
+        (cnv_argVal b) (cnv_omegaNF (cnv_argVal (.ps c1 c2))) _ hIH
+      rw [← argVal_ps b (.ps c1 c2)] at hpre
+      have hfun : (fun n => plus (argVal b) (sumVal (fsP (A.ps c1 c2) n)))
+          = (fun n => argVal (app b (fsP (A.ps c1 c2) n))) :=
+        funext fun n =>
+          (argVal_app (omN_fsP (.ps c1 c2) n (by intro h; exact A.noConfusion h)) b).symm
+      rw [hfun] at hpre
+      exact hpre
+
+/-! ### §15.2 THE MEASUREMENT
+
+The population is every normal-form argument the closure corpus contains. -/
+
+def argCorpus : List A :=
+  (closureCorpus.filterMap fun t =>
+    match t with
+    | .ps _ a => if a == .nil then none else some a
+    | _ => none).eraseDups.filter (fun a => nf a && fpOK a)
+
+#guard argCorpus.length == 80
+-- `omegaNF (argVal a)` は 1 つの形ではない。
+#guard (argCorpus.filter fun a => omegaNF (argVal a) == phi zero (argVal a)).length == 74
+#guard (argCorpus.filter fun a => omegaNF (argVal a) == argVal a).length == 2
+#guard (argCorpus.filter fun a => omegaNF (argVal a) != phi zero (argVal a)
+  && omegaNF (argVal a) != argVal a).length == 4
+-- 3 場合の内訳。
+#guard (argCorpus.filter fun a => match a with | .om _ => true | _ => false).length == 2
+#guard (argCorpus.filter fun a => match a with | .ps _ .nil => true | _ => false).length == 9
+#guard (argCorpus.filter fun a => match a with
+  | .ps _ .nil => false | .ps _ _ => true | _ => false).length == 69
+-- 場合 2 の列は `ψ₀(b)` の反復 — 組み合わせ子 (A) の形。
+#guard argCorpus.all fun a => match a with
+  | .ps b .nil => (List.range 4).all fun n =>
+      sumVal (fsP a n) == Evidence.WF.repAdd (omegaNF (argVal b)) n
+  | _ => true
+-- 場合 3 の列は引数の列を `ω^·` で持ち上げたもの — 組み合わせ子 (C) の形。
+#guard argCorpus.all fun a => match a with
+  | .ps _ .nil => true
+  | .ps b c => (List.range 4).all fun n =>
+      sumVal (fsP a n) == omegaNF (argVal (app b (fsP c n)))
+  | _ => true
 
 end Evidence.Region
