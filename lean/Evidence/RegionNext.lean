@@ -1876,8 +1876,15 @@ that adds one column.  That is exactly the "carry the mark" shape §17 was missi
 out three times.  So the remaining work is to generalise it from a ladder to `B`, not to
 invent a method.
 
-WHAT IS NOT CLAIMED.  `red` being dead is measured here, not proved; `ppair` matching the
-top-level split is measured here, not proved.  Both are next.  Nothing in §13's
+**BOTH STRUCTURAL BRANCHES ARE NOW THEOREMS.**  §18.1 proves `fpar0 = BMS.parent`, and §18.3
+proves `ppair (matB t 0) = (topSplit t).map (matB · 0)` — `ppairAux` cuts on `fAnc`'s last
+element, `fAnc` is the row-0 parent chain (`fAnc_eq`), that chain is the left-minima (§8),
+and on `matB` the left-minimum a summand's interior reaches is the summand's own root,
+because the root sits at depth 0 and everything after it inside the summand is deeper.
+
+WHAT IS NOT CLAIMED.  `red` being dead is measured here, not proved — that is next, and
+`Rows/Ladder.lean` already carries the matrix-independent branch lemmas for it (`red_jj`,
+`red_fold_open`, `red_fold_single`, `red_shift`, `red_head_one`).  Nothing in §13's
 `expand_matB` depends on any of it. -/
 
 section
@@ -2048,6 +2055,127 @@ theorem lmin_of_fpar0 (M : Matrix) (j q : Nat) (hj : j < M.length)
   rw [iterParent_cons hp]
   exact List.mem_cons_self
 
+theorem ent_zero_of_ge_len (M : Matrix) (j : Nat) (h : M.length ≤ j) : ent M j 0 = 0 := by
+  show ((M.getD j []).getD 0 0) = 0
+  rw [show M.getD j [] = [] from by
+    simp [List.getD_eq_getElem?_getD, List.getElem?_eq_none h]]
+  rfl
+
+theorem parent0_none_of_zero (M : Matrix) (s : Nat) (h : ent M s 0 = 0) :
+    parent M 0 s = none := by
+  refine List.max?_eq_none_iff.mpr ?_
+  refine List.filter_eq_nil_iff.mpr ?_
+  intro p _
+  rw [h]
+  simp
+
+theorem getLast?_cons_of_ne_nil {α : Type _} (a : α) : ∀ (l : List α), l ≠ [] →
+    (a :: l).getLast? = l.getLast?
+  | [], h => absurd rfl h
+  | _ :: _, _ => List.getLast?_cons_cons
+
+/-- **親鎖の終点は最初の深さ 0 の列。** -/
+theorem iterParent0_last (M : Matrix) (s : Nat) (hs : ent M s 0 = 0) :
+    ∀ (fuel x : Nat), x ≤ fuel → s < x → LMin M s x →
+      (iterParent (parent M 0) fuel x).getLast? = some s := by
+  intro fuel
+  induction fuel with
+  | zero => intro x hx hsx _; omega
+  | succ g ih =>
+    intro x hx hsx hlm
+    have hsx0 : ent M s 0 < ent M x 0 := hlm.2 x hsx (Nat.le_refl x)
+    have hmem : s ∈ (List.range x).filter (fun p => decide (ent M p 0 < ent M x 0)) :=
+      List.mem_filter.mpr ⟨List.mem_range.mpr hsx, decide_eq_true hsx0⟩
+    cases hr : parent M 0 x with
+    | none =>
+      exfalso
+      have := List.max?_eq_none_iff.mp hr
+      rw [this] at hmem
+      exact absurd hmem (by simp)
+    | some r =>
+      obtain ⟨hrm, hrmax⟩ := List.max?_eq_some_iff.mp hr
+      have hrx : r < x := List.mem_range.mp (List.mem_filter.mp hrm).1
+      have hsr : s ≤ r := hrmax s hmem
+      rw [iterParent_cons hr]
+      rcases Nat.eq_or_lt_of_le hsr with rfl | hlt
+      · rw [iterParent_nil (parent0_none_of_zero M s hs)]
+        rfl
+      · have hrest : (iterParent (parent M 0) g r).getLast? = some s :=
+          ih r (by omega) hlt ⟨hlt, fun p h1 h2 => hlm.2 p h1 (by omega)⟩
+        rw [getLast?_cons_of_ne_nil r _ (by
+          intro hnil
+          rw [hnil] at hrest
+          exact absurd hrest (by simp))]
+        exact hrest
+
+/-- **`fAnc` は行 0 の親鎖そのもの。** -/
+theorem fAncAux_eq (M : Matrix) : ∀ (f x : Nat), x ≤ f → x < M.length →
+    ∀ (acc : List Int),
+      fAncAux f (psM M) 0 (x : Int) 0 acc
+        = acc ++ (iterParent (parent M 0) f x).map (fun (q : Nat) => (q : Int)) := by
+  intro f
+  induction f with
+  | zero =>
+    intro x _ _ acc
+    show acc = _
+    rw [show iterParent (parent M 0) 0 x = [] from rfl, List.map_nil, List.append_nil]
+  | succ g ih =>
+    intro x hx hlen acc
+    have hfp : fpar (psM M) 0 (x : Int) 0
+        = (match parent M 0 x with | none => (-1 : Int) | some p => (p : Int)) := by
+      rw [fpar_zero, fpar0_eq_parent M x hlen]
+    show (let j1 := fpar (psM M) 0 (x : Int) 0
+          if j1 ≥ 0 then fAncAux g (psM M) 0 j1 0 (acc ++ [j1]) else acc) = _
+    rw [hfp]
+    cases hr : parent M 0 x with
+    | none =>
+      rw [iterParent_nil hr]
+      show (if ((-1 : Int) ≥ 0) then _ else acc) = _
+      rw [if_neg (by omega), List.map_nil, List.append_nil]
+    | some r =>
+      have hrx : r < x := by
+        obtain ⟨hrm, _⟩ := List.max?_eq_some_iff.mp hr
+        exact List.mem_range.mp (List.mem_filter.mp hrm).1
+      rw [iterParent_cons hr]
+      show (if (((r : Nat) : Int) ≥ 0) then
+              fAncAux g (psM M) 0 ((r : Nat) : Int) 0 (acc ++ [((r : Nat) : Int)]) else acc) = _
+      rw [if_pos (by omega), ih r (by omega) (by omega) (acc ++ [((r : Nat) : Int)]),
+        List.map_cons, List.append_assoc]
+      rfl
+
+theorem fAnc_eq (M : Matrix) (x : Nat) (hlen : x < M.length) :
+    fAnc (psM M) 0 (x : Int) 0
+      = ((x : Nat) : Int)
+        :: (iterParent (parent M 0) ((psM M).length + 1) x).map (fun (q : Nat) => (q : Int)) := by
+  show (if (x : Int) < 0 ∨ (x : Int) ≥ lenI (psM M) then ([] : List Int)
+        else fAncAux ((psM M).length + 1) (psM M) 0 (x : Int) 0 [(x : Int)]) = _
+  rw [if_neg (by
+    show ¬((x : Int) < 0 ∨ (x : Int) ≥ (((psM M).length : Nat) : Int))
+    rw [psM_len]; omega),
+    fAncAux_eq M ((psM M).length + 1) x (by rw [psM_len]; omega) hlen [(x : Int)]]
+  rfl
+
+/-- **ブロックの根に達する。** 深さ 0 の列 `s` が `x` の左極小なら `fAnc` の終点は `s`。 -/
+theorem fAnc_last (M : Matrix) (s x : Nat) (hs : ent M s 0 = 0) (hlen : x < M.length)
+    (hsx : s < x) (hlm : LMin M s x) :
+    ((fAnc (psM M) 0 (x : Int) 0).getLast?).getD 0 = ((s : Nat) : Int) := by
+  rw [fAnc_eq M x hlen]
+  have hch : (iterParent (parent M 0) ((psM M).length + 1) x).getLast? = some s :=
+    iterParent0_last M s hs ((psM M).length + 1) x (by rw [psM_len]; omega) hsx hlm
+  have hne : (iterParent (parent M 0) ((psM M).length + 1) x) ≠ [] := by
+    intro hnil; rw [hnil] at hch; exact absurd hch (by simp)
+  rw [getLast?_cons_of_ne_nil _ _ (by
+    intro hnil
+    exact hne (List.map_eq_nil_iff.mp hnil)),
+    List.getLast?_map, hch]
+  rfl
+
+/-- 自分が深さ 0 なら `fAnc` の終点は自分。 -/
+theorem fAnc_last_self (M : Matrix) (x : Nat) (hs : ent M x 0 = 0) (hlen : x < M.length) :
+    ((fAnc (psM M) 0 (x : Int) 0).getLast?).getD 0 = ((x : Nat) : Int) := by
+  rw [fAnc_eq M x hlen, iterParent_nil (parent0_none_of_zero M x hs)]
+  rfl
+
 /-! ### §18.2 THE SCOPING MEASUREMENT
 
 `Trans.oR` is candidate tier and appears in no justification; these are measurements. -/
@@ -2073,8 +2201,185 @@ def tyOf (M : PS) : Int :=
 -- 型ごとの数 (-3 から 6 まで)。
 #guard (List.range 10).map (fun k => (visitedPS.filter fun M => tyOf M == (Int.ofNat k) - 3).length)
   == [0, 59, 1, 2, 222, 14, 121, 9, 96, 190]
--- `ppair` は最上位の加数そのもの。
-#guard topPop.all fun t => ppair (psM (matB t 0)) == (topSplit t).map (fun s => psM (matB s 0))
+
+/-! ### §18.3 `ppair` IS THE TOP-LEVEL SPLIT
+
+The second structural branch, now a theorem too.  `ppairAux` walks leftward from the last
+column: it takes `fAnc`'s last element as the block root, cuts the slice from there, and
+restarts one column further left.  §18.1 makes `fAnc` the row-0 parent chain (`fAnc_eq`),
+§8 makes that chain the left-minima, and on `matB` the blocks are exactly the top-level
+summands — each starts at depth 0 and everything after it inside the summand is deeper
+(`matB_col_lb`).  So the chain from anywhere inside a summand ends at that summand's own
+root, which is what `ppairAux` cuts on. -/
+
+theorem matB_topSplit : ∀ (t : B) (d : Nat),
+    matB t d = ((topSplit t).map (fun s => matB s d)).flatten := by
+  intro t
+  induction t with
+  | nil => intro d; rfl
+  | nd v r a ihr _ =>
+    intro d
+    show matB r d ++ ([d, v] :: matB a (d + 1))
+      = ((topSplit r ++ [B.nd v .nil a]).map (fun s => matB s d)).flatten
+    rw [List.map_append, List.flatten_append, ← ihr d]
+    simp
+    rfl
+
+/-- ブロック: 先頭が深さ 0、以降はすべて深い。 -/
+def IsBlk (Bk : Matrix) : Prop :=
+  0 < Bk.length ∧ ent Bk 0 0 = 0 ∧ ∀ p, 0 < p → p < Bk.length → 0 < ent Bk p 0
+
+theorem isBlk_node (v : Nat) (a : B) : IsBlk (matB (.nd v .nil a) 0) := by
+  refine ⟨matB_len_pos (.nd v .nil a) 0 (by intro h; exact B.noConfusion h), rfl, ?_⟩
+  intro p hp hlen
+  obtain ⟨i, rfl⟩ : ∃ i, p = i + 1 := ⟨p - 1, by omega⟩
+  have hi : i < (matB a 1).length := by
+    have h2 : (([0, v] : Col) :: matB a 1).length = (matB a 1).length + 1 := by simp
+    show i < (matB a 1).length
+    have h3 : (matB (B.nd v .nil a) 0).length = (matB a 1).length + 1 := h2
+    omega
+  have hlb := matB_col_lb a 1 _ (getD_mem (matB a 1) [] i hi)
+  show 0 < ent (matB a 1) i 0
+  exact Nat.lt_of_lt_of_le (by omega) hlb
+
+theorem isBlk_of_mem_topSplit : ∀ (t s : B), s ∈ topSplit t → IsBlk (matB s 0) := by
+  intro t
+  induction t with
+  | nil => intro s h; exact absurd (show s ∈ ([] : List B) from h) (by simp)
+  | nd v r a ihr _ =>
+    intro s h
+    rcases List.mem_append.mp h with h | h
+    · exact ihr s h
+    · rcases List.mem_cons.mp h with rfl | h
+      · exact isBlk_node v a
+      · exact absurd (show s ∈ ([] : List B) from h) (by simp)
+
+theorem psM_append (X Y : Matrix) : psM (X ++ Y) = psM X ++ psM Y := List.map_append ..
+
+theorem slice_block (X Bk P : Matrix) :
+    slice (psM (X ++ (Bk ++ P))) ((X.length : Nat) : Int)
+        ((X.length + Bk.length : Nat) : Int) = psM Bk := by
+  show ((psM (X ++ (Bk ++ P))).drop ((X.length : Nat) : Int).toNat).take
+    (((X.length + Bk.length : Nat) : Int) - ((X.length : Nat) : Int)).toNat = _
+  rw [show (((X.length + Bk.length : Nat) : Int) - ((X.length : Nat) : Int)).toNat
+      = Bk.length from by omega,
+    show ((X.length : Nat) : Int).toNat = X.length from rfl,
+    psM_append X (Bk ++ P), ← psM_len X,
+    show ((psM X ++ psM (Bk ++ P)).drop (psM X).length) = psM (Bk ++ P) from by simp,
+    psM_append Bk P, ← psM_len Bk,
+    show ((psM Bk ++ psM P).take (psM Bk).length) = psM Bk from by simp]
+
+theorem len_le_flatten_len : ∀ (Bs : List Matrix), (∀ Bk ∈ Bs, IsBlk Bk) →
+    Bs.length ≤ Bs.flatten.length := by
+  intro Bs
+  induction Bs with
+  | nil => intro _; simp
+  | cons X Xs ihx =>
+    intro hb
+    have hX : 0 < X.length := (hb X (by simp)).1
+    have := ihx (fun Y hY => hb Y (by simp [hY]))
+    rw [List.flatten_cons, List.length_append, List.length_cons]
+    omega
+
+/-- **`ppair` はブロックの並びをそのまま返す。** -/
+theorem ppairAux_blocks : ∀ (f : Nat) (Bs : List Matrix) (P : Matrix) (acc : List PS),
+    (∀ Bk ∈ Bs, IsBlk Bk) → Bs.length ≤ f →
+    ppairAux f (psM (Bs.flatten ++ P)) ((Bs.flatten.length : Int) - 1) acc
+      = Bs.map psM ++ acc := by
+  intro f
+  induction f with
+  | zero =>
+    intro Bs P acc _ hlen
+    have : Bs = [] := List.eq_nil_of_length_eq_zero (by omega)
+    subst this
+    rfl
+  | succ g ih =>
+    intro Bs P acc hb hlen
+    rcases List.eq_nil_or_concat Bs with rfl | ⟨Bs', Bk, hcon⟩
+    · show (if ((([] : List Matrix).flatten.length : Int) - 1) < 0 then acc else _) = _
+      rw [if_pos (by simp)]
+      rfl
+    · rw [show Bs = Bs' ++ [Bk] from by rw [hcon, List.concat_eq_append]] at hb hlen ⊢
+      have hBk : IsBlk Bk := hb Bk (by simp)
+      have hb' : ∀ X ∈ Bs', IsBlk X := fun X hX => hb X (by simp [hX])
+      have hpos : 0 < Bk.length := hBk.1
+      have hflat : (Bs' ++ [Bk]).flatten = Bs'.flatten ++ Bk := by
+        rw [List.flatten_append]; simp
+      have hM : (Bs' ++ [Bk]).flatten ++ P = Bs'.flatten ++ (Bk ++ P) := by
+        rw [hflat, List.append_assoc]
+      have hlenf : ((Bs' ++ [Bk]).flatten.length : Int)
+          = ((Bs'.flatten.length + Bk.length : Nat) : Int) := by
+        rw [hflat, List.length_append]
+      have hMlen : ((Bs' ++ [Bk]).flatten ++ P).length
+          = Bs'.flatten.length + Bk.length + P.length := by
+        rw [hflat, List.length_append, List.length_append]
+      have hentR : ∀ i, Bs'.flatten.length ≤ i →
+          ent ((Bs' ++ [Bk]).flatten ++ P) i 0
+            = ent (Bk ++ P) (i - Bs'.flatten.length) 0 := by
+        intro i hi; rw [hM]; exact ent_append _ _ i 0 hi
+      have hentBk : ∀ i, i < Bk.length → ent (Bk ++ P) i 0 = ent Bk i 0 :=
+        fun i hi => ent_append_left _ _ i 0 hi
+      have hroot : ent ((Bs' ++ [Bk]).flatten ++ P) Bs'.flatten.length 0 = 0 := by
+        rw [hentR Bs'.flatten.length (Nat.le_refl _),
+          show Bs'.flatten.length - Bs'.flatten.length = 0 from by omega,
+          hentBk 0 hpos, hBk.2.1]
+      have hj1 : Bs'.flatten.length + Bk.length - 1
+          < ((Bs' ++ [Bk]).flatten ++ P).length := by rw [hMlen]; omega
+      have hfa : ((fAnc (psM ((Bs' ++ [Bk]).flatten ++ P)) 0
+          ((Bs'.flatten.length + Bk.length - 1 : Nat) : Int) 0).getLast?).getD 0
+            = ((Bs'.flatten.length : Nat) : Int) := by
+        rcases Nat.lt_or_ge Bs'.flatten.length (Bs'.flatten.length + Bk.length - 1)
+          with hlt | hge
+        · refine fAnc_last _ Bs'.flatten.length _ hroot hj1 hlt ⟨hlt, ?_⟩
+          intro p h1 h2
+          rw [hroot, hentR p (by omega), hentBk (p - Bs'.flatten.length) (by omega)]
+          exact hBk.2.2 (p - Bs'.flatten.length) (by omega) (by omega)
+        · have heq : Bs'.flatten.length + Bk.length - 1 = Bs'.flatten.length := by omega
+          rw [heq]
+          exact fAnc_last_self _ Bs'.flatten.length hroot (by rw [heq] at hj1; exact hj1)
+      show (if (((Bs' ++ [Bk]).flatten.length : Int) - 1) < 0 then acc
+            else ppairAux g (psM ((Bs' ++ [Bk]).flatten ++ P))
+              (((fAnc (psM ((Bs' ++ [Bk]).flatten ++ P)) 0
+                  (((Bs' ++ [Bk]).flatten.length : Int) - 1) 0).getLast?).getD 0 - 1)
+              (slice (psM ((Bs' ++ [Bk]).flatten ++ P))
+                (((fAnc (psM ((Bs' ++ [Bk]).flatten ++ P)) 0
+                  (((Bs' ++ [Bk]).flatten.length : Int) - 1) 0).getLast?).getD 0)
+                ((((Bs' ++ [Bk]).flatten.length : Int) - 1) + 1) :: acc)) = _
+      rw [hlenf, if_neg (by omega),
+        show (((Bs'.flatten.length + Bk.length : Nat) : Int) - 1)
+          = ((Bs'.flatten.length + Bk.length - 1 : Nat) : Int) from by omega,
+        hfa,
+        show ((Bs'.flatten.length + Bk.length - 1 : Nat) : Int) + 1
+          = ((Bs'.flatten.length + Bk.length : Nat) : Int) from by omega,
+        hM, slice_block Bs'.flatten Bk P,
+        ih Bs' (Bk ++ P) (psM Bk :: acc) hb' (by
+          rw [List.length_append] at hlen; simp at hlen ⊢; omega)]
+      simp
+
+theorem ppair_blocks (Bs : List Matrix) (hb : ∀ Bk ∈ Bs, IsBlk Bk) :
+    ppair (psM Bs.flatten) = Bs.map psM := by
+  show ppairAux ((psM Bs.flatten).length + 1) (psM Bs.flatten)
+    (lenI (psM Bs.flatten) - 1) [] = _
+  rw [show lenI (psM Bs.flatten) = ((Bs.flatten.length : Nat) : Int) from by
+      show (((psM Bs.flatten).length : Nat) : Int) = _
+      rw [psM_len],
+    show (psM Bs.flatten) = psM (Bs.flatten ++ []) from by rw [List.append_nil],
+    ppairAux_blocks _ Bs [] [] hb (by
+      rw [List.append_nil, psM_len]
+      exact Nat.le_trans (len_le_flatten_len Bs hb) (by omega))]
+  simp
+
+/-- **領域の `ppair` は最上位の加数そのもの。** 型 -2 の枝の `B` 側の記述である。 -/
+theorem ppair_matB (t : B) :
+    ppair (psM (matB t 0)) = (topSplit t).map (fun s => psM (matB s 0)) := by
+  have hb : ∀ Bk ∈ (topSplit t).map (fun s => matB s 0), IsBlk Bk := by
+    intro Bk hBk
+    obtain ⟨s, hs, rfl⟩ := List.mem_map.mp hBk
+    exact isBlk_of_mem_topSplit t s hs
+  have hpb := ppair_blocks ((topSplit t).map (fun s => matB s 0)) hb
+  rw [← matB_topSplit t 0] at hpb
+  rw [hpb, List.map_map]
+  rfl
 
 end
 
