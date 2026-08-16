@@ -5506,4 +5506,76 @@ def enumBad : List B :=
 
 end
 
+/-! ## §37 THE CLASS, AND A CHECK I SHOULD HAVE RUN THREE SECTIONS AGO
+
+§20 stated the identity for `matB` indices, §31 restated it for `NFM` matrices, §36 restated
+it again for `nrmM`.  Each restatement happened for the same reason: the recursion inside
+`red` produced a matrix the previous class did not contain.  The check that would have caught
+all three at once is "are `red`'s own recursive destinations in the class", and this section
+runs it — on matrices generated freely, not from `B`.
+
+The class is one condition, and it is about LEVELS only:
+
+    LvlOKb X : every column's level is at most its row-0 parent's level plus one
+
+MEASURED over all 9999 nonempty matrices of at most four columns with entries below 3:
+
+    8844 satisfy LvlOKb, and red = nrmM at every one of them
+    1155 do not,        and red = nrmM at NONE of them
+
+so the condition is not merely sufficient — it is exactly the hypothesis.  And the three
+destinations of `red`'s recursion stay inside it:
+
+    the blocks of the `ppair` branch                     LvlOKb preserved
+    `downMat` — the `red_shift` branch                   LvlOKb preserved
+    `auxMat`  — the `red_head_pos` branch (942 cases)    LvlOKb preserved, red = nrmM there too
+
+`auxMat` is the one that broke `NFM`, and it is fine here because `LvlOKb` never mentions
+depths.  Note the guard is over the matrices `auxMat` is actually applied to — a single block
+whose root has positive level; prepending a diagonal to something else is not what `red`
+does, and does not preserve the condition. -/
+
+section
+open Trans.Recal
+/-- **木の親に対する段の条件。** 深さの段差については何も言わない。 -/
+def LvlOKb (X : Matrix) : Bool :=
+  (List.range X.length).all fun i =>
+    match parent X 0 i with
+    | none => true
+    | some p => decide (ent X i 1 ≤ ent X p 1 + 1)
+
+/-- 高さ 2 の列を全部 (成分 < K)。 -/
+def allCols (K : Nat) : List Col :=
+  (List.range K).flatMap fun a => (List.range K).map fun b => [a, b]
+
+/-- 長さ `n` 以下の行列を全部。 -/
+def allMats (K : Nat) : Nat → List Matrix
+  | 0 => [[]]
+  | n + 1 => (allMats K n) ++ ((allMats K n).flatMap fun M => (allCols K).map fun c => M ++ [c])
+
+def freePop : List Matrix := (allMats 3 4).filter fun M => !M.isEmpty
+def freePopL : List Matrix := freePop.filter LvlOKb
+
+/-- ブロック 1 つか (Bool 版)。 -/
+def blkBool (X : Matrix) : Bool :=
+  0 < X.length && (List.range X.length).all fun p => p == 0 || ent X 0 0 < ent X p 0
+
+/-- 深さを根の分だけ下げたもの (`red_shift` の行き先)。 -/
+def downMat (X : Matrix) : Matrix := X.map fun c => [c.getD 0 0 - ent X 0 0, c.getD 1 0]
+
+#guard freePop.length == 9999
+#guard freePopL.length == 8844
+-- **両向きの一致。** `red = nrmM` はちょうど `LvlOKb` のところで成り立つ。
+#guard freePopL.all fun M => redP (psM M) == nrmM M
+#guard (freePop.filter fun M => !(LvlOKb M) && redP (psM M) == nrmM M).length == 0
+-- **`red` の再帰の行き先はすべてこの類の中。**
+#guard freePopL.all fun M => (blocks M).all LvlOKb
+#guard freePopL.all fun M => LvlOKb (downMat M)
+#guard (freePopL.filter fun M => blkBool M && 1 ≤ ent M 0 1).length == 942
+#guard (freePopL.filter fun M => blkBool M && 1 ≤ ent M 0 1).all fun M => LvlOKb (auxMat M)
+#guard (freePopL.filter fun M => blkBool M && 1 ≤ ent M 0 1).all fun M =>
+  redP (psM (auxMat M)) == nrmM (auxMat M)
+
+end
+
 end Evidence.Region
