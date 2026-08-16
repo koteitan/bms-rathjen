@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.7.45
+バージョン: v0.7.46
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -28,9 +28,9 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)`](../lean/Rows/TM.lean#L128) | $`\bar{\varphi}(1,0)`$ | $`\varepsilon_0`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L343)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) | 2 行の最初の極限 |
 | [`(0,0)(1,1)(0,0)`](../lean/Rows/TM.lean#L131) | $`\bar{\varphi}(1,0)+1`$ | $`\varepsilon_0+1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L152)+[o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(1,0)`](../lean/Rows/TM.lean#L133) | $`\bar{\varphi}(0,\bar{\varphi}(1,0))`$ | $`\omega^{\varepsilon_0+1}`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L189)+[o](../lean/Trans/TM.lean)+[bisim6](../lean/Evidence/Bisim.lean) |  |
-| [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L136) | $`\bar{\varphi}(1,1)`$ | $`\varepsilon_1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L345)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)`](../lean/Rows/TM.lean#L138) | $`\bar{\varphi}(1,\omega)`$ | $`\varepsilon_\omega`$ |  | [fₙ](../lean/Rows/Proofs.lean#L346)+[o](../lean/Trans/TM.lean) |  |
-| [`(0,0)(1,1)(2,0)(0,0)`](../lean/Rows/TM.lean#L141) | $`\bar{\varphi}(1,\omega)+1`$ | $`\varepsilon_\omega+1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L269)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L136) | $`\bar{\varphi}(1,1)`$ | $`\varepsilon_1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L345)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)`](../lean/Rows/TM.lean#L138) | $`\bar{\varphi}(1,\omega)`$ | $`\varepsilon_\omega`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L346)+[o](../lean/Trans/TM.lean) |  |
+| [`(0,0)(1,1)(2,0)(0,0)`](../lean/Rows/TM.lean#L141) | $`\bar{\varphi}(1,\omega)+1`$ | $`\varepsilon_\omega+1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L269)+[o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,0)(1,1)(1,0)(2,1)(3,0)(1,0)(2,1)`](../lean/Rows/TM.lean#L144) | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ |  | [fₙ](../lean/Rows/Selected.lean#L312) | 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1) |
 | [`(0,0)(1,1)(2,0)(2,0)`](../lean/Rows/TM.lean#L150) | $`\bar{\varphi}(1,\bar{\varphi}(0,2))`$ | $`\varepsilon_{\omega^2}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L299)+[o](../lean/Trans/TM.lean) |  |
 | [`(0,0)(1,1)(2,0)(3,0)`](../lean/Rows/TM.lean#L152) | $`\bar{\varphi}(1,\bar{\varphi}(0,\omega))`$ | $`\varepsilon_{\omega^\omega}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L284)+[o](../lean/Trans/TM.lean) |  |

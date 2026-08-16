@@ -3,6 +3,7 @@ import TM.FS
 import Trans.Recal
 import Evidence.StageA
 import Evidence.WF
+import Evidence.RegionV
 /-
 Evidence/Cert.lean — semantic certificates (the v0.1.42 doctrine)
 
@@ -8701,13 +8702,17 @@ proved (§23's `lim_clauses_prefix`: a fixed prefix on the left preserves all fo
 with NO side condition), on top of a new layer — §20 reads the term order off the component
 list, which is what lets `plus`, a list operation, be reasoned about at all.
 
-What is left is `ArgLim`: the four clauses for ONE principal term `ω^(argVal a)` and its
+What was left is `ArgLim`: the four clauses for ONE principal term `ω^(argVal a)` and its
 sequence `fsP a n` — and §15 shows that is itself a RECURSION, the `ψ₀(c)` case reducing to
-the inner `ArgLim` plus the same prefix combinator.  So THREE BASE FACTS remain:
+the inner `ArgLim` plus the same prefix combinator.  THREE BASE FACTS remained, and all
+three closed on 2026-08-16, so `Hlim` carries no hypotheses either (`RegionV` §15.10):
 
     ArgLimRep   last summand `ψ₀(0)`   9/80   `Evidence/WF.lean`'s combinator (A)
     ArgLimOm    last summand `Ω`       2/80   combinator (B)
     OmegaLim    `ω^·` preserves the four clauses   69/80, and it IS the lift case
+
+§24 of this file then instantiates `certIn_region` on them, and the two rows this region
+was named for — plus the ε_ω+1 row, which comes free — are registered.
 
 §15's measurement is why they cannot be merged: over the 80 normal-form arguments the
 closure corpus yields, `omegaNF (argVal a)` has THREE shapes — ordinary `φ̄(0, argVal a)`,
@@ -8723,209 +8728,6 @@ case is `OmegaLim` with no shape hypothesis at all. -/
   (fun m => (List.range 6).any (fun k =>
     m.take (2 * k) == (List.replicate k [[0, 0], [1, 1]]).flatten &&
     (m.drop (2 * k)).all (fun c => c.getD 1 0 == 0)))).length) == (30, 18)
-
-/-! ## §6 The registry
-
-gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
-
-MOVED TO THE END OF THE FILE (certificate lane, 2026-08-09).  It used to sit
-between §5.15 and §7, but the ε₀ row's certificate is built in §13 and Lean needs
-it in scope before the gate can cite it.  Registry and gate stay together;
-nothing outside this file depends on their position.
-
-THE GATE IS NOW GUARDED (certificate lane, 2026-08-09, approved by the coordinator).
-It used to be `certRows_ok`, i.e. plain `Certified`, and §15.9's
-`cert_not_single_valued` shows what that lets through: `Certified` is satisfied by
-values that are not terms of 𝔗(M) at all (the ω row also certifies `1 + M`), so a
-row could in principle be registered on the strength of a derivation whose values
-wander outside the notation system.  The gate is therefore
-
-    certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2
-
-with `DomI t := inT t = true` — the values are TERMS OF 𝔗(M), all the way down.
-That is plan/README.md's design input 2 enforced at the level where the ✅ is
-computed, and it is strictly stronger than the old gate: `certRows_ok` is now its
-image under `certifiedIn_forget`, so every consumer of the old statement is
-unaffected.
-
-WHAT THE GATE BUYS (2026-08-09, after Stage 3b).  Since `Evidence/WF.lean` §8.5
-gives a strict linear order on 𝔗(M), the gate's own guard is now enough for
-UNIQUENESS: `certRows_unique_gate` (§6.1) says a registered row's value is the only
-value ANY gate-passing certificate can carry — above or below.  Registration and
-uniqueness therefore ask for exactly the same thing, which is the property one wants
-of a gate.
-
-WHY `DomI` AND NOT `DomF`.  `DomF = Frag2 ∧ inT` is the guard uniqueness is
-discharged on today (§14.3), but `Frag2` EXCLUDES `ψ` and `Z` — the shapes the
-whole T(M) table is aiming at.  A `DomF` gate would refuse the first `ψ` row (Γ₀)
-for a reason that has nothing to do with whether its certificate is sound: it
-would look like rigour and act as a wall in front of the target.  So the gate asks
-only for membership in 𝔗(M), which every legitimate future row can satisfy, and
-UNIQUENESS stays a separate, per-region theorem (`certRows_unique_guarded` on
-`DomF` today, wider as the order theory widens, with `certifiedIn_mono` bridging
-the two). -/
-
-/-- The registered certified rows. -/
-def certRows : List (Matrix × Term) :=
-  [([], Term.zero), ([[0]], one), ([[0], [0]], ofNat 2), ([[0], [1]], omega),
-   ([[0], [1], [0], [1]], add omega omega), ([[0], [1], [1]], phi zero (ofNat 2)),
-   ([[0], [1], [2]], phi zero omega),
-   ([[0], [1], [2], [3]], phi zero (phi zero omega)),
-   ([[0, 0], [1, 1]], phi one zero),
-   ([[0, 0], [1, 1], [0, 0]], plus (phi one zero) one),
-   ([[0, 0], [1, 1], [1, 0]], Evidence.WF.rowA)]
-
-/-- **THE GATE.**  Every registered pair carries a derivation whose values are all
-    terms of 𝔗(M).  Extending `certRows` without extending this proof breaks the
-    build — the label cannot outrun the certificates, and (since v0.1.80) it cannot
-    outrun the formation conditions either. -/
-theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 := by
-  intro p hp
-  simp only [certRows, List.mem_cons] at hp
-  rcases hp with h | h | h | h | h | h | h | h | h | h | h | h
-  · rw [h]; exact CertifiedIn.zero
-  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq one (by decide))
-  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (ofNat 2) (by decide))
-  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq omega (by decide))
-  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (add omega omega) (by decide))
-  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero (ofNat 2)) (by decide))
-  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero omega) (by decide))
-  · rw [h]
-    exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero (phi zero omega)) (by decide))
-  · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0
-  · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0_succ_F
-  · rw [h]; exact certIn_rowA
-  · cases h
-
-/-- The old gate, now a COROLLARY of the guarded one: forget the guard.  Kept
-    verbatim so that every consumer of the previous statement is unaffected. -/
-theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 :=
-  fun p hp => certifiedIn_forget (certIn_rows_inT p hp)
-
-/-! ### §6.1 The registry, read as uniqueness and as a ceiling (certificate lane) -/
-
-/-- **THE TABLE'S ✅, READ AS UNIQUENESS — at the gate's own guard.**  For every
-    registered row, ANY certificate that passes the gate (values hereditarily in
-    𝔗(M)) carries the registered value and no other.  With `certRows_no_overshoot`
-    below, this is the pair that makes the ✅ a claim about the VALUE: nothing else
-    is certifiable at gate quality, and nothing above it is certifiable at all. -/
-theorem certRows_unique_gate :
-    ∀ p ∈ certRows, ∀ (u : Term), CertifiedIn DomI p.1 u → u = p.2 :=
-  fun p hp _ h => (cert_unique_inT (certIn_rows_inT p hp) h).symm
-
-/-- The `DomF` form, kept verbatim (the legend was written against it): a corollary
-    of `certRows_unique_gate`, since a `DomF`-guarded certificate is `DomI`-guarded. -/
-theorem certRows_unique_guarded :
-    ∀ p ∈ certRows, ∀ (u : Term), CertifiedIn DomF p.1 u → u = p.2 :=
-  fun p hp u h => certRows_unique_gate p hp u (certifiedIn_mono domF_le_domI h)
-
-
-/-- **THE TABLE'S ✅, READ AS AN UPPER BOUND.**  For every registered row, NO
-    certificate at all — no guard, junk values allowed at every level — carries a
-    value that reaches `ω^(value+1)`.  §15.8 says much more for the ε₀ row (nothing
-    above ε₀ at all); the two together are what makes the ✅ column a claim about
-    the VALUE rather than about one derivation. -/
-theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.1 u →
-    le (phi zero (plus p.2 one)) u = false := by
-  intro p hp u h
-  simp only [certRows, List.mem_cons] at hp
-  rcases hp with e | e | e | e | e | e | e | e | e | e | e | e
-  · subst e; exact cert_below_bound_one zero (by decide) u h
-  · subst e; exact cert_below_bound_one one (by decide) u h
-  · subst e; exact cert_below_bound_one (ofNat 2) (by decide) u h
-  · subst e; exact cert_below_bound_one omega (by decide) u h
-  · subst e; exact cert_below_bound_one (add omega omega) (by decide) u h
-  · subst e; exact cert_below_bound_one (phi zero (ofNat 2)) (by decide) u h
-  · subst e; exact cert_below_bound_one (phi zero omega) (by decide) u h
-  · subst e; exact cert_below_bound_one (phi zero (phi zero omega)) (by decide) u h
-  · subst e; exact cert_below_bound_eps0 u h
-  · -- the ε₀+1 row: a SUCCESSOR row, so §15.10's transport carries the ε₀ row's
-    -- ceiling across it, at the probe `ω^((ε₀+1)+1)`
-    subst e
-    show le (phi zero (plus (plus (phi one zero) one) one)) u = false
-    have hone : le one (phi one zero) = true := le_one_ap rfl
-    have hval : plus (plus (phi one zero) one) one = add (phi one zero) (add one one) := by
-      rw [plus_one_ap (show isAP (phi one zero) = true from rfl) hone,
-        plus_one_add hone, plus_one_ap (show isAP one = true from rfl) (le_one_ap rfl)]
-    have hne : add (phi one zero) one ≠ add (phi one zero) (add one one) := by
-      intro hc; injection hc with _ h2; exact Term.noConfusion h2
-    have hlt1 : lt (add (phi one zero) one) (add (phi one zero) (add one one)) = true := by
-      rw [Evidence.WF.lt_add_add hne, if_pos rfl,
-        lt_ap_add (show isAP one = true from rfl) one one]
-      exact Evidence.WF.le_self one
-    have hbnd : le (phi zero (plus (phi one zero) one))
-        (phi zero (add (phi one zero) (add one one))) = true := by
-      show ((phi zero (plus (phi one zero) one) == phi zero (add (phi one zero) (add one one)))
-        || lt (phi zero (plus (phi one zero) one))
-             (phi zero (add (phi one zero) (add one one)))) = true
-      rw [plus_one_ap (show isAP (phi one zero) = true from rfl) hone, Evidence.WF.lt_pow, hlt1]
-      exact Bool.or_true _
-    rw [hval]
-    refine cert_below_bound_succ (N' := [[0, 0], [1, 1]]) rfl rfl rfl ?_ ?_ u h
-    · exact le_pow_one_false (by intro hc; exact Term.noConfusion hc)
-    · intro w hw
-      exact cert_eps0_row_ceiling (by decide) rfl rfl hbnd w hw
-  · -- Row A: the ceiling for the ε₀-prefixed region (§19.2), at each expansion
-    subst e
-    show le (phi zero (plus Evidence.WF.rowA one)) u = false
-    have hceil : ∀ (n : Nat) (w : Term), Certified (eps0M n) w →
-        ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
-          le (phi zero (plus (Evidence.WF.fsA n) one)) s = true → le s w = false := by
-      intro n w hw s hin hfr hap hbb
-      exact no_overshoot_fam hw (n + 1) zero rfl (famM_zero_arg (n + 1)).symm s hin hfr hap hbb
-    obtain ⟨fs, hall, _, _, hcof⟩ :=
-      certified_lim_inv h (show BMS.kind [[0, 0], [1, 1], [1, 0]] = .lim from rfl)
-    have hcert : ∀ n, Certified (eps0M n) (fs n) := by
-      intro n
-      have hx := hall n
-      rwa [show BMS.expand [[0, 0], [1, 1], [1, 0]] n = eps0M n from by
-        show (BMS.expand? [[0, 0], [1, 1], [1, 0]] n).getD [] = _
-        rw [expand_rowA n]; rfl] at hx
-    have hbound : ∀ (n : Nat) (X : Term), CNV X = true → le Evidence.WF.rowA X = true →
-        le (phi zero (plus (Evidence.WF.fsA n) one)) (phi zero X) = true := by
-      intro n X hcx hlex
-      refine Evidence.WF.le_pow (Evidence.WF.le_trans
-        (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ (Evidence.WF.cnv_repAdd
-          Evidence.WF.cnv_eps0T n)))
-        (Evidence.WF.frag_of_cnv _ Evidence.WF.cnv_rowA)
-        (Evidence.WF.frag_of_cnv _ hcx) ?_ hlex)
-      exact Evidence.WF.le_plus_one_of_lt_cnv
-        (Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T n) Evidence.WF.cnv_rowA
-        ((Evidence.WF.lim_clauses_rowA).2.1 n)
-    cases hlev : le (phi zero (plus Evidence.WF.rowA one)) u with
-    | false => rfl
-    | true =>
-      exfalso
-      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
-      rcases hlev with rfl | hlt
-      · -- u = ω^(rowA+1): probe with ω^rowA, strictly below it
-        have hltu : lt (phi zero Evidence.WF.rowA)
-            (phi zero (plus Evidence.WF.rowA one)) = true := by
-          rw [Evidence.WF.lt_pow]
-          exact lt_self_plus_one_cnv _ Evidence.WF.cnv_rowA
-        obtain ⟨n, hn⟩ := hcof (phi zero Evidence.WF.rowA)
-          (Evidence.WF.inT_of_cnv _ (by
-            show (CNV zero && CNV Evidence.WF.rowA) = true
-            rw [Evidence.WF.cnv_rowA]; rfl)) hltu
-        rw [hceil n (fs n) (hcert n) _ (Evidence.WF.inT_of_cnv _ (by
-            show (CNV zero && CNV Evidence.WF.rowA) = true
-            rw [Evidence.WF.cnv_rowA]; rfl))
-          (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ Evidence.WF.cnv_rowA)) rfl
-          (hbound n Evidence.WF.rowA Evidence.WF.cnv_rowA (Evidence.WF.le_self _))] at hn
-        exact Bool.noConfusion hn
-      · obtain ⟨n, hn⟩ := hcof (phi zero (plus Evidence.WF.rowA one))
-          (Evidence.WF.inT_of_cnv _ (by
-            show (CNV zero && CNV (plus Evidence.WF.rowA one)) = true
-            rw [cnv_plus_one _ Evidence.WF.cnv_rowA]; rfl)) hlt
-        rw [hceil n (fs n) (hcert n) _ (Evidence.WF.inT_of_cnv _ (by
-            show (CNV zero && CNV (plus Evidence.WF.rowA one)) = true
-            rw [cnv_plus_one _ Evidence.WF.cnv_rowA]; rfl))
-          (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _
-            (cnv_plus_one _ Evidence.WF.cnv_rowA))) rfl
-          (hbound n (plus Evidence.WF.rowA one) (cnv_plus_one _ Evidence.WF.cnv_rowA)
-            (le_self_plus_one_cnv _ Evidence.WF.cnv_rowA))] at hn
-        exact Bool.noConfusion hn
-  · cases e
 
 /-! ### §20.1 TWO MORE ROW EXPANSION IDENTITIES — `ε_{ω²}` and `ε_{ω^ω}`
 
@@ -12001,5 +11803,471 @@ theorem certIn_sq_via_region : ∀ (t : Term), CN t = true →
             rw [expand_sq u hcnu hku hz n]
             rfl⟩),
           (fun n => inT_of_cn _ (cn_fsC u hcnu hku hz n)), hltfs, hstep, hcof⟩
+
+/-! ## §24 THE REGION'S CERTIFICATE, AND THE TWO ROWS IT REGISTERS
+
+§23 made `certIn_region` a template; `Evidence/RegionV.lean` finished its four supplies on
+2026-08-16 (`hclosed_supply`, `hzero_supply`, `hsucc_supply`, `hlim`).  So this section is
+the INSTANTIATION and nothing else: ONE application of `certIn_region_cnv` gives a guarded
+certificate for EVERY normal-form top-level index of the region at once, and the two rows
+below are two points of it.
+
+    ε₁    (0,0)(1,1)(1,1)   IS in the region — it is `mat (ps nil (omPow 2)) 0`, value
+                            `φ̄(1,1)` by `Evidence/RegionV.lean` §9.2's `sumVal_eps1`
+    ε_ω   (0,0)(1,1)(2,0)   is NOT — but every one of its expansions is (`expand_epsOmega`,
+                            §20, whose target `epsM n` is `mat (ps nil (omPow (n+1))) 0`),
+                            and `Evidence/WF.lean`'s `lim_clauses_epsOmega` is exactly the
+                            four clauses for the ε-hierarchy those expansions form
+
+THE CEILING.  Registration also obliges `certRows_no_overshoot`, and here it is
+`no_overshoot_ceiling` (§15.7.2) with the region's own valuation `Val` as its parameter.
+The three hypotheses it asks for are the same three supplies read backwards: the value is
+always `CNV` (RegionV §11), and each expansion carries a STRICTLY SMALLER value, which is
+the `lt u t` of `Hsucc` and the `lt (f n) t` of `Hlim`.  Unlike Row A (§19.2's
+`no_overshoot_fam`), NO new induction is needed — the region is closed under expansion, so
+its ceiling is generic in the region rather than in a row.
+
+For ε₁ the probe is the bound itself and the row is in the region, so `le_self` closes it.
+For ε_ω the row sits one step above the region and the argument is `cert_eps0_row_ceiling`'s:
+split on whether a certified value EQUALS the probe or lies strictly below it, and in both
+cases push the probe down to a rung, where `ω^(ε_n+1) ≤ probe` makes that rung's own ceiling
+fire. -/
+
+section
+open Evidence.Region (A mat nf topOK sumVal omPow nf_ps_iff nf_omPow argsLtM_omPow
+  cnv_sumVal hclosed_supply hzero_supply hsucc_supply hlim sumVal_omPow_succ sumVal_eps1
+  mat_omPow)
+
+theorem certIn_reg (t : A) (hnf : nf t = true) (htop : topOK t = true) :
+    CertifiedIn DomI (mat t 0) (sumVal t) :=
+  certIn_region_cnv (Reg := Evidence.Region.Reg) (Val := Evidence.Region.Val)
+    hclosed_supply hzero_supply hsucc_supply hlim
+    (sumVal t) (cnv_sumVal t) (mat t 0) ⟨t, hnf, htop, rfl⟩ ⟨t, hnf, htop, rfl, rfl⟩
+
+theorem certIn_eps1 : CertifiedIn DomI [[0, 0], [1, 1], [1, 1]] (phi one one) := by
+  have h := certIn_reg (.ps .nil (omPow 2)) (by decide) (by decide)
+  rwa [show mat (A.ps .nil (omPow 2)) 0 = [[0, 0], [1, 1], [1, 1]] from rfl,
+    sumVal_eps1] at h
+
+theorem nf_ps_omPow (k : Nat) : nf (A.ps .nil (omPow (k + 1))) = true :=
+  nf_ps_iff.mpr ⟨rfl, nf_omPow (k + 1), rfl, argsLtM_omPow _ (k + 1)⟩
+
+theorem topOK_ps_omPow (k : Nat) : topOK (A.ps .nil (omPow (k + 1))) = true := rfl
+
+theorem mat_ps_omPow (k : Nat) :
+    mat (A.ps .nil (omPow (k + 1))) 0 = [[0, 0], [1, 1]] ++ List.replicate k [1, 1] := by
+  show [] ++ ([0, 0] :: mat (omPow (k + 1)) 1) = _
+  rw [mat_omPow 1 (k + 1)]
+  rfl
+
+theorem flatten_replicate_single (k : Nat) (c : List Nat) :
+    (List.replicate k [c]).flatten = List.replicate k c := by
+  induction k with
+  | zero => rfl
+  | succ j ih => show [c] ++ (List.replicate j [c]).flatten = _; rw [ih]; rfl
+
+theorem epsM_eq_mat (k : Nat) : epsM k = mat (A.ps .nil (omPow (k + 1))) 0 := by
+  rw [mat_ps_omPow k]
+  show [[0, 0], [1, 1]] ++ (List.replicate k [[1, 1]]).flatten = _
+  rw [flatten_replicate_single k [1, 1]]
+
+theorem certIn_epsN (k : Nat) : CertifiedIn DomI (epsM k) (Evidence.WF.epsN k) := by
+  have h := certIn_reg (.ps .nil (omPow (k + 1))) (nf_ps_omPow k) (topOK_ps_omPow k)
+  rw [sumVal_omPow_succ k] at h
+  rw [epsM_eq_mat k]
+  exact h
+
+theorem expand_epsOmega_mat (n : Nat) : BMS.expand [[0, 0], [1, 1], [2, 0]] n = epsM n := by
+  show (BMS.expand? [[0, 0], [1, 1], [2, 0]] n).getD [] = _
+  rw [expand_epsOmega n]
+  rfl
+
+theorem certIn_epsOmega : CertifiedIn DomI [[0, 0], [1, 1], [2, 0]] Evidence.WF.epsOmega := by
+  obtain ⟨_, h2, h3, h4⟩ := Evidence.WF.lim_clauses_epsOmega
+  refine CertifiedIn.lim Evidence.WF.fsEW rfl ?_ h2 h3 h4 (show inT Evidence.WF.epsOmega = true by decide)
+  intro n
+  have h := certIn_epsN n
+  rwa [expand_epsOmega_mat n]
+
+/-! ### the ceiling -/
+
+theorem no_overshoot_region : ∀ {N : BMS.Matrix} {v : Term}, Certified N v →
+    ∀ (t : A), nf t = true → topOK t = true → N = mat t 0 →
+      ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+        le (phi zero (plus (sumVal t) one)) s = true → le s v = false := by
+  intro N v h t hnf htop hN s hin hfr hap hbb
+  refine no_overshoot_ceiling Evidence.Region.Val ?_ ?_ ?_ h (sumVal t)
+    ⟨t, hnf, htop, hN, rfl⟩ s hin hfr hap hbb
+  · rintro M X ⟨u, _, _, _, rfl⟩
+    exact cnv_sumVal u
+  · rintro M X hV hk
+    obtain ⟨u, h1, h2, h3, h4⟩ := hV
+    obtain ⟨w, _, _, _, hlt, hexp⟩ := hsucc_supply M X ⟨u, h1, h2, h3⟩ ⟨u, h1, h2, h3, h4⟩ hk
+    exact ⟨w, hexp 0, hlt⟩
+  · rintro M X hV hk n
+    obtain ⟨u, h1, h2, h3, h4⟩ := hV
+    obtain ⟨f, _, hexp, _, hlt, _, _⟩ := hlim M X ⟨u, h1, h2, h3⟩ ⟨u, h1, h2, h3, h4⟩ hk
+    exact ⟨f n, hexp n, hlt n⟩
+
+theorem cert_below_bound_region (t : A) (hnf : nf t = true) (htop : topOK t = true)
+    (v : Term) (h : Certified (mat t 0) v) :
+    le (phi zero (plus (sumVal t) one)) v = false := by
+  have hc : CNV (plus (sumVal t) one) = true := cnv_plus_one _ (cnv_sumVal t)
+  refine no_overshoot_region h t hnf htop rfl _ (Evidence.WF.inT_of_cnv _ (by
+      show (CNV zero && CNV (plus (sumVal t) one)) = true
+      rw [hc]; rfl))
+    (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ hc)) rfl (Evidence.WF.le_self _)
+
+theorem cert_below_bound_eps1 (v : Term) (h : Certified [[0, 0], [1, 1], [1, 1]] v) :
+    le (phi zero (plus (phi one one) one)) v = false := by
+  have h0 : Certified (mat (A.ps .nil (omPow 2)) 0) v := h
+  have hx := cert_below_bound_region (.ps .nil (omPow 2)) (by decide) (by decide) v h0
+  rwa [sumVal_eps1] at hx
+
+/-- **THE ε_ω ROW'S CEILING, at an arbitrary probe.**  The shape of §15.10's
+    `cert_eps0_row_ceiling`, one level up: the row is not in the region, but every
+    expansion is a rung, and a probe at or above `ω^(ε_ω+1)` dominates every rung's own
+    bound `ω^(ε_n+1)`.  The two cases are the certified value EQUAL to the probe (send
+    `ω^(ε_ω)`, which is strictly below it, down to a rung) and strictly above it (send the
+    probe itself). -/
+theorem cert_epsOmega_row_ceiling {s : Term} (hin : inT s = true)
+    (hfr : Evidence.WF.Frag s = true) (hap : isAP s = true)
+    (hb : le (phi zero (plus Evidence.WF.epsOmega one)) s = true)
+    (v : Term) (h : Certified [[0, 0], [1, 1], [2, 0]] v) : le s v = false := by
+  have hcnvEO : CNV Evidence.WF.epsOmega = true := by decide
+  have hceil : ∀ (n : Nat) (w : Term), Certified (epsM n) w →
+      ∀ (x : Term), inT x = true → Evidence.WF.Frag x = true → isAP x = true →
+        le (phi zero (plus (Evidence.WF.epsN n) one)) x = true → le x w = false := by
+    intro n w hw x hx1 hx2 hx3 hbb
+    refine no_overshoot_region hw (.ps .nil (omPow (n + 1))) (nf_ps_omPow n)
+      (topOK_ps_omPow n) (epsM_eq_mat n) x hx1 hx2 hx3 ?_
+    rwa [sumVal_omPow_succ n]
+  obtain ⟨fs, hall, _, _, hcof⟩ :=
+    certified_lim_inv h (show BMS.kind [[0, 0], [1, 1], [2, 0]] = .lim from rfl)
+  have hcert : ∀ n, Certified (epsM n) (fs n) := by
+    intro n
+    have hx := hall n
+    rwa [expand_epsOmega_mat n] at hx
+  have hbound : ∀ (n : Nat) (X : Term), CNV X = true → le Evidence.WF.epsOmega X = true →
+      le (phi zero (plus (Evidence.WF.epsN n) one)) (phi zero X) = true := by
+    intro n X hcx hlex
+    refine Evidence.WF.le_pow (Evidence.WF.le_trans
+      (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ (Evidence.WF.cnv_epsN n)))
+      (Evidence.WF.frag_of_cnv _ hcnvEO) (Evidence.WF.frag_of_cnv _ hcx) ?_ hlex)
+    exact Evidence.WF.le_plus_one_of_lt_cnv (Evidence.WF.cnv_epsN n) hcnvEO
+      (Evidence.WF.lim_clauses_epsOmega.2.1 n)
+  have hinEO : inT (phi zero Evidence.WF.epsOmega) = true :=
+    Evidence.WF.inT_of_cnv _ (by
+      show (CNV zero && CNV Evidence.WF.epsOmega) = true
+      rw [hcnvEO]; rfl)
+  have hfrEO1 : Evidence.WF.Frag (phi zero (plus Evidence.WF.epsOmega one)) = true :=
+    Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ hcnvEO))
+  -- every rung's bound is below the probe
+  have hsb : ∀ n, le (phi zero (plus (Evidence.WF.epsN n) one)) s = true := by
+    intro n
+    exact Evidence.WF.le_trans
+      (Evidence.WF.frag_of_cnv _ (by
+        show (CNV zero && CNV (plus (Evidence.WF.epsN n) one)) = true
+        rw [cnv_plus_one _ (Evidence.WF.cnv_epsN n)]; rfl))
+      hfrEO1 hfr
+      (hbound n (plus Evidence.WF.epsOmega one) (cnv_plus_one _ hcnvEO)
+        (le_self_plus_one_cnv _ hcnvEO)) hb
+  cases hlev : le s v with
+  | false => rfl
+  | true =>
+    exfalso
+    simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
+    rcases hlev with rfl | hlt
+    · have hlt0 : lt (phi zero Evidence.WF.epsOmega)
+          (phi zero (plus Evidence.WF.epsOmega one)) = true := by
+        rw [Evidence.WF.lt_pow]
+        exact lt_self_plus_one_cnv _ hcnvEO
+      have hltP : lt (phi zero Evidence.WF.epsOmega) s = true :=
+        Evidence.WF.lt_of_lt_of_le
+          (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ hcnvEO)) hfrEO1 hfr hlt0 hb
+      obtain ⟨n, hn⟩ := hcof (phi zero Evidence.WF.epsOmega) hinEO hltP
+      rw [hceil n (fs n) (hcert n) _ hinEO
+        (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ hcnvEO)) rfl
+        (hbound n Evidence.WF.epsOmega hcnvEO (Evidence.WF.le_self _))] at hn
+      exact Bool.noConfusion hn
+    · obtain ⟨n, hn⟩ := hcof s hin hlt
+      rw [hceil n (fs n) (hcert n) _ hin hfr hap (hsb n)] at hn
+      exact Bool.noConfusion hn
+
+theorem cert_below_bound_epsOmega (v : Term) (h : Certified [[0, 0], [1, 1], [2, 0]] v) :
+    le (phi zero (plus Evidence.WF.epsOmega one)) v = false := by
+  have hcnvEO : CNV Evidence.WF.epsOmega = true := by decide
+  exact cert_epsOmega_row_ceiling
+    (Evidence.WF.inT_of_cnv _ (by
+      show (CNV zero && CNV (plus Evidence.WF.epsOmega one)) = true
+      rw [cnv_plus_one _ hcnvEO]; rfl))
+    (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ hcnvEO)))
+    rfl (Evidence.WF.le_self _) v h
+
+/-- **The ε_ω+1 row.**  `(0,0)(1,1)(2,0)(0,0)` expands CONSTANTLY to the ε_ω row, so it is
+    `CertifiedIn.succ` applied to `certIn_epsOmega` — §16.2's one-line row, one level up.
+    It comes free with ε_ω and is registered with it. -/
+theorem certIn_epsOmega_succ :
+    CertifiedIn DomI [[0, 0], [1, 1], [2, 0], [0, 0]] (plus Evidence.WF.epsOmega one) :=
+  CertifiedIn.succ rfl
+    (fun n => by
+      show CertifiedIn DomI ((BMS.expand? [[0, 0], [1, 1], [2, 0], [0, 0]] n).getD [])
+        Evidence.WF.epsOmega
+      exact certIn_epsOmega)
+    (show inT (plus Evidence.WF.epsOmega one) = true by decide)
+
+theorem cert_below_bound_epsOmega_succ (v : Term)
+    (h : Certified [[0, 0], [1, 1], [2, 0], [0, 0]] v) :
+    le (phi zero (plus (plus Evidence.WF.epsOmega one) one)) v = false := by
+  have hcnvEO : CNV Evidence.WF.epsOmega = true := by decide
+  have hone : le one Evidence.WF.epsOmega = true := le_one_ap rfl
+  have hval : plus (plus Evidence.WF.epsOmega one) one
+      = add Evidence.WF.epsOmega (add one one) := by
+    rw [plus_one_ap (show isAP Evidence.WF.epsOmega = true from rfl) hone,
+      plus_one_add hone, plus_one_ap (show isAP one = true from rfl) (le_one_ap rfl)]
+  have hne : add Evidence.WF.epsOmega one ≠ add Evidence.WF.epsOmega (add one one) := by
+    intro hc; injection hc with _ h2; exact Term.noConfusion h2
+  have hlt1 : lt (add Evidence.WF.epsOmega one)
+      (add Evidence.WF.epsOmega (add one one)) = true := by
+    rw [Evidence.WF.lt_add_add hne, if_pos rfl,
+      lt_ap_add (show isAP one = true from rfl) one one]
+    exact Evidence.WF.le_self one
+  have hbnd : le (phi zero (plus Evidence.WF.epsOmega one))
+      (phi zero (add Evidence.WF.epsOmega (add one one))) = true := by
+    show ((phi zero (plus Evidence.WF.epsOmega one)
+        == phi zero (add Evidence.WF.epsOmega (add one one)))
+      || lt (phi zero (plus Evidence.WF.epsOmega one))
+           (phi zero (add Evidence.WF.epsOmega (add one one)))) = true
+    rw [plus_one_ap (show isAP Evidence.WF.epsOmega = true from rfl) hone,
+      Evidence.WF.lt_pow, hlt1]
+    exact Bool.or_true _
+  rw [hval]
+  refine cert_below_bound_succ (N' := [[0, 0], [1, 1], [2, 0]]) rfl rfl rfl ?_ ?_ v h
+  · exact le_pow_one_false (by intro hc; exact Term.noConfusion hc)
+  · intro w hw
+    exact cert_epsOmega_row_ceiling (by decide) (by decide) rfl hbnd w hw
+
+end
+
+/-! ## §6 The registry
+
+gentable marks ✅ exactly on the rows listed here; the GATE is `certIn_rows_inT`.
+
+MOVED TO THE END OF THE FILE (certificate lane, 2026-08-09).  It used to sit
+between §5.15 and §7, but the ε₀ row's certificate is built in §13 and Lean needs
+it in scope before the gate can cite it.  Registry and gate stay together;
+nothing outside this file depends on their position.
+
+THE GATE IS NOW GUARDED (certificate lane, 2026-08-09, approved by the coordinator).
+It used to be `certRows_ok`, i.e. plain `Certified`, and §15.9's
+`cert_not_single_valued` shows what that lets through: `Certified` is satisfied by
+values that are not terms of 𝔗(M) at all (the ω row also certifies `1 + M`), so a
+row could in principle be registered on the strength of a derivation whose values
+wander outside the notation system.  The gate is therefore
+
+    certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2
+
+with `DomI t := inT t = true` — the values are TERMS OF 𝔗(M), all the way down.
+That is plan/README.md's design input 2 enforced at the level where the ✅ is
+computed, and it is strictly stronger than the old gate: `certRows_ok` is now its
+image under `certifiedIn_forget`, so every consumer of the old statement is
+unaffected.
+
+WHAT THE GATE BUYS (2026-08-09, after Stage 3b).  Since `Evidence/WF.lean` §8.5
+gives a strict linear order on 𝔗(M), the gate's own guard is now enough for
+UNIQUENESS: `certRows_unique_gate` (§6.1) says a registered row's value is the only
+value ANY gate-passing certificate can carry — above or below.  Registration and
+uniqueness therefore ask for exactly the same thing, which is the property one wants
+of a gate.
+
+WHY `DomI` AND NOT `DomF`.  `DomF = Frag2 ∧ inT` is the guard uniqueness is
+discharged on today (§14.3), but `Frag2` EXCLUDES `ψ` and `Z` — the shapes the
+whole T(M) table is aiming at.  A `DomF` gate would refuse the first `ψ` row (Γ₀)
+for a reason that has nothing to do with whether its certificate is sound: it
+would look like rigour and act as a wall in front of the target.  So the gate asks
+only for membership in 𝔗(M), which every legitimate future row can satisfy, and
+UNIQUENESS stays a separate, per-region theorem (`certRows_unique_guarded` on
+`DomF` today, wider as the order theory widens, with `certifiedIn_mono` bridging
+the two). -/
+
+/-- The registered certified rows.  The last two entered on 2026-08-16, when
+    `Evidence/RegionV.lean` finished `certIn_region`'s four supplies; §24 builds their
+    certificates and their ceilings. -/
+def certRows : List (Matrix × Term) :=
+  [([], Term.zero), ([[0]], one), ([[0], [0]], ofNat 2), ([[0], [1]], omega),
+   ([[0], [1], [0], [1]], add omega omega), ([[0], [1], [1]], phi zero (ofNat 2)),
+   ([[0], [1], [2]], phi zero omega),
+   ([[0], [1], [2], [3]], phi zero (phi zero omega)),
+   ([[0, 0], [1, 1]], phi one zero),
+   ([[0, 0], [1, 1], [0, 0]], plus (phi one zero) one),
+   ([[0, 0], [1, 1], [1, 0]], Evidence.WF.rowA),
+   ([[0, 0], [1, 1], [1, 1]], phi one one),
+   ([[0, 0], [1, 1], [2, 0]], Evidence.WF.epsOmega),
+   ([[0, 0], [1, 1], [2, 0], [0, 0]], plus Evidence.WF.epsOmega one)]
+
+/-- **THE GATE.**  Every registered pair carries a derivation whose values are all
+    terms of 𝔗(M).  Extending `certRows` without extending this proof breaks the
+    build — the label cannot outrun the certificates, and (since v0.1.80) it cannot
+    outrun the formation conditions either. -/
+theorem certIn_rows_inT : ∀ p ∈ certRows, CertifiedIn DomI p.1 p.2 := by
+  intro p hp
+  simp only [certRows, List.mem_cons] at hp
+  rcases hp with h | h | h | h | h | h | h | h | h | h | h | h | h | h | h
+  · rw [h]; exact CertifiedIn.zero
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq one (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (ofNat 2) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq omega (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (add omega omega) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero (ofNat 2)) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero omega) (by decide))
+  · rw [h]
+    exact certifiedIn_mono domF_le_domI (certIn_sq (phi zero (phi zero omega)) (by decide))
+  · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0
+  · rw [h]; exact certifiedIn_mono domF_le_domI certIn_eps0_succ_F
+  · rw [h]; exact certIn_rowA
+  · rw [h]; exact certIn_eps1
+  · rw [h]; exact certIn_epsOmega
+  · rw [h]; exact certIn_epsOmega_succ
+  · cases h
+
+/-- The old gate, now a COROLLARY of the guarded one: forget the guard.  Kept
+    verbatim so that every consumer of the previous statement is unaffected. -/
+theorem certRows_ok : ∀ p ∈ certRows, Certified p.1 p.2 :=
+  fun p hp => certifiedIn_forget (certIn_rows_inT p hp)
+
+/-! ### §6.1 The registry, read as uniqueness and as a ceiling (certificate lane) -/
+
+/-- **THE TABLE'S ✅, READ AS UNIQUENESS — at the gate's own guard.**  For every
+    registered row, ANY certificate that passes the gate (values hereditarily in
+    𝔗(M)) carries the registered value and no other.  With `certRows_no_overshoot`
+    below, this is the pair that makes the ✅ a claim about the VALUE: nothing else
+    is certifiable at gate quality, and nothing above it is certifiable at all. -/
+theorem certRows_unique_gate :
+    ∀ p ∈ certRows, ∀ (u : Term), CertifiedIn DomI p.1 u → u = p.2 :=
+  fun p hp _ h => (cert_unique_inT (certIn_rows_inT p hp) h).symm
+
+/-- The `DomF` form, kept verbatim (the legend was written against it): a corollary
+    of `certRows_unique_gate`, since a `DomF`-guarded certificate is `DomI`-guarded. -/
+theorem certRows_unique_guarded :
+    ∀ p ∈ certRows, ∀ (u : Term), CertifiedIn DomF p.1 u → u = p.2 :=
+  fun p hp u h => certRows_unique_gate p hp u (certifiedIn_mono domF_le_domI h)
+
+
+/-- **THE TABLE'S ✅, READ AS AN UPPER BOUND.**  For every registered row, NO
+    certificate at all — no guard, junk values allowed at every level — carries a
+    value that reaches `ω^(value+1)`.  §15.8 says much more for the ε₀ row (nothing
+    above ε₀ at all); the two together are what makes the ✅ column a claim about
+    the VALUE rather than about one derivation. -/
+theorem certRows_no_overshoot : ∀ p ∈ certRows, ∀ (u : Term), Certified p.1 u →
+    le (phi zero (plus p.2 one)) u = false := by
+  intro p hp u h
+  simp only [certRows, List.mem_cons] at hp
+  rcases hp with e | e | e | e | e | e | e | e | e | e | e | e | e | e | e
+  · subst e; exact cert_below_bound_one zero (by decide) u h
+  · subst e; exact cert_below_bound_one one (by decide) u h
+  · subst e; exact cert_below_bound_one (ofNat 2) (by decide) u h
+  · subst e; exact cert_below_bound_one omega (by decide) u h
+  · subst e; exact cert_below_bound_one (add omega omega) (by decide) u h
+  · subst e; exact cert_below_bound_one (phi zero (ofNat 2)) (by decide) u h
+  · subst e; exact cert_below_bound_one (phi zero omega) (by decide) u h
+  · subst e; exact cert_below_bound_one (phi zero (phi zero omega)) (by decide) u h
+  · subst e; exact cert_below_bound_eps0 u h
+  · -- the ε₀+1 row: a SUCCESSOR row, so §15.10's transport carries the ε₀ row's
+    -- ceiling across it, at the probe `ω^((ε₀+1)+1)`
+    subst e
+    show le (phi zero (plus (plus (phi one zero) one) one)) u = false
+    have hone : le one (phi one zero) = true := le_one_ap rfl
+    have hval : plus (plus (phi one zero) one) one = add (phi one zero) (add one one) := by
+      rw [plus_one_ap (show isAP (phi one zero) = true from rfl) hone,
+        plus_one_add hone, plus_one_ap (show isAP one = true from rfl) (le_one_ap rfl)]
+    have hne : add (phi one zero) one ≠ add (phi one zero) (add one one) := by
+      intro hc; injection hc with _ h2; exact Term.noConfusion h2
+    have hlt1 : lt (add (phi one zero) one) (add (phi one zero) (add one one)) = true := by
+      rw [Evidence.WF.lt_add_add hne, if_pos rfl,
+        lt_ap_add (show isAP one = true from rfl) one one]
+      exact Evidence.WF.le_self one
+    have hbnd : le (phi zero (plus (phi one zero) one))
+        (phi zero (add (phi one zero) (add one one))) = true := by
+      show ((phi zero (plus (phi one zero) one) == phi zero (add (phi one zero) (add one one)))
+        || lt (phi zero (plus (phi one zero) one))
+             (phi zero (add (phi one zero) (add one one)))) = true
+      rw [plus_one_ap (show isAP (phi one zero) = true from rfl) hone, Evidence.WF.lt_pow, hlt1]
+      exact Bool.or_true _
+    rw [hval]
+    refine cert_below_bound_succ (N' := [[0, 0], [1, 1]]) rfl rfl rfl ?_ ?_ u h
+    · exact le_pow_one_false (by intro hc; exact Term.noConfusion hc)
+    · intro w hw
+      exact cert_eps0_row_ceiling (by decide) rfl rfl hbnd w hw
+  · -- Row A: the ceiling for the ε₀-prefixed region (§19.2), at each expansion
+    subst e
+    show le (phi zero (plus Evidence.WF.rowA one)) u = false
+    have hceil : ∀ (n : Nat) (w : Term), Certified (eps0M n) w →
+        ∀ (s : Term), inT s = true → Evidence.WF.Frag s = true → isAP s = true →
+          le (phi zero (plus (Evidence.WF.fsA n) one)) s = true → le s w = false := by
+      intro n w hw s hin hfr hap hbb
+      exact no_overshoot_fam hw (n + 1) zero rfl (famM_zero_arg (n + 1)).symm s hin hfr hap hbb
+    obtain ⟨fs, hall, _, _, hcof⟩ :=
+      certified_lim_inv h (show BMS.kind [[0, 0], [1, 1], [1, 0]] = .lim from rfl)
+    have hcert : ∀ n, Certified (eps0M n) (fs n) := by
+      intro n
+      have hx := hall n
+      rwa [show BMS.expand [[0, 0], [1, 1], [1, 0]] n = eps0M n from by
+        show (BMS.expand? [[0, 0], [1, 1], [1, 0]] n).getD [] = _
+        rw [expand_rowA n]; rfl] at hx
+    have hbound : ∀ (n : Nat) (X : Term), CNV X = true → le Evidence.WF.rowA X = true →
+        le (phi zero (plus (Evidence.WF.fsA n) one)) (phi zero X) = true := by
+      intro n X hcx hlex
+      refine Evidence.WF.le_pow (Evidence.WF.le_trans
+        (Evidence.WF.frag_of_cnv _ (cnv_plus_one _ (Evidence.WF.cnv_repAdd
+          Evidence.WF.cnv_eps0T n)))
+        (Evidence.WF.frag_of_cnv _ Evidence.WF.cnv_rowA)
+        (Evidence.WF.frag_of_cnv _ hcx) ?_ hlex)
+      exact Evidence.WF.le_plus_one_of_lt_cnv
+        (Evidence.WF.cnv_repAdd Evidence.WF.cnv_eps0T n) Evidence.WF.cnv_rowA
+        ((Evidence.WF.lim_clauses_rowA).2.1 n)
+    cases hlev : le (phi zero (plus Evidence.WF.rowA one)) u with
+    | false => rfl
+    | true =>
+      exfalso
+      simp only [TM.Term.le, Bool.or_eq_true, beq_iff_eq] at hlev
+      rcases hlev with rfl | hlt
+      · -- u = ω^(rowA+1): probe with ω^rowA, strictly below it
+        have hltu : lt (phi zero Evidence.WF.rowA)
+            (phi zero (plus Evidence.WF.rowA one)) = true := by
+          rw [Evidence.WF.lt_pow]
+          exact lt_self_plus_one_cnv _ Evidence.WF.cnv_rowA
+        obtain ⟨n, hn⟩ := hcof (phi zero Evidence.WF.rowA)
+          (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV Evidence.WF.rowA) = true
+            rw [Evidence.WF.cnv_rowA]; rfl)) hltu
+        rw [hceil n (fs n) (hcert n) _ (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV Evidence.WF.rowA) = true
+            rw [Evidence.WF.cnv_rowA]; rfl))
+          (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _ Evidence.WF.cnv_rowA)) rfl
+          (hbound n Evidence.WF.rowA Evidence.WF.cnv_rowA (Evidence.WF.le_self _))] at hn
+        exact Bool.noConfusion hn
+      · obtain ⟨n, hn⟩ := hcof (phi zero (plus Evidence.WF.rowA one))
+          (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV (plus Evidence.WF.rowA one)) = true
+            rw [cnv_plus_one _ Evidence.WF.cnv_rowA]; rfl)) hlt
+        rw [hceil n (fs n) (hcert n) _ (Evidence.WF.inT_of_cnv _ (by
+            show (CNV zero && CNV (plus Evidence.WF.rowA one)) = true
+            rw [cnv_plus_one _ Evidence.WF.cnv_rowA]; rfl))
+          (Evidence.WF.frag_omegaPow (Evidence.WF.frag_of_cnv _
+            (cnv_plus_one _ Evidence.WF.cnv_rowA))) rfl
+          (hbound n (plus Evidence.WF.rowA one) (cnv_plus_one _ Evidence.WF.cnv_rowA)
+            (le_self_plus_one_cnv _ Evidence.WF.cnv_rowA))] at hn
+        exact Bool.noConfusion hn
+  · -- the ε₁ row: IN the region (§24), so the ceiling is `no_overshoot_ceiling` on `Val`
+    subst e
+    exact cert_below_bound_eps1 u h
+  · -- the ε_ω row: one step ABOVE the region — every expansion is a rung (§24)
+    subst e
+    exact cert_below_bound_epsOmega u h
+  · -- the ε_ω+1 row: a SUCCESSOR row, so §15.10's transport carries the ε_ω row's
+    -- ceiling across it, exactly as it does for ε₀+1
+    subst e
+    exact cert_below_bound_epsOmega_succ u h
+  · cases e
 
 end Evidence.Cert
