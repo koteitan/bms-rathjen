@@ -13,10 +13,11 @@ spec this generator answers to.  The proof column is ✅ or empty; everything th
 a PREMISE of ✅ rather than ✅ itself goes to the weak-evidence column.
 
 Fields, and where each one surfaces:
-  m, t  : the two sides of the row.  `t` also decides the Buchholz cell — at and above
-          `buchCut` it is recomputed from `m` by `oRB` (the pss2bp port), below it the
-          row's own `name` is used.  See `buchOf` for why the cut is there.
-  name  : the common name (ε₀, ζ₀, Γ₀, ω^ω).  Rendered only below `buchCut`.
+  m, t  : the two sides of the row.  The Buchholz cell is computed from `m` alone, by
+          `oRB` (the pss2bp port) plus `oR`'s `1 + ·`; see `buchOf`.
+  name  : the common name (ε₀, ζ₀, Γ₀, ω^ω).  NOT rendered since 2026-08-17 — the
+          Buchholz column is the ψ form everywhere — but kept as the fallback for a
+          matrix `oRB` does not apply to, and as the reading of the 𝔗(M) cell.
   proof : the namespace that proves E.fs for this row, i.e.
           `∀ n, oR (M[n]) = fsN t (k n)` for that row's own index k.  Rendered as the
           fₙ mark IN THE WEAK-EVIDENCE COLUMN — it is a premise of ✅, not ✅.
@@ -397,7 +398,7 @@ structure RegionRow where
 def regions : List RegionRow := [
   { bms := "<(0,0)(1,1)",
     tm := "\\lt\\bar{\\varphi}(1,0)",
-    nm := "\\lt\\varepsilon_0",
+    nm := "\\lt\\psi_{0}(\\psi_{1}(0))",
     boundT := e0,
     proof := "e3_general",
     evLabel := "checkAll",
@@ -425,11 +426,20 @@ translation, whose output is verbatim `pss2bp --raw` (checked wholesale in
 `Trans/Recal.lean` §5B).  So the Buchholz column is not a second hand-written column: it
 is computed from the matrix, by the same route the audit checks.
 
-TWO THINGS THE PRINTER MUST NOT DO.  `oRB` is the term BEFORE `oR`'s `1 + ·`
-adjustment, so on the finite rows it is off by one (the row worth `2` reads
-`ψ_0(0) = 1`); and below `ψ_0(Ω_2)` the familiar names (ε₀, ζ₀, Γ₀, ω^ω) say more to a
-reader than a five-deep ψ nest does.  Both are handled by the same cut: the computed
-form is used at and above `ψ_0(Ω_2)`, the row's own `name` below it. -/
+THE ONE THING THE PRINTER MUST NOT FORGET.  `oRB` is the term BEFORE `oR`'s `1 + ·`
+adjustment (`Trans/Recal.lean` §4 explains the convention: a PSS pair sequence is never
+empty and p-bot's `Trans` starts at `Trans((0,0)) = 0`, while this repository reads the
+EMPTY matrix as 0).  The two readings therefore differ by exactly one on the finite rows
+and by nothing at all from ω up, since `1 + α = α` for `α ≥ ω`.  `buchAdj` applies that
+`1 +` on the Buchholz side, so the column agrees with the 𝔗(M) column of the same row
+everywhere instead of only above ω.
+
+Every cell is the computed ψ form (2026-08-17).  It used to switch to the row's common
+name (ε₀, ζ₀, Γ₀, ω^ω) below `ψ_0(Ω_2)`; the names are still carried in `Row.name` and
+are still what the 𝔗(M) column's `\\bar{\\varphi}` spellings unfold to, but the Buchholz
+column now says the same thing in one notation from top to bottom.  `name` survives as
+the fallback for a matrix the reader does not apply to — in practice only the empty
+matrix, which `ofMatrix` rejects. -/
 
 /-- A Buchholz term as MathJax, in the ψ form: `D u a` is `ψ_u(a)`. -/
 def bhTex : Trans.Dict.BT → String
@@ -437,18 +447,22 @@ def bhTex : Trans.Dict.BT → String
   | .D u a => "\\psi_{" ++ toString u ++ "}(" ++ bhTex a ++ ")"
   | .sum a b => bhTex a ++ "+" ++ bhTex b
 
-/-- The first row at which the Buchholz column switches to the computed ψ form:
-    `ψ_Ω(Z 1)`, the 𝔗(M) side of Buchholz's `ψ_0(Ω_2)`. -/
-def buchCut : Term := psi (Z zero) (Z one)
+/-- 1 = ψ_0(0) on the Buchholz side. -/
+def bhOne : Trans.Dict.BT := .D 0 .zero
 
-/-- The Buchholz cell of a row: computed from the matrix at and above `buchCut`,
-    the row's own common name below it, empty when the reader does not apply. -/
+/-- Is the term finite, i.e. a (possibly empty) sum of 1s?  `1 + α` moves only these. -/
+def bhFinite (b : Trans.Dict.BT) : Bool := (Trans.Dict.BT.toL b).all (· == bhOne)
+
+/-- `1 + ·` on the Buchholz side: the convention shift of `oR`. -/
+def buchAdj (b : Trans.Dict.BT) : Trans.Dict.BT :=
+  if bhFinite b then Trans.Dict.BT.ofL (bhOne :: Trans.Dict.BT.toL b) else b
+
+/-- The Buchholz cell of a row: always the computed ψ form, with `oR`'s `1 + ·`
+    applied; the row's own common name only where the reader does not apply. -/
 def buchOf (r : Row) : String :=
-  if le buchCut r.t then
-    match Trans.Recal.oRB r.m with
-    | some b => bhTex b
-    | none => ""
-  else r.name
+  match Trans.Recal.oRB r.m with
+  | some b => bhTex (buchAdj b)
+  | none => r.name
 
 /-- The matrix literal of a row, spelled exactly as it appears in the source of
     `rows` above.  `gentable` looks this up in this very file to turn each table
