@@ -4917,4 +4917,156 @@ def canonM (X : Matrix) : PS := ((blocks X).map shiftToLvl).flatten
 
 end
 
+/-! ## §32 WHY THE REBUILD GIVES THE BRANCH BACK
+
+§23 measured `(jnJ + 1, nJ + 1) :: derp bJ = bJ` at 467 of 467 and called it the crux.  This
+proves the column identity behind it: for a branch root at index `s`, depth `dq`, level `u`,
+hanging off the diagonal,
+
+    fpar M 0 s 0 + 1 = dq        and        (nJ of s) + 1 = u
+
+so `(jnJ + 1, nJ + 1)` IS the branch root's own column.  Two walks, and both are short because
+the diagonal is a diagonal.
+
+ROW 0.  The scan for the parent goes left from `s - 1`.  Everything between the diagonal and
+`s` belongs to earlier branches and is at least as deep as `dq` (the running-minimum property
+of §30's `blocks`, taken as a hypothesis here), so nothing there is a candidate; on the
+diagonal the depths are `0, 1, 2, …`, so the first candidate is column `dq - 1`
+(`fpar0Aux_skip`, `fpar0_blockroot`).
+
+ROW 1.  From there the walk follows the row-0 chain, which on the diagonal is just `j ↦ j - 1`
+(`fpar0_spine`), and stops at the first column whose LEVEL is below `u`.  On the diagonal
+index = level, so that is column `u - 1` — provided `u ≤ dq`, which is exactly §28's
+`lvl_le_fpar` at the joint (`fpar1Aux_spine`, `fpar_one_spine`).  When `u = 0` the algorithm
+takes its own `-1` branch and `nJ + 1 = 0 = u` holds too, so `rebuild_col` needs no case
+split at the end.
+
+`hmid` — "everything between the diagonal and `s` is at least as deep as `dq`" — is the one
+hypothesis still to be discharged from §30's block decomposition. -/
+
+section
+open Trans.Recal
+
+/-- 左へ走査して、途中に候補が無ければ `q` で当たる。 -/
+theorem fpar0Aux_skip (M : Matrix) (tgt : Nat) : ∀ (f i q : Nat), q ≤ i →
+    (∀ p, q < p → p ≤ i → ¬(ent M p 0 < tgt)) → ent M q 0 < tgt → i - q < f →
+    fpar0Aux f (psM M) ((tgt : Nat) : Int) ((i : Nat) : Int) 0 = ((q : Nat) : Int) := by
+  intro f
+  induction f with
+  | zero => intro i q _ _ _ h; exact absurd h (by omega)
+  | succ g ih =>
+    intro i q h1 h2 h3 h4
+    rcases Nat.eq_or_lt_of_le h1 with rfl | hlt
+    · exact fpar0Aux_hit _ _ _ _ _ (by omega) (by rw [psM_gp0]; omega)
+    · show (if ((i : Nat) : Int) < 0 then (-1 : Int)
+            else if gp0 (psM M) ((i : Nat) : Int) < ((tgt : Nat) : Int) then ((i : Nat) : Int)
+            else fpar0Aux g (psM M) ((tgt : Nat) : Int) (((i : Nat) : Int) - 1) 0) = _
+      rw [if_neg (by omega), psM_gp0,
+        if_neg (by have := h2 i (by omega) (by omega); omega),
+        show ((i : Nat) : Int) - 1 = ((i - 1 : Nat) : Int) from by omega]
+      exact ih (i - 1) q (by omega) (fun p hp1 hp2 => h2 p hp1 (by omega)) h3 (by omega)
+
+/-- **対角にぶら下がるブロックの根の行 0 の親は、対角の 1 つ浅い列。** -/
+theorem fpar0_blockroot (M : Matrix) (tr dq s : Nat)
+    (hcol : ∀ j, j ≤ tr → ent M j 0 = j ∧ ent M j 1 = j)
+    (hdq : 1 ≤ dq) (hdqtr : dq ≤ tr + 1) (hs : tr < s) (hslen : s < M.length)
+    (hdep : ent M s 0 = dq)
+    (hmid : ∀ p, tr < p → p < s → dq ≤ ent M p 0) :
+    fpar0 (psM M) ((s : Nat) : Int) 0 = ((dq - 1 : Nat) : Int) := by
+  rw [fpar0_in _ _ _ (by rw [lenI_psM]; omega), psM_gp0, hdep,
+    show ((s : Nat) : Int) - 1 = ((s - 1 : Nat) : Int) from by omega]
+  refine fpar0Aux_skip M dq _ (s - 1) (dq - 1) (by omega) ?_ ?_ (by rw [psM_len]; omega)
+  · intro p hp1 hp2
+    rcases Nat.lt_or_ge tr p with hp | hp
+    · have := hmid p hp (by omega)
+      omega
+    · have := (hcol p hp).1
+      omega
+  · have := (hcol (dq - 1) (by omega)).1
+    omega
+
+/-- 対角の上では行 0 の親は 1 つ左。 -/
+theorem fpar0_spine (M : Matrix) (tr : Nat)
+    (hcol : ∀ j, j ≤ tr → ent M j 0 = j ∧ ent M j 1 = j)
+    (j : Nat) (hj : 1 ≤ j) (hjtr : j ≤ tr) (hlen : j < M.length) :
+    fpar0 (psM M) ((j : Nat) : Int) 0 = ((j - 1 : Nat) : Int) := by
+  rw [fpar0_in _ _ _ (by rw [lenI_psM]; omega), psM_gp0,
+    show ((j : Nat) : Int) - 1 = ((j - 1 : Nat) : Int) from by omega]
+  refine fpar0Aux_hit _ _ _ _ _ (by omega) ?_
+  rw [psM_gp0, (hcol (j - 1) (by omega)).1, (hcol j hjtr).1]
+  omega
+
+/-- 対角を下りると、段が `u` 未満の最初の列は添字 `u-1`。 -/
+theorem fpar1Aux_spine (M : Matrix) (tr u : Nat)
+    (hcol : ∀ j, j ≤ tr → ent M j 0 = j ∧ ent M j 1 = j)
+    (hu : 1 ≤ u) (htr : tr < M.length) :
+    ∀ (f q : Nat), u ≤ q → q ≤ tr → q - u < f →
+      fpar1Aux f (psM M) ((u : Nat) : Int) ((q : Nat) : Int) 0 = ((u - 1 : Nat) : Int) := by
+  intro f
+  induction f with
+  | zero => intro q _ _ h; exact absurd h (by omega)
+  | succ g ih =>
+    intro q h1 h2 h3
+    have hpar : fpar0 (psM M) ((q : Nat) : Int) 0 = ((q - 1 : Nat) : Int) :=
+      fpar0_spine M tr hcol q (by omega) h2 (by omega)
+    show (let z := fpar0 (psM M) ((q : Nat) : Int) 0
+          if z < 0 then (-1 : Int)
+          else if gp1 (psM M) z < ((u : Nat) : Int) then z
+          else fpar1Aux g (psM M) ((u : Nat) : Int) z 0) = _
+    rw [hpar, if_neg (by omega), psM_gp1, (hcol (q - 1) (by omega)).2]
+    by_cases hq : q = u
+    · rw [if_pos (by omega), hq]
+    · rw [if_neg (by omega)]
+      exact ih (q - 1) (by omega) (by omega) (by omega)
+
+/-- **対角にぶら下がる列の行 1 の親は、その段の 1 つ下の対角の列。** -/
+theorem fpar_one_spine (M : Matrix) (tr u p x : Nat)
+    (hcol : ∀ j, j ≤ tr → ent M j 0 = j ∧ ent M j 1 = j)
+    (hu : 1 ≤ u) (htr : tr < M.length) (hx : x < M.length)
+    (hpar : fpar0 (psM M) ((x : Nat) : Int) 0 = ((p : Nat) : Int))
+    (hptr : p ≤ tr) (hup : u ≤ p + 1) (hlvl : ent M x 1 = u) :
+    fpar (psM M) 1 ((x : Nat) : Int) 0 = ((u - 1 : Nat) : Int) := by
+  rw [Rows.Ladder.fpar1_unfold _ _ _ (by rw [lenI_psM]; omega), psM_gp1, hlvl]
+  show (let z := fpar0 (psM M) ((x : Nat) : Int) 0
+        if z < 0 then (-1 : Int)
+        else if gp1 (psM M) z < ((u : Nat) : Int) then z
+        else fpar1Aux (psM M).length (psM M) ((u : Nat) : Int) z 0) = _
+  rw [hpar, if_neg (by omega), psM_gp1, (hcol p hptr).2]
+  by_cases hp : p < u
+  · rw [if_pos (by omega)]
+    have : p = u - 1 := by omega
+    rw [this]
+  · rw [if_neg (by omega)]
+    refine fpar1Aux_spine M tr u hcol hu htr (psM M).length p (by omega) hptr ?_
+    rw [psM_len]
+    omega
+
+/-- **§23 の測った恒等式の中身。** 継ぎ目 +1 は枝の根の深さ、行 1 の親 +1 はその段。 -/
+theorem rebuild_col (M : Matrix) (tr dq u s : Nat)
+    (hcol : ∀ j, j ≤ tr → ent M j 0 = j ∧ ent M j 1 = j)
+    (hdq : 1 ≤ dq) (hdqtr : dq ≤ tr + 1) (hs : tr < s) (hslen : s < M.length)
+    (htr : tr < M.length)
+    (hdep : ent M s 0 = dq) (hlvl : ent M s 1 = u) (hudq : u ≤ dq)
+    (hmid : ∀ p, tr < p → p < s → dq ≤ ent M p 0) :
+    fpar (psM M) 0 ((s : Nat) : Int) 0 + 1 = ((dq : Nat) : Int)
+    ∧ (if (((u : Nat) : Int) == 0) then (-1 : Int)
+       else fpar (psM M) 1 ((s : Nat) : Int) 0) + 1 = ((u : Nat) : Int) := by
+  have hp0 : fpar0 (psM M) ((s : Nat) : Int) 0 = ((dq - 1 : Nat) : Int) :=
+    fpar0_blockroot M tr dq s hcol hdq hdqtr hs hslen hdep hmid
+  constructor
+  · rw [fpar_zero, hp0]
+    omega
+  · cases u with
+    | zero =>
+      rw [if_pos (show ((((0 : Nat)) : Int) == 0) = true from rfl)]
+      omega
+    | succ w =>
+      rw [show ((((w + 1 : Nat)) : Int) == 0) = false from decide_eq_false (by omega)]
+      simp only [Bool.false_eq_true, if_false]
+      rw [fpar_one_spine M tr (w + 1) (dq - 1) s hcol (by omega) htr hslen hp0
+        (by omega) (by omega) hlvl]
+      omega
+
+end
+
 end Evidence.Region
