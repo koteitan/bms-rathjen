@@ -5210,4 +5210,89 @@ theorem joints_getD (M : PS) (J : Nat) (hJ : J < (brF M).length) :
 
 end
 
+/-! ## §34 THE INDUCTION, STARTED
+
+§31 said the goal as `red (psM X) = canonM X` for `NFM X`.  The induction is on `X.length`,
+and it splits the way `red` itself does: nothing, several blocks, one block.
+
+    redM_nil : red f (psM []) = canonM []
+    redM_sum : (each block already known) → red (f+1) (psM X) = canonM X   [X not principal]
+
+`redM_sum` is the `ppair` branch and needs nothing new — §30's `ppair_blocksG` turns it into
+the induction hypothesis applied block by block, and a block of a several-block matrix is
+strictly shorter, so the recursion is well founded on length.
+
+The one-block case has to know that `canonM` says nothing extra there: `peel` swallows the
+whole tail when every column is deeper than the head, so `blocks X = [X]` and
+`canonM X = shiftToLvl X` (`blocks_single`, `canonM_single`).  That is what lets the two
+statements — "each block moves to its own level" and "the matrix moves to its level" — be the
+same theorem.
+
+WHAT IS LEFT is the one-block case itself, which is where `red` actually computes: `isZeroP`,
+then a root of level 0 at depth 0 (the fold, §25 with §32/§33's hypotheses), then a root of
+level 0 deeper down (one `red_shift`), then a root of level ≥ 1 (`red_head_pos`, which
+prepends a diagonal and lands back in the fold).  Only the fold recurses, and it recurses into
+BRANCHES — shorter than `X` — so the same measure carries it. -/
+
+section
+open Trans.Recal
+
+theorem peel_all : ∀ (dd : Nat) (X : Matrix), (∀ i, i < X.length → dd < ent X i 0) →
+    peel dd X = (X, []) := by
+  intro dd X
+  induction X with
+  | nil => intro _; rfl
+  | cons c cs ih =>
+    intro h
+    have hc : dd < c.getD 0 0 := h 0 (by simp)
+    rw [peel_cons_pos dd c cs hc,
+      ih (fun i hi => by
+        have := h (i + 1) (by simp; omega)
+        exact this)]
+
+/-- ブロック 1 つの行列のブロック列は自分だけ。 -/
+theorem blocks_single (X : Matrix) (h : BlkG X) : blocks X = [X] := by
+  cases X with
+  | nil => exact absurd h.1 (by simp)
+  | cons c cs =>
+    have hall : ∀ i, i < cs.length → c.getD 0 0 < ent cs i 0 := by
+      intro i hi
+      have := h.2 (i + 1) (by omega) (by simp; omega)
+      exact this
+    rw [blocks_cons c cs, peel_all (c.getD 0 0) cs hall, blocks_nil]
+
+theorem canonM_single (X : Matrix) (h : BlkG X) : canonM X = shiftToLvl X := by
+  show ((blocks X).map shiftToLvl).flatten = _
+  rw [blocks_single X h]
+  show shiftToLvl X ++ [] = _
+  rw [List.append_nil]
+
+/-! ### 場合分けの 2 つ -/
+
+theorem redM_nil (f : Nat) : red f (psM ([] : Matrix)) = canonM [] := by
+  show red f ([] : PS) = _
+  cases f with
+  | zero =>
+    rw [show canonM [] = [] from by
+      show ((blocks []).map _).flatten = _
+      rw [blocks_nil]
+      rfl]
+    rfl
+  | succ g =>
+    rw [red_nonprin [] g (by decide) (by decide), show ppair ([] : PS) = [] from by decide,
+      show canonM [] = [] from by show ((blocks []).map _).flatten = _; rw [blocks_nil]; rfl]
+    rfl
+
+/-- 最上位のブロックが 2 つ以上の場合。 -/
+theorem redM_sum (f : Nat) (X : Matrix) (hzero : isZeroP (psM X) = false)
+    (hprin : isPrincipalP (psM X) = false)
+    (ih : ∀ Bk ∈ blocks X, red f (psM Bk) = shiftToLvl Bk) :
+    red (f + 1) (psM X) = canonM X := by
+  rw [red_nonprin _ f hzero hprin, ppair_blocksG, List.flatMap_map]
+  show ((blocks X).map (fun Bk => red f (psM Bk))).flatten = _
+  rw [List.map_congr_left ih]
+  rfl
+
+end
+
 end Evidence.Region
