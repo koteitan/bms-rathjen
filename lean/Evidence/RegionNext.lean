@@ -1,5 +1,6 @@
 import Evidence.Region
 import Rows.TM
+import Rows.Ladder
 /-
 Evidence/RegionNext.lean — WHICH ROWS ARE HEAVY, MEASURED
 
@@ -2792,6 +2793,344 @@ def enumFree (L n : Nat) : List B :=
 #guard (List.range 4).all fun d =>
   ((enumFree 3 4).filter fun s => match s with | .nd _ .nil _ => true | _ => false).all
     fun s => redP (psM (matB s d)) == psM (matB s (lvlB s))
+
+end
+
+/-! ## §21 THE `red` PROOF: THE MACHINERY, AND THE BASE CASE
+
+§20 pinned the identity.  This section proves the base case of its induction and builds the
+unfoldings the rest of it will run on.  `Rows/Ladder.lean` already opens `red`'s branches
+matrix-independently (`red_jj`, `red_shift`, `red_fold_open`, `red_fold_single`) and turns a
+row-0 parent chain into `isPrincipalP`/`isAnc`, and it imports only `Trans.Recal`; what was
+missing is the same service for the two PARENT SEARCHES and for `red`'s remaining branch.
+
+    fpar0Aux_hit / fpar1Aux_hit    one step of the leftward scan, when it hits
+    fpar_oob / fpar0_in            the range guards
+    isParentP_of_fpar / _of_ne     `isParentP` from the parent it found
+    red_head_pos                   the branch `red` takes when the head's LEVEL is positive
+                                   (`Rows/Ladder.lean` only had `gp1 = 0` and `gp1 = 1`)
+
+**THE BASE CASE.**  A one-node index is one column, and `red` moves it to depth = level:
+
+    red (f + 2) (psM (matB (nd v nil nil) d))  =  canon (nd v nil nil)  =  [(v, v)]
+
+For `v = 0` that is `isZeroP`, one step.  For `v ≥ 1` it is the interesting branch and it
+shows the whole mechanism in miniature: `red` prepends the diagonal `jjSeq 0 (v-1)`, pushes
+the column out by `v`, reduces THAT (which is a diagonal with one deep column on the end, so
+`trMax` runs to the end and `red_jj` collapses it to `jjSeq 0 v`), then drops the first `v`
+columns and shifts back.  `diagT`/`red_diagT` is that middle matrix, isolated — it is the
+shape every later branch reduces to, so it is written once here. -/
+
+section
+open Trans.Recal
+
+/-! list plumbing -/
+
+theorem getD_app_left {α : Type _} (L R : List α) (dd : α) (i : Nat) (h : i < L.length) :
+    (L ++ R).getD i dd = L.getD i dd := by
+  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_append_left h]
+
+theorem getD_app_right {α : Type _} (L R : List α) (dd : α) (i : Nat) (h : L.length ≤ i) :
+    (L ++ R).getD i dd = R.getD (i - L.length) dd := by
+  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_append_right h]
+
+theorem getD_map_range {α : Type _} (n : Nat) (f : Nat → α) (dd : α) : ∀ (i : Nat), i < n →
+    ((List.range n).map f).getD i dd = f i := by
+  intro i h
+  rw [List.getD_eq_getElem?_getD, List.getElem?_map,
+    show (List.range n)[i]? = some i from by simp [h]]
+  rfl
+
+/-! ### the diagonal -/
+
+theorem jjSeq_zero (w : Nat) : jjSeq 0 ((w : Nat) : Int)
+    = (List.range (w + 1)).map (fun (k : Nat) => (((k : Nat) : Int), ((k : Nat) : Int))) := by
+  show (List.range (((w : Nat) : Int) - 0 + 1).toNat).map
+    (fun (k : Nat) => ((0 : Int) + Int.ofNat k, (0 : Int) + Int.ofNat k)) = _
+  rw [show (((w : Nat) : Int) - 0 + 1).toNat = w + 1 from by omega]
+  exact List.map_congr_left (fun k _ => by
+    show ((0 : Int) + Int.ofNat k, (0 : Int) + Int.ofNat k)
+      = (((k : Nat) : Int), ((k : Nat) : Int))
+    simp)
+
+theorem jjSeq_length (w : Nat) : (jjSeq 0 ((w : Nat) : Int)).length = w + 1 := by
+  rw [jjSeq_zero w, List.length_map, List.length_range]
+
+theorem jjSeq_getD (w i : Nat) (h : i < w + 1) :
+    (jjSeq 0 ((w : Nat) : Int)).getD i (0, 0) = (((i : Nat) : Int), ((i : Nat) : Int)) := by
+  rw [jjSeq_zero w]
+  exact getD_map_range (w + 1) _ (0, 0) i h
+
+/-- 対角の後ろに深い列を 1 本足したもの。 -/
+def diagT (w : Nat) (D : Int) : PS :=
+  jjSeq 0 ((w : Nat) : Int) ++ [(D, ((w + 1 : Nat) : Int))]
+
+theorem diagT_length (w : Nat) (D : Int) : (diagT w D).length = w + 2 := by
+  show ((jjSeq 0 ((w : Nat) : Int)) ++ [(D, ((w + 1 : Nat) : Int))]).length = _
+  rw [List.length_append, jjSeq_length w]
+  rfl
+
+theorem diagT_lenI (w : Nat) (D : Int) : lenI (diagT w D) = ((w + 2 : Nat) : Int) := by
+  show (((diagT w D).length : Nat) : Int) = _
+  rw [diagT_length]
+
+theorem diagT_lo (w : Nat) (D : Int) (i : Nat) (h : i < w + 1) :
+    gp0 (diagT w D) ((i : Nat) : Int) = ((i : Nat) : Int)
+      ∧ gp1 (diagT w D) ((i : Nat) : Int) = ((i : Nat) : Int) := by
+  have hg : (diagT w D).getD i (0, 0) = (((i : Nat) : Int), ((i : Nat) : Int)) := by
+    show ((jjSeq 0 ((w : Nat) : Int)) ++ [(D, ((w + 1 : Nat) : Int))]).getD i (0, 0) = _
+    rw [getD_app_left _ _ _ i (by rw [jjSeq_length w]; omega), jjSeq_getD w i h]
+  constructor
+  · show (if ((i : Nat) : Int) < 0 then (0 : Int)
+          else ((diagT w D).getD ((i : Nat) : Int).toNat (0, 0)).1) = _
+    rw [if_neg (by omega)]
+    show ((diagT w D).getD i (0, 0)).1 = _
+    rw [hg]
+  · show (if ((i : Nat) : Int) < 0 then (0 : Int)
+          else ((diagT w D).getD ((i : Nat) : Int).toNat (0, 0)).2) = _
+    rw [if_neg (by omega)]
+    show ((diagT w D).getD i (0, 0)).2 = _
+    rw [hg]
+
+theorem diagT_hi (w : Nat) (D : Int) :
+    gp0 (diagT w D) ((w + 1 : Nat) : Int) = D
+      ∧ gp1 (diagT w D) ((w + 1 : Nat) : Int) = ((w + 1 : Nat) : Int) := by
+  have hg : (diagT w D).getD (w + 1) (0, 0) = (D, ((w + 1 : Nat) : Int)) := by
+    show ((jjSeq 0 ((w : Nat) : Int)) ++ [(D, ((w + 1 : Nat) : Int))]).getD (w + 1) (0, 0) = _
+    rw [getD_app_right _ _ _ (w + 1) (by rw [jjSeq_length w]; omega), jjSeq_length w,
+      show w + 1 - (w + 1) = 0 from by omega]
+    rfl
+  constructor
+  · show (if ((w + 1 : Nat) : Int) < 0 then (0 : Int)
+          else ((diagT w D).getD ((w + 1 : Nat) : Int).toNat (0, 0)).1) = _
+    rw [if_neg (by omega)]
+    show ((diagT w D).getD (w + 1) (0, 0)).1 = _
+    rw [hg]
+  · show (if ((w + 1 : Nat) : Int) < 0 then (0 : Int)
+          else ((diagT w D).getD ((w + 1 : Nat) : Int).toNat (0, 0)).2) = _
+    rw [if_neg (by omega)]
+    show ((diagT w D).getD (w + 1) (0, 0)).2 = _
+    rw [hg]
+
+/-! ### one-step unfoldings of the parent searches -/
+
+theorem beqI_self (n : Int) : (n == n) = true := decide_eq_true rfl
+
+theorem fpar0Aux_hit (f : Nat) (M : PS) (tgt j0 k : Int) (h1 : k ≤ j0) (h2 : gp0 M j0 < tgt) :
+    fpar0Aux (f + 1) M tgt j0 k = j0 := by
+  show (if j0 < k then (-1 : Int) else if gp0 M j0 < tgt then j0 else _) = _
+  rw [if_neg (by omega), if_pos h2]
+
+theorem fpar1Aux_hit (f : Nat) (M : PS) (tgt j0 k j1 : Int)
+    (h0 : fpar0 M j0 k = j1) (h1 : k ≤ j1) (h2 : gp1 M j1 < tgt) :
+    fpar1Aux (f + 1) M tgt j0 k = j1 := by
+  show (let z := fpar0 M j0 k
+        if z < k then (-1 : Int) else if gp1 M z < tgt then z else _) = _
+  rw [h0, if_neg (by omega), if_pos h2]
+
+theorem fpar_oob (M : PS) (i : Nat) (j k : Int) (h : j < 0 ∨ j ≥ lenI M) :
+    fpar M i j k = -1 := by
+  show (if j < 0 ∨ j ≥ lenI M then (-1 : Int) else _) = _
+  rw [if_pos h]
+
+theorem fpar0_in (M : PS) (j k : Int) (h : ¬(j < 0 ∨ j ≥ lenI M)) :
+    fpar0 M j k = fpar0Aux (M.length + 1) M (gp0 M j) (j - 1) k := by
+  show (if j < 0 ∨ j ≥ lenI M then (-1 : Int) else _) = _
+  rw [if_neg h]
+
+theorem isParentP_of_fpar (M : PS) (i : Nat) (j k : Int) (h0 : 0 ≤ k) (h1 : k < lenI M)
+    (h2 : fpar M i j k = k) : isParentP M i j k = true := by
+  show (decide (0 ≤ k) && decide (k < lenI M) && (k == fpar M i j k)) = true
+  rw [h2, decide_eq_true h0, decide_eq_true h1, beqI_self]
+  rfl
+
+theorem isParentP_of_ne (M : PS) (i : Nat) (j k : Int) (h : (k == fpar M i j k) = false) :
+    isParentP M i j k = false := by
+  show (decide (0 ≤ k) && decide (k < lenI M) && (k == fpar M i j k)) = false
+  rw [h, Bool.and_false]
+
+/-! ### `red` on the diagonal-plus-one -/
+
+theorem diagT_par (w : Nat) (D : Int) (hD : ((w : Nat) : Int) < D) (k : Nat)
+    (hk1 : 1 ≤ k) (hk2 : k < w + 2) :
+    fpar (diagT w D) 0 ((k : Nat) : Int) 0 = ((k - 1 : Nat) : Int) := by
+  have hlt : gp0 (diagT w D) ((k - 1 : Nat) : Int) < gp0 (diagT w D) ((k : Nat) : Int) := by
+    rcases Nat.lt_or_ge k (w + 1) with hkw | hkw
+    · rw [(diagT_lo w D (k - 1) (by omega)).1, (diagT_lo w D k hkw).1]
+      omega
+    · have hkeq : k = w + 1 := by omega
+      subst hkeq
+      rw [(diagT_lo w D (w + 1 - 1) (by omega)).1, (diagT_hi w D).1]
+      omega
+  rw [fpar_zero, fpar0_in _ _ _ (by rw [diagT_lenI]; omega),
+    show ((k : Nat) : Int) - 1 = ((k - 1 : Nat) : Int) from by omega,
+    fpar0Aux_hit _ _ _ _ _ (by omega) hlt]
+
+theorem diagT_par0 (w : Nat) (D : Int) : fpar (diagT w D) 0 ((0 : Nat) : Int) 0 = -1 := by
+  rw [fpar_zero, fpar0_in _ _ _ (by rw [diagT_lenI]; omega)]
+  exact fpar0Aux_neg _ _ _ _ _ (by omega)
+
+theorem diagT_prin (w : Nat) (D : Int) (hD : ((w : Nat) : Int) < D) :
+    isPrincipalP (diagT w D) = true := by
+  refine Rows.Ladder.isPrincipalP_of_chain (M := diagT w D) (par := fun k => k - 1)
+    (fun k h1 h2 => diagT_par w D hD k h1 (by rw [diagT_length] at h2; omega))
+    (fun k h1 _ => by show k - 1 < k; omega) (diagT_par0 w D) (by rw [diagT_length]; omega)
+
+theorem diagT_trMax (w : Nat) (D : Int) (hD : ((w : Nat) : Int) < D) :
+    trMax (diagT w D) = lenI (diagT w D) - 1 := by
+  rw [diagT_lenI, show ((w + 2 : Nat) : Int) - 1 = ((w + 1 : Nat) : Int) from by omega]
+  refine Rows.Ladder.trMax_eq (diagT w D) (w + 1) (by rw [diagT_length]; omega) ?_ ?_
+  · intro j hj
+    refine isParentP_of_fpar _ _ _ _ (by omega) (by rw [diagT_lenI]; omega) ?_
+    have hp0 : fpar0 (diagT w D) (((j : Nat) : Int) + 1) ((j : Nat) : Int)
+        = ((j : Nat) : Int) := by
+      have hlt : gp0 (diagT w D) ((j : Nat) : Int)
+          < gp0 (diagT w D) ((j + 1 : Nat) : Int) := by
+        rcases Nat.lt_or_ge (j + 1) (w + 1) with hjw | hjw
+        · rw [(diagT_lo w D j (by omega)).1, (diagT_lo w D (j + 1) hjw).1]; omega
+        · have : j + 1 = w + 1 := by omega
+          rw [(diagT_lo w D j (by omega)).1, show ((j + 1 : Nat) : Int) = ((w + 1 : Nat) : Int)
+            from by omega, (diagT_hi w D).1]
+          omega
+      rw [fpar0_in _ _ _ (by rw [diagT_lenI]; omega),
+        show ((j : Nat) : Int) + 1 - 1 = ((j : Nat) : Int) from by omega,
+        show ((j : Nat) : Int) + 1 = ((j + 1 : Nat) : Int) from by omega]
+      exact fpar0Aux_hit _ _ _ _ _ (by omega) hlt
+    have hlt1 : gp1 (diagT w D) ((j : Nat) : Int)
+        < gp1 (diagT w D) (((j : Nat) : Int) + 1) := by
+      rcases Nat.lt_or_ge (j + 1) (w + 1) with hjw | hjw
+      · rw [(diagT_lo w D j (by omega)).2,
+          show ((j : Nat) : Int) + 1 = ((j + 1 : Nat) : Int) from by omega,
+          (diagT_lo w D (j + 1) hjw).2]
+        omega
+      · have : j + 1 = w + 1 := by omega
+        rw [(diagT_lo w D j (by omega)).2,
+          show ((j : Nat) : Int) + 1 = ((w + 1 : Nat) : Int) from by omega,
+          (diagT_hi w D).2]
+        omega
+    rw [Rows.Ladder.fpar1_unfold _ _ _ (by rw [diagT_lenI]; omega)]
+    exact fpar1Aux_hit _ _ _ _ _ _ hp0 (by omega) hlt1
+  · refine isParentP_of_ne _ _ _ _ ?_
+    rw [fpar_oob _ _ _ _ (by rw [diagT_lenI]; omega)]
+    exact decide_eq_false (by omega)
+
+/-- **対角に深い列を 1 本足した行列は、1 段長い対角に落ちる。** -/
+theorem red_diagT (w : Nat) (D : Int) (hD : ((w : Nat) : Int) < D) (g : Nat) :
+    red (g + 1) (diagT w D) = jjSeq 0 ((w + 1 : Nat) : Int) := by
+  rw [Rows.Ladder.red_jj (diagT w D) g ?hz (diagT_prin w D hD) ?h0 ?h1 (diagT_trMax w D hD),
+    diagT_lenI, show ((w + 2 : Nat) : Int) - 1 = ((w + 1 : Nat) : Int) from by omega]
+  case hz =>
+    show ((diagT w D).length == 1 && (gp1 (diagT w D) 0 == 0)) = false
+    rw [show ((diagT w D).length == 1) = false from by rw [diagT_length]; simp]
+    rfl
+  case h0 => exact (diagT_lo w D 0 (by omega)).1
+  case h1 => exact (diagT_lo w D 0 (by omega)).2
+
+/-! ### the single-node case -/
+
+theorem jjSeq_lenI (w : Nat) : lenI (jjSeq 0 ((w : Nat) : Int)) = ((w + 1 : Nat) : Int) := by
+  show (((jjSeq 0 ((w : Nat) : Int)).length : Nat) : Int) = _
+  rw [jjSeq_length]
+
+theorem jjSeq_gp (w i : Nat) (h : i < w + 1) :
+    gp0 (jjSeq 0 ((w : Nat) : Int)) ((i : Nat) : Int) = ((i : Nat) : Int)
+      ∧ gp1 (jjSeq 0 ((w : Nat) : Int)) ((i : Nat) : Int) = ((i : Nat) : Int) := by
+  constructor
+  · show (if ((i : Nat) : Int) < 0 then (0 : Int)
+          else ((jjSeq 0 ((w : Nat) : Int)).getD ((i : Nat) : Int).toNat (0, 0)).1) = _
+    rw [if_neg (by omega)]
+    show ((jjSeq 0 ((w : Nat) : Int)).getD i (0, 0)).1 = _
+    rw [jjSeq_getD w i h]
+  · show (if ((i : Nat) : Int) < 0 then (0 : Int)
+          else ((jjSeq 0 ((w : Nat) : Int)).getD ((i : Nat) : Int).toNat (0, 0)).2) = _
+    rw [if_neg (by omega)]
+    show ((jjSeq 0 ((w : Nat) : Int)).getD i (0, 0)).2 = _
+    rw [jjSeq_getD w i h]
+
+theorem drop_app_len {α : Type _} (L R : List α) (n : Nat) (h : L.length = n) :
+    (L ++ R).drop n = R := by
+  subst h; exact List.drop_left
+
+theorem jjSeq_drop_last (w : Nat) :
+    (jjSeq 0 ((w + 1 : Nat) : Int)).drop (w + 1)
+      = [(((w + 1 : Nat) : Int), ((w + 1 : Nat) : Int))] := by
+  rw [jjSeq_zero (w + 1), List.range_succ, List.map_append,
+    drop_app_len _ _ (w + 1) (by simp)]
+  rfl
+
+theorem red_head_pos (M : PS) (f : Nat) (hzero : isZeroP M = false)
+    (hprin : isPrincipalP M = true) (hg1 : (gp1 M 0 == 0) = false) :
+    red (f + 1) M
+      = (let N := red f (jjSeq 0 (gp1 M 0 - 1) ++ incrFirst M (gp1 M 0))
+         let jN : Int := lenI N - 1
+         if decide (gp1 M 0 ≤ jN) && isPrincipalP (N.drop (gp1 M 0).toNat) then
+           incrFirst (N.drop (gp1 M 0).toNat) (-(gp0 N (gp1 M 0)) + gp1 N (gp1 M 0))
+         else M) := by
+  simp only [Trans.Recal.red]
+  rw [hzero]
+  simp only [Bool.false_eq_true, if_false]
+  rw [hprin]
+  simp only [if_true]
+  rw [hg1]
+  simp only [Bool.and_false, Bool.false_eq_true, if_false]
+
+/-- **1 節の添字。** `red` はそれを「深さ = 段」の位置に置く。 -/
+theorem red_leaf (d f : Nat) : ∀ v : Nat,
+    red (f + 2) [(((d : Nat) : Int), ((v : Nat) : Int))]
+      = [(((v : Nat) : Int), ((v : Nat) : Int))] := by
+  intro v
+  cases v with
+  | zero =>
+    simp only [Trans.Recal.red]
+    rw [show isZeroP [(((d : Nat) : Int), ((0 : Nat) : Int))] = true from rfl]
+    simp only [if_true]
+    rfl
+  | succ w =>
+    have hg1M : gp1 [(((d : Nat) : Int), ((w + 1 : Nat) : Int))] 0
+        = ((w + 1 : Nat) : Int) := rfl
+    have hzero : isZeroP [(((d : Nat) : Int), ((w + 1 : Nat) : Int))] = false := by
+      show ([(((d : Nat) : Int), ((w + 1 : Nat) : Int))].length == 1
+        && (gp1 [(((d : Nat) : Int), ((w + 1 : Nat) : Int))] 0 == 0)) = false
+      rw [hg1M, show (((w + 1 : Nat) : Int) == 0) = false from decide_eq_false (by omega)]
+      rfl
+    have hprin : isPrincipalP [(((d : Nat) : Int), ((w + 1 : Nat) : Int))] = true :=
+      Rows.Ladder.isPrincipalP_single _ _ (decide_eq_false (by omega))
+    have hne : (gp1 [(((d : Nat) : Int), ((w + 1 : Nat) : Int))] 0 == 0) = false := by
+      rw [hg1M]; exact decide_eq_false (by omega)
+    have harg : jjSeq 0 (((w + 1 : Nat) : Int) - 1)
+        ++ incrFirst [(((d : Nat) : Int), ((w + 1 : Nat) : Int))] ((w + 1 : Nat) : Int)
+        = diagT w (((d : Nat) : Int) + ((w + 1 : Nat) : Int)) := by
+      rw [show ((w + 1 : Nat) : Int) - 1 = ((w : Nat) : Int) from by omega]
+      rfl
+    have hred : red (f + 1) (jjSeq 0 (((w + 1 : Nat) : Int) - 1)
+        ++ incrFirst [(((d : Nat) : Int), ((w + 1 : Nat) : Int))] ((w + 1 : Nat) : Int))
+        = jjSeq 0 ((w + 1 : Nat) : Int) := by
+      rw [harg]
+      exact red_diagT w _ (by omega) f
+    rw [red_head_pos _ (f + 1) hzero hprin hne, hg1M, hred]
+    show (if decide (((w + 1 : Nat) : Int) ≤ lenI (jjSeq 0 ((w + 1 : Nat) : Int)) - 1)
+            && isPrincipalP ((jjSeq 0 ((w + 1 : Nat) : Int)).drop ((w + 1 : Nat) : Int).toNat)
+          then incrFirst ((jjSeq 0 ((w + 1 : Nat) : Int)).drop ((w + 1 : Nat) : Int).toNat)
+                 (-(gp0 (jjSeq 0 ((w + 1 : Nat) : Int)) ((w + 1 : Nat) : Int))
+                   + gp1 (jjSeq 0 ((w + 1 : Nat) : Int)) ((w + 1 : Nat) : Int))
+          else [(((d : Nat) : Int), ((w + 1 : Nat) : Int))]) = _
+    rw [show ((w + 1 : Nat) : Int).toNat = w + 1 from rfl, jjSeq_drop_last w, jjSeq_lenI,
+      (jjSeq_gp (w + 1) (w + 1) (by omega)).1, (jjSeq_gp (w + 1) (w + 1) (by omega)).2,
+      decide_eq_true (show ((w + 1 : Nat) : Int) ≤ ((w + 1 + 1 : Nat) : Int) - 1 from by omega),
+      Rows.Ladder.isPrincipalP_single _ _ (show (((w + 1 : Nat) : Int) == 0) = false from
+        decide_eq_false (by omega))]
+    simp only [Bool.and_self, if_true]
+    show [(((w + 1 : Nat) : Int)
+      + (-((w + 1 : Nat) : Int) + ((w + 1 : Nat) : Int)), ((w + 1 : Nat) : Int))] = _
+    rw [show ((w + 1 : Nat) : Int) + (-((w + 1 : Nat) : Int) + ((w + 1 : Nat) : Int))
+      = ((w + 1 : Nat) : Int) from by omega]
+
+/-- §20 の等式の基底: 節が 1 つの添字。 -/
+theorem red_canon_leaf (v d f : Nat) :
+    red (f + 2) (psM (matB (.nd v .nil .nil) d)) = canon (.nd v .nil .nil) := by
+  show red (f + 2) [(((d : Nat) : Int), ((v : Nat) : Int))] = _
+  rw [red_leaf d f v]
+  rfl
 
 end
 
