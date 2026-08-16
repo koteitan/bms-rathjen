@@ -1511,4 +1511,64 @@ def powFits (v : Nat) (x y : Term) : Bool :=
 
 end
 
+/-! ## §15 `B` IS A COORDINATE SYSTEM FOR MATRICES, NOT A BUCHHOLZ ENCODING
+
+§14 says the value side needs a collapsing function on `𝔗(M)` terms, and the repository
+already HAS one: `Trans/Dict.lean`'s `dict`, which is compositional —
+`dict (D u a) = collapse u (dict a)`, `dict (sum a b) = dict a ⊕ dict b`.  So the obvious
+shortcut is to read a `B` index as a Buchholz term (`nd v r a` ↦ `r ⊕ ψ_v(a)`) and take
+`dict` of it.  **The shortcut is wrong, and this section pins where.**
+
+    oRB (0,0)(1,1)(2,2)   =  ψ₀(ψ₂(0))          the BMS → Buchholz map
+    encB of the same      =  ψ₀(ψ₁(ψ₂(0)))      reading the row-1 entry as the subscript
+
+and `dict` separates them.  `Trans/Dict.lean` §4 records that THREE independent things put
+that matrix at `ψ₀(ψ₂(0))` — this repository's own port of naruyoko's pss2bp (`oRB`),
+Hexirp's published analysis, and the BMS-vs-Rathjen spreadsheet — so it is `encB` that is
+out, not `oRB`.  MEASURED over §14's 848 indices:
+
+    618 / 848    `dict (encB t)` agrees with `oR (matB t 0)`
+      1          matrix of ≤ 3 columns where they differ, and it is `(0,0)(1,1)(2,2)`
+
+WHAT THIS DOES AND DOES NOT TOUCH.  `B` was never claimed to be a Buchholz encoding.  §2
+claims `matB (decodeB M) 0 = M` — a faithful coordinate system for MATRICES — and §13's
+`expand_matB` is an identity between matrices.  Both stand: `decodeB` reads a width-two
+matrix as a forest by its row-0 entries, which is exactly what `BMS.expand` acts on, and the
+row-1 entry is a LABEL there, not a `ψ` subscript.  What falls is only the shortcut for the
+VALUE.
+
+So the value side still needs its own function, and §14's measurement is what pins it down:
+the prefix splits off, and the node function is `ω^(Ω_{v-1} ⊕ ·)` exactly below `Ω_{v+1}`.
+Above that it collapses, and the collapse is NOT `dict ∘ encB`. -/
+
+section
+open TM TM.Term
+
+/-- 添字を素直に Buchholz 項として読んだもの。**これは BMS → Buchholz の写像ではない。** -/
+def encB : B → Trans.Dict.BT
+  | .nil => .zero
+  | .nd v .nil a => .D v (encB a)
+  | .nd v r a => .sum (encB r) (.D v (encB a))
+
+-- 出典側の読み (`Trans/Dict.lean` §4)。
+#guard Trans.Recal.oRB [[0,0], [1,1], [2,2]] == some (.D 0 (.D 2 .zero))
+-- `B` の読み。
+#guard encB (.nd 0 .nil (.nd 1 .nil (.nd 2 .nil .nil)))
+  == Trans.Dict.BT.D 0 (.D 1 (.D 2 .zero))
+-- 値は違う。
+#guard Trans.Dict.dict (.D 0 (.D 2 .zero))
+  != Trans.Dict.dict (.D 0 (.D 1 (.D 2 .zero)))
+-- 母集団での一致数と、3 列以下で食い違う唯一の行列。
+#guard (valCorpus.filter fun t =>
+  match Trans.oR (matB t 0) with
+  | none => false
+  | some u => u == Trans.Dict.dict (encB t)).length == 618
+#guard (valCorpus.filter fun t => (matB t 0).length ≤ 3 &&
+  (match Trans.oR (matB t 0) with
+   | none => true
+   | some u => u != Trans.Dict.dict (encB t))).map (fun t => matB t 0)
+  == [[[0,0], [1,1], [2,2]]]
+
+end
+
 end Evidence.Region
