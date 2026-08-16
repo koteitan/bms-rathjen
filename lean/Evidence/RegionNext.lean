@@ -2383,4 +2383,315 @@ theorem ppair_matB (t : B) :
 
 end
 
+/-! ## §19 THE NORMAL FORM: A NODE'S LEVEL IS AT MOST ITS PARENT'S PLUS ONE
+
+§18 measured that `red` never runs on the region's 380 indices.  That is NOT a property of
+`topOKB`: enumerate every index with at most 4 nodes and levels below 3 and only **101 of
+220** are reduced.  So the port's gate is not "`red` is dead on `matB` matrices" — it is a
+NORMAL FORM, and this section finds it and proves what the region needs of it.
+
+    nfB t   ⟺   every node's level is at most its parent's level plus one
+                (a top-level node's parent is nothing, so its level must be 0)
+
+MEASURED, and the agreement is exact — not approximate — on every index of three
+enumerations:
+
+    levels < 3, ≤ 4 nodes      220 indices     220 / 220 agree   (101 reduced)
+    levels < 4, ≤ 5 nodes     5101 indices    5101 / 5101 agree  (697 reduced)
+    levels < 3, ≤ 6 nodes    16332 indices   16332 / 16332 agree
+
+    nfB t  =  isReducedP (psM (matB t 0))
+
+The smallest failure is `(0,0)(1,2)`, which `red` sends to `(0,0)(1,1)`: a level-2 node
+directly under a level-0 one is a level jump, and `red` closes it.  The rule is LOCAL — the
+parent alone, not the ancestors.  The variant "at most one more than the largest ancestor
+level" is refuted by `(0,0)(1,1)(2,0)(3,2)`, which has a level-1 ancestor and is still not
+reduced: `red` sends it to `(0,0)(1,1)(2,0)(3,1)`.
+
+`topOKB` is exactly the top-level half of `nfB` (`topOKB_of_nfB`), so the region loses
+nothing by strengthening its hypothesis, and it gains the gate.
+
+**WHAT IS PROVED HERE.**  `nfLe` is preserved by every operator the fundamental sequence is
+built from — `appB`, `plugB`, `repNode`, `repB`, `iterD`, `rwB` — and therefore
+
+    nfB t → nfB (fsB t n)
+
+which with §13's `expand_matB` gives `Hclosed` for the FULL generalised region (`hclosedB`).
+That is `certIn_region`'s first supply, discharged for the region `B` describes rather than
+for `Evidence/RegionV.lean`'s `A` fragment.
+
+The interesting step is `iterD`: `rwB` iterates at the nearest ancestor of level below `w`,
+so the node it plugs into has level `≥ w > v`, and `lastBnd_ge` turns "no ancestor of the
+last node has level below `w`" into the bound that keeps the copies in normal form.
+
+WHAT IS NOT CLAIMED.  `nfB = isReducedP` is measured, not proved; that equality is the port's
+gate and is the next brick.  What §19 proves is everything the REGION needs of `nfB`. -/
+
+section
+open Trans.Recal
+
+/-- **標準形。** 節の段は親の段 + 1 以下。`m` はその位置で許される上限。 -/
+def nfLe (m : Nat) : B → Bool
+  | .nil => true
+  | .nd v r a => decide (v ≤ m) && nfLe m r && nfLe (v + 1) a
+
+/-- 最上位の節の親は無いので、その段は 0 でなければならない。 -/
+def nfB (t : B) : Bool := nfLe 0 t
+
+theorem nfLe_nd_iff (m v : Nat) (r a : B) :
+    nfLe m (.nd v r a) = true ↔ (v ≤ m ∧ nfLe m r = true ∧ nfLe (v + 1) a = true) := by
+  show (decide (v ≤ m) && nfLe m r && nfLe (v + 1) a) = true ↔ _
+  rw [Bool.and_eq_true, Bool.and_eq_true, decide_eq_true_iff, and_assoc]
+
+theorem nfLe_mono : ∀ (t : B) (m m' : Nat), m ≤ m' → nfLe m t = true → nfLe m' t = true := by
+  intro t
+  induction t with
+  | nil => intro _ _ _ _; rfl
+  | nd v r a ihr _ =>
+    intro m m' hm h
+    obtain ⟨h1, h2, h3⟩ := (nfLe_nd_iff m v r a).mp h
+    exact (nfLe_nd_iff m' v r a).mpr ⟨by omega, ihr m m' hm h2, h3⟩
+
+/-- **`topOKB` は `nfB` の最上位の半分。** -/
+theorem topOKB_of_nfB : ∀ (t : B), nfB t = true → topOKB t = true := by
+  intro t
+  show nfLe 0 t = true → _
+  induction t with
+  | nil => intro _; rfl
+  | nd v r a ihr _ =>
+    intro h
+    obtain ⟨h1, h2, _⟩ := (nfLe_nd_iff 0 v r a).mp h
+    show ((v == 0) && topOKB r) = true
+    rw [show (v == 0) = true from decide_eq_true (by omega), ihr h2]
+    rfl
+
+/-! ### §19.1 EVERY OPERATOR OF THE FUNDAMENTAL SEQUENCE PRESERVES IT -/
+
+theorem nfLe_appB : ∀ (s r : B) (m : Nat), nfLe m r = true → nfLe m s = true →
+    nfLe m (appB r s) = true := by
+  intro s
+  induction s with
+  | nil => intro r m hr _; exact hr
+  | nd v s a ihs _ =>
+    intro r m hr hs
+    obtain ⟨h1, h2, h3⟩ := (nfLe_nd_iff m v s a).mp hs
+    exact (nfLe_nd_iff m v (appB r s) a).mpr ⟨h1, ihs r m hr h2, h3⟩
+
+/-- 最後の節の位置で許される上限。 -/
+def lastBnd (m : Nat) : B → Nat
+  | .nil => m
+  | .nd _ _ .nil => m
+  | .nd v _ a => lastBnd (v + 1) a
+
+theorem nfLe_plugB : ∀ (a : B) (m : Nat) (y : B), nfLe m a = true →
+    nfLe (lastBnd m a) y = true → nfLe m (plugB a y) = true := by
+  intro a
+  induction a with
+  | nil => intro m y _ _; rfl
+  | nd v r a _ iha =>
+    intro m y ha hy
+    obtain ⟨h1, h2, h3⟩ := (nfLe_nd_iff m v r a).mp ha
+    cases a with
+    | nil =>
+      show nfLe m (appB r y) = true
+      exact nfLe_appB y r m h2 hy
+    | nd u s b =>
+      show nfLe m (.nd v r (plugB (.nd u s b) y)) = true
+      refine (nfLe_nd_iff m v r _).mpr ⟨h1, h2, iha (v + 1) y h3 ?_⟩
+      exact hy
+
+/-- 祖先の段がすべて `w` 以上なら、最後の節の上限も `w` 以上。 -/
+theorem lastBnd_ge : ∀ (a : B) (w m : Nat), hasLowAnc w a = false → w ≤ m →
+    w ≤ lastBnd m a := by
+  intro a
+  induction a with
+  | nil => intro w m _ hm; exact hm
+  | nd v r b _ ihb =>
+    intro w m hlow hm
+    cases b with
+    | nil => exact hm
+    | nd u s c =>
+      have hb : (decide (v < w) || hasLowAnc w (.nd u s c)) = false := hlow
+      have h1 : decide (v < w) = false := by
+        cases hd : decide (v < w) with
+        | false => rfl
+        | true => rw [hd] at hb; exact absurd hb (by simp)
+      have h2 : hasLowAnc w (.nd u s c) = false := by
+        cases hd : hasLowAnc w (.nd u s c) with
+        | false => rfl
+        | true => rw [hd] at hb; exact absurd hb (by simp)
+      have hvw : w ≤ v := by have := of_decide_eq_false h1; omega
+      show w ≤ lastBnd (v + 1) (.nd u s c)
+      exact ihb w (v + 1) h2 (by omega)
+
+theorem nfLe_iterD : ∀ (k : Nat) (v : Nat) (a : B) (m : Nat), v ≤ m →
+    nfLe (v + 1) a = true → v ≤ lastBnd (v + 1) a →
+    nfLe m (iterD v a k) = true := by
+  intro k
+  induction k with
+  | zero =>
+    intro v a m hvm ha hlb
+    refine (nfLe_nd_iff m v .nil _).mpr ⟨hvm, rfl, ?_⟩
+    exact nfLe_plugB a (v + 1) .nil ha rfl
+  | succ j ih =>
+    intro v a m hvm ha hlb
+    refine (nfLe_nd_iff m v .nil _).mpr ⟨hvm, rfl, ?_⟩
+    exact nfLe_plugB a (v + 1) _ ha (ih v a (lastBnd (v + 1) a) hlb ha hlb)
+
+theorem nfLe_repNode : ∀ (k : Nat) (v : Nat) (P : B) (m : Nat), v ≤ m →
+    nfLe (v + 1) P = true → nfLe m (repNode v P k) = true := by
+  intro k
+  induction k with
+  | zero => intro v P m hvm hP; exact (nfLe_nd_iff m v .nil P).mpr ⟨hvm, rfl, hP⟩
+  | succ j ih =>
+    intro v P m hvm hP
+    exact (nfLe_nd_iff m v _ P).mpr ⟨hvm, ih v P m hvm hP, hP⟩
+
+theorem nfLe_repB : ∀ (t : B) (m n : Nat), nfLe m t = true → nfLe m (repB t n) = true := by
+  intro t
+  induction t with
+  | nil => intro _ _ _; rfl
+  | nd v r a _ iha =>
+    intro m n h
+    obtain ⟨h1, h2, h3⟩ := (nfLe_nd_iff m v r a).mp h
+    cases a with
+    | nil => exact rfl
+    | nd u P c =>
+      cases u with
+      | zero =>
+        cases c with
+        | nil =>
+          show nfLe m (appB r (repNode v P n)) = true
+          obtain ⟨_, hP, _⟩ := (nfLe_nd_iff (v + 1) 0 P .nil).mp h3
+          exact nfLe_appB _ r m h2 (nfLe_repNode n v P m h1 hP)
+        | nd u2 s2 c2 =>
+          show nfLe m (.nd v r (repB (.nd 0 P (.nd u2 s2 c2)) n)) = true
+          exact (nfLe_nd_iff m v r _).mpr ⟨h1, h2, iha (v + 1) n h3⟩
+      | succ u' =>
+        show nfLe m (.nd v r (repB (.nd (u' + 1) P c) n)) = true
+        exact (nfLe_nd_iff m v r _).mpr ⟨h1, h2, iha (v + 1) n h3⟩
+
+theorem nfLe_rwB : ∀ (t : B) (w n m : Nat), nfLe m t = true → nfLe m (rwB w n t) = true := by
+  intro t
+  induction t with
+  | nil => intro _ _ _ _; rfl
+  | nd v r a _ iha =>
+    intro w n m h
+    obtain ⟨h1, h2, h3⟩ := (nfLe_nd_iff m v r a).mp h
+    cases a with
+    | nil => exact h
+    | nd u s b =>
+      show nfLe m (if hasLowAnc w (.nd u s b) then .nd v r (rwB w n (.nd u s b))
+        else if v < w then appB r (iterD v (.nd u s b) n) else .nd v r (.nd u s b)) = true
+      by_cases hl : hasLowAnc w (.nd u s b) = true
+      · rw [if_pos hl]
+        exact (nfLe_nd_iff m v r _).mpr ⟨h1, h2, iha w n (v + 1) h3⟩
+      · rw [if_neg hl]
+        have hl' : hasLowAnc w (.nd u s b) = false := by
+          cases hd : hasLowAnc w (.nd u s b) with
+          | false => rfl
+          | true => exact absurd hd hl
+        by_cases hv : v < w
+        · rw [if_pos hv]
+          refine nfLe_appB _ r m h2 (nfLe_iterD n v (.nd u s b) m h1 h3 ?_)
+          cases b with
+          | nil => show v ≤ v + 1; omega
+          | nd u2 s2 c2 =>
+            have hb : (decide (u < w) || hasLowAnc w (.nd u2 s2 c2)) = false := hl'
+            have hu : decide (u < w) = false := by
+              cases hd : decide (u < w) with
+              | false => rfl
+              | true => rw [hd] at hb; exact absurd hb (by simp)
+            have h2' : hasLowAnc w (.nd u2 s2 c2) = false := by
+              cases hd : hasLowAnc w (.nd u2 s2 c2) with
+              | false => rfl
+              | true => rw [hd] at hb; exact absurd hb (by simp)
+            have huw : w ≤ u := by have := of_decide_eq_false hu; omega
+            have := lastBnd_ge (.nd u2 s2 c2) w (u + 1) h2' (by omega)
+            show v ≤ lastBnd (u + 1) (.nd u2 s2 c2)
+            omega
+        · rw [if_neg hv]
+          exact h
+
+/-- **標準形は基本列で閉じている。** -/
+theorem nfB_fsB (t : B) (n : Nat) (h : nfB t = true) : nfB (fsB t n) = true := by
+  show nfLe 0 (fsB t n) = true
+  have h0 : nfLe 0 t = true := h
+  cases t with
+  | nil => exact rfl
+  | nd v r a =>
+    obtain ⟨h1, h2, h3⟩ := (nfLe_nd_iff 0 v r a).mp h0
+    cases v with
+    | zero =>
+      cases a with
+      | nil => exact h2
+      | nd u s b =>
+        show nfLe 0 (if (lastLvl (.nd u s b) == 0) = true
+          then repB (.nd 0 r (.nd u s b)) n
+          else rwB (lastLvl (.nd u s b)) n (.nd 0 r (.nd u s b))) = true
+        by_cases hz : (lastLvl (.nd u s b) == 0) = true
+        · rw [if_pos hz]; exact nfLe_repB _ 0 n h0
+        · rw [if_neg hz]; exact nfLe_rwB _ _ n 0 h0
+    | succ v' =>
+      cases a with
+      | nil => exact rfl
+      | nd u s b =>
+        show nfLe 0 (if (lastLvl (.nd u s b) == 0) = true
+          then repB (.nd (v' + 1) r (.nd u s b)) n
+          else rwB (lastLvl (.nd u s b)) n (.nd (v' + 1) r (.nd u s b))) = true
+        by_cases hz : (lastLvl (.nd u s b) == 0) = true
+        · rw [if_pos hz]; exact nfLe_repB _ 0 n h0
+        · rw [if_neg hz]; exact nfLe_rwB _ _ n 0 h0
+
+/-! ### §19.2 `Hclosed` FOR THE FULL GENERALISED REGION -/
+
+/-- 一般化した領域: 標準形の添字の行列。 -/
+def RegB (S : Matrix) : Prop := ∃ t : B, nfB t = true ∧ S = matB t 0
+
+/-- **`certIn_region` の第 1 供給、一般化した領域で。** -/
+theorem hclosedB : ∀ (S : Matrix), RegB S → ∀ (n : Nat), RegB (BMS.expand S n) := by
+  rintro S ⟨t, hnf, rfl⟩ n
+  cases t with
+  | nil =>
+    refine ⟨.nil, rfl, ?_⟩
+    show (BMS.expand? [] n).getD [] = []
+    rfl
+  | nd v r a =>
+    refine ⟨fsB (.nd v r a) n, nfB_fsB _ n hnf, ?_⟩
+    show (BMS.expand? (matB (B.nd v r a) 0) n).getD [] = _
+    rw [expand_matB (.nd v r a) (topOKB_of_nfB _ hnf) (by intro h; exact B.noConfusion h) n]
+    rfl
+
+/-! ### §19.3 THE MEASUREMENT: `nfB` IS EXACTLY `isReducedP`
+
+`Trans.Recal.red` is the reference implementation's reduction, ported in `Trans/Recal.lean`;
+these are measurements over exhaustive enumerations, not a proof. -/
+
+/-- 節が `n` 個以下、段が `L` 未満の `B` を全部。 -/
+partial def enumNodes (L : Nat) : Nat → List B
+  | 0 => [.nil]
+  | n + 1 =>
+    (List.range (n + 1)).flatMap fun k =>
+      (enumNodes L k).flatMap fun r =>
+        (enumNodes L (n - k)).flatMap fun a =>
+          (List.range L).map fun v => B.nd v r a
+
+def enumB (L n : Nat) : List B :=
+  ((List.range (n + 1)).flatMap (enumNodes L)).filter fun t => topOKB t && t != .nil
+
+#guard (enumB 3 4).length == 220
+#guard ((enumB 3 4).filter fun t => isReducedP (psM (matB t 0))).length == 101
+#guard (enumB 3 4).all fun t => nfB t == isReducedP (psM (matB t 0))
+#guard (enumB 4 5).length == 5101
+#guard (enumB 4 5).all fun t => nfB t == isReducedP (psM (matB t 0))
+#guard (enumB 3 6).length == 16332
+#guard (enumB 3 6).all fun t => nfB t == isReducedP (psM (matB t 0))
+-- 最小の失敗と、局所的でない変種の反例。
+#guard redP (psM [[0, 0], [1, 2]]) == psM [[0, 0], [1, 1]]
+#guard redP (psM [[0, 0], [1, 1], [2, 0], [3, 2]]) == psM [[0, 0], [1, 1], [2, 0], [3, 1]]
+-- 領域の母集団はすべて標準形。
+#guard topPop.all nfB
+
+end
+
 end Evidence.Region
