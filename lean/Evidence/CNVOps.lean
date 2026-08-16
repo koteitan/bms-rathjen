@@ -1136,4 +1136,36 @@ theorem lim_clauses_prefix {P V : Term} (hP : CNV P = true) (hV : CNV V = true)
     fun n => lt_plus_right hP (h1 n) (h1 (n + 1)) (h3 n),
     cof_plus hP hV hVz g h1 h2 h4⟩
 
+/-! ## §24 THE SHIFT IS ABSORBABLE
+
+`Evidence/WF.lean` §15.33 discharges core (C)'s side condition internally and returns an
+EXISTENTIAL sequence, because `hside_general` delivers `b < φ̄(a, g k)` at some index `k`
+rather than at `0`.  A certificate cannot take that: `Certified.lim`'s identity premise
+pins `fs' n` to the value of the n-th expansion, so a shifted sequence is a different
+sequence and the row does not close.
+
+IT DOES NOT HAVE TO BE SHIFTED.  Clauses 1–3 hold at every `n` on their own — they are
+`lt_phi_arg` applied to `g`'s own clauses — and clause 4's index is EXISTENTIAL, so the
+shifted sequence's witness `m` is read back as `m + k` in the original.  The shift was only
+ever a device for the side condition, and it never had to reach the statement. -/
+
+/-- **ずらしは吸収できる。** `lim_clauses_phi_arg_nf` は `hside` を添字 `k` で得るので
+    ずれた列を返すが、第 4 連言の添字は存在量化されているので、ずれた列の証人 `m` を
+    元の列の `m + k` として読み直せる。他の 3 連言は各 `n` で独立に成り立つ。 -/
+theorem lim_clauses_phi_arg_nf' {a b : Term} (hcna : CNV a = true) (hcnb : CNV b = true)
+    (hnf : ∀ c d, b = phi c d → phiNF a b = phi a b)
+    (g : Nat → Term) (hg : LimClauses b g) :
+    LimClauses (phi a b) (fun n => phi a (g n)) := by
+  obtain ⟨k, hk⟩ := hside_general hcna hcnb hnf g hg
+  obtain ⟨t1, t2, t3, t4⟩ := lim_clauses_shift_k hcnb hg k
+  obtain ⟨h1, h2, h3, h4⟩ := hg
+  obtain ⟨s1, s2, s3, s4⟩ :=
+    lim_clauses_phi_arg (fun n => g (n + k)) hcna hcnb t1 t2 t3 t4
+      (by show lt b (phi a (g (0 + k))) = true
+          rw [show 0 + k = k from by omega]; exact hk)
+  refine ⟨fun n => by show (CNV a && CNV (g n)) = true; rw [hcna, h1 n]; rfl,
+    fun n => lt_phi_arg (h2 n), fun n => lt_phi_arg (h3 n), fun s hin hlt => ?_⟩
+  obtain ⟨m, hm⟩ := s4 s hin hlt
+  exact ⟨m + k, hm⟩
+
 end Evidence.WF

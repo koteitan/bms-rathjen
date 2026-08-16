@@ -1421,4 +1421,47 @@ def argCorpus : List A :=
       sumVal (fsP a n) == omegaNF (argVal (app b (fsP c n)))
   | _ => true
 
+/-! ### §15.3 THE SHAPES ARE PER CASE, AND THE OBSTACLE IS THE ORDER BRIDGE
+
+The three shapes of `omegaNF (argVal a)` line up with the three cases of `fsP` — the
+`Ω` case is ALWAYS a fixed point, the lift case is ALWAYS ordinary, and only `ψ₀(0)` mixes:
+
+    Ω        2 / 2    `omegaNF (argVal a) = argVal a`
+    ψ₀(c)   69 / 69   `omegaNF (argVal a) = φ̄(0, argVal a)`
+    ψ₀(0)    5 + 4    ordinary / re-counted
+
+So `ArgLimLift` can use ONE target shape, and `Evidence/CNVOps.lean` §24's
+`lim_clauses_phi_arg_nf'` is the combinator for it — the un-shifted core (C), which is what
+a certificate needs.  What it still costs is the SHAPE FACT, and that is where the matrix
+order has to be cashed into the value order:
+
+    in 39 of the 69 the prefix `argVal b` contributes nothing, so the target IS
+    `ω^(argVal c)` — and in 0 of those 39 is that a fixed point
+    of the 3 whose last summand's argument is an `Ω` level, `argVal b` is zero in 0
+
+`fpOK` is what buys both (an `Ω` inside the argument forces a big enough prefix), and
+turning `fpOK`'s MATRIX inequality into that VALUE fact is the next step.  §9.1 is the
+standing warning about which direction is safe. -/
+
+#guard (argCorpus.filter fun a => match a with | .om _ => true | _ => false).all
+  (fun a => omegaNF (argVal a) == argVal a)
+#guard (argCorpus.filter fun a => match a with
+  | .ps _ .nil => false | .ps _ _ => true | _ => false).all
+  (fun a => omegaNF (argVal a) == phi zero (argVal a))
+#guard ((argCorpus.filter fun a => match a with | .ps _ .nil => true | _ => false).filter
+  (fun a => omegaNF (argVal a) == phi zero (argVal a))).length == 5
+-- 前置きが消える 39 件のうち、目標が不動点になるものは無い。
+#guard (argCorpus.filter fun a => match a with
+  | .ps _ .nil => false
+  | .ps b c => argVal (A.ps b c) == omegaNF (argVal c)
+  | _ => false).length == 39
+#guard (argCorpus.filter fun a => match a with
+  | .ps _ .nil => false
+  | .ps b c => (argVal (A.ps b c) == omegaNF (argVal c)) && (omegaNF (argVal c) == argVal c)
+  | _ => false).length == 0
+-- 最後の加数の引数が `Ω` の段なら、前置きは消えない。
+#guard (argCorpus.filter fun a => match a with | .ps _ (.om _) => true | _ => false).length == 3
+#guard (argCorpus.filter fun a => match a with
+  | .ps b (.om _) => argVal b == zero | _ => false).length == 0
+
 end Evidence.Region
