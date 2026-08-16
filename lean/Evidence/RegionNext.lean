@@ -4761,4 +4761,160 @@ theorem hsplit_matB (a : B) (hnf : nfLe 1 a = true) :
 
 end
 
+/-! ## §31 SAY IT ABOUT MATRICES, NOT ABOUT TREES
+
+`hterm` is the last hypothesis of §25, and its recursive call is `red` OF A BRANCH.  Stated
+about `matB`, that call needs each branch to be `matB` of a SUBTREE — a fact about `decodeB`
+that nothing here has, and the one place where the tree would come back after §30 got rid of
+it.  So the statement moves to where the proof already lives.
+
+Everything §27 and §28 proved about `matB` is two properties of a matrix:
+
+    StepOK X : ent X (j+1) 0 ≤ ent X j 0 + 1                     the preorder
+    LvlOK X  : k the tree parent of i → ent X i 1 ≤ ent X k 1 + 1  the normal form
+
+`NFM` is their conjunction, `matB` of a normal-form index satisfies it (`nfm_matB`), and —
+this is the point — it is inherited by `take`, by `drop`, and hence by every block
+(`nfm_blocks`).  A branch of an `NFM` matrix is an `NFM` matrix, with no tree in sight.
+
+The goal restated: `red` moves each top-level block so that its root's DEPTH equals its
+root's LEVEL, and leaves everything else where it is.
+
+    shiftToLvl X = incrFirst (psM X) (gp1 (psM X) 0 - gp0 (psM X) 0)
+    canonM X     = ((blocks X).map shiftToLvl).flatten
+
+`canonM (matB s d) = canon s` on §20's population at four depths, so this is §20's identity
+said differently, not a different identity. -/
+
+section
+open Trans.Recal
+
+/-- 深さは 1 列で高々 1 しか増えない (§27 の `matB_step_depth` を行列の性質として)。 -/
+def StepOK (X : Matrix) : Prop := ∀ j, ent X (j + 1) 0 ≤ ent X j 0 + 1
+
+/-- 段は木の親の段 + 1 以下 (§28 の `matB_lvl_le_par` を行列の性質として)。 -/
+def LvlOK (X : Matrix) : Prop :=
+  ∀ k i, LMin X k i → ent X k 0 + 1 = ent X i 0 → ent X i 1 ≤ ent X k 1 + 1
+
+/-- **標準形の行列。** `matB` の標準形の添字はこれを満たし、部分行列も満たす。 -/
+def NFM (X : Matrix) : Prop := StepOK X ∧ LvlOK X
+
+theorem nfm_matB (t : B) (m d : Nat) (hnf : nfLe m t = true) : NFM (matB t d) :=
+  ⟨fun j => matB_step_depth t d j, fun k i hlm hd => matB_lvl_le_par t m d hnf k i hlm hd⟩
+
+/-! ### 部分行列 -/
+
+theorem ent_drop (X : Matrix) (n j y : Nat) : ent (X.drop n) j y = ent X (n + j) y := by
+  show ((X.drop n).getD j []).getD y 0 = ((X.getD (n + j) [])).getD y 0
+  rw [show (X.drop n).getD j [] = X.getD (n + j) [] from by
+    rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_drop]]
+
+theorem ent_take (X : Matrix) (n j y : Nat) (h : j < n) : ent (X.take n) j y = ent X j y := by
+  show ((X.take n).getD j []).getD y 0 = ((X.getD j [])).getD y 0
+  rw [show (X.take n).getD j [] = X.getD j [] from by
+    rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_take_of_lt h]]
+
+theorem stepOK_drop (X : Matrix) (n : Nat) (h : StepOK X) : StepOK (X.drop n) := by
+  intro j
+  rw [ent_drop, ent_drop, show n + (j + 1) = (n + j) + 1 from by omega]
+  exact h (n + j)
+
+theorem stepOK_take (X : Matrix) (n : Nat) (h : StepOK X) : StepOK (X.take n) := by
+  intro j
+  rcases Nat.lt_or_ge (j + 1) n with hj | hj
+  · rw [ent_take X n (j + 1) 0 hj, ent_take X n j 0 (by omega)]
+    exact h j
+  · rw [ent_oob _ (j + 1) 0 (by
+      rw [List.length_take]
+      omega)]
+    omega
+
+theorem lmin_drop (X : Matrix) (n k i : Nat) (h : LMin (X.drop n) k i) : LMin X (n + k) (n + i) := by
+  refine ⟨by have := h.1; omega, ?_⟩
+  intro p hp1 hp2
+  have := h.2 (p - n) (by omega) (by omega)
+  rw [ent_drop, ent_drop, show n + (p - n) = p from by omega] at this
+  exact this
+
+theorem lvlOK_drop (X : Matrix) (n : Nat) (h : LvlOK X) : LvlOK (X.drop n) := by
+  intro k i hlm hd
+  rw [ent_drop, ent_drop] at hd ⊢
+  exact h (n + k) (n + i) (lmin_drop X n k i hlm) hd
+
+theorem lmin_take (X : Matrix) (n k i : Nat) (hi : i < n) (h : LMin (X.take n) k i) :
+    LMin X k i := by
+  refine ⟨h.1, ?_⟩
+  intro p hp1 hp2
+  have := h.2 p hp1 hp2
+  rw [ent_take X n k 0 (by have := h.1; omega), ent_take X n p 0 (by omega)] at this
+  exact this
+
+theorem lvlOK_take (X : Matrix) (n : Nat) (h : LvlOK X) : LvlOK (X.take n) := by
+  intro k i hlm hd
+  rcases Nat.lt_or_ge i n with hi | hi
+  · rw [ent_take X n i 1 hi, ent_take X n k 1 (by have := hlm.1; omega)]
+    rw [ent_take X n i 0 hi, ent_take X n k 0 (by have := hlm.1; omega)] at hd
+    exact h k i (lmin_take X n k i hi hlm) hd
+  · rw [ent_oob _ i 1 (by rw [List.length_take]; omega)]
+    omega
+
+theorem nfm_drop (X : Matrix) (n : Nat) (h : NFM X) : NFM (X.drop n) :=
+  ⟨stepOK_drop X n h.1, lvlOK_drop X n h.2⟩
+
+theorem nfm_take (X : Matrix) (n : Nat) (h : NFM X) : NFM (X.take n) :=
+  ⟨stepOK_take X n h.1, lvlOK_take X n h.2⟩
+
+/-- ブロックは部分行列なので標準形を保つ。 -/
+theorem nfm_blocks : ∀ (n : Nat) (X : Matrix), X.length ≤ n → NFM X → ∀ Bk ∈ blocks X, NFM Bk := by
+  intro n
+  induction n with
+  | zero =>
+    intro X h _ Bk hBk
+    rw [show X = [] from List.eq_nil_of_length_eq_zero (by omega), blocks_nil] at hBk
+    exact absurd hBk (by simp)
+  | succ g ih =>
+    intro X h hnf Bk hBk
+    cases X with
+    | nil => rw [blocks_nil] at hBk; exact absurd hBk (by simp)
+    | cons c cs =>
+      rw [blocks_cons c cs] at hBk
+      rcases List.mem_cons.mp hBk with rfl | hBk
+      · have hpre : c :: (peel (c.getD 0 0) cs).1
+            = (c :: cs).take (c :: (peel (c.getD 0 0) cs).1).length := by
+          have := peel_append (c.getD 0 0) cs
+          rw [show c :: cs = (c :: (peel (c.getD 0 0) cs).1) ++ (peel (c.getD 0 0) cs).2 from by
+            show c :: cs = c :: ((peel (c.getD 0 0) cs).1 ++ (peel (c.getD 0 0) cs).2)
+            rw [this]]
+          rw [List.take_left]
+        rw [hpre]
+        exact nfm_take _ _ hnf
+      · refine ih (peel (c.getD 0 0) cs).2 ?_ ?_ Bk hBk
+        · have := peel_len2 (c.getD 0 0) cs
+          rw [List.length_cons] at h
+          omega
+        · have hsuf : (peel (c.getD 0 0) cs).2
+              = (c :: cs).drop (c :: (peel (c.getD 0 0) cs).1).length := by
+            have := peel_append (c.getD 0 0) cs
+            rw [show c :: cs = (c :: (peel (c.getD 0 0) cs).1) ++ (peel (c.getD 0 0) cs).2 from by
+              show c :: cs = c :: ((peel (c.getD 0 0) cs).1 ++ (peel (c.getD 0 0) cs).2)
+              rw [this]]
+            rw [List.drop_left]
+          rw [hsuf]
+          exact nfm_drop _ _ hnf
+
+/-! ### 言い直した目標 -/
+
+/-- ブロック 1 つを「根の深さ = 根の段」の位置へ動かしたもの。 -/
+def shiftToLvl (X : Matrix) : PS := incrFirst (psM X) (gp1 (psM X) 0 - gp0 (psM X) 0)
+
+/-- 行列を各ブロックごとに動かしたもの — `red` が返すはずの形。 -/
+def canonM (X : Matrix) : PS := ((blocks X).map shiftToLvl).flatten
+
+-- §20 の `canon` と同じもの (母集団で確認)。
+#guard (enumFree 3 4).all fun s => (List.range 4).all fun d => canonM (matB s d) == canon s
+#guard (enumFree 3 4).all fun s => (List.range 4).all fun d =>
+  redP (psM (matB s d)) == canonM (matB s d)
+
+end
+
 end Evidence.Region
