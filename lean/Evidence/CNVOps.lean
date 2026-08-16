@@ -1577,4 +1577,182 @@ theorem dnFacts_of
       dnArg x ≠ dnArg y) : DnFacts :=
   ⟨fun _ hx => dnArg_le hx, fun _ _ hx hy h => dnArg_ge hx hy h, D3⟩
 
+/-! ## §29 D3, AND `DnFacts` BECOMES A THEOREM
+
+D3 says `dnArg` cannot send two different arguments to the same place.  Suppose it does, with
+`x < y` and `x` not a fixed point.  D1 and D2 then squeeze `x` between `dnArg x` and
+`dnArg y`, so both equal `x`; and `dnArg y = x` with `dnArg y ≠ y` means the RE-COUNT fired
+at `y`, i.e. `splitFin y = (γ, m)` with `m ≥ 1` and `γ = φ̄(d,e)`, `d ≠ 0`, and `x = γ ⊕ (m-1)`.
+
+Now compute `splitFin x`.  `splitFin_plus_ofNat` says `splitFin (γ ⊕ k) = (γ, k)` whenever
+`γ`'s LAST component is not `1` — and `γ` came out of a `dropWhile`, so it is not
+(`splitFin_fst_last`).  Two cases and both close:
+
+    m - 1 = 0      `x = γ = φ̄(d,e)` with `d ≠ 0`, so `x` IS a fixed point — contradiction
+    m - 1 = k+1    the re-count fires at `x` too, giving `dnArg x = γ ⊕ k`, but `dnArg x = x
+                   = γ ⊕ (k+1)`, and those two have component lists of different LENGTHS
+
+With D3 proved, `dnFacts` is a theorem and §27's `omegaNF_mono` carries no hypothesis. -/
+
+theorem le_antisymm {a b : Term} (hfa : Frag a = true) (hfb : Frag b = true)
+    (h1 : le a b = true) (h2 : le b a = true) : a = b := by
+  by_cases hab : a = b
+  · exact hab
+  · exfalso
+    have l1 : lt a b = true := lt_of_le_of_ne h1 hab
+    have l2 : lt b a = true := lt_of_le_of_ne h2 (fun hc => hab hc.symm)
+    rw [lt_asymm hfa hfb l1] at l2
+    exact Bool.noConfusion l2
+
+theorem head?_dropWhile {p : Term → Bool} : ∀ (l : List Term) (a : Term),
+    (l.dropWhile p).head? = some a → p a = false := by
+  intro l
+  induction l with
+  | nil => intro a h; exact absurd h (by simp)
+  | cons c t ih =>
+    intro a h
+    by_cases hc : p c = true
+    · rw [List.dropWhile_cons_of_pos hc] at h
+      exact ih a h
+    · rw [List.dropWhile_cons_of_neg (by simpa using hc)] at h
+      have ha : a = c := by
+        have hh : (c :: t).head? = some c := rfl
+        rw [hh] at h
+        exact (Option.some.inj h).symm
+      rw [ha]
+      exact bool_false hc
+
+theorem takeWhile_replicate_append (r : List Term)
+    (hr : ∀ a, r.head? = some a → (a == one) = false) :
+    ∀ k, (List.replicate k one ++ r).takeWhile (fun x => x == one) = List.replicate k one := by
+  intro k
+  induction k with
+  | zero =>
+    show r.takeWhile (fun x => x == one) = []
+    cases hh : r with
+    | nil => rfl
+    | cons a t =>
+      refine List.takeWhile_cons_of_neg ?_
+      rw [hr a (by rw [hh]; rfl)]
+      exact Bool.noConfusion
+  | succ j ih =>
+    show ((one :: (List.replicate j one ++ r)).takeWhile (fun x => x == one))
+      = one :: List.replicate j one
+    rw [List.takeWhile_cons_of_pos (by simp), ih]
+
+/-- **`γ ⊕ k` の `splitFin` は `(γ, k)`** — `γ` の末尾の成分が `1` でなければ。 -/
+theorem splitFin_plus_ofNat {g : Term} (hg : CNV g = true)
+    (hlast : ∀ a, ((toList g).reverse).head? = some a → (a == one) = false) (k : Nat) :
+    splitFin (plus g (ofNat k)) = (g, k) := by
+  have hspec := plus_ofNat_spec g hg k
+  have hrev : (toList (plus g (ofNat k))).reverse
+      = List.replicate k one ++ (toList g).reverse := by
+    rw [hspec.2, List.reverse_append, List.reverse_replicate]
+  have hm : ((toList (plus g (ofNat k))).reverse.takeWhile (fun x => x == one)).length = k := by
+    rw [hrev, takeWhile_replicate_append _ hlast k, List.length_replicate]
+  show (ofList ((toList (plus g (ofNat k))).take
+      ((toList (plus g (ofNat k))).length
+        - ((toList (plus g (ofNat k))).reverse.takeWhile (fun x => x == one)).length)),
+    ((toList (plus g (ofNat k))).reverse.takeWhile (fun x => x == one)).length) = (g, k)
+  rw [hm, take_of_append_replicate hspec.2.symm, cnv_ofList_toList g hg]
+
+/-- `dnArg` の枝を、数え直しが起きた場合の形つきで。 -/
+theorem dnArg_or' {x g : Term} {m : Nat} (hx : CNV x = true) (hs : splitFin x = (g, m)) :
+    dnArg x = x ∨ (1 ≤ m ∧ (∃ d e, g = phi d e ∧ lt zero d = true)
+                   ∧ dnArg x = plus g (ofNat (m - 1))) := by
+  have hcg : CNV g = true := by have h0 := cnv_splitFin hx; rw [hs] at h0; exact h0
+  unfold dnArg
+  rw [hs]
+  dsimp only
+  split
+  · rename_i hm
+    cases g <;> dsimp only <;>
+      first
+        | exact Bool.noConfusion hcg
+        | (split <;>
+            first
+              | exact Or.inr ⟨hm, ⟨_, _, rfl, by assumption⟩, rfl⟩
+              | exact Or.inl rfl
+              | (exfalso; simp_all [isSC]))
+  · exact Or.inl rfl
+
+/-- 数え直しが起きる形での `dnArg` の値。 -/
+theorem dnArg_recount {x g d e : Term} {k : Nat} (hs : splitFin x = (g, k + 1))
+    (hg : g = phi d e) (hd : lt zero d = true) : dnArg x = plus g (ofNat k) := by
+  subst hg
+  unfold dnArg
+  rw [hs]
+  dsimp only
+  rw [if_pos (by omega : 1 ≤ k + 1)]
+  rw [if_pos hd, show k + 1 - 1 = k from rfl]
+
+/-- `splitFin` の第 1 成分の末尾は `1` ではない。 -/
+theorem splitFin_fst_last {y g : Term} {m : Nat} (hy : CNV y = true)
+    (hs : splitFin y = (g, m)) :
+    ∀ a, ((toList g).reverse).head? = some a → (a == one) = false := by
+  have hcg : CNV g = true := by have h0 := cnv_splitFin hy; rw [hs] at h0; exact h0
+  have hgf : g = ofList (((toList y).reverse.dropWhile (fun x => x == one)).reverse) := by
+    have h0 := splitFin_fst y; rw [hs] at h0; exact h0
+  have hF1 : ((toList y).reverse.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate (((toList y).reverse.takeWhile (fun x => x == one)).length) one
+      = toList y := by
+    have h0 := trailing_ones (toList y).reverse
+    rwa [List.reverse_reverse] at h0
+  have hAP : ∀ x ∈ ((toList y).reverse.dropWhile (fun x => x == one)).reverse,
+      x.isAP = true := by
+    intro x hx
+    exact cnvL_isAP hy x (by rw [← hF1]; exact List.mem_append_left _ hx)
+  have hgl : toList g = ((toList y).reverse.dropWhile (fun x => x == one)).reverse := by
+    rw [hgf, toList_ofList _ hAP]
+  intro a ha
+  rw [hgl, List.reverse_reverse] at ha
+  exact head?_dropWhile _ a ha
+
+/-- **D3** — `dnArg` は 2 つの引数を潰さない。 -/
+theorem dnArg_ne {x y : Term} (hx : CNV x = true) (hy : CNV y = true)
+    (hfx : isFixP x = false) (h : lt x y = true) : dnArg x ≠ dnArg y := by
+  intro heq
+  have hle1 : le (dnArg x) x = true := dnArg_le hx
+  have hle2 : le x (dnArg y) = true := dnArg_ge hx hy h
+  rw [← heq] at hle2
+  have hxeq : dnArg x = x :=
+    le_antisymm (frag_of_cnv _ (cnv_dnArg hx)) (frag_of_cnv _ hx) hle1 hle2
+  have hdy : dnArg y = x := heq.symm.trans hxeq
+  cases hs : splitFin y with
+  | mk g m =>
+    have hcg : CNV g = true := by have h0 := cnv_splitFin hy; rw [hs] at h0; exact h0
+    rcases dnArg_or' hy hs with hd | ⟨hm, ⟨d, e, hgphi, hdlt⟩, hdny⟩
+    · rw [hd] at hdy
+      rw [← hdy, lt_irrefl] at h
+      exact Bool.noConfusion h
+    · have hxval : x = plus g (ofNat (m - 1)) := by rw [← hdy, hdny]
+      have hlast := splitFin_fst_last hy hs
+      have hsx : splitFin x = (g, m - 1) := by
+        rw [hxval]; exact splitFin_plus_ofNat hcg hlast (m - 1)
+      cases hk : m - 1 with
+      | zero =>
+        -- x = g = φ̄(d,e), a fixed point
+        have hxg : x = g := by rw [hxval, hk]; rfl
+        rw [hxg, hgphi] at hfx
+        show False
+        rw [show isFixP (phi d e) = lt zero d from rfl, hdlt] at hfx
+        exact Bool.noConfusion hfx
+      | succ k =>
+        rw [hk] at hsx
+        have hdx : dnArg x = plus g (ofNat k) := dnArg_recount hsx hgphi hdlt
+        rw [hxeq, hxval, hk] at hdx
+        -- plus g (ofNat (k+1)) = plus g (ofNat k) : impossible by length
+        have h1 := (plus_ofNat_spec g hcg (k + 1)).2
+        have h2 := (plus_ofNat_spec g hcg k).2
+        rw [hdx, h2] at h1
+        have hlen := congrArg List.length h1
+        rw [List.length_append, List.length_append, List.length_replicate,
+          List.length_replicate] at hlen
+        omega
+
+/-- **`DnFacts` は定理になった。** -/
+theorem dnFacts : DnFacts :=
+  ⟨fun _ hx => dnArg_le hx, fun _ _ hx hy h => dnArg_ge hx hy h,
+   fun _ _ hx hy hfx h => dnArg_ne hx hy hfx h⟩
+
 end Evidence.WF

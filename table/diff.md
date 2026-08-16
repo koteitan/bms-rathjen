@@ -621,8 +621,7 @@ nd v r a  =  r ⊕ psi_v(a)
       ArgLimRep         9/80。組み合わせ子 (A) + 上界 hb。数え直しが 4 件
       ArgLimOm          2/80。組み合わせ子 (B)。塔の側条件 3 つ
       登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
-軽い  D3               dnArg が 2 つを潰さないこと。splitFin の初等的事実 1 本
-      行ごとの否定対照   独立の作業ではない。登録に含まれる
+軽い  行ごとの否定対照   独立の作業ではない。登録に含まれる
 ```
 
 ### したがって 326 行目は依然として未決
@@ -704,8 +703,9 @@ nd v r a  =  r ⊕ psi_v(a)
           4 場合。証明済みの土台は `z < φ̄(0,z)`
         - ✅ `splitFin` の再構成 (`CNVOps` §28)。`splitFin t = (γ,m)` なら `t = γ ⊕ m`。
           これで `t = succT (dnArg t)` が言えて **D1 と D2 が 1 手ずつで落ちる**
-        - 🚨 `DnFacts` は **D3 だけ**になった — `dnArg` が 2 つを潰さないこと
-        - ✅ `OmegaLim` が 2 つに割れた (`omegaLim_of`)。連言 1〜3 は済み
+        - ✅ D3 (`CNVOps` §29)。`splitFin (γ ⊕ k) = (γ, k)` を出して 2 場合で潰す。
+          **`DnFacts` は定理になり、`omegaNF_mono` は仮定なしになった**
+        - ✅ `OmegaLim` に残るのは共終性だけ (`omegaLim_of`)
         - 🚨 `OmegaCof` — 共終性 (第 4 連言) だけ
         - 🚨 `ArgLimRep` — 最後の加数が `ψ₀(0)` (9/80)。組み合わせ子 (A)
         - 🚨 `ArgLimOm` — 最後の加数が `Ω` (2/80)。組み合わせ子 (B)

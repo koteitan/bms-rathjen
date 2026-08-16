@@ -1514,22 +1514,21 @@ Clauses 1–3 are `cnv_omegaNF` and `Evidence/CNVOps.lean` §27's `omegaNF_mono`
 `omegaNF_mono` owing one fact — D3, that `dnArg` cannot collapse two different arguments.  So
 the 69/80 case is now exactly
 
-    DnFacts (D3 only)   a `splitFin` fact, with no `ω^·` in it
-    OmegaCof            cofinality: `s < ω^X → ∃ n, s ≤ ω^(g n)`
+    OmegaCof   cofinality: `s < ω^X → ∃ n, s ≤ ω^(g n)`
 
--/
+and that is all — §29 closed `DnFacts`, so `omegaNF_mono` carries no hypothesis. -/
 
 /-- `ω^·` の共終性 — `OmegaLim` の第 4 連言だけ。 -/
 def OmegaCof : Prop := ∀ (X : Term) (g : Nat → Term), CNV X = true → LimClauses X g →
     ∀ s, inT s = true → lt s (omegaNF X) = true → ∃ n, le s (omegaNF (g n)) = true
 
-/-- **`OmegaLim` は 2 つに割れる。** 連言 1〜3 は `CNVOps` §26–§27、第 4 連言だけが残る。 -/
-theorem omegaLim_of (H : DnFacts) (C : OmegaCof) : OmegaLim := by
+/-- **`OmegaLim` に残るのは共終性だけ。** 連言 1〜3 は `CNVOps` §26–§29。 -/
+theorem omegaLim_of (C : OmegaCof) : OmegaLim := by
   intro X g hX hlc
   obtain ⟨h1, h2, h3, h4⟩ := hlc
   exact ⟨fun n => cnv_omegaNF (h1 n),
-    fun n => omegaNF_mono H (h1 n) hX (h2 n),
-    fun n => omegaNF_mono H (h1 n) (h1 (n + 1)) (h3 n),
+    fun n => omegaNF_mono Evidence.WF.dnFacts (h1 n) hX (h2 n),
+    fun n => omegaNF_mono Evidence.WF.dnFacts (h1 n) (h1 (n + 1)) (h3 n),
     C X g hX ⟨h1, h2, h3, h4⟩⟩
 
 end Evidence.Region
