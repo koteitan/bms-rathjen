@@ -1832,4 +1832,250 @@ def topPop : List B := valCorpus.filter fun t => topOKB t && t != .nil
 
 end
 
+/-! ## §18 THE DECISION: PORT `transPort` — AND THE PORT, SCOPED
+
+§15–§17 excluded three closed forms for the value, and the last one was WORSE than the naive
+reading.  What they have in common is the method: read `transPort` off measured families.
+That method does not converge, and the reason is structural — `transPort` is naruyoko's
+`Trans`/`Mark` recursion (`Trans/Recal.lean` §3), and `Mark` is STATE.  `Trans M` alone is not
+compositional; the pair `(Trans M, Mark M ·)` is, because `replMark` is what performs §17.2's
+"hoist a summand out and keep a copy inside".  So the honest move is not a fourth candidate
+but the port itself.
+
+**The port is much smaller than the algorithm.**  Measured over the 380 top-level indices of
+§14's corpus and the 714 distinct PREFIXES the recursion visits (every guard below):
+
+    714 / 714   every visited prefix is ALREADY REDUCED — `red` never runs
+        0       type -3 (reduce and retry)
+       59       type -2 (not principal: split into `ppair` blocks)
+        1       type -1 (one column)
+        2       type  0 (`Trans (Pred M) = 0`)
+      222 / 14 / 121 / 9 / 96 / 190     types 1 / 2 / 3 / 4 / 5 / 6
+
+`red` is the largest single function in `Trans/Recal.lean` (`ppair`, `brF`, `firstNodes`,
+`joints`, `incrFirst` and a fold with recursive calls), and on this region it is dead code.
+What remains is the six node types plus two structural branches, and both of those branches
+have an exact `B`-side description:
+
+    ppair (matB t 0)  =  the top-level summands of `t`, verbatim
+    fpar M 0 j 0      =  BMS's own `parent M 0 j`
+
+**The second one is a theorem below**, not a measurement: `fpar0` scans leftward from `j-1`
+for the first strictly shallower column and `BMS.parent M 0 j` takes the maximum of the same
+set, so they agree on every matrix — the whole of `Evidence/Region.lean`'s parent machinery
+and §8's `mem_iterParent0` (the chain is the left-minima) therefore apply to the algorithm
+unchanged.  That is the bridge every remaining branch is built on: `fpar` appears in
+`isParentP`, `isAnc`, `fAnc`, `ppair`, `isUnadmitted`, `trMax` and in types 1–6 themselves.
+
+**AND THE PORT HAS A TEMPLATE IN THIS REPOSITORY.**  `Rows/Selected.lean` already opens the
+`StateM` of `runAux` generically — `run_hit` (the memo table is hit), `run_base` (the bottom
+`[(0,0)]`), `beq_PS_self` — and `Rows/G3.lean`, `Rows/G4.lean` and `Rows/G11.lean` each carry
+a COMPLETE port for one infinite family: a specification `Val k req` that gives `Trans` and
+`Mark` in one object, a memo invariant `Good`/`Sound` with `good_of_find`, and the induction
+that adds one column.  That is exactly the "carry the mark" shape §17 was missing, written
+out three times.  So the remaining work is to generalise it from a ladder to `B`, not to
+invent a method.
+
+WHAT IS NOT CLAIMED.  `red` being dead is measured here, not proved; `ppair` matching the
+top-level split is measured here, not proved.  Both are next.  Nothing in §13's
+`expand_matB` depends on any of it. -/
+
+section
+open Trans.Recal
+
+/-- 行列を対列へ (`ofMatrix` の本体)。 -/
+def psM (M : Matrix) : PS := M.map (fun c => ((c.getD 0 0 : Int), (c.getD 1 0 : Int)))
+
+/-- 添字の最上位の加数たち (左から)。 -/
+def topSplit : B → List B
+  | .nil => []
+  | .nd v r a => topSplit r ++ [.nd v .nil a]
+
+theorem getD_psM : ∀ (M : Matrix) (j : Nat),
+    (psM M).getD j (0, 0) = ((ent M j 0 : Int), (ent M j 1 : Int)) := by
+  intro M
+  induction M with
+  | nil => intro j; cases j <;> rfl
+  | cons c cs ih => intro j; cases j with | zero => rfl | succ k => exact ih k
+
+theorem psM_len (M : Matrix) : (psM M).length = M.length := List.length_map ..
+
+theorem psM_gp0 (M : Matrix) (j : Nat) : gp0 (psM M) (j : Int) = (ent M j 0 : Int) := by
+  show (if (j : Int) < 0 then 0 else ((psM M).getD (j : Int).toNat (0, 0)).1) = _
+  rw [if_neg (by omega)]
+  show ((psM M).getD j (0, 0)).1 = _
+  rw [getD_psM]
+
+theorem psM_gp1 (M : Matrix) (j : Nat) : gp1 (psM M) (j : Int) = (ent M j 1 : Int) := by
+  show (if (j : Int) < 0 then 0 else ((psM M).getD (j : Int).toNat (0, 0)).2) = _
+  rw [if_neg (by omega)]
+  show ((psM M).getD j (0, 0)).2 = _
+  rw [getD_psM]
+
+/-- 領域の行列はアルゴリズムの定義域の中にある (高さ 2、空でない)。 -/
+theorem ofMatrix_matB (t : B) (d : Nat) (h : t ≠ .nil) :
+    ofMatrix (matB t d) = some (psM (matB t d)) := by
+  have h1 : (matB t d).isEmpty = false := by
+    have hp := matB_len_pos t d h
+    cases hm : matB t d with
+    | nil => rw [hm] at hp; exact absurd hp (by simp)
+    | cons c cs => rfl
+  have h2 : (matB t d).all (fun c => decide (c.length ≤ 2)) = true :=
+    List.all_eq_true.mpr (fun c hc => by rw [matB_col_len t d c hc]; rfl)
+  show (if (!(matB t d).isEmpty && (matB t d).all (fun c => decide (c.length ≤ 2)) : Bool)
+        then some (psM (matB t d)) else none) = _
+  rw [if_pos (by rw [h1, h2]; rfl)]
+
+/-! ### §18.1 `fpar0` IS `BMS.parent` -/
+
+theorem fpar0Aux_neg (f : Nat) (M : PS) (tgt j0 k : Int) (h : j0 < k) :
+    fpar0Aux f M tgt j0 k = -1 := by
+  cases f with
+  | zero => rfl
+  | succ g => show (if j0 < k then _ else _) = _; rw [if_pos h]
+
+theorem max?_snoc (L : List Nat) (x : Nat) (h : ∀ y ∈ L, y ≤ x) :
+    (L ++ [x]).max? = some x := by
+  refine List.max?_eq_some_iff.mpr ⟨?_, ?_⟩
+  · exact List.mem_append_right _ List.mem_cons_self
+  · intro b hb
+    rcases List.mem_append.mp hb with hb | hb
+    · exact h b hb
+    · rcases List.mem_cons.mp hb with rfl | hb
+      · exact Nat.le_refl _
+      · exact absurd hb (by simp)
+
+/-- 左向きの走査は「条件を満たす最大の添字」を返す。 -/
+theorem fpar0Aux_spec (M : Matrix) (tgt : Nat) : ∀ (i f : Nat), i < f →
+    fpar0Aux f (psM M) (tgt : Int) (i : Int) 0
+      = (match ((List.range (i + 1)).filter (fun p => decide (ent M p 0 < tgt))).max? with
+         | none => (-1 : Int) | some p => (p : Int)) := by
+  intro i
+  induction i with
+  | zero =>
+    intro f hf
+    obtain ⟨g, rfl⟩ : ∃ g, f = g + 1 := ⟨f - 1, by omega⟩
+    show (if ((0 : Nat) : Int) < 0 then (-1 : Int)
+          else if gp0 (psM M) ((0 : Nat) : Int) < (tgt : Int) then ((0 : Nat) : Int)
+          else fpar0Aux g (psM M) (tgt : Int) (((0 : Nat) : Int) - 1) 0) = _
+    rw [if_neg (by omega), psM_gp0, fpar0Aux_neg g (psM M) _ _ _ (by omega)]
+    show (if ((ent M 0 0 : Int) < (tgt : Int)) then ((0 : Nat) : Int) else (-1 : Int)) = _
+    by_cases h : ent M 0 0 < tgt
+    · rw [if_pos (by omega)]
+      show (0 : Int) = _
+      rw [show ((List.range 1).filter (fun p => decide (ent M p 0 < tgt))) = [0] from by
+        simp [List.range_succ, h]]
+      rfl
+    · rw [if_neg (by omega)]
+      rw [show ((List.range 1).filter (fun p => decide (ent M p 0 < tgt))) = [] from by
+        simp [List.range_succ, h]]
+      rfl
+  | succ i ih =>
+    intro f hf
+    obtain ⟨g, rfl⟩ : ∃ g, f = g + 1 := ⟨f - 1, by omega⟩
+    show (if ((i + 1 : Nat) : Int) < 0 then (-1 : Int)
+          else if gp0 (psM M) ((i + 1 : Nat) : Int) < (tgt : Int) then ((i + 1 : Nat) : Int)
+          else fpar0Aux g (psM M) (tgt : Int) (((i + 1 : Nat) : Int) - 1) 0) = _
+    rw [if_neg (by omega), psM_gp0,
+      show (((i + 1 : Nat) : Int) - 1) = ((i : Nat) : Int) from by omega,
+      ih g (by omega)]
+    have hrange : ((List.range (i + 1 + 1)).filter (fun p => decide (ent M p 0 < tgt)))
+        = ((List.range (i + 1)).filter (fun p => decide (ent M p 0 < tgt)))
+          ++ (if ent M (i + 1) 0 < tgt then [i + 1] else []) := by
+      rw [List.range_succ, List.filter_append]
+      by_cases h : ent M (i + 1) 0 < tgt
+      · rw [if_pos h]; simp [h]
+      · rw [if_neg h]; simp [h]
+    rw [hrange]
+    by_cases h : ent M (i + 1) 0 < tgt
+    · rw [if_pos (by omega : (ent M (i + 1) 0 : Int) < (tgt : Int)), if_pos h,
+        max?_snoc _ _ (by
+          intro y hy
+          have := List.mem_range.mp (List.mem_filter.mp hy).1
+          omega)]
+    · rw [if_neg (by omega : ¬((ent M (i + 1) 0 : Int) < (tgt : Int))), if_neg h,
+        List.append_nil]
+
+/-- **アルゴリズムの行 0 の親は BMS の親。** どちらも「`j` より浅い直前の最大の列」。 -/
+theorem fpar0_eq_parent (M : Matrix) (j : Nat) (hj : j < M.length) :
+    fpar0 (psM M) (j : Int) 0
+      = (match parent M 0 j with | none => (-1 : Int) | some p => (p : Int)) := by
+  show (if (j : Int) < 0 ∨ (j : Int) ≥ lenI (psM M) then (-1 : Int)
+        else fpar0Aux ((psM M).length + 1) (psM M) (gp0 (psM M) (j : Int)) ((j : Int) - 1) 0) = _
+  rw [if_neg (by
+    show ¬((j : Int) < 0 ∨ (j : Int) ≥ (((psM M).length : Nat) : Int))
+    rw [psM_len]; omega), psM_gp0, psM_len]
+  cases j with
+  | zero =>
+    rw [fpar0Aux_neg _ _ _ _ _ (by omega)]
+    show (-1 : Int) = (match ((List.range 0).filter
+      (fun p => decide (ent M p 0 < ent M 0 0))).max? with
+      | none => (-1 : Int) | some p => (p : Int))
+    rfl
+  | succ i =>
+    rw [show (((i + 1 : Nat) : Int) - 1) = ((i : Nat) : Int) from by omega,
+      fpar0Aux_spec M (ent M (i + 1) 0) i (M.length + 1) (by omega)]
+    rfl
+
+/-- `fpar M 0 j k` は `fpar0 M j k` そのもの。 -/
+theorem fpar_zero (M : PS) (j k : Int) : fpar M 0 j k = fpar0 M j k := by
+  show (if j < 0 ∨ j ≥ lenI M then (-1 : Int)
+        else if (0 : Nat) == 0 then fpar0Aux (M.length + 1) M (gp0 M j) (j - 1) k
+        else fpar1Aux (M.length + 1) M (gp1 M j) j k) = _
+  by_cases h : j < 0 ∨ j ≥ lenI M
+  · rw [if_pos h]; show _ = (if j < 0 ∨ j ≥ lenI M then (-1 : Int) else _); rw [if_pos h]
+  · rw [if_neg h]; show _ = (if j < 0 ∨ j ≥ lenI M then (-1 : Int) else _); rw [if_neg h]; rfl
+
+/-- **§8 がそのままアルゴリズムに効く。** 親が返した列は左極小である。 -/
+theorem lmin_of_fpar0 (M : Matrix) (j q : Nat) (hj : j < M.length)
+    (h : fpar0 (psM M) (j : Int) 0 = (q : Int)) : LMin M q j := by
+  rw [fpar0_eq_parent M j hj] at h
+  have hp : parent M 0 j = some q := by
+    cases hq : parent M 0 j with
+    | none =>
+      rw [hq] at h
+      exact absurd (show (-1 : Int) = (q : Int) from h) (by omega)
+    | some r =>
+      rw [hq] at h
+      have h' : ((r : Nat) : Int) = ((q : Nat) : Int) := h
+      rw [show r = q from by omega]
+  have hj0 : j ≠ 0 := by
+    intro h0
+    rw [h0, show parent M 0 0 = none from rfl] at hp
+    exact absurd hp (by simp)
+  obtain ⟨i, rfl⟩ : ∃ i, j = i + 1 := ⟨j - 1, by omega⟩
+  refine (mem_iterParent0 M (i + 1) (i + 1) q (Nat.le_refl _)).mp ?_
+  rw [iterParent_cons hp]
+  exact List.mem_cons_self
+
+/-! ### §18.2 THE SCOPING MEASUREMENT
+
+`Trans.oR` is candidate tier and appears in no justification; these are measurements. -/
+
+/-- 再帰が実際に訪れる接頭辞 (領域の 380 個の添字から)。 -/
+def visitedPS : List PS :=
+  (topPop.flatMap fun t =>
+    let M := psM (matB t 0)
+    (List.range M.length).map (fun k => M.take (k + 1))).eraseDups
+
+/-- 場合分けの型 (`Trans/Recal.lean` §3 の `TransType`)。 -/
+def tyOf (M : PS) : Int :=
+  let j1 : Int := lenI M - 1
+  if !(isReducedP M) then -3
+  else if j1 == 0 then -1
+  else if !(isPrincipalP M) then -2
+  else if transPort (predP M) == Trans.Dict.BT.zero then 0
+  else Int.ofNat (transTypeMain M (fpar M 0 j1 0) j1)
+
+#guard visitedPS.length == 714
+-- **`red` は一度も走らない。**
+#guard visitedPS.all isReducedP
+-- 型ごとの数 (-3 から 6 まで)。
+#guard (List.range 10).map (fun k => (visitedPS.filter fun M => tyOf M == (Int.ofNat k) - 3).length)
+  == [0, 59, 1, 2, 222, 14, 121, 9, 96, 190]
+-- `ppair` は最上位の加数そのもの。
+#guard topPop.all fun t => ppair (psM (matB t 0)) == (topSplit t).map (fun s => psM (matB s 0))
+
+end
+
 end Evidence.Region
