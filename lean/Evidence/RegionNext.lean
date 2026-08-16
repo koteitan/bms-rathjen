@@ -1420,4 +1420,95 @@ whole population, not a fragment of it. -/
 #guard wideRows.all fun M => match decodeB M with | none => true | some t => topOKB t
 #guard popB.all fun S => match decodeB S with | none => true | some t => topOKB t
 
+/-! ## §14 THE VALUE, MEASURED — and why `RegionV`'s route does not generalise
+
+`Hclosed` is done (§13).  The other three supplies need a VALUE, and `Evidence/RegionV.lean`
+gets one for the current region out of two pieces: `argVal`, which reads a run of `Ω`s as
+`ε`, and `omegaNF`, Rathjen's `ω^·`.  Does that generalise?  Measured on the 848 indices that
+occur in the depth-two closure of the table's 52 width-two rows and all their subtrees
+(`Trans.oR` is candidate tier and appears in no justification — this is a measurement):
+
+    848 / 848   `oR` is defined on every index, so the region's value is total
+    all true    THE PREFIX SPLITS OFF:  val (nd v r a) = val r ⊕ val (nd v .nil a)
+
+so the value is a SUM over the top-level summands, exactly as `sumVal` is.  The node
+function is where it stops being like `RegionV`.  Write `Ω_k` for `Z k` and `Ω_{-1}` for `0`:
+
+    val (nd v .nil a) = ω^(Ω_{v-1} ⊕ val a)      **iff**   val a < Ω_{v+1}
+
+and the `iff` is exact — `powFits v x y == belowOm v y` holds at every one of the 519 nodes.
+The four-way split says how much of the region that leaves:
+
+    v = 0, arg ≥ Ω        344      a collapse
+    v ≥ 1, arg ≥ Ω_{v+1}   87      a collapse
+    v ≥ 1, arg < Ω_{v+1}   83      an ω-power
+    v = 0, arg < Ω          5      an ω-power
+
+**431 of 519 nodes are genuine collapses.**  `ψ_v` only looks like `ω^(Ω_{v-1} ⊕ ·)` while its
+argument stays below `Ω_{v+1}`; at `Ω_{v+1}` it collapses, and the first one is
+`ψ₁(Ω₂) = φ̄(1,Ω) = ε_Ω`.  `RegionV`'s `argVal`-then-`omegaNF` is the case `v = 0` with the
+argument a run of `Ω`s, which is 5 of the 519 plus the `Ω`-tower dressing — so the route does
+NOT generalise, and the value side of this region needs Rathjen's `ψ` rather than a second
+reading of `ω^·`.
+
+That is a statement about the DESIGN, not a refutation of anything: `oR` computes the right
+value everywhere here.  What it fixes is that the next piece of work is a collapsing function
+on `𝔗(M)` terms, and its correctness — not a valuation built out of `ω^·`. -/
+
+section
+open TM TM.Term
+
+/-- 添字の値 (測定用)。`Trans.oR` は候補段であり、根拠には使わない。 -/
+def valT (t : B) : Option Term := Trans.oR (matB t 0)
+
+partial def subsB : B → List B
+  | .nil => [.nil]
+  | .nd v r a => (B.nd v r a) :: (subsB r ++ subsB a)
+
+/-- 母集団: 幅 2 の 52 行の深さ 2 の閉包に現れる添字と、そのすべての部分木。 -/
+def valCorpus : List B :=
+  ((wideRows.flatMap fun M => cloOf M 3 2).eraseDups.filterMap decodeB).flatMap subsB
+    |>.eraseDups
+
+def OmT (k : Nat) : Term := Z (ofNat k)
+def belowOm (v : Nat) (y : Term) : Bool := lt y (OmT v)
+def powFits (v : Nat) (x y : Term) : Bool :=
+  if v == 0 then x == omegaNF y else x == omegaNF (plus (OmT (v - 1)) y)
+
+#guard valCorpus.length == 848
+#guard valCorpus.all fun t => (valT t).isSome
+-- 前置きは外に出る。
+#guard valCorpus.all fun t => match t with
+  | .nil => true
+  | .nd v r a =>
+    match valT (.nd v r a), valT r, valT (.nd v .nil a) with
+    | some x, some y, some z => x == plus y z
+    | _, _, _ => false
+-- `ω` 冪の形になるのは引数が `Ω_{v+1}` 未満のとき**ちょうど**。
+#guard valCorpus.all fun t => match t with
+  | .nd v .nil a =>
+    match valT (.nd v .nil a), valT a with
+    | some x, some y => powFits v x y == belowOm v y
+    | _, _ => false
+  | _ => true
+-- 4 分割。**431 / 519 は本物の collapse。**
+#guard (valCorpus.filter fun t => match t with
+  | .nd 0 .nil a => match valT a with | some y => !(belowOm 0 y) | none => false
+  | _ => false).length == 344
+#guard (valCorpus.filter fun t => match t with
+  | .nd v .nil a => v ≥ 1 && (match valT a with | some y => !(belowOm v y) | none => false)
+  | _ => false).length == 87
+#guard (valCorpus.filter fun t => match t with
+  | .nd v .nil a => v ≥ 1 && (match valT a with | some y => belowOm v y | none => false)
+  | _ => false).length == 83
+#guard (valCorpus.filter fun t => match t with
+  | .nd 0 .nil a => match valT a with | some y => belowOm 0 y | none => false
+  | _ => false).length == 5
+-- 最初の collapse。
+#guard (match valT (.nd 1 .nil (.nd 2 .nil .nil)) with
+  | some x => x == phi one (Z zero)
+  | none => false)
+
+end
+
 end Evidence.Region
