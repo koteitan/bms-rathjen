@@ -1168,4 +1168,39 @@ theorem lim_clauses_phi_arg_nf' {a b : Term} (hcna : CNV a = true) (hcnb : CNV b
   obtain ⟨m, hm⟩ := s4 s hin hlt
   exact ⟨m + k, hm⟩
 
+/-! ## §25 `ω^·` LANDS ON AN ADDITIVELY PRINCIPAL TERM
+
+Three small facts `Evidence/RegionV.lean` §15.4 needs and `Rows/ProofsB.lean` already has —
+but Rows is DOWNSTREAM of this file, so they are re-proved rather than imported. -/
+
+theorem isAP_of_isSC {t : Term} (h : t.isSC = true) : t.isAP = true := by
+  cases t <;> first | rfl | exact Bool.noConfusion h
+
+theorem isAP_phiNF (a b : Term) : (phiNF a b).isAP = true := by
+  unfold phiNF phiNFsucc phiNFdefault
+  split
+  · rename_i h
+    exact isAP_of_isSC ((Bool.and_eq_true _ _).mp h).1
+  · repeat' split
+    all_goals first
+      | rfl
+      | (apply isAP_of_isSC; simp_all)
+
+theorem isAP_omegaNF (t : Term) : (omegaNF t).isAP = true := by
+  unfold omegaNF
+  split
+  · rfl
+  · split
+    · rfl
+    · exact isAP_phiNF zero t
+
+theorem plus_zero_left {X : Term} (h : X.isAP = true) : plus zero X = X := by
+  have hl : toList X = [X] := by
+    cases X <;> first | rfl | exact Bool.noConfusion h
+  show (match toList X with
+    | [] => zero
+    | b1 :: _ => ofList ((toList (zero : Term)).filter (fun a => le b1 a) ++ toList X)) = X
+  rw [hl]
+  rfl
+
 end Evidence.WF

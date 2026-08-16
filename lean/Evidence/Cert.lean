@@ -8703,13 +8703,21 @@ list, which is what lets `plus`, a list operation, be reasoned about at all.
 
 What is left is `ArgLim`: the four clauses for ONE principal term `ω^(argVal a)` and its
 sequence `fsP a n` — and §15 shows that is itself a RECURSION, the `ψ₀(c)` case reducing to
-the inner `ArgLim` plus the same prefix combinator.  So THREE BASE FACTS remain, one per
-case of `fsP`, and `Evidence/WF.lean` has one combinator aimed at each: `lim_clauses_repAdd`
-for `ψ₀(0)`, `lim_clauses_fsGen` for `Ω`, `lim_clauses_phi_arg` for the `ω^·` step.
+the inner `ArgLim` plus the same prefix combinator.  So THREE BASE FACTS remain:
 
-§15's measurement is the reason they cannot be merged: over the 80 normal-form arguments the
-closure corpus yields, `omegaNF (argVal a)` has THREE shapes — 74 ordinary `φ̄(0, argVal a)`,
-2 already fixed points of `ω^·`, and 4 that `omegaNF` re-counts down. -/
+    ArgLimRep   last summand `ψ₀(0)`   9/80   `Evidence/WF.lean`'s combinator (A)
+    ArgLimOm    last summand `Ω`       2/80   combinator (B)
+    OmegaLim    `ω^·` preserves the four clauses   69/80, and it IS the lift case
+
+§15's measurement is why they cannot be merged: over the 80 normal-form arguments the
+closure corpus yields, `omegaNF (argVal a)` has THREE shapes — ordinary `φ̄(0, argVal a)`,
+already a fixed point of `ω^·`, and re-counted down — and the shapes line up with the cases
+(`Ω` always a fixed point, the lift case always ordinary, only `ψ₀(0)` mixing).
+
+§15.4 is a correction worth not re-deriving: the lift case's TARGET is `φ̄(0, ·)` in all 69,
+which suggests combinator (C) closes it, but its SEQUENCE is not — in 2 of the 69 a member is
+one `omegaNF` re-counts, and `φ̄(0,y)` is a different ordinal from `ω^y` exactly there.  The
+case is `OmegaLim` with no shape hypothesis at all. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>

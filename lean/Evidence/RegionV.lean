@@ -86,7 +86,11 @@ of `fsP`, and `Evidence/WF.lean` has one combinator aimed at each:
 
     ArgLimRep   last summand `ψ₀(0)`   — sequence `ψ₀(b)·(n+1)`, combinator (A)
     ArgLimOm    last summand `Ω`       — sequence the Ω-tower, combinator (B)
-    ArgLimLift  the `ω^·` step only    — combinator (C)
+    ArgLimLift  the `ω^·` step only
+
+and §15.4 shows the third is not combinator (C) after all but `OmegaLim` — that `ω^·`
+preserves the four clauses — because 2 of its 69 sequence members are ones `omegaNF`
+re-counts, and `φ̄(0,y)` is a different ordinal from `ω^y` exactly there.
 -/
 
 namespace Evidence.Region
@@ -334,7 +338,7 @@ indices was measuring a theorem.  It supplies `hfc` for `limClauses_transfer`, `
 gate's guard, and `CNV` for `asm_veblen`. -/
 
 open Evidence.WF (CNV cnv_plus cnv_omegaNF cnv_ofNat inT_of_cnv plus_assoc LimClauses
-  lim_clauses_prefix)
+  lim_clauses_prefix isAP_omegaNF plus_zero_left)
 
 theorem cnv_one : CNV one = true := rfl
 
@@ -1463,5 +1467,45 @@ standing warning about which direction is safe. -/
 #guard (argCorpus.filter fun a => match a with | .ps _ (.om _) => true | _ => false).length == 3
 #guard (argCorpus.filter fun a => match a with
   | .ps b (.om _) => argVal b == zero | _ => false).length == 0
+
+/-! ### §15.4 THE LIFT CASE IS `ω^·` PRESERVING THE LIMIT CLAUSES — AND NOT `φ̄(0,·)`
+
+CORRECTION TO THE OBVIOUS READING.  §15.3 measures the lift case's TARGET as `φ̄(0, argVal a)`
+in all 69, which suggests §24's un-shifted core (C) closes it.  It does not: the SEQUENCE is
+`omegaNF (argVal (b ⊕ fsP c n))`, and in **2 of the 69** some member of that sequence is one
+`omegaNF` RE-COUNTS, so it is not `φ̄(0, ·)` of anything the combinator is given.  `φ̄(0,y)` and
+`ω^y` are different ordinals exactly when `y` has trailing `1`s after a fixed point, so the
+`φ̄` combinator proves clauses about a DIFFERENT sequence.
+
+What the case actually is, with no shape hypothesis at all: `ω^·` preserves the four
+clauses.  `sumVal (fsP (b ⊕ ψ₀(c)) n) = ω^(argVal (b ⊕ fsP c n))` — the `ψ₀` in front of the
+sequence member IS the `ω^·` — so `ArgLimLift` and `OmegaLim` are the same statement. -/
+
+theorem sumVal_fsP_lift {b c : A} (hc : c ≠ .nil) (n : Nat) :
+    sumVal (fsP (.ps b c) n) = omegaNF (argVal (app b (fsP c n))) := by
+  rw [fsP_ps_ne b c n hc]
+  show plus (sumVal A.nil) (omegaNF (argVal (app b (fsP c n)))) = _
+  exact plus_zero_left (isAP_omegaNF _)
+
+/-- `ω^·` は極限節を保つ。 -/
+def OmegaLim : Prop := ∀ (X : Term) (g : Nat → Term), CNV X = true →
+    LimClauses X g → LimClauses (omegaNF X) (fun n => omegaNF (g n))
+
+/-- **場合 3 は `OmegaLim` そのもの。** -/
+theorem argLimLift_of (H : OmegaLim) : ArgLimLift := by
+  intro b c hc _ _ hg
+  have h := H (argVal (.ps b c)) (fun n => argVal (app b (fsP c n))) (cnv_argVal _) hg
+  have hfun : (fun n => omegaNF (argVal (app b (fsP c n))))
+      = (fun n => sumVal (fsP (A.ps b c) n)) :=
+    funext fun n => (sumVal_fsP_lift hc n).symm
+  rw [hfun] at h
+  exact h
+
+-- 目標は 69/69 で `φ̄(0, ·)` だが、列の側は違う: 2 件で `omegaNF` が数え直す。
+#guard (argCorpus.filter fun a => match a with
+  | .ps _ .nil => false
+  | .ps b c => (List.range 5).any fun n =>
+      omegaNF (argVal (app b (fsP c n))) != phi zero (argVal (app b (fsP c n)))
+  | _ => false).length == 2
 
 end Evidence.Region
