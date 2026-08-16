@@ -1755,4 +1755,24 @@ theorem dnFacts : DnFacts :=
   ⟨fun _ hx => dnArg_le hx, fun _ _ hx hy h => dnArg_ge hx hy h,
    fun _ _ hx hy hfx h => dnArg_ne hx hy hfx h⟩
 
+/-! ## §30 Two small facts about heads and `ω^·`
+
+`Evidence/RegionV.lean` §15.6 needs them to peel a sum down to its head. -/
+
+theorem isAP_hdOf {s : Term} (h : CNV s = true) (hz : s ≠ zero) : (hdOf s).isAP = true := by
+  cases s with
+  | zero => exact absurd rfl hz
+  | M => exact Bool.noConfusion h
+  | omg _ => exact Bool.noConfusion h
+  | psi _ _ => exact Bool.noConfusion h
+  | Z _ => exact Bool.noConfusion h
+  | phi _ _ => rfl
+  | add _ _ => exact (cnv_add h).1
+
+theorem omegaNF_ne_zero (y : Term) : omegaNF y ≠ zero := by
+  intro hc
+  have h0 := isAP_omegaNF y
+  rw [hc] at h0
+  exact Bool.noConfusion h0
+
 end Evidence.WF

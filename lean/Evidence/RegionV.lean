@@ -338,7 +338,8 @@ indices was measuring a theorem.  It supplies `hfc` for `limClauses_transfer`, `
 gate's guard, and `CNV` for `asm_veblen`. -/
 
 open Evidence.WF (CNV cnv_plus cnv_omegaNF cnv_ofNat inT_of_cnv plus_assoc LimClauses
-  lim_clauses_prefix isAP_omegaNF plus_zero_left DnFacts omegaNF_mono)
+  lim_clauses_prefix isAP_omegaNF plus_zero_left DnFacts omegaNF_mono isAP_hdOf
+  omegaNF_ne_zero)
 
 theorem cnv_one : CNV one = true := rfl
 
@@ -1530,5 +1531,50 @@ theorem omegaLim_of (C : OmegaCof) : OmegaLim := by
     fun n => omegaNF_mono Evidence.WF.dnFacts (h1 n) hX (h2 n),
     fun n => omegaNF_mono Evidence.WF.dnFacts (h1 n) (h1 (n + 1)) (h3 n),
     C X g hX ⟨h1, h2, h3, h4⟩⟩
+
+/-! ### §15.6 COFINALITY COMES DOWN TO ONE ADDITIVELY PRINCIPAL TERM
+
+A general `s < ω^X` is covered by repeating its own HEAD: `le_repAdd_of_head` gives
+`s ≤ hdOf s · (k+1)`, and `Evidence/WF.lean`'s `lt_repAdd_phi` says a repetition is below an
+additively principal term exactly when ONE copy is.  Both `hdOf s` and `ω^(g n)` are
+additively principal (`isAP_omegaNF`), so the whole clause collapses to the head:
+
+    OmegaCofAP   `u` additively principal, `u < ω^X`  →  `∃ n, u < ω^(g n)`
+
+Nothing about sums survives the reduction, which is why this is the shape to attack. -/
+
+/-- 加法主要な項の側の共終性 — `OmegaCof` の中身。 -/
+def OmegaCofAP : Prop := ∀ (X : Term) (g : Nat → Term), CNV X = true → LimClauses X g →
+    ∀ u, CNV u = true → u.isAP = true → lt u (omegaNF X) = true →
+      ∃ n, lt u (omegaNF (g n)) = true
+
+/-- **共終性は加法主要な項 1 個の話に落ちる。** 一般の `s` はその頭を `repAdd` で
+    覆えばよく、`lt_repAdd_phi` が「頭が下なら反復も下」を与える。 -/
+theorem omegaCof_of (H : OmegaCofAP) : OmegaCof := by
+  intro X g hX hlc s hin hlt
+  have hcnX : CNV (omegaNF X) = true := cnv_omegaNF hX
+  have hcs : CNV s = true := Evidence.WF.cnv_of_lt_cnv hin hcnX hlt
+  obtain ⟨h1, h2, h3, h4⟩ := hlc
+  by_cases hsz : s = zero
+  · exact ⟨0, by rw [hsz]; exact Evidence.WF.le_zero_left (omegaNF_ne_zero (g 0))⟩
+  · have hcu : CNV (Evidence.WF.hdOf s) = true := Evidence.WF.cnv_hdOf hcs
+    have hapu : (Evidence.WF.hdOf s).isAP = true := isAP_hdOf hcs hsz
+    have hus : le (Evidence.WF.hdOf s) s = true := Evidence.WF.le_hdOf_self s hcs
+    have hux : lt (Evidence.WF.hdOf s) (omegaNF X) = true :=
+      Evidence.WF.lt_of_le_of_lt (Evidence.WF.frag_of_cnv _ hcu) (Evidence.WF.frag_of_cnv _ hcs)
+        (Evidence.WF.frag_of_cnv _ hcnX) hus hlt
+    obtain ⟨n, hn⟩ := H X g hX ⟨h1, h2, h3, h4⟩ (Evidence.WF.hdOf s) hcu hapu hux
+    refine ⟨n, ?_⟩
+    obtain ⟨k, hk⟩ := Evidence.WF.le_repAdd_of_head hcu hapu s hcs (Evidence.WF.le_self _)
+    obtain ⟨p, q, hpq⟩ := Evidence.WF.eq_phi_of_isAP_cnv hcu hapu
+    obtain ⟨c, d, hcd⟩ :=
+      Evidence.WF.eq_phi_of_isAP_cnv (cnv_omegaNF (h1 n)) (isAP_omegaNF (g n))
+    have hcrep : CNV (Evidence.WF.repAdd (Evidence.WF.hdOf s) k) = true := by
+      rw [hpq]; exact Evidence.WF.cnv_repAdd (by rw [← hpq]; exact hcu) k
+    have hrep : lt (Evidence.WF.repAdd (Evidence.WF.hdOf s) k) (omegaNF (g n)) = true := by
+      rw [hpq, hcd, Evidence.WF.lt_repAdd_phi, ← hpq, ← hcd]
+      exact hn
+    exact Evidence.WF.le_of_lt (Evidence.WF.lt_of_le_of_lt (Evidence.WF.frag_of_cnv _ hcs)
+      (Evidence.WF.frag_of_cnv _ hcrep) (Evidence.WF.frag_of_cnv _ (cnv_omegaNF (h1 n))) hk hrep)
 
 end Evidence.Region
