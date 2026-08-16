@@ -1066,4 +1066,129 @@ where
     | zero => rw [if_neg (by omega), if_pos (by omega)]
     | succ _ => rw [if_pos (by omega)]
 
+/-! ## §9 `fsP` GROWS TO THE RIGHT
+
+Three facts about the fundamental sequence that mention neither the normal form nor the
+value, and that between them close `Evidence/RegionV.lean` §13.7's `CaseThree`.
+
+The `n = 0` member is already a PREFIX of `ψ₀(a)`'s own matrix (`fsP_zero_prefix`) and is
+already at least as LONG as `a` (`len_fsP_zero`); raising `n` only appends on the right
+(`mat_fsP_mono`).  Read as ordinals that is Buchholz's continuity — `ψ₀(a)[0]` copies
+`a`'s spine and replaces its last summand by something no shorter — and read as matrices
+it is exactly what `Evidence/CmpM.lean`'s `cmpM_le_of_len` consumes. -/
+
+theorem len_app : ∀ (s r : A), len (app r s) = len r + len s := by
+  intro s
+  induction s with
+  | nil => intro r; show len r = len r + 0; omega
+  | om s' ih =>
+    intro r; show len (app r s') + 1 = len r + (len s' + 1); rw [ih r]; omega
+  | ps s' a ih _ =>
+    intro r
+    show len (app r s') + len a + 1 = len r + (len s' + len a + 1)
+    rw [ih r]; omega
+
+/-- 引数の最後の加数が `ψ₀(c)` (`c ≠ 0`) のときの `fsP` の形。 -/
+theorem fsP_ps_ne : ∀ (b c : A) (n : Nat), c ≠ .nil →
+    fsP (.ps b c) n = .ps .nil (app b (fsP c n)) := by
+  intro b c n h
+  cases c with
+  | nil => exact absurd rfl h
+  | om _ => rfl
+  | ps _ _ => rfl
+
+/-- **`ψ₀(c)[0]` の行列は `ψ₀(c)` の行列の接頭辞。** -/
+theorem fsP_zero_prefix : ∀ (c : A) (d : Nat),
+    ∃ Z, ([d, 0] :: mat c (d + 1)) = mat (fsP c 0) d ++ Z := by
+  intro c
+  induction c with
+  | nil => intro d; exact ⟨[[d, 0]], rfl⟩
+  | om r _ => intro d; exact ⟨[[d + 1, 1]], rfl⟩
+  | ps r s _ ihs =>
+    intro d
+    have main : s ≠ .nil →
+        ∃ Z, ([d, 0] :: mat (A.ps r s) (d + 1)) = mat (fsP (A.ps r s) 0) d ++ Z := by
+      intro hs
+      obtain ⟨Z, hZ⟩ := ihs (d + 1)
+      refine ⟨Z, ?_⟩
+      have hL : mat (fsP (A.ps r s) 0) d
+          = [d, 0] :: (mat r (d + 1) ++ mat (fsP s 0) (d + 1)) := by
+        rw [fsP_ps_ne r s 0 hs]
+        show mat A.nil d ++ ([d, 0] :: mat (app r (fsP s 0)) (d + 1)) = _
+        rw [mat_app]
+        rfl
+      have hR : ([d, 0] :: mat (A.ps r s) (d + 1))
+          = [d, 0] :: (mat r (d + 1) ++ ([d + 1, 0] :: mat s (d + 1 + 1))) := rfl
+      rw [hR, hL, hZ, List.cons_append, List.append_assoc]
+    cases s with
+    | nil => exact ⟨[[d + 1, 0]], rfl⟩
+    | om _ => exact main (by intro h; exact A.noConfusion h)
+    | ps _ _ => exact main (by intro h; exact A.noConfusion h)
+
+/-- **`ψ₀(c)[0]` は `c` より短くない。** -/
+theorem len_fsP_zero : ∀ (c : A), len c ≤ len (fsP c 0) := by
+  intro c
+  induction c with
+  | nil => exact Nat.le_refl 0
+  | om r _ => show len r + 1 ≤ 0 + len r + 1; omega
+  | ps r s _ ihs =>
+    have main : s ≠ .nil → len (A.ps r s) ≤ len (fsP (A.ps r s) 0) := by
+      intro hs
+      rw [fsP_ps_ne r s 0 hs]
+      show len r + len s + 1 ≤ 0 + len (app r (fsP s 0)) + 1
+      rw [len_app]
+      omega
+    cases s with
+    | nil => show len r + 0 + 1 ≤ 0 + len r + 1; omega
+    | om _ => exact main (by intro h; exact A.noConfusion h)
+    | ps _ _ => exact main (by intro h; exact A.noConfusion h)
+
+theorem mat_rep_mono (b : A) (d : Nat) :
+    ∀ (n : Nat), ∃ Z, mat (rep b n) d = mat (rep b 0) d ++ Z
+  | 0 => ⟨[], (List.append_nil _).symm⟩
+  | k + 1 => by
+    obtain ⟨Z, hZ⟩ := mat_rep_mono b d k
+    refine ⟨Z ++ ([d, 0] :: mat b (d + 1)), ?_⟩
+    show mat (rep b k) d ++ ([d, 0] :: mat b (d + 1)) = _
+    rw [hZ, List.append_assoc]
+
+/-- **`n` を上げるのは右に足すだけ。** -/
+theorem mat_fsP_mono : ∀ (c : A) (n d : Nat),
+    ∃ Z, mat (fsP c n) d = mat (fsP c 0) d ++ Z := by
+  intro c
+  induction c with
+  | nil => intro n d; exact ⟨[], rfl⟩
+  | om r _ =>
+    intro n d
+    cases n with
+    | zero => exact ⟨[], (List.append_nil _).symm⟩
+    | succ k =>
+      refine ⟨mat (iterOm r k) (d + 1), ?_⟩
+      show [d, 0] :: mat (app r (iterOm r k)) (d + 1)
+        = ([d, 0] :: mat r (d + 1)) ++ mat (iterOm r k) (d + 1)
+      rw [mat_app]
+      rfl
+  | ps r s _ ihs =>
+    intro n d
+    have main : s ≠ .nil →
+        ∃ Z, mat (fsP (A.ps r s) n) d = mat (fsP (A.ps r s) 0) d ++ Z := by
+      intro hs
+      obtain ⟨Z, hZ⟩ := ihs n (d + 1)
+      refine ⟨Z, ?_⟩
+      have hn : mat (fsP (A.ps r s) n) d
+          = [d, 0] :: (mat r (d + 1) ++ mat (fsP s n) (d + 1)) := by
+        rw [fsP_ps_ne r s n hs]
+        show mat A.nil d ++ ([d, 0] :: mat (app r (fsP s n)) (d + 1)) = _
+        rw [mat_app]; rfl
+      have h0 : mat (fsP (A.ps r s) 0) d
+          = [d, 0] :: (mat r (d + 1) ++ mat (fsP s 0) (d + 1)) := by
+        rw [fsP_ps_ne r s 0 hs]
+        show mat A.nil d ++ ([d, 0] :: mat (app r (fsP s 0)) (d + 1)) = _
+        rw [mat_app]; rfl
+      rw [hn, h0, hZ, List.cons_append, List.append_assoc]
+    cases s with
+    | nil => exact mat_rep_mono r d n
+    | om _ => exact main (by intro h; exact A.noConfusion h)
+    | ps _ _ => exact main (by intro h; exact A.noConfusion h)
+
 end Evidence.Region

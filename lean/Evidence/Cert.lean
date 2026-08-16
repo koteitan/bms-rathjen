@@ -8685,12 +8685,17 @@ measurements for the three supplies.  ONE region carries TWO rows: ε₁'s row i
 `mat (ps nil (omPow 2)) 0`, and `epsM k` — §20's ladder rung, the ε_ω row's k-th expansion
 by `expand_epsOmega` — is `mat (ps nil (omPow (k+1))) 0`.
 
-STATE OF THE THREE SUPPLIES (RegionV).  `Hzero` and `Hsucc` are THEOREMS (§12); the value
-is always `CNV` (§11, via `Evidence/CNVOps.lean`); `Hclosed` is a theorem modulo ONE named
-inequality (§13, `CaseThree`, measured with 0 failures and with the two weaker statements
-that would imply it refuted).  `Hlim` is what remains: §9 measures five of its six
-conjuncts clean, and the sixth — cofinality — has a route through `Evidence/WF.lean`'s
-combinators, one per case of `fsP`, composed under `lim_clauses_sum`. -/
+STATE OF THE THREE SUPPLIES (RegionV).  `Hzero`, `Hsucc` and `Hclosed` are all THEOREMS
+now (§12 and §13), and the value is always `CNV` (§11, via `Evidence/CNVOps.lean`).
+`Hclosed`'s last case, `CaseThree`, closed on 2026-08-16 and is not an order fact but a
+LENGTH fact: the fixed-point condition `a ∈ C₀(a)` makes `b` a prefix of `c` in the only
+hard case, and `ψ₀(c)[0]` is a prefix of `ψ₀(c)` that is no shorter than `c`, so the tail
+of `c` cannot overshoot it (`Evidence/CmpM.lean`'s `cmpM_le_of_len`).  Neither the
+descending condition nor the value is used.
+
+`Hlim` is what remains: §9 measures five of its six conjuncts clean, and the sixth —
+cofinality — has a route through `Evidence/WF.lean`'s combinators, one per case of `fsP`,
+composed under `lim_clauses_sum`. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>

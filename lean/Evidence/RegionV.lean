@@ -69,13 +69,11 @@ fourth conjunct is a DOMINATION against one of these — `Evidence/WF.lean` §15
 WHAT IS PROVED HERE, AND WHAT IS LEFT.  §11 proves the value is ALWAYS `CNV` — no normal
 form needed, because `Evidence/CNVOps.lean` closes `CNV` under the only two operations
 `sumVal` uses.  §12 discharges `certIn_region`'s FIRST TWO SUPPLIES as theorems.  §13
-proves `Hclosed` — the region closed under `BMS.expand` — from ONE inequality, `CaseThree`,
-which §13.7 states, measures (0 failures over its 102 instances) and refutes the two
-weaker statements that would have implied it.
+proves `Hclosed` — **the region is closed under `BMS.expand`, unconditionally** — the last
+case, `CaseThree`, being closed in §13.7 by a length argument.
 
-SO THE ✅ IS TWO NAMED THINGS AWAY:
+SO THE ✅ IS ONE NAMED THING AWAY:
 
-    CaseThree   §13.7's inequality, the last case of `Hclosed`
     Hlim        the four limit clauses; §9 measures five of six conjuncts clean, and the
                 sixth (cofinality) has a route — `Evidence/WF.lean`'s combinators
                 `lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen`, one per
@@ -866,17 +864,58 @@ theorem descOK_of_le {r c y : A} (h : (BMS.cmpM (mat y 0) (mat c 0) != Ordering.
       rw [hl] at hd'
       exact BMS.leM_trans h hd'
 
-/-- 場合 3 に残る唯一の穴 — 引数 `c` が、新しい引数 `b ⊕ fsP c n` を超えないこと。 -/
+/-- 場合 3 の要 — 引数 `c` が、新しい引数 `b ⊕ fsP c n` を超えないこと。 -/
 def CaseThree : Prop := ∀ (b c : A), c ≠ .nil → ∀ (n : Nat),
     nf (.ps b c) = true → fpOK (.ps b c) = true → FsPOK c n →
     (BMS.cmpM (mat c 0) (mat (app b (fsP c n)) 0) != Ordering.gt) = true
 
-theorem fsP_case3 (H : CaseThree) (b c : A) (hc : c ≠ .nil) (n : Nat)
+/-- 不動点条件が与える不等式 — `a ∈ C₀(a)` の最後の加数ぶん。 -/
+theorem fpOK_arg_lt {b c : A} (h : fpOK (A.ps b c) = true) :
+    BMS.cmpM (mat c 0) (mat (A.ps b c) 0) = Ordering.lt := by
+  have h' : (argsLtM (mat (A.ps b c) 0) b
+      && (BMS.cmpM (mat c 0) (mat (A.ps b c) 0) == Ordering.lt)
+      && argsLtM (mat (A.ps b c) 0) c) = true := h
+  cases hcmp : BMS.cmpM (mat c 0) (mat (A.ps b c) 0) with
+  | lt => rfl
+  | eq => rw [hcmp] at h'; simp at h'
+  | gt => rw [hcmp] at h'; simp at h'
+
+/-- **場合 3 は閉じている。** 仮定は不動点条件 `fpOK (ps b c)` だけ — 標準形の残りも
+    `FsPOK` も使わない。§13.7 が証明の筋を書く。 -/
+theorem caseThree : CaseThree := by
+  intro b c _ n _ hfp _
+  have h1 : BMS.cmpM (mat c 0) (mat b 0 ++ ([0, 0] :: mat c 1)) = Ordering.lt :=
+    fpOK_arg_lt hfp
+  cases hCB : BMS.cmpM (mat c 0) (mat b 0) with
+  | lt =>
+    rw [mat_app, BMS.cmpM_lt_append _ _ _ hCB]
+    rfl
+  | eq =>
+    rw [mat_app, BMS.cmpM_eq _ _ hCB]
+    exact BMS.cmpM_self_append _ _
+  | gt =>
+    obtain ⟨W, hW⟩ := BMS.cmpM_gt_prefix _ _ _ hCB h1
+    have h1' : BMS.cmpM W ([0, 0] :: mat c 1) = Ordering.lt := by
+      rw [hW, BMS.cmpM_append_left] at h1; exact h1
+    obtain ⟨Z, hZ⟩ := fsP_zero_prefix c 0
+    have hZ0 : ([0, 0] :: mat c 1) = mat (fsP c 0) 0 ++ Z := hZ
+    rw [hZ0] at h1'
+    have hlenC : (mat c 0).length = (mat b 0).length + W.length := by
+      rw [hW, List.length_append]
+    have e1 : (mat c 0).length = len c := mat_len c 0
+    have e2 : (mat (fsP c 0) 0).length = len (fsP c 0) := mat_len (fsP c 0) 0
+    have e3 : len c ≤ len (fsP c 0) := len_fsP_zero c
+    have hstep := BMS.cmpM_le_of_len h1' (by omega : W.length ≤ (mat (fsP c 0) 0).length)
+    obtain ⟨Z', hZ'⟩ := mat_fsP_mono c n 0
+    rw [mat_app, hW, BMS.cmpM_append_left, hZ']
+    exact BMS.leM_trans hstep (BMS.cmpM_self_append _ _)
+
+theorem fsP_case3 (b c : A) (hc : c ≠ .nil) (n : Nat)
     (hnf : nf (.ps b c) = true) (hfp : fpOK (.ps b c) = true) (IH : FsPOK c n)
     (hshape : fsP (.ps b c) n = .ps .nil (app b (fsP c n))) : FsPOK (.ps b c) n := by
   obtain ⟨hnb, hnc, hdbc, hfpc⟩ := nf_ps_iff.mp hnf
   obtain ⟨hns, hargs, ⟨c', hfs, hlt'⟩, hmat⟩ := IH
-  have hLa := H b c hc n hnf hfp ⟨hns, hargs, ⟨c', hfs, hlt'⟩, hmat⟩
+  have hLa := caseThree b c hc n hnf hfp ⟨hns, hargs, ⟨c', hfs, hlt'⟩, hmat⟩
   have hfpb : fpOK b = true := fpOK_left_ps hfp
   have hX : mat (app b (fsP c n)) 0 = mat b 0 ++ mat (fsP c n) 0 := mat_app _ _ _
   have hA : mat (A.ps b c) 0 = mat b 0 ++ mat (A.ps .nil c) 0 := rfl
@@ -918,8 +957,8 @@ theorem fsP_case3 (H : CaseThree) (b c : A) (hc : c ≠ .nil) (n : Nat)
     rw [show (1 : Nat) = 0 + 1 from rfl, cmpM_mat_depth]
     exact hXA
 
-/-- **`fsP` は標準形を保つ。** 場合 3 の穴 `CaseThree` だけを仮定として持つ。 -/
-theorem fsP_ok (H : CaseThree) : ∀ (a : A), a ≠ .nil → nf a = true → fpOK a = true →
+/-- **`fsP` は標準形を保つ。** 仮定なし — 場合 3 は `caseThree` が閉じた。 -/
+theorem fsP_ok : ∀ (a : A), a ≠ .nil → nf a = true → fpOK a = true →
     ∀ (n : Nat), FsPOK a n := by
   intro a
   induction a with
@@ -968,11 +1007,11 @@ theorem fsP_ok (H : CaseThree) : ∀ (a : A), a ≠ .nil → nf a = true → fpO
       · rw [hshape]; exact mat_rep_lt b n
     | om c' =>
       obtain ⟨_, hnc, _, hfpc⟩ := nf_ps_iff.mp hnf
-      exact fsP_case3 H b (.om c') (by intro hcc; exact A.noConfusion hcc) n hnf hfp
+      exact fsP_case3 b (.om c') (by intro hcc; exact A.noConfusion hcc) n hnf hfp
         (ihc (by intro hcc; exact A.noConfusion hcc) hnc hfpc n) rfl
     | ps c1 c2 =>
       obtain ⟨_, hnc, _, hfpc⟩ := nf_ps_iff.mp hnf
-      exact fsP_case3 H b (.ps c1 c2) (by intro hcc; exact A.noConfusion hcc) n hnf hfp
+      exact fsP_case3 b (.ps c1 c2) (by intro hcc; exact A.noConfusion hcc) n hnf hfp
         (ihc (by intro hcc; exact A.noConfusion hcc) hnc hfpc n) rfl
 
 /-! ### §13.6 `Hclosed` -/
@@ -1002,7 +1041,7 @@ theorem topOK_fsP : ∀ (a : A) (n : Nat), topOK (fsP a n) = true := by
     | ps _ _ => rfl
 
 /-- **`Hclosed` の添字側。** -/
-theorem nf_fs (H : CaseThree) (t : A) (hnf : nf t = true) (htop : topOK t = true) (n : Nat) :
+theorem nf_fs (t : A) (hnf : nf t = true) (htop : topOK t = true) (n : Nat) :
     nf (fs t n) = true ∧ topOK (fs t n) = true := by
   cases t with
   | nil => exact ⟨rfl, rfl⟩
@@ -1013,7 +1052,7 @@ theorem nf_fs (H : CaseThree) (t : A) (hnf : nf t = true) (htop : topOK t = true
     | nil => exact ⟨hnr, htop⟩
     | om a' =>
       obtain ⟨hns, _, ⟨c, hfs, hlt⟩, _⟩ :=
-        fsP_ok H (.om a') (by intro hc; exact A.noConfusion hc) hna hfpa n
+        fsP_ok (.om a') (by intro hc; exact A.noConfusion hc) hna hfpa n
       refine ⟨nf_app _ r hnr hns ?_, topOK_app _ r htop (topOK_fsP _ n)⟩
       show (match firstSm (fsP (A.om a') n) with
         | none => true | some none => omOK r | some (some y) => descOK r y) = true
@@ -1021,7 +1060,7 @@ theorem nf_fs (H : CaseThree) (t : A) (hnf : nf t = true) (htop : topOK t = true
       exact descOK_of_le (by rw [hlt]; rfl) hd
     | ps a1 a2 =>
       obtain ⟨hns, _, ⟨c, hfs, hlt⟩, _⟩ :=
-        fsP_ok H (.ps a1 a2) (by intro hc; exact A.noConfusion hc) hna hfpa n
+        fsP_ok (.ps a1 a2) (by intro hc; exact A.noConfusion hc) hna hfpa n
       refine ⟨nf_app _ r hnr hns ?_, topOK_app _ r htop (topOK_fsP _ n)⟩
       show (match firstSm (fsP (A.ps a1 a2) n) with
         | none => true | some none => omOK r | some (some y) => descOK r y) = true
@@ -1029,7 +1068,7 @@ theorem nf_fs (H : CaseThree) (t : A) (hnf : nf t = true) (htop : topOK t = true
       exact descOK_of_le (by rw [hlt]; rfl) hd
 
 /-- **`Hclosed`。** 領域は `BMS.expand` で閉じている。 -/
-theorem hclosed_supply (H : CaseThree) : ∀ (S : BMS.Matrix), Reg S → ∀ (n : Nat),
+theorem hclosed_supply : ∀ (S : BMS.Matrix), Reg S → ∀ (n : Nat),
     Reg (BMS.expand S n) := by
   rintro S ⟨t, hnf, htop, rfl⟩ n
   cases t with
@@ -1039,29 +1078,39 @@ theorem hclosed_supply (H : CaseThree) : ∀ (S : BMS.Matrix), Reg S → ∀ (n 
     rfl
   | om _ => exact Bool.noConfusion htop
   | ps r a =>
-    obtain ⟨h1, h2⟩ := nf_fs H (.ps r a) hnf htop n
+    obtain ⟨h1, h2⟩ := nf_fs (.ps r a) hnf htop n
     refine ⟨fs (.ps r a) n, h1, h2, ?_⟩
     show (BMS.expand? (mat (A.ps r a) 0) n).getD [] = _
     rw [expand_mat (.ps r a) htop (by intro hc; exact A.noConfusion hc) n]
     rfl
 
-/-! ### §13.7 THE ONE REMAINING GAP, MEASURED
+/-! ### §13.7 HOW THE LAST CASE CLOSES
 
-`CaseThree` is the only hypothesis `fsP_ok` and `hclosed_supply` carry, and it is one
+`CaseThree` was the only hypothesis `fsP_ok` and `hclosed_supply` carried, and it is one
 inequality: when the argument's last summand is `ψ₀(c)` with `c ≠ 0`, the fundamental
 sequence replaces it by `ψ₀(b ⊕ fsP c n)`, and the NEW argument must not drop below `c`.
 
     cmpM (mat c 0) (mat (app b (fsP c n)) 0) ≠ .gt
 
-Measured over the 294 normal forms of `closureCorpus`, which yield 102 instances of the
-shape, at `n ≤ 3`: **0 failures**.  Two weaker statements that would have implied it are
-REFUTED on the same population, so the inequality is not a corollary of either:
+IT IS NOT AN ORDER FACT, IT IS A LENGTH FACT.  Both weaker statements that would have
+implied it are REFUTED on the 102 instances `closureCorpus` yields, so neither half is
+enough on its own —
 
     c ≤ fsP c n     27 of 102 fail   (it holds when `b = nil`, 0 of 42)
     c ≤ b           66 of 102 fail
 
-The proof has to see both halves at once, which is why it is stated as an interface here
-rather than guessed at. -/
+— and so is the obvious repair, routing through `ψ₀` of `c` minus its last summand
+(24 of the 66 fail).  What works instead: compare `c` with `b` first.  Below `b` and equal
+to `b` are immediate.  ABOVE `b` is the case with content, and there the fixed-point
+condition `c < b ⊕ ψ₀(c)` forces `b` to be a PREFIX of `c` (`cmpM_gt_prefix`), so the whole
+inequality cancels down to its tail `W` against `fsP c n`.  Now `Evidence/Region.lean` §9
+applies: `fsP c 0`'s matrix is a prefix of `ψ₀(c)`'s and is no shorter than `c`, and `W` is
+a tail of `c`, so `|W| ≤ |c| ≤ |fsP c 0|` — and a matrix that is `< Y ++ Z` and no longer
+than `Y` is `≤ Y` (`Evidence/CmpM.lean`'s `cmpM_le_of_len`).  Raising `n` only appends on
+the right, which cannot lower the bound.
+
+Nothing in the argument uses the descending condition, `FsPOK`, or the value — only
+`a ∈ C₀(a)`.  The `#guard`s below are kept as the measurement that pointed at the shape. -/
 
 def caseThreePairs : List (A × A) :=
   (closureCorpus.filter nf).filterMap fun t =>
@@ -1077,5 +1126,18 @@ def caseThreePairs : List (A × A) :=
   BMS.cmpM (mat p.2 0) (mat (fsP p.2 n) 0) != Ordering.gt)).length == 27
 #guard (caseThreePairs.filter fun p =>
   BMS.cmpM (mat p.2 0) (mat p.1 0) == Ordering.gt).length == 66
+
+/-- 最後の加数を落とした残り。 -/
+def hdOf : A → A | .nil => .nil | .om r => r | .ps r _ => r
+
+-- `ψ₀(hdOf c)` を経由する明らかな修理も落ちる。`c > b` の 66 件のうち 24 件で
+-- 尾 `W` が `ψ₀(hdOf c)` を超える。§13.7 が長さで通す理由。
+#guard (caseThreePairs.filter fun p =>
+  BMS.cmpM (mat p.2 0) (mat p.1 0) == Ordering.gt
+  && BMS.cmpM ((mat p.2 0).drop (mat p.1 0).length)
+       (mat (A.ps .nil (hdOf p.2)) 0) == Ordering.gt).length == 24
+-- 一方 `ψ₀(hdOf c) ≤ fsP c n` の側は 102 件すべてで成り立つ。
+#guard caseThreePairs.all fun p => (List.range 4).all fun n =>
+  BMS.cmpM (mat (A.ps .nil (hdOf p.2)) 0) (mat (fsP p.2 n) 0) != Ordering.gt
 
 end Evidence.Region

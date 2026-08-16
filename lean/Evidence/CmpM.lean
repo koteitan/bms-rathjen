@@ -290,6 +290,38 @@ theorem cmpM_gt_prefix : ∀ (X Y Z : Matrix), cmpM X Y = .gt → cmpM X (Y ++ Z
       obtain ⟨W, hW⟩ := cmpM_gt_prefix s t Z g1 g2
       exact ⟨W, by rw [cmpCol_eq x y hxy, hW]; rfl⟩
 
+/-- 小さい側は、相手を右に伸ばしても小さいまま。 -/
+theorem cmpM_lt_append : ∀ (X Y Z : Matrix), cmpM X Y = .lt → cmpM X (Y ++ Z) = .lt
+  | [], [], _, h => Ordering.noConfusion h
+  | _ :: _, [], _, h => Ordering.noConfusion h
+  | [], _ :: _, _, _ => rfl
+  | x :: s, y :: t, Z, h => by
+    have h' : (cmpCol x y).then (cmpM s t) = .lt := h
+    show (cmpCol x y).then (cmpM s (t ++ Z)) = .lt
+    cases hxy : cmpCol x y with
+    | gt => rw [hxy] at h'; exact Ordering.noConfusion h'
+    | lt => rfl
+    | eq =>
+      rw [hxy] at h'
+      show cmpM s (t ++ Z) = .lt
+      exact cmpM_lt_append s t Z h'
+
+/-- 接頭辞は超えない。 -/
+theorem cmpM_self_append (X Z : Matrix) : (cmpM X (X ++ Z) != Ordering.gt) = true := by
+  have h : cmpM (X ++ []) (X ++ Z) = cmpM [] Z := cmpM_append_left X [] Z
+  rw [List.append_nil] at h
+  rw [h]
+  cases Z <;> rfl
+
+/-- **長さで押さえる。** `X < Y ++ Z` かつ `|X| ≤ |Y|` なら `X ≤ Y`。`cmpM_gt_lt_len` の
+    対偶で、`Evidence/RegionV.lean` §13.7 が `CaseThree` を閉じるのに使う道具。 -/
+theorem cmpM_le_of_len {X Y Z : Matrix} (h : cmpM X (Y ++ Z) = .lt)
+    (hlen : X.length ≤ Y.length) : (cmpM X Y != Ordering.gt) = true := by
+  cases hxy : cmpM X Y with
+  | lt => rfl
+  | eq => rfl
+  | gt => exact absurd (cmpM_gt_lt_len X Y Z hxy h) (by omega)
+
 /-- 高さ 2 の列のなかで `(0,0)` は最小。 -/
 theorem cmpCol_min_zero (c : Col) (h : c.length = 2) :
     (cmpCol c [0, 0] != Ordering.lt) = true := by
