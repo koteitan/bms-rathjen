@@ -2694,4 +2694,105 @@ def enumB (L n : Nat) : List B :=
 
 end
 
+/-! ## §20 WHAT `red` DOES TO A `matB` MATRIX, PINNED
+
+§19 found the normal form and measured `nfB = isReducedP`.  Proving that equality means
+computing `red` on `matB` matrices, and `red`'s own recursion descends into SUBTREES, which
+sit at depth `> 0` — so the statement to prove is not "`red` fixes the region's matrices" but
+the more informative one it needs as its induction hypothesis.  Measured over every index
+with at most 4 nodes and levels below 3 whose non-top nodes obey the normal form (`nfFree`,
+1047 of them), at every depth `d = 0, 1, 2, 3`:
+
+    red (psM (matB s d))  =  (topSplit s).flatMap (fun q => psM (matB q (lvlB q)))
+
+**and the right-hand side does not mention `d`.**  `red` re-roots every top-level subtree so
+that its root's DEPTH equals its root's LEVEL — that is what "reduced" means, and it is why
+`jjSeq 0 tr` (the diagonal `(0,0)(1,1)…(tr,tr)`) is the shape `red` cuts off the front.  On
+the principal indices (344 of the 1047) it reads
+
+    red (psM (matB (nd v nil a) d))  =  psM (matB (nd v nil a) v)
+
+`nfB` is the case where every top-level level is `0`, so every summand is already re-rooted
+at depth 0 and the right-hand side collapses to `psM (matB t 0)` — that is `canon_nfB` below,
+and it is exactly the bridge from the measured identity to the gate `isReducedP`.
+
+WHAT IS NOT CLAIMED.  The identity above is measured, not proved.  `Rows/Ladder.lean` carries
+the matrix-independent branch lemmas it will be proved from (`red_jj`, `red_fold_open`,
+`red_fold_single`, `red_shift`, `red_head_one`, `isPrincipalP_of_chain`, `trMax_eq`); that
+file imports only `Trans.Recal`, so using it here is not a layering inversion. -/
+
+section
+open Trans.Recal
+
+/-- 最上位の節の段は自由、それ以外は親 + 1 以下。`red` の再帰が降りる先の条件。 -/
+def nfFree : B → Bool
+  | .nil => true
+  | .nd v r a => nfFree r && nfLe (v + 1) a
+
+/-- 根の段。 -/
+def lvlB : B → Nat
+  | .nil => 0
+  | .nd v _ _ => v
+
+/-- `red` が返すはずの形: 各加数を「根の深さ = 根の段」の位置に置き直したもの。 -/
+def canon (s : B) : PS := (topSplit s).flatMap fun q => psM (matB q (lvlB q))
+
+theorem nfFree_of_nfLe : ∀ (t : B) (m : Nat), nfLe m t = true → nfFree t = true := by
+  intro t
+  induction t with
+  | nil => intro _ _; rfl
+  | nd v r a ihr _ =>
+    intro m h
+    obtain ⟨_, h2, h3⟩ := (nfLe_nd_iff m v r a).mp h
+    show (nfFree r && nfLe (v + 1) a) = true
+    rw [ihr m h2, h3]
+    rfl
+
+theorem lvlB_topSplit : ∀ (t : B), nfB t = true → ∀ q ∈ topSplit t, lvlB q = 0 := by
+  intro t
+  show nfLe 0 t = true → _
+  induction t with
+  | nil => intro _ q hq; exact absurd (show q ∈ ([] : List B) from hq) (by simp)
+  | nd v r a ihr _ =>
+    intro h q hq
+    obtain ⟨h1, h2, _⟩ := (nfLe_nd_iff 0 v r a).mp h
+    rcases List.mem_append.mp hq with hq | hq
+    · exact ihr h2 q hq
+    · rcases List.mem_cons.mp hq with rfl | hq
+      · show v = 0; omega
+      · exact absurd (show q ∈ ([] : List B) from hq) (by simp)
+
+theorem psM_flatten : ∀ (X : List Matrix), psM X.flatten = (X.map psM).flatten := by
+  intro X
+  induction X with
+  | nil => rfl
+  | cons c cs ih =>
+    show psM (c ++ cs.flatten) = psM c ++ (cs.map psM).flatten
+    rw [psM_append, ih]
+
+/-- **標準形なら `canon` は行列そのもの。** 測定した等式から門への橋。 -/
+theorem canon_nfB (t : B) (h : nfB t = true) : canon t = psM (matB t 0) := by
+  show ((topSplit t).map fun q => psM (matB q (lvlB q))).flatten = _
+  rw [show ((topSplit t).map fun q => psM (matB q (lvlB q)))
+      = ((topSplit t).map (fun q => matB q 0)).map psM from by
+    rw [List.map_map]
+    exact List.map_congr_left (fun q hq => by rw [lvlB_topSplit t h q hq]; rfl),
+    ← psM_flatten, ← matB_topSplit t 0]
+
+/-! ### §20.1 THE MEASUREMENT -/
+
+def enumFree (L n : Nat) : List B :=
+  ((List.range (n + 1)).flatMap (enumNodes L)).filter fun t => nfFree t && t != .nil
+
+#guard (enumFree 3 4).length == 1047
+#guard (List.range 4).all fun d =>
+  (enumFree 3 4).all fun s => redP (psM (matB s d)) == canon s
+#guard ((enumFree 3 4).filter fun s => match s with
+  | .nd _ .nil _ => true | _ => false).length == 344
+#guard (List.range 4).all fun d =>
+  ((enumFree 3 4).filter fun s => match s with | .nd _ .nil _ => true | _ => false).all
+    fun s => redP (psM (matB s d)) == psM (matB s (lvlB s))
+
+end
+
 end Evidence.Region
