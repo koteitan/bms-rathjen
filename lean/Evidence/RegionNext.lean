@@ -4329,4 +4329,107 @@ theorem lvl_le_fpar (t : B) (m d : Nat) (hnf : nfLe m t = true) (i p : Nat)
 
 end
 
+/-! ## §29 `trMax` COMPUTED, AND THE DIAGONAL CUT
+
+§26 says what `trMax` is and §27 says what the run looks like, but both take the position as
+given.  `runLen` produces it: walk right while "depth and level both go up", and stop.  It is
+defined on the MATRIX, not on the tree, which is the point — nothing here needs to know how
+the index is shaped, only that the two step bounds of §27 hold.
+
+    trMax_runLen : trMax (psM M) = runLen M
+
+and on a region matrix the run is the diagonal outright (`spine_diag_matB`): the root is at
+depth 0 and level 0, §27 makes both go up by exactly one along the run, so column `j` is
+`(j, j)` for every `j ≤ runLen M`.  With §27's `take_jjSeq` that is `red`'s `jjSeq 0 tr`, and
+with `psM_split` the matrix is that diagonal followed by whatever is left.
+
+So of §25's three hypotheses, `htr` is now `trMax_runLen` and half of `hsplit` is done.  What
+remains is the other half — that the rest of the matrix is `brF M`'s blocks concatenated —
+and `hterm`. -/
+
+section
+open Trans.Recal
+
+/-- 「深さも段も真に増える」が続く長さ。 -/
+def runAux (M : Matrix) : Nat → Nat → Nat
+  | 0, j => j
+  | f + 1, j =>
+    if j + 1 < M.length ∧ ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1
+    then runAux M f (j + 1) else j
+
+def runLen (M : Matrix) : Nat := runAux M M.length 0
+
+theorem runAux_spec (M : Matrix) : ∀ (f j : Nat), j < M.length → M.length ≤ j + f →
+    runAux M f j < M.length
+    ∧ j ≤ runAux M f j
+    ∧ (∀ i, j ≤ i → i < runAux M f j →
+        ent M i 0 < ent M (i + 1) 0 ∧ ent M i 1 < ent M (i + 1) 1)
+    ∧ (M.length ≤ runAux M f j + 1
+       ∨ ¬(ent M (runAux M f j) 0 < ent M (runAux M f j + 1) 0
+           ∧ ent M (runAux M f j) 1 < ent M (runAux M f j + 1) 1)) := by
+  intro f
+  induction f with
+  | zero => intro j h1 h2; exact absurd h2 (by omega)
+  | succ g ih =>
+    intro j h1 h2
+    by_cases hc : j + 1 < M.length ∧ ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1
+    · have hstep : runAux M (g + 1) j = runAux M g (j + 1) := by
+        show (if j + 1 < M.length ∧ _ ∧ _ then runAux M g (j + 1) else j) = _
+        rw [if_pos hc]
+      obtain ⟨k1, k2, k3, k4⟩ := ih (j + 1) hc.1 (by omega)
+      refine ⟨by rw [hstep]; exact k1, by rw [hstep]; omega, ?_, by rw [hstep]; exact k4⟩
+      intro i hi1 hi2
+      rw [hstep] at hi2
+      rcases Nat.eq_or_lt_of_le hi1 with rfl | hlt
+      · exact hc.2
+      · exact k3 i (by omega) hi2
+    · have hstep : runAux M (g + 1) j = j := by
+        show (if j + 1 < M.length ∧ _ ∧ _ then runAux M g (j + 1) else j) = _
+        rw [if_neg hc]
+      rw [hstep]
+      refine ⟨h1, Nat.le_refl _, fun i hi1 hi2 => absurd hi2 (by omega), ?_⟩
+      rcases Nat.lt_or_ge (j + 1) M.length with hj | hj
+      · exact Or.inr (fun hd => hc ⟨hj, hd⟩)
+      · exact Or.inl hj
+
+theorem runLen_lt (M : Matrix) (h : 0 < M.length) : runLen M < M.length :=
+  (runAux_spec M M.length 0 h (by omega)).1
+
+theorem runLen_run (M : Matrix) (h : 0 < M.length) : ∀ i, i < runLen M →
+    ent M i 0 < ent M (i + 1) 0 ∧ ent M i 1 < ent M (i + 1) 1 :=
+  fun i hi => (runAux_spec M M.length 0 h (by omega)).2.2.1 i (by omega) hi
+
+theorem runLen_stop (M : Matrix) (h : 0 < M.length) :
+    M.length ≤ runLen M + 1
+    ∨ ¬(ent M (runLen M) 0 < ent M (runLen M + 1) 0
+        ∧ ent M (runLen M) 1 < ent M (runLen M + 1) 1) :=
+  (runAux_spec M M.length 0 h (by omega)).2.2.2
+
+/-- **`trMax` は走りの長さ。** -/
+theorem trMax_runLen (M : Matrix) (h : 0 < M.length) :
+    trMax (psM M) = ((runLen M : Nat) : Int) :=
+  trMax_of M (runLen M) (runLen_lt M h) (runLen_run M h) (runLen_stop M h)
+
+/-- **領域の行列では走りの上で深さ = 段 = 添字。** -/
+theorem spine_diag_matB (a : B) (hnf : nfLe 1 a = true) :
+    ∀ j, j ≤ runLen (matB (.nd 0 .nil a) 0) →
+      ent (matB (.nd 0 .nil a) 0) j 0 = j ∧ ent (matB (.nd 0 .nil a) 0) j 1 = j := by
+  have hne : (B.nd 0 .nil a) ≠ .nil := by intro h; exact B.noConfusion h
+  have hpos : 0 < (matB (B.nd 0 .nil a) 0).length := matB_len_pos _ 0 hne
+  have hnf0 : nfLe 0 (B.nd 0 .nil a) = true := (nfLe_nd_iff 0 0 .nil a).mpr ⟨by omega, rfl, hnf⟩
+  have h00 : ent (matB (B.nd 0 .nil a) 0) 0 0 = 0 := matB_head0 _ 0 hne
+  have h01 : ent (matB (B.nd 0 .nil a) 0) 0 1 = 0 := by
+    rw [matB_head1 _ 0 hne]
+    rfl
+  intro j hj
+  obtain ⟨s0, s1⟩ := spine_step (B.nd 0 .nil a) 0 0 hnf0 (runLen (matB (B.nd 0 .nil a) 0))
+    (fun i hi => runLen_run _ hpos i hi) j hj
+  exact ⟨by omega, by omega⟩
+
+/-- 対角と残りで行列が割れる。 -/
+theorem psM_split (M : Matrix) (n : Nat) :
+    (psM M).take n ++ (psM M).drop n = psM M := List.take_append_drop ..
+
+end
+
 end Evidence.Region
