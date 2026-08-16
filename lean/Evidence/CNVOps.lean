@@ -1837,4 +1837,160 @@ theorem limClauses_succ_lt {X : Term} {g : Nat → Term} (hX : CNV X = true)
   exact lt_of_le_of_lt (frag_of_cnv _ (cnv_succT _ hz)) (frag_of_cnv _ (h1 (n + 1)))
     (frag_of_cnv _ hX) hs (h2 (n + 1))
 
+/-! ## §32 NOTHING ADDITIVELY PRINCIPAL SITS BETWEEN `ω^β` AND `ω^(β+1)`
+
+Combinator (A) — `Evidence/WF.lean`'s `lim_clauses_repAdd`, which `ArgLimRep` needs — asks
+for a BOUND: every additively principal term below the target is at most one copy of the
+sequence's step.  Here the target is `ω^(β+1)` and the step is `ω^β`, so the bound says
+`ω^(β+1)` is the NEXT additively principal term after `ω^β`.
+
+The proof runs on §26's equation.  Suppose some AP `x` sits strictly between.  If `x` is a
+fixed point it is its own `ω`-power, so the order reflects and `ω^(β+1) ≤ x`, contradicting
+`x < ω^(β+1)`.  Otherwise `x = φ̄(0,b')`, and squeezing from both sides — `ω^b' ≤ x` and
+`x ≤ ω^(succT b')` — forces `b' = β`; then `ω^(β+1) = φ̄(0,β) = x`, again a contradiction.
+
+The step that makes the second half work is `splitFin_succT`: `succT` raises `splitFin`'s
+finite part by exactly one and leaves its head alone, so the re-count that fails at `β` is
+GUARANTEED to fire at `β+1` and land back on `β` (`dnArg_succT`). -/
+
+theorem le_of_lt_succT {x y : Term} (hx : CNV x = true) (hy : CNV y = true)
+    (h : lt x (succT y) = true) : le x y = true := by
+  by_cases hle : le x y = true
+  · exact hle
+  · exfalso
+    have hlt : lt y x = true := lt_of_not_le (frag_of_cnv _ hx) (frag_of_cnv _ hy) (bool_false hle)
+    have hs2 : le (succT y) x = true := le_succT_of_lt y hy x hx hlt
+    have hcon := lt_of_le_of_lt (frag_of_cnv _ (cnv_succT _ hy)) (frag_of_cnv _ hx)
+      (frag_of_cnv _ (cnv_succT _ hy)) hs2 h
+    rw [lt_irrefl] at hcon
+    exact Bool.noConfusion hcon
+
+theorem le_omegaNF_mono {a b : Term} (ha : CNV a = true) (hb : CNV b = true)
+    (h : le a b = true) : le (omegaNF a) (omegaNF b) = true := by
+  by_cases he : a = b
+  · rw [he]; exact le_self _
+  · exact le_of_lt (omegaNF_mono dnFacts ha hb (lt_of_le_of_ne h he))
+
+/-- **`succT` は `splitFin` の finite 部を 1 上げるだけ。** -/
+theorem splitFin_succT {b : Term} (hb : CNV b = true) :
+    splitFin (succT b) = ((splitFin b).1, (splitFin b).2 + 1) := by
+  cases hs : splitFin b with
+  | mk g m =>
+    have hcg : CNV g = true := by have h0 := cnv_splitFin hb; rw [hs] at h0; exact h0
+    have hreb : plus g (ofNat m) = b := by
+      have h0 := splitFin_rebuild b hb; rw [hs] at h0; exact h0
+    have hlast := splitFin_fst_last hb hs
+    have hsucc : succT b = plus g (ofNat (m + 1)) := by
+      rw [plus_ofNat_step g hcg m, hreb]
+    rw [hsucc, splitFin_plus_ofNat hcg hlast (m + 1)]
+
+/-- 数え直しが `b` で起きるか `b` が不動点なら、`succT b` では必ず起きて `b` に戻る。 -/
+theorem dnArg_succT {b : Term} (hcb : CNV b = true)
+    (h : dnArg b ≠ b ∨ isFixP b = true) : dnArg (succT b) = b := by
+  cases hs : splitFin b with
+  | mk g m =>
+    have hcg : CNV g = true := by have h0 := cnv_splitFin hcb; rw [hs] at h0; exact h0
+    have hreb : plus g (ofNat m) = b := by
+      have h0 := splitFin_rebuild b hcb; rw [hs] at h0; exact h0
+    have hss : splitFin (succT b) = (g, m + 1) := by
+      rw [splitFin_succT hcb, hs]
+    have hshape : ∃ d e, g = phi d e ∧ lt zero d = true := by
+      rcases h with hne | hf
+      · rcases dnArg_or' hcb hs with hd | ⟨_, hg, _⟩
+        · exact absurd hd hne
+        · exact hg
+      · cases hb' : b with
+        | phi c d =>
+          have hc : lt zero c = true := by rw [hb'] at hf; exact hf
+          have hone : ((phi c d) == one) = false := by
+            cases hq : ((phi c d) == one) with
+            | false => rfl
+            | true =>
+              exfalso
+              have h1 := eq_of_beq hq
+              injection h1 with h2 _
+              rw [h2, lt_irrefl] at hc
+              exact Bool.noConfusion hc
+          have hlast' : ∀ a, ((toList b).reverse).head? = some a → (a == one) = false := by
+            intro a ha
+            rw [hb', show toList (phi c d) = [phi c d] from rfl,
+              show ([phi c d] : List Term).reverse.head? = some (phi c d) from rfl] at ha
+            rw [(Option.some.inj ha).symm]
+            exact hone
+          have hb0 : splitFin b = (b, 0) := splitFin_plus_ofNat hcb hlast' 0
+          rw [hs] at hb0
+          injection hb0 with h1 _
+          exact ⟨c, d, by rw [h1, hb'], hc⟩
+        | zero => rw [hb'] at hf; exact Bool.noConfusion hf
+        | M => rw [hb'] at hf; exact Bool.noConfusion hf
+        | omg _ => rw [hb'] at hf; exact Bool.noConfusion hf
+        | psi _ _ => rw [hb'] at hf; exact Bool.noConfusion hf
+        | Z _ => rw [hb'] at hf; exact Bool.noConfusion hf
+        | add _ _ => rw [hb'] at hf; exact Bool.noConfusion hf
+    obtain ⟨d, e, hgphi, hd⟩ := hshape
+    rw [dnArg_recount hss hgphi hd, hreb]
+
+/-- `φ̄(0,b) ≤ ω^(succT b)` — D2 が「下げるのは高々 1」を言うので。 -/
+theorem phi_zero_le_omegaNF_succT {b : Term} (hb : CNV b = true) :
+    le (phi zero b) (omegaNF (succT b)) = true := by
+  have hsc : CNV (succT b) = true := cnv_succT _ hb
+  rw [omegaNF_eq hsc, if_neg (by rw [isFixP_succT]; intro hc; exact Bool.noConfusion hc)]
+  have hd := dnArg_ge hb hsc (lt_succT b hb)
+  by_cases he : b = dnArg (succT b)
+  · rw [← he]; exact le_self _
+  · exact le_of_lt (lt_phi_arg (lt_of_le_of_ne hd he))
+
+/-- **`ω^(β+1)` の下にある加法主要な項は `ω^β` を超えない。** 組み合わせ子 (A) の上界。 -/
+theorem ap_le_omegaNF_of_lt_succT {b x : Term} (hcb : CNV b = true) (hx : CNV x = true)
+    (hapx : x.isAP = true) (h : lt x (omegaNF (succT b)) = true) :
+    le x (omegaNF b) = true := by
+  by_cases hle : le x (omegaNF b) = true
+  · exact hle
+  · exfalso
+    have hcob : CNV (omegaNF b) = true := cnv_omegaNF hcb
+    have hsb : CNV (succT b) = true := cnv_succT _ hcb
+    have hlt : lt (omegaNF b) x = true :=
+      lt_of_not_le (frag_of_cnv _ hx) (frag_of_cnv _ hcob) (bool_false hle)
+    obtain ⟨a, b', hab⟩ := eq_phi_of_isAP_cnv hx hapx
+    subst hab
+    obtain ⟨hca, hcb'⟩ := cnv_phi hx
+    by_cases haz : a = zero
+    · subst haz
+      have hsc' : CNV (succT b') = true := cnv_succT _ hcb'
+      have h1 : lt (omegaNF b) (omegaNF (succT b')) = true :=
+        lt_of_lt_of_le (frag_of_cnv _ hcob) (frag_of_cnv _ hx) (frag_of_cnv _ (cnv_omegaNF hsc'))
+          hlt (phi_zero_le_omegaNF_succT hcb')
+      have hbb' : le b b' = true :=
+        le_of_lt_succT hcb hcb' (omegaNF_lt_reflect hcb hsc' h1)
+      have h2 : lt (omegaNF b') (omegaNF (succT b)) = true :=
+        lt_of_le_of_lt (frag_of_cnv _ (cnv_omegaNF hcb')) (frag_of_cnv _ hx)
+          (frag_of_cnv _ (cnv_omegaNF hsb)) (omegaNF_le_phi_zero hcb') h
+      have hb'b : le b' b = true :=
+        le_of_lt_succT hcb' hcb (omegaNF_lt_reflect hcb' hsb h2)
+      have heq : b = b' := le_antisymm (frag_of_cnv _ hcb) (frag_of_cnv _ hcb') hbb' hb'b
+      subst heq
+      have hcase : dnArg b ≠ b ∨ isFixP b = true := by
+        by_cases hf : isFixP b = true
+        · exact Or.inr hf
+        · refine Or.inl ?_
+          intro hdd
+          rw [omegaNF_eq hcb, if_neg hf, hdd, lt_irrefl] at hlt
+          exact Bool.noConfusion hlt
+      have hom : omegaNF (succT b) = phi zero b := by
+        rw [omegaNF_eq hsb, if_neg (by rw [isFixP_succT]; intro hc; exact Bool.noConfusion hc),
+          dnArg_succT hcb hcase]
+      rw [hom, lt_irrefl] at h
+      exact Bool.noConfusion h
+    · have hfx : isFixP (phi a b') = true := lt_zero_left haz
+      have hxx : omegaNF (phi a b') = phi a b' := by rw [omegaNF_eq hx, if_pos hfx]
+      have hbx : lt b (phi a b') = true :=
+        omegaNF_lt_reflect hcb hx (by rw [hxx]; exact hlt)
+      have hsx : le (succT b) (phi a b') = true := le_succT_of_lt b hcb _ hx hbx
+      have h2 : le (omegaNF (succT b)) (phi a b') = true := by
+        rw [← hxx]; exact le_omegaNF_mono hsb hx hsx
+      have hcon := lt_of_le_of_lt (frag_of_cnv _ (cnv_omegaNF hsb)) (frag_of_cnv _ hx)
+        (frag_of_cnv _ (cnv_omegaNF hsb)) h2 h
+      rw [lt_irrefl] at hcon
+      exact Bool.noConfusion hcon
+
 end Evidence.WF

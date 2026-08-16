@@ -527,7 +527,7 @@ argVal (b ⊕ fsP c n)  = argVal b ⊕ sumVal (fsP c n)
 ### 残る 3 つ (`ArgLim` の土台)
 
 ```
-ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd   🚨
+ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd   🚨 上界は済
 ArgLimOm     最後の加数が Ω。列は Ω の塔               組み合わせ子 (B) fsGen    🚨
 ArgLimLift   ω^· で持ち上げる段だけ                                              ✅
 ```
@@ -617,7 +617,7 @@ nd v r a  =  r ⊕ psi_v(a)
 
 ```
 重い  326 行目          一般化した領域が丸ごと要る。いまの領域はその試作
-      ArgLimRep         9/80。組み合わせ子 (A) + 上界 hb。数え直しが 4 件
+      ArgLimRep         9/80。上界 hb は済んだ。残るのは列 = repAdd の形と組み立て
       ArgLimOm          2/80。組み合わせ子 (B)。塔の側条件 3 つ
       登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
 軽い  行ごとの否定対照   独立の作業ではない。登録に含まれる
