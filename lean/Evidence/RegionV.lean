@@ -81,12 +81,14 @@ left preserves them.  The associativity of `plus` that reduction needed is now p
 (`Evidence/CNVOps.lean` §23), with no side condition.
 
 §15 then shows `ArgLim` is itself a RECURSION: the third case of `fsP` reduces to the inner
-`ArgLim` plus that same prefix combinator.  So the ✅ is THREE BASE FACTS away, one per case
-of `fsP`, and `Evidence/WF.lean` has one combinator aimed at each:
+`ArgLim` plus that same prefix combinator.  That left THREE BASE FACTS, one per case of
+`fsP`, and `Evidence/WF.lean` has one combinator aimed at each.  **All three are now
+proved**, so `ArgLim` and `Hlim` are theorems and `certIn_region`'s four supplies are
+complete:
 
-    ArgLimRep   last summand `ψ₀(0)`   — sequence `ψ₀(b)·(n+1)`, combinator (A)
-    ArgLimOm    last summand `Ω`       — sequence the Ω-tower, combinator (B)
-    ArgLimLift  the `ω^·` step only
+    ArgLimRep   last summand `ψ₀(0)`   — sequence `ψ₀(b)·(n+1)`, combinator (A)   §15.8
+    ArgLimOm    last summand `Ω`       — sequence the Ω-tower, combinator (B)     §15.9
+    ArgLimLift  the `ω^·` step only                                              §15.4–7
 
 and §15.4 shows the third is not combinator (C) after all but `OmegaLim` — that `ω^·`
 preserves the four clauses — because 2 of its 69 sequence members are ones `omegaNF`
@@ -1696,6 +1698,193 @@ theorem argLimRep : ArgLimRep := by
   show LimClauses (omegaNF (argVal (A.ps b .nil))) (fun n => sumVal (fsP (A.ps b .nil) n))
   rw [hav, hseq, hcd, hpq]
   exact key
+
+/-! ### §15.9 THE Ω-TOWER CASE IS CLOSED
+
+`nf (om b)` forces `b = Ω·j` (§13.2's `om_all`), so `sumVal b = 0` and
+`argVal (om b) = ε_j`.  That is a FIXED POINT of `ω^·`, so the TARGET is `ε_j` itself,
+not `ω^(ε_j)`.
+
+The sequence is `ω^(argVal (towArg b n))`, and `towArg b (n+1) = b ⊕ ψ₀(towArg b n)`
+gives `argVal (towArg b (n+1)) = argVal b ⊕ (the previous term)`.  So the whole case is
+ONE recursion whose only parameter is `argVal b` — `0` when `j = 0`, `ε_{j-1}` above it.
+
+MEASURED (`omegaNF (argVal (towArg (omPow j) n))`, j ≤ 4, n ≤ 5): the recursion is exactly
+`Evidence/WF.lean`'s `tower` at `j = 0` and `fsEsucc (j-1)` above it — core (B)
+`lim_clauses_fsGen`, already instantiated there as `lim_clauses_eps0` and
+`lim_clauses_epsSucc`.  So NOTHING new about `fsGen` was needed; what was missing was the
+two `ω^·` facts of `Evidence/CNVOps.lean` §34.  Above `j = 0` the prefix `ε_{j-1}` survives
+only at the first step (`ε_{j-1} ⊕ ε_{j-1} = ε_{j-1}·2`, the base of the tower) and is
+absorbed at every later one, which is `plus_absorb`. -/
+
+theorem sumVal_fsP_om (b : A) (n : Nat) :
+    sumVal (fsP (A.om b) n) = omegaNF (argVal (towArg b n)) := by
+  show sumVal (iterOm b n) = _
+  rw [iterOm_eq b n]
+  show plus zero (omegaNF (argVal (towArg b n))) = _
+  exact plus_zero_left (isAP_omegaNF _)
+
+theorem argVal_towArg_succ (b : A) (k : Nat) :
+    argVal (towArg b (k + 1)) = plus (argVal b) (omegaNF (argVal (towArg b k))) :=
+  argVal_ps b (towArg b k)
+
+theorem argVal_omPow_succ (k : Nat) : argVal (omPow (k + 1)) = epsT k := by
+  show (if omN (omPow (k + 1)) = 0 then sumVal (omPow (k + 1))
+        else plus (epsT (omN (omPow (k + 1)) - 1)) (sumVal (omPow (k + 1)))) = epsT k
+  rw [omN_omPow (k + 1), if_neg (by omega), sumVal_omPow (k + 1),
+    show k + 1 - 1 = k from rfl]
+  rfl
+
+/-- **Ω の塔の目標は `ε_j`。** -/
+theorem argVal_om_omPow (j : Nat) : argVal (A.om (omPow j)) = epsT j := by
+  have hom : omN (A.om (omPow j)) = j + 1 := by
+    show omN (omPow j) + 1 = j + 1; rw [omN_omPow j]
+  show (if omN (A.om (omPow j)) = 0 then sumVal (A.om (omPow j))
+        else plus (epsT (omN (A.om (omPow j)) - 1)) (sumVal (A.om (omPow j)))) = epsT j
+  rw [hom, if_neg (by omega), show sumVal (A.om (omPow j)) = zero from sumVal_omPow j,
+    show j + 1 - 1 = j from rfl]
+  rfl
+
+theorem isFixP_epsT (j : Nat) : isFixP (epsT j) = true := by
+  show lt zero one = true; decide
+
+/-- `ε_j` は `ω^·` の不動点。 -/
+theorem omegaNF_epsT (j : Nat) : omegaNF (epsT j) = epsT j := by
+  rw [omegaNF_eq (cnv_epsT j), if_pos (isFixP_epsT j)]
+
+/-! #### `j = 0` — 素の ω の塔 -/
+
+theorem omegaNF_tower : ∀ n, omegaNF (tower n) = tower (n + 1)
+  | 0 => by decide
+  | n + 1 => by
+    refine omegaNF_pow (cnv_tower (n + 1)) (lt_irrefl zero) ?_
+    intro a ha
+    rw [last_of_isAP (show (tower (n + 1)).isAP = true from rfl) a ha]
+    cases hb : (tower (n + 1) == one) with
+    | false => rfl
+    | true =>
+      exfalso
+      have h0 := eq_of_beq hb
+      injection h0 with _ h2
+      exact tower_ne_zero n h2
+
+theorem tow_zero : ∀ n, omegaNF (argVal (towArg (omPow 0) n)) = tower n
+  | 0 => omegaNF_zero
+  | n + 1 => by
+    rw [argVal_towArg_succ (omPow 0) n, show argVal (omPow 0) = zero from rfl,
+      plus_zero_left (isAP_omegaNF _), tow_zero n]
+    exact omegaNF_tower n
+
+/-! #### `j = k+1` — `ε_k` を底にした塔 -/
+
+theorem lt_epsT_phi_zero {k : Nat} {X : Term} (h : le (epsT k) X = true) :
+    lt (epsT k) (phi zero X) = true := by
+  show lt (phi one (ofNat k)) (phi zero X) = true
+  have hne : phi one (ofNat k) ≠ phi zero X := by
+    intro hc; injection hc with h1 _; exact Term.noConfusion h1
+  rw [lt_phi_phi hne, if_neg (by intro hc; exact Term.noConfusion hc),
+    if_neg (by rw [show lt one zero = false from ltF_right_zero _ _]; exact Bool.noConfusion)]
+  exact h
+
+theorem cnv_add_epsT (k : Nat) : CNV (add (epsT k) (epsT k)) = true := by
+  show ((epsT k).isAP && CNV (epsT k) && CNV (epsT k) && hdLe (epsT k) (epsT k)) = true
+  rw [cnv_epsT k, show (epsT k).isAP = true from rfl,
+    hdLe_of_isAP (show (epsT k).isAP = true from rfl), le_self]
+  rfl
+
+theorem le_epsT_iterPhi (k : Nat) : ∀ m,
+    le (epsT k) (iterPhi zero (add (epsT k) (epsT k)) m) = true
+  | 0 => by
+    refine le_of_lt ?_
+    show lt (epsT k) (add (epsT k) (epsT k)) = true
+    rw [lt_atom_add (s := epsT k) rfl]
+    exact le_self _
+  | m + 1 => le_of_lt (lt_epsT_phi_zero (le_epsT_iterPhi k m))
+
+theorem tow_succ (k : Nat) : ∀ n,
+    omegaNF (argVal (towArg (omPow (k + 1)) n)) = fsEsucc k n := by
+  intro n
+  induction n with
+  | zero =>
+    show omegaNF (argVal (omPow (k + 1))) = epsN k
+    rw [argVal_omPow_succ k]
+    exact omegaNF_epsT k
+  | succ m ih =>
+    rw [argVal_towArg_succ, argVal_omPow_succ k, ih]
+    clear ih
+    cases m with
+    | zero =>
+      show omegaNF (plus (epsT k) (epsT k)) = phi zero (add (epsT k) (epsT k))
+      rw [show plus (epsT k) (epsT k) = add (epsT k) (epsT k) from
+        plus_repAdd_self (cnv_epsT k) rfl 0]
+      refine omegaNF_pow (cnv_add_epsT k) rfl ?_
+      intro a ha
+      rw [last_of_add (show (epsT k).isAP = true from rfl) a ha]
+      rfl
+    | succ m' =>
+      show omegaNF (plus (epsT k) (phi zero (iterPhi zero (add (epsT k) (epsT k)) m')))
+        = phi zero (phi zero (iterPhi zero (add (epsT k) (epsT k)) m'))
+      have hW : CNV (iterPhi zero (add (epsT k) (epsT k)) m') = true :=
+        cnv_iterPhi rfl (cnv_add_epsT k) m'
+      have hPW : CNV (phi zero (iterPhi zero (add (epsT k) (epsT k)) m')) = true := by
+        show (CNV zero && CNV (iterPhi zero (add (epsT k) (epsT k)) m')) = true
+        rw [hW]; rfl
+      rw [plus_absorb (cnv_epsT k) hPW rfl rfl
+        (lt_epsT_phi_zero (le_epsT_iterPhi k m'))]
+      refine omegaNF_pow hPW (lt_irrefl zero) ?_
+      intro a ha
+      rw [last_of_isAP (show (phi zero (iterPhi zero (add (epsT k) (epsT k)) m')).isAP = true
+        from rfl) a ha]
+      cases hb : (phi zero (iterPhi zero (add (epsT k) (epsT k)) m') == one) with
+      | false => rfl
+      | true =>
+        exfalso
+        have h0 := eq_of_beq hb
+        injection h0 with _ h2
+        exact absurd h2 (by
+          intro hc
+          have hle := le_epsT_iterPhi k m'
+          rw [hc] at hle
+          exact Bool.noConfusion hle)
+
+theorem argLimOm_zero : LimClauses (omegaNF (argVal (A.om (omPow 0))))
+    (fun n => sumVal (fsP (A.om (omPow 0)) n)) := by
+  rw [argVal_om_omPow 0, omegaNF_epsT 0,
+    funext (fun n => (sumVal_fsP_om (omPow 0) n).trans (tow_zero n))]
+  exact lim_clauses_eps0
+
+theorem argLimOm_succ (k : Nat) : LimClauses (omegaNF (argVal (A.om (omPow (k + 1)))))
+    (fun n => sumVal (fsP (A.om (omPow (k + 1))) n)) := by
+  rw [argVal_om_omPow (k + 1), omegaNF_epsT (k + 1),
+    funext (fun n => (sumVal_fsP_om (omPow (k + 1)) n).trans (tow_succ k n))]
+  exact lim_clauses_epsSucc k
+
+/-- **場合 1 (2/80) は閉じた。** 組み合わせ子 (B)。 -/
+theorem argLimOm : ArgLimOm := by
+  intro b hnf _
+  obtain ⟨j, rfl⟩ := om_all b hnf
+  cases j with
+  | zero => exact argLimOm_zero
+  | succ k => exact argLimOm_succ k
+
+/-! ### §15.10 `ArgLim` と `Hlim` は定理
+
+三つの土台がそろったので、§15.1 の再帰は仮定なしで回る。`certIn_region` が求める
+四つの供給 — `Hzero` `Hsucc` `Hclosed` `Hlim` — はこれで全部が定理になった。 -/
+
+/-- **`ArgLim` は定理。** -/
+theorem argLimThm : ArgLim := argLim' argLimRep argLimOm
+
+/-- **`Hlim` は定理。** 仮定は無い。 -/
+theorem hlim :
+    ∀ (S : BMS.Matrix) (v : Term), Reg S → Val S v → BMS.kind S = BMS.Kind.lim →
+    ∃ f : Nat → Term, inT v = true
+      ∧ (∀ n, Val (BMS.expand S n) (f n))
+      ∧ (∀ n, inT (f n) = true)
+      ∧ (∀ n, lt (f n) v = true)
+      ∧ (∀ n, lt (f n) (f (n + 1)) = true)
+      ∧ (∀ s, inT s = true → lt s v = true → ∃ n, le s (f n) = true) :=
+  hlim_supply argLimThm
 
 end
 

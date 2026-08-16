@@ -409,7 +409,14 @@ WF.lt_plus_right         plus は右の引数について真に単調
 WF.cof_plus              前置きの下でも共終
 RegionV.prefixLim        PrefixLim — 側条件なしで真
 RegionV.argVal_ps        引数の値も前置き ⊕ 最後の加数に分かれる
-RegionV.argLim           ArgLim は再帰。残るのは 3 つの土台だけ
+RegionV.argLim           ArgLim は再帰。土台は 3 つ
+RegionV.argLimLift_thm   場合 3 (69/80)。OmegaLim から
+RegionV.argLimRep        場合 2 (9/80)。組み合わせ子 (A)
+RegionV.argLimOm         場合 1 (2/80)。組み合わせ子 (B)
+RegionV.argLimThm        ArgLim — 仮定なし
+RegionV.hlim             certIn_region の Hlim — 仮定なし
+WF.omegaNF_pow           ω^x = φ̄(0,x) (`Evidence/CNVOps.lean` §34)
+WF.plus_absorb           小さいほうの加数は消える (§34)
 WF.lim_clauses_phi_arg_nf'  組み合わせ子 (C) のずれない版
 WF.cnv_plus / cnv_omegaNF  CNV が ⊕ と ω^· で閉じる (`Evidence/CNVOps.lean`)
 BMS.cmpM_trans ほか      BMS の順序が線形順序 (`Evidence/CmpM.lean`)
@@ -498,7 +505,8 @@ lt s t  =  ltL (toList s) (toList t)
 **`s` が前置きの中で決着するか、前置きを接頭辞として持つか**で割れる。前者なら `s ≤ P`
 で済み、後者ならその尾を `g` 自身の共終性に渡せる。**側条件は要らなかった。**
 
-これで `hlim_supply` に残る仮定は `ArgLim` 1 つだけである。
+これで `hlim_supply` に残る仮定は `ArgLim` 1 つだけになり、その `ArgLim` も
+2026-08-16 に閉じた (下記)。**`certIn_region` の 4 つの供給はすべて定理である。**
 
 ### `ArgLim` は再帰だった。残るのは 3 つの土台 (2026-08-16)
 
@@ -524,15 +532,38 @@ argVal (b ⊕ fsP c n)  = argVal b ⊕ sumVal (fsP c n)
 なので、引数側の 4 連言は**内側の `ArgLim` に前置きを足したもの**である。つまり
 `PrefixLim` がそのまま効く。`argLim` はその再帰で、証明済み。
 
-### 残る 3 つ (`ArgLim` の土台)
+### 3 つの土台 — すべて閉じた (2026-08-16)
 
 ```
 ArgLimRep    最後の加数が ψ₀(0)。列は ψ₀(b) の反復     組み合わせ子 (A) repAdd   ✅
-ArgLimOm     最後の加数が Ω。列は Ω の塔               組み合わせ子 (B) fsGen    🚨
+ArgLimOm     最後の加数が Ω。列は Ω の塔               組み合わせ子 (B) fsGen    ✅
 ArgLimLift   ω^· で持ち上げる段だけ                                              ✅
 ```
 
-どれも `Evidence/WF.lean` に狙いを付けた組み合わせ子が 1 つずつある。
+どれも `Evidence/WF.lean` に狙いを付けた組み合わせ子が 1 つずつあった。
+
+**`ArgLimOm` (`RegionV` §15.9)。** `nf (om b)` は `b = Ω·j` を強制するので
+`sumVal b = 0` で `argVal (om b) = ε_j`。これは `ω^·` の**不動点**だから目標は
+`ε_j` そのもので、`ω^(ε_j)` ではない。列は `ω^(argVal (towArg b n))` で、
+`towArg b (n+1) = b ⊕ ψ₀(towArg b n)` から
+
+```
+argVal (towArg b (n+1)) = argVal b ⊕ (1 つ前の項)
+```
+
+なので**引数は `argVal b` 1 つだけの再帰**である。先に測った (j <= 4, n <= 5):
+`j = 0` では `Evidence/WF.lean` の `tower`、`j = k+1` では `fsEsucc k` に
+**そのまま一致する**。どちらも組み合わせ子 (B) の実例として既にあるので
+(`lim_clauses_eps0` / `lim_clauses_epsSucc`)、`fsGen` について新しいことは
+何も要らなかった。足りなかったのは `ω^·` の 2 つの事実 (`CNVOps` §34):
+
+```
+omegaNF_pow    末尾の成分が 1 でも不動点でもなければ ω^x = φ̄(0,x)
+plus_absorb    u < v で両方単項なら u ⊕ v = v
+```
+
+`j = k+1` では前置きの `ε_{k-1}` が**最初の 1 歩だけ生き残り** (`ε ⊕ ε = ε·2`、
+これが塔の底)、以降は毎回ふるい落とされる。それが `plus_absorb` である。
 
 ### 形は場合ごとに揃っている。障害は順序の橋 (2026-08-16)
 
@@ -612,20 +643,19 @@ nd v r a  =  r ⊕ psi_v(a)
 ### 残る作業の重さの順
 
 作業の全体の 🚨 のうち、**葉だけが実際の作業**である (内側の節は集計にすぎない)。
-いまの領域が 4293 行 (`Region` 1194 + `RegionV` 1511 + `CmpM` 382 + `CNVOps` 1206) で、
-残る穴は `ArgLim` の土台 3 つ、というのが目盛りである。
+いまの領域が 5565 行 (`Region` 1194 + `RegionV` 1891 + `CmpM` 382 + `CNVOps` 2098) で、
+`ArgLim` の土台 3 つは**すべて埋まった**、というのが目盛りである。
 
 ```
 重い  326 行目          一般化した領域が丸ごと要る。いまの領域はその試作
-      ArgLimOm          2/80。組み合わせ子 (B)。塔の側条件 3 つ
-      登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
+      登録と表の再生成   no_overshoot の実例が要る (機械的ではない)。次はこれ
 軽い  行ごとの否定対照   独立の作業ではない。登録に含まれる
 ```
 
 ### したがって 326 行目は依然として未決
 
-✅ が付かない限り、326 行目は決まらない。`ArgLim` の土台 3 つが埋まると
-ε₁ 行と ε_ω 行に ✅ が付き、そこで初めて 326 行目の議論に必要な道具
+✅ が付かない限り、326 行目は決まらない。`ArgLim` の土台 3 つが埋まったので、
+次に ε₁ 行と ε_ω 行を登録すれば ✅ が付き、そこで初めて 326 行目の議論に必要な道具
 (展開の値の列が当方の値に共終であること) が族 4 でも使える形になる。
 
 ## 作業の全体
@@ -713,14 +743,16 @@ nd v r a  =  r ⊕ psi_v(a)
         - ✅ **場合 3 (69/80) は閉じた** — `OmegaLim` も `ArgLimLift` も定理
         - ✅ `ArgLimRep` (9/80) — `argVal (b ⊕ ψ₀(0)) = succT (argVal b)` と
           `sumVal (rep b n) = ω^(argVal b)·(n+1)`。組み合わせ子 (A) に §32 の上界
-        - 🚨 `ArgLimOm` — 最後の加数が `Ω` (2/80)。組み合わせ子 (B)
+        - ✅ `ArgLimOm` (2/80) — `argVal (Ω·j) = ε_j` は `ω^·` の不動点なので目標は
+          `ε_j` 自身。列は測って `tower` / `fsEsucc` にそのまま一致した。
+          **`ArgLim` と `Hlim` は仮定なしの定理になった** (`argLimThm` / `hlim`)
         - ✅ 項の順序を成分列の辞書式順序として読む層 (`CNVOps` §20)。
           `plus` は成分列の操作なので、これが無いと `plus` の話ができない
         - ✅ `plus` の 2 つの単調性 (§21) と前置きの下での共終性 (§23)
         - ✅ `PrefixLim` — 左に前置きを足しても 4 連言が保たれる。
           **側条件は要らなかった**
         - 🚨 ε₁ 行と ε_ω 行を `certRows` へ登録し、表を再生成する。
-          **`ArgLim` の土台 3 つが埋まるまでは付けない**。機械的ではない: `certRows_no_overshoot`
+          **`ArgLim` の土台 3 つは埋まったので、これが次の作業**。機械的ではない: `certRows_no_overshoot`
           はこの領域用の `no_overshoot` の実例を要る (Row A の場合が約 50 行で
           `no_overshoot_fam` を引いている)
     - 🚨 行ごとの否定対照 — **独立の作業ではない**。ε₀ 行は済

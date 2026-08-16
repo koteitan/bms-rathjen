@@ -2021,4 +2021,78 @@ theorem plus_repAdd_self {u : Term} (hcu : CNV u = true) (hu : u.isAP = true) (k
     ← List.replicate_succ' (n := k + 1) (a := u), ← toList_repAdd hu (k + 1),
     cnv_ofList_toList _ hcr]
 
+/-! ## §34 `ω^·` が「切り上がる」形と、加数を落とす `plus`
+
+`Evidence/RegionV.lean` §15.9 の Ω の塔が要るのはこの 2 つだけである。
+
+前者は §26 の等式の「不動点でも数え直しでもない」枝。末尾の成分が `1` でなければ
+`splitFin` は何も切り出さないので `dnArg` は恒等で、`ω^x` は `φ̄(0,x)` そのものになる。
+
+後者は塔の各段が前段の `ω` 冪であることの帰結で、前置きの `ε` が毎回ふるい落とされる
+ことを言う。`plus` の左の成分は右の頭より小さければ消えるので、単項どうしならこれで
+終わる。 -/
+
+/-- 末尾の成分が `1` でなければ `splitFin` は何も切り出さない。 -/
+theorem splitFin_snd_zero {x : Term}
+    (hlast : ∀ a, ((toList x).reverse).head? = some a → (a == one) = false) :
+    (splitFin x).2 = 0 := by
+  show ((toList x).reverse.takeWhile (fun y => y == one)).length = 0
+  cases hh : (toList x).reverse with
+  | nil => rfl
+  | cons a t =>
+    rw [List.takeWhile_cons_of_neg (by
+      rw [hlast a (by rw [hh]; rfl)]; exact Bool.noConfusion)]
+    rfl
+
+/-- 切り出しがなければ `dnArg` は恒等。 -/
+theorem dnArg_of_snd_zero {x : Term} (h : (splitFin x).2 = 0) : dnArg x = x := by
+  unfold dnArg
+  cases hs : splitFin x with
+  | mk g m =>
+    have hm : m = 0 := by rw [hs] at h; exact h
+    subst hm
+    dsimp only
+    first | rfl | rw [if_neg (by omega)]
+
+/-- 単項の末尾はそれ自身。 -/
+theorem last_of_isAP {x : Term} (hx : x.isAP = true) :
+    ∀ a, ((toList x).reverse).head? = some a → a = x := by
+  intro a ha
+  have hl : toList x = [x] := by cases x <;> first | rfl | exact Bool.noConfusion hx
+  rw [hl] at ha
+  exact (Option.some.inj ha).symm
+
+/-- `u ⊕ v` の末尾は `v` — `v` が単項なら。 -/
+theorem last_of_add {u v : Term} (hv : v.isAP = true) :
+    ∀ a, ((toList (add u v)).reverse).head? = some a → a = v := by
+  intro a ha
+  have hl : toList v = [v] := by cases v <;> first | rfl | exact Bool.noConfusion hv
+  have h2 : toList (add u v) = u :: [v] := by show u :: toList v = _; rw [hl]
+  rw [h2] at ha
+  exact (Option.some.inj ha).symm
+
+/-- **`ω^x = φ̄(0,x)`** — `x` が不動点でも末尾 `1` でもないとき。 -/
+theorem omegaNF_pow {x : Term} (hx : CNV x = true) (hfix : isFixP x = false)
+    (hlast : ∀ a, ((toList x).reverse).head? = some a → (a == one) = false) :
+    omegaNF x = phi zero x := by
+  rw [omegaNF_eq hx, if_neg (by rw [hfix]; exact Bool.noConfusion),
+    dnArg_of_snd_zero (splitFin_snd_zero hlast)]
+
+/-- **小さいほうの加数は消える。** 両辺とも単項で `u < v` なら `u ⊕ v = v`。 -/
+theorem plus_absorb {u v : Term} (hcu : CNV u = true) (hcv : CNV v = true)
+    (hu : u.isAP = true) (hv : v.isAP = true) (h : lt u v = true) : plus u v = v := by
+  have hlu : toList u = [u] := by cases u <;> first | rfl | exact Bool.noConfusion hu
+  have hlv : toList v = [v] := by cases v <;> first | rfl | exact Bool.noConfusion hv
+  have hne : (v == u) = false := by
+    cases hb : (v == u) with
+    | false => rfl
+    | true => rw [eq_of_beq hb, lt_irrefl] at h; exact Bool.noConfusion h
+  have hle : le v u = false := by
+    show (v == u || lt v u) = false
+    rw [hne, lt_asymm_inT (inT_of_cnv u hcu) (inT_of_cnv v hcv) h]
+    rfl
+  rw [plus_eq (d := v) (rest := []) hlv, hlu, hlv,
+    List.filter_cons_of_neg (by rw [hle]; exact Bool.noConfusion)]
+  rfl
+
 end Evidence.WF
