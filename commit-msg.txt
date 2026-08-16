@@ -1,0 +1,16 @@
+Write the single-branch fold once, in Ladder.lean
+
+red_fold_one. When a ladder has trMax 1, a zero head in both rows, and brF of
+length one, red's first branch cuts [(0,0),(1,1)] and recurses on the branch's
+reconstruction:
+
+    red (f+1) M = jjSeq 0 1 ++ incrFirst (red f ((jnJ+1, nJ+1) :: derp B)) (jnJ - nJ)
+
+Stated over an arbitrary ladder with the five readings as hypotheses, so a phase
+supplies its trMax, brF, firstNodes, joints and nJ and gets the level. That is the
+last piece of machinery link 2 needs; what remains is supplying it five times.
+
+Axioms: [propext, Quot.sound].
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01C4hYAg3yuCD7QE4rERTDbj

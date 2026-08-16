@@ -5828,4 +5828,214 @@ theorem nrmBlk_take (M : Matrix) (tr : Nat) (h0 : ent M 0 1 = 0)
 
 end
 
+/-! ## §40 THE THREE BRANCHES THAT DO NOT RECURSE INTO THEMSELVES
+
+§34 started the induction against `canonM`; §36–§37 replaced the target by `nrmM` and the
+class by `LvlOKb`, so the skeleton has to be restated once — it is the same three lines
+(`redN_nil`, `redN_sum`, `nrmM_single`), now against `nrmBlk`.
+
+Then the two branches of the one-block case that end immediately:
+
+    redN_leaf  : one column.  §21's `red_leaf` already puts it at (v, v), and that IS `nrmBlk`
+                 of a one-column matrix — tree depth 0, so depth = root level = v.
+    redN_shift : root at level 0 and depth d > 0.  `red` subtracts d from every depth and
+                 recurses; the matrix it recurses into is `downMat X`.
+
+`downMat` is invisible to the answer, and this section says so four times over: lowering every
+depth by the same amount leaves the row-0 PARENT unchanged (`parent_downMat` — the comparison
+`ent X p 0 < ent X i 0` is what the parent is defined by, and subtracting a constant from both
+sides of a comparison between numbers that are both at least that constant does nothing), hence
+leaves tree depth unchanged (`anc0_downMat`, via `iterParent_congr`), hence leaves `nrmBlk`
+unchanged (`nrmBlk_downMat`) and `LvlOKb` unchanged (`lvlOKb_downMat`) — the last is what makes
+the branch legal as an induction step at all, since the class must contain the destination.
+
+The block hypothesis `BlkG X` is what makes the subtraction safe: the root is the shallowest
+column, so `ent X i 0 - ent X 0 0` never truncates. -/
+
+section
+open Trans.Recal
+
+
+/-! ### `nrmM` の側の言い直し -/
+
+theorem nrmM_nil : nrmM ([] : Matrix) = [] := by
+  show ((blocks ([] : Matrix)).map nrmBlk).flatten = _
+  rw [blocks_nil]
+  rfl
+
+theorem nrmM_single (X : Matrix) (h : BlkG X) : nrmM X = nrmBlk X := by
+  show ((blocks X).map nrmBlk).flatten = _
+  rw [blocks_single X h]
+  show nrmBlk X ++ [] = _
+  rw [List.append_nil]
+
+theorem redN_nil (f : Nat) : red f (psM ([] : Matrix)) = nrmM [] := by
+  rw [nrmM_nil]
+  show red f ([] : PS) = _
+  cases f with
+  | zero => rfl
+  | succ g =>
+    rw [red_nonprin [] g (by decide) (by decide), show ppair ([] : PS) = [] from by decide]
+    rfl
+
+/-- 最上位のブロックが 2 つ以上の場合 (`nrmM` 版)。 -/
+theorem redN_sum (f : Nat) (X : Matrix) (hzero : isZeroP (psM X) = false)
+    (hprin : isPrincipalP (psM X) = false)
+    (ih : ∀ Bk ∈ blocks X, red f (psM Bk) = nrmBlk Bk) :
+    red (f + 1) (psM X) = nrmM X := by
+  rw [red_nonprin _ f hzero hprin, ppair_blocksG, List.flatMap_map]
+  show ((blocks X).map (fun Bk => red f (psM Bk))).flatten = _
+  rw [List.map_congr_left ih]
+  rfl
+
+/-! ### 深さを根の分だけ下げる -/
+
+theorem downMat_length (X : Matrix) : (downMat X).length = X.length := List.length_map ..
+
+theorem ent_downMat0 (X : Matrix) (i : Nat) (hi : i < X.length) :
+    ent (downMat X) i 0 = ent X i 0 - ent X 0 0 := by
+  show ((X.map (fun c => [c.getD 0 0 - ent X 0 0, c.getD 1 0])).getD i []).getD 0 0 = _
+  rw [getD_map_lt _ X [] [] i hi]
+  rfl
+
+theorem ent_downMat1 (X : Matrix) (i : Nat) (hi : i < X.length) :
+    ent (downMat X) i 1 = ent X i 1 := by
+  show ((X.map (fun c => [c.getD 0 0 - ent X 0 0, c.getD 1 0])).getD i []).getD 1 0 = _
+  rw [getD_map_lt _ X [] [] i hi]
+  rfl
+
+theorem parent0_lt (M : Matrix) (i p : Nat) (h : parent M 0 i = some p) : p < i := by
+  obtain ⟨hm, _⟩ := List.max?_eq_some_iff.mp h
+  exact List.mem_range.mp (List.mem_filter.mp hm).1
+
+theorem blkG_ge (X : Matrix) (h : BlkG X) (i : Nat) (hi : i < X.length) :
+    ent X 0 0 ≤ ent X i 0 := by
+  rcases Nat.eq_zero_or_pos i with rfl | hpos
+  · omega
+  · exact Nat.le_of_lt (h.2 i hpos hi)
+
+theorem blkG_downMat (X : Matrix) (h : BlkG X) : BlkG (downMat X) := by
+  refine ⟨by rw [downMat_length]; exact h.1, ?_⟩
+  intro p hp hplen
+  rw [downMat_length] at hplen
+  rw [ent_downMat0 X 0 h.1, ent_downMat0 X p hplen]
+  have := h.2 p hp hplen
+  omega
+
+/-- 親は深さを一斉に下げても変わらない。 -/
+theorem parent_downMat (X : Matrix) (h : BlkG X) (i : Nat) (hi : i < X.length) :
+    parent (downMat X) 0 i = parent X 0 i := by
+  show ((List.range i).filter (fun p => decide (ent (downMat X) p 0 < ent (downMat X) i 0))).max?
+    = ((List.range i).filter (fun p => decide (ent X p 0 < ent X i 0))).max?
+  refine congrArg List.max? (List.filter_congr (fun p hp => ?_))
+  have hpi : p < i := List.mem_range.mp hp
+  rw [ent_downMat0 X p (by omega), ent_downMat0 X i hi]
+  have h1 := blkG_ge X h p (by omega)
+  have h2 := blkG_ge X h i hi
+  by_cases hc : ent X p 0 < ent X i 0
+  · rw [decide_eq_true (show ent X p 0 - ent X 0 0 < ent X i 0 - ent X 0 0 from by omega),
+      decide_eq_true hc]
+  · rw [decide_eq_false (show ¬(ent X p 0 - ent X 0 0 < ent X i 0 - ent X 0 0) from by omega),
+      decide_eq_false hc]
+
+theorem iterParent_congr (F G : Nat → Option Nat) (n : Nat)
+    (hlt : ∀ i p, F i = some p → p < i) (hfg : ∀ i, i < n → F i = G i) :
+    ∀ (f i : Nat), i < n → iterParent F f i = iterParent G f i := by
+  intro f
+  induction f with
+  | zero => intro _ _; rfl
+  | succ g ih =>
+    intro i hi
+    cases hp : F i with
+    | none =>
+      rw [iterParent_nil hp, iterParent_nil (by rw [← hfg i hi]; exact hp)]
+    | some p =>
+      have hpi := hlt i p hp
+      rw [iterParent_cons hp, iterParent_cons (show G i = some p from by rw [← hfg i hi]; exact hp),
+        ih p (by omega)]
+
+theorem anc0_downMat (X : Matrix) (h : BlkG X) (i : Nat) (hi : i < X.length) :
+    anc0 (downMat X) i = anc0 X i := by
+  show (iterParent (parent (downMat X) 0) (downMat X).length i).length
+    = (iterParent (parent X 0) X.length i).length
+  rw [downMat_length,
+    iterParent_congr (parent (downMat X) 0) (parent X 0) X.length
+      (fun a b hab => parent0_lt (downMat X) a b hab)
+      (fun j hj => parent_downMat X h j hj) X.length i hi]
+
+theorem nrmBlk_downMat (X : Matrix) (h : BlkG X) : nrmBlk (downMat X) = nrmBlk X := by
+  show (List.range (downMat X).length).map _ = (List.range X.length).map _
+  rw [downMat_length]
+  refine List.map_congr_left (fun i hi => ?_)
+  have hi' : i < X.length := List.mem_range.mp hi
+  rw [ent_downMat1 X 0 h.1, ent_downMat1 X i hi', anc0_downMat X h i hi']
+
+theorem lvlOKb_downMat (X : Matrix) (h : BlkG X) (hl : LvlOKb X = true) :
+    LvlOKb (downMat X) = true := by
+  show ((List.range (downMat X).length).all _) = true
+  refine List.all_eq_true.mpr (fun i hi => ?_)
+  have hi' : i < X.length := by
+    have := List.mem_range.mp hi
+    rw [downMat_length] at this
+    exact this
+  rw [parent_downMat X h i hi']
+  cases hp : parent X 0 i with
+  | none => rfl
+  | some p =>
+    have hpi := parent0_lt X i p hp
+    have hall := lvlOKb_at X hl i p hi' hp
+    show decide (ent (downMat X) i 1 ≤ ent (downMat X) p 1 + 1) = true
+    rw [ent_downMat1 X i hi', ent_downMat1 X p (by omega)]
+    exact decide_eq_true hall
+
+theorem blkG_mem_ge (X : Matrix) (h : BlkG X) : ∀ c ∈ X, ent X 0 0 ≤ c.getD 0 0 := by
+  intro c hc
+  obtain ⟨i, hi, hci⟩ := List.mem_iff_getElem.mp hc
+  have hxi : X.getD i [] = c := by
+    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hi, hci]
+    rfl
+  have heq : ent X i 0 = c.getD 0 0 := by
+    rw [show ent X i 0 = (X.getD i []).getD 0 0 from rfl, hxi]
+  rw [← heq]
+  exact blkG_ge X h i hi
+
+theorem psM_downMat (X : Matrix) (h : BlkG X) :
+    incrFirst (psM X) (-((ent X 0 0 : Nat) : Int)) = psM (downMat X) := by
+  show ((X.map (fun c => (((c.getD 0 0 : Nat) : Int), ((c.getD 1 0 : Nat) : Int)))).map
+      (fun c => (c.1 + -((ent X 0 0 : Nat) : Int), c.2)))
+    = (X.map (fun c => [c.getD 0 0 - ent X 0 0, c.getD 1 0])).map
+      (fun c => (((c.getD 0 0 : Nat) : Int), ((c.getD 1 0 : Nat) : Int)))
+  rw [List.map_map, List.map_map]
+  refine List.map_congr_left (fun c hc => ?_)
+  have hge := blkG_mem_ge X h c hc
+  show ((((c.getD 0 0 : Nat) : Int) + -((ent X 0 0 : Nat) : Int)), ((c.getD 1 0 : Nat) : Int))
+    = ((((c.getD 0 0 - ent X 0 0 : Nat)) : Int), ((c.getD 1 0 : Nat) : Int))
+  rw [show (((c.getD 0 0 - ent X 0 0 : Nat)) : Int)
+      = ((c.getD 0 0 : Nat) : Int) + -((ent X 0 0 : Nat) : Int) from by omega]
+
+/-- ブロック 1 つ・根の段 0・根の深さ > 0 — 深さを根の分だけ下げるだけ。 -/
+theorem redN_shift (f : Nat) (X : Matrix) (h : BlkG X) (hlen : 1 < X.length)
+    (hlvl0 : ent X 0 1 = 0) (hdep : 0 < ent X 0 0) :
+    red (f + 1) (psM X) = red f (psM (downMat X)) := by
+  have hg0 : gp0 (psM X) 0 = ((ent X 0 0 : Nat) : Int) := psM_gp0 X 0
+  have hg1a : gp1 (psM X) 0 = ((ent X 0 1 : Nat) : Int) := psM_gp1 X 0
+  have hg1 : gp1 (psM X) 0 = 0 := by rw [hg1a, hlvl0]; rfl
+  rw [Rows.Ladder.red_shift _ f
+      (by
+        show ((psM X).length == 1 && _) = false
+        rw [show ((psM X).length == 1) = false from by
+          rw [psM_len]; exact decide_eq_false (by omega)]
+        rfl)
+      (prin_of_deep X hlen h.2)
+      (by rw [hg0]; exact decide_eq_false (by omega)) hg1,
+    hg0, psM_downMat X h]
+
+/-- 1 列のブロック — `red_leaf` がそのまま `nrmBlk` を返す。 -/
+theorem redN_leaf (d v f : Nat) : red (f + 2) (psM [[d, v]]) = nrmBlk [[d, v]] := by
+  show red (f + 2) [(((d : Nat) : Int), ((v : Nat) : Int))] = _
+  rw [red_leaf d f v]
+  rfl
+
+end
+
 end Evidence.Region
