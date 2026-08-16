@@ -1759,4 +1759,77 @@ open TM TM.Term
 
 end
 
+/-! ### §17.3 THE RULE READ OFF THE FAMILY DOES NOT GENERALISE
+
+§17.1 and §17.2 describe what `oRB` does on a designed family.  Turning that description into
+a closed form — rank the subscripts along the path, drop a node whose argument has nothing at
+its own level or below, hoist-and-copy the summands above it — gives `encRule` below.  It is
+WORSE than the reading it was meant to replace:
+
+    380   top-level indices in §14's corpus (`topOKB`, non-empty)
+    245   agree with `oR` under §15's naive `encB` (row-1 entry AS the subscript)
+    114   agree under `encRule`
+
+and its smallest failure is `(0,0)(1,1)(1,0)(2,1)`, four columns — a shape the family of
+§17.1–§17.2 never contained, because that family was built out of single chains and one
+sum, and this one has a `ψ₀` node inside an argument with a sibling after it.
+
+SO THREE CANDIDATES ARE NOW EXCLUDED: `encB` (§15), `Dict.collapse` as the node function
+(§16), and the family-derived rule (here).  What that says is not that a fourth is needed —
+it is that reading `transPort` off measured families does not converge.  `transPort` is an
+ALGORITHM (`Trans/Recal.lean` §3: seven case types, marks, memoisation), and the next honest
+move is either to port it into `B`'s coordinates and prove the correspondence, or to give the
+region a value that does not go through it at all and take the disagreement as a finding.
+
+The measurements that survive all this are §14's: the value is a sum over the top-level
+summands, and the node function is `ω^(Ω_{v-1} ⊕ ·)` exactly below `Ω_{v+1}`.  Those are
+about `oR`'s VALUES, not about its algorithm, and nothing here touches them. -/
+
+section
+open TM TM.Term
+open Trans.Dict (BT)
+
+def rankOf (v : Nat) (P : List Nat) : Nat := ((P.filter (fun x => x < v)).eraseDups).length
+def lvlBT : BT → Nat | .D u _ => u | _ => 0
+def ofLBT : List BT → BT
+  | [] => .zero
+  | [a] => a
+  | a :: rest => .sum a (ofLBT rest)
+
+/-! §17.1–§17.2 の記述を閉じた形にしたもの。**反証済み** (下の `#guard`)。 -/
+mutual
+def encSumR : B → List Nat → List BT
+  | .nil, _ => []
+  | .nd v r a, P => encSumR r P ++ nodeRuleR v a P
+def nodeRuleR (v : Nat) (a : B) (P : List Nat) : List BT :=
+  let w := rankOf v P
+  let R := encSumR a (v :: P)
+  let H := R.takeWhile (fun x => lvlBT x > w)
+  let L := R.drop H.length
+  if !R.isEmpty && L.isEmpty then R else H ++ [.D w (ofLBT R)]
+end
+
+def encRule : B → BT
+  | .nil => .zero
+  | .nd v r a => ofLBT ((match encRule r with
+      | .zero => [] | u => [u]) ++ [.D v (ofLBT (encSumR a [v, 0]))])
+
+def encNaiveB : B → BT
+  | .nil => .zero
+  | .nd v .nil a => .D v (encNaiveB a)
+  | .nd v r a => .sum (encNaiveB r) (.D v (encNaiveB a))
+
+def topPop : List B := valCorpus.filter fun t => topOKB t && t != .nil
+
+#guard topPop.length == 380
+#guard (topPop.filter fun t => match Trans.oR (matB t 0) with
+  | none => false | some u => u == Trans.Dict.dict (encNaiveB t)).length == 245
+#guard (topPop.filter fun t => match Trans.oR (matB t 0) with
+  | none => false | some u => u == Trans.Dict.dict (encRule t)).length == 114
+-- 規則が外す最小の最上位行列。族には無かった形。
+#guard Trans.Recal.oRB [[0,0], [1,1], [1,0], [2,1]]
+  == some (.D 0 (.sum (.D 1 .zero) (.D 0 (.D 1 .zero))))
+
+end
+
 end Evidence.Region
