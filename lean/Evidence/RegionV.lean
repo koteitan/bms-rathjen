@@ -77,14 +77,15 @@ clauses for one principal term and its sequence, and the fact that a fixed prefi
 left preserves them.  The associativity of `plus` that reduction needed is now proved
 (`Evidence/CNVOps.lean` §19).
 
-SO THE ✅ IS TWO NAMED THINGS AWAY, BOTH INSIDE `Hlim`:
+`PrefixLim` — `LimClauses V g → LimClauses (P ⊕ V) (fun n => P ⊕ g n)` — is now PROVED
+(`Evidence/CNVOps.lean` §23), with no side condition.
+
+SO THE ✅ IS ONE NAMED THING AWAY:
 
     ArgLim      `LimClauses (ω^(argVal a)) (fun n => sumVal (fsP a n))` — three cases,
                 one per case of `fsP`, and `Evidence/WF.lean`'s combinators
                 `lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen` are
                 aimed at exactly those three
-    PrefixLim   `LimClauses V g → LimClauses (P ⊕ V) (fun n => P ⊕ g n)` — true with no
-                side condition, needing left monotonicity of `plus` and a subtraction
 -/
 
 namespace Evidence.Region
@@ -331,7 +332,8 @@ theorem topOK_of_ps {r a : A} (h : topOK (.ps r a) = true) : topOK r = true := h
 indices was measuring a theorem.  It supplies `hfc` for `limClauses_transfer`, `inT` for the
 gate's guard, and `CNV` for `asm_veblen`. -/
 
-open Evidence.WF (CNV cnv_plus cnv_omegaNF cnv_ofNat inT_of_cnv plus_assoc LimClauses)
+open Evidence.WF (CNV cnv_plus cnv_omegaNF cnv_ofNat inT_of_cnv plus_assoc LimClauses
+  lim_clauses_prefix)
 
 theorem cnv_one : CNV one = true := rfl
 
@@ -1209,13 +1211,17 @@ theorem kindA_lim {t : A} (htop : topOK t = true) (h : kindA t = BMS.Kind.lim) :
 def ArgLim : Prop := ∀ (a : A), a ≠ .nil → nf a = true → fpOK a = true →
     LimClauses (omegaNF (argVal a)) (fun n => sumVal (fsP a n))
 
-/-- 前置きを足しても極限節は保たれる。 -/
+/-- 前置きを足しても極限節は保たれる。**側条件は無い** — `Evidence/CNVOps.lean` §23。 -/
 def PrefixLim : Prop := ∀ (P V : Term) (g : Nat → Term),
     CNV P = true → CNV V = true → LimClauses V g →
     LimClauses (plus P V) (fun n => plus P (g n))
 
-/-- **`Hlim`。** 2 つの穴 `ArgLim`・`PrefixLim` だけを仮定として持つ。 -/
-theorem hlim_supply (HA : ArgLim) (HP : PrefixLim) :
+/-- **前置きの穴は閉じている。** -/
+theorem prefixLim : PrefixLim :=
+  fun P V g hP hV h => lim_clauses_prefix hP hV g h
+
+/-- **`Hlim`。** 残る仮定は `ArgLim` ただ 1 つ。 -/
+theorem hlim_supply (HA : ArgLim) :
     ∀ (S : BMS.Matrix) (v : Term), Reg S → Val S v → BMS.kind S = BMS.Kind.lim →
     ∃ f : Nat → Term, inT v = true
       ∧ (∀ n, Val (BMS.expand S n) (f n))
@@ -1228,7 +1234,7 @@ theorem hlim_supply (HA : ArgLim) (HP : PrefixLim) :
   obtain ⟨r, a, ha, rfl⟩ := kindA_lim htop hk
   obtain ⟨_, hna, _, hfpa⟩ := nf_ps_iff.mp hnf
   have hlc : LimClauses (sumVal (A.ps r a)) (fun n => sumVal (fs (A.ps r a) n)) := by
-    have h := HP (sumVal r) (omegaNF (argVal a)) (fun n => sumVal (fsP a n))
+    have h := prefixLim (sumVal r) (omegaNF (argVal a)) (fun n => sumVal (fsP a n))
       (cnv_sumVal r) (cnv_omegaNF (cnv_argVal a)) (HA a ha hna hfpa)
     have hf : (fun n => sumVal (fs (A.ps r a) n))
         = (fun n => plus (sumVal r) (sumVal (fsP a n))) :=

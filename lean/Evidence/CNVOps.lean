@@ -565,4 +565,575 @@ theorem plus_assoc {a b c : Term} (ha : CNV a = true) (hb : CNV b = true) (hc : 
         rw [hL, plus_eq (s := a) hbc', hbc, List.filter_append, hswap, hbn,
           List.append_nil, List.nil_append]
 
+/-! ## §20 THE ORDER, READ ON THE COMPONENT LIST
+
+`TM/Order.lean` compares terms through the `add` constructor: `lt_add_add` is one
+lexicographic step, `lt_phi_add` and `lt_add_phi` are the two ragged ends.  Since a `CNV`
+term IS its descending component list (`cnv_ofList_toList`), those three facts assemble
+into ONE equation — `lt` on terms is `ltL` on lists — and everything `plus` does is a list
+operation, so every fact about `plus` below is proved on lists and read back.
+
+This is the layer `Evidence/WF.lean` never needed: its clients build terms, they do not
+take them apart.  `Evidence/RegionV.lean` §14's `PrefixLim` does. -/
+
+/-- 成分列の辞書式順序。 -/
+def ltL : List Term → List Term → Bool
+  | [], [] => false
+  | [], _ :: _ => true
+  | _ :: _, [] => false
+  | a :: s, b :: t => if a = b then ltL s t else lt a b
+
+theorem lt_zero_left {x : Term} (h : x ≠ zero) : lt zero x = true :=
+  ltF_left_zero (by show 1 ≤ 2 * ((zero : Term).deg + x.deg) + 8; omega) h
+
+theorem lt_zero_right (x : Term) : lt x zero = false := ltF_right_zero _ x
+
+theorem ofList_ne_zero : ∀ (l : List Term), cnvL l = true → l ≠ [] → ofList l ≠ zero
+  | [], _, h => absurd rfl h
+  | [a], hc, _ => by
+      have hap := (cnvL_cons.mp hc).1.1
+      show a ≠ zero
+      intro hz; rw [hz] at hap; exact Bool.noConfusion hap
+  | _ :: _ :: _, _, _ => by intro hc; exact Term.noConfusion hc
+
+/-- **順序は成分列で読める。** -/
+theorem lt_ofList : ∀ (l1 l2 : List Term), cnvL l1 = true → cnvL l2 = true →
+    lt (ofList l1) (ofList l2) = ltL l1 l2 := by
+  intro l1
+  induction l1 with
+  | nil =>
+    intro l2 _ hc2
+    cases l2 with
+    | nil => exact lt_irrefl zero
+    | cons b t =>
+      show lt zero (ofList (b :: t)) = true
+      exact lt_zero_left (ofList_ne_zero (b :: t) hc2 (by simp))
+  | cons a s ih =>
+    intro l2 hc1 hc2
+    cases l2 with
+    | nil => exact lt_zero_right _
+    | cons b t =>
+      obtain ⟨⟨hapa, hcna⟩, hcs⟩ := cnvL_cons.mp hc1
+      obtain ⟨⟨hapb, hcnb⟩, hct⟩ := cnvL_cons.mp hc2
+      cases s with
+      | nil =>
+        cases t with
+        | nil =>
+          show lt a b = (if a = b then ltL [] [] else lt a b)
+          by_cases hab : a = b
+          · rw [if_pos hab, hab]; exact lt_irrefl b
+          · rw [if_neg hab]
+        | cons c u =>
+          obtain ⟨p, q, rfl⟩ := eq_phi_of_isAP_cnv hcna hapa
+          show lt (phi p q) (add b (ofList (c :: u))) = (if phi p q = b then ltL [] (c :: u)
+            else lt (phi p q) b)
+          rw [lt_phi_add]
+          by_cases hab : phi p q = b
+          · rw [if_pos hab]
+            show ((phi p q == b) || lt (phi p q) b) = true
+            rw [hab]
+            simp
+          · rw [if_neg hab]
+            show ((phi p q == b) || lt (phi p q) b) = _
+            rw [show (phi p q == b) = false from by
+              cases h : (phi p q == b) with
+              | false => rfl
+              | true => exact absurd (eq_of_beq h) hab]
+            exact Bool.false_or _
+      | cons c u =>
+        cases t with
+        | nil =>
+          obtain ⟨p, q, rfl⟩ := eq_phi_of_isAP_cnv hcnb hapb
+          show lt (add a (ofList (c :: u))) (phi p q)
+            = (if a = phi p q then ltL (c :: u) [] else lt a (phi p q))
+          rw [lt_add_phi]
+          by_cases hab : a = phi p q
+          · rw [if_pos hab, hab]; exact lt_irrefl _
+          · rw [if_neg hab]
+        | cons d v =>
+          show lt (add a (ofList (c :: u))) (add b (ofList (d :: v)))
+            = (if a = b then ltL (c :: u) (d :: v) else lt a b)
+          by_cases heq : add a (ofList (c :: u)) = add b (ofList (d :: v))
+          · injection heq with h1 h2
+            rw [if_pos h1, ← ih (d :: v) hcs hct, ← h2, h1, lt_irrefl, lt_irrefl]
+          · rw [lt_add_add heq, ih (d :: v) hcs hct]
+
+theorem ltL_append_left : ∀ (Q X Y : List Term), ltL (Q ++ X) (Q ++ Y) = ltL X Y
+  | [], _, _ => rfl
+  | a :: Q, X, Y => by
+    show (if a = a then ltL (Q ++ X) (Q ++ Y) else lt a a) = ltL X Y
+    rw [if_pos rfl, ltL_append_left Q X Y]
+
+theorem lt_eq_ltL {s t : Term} (hs : CNV s = true) (ht : CNV t = true) :
+    lt s t = ltL (toList s) (toList t) := by
+  obtain ⟨hcs, _⟩ := cnv_toList s hs
+  obtain ⟨hct, _⟩ := cnv_toList t ht
+  have h := lt_ofList (toList s) (toList t) hcs hct
+  rw [cnv_ofList_toList s hs, cnv_ofList_toList t ht] at h
+  exact h
+
+/-- 左に足すと真に増える。 -/
+theorem ltL_filter_append {x1 : Term} (hx1 : CNV x1 = true) :
+    ∀ (A X' : List Term), cnvL A = true → descL A = true →
+    ltL A (A.filter (fun y => le x1 y) ++ (x1 :: X')) = true := by
+  intro A
+  induction A with
+  | nil => intro X' _ _; rfl
+  | cons a A' ih =>
+    intro X' hc hd
+    obtain ⟨⟨_, hca⟩, hcA'⟩ := cnvL_cons.mp hc
+    cases hle : le x1 a with
+    | true =>
+      rw [List.filter_cons_of_pos (by rw [hle])]
+      show (if a = a then ltL A' (A'.filter (fun y => le x1 y) ++ (x1 :: X')) else lt a a) = true
+      rw [if_pos rfl]
+      exact ih X' hcA' (descL_tail hd)
+    | false =>
+      rw [filter_nil_of_head hx1 a A' hca hcA' hd hle]
+      show (if a = x1 then ltL A' X' else lt a x1) = true
+      have hne : a ≠ x1 := by
+        intro hc'
+        rw [hc', le_self x1] at hle
+        exact Bool.noConfusion hle
+      rw [if_neg hne]
+      exact lt_of_not_le (frag_of_cnv _ hx1) (frag_of_cnv _ hca) hle
+
+/-- 右の引数を上げると真に増える (成分列の側)。 -/
+theorem ltL_filter_mono {x1 y1 : Term} (hx1 : CNV x1 = true) (hy1 : CNV y1 = true)
+    (hlt : lt x1 y1 = true) :
+    ∀ (A X' Y' : List Term), cnvL A = true → descL A = true →
+    ltL (A.filter (fun z => le x1 z) ++ (x1 :: X'))
+        (A.filter (fun z => le y1 z) ++ (y1 :: Y')) = true := by
+  intro A
+  induction A with
+  | nil =>
+    intro X' Y' _ _
+    show (if x1 = y1 then ltL X' Y' else lt x1 y1) = true
+    rw [if_neg (ne_of_ltF hlt)]
+    exact hlt
+  | cons a A' ih =>
+    intro X' Y' hc hd
+    obtain ⟨⟨_, hca⟩, hcA'⟩ := cnvL_cons.mp hc
+    cases hley : le y1 a with
+    | true =>
+      have hlex : le x1 a = true :=
+        le_trans (frag_of_cnv _ hx1) (frag_of_cnv _ hy1) (frag_of_cnv _ hca)
+          (le_of_lt hlt) hley
+      rw [List.filter_cons_of_pos (by rw [hlex]), List.filter_cons_of_pos (by rw [hley])]
+      show (if a = a then ltL (A'.filter (fun z => le x1 z) ++ (x1 :: X'))
+        (A'.filter (fun z => le y1 z) ++ (y1 :: Y')) else lt a a) = true
+      rw [if_pos rfl]
+      exact ih X' Y' hcA' (descL_tail hd)
+    | false =>
+      rw [filter_nil_of_head hy1 a A' hca hcA' hd hley]
+      cases hlex : le x1 a with
+      | true =>
+        rw [List.filter_cons_of_pos (by rw [hlex])]
+        show (if a = y1 then ltL (A'.filter (fun z => le x1 z) ++ (x1 :: X')) Y'
+          else lt a y1) = true
+        have hne : a ≠ y1 := by
+          intro hc'
+          rw [hc', le_self y1] at hley
+          exact Bool.noConfusion hley
+        rw [if_neg hne]
+        exact lt_of_not_le (frag_of_cnv _ hy1) (frag_of_cnv _ hca) hley
+      | false =>
+        rw [filter_nil_of_head hx1 a A' hca hcA' hd hlex]
+        show (if x1 = y1 then ltL X' Y' else lt x1 y1) = true
+        rw [if_neg (ne_of_ltF hlt)]
+        exact hlt
+
+/-! ## §21 `plus` on the left: the two monotonicities -/
+
+theorem lt_plus_left {P x : Term} (hP : CNV P = true) (hx : CNV x = true) (hxz : x ≠ zero) :
+    lt P (plus P x) = true := by
+  obtain ⟨hcP, hdP⟩ := cnv_toList P hP
+  cases hX : toList x with
+  | nil => exact absurd (toList_eq_nil x hX) hxz
+  | cons x1 X' =>
+    obtain ⟨hcx, _⟩ := cnv_toList x hx
+    rw [hX] at hcx
+    obtain ⟨⟨_, hcx1⟩, _⟩ := cnvL_cons.mp hcx
+    rw [lt_eq_ltL hP (cnv_plus hP hx), toList_plus hP hx hX, hX]
+    exact ltL_filter_append hcx1 (toList P) X' hcP hdP
+
+theorem le_plus_left {P x : Term} (hP : CNV P = true) (hx : CNV x = true) :
+    le P (plus P x) = true := by
+  by_cases hz : x = zero
+  · rw [hz]
+    exact le_self P
+  · exact le_of_lt (lt_plus_left hP hx hz)
+
+/-- **`plus` は右の引数について真に単調。** -/
+theorem lt_plus_right {P x y : Term} (hP : CNV P = true) (hx : CNV x = true)
+    (hy : CNV y = true) (h : lt x y = true) : lt (plus P x) (plus P y) = true := by
+  obtain ⟨hcP, hdP⟩ := cnv_toList P hP
+  cases hY : toList y with
+  | nil =>
+    exfalso
+    rw [toList_eq_nil y hY, lt_zero_right] at h
+    exact Bool.noConfusion h
+  | cons y1 Y' =>
+    have hyz : y ≠ zero := by
+      intro hc; rw [hc] at hY; exact absurd (show ([] : List Term) = y1 :: Y' from hY) (by simp)
+    obtain ⟨hcy, _⟩ := cnv_toList y hy
+    rw [hY] at hcy
+    obtain ⟨⟨_, hcy1⟩, _⟩ := cnvL_cons.mp hcy
+    cases hX : toList x with
+    | nil =>
+      rw [toList_eq_nil x hX]
+      exact lt_plus_left hP hy hyz
+    | cons x1 X' =>
+      obtain ⟨hcx, _⟩ := cnv_toList x hx
+      rw [hX] at hcx
+      obtain ⟨⟨_, hcx1⟩, _⟩ := cnvL_cons.mp hcx
+      have hxy : ltL (x1 :: X') (y1 :: Y') = true := by
+        rw [← hX, ← hY, ← lt_eq_ltL hx hy]; exact h
+      rw [lt_eq_ltL (cnv_plus hP hx) (cnv_plus hP hy),
+        toList_plus hP hx hX, toList_plus hP hy hY, hX, hY]
+      by_cases hxy1 : x1 = y1
+      · subst hxy1
+        rw [ltL_append_left]
+        exact hxy
+      · have hlt1 : lt x1 y1 = true := by
+          have h2 : (if x1 = y1 then ltL X' Y' else lt x1 y1) = true := hxy
+          rw [if_neg hxy1] at h2
+          exact h2
+        exact ltL_filter_mono hcx1 hcy1 hlt1 (toList P) X' Y' hcP hdP
+
+theorem le_plus_right {P x y : Term} (hP : CNV P = true) (hx : CNV x = true)
+    (hy : CNV y = true) (h : le x y = true) : le (plus P x) (plus P y) = true := by
+  by_cases hxy : x = y
+  · rw [hxy]; exact le_self _
+  · have hlt : lt x y = true := by
+      have h2 : ((x == y) || lt x y) = true := h
+      rw [show (x == y) = false from by
+        cases hb : (x == y) with
+        | false => rfl
+        | true => exact absurd (eq_of_beq hb) hxy, Bool.false_or] at h2
+      exact h2
+    exact le_of_lt (lt_plus_right hP hx hy hlt)
+
+/-! ## §22 The list lemmas cofinality needs -/
+
+theorem descL_head_ge : ∀ (l : List Term) (a : Term), cnvL (a :: l) = true →
+    descL (a :: l) = true → ∀ x ∈ l, le x a = true := by
+  intro l
+  induction l with
+  | nil => intro a _ _ x hx; exact absurd hx (by simp)
+  | cons c v ih =>
+    intro a hc hd x hx
+    obtain ⟨⟨_, hca⟩, hcrest⟩ := cnvL_cons.mp hc
+    have hcc : CNV c = true := (cnvL_cons.mp hcrest).1.2
+    have hcv : cnvL v = true := (cnvL_cons.mp hcrest).2
+    have hcle : le c a = true := (descL_cons.mp hd).1
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hcle
+    · have hxc : le x c = true := ih c hcrest (descL_tail hd) x hx'
+      have hcx : CNV x = true :=
+        ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcv x hx')).2
+      exact le_trans (frag_of_cnv _ hcx) (frag_of_cnv _ hcc) (frag_of_cnv _ hca) hxc hcle
+
+theorem descL_of_append_right : ∀ (Q S : List Term), descL (Q ++ S) = true → descL S = true := by
+  intro Q
+  induction Q with
+  | nil => intro S h; exact h
+  | cons _ _ ih => intro S h; exact ih S (descL_tail h)
+
+theorem cnvL_of_append_right (Q S : List Term) (h : cnvL (Q ++ S) = true) : cnvL S = true := by
+  show S.all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  exact List.all_eq_true.mp h x (List.mem_append.mpr (Or.inr hx))
+
+/-- 左に足すと真に増える (成分列の側、前置きが任意)。 -/
+theorem ltL_prefix_grow : ∀ (l mid : List Term), mid ≠ [] →
+    cnvL (mid ++ l) = true → descL (mid ++ l) = true → ltL l (mid ++ l) = true := by
+  intro l
+  induction l with
+  | nil =>
+    intro mid hne _ _
+    rw [List.append_nil]
+    cases mid with
+    | nil => exact absurd rfl hne
+    | cons _ _ => rfl
+  | cons h l' ih =>
+    intro mid hne hc hd
+    cases mid with
+    | nil => exact absurd rfl hne
+    | cons m1 mid' =>
+      show (if h = m1 then ltL l' (mid' ++ (h :: l')) else lt h m1) = true
+      by_cases hhm : h = m1
+      · rw [if_pos hhm]
+        have hass : mid' ++ (h :: l') = (mid' ++ [h]) ++ l' := by
+          rw [List.append_assoc]; rfl
+        rw [hass]
+        refine ih (mid' ++ [h]) (by simp) ?_ ?_
+        · rw [← hass]; exact (cnvL_cons.mp hc).2
+        · rw [← hass]; exact descL_tail hd
+      · rw [if_neg hhm]
+        have hle : le h m1 = true :=
+          descL_head_ge (mid' ++ (h :: l')) m1 hc hd h (by simp)
+        have h2 : ((h == m1) || lt h m1) = true := hle
+        rw [show (h == m1) = false from by
+          cases hb : (h == m1) with
+          | false => rfl
+          | true => exact absurd (eq_of_beq hb) hhm, Bool.false_or] at h2
+        exact h2
+
+/-- 前置きを剥がすか、前置きの中で決着するか。 -/
+theorem ltL_split : ∀ (Q S W : List Term), ltL S (Q ++ W) = true →
+    (∃ S', S = Q ++ S' ∧ ltL S' W = true) ∨ ltL S Q = true := by
+  intro Q
+  induction Q with
+  | nil => intro S W h; exact Or.inl ⟨S, rfl, h⟩
+  | cons q1 Q'' ih =>
+    intro S W h
+    cases S with
+    | nil => exact Or.inr rfl
+    | cons s1 S'' =>
+      have h' : (if s1 = q1 then ltL S'' (Q'' ++ W) else lt s1 q1) = true := h
+      by_cases hs : s1 = q1
+      · rw [if_pos hs] at h'
+        rcases ih S'' W h' with ⟨S', hS', hlt⟩ | hr
+        · exact Or.inl ⟨S', by rw [hs, hS']; rfl, hlt⟩
+        · refine Or.inr ?_
+          show (if s1 = q1 then ltL S'' Q'' else lt s1 q1) = true
+          rw [if_pos hs]; exact hr
+      · rw [if_neg hs] at h'
+        refine Or.inr ?_
+        show (if s1 = q1 then ltL S'' Q'' else lt s1 q1) = true
+        rw [if_neg hs]; exact h'
+
+theorem ltL_append_of_lt : ∀ (S Q R : List Term), ltL S Q = true → ltL S (Q ++ R) = true := by
+  intro S
+  induction S with
+  | nil =>
+    intro Q R h
+    cases Q with
+    | nil => exact Bool.noConfusion h
+    | cons _ _ => rfl
+  | cons s1 S'' ih =>
+    intro Q R h
+    cases Q with
+    | nil => exact Bool.noConfusion h
+    | cons q1 Q'' =>
+      have h' : (if s1 = q1 then ltL S'' Q'' else lt s1 q1) = true := h
+      show (if s1 = q1 then ltL S'' (Q'' ++ R) else lt s1 q1) = true
+      by_cases hs : s1 = q1
+      · rw [if_pos hs] at h' ⊢; exact ih Q'' R h'
+      · rw [if_neg hs] at h' ⊢; exact h'
+
+theorem ltL_prefix_lt : ∀ (l R : List Term), R ≠ [] → ltL l (l ++ R) = true := by
+  intro l R h
+  have h2 := ltL_append_left l [] R
+  rw [List.append_nil] at h2
+  rw [h2]
+  cases R with
+  | nil => exact absurd rfl h
+  | cons _ _ => rfl
+
+theorem cnvL_filter (p : Term → Bool) (l : List Term) (hc : cnvL l = true) :
+    cnvL (l.filter p) = true := by
+  show (l.filter p).all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  exact List.all_eq_true.mp hc x (List.mem_filter.mp hx).1
+
+theorem descL_filter {b1 : Term} (hb1 : CNV b1 = true) (l : List Term)
+    (hc : cnvL l = true) (hd : descL l = true) :
+    descL (l.filter (fun z => le b1 z)) = true := by
+  obtain ⟨k, hk⟩ := filter_eq_take b1 l hc hd hb1
+  rw [hk]; exact descL_take k l hd
+
+/-! ## §23 COFINALITY UNDER A PREFIX -/
+
+theorem ltL_or_eq_of_le {S' M : List Term} (hcS' : cnvL S' = true) (hcM : cnvL M = true)
+    (h : le (ofList S') (ofList M) = true) : ltL S' M = true ∨ S' = M := by
+  have hapM : ∀ x ∈ M, x.isAP = true := fun x hx =>
+    ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcM x hx)).1
+  have hapS' : ∀ x ∈ S', x.isAP = true := fun x hx =>
+    ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcS' x hx)).1
+  cases hb : (ofList S' == ofList M) with
+  | true =>
+    refine Or.inr ?_
+    have h2 := congrArg toList (eq_of_beq hb)
+    rw [toList_ofList _ hapS', toList_ofList _ hapM] at h2
+    exact h2
+  | false =>
+    refine Or.inl ?_
+    have h3 : ((ofList S' == ofList M) || lt (ofList S') (ofList M)) = true := h
+    rw [hb, Bool.false_or, lt_ofList S' M hcS' hcM] at h3
+    exact h3
+
+/-- **前置きの下でも共終。** `s` が前置きの中で決着するなら `s ≤ P` で済み、そうでなければ
+    `s` は残った前置きを接頭辞として持つので、その尾を `g` 自身の共終性に渡せる。 -/
+theorem cof_plus {P V : Term} (hP : CNV P = true) (hV : CNV V = true) (hVz : V ≠ zero)
+    (g : Nat → Term) (hg1 : ∀ n, CNV (g n) = true) (hg2 : ∀ n, lt (g n) V = true)
+    (hg4 : ∀ s, inT s = true → lt s V = true → ∃ n, le s (g n) = true) :
+    ∀ s, inT s = true → lt s (plus P V) = true → ∃ n, le s (plus P (g n)) = true := by
+  intro s hin hlt
+  have hPV : CNV (plus P V) = true := cnv_plus hP hV
+  have hcns : CNV s = true := cnv_of_lt_cnv hin hPV hlt
+  obtain ⟨hcA, hdA⟩ := cnv_toList P hP
+  obtain ⟨hcS, hdS⟩ := cnv_toList s hcns
+  cases hVl : toList V with
+  | nil => exact absurd (toList_eq_nil V hVl) hVz
+  | cons v1 V' =>
+    obtain ⟨hcV, _⟩ := cnv_toList V hV
+    rw [hVl] at hcV
+    have hcv1 : CNV v1 = true := (cnvL_cons.mp hcV).1.2
+    obtain ⟨q, hq⟩ := filter_eq_take v1 (toList P) hcA hdA hcv1
+    have hdrop : descL ((toList P).drop q) = true := by
+      have h0 : descL ((toList P).take q ++ (toList P).drop q) = true := by
+        rw [List.take_append_drop]; exact hdA
+      exact descL_of_append_right _ _ h0
+    have hcdrop : cnvL ((toList P).drop q) = true := by
+      have h0 : cnvL ((toList P).take q ++ (toList P).drop q) = true := by
+        rw [List.take_append_drop]; exact hcA
+      exact cnvL_of_append_right _ _ h0
+    have hplus : toList (plus P V) = (toList P).take q ++ (v1 :: V') := by
+      rw [toList_plus hP hV hVl, hVl, hq]
+    have hSlt : ltL (toList s) ((toList P).take q ++ (v1 :: V')) = true := by
+      rw [← hplus, ← lt_eq_ltL hcns hPV]; exact hlt
+    rcases ltL_split _ _ _ hSlt with ⟨S', hS, hS'lt⟩ | hr
+    · have hcS' : cnvL S' = true := by rw [hS] at hcS; exact cnvL_of_append_right _ _ hcS
+      have hdS' : descL S' = true := by rw [hS] at hdS; exact descL_of_append_right _ _ hdS
+      have hapS' : ∀ x ∈ S', x.isAP = true := fun x hx =>
+        ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcS' x hx)).1
+      have hcns' : CNV (ofList S') = true := cnv_ofList S' hcS' hdS'
+      have htoS' : toList (ofList S') = S' := toList_ofList S' hapS'
+      have hs'V : lt (ofList S') V = true := by
+        rw [lt_eq_ltL hcns' hV, htoS', hVl]; exact hS'lt
+      obtain ⟨n, hn⟩ := hg4 (ofList S') (inT_of_cnv _ hcns') hs'V
+      refine ⟨n, ?_⟩
+      cases hZ : toList (g n) with
+      | nil =>
+        have hgz : g n = zero := toList_eq_nil _ hZ
+        rw [hgz] at hn
+        have hs'z : ofList S' = zero := by
+          have h2 : ((ofList S' == zero) || lt (ofList S') zero) = true := hn
+          rw [lt_zero_right, Bool.or_false] at h2
+          exact eq_of_beq h2
+        have hS'nil : S' = [] := by rw [← htoS', hs'z]; rfl
+        have htoSq : toList s = (toList P).take q := by
+          rw [hS, hS'nil, List.append_nil]
+        have hA : toList P = toList s ++ (toList P).drop q := by
+          rw [htoSq, List.take_append_drop]
+        have hleP : le s P = true := by
+          cases hd0 : (toList P).drop q with
+          | nil =>
+            have heq : toList s = toList P := by rw [hA, hd0, List.append_nil]
+            have hsp : s = P := by
+              rw [← cnv_ofList_toList s hcns, ← cnv_ofList_toList P hP, heq]
+            rw [hsp]; exact le_self P
+          | cons c t =>
+            refine le_of_lt ?_
+            rw [lt_eq_ltL hcns hP, hA, hd0]
+            exact ltL_prefix_lt (toList s) (c :: t) (by simp)
+        rw [hgz]
+        exact hleP
+      | cons w Z' =>
+        obtain ⟨hcZ, hdZ⟩ := cnv_toList (g n) (hg1 n)
+        have hcw : CNV w = true := by rw [hZ] at hcZ; exact (cnvL_cons.mp hcZ).1.2
+        have hwv1 : le w v1 = true := by
+          have h1 : ltL (toList (g n)) (toList V) = true := by
+            rw [← lt_eq_ltL (hg1 n) hV]; exact hg2 n
+          rw [hZ, hVl] at h1
+          have h2 : (if w = v1 then ltL Z' V' else lt w v1) = true := h1
+          by_cases hwv : w = v1
+          · rw [hwv]; exact le_self v1
+          · rw [if_neg hwv] at h2; exact le_of_lt h2
+        have hQfall : ∀ x ∈ (toList P).take q, le w x = true := by
+          intro x hx
+          rw [← hq] at hx
+          have hv1x : le v1 x = true := (List.mem_filter.mp hx).2
+          have hcx : CNV x = true := ((Bool.and_eq_true _ _).mp
+            (List.all_eq_true.mp hcA x (List.mem_filter.mp hx).1)).2
+          exact le_trans (frag_of_cnv _ hcw) (frag_of_cnv _ hcv1) (frag_of_cnv _ hcx)
+            hwv1 hv1x
+        have hfilA : (toList P).filter (fun z => le w z)
+            = (toList P).take q ++ ((toList P).drop q).filter (fun z => le w z) := by
+          have h1 : (toList P).filter (fun z => le w z)
+              = ((toList P).take q).filter (fun z => le w z)
+                ++ ((toList P).drop q).filter (fun z => le w z) := by
+            rw [← List.filter_append, List.take_append_drop]
+          rw [h1, filter_self_of_all (fun z => le w z) _ hQfall]
+        have htoPg : toList (plus P (g n))
+            = (toList P).take q
+              ++ (((toList P).drop q).filter (fun z => le w z) ++ toList (g n)) := by
+          rw [toList_plus hP (hg1 n) hZ, hfilA, List.append_assoc]
+        have hcmid : cnvL (((toList P).drop q).filter (fun z => le w z)) = true :=
+          cnvL_filter _ _ hcdrop
+        have hdmid : descL (((toList P).drop q).filter (fun z => le w z)) = true :=
+          descL_filter hcw _ hcdrop hdrop
+        have hcM : cnvL (((toList P).drop q).filter (fun z => le w z) ++ toList (g n))
+            = true := by
+          show (((toList P).drop q).filter (fun z => le w z) ++ toList (g n)).all
+            (fun x => x.isAP && CNV x) = true
+          rw [List.all_eq_true]
+          intro x hx
+          rcases List.mem_append.mp hx with h | h
+          · exact List.all_eq_true.mp hcmid x h
+          · exact List.all_eq_true.mp hcZ x h
+        have hdM : descL (((toList P).drop q).filter (fun z => le w z) ++ toList (g n))
+            = true := by
+          refine descL_append _ _ hdmid hdZ ?_
+          intro a b t ha hb
+          rw [hZ] at hb
+          injection hb with hb1 _
+          rw [← hb1]
+          exact (List.mem_filter.mp (getLast?_mem ha)).2
+        have hcofM : CNV (ofList (((toList P).drop q).filter (fun z => le w z)
+            ++ toList (g n))) = true := cnv_ofList _ hcM hdM
+        have hgM : le (g n) (ofList (((toList P).drop q).filter (fun z => le w z)
+            ++ toList (g n))) = true := by
+          by_cases hm : ((toList P).drop q).filter (fun z => le w z) = []
+          · have h0 : ofList (((toList P).drop q).filter (fun z => le w z)
+                ++ toList (g n)) = g n := by
+              rw [hm]
+              exact cnv_ofList_toList _ (hg1 n)
+            rw [h0]
+            exact le_self _
+          · refine le_of_lt ?_
+            have h1 := lt_ofList (toList (g n))
+              (((toList P).drop q).filter (fun z => le w z) ++ toList (g n)) hcZ hcM
+            rw [cnv_ofList_toList _ (hg1 n)] at h1
+            rw [h1]
+            exact ltL_prefix_grow (toList (g n)) _ hm hcM hdM
+        have hkey : le (ofList S') (ofList (((toList P).drop q).filter (fun z => le w z)
+            ++ toList (g n))) = true :=
+          le_trans (frag_of_cnv _ hcns') (frag_of_cnv _ (hg1 n)) (frag_of_cnv _ hcofM) hn hgM
+        rcases ltL_or_eq_of_le hcS' hcM hkey with h2 | h2
+        · refine le_of_lt ?_
+          rw [lt_eq_ltL hcns (cnv_plus hP (hg1 n)), hS, htoPg, ltL_append_left]
+          exact h2
+        · have hsp : s = plus P (g n) := by
+            rw [← cnv_ofList_toList s hcns, ← cnv_ofList_toList _ (cnv_plus hP (hg1 n)),
+              hS, htoPg, h2]
+          rw [hsp]; exact le_self _
+    · refine ⟨0, ?_⟩
+      have hltP : lt s P = true := by
+        rw [lt_eq_ltL hcns hP]
+        have h2 := ltL_append_of_lt (toList s) ((toList P).take q) ((toList P).drop q) hr
+        rw [List.take_append_drop] at h2
+        exact h2
+      exact le_trans (frag_of_cnv _ hcns) (frag_of_cnv _ hP)
+        (frag_of_cnv _ (cnv_plus hP (hg1 0))) (le_of_lt hltP) (le_plus_left hP (hg1 0))
+
+/-- **前置きの組み合わせ子。** `V` の 4 連言から `P ⊕ V` の 4 連言。側条件は無い。 -/
+theorem lim_clauses_prefix {P V : Term} (hP : CNV P = true) (hV : CNV V = true)
+    (g : Nat → Term) (h : LimClauses V g) :
+    LimClauses (plus P V) (fun n => plus P (g n)) := by
+  obtain ⟨h1, h2, h3, h4⟩ := h
+  have hVz : V ≠ zero := by
+    intro hc
+    have h0 := h2 0
+    rw [hc, lt_zero_right] at h0
+    exact Bool.noConfusion h0
+  exact ⟨fun n => cnv_plus hP (h1 n),
+    fun n => lt_plus_right hP (h1 n) hV (h2 n),
+    fun n => lt_plus_right hP (h1 n) (h1 (n + 1)) (h3 n),
+    cof_plus hP hV hVz g h1 h2 h4⟩
+
 end Evidence.WF

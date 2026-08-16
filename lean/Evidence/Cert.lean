@@ -8693,14 +8693,18 @@ hard case, and `ψ₀(c)[0]` is a prefix of `ψ₀(c)` that is no shorter than `
 of `c` cannot overshoot it (`Evidence/CmpM.lean`'s `cmpM_le_of_len`).  Neither the
 descending condition nor the value is used.
 
-`Hlim` is what remains, and §14 has now REDUCED it.  `fs` acts on the last summand, so the
-value of an expansion is the untouched prefix plus the sequence member — which needed
-`sumVal (app r s) = sumVal r ⊕ sumVal s`, hence associativity of `plus`, which the repo did
-not have and now does (`Evidence/CNVOps.lean` §19).  What is left is two named holes inside
-`Hlim`: `ArgLim`, the four clauses for ONE principal term `ω^(argVal a)` and its sequence
-(three cases, one per case of `fsP`, and `Evidence/WF.lean`'s `lim_clauses_repAdd` /
-`lim_clauses_phi_arg` / `lim_clauses_fsGen` are aimed at exactly those three); and
-`PrefixLim`, that a fixed prefix on the left preserves the four clauses. -/
+`Hlim` is what remains, and §14 has now REDUCED it to ONE hole.  `fs` acts on the last
+summand, so the value of an expansion is the untouched prefix plus the sequence member —
+which needed `sumVal (app r s) = sumVal r ⊕ sumVal s`, hence associativity of `plus`, which
+the repo did not have and now does (`Evidence/CNVOps.lean` §19).  The prefix half is also
+proved (§23's `lim_clauses_prefix`: a fixed prefix on the left preserves all four clauses,
+with NO side condition), on top of a new layer — §20 reads the term order off the component
+list, which is what lets `plus`, a list operation, be reasoned about at all.
+
+What is left is `ArgLim`: the four clauses for ONE principal term `ω^(argVal a)` and its
+sequence `fsP a n`.  Three cases, one per case of `fsP`, and `Evidence/WF.lean`'s
+`lim_clauses_repAdd` / `lim_clauses_phi_arg` / `lim_clauses_fsGen` are aimed at exactly
+those three. -/
 
 #guard ((clo3 [[0, 0], [1, 1], [1, 1]]).length, ((clo3 [[0, 0], [1, 1], [1, 1]]).filter
   (fun m => (List.range 6).any (fun k =>

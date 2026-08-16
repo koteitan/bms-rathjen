@@ -404,6 +404,10 @@ RegionV.caseThree        場合 3 の不等式。仮定は a ∈ C₀(a) だけ
 RegionV.hclosed_supply   certIn_region の Hclosed — 仮定なし
 WF.plus_assoc            plus が CNV 上で結合的 (`Evidence/CNVOps.lean` §19)
 RegionV.sumVal_app       和の値は前置きの値 ⊕ 後ろの値
+WF.lt_ofList             項の順序は成分列の辞書式順序 (§20)
+WF.lt_plus_right         plus は右の引数について真に単調
+WF.cof_plus              前置きの下でも共終
+RegionV.prefixLim        PrefixLim — 側条件なしで真
 WF.cnv_plus / cnv_omegaNF  CNV が ⊕ と ω^· で閉じる (`Evidence/CNVOps.lean`)
 BMS.cmpM_trans ほか      BMS の順序が線形順序 (`Evidence/CmpM.lean`)
 ```
@@ -476,11 +480,24 @@ ArgLim      主要項 ω^(argVal a) 1 つとその列 fsP a n についての 4 
 PrefixLim   左に前置きを足しても 4 連言が保たれること
 ```
 
-**`PrefixLim` は側条件なしで真である。** `plus` は `CNV` 上では順序数の加法なので
-`P ⊕ x < P ⊕ y ⟺ x < y` であり、共終性は `s ≤ P` かどうかで割れる。要るのは左単調性と
-引き算で、どちらもまだ repo に無い。
+### `PrefixLim` も閉じた — 順序を成分列で読む層を足した (2026-08-16)
 
-### 残る 2 つ (どちらも `Hlim` の中)
+`plus` は成分列の操作なので、項の順序を**成分列の辞書式順序として読む層**を作った
+(`Evidence/CNVOps.lean` §20)。`TM/Order.lean` は `add` 構成子ごしに比べる 3 つの事実
+(`lt_add_add`・`lt_phi_add`・`lt_add_phi`) を持っていて、`CNV` の項は自分の成分列そのもの
+なので、この 3 つが 1 本の等式に組み上がる。
+
+```
+lt s t  =  ltL (toList s) (toList t)
+```
+
+この層の上で `plus` の 2 つの単調性 (§21) と共終性 (§23) が出る。共終性は
+**`s` が前置きの中で決着するか、前置きを接頭辞として持つか**で割れる。前者なら `s ≤ P`
+で済み、後者ならその尾を `g` 自身の共終性に渡せる。**側条件は要らなかった。**
+
+これで `hlim_supply` に残る仮定は `ArgLim` 1 つだけである。
+
+### 残る 1 つ (`Hlim` の中)
 
 ### 残る行のどれが重いか (2026-08-16 の測定、`lean/Evidence/RegionNext.lean`)
 
@@ -520,20 +537,19 @@ nd v r a  =  r ⊕ psi_v(a)
 ### 残る作業の重さの順
 
 作業の全体の 🚨 のうち、**葉だけが実際の作業**である (内側の節は集計にすぎない)。
-いまの領域が 3393 行 (`Region` 1194 + `RegionV` 1249 + `CmpM` 382 + `CNVOps` 568) で、
-残る穴は `Hlim` の中の 2 つ、というのが目盛りである。
+いまの領域が 3970 行 (`Region` 1194 + `RegionV` 1255 + `CmpM` 382 + `CNVOps` 1139) で、
+残る穴は `Hlim` の中の `ArgLim` 1 つ、というのが目盛りである。
 
 ```
 重い  326 行目          一般化した領域が丸ごと要る。いまの領域はその試作
       ArgLim            WF の組み合わせ子 3 つ + 側条件。fsP の 3 場合に対応
-      PrefixLim         plus の左単調性と引き算。側条件は要らない
       登録と表の再生成   no_overshoot の実例が要る (機械的ではない)
 軽い  行ごとの否定対照   独立の作業ではない。登録に含まれる
 ```
 
 ### したがって 326 行目は依然として未決
 
-✅ が付かない限り、326 行目は決まらない。`ArgLim` と `PrefixLim` が埋まると
+✅ が付かない限り、326 行目は決まらない。`ArgLim` が埋まると
 ε₁ 行と ε_ω 行に ✅ が付き、そこで初めて 326 行目の議論に必要な道具
 (展開の値の列が当方の値に共終であること) が族 4 でも使える形になる。
 
@@ -596,11 +612,13 @@ nd v r a  =  r ⊕ psi_v(a)
         - 🚨 `ArgLim` — 主要項 `ω^(argVal a)` 1 つとその列の 4 連言。
           `fsP` の 3 場合に対応し、`WF.lean` の `lim_clauses_repAdd`・
           `lim_clauses_phi_arg`・`lim_clauses_fsGen` がその 3 つに向けてある
-        - 🚨 `PrefixLim` — 左に前置きを足しても 4 連言が保たれること。
-          **側条件は要らない** (`plus` は `CNV` 上では順序数の加法)。
-          要るのは左単調性と引き算
+        - ✅ 項の順序を成分列の辞書式順序として読む層 (`CNVOps` §20)。
+          `plus` は成分列の操作なので、これが無いと `plus` の話ができない
+        - ✅ `plus` の 2 つの単調性 (§21) と前置きの下での共終性 (§23)
+        - ✅ `PrefixLim` — 左に前置きを足しても 4 連言が保たれる。
+          **側条件は要らなかった**
         - 🚨 ε₁ 行と ε_ω 行を `certRows` へ登録し、表を再生成する。
-          **`ArgLim` と `PrefixLim` が埋まるまでは付けない**。機械的ではない: `certRows_no_overshoot`
+          **`ArgLim` が埋まるまでは付けない**。機械的ではない: `certRows_no_overshoot`
           はこの領域用の `no_overshoot` の実例を要る (Row A の場合が約 50 行で
           `no_overshoot_fam` を引いている)
     - 🚨 行ごとの否定対照 — **独立の作業ではない**。ε₀ 行は済
