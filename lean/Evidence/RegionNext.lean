@@ -8561,4 +8561,103 @@ theorem atomsL_bVal : ∀ (t : B), AtomsL (bVal t)
 
 end
 
+/-! ## §54 THE SEVERAL-BLOCKS FOLD, ON BOTH SIDES
+
+The `ppair` branch of `runAux` finishes by folding the blocks with an index-aware step: at
+index 0 the accumulator is REPLACED by that block's value, and after that each block is
+appended — as itself, or as `1` when the block is `(0,0)`.  Two lemmas make that shape usable.
+
+`foldl_zipIdx_head` peels the special first step: once the index is positive it can never be
+zero again (`foldl_zipIdx_pos`), so the whole thing is an ordinary `foldl` starting from the
+first block's value.
+
+`bVal_fold` says §48's `bVal` has exactly that shape.  It is defined by the right-nested
+recursion `bplus (bVal r) (…)`, and `topSplit` appends the last top-level node, so the two line
+up step for step: the first node contributes its own value — `zero` when it is `(0,0)`, which is
+the `1 +` convention — and every later node contributes `topCB`, which is `psi_w(its argument)`
+uniformly.  For a later `(0,0)` node that is `psi_0(0) = 1`, matching the algorithm's `bOne`.
+
+So the two folds differ only in what they range over, and the several-blocks branch reduces to
+the induction hypothesis applied block by block. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-! ### 添字つきの畳み込み -/
+
+theorem foldl_zipIdx_pos {α β : Type _} (op : β → α → β) (h : α → β) :
+    ∀ (l : List α) (n : Nat), 0 < n → ∀ (init : β),
+      (l.zipIdx n).foldl (fun a q => if q.2 == 0 then h q.1 else op a q.1) init
+        = l.foldl op init
+  | [], _, _, _ => rfl
+  | x :: rest, n, hn, init => by
+      show (rest.zipIdx (n + 1)).foldl (fun a q => if q.2 == 0 then h q.1 else op a q.1)
+          (if (n == 0) = true then h x else op init x)
+        = rest.foldl op (op init x)
+      rw [if_neg (by
+        intro hc
+        have : n = 0 := of_decide_eq_true (by
+          have := hc
+          exact this)
+        omega)]
+      exact foldl_zipIdx_pos op h rest (n + 1) (by omega) (op init x)
+
+theorem foldl_zipIdx_head {α β : Type _} (op : β → α → β) (h : α → β)
+    (x : α) (rest : List α) (init : β) :
+    ((x :: rest).zipIdx).foldl (fun a q => if q.2 == 0 then h q.1 else op a q.1) init
+      = rest.foldl op (h x) := by
+  show (rest.zipIdx 1).foldl (fun a q => if q.2 == 0 then h q.1 else op a q.1) (h x) = _
+  exact foldl_zipIdx_pos op h rest 1 (by omega) (h x)
+
+/-! ### `bVal` は最上位の節の畳み込み -/
+
+/-- 最上位の節 1 つの寄与。 -/
+def topCB : B → BT
+  | .nil => .zero
+  | .nd w _ c => .D w (bArg w c)
+
+theorem topSplit_ne_nil : ∀ (t : B), t ≠ .nil → topSplit t ≠ []
+  | .nil, h => absurd rfl h
+  | .nd v r a, _ => by
+      show topSplit r ++ [B.nd v .nil a] ≠ []
+      intro hc
+      have := congrArg List.length hc
+      rw [List.length_append] at this
+      simp at this
+
+theorem bVal_fold : ∀ (t : B), t ≠ .nil →
+    bVal t = ((topSplit t).drop 1).foldl (fun a s => bplus a (topCB s))
+      (bVal ((topSplit t).getD 0 .nil))
+  | .nil, h => absurd rfl h
+  | .nd w r a, _ => by
+      cases r with
+      | nil => rfl
+      | nd u b c =>
+        have hne : (B.nd u b c) ≠ .nil := by intro hc; exact B.noConfusion hc
+        have hts : topSplit (B.nd u b c) ≠ [] := topSplit_ne_nil _ hne
+        have hih := bVal_fold (B.nd u b c) hne
+        cases hq : topSplit (B.nd u b c) with
+        | nil => exact absurd hq hts
+        | cons y ys =>
+          rw [hq] at hih
+          show bplus (bVal (B.nd u b c))
+              (if ((B.nd u b c) == .nil) && w == 0 && a == .nil then .zero
+               else .D w (bArg w a))
+            = ((topSplit (B.nd u b c) ++ [B.nd w .nil a]).drop 1).foldl
+                (fun x s => bplus x (topCB s))
+              (bVal ((topSplit (B.nd u b c) ++ [B.nd w .nil a]).getD 0 .nil))
+          rw [hq, show ((y :: ys) ++ [B.nd w .nil a]).drop 1 = ys ++ [B.nd w .nil a] from rfl,
+            show ((y :: ys) ++ [B.nd w .nil a]).getD 0 (.nil : B) = y from rfl,
+            List.foldl_append,
+            show ((y :: ys).drop 1).foldl (fun x s => bplus x (topCB s))
+                (bVal ((y :: ys).getD 0 (.nil : B))) = ys.foldl
+                (fun x s => bplus x (topCB s)) (bVal y) from rfl] at *
+          rw [← hih,
+            show (((B.nd u b c) == .nil) && w == 0 && a == .nil) = false from rfl]
+          rfl
+
+end
+
 end Evidence.Region
