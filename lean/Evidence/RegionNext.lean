@@ -15066,4 +15066,2114 @@ theorem hsuccS_index : ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v �
 
 end
 
+/-! ## §62 `stdB` IS CLOSED UNDER THE FUNDAMENTAL SEQUENCE
+
+§61 found `stdB` — `nfB && nonIncr && stdIn` — measured that it agrees with the C reference
+implementation on 236 422 matrices, and left its closure under `fsB` as a measurement.  §62
+proves it, and with it `Hclosed` for the narrowed region:
+
+    stdB_fsB        stdB t → stdB (fsB t n)
+    hclosedS_supply ∀ S, RegS S → ∀ n, RegS (BMS.expand S n)
+
+WHY IT IS NOT A WALK OVER THE OPERATORS.  `nfB` is LOCAL and §19 pushed it through `appB`,
+`plugB`, `repNode`, `repB`, `iterD`, `rwB` one lemma each.  `nonIncr` and `stdIn` are not:
+`nonIncr` compares a node's argument against its neighbour and `visOK` compares it against the
+WHOLE sum it sits in.  So the first thing §62 needs is an ORDER on `cmpS`, and there was none.
+
+    §62.1  cmpS_refl / cmpS_eq_imp / cmpS_swap / cmpS_trans   `cmpS` is a linear order
+    §62.2  cmpS_lt_append / cmpS_append_left                  a common prefix is inert
+           cmpS_ctx        a term smaller than the prefix cannot see past it
+           cmpS_split      `x < p ++ q` splits into three exhaustive shapes — the workhorse
+           cmpS_lt_snoc_zero  `(0,0)` is the least component, so it can be dropped
+    §62.4  visOK_iff       `visOK v a s` is `∀ c ∈ vArgs v s, c < a`, and `vArgs v s` is a
+                           list of SUBTERMS (`vArgs_size`), which is what makes the size
+                           bounds in the transfers usable
+
+THE TWO TRANSFERS.  Every step of the closure is one of exactly two shapes, and both have to
+be proved for `repB` (§62.6–§62.7) and again for `plugB` (§62.8):
+
+    the reference STAYS PUT   `visOK v ref a → visOK v ref (op a)`.  Every argument the
+                              operator creates is BELOW the one it replaces (`repB_lt`,
+                              `plugB_lt`, `GG_lt`), so transitivity alone does it.
+    the reference MOVES       a subterm of `op a` that was below `a` is below `op a`
+                              (`C1_repB`, `C1_GG`).  `cmpS_split` leaves three cases and the
+                              size bound `sizeB x < sizeB (op a)` kills two of them.
+
+`visOK_self_repB` / `visOK_self_GG` / `visOK_self_rwB` close the loop: the self-referential
+`visOK v (op a) (op a)` is the first transfer followed by the second, applied to each element
+of `vArgs`.
+
+THE ONE PLACE THE NAIVE INDUCTION FAILS, and it is worth recording because the first attempt
+died on it.  `C1_repB`'s statement is FALSE for `plugB`: with `a = ψ₁(0)`, `x = ψ₀(ψ₁(0))`,
+`n = 2` one has `x < a`, `sizeB x < sizeB (plugB a (iterD 0 a 2))` and yet
+`x > plugB a (iterD 0 a 2)` (frozen as a `#guard` in §62.11).  What is missing is
+`visOK (w-1) x x`, and — this is the point — it does NOT propagate as the induction descends
+`a`'s last spine, because that descent passes through nodes of level `≥ w > w-1`.  The fix is
+to hold the REFERENCE fixed at the top argument `a₀` while the scan descends
+(`C1_plugB_cons`'s `∀ z' ∈ vArgs v' x, z' < a₀`), and to run an OUTER induction on the
+nesting depth of `iterD`, whose base case is killed by the size bound alone
+(`C1_plugB_nil`).  `lowAnc_lvl` is the only place `nfB` is used: it says the nearest ancestor
+of lower level has level EXACTLY `w-1`, which is what makes `u < w → u ≤ v'` available at the
+bottom of the descent.
+
+WHAT IS **NOT** CLAIMED.  `stdB t = true` is still not proved equivalent to `BMS.Standard`;
+§61's 236 422-matrix agreement with the reference is the only evidence for that, and §62 adds
+none.  `Hlim` and the VALUE half of `Hsucc` are untouched.  Task 3 of the brief —
+`dict (bplus x y) = plus (dict x) (dict y)` — is measured (§62.11) and NOT proved: it needs
+`plus` to be associative, and the repository's only associativity, `Evidence.CNVOps.plus_assoc`,
+requires `CNV`, which only 150 of the 235 standard values of `popNFB 3 6` satisfy.  The general
+route needs a `plus_assoc` built on `Evidence.WF.lt_trans_inT` / `lt_trichotomy_inT` plus an
+`inT (dict ·)` theorem, and neither exists. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+/-! ### §62.1 `cmpS` の式と、それが線形順序であること -/
+
+theorem cmpS_nil_nil : cmpS [] [] = .eq := by rw [cmpS]
+theorem cmpS_nil_cons (y : Nat × B) (ys : List (Nat × B)) : cmpS [] (y :: ys) = .lt := by
+  rw [cmpS]
+theorem cmpS_cons_nil (x : Nat × B) (xs : List (Nat × B)) : cmpS (x :: xs) [] = .gt := by
+  rw [cmpS]
+theorem cmpS_cons (u : Nat) (a : B) (xs : List (Nat × B)) (w : Nat) (b : B)
+    (ys : List (Nat × B)) :
+    cmpS ((u, a) :: xs) ((w, b) :: ys)
+      = (if u < w then .lt else if w < u then .gt else
+          match cmpS (toL a) (toL b) with | .eq => cmpS xs ys | o => o) := by
+  rw [cmpS]
+
+/-! #### リストの補題と `toL` の単射性 -/
+
+theorem app_sing_ne_nil {α : Type} : ∀ (l : List α) (x : α), l ++ [x] ≠ []
+  | [], x => List.cons_ne_nil x []
+  | a :: l', x => List.cons_ne_nil a (l' ++ [x])
+
+theorem app_sing_inj {α : Type} : ∀ (l1 l2 : List α) (x y : α),
+    l1 ++ [x] = l2 ++ [y] → l1 = l2 ∧ x = y
+  | [], [], x, y, h => ⟨rfl, by injection h⟩
+  | [], b :: l2', x, y, h => by
+      exfalso
+      injection h with _ h2
+      exact app_sing_ne_nil l2' y h2.symm
+  | a :: l1', [], x, y, h => by
+      exfalso
+      injection h with _ h2
+      exact app_sing_ne_nil l1' x h2
+  | a :: l1', b :: l2', x, y, h => by
+      injection h with h1 h2
+      obtain ⟨h3, h4⟩ := app_sing_inj l1' l2' x y h2
+      exact ⟨by rw [h1, h3], h4⟩
+
+theorem toL_nil : toL (.nil : B) = [] := rfl
+
+theorem toL_ne_nil (v : Nat) (r a : B) : toL (.nd v r a) ≠ [] := by
+  rw [toL_nd]
+  exact app_sing_ne_nil (toL r) (v, a)
+
+/-- `toL` は単射。 -/
+theorem toL_inj : ∀ (s t : B), toL s = toL t → s = t := by
+  intro s
+  induction s with
+  | nil =>
+    intro t h
+    cases t with
+    | nil => rfl
+    | nd w u b => exact absurd h.symm (toL_ne_nil w u b)
+  | nd v r a ihr _ =>
+    intro t h
+    cases t with
+    | nil => exact absurd h (toL_ne_nil v r a)
+    | nd w u b =>
+      rw [toL_nd, toL_nd] at h
+      obtain ⟨h1, h2⟩ := app_sing_inj _ _ _ _ h
+      injection h2 with h3 h4
+      rw [ihr u h1, h3, h4]
+
+
+/-! #### 反射・等号・推移 -/
+
+theorem sizeL_cons (u : Nat) (a : B) (xs : List (Nat × B)) :
+    sizeL ((u, a) :: xs) = sizeB a + 1 + sizeL xs := rfl
+
+theorem cmpS_refl : ∀ (x : List (Nat × B)), cmpS x x = .eq
+  | [] => cmpS_nil_nil
+  | (u, a) :: xs => by
+      rw [cmpS_cons, if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u),
+        cmpS_refl (toL a)]
+      exact cmpS_refl xs
+termination_by x => sizeL x
+decreasing_by
+  · rw [sizeL_toL, sizeL_cons]; omega
+  · rw [sizeL_cons]; omega
+
+/-- `eq` は等しさ。 -/
+theorem cmpS_eq_imp : ∀ (x y : List (Nat × B)), cmpS x y = .eq → x = y
+  | [], [], _ => rfl
+  | [], y :: ys, h => by rw [cmpS_nil_cons] at h; exact Ordering.noConfusion h
+  | x :: xs, [], h => by rw [cmpS_cons_nil] at h; exact Ordering.noConfusion h
+  | (u, a) :: xs, (w, b) :: ys, h => by
+      rw [cmpS_cons] at h
+      have huw : u = w := by
+        by_cases h1 : u < w
+        · rw [if_pos h1] at h; exact absurd h (by intro hc; exact Ordering.noConfusion hc)
+        · rw [if_neg h1] at h
+          by_cases h2 : w < u
+          · rw [if_pos h2] at h; exact absurd h (by intro hc; exact Ordering.noConfusion hc)
+          · omega
+      subst huw
+      rw [if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u)] at h
+      cases hab : cmpS (toL a) (toL b) with
+      | lt => rw [hab] at h; exact absurd h (by intro hc; exact Ordering.noConfusion hc)
+      | gt => rw [hab] at h; exact absurd h (by intro hc; exact Ordering.noConfusion hc)
+      | eq =>
+        rw [hab] at h
+        have hb : a = b := toL_inj a b (cmpS_eq_imp (toL a) (toL b) hab)
+        have hx : xs = ys := cmpS_eq_imp xs ys h
+        rw [hb, hx]
+termination_by x y => sizeL x + sizeL y
+decreasing_by
+  · rw [sizeL_toL, sizeL_toL, sizeL_cons, sizeL_cons]; omega
+  · rw [sizeL_cons, sizeL_cons]; omega
+
+/-- 推移律。 -/
+theorem cmpS_trans : ∀ (x y z : List (Nat × B)),
+    cmpS x y = .lt → cmpS y z = .lt → cmpS x z = .lt
+  | [], [], _, h1, _ => by rw [cmpS_nil_nil] at h1; exact Ordering.noConfusion h1
+  | [], _ :: _, [], _, h2 => by rw [cmpS_cons_nil] at h2; exact Ordering.noConfusion h2
+  | [], _ :: _, _ :: _, _, _ => by rw [cmpS_nil_cons]
+  | _ :: _, [], _, h1, _ => by rw [cmpS_cons_nil] at h1; exact Ordering.noConfusion h1
+  | _ :: _, _ :: _, [], _, h2 => by rw [cmpS_cons_nil] at h2; exact Ordering.noConfusion h2
+  | (u, a) :: xs, (w, b) :: ys, (p, c) :: zs, h1, h2 => by
+      rw [cmpS_cons] at h1
+      rw [cmpS_cons] at h2
+      rw [cmpS_cons]
+      have hpw : ¬ (p < w) := by
+        intro hc
+        rw [if_neg (by omega), if_pos hc] at h2
+        exact Ordering.noConfusion h2
+      by_cases huw : u < w
+      · rw [if_pos (show u < p by omega)]
+      · rw [if_neg huw] at h1
+        have hwu : ¬ (w < u) := by
+          intro hc
+          rw [if_pos hc] at h1
+          exact Ordering.noConfusion h1
+        rw [if_neg hwu] at h1
+        have hu : u = w := by omega
+        subst hu
+        by_cases hup : u < p
+        · rw [if_pos hup]
+        · rw [if_neg hup] at h2
+          have hu2 : u = p := by omega
+          subst hu2
+          rw [if_neg (show ¬ (u < u) by omega)] at h2
+          rw [if_neg (show ¬ (u < u) by omega), if_neg (show ¬ (u < u) by omega)]
+          cases hab : cmpS (toL a) (toL b) with
+          | gt => rw [hab] at h1; exact Ordering.noConfusion h1
+          | lt =>
+            cases hbc : cmpS (toL b) (toL c) with
+            | gt =>
+              rw [hbc] at h2
+              exact Ordering.noConfusion (show Ordering.gt = Ordering.lt from h2)
+            | lt =>
+              rw [cmpS_trans (toL a) (toL b) (toL c) hab hbc]
+            | eq =>
+              have : b = c := toL_inj b c (cmpS_eq_imp (toL b) (toL c) hbc)
+              subst this
+              rw [hab]
+          | eq =>
+            have hbe : a = b := toL_inj a b (cmpS_eq_imp (toL a) (toL b) hab)
+            subst hbe
+            rw [hab] at h1
+            cases hbc : cmpS (toL a) (toL c) with
+            | gt =>
+              rw [hbc] at h2
+              exact Ordering.noConfusion (show Ordering.gt = Ordering.lt from h2)
+            | lt => rfl
+            | eq =>
+              rw [hbc] at h2
+              exact cmpS_trans xs ys zs h1 h2
+termination_by x y z => sizeL x + sizeL y + sizeL z
+decreasing_by
+  · rw [sizeL_toL, sizeL_toL, sizeL_toL, sizeL_cons, sizeL_cons, sizeL_cons]; omega
+  · rw [sizeL_cons, sizeL_cons, sizeL_cons]; omega
+
+
+/-! ### §62.2 連結と文脈 -/
+
+theorem sizeL_append : ∀ (l1 l2 : List (Nat × B)), sizeL (l1 ++ l2) = sizeL l1 + sizeL l2
+  | [], l2 => by show sizeL l2 = 0 + sizeL l2; omega
+  | (u, a) :: l1, l2 => by
+      show sizeB a + 1 + sizeL (l1 ++ l2) = (sizeB a + 1 + sizeL l1) + sizeL l2
+      rw [sizeL_append l1 l2]
+      omega
+
+theorem cmpS_nil_right_ne_lt : ∀ (x : List (Nat × B)), cmpS x [] ≠ .lt
+  | [] => by rw [cmpS_nil_nil]; intro hc; exact Ordering.noConfusion hc
+  | y :: ys => by rw [cmpS_cons_nil]; intro hc; exact Ordering.noConfusion hc
+
+/-- 右に足しても `lt` は保たれる。 -/
+theorem cmpS_lt_append : ∀ (x p q : List (Nat × B)), cmpS x p = .lt → cmpS x (p ++ q) = .lt
+  | [], [], q, h => by rw [cmpS_nil_nil] at h; exact Ordering.noConfusion h
+  | [], y :: ys, q, _ => cmpS_nil_cons y (ys ++ q)
+  | x :: xs, [], q, h => by rw [cmpS_cons_nil] at h; exact Ordering.noConfusion h
+  | (u, a) :: xs, (w, b) :: ps, q, h => by
+      rw [cmpS_cons] at h
+      show cmpS ((u, a) :: xs) ((w, b) :: (ps ++ q)) = .lt
+      rw [cmpS_cons]
+      by_cases h1 : u < w
+      · rw [if_pos h1]
+      · rw [if_neg h1] at h ⊢
+        by_cases h2 : w < u
+        · rw [if_pos h2] at h; exact Ordering.noConfusion h
+        · rw [if_neg h2] at h ⊢
+          cases hab : cmpS (toL a) (toL b) with
+          | lt => rfl
+          | gt => rw [hab] at h; exact Ordering.noConfusion h
+          | eq =>
+            rw [hab] at h
+            exact cmpS_lt_append xs ps q h
+termination_by x p _ => sizeL x + sizeL p
+decreasing_by
+  · rw [sizeL_cons, sizeL_cons]; omega
+
+/-- 共通の接頭辞は無視できる。 -/
+theorem cmpS_append_left : ∀ (p q1 q2 : List (Nat × B)),
+    cmpS (p ++ q1) (p ++ q2) = cmpS q1 q2
+  | [], q1, q2 => rfl
+  | (w, b) :: ps, q1, q2 => by
+      show cmpS ((w, b) :: (ps ++ q1)) ((w, b) :: (ps ++ q2)) = _
+      rw [cmpS_cons, if_neg (Nat.lt_irrefl w), if_neg (Nat.lt_irrefl w), cmpS_refl (toL b)]
+      exact cmpS_append_left ps q1 q2
+
+/-- 真の接頭辞は小さい。 -/
+theorem cmpS_lt_self_append (p q : List (Nat × B)) (hq : q ≠ []) : cmpS p (p ++ q) = .lt := by
+  have := cmpS_append_left p [] q
+  rw [List.append_nil] at this
+  rw [this]
+  cases q with
+  | nil => exact absurd rfl hq
+  | cons y ys => rw [cmpS_nil_cons]
+
+/-- **文脈独立性。** `x` が接頭辞より真に小さいなら、その先は比較に効かない。 -/
+theorem cmpS_ctx : ∀ (x p q : List (Nat × B)), sizeL x < sizeL p →
+    cmpS x (p ++ q) = cmpS x p
+  | x, [], q, h => by
+      exact absurd h (by rw [show sizeL ([] : List (Nat × B)) = 0 from rfl]; omega)
+  | [], (w, b) :: ps, q, _ => by
+      show cmpS [] ((w, b) :: (ps ++ q)) = _
+      rw [cmpS_nil_cons, cmpS_nil_cons]
+  | (u, a) :: xs, (w, b) :: ps, q, h => by
+      show cmpS ((u, a) :: xs) ((w, b) :: (ps ++ q)) = _
+      rw [cmpS_cons, cmpS_cons]
+      by_cases h1 : u < w
+      · rw [if_pos h1, if_pos h1]
+      · rw [if_neg h1, if_neg h1]
+        by_cases h2 : w < u
+        · rw [if_pos h2, if_pos h2]
+        · rw [if_neg h2, if_neg h2]
+          cases hab : cmpS (toL a) (toL b) with
+          | lt => rfl
+          | gt => rfl
+          | eq =>
+            have hb : a = b := toL_inj a b (cmpS_eq_imp (toL a) (toL b) hab)
+            subst hb
+            refine cmpS_ctx xs ps q ?_
+            rw [sizeL_cons, sizeL_cons] at h
+            omega
+termination_by x p _ _ => sizeL x + sizeL p
+decreasing_by
+  · rw [sizeL_cons, sizeL_cons]; omega
+
+/-- **末尾の `ψ₀(0)` を落とす。** `(0, nil)` は最小の成分なので、これを付けた和より
+    小さいものは、付ける前より小さいか、ちょうど等しい。 -/
+theorem cmpS_lt_snoc_zero : ∀ (x p : List (Nat × B)),
+    cmpS x (p ++ [(0, (.nil : B))]) = .lt → cmpS x p = .lt ∨ x = p
+  | [], [], _ => Or.inr rfl
+  | (u, a) :: xs, [], h => by
+      exfalso
+      have h' : cmpS ((u, a) :: xs) [(0, (.nil : B))] = .lt := h
+      rw [cmpS_cons] at h'
+      rw [if_neg (show ¬ (u < 0) by omega)] at h'
+      by_cases h1 : 0 < u
+      · rw [if_pos h1] at h'; exact Ordering.noConfusion h'
+      · rw [if_neg h1] at h'
+        cases haa : cmpS (toL a) (toL (.nil : B)) with
+        | lt => exact cmpS_nil_right_ne_lt (toL a) haa
+        | gt => rw [haa] at h'; exact Ordering.noConfusion h'
+        | eq =>
+          rw [haa] at h'
+          exact cmpS_nil_right_ne_lt xs h'
+  | [], (w, b) :: ps, _ => Or.inl (cmpS_nil_cons (w, b) ps)
+  | (u, a) :: xs, (w, b) :: ps, h => by
+      have h' : cmpS ((u, a) :: xs) ((w, b) :: (ps ++ [(0, (.nil : B))])) = .lt := h
+      rw [cmpS_cons] at h'
+      rw [cmpS_cons]
+      by_cases h1 : u < w
+      · rw [if_pos h1]; exact Or.inl rfl
+      · rw [if_neg h1] at h' ⊢
+        by_cases h2 : w < u
+        · rw [if_pos h2] at h'; exact Ordering.noConfusion h'
+        · rw [if_neg h2] at h' ⊢
+          cases hab : cmpS (toL a) (toL b) with
+          | lt => exact Or.inl rfl
+          | gt => rw [hab] at h'; exact Ordering.noConfusion h'
+          | eq =>
+            rw [hab] at h'
+            have hb : a = b := toL_inj a b (cmpS_eq_imp (toL a) (toL b) hab)
+            subst hb
+            rcases cmpS_lt_snoc_zero xs ps h' with hl | he
+            · exact Or.inl hl
+            · subst he
+              have huw : u = w := by omega
+              subst huw
+              exact Or.inr rfl
+termination_by x p => sizeL x + sizeL p
+decreasing_by
+  · rw [sizeL_cons, sizeL_cons]; omega
+
+
+/-! #### 接頭辞による三分 -/
+
+/-- **`p ++ q` より小さいものの三分。** `p` より小さいか、`p` そのものか、`p` を接頭辞に持つ。 -/
+theorem cmpS_split : ∀ (x p q : List (Nat × B)), cmpS x (p ++ q) = .lt →
+    cmpS x p = .lt ∨ x = p ∨ ∃ x', x' ≠ [] ∧ x = p ++ x' ∧ cmpS x' q = .lt
+  | [], [], q, h => Or.inr (Or.inl rfl)
+  | y :: ys, [], q, h => Or.inr (Or.inr ⟨y :: ys, List.cons_ne_nil y ys, rfl, h⟩)
+  | [], (w, b) :: ps, q, _ => Or.inl (cmpS_nil_cons (w, b) ps)
+  | (u, a) :: xs, (w, b) :: ps, q, h => by
+      have h' : cmpS ((u, a) :: xs) ((w, b) :: (ps ++ q)) = .lt := h
+      rw [cmpS_cons] at h'
+      by_cases h1 : u < w
+      · exact Or.inl (by rw [cmpS_cons, if_pos h1])
+      · rw [if_neg h1] at h'
+        by_cases h2 : w < u
+        · rw [if_pos h2] at h'; exact Ordering.noConfusion h'
+        · rw [if_neg h2] at h'
+          cases hab : cmpS (toL a) (toL b) with
+          | lt => exact Or.inl (by rw [cmpS_cons, if_neg h1, if_neg h2, hab])
+          | gt => rw [hab] at h'; exact Ordering.noConfusion h'
+          | eq =>
+            rw [hab] at h'
+            have hb : a = b := toL_inj a b (cmpS_eq_imp (toL a) (toL b) hab)
+            have huw : u = w := by omega
+            subst hb
+            subst huw
+            rcases cmpS_split xs ps q h' with hl | he | ⟨x', hne, hx, hq⟩
+            · refine Or.inl ?_
+              rw [cmpS_cons, if_neg h1, if_neg h2, hab]
+              exact hl
+            · exact Or.inr (Or.inl (by rw [he]))
+            · exact Or.inr (Or.inr ⟨x', hne, by rw [hx]; rfl, hq⟩)
+termination_by x p _ _ => sizeL x + sizeL p
+decreasing_by
+  · rw [sizeL_cons, sizeL_cons]; omega
+
+/-! ### §62.3 `B` の演算と成分列 -/
+
+theorem toL_appB : ∀ (s r : B), toL (appB r s) = toL r ++ toL s
+  | .nil, r => by rw [show appB r .nil = r from rfl, show toL (.nil : B) = [] from rfl,
+      List.append_nil]
+  | .nd v s a, r => by
+      show toL (B.nd v (appB r s) a) = _
+      rw [toL_nd, toL_appB s r, toL_nd, List.append_assoc]
+
+theorem sizeB_appB : ∀ (s r : B), sizeB (appB r s) = sizeB r + sizeB s
+  | .nil, r => by show sizeB r = sizeB r + 0; omega
+  | .nd v s a, r => by
+      show sizeB (appB r s) + 1 + sizeB a = sizeB r + (sizeB s + 1 + sizeB a)
+      rw [sizeB_appB s r]
+      omega
+
+theorem replicate_snoc {α : Type} (x : α) : ∀ (m : Nat),
+    List.replicate m x ++ [x] = List.replicate (m + 1) x
+  | 0 => rfl
+  | k + 1 => by
+      show x :: (List.replicate k x ++ [x]) = x :: List.replicate (k + 1) x
+      rw [replicate_snoc x k]
+
+theorem toL_repNode (v : Nat) (P : B) : ∀ (k : Nat),
+    toL (repNode v P k) = List.replicate (k + 1) (v, P)
+  | 0 => rfl
+  | j + 1 => by
+      show toL (B.nd v (repNode v P j) P) = _
+      rw [toL_nd, toL_repNode v P j, replicate_snoc]
+
+theorem sizeL_replicate (v : Nat) (P : B) : ∀ (m : Nat),
+    sizeL (List.replicate m (v, P)) = m * (sizeB P + 1)
+  | 0 => by show 0 = 0 * (sizeB P + 1); rw [Nat.zero_mul]
+  | k + 1 => by
+      show sizeB P + 1 + sizeL (List.replicate k (v, P)) = _
+      rw [sizeL_replicate v P k, Nat.succ_mul]
+      omega
+
+/-! ### §62.4 `vArgs`: `visOK` が見る節の引数の並び -/
+
+/-- 段 `v` の節の引数を、段が `v` 未満の節で打ち切りつつ集める。 -/
+def vArgs (v : Nat) : B → List B
+  | .nil => []
+  | .nd u r c => vArgs v r ++ (if u < v then [] else (if u == v then [c] else []) ++ vArgs v c)
+
+theorem vArgs_nd (v u : Nat) (r c : B) :
+    vArgs v (.nd u r c)
+      = vArgs v r ++ (if u < v then [] else (if u == v then [c] else []) ++ vArgs v c) := rfl
+
+/-- **`visOK` は `vArgs` の全称。** -/
+theorem visOK_iff : ∀ (s : B) (v : Nat) (a : B),
+    visOK v a s = true ↔ ∀ c ∈ vArgs v s, cmpS (toL c) (toL a) = .lt := by
+  intro s
+  induction s with
+  | nil =>
+    intro v a
+    exact ⟨fun _ c hc => absurd hc (by intro hm; exact List.not_mem_nil hm),
+      fun _ => rfl⟩
+  | nd u r c ihr ihc =>
+    intro v a
+    constructor
+    · intro h
+      have h' : (visOK v a r &&
+        (if u < v then true
+         else (if u == v then cmpS (toL c) (toL a) == Ordering.lt else true) && visOK v a c)) = true := h
+      obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+      intro z hz
+      rw [vArgs_nd] at hz
+      rcases List.mem_append.mp hz with hz | hz
+      · exact (ihr v a).mp h1 z hz
+      · by_cases hu : u < v
+        · rw [if_pos hu] at hz; exact absurd hz (by intro hm; exact List.not_mem_nil hm)
+        · rw [if_neg hu] at h2 hz
+          obtain ⟨h3, h4⟩ := (Bool.and_eq_true _ _).mp h2
+          rcases List.mem_append.mp hz with hz | hz
+          · by_cases hv : (u == v) = true
+            · rw [if_pos hv] at h3 hz
+              rw [List.mem_singleton.mp hz]
+              exact (beq_iff_eq (a := cmpS (toL c) (toL a)) (b := Ordering.lt)).mp h3
+            · rw [if_neg hv] at hz; exact absurd hz (by intro hm; exact List.not_mem_nil hm)
+          · exact (ihc v a).mp h4 z hz
+    · intro h
+      show (visOK v a r &&
+        (if u < v then true
+         else (if u == v then cmpS (toL c) (toL a) == Ordering.lt else true) && visOK v a c)) = true
+      have hr : visOK v a r = true := (ihr v a).mpr (fun z hz => h z (by
+        rw [vArgs_nd]; exact List.mem_append_left _ hz))
+      rw [hr, Bool.true_and]
+      by_cases hu : u < v
+      · rw [if_pos hu]
+      · rw [if_neg hu]
+        have hc' : visOK v a c = true := (ihc v a).mpr (fun z hz => h z (by
+          rw [vArgs_nd, if_neg hu]
+          exact List.mem_append_right _ (List.mem_append_right _ hz)))
+        rw [hc', Bool.and_true]
+        by_cases hv : (u == v) = true
+        · rw [if_pos hv]
+          have : cmpS (toL c) (toL a) = .lt := h c (by
+            rw [vArgs_nd, if_neg hu, if_pos hv]
+            exact List.mem_append_right _ (List.mem_append_left _ (List.mem_singleton.mpr rfl)))
+          rw [this]
+          rfl
+        · rw [if_neg hv]
+
+/-- `vArgs` の要素は真部分項。 -/
+theorem vArgs_size : ∀ (s : B) (v : Nat) (c : B), c ∈ vArgs v s → sizeB c < sizeB s := by
+  intro s
+  induction s with
+  | nil => intro v c hc; exact absurd hc (by intro hm; exact List.not_mem_nil hm)
+  | nd u r a ihr iha =>
+    intro v c hc
+    rw [vArgs_nd] at hc
+    have hs : sizeB (B.nd u r a) = sizeB r + 1 + sizeB a := rfl
+    rcases List.mem_append.mp hc with hc | hc
+    · have := ihr v c hc; omega
+    · by_cases hu : u < v
+      · rw [if_pos hu] at hc; exact absurd hc (by intro hm; exact List.not_mem_nil hm)
+      · rw [if_neg hu] at hc
+        rcases List.mem_append.mp hc with hc | hc
+        · by_cases hv : (u == v) = true
+          · rw [if_pos hv] at hc
+            rw [List.mem_singleton.mp hc]
+            omega
+          · rw [if_neg hv] at hc; exact absurd hc (by intro hm; exact List.not_mem_nil hm)
+        · have := iha v c hc; omega
+
+/-- `stdIn` は `vArgs` の要素にも伝わる。 -/
+theorem stdIn_vArgs : ∀ (s : B), stdIn s = true → ∀ (v : Nat) (c : B), c ∈ vArgs v s →
+    nonIncr c = true ∧ stdIn c = true := by
+  intro s
+  induction s with
+  | nil => intro _ v c hc; exact absurd hc (by intro hm; exact List.not_mem_nil hm)
+  | nd u r a ihr iha =>
+    intro h v c hc
+    have h' : (stdIn r && nonIncr a && visOK u a a && stdIn a) = true := h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+    obtain ⟨h3, _⟩ := (Bool.and_eq_true _ _).mp h1
+    obtain ⟨h5, h6⟩ := (Bool.and_eq_true _ _).mp h3
+    rw [vArgs_nd] at hc
+    rcases List.mem_append.mp hc with hc | hc
+    · exact ihr h5 v c hc
+    · by_cases hu : u < v
+      · rw [if_pos hu] at hc; exact absurd hc (by intro hm; exact List.not_mem_nil hm)
+      · rw [if_neg hu] at hc
+        rcases List.mem_append.mp hc with hc | hc
+        · by_cases hv : (u == v) = true
+          · rw [if_pos hv] at hc
+            rw [List.mem_singleton.mp hc]
+            exact ⟨h6, h2⟩
+          · rw [if_neg hv] at hc; exact absurd hc (by intro hm; exact List.not_mem_nil hm)
+        · exact iha h2 v c hc
+
+/-! #### `nonIncrL` の切り出し -/
+
+theorem nonIncrL_suffix : ∀ (p q : List (Nat × B)), nonIncrL (p ++ q) = true → nonIncrL q = true
+  | [], q, h => h
+  | x :: p, q, h => by
+      have h' : nonIncrL (x :: (p ++ q)) = true := h
+      rw [nonIncrL_cons] at h'
+      exact nonIncrL_suffix p q ((Bool.and_eq_true _ _).mp h').2
+
+
+/-! ### §62.5 `repB` の式と補助 -/
+
+theorem cmpS_nil_lt : ∀ (l : List (Nat × B)), l ≠ [] → cmpS [] l = .lt
+  | [], h => absurd rfl h
+  | y :: ys, _ => cmpS_nil_cons y ys
+
+theorem repB_arg_nil (v : Nat) (r : B) (n : Nat) : repB (.nd v r .nil) n = .nil := rfl
+theorem repB_base (v : Nat) (r P : B) (n : Nat) :
+    repB (.nd v r (.nd 0 P .nil)) n = appB r (repNode v P n) := rfl
+theorem repB_rec1 (v : Nat) (r P : B) (u2 : Nat) (s2 c2 : B) (n : Nat) :
+    repB (.nd v r (.nd 0 P (.nd u2 s2 c2))) n = .nd v r (repB (.nd 0 P (.nd u2 s2 c2)) n) := rfl
+theorem repB_rec2 (v : Nat) (r : B) (k : Nat) (P c : B) (n : Nat) :
+    repB (.nd v r (.nd (k + 1) P c)) n = .nd v r (repB (.nd (k + 1) P c) n) := rfl
+
+theorem vArgs_appB : ∀ (X : B) (v : Nat) (r : B),
+    vArgs v (appB r X) = vArgs v r ++ vArgs v X
+  | .nil, v, r => by
+      show vArgs v r = vArgs v r ++ []
+      rw [List.append_nil]
+  | .nd u X a, v, r => by
+      show vArgs v (B.nd u (appB r X) a) = _
+      rw [vArgs_nd, vArgs_appB X v r, vArgs_nd, List.append_assoc]
+
+theorem mem_vArgs_repNode : ∀ (k : Nat) (v u : Nat) (P z : B), z ∈ vArgs v (repNode u P k) →
+    ¬ (u < v) ∧ ((z = P ∧ (u == v) = true) ∨ z ∈ vArgs v P) := by
+  intro k
+  induction k with
+  | zero =>
+    intro v u P z hz
+    have hz' : z ∈ vArgs v (B.nd u .nil P) := hz
+    rw [vArgs_nd] at hz'
+    rcases List.mem_append.mp hz' with h | h
+    · exact absurd h (by intro hm; exact List.not_mem_nil hm)
+    · by_cases hu : u < v
+      · rw [if_pos hu] at h; exact absurd h (by intro hm; exact List.not_mem_nil hm)
+      · rw [if_neg hu] at h
+        refine ⟨hu, ?_⟩
+        rcases List.mem_append.mp h with h | h
+        · by_cases hv : (u == v) = true
+          · rw [if_pos hv] at h; exact Or.inl ⟨List.mem_singleton.mp h, hv⟩
+          · rw [if_neg hv] at h; exact absurd h (by intro hm; exact List.not_mem_nil hm)
+        · exact Or.inr h
+  | succ j ih =>
+    intro v u P z hz
+    have hz' : z ∈ vArgs v (B.nd u (repNode u P j) P) := hz
+    rw [vArgs_nd] at hz'
+    rcases List.mem_append.mp hz' with h | h
+    · exact ih v u P z h
+    · by_cases hu : u < v
+      · rw [if_pos hu] at h; exact absurd h (by intro hm; exact List.not_mem_nil hm)
+      · rw [if_neg hu] at h
+        refine ⟨hu, ?_⟩
+        rcases List.mem_append.mp h with h | h
+        · by_cases hv : (u == v) = true
+          · rw [if_pos hv] at h; exact Or.inl ⟨List.mem_singleton.mp h, hv⟩
+          · rw [if_neg hv] at h; exact absurd h (by intro hm; exact List.not_mem_nil hm)
+        · exact Or.inr h
+
+/-- 最上位の成分の引数は `vArgs` に入る。 -/
+theorem mem_toL_vArgs : ∀ (s : B) (u : Nat) (c : B), (u, c) ∈ toL s → c ∈ vArgs u s := by
+  intro s
+  induction s with
+  | nil => intro u c h; exact absurd h (by intro hm; exact List.not_mem_nil hm)
+  | nd u' r c' ihr _ =>
+    intro u c h
+    rw [toL_nd] at h
+    rw [vArgs_nd]
+    rcases List.mem_append.mp h with h | h
+    · exact List.mem_append_left _ (ihr u c h)
+    · have he : (u', c') = (u, c) := (List.mem_singleton.mp h).symm
+      injection he with h1 h2
+      subst h1
+      subst h2
+      refine List.mem_append_right _ ?_
+      rw [if_neg (show ¬ (u' < u') by omega), if_pos (show (u' == u') = true from beq_self_eq_true u')]
+      exact List.mem_append_left _ (List.mem_singleton.mpr rfl)
+
+/-- 比較の向きを入れ替える。 -/
+theorem cmpS_swap : ∀ (x y : List (Nat × B)), cmpS y x = (cmpS x y).swap
+  | [], [] => by rw [cmpS_nil_nil]; rfl
+  | [], y :: ys => by rw [cmpS_nil_cons, cmpS_cons_nil]; rfl
+  | x :: xs, [] => by rw [cmpS_nil_cons, cmpS_cons_nil]; rfl
+  | (u, a) :: xs, (w, b) :: ys => by
+      rw [cmpS_cons, cmpS_cons]
+      by_cases h1 : u < w
+      · rw [if_neg (show ¬ (w < u) by omega), if_pos h1, if_pos h1]
+        rfl
+      · by_cases h2 : w < u
+        · rw [if_pos h2, if_neg h1, if_pos h2]
+          rfl
+        · rw [if_neg h2, if_neg h1, if_neg h1, if_neg h2]
+          rw [cmpS_swap (toL a) (toL b)]
+          cases hab : cmpS (toL a) (toL b) with
+          | lt => rfl
+          | gt => rfl
+          | eq => exact cmpS_swap xs ys
+termination_by x y => sizeL x + sizeL y
+decreasing_by
+  · rw [sizeL_toL, sizeL_toL, sizeL_cons, sizeL_cons]; omega
+  · rw [sizeL_cons, sizeL_cons]; omega
+
+theorem cmpS_gt_lt {x y : List (Nat × B)} (h : cmpS x y = .gt) : cmpS y x = .lt := by
+  rw [cmpS_swap x y, h]; rfl
+
+theorem cmpS_lt_gt {x y : List (Nat × B)} (h : cmpS x y = .lt) : cmpS y x = .gt := by
+  rw [cmpS_swap x y, h]; rfl
+
+/-- 降べきの尻尾は同じ成分の繰り返しより短ければ小さい。 -/
+theorem rep_tail : ∀ (m : Nat) (u : Nat) (P : B) (rest : List (Nat × B)),
+    nonIncrL ((u, P) :: rest) = true → sizeL rest < m * (sizeB P + 1) →
+    cmpS rest (List.replicate m (u, P)) = .lt := by
+  intro m
+  induction m with
+  | zero => intro u P rest _ hs; rw [Nat.zero_mul] at hs; omega
+  | succ j ih =>
+    intro u P rest hni hs
+    cases rest with
+    | nil => exact cmpS_nil_cons (u, P) (List.replicate j (u, P))
+    | cons y ys =>
+      rw [nonIncrL_cons] at hni
+      obtain ⟨hhd, hni2⟩ := (Bool.and_eq_true _ _).mp hni
+      have hne : ¬ (cmpS [(u, P)] [(y.1, y.2)] = .lt) := by
+        intro hc
+        rw [show hdOK (u, P) (y :: ys) = !(cmpN (u, P).1 (u, P).2 y.1 y.2 == Ordering.lt) from rfl,
+          show cmpN (u, P).1 (u, P).2 y.1 y.2 = cmpS [(u, P)] [(y.1, y.2)] from rfl, hc] at hhd
+        exact Bool.noConfusion hhd
+      rw [cmpS_cons] at hne
+      have hu1 : ¬ (u < y.1) := by
+        intro hc; rw [if_pos hc] at hne; exact hne rfl
+      rw [if_neg hu1] at hne
+      show cmpS ((y.1, y.2) :: ys) ((u, P) :: List.replicate j (u, P)) = .lt
+      rw [cmpS_cons]
+      by_cases h1 : y.1 < u
+      · rw [if_pos h1]
+      · rw [if_neg h1, if_neg hu1]
+        rw [if_neg h1] at hne
+        cases hpy : cmpS (toL P) (toL y.2) with
+        | lt => rw [hpy] at hne; exact absurd rfl hne
+        | gt => rw [cmpS_gt_lt hpy]
+        | eq =>
+          have hyP : y.2 = P := toL_inj y.2 P (cmpS_eq_imp (toL y.2) (toL P)
+            (by rw [cmpS_swap (toL P) (toL y.2), hpy]; rfl))
+          rw [hyP, cmpS_refl]
+          refine ih u P ys ?_ ?_
+          · have hy : y = (u, P) := by
+              have hu : y.1 = u := by omega
+              rw [← hyP, ← hu]
+            rw [← hy]
+            exact hni2
+          · have hsz : sizeL (y :: ys) = sizeB y.2 + 1 + sizeL ys := rfl
+            rw [hsz, hyP, Nat.succ_mul] at hs
+            omega
+
+
+/-! #### `visOK` の分解 -/
+
+theorem visOK_nd_eq (v u : Nat) (ref r c : B) :
+    visOK v ref (.nd u r c)
+      = (visOK v ref r &&
+         (if u < v then true
+          else (if u == v then cmpS (toL c) (toL ref) == Ordering.lt else true)
+                 && visOK v ref c)) := rfl
+
+theorem visOK_nd_r {v u : Nat} {ref r c : B} (h : visOK v ref (.nd u r c) = true) :
+    visOK v ref r = true := by
+  rw [visOK_nd_eq] at h
+  exact ((Bool.and_eq_true _ _).mp h).1
+
+theorem visOK_nd_c {v u : Nat} {ref r c : B} (hu : ¬ (u < v))
+    (h : visOK v ref (.nd u r c) = true) : visOK v ref c = true := by
+  rw [visOK_nd_eq, if_neg hu] at h
+  exact ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h).2).2
+
+theorem visOK_nd_arg {v u : Nat} {ref r c : B} (hu : ¬ (u < v)) (hv : (u == v) = true)
+    (h : visOK v ref (.nd u r c) = true) : cmpS (toL c) (toL ref) = .lt := by
+  rw [visOK_nd_eq, if_neg hu, if_pos hv] at h
+  have := ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h).2).1
+  exact (beq_iff_eq (a := cmpS (toL c) (toL ref)) (b := Ordering.lt)).mp this
+
+theorem visOK_nd_mk {v u : Nat} {ref r c : B} (h1 : visOK v ref r = true)
+    (h2 : ¬ (u < v) → visOK v ref c = true)
+    (h3 : ¬ (u < v) → (u == v) = true → cmpS (toL c) (toL ref) = .lt) :
+    visOK v ref (.nd u r c) = true := by
+  rw [visOK_nd_eq, h1, Bool.true_and]
+  by_cases hu : u < v
+  · rw [if_pos hu]
+  · rw [if_neg hu, h2 hu, Bool.and_true]
+    by_cases hv : (u == v) = true
+    · rw [if_pos hv, h3 hu hv]; rfl
+    · rw [if_neg hv]
+
+/-! ### §62.6 `repB` は真に小さい -/
+
+theorem repB_lt : ∀ (a : B) (n : Nat), a ≠ .nil → cmpS (toL (repB a n)) (toL a) = .lt := by
+  intro a
+  induction a with
+  | nil => intro n h; exact absurd rfl h
+  | nd v r a1 _ iha =>
+    intro n _
+    cases a1 with
+    | nil =>
+      rw [repB_arg_nil]
+      exact cmpS_nil_lt _ (toL_ne_nil v r .nil)
+    | nd u P c =>
+      cases u with
+      | zero =>
+        cases c with
+        | nil =>
+          rw [repB_base, toL_appB, toL_nd, toL_repNode, cmpS_append_left]
+          show cmpS ((v, P) :: List.replicate n (v, P)) [(v, B.nd 0 P .nil)] = .lt
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v),
+            toL_nd 0 P .nil,
+            cmpS_lt_self_append (toL P) [(0, (.nil : B))] (List.cons_ne_nil _ _)]
+        | nd u2 s2 c2 =>
+          rw [repB_rec1, toL_nd, toL_nd, cmpS_append_left]
+          show cmpS [(v, repB (B.nd 0 P (.nd u2 s2 c2)) n)] [(v, B.nd 0 P (.nd u2 s2 c2))] = .lt
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v),
+            iha n (by intro hc; exact B.noConfusion hc)]
+      | succ k =>
+        rw [repB_rec2, toL_nd, toL_nd, cmpS_append_left]
+        show cmpS [(v, repB (B.nd (k + 1) P c) n)] [(v, B.nd (k + 1) P c)] = .lt
+        rw [cmpS_cons, if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v),
+          iha n (by intro hc; exact B.noConfusion hc)]
+
+
+/-! ### §62.7 二つの移送補題 -/
+
+/-! #### 基準は据え置き -/
+
+theorem visOK_repB : ∀ (a : B) (n v : Nat) (ref : B),
+    visOK v ref a = true → visOK v ref (repB a n) = true := by
+  intro a
+  induction a with
+  | nil => intro n v ref _; rfl
+  | nd u r a1 _ iha =>
+    intro n v ref h
+    have hr : visOK v ref r = true := visOK_nd_r h
+    cases a1 with
+    | nil => rw [repB_arg_nil]; rfl
+    | nd u1 P c =>
+      cases u1 with
+      | zero =>
+        cases c with
+        | nil =>
+          rw [repB_base]
+          refine (visOK_iff _ v ref).mpr ?_
+          intro z hz
+          rw [vArgs_appB] at hz
+          rcases List.mem_append.mp hz with hz | hz
+          · exact (visOK_iff r v ref).mp hr z hz
+          · obtain ⟨hu, hcase⟩ := mem_vArgs_repNode n v u P z hz
+            rcases hcase with ⟨hzP, huv⟩ | hz2
+            · have harg : cmpS (toL (B.nd 0 P .nil)) (toL ref) = .lt := visOK_nd_arg hu huv h
+              have hPlt : cmpS (toL P) (toL (B.nd 0 P .nil)) = .lt := by
+                rw [toL_nd 0 P .nil]
+                exact cmpS_lt_self_append (toL P) [(0, (.nil : B))] (List.cons_ne_nil _ _)
+              rw [hzP]
+              exact cmpS_trans (toL P) _ (toL ref) hPlt harg
+            · exact (visOK_iff P v ref).mp (visOK_nd_r (visOK_nd_c hu h)) z hz2
+        | nd u2 s2 c2 =>
+          rw [repB_rec1]
+          refine visOK_nd_mk hr (fun hu => iha n v ref (visOK_nd_c hu h)) ?_
+          intro hu huv
+          exact cmpS_trans _ _ _ (repB_lt _ n (by intro hc; exact B.noConfusion hc))
+            (visOK_nd_arg hu huv h)
+      | succ k =>
+        rw [repB_rec2]
+        refine visOK_nd_mk hr (fun hu => iha n v ref (visOK_nd_c hu h)) ?_
+        intro hu huv
+        exact cmpS_trans _ _ _ (repB_lt _ n (by intro hc; exact B.noConfusion hc))
+          (visOK_nd_arg hu huv h)
+
+/-! #### 基準も動かす -/
+
+theorem C1_repB_base (u : Nat) (r P : B) (n : Nat) (x : B)
+    (hni : nonIncr x = true)
+    (hs : sizeB x < sizeB (appB r (repNode u P n)))
+    (hlt : cmpS (toL x) (toL (B.nd u r (.nd 0 P .nil))) = .lt) :
+    cmpS (toL x) (toL (appB r (repNode u P n))) = .lt := by
+  have hA : toL (appB r (repNode u P n)) = toL r ++ List.replicate (n + 1) (u, P) := by
+    rw [toL_appB, toL_repNode]
+  rw [toL_nd] at hlt
+  rw [hA]
+  rcases cmpS_split (toL x) (toL r) [(u, (B.nd 0 P .nil))] hlt with h1 | h2 | ⟨x', hne, hx, hq⟩
+  · exact cmpS_lt_append _ _ _ h1
+  · rw [h2]
+    exact cmpS_lt_self_append (toL r) _ (List.cons_ne_nil _ _)
+  · rw [hx, cmpS_append_left]
+    cases x' with
+    | nil => exact absurd rfl hne
+    | cons y rest =>
+      obtain ⟨u0, z0⟩ := y
+      rw [cmpS_cons] at hq
+      by_cases h1 : u0 < u
+      · show cmpS ((u0, z0) :: rest) ((u, P) :: List.replicate n (u, P)) = .lt
+        rw [cmpS_cons, if_pos h1]
+      · rw [if_neg h1] at hq
+        by_cases h2 : u < u0
+        · rw [if_pos h2] at hq; exact Ordering.noConfusion hq
+        · rw [if_neg h2] at hq
+          have hu0 : u0 = u := by omega
+          subst hu0
+          have hz : cmpS (toL z0) (toL (B.nd 0 P .nil)) = .lt := by
+            cases hzz : cmpS (toL z0) (toL (B.nd 0 P .nil)) with
+            | lt => rfl
+            | gt => rw [hzz] at hq; exact Ordering.noConfusion hq
+            | eq => rw [hzz] at hq; exact absurd hq (cmpS_nil_right_ne_lt rest)
+          rw [toL_nd 0 P .nil] at hz
+          show cmpS ((u0, z0) :: rest) ((u0, P) :: List.replicate n (u0, P)) = .lt
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl u0), if_neg (Nat.lt_irrefl u0)]
+          rcases cmpS_lt_snoc_zero (toL z0) (toL P) hz with hlt2 | heq
+          · rw [hlt2]
+          · have hzP : z0 = P := toL_inj z0 P heq
+            subst hzP
+            rw [cmpS_refl]
+            refine rep_tail n u0 z0 rest ?_ ?_
+            · have h3 : nonIncrL (toL r ++ ((u0, z0) :: rest)) = true := by
+                rw [← hx]; exact hni
+              exact nonIncrL_suffix (toL r) _ h3
+            · have e1 : sizeB x = sizeB r + (sizeB z0 + 1 + sizeL rest) := by
+                rw [← sizeL_toL, hx, sizeL_append, sizeL_toL]
+                rfl
+              have e2 : sizeB (appB r (repNode u0 z0 n))
+                  = sizeB r + (n + 1) * (sizeB z0 + 1) := by
+                rw [sizeB_appB, ← sizeL_toL (repNode u0 z0 n), toL_repNode, sizeL_replicate]
+              rw [e1, e2, Nat.succ_mul] at hs
+              omega
+
+theorem C1_repB_rec (u : Nat) (r a1 : B) (n : Nat) (x : B)
+    (hIH : ∀ (z : B), nonIncr z = true → stdIn z = true → sizeB z < sizeB (repB a1 n) →
+      cmpS (toL z) (toL a1) = .lt → cmpS (toL z) (toL (repB a1 n)) = .lt)
+    (_hni : nonIncr x = true) (hst : stdIn x = true)
+    (hs : sizeB x < sizeB (B.nd u r (repB a1 n)))
+    (hlt : cmpS (toL x) (toL (B.nd u r a1)) = .lt) :
+    cmpS (toL x) (toL (B.nd u r (repB a1 n))) = .lt := by
+  rw [toL_nd] at hlt
+  rw [toL_nd]
+  rcases cmpS_split (toL x) (toL r) [(u, a1)] hlt with h1 | h2 | ⟨x', hne, hx, hq⟩
+  · exact cmpS_lt_append _ _ _ h1
+  · rw [h2]
+    exact cmpS_lt_self_append (toL r) _ (List.cons_ne_nil _ _)
+  · rw [hx, cmpS_append_left]
+    cases x' with
+    | nil => exact absurd rfl hne
+    | cons y rest =>
+      obtain ⟨u0, z0⟩ := y
+      rw [cmpS_cons] at hq
+      by_cases h1 : u0 < u
+      · rw [cmpS_cons, if_pos h1]
+      · rw [if_neg h1] at hq
+        by_cases h2 : u < u0
+        · rw [if_pos h2] at hq; exact Ordering.noConfusion hq
+        · rw [if_neg h2] at hq
+          have hu0 : u0 = u := by omega
+          subst hu0
+          have hz : cmpS (toL z0) (toL a1) = .lt := by
+            cases hzz : cmpS (toL z0) (toL a1) with
+            | lt => rfl
+            | gt => rw [hzz] at hq; exact Ordering.noConfusion hq
+            | eq => rw [hzz] at hq; exact absurd hq (cmpS_nil_right_ne_lt rest)
+          have hmem : (u0, z0) ∈ toL x := by
+            rw [hx]
+            exact List.mem_append_right _ (List.mem_cons_self ..)
+          obtain ⟨hnz, hsz⟩ := stdIn_vArgs x hst u0 z0 (mem_toL_vArgs x u0 z0 hmem)
+          have e1 : sizeB x = sizeB r + (sizeB z0 + 1 + sizeL rest) := by
+            rw [← sizeL_toL, hx, sizeL_append, sizeL_toL]
+            rfl
+          have e2 : sizeB (B.nd u0 r (repB a1 n)) = sizeB r + 1 + sizeB (repB a1 n) := rfl
+          rw [e1, e2] at hs
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl u0), if_neg (Nat.lt_irrefl u0),
+            hIH z0 hnz hsz (by omega) hz]
+
+theorem C1_repB : ∀ (a : B) (n : Nat) (x : B), nonIncr x = true → stdIn x = true →
+    sizeB x < sizeB (repB a n) → cmpS (toL x) (toL a) = .lt →
+    cmpS (toL x) (toL (repB a n)) = .lt := by
+  intro a
+  induction a with
+  | nil =>
+    intro n x _ _ hs _
+    have : sizeB (repB (.nil : B) n) = 0 := rfl
+    omega
+  | nd u r a1 _ iha =>
+    intro n x hni hst hs hlt
+    cases a1 with
+    | nil =>
+      rw [repB_arg_nil] at hs ⊢
+      have : sizeB (.nil : B) = 0 := rfl
+      omega
+    | nd u1 P c =>
+      cases u1 with
+      | zero =>
+        cases c with
+        | nil =>
+          rw [repB_base] at hs ⊢
+          exact C1_repB_base u r P n x hni hs hlt
+        | nd u2 s2 c2 =>
+          rw [repB_rec1] at hs ⊢
+          exact C1_repB_rec u r _ n x (fun z h1 h2 h3 h4 => iha n z h1 h2 h3 h4) hni hst hs hlt
+      | succ k =>
+        rw [repB_rec2] at hs ⊢
+        exact C1_repB_rec u r _ n x (fun z h1 h2 h3 h4 => iha n z h1 h2 h3 h4) hni hst hs hlt
+
+
+/-! #### 降べきの張り替え -/
+
+theorem cmpS_not_lt {x y : List (Nat × B)} (h : ¬ (cmpS x y = .lt)) :
+    cmpS y x = .lt ∨ x = y := by
+  cases hxy : cmpS x y with
+  | lt => exact absurd hxy h
+  | eq => exact Or.inr (cmpS_eq_imp x y hxy)
+  | gt => exact Or.inl (cmpS_gt_lt hxy)
+
+theorem cmpS_asymm {x y : List (Nat × B)} (h : cmpS x y = .lt) : ¬ (cmpS y x = .lt) := by
+  intro hc
+  rw [cmpS_lt_gt h] at hc
+  exact Ordering.noConfusion hc
+
+theorem hdOK_cons (x y : Nat × B) (l : List (Nat × B)) :
+    hdOK x (y :: l) = !(cmpS [(x.1, x.2)] [(y.1, y.2)] == Ordering.lt) := rfl
+
+theorem hdOK_of_not_lt (x y : Nat × B) (l : List (Nat × B))
+    (h : ¬ (cmpS [x] [y] = .lt)) : hdOK x (y :: l) = true := by
+  rw [hdOK_cons]
+  cases hc : (cmpS [(x.1, x.2)] [(y.1, y.2)] == Ordering.lt) with
+  | false => rfl
+  | true => exact absurd ((beq_iff_eq (a := cmpS [x] [y]) (b := Ordering.lt)).mp hc) h
+
+theorem not_lt_of_hdOK {x y : Nat × B} {l : List (Nat × B)} (h : hdOK x (y :: l) = true) :
+    ¬ (cmpS [x] [y] = .lt) := by
+  intro hc
+  rw [hdOK_cons, show cmpS [(x.1, x.2)] [(y.1, y.2)] = cmpS [x] [y] from rfl, hc] at h
+  exact Bool.noConfusion h
+
+theorem hdOK_trans {y z : Nat × B} {q : List (Nat × B)}
+    (h1 : hdOK y q = true) (h2 : ¬ (cmpS [z] [y] = .lt)) : hdOK z q = true := by
+  cases q with
+  | nil => rfl
+  | cons w q' =>
+    refine hdOK_of_not_lt z w q' ?_
+    intro hzw
+    have hwy : ¬ (cmpS [y] [w] = .lt) := not_lt_of_hdOK h1
+    rcases cmpS_not_lt hwy with hlt | heq
+    · exact h2 (cmpS_trans [z] [w] [y] hzw hlt)
+    · rw [← heq] at hzw; exact h2 hzw
+
+theorem nonIncrL_replicate (u : Nat) (P : B) : ∀ (m : Nat),
+    nonIncrL (List.replicate m (u, P)) = true
+  | 0 => rfl
+  | k + 1 => by
+      show (hdOK (u, P) (List.replicate k (u, P)) && nonIncrL (List.replicate k (u, P))) = true
+      rw [nonIncrL_replicate u P k, Bool.and_true]
+      cases k with
+      | zero => rfl
+      | succ j =>
+        refine hdOK_of_not_lt (u, P) (u, P) _ ?_
+        rw [cmpS_refl]
+        intro hc; exact Ordering.noConfusion hc
+
+/-- **末尾の成分を、より小さい列で置き換える。** -/
+theorem nonIncrL_subst : ∀ (l : List (Nat × B)) (y : Nat × B) (q : List (Nat × B)),
+    nonIncrL (l ++ [y]) = true → nonIncrL q = true → hdOK y q = true →
+    nonIncrL (l ++ q) = true
+  | [], y, q, _, hq, _ => hq
+  | z :: l', y, q, h, hq, hy => by
+      have h' : (hdOK z (l' ++ [y]) && nonIncrL (l' ++ [y])) = true := h
+      obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+      show (hdOK z (l' ++ q) && nonIncrL (l' ++ q)) = true
+      rw [nonIncrL_subst l' y q h2 hq hy, Bool.and_true]
+      cases l' with
+      | nil => exact hdOK_trans hy (not_lt_of_hdOK h1)
+      | cons w l'' => exact h1
+
+/-! #### `repB` は降べきを保つ -/
+
+theorem P_lt_snoc (u : Nat) (P : B) : cmpS [(u, P)] [(u, (B.nd 0 P .nil))] = .lt := by
+  rw [cmpS_cons, if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u), toL_nd 0 P .nil,
+    cmpS_lt_self_append (toL P) [(0, (.nil : B))] (List.cons_ne_nil _ _)]
+
+theorem nonIncr_repB : ∀ (a : B) (n : Nat), nonIncr a = true → nonIncr (repB a n) = true := by
+  intro a
+  induction a with
+  | nil => intro n h; exact h
+  | nd u r a1 _ iha =>
+    intro n h
+    have h' : nonIncrL (toL r ++ [(u, a1)]) = true := by rw [← toL_nd]; exact h
+    cases a1 with
+    | nil => rw [repB_arg_nil]; rfl
+    | nd u1 P c =>
+      cases u1 with
+      | zero =>
+        cases c with
+        | nil =>
+          rw [repB_base]
+          show nonIncrL (toL (appB r (repNode u P n))) = true
+          rw [toL_appB, toL_repNode]
+          refine nonIncrL_subst (toL r) (u, (B.nd 0 P .nil)) _ h'
+            (nonIncrL_replicate u P (n + 1)) ?_
+          exact hdOK_of_not_lt _ (u, P) _ (cmpS_asymm (P_lt_snoc u P))
+        | nd u2 s2 c2 =>
+          rw [repB_rec1]
+          show nonIncrL (toL (B.nd u r (repB (B.nd 0 P (.nd u2 s2 c2)) n))) = true
+          rw [toL_nd]
+          refine nonIncrL_subst (toL r) (u, (B.nd 0 P (.nd u2 s2 c2))) _ h' rfl ?_
+          refine hdOK_of_not_lt _ (u, repB (B.nd 0 P (.nd u2 s2 c2)) n) _ (cmpS_asymm ?_)
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u),
+            repB_lt _ n (by intro hc; exact B.noConfusion hc)]
+      | succ k =>
+        rw [repB_rec2]
+        show nonIncrL (toL (B.nd u r (repB (B.nd (k + 1) P c) n))) = true
+        rw [toL_nd]
+        refine nonIncrL_subst (toL r) (u, (B.nd (k + 1) P c)) _ h' rfl ?_
+        refine hdOK_of_not_lt _ (u, repB (B.nd (k + 1) P c) n) _ (cmpS_asymm ?_)
+        rw [cmpS_cons, if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u),
+          repB_lt _ n (by intro hc; exact B.noConfusion hc)]
+
+
+/-! #### `stdIn` の閉包 -/
+
+theorem stdIn_nd_eq (v : Nat) (r c : B) :
+    stdIn (.nd v r c) = (stdIn r && nonIncr c && visOK v c c && stdIn c) := rfl
+
+theorem and_assoc4 (x y n v d : Bool) :
+    ((((x && y) && n) && v) && d) = (x && (((y && n) && v) && d)) := by
+  cases x <;> cases y <;> cases n <;> cases v <;> cases d <;> rfl
+
+/-- **基準を `P ⊕ ψ₀(0)` から `P` に縮める。** 走査対象が `P` より大きくない限り通る。 -/
+theorem visOK_shrink (v : Nat) (P s : B) (hsz : sizeB s ≤ sizeB P)
+    (h : visOK v (.nd 0 P .nil) s = true) : visOK v P s = true := by
+  refine (visOK_iff s v P).mpr ?_
+  intro z hz
+  have h1 : cmpS (toL z) (toL (B.nd 0 P .nil)) = .lt := (visOK_iff s v _).mp h z hz
+  rw [toL_nd 0 P .nil] at h1
+  rcases cmpS_lt_snoc_zero (toL z) (toL P) h1 with hlt | heq
+  · exact hlt
+  · exfalso
+    have he := toL_inj z P heq
+    have h2 := vArgs_size s v z hz
+    rw [he] at h2
+    omega
+
+theorem stdIn_appB : ∀ (X r : B), stdIn (appB r X) = (stdIn r && stdIn X)
+  | .nil, r => by
+      show stdIn r = (stdIn r && true)
+      rw [Bool.and_true]
+  | .nd v s a, r => by
+      show (stdIn (appB r s) && nonIncr a && visOK v a a && stdIn a)
+        = (stdIn r && (stdIn s && nonIncr a && visOK v a a && stdIn a))
+      rw [stdIn_appB s r, and_assoc4]
+
+theorem stdIn_repNode (u : Nat) (P : B) (hP1 : nonIncr P = true) (hP2 : visOK u P P = true)
+    (hP3 : stdIn P = true) : ∀ (k : Nat), stdIn (repNode u P k) = true
+  | 0 => by
+      show (stdIn .nil && nonIncr P && visOK u P P && stdIn P) = true
+      rw [hP1, hP2, hP3]
+      rfl
+  | j + 1 => by
+      show (stdIn (repNode u P j) && nonIncr P && visOK u P P && stdIn P) = true
+      rw [stdIn_repNode u P hP1 hP2 hP3 j, hP1, hP2, hP3]
+      rfl
+
+/-- **`repB` は `visOK` の自己参照版を保つ。** `stdIn (repB a n)` を仮定に取る。 -/
+theorem visOK_self_repB (a : B) (n v : Nat) (hst : stdIn (repB a n) = true)
+    (h : visOK v a a = true) : visOK v (repB a n) (repB a n) = true := by
+  refine (visOK_iff (repB a n) v (repB a n)).mpr ?_
+  intro z hz
+  have h1 : cmpS (toL z) (toL a) = .lt :=
+    (visOK_iff (repB a n) v a).mp (visOK_repB a n v a h) z hz
+  obtain ⟨hnz, hstz⟩ := stdIn_vArgs (repB a n) hst v z hz
+  exact C1_repB a n z hnz hstz (vArgs_size (repB a n) v z hz) h1
+
+theorem stdIn_repB : ∀ (a : B) (n : Nat), stdIn a = true → stdIn (repB a n) = true := by
+  intro a
+  induction a with
+  | nil => intro n _; rfl
+  | nd u r a1 _ iha =>
+    intro n h
+    rw [stdIn_nd_eq] at h
+    obtain ⟨h123, h4⟩ := (Bool.and_eq_true _ _).mp h
+    obtain ⟨h12, h3⟩ := (Bool.and_eq_true _ _).mp h123
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h12
+    cases a1 with
+    | nil => rw [repB_arg_nil]; rfl
+    | nd u1 P c =>
+      cases u1 with
+      | zero =>
+        cases c with
+        | nil =>
+          rw [repB_base, stdIn_appB, h1, Bool.true_and]
+          have hPni : nonIncr P = true := by
+            have : nonIncrL (toL P ++ [(0, (.nil : B))]) = true := by
+              rw [← toL_nd 0 P .nil]; exact h2
+            exact nonIncrL_dropLast (toL P) (0, .nil) this
+          have hPst : stdIn P = true := by
+            rw [stdIn_nd_eq] at h4
+            exact ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp
+              ((Bool.and_eq_true _ _).mp h4).1).1).1
+          have hPvis : visOK u P P = true :=
+            visOK_shrink u P P (by omega) (visOK_nd_r h3)
+          exact stdIn_repNode u P hPni hPvis hPst n
+        | nd u2 s2 c2 =>
+          rw [repB_rec1, stdIn_nd_eq, h1, Bool.true_and,
+            nonIncr_repB _ n h2, Bool.true_and, iha n h4, Bool.and_true,
+            visOK_self_repB _ n u (iha n h4) h3]
+      | succ k =>
+        rw [repB_rec2, stdIn_nd_eq, h1, Bool.true_and,
+          nonIncr_repB _ n h2, Bool.true_and, iha n h4, Bool.and_true,
+          visOK_self_repB _ n u (iha n h4) h3]
+
+
+
+/-! ### §62.8 `rwB` の枝: `plugB`・`iterD`・`GG` -/
+
+theorem plugB_nil_arg (u : Nat) (s Y : B) : plugB (.nd u s .nil) Y = appB s Y := rfl
+theorem plugB_rec (u : Nat) (s : B) (u2 : Nat) (s2 c2 Y : B) :
+    plugB (.nd u s (.nd u2 s2 c2)) Y = .nd u s (plugB (.nd u2 s2 c2) Y) := rfl
+
+theorem hasLowAnc_nd (w v : Nat) (s : B) (u2 : Nat) (s2 c2 : B) :
+    hasLowAnc w (.nd v s (.nd u2 s2 c2))
+      = (decide (v < w) || hasLowAnc w (.nd u2 s2 c2)) := rfl
+
+theorem lastLvl_leaf (v : Nat) (s : B) : lastLvl (.nd v s .nil) = v := rfl
+theorem lastLvl_nd (v : Nat) (s : B) (u2 : Nat) (s2 c2 : B) :
+    lastLvl (.nd v s (.nd u2 s2 c2)) = lastLvl (.nd u2 s2 c2) := rfl
+
+theorem rwB_leaf (w n v : Nat) (s : B) : rwB w n (.nd v s .nil) = .nd v s .nil := rfl
+theorem rwB_nd (w n v : Nat) (s : B) (u2 : Nat) (s2 c2 : B) :
+    rwB w n (.nd v s (.nd u2 s2 c2))
+      = (if hasLowAnc w (.nd u2 s2 c2) then .nd v s (rwB w n (.nd u2 s2 c2))
+         else if v < w then appB s (iterD v (.nd u2 s2 c2) n)
+         else .nd v s (.nd u2 s2 c2)) := rfl
+
+/-- `iterD` の内側。`GG v a k` は `a` の最後の節を `k` 回入れ子に差し替えたもの。 -/
+def GG (v : Nat) (a : B) : Nat → B
+  | 0 => plugB a .nil
+  | k + 1 => plugB a (.nd v .nil (GG v a k))
+
+theorem iterD_GG (v : Nat) (a : B) : ∀ (k : Nat), iterD v a k = .nd v .nil (GG v a k)
+  | 0 => rfl
+  | j + 1 => by
+      show B.nd v .nil (plugB a (iterD v a j)) = _
+      rw [iterD_GG v a j]
+      rfl
+
+theorem appB_iterD (v : Nat) (s a : B) (k : Nat) :
+    appB s (iterD v a k) = .nd v s (GG v a k) := by
+  rw [iterD_GG]
+  rfl
+
+theorem toL_iterD (v : Nat) (a : B) (k : Nat) : toL (iterD v a k) = [(v, GG v a k)] := by
+  rw [iterD_GG, toL_nd]
+  rfl
+
+/-! #### `plugB` は成分列をどう変えるか -/
+
+theorem toL_plugB_leaf (u : Nat) (s Y : B) : toL (plugB (.nd u s .nil) Y) = toL s ++ toL Y := by
+  rw [plugB_nil_arg, toL_appB]
+
+theorem toL_plugB_rec (u : Nat) (s : B) (u2 : Nat) (s2 c2 Y : B) :
+    toL (plugB (.nd u s (.nd u2 s2 c2)) Y) = toL s ++ [(u, plugB (.nd u2 s2 c2) Y)] := by
+  rw [plugB_rec, toL_nd]
+
+theorem sizeB_plugB_leaf (u : Nat) (s Y : B) : sizeB (plugB (.nd u s .nil) Y)
+    = sizeB s + sizeB Y := by
+  rw [plugB_nil_arg, sizeB_appB]
+
+/-- **`plugB` は真に小さい。** 差し込む列が `ψ_{lastLvl a}(0)` より小さければよい。 -/
+theorem plugB_lt : ∀ (a : B) (Y : B), a ≠ .nil →
+    cmpS (toL Y) [(lastLvl a, (.nil : B))] = .lt →
+    cmpS (toL (plugB a Y)) (toL a) = .lt := by
+  intro a
+  induction a with
+  | nil => intro Y h _; exact absurd rfl h
+  | nd u s a2 _ iha =>
+    intro Y _ hY
+    cases a2 with
+    | nil =>
+      rw [toL_plugB_leaf, toL_nd, cmpS_append_left]
+      rw [lastLvl_leaf] at hY
+      exact hY
+    | nd u2 s2 c2 =>
+      rw [toL_plugB_rec, toL_nd, cmpS_append_left]
+      show cmpS [(u, plugB (B.nd u2 s2 c2) Y)] [(u, (B.nd u2 s2 c2))] = .lt
+      rw [cmpS_cons, if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u)]
+      rw [iha Y (by intro hc; exact B.noConfusion hc) (by rw [← lastLvl_nd u s u2 s2 c2]; exact hY)]
+
+/-! #### `visOK` の伝播 -/
+
+/-- 走査で届いた引数の中の走査は、元の走査に含まれる。 -/
+theorem visOK_of_vArgs_mem : ∀ (s : B) (v u : Nat) (ref z : B), v ≤ u →
+    visOK v ref s = true → z ∈ vArgs u s → visOK v ref z = true := by
+  intro s
+  induction s with
+  | nil => intro v u ref z _ _ hz; exact absurd hz (by intro hm; exact List.not_mem_nil hm)
+  | nd u0 r c ihr ihc =>
+    intro v u ref z hvu h hz
+    rw [vArgs_nd] at hz
+    rcases List.mem_append.mp hz with hz | hz
+    · exact ihr v u ref z hvu (visOK_nd_r h) hz
+    · by_cases hu : u0 < u
+      · rw [if_pos hu] at hz; exact absurd hz (by intro hm; exact List.not_mem_nil hm)
+      · have hv0 : ¬ (u0 < v) := by omega
+        rw [if_neg hu] at hz
+        rcases List.mem_append.mp hz with hz | hz
+        · by_cases hv : (u0 == u) = true
+          · rw [if_pos hv] at hz
+            rw [List.mem_singleton.mp hz]
+            exact visOK_nd_c hv0 h
+          · rw [if_neg hv] at hz; exact absurd hz (by intro hm; exact List.not_mem_nil hm)
+        · exact ihc v u ref z hvu (visOK_nd_c hv0 h) hz
+
+/-- **`plugB` は基準を据え置いたまま `visOK` を保つ。** -/
+theorem visOK_plugB : ∀ (a : B) (Y : B) (v : Nat) (ref : B),
+    cmpS (toL Y) [(lastLvl a, (.nil : B))] = .lt →
+    visOK v ref a = true → visOK v ref Y = true →
+    visOK v ref (plugB a Y) = true := by
+  intro a
+  induction a with
+  | nil => intro Y v ref _ _ _; rfl
+  | nd u s a2 _ iha =>
+    intro Y v ref hY h hYv
+    cases a2 with
+    | nil =>
+      rw [plugB_nil_arg]
+      refine (visOK_iff _ v ref).mpr ?_
+      intro z hz
+      rw [vArgs_appB] at hz
+      rcases List.mem_append.mp hz with hz | hz
+      · exact (visOK_iff s v ref).mp (visOK_nd_r h) z hz
+      · exact (visOK_iff Y v ref).mp hYv z hz
+    | nd u2 s2 c2 =>
+      rw [plugB_rec]
+      have hY2 : cmpS (toL Y) [(lastLvl (B.nd u2 s2 c2), (.nil : B))] = .lt := by
+        rw [← lastLvl_nd u s u2 s2 c2]; exact hY
+      refine visOK_nd_mk (visOK_nd_r h)
+        (fun hu => iha Y v ref hY2 (visOK_nd_c hu h) hYv) ?_
+      intro hu huv
+      exact cmpS_trans _ _ _
+        (plugB_lt (B.nd u2 s2 c2) Y (by intro hc; exact B.noConfusion hc) hY2)
+        (visOK_nd_arg hu huv h)
+
+/-- 段が `v` より低い単一成分は `vArgs v` に何も足さない。 -/
+theorem visOK_low_node (v v0 : Nat) (ref G : B) (h : v0 < v) :
+    visOK v ref (.nd v0 .nil G) = true := by
+  rw [visOK_nd_eq, if_pos h]
+  rfl
+
+
+/-! #### `plugB` への移送 -/
+
+theorem lt_leaf_lvl {u0 : Nat} {z0 : B} {rest : List (Nat × B)} {w : Nat}
+    (h : cmpS ((u0, z0) :: rest) [(w, (.nil : B))] = .lt) : u0 < w := by
+  rw [cmpS_cons] at h
+  by_cases h1 : u0 < w
+  · exact h1
+  · rw [if_neg h1] at h
+    by_cases h2 : w < u0
+    · rw [if_pos h2] at h; exact absurd h (by intro hc; exact Ordering.noConfusion hc)
+    · rw [if_neg h2] at h
+      exfalso
+      cases hz : cmpS (toL z0) (toL (.nil : B)) with
+      | lt => exact cmpS_nil_right_ne_lt (toL z0) hz
+      | gt => rw [hz] at h; exact Ordering.noConfusion h
+      | eq => rw [hz] at h; exact cmpS_nil_right_ne_lt rest h
+
+theorem sizeL_pos : ∀ (l : List (Nat × B)), l ≠ [] → 0 < sizeL l
+  | [], h => absurd rfl h
+  | (u, a) :: l, _ => by rw [sizeL_cons]; omega
+
+/-- **最内の差し替え (`Y = 0`) への移送。** 大きさの条件だけで通る。 -/
+theorem C1_plugB_nil : ∀ (a : B) (x : B), sizeB x < sizeB (plugB a .nil) →
+    cmpS (toL x) (toL a) = .lt → cmpS (toL x) (toL (plugB a .nil)) = .lt := by
+  intro a
+  induction a with
+  | nil => intro x hs _; exact absurd hs (by rw [show sizeB (plugB (.nil : B) .nil) = 0 from rfl]; omega)
+  | nd u s a2 _ iha =>
+    intro x hs hlt
+    cases a2 with
+    | nil =>
+      rw [plugB_nil_arg, show appB s (.nil : B) = s from rfl] at hs ⊢
+      rw [toL_nd] at hlt
+      rcases cmpS_split (toL x) (toL s) [(u, (.nil : B))] hlt with h1 | h2 | ⟨x', hne, hx, _⟩
+      · exact h1
+      · exfalso
+        have : sizeB x = sizeB s := by rw [← sizeL_toL, h2, sizeL_toL]
+        omega
+      · exfalso
+        have : sizeB x = sizeB s + sizeL x' := by
+          rw [← sizeL_toL, hx, sizeL_append, sizeL_toL]
+        have := sizeL_pos x' hne
+        omega
+    | nd u2 s2 c2 =>
+      rw [plugB_rec] at hs ⊢
+      rw [toL_nd] at hlt
+      rw [toL_nd]
+      rcases cmpS_split (toL x) (toL s) [(u, (B.nd u2 s2 c2))] hlt with h1 | h2 | ⟨x', hne, hx, hq⟩
+      · exact cmpS_lt_append _ _ _ h1
+      · rw [h2]; exact cmpS_lt_self_append (toL s) _ (List.cons_ne_nil _ _)
+      · rw [hx, cmpS_append_left]
+        cases x' with
+        | nil => exact absurd rfl hne
+        | cons y rest =>
+          obtain ⟨u0, z0⟩ := y
+          rw [cmpS_cons] at hq
+          by_cases h1 : u0 < u
+          · rw [cmpS_cons, if_pos h1]
+          · rw [if_neg h1] at hq
+            by_cases h2 : u < u0
+            · rw [if_pos h2] at hq; exact Ordering.noConfusion hq
+            · rw [if_neg h2] at hq
+              have hu0 : u0 = u := by omega
+              subst hu0
+              have hz : cmpS (toL z0) (toL (B.nd u2 s2 c2)) = .lt := by
+                cases hzz : cmpS (toL z0) (toL (B.nd u2 s2 c2)) with
+                | lt => rfl
+                | gt => rw [hzz] at hq; exact Ordering.noConfusion hq
+                | eq => rw [hzz] at hq; exact absurd hq (cmpS_nil_right_ne_lt rest)
+              have e1 : sizeB x = sizeB s + (sizeB z0 + 1 + sizeL rest) := by
+                rw [← sizeL_toL, hx, sizeL_append, sizeL_toL]
+                rfl
+              have e2 : sizeB (B.nd u0 s (plugB (B.nd u2 s2 c2) .nil))
+                  = sizeB s + 1 + sizeB (plugB (B.nd u2 s2 c2) .nil) := rfl
+              rw [e1, e2] at hs
+              rw [cmpS_cons, if_neg (Nat.lt_irrefl u0), if_neg (Nat.lt_irrefl u0),
+                iha z0 (by omega) hz]
+
+/-- **入れ子の差し替えへの移送。** 底では `BOT` に落とす。 -/
+theorem C1_plugB_cons : ∀ (a : B) (w v' : Nat) (a0 G : B), v' + 1 = w →
+    hasLowAnc w a = false → lastLvl a = w →
+    (∀ z : B, nonIncr z = true → stdIn z = true →
+       (∀ z' ∈ vArgs v' z, cmpS (toL z') (toL a0) = .lt) →
+       cmpS (toL z) (toL a0) = .lt → sizeB z < sizeB G →
+       cmpS (toL z) (toL G) = .lt) →
+    ∀ (x : B), nonIncr x = true → stdIn x = true →
+      (∀ z' ∈ vArgs v' x, cmpS (toL z') (toL a0) = .lt) →
+      sizeB x < sizeB (plugB a (.nd v' .nil G)) → cmpS (toL x) (toL a) = .lt →
+      cmpS (toL x) (toL (plugB a (.nd v' .nil G))) = .lt := by
+  intro a
+  induction a with
+  | nil =>
+    intro w v' a0 G _ _ _ _ x _ _ _ hs _
+    exact absurd hs (by rw [show sizeB (plugB (.nil : B) (.nd v' .nil G)) = 0 from rfl]; omega)
+  | nd u s a2 _ iha =>
+    intro w v' a0 G hvw hLA hll BOT x hni hst hvis hs hlt
+    cases a2 with
+    | nil =>
+      have huw : u = w := hll
+      subst huw
+      rw [plugB_nil_arg] at hs ⊢
+      rw [toL_nd] at hlt
+      rw [toL_appB, show toL (B.nd v' (.nil : B) G) = [(v', G)] from rfl]
+      rcases cmpS_split (toL x) (toL s) [(u, (.nil : B))] hlt with h1 | h2 | ⟨x', hne, hx, hq⟩
+      · exact cmpS_lt_append _ _ _ h1
+      · rw [h2]; exact cmpS_lt_self_append (toL s) _ (List.cons_ne_nil _ _)
+      · rw [hx, cmpS_append_left]
+        cases x' with
+        | nil => exact absurd rfl hne
+        | cons y rest =>
+          obtain ⟨u0, z0⟩ := y
+          have hu0 : u0 < u := lt_leaf_lvl hq
+          rw [cmpS_cons]
+          by_cases h1 : u0 < v'
+          · rw [if_pos h1]
+          · rw [if_neg h1, if_neg (show ¬ (v' < u0) by omega)]
+            have hmem : (u0, z0) ∈ toL x := by
+              rw [hx]; exact List.mem_append_right _ (List.mem_cons_self ..)
+            have hmv : z0 ∈ vArgs u0 x := mem_toL_vArgs x u0 z0 hmem
+            obtain ⟨hnz, hsz⟩ := stdIn_vArgs x hst u0 z0 hmv
+            have hvisx : visOK v' a0 x = true := (visOK_iff x v' a0).mpr hvis
+            have hmv' : z0 ∈ vArgs v' x := by
+              have : u0 = v' := by omega
+              rw [← this]; exact hmv
+            have hz0a0 : cmpS (toL z0) (toL a0) = .lt := hvis z0 hmv'
+            have hvz0 : ∀ z' ∈ vArgs v' z0, cmpS (toL z') (toL a0) = .lt :=
+              (visOK_iff z0 v' a0).mp
+                (visOK_of_vArgs_mem x v' u0 a0 z0 (by omega) hvisx hmv)
+            have e1 : sizeB x = sizeB s + (sizeB z0 + 1 + sizeL rest) := by
+              rw [← sizeL_toL, hx, sizeL_append, sizeL_toL]
+              rfl
+            have e2 : sizeB (appB s (B.nd v' (.nil : B) G)) = sizeB s + (0 + 1 + sizeB G) := by
+              rw [sizeB_appB]
+              rfl
+            rw [e1, e2] at hs
+            rw [BOT z0 hnz hsz hvz0 hz0a0 (by omega)]
+    | nd u2 s2 c2 =>
+      have hLA2 : hasLowAnc w (B.nd u2 s2 c2) = false := by
+        rw [hasLowAnc_nd] at hLA
+        cases hd : hasLowAnc w (B.nd u2 s2 c2) with
+        | false => rfl
+        | true => rw [hd, Bool.or_true] at hLA; exact absurd hLA (by intro hc; exact Bool.noConfusion hc)
+      have huw : ¬ (u < w) := by
+        rw [hasLowAnc_nd] at hLA
+        intro hc
+        rw [show decide (u < w) = true from decide_eq_true hc, Bool.true_or] at hLA
+        exact Bool.noConfusion hLA
+      have hll2 : lastLvl (B.nd u2 s2 c2) = w := by rw [← lastLvl_nd u s u2 s2 c2]; exact hll
+      rw [plugB_rec] at hs ⊢
+      rw [toL_nd] at hlt
+      rw [toL_nd]
+      rcases cmpS_split (toL x) (toL s) [(u, (B.nd u2 s2 c2))] hlt with h1 | h2 | ⟨x', hne, hx, hq⟩
+      · exact cmpS_lt_append _ _ _ h1
+      · rw [h2]; exact cmpS_lt_self_append (toL s) _ (List.cons_ne_nil _ _)
+      · rw [hx, cmpS_append_left]
+        cases x' with
+        | nil => exact absurd rfl hne
+        | cons y rest =>
+          obtain ⟨u0, z0⟩ := y
+          rw [cmpS_cons] at hq
+          by_cases h1 : u0 < u
+          · rw [cmpS_cons, if_pos h1]
+          · rw [if_neg h1] at hq
+            by_cases h2 : u < u0
+            · rw [if_pos h2] at hq; exact Ordering.noConfusion hq
+            · rw [if_neg h2] at hq
+              have hu0 : u0 = u := by omega
+              subst hu0
+              have hz : cmpS (toL z0) (toL (B.nd u2 s2 c2)) = .lt := by
+                cases hzz : cmpS (toL z0) (toL (B.nd u2 s2 c2)) with
+                | lt => rfl
+                | gt => rw [hzz] at hq; exact Ordering.noConfusion hq
+                | eq => rw [hzz] at hq; exact absurd hq (cmpS_nil_right_ne_lt rest)
+              have hmem : (u0, z0) ∈ toL x := by
+                rw [hx]; exact List.mem_append_right _ (List.mem_cons_self ..)
+              have hmv : z0 ∈ vArgs u0 x := mem_toL_vArgs x u0 z0 hmem
+              obtain ⟨hnz, hsz⟩ := stdIn_vArgs x hst u0 z0 hmv
+              have hvisx : visOK v' a0 x = true := (visOK_iff x v' a0).mpr hvis
+              have hvz0 : ∀ z' ∈ vArgs v' z0, cmpS (toL z') (toL a0) = .lt :=
+                (visOK_iff z0 v' a0).mp
+                  (visOK_of_vArgs_mem x v' u0 a0 z0 (by omega) hvisx hmv)
+              have e1 : sizeB x = sizeB s + (sizeB z0 + 1 + sizeL rest) := by
+                rw [← sizeL_toL, hx, sizeL_append, sizeL_toL]
+                rfl
+              have e2 : sizeB (B.nd u0 s (plugB (B.nd u2 s2 c2) (.nd v' .nil G)))
+                  = sizeB s + 1 + sizeB (plugB (B.nd u2 s2 c2) (.nd v' .nil G)) := rfl
+              rw [e1, e2] at hs
+              rw [cmpS_cons, if_neg (Nat.lt_irrefl u0), if_neg (Nat.lt_irrefl u0),
+                iha w v' a0 G hvw hLA2 hll2 BOT z0 hnz hsz hvz0 (by omega) hz]
+
+/-- **`GG` への移送。** 入れ子の深さ `k` の帰納。 -/
+theorem C1_GG : ∀ (k : Nat) (a0 : B) (w v' : Nat), v' + 1 = w →
+    hasLowAnc w a0 = false → lastLvl a0 = w →
+    ∀ (x : B), nonIncr x = true → stdIn x = true →
+      (∀ z' ∈ vArgs v' x, cmpS (toL z') (toL a0) = .lt) →
+      sizeB x < sizeB (GG v' a0 k) → cmpS (toL x) (toL a0) = .lt →
+      cmpS (toL x) (toL (GG v' a0 k)) = .lt := by
+  intro k
+  induction k with
+  | zero =>
+    intro a0 w v' _ _ _ x _ _ _ hs hlt
+    exact C1_plugB_nil a0 x hs hlt
+  | succ j ih =>
+    intro a0 w v' hvw hLA hll x hni hst hvis hs hlt
+    exact C1_plugB_cons a0 w v' a0 (GG v' a0 j) hvw hLA hll
+      (fun z h1 h2 h3 h4 h5 => ih a0 w v' hvw hLA hll z h1 h2 h3 h5 h4)
+      x hni hst hvis hs hlt
+
+
+/-! #### `GG` の基本性質 -/
+
+theorem GG_lt (v' : Nat) (a0 : B) (hne : a0 ≠ .nil) (hv : v' < lastLvl a0) :
+    ∀ (k : Nat), cmpS (toL (GG v' a0 k)) (toL a0) = .lt
+  | 0 => plugB_lt a0 .nil hne (cmpS_nil_cons _ _)
+  | j + 1 => by
+      show cmpS (toL (plugB a0 (.nd v' .nil (GG v' a0 j)))) (toL a0) = .lt
+      refine plugB_lt a0 _ hne ?_
+      rw [show toL (B.nd v' (.nil : B) (GG v' a0 j)) = [(v', GG v' a0 j)] from rfl,
+        cmpS_cons, if_pos hv]
+
+theorem visOK_Z (v v' : Nat) (ref G : B)
+    (hG : (v' == v) = true → cmpS (toL G) (toL ref) = .lt)
+    (hGv : ¬ (v' < v) → visOK v ref G = true) : visOK v ref (.nd v' .nil G) = true :=
+  visOK_nd_mk rfl hGv (fun _ huv => hG huv)
+
+theorem visOK_GG (v v' : Nat) (a0 ref : B) (hne : a0 ≠ .nil) (hv : v' < lastLvl a0)
+    (h0 : visOK v ref a0 = true)
+    (hGref : (v' == v) = true → ∀ j, cmpS (toL (GG v' a0 j)) (toL ref) = .lt) :
+    ∀ (k : Nat), visOK v ref (GG v' a0 k) = true
+  | 0 => by
+      show visOK v ref (plugB a0 .nil) = true
+      exact visOK_plugB a0 .nil v ref (cmpS_nil_cons _ _) h0 rfl
+  | j + 1 => by
+      show visOK v ref (plugB a0 (.nd v' .nil (GG v' a0 j))) = true
+      refine visOK_plugB a0 _ v ref ?_ h0 ?_
+      · rw [show toL (B.nd v' (.nil : B) (GG v' a0 j)) = [(v', GG v' a0 j)] from rfl,
+          cmpS_cons, if_pos hv]
+      · exact visOK_Z v v' ref _ (fun huv => hGref huv j)
+          (fun _ => visOK_GG v v' a0 ref hne hv h0 hGref j)
+
+/-! #### `plugB` は降べきを保つ -/
+
+theorem nonIncr_plugB : ∀ (a Y : B), a ≠ .nil → nonIncr a = true →
+    nonIncrL (toL Y) = true → hdOK (lastLvl a, (.nil : B)) (toL Y) = true →
+    cmpS (toL Y) [(lastLvl a, (.nil : B))] = .lt →
+    nonIncr (plugB a Y) = true := by
+  intro a
+  induction a with
+  | nil => intro Y h _ _ _ _; exact absurd rfl h
+  | nd u s a2 _ iha =>
+    intro Y _ hni hYni hYhd hYlt
+    cases a2 with
+    | nil =>
+      show nonIncrL (toL (plugB (B.nd u s .nil) Y)) = true
+      rw [toL_plugB_leaf]
+      refine nonIncrL_subst (toL s) (u, (.nil : B)) (toL Y) ?_ hYni hYhd
+      rw [← toL_nd]
+      exact hni
+    | nd u2 s2 c2 =>
+      show nonIncrL (toL (plugB (B.nd u s (.nd u2 s2 c2)) Y)) = true
+      rw [toL_plugB_rec]
+      refine nonIncrL_subst (toL s) (u, (B.nd u2 s2 c2)) _ (by rw [← toL_nd]; exact hni) rfl ?_
+      refine hdOK_of_not_lt _ (u, plugB (B.nd u2 s2 c2) Y) _ (cmpS_asymm ?_)
+      rw [cmpS_cons, if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u),
+        plugB_lt (B.nd u2 s2 c2) Y (by intro hc; exact B.noConfusion hc)
+          (by rw [← lastLvl_nd u s u2 s2 c2]; exact hYlt)]
+
+theorem nonIncr_GG (v' : Nat) (a0 : B) (hne : a0 ≠ .nil) (hv : v' < lastLvl a0)
+    (hni : nonIncr a0 = true) : ∀ (k : Nat), nonIncr (GG v' a0 k) = true
+  | 0 => by
+      show nonIncr (plugB a0 .nil) = true
+      exact nonIncr_plugB a0 .nil hne hni rfl rfl (cmpS_nil_cons _ _)
+  | j + 1 => by
+      show nonIncr (plugB a0 (.nd v' .nil (GG v' a0 j))) = true
+      have hlt : cmpS (toL (B.nd v' (.nil : B) (GG v' a0 j))) [(lastLvl a0, (.nil : B))] = .lt := by
+        rw [show toL (B.nd v' (.nil : B) (GG v' a0 j)) = [(v', GG v' a0 j)] from rfl,
+          cmpS_cons, if_pos hv]
+      refine nonIncr_plugB a0 _ hne hni rfl ?_ hlt
+      exact hdOK_of_not_lt _ (v', GG v' a0 j) _ (cmpS_asymm hlt)
+
+
+/-! #### `stdIn` と `plugB` -/
+
+theorem hdOK_leaf (w : Nat) (Y : B) (h : cmpS (toL Y) [(w, (.nil : B))] = .lt) :
+    hdOK (w, (.nil : B)) (toL Y) = true := by
+  cases hY : toL Y with
+  | nil => rfl
+  | cons y ys =>
+    rw [hY] at h
+    obtain ⟨u0, z0⟩ := y
+    have hu0 : u0 < w := lt_leaf_lvl h
+    refine hdOK_of_not_lt _ (u0, z0) _ ?_
+    rw [cmpS_cons, if_neg (show ¬ (w < u0) by omega), if_pos hu0]
+    intro hc; exact Ordering.noConfusion hc
+
+theorem stdIn_plugB : ∀ (a : B) (w v' : Nat) (a0 Y : B), v' + 1 = w →
+    hasLowAnc w a = false → lastLvl a = w →
+    cmpS (toL Y) [(w, (.nil : B))] = .lt →
+    nonIncrL (toL Y) = true → stdIn Y = true →
+    (∀ (u : Nat) (ref : B), w ≤ u → visOK u ref Y = true) →
+    visOK v' a0 Y = true →
+    visOK v' a0 a = true →
+    stdIn a = true →
+    (∀ (a' : B), hasLowAnc w a' = false → lastLvl a' = w →
+      ∀ x : B, nonIncr x = true → stdIn x = true →
+        (∀ z' ∈ vArgs v' x, cmpS (toL z') (toL a0) = .lt) →
+        sizeB x < sizeB (plugB a' Y) → cmpS (toL x) (toL a') = .lt →
+        cmpS (toL x) (toL (plugB a' Y)) = .lt) →
+    stdIn (plugB a Y) = true := by
+  intro a
+  induction a with
+  | nil => intro _ _ _ _ _ _ _ _ _ _ _ _ _ _ _; rfl
+  | nd u s a2 _ iha =>
+    intro w v' a0 Y hvw hLA hll hYlt hYni hYst hYvis hYv' hva hst hTR
+    have hst4 : (stdIn s && nonIncr a2 && visOK u a2 a2 && stdIn a2) = true := hst
+    obtain ⟨hst123, hsta2⟩ := (Bool.and_eq_true _ _).mp hst4
+    obtain ⟨hst12, hvisa2⟩ := (Bool.and_eq_true _ _).mp hst123
+    obtain ⟨hsts, hnia2⟩ := (Bool.and_eq_true _ _).mp hst12
+    cases a2 with
+    | nil =>
+      rw [plugB_nil_arg, stdIn_appB, hsts, hYst]
+      rfl
+    | nd u2 s2 c2 =>
+      have hLA2 : hasLowAnc w (B.nd u2 s2 c2) = false := by
+        rw [hasLowAnc_nd] at hLA
+        cases hd : hasLowAnc w (B.nd u2 s2 c2) with
+        | false => rfl
+        | true =>
+          rw [hd, Bool.or_true] at hLA
+          exact absurd hLA (by intro hc; exact Bool.noConfusion hc)
+      have huw : ¬ (u < w) := by
+        rw [hasLowAnc_nd] at hLA
+        intro hc
+        rw [show decide (u < w) = true from decide_eq_true hc, Bool.true_or] at hLA
+        exact Bool.noConfusion hLA
+      have hll2 : lastLvl (B.nd u2 s2 c2) = w := by rw [← lastLvl_nd u s u2 s2 c2]; exact hll
+      have hne2 : (B.nd u2 s2 c2) ≠ .nil := by intro hc; exact B.noConfusion hc
+      have hYlt2 : cmpS (toL Y) [(lastLvl (B.nd u2 s2 c2), (.nil : B))] = .lt := by
+        rw [hll2]; exact hYlt
+      have hva2 : visOK v' a0 (B.nd u2 s2 c2) := visOK_nd_c (show ¬ (u < v') by omega) hva
+      have hIH : stdIn (plugB (B.nd u2 s2 c2) Y) = true :=
+        iha w v' a0 Y hvw hLA2 hll2 hYlt hYni hYst hYvis hYv' hva2 hsta2 hTR
+      have hnip : nonIncr (plugB (B.nd u2 s2 c2) Y) = true :=
+        nonIncr_plugB _ Y hne2 hnia2 hYni (by rw [hll2]; exact hdOK_leaf w Y hYlt) hYlt2
+      have hvp : visOK v' a0 (plugB (B.nd u2 s2 c2) Y) = true :=
+        visOK_plugB _ Y v' a0 hYlt2 hva2 hYv'
+      have hself : visOK u (plugB (B.nd u2 s2 c2) Y) (plugB (B.nd u2 s2 c2) Y) = true := by
+        have h1 : visOK u (B.nd u2 s2 c2) (plugB (B.nd u2 s2 c2) Y) = true :=
+          visOK_plugB _ Y u _ hYlt2 hvisa2 (hYvis u _ (by omega))
+        refine (visOK_iff _ u _).mpr ?_
+        intro z hz
+        have hz1 : cmpS (toL z) (toL (B.nd u2 s2 c2)) = .lt :=
+          (visOK_iff _ u _).mp h1 z hz
+        obtain ⟨hnz, hstz⟩ := stdIn_vArgs _ hIH u z hz
+        have hvz : ∀ z' ∈ vArgs v' z, cmpS (toL z') (toL a0) = .lt :=
+          (visOK_iff z v' a0).mp
+            (visOK_of_vArgs_mem _ v' u a0 z (by omega) hvp hz)
+        exact hTR (B.nd u2 s2 c2) hLA2 hll2 z hnz hstz hvz (vArgs_size _ u z hz) hz1
+      rw [plugB_rec, stdIn_nd_eq, hsts, hnip, hself, hIH]
+      rfl
+
+
+/-! #### `GG` の `stdIn` と自己 `visOK` -/
+
+theorem visOK_self_GG (v' : Nat) (a0 : B) (w : Nat) (hvw : v' + 1 = w)
+    (hne : a0 ≠ .nil) (hLA : hasLowAnc w a0 = false) (hll : lastLvl a0 = w)
+    (hv0 : visOK v' a0 a0 = true) (k : Nat) (hst : stdIn (GG v' a0 k) = true) :
+    visOK v' (GG v' a0 k) (GG v' a0 k) = true := by
+  have hv : v' < lastLvl a0 := by rw [hll]; omega
+  have h1 : visOK v' a0 (GG v' a0 k) = true :=
+    visOK_GG v' v' a0 a0 hne hv hv0 (fun _ j => GG_lt v' a0 hne hv j) k
+  refine (visOK_iff _ v' _).mpr ?_
+  intro z hz
+  have hz1 : cmpS (toL z) (toL a0) = .lt := (visOK_iff _ v' a0).mp h1 z hz
+  obtain ⟨hnz, hstz⟩ := stdIn_vArgs _ hst v' z hz
+  have hvz : ∀ z' ∈ vArgs v' z, cmpS (toL z') (toL a0) = .lt :=
+    (visOK_iff z v' a0).mp (visOK_of_vArgs_mem _ v' v' a0 z (Nat.le_refl v') h1 hz)
+  exact C1_GG k a0 w v' hvw hLA hll z hnz hstz hvz (vArgs_size _ v' z hz) hz1
+
+theorem stdIn_GG (v' : Nat) (a0 : B) (w : Nat) (hvw : v' + 1 = w)
+    (hne : a0 ≠ .nil) (hLA : hasLowAnc w a0 = false) (hll : lastLvl a0 = w)
+    (hni0 : nonIncr a0 = true) (hst0 : stdIn a0 = true) (hv0 : visOK v' a0 a0 = true) :
+    ∀ (k : Nat), stdIn (GG v' a0 k) = true
+  | 0 => by
+      show stdIn (plugB a0 .nil) = true
+      exact stdIn_plugB a0 w v' a0 .nil hvw hLA hll (cmpS_nil_cons _ _) rfl rfl
+        (fun _ _ _ => rfl) rfl hv0 hst0
+        (fun a' _ _ x _ _ _ hs hlt => C1_plugB_nil a' x hs hlt)
+  | j + 1 => by
+      have hv : v' < lastLvl a0 := by rw [hll]; omega
+      have hstj : stdIn (GG v' a0 j) = true :=
+        stdIn_GG v' a0 w hvw hne hLA hll hni0 hst0 hv0 j
+      have hYlt : cmpS (toL (B.nd v' (.nil : B) (GG v' a0 j))) [(w, (.nil : B))] = .lt := by
+        rw [show toL (B.nd v' (.nil : B) (GG v' a0 j)) = [(v', GG v' a0 j)] from rfl,
+          cmpS_cons, if_pos (show v' < w by omega)]
+      have hYst : stdIn (B.nd v' (.nil : B) (GG v' a0 j)) = true := by
+        rw [stdIn_nd_eq, nonIncr_GG v' a0 hne hv hni0 j,
+          visOK_self_GG v' a0 w hvw hne hLA hll hv0 j hstj, hstj]
+        rfl
+      show stdIn (plugB a0 (.nd v' .nil (GG v' a0 j))) = true
+      refine stdIn_plugB a0 w v' a0 _ hvw hLA hll hYlt rfl hYst
+        (fun u ref hu => visOK_low_node u v' ref _ (by omega)) ?_ hv0 hst0 ?_
+      · exact visOK_Z v' v' a0 _ (fun _ => GG_lt v' a0 hne hv j)
+          (fun _ => visOK_GG v' v' a0 a0 hne hv hv0 (fun _ i => GG_lt v' a0 hne hv i) j)
+      · exact fun a' hLA' hll' x hnx hsx hvx hs hlt =>
+          C1_plugB_cons a' w v' a0 (GG v' a0 j) hvw hLA' hll'
+            (fun z h1 h2 h3 h4 h5 => C1_GG j a0 w v' hvw hLA hll z h1 h2 h3 h5 h4)
+            x hnx hsx hvx hs hlt
+
+
+/-! ### §62.9 `rwB` の枝: 組み立て -/
+
+theorem stdIn_toL_visOK : ∀ (s : B), stdIn s = true → ∀ (u : Nat) (c : B),
+    (u, c) ∈ toL s → visOK u c c = true := by
+  intro s
+  induction s with
+  | nil => intro _ u c hc; exact absurd hc (by intro hm; exact List.not_mem_nil hm)
+  | nd u0 r c0 ihr _ =>
+    intro h u c hc
+    have h4 : (stdIn r && nonIncr c0 && visOK u0 c0 c0 && stdIn c0) = true := h
+    obtain ⟨h123, _⟩ := (Bool.and_eq_true _ _).mp h4
+    obtain ⟨h12, hv⟩ := (Bool.and_eq_true _ _).mp h123
+    obtain ⟨hr, _⟩ := (Bool.and_eq_true _ _).mp h12
+    rw [toL_nd] at hc
+    rcases List.mem_append.mp hc with hc | hc
+    · exact ihr hr u c hc
+    · have he : (u0, c0) = (u, c) := (List.mem_singleton.mp hc).symm
+      injection he with h1 h2
+      rw [← h1, ← h2]
+      exact hv
+
+/-- 最後の成分の引数だけを差し替える移送 (`repB` でも `rwB` でも同じ形)。 -/
+theorem C1_rec_gen (u : Nat) (r a1 g : B) (x : B)
+    (hIH : ∀ (z : B), nonIncr z = true → stdIn z = true → visOK u z z = true →
+      sizeB z < sizeB g → cmpS (toL z) (toL a1) = .lt → cmpS (toL z) (toL g) = .lt)
+    (hst : stdIn x = true)
+    (hs : sizeB x < sizeB (B.nd u r g))
+    (hlt : cmpS (toL x) (toL (B.nd u r a1)) = .lt) :
+    cmpS (toL x) (toL (B.nd u r g)) = .lt := by
+  rw [toL_nd] at hlt
+  rw [toL_nd]
+  rcases cmpS_split (toL x) (toL r) [(u, a1)] hlt with h1 | h2 | ⟨x', hne, hx, hq⟩
+  · exact cmpS_lt_append _ _ _ h1
+  · rw [h2]
+    exact cmpS_lt_self_append (toL r) _ (List.cons_ne_nil _ _)
+  · rw [hx, cmpS_append_left]
+    cases x' with
+    | nil => exact absurd rfl hne
+    | cons y rest =>
+      obtain ⟨u0, z0⟩ := y
+      rw [cmpS_cons] at hq
+      by_cases h1 : u0 < u
+      · rw [cmpS_cons, if_pos h1]
+      · rw [if_neg h1] at hq
+        by_cases h2 : u < u0
+        · rw [if_pos h2] at hq; exact Ordering.noConfusion hq
+        · rw [if_neg h2] at hq
+          have hu0 : u0 = u := by omega
+          subst hu0
+          have hz : cmpS (toL z0) (toL a1) = .lt := by
+            cases hzz : cmpS (toL z0) (toL a1) with
+            | lt => rfl
+            | gt => rw [hzz] at hq; exact Ordering.noConfusion hq
+            | eq => rw [hzz] at hq; exact absurd hq (cmpS_nil_right_ne_lt rest)
+          have hmem : (u0, z0) ∈ toL x := by
+            rw [hx]
+            exact List.mem_append_right _ (List.mem_cons_self ..)
+          obtain ⟨hnz, hsz⟩ := stdIn_vArgs x hst u0 z0 (mem_toL_vArgs x u0 z0 hmem)
+          have hvz : visOK u0 z0 z0 = true := stdIn_toL_visOK x hst u0 z0 hmem
+          have e1 : sizeB x = sizeB r + (sizeB z0 + 1 + sizeL rest) := by
+            rw [← sizeL_toL, hx, sizeL_append, sizeL_toL]
+            rfl
+          have e2 : sizeB (B.nd u0 r g) = sizeB r + 1 + sizeB g := rfl
+          rw [e1, e2] at hs
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl u0), if_neg (Nat.lt_irrefl u0),
+            hIH z0 hnz hsz hvz (by omega) hz]
+
+/-- 最も近い低い祖先の段は `w - 1` ちょうど。`nfLe` が効く唯一の場所。 -/
+theorem lowAnc_lvl (w : Nat) : ∀ (a : B) (m : Nat), a ≠ .nil → hasLowAnc w a = false →
+    lastLvl a = w → nfLe m a = true → w ≤ m := by
+  intro a m hne hLA hll hnf
+  cases a with
+  | nil => exact absurd rfl hne
+  | nd u s a2 =>
+    obtain ⟨h1, _, _⟩ := (nfLe_nd_iff m u s a2).mp hnf
+    cases a2 with
+    | nil => rw [← hll]; exact h1
+    | nd u2 s2 c2 =>
+      rw [hasLowAnc_nd] at hLA
+      have huw : ¬ (u < w) := by
+        intro hc
+        rw [show decide (u < w) = true from decide_eq_true hc, Bool.true_or] at hLA
+        exact Bool.noConfusion hLA
+      omega
+
+/-- `rwB` は小さくするか、何もしない。 -/
+theorem rwB_le : ∀ (a : B) (w n : Nat), lastLvl a = w →
+    cmpS (toL (rwB w n a)) (toL a) = .lt ∨ rwB w n a = a := by
+  intro a
+  induction a with
+  | nil => intro w n _; exact Or.inr rfl
+  | nd v s a1 _ iha =>
+    intro w n hll
+    cases a1 with
+    | nil => exact Or.inr rfl
+    | nd u2 s2 c2 =>
+      have hll2 : lastLvl (B.nd u2 s2 c2) = w := by rw [← lastLvl_nd v s u2 s2 c2]; exact hll
+      rw [rwB_nd]
+      by_cases h1 : hasLowAnc w (B.nd u2 s2 c2) = true
+      · rw [if_pos h1]
+        rcases iha w n hll2 with hlt | heq
+        · refine Or.inl ?_
+          rw [toL_nd, toL_nd, cmpS_append_left, cmpS_cons,
+            if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v), hlt]
+        · exact Or.inr (by rw [heq])
+      · rw [if_neg h1]
+        by_cases h2 : v < w
+        · rw [if_pos h2, appB_iterD]
+          refine Or.inl ?_
+          rw [toL_nd, toL_nd, cmpS_append_left, cmpS_cons,
+            if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v),
+            GG_lt v (B.nd u2 s2 c2) (by intro hc; exact B.noConfusion hc)
+              (by rw [hll2]; exact h2) n]
+        · rw [if_neg h2]; exact Or.inr rfl
+
+theorem nonIncr_rwB : ∀ (a : B) (w n : Nat), lastLvl a = w → nonIncr a = true →
+    nonIncr (rwB w n a) = true := by
+  intro a
+  induction a with
+  | nil => intro _ _ _ h; exact h
+  | nd v s a1 _ _ =>
+    intro w n hll hni
+    have hni' : nonIncrL (toL s ++ [(v, a1)]) = true := by rw [← toL_nd]; exact hni
+    cases a1 with
+    | nil => exact hni
+    | nd u2 s2 c2 =>
+      have hll2 : lastLvl (B.nd u2 s2 c2) = w := by rw [← lastLvl_nd v s u2 s2 c2]; exact hll
+      have hne2 : (B.nd u2 s2 c2) ≠ .nil := by intro hc; exact B.noConfusion hc
+      rw [rwB_nd]
+      by_cases h1 : hasLowAnc w (B.nd u2 s2 c2) = true
+      · rw [if_pos h1]
+        show nonIncrL (toL (B.nd v s (rwB w n (B.nd u2 s2 c2)))) = true
+        rw [toL_nd]
+        refine nonIncrL_subst (toL s) (v, (B.nd u2 s2 c2)) _ hni' rfl ?_
+        refine hdOK_of_not_lt _ (v, rwB w n (B.nd u2 s2 c2)) _ ?_
+        rcases rwB_le (B.nd u2 s2 c2) w n hll2 with hlt | heq
+        · refine cmpS_asymm ?_
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v), hlt]
+        · rw [heq, cmpS_refl]
+          intro hc; exact Ordering.noConfusion hc
+      · rw [if_neg h1]
+        by_cases h2 : v < w
+        · rw [if_pos h2, appB_iterD]
+          show nonIncrL (toL (B.nd v s (GG v (B.nd u2 s2 c2) n))) = true
+          rw [toL_nd]
+          refine nonIncrL_subst (toL s) (v, (B.nd u2 s2 c2)) _ hni' rfl ?_
+          refine hdOK_of_not_lt _ (v, GG v (B.nd u2 s2 c2) n) _ (cmpS_asymm ?_)
+          rw [cmpS_cons, if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v),
+            GG_lt v (B.nd u2 s2 c2) hne2 (by rw [hll2]; exact h2) n]
+        · rw [if_neg h2]; exact hni
+
+theorem visOK_rwB : ∀ (a : B) (w n v : Nat) (ref : B), lastLvl a = w →
+    visOK v ref a = true → visOK v ref (rwB w n a) = true := by
+  intro a
+  induction a with
+  | nil => intro _ _ _ _ _ h; exact h
+  | nd v0 s a1 _ iha =>
+    intro w n v ref hll h
+    cases a1 with
+    | nil => exact h
+    | nd u2 s2 c2 =>
+      have hll2 : lastLvl (B.nd u2 s2 c2) = w := by rw [← lastLvl_nd v0 s u2 s2 c2]; exact hll
+      have hne2 : (B.nd u2 s2 c2) ≠ .nil := by intro hc; exact B.noConfusion hc
+      rw [rwB_nd]
+      by_cases h1 : hasLowAnc w (B.nd u2 s2 c2) = true
+      · rw [if_pos h1]
+        refine visOK_nd_mk (visOK_nd_r h) (fun hu => iha w n v ref hll2 (visOK_nd_c hu h)) ?_
+        intro hu huv
+        rcases rwB_le (B.nd u2 s2 c2) w n hll2 with hlt | heq
+        · exact cmpS_trans _ _ _ hlt (visOK_nd_arg hu huv h)
+        · rw [heq]; exact visOK_nd_arg hu huv h
+      · rw [if_neg h1]
+        by_cases h2 : v0 < w
+        · rw [if_pos h2, appB_iterD]
+          have hv : v0 < lastLvl (B.nd u2 s2 c2) := by rw [hll2]; exact h2
+          refine visOK_nd_mk (visOK_nd_r h) ?_ ?_
+          · intro hu
+            refine visOK_GG v v0 (B.nd u2 s2 c2) ref hne2 hv (visOK_nd_c hu h) ?_ n
+            intro huv j
+            exact cmpS_trans _ _ _ (GG_lt v0 _ hne2 hv j) (visOK_nd_arg hu huv h)
+          · intro hu huv
+            exact cmpS_trans _ _ _ (GG_lt v0 _ hne2 hv n) (visOK_nd_arg hu huv h)
+        · rw [if_neg h2]; exact h
+
+theorem C1_rwB : ∀ (a : B) (w n m : Nat), lastLvl a = w → nfLe m a = true →
+    ∀ (x : B), nonIncr x = true → stdIn x = true →
+      sizeB x < sizeB (rwB w n a) → cmpS (toL x) (toL a) = .lt →
+      cmpS (toL x) (toL (rwB w n a)) = .lt := by
+  intro a
+  induction a with
+  | nil => intro _ _ _ _ _ x _ _ _ hlt; exact hlt
+  | nd v0 s a1 _ iha =>
+    intro w n m hll hnf x hni hst hs hlt
+    obtain ⟨_, _, hnf1⟩ := (nfLe_nd_iff m v0 s a1).mp hnf
+    cases a1 with
+    | nil => exact hlt
+    | nd u2 s2 c2 =>
+      have hll2 : lastLvl (B.nd u2 s2 c2) = w := by rw [← lastLvl_nd v0 s u2 s2 c2]; exact hll
+      have hne2 : (B.nd u2 s2 c2) ≠ .nil := by intro hc; exact B.noConfusion hc
+      rw [rwB_nd] at hs ⊢
+      by_cases h1 : hasLowAnc w (B.nd u2 s2 c2) = true
+      · rw [if_pos h1] at hs ⊢
+        exact C1_rec_gen v0 s (B.nd u2 s2 c2) (rwB w n (B.nd u2 s2 c2)) x
+          (fun z hz1 hz2 _ hz3 hz4 => iha w n (v0 + 1) hll2 hnf1 z hz1 hz2 hz3 hz4)
+          hst hs hlt
+      · rw [if_neg h1] at hs ⊢
+        have hLA2 : hasLowAnc w (B.nd u2 s2 c2) = false := by
+          cases hd : hasLowAnc w (B.nd u2 s2 c2) with
+          | false => rfl
+          | true => exact absurd hd h1
+        by_cases h2 : v0 < w
+        · rw [if_pos h2, appB_iterD] at hs ⊢
+          have hvw : v0 + 1 = w := by
+            have := lowAnc_lvl w (B.nd u2 s2 c2) (v0 + 1) hne2 hLA2 hll2 hnf1
+            omega
+          refine C1_rec_gen v0 s (B.nd u2 s2 c2) (GG v0 (B.nd u2 s2 c2) n) x ?_ hst hs hlt
+          intro z hz1 hz2 hzv hz3 hz4
+          refine C1_GG n (B.nd u2 s2 c2) w v0 hvw hLA2 hll2 z hz1 hz2 ?_ hz3 hz4
+          intro z' hz'
+          exact cmpS_trans _ _ _ ((visOK_iff z v0 z).mp hzv z' hz') hz4
+        · rw [if_neg h2] at hs ⊢; exact hlt
+
+theorem visOK_self_rwB (a : B) (w n m v : Nat) (hll : lastLvl a = w) (hnf : nfLe m a = true)
+    (hst : stdIn (rwB w n a) = true) (h : visOK v a a = true) :
+    visOK v (rwB w n a) (rwB w n a) = true := by
+  refine (visOK_iff _ v _).mpr ?_
+  intro z hz
+  have h1 : cmpS (toL z) (toL a) = .lt :=
+    (visOK_iff _ v a).mp (visOK_rwB a w n v a hll h) z hz
+  obtain ⟨hnz, hstz⟩ := stdIn_vArgs _ hst v z hz
+  exact C1_rwB a w n m hll hnf z hnz hstz (vArgs_size _ v z hz) h1
+
+theorem stdIn_rwB : ∀ (a : B) (w n m : Nat), lastLvl a = w → nfLe m a = true →
+    stdIn a = true → stdIn (rwB w n a) = true := by
+  intro a
+  induction a with
+  | nil => intro _ _ _ _ _ h; exact h
+  | nd v0 s a1 _ iha =>
+    intro w n m hll hnf hst
+    obtain ⟨_, _, hnf1⟩ := (nfLe_nd_iff m v0 s a1).mp hnf
+    have hst4 : (stdIn s && nonIncr a1 && visOK v0 a1 a1 && stdIn a1) = true := hst
+    obtain ⟨hst123, hsta1⟩ := (Bool.and_eq_true _ _).mp hst4
+    obtain ⟨hst12, hvisa1⟩ := (Bool.and_eq_true _ _).mp hst123
+    obtain ⟨hsts, hnia1⟩ := (Bool.and_eq_true _ _).mp hst12
+    cases a1 with
+    | nil => exact hst
+    | nd u2 s2 c2 =>
+      have hll2 : lastLvl (B.nd u2 s2 c2) = w := by rw [← lastLvl_nd v0 s u2 s2 c2]; exact hll
+      have hne2 : (B.nd u2 s2 c2) ≠ .nil := by intro hc; exact B.noConfusion hc
+      rw [rwB_nd]
+      by_cases h1 : hasLowAnc w (B.nd u2 s2 c2) = true
+      · rw [if_pos h1]
+        have hIH : stdIn (rwB w n (B.nd u2 s2 c2)) = true :=
+          iha w n (v0 + 1) hll2 hnf1 hsta1
+        rw [stdIn_nd_eq, hsts, nonIncr_rwB _ w n hll2 hnia1,
+          visOK_self_rwB _ w n (v0 + 1) v0 hll2 hnf1 hIH hvisa1, hIH]
+        rfl
+      · rw [if_neg h1]
+        have hLA2 : hasLowAnc w (B.nd u2 s2 c2) = false := by
+          cases hd : hasLowAnc w (B.nd u2 s2 c2) with
+          | false => rfl
+          | true => exact absurd hd h1
+        by_cases h2 : v0 < w
+        · rw [if_pos h2, appB_iterD]
+          have hvw : v0 + 1 = w := by
+            have := lowAnc_lvl w (B.nd u2 s2 c2) (v0 + 1) hne2 hLA2 hll2 hnf1
+            omega
+          have hv : v0 < lastLvl (B.nd u2 s2 c2) := by rw [hll2]; exact h2
+          have hGst : stdIn (GG v0 (B.nd u2 s2 c2) n) = true :=
+            stdIn_GG v0 _ w hvw hne2 hLA2 hll2 hnia1 hsta1 hvisa1 n
+          rw [stdIn_nd_eq, hsts, nonIncr_GG v0 _ hne2 hv hnia1 n,
+            visOK_self_GG v0 _ w hvw hne2 hLA2 hll2 hvisa1 n hGst, hGst]
+          rfl
+        · rw [if_neg h2]; exact hst
+
+/-! ### §62.10 主定理と、狭めた領域 -/
+
+/-- **`stdB` は `repB` で閉じている。** `nfB` は §19、残る 2 つが §62 の内容。 -/
+theorem stdB_repB (t : B) (n : Nat) (h : stdB t = true) : stdB (repB t n) = true := by
+  have h1 : nfB t = true := nfB_of_stdB t h
+  have h2 : nonIncr t = true := nonIncr_of_stdB t h
+  have h3 : stdIn t = true := stdIn_of_stdB t h
+  show (nfB (repB t n) && nonIncr (repB t n) && stdIn (repB t n)) = true
+  rw [show nfB (repB t n) = true from nfLe_repB t 0 n h1,
+    nonIncr_repB t n h2, stdIn_repB t n h3]
+  rfl
+
+/-- **`stdB` は `rwB` で閉じている。** -/
+theorem stdB_rwB (t : B) (w n : Nat) (hll : lastLvl t = w) (h : stdB t = true) :
+    stdB (rwB w n t) = true := by
+  have h1 : nfB t = true := nfB_of_stdB t h
+  have h2 : nonIncr t = true := nonIncr_of_stdB t h
+  have h3 : stdIn t = true := stdIn_of_stdB t h
+  show (nfB (rwB w n t) && nonIncr (rwB w n t) && stdIn (rwB w n t)) = true
+  rw [show nfB (rwB w n t) = true from nfLe_rwB t w n 0 h1,
+    nonIncr_rwB t w n hll h2, stdIn_rwB t w n 0 hll h1 h3]
+  rfl
+
+/-- **主定理。標準性は基本列で閉じている。** §61 の (i) が定理になった。 -/
+theorem stdB_fsB (t : B) (h : stdB t = true) (n : Nat) : stdB (fsB t n) = true := by
+  cases t with
+  | nil => exact rfl
+  | nd v r a =>
+    cases v with
+    | zero =>
+      cases a with
+      | nil => exact stdB_pred r h
+      | nd u s c =>
+        show stdB (if (lastLvl (B.nd u s c) == 0) = true
+          then repB (B.nd 0 r (B.nd u s c)) n
+          else rwB (lastLvl (B.nd u s c)) n (B.nd 0 r (B.nd u s c))) = true
+        by_cases hz : (lastLvl (B.nd u s c) == 0) = true
+        · rw [if_pos hz]; exact stdB_repB _ n h
+        · rw [if_neg hz]
+          exact stdB_rwB _ (lastLvl (B.nd u s c)) n rfl h
+    | succ k =>
+      cases a with
+      | nil => exact rfl
+      | nd u s c =>
+        show stdB (if (lastLvl (B.nd u s c) == 0) = true
+          then repB (B.nd (k + 1) r (B.nd u s c)) n
+          else rwB (lastLvl (B.nd u s c)) n (B.nd (k + 1) r (B.nd u s c))) = true
+        by_cases hz : (lastLvl (B.nd u s c) == 0) = true
+        · rw [if_pos hz]; exact stdB_repB _ n h
+        · rw [if_neg hz]
+          exact stdB_rwB _ (lastLvl (B.nd u s c)) n rfl h
+
+/-- **`certIn_region` の第 1 供給、狭めた領域で。** -/
+theorem hclosedS_supply : ∀ (S : Matrix), RegS S → ∀ (n : Nat), RegS (BMS.expand S n) := by
+  rintro S ⟨t, hstd, rfl⟩ n
+  cases t with
+  | nil =>
+    refine ⟨.nil, rfl, ?_⟩
+    show ((BMS.expand? [] n).getD []) = []
+    rfl
+  | nd v r a =>
+    refine ⟨fsB (B.nd v r a) n, stdB_fsB _ hstd n, ?_⟩
+    show ((BMS.expand? (matB (B.nd v r a) 0) n).getD []) = _
+    rw [expand_matB (B.nd v r a) (topOKB_of_nfB _ (nfB_of_stdB _ hstd))
+      (by intro hc; exact B.noConfusion hc) n]
+    rfl
+
+/-! ### §62.11 測定 (凍結)
+
+否定的なものから。`C1_repB` の素朴な `plugB` 版は**偽**で、これが §62.8–§62.9 が
+基準を据え置く形の帰納になっている理由。 -/
+
+-- **否定。** `C1_repB` の素朴な `plugB` 版は偽。最小の反例。
+#guard
+  (let a : B := .nd 1 .nil .nil                      -- ψ₁(0)
+   let x : B := .nd 0 .nil (.nd 1 .nil .nil)         -- ψ₀(ψ₁(0))
+   let g : B := plugB a (iterD 0 a 2)
+   nonIncr x && stdIn x && decide (sizeB x < sizeB g)
+     && (cmpS (toL x) (toL a) == Ordering.lt)
+     && !(cmpS (toL x) (toL g) == Ordering.lt)
+     && !(visOK 0 x x))                              -- これが落ちている側条件
+#guard matB (.nd 1 (.nil : B) .nil) 0 == [[0, 1]]
+#guard matB (.nd 0 (.nil : B) (.nd 1 .nil .nil)) 0 == [[0, 0], [1, 1]]
+
+-- 肯定。§61 の (i) は定理になったが、受領として再測定を残す。
+#guard (enumB 3 6).all fun t => !(stdB t) || (List.range 6).all fun n => stdB (fsB t n)
+#guard (enumB 4 5).all fun t => !(stdB t) || (List.range 6).all fun n => stdB (fsB t n)
+-- 二つの枝の内訳 (`repB` 側 / `rwB` 側)。
+#guard ((enumB 3 6).filter fun t => stdB t && lastLvl t == 0).length == 741
+#guard ((enumB 3 6).filter fun t => stdB t).length == 1105
+#guard ((popNFB 3 6).filter fun t => stdB t && lastLvl t == 0).length == 161
+#guard ((popNFB 3 6).filter stdB).length == 235
+-- 326 行目の添字とその基本列。
+#guard match decodeB [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]] with
+  | none => false
+  | some t => stdB t && (List.range 6).all fun n => stdB (fsB t n)
+
+-- **task 3 の測定。** `dict (bplus x y) = plus (dict x) (dict y)` は
+-- `popNFB 3 6` の値の上で反例なし。**測定のみ、証明されていない。**
+#guard (((popNFB 3 6).map bVal).eraseDups.take 40).all fun x =>
+  (((popNFB 3 6).map bVal).eraseDups.take 40).all fun y =>
+    Trans.Dict.dict (bplus x y) == TM.Term.plus (Trans.Dict.dict x) (Trans.Dict.dict y)
+#guard (((popNFB 3 6).map bVal).eraseDups.take 80).all fun x =>
+  Trans.Dict.dict (bplus x (BT.D 0 BT.zero)) == TM.Term.plus (Trans.Dict.dict x) TM.Term.one
+-- `plus` の結合則が要るが、この repo の唯一のものは `CNV` を要求し、
+-- 標準な値 235 個のうち `CNV` は 150 個しかない。
+#guard (((popNFB 3 6).filter stdB).filter fun t => Evidence.WF.CNV (vOf t)).length == 150
+
+/-! ### 公理の確認 -/
+
+end
+
 end Evidence.Region
