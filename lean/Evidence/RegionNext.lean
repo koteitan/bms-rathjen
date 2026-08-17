@@ -8836,4 +8836,321 @@ theorem runAux_sum (g : Nat) (t : B) (hnf : nfB t = true) (hne : t ≠ .nil)
 
 end
 
+/-! ## §56 THE TYPE-0 BRANCH, PROVED
+
+    runAux_type0       the `t1 == 0` branch returns `bVal t`, and leaves the table sound
+    runAux_type0_mark  the same branch for `Mark m`, returning `bMark t m`
+
+§55 did the several-blocks branch; this is the other branch that closes without looking inside
+`replMark`.  `runAux` reaches it when the index is reduced, has more than one column, is
+principal, and the recursive call on `Pred` comes back `0`.  The pieces:
+
+    bVal_eq_zero_iff    §53's `bplus` algebra, read backwards: a value is `0` only when it has
+                        no components, and `bVal` drops a component only for the leading `(0,0)`
+    type0_shape         so the hypotheses pin the index completely — the branch is reached by
+                        `(0,0)(1,u)` and nothing else
+    run_zero_miss       unfold `runAux` past the memo miss and the four tests, down to the
+                        returned value and the pushed entry (§55's `run_sum_miss`, one test
+                        deeper)
+
+WHY THE SHAPE IS THE WHOLE CONTENT.  `bVal (dropLastB t) = 0` forces `dropLastB t` to be the
+one-node `(0,0)` (it cannot be empty, since `t` has at least two nodes), so `t` has exactly two
+nodes.  Two nodes and `nfB` leave two candidates — `(0,0)(1,u)` and `(0,0)(0,0)` — and
+`isPrincipalP` kills the second: its last column has no row-0 ancestor.  What is left is a
+family in `u` on which both sides are closed computations, so `bVal`, `bMark`, `gp1` and the
+branch tests all reduce and the two halves are `rfl`.
+
+The `Mark` half needs one extra fact and no extra work: `lastSpine ((0,0)(1,u))` is `[0,1]`, so
+`AllowedB` leaves only `m = 0` (the collapsed root, which is the value) and `m = 1` (the last
+column, which is `psi_u(0)`) — exactly the algorithm's `if m == 0` split. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+/-! ### 値が 0 になる添字 -/
+
+/-- 成分から組み直せる項は、成分が無いときに限り `0`。 -/
+theorem eq_zero_iff_toL (a : BT) (h : NfSum a) : a = BT.zero ↔ a.toL = [] := by
+  constructor
+  · intro hz
+    rw [hz]
+    rfl
+  · intro hl
+    have : BT.ofL a.toL = a := h
+    rw [hl] at this
+    exact this.symm
+
+theorem nfSum_bVal : ∀ (t : B), NfSum (bVal t)
+  | .nil => nfSum_zero
+  | .nd w r c => by
+      show NfSum (bplus (bVal r) (if r == .nil && w == 0 && c == .nil then .zero
+        else .D w (bArg w c)))
+      refine nfSum_bplus _ _ (atomsL_bVal r) ?_
+      by_cases h : r == .nil && w == 0 && c == .nil
+      · rw [if_pos h]; exact atomsL_zero
+      · rw [if_neg h]; exact atomsL_D w (bArg w c)
+
+/-- **値が 0 になる添字は 2 つだけ。** 空か、1 節の `(0,0)` か。 -/
+theorem bVal_eq_zero_iff (s : B) (_hnf : nfB s = true) :
+    bVal s = BT.zero ↔ (s = .nil ∨ s = .nd 0 .nil .nil) := by
+  cases s with
+  | nil => exact ⟨fun _ => Or.inl rfl, fun _ => rfl⟩
+  | nd w r c =>
+    have hK : AtomsL (if r == .nil && w == 0 && c == .nil then (.zero : BT)
+        else .D w (bArg w c)) := by
+      by_cases h : r == .nil && w == 0 && c == .nil
+      · rw [if_pos h]; exact atomsL_zero
+      · rw [if_neg h]; exact atomsL_D w (bArg w c)
+    have htoL : (bVal (.nd w r c)).toL
+        = (bVal r).toL ++ (if r == .nil && w == 0 && c == .nil then (.zero : BT)
+            else .D w (bArg w c)).toL := by
+      show (bplus (bVal r) _).toL = _
+      exact toL_bplus _ _ (atomsL_bVal r) hK
+    constructor
+    · intro hz
+      have h0 : (bVal (.nd w r c)).toL = [] :=
+        (eq_zero_iff_toL _ (nfSum_bVal (.nd w r c))).mp hz
+      rw [htoL] at h0
+      have hK0 : (if r == .nil && w == 0 && c == .nil then (.zero : BT)
+          else .D w (bArg w c)).toL = [] := (List.append_eq_nil_iff.mp h0).2
+      have hcond : (r == .nil && w == 0 && c == .nil) = true := by
+        cases hc : (r == .nil && w == 0 && c == .nil) with
+        | true => rfl
+        | false =>
+          exfalso
+          rw [hc, if_neg (show ¬((false : Bool) = true) from by
+            intro hcc; exact Bool.noConfusion hcc)] at hK0
+          have hbad : ([BT.D w (bArg w c)] : List BT) = [] := hK0
+          cases hbad
+      refine Or.inr ?_
+      have h1 := (Bool.and_eq_true _ _).mp hcond
+      have h2 := (Bool.and_eq_true _ _).mp h1.1
+      rw [eq_of_beq h2.1, eq_of_beq h1.2, eq_of_beq h2.2]
+    · intro h
+      rcases h with h | h
+      · exact absurd h (by intro hc; exact B.noConfusion hc)
+      · rw [h]
+        exact bVal_leaf
+
+/-! ### memo に外れた型 0 の枝 -/
+
+/-- 型 0 の枝が返す値。 -/
+def zeroAns (M : Trans.Recal.PS) (req : Option Int) : BT :=
+  match req with
+  | none => BT.D 0 (BT.D (gp1 M (lenI M - 1)).toNat BT.zero)
+  | some m => if m == 0 then BT.D 0 (BT.D (gp1 M (lenI M - 1)).toNat BT.zero)
+              else BT.D (gp1 M (lenI M - 1)).toNat BT.zero
+
+/-- memo に外れた型 0 の枝。 -/
+theorem run_zero_miss (f : Nat) (M : Trans.Recal.PS) (req : Option Int)
+    (tbl : Trans.Recal.Memo)
+    (hred : isReducedP M = true) (hj1 : (lenI M - 1 == 0) = false)
+    (hprin : isPrincipalP M = true)
+    (hz : ((Trans.Recal.runAux f (predP M) none).run tbl).1 = BT.zero)
+    (h : tbl.find? (fun q => q.1 == (M, req)) = none) :
+    (Trans.Recal.runAux (f + 1) M req).run tbl
+      = (zeroAns M req,
+         ((M, req), zeroAns M req)
+           :: ((Trans.Recal.runAux f (predP M) none).run tbl).2) := by
+  have hz' : Trans.Recal.runAux f (predP M) none tbl
+      = (BT.zero, (Trans.Recal.runAux f (predP M) none tbl).2) := by
+    rw [← hz]
+    rfl
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h, hred, hj1, hprin,
+    Bool.not_true, Bool.false_eq_true, if_false]
+  rw [hz']
+  cases req with
+  | none => rfl
+  | some m => rfl
+
+/-! ### 型 0 に落ちる添字の形 -/
+
+-- 測定: `(0,0)(0,0)` は principal ではない。上の場合分けで消えるのはこれ。
+#guard isPrincipalP (psM (matB (.nd 0 (.nd 0 .nil .nil) .nil) 0)) == false
+
+/-- **型 0 の枝に来る添字は 2 節の `(0,0)(1,u)` しかない。** -/
+theorem type0_shape (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true)
+    (hz : bVal (dropLastB t) = BT.zero) :
+    ∃ u, t = .nd 0 .nil (.nd u .nil .nil) := by
+  have hne : t ≠ .nil := by
+    intro hc
+    rw [hc] at h1
+    have : sizeB (.nil : B) = 0 := rfl
+    omega
+  have hsz := sizeB_dropLast t hne
+  have hdnf : nfB (dropLastB t) = true := nfLe_dropLast t 0 hnf
+  have hd2 : dropLastB t = .nd 0 .nil .nil := by
+    rcases (bVal_eq_zero_iff _ hdnf).mp hz with h | h
+    · exfalso
+      rw [h] at hsz
+      have : sizeB (.nil : B) = 0 := rfl
+      omega
+    · exact h
+  have hsz2 : sizeB t = 2 := by
+    rw [hd2] at hsz
+    have : sizeB (.nd 0 .nil .nil : B) = 1 := rfl
+    omega
+  cases t with
+  | nil => exact absurd rfl hne
+  | nd v r a =>
+    obtain ⟨hv, hrnf, hanf⟩ := (nfLe_nd_iff 0 v r a).mp hnf
+    have hv0 : v = 0 := by omega
+    subst hv0
+    have hs : sizeB r + 1 + sizeB a = 2 := hsz2
+    cases a with
+    | nil =>
+      exfalso
+      have hr : r = .nd 0 .nil .nil := hd2
+      rw [hr] at hprin
+      exact absurd hprin (by decide)
+    | nd u b c =>
+      have hac : sizeB (B.nd u b c) = sizeB b + 1 + sizeB c := rfl
+      refine ⟨u, ?_⟩
+      rw [sizeB_eq_zero r (by omega), sizeB_eq_zero b (by omega),
+        sizeB_eq_zero c (by omega)]
+
+/-! ### 型 0 の枝、`Trans` の側 -/
+
+/-- 型 0 の添字の行列。 -/
+theorem psM_matB_type0 (u : Nat) :
+    psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0)
+      = [((0 : Int), (0 : Int)), ((1 : Int), ((u : Nat) : Int))] := rfl
+
+theorem lenI_type0 (u : Nat) :
+    (lenI (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0)) - 1 == 0) = false := rfl
+
+theorem bVal_type0 (u : Nat) :
+    bVal (.nd 0 .nil (.nd u .nil .nil)) = BT.D 0 (BT.D u BT.zero) := rfl
+
+theorem zeroAns_type0 (u : Nat) :
+    zeroAns (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0)) none
+      = BT.D 0 (BT.D u BT.zero) := rfl
+
+/-- **`runAux` の型 0 の枝** (要求は `Trans`)。 -/
+theorem runAux_type0 (g : Nat) (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true)
+    (hzv : bVal (dropLastB t) = BT.zero)
+    (tbl : Trans.Recal.Memo) (hs : SoundB tbl)
+    (ih : ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).1
+            = bVal (dropLastB t)
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).2) :
+    ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) none).run tbl).1 = bVal t
+      ∧ SoundB ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) none).run tbl).2 := by
+  obtain ⟨u, ht⟩ := type0_shape t hnf h1 hprin hzv
+  subst ht
+  cases hf : tbl.find? (fun z =>
+      z.1 == (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0), (none : Option Int))) with
+  | some p =>
+    rw [runHit g _ none tbl p hf]
+    obtain ⟨hg, he⟩ := goodB_of_find hs hf
+    exact ⟨hg _ none hnf he (Or.inl rfl), hs⟩
+  | none =>
+    obtain ⟨hv, hsd⟩ := ih tbl hs
+    rw [hzv] at hv
+    have hzr : ((Trans.Recal.runAux g
+        (predP (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0))) none).run tbl).1 = BT.zero := by
+      rw [predP_matB _ h1]
+      exact hv
+    have hsd' : SoundB ((Trans.Recal.runAux g
+        (predP (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0))) none).run tbl).2 := by
+      rw [predP_matB _ h1]
+      exact hsd
+    rw [run_zero_miss g _ none tbl (isReducedP_matB _ hnf) (lenI_type0 u) hprin hzr hf,
+      zeroAns_type0 u, bVal_type0 u]
+    exact ⟨rfl, SoundB_cons hsd' (by
+      have := goodB_mk (.nd 0 .nil (.nd u .nil .nil)) none
+      rw [show bValReq (.nd 0 .nil (.nd u .nil .nil)) none = BT.D 0 (BT.D u BT.zero) from rfl]
+        at this
+      exact this)⟩
+
+/-! ### 型 0 の枝、`Mark` の側 -/
+
+theorem lastSpine_type0 (u : Nat) : lastSpine (.nd 0 .nil (.nd u .nil .nil)) = [0, 1] := rfl
+
+/-- 型 0 の添字で意味を持つ `Mark` の位置は 0 と 1 だけ。 -/
+theorem markOKB_type0 (u k : Nat) (h : markOKB (.nd 0 .nil (.nd u .nil .nil)) k = true) :
+    k = 0 ∨ k = 1 := by
+  have hmem : (decide (k ∈ lastSpine (.nd 0 .nil (.nd u .nil .nil)))) = true :=
+    ((Bool.and_eq_true _ _).mp h).1
+  rw [lastSpine_type0] at hmem
+  have hk : k ∈ [0, 1] := of_decide_eq_true hmem
+  rcases List.mem_cons.mp hk with h0 | h1
+  · exact Or.inl h0
+  · rcases List.mem_cons.mp h1 with h2 | h3
+    · exact Or.inr h2
+    · exact absurd h3 (by intro hc; cases hc)
+
+theorem zeroAns_type0_mark (u k : Nat) (hk : k = 0 ∨ k = 1) :
+    zeroAns (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0)) (some ((k : Nat) : Int))
+      = bValReq (.nd 0 .nil (.nd u .nil .nil)) (some ((k : Nat) : Int)) := by
+  rcases hk with h | h
+  · subst h; rfl
+  · subst h; rfl
+
+/-- **`runAux` の型 0 の枝** (要求は `Mark m`)。 -/
+theorem runAux_type0_mark (g : Nat) (t : B) (m : Int) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true)
+    (hzv : bVal (dropLastB t) = BT.zero)
+    (hal : AllowedB t (some m))
+    (tbl : Trans.Recal.Memo) (hs : SoundB tbl)
+    (ih : ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).1
+            = bVal (dropLastB t)
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).2) :
+    ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) (some m)).run tbl).1
+        = bValReq t (some m)
+      ∧ SoundB ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) (some m)).run tbl).2 := by
+  obtain ⟨u, ht⟩ := type0_shape t hnf h1 hprin hzv
+  subst ht
+  obtain ⟨k, hkm, hkok⟩ : ∃ k : Nat, (some m : Option Int) = some ((k : Nat) : Int)
+      ∧ markOKB (.nd 0 .nil (.nd u .nil .nil)) k = true := by
+    rcases hal with h | h
+    · exact absurd h (by intro hc; cases hc)
+    · exact h
+  have hm : m = ((k : Nat) : Int) := Option.some.inj hkm
+  subst hm
+  cases hf : tbl.find? (fun z =>
+      z.1 == (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0),
+              (some ((k : Nat) : Int) : Option Int))) with
+  | some p =>
+    rw [runHit g _ (some ((k : Nat) : Int)) tbl p hf]
+    obtain ⟨hg, he⟩ := goodB_of_find hs hf
+    exact ⟨hg _ (some ((k : Nat) : Int)) hnf he (Or.inr ⟨k, rfl, hkok⟩), hs⟩
+  | none =>
+    obtain ⟨hv, hsd⟩ := ih tbl hs
+    rw [hzv] at hv
+    have hzr : ((Trans.Recal.runAux g
+        (predP (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0))) none).run tbl).1 = BT.zero := by
+      rw [predP_matB _ h1]
+      exact hv
+    have hsd' : SoundB ((Trans.Recal.runAux g
+        (predP (psM (matB (.nd 0 .nil (.nd u .nil .nil)) 0))) none).run tbl).2 := by
+      rw [predP_matB _ h1]
+      exact hsd
+    rw [run_zero_miss g _ (some ((k : Nat) : Int)) tbl (isReducedP_matB _ hnf)
+        (lenI_type0 u) hprin hzr hf,
+      zeroAns_type0_mark u k (markOKB_type0 u k hkok)]
+    exact ⟨rfl, SoundB_cons hsd' (goodB_mk (.nd 0 .nil (.nd u .nil .nil))
+      (some ((k : Nat) : Int)))⟩
+
+/-! ### 測定 -/
+
+-- 型 0 の枝に落ちる標準形の添字は、この 2 つだけ (段 < 4、8 節まで)。
+#guard ((popNFB 4 8).filter fun t =>
+    1 < sizeB t && isPrincipalP (psM (matB t 0)) && (bVal (dropLastB t) == BT.zero))
+  == [.nd 0 .nil (.nd 0 .nil .nil), .nd 0 .nil (.nd 1 .nil .nil)]
+-- 参照実装の `Trans` と `Mark` は、その 2 つで §48・§49 の閉じた形と合う。
+#guard (([.nd 0 .nil (.nd 0 .nil .nil), .nd 0 .nil (.nd 1 .nil .nil)] : List B)).all fun t =>
+  transPort (psM (matB t 0)) == bVal t
+#guard (([.nd 0 .nil (.nd 0 .nil .nil), .nd 0 .nil (.nd 1 .nil .nil)] : List B)).all fun t =>
+  (List.range (sizeB t)).all fun m =>
+    !(markOKB t m) || markRun (psM (matB t 0)) (Int.ofNat m) == bMark t m
+
+end
+
 end Evidence.Region
