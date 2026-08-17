@@ -1294,7 +1294,24 @@ nfB t   ⟺   どの節も、その段は親の段 + 1 以下
               `(0,0)(0,0)` を落とすのは `isPrincipalP` である。形が決まれば
               両側とも閉じた計算で、`Mark` の側も `lastSpine` が `[0,1]` なので
               `m = 0` か `1` しかなく、アルゴリズムの `if m == 0` とそのまま合う
-            - 🚨 残りの枝 (型 1-6 の `mkC2`/`replMark`)
+            - ✅ **型 1-6 の枝の材料** (§57)。枝が行列から取る 4 つを添字の言葉に
+              した: `j0` は最後の節の**木の親** (祖先鎖の最後から 2 番目、
+              `fpar_last_spine`)、`isAdm` は**完全に局所** — §26 の
+              `isParentP_succ_iff` が無条件なので「深さも段も両方増える」が
+              両隣で成り立つとき、そのときだけ不許可 (`isAdm_tree`。標準形も
+              principal も要らない。1290 個の非標準形でも成り立つ)、`adm` は
+              その下向き再帰 (`adm_tree`)、型は `j0` と `j1` の段だけで決まる
+              (`transTypeMain_tree`)。`principal` が要るのはちょうど
+              「最後の節に木の親がある」ため (`lastSpine_dropLast_ne` はその逆)。
+              memo に外れた枝の展開 (`run_main_miss_none`/`_mark_lt`/`_mark_ge`) も
+            - 🚨 残りの枝 (型 1-6 の `replMark`)
+              - 測定済み: **差し替えは一般の補題**である。`s = dropLastB t` で
+                `markOKB` が両側に立つ位置 1086 個すべてで
+                `replMark N (bVal s) (bMark s m) (bMark t m) = some (bVal t)`。
+                `j0` も `adm` も型も出てこない。glue は
+                `mkC2 M j0 j1 ty (bMark s jn1) = bMark t jn1` (440/440) の方に集まる。
+                そして `isUnadmitted` は「§48 が潰す節」とちょうど同じ条件で、
+                `adm` は「潰さない一番近い祖先」を取っているだけだった
       - ✅ 327 行目 — 当方が正しい。`G10.oR_M` と先方側の不成立で決着
       - ✅ 328 行目 — 当方が正しい。`G11.oR_M` と先方側の不成立で決着
   - ✅ 5. 付随

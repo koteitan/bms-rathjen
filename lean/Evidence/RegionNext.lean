@@ -9153,4 +9153,681 @@ theorem runAux_type0_mark (g : Nat) (t : B) (m : Int) (hnf : nfB t = true) (h1 :
 
 end
 
+/-! ## §57 THE BRANCH DATA OF TYPES 1-6, ON THE INDEX SIDE
+
+    fpar_last_spine      j0  is the TREE PARENT of the last node
+    isAdm_tree           isAdm is a completely local test on two consecutive columns
+    adm_tree             adm  is the obvious downward recursion on the index side
+    transTypeMain_tree   the type is read off the levels of `j0` and `j1`
+    run_main_miss_*      the plumbing: unfold `runAux` into the types 1-6 body
+
+§55 proved the several-blocks branch and §56 the type-0 branch.  What is left of `runAux` is
+the types 1-6 branch, and before its VALUE can be discussed at all its four inputs have to be
+named on the index side.  `runAux` computes them off the MATRIX:
+
+    j1  = lenI M - 1                the last column
+    j0  = fpar M 0 j1 0             its row-0 parent
+    ty  = transTypeMain M j0 j1     the case number
+    jn1 = adm M j0                  the mark the recursive call will ask for
+
+and this section says what each of them is when `M = psM (matB t 0)`.
+
+WHAT CARRIES EACH ONE.
+
+`j0` is the only one with content.  `fpar M 0 j 0` is BMS's `parent` (§18.1's
+`fpar0_eq_parent`), so the question is what the row-0 parent of the LAST column of a `matB`
+matrix is, and the answer is the tree one: the second-to-last entry of `lastSpine t` — the
+chain "last top-level node, its last child, and so on" that §49 already uses to say where
+`Mark` means anything.  `parent_lastSpine` proves it by the file's usual three-way split.  The
+`a = nil` case is the one where the last node sits at depth `d`, so nothing before it is
+shallower and there is no parent — which is also the case `isPrincipalP` rules out.  In the
+other case the node's own column (index `sizeB r`, depth `d`) is always a candidate, so the
+maximum is either that column or, when the argument has a parent of its own, the translate of
+the argument's answer; and that is exactly what `dropLast`/`getLast?` do to the spine.
+
+`isAdm` needs NO normal form and no principality: §26's `isParentP_succ_iff` is unconditional
+and says `isParentP M 1 (j+1) j` is "depth and level both go up", so `isUnadmitted` is that
+test at `j-1` and at `j` and nothing else.  The two edges are `isParentP_succ_oob` (no column
+to the right) and the `0 ≤ k` guard of `isParentP` (no column to the left of `0`); note the
+`j + 1 < sizeB t` conjunct of `isAdmB` is REDUNDANT — past the end `ent` reads as `0`, so
+`bothInc` is already false there — and is kept only because that is the measured spelling.
+The one hypothesis that cannot be dropped is `j ≤ sizeB t`: `isUnadmitted` opens with
+`decide (j > lenI M)`, so beyond the matrix the two sides genuinely differ.
+
+`adm` and `transTypeMain` are then mechanical: `adm` is `admAux`'s fuelled downward scan,
+which is the index-side `admB` recursion once `isAdm` is local, and `transTypeMain` is a
+three-way test on `gp1`, which is `entL` through `psM_gp1`.
+
+WHAT IS NOT CLAIMED.  Nothing here evaluates the branch.  The step from these four data to
+`bVal t` goes through `replMark`, and that equation — `bMark s jn1` occurs on the rightmost
+spine of `bVal s`, and replacing it by `c2` gives `bVal t` — is MEASURED at the end of the
+section and is the next section's job.  `run_main_miss_none` / `_mark_lt` / `_mark_ge` are the
+same unfolding §55 and §56 did, one and two tests deeper, and are stated so that the next
+section can quote them without re-deriving the monad. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+/-! ### 行 0 の親の道具 -/
+
+/-- `parent M 0 x` を「最大」の仕様から作る。 -/
+theorem parent0_eq_some (M : Matrix) (x q : Nat) (hq : q < x)
+    (hlt : ent M q 0 < ent M x 0)
+    (hmax : ∀ p, q < p → p < x → ent M x 0 ≤ ent M p 0) :
+    parent M 0 x = some q := by
+  show ((List.range x).filter (fun p => decide (ent M p 0 < ent M x 0))).max? = some q
+  refine List.max?_eq_some_iff.mpr ⟨List.mem_filter.mpr
+    ⟨List.mem_range.mpr hq, decide_eq_true hlt⟩, ?_⟩
+  intro b hb
+  have hb1 := List.mem_range.mp (List.mem_filter.mp hb).1
+  have hb2 := of_decide_eq_true (List.mem_filter.mp hb).2
+  rcases Nat.lt_or_ge q b with hlt2 | hge
+  · exact absurd (hmax b hlt2 hb1) (by omega)
+  · exact hge
+
+/-- 親が無いなら自分が左極小。 -/
+theorem min_of_parent0_none (M : Matrix) (x : Nat) (h : parent M 0 x = none) :
+    ∀ i, i < x → ent M x 0 ≤ ent M i 0 := by
+  intro i hi
+  rcases Nat.lt_or_ge (ent M i 0) (ent M x 0) with hc | hc
+  · exfalso
+    have hmem : i ∈ (List.range x).filter (fun p => decide (ent M p 0 < ent M x 0)) :=
+      List.mem_filter.mpr ⟨List.mem_range.mpr hi, decide_eq_true hc⟩
+    rw [List.max?_eq_none_iff.mp h] at hmem
+    exact absurd hmem (by simp)
+  · exact hc
+
+/-! ### `matB` の三分割で成分を読む -/
+
+theorem ent_nd_left (v : Nat) (r a : B) (d p y : Nat) (h : p < sizeB r) :
+    ent (matB (.nd v r a) d) p y = ent (matB r d) p y :=
+  ent_append_left (matB r d) _ p y (by rw [sizeB_matB]; exact h)
+
+theorem ent_nd_node (v : Nat) (r a : B) (d y : Nat) :
+    ent (matB (.nd v r a) d) (sizeB r) y = ([d, v] : Col).getD y 0 := by
+  show ent (matB r d ++ ([d, v] :: matB a (d + 1))) (sizeB r) y = _
+  rw [ent_append (matB r d) _ _ y (by rw [sizeB_matB]; omega), sizeB_matB,
+    show sizeB r - sizeB r = 0 from by omega]
+  rfl
+
+theorem ent_nd_right (v : Nat) (r a : B) (d i y : Nat) :
+    ent (matB (.nd v r a) d) (sizeB r + 1 + i) y = ent (matB a (d + 1)) i y := by
+  show ent (matB r d ++ ([d, v] :: matB a (d + 1))) (sizeB r + 1 + i) y = _
+  rw [ent_append (matB r d) _ _ y (by rw [sizeB_matB]; omega), sizeB_matB,
+    show sizeB r + 1 + i - sizeB r = i + 1 from by omega]
+  show ((([d, v] :: matB a (d + 1)).getD (i + 1) []).getD y 0) = _
+  rw [show (([d, v] :: matB a (d + 1)).getD (i + 1) []) = (matB a (d + 1)).getD i [] from by
+    simp [List.getD_eq_getElem?_getD]]
+  rfl
+
+/-- `matB t d` のどの列も深さ `d` 以上。 -/
+theorem ent_lb (t : B) (d p : Nat) (h : p < sizeB t) : d ≤ ent (matB t d) p 0 :=
+  matB_col_lb t d _ (getD_mem (matB t d) [] p (by rw [sizeB_matB]; exact h))
+
+theorem sizeB_pos (t : B) (h : t ≠ .nil) : 0 < sizeB t := by
+  cases t with
+  | nil => exact absurd rfl h
+  | nd u b c => show 0 < sizeB b + 1 + sizeB c; omega
+
+theorem lastSpine_ne_nil (t : B) (h : t ≠ .nil) : lastSpine t ≠ [] := by
+  cases t with
+  | nil => exact absurd rfl h
+  | nd u b c =>
+    show (sizeB b :: (lastSpine c).map (fun i => sizeB b + 1 + i)) ≠ []
+    exact List.cons_ne_nil _ _
+
+/-! ### 1. 最後の列の行 0 の親は木の親 -/
+
+/-- **最後の列の行 0 の親は、祖先鎖の最後から 2 番目。** -/
+theorem parent_lastSpine : ∀ (t : B), t ≠ .nil → ∀ (d : Nat),
+    parent (matB t d) 0 (sizeB t - 1) = ((lastSpine t).dropLast).getLast? := by
+  intro t
+  induction t with
+  | nil => intro h; exact absurd rfl h
+  | nd v r a _ iha =>
+    intro _ d
+    cases a with
+    | nil =>
+      have hsz : sizeB (B.nd v r .nil) - 1 = sizeB r := by
+        show sizeB r + 1 + sizeB (.nil : B) - 1 = sizeB r
+        show sizeB r + 1 + 0 - 1 = sizeB r
+        omega
+      rw [hsz, show ((lastSpine (B.nd v r .nil)).dropLast).getLast? = none from rfl]
+      refine parent0_none_of_min _ _ ?_
+      intro i hi
+      rw [ent_nd_node v r .nil d 0, ent_nd_left v r .nil d i 0 hi]
+      exact ent_lb r d i hi
+    | nd u b c =>
+      have hAne : (B.nd u b c) ≠ .nil := by intro hc; exact B.noConfusion hc
+      have hN : 0 < sizeB (B.nd u b c) := sizeB_pos _ hAne
+      have hsz : sizeB (B.nd v r (.nd u b c)) - 1
+          = sizeB r + 1 + (sizeB (B.nd u b c) - 1) := by
+        show sizeB r + 1 + sizeB (B.nd u b c) - 1 = _
+        omega
+      have hIH := iha hAne (d + 1)
+      have hT : ent (matB (B.nd v r (.nd u b c)) d) (sizeB r + 1 + (sizeB (B.nd u b c) - 1)) 0
+          = ent (matB (B.nd u b c) (d + 1)) (sizeB (B.nd u b c) - 1) 0 :=
+        ent_nd_right v r (.nd u b c) d _ 0
+      have hTd : d < ent (matB (B.nd u b c) (d + 1)) (sizeB (B.nd u b c) - 1) 0 := by
+        have := ent_lb (B.nd u b c) (d + 1) (sizeB (B.nd u b c) - 1) (by omega)
+        omega
+      have hmapne : ((lastSpine (B.nd u b c)).map (fun i => sizeB r + 1 + i)) ≠ [] := by
+        intro hc
+        exact lastSpine_ne_nil _ hAne (List.map_eq_nil_iff.mp hc)
+      have hsp : ((lastSpine (B.nd v r (.nd u b c))).dropLast).getLast?
+          = (sizeB r :: (((lastSpine (B.nd u b c)).dropLast).map
+              (fun i => sizeB r + 1 + i))).getLast? := by
+        show ((sizeB r :: ((lastSpine (B.nd u b c)).map
+            (fun i => sizeB r + 1 + i))).dropLast).getLast? = _
+        rw [List.dropLast_cons_of_ne_nil hmapne, ← List.map_dropLast]
+      rw [hsz, hsp]
+      cases hq : ((lastSpine (B.nd u b c)).dropLast).getLast? with
+      | none =>
+        have hnil : ((lastSpine (B.nd u b c)).dropLast) = [] := List.getLast?_eq_none_iff.mp hq
+        rw [hnil, show (([] : List Nat).map (fun i => sizeB r + 1 + i)) = [] from rfl]
+        show _ = some (sizeB r)
+        rw [hq] at hIH
+        have hmin := min_of_parent0_none _ _ hIH
+        refine parent0_eq_some _ _ (sizeB r) (by omega) ?_ ?_
+        · rw [hT, ent_nd_node v r (.nd u b c) d 0]
+          exact hTd
+        · intro p hp1 hp2
+          have hi : p - (sizeB r + 1) < sizeB (B.nd u b c) - 1 := by omega
+          have hpe : p = sizeB r + 1 + (p - (sizeB r + 1)) := by omega
+          rw [hT, hpe, ent_nd_right v r (.nd u b c) d _ 0]
+          exact hmin _ hi
+      | some q =>
+        have hdlne : ((lastSpine (B.nd u b c)).dropLast) ≠ [] := by
+          intro hc
+          rw [hc] at hq
+          exact absurd hq (by simp)
+        rw [getLast?_cons_of_ne_nil _ _ (by
+          intro hc
+          exact hdlne (List.map_eq_nil_iff.mp hc)), List.getLast?_map, hq]
+        show _ = some (sizeB r + 1 + q)
+        rw [hq] at hIH
+        obtain ⟨hqm, hqmax⟩ := List.max?_eq_some_iff.mp hIH
+        have hq1 : q < sizeB (B.nd u b c) - 1 :=
+          List.mem_range.mp (List.mem_filter.mp hqm).1
+        have hq2 : ent (matB (B.nd u b c) (d + 1)) q 0
+            < ent (matB (B.nd u b c) (d + 1)) (sizeB (B.nd u b c) - 1) 0 :=
+          of_decide_eq_true (List.mem_filter.mp hqm).2
+        refine parent0_eq_some _ _ (sizeB r + 1 + q) (by omega) ?_ ?_
+        · rw [hT, ent_nd_right v r (.nd u b c) d q 0]
+          exact hq2
+        · intro p hp1 hp2
+          have hi : q < p - (sizeB r + 1) ∧ p - (sizeB r + 1) < sizeB (B.nd u b c) - 1 := by
+            omega
+          have hpe : p = sizeB r + 1 + (p - (sizeB r + 1)) := by omega
+          rw [hT, hpe, ent_nd_right v r (.nd u b c) d _ 0]
+          rcases Nat.lt_or_ge (ent (matB (B.nd u b c) (d + 1)) (p - (sizeB r + 1)) 0)
+              (ent (matB (B.nd u b c) (d + 1)) (sizeB (B.nd u b c) - 1) 0) with hc | hc
+          · exfalso
+            have hmem : (p - (sizeB r + 1))
+                ∈ (List.range (sizeB (B.nd u b c) - 1)).filter
+                    (fun z => decide (ent (matB (B.nd u b c) (d + 1)) z 0
+                      < ent (matB (B.nd u b c) (d + 1)) (sizeB (B.nd u b c) - 1) 0)) :=
+              List.mem_filter.mpr ⟨List.mem_range.mpr hi.2, decide_eq_true hc⟩
+            have := hqmax _ hmem
+            omega
+          · exact hc
+
+/-- 最後の節の**木の親** (祖先鎖の最後から 2 番目; 無ければ `0`)。 -/
+def j0B (t : B) : Nat := (((lastSpine t).dropLast).getLast?).getD 0
+
+/-- 行列の側の `j0`、まだ `Option` のまま。 -/
+theorem fpar_last_opt (t : B) (h : t ≠ .nil) :
+    fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0
+      = (match ((lastSpine t).dropLast).getLast? with
+         | none => (-1 : Int)
+         | some p => ((p : Nat) : Int)) := by
+  have hlen : lenI (psM (matB t 0)) = ((sizeB t : Nat) : Int) := lenI_matB t
+  have hpos : 0 < sizeB t := sizeB_pos t h
+  rw [fpar_zero, hlen,
+    show ((sizeB t : Nat) : Int) - 1 = ((sizeB t - 1 : Nat) : Int) from by omega,
+    fpar0_eq_parent (matB t 0) (sizeB t - 1) (by rw [sizeB_matB]; omega),
+    parent_lastSpine t h 0]
+
+/-- principal なら最後の節には木の親がある。 -/
+theorem lastSpine_dropLast_ne (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) :
+    ((lastSpine t).dropLast).getLast? = some (j0B t) := by
+  have hne : t ≠ .nil := by
+    intro hc
+    rw [hc] at h1
+    have hz : sizeB (.nil : B) = 0 := rfl
+    omega
+  have hlen : lenI (psM (matB t 0)) = ((sizeB t : Nat) : Int) := lenI_matB t
+  cases hq : ((lastSpine t).dropLast).getLast? with
+  | none =>
+    exfalso
+    have hf : fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0 = -1 := by
+      rw [fpar_last_opt t hne, hq]
+    have hanc : isAnc (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0 = false := by
+      show (if (0 : Int) < 0 ∨ (0 : Int) ≥ lenI (psM (matB t 0)) then false
+            else isAncAux ((psM (matB t 0)).length + 1) (psM (matB t 0)) 0
+                   (lenI (psM (matB t 0)) - 1) 0) = false
+      rw [if_neg (by rw [hlen]; omega)]
+      show (if ((0 : Int) == lenI (psM (matB t 0)) - 1) then true
+            else if fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0 == -1 then false
+                 else isAncAux ((psM (matB t 0)).length) (psM (matB t 0)) 0
+                        (fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0) 0) = false
+      rw [show ((0 : Int) == lenI (psM (matB t 0)) - 1) = false from by
+          rw [hlen]; exact decide_eq_false (by omega)]
+      simp only [Bool.false_eq_true, if_false]
+      rw [hf, beqI_self]
+      rfl
+    rw [show isPrincipalP (psM (matB t 0))
+        = (!isZeroP (psM (matB t 0)) && isAnc (psM (matB t 0)) 0
+            (lenI (psM (matB t 0)) - 1) 0) from rfl, hanc, Bool.and_false] at hprin
+    exact Bool.noConfusion hprin
+  | some q =>
+    have hj : j0B t = q := by
+      show ((((lastSpine t).dropLast).getLast?).getD 0) = q
+      rw [hq]
+      rfl
+    rw [hj]
+
+/-- **`j0` は最後の節の木の親。** -/
+theorem fpar_last_spine (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) :
+    fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0 = ((j0B t : Nat) : Int) := by
+  have hne : t ≠ .nil := by
+    intro hc
+    rw [hc] at h1
+    have hz : sizeB (.nil : B) = 0 := rfl
+    omega
+  rw [fpar_last_opt t hne, lastSpine_dropLast_ne t h1 hprin]
+
+/-- 木の親は最後の列より左。 -/
+theorem j0B_lt (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) : j0B t < sizeB t - 1 := by
+  have hne : t ≠ .nil := by
+    intro hc
+    rw [hc] at h1
+    have hz : sizeB (.nil : B) = 0 := rfl
+    omega
+  exact parent0_lt (matB t 0) (sizeB t - 1) (j0B t)
+    (by rw [parent_lastSpine t hne 0]; exact lastSpine_dropLast_ne t h1 hprin)
+
+/-! ### 2. `isAdm` は完全に局所的 -/
+
+/-- 前順 `j` 番目の節の深さ (行 0)。 -/
+def entD (t : B) (j : Nat) : Nat := ent (matB t 0) j 0
+/-- 前順 `j` 番目の節の段 (行 1)。 -/
+def entL (t : B) (j : Nat) : Nat := ent (matB t 0) j 1
+
+/-- 深さも段も真に増えるか。 -/
+def bothInc (t : B) (j : Nat) : Bool :=
+  decide (entD t j < entD t (j + 1)) && decide (entL t j < entL t (j + 1))
+
+/-- **`isAdm` の添字の側の形。** 隣り合う 2 列だけを見る。 -/
+def isAdmB (t : B) (j : Nat) : Bool :=
+  !((decide (1 ≤ j) && bothInc t (j - 1)) && (decide (j + 1 < sizeB t) && bothInc t j))
+
+/-- §26 の `isParentP_succ_iff` を Bool の等式にしたもの。両端も込み。 -/
+theorem isParentP_succ_bool (M : Matrix) (j : Nat) :
+    isParentP (psM M) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int)
+      = (decide (ent M j 0 < ent M (j + 1) 0) && decide (ent M j 1 < ent M (j + 1) 1)) := by
+  rcases Nat.lt_or_ge (j + 1) M.length with h | h
+  · cases hp : isParentP (psM M) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int) with
+    | true =>
+      obtain ⟨h0, h1⟩ := (isParentP_succ_iff M j h).mp hp
+      rw [decide_eq_true h0, decide_eq_true h1]
+      rfl
+    | false =>
+      refine (Bool.eq_false_iff.mpr (fun hc => ?_)).symm
+      have hb := (Bool.and_eq_true _ _).mp hc
+      have h2 := (isParentP_succ_iff M j h).mpr
+        ⟨of_decide_eq_true hb.1, of_decide_eq_true hb.2⟩
+      rw [hp] at h2
+      exact Bool.noConfusion h2
+  · rw [isParentP_succ_oob M j h, ent_zero_of_ge_len M (j + 1) h,
+      show decide (ent M j 0 < 0) = false from decide_eq_false (by omega)]
+    rfl
+
+/-- 行列の右端では `bothInc` は自動的に偽。 -/
+theorem bothInc_oob (t : B) (j : Nat) (h : sizeB t ≤ j + 1) : bothInc t j = false := by
+  have he : ent (matB t 0) (j + 1) 0 = 0 :=
+    ent_zero_of_ge_len _ _ (by rw [sizeB_matB]; omega)
+  show (decide (entD t j < entD t (j + 1)) && _) = false
+  rw [show entD t (j + 1) = 0 from he,
+    show decide (entD t j < 0) = false from decide_eq_false (by omega)]
+  rfl
+
+/-- **`isAdm` は完全に局所的。** 標準形の仮定は要らない。 -/
+theorem isAdm_tree (t : B) (j : Nat) (hj : j ≤ sizeB t) :
+    isAdm (psM (matB t 0)) ((j : Nat) : Int) = isAdmB t j := by
+  have hlen : lenI (psM (matB t 0)) = ((sizeB t : Nat) : Int) := lenI_matB t
+  have hA : isParentP (psM (matB t 0)) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int)
+      = bothInc t j := isParentP_succ_bool (matB t 0) j
+  have hA' : (decide (j + 1 < sizeB t) && bothInc t j) = bothInc t j := by
+    rcases Nat.lt_or_ge (j + 1) (sizeB t) with h | h
+    · rw [decide_eq_true h, Bool.true_and]
+    · rw [bothInc_oob t j h, Bool.and_false]
+  have hB : isParentP (psM (matB t 0)) 1 ((j : Nat) : Int) (((j : Nat) : Int) - 1)
+      = (decide (1 ≤ j) && bothInc t (j - 1)) := by
+    cases j with
+    | zero =>
+      show (decide ((0 : Int) ≤ (0 : Int) - 1) && _ && _) = _
+      rw [show decide ((0 : Int) ≤ (0 : Int) - 1) = false from decide_eq_false (by omega)]
+      rfl
+    | succ k =>
+      rw [show (((k + 1 : Nat) : Int)) = ((k : Nat) : Int) + 1 from by omega,
+        show ((k : Nat) : Int) + 1 - 1 = ((k : Nat) : Int) from by omega,
+        isParentP_succ_bool (matB t 0) k,
+        show decide (1 ≤ k + 1) = true from decide_eq_true (by omega), Bool.true_and,
+        show k + 1 - 1 = k from by omega]
+      rfl
+  have hun : isAdm (psM (matB t 0)) ((j : Nat) : Int)
+      = (!(decide (((j : Nat) : Int) > lenI (psM (matB t 0)))
+          || (isParentP (psM (matB t 0)) 1 ((j : Nat) : Int) (((j : Nat) : Int) - 1)
+              && isParentP (psM (matB t 0)) 1 (((j : Nat) : Int) + 1) ((j : Nat) : Int)))) := rfl
+  rw [hun, hlen, show decide (((j : Nat) : Int) > ((sizeB t : Nat) : Int)) = false from
+      decide_eq_false (by omega), Bool.false_or, hA, hB, ← hA']
+  rfl
+
+/-! ### 3. `Adm` の再帰 -/
+
+/-- **`Adm` の添字の側の再帰。** `j` 以下で最大の許された位置。 -/
+def admB (t : B) : Nat → Nat
+  | 0 => 0
+  | k + 1 => if isAdmB t (k + 1) then k + 1 else admB t k
+
+theorem admAux_neg (f : Nat) (M : Trans.Recal.PS) (x : Int) (h : x < 0) :
+    admAux f M x = 0 := by
+  cases f with
+  | zero => rfl
+  | succ g =>
+    show (if x < 0 then (0 : Int) else if isAdm M x then x else admAux g M (x - 1)) = 0
+    rw [if_pos h]
+
+theorem admAux_tree (t : B) : ∀ (f j : Nat), j < f → j ≤ sizeB t →
+    admAux f (psM (matB t 0)) ((j : Nat) : Int) = ((admB t j : Nat) : Int) := by
+  intro f
+  induction f with
+  | zero => intro j hj _; omega
+  | succ g ih =>
+    intro j hj hs
+    show (if ((j : Nat) : Int) < 0 then (0 : Int)
+          else if isAdm (psM (matB t 0)) ((j : Nat) : Int) then ((j : Nat) : Int)
+          else admAux g (psM (matB t 0)) (((j : Nat) : Int) - 1)) = _
+    rw [if_neg (by omega), isAdm_tree t j hs]
+    cases j with
+    | zero =>
+      by_cases hz : isAdmB t 0
+      · rw [if_pos hz]; rfl
+      · rw [if_neg hz, show ((0 : Nat) : Int) - 1 = (-1 : Int) from by omega,
+          admAux_neg g _ _ (by omega)]
+        rfl
+    | succ k =>
+      by_cases hz : isAdmB t (k + 1)
+      · rw [if_pos hz]
+        show _ = ((admB t (k + 1) : Nat) : Int)
+        rw [show admB t (k + 1) = if isAdmB t (k + 1) then k + 1 else admB t k from rfl,
+          if_pos hz]
+      · rw [if_neg hz,
+          show (((k + 1 : Nat) : Int) - 1) = ((k : Nat) : Int) from by omega,
+          ih k (by omega) (by omega)]
+        show _ = ((admB t (k + 1) : Nat) : Int)
+        rw [show admB t (k + 1) = if isAdmB t (k + 1) then k + 1 else admB t k from rfl,
+          if_neg hz]
+
+/-- **`Adm` は添字の側の再帰。** -/
+theorem adm_tree (t : B) (j : Nat) (hj : j ≤ sizeB t) :
+    adm (psM (matB t 0)) ((j : Nat) : Int) = ((admB t j : Nat) : Int) := by
+  show admAux ((psM (matB t 0)).length + 2) (psM (matB t 0)) ((j : Nat) : Int) = _
+  refine admAux_tree t _ j ?_ hj
+  rw [psM_len, sizeB_matB]
+  omega
+
+/-! ### 4. 型 -/
+
+/-- **`transTypeMain` の添字の側の形。** -/
+def tyMainB (t : B) (j0 j1 : Nat) : Nat :=
+  if entL t j1 == 0 then (if isAdmB t j0 then 1 else 2)
+  else if entL t j1 ≤ entL t j0 then (if isAdmB t j0 then 3 else 4)
+  else if j0 + 1 < j1 then 5 else 6
+
+theorem beqI_nat_zero (n : Nat) : (((n : Nat) : Int) == (0 : Int)) = (n == 0) := by
+  cases n with
+  | zero => rfl
+  | succ k =>
+    rw [show ((((k + 1 : Nat) : Int)) == (0 : Int)) = false from decide_eq_false (by omega)]
+    rfl
+
+/-- **`transTypeMain` を木の言葉で。** -/
+theorem transTypeMain_tree (t : B) (j0 j1 : Nat) (h0 : j0 ≤ sizeB t) :
+    transTypeMain (psM (matB t 0)) ((j0 : Nat) : Int) ((j1 : Nat) : Int)
+      = tyMainB t j0 j1 := by
+  have g0 : gp1 (psM (matB t 0)) ((j0 : Nat) : Int) = ((entL t j0 : Nat) : Int) :=
+    psM_gp1 (matB t 0) j0
+  have g1 : gp1 (psM (matB t 0)) ((j1 : Nat) : Int) = ((entL t j1 : Nat) : Int) :=
+    psM_gp1 (matB t 0) j1
+  show (if gp1 (psM (matB t 0)) ((j1 : Nat) : Int) == 0 then
+          (if isAdm (psM (matB t 0)) ((j0 : Nat) : Int) then 1 else 2)
+        else if gp1 (psM (matB t 0)) ((j0 : Nat) : Int)
+            ≥ gp1 (psM (matB t 0)) ((j1 : Nat) : Int) then
+          (if isAdm (psM (matB t 0)) ((j0 : Nat) : Int) then 3 else 4)
+        else if ((j0 : Nat) : Int) + 1 < ((j1 : Nat) : Int) then 5 else 6) = _
+  rw [g0, g1, beqI_nat_zero, isAdm_tree t j0 h0]
+  show (if (entL t j1 == 0) = true then (if isAdmB t j0 = true then 1 else 2)
+        else if ((entL t j0 : Nat) : Int) ≥ ((entL t j1 : Nat) : Int)
+             then (if isAdmB t j0 = true then 3 else 4)
+             else if ((j0 : Nat) : Int) + 1 < ((j1 : Nat) : Int) then 5 else 6)
+    = (if (entL t j1 == 0) = true then (if isAdmB t j0 = true then 1 else 2)
+       else if entL t j1 ≤ entL t j0 then (if isAdmB t j0 = true then 3 else 4)
+       else if j0 + 1 < j1 then 5 else 6)
+  by_cases hz : (entL t j1 == 0) = true
+  · rw [if_pos hz, if_pos hz]
+  · rw [if_neg hz, if_neg hz]
+    by_cases hle : entL t j1 ≤ entL t j0
+    · rw [if_pos (show ((entL t j0 : Nat) : Int) ≥ ((entL t j1 : Nat) : Int) from by omega),
+        if_pos hle]
+    · rw [if_neg (show ¬(((entL t j0 : Nat) : Int) ≥ ((entL t j1 : Nat) : Int)) from by omega),
+        if_neg hle]
+      by_cases hlt : j0 + 1 < j1
+      · rw [if_pos (show ((j0 : Nat) : Int) + 1 < ((j1 : Nat) : Int) from by omega), if_pos hlt]
+      · rw [if_neg (show ¬(((j0 : Nat) : Int) + 1 < ((j1 : Nat) : Int)) from by omega),
+          if_neg hlt]
+
+/-! ### 枝の 4 つの材料、まとめて -/
+
+theorem lenI_sub_one (t : B) (h1 : 1 < sizeB t) :
+    lenI (psM (matB t 0)) - 1 = ((sizeB t - 1 : Nat) : Int) := by
+  rw [lenI_matB]
+  omega
+
+/-- **枝が使う `ty`。** -/
+theorem branch_ty (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) :
+    transTypeMain (psM (matB t 0))
+        (fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0)
+        (lenI (psM (matB t 0)) - 1)
+      = tyMainB t (j0B t) (sizeB t - 1) := by
+  rw [fpar_last_spine t h1 hprin, lenI_sub_one t h1]
+  exact transTypeMain_tree t (j0B t) (sizeB t - 1) (by
+    have := j0B_lt t h1 hprin
+    omega)
+
+/-- **枝が要求する `jn1`。** -/
+theorem branch_jn1 (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) :
+    adm (psM (matB t 0)) (fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0)
+      = ((admB t (j0B t) : Nat) : Int) := by
+  rw [fpar_last_spine t h1 hprin]
+  exact adm_tree t (j0B t) (by
+    have := j0B_lt t h1 hprin
+    omega)
+
+/-! ### 5. memo に外れた型 1-6 の枝 -/
+
+/-- `c1` を計算し終えた時点の (値, 表)。 -/
+def mainC1 (f : Nat) (M : Trans.Recal.PS) (tbl : Trans.Recal.Memo) : BT × Trans.Recal.Memo :=
+  (Trans.Recal.runAux f (predP M) (some (adm M (fpar M 0 (lenI M - 1) 0)))).run
+    ((Trans.Recal.runAux f (predP M) none).run tbl).2
+
+/-- 枝の `c2`。 -/
+def mainC2 (M : Trans.Recal.PS) (c1 : BT) : BT :=
+  mkC2 M (fpar M 0 (lenI M - 1) 0) (lenI M - 1)
+    (transTypeMain M (fpar M 0 (lenI M - 1) 0) (lenI M - 1)) c1
+
+/-- `replMark` に渡す深さの上限。 -/
+def mainDep (c1 c2 : BT) : Nat :=
+  Trans.Dict.BT.size c1 + Trans.Dict.BT.size c2 + 4
+
+/-- 型 1-6 の枝が `Trans` に返す値。 -/
+def mainVal (M : Trans.Recal.PS) (t1 c1 : BT) : BT :=
+  (replMark (Trans.Dict.BT.size t1 + mainDep c1 (mainC2 M c1)) t1 c1 (mainC2 M c1)).getD BT.zero
+
+/-- `c0` を計算し終えた時点の (値, 表)。 -/
+def mainC0 (f : Nat) (M : Trans.Recal.PS) (m : Int) (tbl : Trans.Recal.Memo) :
+    BT × Trans.Recal.Memo :=
+  (Trans.Recal.runAux f (predP M) (some m)).run (mainC1 f M tbl).2
+
+/-- 型 1-6 の枝が `Mark m` (`m < j1`) に返す値。 -/
+def markVal (M : Trans.Recal.PS) (c0 c1 : BT) : BT :=
+  if isMarkedB c0 c1 then
+    (replMark (Trans.Dict.BT.size c0 + mainDep c1 (mainC2 M c1)) c0 c1 (mainC2 M c1)).getD BT.zero
+  else BT.D (gp1 M (lenI M - 1)).toNat BT.zero
+
+/-- memo に外れた型 1-6 の枝 (要求は `Trans`)。 -/
+theorem run_main_miss_none (f : Nat) (M : Trans.Recal.PS) (tbl : Trans.Recal.Memo) (t1 : BT)
+    (hred : isReducedP M = true) (hj1 : (lenI M - 1 == 0) = false)
+    (hprin : isPrincipalP M = true)
+    (ht1 : ((Trans.Recal.runAux f (predP M) none).run tbl).1 = t1)
+    (hne : (t1 == BT.zero) = false)
+    (h : tbl.find? (fun q => q.1 == (M, (none : Option Int))) = none) :
+    (Trans.Recal.runAux (f + 1) M none).run tbl
+      = (mainVal M t1 (mainC1 f M tbl).1,
+         ((M, (none : Option Int)), mainVal M t1 (mainC1 f M tbl).1) :: (mainC1 f M tbl).2) := by
+  have hz' : Trans.Recal.runAux f (predP M) none tbl
+      = (t1, (Trans.Recal.runAux f (predP M) none tbl).2) := by
+    rw [← ht1]
+    rfl
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h, hred, hj1, hprin,
+    Bool.not_true, Bool.false_eq_true, if_false]
+  rw [hz']
+  simp only [hne, Bool.false_eq_true, if_false]
+  rfl
+
+/-- memo に外れた型 1-6 の枝 (要求は `Mark m`、`m < j1`)。 -/
+theorem run_main_miss_mark_lt (f : Nat) (M : Trans.Recal.PS) (m : Int)
+    (tbl : Trans.Recal.Memo) (t1 : BT)
+    (hred : isReducedP M = true) (hj1 : (lenI M - 1 == 0) = false)
+    (hprin : isPrincipalP M = true)
+    (ht1 : ((Trans.Recal.runAux f (predP M) none).run tbl).1 = t1)
+    (hne : (t1 == BT.zero) = false) (hm : m < lenI M - 1)
+    (h : tbl.find? (fun q => q.1 == (M, (some m : Option Int))) = none) :
+    (Trans.Recal.runAux (f + 1) M (some m)).run tbl
+      = (markVal M (mainC0 f M m tbl).1 (mainC1 f M tbl).1,
+         ((M, (some m : Option Int)),
+            markVal M (mainC0 f M m tbl).1 (mainC1 f M tbl).1) :: (mainC0 f M m tbl).2) := by
+  have hz' : Trans.Recal.runAux f (predP M) none tbl
+      = (t1, (Trans.Recal.runAux f (predP M) none tbl).2) := by
+    rw [← ht1]
+    rfl
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h, hred, hj1, hprin,
+    Bool.not_true, Bool.false_eq_true, if_false]
+  rw [hz']
+  simp only [hne, Bool.false_eq_true, if_false, if_pos hm]
+  rfl
+
+/-- memo に外れた型 1-6 の枝 (要求は `Mark m`、`j1 ≤ m`)。 -/
+theorem run_main_miss_mark_ge (f : Nat) (M : Trans.Recal.PS) (m : Int)
+    (tbl : Trans.Recal.Memo) (t1 : BT)
+    (hred : isReducedP M = true) (hj1 : (lenI M - 1 == 0) = false)
+    (hprin : isPrincipalP M = true)
+    (ht1 : ((Trans.Recal.runAux f (predP M) none).run tbl).1 = t1)
+    (hne : (t1 == BT.zero) = false) (hm : ¬(m < lenI M - 1))
+    (h : tbl.find? (fun q => q.1 == (M, (some m : Option Int))) = none) :
+    (Trans.Recal.runAux (f + 1) M (some m)).run tbl
+      = (BT.D (gp1 M (lenI M - 1)).toNat BT.zero,
+         ((M, (some m : Option Int)), BT.D (gp1 M (lenI M - 1)).toNat BT.zero)
+           :: (mainC1 f M tbl).2) := by
+  have hz' : Trans.Recal.runAux f (predP M) none tbl
+      = (t1, (Trans.Recal.runAux f (predP M) none tbl).2) := by
+    rw [← ht1]
+    rfl
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h, hred, hj1, hprin,
+    Bool.not_true, Bool.false_eq_true, if_false]
+  rw [hz']
+  simp only [hne, Bool.false_eq_true, if_false, if_neg hm]
+  rfl
+
+/-! ### 測定 -/
+
+/-- 型 1-6 の枝に落ちる標準形の添字。 -/
+def pop6 (L n : Nat) : List B :=
+  (popNFB L n).filter fun t =>
+    1 < sizeB t && isPrincipalP (psM (matB t 0)) && !(bVal (dropLastB t) == BT.zero)
+
+-- 母集団の大きさ。
+#guard (pop6 3 6).length == 440
+-- 1. `j0` は祖先鎖の最後から 2 番目 (証明ずみ、記録として)。
+#guard (pop6 3 6).all fun t =>
+  let M := psM (matB t 0)
+  fpar M 0 (lenI M - 1) 0 == ((j0B t : Nat) : Int)
+-- 2. `isAdm` は局所的 (証明ずみ、全位置で)。
+#guard (pop6 3 6).all fun t =>
+  (List.range (sizeB t + 1)).all fun j => isAdm (psM (matB t 0)) ((j : Nat) : Int) == isAdmB t j
+-- 3. `Adm` は添字の側の再帰 (証明ずみ、全位置で)。
+#guard (pop6 3 6).all fun t =>
+  (List.range (sizeB t + 1)).all fun j =>
+    adm (psM (matB t 0)) ((j : Nat) : Int) == ((admB t j : Nat) : Int)
+-- 4. 型は木の言葉で読める (証明ずみ)。
+#guard (pop6 3 6).all fun t =>
+  let M := psM (matB t 0)
+  transTypeMain M (fpar M 0 (lenI M - 1) 0) (lenI M - 1) == tyMainB t (j0B t) (sizeB t - 1)
+-- 型の分布 (440 個): 1:176, 2:8, 3:76, 4:8, 5:116, 6:56。
+#guard ((pop6 3 6).map fun t => tyMainB t (j0B t) (sizeB t - 1)).foldl
+    (fun (a : List (Nat × Nat)) k =>
+      if a.any (fun p => p.1 == k) then a.map (fun p => if p.1 == k then (p.1, p.2 + 1) else p)
+      else a ++ [(k, 1)]) []
+  == [(1, 176), (6, 56), (3, 76), (5, 116), (2, 8), (4, 8)]
+
+-- 2 は標準形を仮定しない: 標準形でない添字でも成り立つ。
+#guard (((List.range 5).flatMap (enumNodes 3)).filter fun t => t != .nil).length == 1290
+#guard (((List.range 5).flatMap (enumNodes 3)).filter fun t => t != .nil).all fun t =>
+  (List.range (sizeB t + 1)).all fun j => isAdm (psM (matB t 0)) ((j : Nat) : Int) == isAdmB t j
+
+-- **まだ証明していないこと**: `replMark` の等式。次の節の仕事。
+#guard (pop6 3 6).all fun t =>
+  let s := dropLastB t
+  let M := psM (matB t 0)
+  let c1 := bMark s (admB t (j0B t))
+  let c2 := mainC2 M c1
+  let t1 := bVal s
+  markOKB s (admB t (j0B t))
+    && ((replMark (Trans.Dict.BT.size t1 + mainDep c1 c2) t1 c1 c2).getD BT.zero == bVal t)
+-- 465 個 (段 < 4) でも同じ。
+#guard (pop6 4 6).length == 465
+#guard (pop6 4 6).all fun t =>
+  let s := dropLastB t
+  let M := psM (matB t 0)
+  let c1 := bMark s (admB t (j0B t))
+  let c2 := mainC2 M c1
+  let t1 := bVal s
+  markOKB s (admB t (j0B t))
+    && ((replMark (Trans.Dict.BT.size t1 + mainDep c1 c2) t1 c1 c2).getD BT.zero == bVal t)
+-- Mark の側も同じ 440 個で。
+#guard (pop6 3 6).all fun t =>
+  let s := dropLastB t
+  let M := psM (matB t 0)
+  let c1 := bMark s (admB t (j0B t))
+  (List.range (sizeB t)).all fun m =>
+    !(markOKB t m)
+      || (if ((m : Nat) : Int) < lenI M - 1
+          then markOKB s m && (markVal M (bMark s m) c1 == bMark t m)
+          else BT.D (gp1 M (lenI M - 1)).toNat BT.zero == bMark t m)
+
+end
+
 end Evidence.Region
