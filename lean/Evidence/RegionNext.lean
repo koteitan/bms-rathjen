@@ -7778,9 +7778,10 @@ port has to carry that context, and `bFold`'s pair is the smallest form of it th
 the reference — the two remaining guards pin the run behaviour, which is what distinguishes it
 from a plain left fold.
 
-WHAT IS NOT CLAIMED.  Everything here is measured.  The proof has to go through `runAux`'s memo
-table, the way `Rows/G3`, `G4` and `G11` did for their ladders — `bVal` is what their `Val` was
-per family, now written once for the whole region. -/
+PROVED IN §60.  When this section was written everything here was measured; the proof went
+through `runAux`'s memo table, the way `Rows/G3`, `G4` and `G11` did for their ladders — `bVal`
+is what their `Val` was per family, written once for the whole region — and closed in §60 as
+`transPort_bVal`.  The guards below are kept as the record of what was measured first. -/
 
 section
 open Trans.Recal
@@ -7879,7 +7880,7 @@ means something:
 an `Allowed` predicate: every mark the algorithm actually requests when running on `matB t 0`
 lies on that chain.
 
-WHAT IS NOT CLAIMED.  Measured, like §48.  Together the two give the `Val` of a `Good`/`Sound`
+PROVED IN §60, like §48 (`markRun_bMark`).  Together the two give the `Val` of a `Good`/`Sound`
 argument over `runAux`'s memo table — `Val t none = bVal t`, `Val t (some m) = bMark t m` — for
 the whole region rather than one family at a time. -/
 
@@ -13961,6 +13962,616 @@ theorem runAux_main_mark (g : Nat) (t : B) (m : Int) (hnf : nfB t = true) (h1 : 
     !(markOKB t m) || markRun (psM (matB t 0)) (Int.ofNat m) == bMark t m
 
 /-! ### 公理の確認 -/
+
+end
+
+/-! ## §60 THE OUTER INDUCTION — AND THE PORT CLOSES
+
+    runAux_sum_mark   the one branch nobody had done: type -2 with `req = some m`
+    runAux_index      the induction that runs all four branches, on the number of nodes
+    transPort_bVal    `Trans (psM (matB t 0)) = bVal t`        — §48, now a THEOREM
+    markRun_bMark     `Mark m (psM (matB t 0)) = bMark t m`    — §49, now a THEOREM
+
+§52, §55, §56 and §59 proved the four branches of `runAux` one at a time, each of them taking
+the values of its recursive calls as hypotheses.  This section supplies those hypotheses, and
+with them the two measurements that the whole port was written to justify become theorems.
+
+THE MISSING ARM.  `runAux`'s `ppair` branch has a `some m` arm that §55 did not do:
+
+    let lastq := ((ppair M).getLast?).getD []
+    let j0    := j1 - lastq.length + 1
+    if lastq == zeroPS then pure bOne else runAux f lastq (some (m - j0))
+
+**The algorithm never reaches it.**  Run `transPort` on every one of the 670 normal-form indices
+of `popNFB 3 6` and scan every memo key: ZERO keys ask for a `Mark` of a non-principal matrix.
+The only `Mark` request is the main branch's, and it goes to `Pred`, which keeps `nd 0 nil a`
+principal.  But 227 of those indices ARE non-principal and DO have `markOKB` positions, so a
+theorem quantified over `AllowedB` has to cover the arm anyway.  Both counts are frozen as
+guards at the end.
+
+It is small.  Write `t = nd v r c`, `lastBlk t = nd v nil c` (the last top-level addend) and
+`lastBlkOff t = sizeB r` (its root's preorder position):
+
+    sumLast_matB     `lastq` IS `psM (matB (lastBlk t) 0)`   — `ppair_matB`, and the last block
+    sumJ0_matB       the algorithm's `j0` IS `lastBlkOff t`
+    markIn_lastBlk   the mark transfers to the block verbatim, because a top-level node's
+                     contribution does not see its left siblings: the normal form forces its
+                     level to 0, and `bK 0 0 r c` is `psi_0(bArg 0 c)` whatever `r` is
+
+with one exception, and it is the `1 +` convention again.  When the last addend is `nd 0 nil nil`
+its `bMark` is `zero` by definition, `lastq` is `zeroPS`, and both sides answer `bOne`
+(`bMark_blk_zero`).  101 of the 227 take that side.
+
+THE INDUCTION.  `runAux_index` is a strong induction on the number of nodes, with the fuel a
+separate parameter bounded below.  The four branches, in `runAux`'s own order:
+
+    sizeB t = 1                runAux_leaf                                        (§52)
+    not principal              runAux_sum / runAux_sum_mark, blocks `topSplit t`   (§55, above)
+    bVal (dropLastB t) = 0     runAux_type0 / runAux_type0_mark                    (§56)
+    otherwise                  runAux_main / runAux_main_mark                      (§59)
+
+The recursive arguments shrink: `dropLastB t` by `sizeB_dropLast`, the blocks by
+`sizeB_topSplit_lt`.  That last one needs a fact no branch states — a non-principal index has a
+left sibling at the top, because `prin_of_deep` makes `nd v nil c` principal outright — and
+without it the one-block case would recurse into itself.  `markOKB_admB_j0` (§59) and
+`markOKB_dropLast` supply the `AllowedB` of the two `some` recursive calls of the main branch,
+`markOKB_lastBlk_gen` the one of the sum branch.
+
+Fuel is not a fight: `transFuel M = 40 + 6 * (M.length + maxE M)` and `M.length = sizeB t` by
+`sizeB_matB`, so `sizeB t ≤ transFuel (psM (matB t 0))` outright.
+
+WHAT IS NOW A THEOREM.  §48's `bVal` and §49's `bMark` were measurements.  `transPort_bVal` and
+`markRun_bMark` make them theorems — for EVERY normal-form index and EVERY `markOKB` position,
+not for an enumeration.  Nothing about `Trans` or `Mark` is measured any more.  What is still
+measured here is only the negative fact above, that the arm is unreachable in practice, and the
+two counts; both are statements about the enumeration, not about the algorithm. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+/-! ### 1. 最後の最上位の加数 -/
+
+/-- 最後の最上位の加数。 -/
+def lastBlk : B → B
+  | .nil => .nil
+  | .nd v _ c => .nd v .nil c
+
+/-- その根の前順位置。 -/
+def lastBlkOff : B → Nat
+  | .nil => 0
+  | .nd _ r _ => sizeB r
+
+theorem sizeB_lastBlk : ∀ (t : B), t ≠ .nil → lastBlkOff t + sizeB (lastBlk t) = sizeB t
+  | .nil, h => absurd rfl h
+  | .nd v r c, _ => by
+      show sizeB r + (sizeB (.nil : B) + 1 + sizeB c) = sizeB r + 1 + sizeB c
+      show sizeB r + (0 + 1 + sizeB c) = sizeB r + 1 + sizeB c
+      omega
+
+theorem getLast?_snoc {α : Type _} : ∀ (l : List α) (a : α), (l ++ [a]).getLast? = some a
+  | [], a => rfl
+  | x :: rest, a => by
+      show ((x :: (rest ++ [a])) : List α).getLast? = some a
+      rw [getLast?_cons_of_ne_nil x (rest ++ [a]) (by
+        intro hc
+        exact absurd (List.append_eq_nil_iff.mp hc).2 (by intro hcc; cases hcc))]
+      exact getLast?_snoc rest a
+
+/-- **(U)** アルゴリズムが見る最後のブロックは、最後の最上位の加数。 -/
+theorem sumLast_matB : ∀ (t : B), t ≠ .nil →
+    (((ppair (psM (matB t 0))).getLast?).getD []) = psM (matB (lastBlk t) 0)
+  | .nil, h => absurd rfl h
+  | .nd v r c, _ => by
+      rw [ppair_matB]
+      show ((((topSplit r ++ [B.nd v .nil c]).map
+        (fun s => psM (matB s 0))).getLast?).getD []) = psM (matB (B.nd v .nil c) 0)
+      rw [List.map_append]
+      show ((((topSplit r).map (fun s => psM (matB s 0))
+        ++ [psM (matB (B.nd v .nil c) 0)]).getLast?).getD []) = _
+      rw [getLast?_snoc]
+      rfl
+
+/-- **(T)** アルゴリズムの `j0` は最後のブロックの根の前順位置。 -/
+theorem sumJ0_matB (t : B) (h : t ≠ .nil) :
+    lenI (psM (matB t 0)) - 1 - (((psM (matB (lastBlk t) 0)).length : Nat) : Int) + 1
+      = ((lastBlkOff t : Nat) : Int) := by
+  rw [lenI_matB, psM_len, sizeB_matB]
+  have := sizeB_lastBlk t h
+  omega
+
+/-- 左の兄弟が無ければ principal。 -/
+theorem prin_of_no_sibs (v : Nat) (c : B) (h1 : 1 < sizeB (.nd v .nil c : B)) :
+    isPrincipalP (psM (matB (.nd v .nil c) 0)) = true := by
+  refine prin_of_deep (matB (.nd v .nil c) 0) ?_ (matB_node_deep v c 0)
+  rw [sizeB_matB]
+  exact h1
+
+/-- **非 principal なら最後のブロックは真に小さい。** 外側の帰納法が要る測度。 -/
+theorem lastBlk_lt (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = false) : sizeB (lastBlk t) < sizeB t := by
+  cases t with
+  | nil =>
+    have h0 : sizeB (.nil : B) = 0 := rfl
+    omega
+  | nd v r c =>
+    have hrne : r ≠ .nil := by
+      intro hc
+      subst hc
+      rw [prin_of_no_sibs v c h1] at hprin
+      exact Bool.noConfusion hprin
+    have hrp : 0 < sizeB r := sizeB_pos r hrne
+    show sizeB (.nil : B) + 1 + sizeB c < sizeB r + 1 + sizeB c
+    show 0 + 1 + sizeB c < sizeB r + 1 + sizeB c
+    omega
+
+/-! ### 2. 印はブロックへ移る -/
+
+/-- 根の寄与は左の兄弟に依らない (最上位なので `w = u = 0`)。 -/
+theorem markIn_lastBlk (r c : B) (k : Nat) (h : sizeB r ≤ k) :
+    markIn 0 (.nd 0 r c) k = markIn 0 (.nd 0 (.nil : B) c) (k - sizeB r) := by
+  rcases Nat.lt_or_ge k (sizeB r + 1) with hk | hk
+  · have hk0 : k = sizeB r := by omega
+    subst hk0
+    rw [markIn_node,
+      show sizeB r - sizeB r = sizeB (.nil : B) from by
+        show sizeB r - sizeB r = 0
+        omega,
+      markIn_node, bK_le 0 0 r c (Nat.le_refl 0), bK_le 0 0 .nil c (Nat.le_refl 0)]
+  · obtain ⟨i, rfl⟩ : ∃ i, k = sizeB r + 1 + i := ⟨k - sizeB r - 1, by omega⟩
+    rw [markIn_deep,
+      show sizeB r + 1 + i - sizeB r = sizeB (.nil : B) + 1 + i from by
+        show sizeB r + 1 + i - sizeB r = 0 + 1 + i
+        omega,
+      markIn_deep]
+
+/-- **(R')** 最後のブロックが `(0,0)` でなければ、印はブロックの印。 -/
+theorem bMark_lastBlk (r c : B)
+    (hne : (.nd 0 r c : B) ≠ .nd 0 .nil .nil)
+    (hbl : (.nd 0 (.nil : B) c : B) ≠ .nd 0 .nil .nil) (k : Nat) (hk : sizeB r ≤ k) :
+    bMark (.nd 0 r c) k = bMark (.nd 0 (.nil : B) c) (k - sizeB r) := by
+  rw [bMark_eq_markG _ _ hne, bMark_eq_markG _ _ hbl]
+  show (markIn 0 (B.nd 0 r c) k).getD .zero
+    = (markIn 0 (B.nd 0 (.nil : B) c) (k - sizeB r)).getD .zero
+  rw [markIn_lastBlk r c k hk]
+
+/-- 祖先鎖もそのまま移る。 -/
+theorem lastSpine_lastBlk (r c : B) (k : Nat) (h : k ∈ lastSpine (.nd 0 r c)) :
+    k - sizeB r ∈ lastSpine (.nd 0 (.nil : B) c) := by
+  rcases lastSpine_nd_cases 0 r c k h with he | ⟨j, hj, hje⟩
+  · rw [show k - sizeB r = 0 from by omega, lastSpine_nd]
+    exact List.mem_cons.mpr (Or.inl rfl)
+  · rw [show k - sizeB r = 0 + 1 + j from by omega, lastSpine_nd]
+    exact List.mem_cons_of_mem _ (List.mem_map.mpr ⟨j, hj, rfl⟩)
+
+/-- **(S')** 印が意味を持つ位置もそのまま移る。 -/
+theorem markOKB_lastBlk (r c : B)
+    (hne : (.nd 0 r c : B) ≠ .nd 0 .nil .nil)
+    (hbl : (.nd 0 (.nil : B) c : B) ≠ .nd 0 .nil .nil) (k : Nat)
+    (h : markOKB (.nd 0 r c) k = true) :
+    markOKB (.nd 0 (.nil : B) c) (k - sizeB r) = true := by
+  have hsp : k ∈ lastSpine (.nd 0 r c) := markOKB_spine _ _ h
+  have hk : sizeB r ≤ k := lastSpine_ge (.nd 0 r c) k hsp
+  have hD : ∃ p a, bMark (.nd 0 r c) k = BT.D p a := by
+    have h2 : (match bMark (.nd 0 r c) k with | .D _ _ => true | _ => false) = true :=
+      ((Bool.and_eq_true _ _).mp h).2
+    cases hb : bMark (.nd 0 r c) k with
+    | zero => rw [hb] at h2; exact absurd h2 (by intro hc; exact Bool.noConfusion hc)
+    | D p a => exact ⟨p, a, rfl⟩
+    | sum x y => rw [hb] at h2; exact absurd h2 (by intro hc; exact Bool.noConfusion hc)
+  obtain ⟨p, a, hpa⟩ := hD
+  refine markOKB_mk _ _ (lastSpine_lastBlk r c k hsp) p a ?_
+  rw [← bMark_lastBlk r c hne hbl k hk]
+  exact hpa
+
+/-- **(V)** 最後のブロックが `(0,0)` のときは、印は `1`。 -/
+theorem bMark_blk_zero (r : B) (k : Nat)
+    (hne : (.nd 0 r (.nil : B) : B) ≠ .nd 0 .nil .nil)
+    (h : markOKB (.nd 0 r (.nil : B)) k = true) : bMark (.nd 0 r .nil) k = bOne := by
+  have hsp : k ∈ lastSpine (.nd 0 r (.nil : B)) := markOKB_spine _ _ h
+  have hk : k = sizeB r := by
+    rcases lastSpine_nd_cases 0 r .nil k hsp with he | ⟨j, hj, _⟩
+    · exact he
+    · exact absurd hj (by intro hc; exact absurd hc (by intro hcc; cases hcc))
+  subst hk
+  rw [bMark_eq_markG _ _ hne]
+  show (markIn 0 (B.nd 0 r (.nil : B)) (sizeB r)).getD .zero = bOne
+  rw [markIn_node, bK_le 0 0 r .nil (Nat.le_refl 0)]
+  rfl
+
+/-! ### 3. 型 -2 の `Mark` の枝を開く -/
+
+/-- memo に外れた型 -2 の `Mark` の枝、最後のブロックが `(0,0)` のとき。 -/
+theorem run_summark_miss_zero (f : Nat) (M : Trans.Recal.PS) (m : Int)
+    (tbl : Trans.Recal.Memo)
+    (hred : isReducedP M = true) (hj1 : (lenI M - 1 == 0) = false)
+    (hprin : isPrincipalP M = false)
+    (hz : ((((ppair M).getLast?).getD []) == zeroPS) = true)
+    (h : tbl.find? (fun q => q.1 == (M, (some m : Option Int))) = none) :
+    (Trans.Recal.runAux (f + 1) M (some m)).run tbl
+      = (bOne, ((M, (some m : Option Int)), bOne) :: tbl) := by
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h, hred, hj1, hprin, hz,
+    Bool.not_true, Bool.not_false, Bool.false_eq_true, if_false, if_true]
+  rfl
+
+/-- memo に外れた型 -2 の `Mark` の枝、ブロックへ潜るとき。 -/
+theorem run_summark_miss_rec (f : Nat) (M : Trans.Recal.PS) (m : Int)
+    (tbl : Trans.Recal.Memo)
+    (hred : isReducedP M = true) (hj1 : (lenI M - 1 == 0) = false)
+    (hprin : isPrincipalP M = false)
+    (hz : ((((ppair M).getLast?).getD []) == zeroPS) = false)
+    (h : tbl.find? (fun q => q.1 == (M, (some m : Option Int))) = none) :
+    (Trans.Recal.runAux (f + 1) M (some m)).run tbl
+      = (((Trans.Recal.runAux f (((ppair M).getLast?).getD [])
+            (some (m - (lenI M - 1 - (((((ppair M).getLast?).getD []).length : Nat) : Int)
+              + 1)))).run tbl).1,
+         ((M, (some m : Option Int)),
+            ((Trans.Recal.runAux f (((ppair M).getLast?).getD [])
+              (some (m - (lenI M - 1 - (((((ppair M).getLast?).getD []).length : Nat) : Int)
+                + 1)))).run tbl).1)
+           :: ((Trans.Recal.runAux f (((ppair M).getLast?).getD [])
+                (some (m - (lenI M - 1 - (((((ppair M).getLast?).getD []).length : Nat) : Int)
+                  + 1)))).run tbl).2) := by
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h, hred, hj1, hprin, hz,
+    Bool.not_true, Bool.not_false, Bool.false_eq_true, if_false, if_true]
+  rfl
+
+/-! ### 4. 型 -2 の枝、`Mark` の側 -/
+
+/-- **`runAux` の型 -2 の枝** (要求は `Mark m`)。 -/
+theorem runAux_sum_mark (g : Nat) (t : B) (m : Int) (hnf : nfB t = true) (hne : t ≠ .nil)
+    (hj1 : (lenI (psM (matB t 0)) - 1 == 0) = false)
+    (hprin : isPrincipalP (psM (matB t 0)) = false)
+    (hal : AllowedB t (some m))
+    (tbl : Trans.Recal.Memo) (hs : SoundB tbl)
+    (ih : lastBlk t ≠ .nd 0 .nil .nil → ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (lastBlk t) 0))
+            (some (m - ((lastBlkOff t : Nat) : Int)))).run tb).1
+          = bValReq (lastBlk t) (some (m - ((lastBlkOff t : Nat) : Int)))
+        ∧ SoundB ((Trans.Recal.runAux g (psM (matB (lastBlk t) 0))
+            (some (m - ((lastBlkOff t : Nat) : Int)))).run tb).2) :
+    ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) (some m)).run tbl).1 = bValReq t (some m)
+      ∧ SoundB ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) (some m)).run tbl).2 := by
+  have hsz : 1 < sizeB t := by
+    have h0 : 0 < sizeB t := sizeB_pos t hne
+    rcases Nat.lt_or_ge 1 (sizeB t) with hlt | hge
+    · exact hlt
+    · exfalso
+      have he : sizeB t = 1 := by omega
+      have hz0 : lenI (psM (matB t 0)) - 1 = 0 := by rw [lenI_matB, he]; rfl
+      rw [hz0] at hj1
+      exact absurd hj1 (by decide)
+  obtain ⟨v, r, c, rfl⟩ : ∃ v r c, t = .nd v r c := by
+    cases t with
+    | nil => exact absurd rfl hne
+    | nd v r c => exact ⟨v, r, c, rfl⟩
+  have hv0 : v = 0 := by
+    have := ((nfLe_nd_iff 0 v r c).mp hnf).1
+    omega
+  subst hv0
+  obtain ⟨k, hkm, hkok⟩ : ∃ k : Nat, (some m : Option Int) = some ((k : Nat) : Int)
+      ∧ markOKB (.nd 0 r c) k = true := by
+    rcases hal with h | h
+    · exact absurd h (by intro hcc; cases hcc)
+    · exact h
+  have hmk : m = ((k : Nat) : Int) := Option.some.inj hkm
+  subst hmk
+  have hbv : bValReq (.nd 0 r c) (some ((k : Nat) : Int)) = bMark (.nd 0 r c) k := by
+    show bMark (.nd 0 r c) (((k : Nat) : Int)).toNat = _
+    rw [toNat_cast]
+  have hleaf : (B.nd 0 r c : B) ≠ .nd 0 .nil .nil := ne_leaf_of_size _ hsz
+  cases hf : tbl.find? (fun z => z.1 == (psM (matB (B.nd 0 r c) 0),
+      (some ((k : Nat) : Int) : Option Int))) with
+  | some p =>
+    rw [runHit g _ (some ((k : Nat) : Int)) tbl p hf]
+    obtain ⟨hg, he⟩ := goodB_of_find hs hf
+    exact ⟨hg _ (some ((k : Nat) : Int)) hnf he (Or.inr ⟨k, rfl, hkok⟩), hs⟩
+  | none =>
+    by_cases hcn : c = (.nil : B)
+    · subst hcn
+      have hzq : (((ppair (psM (matB (B.nd 0 r (.nil : B)) 0))).getLast?).getD []
+          == zeroPS) = true := by
+        rw [sumLast_matB _ hne]
+        rfl
+      have hval : bMark (B.nd 0 r (.nil : B)) k = bOne := bMark_blk_zero r k hleaf hkok
+      rw [run_summark_miss_zero g _ _ tbl (isReducedP_matB _ hnf) hj1 hprin hzq hf,
+        ← hval, ← hbv]
+      exact ⟨rfl, SoundB_cons hs (goodB_mk (B.nd 0 r (.nil : B)) (some ((k : Nat) : Int)))⟩
+    · have hbl : lastBlk (B.nd 0 r c) ≠ .nd 0 .nil .nil := by
+        show (B.nd 0 (.nil : B) c : B) ≠ .nd 0 .nil .nil
+        intro hcc
+        apply hcn
+        injection hcc with _ _ h3
+      have hzq : (((ppair (psM (matB (B.nd 0 r c) 0))).getLast?).getD []
+          == zeroPS) = false := by
+        rw [sumLast_matB _ hne]
+        show (psM (matB (B.nd 0 (.nil : B) c) 0) == zeroPS) = false
+        rw [psM_matB_eq_zeroPS 0 c, beqB_false c .nil hcn]
+        rfl
+      have hkge : sizeB r ≤ k := lastSpine_ge _ k (markOKB_spine _ _ hkok)
+      have hnum : ((((k : Nat) : Int)
+          - ((lastBlkOff (B.nd 0 r c) : Nat) : Int))).toNat = k - sizeB r := by
+        show ((((k : Nat) : Int) - ((sizeB r : Nat) : Int))).toNat = k - sizeB r
+        omega
+      have hbvb : bValReq (lastBlk (B.nd 0 r c))
+            (some (((k : Nat) : Int) - ((lastBlkOff (B.nd 0 r c) : Nat) : Int)))
+          = bMark (B.nd 0 r c) k := by
+        show bMark (lastBlk (B.nd 0 r c)) ((((k : Nat) : Int)
+          - ((lastBlkOff (B.nd 0 r c) : Nat) : Int)).toNat) = _
+        rw [hnum]
+        exact (bMark_lastBlk r c hleaf hbl k hkge).symm
+      obtain ⟨hv1, hsd1⟩ := ih hbl tbl hs
+      rw [run_summark_miss_rec g _ _ tbl (isReducedP_matB _ hnf) hj1 hprin hzq hf,
+        sumLast_matB _ hne, sumJ0_matB _ hne, hv1, hbvb, ← hbv]
+      exact ⟨rfl, SoundB_cons hsd1 (goodB_mk (B.nd 0 r c) (some ((k : Nat) : Int)))⟩
+
+/-! ### 5. 外側の帰納法が使う測度と標準形 -/
+
+theorem sizeB_topSplit_le : ∀ (x : B), ∀ s ∈ topSplit x, sizeB s ≤ sizeB x
+  | .nil, s, hs => by
+      have h' : s ∈ ([] : List B) := hs
+      cases h'
+  | .nd v r a, s, hs => by
+      rcases List.mem_append.mp hs with h | h
+      · have := sizeB_topSplit_le r s h
+        show sizeB s ≤ sizeB r + 1 + sizeB a
+        omega
+      · rw [List.mem_singleton.mp h]
+        show sizeB (.nil : B) + 1 + sizeB a ≤ sizeB r + 1 + sizeB a
+        show 0 + 1 + sizeB a ≤ sizeB r + 1 + sizeB a
+        omega
+
+/-- **非 principal なら、どのブロックも節が減る。** -/
+theorem sizeB_topSplit_lt (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = false) :
+    ∀ s ∈ topSplit t, sizeB s < sizeB t := by
+  cases t with
+  | nil =>
+    have h0 : sizeB (.nil : B) = 0 := rfl
+    omega
+  | nd v r c =>
+    intro s hsm
+    have hrne : r ≠ .nil := by
+      intro hc
+      subst hc
+      rw [prin_of_no_sibs v c h1] at hprin
+      exact Bool.noConfusion hprin
+    have hrp : 0 < sizeB r := sizeB_pos r hrne
+    rcases List.mem_append.mp hsm with h | h
+    · have := sizeB_topSplit_le r s h
+      show sizeB s < sizeB r + 1 + sizeB c
+      omega
+    · rw [List.mem_singleton.mp h]
+      show sizeB (.nil : B) + 1 + sizeB c < sizeB r + 1 + sizeB c
+      show 0 + 1 + sizeB c < sizeB r + 1 + sizeB c
+      omega
+
+theorem nfB_topSplit : ∀ (x : B), nfB x = true → ∀ s ∈ topSplit x, nfB s = true
+  | .nil, _, s, hs => by
+      have h' : s ∈ ([] : List B) := hs
+      cases h'
+  | .nd v r a, hnf, s, hs => by
+      obtain ⟨hv, hr, ha⟩ := (nfLe_nd_iff 0 v r a).mp hnf
+      rcases List.mem_append.mp hs with h | h
+      · exact nfB_topSplit r hr s h
+      · rw [List.mem_singleton.mp h]
+        exact (nfLe_nd_iff 0 v .nil a).mpr ⟨hv, rfl, ha⟩
+
+theorem lastBlk_mem : ∀ (t : B), t ≠ .nil → lastBlk t ∈ topSplit t
+  | .nil, h => absurd rfl h
+  | .nd _ _ _, _ => List.mem_append.mpr (Or.inr (List.mem_singleton.mpr rfl))
+
+theorem lastBlk_ne_nil : ∀ (t : B), t ≠ .nil → lastBlk t ≠ .nil
+  | .nil, h => absurd rfl h
+  | .nd _ _ _, _ => by intro hc; exact B.noConfusion hc
+
+theorem lastBlkOff_le : ∀ (t : B) (k : Nat), k ∈ lastSpine t → lastBlkOff t ≤ k
+  | .nil, k, h => by
+      have h' : k ∈ ([] : List Nat) := h
+      cases h'
+  | .nd v r c, k, h => lastSpine_ge (.nd v r c) k h
+
+/-- **(S')**、標準形の添字について。 -/
+theorem markOKB_lastBlk_gen (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hbl : lastBlk t ≠ .nd 0 .nil .nil) (k : Nat) (h : markOKB t k = true) :
+    markOKB (lastBlk t) (k - lastBlkOff t) = true := by
+  cases t with
+  | nil =>
+    have h0 : sizeB (.nil : B) = 0 := rfl
+    omega
+  | nd v r c =>
+    have hv0 : v = 0 := by
+      have := ((nfLe_nd_iff 0 v r c).mp hnf).1
+      omega
+    subst hv0
+    exact markOKB_lastBlk r c (ne_leaf_of_size _ h1) hbl k h
+
+/-! ### 6. 外側の帰納法 -/
+
+/-- **移植の要。** 節の個数についての強帰納法で、`runAux` の 4 つの枝を回す。 -/
+theorem runAux_index : ∀ (n : Nat) (t : B) (req : Option Int),
+    sizeB t ≤ n → nfB t = true → t ≠ .nil → AllowedB t req →
+    ∀ (g : Nat), n ≤ g → ∀ (tbl : Trans.Recal.Memo), SoundB tbl →
+      ((Trans.Recal.runAux g (psM (matB t 0)) req).run tbl).1 = bValReq t req
+        ∧ SoundB ((Trans.Recal.runAux g (psM (matB t 0)) req).run tbl).2 := by
+  intro n
+  induction n with
+  | zero =>
+    intro t req hsz _ hne _ _ _ _ _
+    exact absurd hsz (by
+      have := sizeB_pos t hne
+      omega)
+  | succ n' ihn =>
+    intro t req hsz hnf hne hal g hg tbl hs
+    obtain ⟨g', rfl⟩ : ∃ g', g = g' + 1 := ⟨g - 1, by omega⟩
+    have hg' : n' ≤ g' := by omega
+    rcases Nat.lt_or_ge 1 (sizeB t) with h1 | hle1
+    · have hj1 : (lenI (psM (matB t 0)) - 1 == 0) = false := by
+        rw [lenI_matB]
+        refine decide_eq_false ?_
+        omega
+      by_cases hprin : isPrincipalP (psM (matB t 0)) = true
+      · have hd : sizeB (dropLastB t) ≤ n' := by
+          have := sizeB_dropLast t hne
+          omega
+        have hdnf : nfB (dropLastB t) = true := nfLe_dropLast t 0 hnf
+        have hdne : dropLastB t ≠ .nil := by
+          intro hc
+          have hh := sizeB_dropLast t hne
+          rw [hc] at hh
+          have h0 : sizeB (.nil : B) = 0 := rfl
+          omega
+        have ihd : ∀ tb : Trans.Recal.Memo, SoundB tb →
+            ((Trans.Recal.runAux g' (psM (matB (dropLastB t) 0)) none).run tb).1
+                = bVal (dropLastB t)
+              ∧ SoundB ((Trans.Recal.runAux g' (psM (matB (dropLastB t) 0)) none).run tb).2 :=
+          fun tb htb => ihn (dropLastB t) none hd hdnf hdne (Or.inl rfl) g' hg' tb htb
+        by_cases hzv : bVal (dropLastB t) = BT.zero
+        · cases req with
+          | none => exact runAux_type0 g' t hnf h1 hprin hzv tbl hs ihd
+          | some mm => exact runAux_type0_mark g' t mm hnf h1 hprin hzv hal tbl hs ihd
+        · have hokj := markOKB_admB_j0 t hnf h1 hprin hzv
+          have ihm : ∀ tb : Trans.Recal.Memo, SoundB tb →
+              ((Trans.Recal.runAux g' (psM (matB (dropLastB t) 0))
+                   (some ((admB t (j0B t) : Nat) : Int))).run tb).1
+                  = bMark (dropLastB t) (admB t (j0B t))
+                ∧ SoundB ((Trans.Recal.runAux g' (psM (matB (dropLastB t) 0))
+                   (some ((admB t (j0B t) : Nat) : Int))).run tb).2 :=
+            fun tb htb => ihn (dropLastB t) (some ((admB t (j0B t) : Nat) : Int)) hd hdnf hdne
+              (Or.inr ⟨admB t (j0B t), rfl, hokj.1⟩) g' hg' tb htb
+          cases req with
+          | none => exact runAux_main g' t hnf h1 hprin hzv tbl hs ihd ihm
+          | some mm =>
+            have ihm2 : mm < lenI (psM (matB t 0)) - 1 → ∀ tb : Trans.Recal.Memo, SoundB tb →
+                ((Trans.Recal.runAux g' (psM (matB (dropLastB t) 0)) (some mm)).run tb).1
+                    = bMark (dropLastB t) mm.toNat
+                  ∧ SoundB ((Trans.Recal.runAux g' (psM (matB (dropLastB t) 0))
+                      (some mm)).run tb).2 := by
+              intro hlt tb htb
+              obtain ⟨k, hkm, hkok⟩ : ∃ k : Nat, (some mm : Option Int) = some ((k : Nat) : Int)
+                  ∧ markOKB t k = true := by
+                rcases hal with h | h
+                · exact absurd h (by intro hc; cases hc)
+                · exact h
+              have hmk : mm = ((k : Nat) : Int) := Option.some.inj hkm
+              subst hmk
+              have hsleaf : dropLastB t ≠ .nd 0 .nil .nil := by
+                intro hc
+                exact hzv (by rw [hc]; exact bVal_leaf)
+              have hklt : k + 1 < sizeB t := by
+                rw [lenI_matB] at hlt
+                omega
+              exact ihn (dropLastB t) (some ((k : Nat) : Int)) hd hdnf hdne
+                (Or.inr ⟨k, rfl, markOKB_dropLast t k h1 hsleaf hkok hklt⟩) g' hg' tb htb
+            exact runAux_main_mark g' t mm hnf h1 hprin hzv hal tbl hs ihd ihm ihm2
+      · have hprinf : isPrincipalP (psM (matB t 0)) = false := Bool.eq_false_iff.mpr hprin
+        cases req with
+        | none =>
+          refine runAux_sum g' t hnf hne hj1 hprinf tbl hs ?_
+          intro s hsm tb htb
+          refine ihn s none ?_ (nfB_topSplit t hnf s hsm) ?_ (Or.inl rfl) g' hg' tb htb
+          · have := sizeB_topSplit_lt t h1 hprinf s hsm
+            omega
+          · obtain ⟨w, cc, hw⟩ := topSplit_shape t s hsm
+            rw [hw]
+            intro hc
+            exact B.noConfusion hc
+        | some mm =>
+          refine runAux_sum_mark g' t mm hnf hne hj1 hprinf hal tbl hs ?_
+          intro hbl tb htb
+          obtain ⟨k, hkm, hkok⟩ : ∃ k : Nat, (some mm : Option Int) = some ((k : Nat) : Int)
+              ∧ markOKB t k = true := by
+            rcases hal with h | h
+            · exact absurd h (by intro hc; cases hc)
+            · exact h
+          have hmk : mm = ((k : Nat) : Int) := Option.some.inj hkm
+          subst hmk
+          have hkge : lastBlkOff t ≤ k := lastBlkOff_le t k (markOKB_spine t k hkok)
+          rw [show ((k : Nat) : Int) - ((lastBlkOff t : Nat) : Int)
+              = (((k - lastBlkOff t : Nat)) : Int) from by omega]
+          refine ihn (lastBlk t) (some (((k - lastBlkOff t : Nat)) : Int)) ?_
+            (nfB_topSplit t hnf (lastBlk t) (lastBlk_mem t hne)) (lastBlk_ne_nil t hne)
+            (Or.inr ⟨k - lastBlkOff t, rfl, markOKB_lastBlk_gen t hnf h1 hbl k hkok⟩)
+            g' hg' tb htb
+          have := lastBlk_lt t h1 hprinf
+          omega
+    · have hs1 : sizeB t = 1 := by
+        have := sizeB_pos t hne
+        omega
+      obtain ⟨v, rfl⟩ := sizeB_eq_one t hs1
+      have hv0 : v = 0 := by
+        have := ((nfLe_nd_iff 0 v .nil .nil).mp hnf).1
+        omega
+      subst hv0
+      exact runAux_leaf g' req tbl hs hal
+
+/-! ### 7. §48 と §49 は定理になる -/
+
+theorem sizeB_le_transFuel (t : B) : sizeB t ≤ transFuel (psM (matB t 0)) := by
+  show sizeB t ≤ 40 + 6 * ((psM (matB t 0)).length + maxE (psM (matB t 0)))
+  rw [psM_len, sizeB_matB]
+  omega
+
+/-- **§48 の閉じた形は `Trans` そのもの。** -/
+theorem transPort_bVal (t : B) (hnf : nfB t = true) (hne : t ≠ .nil) :
+    transPort (psM (matB t 0)) = bVal t := by
+  have h := runAux_index (sizeB t) t none (Nat.le_refl _) hnf hne (Or.inl rfl)
+    (transFuel (psM (matB t 0))) (sizeB_le_transFuel t) [] SoundB_nil
+  show ((Trans.Recal.runAux (transFuel (psM (matB t 0))) (psM (matB t 0)) none).run []).1
+    = bVal t
+  exact h.1
+
+/-- **§49 の閉じた形は `Mark m` そのもの。** -/
+theorem markRun_bMark (t : B) (m : Nat) (hnf : nfB t = true) (h : markOKB t m = true) :
+    markRun (psM (matB t 0)) ((m : Nat) : Int) = bMark t m := by
+  have hne : t ≠ .nil := by
+    intro hc
+    have hsp : m ∈ lastSpine t := markOKB_spine t m h
+    rw [hc] at hsp
+    have h' : m ∈ ([] : List Nat) := hsp
+    cases h'
+  have hh := runAux_index (sizeB t) t (some ((m : Nat) : Int)) (Nat.le_refl _) hnf hne
+    (Or.inr ⟨m, rfl, h⟩) (transFuel (psM (matB t 0))) (sizeB_le_transFuel t) [] SoundB_nil
+  show ((Trans.Recal.runAux (transFuel (psM (matB t 0))) (psM (matB t 0))
+      (some ((m : Nat) : Int))).run []).1 = bMark t m
+  exact hh.1
+
+/-! ### 測定 -/
+
+-- **負の測定: 型 -2 の `Mark` の枝には、走らせても来ない。**
+-- memo に積まれる鍵のうち、principal でない行列に `Mark` を要求するものは 1 つも無い。
+#guard (popNFB 3 6).all fun t =>
+  (memoKeys (psM (matB t 0))).all fun p =>
+    match p.1.2 with
+    | none => true
+    | some _ => isPrincipalP p.1.1
+-- それでも `AllowedB` で量化した定理は覆わねばならない。非 principal な標準形の添字は
+-- 228 個、そのうち `markOKB` な位置を持つものが 227 個。
+#guard ((popNFB 3 6).filter fun t => !(isPrincipalP (psM (matB t 0)))).length == 228
+#guard ((popNFB 3 6).filter fun t =>
+    !(isPrincipalP (psM (matB t 0)))
+      && (List.range (sizeB t)).any (fun m => markOKB t m)).length == 227
+-- そのうち 101 個は最後の加数が `(0,0)` で、`bOne` の側に落ちる。
+#guard ((popNFB 3 6).filter fun t =>
+    !(isPrincipalP (psM (matB t 0))) && (lastBlk t == .nd 0 .nil .nil)
+      && (List.range (sizeB t)).any (fun m => markOKB t m)).length == 101
+-- (U)(T) の読み替えは非 principal に限らず成り立つ (証明も `t ≠ nil` だけ)。
+#guard (popNFB 3 6).all fun t =>
+  ((ppair (psM (matB t 0))).getLast?).getD [] == psM (matB (lastBlk t) 0)
+#guard (popNFB 3 6).all fun t =>
+  let M := psM (matB t 0)
+  let lastq := ((ppair M).getLast?).getD []
+  (lenI M - 1 - (lastq.length : Int) + 1) == ((lastBlkOff t : Nat) : Int)
+#guard (popNFB 4 6).all fun t =>
+  let M := psM (matB t 0)
+  let lastq := ((ppair M).getLast?).getD []
+  (lenI M - 1 - (lastq.length : Int) + 1) == ((lastBlkOff t : Nat) : Int)
+-- 燃料は十分。
+#guard (popNFB 3 6).all fun t => sizeB t ≤ transFuel (psM (matB t 0))
 
 end
 
