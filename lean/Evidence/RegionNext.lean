@@ -7955,4 +7955,210 @@ def popNFB' (L n : Nat) : List B :=
 
 end
 
+/-! ## §50 THE MEMO TABLE
+
+§48 and §49 say what `runAux` returns; proving it means running the same argument `Rows/G3`,
+`G4` and `G11` ran for their ladders — an induction that carries the memo table and its
+invariant.  This section builds that scaffolding once, for indices instead of rungs.
+
+    bValReq t none      = bVal t          (§48)
+    bValReq t (some m)  = bMark t m       (§49)
+    AllowedB t req      the requests a proof is responsible for
+    GoodB p             "if this entry's key is an index of ours, its value is `bValReq`"
+    SoundB tbl          every entry is `GoodB`
+
+The one thing that is not bookkeeping is `goodB_mk`: an entry pushed for index `s` has to be
+`GoodB`, which means its value must be right for EVERY index whose matrix is that key — so the
+encoding has to be injective, and `matB_inj` proves it is.  The reason is local: in
+`matB (nd v r a) d = matB r d ++ [d, v] :: matB a (d+1)` every column after the node is deeper
+than `d` (`matB_deep_after`), so the node's position is the LAST column of depth `d` and the
+three pieces can be read back off the list.  `psM_inj_matB` carries that through `psM`, which
+loses nothing because `matB`'s columns have exactly two rows.
+
+`runHit` is the memo-hit step of `runAux`, proved here rather than imported: `Rows/Selected.lean`
+has the same lemma, but it sits above this file. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-! ### `matB` は単射 -/
+
+theorem matB_len_nd (v : Nat) (r a : B) (d : Nat) :
+    (matB (.nd v r a) d).length = (matB r d).length + 1 + (matB a (d + 1)).length := by
+  show (matB r d ++ ([d, v] :: matB a (d + 1))).length = _
+  rw [List.length_append, List.length_cons]
+  omega
+
+theorem matB_eq_nil_iff : ∀ (t : B) (d : Nat), matB t d = [] ↔ t = .nil
+  | .nil, _ => ⟨fun _ => rfl, fun _ => rfl⟩
+  | .nd v r a, d => by
+      constructor
+      · intro h
+        exfalso
+        have hlen : (matB (.nd v r a) d).length = 0 := by rw [h]; rfl
+        have := matB_len_nd v r a d
+        omega
+      · intro h
+        exact absurd h (by intro hc; exact B.noConfusion hc)
+
+theorem matB_root_ent (v : Nat) (r a : B) (d y : Nat) :
+    ent (matB (.nd v r a) d) (matB r d).length y = ([d, v] : Col).getD y 0 := by
+  show ent (matB r d ++ ([d, v] :: matB a (d + 1))) (matB r d).length y = _
+  rw [ent_append _ _ _ y (Nat.le_refl _),
+    show (matB r d).length - (matB r d).length = 0 from by omega]
+  rfl
+
+theorem matB_deep_after (v : Nat) (r a : B) (d i : Nat)
+    (h1 : (matB r d).length < i) (h2 : i < (matB (.nd v r a) d).length) :
+    d < ent (matB (.nd v r a) d) i 0 := by
+  obtain ⟨k, hk⟩ : ∃ k, i = (matB r d).length + 1 + k := ⟨i - (matB r d).length - 1, by omega⟩
+  subst hk
+  have hklen : k < (matB a (d + 1)).length := by
+    rw [matB_len_nd] at h2
+    omega
+  have hstep : ent (matB (.nd v r a) d) ((matB r d).length + 1 + k) 0
+      = ent (matB a (d + 1)) k 0 := by
+    show ent (matB r d ++ ([d, v] :: matB a (d + 1))) ((matB r d).length + 1 + k) 0 = _
+    rw [ent_append _ _ _ 0 (by omega),
+      show (matB r d).length + 1 + k - (matB r d).length = k + 1 from by omega]
+    rfl
+  rw [hstep]
+  have hlb := matB_col_lb a (d + 1) _ (getD_mem (matB a (d + 1)) [] k hklen)
+  have : ent (matB a (d + 1)) k 0 = ((matB a (d + 1)).getD k []).getD 0 0 := rfl
+  omega
+
+/-- **添字は行列から読み取れる。** -/
+theorem matB_inj : ∀ (s s' : B) (d : Nat), matB s d = matB s' d → s = s' := by
+  intro s
+  induction s with
+  | nil =>
+    intro s' d h
+    exact ((matB_eq_nil_iff s' d).mp h.symm).symm
+  | nd v r a ihr iha =>
+    intro s' d h
+    cases s' with
+    | nil =>
+      exact absurd ((matB_eq_nil_iff _ d).mp h) (by intro hc; exact B.noConfusion hc)
+    | nd v' r' a' =>
+      have hlen : (matB r d).length = (matB r' d).length := by
+        rcases Nat.lt_trichotomy (matB r d).length (matB r' d).length with hlt | heq | hgt
+        · exfalso
+          have hb : (matB r' d).length < (matB (.nd v r a) d).length := by
+            rw [h, matB_len_nd]
+            omega
+          have h1 := matB_deep_after v r a d (matB r' d).length hlt hb
+          have h2 : ent (matB (.nd v' r' a') d) (matB r' d).length 0 = d :=
+            matB_root_ent v' r' a' d 0
+          rw [h] at h1
+          omega
+        · exact heq
+        · exfalso
+          have hb : (matB r d).length < (matB (.nd v' r' a') d).length := by
+            rw [← h, matB_len_nd]
+            omega
+          have h1 := matB_deep_after v' r' a' d (matB r d).length hgt hb
+          have h2 : ent (matB (.nd v r a) d) (matB r d).length 0 = d :=
+            matB_root_ent v r a d 0
+          rw [← h] at h1
+          omega
+      have hM : matB r d ++ ([d, v] :: matB a (d + 1))
+          = matB r' d ++ ([d, v'] :: matB a' (d + 1)) := h
+      obtain ⟨hr, htail⟩ := List.append_inj hM hlen
+      have hv : v = v' := by
+        have := List.head_eq_of_cons_eq htail
+        have hh : ([d, v] : Col) = [d, v'] := this
+        have := congrArg (fun c => List.getD c 1 0) hh
+        exact this
+      have ha : matB a (d + 1) = matB a' (d + 1) := List.tail_eq_of_cons_eq htail
+      rw [ihr r' d hr, iha a' (d + 1) ha, hv]
+
+theorem col_two (c : Col) (h : c.length = 2) : c = [c.getD 0 0, c.getD 1 0] := by
+  match c, h with
+  | [_, _], _ => rfl
+
+theorem congrArg₂' {x y x' y' : Nat} (h1 : x = x') (h2 : y = y') :
+    ([x, y] : Col) = [x', y'] := by rw [h1, h2]
+
+theorem psM_inj_matB (s s' : B) (h : psM (matB s 0) = psM (matB s' 0)) : s = s' := by
+  refine matB_inj s s' 0 ?_
+  have hlen : (matB s 0).length = (matB s' 0).length := by
+    have := congrArg List.length h
+    rw [psM_len, psM_len] at this
+    exact this
+  refine List.ext_getElem hlen (fun i h1 h2 => ?_)
+  have hi : ((psM (matB s 0)).getD i (0, 0)) = ((psM (matB s' 0)).getD i (0, 0)) := by
+    rw [h]
+  rw [getD_psM, getD_psM] at hi
+  have e0 : ent (matB s 0) i 0 = ent (matB s' 0) i 0 := by
+    have := congrArg Prod.fst hi
+    omega
+  have e1 : ent (matB s 0) i 1 = ent (matB s' 0) i 1 := by
+    have := congrArg Prod.snd hi
+    omega
+  have hc0 := matB_col_len s 0 _ (getD_mem (matB s 0) [] i h1)
+  have hc1 := matB_col_len s' 0 _ (getD_mem (matB s' 0) [] i h2)
+  have g0 : (matB s 0).getD i [] = (matB s' 0).getD i [] := by
+    rw [col_two _ hc0, col_two _ hc1]
+    exact congrArg₂' e0 e1
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h1] at g0
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h2] at g0
+  exact g0
+
+/-! ### memo 表の不変量 -/
+
+/-- 領域の `Val` — §48 と §49 を 1 つにしたもの。 -/
+def bValReq (t : B) : Option Int → BT
+  | none => bVal t
+  | some m => bMark t m.toNat
+
+/-- 許される要求。 -/
+def AllowedB (t : B) (req : Option Int) : Prop :=
+  req = none ∨ ∃ m : Nat, req = some ((m : Nat) : Int) ∧ markOKB t m = true
+
+/-- memo 表の 1 項が正しいこと。 -/
+def GoodB (p : (Trans.Recal.PS × Option Int) × BT) : Prop :=
+  ∀ (s : B) (req : Option Int), nfB s = true → p.1 = (psM (matB s 0), req) →
+    AllowedB s req → p.2 = bValReq s req
+
+def SoundB (tbl : Trans.Recal.Memo) : Prop := ∀ p ∈ tbl, GoodB p
+
+theorem SoundB_nil : SoundB [] := by
+  intro p hp
+  exact absurd hp (by simp)
+
+theorem SoundB_cons {tbl : Trans.Recal.Memo} (hs : SoundB tbl)
+    {p : (Trans.Recal.PS × Option Int) × BT} (hp : GoodB p) : SoundB (p :: tbl) := by
+  intro q hq
+  rcases List.mem_cons.mp hq with h | h
+  · subst h; exact hp
+  · exact hs q h
+
+theorem goodB_of_find {tbl : Trans.Recal.Memo} (hs : SoundB tbl)
+    {key : Trans.Recal.PS × Option Int} {p : (Trans.Recal.PS × Option Int) × BT}
+    (h : tbl.find? (fun z => z.1 == key) = some p) : GoodB p ∧ p.1 = key := by
+  refine ⟨hs p (List.mem_of_find?_eq_some h), ?_⟩
+  have hb : p.1 == key := List.find?_some (p := fun z => z.1 == key) (a := p) h
+  exact eq_of_beq hb
+
+/-- **新しく積む項はいつでも正しい。** `matB` が単射なので他の添字とぶつからない。 -/
+theorem goodB_mk (s : B) (req : Option Int) :
+    GoodB ((psM (matB s 0), req), bValReq s req) := by
+  intro s' req' _ heq _
+  have h1 : psM (matB s 0) = psM (matB s' 0) := congrArg Prod.fst heq
+  have h2 : req = req' := congrArg Prod.snd heq
+  rw [psM_inj_matB s s' h1, h2]
+
+/-- memo に当たったときは表をそのままに値を返す。 -/
+theorem runHit (f : Nat) (M : Trans.Recal.PS) (req : Option Int) (tbl : Trans.Recal.Memo)
+    (p : (Trans.Recal.PS × Option Int) × BT)
+    (h : tbl.find? (fun q => q.1 == (M, req)) = some p) :
+    (Trans.Recal.runAux (f + 1) M req).run tbl = (p.2, tbl) := by
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, StateT.pure, pure,
+    get, getThe, MonadStateOf.get, h]
+
+end
+
 end Evidence.Region
