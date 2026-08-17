@@ -6861,4 +6861,650 @@ theorem redN_fold_self (f : Nat) (X : Matrix) (hblk : BlkG X) (hlvl : LvlOKb X =
 
 end
 
+/-! ## §45 THE OTHER TWO BRANCHES
+
+`redN_diag` — the run covers the whole matrix.  `red` returns the diagonal (`red_jj`), and §39
+already says the first `tr + 1` entries of the answer ARE the diagonal; here `tr + 1` is the
+whole length, so the `take` is the identity.
+
+`redN_head` — the root's level `u` is at least 1.  `red` prepends a diagonal of height `u`,
+pushes the matrix down by `u`, reduces THAT, and then throws the diagonal away.  The prepended
+matrix is `auxMat X = diagMat u ++ sh u X`, and this section establishes what it needs:
+
+    blkG_auxMat / lvlOKb_auxMat   it is a block and it is in the class — `LvlOKb` survives
+                                  because levels are untouched and parents are either the
+                                  previous diagonal column or §38's `parent_in_blk`
+    runLen_auxMat                 the run covers at least the prepended diagonal: depth and
+                                  level both step by one along it, and at the junction the
+                                  root of `X` is deeper (it was pushed down) and higher
+                                  (its level is `u`, one more than `u - 1`)
+    anc0_auxMat_hi                so tree depth below the junction is `u + (tree depth in X)`
+    nrmBlk_auxMat_drop            hence dropping the first `u` entries of the answer for
+                                  `auxMat X` gives exactly the answer for `X`
+
+That last one is the point: `nrmM` puts a column at `root level + tree depth`, `X`'s root level
+IS `u`, and `auxMat X`'s root level is 0 with `u` added to every tree depth below the junction —
+the same numbers.  So the outer step is the identity: the translation `red` applies is
+`-(gp0) + gp1` read at the junction, and both are `u` there, so it translates by zero.
+
+`redN_block` is the two branches of the fold case packaged together (run covers everything, or
+not), which is what the level-positive case calls on `auxMat X`.  Note the bound it passes is
+`X.length`, NOT `(auxMat X).length` — `auxMat X` is longer than `X`, and the induction survives
+only because its BRANCHES are shorter than `X`, which is what `runLen_auxMat` buys. -/
+
+section
+open Trans.Recal
+
+
+/-! ### 走りが全部を覆う場合 -/
+
+theorem redN_diag (f : Nat) (X : Matrix) (hblk : BlkG X) (hlvl : LvlOKb X = true)
+    (h0d : ent X 0 0 = 0) (h0l : ent X 0 1 = 0) (hlen : 1 < X.length)
+    (hcov : X.length ≤ runLen X + 1) :
+    red (f + 1) (psM X) = nrmBlk X := by
+  have hpos : 0 < X.length := by omega
+  have htrlt := runLen_lt X hpos
+  have hzero : isZeroP (psM X) = false := by
+    show ((psM X).length == 1 && _) = false
+    rw [show ((psM X).length == 1) = false from by
+      rw [psM_len]; exact decide_eq_false (by omega)]
+    rfl
+  have hprin : isPrincipalP (psM X) = true := prin_of_deep X hlen hblk.2
+  have hg0 : gp0 (psM X) 0 = 0 := by
+    have hh : gp0 (psM X) 0 = ((ent X 0 0 : Nat) : Int) := psM_gp0 X 0
+    rw [hh, h0d]; rfl
+  have hg1 : gp1 (psM X) 0 = 0 := by
+    have hh : gp1 (psM X) 0 = ((ent X 0 1 : Nat) : Int) := psM_gp1 X 0
+    rw [hh, h0l]; rfl
+  have hlenI : lenI (psM X) - 1 = ((runLen X : Nat) : Int) := by
+    rw [lenI_psM]; omega
+  rw [Rows.Ladder.red_jj (psM X) f hzero hprin hg0 hg1
+      (by rw [trMax_runLen X hpos, hlenI]), hlenI,
+    ← nrmBlk_take X (runLen X) h0l hlvl htrlt (runLen_run X hpos),
+    List.take_of_length_le (by rw [nrmBlk_length]; omega)]
+
+/-- ブロック 1 つ・根は深さ 0 段 0 — 走りが尽きるかどうかで 2 つに分かれる。 -/
+theorem redN_block (f : Nat) (Z : Matrix) (bnd : Nat) (hblk : BlkG Z) (hlvl : LvlOKb Z = true)
+    (h0d : ent Z 0 0 = 0) (h0l : ent Z 0 1 = 0) (hlen : 1 < Z.length)
+    (hbnd : ∀ J, J < (blocks (Z.drop (runLen Z + 1))).length →
+              ((blocks (Z.drop (runLen Z + 1))).getD J []).length < bnd)
+    (ih : ∀ Y : Matrix, Y.length < bnd → BlkG Y → LvlOKb Y = true →
+            red f (psM Y) = nrmBlk Y) :
+    red (f + 1) (psM Z) = nrmBlk Z := by
+  rcases Nat.lt_or_ge (runLen Z + 1) Z.length with h | h
+  · exact redN_fold f Z bnd hblk hlvl h0d h0l hlen h hbnd ih
+  · exact redN_diag f Z hblk hlvl h0d h0l hlen h
+
+/-! ### 深さを一斉に上げる -/
+
+theorem sh_length (e : Nat) (X : Matrix) : (sh e X).length = X.length := List.length_map ..
+
+theorem ent_sh0 (e : Nat) (X : Matrix) (i : Nat) (hi : i < X.length) :
+    ent (sh e X) i 0 = ent X i 0 + e := by
+  show ((X.map (shc e)).getD i []).getD 0 0 = _
+  rw [getD_map_lt _ X [] [] i hi]
+  rfl
+
+theorem ent_sh1 (e : Nat) (X : Matrix) (i : Nat) (hi : i < X.length) :
+    ent (sh e X) i 1 = ent X i 1 := by
+  show ((X.map (shc e)).getD i []).getD 1 0 = _
+  rw [getD_map_lt _ X [] [] i hi]
+  exact getD_drop_one (X.getD i [])
+
+theorem parent_sh (e : Nat) (X : Matrix) :
+    ∀ i, i < X.length → parent (sh e X) 0 i = parent X 0 i := by
+  intro i0 hi0
+  refine parent_congr (sh e X) X (fun p i hpi hi => ?_) i0 (by rw [sh_length]; exact hi0)
+  rw [sh_length] at hi
+  rw [ent_sh0 e X p (by omega), ent_sh0 e X i hi]
+  by_cases hc : ent X p 0 < ent X i 0
+  · rw [decide_eq_true (show ent X p 0 + e < ent X i 0 + e from by omega), decide_eq_true hc]
+  · rw [decide_eq_false (show ¬(ent X p 0 + e < ent X i 0 + e) from by omega),
+      decide_eq_false hc]
+
+theorem anc0_sh (e : Nat) (X : Matrix) : ∀ i, i < X.length → anc0 (sh e X) i = anc0 X i := by
+  intro i hi
+  exact anc0_congr (sh e X) X (sh_length e X)
+    (fun j hj => parent_sh e X j (by rw [sh_length] at hj; exact hj))
+    i (by rw [sh_length]; exact hi)
+
+theorem blkG_sh (e : Nat) (X : Matrix) (h : BlkG X) : BlkG (sh e X) := by
+  refine ⟨by rw [sh_length]; exact h.1, ?_⟩
+  intro p hp hplen
+  rw [sh_length] at hplen
+  rw [ent_sh0 e X 0 h.1, ent_sh0 e X p hplen]
+  have := h.2 p hp hplen
+  omega
+
+/-! ### 対角の行列 -/
+
+theorem diagMat_length (k : Nat) : (diagMat k).length = k := by
+  show ((List.range k).map _).length = _
+  rw [List.length_map, List.length_range]
+
+theorem ent_diagMat (k i y : Nat) (hi : i < k) (hy : y < 2) : ent (diagMat k) i y = i := by
+  show (((List.range k).map (fun j => [j, j])).getD i []).getD y 0 = _
+  rw [getD_map_range k (fun j => [j, j]) [] i hi]
+  match y, hy with
+  | 0, _ => rfl
+  | 1, _ => rfl
+
+theorem psM_diagMat (k : Nat) (hk : 1 ≤ k) :
+    psM (diagMat k) = jjSeq 0 (((k : Nat) : Int) - 1) := by
+  show ((List.range k).map (fun j => [j, j])).map
+      (fun c => (((c.getD 0 0 : Nat) : Int), ((c.getD 1 0 : Nat) : Int))) = _
+  rw [List.map_map,
+    show ((k : Nat) : Int) - 1 = (((k - 1 : Nat)) : Int) from by omega,
+    jjSeq_zero (k - 1), show k - 1 + 1 = k from by omega]
+  rfl
+
+/-! ### 前置きした対角のついた行列 -/
+
+theorem auxMat_length (X : Matrix) : (auxMat X).length = ent X 0 1 + X.length := by
+  show (diagMat (ent X 0 1) ++ sh (ent X 0 1) X).length = _
+  rw [List.length_append, diagMat_length, sh_length]
+
+theorem ent_auxMat_lo (X : Matrix) (i y : Nat) (hi : i < ent X 0 1) (hy : y < 2) :
+    ent (auxMat X) i y = i := by
+  show ent (diagMat (ent X 0 1) ++ sh (ent X 0 1) X) i y = _
+  rw [ent_append_left _ _ i y (by rw [diagMat_length]; exact hi), ent_diagMat _ i y hi hy]
+
+theorem ent_auxMat_hi (X : Matrix) (k y : Nat) :
+    ent (auxMat X) (ent X 0 1 + k) y = ent (sh (ent X 0 1) X) k y := by
+  show ent (diagMat (ent X 0 1) ++ sh (ent X 0 1) X) (ent X 0 1 + k) y = _
+  rw [ent_append _ _ _ y (by rw [diagMat_length]; omega), diagMat_length,
+    show ent X 0 1 + k - ent X 0 1 = k from by omega]
+
+theorem blkG_auxMat (X : Matrix) (hu : 1 ≤ ent X 0 1) : BlkG (auxMat X) := by
+  refine ⟨by rw [auxMat_length]; omega, ?_⟩
+  intro p hp hplen
+  rw [auxMat_length] at hplen
+  rw [ent_auxMat_lo X 0 0 (by omega) (by omega)]
+  rcases Nat.lt_or_ge p (ent X 0 1) with hlo | hhi
+  · rw [ent_auxMat_lo X p 0 hlo (by omega)]
+    omega
+  · obtain ⟨k, rfl⟩ : ∃ k, p = ent X 0 1 + k := ⟨p - ent X 0 1, by omega⟩
+    rw [ent_auxMat_hi X k 0, ent_sh0 _ X k (by omega)]
+    omega
+
+/-- 前置きした対角の上の親は 1 つ左。 -/
+theorem parent_auxMat_lo (X : Matrix) (hblk : BlkG X) :
+    ∀ j, 1 ≤ j → j ≤ ent X 0 1 → parent (auxMat X) 0 j = some (j - 1) := by
+  intro j hj1 hju
+  obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  rw [show k + 1 - 1 = k from by omega]
+  refine parent_succ_of_lt (auxMat X) k ?_
+  rw [ent_auxMat_lo X k 0 (by omega) (by omega)]
+  rcases Nat.lt_or_ge (k + 1) (ent X 0 1) with hlo | hhi
+  · rw [ent_auxMat_lo X (k + 1) 0 hlo (by omega)]
+    omega
+  · rw [show k + 1 = ent X 0 1 + 0 from by omega, ent_auxMat_hi X 0 0,
+      ent_sh0 _ X 0 hblk.1]
+    omega
+
+/-- 前置きした対角の下では、親はもとの行列の親を `u` だけずらしたもの。 -/
+theorem parent_auxMat_hi (X : Matrix) (k q : Nat) (hk : k < X.length)
+    (hq : parent X 0 k = some q) :
+    parent (auxMat X) 0 (ent X 0 1 + k) = some (ent X 0 1 + q) := by
+  refine parent_in_blk (auxMat X) (ent X 0 1) (sh (ent X 0 1) X) k q
+    (fun i _ => ent_auxMat_hi X i 0) (by rw [sh_length]; exact hk) ?_
+  rw [parent_sh (ent X 0 1) X k hk]
+  exact hq
+
+theorem lvlOKb_auxMat (X : Matrix) (hu : 1 ≤ ent X 0 1) (hblk : BlkG X)
+    (hlvl : LvlOKb X = true) : LvlOKb (auxMat X) = true := by
+  show ((List.range (auxMat X).length).all _) = true
+  refine List.all_eq_true.mpr (fun i hi => ?_)
+  have hi' : i < ent X 0 1 + X.length := by
+    have := List.mem_range.mp hi
+    rw [auxMat_length] at this
+    exact this
+  rcases Nat.eq_zero_or_pos i with rfl | hipos
+  · rw [show parent (auxMat X) 0 0 = none from rfl]
+  · rcases Nat.lt_or_ge i (ent X 0 1 + 1) with hlo | hhi
+    · rw [parent_auxMat_lo X hblk i hipos (by omega)]
+      show decide (ent (auxMat X) i 1 ≤ ent (auxMat X) (i - 1) 1 + 1) = true
+      rw [ent_auxMat_lo X (i - 1) 1 (by omega) (by omega)]
+      rcases Nat.lt_or_ge i (ent X 0 1) with h2 | h2
+      · rw [ent_auxMat_lo X i 1 h2 (by omega)]
+        exact decide_eq_true (by omega)
+      · rw [show i = ent X 0 1 + 0 from by omega, ent_auxMat_hi X 0 1,
+          ent_sh1 _ X 0 hblk.1]
+        exact decide_eq_true (by omega)
+    · obtain ⟨k, rfl⟩ : ∃ k, i = ent X 0 1 + k := ⟨i - ent X 0 1, by omega⟩
+      have hkpos : 0 < k := by omega
+      obtain ⟨q, hq⟩ := parent_blk_some X k hkpos (by omega) hblk
+      have hqk := parent0_lt X k q hq
+      rw [parent_auxMat_hi X k q (by omega) hq]
+      show decide (ent (auxMat X) (ent X 0 1 + k) 1
+        ≤ ent (auxMat X) (ent X 0 1 + q) 1 + 1) = true
+      rw [ent_auxMat_hi X k 1, ent_auxMat_hi X q 1, ent_sh1 _ X k (by omega),
+        ent_sh1 _ X q (by omega)]
+      exact decide_eq_true (lvlOKb_at X hlvl k q (by omega) hq)
+
+/-! ### 走りは前置きした対角を最後まで走る -/
+
+theorem runLen_ge (M : Matrix) (m : Nat) (hpos : 0 < M.length) (hm : m < M.length)
+    (hcond : ∀ j, j < m → ent M j 0 < ent M (j + 1) 0 ∧ ent M j 1 < ent M (j + 1) 1) :
+    m ≤ runLen M := by
+  rcases Nat.lt_or_ge (runLen M) m with h | h
+  · exfalso
+    rcases runLen_stop M hpos with hstop | hstop
+    · omega
+    · exact hstop (hcond (runLen M) h)
+  · exact h
+
+theorem runLen_auxMat (X : Matrix) (hu : 1 ≤ ent X 0 1) (hblk : BlkG X) :
+    ent X 0 1 ≤ runLen (auxMat X) := by
+  have hlen0 := hblk.1
+  refine runLen_ge (auxMat X) (ent X 0 1) (by rw [auxMat_length]; omega)
+    (by rw [auxMat_length]; omega) (fun j hj => ?_)
+  rcases Nat.lt_or_ge (j + 1) (ent X 0 1) with hlo | hhi
+  · rw [ent_auxMat_lo X j 0 (by omega) (by omega), ent_auxMat_lo X (j + 1) 0 hlo (by omega),
+      ent_auxMat_lo X j 1 (by omega) (by omega), ent_auxMat_lo X (j + 1) 1 hlo (by omega)]
+    exact ⟨by omega, by omega⟩
+  · rw [ent_auxMat_lo X j 0 (by omega) (by omega), ent_auxMat_lo X j 1 (by omega) (by omega),
+      show j + 1 = ent X 0 1 + 0 from by omega, ent_auxMat_hi X 0 0, ent_auxMat_hi X 0 1,
+      ent_sh0 _ X 0 hlen0, ent_sh1 _ X 0 hlen0]
+    exact ⟨by omega, by omega⟩
+
+/-! ### 前置きした対角の木 -/
+
+theorem anc0_auxMat_lo (X : Matrix) (hblk : BlkG X) :
+    ∀ j, j ≤ ent X 0 1 → anc0 (auxMat X) j = j :=
+  anc0_spine (auxMat X) (ent X 0 1) (by rw [auxMat_length]; have := hblk.1; omega)
+    (parent_auxMat_lo X hblk)
+
+theorem anc0_auxMat_hi (X : Matrix) (hblk : BlkG X) (k : Nat)
+    (hk : k < X.length) : anc0 (auxMat X) (ent X 0 1 + k) = ent X 0 1 + anc0 X k := by
+  rw [anc0_blk (auxMat X) (ent X 0 1) (sh (ent X 0 1) X)
+      (fun i _ => ent_auxMat_hi X i 0) (blkG_sh (ent X 0 1) X hblk)
+      (by rw [auxMat_length, sh_length]; omega) k k (Nat.le_refl k)
+      (by rw [sh_length]; exact hk),
+    anc0_auxMat_lo X hblk (ent X 0 1) (Nat.le_refl _), anc0_sh (ent X 0 1) X k hk]
+
+theorem nrmBlk_auxMat_drop (X : Matrix) (hu : 1 ≤ ent X 0 1) (hblk : BlkG X) :
+    (nrmBlk (auxMat X)).drop (ent X 0 1) = nrmBlk X := by
+  rw [nrmBlk_eq_map (auxMat X), auxMat_length,
+    range_add_map (nrmG (auxMat X)) (ent X 0 1) X.length,
+    drop_app_len _ _ (ent X 0 1) (by rw [List.length_map, List.length_range]),
+    nrmBlk_eq_map X]
+  refine List.map_congr_left (fun k hk => ?_)
+  have hk' : k < X.length := List.mem_range.mp hk
+  show (((ent (auxMat X) 0 1 + anc0 (auxMat X) (ent X 0 1 + k) : Nat) : Int),
+        ((ent (auxMat X) (ent X 0 1 + k) 1 : Nat) : Int))
+    = (((ent X 0 1 + anc0 X k : Nat) : Int), ((ent X k 1 : Nat) : Int))
+  rw [ent_auxMat_lo X 0 1 (by omega) (by omega), anc0_auxMat_hi X hblk k hk',
+    ent_auxMat_hi X k 1, ent_sh1 _ X k hk',
+    show 0 + (ent X 0 1 + anc0 X k) = ent X 0 1 + anc0 X k from by omega]
+
+/-! ### 答えの行列 -/
+
+/-- `nrmBlk` を行列として書いたもの。 -/
+def nrmMat (X : Matrix) : Matrix :=
+  (List.range X.length).map (fun i => [ent X 0 1 + anc0 X i, ent X i 1])
+
+theorem psM_nrmMat (X : Matrix) : psM (nrmMat X) = nrmBlk X := by
+  show ((List.range X.length).map _).map _ = (List.range X.length).map _
+  rw [List.map_map]
+  rfl
+
+theorem nrmMat_length (X : Matrix) : (nrmMat X).length = X.length := by
+  show ((List.range X.length).map _).length = _
+  rw [List.length_map, List.length_range]
+
+theorem ent_nrmMat0 (X : Matrix) (i : Nat) (hi : i < X.length) :
+    ent (nrmMat X) i 0 = ent X 0 1 + anc0 X i := by
+  show (((List.range X.length).map (fun j => [ent X 0 1 + anc0 X j, ent X j 1])).getD i
+    []).getD 0 0 = _
+  rw [getD_map_range X.length _ [] i hi]
+  rfl
+
+theorem anc0_pos (X : Matrix) (hblk : BlkG X) (i : Nat) (hi : 0 < i) (hlen : i < X.length) :
+    0 < anc0 X i := by
+  obtain ⟨p, hp⟩ := parent_blk_some X i hi hlen hblk
+  rw [anc0_succ X i p hlen hp]
+  omega
+
+theorem blkG_nrmMat (X : Matrix) (hblk : BlkG X) : BlkG (nrmMat X) := by
+  refine ⟨by rw [nrmMat_length]; exact hblk.1, ?_⟩
+  intro p hp hplen
+  rw [nrmMat_length] at hplen
+  rw [ent_nrmMat0 X 0 hblk.1, ent_nrmMat0 X p hplen, anc0_zero]
+  have := anc0_pos X hblk p hp hplen
+  omega
+
+theorem prin_nrmBlk (X : Matrix) (hblk : BlkG X) (hlen : 1 < X.length) :
+    isPrincipalP (nrmBlk X) = true := by
+  rw [← psM_nrmMat X]
+  exact prin_of_deep (nrmMat X) (by rw [nrmMat_length]; exact hlen) (blkG_nrmMat X hblk).2
+
+/-! ### 小道具 -/
+
+theorem getD_drop_zero {α : Type _} (L : List α) (d : α) (n : Nat) :
+    (L.drop n).getD 0 d = L.getD n d := by
+  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_drop,
+    show n + 0 = n from by omega]
+
+theorem incrFirst_zero : ∀ (L : PS), incrFirst L 0 = L
+  | [] => rfl
+  | c :: cs => by
+      show ((c.1 + 0, c.2) :: incrFirst cs 0) = c :: cs
+      rw [incrFirst_zero cs, show c.1 + 0 = c.1 from by omega]
+
+/-! ### 根の段が 1 以上の場合 -/
+
+theorem psM_auxMat (X : Matrix) (hu : 1 ≤ ent X 0 1) :
+    psM (auxMat X) = jjSeq 0 (((ent X 0 1 : Nat) : Int) - 1)
+      ++ incrFirst (psM X) ((ent X 0 1 : Nat) : Int) := by
+  show psM (diagMat (ent X 0 1) ++ sh (ent X 0 1) X) = _
+  rw [psM_append, psM_diagMat (ent X 0 1) hu, psM_sh (ent X 0 1) X]
+
+/-- **根の段が 1 以上の場合。** 対角を前置きして畳み込み、頭を落とす。 -/
+theorem redN_head (g : Nat) (X : Matrix) (hblk : BlkG X) (hlvl : LvlOKb X = true)
+    (hu : 1 ≤ ent X 0 1) (hlen : 1 < X.length)
+    (ih : ∀ Y : Matrix, Y.length < X.length → BlkG Y → LvlOKb Y = true →
+            red g (psM Y) = nrmBlk Y) :
+    red (g + 1 + 1) (psM X) = nrmBlk X := by
+  have hlen0 := hblk.1
+  have hzero : isZeroP (psM X) = false := by
+    show ((psM X).length == 1 && _) = false
+    rw [show ((psM X).length == 1) = false from by
+      rw [psM_len]; exact decide_eq_false (by omega)]
+    rfl
+  have hprin : isPrincipalP (psM X) = true := prin_of_deep X hlen hblk.2
+  have hgp1 : gp1 (psM X) 0 = ((ent X 0 1 : Nat) : Int) := psM_gp1 X 0
+  have hg1ne : (gp1 (psM X) 0 == 0) = false := by
+    rw [hgp1]
+    refine Bool.eq_false_iff.mpr (fun hcon => ?_)
+    have := eq_of_beq hcon
+    omega
+  -- 前置きした行列の `red`
+  have haux : red (g + 1) (psM (auxMat X)) = nrmBlk (auxMat X) := by
+    refine redN_block (g) (auxMat X) X.length (blkG_auxMat X hu)
+      (lvlOKb_auxMat X hu hblk hlvl)
+      (ent_auxMat_lo X 0 0 (by omega) (by omega))
+      (ent_auxMat_lo X 0 1 (by omega) (by omega))
+      (by rw [auxMat_length]; omega) (fun J hJ => ?_) ih
+    have hbe := block_end_le (blocks ((auxMat X).drop (runLen (auxMat X) + 1))) J hJ
+    rw [blocks_flatten ((auxMat X).drop (runLen (auxMat X) + 1)).length _ (Nat.le_refl _),
+      List.length_drop, auxMat_length] at hbe
+    have hge := runLen_auxMat X hu hblk
+    omega
+  rw [red_head_pos (psM X) (g + 1) hzero hprin hg1ne, hgp1, ← psM_auxMat X hu]
+  show (if decide (((ent X 0 1 : Nat) : Int)
+            ≤ lenI (red (g + 1) (psM (auxMat X))) - 1)
+          && isPrincipalP ((red (g + 1) (psM (auxMat X))).drop
+              (((ent X 0 1 : Nat) : Int)).toNat) then
+          incrFirst ((red (g + 1) (psM (auxMat X))).drop (((ent X 0 1 : Nat) : Int)).toNat)
+            (-(gp0 (red (g + 1) (psM (auxMat X))) ((ent X 0 1 : Nat) : Int))
+              + gp1 (red (g + 1) (psM (auxMat X))) ((ent X 0 1 : Nat) : Int))
+        else psM X) = nrmBlk X
+  rw [haux, show (((ent X 0 1 : Nat) : Int)).toNat = ent X 0 1 from by omega,
+    nrmBlk_auxMat_drop X hu hblk]
+  have hgetu : (nrmBlk (auxMat X)).getD (ent X 0 1) ((0 : Int), (0 : Int))
+      = (((ent X 0 1 : Nat) : Int), ((ent X 0 1 : Nat) : Int)) := by
+    rw [← getD_drop_zero (nrmBlk (auxMat X)) ((0 : Int), (0 : Int)) (ent X 0 1),
+      nrmBlk_auxMat_drop X hu hblk]
+    show ((List.range X.length).map (nrmG X)).getD 0 ((0 : Int), (0 : Int)) = _
+    rw [getD_map_range X.length (nrmG X) ((0 : Int), (0 : Int)) 0 (by omega)]
+    show (((ent X 0 1 + anc0 X 0 : Nat) : Int), ((ent X 0 1 : Nat) : Int)) = _
+    rw [anc0_zero X, show ent X 0 1 + 0 = ent X 0 1 from by omega]
+  have hgp0N : gp0 (nrmBlk (auxMat X)) ((ent X 0 1 : Nat) : Int)
+      = ((ent X 0 1 : Nat) : Int) := by
+    show (if ((ent X 0 1 : Nat) : Int) < 0 then (0 : Int)
+          else ((nrmBlk (auxMat X)).getD (((ent X 0 1 : Nat) : Int)).toNat (0, 0)).1) = _
+    rw [if_neg (by omega), show (((ent X 0 1 : Nat) : Int)).toNat = ent X 0 1 from by omega,
+      hgetu]
+  have hgp1N : gp1 (nrmBlk (auxMat X)) ((ent X 0 1 : Nat) : Int)
+      = ((ent X 0 1 : Nat) : Int) := by
+    show (if ((ent X 0 1 : Nat) : Int) < 0 then (0 : Int)
+          else ((nrmBlk (auxMat X)).getD (((ent X 0 1 : Nat) : Int)).toNat (0, 0)).2) = _
+    rw [if_neg (by omega), show (((ent X 0 1 : Nat) : Int)).toNat = ent X 0 1 from by omega,
+      hgetu]
+  have hlenN : lenI (nrmBlk (auxMat X)) = ((ent X 0 1 + X.length : Nat) : Int) := by
+    show (((nrmBlk (auxMat X)).length : Nat) : Int) = _
+    rw [nrmBlk_length, auxMat_length]
+  rw [hgp0N, hgp1N, hlenN, prin_nrmBlk X hblk hlen,
+    decide_eq_true (show ((ent X 0 1 : Nat) : Int) ≤ ((ent X 0 1 + X.length : Nat) : Int) - 1
+      from by omega)]
+  simp only [Bool.and_true, if_true]
+  rw [show -((ent X 0 1 : Nat) : Int) + ((ent X 0 1 : Nat) : Int) = 0 from by omega,
+    incrFirst_zero]
+
+end
+
+/-! ## §46 `red` IS `nrmM`
+
+    red f (psM X) = nrmM X    for every `LvlOKb X`, with `f` at least `3 * X.length + 2`
+
+which is §36's measured identity, proved.  `redP_nrmM` says the fuel `redFuel` actually passes
+is more than enough, so this is a statement about the function the port calls, not about a
+convenient variant of it.
+
+The induction is on a bound `n` for `X.length`, and the step dispatches on the number of blocks:
+
+    none          `X = []`                                            redN_nil
+    two or more   not principal (§44), and each block is shorter      redN_sum
+    exactly one   `blocks X = [X]`, so `BlkG X`, and then
+
+        one column                       red_leaf puts it at (v, v)   redN_one   (§21)
+        root level ≥ 1                   prepend a diagonal           redN_head  (§45)
+        root level 0, depth > 0          lower every depth            redN_shift (§40)
+        root level 0, depth 0            the fold, or the diagonal    redN_block (§44/§45)
+
+Each branch costs at most three fuel and drops the length bound by one, which is where
+`3 * n + 2` comes from; the `≥` in the hypothesis is what lets a branch spend a different amount
+than its neighbours.
+
+The depth-lowering branch is the only one that does not shorten anything — it lands on
+`downMat X`, same length — so it is handled inline rather than through the induction hypothesis:
+after one shift the root is at depth 0, which is the fold branch, and that one does recurse into
+strictly shorter blocks.  The level-positive branch goes the other way, to a LONGER matrix, and
+survives because §45's `runLen_auxMat` makes its branches shorter than `X` (which is why §44's
+`redN_fold` carries the bound as a parameter).
+
+`blocks_lvlOKb` and `blocks_lt` are the two facts the several-blocks case needs about a block of
+a matrix: it stays in the class, and it is strictly shorter when there is more than one. -/
+
+section
+open Trans.Recal
+
+
+/-! ### 1 列のブロック -/
+
+theorem redN_one (c : Col) (f : Nat) : red (f + 2) (psM [c]) = nrmBlk [c] := by
+  show red (f + 2) [(((c.getD 0 0 : Nat) : Int), ((c.getD 1 0 : Nat) : Int))] = _
+  rw [red_leaf (c.getD 0 0) f (c.getD 1 0)]
+  show _ = (List.range 1).map (fun i =>
+    (((ent [c] 0 1 + anc0 [c] i : Nat) : Int), ((ent [c] i 1 : Nat) : Int)))
+  rw [show ((List.range 1).map (fun i =>
+      (((ent [c] 0 1 + anc0 [c] i : Nat) : Int), ((ent [c] i 1 : Nat) : Int))))
+      = [(((ent [c] 0 1 + anc0 [c] 0 : Nat) : Int), ((ent [c] 0 1 : Nat) : Int))] from rfl,
+    anc0_zero [c]]
+  rfl
+
+theorem redN_block_self (f : Nat) (Z : Matrix) (hblk : BlkG Z) (hlvl : LvlOKb Z = true)
+    (h0d : ent Z 0 0 = 0) (h0l : ent Z 0 1 = 0) (hlen : 1 < Z.length)
+    (ih : ∀ Y : Matrix, Y.length < Z.length → BlkG Y → LvlOKb Y = true →
+            red f (psM Y) = nrmBlk Y) :
+    red (f + 1) (psM Z) = nrmBlk Z := by
+  refine redN_block f Z Z.length hblk hlvl h0d h0l hlen (fun J hJ => ?_) ih
+  have hbe := block_end_le (blocks (Z.drop (runLen Z + 1))) J hJ
+  rw [blocks_flatten (Z.drop (runLen Z + 1)).length _ (Nat.le_refl _), List.length_drop] at hbe
+  omega
+
+/-! ### ブロック列の長さ -/
+
+theorem off_mono (Bs : List Matrix) : ∀ (b : Nat), b ≤ Bs.length → ∀ a, a ≤ b →
+    ((Bs.take a).flatten).length ≤ ((Bs.take b).flatten).length := by
+  intro b
+  induction b with
+  | zero =>
+    intro _ a ha
+    rw [show a = 0 from by omega]
+    omega
+  | succ k ih =>
+    intro hk a ha
+    rcases Nat.lt_or_ge a (k + 1) with h | h
+    · have h1 := ih (by omega) a (by omega)
+      have h2 := take_succ_flatten_len Bs k (by omega)
+      omega
+    · rw [show a = k + 1 from by omega]
+      omega
+
+theorem blocks_lt (X : Matrix) (h2 : 2 ≤ (blocks X).length) (J : Nat)
+    (hJ : J < (blocks X).length) : ((blocks X).getD J []).length < X.length := by
+  have hfl := blocks_flatten X.length X (Nat.le_refl _)
+  have hbeJ := block_end_le (blocks X) J hJ
+  rw [hfl] at hbeJ
+  have hlen0 : 0 < ((blocks X).getD 0 []).length :=
+    (blocks_blkG X.length X (Nat.le_refl _) _ (getD_mem_list (blocks X) [] 0 (by omega))).1
+  have hlen1 : 0 < ((blocks X).getD 1 []).length :=
+    (blocks_blkG X.length X (Nat.le_refl _) _ (getD_mem_list (blocks X) [] 1 (by omega))).1
+  have h1 : (((blocks X).take 1).flatten).length
+      = (((blocks X).take 0).flatten).length + ((blocks X).getD 0 []).length :=
+    take_succ_flatten_len (blocks X) 0 (by omega)
+  have h00 : (((blocks X).take 0).flatten).length = 0 := rfl
+  rcases Nat.eq_zero_or_pos J with rfl | hJpos
+  · have hbe1 := block_end_le (blocks X) 1 (by omega)
+    rw [hfl] at hbe1
+    omega
+  · have hmono := off_mono (blocks X) J (by omega) 1 hJpos
+    omega
+
+theorem blocks_lvlOKb (X : Matrix) (hlvl : LvlOKb X = true) (J : Nat)
+    (hJ : J < (blocks X).length) : LvlOKb ((blocks X).getD J []) = true := by
+  have hfl := blocks_flatten X.length X (Nat.le_refl _)
+  have hbe := block_end_le (blocks X) J hJ
+  rw [hfl] at hbe
+  refine lvlOKb_sub X ((blocks X).getD J []) ((((blocks X).take J).flatten).length) hlvl
+    (fun i hi => ?_) (fun i hi => ?_) hbe
+  · have hh := ent_flatten_block (blocks X) J hJ i 0 hi
+    rw [hfl] at hh
+    exact hh
+  · have hh := ent_flatten_block (blocks X) J hJ i 1 hi
+    rw [hfl] at hh
+    exact hh
+
+theorem blocks_pos (X : Matrix) (h : 0 < X.length) : 0 < (blocks X).length := by
+  cases hxc : X with
+  | nil => rw [hxc] at h; exact absurd h (by simp)
+  | cons c cs => rw [blocks_cons]; simp
+
+theorem blocks_eq_self (X : Matrix) (h1 : (blocks X).length = 1) : blocks X = [X] := by
+  have hfl := blocks_flatten X.length X (Nat.le_refl _)
+  cases hbs : blocks X with
+  | nil => rw [hbs] at h1; exact absurd h1 (by simp)
+  | cons B rest =>
+    have hr : rest = [] := by
+      have hh : (B :: rest).length = 1 := by rw [← hbs]; exact h1
+      have hz : rest.length = 0 := by
+        have : rest.length + 1 = 1 := hh
+        omega
+      exact List.eq_nil_of_length_eq_zero hz
+    subst hr
+    rw [hbs] at hfl
+    have hBX : B = X := by
+      have hh : B ++ ([] : List Matrix).flatten = X := hfl
+      rw [show ([] : List Matrix).flatten = ([] : Matrix) from rfl, List.append_nil] at hh
+      exact hh
+    rw [hBX]
+
+/-! ### 全体 -/
+
+/-- **`red` は `nrmM` である。** 燃料は長さの 3 倍と少し。 -/
+theorem red_nrmM : ∀ (n : Nat) (X : Matrix), X.length ≤ n → LvlOKb X = true →
+    ∀ (f : Nat), 3 * n + 2 ≤ f → red f (psM X) = nrmM X := by
+  intro n
+  induction n with
+  | zero =>
+    intro X hlen _ f _
+    rw [show X = [] from List.eq_nil_of_length_eq_zero (by omega)]
+    exact redN_nil f
+  | succ m ih =>
+    intro X hlen hlvl f hf
+    have ihB : ∀ Y : Matrix, Y.length ≤ m → BlkG Y → LvlOKb Y = true →
+        ∀ g, 3 * m + 2 ≤ g → red g (psM Y) = nrmBlk Y := by
+      intro Y hY hb hl g hg
+      rw [ih Y hY hl g hg, nrmM_single Y hb]
+    rcases Nat.eq_zero_or_pos X.length with h0 | hpos
+    · rw [show X = [] from List.eq_nil_of_length_eq_zero h0]
+      exact redN_nil f
+    · rcases Nat.lt_or_ge (blocks X).length 2 with hb1 | hb2
+      · -- ブロックは 1 つ
+        have hbl1 : (blocks X).length = 1 := by
+          have := blocks_pos X hpos
+          omega
+        have hBX : blocks X = [X] := blocks_eq_self X hbl1
+        have hblk : BlkG X :=
+          blocks_blkG X.length X (Nat.le_refl _) X (by rw [hBX]; exact List.mem_singleton.mpr rfl)
+        rw [nrmM_single X hblk]
+        rcases Nat.lt_or_ge X.length 2 with hshort | hlong
+        · obtain ⟨c, hc⟩ : ∃ c, X = [c] := by
+            cases hxc : X with
+            | nil => rw [hxc] at hpos; exact absurd hpos (by simp)
+            | cons c cs =>
+              refine ⟨c, ?_⟩
+              have : cs.length = 0 := by
+                rw [hxc] at hshort
+                have : cs.length + 1 < 2 := hshort
+                omega
+              rw [List.eq_nil_of_length_eq_zero this]
+          obtain ⟨f2, rfl⟩ : ∃ f2, f = f2 + 2 := ⟨f - 2, by omega⟩
+          rw [hc]
+          exact redN_one c f2
+        · rcases Nat.eq_zero_or_pos (ent X 0 1) with hu0 | hu1
+          · rcases Nat.eq_zero_or_pos (ent X 0 0) with hd0 | hd1
+            · obtain ⟨g, rfl⟩ : ∃ g, f = g + 1 := ⟨f - 1, by omega⟩
+              exact redN_block_self g X hblk hlvl hd0 hu0 hlong
+                (fun Y hY hb hl => ihB Y (by omega) hb hl g (by omega))
+            · obtain ⟨g, rfl⟩ : ∃ g, f = g + 1 + 1 := ⟨f - 2, by omega⟩
+              rw [redN_shift (g + 1) X hblk hlong hu0 hd1, ← nrmBlk_downMat X hblk]
+              exact redN_block_self g (downMat X)
+                (blkG_downMat X hblk) (lvlOKb_downMat X hblk hlvl)
+                (by rw [ent_downMat0 X 0 hblk.1]; omega)
+                (by rw [ent_downMat1 X 0 hblk.1]; exact hu0)
+                (by rw [downMat_length]; exact hlong)
+                (fun Y hY hb hl =>
+                  ihB Y (by rw [downMat_length] at hY; omega) hb hl g (by omega))
+          · obtain ⟨g, rfl⟩ : ∃ g, f = g + 1 + 1 := ⟨f - 2, by omega⟩
+            exact redN_head g X hblk hlvl hu1 hlong
+              (fun Y hY hb hl => ihB Y (by omega) hb hl g (by omega))
+      · -- ブロックが 2 つ以上
+        have hlen0 : 0 < ((blocks X).getD 0 []).length :=
+          (blocks_blkG X.length X (Nat.le_refl _) _
+            (getD_mem_list (blocks X) [] 0 (by omega))).1
+        have hX2 : 1 < X.length := by
+          have := blocks_lt X hb2 0 (by omega)
+          omega
+        obtain ⟨g, rfl⟩ : ∃ g, f = g + 1 := ⟨f - 1, by omega⟩
+        refine redN_sum g X ?_ (not_prin_of_blocks X hb2) (fun Bk hBk => ?_)
+        · show ((psM X).length == 1 && _) = false
+          rw [show ((psM X).length == 1) = false from by
+            rw [psM_len]; exact decide_eq_false (by omega)]
+          rfl
+        · obtain ⟨J, hJ, hJeq⟩ := List.mem_iff_getElem.mp hBk
+          have hgd : (blocks X).getD J [] = Bk := by
+            rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hJ, hJeq]
+            rfl
+          rw [← hgd]
+          exact ihB ((blocks X).getD J [])
+            (by have := blocks_lt X hb2 J hJ; omega)
+            (blocks_blkG X.length X (Nat.le_refl _) _ (getD_mem_list (blocks X) [] J hJ))
+            (blocks_lvlOKb X hlvl J hJ) g (by omega)
+
+/-- **`redP` の形。** 実際の燃料 `redFuel` は足りている。 -/
+theorem redP_nrmM (X : Matrix) (hlvl : LvlOKb X = true) : redP (psM X) = nrmM X := by
+  show red (redFuel (psM X)) (psM X) = _
+  refine red_nrmM X.length X (Nat.le_refl _) hlvl (redFuel (psM X)) ?_
+  show 3 * X.length + 2 ≤ 40 + 4 * ((psM X).length + maxE (psM X))
+  rw [psM_len]
+  omega
+
+-- 測ったところと合う (§37 の母集団)。
+#guard freePopL.all fun M => redP (psM M) == nrmM M
+
+end
+
 end Evidence.Region
