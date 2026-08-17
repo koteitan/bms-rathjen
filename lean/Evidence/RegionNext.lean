@@ -6038,4 +6038,381 @@ theorem redN_leaf (d v f : Nat) : red (f + 2) (psM [[d, v]]) = nrmBlk [[d, v]] :
 
 end
 
+/-! ## §41 THE COLUMN `red` BUILDS FOR A BRANCH
+
+The fold hands each branch to `red` after replacing the branch's ROOT column by one built from
+indices: `(row-0 parent index + 1, row-1 parent index + 1)`.  §32 read those two numbers off in
+the region's setting, where the spine's depth equals its index and the two readings coincide.
+In the `LvlOKb` setting they need not, so this section separates them.
+
+The level is fine: §39 gives level = index along the run without any depth hypothesis, so the
+row-1 parent index plus one IS the branch root's level (that is §35's `fpar_one_spine'`).
+
+The depth is NOT the branch root's depth — it is `p + 1`, an index plus one.  What saves the
+proof is that the answer never looks at a block root's depth:
+
+    setRoot e X          the matrix with the root's depth replaced by `e`
+    parent_setRoot       the row-0 parent is unchanged, as long as `e` still undercuts the rest
+    anc0_setRoot         hence so is the tree depth
+    nrmBlk_setRoot       hence so is `nrmM`'s answer for the block
+    lvlOKb_setRoot       and the class is preserved, so the branch is a legal induction step
+
+`parent_congr` / `anc0_congr` are the general form: the tree is a function of the depth
+COMPARISONS alone, so any change that preserves every comparison preserves the tree.  (§40's
+`downMat` is the other instance of the same principle.)
+
+The side condition — `e` undercuts every other column of the branch — comes from
+`spine_depth_ge`: a run that starts at depth 0 and strictly increases has `depth ≥ index`, so
+the parent `p` on the spine has `ent X p 0 ≥ p`, the branch root is deeper than that, and every
+other column of the branch is deeper still.  Hence `p + 1 ≤ branch root's depth < the rest`. -/
+
+section
+open Trans.Recal
+
+
+/-! ### 木は深さの大小しか見ない -/
+
+theorem parent_congr (X Y : Matrix)
+    (h : ∀ p i, p < i → i < X.length →
+      decide (ent X p 0 < ent X i 0) = decide (ent Y p 0 < ent Y i 0)) :
+    ∀ i, i < X.length → parent X 0 i = parent Y 0 i := by
+  intro i hi
+  show ((List.range i).filter (fun p => decide (ent X p 0 < ent X i 0))).max?
+    = ((List.range i).filter (fun p => decide (ent Y p 0 < ent Y i 0))).max?
+  exact congrArg List.max? (List.filter_congr (fun p hp => h p i (List.mem_range.mp hp) hi))
+
+theorem anc0_congr (X Y : Matrix) (hlen : X.length = Y.length)
+    (h : ∀ i, i < X.length → parent X 0 i = parent Y 0 i) :
+    ∀ i, i < X.length → anc0 X i = anc0 Y i := by
+  intro i hi
+  show (iterParent (parent X 0) X.length i).length
+    = (iterParent (parent Y 0) Y.length i).length
+  rw [← hlen,
+    iterParent_congr (parent X 0) (parent Y 0) X.length
+      (fun a b hab => parent0_lt X a b hab) h X.length i hi]
+
+/-! ### 根の深さだけを取り替える -/
+
+/-- 根の深さを `e` に取り替えたもの — `red` が枝の先頭に作る列。 -/
+def setRoot (e : Nat) : Matrix → Matrix
+  | [] => []
+  | c :: cs => (e :: c.drop 1) :: cs
+
+theorem setRoot_length (e : Nat) : ∀ (X : Matrix), (setRoot e X).length = X.length
+  | [] => rfl
+  | _ :: _ => rfl
+
+theorem ent_setRoot_root (e : Nat) (c : Col) (cs : Matrix) :
+    ent (setRoot e (c :: cs)) 0 0 = e := rfl
+
+theorem ent_setRoot_pos (e : Nat) (c : Col) (cs : Matrix) (i : Nat) :
+    ent (setRoot e (c :: cs)) (i + 1) 0 = ent (c :: cs) (i + 1) 0 := rfl
+
+theorem ent_setRoot_lvl (e : Nat) : ∀ (X : Matrix) (i : Nat),
+    ent (setRoot e X) i 1 = ent X i 1
+  | [], _ => rfl
+  | c :: _, 0 => by
+    show (e :: c.drop 1).getD 1 0 = c.getD 1 0
+    exact getD_drop_one c
+  | _ :: _, _ + 1 => rfl
+
+/-- 取り替えても根が一番浅いままなら、親はどれも変わらない。 -/
+theorem parent_setRoot (e : Nat) (X : Matrix) (hblk : BlkG X)
+    (hlo : ∀ p, 0 < p → p < X.length → e < ent X p 0) :
+    ∀ i, i < X.length → parent (setRoot e X) 0 i = parent X 0 i := by
+  intro i0 hi0
+  refine parent_congr (setRoot e X) X (fun p i hpi hi => ?_) i0
+    (by rw [setRoot_length]; exact hi0)
+  rw [setRoot_length] at hi
+  cases X with
+  | nil => exact absurd hi (by simp)
+  | cons c cs =>
+    cases p with
+    | zero =>
+      obtain ⟨q, rfl⟩ : ∃ q, i = q + 1 := ⟨i - 1, by omega⟩
+      rw [ent_setRoot_root e c cs, ent_setRoot_pos e c cs q]
+      rw [decide_eq_true (hlo (q + 1) (by omega) hi),
+        decide_eq_true (hblk.2 (q + 1) (by omega) hi)]
+    | succ r =>
+      obtain ⟨q, rfl⟩ : ∃ q, i = q + 1 := ⟨i - 1, by omega⟩
+      rw [ent_setRoot_pos e c cs r, ent_setRoot_pos e c cs q]
+
+theorem blkG_setRoot (e : Nat) (X : Matrix) (hblk : BlkG X)
+    (hlo : ∀ p, 0 < p → p < X.length → e < ent X p 0) : BlkG (setRoot e X) := by
+  refine ⟨by rw [setRoot_length]; exact hblk.1, ?_⟩
+  intro p hp hplen
+  rw [setRoot_length] at hplen
+  cases X with
+  | nil => exact absurd hplen (by simp)
+  | cons c cs =>
+    obtain ⟨q, rfl⟩ : ∃ q, p = q + 1 := ⟨p - 1, by omega⟩
+    rw [ent_setRoot_root e c cs, ent_setRoot_pos e c cs q]
+    exact hlo (q + 1) (by omega) hplen
+
+theorem anc0_setRoot (e : Nat) (X : Matrix) (hblk : BlkG X)
+    (hlo : ∀ p, 0 < p → p < X.length → e < ent X p 0) :
+    ∀ i, i < X.length → anc0 (setRoot e X) i = anc0 X i := by
+  intro i hi
+  exact anc0_congr (setRoot e X) X (setRoot_length e X)
+    (fun j hj => parent_setRoot e X hblk hlo j (by rw [setRoot_length] at hj; exact hj))
+    i (by rw [setRoot_length]; exact hi)
+
+/-- **答えは根の深さを見ていない。** -/
+theorem nrmBlk_setRoot (e : Nat) (X : Matrix) (hblk : BlkG X)
+    (hlo : ∀ p, 0 < p → p < X.length → e < ent X p 0) :
+    nrmBlk (setRoot e X) = nrmBlk X := by
+  show (List.range (setRoot e X).length).map _ = (List.range X.length).map _
+  rw [setRoot_length]
+  refine List.map_congr_left (fun i hi => ?_)
+  have hi' : i < X.length := List.mem_range.mp hi
+  rw [ent_setRoot_lvl e X 0, ent_setRoot_lvl e X i, anc0_setRoot e X hblk hlo i hi']
+
+theorem lvlOKb_setRoot (e : Nat) (X : Matrix) (hblk : BlkG X)
+    (hlo : ∀ p, 0 < p → p < X.length → e < ent X p 0) (hl : LvlOKb X = true) :
+    LvlOKb (setRoot e X) = true := by
+  show ((List.range (setRoot e X).length).all _) = true
+  refine List.all_eq_true.mpr (fun i hi => ?_)
+  have hi' : i < X.length := by
+    have := List.mem_range.mp hi
+    rw [setRoot_length] at this
+    exact this
+  rw [parent_setRoot e X hblk hlo i hi']
+  cases hp : parent X 0 i with
+  | none => rfl
+  | some p =>
+    have hpi := parent0_lt X i p hp
+    have hall := lvlOKb_at X hl i p hi' hp
+    show decide (ent (setRoot e X) i 1 ≤ ent (setRoot e X) p 1 + 1) = true
+    rw [ent_setRoot_lvl e X i, ent_setRoot_lvl e X p]
+    exact decide_eq_true hall
+
+/-- 取り替えた行列の `psM` — `red` が枝へ渡す形そのもの。 -/
+theorem psM_setRoot (e : Nat) (c : Col) (cs : Matrix) :
+    psM (setRoot e (c :: cs))
+      = (((e : Nat) : Int), ((ent (c :: cs) 0 1 : Nat) : Int)) :: derp (psM (c :: cs)) := by
+  show (((e :: c.drop 1) :: cs).map _) = _
+  show ((((e :: c.drop 1).getD 0 0 : Nat) : Int), (((e :: c.drop 1).getD 1 0 : Nat) : Int))
+      :: cs.map (fun q => (((q.getD 0 0 : Nat) : Int), ((q.getD 1 0 : Nat) : Int))) = _
+  rw [show ((e :: c.drop 1).getD 1 0) = ent (c :: cs) 0 1 from getD_drop_one c]
+  rfl
+
+/-! ### 対角の深さは添字以上 -/
+
+theorem spine_depth_ge (M : Matrix) (tr : Nat) (h0 : ent M 0 0 = 0)
+    (hrun : ∀ j, j < tr → ent M j 0 < ent M (j + 1) 0) :
+    ∀ j, j ≤ tr → j ≤ ent M j 0 := by
+  intro j
+  induction j with
+  | zero => intro _; omega
+  | succ k ih =>
+    intro hk
+    have := hrun k (by omega)
+    have := ih (by omega)
+    omega
+
+end
+
+/-! ## §42 THE ANSWER SPLITS ALONG THE BRANCHES
+
+The fold produces `jjSeq 0 tr ++ (one piece per branch).flatten`, so the answer has to be shown
+to have that shape — and this section shows it without mentioning `red` at all.  It is about
+`nrmM` and about lists.
+
+`nrmBlk X` is a map over `List.range X.length`: every column's answer depends only on its
+POSITION.  A list of blocks whose `flatten` is that range therefore cuts the map into pieces,
+one per block, and that is `map_range_flatten` — proved by induction on the block list with the
+running offset as the accumulator (`pieceList`).  `range_add_map` is the one-step case.
+
+    nrmBlk_split       nrmBlk X = (first tr+1 positions) ++ (pieces of the blocks after them)
+    nrmBlk_diag_split  and the first part is `jjSeq 0 tr` (§39)
+
+Then the piece for one branch is identified: `pieceList_nrm` says it is `nrmBlk` OF THAT BRANCH,
+translated.  The translation is `anc0 X s - (branch root's level)`, and the reason is §38's
+`anc0_blk` — tree depth inside a block is the block root's tree depth plus the tree depth within
+the block — so the position-indexed answer for column `s + i` and the block-indexed answer for
+column `i` differ by a constant.  That constant is exactly what the algorithm's `incrFirst`
+applies.
+
+`getD_flatten_block` / `ent_brBlk` are the bookkeeping that says where the `J`-th block starts:
+after the diagonal and after the blocks before it. -/
+
+section
+open Trans.Recal
+
+
+/-! ### 範囲の写像を切り分ける -/
+
+theorem range_add_map {β : Type _} (h : Nat → β) : ∀ (m n : Nat),
+    (List.range (m + n)).map h
+      = (List.range m).map h ++ (List.range n).map (fun i => h (m + i)) := by
+  intro m n
+  induction n with
+  | zero =>
+    show (List.range (m + 0)).map h = (List.range m).map h ++ []
+    rw [List.append_nil, show m + 0 = m from by omega]
+  | succ k ih =>
+    rw [show m + (k + 1) = (m + k) + 1 from by omega, List.range_succ, List.map_append,
+      ih, List.append_assoc, List.range_succ, List.map_append]
+    rfl
+
+/-- ブロックごとの切り身。`base` はそのブロックの先頭が全体で占める位置。 -/
+def pieceList {β γ : Type _} (G : Nat → β) : Nat → List (List γ) → List (List β)
+  | _, [] => []
+  | base, Bk :: rest =>
+      ((List.range Bk.length).map (fun i => G (base + i)))
+        :: pieceList G (base + Bk.length) rest
+
+theorem pieceList_length {β γ : Type _} (G : Nat → β) :
+    ∀ (base : Nat) (Bs : List (List γ)), (pieceList G base Bs).length = Bs.length
+  | _, [] => rfl
+  | base, Bk :: rest => by
+      show (pieceList G (base + Bk.length) rest).length + 1 = rest.length + 1
+      rw [pieceList_length G (base + Bk.length) rest]
+
+/-- **位置で書いた列は、ブロックごとの切り身を並べたもの。** -/
+theorem map_range_flatten {β γ : Type _} (G : Nat → β) :
+    ∀ (Bs : List (List γ)) (base : Nat),
+      (List.range (Bs.flatten.length)).map (fun i => G (base + i))
+        = (pieceList G base Bs).flatten
+  | [], _ => rfl
+  | Bk :: rest, base => by
+      show (List.range ((Bk ++ rest.flatten).length)).map (fun i => G (base + i))
+        = ((List.range Bk.length).map (fun i => G (base + i)))
+            ++ (pieceList G (base + Bk.length) rest).flatten
+      rw [← map_range_flatten G rest (base + Bk.length), List.length_append,
+        range_add_map (fun i => G (base + i)) Bk.length rest.flatten.length]
+      refine congrArg (fun l => ((List.range Bk.length).map (fun i => G (base + i))) ++ l) ?_
+      exact List.map_congr_left (fun i _ => by rw [show base + (Bk.length + i)
+        = base + Bk.length + i from by omega])
+
+theorem pieceList_getD {β γ : Type _} (G : Nat → β) :
+    ∀ (Bs : List (List γ)) (base J : Nat), J < Bs.length →
+      (pieceList G base Bs).getD J []
+        = (List.range ((Bs.getD J []).length)).map
+            (fun i => G (base + ((Bs.take J).flatten).length + i))
+  | [], _, _, h => absurd h (by simp)
+  | Bk :: rest, base, 0, _ => by
+      show (List.range Bk.length).map (fun i => G (base + i)) = _
+      show _ = (List.range Bk.length).map (fun i => G (base + ([] : List γ).length + i))
+      refine List.map_congr_left (fun i _ => ?_)
+      show G (base + i) = G (base + 0 + i)
+      exact congrArg G (by omega)
+  | Bk :: rest, base, K + 1, h => by
+      have hK : K < rest.length := by
+        have : (Bk :: rest).length = rest.length + 1 := rfl
+        omega
+      show (pieceList G (base + Bk.length) rest).getD K [] = _
+      rw [pieceList_getD G rest (base + Bk.length) K hK]
+      show (List.range ((rest.getD K []).length)).map
+          (fun i => G (base + Bk.length + ((rest.take K).flatten).length + i))
+        = (List.range ((rest.getD K []).length)).map
+          (fun i => G (base + ((Bk ++ (rest.take K).flatten).length) + i))
+      refine List.map_congr_left (fun i _ => ?_)
+      rw [List.length_append, show base + Bk.length + ((rest.take K).flatten).length + i
+        = base + (Bk.length + ((rest.take K).flatten).length) + i from by omega]
+
+/-! ### `nrmBlk` を対角と枝に切る -/
+
+/-- `nrmBlk` の `i` 番目 — 位置だけの関数。 -/
+def nrmG (X : Matrix) (i : Nat) : Int × Int :=
+  (((ent X 0 1 + anc0 X i : Nat) : Int), ((ent X i 1 : Nat) : Int))
+
+theorem nrmBlk_eq_map (X : Matrix) : nrmBlk X = (List.range X.length).map (nrmG X) := rfl
+
+/-- **答えは「対角の分」と「ブロックごとの切り身」に分かれる。** -/
+theorem nrmBlk_split (X : Matrix) (tr : Nat) (htr : tr < X.length) :
+    nrmBlk X = (List.range (tr + 1)).map (nrmG X)
+      ++ (pieceList (nrmG X) (tr + 1) (blocks (X.drop (tr + 1)))).flatten := by
+  rw [nrmBlk_eq_map X,
+    show X.length = (tr + 1) + ((blocks (X.drop (tr + 1))).flatten).length from by
+      rw [blocks_flatten (X.drop (tr + 1)).length (X.drop (tr + 1)) (Nat.le_refl _),
+        List.length_drop]
+      omega,
+    range_add_map (nrmG X) (tr + 1) _,
+    map_range_flatten (nrmG X) (blocks (X.drop (tr + 1))) (tr + 1)]
+
+theorem nrmBlk_diag_split (X : Matrix) (tr : Nat) (h0 : ent X 0 1 = 0)
+    (hlvl : LvlOKb X = true) (htr : tr < X.length)
+    (hrun : ∀ j, j < tr → ent X j 0 < ent X (j + 1) 0 ∧ ent X j 1 < ent X (j + 1) 1) :
+    nrmBlk X = jjSeq 0 ((tr : Nat) : Int)
+      ++ (pieceList (nrmG X) (tr + 1) (blocks (X.drop (tr + 1)))).flatten := by
+  rw [nrmBlk_split X tr htr,
+    show (List.range (tr + 1)).map (nrmG X) = (nrmBlk X).take (tr + 1) from by
+      rw [take_eq_map_range ((0 : Int), (0 : Int)) (tr + 1) (nrmBlk X)
+        (by rw [nrmBlk_length]; omega)]
+      exact List.map_congr_left (fun i hi =>
+        (getD_map_range X.length (nrmG X) ((0 : Int), (0 : Int)) i
+          (by have := List.mem_range.mp hi; omega)).symm),
+    nrmBlk_take X tr h0 hlvl htr hrun]
+
+/-! ### ブロックの居場所 -/
+
+theorem getD_flatten_block {γ : Type _} (d : γ) :
+    ∀ (Bs : List (List γ)) (J : Nat), J < Bs.length →
+      ∀ (i : Nat), i < (Bs.getD J []).length →
+        Bs.flatten.getD ((((Bs.take J).flatten).length) + i) d = (Bs.getD J []).getD i d
+  | [], _, h, _, _ => absurd h (by simp)
+  | Bk :: rest, 0, _, i, hi => by
+      show (Bk ++ rest.flatten).getD (0 + i) d = Bk.getD i d
+      rw [show 0 + i = i from by omega]
+      exact getD_app_left Bk rest.flatten d i hi
+  | Bk :: rest, K + 1, h, i, hi => by
+      have hK : K < rest.length := by
+        have hc : (Bk :: rest).length = rest.length + 1 := rfl
+        omega
+      show (Bk ++ rest.flatten).getD ((Bk ++ (rest.take K).flatten).length + i) d
+        = (rest.getD K []).getD i d
+      rw [List.length_append,
+        getD_app_right Bk rest.flatten d _ (by omega),
+        show Bk.length + ((rest.take K).flatten).length + i - Bk.length
+          = ((rest.take K).flatten).length + i from by omega]
+      exact getD_flatten_block d rest K hK i hi
+
+theorem ent_flatten_block (Bs : List Matrix) (J : Nat) (hJ : J < Bs.length) (i y : Nat)
+    (hi : i < (Bs.getD J []).length) :
+    ent Bs.flatten ((((Bs.take J).flatten).length) + i) y = ent (Bs.getD J []) i y := by
+  show (Bs.flatten.getD _ []).getD y 0 = ((Bs.getD J []).getD i []).getD y 0
+  rw [getD_flatten_block ([] : Col) Bs J hJ i hi]
+
+/-- 対角のあとの `J` 番目のブロックは `tr + 1 + 前の分` から始まる。 -/
+theorem ent_brBlk (X : Matrix) (tr J : Nat)
+    (hJ : J < (blocks (X.drop (tr + 1))).length) (i y : Nat)
+    (hi : i < ((blocks (X.drop (tr + 1))).getD J []).length) :
+    ent X (tr + 1 + ((((blocks (X.drop (tr + 1))).take J).flatten).length) + i) y
+      = ent ((blocks (X.drop (tr + 1))).getD J []) i y := by
+  have hfl : (blocks (X.drop (tr + 1))).flatten = X.drop (tr + 1) :=
+    blocks_flatten (X.drop (tr + 1)).length (X.drop (tr + 1)) (Nat.le_refl _)
+  have hb := ent_flatten_block (blocks (X.drop (tr + 1))) J hJ i y hi
+  rw [hfl, ent_drop] at hb
+  rw [show tr + 1 + ((((blocks (X.drop (tr + 1))).take J).flatten).length) + i
+    = tr + 1 + (((((blocks (X.drop (tr + 1))).take J).flatten).length) + i) from by omega]
+  exact hb
+
+/-- **切り身はそのブロックの答えを平行移動したもの。** -/
+theorem pieceList_nrm (X Bk : Matrix) (s : Nat) (Bs : List Matrix) (base J : Nat)
+    (h0 : ent X 0 1 = 0) (hJ : J < Bs.length) (hBk : Bs.getD J [] = Bk)
+    (hs : s = base + ((Bs.take J).flatten).length)
+    (hpos : ∀ i, i < Bk.length → ent X (s + i) 0 = ent Bk i 0)
+    (hlv : ∀ i, i < Bk.length → ent X (s + i) 1 = ent Bk i 1)
+    (hblk : BlkG Bk) (hlen : s + Bk.length ≤ X.length) :
+    (pieceList (nrmG X) base Bs).getD J []
+      = incrFirst (nrmBlk Bk) (((anc0 X s : Nat) : Int) - ((ent Bk 0 1 : Nat) : Int)) := by
+  rw [pieceList_getD (nrmG X) Bs base J hJ, hBk, ← hs]
+  show (List.range Bk.length).map (fun i => nrmG X (s + i))
+    = ((List.range Bk.length).map
+        (fun i => (((ent Bk 0 1 + anc0 Bk i : Nat) : Int), ((ent Bk i 1 : Nat) : Int)))).map
+      (fun q => (q.1 + (((anc0 X s : Nat) : Int) - ((ent Bk 0 1 : Nat) : Int)), q.2))
+  rw [List.map_map]
+  refine List.map_congr_left (fun i hi => ?_)
+  have hi' : i < Bk.length := List.mem_range.mp hi
+  show (((ent X 0 1 + anc0 X (s + i) : Nat) : Int), ((ent X (s + i) 1 : Nat) : Int))
+    = ((((ent Bk 0 1 + anc0 Bk i : Nat) : Int)
+        + (((anc0 X s : Nat) : Int) - ((ent Bk 0 1 : Nat) : Int))), ((ent Bk i 1 : Nat) : Int))
+  rw [h0, anc0_blk X s Bk hpos hblk hlen i i (Nat.le_refl i) hi', hlv i hi',
+    show ((0 + (anc0 X s + anc0 Bk i) : Nat) : Int)
+      = (((ent Bk 0 1 + anc0 Bk i : Nat) : Int)
+          + (((anc0 X s : Nat) : Int) - ((ent Bk 0 1 : Nat) : Int))) from by omega]
+
+end
+
 end Evidence.Region
