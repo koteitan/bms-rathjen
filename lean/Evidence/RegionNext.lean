@@ -11187,4 +11187,2781 @@ theorem isMarkedB_bMark (t : B) (m0 m : Nat) (hle : m0 ≤ m)
 
 end
 
+/-! ## §59 THE GLUE, AND THE TYPES 1-6 BRANCH ASSEMBLED
+
+    markOKB_admB_j0   the side conditions: `markOKB s jn1` and `markOKB t jn1`
+    mkC2_glue         the glue: `mkC2 M j0 j1 ty (bMark s jn1) = bMark t jn1`
+    runAux_main       the branch, `req = none`:   returns `bVal t`, table stays sound
+    runAux_main_mark  the branch, `req = some m`: returns `bMark t m`, table stays sound
+
+§57 named the four inputs of the types 1-6 branch on the index side and §58 proved the
+substitution lemma they feed.  What was left is the step from `mkC2` — which is written in terms
+of the MATRIX — to the index side, and everything here rests on one identity:
+
+    isAdmB t i  =  "§48 does not collapse the node at i"          (`isAdmB_of_node`)
+
+WHAT CARRIES IT.  `nodeAtB` reads the preorder-`i` node off the index as `(parent level, level,
+left siblings, children)`; `markIn` is `bK` of exactly that tuple.  Four `ent` lemmas then say
+what the neighbouring columns are:
+
+    children ≠ nil  →  column `i+1` is the FIRST child   (depth `+1`, level `headLvl c`)
+    children = nil  →  column `i+1` is not deeper
+    left siblings = nil, `i ≥ 1`  →  column `i-1` is the PARENT (depth `-1`, level `w`)
+    left siblings ≠ nil, `i ≥ 1`  →  column `i-1` is not shallower
+
+so `bothInc t i` is `c ≠ nil ∧ u < headLvl c` and `bothInc t (i-1)` is `r = nil ∧ w < u`, and
+`isAdmB` is the negation of §48's third rule verbatim.  Only `i = 0` needs `nfB`: there `isAdmB`
+is true unconditionally, and it is the normal form that forces the leftmost top-level node to
+level 0, so it cannot be collapsed either.
+
+NOTE THE DIRECTION.  `markOKB t m = (m on lastSpine) ∧ isAdmB t m` is FALSE — measured at 38
+positions of `popNFB 3 6`, the smallest `(0,0)(1,1)(2,2)` at `m = 1`, where the node IS collapsed
+and its contribution still comes out a single `psi` because the accumulator is empty.  Only
+`markOKB_of_spine_adm` — admitted ⟹ `markOKB` — is used, and that is all §59 needs: `adm` walks
+DOWN the chain (`admB_spine`, via `lastSpine_pred`) to an admitted position (`isAdmB_admB`), and
+`isAdmB_dropLast` carries the admission to `s = dropLastB t` because the columns of `matB s 0`
+are the columns of `matB t 0` minus the last one.
+
+THE GLUE.  `mkC2` has six types, but the index side has three shapes, and which one applies is
+decided by the BOTTOM of the collapse chain — `botOf`, the last preorder node's `(parent level p,
+level uu, left siblings rL)`.  `botSpine` says `j0` is that node's parent and pins the position
+relation `j0 + 1 + sizeB rL = j1`, so `j0 + 1 < j1` is exactly `rL ≠ nil`.  When `j0` is admitted
+the chain is empty and the argument simply gains a summand.  When it is not, `tele_chain`
+telescopes: every node of `jn1+1 … j0` is a first child with a level strictly above its parent's
+and its own first child higher still, so it is an only child (`child_single`) and its `bK` equals
+the next one's — down to `bClose p (bFold p (nd uu rL nil))` on the `t` side and
+`bClose p (bFold p rL)` (or `psi_p(0)` when `rL = nil`) on the `s` side.  The three shapes:
+
+    ty 1, 3, 5   append      `D v (bplus t2 (D uu 0))`
+    ty 6         replace     `D v (D uu 0)`                 — `rL = nil`, so `p < uu`
+    ty 2, 4      re-expand   `mkC2`'s `t34` splits the last summand back off
+
+The re-expansion is the only place where `mkC2` inspects `t2`.  It asks whether the last
+component of `t2` has head `p`; `lastAtom_aux` — the last component of `bK w u r c` has head at
+least `u`, and of `(bFold w x).1` strictly above `w` — is what decides that test in both
+directions.  16 of the 440 indices are type 2 or 4, and 12 of those take the "keep" side.
+
+THE TWO BRANCHES.  `runAux_main` is then assembly: `run_main_miss_none` (§57) opens the branch,
+the two induction hypotheses give `t1 = bVal s` and `c1 = bMark s jn1`, `mkC2_glue` gives
+`c2 = bMark t jn1`, and `subst_bVal'` (§58) closes it.  `runAux_main_mark` splits as §58's guards
+8 and 9 said it would: for `m ≤ jn1` every side condition holds and `subst_bMark'` applies; past
+`jn1` the requested mark sits ON the collapse chain, so `farMark` computes it — `rL` must be `nil`
+there, the `t`-side mark is `psi_uu(0)` and the `s`-side mark is `psi_p(0)` — the `isMarkedB` test
+fails and §57's fallback is already the answer.
+
+WHAT IS NOT CLAIMED.  Nothing here runs the outer induction: `runAux_main` and
+`runAux_main_mark` take the recursive calls' values as hypotheses, exactly as `runAux_sum` (§55)
+and `runAux_type0` (§56) do.  `runAux_main_mark`'s third hypothesis is guarded by `m < j1` — the
+`m = j1` branch never recurses, and `Mark j1` is not `Allowed` on `s` at all. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+/-! ### 1. 前順 `i` 番目の節を読む -/
+
+/-- 前順 `i` 番目の節のデータ `(親の段, 段, 左の兄弟, 子)`。`markIn` と同じ再帰。 -/
+def nodeAtB (w : Nat) : B → Nat → Option (Nat × Nat × B × B)
+  | .nil, _ => none
+  | .nd u r c, i =>
+      let lr := sizeB r
+      if i < lr then nodeAtB w r i
+      else if i == lr then some (w, u, r, c)
+      else nodeAtB u c (i - lr - 1)
+
+/-- **`markIn` は節のデータの `bK`。** -/
+theorem markIn_nodeAtB : ∀ (x : B) (w i : Nat),
+    markIn w x i = (nodeAtB w x i).map (fun q => bK q.1 q.2.1 q.2.2.1 q.2.2.2) := by
+  intro x
+  induction x with
+  | nil => intro w i; rfl
+  | nd u r c ihr ihc =>
+    intro w i
+    show (if i < sizeB r then markIn w r i
+          else if (i == sizeB r) = true then some (bK w u r c)
+          else markIn u c (i - sizeB r - 1))
+      = ((if i < sizeB r then nodeAtB w r i
+          else if (i == sizeB r) = true then some ((w, u, r, c) : Nat × Nat × B × B)
+          else nodeAtB u c (i - sizeB r - 1)).map (fun q => bK q.1 q.2.1 q.2.2.1 q.2.2.2))
+    by_cases h1 : i < sizeB r
+    · rw [if_pos h1, if_pos h1]
+      exact ihr w i
+    · rw [if_neg h1, if_neg h1]
+      by_cases h2 : (i == sizeB r) = true
+      · rw [if_pos h2, if_pos h2]
+        rfl
+      · rw [if_neg h2, if_neg h2]
+        exact ihc u (i - sizeB r - 1)
+
+theorem nodeAtB_isSome : ∀ (x : B) (w i : Nat), i < sizeB x →
+    ∃ q, nodeAtB w x i = some q := by
+  intro x
+  induction x with
+  | nil =>
+    intro w i h
+    exfalso
+    have hz : sizeB (.nil : B) = 0 := rfl
+    omega
+  | nd u r c ihr ihc =>
+    intro w i h
+    have h' : i < sizeB r + 1 + sizeB c := h
+    show ∃ q, (if i < sizeB r then nodeAtB w r i
+               else if (i == sizeB r) = true then some ((w, u, r, c) : Nat × Nat × B × B)
+               else nodeAtB u c (i - sizeB r - 1)) = some q
+    by_cases h1 : i < sizeB r
+    · rw [if_pos h1]; exact ihr w i h1
+    · rw [if_neg h1]
+      by_cases h2 : (i == sizeB r) = true
+      · rw [if_pos h2]; exact ⟨_, rfl⟩
+      · rw [if_neg h2]
+        have hne : i ≠ sizeB r := by
+          intro hc; exact h2 (by rw [hc]; exact beq_self_eq_true _)
+        exact ihc u (i - sizeB r - 1) (by omega)
+
+theorem nodeAtB_lt : ∀ (x : B) (w i : Nat) (q : Nat × Nat × B × B),
+    nodeAtB w x i = some q → i < sizeB x := by
+  intro x
+  induction x with
+  | nil =>
+    intro w i q h
+    have h' : (none : Option (Nat × Nat × B × B)) = some q := h
+    exact absurd h'.symm (Option.some_ne_none q)
+  | nd u r c ihr ihc =>
+    intro w i q h
+    have h' : (if i < sizeB r then nodeAtB w r i
+               else if (i == sizeB r) = true then some ((w, u, r, c) : Nat × Nat × B × B)
+               else nodeAtB u c (i - sizeB r - 1)) = some q := h
+    show i < sizeB r + 1 + sizeB c
+    by_cases h1 : i < sizeB r
+    · omega
+    · rw [if_neg h1] at h'
+      by_cases h2 : (i == sizeB r) = true
+      · have := eq_of_beq h2; omega
+      · rw [if_neg h2] at h'
+        have hne : i ≠ sizeB r := by
+          intro hc; exact h2 (by rw [hc]; exact beq_self_eq_true _)
+        have := ihc u (i - sizeB r - 1) q h'
+        omega
+
+/-! ### 2. 節のデータと、隣り合う 2 列 -/
+
+theorem nodeAtB_none (w i : Nat) (q : Nat × Nat × B × B) :
+    nodeAtB w .nil i = some q → False := by
+  intro h
+  have h' : (none : Option (Nat × Nat × B × B)) = some q := h
+  exact absurd h'.symm (Option.some_ne_none q)
+
+/-- 先頭の節は左の兄弟を持たず、親の段は外から渡ってきたもの。 -/
+theorem nodeAtB_zero : ∀ (x : B) (w : Nat) (q : Nat × Nat × B × B),
+    nodeAtB w x 0 = some q → q.1 = w ∧ q.2.2.1 = .nil := by
+  intro x
+  induction x with
+  | nil => intro w q h; exact absurd h (fun hc => nodeAtB_none w 0 q hc)
+  | nd u r c ihr _ =>
+    intro w q h
+    have h' : (if 0 < sizeB r then nodeAtB w r 0
+               else if ((0 : Nat) == sizeB r) = true then some ((w, u, r, c) : Nat × Nat × B × B)
+               else nodeAtB u c (0 - sizeB r - 1)) = some q := h
+    by_cases h1 : 0 < sizeB r
+    · rw [if_pos h1] at h'
+      exact ihr w q h'
+    · rw [if_neg h1, if_pos (show ((0 : Nat) == sizeB r) = true from by
+        rw [show sizeB r = 0 from by omega]; rfl)] at h'
+      have hq : q = (w, u, r, c) := (Option.some.inj h').symm
+      rw [hq]
+      exact ⟨rfl, sizeB_eq_zero r (by omega)⟩
+
+/-- 段は行 1 の成分。 -/
+theorem entL_nodeAtB : ∀ (x : B) (w i d : Nat) (q : Nat × Nat × B × B),
+    nodeAtB w x i = some q → ent (matB x d) i 1 = q.2.1 := by
+  intro x
+  induction x with
+  | nil => intro w i d q h; exact absurd h (fun hc => nodeAtB_none w i q hc)
+  | nd u r c ihr ihc =>
+    intro w i d q h
+    have h' : (if i < sizeB r then nodeAtB w r i
+               else if (i == sizeB r) = true then some ((w, u, r, c) : Nat × Nat × B × B)
+               else nodeAtB u c (i - sizeB r - 1)) = some q := h
+    by_cases h1 : i < sizeB r
+    · rw [if_pos h1] at h'
+      rw [ent_nd_left u r c d i 1 h1]
+      exact ihr w i d q h'
+    · rw [if_neg h1] at h'
+      by_cases h2 : (i == sizeB r) = true
+      · rw [if_pos h2] at h'
+        have hq : q = (w, u, r, c) := (Option.some.inj h').symm
+        rw [show i = sizeB r from eq_of_beq h2, ent_nd_node u r c d 1, hq]
+        rfl
+      · rw [if_neg h2] at h'
+        have hne : i ≠ sizeB r := fun hc => h2 (by rw [hc]; exact beq_self_eq_true _)
+        obtain ⟨k, hk⟩ : ∃ k, i = sizeB r + 1 + k := ⟨i - sizeB r - 1, by omega⟩
+        subst hk
+        rw [ent_nd_right u r c d k 1]
+        exact ihc u k (d + 1) q (by
+          rw [show sizeB r + 1 + k - sizeB r - 1 = k from by omega] at h'
+          exact h')
+
+/-- **子があるなら、次の列はその最初の子。** -/
+theorem ent_succ_child : ∀ (x : B) (w i d w' u : Nat) (r c : B),
+    nodeAtB w x i = some (w', u, r, c) → c ≠ .nil →
+    i + 1 < sizeB x ∧ ent (matB x d) (i + 1) 0 = ent (matB x d) i 0 + 1
+      ∧ ent (matB x d) (i + 1) 1 = headLvl c := by
+  intro x
+  induction x with
+  | nil => intro w i d w' u r c h _; exact absurd h (fun hc => nodeAtB_none w i _ hc)
+  | nd u0 r0 c0 ihr ihc =>
+    intro w i d w' u r c h hcn
+    have h' : (if i < sizeB r0 then nodeAtB w r0 i
+               else if (i == sizeB r0) = true then
+                 some ((w, u0, r0, c0) : Nat × Nat × B × B)
+               else nodeAtB u0 c0 (i - sizeB r0 - 1)) = some (w', u, r, c) := h
+    by_cases h1 : i < sizeB r0
+    · rw [if_pos h1] at h'
+      obtain ⟨k1, k2, k3⟩ := ihr w i d w' u r c h' hcn
+      refine ⟨by show i + 1 < sizeB r0 + 1 + sizeB c0; omega, ?_, ?_⟩
+      · rw [ent_nd_left u0 r0 c0 d (i + 1) 0 k1, ent_nd_left u0 r0 c0 d i 0 h1]
+        exact k2
+      · rw [ent_nd_left u0 r0 c0 d (i + 1) 1 k1]
+        exact k3
+    · rw [if_neg h1] at h'
+      by_cases h2 : (i == sizeB r0) = true
+      · rw [if_pos h2] at h'
+        have hq := Option.some.inj h'
+        have hu : u0 = u := congrArg (fun z => z.2.1) hq
+        have hcc : c0 = c := congrArg (fun z => z.2.2.2) hq
+        subst hcc
+        have hi : i = sizeB r0 := eq_of_beq h2
+        subst hi
+        have hcpos : 0 < sizeB c0 := sizeB_pos c0 hcn
+        refine ⟨by show sizeB r0 + 1 < sizeB r0 + 1 + sizeB c0; omega, ?_, ?_⟩
+        · rw [show sizeB r0 + 1 = sizeB r0 + 1 + 0 from by omega,
+            ent_nd_right u0 r0 c0 d 0 0, ent_nd_node u0 r0 c0 d 0,
+            matB_head0 c0 (d + 1) hcn]
+          rfl
+        · rw [show sizeB r0 + 1 = sizeB r0 + 1 + 0 from by omega,
+            ent_nd_right u0 r0 c0 d 0 1, matB_head1 c0 (d + 1) hcn]
+      · rw [if_neg h2] at h'
+        have hne : i ≠ sizeB r0 := fun hc => h2 (by rw [hc]; exact beq_self_eq_true _)
+        obtain ⟨k, hk⟩ : ∃ k, i = sizeB r0 + 1 + k := ⟨i - sizeB r0 - 1, by omega⟩
+        subst hk
+        rw [show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+        obtain ⟨k1, k2, k3⟩ := ihc u0 k (d + 1) w' u r c h' hcn
+        refine ⟨by show sizeB r0 + 1 + k + 1 < sizeB r0 + 1 + sizeB c0; omega, ?_, ?_⟩
+        · rw [show sizeB r0 + 1 + k + 1 = sizeB r0 + 1 + (k + 1) from by omega,
+            ent_nd_right u0 r0 c0 d (k + 1) 0, ent_nd_right u0 r0 c0 d k 0]
+          exact k2
+        · rw [show sizeB r0 + 1 + k + 1 = sizeB r0 + 1 + (k + 1) from by omega,
+            ent_nd_right u0 r0 c0 d (k + 1) 1]
+          exact k3
+
+/-- 子が無いなら、次の列は深くならない。 -/
+theorem ent_succ_leaf : ∀ (x : B) (w i d w' u : Nat) (r : B),
+    nodeAtB w x i = some (w', u, r, .nil) →
+    ent (matB x d) (i + 1) 0 ≤ ent (matB x d) i 0 := by
+  intro x
+  induction x with
+  | nil => intro w i d w' u r h; exact absurd h (fun hc => nodeAtB_none w i _ hc)
+  | nd u0 r0 c0 ihr ihc =>
+    intro w i d w' u r h
+    have h' : (if i < sizeB r0 then nodeAtB w r0 i
+               else if (i == sizeB r0) = true then
+                 some ((w, u0, r0, c0) : Nat × Nat × B × B)
+               else nodeAtB u0 c0 (i - sizeB r0 - 1)) = some (w', u, r, .nil) := h
+    by_cases h1 : i < sizeB r0
+    · rw [if_pos h1] at h'
+      rcases Nat.lt_or_ge (i + 1) (sizeB r0) with hlt | hge
+      · rw [ent_nd_left u0 r0 c0 d (i + 1) 0 hlt, ent_nd_left u0 r0 c0 d i 0 h1]
+        exact ihr w i d w' u r h'
+      · rw [show i + 1 = sizeB r0 from by omega, ent_nd_node u0 r0 c0 d 0,
+          ent_nd_left u0 r0 c0 d i 0 h1]
+        exact ent_lb r0 d i h1
+    · rw [if_neg h1] at h'
+      by_cases h2 : (i == sizeB r0) = true
+      · rw [if_pos h2] at h'
+        have hq := Option.some.inj h'
+        have hcc : c0 = .nil := congrArg (fun z => z.2.2.2) hq
+        subst hcc
+        have hi : i = sizeB r0 := eq_of_beq h2
+        subst hi
+        rw [ent_zero_of_ge_len (matB (B.nd u0 r0 .nil) d) (sizeB r0 + 1) (by
+          rw [sizeB_matB]
+          show sizeB r0 + 1 + sizeB (.nil : B) ≤ sizeB r0 + 1
+          show sizeB r0 + 1 + 0 ≤ sizeB r0 + 1
+          omega)]
+        omega
+      · rw [if_neg h2] at h'
+        have hne : i ≠ sizeB r0 := fun hc => h2 (by rw [hc]; exact beq_self_eq_true _)
+        obtain ⟨k, hk⟩ : ∃ k, i = sizeB r0 + 1 + k := ⟨i - sizeB r0 - 1, by omega⟩
+        subst hk
+        rw [show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+        rw [show sizeB r0 + 1 + k + 1 = sizeB r0 + 1 + (k + 1) from by omega,
+          ent_nd_right u0 r0 c0 d (k + 1) 0, ent_nd_right u0 r0 c0 d k 0]
+        exact ihc u0 k (d + 1) w' u r h'
+
+/-- **左の兄弟が無いなら、前の列は親。** -/
+theorem ent_pred_first : ∀ (x : B) (w i d w' u : Nat) (c : B),
+    nodeAtB w x i = some (w', u, .nil, c) → 1 ≤ i →
+    ent (matB x d) (i - 1) 0 + 1 = ent (matB x d) i 0
+      ∧ ent (matB x d) (i - 1) 1 = w' := by
+  intro x
+  induction x with
+  | nil => intro w i d w' u c h _; exact absurd h (fun hc => nodeAtB_none w i _ hc)
+  | nd u0 r0 c0 ihr ihc =>
+    intro w i d w' u c h hi1
+    have h' : (if i < sizeB r0 then nodeAtB w r0 i
+               else if (i == sizeB r0) = true then
+                 some ((w, u0, r0, c0) : Nat × Nat × B × B)
+               else nodeAtB u0 c0 (i - sizeB r0 - 1)) = some (w', u, .nil, c) := h
+    by_cases h1 : i < sizeB r0
+    · rw [if_pos h1] at h'
+      obtain ⟨k1, k2⟩ := ihr w i d w' u c h' hi1
+      rw [ent_nd_left u0 r0 c0 d (i - 1) 0 (by omega), ent_nd_left u0 r0 c0 d i 0 h1,
+        ent_nd_left u0 r0 c0 d (i - 1) 1 (by omega)]
+      exact ⟨k1, k2⟩
+    · rw [if_neg h1] at h'
+      by_cases h2 : (i == sizeB r0) = true
+      · exfalso
+        rw [if_pos h2] at h'
+        have hq := Option.some.inj h'
+        have hr : r0 = .nil := congrArg (fun z => z.2.2.1) hq
+        have hi : i = sizeB r0 := eq_of_beq h2
+        rw [hr] at hi
+        have hz : sizeB (.nil : B) = 0 := rfl
+        omega
+      · rw [if_neg h2] at h'
+        have hne : i ≠ sizeB r0 := fun hc => h2 (by rw [hc]; exact beq_self_eq_true _)
+        obtain ⟨k, hk⟩ : ∃ k, i = sizeB r0 + 1 + k := ⟨i - sizeB r0 - 1, by omega⟩
+        subst hk
+        rw [show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+        cases k with
+        | zero =>
+          have hcz : 0 < sizeB c0 := nodeAtB_lt c0 u0 0 _ h'
+          have hcn : c0 ≠ .nil := by
+            intro hc
+            rw [hc] at hcz
+            have hz : sizeB (.nil : B) = 0 := rfl
+            omega
+          have hw' : w' = u0 := (nodeAtB_zero c0 u0 _ h').1
+          rw [show sizeB r0 + 1 + 0 - 1 = sizeB r0 from by omega,
+            show sizeB r0 + 1 + 0 = sizeB r0 + 1 + 0 from rfl,
+            ent_nd_right u0 r0 c0 d 0 0, ent_nd_node u0 r0 c0 d 0,
+            ent_nd_node u0 r0 c0 d 1, matB_head0 c0 (d + 1) hcn, hw']
+          exact ⟨rfl, rfl⟩
+        | succ k0 =>
+          obtain ⟨k1, k2⟩ := ihc u0 (k0 + 1) (d + 1) w' u c h' (by omega)
+          rw [show sizeB r0 + 1 + (k0 + 1) - 1 = sizeB r0 + 1 + k0 from by omega,
+            ent_nd_right u0 r0 c0 d k0 0, ent_nd_right u0 r0 c0 d (k0 + 1) 0,
+            ent_nd_right u0 r0 c0 d k0 1,
+            show k0 + 1 - 1 = k0 from by omega] at *
+          exact ⟨k1, k2⟩
+
+/-- 左の兄弟があるなら、前の列は浅くない。 -/
+theorem ent_pred_sib : ∀ (x : B) (w i d w' u : Nat) (r c : B),
+    nodeAtB w x i = some (w', u, r, c) → r ≠ .nil → 1 ≤ i →
+    ent (matB x d) i 0 ≤ ent (matB x d) (i - 1) 0 := by
+  intro x
+  induction x with
+  | nil => intro w i d w' u r c h _ _; exact absurd h (fun hc => nodeAtB_none w i _ hc)
+  | nd u0 r0 c0 ihr ihc =>
+    intro w i d w' u r c h hrn hi1
+    have h' : (if i < sizeB r0 then nodeAtB w r0 i
+               else if (i == sizeB r0) = true then
+                 some ((w, u0, r0, c0) : Nat × Nat × B × B)
+               else nodeAtB u0 c0 (i - sizeB r0 - 1)) = some (w', u, r, c) := h
+    by_cases h1 : i < sizeB r0
+    · rw [if_pos h1] at h'
+      rw [ent_nd_left u0 r0 c0 d (i - 1) 0 (by omega), ent_nd_left u0 r0 c0 d i 0 h1]
+      exact ihr w i d w' u r c h' hrn hi1
+    · rw [if_neg h1] at h'
+      by_cases h2 : (i == sizeB r0) = true
+      · rw [if_pos h2] at h'
+        have hq := Option.some.inj h'
+        have hr : r0 = r := congrArg (fun z => z.2.2.1) hq
+        have hrp : 0 < sizeB r0 := by
+          rw [hr]
+          exact sizeB_pos r hrn
+        have hi : i = sizeB r0 := eq_of_beq h2
+        subst hi
+        rw [ent_nd_node u0 r0 c0 d 0, ent_nd_left u0 r0 c0 d (sizeB r0 - 1) 0 (by omega)]
+        exact ent_lb r0 d (sizeB r0 - 1) (by omega)
+      · rw [if_neg h2] at h'
+        have hne : i ≠ sizeB r0 := fun hc => h2 (by rw [hc]; exact beq_self_eq_true _)
+        obtain ⟨k, hk⟩ : ∃ k, i = sizeB r0 + 1 + k := ⟨i - sizeB r0 - 1, by omega⟩
+        subst hk
+        rw [show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+        cases k with
+        | zero =>
+          exfalso
+          have := (nodeAtB_zero c0 u0 _ h').2
+          exact absurd this hrn
+        | succ k0 =>
+          rw [show sizeB r0 + 1 + (k0 + 1) - 1 = sizeB r0 + 1 + k0 from by omega,
+            ent_nd_right u0 r0 c0 d k0 0, ent_nd_right u0 r0 c0 d (k0 + 1) 0]
+          have := ihc u0 (k0 + 1) (d + 1) w' u r c h' hrn (by omega)
+          rw [show k0 + 1 - 1 = k0 from by omega] at this
+          exact this
+
+/-! ### 3. `isAdm` は「§48 が潰さない」ことに他ならない -/
+
+theorem beqB_false (x y : B) (h : ¬ (x = y)) : (x == y) = false := by
+  cases hb : (x == y) with
+  | true => exact absurd (of_decide_eq_true hb) h
+  | false => rfl
+
+/-- **節が §48 の第 3 分岐 (潰し) に落ちるか。** -/
+def collB (w' u : Nat) (r c : B) : Bool :=
+  !(c == .nil) && decide (w' < u) && (r == .nil) && decide (u < headLvl c)
+
+theorem bothInc_of_node (t : B) (i w' u : Nat) (r c : B)
+    (h : nodeAtB 0 t i = some (w', u, r, c)) :
+    bothInc t i = (!(c == .nil) && decide (u < headLvl c)) := by
+  have hu : ent (matB t 0) i 1 = u := entL_nodeAtB t 0 i 0 _ h
+  by_cases hc : c = .nil
+  · subst hc
+    have hle := ent_succ_leaf t 0 i 0 w' u r h
+    show (decide (ent (matB t 0) i 0 < ent (matB t 0) (i + 1) 0) && _) = _
+    rw [show decide (ent (matB t 0) i 0 < ent (matB t 0) (i + 1) 0) = false from
+      decide_eq_false (by omega)]
+    rfl
+  · obtain ⟨_, k2, k3⟩ := ent_succ_child t 0 i 0 w' u r c h hc
+    show (decide (ent (matB t 0) i 0 < ent (matB t 0) (i + 1) 0)
+      && decide (ent (matB t 0) i 1 < ent (matB t 0) (i + 1) 1)) = _
+    rw [k2, k3, hu,
+      show decide (ent (matB t 0) i 0 < ent (matB t 0) i 0 + 1) = true from
+        decide_eq_true (by omega),
+      show (c == (.nil : B)) = false from beqB_false c .nil hc]
+    rfl
+
+theorem bothInc_pred_of_node (t : B) (i w' u : Nat) (r c : B)
+    (h : nodeAtB 0 t i = some (w', u, r, c)) (hi : 1 ≤ i) :
+    bothInc t (i - 1) = ((r == .nil) && decide (w' < u)) := by
+  have hu : ent (matB t 0) i 1 = u := entL_nodeAtB t 0 i 0 _ h
+  have hsucc : i - 1 + 1 = i := by omega
+  by_cases hr : r = .nil
+  · subst hr
+    obtain ⟨k1, k2⟩ := ent_pred_first t 0 i 0 w' u c h hi
+    show (decide (ent (matB t 0) (i - 1) 0 < ent (matB t 0) (i - 1 + 1) 0)
+      && decide (ent (matB t 0) (i - 1) 1 < ent (matB t 0) (i - 1 + 1) 1)) = _
+    rw [hsucc, k2, hu,
+      show decide (ent (matB t 0) (i - 1) 0 < ent (matB t 0) i 0) = true from
+        decide_eq_true (by omega),
+      show ((.nil : B) == (.nil : B)) = true from rfl]
+  · have hge := ent_pred_sib t 0 i 0 w' u r c h hr hi
+    show (decide (ent (matB t 0) (i - 1) 0 < ent (matB t 0) (i - 1 + 1) 0) && _) = _
+    rw [hsucc,
+      show decide (ent (matB t 0) (i - 1) 0 < ent (matB t 0) i 0) = false from
+        decide_eq_false (by omega),
+      show (r == (.nil : B)) = false from beqB_false r .nil hr]
+    rfl
+
+/-- **`isAdm` = 「潰されない」。** `i = 0` を除けば標準形は要らない。 -/
+theorem isAdmB_of_node (t : B) (i w' u : Nat) (r c : B)
+    (h : nodeAtB 0 t i = some (w', u, r, c)) (hi : 1 ≤ i) :
+    isAdmB t i = !(collB w' u r c) := by
+  have h1 := bothInc_pred_of_node t i w' u r c h hi
+  have h2 := bothInc_of_node t i w' u r c h
+  have hd : decide (1 ≤ i) = true := decide_eq_true hi
+  by_cases hc : c = .nil
+  · subst hc
+    have hb2 : bothInc t i = false := by
+      rw [h2, show ((.nil : B) == (.nil : B)) = true from rfl]
+      rfl
+    have hcz : collB w' u r (.nil : B) = false := by
+      show ((!((.nil : B) == .nil)) && decide (w' < u) && (r == .nil)
+            && decide (u < headLvl (.nil : B))) = false
+      rw [show ((.nil : B) == (.nil : B)) = true from rfl]
+      rfl
+    rw [hcz]
+    show (!((decide (1 ≤ i) && bothInc t (i - 1))
+      && (decide (i + 1 < sizeB t) && bothInc t i))) = !false
+    rw [hb2, Bool.and_false, Bool.and_false]
+  · obtain ⟨k1, _, _⟩ := ent_succ_child t 0 i 0 w' u r c h hc
+    have hcf : (c == (.nil : B)) = false := beqB_false c .nil hc
+    show (!((decide (1 ≤ i) && bothInc t (i - 1))
+      && (decide (i + 1 < sizeB t) && bothInc t i)))
+      = !((!(c == .nil)) && decide (w' < u) && (r == .nil) && decide (u < headLvl c))
+    rw [hd, Bool.true_and, h1, h2, decide_eq_true k1, Bool.true_and, hcf]
+    cases (r == (.nil : B)) <;> cases (decide (w' < u)) <;>
+      cases (decide (u < headLvl c)) <;> rfl
+
+/-- `i = 0` の節は最左の最上位の節。標準形ならその段は 0 で、潰されない。 -/
+theorem collB_zero (t : B) (w' u : Nat) (r c : B) (hnf : nfB t = true) (hne : t ≠ .nil)
+    (h : nodeAtB 0 t 0 = some (w', u, r, c)) : collB w' u r c = false := by
+  have hw : w' = 0 := (nodeAtB_zero t 0 _ h).1
+  have hu : ent (matB t 0) 0 1 = u := entL_nodeAtB t 0 0 0 _ h
+  rw [matB_head1 t 0 hne] at hu
+  have hle : headLvl t ≤ 0 := headLvl_le t 0 hnf hne
+  have hu0 : u = 0 := by omega
+  subst hw
+  subst hu0
+  show ((!(c == .nil)) && decide (0 < 0) && (r == .nil) && decide (0 < headLvl c)) = false
+  rw [show decide ((0 : Nat) < 0) = false from decide_eq_false (by omega),
+    Bool.and_false, Bool.false_and, Bool.false_and]
+
+theorem isAdmB_zero (t : B) : isAdmB t 0 = true := by
+  show (!((decide (1 ≤ 0) && bothInc t (0 - 1))
+    && (decide (0 + 1 < sizeB t) && bothInc t 0))) = true
+  rw [show decide ((1 : Nat) ≤ 0) = false from decide_eq_false (by omega),
+    Bool.false_and, Bool.false_and]
+  rfl
+
+/-- 潰されない節では §48 の分岐判定が成り立つ。 -/
+theorem bK_test_of_not_coll (w' u : Nat) (r c : B) (h : collB w' u r c = false)
+    (hc : ¬ ((c == (.nil : B)) = true)) :
+    (u ≤ w' || !(r == .nil) || headLvl c ≤ u) = true := by
+    have hcf : (c == (.nil : B)) = false := by
+      cases hb : (c == (.nil : B)) with
+      | true => exact absurd hb hc
+      | false => rfl
+    have h0 : ((!(c == .nil)) && decide (w' < u) && (r == .nil)
+        && decide (u < headLvl c)) = false := h
+    rw [hcf] at h0
+    have h'' : (decide (w' < u) && (r == .nil) && decide (u < headLvl c)) = false := h0
+    show (decide (u ≤ w') || (!(r == .nil)) || decide (headLvl c ≤ u)) = true
+    cases hwu : decide (w' < u) with
+    | false =>
+      rw [show decide (u ≤ w') = true from decide_eq_true (by
+        have := of_decide_eq_false hwu
+        omega), Bool.true_or, Bool.true_or]
+    | true =>
+      rw [hwu, Bool.true_and] at h''
+      cases hrn : (r == (.nil : B)) with
+      | false =>
+        rw [show (!(false : Bool)) = true from rfl, Bool.or_true, Bool.true_or]
+      | true =>
+        rw [hrn, Bool.true_and] at h''
+        rw [show decide (headLvl c ≤ u) = true from decide_eq_true (by
+          have := of_decide_eq_false h''
+          omega), Bool.or_true]
+
+/-- **潰されない節の寄与は `psi_u(その引数)`。** -/
+theorem bK_eq_D_arg (w' u : Nat) (r c : B) (h : collB w' u r c = false) :
+    bK w' u r c = BT.D u (bArg u c) := by
+  by_cases hc : (c == (.nil : B)) = true
+  · rw [of_decide_eq_true hc]
+    show (if ((.nil : B) == .nil) = true then (BT.D u .zero)
+          else if (u ≤ w' || !(r == .nil) || headLvl (.nil : B) ≤ u) = true
+               then BT.D u (bArg u (.nil : B))
+          else bClose u (bFold u (.nil : B))) = BT.D u (bArg u (.nil : B))
+    rw [if_pos (show ((.nil : B) == (.nil : B)) = true from rfl)]
+    rfl
+  · show (if (c == .nil) = true then (BT.D u .zero)
+          else if (u ≤ w' || !(r == .nil) || headLvl c ≤ u) = true then BT.D u (bArg u c)
+          else bClose u (bFold u c)) = _
+    rw [if_neg hc, if_pos (bK_test_of_not_coll w' u r c h hc)]
+
+theorem bK_D_of_not_coll (w' u : Nat) (r c : B) (h : collB w' u r c = false) :
+    ∃ a, bK w' u r c = BT.D u a := ⟨bArg u c, bK_eq_D_arg w' u r c h⟩
+
+/-- 許された節は潰されない。 -/
+theorem notColl_of_adm (x : B) (i w' u : Nat) (r c : B) (hnf : nfB x = true) (hne : x ≠ .nil)
+    (hq : nodeAtB 0 x i = some (w', u, r, c)) (hadm : isAdmB x i = true) :
+    collB w' u r c = false := by
+  cases hm : i with
+  | zero =>
+    rw [hm] at hq
+    exact collB_zero x w' u r c hnf hne hq
+  | succ k =>
+    rw [hm] at hq hadm
+    rw [isAdmB_of_node x (k + 1) w' u r c hq (by omega)] at hadm
+    cases hcb : collB w' u r c with
+    | true =>
+      rw [hcb] at hadm
+      exact absurd hadm (by intro hcc; exact Bool.noConfusion hcc)
+    | false => rfl
+
+/-- **(N)** 祖先鎖の上の許された節では `Mark` は意味を持つ。 -/
+theorem markOKB_of_spine_adm (t : B) (m : Nat) (hnf : nfB t = true)
+    (hne : t ≠ .nd 0 .nil .nil) (hsp : m ∈ lastSpine t) (hadm : isAdmB t m = true) :
+    markOKB t m = true := by
+  have hlt : m < sizeB t := lastSpine_lt t m hsp
+  have htne : t ≠ .nil := by
+    intro hc
+    rw [hc] at hlt
+    have hz : sizeB (.nil : B) = 0 := rfl
+    omega
+  obtain ⟨q, hq⟩ := nodeAtB_isSome t 0 m hlt
+  obtain ⟨w', u, r, c⟩ := q
+  have hcoll : collB w' u r c = false := notColl_of_adm t m w' u r c hnf htne hq hadm
+  obtain ⟨a, hK⟩ := bK_D_of_not_coll w' u r c hcoll
+  have hmk : bMark t m = BT.D u a := by
+    rw [bMark_eq_markG t m hne]
+    show (markIn 0 t m).getD .zero = _
+    rw [markIn_nodeAtB t 0 m, hq]
+    exact hK
+  show (decide (m ∈ lastSpine t) && (match bMark t m with | .D _ _ => true | _ => false)) = true
+  rw [decide_eq_true hsp, hmk]
+  rfl
+
+/-! ### 4. 祖先鎖を降りる -/
+
+theorem mem_of_mem_dropLast {α : Type _} : ∀ (l : List α) (x : α), x ∈ l.dropLast → x ∈ l
+  | [], x, h => by
+      have h' : x ∈ ([] : List α) := h
+      cases h'
+  | [_], x, h => by
+      have h' : x ∈ ([] : List α) := h
+      cases h'
+  | a :: b :: r, x, h => by
+      have h' : x ∈ a :: (b :: r).dropLast := h
+      rcases List.mem_cons.mp h' with he | hm
+      · exact List.mem_cons.mpr (Or.inl he)
+      · exact List.mem_cons_of_mem a (mem_of_mem_dropLast (b :: r) x hm)
+
+theorem mem_dropLast_of_ne_last {α : Type _} : ∀ (l : List α) (x y : α),
+    l.getLast? = some y → x ∈ l → ¬ (x = y) → x ∈ l.dropLast := by
+  intro l
+  induction l with
+  | nil =>
+    intro x y h _ _
+    have h' : (none : Option α) = some y := h
+    exact absurd h'.symm (Option.some_ne_none y)
+  | cons a tl ih =>
+    intro x y h hx hne
+    cases tl with
+    | nil =>
+      exfalso
+      have hy : a = y := Option.some.inj h
+      have hxa : x = a := List.mem_singleton.mp hx
+      exact hne (hxa.trans hy)
+    | cons b r =>
+      have hgl : (b :: r).getLast? = some y := by
+        rw [← getLast?_cons_of_ne_nil a (b :: r) (List.cons_ne_nil b r)]
+        exact h
+      show x ∈ a :: (b :: r).dropLast
+      rcases List.mem_cons.mp hx with he | hm
+      · exact List.mem_cons.mpr (Or.inl he)
+      · exact List.mem_cons_of_mem a (ih x y hgl hm hne)
+
+theorem admB_succ (t : B) (k : Nat) :
+    admB t (k + 1) = if isAdmB t (k + 1) then k + 1 else admB t k := rfl
+
+/-- **(L)** `adm` は許された位置を返す。 -/
+theorem isAdmB_admB (t : B) : ∀ (j : Nat), isAdmB t (admB t j) = true := by
+  intro j
+  induction j with
+  | zero => exact isAdmB_zero t
+  | succ k ih =>
+    rw [admB_succ]
+    by_cases h : isAdmB t (k + 1) = true
+    · rw [if_pos h]; exact h
+    · rw [if_neg h]; exact ih
+
+theorem admB_le (t : B) : ∀ (j : Nat), admB t j ≤ j := by
+  intro j
+  induction j with
+  | zero => exact Nat.le_refl 0
+  | succ k ih =>
+    rw [admB_succ]
+    by_cases h : isAdmB t (k + 1) = true
+    · rw [if_pos h]; omega
+    · rw [if_neg h]; omega
+
+/-- **(M')** 最初の子が鎖の上にあるなら、その親も鎖の上。 -/
+theorem lastSpine_pred : ∀ (x : B) (w j w' u : Nat) (c : B),
+    j ∈ lastSpine x → 1 ≤ j → nodeAtB w x j = some (w', u, .nil, c) →
+    j - 1 ∈ lastSpine x := by
+  intro x
+  induction x with
+  | nil =>
+    intro w j w' u c hsp _ _
+    have h' : j ∈ ([] : List Nat) := hsp
+    cases h'
+  | nd u0 r0 c0 _ ihc =>
+    intro w j w' u c hsp hj1 hnode
+    rcases lastSpine_nd_cases u0 r0 c0 j hsp with hbase | ⟨k, hk, hje⟩
+    · exfalso
+      subst hbase
+      have h' : (if sizeB r0 < sizeB r0 then nodeAtB w r0 (sizeB r0)
+                 else if ((sizeB r0) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 - sizeB r0 - 1))
+          = some (w', u, .nil, c) := hnode
+      rw [if_neg (Nat.lt_irrefl _), if_pos (beq_self_eq_true (sizeB r0))] at h'
+      have hr : r0 = .nil := congrArg (fun z => z.2.2.1) (Option.some.inj h')
+      rw [hr] at hj1
+      have hz : sizeB (.nil : B) = 0 := rfl
+      omega
+    · subst hje
+      have h' : (if sizeB r0 + 1 + k < sizeB r0 then nodeAtB w r0 (sizeB r0 + 1 + k)
+                 else if ((sizeB r0 + 1 + k) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 + 1 + k - sizeB r0 - 1))
+          = some (w', u, .nil, c) := hnode
+      rw [if_neg (by omega),
+        if_neg (show ¬ (((sizeB r0 + 1 + k) == sizeB r0) = true) from by
+          intro hc; exact absurd (eq_of_beq hc) (by omega)),
+        show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+      rw [lastSpine_nd]
+      cases k with
+      | zero =>
+        exact List.mem_cons.mpr (Or.inl (by omega))
+      | succ k0 =>
+        refine List.mem_cons.mpr (Or.inr (List.mem_map.mpr ⟨k0, ?_, by omega⟩))
+        have := ihc u0 (k0 + 1) w' u c hk (by omega) h'
+        rw [show k0 + 1 - 1 = k0 from by omega] at this
+        exact this
+
+/-- **(M)** `adm` は祖先鎖の上を降りる。 -/
+theorem admB_spine (t : B) : ∀ (j : Nat), j ∈ lastSpine t → admB t j ∈ lastSpine t := by
+  intro j
+  induction j with
+  | zero => intro h; exact h
+  | succ k ih =>
+    intro h
+    rw [admB_succ]
+    by_cases hA : isAdmB t (k + 1) = true
+    · rw [if_pos hA]; exact h
+    · rw [if_neg hA]
+      have hlt : k + 1 < sizeB t := lastSpine_lt t (k + 1) h
+      obtain ⟨q, hq⟩ := nodeAtB_isSome t 0 (k + 1) hlt
+      obtain ⟨w', u, r, c⟩ := q
+      have hE := isAdmB_of_node t (k + 1) w' u r c hq (by omega)
+      have hcoll : collB w' u r c = true := by
+        cases hcb : collB w' u r c with
+        | true => rfl
+        | false =>
+          exfalso
+          rw [hcb] at hE
+          exact hA hE
+      have hcoll' : ((!(c == .nil)) && decide (w' < u) && (r == .nil)
+          && decide (u < headLvl c)) = true := hcoll
+      have hr : r = .nil :=
+        of_decide_eq_true ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp hcoll').1).2
+      subst hr
+      have hk := lastSpine_pred t 0 (k + 1) w' u c h (by omega) hq
+      rw [show k + 1 - 1 = k from by omega] at hk
+      exact ih hk
+
+/-- 祖先鎖の最後は最後の節。 -/
+theorem lastSpine_getLast : ∀ (x : B), x ≠ .nil →
+    (lastSpine x).getLast? = some (sizeB x - 1) := by
+  intro x
+  induction x with
+  | nil => intro h; exact absurd rfl h
+  | nd u r c _ ihc =>
+    intro _
+    cases hc : c with
+    | nil =>
+      subst hc
+      rw [lastSpine_nd]
+      show (sizeB r :: (([] : List Nat).map (fun i => sizeB r + 1 + i))).getLast?
+        = some (sizeB (B.nd u r .nil) - 1)
+      show some (sizeB r) = some (sizeB r + 1 + sizeB (.nil : B) - 1)
+      rw [show sizeB (.nil : B) = 0 from rfl,
+        show sizeB r + 1 + 0 - 1 = sizeB r from by omega]
+    | nd u2 b2 c2 =>
+      subst hc
+      rw [lastSpine_nd]
+      have hne2 : (B.nd u2 b2 c2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+      have hsp : lastSpine (B.nd u2 b2 c2) ≠ [] := lastSpine_ne_nil _ hne2
+      have hmapne : ((lastSpine (B.nd u2 b2 c2)).map (fun i => sizeB r + 1 + i)) ≠ [] := by
+        intro hcc
+        exact hsp (List.map_eq_nil_iff.mp hcc)
+      rw [getLast?_cons_of_ne_nil _ _ hmapne, List.getLast?_map, ihc hne2]
+      show some (sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1))
+        = some (sizeB (B.nd u r (B.nd u2 b2 c2)) - 1)
+      have hpos : 0 < sizeB (B.nd u2 b2 c2) := sizeB_pos _ hne2
+      have : sizeB (B.nd u r (B.nd u2 b2 c2)) = sizeB r + 1 + sizeB (B.nd u2 b2 c2) := rfl
+      rw [this, show sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1)
+        = sizeB r + 1 + sizeB (B.nd u2 b2 c2) - 1 from by omega]
+
+/-- **(Q の道具)** 鎖の最後を落としたものは、最後の節を落とした添字の鎖に入る。 -/
+theorem lastSpine_dropLast_sub : ∀ (x : B) (j : Nat),
+    j ∈ (lastSpine x).dropLast → j ∈ lastSpine (dropLastB x) := by
+  intro x
+  induction x with
+  | nil =>
+    intro j h
+    have h' : j ∈ ([] : List Nat) := h
+    cases h'
+  | nd u r c _ ihc =>
+    intro j h
+    cases hc : c with
+    | nil =>
+      exfalso
+      rw [hc, lastSpine_nd] at h
+      have h' : j ∈ (sizeB r :: (([] : List Nat).map (fun i => sizeB r + 1 + i))).dropLast := h
+      have h'' : j ∈ ([] : List Nat) := h'
+      cases h''
+    | nd u2 b2 c2 =>
+      subst hc
+      have hne2 : (B.nd u2 b2 c2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+      have hmapne : ((lastSpine (B.nd u2 b2 c2)).map (fun i => sizeB r + 1 + i)) ≠ [] := by
+        intro hcc
+        exact lastSpine_ne_nil _ hne2 (List.map_eq_nil_iff.mp hcc)
+      rw [lastSpine_nd, List.dropLast_cons_of_ne_nil hmapne, ← List.map_dropLast] at h
+      rw [dropLastB_nd_ne u r (B.nd u2 b2 c2) hne2, lastSpine_nd]
+      rcases List.mem_cons.mp h with he | hm
+      · exact List.mem_cons.mpr (Or.inl he)
+      · obtain ⟨k, hk, hke⟩ := List.mem_map.mp hm
+        exact List.mem_cons.mpr (Or.inr (List.mem_map.mpr ⟨k, ihc k hk, hke⟩))
+
+/-! ### 5. 最後の節を落としても、鎖の上の許可は残る -/
+
+theorem ent_dropLast (t : B) (i y : Nat) (h : i + 1 < sizeB t) :
+    ent (matB (dropLastB t) 0) i y = ent (matB t 0) i y := by
+  have hlen : (matB t 0).length = sizeB t := sizeB_matB t 0
+  show (((matB (dropLastB t) 0).getD i []).getD y 0) = (((matB t 0).getD i []).getD y 0)
+  rw [matB_dropLast t 0, getD_dropLast (matB t 0) [] i (by omega)]
+
+theorem bothInc_dropLast (t : B) (j : Nat) (h : j + 2 < sizeB t) :
+    bothInc (dropLastB t) j = bothInc t j := by
+  show (decide (ent (matB (dropLastB t) 0) j 0 < ent (matB (dropLastB t) 0) (j + 1) 0)
+      && decide (ent (matB (dropLastB t) 0) j 1 < ent (matB (dropLastB t) 0) (j + 1) 1))
+    = (decide (ent (matB t 0) j 0 < ent (matB t 0) (j + 1) 0)
+      && decide (ent (matB t 0) j 1 < ent (matB t 0) (j + 1) 1))
+  rw [ent_dropLast t j 0 (by omega), ent_dropLast t (j + 1) 0 (by omega),
+    ent_dropLast t j 1 (by omega), ent_dropLast t (j + 1) 1 (by omega)]
+
+/-- **許可は最後の節を落としても残る。** -/
+theorem isAdmB_dropLast (t : B) (j : Nat) (hne : t ≠ .nil) (h : isAdmB t j = true) :
+    isAdmB (dropLastB t) j = true := by
+  have hsz : sizeB (dropLastB t) + 1 = sizeB t := sizeB_dropLast t hne
+  cases hcond : ((decide (1 ≤ j) && bothInc (dropLastB t) (j - 1))
+      && (decide (j + 1 < sizeB (dropLastB t)) && bothInc (dropLastB t) j)) with
+  | false =>
+    show (!((decide (1 ≤ j) && bothInc (dropLastB t) (j - 1))
+      && (decide (j + 1 < sizeB (dropLastB t)) && bothInc (dropLastB t) j))) = true
+    rw [hcond]
+    rfl
+  | true =>
+    exfalso
+    obtain ⟨hA, hB⟩ := (Bool.and_eq_true _ _).mp hcond
+    obtain ⟨hj1, hbp⟩ := (Bool.and_eq_true _ _).mp hA
+    obtain ⟨hlt, hbi⟩ := (Bool.and_eq_true _ _).mp hB
+    have hj1' : 1 ≤ j := of_decide_eq_true hj1
+    have hlt' : j + 1 < sizeB (dropLastB t) := of_decide_eq_true hlt
+    have hb1 : bothInc t (j - 1) = true := by
+      rw [← bothInc_dropLast t (j - 1) (by omega)]
+      exact hbp
+    have hb2 : bothInc t j = true := by
+      rw [← bothInc_dropLast t j (by omega)]
+      exact hbi
+    have hbad : isAdmB t j = false := by
+      show (!((decide (1 ≤ j) && bothInc t (j - 1))
+        && (decide (j + 1 < sizeB t) && bothInc t j))) = false
+      rw [hj1, hb1, hb2, decide_eq_true (show j + 1 < sizeB t by omega)]
+      rfl
+    rw [hbad] at h
+    exact Bool.noConfusion h
+
+/-! ### 6. §59 の側条件、まとめて -/
+
+theorem ne_nil_of_size (t : B) (h1 : 1 < sizeB t) : t ≠ .nil := by
+  intro hc
+  rw [hc] at h1
+  have hz : sizeB (.nil : B) = 0 := rfl
+  omega
+
+theorem ne_leaf_of_size (t : B) (h1 : 1 < sizeB t) : t ≠ .nd 0 .nil .nil := by
+  intro hc
+  rw [hc] at h1
+  have hz : sizeB (.nd 0 .nil .nil : B) = 1 := rfl
+  omega
+
+/-- **(Q)** `j0` は「最後の節を落とした添字」の祖先鎖の上にある。 -/
+theorem j0B_mem_dropLast (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) :
+    j0B t ∈ (lastSpine t).dropLast :=
+  List.mem_of_getLast? (lastSpine_dropLast_ne t h1 hprin)
+
+/-- **(O) 側条件。** `jn1 = adm(j0)` では `Mark` は両側で意味を持つ。 -/
+theorem markOKB_admB_j0 (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true)
+    (hz : bVal (dropLastB t) ≠ BT.zero) :
+    markOKB (dropLastB t) (admB t (j0B t)) = true
+      ∧ markOKB t (admB t (j0B t)) = true := by
+  have hne : t ≠ .nil := ne_nil_of_size t h1
+  have hleaf : t ≠ .nd 0 .nil .nil := ne_leaf_of_size t h1
+  have hj0d : j0B t ∈ (lastSpine t).dropLast := j0B_mem_dropLast t h1 hprin
+  have hj0 : j0B t ∈ lastSpine t := mem_of_mem_dropLast _ _ hj0d
+  have hjn1 : admB t (j0B t) ∈ lastSpine t := admB_spine t (j0B t) hj0
+  have hadm : isAdmB t (admB t (j0B t)) = true := isAdmB_admB t (j0B t)
+  have hOKt : markOKB t (admB t (j0B t)) = true :=
+    markOKB_of_spine_adm t _ hnf hleaf hjn1 hadm
+  have hjlt : admB t (j0B t) < sizeB t - 1 := by
+    have ha := admB_le t (j0B t)
+    have hb := j0B_lt t h1 hprin
+    omega
+  have hlast : (lastSpine t).getLast? = some (sizeB t - 1) := lastSpine_getLast t hne
+  have hjn1d : admB t (j0B t) ∈ (lastSpine t).dropLast :=
+    mem_dropLast_of_ne_last _ _ _ hlast hjn1 (by omega)
+  have hjn1s : admB t (j0B t) ∈ lastSpine (dropLastB t) := lastSpine_dropLast_sub t _ hjn1d
+  have hnfs : nfB (dropLastB t) = true := nfLe_dropLast t 0 hnf
+  have hadms : isAdmB (dropLastB t) (admB t (j0B t)) = true := isAdmB_dropLast t _ hne hadm
+  have hsleaf : dropLastB t ≠ .nd 0 .nil .nil := by
+    intro hc
+    exact hz (by rw [hc]; exact bVal_leaf)
+  exact ⟨markOKB_of_spine_adm (dropLastB t) _ hnfs hsleaf hjn1s hadms, hOKt⟩
+
+/-! ### 7. 最後の節と、その親 -/
+
+/-- 最後の前順の節の `(親の段, 段, 左の兄弟)`。 -/
+def botOf (w : Nat) : B → Nat × Nat × B
+  | .nil => (w, 0, .nil)
+  | .nd u r c => match c with
+                 | .nil => (w, u, r)
+                 | _ => botOf u c
+
+/-- 最上位の最後の節の左の兄弟たち。 -/
+def lastSibs : B → B
+  | .nil => .nil
+  | .nd _ r _ => r
+
+theorem lastSpine_eq_nil : ∀ (y : B), lastSpine y = [] ↔ y = .nil := by
+  intro y
+  cases y with
+  | nil => exact ⟨fun _ => rfl, fun _ => rfl⟩
+  | nd u r c =>
+    exact ⟨fun h => absurd h (lastSpine_ne_nil _ (by intro hc; exact B.noConfusion hc)),
+           fun h => absurd h (by intro hc; exact B.noConfusion hc)⟩
+
+/-- 最後の節のデータ。 -/
+theorem nodeAtB_last : ∀ (x : B) (w : Nat), x ≠ .nil →
+    nodeAtB w x (sizeB x - 1)
+      = some ((botOf w x).1, (botOf w x).2.1, (botOf w x).2.2, (.nil : B)) := by
+  intro x
+  induction x with
+  | nil => intro w h; exact absurd rfl h
+  | nd u r c _ ihc =>
+    intro w _
+    cases hc : c with
+    | nil =>
+      subst hc
+      have hsz : sizeB (B.nd u r .nil) - 1 = sizeB r := by
+        show sizeB r + 1 + sizeB (.nil : B) - 1 = sizeB r
+        show sizeB r + 1 + 0 - 1 = sizeB r
+        omega
+      rw [hsz]
+      show (if sizeB r < sizeB r then nodeAtB w r (sizeB r)
+            else if ((sizeB r) == sizeB r) = true then
+              some ((w, u, r, (.nil : B)) : Nat × Nat × B × B)
+            else nodeAtB u .nil (sizeB r - sizeB r - 1)) = _
+      rw [if_neg (Nat.lt_irrefl _), if_pos (beq_self_eq_true (sizeB r))]
+      rfl
+    | nd u2 b2 c2 =>
+      subst hc
+      have hne2 : (B.nd u2 b2 c2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+      have hpos : 0 < sizeB (B.nd u2 b2 c2) := sizeB_pos _ hne2
+      have hsz : sizeB (B.nd u r (B.nd u2 b2 c2)) - 1
+          = sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1) := by
+        show sizeB r + 1 + sizeB (B.nd u2 b2 c2) - 1 = _
+        omega
+      rw [hsz]
+      show (if sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1) < sizeB r then _
+            else if ((sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1)) == sizeB r) = true then _
+            else nodeAtB u (B.nd u2 b2 c2)
+              (sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1) - sizeB r - 1)) = _
+      rw [if_neg (by omega),
+        if_neg (show ¬ (((sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1)) == sizeB r) = true) from by
+          intro hcc; exact absurd (eq_of_beq hcc) (by omega)),
+        show sizeB r + 1 + (sizeB (B.nd u2 b2 c2) - 1) - sizeB r - 1
+          = sizeB (B.nd u2 b2 c2) - 1 from by omega]
+      exact ihc u hne2
+
+/-- **`j0` の節は、最後の節の親。** その子は `nd uu rL nil`、位置の関係も込み。 -/
+theorem botSpine : ∀ (x : B) (w j0 : Nat), ((lastSpine x).dropLast).getLast? = some j0 →
+    (∃ ww rr, nodeAtB w x j0 = some (ww, (botOf w x).1, rr,
+        B.nd (botOf w x).2.1 (botOf w x).2.2 .nil))
+      ∧ j0 + 1 + sizeB (botOf w x).2.2 = sizeB x - 1 := by
+  intro x
+  induction x with
+  | nil =>
+    intro w j0 h
+    have h' : (none : Option Nat) = some j0 := h
+    exact absurd h'.symm (Option.some_ne_none j0)
+  | nd u r c _ ihc =>
+    intro w j0 h
+    cases hc : c with
+    | nil =>
+      exfalso
+      rw [hc, lastSpine_nd] at h
+      have h' : ((sizeB r :: (([] : List Nat).map (fun i => sizeB r + 1 + i))).dropLast).getLast?
+          = some j0 := h
+      have h'' : (none : Option Nat) = some j0 := h'
+      exact absurd h''.symm (Option.some_ne_none j0)
+    | nd u2 b2 c2 =>
+      subst hc
+      have hne2 : (B.nd u2 b2 c2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+      have hsp2 : lastSpine (B.nd u2 b2 c2) ≠ [] := lastSpine_ne_nil _ hne2
+      have hmapne : ((lastSpine (B.nd u2 b2 c2)).map (fun i => sizeB r + 1 + i)) ≠ [] := by
+        intro hcc
+        exact hsp2 (List.map_eq_nil_iff.mp hcc)
+      rw [lastSpine_nd, List.dropLast_cons_of_ne_nil hmapne, ← List.map_dropLast] at h
+      have hbot : botOf w (B.nd u r (B.nd u2 b2 c2)) = botOf u (B.nd u2 b2 c2) := rfl
+      cases hdl : ((lastSpine (B.nd u2 b2 c2)).dropLast) with
+      | nil =>
+        rw [hdl] at h
+        have hj0 : j0 = sizeB r := by
+          have h' : (sizeB r :: (([] : List Nat).map (fun i => sizeB r + 1 + i))).getLast?
+              = some j0 := h
+          have h'' : some (sizeB r) = some j0 := h'
+          exact (Option.some.inj h'').symm
+        subst hj0
+        -- 鎖の長さ 1: c2 = nil
+        have hc2 : c2 = .nil := by
+          refine (lastSpine_eq_nil c2).mp ?_
+          rw [lastSpine_nd] at hdl
+          cases hq : lastSpine c2 with
+          | nil => rfl
+          | cons z zs =>
+            exfalso
+            rw [hq] at hdl
+            have hd2 : (sizeB b2 :: ((z :: zs).map (fun i => sizeB b2 + 1 + i))).dropLast
+                = sizeB b2 :: (((z :: zs).map (fun i => sizeB b2 + 1 + i)).dropLast) := rfl
+            rw [hd2] at hdl
+            exact absurd hdl (List.cons_ne_nil _ _)
+        subst hc2
+        have hbot2 : botOf u (B.nd u2 b2 (.nil : B)) = (u, u2, b2) := rfl
+        rw [hbot, hbot2]
+        refine ⟨⟨w, r, ?_⟩, ?_⟩
+        · show (if sizeB r < sizeB r then nodeAtB w r (sizeB r)
+                else if ((sizeB r) == sizeB r) = true then
+                  some ((w, u, r, B.nd u2 b2 (.nil : B)) : Nat × Nat × B × B)
+                else nodeAtB u (B.nd u2 b2 .nil) (sizeB r - sizeB r - 1)) = _
+          rw [if_neg (Nat.lt_irrefl _), if_pos (beq_self_eq_true (sizeB r))]
+        · show sizeB r + 1 + sizeB b2 = sizeB (B.nd u r (B.nd u2 b2 (.nil : B))) - 1
+          show sizeB r + 1 + sizeB b2 = sizeB r + 1 + (sizeB b2 + 1 + sizeB (.nil : B)) - 1
+          show sizeB r + 1 + sizeB b2 = sizeB r + 1 + (sizeB b2 + 1 + 0) - 1
+          omega
+      | cons z zs =>
+        have hdlne : ((lastSpine (B.nd u2 b2 c2)).dropLast) ≠ [] := by
+          rw [hdl]; exact List.cons_ne_nil _ _
+        have hmne : (((lastSpine (B.nd u2 b2 c2)).dropLast).map (fun i => sizeB r + 1 + i)) ≠ [] := by
+          intro hcc
+          exact hdlne (List.map_eq_nil_iff.mp hcc)
+        rw [getLast?_cons_of_ne_nil _ _ hmne, List.getLast?_map] at h
+        cases hq : (((lastSpine (B.nd u2 b2 c2)).dropLast).getLast?) with
+        | none =>
+          exfalso
+          rw [hq] at h
+          have h' : (none : Option Nat) = some j0 := h
+          exact absurd h'.symm (Option.some_ne_none j0)
+        | some j0' =>
+          rw [hq] at h
+          have hj0 : j0 = sizeB r + 1 + j0' := (Option.some.inj h).symm
+          subst hj0
+          obtain ⟨⟨ww, rr, hnode⟩, hpos⟩ := ihc u j0' hq
+          rw [hbot]
+          refine ⟨⟨ww, rr, ?_⟩, ?_⟩
+          · show (if sizeB r + 1 + j0' < sizeB r then _
+                  else if ((sizeB r + 1 + j0') == sizeB r) = true then _
+                  else nodeAtB u (B.nd u2 b2 c2) (sizeB r + 1 + j0' - sizeB r - 1)) = _
+            rw [if_neg (by omega),
+              if_neg (show ¬ (((sizeB r + 1 + j0') == sizeB r) = true) from by
+                intro hcc; exact absurd (eq_of_beq hcc) (by omega)),
+              show sizeB r + 1 + j0' - sizeB r - 1 = j0' from by omega]
+            exact hnode
+          · have hpos2 : 0 < sizeB (B.nd u2 b2 c2) := sizeB_pos _ hne2
+            show sizeB r + 1 + j0' + 1 + sizeB (botOf u (B.nd u2 b2 c2)).2.2
+              = sizeB (B.nd u r (B.nd u2 b2 c2)) - 1
+            show sizeB r + 1 + j0' + 1 + sizeB (botOf u (B.nd u2 b2 c2)).2.2
+              = sizeB r + 1 + sizeB (B.nd u2 b2 c2) - 1
+            omega
+
+/-! ### 8. 鎖の上の節はひとりっ子 -/
+
+theorem lastSpine_ge : ∀ (y : B) (i : Nat), i ∈ lastSpine y → sizeB (lastSibs y) ≤ i := by
+  intro y
+  cases y with
+  | nil =>
+    intro i h
+    have h' : i ∈ ([] : List Nat) := h
+    cases h'
+  | nd u r c =>
+    intro i h
+    rcases lastSpine_nd_cases u r c i h with he | ⟨j, _, hje⟩
+    · show sizeB r ≤ i; omega
+    · show sizeB r ≤ i; omega
+
+theorem spine_next : ∀ (x : B) (w m w' u : Nat) (r c : B),
+    m ∈ lastSpine x → nodeAtB w x m = some (w', u, r, c) → c ≠ .nil →
+    ∀ j, j ∈ lastSpine x → m < j → m + 1 + sizeB (lastSibs c) ≤ j := by
+  intro x
+  induction x with
+  | nil =>
+    intro w m w' u r c hsp _ _ _ _ _
+    have h' : m ∈ ([] : List Nat) := hsp
+    cases h'
+  | nd u0 r0 c0 _ ihc =>
+    intro w m w' u r c hsp hq hcn j hj hmj
+    rcases lastSpine_nd_cases u0 r0 c0 m hsp with hbase | ⟨k, hk, hke⟩
+    · subst hbase
+      have h' : (if sizeB r0 < sizeB r0 then nodeAtB w r0 (sizeB r0)
+                 else if ((sizeB r0) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 - sizeB r0 - 1)) = some (w', u, r, c) := hq
+      rw [if_neg (Nat.lt_irrefl _), if_pos (beq_self_eq_true (sizeB r0))] at h'
+      have hcc : c0 = c := congrArg (fun z => z.2.2.2) (Option.some.inj h')
+      subst hcc
+      rcases lastSpine_nd_cases u0 r0 c0 j hj with hb2 | ⟨k2, hk2, hke2⟩
+      · omega
+      · have := lastSpine_ge c0 k2 hk2
+        omega
+    · subst hke
+      have h' : (if sizeB r0 + 1 + k < sizeB r0 then nodeAtB w r0 (sizeB r0 + 1 + k)
+                 else if ((sizeB r0 + 1 + k) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 + 1 + k - sizeB r0 - 1)) = some (w', u, r, c) := hq
+      rw [if_neg (by omega),
+        if_neg (show ¬ (((sizeB r0 + 1 + k) == sizeB r0) = true) from by
+          intro hcc2; exact absurd (eq_of_beq hcc2) (by omega)),
+        show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+      rcases lastSpine_nd_cases u0 r0 c0 j hj with hb2 | ⟨k2, hk2, hke2⟩
+      · omega
+      · have := ihc u0 k w' u r c hk h' hcn k2 hk2 (by omega)
+        omega
+
+/-- 次の節は最初の子。 -/
+theorem nodeAtB_succ_child : ∀ (x : B) (w m w' u : Nat) (r c : B),
+    nodeAtB w x m = some (w', u, r, c) → c ≠ .nil →
+    nodeAtB w x (m + 1) = nodeAtB u c 0 := by
+  intro x
+  induction x with
+  | nil => intro w m w' u r c h _; exact absurd h (fun hcc => nodeAtB_none w m _ hcc)
+  | nd u0 r0 c0 ihr ihc =>
+    intro w m w' u r c hq hcn
+    have h' : (if m < sizeB r0 then nodeAtB w r0 m
+               else if (m == sizeB r0) = true then some ((w, u0, r0, c0) : Nat × Nat × B × B)
+               else nodeAtB u0 c0 (m - sizeB r0 - 1)) = some (w', u, r, c) := hq
+    by_cases h1 : m < sizeB r0
+    · rw [if_pos h1] at h'
+      have hlt := (ent_succ_child r0 w m 0 w' u r c h' hcn).1
+      show (if m + 1 < sizeB r0 then nodeAtB w r0 (m + 1)
+            else if ((m + 1) == sizeB r0) = true then
+              some ((w, u0, r0, c0) : Nat × Nat × B × B)
+            else nodeAtB u0 c0 (m + 1 - sizeB r0 - 1)) = _
+      rw [if_pos hlt]
+      exact ihr w m w' u r c h' hcn
+    · rw [if_neg h1] at h'
+      by_cases h2 : (m == sizeB r0) = true
+      · rw [if_pos h2] at h'
+        have hcc : c0 = c := congrArg (fun z => z.2.2.2) (Option.some.inj h')
+        have huu : u0 = u := congrArg (fun z => z.2.1) (Option.some.inj h')
+        have hm : m = sizeB r0 := eq_of_beq h2
+        rw [← huu, ← hcc, hm]
+        show (if sizeB r0 + 1 < sizeB r0 then _
+              else if ((sizeB r0 + 1) == sizeB r0) = true then _
+              else nodeAtB u0 c0 (sizeB r0 + 1 - sizeB r0 - 1)) = _
+        rw [if_neg (by omega),
+          if_neg (show ¬ (((sizeB r0 + 1) == sizeB r0) = true) from by
+            intro hcc2; exact absurd (eq_of_beq hcc2) (by omega)),
+          show sizeB r0 + 1 - sizeB r0 - 1 = 0 from by omega]
+      · rw [if_neg h2] at h'
+        have hne : m ≠ sizeB r0 := fun hcc => h2 (by rw [hcc]; exact beq_self_eq_true _)
+        show (if m + 1 < sizeB r0 then _
+              else if ((m + 1) == sizeB r0) = true then _
+              else nodeAtB u0 c0 (m + 1 - sizeB r0 - 1)) = _
+        rw [if_neg (by omega),
+          if_neg (show ¬ (((m + 1) == sizeB r0) = true) from by
+            intro hcc2; exact absurd (eq_of_beq hcc2) (by omega)),
+          show m + 1 - sizeB r0 - 1 = (m - sizeB r0 - 1) + 1 from by omega]
+        exact ihc u0 (m - sizeB r0 - 1) w' u r c h' hcn
+
+theorem nodeAtB_first (w uL : Nat) (cL : B) :
+    nodeAtB w (B.nd uL .nil cL) 0 = some (w, uL, (.nil : B), cL) := rfl
+
+/-- **鎖の上の節はひとりっ子。** -/
+theorem child_single (x : B) (w m w' u : Nat) (r c : B)
+    (hsp : m ∈ lastSpine x) (hq : nodeAtB w x m = some (w', u, r, c)) (hcn : c ≠ .nil)
+    (hsp2 : m + 1 ∈ lastSpine x) :
+    ∃ uL cL, c = B.nd uL .nil cL ∧ nodeAtB w x (m + 1) = some (u, uL, (.nil : B), cL) := by
+  have hz : sizeB (lastSibs c) = 0 := by
+    have := spine_next x w m w' u r c hsp hq hcn (m + 1) hsp2 (by omega)
+    omega
+  cases hcc : c with
+  | nil => exact absurd hcc hcn
+  | nd uL rL cL =>
+    have hrl : rL = .nil := by
+      rw [hcc] at hz
+      exact sizeB_eq_zero rL hz
+    subst hrl
+    refine ⟨uL, cL, rfl, ?_⟩
+    rw [nodeAtB_succ_child x w m w' u r c hq hcn, hcc, nodeAtB_first]
+
+/-! ### 9. 最後の節を落としたときの節のデータ -/
+
+theorem nodeAtB_dropLast : ∀ (x : B) (w i w' u : Nat) (r c : B),
+    i ∈ lastSpine x → i + 1 < sizeB x → nodeAtB w x i = some (w', u, r, c) →
+    nodeAtB w (dropLastB x) i = some (w', u, r, dropLastB c) := by
+  intro x
+  induction x with
+  | nil =>
+    intro w i w' u r c hsp _ _
+    have h' : i ∈ ([] : List Nat) := hsp
+    cases h'
+  | nd u0 r0 c0 _ ihc =>
+    intro w i w' u r c hsp hlt hq
+    have hsz : sizeB (B.nd u0 r0 c0) = sizeB r0 + 1 + sizeB c0 := rfl
+    rcases lastSpine_nd_cases u0 r0 c0 i hsp with hbase | ⟨k, hk, hke⟩
+    · subst hbase
+      have h' : (if sizeB r0 < sizeB r0 then nodeAtB w r0 (sizeB r0)
+                 else if ((sizeB r0) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 - sizeB r0 - 1)) = some (w', u, r, c) := hq
+      rw [if_neg (Nat.lt_irrefl _), if_pos (beq_self_eq_true (sizeB r0))] at h'
+      have heq := Option.some.inj h'
+      have hw : w = w' := congrArg (fun z => z.1) heq
+      have hu : u0 = u := congrArg (fun z => z.2.1) heq
+      have hr : r0 = r := congrArg (fun z => z.2.2.1) heq
+      have hcc : c0 = c := congrArg (fun z => z.2.2.2) heq
+      have hcpos : 0 < sizeB c0 := by omega
+      have hcn0 : c0 ≠ .nil := by
+        intro hcz
+        rw [hcz] at hcpos
+        have hz0 : sizeB (.nil : B) = 0 := rfl
+        omega
+      rw [← hw, ← hu, ← hr, ← hcc, dropLastB_nd_ne u0 r0 c0 hcn0]
+      show (if sizeB r0 < sizeB r0 then nodeAtB w r0 (sizeB r0)
+            else if ((sizeB r0) == sizeB r0) = true then
+              some ((w, u0, r0, dropLastB c0) : Nat × Nat × B × B)
+            else nodeAtB u0 (dropLastB c0) (sizeB r0 - sizeB r0 - 1)) = _
+      rw [if_neg (Nat.lt_irrefl _), if_pos (beq_self_eq_true (sizeB r0))]
+    · subst hke
+      have hcn : c0 ≠ .nil := by
+        intro hcz
+        rw [hcz] at hk
+        have h'' : k ∈ ([] : List Nat) := hk
+        cases h''
+      have h' : (if sizeB r0 + 1 + k < sizeB r0 then nodeAtB w r0 (sizeB r0 + 1 + k)
+                 else if ((sizeB r0 + 1 + k) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 + 1 + k - sizeB r0 - 1)) = some (w', u, r, c) := hq
+      rw [if_neg (by omega),
+        if_neg (show ¬ (((sizeB r0 + 1 + k) == sizeB r0) = true) from by
+          intro hcc2; exact absurd (eq_of_beq hcc2) (by omega)),
+        show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+      rw [dropLastB_nd_ne u0 r0 c0 hcn]
+      show (if sizeB r0 + 1 + k < sizeB r0 then _
+            else if ((sizeB r0 + 1 + k) == sizeB r0) = true then _
+            else nodeAtB u0 (dropLastB c0) (sizeB r0 + 1 + k - sizeB r0 - 1)) = _
+      rw [if_neg (by omega),
+        if_neg (show ¬ (((sizeB r0 + 1 + k) == sizeB r0) = true) from by
+          intro hcc2; exact absurd (eq_of_beq hcc2) (by omega)),
+        show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega]
+      exact ihc u0 k w' u r c hk (by omega) h'
+
+/-! ### 10. 潰れた鎖を降りる -/
+
+theorem headLvl_nd_nil (u : Nat) (c : B) : headLvl (B.nd u .nil c) = u := rfl
+
+theorem headLvl_nd_ne (v : Nat) (r a : B) (h : r ≠ .nil) : headLvl (B.nd v r a) = headLvl r := by
+  cases r with
+  | nil => exact absurd rfl h
+  | nd v2 r2 a2 => rfl
+
+theorem nfSum_bFold_bClose : ∀ (x : B) (w : Nat),
+    NfSum ((bFold w x).1) ∧ NfSum (bClose w (bFold w x)) := by
+  intro x
+  induction x with
+  | nil => intro w; exact ⟨nfSum_zero, nfSum_zero⟩
+  | nd u r c ihr _ =>
+    intro w
+    by_cases hw : w < u
+    · have h1 : (bFold w (B.nd u r c)).1
+          = bplus (bClose w (bFold w r)) (bK w u r c) := by
+        rw [bFold_nd_lt w u r c hw]
+      have hn : NfSum (bplus (bClose w (bFold w r)) (bK w u r c)) :=
+        nfSum_bplus _ _ (atomsL_bClose w (bFold w r) (atomsL_bArg_bFold r w).2)
+          (atomsL_bK w u r c)
+      refine ⟨by rw [h1]; exact hn, ?_⟩
+      rw [bClose_bFold_nd_lt w u r c hw]
+      exact hn
+    · cases hst : (bFold w r).2 with
+      | none =>
+        have h1 : (bFold w (B.nd u r c)).1 = (bFold w r).1 := by
+          rw [bFold_nd_ge w u r c hw, hst]
+        refine ⟨by rw [h1]; exact (ihr w).1, ?_⟩
+        rw [bClose_bFold_nd_none w u r c hw hst]
+        exact nfSum_bplus _ _ (atomsL_bArg_bFold r w).2 (atomsL_D _ _)
+      | some a =>
+        have h1 : (bFold w (B.nd u r c)).1 = (bFold w r).1 := by
+          rw [bFold_nd_ge w u r c hw, hst]
+        refine ⟨by rw [h1]; exact (ihr w).1, ?_⟩
+        rw [bClose_bFold_nd_some w u r c hw a hst]
+        exact nfSum_bplus _ _ (atomsL_bArg_bFold r w).2 (atomsL_D _ _)
+
+theorem nfSum_bK (w u : Nat) (r c : B) : NfSum (bK w u r c) := by
+  show NfSum (if (c == .nil) = true then (BT.D u .zero)
+              else if (u ≤ w || !(r == .nil) || headLvl c ≤ u) = true then BT.D u (bArg u c)
+              else bClose u (bFold u c))
+  by_cases h1 : (c == (.nil : B)) = true
+  · rw [if_pos h1]; exact nfSum_D u .zero
+  · rw [if_neg h1]
+    by_cases h2 : (u ≤ w || !(r == .nil) || headLvl c ≤ u) = true
+    · rw [if_pos h2]; exact nfSum_D u (bArg u c)
+    · rw [if_neg h2]; exact (nfSum_bFold_bClose c u).2
+
+theorem bArg_single (w u : Nat) (c : B) : bArg w (B.nd u .nil c) = bK w u .nil c := by
+  rw [bArg_nd]
+  show bplus BT.zero (bK w u .nil c) = _
+  exact bplus_zero_left _ (nfSum_bK w u .nil c)
+
+theorem bClose_bFold_single (w u : Nat) (c : B) (h : w < u) :
+    bClose w (bFold w (B.nd u .nil c)) = bK w u .nil c := by
+  rw [bClose_bFold_nd_lt w u .nil c h]
+  show bplus BT.zero (bK w u .nil c) = _
+  exact bplus_zero_left _ (nfSum_bK w u .nil c)
+
+theorem collB_parts (w' u : Nat) (r c : B) (h : collB w' u r c = true) :
+    c ≠ .nil ∧ w' < u ∧ r = .nil ∧ u < headLvl c := by
+  have h' : ((!(c == .nil)) && decide (w' < u) && (r == .nil)
+      && decide (u < headLvl c)) = true := h
+  obtain ⟨h1, h4⟩ := (Bool.and_eq_true _ _).mp h'
+  obtain ⟨h2, h3⟩ := (Bool.and_eq_true _ _).mp h1
+  obtain ⟨hcn, hwu⟩ := (Bool.and_eq_true _ _).mp h2
+  refine ⟨?_, of_decide_eq_true hwu, of_decide_eq_true h3, of_decide_eq_true h4⟩
+  intro hcz
+  rw [hcz, show ((.nil : B) == (.nil : B)) = true from rfl] at hcn
+  exact Bool.noConfusion hcn
+
+theorem collB_mk (w' u : Nat) (r c : B) (h1 : c ≠ .nil) (h2 : w' < u) (h3 : r = .nil)
+    (h4 : u < headLvl c) : collB w' u r c = true := by
+  show ((!(c == .nil)) && decide (w' < u) && (r == .nil) && decide (u < headLvl c)) = true
+  rw [beqB_false c .nil h1, show (!(false : Bool)) = true from rfl, decide_eq_true h2,
+    h3, show ((.nil : B) == (.nil : B)) = true from rfl, decide_eq_true h4]
+  rfl
+
+/-- 潰れた節の寄与は `bClose ∘ bFold`。 -/
+theorem bK_coll (w' u : Nat) (r c : B) (h : collB w' u r c = true) :
+    bK w' u r c = bClose u (bFold u c) := by
+  obtain ⟨h1, h2, h3, h4⟩ := collB_parts w' u r c h
+  have htest : (u ≤ w' || !(r == .nil) || headLvl c ≤ u) = false := by
+    show (decide (u ≤ w') || (!(r == .nil)) || decide (headLvl c ≤ u)) = false
+    rw [decide_eq_false (show ¬(u ≤ w') from by omega), h3,
+      show ((.nil : B) == (.nil : B)) = true from rfl,
+      show (!(true : Bool)) = false from rfl,
+      decide_eq_false (show ¬(headLvl c ≤ u) from by omega)]
+    rfl
+  show (if (c == .nil) = true then (BT.D u .zero)
+        else if (u ≤ w' || !(r == .nil) || headLvl c ≤ u) = true then BT.D u (bArg u c)
+        else bClose u (bFold u c)) = _
+  rw [if_neg (by rw [beqB_false c .nil h1]; exact Bool.noConfusion),
+    if_neg (by rw [htest]; exact Bool.noConfusion)]
+
+theorem coll_of_not_adm' (t : B) (k w' u : Nat) (r c : B) (hk : 1 ≤ k)
+    (hq : nodeAtB 0 t k = some (w', u, r, c)) (h : isAdmB t k = false) :
+    collB w' u r c = true := by
+  rw [isAdmB_of_node t k w' u r c hq hk] at h
+  cases hcb : collB w' u r c with
+  | true => rfl
+  | false => rw [hcb] at h; exact Bool.noConfusion h
+
+theorem pos_of_not_adm (t : B) (k : Nat) (h : isAdmB t k = false) : 1 ≤ k := by
+  cases k with
+  | zero => rw [isAdmB_zero t] at h; exact Bool.noConfusion h
+  | succ _ => omega
+
+/-- 潰れた鎖の上の位置はすべて祖先鎖の上。 -/
+theorem chain_spine (t : B) : ∀ (d j0 : Nat), j0 ∈ lastSpine t →
+    (∀ k, j0 - d ≤ k → k ≤ j0 → isAdmB t k = false) → (j0 - d) ∈ lastSpine t := by
+  intro d
+  induction d with
+  | zero =>
+    intro j0 h _
+    rw [show j0 - 0 = j0 from by omega]
+    exact h
+  | succ e ih =>
+    intro j0 hsp hall
+    have hprev : (j0 - e) ∈ lastSpine t := ih j0 hsp (fun k h1 h2 => hall k (by omega) h2)
+    by_cases hz : j0 - e = 0
+    · rw [show j0 - (e + 1) = 0 from by omega, ← hz]
+      exact hprev
+    · have hlt : (j0 - e) < sizeB t := lastSpine_lt t _ hprev
+      have hnad := hall (j0 - e) (by omega) (by omega)
+      have hk1 : 1 ≤ j0 - e := pos_of_not_adm t _ hnad
+      obtain ⟨q, hq⟩ := nodeAtB_isSome t 0 (j0 - e) hlt
+      obtain ⟨w', u, r, c⟩ := q
+      have hcoll := coll_of_not_adm' t (j0 - e) w' u r c hk1 hq hnad
+      obtain ⟨_, _, hr, _⟩ := collB_parts w' u r c hcoll
+      subst hr
+      have hp := lastSpine_pred t 0 (j0 - e) w' u c hprev hk1 hq
+      rw [show j0 - e - 1 = j0 - (e + 1) from by omega] at hp
+      exact hp
+
+theorem chain_spine' (t : B) (j0 m : Nat) (hsp : j0 ∈ lastSpine t)
+    (hall : ∀ k, m ≤ k → k ≤ j0 → isAdmB t k = false) :
+    ∀ k, m ≤ k → k ≤ j0 → k ∈ lastSpine t := by
+  intro k h1 h2
+  have hh := chain_spine t (j0 - k) j0 hsp (fun z hz1 hz2 => hall z (by omega) hz2)
+  rw [show j0 - (j0 - k) = k from by omega] at hh
+  exact hh
+
+/-- **鎖の望遠鏡。** 鎖の上のどの節の寄与も、底の `j0` の寄与に等しい。 -/
+theorem tele_chain (t : B) (j0 p uu : Nat) (rL : B)
+    (ww rr : Nat × B) (hnode0 : nodeAtB 0 t j0 = some (ww.1, p, rr.2, B.nd uu rL .nil)) :
+    ∀ (d m w' u : Nat) (r c : B), m + d = j0 →
+    nodeAtB 0 t m = some (w', u, r, c) →
+    (∀ k, m ≤ k → k ≤ j0 → isAdmB t k = false) →
+    (∀ k, m ≤ k → k ≤ j0 → k ∈ lastSpine t) →
+    bK w' u r c = bClose p (bFold p (B.nd uu rL .nil))
+      ∧ bK w' u r (dropLastB c)
+          = (if rL == .nil then BT.D p BT.zero else bClose p (bFold p rL)) := by
+  intro d
+  induction d with
+  | zero =>
+    intro m w' u r c hmd hq hall _
+    have hm : m = j0 := by omega
+    subst hm
+    have heq := Option.some.inj (hnode0.symm.trans hq)
+    have hu : p = u := congrArg (fun z => z.2.1) heq
+    have hc : B.nd uu rL .nil = c := congrArg (fun z => z.2.2.2) heq
+    subst hu
+    subst hc
+    have hnad := hall m (Nat.le_refl m) (Nat.le_refl m)
+    have hk1 : 1 ≤ m := pos_of_not_adm t m hnad
+    have hcoll := coll_of_not_adm' t m w' p r _ hk1 hq hnad
+    obtain ⟨h1, h2, h3, h4⟩ := collB_parts w' p r _ hcoll
+    refine ⟨bK_coll w' p r _ hcoll, ?_⟩
+    rw [show dropLastB (B.nd uu rL .nil) = rL from rfl]
+    by_cases hrl : rL = .nil
+    · subst hrl
+      rw [if_pos (show ((.nil : B) == (.nil : B)) = true from rfl)]
+      show (if ((.nil : B) == .nil) = true then (BT.D p .zero) else _) = _
+      rw [if_pos (show ((.nil : B) == (.nil : B)) = true from rfl)]
+    · rw [if_neg (by rw [beqB_false rL .nil hrl]; exact Bool.noConfusion)]
+      refine bK_coll w' p r rL (collB_mk w' p r rL hrl h2 h3 ?_)
+      rw [headLvl_nd_ne uu rL .nil hrl] at h4
+      exact h4
+  | succ e ih =>
+    intro m w' u r c hmd hq hall hsp
+    have hnad := hall m (Nat.le_refl m) (by omega)
+    have hk1 : 1 ≤ m := pos_of_not_adm t m hnad
+    have hcoll := coll_of_not_adm' t m w' u r c hk1 hq hnad
+    obtain ⟨hcn, hwu, hr, hhl⟩ := collB_parts w' u r c hcoll
+    have hspm : m ∈ lastSpine t := hsp m (Nat.le_refl m) (by omega)
+    have hsp1 : (m + 1) ∈ lastSpine t := hsp (m + 1) (by omega) (by omega)
+    obtain ⟨uL, cL, hcc, hnode1⟩ := child_single t 0 m w' u r c hspm hq hcn hsp1
+    have huL : u < uL := by
+      rw [hcc, headLvl_nd_nil] at hhl
+      exact hhl
+    have hcoll1 := coll_of_not_adm' t (m + 1) u uL .nil cL (by omega) hnode1
+      (hall (m + 1) (by omega) (by omega))
+    obtain ⟨hcLn, _, _, _⟩ := collB_parts u uL .nil cL hcoll1
+    obtain ⟨ih1, ih2⟩ := ih (m + 1) u uL .nil cL (by omega) hnode1
+      (fun k h1 h2 => hall k (by omega) h2) (fun k h1 h2 => hsp k (by omega) h2)
+    refine ⟨?_, ?_⟩
+    · rw [bK_coll w' u r c hcoll, hcc, bClose_bFold_single u uL cL huL]
+      exact ih1
+    · rw [hcc, dropLastB_nd_ne uL .nil cL hcLn]
+      have hcoll2 : collB w' u r (B.nd uL .nil (dropLastB cL)) = true :=
+        collB_mk w' u r _ (by intro hz; exact B.noConfusion hz) hwu hr
+          (by rw [headLvl_nd_nil]; exact huL)
+      rw [bK_coll w' u r _ hcoll2, bClose_bFold_single u uL (dropLastB cL) huL]
+      exact ih2
+
+/-! ### 11. `jn1` の印を、底のデータで書く -/
+
+theorem bMark_bK (x : B) (m w' u : Nat) (r c : B) (hne : x ≠ .nd 0 .nil .nil)
+    (hq : nodeAtB 0 x m = some (w', u, r, c)) : bMark x m = bK w' u r c := by
+  rw [bMark_eq_markG x m hne]
+  show (markIn 0 x m).getD .zero = _
+  rw [markIn_nodeAtB x 0 m, hq]
+  rfl
+
+/-- 鎖の上の (最後でない) 節は子を持つ。 -/
+theorem spine_child_ne : ∀ (x : B) (w m w' u : Nat) (r c : B),
+    m ∈ lastSpine x → m + 1 < sizeB x → nodeAtB w x m = some (w', u, r, c) → c ≠ .nil := by
+  intro x
+  induction x with
+  | nil =>
+    intro w m w' u r c hsp _ _
+    have h' : m ∈ ([] : List Nat) := hsp
+    cases h'
+  | nd u0 r0 c0 _ ihc =>
+    intro w m w' u r c hsp hlt hq
+    have hsz : sizeB (B.nd u0 r0 c0) = sizeB r0 + 1 + sizeB c0 := rfl
+    rcases lastSpine_nd_cases u0 r0 c0 m hsp with hbase | ⟨k, hk, hke⟩
+    · subst hbase
+      have h' : (if sizeB r0 < sizeB r0 then nodeAtB w r0 (sizeB r0)
+                 else if ((sizeB r0) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 - sizeB r0 - 1)) = some (w', u, r, c) := hq
+      rw [if_neg (Nat.lt_irrefl _), if_pos (beq_self_eq_true (sizeB r0))] at h'
+      have hcc : c0 = c := congrArg (fun z => z.2.2.2) (Option.some.inj h')
+      have hcpos : 0 < sizeB c0 := by omega
+      rw [← hcc]
+      intro hcz
+      rw [hcz] at hcpos
+      have hz0 : sizeB (.nil : B) = 0 := rfl
+      omega
+    · subst hke
+      have h' : (if sizeB r0 + 1 + k < sizeB r0 then nodeAtB w r0 (sizeB r0 + 1 + k)
+                 else if ((sizeB r0 + 1 + k) == sizeB r0) = true then
+                   some ((w, u0, r0, c0) : Nat × Nat × B × B)
+                 else nodeAtB u0 c0 (sizeB r0 + 1 + k - sizeB r0 - 1)) = some (w', u, r, c) := hq
+      rw [if_neg (by omega),
+        if_neg (show ¬ (((sizeB r0 + 1 + k) == sizeB r0) = true) from by
+          intro hcc2; exact absurd (eq_of_beq hcc2) (by omega)),
+        show sizeB r0 + 1 + k - sizeB r0 - 1 = k from by omega] at h'
+      exact ihc u0 k w' u r c hk (by omega) h'
+
+/-- `adm` が飛ばした位置はすべて潰れている。 -/
+theorem admB_not_adm (t : B) : ∀ (j k : Nat), admB t j < k → k ≤ j → isAdmB t k = false := by
+  intro j
+  induction j with
+  | zero => intro k h1 h2; exact absurd h1 (by omega)
+  | succ e ih =>
+    intro k h1 h2
+    rw [admB_succ] at h1
+    by_cases hA : isAdmB t (e + 1) = true
+    · rw [if_pos hA] at h1
+      exact absurd h1 (by omega)
+    · rw [if_neg hA] at h1
+      by_cases hk : k = e + 1
+      · rw [hk]
+        cases hb : isAdmB t (e + 1) with
+        | true => exact absurd hb hA
+        | false => rfl
+      · exact ih k h1 (by omega)
+
+/-- **`jn1` の印、両側。** -/
+theorem markPair (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) (hz : bVal (dropLastB t) ≠ BT.zero) :
+    ∃ (w' v : Nat) (r c : B),
+      nodeAtB 0 t (admB t (j0B t)) = some (w', v, r, c)
+      ∧ bMark t (admB t (j0B t)) = BT.D v (bArg v c)
+      ∧ bMark (dropLastB t) (admB t (j0B t)) = BT.D v (bArg v (dropLastB c))
+      ∧ (admB t (j0B t) = j0B t →
+           c = B.nd (botOf 0 t).2.1 (botOf 0 t).2.2 .nil ∧ v = (botOf 0 t).1)
+      ∧ (admB t (j0B t) < j0B t →
+           bArg v c = bClose (botOf 0 t).1
+               (bFold (botOf 0 t).1 (B.nd (botOf 0 t).2.1 (botOf 0 t).2.2 .nil))
+             ∧ bArg v (dropLastB c)
+               = (if (botOf 0 t).2.2 == .nil then BT.D (botOf 0 t).1 BT.zero
+                  else bClose (botOf 0 t).1 (bFold (botOf 0 t).1 (botOf 0 t).2.2))) := by
+  have hne : t ≠ .nil := ne_nil_of_size t h1
+  have hleaf : t ≠ .nd 0 .nil .nil := ne_leaf_of_size t h1
+  have hsleaf : dropLastB t ≠ .nd 0 .nil .nil := by
+    intro hc
+    exact hz (by rw [hc]; exact bVal_leaf)
+  have hnfs : nfB (dropLastB t) = true := nfLe_dropLast t 0 hnf
+  have hsne : dropLastB t ≠ .nil := by
+    intro hc
+    exact hz (by rw [hc]; rfl)
+  have hj0d : j0B t ∈ (lastSpine t).dropLast := j0B_mem_dropLast t h1 hprin
+  have hj0 : j0B t ∈ lastSpine t := mem_of_mem_dropLast _ _ hj0d
+  have hjn1sp : admB t (j0B t) ∈ lastSpine t := admB_spine t (j0B t) hj0
+  have hadm : isAdmB t (admB t (j0B t)) = true := isAdmB_admB t (j0B t)
+  have hjle : admB t (j0B t) ≤ j0B t := admB_le t (j0B t)
+  have hj0lt : j0B t < sizeB t - 1 := j0B_lt t h1 hprin
+  obtain ⟨⟨ww, rr, hnode0⟩, hposrel⟩ := botSpine t 0 (j0B t) (lastSpine_dropLast_ne t h1 hprin)
+  obtain ⟨q, hq⟩ := nodeAtB_isSome t 0 (admB t (j0B t)) (by omega)
+  obtain ⟨w', v, r, c⟩ := q
+  refine ⟨w', v, r, c, hq, ?_, ?_, ?_, ?_⟩
+  · rw [bMark_bK t _ w' v r c hleaf hq,
+      bK_eq_D_arg w' v r c (notColl_of_adm t _ w' v r c hnf hne hq hadm)]
+  · have hqs : nodeAtB 0 (dropLastB t) (admB t (j0B t)) = some (w', v, r, dropLastB c) :=
+      nodeAtB_dropLast t 0 _ w' v r c hjn1sp (by omega) hq
+    have hadms : isAdmB (dropLastB t) (admB t (j0B t)) = true := isAdmB_dropLast t _ hne hadm
+    rw [bMark_bK (dropLastB t) _ w' v r (dropLastB c) hsleaf hqs,
+      bK_eq_D_arg w' v r (dropLastB c)
+        (notColl_of_adm (dropLastB t) _ w' v r (dropLastB c) hnfs hsne hqs hadms)]
+  · intro heq
+    rw [heq] at hq
+    have hh := Option.some.inj (hnode0.symm.trans hq)
+    exact ⟨(congrArg (fun z => z.2.2.2) hh).symm, (congrArg (fun z => z.2.1) hh).symm⟩
+  · intro hlt
+    have hall : ∀ k, admB t (j0B t) + 1 ≤ k → k ≤ j0B t → isAdmB t k = false :=
+      fun k hk1 hk2 => admB_not_adm t (j0B t) k (by omega) hk2
+    have hspall : ∀ k, admB t (j0B t) + 1 ≤ k → k ≤ j0B t → k ∈ lastSpine t :=
+      chain_spine' t (j0B t) (admB t (j0B t) + 1) hj0 hall
+    have hcn : c ≠ .nil := spine_child_ne t 0 _ w' v r c hjn1sp (by omega) hq
+    obtain ⟨uL, cL, hcc, hnode1⟩ :=
+      child_single t 0 _ w' v r c hjn1sp hq hcn (hspall _ (by omega) (by omega))
+    have hcoll1 := coll_of_not_adm' t (admB t (j0B t) + 1) v uL .nil cL (by omega) hnode1
+      (hall _ (by omega) (by omega))
+    obtain ⟨hcLn, _, _, _⟩ := collB_parts v uL .nil cL hcoll1
+    obtain ⟨tt1, tt2⟩ := tele_chain t (j0B t) (botOf 0 t).1 (botOf 0 t).2.1 (botOf 0 t).2.2
+      (ww, .nil) (0, rr) hnode0
+      (j0B t - (admB t (j0B t) + 1)) (admB t (j0B t) + 1) v uL .nil cL (by omega) hnode1
+      (fun k hk1 hk2 => hall k hk1 hk2) (fun k hk1 hk2 => hspall k hk1 hk2)
+    refine ⟨?_, ?_⟩
+    · rw [hcc, bArg_single v uL cL]
+      exact tt1
+    · rw [hcc, dropLastB_nd_ne uL .nil cL hcLn, bArg_single v uL (dropLastB cL)]
+      exact tt2
+
+/-! ### 12. 底の三つの形 -/
+
+theorem bK_nil (w u : Nat) (r : B) : bK w u r .nil = BT.D u BT.zero := by
+  show (if ((.nil : B) == .nil) = true then (BT.D u .zero) else _) = _
+  rw [if_pos (show ((.nil : B) == (.nil : B)) = true from rfl)]
+
+/-- 底で `p < uu` のとき: 末尾に足すだけ。 -/
+theorem bot_append (p uu : Nat) (rL : B) (h : p < uu) :
+    bClose p (bFold p (B.nd uu rL .nil))
+      = bplus (bClose p (bFold p rL)) (BT.D uu BT.zero) := by
+  rw [bClose_bFold_nd_lt p uu rL .nil h, bK_nil]
+
+/-- 底で `uu ≤ p`、蓄積が空のとき。 -/
+theorem bot_none (p uu : Nat) (rL : B) (h : ¬ (p < uu)) (hst : (bFold p rL).2 = none) :
+    bClose p (bFold p (B.nd uu rL .nil))
+        = bplus (bFold p rL).1 (BT.D p (bplus (bFold p rL).1 (BT.D uu BT.zero)))
+      ∧ bClose p (bFold p rL) = (bFold p rL).1 := by
+  refine ⟨?_, bClose_none' p (bFold p rL) hst⟩
+  rw [bClose_bFold_nd_none p uu rL .nil h hst, bK_nil]
+
+/-- 底で `uu ≤ p`、蓄積があるとき。 -/
+theorem bot_some (p uu : Nat) (rL : B) (a : BT) (h : ¬ (p < uu)) (hst : (bFold p rL).2 = some a) :
+    bClose p (bFold p (B.nd uu rL .nil))
+        = bplus (bFold p rL).1 (BT.D p (bplus a (BT.D uu BT.zero)))
+      ∧ bClose p (bFold p rL) = bplus (bFold p rL).1 (BT.D p a) := by
+  refine ⟨?_, bClose_some' p (bFold p rL) a hst⟩
+  rw [bClose_bFold_nd_some p uu rL .nil h a hst, bK_nil]
+
+/-! ### 13. 和の最後の成分の頭 -/
+
+theorem getLast?_append_right {α : Type _} : ∀ (l1 l2 : List α), l2 ≠ [] →
+    (l1 ++ l2).getLast? = l2.getLast? := by
+  intro l1
+  induction l1 with
+  | nil => intro l2 _; rfl
+  | cons a rest ih =>
+    intro l2 h
+    have hne : rest ++ l2 ≠ [] := by
+      intro hc
+      exact h (List.append_eq_nil_iff.mp hc).2
+    show (a :: (rest ++ l2)).getLast? = _
+    rw [getLast?_cons_of_ne_nil a (rest ++ l2) hne]
+    exact ih l2 h
+
+/-- **和の最後の成分の頭は、その節の段を下回らない。** `mkC2` の `t34` の分岐を潰すのに要る。 -/
+theorem lastAtom_aux : ∀ (x : B),
+    (∀ (w u : Nat) (r : B), (bK w u r x).toL ≠ []
+        ∧ ∀ z, (bK w u r x).toL.getLast? = some z → ∃ s a, z = BT.D s a ∧ u ≤ s)
+    ∧ (∀ (w : Nat), (bFold w x).2 = none → x ≠ .nil →
+        ((bFold w x).1).toL ≠ []
+          ∧ ∀ z, ((bFold w x).1).toL.getLast? = some z → ∃ s a, z = BT.D s a ∧ w < s) := by
+  intro x
+  induction x with
+  | nil =>
+    refine ⟨fun w u r => ⟨?_, ?_⟩, fun w _ hne => absurd rfl hne⟩
+    · rw [bK_nil]
+      show ([BT.D u BT.zero] : List BT) ≠ []
+      exact List.cons_ne_nil _ _
+    · intro z hz
+      rw [bK_nil] at hz
+      have hz' : (some (BT.D u BT.zero) : Option BT) = some z := hz
+      exact ⟨u, BT.zero, (Option.some.inj hz').symm, Nat.le_refl u⟩
+  | nd u1 r1 c1 _ ihc =>
+    have h2 : ∀ (w : Nat), (bFold w (B.nd u1 r1 c1)).2 = none → (B.nd u1 r1 c1) ≠ .nil →
+        ((bFold w (B.nd u1 r1 c1)).1).toL ≠ []
+          ∧ ∀ z, ((bFold w (B.nd u1 r1 c1)).1).toL.getLast? = some z →
+              ∃ s a, z = BT.D s a ∧ w < s := by
+      intro w hnone _
+      by_cases hw : w < u1
+      · have h1 : (bFold w (B.nd u1 r1 c1)).1
+            = bplus (bClose w (bFold w r1)) (bK w u1 r1 c1) := by
+          rw [bFold_nd_lt w u1 r1 c1 hw]
+        have hA : AtomsL (bClose w (bFold w r1)) :=
+          atomsL_bClose w (bFold w r1) (atomsL_bArg_bFold r1 w).2
+        have hB : AtomsL (bK w u1 r1 c1) := atomsL_bK w u1 r1 c1
+        have htoL : ((bFold w (B.nd u1 r1 c1)).1).toL
+            = (bClose w (bFold w r1)).toL ++ (bK w u1 r1 c1).toL := by
+          rw [h1, toL_bplus _ _ hA hB]
+        have hKne := (ihc.1 w u1 r1).1
+        refine ⟨?_, ?_⟩
+        · rw [htoL]
+          intro hc
+          exact hKne (List.append_eq_nil_iff.mp hc).2
+        · intro z hz
+          rw [htoL, getLast?_append_right _ _ hKne] at hz
+          obtain ⟨s, a, hza, hus⟩ := (ihc.1 w u1 r1).2 z hz
+          exact ⟨s, a, hza, by omega⟩
+      · exfalso
+        cases hst : (bFold w r1).2 with
+        | none =>
+          have hs2 : (bFold w (B.nd u1 r1 c1)).2
+              = some (bplus (bFold w r1).1 (bK w u1 r1 c1)) := by
+            rw [bFold_nd_ge w u1 r1 c1 hw, hst]
+          rw [hs2] at hnone
+          exact absurd hnone (Option.some_ne_none _)
+        | some a =>
+          have hs2 : (bFold w (B.nd u1 r1 c1)).2 = some (bplus a (bK w u1 r1 c1)) := by
+            rw [bFold_nd_ge w u1 r1 c1 hw, hst]
+          rw [hs2] at hnone
+          exact absurd hnone (Option.some_ne_none _)
+    refine ⟨fun w u r => ?_, h2⟩
+    by_cases htest : (u ≤ w || !(r == .nil) || headLvl (B.nd u1 r1 c1) ≤ u) = true
+    · have hK : bK w u r (B.nd u1 r1 c1) = BT.D u (bArg u (B.nd u1 r1 c1)) := by
+        show (if ((B.nd u1 r1 c1) == .nil) = true then (BT.D u .zero)
+              else if (u ≤ w || !(r == .nil) || headLvl (B.nd u1 r1 c1) ≤ u) = true
+                   then BT.D u (bArg u (B.nd u1 r1 c1))
+              else bClose u (bFold u (B.nd u1 r1 c1))) = _
+        rw [if_neg (show ¬ (((B.nd u1 r1 c1) == (.nil : B)) = true) from by
+          intro hc; exact B.noConfusion (of_decide_eq_true hc)), if_pos htest]
+      rw [hK]
+      refine ⟨List.cons_ne_nil _ _, ?_⟩
+      intro z hz
+      have hz' : (some (BT.D u (bArg u (B.nd u1 r1 c1))) : Option BT) = some z := hz
+      exact ⟨u, bArg u (B.nd u1 r1 c1), (Option.some.inj hz').symm, Nat.le_refl u⟩
+    · have hK : bK w u r (B.nd u1 r1 c1) = bClose u (bFold u (B.nd u1 r1 c1)) := by
+        show (if ((B.nd u1 r1 c1) == .nil) = true then (BT.D u .zero)
+              else if (u ≤ w || !(r == .nil) || headLvl (B.nd u1 r1 c1) ≤ u) = true
+                   then BT.D u (bArg u (B.nd u1 r1 c1))
+              else bClose u (bFold u (B.nd u1 r1 c1))) = _
+        rw [if_neg (show ¬ (((B.nd u1 r1 c1) == (.nil : B)) = true) from by
+          intro hc; exact B.noConfusion (of_decide_eq_true hc)), if_neg htest]
+      rw [hK]
+      cases hst : (bFold u (B.nd u1 r1 c1)).2 with
+      | none =>
+        rw [bClose_none' u _ hst]
+        obtain ⟨hne1, hh⟩ := h2 u hst (by intro hc; exact B.noConfusion hc)
+        refine ⟨hne1, ?_⟩
+        intro z hz
+        obtain ⟨s, a, hza, hus⟩ := hh z hz
+        exact ⟨s, a, hza, by omega⟩
+      | some a =>
+        rw [bClose_some' u _ a hst]
+        have hA : AtomsL ((bFold u (B.nd u1 r1 c1)).1) :=
+          (atomsL_bArg_bFold (B.nd u1 r1 c1) u).2
+        have htoL : (bplus ((bFold u (B.nd u1 r1 c1)).1) (BT.D u a)).toL
+            = ((bFold u (B.nd u1 r1 c1)).1).toL ++ [BT.D u a] :=
+          toL_bplus _ _ hA (atomsL_D u a)
+        rw [htoL]
+        refine ⟨?_, ?_⟩
+        · intro hc
+          exact absurd (List.append_eq_nil_iff.mp hc).2 (List.cons_ne_nil _ _)
+        · intro z hz
+          rw [getLast?_append_right _ _ (List.cons_ne_nil (BT.D u a) [])] at hz
+          have hz' : (some (BT.D u a) : Option BT) = some z := hz
+          exact ⟨u, a, (Option.some.inj hz').symm, Nat.le_refl u⟩
+
+/-! ### 14. `mkC2` を評価する -/
+
+/-- `mkC2` の `t34`。 -/
+def t34B (M : Trans.Recal.PS) (j0 : Int) (t2 : BT) : BT × BT :=
+  match (t2.toL.getLast?).getD BT.zero with
+  | .D s inner => if ((s : Nat) : Int) == gp1 M j0 then (BT.ofL t2.toL.dropLast, inner)
+                  else (t2, t2)
+  | _ => (t2, t2)
+
+theorem mkC2_D (M : Trans.Recal.PS) (j0 j1 : Int) (ty v : Nat) (t2 : BT) :
+    mkC2 M j0 j1 ty (BT.D v t2)
+      = (if (ty == 1 || ty == 3 || ty == 5) = true then
+           BT.D v (bplus t2 (BT.D (gp1 M j1).toNat BT.zero))
+         else if (ty == 2 || ty == 4) = true then
+           (if (t2 == BT.zero) = true then
+              BT.D v (BT.D (gp1 M j0).toNat (BT.D (gp1 M j1).toNat BT.zero))
+            else
+              BT.D v (bplus (t34B M j0 t2).1 (BT.D (gp1 M j0).toNat
+                (bplus (t34B M j0 t2).2 (BT.D (gp1 M j1).toNat BT.zero)))))
+         else BT.D v (BT.D (gp1 M j1).toNat BT.zero)) := rfl
+
+theorem toNat_cast (n : Nat) : (((n : Nat) : Int)).toNat = n := rfl
+
+theorem getLast?_ne_nil {α : Type _} : ∀ (l : List α), l ≠ [] → ∃ z, l.getLast? = some z := by
+  intro l
+  induction l with
+  | nil => intro h; exact absurd rfl h
+  | cons a tl ih =>
+    intro _
+    cases tl with
+    | nil => exact ⟨a, rfl⟩
+    | cons b r =>
+      obtain ⟨z, hz⟩ := ih (List.cons_ne_nil b r)
+      exact ⟨z, by rw [getLast?_cons_of_ne_nil a (b :: r) (List.cons_ne_nil b r)]; exact hz⟩
+
+theorem mkC2_135 (M : Trans.Recal.PS) (j0 j1 : Int) (ty v : Nat) (t2 : BT)
+    (h1 : (ty == 1 || ty == 3 || ty == 5) = true) :
+    mkC2 M j0 j1 ty (BT.D v t2) = BT.D v (bplus t2 (BT.D (gp1 M j1).toNat BT.zero)) := by
+  rw [mkC2_D, if_pos h1]
+
+theorem mkC2_6 (M : Trans.Recal.PS) (j0 j1 : Int) (ty v : Nat) (t2 : BT)
+    (h1 : (ty == 1 || ty == 3 || ty == 5) = false) (h2 : (ty == 2 || ty == 4) = false) :
+    mkC2 M j0 j1 ty (BT.D v t2) = BT.D v (BT.D (gp1 M j1).toNat BT.zero) := by
+  rw [mkC2_D, if_neg (by rw [h1]; exact Bool.noConfusion),
+    if_neg (by rw [h2]; exact Bool.noConfusion)]
+
+/-- `t2` の末尾が `psi_p(aa)` のとき: `t34` は最後の成分をはがす。 -/
+theorem mkC2_24_split (M : Trans.Recal.PS) (j0 j1 : Int) (ty v pp : Nat) (A aa : BT)
+    (h1 : (ty == 1 || ty == 3 || ty == 5) = false) (h2 : (ty == 2 || ty == 4) = true)
+    (hA : AtomsL A) (hnfA : NfSum A) (hgp : gp1 M j0 = ((pp : Nat) : Int)) :
+    mkC2 M j0 j1 ty (BT.D v (bplus A (BT.D pp aa)))
+      = BT.D v (bplus A (BT.D pp (bplus aa (BT.D (gp1 M j1).toNat BT.zero)))) := by
+  have htoL : (bplus A (BT.D pp aa)).toL = A.toL ++ [BT.D pp aa] :=
+    toL_bplus A (BT.D pp aa) hA (atomsL_D pp aa)
+  have hnz : ((bplus A (BT.D pp aa)) == BT.zero) = false := by
+    refine bt_beq_false _ _ ?_
+    intro hc
+    have hz : (bplus A (BT.D pp aa)).toL = [] := by rw [hc]; rfl
+    rw [htoL] at hz
+    exact absurd (List.append_eq_nil_iff.mp hz).2 (List.cons_ne_nil _ _)
+  have ht34 : t34B M j0 (bplus A (BT.D pp aa)) = (A, aa) := by
+    show (match ((bplus A (BT.D pp aa)).toL.getLast?).getD BT.zero with
+          | .D s inner => if ((s : Nat) : Int) == gp1 M j0
+                          then (BT.ofL ((bplus A (BT.D pp aa)).toL.dropLast), inner)
+                          else (bplus A (BT.D pp aa), bplus A (BT.D pp aa))
+          | _ => (bplus A (BT.D pp aa), bplus A (BT.D pp aa))) = _
+    rw [htoL, List.getLast?_concat]
+    show (if ((pp : Nat) : Int) == gp1 M j0
+          then (BT.ofL ((A.toL ++ [BT.D pp aa]).dropLast), aa)
+          else (BT.ofL (A.toL ++ [BT.D pp aa]), BT.ofL (A.toL ++ [BT.D pp aa]))) = _
+    rw [if_pos (by rw [hgp]; exact beqI_self _), List.dropLast_concat, hnfA]
+  rw [mkC2_D, if_neg (by rw [h1]; exact Bool.noConfusion), if_pos h2,
+    if_neg (by rw [hnz]; exact Bool.noConfusion), ht34, hgp, toNat_cast]
+
+/-- `t2` の末尾の頭が `p` でないとき: `t34` は `t2` をそのまま二度使う。 -/
+theorem mkC2_24_keep (M : Trans.Recal.PS) (j0 j1 : Int) (ty v pp : Nat) (t2 : BT)
+    (h1 : (ty == 1 || ty == 3 || ty == 5) = false) (h2 : (ty == 2 || ty == 4) = true)
+    (hne : t2.toL ≠ []) (hgp : gp1 M j0 = ((pp : Nat) : Int))
+    (hhd : ∀ z, t2.toL.getLast? = some z → ∃ s a, z = BT.D s a ∧ pp < s) :
+    mkC2 M j0 j1 ty (BT.D v t2)
+      = BT.D v (bplus t2 (BT.D pp (bplus t2 (BT.D (gp1 M j1).toNat BT.zero)))) := by
+  obtain ⟨z, hz⟩ := getLast?_ne_nil t2.toL hne
+  obtain ⟨s, a, hza, hps⟩ := hhd z hz
+  have hnz : (t2 == BT.zero) = false := by
+    refine bt_beq_false _ _ ?_
+    intro hc
+    have hzz : t2.toL = [] := by rw [hc]; rfl
+    exact hne hzz
+  have ht34 : t34B M j0 t2 = (t2, t2) := by
+    show (match (t2.toL.getLast?).getD BT.zero with
+          | .D s inner => if ((s : Nat) : Int) == gp1 M j0
+                          then (BT.ofL t2.toL.dropLast, inner) else (t2, t2)
+          | _ => (t2, t2)) = _
+    rw [hz]
+    show (match z with
+          | .D s inner => if ((s : Nat) : Int) == gp1 M j0
+                          then (BT.ofL t2.toL.dropLast, inner) else (t2, t2)
+          | _ => (t2, t2)) = _
+    rw [hza]
+    show (if ((s : Nat) : Int) == gp1 M j0 then (BT.ofL t2.toL.dropLast, a) else (t2, t2)) = _
+    rw [if_neg (by
+      rw [hgp]
+      refine (by
+        intro hcc
+        exact absurd (of_decide_eq_true hcc) (by omega)))]
+  rw [mkC2_D, if_neg (by rw [h1]; exact Bool.noConfusion), if_pos h2,
+    if_neg (by rw [hnz]; exact Bool.noConfusion), ht34, hgp, toNat_cast]
+
+/-! ### 15. 糊: `mkC2` は `t` の側で同じ節の寄与を計算する -/
+
+theorem admB_of_adm (t : B) (j : Nat) (h : isAdmB t j = true) : admB t j = j := by
+  cases j with
+  | zero => rfl
+  | succ k => rw [admB_succ, if_pos h]
+
+theorem admB_lt_of_not_adm (t : B) (j : Nat) (h : isAdmB t j = false) : admB t j < j := by
+  cases j with
+  | zero =>
+    rw [isAdmB_zero t] at h
+    exact absurd h (by intro hc; exact Bool.noConfusion hc)
+  | succ k =>
+    rw [admB_succ, if_neg (by rw [h]; exact Bool.noConfusion)]
+    have := admB_le t k
+    omega
+
+theorem tyMainB_def (t : B) (j0 j1 : Nat) :
+    tyMainB t j0 j1
+      = (if entL t j1 == 0 then (if isAdmB t j0 then 1 else 2)
+         else if entL t j1 ≤ entL t j0 then (if isAdmB t j0 then 3 else 4)
+         else if j0 + 1 < j1 then 5 else 6) := rfl
+
+/-- **項目 2**、底のデータを名前で受け取った形。 -/
+theorem mkC2_glue_aux (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) (hz : bVal (dropLastB t) ≠ BT.zero)
+    (p uu : Nat) (rL : B) (hbot : botOf 0 t = (p, uu, rL)) :
+    mkC2 (psM (matB t 0)) ((j0B t : Nat) : Int) ((sizeB t - 1 : Nat) : Int)
+        (tyMainB t (j0B t) (sizeB t - 1)) (bMark (dropLastB t) (admB t (j0B t)))
+      = bMark t (admB t (j0B t)) := by
+  have hP : (botOf 0 t).1 = p := by rw [hbot]
+  have hU : (botOf 0 t).2.1 = uu := by rw [hbot]
+  have hR : (botOf 0 t).2.2 = rL := by rw [hbot]
+  have hne : t ≠ .nil := ne_nil_of_size t h1
+  obtain ⟨w', v, r, c, hq, hMt, hMs, hEq, hLt⟩ := markPair t hnf h1 hprin hz
+  rw [hP, hU, hR] at hEq hLt
+  obtain ⟨⟨ww, rr, hnode0⟩, hposrel⟩ := botSpine t 0 (j0B t) (lastSpine_dropLast_ne t h1 hprin)
+  rw [hP, hU, hR] at hnode0
+  rw [hR] at hposrel
+  have hpj0 : entL t (j0B t) = p := entL_nodeAtB t 0 (j0B t) 0 _ hnode0
+  have huuj1 : entL t (sizeB t - 1) = uu := by
+    rw [← hU]
+    exact entL_nodeAtB t 0 (sizeB t - 1) 0 _ (nodeAtB_last t 0 hne)
+  have hgp1 : gp1 (psM (matB t 0)) ((sizeB t - 1 : Nat) : Int) = ((uu : Nat) : Int) := by
+    rw [psM_gp1 (matB t 0) (sizeB t - 1)]
+    show ((entL t (sizeB t - 1) : Nat) : Int) = _
+    rw [huuj1]
+  have hgp0 : gp1 (psM (matB t 0)) ((j0B t : Nat) : Int) = ((p : Nat) : Int) := by
+    rw [psM_gp1 (matB t 0) (j0B t)]
+    show ((entL t (j0B t) : Nat) : Int) = _
+    rw [hpj0]
+  have hty : tyMainB t (j0B t) (sizeB t - 1)
+      = (if uu == 0 then (if isAdmB t (j0B t) then 1 else 2)
+         else if uu ≤ p then (if isAdmB t (j0B t) then 3 else 4)
+         else if j0B t + 1 < sizeB t - 1 then 5 else 6) := by
+    rw [tyMainB_def, huuj1, hpj0]
+  by_cases hadm0 : isAdmB t (j0B t) = true
+  · obtain ⟨hc, hv⟩ := hEq (admB_of_adm t (j0B t) hadm0)
+    have hTfin : bArg v c = bplus (bArg v rL) (BT.D uu BT.zero) := by
+      rw [hc, bArg_nd, bK_nil]
+    have hSfin : bArg v (dropLastB c) = bArg v rL := by
+      rw [hc]
+      rfl
+    rw [hMt, hMs, hTfin, hSfin]
+    by_cases hu0 : (uu == 0) = true
+    · rw [show tyMainB t (j0B t) (sizeB t - 1) = 1 from by rw [hty, if_pos hu0, if_pos hadm0],
+        mkC2_135 _ _ _ 1 v _ rfl, hgp1, toNat_cast]
+    · by_cases hle : uu ≤ p
+      · rw [show tyMainB t (j0B t) (sizeB t - 1) = 3 from by
+            rw [hty, if_neg hu0, if_pos hle, if_pos hadm0],
+          mkC2_135 _ _ _ 3 v _ rfl, hgp1, toNat_cast]
+      · by_cases hlt : j0B t + 1 < sizeB t - 1
+        · rw [show tyMainB t (j0B t) (sizeB t - 1) = 5 from by
+              rw [hty, if_neg hu0, if_neg hle, if_pos hlt],
+            mkC2_135 _ _ _ 5 v _ rfl, hgp1, toNat_cast]
+        · have hrLn : rL = .nil := sizeB_eq_zero rL (by omega)
+          rw [show tyMainB t (j0B t) (sizeB t - 1) = 6 from by
+              rw [hty, if_neg hu0, if_neg hle, if_neg hlt],
+            mkC2_6 _ _ _ 6 v _ rfl rfl, hgp1, toNat_cast, hrLn]
+          show BT.D v (BT.D uu BT.zero) = BT.D v (bplus (bArg v (.nil : B)) (BT.D uu BT.zero))
+          rw [show bArg v (.nil : B) = BT.zero from rfl,
+            bplus_zero_left _ (nfSum_D uu BT.zero)]
+  · have hadm0' : isAdmB t (j0B t) = false := by
+      cases hb : isAdmB t (j0B t) with
+      | true => exact absurd hb hadm0
+      | false => rfl
+    obtain ⟨hT, hS⟩ := hLt (admB_lt_of_not_adm t (j0B t) hadm0')
+    have hj0pos : 1 ≤ j0B t := pos_of_not_adm t (j0B t) hadm0'
+    have hcoll0 := coll_of_not_adm' t (j0B t) ww p rr (B.nd uu rL .nil) hj0pos hnode0 hadm0'
+    obtain ⟨_, hwwp, _, hhl⟩ := collB_parts ww p rr (B.nd uu rL .nil) hcoll0
+    by_cases hrL : rL = .nil
+    · subst hrL
+      have hpu : p < uu := by
+        rw [headLvl_nd_nil] at hhl
+        exact hhl
+      have hTfin : bArg v c = BT.D uu BT.zero := by
+        rw [hT, bot_append p uu .nil hpu,
+          show bClose p (bFold p (.nil : B)) = BT.zero from rfl]
+        exact bplus_zero_left _ (nfSum_D uu BT.zero)
+      have hSfin : bArg v (dropLastB c) = BT.D p BT.zero := by
+        rw [hS, if_pos (show ((.nil : B) == (.nil : B)) = true from rfl)]
+      rw [hMt, hMs, hTfin, hSfin,
+        show tyMainB t (j0B t) (sizeB t - 1) = 6 from by
+          rw [hty, if_neg (show ¬ ((uu == 0) = true) from by
+              intro hcc; exact absurd (of_decide_eq_true hcc) (by omega)),
+            if_neg (show ¬ (uu ≤ p) from by omega),
+            if_neg (show ¬ (j0B t + 1 < sizeB t - 1) from by
+              have hz0 : sizeB (.nil : B) = 0 := rfl
+              omega)],
+        mkC2_6 _ _ _ 6 v _ rfl rfl, hgp1, toNat_cast]
+    · have hhl2 : p < headLvl rL := by
+        rw [headLvl_nd_ne uu rL .nil hrL] at hhl
+        exact hhl
+      have hrpos : 0 < sizeB rL := sizeB_pos rL hrL
+      have hSfin : bArg v (dropLastB c) = bClose p (bFold p rL) := by
+        rw [hS, if_neg (by rw [beqB_false rL .nil hrL]; exact Bool.noConfusion)]
+      by_cases hpu : p < uu
+      · have hTfin : bArg v c = bplus (bClose p (bFold p rL)) (BT.D uu BT.zero) := by
+          rw [hT, bot_append p uu rL hpu]
+        rw [hMt, hMs, hTfin, hSfin,
+          show tyMainB t (j0B t) (sizeB t - 1) = 5 from by
+            rw [hty, if_neg (show ¬ ((uu == 0) = true) from by
+                intro hcc; exact absurd (of_decide_eq_true hcc) (by omega)),
+              if_neg (show ¬ (uu ≤ p) from by omega),
+              if_pos (show j0B t + 1 < sizeB t - 1 from by omega)],
+          mkC2_135 _ _ _ 5 v _ rfl, hgp1, toNat_cast]
+      · have hty24 : tyMainB t (j0B t) (sizeB t - 1) = 2
+            ∨ tyMainB t (j0B t) (sizeB t - 1) = 4 := by
+          by_cases hu0 : (uu == 0) = true
+          · exact Or.inl (by rw [hty, if_pos hu0, if_neg hadm0])
+          · exact Or.inr (by rw [hty, if_neg hu0, if_pos (show uu ≤ p from by omega),
+              if_neg hadm0])
+        have hb1 : ((tyMainB t (j0B t) (sizeB t - 1) == 1)
+            || (tyMainB t (j0B t) (sizeB t - 1) == 3)
+            || (tyMainB t (j0B t) (sizeB t - 1) == 5)) = false := by
+          rcases hty24 with h | h <;> rw [h] <;> rfl
+        have hb2 : ((tyMainB t (j0B t) (sizeB t - 1) == 2)
+            || (tyMainB t (j0B t) (sizeB t - 1) == 4)) = true := by
+          rcases hty24 with h | h <;> rw [h] <;> rfl
+        cases hst : (bFold p rL).2 with
+        | none =>
+          obtain ⟨hTn, hSn⟩ := bot_none p uu rL hpu hst
+          have hTfin : bArg v c
+              = bplus (bFold p rL).1 (BT.D p (bplus (bFold p rL).1 (BT.D uu BT.zero))) := by
+            rw [hT, hTn]
+          have hSfin' : bArg v (dropLastB c) = (bFold p rL).1 := by rw [hSfin, hSn]
+          obtain ⟨hne1, hhd⟩ := (lastAtom_aux rL).2 p hst hrL
+          rw [hMt, hMs, hTfin, hSfin',
+            mkC2_24_keep _ _ _ _ v p _ hb1 hb2 hne1 hgp0 hhd, hgp1, toNat_cast]
+        | some a =>
+          obtain ⟨hTs, hSs⟩ := bot_some p uu rL a hpu hst
+          have hTfin : bArg v c
+              = bplus (bFold p rL).1 (BT.D p (bplus a (BT.D uu BT.zero))) := by
+            rw [hT, hTs]
+          have hSfin' : bArg v (dropLastB c) = bplus (bFold p rL).1 (BT.D p a) := by
+            rw [hSfin, hSs]
+          rw [hMt, hMs, hTfin, hSfin',
+            mkC2_24_split _ _ _ _ v p _ a hb1 hb2 (atomsL_bArg_bFold rL p).2
+              (nfSum_bFold_bClose rL p).1 hgp0, hgp1, toNat_cast]
+
+/-- **項目 2。** `mkC2` は `t` の側で同じ節の寄与を計算する。 -/
+theorem mkC2_glue (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) (hz : bVal (dropLastB t) ≠ BT.zero) :
+    mkC2 (psM (matB t 0)) ((j0B t : Nat) : Int) ((sizeB t - 1 : Nat) : Int)
+        (tyMainB t (j0B t) (sizeB t - 1)) (bMark (dropLastB t) (admB t (j0B t)))
+      = bMark t (admB t (j0B t)) :=
+  mkC2_glue_aux t hnf h1 hprin hz (botOf 0 t).1 (botOf 0 t).2.1 (botOf 0 t).2.2 rfl
+
+/-! ### 16. 枝の材料を木の言葉に直す -/
+
+theorem lenI_ne_one (t : B) (h1 : 1 < sizeB t) :
+    (lenI (psM (matB t 0)) - 1 == 0) = false := by
+  rw [lenI_matB]
+  exact decide_eq_false (by omega)
+
+theorem mainC1_tree (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) (g : Nat) (tbl : Trans.Recal.Memo) :
+    mainC1 g (psM (matB t 0)) tbl
+      = (Trans.Recal.runAux g (psM (matB (dropLastB t) 0))
+           (some ((admB t (j0B t) : Nat) : Int))).run
+          ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tbl).2 := by
+  show (Trans.Recal.runAux g (predP (psM (matB t 0)))
+      (some (adm (psM (matB t 0))
+        (fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0)))).run
+      ((Trans.Recal.runAux g (predP (psM (matB t 0))) none).run tbl).2 = _
+  rw [branch_jn1 t h1 hprin, predP_matB t h1]
+
+theorem mainC2_tree (t : B) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) (c1 : BT) :
+    mainC2 (psM (matB t 0)) c1
+      = mkC2 (psM (matB t 0)) ((j0B t : Nat) : Int) ((sizeB t - 1 : Nat) : Int)
+          (tyMainB t (j0B t) (sizeB t - 1)) c1 := by
+  show mkC2 (psM (matB t 0)) (fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0)
+      (lenI (psM (matB t 0)) - 1)
+      (transTypeMain (psM (matB t 0)) (fpar (psM (matB t 0)) 0 (lenI (psM (matB t 0)) - 1) 0)
+        (lenI (psM (matB t 0)) - 1)) c1 = _
+  rw [branch_ty t h1 hprin, fpar_last_spine t h1 hprin, lenI_sub_one t h1]
+
+/-! ### 17. 型 1-6 の枝、`Trans` の側 -/
+
+/-- **`runAux` の型 1-6 の枝** (要求は `Trans`)。 -/
+theorem runAux_main (g : Nat) (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true)
+    (hzv : bVal (dropLastB t) ≠ BT.zero)
+    (tbl : Trans.Recal.Memo) (hs : SoundB tbl)
+    (ih : ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).1
+            = bVal (dropLastB t)
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).2)
+    (ihm : ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0))
+             (some ((admB t (j0B t) : Nat) : Int))).run tb).1
+            = bMark (dropLastB t) (admB t (j0B t))
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0))
+             (some ((admB t (j0B t) : Nat) : Int))).run tb).2) :
+    ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) none).run tbl).1 = bVal t
+      ∧ SoundB ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) none).run tbl).2 := by
+  cases hf : tbl.find? (fun z => z.1 == (psM (matB t 0), (none : Option Int))) with
+  | some pp =>
+    rw [runHit g _ none tbl pp hf]
+    obtain ⟨hg, he⟩ := goodB_of_find hs hf
+    exact ⟨hg t none hnf he (Or.inl rfl), hs⟩
+  | none =>
+    obtain ⟨hv0, hsd0⟩ := ih tbl hs
+    have ht1 : ((Trans.Recal.runAux g (predP (psM (matB t 0))) none).run tbl).1
+        = bVal (dropLastB t) := by
+      rw [predP_matB t h1]
+      exact hv0
+    have hne0 : (bVal (dropLastB t) == BT.zero) = false := bt_beq_false _ _ hzv
+    have hc1 : (mainC1 g (psM (matB t 0)) tbl).1 = bMark (dropLastB t) (admB t (j0B t)) := by
+      rw [mainC1_tree t h1 hprin]
+      exact (ihm _ hsd0).1
+    have hsd1 : SoundB (mainC1 g (psM (matB t 0)) tbl).2 := by
+      rw [mainC1_tree t h1 hprin]
+      exact (ihm _ hsd0).2
+    have hc2 : mainC2 (psM (matB t 0)) (mainC1 g (psM (matB t 0)) tbl).1
+        = bMark t (admB t (j0B t)) := by
+      rw [mainC2_tree t h1 hprin, hc1]
+      exact mkC2_glue t hnf h1 hprin hzv
+    obtain ⟨hoks, hokt⟩ := markOKB_admB_j0 t hnf h1 hprin hzv
+    have hval : mainVal (psM (matB t 0)) (bVal (dropLastB t))
+        (mainC1 g (psM (matB t 0)) tbl).1 = bVal t := by
+      show (replMark (Trans.Dict.BT.size (bVal (dropLastB t))
+              + mainDep (mainC1 g (psM (matB t 0)) tbl).1
+                  (mainC2 (psM (matB t 0)) (mainC1 g (psM (matB t 0)) tbl).1))
+            (bVal (dropLastB t)) (mainC1 g (psM (matB t 0)) tbl).1
+            (mainC2 (psM (matB t 0)) (mainC1 g (psM (matB t 0)) tbl).1)).getD BT.zero = _
+      rw [hc2, hc1,
+        subst_bVal' t (admB t (j0B t)) hnf h1 hoks hokt _ (by
+          show BT.size (bVal (dropLastB t)) + BT.size (bMark (dropLastB t) (admB t (j0B t)))
+              + BT.size (bMark t (admB t (j0B t))) + 4
+            ≤ BT.size (bVal (dropLastB t))
+              + (BT.size (bMark (dropLastB t) (admB t (j0B t)))
+                + BT.size (bMark t (admB t (j0B t))) + 4)
+          omega)]
+      rfl
+    rw [run_main_miss_none g (psM (matB t 0)) tbl (bVal (dropLastB t))
+      (isReducedP_matB t hnf) (lenI_ne_one t h1) hprin ht1 hne0 hf]
+    refine ⟨hval, ?_⟩
+    show SoundB (((psM (matB t 0), (none : Option Int)),
+      mainVal (psM (matB t 0)) (bVal (dropLastB t)) (mainC1 g (psM (matB t 0)) tbl).1)
+        :: (mainC1 g (psM (matB t 0)) tbl).2)
+    rw [hval]
+    exact SoundB_cons hsd1 (goodB_mk t none)
+
+/-! ### 18. 「寄与が 1 つの `D`」は最後の節を落としても残る -/
+
+theorem append_eq_single {α : Type _} : ∀ (l1 l2 : List α) (x : α), l1 ++ l2 = [x] → l2 ≠ [] →
+    l1 = [] ∧ l2 = [x] := by
+  intro l1
+  cases l1 with
+  | nil => intro l2 x h _; exact ⟨rfl, h⟩
+  | cons a rest =>
+    intro l2 x h hne
+    exfalso
+    have h' : a :: (rest ++ l2) = [x] := h
+    have h2 : rest ++ l2 = [] := List.tail_eq_of_cons_eq h'
+    exact hne (List.append_eq_nil_iff.mp h2).2
+
+theorem bplus_D_split (A Bb : BT) (hA : AtomsL A) (hB : AtomsL Bb)
+    (hnfA : NfSum A) (hnfB : NfSum Bb) (hBne : Bb.toL ≠ []) (p : Nat) (a : BT)
+    (h : bplus A Bb = BT.D p a) : A = BT.zero ∧ Bb = BT.D p a := by
+  have htoL : A.toL ++ Bb.toL = [BT.D p a] := by
+    rw [← toL_bplus A Bb hA hB, h]
+    rfl
+  obtain ⟨h1, h2⟩ := append_eq_single A.toL Bb.toL (BT.D p a) htoL hBne
+  constructor
+  · have : BT.ofL A.toL = A := hnfA
+    rw [h1] at this
+    exact this.symm
+  · have : BT.ofL Bb.toL = Bb := hnfB
+    rw [h2] at this
+    exact this.symm
+
+/-- 空でない添字の畳み込みは 0 にならない。 -/
+theorem bClose_bFold_ne_zero : ∀ (x : B) (w : Nat), x ≠ .nil → bClose w (bFold w x) ≠ BT.zero := by
+  intro x
+  cases x with
+  | nil => intro w h; exact absurd rfl h
+  | nd u1 r1 c1 =>
+    intro w _
+    by_cases hw : w < u1
+    · rw [bClose_bFold_nd_lt w u1 r1 c1 hw]
+      intro hc
+      have htoL : (bplus (bClose w (bFold w r1)) (bK w u1 r1 c1)).toL
+          = (bClose w (bFold w r1)).toL ++ (bK w u1 r1 c1).toL :=
+        toL_bplus _ _ (atomsL_bClose w (bFold w r1) (atomsL_bArg_bFold r1 w).2)
+          (atomsL_bK w u1 r1 c1)
+      have hz : (bplus (bClose w (bFold w r1)) (bK w u1 r1 c1)).toL = [] := by
+        rw [hc]; rfl
+      rw [htoL] at hz
+      exact (lastAtom_aux c1).1 w u1 r1 |>.1 (List.append_eq_nil_iff.mp hz).2
+    · cases hst : (bFold w r1).2 with
+      | none =>
+        rw [bClose_bFold_nd_none w u1 r1 c1 hw hst]
+        intro hc
+        have htoL : (bplus (bFold w r1).1 (BT.D w (bplus (bFold w r1).1 (bK w u1 r1 c1)))).toL
+            = ((bFold w r1).1).toL ++ [BT.D w (bplus (bFold w r1).1 (bK w u1 r1 c1))] :=
+          toL_bplus _ _ (atomsL_bArg_bFold r1 w).2 (atomsL_D _ _)
+        have hz : (bplus (bFold w r1).1
+            (BT.D w (bplus (bFold w r1).1 (bK w u1 r1 c1)))).toL = [] := by
+          rw [hc]; rfl
+        rw [htoL] at hz
+        exact absurd (List.append_eq_nil_iff.mp hz).2 (List.cons_ne_nil _ _)
+      | some a =>
+        rw [bClose_bFold_nd_some w u1 r1 c1 hw a hst]
+        intro hc
+        have htoL : (bplus (bFold w r1).1 (BT.D w (bplus a (bK w u1 r1 c1)))).toL
+            = ((bFold w r1).1).toL ++ [BT.D w (bplus a (bK w u1 r1 c1))] :=
+          toL_bplus _ _ (atomsL_bArg_bFold r1 w).2 (atomsL_D _ _)
+        have hz : (bplus (bFold w r1).1 (BT.D w (bplus a (bK w u1 r1 c1)))).toL = [] := by
+          rw [hc]; rfl
+        rw [htoL] at hz
+        exact absurd (List.append_eq_nil_iff.mp hz).2 (List.cons_ne_nil _ _)
+
+/-- 先頭の段が親より高いなら、畳み込みの第 1 成分は 0 でない。 -/
+theorem bFold_fst_ne_zero : ∀ (x : B) (w : Nat), x ≠ .nil → w < headLvl x →
+    (bFold w x).1 ≠ BT.zero := by
+  intro x
+  induction x with
+  | nil => intro w h _; exact absurd rfl h
+  | nd u1 r1 c1 ihr _ =>
+    intro w _ hh
+    by_cases hw : w < u1
+    · have h1 : (bFold w (B.nd u1 r1 c1)).1
+          = bplus (bClose w (bFold w r1)) (bK w u1 r1 c1) := by
+        rw [bFold_nd_lt w u1 r1 c1 hw]
+      rw [h1]
+      intro hc
+      have htoL : (bplus (bClose w (bFold w r1)) (bK w u1 r1 c1)).toL
+          = (bClose w (bFold w r1)).toL ++ (bK w u1 r1 c1).toL :=
+        toL_bplus _ _ (atomsL_bClose w (bFold w r1) (atomsL_bArg_bFold r1 w).2)
+          (atomsL_bK w u1 r1 c1)
+      have hz : (bplus (bClose w (bFold w r1)) (bK w u1 r1 c1)).toL = [] := by
+        rw [hc]; rfl
+      rw [htoL] at hz
+      exact (lastAtom_aux c1).1 w u1 r1 |>.1 (List.append_eq_nil_iff.mp hz).2
+    · have hr1 : r1 ≠ .nil := by
+        intro hc
+        rw [hc, headLvl_nd_nil] at hh
+        omega
+      have hhr : w < headLvl r1 := by
+        rw [headLvl_nd_ne u1 r1 c1 hr1] at hh
+        exact hh
+      have h1 : (bFold w (B.nd u1 r1 c1)).1 = (bFold w r1).1 := by
+        cases hst : (bFold w r1).2 with
+        | none => rw [bFold_nd_ge w u1 r1 c1 hw, hst]
+        | some a => rw [bFold_nd_ge w u1 r1 c1 hw, hst]
+      rw [h1]
+      exact ihr w hr1 hhr
+
+/-- **(R')** 寄与が 1 つの `D` なら、最後の節を落としても 1 つの `D`。 -/
+theorem bK_dropLast_D : ∀ (c : B) (w u : Nat) (r : B),
+    (∃ p a, bK w u r c = BT.D p a) → (∃ p a, bK w u r (dropLastB c) = BT.D p a) := by
+  intro c
+  induction c with
+  | nil => intro w u r h; exact h
+  | nd u1 r1 c1 _ ihc =>
+    intro w u r h
+    by_cases hcoll : collB w u r (B.nd u1 r1 c1) = true
+    · obtain ⟨hcn, hwu, hrn, hhl⟩ := collB_parts w u r (B.nd u1 r1 c1) hcoll
+      -- 潰れているなら、子はひとりっ子で段が上がる
+      have hr1 : r1 = .nil := by
+        by_cases hc : r1 = .nil
+        · exact hc
+        · exfalso
+          have hhr : u < headLvl r1 := by
+            rw [headLvl_nd_ne u1 r1 c1 hc] at hhl
+            exact hhl
+          have hwu1 : ¬ (u < u1) := by
+            intro hlt
+            rw [bK_coll w u r (B.nd u1 r1 c1) hcoll, bClose_bFold_nd_lt u u1 r1 c1 hlt] at h
+            obtain ⟨p, a, hpa⟩ := h
+            obtain ⟨hzz, _⟩ := bplus_D_split _ _
+              (atomsL_bClose u (bFold u r1) (atomsL_bArg_bFold r1 u).2) (atomsL_bK u u1 r1 c1)
+              (nfSum_bFold_bClose r1 u).2 (nfSum_bK u u1 r1 c1)
+              ((lastAtom_aux c1).1 u u1 r1).1 p a hpa
+            exact bClose_bFold_ne_zero r1 u hc hzz
+          rw [bK_coll w u r (B.nd u1 r1 c1) hcoll] at h
+          obtain ⟨p, a, hpa⟩ := h
+          cases hst : (bFold u r1).2 with
+          | none =>
+            rw [bClose_bFold_nd_none u u1 r1 c1 hwu1 hst] at hpa
+            obtain ⟨hzz, _⟩ := bplus_D_split _ _ (atomsL_bArg_bFold r1 u).2 (atomsL_D _ _)
+              (nfSum_bFold_bClose r1 u).1 (nfSum_D _ _) (List.cons_ne_nil _ _) p a hpa
+            exact bFold_fst_ne_zero r1 u hc hhr hzz
+          | some aa =>
+            rw [bClose_bFold_nd_some u u1 r1 c1 hwu1 aa hst] at hpa
+            obtain ⟨hzz, _⟩ := bplus_D_split _ _ (atomsL_bArg_bFold r1 u).2 (atomsL_D _ _)
+              (nfSum_bFold_bClose r1 u).1 (nfSum_D _ _) (List.cons_ne_nil _ _) p a hpa
+            exact bFold_fst_ne_zero r1 u hc hhr hzz
+      subst hr1
+      have hu1 : u < u1 := by
+        rw [headLvl_nd_nil] at hhl
+        exact hhl
+      cases hc1 : c1 with
+      | nil =>
+        exact ⟨u, BT.zero, by
+          show bK w u r (dropLastB (B.nd u1 .nil .nil)) = _
+          rw [show dropLastB (B.nd u1 (.nil : B) (.nil : B)) = .nil from rfl, bK_nil]⟩
+      | nd u2 b2 d2 =>
+        subst hc1
+        have hcne : (B.nd u2 b2 d2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+        have hdrop : dropLastB (B.nd u1 .nil (B.nd u2 b2 d2))
+            = B.nd u1 .nil (dropLastB (B.nd u2 b2 d2)) :=
+          dropLastB_nd_ne u1 .nil (B.nd u2 b2 d2) hcne
+        have hcoll2 : collB w u r (B.nd u1 .nil (dropLastB (B.nd u2 b2 d2))) = true :=
+          collB_mk w u r _ (by intro hcc; exact B.noConfusion hcc) hwu hrn
+            (by rw [headLvl_nd_nil]; exact hu1)
+        rw [hdrop, bK_coll w u r _ hcoll2, bClose_bFold_single u u1 _ hu1]
+        refine ihc u u1 .nil ?_
+        rw [bK_coll w u r _ hcoll, bClose_bFold_single u u1 _ hu1] at h
+        exact h
+    · have hcf : collB w u r (B.nd u1 r1 c1) = false := by
+        cases hb : collB w u r (B.nd u1 r1 c1) with
+        | true => exact absurd hb hcoll
+        | false => rfl
+      by_cases hdn : dropLastB (B.nd u1 r1 c1) = .nil
+      · exact ⟨u, BT.zero, by rw [hdn, bK_nil]⟩
+      · have hhead : headLvl (dropLastB (B.nd u1 r1 c1)) = headLvl (B.nd u1 r1 c1) :=
+          headLvl_dropLast (B.nd u1 r1 c1) hdn
+        have hcf2 : collB w u r (dropLastB (B.nd u1 r1 c1)) = false := by
+          cases hb : collB w u r (dropLastB (B.nd u1 r1 c1)) with
+          | false => rfl
+          | true =>
+            exfalso
+            obtain ⟨_, hwu, hrn, hhl⟩ := collB_parts w u r _ hb
+            rw [hhead] at hhl
+            rw [collB_mk w u r (B.nd u1 r1 c1)
+              (by intro hcc; exact B.noConfusion hcc) hwu hrn hhl] at hcf
+            exact Bool.noConfusion hcf
+        exact ⟨u, bArg u (dropLastB (B.nd u1 r1 c1)), bK_eq_D_arg w u r _ hcf2⟩
+
+/-! ### 19. `markOKB` の道具 -/
+
+theorem markOKB_D (x : B) (m : Nat) (h : markOKB x m = true) : ∃ p a, bMark x m = BT.D p a := by
+  have h2 : (match bMark x m with | .D _ _ => true | _ => false) = true :=
+    ((Bool.and_eq_true _ _).mp h).2
+  cases hb : bMark x m with
+  | zero =>
+    rw [hb] at h2
+    exact absurd h2 (by intro hc; exact Bool.noConfusion hc)
+  | D p a => exact ⟨p, a, rfl⟩
+  | sum a b =>
+    rw [hb] at h2
+    exact absurd h2 (by intro hc; exact Bool.noConfusion hc)
+
+theorem markOKB_spine (x : B) (m : Nat) (h : markOKB x m = true) : m ∈ lastSpine x :=
+  of_decide_eq_true ((Bool.and_eq_true _ _).mp h).1
+
+theorem markOKB_mk (x : B) (m : Nat) (hsp : m ∈ lastSpine x) (p : Nat) (a : BT)
+    (h : bMark x m = BT.D p a) : markOKB x m = true := by
+  show (decide (m ∈ lastSpine x) && (match bMark x m with | .D _ _ => true | _ => false)) = true
+  rw [decide_eq_true hsp, h]
+  rfl
+
+/-- **(R')** 型 1-6 の枝で要求される印は、`s` の側でも意味を持つ。 -/
+theorem markOKB_dropLast (t : B) (m : Nat) (h1 : 1 < sizeB t)
+    (hsleaf : dropLastB t ≠ .nd 0 .nil .nil)
+    (hok : markOKB t m = true) (hlt : m + 1 < sizeB t) :
+    markOKB (dropLastB t) m = true := by
+  have hne : t ≠ .nil := ne_nil_of_size t h1
+  have hleaf : t ≠ .nd 0 .nil .nil := ne_leaf_of_size t h1
+  have hsp : m ∈ lastSpine t := markOKB_spine t m hok
+  have hspd : m ∈ (lastSpine t).dropLast :=
+    mem_dropLast_of_ne_last _ _ _ (lastSpine_getLast t hne) hsp (by omega)
+  have hsps : m ∈ lastSpine (dropLastB t) := lastSpine_dropLast_sub t m hspd
+  obtain ⟨q, hq⟩ := nodeAtB_isSome t 0 m (by omega)
+  obtain ⟨w', u, r, c⟩ := q
+  have hqs : nodeAtB 0 (dropLastB t) m = some (w', u, r, dropLastB c) :=
+    nodeAtB_dropLast t 0 m w' u r c hsp hlt hq
+  obtain ⟨p, a, hpa⟩ := markOKB_D t m hok
+  rw [bMark_bK t m w' u r c hleaf hq] at hpa
+  obtain ⟨p2, a2, hpa2⟩ := bK_dropLast_D c w' u r ⟨p, a, hpa⟩
+  refine markOKB_mk (dropLastB t) m hsps p2 a2 ?_
+  rw [bMark_bK (dropLastB t) m w' u r (dropLastB c) hsleaf hqs]
+  exact hpa2
+
+/-- 祖先鎖の最後から 2 番目は、最後を除く要素の最大。 -/
+theorem spine_dropLast_le : ∀ (x : B) (j : Nat), j ∈ (lastSpine x).dropLast → j ≤ j0B x := by
+  intro x
+  induction x with
+  | nil =>
+    intro j h
+    have h' : j ∈ ([] : List Nat) := h
+    cases h'
+  | nd u r c _ ihc =>
+    intro j h
+    cases hc : c with
+    | nil =>
+      exfalso
+      rw [hc, lastSpine_nd] at h
+      have h' : j ∈ ((sizeB r :: (([] : List Nat).map (fun i => sizeB r + 1 + i))).dropLast) := h
+      have h'' : j ∈ ([] : List Nat) := h'
+      cases h''
+    | nd u2 b2 c2 =>
+      subst hc
+      have hne2 : (B.nd u2 b2 c2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+      have hmapne : ((lastSpine (B.nd u2 b2 c2)).map (fun i => sizeB r + 1 + i)) ≠ [] := by
+        intro hcc
+        exact lastSpine_ne_nil _ hne2 (List.map_eq_nil_iff.mp hcc)
+      rw [lastSpine_nd, List.dropLast_cons_of_ne_nil hmapne, ← List.map_dropLast] at h
+      have hj0 : j0B (B.nd u r (B.nd u2 b2 c2))
+          = ((sizeB r :: (((lastSpine (B.nd u2 b2 c2)).dropLast).map
+              (fun i => sizeB r + 1 + i))).getLast?).getD 0 := by
+        show ((((lastSpine (B.nd u r (B.nd u2 b2 c2))).dropLast).getLast?).getD 0) = _
+        rw [lastSpine_nd, List.dropLast_cons_of_ne_nil hmapne, ← List.map_dropLast]
+      cases hdl : ((lastSpine (B.nd u2 b2 c2)).dropLast) with
+      | nil =>
+        rw [hdl] at h hj0
+        have hje : j = sizeB r := by
+          rcases List.mem_cons.mp h with he | hm
+          · exact he
+          · have : j ∈ ([] : List Nat) := hm
+            cases this
+        rw [hj0, hje]
+        show sizeB r ≤ sizeB r
+        exact Nat.le_refl _
+      | cons z zs =>
+        have hdlne : ((lastSpine (B.nd u2 b2 c2)).dropLast) ≠ [] := by
+          rw [hdl]; exact List.cons_ne_nil _ _
+        have hmne : (((lastSpine (B.nd u2 b2 c2)).dropLast).map
+            (fun i => sizeB r + 1 + i)) ≠ [] := by
+          intro hcc
+          exact hdlne (List.map_eq_nil_iff.mp hcc)
+        rw [hj0, getLast?_cons_of_ne_nil _ _ hmne, List.getLast?_map]
+        have hj0c : j0B (B.nd u2 b2 c2)
+            = ((((lastSpine (B.nd u2 b2 c2)).dropLast).getLast?).getD 0) := rfl
+        cases hq : (((lastSpine (B.nd u2 b2 c2)).dropLast).getLast?) with
+        | none =>
+          exfalso
+          exact hdlne (List.getLast?_eq_none_iff.mp hq)
+        | some j0' =>
+          have hj0c' : j0B (B.nd u2 b2 c2) = j0' := by rw [hj0c, hq]; rfl
+          show j ≤ sizeB r + 1 + j0'
+          rcases List.mem_cons.mp h with he | hm
+          · omega
+          · obtain ⟨k, hk, hke⟩ := List.mem_map.mp hm
+            have := ihc k hk
+            rw [hj0c'] at this
+            omega
+
+/-- `psi_p(0)` の右端の道の上に `psi_v(psi_p(0))` は無い。 -/
+theorem isMarkedB_D_zero (p v : Nat) :
+    isMarkedB (BT.D p BT.zero) (BT.D v (BT.D p BT.zero)) = false := by
+  have hb1 : (BT.D p BT.zero == BT.D v (BT.D p BT.zero)) = false := by
+    show ((p == v) && (BT.zero == BT.D p BT.zero)) = false
+    rw [show (BT.zero == BT.D p BT.zero) = false from rfl, Bool.and_false]
+  show isMarkedBAux (Trans.Dict.BT.size (BT.D p BT.zero) + 2) (some (BT.D p BT.zero))
+    (BT.D v (BT.D p BT.zero)) = false
+  show (if (BT.D p BT.zero == BT.D v (BT.D p BT.zero)) = true then true
+        else isMarkedBAux 3 (nextMarkedB (BT.D p BT.zero)) (BT.D v (BT.D p BT.zero))) = false
+  rw [if_neg (by rw [hb1]; exact Bool.noConfusion)]
+  show (if (BT.zero == BT.D v (BT.D p BT.zero)) = true then true
+        else isMarkedBAux 2 (nextMarkedB BT.zero) (BT.D v (BT.D p BT.zero))) = false
+  rw [if_neg (by
+    rw [show (BT.zero == BT.D v (BT.D p BT.zero)) = false from rfl]
+    exact Bool.noConfusion)]
+  rfl
+
+/-! ### 20. `jn1` より下で要求される印 -/
+
+theorem entL_last' (t : B) (hne : t ≠ .nil) : entL t (sizeB t - 1) = (botOf 0 t).2.1 :=
+  entL_nodeAtB t 0 (sizeB t - 1) 0 _ (nodeAtB_last t 0 hne)
+
+theorem gp1_last (t : B) (hne : t ≠ .nil) :
+    gp1 (psM (matB t 0)) ((sizeB t - 1 : Nat) : Int) = (((botOf 0 t).2.1 : Nat) : Int) := by
+  rw [psM_gp1 (matB t 0) (sizeB t - 1)]
+  show ((entL t (sizeB t - 1) : Nat) : Int) = _
+  rw [entL_last' t hne]
+
+/-- **(G9)** `jn1 < k ≤ j0` で要求される印は、`t` では `psi_uu(0)`、`s` では `psi_p(0)`。 -/
+theorem farMark_aux (t : B) (_hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) (hz : bVal (dropLastB t) ≠ BT.zero)
+    (p uu : Nat) (rL : B) (hbot : botOf 0 t = (p, uu, rL))
+    (k : Nat) (hk1 : admB t (j0B t) < k) (hk2 : k ≤ j0B t) (hok : markOKB t k = true) :
+    rL = .nil ∧ bMark t k = BT.D uu BT.zero ∧ bMark (dropLastB t) k = BT.D p BT.zero := by
+  have hP : (botOf 0 t).1 = p := by rw [hbot]
+  have hU : (botOf 0 t).2.1 = uu := by rw [hbot]
+  have hR : (botOf 0 t).2.2 = rL := by rw [hbot]
+  have hne : t ≠ .nil := ne_nil_of_size t h1
+  have hleaf : t ≠ .nd 0 .nil .nil := ne_leaf_of_size t h1
+  have hsleaf : dropLastB t ≠ .nd 0 .nil .nil := by
+    intro hc
+    exact hz (by rw [hc]; exact bVal_leaf)
+  obtain ⟨⟨ww, rr, hnode0⟩, hposrel⟩ := botSpine t 0 (j0B t) (lastSpine_dropLast_ne t h1 hprin)
+  rw [hP, hU, hR] at hnode0
+  rw [hR] at hposrel
+  have hj0 : j0B t ∈ lastSpine t :=
+    mem_of_mem_dropLast _ _ (j0B_mem_dropLast t h1 hprin)
+  have hall : ∀ z, k ≤ z → z ≤ j0B t → isAdmB t z = false :=
+    fun z hz1 hz2 => admB_not_adm t (j0B t) z (by omega) hz2
+  have hspall : ∀ z, k ≤ z → z ≤ j0B t → z ∈ lastSpine t :=
+    chain_spine' t (j0B t) k hj0 hall
+  have hksp : k ∈ lastSpine t := hspall k (Nat.le_refl k) hk2
+  have hj0lt : j0B t < sizeB t - 1 := j0B_lt t h1 hprin
+  obtain ⟨q, hq⟩ := nodeAtB_isSome t 0 k (by omega)
+  obtain ⟨wk, uk, rk, ck⟩ := q
+  obtain ⟨tt1, tt2⟩ := tele_chain t (j0B t) p uu rL (ww, .nil) (0, rr) hnode0
+    (j0B t - k) k wk uk rk ck (by omega) hq hall hspall
+  have hMt : bMark t k = bClose p (bFold p (B.nd uu rL .nil)) := by
+    rw [bMark_bK t k wk uk rk ck hleaf hq]
+    exact tt1
+  obtain ⟨qq, aa, hD⟩ := markOKB_D t k hok
+  rw [hMt] at hD
+  have hj0pos : 1 ≤ j0B t := pos_of_not_adm t (j0B t) (hall (j0B t) hk2 (Nat.le_refl _))
+  have hcoll0 := coll_of_not_adm' t (j0B t) ww p rr (B.nd uu rL .nil) hj0pos hnode0
+    (hall (j0B t) hk2 (Nat.le_refl _))
+  obtain ⟨_, _, _, hhl⟩ := collB_parts ww p rr (B.nd uu rL .nil) hcoll0
+  have hpu : p < uu := by
+    by_cases hc : rL = .nil
+    · rw [hc, headLvl_nd_nil] at hhl
+      exact hhl
+    · exfalso
+      have hhr : p < headLvl rL := by
+        rw [headLvl_nd_ne uu rL .nil hc] at hhl
+        exact hhl
+      have hfst : (bFold p rL).1 ≠ BT.zero := bFold_fst_ne_zero rL p hc hhr
+      by_cases hpu2 : p < uu
+      · rw [bot_append p uu rL hpu2] at hD
+        obtain ⟨hzz, _⟩ := bplus_D_split _ _
+          (atomsL_bClose p (bFold p rL) (atomsL_bArg_bFold rL p).2) (atomsL_D _ _)
+          (nfSum_bFold_bClose rL p).2 (nfSum_D _ _) (List.cons_ne_nil _ _) qq aa hD
+        exact bClose_bFold_ne_zero rL p hc hzz
+      · cases hst : (bFold p rL).2 with
+        | none =>
+          rw [(bot_none p uu rL hpu2 hst).1] at hD
+          obtain ⟨hzz, _⟩ := bplus_D_split _ _ (atomsL_bArg_bFold rL p).2 (atomsL_D _ _)
+            (nfSum_bFold_bClose rL p).1 (nfSum_D _ _) (List.cons_ne_nil _ _) qq aa hD
+          exact hfst hzz
+        | some a =>
+          rw [(bot_some p uu rL a hpu2 hst).1] at hD
+          obtain ⟨hzz, _⟩ := bplus_D_split _ _ (atomsL_bArg_bFold rL p).2 (atomsL_D _ _)
+            (nfSum_bFold_bClose rL p).1 (nfSum_D _ _) (List.cons_ne_nil _ _) qq aa hD
+          exact hfst hzz
+  have hrLn : rL = .nil := by
+    by_cases hc : rL = .nil
+    · exact hc
+    · exfalso
+      rw [bot_append p uu rL hpu] at hD
+      obtain ⟨hzz, _⟩ := bplus_D_split _ _
+        (atomsL_bClose p (bFold p rL) (atomsL_bArg_bFold rL p).2) (atomsL_D _ _)
+        (nfSum_bFold_bClose rL p).2 (nfSum_D _ _) (List.cons_ne_nil _ _) qq aa hD
+      exact bClose_bFold_ne_zero rL p hc hzz
+  subst hrLn
+  refine ⟨rfl, ?_, ?_⟩
+  · rw [hMt, bot_append p uu .nil hpu,
+      show bClose p (bFold p (.nil : B)) = BT.zero from rfl]
+    exact bplus_zero_left _ (nfSum_D uu BT.zero)
+  · have hqs : nodeAtB 0 (dropLastB t) k = some (wk, uk, rk, dropLastB ck) :=
+      nodeAtB_dropLast t 0 k wk uk rk ck hksp (by omega) hq
+    rw [bMark_bK (dropLastB t) k wk uk rk (dropLastB ck) hsleaf hqs, tt2,
+      if_pos (show ((.nil : B) == (.nil : B)) = true from rfl)]
+
+theorem farMark (t : B) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true) (hz : bVal (dropLastB t) ≠ BT.zero)
+    (k : Nat) (hk1 : admB t (j0B t) < k) (hk2 : k ≤ j0B t) (hok : markOKB t k = true) :
+    (botOf 0 t).2.2 = .nil
+      ∧ bMark t k = BT.D (botOf 0 t).2.1 BT.zero
+      ∧ bMark (dropLastB t) k = BT.D (botOf 0 t).1 BT.zero :=
+  farMark_aux t hnf h1 hprin hz (botOf 0 t).1 (botOf 0 t).2.1 (botOf 0 t).2.2 rfl k hk1 hk2 hok
+
+/-! ### 21. 型 1-6 の枝、`Mark` の側 -/
+
+/-- **`runAux` の型 1-6 の枝** (要求は `Mark m`)。 -/
+theorem runAux_main_mark (g : Nat) (t : B) (m : Int) (hnf : nfB t = true) (h1 : 1 < sizeB t)
+    (hprin : isPrincipalP (psM (matB t 0)) = true)
+    (hzv : bVal (dropLastB t) ≠ BT.zero)
+    (hal : AllowedB t (some m))
+    (tbl : Trans.Recal.Memo) (hs : SoundB tbl)
+    (ih : ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).1
+            = bVal (dropLastB t)
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) none).run tb).2)
+    (ihm : ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0))
+             (some ((admB t (j0B t) : Nat) : Int))).run tb).1
+            = bMark (dropLastB t) (admB t (j0B t))
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0))
+             (some ((admB t (j0B t) : Nat) : Int))).run tb).2)
+    (ihm2 : m < lenI (psM (matB t 0)) - 1 → ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) (some m)).run tb).1
+            = bMark (dropLastB t) m.toNat
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB (dropLastB t) 0)) (some m)).run tb).2) :
+    ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) (some m)).run tbl).1 = bValReq t (some m)
+      ∧ SoundB ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) (some m)).run tbl).2 := by
+  have hne : t ≠ .nil := ne_nil_of_size t h1
+  have hleaf : t ≠ .nd 0 .nil .nil := ne_leaf_of_size t h1
+  have hsleaf : dropLastB t ≠ .nd 0 .nil .nil := by
+    intro hc
+    exact hzv (by rw [hc]; exact bVal_leaf)
+  obtain ⟨k, hkm, hkok⟩ : ∃ k : Nat, (some m : Option Int) = some ((k : Nat) : Int)
+      ∧ markOKB t k = true := by
+    rcases hal with h | h
+    · exact absurd h (by intro hc; cases hc)
+    · exact h
+  have hmk : m = ((k : Nat) : Int) := Option.some.inj hkm
+  subst hmk
+  have hkn : (((k : Nat) : Int)).toNat = k := toNat_cast k
+  have hbv : bValReq t (some ((k : Nat) : Int)) = bMark t k := by
+    show bMark t (((k : Nat) : Int)).toNat = _
+    rw [hkn]
+  have hklt : k < sizeB t := lastSpine_lt t k (markOKB_spine t k hkok)
+  cases hf : tbl.find? (fun z =>
+      z.1 == (psM (matB t 0), (some ((k : Nat) : Int) : Option Int))) with
+  | some pp =>
+    rw [runHit g _ (some ((k : Nat) : Int)) tbl pp hf]
+    obtain ⟨hg, he⟩ := goodB_of_find hs hf
+    exact ⟨hg t (some ((k : Nat) : Int)) hnf he (Or.inr ⟨k, rfl, hkok⟩), hs⟩
+  | none =>
+    obtain ⟨hv0, hsd0⟩ := ih tbl hs
+    have ht1 : ((Trans.Recal.runAux g (predP (psM (matB t 0))) none).run tbl).1
+        = bVal (dropLastB t) := by
+      rw [predP_matB t h1]
+      exact hv0
+    have hne0 : (bVal (dropLastB t) == BT.zero) = false := bt_beq_false _ _ hzv
+    have hc1 : (mainC1 g (psM (matB t 0)) tbl).1 = bMark (dropLastB t) (admB t (j0B t)) := by
+      rw [mainC1_tree t h1 hprin]
+      exact (ihm _ hsd0).1
+    have hsd1 : SoundB (mainC1 g (psM (matB t 0)) tbl).2 := by
+      rw [mainC1_tree t h1 hprin]
+      exact (ihm _ hsd0).2
+    have hlenI : lenI (psM (matB t 0)) - 1 = ((sizeB t - 1 : Nat) : Int) := lenI_sub_one t h1
+    have hgpl : (gp1 (psM (matB t 0)) (lenI (psM (matB t 0)) - 1)).toNat = (botOf 0 t).2.1 := by
+      rw [hlenI, gp1_last t hne, toNat_cast]
+    by_cases hlt : ((k : Nat) : Int) < lenI (psM (matB t 0)) - 1
+    · have hklt' : k + 1 < sizeB t := by
+        rw [hlenI] at hlt
+        omega
+      have hoks : markOKB (dropLastB t) k = true :=
+        markOKB_dropLast t k h1 hsleaf hkok hklt'
+      obtain ⟨hoksj, hoktj⟩ := markOKB_admB_j0 t hnf h1 hprin hzv
+      have hc2 : mainC2 (psM (matB t 0)) (mainC1 g (psM (matB t 0)) tbl).1
+          = bMark t (admB t (j0B t)) := by
+        rw [mainC2_tree t h1 hprin, hc1]
+        exact mkC2_glue t hnf h1 hprin hzv
+      have hc0 : (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).1
+          = bMark (dropLastB t) k := by
+        show ((Trans.Recal.runAux g (predP (psM (matB t 0)))
+          (some ((k : Nat) : Int))).run (mainC1 g (psM (matB t 0)) tbl).2).1 = _
+        rw [predP_matB t h1]
+        have := (ihm2 hlt _ hsd1).1
+        rw [hkn] at this
+        exact this
+      have hsd2 : SoundB (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).2 := by
+        show SoundB ((Trans.Recal.runAux g (predP (psM (matB t 0)))
+          (some ((k : Nat) : Int))).run (mainC1 g (psM (matB t 0)) tbl).2).2
+        rw [predP_matB t h1]
+        exact (ihm2 hlt _ hsd1).2
+      have hval : markVal (psM (matB t 0)) (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).1
+          (mainC1 g (psM (matB t 0)) tbl).1 = bMark t k := by
+        show (if isMarkedB (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).1
+                  (mainC1 g (psM (matB t 0)) tbl).1 = true then
+                (replMark (Trans.Dict.BT.size (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).1
+                    + mainDep (mainC1 g (psM (matB t 0)) tbl).1
+                        (mainC2 (psM (matB t 0)) (mainC1 g (psM (matB t 0)) tbl).1))
+                  (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).1
+                  (mainC1 g (psM (matB t 0)) tbl).1
+                  (mainC2 (psM (matB t 0)) (mainC1 g (psM (matB t 0)) tbl).1)).getD BT.zero
+              else BT.D (gp1 (psM (matB t 0)) (lenI (psM (matB t 0)) - 1)).toNat BT.zero) = _
+        rw [hc2, hc0, hc1]
+        by_cases hkle : k ≤ admB t (j0B t)
+        · rw [if_pos (isMarkedB_bMark t k (admB t (j0B t)) hkle hoks hkok hoksj hoktj),
+            subst_bMark' t k (admB t (j0B t)) hkle hoks hkok hoksj hoktj _ (by
+              show BT.size (bMark (dropLastB t) k)
+                  + BT.size (bMark (dropLastB t) (admB t (j0B t)))
+                  + BT.size (bMark t (admB t (j0B t))) + 4
+                ≤ BT.size (bMark (dropLastB t) k)
+                  + (BT.size (bMark (dropLastB t) (admB t (j0B t)))
+                    + BT.size (bMark t (admB t (j0B t))) + 4)
+              omega)]
+          rfl
+        · -- `jn1 < k`: 印は右端の道の上に無く、fallback がそのまま答
+          have hkj0 : k ≤ j0B t := by
+            refine spine_dropLast_le t k ?_
+            exact mem_dropLast_of_ne_last _ _ _ (lastSpine_getLast t hne)
+              (markOKB_spine t k hkok) (by omega)
+          obtain ⟨hrLn, hMtk, hMsk⟩ :=
+            farMark t hnf h1 hprin hzv k (by omega) hkj0 hkok
+          obtain ⟨w', v, r, c, hq, hMt, hMs, hEq, hLt⟩ := markPair t hnf h1 hprin hzv
+          obtain ⟨_, hSj⟩ := hLt (by omega)
+          have hc1' : bMark (dropLastB t) (admB t (j0B t))
+              = BT.D v (BT.D (botOf 0 t).1 BT.zero) := by
+            rw [hMs, hSj, hrLn, if_pos (show ((.nil : B) == (.nil : B)) = true from rfl)]
+          rw [hMsk, hc1', if_neg (by
+            rw [isMarkedB_D_zero (botOf 0 t).1 v]
+            exact Bool.noConfusion), hgpl, hMtk]
+      rw [run_main_miss_mark_lt g (psM (matB t 0)) ((k : Nat) : Int) tbl (bVal (dropLastB t))
+        (isReducedP_matB t hnf) (lenI_ne_one t h1) hprin ht1 hne0 hlt hf]
+      refine ⟨by rw [hval]; exact hbv.symm, ?_⟩
+      show SoundB (((psM (matB t 0), (some ((k : Nat) : Int) : Option Int)),
+        markVal (psM (matB t 0)) (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).1
+          (mainC1 g (psM (matB t 0)) tbl).1) :: (mainC0 g (psM (matB t 0)) ((k : Nat) : Int) tbl).2)
+      rw [hval, ← hbv]
+      exact SoundB_cons hsd2 (goodB_mk t (some ((k : Nat) : Int)))
+    · have hkeq : k = sizeB t - 1 := by
+        rw [hlenI] at hlt
+        omega
+      have hMtk : bMark t k = BT.D (botOf 0 t).2.1 BT.zero := by
+        rw [hkeq, bMark_bK t (sizeB t - 1) (botOf 0 t).1 (botOf 0 t).2.1 (botOf 0 t).2.2 .nil
+          hleaf (nodeAtB_last t 0 hne), bK_nil]
+      rw [run_main_miss_mark_ge g (psM (matB t 0)) ((k : Nat) : Int) tbl (bVal (dropLastB t))
+        (isReducedP_matB t hnf) (lenI_ne_one t h1) hprin ht1 hne0 hlt hf]
+      have hans : BT.D (gp1 (psM (matB t 0)) (lenI (psM (matB t 0)) - 1)).toNat BT.zero
+          = bValReq t (some ((k : Nat) : Int)) := by
+        rw [hgpl, hbv, hMtk]
+      refine ⟨hans, ?_⟩
+      show SoundB (((psM (matB t 0), (some ((k : Nat) : Int) : Option Int)),
+        BT.D (gp1 (psM (matB t 0)) (lenI (psM (matB t 0)) - 1)).toNat BT.zero)
+          :: (mainC1 g (psM (matB t 0)) tbl).2)
+      rw [hans]
+      exact SoundB_cons hsd1 (goodB_mk t (some ((k : Nat) : Int)))
+
+/-! ### 測定 (凍結)
+
+証明した式をそのまま母集団の上で回したもの。負の結果も含む。 -/
+
+-- 1. **`isAdm` = 「潰されない」** (証明ずみ)。標準形の上では全位置で。
+#guard (popNFB 3 6).all fun t =>
+  (List.range (sizeB t)).all fun i =>
+    match nodeAtB 0 t i with
+    | some (w', u, r, c) => isAdmB t i == !(collB w' u r c)
+    | none => false
+-- 1'. **負の結果**: 標準形を外すと `i = 0` で破れる。`i ≥ 1` なら標準形は要らない。
+#guard !((((List.range 5).flatMap (enumNodes 3)).filter fun t => t != .nil).all fun t =>
+  (List.range (sizeB t)).all fun i =>
+    match nodeAtB 0 t i with
+    | some (w', u, r, c) => isAdmB t i == !(collB w' u r c)
+    | none => false)
+#guard (((List.range 5).flatMap (enumNodes 3)).filter fun t => t != .nil).all fun t =>
+  (List.range (sizeB t)).all fun i =>
+    i == 0 ||
+      (match nodeAtB 0 t i with
+       | some (w', u, r, c) => isAdmB t i == !(collB w' u r c)
+       | none => false)
+-- 1''. **負の結果**: `markOKB` は「鎖の上 かつ 許された」と同値ではない (38 か所)。
+#guard ((popNFB 3 6).map fun t =>
+    ((List.range (sizeB t)).filter fun m =>
+      !(markOKB t m == (decide (m ∈ lastSpine t) && isAdmB t m))).length).foldl (· + ·) 0
+  == 38
+-- そのうち 37 か所は「潰されているのに寄与が 1 つの `D`」の側。逆向き (証明した向き) は正しい。
+#guard ((popNFB 3 6).map fun t =>
+    ((List.range (sizeB t)).filter fun m =>
+      markOKB t m && !(decide (m ∈ lastSpine t) && isAdmB t m)).length).foldl (· + ·) 0
+  == 37
+
+-- 2. **側条件** (`markOKB_admB_j0`、証明ずみ)。
+#guard (pop6 3 6).all fun t =>
+  markOKB (dropLastB t) (admB t (j0B t)) && markOKB t (admB t (j0B t))
+#guard (pop6 4 6).all fun t =>
+  markOKB (dropLastB t) (admB t (j0B t)) && markOKB t (admB t (j0B t))
+
+-- 3. **糊** (`mkC2_glue`、証明ずみ)。
+#guard (pop6 3 6).all fun t =>
+  mkC2 (psM (matB t 0)) ((j0B t : Nat) : Int) ((sizeB t - 1 : Nat) : Int)
+      (tyMainB t (j0B t) (sizeB t - 1)) (bMark (dropLastB t) (admB t (j0B t)))
+    == bMark t (admB t (j0B t))
+#guard (pop6 4 6).all fun t =>
+  mkC2 (psM (matB t 0)) ((j0B t : Nat) : Int) ((sizeB t - 1 : Nat) : Int)
+      (tyMainB t (j0B t) (sizeB t - 1)) (bMark (dropLastB t) (admB t (j0B t)))
+    == bMark t (admB t (j0B t))
+
+-- 4. 底のデータ (`botSpine`、証明ずみ): `j0` の節の子は `nd uu rL nil`、位置の関係も。
+#guard (pop6 3 6).all fun t =>
+  (match nodeAtB 0 t (j0B t) with
+   | some (_, p, _, c) => (p == (botOf 0 t).1) && (c == B.nd (botOf 0 t).2.1 (botOf 0 t).2.2 .nil)
+   | none => false)
+  && (j0B t + 1 + sizeB (botOf 0 t).2.2 == sizeB t - 1)
+
+-- 5. 三つの形 (証明ずみ)。ty 2/4 は 16 個、うち 12 個が `t34` の「そのまま」側。
+#guard ((pop6 3 6).filter fun t =>
+  let ty := tyMainB t (j0B t) (sizeB t - 1)
+  ty == 2 || ty == 4).length == 16
+#guard ((pop6 3 6).filter fun t =>
+  let b := botOf 0 t
+  let ty := tyMainB t (j0B t) (sizeB t - 1)
+  (ty == 2 || ty == 4) && ((bFold b.1 b.2.2).2 == none)).length == 12
+-- `jn1 ≠ j0` は 30 個 (ty 2:8, ty 4:8, ty 5:8, ty 6:6)。
+#guard ((pop6 3 6).filter fun t => decide (admB t (j0B t) < j0B t)).length == 30
+
+-- 6. **(R')** 型 1-6 の枝で要求される印は `s` の側でも意味を持つ (`markOKB_dropLast`)。
+#guard (pop6 3 6).all fun t =>
+  (List.range (sizeB t)).all fun m =>
+    !(markOKB t m && decide (m + 1 < sizeB t)) || markOKB (dropLastB t) m
+-- 6'. **負の結果**: 型 0 の添字を入れると破れる (`bVal (dropLastB t) = 0` の 2 つ)。
+#guard ((popNFB 3 6).filter fun t =>
+  !((List.range (sizeB t)).all fun m =>
+    !(markOKB t m && decide (m + 1 < sizeB t)) || markOKB (dropLastB t) m)).length == 2
+
+-- 7. **(G9)** `jn1 < m ≤ j0` では、印は `t` で `psi_uu(0)`、`s` で `psi_p(0)` (`farMark`)。
+#guard (pop6 3 6).all fun t =>
+  (List.range (sizeB t)).all fun m =>
+    !(markOKB t m && decide (admB t (j0B t) < m) && decide (m ≤ j0B t))
+      || (((botOf 0 t).2.2 == .nil)
+          && (bMark t m == BT.D (botOf 0 t).2.1 BT.zero)
+          && (bMark (dropLastB t) m == BT.D (botOf 0 t).1 BT.zero))
+
+-- 8. 枝そのもの (`runAux_main` / `runAux_main_mark`、証明ずみ): 参照実装と合う。
+#guard (pop6 3 6).all fun t => transPort (psM (matB t 0)) == bVal t
+#guard (pop6 3 6).all fun t =>
+  (List.range (sizeB t)).all fun m =>
+    !(markOKB t m) || markRun (psM (matB t 0)) (Int.ofNat m) == bMark t m
+
+/-! ### 公理の確認 -/
+
+end
+
 end Evidence.Region
