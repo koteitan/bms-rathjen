@@ -17839,4 +17839,1050 @@ private def bcorp63 : List BT := (bstep63 (bstep63 bseed63).eraseDups).eraseDups
 end
 
 
+/-! ## §64 `collapse` LANDS IN 𝔗(M) — EVERY OPERATOR BUT TWO, AND THE TWO ARE NAMED
+
+§63 closed `Hsucc` for the generalised region except for one hypothesis:
+
+    CollapseInT : ∀ (u : Nat) (a : BT), inT (dict (BT.D u a)) = true
+
+i.e. `inT (collapse u (dict a))`.  §64 takes it apart operator by operator.  What comes out
+is that `collapse` is `inT` for EVERY operator it uses except two, and the two are isolated,
+stated, and measured rather than assumed silently.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §64.1  `lt · M` is STRUCTURAL: `lt t M = hdBelowM t`, where `hdBelowM` reads the head
+         component and answers `false` only for `M` and `ω̄^·` ([Rathjen, 1991] 2.3.2/2.3.3).
+         With it, `lt (ofList l) M`, `lt (plus s t) M` and "every component of a term below
+         `M` is below `M`" are all one step.  This is the toolkit the rest of §64 runs on:
+         2.1(v) asks `α, β < M` of every `φ̄` and nothing in §63 could supply it.
+
+  §64.2  one `inT`-preservation lemma per operator, each with its `lt · M` twin:
+         `sub1`, `subAP`, `logOm`, `divAP`, `phiNFdefault`, `phiNFsucc`, `phiNF`, `omegaNF`,
+         `ofNat`, `splitFin`.  `inT_omegaNF` needs NO side condition (the `ω̄^·` branch
+         carries `M < α` itself); `inT_phiNF` needs exactly 2.1(v)'s `α, β < M`.
+
+  §64.3  the component-list toolkit: a descending list of `inT` terms is bounded by its head
+         (`descL_bound_inT` — the only place `le_trans_inT` is used), hence filtering keeps
+         it descending (`descL_filter_inT`).
+
+  §64.4  `wcnf` returns components that are `inT` and below `M` (`wcnf_spec`), by induction
+         on the component list.
+
+  §64.5  the fold: `stepF`/`idxOf`/`scanSt` copy `collapse`'s own fold, `collapse_eq` is
+         `rfl`, and `fold_inv` carries the invariant "both accumulator slots are `inT` and
+         below `M`" through it.  `inT_collapse`, `inT_dict` and `collapseInT_of_gaps` follow.
+
+WHAT IS NOT PROVED, AND IS NOT WEAKENED AWAY.  Exactly three named hypotheses, and
+`collapseInT_of_gaps` shows `CollapseInT` follows from them:
+
+  (G1) `DivDescInT` — `divAP w` maps a descending list to a descending list, PROVIDED every
+       member is `≥ w`.  **The side condition is not decoration: without it the statement is
+       FALSE.**  Smallest counterexample found, `w = M`, `l = [M, Z0]` (degree sum 5):
+       `divAP M M = 1` but `divAP M (Z0) = Z0`, so `[1, Z0]` is not descending.  With `w`
+       restricted to R the smallest is `w = Z M`, `l = [Z M, Z 0]` (degree sum 7) — so
+       "regular" does NOT rescue it and "every member `≥ w`" does: 0 failures on 82 373
+       (w, l) pairs.  This is `Evidence/CNVOps.lean` §27–§29's `omegaNF_mono` one notch up
+       (`CNV` → `inT`), and that is why it is not proved here: `DnFacts` is a theorem for
+       `CNV` only, and its `inT` version is a section of its own.
+
+  (G2) `MulDescInT` — the same for `mulL`'s map `p ↦ ω^(e ⊕ logOm p)`.  Here NO side
+       condition was needed: 0 failures on 274 576 `inT` pairs.  Both (G1) and (G2) were
+       re-measured on a SECOND, independently seeded population of 80 deeper terms
+       (max degree 12): 0 failures on 2324 and 6400 pairs respectively.
+
+  (G3) `PsiIdxOK u x` — [Rathjen, 1991] 2.1(vi)'s LAST conjunct, `K_κ α < α`, for the indices
+       the strongly critical branch actually emits.  It is stated over `scanSt`, the list of
+       (state, component) pairs the fold really visits, so it says nothing about indices the
+       fold never builds.  **It is not vacuous and it is not free**: on a hand corpus of 463
+       `inT` terms below `M` it FAILS 17 times at `u = 0`.  Smallest by degree, `x = ψ_{ZM}(ZM)`
+       (degree 5): the whole of `x` is below `Ω = Z0`, so `wcnf` hands the fold one component
+       with exponent `≥ Ω`, the emitted index is `x` itself, and `K_Ω x = {ZM}` — which is NOT
+       `< x`, so `ψ_Ω x` is not a term.  On `dict`'s image — 1805 systematically enumerated
+       `BT` terms, `BT.isStd` NOT applied — it holds for every one of them at `u = 0,1,2,3`.
+
+  For the fragment where the strongly critical branch never fires, (G3) is discharged:
+  `inT_collapse_noSC` needs only (G1) and (G2).  That fragment is 743 of the 1805 at `u = 0`,
+  1804 of 1805 at `u = 1` and all of them at `u = 2`.
+
+WHAT IS NOT CLAIMED.  `CollapseInT` is NOT discharged.  Nothing here says `dict`'s image is
+characterised; (G3) is stated for a given `x` and MEASURED on `dict`'s image, not proved
+there.  The order-theoretic content of (G1)/(G2) — monotonicity of `ω^·` on `inT` — and the
+Kset content of (G3) are the two things a next attempt has to buy.
+-/
+
+namespace Evidence.Region
+
+/-! ### §64.1 `M` の下 — `lt · M` は頭部だけで決まる
+
+[Rathjen, 1991] 2.3.2 (`φ̄, ψ, Z < M`) と 2.3.3 (`M < ω̄^γ`) を、和の頭部を読むだけの判定
+`hdBelowM` にまとめる。2.1(v) の 2 つの側条件はすべてここから出る。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- `M` より小さいか。和は頭部成分だけで決まる ([Rathjen, 1991] 2.3.2, 2.3.3, 2.3.10)。 -/
+def hdBelowM : Term → Bool
+  | M => false
+  | omg _ => false
+  | add a _ => hdBelowM a
+  | _ => true
+
+theorem inT_zero : inT (zero : Term) = true := rfl
+theorem inT_M : inT (M : Term) = true := rfl
+
+theorem lt_zero_M : lt zero M = true := by
+  rw [Evidence.WF.lt_eq_ltF zero M ((zero : Term).deg + (M : Term).deg) (Nat.le_refl _)]; rfl
+
+theorem lt_M_M : lt M M = false := by
+  rw [Evidence.WF.lt_eq_ltF M M ((M : Term).deg + (M : Term).deg) (Nat.le_refl _)]; rfl
+
+theorem lt_omg_M (a : Term) : lt (omg a) M = false := by
+  rw [Evidence.WF.lt_eq_ltF (omg a) M ((omg a).deg + (M : Term).deg) (Nat.le_refl _)]
+  show (if ((omg a) == M) = true then false else false) = false
+  rw [show (((omg a) == M) : Bool) = false from rfl]; rfl
+
+theorem lt_psi_M (k a : Term) : lt (psi k a) M = true := by
+  rw [Evidence.WF.lt_eq_ltF (psi k a) M ((psi k a).deg + (M : Term).deg) (Nat.le_refl _)]
+  show (if ((psi k a) == M) = true then false else true) = true
+  rw [show (((psi k a) == M) : Bool) = false from rfl]; rfl
+
+theorem lt_Z_M (a : Term) : lt (Z a) M = true := by
+  rw [Evidence.WF.lt_eq_ltF (Z a) M ((Z a).deg + (M : Term).deg) (Nat.le_refl _)]
+  show (if ((Z a) == M) = true then false else true) = true
+  rw [show (((Z a) == M) : Bool) = false from rfl]; rfl
+
+theorem lt_one_M : lt one M = true := lt_phi_M zero zero
+
+/-- **`lt · M` は構造的。** -/
+theorem lt_M_eq : ∀ (t : Term), lt t M = hdBelowM t
+  | zero => lt_zero_M
+  | M => lt_M_M
+  | omg a => lt_omg_M a
+  | phi a b => lt_phi_M a b
+  | psi k a => lt_psi_M k a
+  | Z a => lt_Z_M a
+  | add a b => by rw [lt_add_M a b, lt_M_eq a]; rfl
+
+theorem lt_ofList_M : ∀ (l : List Term), (∀ x ∈ l, lt x M = true) → lt (ofList l) M = true
+  | [], _ => lt_zero_M
+  | [a], h => h a (List.Mem.head _)
+  | a :: b :: t, h => by
+    show lt (add a (ofList (b :: t))) M = true
+    rw [lt_add_M]
+    exact h a (List.Mem.head _)
+
+theorem lt_M_of_le {y a : Term} (hy : inT y = true) (ha : inT a = true)
+    (hle : le y a = true) (hla : lt a M = true) : lt y M = true := by
+  rcases (Bool.or_eq_true _ _).mp hle with h | h
+  · rw [show y = a from eq_of_beq h]; exact hla
+  · exact lt_trans_inT hy ha inT_M h hla
+
+theorem ltM_of_hdLe : ∀ {a b : Term}, inT a = true → inT b = true →
+    hdLe b a = true → lt a M = true → lt b M = true := by
+  intro a b hia hib hhd hla
+  cases b with
+  | zero => exact Bool.noConfusion hhd
+  | M => exact lt_M_of_le hib hia hhd hla
+  | omg c => exact lt_M_of_le hib hia hhd hla
+  | phi c d => exact lt_M_of_le hib hia hhd hla
+  | psi c d => exact lt_M_of_le hib hia hhd hla
+  | Z c => exact lt_M_of_le hib hia hhd hla
+  | add c d =>
+    obtain ⟨_, hic, _, _⟩ := inT_add hib
+    rw [lt_add_M]
+    exact lt_M_of_le hic hia hhd hla
+
+/-- `M` より下の項の成分はすべて `M` より下。 -/
+theorem ltM_toList : ∀ (s : Term), inT s = true → lt s M = true →
+    ∀ x ∈ toList s, lt x M = true := by
+  intro s
+  induction s with
+  | zero => intro _ _ x hx; cases hx
+  | M => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | omg a _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | phi a b _ _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | psi k a _ _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | Z a _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | add a b _ ihb =>
+    intro h hl x hx
+    obtain ⟨hap, hia, hib, hhd⟩ := inT_add h
+    have hla : lt a M = true := by rw [← lt_add_M a b]; exact hl
+    have hlb : lt b M = true := ltM_of_hdLe hia hib hhd hla
+    rcases List.mem_cons.mp (show x ∈ a :: toList b from hx) with h1 | h1
+    · rw [h1]; exact hla
+    · exact ihb hib hlb x h1
+
+theorem lt_plus_M {s t : Term} (hs : inT s = true) (ht : inT t = true)
+    (hls : lt s M = true) (hlt : lt t M = true) : lt (plus s t) M = true := by
+  cases hl : toList t with
+  | nil => rw [show plus s t = s from by unfold TM.Term.plus; rw [hl]]; exact hls
+  | cons b1 rest =>
+    rw [plus_eq (s := s) hl]
+    refine lt_ofList_M _ ?_
+    intro x hx
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact ltM_toList s hs hls x (List.mem_filter.mp h1).1
+    · exact ltM_toList t ht hlt x h1
+
+end
+
+/-! ### §64.2 演算ごとの `inT` 保存
+
+`Trans/Dict.lean` の `collapse` が使う演算を 1 つずつ。どれも「`inT` を保つ」と
+「`M` の下に留まる」を対にして出す。 -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Evidence.WF
+open Trans.Dict (sub1 subAP logOm divAP)
+
+theorem inT_ofNat : ∀ n, inT (ofNat n) = true
+  | 0 => rfl
+  | n + 1 => inT_plus (inT_ofNat n) inT_one
+
+theorem ltM_ofNat : ∀ n, lt (ofNat n) M = true
+  | 0 => lt_zero_M
+  | n + 1 => lt_plus_M (inT_ofNat n) inT_one (ltM_ofNat n) lt_one_M
+
+/-- 2.1(v) の 4 つの連言。 -/
+theorem inT_phi4 {a b : Term} (h : inT (phi a b) = true) :
+    inT a = true ∧ inT b = true ∧ lt a M = true ∧ lt b M = true := by
+  have h' : (inT a && inT b && lt a M && lt b M) = true := h
+  obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+  obtain ⟨h3, h4⟩ := (Bool.and_eq_true _ _).mp h1
+  obtain ⟨h5, h6⟩ := (Bool.and_eq_true _ _).mp h3
+  exact ⟨h5, h6, h4, h2⟩
+
+theorem inT_phi_intro {a b : Term} (hia : inT a = true) (hib : inT b = true)
+    (hla : lt a M = true) (hlb : lt b M = true) : inT (phi a b) = true := by
+  show (inT a && inT b && lt a M && lt b M) = true
+  rw [hia, hib, hla, hlb]; rfl
+
+theorem inT_phiNFdefault {a b : Term} (hia : inT a = true) (hib : inT b = true)
+    (hla : lt a M = true) (hlb : lt b M = true) : inT (phiNFdefault a b) = true := by
+  unfold phiNFdefault
+  split
+  · exact hia
+  · exact inT_phi_intro hia hib hla hlb
+
+theorem ltM_phiNFdefault {a b : Term} (hla : lt a M = true) :
+    lt (phiNFdefault a b) M = true := by
+  unfold phiNFdefault
+  split
+  · exact hla
+  · exact lt_phi_M a b
+
+theorem inT_take_ofList {b : Term} (h : inT b = true) (k : Nat) :
+    inT (ofList ((toList b).take k)) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList b h
+  exact inT_ofList _ (inTL_take k _ hc) (descL_take k _ hd)
+
+theorem ltM_take_ofList {b : Term} (h : inT b = true) (hl : lt b M = true) (k : Nat) :
+    lt (ofList ((toList b).take k)) M = true :=
+  lt_ofList_M _ (fun x hx => ltM_toList b h hl x (List.mem_of_mem_take hx))
+
+theorem inT_splitFin {b : Term} (h : inT b = true) : inT (splitFin b).1 = true :=
+  inT_take_ofList h _
+
+theorem ltM_splitFin {b : Term} (h : inT b = true) (hl : lt b M = true) :
+    lt (splitFin b).1 M = true := ltM_take_ofList h hl _
+
+theorem inT_phiNFsucc {a b : Term} (hia : inT a = true) (hib : inT b = true)
+    (hla : lt a M = true) (hlb : lt b M = true) : inT (phiNFsucc a b) = true := by
+  have hdef := inT_phiNFdefault hia hib hla hlb
+  have hg : inT (splitFin b).1 = true := inT_splitFin hib
+  have hgm : lt (splitFin b).1 M = true := ltM_splitFin hib hlb
+  unfold phiNFsucc
+  split
+  rename_i heq
+  rw [heq] at hg hgm
+  split
+  · split <;> (split <;>
+      first
+        | exact inT_phi_intro hia (inT_plus hg (inT_ofNat _)) hla
+            (lt_plus_M hg (inT_ofNat _) hgm (ltM_ofNat _))
+        | exact hdef)
+  · exact hdef
+
+theorem ltM_phiNFsucc {a b : Term} (hla : lt a M = true) :
+    lt (phiNFsucc a b) M = true := by
+  have hdef := ltM_phiNFdefault (b := b) hla
+  unfold phiNFsucc
+  split
+  rename_i heq
+  split
+  · split <;> (split <;> first | exact lt_phi_M _ _ | exact hdef)
+  · exact hdef
+
+/-- **`φαβ` は 𝔗(M) に留まる** — 2.1(v) の 2 つの側条件つき。 -/
+theorem inT_phiNF {a b : Term} (hia : inT a = true) (hib : inT b = true)
+    (hla : lt a M = true) (hlb : lt b M = true) : inT (phiNF a b) = true := by
+  unfold phiNF
+  split
+  · exact hib
+  · split
+    · split
+      · exact hib
+      · exact inT_phiNFsucc hia hib hla hlb
+    · exact inT_phiNFsucc hia hib hla hlb
+
+theorem ltM_phiNF {a b : Term} (hla : lt a M = true) (hlb : lt b M = true) :
+    lt (phiNF a b) M = true := by
+  unfold phiNF
+  split
+  · exact hlb
+  · split
+    · split
+      · exact hlb
+      · exact ltM_phiNFsucc hla
+    · exact ltM_phiNFsucc hla
+
+theorem ltM_of_not_gt {x : Term} (hx : inT x = true) (h1 : lt M x = false)
+    (h2 : (x == M) = false) : lt x M = true := by
+  rcases lt_trichotomy_inT hx inT_M with ⟨h, _, _⟩ | ⟨_, he, _⟩ | ⟨_, _, h⟩
+  · exact h
+  · exact absurd (beq_of_eq he) (by rw [h2]; exact Bool.noConfusion)
+  · exact absurd h (by rw [h1]; exact Bool.noConfusion)
+
+/-- **`ω^α` は 𝔗(M) に留まる** — 側条件なし。`ω̄^·` の枝は 2.1(iv) の `M < α` を自分で持つ。 -/
+theorem inT_omegaNF {x : Term} (hx : inT x = true) : inT (omegaNF x) = true := by
+  unfold omegaNF
+  split
+  · rename_i h
+    show (inT x && lt M x) = true
+    rw [hx, h]; rfl
+  · split
+    · exact inT_M
+    · rename_i h1 h2
+      exact inT_phiNF inT_zero hx lt_zero_M
+        (ltM_of_not_gt hx (bool_false h1) (bool_false h2))
+
+theorem ltM_omegaNF {x : Term} (hx : inT x = true) (hlx : lt x M = true) :
+    lt (omegaNF x) M = true := by
+  unfold omegaNF
+  split
+  · rename_i h
+    exact absurd hlx (by rw [lt_asymm_inT inT_M hx h]; exact Bool.noConfusion)
+  · split
+    · rename_i h1 h2
+      exact absurd hlx (by rw [eq_of_beq h2, lt_M_M]; exact Bool.noConfusion)
+    · exact ltM_phiNF lt_zero_M hlx
+
+/-- `sub1` と `subAP` は同じ形 — 先頭を落とすか、そのまま返すか。 -/
+theorem inT_dropIfHead {c : Term} (h : inT c = true) (P : Term → Bool) :
+    inT (match toList c with
+         | [] => zero
+         | p :: rest => if P p then ofList rest else c) = true := by
+  cases hl : toList c with
+  | nil => exact inT_zero
+  | cons p rest =>
+    obtain ⟨hc, hd⟩ := inT_toList c h
+    rw [hl] at hc hd
+    show inT (if P p = true then ofList rest else c) = true
+    split
+    · exact inT_ofList rest (inTL_cons.mp hc).2 (descL_tail hd)
+    · exact h
+
+theorem ltM_dropIfHead {c : Term} (h : inT c = true) (hlc : lt c M = true) (P : Term → Bool) :
+    lt (match toList c with
+        | [] => zero
+        | p :: rest => if P p then ofList rest else c) M = true := by
+  cases hl : toList c with
+  | nil => exact lt_zero_M
+  | cons p rest =>
+    show lt (if P p = true then ofList rest else c) M = true
+    split
+    · exact lt_ofList_M rest (fun x hx =>
+        ltM_toList c h hlc x (by rw [hl]; exact List.Mem.tail p hx))
+    · exact hlc
+
+theorem inT_sub1 {c : Term} (h : inT c = true) : inT (sub1 c) = true :=
+  inT_dropIfHead h (fun p => p == one)
+
+theorem ltM_sub1 {c : Term} (h : inT c = true) (hl : lt c M = true) :
+    lt (sub1 c) M = true := ltM_dropIfHead h hl (fun p => p == one)
+
+theorem inT_subAP {w x : Term} (h : inT x = true) : inT (subAP w x) = true :=
+  inT_dropIfHead h (fun p => p == w)
+
+theorem ltM_subAP {w x : Term} (h : inT x = true) (hl : lt x M = true) :
+    lt (subAP w x) M = true := ltM_dropIfHead h hl (fun p => p == w)
+
+theorem inT_logOm {t : Term} (ht : inT t = true) : inT (logOm t) = true := by
+  cases t with
+  | zero => exact ht
+  | M => exact ht
+  | omg a => exact ht
+  | psi k a => exact ht
+  | Z a => exact ht
+  | add a b => exact ht
+  | phi c d =>
+    cases c with
+    | zero =>
+      obtain ⟨_, hd, _, _⟩ := inT_phi4 ht
+      show inT (if TM.Term.phiShifted zero d then plus d one else d) = true
+      split
+      · exact inT_plus hd inT_one
+      · exact hd
+    | M => exact ht
+    | omg _ => exact ht
+    | phi _ _ => exact ht
+    | psi _ _ => exact ht
+    | Z _ => exact ht
+    | add _ _ => exact ht
+
+theorem ltM_logOm {t : Term} (ht : inT t = true) (hl : lt t M = true) :
+    lt (logOm t) M = true := by
+  cases t with
+  | zero => exact hl
+  | M => exact hl
+  | omg a => exact hl
+  | psi k a => exact hl
+  | Z a => exact hl
+  | add a b => exact hl
+  | phi c d =>
+    cases c with
+    | zero =>
+      obtain ⟨_, hd, _, hld⟩ := inT_phi4 ht
+      show lt (if TM.Term.phiShifted zero d then plus d one else d) M = true
+      split
+      · exact lt_plus_M hd inT_one hld lt_one_M
+      · exact hld
+    | M => exact hl
+    | omg _ => exact hl
+    | phi _ _ => exact hl
+    | psi _ _ => exact hl
+    | Z _ => exact hl
+    | add _ _ => exact hl
+
+theorem inT_divAP {w p : Term} (hp : inT p = true) : inT (divAP w p) = true :=
+  inT_omegaNF (inT_subAP (inT_logOm hp))
+
+theorem ltM_divAP {w p : Term} (hp : inT p = true) (hlp : lt p M = true) :
+    lt (divAP w p) M = true :=
+  ltM_omegaNF (inT_subAP (inT_logOm hp)) (ltM_subAP (inT_logOm hp) (ltM_logOm hp hlp))
+
+theorem isAP_divAP (w p : Term) : (divAP w p).isAP = true := isAP_omegaNF _
+
+end
+
+/-! ### §64.3 成分列の道具、そして単調性の 2 つの穴
+
+`ofList` が 𝔗(M) の項になるには成分が降順でなければならない (2.1(iii))。`filter` は
+`le_trans_inT` を 1 度だけ使えば降順を保つ。`map` はそうはいかない — そこが穴で、
+`DivDescInT` と `MulDescInT` に名前をつけて分離する。 -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Evidence.WF
+open Trans.Dict (logOm divAP mulL)
+
+/-- 降順の列は頭で押さえられる。`le_trans_inT` を使うのはここだけ。 -/
+theorem descL_bound_inT : ∀ (l : List Term) (a : Term), inT a = true → inTL l = true →
+    descL (a :: l) = true → ∀ x ∈ l, le x a = true := by
+  intro l
+  induction l with
+  | nil => intro _ _ _ _ x hx; cases hx
+  | cons b t ih =>
+    intro a hia hc hd x hx
+    obtain ⟨hba, hdt⟩ := descL_cons.mp hd
+    obtain ⟨⟨_, hib⟩, hct⟩ := inTL_cons.mp hc
+    rcases List.mem_cons.mp hx with h | h
+    · rw [h]; exact hba
+    · have hxb : le x b = true := ih b hib hct hdt x h
+      have hix : inT x = true := ((Bool.and_eq_true _ _).mp
+        (List.all_eq_true.mp hct x h)).2
+      exact le_trans_inT hix hib hia hxb hba
+
+theorem inTL_filter (P : Term → Bool) : ∀ {l : List Term}, inTL l = true →
+    inTL (l.filter P) = true := by
+  intro l h
+  show (l.filter P).all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  exact List.all_eq_true.mp h x (List.mem_filter.mp hx).1
+
+theorem descL_filter_inT : ∀ (l : List Term), inTL l = true → descL l = true →
+    ∀ (P : Term → Bool), descL (l.filter P) = true := by
+  intro l
+  induction l with
+  | nil => intro _ _ _; rfl
+  | cons a t ih =>
+    intro hc hd P
+    obtain ⟨⟨_, hia⟩, hct⟩ := inTL_cons.mp hc
+    have hdt := descL_tail hd
+    have hbound := descL_bound_inT t a hia hct hd
+    by_cases hp : P a = true
+    · rw [List.filter_cons_of_pos hp]
+      cases hf : t.filter P with
+      | nil => rfl
+      | cons b s =>
+        refine descL_cons.mpr ⟨?_, by rw [← hf]; exact ih hct hdt P⟩
+        have hb : b ∈ t.filter P := by rw [hf]; exact List.Mem.head _
+        exact hbound b (List.mem_filter.mp hb).1
+    · rw [List.filter_cons_of_neg (by simpa using hp)]
+      exact ih hct hdt P
+
+theorem inT_filter_ofList {l : List Term} (hc : inTL l = true) (hd : descL l = true)
+    (P : Term → Bool) : inT (ofList (l.filter P)) = true :=
+  inT_ofList _ (inTL_filter P hc) (descL_filter_inT l hc hd P)
+
+theorem ltM_filter_ofList {l : List Term} (hm : ∀ x ∈ l, lt x M = true)
+    (P : Term → Bool) : lt (ofList (l.filter P)) M = true :=
+  lt_ofList_M _ (fun x hx => hm x (List.mem_filter.mp hx).1)
+
+/-- **(G1) 穴 1。** `divAP w` は降順を保つ — **ただし列の成分がすべて `w` 以上のとき**。
+    側条件を落とすと偽で、最小の反例は `w = M`, `l = [M, Z0]` (下の `#guard`)。
+    `Evidence/CNVOps.lean` §27–§29 の `omegaNF_mono` の `inT` 版にあたる。 -/
+def DivDescInT : Prop := ∀ (w : Term) (l : List Term), inT w = true →
+  inTL l = true → descL l = true → (∀ q ∈ l, lt q w = false) →
+  descL (l.map (divAP w)) = true
+
+/-- **(G2) 穴 2。** `mulL` の写像も降順を保つ。側条件は測定では要らなかった。 -/
+def MulDescInT : Prop := ∀ (e y : Term), inT e = true → inT y = true →
+  descL ((toList y).map (fun p => omegaNF (plus e (logOm p)))) = true
+
+theorem inT_mulL (H : MulDescInT) {e y : Term} (he : inT e = true) (hy : inT y = true) :
+    inT (mulL e y) = true := by
+  show inT (ofList ((toList y).map (fun p => omegaNF (plus e (logOm p))))) = true
+  refine inT_ofList _ ?_ (H e y he hy)
+  show ((toList y).map _).all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  obtain ⟨p, hp, hxe⟩ := List.mem_map.mp hx
+  rw [← hxe]
+  show ((omegaNF (plus e (logOm p))).isAP && inT (omegaNF (plus e (logOm p)))) = true
+  rw [isAP_omegaNF, inT_omegaNF (inT_plus he (inT_logOm (inTL_inT hy p hp)))]
+  rfl
+
+theorem ltM_mulL {e y : Term} (he : inT e = true) (hy : inT y = true)
+    (hle : lt e M = true) (hly : lt y M = true) : lt (mulL e y) M = true := by
+  show lt (ofList ((toList y).map (fun p => omegaNF (plus e (logOm p))))) M = true
+  refine lt_ofList_M _ ?_
+  intro x hx
+  obtain ⟨p, hp, hxe⟩ := List.mem_map.mp hx
+  rw [← hxe]
+  have hip := inTL_inT hy p hp
+  have hlp := ltM_toList y hy hly p hp
+  exact ltM_omegaNF (inT_plus he (inT_logOm hip))
+    (lt_plus_M he (inT_logOm hip) hle (ltM_logOm hip hlp))
+
+end
+
+/-! ### §64.4 `wcnf` の成分
+
+底 `w` の Cantor 標準形。指数 `a` と係数 `c` がどちらも 𝔗(M) の項で `M` の下にあること、
+尾 `ρ` も同じであることを、成分列の帰納で出す。指数の側だけが (G1) を消費する。 -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Evidence.WF
+open Trans.Dict (wcnf divAP logOm)
+
+theorem wcnf_nil (w : Term) : wcnf w [] = ([], zero) := rfl
+
+theorem wcnf_cons_lt {w p : Term} {rest : List Term} (h : lt p w = true) :
+    wcnf w (p :: rest) = ([], ofList (p :: rest)) := by
+  show (if lt p w = true then _ else _) = _
+  rw [if_pos h]
+
+/-- `wcnf` の 1 成分ぶんの指数。 -/
+def wA (w p : Term) : Term :=
+  ofList (((toList (logOm p)).filter (fun q => !lt q w)).map (divAP w))
+/-- `wcnf` の 1 成分ぶんの係数。 -/
+def wC (w p : Term) : Term :=
+  omegaNF (ofList ((toList (logOm p)).filter (fun q => lt q w)))
+
+theorem wcnf_cons_ge {w p : Term} {rest : List Term} (h : lt p w = false) :
+    wcnf w (p :: rest) =
+      (match wcnf w rest with
+       | ((a', c') :: ps, tl) =>
+         if wA w p == a' then ((wA w p, plus (wC w p) c') :: ps, tl)
+         else ((wA w p, wC w p) :: (a', c') :: ps, tl)
+       | ([], tl) => ([(wA w p, wC w p)], tl)) := by
+  show (if lt p w = true then _ else _) = _
+  rw [if_neg (by rw [h]; exact Bool.noConfusion)]
+  rfl
+
+theorem inT_wA (Hd : DivDescInT) {w p : Term} (hw : inT w = true) (hp : inT p = true) :
+    inT (wA w p) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList _ (inT_logOm hp)
+  refine inT_ofList _ ?_
+    (Hd w _ hw (inTL_filter _ hc) (descL_filter_inT _ hc hd _) ?_)
+  · show (List.map (divAP w) _).all _ = true
+    rw [List.all_eq_true]
+    intro x hx
+    obtain ⟨q, hq, hxe⟩ := List.mem_map.mp hx
+    rw [← hxe]
+    show ((divAP w q).isAP && inT (divAP w q)) = true
+    rw [isAP_divAP, inT_divAP (inTL_inT (inT_logOm hp) q (List.mem_filter.mp hq).1)]
+    rfl
+  · intro q hq
+    have := (List.mem_filter.mp hq).2
+    cases hlq : lt q w with
+    | false => rfl
+    | true => rw [hlq] at this; exact Bool.noConfusion this
+
+theorem ltM_wA {w p : Term} (hp : inT p = true) (hlp : lt p M = true) :
+    lt (wA w p) M = true := by
+  refine lt_ofList_M _ ?_
+  intro x hx
+  obtain ⟨q, hq, hxe⟩ := List.mem_map.mp hx
+  rw [← hxe]
+  have hmq := (List.mem_filter.mp hq).1
+  exact ltM_divAP (inTL_inT (inT_logOm hp) q hmq)
+    (ltM_toList _ (inT_logOm hp) (ltM_logOm hp hlp) q hmq)
+
+theorem inT_wC {w p : Term} (hp : inT p = true) : inT (wC w p) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList _ (inT_logOm hp)
+  exact inT_omegaNF (inT_filter_ofList hc hd _)
+
+theorem ltM_wC {w p : Term} (hp : inT p = true) (hlp : lt p M = true) :
+    lt (wC w p) M = true := by
+  obtain ⟨hc, hd⟩ := inT_toList _ (inT_logOm hp)
+  exact ltM_omegaNF (inT_filter_ofList hc hd _)
+    (ltM_filter_ofList (ltM_toList _ (inT_logOm hp) (ltM_logOm hp hlp)) _)
+
+/-- `wcnf` の返り値がすべて 𝔗(M) の項で `M` の下にあること。 -/
+def PairOK (r : List (Term × Term) × Term) : Prop :=
+  (inT r.2 = true ∧ lt r.2 M = true) ∧
+  (∀ ac ∈ r.1, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true)
+
+/-- **`wcnf` は 𝔗(M) の中に留まる。** (G1) だけを使う。 -/
+theorem wcnf_spec (Hd : DivDescInT) {w : Term} (hw : inT w = true) : ∀ (L : List Term),
+    inTL L = true → descL L = true → (∀ x ∈ L, lt x M = true) → PairOK (wcnf w L) := by
+  intro L
+  induction L with
+  | nil =>
+    intro _ _ _
+    exact ⟨⟨inT_zero, lt_zero_M⟩, by intro ac hac; cases hac⟩
+  | cons p rest ih =>
+    intro hc hd hm
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hmr : ∀ x ∈ rest, lt x M = true := fun x hx => hm x (List.Mem.tail p hx)
+    have hlpM : lt p M = true := hm p (List.Mem.head _)
+    have IH := ih hcr hdr hmr
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp]
+      exact ⟨⟨inT_ofList _ hc hd, lt_ofList_M _ hm⟩, by intro ac hac; cases hac⟩
+    · have hlp' : lt p w = false := bool_false hlp
+      have hA := inT_wA Hd (w := w) hw hip
+      have hAM := ltM_wA (w := w) hip hlpM
+      have hC := inT_wC (w := w) hip
+      have hCM := ltM_wC (w := w) hip hlpM
+      rw [wcnf_cons_ge hlp']
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at IH
+        obtain ⟨⟨hs1, hs2⟩, hall⟩ := IH
+        cases fst with
+        | nil =>
+          refine ⟨⟨hs1, hs2⟩, ?_⟩
+          intro ac hac
+          rw [List.mem_singleton.mp hac]
+          exact ⟨hA, hAM, hC, hCM⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac0 := hall (a', c') (List.Mem.head _)
+            show PairOK (if (wA w p == a') = true
+              then ((wA w p, plus (wC w p) c') :: ps, snd)
+              else ((wA w p, wC w p) :: (a', c') :: ps, snd))
+            by_cases heq : (wA w p == a') = true
+            · rw [if_pos heq]
+              refine ⟨⟨hs1, hs2⟩, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]
+                exact ⟨hA, hAM, inT_plus hC hac0.2.2.1,
+                  lt_plus_M hC hac0.2.2.1 hCM hac0.2.2.2⟩
+              · exact hall ac (List.Mem.tail _ h)
+            · rw [if_neg heq]
+              refine ⟨⟨hs1, hs2⟩, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]; exact ⟨hA, hAM, hC, hCM⟩
+              · exact hall ac h
+
+end
+
+/-! ### §64.5 畳み込み、`collapse`、そして `CollapseInT` が何に還元されるか
+
+`stepF`・`idxOf`・`scanSt` は `collapse` の畳み込みをそのまま写したもので、`collapse_eq`
+は `rfl`。不変量は「累算器の 2 つの枠がどちらも 𝔗(M) の項で `M` の下」。ヴェブレン枝は
+§64.2 だけで閉じ、強臨界枝は `PsiIdxOK` — 2.1(vi) の最後の連言 — を消費する。 -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Evidence.WF
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+
+/-- 強臨界枝が組み立てる指数。`collapse` の定義をそのまま写したもの。 -/
+def idxOf (w : Term) (s : Option Term × Option Term) (ac : Term × Term) : Term :=
+  match s.1 with
+  | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+  | some i0 => plus i0 (mulL (mulL w (subAP w ac.1)) ac.2)
+
+/-- `collapse` の畳み込みの 1 歩。 -/
+def stepF (w base : Term) (s : Option Term × Option Term) (ac : Term × Term) :
+    Option Term × Option Term :=
+  if le w ac.1 then (some (idxOf w s ac), some (psi w (idxOf w s ac)))
+  else
+    let bse := match s.2 with | none => base | some v => v
+    let cc := match s.2 with | none => sub1 ac.2 | some _ => ac.2
+    (s.1, some (phiNF ac.1 (plus bse cc)))
+
+def baseOf (u : Nat) : Term := if u == 0 then zero else plus (reg u) TM.Term.one
+
+/-- **`collapse` は畳み込みそのもの。** -/
+theorem collapse_eq (u : Nat) (x : Term) :
+    collapse u x =
+      omegaNF (plus (reg u) (plus
+        (((wcnf (reg (u+1)) (toList x)).1.foldl
+            (init := ((none : Option Term), (none : Option Term)))
+            (stepF (reg (u+1)) (baseOf u))).2.getD zero)
+        (wcnf (reg (u+1)) (toList x)).2)) := rfl
+
+/-- 畳み込みが実際に通る (状態, 成分) の並び。 -/
+def scanSt (w base : Term) : (Option Term × Option Term) → List (Term × Term) →
+    List ((Option Term × Option Term) × (Term × Term))
+  | _, [] => []
+  | s, ac :: t => (s, ac) :: scanSt w base (stepF w base s ac) t
+
+theorem scanSt_mem_snd : ∀ (w base : Term) (s : Option Term × Option Term)
+    (l : List (Term × Term)) (p : (Option Term × Option Term) × (Term × Term)),
+    p ∈ scanSt w base s l → p.2 ∈ l := by
+  intro w base s l
+  induction l generalizing s with
+  | nil => intro p hp; cases hp
+  | cons ac t ih =>
+    intro p hp
+    rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt w base (stepF w base s ac) t from hp)
+      with h | h
+    · rw [h]; exact List.Mem.head _
+    · exact List.Mem.tail _ (ih (stepF w base s ac) p h)
+
+theorem inT_reg : ∀ u, inT (reg u) = true
+  | 0 => inT_zero
+  | u + 1 => show inT (ofNat u) = true from inT_ofNat u
+
+theorem ltM_reg : ∀ u, lt (reg u) M = true
+  | 0 => lt_zero_M
+  | _ + 1 => lt_Z_M _
+
+theorem inT_baseOf (u : Nat) : inT (baseOf u) = true := by
+  unfold baseOf
+  split
+  · exact inT_zero
+  · exact inT_plus (inT_reg u) inT_one
+
+theorem ltM_baseOf (u : Nat) : lt (baseOf u) M = true := by
+  unfold baseOf
+  split
+  · exact lt_zero_M
+  · exact lt_plus_M (inT_reg u) inT_one (ltM_reg u) lt_one_M
+
+/-- 畳み込みの不変量。 -/
+def StInv (s : Option Term × Option Term) : Prop :=
+  (∀ i0, s.1 = some i0 → inT i0 = true ∧ lt i0 M = true) ∧
+  (∀ v, s.2 = some v → inT v = true ∧ lt v M = true)
+
+theorem inT_idxOf (Hm : MulDescInT) {w : Term} (hw : inT w = true) (hlw : lt w M = true)
+    {s : Option Term × Option Term} {ac : Term × Term} (hs : StInv s)
+    (h1 : inT ac.1 = true) (h2 : lt ac.1 M = true) (h3 : inT ac.2 = true)
+    (h4 : lt ac.2 M = true) :
+    inT (idxOf w s ac) = true ∧ lt (idxOf w s ac) M = true := by
+  have he : inT (mulL w (subAP w ac.1)) = true := inT_mulL Hm hw (inT_subAP h1)
+  have hle : lt (mulL w (subAP w ac.1)) M = true :=
+    ltM_mulL hw (inT_subAP h1) hlw (ltM_subAP h1 h2)
+  have hd : inT (mulL (mulL w (subAP w ac.1)) ac.2) = true := inT_mulL Hm he h3
+  have hld : lt (mulL (mulL w (subAP w ac.1)) ac.2) M = true := ltM_mulL he h3 hle h4
+  unfold idxOf
+  cases hs1 : s.1 with
+  | none => exact ⟨inT_sub1 hd, ltM_sub1 hd hld⟩
+  | some i0 =>
+    obtain ⟨hi, hli⟩ := hs.1 i0 hs1
+    exact ⟨inT_plus hi hd, lt_plus_M hi hd hli hld⟩
+
+theorem stepF_inv (Hm : MulDescInT) {w base : Term} (hw : inT w = true) (hlw : lt w M = true)
+    (hb : inT base = true) (hlb : lt base M = true)
+    {s : Option Term × Option Term} {ac : Term × Term} (hs : StInv s)
+    (hac : inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true)
+    (hpsi : le w ac.1 = true → inT (psi w (idxOf w s ac)) = true) :
+    StInv (stepF w base s ac) := by
+  obtain ⟨h1, h2, h3, h4⟩ := hac
+  unfold stepF
+  split
+  · rename_i hle
+    obtain ⟨hi, hli⟩ := inT_idxOf Hm hw hlw hs h1 h2 h3 h4
+    refine ⟨?_, ?_⟩
+    · intro i0 hq
+      rw [← Option.some.inj (show some (idxOf w s ac) = some i0 from hq)]
+      exact ⟨hi, hli⟩
+    · intro v hq
+      rw [← Option.some.inj (show some (psi w (idxOf w s ac)) = some v from hq)]
+      exact ⟨hpsi hle, lt_psi_M _ _⟩
+  · refine ⟨hs.1, ?_⟩
+    intro v hq
+    have hbse : inT (match s.2 with | none => base | some v => v) = true ∧
+        lt (match s.2 with | none => base | some v => v) M = true := by
+      cases hq2 : s.2 with
+      | none => exact ⟨hb, hlb⟩
+      | some v0 => exact hs.2 v0 hq2
+    have hcc : inT (match s.2 with | none => sub1 ac.2 | some _ => ac.2) = true ∧
+        lt (match s.2 with | none => sub1 ac.2 | some _ => ac.2) M = true := by
+      cases hq2 : s.2 with
+      | none => exact ⟨inT_sub1 h3, ltM_sub1 h3 h4⟩
+      | some v0 => exact ⟨h3, h4⟩
+    rw [← Option.some.inj (show some (phiNF ac.1
+      (plus (match s.2 with | none => base | some v => v)
+            (match s.2 with | none => sub1 ac.2 | some _ => ac.2))) = some v from hq)]
+    exact ⟨inT_phiNF h1 (inT_plus hbse.1 hcc.1) h2
+             (lt_plus_M hbse.1 hcc.1 hbse.2 hcc.2),
+           ltM_phiNF h2 (lt_plus_M hbse.1 hcc.1 hbse.2 hcc.2)⟩
+
+theorem fold_inv (Hm : MulDescInT) {w base : Term} (hw : inT w = true) (hlw : lt w M = true)
+    (hb : inT base = true) (hlb : lt base M = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ p ∈ scanSt w base s l, le w p.2.1 = true →
+          inT (psi w (idxOf w p.1 p.2)) = true) →
+      StInv (l.foldl (stepF w base) s) := by
+  intro l
+  induction l with
+  | nil => intro s hs _ _; exact hs
+  | cons ac t ih =>
+    intro s hs hall hpsi
+    have h1 : StInv (stepF w base s ac) :=
+      stepF_inv Hm hw hlw hb hlb hs (hall ac (List.Mem.head _))
+        (hpsi (s, ac) (List.Mem.head _))
+    exact ih (stepF w base s ac) h1 (fun a ha => hall a (List.Mem.tail _ ha))
+      (fun p hp => hpsi p (List.Mem.tail _ hp))
+
+/-- **(G3) 穴 3。** 強臨界枝が実際に吐く指数について [Rathjen, 1991] 2.1(vi) の最後の連言。
+    `scanSt` を通しているので、畳み込みが決して作らない指数については何も言っていない。
+    一般には**偽** (下の `#guard`)。`dict` の像では 1805 項すべてで成り立つ (測定)。 -/
+def PsiIdxOK (u : Nat) (x : Term) : Prop :=
+  ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+    le (reg (u+1)) p.2.1 = true →
+    inT (psi (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2)) = true
+
+/-- **§64 の主定理。** `collapse` は 𝔗(M) に落ちる — (G1)(G2)(G3) を仮定して。 -/
+theorem inT_collapse (Hd : DivDescInT) (Hm : MulDescInT) (u : Nat) (x : Term)
+    (hx : inT x = true) (hlx : lt x M = true) (Hp : PsiIdxOK u x) :
+    inT (collapse u x) = true ∧ lt (collapse u x) M = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨⟨h21, h22⟩, hallOK⟩ :=
+    wcnf_spec Hd (inT_reg (u+1)) (toList x) hc hd (ltM_toList x hx hlx)
+  have hinit : StInv ((none : Option Term), (none : Option Term)) := by
+    constructor
+    · intro i0 h; cases h
+    · intro v h; cases h
+  have hst := fold_inv Hm (inT_reg (u+1)) (ltM_reg (u+1)) (inT_baseOf u) (ltM_baseOf u)
+    (wcnf (reg (u+1)) (toList x)).1 (none, none) hinit hallOK Hp
+  have hv : inT (((wcnf (reg (u+1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u+1)) (baseOf u))).2.getD zero) = true ∧
+      lt (((wcnf (reg (u+1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u+1)) (baseOf u))).2.getD zero) M = true := by
+    cases hg : ((wcnf (reg (u+1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u+1)) (baseOf u))).2 with
+    | none => exact ⟨inT_zero, lt_zero_M⟩
+    | some v => exact hst.2 v hg
+  rw [collapse_eq]
+  have harg : inT (plus (reg u) (plus _ (wcnf (reg (u+1)) (toList x)).2)) = true :=
+    inT_plus (inT_reg u) (inT_plus hv.1 h21)
+  have hlarg : lt (plus (reg u) (plus _ (wcnf (reg (u+1)) (toList x)).2)) M = true :=
+    lt_plus_M (inT_reg u) (inT_plus hv.1 h21) (ltM_reg u)
+      (lt_plus_M hv.1 h21 hv.2 h22)
+  exact ⟨inT_omegaNF harg, ltM_omegaNF harg hlarg⟩
+
+/-- 強臨界枝が一度も点火しないなら (G3) は自動的に成り立つ。 -/
+theorem psiIdxOK_of_noSC (u : Nat) (x : Term)
+    (h : ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = false) :
+    PsiIdxOK u x := by
+  intro p hp hle
+  have hmem := scanSt_mem_snd _ _ _ _ p hp
+  exact absurd hle (by rw [h p.2 hmem]; exact Bool.noConfusion)
+
+/-- **強臨界枝のない断片では (G3) は要らない。** -/
+theorem inT_collapse_noSC (Hd : DivDescInT) (Hm : MulDescInT) (u : Nat) (x : Term)
+    (hx : inT x = true) (hlx : lt x M = true)
+    (h : ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = false) :
+    inT (collapse u x) = true :=
+  (inT_collapse Hd Hm u x hx hlx (psiIdxOK_of_noSC u x h)).1
+
+/-- `dict` の像は 𝔗(M) の中で `M` の下にある — 3 つの穴を仮定して。 -/
+theorem inT_dict (Hd : DivDescInT) (Hm : MulDescInT)
+    (Hp : ∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)) :
+    ∀ a : BT, inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero => ⟨inT_zero, lt_zero_M⟩
+  | .D u a => by
+    have ih := inT_dict Hd Hm Hp a
+    exact inT_collapse Hd Hm u (dict a) ih.1 ih.2 (Hp u a)
+  | .sum a b => by
+    have iha := inT_dict Hd Hm Hp a
+    have ihb := inT_dict Hd Hm Hp b
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+/-- **§63 の `CollapseInT` は、名前のついた 3 つの事実に還元される。** -/
+theorem collapseInT_of_gaps (Hd : DivDescInT) (Hm : MulDescInT)
+    (Hp : ∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)) : CollapseInT :=
+  fun u a => (inT_dict Hd Hm Hp (BT.D u a)).1
+
+/-- **消費者を通す。** §63 の `hsuccS_supply` — `certIn_region` の 2 番目の供給 — が
+    (G1)(G2)(G3) だけで開く。仮説が満たせないものでないことの確認はこれ。 -/
+theorem hsuccS_supply_of_gaps (Hd : DivDescInT) (Hm : MulDescInT)
+    (Hp : ∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u TM.Term.one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, ValS (BMS.expand S n) u :=
+  hsuccS_supply (collapseInT_of_gaps Hd Hm Hp)
+
+end
+
+/-! ### §64.6 測定 (凍結)
+
+否定的なものから。 -/
+
+section
+open TM TM.Term
+open Evidence.WF
+open Trans.Recal
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+
+/-- 測定用の判定器。 -/
+def divDescb (w : Term) (l : List Term) : Bool := descL (l.map (divAP w))
+def mulDescb (e y : Term) : Bool := descL ((toList y).map (fun p => omegaNF (plus e (logOm p))))
+def psiIdxOKb (u : Nat) (x : Term) : Bool :=
+  (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all
+    fun p => !(le (reg (u+1)) p.2.1) || inT (psi (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2))
+def noSCb (u : Nat) (x : Term) : Bool :=
+  (wcnf (reg (u+1)) (toList x)).1.all fun ac => !(le (reg (u+1)) ac.1)
+
+-- **否定 1.** `inT x` だけでは `inT (collapse u x)` は出ない。最小は `x = M`。
+#guard inT (M : Term)
+#guard !(inT (Trans.Dict.collapse 0 M))
+
+-- **否定 2.** `inT x && lt x M` でも出ない。最小は `x = ψ_{ZM}(ZM)` (次数 5)。
+#guard inT (psi (Z M) (Z M)) && lt (psi (Z M) (Z M)) M
+#guard (psi (Z M) (Z M)).deg == 5
+#guard !(inT (Trans.Dict.collapse 0 (psi (Z M) (Z M))))
+--   落ちるのはちょうど (G3) — 吐かれる指数は `x` 自身で、`K_Ω x = {ZM}` が `x` 未満でない。
+#guard !(psiIdxOKb 0 (psi (Z M) (Z M)))
+#guard Kset (Z zero) (psi (Z M) (Z M)) == [Z M]
+#guard !(lt (Z M) (psi (Z M) (Z M)))
+--   次数 10 の `φ̄(Ω, ψ_Ω(Z1))` も同じ形で落ちる (機構は同一)。
+#guard !(psiIdxOKb 0 (phi (Z zero) (psi (Z zero) (Z one))))
+
+-- **否定 3.** (G1) の側条件を落とすと偽。最小は `w = M`, `l = [M, Z0]` (次数和 5)。
+#guard inT (add M (Z zero)) && descL (TM.Term.toList (add M (Z zero)))
+#guard !(divDescb M (TM.Term.toList (add M (Z zero))))
+#guard ((TM.Term.toList (add M (Z zero))).map (divAP M)) == [one, Z zero]
+--   `w` を R に限っても救われない。最小は `w = Z M`, `l = [Z M, Z 0]` (次数和 7)。
+#guard (Z M).isR && inT (add (Z M) (Z zero))
+#guard !(divDescb (Z M) (TM.Term.toList (add (Z M) (Z zero))))
+--   救うのは「成分がすべて `w` 以上」。上の 2 つはどちらもそれを破る。
+#guard !((TM.Term.toList (add M (Z zero))).all (fun q => !lt q M))
+#guard !((TM.Term.toList (add (Z M) (Z zero))).all (fun q => !lt q (Z M)))
+
+/-! 肯定。母集団は 2 つ — 手作りの `inT` 項 (`corp64`) と `dict` の像 (`bcorp64`)。 -/
+
+private def at64 : List Term :=
+  [zero, one, omega, phi one zero, Z zero, Z one, psi (Z zero) zero,
+   psi (Z zero) (Z one), M, omg (add M one), psi M M, phi M M, Z (Z zero), Z M,
+   psi (Z one) zero, psi (Z one) (Z zero), phi (Z zero) zero, phi zero (Z zero)]
+private def corp64 : List Term :=
+  at64
+  ++ (at64.flatMap fun a => at64.map fun b => add a b)
+  ++ (at64.flatMap fun a => at64.map fun b => phi a b)
+  ++ (at64.flatMap fun a => at64.map fun b => psi a b)
+  ++ (at64.map fun a => omg a)
+  ++ (at64.map fun a => Z a)
+  ++ (at64.flatMap fun a => at64.map fun b => add a (add b one))
+private def gT64 : List Term := corp64.filter fun x => inT x
+private def gTM64 : List Term := corp64.filter fun x => inT x && lt x M
+private def bseed64 : List BT := [.zero, .D 0 .zero, .D 1 .zero, .D 2 .zero, .D 0 (.D 1 .zero)]
+private def bstep64 (l : List BT) : List BT :=
+  l ++ (List.range 3).flatMap (fun u => l.map (fun a => BT.D u a))
+    ++ (l.flatMap fun a => l.map fun b => BT.sum a b)
+private def bcorp64 : List BT := (bstep64 (bstep64 bseed64).eraseDups).eraseDups
+
+#guard corp64.length == 1350
+#guard gT64.length == 524
+#guard gTM64.length == 463
+#guard bcorp64.length == 1805
+
+-- 肯定 1.  (G1) — 側条件つきなら 0 失敗。`gT64` の全ペアで 82 373 組。
+#guard (gT64.flatMap fun w => gT64.filter fun y =>
+    (TM.Term.toList y).all (fun q => !lt q w) && !(divDescb w (TM.Term.toList y))).length == 0
+#guard (gT64.flatMap fun w => gT64.filter fun y =>
+    (TM.Term.toList y).all (fun q => !lt q w)).length == 82373
+
+-- 肯定 2.  (G2) — 側条件なしで 0 失敗。`gT64` の全ペアで 274 576 組。
+#guard (gT64.flatMap fun e => gT64.filter fun y => !(mulDescb e y)).length == 0
+#guard gT64.length * gT64.length == 274576
+
+-- 肯定 3.  (G3) — `dict` の像 1805 項すべて、`u = 0,1,2,3` で 0 失敗。
+--   **`BT.isStd` で絞っていない。**
+#guard (bcorp64.filter fun a => !(psiIdxOKb 0 (dict a))).length == 0
+#guard (bcorp64.filter fun a => !(psiIdxOKb 1 (dict a))).length == 0
+#guard (bcorp64.filter fun a => !(psiIdxOKb 2 (dict a))).length == 0
+#guard (bcorp64.filter fun a => !(psiIdxOKb 3 (dict a))).length == 0
+#guard !(bcorp64.all fun a => BT.isStd a)
+--   そして (G3) は真空ではない。手作りの母集団では `u = 0` で 17 回落ちる。
+#guard (gTM64.filter fun x => !(psiIdxOKb 0 x)).length == 17
+#guard (gTM64.filter fun x => !(psiIdxOKb 1 x)).length == 3
+
+-- 肯定 4.  `inT_collapse_noSC` の射程。`u = 0` で 743/1805、`u = 1` で 1804/1805。
+#guard (bcorp64.filter fun a => noSCb 0 (dict a)).length == 743
+#guard (bcorp64.filter fun a => noSCb 1 (dict a)).length == 1804
+#guard (bcorp64.filter fun a => noSCb 2 (dict a)).length == 1805
+
+-- 肯定 5.  `dict` の像は `inT` かつ `M` の下 — §64.5 の `inT_dict` が結論する形。
+#guard bcorp64.all fun a => inT (dict a) && lt (dict a) M
+
+-- 肯定 7.  (G1)(G2) の第 2 母集団 — 種を変えて 2 回閉じた深い項 (最大次数 12)。
+--   種は {0, 1, Ω, M, ψ_Ω0, ω^Ω}、閉包は add/phi/psi/Z/omg。
+private def a64 : List Term := [zero, one, Z zero, M, psi (Z zero) zero, phi zero (Z zero)]
+private def step64 (l : List Term) : List Term :=
+  l ++ (l.flatMap fun a => l.map fun b => add a b)
+    ++ (l.flatMap fun a => l.map fun b => phi a b)
+    ++ (l.flatMap fun a => l.map fun b => psi a b)
+    ++ (l.map fun a => Z a) ++ (l.map fun a => omg a)
+private def a64' : List Term := (step64 a64).eraseDups.filter fun x => inT x
+private def deep64 : List Term :=
+  (((step64 (a64'.take 14)).eraseDups).filter fun x => inT x).take 80
+#guard a64'.length == 53
+#guard deep64.length == 80
+#guard (deep64.map fun x => x.deg).foldl (fun a b => if a < b then b else a) 0 == 12
+#guard (deep64.flatMap fun w => deep64.filter fun y =>
+    (TM.Term.toList y).all (fun q => !lt q w) && !(divDescb w (TM.Term.toList y))).length == 0
+#guard (deep64.flatMap fun w => deep64.filter fun y =>
+    (TM.Term.toList y).all (fun q => !lt q w)).length == 2324
+#guard (deep64.flatMap fun e => deep64.filter fun y => !(mulDescb e y)).length == 0
+#guard deep64.length * deep64.length == 6400
+
+-- 肯定 6.  領域そのもの。§63.5 の `CollapseInT` 測定を (G3) の形で取り直す。
+#guard ((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.length == 443
+#guard ((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.all fun a =>
+  TM.Term.inT (Trans.Dict.dict a)
+
+end
+
+end Evidence.Region
+
 end Evidence.Region
