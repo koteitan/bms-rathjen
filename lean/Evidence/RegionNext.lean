@@ -8660,4 +8660,180 @@ theorem bVal_fold : ∀ (t : B), t ≠ .nil →
 
 end
 
+/-! ## §55 THE SEVERAL-BLOCKS BRANCH, PROVED
+
+    runAux_sum : the `ppair` branch returns `bVal t`, and leaves the table sound
+
+The first branch of the induction that actually computes something.  It is assembled from
+what the last three sections built:
+
+    run_sum_miss        unfold `runAux` past the memo miss, the reduction test (§47) and the
+                        two branch tests, down to `mapM` followed by the fold
+    ppair_matB (§18.3)  the blocks are the top-level subtrees
+    mapM_run' (§53)     the induction hypothesis, applied block by block, threading the table
+    sumFold_topSplit    the fold equals `bVal t` — §54's two halves meeting
+
+`sumFold_topSplit` is where the work is.  `zip_map_pair` turns the algorithm's
+`ps.zip rs` into one map over the subtrees, `foldl_zipIdx_head` removes the index, and
+`topCB_eq` is the per-block identity: `if the block is (0,0) then 1 else its value` is
+`psi_w(its argument)` either way, because `psi_0(0)` IS `1`.  That last equation is the only
+place the `1 +` convention is handled, and it is handled once.
+
+Nothing here depends on what `bArg` computes — only on `bVal` being a left fold over the
+top-level nodes.  The branches that look inside `bArg` are the ones still to come. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-- 型 -2 の枝が最後にやる畳み込み。 -/
+def sumFold (ps : List Trans.Recal.PS) (rs : List BT) : BT :=
+  ((ps.zip rs).zipIdx).foldl (init := BT.zero) fun a q =>
+    if q.2 == 0 then q.1.2 else bplus a (if q.1.1 == zeroPS then bOne else q.1.2)
+
+/-- memo に外れた型 -2 の枝。 -/
+theorem run_sum_miss (f : Nat) (M : Trans.Recal.PS) (tbl : Trans.Recal.Memo)
+    (hred : isReducedP M = true) (hj1 : (lenI M - 1 == 0) = false)
+    (hprin : isPrincipalP M = false)
+    (h : tbl.find? (fun q => q.1 == (M, (none : Option Int))) = none) :
+    (Trans.Recal.runAux (f + 1) M none).run tbl
+      = (sumFold (ppair M)
+            (((ppair M).mapM (fun e => Trans.Recal.runAux f e none)).run tbl).1,
+         ((M, (none : Option Int)),
+            sumFold (ppair M)
+              (((ppair M).mapM (fun e => Trans.Recal.runAux f e none)).run tbl).1)
+           :: (((ppair M).mapM (fun e => Trans.Recal.runAux f e none)).run tbl).2) := by
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h, hred, hj1, hprin,
+    Bool.not_true, Bool.not_false, Bool.false_eq_true, if_false, if_true]
+  rfl
+
+/-! ### 枝の組み立て -/
+
+theorem zip_map_pair {α β γ : Type _} (g : α → β) (h : α → γ) :
+    ∀ (l : List α), (l.map g).zip (l.map h) = l.map (fun x => (g x, h x))
+  | [] => rfl
+  | x :: rest => by
+      show (g x, h x) :: (rest.map g).zip (rest.map h) = _
+      rw [zip_map_pair g h rest]
+      rfl
+
+theorem topSplit_shape : ∀ (t : B), ∀ s ∈ topSplit t, ∃ w c, s = .nd w .nil c
+  | .nil, s, hs => absurd hs (by simp [topSplit])
+  | .nd v r a, s, hs => by
+      rcases List.mem_append.mp hs with h | h
+      · exact topSplit_shape r s h
+      · exact ⟨v, a, List.mem_singleton.mp h⟩
+
+theorem psM_matB_eq_zeroPS (w : Nat) (c : B) :
+    (psM (matB (.nd w .nil c) 0) == zeroPS) = (w == 0 && c == .nil) := by
+  cases c with
+  | nil =>
+    cases w with
+    | zero => rfl
+    | succ k => rfl
+  | nd u b d =>
+    have hlen : (psM (matB (.nd w .nil (.nd u b d)) 0)).length = sizeB (.nd w .nil (.nd u b d)) := by
+      rw [psM_len, sizeB_matB]
+    have hpos : 1 < (psM (matB (.nd w .nil (.nd u b d)) 0)).length := by
+      rw [hlen]
+      show 1 < sizeB (.nil : B) + 1 + sizeB (B.nd u b d)
+      show 1 < 0 + 1 + (sizeB b + 1 + sizeB d)
+      omega
+    rw [show ((B.nd u b d) == (.nil : B)) = false from rfl, Bool.and_false]
+    refine Bool.eq_false_iff.mpr (fun hc => ?_)
+    have := congrArg List.length (eq_of_beq hc)
+    show False
+    have hz : (zeroPS : Trans.Recal.PS).length = 1 := rfl
+    omega
+
+theorem topCB_eq (w : Nat) (c : B) :
+    (if (psM (matB (.nd w .nil c) 0) == zeroPS) then bOne else bVal (.nd w .nil c))
+      = topCB (.nd w .nil c) := by
+  rw [psM_matB_eq_zeroPS w c]
+  by_cases h : w == 0 && c == .nil
+  · rw [if_pos h]
+    have hw : w = 0 := of_decide_eq_true (by
+      have := (Bool.and_eq_true _ _).mp h
+      exact this.1)
+    have hc : c = .nil := eq_of_beq ((Bool.and_eq_true _ _).mp h).2
+    subst hw; subst hc
+    rfl
+  · rw [if_neg h]
+    show bplus (bVal .nil) (if ((.nil : B) == .nil) && w == 0 && c == .nil then .zero
+      else .D w (bArg w c)) = .D w (bArg w c)
+    rw [show (((.nil : B) == .nil) && w == 0 && c == .nil) = false from by
+      rw [show ((.nil : B) == (.nil : B)) = true from rfl, Bool.true_and]
+      exact Bool.eq_false_iff.mpr h]
+    simp only [Bool.false_eq_true, if_false]
+    exact bplus_zero_left _ (nfSum_D w (bArg w c))
+
+theorem foldl_congr_mem {α β : Type _} (f g : β → α → β) :
+    ∀ (l : List α), (∀ x ∈ l, ∀ a, f a x = g a x) → ∀ init, l.foldl f init = l.foldl g init
+  | [], _, _ => rfl
+  | x :: rest, h, init => by
+      show rest.foldl f (f init x) = rest.foldl g (g init x)
+      rw [h x (List.mem_cons_self ..) init]
+      exact foldl_congr_mem f g rest (fun y hy => h y (List.mem_cons_of_mem x hy)) (g init x)
+
+/-- **アルゴリズムの畳み込みは `bVal`。** -/
+theorem sumFold_topSplit (t : B) (hne : t ≠ .nil) :
+    sumFold ((topSplit t).map (fun s => psM (matB s 0))) ((topSplit t).map bVal) = bVal t := by
+  have hsh := topSplit_shape t
+  cases hq : topSplit t with
+  | nil => exact absurd hq (topSplit_ne_nil t hne)
+  | cons s0 rest =>
+    have hb := bVal_fold t hne
+    rw [hq] at hb
+    show ((((s0 :: rest).map (fun s => psM (matB s 0))).zip
+        ((s0 :: rest).map bVal)).zipIdx).foldl
+        (init := BT.zero) (fun a q =>
+          if q.2 == 0 then q.1.2 else bplus a (if q.1.1 == zeroPS then bOne else q.1.2)) = _
+    rw [zip_map_pair (fun s => psM (matB s 0)) bVal (s0 :: rest),
+      show ((s0 :: rest).map (fun s => (psM (matB s 0), bVal s)))
+        = (psM (matB s0 0), bVal s0) :: (rest.map (fun s => (psM (matB s 0), bVal s))) from rfl,
+      foldl_zipIdx_head
+        (fun (a : BT) (q : Trans.Recal.PS × BT) =>
+          bplus a (if q.1 == zeroPS then bOne else q.2))
+        (fun (q : Trans.Recal.PS × BT) => q.2)
+        (psM (matB s0 0), bVal s0) (rest.map (fun s => (psM (matB s 0), bVal s))) BT.zero,
+      List.foldl_map,
+      foldl_congr_mem
+        (fun (a : BT) (s : B) => bplus a (if psM (matB s 0) == zeroPS then bOne else bVal s))
+        (fun (a : BT) (s : B) => bplus a (topCB s)) rest
+        (fun x hx a => by
+          obtain ⟨w, c, rfl⟩ := hsh x (by rw [hq]; exact List.mem_cons_of_mem s0 hx)
+          show bplus a (if (psM (matB (B.nd w .nil c) 0) == zeroPS) then bOne
+              else bVal (B.nd w .nil c)) = bplus a (topCB (B.nd w .nil c))
+          rw [topCB_eq w c])]
+    show rest.foldl (fun a s => bplus a (topCB s)) (bVal s0) = _
+    rw [hb]
+    rfl
+
+/-- **`runAux` の型 -2 の枝** (要求は `Trans`)。 -/
+theorem runAux_sum (g : Nat) (t : B) (hnf : nfB t = true) (hne : t ≠ .nil)
+    (hj1 : (lenI (psM (matB t 0)) - 1 == 0) = false)
+    (hprin : isPrincipalP (psM (matB t 0)) = false)
+    (tbl : Trans.Recal.Memo) (hs : SoundB tbl)
+    (ih : ∀ s ∈ topSplit t, ∀ tb : Trans.Recal.Memo, SoundB tb →
+        ((Trans.Recal.runAux g (psM (matB s 0)) none).run tb).1 = bVal s
+          ∧ SoundB ((Trans.Recal.runAux g (psM (matB s 0)) none).run tb).2) :
+    ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) none).run tbl).1 = bVal t
+      ∧ SoundB ((Trans.Recal.runAux (g + 1) (psM (matB t 0)) none).run tbl).2 := by
+  cases hf : tbl.find? (fun z => z.1 == (psM (matB t 0), (none : Option Int))) with
+  | some p =>
+    rw [runHit g _ none tbl p hf]
+    obtain ⟨hg, he⟩ := goodB_of_find hs hf
+    exact ⟨hg t none hnf he (Or.inl rfl), hs⟩
+  | none =>
+    rw [run_sum_miss g (psM (matB t 0)) tbl (isReducedP_matB t hnf) hj1 hprin hf,
+      ppair_matB t]
+    obtain ⟨hv, hsd⟩ := mapM_run' g (fun s => psM (matB s 0)) bVal (topSplit t) ih tbl hs
+    rw [hv, sumFold_topSplit t hne]
+    exact ⟨rfl, SoundB_cons hsd (goodB_mk t none)⟩
+
+end
+
 end Evidence.Region
