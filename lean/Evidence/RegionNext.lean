@@ -6415,4 +6415,450 @@ theorem pieceList_nrm (X Bk : Matrix) (s : Nat) (Bs : List Matrix) (base J : Nat
 
 end
 
+/-! ## §43 WHAT THE FOLD HANDS TO THE RECURSIVE CALL
+
+The fold's `J`-th term is `incrFirst (red f NJ) (jnJ - nJ)` where
+
+    NJ  = (jnJ + 1, nJ + 1) :: derp bJ        bJ = the J-th branch
+    jnJ = joints.getD J                       the branch root's row-0 parent INDEX
+    nJ  = -1 if the branch root's level is 0, else its row-1 parent index
+
+This section computes all three and puts them together:
+
+    branch_parent  the branch root's row-0 parent EXISTS and lies on the spine — everything
+                   between the spine and the branch is deeper than the branch root
+                   (§33's `hmid_of_blocks`), so it cannot be the parent, and column 0 can
+    branch_deep    every other column of the branch is deeper than `p + 1` (§41's side
+                   condition, from `spine_depth_ge` and the branch being a block)
+    branch_lvl_par §35's `fpar_one_spine'`, with `u ≤ p + 1` supplied by `LvlOKb` at the
+                   branch root and §39's level = index at `p`
+    brF_getD / firstNodes_at / joints_at
+                   the three scans, read off §30's `brF_blocks` and §33's `firstNodes_getD`
+                   and `joints_getD`
+
+and the conclusion is that
+
+    branch_arg    NJ = psM (setRoot (p + 1) bJ)          — §41's matrix, exactly
+    branch_shift  jnJ - nJ = p + 1 - (branch root's level)
+
+Both cases of the `if` collapse into one statement (`branch_if`: the `if` equals `u - 1`,
+where `u = 0` gives `-1` and `u ≥ 1` gives the row-1 parent), which is why `branch_arg` and
+`branch_shift` have no case split left in them. -/
+
+section
+open Trans.Recal
+
+
+/-! ### 枝の根の親は対角の上 -/
+
+theorem branch_parent (X : Matrix) (tr J s : Nat) (hblk : BlkG X)
+    (hJ : J < (blocks (X.drop (tr + 1))).length)
+    (hs : s = tr + 1 + ((((blocks (X.drop (tr + 1))).take J).flatten).length))
+    (hslen : s < X.length)
+    (hroot : ent X s 0 = ent ((blocks (X.drop (tr + 1))).getD J []) 0 0) :
+    ∃ p, parent X 0 s = some p ∧ p ≤ tr ∧ ent X p 0 < ent X s 0 := by
+  have hs0 : 0 < s := by omega
+  have hdeep : ent X 0 0 < ent X s 0 := hblk.2 s hs0 hslen
+  have hmem : 0 ∈ (List.range s).filter (fun q => decide (ent X q 0 < ent X s 0)) :=
+    List.mem_filter.mpr ⟨List.mem_range.mpr hs0, decide_eq_true hdeep⟩
+  cases hp : parent X 0 s with
+  | none =>
+    exfalso
+    have hnil : ((List.range s).filter (fun q => decide (ent X q 0 < ent X s 0))) = [] :=
+      List.max?_eq_none_iff.mp hp
+    rw [hnil] at hmem
+    exact absurd hmem (by simp)
+  | some p =>
+    have hpm := (List.max?_eq_some_iff.mp hp).1
+    have hps : p < s := List.mem_range.mp (List.mem_filter.mp hpm).1
+    have hplt : ent X p 0 < ent X s 0 := of_decide_eq_true (List.mem_filter.mp hpm).2
+    refine ⟨p, rfl, ?_, hplt⟩
+    rcases Nat.lt_or_ge tr p with hcon | hok
+    · exfalso
+      have hmid := hmid_of_blocks X tr J hJ p hcon (by omega)
+      rw [← hroot] at hmid
+      omega
+    · exact hok
+
+/-- 枝のどの列も `p + 1` より深い — 取り替えても根が一番浅い。 -/
+theorem branch_deep (X Bk : Matrix) (tr s p : Nat) (h0d : ent X 0 0 = 0)
+    (hrun : ∀ j, j < tr → ent X j 0 < ent X (j + 1) 0)
+    (hptr : p ≤ tr) (hroot : ent X s 0 = ent Bk 0 0)
+    (hplt : ent X p 0 < ent X s 0) (hblkBk : BlkG Bk) :
+    ∀ q, 0 < q → q < Bk.length → p + 1 < ent Bk q 0 := by
+  intro q hq hqlen
+  have h1 := spine_depth_ge X tr h0d hrun p hptr
+  have h2 := hblkBk.2 q hq hqlen
+  omega
+
+/-! ### 行 1 の親 -/
+
+theorem branch_lvl_par (X : Matrix) (tr s p u : Nat) (h0l : ent X 0 1 = 0)
+    (hlvl : LvlOKb X = true) (htr : tr < X.length)
+    (hrun : ∀ j, j < tr → ent X j 0 < ent X (j + 1) 0 ∧ ent X j 1 < ent X (j + 1) 1)
+    (hslen : s < X.length) (hpar : parent X 0 s = some p) (hptr : p ≤ tr)
+    (hu : 1 ≤ u) (hlvls : ent X s 1 = u) :
+    fpar (psM X) 1 ((s : Nat) : Int) 0 = ((u - 1 : Nat) : Int) := by
+  refine fpar_one_spine' X tr u p s (fun j hj => (hrun j hj).1)
+    (spine_lvl X tr h0l hlvl htr hrun) hu htr hslen ?_ hptr ?_ hlvls
+  · rw [fpar0_eq_parent X s hslen, hpar]
+  · have h1 := lvlOKb_at X hlvl s p hslen hpar
+    have h2 := spine_lvl X tr h0l hlvl htr hrun p hptr
+    omega
+
+/-! ### 走査が返す 3 つの値 -/
+
+theorem brF_getD (X : Matrix) (J : Nat) (hpos : 0 < X.length)
+    (hJ : J < (blocks (X.drop (runLen X + 1))).length) :
+    (brF (psM X)).getD J [] = psM ((blocks (X.drop (runLen X + 1))).getD J []) := by
+  rw [brF_blocks X hpos]
+  exact getD_map_lt psM _ [] [] J hJ
+
+theorem brF_len (X : Matrix) (hpos : 0 < X.length) :
+    (brF (psM X)).length = (blocks (X.drop (runLen X + 1))).length := by
+  rw [brF_blocks X hpos, List.length_map]
+
+theorem brF_take_len (X : Matrix) (J : Nat) (hpos : 0 < X.length) :
+    ((((brF (psM X)).take J).flatten).length)
+      = ((((blocks (X.drop (runLen X + 1))).take J).flatten).length) := by
+  rw [brF_blocks X hpos, ← List.map_take, ← psM_flatten, psM_len]
+
+theorem firstNodes_at (X : Matrix) (J s : Nat) (hpos : 0 < X.length)
+    (hJ : J ≤ (blocks (X.drop (runLen X + 1))).length)
+    (hs : s = runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)) :
+    (firstNodes (psM X)).getD J 0 = ((s : Nat) : Int) := by
+  rw [firstNodes_getD (psM X) J (by rw [brF_len X hpos]; exact hJ),
+    trMax_runLen X hpos, brF_take_len X J hpos, hs]
+  omega
+
+theorem joints_at (X : Matrix) (J s p : Nat) (hpos : 0 < X.length)
+    (hJ : J < (blocks (X.drop (runLen X + 1))).length)
+    (hs : s = runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+    (hslen : s < X.length) (hpar : parent X 0 s = some p) :
+    (joints (psM X)).getD J 0 = ((p : Nat) : Int) := by
+  rw [joints_getD (psM X) J (by rw [brF_len X hpos]; exact hJ),
+    firstNodes_at X J s hpos (by omega) hs, fpar_zero, fpar0_eq_parent X s hslen, hpar]
+
+/-! ### 枝へ渡すもの -/
+
+/-- **`if` の値は枝の根の段から 1 を引いたもの。** -/
+theorem branch_if (X Bk : Matrix) (J s p u : Nat) (hpos : 0 < X.length)
+    (hJ : J < (blocks (X.drop (runLen X + 1))).length)
+    (hBk : (blocks (X.drop (runLen X + 1))).getD J [] = Bk)
+    (hs : s = runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+    (hslen : s < X.length) (hpar : parent X 0 s = some p) (hptr : p ≤ runLen X)
+    (h0l : ent X 0 1 = 0) (hlvl : LvlOKb X = true) (htrlt : runLen X < X.length)
+    (hu : ent Bk 0 1 = u) (hlvls : ent X s 1 = u) :
+    (if gp1 ((brF (psM X)).getD J []) 0 == 0 then (-1 : Int)
+     else fpar (psM X) 1 ((firstNodes (psM X)).getD J 0) 0) = ((u : Nat) : Int) - 1 := by
+  have hbr : (brF (psM X)).getD J [] = psM Bk := by rw [brF_getD X J hpos hJ, hBk]
+  have hg1 : gp1 (psM Bk) 0 = ((u : Nat) : Int) := by
+    have hh : gp1 (psM Bk) 0 = ((ent Bk 0 1 : Nat) : Int) := psM_gp1 Bk 0
+    rw [hh, hu]
+  rw [hbr, hg1]
+  cases u with
+  | zero =>
+    rw [show ((((0 : Nat) : Int)) == 0) = true from rfl]
+    simp only [if_true]
+    rfl
+  | succ w =>
+    rw [show ((((w + 1 : Nat) : Int)) == 0) = false from rfl]
+    simp only [Bool.false_eq_true, if_false]
+    rw [firstNodes_at X J s hpos (by omega) hs,
+      branch_lvl_par X (runLen X) s p (w + 1) h0l hlvl htrlt (runLen_run X hpos) hslen
+        hpar hptr (by omega) hlvls]
+    omega
+
+/-- **畳み込みが枝へ渡す行列は、その枝の根の深さを `p + 1` に取り替えたもの。** -/
+theorem branch_arg (X : Matrix) (c : Col) (cs : Matrix) (J s p u : Nat) (hpos : 0 < X.length)
+    (hJ : J < (blocks (X.drop (runLen X + 1))).length)
+    (hBk : (blocks (X.drop (runLen X + 1))).getD J [] = c :: cs)
+    (hs : s = runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+    (hslen : s < X.length) (hpar : parent X 0 s = some p) (hptr : p ≤ runLen X)
+    (h0l : ent X 0 1 = 0) (hlvl : LvlOKb X = true) (htrlt : runLen X < X.length)
+    (hu : ent (c :: cs) 0 1 = u) (hlvls : ent X s 1 = u) :
+    (((joints (psM X)).getD J 0 + 1,
+      (if gp1 ((brF (psM X)).getD J []) 0 == 0 then (-1 : Int)
+       else fpar (psM X) 1 ((firstNodes (psM X)).getD J 0) 0) + 1)
+        :: derp ((brF (psM X)).getD J []))
+      = psM (setRoot (p + 1) (c :: cs)) := by
+  have hbr : (brF (psM X)).getD J [] = psM (c :: cs) := by rw [brF_getD X J hpos hJ, hBk]
+  rw [branch_if X (c :: cs) J s p u hpos hJ hBk hs hslen hpar hptr h0l hlvl htrlt hu hlvls,
+    joints_at X J s p hpos hJ hs hslen hpar, hbr, psM_setRoot p.succ c cs, hu,
+    show ((p : Nat) : Int) + 1 = ((p + 1 : Nat) : Int) from by omega,
+    show ((u : Nat) : Int) - 1 + 1 = ((u : Nat) : Int) from by omega]
+
+/-- 平行移動の量。 -/
+theorem branch_shift (X Bk : Matrix) (J s p u : Nat) (hpos : 0 < X.length)
+    (hJ : J < (blocks (X.drop (runLen X + 1))).length)
+    (hBk : (blocks (X.drop (runLen X + 1))).getD J [] = Bk)
+    (hs : s = runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+    (hslen : s < X.length) (hpar : parent X 0 s = some p) (hptr : p ≤ runLen X)
+    (h0l : ent X 0 1 = 0) (hlvl : LvlOKb X = true) (htrlt : runLen X < X.length)
+    (hu : ent Bk 0 1 = u) (hlvls : ent X s 1 = u) :
+    (joints (psM X)).getD J 0
+        - (if gp1 ((brF (psM X)).getD J []) 0 == 0 then (-1 : Int)
+           else fpar (psM X) 1 ((firstNodes (psM X)).getD J 0) 0)
+      = ((p : Nat) : Int) + 1 - ((u : Nat) : Int) := by
+  rw [branch_if X Bk J s p u hpos hJ hBk hs hslen hpar hptr h0l hlvl htrlt hu hlvls,
+    joints_at X J s p hpos hJ hs hslen hpar]
+  omega
+
+end
+
+/-! ## §44 THE FOLD
+
+Everything the fold needs is now on the table, so this section runs it.
+
+First the two facts that let the induction dispatch its cases at all.  `block_end_le` says a
+block sits inside the matrix it came from — the offset plus its length is within range, which is
+what `pieceList_nrm` and `anc0_blk` both want.  `not_prin_of_blocks` says two blocks or more
+means NOT principal: the second block's root is no deeper than column 0 (§30's `blocks_root_le`),
+and §22's `isAnc_false_of_flat` turns any such column into a refutation of principality.  With it
+the induction can split on the number of blocks instead of on `isPrincipalP`.
+
+`lvlOKb_sub` is the inheritance the recursion needs in the other direction: a block of a `LvlOKb`
+matrix is `LvlOKb`, because §38's `parent_in_blk` says the parent of an inner column is the same
+column seen from inside the block, and the level condition is then the one already assumed.
+
+Then `redN_fold`.  With `red_fold_to` (§35) the answer is `jjSeq 0 tr ++ cs.flatten` for whatever
+`cs` makes each term come out right, and §42 says the target `nrmBlk X` has exactly that shape
+with `cs = pieceList (nrmG X) (tr + 1) (blocks (X.drop (tr + 1)))`.  So the whole proof is the
+per-branch check, and that is §41 and §43 meeting:
+
+    §43 branch_arg    the argument is `psM (setRoot (p + 1) Bk)`
+    §43 branch_shift  the translation is `p + 1 - (branch root's level)`
+    IH                that argument is shorter than `X`, is a block, and is `LvlOKb`
+    §41 nrmBlk_setRoot  so the recursive answer is `nrmBlk Bk` — the root depth washes out
+    §42 pieceList_nrm   and the target piece is `nrmBlk Bk` translated by `anc0 X s - level`
+    §38 anc0_succ + §39 spine_anc0   and `anc0 X s = p + 1`, which is the same translation
+
+The induction hypothesis is stated for every shorter block, not for the branches specifically —
+that is what makes it usable, since `setRoot` changes the matrix. -/
+
+section
+open Trans.Recal
+
+
+theorem drop_eq_getD_cons {γ : Type _} (d : γ) : ∀ (Bs : List γ) (J : Nat), J < Bs.length →
+    Bs.drop J = Bs.getD J d :: Bs.drop (J + 1)
+  | [], _, h => absurd h (by simp)
+  | _ :: _, 0, _ => rfl
+  | _ :: rest, K + 1, h => by
+      have hK : K < rest.length := by
+        simp at h
+        omega
+      show rest.drop K = rest.getD K d :: rest.drop (K + 1)
+      exact drop_eq_getD_cons d rest K hK
+
+theorem flatten_single (Bk : Matrix) : ([Bk] : List Matrix).flatten = Bk := by
+  show Bk ++ ([] : List Matrix).flatten = Bk
+  rw [show ([] : List Matrix).flatten = ([] : Matrix) from rfl, List.append_nil]
+
+/-- `J` 番目のブロックまでの長さ。 -/
+theorem take_succ_flatten_len (Bs : List Matrix) (J : Nat) (hJ : J < Bs.length) :
+    (((Bs.take (J + 1)).flatten).length)
+      = (((Bs.take J).flatten).length) + ((Bs.getD J []).length) := by
+  have hg : Bs.getD J [] = Bs[J] := by
+    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hJ]
+    rfl
+  rw [hg, List.take_add_one, List.getElem?_eq_getElem hJ]
+  show ((Bs.take J ++ [Bs[J]]).flatten).length = ((Bs.take J).flatten).length + (Bs[J]).length
+  rw [List.flatten_append, List.length_append, flatten_single]
+
+/-- ブロックはその行列の中に収まる。 -/
+theorem block_end_le (Bs : List Matrix) (J : Nat) (hJ : J < Bs.length) :
+    (((Bs.take J).flatten).length) + ((Bs.getD J []).length) ≤ Bs.flatten.length := by
+  rw [← take_flatten_prefix Bs J, List.length_append,
+    drop_eq_getD_cons ([] : Matrix) Bs J hJ]
+  show _ ≤ _ + (Bs.getD J [] ++ ((Bs.drop (J + 1)).flatten)).length
+  rw [List.length_append]
+  omega
+
+theorem getD_mem_list {γ : Type _} (l : List γ) (d : γ) (i : Nat) (h : i < l.length) :
+    l.getD i d ∈ l := by
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h]
+  exact List.getElem_mem h
+
+/-- **ブロックが 2 つ以上なら principal ではない。** -/
+theorem not_prin_of_blocks (X : Matrix) (h2 : 2 ≤ (blocks X).length) :
+    isPrincipalP (psM X) = false := by
+  have hfl : (blocks X).flatten = X := blocks_flatten X.length X (Nat.le_refl _)
+  have hblk0 : BlkG ((blocks X).getD 0 []) :=
+    blocks_blkG X.length X (Nat.le_refl _) _ (getD_mem_list (blocks X) [] 0 (by omega))
+  have hblk1 : BlkG ((blocks X).getD 1 []) :=
+    blocks_blkG X.length X (Nat.le_refl _) _ (getD_mem_list (blocks X) [] 1 (by omega))
+  have h00 : (((blocks X).take 0).flatten).length = 0 := rfl
+  have hr : (((blocks X).take 1).flatten).length = ((blocks X).getD 0 []).length := by
+    rw [take_succ_flatten_len (blocks X) 0 (by omega)]
+    omega
+  have hend1 := block_end_le (blocks X) 1 (by omega)
+  rw [hfl] at hend1
+  have hroot : ent X ((((blocks X).take 1).flatten).length) 0
+      = ent ((blocks X).getD 1 []) 0 0 := by
+    have hb := ent_flatten_block (blocks X) 1 (by omega) 0 0 hblk1.1
+    rw [hfl, show (((blocks X).take 1).flatten).length + 0
+      = (((blocks X).take 1).flatten).length from by omega] at hb
+    exact hb
+  have hle := blocks_root_le X.length X (Nat.le_refl _) 1 (by omega)
+  have hlen0 := hblk0.1
+  have hlen1 := hblk1.1
+  have hfalse : isAnc (psM X) 0 (lenI (psM X) - 1) 0 = false :=
+    isAnc_false_of_flat X ((((blocks X).take 1).flatten).length)
+      (by omega) (by omega) (by omega) (by omega)
+  refine Bool.eq_false_iff.mpr (fun hcon => ?_)
+  have hdef : isPrincipalP (psM X)
+      = (!isZeroP (psM X) && isAnc (psM X) 0 (lenI (psM X) - 1) 0) := rfl
+  rw [hdef, hfalse, Bool.and_false] at hcon
+  exact absurd hcon (by simp)
+
+/-- ブロックは `LvlOKb` を受け継ぐ。 -/
+theorem lvlOKb_sub (X Bk : Matrix) (s : Nat) (hlvl : LvlOKb X = true)
+    (hpos : ∀ i, i < Bk.length → ent X (s + i) 0 = ent Bk i 0)
+    (hlv : ∀ i, i < Bk.length → ent X (s + i) 1 = ent Bk i 1)
+    (hend : s + Bk.length ≤ X.length) : LvlOKb Bk = true := by
+  show ((List.range Bk.length).all _) = true
+  refine List.all_eq_true.mpr (fun i hi => ?_)
+  have hi' : i < Bk.length := List.mem_range.mp hi
+  cases hp : parent Bk 0 i with
+  | none => rfl
+  | some q =>
+    have hqi := parent0_lt Bk i q hp
+    have hX := parent_in_blk X s Bk i q hpos hi' hp
+    have hle := lvlOKb_at X hlvl (s + i) (s + q) (by omega) hX
+    rw [hlv i hi', hlv q (by omega)] at hle
+    exact decide_eq_true hle
+
+/-! ### 畳み込み -/
+
+/-- **ブロック 1 つ・根は深さ 0 段 0・走りが尽きない場合。** -/
+theorem redN_fold (f : Nat) (X : Matrix) (bnd : Nat) (hblk : BlkG X) (hlvl : LvlOKb X = true)
+    (h0d : ent X 0 0 = 0) (h0l : ent X 0 1 = 0) (hlen : 1 < X.length)
+    (hstop : runLen X + 1 < X.length)
+    (hbnd : ∀ J, J < (blocks (X.drop (runLen X + 1))).length →
+              ((blocks (X.drop (runLen X + 1))).getD J []).length < bnd)
+    (ih : ∀ Y : Matrix, Y.length < bnd → BlkG Y → LvlOKb Y = true →
+            red f (psM Y) = nrmBlk Y) :
+    red (f + 1) (psM X) = nrmBlk X := by
+  have hpos : 0 < X.length := by omega
+  have htrlt : runLen X < X.length := runLen_lt X hpos
+  have hrun := runLen_run X hpos
+  have hzero : isZeroP (psM X) = false := by
+    show ((psM X).length == 1 && _) = false
+    rw [show ((psM X).length == 1) = false from by
+      rw [psM_len]; exact decide_eq_false (by omega)]
+    rfl
+  have hprin : isPrincipalP (psM X) = true := prin_of_deep X hlen hblk.2
+  have hg0 : gp0 (psM X) 0 = 0 := by
+    have hh : gp0 (psM X) 0 = ((ent X 0 0 : Nat) : Int) := psM_gp0 X 0
+    rw [hh, h0d]; rfl
+  have hg1 : gp1 (psM X) 0 = 0 := by
+    have hh : gp1 (psM X) 0 = ((ent X 0 1 : Nat) : Int) := psM_gp1 X 0
+    rw [hh, h0l]; rfl
+  have hne : ((((runLen X : Nat)) : Int) == lenI (psM X) - 1) = false := by
+    rw [lenI_psM]
+    refine Bool.eq_false_iff.mpr (fun hcon => ?_)
+    have := eq_of_beq hcon
+    omega
+  have hflat : (blocks (X.drop (runLen X + 1))).flatten = X.drop (runLen X + 1) :=
+    blocks_flatten (X.drop (runLen X + 1)).length (X.drop (runLen X + 1)) (Nat.le_refl _)
+  have hcslen : (brF (psM X)).length
+      = (pieceList (nrmG X) (runLen X + 1) (blocks (X.drop (runLen X + 1)))).length := by
+    rw [brF_len X hpos, pieceList_length]
+  rw [red_fold_to (psM X) f ((runLen X : Nat) : Int)
+      (pieceList (nrmG X) (runLen X + 1) (blocks (X.drop (runLen X + 1))))
+      hzero hprin hg0 hg1 (trMax_runLen X hpos) hne hcslen ?_,
+    ← nrmBlk_diag_split X (runLen X) h0l hlvl htrlt hrun]
+  -- 各枝
+  intro J hJcs
+  have hJ : J < (blocks (X.drop (runLen X + 1))).length := by
+    rw [pieceList_length] at hJcs
+    exact hJcs
+  have hBkblk : BlkG ((blocks (X.drop (runLen X + 1))).getD J []) :=
+    blocks_blkG (X.drop (runLen X + 1)).length (X.drop (runLen X + 1)) (Nat.le_refl _) _
+      (getD_mem_list _ [] J hJ)
+  have hbe := block_end_le (blocks (X.drop (runLen X + 1))) J hJ
+  rw [hflat, List.length_drop] at hbe
+  have hend : runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)
+      + ((blocks (X.drop (runLen X + 1))).getD J []).length ≤ X.length := by omega
+  have hlen0 := hBkblk.1
+  have hslen : runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)
+      < X.length := by omega
+  have hpe : ∀ i, i < ((blocks (X.drop (runLen X + 1))).getD J []).length → ∀ y,
+      ent X (runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length) + i) y
+        = ent ((blocks (X.drop (runLen X + 1))).getD J []) i y :=
+    fun i hi y => ent_brBlk X (runLen X) J hJ i y hi
+  have hroot : ent X (runLen X + 1
+        + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)) 0
+      = ent ((blocks (X.drop (runLen X + 1))).getD J []) 0 0 := by
+    have hb := hpe 0 hlen0 0
+    rw [show runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length) + 0
+      = runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)
+      from by omega] at hb
+    exact hb
+  have hlvls : ent X (runLen X + 1
+        + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)) 1
+      = ent ((blocks (X.drop (runLen X + 1))).getD J []) 0 1 := by
+    have hb := hpe 0 hlen0 1
+    rw [show runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length) + 0
+      = runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)
+      from by omega] at hb
+    exact hb
+  obtain ⟨p, hpar, hptr, hplt⟩ := branch_parent X (runLen X) J
+    (runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+    hblk hJ rfl hslen hroot
+  have hlo := branch_deep X ((blocks (X.drop (runLen X + 1))).getD J []) (runLen X)
+    (runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)) p
+    h0d (fun j hj => (hrun j hj).1) hptr hroot hplt hBkblk
+  have hlvlBk : LvlOKb ((blocks (X.drop (runLen X + 1))).getD J []) = true :=
+    lvlOKb_sub X _ _ hlvl (fun i hi => hpe i hi 0) (fun i hi => hpe i hi 1) (by omega)
+  have hanc : anc0 X (runLen X + 1
+      + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length)) = p + 1 := by
+    rw [anc0_succ X _ p hslen hpar,
+      spine_anc0 X (runLen X) htrlt hrun p hptr]
+  -- 帰納法の仮定を枝に当てる
+  cases hBk : (blocks (X.drop (runLen X + 1))).getD J [] with
+  | nil => exact absurd (hBk ▸ hlen0) (by simp)
+  | cons c cs =>
+    rw [branch_arg X c cs J
+        (runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+        p (ent (c :: cs) 0 1) hpos hJ hBk rfl hslen hpar hptr h0l hlvl htrlt rfl
+        (by rw [hlvls, hBk]),
+      branch_shift X (c :: cs) J
+        (runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+        p (ent (c :: cs) 0 1) hpos hJ hBk rfl hslen hpar hptr h0l hlvl htrlt rfl
+        (by rw [hlvls, hBk]),
+      ih (setRoot (p + 1) (c :: cs))
+        (by
+          rw [setRoot_length]
+          have hb := hbnd J hJ
+          rw [hBk] at hb
+          omega)
+        (blkG_setRoot (p + 1) (c :: cs) (hBk ▸ hBkblk) (by rw [← hBk]; exact hlo))
+        (lvlOKb_setRoot (p + 1) (c :: cs) (hBk ▸ hBkblk) (by rw [← hBk]; exact hlo)
+          (hBk ▸ hlvlBk)),
+      nrmBlk_setRoot (p + 1) (c :: cs) (hBk ▸ hBkblk) (by rw [← hBk]; exact hlo),
+      pieceList_nrm X (c :: cs)
+        (runLen X + 1 + ((((blocks (X.drop (runLen X + 1))).take J).flatten).length))
+        (blocks (X.drop (runLen X + 1))) (runLen X + 1) J h0l hJ hBk rfl
+        (fun i hi => by rw [← hBk] at hi ⊢; exact hpe i hi 0)
+        (fun i hi => by rw [← hBk] at hi ⊢; exact hpe i hi 1)
+        (hBk ▸ hBkblk) (by rw [hBk] at hend; omega),
+      hanc, show ((p : Nat) : Int) + 1 = ((p + 1 : Nat) : Int) from by omega]
+
+/-- 枝はもとの行列より短い — `redN_fold` を自分自身の長さで使う形。 -/
+theorem redN_fold_self (f : Nat) (X : Matrix) (hblk : BlkG X) (hlvl : LvlOKb X = true)
+    (h0d : ent X 0 0 = 0) (h0l : ent X 0 1 = 0) (hlen : 1 < X.length)
+    (hstop : runLen X + 1 < X.length)
+    (ih : ∀ Y : Matrix, Y.length < X.length → BlkG Y → LvlOKb Y = true →
+            red f (psM Y) = nrmBlk Y) :
+    red (f + 1) (psM X) = nrmBlk X := by
+  refine redN_fold f X X.length hblk hlvl h0d h0l hlen hstop (fun J hJ => ?_) ih
+  have hbe := block_end_le (blocks (X.drop (runLen X + 1))) J hJ
+  rw [blocks_flatten (X.drop (runLen X + 1)).length (X.drop (runLen X + 1)) (Nat.le_refl _),
+    List.length_drop] at hbe
+  omega
+
+end
+
 end Evidence.Region
