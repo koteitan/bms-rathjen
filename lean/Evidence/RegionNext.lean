@@ -7507,4 +7507,236 @@ theorem redP_nrmM (X : Matrix) (hlvl : LvlOKb X = true) : redP (psM X) = nrmM X 
 
 end
 
+/-! ## §47 THE NORMAL-FORM INDICES ARE REDUCED
+
+§19 measured that `nfB` and `isReducedP` agree on 220 / 5101 / 16332 enumerated indices.  With
+§46 in hand the forward half is a theorem, and it is the half the port needs: `runAux`'s first
+branch reduces its argument, so running it on `matB t 0` requires knowing the reduction is the
+identity there.
+
+    isReducedP_iff   for `LvlOKb X`, `isReducedP (psM X) = (nrmM X == psM X)`   [§46]
+    isReducedP_matB  `nfB t → isReducedP (psM (matB t 0)) = true`
+
+The bridge is that `matB` builds depth = TREE DEPTH by construction, and `nrmM` puts every
+column at `block root level + tree depth`.  So the two agree exactly when every block root has
+level 0 — which under `nfB` is every top-level node, and `nfB` says their level is 0.
+
+    anc0_eq_depth   tree depth = depth, when depth steps by at most one and the root is at 0
+    lvlOKb_of_nfm   §31's `NFM` (the tree condition) implies §37's `LvlOKb` (the class)
+    nrmBlk_eq_psM   so a block whose root sits at depth 0 and level 0 is already its own answer
+    matB_lvl_top    and under `nfLe m`, every column at the top depth has level at most `m`
+
+`parent_depth_succ` is the small fact underneath: the row-0 parent's depth is exactly one less,
+because it is the LAST shallower column and the depths cannot jump.  That is also what turns
+`LMin`/`LvlOK` into `parent`/`LvlOKb`, so §31 and §37 are finally the same condition.
+
+WHAT IS NOT CLAIMED.  The converse — a non-normal-form index is not reduced — is still only
+measured (§19's guards).  Proving it needs the transfer in the other direction (matrix condition
+back to tree condition), and for a non-`LvlOKb` matrix §46 says nothing at all. -/
+
+section
+open Trans.Recal
+
+
+/-! ### 親と左極小 -/
+
+theorem lmin_of_parent (M : Matrix) (i p : Nat) (hp : parent M 0 i = some p) : LMin M p i := by
+  obtain ⟨hpm, hpmax⟩ := List.max?_eq_some_iff.mp hp
+  have hpi : p < i := List.mem_range.mp (List.mem_filter.mp hpm).1
+  have hplt : ent M p 0 < ent M i 0 := of_decide_eq_true (List.mem_filter.mp hpm).2
+  refine ⟨hpi, fun q hq1 hq2 => ?_⟩
+  rcases Nat.lt_or_ge q i with hqi | hqi
+  · rcases Nat.lt_or_ge (ent M q 0) (ent M i 0) with hc | hc
+    · exfalso
+      have := hpmax q (List.mem_filter.mpr ⟨List.mem_range.mpr hqi, decide_eq_true hc⟩)
+      omega
+    · omega
+  · rw [show q = i from by omega]
+    exact hplt
+
+/-- **深さが 1 段ずつしか増えないなら、親の深さはちょうど 1 つ下。** -/
+theorem parent_depth_succ (X : Matrix) (hstep : StepOK X) (i p : Nat)
+    (hp : parent X 0 i = some p) : ent X p 0 + 1 = ent X i 0 := by
+  obtain ⟨hpm, hpmax⟩ := List.max?_eq_some_iff.mp hp
+  have hpi : p < i := List.mem_range.mp (List.mem_filter.mp hpm).1
+  have hplt : ent X p 0 < ent X i 0 := of_decide_eq_true (List.mem_filter.mp hpm).2
+  have hs := hstep p
+  rcases Nat.eq_or_lt_of_le (show p + 1 ≤ i from by omega) with heq | hlt
+  · subst heq; omega
+  · have hnc : ¬(ent X (p + 1) 0 < ent X i 0) := by
+      intro hc
+      have := hpmax (p + 1) (List.mem_filter.mpr
+        ⟨List.mem_range.mpr (by omega), decide_eq_true hc⟩)
+      omega
+    omega
+
+/-- **木の深さ = 深さ。** 深さが 1 段ずつしか増えず、根が深さ 0 のとき。 -/
+theorem anc0_eq_depth (X : Matrix) (hstep : StepOK X) (h0 : ent X 0 0 = 0) :
+    ∀ (n i : Nat), i ≤ n → i < X.length → anc0 X i = ent X i 0 := by
+  intro n
+  induction n with
+  | zero =>
+    intro i hi _
+    rw [show i = 0 from by omega, anc0_zero X, h0]
+  | succ g ih =>
+    intro i hi hlen
+    rcases Nat.eq_zero_or_pos i with rfl | hipos
+    · rw [anc0_zero X, h0]
+    · cases hp : parent X 0 i with
+      | none =>
+        have hnil : ((List.range i).filter (fun q => decide (ent X q 0 < ent X i 0))) = [] :=
+          List.max?_eq_none_iff.mp hp
+        have h0not : ¬(ent X 0 0 < ent X i 0) := by
+          intro hc
+          have hmem : (0 : Nat)
+              ∈ ((List.range i).filter (fun q => decide (ent X q 0 < ent X i 0))) :=
+            List.mem_filter.mpr ⟨List.mem_range.mpr hipos, decide_eq_true hc⟩
+          rw [hnil] at hmem
+          exact absurd hmem (by simp)
+        have hz : anc0 X i = 0 := by
+          show (iterParent (parent X 0) X.length i).length = 0
+          cases hn : X.length with
+          | zero => rfl
+          | succ _ => rw [iterParent_nil hp]; rfl
+        omega
+      | some p =>
+        have hpi := parent0_lt X i p hp
+        rw [anc0_succ X i p hlen hp, ih p (by omega) (by omega),
+          parent_depth_succ X hstep i p hp]
+
+/-- **`NFM` なら `LvlOKb`。** §31 の木の条件と §37 の類は同じもの。 -/
+theorem lvlOKb_of_nfm (X : Matrix) (h : NFM X) : LvlOKb X = true := by
+  show ((List.range X.length).all _) = true
+  refine List.all_eq_true.mpr (fun i hi => ?_)
+  cases hp : parent X 0 i with
+  | none => rfl
+  | some p =>
+    show decide (ent X i 1 ≤ ent X p 1 + 1) = true
+    exact decide_eq_true (h.2 p i (lmin_of_parent X i p hp)
+      (parent_depth_succ X h.1 i p hp))
+
+/-! ### 位置で書いた `psM` -/
+
+theorem psM_eq_map_range (X : Matrix) :
+    psM X = (List.range X.length).map
+      (fun i => (((ent X i 0 : Nat) : Int), ((ent X i 1 : Nat) : Int))) := by
+  have h1 : (psM X).take (psM X).length = psM X := List.take_of_length_le (Nat.le_refl _)
+  rw [← h1, take_eq_map_range ((0 : Int), (0 : Int)) (psM X).length (psM X) (Nat.le_refl _),
+    psM_len]
+  exact List.map_congr_left (fun i _ => getD_psM X i)
+
+/-- **深さがもともと木の深さで根の段が 0 なら、答えは入力そのもの。** -/
+theorem nrmBlk_eq_psM (X : Matrix) (hstep : StepOK X) (h0d : ent X 0 0 = 0)
+    (h0l : ent X 0 1 = 0) : nrmBlk X = psM X := by
+  rw [psM_eq_map_range X]
+  show (List.range X.length).map _ = _
+  refine List.map_congr_left (fun i hi => ?_)
+  have hi' : i < X.length := List.mem_range.mp hi
+  show (((ent X 0 1 + anc0 X i : Nat) : Int), ((ent X i 1 : Nat) : Int)) = _
+  rw [h0l, anc0_eq_depth X hstep h0d X.length i (by omega) hi',
+    show 0 + ent X i 0 = ent X i 0 from by omega]
+
+/-! ### `matB` の最上位の段 -/
+
+theorem ent_cons0 (c : Col) (cs : Matrix) (y : Nat) : ent (c :: cs) 0 y = c.getD y 0 := rfl
+
+theorem ent_cons (c : Col) (cs : Matrix) (j y : Nat) :
+    ent (c :: cs) (j + 1) y = ent cs j y := rfl
+
+/-- **最上位 (深さ `d`) の列の段は `m` 以下。** -/
+theorem matB_lvl_top : ∀ (t : B) (m d : Nat), nfLe m t = true →
+    ∀ j, j < (matB t d).length → ent (matB t d) j 0 = d → ent (matB t d) j 1 ≤ m := by
+  intro t
+  induction t with
+  | nil => intro m d _ j hj _; exact absurd hj (by simp [matB])
+  | nd v r a ihr _ =>
+    intro m d hnf j hj hd
+    obtain ⟨hv, hr, _⟩ := (nfLe_nd_iff m v r a).mp hnf
+    have hM : matB (.nd v r a) d = matB r d ++ ([d, v] :: matB a (d + 1)) := rfl
+    rcases Nat.lt_or_ge j (matB r d).length with hlo | hhi
+    · rw [hM, ent_append_left _ _ j 1 hlo]
+      refine ihr m d hr j hlo ?_
+      rw [hM, ent_append_left _ _ j 0 hlo] at hd
+      exact hd
+    · obtain ⟨k, hk⟩ : ∃ k, j = (matB r d).length + k := ⟨j - (matB r d).length, by omega⟩
+      subst hk
+      rw [hM, ent_append _ _ _ 1 (by omega),
+        show (matB r d).length + k - (matB r d).length = k from by omega]
+      rw [hM, ent_append _ _ _ 0 (by omega),
+        show (matB r d).length + k - (matB r d).length = k from by omega] at hd
+      cases k with
+      | zero => rw [ent_cons0]; exact hv
+      | succ q =>
+        exfalso
+        rw [ent_cons] at hd
+        have hqlen : q < (matB a (d + 1)).length := by
+          rw [hM, List.length_append] at hj
+          have : ([d, v] :: matB a (d + 1)).length = (matB a (d + 1)).length + 1 := rfl
+          omega
+        have hlb := matB_col_lb a (d + 1) _ (getD_mem (matB a (d + 1)) [] q hqlen)
+        have : ent (matB a (d + 1)) q 0 = ((matB a (d + 1)).getD q []).getD 0 0 := rfl
+        omega
+
+/-! ### 標準形の添字は既約 -/
+
+/-- **`LvlOKb` なら既約かどうかは `nrmM` と等しいかどうか。** -/
+theorem isReducedP_iff (X : Matrix) (h : LvlOKb X = true) :
+    isReducedP (psM X) = (nrmM X == psM X) := by
+  show (redP (psM X) == psM X) = _
+  rw [redP_nrmM X h]
+
+theorem nrmM_matB (t : B) (h : nfB t = true) : nrmM (matB t 0) = psM (matB t 0) := by
+  rcases (show t = .nil ∨ t ≠ .nil from by
+      cases t with
+      | nil => exact Or.inl rfl
+      | nd _ _ _ => exact Or.inr (by intro hc; exact B.noConfusion hc)) with rfl | hne
+  · show nrmM ([] : Matrix) = _
+    rw [nrmM_nil]
+    rfl
+  · have hnfm : NFM (matB t 0) := nfm_matB t 0 0 h
+    have hfl := blocks_flatten (matB t 0).length (matB t 0) (Nat.le_refl _)
+    have hkey : ∀ Bk ∈ blocks (matB t 0), nrmBlk Bk = psM Bk := by
+      intro Bk hBk
+      obtain ⟨J, hJ, hJeq⟩ := List.mem_iff_getElem.mp hBk
+      have hgd : (blocks (matB t 0)).getD J [] = Bk := by
+        rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hJ, hJeq]
+        rfl
+      have hblkG : BlkG Bk := blocks_blkG (matB t 0).length (matB t 0) (Nat.le_refl _) Bk hBk
+      have hnfmBk : NFM Bk :=
+        nfm_blocks (matB t 0).length (matB t 0) (Nat.le_refl _) hnfm Bk hBk
+      have hroot0 : ent Bk 0 0 = 0 := by
+        have hle := blocks_root_le (matB t 0).length (matB t 0) (Nat.le_refl _) J hJ
+        rw [hgd, matB_head0 t 0 hne] at hle
+        omega
+      have hbe := block_end_le (blocks (matB t 0)) J hJ
+      rw [hfl, hgd] at hbe
+      have hpos0 : ent (matB t 0)
+          ((((blocks (matB t 0)).take J).flatten).length) 0 = ent Bk 0 0 := by
+        have hh := ent_flatten_block (blocks (matB t 0)) J hJ 0 0 (by rw [hgd]; exact hblkG.1)
+        rw [hfl, hgd, show (((blocks (matB t 0)).take J).flatten).length + 0
+          = (((blocks (matB t 0)).take J).flatten).length from by omega] at hh
+        exact hh
+      have hpos1 : ent (matB t 0)
+          ((((blocks (matB t 0)).take J).flatten).length) 1 = ent Bk 0 1 := by
+        have hh := ent_flatten_block (blocks (matB t 0)) J hJ 0 1 (by rw [hgd]; exact hblkG.1)
+        rw [hfl, hgd, show (((blocks (matB t 0)).take J).flatten).length + 0
+          = (((blocks (matB t 0)).take J).flatten).length from by omega] at hh
+        exact hh
+      have hroot1 : ent Bk 0 1 = 0 := by
+        have hlt := matB_lvl_top t 0 0 h ((((blocks (matB t 0)).take J).flatten).length)
+          (by have := hblkG.1; omega) (by rw [hpos0, hroot0])
+        omega
+      exact nrmBlk_eq_psM Bk hnfmBk.1 hroot0 hroot1
+    show ((blocks (matB t 0)).map nrmBlk).flatten = _
+    rw [List.map_congr_left hkey, ← psM_flatten, hfl]
+
+/-- **標準形の添字の行列は既約。** §19 で測っていた等式の片側。 -/
+theorem isReducedP_matB (t : B) (h : nfB t = true) :
+    isReducedP (psM (matB t 0)) = true := by
+  show (redP (psM (matB t 0)) == psM (matB t 0)) = true
+  rw [redP_nrmM (matB t 0) (lvlOKb_of_nfm (matB t 0) (nfm_matB t 0 0 h)), nrmM_matB t h]
+  exact beq_self_eq_true _
+
+end
+
 end Evidence.Region
