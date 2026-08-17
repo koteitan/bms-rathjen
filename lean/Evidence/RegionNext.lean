@@ -8161,4 +8161,134 @@ theorem runHit (f : Nat) (M : Trans.Recal.PS) (req : Option Int) (tbl : Trans.Re
 
 end
 
+/-! ## §51 WHAT `runAux` RECURSES INTO, AS INDICES
+
+The induction of §50 has to name `runAux`'s recursive arguments on the index side.  There are
+two, and §18.3 already did one of them (`ppair_matB`: the blocks of `matB t 0` are the top-level
+subtrees).  This section does the other.
+
+    dropLastB t      remove the LAST node in preorder
+    matB_dropLast    and that is exactly `(matB t 0).dropLast`
+    predP_matB       which is `Pred`, once the matrix has more than one column
+
+`dropLastB` is the obvious recursion — drop the last child's last node, or the node itself when
+it has no children — and the identity holds at every depth, which is what the recursion needs.
+`sizeB_dropLast` is the measure going down by one; `nfLe_dropLast` keeps the class.
+
+`sizeB_matB` ties the two sizes together (`(matB t d).length = sizeB t`), so `lenI` on the
+matrix side is `sizeB` on the index side and the branch tests of `runAux` — `j1 == 0`, `isZeroP`
+— become statements about the number of nodes. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-! ### 最後の節を落とす -/
+
+/-- 前順で最後の節を落とす。 -/
+def dropLastB : B → B
+  | .nil => .nil
+  | .nd v r a => match a with
+                 | .nil => r
+                 | _ => .nd v r (dropLastB a)
+
+theorem matB_dropLast : ∀ (t : B) (d : Nat),
+    matB (dropLastB t) d = (matB t d).dropLast
+  | .nil, _ => rfl
+  | .nd v r a, d => by
+      cases a with
+      | nil =>
+        show matB r d = ((matB r d ++ [[d, v]]).dropLast)
+        rw [List.dropLast_concat]
+      | nd u b c =>
+        show matB (.nd v r (dropLastB (.nd u b c))) d
+          = (matB r d ++ ([d, v] :: matB (.nd u b c) (d + 1))).dropLast
+        rw [List.dropLast_append, if_neg (by simp)]
+        show matB r d ++ ([d, v] :: matB (dropLastB (.nd u b c)) (d + 1))
+          = matB r d ++ ([d, v] :: matB (.nd u b c) (d + 1)).dropLast
+        rw [matB_dropLast (.nd u b c) (d + 1),
+          show ([d, v] :: matB (.nd u b c) (d + 1)).dropLast
+            = [d, v] :: (matB (.nd u b c) (d + 1)).dropLast from by
+            rw [List.dropLast_cons_of_ne_nil (by
+              show matB (.nd u b c) (d + 1) ≠ []
+              intro hc
+              exact absurd ((matB_eq_nil_iff _ (d + 1)).mp hc) (by
+                intro hcc; exact B.noConfusion hcc))]]
+
+theorem sizeB_dropLast : ∀ (t : B), t ≠ .nil → sizeB (dropLastB t) + 1 = sizeB t
+  | .nil, h => absurd rfl h
+  | .nd v r a, _ => by
+      cases a with
+      | nil => show sizeB r + 1 = sizeB r + 1 + sizeB (.nil : B); rfl
+      | nd u b c =>
+        show sizeB r + 1 + sizeB (dropLastB (.nd u b c)) + 1
+          = sizeB r + 1 + sizeB (.nd u b c)
+        rw [← sizeB_dropLast (.nd u b c) (by intro hc; exact B.noConfusion hc)]
+        omega
+
+theorem nfLe_dropLast : ∀ (t : B) (m : Nat), nfLe m t = true → nfLe m (dropLastB t) = true
+  | .nil, _, _ => by rfl
+  | .nd v r a, m, h => by
+      obtain ⟨hv, hr, ha⟩ := (nfLe_nd_iff m v r a).mp h
+      cases a with
+      | nil => exact hr
+      | nd u b c =>
+        exact (nfLe_nd_iff m v r (dropLastB (.nd u b c))).mpr
+          ⟨hv, hr, nfLe_dropLast (.nd u b c) (v + 1) ha⟩
+
+theorem sizeB_matB : ∀ (t : B) (d : Nat), (matB t d).length = sizeB t
+  | .nil, _ => rfl
+  | .nd v r a, d => by
+      rw [matB_len_nd]
+      show _ = sizeB r + 1 + sizeB a
+      rw [sizeB_matB r d, sizeB_matB a (d + 1)]
+
+theorem lenI_matB (t : B) : lenI (psM (matB t 0)) = ((sizeB t : Nat) : Int) := by
+  rw [lenI_psM]
+  rw [sizeB_matB t 0]
+
+/-- **`Pred` は「最後の節を落とす」。** 1 列のときは `Pred` は何もしない。 -/
+theorem predP_matB (t : B) (h : 1 < sizeB t) :
+    predP (psM (matB t 0)) = psM (matB (dropLastB t) 0) := by
+  have hlen : (psM (matB t 0)).length = sizeB t := by
+    rw [psM_len, sizeB_matB t 0]
+  show (if (psM (matB t 0)).length == 1 then psM (matB t 0)
+        else (psM (matB t 0)).dropLast) = _
+  rw [show ((psM (matB t 0)).length == 1) = false from by
+    rw [hlen]; exact decide_eq_false (by omega)]
+  simp only [Bool.false_eq_true, if_false]
+  show ((matB t 0).map _).dropLast = (matB (dropLastB t) 0).map _
+  rw [matB_dropLast t 0, ← List.map_dropLast]
+
+/-! ### 大きさが 1 の添字 -/
+
+theorem sizeB_eq_zero : ∀ (t : B), sizeB t = 0 → t = .nil
+  | .nil, _ => rfl
+  | .nd _ r a, h => by
+      have hh : sizeB r + 1 + sizeB a = 0 := h
+      omega
+
+theorem sizeB_eq_one : ∀ (t : B), sizeB t = 1 → ∃ v, t = .nd v .nil .nil
+  | .nil, h => by
+      have hh : (0 : Nat) = 1 := h
+      omega
+  | .nd v r a, h => by
+      have hh : sizeB r + 1 + sizeB a = 1 := h
+      refine ⟨v, ?_⟩
+      rw [sizeB_eq_zero r (by omega), sizeB_eq_zero a (by omega)]
+
+theorem isZeroP_matB_big (t : B) (h : 1 < sizeB t) : isZeroP (psM (matB t 0)) = false := by
+  show ((psM (matB t 0)).length == 1 && _) = false
+  rw [show ((psM (matB t 0)).length == 1) = false from by
+    rw [psM_len, sizeB_matB t 0]
+    exact decide_eq_false (by omega)]
+  rfl
+
+theorem isZeroP_matB_leaf : isZeroP (psM (matB (.nd 0 .nil .nil) 0)) = true := by decide
+
+theorem bVal_leaf : bVal (.nd 0 .nil .nil) = .zero := by decide
+
+end
+
 end Evidence.Region
