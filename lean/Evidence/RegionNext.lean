@@ -8382,4 +8382,183 @@ theorem mapM_run (f : Nat) (val : Trans.Recal.PS → BT) :
 
 end
 
+/-! ## §53 `bplus`, AND THE VALUES IT BUILDS
+
+Every remaining branch of the induction ends in an equation between two `bplus` chains, so the
+chains have to obey the laws one expects of a formal sum.  They almost do — `bplus a b` is
+`ofL (a.toL ++ b.toL)`, which rebuilds the term from its components — but `ofL` is a section of
+`toL` only on terms that ARE in that shape.  `BT.sum (BT.sum x y) z` is not, and neither is
+anything with a `zero` inside.  So the laws carry a hypothesis:
+
+    AtomsL t   every component of `t` is a `D` term
+    NfSum t    `t` is what `ofL` gives back from its own components
+
+    toL_bplus / atomsL_bplus / nfSum_bplus     `bplus` concatenates components and stays in shape
+    bplus_zero_left / bplus_zero_right          unit, for terms in shape
+    bplus_assoc                                 associativity, for atom-component terms
+
+`AtomsL` is then discharged once and for all for the value functions: `bArg`, `bFold` and `bVal`
+only ever `bplus` together `D` terms, so everything §48 and §49 produce is an atom list
+(`atomsL_bArg_bFold`, `atomsL_bVal`), and the laws apply without side conditions from here on.
+
+`mapM_run'` is §52's `mapM_run` in the form the several-blocks branch actually needs: the blocks
+arrive as `(topSplit t).map (psM ∘ matB · 0)`, so the per-block hypothesis is stated about
+indices, not about matrices, and no inverse of the encoding is needed. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-! ### `bplus` の代数 -/
+
+/-- 形式和の成分がすべて `D` であること。 -/
+def AtomsL (t : BT) : Prop := ∀ x ∈ t.toL, ∃ u a, x = .D u a
+
+/-- 成分から組み直して元へ戻ること (`ofL` の像に居ること)。 -/
+def NfSum (t : BT) : Prop := BT.ofL t.toL = t
+
+theorem atomsL_zero : AtomsL .zero := by
+  intro x hx
+  exact absurd hx (by simp [Trans.Dict.BT.toL])
+
+theorem atomsL_D (u : Nat) (a : BT) : AtomsL (.D u a) := by
+  intro x hx
+  rw [List.mem_singleton.mp (show x ∈ [BT.D u a] from hx)]
+  exact ⟨u, a, rfl⟩
+
+theorem nfSum_zero : NfSum .zero := rfl
+
+theorem nfSum_D (u : Nat) (a : BT) : NfSum (.D u a) := rfl
+
+theorem toL_ofL : ∀ (l : List BT), (∀ x ∈ l, ∃ u a, x = .D u a) → (BT.ofL l).toL = l
+  | [], _ => rfl
+  | [x], h => by
+      obtain ⟨u, a, rfl⟩ := h x (by simp)
+      rfl
+  | x :: y :: rest, h => by
+      obtain ⟨u, a, rfl⟩ := h x (by simp)
+      show ((BT.D u a).toL ++ (BT.ofL (y :: rest)).toL) = _
+      rw [toL_ofL (y :: rest) (fun z hz => h z (List.mem_cons_of_mem _ hz))]
+      rfl
+
+theorem toL_bplus (a b : BT) (ha : AtomsL a) (hb : AtomsL b) :
+    (bplus a b).toL = a.toL ++ b.toL := by
+  show (BT.ofL (a.toL ++ b.toL)).toL = _
+  refine toL_ofL _ (fun x hx => ?_)
+  rcases List.mem_append.mp hx with h | h
+  · exact ha x h
+  · exact hb x h
+
+theorem atomsL_bplus (a b : BT) (ha : AtomsL a) (hb : AtomsL b) : AtomsL (bplus a b) := by
+  intro x hx
+  rw [toL_bplus a b ha hb] at hx
+  rcases List.mem_append.mp hx with h | h
+  · exact ha x h
+  · exact hb x h
+
+theorem nfSum_bplus (a b : BT) (ha : AtomsL a) (hb : AtomsL b) : NfSum (bplus a b) := by
+  show BT.ofL ((bplus a b).toL) = bplus a b
+  rw [toL_bplus a b ha hb]
+  rfl
+
+theorem bplus_zero_left (b : BT) (hb : NfSum b) : bplus .zero b = b := by
+  show BT.ofL ((BT.zero).toL ++ b.toL) = b
+  rw [show (BT.zero).toL = ([] : List BT) from rfl, List.nil_append]
+  exact hb
+
+theorem bplus_zero_right (a : BT) (ha : NfSum a) : bplus a .zero = a := by
+  show BT.ofL (a.toL ++ (BT.zero).toL) = a
+  rw [show (BT.zero).toL = ([] : List BT) from rfl, List.append_nil]
+  exact ha
+
+theorem bplus_assoc (a b c : BT) (ha : AtomsL a) (hb : AtomsL b) (hc : AtomsL c) :
+    bplus (bplus a b) c = bplus a (bplus b c) := by
+  show BT.ofL ((bplus a b).toL ++ c.toL) = BT.ofL (a.toL ++ (bplus b c).toL)
+  rw [toL_bplus a b ha hb, toL_bplus b c hb hc, List.append_assoc]
+
+/-! ### ブロックを順に走らせる (添字の側) -/
+
+theorem mapM_run' (f : Nat) (g : B → Trans.Recal.PS) (h : B → BT) :
+    ∀ (ss : List B),
+      (∀ s ∈ ss, ∀ tbl : Trans.Recal.Memo, SoundB tbl →
+          ((Trans.Recal.runAux f (g s) none).run tbl).1 = h s
+            ∧ SoundB ((Trans.Recal.runAux f (g s) none).run tbl).2) →
+      ∀ tbl : Trans.Recal.Memo, SoundB tbl →
+        (((ss.map g).mapM (fun e => Trans.Recal.runAux f e none)).run tbl).1 = ss.map h
+          ∧ SoundB (((ss.map g).mapM (fun e => Trans.Recal.runAux f e none)).run tbl).2
+  | [], _, tbl, hs => ⟨rfl, hs⟩
+  | s :: rest, hstep, tbl, hs => by
+      obtain ⟨hv1, hs1⟩ := hstep s (List.mem_cons_self ..) tbl hs
+      obtain ⟨hv2, hs2⟩ := mapM_run' f g h rest
+        (fun q hq => hstep q (List.mem_cons_of_mem s hq))
+        ((Trans.Recal.runAux f (g s) none).run tbl).2 hs1
+      show ((((g s) :: rest.map g).mapM (fun e => Trans.Recal.runAux f e none)).run tbl).1
+          = h s :: rest.map h
+        ∧ SoundB ((((g s) :: rest.map g).mapM
+            (fun e => Trans.Recal.runAux f e none)).run tbl).2
+      rw [List.mapM_cons]
+      refine ⟨?_, ?_⟩
+      · show ((Trans.Recal.runAux f (g s) none).run tbl).1
+            :: (((rest.map g).mapM (fun e => Trans.Recal.runAux f e none)).run
+                 ((Trans.Recal.runAux f (g s) none).run tbl).2).1
+          = h s :: rest.map h
+        rw [hv1, hv2]
+      · show SoundB (((rest.map g).mapM (fun e => Trans.Recal.runAux f e none)).run
+          ((Trans.Recal.runAux f (g s) none).run tbl).2).2
+        exact hs2
+
+/-! ### 値はいつも `D` の並び -/
+
+theorem atomsL_bClose (w : Nat) (st : BT × Option BT) (h : AtomsL st.1) :
+    AtomsL (bClose w st) := by
+  show AtomsL (match st.2 with | none => st.1 | some a => bplus st.1 (.D w a))
+  cases hst : st.2 with
+  | none => exact h
+  | some a => exact atomsL_bplus st.1 (.D w a) h (atomsL_D w a)
+
+theorem atomsL_bArg_bFold : ∀ (s : B) (w : Nat),
+    AtomsL (bArg w s) ∧ AtomsL ((bFold w s).1) := by
+  intro s
+  induction s with
+  | nil => intro w; exact ⟨atomsL_zero, atomsL_zero⟩
+  | nd u r c ihr ihc =>
+    intro w
+    have hK : AtomsL (if c == .nil then (.D u .zero : BT)
+        else if u ≤ w || !(r == .nil) || headLvl c ≤ u then .D u (bArg u c)
+        else bClose u (bFold u c)) := by
+      by_cases h1 : c == .nil
+      · rw [if_pos h1]; exact atomsL_D u .zero
+      · rw [if_neg h1]
+        by_cases h2 : u ≤ w || !(r == .nil) || headLvl c ≤ u
+        · rw [if_pos h2]; exact atomsL_D u (bArg u c)
+        · rw [if_neg h2]; exact atomsL_bClose u (bFold u c) (ihc u).2
+    refine ⟨?_, ?_⟩
+    · show AtomsL (bplus (bArg w r) _)
+      exact atomsL_bplus _ _ (ihr w).1 hK
+    · show AtomsL (
+        (if w < u then (bplus (bClose w (bFold w r)) _, none)
+         else match (bFold w r).2 with
+              | none => ((bFold w r).1, some (bplus (bFold w r).1 _))
+              | some a => ((bFold w r).1, some (bplus a _))).1)
+      by_cases hw : w < u
+      · rw [if_pos hw]
+        exact atomsL_bplus _ _ (atomsL_bClose w (bFold w r) (ihr w).2) hK
+      · rw [if_neg hw]
+        cases hst : (bFold w r).2 with
+        | none => exact (ihr w).2
+        | some a => exact (ihr w).2
+
+theorem atomsL_bVal : ∀ (t : B), AtomsL (bVal t)
+  | .nil => atomsL_zero
+  | .nd w r c => by
+      show AtomsL (bplus (bVal r) (if r == .nil && w == 0 && c == .nil then .zero
+        else .D w (bArg w c)))
+      refine atomsL_bplus _ _ (atomsL_bVal r) ?_
+      by_cases h : r == .nil && w == 0 && c == .nil
+      · rw [if_pos h]; exact atomsL_zero
+      · rw [if_neg h]; exact atomsL_D w (bArg w c)
+
+end
+
 end Evidence.Region
