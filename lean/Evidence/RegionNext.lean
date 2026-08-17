@@ -7850,4 +7850,109 @@ def popNFB (L n : Nat) : List B :=
 
 end
 
+/-! ## §49 THE MARKS
+
+§48 gives `Trans`.  `runAux` also computes `Mark m`, and a proof has to say what those are too —
+that is what `Rows/G11`'s `markV1` / `markV2` were, per rung.  This section says it once.
+
+    bMark t m = Mark m (psM (matB t 0))      whenever `markOKB t m`
+
+MEASURED on the same enumerations as §48 (670 and 697 indices, every position of each), and
+during development also at seven nodes.  Zero mismatches.
+
+WHAT `Mark m` IS.  The CONTRIBUTION of the node at preorder position `m` — the very `K` that
+§48's `bArg` inserts into its parent's argument, collapse rule and all.  Not its value: for a
+node that §48 collapses (first child, higher than its parent, own first child higher still) the
+mark is the collapsed form, which is why `markIn` repeats §48's three-way test instead of just
+returning `psi_u(...)`.
+
+WHERE IT IS DEFINED.  Not everywhere.  `Mark m` returns a fallback (`psi` of the LAST column's
+level) when the mark cannot be found, so a specification has to name the positions where it
+means something:
+
+    m is on the last column's row-0 ancestor chain  — `lastSpine`, read off the tree as
+                                                      "last top-level node, then its last
+                                                      child, and so on"
+    and the contribution is a single `psi` term     — a sum means "not findable"
+
+`markOKB` is the conjunction, and the last guard checks the containment that makes it usable as
+an `Allowed` predicate: every mark the algorithm actually requests when running on `matB t 0`
+lies on that chain.
+
+WHAT IS NOT CLAIMED.  Measured, like §48.  Together the two give the `Val` of a `Good`/`Sound`
+argument over `runAux`'s memo table — `Val t none = bVal t`, `Val t (some m) = bMark t m` — for
+the whole region rather than one family at a time. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-- 添字の節の個数 (= `matB t d` の列数)。 -/
+def sizeB : B → Nat
+  | .nil => 0
+  | .nd _ r a => sizeB r + 1 + sizeB a
+
+/-- 前順で `m` 番目の節の**寄与**。`w` は親の段。 -/
+def markIn (w : Nat) : B → Nat → Option BT
+  | .nil, _ => none
+  | .nd u r c, m =>
+      let lr := sizeB r
+      if m < lr then markIn w r m
+      else if m == lr then
+        some (if c == .nil then .D u .zero
+              else if u ≤ w || !(r == .nil) || headLvl c ≤ u then .D u (bArg u c)
+              else bClose u (bFold u c))
+      else markIn u c (m - lr - 1)
+
+/-- **`Mark m` の値。** 最上位の `(0,0)` だけが 0。 -/
+def bMark (t : B) (m : Nat) : BT :=
+  match t with
+  | .nd 0 .nil .nil => .zero
+  | _ => (markIn 0 t m).getD .zero
+
+/-- 最後の列の行 0 の祖先鎖 (自分を含む) の前順添字。 -/
+def lastSpine : B → List Nat
+  | .nil => []
+  | .nd _ r c =>
+      let lr := sizeB r
+      lr :: (lastSpine c).map (fun i => lr + 1 + i)
+
+/-- **`Mark m` が意味を持つ添字。** 最後の列の祖先で、寄与が 1 つの `D` になるもの。 -/
+def markOKB (t : B) (m : Nat) : Bool :=
+  m ∈ lastSpine t && (match bMark t m with | .D _ _ => true | _ => false)
+
+/-! ### 測定 -/
+
+def markRun (M : PS) (m : Int) : BT := (Trans.Recal.runAux (transFuel M) M (some m)).run' []
+def memoKeys (M : PS) : List ((PS × Option Int) × BT) :=
+  ((Trans.Recal.runAux (transFuel M) M none).run []).2
+
+def popNFB' (L n : Nat) : List B :=
+  ((List.range n).flatMap (enumNodes L)).filter fun t => nfB t && t != .nil
+
+#guard (popNFB' 3 6).length == 670
+-- 節の個数は列の数。
+#guard (popNFB' 3 6).all fun t => sizeB t == (matB t 0).length
+-- 祖先鎖の読み替えは行列の側と合う。
+#guard (popNFB' 3 6).all fun t =>
+  let P := psM (matB t 0)
+  (List.range (sizeB t)).all fun m =>
+    (m ∈ lastSpine t) == (Int.ofNat m == lenI P - 1 || isAnc P 0 (lenI P - 1) (Int.ofNat m))
+-- **測定: 意味を持つ添字では `Mark m` はこの閉じた形。**
+#guard (popNFB' 3 6).all fun t =>
+  (List.range (sizeB t)).all fun m =>
+    !(markOKB t m) || markRun (psM (matB t 0)) (Int.ofNat m) == bMark t m
+#guard (popNFB' 4 6).all fun t =>
+  (List.range (sizeB t)).all fun m =>
+    !(markOKB t m) || markRun (psM (matB t 0)) (Int.ofNat m) == bMark t m
+-- **測定: 走らせたときに実際に要求される `Mark` はすべて祖先鎖の上。**
+#guard (popNFB' 3 6).all fun t =>
+  (memoKeys (psM (matB t 0))).all fun p =>
+    match p.1.2 with
+    | none => true
+    | some m => m == lenI p.1.1 - 1 || isAnc p.1.1 0 (lenI p.1.1 - 1) m
+
+end
+
 end Evidence.Region
