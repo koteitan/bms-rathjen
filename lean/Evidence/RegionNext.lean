@@ -8291,4 +8291,95 @@ theorem bVal_leaf : bVal (.nd 0 .nil .nil) = .zero := by decide
 
 end
 
+/-! ## §52 THE FIRST BRANCH, AND THE MONAD
+
+Two pieces of the induction, both independent of what `Trans` computes.
+
+`runAux_leaf` is `runAux`'s `j1 == 0` branch on the index side.  Under `nfB` the only index with
+one node is `nd 0 nil nil` — the root's level is forced to 0 — so the branch returns `zero`, and
+that is `bVal` and `bMark` alike.  Both halves of the memo argument appear here in miniature:
+a hit is discharged by `goodB_of_find`, a miss by `SoundB_cons` with §50's `goodB_mk`.
+
+`mapM_run` is the monadic plumbing the several-blocks branch needs, and nothing in this
+repository had it before: `runAux` runs the blocks with `List.mapM` in the state monad, so the
+table each block sees is the one the previous block left.  The lemma threads that — given a
+per-block statement that holds for EVERY sound table, the whole `mapM` returns the blocks'
+values in order and leaves a sound table.  The induction is on the block list and the state
+bookkeeping is just `List.mapM_cons`. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-- 1 節の添字の行列。 -/
+theorem psM_matB_leaf : psM (matB (.nd 0 .nil .nil) 0) = [((0 : Int), (0 : Int))] := rfl
+
+theorem bValReq_leaf (req : Option Int) : bValReq (.nd 0 .nil .nil) req = .zero := by
+  cases req with
+  | none => rfl
+  | some m => rfl
+
+/-- memo に外れたときの 1 節の添字。 -/
+theorem run_leaf_miss (f : Nat) (req : Option Int) (tbl : Trans.Recal.Memo)
+    (h : tbl.find? (fun q => q.1 == (([((0 : Int), (0 : Int))] : Trans.Recal.PS), req))
+      = none) :
+    (Trans.Recal.runAux (f + 1) ([((0 : Int), (0 : Int))] : Trans.Recal.PS) req).run tbl
+      = (BT.zero,
+         ((([((0 : Int), (0 : Int))] : Trans.Recal.PS), req), BT.zero) :: tbl) := by
+  rw [Trans.Recal.runAux]
+  simp only [StateT.run, bind, StateT.bind, StateT.get, pure,
+    get, getThe, MonadStateOf.get, h]
+  rfl
+
+/-- **`runAux` の型 -1 の枝。** 1 節の添字は `Trans` も `Mark` も 0。 -/
+theorem runAux_leaf (g : Nat) (req : Option Int) (tbl : Trans.Recal.Memo)
+    (hs : SoundB tbl) (ha : AllowedB (.nd 0 .nil .nil) req) :
+    ((Trans.Recal.runAux (g + 1) (psM (matB (.nd 0 .nil .nil) 0)) req).run tbl).1
+        = bValReq (.nd 0 .nil .nil) req
+      ∧ SoundB ((Trans.Recal.runAux (g + 1) (psM (matB (.nd 0 .nil .nil) 0)) req).run tbl).2 := by
+  rw [psM_matB_leaf, bValReq_leaf]
+  cases hf : tbl.find? (fun z => z.1 == (([((0 : Int), (0 : Int))] : Trans.Recal.PS), req)) with
+  | some p =>
+    rw [runHit g _ req tbl p hf]
+    obtain ⟨hg, he⟩ := goodB_of_find hs hf
+    refine ⟨?_, hs⟩
+    have hv := hg (.nd 0 .nil .nil) req (by decide) (by rw [psM_matB_leaf]; exact he) ha
+    rw [hv, bValReq_leaf]
+  | none =>
+    rw [run_leaf_miss g req tbl hf]
+    refine ⟨rfl, SoundB_cons hs ?_⟩
+    have := goodB_mk (.nd 0 .nil .nil) req
+    rw [psM_matB_leaf, bValReq_leaf] at this
+    exact this
+
+/-! ### ブロックを順に走らせる -/
+
+theorem mapM_run (f : Nat) (val : Trans.Recal.PS → BT) :
+    ∀ (Ms : List Trans.Recal.PS),
+      (∀ M ∈ Ms, ∀ tbl : Trans.Recal.Memo, SoundB tbl →
+          ((Trans.Recal.runAux f M none).run tbl).1 = val M
+            ∧ SoundB ((Trans.Recal.runAux f M none).run tbl).2) →
+      ∀ tbl : Trans.Recal.Memo, SoundB tbl →
+        ((Ms.mapM (fun e => Trans.Recal.runAux f e none)).run tbl).1 = Ms.map val
+          ∧ SoundB ((Ms.mapM (fun e => Trans.Recal.runAux f e none)).run tbl).2
+  | [], _, tbl, hs => ⟨rfl, hs⟩
+  | M :: rest, hstep, tbl, hs => by
+      obtain ⟨hv1, hs1⟩ := hstep M (List.mem_cons_self ..) tbl hs
+      obtain ⟨hv2, hs2⟩ := mapM_run f val rest
+        (fun q hq => hstep q (List.mem_cons_of_mem M hq))
+        ((Trans.Recal.runAux f M none).run tbl).2 hs1
+      rw [List.mapM_cons]
+      refine ⟨?_, ?_⟩
+      · show ((Trans.Recal.runAux f M none).run tbl).1
+            :: ((rest.mapM (fun e => Trans.Recal.runAux f e none)).run
+                 ((Trans.Recal.runAux f M none).run tbl).2).1
+          = val M :: rest.map val
+        rw [hv1, hv2]
+      · show SoundB ((rest.mapM (fun e => Trans.Recal.runAux f e none)).run
+          ((Trans.Recal.runAux f M none).run tbl).2).2
+        exact hs2
+
+end
+
 end Evidence.Region
