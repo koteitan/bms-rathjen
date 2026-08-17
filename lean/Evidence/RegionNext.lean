@@ -17909,9 +17909,15 @@ WHAT IS NOT CLAIMED.  `CollapseInT` is NOT discharged.  Nothing here says `dict`
 characterised; (G3) is stated for a given `x` and MEASURED on `dict`'s image, not proved
 there.  The order-theoretic content of (G1)/(G2) — monotonicity of `ω^·` on `inT` — and the
 Kset content of (G3) are the two things a next attempt has to buy.
+
+**CORRECTION (§65).  `DivDescInT` as stated here is FALSE** — `not_divDescInT` proves it,
+smallest counterexample `w = ω`, `l = [ω^ω, ω]`.  So every theorem of this section that takes
+it as a hypothesis (`wcnf_spec`, `inT_collapse`, `inT_collapse_noSC`, `inT_dict`,
+`collapseInT_of_gaps`, `hsuccS_supply_of_gaps`) is VACUOUS and must not be used.  §65 restates
+them against `DivDescSC`, which adds `w.isSC` and IS proved; the live consumers are
+`collapseInT_of_gap3` and `hsuccS_supply_of_gap3`, whose only hypothesis is (G3).
 -/
 
-namespace Evidence.Region
 
 /-! ### §64.1 `M` の下 — `lt · M` は頭部だけで決まる
 
@@ -18883,6 +18889,1709 @@ private def deep64 : List Term :=
 
 end
 
-end Evidence.Region
+
+/-! ## §65 (G1) IS FALSE AS STATED, (G2) IS TRUE — AND BOTH CLOSE
+
+§64 reduced `CollapseInT` to three named hypotheses and recommended closing the first two.
+The recommendation was checked before it was followed, and the check came back split.
+
+  **(G1) `DivDescInT` IS FALSE — and `not_divDescInT` below PROVES it** (axioms: `propext`
+  only).  Not for want of the side condition §64 already found: with it.  Smallest
+  counterexample, degree sum 17:
+
+      w = ω,   l = [ω^ω, ω]
+
+  Every hypothesis holds — `inT ω`; both members additively principal and `inT`; `l`
+  descending (`ω ≤ ω^ω`); and `lt q w = false` for BOTH members, since `ω ≤ ω ≤ ω^ω`.  But
+  `divAP ω (ω^ω) = 1` while `divAP ω ω = ω`, so the image `[1, ω]` ASCENDS.  The list is not
+  an artefact of the Prop's generality either: `l = toList (ω^ω ⊕ ω)` and `ω^ω ⊕ ω` is a
+  genuine term of 𝔗(M).
+
+  WHY 82373 + 2324 PAIRS MISSED IT.  §64's positive sweep quantified `l` not over lists but
+  as `toList y` for `y` RANGING OVER THE CORPUS, so it only ever saw the component lists of
+  corpus terms — and `ω^ω ⊕ ω` is in neither population (`corp64` closes `add` over `at64`
+  only, and `ω^ω = φ̄(0,ω)` is not in `at64`).  §64's counterexample search, which did range
+  over lists, stopped at `w = M` and `w = Z M` and concluded "regular does not rescue it,
+  `w ≤ every member` does".  Both halves of that conclusion are right about what they tested
+  and wrong as stated: the missing fact is that `w ≤ p` does NOT give `w ≤ logOm p` unless
+  `w` is STRONGLY CRITICAL — at `w = p = ω`, `ω ≤ ω` but `logOm ω = 1 < ω`.
+
+  **The repair is `w ∈ SC`, and it is exactly what the call site has**: `wcnf`'s base is
+  always `reg (u+1) = Z u`, and `(Z ·).isSC` is `rfl`.  `DivDescSC` is `DivDescInT` with that
+  one conjunct added, and it is PROVED, unconditionally.
+
+  **(G2) `MulDescInT` is true exactly as §64 states it** — no side condition — and is PROVED,
+  unconditionally.
+
+WHAT CARRIES THEM.  Three monotonicity steps and one order fact, each measured before it was
+proved (§65.7) and each with its own side condition, none of them decoration:
+
+  §65.1  heads and sums at `inT`: `0 ≤ ·`, `1 ≤ ·` for nonzero, `ofList (b :: t) < a` is
+         `b < a` for additively principal `a`, and HEAD MONOTONICITY — `x ≤ y` forces the
+         head component of `x` below the head component of `y`.  That is what makes the
+         `subAP` case analysis finite.
+  §65.2  `succT` at `inT`: `p < succT p`, and `p < v → succT p ≤ v` (NOTHING lies strictly
+         between `p` and `p ⊕ 1`), `splitFin` rebuilds its argument, and hence **D1**
+         (`dnArg x ≤ x`) and **D2** (`x < y → x ≤ dnArg y`) of `CNVOps` §28 one notch up.
+         `CNV` admits three shapes and 𝔗(M) seven; the four new ones are additively principal
+         atoms and go through the `φ̄` case of §28 unchanged.  **D3 — §29's hard one — is not
+         needed and not restated**: it buys strictness, and every consumer here is non-strict.
+  §65.3  `ω^·` is MONOTONE on 𝔗(M).  `omegaNF_eq_gen` — `ω^x = if M < x then ω̄^x else if
+         isFP 0 x then x else φ̄0(dnArg x)` — holds for EVERY term, with no hypothesis at all,
+         and is where the `isFixP` of `CNVOps` §26 WIDENS: at `CNV` a fixed point of `ω^·` is
+         a `φ̄αβ` with `α ≠ 0`; at `inT` every strongly critical term is one too, and
+         `TM/FS.lean`'s `isFP zero` — the predicate `logOm`'s own `φ̄0·` clause already uses —
+         is exactly that.  Nine cases, `ω̄^·` included, none skipped.
+  §65.4  `logOm` is monotone ON THE ADDITIVELY PRINCIPAL TERMS (**false without that**:
+         `Ω ⊕ Ω ≤ ω^Ω` but `logOm (Ω ⊕ Ω) = Ω ⊕ Ω > Ω`, degree sum 9); `subAP w` is monotone
+         ON `{x : w ≤ x}` (**false without that**: `w = M`, `x = Ω`, `y = M`, degree sum 4);
+         `plus e ·` is monotone with no side condition; and the SC step `w ∈ SC ∧ w ≤ p ⟹
+         w ≤ logOm p` (**false without SC**: `w = p = 1`).
+         TWO THINGS THE MEASUREMENT SETTLED THAT THE RECOMMENDATION DID NOT.  `subAP` needs
+         only `w ≤ x` — the condition on the SMALLER argument — and needs `w ∈ SC` not at all
+         (0 failures over 109³ triples with SC dropped).  So `w ∈ SC` is consumed in exactly
+         ONE place, `lt_logOm_of_sc`, and that is the whole content of the repair.
+  §65.5  (G1) as `DivDescSC`; `not_divDescInT`; and (G2) as `MulDescInT` itself.
+  §65.6  the consumers.  §64.4/§64.5's `wcnf_spec`, `inT_collapse`, `inT_dict` and
+         `collapseInT_of_gaps` take the FALSE `DivDescInT` as a hypothesis and therefore
+         CANNOT BE APPLIED; their proofs are re-run here against `DivDescSC`.  §64.3's
+         `inT_mulL`/`ltM_mulL` and §64.5's `inT_idxOf`/`stepF_inv`/`fold_inv` take only
+         `MulDescInT` and are reused as they stand.  The results are `wcnf_spec_sc`,
+         `inT_collapse_gap3`, `inT_dict_gap3`, `collapseInT_of_gap3` and
+         `hsuccS_supply_of_gap3`: **(G3) `PsiIdxOK` is the only hypothesis left.**
+
+WHAT IS NOT CLAIMED.  (G3) is untouched — §64 measured it FALSE on hand terms (17 of 463 at
+`u = 0`) and true on `dict`'s 1805-term image, and nothing here changes either.
+`DivDescInT` is not repaired, it is REFUTED, so `collapseInT_of_gaps` still carries a false
+hypothesis and is not used.  Nothing here says `dict`'s image is characterised, and nothing
+here is a claim about `BT.isStd`.
+-/
+
+namespace Evidence.Region
+
+/-! ### §65.1 頭部と和 — 𝔗(M) の上の順序の道具
+
+`le` の左が `0`、`1` が最小の非零、加法主要な右辺に対する和の比較、そして**頭部の単調性**。
+最後のものが §65.4 の `subAP` の単調性を支える。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+theorem le_zero_left (t : Term) : le zero t = true := by
+  show ((zero == t) || lt zero t) = true
+  cases hz : ((zero : Term) == t) with
+  | true => rfl
+  | false =>
+    rw [Bool.false_or]
+    refine lt_zero_left ?_
+    intro hc
+    subst hc
+    exact Bool.noConfusion hz
+
+/-- `1` は 𝔗(M) の最小の非零項。 -/
+theorem le_one_inT {v : Term} (hv : inT v = true) (hz : v ≠ zero) : le one v = true := by
+  refine le_of_not_lt3 (inT_le_fragR v hv) (show FragR (one : Term) = true from rfl) ?_
+  cases hlt : lt v one with
+  | false => rfl
+  | true => exact absurd (below_one v hv (fuelOf v one) hlt) hz
+
+/-- 非和・非零に対する `⊕` の比較は頭部だけで決まる。 -/
+theorem lt_ofList_nsum {a : Term} (hap : a.isAP = true) :
+    ∀ (b : Term) (t : List Term), lt (ofList (b :: t)) a = lt b a := by
+  intro b t
+  cases t with
+  | nil => rfl
+  | cons c u =>
+    show lt (add b (ofList (c :: u))) a = _
+    exact lt_add_nsum (ne_zero_of_isAP hap) (nsum_of_isAP hap)
+
+theorem toList_cons_hd {x b : Term} {s : List Term} (h : toList x = b :: s) :
+    x = b ∨ ∃ v, x = add b v := by
+  have hb : (toList x).head? = some b := by rw [h]; rfl
+  cases x with
+  | zero =>
+    exact absurd (show b :: s = ([] : List Term) from h.symm) (List.cons_ne_nil b s)
+  | M => exact Or.inl (Option.some.inj (show some (M : Term) = some b from hb))
+  | omg a => exact Or.inl (Option.some.inj (show some (omg a) = some b from hb))
+  | phi a c => exact Or.inl (Option.some.inj (show some (phi a c) = some b from hb))
+  | psi k a => exact Or.inl (Option.some.inj (show some (psi k a) = some b from hb))
+  | Z a => exact Or.inl (Option.some.inj (show some (Z a) = some b from hb))
+  | add u v =>
+    exact Or.inr ⟨v, by rw [Option.some.inj (show some u = some b from hb)]⟩
+
+/-- 頭部成分は自分自身以下。 -/
+theorem le_hd_self_inT {x b : Term} {s : List Term} (hx : inT x = true)
+    (h : toList x = b :: s) : le b x = true := by
+  rcases toList_cons_hd h with hb | ⟨v, hb⟩
+  · rw [hb]; exact Evidence.WF.le_self _
+  · rw [hb]
+    refine le_of_lt (lt_head_add ?_ v)
+    have := inT_add (by rw [← hb]; exact hx)
+    exact this.1
+
+/-- **頭部の単調性。** `x ≤ y` なら `x` の頭部は `y` の頭部以下。 -/
+theorem hd_mono_inT {x y b c : Term} {s t : List Term} (hx : inT x = true) (hy : inT y = true)
+    (hxl : toList x = b :: s) (hyl : toList y = c :: t) (h : le x y = true) :
+    le b c = true := by
+  have hib : inT b = true := inTL_inT hx b (by rw [hxl]; exact List.Mem.head _)
+  have hic : inT c = true := inTL_inT hy c (by rw [hyl]; exact List.Mem.head _)
+  have hapb : b.isAP = true := inTL_isAP hx b (by rw [hxl]; exact List.Mem.head _)
+  cases hbc : le b c with
+  | true => rfl
+  | false =>
+    exfalso
+    have hcb : lt c b = true := lt_of_not_le_inT hib hic hbc
+    have hyb : lt y b = true := by
+      rw [← inT_ofList_toList y hy, hyl, lt_ofList_nsum hapb]
+      exact hcb
+    have hbx : le b x = true := le_hd_self_inT hx hxl
+    have : lt y x = true := lt_of_lt_of_le3 (inT_le_fragR y hy) (inT_le_fragR b hib)
+      (inT_le_fragR x hx) hyb hbx
+    rcases (Bool.or_eq_true _ _).mp h with he | hl
+    · rw [eq_of_beq he, lt_irrefl] at this; exact Bool.noConfusion this
+    · rw [lt_asymm_inT hx hy hl] at this; exact Bool.noConfusion this
+
+/-- 単調な写像は降順の列を降順に写す。 -/
+theorem descL_map_mono (f : Term → Term) (P : Term → Prop)
+    (hf : ∀ a b, P a → P b → le b a = true → le (f b) (f a) = true) :
+    ∀ (l : List Term), (∀ x ∈ l, P x) → descL l = true → descL (l.map f) = true := by
+  intro l
+  induction l with
+  | nil => intro _ _; rfl
+  | cons a t ih =>
+    intro hp hd
+    cases t with
+    | nil => rfl
+    | cons b u =>
+      obtain ⟨hba, hdt⟩ := descL_cons.mp hd
+      refine descL_cons.mpr ⟨?_, ih (fun x hx => hp x (List.Mem.tail a hx)) hdt⟩
+      exact hf a b (hp a (List.Mem.head _)) (hp b (List.Mem.tail a (List.Mem.head _))) hba
+
+end
+
+/-! ### §65.2 `succT` と `splitFin` — D1 と D2 を 𝔗(M) の上で
+
+`CNVOps` §28 は `CNV` の 3 形 (`0`, `φ̄`, `⊕`) しか見ない。𝔗(M) には `M`, `ω̄^·`, `ψ`, `Z`
+の 4 形が増えるが、そのどれも**加法主要な原子**であって `⊕` の頭部と同じ扱いで済む
+(`le_succT_atom`)。`splitFin_rebuild` は `plus_ofNat` の成分列を直接計算する形に書き換えた
+——`CNV` 版の `plus_ofNat_spec` は `cnv_succT` を経由するが、その必要はない。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- `p < p ⊕ 1`。 -/
+theorem lt_succT_inT : ∀ (p : Term), inT p = true → lt p (succT p) = true := by
+  intro p
+  induction p with
+  | zero => intro _; exact lt_zero_left (by intro hc; exact Term.noConfusion hc)
+  | M => intro _; exact lt_head_add rfl one
+  | omg _ _ => intro _; exact lt_head_add rfl one
+  | phi _ _ _ _ => intro _; exact lt_head_add rfl one
+  | psi _ _ _ _ => intro _; exact lt_head_add rfl one
+  | Z _ _ => intro _; exact lt_head_add rfl one
+  | add s t _ iht =>
+    intro h
+    obtain ⟨_, _, hit, _⟩ := inT_add h
+    have hrec := iht hit
+    have hne : add s t ≠ add s (succT t) := by
+      intro hc
+      injection hc with _ h2
+      rw [← h2, lt_irrefl] at hrec
+      exact Bool.noConfusion hrec
+    show lt (add s t) (add s (succT t)) = true
+    rw [lt_add_add hne, if_pos rfl]
+    exact hrec
+
+theorem toList_ne_nil_inT {d : Term} (hz : d ≠ zero) : toList d ≠ [] := by
+  intro hc
+  exact hz (toList_eq_nil d hc)
+
+/-- 末尾に `1` を継ぎ足すのは `succT`。 -/
+theorem ofList_toList_snoc_inT : ∀ (a : Term), inT a = true →
+    ofList (toList a ++ [one]) = succT a := by
+  intro a
+  induction a with
+  | zero => intro _; rfl
+  | M => intro _; rfl
+  | omg _ _ => intro _; rfl
+  | phi _ _ _ _ => intro _; rfl
+  | psi _ _ _ _ => intro _; rfl
+  | Z _ _ => intro _; rfl
+  | add c d _ ihd =>
+    intro h
+    obtain ⟨_, _, hid, hdesc⟩ := inT_add h
+    have hdz : d ≠ zero := by intro hc; rw [hc] at hdesc; exact Bool.noConfusion hdesc
+    show ofList (c :: (toList d ++ [one])) = add c (succT d)
+    cases hl : toList d with
+    | nil => exact absurd hl (toList_ne_nil_inT hdz)
+    | cons e rest =>
+      show add c (ofList (e :: (rest ++ [one]))) = add c (succT d)
+      rw [show (e :: (rest ++ [one])) = toList d ++ [one] from by rw [hl]; rfl, ihd hid]
+
+/-- 非和の右辺に対しては、和は頭部だけで決まる。 -/
+theorem le_add_of_lt_nsum {a e v : Term} (hv : NSum v = true) (hvz : v ≠ zero)
+    (hlt : lt a v = true) : le (add a e) v = true :=
+  le_of_lt (by rw [lt_add_nsum hvz hv]; exact hlt)
+
+/-- 加法主要な原子に対する `≤ succ`。 -/
+theorem le_succT_atom {a : Term} (hap : a.isAP = true) {v : Term} (hv : inT v = true)
+    (hlt : lt a v = true) : le (add a one) v = true := by
+  cases v with
+  | zero => rw [lt_zero_right] at hlt; exact Bool.noConfusion hlt
+  | M => exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+  | omg _ => exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+  | phi _ _ => exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+  | psi _ _ => exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+  | Z _ => exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+  | add c d =>
+    rw [Evidence.Cert.lt_ap_add hap] at hlt
+    obtain ⟨_, _, hid, hdesc⟩ := inT_add hv
+    by_cases hac : a = c
+    · rw [hac]
+      refine le_add_tail (le_one_inT hid ?_)
+      intro hz; rw [hz] at hdesc; exact Bool.noConfusion hdesc
+    · refine le_of_lt (lt_add_head hac ?_)
+      rcases (Bool.or_eq_true _ _).mp hlt with he | hl
+      · exact absurd (eq_of_beq he) hac
+      · exact hl
+
+/-- **`p` と `p ⊕ 1` のあいだには何も無い** — 𝔗(M) の上で。`CNVOps` §28 が `CNV` で言う
+    `le_succT_of_lt` の 𝔗(M) 版。 -/
+theorem le_succT_of_lt_inT : ∀ (a : Term), inT a = true → ∀ (v : Term), inT v = true →
+    lt a v = true → le (succT a) v = true := by
+  intro a
+  induction a with
+  | zero =>
+    intro _ v hv hlt
+    show le one v = true
+    refine le_one_inT hv ?_
+    intro hc
+    rw [hc, lt_irrefl] at hlt
+    exact Bool.noConfusion hlt
+  | M => intro _ v hv hlt; exact le_succT_atom rfl hv hlt
+  | omg _ _ => intro _ v hv hlt; exact le_succT_atom rfl hv hlt
+  | phi _ _ _ _ => intro _ v hv hlt; exact le_succT_atom rfl hv hlt
+  | psi _ _ _ _ => intro _ v hv hlt; exact le_succT_atom rfl hv hlt
+  | Z _ _ => intro _ v hv hlt; exact le_succT_atom rfl hv hlt
+  | add s t _ iht =>
+    intro ha v hv hlt
+    obtain ⟨_, _, hit, _⟩ := inT_add ha
+    show le (add s (succT t)) v = true
+    cases v with
+    | zero => rw [lt_zero_right] at hlt; exact Bool.noConfusion hlt
+    | M =>
+      rw [lt_add_nsum (by intro hc; exact Term.noConfusion hc) rfl] at hlt
+      exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+    | omg _ =>
+      rw [lt_add_nsum (by intro hc; exact Term.noConfusion hc) rfl] at hlt
+      exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+    | phi _ _ =>
+      rw [lt_add_nsum (by intro hc; exact Term.noConfusion hc) rfl] at hlt
+      exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+    | psi _ _ =>
+      rw [lt_add_nsum (by intro hc; exact Term.noConfusion hc) rfl] at hlt
+      exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+    | Z _ =>
+      rw [lt_add_nsum (by intro hc; exact Term.noConfusion hc) rfl] at hlt
+      exact le_add_of_lt_nsum rfl (by intro hc; exact Term.noConfusion hc) hlt
+    | add c d =>
+      obtain ⟨_, _, hid, _⟩ := inT_add hv
+      by_cases heq : add s t = add c d
+      · rw [heq, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+      · rw [lt_add_add heq] at hlt
+        by_cases hsc : s = c
+        · rw [if_pos hsc] at hlt
+          rw [hsc]
+          exact le_add_tail (iht hit d hid hlt)
+        · rw [if_neg hsc] at hlt
+          exact le_of_lt (lt_add_head hsc hlt)
+
+/-! `plus g (ofNat m)` の成分列 — `1` を `m` 個継ぎ足すだけ。 -/
+
+theorem filter_one_toList_inT {a : Term} (h : inT a = true) :
+    (toList a).filter (fun x => le one x) = toList a :=
+  filter_self_of_all _ _ (fun x hx => Evidence.Cert.le_one_ap (inTL_isAP h x hx))
+
+theorem plus_ofNat_eq_inT {g : Term} (hg : inT g = true) (k : Nat) :
+    plus g (ofNat (k + 1)) = ofList (toList g ++ List.replicate (k + 1) one) := by
+  have hl : toList (ofNat (k + 1)) = one :: List.replicate k one := by
+    rw [toList_ofNat (k + 1)]; rfl
+  rw [plus_eq hl, filter_one_toList_inT hg, toList_ofNat (k + 1)]
+
+theorem toList_plus_ofNat_inT {g : Term} (hg : inT g = true) : ∀ m,
+    toList (plus g (ofNat m)) = toList g ++ List.replicate m one := by
+  intro m
+  cases m with
+  | zero =>
+    show toList (plus g zero) = toList g ++ []
+    exact (List.append_nil _).symm
+  | succ k =>
+    rw [plus_ofNat_eq_inT hg k]
+    refine toList_ofList _ ?_
+    intro x hx
+    rcases List.mem_append.mp hx with h | h
+    · exact inTL_isAP hg x h
+    · rw [List.eq_of_mem_replicate h]; rfl
+
+theorem plus_ofNat_step_inT {g : Term} (hg : inT g = true) (m : Nat) :
+    plus g (ofNat (m + 1)) = succT (plus g (ofNat m)) := by
+  rw [plus_ofNat_eq_inT hg m, ← ofList_toList_snoc_inT _ (inT_plus hg (inT_ofNat m)),
+    toList_plus_ofNat_inT hg m, List.append_assoc, ← List.replicate_succ']
+
+/-- **`splitFin` は引数を組み立て直す** — 𝔗(M) の上で。 -/
+theorem splitFin_rebuild_inT (t : Term) (ht : inT t = true) :
+    plus (splitFin t).1 (ofNat (splitFin t).2) = t := by
+  have hcg : inT (splitFin t).1 = true := inT_splitFin ht
+  have hF1 : ((toList t).reverse.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate (((toList t).reverse.takeWhile (fun x => x == one)).length) one
+      = toList t := by
+    have h := trailing_ones (toList t).reverse
+    rwa [List.reverse_reverse] at h
+  have hAP : ∀ x ∈ ((toList t).reverse.dropWhile (fun x => x == one)).reverse,
+      x.isAP = true := by
+    intro x hx
+    exact inTL_isAP ht x (by rw [← hF1]; exact List.mem_append_left _ hx)
+  have hg : toList (splitFin t).1
+      = ((toList t).reverse.dropWhile (fun x => x == one)).reverse := by
+    rw [splitFin_fst t, toList_ofList _ hAP]
+  have hto : toList (plus (splitFin t).1 (ofNat (splitFin t).2)) = toList t := by
+    rw [toList_plus_ofNat_inT hcg, hg]
+    exact hF1
+  rw [← inT_ofList_toList _ (inT_plus hcg (inT_ofNat _)), hto, inT_ofList_toList t ht]
+
+theorem inT_dnArg {x : Term} (hx : inT x = true) : inT (dnArg x) = true := by
+  have hg : inT (splitFin x).1 = true := inT_splitFin hx
+  cases hs : splitFin x with
+  | mk g m =>
+    rw [hs] at hg
+    rcases dnArg_or hs with h | ⟨_, h⟩
+    · rw [h]; exact hx
+    · rw [h]; exact inT_plus hg (inT_ofNat _)
+
+/-- **D1** — `dnArg` は下げるだけ (𝔗(M) 版)。 -/
+theorem dnArg_le_inT {x : Term} (hx : inT x = true) : le (dnArg x) x = true := by
+  cases hs : splitFin x with
+  | mk g m =>
+    rcases dnArg_or hs with h | ⟨hm, h⟩
+    · rw [h]; exact Evidence.WF.le_self _
+    · have hcg : inT g = true := by
+        have h0 := inT_splitFin hx; rw [hs] at h0; exact h0
+      have hreb : plus g (ofNat m) = x := by
+        have h0 := splitFin_rebuild_inT x hx; rw [hs] at h0; exact h0
+      cases m with
+      | zero => exact absurd hm (by omega)
+      | succ k =>
+        rw [h, ← hreb, show k + 1 - 1 = k from rfl, plus_ofNat_step_inT hcg k]
+        exact le_of_lt (lt_succT_inT _ (inT_plus hcg (inT_ofNat k)))
+
+/-- **D2** — 下げるのは高々 1 (𝔗(M) 版)。 -/
+theorem dnArg_ge_inT {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (h : lt x y = true) : le x (dnArg y) = true := by
+  cases hs : splitFin y with
+  | mk g m =>
+    rcases dnArg_or hs with hd | ⟨hm, hd⟩
+    · rw [hd]; exact le_of_lt h
+    · have hcg : inT g = true := by
+        have h0 := inT_splitFin hy; rw [hs] at h0; exact h0
+      have hreb : plus g (ofNat m) = y := by
+        have h0 := splitFin_rebuild_inT y hy; rw [hs] at h0; exact h0
+      cases m with
+      | zero => exact absurd hm (by omega)
+      | succ k =>
+        have hz : inT (plus g (ofNat k)) = true := inT_plus hcg (inT_ofNat k)
+        have hy' : y = succT (plus g (ofNat k)) := by
+          rw [← hreb, plus_ofNat_step_inT hcg k]
+        rw [hd, show k + 1 - 1 = k from rfl]
+        cases hle : le x (plus g (ofNat k)) with
+        | true => rfl
+        | false =>
+          exfalso
+          have hlt : lt (plus g (ofNat k)) x = true := lt_of_not_le_inT hx hz hle
+          have hs2 : le y x = true := by
+            rw [hy']; exact le_succT_of_lt_inT _ hz x hx hlt
+          have hcon := lt_of_le_of_lt3 (inT_le_fragR y hy) (inT_le_fragR x hx)
+            (inT_le_fragR y hy) hs2 h
+          rw [lt_irrefl] at hcon
+          exact Bool.noConfusion hcon
+
+end
+
+/-! ### §65.3 `ω^·` は 𝔗(M) の上で単調
+
+`CNVOps` §26 は `CNV` の上で `ω^x = if isFixP x then x else φ̄0(dnArg x)` と書く。𝔗(M) では
+枝が 2 つ増える: `M < x` の `ω̄^x` と、**不動点の範囲が広がる**こと。`CNV` では不動点は
+`φ̄αβ` (`α ≠ 0`) だけだが、𝔗(M) では `M`・`ψκα`・`Zα` — 強臨界項はすべて自分自身が
+`ω` の指数である。その述語は `TM/FS.lean` の `isFP zero` がすでにそのもので、`logOm` の
+`φ̄0·` 節が使っているのと同じものである。
+
+D3 (`CNVOps` §29) は使わない。結論が `le` であって `lt` ではないからで、`dnArg` が 2 つの
+引数を潰しても困らない。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+theorem lt_eq_ltF_succ (s t : Term) : lt s t = ltF (2 * (s.deg + t.deg) + 7 + 1) s t := by
+  rw [lt_eq_ltF s t (2 * (s.deg + t.deg) + 7 + 1) (by omega)]
+
+/-- **`ω^·` の 3 つの形**、側条件なし。`isFP zero` が `CNVOps` §26 の `isFixP` の
+    𝔗(M) 版 — 強臨界項もまた `ω^·` の不動点である。 -/
+theorem phiNF_zero_eq_gen (x : Term) :
+    (if x == M then M else phiNF zero x)
+      = (if TM.Term.isFP zero x then x else phi zero (dnArg x)) := by
+  cases x with
+  | zero => exact phiNFsucc_zero_eq zero
+  | omg a => exact phiNFsucc_zero_eq (omg a)
+  | add u v => exact phiNFsucc_zero_eq (add u v)
+  | M =>
+    have h1 : TM.Term.isFP zero M = true := by
+      unfold TM.Term.isFP
+      rw [lt_zero_M]
+      rfl
+    rw [h1]
+    rfl
+  | psi k a =>
+    have hz : lt zero (psi k a) = true := lt_zero_left (by intro hc; exact Term.noConfusion hc)
+    have h1 : TM.Term.isFP zero (psi k a) = true := by
+      unfold TM.Term.isFP
+      rw [hz]
+      rfl
+    rw [h1]
+    show phiNF zero (psi k a) = psi k a
+    unfold phiNF
+    rw [hz]
+    rfl
+  | Z a =>
+    have hz : lt zero (Z a) = true := lt_zero_left (by intro hc; exact Term.noConfusion hc)
+    have h1 : TM.Term.isFP zero (Z a) = true := by
+      unfold TM.Term.isFP
+      rw [hz]
+      rfl
+    rw [h1]
+    show phiNF zero (Z a) = Z a
+    unfold phiNF
+    rw [hz]
+    rfl
+  | phi c d =>
+    have h1 : TM.Term.isFP zero (phi c d) = lt zero c := by
+      unfold TM.Term.isFP; rfl
+    rw [h1]
+    show (if lt zero c then phi c d else phiNFsucc zero (phi c d))
+        = (if lt zero c then phi c d else phi zero (dnArg (phi c d)))
+    by_cases hc : lt zero c = true
+    · rw [if_pos hc, if_pos hc]
+    · rw [if_neg hc, if_neg hc]
+      exact phiNFsucc_zero_eq (phi c d)
+
+theorem omegaNF_eq_gen (x : Term) :
+    omegaNF x = if lt M x then omg x
+                else if TM.Term.isFP zero x then x else phi zero (dnArg x) := by
+  show (if lt M x then omg x else if x == M then M else phiNF zero x) = _
+  rw [phiNF_zero_eq_gen x]
+
+/-! `ω̄^·` の枝に落ちるときの比較 (2.3.2, 2.3.3, 2.3.12)。 -/
+
+theorem lt_phi_omg (a b y : Term) : lt (phi a b) (omg y) = true := by
+  rw [lt_eq_ltF_succ]; exact ltF_succ_phi_omg _ _ _ _
+
+theorem lt_isFP_omg {x y : Term} (hfix : TM.Term.isFP zero x = true) :
+    lt x (omg y) = true := by
+  cases x with
+  | zero => exact Bool.noConfusion hfix
+  | omg _ => exact Bool.noConfusion hfix
+  | add _ _ => exact Bool.noConfusion hfix
+  | M => rw [lt_eq_ltF_succ]; exact ltF_succ_M_omg _ _
+  | psi k a => rw [lt_eq_ltF_succ]; exact ltF_succ_psi_omg _ _ _ _
+  | Z a => rw [lt_eq_ltF_succ]; exact ltF_succ_Z_omg _ _ _
+  | phi a b => exact lt_phi_omg a b y
+
+theorem lt_omg_omg {x y : Term} (h : lt x y = true) : lt (omg x) (omg y) = true := by
+  have hne : omg x ≠ omg y := by
+    intro hc
+    injection hc with h1
+    rw [h1, lt_irrefl] at h
+    exact Bool.noConfusion h
+  rw [lt_eq_ltF_succ, ltF_succ_omg_omg _ hne,
+    ← lt_eq_ltF x y _ (by show x.deg + y.deg ≤ 2 * ((1 + x.deg) + (1 + y.deg)) + 7; omega)]
+  exact h
+
+/-! 2.3.4 と 2.3.5 — 強臨界項と `φ̄` のあいだ。 -/
+
+theorem lt_psi_phi_of_le {k a c w : Term} (h : le (psi k a) w = true) :
+    lt (psi k a) (phi c w) = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_psi_phi,
+    show ltF (2 * ((psi k a).deg + (phi c w).deg) + 7) (psi k a) w = lt (psi k a) w from
+      (lt_eq_ltF (psi k a) w _ (by
+        show (1 + k.deg + a.deg) + w.deg
+          ≤ 2 * ((1 + k.deg + a.deg) + (1 + c.deg + w.deg)) + 7
+        omega)).symm]
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [he, Bool.or_true, Bool.true_or, Bool.true_or]
+  · rw [hl, Bool.or_true]
+
+theorem lt_Z_phi_of_le {e c w : Term} (h : le (Z e) w = true) :
+    lt (Z e) (phi c w) = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_Z_phi,
+    show ltF (2 * ((Z e).deg + (phi c w).deg) + 7) (Z e) w = lt (Z e) w from
+      (lt_eq_ltF (Z e) w _ (by
+        show (1 + e.deg) + w.deg ≤ 2 * ((1 + e.deg) + (1 + c.deg + w.deg)) + 7
+        omega)).symm]
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [he, Bool.or_true, Bool.true_or, Bool.true_or]
+  · rw [hl, Bool.or_true]
+
+theorem lt_phi_psi_of {a b k c : Term} (h1 : lt a (psi k c) = true)
+    (h2 : lt b (psi k c) = true) : lt (phi a b) (psi k c) = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_phi_psi,
+    show ltF (2 * ((phi a b).deg + (psi k c).deg) + 7) a (psi k c) = lt a (psi k c) from
+      (lt_eq_ltF a (psi k c) _ (by
+        show a.deg + (1 + k.deg + c.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + k.deg + c.deg)) + 7
+        omega)).symm,
+    show ltF (2 * ((phi a b).deg + (psi k c).deg) + 7) b (psi k c) = lt b (psi k c) from
+      (lt_eq_ltF b (psi k c) _ (by
+        show b.deg + (1 + k.deg + c.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + k.deg + c.deg)) + 7
+        omega)).symm, h1, h2]
+  rfl
+
+theorem lt_phi_Z_of {a b d : Term} (h1 : lt a (Z d) = true)
+    (h2 : lt b (Z d) = true) : lt (phi a b) (Z d) = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_phi_Z,
+    show ltF (2 * ((phi a b).deg + (Z d).deg) + 7) a (Z d) = lt a (Z d) from
+      (lt_eq_ltF a (Z d) _ (by
+        show a.deg + (1 + d.deg) ≤ 2 * ((1 + a.deg + b.deg) + (1 + d.deg)) + 7
+        omega)).symm,
+    show ltF (2 * ((phi a b).deg + (Z d).deg) + 7) b (Z d) = lt b (Z d) from
+      (lt_eq_ltF b (Z d) _ (by
+        show b.deg + (1 + d.deg) ≤ 2 * ((1 + a.deg + b.deg) + (1 + d.deg)) + 7
+        omega)).symm, h1, h2]
+  rfl
+
+/-- 不動点は `φ̄0w` の下 — `x ≤ w` があれば。`x = M` だけは除く (`M < φ̄0w` は偽)。 -/
+theorem lt_isFP_phi_zero {x w : Term} (hfix : TM.Term.isFP zero x = true) (hne : x ≠ M)
+    (h : le x w = true) : lt x (phi zero w) = true := by
+  cases x with
+  | zero => exact Bool.noConfusion hfix
+  | omg _ => exact Bool.noConfusion hfix
+  | add _ _ => exact Bool.noConfusion hfix
+  | M => exact absurd rfl hne
+  | psi k a => exact lt_psi_phi_of_le h
+  | Z e => exact lt_Z_phi_of_le h
+  | phi c d =>
+    have hc : lt zero c = true := by
+      have h1 : TM.Term.isFP zero (phi c d) = lt zero c := by unfold TM.Term.isFP; rfl
+      rw [h1] at hfix; exact hfix
+    have hzc : ¬ (c = zero) := by
+      intro hcc
+      rw [hcc, lt_irrefl] at hc
+      exact Bool.noConfusion hc
+    have hnn : phi c d ≠ phi zero w := by
+      intro hcc
+      injection hcc with h1 _
+      exact hzc h1
+    rw [lt_phi_phi hnn, if_neg hzc,
+      if_neg (by rw [lt_zero_right]; exact Bool.noConfusion)]
+    exact h
+
+/-- `φ̄0z` は不動点 `y` の下 — `z < y` があれば。 -/
+theorem lt_phi_zero_isFP {z y : Term} (hfix : TM.Term.isFP zero y = true)
+    (h : lt z y = true) : lt (phi zero z) y = true := by
+  cases y with
+  | zero => exact Bool.noConfusion hfix
+  | omg _ => exact Bool.noConfusion hfix
+  | add _ _ => exact Bool.noConfusion hfix
+  | M => exact lt_phi_M zero z
+  | psi k a =>
+    exact lt_phi_psi_of (lt_zero_left (by intro hc; exact Term.noConfusion hc)) h
+  | Z e =>
+    exact lt_phi_Z_of (lt_zero_left (by intro hc; exact Term.noConfusion hc)) h
+  | phi c d =>
+    have hc : lt zero c = true := by
+      have h1 : TM.Term.isFP zero (phi c d) = lt zero c := by unfold TM.Term.isFP; rfl
+      rw [h1] at hfix; exact hfix
+    have hzc : ¬ ((zero : Term) = c) := by
+      intro hcc
+      rw [← hcc, lt_irrefl] at hc
+      exact Bool.noConfusion hc
+    have hnn : phi zero z ≠ phi c d := by
+      intro hcc
+      injection hcc with h1 _
+      exact hzc h1
+    rw [lt_phi_phi hnn, if_neg hzc, if_pos hc]
+    exact h
+
+theorem le_phi_zero_arg {a b : Term} (h : le a b = true) :
+    le (phi zero a) (phi zero b) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [eq_of_beq he]; exact Evidence.WF.le_self _
+  · exact le_of_lt (lt_phi_arg hl)
+
+/-- **`ω^·` は 𝔗(M) の上で単調** (非狭義)。D1 と D2 だけを使い、D3 は使わない。 -/
+theorem le_omegaNF_of_lt_inT {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (h : lt x y = true) : le (omegaNF x) (omegaNF y) = true := by
+  rw [omegaNF_eq_gen x, omegaNF_eq_gen y]
+  by_cases hMy : lt M y = true
+  · rw [if_pos hMy]
+    by_cases hMx : lt M x = true
+    · rw [if_pos hMx]; exact le_of_lt (lt_omg_omg h)
+    · rw [if_neg hMx]
+      by_cases hfx : TM.Term.isFP zero x = true
+      · rw [if_pos hfx]; exact le_of_lt (lt_isFP_omg hfx)
+      · rw [if_neg hfx]; exact le_of_lt (lt_phi_omg _ _ _)
+  · rw [if_neg hMy]
+    have hMx : ¬ (lt M x = true) := by
+      intro hc
+      exact hMy (lt_trans_inT inT_M hx hy hc h)
+    rw [if_neg hMx]
+    have hxM : x ≠ M := by
+      intro hc
+      rw [hc] at h
+      exact hMy h
+    by_cases hfx : TM.Term.isFP zero x = true
+    · rw [if_pos hfx]
+      by_cases hfy : TM.Term.isFP zero y = true
+      · rw [if_pos hfy]; exact le_of_lt h
+      · rw [if_neg hfy]
+        exact le_of_lt (lt_isFP_phi_zero hfx hxM (dnArg_ge_inT hx hy h))
+    · rw [if_neg hfx]
+      by_cases hfy : TM.Term.isFP zero y = true
+      · rw [if_pos hfy]
+        refine le_of_lt (lt_phi_zero_isFP hfy ?_)
+        exact lt_of_le_of_lt3 (inT_le_fragR _ (inT_dnArg hx)) (inT_le_fragR x hx)
+          (inT_le_fragR y hy) (dnArg_le_inT hx) h
+      · rw [if_neg hfy]
+        refine le_phi_zero_arg ?_
+        exact le_trans_inT (inT_dnArg hx) hx (inT_dnArg hy)
+          (dnArg_le_inT hx) (dnArg_ge_inT hx hy h)
+
+theorem omegaNF_mono_inT {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (h : le x y = true) : le (omegaNF x) (omegaNF y) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [eq_of_beq he]; exact Evidence.WF.le_self _
+  · exact le_omegaNF_of_lt_inT hx hy hl
+
+end
+
+/-! ### §65.4 `logOm`・`subAP`・`plus` の単調性、そして SC の一段
+
+3 つとも側条件つきで、どれも側条件を落とすと偽 (§65.7 に反例を凍結)。
+
+  `logOm`  加法主要な項の上でのみ単調。`Ω ⊕ Ω ≤ ω^Ω` だが `logOm (Ω ⊕ Ω) = Ω ⊕ Ω > Ω`。
+  `subAP`  `w ≤ x` と `w ≤ y` の上でのみ単調。`w = M`, `x = Ω`, `y = M` が最小反例。
+  `plus`   側条件なし。
+  SC の一段  `w ∈ SC` かつ `w ≤ p` (`p` は加法主要) なら `w ≤ logOm p`。**これが (G1) の
+           側条件が `w ∈ SC` でなければならない理由**で、`w = p = 1` で破れる。 -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Evidence.WF
+open Trans.Dict (logOm subAP divAP mulL)
+
+theorem plus_one_eq_succT_inT {a : Term} (ha : inT a = true) : plus a one = succT a := by
+  rw [plus_eq (show toList (one : Term) = [one] from rfl), filter_one_toList_inT ha]
+  exact ofList_toList_snoc_inT a ha
+
+theorem inT_succT_inT {a : Term} (ha : inT a = true) : inT (succT a) = true := by
+  rw [← plus_one_eq_succT_inT ha]
+  exact inT_plus ha inT_one
+
+/-! 2.3.4/2.3.5 の逆読み — `φ̄` と強臨界項のあいだの比較から引数の比較を取り出す。 -/
+
+theorem lt_arg_of_phi_lt_psi {a b k c : Term} (h : lt (phi a b) (psi k c) = true) :
+    lt b (psi k c) = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_phi_psi,
+    show ltF (2 * ((phi a b).deg + (psi k c).deg) + 7) b (psi k c) = lt b (psi k c) from
+      (lt_eq_ltF b (psi k c) _ (by
+        show b.deg + (1 + k.deg + c.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + k.deg + c.deg)) + 7
+        omega)).symm] at h
+  exact ((Bool.and_eq_true _ _).mp h).2
+
+theorem lt_arg_of_phi_lt_Z {a b d : Term} (h : lt (phi a b) (Z d) = true) :
+    lt b (Z d) = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_phi_Z,
+    show ltF (2 * ((phi a b).deg + (Z d).deg) + 7) b (Z d) = lt b (Z d) from
+      (lt_eq_ltF b (Z d) _ (by
+        show b.deg + (1 + d.deg) ≤ 2 * ((1 + a.deg + b.deg) + (1 + d.deg)) + 7
+        omega)).symm] at h
+  exact ((Bool.and_eq_true _ _).mp h).2
+
+theorem le_of_psi_lt_phi_zero {k a e : Term} (h : lt (psi k a) (phi zero e) = true) :
+    le (psi k a) e = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_psi_phi,
+    show ltF (2 * ((psi k a).deg + (phi zero e).deg) + 7) (psi k a) e = lt (psi k a) e from
+      (lt_eq_ltF (psi k a) e _ (by
+        show (1 + k.deg + a.deg) + e.deg
+          ≤ 2 * ((1 + k.deg + a.deg) + (1 + (zero : Term).deg + e.deg)) + 7
+        omega)).symm,
+    show ((psi k a) == (zero : Term)) = false from rfl, ltF_right_zero,
+    Bool.false_or, Bool.or_false] at h
+  exact h
+
+theorem le_of_Z_lt_phi_zero {d e : Term} (h : lt (Z d) (phi zero e) = true) :
+    le (Z d) e = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_Z_phi,
+    show ltF (2 * ((Z d).deg + (phi zero e).deg) + 7) (Z d) e = lt (Z d) e from
+      (lt_eq_ltF (Z d) e _ (by
+        show (1 + d.deg) + e.deg
+          ≤ 2 * ((1 + d.deg) + (1 + (zero : Term).deg + e.deg)) + 7
+        omega)).symm,
+    show ((Z d) == (zero : Term)) = false from rfl, ltF_right_zero,
+    Bool.false_or, Bool.or_false] at h
+  exact h
+
+theorem le_arg_of_le_pow {b d : Term} (h : le (phi zero b) (phi zero d) = true) :
+    le b d = true := by
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · have hq := eq_of_beq he
+    injection hq with _ h2
+    rw [h2]
+    exact Evidence.WF.le_self _
+  · rw [lt_pow] at hl
+    exact le_of_lt hl
+
+/-! `logOm (φ̄0b)` は `b` か `b ⊕ 1`。どちらでも `b < y` から `logOm (φ̄0b) ≤ y` が出る。 -/
+
+theorem le_shift_of_lt {b y : Term} (hb : inT b = true) (hy : inT y = true)
+    (h : lt b y = true) : le (logOm (phi zero b)) y = true := by
+  show le (if TM.Term.phiShifted zero b then plus b one else b) y = true
+  by_cases hs : TM.Term.phiShifted zero b = true
+  · rw [if_pos hs, plus_one_eq_succT_inT hb]
+    exact le_succT_of_lt_inT b hb y hy h
+  · rw [if_neg hs]
+    exact le_of_lt h
+
+theorem le_logOm_phi_zero_of_le {x e : Term} (hx : inT x = true) (he : inT e = true)
+    (h : le x e = true) : le x (logOm (phi zero e)) = true := by
+  show le x (if TM.Term.phiShifted zero e then plus e one else e) = true
+  by_cases hs : TM.Term.phiShifted zero e = true
+  · rw [if_pos hs]
+    refine le_trans_inT hx he (inT_plus he inT_one) h ?_
+    rw [plus_one_eq_succT_inT he]
+    exact le_of_lt (lt_succT_inT e he)
+  · rw [if_neg hs]
+    exact h
+
+theorem le_shift_shift {b d : Term} (hb : inT b = true) (hd : inT d = true)
+    (h : le b d = true) :
+    le (logOm (phi zero b)) (logOm (phi zero d)) = true := by
+  show le (if TM.Term.phiShifted zero b then plus b one else b)
+         (if TM.Term.phiShifted zero d then plus d one else d) = true
+  by_cases hsb : TM.Term.phiShifted zero b = true
+  · rw [if_pos hsb, plus_one_eq_succT_inT hb]
+    by_cases hsd : TM.Term.phiShifted zero d = true
+    · rw [if_pos hsd, plus_one_eq_succT_inT hd]
+      rcases (Bool.or_eq_true _ _).mp h with he | hl
+      · rw [eq_of_beq he]; exact Evidence.WF.le_self _
+      · exact le_trans_inT (inT_succT_inT hb) hd (inT_succT_inT hd)
+          (le_succT_of_lt_inT b hb d hd hl) (le_of_lt (lt_succT_inT d hd))
+    · rw [if_neg hsd]
+      have hne : b ≠ d := by
+        intro hc
+        rw [hc] at hsb
+        exact hsd hsb
+      exact le_succT_of_lt_inT b hb d hd (lt_of_le_of_ne h hne)
+  · rw [if_neg hsb]
+    by_cases hsd : TM.Term.phiShifted zero d = true
+    · rw [if_pos hsd]
+      refine le_trans_inT hb hd (inT_plus hd inT_one) h ?_
+      rw [plus_one_eq_succT_inT hd]
+      exact le_of_lt (lt_succT_inT d hd)
+    · rw [if_neg hsd]
+      exact h
+
+
+/-- `logOm` は `φ̄0·` 以外の形では恒等。 -/
+theorem logOm_eq_self_of_ne : ∀ (x : Term), (∀ b, x ≠ phi zero b) → logOm x = x := by
+  intro x hne
+  cases x with
+  | zero => rfl
+  | M => rfl
+  | omg _ => rfl
+  | psi _ _ => rfl
+  | Z _ => rfl
+  | add _ _ => rfl
+  | phi c d =>
+    cases c with
+    | zero => exact absurd rfl (hne d)
+    | M => rfl
+    | omg _ => rfl
+    | phi _ _ => rfl
+    | psi _ _ => rfl
+    | Z _ => rfl
+    | add _ _ => rfl
+
+/-- `c ≠ 0` の `φ̄cd` が `φ̄0e` の下なら `φ̄cd ≤ e` (2.3.13(iii))。 -/
+theorem le_of_phi_lt_phi_zero {c d e : Term} (hc : ¬ (c = zero))
+    (hlt : lt (phi c d) (phi zero e) = true) : le (phi c d) e = true := by
+  have hne : phi c d ≠ phi zero e := by
+    intro hcc
+    injection hcc with h1 _
+    exact hc h1
+  rw [lt_phi_phi hne, if_neg hc,
+    if_neg (by rw [lt_zero_right]; exact Bool.noConfusion)] at hlt
+  exact hlt
+
+/-- `φ̄0b < φ̄ce` (`c ≠ 0`) なら `b < φ̄ce` (2.3.13(i))。 -/
+theorem lt_arg_of_pow_lt_phi {b c e : Term} (hc : ¬ ((zero : Term) = c))
+    (hlt : lt (phi zero b) (phi c e) = true) : lt b (phi c e) = true := by
+  have hne : phi zero b ≠ phi c e := by
+    intro hcc
+    injection hcc with h1 _
+    exact hc h1
+  rw [lt_phi_phi hne, if_neg hc, if_pos (lt_zero_left (fun hcc => hc hcc.symm))] at hlt
+  exact hlt
+
+/-- `logOm x = x` の側の単調性。`hkey` は「`x < φ̄0e` なら `x ≤ e`」で、`x` の形ごとに供給する。 -/
+theorem logOm_mono_self {x y : Term} (hlx : logOm x = x) (hxne : ∀ e, x ≠ phi zero e)
+    (hkey : ∀ e, lt x (phi zero e) = true → le x e = true)
+    (hx : inT x = true) (hy : inT y = true) (hya : y.isAP = true) (h : le x y = true) :
+    le (logOm x) (logOm y) = true := by
+  rw [hlx]
+  cases y with
+  | zero => exact Bool.noConfusion hya
+  | add _ _ => exact Bool.noConfusion hya
+  | M => exact h
+  | omg _ => exact h
+  | psi _ _ => exact h
+  | Z _ => exact h
+  | phi c e =>
+    cases c with
+    | zero =>
+      refine le_logOm_phi_zero_of_le hx (inT_phi4 hy).2.1 ?_
+      exact hkey e (lt_of_le_of_ne h (hxne e))
+    | M => exact h
+    | omg _ => exact h
+    | phi _ _ => exact h
+    | psi _ _ => exact h
+    | Z _ => exact h
+    | add _ _ => exact h
+
+/-- `x = φ̄0b` の側の単調性。 -/
+theorem logOm_mono_pow {b y : Term} (hx : inT (phi zero b) = true) (hy : inT y = true)
+    (hya : y.isAP = true) (h : le (phi zero b) y = true) :
+    le (logOm (phi zero b)) (logOm y) = true := by
+  have hib : inT b = true := (inT_phi4 hx).2.1
+  have hbM : lt b M = true := (inT_phi4 hx).2.2.2
+  cases y with
+  | zero => exact Bool.noConfusion hya
+  | add _ _ => exact Bool.noConfusion hya
+  | M => exact le_shift_of_lt hib inT_M hbM
+  | omg a =>
+    refine le_shift_of_lt hib hy ?_
+    exact lt_trans_inT hib inT_M hy hbM (by rw [lt_eq_ltF_succ]; exact ltF_succ_M_omg _ _)
+  | psi k a =>
+    refine le_shift_of_lt hib hy ?_
+    exact lt_arg_of_phi_lt_psi (lt_of_le_of_ne h (by intro hc; exact Term.noConfusion hc))
+  | Z d =>
+    refine le_shift_of_lt hib hy ?_
+    exact lt_arg_of_phi_lt_Z (lt_of_le_of_ne h (by intro hc; exact Term.noConfusion hc))
+  | phi c e =>
+    cases c with
+    | zero => exact le_shift_shift hib (inT_phi4 hy).2.1 (le_arg_of_le_pow h)
+    | M =>
+      refine le_shift_of_lt hib hy (lt_arg_of_pow_lt_phi ?_ ?_)
+      · intro hc; exact Term.noConfusion hc
+      · exact lt_of_le_of_ne h (by intro hc; injection hc with h1 _; exact Term.noConfusion h1)
+    | omg _ =>
+      refine le_shift_of_lt hib hy (lt_arg_of_pow_lt_phi ?_ ?_)
+      · intro hc; exact Term.noConfusion hc
+      · exact lt_of_le_of_ne h (by intro hc; injection hc with h1 _; exact Term.noConfusion h1)
+    | phi _ _ =>
+      refine le_shift_of_lt hib hy (lt_arg_of_pow_lt_phi ?_ ?_)
+      · intro hc; exact Term.noConfusion hc
+      · exact lt_of_le_of_ne h (by intro hc; injection hc with h1 _; exact Term.noConfusion h1)
+    | psi _ _ =>
+      refine le_shift_of_lt hib hy (lt_arg_of_pow_lt_phi ?_ ?_)
+      · intro hc; exact Term.noConfusion hc
+      · exact lt_of_le_of_ne h (by intro hc; injection hc with h1 _; exact Term.noConfusion h1)
+    | Z _ =>
+      refine le_shift_of_lt hib hy (lt_arg_of_pow_lt_phi ?_ ?_)
+      · intro hc; exact Term.noConfusion hc
+      · exact lt_of_le_of_ne h (by intro hc; injection hc with h1 _; exact Term.noConfusion h1)
+    | add _ _ =>
+      refine le_shift_of_lt hib hy (lt_arg_of_pow_lt_phi ?_ ?_)
+      · intro hc; exact Term.noConfusion hc
+      · exact lt_of_le_of_ne h (by intro hc; injection hc with h1 _; exact Term.noConfusion h1)
+
+/-- **`logOm` は加法主要な項の上で単調。** 加法主要を落とすと偽 (§65.7)。 -/
+theorem logOm_mono_inT {x y : Term} (hxa : x.isAP = true) (hya : y.isAP = true)
+    (hx : inT x = true) (hy : inT y = true) (h : le x y = true) :
+    le (logOm x) (logOm y) = true := by
+  cases x with
+  | zero => exact Bool.noConfusion hxa
+  | add _ _ => exact Bool.noConfusion hxa
+  | M =>
+    refine logOm_mono_self rfl (fun e hc => Term.noConfusion hc) (fun e hlt => ?_) hx hy hya h
+    exact absurd hlt (by
+      rw [show lt (M : Term) (phi zero e) = false from by
+        rw [lt_eq_ltF_succ]; exact ltF_succ_M_phi _ _ _]
+      exact Bool.noConfusion)
+  | omg a =>
+    refine logOm_mono_self rfl (fun e hc => Term.noConfusion hc) (fun e hlt => ?_) hx hy hya h
+    exact absurd hlt (by
+      rw [show lt (omg a) (phi zero e) = false from by
+        rw [lt_eq_ltF_succ]; exact ltF_succ_omg_phi _ _ _ _]
+      exact Bool.noConfusion)
+  | psi k a =>
+    exact logOm_mono_self rfl (fun e hc => Term.noConfusion hc)
+      (fun _ hlt => le_of_psi_lt_phi_zero hlt) hx hy hya h
+  | Z d =>
+    exact logOm_mono_self rfl (fun e hc => Term.noConfusion hc)
+      (fun _ hlt => le_of_Z_lt_phi_zero hlt) hx hy hya h
+  | phi c d =>
+    cases c with
+    | zero => exact logOm_mono_pow hx hy hya h
+    | M =>
+      exact logOm_mono_self rfl (fun e hc => by injection hc with h1 _; exact Term.noConfusion h1)
+        (fun _ hlt => le_of_phi_lt_phi_zero (fun hc => Term.noConfusion hc) hlt) hx hy hya h
+    | omg _ =>
+      exact logOm_mono_self rfl (fun e hc => by injection hc with h1 _; exact Term.noConfusion h1)
+        (fun _ hlt => le_of_phi_lt_phi_zero (fun hc => Term.noConfusion hc) hlt) hx hy hya h
+    | phi _ _ =>
+      exact logOm_mono_self rfl (fun e hc => by injection hc with h1 _; exact Term.noConfusion h1)
+        (fun _ hlt => le_of_phi_lt_phi_zero (fun hc => Term.noConfusion hc) hlt) hx hy hya h
+    | psi _ _ =>
+      exact logOm_mono_self rfl (fun e hc => by injection hc with h1 _; exact Term.noConfusion h1)
+        (fun _ hlt => le_of_phi_lt_phi_zero (fun hc => Term.noConfusion hc) hlt) hx hy hya h
+    | Z _ =>
+      exact logOm_mono_self rfl (fun e hc => by injection hc with h1 _; exact Term.noConfusion h1)
+        (fun _ hlt => le_of_phi_lt_phi_zero (fun hc => Term.noConfusion hc) hlt) hx hy hya h
+    | add _ _ =>
+      exact logOm_mono_self rfl (fun e hc => by injection hc with h1 _; exact Term.noConfusion h1)
+        (fun _ hlt => le_of_phi_lt_phi_zero (fun hc => Term.noConfusion hc) hlt) hx hy hya h
+
+/-! `subAP w` — 頭部がちょうど `w` なら落とし、そうでなければ何もしない。 -/
+
+theorem subAP_nil (w x : Term) (h : toList x = []) : subAP w x = zero := by
+  show (match toList x with
+        | [] => zero
+        | p :: rest => if p == w then ofList rest else x) = _
+  rw [h]
+
+theorem subAP_cons (w x b : Term) (s : List Term) (h : toList x = b :: s) :
+    subAP w x = if b == w then ofList s else x := by
+  show (match toList x with
+        | [] => zero
+        | p :: rest => if p == w then ofList rest else x) = _
+  rw [h]
+
+theorem le_tail_of_le_add {u A B : Term} (h : le (add u A) (add u B) = true) :
+    le A B = true := by
+  by_cases heq : add u A = add u B
+  · injection heq with _ h2
+    rw [h2]
+    exact Evidence.WF.le_self _
+  · rcases (Bool.or_eq_true _ _).mp h with he | hl
+    · exact absurd (eq_of_beq he) heq
+    · rw [lt_add_add heq, if_pos rfl] at hl
+      exact le_of_lt hl
+
+/-- **`subAP w` は `{x : w ≤ x}` の上で単調。** 側条件を落とすと偽 (§65.7)。 -/
+theorem subAP_mono_inT {w x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (hwx : lt x w = false) (h : le x y = true) :
+    le (subAP w x) (subAP w y) = true := by
+  obtain ⟨hcx, hdx⟩ := inT_toList x hx
+  cases hxl : toList x with
+  | nil => rw [subAP_nil w x hxl]; exact le_zero_left _
+  | cons b s =>
+    cases hyl : toList y with
+    | nil =>
+      exfalso
+      have hyz : y = zero := toList_eq_nil y hyl
+      rw [hyz] at h
+      have hz : x = zero := by
+        rcases (Bool.or_eq_true _ _).mp h with he | hl
+        · exact eq_of_beq he
+        · rw [lt_zero_right] at hl; exact Bool.noConfusion hl
+      rw [hz] at hxl
+      exact absurd (show b :: s = ([] : List Term) from hxl.symm) (List.cons_ne_nil b s)
+    | cons c t =>
+      rw [subAP_cons w x b s hxl, subAP_cons w y c t hyl]
+      have hbc : le b c = true := hd_mono_inT hx hy hxl hyl h
+      have hapb : b.isAP = true := inTL_isAP hx b (by rw [hxl]; exact List.Mem.head _)
+      have hapc : c.isAP = true := inTL_isAP hy c (by rw [hyl]; exact List.Mem.head _)
+      have hxe : x = ofList (b :: s) := by rw [← hxl, inT_ofList_toList x hx]
+      have hye : y = ofList (c :: t) := by rw [← hyl, inT_ofList_toList y hy]
+      rw [hxl] at hcx hdx
+      obtain ⟨_, hcs⟩ := inTL_cons.mp hcx
+      have hds := descL_tail hdx
+      have his : inT (ofList s) = true := inT_ofList s hcs hds
+      by_cases hcw : (c == w) = true
+      · have hcw' : c = w := eq_of_beq hcw
+        rw [if_pos hcw]
+        by_cases hbw : (b == w) = true
+        · rw [if_pos hbw]
+          have hbw' : b = w := eq_of_beq hbw
+          cases hs : s with
+          | nil => exact le_zero_left _
+          | cons a s' =>
+            cases ht : t with
+            | nil =>
+              exfalso
+              have hy' : y = w := by rw [hye, ht, hcw']; rfl
+              have hx' : x = add w (ofList (a :: s')) := by rw [hxe, hs, hbw']; rfl
+              have hlt : lt y x = true := by
+                rw [hy', hx']
+                exact lt_head_add (by rw [← hbw']; exact hapb) _
+              rcases (Bool.or_eq_true _ _).mp h with he | hl
+              · rw [eq_of_beq he, lt_irrefl] at hlt; exact Bool.noConfusion hlt
+              · rw [lt_asymm_inT hx hy hl] at hlt; exact Bool.noConfusion hlt
+            | cons d t' =>
+              refine le_tail_of_le_add (u := w) ?_
+              have hx' : x = add w (ofList (a :: s')) := by rw [hxe, hs, hbw']; rfl
+              have hy' : y = add w (ofList (d :: t')) := by rw [hye, ht, hcw']; rfl
+              rw [← hx', ← hy']
+              exact h
+        · exfalso
+          have hbne : b ≠ w := fun hc => hbw (beq_of_eq hc)
+          have hbltw : lt b w = true := by
+            rw [← hcw']
+            exact lt_of_le_of_ne hbc (by rw [hcw']; exact hbne)
+          have hlt : lt x w = true := by
+            rw [hxe, lt_ofList_nsum (by rw [← hcw']; exact hapc)]
+            exact hbltw
+          rw [hwx] at hlt
+          exact Bool.noConfusion hlt
+      · rw [if_neg hcw]
+        by_cases hbw : (b == w) = true
+        · rw [if_pos hbw]
+          have hbw' : b = w := eq_of_beq hbw
+          have hwc : lt w c = true := by
+            rw [← hbw']
+            exact lt_of_le_of_ne hbc (fun hc => hcw (beq_of_eq (hc.symm.trans hbw')))
+          have hlsc : lt (ofList s) c = true := by
+            cases hs : s with
+            | nil => exact lt_zero_left (ne_zero_of_isAP hapc)
+            | cons a s' =>
+              rw [lt_ofList_nsum hapc]
+              have haw : le a b = true := by
+                rw [hs] at hdx
+                exact (descL_cons.mp hdx).1
+              have hia : inT a = true :=
+                inTL_inT hx a (by rw [hxl, hs]; exact List.Mem.tail b (List.Mem.head _))
+              exact lt_of_le_of_lt3 (inT_le_fragR a hia)
+                (inT_le_fragR b (inTL_inT hx b (by rw [hxl]; exact List.Mem.head _)))
+                (inT_le_fragR c (inTL_inT hy c (by rw [hyl]; exact List.Mem.head _)))
+                haw (by rw [hbw']; exact hwc)
+          refine le_of_lt (lt_of_lt_of_le3 (inT_le_fragR _ his)
+            (inT_le_fragR c (inTL_inT hy c (by rw [hyl]; exact List.Mem.head _)))
+            (inT_le_fragR y hy) hlsc (le_hd_self_inT hy hyl))
+        · rw [if_neg hbw]
+          exact h
+
+/-! `plus e ·` の単調性。`e` の成分列の頭で場合分けし、尾に帰納する。 -/
+
+theorem ofList_cons_ne_nil {a : Term} {L : List Term} (h : L ≠ []) :
+    ofList (a :: L) = add a (ofList L) := by
+  cases L with
+  | nil => exact absurd rfl h
+  | cons b t => rfl
+
+theorem append_toList_ne_nil {L : List Term} {x x1 : Term} {X' : List Term}
+    (hX : toList x = x1 :: X') : L ++ toList x ≠ [] := by
+  rw [hX]
+  cases L with
+  | nil => exact List.cons_ne_nil x1 X'
+  | cons a u => exact List.cons_ne_nil a (u ++ (x1 :: X'))
+
+/-- 頭部が下なら和も下 (右辺の成分列が分かっているとき)。 -/
+theorem lt_add_of_lt_hd {a A y y1 : Term} {Y' : List Term} (hy : inT y = true)
+    (hY : toList y = y1 :: Y') (h : lt a y1 = true) : lt (add a A) y = true := by
+  have hap : y1.isAP = true := inTL_isAP hy y1 (by rw [hY]; exact List.Mem.head _)
+  have hye : y = ofList (y1 :: Y') := by rw [← hY, inT_ofList_toList y hy]
+  rw [hye]
+  cases Y' with
+  | nil =>
+    show lt (add a A) y1 = true
+    rw [lt_add_nsum (ne_zero_of_isAP hap) (nsum_of_isAP hap)]
+    exact h
+  | cons d u =>
+    show lt (add a A) (add y1 (ofList (d :: u))) = true
+    refine lt_add_head ?_ h
+    intro hc
+    rw [hc, lt_irrefl] at h
+    exact Bool.noConfusion h
+
+theorem lt_of_hd_lt {e y e1 y1 : Term} {E' Y' : List Term} (he : inT e = true)
+    (hy : inT y = true) (hE : toList e = e1 :: E') (hY : toList y = y1 :: Y')
+    (h : lt e1 y1 = true) : lt e y = true := by
+  have hee : e = ofList (e1 :: E') := by rw [← hE, inT_ofList_toList e he]
+  have hi1 : inT e1 = true := inTL_inT he e1 (by rw [hE]; exact List.Mem.head _)
+  have hj1 : inT y1 = true := inTL_inT hy y1 (by rw [hY]; exact List.Mem.head _)
+  cases E' with
+  | nil =>
+    rw [show e = e1 from hee]
+    exact lt_of_lt_of_le3 (inT_le_fragR e1 hi1) (inT_le_fragR y1 hj1)
+      (inT_le_fragR y hy) h (le_hd_self_inT hy hY)
+  | cons f F =>
+    rw [hee]
+    show lt (add e1 (ofList (f :: F))) y = true
+    exact lt_add_of_lt_hd hy hY h
+
+theorem plus_cons {e x e1 e' x1 : Term} {E' X' : List Term} (he : inT e = true)
+    (hx : inT x = true) (hE : toList e = e1 :: E') (hE' : ofList E' = e')
+    (hX : toList x = x1 :: X') :
+    plus e x = if le x1 e1 then add e1 (plus e' x) else x := by
+  obtain ⟨hce, hde⟩ := inT_toList e he
+  rw [hE] at hce hde
+  obtain ⟨⟨hap1, hi1⟩, hcE⟩ := inTL_cons.mp hce
+  have htE : toList (ofList E') = E' := toList_ofList E' (fun z hz =>
+    ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcE z hz)).1)
+  have hix1 : inT x1 = true := inTL_inT hx x1 (by rw [hX]; exact List.Mem.head _)
+  rw [plus_eq hX, hE, ← hE']
+  by_cases hle : le x1 e1 = true
+  · rw [if_pos hle, List.filter_cons_of_pos (by rw [hle]),
+      plus_eq (s := ofList E') hX, htE]
+    exact ofList_cons_ne_nil (append_toList_ne_nil hX)
+  · rw [if_neg hle,
+      filter_nil_of_head_inT hix1 e1 E' hi1 hcE hde (bool_false hle),
+      List.nil_append]
+    exact inT_ofList_toList x hx
+
+theorem plus_mono_step {e e' e1 : Term} {E' : List Term} (he : inT e = true)
+    (hE : toList e = e1 :: E') (hE' : ofList E' = e')
+    (ih : ∀ x y, inT x = true → inT y = true → le x y = true →
+        le (plus e' x) (plus e' y) = true) :
+    ∀ (x y : Term), inT x = true → inT y = true → le x y = true →
+      le (plus e x) (plus e y) = true := by
+  intro x y hx hy h
+  have hap1 : e1.isAP = true := inTL_isAP he e1 (by rw [hE]; exact List.Mem.head _)
+  have hi1 : inT e1 = true := inTL_inT he e1 (by rw [hE]; exact List.Mem.head _)
+  have hee : e = ofList (e1 :: E') := by rw [← hE, inT_ofList_toList e he]
+  cases hX : toList x with
+  | nil =>
+    have hxz : x = zero := toList_eq_nil x hX
+    subst hxz
+    show le e (plus e y) = true
+    cases hY : toList y with
+    | nil =>
+      have hyz : y = zero := toList_eq_nil y hY
+      subst hyz
+      exact Evidence.WF.le_self e
+    | cons y1 Y' =>
+      have hiy1 : inT y1 = true := inTL_inT hy y1 (by rw [hY]; exact List.Mem.head _)
+      rw [plus_cons he hy hE hE' hY]
+      by_cases hle : le y1 e1 = true
+      · rw [if_pos hle]
+        cases hEc : E' with
+        | nil =>
+          rw [hEc] at hee
+          rw [show e = e1 from hee]
+          exact le_of_lt (lt_head_add hap1 _)
+        | cons f F =>
+          rw [hEc] at hee hE'
+          have hee2 : e = add e1 e' := by rw [hee, ← hE']; rfl
+          rw [hee2]
+          refine le_add_tail ?_
+          exact ih zero y inT_zero hy (le_zero_left y)
+      · rw [if_neg hle]
+        refine le_of_lt (lt_of_hd_lt he hy hE hY ?_)
+        exact lt_of_not_le_inT hiy1 hi1 (bool_false hle)
+  | cons x1 X' =>
+    have hix1 : inT x1 = true := inTL_inT hx x1 (by rw [hX]; exact List.Mem.head _)
+    rw [plus_cons he hx hE hE' hX]
+    cases hY : toList y with
+    | nil =>
+      exfalso
+      have hyz : y = zero := toList_eq_nil y hY
+      rw [hyz] at h
+      have hz : x = zero := by
+        rcases (Bool.or_eq_true _ _).mp h with hq | hl
+        · exact eq_of_beq hq
+        · rw [lt_zero_right] at hl; exact Bool.noConfusion hl
+      rw [hz] at hX
+      exact absurd (show x1 :: X' = ([] : List Term) from hX.symm) (List.cons_ne_nil x1 X')
+    | cons y1 Y' =>
+      have hiy1 : inT y1 = true := inTL_inT hy y1 (by rw [hY]; exact List.Mem.head _)
+      rw [plus_cons he hy hE hE' hY]
+      have hxy1 : le x1 y1 = true := hd_mono_inT hx hy hX hY h
+      by_cases hlx : le x1 e1 = true
+      · rw [if_pos hlx]
+        by_cases hly : le y1 e1 = true
+        · rw [if_pos hly]
+          exact le_add_tail (ih x y hx hy h)
+        · rw [if_neg hly]
+          refine le_of_lt (lt_add_of_lt_hd hy hY ?_)
+          exact lt_of_not_le_inT hiy1 hi1 (bool_false hly)
+      · have hly : ¬ (le y1 e1 = true) := by
+          intro hc
+          exact hlx (le_trans_inT hix1 hiy1 hi1 hxy1 hc)
+        rw [if_neg hlx, if_neg hly]
+        exact h
+
+/-- **`plus e ·` は単調。** 側条件なし。 -/
+theorem plus_mono_right_inT : ∀ (e : Term), inT e = true → ∀ (x y : Term), inT x = true →
+    inT y = true → le x y = true → le (plus e x) (plus e y) = true := by
+  have hzero : ∀ (x y : Term), inT x = true → inT y = true → le x y = true →
+      le (plus zero x) (plus zero y) = true := by
+    intro x y hx hy h
+    rw [plus_zero_left_inT hx, plus_zero_left_inT hy]
+    exact h
+  intro e
+  induction e with
+  | zero => intro _; exact hzero
+  | M => intro he; exact plus_mono_step he rfl rfl hzero
+  | omg _ _ => intro he; exact plus_mono_step he rfl rfl hzero
+  | phi _ _ _ _ => intro he; exact plus_mono_step he rfl rfl hzero
+  | psi _ _ _ _ => intro he; exact plus_mono_step he rfl rfl hzero
+  | Z _ _ => intro he; exact plus_mono_step he rfl rfl hzero
+  | add u v _ ihv =>
+    intro he
+    obtain ⟨_, _, hiv, _⟩ := inT_add he
+    exact plus_mono_step he rfl (inT_ofList_toList v hiv) (ihv hiv)
+
+/-- **SC の一段。** `w` が強臨界で `w ≤ p` (`p` は加法主要) なら `w ≤ logOm p`。
+    これが (G1) の側条件が `w ∈ SC` でなければならない理由。`w = p = 1` で破れる。 -/
+theorem lt_logOm_of_sc {w p : Term} (hsc : w.isSC = true) (hw : inT w = true)
+    (hap : p.isAP = true) (hp : inT p = true) (h : lt p w = false) :
+    lt (logOm p) w = false := by
+  have hlew : le w p = true := le_of_not_lt3 (inT_le_fragR p hp) (inT_le_fragR w hw) h
+  have hkey : le w (logOm p) = true := by
+    cases p with
+    | zero => exact Bool.noConfusion hap
+    | add _ _ => exact Bool.noConfusion hap
+    | M => exact hlew
+    | omg _ => exact hlew
+    | psi _ _ => exact hlew
+    | Z _ => exact hlew
+    | phi c d =>
+      cases c with
+      | zero =>
+        refine le_logOm_phi_zero_of_le hw (inT_phi4 hp).2.1 ?_
+        cases w with
+        | zero => exact Bool.noConfusion hsc
+        | omg _ => exact Bool.noConfusion hsc
+        | phi _ _ => exact Bool.noConfusion hsc
+        | add _ _ => exact Bool.noConfusion hsc
+        | M =>
+          exfalso
+          rw [show le (M : Term) (phi zero d) = false from by
+            show ((M == phi zero d) || lt M (phi zero d)) = false
+            rw [show ((M : Term) == phi zero d) = false from rfl,
+              show lt (M : Term) (phi zero d) = false from by
+                rw [lt_eq_ltF_succ]; exact ltF_succ_M_phi _ _ _]
+            rfl] at hlew
+          exact Bool.noConfusion hlew
+        | psi k a =>
+          exact le_of_psi_lt_phi_zero
+            (lt_of_le_of_ne hlew (by intro hc; exact Term.noConfusion hc))
+        | Z e =>
+          exact le_of_Z_lt_phi_zero
+            (lt_of_le_of_ne hlew (by intro hc; exact Term.noConfusion hc))
+      | M => exact hlew
+      | omg _ => exact hlew
+      | phi _ _ => exact hlew
+      | psi _ _ => exact hlew
+      | Z _ => exact hlew
+      | add _ _ => exact hlew
+  rcases (Bool.or_eq_true _ _).mp hkey with he | hl
+  · rw [← eq_of_beq he, lt_irrefl]
+  · exact lt_asymm_inT hw (inT_logOm hp) hl
+
+end
+
+/-! ### §65.5 (G1) を直した形と、(G2) そのもの
+
+`DivDescSC` は §64 の `DivDescInT` に `w ∈ SC` を 1 つ足したもの。足さないと偽で、反例は
+§65.7 に凍結してある。`MulDescInT` は §64 の定義そのままで、直しは要らない。 -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Evidence.WF
+open Trans.Dict (logOm subAP divAP mulL)
+
+/-- **(G1) を直した形。** §64 の `DivDescInT` に `w.isSC` を足したもの。 -/
+def DivDescSC : Prop := ∀ (w : Term) (l : List Term), inT w = true → w.isSC = true →
+  inTL l = true → descL l = true → (∀ q ∈ l, lt q w = false) →
+  descL (l.map (divAP w)) = true
+
+/-- **(G1) は偽。** §64 の `DivDescInT` の反証 — `w = ω`, `l = [ω^ω, ω]`。 -/
+theorem not_divDescInT : ¬ DivDescInT := by
+  intro H
+  have h := H omega [phi zero omega, omega] rfl rfl rfl
+    (by intro q hq
+        rcases List.mem_cons.mp hq with h1 | h1
+        · rw [h1]; rfl
+        · rw [List.mem_singleton.mp h1]; rfl)
+  exact Bool.noConfusion (h.symm.trans
+    (show descL ([phi zero omega, omega].map (divAP omega)) = false from rfl))
+
+/-- **(G1) 完了。** `logOm` の単調性 → SC の一段 → `subAP` の単調性 → `ω^·` の単調性。 -/
+theorem divDescSC : DivDescSC := by
+  intro w l hw hsc hcl hdl hge
+  refine descL_map_mono (divAP w)
+    (fun p => p.isAP = true ∧ inT p = true ∧ lt p w = false) ?_ l ?_ hdl
+  · intro a b ha hb hba
+    obtain ⟨hapa, hia, _⟩ := ha
+    obtain ⟨hapb, hib, hwb⟩ := hb
+    show le (omegaNF (subAP w (logOm b))) (omegaNF (subAP w (logOm a))) = true
+    refine omegaNF_mono_inT (inT_subAP (inT_logOm hib)) (inT_subAP (inT_logOm hia)) ?_
+    refine subAP_mono_inT (inT_logOm hib) (inT_logOm hia)
+      (lt_logOm_of_sc hsc hw hapb hib hwb) ?_
+    exact logOm_mono_inT hapb hapa hib hia hba
+  · intro x hx
+    exact ⟨((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcl x hx)).1,
+           ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcl x hx)).2, hge x hx⟩
+
+/-- **(G2) 完了。** §64 の `MulDescInT` そのまま — 側条件は要らない。 -/
+theorem mulDescInT : MulDescInT := by
+  intro e y he hy
+  obtain ⟨hc, hd⟩ := inT_toList y hy
+  refine descL_map_mono (fun p => omegaNF (plus e (logOm p)))
+    (fun p => p.isAP = true ∧ inT p = true) ?_ (toList y) ?_ hd
+  · intro a b ha hb hba
+    obtain ⟨hapa, hia⟩ := ha
+    obtain ⟨hapb, hib⟩ := hb
+    refine omegaNF_mono_inT (inT_plus he (inT_logOm hib)) (inT_plus he (inT_logOm hia)) ?_
+    exact plus_mono_right_inT e he _ _ (inT_logOm hib) (inT_logOm hia)
+      (logOm_mono_inT hapb hapa hib hia hba)
+  · intro x hx
+    exact ⟨inTL_isAP hy x hx, inTL_inT hy x hx⟩
+
+end
+
+/-! ### §65.6 消費者 — `wcnf`・`collapse`・`dict` を直した仮説の上で
+
+§64.4 の `wcnf_spec` と §64.5 の `inT_collapse` / `inT_dict` / `collapseInT_of_gaps` は
+**偽である `DivDescInT` を仮説に取っている**ので、そのままでは使えない。ここでは同じ証明を
+`DivDescSC` に対して引き直す。呼び出し側の底はいつも `reg (u+1) = Z u` で、`isSC` は `rfl`。
+
+§64.3 の `inT_mulL` / `ltM_mulL` と §64.5 の `inT_idxOf` / `stepF_inv` / `fold_inv` は
+`MulDescInT` しか取らないので、そのまま `mulDescInT` を渡して再利用する。 -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Evidence.WF
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+
+theorem isSC_reg_succ (u : Nat) : (reg (u + 1)).isSC = true := rfl
+
+theorem inT_wA_sc {w p : Term} (hw : inT w = true) (hsc : w.isSC = true)
+    (hp : inT p = true) : inT (wA w p) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList _ (inT_logOm hp)
+  refine inT_ofList _ ?_
+    (divDescSC w _ hw hsc (inTL_filter _ hc) (descL_filter_inT _ hc hd _) ?_)
+  · show (List.map (divAP w) _).all _ = true
+    rw [List.all_eq_true]
+    intro x hx
+    obtain ⟨q, hq, hxe⟩ := List.mem_map.mp hx
+    rw [← hxe]
+    show ((divAP w q).isAP && inT (divAP w q)) = true
+    rw [isAP_divAP, inT_divAP (inTL_inT (inT_logOm hp) q (List.mem_filter.mp hq).1)]
+    rfl
+  · intro q hq
+    have hq2 := (List.mem_filter.mp hq).2
+    cases hlq : lt q w with
+    | false => rfl
+    | true => rw [hlq] at hq2; exact Bool.noConfusion hq2
+
+/-- **`wcnf` は 𝔗(M) の中に留まる** — 底が強臨界なら。§64.4 の `wcnf_spec` の直した版。 -/
+theorem wcnf_spec_sc {w : Term} (hw : inT w = true) (hsc : w.isSC = true) :
+    ∀ (L : List Term), inTL L = true → descL L = true → (∀ x ∈ L, lt x M = true) →
+      PairOK (wcnf w L) := by
+  intro L
+  induction L with
+  | nil =>
+    intro _ _ _
+    exact ⟨⟨inT_zero, lt_zero_M⟩, by intro ac hac; cases hac⟩
+  | cons p rest ih =>
+    intro hc hd hm
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hmr : ∀ x ∈ rest, lt x M = true := fun x hx => hm x (List.Mem.tail p hx)
+    have hlpM : lt p M = true := hm p (List.Mem.head _)
+    have IH := ih hcr hdr hmr
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp]
+      exact ⟨⟨inT_ofList _ hc hd, lt_ofList_M _ hm⟩, by intro ac hac; cases hac⟩
+    · have hlp' : lt p w = false := bool_false hlp
+      have hA := inT_wA_sc (w := w) hw hsc hip
+      have hAM := ltM_wA (w := w) hip hlpM
+      have hC := inT_wC (w := w) hip
+      have hCM := ltM_wC (w := w) hip hlpM
+      rw [wcnf_cons_ge hlp']
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at IH
+        obtain ⟨⟨hs1, hs2⟩, hall⟩ := IH
+        cases fst with
+        | nil =>
+          refine ⟨⟨hs1, hs2⟩, ?_⟩
+          intro ac hac
+          rw [List.mem_singleton.mp hac]
+          exact ⟨hA, hAM, hC, hCM⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac0 := hall (a', c') (List.Mem.head _)
+            show PairOK (if (wA w p == a') = true
+              then ((wA w p, plus (wC w p) c') :: ps, snd)
+              else ((wA w p, wC w p) :: (a', c') :: ps, snd))
+            by_cases heq : (wA w p == a') = true
+            · rw [if_pos heq]
+              refine ⟨⟨hs1, hs2⟩, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with hq | hq
+              · rw [hq]
+                exact ⟨hA, hAM, inT_plus hC hac0.2.2.1,
+                  lt_plus_M hC hac0.2.2.1 hCM hac0.2.2.2⟩
+              · exact hall ac (List.Mem.tail _ hq)
+            · rw [if_neg heq]
+              refine ⟨⟨hs1, hs2⟩, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with hq | hq
+              · rw [hq]; exact ⟨hA, hAM, hC, hCM⟩
+              · exact hall ac hq
+
+/-- **`collapse` は 𝔗(M) に落ちる** — (G3) だけを仮定して。§64.5 の `inT_collapse` から
+    (G1)(G2) の仮説が消えた形。 -/
+theorem inT_collapse_gap3 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK u x) :
+    inT (collapse u x) = true ∧ lt (collapse u x) M = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨⟨h21, h22⟩, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  have hinit : StInv ((none : Option Term), (none : Option Term)) := by
+    constructor
+    · intro i0 hq; cases hq
+    · intro v hq; cases hq
+  have hst := fold_inv mulDescInT (inT_reg (u+1)) (ltM_reg (u+1)) (inT_baseOf u) (ltM_baseOf u)
+    (wcnf (reg (u+1)) (toList x)).1 (none, none) hinit hallOK Hp
+  have hv : inT (((wcnf (reg (u+1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u+1)) (baseOf u))).2.getD zero) = true ∧
+      lt (((wcnf (reg (u+1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u+1)) (baseOf u))).2.getD zero) M = true := by
+    cases hg : ((wcnf (reg (u+1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u+1)) (baseOf u))).2 with
+    | none => exact ⟨inT_zero, lt_zero_M⟩
+    | some v => exact hst.2 v hg
+  rw [collapse_eq]
+  have harg : inT (plus (reg u) (plus _ (wcnf (reg (u+1)) (toList x)).2)) = true :=
+    inT_plus (inT_reg u) (inT_plus hv.1 h21)
+  have hlarg : lt (plus (reg u) (plus _ (wcnf (reg (u+1)) (toList x)).2)) M = true :=
+    lt_plus_M (inT_reg u) (inT_plus hv.1 h21) (ltM_reg u)
+      (lt_plus_M hv.1 h21 hv.2 h22)
+  exact ⟨inT_omegaNF harg, ltM_omegaNF harg hlarg⟩
+
+/-- 強臨界枝が一度も点火しない断片では、もう仮説はひとつも要らない。 -/
+theorem inT_collapse_noSC_gap3 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (h : ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = false) :
+    inT (collapse u x) = true :=
+  (inT_collapse_gap3 u x hx hlx (psiIdxOK_of_noSC u x h)).1
+
+/-- `dict` の像は 𝔗(M) の中で `M` の下 — (G3) だけを仮定して。 -/
+theorem inT_dict_gap3 (Hp : ∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)) :
+    ∀ a : BT, inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero => ⟨inT_zero, lt_zero_M⟩
+  | .D u a => by
+    have ih := inT_dict_gap3 Hp a
+    exact inT_collapse_gap3 u (dict a) ih.1 ih.2 (Hp u a)
+  | .sum a b => by
+    have iha := inT_dict_gap3 Hp a
+    have ihb := inT_dict_gap3 Hp b
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+/-- **§65 の主定理。** §63 の `CollapseInT` は (G3) だけに還元される。 -/
+theorem collapseInT_of_gap3 (Hp : ∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)) : CollapseInT :=
+  fun u a => (inT_dict_gap3 Hp (BT.D u a)).1
+
+/-- **消費者を通す。** §63 の `hsuccS_supply` — `certIn_region` の 2 番目の供給 — が
+    (G3) だけで開く。 -/
+theorem hsuccS_supply_of_gap3 (Hp : ∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u TM.Term.one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, ValS (BMS.expand S n) u :=
+  hsuccS_supply (collapseInT_of_gap3 Hp)
+
+end
+
+/-! ### §65.7 測定 (凍結)
+
+否定的なものから。母集団は `ofNat` を種に入れてある — §64 の 2 つの母集団がどちらも
+`ω^n` を作れず、しかも肯定側の掃引が `l` を「母集団の項 `y` の `toList`」に限っていたので、
+(G1) の反例が 82373 + 2324 組すべてをすり抜けていた。 -/
+
+section
+open TM TM.Term
+open Evidence.WF
+open Trans.Recal
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+
+/-! **否定 1 — (G1) `DivDescInT` は偽。** `w = ω`, `l = [ω^ω, ω]`、次数和 17。 -/
+
+#guard inT omega && inT (phi zero omega)
+#guard omega.isAP && (phi zero omega).isAP
+#guard descL [phi zero omega, omega]
+#guard !(lt (phi zero omega) omega) && !(lt omega omega)
+#guard !(descL ([phi zero omega, omega].map (divAP omega)))
+#guard ([phi zero omega, omega].map (divAP omega)) == [one, omega]
+#guard omega.deg + (phi zero omega).deg + omega.deg == 17
+--   `w = ω` は SC ではない。これが唯一の逃げ道である。
+#guard !(omega.isSC)
+--   `l` は正真正銘 𝔗(M) の項の成分列 — 命題の一般性の artefact ではない。
+#guard inT (add (phi zero omega) omega)
+#guard TM.Term.toList (add (phi zero omega) omega) == [phi zero omega, omega]
+--   §64 の判定器でも同じ。
+#guard !(divDescb omega [phi zero omega, omega])
+--   壊れているのは `w ≤ p` から `w ≤ logOm p` への一段。
+#guard !(lt omega omega) && lt (logOm omega) omega
+#guard logOm omega == one
+
+/-! **否定 2 — `logOm` の単調性は加法主要を落とすと偽。** 最小は `Ω ⊕ Ω ≤ ω^Ω`、次数和 9。 -/
+
+#guard le (add (Z zero) (Z zero)) (phi zero (Z zero))
+#guard !(le (logOm (add (Z zero) (Z zero))) (logOm (phi zero (Z zero))))
+#guard (add (Z zero) (Z zero)).deg + (phi zero (Z zero)).deg == 9
+#guard !((add (Z zero) (Z zero)).isAP)
+
+/-! **否定 3 — `subAP` の単調性は `w ≤ x` を落とすと偽。** 最小は `w = M`, `x = Ω`, `y = M`。 -/
+
+#guard le (Z zero) (M : Term)
+#guard !(le (subAP M (Z zero)) (subAP M M))
+#guard (M : Term).deg + (Z zero).deg + (M : Term).deg == 4
+#guard lt (Z zero) M          -- `w ≤ x` が破れている
+
+/-! **否定 4 — SC の一段は SC を落とすと偽。** `w = p = 1`。 -/
+
+#guard !(lt one one) && lt (logOm one) one
+#guard !((one : Term).isSC)
+
+/-! **否定 5 — `z < ω^z` は `z < M` を要る。** `z = M` で偽。 -/
+
+#guard !(lt M (phi zero M))
+#guard !(lt (M : Term) M)
+
+/-! 肯定。母集団は `ofNat` 入りの閉包を 2 段。 -/
+
+private def b65 : List Term :=
+  [zero, one, ofNat 2, ofNat 3, omega, Z zero, M, psi (Z zero) zero, phi one zero]
+private def stp65 (l : List Term) : List Term :=
+  l ++ (l.flatMap fun a => l.map fun b => add a b)
+    ++ (l.flatMap fun a => l.map fun b => phi a b)
+    ++ (l.map fun a => omegaNF a)
+    ++ (l.map fun a => Z a)
+    ++ (l.map fun a => omg a)
+private def raw65 : List Term := (stp65 b65).eraseDups
+private def C65 : List Term := raw65.filter fun x => inT x
+private def C65ap : List Term := C65.filter fun x => x.isAP
+private def D65 : List Term := ((stp65 (C65.take 22)).eraseDups.filter fun x => inT x).take 120
+private def D65ap : List Term := D65.filter fun x => x.isAP
+
+#guard raw65.length == 183
+#guard C65.length == 109
+#guard C65ap.length == 75
+#guard D65.length == 120
+#guard D65ap.length == 45
+#guard (D65.map fun x => x.deg).foldl (fun a b => if a < b then b else a) 0 == 23
+
+/-! 肯定 1. `ω^·` の 3 分岐 (`omegaNF_eq_gen`) — `inT` でない項も含めて 0 失敗。 -/
+
+private def omEq65 (x : Term) : Bool :=
+  omegaNF x ==
+    (if lt M x then omg x else if TM.Term.isFP zero x then x else phi zero (dnArg x))
+#guard (raw65.filter fun x => !(omEq65 x)).length == 0
+#guard (D65.filter fun x => !(omEq65 x)).length == 0
+
+/-! 肯定 2. `logOm` の単調性 — 加法主要に限れば 0 失敗、落とすと 33 失敗。 -/
+
+#guard (C65ap.flatMap fun x => C65ap.filter fun y =>
+    le x y && !(le (logOm x) (logOm y))).length == 0
+#guard (D65ap.flatMap fun x => D65ap.filter fun y =>
+    le x y && !(le (logOm x) (logOm y))).length == 0
+#guard (C65.flatMap fun x => C65.filter fun y =>
+    le x y && !(le (logOm x) (logOm y))).length == 33
+
+/-! 肯定 3. `ω^·` の単調性 (非狭義) — 0 失敗。 -/
+
+#guard (C65.flatMap fun x => C65.filter fun y =>
+    le x y && !(le (omegaNF x) (omegaNF y))).length == 0
+#guard (D65.flatMap fun x => D65.filter fun y =>
+    le x y && !(le (omegaNF x) (omegaNF y))).length == 0
+
+/-! 肯定 4. D1 と D2 — 0 失敗。D3 は使っていないので測っていない。 -/
+
+#guard (C65.filter fun x => !(le (dnArg x) x)).length == 0
+#guard (C65.flatMap fun x => C65.filter fun y => lt x y && !(le x (dnArg y))).length == 0
+#guard (D65.filter fun x => !(le (dnArg x) x)).length == 0
+#guard (D65.flatMap fun x => D65.filter fun y => lt x y && !(le x (dnArg y))).length == 0
+
+/-! 肯定 5. `plus e ·` の単調性 — 側条件なしで 0 失敗 (109³ 組)。 -/
+
+#guard (C65.flatMap fun e => C65.flatMap fun x => C65.filter fun y =>
+    le x y && !(le (plus e x) (plus e y))).length == 0
+
+/-! 肯定 6. `subAP w` の単調性 — `w ≤ x` があれば 0 失敗、無いと 2073 失敗。
+    **`w ∈ SC` は `subAP` には要らない** (証明も使っていない)。 -/
+
+#guard (C65.flatMap fun w => C65.flatMap fun x => C65.filter fun y =>
+    !(lt x w) && le x y && !(le (subAP w x) (subAP w y))).length == 0
+#guard (D65.flatMap fun w => D65.flatMap fun x => D65.filter fun y =>
+    !(lt x w) && !(lt y w) && le x y && !(le (subAP w x) (subAP w y))).length == 0
+#guard (C65.flatMap fun w => C65.flatMap fun x => C65.filter fun y =>
+    w.isSC && le x y && !(le (subAP w x) (subAP w y))).length == 2073
+
+/-! 肯定 7. SC の一段 — `w ∈ SC` なら 0 失敗、落とすと 46 失敗。 -/
+
+#guard (C65.flatMap fun w => C65ap.filter fun p =>
+    w.isSC && !(lt p w) && (lt (logOm p) w)).length == 0
+#guard (D65.flatMap fun w => D65ap.filter fun p =>
+    w.isSC && !(lt p w) && (lt (logOm p) w)).length == 0
+#guard (C65.flatMap fun w => C65ap.filter fun p =>
+    !(lt p w) && (lt (logOm p) w)).length == 46
+
+/-! 肯定 8. (G1) を直した形 — 0 失敗。C65 で 1270 組、D65 で 403 組。 -/
+
+#guard (C65.flatMap fun w => C65ap.flatMap fun p => C65ap.filter fun p' =>
+    w.isSC && le p' p && !(lt p w) && !(lt p' w)
+      && !(descL [divAP w p, divAP w p'])).length == 0
+#guard (C65.flatMap fun w => C65ap.flatMap fun p => C65ap.filter fun p' =>
+    w.isSC && le p' p && !(lt p w) && !(lt p' w)).length == 1270
+#guard (D65.flatMap fun w => D65ap.flatMap fun p => D65ap.filter fun p' =>
+    w.isSC && le p' p && !(lt p w) && !(lt p' w)
+      && !(descL [divAP w p, divAP w p'])).length == 0
+#guard (D65.flatMap fun w => D65ap.flatMap fun p => D65ap.filter fun p' =>
+    w.isSC && le p' p && !(lt p w) && !(lt p' w)).length == 403
+
+/-! 肯定 9. (G2) — 0 失敗。 -/
+
+#guard (C65.flatMap fun e => C65.filter fun y => !(mulDescb e y)).length == 0
+#guard (D65.flatMap fun e => D65.filter fun y => !(mulDescb e y)).length == 0
+
+/-! 肯定 10. 領域そのもの。§64.6 肯定 6 を、(G1)(G2) が定理になった今の形で取り直す。 -/
+
+#guard ((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.length == 443
+#guard ((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.all fun a =>
+  TM.Term.inT (Trans.Dict.dict a)
+
+
+end
+
+/-! ### §65.8 公理 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+end
 
 end Evidence.Region
