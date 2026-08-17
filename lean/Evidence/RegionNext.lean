@@ -7739,4 +7739,115 @@ theorem isReducedP_matB (t : B) (h : nfB t = true) :
 
 end
 
+/-! ## §48 A CLOSED FORM FOR `Trans` ON THE NORMAL-FORM INDICES
+
+`red` is settled (§46) and the normal-form indices are reduced (§47), so `runAux` on
+`matB t 0` never takes its reduction branch and the question becomes: what does it return?
+This section answers it as a recursion on `B` — no matrices, no memo table.
+
+    bVal t = transPort (psM (matB t 0))
+
+MEASURED on every normal-form index of the enumerations: 670 (levels < 3, ≤ 6 nodes) and 697
+(levels < 4), frozen as guards below; during development also 39446 (levels < 3, ≤ 8 nodes),
+5443 (levels < 4, ≤ 7) and 698 (levels < 5, ≤ 6).  Zero mismatches.
+
+THE THREE RULES.  Write `w` for a node's level and read the children left to right.
+
+  * A node's ARGUMENT (`bArg`) is its children's contributions in order.  `bVal` reads the
+    top-level nodes as a sum: the FIRST `(0,0)` contributes 0 and every later one contributes 1
+    — that is the `1 +` convention of `oR`, and it is `red`'s `ppair` branch.
+
+  * A child of level `u ≤ w`, or any child that is not the first, contributes `psi_u(its
+    argument)` — the obvious thing.
+
+  * A child of level `u > w` that IS first and whose own first child is higher still contributes
+    something else: `bFold`, which keeps the sum built so far AND an argument being accumulated,
+    emits high grandchildren at the outer level, and closes a whole RUN of low ones into a single
+    `psi_u(...)` whose argument is the outer sum at the start of the run plus that run.
+
+WHY AN ACCUMULATOR.  The contribution of a subtree is not a function of the subtree.  The
+guards at the end of the section exhibit the same shape three times:
+
+    (1,1)(2,2)                    on its own          psi_1(Omega_2)
+    (0,0)(1,1)(2,2)               as the first child  Omega_2          — the psi_1 is gone
+    (0,0)(1,0)(1,1)(2,2)          with a sibling      psi_1(Omega_2)   — it is back
+
+That is exactly what `replMark` implements in the reference: a value is substituted INTO the
+previous answer, so where a subtree sits changes what it contributes.  Any specification of the
+port has to carry that context, and `bFold`'s pair is the smallest form of it that reproduces
+the reference — the two remaining guards pin the run behaviour, which is what distinguishes it
+from a plain left fold.
+
+WHAT IS NOT CLAIMED.  Everything here is measured.  The proof has to go through `runAux`'s memo
+table, the way `Rows/G3`, `G4` and `G11` did for their ladders — `bVal` is what their `Val` was
+per family, now written once for the whole region. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+
+/-- 溜めている「低い子」の分を `psi_w` で閉じる。 -/
+def bClose (w : Nat) (st : BT × Option BT) : BT :=
+  match st.2 with
+  | none => st.1
+  | some a => bplus st.1 (.D w a)
+
+mutual
+/-- **段 `w` の節の引数。** 子の寄与をそのまま左から並べたもの。 -/
+def bArg : Nat → B → BT
+  | _, .nil => .zero
+  | w, .nd u r c =>
+      bplus (bArg w r)
+        (if c == .nil then .D u .zero
+         else if u ≤ w || !(r == .nil) || headLvl c ≤ u then .D u (bArg u c)
+         else bClose u (bFold u c))
+/-- **段 `w` の節の寄与を作る畳み込み。** 第 1 成分は閉じた分、第 2 成分は
+    今の「低い子」の連なりのために溜めている引数。 -/
+def bFold : Nat → B → BT × Option BT
+  | _, .nil => (.zero, none)
+  | w, .nd u r c =>
+      let st := bFold w r
+      let K : BT :=
+        if c == .nil then .D u .zero
+        else if u ≤ w || !(r == .nil) || headLvl c ≤ u then .D u (bArg u c)
+        else bClose u (bFold u c)
+      if w < u then (bplus (bClose w st) K, none)
+      else
+        match st.2 with
+        | none => (st.1, some (bplus st.1 K))
+        | some a => (st.1, some (bplus a K))
+end
+
+/-- **添字の値。** 最上位の節を左から足す — 先頭の `(0,0)` だけが 0。 -/
+def bVal : B → BT
+  | .nil => .zero
+  | .nd w r c =>
+      bplus (bVal r) (if r == .nil && w == 0 && c == .nil then .zero else .D w (bArg w c))
+
+/-- 標準形の添字の母集団。 -/
+def popNFB (L n : Nat) : List B :=
+  ((List.range n).flatMap (enumNodes L)).filter fun t => nfB t && t != .nil
+
+#guard (popNFB 3 6).length == 670
+#guard (popNFB 4 6).length == 697
+-- **測定: 移植した `Trans` の値はこの閉じた形。**
+#guard (popNFB 3 6).all fun t => transPort (psM (matB t 0)) == bVal t
+#guard (popNFB 4 6).all fun t => transPort (psM (matB t 0)) == bVal t
+
+/-! ### 蓄積器が要る理由 (測定) -/
+
+-- 同じ部分木が、左に兄弟があるかどうかで**別の寄与**をする。
+#guard Test.showRaw (transPort (psM [[1, 1], [2, 2]])) == "D_1 D_2 0"
+#guard Test.showRaw (transPort (psM [[0, 0], [1, 1], [2, 2]])) == "D_0 D_2 0"
+#guard Test.showRaw (transPort (psM [[0, 0], [1, 0], [1, 1], [2, 2]]))
+  == "D_0 (D_0 0,D_1 D_2 0)"
+-- 低い子の**連なり**は 1 つの `psi_w` に閉じ、高い子が来ると切れる。
+#guard Test.showRaw (transPort (psM [[0, 0], [1, 1], [2, 2], [2, 0], [2, 0]]))
+  == "D_0 (D_2 0,D_1 (D_2 0,D_0 0,D_0 0))"
+#guard Test.showRaw (transPort (psM [[0, 0], [1, 1], [2, 2], [2, 0], [2, 2], [2, 0]]))
+  == "D_0 (D_2 0,D_1 (D_2 0,D_0 0),D_2 0,D_1 (D_2 0,D_1 (D_2 0,D_0 0),D_2 0,D_0 0))"
+
+end
+
 end Evidence.Region
