@@ -17176,4 +17176,667 @@ theorem hclosedS_supply : ∀ (S : Matrix), RegS S → ∀ (n : Nat), RegS (BMS.
 
 end
 
+/-! ## §63 `plus` IS ASSOCIATIVE ON 𝔗(M), NOT ONLY ON THE VEBLEN FRAGMENT
+
+`Evidence/CNVOps.lean` §19 proves `plus (plus a b) c = plus a (plus b c)` under `CNV`.
+`CNV` admits only `zero`, `phi` and `add`, so it is the VEBLEN FRAGMENT and it excludes every
+value that contains a `psi` or a `Z` — 85 of the 235 standard region values (§62.11's
+`#guard`).  That is why §62 could not prove `dict (bplus x y) = plus (dict x) (dict y)` and had
+to freeze it as a measurement.
+
+WHAT THE §19 PROOF ACTUALLY USES.  Two things, and neither of them is `CNV`:
+
+    (a) the components of a sum are additively principal and DESCEND;
+    (b) `le` is transitive on the components.
+
+`inT` says (a) verbatim — [Rathjen, 1991] 2.1(iii) is exactly `a.isAP && inT a && inT b` plus
+`hdLe b a` — and §8.5.4 of `Evidence/WF.lean` says (b) verbatim: `le_trans_inT`.  So the whole
+of §19 goes through one notch up, and this section restates it there.
+
+MEASURED FIRST (all frozen as `#guard`s below).  Negative results first:
+
+  * (a) is NOT optional.  With additively principal components but the DESCENT DROPPED the
+    equation is false; the smallest counterexample found is `a = ω`, `b = 1 ⊕ ε₀`, `c = ω`
+    (degree sum 19).  A component `zero` breaks it even sooner: `a = 1`, `b = 0 ⊕ ω`, `c = 1`.
+  * (b) is NOT optional either, and this is the part that says `inT` — not merely "AP
+    components, descending" — is the right hypothesis.  Over sums built from `ψ_M M`
+    and `φ̄(ψ_M M)M` (terms that are AP, descending, and NOT `inT`, and on which §8.5.5's
+    asymmetry counterexample lives) the equation FAILS.  So the structural condition alone
+    is not enough: the components have to be genuinely comparable, and in this repository
+    that is `FragR`, of which `inT` is the client-facing form.
+
+  * POSITIVE: on all `inT` triples of two independent populations — the region's own 257
+    distinct values `vOf` over `popNFB 3 6` (40³ triples measured, 25³ frozen below) and a
+    hand enumeration of sums over `{1, ω, ε₀, Ω, Γ₀, ψ_{Z0}(Z1), Z1, M, ω^(M⊕1)}` (100³
+    triples, frozen below) — zero counterexamples.
+
+WHAT IS RESTATED.  Only what §63 itself needs, and each one is the §19 proof with `CNV`
+replaced by `inT` and `frag_of_cnv`/`le_trans` replaced by `le_trans_inT`:
+`inT_toList`, `inT_ofList_toList`, `filter_eq_take_inT`, `toList_plus_inT`,
+`filter_nil_of_head_inT`, `inT_plus`, `plus_assoc_inT`.  `lt_ofList` (§20) is NOT restated —
+§63 never reads the order off the component list.
+
+WHAT IS NOT CLAIMED.  Nothing here says anything about `dict`, about `collapse`, or about the
+values of the region; those are §63.3 and §63.4 below, and §63.4 does NOT close.
+-/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §63.1 `plus` の結合則、`inT` の上で -/
+
+/-- 成分がすべて加法主要かつ `inT` か (`cnvL` の `inT` 版)。 -/
+def inTL (l : List Term) : Bool := l.all (fun x => x.isAP && inT x)
+
+theorem inTL_cons {a : Term} {l : List Term} :
+    inTL (a :: l) = true ↔ (a.isAP = true ∧ inT a = true) ∧ inTL l = true := by
+  constructor
+  · intro h
+    have h' := (List.all_cons ..).symm.trans h
+    have h2 := (Bool.and_eq_true _ _).mp h'
+    exact ⟨(Bool.and_eq_true _ _).mp h2.1, h2.2⟩
+  · intro ⟨⟨h1, h2⟩, h3⟩
+    show ((a.isAP && inT a) && inTL l) = true
+    rw [h1, h2, h3]
+    rfl
+
+theorem inTL_take (k : Nat) (l : List Term) (h : inTL l = true) : inTL (l.take k) = true := by
+  show (l.take k).all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  exact List.all_eq_true.mp h x (List.mem_of_mem_take hx)
+
+/-- [Rathjen, 1991] 2.1(iii) を `hdLe` で書き直す。最後の連言はちょうど `hdLe b a`。 -/
+theorem inT_add_eq (a b : Term) :
+    inT (add a b) = (a.isAP && inT a && inT b && hdLe b a) := by
+  show (a.isAP && inT a && inT b &&
+      (match b with | add c _ => le c a | _ => b.isAP && le b a)) = _
+  cases b with
+  | zero => rfl
+  | add _ _ => rfl
+  | M => rfl | omg _ => rfl | phi _ _ => rfl | psi _ _ => rfl | Z _ => rfl
+
+theorem inT_add {a b : Term} (h : inT (add a b) = true) :
+    a.isAP = true ∧ inT a = true ∧ inT b = true ∧ hdLe b a = true := by
+  rw [inT_add_eq] at h
+  obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+  obtain ⟨h3, h4⟩ := (Bool.and_eq_true _ _).mp h1
+  obtain ⟨h5, h6⟩ := (Bool.and_eq_true _ _).mp h3
+  exact ⟨h5, h6, h4, h2⟩
+
+/-- **𝔗(M) の項は、降順の加法主要成分の列。**  §19 の `cnv_toList` の `inT` 版。 -/
+theorem inT_toList : ∀ (t : Term), inT t = true →
+    inTL (toList t) = true ∧ descL (toList t) = true := by
+  intro t
+  induction t with
+  | zero => intro _; exact ⟨rfl, rfl⟩
+  | M => intro h; exact ⟨inTL_cons.mpr ⟨⟨rfl, h⟩, rfl⟩, rfl⟩
+  | omg a _ => intro h; exact ⟨inTL_cons.mpr ⟨⟨rfl, h⟩, rfl⟩, rfl⟩
+  | phi a b _ _ => intro h; exact ⟨inTL_cons.mpr ⟨⟨rfl, h⟩, rfl⟩, rfl⟩
+  | psi k a _ _ => intro h; exact ⟨inTL_cons.mpr ⟨⟨rfl, h⟩, rfl⟩, rfl⟩
+  | Z a _ => intro h; exact ⟨inTL_cons.mpr ⟨⟨rfl, h⟩, rfl⟩, rfl⟩
+  | add a b _ ihb =>
+    intro h
+    obtain ⟨hap, hia, hib, hhd⟩ := inT_add h
+    obtain ⟨hcl, hdl⟩ := ihb hib
+    have he : toList (add a b) = a :: toList b := rfl
+    rw [he]
+    refine ⟨inTL_cons.mpr ⟨⟨hap, hia⟩, hcl⟩, ?_⟩
+    cases hb : toList b with
+    | nil => rfl
+    | cons c rest =>
+      refine descL_cons.mpr ⟨?_, by rw [← hb]; exact hdl⟩
+      rw [← hdLe_eq_of_toList (a := a) hb]
+      exact hhd
+
+theorem inTL_isAP {t : Term} (h : inT t = true) : ∀ x ∈ toList t, x.isAP = true := by
+  intro x hx
+  exact ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp (inT_toList t h).1 x hx)).1
+
+theorem inTL_inT {t : Term} (h : inT t = true) : ∀ x ∈ toList t, inT x = true := by
+  intro x hx
+  exact ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp (inT_toList t h).1 x hx)).2
+
+/-- 成分列から組み直す。`hdLe` が `b ≠ zero` を保証する。 -/
+theorem inT_ofList_toList : ∀ (t : Term), inT t = true → ofList (toList t) = t := by
+  intro t
+  induction t with
+  | zero => intro _; rfl
+  | M => intro _; rfl
+  | omg _ _ => intro _; rfl
+  | phi _ _ _ _ => intro _; rfl
+  | psi _ _ _ _ => intro _; rfl
+  | Z _ _ => intro _; rfl
+  | add a b _ ihb =>
+    intro h
+    obtain ⟨_, _, hib, hhd⟩ := inT_add h
+    have hbz : b ≠ zero := by
+      intro hz; rw [hz] at hhd; exact Bool.noConfusion hhd
+    show ofList (a :: toList b) = add a b
+    cases hbl : toList b with
+    | nil => exact absurd (toList_eq_nil b hbl) hbz
+    | cons c u =>
+      show add a (ofList (c :: u)) = add a b
+      rw [← hbl, ihb hib]
+
+theorem lt_of_not_le_inT {a b : Term} (ha : inT a = true) (hb : inT b = true)
+    (h : le a b = false) : lt b a = true :=
+  lt_of_not_le3 (inT_le_fragR a ha) (inT_le_fragR b hb) h
+
+/-- 降順の列で `le b₁ ·` を通すのは、前を切り取るのと同じ (§17 の `inT` 版)。 -/
+theorem filter_eq_take_inT : ∀ (b1 : Term) (l : List Term), inTL l = true → descL l = true →
+    inT b1 = true → ∃ k, l.filter (fun a => le b1 a) = l.take k := by
+  intro b1 l
+  induction l with
+  | nil => intro _ _ _; exact ⟨0, rfl⟩
+  | cons a t ih =>
+    intro hc hd hb1
+    obtain ⟨⟨_, hia⟩, hct⟩ := inTL_cons.mp hc
+    cases hle : le b1 a with
+    | true =>
+      obtain ⟨k, hk⟩ := ih hct (descL_tail hd) hb1
+      refine ⟨k + 1, ?_⟩
+      rw [List.filter_cons_of_pos (by rw [hle]), hk]
+      rfl
+    | false =>
+      refine ⟨0, ?_⟩
+      rw [List.filter_cons_of_neg (by rw [hle]; exact Bool.noConfusion)]
+      have hnil : ∀ (u : List Term), inTL u = true → descL (a :: u) = true →
+          u.filter (fun x => le b1 x) = [] := by
+        intro u
+        induction u with
+        | nil => intro _ _; rfl
+        | cons c v ihv =>
+          intro hcu hdu
+          obtain ⟨⟨_, hicv⟩, hcv⟩ := inTL_cons.mp hcu
+          have hca' : le c a = true := (descL_cons.mp hdu).1
+          have hnc : le b1 c = false := by
+            cases hbc : le b1 c with
+            | false => rfl
+            | true =>
+              exact absurd (le_trans_inT hb1 hicv hia hbc hca')
+                (by rw [hle]; exact Bool.noConfusion)
+          rw [List.filter_cons_of_neg (by rw [hnc]; exact Bool.noConfusion)]
+          refine ihv hcv ?_
+          cases v with
+          | nil => rfl
+          | cons d w =>
+            refine descL_cons.mpr ⟨?_, descL_tail (descL_tail hdu)⟩
+            exact le_trans_inT (inTL_cons.mp hcv).1.2 hicv hia
+              (descL_cons.mp (descL_tail hdu)).1 hca'
+      exact hnil t hct hd
+
+/-- 先頭より上のものは、その後ろにも無い (§19 の `filter_nil_of_head` の `inT` 版)。 -/
+theorem filter_nil_of_head_inT {b1 : Term} (hb1 : inT b1 = true) :
+    ∀ (a : Term) (u : List Term), inT a = true → inTL u = true → descL (a :: u) = true →
+      le b1 a = false → (a :: u).filter (fun x => le b1 x) = [] := by
+  intro a u hia hcu hd hle
+  rw [List.filter_cons_of_neg (by rw [hle]; exact Bool.noConfusion)]
+  have hnil : ∀ (v : List Term), inTL v = true → descL (a :: v) = true →
+      v.filter (fun x => le b1 x) = [] := by
+    intro v
+    induction v with
+    | nil => intro _ _; rfl
+    | cons c w ihw =>
+      intro hcv hdv
+      obtain ⟨⟨_, hicv⟩, hcw⟩ := inTL_cons.mp hcv
+      have hca' : le c a = true := (descL_cons.mp hdv).1
+      have hnc : le b1 c = false := by
+        cases hbc : le b1 c with
+        | false => rfl
+        | true =>
+          exact absurd (le_trans_inT hb1 hicv hia hbc hca')
+            (by rw [hle]; exact Bool.noConfusion)
+      rw [List.filter_cons_of_neg (by rw [hnc]; exact Bool.noConfusion)]
+      refine ihw hcw ?_
+      cases w with
+      | nil => rfl
+      | cons d z =>
+        refine descL_cons.mpr ⟨?_, descL_tail (descL_tail hdv)⟩
+        exact le_trans_inT (inTL_cons.mp hcw).1.2 hicv hia
+          (descL_cons.mp (descL_tail hdv)).1 hca'
+  exact hnil u hcu hd
+
+/-- `plus` の成分列 (§19 の `toList_plus` の `inT` 版)。 -/
+theorem toList_plus_inT {s t : Term} (hs : inT s = true) (ht : inT t = true)
+    {b1 : Term} {rest : List Term} (hl : toList t = b1 :: rest) :
+    toList (plus s t) = (toList s).filter (fun a => le b1 a) ++ toList t := by
+  have hall : ∀ x ∈ (toList s).filter (fun a => le b1 a) ++ toList t, x.isAP = true := by
+    intro x hx
+    rcases List.mem_append.mp hx with h | h
+    · exact inTL_isAP hs x ((List.mem_filter.mp h).1)
+    · exact inTL_isAP ht x h
+  show toList (match toList t with
+      | [] => s
+      | b :: _ => ofList ((toList s).filter (fun a => le b a) ++ toList t)) = _
+  rw [hl]
+  show toList (ofList ((toList s).filter (fun a => le b1 a) ++ (b1 :: rest))) = _
+  rw [hl] at hall
+  rw [toList_ofList _ hall]
+
+/-- **`plus` は 𝔗(M) の上で結合的。**  §19 `plus_assoc` の `CNV` を `inT` に落としたもの。 -/
+theorem plus_assoc_inT (a b c : Term) (ha : inT a = true) (hb : inT b = true)
+    (hc : inT c = true) : plus (plus a b) c = plus a (plus b c) := by
+  obtain ⟨hca, hda⟩ := inT_toList a ha
+  obtain ⟨hcb, hdb⟩ := inT_toList b hb
+  obtain ⟨hcc, hdc⟩ := inT_toList c hc
+  cases hC : toList c with
+  | nil =>
+    have hcz : c = zero := toList_eq_nil c hC
+    rw [hcz]
+    show plus (plus a b) zero = plus a (plus b zero)
+    rfl
+  | cons c1 C' =>
+    rw [hC] at hcc hdc
+    obtain ⟨⟨_, hic1⟩, _⟩ := inTL_cons.mp hcc
+    cases hB : toList b with
+    | nil =>
+      have hbz : b = zero := toList_eq_nil b hB
+      have h1 : plus a b = a := by rw [hbz]; rfl
+      have h2 : plus b c = c := by
+        rw [plus_eq (s := b) hC, hB]
+        show ofList (([] : List Term) ++ toList c) = c
+        show ofList (toList c) = c
+        exact inT_ofList_toList c hc
+      rw [h1, h2]
+    | cons b1 B' =>
+      rw [hB] at hcb hdb
+      obtain ⟨⟨_, hib1⟩, hcB'⟩ := inTL_cons.mp hcb
+      have hab : toList (plus a b) = (toList a).filter (fun x => le b1 x) ++ toList b :=
+        toList_plus_inT ha hb hB
+      have hbc : toList (plus b c) = (toList b).filter (fun x => le c1 x) ++ toList c :=
+        toList_plus_inT hb hc hC
+      have hL : plus (plus a b) c
+          = ofList ((((toList a).filter (fun x => le b1 x) ++ toList b).filter
+              (fun x => le c1 x)) ++ toList c) := by
+        rw [plus_eq (s := plus a b) hC, hab]
+      cases hcb1' : le c1 b1 with
+      | true =>
+        have hkeep : ((toList a).filter (fun x => le b1 x)).filter (fun x => le c1 x)
+            = (toList a).filter (fun x => le b1 x) := by
+          refine filter_self_of_all _ _ ?_
+          intro x hx
+          have hbx : le b1 x = true := (List.mem_filter.mp hx).2
+          have hix : inT x = true := inTL_inT ha x (List.mem_filter.mp hx).1
+          exact le_trans_inT hic1 hib1 hix hcb1' hbx
+        have hhead : (toList b).filter (fun x => le c1 x)
+            = b1 :: B'.filter (fun x => le c1 x) := by
+          rw [hB]; exact List.filter_cons_of_pos (by rw [hcb1'])
+        have hbc' : toList (plus b c)
+            = b1 :: (B'.filter (fun x => le c1 x) ++ toList c) := by
+          rw [hbc, hhead]; rfl
+        rw [hL, plus_eq (s := a) hbc', hbc, List.filter_append, hkeep, hhead,
+          List.append_assoc]
+      | false =>
+        have hbn : (toList b).filter (fun x => le c1 x) = [] := by
+          rw [hB]; exact filter_nil_of_head_inT hic1 b1 B' hib1 hcB' hdb hcb1'
+        have hswap : ((toList a).filter (fun x => le b1 x)).filter (fun x => le c1 x)
+            = (toList a).filter (fun x => le c1 x) := by
+          refine filter_of_imp _ _ _ ?_
+          intro x hx hcx
+          have hix : inT x = true := inTL_inT ha x hx
+          have hbc1 : le b1 c1 = true := by
+            have h1 : lt b1 c1 = true := lt_of_not_le_inT hic1 hib1 hcb1'
+            show (b1 == c1 || lt b1 c1) = true
+            rw [h1]
+            exact Bool.or_true _
+          exact le_trans_inT hib1 hic1 hix hbc1 hcx
+        have hbc' : toList (plus b c) = c1 :: C' := by
+          rw [hbc, hbn, hC]; rfl
+        rw [hL, plus_eq (s := a) hbc', hbc, List.filter_append, hswap, hbn,
+          List.append_nil, List.nil_append]
+
+/-! ### §63.2 `plus` の閉包、`0 ⊕ ·`、`· ⊕ 1`
+
+§17 の `cnv_plus` と §21 の `lt_plus_left` のうち §63 が使う分だけ。`lt_plus_left` は
+§20 の `lt_ofList` を経由するが、`lt_ofList` は `eq_phi_of_isAP_cnv`(「`CNV` の加法主要項は
+`φ̄`」) を使うので `inT` へはそのままでは上がらない。ここで要るのは `x = 1` の場合だけなので、
+`Evidence/Cert.lean` §15.1 の一般加法主要版の節 (`lt_ap_add`, `plus_one_add`, `le_one_ap`) を
+使って和の長さの帰納で直接示す。§20 は復元していない。 -/
+
+theorem inT_ofList : ∀ (l : List Term), inTL l = true → descL l = true →
+    inT (ofList l) = true
+  | [], _, _ => rfl
+  | [a], h, _ => (inTL_cons.mp h).1.2
+  | a :: b :: t, h, hd => by
+    obtain ⟨⟨hap, hia⟩, hrest⟩ := inTL_cons.mp h
+    obtain ⟨hle, hd2⟩ := descL_cons.mp hd
+    have hbap : b.isAP = true := (inTL_cons.mp hrest).1.1
+    show inT (add a (ofList (b :: t))) = true
+    rw [inT_add_eq, hap, hia, inT_ofList (b :: t) hrest hd2, hdLe_ofList hbap, hle]
+    rfl
+
+/-- **𝔗(M) は `plus` で閉じる。** §17 の `cnv_plus` の `inT` 版。 -/
+theorem inT_plus {s t : Term} (hs : inT s = true) (ht : inT t = true) :
+    inT (plus s t) = true := by
+  obtain ⟨hcs, hds⟩ := inT_toList s hs
+  obtain ⟨hct, hdt⟩ := inT_toList t ht
+  show inT (match toList t with
+            | [] => s
+            | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) = true
+  cases hl : toList t with
+  | nil => exact hs
+  | cons b1 rest =>
+    rw [hl] at hct hdt
+    obtain ⟨⟨_, hb1⟩, _⟩ := inTL_cons.mp hct
+    obtain ⟨k, hk⟩ := filter_eq_take_inT b1 (toList s) hcs hds hb1
+    show inT (ofList ((toList s).filter (fun a => le b1 a) ++ (b1 :: rest))) = true
+    rw [hk]
+    refine inT_ofList _ ?_ ?_
+    · show ((toList s).take k ++ (b1 :: rest)).all _ = true
+      rw [List.all_eq_true]
+      intro x hx
+      rcases List.mem_append.mp hx with h | h
+      · exact List.all_eq_true.mp (inTL_take k (toList s) hcs) x h
+      · exact List.all_eq_true.mp hct x h
+    · refine descL_append _ _ (descL_take k (toList s) hds) hdt ?_
+      intro a b w ha hb
+      injection hb with hb1eq _
+      rw [← hb1eq]
+      have hmem : a ∈ (toList s).filter (fun x => le b1 x) := by
+        rw [hk]; exact getLast?_mem ha
+      exact (List.mem_filter.mp hmem).2
+
+/-- `0` は `plus` の左単位 (成分から組み直せる項の上で)。 -/
+theorem plus_zero_left_inT {t : Term} (ht : inT t = true) : plus zero t = t := by
+  cases hl : toList t with
+  | nil => rw [toList_eq_nil t hl]; rfl
+  | cons b1 rest =>
+    rw [plus_eq (s := zero) hl]
+    show ofList (([] : List Term) ++ toList t) = t
+    rw [List.nil_append]
+    exact inT_ofList_toList t ht
+
+/-- **`v < v ⊕ 1`。** 和の長さの帰納。 -/
+theorem lt_self_plus_one_inT : ∀ (v : Term), inT v = true → lt v (plus v one) = true := by
+  intro v
+  induction v with
+  | zero => intro _; exact rfl
+  | M => intro _; rw [Evidence.Cert.plus_one_ap rfl (Evidence.Cert.le_one_ap rfl),
+      Evidence.Cert.lt_ap_add rfl M one]; exact Evidence.WF.le_self M
+  | omg a _ => intro _; rw [Evidence.Cert.plus_one_ap rfl (Evidence.Cert.le_one_ap rfl),
+      Evidence.Cert.lt_ap_add rfl (omg a) one]; exact Evidence.WF.le_self (omg a)
+  | phi a b _ _ => intro _; rw [Evidence.Cert.plus_one_ap rfl (Evidence.Cert.le_one_ap rfl),
+      Evidence.Cert.lt_ap_add rfl (phi a b) one]; exact Evidence.WF.le_self (phi a b)
+  | psi k a _ _ => intro _; rw [Evidence.Cert.plus_one_ap rfl (Evidence.Cert.le_one_ap rfl),
+      Evidence.Cert.lt_ap_add rfl (psi k a) one]; exact Evidence.WF.le_self (psi k a)
+  | Z a _ => intro _; rw [Evidence.Cert.plus_one_ap rfl (Evidence.Cert.le_one_ap rfl),
+      Evidence.Cert.lt_ap_add rfl (Z a) one]; exact Evidence.WF.le_self (Z a)
+  | add a b _ ihb =>
+    intro h
+    obtain ⟨hap, _, hib, _⟩ := inT_add h
+    have hone : le one a = true := Evidence.Cert.le_one_ap hap
+    have hrec : lt b (plus b one) = true := ihb hib
+    have hne : b ≠ plus b one := by
+      intro hc; rw [← hc, Evidence.WF.lt_irrefl] at hrec; exact Bool.noConfusion hrec
+    rw [Evidence.Cert.plus_one_add hone,
+      Evidence.WF.lt_add_add (by intro hc; injection hc with _ h2; exact hne h2), if_pos rfl]
+    exact hrec
+
+end
+
+/-! ## §63.3 `dict` DISTRIBUTES OVER `bplus`
+
+`bplus x y` is `BT.ofL (x.toL ++ y.toL)` and `dict` is compositional over `.sum`
+(`Trans/Dict.lean`'s `dict_sum`), so the content of
+
+    dict (bplus x y) = plus (dict x) (dict y)
+
+is the `toL`/`ofL` round trip of §53 plus §63.1's associativity.  §62.11 measured the equation
+with ZERO counterexamples and NO side condition (40×40 region values, and the corollary on 80).
+
+THE SIDE CONDITION THE PROOF NEEDS, HONESTLY.  Two, and neither is visible in the equation:
+
+  * `NfSum x` and `NfSum y` (§53) — `ofL` is a section of `toL` only on terms already in
+    that shape, so without it `dict (bplus x y)` and `plus (dict x) (dict y)` are statements
+    about different terms.  `nfSum_bplus`/`nfSum_D`/`nfSum_zero` discharge it everywhere §63
+    uses it, and `nfSum_bVal` below discharges it for the region's own values.
+  * `inT (dict a) = true` for every component `a` of `x.toL ++ y.toL`.  This is where §63.1
+    is consumed: the induction on `l1` peels one component and re-associates, and
+    `plus_assoc_inT` wants all three arguments `inT`.  There is no way around it — §63.1's
+    own measurement shows associativity is FALSE without it.
+
+The second condition is not decoration either: `inT (dict ·)` is exactly the theorem this
+repository does not have (`Evidence/RegionNext.lean` line 14637 and line 15126 both say so).
+`CollapseInT` below isolates it to one line, and §63.4 carries it as a hypothesis rather than
+pretending it is proved. -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+open Trans.Dict (dict)
+
+/-- 成分の像がすべて 𝔗(M) に入るなら、和の像も入る。 -/
+theorem inT_dict_ofL : ∀ (l : List BT), (∀ x ∈ l, inT (dict x) = true) →
+    inT (dict (BT.ofL l)) = true
+  | [], _ => rfl
+  | [a], h => h a (List.Mem.head _)
+  | a :: b :: t, h => by
+    show inT (dict (BT.sum a (BT.ofL (b :: t)))) = true
+    rw [Trans.Dict.dict_sum]
+    exact inT_plus (h a (List.Mem.head _))
+      (inT_dict_ofL (b :: t) (fun z hz => h z (List.Mem.tail a hz)))
+
+/-- **`dict` は成分列の連結を `plus` に送る。** §63.1 を消費するのはここ。 -/
+theorem dict_ofL_append : ∀ (l1 l2 : List BT),
+    (∀ x ∈ l1, inT (dict x) = true) → (∀ x ∈ l2, inT (dict x) = true) →
+    dict (BT.ofL (l1 ++ l2)) = plus (dict (BT.ofL l1)) (dict (BT.ofL l2))
+  | [], l2, _, h2 => by
+    show dict (BT.ofL l2) = plus (dict BT.zero) (dict (BT.ofL l2))
+    rw [show dict BT.zero = zero from rfl]
+    exact (plus_zero_left_inT (inT_dict_ofL l2 h2)).symm
+  | [a], l2, _, _ => by
+    cases l2 with
+    | nil => rfl
+    | cons b t => exact Trans.Dict.dict_sum a (BT.ofL (b :: t))
+  | a :: b :: t, l2, h1, h2 => by
+    have hIH := dict_ofL_append (b :: t) l2 (fun z hz => h1 z (List.Mem.tail a hz)) h2
+    show dict (BT.sum a (BT.ofL (b :: (t ++ l2))))
+        = plus (dict (BT.sum a (BT.ofL (b :: t)))) (dict (BT.ofL l2))
+    rw [Trans.Dict.dict_sum, Trans.Dict.dict_sum,
+      show BT.ofL (b :: (t ++ l2)) = BT.ofL ((b :: t) ++ l2) from rfl, hIH]
+    exact (plus_assoc_inT _ _ _ (h1 a (List.Mem.head _))
+      (inT_dict_ofL (b :: t) (fun z hz => h1 z (List.Mem.tail a hz)))
+      (inT_dict_ofL l2 h2)).symm
+
+/-- **§63.3 の主定理。** -/
+theorem dict_bplus (x y : BT) (hx : NfSum x) (hy : NfSum y)
+    (hdx : ∀ a ∈ x.toL, inT (dict a) = true) (hdy : ∀ a ∈ y.toL, inT (dict a) = true) :
+    dict (bplus x y) = plus (dict x) (dict y) := by
+  show dict (BT.ofL (x.toL ++ y.toL)) = _
+  rw [dict_ofL_append x.toL y.toL hdx hdy,
+    show BT.ofL x.toL = x from hx, show BT.ofL y.toL = y from hy]
+
+theorem dict_D0_zero : dict (BT.D 0 BT.zero) = one := by decide
+
+theorem inT_one : inT one = true := by decide
+
+/-- **`Hsucc` を開ける系。** -/
+theorem dict_bplus_one (x : BT) (hx : NfSum x) (hdx : ∀ a ∈ x.toL, inT (dict a) = true) :
+    dict (bplus x (BT.D 0 BT.zero)) = plus (dict x) one := by
+  rw [dict_bplus x (BT.D 0 BT.zero) hx (nfSum_D 0 BT.zero) hdx
+    (by intro a ha
+        rw [List.mem_singleton.mp (show a ∈ [BT.D 0 BT.zero] from ha), dict_D0_zero]
+        exact inT_one), dict_D0_zero]
+
+end
+
+/-! ## §63.4 THE VALUE HALF OF `Hsucc`, AND THE ONE FACT THAT IS MISSING
+
+WHAT IS PROVED.  `vOf (nd 0 r nil) = plus (vOf r) 1` and `lt (vOf r) (vOf (nd 0 r nil))`, and
+with §61's `hsuccS_index` the whole of `certIn_region`'s `Hsucc` supply for the narrowed
+region — **conditionally on `CollapseInT`**.
+
+WHAT IS NOT PROVED, AND IS NOT WEAKENED AWAY.  `CollapseInT` says
+
+    ∀ u a, inT (dict (BT.D u a)) = true
+
+— "the Buchholz collapse always lands in 𝔗(M)".  It is `Trans/Dict.lean`'s acceptance record
+item (B), which that file states only as `#guard`s over three corpora.  It is MEASURED here
+too (see the `#guard`s below): 1805 `BT` terms of a systematic enumeration that does NOT
+filter by `BT.isStd`, and the 443 distinct components of `bVal` over `popNFB 3 6`, with zero
+counterexamples.  Restricting it to `BT.isStd` would be WRONG for this client: the 443
+components of the region's own values are not all `isStd` (measured below).
+
+Proving it means proving `inT (collapse u x)` — the whole of `wcnf`/`mulL`/`divAP`/`phiNF`
+and, for the strongly critical branch, [Rathjen, 1991] 2.1(vi)'s `(Kset κ α).all (· < α)`.
+That is a section of its own and none of it is attempted here.
+
+AND INDUCTING ON THE INDEX DOES NOT DODGE IT.  `inT_vOf` below is proved by structure on `B`
+and needs no `stdB`, but the induction bottoms out at the components of `bVal t`, which
+`atomsL_bVal` (§53) says are exactly the `BT.D w (bArg w c)` — and `dict` is NOT compositional
+through `.D`: `dict (.D u a) = collapse u (dict a)` throws away the Buchholz syntax.  So the
+index-side induction reaches the same wall from the other side; there is no region-restricted
+version of item 3 that is cheaper than `inT (collapse ·)` itself.  Everything below therefore
+takes `CollapseInT` as an explicit hypothesis, and `hsuccS_supply` cannot be handed to
+`certIn_region` until it is discharged. -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+open Trans.Dict (dict)
+
+/-- **欠けている 1 つの事実。** Buchholz の崩壊の像が 𝔗(M) に入ること。証明されていない。 -/
+def CollapseInT : Prop := ∀ (u : Nat) (a : BT), inT (dict (BT.D u a)) = true
+
+-- `nfSum_bVal` (§56) と `atomsL_bVal` (§53) は既にある。ここで使う。
+
+theorem dictAtoms_bVal (H : CollapseInT) (t : B) :
+    ∀ a ∈ (bVal t).toL, inT (dict a) = true := by
+  intro a ha
+  obtain ⟨u, b, rfl⟩ := atomsL_bVal t a ha
+  exact H u b
+
+theorem inT_dict_bVal (H : CollapseInT) (t : B) : inT (dict (bVal t)) = true := by
+  have h := inT_dict_ofL (bVal t).toL (dictAtoms_bVal H t)
+  rwa [show BT.ofL (bVal t).toL = bVal t from nfSum_bVal t] at h
+
+/-- **§63 の項目 3。** 領域の値は 𝔗(M) の項 — `CollapseInT` を仮定して、しかし `stdB` は不要。 -/
+theorem inT_vOf (H : CollapseInT) (t : B) : inT (vOf t) = true := by
+  cases t with
+  | nil => exact rfl
+  | nd w r c =>
+    show inT (plus one (dict (bVal (B.nd w r c)))) = true
+    exact inT_plus inT_one (inT_dict_bVal H _)
+
+/-- **§63 の項目 4 の値の等式。** -/
+theorem vOf_succ (H : CollapseInT) (r : B) : vOf (.nd 0 r .nil) = plus (vOf r) one := by
+  cases r with
+  | nil => exact rfl
+  | nd w s c =>
+    show plus one (dict (bVal (B.nd 0 (B.nd w s c) B.nil)))
+        = plus (plus one (dict (bVal (B.nd w s c)))) one
+    rw [show bVal (B.nd 0 (B.nd w s c) B.nil)
+          = bplus (bVal (B.nd w s c)) (BT.D 0 BT.zero) from rfl,
+      dict_bplus_one _ (nfSum_bVal _) (dictAtoms_bVal H _)]
+    exact (plus_assoc_inT _ _ _ inT_one (inT_dict_bVal H _) inT_one).symm
+
+theorem lt_vOf_succ (H : CollapseInT) (r : B) : lt (vOf r) (vOf (.nd 0 r .nil)) = true := by
+  rw [vOf_succ H r]
+  exact lt_self_plus_one_inT (vOf r) (inT_vOf H r)
+
+/-- **`certIn_region` の `Hsucc` 供給、狭めた領域で。** `CollapseInT` に依存する。 -/
+theorem hsuccS_supply (H : CollapseInT) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u TM.Term.one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, ValS (BMS.expand S n) u := by
+  intro S v hreg hval hk
+  obtain ⟨r, hv, _, hexp⟩ := hsuccS_index S v hreg hval hk
+  refine ⟨vOf r, ?_, ?_, inT_vOf H r, ?_, fun n => (hexp n).2⟩
+  · rw [hv]; exact vOf_succ H r
+  · rw [hv]; exact inT_vOf H _
+  · rw [hv]; exact lt_vOf_succ H r
+
+end
+
+/-! ## §63.5 MEASURED (frozen)
+
+Negative results first: the three ways `plus (plus a b) c = plus a (plus b c)` fails, one per
+conjunct of the hypothesis it is proved under.  The third is the one that decides the design —
+it says the hypothesis has to be `inT` and not merely "additively principal components,
+descending", because the order is not even TOTAL outside `FragR`. -/
+
+section
+open Trans.Recal (bplus)
+open TM TM.Term
+open Trans.Dict (BT)
+
+-- **否定 1.** 成分に `zero` が混ざると落ちる。`a = 1`, `b = 0 ⊕ ω`, `c = 1`。
+#guard !((TM.Term.toList (add zero omega)).all (fun x => x.isAP))
+#guard TM.Term.plus (TM.Term.plus one (add zero omega)) one
+       != TM.Term.plus one (TM.Term.plus (add zero omega) one)
+
+-- **否定 2.** 成分は加法主要でも、降順でないと落ちる。`a = ω`, `b = 1 ⊕ ε₀`, `c = ω` (次数和 19)。
+#guard (TM.Term.toList (add one (phi one zero))).all (fun x => x.isAP)
+#guard !(Evidence.WF.descL (TM.Term.toList (add one (phi one zero))))
+#guard TM.Term.plus (TM.Term.plus omega (add one (phi one zero))) omega
+       != TM.Term.plus omega (TM.Term.plus (add one (phi one zero)) omega)
+
+-- **否定 3.** 加法主要かつ降順でも `inT` でないと落ちる。`a = c = ψ_M M`, `b = ψ_{ψ_M M} 0`
+--   (次数和 11)。この 2 つは **比較不能** — `lt` がどちらの向きにも `false` で、
+--   `plus` の篩 `le b₁ ·` はそこで意味を失う。`WF` §8.5.5 と同じ場所。
+#guard !(inT (psi M M)) && !(inT (psi (psi M M) zero))
+#guard !(TM.Term.lt (psi M M) (psi (psi M M) zero))
+     && !(TM.Term.lt (psi (psi M M) zero) (psi M M))
+#guard (psi M M) != (psi (psi M M) zero)
+#guard TM.Term.plus (TM.Term.plus (psi M M) (psi (psi M M) zero)) (psi M M)
+       != TM.Term.plus (psi M M) (TM.Term.plus (psi (psi M M) zero) (psi M M))
+
+-- 肯定 1.  領域の値そのもの。`vOf` の相異なる像は 257 個、その先頭 25 個で 25³ 三つ組。
+#guard ((popNFB 3 6).map vOf).eraseDups.length == 257
+#guard ((popNFB 3 6).map vOf).eraseDups.all fun x => TM.Term.inT x
+#guard (((popNFB 3 6).map vOf).eraseDups.take 25).all fun a =>
+  (((popNFB 3 6).map vOf).eraseDups.take 25).all fun b =>
+    (((popNFB 3 6).map vOf).eraseDups.take 25).all fun c =>
+      TM.Term.plus (TM.Term.plus a b) c == TM.Term.plus a (TM.Term.plus b c)
+-- `CNV` はこの母集団の 159 個にしか成り立たない。§19 が届かない理由。
+#guard (((popNFB 3 6).map vOf).eraseDups.filter fun x => Evidence.WF.CNV x).length == 159
+
+-- 肯定 2.  ψ・Z の原子を含む手作りの母集団 (`{1, ω, ε₀, Ω, Γ₀, ψ_{Z0}(Z1), Z1, M, ω^(M⊕1)}`
+--   から作った 0〜3 成分の和のうち `inT` なもの) で、全三つ組。
+private def at63 : List TM.Term :=
+  [one, omega, phi one zero, Z zero, psi (Z zero) zero, psi (Z zero) (Z one),
+   Z one, M, omg (add M one)]
+private def raw63 : List TM.Term :=
+  [zero] ++ at63
+  ++ (at63.flatMap fun a => at63.map fun b => add a b)
+  ++ (at63.flatMap fun a => at63.map fun b => add a (add b one))
+  ++ (at63.map fun a => add a zero) ++ (at63.map fun a => add zero a)
+  ++ (at63.flatMap fun a => at63.map fun b => add (add a b) one)
+private def in63 : List TM.Term := raw63.filter fun x => TM.Term.inT x
+#guard at63.all fun x => TM.Term.inT x
+#guard raw63.length == 271
+#guard in63.length == 100
+#guard in63.all fun a => in63.all fun b => in63.all fun c =>
+  TM.Term.plus (TM.Term.plus a b) c == TM.Term.plus a (TM.Term.plus b c)
+
+-- 肯定 3.  §63.3 の等式 (§62.11 の再掲)。
+#guard (((popNFB 3 6).map bVal).eraseDups.take 25).all fun x =>
+  (((popNFB 3 6).map bVal).eraseDups.take 25).all fun y =>
+    Trans.Dict.dict (bplus x y) == TM.Term.plus (Trans.Dict.dict x) (Trans.Dict.dict y)
+
+-- 肯定 4.  §63.4 が仮定する `CollapseInT` の測定。**証明ではない。**
+--   (i) 領域の値の成分 443 個すべて。
+#guard ((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.length == 443
+#guard ((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.all fun a =>
+  TM.Term.inT (Trans.Dict.dict a)
+--   **`BT.isStd` に制限してはいけない。** 領域の成分は全部が標準ではない。
+#guard !(((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.all fun a => BT.isStd a)
+--   (ii) `isStd` で絞らない `BT` の系統的な列挙 1805 個。
+private def bseed63 : List BT := [.zero, .D 0 .zero, .D 1 .zero, .D 2 .zero, .D 0 (.D 1 .zero)]
+private def bstep63 (l : List BT) : List BT :=
+  l ++ (List.range 3).flatMap (fun u => l.map (fun a => BT.D u a))
+    ++ (l.flatMap fun a => l.map fun b => BT.sum a b)
+private def bcorp63 : List BT := (bstep63 (bstep63 bseed63).eraseDups).eraseDups
+#guard bcorp63.length == 1805
+#guard bcorp63.all fun a => TM.Term.inT (Trans.Dict.dict a)
+
+end
+
+
 end Evidence.Region
