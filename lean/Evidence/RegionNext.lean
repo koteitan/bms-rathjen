@@ -18967,7 +18967,6 @@ hypothesis and is not used.  Nothing here says `dict`'s image is characterised, 
 here is a claim about `BT.isStd`.
 -/
 
-namespace Evidence.Region
 
 /-! ### §65.1 頭部と和 — 𝔗(M) の上の順序の道具
 
@@ -20593,5 +20592,887 @@ open TM TM.Term
 open Evidence.WF
 
 end
+
+/-! ## §66 (G3) IS FALSE — AND SO IS `CollapseInT`.  THE REPAIR IS `BT.isStd`
+
+§65 left `certIn_region`'s second supply waiting on exactly one hypothesis,
+
+    Hp : ∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)
+
+i.e. [Rathjen, 1991] 2.1(vi) for the indices `collapse`'s strongly critical branch actually
+emits.  §66 took 2.1(vi) apart, proved the traceback §64 asked for — and then found the
+hypothesis FALSE.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §66.1  **`PsiIdxOK u x` IS EXACTLY ITS `K`-set conjunct.**  2.1(vi) is a conjunction of five
+         clauses — `κ ∈ R`, `κ ∈ 𝔗(M)`, `α ∈ 𝔗(M)`, `α < M`, `K_κ α < α` — and for the emitted
+         indices the first four are theorems: `(Z ·).isR` and `inT (reg (u+1))` are immediate,
+         and `inT` / `lt · M` of the index come from §64.5's `inT_idxOf` once the fold's state
+         invariant `StInv` is available at the visited state.  Making `StInv` available is the
+         one non-trivial step, because §64.5's `fold_inv` DEMANDS the `ψ` facts it is supposed
+         to deliver: `scanSt_stInv` breaks the circle by running the two inductions
+         simultaneously along `scanSt`.  The result is `psiIdxOK_iff_ksetIdxOK`: for
+         `x ∈ 𝔗(M)` below `M`, `PsiIdxOK u x ↔ KsetIdxOK u x`.
+
+  §66.2  **THE TRACEBACK.**  §64 named the missing structural fact as "`Kset w i` traces back
+         through `mulL` / `plus` / `omegaNF` to `Kset w` of the `wcnf` components of `x`".
+         It is proved here in full, with no hypothesis — and SHARPER than asked, because
+         `wcnf` stops at the first component below `w`:
+
+             y ∈ Kset (reg (u+1)) i  →  y ∈ KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x))
+
+         (`Kset_scanSt_big`), whence `y ∈ Kset (reg (u+1)) x` (`Kset_scanSt_sub`).  One
+         membership lemma per operator carries it — `ofList`, `plus`, `ofNat`, `reg`,
+         `omegaNF`, `phiNF`, `phiNFsucc`, `phiNFdefault`, `splitFin`, `logOm`, `subAP`, `sub1`,
+         `divAP`, `mulL`, `wA`, `wC`, `wcnf`, `idxOf`, `scanSt` — and the `reg` one is what
+         makes `mulL w ·` lose its `w`: `Kset κ Ω_{u+1}` is empty because `Ω_{u+1} = Z n` and
+         `Kset κ (Z β) = Kset κ β = Kset κ n = ∅`.  `KsetBigOK` is the sufficient condition the
+         traceback buys, and `psiIdxOK_of_bigOK` is the reduction.
+
+  §66.3  **(G3) IS FALSE, AND `not_psiIdxOK_dict` PROVES IT.**  Smallest counterexample,
+         `BT`-size 4:
+
+             u = 0,   a = ψ₁(ψ₃0)   (`BT.D 1 (BT.D 3 BT.zero)`)
+
+         `dict a = ψ_{Ω₂}(Ω₃)`, which is a genuine term of 𝔗(M).  At `u = 0` the base is
+         `w = Ω₁`, `wcnf` returns the single pair `(ψ_{Ω₂}(Ω₃), 1)`, the strongly critical
+         branch fires, and the emitted index is `ψ_{Ω₂}(Ω₃)` itself — but
+         `K_{Ω₁} ψ_{Ω₂}(Ω₃) = {Ω₃}` and `Ω₃ ≮ ψ_{Ω₂}(Ω₃)`, so `ψ_{Ω₁}` of it is not a term.
+         **Hence `CollapseInT` (§63) is FALSE too** (`not_collapseInT`):
+         `inT (dict (ψ₀(ψ₁(ψ₃0)))) = false`, and over ALL 3966 `BT` terms of the 3-fold
+         closure of `{0}` under `ψ_u` (`u < 4`) and `⊕`, that is the ONLY failure.
+
+         WHY §64's 1805-TERM SWEEP MISSED IT.  `bcorp64` uses subscripts 0,1,2 only, and the
+         pattern needs an inner subscript ≥ u+2 ABOVE the middle one: at the middle level
+         `u' = 1` the base is `Ω₂`, and `dict (ψ₂0) = Ω₂` divides out exactly (`a = 1`, Veblen
+         branch, nothing emitted), while `dict (ψ₃0) = Ω₃` does not (`a = Ω₃ ≥ Ω₂`, strongly
+         critical branch, index `Ω₃`).  So `ψ₀(ψ₁(ψ₂0))` is fine and `ψ₀(ψ₁(ψ₃0))` is not:
+         the corpus was one subscript short.
+
+  §66.4  **THE REPAIR IS `BT.isStd`, AND IT IS MEASURED, NOT PROVED.**  `PsiIdxOKStd` and
+         `CollapseInTStd` add exactly Buchholz's standardness of the collapsed term, and
+         `collapseInTStd_of_psiIdxOKStd` proves the second from the first — the induction
+         goes through because every `BT`-subterm of a standard term is standard.
+         `PsiIdxOKStd` itself is NOT proved: 0 failures over `bcorp` (1805) and a second,
+         subscript-3 corpus `ccorp` (1761), at `u = 0,1,2,3`.
+
+WHAT IS NOT CLAIMED, AND WHAT THE REFUTATION COSTS.  §65's `collapseInT_of_gap3` and
+`hsuccS_supply_of_gap3` carry `∀ u a, PsiIdxOK u (dict a)`, which §66.3 refutes, so **they are
+now known to be VACUOUS and must not be used**, exactly as §65 said of §64's `DivDescInT`
+consumers.  `Hsucc` is therefore NOT closed and is further from closed than §65 believed.
+Nor does `BT.isStd` immediately rescue the region: of the 443 `bVal` components the region
+actually produces, 280 are NOT `BT.isStd`, though all 443 do satisfy `PsiIdxOK` at
+`u = 0,1,2,3` (measured).  So a §67 has two jobs: prove `PsiIdxOKStd`, and find the weaker
+condition the region's own terms satisfy.
+-/
+
+
+/-! ### §66.1 2.1(vi) の 5 つの連言のうち 4 つは定理
+
+`inT (ψκα)` は `κ ∈ R`・`inT κ`・`inT α`・`α < M`・`K_κ α < α` の連言。強臨界枝が吐く指数に
+ついて、前の 4 つはここで落ちる。難所は「畳み込みの状態が `StInv` を満たす」ことで、§64.5 の
+`fold_inv` はそれを出すのに `ψ` の事実を要求する — 循環している。`scanSt_stInv` は
+`scanSt` に沿って 2 つの帰納法を同時に回してこの循環を切る。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **2.1(vi) の最後の連言だけ。** `PsiIdxOK` から易しい 4 つを落としたもの。 -/
+def KsetIdxOK (u : Nat) (x : Term) : Prop :=
+  ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+    le (reg (u+1)) p.2.1 = true →
+    (Kset (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2)).all
+      (fun y => lt y (idxOf (reg (u+1)) p.1 p.2)) = true
+
+/-- `Ω_{u+1} = Z u` は正則 ([Rathjen, 1991] 2.1(vii))。 -/
+theorem isR_reg_succ (u : Nat) : (reg (u+1)).isR = true := rfl
+
+/-- `inT (ψκα)` の 5 連言をそのまま書き下したもの。 -/
+theorem inT_psi_eq (k a : Term) :
+    inT (psi k a) =
+      (k.isR && inT k && inT a && lt a M && (Kset k a).all (fun x => lt x a)) := rfl
+
+/-- `inT (ψκα)` から最後の連言を取り出す。 -/
+theorem ksetAll_of_inT_psi {k a : Term} (h : inT (psi k a) = true) :
+    (Kset k a).all (fun x => lt x a) = true := by
+  rw [inT_psi_eq, Bool.and_eq_true] at h
+  exact h.2
+
+/-- **易しい 4 つ。** `K` の条件さえあれば、吐かれた指数の `ψ` は 𝔗(M) の項。 -/
+theorem inT_psi_idx {w : Term} (hR : w.isR = true) (hw : inT w = true) (hlw : lt w M = true)
+    {s : Option Term × Option Term} {ac : Term × Term} (hs : StInv s)
+    (h1 : inT ac.1 = true) (h2 : lt ac.1 M = true) (h3 : inT ac.2 = true)
+    (h4 : lt ac.2 M = true)
+    (hk : (Kset w (idxOf w s ac)).all (fun y => lt y (idxOf w s ac)) = true) :
+    inT (psi w (idxOf w s ac)) = true := by
+  obtain ⟨hi, hli⟩ := inT_idxOf mulDescInT hw hlw hs h1 h2 h3 h4
+  rw [inT_psi_eq, hR, hw, hi, hli, hk]
+  rfl
+
+/-- **循環を切る。** `scanSt` に沿って「状態は `StInv`」と「吐かれる `ψ` は 𝔗(M) の項」を
+    同時に回す。§64.5 の `fold_inv` は後者を仮説に取るので、これがないと使えない。 -/
+theorem scanSt_stInv {w base : Term} (hR : w.isR = true) (hw : inT w = true)
+    (hlw : lt w M = true) (hb : inT base = true) (hlb : lt base M = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ p ∈ scanSt w base s l, le w p.2.1 = true →
+        (Kset w (idxOf w p.1 p.2)).all (fun y => lt y (idxOf w p.1 p.2)) = true) →
+      ∀ p ∈ scanSt w base s l,
+        StInv p.1 ∧ (le w p.2.1 = true → inT (psi w (idxOf w p.1 p.2)) = true) := by
+  intro l
+  induction l with
+  | nil => intro s _ _ _ p hp; cases hp
+  | cons ac t ih =>
+    intro s hs hall hk p hp
+    have hhead : StInv s ∧ (le w ac.1 = true → inT (psi w (idxOf w s ac)) = true) := by
+      refine ⟨hs, ?_⟩
+      intro hle
+      obtain ⟨g1, g2, g3, g4⟩ := hall ac (List.Mem.head _)
+      exact inT_psi_idx hR hw hlw hs g1 g2 g3 g4 (hk (s, ac) (List.Mem.head _) hle)
+    rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt w base (stepF w base s ac) t from hp)
+      with h | h
+    · rw [h]; exact hhead
+    · have hs' : StInv (stepF w base s ac) :=
+        stepF_inv mulDescInT hw hlw hb hlb hs (hall ac (List.Mem.head _)) hhead.2
+      exact ih (stepF w base s ac) hs' (fun a ha => hall a (List.Mem.tail _ ha))
+        (fun q hq => hk q (List.Mem.tail _ hq)) p h
+
+theorem stInv_none : StInv ((none : Option Term), (none : Option Term)) := by
+  constructor
+  · intro i0 h; cases h
+  · intro v h; cases h
+
+/-- **§66.1 の主定理 (→)。** `K` の条件だけで (G3) が出る。 -/
+theorem psiIdxOK_of_ksetIdxOK (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (Hk : KsetIdxOK u x) : PsiIdxOK u x := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  intro p hp hle
+  exact (scanSt_stInv (isR_reg_succ u) (inT_reg (u+1)) (ltM_reg (u+1)) (inT_baseOf u)
+    (ltM_baseOf u) (wcnf (reg (u+1)) (toList x)).1 (none, none) stInv_none hallOK Hk p hp).2 hle
+
+/-- **§66.1 の主定理 (←)。** 逆は仮説なしで出る。 -/
+theorem ksetIdxOK_of_psiIdxOK (u : Nat) (x : Term) (Hp : PsiIdxOK u x) : KsetIdxOK u x :=
+  fun p hp hle => ksetAll_of_inT_psi (Hp p hp hle)
+
+/-- **(G3) はちょうど 2.1(vi) の `K` の連言。** 残り 4 つは定理。 -/
+theorem psiIdxOK_iff_ksetIdxOK (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true) :
+    PsiIdxOK u x ↔ KsetIdxOK u x :=
+  ⟨ksetIdxOK_of_psiIdxOK u x, psiIdxOK_of_ksetIdxOK u x hx hlx⟩
+
+end
+
+/-! ### §66.2 追跡 — 吐かれた指数の `K` は `x` の「大きい成分」の `K` に戻る
+
+演算ごとに 1 本ずつ。`ω^·`・`φ`・`plus`・`ofList`・`mulL`・`subAP`・`sub1`・`divAP`・`logOm`・
+`wA`・`wC`・`wcnf`・`idxOf`・`scanSt`。`mulL w ·` が `w` を落とすのは `Kset κ Ω_{u+1} = ∅`
+だから ([Rathjen, 1991] 2.2(vii) と 2.2(iv))。`wcnf` は `w` 未満の成分で止まるので、追跡先は
+`toList x` 全体ではなく先頭の「大きい」部分 `bigPart` でよい。 -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg)
+open TM TM.Term
+open Evidence.WF
+
+def KsetL (k : Term) : List Term → List Term
+  | [] => []
+  | a :: t => Kset k a ++ KsetL k t
+
+theorem mem_KsetL_iff (k y : Term) : ∀ (l : List Term),
+    (y ∈ KsetL k l) ↔ (∃ a, a ∈ l ∧ y ∈ Kset k a) := by
+  intro l
+  induction l with
+  | nil =>
+    constructor
+    · intro h; cases h
+    · intro h; obtain ⟨a, ha, _⟩ := h; cases ha
+  | cons b t ih =>
+    constructor
+    · intro h
+      rcases List.mem_append.mp (show y ∈ Kset k b ++ KsetL k t from h) with h1 | h1
+      · exact ⟨b, List.Mem.head _, h1⟩
+      · obtain ⟨a, ha, hy⟩ := ih.mp h1
+        exact ⟨a, List.Mem.tail _ ha, hy⟩
+    · intro h
+      obtain ⟨a, ha, hy⟩ := h
+      rcases List.mem_cons.mp ha with h1 | h1
+      · exact List.mem_append.mpr (Or.inl (by rw [← h1]; exact hy))
+      · exact List.mem_append.mpr (Or.inr (ih.mpr ⟨a, h1, hy⟩))
+
+theorem mem_KsetL_of_sub {k y : Term} {l1 l2 : List Term}
+    (hs : ∀ a, a ∈ l1 → a ∈ l2) (h : y ∈ KsetL k l1) : y ∈ KsetL k l2 := by
+  obtain ⟨a, ha, hy⟩ := (mem_KsetL_iff k y l1).mp h
+  exact (mem_KsetL_iff k y l2).mpr ⟨a, hs a ha, hy⟩
+
+theorem KsetL_append (k : Term) : ∀ (l1 l2 : List Term),
+    KsetL k (l1 ++ l2) = KsetL k l1 ++ KsetL k l2 := by
+  intro l1
+  induction l1 with
+  | nil => intro l2; rfl
+  | cons a t ih =>
+    intro l2
+    show Kset k a ++ KsetL k (t ++ l2) = (Kset k a ++ KsetL k t) ++ KsetL k l2
+    rw [ih l2, List.append_assoc]
+
+theorem mem_KsetL_append {k y : Term} {l1 l2 : List Term} (h : y ∈ KsetL k (l1 ++ l2)) :
+    y ∈ KsetL k l1 ∨ y ∈ KsetL k l2 := by
+  rw [KsetL_append] at h
+  exact List.mem_append.mp h
+
+theorem Kset_eq_KsetL (k : Term) : ∀ t : Term, Kset k t = KsetL k (toList t)
+  | zero => rfl
+  | M => rfl
+  | add a b => by
+    show Kset k a ++ Kset k b = Kset k a ++ KsetL k (toList b)
+    rw [Kset_eq_KsetL k b]
+  | omg a => (List.append_nil _).symm
+  | phi a b => (List.append_nil _).symm
+  | psi p b => (List.append_nil _).symm
+  | Z b => (List.append_nil _).symm
+
+theorem Kset_ofList (k : Term) : ∀ l : List Term, Kset k (ofList l) = KsetL k l
+  | [] => rfl
+  | [a] => (List.append_nil _).symm
+  | a :: b :: t => by
+    show Kset k a ++ Kset k (ofList (b :: t)) = Kset k a ++ KsetL k (b :: t)
+    rw [Kset_ofList k (b :: t)]
+
+
+theorem plus_nil {s t : Term} (h : toList t = []) : plus s t = s := by
+  show (match toList t with
+        | [] => s
+        | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) = s
+  rw [h]
+
+theorem plus_cons66 {s t b1 : Term} {r : List Term} (h : toList t = b1 :: r) :
+    plus s t = ofList ((toList s).filter (fun a => le b1 a) ++ (b1 :: r)) := by
+  show (match toList t with
+        | [] => s
+        | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) = _
+  rw [h]
+
+theorem mem_Kset_plus {k y s t : Term} (h : y ∈ Kset k (plus s t)) :
+    y ∈ Kset k s ∨ y ∈ Kset k t := by
+  cases hl : toList t with
+  | nil => rw [plus_nil hl] at h; exact Or.inl h
+  | cons b1 r =>
+    rw [plus_cons66 hl, Kset_ofList] at h
+    rcases mem_KsetL_append h with h1 | h1
+    · refine Or.inl ?_
+      rw [Kset_eq_KsetL]
+      exact mem_KsetL_of_sub (fun a ha => (List.mem_filter.mp ha).1) h1
+    · refine Or.inr ?_
+      rw [Kset_eq_KsetL, hl]
+      exact h1
+
+theorem Kset_one (k : Term) : Kset k one = [] := rfl
+
+theorem mem_Kset_ofNat {k y : Term} : ∀ n : Nat, y ∈ Kset k (ofNat n) → False
+  | 0 => fun h => by cases h
+  | n+1 => fun h => by
+    rcases mem_Kset_plus (show y ∈ Kset k (plus (ofNat n) one) from h) with h1 | h1
+    · exact mem_Kset_ofNat n h1
+    · rw [Kset_one] at h1; cases h1
+
+theorem mem_Kset_reg {k y : Term} : ∀ u : Nat, y ∈ Kset k (reg u) → False
+  | 0 => fun h => by cases h
+  | u+1 => fun h => mem_Kset_ofNat u (show y ∈ Kset k (ofNat u) from h)
+
+
+theorem mem_of_mem_take {α : Type} {a : α} : ∀ (n : Nat) (l : List α), a ∈ l.take n → a ∈ l
+  | 0, l, h => by cases h
+  | _+1, [], h => by cases h
+  | n+1, b :: t, h => by
+    rcases List.mem_cons.mp (show a ∈ b :: t.take n from h) with h1 | h1
+    · rw [h1]; exact List.Mem.head _
+    · exact List.Mem.tail _ (mem_of_mem_take n t h1)
+
+theorem mem_Kset_splitFin_fst {k y b : Term} (h : y ∈ Kset k (splitFin b).1) : y ∈ Kset k b := by
+  have he : (splitFin b).1 = ofList ((toList b).take ((toList b).length -
+      (((toList b).reverse.takeWhile (fun x => x == one)).length))) := rfl
+  rw [he, Kset_ofList] at h
+  rw [Kset_eq_KsetL]
+  exact mem_KsetL_of_sub (fun a ha => mem_of_mem_take _ _ ha) h
+
+theorem mem_Kset_phiNFdefault {k y a b : Term} (h : y ∈ Kset k (phiNFdefault a b)) :
+    y ∈ Kset k a ∨ y ∈ Kset k b := by
+  unfold TM.Term.phiNFdefault at h
+  split at h
+  · exact Or.inl h
+  · exact List.mem_append.mp h
+
+theorem mem_Kset_phiNFsucc {k y a b : Term} (h : y ∈ Kset k (phiNFsucc a b)) :
+    y ∈ Kset k a ∨ y ∈ Kset k b := by
+  unfold TM.Term.phiNFsucc at h
+  split at h
+  · rename_i g m heq
+    have hgb : ∀ z, z ∈ Kset k g → z ∈ Kset k b := by
+      intro z hz
+      refine mem_Kset_splitFin_fst ?_
+      rw [heq]; exact hz
+    have hphi : ∀ (n : Nat), y ∈ Kset k (phi a (plus g (ofNat n))) →
+        y ∈ Kset k a ∨ y ∈ Kset k b := by
+      intro n h1
+      rcases List.mem_append.mp
+        (show y ∈ Kset k a ++ Kset k (plus g (ofNat n)) from h1) with h2 | h2
+      · exact Or.inl h2
+      · rcases mem_Kset_plus h2 with h3 | h3
+        · exact Or.inr (hgb y h3)
+        · exact absurd h3 (fun hc => mem_Kset_ofNat _ hc)
+    split at h
+    · split at h
+      · split at h
+        · exact hphi _ h
+        · exact mem_Kset_phiNFdefault h
+      · split at h
+        · exact hphi _ h
+        · exact mem_Kset_phiNFdefault h
+    · exact mem_Kset_phiNFdefault h
+
+theorem mem_Kset_phiNF {k y a b : Term} (h : y ∈ Kset k (phiNF a b)) :
+    y ∈ Kset k a ∨ y ∈ Kset k b := by
+  unfold TM.Term.phiNF at h
+  split at h
+  · exact Or.inr h
+  · split at h
+    · split at h
+      · exact Or.inr h
+      · exact mem_Kset_phiNFsucc h
+    · exact mem_Kset_phiNFsucc h
+
+theorem mem_Kset_omegaNF {k y a : Term} (h : y ∈ Kset k (omegaNF a)) : y ∈ Kset k a := by
+  unfold TM.Term.omegaNF at h
+  split at h
+  · exact h
+  · split at h
+    · cases h
+    · rcases mem_Kset_phiNF h with h1 | h1
+      · cases h1
+      · exact h1
+
+
+theorem mem_Kset_logOm {k y : Term} (p : Term) (h : y ∈ Kset k (logOm p)) : y ∈ Kset k p := by
+  unfold Trans.Dict.logOm at h
+  split at h
+  · rename_i b
+    split at h
+    · rcases mem_Kset_plus h with h1 | h1
+      · exact h1
+      · rw [Kset_one] at h1; cases h1
+    · exact h
+  · exact h
+
+theorem mem_Kset_subAP {k y w c : Term} (h : y ∈ Kset k (subAP w c)) : y ∈ Kset k c := by
+  unfold Trans.Dict.subAP at h
+  split at h
+  · cases h
+  · rename_i p rest heq
+    split at h
+    · rw [Kset_ofList] at h
+      rw [Kset_eq_KsetL, heq]
+      exact mem_KsetL_of_sub (fun a ha => List.Mem.tail _ ha) h
+    · exact h
+
+theorem mem_Kset_sub1 {k y c : Term} (h : y ∈ Kset k (sub1 c)) : y ∈ Kset k c := by
+  unfold Trans.Dict.sub1 at h
+  split at h
+  · cases h
+  · rename_i p rest heq
+    split at h
+    · rw [Kset_ofList] at h
+      rw [Kset_eq_KsetL, heq]
+      exact mem_KsetL_of_sub (fun a ha => List.Mem.tail _ ha) h
+    · exact h
+
+theorem mem_Kset_divAP {k y w p : Term} (h : y ∈ Kset k (divAP w p)) : y ∈ Kset k p :=
+  mem_Kset_logOm p (mem_Kset_subAP (mem_Kset_omegaNF h))
+
+theorem mem_Kset_mulL {k y w z : Term} (h : y ∈ Kset k (mulL w z)) :
+    y ∈ Kset k w ∨ y ∈ Kset k z := by
+  rw [show mulL w z = ofList ((toList z).map (fun p => omegaNF (plus w (logOm p)))) from rfl,
+    Kset_ofList] at h
+  obtain ⟨a, ha, hy⟩ := (mem_KsetL_iff k y _).mp h
+  obtain ⟨p, hp, hpe⟩ := List.mem_map.mp ha
+  rw [← hpe] at hy
+  rcases mem_Kset_plus (mem_Kset_omegaNF hy) with h1 | h1
+  · exact Or.inl h1
+  · refine Or.inr ?_
+    rw [Kset_eq_KsetL]
+    exact (mem_KsetL_iff k y _).mpr ⟨p, hp, mem_Kset_logOm p h1⟩
+
+
+theorem mem_Kset_wA {k y w p : Term} (h : y ∈ Kset k (wA w p)) : y ∈ Kset k p := by
+  rw [show wA w p
+      = ofList (((toList (logOm p)).filter (fun q => !lt q w)).map (divAP w)) from rfl,
+    Kset_ofList] at h
+  obtain ⟨a, ha, hy⟩ := (mem_KsetL_iff k y _).mp h
+  obtain ⟨q, hq, hqe⟩ := List.mem_map.mp ha
+  rw [← hqe] at hy
+  refine mem_Kset_logOm p ?_
+  rw [Kset_eq_KsetL]
+  exact (mem_KsetL_iff k y _).mpr ⟨q, (List.mem_filter.mp hq).1, mem_Kset_divAP hy⟩
+
+theorem mem_Kset_wC {k y w p : Term} (h : y ∈ Kset k (wC w p)) : y ∈ Kset k p := by
+  rw [show wC w p = omegaNF (ofList ((toList (logOm p)).filter (fun q => lt q w))) from rfl] at h
+  have h1 := mem_Kset_omegaNF h
+  rw [Kset_ofList] at h1
+  refine mem_Kset_logOm p ?_
+  rw [Kset_eq_KsetL]
+  exact mem_KsetL_of_sub (fun a ha => (List.mem_filter.mp ha).1) h1
+
+/-- `w` 以上の先頭成分だけ。`wcnf` は最初の `< w` で止まるので、指数が見るのはここだけ。 -/
+def bigPart (w : Term) : List Term → List Term
+  | [] => []
+  | p :: rest => if lt p w then [] else p :: bigPart w rest
+
+theorem bigPart_sub (w : Term) : ∀ (L : List Term) (a : Term), a ∈ bigPart w L → a ∈ L := by
+  intro L
+  induction L with
+  | nil => intro a h; cases h
+  | cons p rest ih =>
+    intro a h
+    by_cases hlp : lt p w = true
+    · rw [show bigPart w (p :: rest) = [] from by
+        show (if lt p w = true then [] else p :: bigPart w rest) = []
+        rw [if_pos hlp]] at h
+      cases h
+    · rw [show bigPart w (p :: rest) = p :: bigPart w rest from by
+        show (if lt p w = true then [] else p :: bigPart w rest) = _
+        rw [if_neg hlp]] at h
+      rcases List.mem_cons.mp h with h1 | h1
+      · rw [h1]; exact List.Mem.head _
+      · exact List.Mem.tail _ (ih a h1)
+
+theorem mem_Kset_wcnf {k w y : Term} : ∀ (L : List Term) (ac : Term × Term),
+    ac ∈ (wcnf w L).1 → (y ∈ Kset k ac.1 ∨ y ∈ Kset k ac.2) → y ∈ KsetL k (bigPart w L) := by
+  intro L
+  induction L with
+  | nil => intro ac hac _; cases hac
+  | cons p rest ih =>
+    intro ac hac hy
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp] at hac; cases hac
+    · have hlp' : lt p w = false := by
+        cases hh : lt p w with
+        | false => rfl
+        | true => exact absurd hh hlp
+      have hbig : bigPart w (p :: rest) = p :: bigPart w rest := by
+        show (if lt p w = true then [] else p :: bigPart w rest) = _
+        rw [if_neg hlp]
+      rw [hbig]
+      have hp : ∀ z, (z ∈ Kset k (wA w p) ∨ z ∈ Kset k (wC w p)) →
+          z ∈ KsetL k (p :: bigPart w rest) := by
+        intro z hz
+        refine (mem_KsetL_iff k z (p :: bigPart w rest)).mpr ⟨p, List.Mem.head _, ?_⟩
+        rcases hz with h1 | h1
+        · exact mem_Kset_wA h1
+        · exact mem_Kset_wC h1
+      have htail : ∀ z, z ∈ KsetL k (bigPart w rest) → z ∈ KsetL k (p :: bigPart w rest) :=
+        fun z hz => mem_KsetL_of_sub (fun a ha => List.Mem.tail _ ha) hz
+      rw [wcnf_cons_ge hlp'] at hac
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at hac
+        have hmem0 : ∀ (q : Term × Term), q ∈ fst → q ∈ (wcnf w rest).1 := by
+          intro q hq; rw [hr]; exact hq
+        cases fst with
+        | nil =>
+          rw [List.mem_singleton] at hac
+          rw [hac] at hy
+          exact hp y hy
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac' : ac ∈ (if (wA w p == a') = true
+                then ((wA w p, plus (wC w p) c') :: ps, snd)
+                else ((wA w p, wC w p) :: (a', c') :: ps, snd)).1 := hac
+            by_cases heq : (wA w p == a') = true
+            · rw [if_pos heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · rw [h1] at hy
+                rcases hy with h2 | h2
+                · exact hp y (Or.inl h2)
+                · rcases mem_Kset_plus h2 with h3 | h3
+                  · exact hp y (Or.inr h3)
+                  · exact htail y (ih (a', c') (hmem0 _ (List.Mem.head _)) (Or.inr h3))
+              · exact htail y (ih ac (hmem0 _ (List.Mem.tail _ h1)) hy)
+            · rw [if_neg heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · rw [h1] at hy; exact hp y hy
+              · exact htail y (ih ac (hmem0 _ h1) hy)
+
+theorem mem_Kset_idxOf {k w y : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (hw : ∀ z, z ∈ Kset k w → False)
+    (h : y ∈ Kset k (idxOf w s ac)) :
+    (∃ i0, s.1 = some i0 ∧ y ∈ Kset k i0) ∨ y ∈ Kset k ac.1 ∨ y ∈ Kset k ac.2 := by
+  have hd : ∀ z, z ∈ Kset k (mulL (mulL w (subAP w ac.1)) ac.2) →
+      z ∈ Kset k ac.1 ∨ z ∈ Kset k ac.2 := by
+    intro z hz
+    rcases mem_Kset_mulL hz with h1 | h1
+    · rcases mem_Kset_mulL h1 with h2 | h2
+      · exact absurd h2 (fun hc => hw z hc)
+      · exact Or.inl (mem_Kset_subAP h2)
+    · exact Or.inr h1
+  unfold idxOf at h
+  split at h
+  · exact Or.inr (hd y (mem_Kset_sub1 h))
+  · rename_i i0 heq
+    rcases mem_Kset_plus h with h1 | h1
+    · exact Or.inl ⟨i0, heq, h1⟩
+    · exact Or.inr (hd y h1)
+
+theorem stepF_fst (w base : Term) (s : Option Term × Option Term) (ac : Term × Term) :
+    (stepF w base s ac).1 = if le w ac.1 = true then some (idxOf w s ac) else s.1 := by
+  unfold stepF
+  split <;> rfl
+
+/-- 畳み込みが通るどの状態でも、吐かれた指数の `K` は成分の `K` の外に出ない。 -/
+theorem Kset_scanSt {k w base : Term} (hw : ∀ z, z ∈ Kset k w → False) (S : Term → Prop) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+      (∀ i0, s.1 = some i0 → ∀ y, y ∈ Kset k i0 → S y) →
+      (∀ ac ∈ l, ∀ y, (y ∈ Kset k ac.1 ∨ y ∈ Kset k ac.2) → S y) →
+      ∀ p ∈ scanSt w base s l, ∀ y, y ∈ Kset k (idxOf w p.1 p.2) → S y := by
+  intro l
+  induction l with
+  | nil => intro s _ _ p hp; cases hp
+  | cons ac t ih =>
+    intro s hs hall p hp y hy
+    have hhead : ∀ z, z ∈ Kset k (idxOf w s ac) → S z := by
+      intro z hz
+      rcases mem_Kset_idxOf hw hz with h1 | h1
+      · obtain ⟨i0, hi0, hz0⟩ := h1
+        exact hs i0 hi0 z hz0
+      · exact hall ac (List.Mem.head _) z h1
+    rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt w base (stepF w base s ac) t from hp)
+      with h | h
+    · rw [h] at hy; exact hhead y hy
+    · refine ih (stepF w base s ac) ?_ (fun a ha => hall a (List.Mem.tail _ ha)) p h y hy
+      intro i0 hi0 z hz
+      rw [stepF_fst] at hi0
+      split at hi0
+      · exact hhead z (by rw [Option.some.inj hi0]; exact hz)
+      · exact hs i0 hi0 z hz
+
+/-- **§66.2 の主定理。** 吐かれた指数の `K` は `x` の「大きい成分」の `K` の中。 -/
+theorem Kset_scanSt_big (u : Nat) (x : Term) :
+    ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+      ∀ y, y ∈ Kset (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2) →
+        y ∈ KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x)) := by
+  refine Kset_scanSt (fun z hz => mem_Kset_reg (u+1) hz)
+    (fun y => y ∈ KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x)))
+    (wcnf (reg (u+1)) (toList x)).1 (none, none) (fun i0 hi0 => by cases hi0) ?_
+  intro ac hac y hy
+  exact mem_Kset_wcnf (toList x) ac hac hy
+
+/-- 粗い形。§64 が名指しした「`Kset w i` は `x` の `K` に戻る」そのもの。 -/
+theorem Kset_scanSt_sub (u : Nat) (x : Term) :
+    ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+      ∀ y, y ∈ Kset (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2) → y ∈ Kset (reg (u+1)) x := by
+  intro p hp y hy
+  rw [Kset_eq_KsetL]
+  exact mem_KsetL_of_sub (fun a ha => bigPart_sub _ _ a ha) (Kset_scanSt_big u x p hp y hy)
+
+/-- **追跡が買う十分条件。** `x` の大きい成分の `K` の各元が、吐かれる指数より小さいこと。
+    `KsetIdxOK` より強いが、指数の `K` を計算せずに `x` だけで書けている。 -/
+def KsetBigOK (u : Nat) (x : Term) : Prop :=
+  ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+    le (reg (u+1)) p.2.1 = true →
+    ∀ y ∈ KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x)),
+      lt y (idxOf (reg (u+1)) p.1 p.2) = true
+
+/-- `KsetBigOK` の判定器。 -/
+def bigOKb (u : Nat) (x : Term) : Bool :=
+  (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all fun p =>
+    !(le (reg (u+1)) p.2.1) ||
+      (KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x))).all
+        (fun y => lt y (idxOf (reg (u+1)) p.1 p.2))
+
+theorem ksetBigOK_of_b {u : Nat} {x : Term} (h : bigOKb u x = true) : KsetBigOK u x := by
+  intro p hp hle y hy
+  have h1 := List.all_eq_true.mp h p hp
+  rw [hle, Bool.not_true, Bool.false_or] at h1
+  exact List.all_eq_true.mp h1 y hy
+
+theorem ksetIdxOK_of_bigOK (u : Nat) (x : Term) (H : KsetBigOK u x) : KsetIdxOK u x := by
+  intro p hp hle
+  rw [List.all_eq_true]
+  intro y hy
+  exact H p hp hle y (Kset_scanSt_big u x p hp y hy)
+
+/-- **§66.1 と §66.2 を継ぐ。** -/
+theorem psiIdxOK_of_bigOK (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : KsetBigOK u x) : PsiIdxOK u x :=
+  psiIdxOK_of_ksetIdxOK u x hx hlx (ksetIdxOK_of_bigOK u x H)
+
+end
+
+/-! ### §66.3 (G3) は偽 — そして `CollapseInT` も偽
+
+最小の反例は `u = 0`, `a = ψ₁(ψ₃0)`。`dict a = ψ_{Ω₂}(Ω₃)` は 𝔗(M) の項だが、`u = 0` の底
+`w = Ω₁` で `wcnf` が返す唯一の対は `(ψ_{Ω₂}(Ω₃), 1)`、強臨界枝が点火して指数は
+`ψ_{Ω₂}(Ω₃)` 自身、そして `K_{Ω₁} ψ_{Ω₂}(Ω₃) = {Ω₃}` は指数より小さくない。 -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (wcnf reg dict)
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+/-- 反例の引数。`BT` の大きさは 4。 -/
+def badArg : BT := BT.D 1 (BT.D 3 BT.zero)
+
+/-- 判定器は `PsiIdxOK` の必要条件。 -/
+theorem psiIdxOKb_of_psiIdxOK {u : Nat} {x : Term} (H : PsiIdxOK u x) :
+    psiIdxOKb u x = true := by
+  show (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all
+      (fun p => !(le (reg (u+1)) p.2.1) ||
+        inT (psi (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2))) = true
+  rw [List.all_eq_true]
+  intro p hp
+  cases hle : le (reg (u+1)) p.2.1 with
+  | false => rfl
+  | true => rw [H p hp hle]; rfl
+
+/-- **(G3) の個別反例。** -/
+theorem not_psiIdxOK_badArg : ¬ PsiIdxOK 0 (dict badArg) := fun H =>
+  Bool.noConfusion ((psiIdxOKb_of_psiIdxOK H).symm.trans
+    (show psiIdxOKb 0 (dict badArg) = false from rfl))
+
+/-- **(G3) は偽。** §65 の `collapseInT_of_gap3` と `hsuccS_supply_of_gap3` の仮説は
+    満たされない — したがってあの 2 つは真空で、使ってはならない。 -/
+theorem not_psiIdxOK_dict : ¬ (∀ (u : Nat) (a : BT), PsiIdxOK u (dict a)) :=
+  fun H => not_psiIdxOK_badArg (H 0 badArg)
+
+/-- 同じ反例で `K` の連言そのものも落ちる。 -/
+theorem not_ksetIdxOK_dict : ¬ (∀ (u : Nat) (a : BT), KsetIdxOK u (dict a)) := fun H =>
+  not_psiIdxOK_badArg
+    (psiIdxOK_of_ksetIdxOK 0 (dict badArg)
+      (show inT (dict badArg) = true from rfl)
+      (show lt (dict badArg) M = true from rfl) (H 0 badArg))
+
+/-- **§63 の `CollapseInT` も偽。** `dict (ψ₀(ψ₁(ψ₃0)))` は 𝔗(M) の項ではない。 -/
+theorem not_collapseInT : ¬ CollapseInT := fun H =>
+  Bool.noConfusion ((H 0 badArg).symm.trans
+    (show inT (dict (BT.D 0 badArg)) = false from rfl))
+
+end
+
+/-! ### §66.4 直しの候補 — `BT` の標準性 (測定のみ、未証明)
+
+反例 `ψ₀(ψ₁(ψ₃0))` は Buchholz の意味で標準でない (`BT.isStd` が偽) — 一方その引数
+`ψ₁(ψ₃0)` は標準である。標準性を側条件に足すと、測った限り反例は消える。ここでは名前を
+つけ、片方からもう片方が出ることだけを証明する。**どちらも未証明のまま残す。** -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (reg dict collapse)
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+/-- **直しの候補 1。** Buchholz 標準性つきの (G3)。**未証明** (§66.5 で測定のみ)。 -/
+def PsiIdxOKStd : Prop :=
+  ∀ (u : Nat) (a : BT), BT.isStd (BT.D u a) = true → PsiIdxOK u (dict a)
+
+/-- **直しの候補 2。** Buchholz 標準性つきの `CollapseInT`。 -/
+def CollapseInTStd : Prop :=
+  ∀ (u : Nat) (a : BT), BT.isStd (BT.D u a) = true → inT (dict (BT.D u a)) = true
+
+/-- 標準な `BT` 項の部分項はまた標準。`D` の場合。 -/
+theorem isStd_of_D {u : Nat} {a : BT} (h : BT.isStd (BT.D u a) = true) : BT.isStd a = true :=
+  ((Bool.and_eq_true _ _).mp h).1
+
+/-- 同じく `sum` の場合。 -/
+theorem isStd_of_sum {a b : BT} (h : BT.isStd (BT.sum a b) = true) :
+    BT.isStd a = true ∧ BT.isStd b = true := by
+  obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp h
+  obtain ⟨h2, h3⟩ := (Bool.and_eq_true _ _).mp h1
+  exact ⟨((Bool.and_eq_true _ _).mp h2).2, h3⟩
+
+/-- **標準な `BT` の像は 𝔗(M) に入る — 直した (G3) を仮定して。** -/
+theorem inT_dict_of_std (H : PsiIdxOKStd) : ∀ a : BT, BT.isStd a = true →
+    inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero => fun _ => ⟨inT_zero, lt_zero_M⟩
+  | .D u a => fun h => by
+    have ih := inT_dict_of_std H a (isStd_of_D h)
+    exact inT_collapse_gap3 u (dict a) ih.1 ih.2 (H u a h)
+  | .sum a b => fun h => by
+    have iha := inT_dict_of_std H a (isStd_of_sum h).1
+    have ihb := inT_dict_of_std H b (isStd_of_sum h).2
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+/-- **候補 2 は候補 1 から出る。** -/
+theorem collapseInTStd_of_psiIdxOKStd (H : PsiIdxOKStd) : CollapseInTStd :=
+  fun u a h => (inT_dict_of_std H (BT.D u a) h).1
+
+end
+
+/-! ### §66.5 測定 (凍結)
+
+否定的なものから。母集団は 3 つ — §64 の `bcorp` (添字 0..2)、添字 3 を入れた第 2 母集団
+`ccorp`、そして `{0}` を `ψ_u` (`u < 4`) と `⊕` で 3 回閉じた `BT` 項**全部** `small2`。
+(G3) の反例が §64 をすり抜けたのは、`bcorp` に添字 3 がなかったからで、それだけ。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+private def emitted66 (u : Nat) (x : Term) : List Term :=
+  ((scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).filter
+    (fun p => le (reg (u+1)) p.2.1)).map (fun p => idxOf (reg (u+1)) p.1 p.2)
+private def ksetBig66 (u : Nat) (x : Term) : List Term :=
+  KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x))
+private def dOf66 (u : Nat) (p : Term) : Term :=
+  mulL (mulL (reg (u+1)) (subAP (reg (u+1)) (wA (reg (u+1)) p))) (wC (reg (u+1)) p)
+
+private def bseed66 : List BT := [.zero, .D 0 .zero, .D 1 .zero, .D 2 .zero, .D 0 (.D 1 .zero)]
+private def bstep66 (l : List BT) : List BT :=
+  l ++ (List.range 3).flatMap (fun u => l.map (fun a => BT.D u a))
+    ++ (l.flatMap fun a => l.map fun b => BT.sum a b)
+private def bcorp : List BT := (bstep66 (bstep66 bseed66).eraseDups).eraseDups
+
+private def cseed66 : List BT := [.zero, .D 0 .zero, .D 1 .zero, .D 2 .zero, .D 3 .zero,
+  .D 1 (.D 2 .zero), .D 0 (.D 2 .zero)]
+private def cstep66 (l : List BT) : List BT :=
+  l ++ (List.range 4).flatMap (fun u => l.map (fun a => BT.D u a))
+    ++ (l.flatMap fun a => l.map fun b => BT.sum a b)
+private def ccorp : List BT := (cstep66 ((cstep66 cseed66).eraseDups.take 40)).eraseDups
+
+private def allBT66 : Nat → Nat → List BT
+  | 0, _ => [.zero]
+  | n+1, k =>
+    let sub := (allBT66 n k).eraseDups
+    (sub ++ ((List.range k).flatMap fun u => sub.map fun a => BT.D u a)
+        ++ (sub.flatMap fun a => sub.map fun b => BT.sum a b)).eraseDups
+private def small2 : List BT := allBT66 3 4
+
+/-! **否定 1 — (G3) は偽。** 最小の反例は `u = 0`, `a = ψ₁(ψ₃0)` (`BT` の大きさ 4)。 -/
+
+#guard badArg.size == 3
+#guard (BT.D 0 badArg).size == 4
+#guard BT.isStd badArg
+#guard !(BT.isStd (BT.D 0 badArg))
+--   `dict a = ψ_{Ω₂}(Ω₃)` は 𝔗(M) の項で `M` の下。
+#guard dict badArg == psi (reg 2) (reg 3)
+#guard inT (dict badArg) && lt (dict badArg) M
+--   `u = 0` の底は `Ω₁`、`wcnf` の対はただひとつ `(ψ_{Ω₂}(Ω₃), 1)`、強臨界枝が点火する。
+#guard (wcnf (reg 1) (toList (dict badArg))).1 == [(dict badArg, one)]
+#guard (wcnf (reg 1) (toList (dict badArg))).2 == zero
+#guard le (reg 1) (dict badArg)
+--   吐かれる指数は `x` 自身で、`K_{Ω₁}` はその外に出る。
+#guard emitted66 0 (dict badArg) == [dict badArg]
+#guard Kset (reg 1) (dict badArg) == [reg 3]
+#guard !(lt (reg 3) (dict badArg))
+#guard !(psiIdxOKb 0 (dict badArg))
+--   したがって `CollapseInT` も偽。
+#guard !(inT (dict (BT.D 0 badArg)))
+
+/-! **否定 2 — なぜ §64 の 1805 項がすり抜けたか。** 添字 2 では割り切れて枝が点火しない。 -/
+
+#guard bcorp.length == 1805
+#guard (bcorp.filter fun a => !(inT (dict a))).length == 0
+#guard inT (dict (BT.D 0 (BT.D 1 (BT.D 2 BT.zero))))
+#guard psiIdxOKb 0 (dict (BT.D 1 (BT.D 2 BT.zero)))
+--   `dict (ψ₂0) = Ω₂` はちょうど底なので `a = 1` になりヴェブレン枝、`dict (ψ₃0) = Ω₃` は違う。
+#guard dict (BT.D 2 BT.zero) == reg 2
+#guard dict (BT.D 3 BT.zero) == reg 3
+#guard wA (reg 2) (reg 2) == one
+#guard wA (reg 2) (reg 3) == reg 3
+#guard !(le (reg 2) (wA (reg 2) (reg 2)))
+#guard le (reg 2) (wA (reg 2) (reg 3))
+
+/-! **否定 3 — 全数探索。** `{0}` を `ψ_u` (`u < 4`) と `⊕` で 3 回閉じた 3966 項すべてで、
+`inT ∘ dict` が落ちるのはちょうど 1 個、上の反例だけ。標準なものは 1 個も落ちない。 -/
+
+#guard small2.length == 3966
+#guard (small2.filter fun a => !(inT (dict a))).length == 1
+#guard (small2.filter fun a => !(inT (dict a))) == [BT.D 0 badArg]
+#guard (small2.filter fun a => BT.isStd a && !(inT (dict a))).length == 0
+
+/-! **否定 4 — 第 2 母集団。** 添字 3 を入れると (G3) は 1761 項中 67 回落ちる。 -/
+
+#guard ccorp.length == 1761
+#guard (ccorp.filter fun a => !(psiIdxOKb 0 (dict a))).length == 67
+#guard (ccorp.filter fun a => !(inT (dict a))).length == 1
+
+/-! **否定 5 — 落とした候補たち** (母集団は `bcorp`、`u = 0`)。
+
+  * 「`K_w i` は空」— 空でない成分がある (2 件)。§64 の観察の再確認。
+  * 「`K_w x` の元はすべて吐かれる指数より小さい」— 10 件落ちる。落ちる元は `wcnf` の
+    **末尾** `ρ` にいて、指数はそれを見ない。追跡を `bigPart` まで細めた理由がこれ。
+  * 「大きい成分 `p` ごとに `K_w p < p`」(candQ) — 1 件落ちる。
+  * 「大きい成分 `p` ごとに `K_w p < d_p`」(candS) — 1 件落ちる。
+  * 「`d_p ≤` 吐かれる指数」(candT) — 1 件落ちる。 -/
+
+#guard (bcorp.filter fun a => !(ksetBig66 0 (dict a)).isEmpty).length == 2
+#guard (bcorp.filter fun a =>
+    !((emitted66 0 (dict a)).all fun i =>
+        (Kset (reg 1) (dict a)).all fun y => lt y i)).length == 10
+#guard (bcorp.filter fun a =>
+    !((bigPart (reg 1) (toList (dict a))).all fun p =>
+        (Kset (reg 1) p).all fun y => lt y p)).length == 1
+#guard (bcorp.filter fun a =>
+    !((bigPart (reg 1) (toList (dict a))).all fun p =>
+        (Kset (reg 1) p).all fun y => lt y (dOf66 0 p))).length == 1
+#guard (bcorp.filter fun a =>
+    !((bigPart (reg 1) (toList (dict a))).all fun p =>
+        (emitted66 0 (dict a)).all fun i => le (dOf66 0 p) i)).length == 1
+
+/-! 肯定。 -/
+
+/-! **肯定 1 — 直しの候補。** `BT.isStd (ψ_u a)` を側条件に足すと、両母集団・`u = 0,1,2,3`
+で 0 失敗。`PsiIdxOKStd` はこれを述べたもので、**証明はしていない**。 -/
+
+#guard (List.range 4).all fun u =>
+  (bcorp.filter fun a => BT.isStd (BT.D u a) && !(psiIdxOKb u (dict a))).length == 0
+#guard (List.range 4).all fun u =>
+  (ccorp.filter fun a => BT.isStd (BT.D u a) && !(psiIdxOKb u (dict a))).length == 0
+#guard (ccorp.filter fun a => BT.isStd (BT.D 0 a)).length == 322
+#guard (ccorp.filter fun a => BT.isStd (BT.D 3 a)).length == 448
+#guard (bcorp.filter fun a => BT.isStd a && !(inT (dict a))).length == 0
+#guard (ccorp.filter fun a => BT.isStd a && !(inT (dict a))).length == 0
+
+/-! **肯定 2 — §66.2 が買う十分条件 `KsetBigOK`。** `bcorp` では `u = 0,1,2,3` で 0 失敗。
+`ccorp` では `psiIdxOKb` より **多く** 落ちる (75 対 67) ので、これは真に強い十分条件であって
+(G3) と同値ではない。`ksetBigOK_of_b` があるので、下の `#guard` は 1805 項ぶんの
+`KsetBigOK` の証明そのものになっている。 -/
+
+#guard (List.range 4).all fun u => (bcorp.filter fun a => !(bigOKb u (dict a))).length == 0
+#guard (ccorp.filter fun a => !(bigOKb 0 (dict a))).length == 75
+
+/-! **肯定 3 — 領域そのもの。** `popNFB 3 6` が作る 443 個の `bVal` 成分では、(G3) も
+`KsetBigOK` も `u = 0,1,2,3` で 0 失敗。ただし **280 個は `BT.isStd` ではない** ので、
+`PsiIdxOKStd` を証明しても領域はそれだけでは通らない。 -/
+
+#guard ((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.length == 443
+#guard (((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.filter
+  fun a => !(BT.isStd a)).length == 280
+#guard (List.range 4).all fun u =>
+  (((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.filter
+    fun a => !(psiIdxOKb u (dict a))).length == 0
+#guard (List.range 4).all fun u =>
+  (((popNFB 3 6).flatMap fun t => (bVal t).toL).eraseDups.filter
+    fun a => !(bigOKb u (dict a))).length == 0
+
+end
+
+/-! ### §66.6 公理 -/
+
 
 end Evidence.Region
