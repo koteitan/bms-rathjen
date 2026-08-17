@@ -14575,4 +14575,495 @@ theorem markRun_bMark (t : B) (m : Nat) (hnf : nfB t = true) (h : markOKB t m = 
 
 end
 
+/-! ## §61 BMS STANDARDNESS ON THE INDEX SIDE, AND THE FIRST TWO SUPPLIES
+
+§60 closed the port: `transPort (psM (matB t 0)) = bVal t`.  §61 measures what the region
+must be, and hands `certIn_region` the two supplies that do not need the limit clause.
+
+THE PROBLEM §60 LEFT.  The generalised region is `nfB` — the Trans-side reduced form — and
+on it `Hlim`'s clause `lt (value (fsB t n)) (value t)` is FALSE.  The three smallest
+failures are `(0,0)(1,0)(2,1)(1,1)`, `(0,0)(1,0)(2,0)(3,1)(2,1)` and
+`(0,0)(1,1)(2,1)(3,2)(2,2)`, and all three are NON-STANDARD as Bashicu matrices: no
+expansion path from `(0,0)` reaches them.  `nfB` is strictly weaker than BMS standardness.
+
+WHAT THIS SECTION FINDS.  A decidable structural predicate `stdB : B → Bool` that agrees
+with the C reference implementation `~/proofs/yaBMS/c/bms -s` on **236 422 matrices**,
+with zero mismatches in either direction:
+
+    popNFB 3 6      670   (verdicts frozen verbatim below, as a 670-character string)
+    enumB   3 6  16 332   1105 standard
+    enumB   4 5   5 101    250 standard
+    enumB   3 7 153 421   5507 standard
+    enumB   4 6  60 898   1263 standard
+
+and, on a population of a completely different shape — the depth-three expansion closure of
+the table's 52 width-two rows, `popB`, 877 matrices reaching **47 columns**, every one of
+which the reference calls standard — `stdB` accepts all 877.  So the agreement is not an
+artefact of small enumerations.
+
+`stdB` is `nfB` (a node's level is at most its parent's plus one) conjoined with two
+conditions, and both are the classical normal-form conditions for a Buchholz-style ψ:
+
+  CNF   the summands of every argument — and of the whole term — descend, `nonIncr`;
+  BNF   for a node of level `v` with argument `a`: scanning `a` and descending only
+        through nodes of level `≥ v`, every node of level EXACTLY `v` has an argument
+        strictly below `a`.  That is `visOK`, and the comparison is `cmpS`, the ordinary
+        lexicographic-from-the-left order on descending sums.
+
+THE ONE SURPRISE, worth recording because the first attempt failed on it: Buchholz's own
+condition constrains `ψ_u(b)` for EVERY `u ≥ v`, not only `u = v`.  That version is sound
+(no false positives) but rejects 75 of the 670 — every index containing the diagonal
+`(0,0)(1,1)(2,2)`, which IS standard.  Constraining only `u = v` is exact.  So the pair
+sequence system's standard form is NOT Buchholz's normal form; it is the weaker one.
+
+WHAT `stdB` BUYS, measured:
+
+  (i)   `stdB t → stdB (fsB t n)` — closure under the fundamental sequence.  Zero
+        counterexamples over all five populations above, and to three iterated steps.
+  (ii)  row 326's index `(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)` is `stdB`, and so is every
+        member of its fundamental sequence.
+  (iii) **the failing clause is restored.**  Over `popNFB 3 6`, 13 limit indices violate
+        `lt (value (fsB t n)) (value t)`; **none of the 13 is `stdB`**, and on the 235
+        `stdB` indices the clause holds to `n ≤ 8`, together with strict increase.
+
+WHAT IS PROVED HERE.  `kind_matB` (§4) and `oR_matB` (§5) — the latter carries §60 through
+`oRB` and `dict` to the value the table actually holds — and `hzero_supply` plus the INDEX
+half of `Hsucc` (§6).
+
+WHAT IS **NOT** CLAIMED.  `stdB t = true` is not proved equivalent to `BMS.Standard`; the
+evidence is the 236 422-matrix agreement with the reference implementation, nothing more.
+(i) is measured, not proved, so `Hclosed` for this region is still owed.  The VALUE half of
+`Hsucc` — `v = plus u one`, `inT v`, `inT u`, `lt u v` — is measured and NOT proved: it
+needs `plus`-algebra and an `inT (dict ·)` theorem that this repository does not have.
+`Hlim` is not touched. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+
+/-! ### 1. 降べきの和の比較
+
+`B` は「和を左に積む」形なので、比較には成分を左から右へ並べ直す必要がある。
+`toLA` は蓄積器つきの並べ直し、`cmpS` はその上の辞書式比較 (短い方が小さい)。 -/
+
+/-- 和の成分の重み。停止性の測度。 -/
+def sizeL : List (Nat × B) → Nat
+  | [] => 0
+  | p :: r => sizeB p.2 + 1 + sizeL r
+
+/-- 和の成分を左から右へ (蓄積器つき)。 -/
+def toLA : B → List (Nat × B) → List (Nat × B)
+  | .nil, acc => acc
+  | .nd v r a, acc => toLA r ((v, a) :: acc)
+
+/-- 和の成分を左から右へ。 -/
+def toL (t : B) : List (Nat × B) := toLA t []
+
+theorem sizeL_toLA : ∀ (t : B) (acc : List (Nat × B)),
+    sizeL (toLA t acc) = sizeB t + sizeL acc := by
+  intro t
+  induction t with
+  | nil => intro acc; show sizeL acc = 0 + sizeL acc; omega
+  | nd v r a ihr _ =>
+    intro acc
+    show sizeL (toLA r ((v, a) :: acc)) = sizeB r + 1 + sizeB a + sizeL acc
+    rw [ihr ((v, a) :: acc)]
+    show sizeB r + (sizeB a + 1 + sizeL acc) = _
+    omega
+
+/-- 成分の重みの合計は節の個数。 -/
+theorem sizeL_toL (t : B) : sizeL (toL t) = sizeB t := by
+  rw [toL, sizeL_toLA t []]
+  rfl
+
+theorem toLA_append : ∀ (t : B) (acc : List (Nat × B)), toLA t acc = toL t ++ acc := by
+  intro t
+  induction t with
+  | nil => intro acc; rfl
+  | nd v r a ihr _ =>
+    intro acc
+    show toLA r ((v, a) :: acc) = toL (B.nd v r a) ++ acc
+    rw [ihr ((v, a) :: acc)]
+    show toL r ++ ((v, a) :: acc) = (toLA r [(v, a)]) ++ acc
+    rw [ihr [(v, a)]]
+    rw [List.append_assoc]
+    rfl
+
+/-- 節を 1 つ足すと成分が右に 1 つ増える。 -/
+theorem toL_nd (v : Nat) (r a : B) : toL (.nd v r a) = toL r ++ [(v, a)] := by
+  show toLA r [(v, a)] = _
+  rw [toLA_append r [(v, a)]]
+
+/-- **和の比較。** 左から辞書式、成分が尽きた方が小さい。降べきの和の上でだけ意味を持つ。 -/
+def cmpS : List (Nat × B) → List (Nat × B) → Ordering
+  | [], [] => .eq
+  | [], _ :: _ => .lt
+  | _ :: _, [] => .gt
+  | (u, a) :: xs, (w, b) :: ys =>
+      if u < w then .lt
+      else if w < u then .gt
+      else
+        match cmpS (toL a) (toL b) with
+        | .eq => cmpS xs ys
+        | o => o
+termination_by x y => sizeL x + sizeL y
+decreasing_by
+  · rw [sizeL_toL, sizeL_toL]
+    show _ < (sizeB a + 1 + sizeL xs) + (sizeB b + 1 + sizeL ys)
+    omega
+  · show sizeL xs + sizeL ys < (sizeB a + 1 + sizeL xs) + (sizeB b + 1 + sizeL ys)
+    omega
+
+/-- 1 つの節どうしの比較。 -/
+def cmpN (u : Nat) (a : B) (w : Nat) (b : B) : Ordering := cmpS [(u, a)] [(w, b)]
+
+/-! ### 2. `stdB`
+
+三つの条件の連言。`nfB` は §19 のもの、`nonIncr` は和が降べきであること、`visOK` は
+「段 `v` の節の引数の中に現れる段 `v` の節は、その引数より真に小さい引数を持つ」。 -/
+
+/-- 先頭の 2 つが降べきか。 -/
+def hdOK (x : Nat × B) : List (Nat × B) → Bool
+  | [] => true
+  | y :: _ => !(cmpN x.1 x.2 y.1 y.2 == Ordering.lt)
+
+/-- 成分が左から右へ広義単調減少。 -/
+def nonIncrL : List (Nat × B) → Bool
+  | [] => true
+  | x :: r => hdOK x r && nonIncrL r
+
+/-- 和が降べき。 -/
+def nonIncr (t : B) : Bool := nonIncrL (toL t)
+
+/-- **段 `v` の節の許容条件。** 引数 `a` の中を走査し、段が `v` 未満の節で打ち切る。
+    段がちょうど `v` の節は、その引数が `a` より真に小さくなければならない。 -/
+def visOK (v : Nat) (a : B) : B → Bool
+  | .nil => true
+  | .nd u r c =>
+      visOK v a r &&
+      (if u < v then true
+       else (if u == v then cmpS (toL c) (toL a) == Ordering.lt else true) && visOK v a c)
+
+/-- すべての節での条件。 -/
+def stdIn : B → Bool
+  | .nil => true
+  | .nd v r c => stdIn r && nonIncr c && visOK v c c && stdIn c
+
+/-- **BMS 標準性の添字側の判定。** `~/proofs/yaBMS/c/bms -s` と 236 422 個で一致。 -/
+def stdB (t : B) : Bool := nfB t && nonIncr t && stdIn t
+
+/-! ### 3. 測定 (凍結)
+
+`bms -s` の判定を Lean のリテラルとして凍結する。1 行目は `popNFB 3 6` の 670 個ぶんの
+判定そのもの、以下は各母集団の標準行列の個数。すべて参照実装の出力。 -/
+
+/-- `~/proofs/yaBMS/c/bms -s` を `popNFB 3 6` の 670 個の行列に順に当てた結果。 -/
+def bmsStd670 : String :=
+  "1111110111011001111101101011001110000101011100000101001011001111100010110000000001011001101110110011111011010110010001100011001000010011101100000000010110101100000100100100000000000000100001000000110110101100001010111010000101011100000111110000000000001000010100001001101110000000000000000000000000010000000000001000010000000100001110000000111101111100000000000000010100101100111100110011110000111011000000001100110011111100000000001000100000100010110000101110111000000010001011000000000000000000000000000000000000000000000000000000000000000100001000000000000101100111110001111000000000011011010110011100001010111000001010010110011111000101100000000010110011011101100111"
+
+#guard bmsStd670.length == 670
+#guard (bmsStd670.toList.filter (· == '1')).length == 235
+-- **`stdB` は参照実装そのもの。**
+#guard (String.join ((popNFB 3 6).map fun t => if stdB t then "1" else "0")) == bmsStd670
+-- 参照実装が数えた標準行列の個数と、`stdB` が数えた個数。
+#guard ((enumB 3 6).filter stdB).length == 1105
+#guard ((enumB 4 5).filter stdB).length == 250
+#guard ((enumB 3 7).filter stdB).length == 5507
+#guard ((enumB 4 6).filter stdB).length == 1263
+
+/-- 標準な添字の母集団。 -/
+def popS (L n : Nat) : List B := (popNFB L n).filter stdB
+
+#guard (popS 3 6).length == 235
+#guard (popS 4 6).length == 250
+
+-- (i) 基本列で閉じる。**測定のみ。**
+#guard (enumB 3 6).all fun t => !(stdB t) || (List.range 6).all fun n => stdB (fsB t n)
+#guard (enumB 4 5).all fun t => !(stdB t) || (List.range 6).all fun n => stdB (fsB t n)
+#guard (enumB 3 7).all fun t => !(stdB t) || (List.range 4).all fun n => stdB (fsB t n)
+#guard (enumB 4 6).all fun t => !(stdB t) || (List.range 4).all fun n => stdB (fsB t n)
+-- 2 段、3 段でも。
+#guard (popNFB 3 6).all fun t => !(stdB t) ||
+  (List.range 4).all fun n => (List.range 4).all fun m => stdB (fsB (fsB t n) m)
+#guard (popNFB 3 6).all fun t => !(stdB t) ||
+  (List.range 3).all fun n => (List.range 3).all fun m => (List.range 3).all fun k =>
+    stdB (fsB (fsB (fsB t n) m) k)
+
+-- 表そのもの。参照実装は `popB` の 877 個と `wideRows` の 52 個をすべて標準と呼び、
+-- `stdB` もすべて受け入れる。`popB` は最大 47 列で、上の列挙とは母集団の形が違う。
+#guard popB.length == 877
+#guard popB.all fun S => match decodeB S with | none => false | some t => stdB t
+#guard wideRows.all fun M => match decodeB M with | none => false | some t => stdB t
+#guard popB.all fun S => match decodeB S with
+  | none => false | some t => (List.range 5).all fun n => stdB (fsB t n)
+
+-- (ii) 326 行目の添字。
+#guard (decodeB [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]]).isSome
+#guard match decodeB [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1]] with
+  | none => false
+  | some t => nfB t && stdB t && (List.range 6).all fun n => stdB (fsB t n)
+
+/-- 添字の値。`oR` と同じ `1 +` の約束を持つ (空行列は 0)。 -/
+def vOf : B → TM.Term
+  | .nil => TM.Term.zero
+  | t@(.nd _ _ _) => TM.Term.plus TM.Term.one (Trans.Dict.dict (bVal t))
+
+/-- 添字が自分で読む種別。 -/
+def kindB : B → BMS.Kind
+  | .nil => .zero
+  | .nd v _ .nil => if v == 0 then .succ else .lim
+  | .nd _ _ _ => .lim
+
+-- `vOf` は表の値そのもの (§5 が定理にする)。
+#guard (popNFB 3 6).all fun t => Trans.Recal.oR (matB t 0) == some (vOf t)
+
+-- (iii) **落ちていた極限の条項が戻る。** `nfB` だけでは 13 個が落ち、そのどれも `stdB` でない。
+#guard ((popNFB 3 6).filter fun t => kindB t == BMS.Kind.lim &&
+  !((List.range 5).all fun n => TM.Term.lt (vOf (fsB t n)) (vOf t))).length == 13
+#guard ((popNFB 3 6).filter fun t => kindB t == BMS.Kind.lim && stdB t &&
+  !((List.range 5).all fun n => TM.Term.lt (vOf (fsB t n)) (vOf t))).length == 0
+-- 標準な添字の上では `n ≤ 8` まで成り立ち、真に増える。**測定のみ。**
+#guard (popS 3 6).all fun t => !(kindB t == BMS.Kind.lim) ||
+  (List.range 9).all fun n => TM.Term.lt (vOf (fsB t n)) (vOf t)
+#guard (popS 4 6).all fun t => !(kindB t == BMS.Kind.lim) ||
+  (List.range 6).all fun n => TM.Term.lt (vOf (fsB t n)) (vOf t)
+#guard (popS 3 6).all fun t => !(kindB t == BMS.Kind.lim) ||
+  (List.range 8).all fun n => TM.Term.lt (vOf (fsB t n)) (vOf (fsB t (n+1)))
+#guard (popS 4 6).all fun t => !(kindB t == BMS.Kind.lim) ||
+  (List.range 5).all fun n => TM.Term.lt (vOf (fsB t n)) (vOf (fsB t (n+1)))
+-- 3 つの最小の反例は、どれも `stdB` でない。
+#guard (decodeB [[0,0],[1,0],[2,1],[1,1]]).isSome
+#guard match decodeB [[0,0],[1,0],[2,1],[1,1]] with
+  | none => false | some t => nfB t && !(stdB t)
+#guard match decodeB [[0,0],[1,0],[2,0],[3,1],[2,1]] with
+  | none => false | some t => nfB t && !(stdB t)
+#guard match decodeB [[0,0],[1,1],[2,1],[3,2],[2,2]] with
+  | none => false | some t => nfB t && !(stdB t)
+-- Buchholz そのものの条件 (段が `v` 以上のすべての節を縛る) は**強すぎる**。
+-- 対角 `(0,0)(1,1)(2,2)` を含む 75 個を落としてしまう。その最小のもの。
+#guard match decodeB [[0,0],[1,1],[2,2]] with
+  | none => false | some t => stdB t
+-- `Hsucc` の値の側。**測定のみ、証明されていない。**
+#guard (popS 3 6).all fun t => !(kindB t == BMS.Kind.succ) ||
+  (vOf t == TM.Term.plus (vOf (fsB t 0)) TM.Term.one)
+#guard (popS 3 6).all fun t => !(kindB t == BMS.Kind.succ) ||
+  (List.range 5).all fun n => fsB t n == fsB t 0
+#guard (popS 3 6).all fun t => TM.Term.inT (vOf t)
+#guard (popS 4 6).all fun t => TM.Term.inT (vOf t)
+-- `CNV` は 235 個中 150 個。`certIn_region_cnv` は最上位の値にしか要らない。
+#guard ((popS 3 6).filter fun t => Evidence.WF.CNV (vOf t)).length == 150
+-- 値は添字を分ける。
+#guard ((popS 3 6).map vOf).eraseDups.length == 235
+
+/-! ### 4. 種別
+
+`BMS.lnz` は列の**最後の**非零行なので、種別が後続になるのは最後の列が `[0,0]` の
+ときちょうど — つまり最上位に段 0 の葉が来たとき。仮定は要らない。 -/
+
+/-- 空でない添字の行列の最後の列。 -/
+theorem matB_getLast? (a : B) (ha : a ≠ .nil) (d : Nat) :
+    (matB a d).getLast? = some [d + lastDep a, lastLvl a] := by
+  have h := matB_last a ha d
+  calc (matB a d).getLast?
+      = ((matB a d).dropLast ++ [[d + lastDep a, lastLvl a]]).getLast? := by rw [← h]
+    _ = some [d + lastDep a, lastLvl a] := getLast?_append_ne _ _ (by simp)
+
+/-- **種別は添字が決める。** 仮定は要らない。 -/
+theorem kind_matB (t : B) : BMS.kind (matB t 0) = kindB t := by
+  cases t with
+  | nil => rfl
+  | nd v r a =>
+    cases a with
+    | nil =>
+      show (match (matB r 0 ++ ([0, v] :: matB B.nil 1)).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match lnz L with | none => BMS.Kind.succ | some _ => BMS.Kind.lim)
+        = (if v == 0 then BMS.Kind.succ else BMS.Kind.lim)
+      rw [show ([0, v] :: matB B.nil 1) = [[0, v]] from rfl,
+        getLast?_append_ne _ _ (by simp)]
+      show (match lnz [0, v] with | none => BMS.Kind.succ | some _ => BMS.Kind.lim) = _
+      rw [lnz_pair]
+      cases v with
+      | zero => rfl
+      | succ k => rw [if_pos (by omega)]; rfl
+    | nd w b c =>
+      have ha : (B.nd w b c) ≠ .nil := by intro h; exact B.noConfusion h
+      have hne : matB (B.nd w b c) 1 ≠ [] := by
+        intro h
+        have := matB_len_pos (B.nd w b c) 1 ha
+        rw [h] at this
+        exact absurd this (by simp)
+      show (match (matB r 0 ++ ([0, v] :: matB (B.nd w b c) 1)).getLast? with
+        | none => BMS.Kind.zero
+        | some L => match lnz L with | none => BMS.Kind.succ | some _ => BMS.Kind.lim)
+        = BMS.Kind.lim
+      rw [getLast?_append_ne _ _ (by simp), List.getLast?_cons_of_ne_nil hne,
+        matB_getLast? (B.nd w b c) ha 1]
+      show (match lnz [1 + lastDep (B.nd w b c), lastLvl (B.nd w b c)] with
+        | none => BMS.Kind.succ | some _ => BMS.Kind.lim) = _
+      rw [lnz_pair]
+      cases hl : lastLvl (B.nd w b c) with
+      | zero => rw [if_neg (by omega), if_pos (by omega)]
+      | succ _ => rw [if_pos (by omega)]
+
+/-- 種別 0 の添字は `nil` だけ。 -/
+theorem kindB_nd_nil (v : Nat) (r : B) :
+    kindB (.nd v r .nil) = (if v == 0 then BMS.Kind.succ else BMS.Kind.lim) := rfl
+
+theorem kindB_zero : ∀ (t : B), kindB t = BMS.Kind.zero → t = .nil := by
+  intro t
+  cases t with
+  | nil => intro _; rfl
+  | nd v r a =>
+    cases a with
+    | nil =>
+      intro h
+      rw [kindB_nd_nil] at h
+      cases hv : (v == 0) with
+      | true => rw [hv] at h; exact BMS.Kind.noConfusion h
+      | false => rw [hv] at h; exact BMS.Kind.noConfusion h
+    | nd w b c => intro h; exact BMS.Kind.noConfusion h
+
+/-- 種別後続の添字は `nd 0 r nil`。 -/
+theorem kindB_succ : ∀ (t : B), kindB t = BMS.Kind.succ → ∃ r, t = .nd 0 r .nil := by
+  intro t
+  cases t with
+  | nil => intro h; exact BMS.Kind.noConfusion h
+  | nd v r a =>
+    cases a with
+    | nil =>
+      intro h
+      rw [kindB_nd_nil] at h
+      cases hv : (v == 0) with
+      | true =>
+        refine ⟨r, ?_⟩
+        rw [show v = 0 from (beq_iff_eq (a := v) (b := 0)).mp hv]
+      | false =>
+        rw [hv] at h
+        exact BMS.Kind.noConfusion h
+    | nd w b c => intro h; exact BMS.Kind.noConfusion h
+
+/-! ### 5. `oR`
+
+§60 の `transPort_bVal` を `oRB` と `dict` を通して表の値まで運ぶ。`oR` は空行列だけを
+特別扱いして `0` を返すので、添字側の値 `vOf` も同じ特別扱いを持つ。 -/
+
+/-- **`oR` は `bVal` の辞書引きに `1 +` を付けたもの。** -/
+theorem oR_matB (t : B) (hnf : nfB t = true) (hne : t ≠ .nil) :
+    Trans.Recal.oR (matB t 0)
+      = some (TM.Term.plus TM.Term.one (Trans.Dict.dict (bVal t))) := by
+  have h1 : (matB t 0).isEmpty = false := by
+    have hp := matB_len_pos t 0 hne
+    cases hm : matB t 0 with
+    | nil => rw [hm] at hp; exact absurd hp (by simp)
+    | cons c cs => rfl
+  show (if (matB t 0).isEmpty = true then some TM.Term.zero
+        else (Trans.Recal.oRB (matB t 0)).map
+          (fun x => TM.Term.plus TM.Term.one (Trans.Dict.dict x))) = _
+  rw [if_neg (by rw [h1]; exact fun h => Bool.noConfusion h)]
+  show ((ofMatrix (matB t 0)).map transPort).map
+      (fun x => TM.Term.plus TM.Term.one (Trans.Dict.dict x)) = _
+  rw [ofMatrix_matB t 0 hne]
+  show some (TM.Term.plus TM.Term.one (Trans.Dict.dict (transPort (psM (matB t 0))))) = _
+  rw [transPort_bVal t hnf hne]
+
+/-- **`vOf` は表の値。** 空添字も込めて 1 本の等式。 -/
+theorem oR_vOf (t : B) (hnf : nfB t = true) : Trans.Recal.oR (matB t 0) = some (vOf t) := by
+  cases t with
+  | nil => rfl
+  | nd v r a =>
+    have hne : (B.nd v r a) ≠ .nil := by intro h; exact B.noConfusion h
+    rw [oR_matB (B.nd v r a) hnf hne]
+    rfl
+
+/-! ### 6. 領域と、最初の 2 つの供給
+
+`RegS`/`ValS` は `certIn_region` の 2 つの引数。`Evidence/RegionV.lean` §12 の形をそのまま
+一般化した添字に載せ替えたもの。`Hzero` は定理、`Hsucc` は**添字の側だけ**が定理。 -/
+
+/-- 領域: 標準な添字の行列。 -/
+def RegS (S : BMS.Matrix) : Prop := ∃ t : B, stdB t = true ∧ S = matB t 0
+
+/-- その上の値付け。 -/
+def ValS (S : BMS.Matrix) (v : TM.Term) : Prop :=
+  ∃ t : B, stdB t = true ∧ S = matB t 0 ∧ v = vOf t
+
+theorem stdB_nil : stdB .nil = true := rfl
+
+theorem nfB_of_stdB (t : B) (h : stdB t = true) : nfB t = true :=
+  ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h).1).1
+
+theorem nonIncr_of_stdB (t : B) (h : stdB t = true) : nonIncr t = true :=
+  ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h).1).2
+
+theorem stdIn_of_stdB (t : B) (h : stdB t = true) : stdIn t = true :=
+  ((Bool.and_eq_true _ _).mp h).2
+
+/-- 成分を 1 つ右に足しても、左側の降べきは残る。 -/
+theorem nonIncrL_cons (x : Nat × B) (r : List (Nat × B)) :
+    nonIncrL (x :: r) = (hdOK x r && nonIncrL r) := rfl
+
+theorem nonIncrL_dropLast : ∀ (l : List (Nat × B)) (x : Nat × B),
+    nonIncrL (l ++ [x]) = true → nonIncrL l = true := by
+  intro l
+  induction l with
+  | nil => intro _ _; rfl
+  | cons a l ih =>
+    intro x h
+    rw [show (a :: l) ++ [x] = a :: (l ++ [x]) from rfl, nonIncrL_cons] at h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    rw [nonIncrL_cons, ih x h2, Bool.and_true]
+    cases l with
+    | nil => rfl
+    | cons b l' => exact h1
+
+/-- **`stdB` は最後の節を落としても残る (段 0 の葉のとき)。** -/
+theorem stdB_pred (r : B) (h : stdB (.nd 0 r .nil) = true) : stdB r = true := by
+  have hnf : nfB (.nd 0 r .nil) = true := nfB_of_stdB _ h
+  have hni : nonIncr (.nd 0 r .nil) = true := nonIncr_of_stdB _ h
+  have hin : stdIn (.nd 0 r .nil) = true := stdIn_of_stdB _ h
+  have h1 : nfB r = true := ((nfLe_nd_iff 0 0 r .nil).mp hnf).2.1
+  have h2 : nonIncr r = true := by
+    have hni' : nonIncrL (toL (B.nd 0 r .nil)) = true := hni
+    rw [toL_nd 0 r .nil] at hni'
+    exact nonIncrL_dropLast (toL r) (0, .nil) hni'
+  have h3 : stdIn r = true := by
+    have : (stdIn r && nonIncr .nil && visOK 0 .nil .nil && stdIn .nil) = true := hin
+    exact ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp
+      ((Bool.and_eq_true _ _).mp this).1).1).1
+  show (nfB r && nonIncr r && stdIn r) = true
+  rw [h1, h2, h3]
+  rfl
+
+/-- **`Hzero`。** 種別 0 の行列は添字 `nil` から来て、値は `0`。 -/
+theorem hzeroS_supply : ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v →
+    BMS.kind S = BMS.Kind.zero → v = TM.Term.zero := by
+  rintro S v _ ⟨t, hstd, rfl, rfl⟩ hk
+  rw [kind_matB t] at hk
+  rw [kindB_zero t hk]
+  rfl
+
+/-- **`Hsucc` の添字の側。** 種別後続の行列は `nd 0 r nil` から来て、その展開は `n` に
+    よらず `matB r 0`、値は `vOf r`。値の等式 `v = plus (vOf r) one` は**測定のみ**。 -/
+theorem hsuccS_index : ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v →
+    BMS.kind S = BMS.Kind.succ →
+    ∃ r : B, v = vOf (.nd 0 r .nil) ∧ stdB r = true
+             ∧ ∀ n, BMS.expand S n = matB r 0 ∧ ValS (BMS.expand S n) (vOf r) := by
+  rintro S v _ ⟨t, hstd, rfl, rfl⟩ hk
+  rw [kind_matB t] at hk
+  obtain ⟨r, rfl⟩ := kindB_succ t hk
+  have hr : stdB r = true := stdB_pred r hstd
+  have hnf : nfB (B.nd 0 r .nil) = true := nfB_of_stdB _ hstd
+  have htop : topOKB (B.nd 0 r .nil) = true := topOKB_of_nfB _ hnf
+  have hexp : ∀ n, BMS.expand (matB (B.nd 0 r .nil) 0) n = matB r 0 := by
+    intro n
+    show (BMS.expand? (matB (B.nd 0 r .nil) 0) n).getD [] = _
+    rw [expand_matB (B.nd 0 r .nil) htop (by intro h; exact B.noConfusion h) n]
+    rfl
+  exact ⟨r, rfl, hr, fun n => ⟨hexp n, ⟨r, hr, (hexp n).symm ▸ rfl, rfl⟩⟩⟩
+
+/-! ### 公理の確認 -/
+
+end
+
 end Evidence.Region
