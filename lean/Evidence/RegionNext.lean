@@ -29270,4 +29270,859 @@ end
 
 /-! ### §76.7 公理 -/
 
+/-! ## §75 THE `u = 0` BRANCH: THE STATE FALLS OUT OF THE `K`-GATE, AND `isStd` IS NOT
+    DECORATION
+
+§73 closed the `u = 1` half of the last `inT` gate and left exactly one clause,
+
+    PsiIdxStep073 : ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+                    KsetStepOK 0 (dict a)
+
+together with two independent jobs for whoever came next — (1) the transport
+`K_{Ω₁}(dict a) < dict a`, which is where `BT.isStd` has to be spent, and (3) "the step from
+the local condition back to `KsetStepOK`", which §73 said it does **not** provide, because the
+fold's later steps use `plus i0 Δ` rather than `sub1 Δ` and `le i0 (plus i0 Δ)` was only
+available as an `inT`-conditioned lemma whose `inT` is what the gate produces.
+
+**§75 does jobs (3) and (2) in full.**  The gate is NOT closed; what closes is the whole
+distance between the gate and a condition that looks at ONE `(a, c)` pair at a time, never at
+the state of the fold, and is then implied by the four order facts §73.7 named.  What is left
+is (1) alone.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §75.1  **A SUM DOMINATES ITS RIGHT SUMMAND, on 𝔗(M).**  `le_ofList_append75`: for a
+         descending list of 𝔗(M)-components, `ofList L ≤ ofList (Q ++ L)`.  The induction is
+         on `|Q| + |L|`, not on `|Q|`: the equal-head branch moves the head of `L` into `Q`,
+         which keeps `|Q|` fixed and shortens `L`.  Two corollaries carry the section:
+         `le_self_plus75 : le t (plus s t)` — the missing half of §65.1's `plus_mono_right_inT`,
+         which only ever gave `le s (plus s t)` — and `le_sub1_self75 : le (sub1 d) d`.
+         `inT_mem_Kset75` records that the elements of a `K`-set of a 𝔗(M) term are 𝔗(M)
+         terms, so §8.5's order theory applies to them; without it the transitivity steps
+         below cannot even be stated.
+
+  §75.2  **THE MATERIAL OF ONE INDEX STEP.**  `ddOf75 w (a,c) = W^(a ⊖ W)·c` is the amount
+         the strongly critical branch adds.  `mem_Kset_ddOf75` : `K_κ Δ ⊆ K_κ a ∪ K_κ c`,
+         by §66.2's `mem_Kset_mulL` twice and `Kset κ Ω_{u+1} = ∅`.  `le_prev_idxOf75` and
+         `le_sub1dd_idxOf75` say what the emitted index dominates: the PREVIOUS index `i0`,
+         and `Δ ⊖ 1`.  **Both branches of `idxOf` are covered** — that is exactly what §73
+         could not do, and §75.6 says how thinly §73's corpus exercised the second one.
+
+  §75.3  **THE STATE FALLS OUT.**  `scan_local75` runs `StInv` (§64.5) and the new `KInv75`
+         along `scanSt` at the same time, and `ksetStepOK_of_local75` concludes
+
+             inT x → lt x M → LocalK75 u x → KsetStepOK u x
+
+         for EVERY `u`, not just `u = 0`.  `LocalK75` is the proposition form of §73.6's
+         decided `localOKb73`, and `localK75_of_b` turns a `#guard` into a proof of it for a
+         given term.  Note what is NOT assumed: no `inT` on the index, no `PsiIdxOK`, and no
+         `BT.isStd`.  The `inT (psi …)` that `stepF_inv` demands is manufactured on the way
+         past, out of `KInv75` itself, by §66.1's `inT_psi_idx`.
+
+  §75.4  **AND THE FOUR LOCAL FACTS SUFFICE (= §73's job (2)).**  `LocalFacts75` is §73.7's
+         (K2)–(K5) for one pair, and `localK75_of_facts75` derives the local condition from
+         them.  Transitivity comes from `inT` through §8.5 — `pure73` is not needed, and
+         neither is the gate.  The (K4) branch is where `sub1 Δ ≠ Δ` is used, and it is used
+         exactly once.
+
+  §75.4b/§75.4c  **BUT (K2) IS FALSE AS §73 STATED IT, AND TWO CLAUSES DO THE WORK OF FOUR.**
+         `K_{Ω₁} aV < aV` fails on 9 of the 204 firing steps of the `BT.isStd`-filtered
+         depth-9 corpus (§75.6, 否定 4) — §73 measured it at zero failures on 120 steps one
+         level shallower.  What is true there is the comparison against `Δ`, not against
+         `aV`, so `LocalFacts2_75` keeps only (K2') `K_κ aV ∪ K_κ cV < Δ` and (K4), and
+         `localK75_of_facts2_75` gets the local condition out of those two alone; (K3) and
+         (K5) are not needed.  `localFacts2_of_facts75` shows the corrected pair is weaker
+         than §73's four.  `kset_fst_reg75` and `kset_snd_ofNat75` discharge, for free, 30 of
+         the 31 (K5) exceptions and every step whose coefficient is a natural number.
+
+  §75.5  **THE ASSEMBLY.**  `inT_dict_of_local75` is the structural induction that makes the
+         `inT x` hypothesis of §75.3 legitimate: the argument's `inT` comes from the induction
+         hypothesis, not from the gate, so there is no circle.  `psiIdxStep073_of_local75`
+         (and `psiIdxStep073_of_facts75`) proves §73's remaining clause, and
+         `certIn_t326_local75` re-derives row 326's certificate.
+
+WHAT IS NOT CLAIMED, AND THE TWO THINGS §73 GOT WRONG ABOUT ITS OWN CORPUS.
+
+  `LocalStd75` is NOT proved.  It is much weaker in SHAPE than `PsiIdxStep073` — one pair, no
+  state, no fold — but it is the same amount of ordinal theory: it still needs the transport,
+  and §75.6 measures where.
+
+  **Two of §73's measurements were corpus artefacts, and both fail one level deeper.**
+
+  (i) **"肯定 2" — the gate without `BT.isStd`.**  §73 measured `stepOKb 0 (dict a)` at zero
+  failures on all of `btPool72`, `hotB73` and the sub-region, and wrote that the gate does not
+  fall even without `BT.isStd`.  One more level of `ψ`-nesting kills that: on `hotD75`
+  (`ψ`-nesting 8, 2127 terms) the gate falls on **16** terms, on `hotE75` (nesting 9, 4319
+  terms) on 61, and every one of them has `BT.isStd (BT.D 0 a) = false`.
+  `not_ksetStepOK_wStep75` freezes the smallest, `wStep75 = ψ₁ψ₁ψ₁ψ₀ψ₁ψ₁ψ₁ψ₁0`, which is
+  itself Buchholz standard and stops being so under one `ψ₀`.  **`BT.isStd` is load-bearing
+  for the gate itself, not only for the transport §73 named.**
+
+  (ii) **"肯定 3" — the (K2) half of the decomposition.**  See §75.4c above.  The route §73
+  recommended cannot be walked as written; the corrected two-clause version can.
+
+  WHAT IS STILL MEASURED-ONLY.  (K3) `cV ≤ Δ` holds at every firing step of every corpus
+  swept, and the general lemma behind it, `le c (mulL e c)`, holds on all 434281 ordered
+  pairs from a 659-term pool of the level-one image (`s75sweep5.lean`); so does
+  `omegaNF (logOm p) = p` on all 630 additively principal `inT` subterms below `M`.  Neither
+  is proved, and the second is FALSE without `lt p M` — `ω̄^·` breaks it.  (K4) holds at all
+  27 steps where `Δ ⊖ 1 ≠ Δ`.  The transport `K_{Ω₁}(dict a) < dict a` is still exactly where
+  `BT.isStd` has to be spent, and §75 did not spend it.
+-/
+
+/-! ### §75.1 和と接尾辞 — `le t (plus s t)` -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+private theorem inTL_sub75 {l1 l2 : List Term} (h : ∀ x ∈ l1, x ∈ l2)
+    (h2 : inTL l2 = true) : inTL l1 = true := by
+  show l1.all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  exact List.all_eq_true.mp h2 x (h x hx)
+
+/-- **接尾辞は本体以下。** 降順の成分列 `Q ++ L` について `ofList L ≤ ofList (Q ++ L)`。 -/
+private theorem le_ofList_append75 : ∀ (n : Nat) (Q L : List Term),
+    Q.length + L.length ≤ n → inTL (Q ++ L) = true → descL (Q ++ L) = true →
+    le (ofList L) (ofList (Q ++ L)) = true := by
+  intro n
+  induction n with
+  | zero =>
+    intro Q L hn _ _
+    have hQ : Q = [] := List.eq_nil_of_length_eq_zero (by omega)
+    have hL : L = [] := List.eq_nil_of_length_eq_zero (by omega)
+    rw [hQ, hL]
+    exact Evidence.WF.le_self _
+  | succ m ih =>
+    intro Q L hn hc hd
+    cases Q with
+    | nil => exact Evidence.WF.le_self _
+    | cons q Q' =>
+      cases L with
+      | nil =>
+        show le zero _ = true
+        exact le_zero_left _
+      | cons b r =>
+        have hAeq : (q :: Q') ++ (b :: r) = q :: (Q' ++ (b :: r)) := rfl
+        rw [hAeq] at hc hd ⊢
+        obtain ⟨⟨hapq, hiq⟩, hcA⟩ := inTL_cons.mp hc
+        have hdA : descL (Q' ++ (b :: r)) = true := descL_tail hd
+        have hbmem : b ∈ Q' ++ (b :: r) := List.mem_append.mpr (Or.inr (List.Mem.head _))
+        have hbq : le b q = true := descL_bound_inT _ q hiq hcA hd b hbmem
+        have hAne : Q' ++ (b :: r) ≠ [] := by
+          intro hz; rw [hz] at hbmem; cases hbmem
+        rw [ofList_cons_ne_nil hAne]
+        have hcbr : inTL (b :: r) = true :=
+          inTL_sub75 (fun x hx => List.mem_append.mpr (Or.inr hx)) hcA
+        have hdbr : descL (b :: r) = true := descL_of_append_right Q' (b :: r) hdA
+        by_cases hqb : q = b
+        · subst hqb
+          cases r with
+          | nil =>
+            show le q _ = true
+            exact le_of_lt (lt_head_add hapq _)
+          | cons c s =>
+            show le (add q (ofList (c :: s))) (add q (ofList (Q' ++ (q :: c :: s)))) = true
+            refine le_add_tail ?_
+            have hsplit : Q' ++ (q :: c :: s) = (Q' ++ [q]) ++ (c :: s) := by
+              rw [List.append_assoc]; rfl
+            rw [hsplit]
+            refine ih (Q' ++ [q]) (c :: s) ?_ (by rw [← hsplit]; exact hcA)
+              (by rw [← hsplit]; exact hdA)
+            simp only [List.length_append, List.length_cons, List.length_nil] at hn ⊢
+            omega
+        · have hltbq : lt b q = true := by
+            rcases (Bool.or_eq_true _ _).mp hbq with he | hl
+            · exact absurd (eq_of_beq he).symm hqb
+            · exact hl
+          refine le_of_lt ?_
+          refine lt_of_hd_lt (inT_ofList _ hcbr hdbr)
+            (show inT (add q (ofList (Q' ++ (b :: r)))) = true from by
+              rw [← ofList_cons_ne_nil hAne]; exact inT_ofList _ hc hd)
+            (toList_ofList _ (fun x hx =>
+              ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcbr x hx)).1))
+            (show toList (add q (ofList (Q' ++ (b :: r)))) = q :: _ from rfl) hltbq
+
+/-- **右の引数は和以下。** `t ≤ s ⊕ t` — §73 が名指しした `le i0 (plus i0 Δ)` の対。 -/
+theorem le_self_plus75 {s t : Term} (hs : inT s = true) (ht : inT t = true) :
+    le t (plus s t) = true := by
+  cases hl : toList t with
+  | nil =>
+    rw [plus_nil hl, toList_eq_nil t hl]
+    exact le_zero_left s
+  | cons b1 r =>
+    have hp : inT (plus s t) = true := inT_plus hs ht
+    have htl : toList (plus s t) = (toList s).filter (fun a => le b1 a) ++ toList t :=
+      toList_plus_inT hs ht hl
+    obtain ⟨hcp, hdp⟩ := inT_toList _ hp
+    rw [htl] at hcp hdp
+    have key := le_ofList_append75
+      (((toList s).filter (fun a => le b1 a)).length + (toList t).length)
+      ((toList s).filter (fun a => le b1 a)) (toList t) (Nat.le_refl _) hcp hdp
+    rw [inT_ofList_toList t ht] at key
+    rw [show ofList ((toList s).filter (fun a => le b1 a) ++ toList t) = plus s t from by
+      rw [← htl, inT_ofList_toList _ hp]] at key
+    exact key
+
+/-- **`sub1` は下げるだけ。** -/
+theorem le_sub1_self75 {d : Term} (hd : inT d = true) : le (sub1 d) d = true := by
+  obtain ⟨hc, hdd⟩ := inT_toList d hd
+  show le (match toList d with
+      | [] => zero
+      | p :: rest => if p == TM.Term.one then ofList rest else d) d = true
+  cases hl : toList d with
+  | nil => rw [toList_eq_nil d hl]; exact Evidence.WF.le_self _
+  | cons p rest =>
+    show le (if (p == TM.Term.one) = true then ofList rest else d) d = true
+    by_cases hp : (p == TM.Term.one) = true
+    · rw [if_pos hp]
+      rw [hl] at hc hdd
+      have key := le_ofList_append75 (1 + rest.length) [p] rest (by simp)
+        (show inTL ([p] ++ rest) = true from hc) (show descL ([p] ++ rest) = true from hdd)
+      rw [show ([p] ++ rest) = p :: rest from rfl, ← hl, inT_ofList_toList d hd] at key
+      exact key
+    · rw [if_neg hp]; exact Evidence.WF.le_self _
+
+/-- `K` の元は 𝔗(M) の項。 -/
+theorem inT_mem_Kset75 : ∀ (t : Term), inT t = true → ∀ (k y : Term),
+    y ∈ Kset k t → inT y = true := by
+  intro t
+  induction t with
+  | zero => intro _ k y h; cases h
+  | M => intro _ k y h; cases h
+  | omg a iha =>
+    intro ht k y h
+    exact iha ((Bool.and_eq_true _ _).mp (show (inT a && lt M a) = true from ht)).1 k y
+      (show y ∈ Kset k a from h)
+  | phi a b iha ihb =>
+    intro ht k y h
+    have h2 := (Bool.and_eq_true _ _).mp
+      ((Bool.and_eq_true _ _).mp
+        ((Bool.and_eq_true _ _).mp
+          (show (inT a && inT b && lt a M && lt b M) = true from ht)).1).1
+    rcases List.mem_append.mp (show y ∈ Kset k a ++ Kset k b from h) with h1 | h1
+    · exact iha h2.1 k y h1
+    · exact ihb h2.2 k y h1
+  | psi p b ihp ihb =>
+    intro ht k y h
+    have h2 := (Bool.and_eq_true _ _).mp
+      ((Bool.and_eq_true _ _).mp
+        ((Bool.and_eq_true _ _).mp
+          ((Bool.and_eq_true _ _).mp
+            (show (p.isR && inT p && inT b && lt b M &&
+              (Kset p b).all (fun x => lt x b)) = true from ht)).1).1).1
+    have hip : inT p = true := h2.2
+    have hib : inT b = true := ((Bool.and_eq_true _ _).mp
+      ((Bool.and_eq_true _ _).mp
+        ((Bool.and_eq_true _ _).mp
+          (show (p.isR && inT p && inT b && lt b M &&
+            (Kset p b).all (fun x => lt x b)) = true from ht)).1).1).2
+    rw [show Kset k (psi p b) = (if le (psi p b) (kminus k) then [] else
+        if lt p k then Kset k p else b :: (Kset k p ++ Kset k b)) from rfl] at h
+    split at h
+    · cases h
+    · split at h
+      · exact ihp hip k y h
+      · rcases List.mem_cons.mp h with hq | hq
+        · rw [hq]; exact hib
+        · rcases List.mem_append.mp hq with h1 | h1
+          · exact ihp hip k y h1
+          · exact ihb hib k y h1
+  | Z b ihb =>
+    intro ht k y h
+    exact ihb (show inT b = true from ht) k y (show y ∈ Kset k b from h)
+  | add a b iha ihb =>
+    intro ht k y h
+    obtain ⟨_, hia, hib, _⟩ := inT_add ht
+    rcases List.mem_append.mp (show y ∈ Kset k a ++ Kset k b from h) with h1 | h1
+    · exact iha hia k y h1
+    · exact ihb hib k y h1
+
+/-! ### §75.2 一歩ぶんの指数 — 材料と `K` -/
+
+/-- 強臨界枝が一歩で足す量 `Δ = W^(a ⊖ W)·c`。 -/
+def ddOf75 (w : Term) (ac : Term × Term) : Term := mulL (mulL w (subAP w ac.1)) ac.2
+
+theorem inT_ddOf75 {w : Term} (hw : inT w = true) {ac : Term × Term}
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) : inT (ddOf75 w ac) = true :=
+  inT_mulL mulDescInT (inT_mulL mulDescInT hw (inT_subAP h1)) h3
+
+/-- **`Δ` の `K` は材料の `K` に戻る。** `Kset κ Ω_{u+1} = ∅` を使う。 -/
+theorem mem_Kset_ddOf75 {u : Nat} {y : Term} {ac : Term × Term}
+    (h : y ∈ Kset (reg (u+1)) (ddOf75 (reg (u+1)) ac)) :
+    y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2 := by
+  rcases mem_Kset_mulL (show y ∈ Kset (reg (u+1))
+      (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2) from h) with h1 | h1
+  · rcases mem_Kset_mulL h1 with h2 | h2
+    · exact absurd h2 (fun hc => mem_Kset_reg (u+1) hc)
+    · exact Or.inl (mem_Kset_subAP h2)
+  · exact Or.inr h1
+
+/-- 直前の指数は今の指数以下。 -/
+theorem le_prev_idxOf75 {w : Term} (hw : inT w = true) {s : Option Term × Option Term}
+    {ac : Term × Term} {i0 : Term} (hs : StInv s) (hs1 : s.1 = some i0)
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) :
+    le i0 (idxOf w s ac) = true := by
+  have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+  have hd : inT (ddOf75 w ac) = true := inT_ddOf75 hw h1 h3
+  have hidx : idxOf w s ac = plus i0 (ddOf75 w ac) := by
+    show (match s.1 with
+          | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+          | some j => plus j (mulL (mulL w (subAP w ac.1)) ac.2)) = _
+    rw [hs1]
+    try rfl
+  rw [hidx]
+  have h := plus_mono_right_inT i0 hi0 zero (ddOf75 w ac) inT_zero hd (le_zero_left _)
+  rwa [plus_nil (show toList (zero : Term) = [] from rfl)] at h
+
+/-- `Δ ⊖ 1` は今の指数以下 — 状態がどちらでも。 -/
+theorem le_sub1dd_idxOf75 {w : Term} (hw : inT w = true) {s : Option Term × Option Term}
+    {ac : Term × Term} (hs : StInv s) (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) :
+    le (sub1 (ddOf75 w ac)) (idxOf w s ac) = true := by
+  have hd : inT (ddOf75 w ac) = true := inT_ddOf75 hw h1 h3
+  have hsd : inT (sub1 (ddOf75 w ac)) = true := inT_sub1 hd
+  cases hs1 : s.1 with
+  | none =>
+    have hidx : idxOf w s ac = sub1 (ddOf75 w ac) := by
+      show (match s.1 with
+            | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+            | some j => plus j (mulL (mulL w (subAP w ac.1)) ac.2)) = _
+      rw [hs1]
+      try rfl
+    rw [hidx]
+    exact Evidence.WF.le_self _
+  | some i0 =>
+    have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+    have hidx : idxOf w s ac = plus i0 (ddOf75 w ac) := by
+      show (match s.1 with
+            | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+            | some j => plus j (mulL (mulL w (subAP w ac.1)) ac.2)) = _
+      rw [hs1]
+      try rfl
+    rw [hidx]
+    exact le_trans_inT hsd hd (inT_plus hi0 hd) (le_sub1_self75 hd) (le_self_plus75 hi0 hd)
+
+/-- 局所条件から、吐かれた指数についての 2.1(vi) の `K` の連言。 -/
+theorem kall_idxOf75 {u : Nat} {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : StInv s)
+    (hk : ∀ i0, s.1 = some i0 → ∀ y, y ∈ Kset (reg (u+1)) i0 → lt y i0 = true)
+    (h1 : inT ac.1 = true) (h2 : lt ac.1 M = true)
+    (h3 : inT ac.2 = true) (h4 : lt ac.2 M = true)
+    (hloc : ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+        lt y (sub1 (ddOf75 (reg (u+1)) ac)) = true) :
+    ∀ y, y ∈ Kset (reg (u+1)) (idxOf (reg (u+1)) s ac) →
+      lt y (idxOf (reg (u+1)) s ac) = true := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have hlw : lt (reg (u+1)) M = true := ltM_reg (u+1)
+  have hd : inT (ddOf75 (reg (u+1)) ac) = true := inT_ddOf75 hw h1 h3
+  have hsd : inT (sub1 (ddOf75 (reg (u+1)) ac)) = true := inT_sub1 hd
+  obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT hw hlw hs h1 h2 h3 h4
+  have hlocIdx : ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+      lt y (idxOf (reg (u+1)) s ac) = true := by
+    intro y hy
+    have hyi : inT y = true := by
+      rcases hy with hy | hy
+      · exact inT_mem_Kset75 ac.1 h1 _ y hy
+      · exact inT_mem_Kset75 ac.2 h3 _ y hy
+    exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR _ hsd) (inT_le_fragR _ hidxT)
+      (hloc y hy) (le_sub1dd_idxOf75 hw hs h1 h3)
+  intro y hy
+  cases hs1 : s.1 with
+  | none =>
+    have hidx : idxOf (reg (u+1)) s ac = sub1 (ddOf75 (reg (u+1)) ac) := by
+      show (match s.1 with
+            | none => sub1 (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)
+            | some j => plus j (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)) = _
+      rw [hs1]
+      try rfl
+    rw [hidx] at hy
+    exact hlocIdx y (mem_Kset_ddOf75 (mem_Kset_sub1 hy))
+  | some i0 =>
+    have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+    have hidx : idxOf (reg (u+1)) s ac = plus i0 (ddOf75 (reg (u+1)) ac) := by
+      show (match s.1 with
+            | none => sub1 (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)
+            | some j => plus j (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)) = _
+      rw [hs1]
+      try rfl
+    rw [hidx] at hy
+    rcases mem_Kset_plus hy with h5 | h5
+    · have hyi : inT y = true := inT_mem_Kset75 i0 hi0 _ y h5
+      exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR i0 hi0) (inT_le_fragR _ hidxT)
+        (hk i0 hs1 y h5) (le_prev_idxOf75 hw hs hs1 h1 h3)
+    · exact hlocIdx y (mem_Kset_ddOf75 h5)
+
+/-! ### §75.3 走査に沿って — 局所条件から一歩ぶんの門 -/
+
+/-- 状態の `K` 不変量 — 直前の指数は自分の `K` より上。 -/
+def KInv75 (u : Nat) (s : Option Term × Option Term) : Prop :=
+  ∀ i0, s.1 = some i0 → ∀ y, y ∈ Kset (reg (u+1)) i0 → lt y i0 = true
+
+theorem kInv75_none (u : Nat) :
+    KInv75 u ((none : Option Term), (none : Option Term)) := by
+  intro i0 h; cases h
+
+/-- **局所条件。** §73.6 の `localOKb73` の命題版 — 状態を見ない、対ごとの条件。 -/
+def LocalK75 (u : Nat) (x : Term) : Prop :=
+  ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = true →
+    ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+      lt y (sub1 (ddOf75 (reg (u+1)) ac)) = true
+
+theorem localK75_of_b {u : Nat} {x : Term} (h : localOKb73 u x = true) : LocalK75 u x := by
+  intro ac hac hle y hy
+  have h1 := List.all_eq_true.mp
+    (show (wcnf (reg (u+1)) (toList x)).1.all (fun ac =>
+        !(le (reg (u+1)) ac.1) ||
+          ((Kset (reg (u+1)) ac.1 ++ Kset (reg (u+1)) ac.2).all fun y =>
+            lt y (sub1 (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)))) = true from h)
+    ac hac
+  rw [hle, Bool.not_true, Bool.false_or] at h1
+  refine List.all_eq_true.mp h1 y ?_
+  rcases hy with hy | hy
+  · exact List.mem_append.mpr (Or.inl hy)
+  · exact List.mem_append.mpr (Or.inr hy)
+
+/-- **§75 の心臓。** 走査に沿って `StInv` と `KInv75` を同時に回し、局所条件から
+    一歩ぶんの 2 つの連言を出す。`plus i0 Δ` の枝を閉じるのが `le_prev_idxOf75` と
+    `le_sub1dd_idxOf75` — どちらも `le_ofList_append75` に載っている。 -/
+theorem scan_local75 {u : Nat} :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s → KInv75 u s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ ac ∈ l, le (reg (u+1)) ac.1 = true → ∀ y,
+          (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+          lt y (sub1 (ddOf75 (reg (u+1)) ac)) = true) →
+      ∀ p ∈ scanSt (reg (u+1)) (baseOf u) s l, le (reg (u+1)) p.2.1 = true →
+        (∀ i0, p.1.1 = some i0 → ∀ y, y ∈ Kset (reg (u+1)) i0 →
+            lt y (idxOf (reg (u+1)) p.1 p.2) = true) ∧
+        (∀ y, (y ∈ Kset (reg (u+1)) p.2.1 ∨ y ∈ Kset (reg (u+1)) p.2.2) →
+            lt y (idxOf (reg (u+1)) p.1 p.2) = true) := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have hlw : lt (reg (u+1)) M = true := ltM_reg (u+1)
+  intro l
+  induction l with
+  | nil => intro s _ _ _ _ p hp; cases hp
+  | cons ac t ih =>
+    intro s hs hk hall hloc p hp hle
+    have hac := hall ac (List.Mem.head _)
+    have hhead : le (reg (u+1)) ac.1 = true →
+        (∀ i0, s.1 = some i0 → ∀ y, y ∈ Kset (reg (u+1)) i0 →
+            lt y (idxOf (reg (u+1)) s ac) = true) ∧
+        (∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+            lt y (idxOf (reg (u+1)) s ac) = true) := by
+      intro hle2
+      obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT hw hlw hs hac.1 hac.2.1 hac.2.2.1 hac.2.2.2
+      constructor
+      · intro i0 hs1 y hy
+        have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+        have hyi : inT y = true := inT_mem_Kset75 i0 hi0 _ y hy
+        exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR i0 hi0)
+          (inT_le_fragR _ hidxT) (hk i0 hs1 y hy)
+          (le_prev_idxOf75 hw hs hs1 hac.1 hac.2.2.1)
+      · intro y hy
+        have hyi : inT y = true := by
+          rcases hy with hy | hy
+          · exact inT_mem_Kset75 ac.1 hac.1 _ y hy
+          · exact inT_mem_Kset75 ac.2 hac.2.2.1 _ y hy
+        exact lt_of_lt_of_le3 (inT_le_fragR y hyi)
+          (inT_le_fragR _ (inT_sub1 (inT_ddOf75 hw hac.1 hac.2.2.1)))
+          (inT_le_fragR _ hidxT)
+          (hloc ac (List.Mem.head _) hle2 y hy)
+          (le_sub1dd_idxOf75 hw hs hac.1 hac.2.2.1)
+    rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt (reg (u+1)) (baseOf u)
+        (stepF (reg (u+1)) (baseOf u) s ac) t from hp) with h | h
+    · subst h
+      exact hhead hle
+    · have hkall : le (reg (u+1)) ac.1 = true →
+          ∀ y, y ∈ Kset (reg (u+1)) (idxOf (reg (u+1)) s ac) →
+            lt y (idxOf (reg (u+1)) s ac) = true := fun hle2 =>
+        kall_idxOf75 hs hk hac.1 hac.2.1 hac.2.2.1 hac.2.2.2
+          (hloc ac (List.Mem.head _) hle2)
+      have hpsi : le (reg (u+1)) ac.1 = true →
+          inT (psi (reg (u+1)) (idxOf (reg (u+1)) s ac)) = true := by
+        intro hle2
+        refine inT_psi_idx (isR_reg_succ u) hw hlw hs hac.1 hac.2.1 hac.2.2.1 hac.2.2.2 ?_
+        rw [List.all_eq_true]
+        intro y hy
+        exact hkall hle2 y hy
+      have hs' : StInv (stepF (reg (u+1)) (baseOf u) s ac) :=
+        stepF_inv mulDescInT hw hlw (inT_baseOf u) (ltM_baseOf u) hs hac hpsi
+      have hk' : KInv75 u (stepF (reg (u+1)) (baseOf u) s ac) := by
+        intro i0 hi0 y hy
+        cases hle2 : le (reg (u+1)) ac.1 with
+        | true =>
+          have hfst : (stepF (reg (u+1)) (baseOf u) s ac).1
+              = some (idxOf (reg (u+1)) s ac) := by
+            unfold stepF; rw [hle2]; try rfl
+          rw [hfst] at hi0
+          rw [← Option.some.inj hi0] at hy ⊢
+          exact hkall hle2 y hy
+        | false =>
+          have hfst : (stepF (reg (u+1)) (baseOf u) s ac).1 = s.1 := by
+            unfold stepF; rw [hle2]; try rfl
+          rw [hfst] at hi0
+          exact hk i0 hi0 y hy
+      exact ih (stepF (reg (u+1)) (baseOf u) s ac) hs' hk'
+        (fun a ha => hall a (List.Mem.tail _ ha))
+        (fun a ha => hloc a (List.Mem.tail _ ha)) p h hle
+
+/-- **§75.3 の主定理。** 状態を落とした局所条件から `KsetStepOK` — §73 が「二つ目の
+    仕事」と呼んだ段。`inT x` は仮説だが `PsiIdxStep073` そのものではない。 -/
+theorem ksetStepOK_of_local75 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : LocalK75 u x) : KsetStepOK u x := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  intro p hp hle
+  exact scan_local75 (wcnf (reg (u+1)) (toList x)).1 (none, none)
+    stInv_none (kInv75_none u) hallOK H p hp hle
+
+/-- 系 — 2.1(vi) の `K` の連言も出る。 -/
+theorem ksetIdxOK_of_local75 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : LocalK75 u x) : KsetIdxOK u x :=
+  ksetIdxOK_of_stepOK u x (ksetStepOK_of_local75 u x hx hlx H)
+
+
+/-! ### §75.4 §73.7 の 4 つの局所事実から局所条件へ -/
+
+/-- **§73.7 が名指しした 4 つ、対ひとつぶん。** `d := Δ = W^(a ⊖ W)·c` として
+    (K2) `K a < a` かつ `K c < c`、(K3) `c ≤ d`、(K5) `a ≤ d` か `K a = ∅`、
+    (K4) `d ⊖ 1 ≠ d` なら両方の `K` が空。 -/
+def LocalFacts75 (u : Nat) (ac : Term × Term) : Prop :=
+  (∀ y, y ∈ Kset (reg (u+1)) ac.1 → lt y ac.1 = true) ∧
+  (∀ y, y ∈ Kset (reg (u+1)) ac.2 → lt y ac.2 = true) ∧
+  le ac.2 (ddOf75 (reg (u+1)) ac) = true ∧
+  (le ac.1 (ddOf75 (reg (u+1)) ac) = true ∨ ∀ y, y ∈ Kset (reg (u+1)) ac.1 → False) ∧
+  (sub1 (ddOf75 (reg (u+1)) ac) ≠ ddOf75 (reg (u+1)) ac →
+    (∀ y, y ∈ Kset (reg (u+1)) ac.1 → False) ∧ (∀ y, y ∈ Kset (reg (u+1)) ac.2 → False))
+
+/-- **§75.4 の主定理 (= §73 の仕事 (2))。** 4 つの局所事実と推移律だけで局所条件が出る。
+    推移律は `inT` からで、`pure73` も `inT` の門も要らない。 -/
+theorem localK75_of_facts75 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = true →
+      LocalFacts75 u ac) : LocalK75 u x := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd
+    (ltM_toList x hx hlx)
+  intro ac hac hle y hy
+  obtain ⟨h1, _, h3, _⟩ := hallOK ac hac
+  obtain ⟨k2a, k2c, k3, k5, k4⟩ := H ac hac hle
+  have hdT : inT (ddOf75 (reg (u+1)) ac) = true := inT_ddOf75 (inT_reg (u+1)) h1 h3
+  by_cases hsd : sub1 (ddOf75 (reg (u+1)) ac) = ddOf75 (reg (u+1)) ac
+  · rw [hsd]
+    rcases hy with hy | hy
+    · rcases k5 with k5 | k5
+      · exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.1 h1 _ y hy))
+          (inT_le_fragR _ h1) (inT_le_fragR _ hdT) (k2a y hy) k5
+      · exact (k5 y hy).elim
+    · exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.2 h3 _ y hy))
+        (inT_le_fragR _ h3) (inT_le_fragR _ hdT) (k2c y hy) k3
+  · obtain ⟨e1, e2⟩ := k4 hsd
+    rcases hy with hy | hy
+    · exact (e1 y hy).elim
+    · exact (e2 y hy).elim
+
+
+/-! ### §75.4b (K2)-(K5) のうち只で来る分
+
+`Kset κ Ω_{u+1} = ∅` と `Kset κ n = ∅` の 2 本だけで、§73.6 が数えた例外のほとんどが
+片づく。残りが本当の仕事。 -/
+
+/-- **(K5) の例外の 29/30 はこれ。** 指数が `Ω_{u+1}` ちょうどなら `K` は空。 -/
+theorem kset_fst_reg75 {u : Nat} {ac : Term × Term} (h : ac.1 = reg (u+1)) :
+    ∀ y, y ∈ Kset (reg (u+1)) ac.1 → False := by
+  intro y hy
+  rw [h] at hy
+  exact mem_Kset_reg (u+1) hy
+
+/-- **(K2) の係数側は、係数が自然数なら空。** -/
+theorem kset_snd_ofNat75 {u : Nat} {ac : Term × Term} {n : Nat} (h : ac.2 = ofNat n) :
+    ∀ y, y ∈ Kset (reg (u+1)) ac.2 → False := by
+  intro y hy
+  rw [h] at hy
+  exact mem_Kset_ofNat n hy
+
+/-- 只で来る分をまとめた形 — 両方の `K` が空なら局所事実は残り 3 つに落ちる。 -/
+theorem localFacts75_of_empty {u : Nat} {ac : Term × Term}
+    (h1 : ∀ y, y ∈ Kset (reg (u+1)) ac.1 → False)
+    (h2 : ∀ y, y ∈ Kset (reg (u+1)) ac.2 → False)
+    (h3 : le ac.2 (ddOf75 (reg (u+1)) ac) = true) : LocalFacts75 u ac :=
+  ⟨fun y hy => (h1 y hy).elim, fun y hy => (h2 y hy).elim, h3, Or.inr h1, fun _ => ⟨h1, h2⟩⟩
+
+
+/-! ### §75.4c 直した分解 — (K2) は §73 の形では偽
+
+§75.6 の否定 4 が測るとおり、§73.7 の (K2) 「`K_{Ω₁} aV < aV`」は**標準な母集団でも
+落ちる** (深さ 9 の 284 個の 204 歩のうち 9 歩)。落ちても局所条件は通る。通る理由は
+`K_{Ω₁} aV < Δ` の方で、`aV` ではなく `Δ` と比べれば 0 失敗。直した分解は 2 条項で、
+(K3)・(K5) は要らなくなる。 -/
+
+/-- **直した局所事実。** (K2') `K aV ∪ K cV < Δ`、(K4) `Δ ⊖ 1 ≠ Δ` なら両方空。 -/
+def LocalFacts2_75 (u : Nat) (ac : Term × Term) : Prop :=
+  (∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+      lt y (ddOf75 (reg (u+1)) ac) = true) ∧
+  (sub1 (ddOf75 (reg (u+1)) ac) ≠ ddOf75 (reg (u+1)) ac →
+    (∀ y, y ∈ Kset (reg (u+1)) ac.1 → False) ∧ (∀ y, y ∈ Kset (reg (u+1)) ac.2 → False))
+
+/-- **直した分解から局所条件。** `⊖ 1` の始末だけが (K4) の仕事。 -/
+theorem localK75_of_facts2_75 (u : Nat) (x : Term)
+    (H : ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = true →
+      LocalFacts2_75 u ac) : LocalK75 u x := by
+  intro ac hac hle y hy
+  obtain ⟨k2, k4⟩ := H ac hac hle
+  by_cases hsd : sub1 (ddOf75 (reg (u+1)) ac) = ddOf75 (reg (u+1)) ac
+  · rw [hsd]; exact k2 y hy
+  · obtain ⟨e1, e2⟩ := k4 hsd
+    rcases hy with hy | hy
+    · exact (e1 y hy).elim
+    · exact (e2 y hy).elim
+
+/-- §73 の 4 つからも直した 2 つが出る (逆は出ない — §75.6 の否定 4)。 -/
+theorem localFacts2_of_facts75 {u : Nat} {ac : Term × Term}
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (H : LocalFacts75 u ac) :
+    LocalFacts2_75 u ac := by
+  obtain ⟨k2a, k2c, k3, k5, k4⟩ := H
+  have hdT : inT (ddOf75 (reg (u+1)) ac) = true := inT_ddOf75 (inT_reg (u+1)) h1 h3
+  refine ⟨?_, k4⟩
+  intro y hy
+  rcases hy with hy | hy
+  · rcases k5 with k5 | k5
+    · exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.1 h1 _ y hy))
+        (inT_le_fragR _ h1) (inT_le_fragR _ hdT) (k2a y hy) k5
+    · exact (k5 y hy).elim
+  · exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.2 h3 _ y hy))
+      (inT_le_fragR _ h3) (inT_le_fragR _ hdT) (k2c y hy) k3
+
+/-! ### §75.5 組み立て — 残る門は局所条件ひとつ -/
+
+/-- **§75 の残る仮説。** §73 の `PsiIdxStep073` を、状態を見ない対ごとの条件に
+    落としたもの。像が既に 𝔗(M) の項であることは前提に入れてよい (下の帰納法が
+    それを供給する)。**証明しない。** -/
+def LocalStd75 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true → LocalK75 0 (dict a)
+
+/-- 4 つの局所事実の側の形。`localK75_of_facts75` でこちらからも入れる。 -/
+def LocalStdFacts75 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true → LocalFacts75 0 ac
+
+/-- **4 つの局所事実からも同じ仮説が出る。** -/
+theorem localStd75_of_facts75 (H : LocalStdFacts75) : LocalStd75 :=
+  fun a hb h hi hl => localK75_of_facts75 0 (dict a) hi hl (H a hb h hi hl)
+
+/-- 局所条件だけで `dict` の像は 𝔗(M) の中。`u = 1` は §73.4 が閉じている。 -/
+theorem inT_dict_of_local75 (H : LocalStd75) : ∀ a : BT, btLe72 1 a = true →
+    BT.isStd a = true → inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero, _, _ => ⟨inT_zero, lt_zero_M⟩
+  | .D u a, hb, h => by
+    obtain ⟨hu, hba⟩ := btLe72_D 1 u a hb
+    have ih := inT_dict_of_local75 H a hba (isStd_of_D h)
+    refine inT_collapse_gap3 u (dict a) ih.1 ih.2
+      (psiIdxOK_of_stepOK u (dict a) ih.1 ih.2 ?_)
+    cases u with
+    | zero => exact ksetStepOK_of_local75 0 (dict a) ih.1 ih.2 (H a hba h ih.1 ih.2)
+    | succ u' =>
+      cases u' with
+      | zero => exact ksetStepOK_one73 a hba
+      | succ u'' => exact absurd hu (by omega)
+  | .sum a b, hb, h => by
+    obtain ⟨hba, hbb⟩ := btLe72_sum 1 a b hb
+    have iha := inT_dict_of_local75 H a hba (isStd_of_sum h).1
+    have ihb := inT_dict_of_local75 H b hbb (isStd_of_sum h).2
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+/-- **§75 の第一の結論。** §73 の残る門は局所条件から出る。 -/
+theorem psiIdxStep073_of_local75 (H : LocalStd75) : PsiIdxStep073 := by
+  intro a hb h
+  have ih := inT_dict_of_local75 H a hb (isStd_of_D h)
+  exact ksetStepOK_of_local75 0 (dict a) ih.1 ih.2 (H a hb h ih.1 ih.2)
+
+/-- 4 つの局所事実からも。 -/
+theorem psiIdxStep073_of_facts75 (H : LocalStdFacts75) : PsiIdxStep073 :=
+  psiIdxStep073_of_local75 (localStd75_of_facts75 H)
+
+/-- 直した 2 条項の側の門。 -/
+def LocalStdFacts2_75 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true → LocalFacts2_75 0 ac
+
+theorem localStd75_of_facts2_75 (H : LocalStdFacts2_75) : LocalStd75 :=
+  fun a hb h hi hl => localK75_of_facts2_75 0 (dict a) (H a hb h hi hl)
+
+theorem psiIdxStep073_of_facts2_75 (H : LocalStdFacts2_75) : PsiIdxStep073 :=
+  psiIdxStep073_of_local75 (localStd75_of_facts2_75 H)
+
+/-- **§75 の第二の結論。** 326 行目の証明書が `K` の側で待っているのは局所条件だけ。 -/
+theorem certIn_t326_local75 (H : LocalStd75)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step73 (psiIdxStep073_of_local75 H) HD HI HC hacc
+
+end
+
+/-! ### §75.6 測定 (凍結)
+
+母集団の作り方を先に書く。**§73 の `hotB73` はこの節には浅すぎる** (否定 1)。
+
+    hotB73  = §73 の 483 個 (`ψ` の入れ子 6 段)
+    hotC75  = dg72 hotB73                                   1031 個, 入れ子 7 段
+    hotD75  = dg72 hotC75                                   2127 個, 入れ子 8 段
+    hotE75  = dg72 hotD75                                   4319 個, 入れ子 9 段
+    stdE75  = hotE75 を `BT.isStd (ψ₀ ·)` で絞ったもの         284 個
+    seedP75 = (dg72 を 6 回) を主要項に絞ったもの            126 個, 入れ子 6 段
+    wide2_75 = seedP75 の 2 項和すべて                     15876 個, 入れ子 6 段
+      (dg72 l = l ++ {ψ₀a, ψ₁a : a ∈ l} は §72 のもの。`isStd` では絞らずに作る。)
+    wStep75 = ψ₁ψ₁ψ₁ψ₀ψ₁ψ₁ψ₁ψ₁0                   節 9 個, 入れ子 8 段
+
+`wide2_75` は「前の指数を持つ歩」(`plus i0 Δ` の枝 — §75.2 が閉じたもの) を稼ぐために
+入れた。§73 の母集団ではその歩は 120 歩中 **1 歩**しかなく、枝が空回りして見えていた。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+def hotC75 : List BT := dg72 hotB73
+def hotD75 : List BT := dg72 hotC75
+def hotE75 : List BT := dg72 hotD75
+def stdE75 : List BT := hotE75.filter fun a => BT.isStd (BT.D 0 a)
+/-- 段 1 以下・`ψ` の入れ子 8 段。`BT.isStd` は `ψ₀` を被せたところで落ちる。 -/
+def wStep75 : BT :=
+  BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero)))))))
+
+-- 母集団の大きさ。
+#guard hotC75.length == 1031
+#guard hotD75.length == 2127
+#guard hotD75.all (btLe72 1)
+
+/-! **否定 1 — §73 の母集団はこの節には浅すぎる。`u = 0` の門は `BT.isStd` なしでは偽。**
+§73 の `hotB73` (入れ子 6 段) では `stepOKb 0 (dict a)` が一度も落ちず、門が仮説なしで
+成り立つように見える。入れ子を 8 段にすると 2127 個のうち **16 個**で落ちる。16 個は
+どれも `BT.isStd (ψ₀ ·)` が偽で、`BT.isStd` を課すと 0 個。**§73 の「肯定 2」は
+母集団が一段浅かった。** -/
+
+#guard (hotB73.filter fun a => !(stepOKb 0 (dict a))).length == 0
+#guard (hotD75.filter fun a => !(stepOKb 0 (dict a))).length == 16
+#guard (hotD75.filter fun a => BT.isStd (BT.D 0 a) && !(stepOKb 0 (dict a))).length == 0
+#guard ((hotD75.filter fun a => !(stepOKb 0 (dict a))).all
+  fun a => BT.isStd (BT.D 0 a) == false)
+#guard ((hotD75.filter fun a => !(stepOKb 0 (dict a))).all fun a => BT.size a >= 9)
+
+/-- **否定 1、定理の形。** 段 1 以下で、`BT` そのものは Buchholz 標準なのに `ψ₀` を
+    被せると標準でなくなる項があり、そこで残る門は破れる。§73 の `btPool72`・`hotB73`
+    のどちらにも入っていない。 -/
+theorem not_ksetStepOK_wStep75 :
+    btLe72 1 wStep75 = true ∧ BT.isStd wStep75 = true ∧
+    BT.isStd (BT.D 0 wStep75) = false ∧ ¬ KsetStepOK 0 (dict wStep75) := by
+  refine ⟨by decide, by decide, by decide, fun H => ?_⟩
+  exact Bool.noConfusion ((stepOKb_of_ksetStepOK H).symm.trans
+    (show stepOKb 0 (dict wStep75) = false from by decide))
+
+/-! **否定 2 — 局所条件も同じところで落ちる、そしてそこだけで落ちる。**
+`localOKb73 0 ·` が落ちる 16 個は `stepOKb 0 ·` が落ちる 16 個とちょうど同じ。
+つまり §75.3 の還元はこの母集団では**損をしていない** — 門が通るのに局所条件が
+落ちる項は一つも無い。 -/
+
+#guard (hotD75.filter fun a => !(localOKb73 0 (dict a))) ==
+  (hotD75.filter fun a => !(stepOKb 0 (dict a)))
+#guard (hotD75.filter fun a => stepOKb 0 (dict a) && !(localOKb73 0 (dict a))).length == 0
+#guard (hotC75.filter fun a => stepOKb 0 (dict a) && !(localOKb73 0 (dict a))).length == 0
+#guard !(localOKb73 0 (dict wStep75))
+
+/-! **否定 3 — 移送 `K_{Ω₁}(dict a) < dict a` は入れ子 8 段でも `isStd` で 0 失敗。**
+§73 の否定 3 (`hotB73` で 483 個中 79 個) は深くしても同じ形で残る。 -/
+
+#guard (hotD75.filter fun a => !(KOK73 (dict a))).length == 653
+#guard (hotD75.filter fun a => BT.isStd (BT.D 0 a) && !(KOK73 (dict a))).length == 0
+
+/-! **肯定 1 — 局所条件は空回りしていない。** `hotD75` の 325 歩の発火のうち、
+67 歩で `K_{Ω₁} aV` が、3 歩で `K_{Ω₁} cV` が空でない。 -/
+
+#guard (hotD75.flatMap fires73).length == 325
+#guard ((hotD75.flatMap fires73).filter fun p => !((Kset (reg 1) p.2.1).isEmpty)).length == 67
+#guard ((hotD75.flatMap fires73).filter fun p => !((Kset (reg 1) p.2.2).isEmpty)).length == 3
+
+
+/-! **否定 4 — §73.7 の (K2) は「標準」を課しても偽。** `hotE75 = dg72 hotD75`
+(`ψ` の入れ子 9 段、4319 個) を `BT.isStd (ψ₀ ·)` で絞ると 284 個、その発火は 204 歩。
+そのうち **9 歩**で (K2) の `K_{Ω₁} aV < aV` が落ちる (`K_{Ω₁} cV < cV` の方は 0 歩)。
+§73.6 は 120 歩で 0 失敗と測って「(K2) が成り立つ」と書いたが、母集団が浅かった。
+**それでも局所条件は 204 歩すべてで通る。** 通る理由は `aV` ではなく `Δ` と比べる
+からで、`K_{Ω₁} aV ∪ K_{Ω₁} cV < Δ` は 204 歩で 0 失敗。§75.4c の直した分解
+(K2')+(K4) はこの測定に合わせたもので、(K3)・(K5) は要らなくなる。 -/
+
+#guard hotE75.length == 4319
+#guard (hotE75.filter fun a => !(stepOKb 0 (dict a))).length == 61
+#guard (hotE75.filter fun a => BT.isStd (BT.D 0 a) && !(stepOKb 0 (dict a))).length == 0
+#guard stdE75.length == 284
+#guard (stdE75.flatMap fires73).length == 204
+#guard ((stdE75.flatMap fires73).filter fun p => !(KOK73 p.2.1)).length == 9
+#guard ((stdE75.flatMap fires73).filter fun p => !(KOK73 p.2.2)).length == 0
+#guard ((stdE75.flatMap fires73).filter fun p =>
+  !((Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).all fun y => lt y (dd73 p))).length == 0
+#guard (stdE75.filter fun a => !(localOKb73 0 (dict a))).length == 0
+#guard (stdE75.filter fun a => !(stepOKb 0 (dict a))).length == 0
+
+
+/-- **否定 4、定理の形。** `kBad75 = ψ₁ wStep75` は段 1 以下で `ψ₀` を被せても Buchholz
+    標準、門も局所条件も通る。それでも発火の一歩で §73.7 の (K2) `K_{Ω₁} aV < aV` が
+    落ちる。**§73 の分解はこの形では使えない。** 直した (K2') は落ちない。 -/
+def kBad75 : BT := BT.D 1 wStep75
+
+theorem not_k2_kBad75 :
+    btLe72 1 kBad75 = true ∧ BT.isStd (BT.D 0 kBad75) = true ∧
+    stepOKb 0 (dict kBad75) = true ∧ localOKb73 0 (dict kBad75) = true ∧
+    ((fires73 kBad75).any fun p => !(KOK73 p.2.1)) = true ∧
+    ((fires73 kBad75).all fun p =>
+      (Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).all fun y => lt y (dd73 p)) = true := by
+  refine ⟨by decide, by decide, by decide, by decide, by decide, by decide⟩
+
+/-! **肯定 3 — (K3) と (K4) は測ったかぎり無条件。証明はしていない。**
+`hotD75` の 325 歩で `cV ≤ Δ` は 0 失敗、`Δ ⊖ 1 ≠ Δ` の 27 歩ではどちらの `K` も空、
+`aV ≰ Δ` の 31 歩のうち 30 歩は `aV = Ω₁` (そこは `kset_fst_reg75` が只で片づける) で、
+残り 1 歩も `K aV` が空。 -/
+
+#guard ((hotD75.flatMap fires73).filter fun p => !(le p.2.2 (dd73 p))).length == 0
+#guard ((hotD75.flatMap fires73).filter fun p => sub1 (dd73 p) != dd73 p).length == 27
+#guard ((hotD75.flatMap fires73).filter fun p => sub1 (dd73 p) != dd73 p &&
+  !((Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).isEmpty)).length == 0
+#guard ((hotD75.flatMap fires73).filter fun p => !(le p.2.1 (dd73 p))).length == 31
+#guard ((hotD75.flatMap fires73).filter fun p =>
+  !(le p.2.1 (dd73 p)) && p.2.1 == reg 1).length == 30
+#guard ((hotD75.flatMap fires73).filter fun p => !(le p.2.1 (dd73 p)) && p.2.1 != reg 1 &&
+  !((Kset (reg 1) p.2.1).isEmpty)).length == 0
+
+/-! (K3) の裏にある補題 `omegaNF (logOm p) = p` は `lt p M` を落とすと**偽**。
+`ω̄^(M ⊕ 1)` で `ω̄^(ω̄^(M ⊕ 1))` になる。段 1 以下の像には `ω̄^·` が出ない
+(§73.3 の `lt_M_pure73`) ので、そこでは効いていない。 -/
+
+#guard inT (omg (add M TM.Term.one)) && (omg (add M TM.Term.one)).isAP
+#guard !(lt (omg (add M TM.Term.one)) M)
+#guard !(omegaNF (logOm (omg (add M TM.Term.one))) == omg (add M TM.Term.one))
+
+/-- **肯定 2 — §73 が「`K` が空だから通るのではない」と言った項で、§75.3 の道が通る。**
+    `aBad73` の発火の係数は `Γ₀` で `K_{Ω₁} Γ₀ = {0}`。局所条件を経由して門が出る。 -/
+theorem ksetStepOK_aBad73_75 : KsetStepOK 0 (dict aBad73) :=
+  ksetStepOK_of_local75 0 (dict aBad73) (by decide) (by decide) (localK75_of_b (by decide))
+
+/-- 同じ道で 2.1(vi) の `K` の連言も出る。 -/
+theorem ksetIdxOK_aBad73_75 : KsetIdxOK 0 (dict aBad73) :=
+  ksetIdxOK_of_stepOK 0 (dict aBad73) ksetStepOK_aBad73_75
+
+end
+
+/-! ### §75.7 公理 -/
+
 end Evidence.Region
