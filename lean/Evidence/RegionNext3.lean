@@ -9984,4 +9984,472 @@ open TM TM.Term
 
 end
 
+/-! ## §91 `LoDom89` IS FALSE, AND THE CLAUSE IT SHOULD HAVE BEEN IS A PAIR CLAUSE
+
+§89 gave the fold its closed form on the residual region,
+
+        ψ₀(x)  =  ω^( ψ₀(hi x) ⊕ lo x )        for `Ω₁ ≤ x`,
+
+and split what §81 had left into two named clauses: `HiMono89`, the comparison of the two
+big parts, and `LoDom89`, a clause about ONE term — every component of `lo x` is at most
+`ψ₀(hi x)`.  §89 measured `LoDom89` on 69 `K`-standard residual terms, saw 0 failures, and
+proved it free on 60 of them.
+
+**`LoDom89` is false.**  §91.1 builds the witness.  It is not a witness §89's negative
+section missed by a hair: `not_loDomNoK89` refuted the clause only after the `K`-condition
+`BT.isStd (ψ₀ ·)` was weakened away, and said in as many words that what keeps its term out
+is that one hypothesis.  §91's witness satisfies the `K`-condition.
+
+        a  =  Ω₁ ⊕ ψ₀(Ω₁ ⊕ 1)
+
+`BT.isStd (ψ₀ a) = true`, `btLe72 1 (ψ₀ a) = true`, `Ω₁ ≤ dict a`, and
+
+        hi (dict a) = Ω₁ ,  ψ₀(hi (dict a)) = ε₀ ,  lo (dict a) = φ̄0ε₀ = ε₀·ω  >  ε₀ .
+
+So `LoDom89` fails at `a`, and with it `LoDomSum89` (`a` is a sum, not a principal term),
+`collapseMono0Hi_of_89`, `collapseMono0Hi_of_sum89`, and every consequence §89 hung on
+them: `dictLtA74_89`, `vOfLtA71_89`, `limDecS1_89`, `limIncS1_89`, `certIn_t326_89` are all
+implications out of a false hypothesis and can never be discharged.  Row 326 lost that
+route the moment `LoDom89` was written down.
+
+**§91 repairs it.**  The mistake is visible in one line of `lt_collapse0_diffHi89`: to
+compare `ω^(V ⊕ r)` with `ω^(W ⊕ s)` when `V < W`, what must dominate the small side's tail
+`r` is `W` — the accumulator of the LARGER term — and not `V`.  §89 asked for the stronger,
+false thing because asking it of `V` alone made the clause a statement about one term.  The
+repaired clause is a pair clause:
+
+  `LoDomPair91` : `hi (dict a) < hi (dict b)` ⟹ every component of `lo (dict a)` is
+  strictly below `ψ₀(hi (dict b))`.
+
+WHAT IS PROVED.
+
+  §91.1  **THE REFUTATION.**  `not_loDom89`, `not_loDomSum89`, and `loBadK91_facts`, the
+         eleven decided facts about the witness.  Also `not_loDom_of_hiMono91`: `HiMono89`
+         and `LoDom89` cannot both hold, stated so the negative cannot be read as an
+         artefact of a stray hypothesis.
+
+  §91.2  **THE REPAIRED STEP.**  `lt_plus_of_all_lt91` — the head-domination lemma with the
+         side condition moved to the larger side, replacing `lt_plus_ap89` — and
+         `lt_collapse0_diffHi91`, the repaired case B of §89.5.
+
+  §91.3  **THE ASSEMBLY.**  `collapseMono0Hi_of_91 (Hp) (H : HiMono89) (L : LoDomPair91) :
+         CollapseMono0Hi81`, and through §81: `dictLtA74_91`, `vOfLtA71_91`, `limDecS1_91`,
+         `limIncS1_91`, `certIn_t326_91`.  Row 326's route is restored, with `LoDom89`
+         replaced by `LoDomPair91` and `HiMono89` unchanged.
+
+  §91.4  **THE REPAIRED CLAUSE IS THE WEAKER ONE, AND IS FREE WHERE §89'S WAS.**
+         `loDomPair_of_loDom91` : `HiMono89` and `LoDom89` give `LoDomPair91` (the
+         direction, recorded even though the antecedent is refuted);
+         `loDomPair_of_ltE91` : a tail below `ε₀` discharges it, as in §89;
+         `loDomPair_of_sum91` : principal terms have no tail, as in §89.
+
+WHAT IS **NOT** CLAIMED.  `HiMono89` is not proved and §91 does not weaken it: §91.5
+searched for a counterexample over a population built to contain shapes §89's could not
+express, and found none.  `LoDomPair91` is not proved either — it is a hypothesis, exactly
+as `LoDom89` was, and §91.5 measures it.  Nothing here proves `PsiIdxOKStd172`,
+`CofDenseS1` or `BCofIn71`.
+
+WHAT THE MEASUREMENT SAYS (§91.5 gives the construction).  §89's population cannot express
+the witness at all: its `wide89` line forms sums only at the top level, so a sum nested
+underneath a `ψ₀` — which is what `Ω₁ ⊕ ψ₀(Ω₁ ⊕ 1)` is — never occurs in it.  §91's
+population closes that hole by capping sums and then summing again. -/
+
+/-! ### §91.1 反例 — `K` の条件つきで `LoDom89` は偽
+
+`a = Ω₁ ⊕ ψ₀(Ω₁ ⊕ 1)`。`ψ₀` の下に**和**が入っているのが要点で、§89 の母集団は
+上の段でしか和を作らないからこの形を持たない。`BT.isStd (ψ₀ a)` は真 —
+`G(a,0)` の元は `0` と `Ω₁ ⊕ 1` で、後者は `a` より小さい (最初の成分が同じで、
+尾の `ψ₀0` と `ψ₀(Ω₁⊕1)` の比較が `0 < Ω₁⊕1` に落ちる)。
+それでも `lo (dict a) = ε₀·ω > ε₀ = ψ₀(hi (dict a))`。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§91 の反例。** `Ω₁ ⊕ ψ₀(Ω₁ ⊕ 1)`。 -/
+def loBadK91 : BT :=
+  BT.sum (BT.D 1 BT.zero) (BT.D 0 (BT.sum (BT.D 1 BT.zero) (BT.D 0 BT.zero)))
+
+/-- 反例の受領 — すべて `decide`。`BT.isStd (ψ₀ ·)` は**真**である。 -/
+theorem loBadK91_facts :
+    btLe72 1 (BT.D 0 loBadK91) = true ∧ BT.isStd (BT.D 0 loBadK91) = true ∧
+    BT.isStd loBadK91 = true ∧ BT.isP loBadK91 = false ∧
+    le (reg 1) (dict loBadK91) = true ∧
+    hiW89 (dict loBadK91) = reg 1 ∧
+    collapse 0 (hiW89 (dict loBadK91)) = E081 ∧
+    loW89 (dict loBadK91) = phi zero E081 ∧
+    (phi zero E081) ∈ toList (loW89 (dict loBadK91)) ∧
+    le (phi zero E081) (collapse 0 (hiW89 (dict loBadK91))) = false ∧
+    lt (collapse 0 (hiW89 (dict loBadK91))) (phi zero E081) = true :=
+  ⟨by decide, by decide, by decide, by decide, by decide, by decide,
+   by decide, by decide, by decide, by decide, by decide⟩
+
+/-- **§91.1 の主定理 — `LoDom89` は偽。** `K` の条件を消費しても落ちる。 -/
+theorem not_loDom89 : ¬ LoDom89 := by
+  intro H
+  have h := H loBadK91 loBadK91_facts.1 loBadK91_facts.2.1 loBadK91_facts.2.2.2.2.1
+    (phi zero E081) loBadK91_facts.2.2.2.2.2.2.2.2.1
+  rw [loBadK91_facts.2.2.2.2.2.2.2.2.2.1] at h
+  exact Bool.noConfusion h
+
+/-- **和の形に絞っても偽。** 反例は和である。 -/
+theorem not_loDomSum89 : ¬ LoDomSum89 := by
+  intro H
+  have h := H loBadK91 loBadK91_facts.2.2.2.1 loBadK91_facts.1 loBadK91_facts.2.1
+    loBadK91_facts.2.2.2.2.1 (phi zero E081) loBadK91_facts.2.2.2.2.2.2.2.2.1
+  rw [loBadK91_facts.2.2.2.2.2.2.2.2.2.1] at h
+  exact Bool.noConfusion h
+
+/-- §89 の組み立ては前件が偽 — `LoDom89` を仮定に持つものは discharge できない。 -/
+theorem loDom89_unreachable91 : ∀ (P : Prop), LoDom89 → P :=
+  fun _ L => absurd L not_loDom89
+
+end
+
+/-! ### §91.2 直った一歩 — 押さえるのは**大きい側**の累算器
+
+`ω^(V ⊕ r) < ω^(W ⊕ s)` を `V < W` から出すのに要るのは `V ⊕ r < W` であって、
+`W` が加法主要だから、`r` の成分がぜんぶ `W` より下ならそれで足りる。§89 は
+`r` の成分を `V` で押さえにいって、そこで偽の条項を作ってしまった。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **直った押さえ。** 尾の成分が `W` より下なら和は `W` より下 — `V` は関係しない。
+    `lt_plus_ap89` の側条件を大きい側へ移した形。 -/
+theorem lt_plus_of_all_lt91 {V W r : Term} (hiV : inT V = true) (hiW : inT W = true)
+    (hir : inT r = true) (hapV : V.isAP = true) (hapW : W.isAP = true)
+    (hhd : ∀ p ∈ toList r, lt p W = true) (hVW : lt V W = true) :
+    lt (plus V r) W = true := by
+  cases hr : toList r with
+  | nil => rw [plus_nil hr]; exact hVW
+  | cons r1 R' =>
+    rw [plus_cons hiV hir (toList_isAP81 hapV) rfl hr]
+    by_cases hle : le r1 V = true
+    · rw [if_pos hle, show ofList ([] : List Term) = zero from rfl,
+        plus_zero_left_inT hir,
+        lt_add_nsum (ne_zero_of_isAP hapW) (nsum_of_isAP hapW)]
+      exact hVW
+    · rw [if_neg hle]
+      exact lt_of_hd_lt hir hiW hr (toList_isAP81 hapW)
+        (hhd r1 (by rw [hr]; exact List.Mem.head _))
+
+/-- **場合 B、直した形。** 小さい側の尾は**大きい側**の累算器より下、という側条件で
+    §89.5 の `lt_collapse0_diffHi89` がそのまま通る。 -/
+theorem lt_collapse0_diffHi91 {x y : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (Hpx : PsiIdxOK 0 x) (hWx : le (reg 1) x = true)
+    (hy : inT y = true) (hly : lt y M = true) (Hpy : PsiIdxOK 0 y)
+    (hWy : le (reg 1) y = true)
+    (hhd : ∀ p ∈ toList (loW89 x), lt p (collapse 0 (hiW89 y)) = true)
+    (hHi : lt (collapse 0 (hiW89 x)) (collapse 0 (hiW89 y)) = true) :
+    lt (collapse 0 x) (collapse 0 y) = true := by
+  obtain ⟨hiA, _, hapA, _, _⟩ := accW89_facts x hx hlx Hpx hWx
+  obtain ⟨hiB, _, hapB, _, _⟩ := accW89_facts y hy hly Hpy hWy
+  have hVx := collapse0_hi89 x hx hlx Hpx hWx
+  have hVy := collapse0_hi89 y hy hly Hpy hWy
+  rw [hVy] at hhd hHi
+  rw [hVx] at hHi
+  rw [collapse0_split89 x hx hlx Hpx hWx, collapse0_split89 y hy hly Hpy hWy, hVx, hVy]
+  refine lt_omegaNF_inT79 (inT_plus hiA (inT_loW89 hx)) (inT_plus hiB (inT_loW89 hy)) ?_
+  exact lt_of_lt_of_le3 (inT_le_fragR _ (inT_plus hiA (inT_loW89 hx)))
+    (inT_le_fragR _ hiB) (inT_le_fragR _ (inT_plus hiB (inT_loW89 hy)))
+    (lt_plus_of_all_lt91 hiA hiB (inT_loW89 hx) hapA hapB hhd hHi)
+    (le_self_plus_ap81 hiB hapB (inT_loW89 hy))
+
+end
+
+/-! ### §91.3 組み立て — 326 行目までの道を張り直す
+
+`HiMono89` はそのまま、`LoDom89` を `LoDomPair91` に取り替える。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **直った残余 (2)。** 小さい側の尾は**大きい側**の `ψ₀(hi ·)` より下。
+    §89 の `LoDom89` と違って対の条項だが、そのぶん弱い (§91.4)。 -/
+def LoDomPair91 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    ∀ p ∈ toList (loW89 (dict a)), lt p (collapse 0 (hiW89 (dict b))) = true
+
+/-- **§91 の主定理。** §81 の残余は `HiMono89` と `LoDomPair91` に割れる。 -/
+theorem collapseMono0Hi_of_91 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDomPair91) :
+    CollapseMono0Hi81 := by
+  intro a b hbA hbB hsA hsB hWa hWb h
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hsa := isStd_of_D hsA
+  have hsb := isStd_of_D hsB
+  have hia := inT_dict_of_std172 Hp a hba hsa
+  have hib := inT_dict_of_std172 Hp b hbb hsb
+  have hpa := Hp 0 a (by omega) hba hsA
+  have hpb := Hp 0 b (by omega) hbb hsB
+  by_cases heq : hiW89 (dict a) = hiW89 (dict b)
+  · exact lt_collapse0_sameHi89 hia.1 hia.2 hpa hWa hib.1 hib.2 hpb hWb heq h
+  · have hhi := lt_hi89 hia.1 hib.1 h heq
+    exact lt_collapse0_diffHi91 hia.1 hia.2 hpa hWa hib.1 hib.2 hpb hWb
+      (L a b hbA hbB hsA hsB hWa hWb hhi) (H a b hbA hbB hsA hsB hWa hWb hhi)
+
+/-- 326 行目までの繋ぎ。 -/
+theorem dictLtA74_91 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDomPair91) : DictLtA74 :=
+  dictLtA74_81 Hp (collapseMono0Hi_of_91 Hp H L)
+
+theorem vOfLtA71_91 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDomPair91) : VOfLtA71 :=
+  vOfLtA71_81 Hp (collapseMono0Hi_of_91 Hp H L)
+
+theorem limDecS1_91 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDomPair91) : LimDecS1 :=
+  limDecS1_81 Hp (collapseMono0Hi_of_91 Hp H L)
+
+theorem limIncS1_91 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDomPair91) : LimIncS1 :=
+  limIncS1_81 Hp (collapseMono0Hi_of_91 Hp H L)
+
+theorem certIn_t326_91 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDomPair91)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_81 Hp (collapseMono0Hi_of_91 Hp H L) HCD HBC hacc
+
+end
+
+/-! ### §91.4 直した条項は弱い方で、只のところは §89 と同じ
+
+`LoDom89` は (`HiMono89` があれば) `LoDomPair91` を導く — 向きの記録。
+逆は出ない: §91.1 の反例は `LoDomPair91` を破らない (§91.5 が測る)。
+尾が ε₀ より下なら只、主要項なら尾がないから只、という §89 の 2 つはそのまま残る。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **向きの記録。** `LoDom89` の方が強い。前件は §91.1 で偽と分かっているが、
+    どちらが弱いかは形の問題である。 -/
+theorem loDomPair_of_loDom91 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDom89) :
+    LoDomPair91 := by
+  intro a b hbA hbB hsA hsB hWa hWb hhi p hp
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hia := inT_dict_of_std172 Hp a hba (isStd_of_D hsA)
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  have hpa := Hp 0 a (by omega) hba hsA
+  have hpb := Hp 0 b (by omega) hbb hsB
+  have hip : inT p = true := inTL_inT (inT_loW89 hia.1) p hp
+  obtain ⟨hiA, _, _, _, _⟩ := accW89_facts (dict a) hia.1 hia.2 hpa hWa
+  obtain ⟨hiB, _, _, _, _⟩ := accW89_facts (dict b) hib.1 hib.2 hpb hWb
+  have h1 := L a hbA hsA hWa p hp
+  have h2 := H a b hbA hbB hsA hsB hWa hWb hhi
+  rw [collapse0_hi89 (dict a) hia.1 hia.2 hpa hWa] at h1 h2
+  rw [collapse0_hi89 (dict b) hib.1 hib.2 hpb hWb] at h2 ⊢
+  exact lt_of_le_of_lt3 (inT_le_fragR p hip) (inT_le_fragR _ hiA) (inT_le_fragR _ hiB) h1 h2
+
+/-- **尾が ε₀ より下なら只** — §89 の `loDom_of_ltE89` の対の形。 -/
+theorem loDomPair_of_ltE91 (Hp : PsiIdxOKStd172)
+    (L : ∀ (a : BT), btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      le (reg 1) (dict a) = true →
+      ∀ p ∈ toList (loW89 (dict a)), lt p E081 = true) : LoDomPair91 := by
+  intro a b hbA hbB hsA hsB hWa hWb _ p hp
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hia := inT_dict_of_std172 Hp a hba (isStd_of_D hsA)
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  have hpb := Hp 0 b (by omega) hbb hsB
+  have hip : inT p = true := inTL_inT (inT_loW89 hia.1) p hp
+  obtain ⟨hiB, _, _, hleB, _⟩ := accW89_facts (dict b) hib.1 hib.2 hpb hWb
+  rw [collapse0_hi89 (dict b) hib.1 hib.2 hpb hWb]
+  exact lt_of_lt_of_le3 (inT_le_fragR p hip) (inT_le_fragR _ inT_E81)
+    (inT_le_fragR _ hiB) (L a hbA hsA hWa p hp) hleB
+
+/-- **主要項には尾がないから只** — §89 の `loDom_of_sum89` の対の形。
+    残るのは小さい側が和のときだけ。 -/
+def LoDomPairSum91 : Prop :=
+  ∀ (a b : BT), BT.isP a = false →
+    btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    ∀ p ∈ toList (loW89 (dict a)), lt p (collapse 0 (hiW89 (dict b))) = true
+
+theorem loDomPair_of_sum91 (Hp : PsiIdxOKStd172) (L : LoDomPairSum91) : LoDomPair91 := by
+  intro a b hbA hbB hsA hsB hWa hWb hhi
+  cases a with
+  | zero => exact L BT.zero b rfl hbA hbB hsA hsB hWa hWb hhi
+  | sum c d => exact L (BT.sum c d) b rfl hbA hbB hsA hsB hWa hWb hhi
+  | D u c =>
+      have hba := (btLe72_D 1 0 (BT.D u c) hbA).2
+      have hia := inT_dict_of_std172 Hp (BT.D u c) hba (isStd_of_D hsA)
+      rw [loW89_zero_of_isAP89 hia.1 (isAP_dict_D89 u c) hWa,
+        show toList zero = ([] : List Term) from rfl]
+      intro p hp; cases hp
+
+end
+
+/-! ### §91.5 測定 (凍結)
+
+**構成を先に書く。**  §89.8 の構成は `wide89` が**上の段でしか和を作らない**ので、
+`ψ₀` の下に和が入った項をひとつも持たない。§91 の反例はまさにその形だから、母集団の
+穴をふさぐところから始める。種 `bs91` は §89 と同じ段 1 以下の 6 項。**深さの線**
+`deep91` は `ψ₀`・`ψ₁` を 1 段ずつかぶせて 2 つに 1 つ間引く操作を 5 回。**入れ子の線**
+`nest91` は**和に帽子をかぶせた**もの (§89 に無い形)。**幅の線** `wide91` はそれらの
+2 項和。そして**文から作った線** `bad91` — `Ω₁ ⊕ ψ₀(c)`・`Ω₁ ⊕ Ω₁ ⊕ ψ₀(c)`・
+`ψ₁ψ₁0 ⊕ ψ₀(c)` を `c` の全域について並べたもの。**これは探索の結果ではなく
+`LoDom89` の文を読んで書いた形である** — 尾が頭の累算器を追い越すには `ψ₀` の引数に
+`Ω₁` 以上のものが入っていなければならず、しかも `G(a,0) < a` を満たすには
+その引数が `a` の頭と同じ成分で始まっていなければならない。
+
+    popAll91  1964 項
+    popStd91   776 項  `BT.isStd`
+    popGood91  776 項  さらに段 1 以下 (この母集団に添字 2 以上の線は無い。
+                       段の上限の負の対照は §89.8 の `out89` が持っている)
+    popK91     275 項  さらに `BT.isStd (ψ₀ ·)`
+    popHi91    266 項  さらに `Ω₁ ≤ dict a`   (**§91 が語る母集団**)
+
+対の母集団 `hipop91` は `popHi91` を 3 つに 1 つ間引いたものに、`LoDom89` を破る
+24 項をぜんぶ足したもの — 103 項。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+private def dedup91 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def every91 (k : Nat) (l : List BT) : List BT :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+private def dep91 : BT → Nat
+  | .zero => 0
+  | .D _ a => 1 + dep91 a
+  | .sum a b => max (dep91 a) (dep91 b)
+private def wid91 : BT → Nat
+  | .sum a b => wid91 a + wid91 b
+  | _ => 1
+
+private def bs91 : List BT :=
+  [BT.zero, BT.D 0 BT.zero, BT.D 0 (BT.D 0 BT.zero), BT.D 1 BT.zero,
+   BT.D 1 (BT.D 1 BT.zero), BT.D 0 (BT.D 1 BT.zero)]
+private def cap01_91 (l : List BT) : List BT := l.map (BT.D 0) ++ l.map (BT.D 1)
+private def lay91 : Nat → List BT → List BT
+  | 0, l => l
+  | n + 1, l => every91 2 (cap01_91 (lay91 n l))
+private def deep91 : List BT :=
+  dedup91 (bs91 ++ lay91 1 bs91 ++ lay91 2 bs91 ++ lay91 3 bs91 ++ lay91 4 bs91
+            ++ lay91 5 bs91)
+private def prin91 (l : List BT) : List BT := l.filter BT.isP
+private def sums2_91 (l : List BT) : List BT :=
+  (prin91 l).flatMap (fun a => ((prin91 l).filter (fun b => BT.le b a)).map (BT.sum a))
+private def sums3_91 (l : List BT) : List BT :=
+  (prin91 l).flatMap (fun a =>
+    ((prin91 l).filter (fun b => BT.le b a)).flatMap (fun b =>
+      ((prin91 l).filter (fun c => BT.le c b)).map (fun c => BT.sum a (BT.sum b c))))
+/-- 和に帽子をかぶせる — §89.8 の母集団に無かった形。 -/
+private def nest91 : List BT :=
+  dedup91 (every91 2 (cap01_91 (sums2_91 (every91 2 deep91))))
+private def wide91 : List BT :=
+  dedup91 (every91 5 (sums2_91 (every91 2 (deep91 ++ nest91))))
+/-- **文から作った線。** 探索ではなく `LoDom89` の文から構成した。 -/
+private def bad91 : List BT :=
+  dedup91 ((deep91 ++ sums2_91 bs91 ++ sums3_91 bs91
+             ++ sums2_91 (every91 2 deep91) ++ sums3_91 (every91 3 deep91)).flatMap
+    (fun c => [BT.sum (BT.D 1 BT.zero) (BT.D 0 c),
+               BT.sum (BT.D 1 BT.zero) (BT.sum (BT.D 1 BT.zero) (BT.D 0 c)),
+               BT.sum (BT.D 1 (BT.D 1 BT.zero)) (BT.D 0 c)]))
+
+private def popAll91 : List BT := dedup91 (deep91 ++ nest91 ++ wide91 ++ bad91)
+private def popStd91 : List BT := popAll91.filter BT.isStd
+private def popGood91 : List BT := popAll91.filter (fun x => btLe72 1 x && BT.isStd x)
+private def popK91 : List BT := popGood91.filter (fun a => BT.isStd (BT.D 0 a))
+private def lowW91 (a : BT) : Bool := TM.Term.lt (dict a) (reg 1)
+/-- §91 が語る母集団。 -/
+private def popHi91 : List BT := popK91.filter (fun a => !(lowW91 a))
+
+private def loDomB91 (a : BT) : Bool :=
+  (toList (loW89 (dict a))).all (fun p => TM.Term.le p (collapse 0 (hiW89 (dict a))))
+private def loDomPairB91 (a b : BT) : Bool :=
+  (toList (loW89 (dict a))).all (fun p => TM.Term.lt p (collapse 0 (hiW89 (dict b))))
+private def hipop91 : List BT :=
+  dedup91 (every91 3 popHi91 ++ popHi91.filter (fun a => !(loDomB91 a)))
+private def pairs91 (l : List BT) : List (BT × BT) :=
+  l.flatMap (fun a => l.map (fun b => (a, b)))
+private def hipairs91 : List (BT × BT) :=
+  (pairs91 hipop91).filter (fun p => TM.Term.lt (dict p.1) (dict p.2))
+private def dpairs91 : List (BT × BT) :=
+  hipairs91.filter (fun p => !(hiW89 (dict p.1) == hiW89 (dict p.2)))
+
+/-! 母集団の形。 -/
+#guard (popAll91.length, popStd91.length, popGood91.length, popK91.length, popHi91.length)
+        == (1964, 776, 776, 275, 266)
+#guard (hipop91.length, hipairs91.length, dpairs91.length) == (103, 5253, 4681)
+
+/-! **否定 1 — `LoDom89` は領域の中で 24 項が破る。** §89.8 は同じ条項を 69 項で
+    測って破れ 0 を見た。母集団を「`ψ₀` の下の和」に開くと、`K` 標準の 266 項のうち
+    **24 項**が破る。先頭は §91.1 の `loBadK91` そのもので、24 項はどれも和 (主要項は
+    尾を持たないので破りようがない)、20 項は 2 項和である。
+    `BT.isStd` だけに緩めると 460 項が破る。 -/
+#guard (popAll91.contains loBadK91, popK91.contains loBadK91, popHi91.contains loBadK91)
+        == (true, true, true)
+#guard popHi91.countP (fun a => !(loDomB91 a)) == 24
+#guard (popHi91.filter (fun a => !(loDomB91 a))).head? == some loBadK91
+#guard (popHi91.countP (fun a => !(loDomB91 a) && wid91 a == 2),
+        (popHi91.filter (fun a => !(loDomB91 a))).all (fun a => !(BT.isP a)))
+        == (20, true)
+#guard (popStd91.filter (fun a => !(lowW91 a))).countP (fun a => !(loDomB91 a)) == 460
+
+/-! **肯定 1 — 直した対の条項は破れ 0。** `hi` の違う 4681 対すべてで、小さい側の尾の
+    成分は大きい側の `ψ₀(hi ·)` より真に下。**その 1542 対は小さい側が `LoDom89` を
+    破る対である** — つまり §89 の条項が落ちるところでも直した条項は立っている。 -/
+#guard dpairs91.countP (fun p => !(loDomPairB91 p.1 p.2)) == 0
+#guard (hipairs91.length - dpairs91.length,
+        dpairs91.countP (fun p => loW89 (dict p.1) == zero && loW89 (dict p.2) == zero),
+        dpairs91.countP (fun p => !(loDomB91 p.1))) == (572, 435, 1542)
+
+/-! **肯定 2 — `HiMono89` は破れ 0。** §89 が残したまま §91 も残す条項で、
+    `ψ₀` の下に和が入る形へ母集団を開いても反例は出ない。`lt_hi89` の受領も 0。
+    `collapse 0` の単調性そのものも 5253 対すべてで成立する。 -/
+#guard dpairs91.countP (fun p =>
+        !(TM.Term.lt (collapse 0 (hiW89 (dict p.1))) (collapse 0 (hiW89 (dict p.2))))) == 0
+#guard dpairs91.countP (fun p => !(TM.Term.lt (hiW89 (dict p.1)) (hiW89 (dict p.2)))) == 0
+#guard (pairs91 hipop91).countP (fun p => TM.Term.lt (dict p.1) (dict p.2) &&
+        !(TM.Term.lt (collapse 0 (dict p.1)) (collapse 0 (dict p.2)))) == 0
+
+/-! **肯定 3 — 只のところ。** 266 項のうち尾が ε₀ より下は 146 項
+    (`loDomPair_of_ltE91`)、主要項は 40 項 (`loDomPair_of_sum91`)、尾なしは 88 項。
+    対で数えると 4681 対のうち小さい側の尾が ε₀ より下は 1863 対、主要は 476 対。 -/
+#guard (popHi91.countP (fun a => (toList (loW89 (dict a))).all (fun p => TM.Term.lt p E081)),
+        popHi91.countP BT.isP,
+        popHi91.countP (fun a => loW89 (dict a) == zero)) == (146, 40, 88)
+#guard (dpairs91.countP (fun p =>
+          (toList (loW89 (dict p.1))).all (fun q => TM.Term.lt q E081)),
+        dpairs91.countP (fun p => BT.isP p.1)) == (1863, 476)
+
+/-! 母集団の深さと幅。 -/
+#eval (popAll91.foldl (fun m x => max m (dep91 x)) 0,
+        popK91.foldl (fun m x => max m (dep91 x)) 0,
+        popHi91.foldl (fun m x => max m (wid91 x)) 0)
+
+end
+
+/-! ### §91.6 公理
+
+§91 が足した公理はない。`LoDomPair91` は `Prop` の**仮説**であって公理ではなく、
+`collapseMono0Hi_of_91` の引数として明示的に渡る。`not_loDom89` は `decide` だけで
+出る定理で、仮説をひとつも取らない。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+
+end
+
 end Evidence.Region
