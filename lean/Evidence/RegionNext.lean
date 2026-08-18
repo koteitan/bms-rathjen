@@ -26695,4 +26695,893 @@ end
 
 /-! ### §71.9 公理 -/
 
+/-! ## §73 THE `u = 1` HALF OF THE LAST `inT` GATE IS A THEOREM — `u = 0` IS NOT
+
+§72 reduced row 326's certificate to four hypotheses.  Three are order clauses.  The fourth
+is [Rathjen, 1991] 2.1(vi)'s `K`-condition for the indices `collapse`'s strongly critical
+branch emits, restricted to level-one arguments:
+
+    PsiIdxStepStd172 : ∀ u a, u ≤ 1 → btLe72 1 a = true → BT.isStd (BT.D u a) = true →
+                       KsetStepOK u (dict a)
+
+§73 splits it at `u`.  **The `u = 1` half is proved here, and unconditionally** — neither
+`BT.isStd` nor anything else is needed.  The `u = 0` half is NOT proved; §73 states it as one
+named hypothesis, measures it, and says what a §74 should try first.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §73.1–§73.2  **PURITY, AND THE ORDER FACT IT BUYS.**  `pure73` is a purely SYNTACTIC
+    predicate on 𝔗(M): no `M`, no `ω̄^·`, every `Z` is `Z 0`, and every `ψ` has a regular
+    subscript.  Two things come out of it with no side condition.  `lt_pure73_reg2`: a pure
+    term is below `Z 1 = reg 2 = Ω₂`, by an induction on the fuel of 2.3 that touches only
+    five of its sixteen clauses.  `fragR_of_pure73` (in §73.4): a pure term is `FragR`, so
+    `Evidence/WF.lean` §8.5's order theory — transitivity, asymmetry, trichotomy — applies to
+    the whole level-one image **without any `inT` hypothesis**, which is what makes the
+    corollaries `lt_trans_dict73` / `lt_comparable_dict73` free of the very gate being proved.
+
+  §73.3–§73.4  **THE LEVEL-ONE IMAGE IS PURE.**  Twenty preservation lemmas, one per
+    operation of the dictionary (`ofList`, `toList`, `plus`, `ofNat`, `sub1`, `subAP`,
+    `logOm`, `splitFin`, `phiNFdefault`, `phiNFsucc`, `phiNF`, `omegaNF`, `divAP`, `mulL`,
+    `wA`, `wC`, `wcnf`, `idxOf`, `stepF`, the fold), then `pure73_dict`.  Unlike §64's `inT`
+    versions these carry NO order side conditions: purity is preserved by both branches of
+    every `if`, so the comparisons inside `phiNF` and `plus` never have to be decided.  The
+    one place where that fails is `omegaNF`'s `ω̄^·` branch and `collapse`'s `ψ_w` branch, and
+    both are settled: `lt_M_pure73` kills the first, and for the second the subscript is
+    `reg (u+1)`, pure exactly when `u = 0`.
+
+    **`collapse 1` LOOKS CIRCULAR AND IS NOT.**  Its strongly critical branch would emit
+    `ψ_{Z 1}`, which is not pure — and it never fires, because `lt_pure73_reg2` puts every
+    component of the argument below `Z 1`, so `wcnf (reg 2)` returns the empty pair list
+    (`wcnf_reg2_nil73`).  The scan is then literally `[]`, and `ksetStepOK_one73` closes the
+    `u = 1` gate with no hypothesis at all.
+
+  §73.5  **THE SPLIT.**  `PsiIdxStep073` is §72's gate with `u` fixed to `0`;
+    `psiIdxStepStd172_of_step073` proves §72's gate from it and `step073_of_psiIdxStepStd172`
+    records that nothing was lost.  `certIn_t326_step73` re-derives row 326's certificate:
+    on the `K` side it now waits on `PsiIdxStep073` alone.
+
+WHAT IS NOT CLAIMED, AND WHAT §73.6 MEASURED.  `PsiIdxStep073` is NOT proved, and the
+measurements say the easy routes to it are all closed.
+
+  * **The `K`-sets are not empty.**  `aBad73 = ψ₁(ψ₁ψ₁0 ⊕ ψ₀ψ₁ψ₁ψ₁0)` is level-one and
+    Buchholz-standard, its scan fires once, and that step's coefficient is `Γ₀`, whose
+    `K_{Ω₁}` is `{0}`.  The step passes because `0 < Γ₀`, not because anything is empty.
+  * **§72's `btPool72` cannot see this.**  On its 3519 terms all 378 firing steps have empty
+    `K`-sets and `K_{Ω₁}(dict a) < dict a` never fails — both look like theorems and both are
+    false.  `aBad73` needs a `ψ`-nesting of 5; `btPool72` reaches 3.  §73 therefore measures
+    on `hotB73`, built from a seed that already contains the three-fold `ψ₁`-tower.
+  * **`K_{Ω₁}(dict a) < dict a` is FALSE without `BT.isStd`** (79 of 483) **and holds with it**
+    (0 of 87).  That statement IS the transport of Buchholz's `G(a,u) < a` that §68 and §72
+    named, and this is where `isStd` is spent.  It is not proved here.
+  * **The level-one image does contain `ψ_{Ω₁}(β)` with `β ≥ Ω₁`** — 79 of its 218 `ψ`s.  The
+    shape that refuted §66 at level three is present at level one as well; the level bound
+    does not remove it, the `K`-condition survives it.
+  * **The level bound is not decoration.**  `dict (ψ₂0) = Z 1 = Ω₂` itself, so `pure73` and
+    `lt · (reg 2)` both fail one level up, and with them the whole `u = 1` argument.
+
+WHAT A §74 SHOULD TRY FIRST.  §73.6's "肯定 3" decomposes the `u = 0` step into four facts,
+each measured with 0 failures on all 120 firing steps of `hotB73` and on the sub-region's
+1908 pairs, and each an ordinary order statement once the transport above is available:
+
+    (K2)  `K_{Ω₁} aV < aV` and `K_{Ω₁} cV < cV` at every firing pair;
+    (K3)  `cV ≤ Δ`;
+    (K5)  `aV ≤ Δ` except when `aV = Ω₁`, where `K_{Ω₁} aV = ∅`;
+    (K4)  when `sub1 Δ ≠ Δ`, both `K`-sets are empty.
+
+Together with transitivity — free here, by `fragR_of_pure73` — these give the state-free local
+condition `localOKb73`, which §73.6 measures at 0 failures everywhere.  What §73 does NOT
+provide is the step from that local condition back to `KsetStepOK`: the fold's later steps use
+`plus i0 Δ` rather than `sub1 Δ`, and `le i0 (plus i0 Δ)` is an `inT`-conditioned lemma in
+§65.1 whose `inT` is exactly what this gate is for.  Breaking that is the second job.
+-/
+
+/-! ### §73.1 純粋な項 — `Z 0` までの構文しか使わない形 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **純粋** — `M`・`ω̄^·` を含まず、`Z` は `Z 0` だけ。段 1 以下の `dict` の像が
+    ちょうどこの形に留まる。順序の話を一切使わずに構文だけで定義する。 -/
+def pure73 : Term → Bool
+  | zero => true
+  | M => false
+  | omg _ => false
+  | add a b => pure73 a && pure73 b
+  | phi a b => pure73 a && pure73 b
+  | psi k a => k.isR && pure73 k && pure73 a
+  | Z a => a == zero
+
+theorem pure73_add {a b : Term} (ha : pure73 a = true) (hb : pure73 b = true) :
+    pure73 (add a b) = true := by
+  show (pure73 a && pure73 b) = true
+  rw [ha, hb]; rfl
+
+theorem pure73_add_iff {a b : Term} (h : pure73 (add a b) = true) :
+    pure73 a = true ∧ pure73 b = true := (Bool.and_eq_true _ _).mp h
+
+theorem pure73_phi {a b : Term} (ha : pure73 a = true) (hb : pure73 b = true) :
+    pure73 (phi a b) = true := by
+  show (pure73 a && pure73 b) = true
+  rw [ha, hb]; rfl
+
+theorem pure73_psi {k a : Term} (hr : k.isR = true) (hk : pure73 k = true)
+    (ha : pure73 a = true) : pure73 (psi k a) = true := by
+  show (k.isR && pure73 k && pure73 a) = true
+  rw [hr, hk, ha]; rfl
+
+/-- 純粋な項の `ψ` の添字はどれも `Z 0` そのもの。 -/
+theorem pure73_psi_iff {k a : Term} (h : pure73 (psi k a) = true) :
+    k.isR = true ∧ pure73 k = true ∧ pure73 a = true := by
+  have h' : (k.isR && pure73 k && pure73 a) = true := h
+  obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+  obtain ⟨h3, h4⟩ := (Bool.and_eq_true _ _).mp h1
+  exact ⟨h3, h4, h2⟩
+
+theorem pure73_zero : pure73 zero = true := rfl
+theorem pure73_one : pure73 TM.Term.one = true := rfl
+theorem pure73_reg0 : pure73 (reg 0) = true := rfl
+theorem pure73_reg1 : pure73 (reg 1) = true := rfl
+
+/-- `reg 2 = Z 1` は純粋でない。段 1 以下の像に `Z 1` が出ないことが §73.3 の要。 -/
+theorem not_pure73_reg2 : pure73 (reg 2) = false := rfl
+
+end
+
+/-! ### §73.2 純粋な項は `Z 1` より小さい -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (reg)
+open TM TM.Term
+open Evidence.WF
+
+theorem ltF_succ_add_Z73 (f : Nat) (a b d : Term) :
+    ltF (f + 1) (add a b) (Z d) = ltF f a (Z d) := rfl
+
+theorem ltF_succ_zero_Z73 (f : Nat) (d : Term) : ltF (f + 1) zero (Z d) = true := rfl
+
+theorem deg_pos73 : ∀ t : Term, 1 ≤ t.deg
+  | zero => Nat.le_refl 1
+  | M => Nat.le_refl 1
+  | add a b => by show 1 ≤ 1 + a.deg + b.deg; omega
+  | omg a => by show 1 ≤ 1 + a.deg; omega
+  | phi a b => by show 1 ≤ 1 + a.deg + b.deg; omega
+  | psi k a => by show 1 ≤ 1 + k.deg + a.deg; omega
+  | Z a => by show 1 ≤ 1 + a.deg; omega
+
+/-- 純粋な項は `Z 1` より小さい — 燃料つきの形。 -/
+theorem ltF_pure73_Z1 : ∀ (f : Nat) (t : Term), t.deg + 2 ≤ f + 1 → pure73 t = true →
+    ltF (f + 1) t (Z TM.Term.one) = true := by
+  intro f
+  induction f with
+  | zero => intro t hf _; exact absurd hf (by have := deg_pos73 t; omega)
+  | succ f ih =>
+    intro t hf hp
+    cases t with
+    | zero => exact ltF_succ_zero_Z73 _ _
+    | M => exact Bool.noConfusion hp
+    | omg a => exact Bool.noConfusion hp
+    | add a b =>
+      rw [ltF_succ_add_Z73]
+      refine ih a ?_ (pure73_add_iff hp).1
+      have h1 : (add a b).deg = 1 + a.deg + b.deg := rfl
+      have := deg_pos73 b
+      omega
+    | phi a b =>
+      obtain ⟨ha, hb⟩ := (Bool.and_eq_true _ _).mp hp
+      have h1 : (phi a b).deg = 1 + a.deg + b.deg := rfl
+      have h2 := deg_pos73 a
+      have h3 := deg_pos73 b
+      rw [ltF_succ_phi_Z, ih a (by omega) ha, ih b (by omega) hb]
+      rfl
+    | psi k a =>
+      have hk := (pure73_psi_iff hp).2.1
+      have h1 : (psi k a).deg = 1 + k.deg + a.deg := rfl
+      have h2 := deg_pos73 a
+      rw [ltF_succ_psi_Z, if_pos (by rw [ih k (by omega) hk, Bool.or_true])]
+    | Z a =>
+      have ha : a = zero := of_decide_eq_true (show (a == zero) = true from hp)
+      subst ha
+      have hne : (Z zero : Term) ≠ Z TM.Term.one := by
+        intro hc; injection hc with h1; exact Term.noConfusion h1
+      rw [ltF_succ_Z_Z _ hne, if_pos (show ltF (f + 1) zero TM.Term.one = true from rfl),
+        starF_succ_zero, ltF_succ_zero_Z73]
+
+/-- **§73.2 の主定理。** 純粋な項は `Z 1 = reg 2` より小さい。 -/
+theorem lt_pure73_reg2 {t : Term} (h : pure73 t = true) : lt t (reg 2) = true := by
+  show lt t (Z TM.Term.one) = true
+  rw [lt_eq_ltF t (Z TM.Term.one) (2 * (t.deg + (Z TM.Term.one).deg) + 7 + 1) (by omega)]
+  refine ltF_pure73_Z1 _ t ?_ h
+  have h1 : (Z TM.Term.one).deg = 4 := rfl
+  omega
+
+end
+
+
+/-! ### §73.3 純粋性は辞書のすべての演算を通る -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+theorem pure73_phi_iff {a b : Term} (h : pure73 (phi a b) = true) :
+    pure73 a = true ∧ pure73 b = true := (Bool.and_eq_true _ _).mp h
+
+theorem pure73_ofList : ∀ (l : List Term), (∀ p ∈ l, pure73 p = true) →
+    pure73 (ofList l) = true
+  | [], _ => rfl
+  | [a], h => h a (List.mem_cons.mpr (Or.inl rfl))
+  | a :: b :: r, h => by
+    show pure73 (add a (ofList (b :: r))) = true
+    exact pure73_add (h a (List.mem_cons.mpr (Or.inl rfl)))
+      (pure73_ofList (b :: r) fun x hx => h x (List.mem_cons.mpr (Or.inr hx)))
+
+theorem pure73_toList : ∀ (t : Term), pure73 t = true → ∀ p ∈ toList t, pure73 p = true
+  | zero, _, _, hp => by cases hp
+  | M, h, _, _ => Bool.noConfusion h
+  | omg _, h, _, _ => Bool.noConfusion h
+  | add a b, h, p, hp => by
+    rcases List.mem_cons.mp (show p ∈ a :: toList b from hp) with h1 | h1
+    · rw [h1]; exact (pure73_add_iff h).1
+    · exact pure73_toList b (pure73_add_iff h).2 p h1
+  | phi a b, h, p, hp => by
+    rw [List.mem_singleton.mp (show p ∈ [phi a b] from hp)]; exact h
+  | psi k a, h, p, hp => by
+    rw [List.mem_singleton.mp (show p ∈ [psi k a] from hp)]; exact h
+  | Z a, h, p, hp => by
+    rw [List.mem_singleton.mp (show p ∈ [Z a] from hp)]; exact h
+
+theorem pure73_plus {s t : Term} (hs : pure73 s = true) (ht : pure73 t = true) :
+    pure73 (plus s t) = true := by
+  show pure73 (match toList t with
+    | [] => s
+    | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) = true
+  cases hl : toList t with
+  | nil => exact hs
+  | cons b1 r =>
+    refine pure73_ofList _ ?_
+    intro x hx
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact pure73_toList s hs x (List.mem_filter.mp h1).1
+    · exact pure73_toList t ht x (by rw [hl]; exact h1)
+
+theorem pure73_ofNat : ∀ n, pure73 (TM.Term.ofNat n) = true
+  | 0 => rfl
+  | n + 1 => pure73_plus (pure73_ofNat n) pure73_one
+
+theorem pure73_dropIfHead {c : Term} (h : pure73 c = true) (P : Term → Bool) :
+    pure73 (match toList c with
+            | [] => zero
+            | p :: rest => if P p then ofList rest else c) = true := by
+  cases hl : toList c with
+  | nil => exact pure73_zero
+  | cons p rest =>
+    show pure73 (if P p = true then ofList rest else c) = true
+    split
+    · exact pure73_ofList rest fun x hx =>
+        pure73_toList c h x (by rw [hl]; exact List.Mem.tail p hx)
+    · exact h
+
+theorem pure73_sub1 {c : Term} (h : pure73 c = true) : pure73 (sub1 c) = true :=
+  pure73_dropIfHead h (fun p => p == TM.Term.one)
+
+theorem pure73_subAP {w x : Term} (h : pure73 x = true) : pure73 (subAP w x) = true :=
+  pure73_dropIfHead h (fun p => p == w)
+
+theorem pure73_logOm {t : Term} (h : pure73 t = true) : pure73 (logOm t) = true := by
+  cases t with
+  | zero => exact h
+  | M => exact h
+  | omg a => exact h
+  | psi k a => exact h
+  | Z a => exact h
+  | add a b => exact h
+  | phi c d =>
+    cases c with
+    | zero =>
+      show pure73 (if TM.Term.phiShifted zero d then plus d TM.Term.one else d) = true
+      have hd := (pure73_phi_iff h).2
+      split
+      · exact pure73_plus hd pure73_one
+      · exact hd
+    | M => exact h
+    | omg _ => exact h
+    | phi _ _ => exact h
+    | psi _ _ => exact h
+    | Z _ => exact h
+    | add _ _ => exact h
+
+theorem pure73_take_ofList {b : Term} (h : pure73 b = true) (k : Nat) :
+    pure73 (ofList ((toList b).take k)) = true :=
+  pure73_ofList _ fun x hx => pure73_toList b h x (List.mem_of_mem_take hx)
+
+theorem pure73_splitFin {b : Term} (h : pure73 b = true) :
+    pure73 (splitFin b).1 = true := pure73_take_ofList h _
+
+theorem pure73_phiNFdefault {a b : Term} (ha : pure73 a = true) (hb : pure73 b = true) :
+    pure73 (phiNFdefault a b) = true := by
+  unfold TM.Term.phiNFdefault
+  split
+  · exact ha
+  · exact pure73_phi ha hb
+
+theorem pure73_phiNFsucc {a b : Term} (ha : pure73 a = true) (hb : pure73 b = true) :
+    pure73 (phiNFsucc a b) = true := by
+  have hdef := pure73_phiNFdefault ha hb
+  have hg : pure73 (splitFin b).1 = true := pure73_splitFin hb
+  unfold TM.Term.phiNFsucc
+  split
+  rename_i heq
+  rw [heq] at hg
+  split
+  · split <;> (split <;>
+      first
+        | exact pure73_phi ha (pure73_plus hg (pure73_ofNat _))
+        | exact hdef)
+  · exact hdef
+
+theorem pure73_phiNF {a b : Term} (ha : pure73 a = true) (hb : pure73 b = true) :
+    pure73 (phiNF a b) = true := by
+  unfold TM.Term.phiNF
+  split
+  · exact hb
+  · split
+    · split
+      · exact hb
+      · exact pure73_phiNFsucc ha hb
+    · exact pure73_phiNFsucc ha hb
+
+theorem beq_M_pure73 : ∀ {t : Term}, pure73 t = true → (t == M) = false
+  | zero, _ => rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | add _ _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+
+theorem beq_pure73_M : ∀ {t : Term}, pure73 t = true → ((M : Term) == t) = false
+  | zero, _ => rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | add _ _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+
+theorem ltF_M_pure73 : ∀ (f : Nat) (t : Term), t.deg ≤ f + 1 → pure73 t = true →
+    ltF (f + 1) M t = false := by
+  intro f
+  induction f with
+  | zero =>
+    intro t hf hp
+    cases t with
+    | zero => rfl
+    | M => exact Bool.noConfusion hp
+    | omg _ => exact Bool.noConfusion hp
+    | add a b =>
+      refine absurd hf ?_
+      have h1 : (add a b).deg = 1 + a.deg + b.deg := rfl
+      have h2 := deg_pos73 a
+      have h3 := deg_pos73 b
+      omega
+    | phi _ _ => rfl
+    | psi _ _ => rfl
+    | Z _ => rfl
+  | succ f ih =>
+    intro t hf hp
+    cases t with
+    | zero => rfl
+    | M => exact Bool.noConfusion hp
+    | omg _ => exact Bool.noConfusion hp
+    | add a b =>
+      rw [ltF_succ_M_add, beq_pure73_M (pure73_add_iff hp).1, Bool.false_or]
+      refine ih a ?_ (pure73_add_iff hp).1
+      have h1 : (add a b).deg = 1 + a.deg + b.deg := rfl
+      have h2 := deg_pos73 b
+      omega
+    | phi _ _ => rfl
+    | psi _ _ => rfl
+    | Z _ => rfl
+
+theorem lt_M_pure73 {t : Term} (h : pure73 t = true) : lt M t = false := by
+  rw [lt_eq_ltF M t (2 * (M.deg + t.deg) + 7 + 1) (by omega)]
+  exact ltF_M_pure73 _ t (by omega) h
+
+theorem pure73_omegaNF {x : Term} (h : pure73 x = true) : pure73 (omegaNF x) = true := by
+  show pure73 (if lt M x then omg x else if x == M then M else phiNF zero x) = true
+  rw [if_neg (by rw [lt_M_pure73 h]; exact Bool.noConfusion),
+    if_neg (by rw [beq_M_pure73 h]; exact Bool.noConfusion)]
+  exact pure73_phiNF pure73_zero h
+
+theorem pure73_divAP {w p : Term} (hp : pure73 p = true) : pure73 (divAP w p) = true :=
+  pure73_omegaNF (pure73_subAP (pure73_logOm hp))
+
+theorem pure73_mulL {e y : Term} (he : pure73 e = true) (hy : pure73 y = true) :
+    pure73 (mulL e y) = true := by
+  show pure73 (ofList ((toList y).map (fun p => omegaNF (plus e (logOm p))))) = true
+  refine pure73_ofList _ ?_
+  intro x hx
+  obtain ⟨p, hp, hxe⟩ := List.mem_map.mp hx
+  rw [← hxe]
+  exact pure73_omegaNF (pure73_plus he (pure73_logOm (pure73_toList y hy p hp)))
+
+theorem pure73_wA {w p : Term} (hp : pure73 p = true) : pure73 (wA w p) = true := by
+  refine pure73_ofList _ ?_
+  intro x hx
+  obtain ⟨q, hq, hxe⟩ := List.mem_map.mp hx
+  rw [← hxe]
+  exact pure73_divAP (pure73_toList _ (pure73_logOm hp) q (List.mem_filter.mp hq).1)
+
+theorem pure73_wC {w p : Term} (hp : pure73 p = true) : pure73 (wC w p) = true := by
+  refine pure73_omegaNF (pure73_ofList _ ?_)
+  intro x hx
+  exact pure73_toList _ (pure73_logOm hp) x (List.mem_filter.mp hx).1
+
+/-- `wcnf` の返り値がすべて純粋であること。 -/
+def PurePair73 (r : List (Term × Term) × Term) : Prop :=
+  pure73 r.2 = true ∧ ∀ ac ∈ r.1, pure73 ac.1 = true ∧ pure73 ac.2 = true
+
+theorem pure73_wcnf {w : Term} : ∀ (L : List Term), (∀ x ∈ L, pure73 x = true) →
+    PurePair73 (wcnf w L) := by
+  intro L
+  induction L with
+  | nil => intro _; exact ⟨pure73_zero, by intro ac hac; cases hac⟩
+  | cons p rest ih =>
+    intro hm
+    have hp : pure73 p = true := hm p (List.Mem.head _)
+    have IH := ih fun x hx => hm x (List.Mem.tail p hx)
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp]
+      exact ⟨pure73_ofList _ hm, by intro ac hac; cases hac⟩
+    · rw [wcnf_cons_ge (bool_false hlp)]
+      have hA := pure73_wA (w := w) hp
+      have hC := pure73_wC (w := w) hp
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at IH
+        obtain ⟨hs, hall⟩ := IH
+        cases fst with
+        | nil =>
+          refine ⟨hs, ?_⟩
+          intro ac hac
+          rw [List.mem_singleton.mp hac]
+          exact ⟨hA, hC⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac0 := hall (a', c') (List.Mem.head _)
+            show PurePair73 (if (wA w p == a') = true
+              then ((wA w p, plus (wC w p) c') :: ps, snd)
+              else ((wA w p, wC w p) :: (a', c') :: ps, snd))
+            by_cases heq : (wA w p == a') = true
+            · rw [if_pos heq]
+              refine ⟨hs, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]; exact ⟨hA, pure73_plus hC hac0.2⟩
+              · exact hall ac (List.Mem.tail _ h)
+            · rw [if_neg heq]
+              refine ⟨hs, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]; exact ⟨hA, hC⟩
+              · exact hall ac h
+
+end
+
+
+/-! ### §73.4 `dict` の像は純粋 — そして `u = 1` の門は無条件 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **純粋な項は `FragR`。** `Evidence/WF.lean` §8.5 の順序理論 — 推移律・三分律 —
+    が `inT` を仮定せずに使えるようになる。`ψ` の添字が `Z 0` だけであることが要。 -/
+theorem fragR_of_pure73 : ∀ (t : Term), pure73 t = true → FragR t = true
+  | zero, _ => rfl
+  | M, _ => rfl
+  | omg _, h => Bool.noConfusion h
+  | add a b, h => by
+    show (FragR a && FragR b) = true
+    rw [fragR_of_pure73 a (pure73_add_iff h).1, fragR_of_pure73 b (pure73_add_iff h).2]
+    rfl
+  | phi a b, h => by
+    show (FragR a && FragR b) = true
+    rw [fragR_of_pure73 a (pure73_phi_iff h).1, fragR_of_pure73 b (pure73_phi_iff h).2]
+    rfl
+  | psi k a, h => by
+    obtain ⟨hr, hk, ha⟩ := pure73_psi_iff h
+    show (k.isR && FragR k && FragR a) = true
+    rw [hr, fragR_of_pure73 k hk, fragR_of_pure73 a ha]
+    rfl
+  | Z a, h => by
+    have ha : a = zero := of_decide_eq_true (show (a == zero) = true from h)
+    subst ha
+    rfl
+
+theorem pure73_reg73 : ∀ u : Nat, u ≤ 1 → pure73 (reg u) = true
+  | 0, _ => rfl
+  | 1, _ => rfl
+  | _ + 2, h => absurd h (by omega)
+
+theorem pure73_getD73 {o : Option Term} (h : ∀ v, o = some v → pure73 v = true) :
+    pure73 (o.getD zero) = true := by
+  cases hq : o with
+  | none => exact pure73_zero
+  | some v => exact h v hq
+
+/-- 畳み込みの状態が純粋であること。 -/
+def StPure73 (s : Option Term × Option Term) : Prop :=
+  (∀ i0, s.1 = some i0 → pure73 i0 = true) ∧ (∀ v, s.2 = some v → pure73 v = true)
+
+theorem stPure73_init : StPure73 ((none : Option Term), (none : Option Term)) :=
+  ⟨(by intro i0 h; cases h), (by intro v h; cases h)⟩
+
+theorem pure73_idxOf {w : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (hw : pure73 w = true) (hs : StPure73 s)
+    (h1 : pure73 ac.1 = true) (h2 : pure73 ac.2 = true) :
+    pure73 (idxOf w s ac) = true := by
+  have hd : pure73 (mulL (mulL w (subAP w ac.1)) ac.2) = true :=
+    pure73_mulL (pure73_mulL hw (pure73_subAP h1)) h2
+  unfold idxOf
+  split
+  · exact pure73_sub1 hd
+  · rename_i i0 heq
+    exact pure73_plus (hs.1 i0 heq) hd
+
+theorem stPure73_stepF {w base : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (hwR : w.isR = true) (hw : pure73 w = true) (hb : pure73 base = true) (hs : StPure73 s)
+    (h1 : pure73 ac.1 = true) (h2 : pure73 ac.2 = true) :
+    StPure73 (stepF w base s ac) := by
+  have hi := pure73_idxOf hw hs h1 h2
+  unfold stepF
+  split
+  · exact ⟨(by intro i0 h; rw [← Option.some.inj h]; exact hi),
+      (by intro v h; rw [← Option.some.inj h]; exact pure73_psi hwR hw hi)⟩
+  · refine ⟨hs.1, ?_⟩
+    intro v h
+    rw [← Option.some.inj h]
+    refine pure73_phiNF h1 (pure73_plus ?_ ?_)
+    · cases hq : s.2 with
+      | none => exact hb
+      | some v0 => exact hs.2 v0 hq
+    · cases hq : s.2 with
+      | none => exact pure73_sub1 h2
+      | some _ => exact h2
+
+theorem stPure73_fold {w base : Term} (hwR : w.isR = true) (hw : pure73 w = true)
+    (hb : pure73 base = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StPure73 s →
+      (∀ ac ∈ l, pure73 ac.1 = true ∧ pure73 ac.2 = true) →
+      StPure73 (l.foldl (stepF w base) s) := by
+  intro l
+  induction l with
+  | nil => intro s hs _; exact hs
+  | cons ac t ih =>
+    intro s hs hall
+    have h0 := hall ac (List.Mem.head _)
+    exact ih (stepF w base s ac) (stPure73_stepF hwR hw hb hs h0.1 h0.2)
+      (fun a ha => hall a (List.Mem.tail _ ha))
+
+/-- 成分がすべて `w` より小さければ `wcnf` は対を出さない。 -/
+theorem wcnf_nil73 {w : Term} : ∀ (L : List Term), (∀ p ∈ L, lt p w = true) →
+    (wcnf w L).1 = []
+  | [], _ => rfl
+  | p :: rest, h => by rw [wcnf_cons_lt (h p (List.Mem.head _))]
+
+theorem pure73_collapse0_73 {x : Term} (hx : pure73 x = true) :
+    pure73 (collapse 0 x) = true := by
+  have hP := pure73_wcnf (w := reg (0+1)) (toList x) (pure73_toList x hx)
+  rw [collapse_eq]
+  refine pure73_omegaNF (pure73_plus pure73_reg0 (pure73_plus ?_ hP.1))
+  refine pure73_getD73 ?_
+  exact (stPure73_fold (w := reg (0+1)) (base := baseOf 0) (isR_reg_succ 0) pure73_reg1 pure73_zero
+    (wcnf (reg (0+1)) (toList x)).1 (none, none) stPure73_init hP.2).2
+
+theorem pure73_collapse1_73 {x : Term} (hx : pure73 x = true) :
+    pure73 (collapse 1 x) = true := by
+  have hP := pure73_wcnf (w := reg (1+1)) (toList x) (pure73_toList x hx)
+  have hnil : (wcnf (reg (1+1)) (toList x)).1 = [] :=
+    wcnf_nil73 _ fun p hp => lt_pure73_reg2 (pure73_toList x hx p hp)
+  rw [collapse_eq, hnil]
+  exact pure73_omegaNF (pure73_plus (pure73_reg73 1 (by omega))
+    (pure73_plus pure73_zero hP.1))
+
+theorem pure73_collapse73 (u : Nat) (hu : u ≤ 1) {x : Term} (hx : pure73 x = true) :
+    pure73 (collapse u x) = true := by
+  cases u with
+  | zero => exact pure73_collapse0_73 hx
+  | succ u' =>
+    cases u' with
+    | zero => exact pure73_collapse1_73 hx
+    | succ u'' => exact absurd hu (by omega)
+
+/-- **§73.4 の主定理。** 段 1 以下の `BT` の像は純粋。 -/
+theorem pure73_dict : ∀ (a : BT), btLe72 1 a = true → pure73 (dict a) = true
+  | .zero, _ => rfl
+  | .D u a, hb => by
+    obtain ⟨hu, hba⟩ := btLe72_D 1 u a hb
+    rw [Trans.Dict.dict_D]
+    exact pure73_collapse73 u hu (pure73_dict a hba)
+  | .sum a b, hb => by
+    obtain ⟨hba, hbb⟩ := btLe72_sum 1 a b hb
+    rw [Trans.Dict.dict_sum]
+    exact pure73_plus (pure73_dict a hba) (pure73_dict b hbb)
+
+/-- 段 1 以下の像は `Ω₂ = reg 2` の下。 -/
+theorem lt_dict_reg2_73 (a : BT) (hb : btLe72 1 a = true) : lt (dict a) (reg 2) = true :=
+  lt_pure73_reg2 (pure73_dict a hb)
+
+/-- **`u = 1` では `wcnf` が対を出さない** — 走査そのものが空。 -/
+theorem wcnf_reg2_nil73 (a : BT) (hb : btLe72 1 a = true) :
+    (wcnf (reg (1+1)) (toList (dict a))).1 = [] :=
+  wcnf_nil73 _ fun p hp => lt_pure73_reg2 (pure73_toList _ (pure73_dict a hb) p hp)
+
+/-- **§73 の第一の結論。** 段 1 以下では `u = 1` の門は**無条件に**閉じる。
+    `BT.isStd` も要らない。 -/
+theorem ksetStepOK_one73 (a : BT) (hb : btLe72 1 a = true) : KsetStepOK 1 (dict a) := by
+  intro p hp _
+  rw [wcnf_reg2_nil73 a hb] at hp
+  cases hp
+
+/-- **段 1 以下の像の上では順序理論に `inT` が要らない。** `fragR_of_pure73` の系で、
+    証明しようとしている門そのものを仮定せずに推移律が使える。 -/
+theorem lt_trans_dict73 {a b c : BT} (ha : btLe72 1 a = true) (hb : btLe72 1 b = true)
+    (hc : btLe72 1 c = true) (h1 : lt (dict a) (dict b) = true)
+    (h2 : lt (dict b) (dict c) = true) : lt (dict a) (dict c) = true :=
+  lt_trans3 (fragR_of_pure73 _ (pure73_dict a ha)) (fragR_of_pure73 _ (pure73_dict b hb))
+    (fragR_of_pure73 _ (pure73_dict c hc)) h1 h2
+
+theorem lt_comparable_dict73 {a b : BT} (ha : btLe72 1 a = true) (hb : btLe72 1 b = true) :
+    lt (dict a) (dict b) = true ∨ dict a = dict b ∨ lt (dict b) (dict a) = true :=
+  lt_comparable3 (fragR_of_pure73 _ (pure73_dict a ha)) (fragR_of_pure73 _ (pure73_dict b hb))
+
+/-! **段 1 の上限は飾りではない。** `dict (ψ₂0)` は `Z 1 = reg 2` そのもので、
+`pure73` も `lt · (reg 2)` もそこで落ちる。 -/
+
+#guard dict (BT.D 2 BT.zero) == reg 2
+#guard !(pure73 (dict (BT.D 2 BT.zero)))
+#guard !(lt (dict (BT.D 2 BT.zero)) (reg 2))
+#guard !(btLe72 1 (BT.D 2 BT.zero))
+
+end
+
+
+/-! ### §73.5 門の分割 — 残るのは `u = 0` の一節だけ -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **残る門。** §72 の `PsiIdxStepStd172` から `u = 1` を抜いたもの。**証明しない。** -/
+def PsiIdxStep073 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → KsetStepOK 0 (dict a)
+
+/-- **§73 の第二の結論。** §72 の門は `u = 0` の一節に落ちる。`u = 1` は §73.4 が
+    無条件に閉じているので、仮定に残らない。 -/
+theorem psiIdxStepStd172_of_step073 (H : PsiIdxStep073) : PsiIdxStepStd172 := by
+  intro u a hu hb h
+  cases u with
+  | zero => exact H a hb h
+  | succ u' =>
+    cases u' with
+    | zero => exact ksetStepOK_one73 a hb
+    | succ u'' => exact absurd hu (by omega)
+
+/-- 逆向き — 分割が本当に分割であることの記録。 -/
+theorem step073_of_psiIdxStepStd172 (H : PsiIdxStepStd172) : PsiIdxStep073 :=
+  fun a hb h => H 0 a (by omega) hb h
+
+/-- §72 の第二の門も `u = 0` の一節から出る。 -/
+theorem psiIdxOKStd172_of_step073 (H : PsiIdxStep073) : PsiIdxOKStd172 :=
+  psiIdxOKStd172_of_step172 (psiIdxStepStd172_of_step073 H)
+
+/-- 領域の値は 𝔗(M) の項 — `u = 0` の一節の上で。 -/
+theorem inT_vOf_step73 (H : PsiIdxStep073) (t : B) (ht : stdB1 t = true) :
+    inT (vOf t) = true :=
+  inT_vOf_step72 (psiIdxStepStd172_of_step073 H) t ht
+
+/-- **§73 の第三の結論。** 326 行目の証明書が `K` の側で待っているのは
+    `PsiIdxStep073` — 段 1 以下・`u = 0`・一歩ぶん — ただ一つ。残りは §70.5 の
+    3 つの順序の条項と停止性。 -/
+theorem certIn_t326_step73 (H : PsiIdxStep073)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step72 (psiIdxStepStd172_of_step073 H) HD HI HC hacc
+
+end
+
+
+/-! ### §73.6 測定 (凍結)
+
+母集団の作り方を先に書く。§72 の `btPool72` は**この節には浅すぎる** (否定 1)。
+
+    d1a73 = ψ₁0,  d1b73 = ψ₁ψ₁0,  d1c73 = ψ₁ψ₁ψ₁0
+    hot073 = [0, ψ₀0, d1a73, d1b73, d1c73, ψ₀d1c73, ψ₁d1c73, ψ₀d1b73]        8 個
+    hotA73 = dg72 (sg72 hot073)                                            209 個
+    hotB73 = dg72 hotA73                                                   483 個
+      ただし dg72 l = l ++ {ψ₀a, ψ₁a : a ∈ l}、sg72 l = l ++ {a ⊕ b : a,b ∈ l}
+      (どちらも §72 のもの)。`isStd` では絞らずに作る。
+    btPool72 = §72 の 3519 個 (`ψ` の入れ子はたかだか 3 段)
+    regPairs72 (sub72 8) = §72 の部分領域の 1908 個の `(u, a)`
+    aBad73 = ψ₁(ψ₁ψ₁0 ⊕ ψ₀ψ₁ψ₁ψ₁0)  — `btPool72` には**入っていない** (入れ子 5 段) -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 項の中の `ψ` を (添字, 引数) の対として全部集める。 -/
+def psis73 : Term → List (Term × Term)
+  | zero => []
+  | M => []
+  | omg a => psis73 a
+  | add a b => psis73 a ++ psis73 b
+  | phi a b => psis73 a ++ psis73 b
+  | psi k a => (k, a) :: psis73 k ++ psis73 a
+  | Z a => psis73 a
+
+def d1a73 : BT := BT.D 1 BT.zero
+def d1b73 : BT := BT.D 1 d1a73
+def d1c73 : BT := BT.D 1 d1b73
+def hot073 : List BT :=
+  [BT.zero, BT.D 0 BT.zero, d1a73, d1b73, d1c73, BT.D 0 d1c73, BT.D 1 d1c73, BT.D 0 d1b73]
+def hotA73 : List BT := dg72 (sg72 hot073)
+def hotB73 : List BT := dg72 hotA73
+def aBad73 : BT := BT.D 1 (BT.sum d1b73 (BT.D 0 d1c73))
+/-- 移送 `K_{Ω₁}(dict a) < dict a` の最小の反例 (`BT` の大きさ 6)。 -/
+def wKOK73 : BT := BT.D 0 (BT.D 1 d1c73)
+
+/-- 走査のうち強臨界枝を取る歩だけ (`u = 0`)。 -/
+def fires73 (a : BT) : List ((Option Term × Option Term) × (Term × Term)) :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).filter
+    (fun p => le (reg 1) p.2.1)
+/-- 指数の材料 `Δ = Ω₁·(a ⊖ Ω₁) の ω 冪 × c`。 -/
+def dd73 (p : (Option Term × Option Term) × (Term × Term)) : Term :=
+  mulL (mulL (reg 1) (subAP (reg 1) p.2.1)) p.2.2
+/-- 2.1(vi) の `K` の連言そのもの — 「`K_{Ω₁} t < t`」。 -/
+def KOK73 (t : Term) : Bool := (Kset (reg 1) t).all fun y => lt y t
+/-- 状態を落とした局所条件の判定器 (§73.7 の候補)。 -/
+def localOKb73 (u : Nat) (x : Term) : Bool :=
+  (wcnf (reg (u+1)) (toList x)).1.all fun ac =>
+    !(le (reg (u+1)) ac.1) ||
+      ((Kset (reg (u+1)) ac.1 ++ Kset (reg (u+1)) ac.2).all fun y =>
+        lt y (sub1 (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)))
+
+-- 母集団の大きさ。
+#guard hotA73.length == 209
+#guard hotB73.length == 483
+#guard (hotB73.filter fun a => BT.isStd (BT.D 0 a)).length == 87
+#guard hotB73.all (btLe72 1)
+
+/-! **否定 1 — §72 の `btPool72` はこの節には浅すぎる。** 3519 個の上では
+`u = 0` の強臨界枝は 378 歩 firing するが、そのどれも `K` が空で、しかも
+`K_{Ω₁}(dict a) < dict a` が一度も落ちない。**どちらも定理に見えるが、どちらも偽。**
+反例は `ψ` の入れ子が 5 段いる (`btPool72` はたかだか 3 段)。 -/
+
+#guard (btPool72.flatMap fires73).length == 378
+#guard ((btPool72.flatMap fires73).filter fun p =>
+  !((Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).isEmpty)).length == 0
+#guard (btPool72.filter fun a => !(KOK73 (dict a))).length == 0
+#guard !(btPool72.contains aBad73)
+#guard hotB73.contains aBad73
+
+/-! **否定 2 — 「発火する歩の `K` は空」という道は偽。** `aBad73` は段 1 以下で
+`BT.isStd (ψ₀ ·)` を満たし、走査は 1 歩だけ発火して、その対は `(Ω₁, Γ₀)`。
+`K_{Ω₁} Γ₀ = {0}` は空でない。それでも一歩ぶんの条件は通る — 通る理由は
+「`K` が空」ではなく「`0 < Γ₀`」である。 -/
+
+#guard BT.isStd (BT.D 0 aBad73) && btLe72 1 aBad73
+#guard (fires73 aBad73).length == 1
+#guard ((fires73 aBad73).map fun p =>
+  ((Kset (reg 1) p.2.1).length, (Kset (reg 1) p.2.2).length)) == [(0, 1)]
+#guard stepOKb 0 (dict aBad73)
+
+/-- **否定 2、定理の形。** `aBad73` は段 1 以下で Buchholz 標準。 -/
+theorem std_aBad73 : BT.isStd (BT.D 0 aBad73) = true ∧ btLe72 1 aBad73 = true := by
+  refine ⟨?_, ?_⟩ <;> decide
+
+/-- **発火する歩の `K` は空ではない。** 係数 `cV = Γ₀` の `K_{Ω₁}` は `{0}`。 -/
+theorem kset_fires_aBad73 :
+    ((fires73 aBad73).map fun p => (Kset (reg 1) p.2.2).length) = [1] := by decide
+
+/-- それでも一歩ぶんの条件は通る — 「`K` が空だから」ではない。 -/
+theorem stepOKb_aBad73 : stepOKb 0 (dict aBad73) = true := by decide
+
+/-! **否定 3 — `K_{Ω₁}(dict a) < dict a` は `BT.isStd` なしでは偽。**
+`hotB73` の 483 個のうち 79 個で落ちる。`BT.isStd (ψ₀ a)` で絞った 87 個では 0 個。
+**これが §68・§72 が名指しした「Buchholz の `G(a,u) < a` の移送」で、`isStd` は
+まさにそこで要る。** -/
+
+#guard (hotB73.filter fun a => !(KOK73 (dict a))).length == 79
+#guard (hotB73.filter fun a => BT.isStd (BT.D 0 a) && !(KOK73 (dict a))).length == 0
+
+/-- **否定 3、定理の形。** 段 1 以下で、大きさ 6 の `ψ₀ψ₁ψ₁ψ₁ψ₁0` が移送を落とす。
+    Buchholz 標準ではない — そして標準性を課した母集団では 0 失敗 (上の `#guard`)。 -/
+theorem not_KOK73_wKOK73 :
+    btLe72 1 wKOK73 = true ∧ BT.isStd (BT.D 0 wKOK73) = false ∧ KOK73 (dict wKOK73) = false := by
+  refine ⟨?_, ?_, ?_⟩ <;> decide
+
+/-! **否定 4 — 段 1 の像にも `ψ_{Ω₁}(β)` で `β ≥ Ω₁` のものが出る。**
+§66 の反例を殺したのはこの形だったが、段 1 でも 218 個の `ψ` のうち 79 個がこの形。
+添字はどれも `Ω₁ = reg 1` ちょうど (§73.4 の `pure73_dict` の系)。
+**形が安全なのではなく `K` の条件が効いている。** -/
+
+#guard (hotB73.flatMap fun a => psis73 (dict a)).length == 218
+#guard (hotB73.flatMap fun a => (psis73 (dict a)).filter fun q => q.1 != reg 1).length == 0
+#guard (hotB73.flatMap fun a => (psis73 (dict a)).filter fun q => !(lt q.2 (reg 1))).length == 79
+
+/-! **否定 5 — `u = 0` は空回りしない。** `hotB73` で 120 歩が発火し、うち 4 歩は
+`K_{Ω₁} aV` が、3 歩は `K_{Ω₁} cV` が空でなく、1 歩は前の指数を持つ。 -/
+
+#guard (hotB73.flatMap fires73).length == 120
+#guard ((hotB73.flatMap fires73).filter fun p => !((Kset (reg 1) p.2.1).isEmpty)).length == 4
+#guard ((hotB73.flatMap fires73).filter fun p => !((Kset (reg 1) p.2.2).isEmpty)).length == 3
+#guard ((hotB73.flatMap fires73).filter fun p => p.1.1.isSome).length == 1
+
+/-! **肯定 1 — §73.2・§73.4 の定理の判定器での裏取り。** 段 1 以下の像は
+`Z 1` の下、`u = 1` の `wcnf` は対を出さない。 -/
+
+#guard hotB73.all fun a => pure73 (dict a)
+#guard btPool72.all fun a => pure73 (dict a)
+#guard hotB73.all fun a => lt (dict a) (reg 2)
+#guard hotB73.all fun a => (wcnf (reg 2) (toList (dict a))).1.isEmpty
+#guard btPool72.all fun a => (wcnf (reg 2) (toList (dict a))).1.isEmpty
+
+/-! **肯定 2 — 残る門 `PsiIdxStep073` は 0 失敗。** `isStd` を課さなくても落ちない
+(課さないでよいとは**言わない** — 否定 3 が示すとおり、その先の補題には要る)。 -/
+
+#guard (hotB73.filter fun a => !(stepOKb 0 (dict a))).length == 0
+#guard (btPool72.filter fun a => !(stepOKb 0 (dict a))).length == 0
+#guard ((regPairs72 (sub72 8)).filter fun q => !(stepOKb q.1 (dict q.2))).length == 0
+#guard ((regPairs72 (sub72 8)).filter fun q => !(KOK73 (dict q.2))).length == 0
+
+/-! **肯定 3 — §74 への分解。** 状態を落とした局所条件 `localOKb73` は 0 失敗で、
+発火する歩ごとに次の 4 つが成り立つ (`d := Δ`):
+
+    (K2)  `K_{Ω₁} aV < aV` かつ `K_{Ω₁} cV < cV`                    120 歩で 0 失敗
+    (K3)  `cV ≤ d`                                                  120 歩で 0 失敗
+    (K5)  `aV ≰ d` は 30 歩、うち 29 歩は `aV = Ω₁` (そこで `K aV = ∅`)、
+          残り 1 歩も `K aV = ∅`                                     0 失敗
+    (K4)  `sub1 d ≠ d` の 26 歩では `K aV = K cV = ∅`                0 失敗
+
+この 4 つと推移律 (`fragR_of_pure73` で `inT` 抜きに使える) から局所条件が出る。 -/
+
+#guard (hotB73.filter fun a => !(localOKb73 0 (dict a))).length == 0
+#guard (btPool72.filter fun a => !(localOKb73 0 (dict a))).length == 0
+#guard ((regPairs72 (sub72 8)).filter fun q => !(localOKb73 q.1 (dict q.2))).length == 0
+#guard ((hotB73.flatMap fires73).filter fun p => !(KOK73 p.2.1) || !(KOK73 p.2.2)).length == 0
+#guard ((hotB73.flatMap fires73).filter fun p => !(le p.2.2 (dd73 p))).length == 0
+#guard ((hotB73.flatMap fires73).filter fun p => !(le p.2.1 (dd73 p))).length == 30
+#guard ((hotB73.flatMap fires73).filter fun p => p.2.1 == reg 1).length == 29
+#guard ((hotB73.flatMap fires73).filter fun p =>
+  p.2.1 != reg 1 && !(le p.2.1 (dd73 p)) && !((Kset (reg 1) p.2.1).isEmpty)).length == 0
+#guard ((hotB73.flatMap fires73).filter fun p => sub1 (dd73 p) != dd73 p).length == 26
+#guard ((hotB73.flatMap fires73).filter fun p => sub1 (dd73 p) != dd73 p &&
+  !((Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).isEmpty)).length == 0
+
+end
+
+/-! ### §73.7 公理 -/
+
 end Evidence.Region
