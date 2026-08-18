@@ -24142,4 +24142,1436 @@ end
 
 /-! ### §70.7 公理 -/
 
+/-! ## §72 THE LEVEL-ONE SUB-REGION CLOSES `RegionStd` — `ArgStd` IS A THEOREM THERE
+
+§67 left `certIn_region`'s second supply on two named, measured, unproved hypotheses,
+`RegionStd` and `PsiIdxOKStd`; §68 replaced each by a strictly more local one, `ArgStd` and
+`PsiIdxStepStd`, and proved NEITHER; §70 cut the region down to `stdB1 t = stdB t && lvlLe 1 t`,
+the sub-region that contains row 326.  §72 **closes the first of the two gates on that
+sub-region, unconditionally**, and reduces the second one to the same sub-region.  Everything
+below is a theorem unless it visibly carries `Hp`.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §72.1  **AT LEVEL ONE `bArg` DOES NOT COLLAPSE, AND DOES NOT SEE THE PARENT.**  `bK`'s
+         three-way branch has the guard `u ≤ w || r ≠ nil || headLvl c ≤ u`, and at level one
+         every node satisfies it for a trivial reason: `u = 0` gives `u ≤ w` for every `w`,
+         and `u = 1` gives `headLvl c ≤ 1 = u`.  So `bK w u r c = ψ_u (bArg u c)` always and
+         `toL_bArg72` says the component list of `bArg w c` is the plain `map` of `toL c` —
+         **the very asymmetry §68.2c named as the obstruction (a collapsing head contributes
+         a LIST, the other nodes one `ψ` each) is gone**, and with it the proper-prefix case
+         that has no counterpart on the `cmpS` side.  `bArg_indep72`: `bArg w c` does not
+         depend on `w` at all.
+
+  §72.2  **THE ORDER TRANSFER IS A THEOREM AT LEVEL ONE — AND IT NEEDS NOTHING ELSE.**
+         `argTransfer72` : `lvlLe 1 c₁ → lvlLe 1 c₂ → cmpS (toL c₁) (toL c₂) = .lt →
+         BT.lt (bArg w₁ c₁) (bArg w₂ c₂) = true`.  **No `nonIncr`, no `visOK`, no `stdIn`,
+         no `nfLe`** — the level bound alone replaces all of them.  §68's witness for
+         "`ArgTransfer` is false with only `nfLe`" (`cT1`/`cT2`, `not_argTransfer_nfLe`) has a
+         LEVEL-2 node, so it is outside.  The proof runs on component lists with §68.1's
+         fuel-free `ltS` (`ltS_cons`) against §62.1's `cmpS_cons`, one case at a time; the
+         only extra brick is `ltL_irrefl72`, which picks the "arguments differ" branch.
+
+  §72.3  **EVERY NODE'S ARGUMENT IS `cmpS`-BELOW THE WHOLE TREE.**  `key72` : for `c` with
+         `lvlLe 1`, `nonIncr`, `visOK 0 c c` and `stdIn`, EVERY node of `c` at EVERY depth has
+         `cmpS (toL (its argument)) (toL c) = .lt`.  `visOK 0 c c` gives this for the level-0
+         nodes directly (its traversal never stops, since it only stops below level 0), and
+         the level-1 nodes are the work: `topLvl1_72` does the top-level ones — `nonIncr` makes
+         the head component the maximum, so the head has level 1 too, and `stdIn`'s
+         `visOK 1 d d` puts the head of `d` strictly below `d`, which `cmpS_trans` turns into
+         the head comparison — and `keyInner72` does the deeper ones by a two-part induction:
+         under a level-0 node the child is good at 0, so `key72` applies to it and `cmpS_trans`
+         lifts; under a level-1 node `visOK 1` applies and `cmpS_trans` lifts.
+
+  §72.4  **`ArgStd` AT LEVEL ONE IS A THEOREM.**  `argStd72` :
+
+             lvlLe 1 c → nonIncr c → visOK w c c → stdIn c → BT.isStd (ψ_w (bArg w c)) = true
+
+         for EVERY `w`, not only `w ≤ 1`.  `isStd` of a sum splits into "components standard"
+         (the induction) and "components descending" (`descOK_map72`, from `nonIncr` through
+         §72.2), and `GB w`'s condition splits into "which nodes `GB w` descends through"
+         (`gbL72`, the SAME traversal as `visOK w`) and "each of them is below" (§72.3 through
+         §72.2).  **`nfLe` IS NOT A HYPOTHESIS** — `nfLe_of_lvlLe72` derives `nfLe m` from
+         `lvlLe 1` for every `m ≥ 1`, so §68's fourth load-bearing conjunct is free here (its
+         witness `cNf` has a level-3 node).  The other three are STILL load-bearing, with
+         witnesses that are theorems: `not_argStd72_no_visOK` (2 nodes), `..._no_nonIncr`
+         (2 nodes), `..._no_stdIn` (4 nodes, new — §68's `cStd` has a level-2 node).
+         `regionStd1_72` is the consumer's form: **§67's `RegionStd`, restricted to `stdB1`,
+         is a theorem.**  §72.7b goes one better: `toL_bVal72` says `bVal`'s component list is
+         `toL t`'s `map` with a leading `(0, nil)` dropped, and `regionStdSum1_72` proves
+         **§67.2's stronger `RegionStdSum` on the sub-region** — the whole sum is
+         Buchholz-standard, not only its components.
+
+  §72.5  **THE SECOND GATE, RESTRICTED TO THE SAME PLACE.**  `btLe72 1` is the level bound on
+         the `BT` side and `btLe_bVal_mem72` proves the sub-region's values carry it, so the
+         consumers only ever need `PsiIdxOKStd172` — 2.1(vi) for `ψ_u a` with `u ≤ 1` and every
+         subscript of `a` at most 1.  `psiIdxOKStd172_of_step172` carries §68.3's one-step form
+         `PsiIdxStepStd172` to it; `psiIdxOKStd172_of_std` records that it is weaker than §66.4.
+
+  §72.6/§72.7  **THE CONSUMERS AND THE ASSEMBLY.**  `hsuccS1_supply_72` and `hlimS1_supply_72`
+         are §70.2/§70.5's supplies with `RegionStd` REMOVED, and `certIn_t326_72` is §70's
+         `certIn_t326` with the same hypothesis removed: what is left is `PsiIdxOKStd172`,
+         §70.5's `LimDecS1`/`LimIncS1`/`LimCofS1`, and the accessibility of `vOf t326`.
+         **Five hypotheses become four, and the one that goes was the harder-looking one.**
+
+WHAT IS **NOT** CLAIMED.
+
+  * **`PsiIdxStepStd172` IS NOT PROVED, AND THE LEVEL BOUND DOES NOT TRIVIALISE IT.**  The
+    obvious hope — that at level one the strongly-critical branch of `collapse`, the only
+    branch `KsetStepOK` constrains, never fires — is FALSE, measured: over the 1908 `(u, a)`
+    pairs occurring inside the values of the level-≤1 standard indices of at most 7 nodes, the
+    scan takes 1614 steps and **335 of them take that branch**.  `stepOKb` fails on none of
+    them, and on none of 1767 standard `(u, a)` pairs of a systematic level-≤1 `BT` pool with
+    `u` swept to 5 — but that is measurement, not proof.  A proof still needs what §68 named:
+    the transport of Buchholz's `G(a,u) < a` to Rathjen's `K_κ α < α`.
+  * **NOTHING HERE IS ABOUT THE UNRESTRICTED `ArgStd` OR `RegionStd`.**  §68's four
+    counterexamples and §67.2's `tbad` stand untouched; `argStd72` says nothing about trees
+    with a node of level 2 or more, and §69's refutation of `Hlim` lives exactly there.
+  * `LimDecS1`, `LimIncS1`, `LimCofS1` are §70.5's, still measured and still unproved.  This
+    section does not touch them, and it does not prove `Acc RT (vOf t326)`. -/
+
+/-! ### §72.1 段が 1 以下なら `bArg` は潰れない -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 成分列の側の段の上限。 -/
+def LvlL72 (l : List (Nat × B)) : Prop := ∀ q ∈ l, q.1 ≤ 1 ∧ lvlLe 1 q.2 = true
+
+/-- 節の寄与 — 潰れない形。 -/
+def fB72 (q : Nat × B) : BT := BT.D q.1 (bArg q.1 q.2)
+
+theorem lvlL72_nil : LvlL72 [] := by intro q hq; cases hq
+
+theorem lvlL72_of_lvlLe : ∀ (c : B), lvlLe 1 c = true → LvlL72 (toL c)
+  | .nil, _ => lvlL72_nil
+  | .nd v r a, h => by
+    obtain ⟨h1, h2, h3⟩ := (lvlLe_nd_iff 1 v r a).mp h
+    rw [toL_nd]
+    intro q hq
+    rcases List.mem_append.mp hq with hq | hq
+    · exact lvlL72_of_lvlLe r h2 q hq
+    · rw [List.mem_singleton.mp hq]; exact ⟨h1, h3⟩
+
+theorem lvlL72_tail {q : Nat × B} {l : List (Nat × B)} (h : LvlL72 (q :: l)) : LvlL72 l :=
+  fun x hx => h x (List.mem_cons_of_mem q hx)
+
+theorem headLvl_le72 : ∀ (a : B), lvlLe 1 a = true → headLvl a ≤ 1
+  | .nil, _ => Nat.zero_le 1
+  | .nd v .nil a, h => ((lvlLe_nd_iff 1 v .nil a).mp h).1
+  | .nd v (.nd u s b) a, h => by
+    show headLvl (B.nd u s b) ≤ 1
+    exact headLvl_le72 (B.nd u s b) ((lvlLe_nd_iff 1 v (.nd u s b) a).mp h).2.1
+
+/-- **段が 1 以下なら三分岐は一本になる。** 潰す枝は決して選ばれない。 -/
+theorem bK_nil72 (w u : Nat) (a : B) (hu : u ≤ 1) (ha : lvlLe 1 a = true) :
+    bK w u .nil a = BT.D u (bArg u a) := by
+  show (if (a == .nil) = true then (BT.D u BT.zero)
+        else if (decide (u ≤ w) || !(B.nil == .nil) || decide (headLvl a ≤ u)) = true
+             then BT.D u (bArg u a) else bClose u (bFold u a)) = _
+  by_cases hc : (a == .nil) = true
+  · rw [if_pos hc, show a = .nil from of_decide_eq_true hc]
+    rfl
+  · rw [if_neg hc, if_pos ?_]
+    show (decide (u ≤ w) || false || decide (headLvl a ≤ u)) = true
+    rw [Bool.or_false, Bool.or_eq_true, decide_eq_true_iff, decide_eq_true_iff]
+    rcases Nat.eq_zero_or_pos u with h0 | h0
+    · exact Or.inl (by omega)
+    · exact Or.inr (by have := headLvl_le72 a ha; omega)
+
+/-- **潰れない形の成分列。** `argL` は単なる `map` になる。 -/
+theorem argL_map72 : ∀ (w : Nat) (l : List (Nat × B)), LvlL72 l → argL w l = l.map fB72
+  | _, [], _ => rfl
+  | w, (u, a) :: rest, h => by
+    obtain ⟨h1, h2⟩ := h (u, a) (List.mem_cons.mpr (Or.inl rfl))
+    show (bK w u .nil a).toL ++ rest.map (fun q => BT.D q.1 (bArg q.1 q.2))
+      = fB72 (u, a) :: rest.map fB72
+    rw [bK_nil72 w u a h1 h2]
+    rfl
+
+/-- **§72.1 の主定理。** 段が 1 以下の添字では `bArg` の成分列はただの `map`。 -/
+theorem toL_bArg72 (w : Nat) (c : B) (h : lvlLe 1 c = true) :
+    (bArg w c).toL = (toL c).map fB72 := by
+  rw [toL_bArg w c, argL_map72 w (toL c) (lvlL72_of_lvlLe c h)]
+
+end
+
+/-! ### §72.2 移送 — 段が 1 以下なら添字の順序はそのまま値の順序 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem beq_refl72 : ∀ a : BT, (a == a) = true
+  | .zero => rfl
+  | .D u a => by
+    show (u == u && (a == a)) = true
+    rw [beq_refl72 a, beq_self_eq_true u]
+    rfl
+  | .sum a b => by
+    show ((a == a) && (b == b)) = true
+    rw [beq_refl72 a, beq_refl72 b]
+    rfl
+
+theorem eq_of_beq72 : ∀ (a b : BT), (a == b) = true → a = b
+  | .zero, .zero, _ => rfl
+  | .zero, .D _ _, h => Bool.noConfusion h
+  | .zero, .sum _ _, h => Bool.noConfusion h
+  | .D _ _, .zero, h => Bool.noConfusion h
+  | .sum _ _, .zero, h => Bool.noConfusion h
+  | .D _ _, .sum _ _, h => Bool.noConfusion h
+  | .sum _ _, .D _ _, h => Bool.noConfusion h
+  | .D u a, .D v b, h => by
+    have h' : (u == v && (a == b)) = true := h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+    rw [eq_of_beq h1, eq_of_beq72 a b h2]
+  | .sum a b, .sum c d, h => by
+    have h' : ((a == c) && (b == d)) = true := h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+    rw [eq_of_beq72 a c h1, eq_of_beq72 b d h2]
+
+/-- `ltS` は非反射。移送の「引数が違う」枝を選ぶのに要る。 -/
+theorem ltL_irrefl72 : ∀ (f : Nat) (l : List BT), BT.ltL f l l = false
+  | 0, _ => rfl
+  | _ + 1, [] => rfl
+  | f + 1, x :: xs => by
+    cases x with
+    | zero => rfl
+    | sum p q => rfl
+    | D u a =>
+      show (if u < u then true else if u < u then false
+            else if (a == a) = true then BT.ltL f xs xs else BT.ltL f a.toL a.toL) = false
+      rw [if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u), if_pos (beq_refl72 a)]
+      exact ltL_irrefl72 f xs
+
+theorem ltS_irrefl72 (l : List BT) : ltS l l = false := ltL_irrefl72 _ l
+
+theorem sizeL_pos72 : ∀ (x : Nat × B) (xs : List (Nat × B)), 0 < sizeL (x :: xs)
+  | (_, a), xs => by show 0 < sizeB a + 1 + sizeL xs; omega
+
+/-- **§72.2 の主定理 (成分列の形)。** 段が 1 以下なら `cmpS` の `lt` は `ltS` の `true`
+    にそのまま移る。`nonIncr` も `visOK` も `stdIn` も要らない — §68 の `ArgTransfer` が
+    要求した側条件は、段の上限が肩代わりする。 -/
+theorem transfer72 : ∀ (n : Nat) (l1 l2 : List (Nat × B)), sizeL l1 + sizeL l2 < n →
+    LvlL72 l1 → LvlL72 l2 → cmpS l1 l2 = Ordering.lt →
+    ltS (l1.map fB72) (l2.map fB72) = true
+  | 0, _, _, hs, _, _, _ => absurd hs (Nat.not_lt_zero _)
+  | n + 1, [], [], _, _, _, hlt => by rw [cmpS_nil_nil] at hlt; exact Ordering.noConfusion hlt
+  | n + 1, [], y :: ys, _, _, _, _ => by
+    show ltS [] (fB72 y :: ys.map fB72) = true
+    exact ltS_nil_cons _ _
+  | n + 1, _ :: _, [], _, _, _, hlt => by
+    rw [cmpS_cons_nil] at hlt; exact Ordering.noConfusion hlt
+  | n + 1, (u, a) :: xs, (v, b) :: ys, hs, h1, h2, hlt => by
+    obtain ⟨hu, ha⟩ := h1 (u, a) (List.mem_cons.mpr (Or.inl rfl))
+    obtain ⟨hv, hb⟩ := h2 (v, b) (List.mem_cons.mpr (Or.inl rfl))
+    have hsa : sizeL (toL a) + sizeL (toL b) < n := by
+      have e1 : sizeL (toL a) = sizeB a := sizeL_toL a
+      have e2 : sizeL (toL b) = sizeB b := sizeL_toL b
+      have e3 : sizeL ((u, a) :: xs) = sizeB a + 1 + sizeL xs := rfl
+      have e4 : sizeL ((v, b) :: ys) = sizeB b + 1 + sizeL ys := rfl
+      omega
+    have hsx : sizeL xs + sizeL ys < n := by
+      have e3 : sizeL ((u, a) :: xs) = sizeB a + 1 + sizeL xs := rfl
+      have e4 : sizeL ((v, b) :: ys) = sizeB b + 1 + sizeL ys := rfl
+      omega
+    rw [cmpS_cons] at hlt
+    show ltS (BT.D u (bArg u a) :: xs.map fB72) (BT.D v (bArg v b) :: ys.map fB72) = true
+    rw [ltS_cons]
+    by_cases huv : u < v
+    · rw [if_pos huv]
+    · rw [if_neg huv] at hlt ⊢
+      by_cases hvu : v < u
+      · rw [if_pos hvu] at hlt; exact Ordering.noConfusion hlt
+      · rw [if_neg hvu] at hlt ⊢
+        cases hab : cmpS (toL a) (toL b) with
+        | gt => rw [hab] at hlt; exact Ordering.noConfusion hlt
+        | lt =>
+          have key : ltS (bArg u a).toL (bArg v b).toL = true := by
+            rw [toL_bArg72 u a ha, toL_bArg72 v b hb]
+            exact transfer72 n (toL a) (toL b) hsa (lvlL72_of_lvlLe a ha)
+              (lvlL72_of_lvlLe b hb) hab
+          have hne : ¬ ((bArg u a == bArg v b) = true) := by
+            intro he
+            rw [eq_of_beq72 _ _ he, ltS_irrefl72] at key
+            exact Bool.noConfusion key
+          rw [if_neg hne]
+          exact key
+        | eq =>
+          have hab' : a = b := toL_inj a b (cmpS_eq_imp (toL a) (toL b) hab)
+          have huv' : u = v := by omega
+          rw [hab] at hlt
+          rw [if_pos (show (bArg u a == bArg v b) = true by rw [hab', huv']; exact beq_refl72 _)]
+          exact transfer72 n xs ys hsx (lvlL72_tail h1) (lvlL72_tail h2) hlt
+
+/-- **§72.2 の主定理 (木の形)。** -/
+theorem argTransfer72 (w1 w2 : Nat) (c1 c2 : B)
+    (h1 : lvlLe 1 c1 = true) (h2 : lvlLe 1 c2 = true)
+    (h : cmpS (toL c1) (toL c2) = Ordering.lt) : BT.lt (bArg w1 c1) (bArg w2 c2) = true := by
+  rw [Trans.Dict.BT.lt, toL_bArg72 w1 c1 h1, toL_bArg72 w2 c2 h2]
+  rw [show BT.ltL ((bArg w1 c1).size + (bArg w2 c2).size + 2)
+        ((toL c1).map fB72) ((toL c2).map fB72)
+      = ltS ((toL c1).map fB72) ((toL c2).map fB72) from ?_]
+  · exact transfer72 (sizeL (toL c1) + sizeL (toL c2) + 1) (toL c1) (toL c2)
+      (Nat.lt_succ_self _) (lvlL72_of_lvlLe c1 h1) (lvlL72_of_lvlLe c2 h2) h
+  · have e1 : (bArg w1 c1).toL = (toL c1).map fB72 := toL_bArg72 w1 c1 h1
+    have e2 : (bArg w2 c2).toL = (toL c2).map fB72 := toL_bArg72 w2 c2 h2
+    have s1 := sizeLB_toL (bArg w1 c1)
+    have s2 := sizeLB_toL (bArg w2 c2)
+    rw [e1] at s1
+    rw [e2] at s2
+    exact ltL_fuel _ _ _ _ (by omega) (by omega)
+
+/-- 一成分どうしの移送。`nonIncr` から降べきを取り出すのに使う。 -/
+theorem lt_fB72 (q1 q2 : Nat × B) (h1 : q1.1 ≤ 1) (ha1 : lvlLe 1 q1.2 = true)
+    (h2 : q2.1 ≤ 1) (ha2 : lvlLe 1 q2.2 = true)
+    (h : cmpS [q1] [q2] = Ordering.lt) : BT.lt (fB72 q1) (fB72 q2) = true := by
+  rw [Trans.Dict.BT.lt]
+  show BT.ltL _ [fB72 q1] [fB72 q2] = true
+  rw [show BT.ltL ((fB72 q1).size + (fB72 q2).size + 2) [fB72 q1] [fB72 q2]
+      = ltS [fB72 q1] [fB72 q2] from ?_]
+  · exact transfer72 (sizeL [q1] + sizeL [q2] + 1) [q1] [q2] (Nat.lt_succ_self _)
+      (fun x hx => by rw [List.mem_singleton.mp hx]; exact ⟨h1, ha1⟩)
+      (fun x hx => by rw [List.mem_singleton.mp hx]; exact ⟨h2, ha2⟩) h
+  · have s1 := sizeLB_toL (fB72 q1)
+    have s2 := sizeLB_toL (fB72 q2)
+    have e1 : (fB72 q1).toL = [fB72 q1] := rfl
+    have e2 : (fB72 q2).toL = [fB72 q2] := rfl
+    rw [e1] at s1
+    rw [e2] at s2
+    exact ltL_fuel _ _ _ _ (by omega) (by omega)
+
+end
+
+/-! ### §72.3 添字の側 — 節の引数はどれも木そのものより小さい -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 木のすべての節を「(段, 引数)」の対として。 -/
+def nodes72 : B → List (Nat × B)
+  | .nil => []
+  | .nd u r c => nodes72 r ++ ((u, c) :: nodes72 c)
+
+/-- `GB w` が降りる節だけ。段が `w` 未満の節で打ち切る — `visOK w` と同じ走査。 -/
+def gbL72 (w : Nat) : B → List (Nat × B)
+  | .nil => []
+  | .nd u r c => gbL72 w r ++ (if w ≤ u then (u, c) :: gbL72 w c else [])
+
+theorem ord_ne_lt72 {o : Ordering} (h : (!(o == Ordering.lt)) = true) : o ≠ Ordering.lt := by
+  cases o with
+  | lt => exact Bool.noConfusion h
+  | eq => intro hc; exact Ordering.noConfusion hc
+  | gt => intro hc; exact Ordering.noConfusion hc
+
+theorem ord_lt72 : ∀ (o : Ordering), (o == Ordering.lt) = true → o = Ordering.lt
+  | .lt, _ => rfl
+  | .eq, h => Bool.noConfusion h
+  | .gt, h => Bool.noConfusion h
+
+/-- `visOK` の展開式。 -/
+theorem visOK_nd72 (v u : Nat) (a r c : B) :
+    visOK v a (.nd u r c)
+      = (visOK v a r &&
+         (if u < v then true
+          else (if u == v then cmpS (toL c) (toL a) == Ordering.lt else true) && visOK v a c)) :=
+  rfl
+
+/-- `stdIn` は各成分に `nonIncr`・`visOK`・`stdIn` を渡す。 -/
+theorem stdIn_mem72 : ∀ (t : B), stdIn t = true → ∀ q ∈ toL t,
+    nonIncr q.2 = true ∧ visOK q.1 q.2 q.2 = true ∧ stdIn q.2 = true
+  | .nil, _ => by intro q hq; cases hq
+  | .nd v r c, h => by
+    obtain ⟨hr, hn, hv, hs⟩ := stdIn_nd h
+    rw [toL_nd]
+    intro q hq
+    rcases List.mem_append.mp hq with hq | hq
+    · exact stdIn_mem72 r hr q hq
+    · rw [List.mem_singleton.mp hq]; exact ⟨hn, hv, hs⟩
+
+/-- 最上位の段 `v` の節は、引数が基準より真に小さい。 -/
+theorem visOK_top72 : ∀ (v : Nat) (a t : B), visOK v a t = true →
+    ∀ q ∈ toL t, q.1 = v → cmpS (toL q.2) (toL a) = Ordering.lt
+  | _, _, .nil, _ => by intro q hq; cases hq
+  | v, a, .nd u r c, h => by
+    rw [visOK_nd72] at h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    rw [toL_nd]
+    intro q hq hqv
+    rcases List.mem_append.mp hq with hq | hq
+    · exact visOK_top72 v a r h1 q hq hqv
+    · rw [List.mem_singleton.mp hq] at hqv ⊢
+      have hne : ¬ (u < v) := by omega
+      rw [if_neg hne] at h2
+      obtain ⟨h3, _⟩ := (Bool.and_eq_true _ _).mp h2
+      rw [if_pos (show (u == v) = true by rw [show u = v from hqv]; exact beq_self_eq_true v)] at h3
+      exact ord_lt72 _ h3
+
+/-- 段 0 を基準にした走査はすべての節を通り、段 0 の節の引数を押さえる。 -/
+theorem visOK0_mem72 : ∀ (c t : B), visOK 0 c t = true →
+    ∀ q ∈ nodes72 t, q.1 = 0 → cmpS (toL q.2) (toL c) = Ordering.lt
+  | _, .nil, _ => by intro q hq; cases hq
+  | c, .nd u r a, h => by
+    rw [visOK_nd72] at h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    rw [if_neg (Nat.not_lt_zero u)] at h2
+    obtain ⟨h3, h4⟩ := (Bool.and_eq_true _ _).mp h2
+    show ∀ q ∈ nodes72 r ++ ((u, a) :: nodes72 a), q.1 = 0 → _
+    intro q hq hq0
+    rcases List.mem_append.mp hq with hq | hq
+    · exact visOK0_mem72 c r h1 q hq hq0
+    · rcases List.mem_cons.mp hq with hq | hq
+      · rw [hq] at hq0 ⊢
+        rw [if_pos (show (u == 0) = true by rw [show u = 0 from hq0]; rfl)] at h3
+        exact ord_lt72 _ h3
+      · exact visOK0_mem72 c a h4 q hq hq0
+
+/-- 段 0 の走査は子にも渡る。 -/
+theorem visOK0_child72 : ∀ (c t : B), visOK 0 c t = true →
+    ∀ q ∈ toL t, visOK 0 c q.2 = true
+  | _, .nil, _ => by intro q hq; cases hq
+  | c, .nd u r a, h => by
+    rw [visOK_nd72] at h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    rw [if_neg (Nat.not_lt_zero u)] at h2
+    obtain ⟨_, h4⟩ := (Bool.and_eq_true _ _).mp h2
+    rw [toL_nd]
+    intro q hq
+    rcases List.mem_append.mp hq with hq | hq
+    · exact visOK0_child72 c r h1 q hq
+    · rw [List.mem_singleton.mp hq]; exact h4
+
+/-- 段 1 を基準にした走査は `gbL72 1` とちょうど同じ。 -/
+theorem visOK1_mem72 : ∀ (c t : B), lvlLe 1 t = true → visOK 1 c t = true →
+    ∀ q ∈ gbL72 1 t, cmpS (toL q.2) (toL c) = Ordering.lt
+  | _, .nil, _, _ => by intro q hq; cases hq
+  | c, .nd u r a, hl, h => by
+    obtain ⟨hu, hlr, hla⟩ := (lvlLe_nd_iff 1 u r a).mp hl
+    rw [visOK_nd72] at h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    show ∀ q ∈ gbL72 1 r ++ (if 1 ≤ u then (u, a) :: gbL72 1 a else []), _
+    intro q hq
+    rcases List.mem_append.mp hq with hq | hq
+    · exact visOK1_mem72 c r hlr h1 q hq
+    · by_cases hu1 : 1 ≤ u
+      · rw [if_pos hu1] at hq
+        rw [if_neg (show ¬ (u < 1) by omega)] at h2
+        obtain ⟨h3, h4⟩ := (Bool.and_eq_true _ _).mp h2
+        rw [if_pos (show (u == 1) = true by rw [show u = 1 by omega]; rfl)] at h3
+        rcases List.mem_cons.mp hq with hq | hq
+        · rw [hq]; exact ord_lt72 _ h3
+        · exact visOK1_mem72 c a hla h4 q hq
+      · rw [if_neg hu1] at hq; cases hq
+
+/-- 段が 2 以上なら `GB` は何も拾わない。 -/
+theorem gbL72_ge2 : ∀ (w : Nat) (t : B), 2 ≤ w → lvlLe 1 t = true → gbL72 w t = []
+  | _, .nil, _, _ => rfl
+  | w, .nd u r a, hw, hl => by
+    obtain ⟨hu, hlr, _⟩ := (lvlLe_nd_iff 1 u r a).mp hl
+    show gbL72 w r ++ (if w ≤ u then (u, a) :: gbL72 w a else []) = []
+    rw [gbL72_ge2 w r hw hlr, if_neg (show ¬ (w ≤ u) by omega)]
+    rfl
+
+end
+
+/-! ### §72.3b 降べきの先頭は最大 -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem hdOK_cons72 (x y : Nat × B) (l : List (Nat × B)) :
+    hdOK x (y :: l) = !(cmpS [x] [y] == Ordering.lt) := rfl
+
+theorem nonIncrL_cons72 (x : Nat × B) (l : List (Nat × B)) :
+    nonIncrL (x :: l) = (hdOK x l && nonIncrL l) := rfl
+
+theorem nonIncrL_head72 : ∀ (l : List (Nat × B)) (x : Nat × B), nonIncrL (x :: l) = true →
+    ∀ y ∈ l, cmpS [x] [y] ≠ Ordering.lt
+  | [], _, _ => by intro y hy; cases hy
+  | y :: l', x, h => by
+    rw [nonIncrL_cons72] at h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    rw [hdOK_cons72] at h1
+    have hxy : cmpS [x] [y] ≠ Ordering.lt := ord_ne_lt72 h1
+    intro z hz
+    rcases List.mem_cons.mp hz with hz | hz
+    · rw [hz]; exact hxy
+    · have hyz := nonIncrL_head72 l' y h2 z hz
+      intro hcon
+      cases hxy' : cmpS [x] [y] with
+      | lt => exact hxy hxy'
+      | eq =>
+        have he : x = y := by
+          have := cmpS_eq_imp [x] [y] hxy'
+          injection this
+        rw [he] at hcon
+        exact hyz hcon
+      | gt => exact hyz (cmpS_trans _ _ _ (cmpS_gt_lt hxy') hcon)
+
+theorem nonIncrL_max72 (l : List (Nat × B)) (x q : Nat × B) (h : nonIncrL (x :: l) = true)
+    (hq : q ∈ x :: l) : cmpS [x] [q] ≠ Ordering.lt := by
+  rcases List.mem_cons.mp hq with hq | hq
+  · rw [hq, cmpS_refl]; intro hcon; exact Ordering.noConfusion hcon
+  · exact nonIncrL_head72 l x h q hq
+
+theorem nonIncrL_prefix72 : ∀ (l1 l2 : List (Nat × B)), nonIncrL (l1 ++ l2) = true →
+    nonIncrL l1 = true
+  | [], _, _ => rfl
+  | x :: l1', l2, h => by
+    rw [show (x :: l1') ++ l2 = x :: (l1' ++ l2) from rfl, nonIncrL_cons72] at h
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    rw [nonIncrL_cons72]
+    refine (Bool.and_eq_true _ _).mpr ⟨?_, nonIncrL_prefix72 l1' l2 h2⟩
+    cases l1' with
+    | nil => rfl
+    | cons y l'' =>
+      rw [hdOK_cons72]
+      rw [show (y :: l'') ++ l2 = y :: (l'' ++ l2) from rfl, hdOK_cons72] at h1
+      exact h1
+
+/-- **最上位の段 1 の節の引数は、木そのものより小さい。** `nonIncr` で先頭が最大、
+    `stdIn` の `visOK 1` でその中がさらに小さい — この二つだけで出る。 -/
+theorem topLvl1_72 (c : B) (hl : lvlLe 1 c = true) (hn : nonIncr c = true)
+    (hs : stdIn c = true) :
+    ∀ q ∈ toL c, q.1 = 1 → cmpS (toL q.2) (toL c) = Ordering.lt := by
+  rintro ⟨v, d⟩ hq hq1
+  have hq1' : v = 1 := hq1
+  subst hq1'
+  have hn' : nonIncrL (toL c) = true := hn
+  have hmemL := lvlL72_of_lvlLe c hl
+  have hld : lvlLe 1 d = true := (hmemL (1, d) hq).2
+  have hvd : visOK 1 d d = true := (stdIn_mem72 c hs (1, d) hq).2.1
+  cases hc : toL c with
+  | nil => rw [hc] at hq; cases hq
+  | cons x rest =>
+    obtain ⟨u1, a1⟩ := x
+    rw [hc] at hn' hq
+    have hmax : cmpS [(u1, a1)] [(1, d)] ≠ Ordering.lt :=
+      nonIncrL_max72 rest (u1, a1) (1, d) hn' hq
+    have hu1le : u1 ≤ 1 := (hmemL (u1, a1) (by rw [hc]; exact List.mem_cons.mpr (Or.inl rfl))).1
+    have hu1 : u1 = 1 := by
+      rcases Nat.lt_or_ge u1 1 with h0 | h0
+      · exact absurd (by rw [cmpS_cons, if_pos h0]) hmax
+      · omega
+    subst hu1
+    have hcm : cmpS (toL a1) (toL d) ≠ Ordering.lt := by
+      intro hc2
+      exact hmax (by rw [cmpS_cons, if_neg (Nat.lt_irrefl 1), if_neg (Nat.lt_irrefl 1), hc2])
+    cases hd : toL d with
+    | nil => exact cmpS_nil_cons _ _
+    | cons y r' =>
+      obtain ⟨v2, b⟩ := y
+      have hv2 : v2 ≤ 1 :=
+        ((lvlL72_of_lvlLe d hld) (v2, b) (by rw [hd]; exact List.mem_cons.mpr (Or.inl rfl))).1
+      rcases Nat.lt_or_ge v2 1 with h0 | h0
+      · rw [cmpS_cons, if_pos h0]
+      · have hv2' : v2 = 1 := by omega
+        subst hv2'
+        have hb : cmpS (toL b) (toL d) = Ordering.lt :=
+          visOK_top72 1 d d hvd (1, b) (by rw [hd]; exact List.mem_cons.mpr (Or.inl rfl)) rfl
+        have hba : cmpS (toL b) (toL a1) = Ordering.lt := by
+          cases had : cmpS (toL a1) (toL d) with
+          | lt => exact absurd had hcm
+          | eq => rw [toL_inj a1 d (cmpS_eq_imp _ _ had)]; exact hb
+          | gt => exact cmpS_trans _ _ _ hb (cmpS_gt_lt had)
+        rw [cmpS_cons, if_neg (Nat.lt_irrefl 1), if_neg (Nat.lt_irrefl 1), hba]
+
+end
+
+/-! ### §72.3c 主定理 — 節の引数はどれも木より小さい -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem toL_sub_nodes72 : ∀ (t : B) (q : Nat × B), q ∈ toL t → q ∈ nodes72 t
+  | .nil, _, hq => by cases hq
+  | .nd u r a, q, hq => by
+    rw [toL_nd] at hq
+    show q ∈ nodes72 r ++ ((u, a) :: nodes72 a)
+    rcases List.mem_append.mp hq with hq | hq
+    · exact List.mem_append.mpr (Or.inl (toL_sub_nodes72 r q hq))
+    · exact List.mem_append.mpr (Or.inr (List.mem_cons.mpr (Or.inl (List.mem_singleton.mp hq))))
+
+theorem nonIncr_pred72 (u : Nat) (r a : B) (h : nonIncr (.nd u r a) = true) :
+    nonIncr r = true := by
+  have h' : nonIncrL (toL r ++ [(u, a)]) = true := by rw [← toL_nd]; exact h
+  exact nonIncrL_prefix72 (toL r) [(u, a)] h'
+
+/-- **§72.3 の主定理 (二本立ての帰納法)。** 第一の連言が結論、第二はその中で回る形。 -/
+theorem keyInner72 : ∀ (n : Nat),
+    (∀ (c : B), sizeB c < n → lvlLe 1 c = true → nonIncr c = true → visOK 0 c c = true →
+      stdIn c = true → ∀ q ∈ nodes72 c, cmpS (toL q.2) (toL c) = Ordering.lt)
+    ∧ (∀ (c t : B), sizeB t < n → lvlLe 1 t = true → nonIncr t = true → stdIn t = true →
+      visOK 0 c t = true → (∀ q ∈ toL t, q.1 = 1 → cmpS (toL q.2) (toL c) = Ordering.lt) →
+      ∀ q ∈ nodes72 t, cmpS (toL q.2) (toL c) = Ordering.lt) := by
+  intro n
+  induction n with
+  | zero =>
+    exact ⟨fun _ hsz => absurd hsz (Nat.not_lt_zero _),
+           fun _ _ hsz => absurd hsz (Nat.not_lt_zero _)⟩
+  | succ n ih =>
+    have hinner : ∀ (c t : B), sizeB t < n + 1 → lvlLe 1 t = true → nonIncr t = true →
+        stdIn t = true → visOK 0 c t = true →
+        (∀ q ∈ toL t, q.1 = 1 → cmpS (toL q.2) (toL c) = Ordering.lt) →
+        ∀ q ∈ nodes72 t, cmpS (toL q.2) (toL c) = Ordering.lt := by
+      intro c t
+      induction t with
+      | nil => intro _ _ _ _ _ _ q hq; cases hq
+      | nd u r a ihr iha =>
+        intro hsz hl hn hs hv htop q hq
+        obtain ⟨hu, hlr, hla⟩ := (lvlLe_nd_iff 1 u r a).mp hl
+        obtain ⟨hsr, hna, hva, hsa⟩ := stdIn_nd hs
+        have hnr : nonIncr r = true := nonIncr_pred72 u r a hn
+        rw [visOK_nd72] at hv
+        obtain ⟨hvr, hv2⟩ := (Bool.and_eq_true _ _).mp hv
+        rw [if_neg (Nat.not_lt_zero u)] at hv2
+        obtain ⟨hv3, hvc⟩ := (Bool.and_eq_true _ _).mp hv2
+        have hszr : sizeB r < n + 1 := by
+          have : sizeB (B.nd u r a) = sizeB r + 1 + sizeB a := rfl
+          omega
+        have hsza : sizeB a < n := by
+          have : sizeB (B.nd u r a) = sizeB r + 1 + sizeB a := rfl
+          omega
+        have htopr : ∀ q' ∈ toL r, q'.1 = 1 → cmpS (toL q'.2) (toL c) = Ordering.lt :=
+          fun q' hq' => htop q' (by rw [toL_nd]; exact List.mem_append.mpr (Or.inl hq'))
+        have hua : cmpS (toL a) (toL c) = Ordering.lt := by
+          rcases Nat.eq_zero_or_pos u with h0 | h0
+          · rw [if_pos (show (u == 0) = true by rw [h0]; rfl)] at hv3
+            exact ord_lt72 _ hv3
+          · have hmem : (u, a) ∈ toL (B.nd u r a) := by
+              rw [toL_nd]
+              exact List.mem_append.mpr (Or.inr (List.mem_singleton.mpr rfl))
+            exact htop (u, a) hmem (by omega)
+        have htopa : ∀ q' ∈ toL a, q'.1 = 1 → cmpS (toL q'.2) (toL c) = Ordering.lt := by
+          intro q' hq' hq1
+          rcases Nat.eq_zero_or_pos u with h0 | h0
+          · have hva0 : visOK 0 a a = true := by rw [← h0]; exact hva
+            have := ih.1 a hsza hla hna hva0 hsa q' (toL_sub_nodes72 a q' hq')
+            exact cmpS_trans _ _ _ this hua
+          · have hu1 : u = 1 := by omega
+            have hva1 : visOK 1 a a = true := by rw [← hu1]; exact hva
+            exact cmpS_trans _ _ _ (visOK_top72 1 a a hva1 q' hq' hq1) hua
+        have hq2 : q ∈ nodes72 r ++ ((u, a) :: nodes72 a) := hq
+        rcases List.mem_append.mp hq2 with hq | hq
+        · exact ihr hszr hlr hnr hsr hvr htopr q hq
+        · rcases List.mem_cons.mp hq with hq | hq
+          · rw [hq]; exact hua
+          · exact iha (by omega) hla hna hsa hvc htopa q hq
+    exact ⟨fun c hsz hl hn hv hs q hq =>
+             hinner c c hsz hl hn hs hv (topLvl1_72 c hl hn hs) q hq, hinner⟩
+
+/-- **§72.3 の結論。** 段が 1 以下で良い添字なら、どの節の引数も木そのものより小さい。 -/
+theorem key72 (c : B) (hl : lvlLe 1 c = true) (hn : nonIncr c = true)
+    (hv : visOK 0 c c = true) (hs : stdIn c = true) :
+    ∀ q ∈ nodes72 c, cmpS (toL q.2) (toL c) = Ordering.lt :=
+  (keyInner72 (sizeB c + 1)).1 c (Nat.lt_succ_self _) hl hn hv hs
+
+end
+
+/-! ### §72.4a `BT` の側 — 和の標準性と `GB` を成分列で見る -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 成分列が広義単調減少。`BT.isStd` の和の条項そのもの。 -/
+def descOK72 : List BT → Bool
+  | [] => true
+  | [_] => true
+  | x :: y :: r => BT.le y x && descOK72 (y :: r)
+
+/-- **和の標準性は成分ごとの標準性と降べきに分かれる。** -/
+theorem isStd_ofL72 : ∀ (l : List BT), Atoms l → (∀ x ∈ l, BT.isStd x = true) →
+    descOK72 l = true → BT.isStd (BT.ofL l) = true
+  | [], _, _, _ => rfl
+  | [a], _, hs, _ => hs a (List.mem_cons.mpr (Or.inl rfl))
+  | a :: y :: r, hat, hs, hd => by
+    obtain ⟨p1, q1, rfl⟩ := hat a (List.mem_cons.mpr (Or.inl rfl))
+    obtain ⟨p2, q2, rfl⟩ := hat y (List.mem_cons.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl))))
+    have hdd : (BT.le (BT.D p2 q2) (BT.D p1 q1) && descOK72 (BT.D p2 q2 :: r)) = true := hd
+    obtain ⟨hle, hd2⟩ := (Bool.and_eq_true _ _).mp hdd
+    have hrest : BT.isStd (BT.ofL (BT.D p2 q2 :: r)) = true :=
+      isStd_ofL72 (BT.D p2 q2 :: r) (fun z hz => hat z (List.mem_cons.mpr (Or.inr hz)))
+        (fun z hz => hs z (List.mem_cons.mpr (Or.inr hz))) hd2
+    have hsa : BT.isStd (BT.D p1 q1) = true := hs _ (List.mem_cons.mpr (Or.inl rfl))
+    cases r with
+    | nil =>
+      have hsy : BT.isStd (BT.D p2 q2) = true := hrest
+      show (BT.isP (BT.D p1 q1) && BT.isStd (BT.D p1 q1) && BT.isStd (BT.D p2 q2) &&
+            (BT.isP (BT.D p2 q2) && BT.le (BT.D p2 q2) (BT.D p1 q1))) = true
+      rw [hsa, hsy, hle, show BT.isP (BT.D p1 q1) = true from rfl,
+        show BT.isP (BT.D p2 q2) = true from rfl]
+      rfl
+    | cons z r' =>
+      show (BT.isP (BT.D p1 q1) && BT.isStd (BT.D p1 q1) &&
+            BT.isStd (BT.sum (BT.D p2 q2) (BT.ofL (z :: r'))) &&
+            BT.le (BT.D p2 q2) (BT.D p1 q1)) = true
+      rw [hsa, hle, show BT.isP (BT.D p1 q1) = true from rfl,
+        show BT.isStd (BT.sum (BT.D p2 q2) (BT.ofL (z :: r'))) = true from hrest]
+      rfl
+
+/-- `GB` は和の成分に散る。 -/
+theorem mem_GB_ofL72 : ∀ (w : Nat) (l : List BT) (e : BT),
+    e ∈ BT.GB w (BT.ofL l) → ∃ x ∈ l, e ∈ BT.GB w x
+  | _, [], _, he => by cases he
+  | _, [a], _, he => ⟨a, List.mem_cons.mpr (Or.inl rfl), he⟩
+  | w, a :: y :: r, e, he => by
+    have he' : e ∈ BT.GB w a ++ BT.GB w (BT.ofL (y :: r)) := he
+    rcases List.mem_append.mp he' with h | h
+    · exact ⟨a, List.mem_cons.mpr (Or.inl rfl), h⟩
+    · obtain ⟨x, hx, hex⟩ := mem_GB_ofL72 w (y :: r) e h
+      exact ⟨x, List.mem_cons.mpr (Or.inr hx), hex⟩
+
+theorem GB_D72 (w u : Nat) (a : BT) :
+    BT.GB w (BT.D u a) = (if u ≥ w then a :: BT.GB w a else []) := rfl
+
+end
+
+/-! ### §72.4b `gbL72` の帰属と大きさ -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem sizeB_mem72 : ∀ (t : B) (q : Nat × B), q ∈ toL t → sizeB q.2 < sizeB t
+  | .nil, _, hq => by cases hq
+  | .nd u r a, q, hq => by
+    rw [toL_nd] at hq
+    have e : sizeB (B.nd u r a) = sizeB r + 1 + sizeB a := rfl
+    rcases List.mem_append.mp hq with hq | hq
+    · have := sizeB_mem72 r q hq
+      omega
+    · rw [List.mem_singleton.mp hq]
+      show sizeB a < sizeB r + 1 + sizeB a
+      omega
+
+theorem mem_gbL72_self : ∀ (w : Nat) (t : B) (q : Nat × B), q ∈ toL t → w ≤ q.1 →
+    q ∈ gbL72 w t
+  | _, .nil, _, hq, _ => by cases hq
+  | w, .nd u r a, q, hq, hw => by
+    rw [toL_nd] at hq
+    show q ∈ gbL72 w r ++ (if w ≤ u then (u, a) :: gbL72 w a else [])
+    rcases List.mem_append.mp hq with hq | hq
+    · exact List.mem_append.mpr (Or.inl (mem_gbL72_self w r q hq hw))
+    · have hq' : q = (u, a) := List.mem_singleton.mp hq
+      rw [hq'] at hw ⊢
+      rw [if_pos (show w ≤ u from hw)]
+      exact List.mem_append.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl)))
+
+theorem mem_gbL72_sub : ∀ (w : Nat) (t : B) (q0 q : Nat × B), q0 ∈ toL t → w ≤ q0.1 →
+    q ∈ gbL72 w q0.2 → q ∈ gbL72 w t
+  | _, .nil, _, _, hq, _, _ => by cases hq
+  | w, .nd u r a, q0, q, hq0, hw, hq => by
+    rw [toL_nd] at hq0
+    show q ∈ gbL72 w r ++ (if w ≤ u then (u, a) :: gbL72 w a else [])
+    rcases List.mem_append.mp hq0 with hq0 | hq0
+    · exact List.mem_append.mpr (Or.inl (mem_gbL72_sub w r q0 q hq0 hw hq))
+    · have hq' : q0 = (u, a) := List.mem_singleton.mp hq0
+      rw [hq'] at hw hq
+      rw [if_pos (show w ≤ u from hw)]
+      exact List.mem_append.mpr (Or.inr (List.mem_cons.mpr (Or.inr hq)))
+
+theorem gbL72_zero72 : ∀ (t : B), gbL72 0 t = nodes72 t
+  | .nil => rfl
+  | .nd u r a => by
+    show gbL72 0 r ++ (if 0 ≤ u then (u, a) :: gbL72 0 a else [])
+      = nodes72 r ++ ((u, a) :: nodes72 a)
+    rw [if_pos (Nat.zero_le u), gbL72_zero72 r, gbL72_zero72 a]
+
+end
+
+/-! ### §72.4c `ArgStd` の段 1 以下の形 — 証明 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem gbL72_lvl72 : ∀ (w : Nat) (t : B), lvlLe 1 t = true →
+    ∀ q ∈ gbL72 w t, q.1 ≤ 1 ∧ lvlLe 1 q.2 = true
+  | _, .nil, _, _, hq => by cases hq
+  | w, .nd u r a, hl, q, hq => by
+    obtain ⟨hu, hlr, hla⟩ := (lvlLe_nd_iff 1 u r a).mp hl
+    have hq2 : q ∈ gbL72 w r ++ (if w ≤ u then (u, a) :: gbL72 w a else []) := hq
+    rcases List.mem_append.mp hq2 with h | h
+    · exact gbL72_lvl72 w r hlr q h
+    · by_cases hw : w ≤ u
+      · rw [if_pos hw] at h
+        rcases List.mem_cons.mp h with h | h
+        · rw [h]; exact ⟨hu, hla⟩
+        · exact gbL72_lvl72 w a hla q h
+      · rw [if_neg hw] at h; cases h
+
+theorem ofL_bArg72 (w : Nat) (c : B) (hl : lvlLe 1 c = true) :
+    bArg w c = BT.ofL ((toL c).map fB72) := by
+  rw [← toL_bArg72 w c hl]
+  exact (nfSum_bArg w c).symm
+
+/-- **段が 1 以下なら `bArg` は親の段に依らない。** 潰す枝が消えたので `w` が効かない。 -/
+theorem bArg_indep72 (w1 w2 : Nat) (c : B) (hl : lvlLe 1 c = true) :
+    bArg w1 c = bArg w2 c := by
+  rw [ofL_bArg72 w1 c hl, ofL_bArg72 w2 c hl]
+
+/-- `GB w (bArg w c)` の要素は `gbL72 w c` の節の引数の `bArg`。 -/
+theorem mem_GB_bArg72 : ∀ (n w : Nat) (c : B) (e : BT), sizeB c < n → lvlLe 1 c = true →
+    e ∈ BT.GB w (bArg w c) → ∃ q ∈ gbL72 w c, e = bArg q.1 q.2
+  | 0, _, _, _, hsz, _, _ => absurd hsz (Nat.not_lt_zero _)
+  | n + 1, w, c, e, hsz, hl, he => by
+    rw [ofL_bArg72 w c hl] at he
+    obtain ⟨x, hxm, hex⟩ := mem_GB_ofL72 w _ e he
+    obtain ⟨q, hqm, hxq⟩ := List.mem_map.mp hxm
+    rw [← hxq] at hex
+    rw [show fB72 q = BT.D q.1 (bArg q.1 q.2) from rfl, GB_D72] at hex
+    by_cases hw : q.1 ≥ w
+    · rw [if_pos hw] at hex
+      rcases List.mem_cons.mp hex with h | h
+      · exact ⟨q, mem_gbL72_self w c q hqm hw, h⟩
+      · have hlq : lvlLe 1 q.2 = true := (lvlL72_of_lvlLe c hl q hqm).2
+        have hsq : sizeB q.2 < n := by have := sizeB_mem72 c q hqm; omega
+        rw [bArg_indep72 q.1 w q.2 hlq] at h
+        obtain ⟨q', hq', he'⟩ := mem_GB_bArg72 n w q.2 e hsq hlq h
+        exact ⟨q', mem_gbL72_sub w c q q' hqm hw hq', he'⟩
+    · rw [if_neg hw] at hex; cases hex
+
+/-- `nonIncr` が `BT` 側の降べきになる。 -/
+theorem descOK_map72 : ∀ (l : List (Nat × B)), LvlL72 l → nonIncrL l = true →
+    descOK72 (l.map fB72) = true
+  | [], _, _ => rfl
+  | [_], _, _ => rfl
+  | x :: y :: r, hl, hn => by
+    rw [nonIncrL_cons72] at hn
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp hn
+    rw [hdOK_cons72] at h1
+    have hxy : cmpS [x] [y] ≠ Ordering.lt := ord_ne_lt72 h1
+    have hlx := hl x (List.mem_cons.mpr (Or.inl rfl))
+    have hly := hl y (List.mem_cons.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl))))
+    have hle : BT.le (fB72 y) (fB72 x) = true := by
+      cases hcc : cmpS [x] [y] with
+      | lt => exact absurd hcc hxy
+      | eq =>
+        have he : x = y := by
+          have hee := cmpS_eq_imp [x] [y] hcc
+          injection hee
+        show ((fB72 y == fB72 x) || BT.lt (fB72 y) (fB72 x)) = true
+        rw [he, beq_refl72 (fB72 y)]
+        rfl
+      | gt =>
+        show ((fB72 y == fB72 x) || BT.lt (fB72 y) (fB72 x)) = true
+        rw [lt_fB72 y x hly.1 hly.2 hlx.1 hlx.2 (cmpS_gt_lt hcc), Bool.or_true]
+    show (BT.le (fB72 y) (fB72 x) && descOK72 (fB72 y :: r.map fB72)) = true
+    exact (Bool.and_eq_true _ _).mpr ⟨hle, descOK_map72 (y :: r) (lvlL72_tail hl) h2⟩
+
+/-- **`GB` が降りる節の引数は、どれも木そのものより小さい。** 段 0 では §72.3 の
+    `key72`、段 1 では `visOK 1`、段 2 以上では `GB` が空。 -/
+theorem gbL72_lt72 (w : Nat) (c : B) (hl : lvlLe 1 c = true) (hn : nonIncr c = true)
+    (hv : visOK w c c = true) (hs : stdIn c = true) :
+    ∀ q ∈ gbL72 w c, cmpS (toL q.2) (toL c) = Ordering.lt := by
+  cases w with
+  | zero => rw [gbL72_zero72 c]; exact key72 c hl hn hv hs
+  | succ k =>
+    cases k with
+    | zero => exact visOK1_mem72 c c hl hv
+    | succ k2 => rw [gbL72_ge2 _ c (by omega) hl]; intro q hq; cases hq
+
+/-- **§72.4 の主定理 (帰納の形)。** -/
+theorem argStd72aux : ∀ (n w : Nat) (c : B), sizeB c < n → lvlLe 1 c = true →
+    nonIncr c = true → visOK w c c = true → stdIn c = true →
+    BT.isStd (BT.D w (bArg w c)) = true
+  | 0, _, _, hsz, _, _, _, _ => absurd hsz (Nat.not_lt_zero _)
+  | n + 1, w, c, hsz, hl, hn, hv, hs => by
+    have hat : Atoms ((toL c).map fB72) := by
+      intro z hz
+      obtain ⟨q, _, hq⟩ := List.mem_map.mp hz
+      exact ⟨q.1, bArg q.1 q.2, hq.symm⟩
+    have hcomp : ∀ z ∈ (toL c).map fB72, BT.isStd z = true := by
+      intro z hz
+      obtain ⟨q, hqm, hq⟩ := List.mem_map.mp hz
+      rw [← hq]
+      obtain ⟨hnq, hvq, hsq⟩ := stdIn_mem72 c hs q hqm
+      have hlq : lvlLe 1 q.2 = true := (lvlL72_of_lvlLe c hl q hqm).2
+      have hsz2 : sizeB q.2 < n := by have := sizeB_mem72 c q hqm; omega
+      exact argStd72aux n q.1 q.2 hsz2 hlq hnq hvq hsq
+    have hstdx : BT.isStd (bArg w c) = true := by
+      rw [ofL_bArg72 w c hl]
+      exact isStd_ofL72 _ hat hcomp (descOK_map72 (toL c) (lvlL72_of_lvlLe c hl) hn)
+    have hgb : ∀ e ∈ BT.GB w (bArg w c), BT.lt e (bArg w c) = true := by
+      intro e he
+      obtain ⟨q, hqm, hqe⟩ := mem_GB_bArg72 (sizeB c + 1) w c e (Nat.lt_succ_self _) hl he
+      rw [hqe]
+      exact argTransfer72 q.1 w q.2 c (gbL72_lvl72 w c hl q hqm).2 hl
+        (gbL72_lt72 w c hl hn hv hs q hqm)
+    show (BT.isStd (bArg w c) && (BT.GB w (bArg w c)).all (fun e => BT.lt e (bArg w c))) = true
+    rw [hstdx, Bool.true_and, List.all_eq_true]
+    exact hgb
+
+/-- **§72 の第一の門。** 段が 1 以下なら `ArgStd` は定理。`nfLe` は仮説に要らない
+    (`lvlLe 1` から出る)。 -/
+theorem argStd72 (w : Nat) (c : B) (hl : lvlLe 1 c = true) (hn : nonIncr c = true)
+    (hv : visOK w c c = true) (hs : stdIn c = true) :
+    BT.isStd (BT.D w (bArg w c)) = true :=
+  argStd72aux (sizeB c + 1) w c (Nat.lt_succ_self _) hl hn hv hs
+
+/-- 段が 1 以下なら `nfLe m` は `1 ≤ m` のとき自動。 -/
+theorem nfLe_of_lvlLe72 : ∀ (c : B) (m : Nat), 1 ≤ m → lvlLe 1 c = true → nfLe m c = true
+  | .nil, _, _, _ => rfl
+  | .nd v r a, m, hm, h => by
+    obtain ⟨h1, h2, h3⟩ := (lvlLe_nd_iff 1 v r a).mp h
+    exact (nfLe_nd_iff m v r a).mpr
+      ⟨by omega, nfLe_of_lvlLe72 r m hm h2, nfLe_of_lvlLe72 a (v + 1) (by omega) h3⟩
+
+end
+
+/-! ### §72.5 第二の門を段 1 以下に絞る (還元のみ、証明はしない) -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `BT` の側の添字の上限。 -/
+def btLe72 (m : Nat) : BT → Bool
+  | .zero => true
+  | .D u a => decide (u ≤ m) && btLe72 m a
+  | .sum a b => btLe72 m a && btLe72 m b
+
+theorem btLe72_D (m u : Nat) (a : BT) (h : btLe72 m (BT.D u a) = true) :
+    u ≤ m ∧ btLe72 m a = true := by
+  obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+  exact ⟨of_decide_eq_true h1, h2⟩
+
+theorem btLe72_sum (m : Nat) (a b : BT) (h : btLe72 m (BT.sum a b) = true) :
+    btLe72 m a = true ∧ btLe72 m b = true := (Bool.and_eq_true _ _).mp h
+
+theorem btLe72_ofL72 : ∀ (l : List BT), (∀ x ∈ l, btLe72 1 x = true) →
+    btLe72 1 (BT.ofL l) = true
+  | [], _ => rfl
+  | [a], h => h a (List.mem_cons.mpr (Or.inl rfl))
+  | a :: y :: r, h => by
+    show (btLe72 1 a && btLe72 1 (BT.ofL (y :: r))) = true
+    rw [h a (List.mem_cons.mpr (Or.inl rfl)),
+      btLe72_ofL72 (y :: r) (fun x hx => h x (List.mem_cons.mpr (Or.inr hx)))]
+    rfl
+
+theorem btLe72_bArg72 : ∀ (n w : Nat) (c : B), sizeB c < n → lvlLe 1 c = true →
+    btLe72 1 (bArg w c) = true
+  | 0, _, _, hsz, _ => absurd hsz (Nat.not_lt_zero _)
+  | n + 1, w, c, hsz, hl => by
+    rw [ofL_bArg72 w c hl]
+    refine btLe72_ofL72 _ ?_
+    intro x hx
+    obtain ⟨q, hqm, hq⟩ := List.mem_map.mp hx
+    rw [← hq]
+    obtain ⟨hu, hlq⟩ := lvlL72_of_lvlLe c hl q hqm
+    have hsz2 : sizeB q.2 < n := by have := sizeB_mem72 c q hqm; omega
+    show (decide (q.1 ≤ 1) && btLe72 1 (bArg q.1 q.2)) = true
+    rw [decide_eq_true hu, btLe72_bArg72 n q.1 q.2 hsz2 hlq]
+    rfl
+
+/-- **部分領域の値の成分は添字が 1 以下。** -/
+theorem btLe_bVal_mem72 : ∀ (t : B), lvlLe 1 t = true →
+    ∀ a ∈ (bVal t).toL, btLe72 1 a = true
+  | .nil, _, _, ha => by cases ha
+  | .nd v r c, hl, a, ha => by
+    obtain ⟨hv, hlr, hlc⟩ := (lvlLe_nd_iff 1 v r c).mp hl
+    rw [toL_bVal_nd v r c] at ha
+    rcases List.mem_append.mp ha with h | h
+    · exact btLe_bVal_mem72 r hlr a h
+    · by_cases hcc : (r == .nil && v == 0 && c == .nil) = true
+      · rw [if_pos hcc] at h; cases h
+      · rw [if_neg hcc, List.mem_singleton] at h
+        rw [h]
+        show (decide (v ≤ 1) && btLe72 1 (bArg v c)) = true
+        rw [decide_eq_true hv, btLe72_bArg72 (sizeB c + 1) v c (Nat.lt_succ_self _) hlc]
+        rfl
+
+/-- **第二の門、段 1 以下の形。** §66.4 の `PsiIdxOKStd` を、添字も引数も段 1 以下の
+    ところに絞ったもの。**証明しない** (§72.8 で測定のみ)。 -/
+def PsiIdxOKStd172 : Prop :=
+  ∀ (u : Nat) (a : BT), u ≤ 1 → btLe72 1 a = true → BT.isStd (BT.D u a) = true →
+    PsiIdxOK u (dict a)
+
+/-- **その一歩ぶんの形。** §68.3 の `PsiIdxStepStd` を同じところに絞ったもの。 -/
+def PsiIdxStepStd172 : Prop :=
+  ∀ (u : Nat) (a : BT), u ≤ 1 → btLe72 1 a = true → BT.isStd (BT.D u a) = true →
+    KsetStepOK u (dict a)
+
+theorem inT_dict_of_step172 (H : PsiIdxStepStd172) : ∀ a : BT, btLe72 1 a = true →
+    BT.isStd a = true → inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero, _, _ => ⟨inT_zero, lt_zero_M⟩
+  | .D u a, hb, h => by
+    obtain ⟨hu, hba⟩ := btLe72_D 1 u a hb
+    have ih := inT_dict_of_step172 H a hba (isStd_of_D h)
+    exact inT_collapse_gap3 u (dict a) ih.1 ih.2
+      (psiIdxOK_of_stepOK u (dict a) ih.1 ih.2 (H u a hu hba h))
+  | .sum a b, hb, h => by
+    obtain ⟨hba, hbb⟩ := btLe72_sum 1 a b hb
+    have iha := inT_dict_of_step172 H a hba (isStd_of_sum h).1
+    have ihb := inT_dict_of_step172 H b hbb (isStd_of_sum h).2
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+/-- 一歩ぶんの形から §72.7 の門が出る。 -/
+theorem psiIdxOKStd172_of_step172 (H : PsiIdxStepStd172) : PsiIdxOKStd172 := by
+  intro u a hu hb h
+  have ih := inT_dict_of_step172 H a (btLe72_D 1 u a (by
+    show (decide (u ≤ 1) && btLe72 1 a) = true
+    rw [decide_eq_true hu, hb]
+    rfl)).2 (isStd_of_D h)
+  exact psiIdxOK_of_stepOK u (dict a) ih.1 ih.2 (H u a hu hb h)
+
+/-- §66.4 の無制限の形から絞った形が出る (向きの記録)。 -/
+theorem psiIdxOKStd172_of_std (H : PsiIdxOKStd) : PsiIdxOKStd172 :=
+  fun u a _ _ h => H u a h
+
+theorem inT_dict_of_std172 (H : PsiIdxOKStd172) : ∀ a : BT, btLe72 1 a = true →
+    BT.isStd a = true → inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero, _, _ => ⟨inT_zero, lt_zero_M⟩
+  | .D u a, hb, h => by
+    obtain ⟨hu, hba⟩ := btLe72_D 1 u a hb
+    have ih := inT_dict_of_std172 H a hba (isStd_of_D h)
+    exact inT_collapse_gap3 u (dict a) ih.1 ih.2 (H u a hu hba h)
+  | .sum a b, hb, h => by
+    obtain ⟨hba, hbb⟩ := btLe72_sum 1 a b hb
+    have iha := inT_dict_of_std172 H a hba (isStd_of_sum h).1
+    have ihb := inT_dict_of_std172 H b hbb (isStd_of_sum h).2
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+end
+
+/-! ### §72.6 消費者 — `RegionStd` は部分領域で無条件 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+open Trans.Dict (dict)
+
+/-- **`RegionStd` を部分領域に絞った形。** -/
+def RegionStd172 : Prop := ∀ t : B, stdB1 t = true → ∀ a ∈ (bVal t).toL, BT.isStd a = true
+
+theorem regionStd1_aux72 : ∀ (t : B), lvlLe 1 t = true → stdIn t = true →
+    ∀ a ∈ (bVal t).toL, BT.isStd a = true := by
+  intro t
+  induction t with
+  | nil => intro _ _ a ha; cases ha
+  | nd v r c ihr _ =>
+    intro hl hst a ha
+    obtain ⟨_, hlr, hlc⟩ := (lvlLe_nd_iff 1 v r c).mp hl
+    obtain ⟨hstr, hnc, hvis, hstc⟩ := stdIn_nd hst
+    rw [toL_bVal_nd v r c] at ha
+    rcases List.mem_append.mp ha with h | h
+    · exact ihr hlr hstr a h
+    · by_cases hc : (r == .nil && v == 0 && c == .nil) = true
+      · rw [if_pos hc] at h; cases h
+      · rw [if_neg hc, List.mem_singleton] at h
+        rw [h]
+        exact argStd72 v c hlc hnc hvis hstc
+
+/-- **§72 の第一の門、消費者の形。** §67 の `RegionStd` は部分領域では**定理**。 -/
+theorem regionStd1_72 : RegionStd172 := by
+  intro t ht a ha
+  have h1 : stdB t = true := stdB_of_stdB1 t ht
+  have h2 : ((nfB t && nonIncr t) && stdIn t) = true := h1
+  exact regionStd1_aux72 t (lvlLe1_of_stdB1 t ht) ((Bool.and_eq_true _ _).mp h2).2 a ha
+
+theorem dictAtoms_bVal_72 (Hp : PsiIdxOKStd172) (t : B) (ht : stdB1 t = true) :
+    ∀ a ∈ (bVal t).toL, inT (dict a) = true :=
+  fun a ha => (inT_dict_of_std172 Hp a (btLe_bVal_mem72 t (lvlLe1_of_stdB1 t ht) a ha)
+    (regionStd1_72 t ht a ha)).1
+
+theorem inT_dict_bVal_72 (Hp : PsiIdxOKStd172) (t : B) (ht : stdB1 t = true) :
+    inT (dict (bVal t)) = true := by
+  have h := inT_dict_ofL (bVal t).toL (dictAtoms_bVal_72 Hp t ht)
+  rwa [show BT.ofL (bVal t).toL = bVal t from nfSum_bVal t] at h
+
+/-- **部分領域の値は 𝔗(M) の項** — 仮説は `PsiIdxOKStd172` ただ一つ。 -/
+theorem inT_vOf_72 (Hp : PsiIdxOKStd172) (t : B) (ht : stdB1 t = true) :
+    inT (vOf t) = true := by
+  cases t with
+  | nil => exact rfl
+  | nd w r c =>
+    show inT (plus one (dict (bVal (B.nd w r c)))) = true
+    exact inT_plus inT_one (inT_dict_bVal_72 Hp _ ht)
+
+theorem vOf_succ_72 (Hp : PsiIdxOKStd172) (r : B) (hr : stdB1 r = true) :
+    vOf (.nd 0 r .nil) = plus (vOf r) one := by
+  cases r with
+  | nil => exact rfl
+  | nd w s c =>
+    show plus one (dict (bVal (B.nd 0 (B.nd w s c) B.nil)))
+        = plus (plus one (dict (bVal (B.nd w s c)))) one
+    rw [show bVal (B.nd 0 (B.nd w s c) B.nil)
+          = bplus (bVal (B.nd w s c)) (BT.D 0 BT.zero) from rfl,
+      dict_bplus_one _ (nfSum_bVal _) (dictAtoms_bVal_72 Hp _ hr)]
+    exact (plus_assoc_inT _ _ _ inT_one (inT_dict_bVal_72 Hp _ hr) inT_one).symm
+
+theorem lt_vOf_succ_72 (Hp : PsiIdxOKStd172) (r : B) (hr : stdB1 r = true) :
+    lt (vOf r) (vOf (.nd 0 r .nil)) = true := by
+  rw [vOf_succ_72 Hp r hr]
+  exact lt_self_plus_one_inT (vOf r) (inT_vOf_72 Hp r hr)
+
+end
+
+/-! ### §72.7 組み立て — `certIn_t326` から `RegionStd` を外す -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **`Hsucc` の供給、部分領域で。** 仮説は `PsiIdxOKStd172` だけ。§70 の
+    `hsuccS1_supply_std` から `RegionStd` が落ちた形。 -/
+theorem hsuccS1_supply_72 (Hp : PsiIdxOKStd172) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS1 S → ValS1 S v → BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u TM.Term.one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, ValS1 (BMS.expand S n) u := by
+  rintro S v _ ⟨t, hstd, rfl, rfl⟩ hk
+  rw [kind_matB t] at hk
+  obtain ⟨r, rfl⟩ := kindB_succ t hk
+  have hstd' : stdB (B.nd 0 r .nil) = true := stdB_of_stdB1 _ hstd
+  have hr1 : stdB1 r = true := stdB1_pred r hstd
+  have htop : topOKB (B.nd 0 r .nil) = true := topOKB_of_nfB _ (nfB_of_stdB _ hstd')
+  have hexp : ∀ n, BMS.expand (matB (B.nd 0 r .nil) 0) n = matB r 0 := by
+    intro n
+    show (BMS.expand? (matB (B.nd 0 r .nil) 0) n).getD [] = _
+    rw [expand_matB (B.nd 0 r .nil) htop (by intro h; exact B.noConfusion h) n]
+    rfl
+  exact ⟨vOf r, vOf_succ_72 Hp r hr1, inT_vOf_72 Hp _ hstd,
+    inT_vOf_72 Hp r hr1, lt_vOf_succ_72 Hp r hr1,
+    fun n => ⟨r, hr1, hexp n, rfl⟩⟩
+
+/-- **`Hlim` の供給、部分領域で。** 仮説は `PsiIdxOKStd172` と §70.5 の 3 つ。 -/
+theorem hlimS1_supply_72 (Hp : PsiIdxOKStd172)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS1 S → ValS1 S v → BMS.kind S = BMS.Kind.lim →
+    ∃ f : Nat → TM.Term, inT v = true
+      ∧ (∀ n, ValS1 (BMS.expand S n) (f n))
+      ∧ (∀ n, inT (f n) = true)
+      ∧ (∀ n, lt (f n) v = true)
+      ∧ (∀ n, lt (f n) (f (n + 1)) = true)
+      ∧ (∀ s, inT s = true → lt s v = true → ∃ n, le s (f n) = true) := by
+  rintro S v _ ⟨t, hstd, rfl, rfl⟩ hk
+  rw [kind_matB t] at hk
+  exact ⟨fun n => vOf (fsB t n), inT_vOf_72 Hp t hstd,
+    valS1_expand t hstd hk,
+    fun n => inT_vOf_72 Hp _ (stdB1_fsB t hstd n),
+    HD t hstd hk, HI t hstd hk, HC t hstd hk⟩
+
+/-- **輪が閉じる形、`RegionStd` 抜き。** 仮説は 4 つ。 -/
+theorem certInS1_72 (Hp : PsiIdxOKStd172)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1) :
+    ∀ (v : TM.Term), Acc Evidence.WF.RT v → ∀ (S : BMS.Matrix), RegS1 S → ValS1 S v →
+      Evidence.Cert.CertifiedIn Evidence.Cert.DomI S v :=
+  Evidence.Cert.certIn_region hclosedS1_supply hzeroS1_supply (hsuccS1_supply_72 Hp)
+    (hlimS1_supply_72 Hp HD HI HC)
+
+/-- **§72 の結論。** 326 行目の証明書は `RegionStd` に依らない。残る仮説は
+    `PsiIdxOKStd172` と `LimDecS1`・`LimIncS1`・`LimCofS1`、それに停止性。 -/
+theorem certIn_t326_72 (Hp : PsiIdxOKStd172)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certInS1_72 Hp HD HI HC (vOf t326) hacc (matB t326 0) ⟨t326, stdB1_t326, rfl⟩
+    ⟨t326, stdB1_t326, rfl, rfl⟩
+
+/-- **一歩ぶんの形からも同じ。** §68.4 の `inT_vOf_68` の段 1 以下の形。 -/
+theorem inT_vOf_step72 (Hs : PsiIdxStepStd172) (t : B) (ht : stdB1 t = true) :
+    inT (vOf t) = true :=
+  inT_vOf_72 (psiIdxOKStd172_of_step172 Hs) t ht
+
+/-- §68.4 の `hsuccS_supply_68` の段 1 以下の形。`ArgStd` はもう仮説ではない。 -/
+theorem hsuccS1_supply_step72 (Hs : PsiIdxStepStd172) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS1 S → ValS1 S v → BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u TM.Term.one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, ValS1 (BMS.expand S n) u :=
+  hsuccS1_supply_72 (psiIdxOKStd172_of_step172 Hs)
+
+/-- **§72 の結論、一歩ぶんの形で。** 326 行目の証明書は `PsiIdxStepStd172` と
+    §70.5 の 3 つと停止性だけに依る。 -/
+theorem certIn_t326_step72 (Hs : PsiIdxStepStd172)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_72 (psiIdxOKStd172_of_step172 Hs) HD HI HC hacc
+
+end
+
+/-! ### §72.7b 和の形 — §67.2 の `RegionStdSum` も部分領域では定理
+
+消費者が要るのは成分ごとの標準性 (`RegionStd`) だけだが、和そのものの標準性も出る。
+`bVal` の成分列は `toL t` の `map` から**先頭の `(0, nil)` を落としただけ**。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 先頭が `(0, nil)` ならそれを落とす。`bVal` が先頭の `(0,0)` を 0 にする分。 -/
+def dropHd72 : List (Nat × B) → List (Nat × B)
+  | (0, .nil) :: r => r
+  | l => l
+
+theorem dropHd72_sub : ∀ (l : List (Nat × B)) (q : Nat × B), q ∈ dropHd72 l → q ∈ l
+  | (0, .nil) :: _, _, hq => List.mem_cons.mpr (Or.inr hq)
+  | [], _, hq => hq
+  | (0, .nd _ _ _) :: _, _, hq => hq
+  | (_ + 1, _) :: _, _, hq => hq
+
+theorem nonIncrL_dropHd72 : ∀ (l : List (Nat × B)), nonIncrL l = true →
+    nonIncrL (dropHd72 l) = true
+  | (0, .nil) :: r, h => ((Bool.and_eq_true _ _).mp h).2
+  | [], h => h
+  | (0, .nd _ _ _) :: _, h => h
+  | (_ + 1, _) :: _, h => h
+
+theorem dropHd72_snoc : ∀ (l : List (Nat × B)) (x : Nat × B), l ≠ [] →
+    dropHd72 (l ++ [x]) = dropHd72 l ++ [x]
+  | [], _, hn => absurd rfl hn
+  | (0, .nil) :: r, x, _ => rfl
+  | (0, .nd _ _ _) :: _, _, _ => rfl
+  | (_ + 1, _) :: _, _, _ => rfl
+
+/-- **`bVal` の成分列。** `toL t` の `map` から先頭の `(0, nil)` を落としたもの。 -/
+theorem toL_bVal72 : ∀ (t : B), (bVal t).toL = (dropHd72 (toL t)).map fB72
+  | .nil => rfl
+  | .nd v r c => by
+    rw [toL_bVal_nd v r c, toL_nd]
+    cases hr : r with
+    | nil =>
+      rw [show toL (B.nil) = ([] : List (Nat × B)) from rfl, List.nil_append,
+        show (bVal B.nil).toL = ([] : List BT) from rfl, List.nil_append]
+      by_cases hc : ((B.nil : B) == .nil && v == 0 && c == .nil) = true
+      · obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp hc
+        obtain ⟨_, h3⟩ := (Bool.and_eq_true _ _).mp h1
+        rw [if_pos hc, show v = 0 from of_decide_eq_true h3,
+          show c = B.nil from of_decide_eq_true h2]
+        rfl
+      · rw [if_neg hc]
+        cases v with
+        | zero =>
+          cases c with
+          | nil => exact absurd rfl hc
+          | nd u s b => rfl
+        | succ k => rfl
+    | nd u s b =>
+      rw [if_neg (show ¬ ((B.nd u s b : B) == .nil && v == 0 && c == .nil) = true from by
+        intro hcon
+        obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hcon
+        obtain ⟨h2, _⟩ := (Bool.and_eq_true _ _).mp h1
+        exact B.noConfusion (of_decide_eq_true h2))]
+      rw [dropHd72_snoc (toL (B.nd u s b)) (v, c) (toL_ne_nil u s b), List.map_append,
+        toL_bVal72 (B.nd u s b)]
+      rfl
+
+/-- **§67.2 の `RegionStdSum` の部分領域版。** 消費者より強い形。 -/
+theorem regionStdSum1_72 : ∀ (t : B), stdB1 t = true → BT.isStd (bVal t) = true := by
+  intro t ht
+  have hl : lvlLe 1 t = true := lvlLe1_of_stdB1 t ht
+  have hs' : ((nfB t && nonIncr t) && stdIn t) = true := stdB_of_stdB1 t ht
+  have hst : stdIn t = true := ((Bool.and_eq_true _ _).mp hs').2
+  have hni : nonIncr t = true := ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp hs').1).2
+  have hlv : LvlL72 (dropHd72 (toL t)) :=
+    fun q hq => lvlL72_of_lvlLe t hl q (dropHd72_sub (toL t) q hq)
+  have hx : bVal t = BT.ofL ((dropHd72 (toL t)).map fB72) := by
+    rw [← toL_bVal72 t]
+    exact (nfSum_bVal t).symm
+  rw [hx]
+  refine isStd_ofL72 _ ?_ ?_ (descOK_map72 (dropHd72 (toL t)) hlv (nonIncrL_dropHd72 (toL t) hni))
+  · intro z hz
+    obtain ⟨q, _, hq⟩ := List.mem_map.mp hz
+    exact ⟨q.1, bArg q.1 q.2, hq.symm⟩
+  · intro z hz
+    obtain ⟨q, hqm, hq⟩ := List.mem_map.mp hz
+    rw [← hq]
+    have hqt := dropHd72_sub (toL t) q hqm
+    obtain ⟨hnq, hvq, hsq⟩ := stdIn_mem72 t hst q hqt
+    exact argStd72 q.1 q.2 (lvlL72_of_lvlLe t hl q hqt).2 hnq hvq hsq
+
+end
+
+/-! ### §72.8 三つの仮説はどれも外せない (段 1 以下でも)
+
+`nfLe` は `lvlLe 1` から出るので外れた (`nfLe_of_lvlLe72`)。残る三つは段 1 以下でも
+外せない。`cVis`・`cInc` は §68.2b のものがそのまま段 1 以下で、`stdIn` の反例だけ
+新しい — §68 の `cStd` は段 2 の節を持つ。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- `stdIn` を外す反例、段 1 以下。行列 `(0,1)(1,1)(1,1)(2,1)`、値 `ψ₁(ψ₁(1 ⊕ Ω₁))` の形。
+    引数の和 `Ω₁ ⊕ ψ₁(Ω₁)` が降べきでない。 -/
+def cStd72 : B := .nd 1 .nil (.nd 1 (.nd 1 .nil .nil) (.nd 1 .nil .nil))
+
+theorem matB_cStd72 : matB cStd72 0 = [[0,1],[1,1],[1,1],[2,1]] := rfl
+
+theorem not_argStd72_no_visOK :
+    ¬ (∀ (w : Nat) (c : B), lvlLe 1 c = true → nonIncr c = true → stdIn c = true →
+        BT.isStd (BT.D w (bArg w c)) = true) := fun H =>
+  Bool.noConfusion ((H 0 cVis rfl rfl rfl).symm.trans
+    (show BT.isStd (BT.D 0 (bArg 0 cVis)) = false from rfl))
+
+theorem not_argStd72_no_nonIncr :
+    ¬ (∀ (w : Nat) (c : B), lvlLe 1 c = true → visOK w c c = true → stdIn c = true →
+        BT.isStd (BT.D w (bArg w c)) = true) := fun H =>
+  Bool.noConfusion ((H 0 cInc rfl visOK_cInc rfl).symm.trans
+    (show BT.isStd (BT.D 0 (bArg 0 cInc)) = false from rfl))
+
+theorem not_argStd72_no_stdIn :
+    ¬ (∀ (w : Nat) (c : B), lvlLe 1 c = true → nonIncr c = true → visOK w c c = true →
+        BT.isStd (BT.D w (bArg w c)) = true) := fun H =>
+  Bool.noConfusion ((H 0 cStd72 rfl rfl rfl).symm.trans
+    (show BT.isStd (BT.D 0 (bArg 0 cStd72)) = false from rfl))
+
+end
+
+/-! ### §72.9 測定 (凍結)
+
+母集団の作り方を先に書く。
+
+    pool72 n   = ((List.range (n+1)).flatMap (enumNodes 2))
+                 — 節が `n` 個以下、段が **0 か 1 だけ**の `B` を全部。`topOKB` でも
+                   `nfB` でも絞らない。`ArgStd` が量化しているのは添字の全体ではなく
+                   **一つの節の引数**なので、絞ってはいけない。
+    good72 w c = lvlLe 1 c && nonIncr c && visOK w c c && stdIn c
+    btPool72   = dg72 (sg72 (dg72 (sg72 (dg72 [zero]))))  ただし
+                 dg72 l = l ++ {ψ₀ a, ψ₁ a : a ∈ l}、sg72 l = l ++ {a ⊕ b : a,b ∈ l}
+                 — 添字が 0 か 1 だけの `BT` を 3519 個。`isStd` で絞らずに作る。
+    sub72 n    = (popNFB 2 n).filter stdB1   — §70.6 の `subP` と同じもの。
+    regPairs72 l = l の値 `bVal t` の成分の中に現れる `ψ_u a` を対 `(u, a)` として全部。
+    exp72      = t326 の基本列を 2 回まで適用したもの 36 個 (最大 44 節)。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+def pool72 (n : Nat) : List B := (List.range (n+1)).flatMap (enumNodes 2)
+def good72 (w : Nat) (c : B) : Bool := lvlLe 1 c && nonIncr c && visOK w c c && stdIn c
+def dg72 (l : List BT) : List BT := (l ++ l.flatMap fun a => [BT.D 0 a, BT.D 1 a]).eraseDups
+def sg72 (l : List BT) : List BT := (l ++ l.flatMap fun a => l.map fun b => BT.sum a b).eraseDups
+def btPool72 : List BT := dg72 (sg72 (dg72 (sg72 (dg72 [BT.zero]))))
+def pairs72 : BT → List (Nat × BT)
+  | .zero => []
+  | .D u a => (u, a) :: pairs72 a
+  | .sum a b => pairs72 a ++ pairs72 b
+def regPairs72 (l : List B) : List (Nat × BT) :=
+  (l.flatMap fun t => (bVal t).toL.flatMap pairs72).eraseDups
+def sub72 (n : Nat) : List B := (popNFB 2 n).filter stdB1
+def exp72 : List B :=
+  ((List.range 6).flatMap fun n => (List.range 6).map fun m => fsB (fsB t326 n) m).eraseDups
+/-- 走査のうち強臨界枝を取る歩数 — `KsetStepOK` が条件を課す唯一の枝。 -/
+def scFire72 (u : Nat) (x : Term) : Nat :=
+  ((scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).filter
+    (fun p => le (reg (u+1)) p.2.1)).length
+def scLen72 (u : Nat) (x : Term) : Nat :=
+  (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).length
+
+-- 母集団の大きさ。
+#guard (pool72 4).length == 275
+#guard (pool72 5).length == 1619
+#guard (pool72 7).length == 64979
+#guard ((pool72 7).filter (good72 0)).length == 5744
+#guard ((pool72 7).filter (good72 1)).length == 9135
+
+/-! **肯定 1 — §72.1 の潰れなさ。** `w` を 4 まで振って 64979 本すべてで成分列は `map`。 -/
+
+#guard ((pool72 7).filter fun c =>
+  !((List.range 5).all fun w => (bArg w c).toL == (toL c).map fB72)).length == 0
+
+/-! **肯定 2 — §72.2 の移送は順序同型。** 段 1 以下の木の**すべての**順序対で、良さの
+仮定を一切置かずに `cmpS = lt` と `BT.lt` が一致する。275² = 75 625 対、うち `lt` は
+37 675 対 (空回りしていない)。1619² = 2 621 161 対でも食い違い 0 (重いので凍結しない)。 -/
+
+#guard ((pool72 4).flatMap fun c1 => (pool72 4).filter fun c2 =>
+  ((cmpS (toL c1) (toL c2) == Ordering.lt) != BT.lt (bArg 0 c1) (bArg 0 c2))).length == 0
+#guard ((pool72 4).flatMap fun c1 => (pool72 4).filter fun c2 =>
+  cmpS (toL c1) (toL c2) == Ordering.lt).length == 37675
+
+/-! **肯定 3 — §72.3 と §72.4 そのもの。** 良い木の上で `key72` も `argStd72` も 0 失敗
+(定理なので当然だが、判定器と定義の食い違いの検査になる)。 -/
+
+#guard ((pool72 7).filter fun c => good72 0 c &&
+  !((nodes72 c).all fun q => cmpS (toL q.2) (toL c) == Ordering.lt)).length == 0
+#guard ((pool72 7).filter fun c => good72 0 c && !(BT.isStd (BT.D 0 (bArg 0 c)))).length == 0
+#guard ((pool72 7).filter fun c => good72 1 c && !(BT.isStd (BT.D 1 (bArg 1 c)))).length == 0
+#guard ((pool72 7).filter fun c => good72 2 c && !(BT.isStd (BT.D 2 (bArg 2 c)))).length == 0
+
+/-! **否定 1 — 三つの仮説はどれも外せない。** 最小の反例の節数は 2・2・3。
+(`not_argStd72_no_stdIn` が使う `cStd72` は 4 節。3 節の最小反例 `(0,0)(1,0)(1,1)` は
+`visOK` の中の `cmpS` が簡約しないので、定理にするには手で展開が要る。) -/
+
+#guard (((pool72 7).filter fun c => lvlLe 1 c && nonIncr c && stdIn c
+  && !(BT.isStd (BT.D 0 (bArg 0 c)))).map sizeB).foldl (fun a b => min a b) 99 == 2
+#guard (((pool72 7).filter fun c => lvlLe 1 c && visOK 0 c c && stdIn c
+  && !(BT.isStd (BT.D 0 (bArg 0 c)))).map sizeB).foldl (fun a b => min a b) 99 == 2
+#guard (((pool72 7).filter fun c => lvlLe 1 c && nonIncr c && visOK 0 c c
+  && !(BT.isStd (BT.D 0 (bArg 0 c)))).map sizeB).foldl (fun a b => min a b) 99 == 3
+
+/-! **否定 2 — 段 1 以下でも強臨界枝は firing する。** 「段を 1 に絞れば `KsetStepOK` は
+空回りする」という期待は**偽**。部分領域自身の値の 1908 個の `ψ` 対で、走査は 1614 歩、
+そのうち 335 歩が強臨界枝を取る。ただし `t326` の基本列 (36 個, 最大 44 節) の側では
+0 歩 — 行 326 の周りだけを見ると空回りに見えてしまう。 -/
+
+#guard (sub72 8).length == 2397
+#guard (regPairs72 (sub72 8)).length == 1908
+#guard (regPairs72 (sub72 8)).all fun q => q.1 ≤ 1
+#guard ((regPairs72 (sub72 8)).map fun q => scLen72 q.1 (dict q.2)).foldl (· + ·) 0 == 1614
+#guard ((regPairs72 (sub72 8)).map fun q => scFire72 q.1 (dict q.2)).foldl (· + ·) 0 == 335
+#guard exp72.length == 36
+#guard exp72.all stdB1
+#guard (exp72.map sizeB).foldl (fun a b => max a b) 0 == 44
+#guard (regPairs72 exp72).length == 40
+#guard ((regPairs72 exp72).map fun q => scFire72 q.1 (dict q.2)).foldl (· + ·) 0 == 0
+
+/-! **肯定 4 — (S1'') `PsiIdxStepStd172`。** 二つの母集団で 0 失敗。添字は 5 まで振った
+(要るのは 1 まで)。btPool72 は `isStd` で絞らずに作ってから `isStd (ψ_u a)` で選ぶ。 -/
+
+#guard btPool72.length == 3519
+#guard ((List.range 6).flatMap fun u =>
+  btPool72.filter fun a => BT.isStd (BT.D u a)).length == 1767
+#guard ((List.range 6).flatMap fun u =>
+  btPool72.filter fun a => BT.isStd (BT.D u a) && !(stepOKb u (dict a))).length == 0
+#guard ((regPairs72 (sub72 8)).filter fun q => !(BT.isStd (BT.D q.1 q.2))).length == 0
+#guard ((regPairs72 (sub72 8)).filter fun q => !(stepOKb q.1 (dict q.2))).length == 0
+#guard ((regPairs72 exp72).filter fun q => !(stepOKb q.1 (dict q.2))).length == 0
+
+/-! **肯定 5 — 段 1 以下の `BT` の上限は値から出る。** 部分領域の値の成分の添字は 1 以下。 -/
+
+#guard (sub72 8).all fun t => (bVal t).toL.all (btLe72 1)
+#guard exp72.all fun t => (bVal t).toL.all (btLe72 1)
+
+end
+
+/-! ### §72.10 公理 -/
+
 end Evidence.Region
