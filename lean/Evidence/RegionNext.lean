@@ -25574,4 +25574,1125 @@ end
 
 /-! ### §72.10 公理 -/
 
+/-! ## §71 DECREASING AND INCREASING ARE THEOREMS ON THE LEVEL-ONE SUB-REGION —
+    THE PREFIX IS GONE, THE COLLAPSE NEVER FIRES, AND COFINALITY SPLITS WHERE §69 FELL
+
+§70 cut the region down to `stdB1 t = stdB t && lvlLe 1 t`, proved it closed under `fsB`,
+put row 326 inside it, and left `certIn_t326` standing on five hypotheses: §67's
+`PsiIdxOKStd` / `RegionStd` (§68's job) and §70.5's `LimDecS1` / `LimIncS1` / `LimCofS1`.
+§71 is about those last three.  **Two of them stop being open problems.**  On the
+sub-region the Buchholz-side halves of `LimDecS1` and `LimIncS1` are PROVED here, with no
+hypothesis at all, so each of those two clauses now rests on ONE measured statement — the
+order bridge `VOfLtA71` — and on nothing else.  The third, `LimCofS1`, is split into the
+half §69 swept and the half §69 did not.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §71.1  **THE FUNDAMENTAL SEQUENCE DOES NOT TOUCH THE PREFIX.**  `fsB_appB71` —
+
+             a ≠ nil  ⟹  fsB (nd v r a) n = appB r (fsB (nd v nil a) n)
+
+         for EVERY `v`, `r`, `a`, `n`, with no normal form and no standardness.  All three
+         of `fsB`'s operators (`repB`, `rwB` through `iterD`/`plugB`, and dropping a leaf)
+         rebuild the node they are applied to and copy the prefix verbatim.  This is
+         `Evidence/RegionV.lean` §14's `sumVal_fs_lim` — the seam that let the SMALL region
+         reduce `Hlim` to its last summand — now at the generalised index, where §14's `A`
+         had no analogue.  `fsB_ne_nil71` is the unfolding equation it needs.
+
+  §71.2  **THE PREFIX CANCELS IN THE BUCHHOLZ ORDER.**  `bValA71` is `bVal` without the
+         leading-`(0,0)` exception — the Buchholz-side reading of `vOf`'s `1 +`.  Its
+         component list is a homomorphism for `appB` with NO side condition
+         (`toL_bValA71_appB71`), `ltS_append_left71` cancels a common prefix of `BT.ltL`
+         (§68.1's `ltS_cons` with equal heads), and together
+
+             lt_bValA71_appB71 :  BT.lt (bValA71 (appB r s₁)) (bValA71 (appB r s₂))
+                                    = BT.lt (bValA71 s₁) (bValA71 s₂)
+
+         again for every `r`, `s₁`, `s₂`.  `toL_bVal_appB71` is the same statement for `bVal`
+         itself and does carry `r ≠ nil` — that side condition IS the leading-`(0,0)`
+         exception, which is why `bValA71` and not `bVal` is the right object here.
+         Measured: `bValA71 ≠ bVal` on exactly 7 of `subP 8`'s 2397 indices, and those 7 are
+         the all-`(0,0)` matrices, i.e. the natural numbers.
+
+  §71.3  **THE TWO ORDER CLAUSES LOSE THEIR PREFIX.**  `blimDecA71_of_core71` /
+         `blimIncA71_of_core71`: the Buchholz-side clauses on the WHOLE sub-region follow
+         from the same clauses on PREFIX-FREE indices `nd 0 nil a` alone.
+         `stdB1_drop_prefix71` is what makes the reduction legal.
+
+  §71.4  **COFINALITY SPLITS INTO THE HALF §69 SWEPT AND THE HALF §69 DID NOT.**
+         `limCofS1_of71` proves  `CofDenseS1 ∧ CofInS1 ⟹ LimCofS1`, where `CofDenseS1` says
+         every `s ∈ 𝔗(M)` below `vOf t` is `≤` some SUB-REGION value that is still
+         `< vOf t`, and `CofInS1` says the fundamental sequence is cofinal in the
+         sub-region's own values below `vOf t`.  §69 measured `CofInS1` and reported it as
+         `LimCofS`; §70 swept the whole of `LimCofS1` and found nothing.  `cofInS1_of71`
+         transports the SECOND half to the Buchholz level through `VOfLtA71'` and the
+         linearity of `lt` on 𝔗(M) (`Evidence/WF.lean` §8.4), so cofinality's index-side
+         half is `BCofIn71`, a statement with no `dict` in it.  **`CofDenseS1` is where
+         𝔗(M) enters and it is NOT reduced.**
+
+  §71.6  **THE COLLAPSE NEVER FIRES BELOW LEVEL 2.**  `bK`'s third branch
+         (`bClose ∘ bFold`, §48's fold — the one that turns a run of low children into a
+         single `ψ`) is unreachable when every node has level ≤ 1: the guard
+         `u ≤ w || !(r == nil) || headLvl c ≤ u` is already true at `u = 0` by its first
+         disjunct and at `u = 1` by its third.  Hence
+
+             bArg_eq_bValA71_71 :  lvlLe 1 t  ⟹  bArg w t = bValA71 t   for every w
+
+         — on the sub-region the Buchholz value is a plain nested sum, with no collapsing
+         anywhere and no dependence on the ambient level.  **The bound is sharp**: of the
+         1291 trees with ≤ 4 nodes and levels < 3, 91 have `bArg 0 t ≠ bValA71 t`, the
+         smallest being `(0,1)(1,2) = ψ₁(ψ₂(0))`; of the 10 067 trees with ≤ 6 nodes and
+         levels < 2, none does, at `w = 0, 1, 2` alike.
+
+  §71.7  **THE CORES ARE THEOREMS — SO DECREASING AND INCREASING ARE.**  With §71.6 the
+         value side of `fsB` can be followed operator by operator:
+
+             `repB`   `lt_bValA71_repNode_dec71` / `_inc71` close the leaf branch outright —
+                      `ψ_v(P)` repeated `n+1` times is below `ψ_v(P ⊕ ψ₀0)` because the very
+                      first component already decides, and adding one more copy is one more
+                      component on the right;
+             `plugB`  `lt_bValA71_plugB_dec71` / `_mono71` — replacing the last node by
+                      something below `ψ_{lastLvl c}(0)` lowers the value, and does so
+                      monotonically;
+             `iterD`  the two above give the `rwB` leaf branch;
+             `rwB`    `rwB_dec_inc71` carries the invariant `hasLowAnc w c = true ∨ v < w`
+                      down the argument chain, and that invariant is exactly what makes
+                      `rwB`'s THIRD branch — the one that returns its argument unchanged,
+                      where decrease would be false — unreachable.
+
+         `bDecCore71_thm` and `bIncCore71_thm` are the resulting theorems, and
+         `blimDecA71_thm` / `blimIncA71_thm` lift them to the whole sub-region through
+         §71.3.  Therefore
+
+             limDecS1_of_bridge71 (HV : VOfLtA71) : LimDecS1
+             limIncS1_of_bridge71 (HV : VOfLtA71) : LimIncS1
+
+         and `certIn_t326_71'` needs, of §70.5's three, only `VOfLtA71`, `CofDenseS1` and
+         `CofInS1`.  **`LimDecS1` and `LimIncS1` are no longer independent hypotheses.**
+
+WHAT THE MEASUREMENT SAYS.  Every population is re-swept on the SUB-region, wider than
+§70: `subLim 10` (31 099 limit indices) for decreasing and increasing, `subP 7`'s
+609² = 370 881 ordered pairs for the bridge in the form
+
+    BT.lt (bValA71 ·) (bValA71 ·)  =  BT.lt (bVal ·) (bVal ·)  =  lt (vOf ·) (vOf ·)
+
+— an EQUALITY of three Booleans, not an implication — and a new 175 439-term pool of 𝔗(M)
+for cofinality (§71.8 gives every construction).  **Zero counterexamples everywhere.**
+Nothing was refuted.
+
+WHAT IS **NOT** CLAIMED.  `VOfLtA71`, `VOfLtA71'`, `CofDenseS1`, `CofInS1` and `BCofIn71`
+are NAMED AND UNPROVED; so `LimCofS1` is still open and `certIn_t326_71'` still carries
+§68's `PsiIdxOKStd` / `RegionStd`.  §71 proves nothing about `dict`: `VOfLtA71` is exactly
+the place where `dict` has to preserve the order, and §69's `VOfLtStd` is the same gap in
+the un-restricted region.  Nothing here says the table's value at `(0,0)(1,1)(2,2)` is right
+or wrong, and nothing here repairs §69 — `LimCofS` is still false OUTSIDE the sub-region.
+The proofs of §71.7 use `lvlLe 1` essentially (through §71.6) and say nothing about
+level 2, where §69's counterexample lives. -/
+
+/-! ### §71.1 基本列は前置きに触らない
+
+`fsB` の三つの演算はどれも当てられた節を組み直すだけで、前置き `r` はそのまま複写する。
+だから前置きは再帰の外に出せる。§14 の `sumVal_fs_lim` に当たるもの。**無条件。** -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 前置きは `repB` を素通りする。 -/
+theorem repB_appB71 : ∀ (v : Nat) (r a : B) (n : Nat), a ≠ .nil →
+    repB (.nd v r a) n = appB r (repB (.nd v .nil a) n) := by
+  intro v r a n ha
+  cases a with
+  | nil => exact absurd rfl ha
+  | nd u P c =>
+    cases u with
+    | zero =>
+      cases c with
+      | nil =>
+        show appB r (repNode v P n) = appB r (appB .nil (repNode v P n))
+        rw [appB_nil]
+      | nd u2 s2 c2 =>
+        show B.nd v r (repB (.nd 0 P (.nd u2 s2 c2)) n)
+          = appB r (.nd v .nil (repB (.nd 0 P (.nd u2 s2 c2)) n))
+        rfl
+    | succ u' =>
+      show B.nd v r (repB (.nd (u' + 1) P c) n)
+        = appB r (.nd v .nil (repB (.nd (u' + 1) P c) n))
+      rfl
+
+/-- 前置きは `rwB` を素通りする。 -/
+theorem rwB_appB71 : ∀ (w n v : Nat) (r a : B), a ≠ .nil →
+    rwB w n (.nd v r a) = appB r (rwB w n (.nd v .nil a)) := by
+  intro w n v r a ha
+  cases a with
+  | nil => exact absurd rfl ha
+  | nd u s b =>
+    show (if hasLowAnc w (.nd u s b) then B.nd v r (rwB w n (.nd u s b))
+          else if v < w then appB r (iterD v (.nd u s b) n) else B.nd v r (.nd u s b))
+        = appB r (if hasLowAnc w (.nd u s b) then B.nd v .nil (rwB w n (.nd u s b))
+          else if v < w then appB .nil (iterD v (.nd u s b) n) else B.nd v .nil (.nd u s b))
+    by_cases hl : hasLowAnc w (.nd u s b) = true
+    · rw [if_pos hl, if_pos hl]; rfl
+    · rw [if_neg hl, if_neg hl]
+      by_cases hv : v < w
+      · rw [if_pos hv, if_pos hv, appB_nil]
+      · rw [if_neg hv, if_neg hv]; rfl
+
+/-- `fsB` の第 4 枝の展開式。`a ≠ nil` なら段によらずこの形。 -/
+theorem fsB_ne_nil71 : ∀ (v : Nat) (r a : B) (n : Nat), a ≠ .nil →
+    fsB (.nd v r a) n
+      = (if lastLvl a == 0 then repB (.nd v r a) n else rwB (lastLvl a) n (.nd v r a)) := by
+  intro v r a n ha
+  cases a with
+  | nil => exact absurd rfl ha
+  | nd u s b => cases v with
+    | zero => rfl
+    | succ k => rfl
+
+/-- **§71.1 の主定理。** 基本列は前置きに触らない — 最後の加数だけを動かす。
+    §14 の `sumVal_fs_lim` の、一般化した添字での対応物。**無条件。** -/
+theorem fsB_appB71 (v : Nat) (r a : B) (ha : a ≠ .nil) (n : Nat) :
+    fsB (.nd v r a) n = appB r (fsB (.nd v .nil a) n) := by
+  rw [fsB_ne_nil71 v r a n ha, fsB_ne_nil71 v .nil a n ha]
+  by_cases hz : (lastLvl a == 0) = true
+  · rw [if_pos hz, if_pos hz]; exact repB_appB71 v r a n ha
+  · rw [if_neg hz, if_neg hz]; exact rwB_appB71 _ n v r a ha
+
+/-- 節を 1 つ足すのは前置きを付けるのと同じ。 -/
+theorem nd_eq_appB71 (v : Nat) (r a : B) : B.nd v r a = appB r (.nd v .nil a) := rfl
+
+end
+
+/-! ### §71.2 前置きは Buchholz 側の順序で相殺する
+
+`bVal` は先頭の `(0,0)` だけを 0 に読む (`vOf` の `1 +` の分)。その例外を外したのが
+`bValA71` で、こちらは `appB` について**側条件なしで**準同型になる。共通の前置きは
+`ltS` を素通りするので、順序は最後の加数だけの話になる。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem bt_beq_self71 : ∀ (a : BT), (a == a) = true := by
+  intro a
+  induction a with
+  | zero => rfl
+  | D u b ih => show (u == u && (b == b)) = true; rw [ih, beq_self_eq_true u]; rfl
+  | sum p q ihp ihq => show ((p == p) && (q == q)) = true; rw [ihp, ihq]; rfl
+
+theorem bt_eq_of_beq71 : ∀ (a b : BT), (a == b) = true → a = b := by
+  intro a
+  induction a with
+  | zero => intro b h; cases b with
+    | zero => rfl
+    | D u x => exact Bool.noConfusion h
+    | sum p q => exact Bool.noConfusion h
+  | D u x ihx => intro b h; cases b with
+    | zero => exact Bool.noConfusion h
+    | D v y =>
+      have h' : ((u == v) && (x == y)) = true := h
+      obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+      rw [eq_of_beq h1, ihx y h2]
+    | sum p q => exact Bool.noConfusion h
+  | sum p q ihp ihq => intro b h; cases b with
+    | zero => exact Bool.noConfusion h
+    | D v y => exact Bool.noConfusion h
+    | sum s t =>
+      have h' : ((p == s) && (q == t)) = true := h
+      obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+      rw [ihp s h1, ihq t h2]
+
+/-- **前置きの相殺。** 共通の前置きは `ltS` を素通りする。 -/
+theorem ltS_append_left71 : ∀ (p : List BT), (∀ z ∈ p, ∃ u a, z = BT.D u a) →
+    ∀ (x y : List BT), ltS (p ++ x) (p ++ y) = ltS x y := by
+  intro p
+  induction p with
+  | nil => intro _ x y; rfl
+  | cons z p' ih =>
+    intro hp x y
+    obtain ⟨u, a, rfl⟩ := hp z (List.mem_cons_self ..)
+    show ltS (BT.D u a :: (p' ++ x)) (BT.D u a :: (p' ++ y)) = ltS x y
+    rw [ltS_cons u a (p' ++ x) u a (p' ++ y), if_neg (Nat.lt_irrefl u),
+      if_neg (Nat.lt_irrefl u), if_pos (bt_beq_self71 a)]
+    exact ih (fun z hz => hp z (List.mem_cons_of_mem _ hz)) x y
+
+/-- **前置きを付けない値。** `bVal` と違い先頭の `(0,0)` も 1 つの成分として数える。
+    `vOf` の `1 +` を Buchholz 側に写したもの。 -/
+def bValA71 : B → BT
+  | .nil => .zero
+  | .nd w r c => bplus (bValA71 r) (BT.D w (bArg w c))
+
+theorem atomsL_bValA71 : ∀ (t : B), AtomsL (bValA71 t)
+  | .nil => atomsL_zero
+  | .nd w r c => atomsL_bplus _ _ (atomsL_bValA71 r) (atomsL_D w (bArg w c))
+
+theorem toL_bValA71_nd (w : Nat) (r c : B) :
+    (bValA71 (.nd w r c)).toL = (bValA71 r).toL ++ [BT.D w (bArg w c)] :=
+  toL_bplus _ _ (atomsL_bValA71 r) (atomsL_D w (bArg w c))
+
+theorem appB_ne_nil71 : ∀ (s r : B), r ≠ .nil → appB r s ≠ .nil := by
+  intro s
+  cases s with
+  | nil => intro r hr; exact hr
+  | nd v s' a => intro r _ hc; exact B.noConfusion hc
+
+/-- **`bValA71` は `appB` の準同型。側条件は無い。** -/
+theorem toL_bValA71_appB71 : ∀ (s r : B),
+    (bValA71 (appB r s)).toL = (bValA71 r).toL ++ (bValA71 s).toL := by
+  intro s
+  induction s with
+  | nil => intro r; exact (List.append_nil _).symm
+  | nd w s' c ih =>
+    intro r
+    show (bValA71 (.nd w (appB r s') c)).toL = _
+    rw [toL_bValA71_nd w (appB r s') c, ih r, toL_bValA71_nd w s' c, List.append_assoc]
+
+/-- 同じことを `bVal` で。**`r ≠ nil` が要る** — それが先頭の `(0,0)` の例外そのもの。 -/
+theorem toL_bVal_appB71 : ∀ (s r : B), r ≠ .nil →
+    (bVal (appB r s)).toL = (bVal r).toL ++ (bValA71 s).toL := by
+  intro s
+  induction s with
+  | nil => intro r _; exact (List.append_nil _).symm
+  | nd w s' c ih =>
+    intro r hr
+    have hne : (appB r s' == .nil) = false := by
+      cases h : (appB r s' == B.nil) with
+      | false => rfl
+      | true => exact absurd (eq_of_beq h) (appB_ne_nil71 s' r hr)
+    show (bVal (.nd w (appB r s') c)).toL = _
+    rw [toL_bVal_nd w (appB r s') c, ih r hr, toL_bValA71_nd w s' c,
+      if_neg (show ¬((appB r s' == .nil && w == 0 && c == .nil) = true) from by
+        rw [hne]; intro hc; exact Bool.noConfusion hc),
+      List.append_assoc]
+
+/-- **§71.2 の主定理。** 共通の前置きの下では Buchholz 側の順序は最後の加数だけの話。
+    **無条件、`r = nil` も込み。** -/
+theorem lt_bValA71_appB71 (r s1 s2 : B) :
+    BT.lt (bValA71 (appB r s1)) (bValA71 (appB r s2)) = BT.lt (bValA71 s1) (bValA71 s2) := by
+  rw [lt_eq_ltS, lt_eq_ltS, toL_bValA71_appB71 s1 r, toL_bValA71_appB71 s2 r]
+  exact ltS_append_left71 (bValA71 r).toL (atomsL_bValA71 r) _ _
+
+/-- `bVal` の側の同じ主張。前置きが空でないときだけ。 -/
+theorem lt_bVal_appB71 (r s1 s2 : B) (hr : r ≠ .nil) :
+    BT.lt (bVal (appB r s1)) (bVal (appB r s2)) = BT.lt (bValA71 s1) (bValA71 s2) := by
+  rw [lt_eq_ltS, lt_eq_ltS, toL_bVal_appB71 s1 r hr, toL_bVal_appB71 s2 r hr]
+  exact ltS_append_left71 (bVal r).toL (atomsL_bVal r) _ _
+
+end
+
+/-! ### §71.3 減少と増加は前置きを失う
+
+`fsB` が前置きを動かさず (§71.1)、前置きが `bValA71` の順序で相殺する (§71.2) ので、
+Buchholz 側の 2 つの条項は「前置きの無い添字 `nd 0 nil a`」の話に落ちる。
+落とす操作が正当なのは `stdB1_drop_prefix71` — 前置きを外しても標準性と段の上限は残る。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **前置きは外せる。** 標準で段 1 以下の添字から前置きを外しても標準で段 1 以下。 -/
+theorem stdB1_drop_prefix71 (r a : B) (h : stdB1 (.nd 0 r a) = true) :
+    stdB1 (.nd 0 .nil a) = true := by
+  have hs := stdB_of_stdB1 _ h
+  have hl := lvlLe1_of_stdB1 _ h
+  have hs' : ((nfB (B.nd 0 r a) && nonIncr (B.nd 0 r a)) && stdIn (B.nd 0 r a)) = true := hs
+  obtain ⟨h1, hstdIn⟩ := (Bool.and_eq_true _ _).mp hs'
+  obtain ⟨hnf, _⟩ := (Bool.and_eq_true _ _).mp h1
+  obtain ⟨_, _, hnfa⟩ := (nfLe_nd_iff 0 0 r a).mp hnf
+  obtain ⟨_, hna, hvis, hsta⟩ := stdIn_nd hstdIn
+  obtain ⟨_, _, hla⟩ := (lvlLe_nd_iff 1 0 r a).mp hl
+  have hnf' : nfB (B.nd 0 B.nil a) = true :=
+    (nfLe_nd_iff 0 0 .nil a).mpr ⟨Nat.le_refl 0, rfl, hnfa⟩
+  have hni' : nonIncr (B.nd 0 B.nil a) = true := rfl
+  have hsi' : stdIn (B.nd 0 B.nil a) = true := by
+    show ((stdIn B.nil && nonIncr a && visOK 0 a a) && stdIn a) = true
+    rw [hna, hvis, hsta]; rfl
+  have hlv' : lvlLe 1 (B.nd 0 B.nil a) = true :=
+    (lvlLe_nd_iff 1 0 .nil a).mpr ⟨Nat.zero_le 1, rfl, hla⟩
+  show ((nfB (B.nd 0 B.nil a) && nonIncr (B.nd 0 B.nil a) && stdIn (B.nd 0 B.nil a))
+    && lvlLe 1 (B.nd 0 B.nil a)) = true
+  rw [hnf', hni', hsi', hlv']
+  rfl
+
+/-- **前置きの無い添字での減少。** これが `LimDecS1` の核。**未証明** (§71.6 で反例 0)。 -/
+def BDecCore71 : Prop := ∀ (a : B) (n : Nat), a ≠ .nil → stdB1 (.nd 0 .nil a) = true →
+    BT.lt (bValA71 (fsB (.nd 0 .nil a) n)) (bValA71 (.nd 0 .nil a)) = true
+
+/-- **前置きの無い添字での増加。** **未証明** (§71.6 で反例 0)。 -/
+def BIncCore71 : Prop := ∀ (a : B) (n : Nat), a ≠ .nil → stdB1 (.nd 0 .nil a) = true →
+    BT.lt (bValA71 (fsB (.nd 0 .nil a) n)) (bValA71 (fsB (.nd 0 .nil a) (n + 1))) = true
+
+/-- 部分領域ぜんぶでの減少 (Buchholz 側)。 -/
+def BLimDecA71 : Prop := ∀ (t : B), stdB1 t = true → kindB t = BMS.Kind.lim →
+    ∀ n, BT.lt (bValA71 (fsB t n)) (bValA71 t) = true
+
+/-- 部分領域ぜんぶでの増加 (Buchholz 側)。 -/
+def BLimIncA71 : Prop := ∀ (t : B), stdB1 t = true → kindB t = BMS.Kind.lim →
+    ∀ n, BT.lt (bValA71 (fsB t n)) (bValA71 (fsB t (n + 1))) = true
+
+/-- **§71.3 の主定理 (減少)。** 前置きの無い添字で足りる。 -/
+theorem blimDecA71_of_core71 (H : BDecCore71) : BLimDecA71 := by
+  intro t ht hk n
+  obtain ⟨r, a, ha, rfl⟩ := kindB_lim_std t (stdB_of_stdB1 t ht) hk
+  rw [fsB_appB71 0 r a ha n]
+  show BT.lt (bValA71 (appB r (fsB (B.nd 0 B.nil a) n)))
+    (bValA71 (appB r (B.nd 0 B.nil a))) = true
+  rw [lt_bValA71_appB71]
+  exact H a n ha (stdB1_drop_prefix71 r a ht)
+
+/-- **§71.3 の主定理 (増加)。** -/
+theorem blimIncA71_of_core71 (H : BIncCore71) : BLimIncA71 := by
+  intro t ht hk n
+  obtain ⟨r, a, ha, rfl⟩ := kindB_lim_std t (stdB_of_stdB1 t ht) hk
+  rw [fsB_appB71 0 r a ha n, fsB_appB71 0 r a ha (n + 1), lt_bValA71_appB71]
+  exact H a n ha (stdB1_drop_prefix71 r a ht)
+
+/-- **順序の橋、部分領域で。** `bValA71` の `BT.lt` は `vOf` の `lt` を出す。
+    §69 の `VOfLtStd` を部分領域に絞り、`bVal` を `bValA71` に替えたもの。
+    `subP 7` の 609² = 370 881 対で `BT.lt (bValA71 ·) (bValA71 ·)`・
+    `BT.lt (bVal ·) (bVal ·)`・`lt (vOf ·) (vOf ·)` の 3 つが**一致** (§71.6)。**未証明。** -/
+def VOfLtA71 : Prop := ∀ (u t : B), stdB1 u = true → stdB1 t = true →
+    BT.lt (bValA71 u) (bValA71 t) = true → lt (vOf u) (vOf t) = true
+
+/-- 逆向き。同じ測定が支える。**未証明。** -/
+def VOfLtA71' : Prop := ∀ (u t : B), stdB1 u = true → stdB1 t = true →
+    lt (vOf u) (vOf t) = true → BT.lt (bValA71 u) (bValA71 t) = true
+
+theorem limDecS1_71 (HV : VOfLtA71) (HB : BLimDecA71) : LimDecS1 :=
+  fun t ht hk n => HV (fsB t n) t (stdB1_fsB t ht n) ht (HB t ht hk n)
+
+theorem limIncS1_71 (HV : VOfLtA71) (HB : BLimIncA71) : LimIncS1 :=
+  fun t ht hk n => HV (fsB t n) (fsB t (n + 1)) (stdB1_fsB t ht n)
+    (stdB1_fsB t ht (n + 1)) (HB t ht hk n)
+
+/-- **§70.5 の `LimDecS1` は、橋と前置きの無い核の 2 つに落ちる。** -/
+theorem limDecS1_of_core71 (HV : VOfLtA71) (H : BDecCore71) : LimDecS1 :=
+  limDecS1_71 HV (blimDecA71_of_core71 H)
+
+/-- **§70.5 の `LimIncS1` も同じ。** -/
+theorem limIncS1_of_core71 (HV : VOfLtA71) (H : BIncCore71) : LimIncS1 :=
+  limIncS1_71 HV (blimIncA71_of_core71 H)
+
+end
+
+/-! ### §71.4 共終性は二つに割れる — §69 が掃いた側と、掃かなかった側
+
+`LimCofS1` の `s` は 𝔗(M) 全体を走る。それを
+
+    CofDenseS1  `s` は「部分領域のある値以下、かつその値は `vOf t` 未満」
+    CofInS1     基本列は部分領域の値の中で共終
+
+に割る。§69 は後者だけを測って `LimCofS` と呼び、前者を確かめなかった (§70 が同じ掃きを
+正しくやり直して逆の答えを得た)。後者は Buchholz 側へ運べる — `dict` は出てこない。
+前者は 𝔗(M) が入ってくる側で、**ここでは落とせない**。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+/-- **密度。** `vOf t` より下の 𝔗(M) の項は、部分領域のどれかの値で上から押さえられ、
+    その値は `vOf t` より真に小さい。**未証明。** -/
+def CofDenseS1 : Prop := ∀ (t : B), stdB1 t = true → kindB t = BMS.Kind.lim →
+    ∀ s, inT s = true → lt s (vOf t) = true →
+    ∃ u : B, stdB1 u = true ∧ le s (vOf u) = true ∧ lt (vOf u) (vOf t) = true
+
+/-- **内側の共終性。** 部分領域の値だけを相手にした共終性。§69 が測ったのはこれ。
+    **未証明。** -/
+def CofInS1 : Prop := ∀ (t : B), stdB1 t = true → kindB t = BMS.Kind.lim →
+    ∀ u : B, stdB1 u = true → lt (vOf u) (vOf t) = true →
+    ∃ n, le (vOf u) (vOf (fsB t n)) = true
+
+/-- **§71.4 の主定理。** 共終性は密度と内側の共終性の連言。`inT` の側は §67 の 2 つが運ぶ。 -/
+theorem limCofS1_of71 (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HD : CofDenseS1) (HI : CofInS1) : LimCofS1 := by
+  intro t ht hk s hs hlt
+  obtain ⟨u, hu, hle, hult⟩ := HD t ht hk s hs hlt
+  obtain ⟨n, hn⟩ := HI t ht hk u hu hult
+  exact ⟨n, le_trans_inT hs (inT_vOf_std Hp Hr u (stdB_of_stdB1 u hu))
+    (inT_vOf_std Hp Hr _ (stdB_of_stdB1 _ (stdB1_fsB t ht n))) hle hn⟩
+
+/-- **内側の共終性の Buchholz 側。** `dict` は出てこない。**未証明。** -/
+def BCofIn71 : Prop := ∀ (t : B), stdB1 t = true → kindB t = BMS.Kind.lim →
+    ∀ u : B, stdB1 u = true → BT.lt (bValA71 u) (bValA71 t) = true →
+    ∃ n, BT.lt (bValA71 (fsB t n)) (bValA71 u) = false
+
+/-- **内側の共終性は Buchholz 側へ落ちる。** 使うのは橋の逆向きと、𝔗(M) の順序が
+    線型であること (`Evidence/WF.lean` §8.4) だけ。 -/
+theorem cofInS1_of71 (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HV : VOfLtA71') (HB : BCofIn71) : CofInS1 := by
+  intro t ht hk u hu hlt
+  obtain ⟨n, hn⟩ := HB t ht hk u hu (HV u t hu ht hlt)
+  refine ⟨n, ?_⟩
+  have hfs := stdB1_fsB t ht n
+  have hiu : inT (vOf u) = true := inT_vOf_std Hp Hr u (stdB_of_stdB1 u hu)
+  have hif : inT (vOf (fsB t n)) = true :=
+    inT_vOf_std Hp Hr _ (stdB_of_stdB1 _ hfs)
+  rcases lt_comparable_inT hiu hif with h | h | h
+  · show (vOf u == vOf (fsB t n) || lt (vOf u) (vOf (fsB t n))) = true
+    rw [h]; exact Bool.or_true _
+  · rw [h]; exact le_self _
+  · rw [HV (fsB t n) u hfs hu h] at hn
+    exact absurd hn (by intro hc; exact Bool.noConfusion hc)
+
+end
+
+/-! ### §71.5 組み立て
+
+`certIn_t326` (§70.5) を §71 の仮説で書き直す。§68 の 2 つはそのまま、順序の 3 つは
+橋 1 つ・前置きの無い核 2 つ・共終性の 2 つ半に置き換わる。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **§70.5 の 3 つを §71 の形に置き換えた `certIn_t326`。** -/
+theorem certIn_t326_71 (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HV : VOfLtA71) (HBD : BDecCore71) (HBI : BIncCore71)
+    (HCD : CofDenseS1) (HCI : CofInS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326 Hp Hr (limDecS1_of_core71 HV HBD) (limIncS1_of_core71 HV HBI)
+    (limCofS1_of71 Hp Hr HCD HCI) hacc
+
+/-- 共終性の内側の半分まで Buchholz 側へ落としきった形。仮説は 8 つ、そのうち
+    `dict` を含むのは `Hp`・`Hr`・`VOfLtA71`・`VOfLtA71'`・`CofDenseS1` の 5 つだけで、
+    残る 3 つ (`BDecCore71`・`BIncCore71`・`BCofIn71`) は Buchholz 側の純粋な順序の話。 -/
+theorem certIn_t326_bt71 (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HV : VOfLtA71) (HV' : VOfLtA71') (HBD : BDecCore71) (HBI : BIncCore71)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_71 Hp Hr HV HBD HBI HCD (cofInS1_of71 Hp Hr HV' HBC) hacc
+
+end
+
+/-! ### §71.6 部分領域では崩れが起きない — 核の再帰と、その底
+
+`bArg` の三分岐 (§48 の `bK`) の第 3 枝は `bClose ∘ bFold`、すなわち「低い子の連なりを
+一つの `ψ` に畳む」崩れの枝である。**段が 1 以下ならこの枝は決して選ばれない** — 条件
+`u ≤ w || !(r == nil) || headLvl c ≤ u` は `u = 0` なら第 1 項で、`u = 1` なら第 3 項で
+すでに真だからである。したがって部分領域の値は「崩れの無い」素直な入れ子の和で、
+`bArg w t = bValA71 t` が段 `w` によらず成り立つ。
+
+その帰結が核の再帰である。`bValA71 (nd u nil a) = ψ_u (bValA71 a)` なので、`fsB` が
+引数の中へ降りる枝では減少・増加はそのまま一段下の同じ主張になり (`lt_bValA71_nd71`)、
+降りない枝 — `repNode` の枝 — は**ここで無条件に閉じる**。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 段の上限は頭の段を縛る。 -/
+theorem headLvl_le71 : ∀ (t : B) (m : Nat), lvlLe m t = true → headLvl t ≤ m := by
+  intro t
+  induction t with
+  | nil => intro m _; exact Nat.zero_le m
+  | nd v r c ihr _ =>
+    intro m h
+    obtain ⟨h1, h2, _⟩ := (lvlLe_nd_iff m v r c).mp h
+    cases r with
+    | nil => exact h1
+    | nd v' r' c' => exact ihr m h2
+
+/-- **崩れは起きない。** 段が 1 以下なら `bK` の第 3 枝 (`bClose ∘ bFold`) は選ばれない。 -/
+theorem bK_eq71 (w u : Nat) (r c : B) (hu : u ≤ 1) (hc : lvlLe 1 c = true) :
+    bK w u r c = BT.D u (bArg u c) := by
+  show (if c == .nil then (BT.D u .zero) else
+        if u ≤ w || !(r == .nil) || headLvl c ≤ u then BT.D u (bArg u c)
+        else bClose u (bFold u c)) = BT.D u (bArg u c)
+  by_cases h1 : (c == B.nil) = true
+  · rw [if_pos h1, show c = B.nil from eq_of_beq h1]
+    rfl
+  · rw [if_neg h1]
+    have hcond : (u ≤ w || !(r == B.nil) || headLvl c ≤ u) = true := by
+      cases u with
+      | zero =>
+        rw [show (decide (0 ≤ w)) = true from decide_eq_true (Nat.zero_le w)]
+        rfl
+      | succ k =>
+        have hk : k = 0 := by omega
+        subst hk
+        rw [show (decide (headLvl c ≤ 1)) = true from decide_eq_true (headLvl_le71 c 1 hc)]
+        exact Bool.or_true _
+    rw [if_pos hcond]
+
+/-- **§71.6 の主定理。** 段 1 以下の添字では `bArg` は段 `w` によらず `bValA71` そのもの。
+    §48 の畳み込みは部分領域では恒等写像である。**無条件。** -/
+theorem bArg_eq_bValA71_71 : ∀ (t : B) (w : Nat), lvlLe 1 t = true → bArg w t = bValA71 t := by
+  intro t
+  induction t with
+  | nil => intro w _; rfl
+  | nd u r c ihr _ =>
+    intro w h
+    obtain ⟨hu, hr, hc⟩ := (lvlLe_nd_iff 1 u r c).mp h
+    rw [bArg_nd w u r c, bK_eq71 w u r c hu hc, ihr w hr]
+    rfl
+
+/-- 前置きの無い一節の値は `ψ_u` そのもの。 -/
+theorem bValA71_nd_nil71 (u : Nat) (a : B) (h : lvlLe 1 a = true) :
+    bValA71 (.nd u .nil a) = BT.D u (bValA71 a) := by
+  show bplus (bValA71 B.nil) (BT.D u (bArg u a)) = _
+  rw [bArg_eq_bValA71_71 a u h]
+  rfl
+
+/-- Buchholz 側の順序は非反射的 — 少なくとも `bValA71` の像の上では。 -/
+theorem lt_bValA71_irrefl71 (x : B) : BT.lt (bValA71 x) (bValA71 x) = false := by
+  rw [lt_eq_ltS]
+  have h := ltS_append_left71 (bValA71 x).toL (atomsL_bValA71 x) [] []
+  rw [List.append_nil] at h
+  rw [h]
+  rfl
+
+/-- **核の再帰の一段。** 引数の中で減れば、`ψ_u` を被せても減る。 -/
+theorem lt_bValA71_nd71 (u : Nat) (x y : B) (hx : lvlLe 1 x = true) (hy : lvlLe 1 y = true)
+    (h : BT.lt (bValA71 x) (bValA71 y) = true) :
+    BT.lt (bValA71 (.nd u .nil x)) (bValA71 (.nd u .nil y)) = true := by
+  have hne : ¬((bValA71 x == bValA71 y) = true) := by
+    intro hc
+    rw [bt_eq_of_beq71 _ _ hc, lt_bValA71_irrefl71 y] at h
+    exact Bool.noConfusion h
+  rw [bValA71_nd_nil71 u x hx, bValA71_nd_nil71 u y hy, lt_eq_ltS]
+  show ltS [BT.D u (bValA71 x)] [BT.D u (bValA71 y)] = true
+  rw [ltS_cons u (bValA71 x) [] u (bValA71 y) [], if_neg (Nat.lt_irrefl u),
+    if_neg (Nat.lt_irrefl u), if_neg hne, ← lt_eq_ltS]
+  exact h
+
+/-- `repNode` の成分列の頭。 -/
+theorem toL_bValA71_repNode71 (u : Nat) (P : B) : ∀ n,
+    ∃ rest, (bValA71 (repNode u P n)).toL = BT.D u (bArg u P) :: rest
+  | 0 => ⟨[], rfl⟩
+  | k + 1 => by
+    obtain ⟨rest, hrest⟩ := toL_bValA71_repNode71 u P k
+    refine ⟨rest ++ [BT.D u (bArg u P)], ?_⟩
+    show (bValA71 (.nd u (repNode u P k) P)).toL = _
+    rw [toL_bValA71_nd u (repNode u P k) P, hrest]
+    rfl
+
+/-- **`repNode` の枝の増加 — 無条件。** 一つ増やすと成分が右に一つ増えるだけ。 -/
+theorem lt_bValA71_repNode_inc71 (u : Nat) (P : B) (n : Nat) :
+    BT.lt (bValA71 (repNode u P n)) (bValA71 (repNode u P (n + 1))) = true := by
+  rw [lt_eq_ltS]
+  show ltS (bValA71 (repNode u P n)).toL (bValA71 (.nd u (repNode u P n) P)).toL = true
+  rw [toL_bValA71_nd u (repNode u P n) P]
+  have h := ltS_append_left71 (bValA71 (repNode u P n)).toL
+    (atomsL_bValA71 (repNode u P n)) [] [BT.D u (bArg u P)]
+  rw [List.append_nil] at h
+  rw [h]
+  rfl
+
+/-- **`repNode` の枝の減少 — 無条件。** `ψ_u(P)` の並びは `ψ_u(P ⊕ ψ₀0)` より小さい。 -/
+theorem lt_bValA71_repNode_dec71 (u : Nat) (P : B) (hP : lvlLe 1 P = true) (n : Nat) :
+    BT.lt (bValA71 (repNode u P n)) (bValA71 (.nd u .nil (.nd 0 P .nil))) = true := by
+  have hA : (bValA71 (.nd 0 P .nil)).toL = (bValA71 P).toL ++ [BT.D 0 BT.zero] := by
+    rw [toL_bValA71_nd 0 P .nil]; rfl
+  have hne : ¬((bValA71 P == bValA71 (.nd 0 P .nil)) = true) := by
+    intro hc
+    have h1 : (bValA71 P).toL = (bValA71 P).toL ++ [BT.D 0 BT.zero] := by
+      rw [← hA, bt_eq_of_beq71 _ _ hc]
+    have h2 := congrArg List.length h1
+    rw [List.length_append, show ([BT.D 0 BT.zero]).length = 1 from rfl] at h2
+    omega
+  have hlv : lvlLe 1 (.nd 0 P .nil) = true :=
+    (lvlLe_nd_iff 1 0 P .nil).mpr ⟨Nat.zero_le 1, hP, rfl⟩
+  obtain ⟨rest, hrest⟩ := toL_bValA71_repNode71 u P n
+  rw [bValA71_nd_nil71 u _ hlv, lt_eq_ltS, hrest]
+  show ltS (BT.D u (bArg u P) :: rest) [BT.D u (bValA71 (.nd 0 P .nil))] = true
+  rw [bArg_eq_bValA71_71 P u hP, ltS_cons u (bValA71 P) rest u (bValA71 (.nd 0 P .nil)) [],
+    if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u), if_neg hne, hA]
+  have h := ltS_append_left71 (bValA71 P).toL (atomsL_bValA71 P) [] [BT.D 0 BT.zero]
+  rw [List.append_nil] at h
+  rw [h]
+  rfl
+
+end
+
+/-! ### §71.7 核は定理である — `BDecCore71` と `BIncCore71` の証明
+
+§71.6 で `bValA71` が崩れの無い入れ子の和だと分かったので、`fsB` の三つの演算を値の側で
+そのまま追える。`plugB` は最後の節を差し替えるだけ、`repB` は葉を複製するだけ、`rwB` は
+段が低い最も近い祖先まで降りてそこで `iterD` する。どれも「共通の前置きを消して一段下の
+同じ主張にする」形になるので、節の個数についての帰納法で閉じる。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem lastLvl_nd71 (v : Nat) (r c : B) (h : c ≠ .nil) :
+    lastLvl (.nd v r c) = lastLvl c := by
+  cases c with
+  | nil => exact absurd rfl h
+  | nd u s d => rfl
+
+theorem toL_bValA71_ne_nil71 : ∀ (t : B), t ≠ .nil → (bValA71 t).toL ≠ []
+  | .nil, h => absurd rfl h
+  | .nd w r c, _ => by
+      intro hc
+      have h2 := congrArg List.length hc
+      rw [toL_bValA71_nd w r c, List.length_append,
+        show ([BT.D w (bArg w c)]).length = 1 from rfl,
+        show (([] : List BT)).length = 0 from rfl] at h2
+      omega
+
+/-- 0 は最小。 -/
+theorem lt_bValA71_nil71 (x : B) (h : x ≠ .nil) :
+    BT.lt (bValA71 .nil) (bValA71 x) = true := by
+  have hne := toL_bValA71_ne_nil71 x h
+  rw [lt_eq_ltS]
+  show ltS [] (bValA71 x).toL = true
+  cases hx : (bValA71 x).toL with
+  | nil => exact absurd hx hne
+  | cons y ys => exact ltS_nil_cons y ys
+
+/-- **最後の節の差し替えは値を下げる。** 差し込む側が `ψ_{lastLvl c}(0)` より小さければ。 -/
+theorem lt_bValA71_plugB_dec71 : ∀ (c : B), c ≠ .nil → lvlLe 1 c = true → ∀ (Y : B),
+    lvlLe 1 Y = true → BT.lt (bValA71 Y) (BT.D (lastLvl c) BT.zero) = true →
+    BT.lt (bValA71 (plugB c Y)) (bValA71 c) = true := by
+  intro c
+  induction c with
+  | nil => intro h; exact absurd rfl h
+  | nd v r c' _ ihc =>
+    intro _ hlv Y hY hlt
+    obtain ⟨_, _, hc'⟩ := (lvlLe_nd_iff 1 v r c').mp hlv
+    cases c' with
+    | nil =>
+      show BT.lt (bValA71 (appB r Y)) (bValA71 (appB r (.nd v .nil .nil))) = true
+      rw [lt_bValA71_appB71]
+      exact hlt
+    | nd u s d =>
+      show BT.lt (bValA71 (appB r (.nd v .nil (plugB (.nd u s d) Y))))
+        (bValA71 (appB r (.nd v .nil (.nd u s d)))) = true
+      rw [lt_bValA71_appB71]
+      exact lt_bValA71_nd71 v _ _ (lvlLe_plugB _ 1 Y hc' hY) hc'
+        (ihc (by intro hc; exact B.noConfusion hc) hc' Y hY hlt)
+
+/-- **最後の節の差し替えは単調。** -/
+theorem lt_bValA71_plugB_mono71 : ∀ (c : B), c ≠ .nil → lvlLe 1 c = true → ∀ (Y Y' : B),
+    lvlLe 1 Y = true → lvlLe 1 Y' = true → BT.lt (bValA71 Y) (bValA71 Y') = true →
+    BT.lt (bValA71 (plugB c Y)) (bValA71 (plugB c Y')) = true := by
+  intro c
+  induction c with
+  | nil => intro h; exact absurd rfl h
+  | nd v r c' _ ihc =>
+    intro _ hlv Y Y' hY hY' hlt
+    obtain ⟨_, _, hc'⟩ := (lvlLe_nd_iff 1 v r c').mp hlv
+    cases c' with
+    | nil =>
+      show BT.lt (bValA71 (appB r Y)) (bValA71 (appB r Y')) = true
+      rw [lt_bValA71_appB71]
+      exact hlt
+    | nd u s d =>
+      show BT.lt (bValA71 (appB r (.nd v .nil (plugB (.nd u s d) Y))))
+        (bValA71 (appB r (.nd v .nil (plugB (.nd u s d) Y')))) = true
+      rw [lt_bValA71_appB71]
+      exact lt_bValA71_nd71 v _ _ (lvlLe_plugB _ 1 Y hc' hY) (lvlLe_plugB _ 1 Y' hc' hY')
+        (ihc (by intro hc; exact B.noConfusion hc) hc' Y Y' hY hY' hlt)
+
+/-- `ψ_v(0)` より小さい: `iterD` の値の段は `v`。 -/
+theorem lt_bValA71_iterD_D71 (v w : Nat) (c : B) (hv : v ≤ 1) (hc : lvlLe 1 c = true)
+    (h : v < w) : ∀ n, BT.lt (bValA71 (iterD v c n)) (BT.D w BT.zero) = true
+  | 0 => by
+      show BT.lt (bValA71 (.nd v .nil (plugB c .nil))) (BT.D w BT.zero) = true
+      rw [bValA71_nd_nil71 v _ (lvlLe_plugB c 1 .nil hc rfl)]
+      exact lt_D_lvl v w _ BT.zero h
+  | k + 1 => by
+      show BT.lt (bValA71 (.nd v .nil (plugB c (iterD v c k)))) (BT.D w BT.zero) = true
+      rw [bValA71_nd_nil71 v _ (lvlLe_plugB c 1 _ hc (lvlLe_iterD k v c 1 hv hc))]
+      exact lt_D_lvl v w _ BT.zero h
+
+theorem lt_zero_D71 (w : Nat) : BT.lt (bValA71 .nil) (BT.D w BT.zero) = true := by
+  refine lt_zero_toL (BT.D w BT.zero) ?_
+  intro hc
+  have h2 := congrArg List.length hc
+  rw [show ((BT.D w BT.zero).toL).length = 1 from rfl,
+    show (([] : List BT)).length = 0 from rfl] at h2
+  omega
+
+/-- **悪い根の反復は値を下げる。** -/
+theorem lt_bValA71_iterD_dec71 (v : Nat) (c : B) (hv : v ≤ 1) (hc : lvlLe 1 c = true)
+    (hne : c ≠ .nil) (h : v < lastLvl c) : ∀ n,
+    BT.lt (bValA71 (iterD v c n)) (bValA71 (.nd v .nil c)) = true
+  | 0 => by
+      show BT.lt (bValA71 (.nd v .nil (plugB c .nil))) (bValA71 (.nd v .nil c)) = true
+      exact lt_bValA71_nd71 v _ c (lvlLe_plugB c 1 .nil hc rfl) hc
+        (lt_bValA71_plugB_dec71 c hne hc .nil rfl (lt_zero_D71 (lastLvl c)))
+  | k + 1 => by
+      show BT.lt (bValA71 (.nd v .nil (plugB c (iterD v c k)))) (bValA71 (.nd v .nil c)) = true
+      exact lt_bValA71_nd71 v _ c
+        (lvlLe_plugB c 1 _ hc (lvlLe_iterD k v c 1 hv hc)) hc
+        (lt_bValA71_plugB_dec71 c hne hc _ (lvlLe_iterD k v c 1 hv hc)
+          (lt_bValA71_iterD_D71 v (lastLvl c) c hv hc h k))
+
+/-- **悪い根の反復は真に増える。** -/
+theorem lt_bValA71_iterD_inc71 (v : Nat) (c : B) (hv : v ≤ 1) (hc : lvlLe 1 c = true)
+    (hne : c ≠ .nil) : ∀ n,
+    BT.lt (bValA71 (iterD v c n)) (bValA71 (iterD v c (n + 1))) = true
+  | 0 => by
+      show BT.lt (bValA71 (.nd v .nil (plugB c .nil)))
+        (bValA71 (.nd v .nil (plugB c (iterD v c 0)))) = true
+      exact lt_bValA71_nd71 v _ _ (lvlLe_plugB c 1 .nil hc rfl)
+        (lvlLe_plugB c 1 _ hc (lvlLe_iterD 0 v c 1 hv hc))
+        (lt_bValA71_plugB_mono71 c hne hc .nil (iterD v c 0) rfl
+          (lvlLe_iterD 0 v c 1 hv hc)
+          (lt_bValA71_nil71 (iterD v c 0)
+            (by intro hcc; exact B.noConfusion (show B.nd v B.nil (plugB c B.nil) = B.nil from hcc))))
+  | k + 1 => by
+      show BT.lt (bValA71 (.nd v .nil (plugB c (iterD v c k))))
+        (bValA71 (.nd v .nil (plugB c (iterD v c (k + 1))))) = true
+      exact lt_bValA71_nd71 v _ _
+        (lvlLe_plugB c 1 _ hc (lvlLe_iterD k v c 1 hv hc))
+        (lvlLe_plugB c 1 _ hc (lvlLe_iterD (k + 1) v c 1 hv hc))
+        (lt_bValA71_plugB_mono71 c hne hc _ _ (lvlLe_iterD k v c 1 hv hc)
+          (lvlLe_iterD (k + 1) v c 1 hv hc)
+          (lt_bValA71_iterD_inc71 v c hv hc hne k))
+
+/-! #### `repB` の枝 -/
+
+theorem repB_base71 (v : Nat) (r P : B) (n : Nat) :
+    repB (.nd v r (.nd 0 P .nil)) n = appB r (repNode v P n) := rfl
+
+theorem repB_deep71 (v : Nat) (r : B) (u : Nat) (P d : B) (n : Nat) (hd : d ≠ .nil) :
+    repB (.nd v r (.nd u P d)) n = .nd v r (repB (.nd u P d) n) := by
+  cases d with
+  | nil => exact absurd rfl hd
+  | nd u2 s2 d2 => cases u with
+    | zero => rfl
+    | succ k => rfl
+
+/-- **段 0 の葉の枝は減って増える。** 節の個数についての帰納法。 -/
+theorem repB_dec_inc71 : ∀ (c : B), c ≠ .nil → lastLvl c = 0 → ∀ (v : Nat) (r : B),
+    lvlLe 1 (.nd v r c) = true → ∀ n,
+    BT.lt (bValA71 (repB (.nd v r c) n)) (bValA71 (.nd v r c)) = true
+    ∧ BT.lt (bValA71 (repB (.nd v r c) n)) (bValA71 (repB (.nd v r c) (n + 1))) = true := by
+  intro c
+  induction c with
+  | nil => intro h; exact absurd rfl h
+  | nd u P d _ ihd =>
+    intro _ hll v r hlv n
+    obtain ⟨_, _, hc⟩ := (lvlLe_nd_iff 1 v r (.nd u P d)).mp hlv
+    obtain ⟨_, hP, _⟩ := (lvlLe_nd_iff 1 u P d).mp hc
+    cases d with
+    | nil =>
+      have hu0 : u = 0 := hll
+      subst hu0
+      refine ⟨?_, ?_⟩
+      · rw [repB_base71 v r P n]
+        show BT.lt (bValA71 (appB r (repNode v P n)))
+          (bValA71 (appB r (.nd v .nil (.nd 0 P .nil)))) = true
+        rw [lt_bValA71_appB71]
+        exact lt_bValA71_repNode_dec71 v P hP n
+      · rw [repB_base71 v r P n, repB_base71 v r P (n + 1), lt_bValA71_appB71]
+        exact lt_bValA71_repNode_inc71 v P n
+    | nd u2 s2 d2 =>
+      have hdne : (B.nd u2 s2 d2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+      obtain ⟨g1, g2⟩ := ihd hdne hll u P hc n
+      have hlr : lvlLe 1 (repB (.nd u P (.nd u2 s2 d2)) n) = true :=
+        lvlLe_repB _ 1 n hc
+      have hlr' : lvlLe 1 (repB (.nd u P (.nd u2 s2 d2)) (n + 1)) = true :=
+        lvlLe_repB _ 1 (n + 1) hc
+      refine ⟨?_, ?_⟩
+      · rw [repB_deep71 v r u P (.nd u2 s2 d2) n hdne]
+        show BT.lt (bValA71 (appB r (.nd v .nil (repB (.nd u P (.nd u2 s2 d2)) n))))
+          (bValA71 (appB r (.nd v .nil (.nd u P (.nd u2 s2 d2))))) = true
+        rw [lt_bValA71_appB71]
+        exact lt_bValA71_nd71 v _ _ hlr hc g1
+      · rw [repB_deep71 v r u P (.nd u2 s2 d2) n hdne,
+          repB_deep71 v r u P (.nd u2 s2 d2) (n + 1) hdne]
+        show BT.lt (bValA71 (appB r (.nd v .nil (repB (.nd u P (.nd u2 s2 d2)) n))))
+          (bValA71 (appB r (.nd v .nil (repB (.nd u P (.nd u2 s2 d2)) (n + 1))))) = true
+        rw [lt_bValA71_appB71]
+        exact lt_bValA71_nd71 v _ _ hlr hlr' g2
+
+/-! #### `rwB` の枝 -/
+
+theorem hasLowAnc_nd71 (w u : Nat) (P d : B) (hd : d ≠ .nil) :
+    hasLowAnc w (.nd u P d) = (decide (u < w) || hasLowAnc w d) := by
+  cases d with
+  | nil => exact absurd rfl hd
+  | nd u2 s2 d2 => rfl
+
+theorem hasLowAnc_leaf71 (w u : Nat) (P : B) : hasLowAnc w (.nd u P .nil) = false := rfl
+
+theorem rwB_nd71 (w n v : Nat) (r : B) (u : Nat) (P d : B) :
+    rwB w n (.nd v r (.nd u P d))
+      = (if hasLowAnc w (.nd u P d) then .nd v r (rwB w n (.nd u P d))
+         else if v < w then appB r (iterD v (.nd u P d) n) else .nd v r (.nd u P d)) := rfl
+
+/-- **段 `w ≥ 1` の葉の枝は減って増える。** 「段が `w` 未満の最も近い祖先が在る」
+    という不変量 (`hasLowAnc w c = true ∨ v < w`) が降下のたびに保たれるので、
+    `fsB` が添字を動かさない第 3 枝には決して落ちない。 -/
+theorem rwB_dec_inc71 : ∀ (c : B), c ≠ .nil → ∀ (w : Nat), lastLvl c = w →
+    ∀ (v : Nat) (r : B), (hasLowAnc w c = true ∨ v < w) → lvlLe 1 (.nd v r c) = true → ∀ n,
+    BT.lt (bValA71 (rwB w n (.nd v r c))) (bValA71 (.nd v r c)) = true
+    ∧ BT.lt (bValA71 (rwB w n (.nd v r c))) (bValA71 (rwB w (n + 1) (.nd v r c))) = true := by
+  intro c
+  induction c with
+  | nil => intro h; exact absurd rfl h
+  | nd u P d _ ihd =>
+    intro _ w hll v r hdis hlv n
+    obtain ⟨hv, _, hc⟩ := (lvlLe_nd_iff 1 v r (.nd u P d)).mp hlv
+    have hcne : (B.nd u P d) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+    by_cases hla : hasLowAnc w (.nd u P d) = true
+    · have hdne : d ≠ .nil := by
+        intro hcc
+        rw [hcc, hasLowAnc_leaf71 w u P] at hla
+        exact Bool.noConfusion hla
+      have hdis2 : hasLowAnc w d = true ∨ u < w := by
+        rw [hasLowAnc_nd71 w u P d hdne] at hla
+        rcases (Bool.or_eq_true _ _).mp hla with h | h
+        · exact Or.inr (of_decide_eq_true h)
+        · exact Or.inl h
+      have hll2 : lastLvl d = w := by rw [← hll]; exact (lastLvl_nd71 u P d hdne).symm
+      obtain ⟨g1, g2⟩ := ihd hdne w hll2 u P hdis2 hc n
+      have hlr : lvlLe 1 (rwB w n (.nd u P d)) = true := lvlLe_rwB _ w n 1 hc
+      have hlr' : lvlLe 1 (rwB w (n + 1) (.nd u P d)) = true := lvlLe_rwB _ w (n + 1) 1 hc
+      refine ⟨?_, ?_⟩
+      · rw [rwB_nd71 w n v r u P d, if_pos hla]
+        show BT.lt (bValA71 (appB r (.nd v .nil (rwB w n (.nd u P d)))))
+          (bValA71 (appB r (.nd v .nil (.nd u P d)))) = true
+        rw [lt_bValA71_appB71]
+        exact lt_bValA71_nd71 v _ _ hlr hc g1
+      · rw [rwB_nd71 w n v r u P d, rwB_nd71 w (n + 1) v r u P d, if_pos hla, if_pos hla]
+        show BT.lt (bValA71 (appB r (.nd v .nil (rwB w n (.nd u P d)))))
+          (bValA71 (appB r (.nd v .nil (rwB w (n + 1) (.nd u P d))))) = true
+        rw [lt_bValA71_appB71]
+        exact lt_bValA71_nd71 v _ _ hlr hlr' g2
+    · have hvw : v < w := by
+        rcases hdis with h | h
+        · exact absurd h hla
+        · exact h
+      have hvl : v < lastLvl (.nd u P d) := by rw [hll]; exact hvw
+      refine ⟨?_, ?_⟩
+      · rw [rwB_nd71 w n v r u P d, if_neg hla, if_pos hvw]
+        show BT.lt (bValA71 (appB r (iterD v (.nd u P d) n)))
+          (bValA71 (appB r (.nd v .nil (.nd u P d)))) = true
+        rw [lt_bValA71_appB71]
+        exact lt_bValA71_iterD_dec71 v _ hv hc hcne hvl n
+      · rw [rwB_nd71 w n v r u P d, rwB_nd71 w (n + 1) v r u P d,
+          if_neg hla, if_neg hla, if_pos hvw, if_pos hvw, lt_bValA71_appB71]
+        exact lt_bValA71_iterD_inc71 v _ hv hc hcne n
+
+/-! #### 核は定理 -/
+
+theorem lastLvl_pos71 (a : B) (hz : ¬((lastLvl a == 0) = true)) : 0 < lastLvl a := by
+  refine Nat.pos_of_ne_zero ?_
+  intro hcc
+  exact hz (by rw [hcc]; rfl)
+
+/-- **§71.7 の主定理 (減少)。** `BDecCore71` は定理である。 -/
+theorem bDecCore71_thm : BDecCore71 := by
+  intro a n ha hstd
+  have hlv : lvlLe 1 (.nd 0 .nil a) = true := lvlLe1_of_stdB1 _ hstd
+  rw [fsB_ne_nil71 0 .nil a n ha]
+  by_cases hz : (lastLvl a == 0) = true
+  · rw [if_pos hz]
+    exact (repB_dec_inc71 a ha (eq_of_beq hz) 0 .nil hlv n).1
+  · rw [if_neg hz]
+    exact (rwB_dec_inc71 a ha (lastLvl a) rfl 0 .nil (Or.inr (lastLvl_pos71 a hz)) hlv n).1
+
+/-- **§71.7 の主定理 (増加)。** `BIncCore71` は定理である。 -/
+theorem bIncCore71_thm : BIncCore71 := by
+  intro a n ha hstd
+  have hlv : lvlLe 1 (.nd 0 .nil a) = true := lvlLe1_of_stdB1 _ hstd
+  rw [fsB_ne_nil71 0 .nil a n ha, fsB_ne_nil71 0 .nil a (n + 1) ha]
+  by_cases hz : (lastLvl a == 0) = true
+  · rw [if_pos hz, if_pos hz]
+    exact (repB_dec_inc71 a ha (eq_of_beq hz) 0 .nil hlv n).2
+  · rw [if_neg hz, if_neg hz]
+    exact (rwB_dec_inc71 a ha (lastLvl a) rfl 0 .nil (Or.inr (lastLvl_pos71 a hz)) hlv n).2
+
+/-- **部分領域ぜんぶで減少 (Buchholz 側)。仮説なし。** -/
+theorem blimDecA71_thm : BLimDecA71 := blimDecA71_of_core71 bDecCore71_thm
+
+/-- **部分領域ぜんぶで増加 (Buchholz 側)。仮説なし。** -/
+theorem blimIncA71_thm : BLimIncA71 := blimIncA71_of_core71 bIncCore71_thm
+
+/-- **§70.5 の `LimDecS1` は、橋 `VOfLtA71` ただ 1 つに落ちる。** -/
+theorem limDecS1_of_bridge71 (HV : VOfLtA71) : LimDecS1 := limDecS1_71 HV blimDecA71_thm
+
+/-- **§70.5 の `LimIncS1` も、橋 `VOfLtA71` ただ 1 つに落ちる。** -/
+theorem limIncS1_of_bridge71 (HV : VOfLtA71) : LimIncS1 := limIncS1_71 HV blimIncA71_thm
+
+/-- **§71 の最終形。** `certIn_t326` の 5 つの仮説のうち、順序の 3 つは
+    `VOfLtA71` (橋) と `CofDenseS1`・`CofInS1` (共終性の 2 つ) だけになる。
+    減少と増加はもう仮説ではない。 -/
+theorem certIn_t326_71' (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HV : VOfLtA71) (HCD : CofDenseS1) (HCI : CofInS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326 Hp Hr (limDecS1_of_bridge71 HV) (limIncS1_of_bridge71 HV)
+    (limCofS1_of71 Hp Hr HCD HCI) hacc
+
+end
+
+/-! ### §71.8 測定 (凍結)
+
+母集団の作り方を先に書く。添字の側は §70.6 のものをそのまま使う:
+
+    popNFB 2 n = ((List.range n).flatMap (enumNodes 2)).filter (nfB · && · != nil)
+    subP   n   = (popNFB 2 n).filter stdB1        節は 0 … n-1 個、段は 0 と 1
+    subLim n   = (subP n).filter (kindB · == lim)
+
+`pfree71` は前置きの無い添字 (`nd _ nil _`)、`allB71 L n` は「節が n 個未満・段が L 未満」の
+`B` を**標準形も標準性も問わずに**全部並べたもの — §71.6 の鋭さはここで測る。
+
+`s` の側 (共終性) は §70.6 より広い `§71` 独自の母集団を作る。**部分領域の外を必ず含める**
+(§69 が踏んだ罠):
+
+    seedT71 = valP70 3 6 ++ valP70 4 7 ++ outP70 3 6 ++ outP70 4 7 ++ (subP 8).map vOf
+              — 段 0..2 と 0..3 の**領域全体**の値 (段 2・段 3 の添字の値、すなわち部分領域の
+                外の値を含む)、標準でない添字の値、そして部分領域自身の値
+    base71  = seedT71 の**部分項をすべて**取り、`inT` かつ `< cap71` に絞って重複を除く (2437)
+    phiL71  = idxA71 (22 個) と base71 の `φ̄` の積 — 両側から (87 732)
+    uni71   = base71 の `ω^·`・`ω̄^·`・`· ⊕ 1`・`· ⊕ ·`、および idxP71 (6 個) を添字とする
+              `ψ` を base71 に当てたもの (9418)
+    psiL71  = idxP71 を添字とする `ψ` を phiL71 に当てたもの (75 852)
+
+合計 175 439 項。`cap71 = ψ_{Ω₁}(φ̄(1,Ω₁)) = §69 の `sbad` で切るのは損が無い (§70.6 の
+`BelowGap` の測定)。添字の掃き幅は §70.6 より広い — `idxA71` は `φ̄` の第 1 引数を
+`0..8, ω, φ̄(1,0), φ̄(2,0), φ̄(3,0), φ̄(4,0), φ̄(ω,0), φ̄(φ̄(1,0),0), ψ_{Ω₁}0, ψ_{Ω₁}1, Ω₁,
+φ̄(1,Ω₁), φ̄(2,Ω₁), Ω₁⊕Ω₁` まで、`idxP71` は `Z0, Z1, Z2, Z3, Zω, Z(Z0)` まで。
+
+重い掃きは同じ母集団で別ファイルに凍結してある — この節には 300 秒に収まる分だけを置く。
+
+    s71sweep1.lean   base71 (2437) × subLim 8 (1787) = 4 354 919 対、uni71 (9418) ×
+                     subLim 7 (448) = 4 219 264 対
+    s71sweep2.lean   phiL71a (43 866) × subLim 6 (114) = 5 000 724 対
+    s71sweep4.lean   phiL71b (43 866) × subLim 6 (114) = 5 000 724 対
+    s71sweep3.lean   psiL71 (75 852) × subLim 6 (114) = 8 647 128 対
+
+`phiL71a` は `φ̄` の第 1 引数に `idxA71` を、`phiL71b` は第 2 引数に置いたもので
+`phiL71 = phiL71a ++ phiL71b`。どれも `N = 14` で反例 0、合計 27 222 759 対。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+/-- 前置きの無い添字。 -/
+def pfree71 : B → Bool
+  | .nd _ .nil _ => true
+  | _ => false
+
+/-- 標準形も標準性も問わない全列挙。 -/
+def allB71 (L n : Nat) : List B := (List.range n).flatMap (enumNodes L)
+
+/-- `cap71` は §69 の `sbad`。 -/
+def cap71 : Term := psi (Z zero) (phi TM.Term.one (Z zero))
+
+def seedT71 : List Term :=
+  ((valP70 3 6) ++ (valP70 4 7) ++ (outP70 3 6) ++ (outP70 4 7)
+   ++ ((subP 8).map vOf)).eraseDups
+
+def base71 : List Term :=
+  ((seedT71.flatMap subs).filter fun x => inT x && lt x cap71).eraseDups
+
+def idxA71 : List Term :=
+  [zero, TM.Term.one, ofNat 2, ofNat 3, ofNat 4, ofNat 5, ofNat 6, ofNat 7, ofNat 8,
+   TM.Term.omega, phi TM.Term.one zero, phi (ofNat 2) zero, phi (ofNat 3) zero,
+   phi (ofNat 4) zero, phi TM.Term.omega zero, phi (phi TM.Term.one zero) zero,
+   psi (Z zero) zero, psi (Z zero) TM.Term.one, Z zero, phi TM.Term.one (Z zero),
+   phi (ofNat 2) (Z zero), plus (Z zero) (Z zero)]
+
+def idxP71 : List Term :=
+  [Z zero, Z TM.Term.one, Z (ofNat 2), Z (ofNat 3), Z TM.Term.omega, Z (Z zero)]
+
+def uni71 : List Term :=
+  (base71.map omegaNF ++ base71.map omg
+   ++ base71.map (fun a => plus a TM.Term.one)
+   ++ base71.map (fun a => plus a a)
+   ++ (idxP71.flatMap fun k => base71.map fun a => psi k a)).filter
+    fun x => inT x && lt x cap71
+
+/-- `BCofIn71` が落ちる対 `(t, u)`。基本列の値は `t` ごとに 1 度だけ計算する。 -/
+def bcofFail71 (N : Nat) (ts us : List B) : Nat :=
+  (ts.flatMap fun t =>
+    let v := bValA71 t
+    let fsv := (List.range N).map fun k => bValA71 (fsB t k)
+    us.filter fun u => BT.lt (bValA71 u) v && (fsv.all fun w => BT.lt w (bValA71 u))).length
+
+/-- 三つの順序が一致しない対。 -/
+def bridgeFail71 (l : List B) : Nat :=
+  (l.flatMap fun u => (l.filter fun t =>
+    !((BT.lt (bValA71 u) (bValA71 t) == BT.lt (bVal u) (bVal t))
+      && (BT.lt (bVal u) (bVal t) == lt (vOf u) (vOf t))))).length
+
+-- 添字の母集団の大きさ。
+#guard (subP 6).length == 160
+#guard (subP 7).length == 609
+#guard (subP 8).length == 2397
+#guard (subP 9).length == 9782
+#guard (subLim 6).length == 114
+#guard (subLim 7).length == 448
+#guard (subLim 8).length == 1787
+#guard (subLim 9).length == 7384
+-- 前置きの無い添字が占める割合。§71.3 の還元が消す分。
+#guard ((subLim 8).filter pfree71).length == 1427
+#guard ((subLim 9).filter pfree71).length == 5743
+
+/-! **§71.6 の鋭さ。** 段 2 が入ると崩れは実際に起きる。最小の証人は `(0,1)(1,2)`。 -/
+
+#guard (allB71 3 5).length == 1291
+#guard ((allB71 3 5).filter fun t => bArg 0 t != bValA71 t).length == 91
+#guard ((allB71 3 5).filter fun t => bArg 0 t != bValA71 t).head? ==
+  some (.nd 1 .nil (.nd 2 .nil .nil))
+#guard (allB71 2 7).length == 10067
+#guard ((allB71 2 7).filter fun t =>
+  bArg 0 t != bValA71 t || bArg 1 t != bValA71 t || bArg 2 t != bValA71 t).length == 0
+-- §71.6 は定理なので、これは受領であって根拠ではない。
+#guard (subP 8).all fun t => bArg 0 t == bValA71 t && bArg 1 t == bValA71 t
+
+/-! **`bValA71` と `bVal` の差。** 先頭の `(0,0)` の例外そのもの — 自然数だけ。 -/
+
+#guard ((subP 8).filter fun t => bValA71 t != bVal t).length == 7
+#guard ((subP 8).filter fun t => bValA71 t != bVal t).all fun t =>
+  (matB t 0).all fun row => row.getD 1 9 == 0
+
+/-! **§71.7 の受領。** 減少と増加は定理になったので、これは確認である。 -/
+
+#guard (subLim 8).all fun t => (List.range 6).all fun n =>
+  BT.lt (bValA71 (fsB t n)) (bValA71 t)
+#guard (subLim 8).all fun t => (List.range 6).all fun n =>
+  BT.lt (bValA71 (fsB t n)) (bValA71 (fsB t (n + 1)))
+
+/-! **橋 `VOfLtA71` — §71 に残る唯一の順序の仮説。** `bValA71` の `BT.lt`、`bVal` の
+`BT.lt`、`vOf` の `lt` の 3 つが**一致**する。含意ではなく等号で測る。反例 0。 -/
+
+#guard bridgeFail71 (subP 6) == 0
+#guard bridgeFail71 (subP 7) == 0
+
+/-! **共終性 (§71.4 の 2 つを合わせたもの、すなわち `LimCofS1` そのもの)。** `s` は
+部分領域の**外**まで走らせる。`N = 14` で反例 0。基本列は増えるので `N` を上げても
+失敗は減るだけ — したがってこれは `N ≥ 14` すべてで反例 0 ということ。 -/
+
+#guard base71.length == 2437
+#guard uni71.length == 9418
+#guard (cofFail2 14 (subLim 7) base71).length == 0
+#guard (cofFail2 14 (subLim 6) uni71).length == 0
+
+/-! **測定が空回りしていないことの対照 (§70.6 と同じ試験)。** 同じ母集団を `N = 4` で
+掃くと落ちる。落ちた分はどれも `4 ≤ n < 14` で閉じる。 -/
+
+#guard (cofFail2 4 (subLim 6) uni71).length > 0
+
+/-! **§71.4 の内側の半分 `BCofIn71` を Buchholz 側で直接測る。** `u` は部分領域の添字を
+走る (§69 が測ったのと同じ母集団の形だが、こちらは `bValA71` の `BT.lt` で、`dict` を
+通さない)。`N = 14` で反例 0。`N = 3` では 108 対落ちるので、試験は空回りしていない。
+**`CofDenseS1` の側はこの測定では何も言えない** — それが §71.4 の要点である。 -/
+
+#guard bcofFail71 14 (subLim 6) (subP 7) == 0
+#guard bcofFail71 14 (subLim 7) (subP 8) == 0
+#guard bcofFail71 3 (subLim 6) (subP 7) == 108
+
+end
+
+/-! ### §71.9 公理 -/
+
 end Evidence.Region
