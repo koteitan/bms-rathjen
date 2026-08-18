@@ -15688,4 +15688,885 @@ def ex95 (n : Nat) : List BT := ((layers95 n).flatten).filter okHyp84
 
 end
 
+/-! ## §99 THE VEBLEN GATE IS `HiMono89` AND NOTHING ELSE — THE TAIL CLAUSE IS FREE
+
+§93 proved that the split is exact — `CollapseMono0Hi81 ↔ HiMono89 ∧ LoDomPair91` — and
+§96 named the one thing standing between §93.6 and a running induction:
+
+> along Gate(a,b) → Order(c,a) → Gate(x,y) the FIRST component runs `a ↦ c ↦ x` with
+> `size x < size c < size a`: measured by `size a` alone, every gate instance §93.6 reaches
+> is strictly smaller — **except the ones that come through the bridge at `b`**.
+
+**§99 removes the bridge at `b` from §93.6's proof, and the induction runs.**  The second
+factor of §93's split is not a gate:
+
+        `LoDomPair91`  is a THEOREM of  `HiMono89`        (`loDomPair91_of_hiMono99`)
+        `CollapseMono0Hi81`  ↔  `HiMono89`                (`gate_iff_hiMono99`)
+
+Everything §96 isolated as debt — the bridge (`HiBridge93`, `FullBridge96`), the
+one-component clauses (`DictLeAtom96`, `CollapseLe0_96`), and the injectivity
+(`DictAtomInj96`) — comes out of `HiMono89` as well.  **Row 326's Veblen fold is one
+clause about tail-free arguments, and its three gates are `PsiIdxOKStd172`, `HiMono89`,
+`DictDenseHi94`.**
+
+WHAT IS PROVED.
+
+  §99.1  **TWO 𝔗(M)-SIDE FACTS ABOUT `hi`.**  `ltM_hiW99` (`x < M ⟹ hi x < M`, through
+         `ltM_ofList99`) and `psiIdxOK_hiW99` (`PsiIdxOK 0 x ⟹ PsiIdxOK 0 (hi x)`, one
+         rewrite by §89.2's `wcnf_split89`: the pair list of the base-`Ω₁` CNF is decided by
+         the part at or above `Ω₁`, so the two clauses are literally the same clause).
+         **These two are the whole price of dropping the bridge at `b`** — they let the
+         residual be applied to `hi (dict b)` as a 𝔗(M) TERM instead of to `dict (hi b)`.
+
+  §99.2  **(A) THE PRICE OF `CollapseLe0_96`, EXACTLY.**  `mono79_iff99` :
+         `CollapseMono0_79 ↔ CollapseLe0_96 ∧ CollapseInj0_99`.  The non-strict clause IS
+         weaker, and the missing part is exactly the injectivity of `collapse 0 ∘ dict` —
+         not any part of the Veblen fold.  `collapseLe0_of79` is the easy direction (the
+         diagonal is free); §99.6 shows the difference is populated.  This is §96.3's
+         `dictLtAtom96_iff` one floor down.
+
+  §99.3  **THE ORDER CHAIN, INDEXED ON BOTH SIDES.**  §96's `DictHeadLtUpTo96` is indexed by
+         the SUM of the two symbol counts, and that index cannot express "the gate is only
+         ever needed at the argument of a head component".  `DictLtBoth99 n` bounds BOTH
+         lists by `n` and `GateFst99 n` bounds only the FIRST argument of the gate;
+         `dictLtBoth99_step` and `dictLtBoth99_all` then give: **the order at terms of
+         symbol count `≤ n` needs the gate only at first arguments of symbol count `< n`.**
+         `bridge99` is §96.1's bridge on the same index.
+
+  §99.4  **THE MAIN INDUCTION.**  `loDomPairFst99_all` : `HiMono89 ⟹ LoDomPair91`, by strong
+         induction on `size a` alone.  §93.6 sent the tail component `ψ₀c` of `a` to the
+         residual at the pair `(c, hi b)`, which needs `hi (dict b) = dict (hi b)` — the
+         bridge at `b`, hence gate instances up to `size b`, unbounded by `size a`.  §99
+         never forms `hi b`.  It keeps `Y = hi (dict b)` as a 𝔗(M) term (legal by §99.1) and
+         applies §91.2's `lt_collapse0_diffHi91` to the pair `(dict c, Y)`; its two side
+         conditions are `HiMono89` at `(c, b)` — an instance of the hypothesis — and **this
+         theorem's own instance at `(c, b)`**, where `size c < size a` by §93.1's
+         `size_GB93`.  The order instance it still needs is `lt (dict c) (dict a)`, at two
+         terms both of symbol count `≤ size a`, which is exactly what §99.3 supplies.
+
+  §99.5  **THE ASSEMBLY.**  `collapseMono0Hi_of_hiMono99`, `gate_iff_hiMono99`,
+         `gates_iff99`.  Then `hiBridge99`, `fullBridge99`, `dictDesc99`, `dictLe99`,
+         `dictLeAtom96_99`, `collapseLe0_99`, `collapseMono0_99`, `collapseInj0_99`,
+         `dictLtAtom99`, **`dictAtomInj99` (B)** and `dictLtA74_99` — every clause §96 left
+         open, from `HiMono89`.  Row 326: `certIn_t326_99` (with §97's density half) and
+         `certIn_t326_pair99`.
+
+  §99.6  **THE NEGATIVES, BUILT.**  `injBad99 = ψ₀Ω₁` against `Ω₁` satisfies EVERY
+         hypothesis of `CollapseInj0_99` except `BT.isStd (ψ₀ ψ₀Ω₁)`, and
+         `collapseInj0_needs_K99` is `ψ₀ψ₀Ω₁ = ψ₀Ω₁`: the collapse is not injective off the
+         `K`-condition.  `collapseLe0_holds_at_injBad99` — the NON-strict conclusion holds
+         at the same pair, so §99.2's factorisation separates two statements that really do
+         differ.  `leBad99 = ψ₀ψ₁ψ₁0` against `Ω₁` refutes `CollapseLe0_96` itself with the
+         same single hypothesis removed: **the non-strict clause does not buy freedom from
+         the `K`-condition.**  And `dict_collides99` : `dict (1 ⊕ Ω₁) = dict Ω₁` — §96.6's
+         own witness is a `dict`-collision, which is what §96's corpus had none of.
+
+WHAT IS **NOT** CLAIMED.  `HiMono89` is NOT proved.  §99 does not prove `PsiIdxOKStd172`,
+`IdxStd90`, `DictDenseHi94`, `CofDenseS1` or `BCofIn71`.  What §99 changes is that the
+Veblen fold is now ONE clause instead of two, and that the bridge, the non-strict
+one-component order and the injectivity are all consequences of it rather than companions
+to it.
+
+**WHERE §99 STOPPED, PRECISELY.**  The reverse of §99.4 does not run.  `HiMono89` at
+`(a, b)` asks for `ψ₀` of `hi (dict a)` against `ψ₀` of `hi (dict b)`, and the only route
+from the tail-free clause `CollapseMono0HiFree93` to it — §93.7's `hiMono89_of_hiFree93` —
+needs `HiBridge93` at BOTH `a` and `b`.  The trick of §99.4 does not apply: there the
+second argument entered only as the TARGET of a comparison whose left side was a `dict`
+image, and `lt_collapse0_diffHi91` could take it as a bare term; here both sides are `hi`
+of a `dict` image and the clause to be applied is stated on `BT` terms.  Measured by
+`size a + size b` the bridge at either side is affordable, but `LoDomPair91`'s own order
+instance `(c, a)` sits at `size c + size a`, which is not below `size a + size b` when `b`
+is small — §93's remark, still true, and the reason §99 measures by `size a` alone.
+
+WHAT THE MEASUREMENT SAYS (§99.7 gives the construction).  **§96 recorded a blind spot —
+`dict` is injective on its 592 good terms, so its corpus could not tell `CollapseLe0_96`
+from §79's strict clause — and the first job here is to fix it.**  Following §97's model
+the population manufactures ill-formed terms (ASCENDING two-term sums, where `plus` drops
+the first component) and does NOT filter them out: 200 terms, 120 of them not `BT.isStd`.
+
+  * **`dict` collides 78 times** on the 100-term sample, and **0 times** on the 40 good
+    terms and the 34 `K`-standard ones.  The detector works and the hypothesis is exactly
+    what excludes collisions — which is the thing §96 could not show.
+  * **§99.2 is visible as a partition.**  On 10000 pairs the strict conclusion fails 830
+    times, the non-strict one 744, and `collapse 0 ∘ dict` collides on 86: `830 = 744 + 86`.
+    On the 1600 good pairs, `67 = 61 + 6`.  On the 1156 `K`-standard pairs, `0, 0, 0`.
+  * **The measure, counted.**  On 406 residual pairs the instance §93.6 needs through the
+    bridge at `b` exceeds the `size a` budget on **246 (61%)**, and the second component of
+    its gate instance `(c, hi b)` exceeds it on **187 (46%)**.  §99's own recursion partner
+    `c ∈ G(a,0)` is below `size a` on **all 406**.
+  * **The tail clause is not vacuous.**  On the `K`-standard sample `LoDomPair91` and
+    `HiMono89` both hold on all 427 residual pairs; on the 13-term negative control where
+    only the `K`-condition fails, **`LoDomPair91` fails on 4 of 9 and `HiMono89` on 0** —
+    so what §99.4 made free is a clause that can fail.
+  * **§99.1 is not about the identity**: `hi (dict b) ≠ dict b` on 40 of the 80 good terms
+    and 30 of the 67 `K`-standard ones.
+-/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+theorem ltM_ofList99 : ∀ (l : List Term), (∀ x ∈ l, lt x M = true) →
+    lt (ofList l) M = true
+  | [], _ => lt_zero_M
+  | [a], h => h a (List.Mem.head _)
+  | a :: b :: t, h => by
+    show lt (add a (ofList (b :: t))) M = true
+    rw [lt_add_M]
+    exact h a (List.Mem.head _)
+
+theorem ltM_hiW99 {x : Term} (hx : inT x = true) (hlx : lt x M = true) :
+    lt (hiW89 x) M = true := by
+  show lt (ofList ((toList x).filter (fun p => !lt p (reg 1)))) M = true
+  exact ltM_ofList99 _ (fun p hp => ltM_toList x hx hlx p (List.mem_filter.mp hp).1)
+
+theorem psiIdxOK_hiW99 {x : Term} (hx : inT x = true) (H : PsiIdxOK 0 x) :
+    PsiIdxOK 0 (hiW89 x) := by
+  have e : (wcnf (reg 1) (toList x)).1 = (wcnf (reg 1) (toList (hiW89 x))).1 := by
+    rw [wcnf_split89 hx]
+  show ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (hiW89 x))).1,
+    le (reg 1) p.2.1 = true → inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true
+  rw [← e]
+  exact H
+
+end
+
+/-! ### §99.2 (A) 非狭義の単調性の値段 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- `collapse 0` が像の上で単射であること — 狭義と非狭義の差ちょうど。 -/
+def CollapseInj0_99 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    lt (dict a) (dict b) = true →
+    collapse 0 (dict a) ≠ collapse 0 (dict b)
+
+/-- **非狭義は狭義から出る。** 対角は `le` の反射律で只。 -/
+theorem collapseLe0_of79 (H : CollapseMono0_79) : CollapseLe0_96 := by
+  intro a b hbA hbB hsA hsB h
+  rw [Trans.Dict.dict_D, Trans.Dict.dict_D]
+  rcases (Bool.or_eq_true _ _).mp h with h1 | h1
+  · rw [eq_of_beq h1]; exact le_self77 _
+  · exact le_of_lt (H a b hbA hbB hsA hsB h1)
+
+theorem inj0_of79 (H : CollapseMono0_79) : CollapseInj0_99 :=
+  fun a b hbA hbB hsA hsB h => ne_of_lt96 (H a b hbA hbB hsA hsB h)
+
+theorem mono79_of_le_inj99 (L : CollapseLe0_96) (I : CollapseInj0_99) : CollapseMono0_79 := by
+  intro a b hbA hbB hsA hsB h
+  have h2 := L a b hbA hbB hsA hsB (le_of_lt h)
+  rw [Trans.Dict.dict_D, Trans.Dict.dict_D] at h2
+  exact lt_of_le_ne96 h2 (I a b hbA hbB hsA hsB h)
+
+/-- **§99.2 の主定理 — 狭義 = 非狭義 + 単射。** §96.3 の `dictLtAtom96_iff` を
+    添字 0 の一本ぶんに落とした形。**`CollapseLe0_96` は真に弱いが、弱い分は
+    ちょうど単射性であって、Veblen の折り畳みの分ではない。** -/
+theorem mono79_iff99 : CollapseMono0_79 ↔ (CollapseLe0_96 ∧ CollapseInj0_99) :=
+  ⟨fun H => ⟨collapseLe0_of79 H, inj0_of79 H⟩, fun h => mono79_of_le_inj99 h.1 h.2⟩
+
+/-- §81 の残余からも出る。 -/
+theorem collapseLe0_of_hi81 (Hp : PsiIdxOKStd172) (H : CollapseMono0Hi81) : CollapseLe0_96 :=
+  collapseLe0_of79 (collapseMono0_of_hi81 Hp H)
+
+end
+
+/-! ### §99.3 記号数を**両辺で**切った順序の鎖 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- 両辺の記号数を `n` で切った順序。§96 の `DictLtUpTo77` は**和**で切っていた。 -/
+def DictLtBoth99 (n : Nat) : Prop :=
+  ∀ (f : Nat) (l1 l2 : List BT), szL77 l1 ≤ n → szL77 l2 ≤ n →
+    GoodL77 l1 → GoodL77 l2 → BT.ltL f l1 l2 = true →
+    lt (dict (BT.ofL l1)) (dict (BT.ofL l2)) = true
+
+/-- **第一成分の記号数だけで切った §81 の残余。** 第二引数は野放し。 -/
+def GateFst99 (n : Nat) : Prop :=
+  ∀ (a b : BT), BT.size a ≤ n →
+    btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lt (dict a) (dict b) = true →
+    lt (collapse 0 (dict a)) (collapse 0 (dict b)) = true
+
+/-- 第一成分の記号数だけで切った頭部の比較。 -/
+def DictHeadLtFst99 (n : Nat) : Prop := ∀ (u v : Nat) (a b : BT),
+    BT.size a ≤ n →
+    btLe72 1 (BT.D u a) = true → btLe72 1 (BT.D v b) = true →
+    BT.isStd (BT.D u a) = true → BT.isStd (BT.D v b) = true →
+    (u < v ∨ (u = v ∧ lt (dict a) (dict b) = true)) →
+    lt (dict (BT.D u a)) (dict (BT.D v b)) = true
+
+theorem gateFst99_mono {m n : Nat} (h : m ≤ n) (G : GateFst99 n) : GateFst99 m :=
+  fun a b hsz => G a b (by omega)
+
+theorem dictLtBoth99_mono {m n : Nat} (h : m ≤ n) (S : DictLtBoth99 n) : DictLtBoth99 m :=
+  fun f l1 l2 h1 h2 => S f l1 l2 (by omega) (by omega)
+
+theorem szL77_eq_zero99 : ∀ (l : List BT), szL77 l = 0 → l = []
+  | [], _ => rfl
+  | p :: r, h => by
+      have := size_pos77 p
+      have he : szL77 (p :: r) = BT.size p + szL77 r := rfl
+      omega
+
+/-- 成分ひとつぶんの非狭義の順序 — 両辺切りの鎖から。 -/
+theorem dictLeAtom99 {n : Nat} (S : DictLtBoth99 n) {p q : BT}
+    (hsp : BT.isStd p = true) (hsq : BT.isStd q = true)
+    (hbp : btLe72 1 p = true) (hbq : btLe72 1 q = true)
+    (hszp : BT.size p ≤ n) (hszq : BT.size q ≤ n)
+    (h : BT.le p q = true) : le (dict p) (dict q) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with h1 | h1
+  · rw [bt_beq_eq77 h1]; exact le_self77 _
+  · have t1 := szL77_toL p
+    have t2 := szL77_toL q
+    have hq2 := S (BT.size p + BT.size q + 2) (BT.toL p) (BT.toL q)
+      (by omega) (by omega) (good_toL77 p hsp hbp) (good_toL77 q hsq hbq) h1
+    rw [ofL_toL77 p hsp, ofL_toL77 q hsq] at hq2
+    exact le_of_lt hq2
+
+/-- **橋、両辺切りの形。** 隣り合う成分の像が `le` で並ぶことしか使わない。 -/
+theorem bridge99 (Hp : PsiIdxOKStd172) {n : Nat} (S : DictLtBoth99 n) :
+    ∀ (l : List BT), GoodL77 l → szL77 l ≤ n + 1 →
+      toList (dict (BT.ofL l)) = l.map dict
+  | [], _, _ => rfl
+  | [p], hg, _ => by
+      obtain ⟨u, a, rfl⟩ := hg.1 p (List.Mem.head _)
+      show toList (dict (BT.D u a)) = [dict (BT.D u a)]
+      exact toList_of_isAP (isAP_dict_D76 u a)
+  | p :: q :: r, hg, hsz => by
+      obtain ⟨u, a, rfl⟩ := hg.1 p (List.Mem.head _)
+      obtain ⟨v, b, rfl⟩ := hg.1 q (List.Mem.tail _ (List.Mem.head _))
+      have hgt : GoodL77 (BT.D v b :: r) := goodL77_tail hg
+      have he1 : szL77 (BT.D u a :: BT.D v b :: r)
+          = BT.size (BT.D u a) + (BT.size (BT.D v b) + szL77 r) := rfl
+      have he2 : szL77 (BT.D v b :: r) = BT.size (BT.D v b) + szL77 r := rfl
+      have hp1 := size_pos77 (BT.D u a)
+      have hp2 := size_pos77 (BT.D v b)
+      have ih : toList (dict (BT.ofL (BT.D v b :: r)))
+          = dict (BT.D v b) :: r.map dict := bridge99 Hp S (BT.D v b :: r) hgt (by omega)
+      have hiP : inT (dict (BT.D u a)) = true :=
+        (inT_dict_of_std172 Hp (BT.D u a) (hg.2.2.1 _ (List.Mem.head _))
+          (hg.2.1 _ (List.Mem.head _))).1
+      have hiT : inT (dict (BT.ofL (BT.D v b :: r))) = true :=
+        (inT_dict_of_std172 Hp _ (btLe_ofL77 hgt) (isStd_ofL77 hgt)).1
+      have hle : le (dict (BT.D v b)) (dict (BT.D u a)) = true :=
+        dictLeAtom99 S (hg.2.1 _ (List.Mem.tail _ (List.Mem.head _)))
+          (hg.2.1 _ (List.Mem.head _))
+          (hg.2.2.1 _ (List.Mem.tail _ (List.Mem.head _)))
+          (hg.2.2.1 _ (List.Mem.head _)) (by omega) (by omega)
+          ((Bool.and_eq_true _ _).mp hg.2.2.2).1
+      have hfil : List.filter (fun z => le (dict (BT.D v b)) z) [dict (BT.D u a)]
+          = [dict (BT.D u a)] := by
+        show (match le (dict (BT.D v b)) (dict (BT.D u a)) with
+              | true => dict (BT.D u a) :: List.filter (fun z => le (dict (BT.D v b)) z) []
+              | false => List.filter (fun z => le (dict (BT.D v b)) z) []) = _
+        rw [hle]
+        rfl
+      show toList (dict (BT.sum (BT.D u a) (BT.ofL (BT.D v b :: r)))) = _
+      rw [Trans.Dict.dict_sum, toList_plus_inT hiP hiT ih,
+        toList_of_isAP (isAP_dict_D76 u a), hfil, ih]
+      rfl
+
+theorem ofListMap99 (Hp : PsiIdxOKStd172) {n : Nat} (S : DictLtBoth99 n)
+    (l : List BT) (hg : GoodL77 l) (hsz : szL77 l ≤ n + 1) :
+    ofList (l.map dict) = dict (BT.ofL l) := by
+  rw [← bridge99 Hp S l hg hsz,
+    inT_ofList_toList _ (inT_dict_of_std172 Hp _ (btLe_ofL77 hg) (isStd_ofL77 hg)).1]
+
+end
+
+/-! ### §99.3b 一段ぶんの前進と鎖の全体 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§77.4 の和の帰納法、両辺切りの形。** 頭部の比較は**第一成分の引数**でしか
+    使わない — そこが §96 の和切りとの違い。 -/
+theorem dictLtBoth99_step (Hp : PsiIdxOKStd172) {n : Nat}
+    (H : DictHeadLtFst99 n) (S : DictLtBoth99 n) : DictLtBoth99 (n + 1) := by
+  intro f l1 l2 hs1 hs2 g1 g2 hlt
+  cases f with
+  | zero => rw [ltL_zero77] at hlt; exact Bool.noConfusion hlt
+  | succ f' =>
+    cases l1 with
+    | nil =>
+        cases l2 with
+        | nil => rw [ltL_nil_nil77] at hlt; exact Bool.noConfusion hlt
+        | cons q qs =>
+            obtain ⟨v, b, rfl⟩ := g2.1 q (List.Mem.head _)
+            show lt zero (dict (BT.ofL (BT.D v b :: qs))) = true
+            exact lt_zero_ne76 (dict_ne_zero76 Hp _ (btLe_ofL77 g2) (isStd_ofL77 g2)
+              (ofL_ne_zero77 ⟨v, b, rfl⟩))
+    | cons p ps =>
+        cases l2 with
+        | nil => rw [ltL_cons_nil77] at hlt; exact Bool.noConfusion hlt
+        | cons q qs =>
+            obtain ⟨u, a, rfl⟩ := g1.1 p (List.Mem.head _)
+            obtain ⟨v, b, rfl⟩ := g2.1 q (List.Mem.head _)
+            have e1 : szL77 (BT.D u a :: ps) = 1 + BT.size a + szL77 ps := rfl
+            have e2 : szL77 (BT.D v b :: qs) = 1 + BT.size b + szL77 qs := rfl
+            have ha1 := size_pos77 a
+            have hb1 := size_pos77 b
+            have ta := szL77_toL a
+            have tb := szL77_toL b
+            have hB1 : toList (dict (BT.ofL (BT.D u a :: ps)))
+                = dict (BT.D u a) :: ps.map dict := bridge99 Hp S _ g1 hs1
+            have hB2 : toList (dict (BT.ofL (BT.D v b :: qs)))
+                = dict (BT.D v b) :: qs.map dict := bridge99 Hp S _ g2 hs2
+            have hiX : inT (dict (BT.ofL (BT.D u a :: ps))) = true :=
+              (inT_dict_of_std172 Hp _ (btLe_ofL77 g1) (isStd_ofL77 g1)).1
+            have hiY : inT (dict (BT.ofL (BT.D v b :: qs))) = true :=
+              (inT_dict_of_std172 Hp _ (btLe_ofL77 g2) (isStd_ofL77 g2)).1
+            have hbA : btLe72 1 (BT.D u a) = true := g1.2.2.1 _ (List.Mem.head _)
+            have hbB : btLe72 1 (BT.D v b) = true := g2.2.2.1 _ (List.Mem.head _)
+            have hsA : BT.isStd (BT.D u a) = true := g1.2.1 _ (List.Mem.head _)
+            have hsB : BT.isStd (BT.D v b) = true := g2.2.1 _ (List.Mem.head _)
+            rw [ltL_DD93] at hlt
+            by_cases huv : u < v
+            · exact lt_of_hd_lt hiX hiY hB1 hB2
+                (H u v a b (by omega) hbA hbB hsA hsB (Or.inl huv))
+            · rw [if_neg huv] at hlt
+              by_cases hvu : v < u
+              · rw [if_pos hvu] at hlt; exact Bool.noConfusion hlt
+              · rw [if_neg hvu] at hlt
+                have huv2 : u = v := by omega
+                by_cases hab : (a == b) = true
+                · rw [if_pos hab] at hlt
+                  have hPQ : dict (BT.D u a) = dict (BT.D v b) := by
+                    rw [huv2, bt_beq_eq77 hab]
+                  have hB2' : toList (dict (BT.ofL (BT.D v b :: qs)))
+                      = dict (BT.D u a) :: qs.map dict := by rw [hB2, hPQ]
+                  refine lt_of_hd_eq77 hiX hiY hB1 hB2' ?_
+                  rw [ofListMap99 Hp S ps (goodL77_tail g1) (by omega),
+                    ofListMap99 Hp S qs (goodL77_tail g2) (by omega)]
+                  exact S f' ps qs (by omega) (by omega)
+                    (goodL77_tail g1) (goodL77_tail g2) hlt
+                · rw [if_neg hab] at hlt
+                  have hsa : BT.isStd a = true := isStd_of_D hsA
+                  have hsb : BT.isStd b = true := isStd_of_D hsB
+                  have hba : btLe72 1 a = true := (btLe72_D 1 u a hbA).2
+                  have hbb : btLe72 1 b = true := (btLe72_D 1 v b hbB).2
+                  have hlta : lt (dict (BT.ofL (BT.toL a))) (dict (BT.ofL (BT.toL b))) = true :=
+                    S f' (BT.toL a) (BT.toL b) (by omega) (by omega)
+                      (good_toL77 a hsa hba) (good_toL77 b hsb hbb) hlt
+                  rw [ofL_toL77 a hsa, ofL_toL77 b hsb] at hlta
+                  exact lt_of_hd_lt hiX hiY hB1 hB2
+                    (H u v a b (by omega) hbA hbB hsA hsB (Or.inr ⟨huv2, hlta⟩))
+
+/-- **§81.7 を第一成分の記号数で切った形。** もとの証明は対について各点的。 -/
+theorem dictHeadLtFst99_of_gate (Hp : PsiIdxOKStd172) {n : Nat}
+    (G : GateFst99 n) : DictHeadLtFst99 n := by
+  intro u v a b hsz hbA hbB hsA hsB hc
+  rcases hc with huv | ⟨huv, hlt⟩
+  · exact dictCross79 Hp u v a b huv hbA hbB hsA hsB
+  · subst huv
+    have hu := (btLe72_D 1 u a hbA).1
+    have hba := (btLe72_D 1 u a hbA).2
+    have hbb := (btLe72_D 1 u b hbB).2
+    have hsa := isStd_of_D hsA
+    have hsb := isStd_of_D hsB
+    cases u with
+    | zero =>
+      have hia := inT_dict_of_std172 Hp a hba hsa
+      have hib := inT_dict_of_std172 Hp b hbb hsb
+      rw [Trans.Dict.dict_D, Trans.Dict.dict_D]
+      by_cases hWb : le (reg 1) (dict b) = true
+      · by_cases hWa : le (reg 1) (dict a) = true
+        · exact G a b hsz hbA hbB hsA hsB hWa hWb hlt
+        · have hlow : lowHd81 a = true := by
+            cases hh : lowHd81 a with
+            | true => rfl
+            | false => exact absurd (le_reg1_dict_of_not_lowHd81 Hp a hba hsa hh) hWa
+          have hb0 : btLe72 0 a = true :=
+            btLe0_of_lowHd81 a hba hsa hlow (lowHd_GB_of_std81 hsA hlow)
+          exact lt_collapse0_cross81 hia.1 (lt_dict_E81 Hp a hb0 hsa) hib.1 hib.2
+            (Hp 0 b (by omega) hbb hsB) hWb
+      · have hlb : lt (dict b) (reg 1) = true :=
+          lt_of_not_le_inT inT_W79 hib.1 (bool_false hWb)
+        have hla : lt (dict a) (reg 1) = true := lt_trans_inT hia.1 hib.1 inT_W79 hlt hlb
+        exact collapse0_mono_ltW81 hia.1 hib.1 hla hlb hlt
+    | succ u' =>
+      cases u' with
+      | zero =>
+        rw [Trans.Dict.dict_D, Trans.Dict.dict_D]
+        exact collapseMono1_79 Hp a b hbA hbB hsA hsB hlt
+      | succ _ => exact absurd hu (by omega)
+
+/-- **鎖の全体。** 記号数 `n` までの順序には、記号数 `n` 未満の門しか要らない。 -/
+theorem dictLtBoth99_all (Hp : PsiIdxOKStd172) :
+    ∀ (n : Nat), (∀ m, m < n → GateFst99 m) → DictLtBoth99 n
+  | 0, _ => by
+      intro f l1 l2 h1 h2 _ _ hlt
+      rw [szL77_eq_zero99 l1 (by omega), szL77_eq_zero99 l2 (by omega)] at hlt
+      cases f with
+      | zero => exact Bool.noConfusion hlt
+      | succ f' => rw [ltL_nil_nil77] at hlt; exact Bool.noConfusion hlt
+  | n + 1, hg =>
+      dictLtBoth99_step Hp (dictHeadLtFst99_of_gate Hp (hg n (by omega)))
+        (dictLtBoth99_all Hp n (fun m hm => hg m (by omega)))
+
+end
+
+/-! ### §99.4 尾の条項は `HiMono89` から落ちる -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- 第一成分の記号数で切った §91 の尾の条項。 -/
+def LoDomPairFst99 (n : Nat) : Prop :=
+  ∀ (a b : BT), BT.size a ≤ n →
+    btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    ∀ p ∈ toList (loW89 (dict a)), lt p (collapse 0 (hiW89 (dict b))) = true
+
+/-- §91.3 の組み立てを記号数つきで。もとの証明は対について各点的。 -/
+theorem gateFst99_of_loDom (Hp : PsiIdxOKStd172) (H : HiMono89) {n : Nat}
+    (L : LoDomPairFst99 n) : GateFst99 n := by
+  intro a b hsz hbA hbB hsA hsB hWa hWb h
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hsa := isStd_of_D hsA
+  have hsb := isStd_of_D hsB
+  have hia := inT_dict_of_std172 Hp a hba hsa
+  have hib := inT_dict_of_std172 Hp b hbb hsb
+  have hpa := Hp 0 a (by omega) hba hsA
+  have hpb := Hp 0 b (by omega) hbb hsB
+  by_cases heq : hiW89 (dict a) = hiW89 (dict b)
+  · exact lt_collapse0_sameHi89 hia.1 hia.2 hpa hWa hib.1 hib.2 hpb hWb heq h
+  · have hhi := lt_hi89 hia.1 hib.1 h heq
+    exact lt_collapse0_diffHi91 hia.1 hia.2 hpa hWa hib.1 hib.2 hpb hWb
+      (L a b hsz hbA hbB hsA hsB hWa hWb hhi) (H a b hbA hbB hsA hsB hWa hWb hhi)
+
+/-- **§99 の主定理 — 尾の条項は `HiMono89` だけから、記号数 `size a` の帰納法で出る。**
+
+    §93.6 は同じ場所で §81 の残余を対 `(c, hi b)` に当てていた。そのためには
+    `hi (dict b) = dict (hi b)` — **`b` での橋** — が要り、その橋には `size b` までの
+    門が要るので、`size a` だけの測度が閉じなかった (§96 の診断)。ここでは対
+    `(c, hi b)` を作らず、`Y = hi (dict b)` を 𝔗(M) の項のまま扱い、
+    `lt_collapse0_diffHi91` を `(dict c, Y)` に当てる。その二つの側条件は
+    `HiMono89 (c, b)` と**この定理自身の `(c, b)` での例** — `size c < size a` —
+    であって、`b` での橋はどこにも現れない。 -/
+theorem loDomPairFst99_all (Hp : PsiIdxOKStd172) (H : HiMono89) :
+    ∀ (n : Nat), LoDomPairFst99 n := by
+  intro n
+  refine Nat.strongRecOn (motive := fun n => LoDomPairFst99 n) n ?_
+  intro n IH a b hsza hbA hbB hsA hsB hWa hWb hhi p hp
+  have hgate : ∀ m, m < n → GateFst99 m :=
+    fun m hm => gateFst99_of_loDom Hp H (IH m hm)
+  have S : DictLtBoth99 n := dictLtBoth99_all Hp n hgate
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hsa := isStd_of_D hsA
+  have hsb := isStd_of_D hsB
+  have hia := inT_dict_of_std172 Hp a hba hsa
+  have hib := inT_dict_of_std172 Hp b hbb hsb
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hszLa := szL77_toL a
+  have htl : toList (dict a) = (BT.toL a).map dict := by
+    have h1 := bridge99 Hp S (BT.toL a) hgood (by omega)
+    rw [ofL_toL77 a hsa] at h1
+    exact h1
+  have hlo : toList (loW89 (dict a)) = (loL93 (BT.toL a)).map dict := by
+    rw [toList_loW89 hia.1, htl, filter_map93 dict (fun p => lt p (reg 1)) (BT.toL a),
+      filter_congr93 (fun t => lt (dict t) (reg 1)) (fun t => !hiA93 t) (BT.toL a)
+        (fun t ht => by
+          obtain ⟨u, c, rfl⟩ := hgood.1 t ht
+          have hq := hiA_dict93 Hp u c (hgood.2.2.1 _ ht) (hgood.2.1 _ ht)
+          show lt (dict (BT.D u c)) (reg 1) = !hiA93 (BT.D u c)
+          rw [← hq]
+          cases hz : lt (dict (BT.D u c)) (reg 1) with
+          | true => rfl
+          | false => rfl)]
+    rfl
+  rw [hlo] at hp
+  obtain ⟨t, htmem, hpt⟩ := List.mem_map.mp hp
+  have htL : t ∈ BT.toL a := (List.mem_filter.mp htmem).1
+  have hlot : hiA93 t = false := by
+    have h1 := (List.mem_filter.mp htmem).2
+    cases hz : hiA93 t with
+    | false => rfl
+    | true => rw [hz] at h1; exact absurd h1 Bool.noConfusion
+  obtain ⟨u, c, rfl⟩ := hgood.1 t htL
+  have hu0 : u = 0 := by
+    have hu1 : u ≤ 1 := (btLe72_D 1 u c (hgood.2.2.1 _ htL)).1
+    have h2 : decide (1 ≤ u) = false := hlot
+    have h3 : ¬ (1 ≤ u) := of_decide_eq_false h2
+    omega
+  subst hu0
+  have hst : BT.isStd (BT.D 0 c) = true := hgood.2.1 _ htL
+  have hbt : btLe72 1 (BT.D 0 c) = true := hgood.2.2.1 _ htL
+  have hbc := (btLe72_D 1 0 c hbt).2
+  have hsc := isStd_of_D hst
+  have hic := inT_dict_of_std172 Hp c hbc hsc
+  have hmemGB : c ∈ BT.GB 0 a := arg_mem_GB0_82 a 0 c htL
+  have hszc : BT.size c < BT.size a := size_GB93 a c hmemGB
+  have hltca : BT.lt c a = true := (std0_split82 hsA).2 c hmemGB
+  have hszLc := szL77_toL c
+  have h1 : lt (dict c) (dict a) = true := by
+    have h0 := S (BT.size c + BT.size a + 2) (BT.toL c) (BT.toL a)
+      (by omega) (by omega) (good_toL77 c hsc hbc) hgood hltca
+    rw [ofL_toL77 c hsc, ofL_toL77 a hsa] at h0
+    exact h0
+  have h2 : le (hiW89 (dict c)) (hiW89 (dict a)) = true := le_hiW_of_lt93 hic.1 hia.1 h1
+  have h3 : lt (hiW89 (dict c)) (hiW89 (dict b)) = true :=
+    lt_of_le_of_lt3 (inT_le_fragR _ (inT_hiW89 hic.1)) (inT_le_fragR _ (inT_hiW89 hia.1))
+      (inT_le_fragR _ (inT_hiW89 hib.1)) h2 hhi
+  have h4 : lt (dict c) (hiW89 (dict b)) = true := lt_hiW_of_lt_hiW93 hic.1 hib.1 h3
+  have hiY : inT (hiW89 (dict b)) = true := inT_hiW89 hib.1
+  have hlY : lt (hiW89 (dict b)) M = true := ltM_hiW99 hib.1 hib.2
+  have hpY : PsiIdxOK 0 (hiW89 (dict b)) :=
+    psiIdxOK_hiW99 hib.1 (Hp 0 b (by omega) hbb hsB)
+  have hWY : le (reg 1) (hiW89 (dict b)) = true := le_W_hiW93 hib.1 hWb
+  have hYY : hiW89 (hiW89 (dict b)) = hiW89 (dict b) :=
+    hiW89_self89 hiY (loW_hiW93 hib.1)
+  rw [← hpt, Trans.Dict.dict_D]
+  cases hcase : le (reg 1) (dict c) with
+  | false =>
+    have hlow : lowHd81 c = true := by
+      cases hh : lowHd81 c with
+      | true => rfl
+      | false =>
+        rw [le_reg1_dict_of_not_lowHd81 Hp c hbc hsc hh] at hcase
+        exact Bool.noConfusion hcase
+    have hb0 : btLe72 0 c = true :=
+      btLe0_of_lowHd81 c hbc hsc hlow (lowHd_GB_of_std81 hst hlow)
+    exact lt_collapse0_cross81 hic.1 (lt_dict_E81 Hp c hb0 hsc) hiY hlY hpY hWY
+  | true =>
+    by_cases heq : hiW89 (dict c) = hiW89 (hiW89 (dict b))
+    · exact lt_collapse0_sameHi89 hic.1 hic.2 (Hp 0 c (by omega) hbc hst) hcase
+        hiY hlY hpY hWY heq h4
+    · have h5 : lt (hiW89 (dict c)) (hiW89 (dict b)) = true := by
+        have h6 := lt_hi89 hic.1 hiY h4 heq
+        rw [hYY] at h6
+        exact h6
+      have hHi : lt (collapse 0 (hiW89 (dict c)))
+          (collapse 0 (hiW89 (hiW89 (dict b)))) = true := by
+        rw [hYY]
+        exact H c b hbt hbB hst hsB hcase hWb h5
+      have hhd : ∀ q ∈ toList (loW89 (dict c)),
+          lt q (collapse 0 (hiW89 (hiW89 (dict b)))) = true := by
+        rw [hYY]
+        exact IH (BT.size c) (by omega) c b (Nat.le_refl _) hbt hbB hst hsB hcase hWb h5
+      exact lt_collapse0_diffHi91 hic.1 hic.2 (Hp 0 c (by omega) hbc hst) hcase
+        hiY hlY hpY hWY hhd hHi
+
+end
+
+/-! ### §99.5 組み立て — 326 行目の Veblen の門は `HiMono89` ただ一つ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`LoDomPair91` は `HiMono89` の帰結。** §91 が条項として立て、§93 が
+    「§81 の残余そのもの」と値付けした対の条項は、独立な条項ではなかった。 -/
+theorem loDomPair91_of_hiMono99 (Hp : PsiIdxOKStd172) (H : HiMono89) : LoDomPair91 :=
+  fun a b hbA hbB hsA hsB hWa hWb hhi p hp =>
+    loDomPairFst99_all Hp H (BT.size a) a b (Nat.le_refl _) hbA hbB hsA hsB hWa hWb hhi p hp
+
+/-- **§99 の主結論 — §81 の残余は `HiMono89` から出る。** -/
+theorem collapseMono0Hi_of_hiMono99 (Hp : PsiIdxOKStd172) (H : HiMono89) :
+    CollapseMono0Hi81 :=
+  collapseMono0Hi_of_91 Hp H (loDomPair91_of_hiMono99 Hp H)
+
+/-- **§93 の分割は、片方が只だった。** -/
+theorem gate_iff_hiMono99 (Hp : PsiIdxOKStd172) : CollapseMono0Hi81 ↔ HiMono89 :=
+  ⟨fun H => hiMono89_of81 Hp H, collapseMono0Hi_of_hiMono99 Hp⟩
+
+/-- §93 の同値の、片方が消えた形。 -/
+theorem gates_iff99 (Hp : PsiIdxOKStd172) : (HiMono89 ∧ LoDomPair91) ↔ HiMono89 :=
+  ⟨fun h => h.1, fun H => ⟨H, loDomPair91_of_hiMono99 Hp H⟩⟩
+
+/-- **橋は定理になった** — §93 の半橋も §96 の完全な橋も。 -/
+theorem hiBridge99 (Hp : PsiIdxOKStd172) (H : HiMono89) : HiBridge93 :=
+  hiBridge93_of81 Hp (collapseMono0Hi_of_hiMono99 Hp H)
+
+theorem dictLe99 (Hp : PsiIdxOKStd172) (H : HiMono89) : DictLe96 :=
+  dictLe96_of81 Hp (collapseMono0Hi_of_hiMono99 Hp H)
+
+theorem fullBridge99 (Hp : PsiIdxOKStd172) (H : HiMono89) : FullBridge96 :=
+  fullBridge96_of_le Hp (dictLe99 Hp H)
+
+theorem dictDesc99 (Hp : PsiIdxOKStd172) (H : HiMono89) : DictDesc96 :=
+  desc96_of_fullBridge Hp (fullBridge99 Hp H)
+
+theorem dictLeAtom96_99 (Hp : PsiIdxOKStd172) (H : HiMono89) : DictLeAtom96 :=
+  dictLeAtom96_of_le (dictLe99 Hp H)
+
+/-- **(A) `CollapseLe0_96` も定理になった。** -/
+theorem collapseLe0_99 (Hp : PsiIdxOKStd172) (H : HiMono89) : CollapseLe0_96 :=
+  collapseLe0_of_hi81 Hp (collapseMono0Hi_of_hiMono99 Hp H)
+
+theorem collapseMono0_99 (Hp : PsiIdxOKStd172) (H : HiMono89) : CollapseMono0_79 :=
+  collapseMono0_of_hi81 Hp (collapseMono0Hi_of_hiMono99 Hp H)
+
+theorem collapseInj0_99 (Hp : PsiIdxOKStd172) (H : HiMono89) : CollapseInj0_99 :=
+  inj0_of79 (collapseMono0_99 Hp H)
+
+theorem dictLtAtom99 (Hp : PsiIdxOKStd172) (H : HiMono89) : DictLtAtom96 :=
+  fun u v a b hbA hbB hsA hsB h =>
+    dictLt_of_head77 Hp (dictHeadLt81 Hp (collapseMono0Hi_of_hiMono99 Hp H))
+      (BT.D u a) (BT.D v b) hbA hbB hsA hsB h
+
+/-- **(B) `DictAtomInj96`。** §96.3 の分解の右の項。 -/
+theorem dictAtomInj99 (Hp : PsiIdxOKStd172) (H : HiMono89) : DictAtomInj96 :=
+  (dictLtAtom96_iff.mp (dictLtAtom99 Hp H)).2
+
+theorem dictLtA74_99 (Hp : PsiIdxOKStd172) (H : HiMono89) : DictLtA74 :=
+  dictLtA74_81 Hp (collapseMono0Hi_of_hiMono99 Hp H)
+
+/-- **326 行目 — Veblen の折り畳みのぶんは `HiMono89` ひとつ。** §97 でとどめた
+    密度の側は `DictDenseHi94` ひとつ。 -/
+theorem certIn_t326_99 (Hp : PsiIdxOKStd172) (H : HiMono89) (HH : DictDenseHi94)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_97 Hp (dictLtA74_99 Hp H) HH hacc
+
+/-- §91・§93 の形との繋ぎ — `LoDomPair91` はもう要らない。 -/
+theorem certIn_t326_pair99 (Hp : PsiIdxOKStd172) (H : HiMono89)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_81 Hp (collapseMono0Hi_of_hiMono99 Hp H) HCD HBC hacc
+
+end
+
+/-! ### §99.6 否定 — 反例は手で組んだ二つ、どちらも `K` の条件ひとつだけを外す -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **反例 1 — `ψ₀Ω₁`。** 記号 3 個。 -/
+def injBad99 : BT := BT.D 0 (BT.D 1 BT.zero)
+
+/-- `ψ₀Ω₁` と `Ω₁` は `CollapseInj0_99` の仮説を**すべて**満たす — ただし
+    `BT.isStd (ψ₀ ψ₀Ω₁)` だけが偽。文を読んで、そこ以外を満たすように組んだ。 -/
+theorem injBad99_facts : (btLe72 1 injBad99, btLe72 1 (BT.D 1 BT.zero),
+    BT.isStd injBad99, BT.isStd (BT.D 1 BT.zero),
+    BT.isStd (BT.D 0 injBad99), BT.isStd (BT.D 0 (BT.D 1 BT.zero)),
+    lt (dict injBad99) (dict (BT.D 1 BT.zero)))
+    = (true, true, true, true, false, true, true) := rfl
+
+/-- **`CollapseInj0_99` は `K` の条件なしでは偽。** `ψ₀ψ₀Ω₁ = ψ₀Ω₁` — Buchholz の
+    `ψ₀` は正規形の外では単射でない。 -/
+theorem collapseInj0_needs_K99 :
+    collapse 0 (dict injBad99) = collapse 0 (dict (BT.D 1 BT.zero)) := rfl
+
+/-- **同じ対で `CollapseLe0_96` の結論は成り立つ。** だから §99.2 の分解
+    (狭義 = 非狭義 + 単射) は形式ではない — 母集団がその差を実際に持つ。
+    §96 の母集団は `dict` が単射だったのでこの差が見えなかった。 -/
+theorem collapseLe0_holds_at_injBad99 :
+    le (collapse 0 (dict injBad99)) (collapse 0 (dict (BT.D 1 BT.zero))) = true := rfl
+
+/-- **反例 2 — `ψ₀ψ₁ψ₁0`。** 記号 4 個。 -/
+def leBad99 : BT := BT.D 0 (BT.D 1 (BT.D 1 BT.zero))
+
+/-- **`CollapseLe0_96` そのものが `K` の条件なしでは偽。** 非狭義にしても
+    `K` の条件は落とせない — 外れるのはやはりその一つだけである。 -/
+theorem leBad99_facts : (btLe72 1 leBad99, BT.isStd leBad99,
+    BT.isStd (BT.D 0 leBad99), BT.isStd (BT.D 0 (BT.D 1 BT.zero)),
+    le (dict leBad99) (dict (BT.D 1 BT.zero)),
+    le (collapse 0 (dict leBad99)) (collapse 0 (dict (BT.D 1 BT.zero))))
+    = (true, true, false, true, true, false) := rfl
+
+/-- **`dict` は仮説の外で衝突する。** §96.6 の `aDrop96 = 1 ⊕ Ω₁` の像は `Ω₁` の像
+    そのもの — 昇べきの和で `plus` が第一成分を落とすから。§96 の母集団には
+    こういう項が一つも無かった。 -/
+theorem dict_collides99 : dict aDrop96 = dict (BT.D 1 BT.zero) := rfl
+
+theorem dict_collides99_facts :
+    (BT.isStd aDrop96, btLe72 1 aDrop96, BT.lt aDrop96 (BT.D 1 BT.zero))
+    = (false, true, true) := rfl
+
+end
+
+/-! ### §99.7 測定 (凍結)
+
+**構成 — §96 の盲点を先に潰す。** §96 の母集団は 592 個の良い項の上で `dict` が
+単射だったので、`CollapseLe0_96` と §79 の狭義の条項の差を**一つも見なかった**。
+ここでは §97 の作り方に倣い、**壊れた項を故意に作り、濾さない**。
+
+    bs99      段 1 以下の種 7 項 (`cexA89` の親 `ψ₁ψ₀ψ₁ψ₁0` を含む)
+    deep99    `ψ₀`・`ψ₁` を 1 段ずつかぶせて 2 つに 1 つ間引く操作を 3 回
+    ksum99    `K` 標準な主要項どうしの降べき 2 項和・3 項和 (残余を厚くする線)
+    desc99    降べきの 2 項和 (行儀のよい線)
+    asc99     **昇べきの 2 項和** — `plus` がここで成分を落とす (衝突の線)
+              とその `ψ₀`・`ψ₁` 帽子
+
+    popRaw99  200 項   濾さない
+    popGood99  80 項   段 1 以下かつ `BT.isStd`
+    popK99     67 項   さらに `BT.isStd (ψ₀ ·)`
+    popHi99    57 項   さらに `Ω₁ ≤ dict a`
+    popNK99    13 項   `K` の条件だけが偽 (負の対照)
+
+対の母集団は 2 つに 1 つ間引いた `sRaw99` (100 項)・`sGood99` (40)・`sK99` (34)・
+`sHi99` (29)。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+private def dedup99 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def every99 (k : Nat) (l : List BT) : List BT :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+
+private def bs99 : List BT :=
+  [BT.zero, BT.D 0 BT.zero, BT.D 0 (BT.D 0 BT.zero), BT.D 1 BT.zero,
+   BT.D 1 (BT.D 1 BT.zero), BT.D 0 (BT.D 1 BT.zero),
+   BT.D 1 (BT.D 0 (BT.D 1 (BT.D 1 BT.zero)))]
+private def cap99 (l : List BT) : List BT := l.map (BT.D 0) ++ l.map (BT.D 1)
+private def lay99 : Nat → List BT → List BT
+  | 0, l => l
+  | n + 1, l => every99 2 (cap99 (lay99 n l))
+private def deep99 : List BT :=
+  dedup99 (bs99 ++ lay99 1 bs99 ++ lay99 2 bs99 ++ lay99 3 bs99)
+private def prin99 (l : List BT) : List BT := l.filter BT.isP
+private def desc99 (l : List BT) : List BT :=
+  (prin99 l).flatMap (fun a => ((prin99 l).filter (fun b => BT.le b a)).map (BT.sum a))
+/-- **昇べきの和 — 故意に壊した線。** `plus` はここで第一成分を落とす。 -/
+private def asc99 (l : List BT) : List BT :=
+  (prin99 l).flatMap (fun a => ((prin99 l).filter (fun b => BT.lt a b)).map (BT.sum a))
+private def kprin99 : List BT :=
+  deep99.filter (fun a => BT.isP a && btLe72 1 a && BT.isStd a && BT.isStd (BT.D 0 a))
+private def ksum99 : List BT :=
+  dedup99 (desc99 kprin99 ++ (desc99 kprin99).flatMap
+    (fun a => (kprin99.filter (fun b => BT.le b (BT.D 0 BT.zero))).map (fun b => BT.sum a b)))
+
+private def popRaw99 : List BT :=
+  dedup99 (deep99 ++ ksum99 ++ every99 3 (desc99 (every99 2 deep99))
+            ++ every99 3 (asc99 (every99 2 deep99))
+            ++ (every99 4 (asc99 (every99 2 deep99))).map (BT.D 0)
+            ++ (every99 4 (asc99 (every99 2 deep99))).map (BT.D 1))
+private def popGood99 : List BT := popRaw99.filter (fun x => btLe72 1 x && BT.isStd x)
+private def popK99 : List BT := popGood99.filter (fun a => BT.isStd (BT.D 0 a))
+private def lowW99 (a : BT) : Bool := TM.Term.lt (dict a) (reg 1)
+private def popHi99 : List BT := popK99.filter (fun a => !(lowW99 a))
+private def popNK99 : List BT := popGood99.filter (fun a => !(BT.isStd (BT.D 0 a)))
+
+private def sRaw99 : List BT := every99 2 popRaw99
+private def sGood99 : List BT := every99 2 popGood99
+private def sK99 : List BT := every99 2 popK99
+private def sHi99 : List BT := every99 2 popHi99
+
+private def pairs99 (l : List BT) : List (BT × BT) :=
+  l.flatMap (fun a => l.map (fun b => (a, b)))
+private def C0_99 (x : BT) : Term := collapse 0 (dict x)
+/-- `dict` の衝突。 -/
+private def colls99 (l : List BT) : List (BT × BT) :=
+  (pairs99 l).filter (fun p => !(p.1 == p.2) && (dict p.1 == dict p.2))
+/-- §79 の狭義の条項の結論が破れる対。 -/
+private def ltFail99 (l : List BT) : List (BT × BT) :=
+  (pairs99 l).filter (fun p => TM.Term.lt (dict p.1) (dict p.2)
+      && !(TM.Term.lt (C0_99 p.1) (C0_99 p.2)))
+/-- §96 の非狭義の条項の結論が破れる対。 -/
+private def leFail99 (l : List BT) : List (BT × BT) :=
+  (pairs99 l).filter (fun p => TM.Term.le (dict p.1) (dict p.2)
+      && !(TM.Term.le (C0_99 p.1) (C0_99 p.2)))
+/-- `collapse 0 ∘ dict` の衝突 — 狭義と非狭義のちょうど差 (§99.2)。 -/
+private def inj0Fail99 (l : List BT) : List (BT × BT) :=
+  (pairs99 l).filter (fun p => TM.Term.lt (dict p.1) (dict p.2) && (C0_99 p.1 == C0_99 p.2))
+private def hiOK99 (a : BT) : Bool := hiW89 (dict a) == dict (hiB93 a)
+private def fullOK99 (a : BT) : Bool := toList (dict a) == (BT.toL a).map dict
+private def hipairs99 : List (BT × BT) :=
+  (pairs99 sHi99).filter (fun p => TM.Term.lt (dict p.1) (dict p.2))
+private def loArgs99 (a : BT) : List BT :=
+  (loL93 (BT.toL a)).filterMap (fun t => match t with | BT.D 0 c => some c | _ => none)
+private def loDomOK99 (p : BT × BT) : Bool :=
+  (toList (loW89 (dict p.1))).all (fun q => TM.Term.lt q (collapse 0 (hiW89 (dict p.2))))
+private def hiMonoOK99 (p : BT × BT) : Bool :=
+  TM.Term.lt (collapse 0 (hiW89 (dict p.1))) (collapse 0 (hiW89 (dict p.2)))
+private def resPairs99 (l : List BT) : List (BT × BT) :=
+  (pairs99 l).filter (fun p => TM.Term.le (reg 1) (dict p.1) && TM.Term.le (reg 1) (dict p.2)
+      && TM.Term.lt (hiW89 (dict p.1)) (hiW89 (dict p.2)))
+
+/-! 母集団の形。**200 項のうち 120 項は `BT.isStd` が偽** — §96 の母集団と違い、
+    壊れた項を濾していない。 -/
+#guard (popRaw99.length, popGood99.length, popK99.length, popHi99.length, popNK99.length)
+        == (200, 80, 67, 57, 13)
+#guard (popRaw99.countP (fun x => btLe72 1 x), popRaw99.countP (fun x => !(BT.isStd x)),
+        sRaw99.length, sGood99.length, sK99.length, sHi99.length)
+        == (200, 120, 100, 40, 34, 29)
+
+/-! **受領 1 (盲点の修理) — `dict` はこの母集団で衝突する。** 100 項の標本で
+    **78 対**が相異なる項で同じ像を持つ。良い 40 項・`K` 標準な 34 項では **0**。
+    §96 は「`dict` は 592 項で単射 (衝突 0)」としか言えず、そのせいで
+    `CollapseLe0_96` と §79 の狭義の条項を**区別できなかった**。ここでは区別できる。 -/
+#guard ((colls99 sRaw99).length, (colls99 sGood99).length, (colls99 sK99).length)
+        == (78, 0, 0)
+
+/-! **受領 2 (§99.2 が母集団に見える) — 狭義の破れ = 非狭義の破れ + 単射の破れ。**
+    10000 対で `830 = 744 + 86`、1600 対で `67 = 61 + 6`。**差は形式ではない。**
+    `K` の条件を課した 1156 対では三つとも 0。 -/
+#guard ((pairs99 sRaw99).length, (ltFail99 sRaw99).length, (leFail99 sRaw99).length,
+        (inj0Fail99 sRaw99).length) == (10000, 830, 744, 86)
+#guard ((pairs99 sGood99).length, (ltFail99 sGood99).length, (leFail99 sGood99).length,
+        (inj0Fail99 sGood99).length) == (1600, 67, 61, 6)
+#guard ((pairs99 sK99).length, (ltFail99 sK99).length, (leFail99 sK99).length,
+        (inj0Fail99 sK99).length) == (1156, 0, 0, 0)
+
+/-! **受領 3 — 橋の側は §96 の再確認。** §93 の半橋は 200 項すべてで成り立ち、
+    §96 の完全な橋は 19 項で破れる (すべて `BT.isStd` が偽の項)。 -/
+#guard (popRaw99.countP (fun a => !(hiOK99 a)), popRaw99.countP (fun a => !(fullOK99 a)),
+        popGood99.countP (fun a => !(hiOK99 a)), popGood99.countP (fun a => !(fullOK99 a)))
+        == (0, 19, 0, 0)
+
+/-! **受領 4 (測度) — 古い道は `size a` の予算を超え、§99 の道は超えない。**
+    29 項から取った 406 の残余の対で、§93.6 が要る門の相手 `(c, hi b)` の
+    **第二成分が `size a` を超えるのが 187 対 (46%)**、`b` での橋が要る記号数
+    `size b` が `size a` を超えるのが **246 対 (61%)**。いっぽう §99 が回す相手
+    `c ∈ G(a,0)` は **406 対すべてで `size c < size a`** (§93.1 の `size_GB93`、
+    定理なので確認)。**測度 `size a` だけで閉じるのはこの内訳のとおり。** -/
+#guard (hipairs99.length,
+        hipairs99.countP (fun p => !(loArgs99 p.1).isEmpty),
+        hipairs99.countP (fun p => BT.size (hiB93 p.2) > BT.size p.1),
+        hipairs99.countP (fun p => BT.size p.2 > BT.size p.1),
+        hipairs99.countP (fun p => (loArgs99 p.1).any (fun c => BT.size c ≥ BT.size p.1)),
+        hipairs99.countP (fun p => (loArgs99 p.1).any (fun c => BT.size c > BT.size p.2)))
+        == (406, 159, 187, 246, 0, 0)
+
+/-! **受領 5 (負の対照) — 尾の条項は `K` の条件がなければ偽。** `K` 標準な 34 項の
+    427 の残余の対では `LoDomPair91` も `HiMono89` も破れ 0。`K` の条件だけが偽の
+    13 項では、9 の残余の対のうち **`LoDomPair91` が 4 対で破れ、`HiMono89` は
+    0 対**。§99 が只にしたのは、空虚な条項ではない。 -/
+#guard ((resPairs99 sK99).length, (resPairs99 sK99).countP (fun p => !(loDomOK99 p)),
+        (resPairs99 sK99).countP (fun p => !(hiMonoOK99 p)),
+        (resPairs99 popNK99).length, (resPairs99 popNK99).countP (fun p => !(loDomOK99 p)),
+        (resPairs99 popNK99).countP (fun p => !(hiMonoOK99 p))) == (427, 0, 0, 9, 4, 0)
+
+/-! **受領 6 — §99.1 の二つの補題は恒等写像の話ではない。** `hi (dict b) ≠ dict b` が
+    良い 80 項のうち 40 項、`K` 標準な 67 項のうち 30 項。 -/
+#guard (popGood99.countP (fun b => !(hiW89 (dict b) == dict b)),
+        popK99.countP (fun b => !(hiW89 (dict b) == dict b)),
+        popRaw99.countP (fun b => !(BT.toL b == BT.toL (hiB93 b)))) == (40, 30, 139)
+
+end
+
 end Evidence.Region
