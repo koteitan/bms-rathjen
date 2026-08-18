@@ -21475,4 +21475,415 @@ end
 /-! ### §66.6 公理 -/
 
 
+/-! ## §67 `CollapseInT` ON THE REGION — `nfB` DOES NOT DODGE IT, `stdB` DOES
+
+§66 proved `CollapseInT` FALSE and left §67 two jobs: "prove `PsiIdxOKStd`, and find the
+weaker condition the region's own terms satisfy".  §67 answers the second and REFUTES the
+premise the first was going to be used with.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §67.1  **THE `nfB` REGION DOES NOT DODGE §66'S COUNTEREXAMPLE.**  The idea that the region
+         escapes because §66's index `(0,0)(1,1)(2,3)` jumps two levels at once is WRONG: the
+         counterexample `ψ₁(ψ₃0)` is reachable from a `nfB` index without any level jump.  The
+         witness is
+
+             tbad = (0,0)(1,1)(1,1)(2,2)(3,3)      `nd 0 nil (nd 1 (nd 1 nil nil) (nd 2 nil (nd 3 nil nil)))`
+
+         whose levels rise by exactly one at every step.  `bVal tbad = ψ₀(ψ₁0 ⊕ ψ₁(ψ₃0))`,
+         and `inT (vOf tbad) = false` (`not_inT_vOf_tbad`, by `rfl`).  The `ψ₃` appears because
+         `bArg` COLLAPSES: the level-2 node with a level-3 child and no left sibling is deleted
+         and its child lifted, which turns a one-step ladder `1 → 2 → 3` into the two-step jump
+         `ψ₁(ψ₃·)`.  So `not_inT_vOf_nfB` : `¬ ∀ t, nfB t = true → inT (vOf t) = true`.
+         `tbad` is one of exactly 5 smallest such indices (5 nodes) and there are 143 of them
+         among the 5443 `nfB` indices of levels < 4 with ≤ 6 nodes (measured).
+
+  §67.2  **THE INVARIANT IS `BT.isStd` AFTER ALL — ON `stdB`, WHICH IS WHAT `RegS` IS.**
+         `RegS` is `∃ t, stdB t = true ∧ S = matB t 0`, not `nfB`.  §66's "280 of the 443
+         `bVal` components are not `BT.isStd`" was measured over `popNFB 3 6`, which filters by
+         `nfB` ONLY; restricted to the 235 `stdB` indices of that same population the 443
+         components become 163 and the count of non-`BT.isStd` ones becomes **0** (frozen in
+         §67.5).  Over every population measured — 1263 / 6933 / 251 standard indices and the
+         877 table matrices — `BT.isStd (bVal t)` holds with 0 failures, and so does
+         `inT (vOf t)`.  `RegionStdSum` and `RegionStd` name it; `regionStd_of_sum` and
+         `isStd_mem_toL` are the (proved) passage from the sum to the components, which is the
+         form the consumers want.  **`RegionStd` itself is MEASURED, NOT PROVED.**
+
+  §67.3  **§66.2'S ROUTE DOES NOT REACH THE REGION.**  `KsetBigOK` — the sufficient condition
+         §66.2's traceback buys — is strictly stronger than `PsiIdxOK`, and the region falls in
+         the gap: of the 1327 `(u, b)` pairs `ψ_u b` occurring inside the `bVal` components of
+         the 1263 standard indices of levels < 4, all 1327 satisfy `psiIdxOKb` and **33 fail
+         `bigOKb`**.  The smallest failure is an honest region term,
+
+             tBig = (0,0)(1,1)(2,2)(3,3)(2,0),   bVal tBig = ψ₀(Ω₃ ⊕ ψ₁(Ω₃ ⊕ 1))
+
+         (`not_ksetBigOK_aBig`, proved).  So a §68 that wants `PsiIdxOKStd` must go through
+         `KsetIdxOK` — the `K` of the index actually emitted — and NOT through the `bigPart`
+         over-approximation.  `bigOKb_of_ksetBigOK` is the converse of §66's `ksetBigOK_of_b`
+         and is what makes the refutation a theorem rather than a `#guard`.
+
+  §67.4  **THE CONSUMERS, RESTATED.**  §63's `inT_vOf` / `vOf_succ` / `lt_vOf_succ` /
+         `hsuccS_supply` carried `CollapseInT`, which §66 refuted, so they are VACUOUS.  Here
+         they are restated on the region with `CollapseInT` replaced by the pair
+
+             PsiIdxOKStd   (§66.4, measured: 0 failures on `bcorp` 1805 and `ccorp` 1761)
+             RegionStd     (§67.2, measured: 0 failures on 1263 + 6933 + 251 + 877 indices)
+
+         and the extra hypothesis `stdB t = true`, which `hsuccS_index` (§61) supplies for
+         free.  Neither hypothesis is refuted by anything measured.
+
+WHAT IS NOT CLAIMED.  **`Hsucc` IS STILL NOT UNCONDITIONAL.**  Two named facts stand between
+`hsuccS_supply_std` and `certIn_region`, and neither is proved here:
+
+  (S1)  `PsiIdxOKStd` — [Rathjen, 1991] 2.1(vi) for the indices `collapse` emits from a
+        BUCHHOLZ-STANDARD term.  §66 named it, §67 confirms it is the right hypothesis and
+        §67.3 tells the next section which route to take to it.
+  (S2)  `RegionStd` — `stdB t = true → BT.isStd (bVal t) = true`, i.e. the region's index
+        standardness implies Buchholz's standardness of its value.  This is a statement about
+        `bVal`/`bArg`/`bFold` versus `nfB`/`nonIncr`/`stdIn`, and proving it needs an order
+        theory for `BT.lt` (which the repository does not have yet) plus the transfer of §62's
+        `cmpS` through `bArg`.  The shape of the transfer is visible in the definitions:
+        `visOK v a` cuts its scan at the first node of level `< v` and `GB v` cuts its descent
+        at the first `ψ_w` with `w < v`, which is the same cut; what is missing is that
+        `visOK`'s constraint at level EXACTLY `v` plus `nonIncr` covers `GB`'s constraint at
+        every level `≥ v`.
+
+NOTHING HERE WEAKENS A STATEMENT.  `not_inT_vOf_nfB` and `not_ksetBigOK_aBig` are
+unconditional; everything with `Hp`/`Hr` in it carries them visibly. -/
+
+
+/-! ### §67.1 `nfB` は §66 の反例を避けない
+
+§66 の反例の添字 `(0,0)(1,1)(2,3)` は段が 1 から 3 に飛ぶので `nfB` ではない。しかし
+`bArg` は節を**潰す**ので、段が 1 ずつしか上がらない添字からも同じ `ψ₁(ψ₃0)` が出る。
+左に兄弟がある段 1 の節の引数に、段 2 → 段 3 の梯子を置けばよい。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+/-- **反例の添字。** 行列は `(0,0)(1,1)(1,1)(2,2)(3,3)`、段は 1 ずつしか上がらない。 -/
+def tbad : B := .nd 0 .nil (.nd 1 (.nd 1 .nil .nil) (.nd 2 .nil (.nd 3 .nil .nil)))
+
+/-- `tbad` は標準形 — つまり `nfB` の意味の「領域」の中にいる。 -/
+theorem nfB_tbad : nfB tbad = true := rfl
+
+/-- 値の `BT` は §66 の `badArg = ψ₁(ψ₃0)` を含む。 -/
+theorem bVal_tbad :
+    bVal tbad = BT.D 0 (BT.sum (BT.D 1 BT.zero) (BT.D 1 (BT.D 3 BT.zero))) := rfl
+
+/-- Buchholz の意味では標準でない。 -/
+theorem not_isStd_bVal_tbad : BT.isStd (bVal tbad) = false := rfl
+
+/-- **`vOf tbad` は 𝔗(M) の項ではない。** -/
+theorem not_inT_vOf_tbad : inT (vOf tbad) = false := rfl
+
+/-- **§67.1 の主定理。** `nfB` だけでは §63 の `inT_vOf` は救えない。 -/
+theorem not_inT_vOf_nfB : ¬ (∀ t : B, nfB t = true → inT (vOf t) = true) := fun H =>
+  Bool.noConfusion ((H tbad nfB_tbad).symm.trans not_inT_vOf_tbad)
+
+/-- 同じ添字が `BT.isStd (bVal ·)` も落とす。 -/
+theorem not_isStd_bVal_nfB : ¬ (∀ t : B, nfB t = true → BT.isStd (bVal t) = true) := fun H =>
+  Bool.noConfusion ((H tbad nfB_tbad).symm.trans not_isStd_bVal_tbad)
+
+end
+
+/-! ### §67.2 領域の不変量 — `stdB` の上では `BT.isStd`
+
+`RegS` は `stdB`。`stdB` に絞ると `bVal` の値は Buchholz の意味で標準になる (測定)。
+消費者が要るのは成分ごとの標準性なので、和から成分への通過だけをここで証明する。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+/-- **領域の不変量 (和の形)。** **未証明** — §67.5 で測定のみ。 -/
+def RegionStdSum : Prop := ∀ t : B, stdB t = true → BT.isStd (bVal t) = true
+
+/-- **消費者が実際に使う形。** `RegionStdSum` より弱い。 -/
+def RegionStd : Prop := ∀ t : B, stdB t = true → ∀ a ∈ (bVal t).toL, BT.isStd a = true
+
+/-- 標準な和の成分はまた標準。`isP` が「成分は主要」を保証するので分解できる。 -/
+theorem isStd_mem_toL : ∀ (x : BT), BT.isStd x = true → ∀ a ∈ x.toL, BT.isStd a = true
+  | .zero => by intro _ a ha; cases ha
+  | .D u b => by
+      intro h a ha
+      rw [List.mem_singleton.mp (show a ∈ [BT.D u b] from ha)]
+      exact h
+  | .sum x y => by
+      intro h a ha
+      obtain ⟨h1, h3⟩ := (Bool.and_eq_true _ _).mp h
+      obtain ⟨h12, h2⟩ := (Bool.and_eq_true _ _).mp h1
+      obtain ⟨hP, h1'⟩ := (Bool.and_eq_true _ _).mp h12
+      rcases List.mem_append.mp (show a ∈ x.toL ++ y.toL from ha) with hx | hy
+      · cases x with
+        | zero => exact Bool.noConfusion hP
+        | sum _ _ => exact Bool.noConfusion hP
+        | D u b =>
+          rw [List.mem_singleton.mp (show a ∈ [BT.D u b] from hx)]
+          exact h1'
+      · exact isStd_mem_toL y h2 a hy
+
+/-- **和の形から成分の形へ。** -/
+theorem regionStd_of_sum (H : RegionStdSum) : RegionStd :=
+  fun t ht a ha => isStd_mem_toL (bVal t) (H t ht) a ha
+
+end
+
+/-! ### §67.3 §66.2 の十分条件は領域に届かない
+
+`KsetBigOK` は `PsiIdxOK` より真に強い。領域はその隙間に落ちる — 領域の項で
+`psiIdxOKb` は通り `bigOKb` は落ちる。したがって §68 は `bigPart` の上からの評価ではなく、
+実際に吐かれる指数の `K` (`KsetIdxOK`) を通らなければならない。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+/-- **領域の添字。** 行列は `(0,0)(1,1)(2,2)(3,3)(2,0)`、`nfB` かつ `stdB` (§67.5 で測定)。 -/
+def tBig : B := .nd 0 .nil (.nd 1 .nil (.nd 0 (.nd 2 .nil (.nd 3 .nil .nil)) .nil))
+
+/-- その値の `ψ₀` の引数 — `Ω₃ ⊕ ψ₁(Ω₃ ⊕ 1)`。 -/
+def aBig : BT := BT.sum (BT.D 3 BT.zero) (BT.D 1 (BT.sum (BT.D 3 BT.zero) (BT.D 0 BT.zero)))
+
+theorem nfB_tBig : nfB tBig = true := rfl
+theorem bVal_tBig : bVal tBig = BT.D 0 aBig := rfl
+
+/-- `aBig` は Buchholz の意味で標準で、その `ψ₀` も標準。 -/
+theorem isStd_D0_aBig : BT.isStd (BT.D 0 aBig) = true := rfl
+
+/-- **§66 の判定器の逆向き。** `ksetBigOK_of_b` の converse。 -/
+theorem bigOKb_of_ksetBigOK {u : Nat} {x : Term} (H : KsetBigOK u x) : bigOKb u x = true := by
+  show ((scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all
+    fun p => !(le (reg (u+1)) p.2.1) ||
+      (KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x))).all
+        (fun y => lt y (idxOf (reg (u+1)) p.1 p.2))) = true
+  rw [List.all_eq_true]
+  intro p hp
+  cases hle : le (reg (u+1)) p.2.1 with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or, List.all_eq_true]
+    intro y hy
+    exact H p hp hle y hy
+
+/-- **`KsetBigOK` は領域で落ちる。** -/
+theorem not_ksetBigOK_aBig : ¬ KsetBigOK 0 (dict aBig) := fun H =>
+  Bool.noConfusion ((bigOKb_of_ksetBigOK H).symm.trans
+    (show bigOKb 0 (dict aBig) = false from rfl))
+
+/-- **なのに 2.1(vi) 自身は通る。** 隙間はちょうど §66.2 の追跡の粗さ。 -/
+theorem psiIdxOKb_aBig : psiIdxOKb 0 (dict aBig) = true := rfl
+
+/-- **§67.3 の主定理。** `dict` の像の上で `KsetBigOK` を仮定してはいけない。 -/
+theorem not_ksetBigOK_dict : ¬ (∀ (u : Nat) (a : BT), BT.isStd (BT.D u a) = true →
+    KsetBigOK u (dict a)) := fun H => not_ksetBigOK_aBig (H 0 aBig isStd_D0_aBig)
+
+end
+
+/-! ### §67.4 消費者 — §63 の 4 つを、領域の仮説の上で
+
+§63 の 4 つは `CollapseInT` の上にあり、§66 がそれを反証したので真空。ここでは
+`PsiIdxOKStd` (§66.4) と `RegionStd` (§67.2)、そして `stdB` を仮説に置き換える。
+`stdB` は §61 の `hsuccS_index` がただで供給する。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+open Trans.Dict (dict)
+
+/-- 領域の値の成分は 𝔗(M) の項。 -/
+theorem dictAtoms_bVal_std (Hp : PsiIdxOKStd) (Hr : RegionStd) (t : B) (ht : stdB t = true) :
+    ∀ a ∈ (bVal t).toL, inT (dict a) = true :=
+  fun a ha => (inT_dict_of_std Hp a (Hr t ht a ha)).1
+
+theorem inT_dict_bVal_std (Hp : PsiIdxOKStd) (Hr : RegionStd) (t : B) (ht : stdB t = true) :
+    inT (dict (bVal t)) = true := by
+  have h := inT_dict_ofL (bVal t).toL (dictAtoms_bVal_std Hp Hr t ht)
+  rwa [show BT.ofL (bVal t).toL = bVal t from nfSum_bVal t] at h
+
+/-- **§63 の `inT_vOf` の直し。** 領域の値は 𝔗(M) の項。 -/
+theorem inT_vOf_std (Hp : PsiIdxOKStd) (Hr : RegionStd) (t : B) (ht : stdB t = true) :
+    inT (vOf t) = true := by
+  cases t with
+  | nil => exact rfl
+  | nd w r c =>
+    show inT (plus one (dict (bVal (B.nd w r c)))) = true
+    exact inT_plus inT_one (inT_dict_bVal_std Hp Hr _ ht)
+
+/-- **§63 の `vOf_succ` の直し。** -/
+theorem vOf_succ_std (Hp : PsiIdxOKStd) (Hr : RegionStd) (r : B) (hr : stdB r = true) :
+    vOf (.nd 0 r .nil) = plus (vOf r) one := by
+  cases r with
+  | nil => exact rfl
+  | nd w s c =>
+    show plus one (dict (bVal (B.nd 0 (B.nd w s c) B.nil)))
+        = plus (plus one (dict (bVal (B.nd w s c)))) one
+    rw [show bVal (B.nd 0 (B.nd w s c) B.nil)
+          = bplus (bVal (B.nd w s c)) (BT.D 0 BT.zero) from rfl,
+      dict_bplus_one _ (nfSum_bVal _) (dictAtoms_bVal_std Hp Hr _ hr)]
+    exact (plus_assoc_inT _ _ _ inT_one (inT_dict_bVal_std Hp Hr _ hr) inT_one).symm
+
+/-- **§63 の `lt_vOf_succ` の直し。** -/
+theorem lt_vOf_succ_std (Hp : PsiIdxOKStd) (Hr : RegionStd) (r : B) (hr : stdB r = true) :
+    lt (vOf r) (vOf (.nd 0 r .nil)) = true := by
+  rw [vOf_succ_std Hp Hr r hr]
+  exact lt_self_plus_one_inT (vOf r) (inT_vOf_std Hp Hr r hr)
+
+/-- **`certIn_region` の `Hsucc` 供給。** `CollapseInT` (偽) の代わりに `PsiIdxOKStd` と
+    `RegionStd` の上で。**まだ無条件ではない。** -/
+theorem hsuccS_supply_std (Hp : PsiIdxOKStd) (Hr : RegionStd) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u TM.Term.one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, ValS (BMS.expand S n) u := by
+  rintro S v _ ⟨t, hstd, rfl, rfl⟩ hk
+  rw [kind_matB t] at hk
+  obtain ⟨r, rfl⟩ := kindB_succ t hk
+  have hr : stdB r = true := stdB_pred r hstd
+  have hnf : nfB (B.nd 0 r .nil) = true := nfB_of_stdB _ hstd
+  have htop : topOKB (B.nd 0 r .nil) = true := topOKB_of_nfB _ hnf
+  have hexp : ∀ n, BMS.expand (matB (B.nd 0 r .nil) 0) n = matB r 0 := by
+    intro n
+    show (BMS.expand? (matB (B.nd 0 r .nil) 0) n).getD [] = _
+    rw [expand_matB (B.nd 0 r .nil) htop (by intro h; exact B.noConfusion h) n]
+    rfl
+  exact ⟨vOf r, vOf_succ_std Hp Hr r hr, inT_vOf_std Hp Hr _ hstd,
+    inT_vOf_std Hp Hr r hr, lt_vOf_succ_std Hp Hr r hr,
+    fun n => ⟨r, hr, hexp n, rfl⟩⟩
+
+end
+
+/-! ### §67.5 測定 (凍結)
+
+母集団の作り方を先に書く。`enumNodes L n` は「節が `n` 個以下・段が `L` 未満」の `B` を
+全部並べる (§19.3)。ここでは
+
+    popNF67 L n := ((List.range n).flatMap (enumNodes L)).filter (nfB · && · != nil)
+    popSt67 L n := (popNF67 L n).filter stdB
+
+すなわち **節の個数は `0 … n-1`、段は `0 … L-1`**。§66 が使った `popNFB 3 6` は
+`popNF67 3 6` と同じもので、段は **0,1,2 しかない**。§66 の反例は添字 3 を要るので、
+ここでは `L = 4` 以上 (段 0..3) を必ず含める。`popB` は表の 877 行列そのもの。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+private def popNF67 (L n : Nat) : List B :=
+  ((List.range n).flatMap (enumNodes L)).filter fun t => nfB t && t != .nil
+private def popSt67 (L n : Nat) : List B := (popNF67 L n).filter stdB
+/-- `bVal` の成分の中に現れる `ψ_u b` を全部、対 `(u, b)` として。 -/
+private def pairsOf : BT → List (Nat × BT)
+  | .zero => []
+  | .D u a => (u, a) :: pairsOf a
+  | .sum a b => pairsOf a ++ pairsOf b
+private def pairs67 (l : List B) : List (Nat × BT) :=
+  (l.flatMap fun t => (bVal t).toL.flatMap pairsOf).eraseDups
+
+-- 母集団が §66 のものと同じであることの確認。
+#guard popNF67 3 6 == popNFB 3 6
+#guard (popNF67 3 6).length == 670
+#guard (popNF67 4 7).length == 5443
+#guard (popSt67 4 7).length == 1263
+#guard (popSt67 4 8).length == 6933
+#guard (popSt67 5 6).length == 251
+
+/-! **否定 1 — `nfB` は §66 の反例を避けない。** 段が 1 ずつしか上がらない添字から
+`ψ₁(ψ₃0)` が出る。`bArg` が段 2 の節を潰して段 3 の子を持ち上げるから。 -/
+
+#guard matB tbad 0 == [[0, 0], [1, 1], [1, 1], [2, 2], [3, 3]]
+#guard nfB tbad
+#guard !(stdB tbad)
+#guard Trans.Recal.Test.showRaw (bVal tbad) == "D_0 (D_1 0,D_1 D_3 0)"
+#guard (bVal tbad).toL.length == 1
+#guard !(BT.isStd (bVal tbad))
+#guard !(inT (vOf tbad))
+--   落ちる場所はちょうど §66 の `badArg`。
+#guard (BT.D 1 (BT.D 3 BT.zero)) == badArg
+#guard !(inT (dict (BT.D 0 (BT.sum (BT.D 1 BT.zero) (BT.D 1 (BT.D 3 BT.zero))))))
+--   `nfB` の母集団 (段 0..3・節 ≤ 6) では 5443 個中 143 個が落ち、最小は 5 節でちょうど 5 個。
+#guard ((popNF67 4 7).filter fun t => !(inT (vOf t))).length == 143
+#guard (((popNF67 4 7).filter fun t => !(inT (vOf t))).map sizeB).foldl min 99 == 5
+#guard (((popNF67 4 7).filter fun t => !(inT (vOf t))).filter fun t => sizeB t == 5).length == 5
+#guard ((popNF67 4 7).filter fun t => !(inT (vOf t))).any (· == tbad)
+--   `BT.isStd (bVal ·)` は `nfB` の上では 5443 個中 3933 個で落ちる。
+#guard ((popNF67 4 7).filter fun t => !(BT.isStd (bVal t))).length == 3933
+
+/-! **否定 2 — §66 の「443 成分のうち 280 が標準でない」は `nfB` の母集団の話。**
+`RegS` は `stdB`。同じ `popNFB 3 6` を `stdB` で絞ると 235 個・成分 163 個・非標準 0 個。 -/
+
+#guard ((popNF67 3 6).flatMap fun t => (bVal t).toL).eraseDups.length == 443
+#guard (((popNF67 3 6).flatMap fun t => (bVal t).toL).eraseDups.filter
+  fun a => !(BT.isStd a)).length == 280
+#guard ((popNF67 3 6).filter stdB).length == 235
+#guard (((popNF67 3 6).filter stdB).flatMap fun t => (bVal t).toL).eraseDups.length == 163
+#guard ((((popNF67 3 6).filter stdB).flatMap fun t => (bVal t).toL).eraseDups.filter
+  fun a => !(BT.isStd a)).length == 0
+
+/-! **否定 3 — §66.2 の `KsetBigOK` は領域に届かない。** 領域の 1327 対のうち
+`psiIdxOKb` は 0 個落ち、`bigOKb` は 33 個落ちる。最小の落ち方が `tBig`。 -/
+
+#guard (pairs67 (popSt67 4 7)).length == 1327
+#guard ((pairs67 (popSt67 4 7)).filter fun p => !(psiIdxOKb p.1 (dict p.2))).length == 0
+#guard ((pairs67 (popSt67 4 7)).filter fun p => !(bigOKb p.1 (dict p.2))).length == 33
+--   強臨界枝は領域でも実際に点火する (1327 対のうち 626 対) ので、`noSC` の逃げ道はない。
+#guard ((pairs67 (popSt67 4 7)).filter fun p => !(noSCb p.1 (dict p.2))).length == 626
+--   `tBig` は領域の添字で、その値の `ψ₀` の引数が `aBig`。
+#guard matB tBig 0 == [[0, 0], [1, 1], [2, 2], [3, 3], [2, 0]]
+#guard nfB tBig && stdB tBig
+#guard Trans.Recal.Test.showRaw (bVal tBig) == "D_0 (D_3 0,D_1 (D_3 0,D_0 0))"
+#guard BT.isStd (BT.D 0 aBig)
+#guard psiIdxOKb 0 (dict aBig)
+#guard !(bigOKb 0 (dict aBig))
+#guard inT (dict (BT.D 0 aBig))
+
+/-! **否定 4 — `nfB` では 2.1(vi) 自身も落ちる。** 段 0..3・節 ≤ 6 の `nfB` 母集団の
+`bVal` 成分の中の 5013 対のうち 128 対で `psiIdxOKb` が偽。`stdB` に絞ると 0 個。 -/
+
+#guard (pairs67 (popNF67 4 7)).length == 5013
+#guard ((pairs67 (popNF67 4 7)).filter fun p => !(psiIdxOKb p.1 (dict p.2))).length == 128
+
+/-! **肯定 1 — 領域の不変量 `RegionStdSum`。** 3 つの母集団と表の 877 行列で 0 失敗。
+`RegionStd` はこれから `regionStd_of_sum` で出る。**証明ではない。** -/
+
+#guard ((popSt67 4 7).filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard ((popSt67 4 8).filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard ((popSt67 5 6).filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard popB.length == 877
+#guard (popB.filterMap decodeB).length == 877
+#guard ((popB.filterMap decodeB).filter fun t => !(stdB t)).length == 0
+#guard ((popB.filterMap decodeB).filter fun t => !(BT.isStd (bVal t))).length == 0
+
+/-! **肯定 2 — 結論そのもの。** 同じ母集団で `inT (vOf t)` が 0 失敗。`inT_vOf_std` が
+主張するのはこれで、(S1)(S2) を仮定して証明されている。 -/
+
+#guard ((popSt67 4 7).filter fun t => !(inT (vOf t))).length == 0
+#guard ((popSt67 4 8).filter fun t => !(inT (vOf t))).length == 0
+#guard ((popSt67 5 6).filter fun t => !(inT (vOf t))).length == 0
+#guard ((popB.filterMap decodeB).filter fun t => !(inT (vOf t))).length == 0
+
+/-! **肯定 3 — (S1) `PsiIdxOKStd` の再測定、段 3 を入れた母集団で。** §66 の
+`ccorp` は添字 0..3 で 1761 項。`BT.isStd (ψ_u a)` を課すと `u = 0,1,2,3` で 0 失敗。
+領域の 1327 対はすべて `BT.isStd (ψ_u b)` を満たす。 -/
+
+#guard ((pairs67 (popSt67 4 7)).filter fun p => !(BT.isStd (BT.D p.1 p.2))).length == 0
+#guard ((pairs67 (popNF67 4 7)).filter fun p => !(BT.isStd (BT.D p.1 p.2))).length == 3630
+
+end
+
+/-! ### §67.6 公理 -/
+
 end Evidence.Region

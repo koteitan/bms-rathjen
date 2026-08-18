@@ -1161,10 +1161,24 @@ nfB t   ⟺   どの節も、その段は親の段 + 1 以下
               (反例には 3 が要る)。**§65 の `_of_gap3` 2 つは空虚**である
             - ✅ 追跡は買えた (§66 `Kset_scanSt_big`、仮定ゼロ)。2.1(vi) の
               5 連言のうち 4 つも定理 (`psiIdxOK_iff_ksetIdxOK`)
-            - 🚨 直しは**領域に絞ること**。反例の添字は `(0,0)(1,1)(2,3)` で
+            - 🚨 直しは**領域に絞ること** (§67)。反例の添字は `(0,0)(1,1)(2,3)` で
               段が親 + 1 を超えるので `nfB` ではない — **領域は最初から安全**である。
-              領域の 443 個の成分は `psiIdxOKb` も `bigOKb` も u = 0..3 で 0 失敗。
-              ただし `BT.isStd` では足りない (443 個中 280 個が `isStd` でない)
+              §67 で §63 の消費者 4 つを**領域の仮説 2 つの上に引き直した**
+              (`inT_vOf_std`・`vOf_succ_std`・`lt_vOf_succ_std`・`hsuccS_supply_std`)。
+              残る仮定は
+
+              ```
+              PsiIdxOKStd  BT.isStd (D u a) → PsiIdxOK u (dict a)
+              RegionStd    stdB t → bVal t の成分はすべて BT.isStd
+              ```
+
+              - ❌ `nfB` だけでは足りない — `nfB t → BT.isStd (bVal t)` は偽
+                (`not_isStd_bVal_nfB`)。`stdB` が要る
+              - ❌ §66 の十分条件 `KsetBigOK` は**領域に届かない**
+                (`not_ksetBigOK_dict`)。反例は `(0,0)(1,1)(2,0)(3,2)(4,3)` の値で、
+                `psiIdxOKb` は真なのに `bigOKb` が偽。§66 が「真に強い」と
+                測っていたとおりだった
+              - 🚨 残りはその 2 つの証明
             - 途中で出た 2 つ: `subAP` の単調性に要るのは `w ≤ x` (小さい側) だけ、
               そして `w ∈ SC` は `subAP` には要らない —
               消費するのは `lt_logOm_of_sc` のただ 1 箇所である
