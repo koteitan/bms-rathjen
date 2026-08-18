@@ -32769,4 +32769,641 @@ end
 
 /-! ### §79.10 公理 -/
 
+/-! ## §80 THE `aV` SIDE — THE COEFFICIENT DROPS OUT, AND WHAT IS LEFT SITS ABOVE `Ω₁`
+
+§78 proved (K4), narrowed the whole `K`-gate to one clause `LocalK2_78`, split it at `aV` and
+`cV`, and measured that **all 87 failures are the `aV` side**.  §80 attacks that side.  It
+does not close it.  What it does is take the clause apart until the part that is genuinely
+open is one comparison about one `ψ`-argument, prove everything else, and say — with a
+theorem, not a measurement — that nothing was given away in the taking apart.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §80.1  **THE COEFFICIENT DROPS OUT.**  `Δ = W^(aV ⊖ W)·cV`, and the coefficient never
+         contributes: `le_powOf_ddOf80` is `W^(aV ⊖ W) ≤ Δ` and needs nothing but `cV ≠ 0`.
+         The proof is `ω^·` monotone (§65.3) under `e ≤ e ⊕ log cV₀` (§65.4), then "a sum
+         dominates its HEAD" — which is `lt_atom_add`, clause 2.3.11, and **not** §75.1's
+         `le_ofList_append75`: §75 needed the tail dominated, here it is the head.
+         `wcnf_snd_ne_zero80` supplies `cV ≠ 0` for every pair the scan emits — `wC` is an
+         `ω`-power, and the merging branch `plus (wC w p) c'` survives because `s ⊕ t = 0`
+         forces `s = 0` (§78.1's argument, re-derived).  **Measured: 0 disagreements on 635
+         firing pairs.**  `localK2Fst_of_pow80` is the resulting coefficient-free residual.
+
+  §80.2  **THE RESIDUAL, COEFFICIENT-FREE.**  `LocalK2Pow_80` is `LocalK2Fst_78` with `Δ`
+         replaced by `W^(aV ⊖ W)`, and `localK2Fst_of_pow80` is the implication.  One of the
+         two factors of the right-hand side is gone for good.
+
+  §80.3  **EVERY `K`-ELEMENT BELOW `Ω₁` IS FREE.**  `lt_dd_of_lt_reg80` — no side condition at
+         all: if `y ∈ K_{Ω₁} aV` and `y < Ω₁` then `y < Δ`.  Two cases, and both are
+         forcings: either `aV ⊖ Ω₁ = 0`, and then §78.1's `subAP`/`Kset` forcing makes
+         `K_{Ω₁} aV` EMPTY, or it is not, and then `Ω₁ = ω^{Ω₁} ≤ W^(aV ⊖ Ω₁) ≤ Δ`.
+         **458 of the 635 firing steps, and 89 of the 102 inside the region, close on this
+         lemma alone.**  The same lemma NAMES the `cV` side: `localK2Snd_of_below80` derives
+         §78's `LocalK2Snd_78` from `LocalKSndBelow_80` — *if `K_{Ω₁} cV` is non-empty then
+         `aV ⊖ Ω₁ ≠ 0` and its elements lie below `Ω₁`* — which is a HYPOTHESIS, not a
+         theorem, and §80.7 measures where it breaks.
+
+  §80.4  **SO THE `aV` SIDE IS EXACTLY ITS RESTRICTION TO `Ω₁ ≤ y`.**  `localK2Fst_iff_big80`
+         is an **equivalence**, not a reduction: `LocalK2Fst_78 ↔ LocalK2Big_80`.  What is
+         left to prove has shrunk from every `K`-element of 635 pairs to the 177 steps that
+         carry an element `≥ Ω₁` — and an element of `K_{Ω₁}` above `Ω₁` is, by
+         [Rathjen, 1991] 2.2(vi), the ARGUMENT of a `ψ_π` with `Ω₁ ≤ π` sitting inside `aV`.
+         The open statement is therefore exactly: *a collapsing function occurring inside `aV`
+         has its argument below `Ω₁^{aV ⊖ Ω₁}`* — the transport of Buchholz's `G(a,0) < a`
+         that §68, §72, §73, §75 and §78 all named, now with nothing else attached to it.
+         `LocalK2BigPow_80` applies both reductions at once and is the smallest residual;
+         `certIn_t326_big80` re-derives row 326's certificate on top of it.
+
+  §80.5  **THE COEFFICIENT-FREE DECIDER.**  `k2fb80` never looks at `cV`, and
+         `localK2FstT_of_b80` turns it into the `aV` half of the clause for one term — a guard
+         IS a proof, as in §78.4.  Frozen on §78's two witnesses, both with a non-empty
+         `K_{Ω₁} aV`: a `ψ`-nesting-9 tower and a width-2 sum.
+
+  §80.6  **THE NEGATIVE THEOREM.**  `not_pow80_bad80` — see the measurement below.
+
+WHAT IS **NOT** CLAIMED.  `LocalK2Fst_78` is NOT proved; neither is `LocalK2Snd_78`, and
+`LocalKSndBelow_80` is a hypothesis.  `certIn_t326_big80` re-derives row 326's certificate
+from `LocalK2Big_80` and `LocalK2Snd_78` in place of §78's `LocalK2_78`, and that is the same
+strength, not less: the equivalence above says so.  What §80 changes is the SHAPE of what is
+left, and how much of the corpus still has to be looked at.  Nothing here proves
+`DictHeadLt77`, `CofDenseS1` or `BCofIn71`.
+
+WHAT THE MEASUREMENT SAYS (§80.7 gives the construction: §78.5's three populations verbatim,
+plus one new group built to answer §80's own question).  **The negative results first.**
+
+  * **The residual is not a fact about 𝔗(M).**  `bad80 = Ω₁ ⊕ ψ_{Ω₁}(Ω₂)` is a 𝔗(M) term
+    with `Ω₁ ≤ bad80` and `K_{Ω₁} bad80 = {Ω₂}`, and `Ω₂` reaches neither `W^(bad80 ⊖ Ω₁)`
+    nor `Δ`.  `not_pow80_bad80` freezes it.  **So no proof of `LocalK2Big_80` can go through
+    the pair `(aV, cV)` alone** — it must consume `dict` and `BT.isStd`, and §80 says exactly
+    which consumption is left.
+  * **The residual cannot be sharpened.**  On the 635 steps, `y < ω^{Ω₁·(aV ⊖ Ω₁)}` fails 87
+    times — all outside the region — while dropping the `ω^·` costs 40 more: both
+    `y < Ω₁·(aV ⊖ Ω₁)` and §73.7's `y < aV` fail **127** times.  The exponentiation is
+    load-bearing, and §73's comparison against `aV` is still the wrong one.
+  * **The `Ω₁`-bound on the `cV` side breaks the moment the level bound does.**
+    `LocalKSndBelow_80` holds at all 443 firing steps whose term satisfies `btLe72 1` and
+    fails at 3 of the 206 new steps, every one of them on a term with `btLe72 1 = false` and
+    `btLe72 2 = true`.  The `cV` clause ITSELF (`K_{Ω₁} cV < Δ`) still holds at all 635.
+  * **The level bound is not what carries (K2').**  The new group is 223 Buchholz-standard
+    terms, and 192 of them have `ψ₂` inside, so they break `btLe72 1`; (K2') and (K4) fail at
+    **0** of their 206 firing steps, while §73.7's (K2) fails at 35.  §78 saw this on 51
+    bumped terms; at 223, with three widths, it is not an artefact.  **`BT.isStd` is the side
+    condition; the level bound is scaffolding.**
+
+  The positive side.  The `K`-sets are not idle anywhere the theorems are used: `K_{Ω₁} aV` is
+  non-empty at 68 of the 206 new steps and at every one of them carries an element `≥ Ω₁`;
+  the residual is non-vacuous at 177 of the 635 steps and at 13 of the region's 102.  The 11
+  steps with `aV ⊖ Ω₁ = 0` — the branch §80.2 forces — have BOTH `K`-sets empty, which is why
+  §80.4's hypothesis is not contradictory.  Replacing `Δ` by `W^(aV ⊖ Ω₁)` changes no verdict
+  at any of the 635.
+-/
+
+/-! ### §80.1 係数は落ちる — `W^(aV ⊖ W) ≤ Δ` -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ofList l = 0` は列が空か `[0]` のときだけ (§78.1 と同じ、`private` なので引き直す)。 -/
+private theorem ofList_eq_zero80 : ∀ (l : List Term), ofList l = zero → l = [] ∨ l = [zero]
+  | [], _ => Or.inl rfl
+  | [a], h => Or.inr (by rw [show a = zero from h])
+  | _ :: _ :: _, h => absurd h (by intro hc; exact Term.noConfusion hc)
+
+/-- `s ⊕ t = 0` なら両方 `0` (§78.1 と同じ)。 -/
+private theorem plus_eq_zero80 {s t : Term} (ht : inT t = true) (h : plus s t = zero) :
+    s = zero ∧ t = zero := by
+  cases hl : toList t with
+  | nil => rw [plus_nil hl] at h; exact ⟨h, toList_eq_nil t hl⟩
+  | cons b1 r =>
+    exfalso
+    rw [plus_cons66 hl] at h
+    have hb1 : b1 ∈ (toList s).filter (fun a => le b1 a) ++ (b1 :: r) :=
+      List.mem_append.mpr (Or.inr (List.Mem.head _))
+    rcases ofList_eq_zero80 _ h with h2 | h2
+    · rw [h2] at hb1; cases hb1
+    · rw [h2] at hb1
+      have hz : b1 = zero := List.mem_singleton.mp hb1
+      have hap : b1.isAP = true := inTL_isAP ht b1 (by rw [hl]; exact List.Mem.head _)
+      rw [hz] at hap
+      exact Bool.noConfusion hap
+
+/-- **和はその先頭成分以上。** §12 の 2.3.11 (`lt_atom_add`) そのもの — §75.1 が要った
+    「和は右の被加数以上」の反対側で、こちらは 1 行で済む。 -/
+private theorem le_head_ofList80 {x : Term} (hx : x.isAP = true) :
+    ∀ (r : List Term), le x (ofList (x :: r)) = true
+  | [] => Evidence.WF.le_self x
+  | y :: t => by
+      show ((x == add x (ofList (y :: t))) || lt x (add x (ofList (y :: t)))) = true
+      rw [lt_atom_add (isAtom_of_isAP hx), Evidence.WF.le_self]
+      exact Bool.or_true _
+
+/-- **`ω^e ≤ e·c`。** 係数が `0` でなければ、`e·c` の先頭成分が `ω^e` を超える。 -/
+theorem le_pow_mulL80 {e c : Term} (he : inT e = true) (hc : inT c = true) (hcz : c ≠ zero) :
+    le (omegaNF e) (mulL e c) = true := by
+  cases hl : toList c with
+  | nil => exact absurd (toList_eq_nil c hl) hcz
+  | cons p rest =>
+    have hp : inT p = true := inTL_inT hc p (by rw [hl]; exact List.Mem.head _)
+    have hmul : mulL e c = ofList (omegaNF (plus e (logOm p)) ::
+        rest.map (fun q => omegaNF (plus e (logOm q)))) := by
+      show ofList ((toList c).map _) = _
+      rw [hl, List.map_cons]
+    have h1 : le (omegaNF e) (omegaNF (plus e (logOm p))) = true := by
+      refine omegaNF_mono_inT he (inT_plus he (inT_logOm hp)) ?_
+      have h2 := plus_mono_right_inT e he zero (logOm p) inT_zero (inT_logOm hp)
+        (le_zero_left _)
+      rwa [plus_nil (show toList (zero : Term) = [] from rfl)] at h2
+    have h3 : le (omegaNF (plus e (logOm p))) (mulL e c) = true := by
+      rw [hmul]; exact le_head_ofList80 (isAP_omegaNF _) _
+    exact le_trans_inT (inT_omegaNF he) (inT_omegaNF (inT_plus he (inT_logOm hp)))
+      (inT_mulL mulDescInT he hc) h1 h3
+
+/-- `w` が `ω^w = w` を満たすなら `w ≤ w·s`。 -/
+theorem le_self_mulL80 {w s : Term} (hw : inT w = true) (hnf : omegaNF w = w)
+    (hs : inT s = true) (hsz : s ≠ zero) : le w (mulL w s) = true := by
+  have h := le_pow_mulL80 hw hs hsz
+  rwa [hnf] at h
+
+/-- `Δ` から係数を落とした量 `W^(aV ⊖ W)`。 -/
+def powOf80 (w : Term) (ac : Term × Term) : Term := omegaNF (mulL w (subAP w ac.1))
+
+theorem inT_powOf80 {w : Term} (hw : inT w = true) {ac : Term × Term} (h1 : inT ac.1 = true) :
+    inT (powOf80 w ac) = true :=
+  inT_omegaNF (inT_mulL mulDescInT hw (inT_subAP h1))
+
+/-- **§80.1 の主定理 — 係数は落ちる。** `W^(aV ⊖ W) ≤ Δ`。 -/
+theorem le_powOf_ddOf80 {w : Term} (hw : inT w = true) {ac : Term × Term}
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hz : ac.2 ≠ zero) :
+    le (powOf80 w ac) (ddOf75 w ac) = true :=
+  le_pow_mulL80 (inT_mulL mulDescInT hw (inT_subAP h1)) h3 hz
+
+/-- **`wcnf` の係数は `0` にならない。** `wC` は `ω^·`、併合の枝は `s ⊕ t = 0 → s = 0`。 -/
+theorem wcnf_snd_ne_zero80 {w : Term} : ∀ (L : List Term), inTL L = true →
+    ∀ ac ∈ (wcnf w L).1, inT ac.2 = true ∧ ac.2 ≠ zero := by
+  intro L
+  induction L with
+  | nil => intro _ ac hac; cases hac
+  | cons p rest ih =>
+    intro hc ac hac
+    obtain ⟨⟨_, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have IH := ih hcr
+    have hC : inT (wC w p) = true := inT_wC hip
+    have hCz : wC w p ≠ zero :=
+      show omegaNF (ofList ((toList (logOm p)).filter (fun q => lt q w))) ≠ zero from
+        omegaNF_ne_zero76 _
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp] at hac; cases hac
+    · have hlp' : lt p w = false := bool_false hlp
+      rw [wcnf_cons_ge hlp'] at hac
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at hac IH
+        cases fst with
+        | nil =>
+          rw [List.mem_singleton.mp hac]
+          exact ⟨hC, hCz⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac0 := IH (a', c') (List.Mem.head _)
+            by_cases heq : (wA w p == a') = true
+            · rw [show ((if (wA w p == a') = true
+                  then ((wA w p, plus (wC w p) c') :: ps, snd)
+                  else ((wA w p, wC w p) :: (a', c') :: ps, snd))).1
+                = ((wA w p, plus (wC w p) c') :: ps) from by rw [if_pos heq]] at hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]
+                exact ⟨inT_plus hC hac0.1, fun hz => hCz (plus_eq_zero80 hac0.1 hz).1⟩
+              · exact IH ac (List.Mem.tail _ h)
+            · rw [show ((if (wA w p == a') = true
+                  then ((wA w p, plus (wC w p) c') :: ps, snd)
+                  else ((wA w p, wC w p) :: (a', c') :: ps, snd))).1
+                = ((wA w p, wC w p) :: (a', c') :: ps) from by rw [if_neg heq]] at hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]; exact ⟨hC, hCz⟩
+              · exact IH ac h
+
+end
+
+/-! ### §80.2 係数なしの残余 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 残る条項の `aV` 側、`Δ` の代わりに `W^(aV ⊖ W)` と比べる形。 -/
+def LocalK2Pow_80 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.1 → lt y (powOf80 (reg 1) ac) = true
+
+/-- **係数なしの形で十分。** §78 の `LocalK2Fst_78` が出る。 -/
+theorem localK2Fst_of_pow80 (H : LocalK2Pow_80) : LocalK2Fst_78 := by
+  intro a hb hs hi hl ac hac hle y hy
+  obtain ⟨hc, hd⟩ := inT_toList (dict a) hi
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hc hd
+    (ltM_toList (dict a) hi hl)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hz := (wcnf_snd_ne_zero80 (toList (dict a)) hc ac hac).2
+  exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.1 hi1 _ y hy))
+    (inT_le_fragR _ (inT_powOf80 (inT_reg 1) hi1))
+    (inT_le_fragR _ (inT_ddOf75 (inT_reg 1) hi1 hi2))
+    (H a hb hs hi hl ac hac hle y hy)
+    (le_powOf_ddOf80 (inT_reg 1) hi1 hi2 hz)
+
+end
+
+/-! ### §80.3 `Ω₁` より下の `K` の元はただ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+private theorem ofList_eq_zero80' : ∀ (l : List Term), ofList l = zero → l = [] ∨ l = [zero]
+  | [], _ => Or.inl rfl
+  | [a], h => Or.inr (by rw [show a = zero from h])
+  | _ :: _ :: _, h => absurd h (by intro hc; exact Term.noConfusion hc)
+
+/-- `subAP w h = 0` なら成分列は空か `[w]` (§78.1 と同じ)。 -/
+private theorem subAP_eq_zero80 {w t : Term} (ht : inT t = true) (h : subAP w t = zero) :
+    toList t = [] ∨ toList t = [w] := by
+  cases hl : toList t with
+  | nil => exact Or.inl rfl
+  | cons p r =>
+    have h1 : (if p == w then ofList r else t) = zero := by
+      rw [show subAP w t = (match toList t with
+            | [] => zero
+            | q :: rest => if q == w then ofList rest else t) from rfl, hl] at h
+      exact h
+    by_cases hp : (p == w) = true
+    · rw [if_pos hp] at h1
+      rcases ofList_eq_zero80' r h1 with h2 | h2
+      · refine Or.inr ?_
+        rw [h2, of_decide_eq_true hp]
+      · exfalso
+        have hap : (zero : Term).isAP = true :=
+          inTL_isAP ht zero (by rw [hl, h2]; exact List.Mem.tail _ (List.Mem.head _))
+        exact Bool.noConfusion hap
+    · rw [if_neg hp] at h1
+      exfalso
+      rw [h1] at hl
+      exact List.cons_ne_nil _ _ (show ([] : List Term) = p :: r from hl).symm
+
+/-- 成分列が空か `[Ω_{u+1}]` なら `K_{Ω_{u+1}}` は空 (§78.1 と同じ)。 -/
+private theorem kset_nil_of_toList80 {u : Nat} {t : Term}
+    (h : toList t = [] ∨ toList t = [reg (u+1)]) : ∀ y, y ∈ Kset (reg (u+1)) t → False := by
+  intro y hy
+  rw [Kset_eq_KsetL] at hy
+  rcases h with h | h
+  · rw [h] at hy
+    obtain ⟨a, ha, _⟩ := (mem_KsetL_iff _ y _).mp hy
+    cases ha
+  · rw [h] at hy
+    obtain ⟨a, ha, hya⟩ := (mem_KsetL_iff _ y _).mp hy
+    rw [List.mem_singleton.mp ha] at hya
+    exact mem_Kset_reg (u+1) hya
+
+/-- `ω^{Ω₁} = Ω₁`。 -/
+theorem omegaNF_reg1_80 : omegaNF (reg 1) = reg 1 := by rfl
+
+/-- `aV ⊖ W ≠ 0` なら `Ω_{u+1} ≤ W^(aV ⊖ W)`。 -/
+theorem le_reg_powOf80 {u : Nat} {ac : Term × Term} (hnf : omegaNF (reg (u+1)) = reg (u+1))
+    (h1 : inT ac.1 = true) (hs : subAP (reg (u+1)) ac.1 ≠ zero) :
+    le (reg (u+1)) (powOf80 (reg (u+1)) ac) = true := by
+  have h2 : le (reg (u+1)) (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) = true :=
+    le_self_mulL80 (inT_reg (u+1)) hnf (inT_subAP h1) hs
+  have h3 := omegaNF_mono_inT (inT_reg (u+1))
+    (inT_mulL mulDescInT (inT_reg (u+1)) (inT_subAP h1)) h2
+  rwa [hnf] at h3
+
+/-- **§80.3 の主定理 — `Ω_{u+1}` より下の `K` の元はただ。**  側条件はいっさい要らない。
+    `aV ⊖ W = 0` なら `K_{Ω_{u+1}} aV` はそもそも空、そうでなければ `Ω_{u+1} ≤ W^(aV ⊖ W) ≤ Δ`。 -/
+theorem lt_dd_of_lt_reg80 {u : Nat} {ac : Term × Term} (hnf : omegaNF (reg (u+1)) = reg (u+1))
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hz : ac.2 ≠ zero) {y : Term}
+    (hy : y ∈ Kset (reg (u+1)) ac.1) (hlt : lt y (reg (u+1)) = true) :
+    lt y (ddOf75 (reg (u+1)) ac) = true := by
+  by_cases hs : subAP (reg (u+1)) ac.1 = zero
+  · exact (kset_nil_of_toList80 (subAP_eq_zero80 h1 hs) y hy).elim
+  · have hyi : inT y = true := inT_mem_Kset75 ac.1 h1 _ y hy
+    have hleT : le (reg (u+1)) (ddOf75 (reg (u+1)) ac) = true :=
+      le_trans_inT (inT_reg (u+1)) (inT_powOf80 (inT_reg (u+1)) h1)
+        (inT_ddOf75 (inT_reg (u+1)) h1 h3)
+        (le_reg_powOf80 hnf h1 hs) (le_powOf_ddOf80 (inT_reg (u+1)) h1 h3 hz)
+    exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR _ (inT_reg (u+1)))
+      (inT_le_fragR _ (inT_ddOf75 (inT_reg (u+1)) h1 h3)) hlt hleT
+
+/-- `cV` 側を落とすための仮説 — `K_{Ω₁} cV` が空でないなら `aV ⊖ Ω₁ ≠ 0` で、しかも
+    その元は `Ω₁` より下。**定理ではない** — §80.7 が段の上限を外すと 3 歩で破れることを測る。 -/
+def LocalKSndBelow_80 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.2 →
+        subAP (reg 1) ac.1 ≠ zero ∧ lt y (reg 1) = true
+
+/-- **`cV` 側は「`Ω₁` より下」から出る。** §78 が測った易しい方の半分の、正確な内訳。 -/
+theorem localK2Snd_of_below80 (H : LocalKSndBelow_80) : LocalK2Snd_78 := by
+  intro a hb hs hi hl ac hac hle y hy
+  obtain ⟨hc, hd⟩ := inT_toList (dict a) hi
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hc hd
+    (ltM_toList (dict a) hi hl)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hz := (wcnf_snd_ne_zero80 (toList (dict a)) hc ac hac).2
+  obtain ⟨hsz, hlt⟩ := H a hb hs hi hl ac hac hle y hy
+  have hyi : inT y = true := inT_mem_Kset75 ac.2 hi2 _ y hy
+  have hleT : le (reg 1) (ddOf75 (reg 1) ac) = true :=
+    le_trans_inT (inT_reg 1) (inT_powOf80 (inT_reg 1) hi1)
+      (inT_ddOf75 (inT_reg 1) hi1 hi2)
+      (le_reg_powOf80 omegaNF_reg1_80 hi1 hsz) (le_powOf_ddOf80 (inT_reg 1) hi1 hi2 hz)
+  exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR _ (inT_reg 1))
+    (inT_le_fragR _ (inT_ddOf75 (inT_reg 1) hi1 hi2)) hlt hleT
+
+end
+
+/-! ### §80.4 残るのは `Ω₁` 以上の `ψ` の引数ひとつ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 残る条項 — `K` の元のうち `Ω₁` 以上のものだけ。**結論は `Δ` のまま**なので、
+    これは `LocalK2Fst_78` を弱めた形になっている。 -/
+def LocalK2Big_80 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.1 → le (reg 1) y = true →
+        lt y (ddOf75 (reg 1) ac) = true
+
+/-- 両方の縮約をかけた最小の残余 — `Ω₁` 以上の元だけ、しかも係数なし。 -/
+def LocalK2BigPow_80 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.1 → le (reg 1) y = true →
+        lt y (powOf80 (reg 1) ac) = true
+
+/-- `Ω₁` 以上でない元は §80.3 が片づける。 -/
+private theorem k2Fst_of_big_aux80 {x : Term} (hi : inT x = true) (hl : lt x M = true)
+    {ac : Term × Term} (hac : ac ∈ (wcnf (reg 1) (toList x)).1)
+    {y : Term} (hy : y ∈ Kset (reg 1) ac.1)
+    (Hbig : le (reg 1) y = true → lt y (ddOf75 (reg 1) ac) = true) :
+    lt y (ddOf75 (reg 1) ac) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hi
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList x) hc hd
+    (ltM_toList x hi hl)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hz := (wcnf_snd_ne_zero80 (toList x) hc ac hac).2
+  have hyi : inT y = true := inT_mem_Kset75 ac.1 hi1 _ y hy
+  by_cases hlt : lt y (reg 1) = true
+  · exact lt_dd_of_lt_reg80 omegaNF_reg1_80 hi1 hi2 hz hy hlt
+  · refine Hbig ?_
+    rcases lt_comparable_inT hyi (inT_reg 1) with h | h | h
+    · exact absurd h hlt
+    · rw [h]; exact Evidence.WF.le_self _
+    · show ((reg 1 == y) || lt (reg 1) y) = true
+      rw [h]; exact Bool.or_true _
+
+/-- **§80.4 の主定理。** `Ω₁` 以上の元だけ相手にすれば `aV` 側は出る。 -/
+theorem localK2Fst_of_big80 (H : LocalK2Big_80) : LocalK2Fst_78 := fun a hb hs hi hl ac hac hle y hy =>
+  k2Fst_of_big_aux80 hi hl hac hy (H a hb hs hi hl ac hac hle y hy)
+
+/-- 逆も自明 — だから残余は `Ω₁` 以上の元についての条項と**同値**。 -/
+theorem localK2Big_of_fst80 (H : LocalK2Fst_78) : LocalK2Big_80 :=
+  fun a hb hs hi hl ac hac hle y hy _ => H a hb hs hi hl ac hac hle y hy
+
+/-- **`aV` 側は `Ω₁` 以上の `K` の元についての条項と同値。** -/
+theorem localK2Fst_iff_big80 : LocalK2Fst_78 ↔ LocalK2Big_80 :=
+  ⟨localK2Big_of_fst80, localK2Fst_of_big80⟩
+
+/-- 最小の残余からも `aV` 側は出る — 係数を落とした形。 -/
+theorem localK2Fst_of_bigPow80 (H : LocalK2BigPow_80) : LocalK2Fst_78 := by
+  intro a hb hs hi hl ac hac hle y hy
+  refine k2Fst_of_big_aux80 hi hl hac hy (fun hge => ?_)
+  obtain ⟨hc, hd⟩ := inT_toList (dict a) hi
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hc hd
+    (ltM_toList (dict a) hi hl)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hz := (wcnf_snd_ne_zero80 (toList (dict a)) hc ac hac).2
+  exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.1 hi1 _ y hy))
+    (inT_le_fragR _ (inT_powOf80 (inT_reg 1) hi1))
+    (inT_le_fragR _ (inT_ddOf75 (inT_reg 1) hi1 hi2))
+    (H a hb hs hi hl ac hac hle y hy hge)
+    (le_powOf_ddOf80 (inT_reg 1) hi1 hi2 hz)
+
+/-- 二つに割った残余から §78 の一条項。 -/
+theorem localK2_of_big80 (H1 : LocalK2Big_80) (H2 : LocalK2Snd_78) : LocalK2_78 :=
+  localK2_of_split78 (localK2Fst_of_big80 H1) H2
+
+/-- 326 行目の証明書 — `K` の側で待つのは `Ω₁` 以上の元についての条項と、
+    §78 が「破れない」と測った `cV` 側だけ。 -/
+theorem certIn_t326_big80 (H1 : LocalK2Big_80) (H2 : LocalK2Snd_78) (HD : DictHeadLt77)
+    (HCD : CofDenseS1) (HBC : BCofIn71) (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_k2_78 (localK2_of_big80 H1 H2) HD HCD HBC hacc
+
+end
+
+/-! ### §80.5 判定器 — 係数を見ない形 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 係数を見ない判定器 — `aV` 側だけ。 -/
+def k2fb80 (u : Nat) (x : Term) : Bool :=
+  (wcnf (reg (u+1)) (toList x)).1.all fun ac =>
+    !(le (reg (u+1)) ac.1) ||
+      ((Kset (reg (u+1)) ac.1).all fun y => lt y (powOf80 (reg (u+1)) ac))
+
+/-- 一項ぶんの `aV` 側の条項。 -/
+def LocalK2FstT_80 (u : Nat) (x : Term) : Prop :=
+  ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = true →
+    ∀ y, y ∈ Kset (reg (u+1)) ac.1 → lt y (ddOf75 (reg (u+1)) ac) = true
+
+/-- **判定器は証明。** 係数を見ない判定器から `aV` 側の条項が出る。 -/
+theorem localK2FstT_of_b80 {u : Nat} {x : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (h : k2fb80 u x = true) : LocalK2FstT_80 u x := by
+  intro ac hac hle y hy
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd
+    (ltM_toList x hx hlx)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hz := (wcnf_snd_ne_zero80 (toList x) hc ac hac).2
+  have hall := List.all_eq_true.mp h ac hac
+  rw [hle, Bool.not_true, Bool.false_or] at hall
+  exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.1 hi1 _ y hy))
+    (inT_le_fragR _ (inT_powOf80 (inT_reg (u+1)) hi1))
+    (inT_le_fragR _ (inT_ddOf75 (inT_reg (u+1)) hi1 hi2))
+    (List.all_eq_true.mp hall y hy)
+    (le_powOf_ddOf80 (inT_reg (u+1)) hi1 hi2 hz)
+
+/-- 凍結 (深さ) — §78.5 の `ψ` の入れ子 9 段の塔。`K_{Ω₁} aV` は空でない。 -/
+theorem localK2FstT_wOK78 : LocalK2FstT_80 0 (dict wOK78) :=
+  localK2FstT_of_b80 (by decide) (by decide) (by decide)
+
+/-- 凍結 (幅) — §78.5 の二項和。 -/
+theorem localK2FstT_wWide78 : LocalK2FstT_80 0 (dict wWide78) :=
+  localK2FstT_of_b80 (by decide) (by decide) (by decide)
+
+end
+
+/-! ### §80.6 否定 — 残る条項は 𝔗(M) の項だけの事実ではない -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Ω₁ ⊕ ψ_{Ω₁}(Ω₂)` — 𝔗(M) の項で `Ω₁ ≤ ·`、`K_{Ω₁}` は `{Ω₂}`。 -/
+def bad80 : Term := add (reg 1) (psi (reg 1) (reg 2))
+
+/-- **§80.6 の主定理 — 残る条項は「対 `(aV, cV)`」だけからは出ない。**
+    `bad80` は 𝔗(M) の項で `Ω₁ ≤ bad80` だが `K_{Ω₁} bad80 = {Ω₂}` で、`Ω₂` は
+    `W^(bad80 ⊖ Ω₁)` にも `Δ` にも届かない。だから `LocalK2Big_80` の証明は
+    どこかで `dict`・`BT.isStd` を使わねばならない。 -/
+theorem not_pow80_bad80 :
+    inT bad80 = true ∧ le (reg 1) bad80 = true ∧
+    (Kset (reg 1) bad80 == [reg 2]) = true ∧
+    lt (reg 2) (powOf80 (reg 1) (bad80, TM.Term.one)) = false ∧
+    lt (reg 2) (ddOf75 (reg 1) (bad80, TM.Term.one)) = false :=
+  ⟨by decide, by decide, by decide, by decide, by decide⟩
+
+end
+
+
+/-! ### §80.7 測定 (凍結)
+
+**構成を先に書く。**  §78.5 の三つの母集団 — `pop78` (領域の中、129 個・102 歩)、
+`bmp78` (`ψ₀` を `ψ₂`・`ψ₃` に差し替えた 217 個・217 歩)、`nst78` (段の上限は満たすが
+標準でない 118 個・110 歩) — をそのまま使い、**§80 の問いに合わせて一群だけ足す**。
+
+`tri80 n` は長さ `n` の `{0,1,2}` 列、`T80 n` はそこから作った塔 `ψ_{p₁}…ψ_{p_n}0`。
+
+    H1  深さ  `T80 5` の塔ぜんぶ                       243 個  `ψ` の入れ子 5 段, 幅 1
+    H2  幅 2   `ψ₂ψ₁(x ⊕ y)`,  x,y ∈ T80 3            729 個  入れ子 5 段, 幅 2
+    H3  幅 3   `ψ₁(x ⊕ y ⊕ z)`,  x,y,z ∈ T80 2        729 個  入れ子 3 段, 幅 3
+    ------------------------------------------------------------------------------
+    hi80 = H1 ++ H2 ++ H3 のうち `ψ₀` をかぶせて標準なもの (重複を除く)
+                                                       223 個, 発火 206 歩
+
+**この群の狙いは段の上限を外すこと**で、`bmp78` と違って標準性は保つ。223 個のうち
+`btLe72 1` を満たすのは 31 個だけ — 残り 192 個は `ψ₂` を内側に持つ。四群あわせて
+**635 歩**、うち残余 (`Ω₁` 以上の `K` の元がある歩) は 177 歩。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 長さ `n` の `{0,1,2}` 列。 -/
+def tri80 : Nat → List (List Nat)
+  | 0 => [[]]
+  | k+1 => (tri80 k).flatMap fun l => [0 :: l, 1 :: l, 2 :: l]
+
+/-- `{0,1,2}` 列から作った塔。 -/
+def T80 (n : Nat) : List BT := (tri80 n).map tw78
+
+/-- **段の上限を外し、標準性は保つ群。** -/
+def hi80 : List BT := ((T80 5 ++ (sums2_78 (T80 3)).map (fun s => BT.D 2 (BT.D 1 s))
+  ++ (sums3_78 (T80 2)).map (fun s => BT.D 1 s)).filter std78).eraseDups
+def hip80 : List (Term × Term) := hi80.flatMap fire78
+def all80 : List (Term × Term) := allp78 ++ hip80
+
+def k2fst80 (ac : Term × Term) : Bool := (Kset (reg 1) ac.1).all fun y => lt y (dd78 ac)
+def k2pow80 (ac : Term × Term) : Bool :=
+  (Kset (reg 1) ac.1).all fun y => lt y (powOf80 (reg 1) ac)
+/-- 残余が語る元 — `Ω₁` 以上の `K` の元。 -/
+def big80 (ac : Term × Term) : List Term := (Kset (reg 1) ac.1).filter fun y => le (reg 1) y
+
+-- 母集団の大きさ。
+#guard hi80.length == 223
+#guard hip80.length == 206
+#guard (hi80.filter (btLe72 1)).length == 31
+#guard all80.length == 635
+
+/-! **肯定 1 — 係数は落ちる。** `Δ` を `W^(aV ⊖ Ω₁)` に取り替えても、635 歩で判定は
+一度も変わらない。§80.1 の定理が捨てているものは無い。 -/
+
+#guard (all80.filter fun ac => k2fst80 ac != k2pow80 ac).length == 0
+
+/-! **肯定 2 — `Ω₁` より下の `K` の元はただ (§80.3)。** 635 歩のうち 458 歩は
+それだけで片づき、領域の中の 102 歩では 89 歩。残余が語るのは 177 歩、領域の中では
+13 歩で、そこは空回りではない。 -/
+
+#guard (all80.filter fun ac => (Kset (reg 1) ac.1).all fun y => lt y (reg 1)).length == 458
+#guard ((pop78.flatMap fire78).filter fun ac =>
+  (Kset (reg 1) ac.1).all fun y => lt y (reg 1)).length == 89
+#guard (all80.filter fun ac => !((big80 ac).isEmpty)).length == 177
+#guard ((pop78.flatMap fire78).filter fun ac => !((big80 ac).isEmpty)).length == 13
+
+/-! **肯定 3 — `aV ⊖ Ω₁ = 0` の歩では `K` は両方とも空。** §80.3 の場合分けが
+空回りでないこと、そして `cV` 側の仮説が矛盾しないことの両方。 -/
+
+#guard (all80.filter fun ac => subAP (reg 1) ac.1 == zero).length == 11
+#guard (all80.filter fun ac => subAP (reg 1) ac.1 == zero &&
+  !((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).isEmpty)).length == 0
+
+/-! **否定 1 — 段の上限は (K2') を担いでいない。** 新しい群 223 個のうち 192 個は
+`ψ₂` を内側に持ち `btLe72 1` を破るが、標準ではある。その 206 歩で (K2') も (K4) も
+**一度も落ちない**。`K` は空回りしていない — `K_{Ω₁} aV` は 68 歩で、`K_{Ω₁} cV` は
+4 歩で空でなく、68 歩のすべてに `Ω₁` 以上の元がある。 -/
+
+#guard (hip80.filter fun ac => !(k2fst80 ac)).length == 0
+#guard (hip80.filter fun ac => !(k4b78 ac)).length == 0
+#guard (hip80.filter fun ac => !((Kset (reg 1) ac.1).isEmpty)).length == 68
+#guard (hip80.filter fun ac => !((Kset (reg 1) ac.2).isEmpty)).length == 4
+#guard (hip80.filter fun ac => !((big80 ac).isEmpty)).length == 68
+
+/-! **否定 2 — `cV` 側の「`Ω₁` より下」は段の上限を外すと破れる。**
+`LocalKSndBelow_80` は段の上限を満たす 443 歩で 0 回、`ψ₂` を許すと 3 歩で落ちる。
+`cV` 側の条項そのもの (`K_{Ω₁} cV < Δ`) は 635 歩すべてで成り立つ。 -/
+
+#guard (all80.filter fun ac => !((Kset (reg 1) ac.2).all fun y =>
+  (subAP (reg 1) ac.1 != zero) && lt y (reg 1))).length == 3
+#guard ((allp78 ++ (hi80.filter (btLe72 1)).flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.2).all fun y =>
+    (subAP (reg 1) ac.1 != zero) && lt y (reg 1))).length == 0
+#guard ((allp78 ++ (hi80.filter (btLe72 1)).flatMap fire78)).length == 443
+#guard (all80.filter fun ac => !((Kset (reg 1) ac.2).all fun y => lt y (dd78 ac))).length == 0
+
+/-! **否定 3 — 残余をこれ以上鋭くはできない。** `Ω₁` 以上の元 `y` について
+`y < ω^{Ω₁·(aV ⊖ Ω₁)}` は 635 歩で 87 回落ちる (領域の外だけ) が、`ω^·` を外した
+`y < Ω₁·(aV ⊖ Ω₁)` は 127 回、§73.7 の `y < aV` も 127 回落ちる。**`ω^·` は要る。** -/
+
+#guard (all80.filter fun ac => !((big80 ac).all fun y => lt y (powOf80 (reg 1) ac))).length == 87
+#guard (all80.filter fun ac =>
+  !((big80 ac).all fun y => lt y (mulL (reg 1) (subAP (reg 1) ac.1)))).length == 127
+#guard (all80.filter fun ac => !((big80 ac).all fun y => lt y ac.1)).length == 127
+
+/-! **否定 4 — §73.7 の (K2) は新しい母集団でも別の条項。** `K_{Ω₁} aV < aV` は
+206 歩のうち 35 歩で落ち、(K2') は 0 歩。 -/
+
+#guard (hip80.filter fun ac => !(KOK73 ac.1)).length == 35
+
+end
+
+/-! ### §80.8 公理 -/
+
 end Evidence.Region
