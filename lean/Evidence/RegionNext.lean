@@ -30125,4 +30125,895 @@ end
 
 /-! ### §75.7 公理 -/
 
+/-! ## §77 THE SUM SIDE OF `DictLtA74` IS A THEOREM — ONE HEAD COMPARISON IS ALL THAT IS LEFT
+
+§76 cut row 326's certificate down to four named hypotheses, and one of them is
+`Trans/Dict.lean`'s acceptance record item (C) verbatim:
+
+    DictLtA74 : ∀ u t, stdB1 u → stdB1 t →
+                BT.lt (bValA71 u) (bValA71 t) → lt (dict (bValA71 u)) (dict (bValA71 t))
+
+§76 closed the two BOTTOM cases of its induction (`dictLt_zero76`, `dictLt_D0_zero76`) and said
+in as many words what was left: "the general head comparison, `ψ_u(α)` against `ψ_v(β)`
+lexicographically in `(u, α)`, is untouched, and so is the sum-level induction that would need
+it".  **§77 closes the sum-level induction, and the transfer from the index side.**  The head
+comparison is NOT proved.  It is isolated as one named hypothesis, split into its two halves,
+and each half measured — including a negative result that says which side condition each half
+actually needs.
+
+WHAT IS PROVED.
+
+  §77.1  **A STANDARD `BT` TERM IS ITS COMPONENT LIST.**  `ofL_toL77` (`BT.ofL ∘ BT.toL = id` on
+         `BT.isStd`), `good_toL77` (the components are principal, standard, level-bounded and
+         DESCENDING — `descOK72`, §72's predicate), and `bt_beq_eq77` (`BT`'s derived `BEq` is
+         equality, which `BT.ltL`'s `a == b` branch needs and which `deriving BEq` does not
+         hand over).  `isStd_ofL72` (§72) is the converse and is reused as is.
+
+  §77.2  **TWO LIFTING LEMMAS ON THE 𝔗(M) SIDE.**  §65's `lt_of_hd_lt` already says that a
+         strictly smaller leading component decides `<` between two sums.  `lt_of_hd_eq77` is
+         its missing twin: an EQUAL leading component hands the decision to the tails.  Between
+         them they cover every branch of [Rathjen, 1991] 2.3.16 that the induction reaches.
+
+  §77.3  **THE DESCENDING TRANSFER.**  `toList_dict_ofL77` : for a good component list `l`,
+         `toList (dict (BT.ofL l)) = l.map dict` — the image of a formal sum has exactly the
+         images of the components, in the same order, and NOTHING is absorbed.  This is the
+         one place where `descOK72` is spent: `plus` filters away every component of its left
+         argument that is below the head of its right argument, so without the descending
+         condition the leading `dict` component disappears (`plus one α = α`, §76).  The
+         transfer needs the head comparison for the pair `(component i+1, component i)`, which
+         is why it lives INSIDE the induction, as `dictLe_atom77` under a `DictLtUpTo77 m`
+         hypothesis rather than as a standalone lemma.
+
+  §77.4  **THE SUM-LEVEL INDUCTION.**  `dictLtUpTo_all77` / `dictLt_of_head77` :
+
+             DictHeadLt77 → ∀ x y, btLe72 1 x → btLe72 1 y → BT.isStd x → BT.isStd y →
+                            BT.lt x y = true → lt (dict x) (dict y) = true
+
+         The induction is on the SUM of the component sizes, with `BT.ltL`'s fuel universally
+         quantified — that is what makes it go through without a fuel-adequacy lemma, because
+         `BT.ltL`'s two recursive calls (into the tails, and into the ARGUMENTS of a common
+         head) both shrink the measure while carrying whatever fuel they were handed.
+
+  §77.5  **THE HEAD SPLIT.**  `DictCross77` (different subscripts: `ψ₀(α) < ψ₁(β)`) and
+         `CollapseMono77` (equal subscripts: `collapse u` preserves the order of the argument's
+         image).  `dictHeadLt_of_split77` puts them back together.
+
+  §77.6  **THE INDEX SIDE TRANSFERS UNCONDITIONALLY.**  `stdA77` and `btLeA77` :
+         `BT.isStd (bValA71 t)` and `btLe72 1 (bValA71 t)` for every `stdB1 t`.  §72 proved the
+         first only for `bVal`, which drops the leading `(0, nil)` node; the measurement here
+         says the `dropHd72` was never needed for standardness — `nonIncrL` holds of the whole
+         list — and `descOK_map72` applies to `toL t` unchanged.  Hence
+
+             dictLtA74_of_head77 : PsiIdxOKStd172 → DictHeadLt77 → DictLtA74
+
+         and with §76, `vOfLtA71_of_head77`, `limDecS1_77`, `limIncS1_77`, `certIn_t326_head77`.
+
+  §77.7  **`ψ₁(α) = ω^(Ω₁ + α)`, AND `ψ₀(α) = ω^α` FOR `α < Ω₁`.**  `collapse1_eq77` and
+         `collapse0_eq77` — clause (D1) of `Trans/Dict.lean`'s header, which that file states
+         only as `#guard`s.  At level one `wcnf` never splits (§73's `lt_pure73_reg2`), so the
+         whole fold is the empty fold and `collapse` is a single `ω^·`.
+
+  §77.8  **THE RESIDUAL, SHARPENED, AND ONE HALF OF IT REDUCED TO A KNOWN GAP.**
+         `dictCross_of01_77` : the level bound forces `u = 0` and `v = 1`, so `DictCross77` is
+         ONE inequality, `ψ₀(α) < ψ₁(β)`.  `collapseMono_of_split77` splits `CollapseMono77` at
+         `u`, and `collapseMono1_of77` rewrites the `u = 1` half through §77.7 into
+         `OmPlusMono77` — `α < β ⟹ ω^(Ω₁+α) < ω^(Ω₁+β)`.  `le_collapse1_77` then proves that
+         half **non-strictly**, by §65.4's `plus_mono_right_inT` into §65.3's
+         `omegaNF_mono_inT`; what is missing is exactly the STRICTNESS of `ω^·` on 𝔗(M), i.e.
+         the 𝔗(M) analogue of `CNVOps` §29's D3 (`dnFacts`), which §65.3 deliberately avoided
+         because `le` was all its consumers needed.  The `u = 0` half is the Veblen-and-`ψ_{Z0}`
+         fold and is left as it stands.
+
+WHAT IS **NOT** CLAIMED.  `DictHeadLt77` is NOT proved, in either half — `le_collapse1_77`
+gets the `u = 1` half only up to `≤`, and the gap to `<` is a named one (§77.8).  Nothing here proves
+`PsiIdxOKStd172`, `CofDenseS1` or `BCofIn71`, and `dict`'s order-preservation therefore remains
+what `Trans/Dict.lean` always said it was: a `#guard`ed goal.  What has changed is its shape —
+the sum, the descending condition, and the whole index side are gone from the statement.
+
+WHAT THE MEASUREMENT SAYS (§77.9 gives the construction).  **The negative results first.**
+
+  * **`BT.isStd` is not optional and the level bound is not what buys the order.**  On the
+    level-bounded but NOT standard population (24 terms, 576 pairs) `dict` inverts 35 pairs.
+    On the standard but NOT level-bounded population (71 terms, 5041 pairs) it inverts NONE.
+    So §77's `btLe72 1` hypothesis is spent entirely on `inT (dict ·)` — it is what makes
+    `PsiIdxOKStd172` applicable — and not on the order at all.  §76's opposite-looking finding
+    ("`DictLtA74` is FALSE once the level bound is dropped") is about the INDEX side, where
+    dropping the bound also drops `BT.isStd (bValA71 ·)`.
+  * **`CollapseMono77`'s side condition is the `K`-condition, not `isStd` of the argument.**
+    With `BT.isStd (BT.D 0 ·)` demanded of both sides — i.e. with `G(α,0) < α` — `collapse 0`
+    inverts 0 pairs.  With it dropped but the arguments still standard and level-bounded, it
+    inverts 28.  `collapse 1` inverts 0 either way, which is §77.7 showing: at level one the
+    map is just `ω^(Ω₁+·)`.
+  * **The descending transfer really does fail without `descOK72`.**  `toList (dict (BT.ofL l))
+    = l.map dict` holds for all 19 good terms and fails for 4 of the 24 level-bounded ones.
+
+  The positive side.  The statement itself holds on 361 good pairs, the head hypothesis holds
+  on all principal pairs among them, and `stdA77`/`btLeA77` — now theorems — hold on `subP 6`
+  (160 indices) and `subP 7` (609 indices).
+-/
+
+/-! ### §77.1 標準な `BT` 項と成分列 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- 成分列の大きさの和 — 外側の帰納法の測度。 -/
+def szL77 : List BT → Nat
+  | [] => 0
+  | p :: l => BT.size p + szL77 l
+
+theorem szL77_append : ∀ (l1 l2 : List BT), szL77 (l1 ++ l2) = szL77 l1 + szL77 l2
+  | [], l2 => by show szL77 l2 = 0 + szL77 l2; omega
+  | p :: l, l2 => by
+      show BT.size p + szL77 (l ++ l2) = BT.size p + szL77 l + szL77 l2
+      rw [szL77_append l l2]; omega
+
+theorem size_pos77 : ∀ t : BT, 1 ≤ BT.size t
+  | .zero => Nat.le_refl 1
+  | .D _ a => by have h := size_pos77 a; show 1 ≤ 1 + BT.size a; omega
+  | .sum a b => by
+      have h1 := size_pos77 a; have h2 := size_pos77 b
+      show 1 ≤ 1 + BT.size a + BT.size b; omega
+
+theorem szL77_toL : ∀ t : BT, szL77 (BT.toL t) ≤ BT.size t
+  | .zero => Nat.zero_le _
+  | .D u a => by show BT.size (BT.D u a) + 0 ≤ BT.size (BT.D u a); omega
+  | .sum a b => by
+      have h1 := szL77_toL a; have h2 := szL77_toL b
+      show szL77 (BT.toL a ++ BT.toL b) ≤ 1 + BT.size a + BT.size b
+      rw [szL77_append]; omega
+
+/-- `BT` の `==` は等号。`deriving BEq` の構造的比較を一度だけ開く。 -/
+theorem bt_beq_eq77 : ∀ {a b : BT}, (a == b) = true → a = b := by
+  intro a
+  induction a with
+  | zero =>
+      intro b h
+      cases b with
+      | zero => rfl
+      | D _ _ => exact Bool.noConfusion h
+      | sum _ _ => exact Bool.noConfusion h
+  | D u a ih =>
+      intro b h
+      cases b with
+      | zero => exact Bool.noConfusion h
+      | D v c =>
+          have h' : (u == v && (a == c)) = true := h
+          obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+          rw [eq_of_beq h1, ih h2]
+      | sum _ _ => exact Bool.noConfusion h
+  | sum a b iha ihb =>
+      intro c h
+      cases c with
+      | zero => exact Bool.noConfusion h
+      | D _ _ => exact Bool.noConfusion h
+      | sum c d =>
+          have h' : ((a == c) && (b == d)) = true := h
+          obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h'
+          rw [iha h1, ihb h2]
+
+/-- 形式和の先頭成分。 -/
+def bhd77 : BT → BT
+  | .sum a _ => bhd77 a
+  | t => t
+
+theorem bhd77_of_isP {t : BT} (h : BT.isP t = true) : bhd77 t = t := by
+  cases t with
+  | zero => exact Bool.noConfusion h
+  | D _ _ => rfl
+  | sum _ _ => exact Bool.noConfusion h
+
+theorem isP_of_isStd_sum {a b : BT} (h : BT.isStd (BT.sum a b) = true) : BT.isP a = true := by
+  obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp h
+  obtain ⟨h2, _⟩ := (Bool.and_eq_true _ _).mp h1
+  exact ((Bool.and_eq_true _ _).mp h2).1
+
+theorem isStd_sum_ne_zero77 {a b : BT} (h : BT.isStd (BT.sum a b) = true) : b ≠ BT.zero := by
+  intro hb
+  subst hb
+  obtain ⟨_, h2⟩ := (Bool.and_eq_true _ _).mp h
+  exact Bool.noConfusion h2
+
+theorem toL_cons77 : ∀ (b : BT), BT.isStd b = true → b ≠ BT.zero →
+    ∃ r, BT.toL b = bhd77 b :: r
+  | .zero, _, hz => absurd rfl hz
+  | .D _ _, _, _ => ⟨[], rfl⟩
+  | .sum c d, hs, _ => by
+      have hP : BT.isP c = true := isP_of_isStd_sum hs
+      cases c with
+      | zero => exact Bool.noConfusion hP
+      | sum _ _ => exact Bool.noConfusion hP
+      | D v e => exact ⟨BT.toL d, rfl⟩
+
+theorem le_bhd77 {a b : BT} (h : BT.isStd (BT.sum a b) = true) : BT.le (bhd77 b) a = true := by
+  cases b with
+  | zero => exact absurd rfl (isStd_sum_ne_zero77 h)
+  | D v d =>
+      obtain ⟨_, h2⟩ := (Bool.and_eq_true _ _).mp h
+      exact ((Bool.and_eq_true _ _).mp h2).2
+  | sum c d =>
+      obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+      have hsc : BT.isStd (BT.sum c d) = true := ((Bool.and_eq_true _ _).mp h1).2
+      rw [show bhd77 (BT.sum c d) = bhd77 c from rfl, bhd77_of_isP (isP_of_isStd_sum hsc)]
+      exact h2
+
+/-- 標準な項は成分列から組み直せる。 -/
+theorem ofL_toL77 : ∀ (x : BT), BT.isStd x = true → BT.ofL (BT.toL x) = x
+  | .zero, _ => rfl
+  | .D _ _, _ => rfl
+  | .sum a b, hs => by
+      have hP : BT.isP a = true := isP_of_isStd_sum hs
+      obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hs
+      have hsb : BT.isStd b = true := ((Bool.and_eq_true _ _).mp h1).2
+      obtain ⟨r, hr⟩ := toL_cons77 b hsb (isStd_sum_ne_zero77 hs)
+      have hne : BT.toL b ≠ [] := by rw [hr]; exact List.cons_ne_nil _ _
+      cases a with
+      | zero => exact Bool.noConfusion hP
+      | sum _ _ => exact Bool.noConfusion hP
+      | D v e =>
+          show BT.ofL (BT.D v e :: BT.toL b) = BT.sum (BT.D v e) b
+          rw [ofL_cons_ne _ _ hne, ofL_toL77 b hsb]
+
+/-- 成分列の「良さ」— 成分は主要・標準・段 1 以下で、降べき。 -/
+def GoodL77 (l : List BT) : Prop :=
+  Atoms l ∧ (∀ x ∈ l, BT.isStd x = true) ∧ (∀ x ∈ l, btLe72 1 x = true) ∧ descOK72 l = true
+
+theorem goodL77_nil : GoodL77 ([] : List BT) := by
+  refine ⟨?_, ?_, ?_, rfl⟩ <;> (intro z hz; cases hz)
+
+theorem descOK72_tail {p : BT} {l : List BT} (h : descOK72 (p :: l) = true) :
+    descOK72 l = true := by
+  cases l with
+  | nil => rfl
+  | cons q r => exact ((Bool.and_eq_true _ _).mp h).2
+
+theorem goodL77_tail {p : BT} {l : List BT} (h : GoodL77 (p :: l)) : GoodL77 l :=
+  ⟨fun z hz => h.1 z (List.Mem.tail _ hz), fun z hz => h.2.1 z (List.Mem.tail _ hz),
+    fun z hz => h.2.2.1 z (List.Mem.tail _ hz), descOK72_tail h.2.2.2⟩
+
+theorem good_toL77 : ∀ (x : BT), BT.isStd x = true → btLe72 1 x = true → GoodL77 (BT.toL x)
+  | .zero, _, _ => goodL77_nil
+  | .D u a, hs, hb => by
+      refine ⟨?_, ?_, ?_, rfl⟩
+      · intro z hz; rw [List.mem_singleton.mp hz]; exact ⟨u, a, rfl⟩
+      · intro z hz; rw [List.mem_singleton.mp hz]; exact hs
+      · intro z hz; rw [List.mem_singleton.mp hz]; exact hb
+  | .sum a b, hs, hb => by
+      have hP : BT.isP a = true := isP_of_isStd_sum hs
+      obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hs
+      have hsa : BT.isStd a = true := ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h1).1).2
+      have hsb : BT.isStd b = true := ((Bool.and_eq_true _ _).mp h1).2
+      obtain ⟨hba, hbb⟩ := btLe72_sum 1 a b hb
+      have ihb := good_toL77 b hsb hbb
+      obtain ⟨r, hr⟩ := toL_cons77 b hsb (isStd_sum_ne_zero77 hs)
+      cases a with
+      | zero => exact Bool.noConfusion hP
+      | sum _ _ => exact Bool.noConfusion hP
+      | D v e =>
+          show GoodL77 (BT.D v e :: BT.toL b)
+          refine ⟨?_, ?_, ?_, ?_⟩
+          · intro z hz
+            rcases List.mem_cons.mp hz with h | h
+            · exact ⟨v, e, h⟩
+            · exact ihb.1 z h
+          · intro z hz
+            rcases List.mem_cons.mp hz with h | h
+            · rw [h]; exact hsa
+            · exact ihb.2.1 z h
+          · intro z hz
+            rcases List.mem_cons.mp hz with h | h
+            · rw [h]; exact hba
+            · exact ihb.2.2.1 z h
+          · have hd : descOK72 (BT.toL b) = true := ihb.2.2.2
+            rw [hr] at hd ⊢
+            show (BT.le (bhd77 b) (BT.D v e) && descOK72 (bhd77 b :: r)) = true
+            rw [le_bhd77 hs, hd]
+            rfl
+
+theorem isStd_ofL77 {l : List BT} (h : GoodL77 l) : BT.isStd (BT.ofL l) = true :=
+  isStd_ofL72 l h.1 h.2.1 h.2.2.2
+
+theorem btLe_ofL77 {l : List BT} (h : GoodL77 l) : btLe72 1 (BT.ofL l) = true :=
+  btLe72_ofL72 l h.2.2.1
+
+theorem ofL_ne_zero77 {p : BT} {l : List BT} (h : ∃ u a, p = BT.D u a) :
+    BT.ofL (p :: l) ≠ BT.zero := by
+  obtain ⟨u, a, rfl⟩ := h
+  cases l with
+  | nil => intro hc; exact BT.noConfusion hc
+  | cons q r =>
+      rw [ofL_cons_ne _ _ (List.cons_ne_nil q r)]
+      intro hc; exact BT.noConfusion hc
+
+/-! ### §77.2 𝔗(M) 側の持ち上げ — 先頭が決めるか、先頭が同じか -/
+
+theorem isAtom_of_isAP77 {t : Term} (h : t.isAP = true) : isAtom t = true := by
+  cases t with
+  | zero => exact Bool.noConfusion h
+  | add _ _ => exact Bool.noConfusion h
+  | M => rfl
+  | omg _ => rfl
+  | phi _ _ => rfl
+  | psi _ _ => rfl
+  | Z _ => rfl
+
+theorem le_self77 (c : Term) : le c c = true := by
+  show (c == c || lt c c) = true
+  rw [beq_self_eq_true]
+  rfl
+
+theorem lt_hd_self77 {c Y0 : Term} (hc : c.isAP = true) : lt c (add c Y0) = true := by
+  rw [lt_atom_add (isAtom_of_isAP77 hc)]
+  exact le_self77 c
+
+theorem lt_add_tail77 {A X0 Y0 : Term} (h : lt X0 Y0 = true) :
+    lt (add A X0) (add A Y0) = true := by
+  have hne : X0 ≠ Y0 := by
+    intro hc; rw [hc, lt_irrefl] at h; exact Bool.noConfusion h
+  rw [lt_add_add (by intro hc; injection hc with _ h2; exact hne h2), if_pos rfl]
+  exact h
+
+/-- **先頭が同じなら尾部が決める。** `lt_of_hd_lt` の等号版。 -/
+theorem lt_of_hd_eq77 {e y c : Term} {E' Y' : List Term} (he : inT e = true) (hy : inT y = true)
+    (hE : toList e = c :: E') (hY : toList y = c :: Y')
+    (h : lt (ofList E') (ofList Y') = true) : lt e y = true := by
+  have hcAP : c.isAP = true := inTL_isAP he c (by rw [hE]; exact List.Mem.head _)
+  have hee : e = ofList (c :: E') := by rw [← hE, inT_ofList_toList e he]
+  have hye : y = ofList (c :: Y') := by rw [← hY, inT_ofList_toList y hy]
+  cases E' with
+  | nil =>
+      cases Y' with
+      | nil =>
+          rw [show ofList ([] : List Term) = zero from rfl,
+            show lt zero zero = false from lt_irrefl zero] at h
+          exact Bool.noConfusion h
+      | cons d D =>
+          rw [hee, hye]
+          show lt c (add c (ofList (d :: D))) = true
+          exact lt_hd_self77 hcAP
+  | cons g G =>
+      cases Y' with
+      | nil =>
+          rw [show ofList ([] : List Term) = zero from rfl,
+            show lt (ofList (g :: G)) zero = false from ltF_right_zero _ _] at h
+          exact Bool.noConfusion h
+      | cons d D =>
+          rw [hee, hye]
+          show lt (add c (ofList (g :: G))) (add c (ofList (d :: D))) = true
+          exact lt_add_tail77 h
+
+/-! ### §77.3 帰納法の中で使う二つの補助 -/
+
+/-- 大きさ `m` までの成分列で `dict` が `BT.ltL` を保つ、という主張。 -/
+def DictLtUpTo77 (m : Nat) : Prop :=
+  ∀ (f : Nat) (l1 l2 : List BT), szL77 l1 + szL77 l2 ≤ m → GoodL77 l1 → GoodL77 l2 →
+    BT.ltL f l1 l2 = true → lt (dict (BT.ofL l1)) (dict (BT.ofL l2)) = true
+
+theorem ltL_zero77 (l1 l2 : List BT) : BT.ltL 0 l1 l2 = false := rfl
+
+theorem ltL_nil_nil77 (f : Nat) : BT.ltL f ([] : List BT) [] = false := by
+  cases f with
+  | zero => rfl
+  | succ _ => rfl
+
+theorem ltL_cons_nil77 (f : Nat) (p : BT) (l : List BT) : BT.ltL f (p :: l) [] = false := by
+  cases f with
+  | zero => rfl
+  | succ _ => rfl
+
+theorem goodL77_single77 {c : BT} (hc : ∃ u x, c = BT.D u x) (hsc : BT.isStd c = true)
+    (hbc : btLe72 1 c = true) : GoodL77 [c] :=
+  ⟨by intro z hz; rw [List.mem_singleton.mp hz]; exact hc,
+   by intro z hz; rw [List.mem_singleton.mp hz]; exact hsc,
+   by intro z hz; rw [List.mem_singleton.mp hz]; exact hbc, rfl⟩
+
+/-- **降べきの移送。** `BT` の側の `≤` が像の `≤` になる。帰納法の内側でだけ使う。 -/
+theorem dictLe_atom77 {m : Nat} (HQ : DictLtUpTo77 m) {c a : BT}
+    (hc : ∃ u x, c = BT.D u x) (ha : ∃ v y, a = BT.D v y)
+    (hsc : BT.isStd c = true) (hsa : BT.isStd a = true)
+    (hbc : btLe72 1 c = true) (hba : btLe72 1 a = true)
+    (hsz : BT.size c + BT.size a ≤ m)
+    (h : BT.le c a = true) : le (dict c) (dict a) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with h1 | h1
+  · rw [bt_beq_eq77 h1]
+    exact le_self77 _
+  · have g1 : GoodL77 [c] := goodL77_single77 hc hsc hbc
+    have g2 : GoodL77 [a] := goodL77_single77 ha hsa hba
+    obtain ⟨u, x, rfl⟩ := hc
+    obtain ⟨v, y, rfl⟩ := ha
+    exact le_of_lt (HQ (BT.size (BT.D u x) + BT.size (BT.D v y) + 2)
+      [BT.D u x] [BT.D v y]
+      (by show BT.size (BT.D u x) + 0 + (BT.size (BT.D v y) + 0) ≤ m; omega) g1 g2 h1)
+
+/-- **良い成分列の像の成分列は像の並び。** 先頭が消えないことがここの内容で、
+    それは §77.1 の降べきと `dictLe_atom77` が支えている。 -/
+theorem toList_dict_ofL77 (Hp : PsiIdxOKStd172) {m : Nat} (HQ : DictLtUpTo77 m) :
+    ∀ (l : List BT), GoodL77 l → szL77 l ≤ m → toList (dict (BT.ofL l)) = l.map dict
+  | [], _, _ => rfl
+  | [p], hg, _ => by
+      obtain ⟨u, a, rfl⟩ := hg.1 p (List.Mem.head _)
+      show toList (dict (BT.D u a)) = [dict (BT.D u a)]
+      exact toList_of_isAP (isAP_dict_D76 u a)
+  | p :: q :: r, hg, hsz => by
+      obtain ⟨u, a, rfl⟩ := hg.1 p (List.Mem.head _)
+      obtain ⟨v, b, rfl⟩ := hg.1 q (List.Mem.tail _ (List.Mem.head _))
+      have hgt : GoodL77 (BT.D v b :: r) := goodL77_tail hg
+      have he1 : szL77 (BT.D u a :: BT.D v b :: r)
+          = BT.size (BT.D u a) + (BT.size (BT.D v b) + szL77 r) := rfl
+      have hp1 := size_pos77 (BT.D u a)
+      have hp2 := size_pos77 (BT.D v b)
+      have hsz1 : szL77 (BT.D v b :: r) ≤ m := by
+        have he2 : szL77 (BT.D v b :: r) = BT.size (BT.D v b) + szL77 r := rfl
+        omega
+      have ih : toList (dict (BT.ofL (BT.D v b :: r)))
+          = dict (BT.D v b) :: r.map dict := toList_dict_ofL77 Hp HQ (BT.D v b :: r) hgt hsz1
+      have hiP : inT (dict (BT.D u a)) = true :=
+        (inT_dict_of_std172 Hp (BT.D u a) (hg.2.2.1 _ (List.Mem.head _))
+          (hg.2.1 _ (List.Mem.head _))).1
+      have hiT : inT (dict (BT.ofL (BT.D v b :: r))) = true :=
+        (inT_dict_of_std172 Hp _ (btLe_ofL77 hgt) (isStd_ofL77 hgt)).1
+      have hle : le (dict (BT.D v b)) (dict (BT.D u a)) = true :=
+        dictLe_atom77 HQ ⟨v, b, rfl⟩ ⟨u, a, rfl⟩
+          (hg.2.1 _ (List.Mem.tail _ (List.Mem.head _))) (hg.2.1 _ (List.Mem.head _))
+          (hg.2.2.1 _ (List.Mem.tail _ (List.Mem.head _))) (hg.2.2.1 _ (List.Mem.head _))
+          (by omega) ((Bool.and_eq_true _ _).mp hg.2.2.2).1
+      have hfil : List.filter (fun z => le (dict (BT.D v b)) z) [dict (BT.D u a)]
+          = [dict (BT.D u a)] := by
+        show (match le (dict (BT.D v b)) (dict (BT.D u a)) with
+              | true => dict (BT.D u a) :: List.filter (fun z => le (dict (BT.D v b)) z) []
+              | false => List.filter (fun z => le (dict (BT.D v b)) z) []) = _
+        rw [hle]
+        rfl
+      show toList (dict (BT.sum (BT.D u a) (BT.ofL (BT.D v b :: r)))) = _
+      rw [Trans.Dict.dict_sum, toList_plus_inT hiP hiT ih,
+        toList_of_isAP (isAP_dict_D76 u a), hfil, ih]
+      rfl
+
+/-- 良い成分列の `ofList`。 -/
+theorem ofList_map_dict77 (Hp : PsiIdxOKStd172) {m : Nat} (HQ : DictLtUpTo77 m)
+    (l : List BT) (hg : GoodL77 l) (hsz : szL77 l ≤ m) :
+    ofList (l.map dict) = dict (BT.ofL l) := by
+  rw [← toList_dict_ofL77 Hp HQ l hg hsz,
+    inT_ofList_toList _ (inT_dict_of_std172 Hp _ (btLe_ofL77 hg) (isStd_ofL77 hg)).1]
+
+/-! ### §77.4 和の帰納法 — 頭部の比較だけを残す -/
+
+/-- **頭部の比較。** `ψ_u(α)` を `ψ_v(β)` と `(u, α)` の辞書式で比べる、その一歩。 -/
+def DictHeadLt77 : Prop := ∀ (u v : Nat) (a b : BT),
+    btLe72 1 (BT.D u a) = true → btLe72 1 (BT.D v b) = true →
+    BT.isStd (BT.D u a) = true → BT.isStd (BT.D v b) = true →
+    (u < v ∨ (u = v ∧ lt (dict a) (dict b) = true)) →
+    lt (dict (BT.D u a)) (dict (BT.D v b)) = true
+
+theorem dictLtUpTo_all77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77) (n : Nat) :
+    DictLtUpTo77 n := by
+  refine Nat.strongRecOn (motive := fun n => DictLtUpTo77 n) n ?_
+  intro n IH f l1 l2 hsz g1 g2 hlt
+  cases f with
+  | zero => rw [ltL_zero77] at hlt; exact Bool.noConfusion hlt
+  | succ f' =>
+    cases l1 with
+    | nil =>
+        cases l2 with
+        | nil => rw [ltL_nil_nil77] at hlt; exact Bool.noConfusion hlt
+        | cons q qs =>
+            obtain ⟨v, b, rfl⟩ := g2.1 q (List.Mem.head _)
+            show lt zero (dict (BT.ofL (BT.D v b :: qs))) = true
+            exact lt_zero_ne76 (dict_ne_zero76 Hp _ (btLe_ofL77 g2) (isStd_ofL77 g2)
+              (ofL_ne_zero77 ⟨v, b, rfl⟩))
+    | cons p ps =>
+        cases l2 with
+        | nil => rw [ltL_cons_nil77] at hlt; exact Bool.noConfusion hlt
+        | cons q qs =>
+            obtain ⟨u, a, rfl⟩ := g1.1 p (List.Mem.head _)
+            obtain ⟨v, b, rfl⟩ := g2.1 q (List.Mem.head _)
+            have e1 : szL77 (BT.D u a :: ps) = 1 + BT.size a + szL77 ps := rfl
+            have e2 : szL77 (BT.D v b :: qs) = 1 + BT.size b + szL77 qs := rfl
+            have ha1 := size_pos77 a
+            have hb1 := size_pos77 b
+            have hm : n - 2 < n := by omega
+            have HQ : DictLtUpTo77 (n - 2) := IH (n - 2) hm
+            have hB1 : toList (dict (BT.ofL (BT.D u a :: ps)))
+                = dict (BT.D u a) :: ps.map dict :=
+              toList_dict_ofL77 Hp HQ _ g1 (by omega)
+            have hB2 : toList (dict (BT.ofL (BT.D v b :: qs)))
+                = dict (BT.D v b) :: qs.map dict :=
+              toList_dict_ofL77 Hp HQ _ g2 (by omega)
+            have hiX : inT (dict (BT.ofL (BT.D u a :: ps))) = true :=
+              (inT_dict_of_std172 Hp _ (btLe_ofL77 g1) (isStd_ofL77 g1)).1
+            have hiY : inT (dict (BT.ofL (BT.D v b :: qs))) = true :=
+              (inT_dict_of_std172 Hp _ (btLe_ofL77 g2) (isStd_ofL77 g2)).1
+            have hbA : btLe72 1 (BT.D u a) = true := g1.2.2.1 _ (List.Mem.head _)
+            have hbB : btLe72 1 (BT.D v b) = true := g2.2.2.1 _ (List.Mem.head _)
+            have hsA : BT.isStd (BT.D u a) = true := g1.2.1 _ (List.Mem.head _)
+            have hsB : BT.isStd (BT.D v b) = true := g2.2.1 _ (List.Mem.head _)
+            have hstep : BT.ltL (f' + 1) (BT.D u a :: ps) (BT.D v b :: qs)
+                = (if u < v then true else if v < u then false else
+                    if a == b then BT.ltL f' ps qs
+                    else BT.ltL f' (BT.toL a) (BT.toL b)) := rfl
+            rw [hstep] at hlt
+            by_cases huv : u < v
+            · exact lt_of_hd_lt hiX hiY hB1 hB2
+                (H u v a b hbA hbB hsA hsB (Or.inl huv))
+            · rw [if_neg huv] at hlt
+              by_cases hvu : v < u
+              · rw [if_pos hvu] at hlt; exact Bool.noConfusion hlt
+              · rw [if_neg hvu] at hlt
+                have huv2 : u = v := by omega
+                by_cases hab : (a == b) = true
+                · rw [if_pos hab] at hlt
+                  have hPQ : dict (BT.D u a) = dict (BT.D v b) := by
+                    rw [huv2, bt_beq_eq77 hab]
+                  have hB2' : toList (dict (BT.ofL (BT.D v b :: qs)))
+                      = dict (BT.D u a) :: qs.map dict := by rw [hB2, hPQ]
+                  refine lt_of_hd_eq77 hiX hiY hB1 hB2' ?_
+                  rw [ofList_map_dict77 Hp HQ ps (goodL77_tail g1) (by omega),
+                    ofList_map_dict77 Hp HQ qs (goodL77_tail g2) (by omega)]
+                  exact HQ f' ps qs (by omega) (goodL77_tail g1) (goodL77_tail g2) hlt
+                · rw [if_neg hab] at hlt
+                  have hsa : BT.isStd a = true := isStd_of_D hsA
+                  have hsb : BT.isStd b = true := isStd_of_D hsB
+                  have hba : btLe72 1 a = true := (btLe72_D 1 u a hbA).2
+                  have hbb : btLe72 1 b = true := (btLe72_D 1 v b hbB).2
+                  have t1 := szL77_toL a
+                  have t2 := szL77_toL b
+                  have hlta : lt (dict (BT.ofL (BT.toL a))) (dict (BT.ofL (BT.toL b))) = true :=
+                    HQ f' (BT.toL a) (BT.toL b) (by omega)
+                      (good_toL77 a hsa hba) (good_toL77 b hsb hbb) hlt
+                  rw [ofL_toL77 a hsa, ofL_toL77 b hsb] at hlta
+                  exact lt_of_hd_lt hiX hiY hB1 hB2
+                    (H u v a b hbA hbB hsA hsB (Or.inr ⟨huv2, hlta⟩))
+
+/-- **§77 の主定理。** 頭部の比較さえあれば、`dict` は段 1 以下の標準な `BT` 項の
+    上で `BT.lt` を保つ。和の側の帰納法はここで閉じている。 -/
+theorem dictLt_of_head77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77) (x y : BT)
+    (hbx : btLe72 1 x = true) (hby : btLe72 1 y = true)
+    (hsx : BT.isStd x = true) (hsy : BT.isStd y = true)
+    (h : BT.lt x y = true) : lt (dict x) (dict y) = true := by
+  have hq := dictLtUpTo_all77 Hp H (szL77 (BT.toL x) + szL77 (BT.toL y))
+    (BT.size x + BT.size y + 2) (BT.toL x) (BT.toL y) (Nat.le_refl _)
+    (good_toL77 x hsx hbx) (good_toL77 y hsy hby) h
+  rw [ofL_toL77 x hsx, ofL_toL77 y hsy] at hq
+  exact hq
+
+/-! ### §77.5 頭部の比較の二つの半分 -/
+
+/-- **段をまたぐ半分。** `ψ_0(α) < ψ_1(β)` — 添字が違うとき。 -/
+def DictCross77 : Prop := ∀ (u v : Nat) (a b : BT), u < v →
+    btLe72 1 (BT.D u a) = true → btLe72 1 (BT.D v b) = true →
+    BT.isStd (BT.D u a) = true → BT.isStd (BT.D v b) = true →
+    lt (dict (BT.D u a)) (dict (BT.D v b)) = true
+
+/-- **段が同じ半分。** `collapse u` が引数の像の順序を保つこと。 -/
+def CollapseMono77 : Prop := ∀ (u : Nat) (a b : BT),
+    btLe72 1 (BT.D u a) = true → btLe72 1 (BT.D u b) = true →
+    BT.isStd (BT.D u a) = true → BT.isStd (BT.D u b) = true →
+    lt (dict a) (dict b) = true →
+    lt (collapse u (dict a)) (collapse u (dict b)) = true
+
+theorem dictHeadLt_of_split77 (H1 : DictCross77) (H2 : CollapseMono77) : DictHeadLt77 := by
+  intro u v a b hbA hbB hsA hsB h
+  rcases h with h | ⟨huv, h2⟩
+  · exact H1 u v a b h hbA hbB hsA hsB
+  · subst huv
+    rw [Trans.Dict.dict_D, Trans.Dict.dict_D]
+    exact H2 u a b hbA hbB hsA hsB h2
+
+/-- **§77 の結論の形。** 二つの半分から `dict` の順序保存が出る。 -/
+theorem dictLt_of_split77 (Hp : PsiIdxOKStd172) (H1 : DictCross77) (H2 : CollapseMono77)
+    (x y : BT) (hbx : btLe72 1 x = true) (hby : btLe72 1 y = true)
+    (hsx : BT.isStd x = true) (hsy : BT.isStd y = true)
+    (h : BT.lt x y = true) : lt (dict x) (dict y) = true :=
+  dictLt_of_head77 Hp (dictHeadLt_of_split77 H1 H2) x y hbx hby hsx hsy h
+
+end
+/-! ### §77.6 添字の値の側 — `bValA71` は部分領域で標準 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`bValA71` の成分列。** `bVal` (§72) と違い先頭の `(0, nil)` も落とさない。 -/
+theorem toL_bValA7177 : ∀ (t : B), (bValA71 t).toL = (toL t).map fB72
+  | .nil => rfl
+  | .nd v r c => by
+      rw [toL_bValA71_nd v r c, toL_bValA7177 r, toL_nd, List.map_append]
+      rfl
+
+theorem bValA71_ofL77 (t : B) : bValA71 t = BT.ofL ((toL t).map fB72) := by
+  rw [← toL_bValA7177 t]
+  exact (nfSum_bValA7174 t).symm
+
+/-- **前置きを付けない値も部分領域では標準。** §72 の `regionStdSum1_72` の
+    `dropHd72` を外した形。`nonIncrL` は落とす前の列でも成り立つ。 -/
+theorem stdA77 (t : B) (ht : stdB1 t = true) : BT.isStd (bValA71 t) = true := by
+  have hl : lvlLe 1 t = true := lvlLe1_of_stdB1 t ht
+  have hs' : ((nfB t && nonIncr t) && stdIn t) = true := stdB_of_stdB1 t ht
+  have hst : stdIn t = true := ((Bool.and_eq_true _ _).mp hs').2
+  have hni : nonIncr t = true := ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp hs').1).2
+  have hlv : LvlL72 (toL t) := lvlL72_of_lvlLe t hl
+  rw [bValA71_ofL77 t]
+  refine isStd_ofL72 _ ?_ ?_ (descOK_map72 (toL t) hlv hni)
+  · intro z hz
+    obtain ⟨q, _, hq⟩ := List.mem_map.mp hz
+    exact ⟨q.1, bArg q.1 q.2, hq.symm⟩
+  · intro z hz
+    obtain ⟨q, hqm, hq⟩ := List.mem_map.mp hz
+    rw [← hq]
+    obtain ⟨hnq, hvq, hsq⟩ := stdIn_mem72 t hst q hqm
+    exact argStd72 q.1 q.2 (hlv q hqm).2 hnq hvq hsq
+
+theorem btLeA77 (t : B) (ht : stdB1 t = true) : btLe72 1 (bValA71 t) = true := by
+  have hl : lvlLe 1 t = true := lvlLe1_of_stdB1 t ht
+  have hlv : LvlL72 (toL t) := lvlL72_of_lvlLe t hl
+  rw [bValA71_ofL77 t]
+  refine btLe72_ofL72 _ ?_
+  intro z hz
+  obtain ⟨q, hqm, hq⟩ := List.mem_map.mp hz
+  rw [← hq]
+  show (decide (q.1 ≤ 1) && btLe72 1 (bArg q.1 q.2)) = true
+  rw [decide_eq_true (hlv q hqm).1,
+    btLe72_bArg72 (sizeB q.2 + 1) q.1 q.2 (Nat.lt_succ_self _) (hlv q hqm).2]
+  rfl
+
+/-- **§77 の結論。** `DictLtA74` — `Trans/Dict.lean` の受領記録 (C) — は
+    頭部の比較 `DictHeadLt77` ただ一つに落ちる。和の側は定理になった。 -/
+theorem dictLtA74_of_head77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77) : DictLtA74 :=
+  fun u t hu ht h =>
+    dictLt_of_head77 Hp H _ _ (btLeA77 u hu) (btLeA77 t ht) (stdA77 u hu) (stdA77 t ht) h
+
+/-- 橋 `VOfLtA71` も同じ一つに落ちる。 -/
+theorem vOfLtA71_of_head77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77) : VOfLtA71 :=
+  vOfLtA71_of_dictLt76 Hp (dictLtA74_of_head77 Hp H)
+
+/-- 326 行目の減少条項。 -/
+theorem limDecS1_77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77) : LimDecS1 :=
+  limDecS1_76 Hp (dictLtA74_of_head77 Hp H)
+
+/-- 326 行目の増加条項。 -/
+theorem limIncS1_77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77) : LimIncS1 :=
+  limIncS1_76 Hp (dictLtA74_of_head77 Hp H)
+
+end
+
+/-! ### §77.7 `ψ₁(α) = ω^(Ω₁ + α)` — 段 1 では `collapse` はただの `ω^·` -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- 成分がすべて `w` より下なら `wcnf` は何も分解しない。 -/
+theorem wcnf_all_lt77 (w : Term) : ∀ (L : List Term), (∀ p ∈ L, lt p w = true) →
+    wcnf w L = ([], ofList L)
+  | [], _ => rfl
+  | p :: _, h => wcnf_cons_lt (h p (List.Mem.head _))
+
+/-- **`ψ_1(α) = ω^(Ω₁ + α)`。** `Trans/Dict.lean` の (D1) の `u = 1` の場合。
+    強臨界の枝は段 1 以下では一度も発火しない (§73 の `wcnf_reg2_nil73` と同じ理由)。 -/
+theorem collapse1_eq77 (x : Term) (hx : inT x = true)
+    (hlt : ∀ p ∈ toList x, lt p (reg 2) = true) :
+    collapse 1 x = omegaNF (plus (reg 1) x) := by
+  rw [collapse_eq, wcnf_all_lt77 (reg (1+1)) (toList x) hlt]
+  show omegaNF (plus (reg 1) (plus zero (ofList (toList x)))) = _
+  rw [inT_ofList_toList x hx, plus_zero_left_inT hx]
+
+/-- **`ψ_0(α) = ω^α` (`α < Ω₁`)。** (D1) の `u = 0` の場合。 -/
+theorem collapse0_eq77 (x : Term) (hx : inT x = true)
+    (hlt : ∀ p ∈ toList x, lt p (reg 1) = true) :
+    collapse 0 x = omegaNF x := by
+  rw [collapse_eq, wcnf_all_lt77 (reg (0+1)) (toList x) hlt]
+  show omegaNF (plus (reg 0) (plus zero (ofList (toList x)))) = _
+  rw [inT_ofList_toList x hx, plus_zero_left_inT hx,
+    show plus (reg 0) x = plus zero x from rfl, plus_zero_left_inT hx]
+
+/-- 段 1 以下の像に当てはめた形。 -/
+theorem dict_D1_eq77 (Hp : PsiIdxOKStd172) (a : BT) (hb : btLe72 1 a = true)
+    (hs : BT.isStd a = true) :
+    dict (BT.D 1 a) = omegaNF (plus (reg 1) (dict a)) := by
+  rw [Trans.Dict.dict_D]
+  exact collapse1_eq77 (dict a) (inT_dict_of_std172 Hp a hb hs).1
+    (fun p hp => lt_pure73_reg2 (pure73_toList _ (pure73_dict a hb) p hp))
+
+end
+
+/-! ### §77.8 残る仮説を絞る -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **段をまたぐ半分は 1 本の不等式。** 段の上限が `u = 0`・`v = 1` を強いる。 -/
+theorem dictCross_of01_77
+    (H : ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 1 b) = true →
+      BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 1 b) = true →
+      lt (dict (BT.D 0 a)) (dict (BT.D 1 b)) = true) : DictCross77 := by
+  intro u v a b huv hbA hbB hsA hsB
+  have hu1 := (btLe72_D 1 u a hbA).1
+  have hv1 := (btLe72_D 1 v b hbB).1
+  have hu0 : u = 0 := by omega
+  have hv0 : v = 1 := by omega
+  subst hu0; subst hv0
+  exact H a b hbA hbB hsA hsB
+
+/-- **段が同じ半分は `u = 0` と `u = 1` の 2 本。** -/
+theorem collapseMono_of_split77
+    (H0 : ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+      BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true → lt (dict a) (dict b) = true →
+      lt (collapse 0 (dict a)) (collapse 0 (dict b)) = true)
+    (H1 : ∀ (a b : BT), btLe72 1 (BT.D 1 a) = true → btLe72 1 (BT.D 1 b) = true →
+      BT.isStd (BT.D 1 a) = true → BT.isStd (BT.D 1 b) = true → lt (dict a) (dict b) = true →
+      lt (collapse 1 (dict a)) (collapse 1 (dict b)) = true) : CollapseMono77 := by
+  intro u a b hbA hbB hsA hsB h
+  have hu1 := (btLe72_D 1 u a hbA).1
+  cases u with
+  | zero => exact H0 a b hbA hbB hsA hsB h
+  | succ u' =>
+      cases u' with
+      | zero => exact H1 a b hbA hbB hsA hsB h
+      | succ _ => exact absurd hu1 (by omega)
+
+/-- **`u = 1` の半分は `ω^(Ω₁ + ·)` の単調性そのもの** — §77.7 で書き換えた形。 -/
+def OmPlusMono77 : Prop := ∀ (a b : BT), btLe72 1 (BT.D 1 a) = true →
+    btLe72 1 (BT.D 1 b) = true → BT.isStd (BT.D 1 a) = true → BT.isStd (BT.D 1 b) = true →
+    lt (dict a) (dict b) = true →
+    lt (omegaNF (plus (reg 1) (dict a))) (omegaNF (plus (reg 1) (dict b))) = true
+
+theorem collapseMono1_of77 (Hp : PsiIdxOKStd172) (H : OmPlusMono77) :
+    ∀ (a b : BT), btLe72 1 (BT.D 1 a) = true → btLe72 1 (BT.D 1 b) = true →
+      BT.isStd (BT.D 1 a) = true → BT.isStd (BT.D 1 b) = true → lt (dict a) (dict b) = true →
+      lt (collapse 1 (dict a)) (collapse 1 (dict b)) = true := by
+  intro a b hbA hbB hsA hsB h
+  rw [← Trans.Dict.dict_D, ← Trans.Dict.dict_D,
+    dict_D1_eq77 Hp a (btLe72_D 1 1 a hbA).2 (isStd_of_D hsA),
+    dict_D1_eq77 Hp b (btLe72_D 1 1 b hbB).2 (isStd_of_D hsB)]
+  exact H a b hbA hbB hsA hsB h
+
+
+/-- **`u = 1` の半分の、非狭義の分だけは定理。** §65.4 の `plus_mono_right_inT` と
+    §65.3 の `omegaNF_mono_inT` をつなぐだけで `≤` は出る。**出ないのは狭義の分**で、
+    それは `ω^·` の狭義単調性 — `CNVOps` §29 の D3 (`dnFacts`) の 𝔗(M) 版 — が
+    無いからである。§65.3 はそこを避けて `le` で止めている。 -/
+theorem le_collapse1_77 (Hp : PsiIdxOKStd172) (a b : BT)
+    (hbA : btLe72 1 (BT.D 1 a) = true) (hbB : btLe72 1 (BT.D 1 b) = true)
+    (hsA : BT.isStd (BT.D 1 a) = true) (hsB : BT.isStd (BT.D 1 b) = true)
+    (h : lt (dict a) (dict b) = true) :
+    le (collapse 1 (dict a)) (collapse 1 (dict b)) = true := by
+  have hia := (inT_dict_of_std172 Hp a (btLe72_D 1 1 a hbA).2 (isStd_of_D hsA)).1
+  have hib := (inT_dict_of_std172 Hp b (btLe72_D 1 1 b hbB).2 (isStd_of_D hsB)).1
+  rw [← Trans.Dict.dict_D, ← Trans.Dict.dict_D,
+    dict_D1_eq77 Hp a (btLe72_D 1 1 a hbA).2 (isStd_of_D hsA),
+    dict_D1_eq77 Hp b (btLe72_D 1 1 b hbB).2 (isStd_of_D hsB)]
+  exact omegaNF_mono_inT (inT_plus (inT_reg 1) hia) (inT_plus (inT_reg 1) hib)
+    (plus_mono_right_inT (reg 1) (inT_reg 1) (dict a) (dict b) hia hib (le_of_lt h))
+
+/-- **326 行目の証明書。** §76 の 4 つのうち `DictLtA74` が `DictHeadLt77` に替わる。 -/
+theorem certIn_t326_head77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_dict76 Hp (dictLtA74_of_head77 Hp H) HCD HBC hacc
+
+end
+
+/-! ### §77.9 測定 (凍結)
+
+**構成。** `seed77` は 12 個の `BT` 項 — `0`・`1`・`ω`・`Ω₁`・`ψ₁ψ₁0`・`ψ₀ψ₁0`、
+**上限より 2 つ先の添字** `ψ₂0`・`ψ₃0`、それに `ψ` の入れ子が **5 段** のもの 4 本
+(`ψ₀ψ₁ψ₁ψ₁ψ₀0`・`ψ₁ψ₁ψ₁ψ₁ψ₀0`・`ψ₂ψ₂ψ₁ψ₁ψ₀0`・`ψ₀ψ₂ψ₁ψ₁ψ₀0`) で、最後の 2 本は
+**領域の外**にある。そこに添字 0…3 の `ψ` を 1 段かぶせ (`dsucc77 4`)、さらに和を
+足して 107 項。母集団はそれを 3 通りに絞って作る:
+
+    popGood77   btLe72 1 かつ BT.isStd     19 項 →  361 対   (§77 の仮説そのもの)
+    popStd77    BT.isStd のみ               71 項 → 5041 対   (段の上限を外す)
+    popLv77     btLe72 1 のみ               24 項 →  576 対   (標準性を外す)
+
+各変数はそれが実際に走る形の上で振ってある — 頭部の測定は主要項の対、`collapse` の
+測定は引数の対、成分列の測定は項そのもの。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+private def seed77 : List BT :=
+  [BT.zero, BT.D 0 BT.zero, BT.D 0 (BT.D 0 BT.zero), BT.D 1 BT.zero,
+   BT.D 1 (BT.D 1 BT.zero), BT.D 0 (BT.D 1 BT.zero), BT.D 2 BT.zero, BT.D 3 BT.zero,
+   BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 BT.zero)))),
+   BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 BT.zero)))),
+   BT.D 2 (BT.D 2 (BT.D 1 (BT.D 1 (BT.D 0 BT.zero)))),
+   BT.D 0 (BT.D 2 (BT.D 1 (BT.D 1 (BT.D 0 BT.zero))))]
+
+private def dedup77 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def dsucc77 (n : Nat) (l : List BT) : List BT :=
+  (List.range n).flatMap (fun u => l.map (fun a => BT.D u a))
+private def sums77 (l : List BT) : List BT :=
+  l.flatMap (fun a => l.map (fun b => BT.add a b))
+private def every77 (k : Nat) (l : List BT) : List BT :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+
+private def lvlA77 : List BT := dedup77 (seed77 ++ every77 2 (dsucc77 4 seed77))
+private def popAll77 : List BT := dedup77 (lvlA77 ++ every77 3 (sums77 (every77 2 lvlA77)))
+private def popGood77 : List BT := popAll77.filter (fun x => btLe72 1 x && BT.isStd x)
+private def popStd77 : List BT := popAll77.filter BT.isStd
+private def popLv77 : List BT := popAll77.filter (btLe72 1 ·)
+
+private def okPair77 (a b : BT) : Bool := !(BT.lt a b) || TM.Term.lt (dict a) (dict b)
+private def fails77 (l : List BT) : Nat :=
+  (l.flatMap (fun a => l.map (fun b => (a, b)))).countP (fun p => !(okPair77 p.1 p.2))
+private def crossFail77 (l : List BT) : Nat :=
+  ((l.filter BT.isP).flatMap (fun a => (l.filter BT.isP).map (fun b => (a, b)))).countP
+    (fun p => match p.1, p.2 with
+      | BT.D u _, BT.D v _ => u < v && !(TM.Term.lt (dict p.1) (dict p.2))
+      | _, _ => false)
+private def headFail77 (l : List BT) : Nat :=
+  ((l.filter BT.isP).flatMap (fun a => (l.filter BT.isP).map (fun b => (a, b)))).countP
+    (fun p => BT.lt p.1 p.2 && !(TM.Term.lt (dict p.1) (dict p.2)))
+private def monoFail77 (w : Nat) (l : List BT) : Nat :=
+  (l.flatMap (fun a => l.map (fun b => (a, b)))).countP
+    (fun p => TM.Term.lt (dict p.1) (dict p.2) &&
+      !(TM.Term.lt (collapse w (dict p.1)) (collapse w (dict p.2))))
+private def transOK77 (x : BT) : Bool := (dict x).toList == (x.toL).map dict
+
+/-! 母集団の大きさ。 -/
+#guard (popAll77.length, popGood77.length, popStd77.length, popLv77.length) == (107, 19, 71, 24)
+
+/-! **肯定 1 — §77 の主張そのもの。** 361 対で反例 0。 -/
+#guard fails77 popGood77 == 0
+
+/-! **肯定 2 — 頭部の仮説 `DictHeadLt77`。** 主要項の対で反例 0、段をまたぐ半分も 0。 -/
+#guard headFail77 popGood77 == 0
+#guard crossFail77 popGood77 == 0
+
+/-! **否定 1 — `BT.isStd` は外せない。** 段の上限だけでは 576 対中 35 対が反転する。 -/
+#guard fails77 popLv77 == 35
+
+/-! **否定 2 — 段の上限は順序を買っていない。** 標準なら段 2・3 の節があっても
+    5041 対で反例 0。§77 の `btLe72 1` は `inT (dict ·)` の門のためだけにある。 -/
+#guard fails77 popStd77 == 0
+
+/-! **否定 3 — `collapse 0` の単調性が要るのは `K` の条件。** 引数が標準で段 1 以下でも
+    `BT.isStd (ψ₀ ·)` を落とすと 28 対が反転し、課すと 0 になる。`collapse 1` は
+    どちらでも 0 — §77.7 が言うとおり `ω^(Ω₁ + ·)` でしかない。 -/
+#guard monoFail77 0 popGood77 == 28
+#guard monoFail77 0 (popGood77.filter (fun a => BT.isStd (BT.D 0 a))) == 0
+#guard monoFail77 1 popGood77 == 0
+#guard monoFail77 1 (popGood77.filter (fun a => BT.isStd (BT.D 1 a))) == 0
+
+/-! **否定 4 — 降べきを落とすと成分列の移送が壊れる。** §77.3 が `descOK72` を使う場所。 -/
+#guard popGood77.countP (fun x => !(transOK77 x)) == 0
+#guard popLv77.countP (fun x => !(transOK77 x)) == 4
+
+/-! **添字の側 (§77.6 は定理なので、これは確認であって根拠ではない)。** -/
+#guard ((subP 6).filter (fun t => !(BT.isStd (bValA71 t)))).length == 0
+#guard ((subP 7).filter (fun t => !(BT.isStd (bValA71 t)))).length == 0
+#guard ((subP 6).filter (fun t => !(btLe72 1 (bValA71 t)))).length == 0
+
+/-! **§77.7 の確認。** 段 1 の像は `ω^(Ω₁ + ·)`。 -/
+#guard popGood77.all fun a =>
+  dict (BT.D 1 a) == omegaNF (plus (reg 1) (dict a))
+
+end
+
+/-! ### §77.10 公理 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+end
+
 end Evidence.Region
