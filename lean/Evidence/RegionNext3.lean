@@ -7775,4 +7775,1191 @@ open TM TM.Term
 
 end
 
+/-! ## §89 THE FOLD ONLY SEES THE PART AT OR ABOVE `Ω₁`, AND WHAT IS LEFT IS TWO CLAUSES
+
+§81 split `CollapseMono0_79` at `Ω₁`, proved the both-below case and the crossing case, and
+left one: both arguments at or above `Ω₁`, where the Veblen fold runs on both sides.  §81
+also priced that residual — `cexA81 / cexB81` are two `dict` images of Buchholz-standard
+terms with `Ω₁ ≤ x < y` and `ψ₀(x) = ψ₀(y) = ζ₀`, so `Ω₁ ≤ x < y ⟹ ψ₀(x) < ψ₀(y)` is FALSE
+as a statement about 𝔗(M) and any proof must consume `BT.isStd (ψ₀ ·)`.
+
+**§89 does not close it.  §89 finds the closed form the fold has on that region, uses it to
+strip off the part of the residual that has nothing to do with the fold, and leaves TWO
+named clauses in place of one — the second of which is not about a pair at all.**  The
+closed form is the whole of §89:
+
+        ψ₀(x)  =  ω^( ψ₀(hi x) ⊕ lo x )        for `Ω₁ ≤ x`,
+
+where `hi x` collects the components of `x` at or above `Ω₁` and `lo x` the ones below.
+Both halves of it are new here.
+
+WHAT IS PROVED.
+
+  §89.1  **THE BASE-`Ω₁` CNF SPLITS AT `Ω₁`.**  `filter_split89` — a descending component
+         list is its big part followed by its small part — then `wcnf_append89` and
+         `wcnf_split89`: the pair list of `x` is the pair list of `hi x`, and the tail `ρ`
+         is exactly `lo x`.  So `accW89 x = accW89 (hi x)` and `rhoW89 x = lo x`, and the
+         fold never looks at `lo x`.
+
+  §89.2  **EVERY VALUE THE FOLD EMITS IS AN ε-NUMBER.**  `isFP_phiNF89` : `φ̄(a,b)` is a
+         fixed point of `ω^·` as soon as `a ≠ 0`, in every branch of `phiNF` / `phiNFsucc`
+         / `phiNFdefault`; `a ≠ 0` is §81.3's `wcnf_NZ81`.  The strongly critical branch
+         emits `ψ_{Ω₁}(·)`, which is strongly critical, hence also a fixed point.
+         `StF89` / `foldF89` carry it along the fold, `accW89_facts` bundles it with
+         §81.3's `ε₀ ≤ ·` and §79.6's `· < Ω₁`.
+
+  §89.3  **THE CLOSED FORM.**  `collapse0_hi89 : ψ₀(hi x) = accW89 x` — the outer `ω^·` of
+         `collapse` is the identity on the accumulator, by §89.2 — and
+         `collapse0_split89 : ψ₀(x) = ω^(ψ₀(hi x) ⊕ lo x)`.  The accumulator, which §81
+         could only bound from below, now has a name in the language of `dict` itself.
+
+  §89.4  **THE SPLIT IS ORDER-COMPATIBLE.**  `lo_lt_of_lt89` (equal big parts: the small
+         parts decide) and `lt_hi89` (unequal big parts: the big parts decide), the latter
+         through `lt_append_hi89`, a lexicographic induction along the two component lists:
+         at the first genuine mismatch the big parts decide it, and where one big part runs
+         out the other side's next component is at or above `Ω₁` while every remaining
+         component of the first is below it.
+
+  §89.5  **THE CASE WHERE THE BIG PARTS AGREE IS A THEOREM.**  `lt_collapse0_sameHi89`.
+         The fold emits the same accumulator on both sides and what is left is §79.3's
+         strict monotonicity of `plus e ·` under §79.2's `ω^·`.  No `K`-condition is spent
+         and no two folds are compared.  `lt_collapse0_diffHi89` is the other half, with
+         its two inputs named.
+
+  §89.6  **THE ASSEMBLY.**  `collapseMono0Hi_of_89 (Hp) (H : HiMono89) (L : LoDom89) :
+         CollapseMono0Hi81`, and through §81: `dictLtA74_89`, `vOfLtA71_89`, `limDecS1_89`,
+         `limIncS1_89`, `certIn_t326_89`.  `LoDom89` is discharged on principal terms
+         (`loDom_of_sum89` — a principal `dict` image is additively principal, so it has no
+         tail) and wherever the tail stays below `ε₀` (`loDom_of_ltE89`).
+
+  §89.7  **THE NEGATIVE THEOREMS.**  `not_hiMonoNoK89` and `not_loDomNoK89` — see the
+         measurement below.
+
+WHAT IS **NOT** CLAIMED.  `HiMono89` — §81's residual restricted to TAIL-FREE arguments —
+is NOT proved, and is stated as a named hypothesis.  `LoDom89` — every component of `lo x`
+is at most `ψ₀(hi x)` — is NOT proved either; it is a NEW hypothesis, not a piece of §81's,
+and §89.7 shows it is a real one.  Nothing here proves `PsiIdxOKStd172`, `CofDenseS1` or
+`BCofIn71`; §89 changes nothing about those three.  §89 proves nothing at all about the
+comparison of two folds: `HiMono89` is exactly as open as `CollapseMono0Hi81` was, on the
+sub-class where the tail is empty.  What §89 removes is everything else.
+
+WHAT THE MEASUREMENT SAYS (§89.8 gives the construction).  §81's population opened further:
+the same six level-one seeds, the depth line run to eleven layers (nesting 13 deep, 12 on
+the `K`-standard part) instead of §81's seven, the same two- and three-term width line, the
+same subscript-2/3 line outside the region.  229 terms, 81 of them `K`-standard, and **69 of
+those 81 are the residual** — `Ω₁ ≤ dict a`.
+
+  * **The split is 66 / 828 / 2346.**  Of 3240 ordered pairs with `dict a < dict b` on the
+    81 `K`-standard terms, 66 are both below `Ω₁` (§81.1), 828 cross (§81.4), 2346 are the
+    residual.  §81 measured 36 / 360 / 780 on its smaller population.
+  * **§89.5 closes 9 of the 2346, and that is the honest number.**  Exactly 9 of the
+    residual pairs have equal big parts.  The point of §89 is not how many pairs it closes
+    but what the other 2337 are now asking for: `ψ₀(hi a) < ψ₀(hi b)`, with the tails gone.
+  * **`ψ₀(hi ·)` and the accumulator agree, and equal big parts and equal accumulators
+    agree.**  0 disagreements on either, on all 69 terms and all 2346 pairs — the receipts
+    for §89.3 and for the case split.
+  * **1485 of the 2346 pairs are tail-free on BOTH sides**, and 55 of the 69 terms are
+    tail-free.  On those `hi` is the identity (`hiW89_self89`), so `HiMono89` is literally
+    §81's clause, unchanged, on 63% of the residual.
+  * **`HiMono89` needs the `K`-condition, and the counterexample is tail-free.**
+    `not_hiMonoNoK89`: weaken `BT.isStd (ψ₀ ·)` to `BT.isStd ·` and §81's `cexA81 / cexB81`
+    — `ψ₁ψ₀ψ₁ψ₁0 < ψ₁ψ₁0`, both `BT.isStd`, both with empty tail, both collapsing to `ζ₀` —
+    refute it.  Opening the population to depth 13 and width 3 finds **no other** inversion
+    in the residual case: it is still the unique one, as it was for §81 at depth 10.
+  * **`LoDom89` needs the `K`-condition too, and `BT.isStd` alone is NOT enough.**
+    `not_loDomNoK89` : `a = Ω₁ ⊕ ψ₀(Ω₁ ⊕ Ω₁)` has `BT.isStd a = true`, `btLe72 1 a = true`,
+    `Ω₁ ≤ dict a`, and `lo (dict a) = ε₁ > ε₀ = ψ₀(hi (dict a))`.  What keeps it out is
+    `BT.isStd (ψ₀ a) = false`, and nothing else.  **The 105-term standard corpus does not
+    contain it and shows 0 failures**, so this is a case where the population would have
+    lied; the witness was built from the statement, not found by search.
+  * **And the tail clause must be read component by component.**  `a = Ω₁ ⊕ ψ₀Ω₁ ⊕ ψ₀Ω₁`
+    is `K`-standard, satisfies `LoDom89`, and has `lo (dict a) = ε₀ ⊕ ε₀ > ε₀ = ψ₀(hi …)`.
+    The clause `le (lo x) (ψ₀ (hi x))` — the shape one writes first — is FALSE inside the
+    region.  Only `∀ p ∈ lo x, p ≤ ψ₀(hi x)` is right, and that is what §89.6 uses.
+  * **`LoDom89` is free on 60 of the 69 residual terms** by `loDom_of_ltE89` (the tail
+    below `ε₀`), and on 22 of them by `loDom_of_sum89` (principal).  0 failures on the
+    residual population, and 17 failures once `BT.isStd` is dropped and only the level cap
+    is kept.
+-/
+
+/-! ### §89.1 底 `Ω₁` の分解は `Ω₁` で切れる
+
+成分列は降順だから、`Ω₁` 以上の成分がぜんぶ前に、下の成分がぜんぶ後ろに並ぶ
+(`filter_split89`)。`wcnf` はその切れ目で完全に分かれる — 対の列は前半だけで決まり、
+尾は後半そのもの。**畳み込みが見るのは前半だけである。** -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 底 `Ω₁` の畳み込みの累算器。 -/
+def accW89 (x : Term) : Term :=
+  (((wcnf (reg 1) (toList x)).1.foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).2.getD zero)
+
+/-- 底 `Ω₁` の分解の尾。 -/
+def rhoW89 (x : Term) : Term := (wcnf (reg 1) (toList x)).2
+
+/-- `Ω₁` 以上の成分だけ集めた項。 -/
+def hiW89 (x : Term) : Term := ofList ((toList x).filter (fun p => !lt p (reg 1)))
+
+/-- `Ω₁` より下の成分だけ集めた項。 -/
+def loW89 (x : Term) : Term := ofList ((toList x).filter (fun p => lt p (reg 1)))
+
+/-- `collapse 0` は累算器と尾の和の `ω` 冪 — 定義そのもの。 -/
+theorem collapse0_raw89 (x : Term) :
+    collapse 0 x = omegaNF (plus (reg 0) (plus (accW89 x) (rhoW89 x))) := collapse_eq 0 x
+
+theorem collapse0_acc89 {x : Term} (h : inT (plus (accW89 x) (rhoW89 x)) = true) :
+    collapse 0 x = omegaNF (plus (accW89 x) (rhoW89 x)) := by
+  rw [collapse0_raw89, show plus (reg 0) (plus (accW89 x) (rhoW89 x))
+      = plus zero (plus (accW89 x) (rhoW89 x)) from rfl, plus_zero_left_inT h]
+
+/-- **成分列は `Ω₁` で切れる。** 降順なので `Ω₁` 以上の成分が前、下の成分が後ろ。 -/
+theorem filter_split89 : ∀ (l : List Term), inTL l = true → descL l = true →
+    l = l.filter (fun p => !lt p (reg 1)) ++ l.filter (fun p => lt p (reg 1)) := by
+  intro l
+  induction l with
+  | nil => intro _ _; rfl
+  | cons p t ih =>
+    intro hc hd
+    obtain ⟨⟨_, hip⟩, hct⟩ := inTL_cons.mp hc
+    have hdt := descL_tail hd
+    by_cases hlp : lt p (reg 1) = true
+    · have hall : ∀ q ∈ t, lt q (reg 1) = true := by
+        intro q hq
+        have hle := descL_bound_inT t p hip hct hd q hq
+        have hiq : inT q = true := inTL_inT (by
+          exact inT_ofList (p :: t) hc hd) q (by
+          rw [toList_ofList (p :: t) (fun z hz =>
+            ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hc z hz)).1)]
+          exact List.Mem.tail _ hq)
+        exact lt_of_le_of_lt3 (inT_le_fragR q hiq) (inT_le_fragR p hip)
+          (inT_le_fragR _ inT_W79) hle hlp
+      have h1 : t.filter (fun p => !lt p (reg 1)) = [] := by
+        refine List.filter_eq_nil_iff.mpr ?_
+        intro q hq
+        rw [hall q hq]
+        exact Bool.noConfusion
+      have h2 : t.filter (fun p => lt p (reg 1)) = t := by
+        refine List.filter_eq_self.mpr ?_
+        intro q hq; exact hall q hq
+      rw [List.filter_cons_of_neg (by rw [hlp]; exact Bool.noConfusion),
+        List.filter_cons_of_pos (by rw [hlp]), h1, h2]
+      rfl
+    · have hlp' : lt p (reg 1) = false := bool_false hlp
+      rw [List.filter_cons_of_pos (by rw [hlp']; rfl),
+        List.filter_cons_of_neg (by rw [hlp']; exact Bool.noConfusion)]
+      exact congrArg (p :: ·) (ih hct hdt)
+
+theorem toList_hiW89 {x : Term} (hx : inT x = true) :
+    toList (hiW89 x) = (toList x).filter (fun p => !lt p (reg 1)) := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  exact toList_ofList _ (fun z hz => ((Bool.and_eq_true _ _).mp
+    (List.all_eq_true.mp (inTL_filter _ hc) z hz)).1)
+
+theorem toList_loW89 {x : Term} (hx : inT x = true) :
+    toList (loW89 x) = (toList x).filter (fun p => lt p (reg 1)) := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  exact toList_ofList _ (fun z hz => ((Bool.and_eq_true _ _).mp
+    (List.all_eq_true.mp (inTL_filter _ hc) z hz)).1)
+
+theorem inT_hiW89 {x : Term} (hx : inT x = true) : inT (hiW89 x) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  exact inT_filter_ofList hc hd _
+
+theorem inT_loW89 {x : Term} (hx : inT x = true) : inT (loW89 x) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  exact inT_filter_ofList hc hd _
+
+theorem toList_split89 {x : Term} (hx : inT x = true) :
+    toList x = toList (hiW89 x) ++ toList (loW89 x) := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  rw [toList_hiW89 hx, toList_loW89 hx]
+  exact filter_split89 (toList x) hc hd
+
+/-- **`Ω₁` 以上の並びの後ろに下の並びを継いでも、対の列は変わらず尾はその並び。** -/
+theorem wcnf_append89 : ∀ (H L : List Term), (∀ p ∈ H, lt p (reg 1) = false) →
+    (∀ p ∈ L, lt p (reg 1) = true) →
+    wcnf (reg 1) (H ++ L) = ((wcnf (reg 1) H).1, ofList L) := by
+  intro H
+  induction H with
+  | nil =>
+    intro L _ hL
+    show wcnf (reg 1) L = ([], ofList L)
+    exact wcnf_all_lt77 (reg 1) L hL
+  | cons p H' ih =>
+    intro L hH hL
+    have hp : lt p (reg 1) = false := hH p (List.Mem.head _)
+    have IH := ih L (fun q hq => hH q (List.Mem.tail _ hq)) hL
+    show wcnf (reg 1) (p :: (H' ++ L)) = ((wcnf (reg 1) (p :: H')).1, ofList L)
+    rw [wcnf_cons_ge hp, wcnf_cons_ge hp, IH]
+    cases hr : wcnf (reg 1) H' with
+    | mk fst snd =>
+      cases fst with
+      | nil => rfl
+      | cons ac0 ps =>
+        cases ac0 with
+        | mk a' c' =>
+          show (if (wA (reg 1) p == a') = true
+              then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, ofList L)
+              else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, ofList L))
+            = ((if (wA (reg 1) p == a') = true
+              then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+              else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd)).1, ofList L)
+          by_cases heq : (wA (reg 1) p == a') = true
+          · rw [if_pos heq, if_pos heq]
+          · rw [if_neg heq, if_neg heq]
+
+/-- `Ω₁` 以上の並びなら尾は `0`。 -/
+theorem wcnf_snd_ge89 : ∀ (H : List Term), (∀ p ∈ H, lt p (reg 1) = false) →
+    (wcnf (reg 1) H).2 = zero := by
+  intro H
+  induction H with
+  | nil => intro _; rfl
+  | cons p H' ih =>
+    intro hH
+    have hp : lt p (reg 1) = false := hH p (List.Mem.head _)
+    have IH := ih (fun q hq => hH q (List.Mem.tail _ hq))
+    rw [wcnf_cons_ge hp]
+    cases hr : wcnf (reg 1) H' with
+    | mk fst snd =>
+      rw [hr] at IH
+      cases fst with
+      | nil => exact IH
+      | cons ac0 ps =>
+        cases ac0 with
+        | mk a' c' =>
+          show (if (wA (reg 1) p == a') = true
+              then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+              else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd)).2 = zero
+          by_cases heq : (wA (reg 1) p == a') = true
+          · rw [if_pos heq]; exact IH
+          · rw [if_neg heq]; exact IH
+
+theorem hiW89_ge89 {x : Term} (hx : inT x = true) :
+    ∀ p ∈ toList (hiW89 x), lt p (reg 1) = false := by
+  intro p hp
+  rw [toList_hiW89 hx] at hp
+  have := (List.mem_filter.mp hp).2
+  cases hc : lt p (reg 1) with
+  | false => rfl
+  | true => rw [hc] at this; exact Bool.noConfusion this
+
+theorem loW89_lt89 {x : Term} (hx : inT x = true) :
+    ∀ p ∈ toList (loW89 x), lt p (reg 1) = true := by
+  intro p hp
+  rw [toList_loW89 hx] at hp
+  exact (List.mem_filter.mp hp).2
+
+/-- **分解。** `wcnf` の対の列は `Ω₁` 以上の部分だけで決まり、尾は下の部分そのもの。 -/
+theorem wcnf_split89 {x : Term} (hx : inT x = true) :
+    wcnf (reg 1) (toList x) = ((wcnf (reg 1) (toList (hiW89 x))).1, loW89 x) := by
+  rw [toList_split89 hx,
+    wcnf_append89 _ _ (hiW89_ge89 hx) (loW89_lt89 hx),
+    inT_ofList_toList _ (inT_loW89 hx)]
+
+theorem accW89_hi89 {x : Term} (hx : inT x = true) : accW89 x = accW89 (hiW89 x) := by
+  unfold accW89
+  rw [wcnf_split89 hx]
+
+theorem rhoW89_lo89 {x : Term} (hx : inT x = true) : rhoW89 x = loW89 x := by
+  unfold rhoW89
+  rw [wcnf_split89 hx]
+
+theorem rhoW89_hi_zero89 {x : Term} (hx : inT x = true) : rhoW89 (hiW89 x) = zero :=
+  wcnf_snd_ge89 _ (hiW89_ge89 hx)
+
+/-! ### 累算器は ε 数 -/
+
+end
+
+/-! ### §89.2 畳み込みが吐くものはすべて ε 数
+
+ヴェブレン枝の出力は `φ̄(a, ·)` で、指数 `a` は 0 でない (§81.3 の `wcnf_NZ81`)。
+`phiNF` の 6 つの枝のどれを通っても結果は `ω^·` の不動点になる (`isFP_phiNF89`)。
+強臨界枝の出力 `ψ_{Ω₁}(·)` は強臨界だからやはり不動点。だから累算器に外から
+`ω^·` をかけても何も変わらない — これが §89.3 の閉じた形の理由である。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+theorem isFP_phi89 {a : Term} (hza : a ≠ zero) (d : Term) :
+    TM.Term.isFP zero (phi a d) = true := by
+  show ((_ && _) || lt zero a) = true
+  rw [lt_zero_left hza]; exact Bool.or_true _
+
+theorem isFP_phiNFdefault89 {a b : Term} (hza : a ≠ zero) :
+    TM.Term.isFP zero (phiNFdefault a b) = true := by
+  unfold phiNFdefault
+  split
+  · rename_i h
+    show ((a.isSC && lt zero a) || _) = true
+    rw [((Bool.and_eq_true _ _).mp h).2, lt_zero_left hza]; rfl
+  · exact isFP_phi89 hza b
+
+theorem isFP_phiNFsucc89 {a b : Term} (hza : a ≠ zero) :
+    TM.Term.isFP zero (phiNFsucc a b) = true := by
+  have hdef := isFP_phiNFdefault89 (a := a) (b := b) hza
+  unfold phiNFsucc
+  split
+  split
+  · split <;> (split <;> first | exact isFP_phi89 hza _ | exact hdef)
+  · exact hdef
+
+/-- **指数が `0` でないヴェブレン枝の出力は ε 数。** -/
+theorem isFP_phiNF89 {a b : Term} (hza : a ≠ zero) :
+    TM.Term.isFP zero (phiNF a b) = true := by
+  unfold phiNF
+  split
+  · rename_i h
+    have hsc := ((Bool.and_eq_true _ _).mp h).1
+    have hb := ((Bool.and_eq_true _ _).mp h).2
+    have hne : b ≠ zero := by
+      intro hc; rw [hc, lt_zero_right] at hb; exact Bool.noConfusion hb
+    show ((b.isSC && lt zero b) || _) = true
+    rw [hsc, lt_zero_left hne]; rfl
+  · cases b with
+    | zero => exact isFP_phiNFsucc89 hza
+    | M => exact isFP_phiNFsucc89 hza
+    | add _ _ => exact isFP_phiNFsucc89 hza
+    | omg _ => exact isFP_phiNFsucc89 hza
+    | psi _ _ => exact isFP_phiNFsucc89 hza
+    | Z _ => exact isFP_phiNFsucc89 hza
+    | phi c d =>
+        show TM.Term.isFP zero (if lt a c = true then phi c d else phiNFsucc a (phi c d)) = true
+        by_cases hlt : lt a c = true
+        · rw [if_pos hlt]
+          refine isFP_phi89 ?_ d
+          intro hc; rw [hc, lt_zero_right] at hlt; exact Bool.noConfusion hlt
+        · rw [if_neg hlt]; exact isFP_phiNFsucc89 hza
+
+/-- 畳み込みの不変量、ε 数の側。 -/
+def StF89 (s : Option Term × Option Term) : Prop :=
+  ∀ v, s.2 = some v → TM.Term.isFP zero v = true
+
+theorem stepF89 {s : Option Term × Option Term} {ac : Term × Term}
+    (hz : ac.1 ≠ zero) : StF89 (stepF (reg 1) (baseOf 0) s ac) := by
+  unfold stepF
+  split
+  · intro v hq
+    rw [← Option.some.inj (show some (psi (reg 1) (idxOf (reg 1) s ac)) = some v from hq)]
+    exact isFP_zero_of_sc79 rfl (lt_zero_left (by intro hc; exact Term.noConfusion hc))
+  · intro v hq
+    rw [← Option.some.inj (show some (phiNF ac.1
+      (plus (match s.2 with | none => baseOf 0 | some v => v)
+            (match s.2 with | none => sub1 ac.2 | some _ => ac.2))) = some v from hq)]
+    exact isFP_phiNF89 hz
+
+theorem foldF89 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StF89 s →
+    (∀ ac ∈ l, ac.1 ≠ zero) → StF89 (l.foldl (stepF (reg 1) (baseOf 0)) s)
+  | [], _, hs, _ => hs
+  | ac :: t, s, _, hz =>
+      foldF89 t (stepF (reg 1) (baseOf 0) s ac) (stepF89 (hz ac (List.Mem.head _)))
+        (fun a ha => hz a (List.Mem.tail _ ha))
+
+/-- **累算器の性質、ひとまとめ。** `Ω₁ ≤ x` なら畳み込みは必ず 1 歩は回る。 -/
+theorem accW89_facts (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK 0 x) (hW : le (reg 1) x = true) :
+    inT (accW89 x) = true ∧ lt (accW89 x) (reg 1) = true ∧ (accW89 x).isAP = true
+      ∧ le E081 (accW89 x) = true ∧ TM.Term.isFP zero (accW89 x) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨⟨h21, h22⟩, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (show (reg 1).isSC = true from rfl) (toList x) hc hd
+      (ltM_toList x hx hlx)
+  have hWp := wcnf_W79 (toList x) hc
+  have hNZ := wcnf_NZ81 (toList x) hc
+  have hinit : StE81 ((none : Option Term), (none : Option Term)) := by intro v h; cases h
+  have hst := foldE81 (wcnf (reg 1) (toList x)).1 (none, none) hinit hallOK
+    (fun ac hac => (hWp.2 ac hac).2) hNZ Hp
+  have hinitF : StF89 ((none : Option Term), (none : Option Term)) := by intro v h; cases h
+  have hstF := foldF89 (wcnf (reg 1) (toList x)).1 (none, none) hinitF hNZ
+  have hsome := fold_some81 (wcnf (reg 1) (toList x)).1 (none, none)
+    (wcnf_fst_ne_nil81 hx hW)
+  cases hg : ((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2 with
+  | none => exact absurd hg hsome
+  | some v =>
+      have hv := hst v hg
+      have hvF := hstF v hg
+      show inT (accW89 x) = true ∧ lt (accW89 x) (reg 1) = true ∧ (accW89 x).isAP = true
+        ∧ le E081 (accW89 x) = true ∧ TM.Term.isFP zero (accW89 x) = true
+      unfold accW89
+      rw [hg]
+      exact ⟨hv.1, hv.2.1, hv.2.2.1, hv.2.2.2, hvF⟩
+
+theorem ltM_accW89 {x : Term} (hi : inT (accW89 x) = true)
+    (hlw : lt (accW89 x) (reg 1) = true) : lt M (accW89 x) = false :=
+  lt_asymm_inT hi inT_M (lt_trans_inT hi inT_W79 inT_M hlw ltM_W79)
+
+end
+
+/-! ### §89.3 閉じた形 — `ψ₀(x) = ω^(ψ₀(hi x) ⊕ lo x)`
+
+`hi x` の分解は `x` の分解と同じ対の列を持ち、尾は `0`。だから
+`ψ₀(hi x) = ω^(累算器) = 累算器` (§89.2)。あとは §89.1 の分解をそのまま書けば
+`ψ₀(x) = ω^(ψ₀(hi x) ⊕ lo x)` になる。**折り畳みはこれ以上ほどかない。** -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§89 の閉じた形 (1)。** `Ω₁` 以上の部分に `ψ₀` を当てたものが累算器そのもの。 -/
+theorem collapse0_hi89 (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK 0 x) (hW : le (reg 1) x = true) :
+    collapse 0 (hiW89 x) = accW89 x := by
+  obtain ⟨hi, hlw, hap, hle, hfp⟩ := accW89_facts x hx hlx Hp hW
+  rw [collapse0_raw89, ← accW89_hi89 hx, rhoW89_hi_zero89 hx,
+    show plus (accW89 x) zero = accW89 x from plus_nil rfl,
+    show plus (reg 0) (accW89 x) = plus zero (accW89 x) from rfl,
+    plus_zero_left_inT hi, omegaNF_eq_gen,
+    if_neg (by rw [ltM_accW89 hi hlw]; exact Bool.noConfusion), if_pos hfp]
+
+/-- **§89 の閉じた形 (2)。** `ψ₀(x) = ω^(ψ₀(hi x) ⊕ lo x)`。 -/
+theorem collapse0_split89 (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK 0 x) (hW : le (reg 1) x = true) :
+    collapse 0 x = omegaNF (plus (collapse 0 (hiW89 x)) (loW89 x)) := by
+  obtain ⟨hi, hlw, hap, hle, hfp⟩ := accW89_facts x hx hlx Hp hW
+  rw [collapse0_acc89 (inT_plus hi (by rw [rhoW89_lo89 hx]; exact inT_loW89 hx)),
+    rhoW89_lo89 hx, collapse0_hi89 x hx hlx Hp hW]
+
+/-! ### 順序 — 頭が同じなら尾が決める -/
+
+end
+
+/-! ### §89.4 `Ω₁` での切り分けは順序を保つ
+
+`hi` が同じなら `lo` が決め (`lo_lt_of_lt89`)、`hi` が違えば `hi` が決める
+(`lt_hi89`)。後者は成分列の辞書式の帰納で、最初に食い違うところで `hi` が決まり、
+片方の `hi` が尽きるところでは相手の成分が `Ω₁` 以上・こちらの残りが `Ω₁` より下
+だから、やはり `hi` の側が決める。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+theorem inTL_append89 {L1 L2 : List Term} (h1 : inTL L1 = true) (h2 : inTL L2 = true) :
+    inTL (L1 ++ L2) = true := by
+  show (L1 ++ L2).all _ = true
+  rw [List.all_eq_true]
+  intro z hz
+  rcases List.mem_append.mp hz with h | h
+  · exact List.all_eq_true.mp h1 z h
+  · exact List.all_eq_true.mp h2 z h
+
+theorem toList_ofList89 {l : List Term} (h : inTL l = true) : toList (ofList l) = l :=
+  toList_ofList l (fun z hz => ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp h z hz)).1)
+
+/-- **共通の前置きを付けても順序は変わらない** (継ぐ側)。 -/
+theorem lt_append_eq89 : ∀ (H : List Term), inTL H = true → ∀ (X Y : Term),
+    inT X = true → inT Y = true →
+    descL (H ++ toList X) = true → descL (H ++ toList Y) = true →
+    lt X Y = true → lt (ofList (H ++ toList X)) (ofList (H ++ toList Y)) = true := by
+  intro H
+  induction H with
+  | nil =>
+    intro _ X Y hX hY _ _ h
+    rw [List.nil_append, List.nil_append, inT_ofList_toList X hX, inT_ofList_toList Y hY]
+    exact h
+  | cons c H' ih =>
+    intro hc X Y hX hY hdx hdy h
+    obtain ⟨⟨hapc, hic⟩, hcH⟩ := inTL_cons.mp hc
+    have hdx' := descL_tail hdx
+    have hdy' := descL_tail hdy
+    have hIH := ih hcH X Y hX hY hdx' hdy' h
+    have hcX : inTL (c :: (H' ++ toList X)) = true := inTL_append89 hc (inT_toList X hX).1
+    have hcY : inTL (c :: (H' ++ toList Y)) = true := inTL_append89 hc (inT_toList Y hY).1
+    exact lt_of_hd_eq77 (inT_ofList _ hcX hdx) (inT_ofList _ hcY hdy)
+      (toList_ofList89 hcX) (toList_ofList89 hcY) hIH
+
+/-- 分解して戻す。 -/
+theorem eq_of_split89 {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (h1 : hiW89 x = hiW89 y) (h2 : loW89 x = loW89 y) : x = y := by
+  have e1 := toList_split89 hx
+  have e2 := toList_split89 hy
+  rw [h1, h2] at e1
+  rw [← inT_ofList_toList x hx, ← inT_ofList_toList y hy, e1, e2]
+
+/-- **頭部が同じなら尾が決める** — `lo` から `x` へ。 -/
+theorem lt_of_lo_lt89 {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (heq : hiW89 x = hiW89 y) (h : lt (loW89 x) (loW89 y) = true) : lt x y = true := by
+  obtain ⟨hcx, hdx⟩ := inT_toList x hx
+  obtain ⟨hcy, hdy⟩ := inT_toList y hy
+  have hH : toList (hiW89 y) = toList (hiW89 x) := by rw [heq]
+  have e1 : toList x = toList (hiW89 x) ++ toList (loW89 x) := toList_split89 hx
+  have e2 : toList y = toList (hiW89 x) ++ toList (loW89 y) := by
+    rw [toList_split89 hy, hH]
+  have h1 := lt_append_eq89 (toList (hiW89 x)) (inT_toList _ (inT_hiW89 hx)).1
+    (loW89 x) (loW89 y) (inT_loW89 hx) (inT_loW89 hy)
+    (by rw [← e1]; exact hdx) (by rw [← e2]; exact hdy) h
+  rw [← e1, ← e2, inT_ofList_toList x hx, inT_ofList_toList y hy] at h1
+  exact h1
+
+/-- **その逆。** 三分律で戻す。 -/
+theorem lo_lt_of_lt89 {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (heq : hiW89 x = hiW89 y) (h : lt x y = true) : lt (loW89 x) (loW89 y) = true := by
+  by_cases hle : le (loW89 x) (loW89 y) = true
+  · rcases (Bool.or_eq_true _ _).mp hle with he | hl
+    · exfalso
+      have hxy : x = y := eq_of_split89 hx hy heq (eq_of_beq he)
+      rw [hxy, lt_irrefl] at h
+      exact Bool.noConfusion h
+    · exact hl
+  · exfalso
+    have h2 : lt (loW89 y) (loW89 x) = true :=
+      lt_of_not_le_inT (inT_loW89 hx) (inT_loW89 hy) (bool_false hle)
+    have h3 : lt y x = true := lt_of_lo_lt89 hy hx heq.symm h2
+    rw [lt_asymm_inT hx hy h] at h3
+    exact Bool.noConfusion h3
+
+/-- **加法主要な頭が決める。** 尾の成分が頭以下なら、頭の比較がそのまま和の比較。 -/
+theorem lt_plus_ap89 {V W r s : Term} (hiV : inT V = true) (hiW : inT W = true)
+    (hir : inT r = true) (his : inT s = true)
+    (hapV : V.isAP = true) (hapW : W.isAP = true)
+    (hhd : ∀ p ∈ toList r, le p V = true)
+    (hVW : lt V W = true) : lt (plus V r) (plus W s) = true := by
+  have h1 : lt (plus V r) W = true := by
+    cases hr : toList r with
+    | nil => rw [plus_nil hr]; exact hVW
+    | cons r1 R' =>
+      rw [plus_cons hiV hir (toList_isAP81 hapV) rfl hr,
+        if_pos (hhd r1 (by rw [hr]; exact List.Mem.head _)),
+        show ofList ([] : List Term) = zero from rfl, plus_zero_left_inT hir,
+        lt_add_nsum (ne_zero_of_isAP hapW) (nsum_of_isAP hapW)]
+      exact hVW
+  exact lt_of_lt_of_le3 (inT_le_fragR _ (inT_plus hiV hir)) (inT_le_fragR W hiW)
+    (inT_le_fragR _ (inT_plus hiW his)) h1 (le_self_plus_ap81 hiW hapW his)
+
+/-! ### `Ω₁` 以上の部分は単調 -/
+
+theorem le_reg1_of_not_lt89 {c : Term} (hic : inT c = true) (h : lt c (reg 1) = false) :
+    le (reg 1) c = true := by
+  by_cases hq : ((reg 1 : Term) == c) = true
+  · show ((reg 1 == c) || lt (reg 1) c) = true
+    rw [hq]; rfl
+  · have hle : le c (reg 1) = false := by
+      show ((c == reg 1) || lt c (reg 1)) = false
+      rw [h, show (c == (reg 1 : Term)) = false from by
+        cases hb : (c == (reg 1 : Term)) with
+        | false => rfl
+        | true => exact absurd (show ((reg 1 : Term) == c) = true from by
+            rw [eq_of_beq hb]; exact beq_self_eq_true _) hq]
+      rfl
+    exact le_of_lt (lt_of_not_le_inT hic inT_W79 hle)
+
+/-- **`lt_of_hd_eq77` の逆。** 三分律で戻す。 -/
+theorem lt_hd_eq_inv89 {e y c : Term} {E' Y' : List Term} (he : inT e = true)
+    (hy : inT y = true) (hE : toList e = c :: E') (hY : toList y = c :: Y')
+    (hiE : inT (ofList E') = true) (hiY : inT (ofList Y') = true)
+    (hE2 : toList (ofList E') = E') (hY2 : toList (ofList Y') = Y')
+    (h : lt e y = true) : lt (ofList E') (ofList Y') = true := by
+  by_cases hle : le (ofList E') (ofList Y') = true
+  · rcases (Bool.or_eq_true _ _).mp hle with hq | hl
+    · exfalso
+      have hEY : E' = Y' := by rw [← hE2, ← hY2, eq_of_beq hq]
+      have hxy : e = y := by
+        rw [← inT_ofList_toList e he, ← inT_ofList_toList y hy, hE, hY, hEY]
+      rw [hxy, lt_irrefl] at h
+      exact Bool.noConfusion h
+    · exact hl
+  · exfalso
+    have h2 : lt (ofList Y') (ofList E') = true :=
+      lt_of_not_le_inT hiE hiY (bool_false hle)
+    have h3 : lt y e = true := lt_of_hd_eq77 hy he hY hE h2
+    rw [lt_asymm_inT he hy h] at h3
+    exact Bool.noConfusion h3
+
+/-- **`Ω₁` 以上の並びの比較は、下の尾を継いでも変わらない。** -/
+theorem lt_append_hi89 : ∀ (Hy Hx : List Term), inTL Hy = true → inTL Hx = true →
+    descL Hy = true → descL Hx = true →
+    ∀ (Ly Lx : List Term), inTL Ly = true → inTL Lx = true →
+    descL (Hy ++ Ly) = true → descL (Hx ++ Lx) = true →
+    (∀ p ∈ Hx, lt p (reg 1) = false) → (∀ p ∈ Ly, lt p (reg 1) = true) →
+    lt (ofList Hy) (ofList Hx) = true →
+    lt (ofList (Hy ++ Ly)) (ofList (Hx ++ Lx)) = true := by
+  intro Hy
+  induction Hy with
+  | nil =>
+    intro Hx _ hcx _ hdx Ly Lx hcLy hcLx hdyL hdxL hHx hLy hlt
+    cases Hx with
+    | nil =>
+      exfalso
+      rw [show ofList ([] : List Term) = zero from rfl, lt_irrefl] at hlt
+      exact Bool.noConfusion hlt
+    | cons cx Hx' =>
+      have hcxL : inTL (cx :: (Hx' ++ Lx)) = true := inTL_append89 hcx hcLx
+      have hiT : inT (ofList (cx :: (Hx' ++ Lx))) = true := inT_ofList _ hcxL hdxL
+      have hicx : inT cx = true := (inTL_cons.mp hcx).1.2
+      have hgx : lt cx (reg 1) = false := hHx cx (List.Mem.head _)
+      cases Ly with
+      | nil =>
+        show lt (ofList ([] : List Term)) (ofList (cx :: (Hx' ++ Lx))) = true
+        exact lt_zero_left (ofList_ne_zero81 _ (List.cons_ne_nil _ _) (fun z hz =>
+          ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcxL z hz)).1))
+      | cons l1 Ly' =>
+        have hcyL : inTL (l1 :: Ly') = true := hcLy
+        have hiS : inT (ofList (l1 :: Ly')) = true := inT_ofList _ hcyL hdyL
+        have hil1 : inT l1 = true := (inTL_cons.mp hcLy).1.2
+        refine lt_of_hd_lt hiS hiT (toList_ofList89 hcyL) (toList_ofList89 hcxL) ?_
+        exact lt_of_lt_of_le3 (inT_le_fragR l1 hil1) (inT_le_fragR _ inT_W79)
+          (inT_le_fragR cx hicx) (hLy l1 (List.Mem.head _)) (le_reg1_of_not_lt89 hicx hgx)
+  | cons cy Hy' ih =>
+    intro Hx hcy hcx hdy hdx Ly Lx hcLy hcLx hdyL hdxL hHx hLy hlt
+    cases Hx with
+    | nil =>
+      exfalso
+      rw [show ofList ([] : List Term) = zero from rfl, lt_zero_right] at hlt
+      exact Bool.noConfusion hlt
+    | cons cx Hx' =>
+      obtain ⟨⟨hapy, hicy⟩, hcy'⟩ := inTL_cons.mp hcy
+      obtain ⟨⟨hapx, hicx⟩, hcx'⟩ := inTL_cons.mp hcx
+      have hdy' := descL_tail hdy
+      have hdx' := descL_tail hdx
+      have hdyL' := descL_tail hdyL
+      have hdxL' := descL_tail hdxL
+      have hcyL : inTL (cy :: (Hy' ++ Ly)) = true := inTL_append89 hcy hcLy
+      have hcxL : inTL (cx :: (Hx' ++ Lx)) = true := inTL_append89 hcx hcLx
+      have hiSL : inT (ofList (cy :: (Hy' ++ Ly))) = true := inT_ofList _ hcyL hdyL
+      have hiTL : inT (ofList (cx :: (Hx' ++ Lx))) = true := inT_ofList _ hcxL hdxL
+      by_cases hcc : cy = cx
+      · subst hcc
+        have hiHy : inT (ofList (cy :: Hy')) = true := inT_ofList _ hcy hdy
+        have hiHx : inT (ofList (cy :: Hx')) = true := inT_ofList _ hcx hdx
+        have hiHy' : inT (ofList Hy') = true := inT_ofList _ hcy' hdy'
+        have hiHx' : inT (ofList Hx') = true := inT_ofList _ hcx' hdx'
+        have hrec : lt (ofList Hy') (ofList Hx') = true :=
+          lt_hd_eq_inv89 hiHy hiHx (toList_ofList89 hcy) (toList_ofList89 hcx)
+            hiHy' hiHx' (toList_ofList89 hcy') (toList_ofList89 hcx') hlt
+        have hIH := ih Hx' hcy' hcx' hdy' hdx' Ly Lx hcLy hcLx hdyL' hdxL'
+          (fun p hp => hHx p (List.Mem.tail _ hp)) hLy hrec
+        exact lt_of_hd_eq77 hiSL hiTL (toList_ofList89 hcyL) (toList_ofList89 hcxL) hIH
+      · have hiHy : inT (ofList (cy :: Hy')) = true := inT_ofList _ hcy hdy
+        have hiHx : inT (ofList (cx :: Hx')) = true := inT_ofList _ hcx hdx
+        have hle : le cy cx = true := hd_mono_inT hiHy hiHx
+          (toList_ofList89 hcy) (toList_ofList89 hcx) (le_of_lt hlt)
+        have hlcc : lt cy cx = true := by
+          rcases (Bool.or_eq_true _ _).mp hle with hq | hl
+          · exact absurd (eq_of_beq hq) hcc
+          · exact hl
+        exact lt_of_hd_lt hiSL hiTL (toList_ofList89 hcyL) (toList_ofList89 hcxL) hlcc
+
+/-- **§89 の第三の定理。** `Ω₁` での切り分けは順序を保つ。 -/
+theorem lt_hi89 {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (h : lt x y = true) (hne : hiW89 x ≠ hiW89 y) : lt (hiW89 x) (hiW89 y) = true := by
+  by_cases hlt : lt (hiW89 x) (hiW89 y) = true
+  · exact hlt
+  · exfalso
+    have hle : le (hiW89 x) (hiW89 y) = false := by
+      show ((hiW89 x == hiW89 y) || lt (hiW89 x) (hiW89 y)) = false
+      rw [bool_false hlt, show (hiW89 x == hiW89 y) = false from by
+        cases hb : (hiW89 x == hiW89 y) with
+        | false => rfl
+        | true => exact absurd (eq_of_beq hb) hne]
+      rfl
+    have h2 : lt (hiW89 y) (hiW89 x) = true :=
+      lt_of_not_le_inT (inT_hiW89 hx) (inT_hiW89 hy) hle
+    have hey := toList_split89 hy
+    have hex := toList_split89 hx
+    have h2' : lt (ofList (toList (hiW89 y))) (ofList (toList (hiW89 x))) = true := by
+      rw [inT_ofList_toList _ (inT_hiW89 hy), inT_ofList_toList _ (inT_hiW89 hx)]; exact h2
+    have h3 := lt_append_hi89 (toList (hiW89 y)) (toList (hiW89 x))
+      (inT_toList _ (inT_hiW89 hy)).1 (inT_toList _ (inT_hiW89 hx)).1
+      (inT_toList _ (inT_hiW89 hy)).2 (inT_toList _ (inT_hiW89 hx)).2
+      (toList (loW89 y)) (toList (loW89 x))
+      (inT_toList _ (inT_loW89 hy)).1 (inT_toList _ (inT_loW89 hx)).1
+      (by rw [← hey]; exact (inT_toList y hy).2)
+      (by rw [← hex]; exact (inT_toList x hx).2)
+      (hiW89_ge89 hx) (loW89_lt89 hy) h2'
+    rw [← hey, ← hex, inT_ofList_toList x hx, inT_ofList_toList y hy] at h3
+    rw [lt_asymm_inT hx hy h] at h3
+    exact Bool.noConfusion h3
+
+/-! ### 組み立て -/
+
+end
+
+/-! ### §89.5 場合 A は定理、場合 B の道具
+
+`hi` が同じなら累算器も同じで、残るのは尾どうしの比較 — §79.3 の `plus e ·` の
+狭義単調性そのもの。`hi` が違うときに要るのは、小さい側の尾がその累算器で
+押さえられていること (`lt_plus_ap89`)。それは尾が ε₀ より下なら只である
+(`loDom_of_ltE89`、§81.3 の下界)。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **場合 A — `Ω₁` 以上の部分が同じなら定理。** 折り畳みは両辺で同じものを吐き、
+    残るのは尾どうしの比較で、それは §79.3 の狭義単調性そのもの。 -/
+theorem lt_collapse0_sameHi89 {x y : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (Hpx : PsiIdxOK 0 x) (hWx : le (reg 1) x = true)
+    (hy : inT y = true) (hly : lt y M = true) (Hpy : PsiIdxOK 0 y)
+    (hWy : le (reg 1) y = true)
+    (heq : hiW89 x = hiW89 y) (h : lt x y = true) :
+    lt (collapse 0 x) (collapse 0 y) = true := by
+  have hlo := lo_lt_of_lt89 hx hy heq h
+  obtain ⟨hiB, _, _, _, _⟩ := accW89_facts y hy hly Hpy hWy
+  rw [collapse0_split89 x hx hlx Hpx hWx, collapse0_split89 y hy hly Hpy hWy, heq,
+    collapse0_hi89 y hy hly Hpy hWy]
+  exact lt_omegaNF_inT79 (inT_plus hiB (inT_loW89 hx)) (inT_plus hiB (inT_loW89 hy))
+    (plus_smono_right_inT79 (accW89 y) hiB (loW89 x) (loW89 y)
+      (inT_loW89 hx) (inT_loW89 hy) hlo)
+
+/-- **場合 B — `Ω₁` 以上の部分が違うとき。** 折り畳みの比較と、小さい側の尾が
+    その累算器で押さえられていること、この 2 つで出る。 -/
+theorem lt_collapse0_diffHi89 {x y : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (Hpx : PsiIdxOK 0 x) (hWx : le (reg 1) x = true)
+    (hy : inT y = true) (hly : lt y M = true) (Hpy : PsiIdxOK 0 y)
+    (hWy : le (reg 1) y = true)
+    (hhd : ∀ p ∈ toList (loW89 x), le p (collapse 0 (hiW89 x)) = true)
+    (hHi : lt (collapse 0 (hiW89 x)) (collapse 0 (hiW89 y)) = true) :
+    lt (collapse 0 x) (collapse 0 y) = true := by
+  obtain ⟨hiA, _, hapA, _, _⟩ := accW89_facts x hx hlx Hpx hWx
+  obtain ⟨hiB, _, hapB, _, _⟩ := accW89_facts y hy hly Hpy hWy
+  have hVx := collapse0_hi89 x hx hlx Hpx hWx
+  have hVy := collapse0_hi89 y hy hly Hpy hWy
+  rw [hVx] at hhd hHi
+  rw [hVy] at hHi
+  rw [collapse0_split89 x hx hlx Hpx hWx, collapse0_split89 y hy hly Hpy hWy, hVx, hVy]
+  exact lt_omegaNF_inT79 (inT_plus hiA (inT_loW89 hx)) (inT_plus hiB (inT_loW89 hy))
+    (lt_plus_ap89 hiA hiB (inT_loW89 hx) (inT_loW89 hy) hapA hapB hhd hHi)
+
+/-- **尾の側条件は ε₀ より下なら只。** §81.3 の下界がそのまま効く。 -/
+theorem loDom_of_ltE89 {x : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (Hpx : PsiIdxOK 0 x) (hWx : le (reg 1) x = true)
+    (hlo : ∀ p ∈ toList (loW89 x), lt p E081 = true) :
+    ∀ p ∈ toList (loW89 x), le p (collapse 0 (hiW89 x)) = true := by
+  obtain ⟨hiA, _, _, hleA, _⟩ := accW89_facts x hx hlx Hpx hWx
+  intro p hp
+  have hip : inT p = true := inTL_inT (inT_loW89 hx) p hp
+  rw [collapse0_hi89 x hx hlx Hpx hWx]
+  exact le_of_lt (lt_of_lt_of_le3 (inT_le_fragR p hip) (inT_le_fragR _ inT_E81)
+    (inT_le_fragR _ hiA) (hlo p hp) hleA)
+
+end
+
+/-! ### §89.6 組み立て — 残る条項は 2 つ
+
+`HiMono89` は §81 の残余を**尾のない引数に絞ったもの** (`hiW89_self89` がそう言う)。
+`LoDom89` は対ではなく**項ひとつ**についての条項で、主要項では只
+(`loDom_of_sum89`)、尾が ε₀ より下でも只 (`loDom_of_ltE89`)。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **尾がなければ `hiW89` は恒等。** そこでは `HiMono89` は §81 の残余の文そのもの。 -/
+theorem hiW89_self89 {x : Term} (hx : inT x = true) (h : loW89 x = zero) : hiW89 x = x := by
+  have e1 := toList_split89 hx
+  rw [h, show toList zero = ([] : List Term) from rfl, List.append_nil] at e1
+  have h2 : ofList (toList (hiW89 x)) = ofList (toList x) := by rw [e1]
+  rw [inT_ofList_toList _ (inT_hiW89 hx), inT_ofList_toList x hx] at h2
+  exact h2
+
+/-- **残余 (1) — 尾のない引数についての §81 の残余そのもの。** -/
+def HiMono89 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true
+
+/-- **残余 (2) — 尾は累算器で押さえられる。** 対ではなく**項ひとつ**についての主張。 -/
+def LoDom89 : Prop :=
+  ∀ (a : BT), btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    le (reg 1) (dict a) = true →
+    ∀ p ∈ toList (loW89 (dict a)), le p (collapse 0 (hiW89 (dict a))) = true
+
+/-- 主要項には尾がない。 -/
+theorem isAP_dict_D89 (u : Nat) (c : BT) : (dict (BT.D u c)).isAP = true := by
+  rw [Trans.Dict.dict_D, collapse_eq]; exact isAP_omegaNF _
+
+theorem not_lt_of_le_reg1_89 {x : Term} (hx : inT x = true) (hW : le (reg 1) x = true) :
+    lt x (reg 1) = false := by
+  cases hc : lt x (reg 1) with
+  | false => rfl
+  | true =>
+    exfalso
+    rcases (Bool.or_eq_true _ _).mp hW with hq | hl
+    · rw [← eq_of_beq hq, lt_irrefl] at hc; exact Bool.noConfusion hc
+    · rw [lt_asymm_inT hx inT_W79 hc] at hl; exact Bool.noConfusion hl
+
+theorem loW89_zero_of_isAP89 {x : Term} (hx : inT x = true) (hap : x.isAP = true)
+    (hW : le (reg 1) x = true) : loW89 x = zero := by
+  unfold loW89
+  rw [toList_isAP81 hap,
+    List.filter_cons_of_neg (by rw [not_lt_of_le_reg1_89 hx hW]; exact Bool.noConfusion)]
+  rfl
+
+/-- **残余 (2') — 和の形の項だけに絞った尾の条件。** -/
+def LoDomSum89 : Prop :=
+  ∀ (a : BT), BT.isP a = false → btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    le (reg 1) (dict a) = true →
+    ∀ p ∈ toList (loW89 (dict a)), le p (collapse 0 (hiW89 (dict a))) = true
+
+/-- **尾の条件は主要項では只。** 残るのは和の形だけ。 -/
+theorem loDom_of_sum89 (Hp : PsiIdxOKStd172) (L : LoDomSum89) : LoDom89 := by
+  intro a hbA hsA hWa
+  cases a with
+  | zero => exact L BT.zero rfl hbA hsA hWa
+  | sum c d => exact L (BT.sum c d) rfl hbA hsA hWa
+  | D u c =>
+      have hba := (btLe72_D 1 0 (BT.D u c) hbA).2
+      have hsa := isStd_of_D hsA
+      have hia := inT_dict_of_std172 Hp (BT.D u c) hba hsa
+      rw [loW89_zero_of_isAP89 hia.1 (isAP_dict_D89 u c) hWa,
+        show toList zero = ([] : List Term) from rfl]
+      intro p hp; cases hp
+
+/-- **§89 の主定理。** §81 の残余は 2 つに割れる。 -/
+theorem collapseMono0Hi_of_89 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDom89) :
+    CollapseMono0Hi81 := by
+  intro a b hbA hbB hsA hsB hWa hWb h
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hsa := isStd_of_D hsA
+  have hsb := isStd_of_D hsB
+  have hia := inT_dict_of_std172 Hp a hba hsa
+  have hib := inT_dict_of_std172 Hp b hbb hsb
+  have hpa := Hp 0 a (by omega) hba hsA
+  have hpb := Hp 0 b (by omega) hbb hsB
+  by_cases heq : hiW89 (dict a) = hiW89 (dict b)
+  · exact lt_collapse0_sameHi89 hia.1 hia.2 hpa hWa hib.1 hib.2 hpb hWb heq h
+  · exact lt_collapse0_diffHi89 hia.1 hia.2 hpa hWa hib.1 hib.2 hpb hWb
+      (L a hbA hsA hWa) (H a b hbA hbB hsA hsB hWa hWb (lt_hi89 hia.1 hib.1 h heq))
+
+/-- 和の形だけの尾の条件からも同じ結論。 -/
+theorem collapseMono0Hi_of_sum89 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDomSum89) :
+    CollapseMono0Hi81 :=
+  collapseMono0Hi_of_89 Hp H (loDom_of_sum89 Hp L)
+
+/-- 326 行目までの繋ぎ。 -/
+theorem dictLtA74_89 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDom89) : DictLtA74 :=
+  dictLtA74_81 Hp (collapseMono0Hi_of_89 Hp H L)
+
+theorem vOfLtA71_89 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDom89) : VOfLtA71 :=
+  vOfLtA71_81 Hp (collapseMono0Hi_of_89 Hp H L)
+
+theorem limDecS1_89 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDom89) : LimDecS1 :=
+  limDecS1_81 Hp (collapseMono0Hi_of_89 Hp H L)
+
+theorem limIncS1_89 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDom89) : LimIncS1 :=
+  limIncS1_81 Hp (collapseMono0Hi_of_89 Hp H L)
+
+theorem certIn_t326_89 (Hp : PsiIdxOKStd172) (H : HiMono89) (L : LoDom89)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_81 Hp (collapseMono0Hi_of_89 Hp H L) HCD HBC hacc
+
+end
+
+
+/-! ### §89.7 否定 — 2 つの条項はどちらも `K` の条件を消費する
+
+`HiMono89` から `BT.isStd (ψ₀ ·)` を `BT.isStd ·` に緩めると §81 の `cexA81`/`cexB81` が
+そのまま反例になる。そして**その 2 つはどちらも尾がない**から、反例は `HiMono89` 自身の
+形の中にある。`LoDom89` の方も同じで、しかもこちらは `BT.isStd ·` だけを満たす項が
+落とす — 標準の母集団 105 項はその項を含まないので、母集団は嘘をつく側にいる。
+最後に、尾の条項を「`lo x ≤ ψ₀(hi x)`」と書くと**領域の中で偽**であることも押さえる。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- §81 の `cexA81` — `ψ₁ψ₀ψ₁ψ₁0`。 -/
+def cexA89 : BT := BT.D 1 (BT.D 0 (BT.D 1 (BT.D 1 BT.zero)))
+/-- §81 の `cexB81` — `ψ₁ψ₁0`。 -/
+def cexB89 : BT := BT.D 1 (BT.D 1 BT.zero)
+
+/-- **どちらも尾がない。** だから反例は `HiMono89` 自身の形の中にある。 -/
+theorem cex89_facts :
+    btLe72 1 cexA89 = true ∧ btLe72 1 cexB89 = true ∧
+    BT.isStd cexA89 = true ∧ BT.isStd cexB89 = true ∧
+    le (reg 1) (dict cexA89) = true ∧ le (reg 1) (dict cexB89) = true ∧
+    loW89 (dict cexA89) = zero ∧ loW89 (dict cexB89) = zero ∧
+    lt (hiW89 (dict cexA89)) (hiW89 (dict cexB89)) = true ∧
+    lt (collapse 0 (hiW89 (dict cexA89))) (collapse 0 (hiW89 (dict cexB89))) = false ∧
+    BT.isStd (BT.D 0 cexA89) = false :=
+  ⟨by decide, by decide, by decide, by decide, by decide, by decide,
+   by decide, by decide, by decide, by decide, by decide⟩
+
+/-- `HiMono89` の `K` の条件を `BT.isStd` に緩めた形。 -/
+def HiMonoNoK89 : Prop :=
+  ∀ (a b : BT), btLe72 1 a = true → btLe72 1 b = true →
+    BT.isStd a = true → BT.isStd b = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true
+
+/-- **§89.7 の第一の定理。** `HiMono89` は `K` の条件を消費しなければ偽。 -/
+theorem not_hiMonoNoK89 : ¬ HiMonoNoK89 := by
+  intro H
+  have h := H cexA89 cexB89 cex89_facts.1 cex89_facts.2.1 cex89_facts.2.2.1
+    cex89_facts.2.2.2.1 cex89_facts.2.2.2.2.1 cex89_facts.2.2.2.2.2.1
+    cex89_facts.2.2.2.2.2.2.2.2.1
+  rw [cex89_facts.2.2.2.2.2.2.2.2.2.1] at h
+  exact Bool.noConfusion h
+
+/-- 尾の条項の反例 — `Ω₁ ⊕ ψ₀(Ω₁ ⊕ Ω₁)`。`BT.isStd` は満たすが `K` の条件は満たさない。 -/
+def loBad89 : BT :=
+  BT.sum (BT.D 1 BT.zero) (BT.D 0 (BT.sum (BT.D 1 BT.zero) (BT.D 1 BT.zero)))
+
+/-- `lo (dict loBad89) = ε₁`、`ψ₀(hi (dict loBad89)) = ε₀`。 -/
+theorem loBad89_facts :
+    btLe72 1 loBad89 = true ∧ BT.isStd loBad89 = true ∧
+    BT.isStd (BT.D 0 loBad89) = false ∧ le (reg 1) (dict loBad89) = true ∧
+    collapse 0 (hiW89 (dict loBad89)) = E081 ∧
+    loW89 (dict loBad89) = phi TM.Term.one TM.Term.one ∧
+    (phi TM.Term.one TM.Term.one) ∈ toList (loW89 (dict loBad89)) ∧
+    le (phi TM.Term.one TM.Term.one) (collapse 0 (hiW89 (dict loBad89))) = false :=
+  ⟨by decide, by decide, by decide, by decide, by decide, by decide,
+   by decide, by decide⟩
+
+/-- `LoDom89` の `K` の条件を `BT.isStd` に緩めた形。 -/
+def LoDomNoK89 : Prop :=
+  ∀ (a : BT), btLe72 1 a = true → BT.isStd a = true → le (reg 1) (dict a) = true →
+    ∀ p ∈ toList (loW89 (dict a)), le p (collapse 0 (hiW89 (dict a))) = true
+
+/-- **§89.7 の第二の定理。** 尾の条項も `K` の条件を消費しなければ偽。
+    落とすのは `BT.isStd (ψ₀ ·)` ただ 1 つで、標準の母集団はこの項を含まない。 -/
+theorem not_loDomNoK89 : ¬ LoDomNoK89 := by
+  intro H
+  have h := H loBad89 loBad89_facts.1 loBad89_facts.2.1 loBad89_facts.2.2.2.1
+    (phi TM.Term.one TM.Term.one) loBad89_facts.2.2.2.2.2.2.1
+  rw [loBad89_facts.2.2.2.2.2.2.2] at h
+  exact Bool.noConfusion h
+
+/-- 尾の条項を和のまま書くと**領域の中で**偽 — `Ω₁ ⊕ ψ₀Ω₁ ⊕ ψ₀Ω₁`。 -/
+def loSum89 : BT :=
+  BT.sum (BT.D 1 BT.zero) (BT.sum (BT.D 0 (BT.D 1 BT.zero)) (BT.D 0 (BT.D 1 BT.zero)))
+
+/-- **§89.7 の第三の定理。** `K` の条件つきでも `lo x ≤ ψ₀(hi x)` は偽。
+    成分ごとに読むのが正しく、§89.6 が使うのはそちらである。 -/
+theorem not_le_lo_hi89 :
+    btLe72 1 loSum89 = true ∧ BT.isStd (BT.D 0 loSum89) = true ∧
+    le (reg 1) (dict loSum89) = true ∧
+    ((toList (loW89 (dict loSum89))).all
+      (fun p => le p (collapse 0 (hiW89 (dict loSum89))))) = true ∧
+    le (loW89 (dict loSum89)) (collapse 0 (hiW89 (dict loSum89))) = false :=
+  ⟨by decide, by decide, by decide, by decide, by decide⟩
+
+end
+
+/-! ### §89.8 測定 (凍結)
+
+**構成を先に書く。**  §81.8 の構成をそのまま使い、**深さの線だけ開ける**。種 `bs89` は
+§81 と同じ段 1 以下の 6 項 (`0`・`1`・`ω`・`Ω₁`・`ψ₁ψ₁0`・`ψ₀ψ₁0`)。**深さの線**
+`deep89` は `ψ₀`・`ψ₁` を 1 段ずつかぶせて 2 つに 1 つ間引く操作を §81 の 7 回ではなく
+**11 回**繰り返した層の合併 (入れ子は 13 段まで、`K` 標準の部分で 12 段)。**幅の線**
+`wide89` は成分が降順の 2 項和・3 項和。**領域の外** `out89` は添字 2・3 を 1 段/2 段
+かぶせたもの。合わせて 229 項。§87 が「3 段で綺麗に見えた条項が 4 段で落ちる」と
+言ったので、`ψ₀` の下に `ψ₁` を 4 段以上重ねる形が層 4 以降にぜんぶ入る。
+
+    popAll89   229 項
+    popGood89   89 項  段 1 以下かつ `BT.isStd`
+    popStd89   105 項  `BT.isStd` だけ
+    popLv89    204 項  段 1 以下だけ
+    popK89      81 項  さらに `BT.isStd (ψ₀ ·)`      (§81 の仮説そのもの)
+    popHi89     69 項  さらに `Ω₁ ≤ dict a`          (**§89 が語る母集団**)
+
+対は `(a, b)` の順序対で `dict a < dict b` のものだけを数える。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+private def dedup89 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def every89 (k : Nat) (l : List BT) : List BT :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+private def dep89 : BT → Nat
+  | .zero => 0
+  | .D _ a => 1 + dep89 a
+  | .sum a b => max (dep89 a) (dep89 b)
+private def wid89 : BT → Nat
+  | .sum a b => wid89 a + wid89 b
+  | _ => 1
+
+private def bs89 : List BT :=
+  [BT.zero, BT.D 0 BT.zero, BT.D 0 (BT.D 0 BT.zero), BT.D 1 BT.zero,
+   BT.D 1 (BT.D 1 BT.zero), BT.D 0 (BT.D 1 BT.zero)]
+private def cap01_89 (l : List BT) : List BT := l.map (BT.D 0) ++ l.map (BT.D 1)
+private def cap23_89 (l : List BT) : List BT := l.map (BT.D 2) ++ l.map (BT.D 3)
+private def lay89 : Nat → List BT → List BT
+  | 0, l => l
+  | n + 1, l => every89 2 (cap01_89 (lay89 n l))
+private def deep89 : List BT :=
+  dedup89 (bs89 ++ lay89 1 bs89 ++ lay89 2 bs89 ++ lay89 3 bs89 ++ lay89 4 bs89
+            ++ lay89 5 bs89 ++ lay89 6 bs89 ++ lay89 7 bs89 ++ lay89 8 bs89
+            ++ lay89 9 bs89 ++ lay89 10 bs89)
+private def prin89 (l : List BT) : List BT := l.filter BT.isP
+private def sums2_89 (l : List BT) : List BT :=
+  (prin89 l).flatMap (fun a => ((prin89 l).filter (fun b => BT.le b a)).map (BT.sum a))
+private def sums3_89 (l : List BT) : List BT :=
+  (prin89 l).flatMap (fun a =>
+    ((prin89 l).filter (fun b => BT.le b a)).flatMap (fun b =>
+      ((prin89 l).filter (fun c => BT.le c b)).map (fun c => BT.sum a (BT.sum b c))))
+private def wide89 : List BT :=
+  dedup89 (every89 5 (sums2_89 (every89 2 deep89))
+            ++ every89 31 (sums3_89 (every89 3 deep89)))
+private def out89 : List BT :=
+  dedup89 (every89 2 (cap23_89 (every89 3 deep89))
+            ++ every89 3 (cap01_89 (every89 5 (cap23_89 (every89 5 deep89)))))
+
+private def popAll89 : List BT := dedup89 (deep89 ++ wide89 ++ out89)
+private def popGood89 : List BT := popAll89.filter (fun x => btLe72 1 x && BT.isStd x)
+private def popStd89 : List BT := popAll89.filter BT.isStd
+private def popLv89 : List BT := popAll89.filter (btLe72 1 ·)
+private def popK89 : List BT := popGood89.filter (fun a => BT.isStd (BT.D 0 a))
+private def lowW89 (a : BT) : Bool := TM.Term.lt (dict a) (reg 1)
+/-- §89 が語る母集団 — §81 が残した場合。 -/
+private def popHi89 : List BT := popK89.filter (fun a => !(lowW89 a))
+
+private def pairs89 (l : List BT) : List (BT × BT) :=
+  l.flatMap (fun a => l.map (fun b => (a, b)))
+private def inv0_89 (l : List (BT × BT)) : Nat :=
+  l.countP (fun p => TM.Term.lt (dict p.1) (dict p.2) &&
+    !(TM.Term.lt (collapse 0 (dict p.1)) (collapse 0 (dict p.2))))
+private def cnt0_89 (l : List (BT × BT)) : Nat :=
+  l.countP (fun p => TM.Term.lt (dict p.1) (dict p.2))
+private def hipairs89 : List (BT × BT) :=
+  (pairs89 popHi89).filter (fun p => TM.Term.lt (dict p.1) (dict p.2))
+private def loDomB89 (a : BT) : Bool :=
+  (toList (loW89 (dict a))).all (fun p => TM.Term.le p (collapse 0 (hiW89 (dict a))))
+
+/-! 母集団の形 — §81 より深く。 -/
+#guard (popAll89.length, popGood89.length, popStd89.length, popLv89.length,
+        popK89.length, popHi89.length) == (229, 89, 105, 204, 81, 69)
+#guard (popAll89.foldl (fun m x => max m (dep89 x)) 0,
+        popK89.foldl (fun m x => max m (dep89 x)) 0) == (13, 12)
+#guard (popHi89.foldl (fun m x => max m (dep89 x)) 0,
+        popHi89.countP (fun x => wid89 x == 1), popHi89.countP (fun x => wid89 x == 2),
+        popHi89.countP (fun x => wid89 x == 3)) == (12, 22, 33, 14)
+
+/-! **分割の内訳。** `dict a < dict b` の順序対 3240 のうち、両辺が `Ω₁` の下は 66
+    (§81.1)、`Ω₁` をまたぐのが 828 (§81.4)、両辺が `Ω₁` 以上が 2346 (§89 が語る場合)。
+    逆向きは 0 対。§81 は小さい母集団で 36 / 360 / 780 と測った。 -/
+#guard (cnt0_89 ((pairs89 popK89).filter (fun p => lowW89 p.1 && lowW89 p.2)),
+        cnt0_89 ((pairs89 popK89).filter (fun p => lowW89 p.1 && !(lowW89 p.2))),
+        cnt0_89 ((pairs89 popK89).filter (fun p => !(lowW89 p.1) && !(lowW89 p.2))),
+        cnt0_89 ((pairs89 popK89).filter (fun p => !(lowW89 p.1) && lowW89 p.2)))
+        == (66, 828, 2346, 0)
+
+/-! **肯定 1 — `K` の条件つきでは 3 つの場合すべてで反転 0。** -/
+#guard (inv0_89 ((pairs89 popK89).filter (fun p => lowW89 p.1 && lowW89 p.2)),
+        inv0_89 ((pairs89 popK89).filter (fun p => lowW89 p.1 && !(lowW89 p.2))),
+        inv0_89 ((pairs89 popK89).filter (fun p => !(lowW89 p.1) && !(lowW89 p.2))))
+        == (0, 0, 0)
+
+/-! **肯定 2 — §89.3 の閉じた形の受領。** `ψ₀(hi x)` は累算器そのもので、
+    `ψ₀(x) = ω^(ψ₀(hi x) ⊕ lo x)`。69 項すべてで食い違い 0 (定理なので確認)。
+    主要項には尾がない (`loDom_of_sum89` の受領) のも 22 項すべてで確認。 -/
+#guard (popHi89.countP (fun a => !(collapse 0 (hiW89 (dict a)) == accW89 (dict a))),
+        popHi89.countP (fun a => !(collapse 0 (dict a)
+          == omegaNF (plus (collapse 0 (hiW89 (dict a))) (loW89 (dict a))))),
+        (popHi89.filter BT.isP).countP (fun a => !(loW89 (dict a) == zero)))
+        == (0, 0, 0)
+
+/-! **肯定 3 — 場合分けの受領。** `hi` が同じ対と違う対は 9 / 2337 に分かれ、
+    「`hi` が同じ」と「累算器が同じ」は完全に一致する (食い違い 0)。
+    `hi` が違う 2337 対では `hi` は順序を保ち (`lt_hi89` の受領)、
+    `ψ₀(hi ·)` も順序を保つ — つまり `HiMono89` は母集団の上では真。 -/
+#guard (hipairs89.countP (fun p => hiW89 (dict p.1) == hiW89 (dict p.2)),
+        hipairs89.countP (fun p => !(hiW89 (dict p.1) == hiW89 (dict p.2))))
+        == (9, 2337)
+#guard hipairs89.countP (fun p => (hiW89 (dict p.1) == hiW89 (dict p.2))
+        != (accW89 (dict p.1) == accW89 (dict p.2))) == 0
+#guard (hipairs89.countP (fun p => !(hiW89 (dict p.1) == hiW89 (dict p.2))
+          && !(TM.Term.lt (hiW89 (dict p.1)) (hiW89 (dict p.2)))),
+        hipairs89.countP (fun p => !(hiW89 (dict p.1) == hiW89 (dict p.2))
+          && !(TM.Term.lt (collapse 0 (hiW89 (dict p.1))) (collapse 0 (hiW89 (dict p.2))))))
+        == (0, 0)
+
+/-! **肯定 4 — 残余の 63% は尾がない。** 69 項のうち 55 項、2346 対のうち 1485 対が
+    両辺とも尾なしで、そこでは `hiW89` は恒等 (`hiW89_self89`) だから `HiMono89` は
+    §81 の残余の文そのものである。 -/
+#guard (popHi89.countP (fun a => loW89 (dict a) == zero),
+        hipairs89.countP (fun p => loW89 (dict p.1) == zero && loW89 (dict p.2) == zero))
+        == (55, 1485)
+
+/-! **肯定 5 — 尾の条項は母集団の上では真で、しかもほとんど只。** `K` 標準の 69 項で
+    破れ 0、そのうち 60 項は尾が ε₀ より下 (`loDom_of_ltE89` が片づける)、
+    22 項は主要項 (`loDom_of_sum89` が片づける)。和の形の 47 項でも破れ 0。 -/
+#guard (popHi89.countP (fun a => !(loDomB89 a)),
+        popHi89.countP (fun a => (toList (loW89 (dict a))).all (fun p => TM.Term.lt p E081)),
+        popHi89.countP BT.isP,
+        (popHi89.filter (fun a => !(BT.isP a))).countP (fun a => !(loDomB89 a)))
+        == (0, 60, 22, 0)
+
+/-! **否定 1 — `K` の条件を落とすと 149 対反転し、両辺 `Ω₁` 以上の場合の 1 対が
+    `not_hiMonoNoK89` の証人。** 内訳は (下,下) 0・(下,上) 148・(上,上) 1。
+    §81 は 66 対 (0 / 65 / 1) と測った。**深さを 10 段から 13 段へ、幅を 3 項へ
+    開けても、両辺 `Ω₁` 以上の反転はやはりこの 1 対だけである。** -/
+#guard (inv0_89 (pairs89 popK89), inv0_89 (pairs89 popGood89),
+        inv0_89 (pairs89 popStd89), inv0_89 (pairs89 popLv89)) == (0, 149, 221, 2094)
+#guard (inv0_89 ((pairs89 popGood89).filter (fun p => lowW89 p.1 && lowW89 p.2)),
+        inv0_89 ((pairs89 popGood89).filter (fun p => lowW89 p.1 && !(lowW89 p.2))),
+        inv0_89 ((pairs89 popGood89).filter (fun p => !(lowW89 p.1) && !(lowW89 p.2))))
+        == (0, 148, 1)
+#guard ((pairs89 popGood89).filter (fun p => !(lowW89 p.1) && !(lowW89 p.2) &&
+          TM.Term.lt (dict p.1) (dict p.2) &&
+          !(TM.Term.lt (collapse 0 (dict p.1)) (collapse 0 (dict p.2)))))
+        == [(cexA89, cexB89)]
+
+/-! **否定 2 — 尾の条項の反例は母集団の外にある。** `loBad89 = Ω₁ ⊕ ψ₀(Ω₁ ⊕ Ω₁)` は
+    `BT.isStd` を満たすのに尾の条項を破る。**標準の 105 項はこの項を含まず、破れも
+    見ない** — 母集団だけを見ていたら `BT.isStd` で足りると誤るところである。
+    段の上限だけに緩めると 17 項が破る。 -/
+#guard (popStd89.contains loBad89, popAll89.contains loBad89) == (false, false)
+#guard ((popStd89.filter (fun a => !(lowW89 a))).countP (fun a => !(loDomB89 a)),
+        (popLv89.filter (fun a => !(lowW89 a))).countP (fun a => !(loDomB89 a)))
+        == (0, 17)
+
+/-! **否定 3 — 和のまま書いた尾の条項は領域の中で偽。** `loSum89` は `K` 標準で
+    成分ごとの条項を満たすのに `le (lo x) (ψ₀ (hi x))` は偽 (`not_le_lo_hi89`)。 -/
+#guard (BT.isStd (BT.D 0 loSum89), loDomB89 loSum89,
+        TM.Term.le (loW89 (dict loSum89)) (collapse 0 (hiW89 (dict loSum89))))
+        == (true, true, false)
+
+end
+
+/-! ### §89.9 公理
+
+§89 が足した公理はない。`HiMono89`・`LoDom89` はどちらも `Prop` の**仮説**であって
+公理ではなく、`collapseMono0Hi_of_89` の引数として明示的に渡る。
+`#print axioms` は下のとおり。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+
+end
+
 end Evidence.Region
