@@ -36356,4 +36356,824 @@ end
 
 /-! ### §83.10 公理 -/
 
+/-! ## §84 THE `K`-GATE RELOCALISED — WHAT ESCAPES `Δ` IS WHAT THE HEAD ALREADY PUT IN THE INDEX
+
+§82 refuted §78's and §80's residue and diagnosed it exactly: the `ψ₀` inside a TAIL summand
+can have the HEAD as its argument, so its collapse index is fixed by the head while the `Δ`
+of the tail's own scan step is fixed by the tail.  Buchholz asks *argument < whole sum*;
+Rathjen asks *index < Δ*.  §84 takes the diagnosis at its word and moves the comparison off
+`Δ`.
+
+**FIRST, ONE MORE THING IS FALSE.**  `not_localStd75` — §75's own remaining hypothesis
+`LocalStd75`, the state-free per-pair clause, **is refutable too**, by the same `aBad82`.
+§82 refuted `LocalK2_78`, which is STRONGER (`localStd75_of_k2_78` goes that way), so this did
+not follow from §82 and is new here.  With it `LocalStdFacts75` and `LocalStdFacts2_75` fall,
+and `certIn_t326_local75` joins `certIn_t326_k2_78`, `certIn_t326_big80` and
+`certIn_t326_node82` in the vacuous column.  **Every localisation from §73.6 onwards that
+compares a `K`-element against `Δ` alone is false.**
+
+**AND THE REPLACEMENT IS TRUE WHERE THEY ARE FALSE.**  `SplitK84` asks, of each element `y`
+of `K_{Ω₁} aV ∪ K_{Ω₁} cV` at a firing step,
+
+    y < Δ ⊖ 1        OR        y ≤ i₀   (the index the scan has accumulated so far)
+
+and `ksetStepOK_of_split84` turns it into the gate.  Neither disjunct mentions the sum
+`i₀ ⊕ Δ`: the two comparisons are against single objects, which is what "local" can still
+mean after §82 showed it cannot mean per-pair.  The left disjunct is §75's clause verbatim —
+everything §73–§80 built for it still applies.  The right disjunct is a statement about the
+PREFIX of the sum, which is exactly where Buchholz's `G(a,0) < a` lives.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §84.1  **THE GATE'S FIRST CONJUNCT IS FREE.**  `KsetStepOK` has two conjuncts — the previous
+         index's `K`, and the current pair's `K`.  `scan_idx84` runs `StInv` and `KInv75` along
+         the scan and gets the first from the second, so `ksetStepOK_of_idxK84 : IdxK84 → KsetStepOK`
+         where `IdxK84` is the second conjunct alone.  `idxK84_of_ksetStepOK` is the converse,
+         so the reduction is exact and a `false` from `idxb84` would be a refutation of the
+         gate itself.  The hypothesis is handed `StInv p.1` at each entry, which is what lets
+         §84.3 convert it pointwise; nothing else about the scan leaks out.
+
+  §84.2  **THE STRONGLY CRITICAL BRANCH ALWAYS ADVANCES THE INDEX.**  Three lemmas, no order
+         theory: `wcnf_snd_ne_zero84` (the coefficient of a `wcnf` pair is never `0` — the
+         single branch is an `ω`-power, the merging branch is a `⊕` whose right summand is one),
+         `ddOf_ne_zero84` (`Δ = W^(aV ⊖ W)·cV ≠ 0`), and `ne_plus_self84` (`v ⊕ d ≠ v` for
+         `d ≠ 0`, by filtering both sides of `toList v = filter(toList v) ++ toList d` and
+         counting).  Together: `lt_prev_idxOf84 : i₀ < i₀ ⊕ Δ`, the strict form of §75.2's
+         `le_prev_idxOf75`.  **This is the whole reason `y ≤ i₀` suffices and not just
+         `y < i₀`,** and §84.7 says it is needed at 8 of 893 measured escapes.
+
+  §84.3  **THE SPLIT.**  `idx_of_split84` translates one pair — left disjunct through §75.2's
+         `le_sub1dd_idxOf75`, right disjunct through §84.2 — and `ksetStepOK_of_split84`
+         feeds it to §84.1's induction.  `split84_of_local75` records that §75's clause is
+         the left disjunct on its own, so `SplitK84` is weaker than what §75 asked for.
+
+  §84.4  **THE DECIDERS ARE EXACT.**  `idxb84`/`splitb84` with `idxK84_of_b84`,
+         `b84_of_idxK84` (both directions for the state-aware clause) and `splitK84_of_b84`.
+
+  §84.5  **THE REFUTATION AND THE RESCUE, SIDE BY SIDE.**  `b73_of_localK75` is the converse of
+         §75.3's `localK75_of_b`, so `localOKb73 = false` is a refutation; `not_localStd75`
+         uses it on `aBad82`.  `split84_saves_aBad82` freezes all four verdicts on the same
+         term: §75's clause `false`, §78's clause `false`, `splitb84` `true`, `idxb84` `true`.
+
+  §84.6  **THE ASSEMBLY.**  `SplitStd84` (and `IdxStd84`) → `PsiIdxStep073` → row 326.
+         `idxStd84_of_step073` is the converse for the state-aware form, so `IdxStd84` and
+         §73's gate are the same statement; `SplitStd84` is the sufficient condition proper.
+
+WHAT IS **NOT** CLAIMED.  `SplitStd84` and `IdxStd84` are NOT proved.  `IdxStd84` is EQUAL in
+strength to `PsiIdxStep073` — it is a repackaging that discharges one conjunct, not progress on
+the gate.  The progress claimed is `SplitStd84`, and it is progress in SHAPE only: **no
+measured term separates `splitb84` from `idxb84`**, so the extra strength is not visible
+anywhere in the corpora and could in principle be vacuous.  §82's own repair `LocalK2BigC_82`
+is not resurrected here — §84.7 measures again that it dies on row 326.  `LocalK2Snd_78`,
+`DictHeadLt77`, `CofDenseS1`, `BCofIn71` are untouched.  The right disjunct is the open
+direction: it asks that a `ψ₀`-argument's collapse index be at most what the EARLIER summands
+already contributed, which is where `G(a,0) < a` has to be spent, and §84 does not spend it.
+
+WHAT THE MEASUREMENT SAYS (§84.7 gives the construction).  §82.8's four groups are built by
+capping and summing uniformly, so no component of one of their terms ever mentions another.
+§84's population is built the other way round: `ψ₀`'s argument is made to BE another summand.
+
+  * **§75's clause falls on 3 of the 53 qualifying constructed terms** (all in the family
+    `h ⊕ ψ₁^m(ψ₀ h)`, of which `aBad82` is the smallest) and on **690 of §82.8's 5949
+    `refFam82` terms**.
+  * **`splitb84` falls on none of them** — 0 failures on the 53, 0 on all 5949, 0 on the 690
+    refuters.  `idxb84` and `stepOKb` likewise.
+  * **The escapes are covered by the right disjunct with room to spare, but not everywhere.**
+    893 escaping elements over the 690 refuters: 885 satisfy `y < i₀` strictly, **8 satisfy only
+    `y = i₀`** — and those 8 are exactly what §84.2's `Δ ≠ 0` is for.  All 3 escapes in the
+    constructed population are of the equality kind.
+  * **Row 326 and its whole fundamental sequence pass, and §82's repair does not.**  Over the
+    41 indices of `regPairs72 ([t326] ++ exp72)`: `splitb84`, `idxb84`, `stepOKb` and even
+    `localOKb73` fail 0 times, while the component-standardness condition of `LocalK2BigC_82`
+    fails **30** times — and on `bVal t326` itself.  Over the sub-region
+    `regPairs72 (sub72 8)` (1908 indices) the same: 0 failures for `splitb84`, 319 for
+    component standardness.
+-/
+
+/-! ### §84.1 状態つきの条項 — 門の第一連言は只で来る -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **状態つきの `K` 条項。** `KsetStepOK` の**第二**連言だけ — 今の対の材料の `K` が、
+    実際に吐かれる指数より下。`Δ` ではなく `idxOf` と比べるのがすべての違い。 -/
+def IdxK84 (u : Nat) (x : Term) : Prop :=
+  ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+    le (reg (u+1)) p.2.1 = true →
+      ∀ y, (y ∈ Kset (reg (u+1)) p.2.1 ∨ y ∈ Kset (reg (u+1)) p.2.2) →
+        lt y (idxOf (reg (u+1)) p.1 p.2) = true
+
+/-- 状態つきの局所条件から、吐かれた指数についての 2.1(vi) の `K` の連言。
+    §75.2 の `kall_idxOf75` と違い `le_sub1dd_idxOf75` を通らない。 -/
+private theorem kall_idx84 {u : Nat} {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : StInv s) (hk : KInv75 u s)
+    (h1 : inT ac.1 = true) (h2 : lt ac.1 M = true)
+    (h3 : inT ac.2 = true) (h4 : lt ac.2 M = true)
+    (hloc : ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+        lt y (idxOf (reg (u+1)) s ac) = true) :
+    ∀ y, y ∈ Kset (reg (u+1)) (idxOf (reg (u+1)) s ac) →
+      lt y (idxOf (reg (u+1)) s ac) = true := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have hlw : lt (reg (u+1)) M = true := ltM_reg (u+1)
+  obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT hw hlw hs h1 h2 h3 h4
+  intro y hy
+  cases hs1 : s.1 with
+  | none =>
+    have hidx : idxOf (reg (u+1)) s ac = sub1 (ddOf75 (reg (u+1)) ac) := by
+      show (match s.1 with
+            | none => sub1 (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)
+            | some j => plus j (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)) = _
+      rw [hs1]
+      try rfl
+    rw [hidx] at hy
+    exact hloc y (mem_Kset_ddOf75 (mem_Kset_sub1 hy))
+  | some i0 =>
+    have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+    have hidx : idxOf (reg (u+1)) s ac = plus i0 (ddOf75 (reg (u+1)) ac) := by
+      show (match s.1 with
+            | none => sub1 (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)
+            | some j => plus j (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)) = _
+      rw [hs1]
+      try rfl
+    rw [hidx] at hy
+    rcases mem_Kset_plus hy with h5 | h5
+    · have hyi : inT y = true := inT_mem_Kset75 i0 hi0 _ y h5
+      exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR i0 hi0) (inT_le_fragR _ hidxT)
+        (hk i0 hs1 y h5) (le_prev_idxOf75 hw hs hs1 h1 h3)
+    · exact hloc y (mem_Kset_ddOf75 h5)
+
+/-- **§84.1 の心臓。** 走査に沿って `StInv` と `KInv75` を回し、状態つきの条項から
+    一歩ぶんの**両方**の連言を出す。第一連言 — 直前の指数の `K` — は仮説ではない。 -/
+theorem scan_idx84 {u : Nat} :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s → KInv75 u s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ p ∈ scanSt (reg (u+1)) (baseOf u) s l, le (reg (u+1)) p.2.1 = true → StInv p.1 →
+          ∀ y, (y ∈ Kset (reg (u+1)) p.2.1 ∨ y ∈ Kset (reg (u+1)) p.2.2) →
+            lt y (idxOf (reg (u+1)) p.1 p.2) = true) →
+      ∀ p ∈ scanSt (reg (u+1)) (baseOf u) s l, le (reg (u+1)) p.2.1 = true →
+        (∀ i0, p.1.1 = some i0 → ∀ y, y ∈ Kset (reg (u+1)) i0 →
+            lt y (idxOf (reg (u+1)) p.1 p.2) = true) ∧
+        (∀ y, (y ∈ Kset (reg (u+1)) p.2.1 ∨ y ∈ Kset (reg (u+1)) p.2.2) →
+            lt y (idxOf (reg (u+1)) p.1 p.2) = true) := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have hlw : lt (reg (u+1)) M = true := ltM_reg (u+1)
+  intro l
+  induction l with
+  | nil => intro s _ _ _ _ p hp; cases hp
+  | cons ac t ih =>
+    intro s hs hk hall hloc p hp hle
+    have hac := hall ac (List.Mem.head _)
+    have hmemhead : ((s, ac) : (Option Term × Option Term) × (Term × Term)) ∈
+        scanSt (reg (u+1)) (baseOf u) s (ac :: t) :=
+      show ((s, ac) : (Option Term × Option Term) × (Term × Term)) ∈
+        (s, ac) :: scanSt (reg (u+1)) (baseOf u) (stepF (reg (u+1)) (baseOf u) s ac) t from
+        List.Mem.head _
+    rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt (reg (u+1)) (baseOf u)
+        (stepF (reg (u+1)) (baseOf u) s ac) t from hp) with h | h
+    · subst h
+      refine ⟨?_, hloc _ hmemhead hle hs⟩
+      intro i0 hs1 y hy
+      obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT hw hlw hs hac.1 hac.2.1 hac.2.2.1 hac.2.2.2
+      have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+      have hyi : inT y = true := inT_mem_Kset75 i0 hi0 _ y hy
+      exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR i0 hi0)
+        (inT_le_fragR _ hidxT) (hk i0 hs1 y hy)
+        (le_prev_idxOf75 hw hs hs1 hac.1 hac.2.2.1)
+    · have hkall : le (reg (u+1)) ac.1 = true →
+          ∀ y, y ∈ Kset (reg (u+1)) (idxOf (reg (u+1)) s ac) →
+            lt y (idxOf (reg (u+1)) s ac) = true := fun hle2 =>
+        kall_idx84 hs hk hac.1 hac.2.1 hac.2.2.1 hac.2.2.2 (hloc _ hmemhead hle2 hs)
+      have hpsi : le (reg (u+1)) ac.1 = true →
+          inT (psi (reg (u+1)) (idxOf (reg (u+1)) s ac)) = true := by
+        intro hle2
+        refine inT_psi_idx (isR_reg_succ u) hw hlw hs hac.1 hac.2.1 hac.2.2.1 hac.2.2.2 ?_
+        rw [List.all_eq_true]
+        intro y hy
+        exact hkall hle2 y hy
+      have hs' : StInv (stepF (reg (u+1)) (baseOf u) s ac) :=
+        stepF_inv mulDescInT hw hlw (inT_baseOf u) (ltM_baseOf u) hs hac hpsi
+      have hk' : KInv75 u (stepF (reg (u+1)) (baseOf u) s ac) := by
+        intro i0 hi0 y hy
+        cases hle2 : le (reg (u+1)) ac.1 with
+        | true =>
+          have hfst : (stepF (reg (u+1)) (baseOf u) s ac).1
+              = some (idxOf (reg (u+1)) s ac) := by
+            unfold stepF; rw [hle2]; try rfl
+          rw [hfst] at hi0
+          rw [← Option.some.inj hi0] at hy ⊢
+          exact hkall hle2 y hy
+        | false =>
+          have hfst : (stepF (reg (u+1)) (baseOf u) s ac).1 = s.1 := by
+            unfold stepF; rw [hle2]; try rfl
+          rw [hfst] at hi0
+          exact hk i0 hi0 y hy
+      exact ih (stepF (reg (u+1)) (baseOf u) s ac) hs' hk'
+        (fun a ha => hall a (List.Mem.tail _ ha))
+        (fun q hq hle3 hst => hloc q (show q ∈ (s, ac) :: scanSt (reg (u+1)) (baseOf u)
+          (stepF (reg (u+1)) (baseOf u) s ac) t from List.Mem.tail _ hq) hle3 hst) p h hle
+
+/-- **§84.1 の主定理。** 状態つきの条項から `KsetStepOK`。 -/
+theorem ksetStepOK_of_idxK84 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : IdxK84 u x) : KsetStepOK u x := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  intro p hp hle
+  exact scan_idx84 (wcnf (reg (u+1)) (toList x)).1 (none, none)
+    stInv_none (kInv75_none u) hallOK (fun q hq hle2 _ y hy => H q hq hle2 y hy) p hp hle
+
+/-- **逆も。** `IdxK84` は門の第二連言そのものなので、これは過不足のない分解である。 -/
+theorem idxK84_of_ksetStepOK {u : Nat} {x : Term} (H : KsetStepOK u x) : IdxK84 u x :=
+  fun p hp hle y hy => (H p hp hle).2 y hy
+
+/-- §75 の対ごとの条件は状態つきの条項より**強い**。 -/
+theorem idxK84_of_local75 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : LocalK75 u x) : IdxK84 u x :=
+  idxK84_of_ksetStepOK (ksetStepOK_of_local75 u x hx hlx H)
+
+end
+
+/-! ### §84.2 走査は必ず前へ進む — `i0 < i0 ⊕ Δ` -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`v ⊕ d ≠ v`。** `plus` の成分列は「`v` の成分のふるい ++ `d` の成分」なので、
+    等しければ長さが合わない。順序の理論は要らない。 -/
+theorem ne_plus_self84 {v d : Term} (hv : inT v = true) (hd : inT d = true)
+    (hdz : d ≠ zero) : plus v d ≠ v := by
+  cases hD : toList d with
+  | nil => exact absurd (toList_eq_nil d hD) hdz
+  | cons d1 D' =>
+    intro hc
+    have hT : toList (plus v d) = (toList v).filter (fun a => le d1 a) ++ toList d :=
+      toList_plus_inT hv hd hD
+    rw [hc] at hT
+    have hFself : ((toList v).filter (fun a => le d1 a)).filter (fun a => le d1 a)
+        = (toList v).filter (fun a => le d1 a) :=
+      filter_self_of_all _ _ (fun x hx => (List.mem_filter.mp hx).2)
+    have h2 : (toList v).filter (fun a => le d1 a)
+        = (((toList v).filter (fun a => le d1 a)) ++ toList d).filter (fun a => le d1 a) := by
+      rw [← hT]
+    rw [List.filter_append, hFself] at h2
+    have h3 := congrArg List.length h2
+    rw [List.length_append] at h3
+    have h4 : ((toList d).filter (fun a => le d1 a)).length = 0 := by omega
+    have h5 : d1 ∈ (toList d).filter (fun a => le d1 a) :=
+      List.mem_filter.mpr ⟨by rw [hD]; exact List.Mem.head _, Evidence.WF.le_self d1⟩
+    rw [List.eq_nil_of_length_eq_zero h4] at h5
+    cases h5
+
+/-- **`Δ` は 0 でない。** 係数が 0 でなければ、`mulL` は空でない `ω` 冪の列を作る。 -/
+theorem ddOf_ne_zero84 {w : Term} {ac : Term × Term} (h : ac.2 ≠ zero) :
+    ddOf75 w ac ≠ zero := by
+  have hm : ddOf75 w ac
+      = ofList ((toList ac.2).map
+          (fun p => omegaNF (plus (mulL w (subAP w ac.1)) (logOm p)))) := rfl
+  cases hL : toList ac.2 with
+  | nil => exact absurd (toList_eq_nil _ hL) h
+  | cons q r =>
+    rw [hm, hL]
+    refine ofList_ne_zero81 _ (by rw [List.map_cons]; exact List.cons_ne_nil _ _) ?_
+    intro x hx
+    obtain ⟨p, _, hp⟩ := List.mem_map.mp hx
+    rw [← hp]
+    exact isAP_omegaNF _
+
+/-- **`wcnf` の係数は 0 でない。** 単独の枝は `ω` 冪、併合の枝は `⊕` で、どちらも
+    0 にならない。**これが「強臨界枝は指数を必ず伸ばす」の中身である。** -/
+theorem wcnf_snd_ne_zero84 {w : Term} (hw : inT w = true) (hsc : w.isSC = true) :
+    ∀ (L : List Term), inTL L = true → descL L = true → (∀ x ∈ L, lt x M = true) →
+      ∀ ac ∈ (wcnf w L).1, ac.2 ≠ zero := by
+  intro L
+  induction L with
+  | nil => intro _ _ _ ac hac; cases hac
+  | cons p rest ih =>
+    intro hc hd hm ac hac
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hmr : ∀ x ∈ rest, lt x M = true := fun x hx => hm x (List.Mem.tail p hx)
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp] at hac; cases hac
+    · have hlp' : lt p w = false := bool_false hlp
+      have hrestOK := wcnf_spec_sc hw hsc rest hcr hdr hmr
+      rw [wcnf_cons_ge hlp'] at hac
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at hac
+        cases fst with
+        | nil =>
+          rw [List.mem_singleton.mp hac]
+          exact omegaNF_ne_zero _
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hic' : inT c' = true :=
+              (hrestOK.2 (a', c') (by rw [hr]; exact List.Mem.head _)).2.2.1
+            have hac' : ac ∈ (if (wA w p == a') = true
+                then ((wA w p, plus (wC w p) c') :: ps, snd)
+                else ((wA w p, wC w p) :: (a', c') :: ps, snd)).1 := hac
+            by_cases heq : (wA w p == a') = true
+            · rw [if_pos heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · rw [h1]
+                show plus (wC w p) c' ≠ zero
+                cases hC : toList c' with
+                | nil => rw [plus_nil hC]; exact omegaNF_ne_zero _
+                | cons b1 rr =>
+                  intro hz
+                  have h2 : ((toList (wC w p)).filter (fun a => le b1 a)
+                      ++ toList c').length = 0 := by
+                    rw [← toList_plus_inT (inT_wC hip) hic' hC, hz]; rfl
+                  rw [List.length_append, hC, List.length_cons] at h2
+                  omega
+              · exact ih hcr hdr hmr ac (by rw [hr]; exact List.Mem.tail _ h1)
+            · rw [if_neg heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · rw [h1]; exact omegaNF_ne_zero _
+              · exact ih hcr hdr hmr ac (by rw [hr]; exact h1)
+
+/-- **直前の指数は今の指数より真に小さい。** §75.2 の `le_prev_idxOf75` の狭義版。 -/
+theorem lt_prev_idxOf84 {w : Term} (hw : inT w = true) {s : Option Term × Option Term}
+    {ac : Term × Term} {i0 : Term} (hs : StInv s) (hs1 : s.1 = some i0)
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hz : ac.2 ≠ zero) :
+    lt i0 (idxOf w s ac) = true := by
+  have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+  have hdT : inT (ddOf75 w ac) = true := inT_ddOf75 hw h1 h3
+  have hle := le_prev_idxOf75 hw hs hs1 h1 h3
+  have hidx : idxOf w s ac = plus i0 (ddOf75 w ac) := by
+    show (match s.1 with
+          | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+          | some j => plus j (mulL (mulL w (subAP w ac.1)) ac.2)) = _
+    rw [hs1]
+    try rfl
+  have hne : (i0 == idxOf w s ac) = false := by
+    cases hb : (i0 == idxOf w s ac) with
+    | false => rfl
+    | true =>
+      exfalso
+      have heq : i0 = idxOf w s ac := eq_of_beq hb
+      rw [hidx] at heq
+      exact ne_plus_self84 hi0 hdT (ddOf_ne_zero84 hz) heq.symm
+  have h2 : ((i0 == idxOf w s ac) || lt i0 (idxOf w s ac)) = true := hle
+  rw [hne, Bool.false_or] at h2
+  exact h2
+
+end
+
+/-! ### §84.3 分割条項 — `Δ` か、直前の指数か -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§84 の条項。** 一つの元 `y` について、**今の対の `Δ ⊖ 1`** が抑えるか、
+    **直前の指数**が抑えるか、どちらか。比較の相手はどちらも単体の項で、和
+    `i0 ⊕ Δ` は現れない。§82 が落とした `aBad82` は右の枝で通る — 逃げる元は
+    頭が積んだ指数と**ちょうど等しい**。 -/
+def SplitK84 (u : Nat) (x : Term) : Prop :=
+  ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+    le (reg (u+1)) p.2.1 = true →
+      ∀ y, (y ∈ Kset (reg (u+1)) p.2.1 ∨ y ∈ Kset (reg (u+1)) p.2.2) →
+        lt y (sub1 (ddOf75 (reg (u+1)) p.2)) = true ∨
+        ∃ i0, p.1.1 = some i0 ∧ le y i0 = true
+
+/-- 対ひとつぶんの翻訳。左の枝は §75.2 の `le_sub1dd_idxOf75`、右の枝は §84.2 の
+    `lt_prev_idxOf84`。 -/
+theorem idx_of_split84 {u : Nat} {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : StInv s) (h1 : inT ac.1 = true) (h2 : lt ac.1 M = true)
+    (h3 : inT ac.2 = true) (h4 : lt ac.2 M = true) (hz : ac.2 ≠ zero)
+    (hsp : ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+        lt y (sub1 (ddOf75 (reg (u+1)) ac)) = true ∨
+        ∃ i0, s.1 = some i0 ∧ le y i0 = true) :
+    ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+      lt y (idxOf (reg (u+1)) s ac) = true := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have hlw : lt (reg (u+1)) M = true := ltM_reg (u+1)
+  have hdT : inT (ddOf75 (reg (u+1)) ac) = true := inT_ddOf75 hw h1 h3
+  obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT hw hlw hs h1 h2 h3 h4
+  intro y hy
+  have hyi : inT y = true := by
+    rcases hy with hy | hy
+    · exact inT_mem_Kset75 ac.1 h1 _ y hy
+    · exact inT_mem_Kset75 ac.2 h3 _ y hy
+  rcases hsp y hy with hL | ⟨i0, hs1, hle⟩
+  · exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR _ (inT_sub1 hdT))
+      (inT_le_fragR _ hidxT) hL (le_sub1dd_idxOf75 hw hs h1 h3)
+  · have hi0 : inT i0 = true := (hs.1 i0 hs1).1
+    exact lt_of_le_of_lt3 (inT_le_fragR y hyi) (inT_le_fragR i0 hi0)
+      (inT_le_fragR _ hidxT) hle (lt_prev_idxOf84 hw hs hs1 h1 h3 hz)
+
+/-- **§84.3 の主定理。** 分割条項から `KsetStepOK`。 -/
+theorem ksetStepOK_of_split84 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : SplitK84 u x) : KsetStepOK u x := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  have hnz := wcnf_snd_ne_zero84 (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd
+    (ltM_toList x hx hlx)
+  intro p hp hle
+  refine scan_idx84 (wcnf (reg (u+1)) (toList x)).1 (none, none)
+    stInv_none (kInv75_none u) hallOK ?_ p hp hle
+  intro q hq hle2 hst
+  have hmem : q.2 ∈ (wcnf (reg (u+1)) (toList x)).1 :=
+    scanSt_mem_snd _ _ _ _ q hq
+  obtain ⟨hi1, hl1, hi2, hl2⟩ := hallOK q.2 hmem
+  exact idx_of_split84 hst hi1 hl1 hi2 hl2 (hnz q.2 hmem) (H q hq hle2)
+
+/-- 系 — 分割条項は状態つきの条項より強い。 -/
+theorem idxK84_of_split84 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : SplitK84 u x) : IdxK84 u x :=
+  idxK84_of_ksetStepOK (ksetStepOK_of_split84 u x hx hlx H)
+
+/-- §75 の対ごとの条件は分割条項の**左の枝だけ**を使ったもの。 -/
+theorem split84_of_local75 {u : Nat} {x : Term} (H : LocalK75 u x) : SplitK84 u x := by
+  intro p hp hle y hy
+  exact Or.inl (H p.2 (scanSt_mem_snd _ _ _ _ p hp) hle y hy)
+
+end
+
+/-! ### §84.4 判定器 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 状態つきの条項の判定器。 -/
+def idxb84 (u : Nat) (x : Term) : Bool :=
+  (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all fun p =>
+    !(le (reg (u+1)) p.2.1) ||
+      ((Kset (reg (u+1)) p.2.1 ++ Kset (reg (u+1)) p.2.2).all fun y =>
+        lt y (idxOf (reg (u+1)) p.1 p.2))
+
+/-- 分割条項の判定器。 -/
+def splitb84 (u : Nat) (x : Term) : Bool :=
+  (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all fun p =>
+    !(le (reg (u+1)) p.2.1) ||
+      ((Kset (reg (u+1)) p.2.1 ++ Kset (reg (u+1)) p.2.2).all fun y =>
+        lt y (sub1 (ddOf75 (reg (u+1)) p.2)) ||
+          (match p.1.1 with | none => false | some i0 => le y i0))
+
+theorem idxK84_of_b84 {u : Nat} {x : Term} (h : idxb84 u x = true) : IdxK84 u x := by
+  intro p hp hle y hy
+  have h1 := List.all_eq_true.mp
+    (show (scanSt (reg (u+1)) (baseOf u) (none, none)
+        (wcnf (reg (u+1)) (toList x)).1).all (fun p =>
+      !(le (reg (u+1)) p.2.1) ||
+        ((Kset (reg (u+1)) p.2.1 ++ Kset (reg (u+1)) p.2.2).all fun y =>
+          lt y (idxOf (reg (u+1)) p.1 p.2))) = true from h) p hp
+  rw [hle, Bool.not_true, Bool.false_or] at h1
+  refine List.all_eq_true.mp h1 y ?_
+  rcases hy with hy | hy
+  · exact List.mem_append.mpr (Or.inl hy)
+  · exact List.mem_append.mpr (Or.inr hy)
+
+/-- **判定器は条項と過不足なく同値。** だから `false` は反証である。 -/
+theorem b84_of_idxK84 {u : Nat} {x : Term} (H : IdxK84 u x) : idxb84 u x = true := by
+  show (scanSt (reg (u+1)) (baseOf u) (none, none)
+      (wcnf (reg (u+1)) (toList x)).1).all (fun p =>
+    !(le (reg (u+1)) p.2.1) ||
+      ((Kset (reg (u+1)) p.2.1 ++ Kset (reg (u+1)) p.2.2).all fun y =>
+        lt y (idxOf (reg (u+1)) p.1 p.2))) = true
+  refine List.all_eq_true.mpr ?_
+  intro p hp
+  cases hle : le (reg (u+1)) p.2.1 with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or]
+    refine List.all_eq_true.mpr ?_
+    intro y hy
+    refine H p hp hle y ?_
+    rcases List.mem_append.mp hy with h | h
+    · exact Or.inl h
+    · exact Or.inr h
+
+theorem splitK84_of_b84 {u : Nat} {x : Term} (h : splitb84 u x = true) : SplitK84 u x := by
+  intro p hp hle y hy
+  have h1 := List.all_eq_true.mp
+    (show (scanSt (reg (u+1)) (baseOf u) (none, none)
+        (wcnf (reg (u+1)) (toList x)).1).all (fun p =>
+      !(le (reg (u+1)) p.2.1) ||
+        ((Kset (reg (u+1)) p.2.1 ++ Kset (reg (u+1)) p.2.2).all fun y =>
+          lt y (sub1 (ddOf75 (reg (u+1)) p.2)) ||
+            (match p.1.1 with | none => false | some i0 => le y i0))) = true from h) p hp
+  rw [hle, Bool.not_true, Bool.false_or] at h1
+  have h2 := List.all_eq_true.mp h1 y (by
+    rcases hy with hy | hy
+    · exact List.mem_append.mpr (Or.inl hy)
+    · exact List.mem_append.mpr (Or.inr hy))
+  cases h3 : lt y (sub1 (ddOf75 (reg (u+1)) p.2)) with
+  | true => exact Or.inl rfl
+  | false =>
+    rw [h3, Bool.false_or] at h2
+    cases hq : p.1.1 with
+    | none => rw [hq] at h2; exact Bool.noConfusion h2
+    | some i0 => rw [hq] at h2; exact Or.inr ⟨i0, rfl, h2⟩
+
+end
+
+/-! ### §84.5 §75 の対ごとの条件は**偽** -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- §75.3 の `localK75_of_b` の逆。判定器は条項と同値なので `false` は反証。 -/
+theorem b73_of_localK75 {u : Nat} {x : Term} (H : LocalK75 u x) : localOKb73 u x = true := by
+  show (wcnf (reg (u+1)) (toList x)).1.all (fun ac =>
+    !(le (reg (u+1)) ac.1) ||
+      ((Kset (reg (u+1)) ac.1 ++ Kset (reg (u+1)) ac.2).all fun y =>
+        lt y (sub1 (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2)))) = true
+  refine List.all_eq_true.mpr ?_
+  intro ac hac
+  cases hle : le (reg (u+1)) ac.1 with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or]
+    refine List.all_eq_true.mpr ?_
+    intro y hy
+    refine H ac hac hle y ?_
+    rcases List.mem_append.mp hy with h | h
+    · exact Or.inl h
+    · exact Or.inr h
+
+/-- **§84 の否定。** §75 が残した仮説 `LocalStd75` — 状態を見ない対ごとの条件 —
+    も `aBad82` で落ちる。§82 は §78 の `LocalK2_78` (より強い方) しか反証して
+    いなかった。だから `certIn_t326_local75` も**空回り**である。 -/
+theorem not_localStd75 : ¬ LocalStd75 := by
+  intro H
+  have h := H aBad82 aBad82_hyps.1 aBad82_hyps.2.1 aBad82_hyps.2.2.1 aBad82_hyps.2.2.2.1
+  have h2 := b73_of_localK75 h
+  rw [show localOKb73 0 (dict aBad82) = false from by decide] at h2
+  exact Bool.noConfusion h2
+
+theorem not_localStdFacts75 : ¬ LocalStdFacts75 := fun H => not_localStd75 (localStd75_of_facts75 H)
+
+theorem not_localStdFacts2_75 : ¬ LocalStdFacts2_75 :=
+  fun H => not_localStd75 (localStd75_of_facts2_75 H)
+
+/-- **落ちない方。** 同じ `aBad82` で分割条項は通る。 -/
+theorem splitK84_aBad82 : SplitK84 0 (dict aBad82) := splitK84_of_b84 (by decide)
+
+/-- **落ちる理由と落ちない理由が一つの定理に。** -/
+theorem split84_saves_aBad82 :
+    localOKb73 0 (dict aBad82) = false ∧ k2b78 0 (dict aBad82) = false ∧
+    splitb84 0 (dict aBad82) = true ∧ idxb84 0 (dict aBad82) = true := by
+  refine ⟨?_, ?_, ?_, ?_⟩ <;> decide
+
+end
+
+/-! ### §84.6 組み立て — 326 行目が待つのは分割条項ひとつ -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§84 の残る仮説。** 部分領域の項について分割条項。**証明しない。** -/
+def SplitStd84 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true → SplitK84 0 (dict a)
+
+/-- 状態つきの条項の側の形。 -/
+def IdxStd84 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true → IdxK84 0 (dict a)
+
+theorem idxStd84_of_split84 (H : SplitStd84) : IdxStd84 :=
+  fun a hb hs hi hl => idxK84_of_split84 0 (dict a) hi hl (H a hb hs hi hl)
+
+/-- 分割条項だけで `dict` の像は 𝔗(M) の中。`u = 1` は §73.4 が閉じている。 -/
+theorem inT_dict_of_idx84 (H : IdxStd84) : ∀ a : BT, btLe72 1 a = true →
+    BT.isStd a = true → inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero, _, _ => ⟨inT_zero, lt_zero_M⟩
+  | .D u a, hb, h => by
+    obtain ⟨hu, hba⟩ := btLe72_D 1 u a hb
+    have ih := inT_dict_of_idx84 H a hba (isStd_of_D h)
+    refine inT_collapse_gap3 u (dict a) ih.1 ih.2
+      (psiIdxOK_of_stepOK u (dict a) ih.1 ih.2 ?_)
+    cases u with
+    | zero => exact ksetStepOK_of_idxK84 0 (dict a) ih.1 ih.2 (H a hba h ih.1 ih.2)
+    | succ u' =>
+      cases u' with
+      | zero => exact ksetStepOK_one73 a hba
+      | succ u'' => exact absurd hu (by omega)
+  | .sum a b, hb, h => by
+    obtain ⟨hba, hbb⟩ := btLe72_sum 1 a b hb
+    have iha := inT_dict_of_idx84 H a hba (isStd_of_sum h).1
+    have ihb := inT_dict_of_idx84 H b hbb (isStd_of_sum h).2
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+/-- **§84 の第一の結論。** §73 の残る門は状態つきの条項から出る。 -/
+theorem psiIdxStep073_of_idx84 (H : IdxStd84) : PsiIdxStep073 := by
+  intro a hb h
+  have ih := inT_dict_of_idx84 H a hb (isStd_of_D h)
+  exact ksetStepOK_of_idxK84 0 (dict a) ih.1 ih.2 (H a hb h ih.1 ih.2)
+
+/-- 分割条項からも。 -/
+theorem psiIdxStep073_of_split84 (H : SplitStd84) : PsiIdxStep073 :=
+  psiIdxStep073_of_idx84 (idxStd84_of_split84 H)
+
+/-- **逆向き。** 状態つきの条項は門と同値 — 分解は過不足がない。 -/
+theorem idxStd84_of_step073 (H : PsiIdxStep073) : IdxStd84 :=
+  fun a hb hs _ _ => idxK84_of_ksetStepOK (H a hb hs)
+
+/-- **§84 の第二の結論。** 326 行目の証明書が `K` の側で待つのは分割条項ひとつ。 -/
+theorem certIn_t326_split84 (H : SplitStd84)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step73 (psiIdxStep073_of_split84 H) HD HI HC hacc
+
+theorem certIn_t326_idx84 (H : IdxStd84)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step73 (psiIdxStep073_of_idx84 H) HD HI HC hacc
+
+end
+
+
+/-! ### §84.7 測定 (凍結)
+
+**構成を先に書く。**  §82.8 の四群は「上限で切って一様に足す」作り方なので、
+**成分どうしが相互作用する項が一つも入っていない**。§84 の母集団は逆から作る —
+`ψ₀` の引数が**和の別の成分そのもの**になるように、手で組む。
+
+    tw84 k       = ψ₁^k 0                      (段 1 の塔)
+    cap84 m a    = ψ₁^m a
+    famA84  h ⊕ ψ₁^m(ψ₀ h),  h = tw84 (k+2)          16 個  ← `aBad82` はここの (k,m)=(2,2)
+    famB84  ψ₁^m(ψ₀ t) ⊕ t                            9 個  (`ψ₀` が頭、引数が尾)
+    famC84  h ⊕ ψ₁^m(ψ₀ (h ⊕ 別の塔))                12 個
+    famD84  h ⊕ h' ⊕ ψ₁^m(ψ₀ h)                       6 個  (三項和、引数は先頭)
+    famE84  h ⊕ h' ⊕ ψ₁^m(ψ₀ h')                      6 個  (三項和、引数は中項)
+    famF84  h ⊕ ψ₁^m(ψ₀ (h ⊕ ψ₀ h))                   6 個  (`ψ₀` が二重)
+    famG84  ψ₁(h ⊕ h') ⊕ ψ₁(ψ₀ (h ⊕ h'))              6 個
+    famH84  h ⊕ ψ₁^m(ψ₀ (h の真の部分塔))            18 個
+    pop84   = 上の和集合、重複を除いて                77 個
+    qual84  = そのうち条項の仮説をぜんぶ満たすもの    53 個
+
+  比較の相手として §82.8 の `refFam82` (5949 項) をそのまま使う。
+
+**測定の結果。**
+
+  * **§75 の対ごとの条件は偽。**  `qual84` の 53 項のうち **3 項**で `localOKb73` が
+    落ちる (ぜんぶ `famA84`)。`refFam82` の 5949 項では **690 項**。
+    §82 は §78 の `LocalK2_78` (より強い方) しか反証していなかったので、
+    `LocalStd75` の反証は §84 が初めてである (`not_localStd75`)。
+  * **分割条項はそのぜんぶを救う。**  `splitb84` は `qual84` の 53 項でも、
+    `refFam82` の 5949 項 (690 の反証項をぜんぶ含む) でも、失敗 **0**。
+    `idxb84` と `stepOKb` も失敗 0。
+  * **逃げる元は直前の指数が抑える。しかも等号が出る。**  左の枝が落ちる箇所
+    (以下「逃げる元」) は `qual84` の 57 の発火歩で 3 つ、`refFam82` の 690 の
+    反証項で 893 つ。**そのぜんぶで `le y i0` が成り立つ。**  さらに内訳が
+    §82 の診断の算術的な中身になっている — `refFam82` の 893 のうち **885 は
+    `y < i0` (真に小さい)** が、**8 つは `y = i0` (等号)** で、`qual84` の 3 つは
+    ぜんぶ等号。等号が出るのは `ψ₀` の引数が**頭そのもの**のときで、そのとき
+    その崩壊指数は頭が走査に積んだ指数と一致する (`aBad82` がそれ)。
+    **だから `Δ` では足りず `i0 ⊕ Δ` では足りる。足りる理由は `Δ ≠ 0` (§84.2)
+    ただ一つで、それが要るのは 893 のうち 8 箇所だけである。**
+  * **326 行目とその基本列。**  `regPairs72 ([t326] ++ exp72)` の 41 個の添字で
+    `splitb84`・`idxb84`・`stepOKb`・`localOKb73` はぜんぶ失敗 0。326 行目の値
+    `bVal t326` 自身 (`BT` の大きさ 13) も同じ。**§82 の修理はここで死ぬ** —
+    成分ぜんぶが `BT.isStd (ψ₀ ·)` を満たすという条件は 41 個のうち **30 個**で
+    落ち、`bVal t326` 自身でも落ちる。
+  * **部分領域。**  `regPairs72 (sub72 8)` の 1908 個の添字でも失敗 0
+    (成分標準性は 319 個で落ちる)。
+  * **分離は見つからなかった。**  `splitb84` が落ちて `idxb84` が通る例は
+    どの母集団にも無い。強めたのは**形**であって、測れる範囲では強さではない。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁` の塔。 -/
+def tw84 : Nat → BT
+  | 0 => BT.zero
+  | k+1 => BT.D 1 (tw84 k)
+/-- `ψ₁^m a`。 -/
+def cap84 : Nat → BT → BT
+  | 0, a => a
+  | m+1, a => BT.D 1 (cap84 m a)
+def d0_84 (a : BT) : BT := BT.D 0 a
+def s3_84 (a b c : BT) : BT := BT.sum a (BT.sum b c)
+
+def famA84 : List BT :=
+  (List.range 4).flatMap fun k => (List.range 4).map fun m =>
+    BT.sum (tw84 (k+2)) (cap84 (m+1) (d0_84 (tw84 (k+2))))
+def famB84 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 3).map fun m =>
+    BT.sum (cap84 (m+1) (d0_84 (tw84 (k+2)))) (tw84 (k+2))
+def famC84 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 2).flatMap fun j => (List.range 2).map fun m =>
+    BT.sum (tw84 (k+2)) (cap84 (m+1) (d0_84 (BT.sum (tw84 (k+2)) (tw84 (j+1)))))
+def famD84 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 2).map fun m =>
+    s3_84 (tw84 (k+2)) (tw84 (k+1)) (cap84 (m+1) (d0_84 (tw84 (k+2))))
+def famE84 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 2).map fun m =>
+    s3_84 (tw84 (k+2)) (tw84 (k+1)) (cap84 (m+1) (d0_84 (tw84 (k+1))))
+def famF84 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 2).map fun m =>
+    BT.sum (tw84 (k+2))
+      (cap84 (m+1) (d0_84 (BT.sum (tw84 (k+2)) (d0_84 (tw84 (k+2))))))
+def famG84 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 2).map fun j =>
+    BT.sum (BT.D 1 (BT.sum (tw84 (k+2)) (tw84 (j+1))))
+      (BT.D 1 (d0_84 (BT.sum (tw84 (k+2)) (tw84 (j+1)))))
+def famH84 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 3).flatMap fun j => (List.range 2).map fun m =>
+    BT.sum (tw84 (k+3)) (cap84 (m+1) (d0_84 (tw84 (j+1))))
+
+def pop84 : List BT :=
+  (famA84 ++ famB84 ++ famC84 ++ famD84 ++ famE84 ++ famF84 ++ famG84 ++ famH84).eraseDups
+def okHyp84 (a : BT) : Bool :=
+  btLe72 1 a && BT.isStd (BT.D 0 a) && inT (dict a) && lt (dict a) M
+def qual84 : List BT := pop84.filter okHyp84
+/-- 326 行目とその基本列 (二重に 6 段まで) の添字ぜんぶ。 -/
+def r326_84 : List (Nat × BT) := regPairs72 ([t326] ++ exp72)
+
+-- 母集団の大きさ。
+#guard (pop84.length, qual84.length) == (77, 53)
+#guard r326_84.length == 41
+
+/-! **否定 — §75 の対ごとの条件は相互作用する項で落ちる。** 落ちるのは `famA84`
+(`ψ₀` の引数が頭そのもの) だけで、`aBad82` はそこの最小。 -/
+
+#guard (qual84.filter fun a => !(localOKb73 0 (dict a))).length == 3
+#guard (qual84.filter fun a => !(k2b78 0 (dict a))).length == 3
+#guard (famA84.filter fun a => okHyp84 a && !(localOKb73 0 (dict a))).length == 3
+
+/-! **肯定 1 — 分割条項は同じ母集団で落ちない。** 門 `stepOKb` も、状態つきの
+条項 `idxb84` も同じ。 -/
+
+#guard (qual84.filter fun a => !(splitb84 0 (dict a))).length == 0
+#guard (qual84.filter fun a => !(idxb84 0 (dict a))).length == 0
+#guard (qual84.filter fun a => !(stepOKb 0 (dict a))).length == 0
+
+/-! **肯定 2 — 326 行目とその基本列。** 分割条項は落ちない。**§82 の修理は
+ここで死ぬ** — 成分ぜんぶが `BT.isStd (ψ₀ ·)` という条件は 41 個中 30 個で落ちる。 -/
+
+#guard (r326_84.filter fun q => !(splitb84 q.1 (dict q.2))).length == 0
+#guard (r326_84.filter fun q => !(idxb84 q.1 (dict q.2))).length == 0
+#guard (r326_84.filter fun q => !((BT.toL q.2).all fun t => BT.isStd (BT.D 0 t))).length == 30
+#guard splitb84 0 (dict (bVal t326))
+#guard !((BT.toL (bVal t326)).all fun t => BT.isStd (BT.D 0 t))
+
+/-! **肯定 3 — 逃げる元は直前の指数と等号で並ぶ。** `qual84` の 57 の発火歩で
+左の枝が落ちる元は 3 つ、そのどれでも `y = i0` (等号)。`refFam82` の側では
+893 のうち 885 が真に小さく、等号は 8 つ — その 8 つが §84.2 の `Δ ≠ 0` を
+要求する箇所である。 -/
+
+#guard
+  (let fires := qual84.flatMap fun a =>
+     (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).filter
+       (fun p => le (reg 1) p.2.1)
+   let bad := fires.flatMap fun p =>
+     (Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).filterMap fun y =>
+       if lt y (sub1 (ddOf75 (reg 1) p.2)) then none else some (p, y)
+   (fires.length, bad.length,
+    (bad.filter fun q => match q.1.1.1 with
+      | none => false | some i0 => q.2 == i0).length)) == (57, 3, 3)
+
+-- (重い測定。数は §84 の前書きに記録)
+-- #guard (refFam82.filter fun a => !(localOKb73 0 (dict a))).length == 690
+-- #guard (refFam82.filter fun a => !(splitb84 0 (dict a))).length == 0
+-- #guard ((regPairs72 (sub72 8)).filter fun q => !(splitb84 q.1 (dict q.2))).length == 0
+-- #guard ((regPairs72 (sub72 8)).filter fun q =>
+--   !((BT.toL q.2).all fun t => BT.isStd (BT.D 0 t))).length == 319
+
+end
+
+/-! ### §84.8 公理 -/
+
 end Evidence.Region
