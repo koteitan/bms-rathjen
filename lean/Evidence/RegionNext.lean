@@ -22562,4 +22562,834 @@ open TM TM.Term
 
 end
 
+/-! ## §68 THE TWO HYPOTHESES OF §67, EACH REDUCED TO ONE LOCAL FACT — NEITHER PROVED
+
+§67 rebuilt `certIn_region`'s second supply on two named, measured, unproved hypotheses —
+`PsiIdxOKStd` and `RegionStd` — and §68 was to prove both.  **It proves neither.**  What it
+does instead is: replace each by a strictly more local statement and prove the replacement is
+enough; kill §67.3's dead route by proving a live one; and pin down, with counterexamples that
+are theorems, exactly which hypotheses the two remaining gaps need.  Everything below is
+unconditional unless it visibly carries `Ha`/`Hs`.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §68.1  **THE `BT.lt` ORDER THEORY §67 SAID THE REPOSITORY DID NOT HAVE — ITS FIRST BRICKS.**
+         Nothing can be said about `BT.lt` before its fuel is dealt with: `BT.ltL` counts down
+         a fuel argument and `BT.lt s t` seeds it with `size s + size t + 2`, so the recursive
+         calls are at a DIFFERENT fuel than the one an induction hypothesis offers.
+         `ltL_fuel` proves the fuel is irrelevant as soon as it exceeds the component weight
+         `sizeLB`, `ltS` fixes it at the weight, and `ltS_cons` is the unfolding equation that
+         a proof can actually `rw` with.  `lt_zero_toL` and `lt_D_lvl` are the two facts that
+         follow at once: `0` is least, and a strictly smaller subscript decides.
+
+  §68.2  **`RegionStd` IS A STATEMENT ABOUT ONE NODE.**  `regionStd_of_argStd` reduces it to
+
+             ArgStd : ∀ w c, nfLe (w+1) c → nonIncr c → visOK w c c → stdIn c
+                             → BT.isStd (BT.D w (bArg w c)) = true
+
+         — no sum, no spine, no `bVal`: one node of level `w` with argument `c`.  The passage
+         is `toL_bVal_nd` (the components of `bVal` are exactly the top-level nodes' `bK`s)
+         and `stdIn_nd` (each top-level node's argument carries `nonIncr`/`visOK`/`stdIn` for
+         free).  `nonIncr t` is NOT used: the region's own descent is not needed for the
+         COMPONENTS to be standard, only `nfB` and `stdIn` are.
+
+         **ALL FOUR HYPOTHESES OF `ArgStd` ARE LOAD-BEARING**, and the witnesses are tiny:
+
+             drop `visOK`   c = (0,0)(1,1)        `ψ₀(ψ₀(Ω₁))`             2 nodes
+             drop `nonIncr` c = (0,0)(0,1)        `ψ₀(1 ⊕ Ω₁)`             2 nodes
+             drop `stdIn`   c = (0,1)(1,1)(2,2)   `ψ₀(ψ₁(ψ₁(Ω₂)))`         3 nodes
+             drop `nfLe`    c = (0,2)(1,1)(2,3)   `ψ₀(ψ₂(ψ₁(Ω₃)))`         3 nodes
+
+         (`not_argStd_no_visOK` … `not_argStd_no_nfLe`, all four proved).  So §67's question
+         "which one implies which" has an answer: no three of the four suffice.
+
+         **THE CRUX IS AN ORDER TRANSFER, AND IT IS FALSE WITHOUT `stdIn`.**  What `ArgStd`
+         needs and does not have is `ArgTransfer`: on trees that are good at level `w`, the
+         index-side order `cmpS` and the value-side order `BT.lt` agree through `bArg`.
+         Measured it is an order ISOMORPHISM (1 485 370 ordered pairs, zero disagreement).
+         Dropping `stdIn` — keeping only `nfLe` — breaks it, and `not_argTransfer_nfLe`
+         proves that with the smallest witness, a pair of 4-node arguments
+
+             cT1 = (0,1)(1,2)(1,0)(1,0)   bArg = Ω₂ ⊕ ψ₁(Ω₂ ⊕ 1 ⊕ 1)
+             cT2 = (0,1)(1,2)(1,0)(1,2)   bArg = Ω₂ ⊕ ψ₁(Ω₂ ⊕ 1) ⊕ Ω₂
+
+         with `cmpS cT1 cT2 = .lt` and `BT.lt (bArg 0 cT1) (bArg 0 cT2) = false`.
+
+         `toL_bArg` (§68.2c) is the shape the next induction has to run on: `bArg`'s
+         component list is the FIRST node's contribution — the only one that can collapse —
+         followed by a plain `ψ_u` per remaining node.  That asymmetry is what makes the
+         proper-prefix case above appear, and it has no counterpart on the `cmpS` side.
+
+  §68.3  **`PsiIdxOKStd` IS A STATEMENT ABOUT ONE SCAN STEP, AND §67.3'S DEAD ROUTE HAS A LIVE
+         REPLACEMENT.**  §67.3 proved `KsetBigOK` — §66.2's sufficient condition — FALSE on the
+         region, and told §68 to go at the `K` of the index actually emitted.  `KsetStepOK`
+         does exactly that: it asks the `K`-condition only of the two things the emitted index
+         is BUILT from, the previous index and the component being consumed, which is what
+         `mem_Kset_idxOf` splits it into.  `ksetIdxOK_of_stepOK` needs no induction at all,
+         `psiIdxOKStd_of_stepStd` carries it through `dict` (the `inT`/`< M` side conditions
+         come along in the same induction, `inT_dict_of_stepStd`), and the region passes:
+
+             region's 1327 `(u, ψ_u b)` pairs   `bigOKb` fails 33   `stepOKb` fails 0
+
+         §67.3's own counterexample `aBig` is repaired (`ksetStepOK_aBig`, proved), and §66.3's
+         genuine counterexample `badArg` is still rejected (`not_ksetStepOK_badArg`, proved) —
+         so the new condition is not vacuous slack.  Over ALL 3966 `BT` terms of the 3-fold
+         closure of `{0}` under `ψ_u` (`u < 4`) and `⊕`, `stepOKb` and `psiIdxOKb` fail at
+         `u = 0` on exactly the same 93 terms (`bigOKb` fails on 105): on that population the
+         step condition is not merely sufficient, it is equivalent to 2.1(vi)'s decider.
+         On the standard side it never fails: 34 551 standard pairs `(u, a)` with subscripts
+         up to 7 and `u` up to 8 — so the "sweep to at least `u+2`" rule is met for `u ≤ 5`.
+
+  §68.4  **THE CONSUMER.**  `hsuccS_supply_68` is `certIn_region`'s second supply on the two
+         new hypotheses alone.
+
+WHAT IS NOT CLAIMED.  **`Hsucc` IS STILL NOT UNCONDITIONAL.**  Two named facts stand between
+`hsuccS_supply_68` and `certIn_region`:
+
+  (S1')  `PsiIdxStepStd` — §68.3's local form of [Rathjen, 1991] 2.1(vi).  Measured: 0 failures
+         over every population below.  A proof needs the `K`-sets of `dict`'s image, i.e. the
+         transport of Buchholz's `G(a,u) < a` to Rathjen's `K_κ α < α`; nothing here does that.
+  (S2')  `ArgStd` — §68.2's one-node form.  A proof needs `ArgTransfer` (§68.2, measured) plus
+         the structure of the collapsing head `bClose ∘ bFold`, and `ArgTransfer` itself needs
+         `ltS`-analogues of §62's `cmpS_split` / `cmpS_ctx`, which §68.1 does not build.
+         The obstruction is identified precisely: on a common prefix `ltS` behaves like `cmpS`,
+         but the collapsed head is a LIST, not a single component, so a proper-prefix case
+         appears that has no analogue on the index side.
+
+NEITHER IS REFUTED.  Every measurement in §68.5 is consistent with both, over populations of
+four different shapes, and the four negative results are all about DROPPING a hypothesis, not
+about the hypotheses themselves. -/
+
+
+/-! ### §68.1 `BT.lt` の燃料を外す
+
+`BT.ltL` は燃料を数えながら降りるので、帰納法の仮説が持つ燃料と再帰呼び出しの燃料が
+食い違う。まず「燃料は成分の重み `sizeLB` を超えていれば何でもよい」を示し、燃料を
+その重みに固定した `ltS` を作る。`ltS_cons` が `rw` できる展開式である。 -/
+
+section
+open TM TM.Term
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+
+/-- 成分列の重み。`BT.ltL` の燃料の測度。 -/
+def sizeLB : List BT → Nat
+  | [] => 0
+  | a :: r => a.size + sizeLB r
+
+theorem sizeLB_append : ∀ (l1 l2 : List BT), sizeLB (l1 ++ l2) = sizeLB l1 + sizeLB l2
+  | [], l2 => by show sizeLB l2 = 0 + sizeLB l2; omega
+  | a :: r, l2 => by
+    show a.size + sizeLB (r ++ l2) = (a.size + sizeLB r) + sizeLB l2
+    rw [sizeLB_append r l2]; omega
+
+theorem one_le_size : ∀ x : BT, 1 ≤ x.size
+  | .zero => Nat.le_refl 1
+  | .D _ a => by show 1 ≤ 1 + a.size; omega
+  | .sum a b => by show 1 ≤ 1 + a.size + b.size; omega
+
+theorem sizeLB_toL : ∀ x : BT, sizeLB x.toL ≤ x.size
+  | .zero => Nat.zero_le _
+  | .D _ _ => Nat.le_refl _
+  | .sum a b => by
+    show sizeLB (a.toL ++ b.toL) ≤ 1 + a.size + b.size
+    rw [sizeLB_append]
+    have h1 := sizeLB_toL a
+    have h2 := sizeLB_toL b
+    omega
+
+/-- **燃料は足りてさえいればよい。** -/
+theorem ltL_fuel : ∀ (f1 : Nat) (f2 : Nat) (l1 l2 : List BT),
+    sizeLB l1 + sizeLB l2 < f1 → sizeLB l1 + sizeLB l2 < f2 →
+    BT.ltL f1 l1 l2 = BT.ltL f2 l1 l2 := by
+  intro f1
+  induction f1 with
+  | zero => intro _ l1 l2 h _; exact absurd h (Nat.not_lt_zero _)
+  | succ k ih =>
+    intro f2 l1 l2 h1 h2
+    cases f2 with
+    | zero => exact absurd h2 (Nat.not_lt_zero _)
+    | succ k2 =>
+      cases l1 with
+      | nil => cases l2 with
+        | nil => rfl
+        | cons y ys => rfl
+      | cons x xs => cases l2 with
+        | nil => cases x <;> rfl
+        | cons y ys =>
+          cases x with
+          | zero => cases y <;> rfl
+          | sum p q => cases y <;> rfl
+          | D u a =>
+            cases y with
+            | zero => rfl
+            | sum p q => rfl
+            | D v b =>
+              have hs1 : 1 ≤ a.size := one_le_size a
+              have hs2 : 1 ≤ b.size := one_le_size b
+              have t1 := sizeLB_toL a
+              have t2 := sizeLB_toL b
+              have hsum : sizeLB ((BT.D u a) :: xs) + sizeLB ((BT.D v b) :: ys)
+                  = (1 + a.size + sizeLB xs) + (1 + b.size + sizeLB ys) := by
+                show ((1 + a.size) + sizeLB xs) + ((1 + b.size) + sizeLB ys) = _
+                omega
+              show (if u < v then true else if v < u then false
+                    else if a == b then BT.ltL k xs ys else BT.ltL k a.toL b.toL)
+                = (if u < v then true else if v < u then false
+                    else if a == b then BT.ltL k2 xs ys else BT.ltL k2 a.toL b.toL)
+              by_cases h3 : u < v
+              · rw [if_pos h3, if_pos h3]
+              · rw [if_neg h3, if_neg h3]
+                by_cases h4 : v < u
+                · rw [if_pos h4, if_pos h4]
+                · rw [if_neg h4, if_neg h4]
+                  by_cases h5 : (a == b) = true
+                  · rw [if_pos h5, if_pos h5]
+                    exact ih k2 xs ys (by omega) (by omega)
+                  · rw [if_neg h5, if_neg h5]
+                    exact ih k2 a.toL b.toL (by omega) (by omega)
+
+/-- 燃料を重みに固定した比較。 -/
+def ltS (l1 l2 : List BT) : Bool := BT.ltL (sizeLB l1 + sizeLB l2 + 1) l1 l2
+
+theorem lt_eq_ltS (s t : BT) : BT.lt s t = ltS s.toL t.toL := by
+  have h1 := sizeLB_toL s
+  have h2 := sizeLB_toL t
+  exact ltL_fuel (s.size + t.size + 2) (sizeLB s.toL + sizeLB t.toL + 1) s.toL t.toL
+    (by omega) (by omega)
+
+theorem ltS_nil_nil : ltS [] [] = false := rfl
+theorem ltS_nil_cons (y : BT) (ys : List BT) : ltS [] (y :: ys) = true := rfl
+
+theorem ltS_cons_nil (x : BT) (xs : List BT) : ltS (x :: xs) [] = false := by
+  show BT.ltL (sizeLB (x :: xs) + sizeLB [] + 1) (x :: xs) [] = false
+  cases h : sizeLB (x :: xs) + sizeLB [] + 1 with
+  | zero => rfl
+  | succ k => cases x <;> rfl
+
+/-- **展開式。** 段が決め、同段なら引数、引数が同じなら後続。 -/
+theorem ltS_cons (u : Nat) (a : BT) (xs : List BT) (v : Nat) (b : BT) (ys : List BT) :
+    ltS (BT.D u a :: xs) (BT.D v b :: ys)
+      = (if u < v then true else if v < u then false
+         else if a == b then ltS xs ys else ltS a.toL b.toL) := by
+  have hs1 : 1 ≤ a.size := one_le_size a
+  have hs2 : 1 ≤ b.size := one_le_size b
+  have t1 := sizeLB_toL a
+  have t2 := sizeLB_toL b
+  have hsum : sizeLB (BT.D u a :: xs) + sizeLB (BT.D v b :: ys)
+      = (1 + a.size + sizeLB xs) + (1 + b.size + sizeLB ys) := by
+    show ((1 + a.size) + sizeLB xs) + ((1 + b.size) + sizeLB ys) = _
+    omega
+  show BT.ltL ((sizeLB (BT.D u a :: xs) + sizeLB (BT.D v b :: ys)) + 1) _ _ = _
+  rw [show (sizeLB (BT.D u a :: xs) + sizeLB (BT.D v b :: ys)) + 1
+        = ((1 + a.size + sizeLB xs) + (1 + b.size + sizeLB ys)) + 1 from by rw [hsum]]
+  show (if u < v then true else if v < u then false
+        else if a == b then BT.ltL ((1 + a.size + sizeLB xs) + (1 + b.size + sizeLB ys)) xs ys
+        else BT.ltL ((1 + a.size + sizeLB xs) + (1 + b.size + sizeLB ys)) a.toL b.toL) = _
+  by_cases h3 : u < v
+  · rw [if_pos h3, if_pos h3]
+  · rw [if_neg h3, if_neg h3]
+    by_cases h4 : v < u
+    · rw [if_pos h4, if_pos h4]
+    · rw [if_neg h4, if_neg h4]
+      by_cases h5 : (a == b) = true
+      · rw [if_pos h5, if_pos h5]
+        exact ltL_fuel _ _ xs ys (by omega) (by omega)
+      · rw [if_neg h5, if_neg h5]
+        exact ltL_fuel _ _ a.toL b.toL (by omega) (by omega)
+
+/-- `0` は最小。 -/
+theorem lt_zero_toL (x : BT) (h : x.toL ≠ []) : BT.lt BT.zero x = true := by
+  rw [lt_eq_ltS]
+  cases hx : x.toL with
+  | nil => exact absurd hx h
+  | cons y ys => exact ltS_nil_cons y ys
+
+/-- 段が小さければそれで決まる。 -/
+theorem lt_D_lvl (u v : Nat) (a b : BT) (h : u < v) :
+    BT.lt (BT.D u a) (BT.D v b) = true := by
+  rw [lt_eq_ltS]
+  show ltS (BT.D u a :: []) (BT.D v b :: []) = true
+  rw [ltS_cons, if_pos h]
+
+end
+
+/-! ### §68.2 `RegionStd` は一つの節の話
+
+`bVal` の成分は最上位の節の寄与そのもので、`stdIn` は各節の引数に `nonIncr`・`visOK`・
+`stdIn` をただで渡す。だから `RegionStd` は「一つの節の寄与が Buchholz 標準」に落ちる。
+落ちた先 `ArgStd` は**証明しない**。四つの仮説がどれも外せないことだけを示す。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 段 `w` の節の引数として「良い」こと。 -/
+def goodAt (w : Nat) (c : B) : Bool :=
+  nfLe (w+1) c && nonIncr c && visOK w c c && stdIn c
+
+/-- **一つの節の条件。** `RegionStd` はこれに落ちる (`regionStd_of_argStd`)。**未証明。** -/
+def ArgStd : Prop := ∀ (w : Nat) (c : B),
+  nfLe (w+1) c = true → nonIncr c = true → visOK w c c = true → stdIn c = true →
+  BT.isStd (BT.D w (bArg w c)) = true
+
+/-- **その核。** 添字の側の順序 `cmpS` は `bArg` を通って値の側の順序になる。**未証明。** -/
+def ArgTransfer : Prop := ∀ (w : Nat) (c1 c2 : B),
+  goodAt w c1 = true → goodAt w c2 = true →
+  cmpS (toL c1) (toL c2) = Ordering.lt → BT.lt (bArg w c1) (bArg w c2) = true
+
+theorem stdIn_nd {v : Nat} {r c : B} (h : stdIn (.nd v r c) = true) :
+    stdIn r = true ∧ nonIncr c = true ∧ visOK v c c = true ∧ stdIn c = true := by
+  have h' : ((stdIn r && nonIncr c && visOK v c c) && stdIn c) = true := h
+  obtain ⟨h1, h4⟩ := (Bool.and_eq_true _ _).mp h'
+  obtain ⟨h2, h3⟩ := (Bool.and_eq_true _ _).mp h1
+  obtain ⟨hr, hn⟩ := (Bool.and_eq_true _ _).mp h2
+  exact ⟨hr, hn, h3, h4⟩
+
+/-- **`bVal` の成分は最上位の節の寄与そのもの。** -/
+theorem toL_bVal_nd (v : Nat) (r c : B) :
+    (bVal (.nd v r c)).toL = (bVal r).toL ++
+      (if (r == .nil && v == 0 && c == .nil) = true then ([] : List BT)
+       else [BT.D v (bArg v c)]) := by
+  have hX : AtomsL (if (r == .nil && v == 0 && c == .nil) = true then BT.zero
+      else BT.D v (bArg v c)) := by
+    by_cases hc : (r == .nil && v == 0 && c == .nil) = true
+    · rw [if_pos hc]; exact atomsL_zero
+    · rw [if_neg hc]; exact atomsL_D _ _
+  show (bplus (bVal r) (if (r == .nil && v == 0 && c == .nil) = true then BT.zero
+      else BT.D v (bArg v c))).toL = _
+  rw [toL_bplus _ _ (atomsL_bVal r) hX]
+  by_cases hc : (r == .nil && v == 0 && c == .nil) = true
+  · rw [if_pos hc, if_pos hc]; rfl
+  · rw [if_neg hc, if_neg hc]; rfl
+
+theorem regionStd_aux (H : ArgStd) : ∀ (t : B), nfB t = true → stdIn t = true →
+    ∀ a ∈ (bVal t).toL, BT.isStd a = true := by
+  intro t
+  induction t with
+  | nil => intro _ _ a ha; cases ha
+  | nd v r c ihr _ =>
+    intro hnf hst a ha
+    obtain ⟨_, hnfr, hnfc⟩ := (nfLe_nd_iff 0 v r c).mp hnf
+    obtain ⟨hstr, hnc, hvis, hstc⟩ := stdIn_nd hst
+    rw [toL_bVal_nd v r c] at ha
+    rcases List.mem_append.mp ha with h | h
+    · exact ihr hnfr hstr a h
+    · by_cases hc : (r == .nil && v == 0 && c == .nil) = true
+      · rw [if_pos hc] at h; cases h
+      · rw [if_neg hc, List.mem_singleton] at h
+        rw [h]
+        exact H v c hnfc hnc hvis hstc
+
+/-- **§68.2 の主定理。** `RegionStd` は一つの節の条件に落ちる。`nonIncr t` は要らない。 -/
+theorem regionStd_of_argStd (H : ArgStd) : RegionStd := by
+  intro t ht a ha
+  have h' : ((nfB t && nonIncr t) && stdIn t) = true := ht
+  obtain ⟨h1, h3⟩ := (Bool.and_eq_true _ _).mp h'
+  obtain ⟨h2, _⟩ := (Bool.and_eq_true _ _).mp h1
+  exact regionStd_aux H t h2 h3 a ha
+
+end
+
+/-! ### §68.2b 四つの仮説はどれも外せない
+
+`ArgStd` の連言から一つずつ外して、最小の反例を挙げる。どれも 2 節か 3 節である。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- `visOK` を外す反例。行列 `(0,0)(1,1)`、値 `ψ₀(ψ₀(Ω₁))`。 -/
+def cVis : B := .nd 0 .nil (.nd 1 .nil .nil)
+/-- `nonIncr` を外す反例。行列 `(0,0)(0,1)`、値 `ψ₀(1 ⊕ Ω₁)`。 -/
+def cInc : B := .nd 1 (.nd 0 .nil .nil) .nil
+/-- `stdIn` を外す反例。行列 `(0,1)(1,1)(2,2)`、値 `ψ₀(ψ₁(ψ₁(Ω₂)))`。 -/
+def cStd : B := .nd 1 .nil (.nd 1 .nil (.nd 2 .nil .nil))
+/-- `nfLe` を外す反例。行列 `(0,2)(1,1)(2,3)`、値 `ψ₀(ψ₂(ψ₁(Ω₃)))`。 -/
+def cNf : B := .nd 2 .nil (.nd 1 .nil (.nd 3 .nil .nil))
+
+theorem not_argStd_no_visOK :
+    ¬ (∀ (w : Nat) (c : B), nfLe (w+1) c = true → nonIncr c = true → stdIn c = true →
+        BT.isStd (BT.D w (bArg w c)) = true) := fun H =>
+  Bool.noConfusion ((H 0 cVis rfl rfl rfl).symm.trans
+    (show BT.isStd (BT.D 0 (bArg 0 cVis)) = false from rfl))
+
+/-- `cInc` の中の段 0 の節の引数は空和で、`cInc` より真に小さい。 -/
+theorem cmpS_nil_cInc : (cmpS (toL (B.nil)) (toL cInc) == Ordering.lt) = true := by
+  show (cmpS [] [((0 : Nat), (B.nil)), ((1 : Nat), (B.nil))] == Ordering.lt) = true
+  rw [cmpS_nil_cons]
+  rfl
+
+/-- `visOK` は `cmpS` を含むので `rfl` では出ない。値は §62 の展開式から。 -/
+theorem visOK_cInc : visOK 0 cInc cInc = true := by
+  show ((true && ((cmpS (toL (B.nil)) (toL cInc) == Ordering.lt) && true))
+        && (true && true)) = true
+  rw [cmpS_nil_cInc]
+  rfl
+
+theorem not_argStd_no_nonIncr :
+    ¬ (∀ (w : Nat) (c : B), nfLe (w+1) c = true → visOK w c c = true → stdIn c = true →
+        BT.isStd (BT.D w (bArg w c)) = true) := fun H =>
+  Bool.noConfusion ((H 0 cInc rfl visOK_cInc rfl).symm.trans
+    (show BT.isStd (BT.D 0 (bArg 0 cInc)) = false from rfl))
+
+theorem not_argStd_no_stdIn :
+    ¬ (∀ (w : Nat) (c : B), nfLe (w+1) c = true → nonIncr c = true → visOK w c c = true →
+        BT.isStd (BT.D w (bArg w c)) = true) := fun H =>
+  Bool.noConfusion ((H 0 cStd rfl rfl rfl).symm.trans
+    (show BT.isStd (BT.D 0 (bArg 0 cStd)) = false from rfl))
+
+theorem not_argStd_no_nfLe :
+    ¬ (∀ (w : Nat) (c : B), nonIncr c = true → visOK w c c = true → stdIn c = true →
+        BT.isStd (BT.D w (bArg w c)) = true) := fun H =>
+  Bool.noConfusion ((H 0 cNf rfl rfl rfl).symm.trans
+    (show BT.isStd (BT.D 0 (bArg 0 cNf)) = false from rfl))
+
+/-- 移送の反例、小さい方。四つの条件をすべて満たす。 -/
+def cT1 : B := .nd 1 .nil (.nd 0 (.nd 0 (.nd 2 .nil .nil) .nil) .nil)
+/-- 移送の反例、大きい方。子の並び `(2)(0)(2)` が降べきでないので `stdIn` だけが落ちる。 -/
+def cT2 : B := .nd 1 .nil (.nd 2 (.nd 0 (.nd 2 .nil .nil) .nil) .nil)
+
+theorem cmpS_cT1_cT2 : cmpS (toL cT1) (toL cT2) = Ordering.lt := by
+  have h3 : cmpS [((0 : Nat), (B.nil))] [((2 : Nat), (B.nil))] = Ordering.lt := by
+    rw [cmpS_cons, if_pos (by omega)]
+  have h2 : cmpS [((0 : Nat), (B.nil)), ((0 : Nat), (B.nil))]
+      [((0 : Nat), (B.nil)), ((2 : Nat), (B.nil))] = Ordering.lt := by
+    rw [cmpS_cons, if_neg (by omega), if_neg (by omega),
+      show cmpS (toL (B.nil)) (toL (B.nil)) = Ordering.eq from cmpS_nil_nil]
+    exact h3
+  have h1 : cmpS [((2 : Nat), (B.nil)), ((0 : Nat), (B.nil)), ((0 : Nat), (B.nil))]
+      [((2 : Nat), (B.nil)), ((0 : Nat), (B.nil)), ((2 : Nat), (B.nil))] = Ordering.lt := by
+    rw [cmpS_cons, if_neg (by omega), if_neg (by omega),
+      show cmpS (toL (B.nil)) (toL (B.nil)) = Ordering.eq from cmpS_nil_nil]
+    exact h2
+  show cmpS [((1 : Nat), (B.nd 0 (B.nd 0 (B.nd 2 .nil .nil) .nil) .nil))]
+      [((1 : Nat), (B.nd 2 (B.nd 0 (B.nd 2 .nil .nil) .nil) .nil))] = Ordering.lt
+  rw [cmpS_cons, if_neg (by omega), if_neg (by omega),
+    show cmpS (toL (B.nd 0 (B.nd 0 (B.nd 2 .nil .nil) .nil) .nil))
+        (toL (B.nd 2 (B.nd 0 (B.nd 2 .nil .nil) .nil) .nil)) = Ordering.lt from h1]
+
+/-- **移送は `nfLe` だけでは成り立たない。** 最小の反例は 4 節どうし。 -/
+theorem not_argTransfer_nfLe :
+    ¬ (∀ (w : Nat) (c1 c2 : B), nfLe (w+1) c1 = true → nfLe (w+1) c2 = true →
+        cmpS (toL c1) (toL c2) = Ordering.lt → BT.lt (bArg w c1) (bArg w c2) = true) :=
+  fun H => Bool.noConfusion ((H 0 cT1 cT2 rfl rfl cmpS_cT1_cT2).symm.trans
+    (show BT.lt (bArg 0 cT1) (bArg 0 cT2) = false from rfl))
+
+end
+
+/-! ### §68.2c `bArg` の成分列 — 次の帰納法が回る形
+
+`ArgTransfer` を証明するには `bArg` を成分列として見る必要がある。潰れるのは**先頭の
+節だけ**で、残りはそのまま `ψ_u` になる — それが `toL_bArg` である。`argL` の第一項が
+`bK w u .nil a` (潰れうる) で第二項が `map` (潰れない) という非対称が、`cmpS` 側には無い
+「真の接頭辞」の場合を作る。§69 が塞ぐべき穴はそこにある。 -/
+
+section
+open TM TM.Term
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT)
+
+/-- 成分列の側から見た `bArg`。先頭の節だけが潰れうる。 -/
+def argL (w : Nat) : List (Nat × B) → List BT
+  | [] => []
+  | (u, a) :: rest => (bK w u .nil a).toL ++ rest.map (fun q => BT.D q.1 (bArg q.1 q.2))
+
+/-- **先頭でない節の寄与は必ず `ψ_u`。** 潰れるのは先頭だけ。 -/
+theorem bK_tail (w u : Nat) (r c : B) (hr : r ≠ .nil) : bK w u r c = BT.D u (bArg u c) := by
+  cases r with
+  | nil => exact absurd rfl hr
+  | nd v r' c' =>
+    show (if (c == .nil) = true then (BT.D u BT.zero)
+          else if (decide (u ≤ w) || !(B.nd v r' c' == .nil) || decide (headLvl c ≤ u)) = true
+               then BT.D u (bArg u c) else bClose u (bFold u c)) = _
+    by_cases hc : (c == .nil) = true
+    · rw [if_pos hc, show c = .nil from of_decide_eq_true hc]
+      rfl
+    · rw [if_neg hc, if_pos ?_]
+      show (decide (u ≤ w) || !(B.nd v r' c' == .nil) || decide (headLvl c ≤ u)) = true
+      rw [show (!(B.nd v r' c' == B.nil)) = true from rfl, Bool.or_true]
+      rfl
+
+theorem argL_snoc (w : Nat) : ∀ (l : List (Nat × B)) (x : Nat × B), l ≠ [] →
+    argL w (l ++ [x]) = argL w l ++ [BT.D x.1 (bArg x.1 x.2)]
+  | [], _, h => absurd rfl h
+  | (u, a) :: rest, x, _ => by
+    show (bK w u .nil a).toL ++ (rest ++ [x]).map (fun q => BT.D q.1 (bArg q.1 q.2))
+      = ((bK w u .nil a).toL ++ rest.map (fun q => BT.D q.1 (bArg q.1 q.2)))
+          ++ [BT.D x.1 (bArg x.1 x.2)]
+    rw [List.map_append, List.append_assoc]
+    rfl
+
+/-- **`bArg` の成分列。** 先頭の節の寄与 (潰れうる) に、残りの節の `ψ_u` を並べたもの。 -/
+theorem toL_bArg (w : Nat) : ∀ (c : B), (bArg w c).toL = argL w (toL c)
+  | .nil => rfl
+  | .nd u r a => by
+    rw [show bArg w (.nd u r a) = bplus (bArg w r) (bK w u r a) from rfl,
+      toL_bplus _ _ (atomsL_bArg_bFold r w).1 (atomsL_bK w u r a), toL_nd]
+    cases hr : r with
+    | nil =>
+      rw [show toL (B.nil) = ([] : List (Nat × B)) from rfl, List.nil_append]
+      show (bArg w B.nil).toL ++ (bK w u B.nil a).toL = (bK w u .nil a).toL ++ [].map _
+      rw [show (bArg w B.nil).toL = ([] : List BT) from rfl,
+        show ((bK w u B.nil a).toL ++ ([] : List (Nat × B)).map
+          (fun q => BT.D q.1 (bArg q.1 q.2))) = (bK w u B.nil a).toL from List.append_nil _]
+      exact List.nil_append _
+    | nd v r' c' =>
+      rw [argL_snoc w (toL (B.nd v r' c')) (u, a) (toL_ne_nil v r' c'),
+        ← toL_bArg w (B.nd v r' c'),
+        bK_tail w u (B.nd v r' c') a (by intro h; exact B.noConfusion h)]
+      rfl
+
+end
+
+/-! ### §68.3 `PsiIdxOKStd` は一歩の話
+
+`mem_Kset_idxOf` は「吐かれた指数の `K`」を「直前の指数の `K`」と「今の成分の `K`」に
+分ける。分けた先だけを条件にしたものが `KsetStepOK` で、`KsetIdxOK` はそこから帰納法
+なしで出る。§66.2 の `bigPart` と違い、まだ消費していない成分を見ないので領域に届く。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **一歩ぶんの条件。** 吐かれた指数を作る材料 — 直前の指数と今の成分 — の `K` が、
+    その指数より小さいこと。 -/
+def KsetStepOK (u : Nat) (x : Term) : Prop :=
+  ∀ p ∈ scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1,
+    le (reg (u+1)) p.2.1 = true →
+      (∀ i0, p.1.1 = some i0 → ∀ y ∈ Kset (reg (u+1)) i0,
+          lt y (idxOf (reg (u+1)) p.1 p.2) = true) ∧
+      (∀ y, (y ∈ Kset (reg (u+1)) p.2.1 ∨ y ∈ Kset (reg (u+1)) p.2.2) →
+          lt y (idxOf (reg (u+1)) p.1 p.2) = true)
+
+/-- **§68.3 の主定理。** 一歩ぶんの条件から 2.1(vi) の `K` の連言が出る。帰納法は要らない。 -/
+theorem ksetIdxOK_of_stepOK (u : Nat) (x : Term) (H : KsetStepOK u x) : KsetIdxOK u x := by
+  intro p hp hle
+  rw [List.all_eq_true]
+  intro y hy
+  rcases mem_Kset_idxOf (fun z hz => mem_Kset_reg (u+1) hz) hy with h1 | h1
+  · obtain ⟨i0, hi0, hy0⟩ := h1
+    exact (H p hp hle).1 i0 hi0 y hy0
+  · exact (H p hp hle).2 y h1
+
+theorem psiIdxOK_of_stepOK (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (H : KsetStepOK u x) : PsiIdxOK u x :=
+  psiIdxOK_of_ksetIdxOK u x hx hlx (ksetIdxOK_of_stepOK u x H)
+
+/-- **候補 3。** `PsiIdxOKStd` の一歩ぶんの形。**未証明。** -/
+def PsiIdxStepStd : Prop :=
+  ∀ (u : Nat) (a : BT), BT.isStd (BT.D u a) = true → KsetStepOK u (dict a)
+
+theorem inT_dict_of_stepStd (H : PsiIdxStepStd) : ∀ a : BT, BT.isStd a = true →
+    inT (dict a) = true ∧ lt (dict a) M = true
+  | .zero => fun _ => ⟨inT_zero, lt_zero_M⟩
+  | .D u a => fun h => by
+    have ih := inT_dict_of_stepStd H a (isStd_of_D h)
+    exact inT_collapse_gap3 u (dict a) ih.1 ih.2
+      (psiIdxOK_of_stepOK u (dict a) ih.1 ih.2 (H u a h))
+  | .sum a b => fun h => by
+    have iha := inT_dict_of_stepStd H a (isStd_of_sum h).1
+    have ihb := inT_dict_of_stepStd H b (isStd_of_sum h).2
+    exact ⟨inT_plus iha.1 ihb.1, lt_plus_M iha.1 ihb.1 iha.2 ihb.2⟩
+
+/-- **一歩ぶんの条件から §66.4 の候補が出る。** -/
+theorem psiIdxOKStd_of_stepStd (H : PsiIdxStepStd) : PsiIdxOKStd := by
+  intro u a h
+  have ih := inT_dict_of_stepStd H a (isStd_of_D h)
+  exact psiIdxOK_of_stepOK u (dict a) ih.1 ih.2 (H u a h)
+
+/-- 一歩ぶんの条件の判定器。 -/
+def stepOKb (u : Nat) (x : Term) : Bool :=
+  (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all fun p =>
+    !(le (reg (u+1)) p.2.1) ||
+      (((match p.1.1 with
+         | none => ([] : List Term)
+         | some i0 => Kset (reg (u+1)) i0) ++
+        Kset (reg (u+1)) p.2.1 ++ Kset (reg (u+1)) p.2.2).all
+          (fun y => lt y (idxOf (reg (u+1)) p.1 p.2)))
+
+theorem ksetStepOK_of_b {u : Nat} {x : Term} (h : stepOKb u x = true) : KsetStepOK u x := by
+  intro p hp hle
+  have h1 := List.all_eq_true.mp h p hp
+  rw [hle, Bool.not_true, Bool.false_or] at h1
+  have h2 := List.all_eq_true.mp h1
+  constructor
+  · intro i0 hi0 y hy
+    refine h2 y (List.mem_append.mpr (Or.inl (List.mem_append.mpr (Or.inl ?_))))
+    rw [hi0]; exact hy
+  · intro y hy
+    rcases hy with hy | hy
+    · exact h2 y (List.mem_append.mpr (Or.inl (List.mem_append.mpr (Or.inr hy))))
+    · exact h2 y (List.mem_append.mpr (Or.inr hy))
+
+theorem stepOKb_of_ksetStepOK {u : Nat} {x : Term} (H : KsetStepOK u x) : stepOKb u x = true := by
+  show ((scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all fun p =>
+    !(le (reg (u+1)) p.2.1) ||
+      (((match p.1.1 with
+         | none => ([] : List Term)
+         | some i0 => Kset (reg (u+1)) i0) ++
+        Kset (reg (u+1)) p.2.1 ++ Kset (reg (u+1)) p.2.2).all
+          (fun y => lt y (idxOf (reg (u+1)) p.1 p.2)))) = true
+  rw [List.all_eq_true]
+  intro p hp
+  cases hle : le (reg (u+1)) p.2.1 with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or, List.all_eq_true]
+    intro y hy
+    rcases List.mem_append.mp hy with h1 | h1
+    · rcases List.mem_append.mp h1 with h2 | h2
+      · cases hq : p.1.1 with
+        | none => rw [hq] at h2; cases h2
+        | some i0 => exact (H p hp hle).1 i0 hq y (by rw [hq] at h2; exact h2)
+      · exact (H p hp hle).2 y (Or.inl h2)
+    · exact (H p hp hle).2 y (Or.inr h1)
+
+/-- **§67.3 の反例は直る。** `KsetBigOK` が落ちた `aBig` で、一歩ぶんの条件は成り立つ。 -/
+theorem ksetStepOK_aBig : KsetStepOK 0 (dict aBig) :=
+  ksetStepOK_of_b (show stepOKb 0 (dict aBig) = true from rfl)
+
+/-- **§66.3 の反例は落ちたまま。** 条件は空回りしていない。 -/
+theorem not_ksetStepOK_badArg : ¬ KsetStepOK 0 (dict badArg) := fun H =>
+  Bool.noConfusion ((stepOKb_of_ksetStepOK H).symm.trans
+    (show stepOKb 0 (dict badArg) = false from rfl))
+
+end
+
+/-! ### §68.4 消費者
+
+§67.4 の `hsuccS_supply_std` に、§68.2 と §68.3 の還元を差し込むだけ。 -/
+
+section
+open Evidence.Region
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- 領域の値は 𝔗(M) の項 — 二つの局所仮説の上で。 -/
+theorem inT_vOf_68 (Ha : ArgStd) (Hs : PsiIdxStepStd) (t : B) (ht : stdB t = true) :
+    inT (vOf t) = true :=
+  inT_vOf_std (psiIdxOKStd_of_stepStd Hs) (regionStd_of_argStd Ha) t ht
+
+/-- **`certIn_region` の `Hsucc` 供給。** `ArgStd` と `PsiIdxStepStd` の上で。
+    **まだ無条件ではない。** -/
+theorem hsuccS_supply_68 (Ha : ArgStd) (Hs : PsiIdxStepStd) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.succ →
+    ∃ u, v = plus u TM.Term.one ∧ inT v = true ∧ inT u = true ∧ lt u v = true
+         ∧ ∀ n, ValS (BMS.expand S n) u :=
+  hsuccS_supply_std (psiIdxOKStd_of_stepStd Hs) (regionStd_of_argStd Ha)
+
+end
+
+/-! ### §68.5 測定 (凍結)
+
+母集団の作り方を先に書く。
+
+    popNF68 L n := ((List.range n).flatMap (enumNodes L)).filter (nfB · && · != nil)
+    popSt68 L n := (popNF68 L n).filter stdB          -- 節 0..n-1、段 0..L-1
+    pool68  L n := (List.range n).flatMap (enumNodes L)   -- 標準形とは限らない木
+    goods   w L n := (pool68 L n).filter (goodAt w)
+    expPop  := popSt68 4 7 の各元を基本列で 2 回展開したもの (節は最大 36)
+    sclos k n := `{0}` を `ψ_u` (`u < k`) と `⊕` で n 回閉じ、各段で `BT.isStd` に絞ったもの
+                 (部分項は標準なので、これで深さ n の標準項をすべて得る)
+    small68 := `{0}` を `ψ_u` (`u < 4`) と `⊕` で 3 回閉じた **全部** (絞らない)
+
+`pairs68 l` は `l` の `bVal` の成分の中に現れる `ψ_u b` を対 `(u, b)` として全部集める。
+量化子はそれぞれ「実際に量化されている形」の上で走らせてある — 木の対は木の対の上で、
+`(u, a)` の対は `(u, a)` の対の上で。段は `u+2` 以上まで振ってある (§66 の教訓)。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse dict)
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+private def popNF68 (L n : Nat) : List B :=
+  ((List.range n).flatMap (enumNodes L)).filter fun t => nfB t && t != .nil
+private def popSt68 (L n : Nat) : List B := (popNF68 L n).filter stdB
+private def pool68 (L n : Nat) : List B := (List.range n).flatMap (enumNodes L)
+private def goods (w L n : Nat) : List B := (pool68 L n).filter (goodAt w)
+private def expPop : List B :=
+  ((popSt68 4 7).flatMap fun t =>
+    (List.range 3).flatMap fun n => (List.range 3).map fun m => fsB (fsB t n) m).eraseDups
+private def pairsOf68 : BT → List (Nat × BT)
+  | .zero => []
+  | .D u a => (u, a) :: pairsOf68 a
+  | .sum a b => pairsOf68 a ++ pairsOf68 b
+private def pairs68 (l : List B) : List (Nat × BT) :=
+  (l.flatMap fun t => (bVal t).toL.flatMap pairsOf68).eraseDups
+private def sstep (k : Nat) (l : List BT) : List BT :=
+  (l ++ ((List.range k).flatMap fun u => l.map fun a => BT.D u a)
+     ++ (l.flatMap fun a => l.map fun b => BT.sum a b)).eraseDups.filter BT.isStd
+private def sclos (k : Nat) : Nat → List BT
+  | 0 => [BT.zero]
+  | n+1 => sstep k (sclos k n)
+private def allBT68 : Nat → Nat → List BT
+  | 0, _ => [.zero]
+  | n+1, k =>
+    let sub := (allBT68 n k).eraseDups
+    (sub ++ ((List.range k).flatMap fun u => sub.map fun a => BT.D u a)
+        ++ (sub.flatMap fun a => sub.map fun b => BT.sum a b)).eraseDups
+private def small68 : List BT := allBT68 3 4
+
+-- 母集団の大きさ。
+#guard (popSt68 4 7).length == 1263
+#guard (popSt68 4 8).length == 6933
+#guard (popSt68 5 7).length == 1284
+#guard (popSt68 5 8).length == 7227
+#guard (popSt68 6 7).length == 1285
+#guard expPop.length == 5794
+#guard (expPop.map sizeB).foldl max 0 == 36
+#guard (goods 0 4 5).length == 177
+#guard (goods 1 4 5).length == 485
+#guard (goods 2 5 5).length == 1104
+#guard (sclos 4 3).length == 425
+#guard (sclos 6 3).length == 1645
+#guard (sclos 8 3).length == 4497
+#guard small68.length == 3966
+
+/-! **否定 1 — `ArgStd` の四つの仮説はどれも外せない。** 反例は 2 節・2 節・3 節・3 節。 -/
+
+#guard matB cVis 0 == [[0, 0], [1, 1]]
+#guard matB cInc 0 == [[0, 0], [0, 1]]
+#guard matB cStd 0 == [[0, 1], [1, 1], [2, 2]]
+#guard matB cNf 0 == [[0, 2], [1, 1], [2, 3]]
+#guard nfLe 1 cVis && nonIncr cVis && stdIn cVis && !(visOK 0 cVis cVis)
+#guard nfLe 1 cInc && visOK 0 cInc cInc && stdIn cInc && !(nonIncr cInc)
+#guard nfLe 1 cStd && nonIncr cStd && visOK 0 cStd cStd && !(stdIn cStd)
+#guard nonIncr cNf && visOK 0 cNf cNf && stdIn cNf && !(nfLe 1 cNf)
+#guard !(BT.isStd (BT.D 0 (bArg 0 cVis)))
+#guard !(BT.isStd (BT.D 0 (bArg 0 cInc)))
+#guard !(BT.isStd (BT.D 0 (bArg 0 cStd)))
+#guard !(BT.isStd (BT.D 0 (bArg 0 cNf)))
+#guard Trans.Recal.Test.showRaw (BT.D 0 (bArg 0 cVis)) == "D_0 D_0 D_1 0"
+#guard Trans.Recal.Test.showRaw (BT.D 0 (bArg 0 cInc)) == "D_0 (D_0 0,D_1 0)"
+#guard Trans.Recal.Test.showRaw (BT.D 0 (bArg 0 cStd)) == "D_0 D_1 D_1 D_2 0"
+#guard Trans.Recal.Test.showRaw (BT.D 0 (bArg 0 cNf)) == "D_0 D_2 D_1 D_3 0"
+--   節 ≤ 5・段 < 4 の母集団で、外した連言ごとの反例の個数と最小の節数。
+#guard ((pool68 4 6).filter fun c =>
+  nfLe 1 c && nonIncr c && stdIn c && !(BT.isStd (BT.D 0 (bArg 0 c)))).length == 275
+#guard (((pool68 4 6).filter fun c =>
+  nfLe 1 c && nonIncr c && stdIn c && !(BT.isStd (BT.D 0 (bArg 0 c)))).map sizeB).foldl min 99 == 2
+#guard (((pool68 4 6).filter fun c =>
+  nfLe 1 c && visOK 0 c c && stdIn c && !(BT.isStd (BT.D 0 (bArg 0 c)))).map sizeB).foldl min 99 == 2
+#guard (((pool68 4 6).filter fun c =>
+  nfLe 1 c && nonIncr c && visOK 0 c c && !(BT.isStd (BT.D 0 (bArg 0 c)))).map sizeB).foldl min 99 == 3
+#guard (((pool68 4 6).filter fun c =>
+  nonIncr c && visOK 0 c c && stdIn c && !(BT.isStd (BT.D 0 (bArg 0 c)))).map sizeB).foldl min 99 == 3
+
+/-! **否定 2 — 移送は `nfLe` だけでは落ちる。** 節 ≤ 4・段 < 4 の `nfLe` な木 468 個の
+219 024 対のうち 8 対で `cmpS` と `BT.lt` が食い違う。最小は 4 節どうしの `cT1`/`cT2`。 -/
+
+#guard matB cT1 0 == [[0, 1], [1, 2], [1, 0], [1, 0]]
+#guard matB cT2 0 == [[0, 1], [1, 2], [1, 0], [1, 2]]
+#guard nfLe 1 cT1 && nonIncr cT1 && visOK 0 cT1 cT1 && stdIn cT1
+#guard nfLe 1 cT2 && nonIncr cT2 && visOK 0 cT2 cT2 && !(stdIn cT2)
+#guard cmpS (toL cT1) (toL cT2) == Ordering.lt
+#guard !(BT.lt (bArg 0 cT1) (bArg 0 cT2))
+#guard Trans.Recal.Test.showRaw (bArg 0 cT1) == "(D_2 0,D_1 (D_2 0,D_0 0,D_0 0))"
+#guard Trans.Recal.Test.showRaw (bArg 0 cT2) == "(D_2 0,D_1 (D_2 0,D_0 0),D_2 0)"
+#guard ((pool68 4 5).filter (nfLe 1)).length == 468
+#guard ((pool68 4 5).flatMap fun c1 => (pool68 4 5).filter fun c2 =>
+  nfLe 1 c1 && nfLe 1 c2 &&
+    ((cmpS (toL c1) (toL c2) == Ordering.lt) != BT.lt (bArg 0 c1) (bArg 0 c2))).length == 8
+
+/-! **否定 3 — 一歩ぶんの条件は空回りではない。** §66.3 の反例では落ちる。
+`small68` の 3966 項のうち `psiIdxOKb` が落ちるのは 93 項で、`stepOKb` が落ちるのも同じ
+93 項 — この母集団では一歩ぶんの条件は 2.1(vi) の判定器と**一致する**。
+§66.2 の `bigOKb` はもっと多く落ちる (105 項)。 -/
+
+#guard !(stepOKb 0 (dict badArg))
+#guard !(psiIdxOKb 0 (dict badArg))
+#guard (small68.filter fun a => !(psiIdxOKb 0 (dict a))).length == 93
+#guard (small68.filter fun a => !(stepOKb 0 (dict a))).length == 93
+#guard (small68.filter fun a => psiIdxOKb 0 (dict a) && !(stepOKb 0 (dict a))).length == 0
+#guard (small68.filter fun a => !(bigOKb 0 (dict a))).length == 105
+
+/-! **肯定 1 — §67.3 の穴は塞がる。** 領域の 1327 対で `bigOKb` は 33 個落ち、
+`stepOKb` は 0 個。反例 `aBig` そのものでも一歩ぶんの条件は成り立つ。 -/
+
+#guard (pairs68 (popSt68 4 7)).length == 1327
+#guard ((pairs68 (popSt68 4 7)).filter fun p => !(bigOKb p.1 (dict p.2))).length == 33
+#guard ((pairs68 (popSt68 4 7)).filter fun p => !(stepOKb p.1 (dict p.2))).length == 0
+#guard ((pairs68 (popSt68 4 7)).filter fun p => !(psiIdxOKb p.1 (dict p.2))).length == 0
+#guard !(bigOKb 0 (dict aBig))
+#guard stepOKb 0 (dict aBig)
+
+/-! **肯定 2 — (S1') `PsiIdxStepStd`。** 標準な `BT` の母集団で 0 失敗。`sclos 4 3` は
+425 項・1894 対 (`u < 5`)、`sclos 6 3` は 1645 項・9989 対 (`u < 7`)、`sclos 8 3` は
+4497 項・34551 対 (`u < 9`、内側の添字は 7 まで) — 最後のものは `u ≤ 5` について
+「添字を `u+2` まで振る」を満たしている。(開発中には `sclos 3 4` の 4701 項・16793 対で
+`psiIdxOKb` が 0 失敗であることも見ている。) -/
+
+#guard ((List.range 5).flatMap fun u =>
+  (sclos 4 3).filter fun a => BT.isStd (BT.D u a)).length == 1894
+#guard ((List.range 5).flatMap fun u =>
+  (sclos 4 3).filter fun a => BT.isStd (BT.D u a) && !(stepOKb u (dict a))).length == 0
+#guard ((List.range 7).flatMap fun u =>
+  (sclos 6 3).filter fun a => BT.isStd (BT.D u a)).length == 9989
+#guard ((List.range 7).flatMap fun u =>
+  (sclos 6 3).filter fun a => BT.isStd (BT.D u a) && !(stepOKb u (dict a))).length == 0
+#guard ((List.range 9).flatMap fun u =>
+  (sclos 8 3).filter fun a => BT.isStd (BT.D u a)).length == 34551
+#guard ((List.range 9).flatMap fun u =>
+  (sclos 8 3).filter fun a => BT.isStd (BT.D u a) && !(stepOKb u (dict a))).length == 0
+#guard (small68.filter fun a => BT.isStd (BT.D 0 a) && !(stepOKb 0 (dict a))).length == 0
+
+/-! **肯定 3 — (S2') `ArgStd`。** 良い木の上で 0 失敗。母集団は木そのもの (和ではない)。 -/
+
+#guard ((pool68 4 6).filter fun c => goodAt 0 c).length == 906
+#guard ((pool68 4 6).filter fun c => goodAt 1 c).length == 2824
+#guard ((pool68 5 6).filter fun c => goodAt 2 c).length == 7606
+#guard ((pool68 4 6).filter fun c => goodAt 0 c && !(BT.isStd (BT.D 0 (bArg 0 c)))).length == 0
+#guard ((pool68 4 6).filter fun c => goodAt 1 c && !(BT.isStd (BT.D 1 (bArg 1 c)))).length == 0
+#guard ((pool68 5 6).filter fun c => goodAt 2 c && !(BT.isStd (BT.D 2 (bArg 2 c)))).length == 0
+
+/-! **肯定 4 — `ArgTransfer`。** 良い木の対の上では `cmpS` と `BT.lt` は**同値**
+(片側の含意ではない)。177² + 485² + 1104² = 1 485 370 対で食い違い 0。 -/
+
+#guard ((goods 0 4 5).flatMap fun c1 => (goods 0 4 5).filter fun c2 =>
+  ((cmpS (toL c1) (toL c2) == Ordering.lt) != BT.lt (bArg 0 c1) (bArg 0 c2))).length == 0
+#guard ((goods 1 4 5).flatMap fun c1 => (goods 1 4 5).filter fun c2 =>
+  ((cmpS (toL c1) (toL c2) == Ordering.lt) != BT.lt (bArg 1 c1) (bArg 1 c2))).length == 0
+#guard ((goods 2 5 5).flatMap fun c1 => (goods 2 5 5).filter fun c2 =>
+  ((cmpS (toL c1) (toL c2) == Ordering.lt) != BT.lt (bArg 2 c1) (bArg 2 c2))).length == 0
+
+/-! **肯定 5 — `RegionStd` そのもの (和の形)。** 四つの形の母集団で 0 失敗。
+`expPop` は基本列で 2 回展開したもので、最大 36 節 — 列挙とは形が違う。 -/
+
+#guard ((popSt68 4 7).filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard ((popSt68 4 8).filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard ((popSt68 5 8).filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard ((popSt68 6 7).filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard (expPop.filter fun t => !(stdB t)).length == 0
+#guard (expPop.filter fun t => !(BT.isStd (bVal t))).length == 0
+#guard popB.length == 877
+#guard ((popB.filterMap decodeB).filter fun t => !(BT.isStd (bVal t))).length == 0
+
+/-! **肯定 6 — 結論そのもの。** 同じ母集団で `inT (vOf t)` が 0 失敗。 -/
+
+#guard ((popSt68 4 7).filter fun t => !(inT (vOf t))).length == 0
+#guard ((popSt68 5 8).filter fun t => !(inT (vOf t))).length == 0
+#guard (expPop.filter fun t => !(inT (vOf t))).length == 0
+#guard ((popB.filterMap decodeB).filter fun t => !(inT (vOf t))).length == 0
+
+end
+
+/-! ### §68.6 公理 -/
+
 end Evidence.Region

@@ -1188,7 +1188,22 @@ nfB t   ⟺   どの節も、その段は親の段 + 1 以下
                 (`not_ksetBigOK_dict`)。反例は `(0,0)(1,1)(2,0)(3,2)(4,3)` の値で、
                 `psiIdxOKb` は真なのに `bigOKb` が偽。§66 が「真に強い」と
                 測っていたとおりだった
-              - 🚨 残りはその 2 つの証明
+              - 🚨 §68 で**どちらももっと局所的な仮定に落ちた** (還元は定理):
+
+                ```
+                RegionStd   ⟸ ArgStd         節 1 つの話
+                PsiIdxOKStd ⟸ PsiIdxStepStd  走査の 1 段の話
+                ```
+
+                付随して repo に無かった **`BT.lt` の順序論**を作った
+                (`lt_eq_ltS`・`ltS_cons`・`toL_bArg` ほか)。
+                `ArgStd` の 4 つの仮定は**どれも効いている** — 1 つずつ落とすと
+                それぞれ 2〜3 節の反例が出る (4 つとも定理)。
+                `ArgTransfer` は `nfLe` だけでは偽 (468 本中 8 組)。
+                `PsiIdxStepStd` は §66.2 の `bigPart` を通らないので §67.3 の
+                反例を通す (`ksetStepOK_aBig`) が、§66.3 の反例は落とす。
+                測定は 34551 組 (添字 8 まで) で 0 失敗
+              - 🚨 残りは `ArgStd` (要は `ArgTransfer`) と `PsiIdxStepStd`
             - 途中で出た 2 つ: `subAP` の単調性に要るのは `w ≤ x` (小さい側) だけ、
               そして `w ∈ SC` は `subAP` には要らない —
               消費するのは `lt_logOm_of_sc` のただ 1 箇所である
