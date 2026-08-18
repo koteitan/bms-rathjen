@@ -10452,4 +10452,934 @@ open TM TM.Term
 
 end
 
+/-! ## §92 THE PREVIOUS INDEX IS FREE, AND MISSING PIECE (1) IS THE CLAUSE ROW 326 ALREADY HAS
+
+§90 named what the `K`-gate is still missing, in two items, and proved neither:
+
+    (1) a monotonicity of the collapse index along `dict`;
+    (2) the statement that `e`'s material ABOVE this step's `aV` is already inside `i₀`.
+
+**§92 proves (1)** — from two clauses row 326 already carries, `HiMono89` and the
+order-preservation of `dict` — and it spends a lemma §84 proved and no section since has
+pointed at the gate.
+Together the two cut the residue from 163 obligations on the corpus to **13**, and the 13
+are item (2) and nothing else.  **The gate is still open.**
+
+THE FIRST HALF IS §84's OWN ARITHMETIC.  §84.2's `lt_prev_idxOf84` says `i₀ < i₀ ⊕ Δ` — the
+scan strictly advances, because `wcnf`'s coefficient is never `0` (`wcnf_snd_ne_zero84`).
+Four sections have carried that lemma and none has pointed it at the `K`-element.  Point it
+there and **every element at or below the previous index is free**: the obligation is only
+ever about elements STRICTLY ABOVE `i₀`, hence — since §88 bounds the element by the
+`ψ₀`-argument's collapse index `j` — only about steps where `j` exceeds everything the scan
+has already accumulated.  That is item (2), stated sharply and in the gate's own terms.
+
+THE SECOND HALF IS THAT `ψ_{Ω₁}` PRESERVES ORDER.  §69.4b's `lt_psi_same` says
+`ψ_{Ω₁}α < ψ_{Ω₁}β = (α < β)`, unconditionally and syntactically.  So a comparison of
+collapse INDICES **is** a comparison of collapse VALUES — and §89.3's closed form names the
+value: the fold's accumulator is `ψ₀(hi x)`.  §89 could not hand that over here, because
+`collapse0_hi89` needs `PsiIdxOK 0 x`, which at the term the induction is working on is the
+gate itself.  §92.2 re-proves the identification for the one shape that matters and does it
+**without the gate**: when the last pair of the base-`Ω₁` decomposition fires, the
+accumulator is literally `ψ_{Ω₁}(j)`, and `ω^(ψκα) = ψκα` because `ψ` is strongly critical.
+From there item (1) is three known things in a row: `e < a` (§90.1, free), `dict e < dict a`
+(`DictLtStd92` — §74's `DictLtA74` on the sub-region, which §77.4 derives from
+`PsiIdxOKStd172` and `DictHeadLt77`), `hi(dict e) < hi(dict a)` (§89.4's `lt_hi89`), and
+then `HiMono89` — **the clause §89 named and §91 left standing when it refuted `LoDom89`.**
+
+    **The `K`-gate's missing monotonicity is `HiMono89`.  It is not a new hypothesis: it is
+    the clause the OTHER route to row 326 — the value route, through `CollapseMono0Hi81`
+    and `dictLtA74_91` — is already waiting for.**
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §92.1  **THE PREVIOUS INDEX IS FREE.**  `lt_idxOf_of_le_prev92` : at a step with a previous
+         index `i₀`, `y ≤ i₀` gives `y < i₀ ⊕ Δ`.  `le_fold_idx92` and `le_idxOf_fold92` say
+         the fold's index never decreases and **every emitted index is at or below the final
+         one**, so "at or below `i₀`" is also "at or below any earlier firing step's index".
+         `inT_idxF92` strengthens §88.1's `inT_idxF88` by dropping `PsiIdxOK` from it: the
+         index is a `𝔗(M)` term for the fold's arithmetic alone (`IdxInv92`).
+
+  §92.2  **ITEM (1).**  `accW89_psi92` (`lastFire92 x` ⟹ the accumulator is `ψ_{Ω₁}(j)`),
+         `omegaNF_psi92`, `collapse0_hi_psi92` (`ψ₀(hi x) = ψ_{Ω₁}(j)`, no gate),
+         `le_reg1_of_idxF92`, and the main theorem `lt_idxF_of_lt92` :
+
+             `DictLtStd92` + `HiMono89` + `BT.lt e a`  ⟹  `j < J` .
+
+         Two side conditions, both decidable and both **necessary** (§92.4): the last pair of
+         `dict a`'s decomposition fires, and `hi(dict e) ≠ hi(dict a)`.  The `e` side asks
+         only `accGeb92 (dict e)` — that the accumulator does not fall below the last
+         `ψ_{Ω₁}` it emitted — which `lastFire92` implies and which the corpus never fails.
+
+  §92.3  **THE RESIDUE.**  `IdxK92` is `IdxK90` with the two obligations dropped, and it is
+         still EXACTLY the gate (`idxStd92_of_step073` is the converse).  `gateStd87_of_idxK92`
+         consumes it at ONE term; `psiIdxStep073_of_idxStd92` and `certIn_t326_idx92` re-hang
+         row 326, now on `IdxStd92`, `DictLtStd92` and `HiMono89`.  `IdxLtK92` is the sharp
+         form.  `dictLtA74_of_dictLtStd92` records that `DictLtStd92` is not a new gate:
+         it gives `DictLtA74` (§77.6's `stdA77`/`btLeA77`), and §77.4's `dictLt_of_head77`
+         gives it back from `PsiIdxOKStd172` and `DictHeadLt77`.
+
+  §92.4  **THE TWO SIDE CONDITIONS ARE BOTH REAL.**  `not_idxMonoNoFire92` : drop
+         `lastFire92 (dict a)` and item (1) is FALSE — witness `fireBadA92 = ψ₁ψ₁ψ₁0 ⊕
+         ψ₁ψ₀ψ₁ψ₁ψ₁0` with `e = ψ₁ψ₁ψ₁0` (11 symbols, and `e` is a genuine `ψ₀`-argument of
+         the component, so the witness has the population's own shape).  `not_idxMonoNoHi92` :
+         drop `hi(dict e) ≠ hi(dict a)` and it is FALSE — witness `ψ₁ψ₁ψ₁0 ⊕ ψ₀0` against
+         `ψ₁ψ₁ψ₁0` (7 symbols).  The second was **built, not swept**: over the 192 pairs of
+         the corpus the two `hi` parts never coincide (0 of 192), so no sweep could find it.
+
+WHAT IS **NOT** CLAIMED.  The gate is NOT closed.  `IdxStd92` is EQUIVALENT to
+`PsiIdxStep073`, as `IdxStd90` was.  `HiMono89` is not proved here and §92 does not weaken
+it; neither is `DictLtStd92`, and `DictLtStd92` is **not** literally `DictLtA74`: it is the
+sub-region form and it IMPLIES `DictLtA74` (`dictLtA74_of_dictLtStd92`).  §77.4's
+`dictLt_of_head77` derives it from `PsiIdxOKStd172` and `DictHeadLt77`, but `PsiIdxOKStd172`
+is the gate itself and so is not available inside the gate's own induction — which is why
+§92 carries `DictLtStd92` as a NAMED hypothesis and does not pretend it is free.  Item (2) is NOT proved — §92 localises it and measures it, and
+what is left is exactly this: at a firing step that is not the last, the `ψ₀`-argument's
+index `j` can exceed the accumulated index `i₀`, and the gate then needs `Δ` as well.  §86
+proved that no clause comparing against `i₀` alone or `Δ` alone can close that, and §92 does
+not contradict it.  `IdxLtStd92`, `SplitK86`, `ArgStd87`, `LocalK2Snd_78`, `CofDenseS1`,
+`BCofIn71` are untouched.
+
+WHAT THE MEASUREMENT SAYS (§92.5 gives the construction).  §88's `qual88` — the `wC` routing,
+the `ψ₀` in the firing component's own argument — with §87's `qual87`, §86's `qual86`, §84's
+`qual84`, row 326's `r326_84` and §90's `qual90` — the `wA` routing, the `ψ₀` under the
+`ψ₁`-cap — all reused verbatim, plus **16 terms built for §92**: `famL92` (cap over `ψ₀`, then
+the same tower again — the one shape in §84's population that ever put a `K`-element at a
+firing step that is not the last), `famM92` (a tower and two caps: three firing steps), and
+`famN92` (the two routings inside one term).  **233 terms, 335 firing steps, 135 `K`-elements.**
+
+  * **§92.1 takes 61 of the 135, §92.2 takes 57, and 17 are left.**  Counting the clause's
+    actual obligations (a step, an element, a `ψ₀`-argument and its index), **163 under §90's
+    clause, 13 under §92's**.  The gate itself fails 0 times in both.
+  * **The 13 do not sit where §92.2 works.**  3 are at a term's FIRST firing step (there is no
+    previous index to be free of) and 10 are at a MIDDLE one; **none is at the last firing
+    step.**  That is the shape of item (2): the residue is exactly "the scan is not finished".
+  * **Item (1) measured.**  Of 192 `(a, e)` pairs with both indices defined, 154 satisfy
+    `j < J` and 38 do not — and all 38 fail the side condition, `lastFire92 (dict a)` being
+    false (0 failures where the side conditions hold: the theorem, measured).
+  * **The side conditions are not decoration.**  `lastFire92 (dict a)` is false on 59 of the
+    192 pairs and `lastFire92 (dict e)` on 95, which is why §92.2 asks the weaker
+    `accGeb92 (dict e)` on the `e` side — that one is true on all 192.  The `hi` parts
+    coincide on 0 of 192, so §92.4's second witness had to be built by reading the statement.
+  * **The new family is where the residue lives.**  `qual92`'s 16 terms carry 8 of the 13
+    remaining obligations on 29 of the 163 original ones, with 8 terms firing twice and 8
+    three times.  It was built for that and it does it.
+  * **The gate does not fail on the new terms.**  `stepOKb`, `idxb84`, `splitb86`, `ltArg90b`
+    and `idxLt90b` : 0 failures on the 16.  §92 is not a seventh refutation.
+-/
+
+/-! ### §92.1 直前の指数は只 — 走査は必ず前へ進む -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§92.1 の主定理 — 直前の指数以下の元は只で片づく。**  §84.2 の `lt_prev_idxOf84` は
+    `i₀ < i₀ ⊕ Δ` を言う。だから `y ≤ i₀` なら `y < i₀ ⊕ Δ` で、門の義務は
+    **直前の指数より真に上の元にしか課されない**。 -/
+theorem lt_idxOf_of_le_prev92 {w : Term} (hw : inT w = true)
+    {s : Option Term × Option Term} {ac : Term × Term} {i0 y : Term}
+    (hst : StInv s) (hs1 : s.1 = some i0)
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hz : ac.2 ≠ zero)
+    (hyT : inT y = true) (hidxT : inT (idxOf w s ac) = true)
+    (hle : le y i0 = true) : lt y (idxOf w s ac) = true :=
+  lt_of_le_of_lt3 (inT_le_fragR _ hyT) (inT_le_fragR _ (hst.1 i0 hs1).1)
+    (inT_le_fragR _ hidxT) hle (lt_prev_idxOf84 hw hst hs1 h1 h3 hz)
+
+/-- 指数だけの不変量。`StInv` と違って門 (`PsiIdxOK`) が要らない。 -/
+def IdxInv92 (s : Option Term × Option Term) : Prop := ∀ i, s.1 = some i → inT i = true
+
+theorem idxInv92_none : IdxInv92 ((none : Option Term), (none : Option Term)) := by
+  intro i h; cases h
+
+/-- `s.1 = some i0` のときの指数の形。 -/
+theorem idxOf_some92 {w : Term} {s : Option Term × Option Term} {ac : Term × Term} {i0 : Term}
+    (hs1 : s.1 = some i0) : idxOf w s ac = plus i0 (ddOf75 w ac) := by
+  show (match s.1 with
+        | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+        | some j => plus j (mulL (mulL w (subAP w ac.1)) ac.2)) = _
+  rw [hs1]
+  rfl
+
+/-- 直前の指数は今の指数以下 — `StInv` ではなく `inT i₀` だけから。 -/
+theorem le_prev_idxOf92 {w : Term} (hw : inT w = true)
+    {s : Option Term × Option Term} {ac : Term × Term} {i0 : Term}
+    (hs1 : s.1 = some i0) (hi0 : inT i0 = true)
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) :
+    le i0 (idxOf w s ac) = true := by
+  have hd : inT (ddOf75 w ac) = true := inT_ddOf75 hw h1 h3
+  rw [idxOf_some92 hs1]
+  have h := plus_mono_right_inT i0 hi0 zero (ddOf75 w ac) inT_zero hd (le_zero_left _)
+  rwa [plus_nil (show toList (zero : Term) = [] from rfl)] at h
+
+theorem inT_idxOf_some92 {w : Term} (hw : inT w = true)
+    {s : Option Term × Option Term} {ac : Term × Term} {i0 : Term}
+    (hs1 : s.1 = some i0) (hi0 : inT i0 = true)
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) :
+    inT (idxOf w s ac) = true := by
+  rw [idxOf_some92 hs1]
+  exact inT_plus hi0 (inT_ddOf75 hw h1 h3)
+
+theorem idxInv92_step {w base : Term} (hw : inT w = true)
+    {s : Option Term × Option Term} {ac : Term × Term} (hs : IdxInv92 s)
+    (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) : IdxInv92 (stepF w base s ac) := by
+  intro i hi
+  cases hf : le w ac.1 with
+  | true =>
+    rw [stepF_fst, if_pos hf] at hi
+    rw [← Option.some.inj hi]
+    cases hs1 : s.1 with
+    | none =>
+      show inT (match s.1 with
+                | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+                | some j => plus j (mulL (mulL w (subAP w ac.1)) ac.2)) = true
+      rw [hs1]
+      exact inT_sub1 (inT_ddOf75 hw h1 h3)
+    | some i0 => exact inT_idxOf_some92 hw hs1 (hs i0 hs1) h1 h3
+  | false =>
+    rw [stepF_fst, if_neg (by rw [hf]; exact Bool.noConfusion)] at hi
+    exact hs i hi
+
+/-- **畳み込みの指数は決して下がらない。** -/
+theorem le_fold_idx92 {w base : Term} (hw : inT w = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+      (∀ ac ∈ l, inT ac.1 = true ∧ inT ac.2 = true) →
+      ∀ i, s.1 = some i → inT i = true →
+        ∀ i', (l.foldl (stepF w base) s).1 = some i' → le i i' = true ∧ inT i' = true := by
+  intro l
+  induction l with
+  | nil =>
+    intro s _ i hs1 hi i' hi'
+    have hi2 : s.1 = some i' := hi'
+    rw [hs1] at hi2
+    rw [← Option.some.inj hi2]
+    exact ⟨Evidence.WF.le_self _, hi⟩
+  | cons ac t ih =>
+    intro s hall i hs1 hi i' hi'
+    have hac := hall ac (List.Mem.head _)
+    have hfold : ((ac :: t).foldl (stepF w base) s) = t.foldl (stepF w base) (stepF w base s ac) :=
+      rfl
+    rw [hfold] at hi'
+    cases hf : le w ac.1 with
+    | true =>
+      have h2 : (stepF w base s ac).1 = some (idxOf w s ac) := by
+        rw [stepF_fst, if_pos hf]
+      have hidxT : inT (idxOf w s ac) = true := inT_idxOf_some92 hw hs1 hi hac.1 hac.2
+      obtain ⟨hle2, hi2⟩ := ih (stepF w base s ac) (fun a ha => hall a (List.Mem.tail _ ha))
+        _ h2 hidxT i' hi'
+      exact ⟨le_trans3 (inT_le_fragR _ hi) (inT_le_fragR _ hidxT) (inT_le_fragR _ hi2)
+        (le_prev_idxOf92 hw hs1 hi hac.1 hac.2) hle2, hi2⟩
+    | false =>
+      have h2 : (stepF w base s ac).1 = some i := by
+        rw [stepF_fst, if_neg (by rw [hf]; exact Bool.noConfusion)]; exact hs1
+      exact ih (stepF w base s ac) (fun a ha => hall a (List.Mem.tail _ ha)) i h2 hi i' hi'
+
+/-- 指数の不変量は畳み込みを通る。 -/
+theorem idxInv92_fold {w base : Term} (hw : inT w = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), IdxInv92 s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ inT ac.2 = true) →
+      IdxInv92 (l.foldl (stepF w base) s) := by
+  intro l
+  induction l with
+  | nil => intro s hs _; exact hs
+  | cons ac t ih =>
+    intro s hs hall
+    exact ih (stepF w base s ac)
+      (idxInv92_step hw hs (hall ac (List.Mem.head _)).1 (hall ac (List.Mem.head _)).2)
+      (fun a ha => hall a (List.Mem.tail _ ha))
+
+/-- **最後の指数は 𝔗(M) の項 — 門を使わずに。**  §88.1 の `inT_idxF88` は
+    `PsiIdxOK` を要ったが、指数そのものの `inT` は畳み込みの算術だけで出る。 -/
+theorem inT_idxF92 {x : Term} (hx : inT x = true) (hlx : lt x M = true)
+    {j : Term} (hj : idxF88 0 x = some j) : inT j = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList x) hc hd (ltM_toList x hx hlx)
+  exact idxInv92_fold (inT_reg 1) (wcnf (reg 1) (toList x)).1 (none, none) idxInv92_none
+    (fun ac hac => ⟨(hallOK ac hac).1, (hallOK ac hac).2.2.1⟩) j hj
+
+/-- `ψ_{Ω₁}(·)` の `FragR` — 添字が `Ω₁` なら引数の `FragR` だけ。 -/
+theorem fragR_psi_reg92 {j : Term} (h : FragR j = true) :
+    FragR (psi (reg 1) j) = true := by
+  show ((reg 1).isR && FragR (reg 1) && FragR j) = true
+  rw [h]
+  rfl
+
+/-- **吐かれた指数はどれも最後の指数以下。**  仮定は `inT` だけ — 門は要らない。
+    これが「残余が**最後の発火歩以外**に閉じこもる」ことの中身である。 -/
+theorem le_idxOf_fold92 {w base : Term} (hw : inT w = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), IdxInv92 s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ inT ac.2 = true) →
+      ∀ p ∈ scanSt w base s l, le w p.2.1 = true →
+        ∀ i', (l.foldl (stepF w base) s).1 = some i' →
+          le (idxOf w p.1 p.2) i' = true := by
+  intro l
+  induction l with
+  | nil => intro s _ _ p hp; cases hp
+  | cons ac t ih =>
+    intro s hs hall p hp hle i' hi'
+    have hac := hall ac (List.Mem.head _)
+    have hfold : ((ac :: t).foldl (stepF w base) s) = t.foldl (stepF w base) (stepF w base s ac) :=
+      rfl
+    rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt w base (stepF w base s ac) t from hp)
+      with h | h
+    · subst h
+      have h2 : (stepF w base s ac).1 = some (idxOf w s ac) := by
+        rw [stepF_fst, if_pos hle]
+      have hidxT : inT (idxOf w s ac) = true :=
+        (idxInv92_step hw hs hac.1 hac.2) _ h2
+      rw [hfold] at hi'
+      exact (le_fold_idx92 hw t (stepF w base s ac)
+        (fun a ha => hall a (List.Mem.tail _ ha)) _ h2 hidxT i' hi').1
+    · rw [hfold] at hi'
+      exact ih (stepF w base s ac) (idxInv92_step hw hs hac.1 hac.2)
+        (fun a ha => hall a (List.Mem.tail _ ha)) p h hle i' hi'
+
+end
+
+/-! ### §92.2 欠けていた (1) — 崩壊指数の単調性は `ψ₀(hi ·)` の単調性 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+theorem btLe72_D0_92 {e : BT} (h : btLe72 1 e = true) : btLe72 1 (BT.D 0 e) = true := by
+  show (decide (0 ≤ 1) && btLe72 1 e) = true
+  rw [h]; rfl
+
+/-- 底 `Ω₁` の分解の**最後の対**が発火するか。 -/
+def lastFire92 (x : Term) : Bool :=
+  match (wcnf (reg 1) (toList x)).1.reverse with
+  | [] => false
+  | ac :: _ => le (reg 1) ac.1
+
+theorem split_lastFire92 {x : Term} (h : lastFire92 x = true) :
+    ∃ l' ac, (wcnf (reg 1) (toList x)).1 = l' ++ [ac] ∧ le (reg 1) ac.1 = true := by
+  unfold lastFire92 at h
+  cases hr : (wcnf (reg 1) (toList x)).1.reverse with
+  | nil => rw [hr] at h; exact Bool.noConfusion h
+  | cons ac r =>
+    rw [hr] at h
+    refine ⟨r.reverse, ac, ?_, h⟩
+    have h2 := congrArg List.reverse hr
+    rw [List.reverse_reverse, List.reverse_cons] at h2
+    exact h2
+
+/-- 最後の対が発火するなら、畳み込みの最後の値は `ψ_{Ω₁}` の像そのもの。 -/
+theorem fold_last_fire92 {w base : Term} (l' : List (Term × Term)) (ac : Term × Term)
+    (s : Option Term × Option Term) (h : le w ac.1 = true) :
+    ((l' ++ [ac]).foldl (stepF w base) s).1
+        = some (idxOf w (l'.foldl (stepF w base) s) ac) ∧
+      ((l' ++ [ac]).foldl (stepF w base) s).2
+        = some (psi w (idxOf w (l'.foldl (stepF w base) s) ac)) := by
+  have he : ((l' ++ [ac]).foldl (stepF w base) s)
+      = stepF w base (l'.foldl (stepF w base) s) ac := by
+    rw [List.foldl_append]
+    rfl
+  rw [he]
+  exact ⟨by rw [stepF_fst, if_pos h], stepF_snd_fire88 h⟩
+
+/-- **§92.2 の第一の定理 — 最後の対が発火するとき、累算器は `ψ_{Ω₁}(j)`。** -/
+theorem accW89_psi92 {x : Term} (h : lastFire92 x = true) :
+    ∃ j, idxF88 0 x = some j ∧ accW89 x = psi (reg 1) j := by
+  obtain ⟨l', ac, he, hf⟩ := split_lastFire92 h
+  refine ⟨idxOf (reg 1) (l'.foldl (stepF (reg 1) (baseOf 0)) (none, none)) ac, ?_, ?_⟩
+  · show ((wcnf (reg 1) (toList x)).1.foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).1 = _
+    rw [he]
+    exact (fold_last_fire92 l' ac (none, none) hf).1
+  · show (((wcnf (reg 1) (toList x)).1.foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).2.getD zero) = _
+    rw [he, (fold_last_fire92 l' ac (none, none) hf).2]
+    rfl
+
+/-- `ω^(ψκα) = ψκα` — `ψ` は強臨界だから。 -/
+theorem omegaNF_psi92 (k a : Term) : omegaNF (psi k a) = psi k a := by
+  rw [omegaNF_of_le_M (by rw [lt_eq_ltF_succ]; exact ltF_succ_M_psi _ _ _)]
+  show (if (psi k a).isSC && lt zero (psi k a) then psi k a else _) = _
+  rw [show ((psi k a).isSC && lt zero (psi k a)) = true from by
+    rw [show (psi k a).isSC = true from rfl,
+      show lt zero (psi k a) = true from lt_zero_left (by intro hc; exact Term.noConfusion hc)]
+    rfl]
+  rfl
+
+/-- **§92.2 の第二の定理 — `ψ₀(hi x) = ψ_{Ω₁}(j)`。**  §89.3 の閉じた形の右辺を、
+    **門を使わずに**名指しした形。§89 の `collapse0_hi89` は `PsiIdxOK 0 x` を要る
+    (累算器が ε 数であることを出すため) が、最後の対が発火するなら累算器は
+    `ψ_{Ω₁}(j)` そのもので、`ψ` は強臨界だから `ω^·` は素通りする。 -/
+theorem collapse0_hi_psi92 {x : Term} (hx : inT x = true) (h : lastFire92 x = true)
+    {j : Term} (hj : idxF88 0 x = some j) : collapse 0 (hiW89 x) = psi (reg 1) j := by
+  obtain ⟨j', hj', hacc⟩ := accW89_psi92 h
+  have hje : j' = j := Option.some.inj (by rw [← hj', hj])
+  subst hje
+  rw [collapse0_raw89, ← accW89_hi89 hx, rhoW89_hi_zero89 hx,
+    show plus (accW89 x) zero = accW89 x from plus_nil rfl, hacc,
+    show plus (reg 0) (psi (reg 1) j') = psi (reg 1) j' from rfl]
+  exact omegaNF_psi92 _ _
+
+/-- 指数が出るなら引数は `Ω₁` 以上。 -/
+theorem le_reg1_of_idxF92 {x : Term} (hx : inT x = true) {j : Term}
+    (hj : idxF88 0 x = some j) : le (reg 1) x = true := by
+  cases hc : le (reg 1) x with
+  | true => rfl
+  | false =>
+    exfalso
+    have hlt : lt x (reg 1) = true := lt_of_not_le_inT inT_W79 hx hc
+    rw [idxF88_none_of_nil90 (wcnf_fst_nil90 _ (ltW_toList79 x hx hlt))] at hj
+    cases hj
+
+/-- **`dict` は順序を保つ、部分領域の形。**  §74 の `DictLtA74` を `bValA71` の像から
+    段 1 以下の標準な `BT` 項ぜんぶに広げたもの。**証明しない** — 326 行目が
+    既に抱えている門である (`dictLtStd92_of_head77` が出どころ)。 -/
+def DictLtStd92 : Prop :=
+  ∀ (x y : BT), btLe72 1 x = true → btLe72 1 y = true →
+    BT.isStd x = true → BT.isStd y = true → BT.lt x y = true →
+    lt (dict x) (dict y) = true
+
+theorem dictLtStd92_of_head77 (Hp : PsiIdxOKStd172) (H : DictHeadLt77) : DictLtStd92 :=
+  fun x y hbx hby hsx hsy h => dictLt_of_head77 Hp H x y hbx hby hsx hsy h
+
+/-- **§92 の条項は 326 行目の門より強くはない — 出どころは同じ。**  §77.4 の
+    `stdA77`・`btLeA77` が `stdB1` から標準性と段の上限を渡すので、`DictLtStd92` は
+    `DictLtA74` を出す。逆に §77.4 の `dictLt_of_head77` が `PsiIdxOKStd172` と
+    `DictHeadLt77` から `DictLtStd92` を出す。 -/
+theorem dictLtA74_of_dictLtStd92 (H : DictLtStd92) : DictLtA74 :=
+  fun u t hu ht h =>
+    H (bValA71 u) (bValA71 t) (btLeA77 u hu) (btLeA77 t ht) (stdA77 u hu) (stdA77 t ht) h
+
+/-- 累算器が最後に吐いた `ψ_{Ω₁}` の値を下回らないか — 判定できる形。
+    最後の対が発火するなら等号で成り立つ (`accGeb92_of_lastFire92`)。
+    落ちるのは、最後の発火の**後ろ**に Veblen の枝が来る形だけである。 -/
+def accGeb92 (x : Term) : Bool :=
+  match idxF88 0 x with
+  | none => false
+  | some j => le (psi (reg 1) j) (accW89 x)
+
+theorem accGeb92_of_lastFire92 {x : Term} (h : lastFire92 x = true) : accGeb92 x = true := by
+  obtain ⟨j, hj, hacc⟩ := accW89_psi92 h
+  unfold accGeb92
+  rw [hj, hacc]
+  exact Evidence.WF.le_self _
+
+theorem le_psi_accW89_of_accGeb92 {x j : Term} (h : accGeb92 x = true)
+    (hj : idxF88 0 x = some j) : le (psi (reg 1) j) (accW89 x) = true := by
+  unfold accGeb92 at h
+  rw [hj] at h
+  exact h
+
+/-- **§92.2 の主定理 — 欠けていた (1)、崩壊指数の単調性。**
+    `e < a` (§90.1 が只で渡す Buchholz の事実) から、`ψ₀` の崩壊指数どうしの比較
+    `j < J` が出る。中身は `ψ_{Ω₁}` が順序を保つこと (`lt_psi_same`) と §89 の
+    閉じた形で、**新しい仮説は一つも要らない** — `DictLtStd92` も `HiMono89` も
+    326 行目が既に抱えている条項である。側条件は二つ、どちらも判定できる:
+    両辺の分解の最後の対が発火すること、`hi` が食い違うこと。 -/
+theorem lt_idxF_of_lt92 (HD : DictLtStd92) (HM : HiMono89)
+    {e a : BT} (hbe : btLe72 1 e = true) (hba : btLe72 1 a = true)
+    (hse : BT.isStd (BT.D 0 e) = true) (hsa : BT.isStd (BT.D 0 a) = true)
+    (hlt : BT.lt e a = true)
+    (hie : inT (dict e) = true) (hlie : lt (dict e) M = true)
+    (hia : inT (dict a) = true) (hlia : lt (dict a) M = true)
+    (Hpe : PsiIdxOK 0 (dict e))
+    (hge : accGeb92 (dict e) = true) (hfa : lastFire92 (dict a) = true)
+    (hne : hiW89 (dict e) ≠ hiW89 (dict a))
+    {j J : Term} (hj : idxF88 0 (dict e) = some j) (hJ : idxF88 0 (dict a) = some J) :
+    lt j J = true := by
+  have hWe : le (reg 1) (dict e) = true := le_reg1_of_idxF92 hie hj
+  have h1 : lt (dict e) (dict a) = true :=
+    HD e a hbe hba (isStd_of_D hse) (isStd_of_D hsa) hlt
+  have h2 : lt (hiW89 (dict e)) (hiW89 (dict a)) = true := lt_hi89 hie hia h1 hne
+  have h3 := HM e a (btLe72_D0_92 hbe) (btLe72_D0_92 hba) hse hsa
+    hWe (le_reg1_of_idxF92 hia hJ) h2
+  rw [collapse0_hi89 (dict e) hie hlie Hpe hWe, collapse0_hi_psi92 hia hfa hJ] at h3
+  have hAT : inT (accW89 (dict e)) = true := (accW89_facts (dict e) hie hlie Hpe hWe).1
+  have hjT : inT j = true := inT_idxF92 hie hlie hj
+  have hJT : inT J = true := inT_idxF92 hia hlia hJ
+  have h4 : lt (psi (reg 1) j) (psi (reg 1) J) = true :=
+    lt_of_le_of_lt3 (fragR_psi_reg92 (inT_le_fragR _ hjT)) (inT_le_fragR _ hAT)
+      (fragR_psi_reg92 (inT_le_fragR _ hJT))
+      (le_psi_accW89_of_accGeb92 hge hj) h3
+  rw [lt_psi_same] at h4
+  exact h4
+
+end
+
+/-! ### §92.3 残余 — 中ほどの発火歩に閉じこもる -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- この歩が**最後の発火歩**か。 -/
+def isLastIdx92 (a : BT) (p : (Option Term × Option Term) × (Term × Term)) : Bool :=
+  match idxF88 0 (dict a) with
+  | none => false
+  | some J => idxOf (reg 1) p.1 p.2 == J
+
+theorem isLastIdx92_eq {a : BT} {p : (Option Term × Option Term) × (Term × Term)}
+    (h : isLastIdx92 a p = true) :
+    ∃ J, idxF88 0 (dict a) = some J ∧ idxOf (reg 1) p.1 p.2 = J := by
+  unfold isLastIdx92 at h
+  cases hJ : idxF88 0 (dict a) with
+  | none => rw [hJ] at h; exact Bool.noConfusion h
+  | some J => rw [hJ] at h; exact ⟨J, rfl, eq_of_beq h⟩
+
+/-- **§92.2 の道が通る歩** — 判定できる側条件ぜんぶ。 -/
+def monoClosed92 (a : BT) (p : (Option Term × Option Term) × (Term × Term)) (e : BT) : Bool :=
+  isLastIdx92 a p && lastFire92 (dict a) && accGeb92 (dict e) &&
+    !(hiW89 (dict e) == hiW89 (dict a))
+
+/-- **§92 の条項。** §90 の `IdxK90` から、
+    (i) 直前の指数以下の元 (§92.1 が只で片づける) と
+    (ii) §92.2 の道が通る歩の元 (`monoClosed92` が真のところ)
+    を義務から外した形。外したものはどちらも定理だから、門との同値は保たれる
+    (`idxStd92_of_step073` が逆向き)。 -/
+def IdxK92 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true → inT (idxOf (reg 1) p.1 p.2) = true →
+      ∀ (y : Term) (c e : BT) (j : Term),
+        BT.D 1 c ∈ BT.toL a → BT.isStd (BT.D 1 c) = true → BT.lt c a = true →
+        e ∈ d0Args88 c → BT.isStd (BT.D 0 e) = true → btLe72 1 e = true →
+        BT.lt e a = true → BT.size e < BT.size a →
+        idxF88 0 (dict e) = some j → inT j = true → inT (psi (reg 1) j) = true →
+        le y j = true → inT y = true → y ∈ Kset (reg 1) (dict c) →
+        (lt y (reg 1) = false ∨ subAP (reg 1) p.2.1 = zero) →
+        (∀ i0, p.1.1 = some i0 → lt i0 y = true) →
+        monoClosed92 a p e = false →
+        (y ∈ Kset (reg 1) p.2.1 ∨ y ∈ Kset (reg 1) p.2.2) →
+        lt y (idxOf (reg 1) p.1 p.2) = true
+
+/-- §90 の条項は §92 の条項を出す — 仮説が増えただけだから。 -/
+theorem idxK92_of_idxK90 {a : BT} (H : IdxK90 a) : IdxK92 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk hfr
+    _ _ hy
+  exact H p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk hfr hy
+
+/-- **鋭い形 — `y` を落として指数どうしを比べる。**  仮説は `IdxK92` と同じで、
+    結論だけ `j < i₀ ⊕ Δ` に強めたもの。`IdxK92` を出す。§92.2 が閉じるのは
+    まさにこの形の、最後の発火歩における場合である。 -/
+def IdxLtK92 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true → inT (idxOf (reg 1) p.1 p.2) = true →
+      ∀ (y : Term) (c e : BT) (j : Term),
+        BT.D 1 c ∈ BT.toL a → BT.isStd (BT.D 1 c) = true → BT.lt c a = true →
+        e ∈ d0Args88 c → BT.isStd (BT.D 0 e) = true → btLe72 1 e = true →
+        BT.lt e a = true → BT.size e < BT.size a →
+        idxF88 0 (dict e) = some j → inT j = true → inT (psi (reg 1) j) = true →
+        le y j = true → inT y = true → y ∈ Kset (reg 1) (dict c) →
+        (lt y (reg 1) = false ∨ subAP (reg 1) p.2.1 = zero) →
+        (∀ i0, p.1.1 = some i0 → lt i0 y = true) →
+        monoClosed92 a p e = false →
+        (y ∈ Kset (reg 1) p.2.1 ∨ y ∈ Kset (reg 1) p.2.2) →
+        lt j (idxOf (reg 1) p.1 p.2) = true
+
+theorem idxK92_of_idxLtK92 {a : BT} (H : IdxLtK92 a) : IdxK92 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk hfr
+    hgt hmono hy
+  exact lt_of_le_of_lt3 (inT_le_fragR _ hyT) (inT_le_fragR _ hjT) (inT_le_fragR _ hidxT) hlej
+    (H p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk hfr
+      hgt hmono hy)
+
+/-- **§92 の残る仮説。** 部分領域の項について §92 の条項。**証明しない。** -/
+def IdxStd92 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK92 a
+
+/-- 鋭い形の大域版。**証明しない。** -/
+def IdxLtStd92 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxLtK92 a
+
+theorem idxStd92_of_idxLtStd92 (H : IdxLtStd92) : IdxStd92 :=
+  fun a hb hs => idxK92_of_idxLtK92 (H a hb hs)
+
+/-- **§92.3 の主定理。** 一項ぶんの門は §92 の条項と帰納法の仮説から出る。
+    条項に残るのは「直前の指数より上」かつ「最後の発火歩ではない」元だけである。 -/
+theorem gateStd87_of_idxK92 (HD : DictLtStd92) (HM : HiMono89) (a : BT)
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b)
+    (H : btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK92 a) : GateStd87 a := by
+  intro hb hs
+  have hin := inT_dict_ih87 a ih hb (isStd_of_D hs)
+  obtain ⟨hcL, hdL⟩ := inT_toList (dict a) hin.1
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcL hdL
+      (ltM_toList (dict a) hin.1 hin.2)
+  have hnz := wcnf_snd_ne_zero84 (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcL hdL
+    (ltM_toList (dict a) hin.1 hin.2)
+  intro p hp hle
+  refine scan_idx84 (wcnf (reg 1) (toList (dict a))).1 (none, none)
+    stInv_none (kInv75_none 0) hallOK ?_ p hp hle
+  intro q hq hle2 hst y hy
+  obtain ⟨hi1, hl1, hi2, hl2⟩ := hallOK q.2 (scanSt_mem_snd _ _ _ _ q hq)
+  obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT (inT_reg 1) (ltM_reg 1) hst hi1 hl1 hi2 hl2
+  have hnz2 : q.2.2 ≠ zero := hnz q.2 (scanSt_mem_snd _ _ _ _ q hq)
+  obtain ⟨c, hc, hstd, hltc, hyk⟩ := kset_arg87 ih hb hs hq hy
+  have hszc0 : BT.size (BT.D 1 c) ≤ BT.size a := size_mem_toL87 a _ hc
+  have hszc : BT.size c < BT.size a := by rw [size_D87] at hszc0; omega
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (btLe72_toL87 a _ hb hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D hstd
+  have ihc : ∀ b : BT, BT.size b < BT.size c → GateStd87 b := fun b hz => ih b (by omega)
+  have hinc := inT_dict_ih87 c ihc hbc hsc
+  have hyT : inT y = true := inT_mem_Kset75 (dict c) hinc.1 _ y hyk
+  obtain ⟨e, he, j, hj, hlej, hjT⟩ := kset_dict_idx88 c ihc hbc hsc y hyk
+  have hse : BT.isStd (BT.D 0 e) = true := isStd_d0Args_90 c hsc e he
+  have hbe : btLe72 1 e = true := btLe72_d0Args_90 c hbc e he
+  have hlte : BT.lt e a = true := lt_d0Args_90 hs hc he
+  have hsze : BT.size e < BT.size a := by have := size_d0Args_90 c e he; omega
+  have ihe : ∀ b : BT, BT.size b < BT.size e → GateStd87 b := fun b hz => ih b (by omega)
+  have hine := inT_dict_ih87 e ihe hbe (isStd_of_D hse)
+  have hpsiT : inT (psi (reg 1) j) = true :=
+    inT_psi_idxF90 (psiIdxOK_of_stepOK 0 (dict e) hine.1 hine.2 (ih e hsze hbe hse)) hj
+  -- §92.2 の道か、条項か
+  have hfin : (∀ i1, q.1.1 = some i1 → lt i1 y = true) →
+      lt y (idxOf (reg 1) q.1 q.2) = true := by
+    intro hgt
+    cases hmono : monoClosed92 a q e with
+    | true =>
+      obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp hmono
+      obtain ⟨h3, h4⟩ := (Bool.and_eq_true _ _).mp h1
+      obtain ⟨h5, h6⟩ := (Bool.and_eq_true _ _).mp h3
+      obtain ⟨J, hJ, hidxe⟩ := isLastIdx92_eq h5
+      have hne : hiW89 (dict e) ≠ hiW89 (dict a) := by
+        intro hcc
+        rw [show (hiW89 (dict e) == hiW89 (dict a)) = true from by rw [hcc]; exact beq_self_eq_true _]
+          at h2
+        exact Bool.noConfusion h2
+      have hlj : lt j J = true :=
+        lt_idxF_of_lt92 HD HM hbe hb hse hs hlte hine.1 hine.2 hin.1 hin.2
+          (psiIdxOK_of_stepOK 0 (dict e) hine.1 hine.2 (ih e hsze hbe hse)) h4 h6 hne hj hJ
+      refine lt_of_le_of_lt3 (inT_le_fragR _ hyT) (inT_le_fragR _ hjT)
+        (inT_le_fragR _ hidxT) hlej ?_
+      rw [hidxe]
+      exact hlj
+    | false =>
+      cases hlty : lt y (reg 1) with
+      | false =>
+        exact H hb hs q hq hle2 hidxT y c e j hc hstd hltc he hse hbe hlte hsze
+          hj hjT hpsiT hlej hyT hyk (Or.inl hlty) hgt hmono hy
+      | true =>
+        by_cases hsub : subAP (reg 1) q.2.1 = zero
+        · exact H hb hs q hq hle2 hidxT y c e j hc hstd hltc he hse hbe hlte hsze
+            hj hjT hpsiT hlej hyT hyk (Or.inr hsub) hgt hmono hy
+        · exact lt_idxOf_of_lt_reg90 hst hi1 hi2 hnz2 hsub hyT hlty hidxT
+  cases hq1 : q.1.1 with
+  | none =>
+    refine hfin ?_
+    intro i1 h1
+    rw [hq1] at h1
+    cases h1
+  | some i0 =>
+    cases hbb : le y i0 with
+    | true =>
+      exact lt_idxOf_of_le_prev92 (inT_reg 1) hst hq1 hi1 hi2 hnz2 hyT hidxT hbb
+    | false =>
+      refine hfin ?_
+      intro i1 h1
+      rw [hq1] at h1
+      rw [← Option.some.inj h1]
+      exact lt_of_not_le_inT hyT (hst.1 i0 hq1).1 hbb
+
+/-- **§92 の第一の結論。** §73 の残る門は §92 の条項と、326 行目が既に抱えている
+    二つの条項から出る。 -/
+theorem psiIdxStep073_of_idxStd92 (HD : DictLtStd92) (HM : HiMono89) (H : IdxStd92) :
+    PsiIdxStep073 :=
+  step073_of_gate87 (fun a ih => gateStd87_of_idxK92 HD HM a ih (fun hb hs => H a hb hs))
+
+/-- **逆向き。** 足した仮説も外した義務もすべて落ちるので、分解は過不足がない。 -/
+theorem idxStd92_of_step073 (H : PsiIdxStep073) : IdxStd92 := by
+  intro a hb hs p hp hle
+  intro _ y _ _ _
+  intro _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ hy
+  exact (H a hb hs p hp hle).2 y hy
+
+/-- **§92 の第二の結論。** 326 行目の証明書が `K` の側で待つのは §92 の条項ひとつと、
+    §74/§89 が既に名指ししている二つである。 -/
+theorem certIn_t326_idx92 (HD : DictLtStd92) (HM : HiMono89) (H : IdxStd92)
+    (HDe : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step73 (psiIdxStep073_of_idxStd92 HD HM H) HDe HI HC hacc
+
+end
+
+/-! ### §92.4 否定 — 側条件はどちらも本物 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- §92.2 の結論の判定器。 -/
+def ltIdxFb92 (e a : BT) : Bool :=
+  match idxF88 0 (dict e), idxF88 0 (dict a) with
+  | some j, some J => lt j J
+  | _, _ => true
+
+/-- §92.2 から `lastFire (dict a)` を落とした形。**偽** — `not_idxMonoNoFire92`。 -/
+def IdxMonoNoFire92 : Prop :=
+  ∀ (e a : BT), btLe72 1 e = true → btLe72 1 a = true →
+    BT.isStd (BT.D 0 e) = true → BT.isStd (BT.D 0 a) = true → BT.lt e a = true →
+    accGeb92 (dict e) = true → hiW89 (dict e) ≠ hiW89 (dict a) →
+    ∀ j J, idxF88 0 (dict e) = some j → idxF88 0 (dict a) = some J → lt j J = true
+
+/-- §92.2 から `hi` の食い違いを落とした形。**偽** — `not_idxMonoNoHi92`。 -/
+def IdxMonoNoHi92 : Prop :=
+  ∀ (e a : BT), btLe72 1 e = true → btLe72 1 a = true →
+    BT.isStd (BT.D 0 e) = true → BT.isStd (BT.D 0 a) = true → BT.lt e a = true →
+    accGeb92 (dict e) = true → lastFire92 (dict a) = true →
+    ∀ j J, idxF88 0 (dict e) = some j → idxF88 0 (dict a) = some J → lt j J = true
+
+/-- 反例 1 — `a` の分解の最後の対が Veblen の枝に落ちる形。記号 11 個。
+    `e` は `a` の添字 1 の成分の中の `ψ₀` の引数そのもので、形も母集団のもの。 -/
+def fireBadA92 : BT := BT.sum (twr86 3) (BT.D 1 (BT.D 0 (twr86 3)))
+def fireBadE92 : BT := twr86 3
+
+/-- 反例 2 — `hi` が一致する形。記号 7 個。`ψ₀0` を足しても `Ω₁` 以上の成分は
+    変わらないから、畳み込みは同じ指数を出す。 -/
+def hiBadA92 : BT := BT.sum (twr86 3) (BT.D 0 BT.zero)
+def hiBadE92 : BT := twr86 3
+
+theorem fireBad92_facts :
+    btLe72 1 fireBadE92 = true ∧ btLe72 1 fireBadA92 = true ∧
+    BT.isStd (BT.D 0 fireBadE92) = true ∧ BT.isStd (BT.D 0 fireBadA92) = true ∧
+    BT.lt fireBadE92 fireBadA92 = true ∧
+    accGeb92 (dict fireBadE92) = true ∧ lastFire92 (dict fireBadA92) = false ∧
+    (hiW89 (dict fireBadE92) == hiW89 (dict fireBadA92)) = false ∧
+    ltIdxFb92 fireBadE92 fireBadA92 = false :=
+  ⟨by decide, by decide, by decide, by decide, by decide, by decide, by decide,
+   by decide, by decide⟩
+
+theorem hiBad92_facts :
+    btLe72 1 hiBadE92 = true ∧ btLe72 1 hiBadA92 = true ∧
+    BT.isStd (BT.D 0 hiBadE92) = true ∧ BT.isStd (BT.D 0 hiBadA92) = true ∧
+    BT.lt hiBadE92 hiBadA92 = true ∧
+    accGeb92 (dict hiBadE92) = true ∧ lastFire92 (dict hiBadA92) = true ∧
+    (hiW89 (dict hiBadE92) == hiW89 (dict hiBadA92)) = true ∧
+    ltIdxFb92 hiBadE92 hiBadA92 = false :=
+  ⟨by decide, by decide, by decide, by decide, by decide, by decide, by decide,
+   by decide, by decide⟩
+
+theorem ne_hiW89_of_beq92 {x y : Term} (h : (hiW89 x == hiW89 y) = false) :
+    hiW89 x ≠ hiW89 y := by
+  intro hc
+  rw [hc, beq_self_eq_true] at h
+  exact Bool.noConfusion h
+
+/-- **§92.4 の第一の否定 — `lastFire (dict a)` は落とせない。** -/
+theorem not_idxMonoNoFire92 : ¬ IdxMonoNoFire92 := by
+  intro H
+  have hbad := fireBad92_facts.2.2.2.2.2.2.2.2
+  unfold ltIdxFb92 at hbad
+  cases hj : idxF88 0 (dict fireBadE92) with
+  | none => rw [hj] at hbad; exact Bool.noConfusion hbad
+  | some j =>
+    cases hJ : idxF88 0 (dict fireBadA92) with
+    | none => rw [hj, hJ] at hbad; exact Bool.noConfusion hbad
+    | some J =>
+      rw [hj, hJ] at hbad
+      have hbad2 : lt j J = false := hbad
+      rw [H fireBadE92 fireBadA92 fireBad92_facts.1 fireBad92_facts.2.1
+        fireBad92_facts.2.2.1 fireBad92_facts.2.2.2.1 fireBad92_facts.2.2.2.2.1
+        fireBad92_facts.2.2.2.2.2.1
+        (ne_hiW89_of_beq92 fireBad92_facts.2.2.2.2.2.2.2.1) j J hj hJ] at hbad2
+      exact Bool.noConfusion hbad2
+
+/-- **§92.4 の第二の否定 — `hi` の食い違いも落とせない。**  母集団は 192 組すべてで
+    `hi` が食い違うので、これは掃いて見つかる反例ではなく**組み立てた**反例である。 -/
+theorem not_idxMonoNoHi92 : ¬ IdxMonoNoHi92 := by
+  intro H
+  have hbad := hiBad92_facts.2.2.2.2.2.2.2.2
+  unfold ltIdxFb92 at hbad
+  cases hj : idxF88 0 (dict hiBadE92) with
+  | none => rw [hj] at hbad; exact Bool.noConfusion hbad
+  | some j =>
+    cases hJ : idxF88 0 (dict hiBadA92) with
+    | none => rw [hj, hJ] at hbad; exact Bool.noConfusion hbad
+    | some J =>
+      rw [hj, hJ] at hbad
+      have hbad2 : lt j J = false := hbad
+      rw [H hiBadE92 hiBadA92 hiBad92_facts.1 hiBad92_facts.2.1
+        hiBad92_facts.2.2.1 hiBad92_facts.2.2.2.1 hiBad92_facts.2.2.2.2.1
+        hiBad92_facts.2.2.2.2.2.1 hiBad92_facts.2.2.2.2.2.2.1 j J hj hJ] at hbad2
+      exact Bool.noConfusion hbad2
+
+end
+
+/-! ### §92.5 測定 (凍結) -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 帽子の内側に `ψ₀` を置き、その下に同じ塔を並べる — `wA` の側へ回す族。
+    §84 の母集団の中で唯一「最後でない発火歩」に `K` の元を出した形の一般化。 -/
+def famL92 : List BT :=
+  (List.range 3).flatMap fun m => (List.range 3).map fun n =>
+    BT.sum (cp86 (m+3) (BT.D 0 (twr86 (n+3)))) (twr86 (n+3))
+/-- 塔の下に帽子つき `ψ₀` を二つ — 発火歩を三つ作る。`wA` の側。 -/
+def famM92 : List BT :=
+  (List.range 2).flatMap fun m => (List.range 2).flatMap fun i => (List.range 2).map fun j =>
+    BT.sum (twr86 5) (BT.sum (cp86 (m+3) (BT.D 0 (BT.sum (twr86 5) (twr86 (i+2)))))
+                             (cp86 (m+3) (BT.D 0 (BT.sum (twr86 5) (twr86 (j+1))))))
+/-- `wC` の側 (発火成分の引数の直下の和) と `wA` の側を一つの項に混ぜた族。 -/
+def famN92 : List BT :=
+  (List.range 2).flatMap fun k => (List.range 2).flatMap fun m => (List.range 2).map fun j =>
+    BT.sum (twr86 (k+5)) (BT.sum
+      (BT.D 1 (BT.sum (twr86 (k+2)) (BT.D 0 (BT.sum (twr86 (k+5)) (twr86 (j+2))))))
+      (cp86 (m+3) (BT.D 0 (BT.sum (twr86 (k+5)) (twr86 (j+1))))))
+
+def pop92 : List BT := (famL92 ++ famM92 ++ famN92).eraseDups
+def qual92 : List BT := pop92.filter okHyp84
+
+/-- 測る母集団ぜんぶ。§88 の `wC` の側と §84/§86/§87/326 行目の `wA` の側を
+    そのまま使い、その上に §92 の 16 項を足す。 -/
+def corpus92 : List BT :=
+  qual88 ++ qual87 ++ qual86 ++ qual84 ++ (r326_84.map Prod.snd) ++ qual90 ++ qual92
+
+/-- §92.1 の免除の判定器。 -/
+def freePrev92b (p : (Option Term × Option Term) × (Term × Term)) (y : Term) : Bool :=
+  match p.1.1 with | none => false | some i0 => le y i0
+
+/-- §90 の条項が実際に訊く組 (p, y, e, j) ぜんぶ — §90.3 が外した元は除いてある。 -/
+def oblPre92 (a : BT) :
+    List (((Option Term × Option Term) × (Term × Term)) × Term × BT × Term) :=
+  (fireSt90 a).flatMap fun p =>
+    (Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).flatMap fun y =>
+      if lt y (reg 1) && !(subAP (reg 1) p.2.1 == zero) then [] else
+      (BT.toL a).flatMap fun t => match t with
+        | BT.D 1 c =>
+          if (Kset (reg 1) (dict c)).contains y then
+            (d0Args88 c).filterMap fun e => match idxF88 0 (dict e) with
+              | none => none
+              | some j => if le y j then some (p, y, e, j) else none
+          else []
+        | _ => []
+
+/-- §92 の条項が訊く組 — §92.1 と §92.2 が外したぶんを引いたもの。 -/
+def oblPost92 (a : BT) :
+    List (((Option Term × Option Term) × (Term × Term)) × Term × BT × Term) :=
+  (oblPre92 a).filter fun w => !(freePrev92b w.1 w.2.1) && !(monoClosed92 a w.1 w.2.2.1)
+
+/-- 添字 1 の成分の中の `ψ₀` の引数ぜんぶ。 -/
+def d0ArgsAll92 (a : BT) : List BT :=
+  (BT.toL a).flatMap fun t => match t with
+    | BT.D 1 c => d0Args88 c
+    | _ => []
+
+-- 母集団の大きさと形。
+#guard (pop92.length, qual92.length, (famL92.filter okHyp84).length,
+        (famM92.filter okHyp84).length, (famN92.filter okHyp84).length) == (25, 16, 6, 8, 2)
+#guard (qual88.length, qual87.length, qual86.length, qual84.length, r326_84.length,
+        qual90.length, qual92.length, corpus92.length) == (27, 25, 53, 53, 41, 18, 16, 233)
+#guard ((pop92.map BT.size).foldl min 999, (pop92.map BT.size).foldl max 0) == (13, 44)
+
+/-! **母集団の発火歩。** 233 項で 335 歩、うち 188 歩は「最初の発火歩」(直前の指数が
+無い)。`K` の元は 135 個。 -/
+
+#guard ((corpus92.flatMap fireSt90).length,
+        (corpus92.flatMap fun a => (fireSt90 a).flatMap fun p =>
+           Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).length,
+        (corpus92.flatMap fun a => (fireSt90 a).filter fun p => p.1.1 == none).length)
+       == (335, 135, 188)
+#guard ((qual92.flatMap fireSt90).length,
+        (qual92.filter fun a => (fireSt90 a).length == 2).length,
+        (qual92.filter fun a => (fireSt90 a).length == 3).length) == (40, 8, 8)
+
+/-! **肯定 1 — §92.1 と §92.2 が `K` の元の 87% を持っていく。** 135 個のうち
+61 個は直前の指数以下 (§92.1)、57 個は最後の発火歩にいる (§92.2)、残りは 17 個。 -/
+
+#guard
+  (let ks := corpus92.flatMap fun a => (fireSt90 a).flatMap fun p =>
+      (Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).map fun y => (a, p, y)
+   (ks.length,
+    (ks.filter fun w => freePrev92b w.2.1 w.2.2).length,
+    (ks.filter fun w => !(freePrev92b w.2.1 w.2.2) && isLastIdx92 w.1 w.2.1).length,
+    (ks.filter fun w => !(freePrev92b w.2.1 w.2.2) && !(isLastIdx92 w.1 w.2.1)).length))
+  == (135, 61, 57, 17)
+
+/-! **肯定 2 — 残余の居場所。** 13 の義務のうち 3 は「最初の発火歩」(直前の指数が無い)、
+10 は「中ほどの発火歩」。**最後の発火歩には一つも残らない** — そこは §92.2 が閉じる。 -/
+
+#guard
+  (let o := corpus92.flatMap fun a => (oblPost92 a).map fun w => (a, w)
+   (o.length,
+    (o.filter fun w => w.2.1.1.1 == none).length,
+    (o.filter fun w => isLastIdx92 w.1 w.2.1 && !(w.2.1.1.1 == none)).length,
+    (o.filter fun w => !(isLastIdx92 w.1 w.2.1) && !(w.2.1.1.1 == none)).length))
+  == (13, 3, 0, 10)
+
+/-! **肯定 2 — 条項が訊く組は 163 から 19 に落ちる。** 側条件まで込みで数えた形。
+そして門はどちらでも落ちない (失敗 0)。 -/
+
+#guard ((corpus92.flatMap oblPre92).length, (corpus92.flatMap oblPost92).length,
+        (corpus92.flatMap fun a => (oblPre92 a).map fun w => (a, w)).countP
+          (fun w => !(lt w.2.2.1 (idxOf (reg 1) w.2.1.1 w.2.1.2))),
+        (corpus92.flatMap fun a => (oblPost92 a).map fun w => (a, w)).countP
+          (fun w => !(lt w.2.2.1 (idxOf (reg 1) w.2.1.1 w.2.1.2)))) == (163, 13, 0, 0)
+#guard ((qual92.flatMap oblPre92).length, (qual92.flatMap oblPost92).length) == (29, 8)
+
+/-! **肯定 3 — §92.2 の結論の測定。** 192 組のうち 154 で `j < J`。落ちる 38 組は
+**ぜんぶ** `lastFire (dict a)` が偽で、側条件がそろっているところでの反例は 0 —
+定理の測定である。 -/
+
+#guard
+  (let tr := corpus92.flatMap fun a => (d0ArgsAll92 a).filterMap fun e =>
+      if (idxF88 0 (dict e)).isSome && (idxF88 0 (dict a)).isSome then some (a, e) else none
+   (tr.length,
+    (tr.filter fun w => ltIdxFb92 w.2 w.1).length,
+    (tr.filter fun w => !(ltIdxFb92 w.2 w.1)).length,
+    (tr.filter fun w => lastFire92 (dict w.1) && accGeb92 (dict w.2) &&
+       !(hiW89 (dict w.2) == hiW89 (dict w.1)) && !(ltIdxFb92 w.2 w.1)).length,
+    (tr.filter fun w => !(ltIdxFb92 w.2 w.1) && lastFire92 (dict w.1)).length))
+  == (192, 154, 38, 0, 0)
+
+/-! **否定 — 側条件の内訳。** `lastFire (dict a)` は 59 組で偽、`lastFire (dict e)` は
+95 組で偽、`hi` の一致は **0 組**。だから `hi` の側の反例は掃いて出るものではなく、
+§92.4 のように**組み立てる**しかない。 -/
+
+#guard
+  (let tr := corpus92.flatMap fun a => (d0ArgsAll92 a).filterMap fun e =>
+      if (idxF88 0 (dict e)).isSome && (idxF88 0 (dict a)).isSome then some (a, e) else none
+   ((tr.filter fun w => !(lastFire92 (dict w.1))).length,
+    (tr.filter fun w => !(lastFire92 (dict w.2))).length,
+    (tr.filter fun w => !(accGeb92 (dict w.2))).length,
+    (tr.filter fun w => hiW89 (dict w.2) == hiW89 (dict w.1)).length)) == (59, 95, 0, 0)
+
+/-! **反例の受領。** どちらも小さく、`fireBad92` は母集団の形そのもの
+(`e` は `a` の添字 1 の成分の中の `ψ₀` の引数)。 -/
+
+#guard (BT.size fireBadA92, BT.size fireBadE92, BT.size hiBadA92, BT.size hiBadE92)
+       == (11, 4, 7, 4)
+#guard (okHyp84 fireBadA92, okHyp84 fireBadE92, okHyp84 hiBadA92, okHyp84 hiBadE92)
+       == (true, true, true, true)
+#guard ((d0Args88 (BT.D 0 (twr86 3))).contains fireBadE92, stepOKb 0 (dict fireBadA92),
+        stepOKb 0 (dict hiBadA92)) == (true, true, true)
+
+/-! **肯定 4 — 門は落ちない。** §92 は七つ目の反証を出していない。 -/
+
+#guard ((qual92.filter fun a => !(stepOKb 0 (dict a))).length,
+        (qual92.filter fun a => !(idxb84 0 (dict a))).length,
+        (qual92.filter fun a => !(splitb86 0 (dict a))).length,
+        (qual92.filter fun a => !(ltArg90b a)).length,
+        (qual92.filter fun a => !(idxLt90b a)).length) == (0, 0, 0, 0, 0)
+
+end
+
 end Evidence.Region
