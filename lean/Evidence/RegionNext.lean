@@ -21886,4 +21886,680 @@ end
 
 /-! ### §67.6 公理 -/
 
+/-! ## §69 `Hlim` FOR THE GENERALISED REGION — THE INDEX HALF IS A THEOREM,
+    AND COFINALITY IS FALSE
+
+§61 built the region (`RegS`/`ValS`, the `stdB` indices and their value `vOf`), §62 closed
+`Hclosed`, §67 closed `Hsucc` modulo two named gates.  `Hlim` is the last supply, and it has
+six conjuncts.  This section settles four of them and REFUTES one.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §69.1  **THE INDEX HALF.**  For a region matrix of kind `lim` the index is `nd 0 r a` with
+         `a ≠ nil`, its `n`-th expansion is `matB (fsB t n) 0`, and `fsB t n` is again a
+         region index.  `hlimS_index` packages it; `kindB_lim_std` is the shape lemma
+         (`nfB` forces every TOP-LEVEL node to level 0, so the `nd v r nil` with `v ≥ 1`
+         branch of `fsB` — the one that returns `nil` — is unreachable inside the region).
+         Nothing is assumed.
+
+  §69.4  **COFINALITY IS FALSE ON THE REGION.**  The witness is the diagonal index
+
+             tdiag = (0,0)(1,1)(2,2)      `nd 0 nil (nd 1 nil (nd 2 nil nil))`
+
+         which is `stdB`, has `kindB = lim`, and whose value is `ψ_{Ω₁}(Ω₂)`.  Its
+         fundamental sequence is pinned here as a THEOREM at the Buchholz level,
+
+             bVal_fsB_tdiag :  bVal (fsB tdiag k) = ψ₀((ψ₁)^{k+1} 0)
+
+         (`fsB` walks to the nearest ancestor of lower level and iterates there, so the
+         sequence is the ψ₁-TOWER, matching §3.1's measured `ε₀, ζ₀, Γ₀, …`).  Under `dict`
+         the tower's values are `ψ_{Ω₁}` of a φ̄0-tower over `Ω₁ ⊕ Ω₁`, whose supremum is the
+         first ε-number above `Ω₁`.  The term
+
+             sbad = ψ_{Ω₁}(φ̄(1, Ω₁))
+
+         is `inT`, is STRICTLY BELOW `vOf tdiag`, and is strictly ABOVE every member of the
+         sequence (checked to `k ≤ 39`).  So `vOf tdiag` is not the supremum of its own
+         fundamental sequence in 𝔗(M): there is a gap, and `sbad` sits in it.
+         `not_limCofS` / `not_hlimS` turn that into `¬ LimCofS` and `¬ Hlim`.
+         Exactly three of the 179 standard limit indices of `popNFB 3 6` fail, and all three
+         contain the diagonal: `(0,0)(1,1)(2,2)`, `(0,0)(1,1)(2,2)(3,2)`,
+         `(0,0)(1,1)(2,2)(2,2)`.
+
+  §69.4b **THE ORDER HALF OF THE REFUTATION IS A THEOREM.**  `CofGap` — "`sbad` is above
+         every member" — splits into an ORDER part and a `dict`-COMPUTATION part, and the
+         order part is closed here, unconditionally: `lt_psi_same` ([Rathjen, 1991] 2.3.14(ii),
+         read off `ltF` with the fuel matched), `lt_phi_zero_one` (2.3.13(i): `φ̄0x < φ̄1c`
+         iff `x < φ̄1c`, so `φ̄(1, Ω₁)` is closed under `ω^·`), `lt_TW` (every φ̄0-tower over
+         `Ω₁ ⊕ Ω₁` stays below `φ̄(1, Ω₁)`), `inT_TW`, and `le_sbad_psi_TW`.  What is left is
+         ONE named hypothesis, `TowerVal` — the closed form `vOf (fsB tdiag (j+3)) =
+         ψ_{Ω₁}(TW (j+3))`, a pure `dict` computation with no order content — and
+         `cofGap_of` / `not_limCofS_of` / `not_hlimS_of` carry it visibly.
+
+WHAT IS NAMED AND NOT PROVED.  §69.2 states the three ORDER conjuncts as Props on the
+region — `LimDecS`, `LimIncS`, `LimCofS` — and §69.3 assembles `hlimS_supply` from them
+together with §67's `PsiIdxOKStd` and `RegionStd` (which carry the two `inT` conjuncts).
+`LimDecS` and `LimIncS` are measured with zero counterexamples on five populations; §69.2
+also reduces them to the Buchholz level through the measured `VOfLtStd` (`BT.lt` on `bVal`
+agrees with `lt` on `vOf`: 0 mismatches on all 235² pairs of `popS 3 6`).  §69.3's `certInS`
+puts the four supplies into `certIn_region` and shows the whole region closing on exactly
+those five hypotheses.  But `LimCofS` is FALSE, so `hlimS_supply` and `certInS` are not
+merely un-discharged — their cofinality hypothesis cannot be discharged at all, and
+`certIn_region` cannot be instantiated at `RegS`/`ValS` as they stand.  What would have to
+change is the VALUE or the EXPANSION at the diagonal, not the proof.
+
+WHAT IS **NOT** CLAIMED.  `TowerVal` is measured (`j ≤ 9`, plus the two closed forms it
+factors through, `dict (psiTow (m+2)) = TW (m+1)` for `m ≤ 7` and
+`dict (ψ₀ (psiTow (m+4))) = ψ_{Ω₁}(TW (m+3))` for `m ≤ 5`), NOT proved: proving it means
+unfolding `collapse` through `wcnf` / `mulL` / `subAP` / `ω^·` on a parametrised argument,
+which is a §64–§65-sized job.  Nothing here is a claim about `Hsucc`, about `PsiIdxOKStd`
+or `RegionStd` (§68's job), or about whether the table's value for `(0,0)(1,1)(2,2)` is the
+right ordinal — the finding is that the value and the expansion do not agree, not which of
+the two is wrong. -/
+
+
+/-! ### §69.1 添字の側 — 無条件
+
+領域の添字は `nfB` なので最上位の節の段は必ず 0。したがって種別が極限の添字は
+`nd 0 r a` (`a ≠ nil`) の形しかなく、`fsB` の「段 ≥ 1 の葉で `nil` を返す」枝は
+領域の中では到達しない。展開の同一視は §13 の `expand_matB`、標準性は §62 の `stdB_fsB`。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 種別が極限なら添字は空でない。 -/
+theorem kindB_ne_nil {t : B} (h : kindB t = BMS.Kind.lim) : t ≠ .nil := by
+  intro hc
+  rw [hc] at h
+  exact BMS.Kind.noConfusion h
+
+/-- **領域の極限添字の形。** `nfB` が最上位の段を 0 に縛るので、`a ≠ nil` が出る。 -/
+theorem kindB_lim_std : ∀ (t : B), stdB t = true → kindB t = BMS.Kind.lim →
+    ∃ r a, a ≠ .nil ∧ t = .nd 0 r a := by
+  intro t hstd hk
+  cases t with
+  | nil => exact absurd rfl (kindB_ne_nil hk)
+  | nd v r a =>
+    have hv : v = 0 := by
+      have h := nfB_of_stdB _ hstd
+      have h1 := (nfLe_nd_iff 0 v r a).mp h
+      omega
+    subst hv
+    cases a with
+    | nil =>
+      rw [kindB_nd_nil, if_pos (show (0 == 0) = true from rfl)] at hk
+      exact BMS.Kind.noConfusion hk
+    | nd w b c => exact ⟨r, .nd w b c, (by intro hc; exact B.noConfusion hc), rfl⟩
+
+/-- **展開は添字の基本列。** 領域の中では仮定なしで使える形。 -/
+theorem expand_matB_std {t : B} (hstd : stdB t = true) (hne : t ≠ .nil) (n : Nat) :
+    BMS.expand (matB t 0) n = matB (fsB t n) 0 := by
+  show (BMS.expand? (matB t 0) n).getD [] = _
+  rw [expand_matB t (topOKB_of_nfB _ (nfB_of_stdB _ hstd)) hne n]
+  rfl
+
+/-- **`Hlim` の添字の側。** 値については何も言わない。**無条件。** -/
+theorem hlimS_index : ∀ (S : BMS.Matrix), RegS S → BMS.kind S = BMS.Kind.lim →
+    ∃ t : B, stdB t = true ∧ S = matB t 0 ∧ kindB t = BMS.Kind.lim
+      ∧ ∀ n, BMS.expand S n = matB (fsB t n) 0 ∧ stdB (fsB t n) = true := by
+  rintro S ⟨t, hstd, rfl⟩ hk
+  rw [kind_matB t] at hk
+  exact ⟨t, hstd, rfl, hk, fun n =>
+    ⟨expand_matB_std hstd (kindB_ne_nil hk) n, stdB_fsB t hstd n⟩⟩
+
+/-- **極限の展開は領域の値を持つ。** `ValS` の側の条項がこれ。**無条件。** -/
+theorem valS_expand : ∀ (t : B), stdB t = true → kindB t = BMS.Kind.lim →
+    ∀ n, ValS (BMS.expand (matB t 0) n) (vOf (fsB t n)) := by
+  intro t hstd hk n
+  exact ⟨fsB t n, stdB_fsB t hstd n, expand_matB_std hstd (kindB_ne_nil hk) n, rfl⟩
+
+end
+
+/-! ### §69.2 三つの順序の条項 — 名前をつける
+
+`Hlim` の 6 連言のうち、`inT` の 2 つは §67 の `PsiIdxOKStd`/`RegionStd` が運び、
+`ValS` の 1 つは §69.1 が閉じた。残るのは順序の 3 つで、それがこの節の対象。
+`LimDecS`/`LimIncS` は 5 つの母集団で反例 0 (§69.5)、`LimCofS` は §69.4 で**偽**。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **減少。** 基本列の値は元の値より真に小さい。**測定のみ** (§69.5)。 -/
+def LimDecS : Prop := ∀ (t : B), stdB t = true → kindB t = BMS.Kind.lim →
+    ∀ n, lt (vOf (fsB t n)) (vOf t) = true
+
+/-- **増加。** 基本列の値は真に増える。**測定のみ** (§69.5)。 -/
+def LimIncS : Prop := ∀ (t : B), stdB t = true → kindB t = BMS.Kind.lim →
+    ∀ n, lt (vOf (fsB t n)) (vOf (fsB t (n + 1))) = true
+
+/-- **共終性。** 値より下の 𝔗(M) の項はどれか一つの基本列の項以下。**§69.4 で偽。** -/
+def LimCofS : Prop := ∀ (t : B), stdB t = true → kindB t = BMS.Kind.lim →
+    ∀ s, inT s = true → lt s (vOf t) = true → ∃ n, le s (vOf (fsB t n)) = true
+
+/-- **Buchholz 側の順序を 𝔗(M) 側へ運ぶ仮説。** `dict` の順序保存の、領域に絞った形。
+    `popS 3 6` の 235² 対で不一致 0 (§69.5)。**未証明。** -/
+def VOfLtStd : Prop := ∀ (u t : B), stdB u = true → stdB t = true →
+    BT.lt (bVal u) (bVal t) = true → lt (vOf u) (vOf t) = true
+
+/-- 減少の Buchholz 側。**測定のみ** (§69.5)。 -/
+def BLimDec : Prop := ∀ (t : B), stdB t = true → kindB t = BMS.Kind.lim →
+    ∀ n, BT.lt (bVal (fsB t n)) (bVal t) = true
+
+/-- 増加の Buchholz 側。**測定のみ** (§69.5)。 -/
+def BLimInc : Prop := ∀ (t : B), stdB t = true → kindB t = BMS.Kind.lim →
+    ∀ n, BT.lt (bVal (fsB t n)) (bVal (fsB t (n + 1))) = true
+
+/-- **減少は Buchholz 側へ落ちる。** -/
+theorem limDecS_of (HV : VOfLtStd) (HB : BLimDec) : LimDecS :=
+  fun t hstd hk n => HV (fsB t n) t (stdB_fsB t hstd n) hstd (HB t hstd hk n)
+
+/-- **増加も Buchholz 側へ落ちる。** -/
+theorem limIncS_of (HV : VOfLtStd) (HB : BLimInc) : LimIncS :=
+  fun t hstd hk n => HV (fsB t n) (fsB t (n + 1)) (stdB_fsB t hstd n)
+    (stdB_fsB t hstd (n + 1)) (HB t hstd hk n)
+
+end
+
+/-! ### §69.3 組み立て
+
+`certIn_region` が求める `Hlim` の形そのもの。`f n = vOf (fsB t n)` で、`ValS` と
+`inT` の条項は §69.1 と §67 が閉じ、順序の 3 つは仮説のまま残る。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **`certIn_region` の `Hlim` 供給。** 仮説は 5 つ — §67 の 2 つ (`inT` の側) と
+    §69.2 の 3 つ (順序の側)。**`LimCofS` は §69.4 で偽なので、この定理は
+    `certIn_region` を実際に起動できない。**そのことを含めて §69.4 に書く。 -/
+theorem hlimS_supply (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HD : LimDecS) (HI : LimIncS) (HC : LimCofS) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.lim →
+    ∃ f : Nat → TM.Term, inT v = true
+      ∧ (∀ n, ValS (BMS.expand S n) (f n))
+      ∧ (∀ n, inT (f n) = true)
+      ∧ (∀ n, lt (f n) v = true)
+      ∧ (∀ n, lt (f n) (f (n + 1)) = true)
+      ∧ (∀ s, inT s = true → lt s v = true → ∃ n, le s (f n) = true) := by
+  rintro S v _ ⟨t, hstd, rfl, rfl⟩ hk
+  rw [kind_matB t] at hk
+  exact ⟨fun n => vOf (fsB t n), inT_vOf_std Hp Hr t hstd,
+    valS_expand t hstd hk,
+    fun n => inT_vOf_std Hp Hr _ (stdB_fsB t hstd n),
+    HD t hstd hk, HI t hstd hk, HC t hstd hk⟩
+
+/-- 同じものを Buchholz 側の仮説で。 -/
+theorem hlimS_supply_bt (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HV : VOfLtStd) (HBD : BLimDec) (HBI : BLimInc) (HC : LimCofS) :
+    ∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.lim →
+    ∃ f : Nat → TM.Term, inT v = true
+      ∧ (∀ n, ValS (BMS.expand S n) (f n))
+      ∧ (∀ n, inT (f n) = true)
+      ∧ (∀ n, lt (f n) v = true)
+      ∧ (∀ n, lt (f n) (f (n + 1)) = true)
+      ∧ (∀ s, inT s = true → lt s v = true → ∃ n, le s (f n) = true) :=
+  hlimS_supply Hp Hr (limDecS_of HV HBD) (limIncS_of HV HBI) HC
+
+/-- **輪が閉じる形。** §62 の `Hclosed`、§61 の `Hzero`、§67 の `Hsucc`、そしてここの
+    `Hlim` を `certIn_region` に入れると、領域のすべての行列が証明書を持つ。仮説は 5 つ
+    — §67 の 2 つと §69.2 の 3 つ。**そのうち `LimCofS` は §69.4 で偽なので、この定理は
+    実際には起動できない。**残っているのが何かを 1 行で言うために置いてある。 -/
+theorem certInS (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HD : LimDecS) (HI : LimIncS) (HC : LimCofS) :
+    ∀ (v : TM.Term), Acc Evidence.WF.RT v → ∀ (S : BMS.Matrix), RegS S → ValS S v →
+      Evidence.Cert.CertifiedIn Evidence.Cert.DomI S v :=
+  Evidence.Cert.certIn_region hclosedS_supply hzeroS_supply (hsuccS_supply_std Hp Hr)
+    (hlimS_supply Hp Hr HD HI HC)
+
+end
+
+/-! ### §69.4 共終性は偽 — 対角の添字で
+
+`fsB` は「段が `w` 未満の最も近い祖先」まで降りてそこで反復する (§3.2)。対角の添字
+`(0,0)(1,1)(2,2)` では最後の節の段が 2、その祖先で段が 2 未満の最も近いものが段 1 の節
+なので、反復されるのは ψ₁ の梯子であり、基本列は **ψ₁ の塔** になる。ここではそれを
+Buchholz 項の等式として証明する (`bVal_fsB_tdiag`)。
+
+値の側は測定 (§69.5): 塔の値は `ψ_{Ω₁}` を頭に持ち、その引数は `Ω₁ ⊕ Ω₁` の上の
+φ̄0 の塔で、上限は `Ω₁` より上の最初の ε 数。一方 `vOf tdiag = ψ_{Ω₁}(Ω₂)` はそれより
+はるかに上にある。その隙間に `sbad = ψ_{Ω₁}(φ̄(1, Ω₁))` が入る。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+/-- **対角の添字。** 行列は `(0,0)(1,1)(2,2)`。 -/
+def tdiag : B := .nd 0 .nil (.nd 1 .nil (.nd 2 .nil .nil))
+
+theorem matB_tdiag : matB tdiag 0 = [[0, 0], [1, 1], [2, 2]] := rfl
+theorem stdB_tdiag : stdB tdiag = true := rfl
+theorem kindB_tdiag : kindB tdiag = BMS.Kind.lim := rfl
+theorem bVal_tdiag : bVal tdiag = BT.D 0 (BT.D 2 BT.zero) := rfl
+
+/-- ψ₁ の塔 (添字の側)。 -/
+def bTow : Nat → B
+  | 0 => .nd 1 .nil .nil
+  | k + 1 => .nd 1 .nil (bTow k)
+
+/-- ψ₁ の塔 (Buchholz 項の側)。 -/
+def psiTow : Nat → BT
+  | 0 => BT.zero
+  | m + 1 => BT.D 1 (psiTow m)
+
+theorem bTow_shape : ∀ k, ∃ x, bTow k = .nd 1 .nil x
+  | 0 => ⟨.nil, rfl⟩
+  | k + 1 => ⟨bTow k, rfl⟩
+
+/-- `iterD` が作るのは塔そのもの。 -/
+theorem iterD_bTow : ∀ k, iterD 1 (.nd 2 .nil .nil) k = bTow k
+  | 0 => rfl
+  | k + 1 => by
+      show B.nd 1 .nil (appB .nil (iterD 1 (.nd 2 .nil .nil) k)) = _
+      rw [appB_nil, iterD_bTow k]
+      rfl
+
+/-- **対角の基本列。** `rwB` が段 1 の節まで降りて、そこで反復する。 -/
+theorem fsB_tdiag (k : Nat) : fsB tdiag k = .nd 0 .nil (bTow k) := by
+  show B.nd 0 .nil (appB .nil (iterD 1 (.nd 2 .nil .nil) k)) = _
+  rw [appB_nil, iterD_bTow k]
+
+theorem bArg1_bTow : ∀ k, bArg 1 (bTow k) = psiTow (k + 1)
+  | 0 => rfl
+  | k + 1 => by
+      have h : bArg 1 (bTow (k + 1)) = BT.D 1 (bArg 1 (bTow k)) := by
+        show bArg 1 (B.nd 1 .nil (bTow k)) = _
+        rw [bArg_single]
+        exact bK_le 1 1 .nil (bTow k) (Nat.le_refl 1)
+      rw [h, bArg1_bTow k]
+      rfl
+
+theorem bArg0_bTow : ∀ k, bArg 0 (bTow k) = psiTow (k + 1)
+  | 0 => rfl
+  | k + 1 => by
+      obtain ⟨x, hx⟩ := bTow_shape k
+      have h : bArg 0 (bTow (k + 1)) = BT.D 1 (bArg 1 (bTow k)) := by
+        show bArg 0 (B.nd 1 .nil (bTow k)) = _
+        rw [bArg_single, hx]
+        rfl
+      rw [h, bArg1_bTow k]
+      rfl
+
+/-- **対角の基本列の値 (Buchholz 側)、証明済み。** `ψ₀((ψ₁)^{k+1} 0)`。 -/
+theorem bVal_fsB_tdiag (k : Nat) : bVal (fsB tdiag k) = BT.D 0 (psiTow (k + 1)) := by
+  rw [fsB_tdiag k]
+  obtain ⟨x, hx⟩ := bTow_shape k
+  have h : bVal (B.nd 0 .nil (bTow k)) = BT.D 0 (bArg 0 (bTow k)) := by
+    rw [hx]; rfl
+  rw [h, bArg0_bTow k]
+
+/-- **隙間に入る項。** `ψ_{Ω₁}(φ̄(1, Ω₁))`。 -/
+def sbad : Term := psi (Z zero) (phi (phi zero zero) (Z zero))
+
+theorem inT_sbad : inT sbad = true := rfl
+theorem lt_sbad_tdiag : lt sbad (vOf tdiag) = true := rfl
+
+/-- **隙間の主張。** `sbad` は基本列のどの項以下でもない。`k ≤ 39` まで測定 (§69.5)、
+    **証明されていない**。閉じた形が要る — §69.5 の最後を見よ。 -/
+def CofGap : Prop := ∀ k, le sbad (vOf (fsB tdiag k)) = false
+
+/-- **§69.4 の主定理。** 共終性の条項は領域の上で偽。 -/
+theorem not_limCofS (H : CofGap) : ¬ LimCofS := by
+  intro HC
+  obtain ⟨n, hn⟩ := HC tdiag stdB_tdiag kindB_tdiag sbad inT_sbad lt_sbad_tdiag
+  exact Bool.noConfusion (hn.symm.trans (H n))
+
+/-- 同じ行列から来る領域の添字は同じ値を持つ (`oR_vOf` の一意性)。 -/
+theorem vOf_of_matB_eq {u t : B} (hu : stdB u = true) (ht : stdB t = true)
+    (h : matB u 0 = matB t 0) : vOf u = vOf t := by
+  have h1 := oR_vOf u (nfB_of_stdB _ hu)
+  have h2 := oR_vOf t (nfB_of_stdB _ ht)
+  rw [h] at h1
+  exact Option.some.inj (h1.symm.trans h2)
+
+/-- **`ValS` は列を決めてしまう。** 別の `f` を選ぶ逃げ道は無い。 -/
+theorem valS_pins {t : B} (hstd : stdB t = true) (hk : kindB t = BMS.Kind.lim)
+    {v : TM.Term} (n : Nat) (h : ValS (BMS.expand (matB t 0) n) v) : v = vOf (fsB t n) := by
+  obtain ⟨u, hu, heq, rfl⟩ := h
+  rw [expand_matB_std hstd (kindB_ne_nil hk) n] at heq
+  exact vOf_of_matB_eq hu (stdB_fsB t hstd n) heq.symm
+
+/-- **`Hlim` は `RegS`/`ValS` では成り立たない。** `certIn_region` をこの領域で
+    起動することはできない。 -/
+theorem not_hlimS (H : CofGap) :
+    ¬ (∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.lim →
+      ∃ f : Nat → TM.Term, inT v = true
+        ∧ (∀ n, ValS (BMS.expand S n) (f n))
+        ∧ (∀ n, inT (f n) = true)
+        ∧ (∀ n, lt (f n) v = true)
+        ∧ (∀ n, lt (f n) (f (n + 1)) = true)
+        ∧ (∀ s, inT s = true → lt s v = true → ∃ n, le s (f n) = true)) := by
+  intro HL
+  obtain ⟨f, _, hval, _, _, _, hcof⟩ := HL (matB tdiag 0) (vOf tdiag)
+    ⟨tdiag, stdB_tdiag, rfl⟩ ⟨tdiag, stdB_tdiag, rfl, rfl⟩
+    (by rw [kind_matB]; exact kindB_tdiag)
+  obtain ⟨n, hn⟩ := hcof sbad inT_sbad lt_sbad_tdiag
+  rw [valS_pins stdB_tdiag kindB_tdiag n (hval n)] at hn
+  exact Bool.noConfusion (hn.symm.trans (H n))
+
+end
+
+/-! ### §69.4b 隙間の順序の側は定理 — 残るのは `dict` の閉じた形だけ
+
+`CofGap` を二つに割る。順序の部分 (「φ̄0 の塔はどれも `φ̄(1, Ω₁)` の下」と
+「だから `sbad` はどの項以下でもない」) は**ここで証明する**。残るのは `dict` の
+計算そのもの、すなわち `TowerVal` — 基本列の値の閉じた形 — だけになる。
+
+道具は 3 つで、どれも [Rathjen, 1991] 2.3 の節を `ltF` の燃料を合わせて読んだもの:
+`lt_psi_same` (2.3.14(ii): 添字が同じ `ψ` の比較は引数の比較)、`lt_phi_zero_one`
+(2.3.13(i): `φ̄0x < φ̄1c ⟺ x < φ̄1c`)、そして `Evidence/WF.lean` §8.5.4 の `lt_asymm_inT`。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Ω₁ ⊕ Ω₁` の上に積んだ φ̄0 の塔。基本列の値の引数はこれ (§69.5 で測定)。 -/
+def TW : Nat → TM.Term
+  | 0 => TM.Term.add (Z zero) (Z zero)
+  | j + 1 => phi zero (TW j)
+
+/-- **2.3.14(ii)。** 添字が同じ `ψ` の比較は、引数の比較そのもの。 -/
+theorem lt_psi_same (k a b : Term) : lt (psi k a) (psi k b) = lt a b := by
+  by_cases h : a = b
+  · subst h; rw [lt_irrefl, lt_irrefl]
+  · have hne : ((psi k a : Term) == psi k b) = false := by
+      cases hq : ((psi k a : Term) == psi k b) with
+      | false => rfl
+      | true =>
+        exfalso
+        have he : (psi k a : Term) = psi k b := of_decide_eq_true hq
+        injection he with _ h2
+        exact h h2
+    have hd : (psi k a).deg + (psi k b).deg
+        = (k.deg + k.deg + a.deg + b.deg + 1) + 1 := by
+      show (1 + k.deg + a.deg) + (1 + k.deg + b.deg) = _
+      omega
+    rw [lt_eq_ltF (psi k a) (psi k b) ((psi k a).deg + (psi k b).deg) (Nat.le_refl _), hd]
+    show (if ((psi k a : Term) == psi k b) = true then false
+          else if ((k : Term) == k) = true then
+            ltF (k.deg + k.deg + a.deg + b.deg + 1) a b
+          else if ltF (k.deg + k.deg + a.deg + b.deg + 1) k k = true then
+            ltF (k.deg + k.deg + a.deg + b.deg + 1) k (psi k b)
+          else ltF (k.deg + k.deg + a.deg + b.deg + 1) (psi k a) k) = _
+    rw [hne, if_neg (fun hc => Bool.noConfusion hc),
+      if_pos (show ((k : Term) == k) = true from beq_self_eq_true k)]
+    exact (lt_eq_ltF a b (k.deg + k.deg + a.deg + b.deg + 1) (by omega)).symm
+
+/-- **2.3.13(i)。** `φ̄(1, c)` は `ω^·` で閉じている — 第 1 引数が上がるので、
+    比較は引数のほうへ落ちる。 -/
+theorem lt_phi_zero_one (x c : Term) :
+    lt (phi zero x) (phi TM.Term.one c) = lt x (phi TM.Term.one c) := by
+  have hd : (phi zero x).deg + (phi TM.Term.one c).deg = (x.deg + c.deg + 5) + 1 := by
+    show (1 + 1 + x.deg) + (1 + (1 + 1 + 1) + c.deg) = _
+    omega
+  have hz : ltF (x.deg + c.deg + 5) zero TM.Term.one = true := by
+    rw [← lt_eq_ltF zero TM.Term.one (x.deg + c.deg + 5) (by show 1 + (1 + 1 + 1) ≤ _; omega)]
+    rfl
+  rw [lt_eq_ltF (phi zero x) (phi TM.Term.one c)
+      ((phi zero x).deg + (phi TM.Term.one c).deg) (Nat.le_refl _), hd]
+  show (if ((phi zero x : Term) == phi TM.Term.one c) = true then false
+        else if ((zero : Term) == TM.Term.one) = true then
+          ltF (x.deg + c.deg + 5) x c
+        else if ltF (x.deg + c.deg + 5) zero TM.Term.one = true then
+          ltF (x.deg + c.deg + 5) x (phi TM.Term.one c)
+        else (((phi zero x : Term) == c)
+              || ltF (x.deg + c.deg + 5) (phi zero x) c)) = _
+  rw [show ((phi zero x : Term) == phi TM.Term.one c) = false from rfl,
+    if_neg (fun hc => Bool.noConfusion hc),
+    show ((zero : Term) == TM.Term.one) = false from rfl,
+    if_neg (fun hc => Bool.noConfusion hc), hz, if_pos rfl]
+  exact (lt_eq_ltF x (phi TM.Term.one c) (x.deg + c.deg + 5)
+    (by show x.deg + (1 + (1 + 1 + 1) + c.deg) ≤ _; omega)).symm
+
+/-- **塔はすべて `φ̄(1, Ω₁)` の下。** これが隙間の理由。 -/
+theorem lt_TW : ∀ j, lt (TW j) (phi TM.Term.one (Z zero)) = true
+  | 0 => rfl
+  | j + 1 => by
+      show lt (phi zero (TW j)) (phi TM.Term.one (Z zero)) = true
+      rw [lt_phi_zero_one]
+      exact lt_TW j
+
+theorem lt_TW_M : ∀ j, lt (TW j) M = true
+  | 0 => by
+      show lt (TM.Term.add (Z zero) (Z zero)) M = true
+      rw [lt_add_M]
+      exact lt_Z_M zero
+  | j + 1 => lt_phi_M zero (TW j)
+
+theorem inT_TW : ∀ j, inT (TW j) = true
+  | 0 => rfl
+  | j + 1 => by
+      show (inT zero && inT (TW j) && lt zero M && lt (TW j) M) = true
+      rw [inT_TW j, lt_TW_M j]
+      rfl
+
+theorem sbad_eq : sbad = psi (Z zero) (phi TM.Term.one (Z zero)) := rfl
+
+/-- **隙間の順序の側、証明済み。** `sbad` は `ψ_{Ω₁}(TW j)` のどれ以下でもない。 -/
+theorem le_sbad_psi_TW (j : Nat) : le sbad (psi (Z zero) (TW j)) = false := by
+  have h1 : lt (TW j) (phi TM.Term.one (Z zero)) = true := lt_TW j
+  have hne2 : TW j ≠ phi TM.Term.one (Z zero) := by
+    intro hc
+    rw [hc, lt_irrefl] at h1
+    exact Bool.noConfusion h1
+  have hne : ((sbad : Term) == psi (Z zero) (TW j)) = false := by
+    cases hq : ((sbad : Term) == psi (Z zero) (TW j)) with
+    | false => rfl
+    | true =>
+      exfalso
+      have he : (psi (Z zero) (phi TM.Term.one (Z zero)) : Term) = psi (Z zero) (TW j) :=
+        sbad_eq ▸ of_decide_eq_true hq
+      injection he with _ h2
+      exact hne2 h2.symm
+  have h2 : lt sbad (psi (Z zero) (TW j)) = false := by
+    rw [sbad_eq, lt_psi_same]
+    exact lt_asymm_inT (inT_TW j) (show inT (phi TM.Term.one (Z zero)) = true from rfl) h1
+  show (((sbad : Term) == psi (Z zero) (TW j)) || lt sbad (psi (Z zero) (TW j))) = false
+  rw [hne, h2]
+  rfl
+
+/-- **残った穴は `dict` の計算そのもの。** 基本列の値の閉じた形。`j ≤ 9` まで測定
+    (§69.5)、**証明されていない**。`collapse` を `wcnf`/`mulL`/`subAP`/`ω^·` まで
+    展開する必要があり、それは §64–§65 と同じ規模の仕事。 -/
+def TowerVal : Prop := ∀ j, vOf (fsB tdiag (j + 3)) = psi (Z zero) (TW (j + 3))
+
+/-- **`CofGap` は `TowerVal` だけに縮む。** 順序の側は上で閉じた。 -/
+theorem cofGap_of (H : TowerVal) : CofGap := by
+  intro k
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | 2 => rfl
+  | (j + 3) =>
+    rw [H j]
+    exact le_sbad_psi_TW (j + 3)
+
+/-- **共終性は偽 — 仮説は `TowerVal` ただ 1 つ。** -/
+theorem not_limCofS_of (H : TowerVal) : ¬ LimCofS := not_limCofS (cofGap_of H)
+
+/-- **`Hlim` は成り立たない — 仮説は `TowerVal` ただ 1 つ。** -/
+theorem not_hlimS_of (H : TowerVal) :
+    ¬ (∀ (S : BMS.Matrix) (v : TM.Term), RegS S → ValS S v → BMS.kind S = BMS.Kind.lim →
+      ∃ f : Nat → TM.Term, inT v = true
+        ∧ (∀ n, ValS (BMS.expand S n) (f n))
+        ∧ (∀ n, inT (f n) = true)
+        ∧ (∀ n, lt (f n) v = true)
+        ∧ (∀ n, lt (f n) (f (n + 1)) = true)
+        ∧ (∀ s, inT s = true → lt s v = true → ∃ n, le s (f n) = true)) :=
+  not_hlimS (cofGap_of H)
+
+end
+
+/-! ### §69.5 測定 (凍結)
+
+母集団の作り方を先に書く。`enumNodes L n` は「節がちょうど `n` 個・段が `L` 未満」の `B`
+を全部並べる (§19.3)。それを使って
+
+    popNFB L n  =  ((List.range n).flatMap (enumNodes L)).filter (nfB · && · != nil)   §48
+    popS   L n  =  (popNFB L n).filter stdB                                            §61
+    limP   L n  =  (popS L n).filter (kindB · == lim)          極限の添字だけ
+    valP   L n  =  ((popS L n).map vOf).eraseDups              領域の値だけ
+    outP   L n  =  (((popNFB L n).filter (!stdB ·)).map vOf).eraseDups.filter inT
+                                                              領域の**外**の 𝔗(M) の項
+    cloP        =  valP 3 5 を `plus` / `ω^·` / `φ̄(·,0)` / `ψ_{Ω₁}(·)` で 1 段閉じ、
+                   `inT` かつ `< Ω₁` に絞ったもの (1450 項)
+    popB        =  表の幅 2 の 52 行の深さ 3 の閉包、877 行列 (§3.5)
+
+すなわち **節の個数は `0 … n-1`、段は `0 … L-1`**。`outP` と `cloP` が要るのは、共終性の
+`s` が領域の値だけでなく 𝔗(M) の項**すべて**を走るからで、§65–§67 が三度続けて踏んだ罠
+(母集団が量化の形と違う) はここにある。実際、**領域の値だけで掃くと共終性は通る**。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+private def limP (L n : Nat) : List B := (popS L n).filter fun t => kindB t == BMS.Kind.lim
+private def valP (L n : Nat) : List Term := ((popS L n).map vOf).eraseDups
+private def outP (L n : Nat) : List Term :=
+  (((popNFB L n).filter fun t => !(stdB t)).map vOf).eraseDups.filter fun x => inT x
+private def cloP : List Term :=
+  ((valP 3 5) ++ (valP 3 5).flatMap (fun a => (valP 3 5).map (fun b => plus a b))
+     ++ (valP 3 5).map omegaNF
+     ++ (valP 3 5).map (fun a => phi a zero)
+     ++ (valP 3 5).map (fun a => psi (Z zero) a)).eraseDups.filter
+    fun x => inT x && lt x (Z zero)
+/-- 共終性が落ちる対 `(t, s)`。 -/
+private def cofFail (N : Nat) (ts : List B) (ss : List Term) : List (B × Term) :=
+  ts.flatMap fun t => (ss.filter fun s =>
+    lt s (vOf t) && !((List.range N).any fun k => le s (vOf (fsB t k)))).map fun s => (t, s)
+/-- 共終性が落ちる添字。 -/
+private def cofBad (N : Nat) (ts : List B) (ss : List Term) : List B :=
+  ts.filter fun t => ss.any fun s =>
+    lt s (vOf t) && !((List.range N).any fun k => le s (vOf (fsB t k)))
+-- 母集団の大きさ。
+#guard (popNFB 3 6).length == 670
+#guard (popS 3 6).length == 235
+#guard (limP 3 6).length == 179
+#guard (valP 3 6).length == 235
+#guard (outP 3 6).length == 74
+#guard (outP 4 7).length == 458
+#guard cloP.length == 1450
+#guard (popS 4 6).length == 250
+#guard (limP 4 6).length == 193
+#guard (popS 4 7).length == 1263
+#guard (limP 4 7).length == 1012
+#guard (popS 5 6).length == 251
+#guard (limP 5 6).length == 194
+#guard popB.length == 877
+
+/-! **否定 1 — 共終性は偽。** `s` を領域の外の 𝔗(M) の項まで広げると落ちる。
+`popNFB 3 6` の 179 個の極限添字のうち、`outP 3 6` (74 項) では 1 個・12 対が落ち、
+`outP 4 7` (458 項) では **3 個**が落ちる。落ちる 3 個はどれも対角 `(0,0)(1,1)(2,2)` を
+含む。`N = 12` で測っているが、対角では `N = 40` でも落ちる (下)。 -/
+
+#guard (cofFail 12 (limP 3 6) (outP 3 6)).length == 12
+#guard (cofBad 12 (limP 3 6) (outP 3 6)).length == 1
+#guard (cofBad 12 (limP 3 6) (outP 3 6)).map (fun t => matB t 0) == [[[0,0],[1,1],[2,2]]]
+#guard (cofBad 12 (limP 3 6) (outP 4 7)).map (fun t => matB t 0)
+  == [[[0,0],[1,1],[2,2]], [[0,0],[1,1],[2,2],[3,2]], [[0,0],[1,1],[2,2],[2,2]]]
+
+/-! **否定 1 の中身。** 対角の添字は標準・極限で、値は `ψ_{Ω₁}(Ω₂)`。基本列は ψ₁ の塔で
+`ε₀, ζ₀, Γ₀, …` (§3.1 の測定と一致)。`sbad = ψ_{Ω₁}(φ̄(1,Ω₁))` は `inT`、`vOf tdiag` より
+真に小さく、基本列のどの項よりも真に大きい — `k ≤ 39` まで。 -/
+
+#guard matB tdiag 0 == [[0,0],[1,1],[2,2]]
+#guard stdB tdiag && (kindB tdiag == BMS.Kind.lim)
+-- 展開は `fsB` を経由せず `BMS.expand` で直接。値は表の値 `oR` そのもの。
+#guard (List.range 6).map (fun k => BMS.expand (matB tdiag 0) k)
+  == [[[0,0],[1,1]], [[0,0],[1,1],[2,1]], [[0,0],[1,1],[2,1],[3,1]],
+      [[0,0],[1,1],[2,1],[3,1],[4,1]], [[0,0],[1,1],[2,1],[3,1],[4,1],[5,1]],
+      [[0,0],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1]]]
+#guard Trans.Recal.oR (matB tdiag 0) == some (vOf tdiag)
+#guard (List.range 6).all fun k =>
+  Trans.Recal.oR (BMS.expand (matB tdiag 0) k) == some (vOf (fsB tdiag k))
+#guard Test.showRaw (bVal tdiag) == "D_0 D_2 0"
+#guard vOf tdiag == psi (Z zero) (Z (phi zero zero))
+#guard (List.range 6).map (fun k => matB (fsB tdiag k) 0)
+  == [[[0,0],[1,1]], [[0,0],[1,1],[2,1]], [[0,0],[1,1],[2,1],[3,1]],
+      [[0,0],[1,1],[2,1],[3,1],[4,1]], [[0,0],[1,1],[2,1],[3,1],[4,1],[5,1]],
+      [[0,0],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1]]]
+#guard (List.range 6).all fun k => bVal (fsB tdiag k) == BT.D 0 (psiTow (k + 1))
+#guard inT sbad
+#guard lt sbad (vOf tdiag)
+#guard (List.range 40).all fun k => lt (vOf (fsB tdiag k)) sbad
+#guard (List.range 40).all fun k => !(le sbad (vOf (fsB tdiag k)))
+-- 領域の値の中には隙間に入るものは無い。だから領域だけを掃いても見えない。
+#guard (cofFail 12 (limP 3 6) (valP 3 6)).length == 0
+
+/-! **否定 2 — `CofGap` を証明するのに要る閉じた形 (測定のみ)。** ψ₁ の塔の値は
+`Ω₁` から始まり、以後は `Ω₁ ⊕ Ω₁` の上の φ̄0 の塔。`ψ₀` を被せると `k ≥ 3` で
+`ψ_{Ω₁}(TW k)`。`TW j` はすべて `φ̄(1, Ω₁)` より下 — これが隙間の理由。 -/
+
+#guard dict (psiTow 1) == Z zero
+#guard (List.range 8).all fun m => dict (psiTow (m + 2)) == TW (m + 1)
+#guard (List.range 6).all fun m => dict (BT.D 0 (psiTow (m + 4))) == psi (Z zero) (TW (m + 3))
+#guard (List.range 10).all fun j => vOf (fsB tdiag (j + 3)) == psi (Z zero) (TW (j + 3))
+#guard (List.range 12).all fun j => lt (TW j) (phi (phi zero zero) (Z zero))
+#guard sbad == psi (Z zero) (phi TM.Term.one (Z zero))
+
+/-! **肯定 1 — 減少と増加。** 五つの母集団で反例 0。`popS 3 6` は `n ≤ 12` まで、
+以下は母集団が大きいぶん `n` を落としてある。 -/
+
+#guard (limP 3 6).all fun t => (List.range 13).all fun n => lt (vOf (fsB t n)) (vOf t)
+#guard (limP 3 6).all fun t => (List.range 12).all fun n =>
+  lt (vOf (fsB t n)) (vOf (fsB t (n + 1)))
+#guard (limP 4 6).all fun t => (List.range 7).all fun n => lt (vOf (fsB t n)) (vOf t)
+#guard (limP 4 6).all fun t => (List.range 6).all fun n =>
+  lt (vOf (fsB t n)) (vOf (fsB t (n + 1)))
+#guard (limP 4 7).all fun t => (List.range 5).all fun n => lt (vOf (fsB t n)) (vOf t)
+#guard (limP 4 7).all fun t => (List.range 4).all fun n =>
+  lt (vOf (fsB t n)) (vOf (fsB t (n + 1)))
+#guard (limP 5 6).all fun t => (List.range 5).all fun n => lt (vOf (fsB t n)) (vOf t)
+#guard (limP 5 6).all fun t => (List.range 4).all fun n =>
+  lt (vOf (fsB t n)) (vOf (fsB t (n + 1)))
+-- 表そのもの。877 行列のうち極限は 864 個。
+#guard ((popB.filterMap decodeB).filter fun t => kindB t == BMS.Kind.lim).length == 864
+#guard ((popB.filterMap decodeB).filter fun t => kindB t == BMS.Kind.lim).all fun t =>
+  (List.range 5).all fun n => lt (vOf (fsB t n)) (vOf t)
+#guard ((popB.filterMap decodeB).filter fun t => kindB t == BMS.Kind.lim).all fun t =>
+  (List.range 4).all fun n => lt (vOf (fsB t n)) (vOf (fsB t (n + 1)))
+
+/-! **肯定 2 — Buchholz 側でも同じ。** `BLimDec`/`BLimInc` の測定。 -/
+
+#guard (limP 3 6).all fun t => (List.range 9).all fun n => BT.lt (bVal (fsB t n)) (bVal t)
+#guard (limP 3 6).all fun t => (List.range 8).all fun n =>
+  BT.lt (bVal (fsB t n)) (bVal (fsB t (n + 1)))
+
+/-! **肯定 3 — `VOfLtStd`。** `popS 3 6` の 235² = 55225 対で `BT.lt (bVal ·) (bVal ·)` と
+`lt (vOf ·) (vOf ·)` は**完全に一致**する (含意ではなく同値で 0 不一致)。 -/
+
+#guard ((popS 3 6).flatMap fun u => (popS 3 6).map fun t =>
+  BT.lt (bVal u) (bVal t) == lt (vOf u) (vOf t)).all (fun b => b)
+
+/-! **肯定 4 — 領域の値と、その 1 段の閉包では共終性は通る。** これが「測ってから
+信じよ」の一番の実例: 母集団を領域の中に取ると偽の条項が真に見える。 -/
+
+#guard (cofFail 12 (limP 3 6) (valP 3 6)).length == 0
+#guard (cofFail 12 (limP 3 6) cloP).length == 0
+#guard (cofFail 9 (limP 4 6) (valP 4 6)).length == 0
+
+end
+
+/-! ### §69.6 公理 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+end
+
 end Evidence.Region
