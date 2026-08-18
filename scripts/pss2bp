@@ -1,0 +1,155 @@
+#!/bin/sh
+# pss2bp — print the Buchholz term of a Bashicu matrix (the PSS → Buchholz half
+# of the translation), and check it against the reference implementation.
+#
+#   scripts/pss2bp "(0,0)(1,1)(2,1)"
+#   scripts/pss2bp --raw "(0,0)(1,1)(2,1)"
+#
+# The term is computed by `bpcli` (lean_exe bpcli, lean/Test/BPCLI.lean), which is
+# `Trans.Recal.oRB` — this repository's port of naruyoko's common.js.  That is the
+# SAME instrument as the Lean library, so on its own it proves nothing about the
+# port.  When the reference implementation is reachable this script therefore runs
+# it too and compares, the way scripts/or asks yaBMS for the standard-form verdict:
+# a tool that reports a verdict carries its own second opinion (plan/constitutions.md).
+#
+# scripts/or is the sibling that prints the Rathjen T(M) side, i.e. `dict` of this.
+#
+# Exit: 0 agreed (or the reference was not consulted), 1 the two disagree,
+#       2 could not answer.
+
+set -e
+
+usage() {
+  cat <<'EOF'
+usage: pss2bp [--raw] "<BM>"      print <BM>'s Buchholz term
+       pss2bp --help | -h | help  this message
+       pss2bp --self-test         run the tool against known answers
+
+<BM> is consecutive parenthesised columns, e.g. "(0,0)(1,1)(2,1)".  Always quote
+it -- parentheses are shell syntax.  Expansion brackets ("...[2]") are not
+accepted, and neither is the empty matrix: a PSS pair sequence is never empty.
+
+Only the 2-row fragment is in the domain (every column of height at most 2);
+anything taller is exit 2.
+
+output
+  default   psi notation:  psi_0(psi_1(0))
+  --raw     common.js's stringifyBuchholz form:  D_0 D_1 0
+            This is the form the acceptance record in lean/Trans/Recal.lean pins,
+            so it is the one to use when comparing by eye with the reference.
+
+  With the reference implementation present the two are compared on --raw (the
+  only form both produce identically), and a disagreement is reported and exits 1.
+
+environment
+  PSS2BP  directory holding the reference pss2bp.js and naruyoko's common.js
+          (default: $HOME/proofs/pss2bp).  Needs node.  When it is absent the
+          script still prints our value and says the reference was not consulted.
+EOF
+}
+
+tests=0
+bad=0
+
+check() {
+  desc=$1
+  want_status=$2
+  want_out=$3
+  shift 3
+  tests=$((tests + 1))
+  out=$("$0" "$@" 2>/dev/null) && status=0 || status=$?
+  if [ "$status" != "$want_status" ] || [ "$out" != "$want_out" ]; then
+    echo "pss2bp --self-test: FAIL — $desc"
+    echo "  want: status $want_status, stdout [$want_out]"
+    echo "  got : status $status, stdout [$out]"
+    bad=$((bad + 1))
+  fi
+}
+
+self_test() {
+  check "zeta_0 in psi notation"  0 "psi_0(psi_1(psi_1(0)))" "(0,0)(1,1)(2,1)"
+  check "zeta_0 raw"              0 "D_0 D_1 D_1 0"          --raw "(0,0)(1,1)(2,1)"
+  check "eps_0 raw"               0 "D_0 D_1 0"              --raw "(0,0)(1,1)"
+  check "the one-column matrix"   0 "0"                      "(0,0)"
+  check "height 3 is out of domain" 2 ""                     "(0,0,0)(1,1,1)"
+  check "the empty matrix is out of domain" 2 ""             ""
+  check "an unparsable matrix"    2 ""                       "junk"
+  check "brackets are rejected"   2 ""                       "(0,0)(1,1)[2]"
+  echo "pss2bp --self-test: $tests cases, $bad failed"
+  [ "$bad" -eq 0 ]
+}
+
+if [ $# -eq 0 ]; then
+  usage
+  exit 0
+fi
+
+case "$1" in
+  -h|--help|help) usage; exit 0 ;;
+  --self-test)    self_test; exit $? ;;
+esac
+
+raw=""
+if [ "$1" = "--raw" ]; then
+  raw="--raw"
+  shift
+fi
+
+if [ $# -ne 1 ]; then
+  echo "pss2bp: expected exactly one matrix, got $#" >&2
+  echo "pss2bp: try 'pss2bp --help'" >&2
+  exit 2
+fi
+
+bm=$1
+root=$(cd "$(dirname "$0")/.." && pwd)
+bpcli="$root/lean/.lake/build/bin/bpcli"
+
+if [ ! -x "$bpcli" ]; then
+  echo "pss2bp: $bpcli not found." >&2
+  echo "pss2bp: build it once with:  cd $root/lean && lake build bpcli" >&2
+  exit 2
+fi
+
+# Our value first.  Exit 2 (unparsable / out of domain) has already been explained
+# on stderr by bpcli, and there is nothing to compare.
+ours=$($bpcli $raw "$bm") || exit 2
+ours_raw=$ours
+if [ -z "$raw" ]; then
+  ours_raw=$($bpcli --raw "$bm") || exit 2
+fi
+
+echo "$ours"
+
+# The second opinion, when it is installed.
+refdir=${PSS2BP:-$HOME/proofs/pss2bp}
+if [ ! -f "$refdir/pss2bp.js" ] || [ ! -f "$refdir/common.js" ]; then
+  echo "pss2bp: reference not consulted (no pss2bp.js/common.js under $refdir;" >&2
+  echo "pss2bp: set PSS2BP to the directory holding them)" >&2
+  exit 0
+fi
+if ! command -v node >/dev/null 2>&1; then
+  echo "pss2bp: reference not consulted (node not found)" >&2
+  exit 0
+fi
+
+# The reference prints "<matrix>  =>  <term>"; take the part after the arrow.
+ref=$(cd "$refdir" && node pss2bp.js --raw "$bm" 2>/dev/null | tail -1 \
+      | sed 's/.*=>[[:space:]]*//') || {
+  echo "pss2bp: the reference implementation failed on this matrix" >&2
+  exit 2
+}
+
+if [ -z "$ref" ]; then
+  echo "pss2bp: could not read a term from the reference implementation" >&2
+  exit 2
+fi
+
+if [ "$ours_raw" != "$ref" ]; then
+  echo "pss2bp: DISAGREEMENT with the reference implementation." >&2
+  echo "pss2bp:   ours: $ours_raw" >&2
+  echo "pss2bp:   ref : $ref" >&2
+  exit 1
+fi
+
+exit 0

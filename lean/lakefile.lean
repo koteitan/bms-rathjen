@@ -49,3 +49,8 @@ lean_exe bmscli where
 /-- `scripts/or`'s Lean half: one matrix on the command line → its 𝔗(M) notation. -/
 lean_exe orcli where
   root := `Test.ORCLI
+
+/-- `scripts/pss2bp`'s Lean half: one matrix → its Buchholz term (`oRB`).  This is
+    OUR port, not the reference implementation of the same name; see Test/BPCLI.lean. -/
+lean_exe bpcli where
+  root := `Test.BPCLI
