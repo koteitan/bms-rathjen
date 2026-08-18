@@ -1,0 +1,223 @@
+#!/bin/sh
+# bp2pss — print the Bashicu matrix a Buchholz term is the value of (the Buchholz
+# → PSS half of the translation), and check it against the reference implementation.
+#
+#   scripts/bp2pss "p0(p1(0))"
+#   scripts/bp2pss "D_0 D_1 0"
+#
+# This is the REVERSE of scripts/pss2bp.  The matrix is computed by `bp2psscli`
+# (lean_exe bp2psscli, lean/Test/BP2PSS.lean), which is §85.1's `bInv85` followed
+# by `matB · 0`.  That is the SAME instrument as the Lean library, so on its own it
+# proves nothing: §85.7 only ever checked `bInv85` against this repository's own
+# forward map (`bValA71 (bInv85 b) == b`), which is one instrument twice.  When the
+# reference implementation is reachable this script therefore also runs naruyoko's
+# `TransRev` — an independent inverse — and compares, the way scripts/pss2bp asks
+# `Trans` and scripts/or asks yaBMS: a tool that reports a verdict carries its own
+# second opinion (plan/constitutions.md).
+#
+# scripts/bp2pss-check.sh is the corpus version of that comparison.
+#
+# Exit: 0 agreed (or the reference was not consulted), 1 the two disagree,
+#       2 could not answer.
+
+set -e
+
+usage() {
+  cat <<'EOF'
+usage: bp2pss "<term>"            print the matrix whose value <term> is
+       bp2pss --help | -h | help  this message
+       bp2pss --self-test         run the tool against known answers
+
+<term> is a Buchholz term in either form `scripts/pss2bp` prints:
+
+  p0(p1(0))       the psi form -- subscript juxtaposed, sums "+"-separated, a run
+                  of p0(0) written as a numeral
+  D_0 D_1 0       the --raw form (common.js's stringifyBuchholz), sums written
+                  (a,b,c)
+
+psi_0(...) is accepted as a synonym of p0(...).  Always quote the argument --
+parentheses are shell syntax.  The output is the matrix in the "(0,0)(1,1)" form;
+the term 0 gives the EMPTY matrix, printed as an empty line.
+
+  scripts/bp2pss "$(scripts/pss2bp M)"  gives back M for every M whose value is
+  infinite; on the finite values it is one (0,0) column short, for the reason in
+  "what it inverts" below.
+
+domain
+  Ours is §85's `bOnto85`: standard, level <= 1 everywhere (btLe72 1), and every
+  component of the formal sum a D 0 -- head `D 0`.  Note that Omega = p1(0) is
+  standard and of level 1 and satisfies neither the head condition nor anything
+  else: it is the value of NO index (`not_bValA71_om85`), which is why the head
+  condition cannot be dropped from `bOnto85`.
+
+  Theirs is TransRev's own guard: standard and t < Omega, and it throws outside it.
+
+  The two are NOT the same domain, though the head condition and `t < Omega` are.
+  For a standard term, "every component is a D 0" and "t < Omega" say the same
+  thing -- D 0 is the smallest head, so the leading component decides.  What ours
+  has on top is the LEVEL bound, which reaches inside: p0(p2(0)) = psi_0(Omega_2)
+  is standard and below Omega, so TransRev answers it -- (0,0)(1,1)(2,2) -- and we
+  refuse.  Ours is a proper subset of theirs.  scripts/bp2pss-check.sh measures it.
+
+what it inverts
+  `bInv85` inverts `bValA71`, not `Trans`.  §71.2: `bValA71` is `bVal` without the
+  leading-(0,0) exception, "the Buchholz-side reading of vOf's 1 +", and the two
+  differ on exactly the all-(0,0) matrices, i.e. the natural numbers.  TransRev
+  inverts `Trans` = `bVal`.  So the expected relation between the two answers is
+
+      theirs = ours                for every term that is not a natural number
+      theirs = "(0,0)" ++ ours     for the natural numbers (ours is all-(0,0))
+
+  and this script checks THAT identity, not blind equality: a deviation from it in
+  either direction is a disagreement and exits 1.
+
+environment
+  PSS2BP  directory holding naruyoko's common.js (default: $HOME/proofs/pss2bp).
+          Needs node.  When it is absent the script still prints our value and
+          says the reference was not consulted.
+EOF
+}
+
+tests=0
+bad=0
+
+check() {
+  desc=$1
+  want_status=$2
+  want_out=$3
+  shift 3
+  tests=$((tests + 1))
+  out=$("$0" "$@" 2>/dev/null) && status=0 || status=$?
+  if [ "$status" != "$want_status" ] || [ "$out" != "$want_out" ]; then
+    echo "bp2pss --self-test: FAIL — $desc"
+    echo "  want: status $want_status, stdout [$want_out]"
+    echo "  got : status $status, stdout [$out]"
+    bad=$((bad + 1))
+  fi
+}
+
+# The round trip through the sibling script: pss2bp then bp2pss is the identity on
+# the infinite values.  It composes the two CLIs, which is the only place the two
+# notations have to agree.
+roundtrip() {
+  m=$1
+  form=$2                     # "" (psi form) or --raw
+  tests=$((tests + 1))
+  here=$(dirname "$0")
+  t=$("$here/pss2bp" $form "$m" 2>/dev/null) || t=""
+  out=$("$0" "$t" 2>/dev/null) || out="<refused>"
+  if [ "$out" != "$m" ]; then
+    echo "bp2pss --self-test: FAIL — round trip $form $m"
+    echo "  pss2bp gave [$t], bp2pss gave [$out]"
+    bad=$((bad + 1))
+  fi
+}
+
+self_test() {
+  check "eps_0, psi form"          0 "(0,0)(1,1)"       "p0(p1(0))"
+  check "eps_0, raw form"          0 "(0,0)(1,1)"       "D_0 D_1 0"
+  check "zeta_0, raw form"         0 "(0,0)(1,1)(2,1)"  "D_0 D_1 D_1 0"
+  check "a raw sum inside psi_0"   0 "(0,0)(1,1)(1,1)"  "D_0 (D_1 0,D_1 0)"
+  check "a top-level sum"          0 "(0,0)(1,1)(0,0)(1,1)" "p0(p1(0))+p0(p1(0))"
+  check "the numeral 2"            0 "(0,0)(0,0)"       "2"
+  check "0 is the empty matrix"    0 ""                 "0"
+  check "Omega is the value of no index" 2 ""           "p1(0)"
+  check "a level-2 node is outside our sub-region" 2 "" "D_0 D_2 0"
+  check "a non-standard term"      2 ""                 "D_0 D_1 D_2 0"
+  check "an unparsable term"       2 ""                 "junk"
+  roundtrip "(0,0)(1,1)(2,1)" ""
+  roundtrip "(0,0)(1,1)(2,1)" "--raw"
+  roundtrip "(0,0)(1,1)(2,1)(1,1)" ""
+  roundtrip "(0,0)(1,1)(2,1)(2,1)" "--raw"
+  echo "bp2pss --self-test: $tests cases, $bad failed"
+  [ "$bad" -eq 0 ]
+}
+
+if [ $# -eq 0 ]; then
+  usage
+  exit 0
+fi
+
+case "$1" in
+  -h|--help|help) usage; exit 0 ;;
+  --self-test)    self_test; exit $? ;;
+esac
+
+if [ $# -ne 1 ]; then
+  echo "bp2pss: expected exactly one term, got $#" >&2
+  echo "bp2pss: try 'bp2pss --help'" >&2
+  exit 2
+fi
+
+term=$1
+root=$(cd "$(dirname "$0")/.." && pwd)
+cli="$root/lean/.lake/build/bin/bp2psscli"
+ref="$root/scripts/bp2pss-ref.js"
+
+if [ ! -x "$cli" ]; then
+  echo "bp2pss: $cli not found." >&2
+  echo "bp2pss: build it once with:  cd $root/lean && lake build bp2psscli" >&2
+  exit 2
+fi
+
+# Is the second opinion installed?
+refdir=${PSS2BP:-$HOME/proofs/pss2bp}
+have_ref=yes
+if [ ! -f "$refdir/common.js" ]; then
+  have_ref=no
+elif ! command -v node >/dev/null 2>&1; then
+  have_ref=no
+fi
+
+# Our value first.  Exit 2 (unparsable / out of domain) has already been explained
+# on stderr by bp2psscli.
+if ours=$("$cli" "$term"); then
+  :
+else
+  # A refusal is still worth a word about the other domain: that difference is the
+  # point of scripts/bp2pss-check.sh's negative controls.
+  if [ "$have_ref" = yes ]; then
+    if theirs=$(node "$ref" "$term" 2>/dev/null); then
+      echo "bp2pss: (the reference answered where we refused: $theirs — a DOMAIN" >&2
+      echo "bp2pss:  difference, not a value disagreement; see 'bp2pss --help')" >&2
+    else
+      echo "bp2pss: (the reference refuses it too)" >&2
+    fi
+  fi
+  exit 2
+fi
+
+echo "$ours"
+
+if [ "$have_ref" = no ]; then
+  echo "bp2pss: reference not consulted (no common.js under $refdir, or node is" >&2
+  echo "bp2pss: missing; set PSS2BP to the directory holding common.js)" >&2
+  exit 0
+fi
+
+theirs=$(node "$ref" "$term" 2>/dev/null) || {
+  echo "bp2pss: DISAGREEMENT — TransRev refuses a term inside bOnto85's domain." >&2
+  echo "bp2pss:   ours: $ours" >&2
+  node "$ref" "$term" >&2 2>&1 || true
+  exit 1
+}
+
+# The expected relation, not blind equality: see "what it inverts" in --help.
+# `ours` is all-(0,0) exactly when the term is a natural number.
+if [ -z "$(printf '%s' "$ours" | sed 's/(0,0)//g')" ]; then
+  want="(0,0)$ours"
+  why="the documented 1 + of bValA71 vs Trans on the naturals"
+else
+  want="$ours"
+  why="equality"
+fi
+
+if [ "$theirs" != "$want" ]; then
+  echo "bp2pss: DISAGREEMENT with the reference implementation." >&2
+  echo "bp2pss:   ours  : $ours" >&2
+  echo "bp2pss:   theirs: $theirs" >&2
+  echo "bp2pss:   expected theirs = [$want]  ($why)" >&2
+  exit 1
+fi
+
+exit 0

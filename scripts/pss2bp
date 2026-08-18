@@ -33,7 +33,7 @@ Only the 2-row fragment is in the domain (every column of height at most 2);
 anything taller is exit 2.
 
 output
-  default   psi notation:  psi_0(psi_1(0))
+  default   psi notation, subscript juxtaposed:  p0(p1(0))
   --raw     common.js's stringifyBuchholz form:  D_0 D_1 0
             This is the form the acceptance record in lean/Trans/Recal.lean pins,
             so it is the one to use when comparing by eye with the reference.
@@ -67,7 +67,7 @@ check() {
 }
 
 self_test() {
-  check "zeta_0 in psi notation"  0 "psi_0(psi_1(psi_1(0)))" "(0,0)(1,1)(2,1)"
+  check "zeta_0 in psi notation"  0 "p0(p1(p1(0)))"          "(0,0)(1,1)(2,1)"
   check "zeta_0 raw"              0 "D_0 D_1 D_1 0"          --raw "(0,0)(1,1)(2,1)"
   check "eps_0 raw"               0 "D_0 D_1 0"              --raw "(0,0)(1,1)"
   check "the one-column matrix"   0 "0"                      "(0,0)"

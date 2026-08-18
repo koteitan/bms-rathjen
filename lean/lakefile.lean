@@ -54,3 +54,8 @@ lean_exe orcli where
     OUR port, not the reference implementation of the same name; see Test/BPCLI.lean. -/
 lean_exe bpcli where
   root := `Test.BPCLI
+
+/-- `scripts/bp2pss`'s Lean half: the reverse direction — one Buchholz term → the
+    matrix it is the value of (§85's `bInv85`, then `matB`); see Test/BP2PSS.lean. -/
+lean_exe bp2psscli where
+  root := `Test.BP2PSS

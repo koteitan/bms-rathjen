@@ -32,14 +32,15 @@ def showRawF : Nat → BT → String
     | .D u a => "D_" ++ toString u ++ " " ++ showRawF f a
     | .sum _ _ => "(" ++ String.intercalate "," (t.toL.map (showRawF f)) ++ ")"
 
-/-- The ψ notation: `D u a` is `ψ_u(a)` and a formal sum is `+`-separated.
+/-- The ψ notation: `D u a` is `ψ_u(a)`, written `pu(a)` — the subscript juxtaposed,
+    no underscore — and a formal sum is `+`-separated.
     A run of `ψ_0(0)` collapses to a numeral, since `ψ_0(0) = 1`. -/
 def showPsiF : Nat → BT → String
   | 0, _ => "?"
   | f + 1, t =>
     match t with
     | .zero => "0"
-    | .D u a => "psi_" ++ toString u ++ "(" ++ showPsiF f a ++ ")"
+    | .D u a => "p" ++ toString u ++ "(" ++ showPsiF f a ++ ")"
     | .sum _ _ =>
       let l := t.toL
       if l.all (· == BT.D 0 BT.zero) then toString l.length
@@ -51,8 +52,9 @@ def showPsi (t : BT) : String := showPsiF (BT.size t + 2) t
 def usage : String :=
   "usage: bpcli [--raw] <matrix>\n\
    \n\
-   Prints the Buchholz term of the matrix.  Default is psi notation; --raw is\n\
-   common.js's stringifyBuchholz form (D_u a, sums parenthesised and comma-separated)."
+   Prints the Buchholz term of the matrix.  Default is psi notation, p0(p1(0));\n\
+   --raw is common.js's stringifyBuchholz form (D_u a, sums parenthesised and\n\
+   comma-separated)."
 
 def run (raw : Bool) (s : String) : IO UInt32 := do
   match BMS.parseMatrix s with
