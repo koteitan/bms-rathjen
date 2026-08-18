@@ -28369,4 +28369,905 @@ end
 
 /-! ### §74.9 公理 -/
 
+/-! ## §76 THE BOOKKEEPING HALF OF THE ORDER BRIDGE IS A THEOREM
+
+§74 split row 326's remaining order hypothesis `VOfLtA71` into two named pieces,
+
+    VOfIsDict74 : ∀ t, stdB1 t = true → vOf t = dict (bValA71 t)
+    DictLtA74   : `dict` preserves `BT.lt` on the sub-region's values
+
+and proved `vOfLtA71_of_dict74 : VOfIsDict74 → DictLtA74 → VOfLtA71`.  **§76 proves the first
+one.**  It is not proved outright — nothing about `dict` can be, until `inT (dict ·)` is —
+but it is proved from `PsiIdxOKStd172` ALONE, and that is a hypothesis row 326's certificate
+already carries (§72).  So the split of §74 collapses: `DictLtA74` and `VOfLtA71` become the
+SAME hypothesis (`dictLtA74_iff76`), and the bridge is now exactly one statement about `dict`
+and nothing about bookkeeping.
+
+WHAT IS PROVED.
+
+  §76.1  **NOTHING IN THE IMAGE OF `ω^·` IS `0`, AND NOTHING IS `1` UNLESS ITS ARGUMENT IS.**
+         `omegaNF_ne_zero76` and `omegaNF_ne_one76` (`x ≠ 0 → ω^x ≠ 1`), by §65.3's
+         `omegaNF_eq_gen` and a case analysis of `dnArg` that needs no side condition:
+         `dnArg_cases76` says `dnArg x` is either `x` itself or `plus g (ofNat k)` with
+         `g ≠ 0`, and `plus_ne_zero76` closes the second.  `phiNF_ne_zero76` is the same
+         statement for `φ`, needed one level down.
+
+  §76.2  **`ψ_u(α) ≠ 1` UNLESS `u = 0` AND `α = 0`.**  `collapse_ne_one76`.  This is the fact
+         the identity actually needs: for 2390 of `subP 8`'s 2397 indices the leading
+         component is NOT `ψ₀0`, and there `1 + ψ₀(α) = ψ₀(α)` says exactly that `ψ₀(α) ≥ ω`.
+         The proof unfolds `collapse` through `collapse_eq`, keeps `wcnf`'s output alive with
+         §65.6's `wcnf_spec_sc` and `fold_inv`, and then only has to see that the fold's
+         second component is `some` of a `ψ` or a `φ` — never `0` (`fold_snd_ne_zero76`) —
+         and that `wcnf` of a nonempty list returns either a nonempty pair list or the list
+         itself (`wcnf_cons_ne76`).  `PsiIdxOK u x` is a hypothesis; at the call site it is
+         exactly what `PsiIdxOKStd172` hands over.
+
+  §76.3  **`1 + α = α` FOR ADDITIVELY PRINCIPAL `α ≠ 1`.**  `plus_one_eq76`, from
+         §65.1's `le_one_ap` and `Evidence/WF.lean`'s `lt_asymm_inT`.
+
+  §76.4  **THE IDENTITY.**  `vOfIsDict76 (Hp : PsiIdxOKStd172) : VOfIsDict74`.  §74.3's
+         `bVal_eq_strip74` says the two values differ by at most a leading `ψ₀0`, so the
+         proof splits on that leading component.  When it IS `ψ₀0` the identity is
+         `dict`'s distribution over `⊕` (§63.3) and `dict (ψ₀0) = 1`.  When it is NOT, the
+         identity is `1 + α = α` at the head, which is §76.2 plus associativity
+         (`plus_assoc_inT`) — and the `α ≠ 0` side condition of §76.2 is discharged by
+         `dict_ne_zero76`, which is where `BT.isStd` is spent (its `isP` conjunct; see the
+         negative result below).
+
+  §76.4b **THE TWO BOTTOM CASES OF `DictLtA74`.**  `dictLt_zero76` and `dictLt_D0_zero76`.
+         Neither needs the `BT.lt` hypothesis: they are unconditional strict inequalities.
+
+  §76.5  **THE COLLAPSE OF THE SPLIT.**  `dictLtA74_iff76 : DictLtA74 ↔ VOfLtA71`, and
+         `limDecS1_76` / `limIncS1_76` — row 326's decreasing and increasing clauses are
+         theorems given `PsiIdxOKStd172` and `DictLtA74` alone.
+
+  §76.5b **AND THE CERTIFICATE IS DOWN TO FOUR NAMED HYPOTHESES.**  §71.4's and §74.5's
+         cofinality tools carried `PsiIdxOKStd` and `RegionStd`, the UNRESTRICTED pair, only
+         because they predate §72's `inT_vOf_72`; the same proofs go through with
+         `PsiIdxOKStd172` alone (`vOfLtA71'_76`, `cofInS1_172_76`, `limCofS1_172_76`).  So
+
+             certIn_t326_dict76 :  PsiIdxOKStd172, DictLtA74, CofDenseS1, BCofIn71  ⊢ row 326
+             certIn_t326_step76 :  PsiIdxStep073,  DictLtA74, CofDenseS1, BCofIn71  ⊢ row 326
+
+         (plus the accessibility of `vOf t326`, as always).  §74.7's best was five, two of
+         them the unrestricted gates.
+
+WHAT IS **NOT** CLAIMED.  `DictLtA74` is NOT proved.  §76.4b closes the two BOTTOM cases of
+its induction and nothing else — `dictLt_zero76` (`dict 0 = 0` is below every standard nonzero
+image) and `dictLt_D0_zero76` (`dict (ψ₀0) = 1` is below every other `ψ_u(α)` image) — and both
+are §76.2 restated, with no order content in them.  The general head comparison, `ψ_u(α)`
+against `ψ_v(β)` lexicographically in `(u, α)`, is untouched, and so is the sum-level
+induction that would need it.  `PsiIdxOKStd172`, `CofDenseS1` and
+`BCofIn71` are still named and unproved, and §70.5's `LimCofS1` is still open on the
+`CofDenseS1` side.  `vOfIsDict76` needs `PsiIdxOKStd172` and cannot be made unconditional:
+`collapse_ne_one76` needs `inT (dict a)`, and `inT (dict ·)` is that gate.
+
+WHAT THE MEASUREMENT SAYS (§76.6 gives every construction).  **The negative results first.**
+The identity `vOf t = dict (bValA71 t)` is FALSE outside the sub-region — it fails on indices
+of the deep corpus that carry a level-2 or level-3 node, so the `lvlLe 1` half of `stdB1` is
+not decoration.  `dict_ne_zero76` is FALSE without `BT.isStd`: `dict (0 ⊕ 0) = 0` with
+`0 ⊕ 0 ≠ 0`.  `collapse_ne_one76` is FALSE without its side condition: `ψ₀0 = 1` exactly.
+`plus_one_eq76` is FALSE without `α ≠ 1`: `1 + 1 = 2`.
+-/
+
+/-! ### §76.1 `ω^·` の像は 0 でなく、引数が 0 でなければ 1 でもない -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- 加法主要なら 0 でない。 -/
+theorem ne_zero_of_isAP76 {a : Term} (h : a.isAP = true) : a ≠ zero := by
+  intro hc; rw [hc] at h; exact Bool.noConfusion h
+
+/-- 強臨界なら 0 でない。 -/
+theorem ne_zero_of_isSC76 {a : Term} (h : a.isSC = true) : a ≠ zero := by
+  intro hc; rw [hc] at h; exact Bool.noConfusion h
+
+/-- 0 でない項の成分列は空でない。 -/
+theorem toList_ne_nil76 {t : Term} (h : t ≠ zero) : t.toList ≠ [] := by
+  cases t with
+  | zero => exact absurd rfl h
+  | M => exact List.cons_ne_nil _ _
+  | add a b => exact List.cons_ne_nil _ _
+  | omg a => exact List.cons_ne_nil _ _
+  | phi a b => exact List.cons_ne_nil _ _
+  | psi k a => exact List.cons_ne_nil _ _
+  | Z a => exact List.cons_ne_nil _ _
+
+/-- 0 でない成分を 1 つでも含む列から組んだ項は 0 でない。 -/
+theorem ofList_append_ne_zero76 : ∀ (f : List Term) (a : Term) (r : List Term),
+    a ≠ zero → ofList (f ++ a :: r) ≠ zero
+  | [], a, r, ha => by
+      cases r with
+      | nil => exact ha
+      | cons b t => exact fun hc => Term.noConfusion hc
+  | x :: f', a, r, ha => by
+      have hne : f' ++ a :: r ≠ [] := by
+        cases f' with
+        | nil => exact List.cons_ne_nil a r
+        | cons z zs => exact List.cons_ne_nil z (zs ++ a :: r)
+      cases h : f' ++ a :: r with
+      | nil => exact absurd h hne
+      | cons y t =>
+        show ofList (x :: (f' ++ a :: r)) ≠ zero
+        rw [h]
+        exact fun hc => Term.noConfusion hc
+
+/-- **和は 0 でない。** 右の項が 𝔗(M) の項なら、左が 0 でないだけで足りる。 -/
+theorem plus_ne_zero76 {s t : Term} (ht : t.inT = true) (hs : s ≠ zero) :
+    plus s t ≠ zero := by
+  cases htl : t.toList with
+  | nil =>
+      show (match t.toList with
+            | [] => s
+            | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) ≠ zero
+      rw [htl]
+      exact hs
+  | cons b1 r =>
+      have hb1 : b1 ≠ zero := by
+        have h1 := (inT_toList t ht).1
+        rw [htl] at h1
+        exact ne_zero_of_isAP76 (inTL_cons.mp h1).1.1
+      show (match t.toList with
+            | [] => s
+            | b1 :: _ => ofList ((toList s).filter (fun a => le b1 a) ++ toList t)) ≠ zero
+      rw [htl]
+      exact ofList_append_ne_zero76 _ b1 r hb1
+
+/-- **`dnArg` の 2 つの形。** そのままか、`0` でない `g` に有限個を足したもの。
+    側条件は無い — `CNVOps` §26 の枝分けをそのまま読んだだけ。 -/
+theorem dnArg_cases76 (v : Term) :
+    dnArg v = v ∨ ∃ (g : Term) (k : Nat), g ≠ zero ∧ dnArg v = plus g (ofNat k) := by
+  unfold dnArg
+  cases hs : splitFin v with
+  | mk g m =>
+    dsimp only
+    split
+    · cases g with
+      | phi a b =>
+        dsimp only
+        split
+        · exact Or.inr ⟨phi a b, m - 1, fun h => Term.noConfusion h, rfl⟩
+        · exact Or.inl rfl
+      | zero =>
+        dsimp only
+        split
+        · rename_i hcond; exact Bool.noConfusion hcond
+        · exact Or.inl rfl
+      | M =>
+        dsimp only
+        split
+        · exact Or.inr ⟨M, m - 1, fun h => Term.noConfusion h, rfl⟩
+        · exact Or.inl rfl
+      | add a b =>
+        dsimp only
+        split
+        · rename_i hcond; exact Bool.noConfusion hcond
+        · exact Or.inl rfl
+      | omg a =>
+        dsimp only
+        split
+        · rename_i hcond; exact Bool.noConfusion hcond
+        · exact Or.inl rfl
+      | psi k a =>
+        dsimp only
+        split
+        · exact Or.inr ⟨psi k a, m - 1, fun h => Term.noConfusion h, rfl⟩
+        · exact Or.inl rfl
+      | Z a =>
+        dsimp only
+        split
+        · exact Or.inr ⟨Z a, m - 1, fun h => Term.noConfusion h, rfl⟩
+        · exact Or.inl rfl
+    · exact Or.inl rfl
+
+theorem dnArg_ne_zero76 {v : Term} (h : v ≠ zero) : dnArg v ≠ zero := by
+  rcases dnArg_cases76 v with h1 | ⟨g, k, hg, h1⟩
+  · rw [h1]; exact h
+  · rw [h1]; exact plus_ne_zero76 (inT_ofNat k) hg
+
+/-- **`ω^x` は決して 0 でない。** -/
+theorem omegaNF_ne_zero76 (x : Term) : omegaNF x ≠ zero := by
+  rw [omegaNF_eq_gen x]
+  split
+  · exact fun hc => Term.noConfusion hc
+  · split
+    · rename_i hfp
+      intro hc
+      rw [hc] at hfp
+      exact Bool.noConfusion hfp
+    · exact fun hc => Term.noConfusion hc
+
+/-- **`x ≠ 0` なら `ω^x ≠ 1`。** つまり `ω^x ≥ ω`。 -/
+theorem omegaNF_ne_one76 (x : Term) (h : x ≠ zero) : omegaNF x ≠ one := by
+  rw [omegaNF_eq_gen x]
+  split
+  · exact fun hc => Term.noConfusion hc
+  · split
+    · rename_i hfp
+      intro hc
+      rw [hc] at hfp
+      exact Bool.noConfusion hfp
+    · intro hc
+      exact absurd (show dnArg x = zero by injection hc) (dnArg_ne_zero76 h)
+
+/-- `φ` の既定枝は 0 でない。 -/
+theorem phiNFdefault_ne_zero76 (a b : Term) : phiNFdefault a b ≠ zero := by
+  unfold phiNFdefault
+  split
+  · rename_i h
+    exact ne_zero_of_isSC76 ((Bool.and_eq_true _ _).mp h).2
+  · exact fun hc => Term.noConfusion hc
+
+/-- `φ` の数え直しの枝も 0 でない。 -/
+theorem phiNFsucc_ne_zero76 (a b : Term) : phiNFsucc a b ≠ zero := by
+  unfold phiNFsucc
+  cases hs : splitFin b with
+  | mk g m =>
+    dsimp only
+    split
+    · cases g with
+      | phi c d =>
+        dsimp only
+        split
+        · exact fun hc => Term.noConfusion hc
+        · exact phiNFdefault_ne_zero76 a b
+      | zero => dsimp only; split
+                · exact fun hc => Term.noConfusion hc
+                · exact phiNFdefault_ne_zero76 a b
+      | M => dsimp only; split
+             · exact fun hc => Term.noConfusion hc
+             · exact phiNFdefault_ne_zero76 a b
+      | add p q => dsimp only; split
+                   · exact fun hc => Term.noConfusion hc
+                   · exact phiNFdefault_ne_zero76 a b
+      | omg p => dsimp only; split
+                 · exact fun hc => Term.noConfusion hc
+                 · exact phiNFdefault_ne_zero76 a b
+      | psi k p => dsimp only; split
+                   · exact fun hc => Term.noConfusion hc
+                   · exact phiNFdefault_ne_zero76 a b
+      | Z p => dsimp only; split
+               · exact fun hc => Term.noConfusion hc
+               · exact phiNFdefault_ne_zero76 a b
+    · exact phiNFdefault_ne_zero76 a b
+
+/-- **`φαβ` は決して 0 でない。** -/
+theorem phiNF_ne_zero76 (a b : Term) : phiNF a b ≠ zero := by
+  unfold phiNF
+  split
+  · rename_i h
+    exact ne_zero_of_isSC76 ((Bool.and_eq_true _ _).mp h).1
+  · cases b with
+    | phi c d =>
+      dsimp only
+      split
+      · exact fun hc => Term.noConfusion hc
+      · exact phiNFsucc_ne_zero76 a (phi c d)
+    | zero => exact phiNFsucc_ne_zero76 a zero
+    | M => exact phiNFsucc_ne_zero76 a M
+    | add p q => exact phiNFsucc_ne_zero76 a (add p q)
+    | omg p => exact phiNFsucc_ne_zero76 a (omg p)
+    | psi k p => exact phiNFsucc_ne_zero76 a (psi k p)
+    | Z p => exact phiNFsucc_ne_zero76 a (Z p)
+
+end
+
+/-! ### §76.2 `collapse` は 0 でなく、`(u, x) = (0, 0)` でなければ 1 でもない -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- 畳み込みの 1 歩は第 2 成分に必ず 0 でない項を置く。`ψ` か `φ` のどちらか。 -/
+theorem stepF_snd_ne_zero76 (w base : Term) (s : Option Term × Option Term)
+    (ac : Term × Term) : ∃ v, (stepF w base s ac).2 = some v ∧ v ≠ zero := by
+  unfold stepF
+  split
+  · exact ⟨psi w (idxOf w s ac), rfl, fun hc => Term.noConfusion hc⟩
+  · refine ⟨_, rfl, ?_⟩
+    exact phiNF_ne_zero76 _ _
+
+/-- **畳み込みが 1 歩でも進めば第 2 成分は 0 でない `some`。** -/
+theorem fold_snd_ne_zero76 (w base : Term) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), l ≠ [] →
+      ∃ v, (l.foldl (stepF w base) s).2 = some v ∧ v ≠ zero
+  | [], _, h => absurd rfl h
+  | [ac], s, _ => stepF_snd_ne_zero76 w base s ac
+  | ac :: b :: t, s, _ =>
+      fold_snd_ne_zero76 w base (b :: t) (stepF w base s ac) (List.cons_ne_nil _ _)
+
+/-- **空でない列の `wcnf`。** 対の列が空でないか、さもなくば余りが列そのもの。 -/
+theorem wcnf_cons_ne76 (w p : Term) (rest : List Term) :
+    (wcnf w (p :: rest)).1 ≠ [] ∨ (wcnf w (p :: rest)).2 = ofList (p :: rest) := by
+  cases h : lt p w with
+  | true => exact Or.inr (by rw [wcnf_cons_lt h])
+  | false =>
+    left
+    cases hr : wcnf w rest with
+    | mk fst snd =>
+      rw [wcnf_cons_ge h, hr]
+      cases fst with
+      | nil => exact List.cons_ne_nil _ _
+      | cons ac0 ps =>
+        cases ac0 with
+        | mk a' c' =>
+          dsimp only
+          split
+          · exact List.cons_ne_nil _ _
+          · exact List.cons_ne_nil _ _
+
+/-- **`ψ_u(α) ≠ 0`。** 仮説は何も要らない。 -/
+theorem collapse_ne_zero76 (u : Nat) (x : Term) : collapse u x ≠ zero := by
+  rw [collapse_eq]
+  exact omegaNF_ne_zero76 _
+
+/-- **§76.2 の主定理。** `ψ_u(α) = 1` になるのは `u = 0` かつ `α = 0` のときだけ。
+    `PsiIdxOK` は §65.6 の `fold_inv` を通すために要る — 呼び出し側では
+    `PsiIdxOKStd172` がそのまま供給する。 -/
+theorem collapse_ne_one76 (u : Nat) (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (Hpx : PsiIdxOK u x) (h : ¬(u = 0 ∧ x = zero)) : collapse u x ≠ one := by
+  rw [collapse_eq]
+  refine omegaNF_ne_one76 _ ?_
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨⟨h21, _⟩, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u + 1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  have hinit : StInv ((none : Option Term), (none : Option Term)) := by
+    constructor
+    · intro i0 hq; cases hq
+    · intro v hq; cases hq
+  have hst := fold_inv mulDescInT (inT_reg (u + 1)) (ltM_reg (u + 1)) (inT_baseOf u)
+    (ltM_baseOf u) (wcnf (reg (u + 1)) (toList x)).1 (none, none) hinit hallOK Hpx
+  have hv : inT (((wcnf (reg (u + 1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u + 1)) (baseOf u))).2.getD zero) = true := by
+    cases hg : ((wcnf (reg (u + 1)) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg (u + 1)) (baseOf u))).2 with
+    | none => exact inT_zero
+    | some v => exact (hst.2 v hg).1
+  cases u with
+  | succ k =>
+    exact plus_ne_zero76 (inT_plus hv h21)
+      (show reg (k + 1) ≠ zero from fun hcc => Term.noConfusion hcc)
+  | zero =>
+    have hxz : x ≠ zero := fun hcc => h ⟨rfl, hcc⟩
+    rw [show reg 0 = zero from rfl, plus_zero_left_inT (inT_plus hv h21)]
+    cases hl : (wcnf (reg (0 + 1)) (toList x)).1 with
+    | cons a0 t0 =>
+      obtain ⟨v, hvq, hvz⟩ := fold_snd_ne_zero76 (reg (0 + 1)) (baseOf 0) (a0 :: t0) (none, none)
+        (List.cons_ne_nil _ _)
+      rw [hvq]
+      exact plus_ne_zero76 h21 hvz
+    | nil =>
+      show plus zero (wcnf (reg (0 + 1)) (toList x)).2 ≠ zero
+      rw [plus_zero_left_inT h21]
+      cases htl : (toList x) with
+      | nil => exact absurd htl (toList_ne_nil76 hxz)
+      | cons p rest =>
+        rcases wcnf_cons_ne76 (reg (0 + 1)) p rest with hne | heq
+        · exact absurd (by rw [← htl]; exact hl) hne
+        · rw [heq, ← htl, inT_ofList_toList x hx]
+          exact hxz
+
+end
+
+/-! ### §76.3 `1 + α = α` — `α` が加法主要で 1 でないとき -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- 加法主要な項の成分列はそれ自身 1 つ。 -/
+theorem toList_ap76 {A : Term} (hap : A.isAP = true) : toList A = [A] := by
+  cases A with
+  | zero => exact Bool.noConfusion hap
+  | add a b => exact Bool.noConfusion hap
+  | M => rfl
+  | omg a => rfl
+  | phi a b => rfl
+  | psi k a => rfl
+  | Z a => rfl
+
+/-- 加法主要で 1 でなければ `α ≤ 1` は偽。 -/
+theorem le_one_eq_false76 {A : Term} (hap : A.isAP = true) (hiA : inT A = true)
+    (hne : A ≠ one) : le A one = false := by
+  have hb : (one == A) = false := by
+    cases hbb : (one == A) with
+    | true => exact absurd (eq_of_beq hbb).symm hne
+    | false => rfl
+  have h2 : lt one A = true := by
+    have h1 : (one == A || lt one A) = true := Evidence.Cert.le_one_ap hap
+    rw [hb, Bool.false_or] at h1
+    exact h1
+  have h3 : lt A one = false := lt_asymm_inT inT_one hiA h2
+  have hb2 : (A == one) = false := by
+    cases hbb : (A == one) with
+    | true => exact absurd (eq_of_beq hbb) hne
+    | false => rfl
+  show (A == one || lt A one) = false
+  rw [hb2, h3]
+  rfl
+
+/-- 0 でない項は 0 より真に大きい。2.3.1 そのもの。 -/
+theorem lt_zero_ne76 {y : Term} (h : y ≠ zero) : lt zero y = true := by
+  have hb : (zero == y) = false := by
+    cases hbb : (zero == y) with
+    | true => exact absurd (eq_of_beq hbb).symm h
+    | false => rfl
+  rw [lt_eq_ltF_succ]
+  cases y with
+  | zero => exact absurd rfl h
+  | M => rfl
+  | add a b => rfl
+  | omg a => rfl
+  | phi a b => rfl
+  | psi k a => rfl
+  | Z a => rfl
+
+/-- 加法主要で 1 でなければ 1 より真に大きい。 -/
+theorem lt_one_ap76 {A : Term} (hap : A.isAP = true) (hne : A ≠ one) : lt one A = true := by
+  have hb : (one == A) = false := by
+    cases hbb : (one == A) with
+    | true => exact absurd (eq_of_beq hbb).symm hne
+    | false => rfl
+  have h1 : (one == A || lt one A) = true := Evidence.Cert.le_one_ap hap
+  rw [hb, Bool.false_or] at h1
+  exact h1
+
+/-- **§76.3 の主定理。** `1 + α = α`。 -/
+theorem plus_one_eq76 {A : Term} (hap : A.isAP = true) (hiA : inT A = true)
+    (hne : A ≠ one) : plus one A = A := by
+  have hle : le A one = false := le_one_eq_false76 hap hiA hne
+  have hfil : List.filter (fun a => le A a) [one] = [] := by
+    show (match le A one with
+          | true => one :: List.filter (fun a => le A a) []
+          | false => List.filter (fun a => le A a) []) = []
+    rw [hle]
+    rfl
+  show (match toList A with
+        | [] => one
+        | b1 :: _ => ofList ((toList one).filter (fun a => le b1 a) ++ toList A)) = A
+  rw [toList_ap76 hap]
+  show ofList (List.filter (fun a => le A a) (toList one) ++ [A]) = A
+  rw [show toList one = [one] from rfl, hfil]
+  rfl
+
+end
+
+/-! ### §76.4 `VOfIsDict74` — 添字の値は `dict` の像そのもの -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **部分領域の標準な `BT` 項の像は 0 でない。** `BT.isStd` の `isP` の連言を使う —
+    これを落とすと偽 (`0 ⊕ 0`、§76.6)。 -/
+theorem dict_ne_zero76 (Hp : PsiIdxOKStd172) : ∀ (x : BT), btLe72 1 x = true →
+    BT.isStd x = true → x ≠ BT.zero → dict x ≠ zero
+  | .zero, _, _, h => absurd rfl h
+  | .D u a, _, _, _ => by
+      rw [Trans.Dict.dict_D]
+      exact collapse_ne_zero76 u (dict a)
+  | .sum a b, hb, hs, _ => by
+      obtain ⟨hba, hbb⟩ := btLe72_sum 1 a b hb
+      obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hs
+      obtain ⟨h12, h3⟩ := (Bool.and_eq_true _ _).mp h1
+      obtain ⟨hP, _⟩ := (Bool.and_eq_true _ _).mp h12
+      rw [Trans.Dict.dict_sum]
+      refine plus_ne_zero76 (inT_dict_of_std172 Hp b hbb h3).1 ?_
+      cases a with
+      | zero => exact Bool.noConfusion hP
+      | sum p q => exact Bool.noConfusion hP
+      | D u p => rw [Trans.Dict.dict_D]; exact collapse_ne_zero76 u (dict p)
+
+/-- `ψ_u` の像は加法主要。`collapse` の出口は `omegaNF` だから。 -/
+theorem isAP_dict_D76 (u : Nat) (a : BT) : (dict (BT.D u a)).isAP = true := by
+  rw [Trans.Dict.dict_D, collapse_eq]
+  exact isAP_omegaNF _
+
+/-- **`ψ_u(α)` の像は 1 でない** — 部分領域の仮説の上で。§76.2 の `BT` 側の形。 -/
+theorem dict_D_ne_one76 (Hp : PsiIdxOKStd172) (u : Nat) (b : BT)
+    (hb : btLe72 1 (BT.D u b) = true) (hs : BT.isStd (BT.D u b) = true)
+    (hne : BT.D u b ≠ BT.D 0 BT.zero) : dict (BT.D u b) ≠ one := by
+  obtain ⟨hu1, hbtb⟩ := btLe72_D 1 u b hb
+  have hib := inT_dict_of_std172 Hp b hbtb (isStd_of_D hs)
+  rw [Trans.Dict.dict_D]
+  refine collapse_ne_one76 u (dict b) hib.1 hib.2 (Hp u b hu1 hbtb hs) ?_
+  rintro ⟨hu0, hz⟩
+  subst hu0
+  exact dict_ne_zero76 Hp b hbtb (isStd_of_D hs) (fun hcc => hne (by rw [hcc])) hz
+
+/-- **§76 の主定理。** §74.6 の `VOfIsDict74` — 添字の値は `dict` の像そのもの。
+    仮説は `PsiIdxOKStd172` ただ一つで、それは §72 が 326 行目の証明書に残した
+    4 つのうちの 1 つである。 -/
+theorem vOfIsDict76 (Hp : PsiIdxOKStd172) : VOfIsDict74 := by
+  intro t ht
+  cases t with
+  | nil => rfl
+  | nd w r c =>
+    have hl : lvlLe 1 (B.nd w r c) = true := lvlLe1_of_stdB1 _ ht
+    have hLne : (bValA71 (B.nd w r c)).toL ≠ [] :=
+      toL_bValA71_ne_nil74 _ (fun hcc => B.noConfusion hcc)
+    have hstrip : (bVal (B.nd w r c)).toL = stripL74 (bValA71 (B.nd w r c)).toL := by
+      rw [bVal_eq_strip74 _ hl]
+      exact toL_ofL _ (atoms_stripL74 _ (atoms_toL74 _))
+    have hdA : ∀ a ∈ (bVal (B.nd w r c)).toL, inT (dict a) = true :=
+      dictAtoms_bVal_72 Hp _ ht
+    cases hLc : (bValA71 (B.nd w r c)).toL with
+    | nil => exact absurd hLc hLne
+    | cons h1 rest =>
+      rw [hLc] at hstrip
+      by_cases hh : h1 = BT.D 0 BT.zero
+      · -- 先頭が `ψ₀0` — `bVal` はそれを落とす。`dict` の分配で終わり。
+        subst hh
+        rw [stripL74_cons_eq74] at hstrip
+        have hdr : ∀ x ∈ rest, inT (dict x) = true := by
+          intro x hx; exact hdA x (by rw [hstrip]; exact hx)
+        show plus one (dict (bVal (B.nd w r c))) = dict (bValA71 (B.nd w r c))
+        have e1 : bValA71 (B.nd w r c) = BT.ofL ([BT.D 0 BT.zero] ++ rest) := by
+          rw [show ([BT.D 0 BT.zero] ++ rest) = BT.D 0 BT.zero :: rest from rfl, ← hLc]
+          exact (nfSum_bValA7174 _).symm
+        have e2 : bVal (B.nd w r c) = BT.ofL rest := by
+          rw [← hstrip]; exact (nfSum_bVal _).symm
+        rw [e1, dict_ofL_append [BT.D 0 BT.zero] rest
+          (by intro x hx
+              rw [List.mem_singleton.mp hx, dict_D0_zero]
+              exact inT_one) hdr,
+          show BT.ofL [BT.D 0 BT.zero] = BT.D 0 BT.zero from rfl, dict_D0_zero, ← e2]
+      · -- 先頭が `ψ₀0` でない — `1 + ψ_u(α) = ψ_u(α)` そのもの。
+        rw [stripL74_cons_ne74 h1 rest hh] at hstrip
+        have hdr : ∀ x ∈ rest, inT (dict x) = true := by
+          intro x hx; exact hdA x (by rw [hstrip]; exact List.Mem.tail _ hx)
+        have hh1mem : h1 ∈ (bVal (B.nd w r c)).toL := by rw [hstrip]; exact List.Mem.head _
+        have hbv : bVal (B.nd w r c) = bValA71 (B.nd w r c) := by
+          rw [← nfSum_bVal (B.nd w r c), ← nfSum_bValA7174 (B.nd w r c), hstrip, hLc]
+        obtain ⟨u, b, hub⟩ :=
+          atoms_toL74 (bValA71 (B.nd w r c)) h1 (by rw [hLc]; exact List.Mem.head _)
+        have hiA : inT (dict h1) = true := hdA h1 hh1mem
+        have hbt : btLe72 1 h1 = true := btLe_bVal_mem72 _ hl h1 hh1mem
+        have hst1 : BT.isStd h1 = true := regionStd1_72 _ ht h1 hh1mem
+        subst hub
+        have hAne : dict (BT.D u b) ≠ one := dict_D_ne_one76 Hp u b hbt hst1 hh
+        have e1 : bValA71 (B.nd w r c) = BT.ofL ([BT.D u b] ++ rest) := by
+          rw [show ([BT.D u b] ++ rest) = BT.D u b :: rest from rfl, ← hLc]
+          exact (nfSum_bValA7174 _).symm
+        show plus one (dict (bVal (B.nd w r c))) = dict (bValA71 (B.nd w r c))
+        rw [hbv, e1, dict_ofL_append [BT.D u b] rest
+          (by intro x hx; rw [List.mem_singleton.mp hx]; exact hiA) hdr,
+          show BT.ofL [BT.D u b] = BT.D u b from rfl,
+          ← plus_assoc_inT one (dict (BT.D u b)) (dict (BT.ofL rest)) inT_one hiA
+            (inT_dict_ofL rest hdr),
+          plus_one_eq76 (isAP_dict_D76 u b) hiA hAne]
+
+/-- §66.4 の絞らない形からも同じ。 -/
+theorem vOfIsDict76' (Hp : PsiIdxOKStd) : VOfIsDict74 :=
+  vOfIsDict76 (psiIdxOKStd172_of_std Hp)
+
+end
+
+/-! ### §76.4b `DictLtA74` の底の二段 — 0 と `ψ₀0` の行き先
+
+**`DictLtA74` そのものは証明しない。**  ここで閉じるのは、その帰納法の底になる 2 つの
+場合だけである: 小さい側が `0` のときと `ψ₀0` (= Buchholz の 1) のとき。どちらも §76.2 の
+「`ψ_u(α)` は 0 でも 1 でもない」の言い換えで、順序の中身は入っていない。頭の比較の
+一般の場合 — `ψ_u(α)` と `ψ_v(β)` を `(u, α)` の辞書式で比べる — は手つかずである。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **底、その 1。** `dict 0 = 0` は標準な非零項の像より真に小さい。 -/
+theorem dictLt_zero76 (Hp : PsiIdxOKStd172) (x : BT) (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hx : x ≠ BT.zero) :
+    lt (dict BT.zero) (dict x) = true :=
+  lt_zero_ne76 (dict_ne_zero76 Hp x hb hs hx)
+
+/-- **底、その 2。** `dict (ψ₀0) = 1` は他のどの `ψ_u(α)` の像より真に小さい。
+    Buchholz 側でも `BT.lt (ψ₀0) (ψ_u(α)) = true` なので、これは `DictLtA74` を
+    「小さい側の先頭成分が `ψ₀0`」に絞った形そのものである。仮説に `BT.lt` は要らない。 -/
+theorem dictLt_D0_zero76 (Hp : PsiIdxOKStd172) (u : Nat) (b : BT)
+    (hb : btLe72 1 (BT.D u b) = true) (hs : BT.isStd (BT.D u b) = true)
+    (hne : BT.D u b ≠ BT.D 0 BT.zero) :
+    lt (dict (BT.D 0 BT.zero)) (dict (BT.D u b)) = true := by
+  rw [dict_D0_zero]
+  exact lt_one_ap76 (isAP_dict_D76 u b) (dict_D_ne_one76 Hp u b hb hs hne)
+
+end
+
+/-! ### §76.5 帰結 — 二つに割れていた橋がひとつに戻る -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§74.6 の分解は片方が定理になったので、残りは一つ。** -/
+theorem vOfLtA71_of_dictLt76 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) : VOfLtA71 :=
+  vOfLtA71_of_dict74 (vOfIsDict76 Hp) H2
+
+/-- 逆向き。`vOf` が `dict` の像なので、橋は `dict` の順序保存そのもの。 -/
+theorem dictLt_of_vOfLtA7176 (Hp : PsiIdxOKStd172) (HV : VOfLtA71) : DictLtA74 := by
+  intro u t hu ht h
+  rw [← vOfIsDict76 Hp u hu, ← vOfIsDict76 Hp t ht]
+  exact HV u t hu ht h
+
+/-- **§76.5 の主定理。** `DictLtA74` と `VOfLtA71` は同じ仮説である。
+    §74 が二つに割ったうちの一方が定理になったので、割れ目が消えた。 -/
+theorem dictLtA74_iff76 (Hp : PsiIdxOKStd172) : DictLtA74 ↔ VOfLtA71 :=
+  ⟨vOfLtA71_of_dictLt76 Hp, dictLt_of_vOfLtA7176 Hp⟩
+
+/-- **減少。** 仮説は `PsiIdxOKStd172` と `DictLtA74` の 2 つだけ。 -/
+theorem limDecS1_76 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) : LimDecS1 :=
+  limDecS1_of_bridge71 (vOfLtA71_of_dictLt76 Hp H2)
+
+/-- **増加。** 同じ 2 つ。 -/
+theorem limIncS1_76 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) : LimIncS1 :=
+  limIncS1_of_bridge71 (vOfLtA71_of_dictLt76 Hp H2)
+
+/-- **共終性の内側の半分。** §74.5 で逆向きが要らなくなっているので、
+    `DictLtA74` から `CofInS1` が出る。 -/
+theorem cofInS1_76 (Hp : PsiIdxOKStd) (Hr : RegionStd) (H2 : DictLtA74)
+    (HBC : BCofIn71) : CofInS1 :=
+  cofInS1_of71 Hp Hr
+    (vOfLtA71'_of74 Hp Hr (vOfLtA71_of_dictLt76 (psiIdxOKStd172_of_std Hp) H2)) HBC
+
+/-- **§76 の最終形。** §74.7 の 5 つの仮説のうち、橋 `VOfLtA71` が `DictLtA74` に
+    置き換わる。数は変わらないが、残った 1 つは `dict` の順序保存だけになった —
+    帳簿の分 (`VOfIsDict74`) はもう仮説ではない。 -/
+theorem certIn_t326_76 (Hp : PsiIdxOKStd) (Hr : RegionStd) (H2 : DictLtA74)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_74' Hp Hr (vOfLtA71_of_dictLt76 (psiIdxOKStd172_of_std Hp) H2) HCD HBC hacc
+
+end
+
+/-! ### §76.5b 部分領域の仮説だけで閉じる — 326 行目に残るのは 4 つ
+
+§71.4 / §74.5 の共終性の道具は `PsiIdxOKStd` と `RegionStd` (絞らない形の 2 つ) を
+取っていた。§72 の `inT_vOf_72` があるので、同じ証明がそのまま `PsiIdxOKStd172` だけで
+通る。これで 326 行目の証明書は部分領域の仮説だけで書ける。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- §74.5 の `vOfLtA71'_of74` を部分領域の仮説だけで。 -/
+theorem vOfLtA71'_76 (Hp : PsiIdxOKStd172) (HV : VOfLtA71) : VOfLtA71' := by
+  intro u t hu ht hlt
+  rcases lt_tricho_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) with h | h | h
+  · exact h
+  · exact absurd hlt (by
+      rw [vOf_eq_of_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) h,
+        Evidence.WF.lt_irrefl]
+      exact fun hc => Bool.noConfusion hc)
+  · exact absurd hlt (by
+      rw [lt_asymm_inT (inT_vOf_72 Hp t ht) (inT_vOf_72 Hp u hu) (HV t u ht hu h)]
+      exact fun hc => Bool.noConfusion hc)
+
+/-- §71.4 の `cofInS1_of71` を部分領域の仮説だけで。 -/
+theorem cofInS1_172_76 (Hp : PsiIdxOKStd172) (HV : VOfLtA71') (HB : BCofIn71) : CofInS1 := by
+  intro t ht hk u hu hlt
+  obtain ⟨n, hn⟩ := HB t ht hk u hu (HV u t hu ht hlt)
+  refine ⟨n, ?_⟩
+  have hfs := stdB1_fsB t ht n
+  have hiu : inT (vOf u) = true := inT_vOf_72 Hp u hu
+  have hif : inT (vOf (fsB t n)) = true := inT_vOf_72 Hp _ hfs
+  rcases lt_comparable_inT hiu hif with h | h | h
+  · show (vOf u == vOf (fsB t n) || lt (vOf u) (vOf (fsB t n))) = true
+    rw [h]; exact Bool.or_true _
+  · rw [h]; exact le_self _
+  · rw [HV (fsB t n) u hfs hu h] at hn
+    exact absurd hn (by intro hc; exact Bool.noConfusion hc)
+
+/-- §71.4 の `limCofS1_of71` を部分領域の仮説だけで。 -/
+theorem limCofS1_172_76 (Hp : PsiIdxOKStd172) (HD : CofDenseS1) (HI : CofInS1) :
+    LimCofS1 := by
+  intro t ht hk s hs hlt
+  obtain ⟨u, hu, hle, hult⟩ := HD t ht hk s hs hlt
+  obtain ⟨n, hn⟩ := HI t ht hk u hu hult
+  exact ⟨n, le_trans_inT hs (inT_vOf_72 Hp u hu) (inT_vOf_72 Hp _ (stdB1_fsB t ht n)) hle hn⟩
+
+/-- **§76 の最終形。** 326 行目の証明書に残る仮説は 4 つ —
+    `PsiIdxOKStd172` (§72 の門)、`DictLtA74` (`dict` の順序保存)、`CofDenseS1` (密度)、
+    `BCofIn71` (Buchholz 側の共終性)。§74.7 の最良は 5 つで、うち 2 つは絞らない形の
+    `PsiIdxOKStd`・`RegionStd` だった。 -/
+theorem certIn_t326_dict76 (Hp : PsiIdxOKStd172) (H2 : DictLtA74)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_72 Hp (limDecS1_76 Hp H2) (limIncS1_76 Hp H2)
+    (limCofS1_172_76 Hp HCD
+      (cofInS1_172_76 Hp (vOfLtA71'_76 Hp (vOfLtA71_of_dictLt76 Hp H2)) HBC)) hacc
+
+/-- 同じものを §73 の一歩ぶんの門で。`K` の側に残るのは `PsiIdxStep073` ひとつ。 -/
+theorem certIn_t326_step76 (Hs : PsiIdxStep073) (H2 : DictLtA74)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_dict76 (psiIdxOKStd172_of_step073 Hs) H2 HCD HBC hacc
+
+/-- 恒等式そのものも §73 の一歩ぶんの門だけで出る。 -/
+theorem vOfIsDict_step76 (Hs : PsiIdxStep073) : VOfIsDict74 :=
+  vOfIsDict76 (psiIdxOKStd172_of_step073 Hs)
+
+end
+
+/-! ### §76.6 測定 (凍結)
+
+母集団の作り方を先に書く。§65–§74 の掃きとは違って**深さで作る** — §66 の反例は `ψ` の
+添字 3 が要り、§73 の反例は `ψ` の入れ子 5 段が要ったのに、どちらも幅で作った何千個の
+母集団には現れなかったからである。したがってここは 100 個ほどしか使わず、そのかわり
+
+  * 入れ子はどれも **5 段**、
+  * `ψ` の添字は **0…3** — いま効いている上限 `1` の 2 つ先まで、
+  * 変数はそれが実際に走る形の上で動かす (`BT` の変数は `BT` 全体の上で、
+    `bValA71` の像の上ではなく)、
+  * **領域の外の項をわざと入れる**、
+
+の 4 つを守る。
+
+    mixT76 [v₁,…,vₙ] = ψ_{v₁}(ψ_{v₂}(… ψ_{vₙ}(0) …))     添字の側の縦棒 (深さ n)
+    btT76  [u₁,…,uₙ] = D_{u₁}(D_{u₂}(… D_{uₙ}(0) …))       BT の側の縦棒
+    bits76 5         = {0,1}⁵                              32 通り
+    hiSeqs76         = 4 つの型の 5 か所のどれか 1 つを 2 か 3 に替えたもの   40 通り
+    seedS76          = 5 つの型
+
+    deepB76  = (bits76 5).map mixT76                        32 本の縦棒 (段 0,1)
+             ++ hiSeqs76.map mixT76                         40 本 (段 2,3 を含む = 領域の外)
+             ++ seedS76 × seedS76 の 2 成分和                25 個
+             ++ seedS76 の先頭に (0,0) を足したもの           5 個 (先頭成分が ψ₀0 になる側)
+             ++ [t326, fsB t326 0, fsB t326 1, fsB t326 2]   326 行目そのもの
+                                                            計 106、重複なし
+    deepBT76 = 同じ 3 つを `BT` の上で                       計 97、重複なし
+    tPool76  = 𝔗(M) の項 15 個。`inT` で絞らない — 側条件を測るための母集団だから。
+
+**否定的結果を先に。**
+
+  * `collapse_ne_one76` の `inT x` は飾りではない。`ψ₀(0 ⊕ 0) = 1` であって `0 ⊕ 0 ≠ 0`。
+    `tPool76` を 𝔗(M) の項の上で (`dict` の像の上でではなく) 走らせるとこれが出る。
+    `collapse u x = one` になるのは `tPool76 × {0,1,2,3}` の 60 通りのうち 2 通りだけで、
+    その 2 つが `(0, 0)` と `(0, 0 ⊕ 0)` である。
+  * `dict_ne_zero76` の `BT.isStd` も飾りではない。`dict (0 ⊕ 0) = 0` で `0 ⊕ 0 ≠ 0`。
+    落ちるのは `isStd` の `isP` の連言である。
+  * **`DictLtA74` は段の上限を外すと偽。** 段 2 以上の節を持つ添字 10 個の 100 対のうち
+    **6 対**で `dict` が Buchholz の順序を保たない。最小の証人は
+
+        (0,0)(1,0)(2,3)(3,0)(4,0)  <  (0,0)(1,2)(2,0)(3,0)(4,0)   (Buchholz)
+        `dict` の像では成り立たない。
+
+  * **`BT` の側では `BT.isStd` も要る。** 段 1 以下だが Buchholz 標準でない 10 項の
+    100 対のうち **5 対**で破れる。証人は `ψ₀ψ₀ψ₁ψ₁ψ₀0 < ψ₀ψ₁ψ₀ψ₀ψ₁0`。
+    添字の側 (`bValA71` の像) にはこの形が現れないので、`deepB76` を使う限りこの
+    反例は見えない — **母集団の形が答えを変える例**である。
+
+肯定的な側。`VOfIsDict74` は定理なので `deepB76` の行は確認であって根拠ではないが、
+**領域の外でも 1 つも破れない** (106 個で 0 失敗)。部分領域の 14 個はどれも先頭成分が
+`ψ₀0` ではない、つまり恒等式はどれも `1 + ψ₀(α) = ψ₀(α)` の側で、帳簿ではない。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+
+/-- 段の列を 1 本の縦棒に。 -/
+def mixT76 : List Nat → B
+  | [] => .nil
+  | v :: r => .nd v .nil (mixT76 r)
+
+/-- `BT` の側の縦棒。 -/
+def btT76 : List Nat → BT
+  | [] => BT.zero
+  | u :: r => BT.D u (btT76 r)
+
+/-- 長さ `n` の `{0,1}` 列すべて。 -/
+def bits76 : Nat → List (List Nat)
+  | 0 => [[]]
+  | n + 1 => (bits76 n).flatMap fun l => [0 :: l, 1 :: l]
+
+/-- 5 か所のどれか 1 つを 2 か 3 に替えたもの — 上限 1 の 2 つ先まで届かせる。 -/
+def hiSeqs76 : List (List Nat) :=
+  [[0,0,0,0,0], [0,1,0,1,0], [1,1,1,1,1], [0,0,1,1,0]].flatMap fun l =>
+    (List.range 5).flatMap fun i => [2, 3].map fun v => l.set i v
+
+def seedS76 : List (List Nat) :=
+  [[0,0,0,0,0], [0,1,0,1,0], [1,0,0,1,0], [0,0,1,0,1], [1,1,0,0,0]]
+
+/-- 添字の側の母集団。 -/
+def deepB76 : List B :=
+  (bits76 5).map mixT76
+  ++ hiSeqs76.map mixT76
+  ++ (seedS76.flatMap fun l1 => seedS76.map fun l2 => appB (mixT76 l1) (mixT76 l2))
+  ++ seedS76.map (fun l => appB (B.nd 0 .nil .nil) (mixT76 l))
+  ++ [t326, fsB t326 0, fsB t326 1, fsB t326 2]
+
+/-- `BT` の側の母集団。`bValA71` の像に限らない。 -/
+def deepBT76 : List BT :=
+  (bits76 5).map btT76
+  ++ hiSeqs76.map btT76
+  ++ (seedS76.flatMap fun l1 => seedS76.map fun l2 => BT.sum (btT76 l1) (btT76 l2))
+
+/-- 𝔗(M) の項の母集団。`inT` で絞らない。 -/
+def tPool76 : List Term :=
+  [zero, one, omega, M, Om, add zero zero, add zero one, add one zero,
+   omg zero, phi zero zero, phi one zero, psi Om zero, Z zero, Z one, ofNat 3]
+
+def subD76 : List B := (deepB76.filter stdB1).take 10
+def outD76 : List B := (deepB76.filter fun t => !(lvlLe 1 t)).take 10
+
+def dictLtFailB76 (l : List B) : Nat :=
+  (l.flatMap fun u => l.filter fun t =>
+     BT.lt (bValA71 u) (bValA71 t) && !(TM.Term.lt (dict (bValA71 u)) (dict (bValA71 t)))).length
+
+def pairsBT76 : List BT := (deepBT76.filter fun x => BT.isStd x && btLe72 1 x).take 10
+def pairsBTout76 : List BT := (deepBT76.filter fun x => !(btLe72 1 x)).take 10
+def pairsBTns76 : List BT := (deepBT76.filter fun x => !(BT.isStd x) && btLe72 1 x).take 10
+
+def dictLtFailBT76 (l : List BT) : Nat :=
+  (l.flatMap fun x => l.filter fun y => BT.lt x y && !(TM.Term.lt (dict x) (dict y))).length
+
+/-! 母集団の形。 -/
+#guard deepB76.length == 106
+#guard deepB76.eraseDups.length == 106
+#guard deepBT76.length == 97
+#guard deepBT76.eraseDups.length == 97
+#guard tPool76.length == 15
+#guard (deepB76.filter stdB1).length == 14
+#guard (deepB76.filter fun t => lvlLe 1 t).length == 66
+#guard (deepBT76.filter fun x => btLe72 1 x).length == 57
+
+/-! §76.4 の確認。**定理なので根拠ではない。** 領域の外でも破れない。 -/
+#guard (deepB76.filter fun t => !(vOf t == dict (bValA71 t))).length == 0
+/-! 恒等式は自明ではない — 部分領域の 14 個はどれも先頭成分が `ψ₀0` でない。 -/
+#guard ((deepB76.filter stdB1).filter fun t =>
+  (bValA71 t).toL.head? == some (BT.D 0 BT.zero)).length == 0
+#guard (deepB76.filter fun t => (bValA71 t).toL.head? == some (BT.D 0 BT.zero)).length == 5
+
+/-! 側条件の鋭さ (否定的結果)。 -/
+-- `collapse_ne_one76` の除外した場合そのもの。
+#guard collapse 0 TM.Term.zero == TM.Term.one
+-- `inT x` を落とすと偽。`0 ⊕ 0 ≠ 0` なのに `ψ₀(0 ⊕ 0) = 1`。
+#guard collapse 0 (TM.Term.add TM.Term.zero TM.Term.zero) == TM.Term.one
+#guard TM.Term.inT (TM.Term.add TM.Term.zero TM.Term.zero) == false
+#guard (tPool76.flatMap fun x => (List.range 4).filter fun u => collapse u x == one).length == 2
+-- `dict_ne_zero76` の `BT.isStd` を落とすと偽。
+#guard dict (BT.sum BT.zero BT.zero) == TM.Term.zero
+#guard BT.isStd (BT.sum BT.zero BT.zero) == false
+-- `plus_one_eq76` の `α ≠ 1`、`omegaNF_ne_one76` の `x ≠ 0`。
+#guard TM.Term.plus TM.Term.one TM.Term.one != TM.Term.one
+#guard TM.Term.omegaNF TM.Term.zero == TM.Term.one
+
+/-! `DictLtA74` — **未証明**。100 対ずつ、深さ 5、添字 0…3。 -/
+#guard subD76.length == 10
+#guard dictLtFailB76 subD76 == 0
+#guard outD76.length == 10
+-- **段の上限を外すと偽。**
+#guard dictLtFailB76 outD76 == 6
+#guard pairsBT76.length == 10
+#guard dictLtFailBT76 pairsBT76 == 0
+#guard pairsBTout76.length == 10
+#guard dictLtFailBT76 pairsBTout76 == 6
+#guard pairsBTns76.length == 10
+-- **`BT` の側では `BT.isStd` を外しても偽。添字の側の母集団では見えない。**
+#guard dictLtFailBT76 pairsBTns76 == 5
+
+end
+
+/-! ### §76.7 公理 -/
+
 end Evidence.Region
