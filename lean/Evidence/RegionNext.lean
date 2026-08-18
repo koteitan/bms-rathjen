@@ -34460,4 +34460,731 @@ end
 
 /-! ### §81.9 公理 -/
 
+/-! ## §82 THE `K`-GATE'S RESIDUE IS FALSE, AND THE COUNTEREXAMPLE IS INSIDE THE SUB-REGION
+
+§80 reduced the `K`-gate to one clause, `LocalK2Big_80`, and proved with `not_pow80_bad80`
+that the clause is not a statement about 𝔗(M) terms: `Ω₁ ⊕ ψ_{Ω₁}(Ω₂)` is a 𝔗(M) term that
+breaks it.  The conclusion drawn there was correct and its consequence was named exactly:
+**any proof must consume `dict` and `BT.isStd`.**  §82 consumes them.  What comes out is not a
+proof.
+
+**`LocalK2Big_80` IS FALSE.**  `not_localK2Big_80` is a theorem, and with it
+`not_localK2Fst_78`, `not_localK2_78`, `not_localK2Pow_80`, `not_localK2BigPow_80`.  The
+witness is a Buchholz term of fifteen symbols,
+
+    aBad82 = ψ₁ψ₁ψ₁ψ₁0 ⊕ ψ₁ψ₁ψ₁ψ₀ψ₁ψ₁ψ₁ψ₁0
+
+which satisfies **every** hypothesis of the clause — `btLe72 1`, `BT.isStd (ψ₀ ·)`,
+`inT (dict ·)`, `dict · < M` — and breaks its conclusion.  The reason fits on one line: the
+`ψ₀` inside the tail has the HEAD as its argument, so its collapse index is
+`y = ω^{ω^{ω^{Ω₁·2}}}`, while the `Δ` of the tail's own scan step is
+`ω^{ω^{ω^{Ω₁ ⊕ ψ_{Ω₁}(y)}}}` and `ψ_{Ω₁}(y) < Ω₁`, so `Δ < y`.  Buchholz asks *argument <
+whole sum*, which the head satisfies because it IS the head; Rathjen asks *index < Δ*, and
+`Δ` is fixed by the TAIL alone.  **The two normal-form conditions genuinely differ, and the
+transport §68/§72/§73/§75/§78/§80 kept naming does not exist in this form.**  So the `K`-gate
+as §78 and §80
+stated it cannot be closed, and `certIn_t326_k2_78`, `certIn_t326_big80` and this section's own
+`certIn_t326_node82` are **vacuous**: their first hypothesis is refutable.  Row 326's
+certificate now waits on a clause that does not yet exist as a proved statement — §82.7 says
+which one it has to be.
+
+HOW IT WAS FOUND, AND WHAT IS PROVED ON THE WAY.  The counterexample is not a lucky guess; it
+is what the localization produces when it is pushed.
+
+  §82.1  **THE SCAN LOCALIZES.**  `wcnf_fst_wA82` — every pair the base-`w` scan emits has
+         `ac.1 = wA w p` for a SINGLE component `p` of the `bigPart`.  §66's `mem_Kset_wcnf`
+         traced the `K`-sets to the whole big part; the merging branch keeps the first
+         component's `wA`, so the exponent itself traces to one component.
+
+  §82.2  **THE COMPONENTS OF `dict a` ARE THE IMAGES OF THE COMPONENTS OF `a`.**
+         `toList_dict82` — every `p ∈ toList (dict a)` is additively principal AND equals
+         `dict t` for some `t ∈ BT.toL a`.  `dict` of a `ψ`-node is an `ω`-power
+         (`isAP_collapse82`); `dict` of a sum is `plus`, and `plus` only ever DROPS
+         components.  No `inT`, no `isStd`, no level bound.
+
+  §82.3  **WHAT `BT.isStd (ψ₀ a)` ACTUALLY HANDS OVER.**  `comp_facts82` : each component
+         `ψ_u c` of `a` is itself Buchholz standard (`isStd_toL82`) and its argument `c` is
+         below `a` (`arg_mem_GB0_82` puts `c` into `G(a,0)`, `std0_split82` bounds it).
+         **That is all of it.**  `G(a,0) < a` bounds the arguments inside `a` by `a`; it does
+         not bound the arguments inside a component by that component.
+
+  §82.4  **SO THE RESIDUE IS A CLAUSE ABOUT ONE NODE.**  `NodeBigT_82 t` — for the exponent
+         `wA Ω₁ (dict t)` of one node, every `y ∈ K_{Ω₁} (dict t)` with `Ω₁ ≤ y` is below
+         `W^(wA Ω₁ (dict t) ⊖ Ω₁)`.  `NodeBig_82` asks it of every component the scan
+         reaches, and `localK2BigPow_of_node82` carries it to §80's smallest residual and on
+         to row 326.  **The scan, the pair `(aV, cV)` and the coefficient are gone.**
+
+  §82.5  **THE PER-NODE DECIDER IS EXACT.**  `nodeBigT_of_b82` and its converse
+         `nodeb82_of_nodeBigT82`: on a firing node the decider and the clause are equivalent,
+         so a `false` is a REFUTATION and not a failure to prove.  That is the instrument
+         §82.6 uses.  `nodeBigT_of_empty82` disposes of the nodes with an empty `K`-set (110
+         of the 141 the measurement reaches), and the two frozen guards keep §78's
+         `ψ`-nesting-9 tower and width-2 sum.
+
+  §82.6  **THE REFUTATION.**  Point the exact decider at the node `nBad82 = ψ₁ψ₁ψ₁ψ₀ψ₁ψ₁ψ₁ψ₁0`
+         — §78's `kBad78` phenomenon as a tower — and it says `false` (`not_nodeBigT_nBad82`).
+         By itself `nBad82` is outside the region: `BT.isStd (ψ₀ nBad82) = false`.  §82.3 says
+         why that does not save the clause: put a bigger head in front and the SUM becomes
+         standard while the component does not change.  `aBad82` is that sum, and
+         `not_inherit_std82` freezes the anatomy — standard whole, non-standard component,
+         and the component is one the scan reaches.
+
+  §82.7  **THE REPAIR, AND ITS REDUCTION.**  `LocalK2BigC_82` is §80's clause with the
+         component condition added: every `t ∈ BT.toL a` satisfies `BT.isStd (ψ₀ t)`.
+         `localK2BigC_of_nodeStd82` reduces it — through §82.1 and §82.2 unchanged — to
+         `NodeBigStd_82`, the per-node clause with the RIGHT side condition, and
+         `localK2FstC_of_bigC82` restores the `Ω₁ >` half by §80.3.  `NodeBigStd_82` is
+         measured at 0 failures on 265 nodes and is the honest successor of §78's
+         `LocalK2_78`.
+
+WHAT IS **NOT** CLAIMED.  `NodeBigStd_82` and `LocalK2BigC_82` are NOT proved.  Worse for the
+gate: **nothing here shows the repaired region contains row 326 or is closed under the
+fundamental sequence**, and until that is done `LocalK2BigC_82` cannot be plugged into
+`certIn_t326_*` at all.  `LocalK2Snd_78` is untouched — §82 refutes only the `aV` side, which
+is the side §78 already identified as the hard one.  `DictHeadLt77`, `CofDenseS1`, `BCofIn71`
+are untouched.  §82.8's closed form for `Ω₁ · wA Ω₁ p` is a MEASUREMENT, not a theorem.
+
+WHAT THE MEASUREMENT SAYS (§82.8 gives the construction: §78.5's three groups and §80.7's
+fourth verbatim, plus the subterm closure and one new family built to answer §82's question).
+
+  * **The refutation is not rare and the old populations could not see it.**  The new family
+    is `h ⊕ t` with `h` any level-≤1 `ψ₁`-node of the corpus and `t` one of the 38 nodes that
+    are `BT.isStd` but not `BT.isStd (ψ₀ ·)`; 5949 of those sums satisfy every hypothesis of
+    `LocalK2Big_80` and **528 of them refute it**.  Inside the four groups themselves — 201
+    qualifying terms, 373 qualifying subterms — there is **not one** refutation.  §78's "on
+    the standard population it never fails" and §80's "all 87 failures are outside the region"
+    were true of their corpora and false as statements.
+  * **Every refutation is a component-standardness failure.**  Not one of the 528 has all its
+    components `BT.isStd (ψ₀ ·)`, which is exactly the hypothesis §82.7 adds.  And the failure
+    reaches inside the four groups too: 1 of the 141 reached nodes there is a component of a
+    standard term without being standard-under-`ψ₀` itself.
+  * **With the right side condition nothing falls.**  Of the 729 level-≤1 subterms, the 265
+    that fire and satisfy `BT.isStd (ψ₀ ·)` give 0 failures; relaxing to `BT.isStd` alone
+    gives 10, the smallest of which is `nBad82`.
+
+  The positive side.  The per-node clause is not vacuous where it is used: 13 of the reached
+  nodes carry a `K`-element `≥ Ω₁`, and the move from `K_{Ω₁} (wA Ω₁ (dict t))` to
+  `K_{Ω₁} (dict t)` — the one place §82.4 asks for more than §80 did — changes no verdict
+  anywhere inside the level bound.  `Ω₁ · wA Ω₁ p` equals the `≥ Ω₁` part of `log p` at all
+  518 big components measured, which is the closed form that says what the node clause is.
+-/
+
+/-! ### §82.1 走査は一成分に落ちる -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§82.1 の主定理。** 走査が吐く対の第一成分は、`bigPart` のただ一つの成分の `wA`。
+    §66 の `mem_Kset_wcnf` は「大きい成分ぜんぶ」までしか追えなかった — 併合の枝が
+    先頭の `wA` を残すので、指数そのものは一成分に落ちる。 -/
+theorem wcnf_fst_wA82 {w : Term} : ∀ (L : List Term) (ac : Term × Term),
+    ac ∈ (wcnf w L).1 → ∃ p, p ∈ bigPart w L ∧ ac.1 = wA w p := by
+  intro L
+  induction L with
+  | nil => intro ac hac; cases hac
+  | cons p rest ih =>
+    intro ac hac
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp] at hac; cases hac
+    · have hlp' : lt p w = false := bool_false hlp
+      have hbig : bigPart w (p :: rest) = p :: bigPart w rest := by
+        show (if lt p w = true then [] else p :: bigPart w rest) = _
+        rw [if_neg hlp]
+      rw [wcnf_cons_ge hlp'] at hac
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at hac
+        have hmem0 : ∀ (q : Term × Term), q ∈ fst → q ∈ (wcnf w rest).1 := by
+          intro q hq; rw [hr]; exact hq
+        cases fst with
+        | nil =>
+          exact ⟨p, by rw [hbig]; exact List.Mem.head _,
+            by rw [List.mem_singleton.mp hac]⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac' : ac ∈ (if (wA w p == a') = true
+                then ((wA w p, plus (wC w p) c') :: ps, snd)
+                else ((wA w p, wC w p) :: (a', c') :: ps, snd)).1 := hac
+            by_cases heq : (wA w p == a') = true
+            · rw [if_pos heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · exact ⟨p, by rw [hbig]; exact List.Mem.head _, by rw [h1]⟩
+              · obtain ⟨q, hq, hqe⟩ := ih ac (hmem0 _ (List.Mem.tail _ h1))
+                exact ⟨q, by rw [hbig]; exact List.Mem.tail _ hq, hqe⟩
+            · rw [if_neg heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · exact ⟨p, by rw [hbig]; exact List.Mem.head _, by rw [h1]⟩
+              · obtain ⟨q, hq, hqe⟩ := ih ac (hmem0 _ h1)
+                exact ⟨q, by rw [hbig]; exact List.Mem.tail _ hq, hqe⟩
+
+end
+
+/-! ### §82.2 `dict a` の成分は `a` の成分の像 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `collapse` は `ω^·` なので加法主要 — 節の像はいつも一成分。 -/
+theorem isAP_collapse82 (u : Nat) (x : Term) : (collapse u x).isAP = true := isAP_omegaNF _
+
+theorem toList_dict_D82 (u : Nat) (c : BT) :
+    toList (dict (BT.D u c)) = [dict (BT.D u c)] :=
+  toList_of_isAP (isAP_collapse82 u (dict c))
+
+/-- **§82.2 の主定理。** `dict a` の成分はどれも加法主要で、しかも `a` のある成分の像。
+    `inT` も `isStd` も段の上限も要らない — `plus` は成分を落とすだけだから。 -/
+theorem toList_dict82 : ∀ (a : BT), ∀ p ∈ toList (dict a),
+    p.isAP = true ∧ ∃ t, t ∈ BT.toL a ∧ p = dict t := by
+  intro a
+  induction a with
+  | zero => intro p hp; cases hp
+  | D u c _ =>
+    intro p hp
+    rw [toList_dict_D82 u c] at hp
+    rw [List.mem_singleton.mp hp]
+    exact ⟨isAP_collapse82 u (dict c), BT.D u c, List.Mem.head _, rfl⟩
+  | sum s t ihs iht =>
+    intro p hp
+    have hd : dict (BT.sum s t) = plus (dict s) (dict t) := rfl
+    rw [hd] at hp
+    cases hl : toList (dict t) with
+    | nil =>
+      rw [plus_nil hl] at hp
+      obtain ⟨h1, u, hu, he⟩ := ihs p hp
+      exact ⟨h1, u, List.mem_append.mpr (Or.inl hu), he⟩
+    | cons b1 r =>
+      rw [plus_cons66 hl] at hp
+      have hap2 : ∀ x ∈ (toList (dict s)).filter (fun a => le b1 a) ++ (b1 :: r),
+          x.isAP = true := by
+        intro x hx
+        rcases List.mem_append.mp hx with h | h
+        · exact (ihs x (List.mem_filter.mp h).1).1
+        · exact (iht x (by rw [hl]; exact h)).1
+      rw [toList_ofList hap2] at hp
+      rcases List.mem_append.mp hp with h | h
+      · obtain ⟨h1, u, hu, he⟩ := ihs p (List.mem_filter.mp h).1
+        exact ⟨h1, u, List.mem_append.mpr (Or.inl hu), he⟩
+      · obtain ⟨h1, u, hu, he⟩ := iht p (by rw [hl]; exact h)
+        exact ⟨h1, u, List.mem_append.mpr (Or.inr hu), he⟩
+
+end
+
+
+/-! ### §82.3 Buchholz 側が渡すもの — と渡さないもの -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 和が標準なら成分も標準。 -/
+theorem isStd_toL82 : ∀ (a : BT), BT.isStd a = true → ∀ t, t ∈ BT.toL a → BT.isStd t = true := by
+  intro a
+  induction a with
+  | zero => intro _ t ht; cases ht
+  | D u c _ =>
+    intro h t ht
+    rw [List.mem_singleton.mp (show t ∈ [BT.D u c] from ht)]
+    exact h
+  | sum s t ihs iht =>
+    intro h x hx
+    have h1 : (BT.isP s && BT.isStd s && BT.isStd t) = true :=
+      (Bool.and_eq_true _ _).mp h |>.1
+    have hs : BT.isStd s = true := ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h1).1).2
+    have ht2 : BT.isStd t = true := ((Bool.and_eq_true _ _).mp h1).2
+    rcases List.mem_append.mp (show x ∈ BT.toL s ++ BT.toL t from hx) with h2 | h2
+    · exact ihs hs x h2
+    · exact iht ht2 x h2
+
+/-- 成分の引数は `G(a,0)` の中 — `u ≤ 0` の分岐がないから、`GB 0` は引数をぜんぶ拾う。 -/
+theorem arg_mem_GB0_82 : ∀ (a : BT) (u : Nat) (c : BT),
+    BT.D u c ∈ BT.toL a → c ∈ BT.GB 0 a := by
+  intro a
+  induction a with
+  | zero => intro u c h; cases h
+  | D v e _ =>
+    intro u c h
+    have he : BT.D u c = BT.D v e := List.mem_singleton.mp (show BT.D u c ∈ [BT.D v e] from h)
+    have hce : c = e := by injection he
+    have hgb : BT.GB 0 (BT.D v e) = e :: BT.GB 0 e := by
+      show (if 0 ≤ v then e :: BT.GB 0 e else []) = _
+      rw [if_pos (Nat.zero_le v)]
+    rw [hgb, hce]
+    exact List.Mem.head _
+  | sum s t ihs iht =>
+    intro u c h
+    have hgb : BT.GB 0 (BT.sum s t) = BT.GB 0 s ++ BT.GB 0 t := rfl
+    rw [hgb]
+    rcases List.mem_append.mp (show BT.D u c ∈ BT.toL s ++ BT.toL t from h) with h1 | h1
+    · exact List.mem_append.mpr (Or.inl (ihs u c h1))
+    · exact List.mem_append.mpr (Or.inr (iht u c h1))
+
+/-- `isStd (ψ₀ a)` を割る。 -/
+theorem std0_split82 {a : BT} (h : BT.isStd (BT.D 0 a) = true) :
+    BT.isStd a = true ∧ ∀ e ∈ BT.GB 0 a, BT.lt e a = true := by
+  have h1 : (BT.isStd a && (BT.GB 0 a).all (fun e => BT.lt e a)) = true := h
+  obtain ⟨h2, h3⟩ := (Bool.and_eq_true _ _).mp h1
+  exact ⟨h2, fun e he => List.all_eq_true.mp h3 e he⟩
+
+/-- **§82.3 の主定理 — 残余が使ってよい Buchholz の事実。** 部分領域の項 `a` の成分
+    `ψ_u c` はそれ自身 Buchholz 標準で、しかもその引数 `c` は `a` より小さい。
+    **これが `BT.isStd (ψ₀ a)` の渡すすべて** — §82.6 の否定 2 が、渡さないものを言う。 -/
+theorem comp_facts82 {a : BT} (h : BT.isStd (BT.D 0 a) = true) {u : Nat} {c : BT}
+    (ht : BT.D u c ∈ BT.toL a) : BT.isStd (BT.D u c) = true ∧ BT.lt c a = true :=
+  ⟨isStd_toL82 a (std0_split82 h).1 _ ht,
+   (std0_split82 h).2 c (arg_mem_GB0_82 a u c ht)⟩
+
+end
+
+/-! ### §82.4 残余は一節ぶんの条項 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `powOf80` は対の第一成分しか見ない。 -/
+theorem powOf80_congr82 {w : Term} {ac ac' : Term × Term} (h : ac.1 = ac'.1) :
+    powOf80 w ac = powOf80 w ac' := by
+  unfold powOf80
+  rw [h]
+
+/-- **一節ぶんの残余。** `t` の像の `K` のうち `Ω₁` 以上の元は `W^(wA Ω₁ (dict t) ⊖ Ω₁)`
+    より下。走査も対も係数も出てこない。 -/
+def NodeBigT_82 (t : BT) : Prop :=
+  ∀ ac : Term × Term, ac.1 = wA (reg 1) (dict t) → le (reg 1) ac.1 = true →
+    ∀ y, y ∈ Kset (reg 1) (dict t) → le (reg 1) y = true →
+      lt y (powOf80 (reg 1) ac) = true
+
+/-- **§82 の残余。** 部分領域の項の成分のうち**走査がほんとうに届くもの**について、
+    一節ぶんの条項。 -/
+def NodeBig_82 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ t, t ∈ BT.toL a → dict t ∈ bigPart (reg 1) (toList (dict a)) → NodeBigT_82 t
+
+/-- **§82.4 の主定理。** 節ごとの条項から §80 の最小の残余が出る。 -/
+theorem localK2BigPow_of_node82 (H : NodeBig_82) : LocalK2BigPow_80 := by
+  intro a hb hs hi hl ac hac hle y hy hge
+  obtain ⟨p, hp, hpe⟩ := wcnf_fst_wA82 (toList (dict a)) ac hac
+  obtain ⟨_, t, ht, hte⟩ := toList_dict82 a p (bigPart_sub _ _ p hp)
+  rw [hte] at hpe hp
+  refine H a hb hs hi hl t ht hp ac hpe hle y ?_ hge
+  refine mem_Kset_wA (w := reg 1) ?_
+  rw [← hpe]; exact hy
+
+/-- 系 — §80.4 の残余。 -/
+theorem localK2Big_of_node82 (H : NodeBig_82) : LocalK2Big_80 :=
+  localK2Big_of_fst80 (localK2Fst_of_bigPow80 (localK2BigPow_of_node82 H))
+
+/-- 系 — §78 の一条項。 -/
+theorem localK2_of_node82 (H1 : NodeBig_82) (H2 : LocalK2Snd_78) : LocalK2_78 :=
+  localK2_of_big80 (localK2Big_of_node82 H1) H2
+
+/-- **326 行目の証明書。** `K` の側で待つのは節ごとの条項と §78 の `cV` 側だけ。
+    **§82.6 以後、この定理は空回りである** — `NodeBig_82` は `not_nodeBig_82` で偽。
+    §80 の `certIn_t326_big80` も §78 の `certIn_t326_k2_78` も同じ理由で空回り。 -/
+theorem certIn_t326_node82 (H1 : NodeBig_82) (H2 : LocalK2Snd_78) (HD : DictHeadLt77)
+    (HCD : CofDenseS1) (HBC : BCofIn71) (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_big80 (localK2Big_of_node82 H1) H2 HD HCD HBC hacc
+
+end
+
+
+/-! ### §82.5 判定器 — 一節ぶん、しかも過不足なし -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 一節ぶんの判定器。 -/
+def nodeb82 (t : BT) : Bool :=
+  (Kset (reg 1) (dict t)).all fun y =>
+    !(le (reg 1) y) || lt y (powOf80 (reg 1) (wA (reg 1) (dict t), TM.Term.one))
+
+/-- **判定器は証明。** §78.4・§80.5 と同じ形。 -/
+theorem nodeBigT_of_b82 {t : BT} (h : nodeb82 t = true) : NodeBigT_82 t := by
+  intro ac hac _ y hy hge
+  rw [powOf80_congr82 (ac' := (wA (reg 1) (dict t), TM.Term.one)) hac]
+  have h1 := List.all_eq_true.mp h y hy
+  rw [hge, Bool.not_true, Bool.false_or] at h1
+  exact h1
+
+/-- **逆も。** 発火する節では判定器は条項と同値 — だから `false` は反証である。 -/
+theorem nodeb82_of_nodeBigT82 {t : BT} (hf : le (reg 1) (wA (reg 1) (dict t)) = true)
+    (H : NodeBigT_82 t) : nodeb82 t = true := by
+  refine List.all_eq_true.mpr ?_
+  intro y hy
+  cases hge : le (reg 1) y with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or]
+    exact H (wA (reg 1) (dict t), TM.Term.one) rfl hf y hy hge
+
+/-- `K` が空なら条項は只。§82.8 の測定では 141 節のうち 110 節がこれ。 -/
+theorem nodeBigT_of_empty82 {t : BT} (h : Kset (reg 1) (dict t) = []) : NodeBigT_82 t := by
+  intro _ _ _ y hy _
+  rw [h] at hy
+  cases hy
+
+/-- 凍結 (深さ) — §78.5 の `ψ` の入れ子 9 段の塔。`K_{Ω₁}` に `Ω₁` 以上の元がある節。 -/
+theorem nodeBigT_wOK78 : NodeBigT_82 wOK78 := nodeBigT_of_b82 (by decide)
+
+/-- 凍結 (幅) — §78.5 の二項和。 -/
+theorem nodeBigT_wWide78 : NodeBigT_82 wWide78 := nodeBigT_of_b82 (by decide)
+
+end
+
+
+/-! ### §82.6 否定 — 残る条項は部分領域の上で偽 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `LocalK2Big_80` を一項ぶんに落とした判定器。 -/
+def k2bigb82 (a : BT) : Bool :=
+  ((wcnf (reg 1) (toList (dict a))).1).all fun ac =>
+    !(le (reg 1) ac.1) ||
+      ((Kset (reg 1) ac.1).all fun y => !(le (reg 1) y) || lt y (ddOf75 (reg 1) ac))
+
+/-- 条項が成り立てば判定器も通る — だから判定器の `false` は反証。 -/
+theorem k2bigb_of_localK2Big82 (H : LocalK2Big_80) {a : BT} (hb : btLe72 1 a = true)
+    (hs : BT.isStd (BT.D 0 a) = true) (hi : inT (dict a) = true) (hl : lt (dict a) M = true) :
+    k2bigb82 a = true := by
+  refine List.all_eq_true.mpr ?_
+  intro ac hac
+  cases hle : le (reg 1) ac.1 with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or]
+    refine List.all_eq_true.mpr ?_
+    intro y hy
+    cases hge : le (reg 1) y with
+    | false => rfl
+    | true =>
+      rw [Bool.not_true, Bool.false_or]
+      exact H a hb hs hi hl ac hac hle y hy hge
+
+/-- 段 1 以下で Buchholz 標準、しかし `ψ₀` をかぶせると標準でなくなる塔
+    `ψ₁ψ₁ψ₁ψ₀ψ₁ψ₁ψ₁ψ₁0`。§78 の `kBad78` の塔版で、これ一つでは領域の外。 -/
+def nBad82 : BT :=
+  BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero)))))))
+
+/-- **反証。** `ψ₁ψ₁ψ₁ψ₁0 ⊕ nBad82` — 大きい頭をかぶせると和ぜんたいは
+    `BT.isStd (ψ₀ ·)` を満たし、**部分領域の中に入る**。成分 `nBad82` はそのままなので
+    `K` の条項はそこで破れる。§82.8 の測定でこれが最小 (記号 15 個)。
+
+    **破れる理由は一行で言える。**  `nBad82` の中の `ψ₀` の引数は頭とちょうど同じ
+    `ψ₁ψ₁ψ₁ψ₁0` で、その像は `y = ω^{ω^{ω^{Ω₁·2}}}`。走査の第二の対では
+
+        aV = ω^{ω^{Ω₁ ⊕ ψ_{Ω₁}(y)}},  cV = 1,  Δ = ω^{ω^{ω^{Ω₁ ⊕ ψ_{Ω₁}(y)}}},
+        K_{Ω₁} aV = {y},  そして ψ_{Ω₁}(y) < Ω₁ だから **Δ < y**。
+
+    Buchholz の条件が要るのは「引数 < 和ぜんたい」で、頭は和より小さいからそれは通る。
+    Rathjen の条件が要るのは「指数 < Δ」で、`Δ` を決めるのは**尾の**指数だけ。
+    二つの標準形条件はここで本当に食い違う。 -/
+def aBad82 : BT := BT.sum (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero)))) nBad82
+
+/-- **`aBad82` は `LocalK2Big_80` の仮説をぜんぶ満たし、結論を破る。** -/
+theorem aBad82_hyps :
+    btLe72 1 aBad82 = true ∧ BT.isStd (BT.D 0 aBad82) = true ∧
+    inT (dict aBad82) = true ∧ lt (dict aBad82) M = true ∧
+    nBad82 ∈ BT.toL aBad82 ∧ BT.isStd nBad82 = true ∧
+    BT.isStd (BT.D 0 nBad82) = false ∧
+    k2bigb82 aBad82 = false :=
+  ⟨by decide, by decide, by decide, by decide,
+   List.Mem.tail _ (List.Mem.head _), by decide, by decide, by decide⟩
+
+/-- **§82 の主定理 — `K` 門の残余は偽。** §80 が「𝔗(M) の項だけの事実ではない」と
+    言った条項は、`dict` と `BT.isStd` を足しても救えない。 -/
+theorem not_localK2Big_80 : ¬ LocalK2Big_80 := by
+  intro H
+  have h := k2bigb_of_localK2Big82 H aBad82_hyps.1 aBad82_hyps.2.1 aBad82_hyps.2.2.1
+    aBad82_hyps.2.2.2.1
+  rw [aBad82_hyps.2.2.2.2.2.2.2] at h
+  exact Bool.noConfusion h
+
+/-- 系 — §78 の `aV` 側は偽。 -/
+theorem not_localK2Fst_78 : ¬ LocalK2Fst_78 := fun H => not_localK2Big_80 (localK2Big_of_fst80 H)
+
+/-- 系 — §78 が `K` 門ぜんぶを縮めた一条項は偽。 -/
+theorem not_localK2_78 : ¬ LocalK2_78 :=
+  fun H => not_localK2Fst_78 (fun a hb hs hi hl ac hac hle y hy =>
+    H a hb hs hi hl ac hac hle y (Or.inl hy))
+
+/-- 系 — §80 の二つの残余も偽。 -/
+theorem not_localK2Pow_80 : ¬ LocalK2Pow_80 := fun H => not_localK2Fst_78 (localK2Fst_of_pow80 H)
+theorem not_localK2BigPow_80 : ¬ LocalK2BigPow_80 :=
+  fun H => not_localK2Fst_78 (localK2Fst_of_bigPow80 H)
+
+/-- 系 — §82.4 の節ごとの形も偽。 -/
+theorem not_nodeBig_82 : ¬ NodeBig_82 := fun H => not_localK2BigPow_80 (localK2BigPow_of_node82 H)
+
+/-- **落ちる節そのもの。** `nBad82` は段 1 以下で `BT.isStd` を満たし、`wA` は
+    発火するのに、節ごとの条項は偽。要る側条件は `BT.isStd (ψ₀ ·)` の方。 -/
+theorem not_nodeBigT_nBad82 :
+    btLe72 1 nBad82 = true ∧ BT.isStd nBad82 = true ∧
+    BT.isStd (BT.D 0 nBad82) = false ∧
+    le (reg 1) (wA (reg 1) (dict nBad82)) = true ∧
+    ¬ NodeBigT_82 nBad82 := by
+  refine ⟨by decide, by decide, by decide, by decide, ?_⟩
+  intro H
+  have h1 := nodeb82_of_nodeBigT82 (by decide) H
+  rw [show nodeb82 nBad82 = false from by decide] at h1
+  exact Bool.noConfusion h1
+
+/-- **なぜ救えないかの正確な理由。** `aBad82` は `BT.isStd (ψ₀ aBad82)` を満たすのに
+    成分 `nBad82` は `BT.isStd (ψ₀ nBad82)` を満たさない。`G(a,0) < a` は `a` の中の
+    引数を `a` で抑えるだけで、**成分の中の引数をその成分で抑えはしない**。
+    §82.3 が渡すもの (成分の `BT.isStd` と `c < a`) はここで足りない。 -/
+theorem not_inherit_std82 :
+    BT.isStd (BT.D 0 aBad82) = true ∧ nBad82 ∈ BT.toL aBad82 ∧
+    BT.isStd nBad82 = true ∧ BT.isStd (BT.D 0 nBad82) = false ∧
+    dict nBad82 ∈ bigPart (reg 1) (toList (dict aBad82)) :=
+  ⟨by decide, List.Mem.tail _ (List.Mem.head _), by decide, by decide, by decide⟩
+
+end
+
+/-! ### §82.7 修理 — 成分にも `BT.isStd (ψ₀ ·)` を課す -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 段の上限は成分に降りる。 -/
+theorem btLe72_toL82 : ∀ (m : Nat) (a : BT), btLe72 m a = true →
+    ∀ t, t ∈ BT.toL a → btLe72 m t = true := by
+  intro m a
+  induction a with
+  | zero => intro _ t ht; cases ht
+  | D u c _ =>
+    intro h t ht
+    rw [List.mem_singleton.mp (show t ∈ [BT.D u c] from ht)]
+    exact h
+  | sum s t ihs iht =>
+    intro h x hx
+    obtain ⟨h1, h2⟩ := btLe72_sum m s t h
+    rcases List.mem_append.mp (show x ∈ BT.toL s ++ BT.toL t from hx) with h3 | h3
+    · exact ihs h1 x h3
+    · exact iht h2 x h3
+
+/-- **正しい側条件つきの節ごとの残余。** §82.6 が落とした `nBad82` はここに入らない。 -/
+def NodeBigStd_82 : Prop :=
+  ∀ t : BT, btLe72 1 t = true → BT.isStd (BT.D 0 t) = true → NodeBigT_82 t
+
+/-- **修理した条項 (`Ω₁` 以上の元)。** §78 の `LocalK2Fst_78` に「成分ぜんぶが
+    `BT.isStd (ψ₀ ·)`」を足したもの。**足りない分は §82.6 がちょうど言っている。** -/
+def LocalK2BigC_82 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    (BT.toL a).all (fun t => BT.isStd (BT.D 0 t)) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.1 → le (reg 1) y = true →
+        lt y (ddOf75 (reg 1) ac) = true
+
+/-- 修理した条項 (元ぜんぶ)。 -/
+def LocalK2FstC_82 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    (BT.toL a).all (fun t => BT.isStd (BT.D 0 t)) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.1 → lt y (ddOf75 (reg 1) ac) = true
+
+/-- **§82.7 の主定理。** 正しい側条件つきの節ごとの残余から修理した条項が出る。
+    §82.1・§82.2 の局所化がそのまま効き、成分の側条件は仮説から只で降りる。 -/
+theorem localK2BigC_of_nodeStd82 (H : NodeBigStd_82) : LocalK2BigC_82 := by
+  intro a hb hs hc hi hl ac hac hle y hy hge
+  obtain ⟨p, hp, hpe⟩ := wcnf_fst_wA82 (toList (dict a)) ac hac
+  obtain ⟨_, t, ht, hte⟩ := toList_dict82 a p (bigPart_sub _ _ p hp)
+  rw [hte] at hpe
+  have hyt : y ∈ Kset (reg 1) (dict t) := by
+    refine mem_Kset_wA (w := reg 1) ?_
+    rw [← hpe]; exact hy
+  have hpow : lt y (powOf80 (reg 1) ac) = true :=
+    H t (btLe72_toL82 1 a hb t ht) (List.all_eq_true.mp hc t ht) ac hpe hle y hyt hge
+  obtain ⟨hcl, hd⟩ := inT_toList (dict a) hi
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcl hd
+    (ltM_toList (dict a) hi hl)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hz := (wcnf_snd_ne_zero80 (toList (dict a)) hcl ac hac).2
+  exact lt_of_lt_of_le3 (inT_le_fragR y (inT_mem_Kset75 ac.1 hi1 _ y hy))
+    (inT_le_fragR _ (inT_powOf80 (inT_reg 1) hi1))
+    (inT_le_fragR _ (inT_ddOf75 (inT_reg 1) hi1 hi2))
+    hpow (le_powOf_ddOf80 (inT_reg 1) hi1 hi2 hz)
+
+/-- `Ω₁` より下の元は §80.3 が只で片づける — だから修理は両方の形で同じ。 -/
+theorem localK2FstC_of_bigC82 (H : LocalK2BigC_82) : LocalK2FstC_82 := by
+  intro a hb hs hc hi hl ac hac hle y hy
+  obtain ⟨hcl, hd⟩ := inT_toList (dict a) hi
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcl hd
+    (ltM_toList (dict a) hi hl)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hz := (wcnf_snd_ne_zero80 (toList (dict a)) hcl ac hac).2
+  have hyi : inT y = true := inT_mem_Kset75 ac.1 hi1 _ y hy
+  by_cases hlt : lt y (reg 1) = true
+  · exact lt_dd_of_lt_reg80 omegaNF_reg1_80 hi1 hi2 hz hy hlt
+  · refine H a hb hs hc hi hl ac hac hle y hy ?_
+    rcases lt_comparable_inT hyi (inT_reg 1) with h | h | h
+    · exact absurd h hlt
+    · rw [h]; exact Evidence.WF.le_self _
+    · show ((reg 1 == y) || lt (reg 1) y) = true
+      rw [h]; exact Bool.or_true _
+
+end
+
+
+/-! ### §82.8 測定 (凍結)
+
+**構成を先に書く。**  母集団は §78.5 の三つと §80.7 の一つを**そのまま**使う —
+`pop78` (領域の中、129 個)、`bmp78` (`ψ₀` を `ψ₂`・`ψ₃` に差し替えた 217 個)、
+`nst78` (段の上限は満たすが標準でない 118 個)、`hi80` (標準のまま `ψ₂` を内側に持つ
+223 個)。あわせて `grp82` は 687 項。§82 が語るのは項ではなく**節**なので、そこから
+四つ導く。
+
+    S82    = grp82 の各項の部分項をぜんぶ、重複を除いたもの           1722 節
+    hypA82 = grp82 のうち `LocalK2Big_80` の仮説をぜんぶ満たすもの
+             (`btLe72 1`・`BT.isStd (ψ₀ ·)`・`inT (dict ·)`・`dict · < M`)   201 項
+    hypB82 = hypA82 の成分のうち**走査がほんとうに届くもの**          141 節、発火 100 歩
+    BP82   = grp82 の像の `Ω₁` 以上の成分                             518 個
+
+**反証はこの四群の中には無い** (201 項でも 373 部分項でも 0)。そこで**一群だけ足す**。
+§82.6 の反証は「大きい頭 ⊕ 悪い節」の形なので、その形をぜんぶ作る。
+
+    L1_82  = S82 の段 1 以下の `ψ₁` 節ぜんぶ                          421 節
+    bad82  = そのうち `BT.isStd` は満たすが `BT.isStd (ψ₀ ·)` を満たさないもの  38 節
+    refFam82 = `h ⊕ t` (h ∈ L1_82, t ∈ bad82) のうち仮説をぜんぶ満たすもの  5949 項
+
+**`refFam82` の 5949 項のうち 528 項が `LocalK2Big_80` を破る**。最小は記号 15 個の
+`aBad82`。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+def grp82 : List BT := pop78 ++ bmp78 ++ nst78 ++ hi80
+def subs82 : BT → List BT
+  | .zero => [BT.zero]
+  | .D u a => BT.D u a :: subs82 a
+  | .sum a b => BT.sum a b :: (subs82 a ++ subs82 b)
+def S82 : List BT := (grp82.flatMap subs82).eraseDups
+def std0_82 (t : BT) : Bool := BT.isStd (BT.D 0 t)
+def fireN82 (t : BT) : Bool := le (reg 1) (wA (reg 1) (dict t))
+def okHyp82 (a : BT) : Bool :=
+  btLe72 1 a && std0_82 a && inT (dict a) && lt (dict a) M
+/-- `K` を `wA` の側で見る形 — もとの条項が語るのはこちら。 -/
+def nodeA82 (t : BT) : Bool :=
+  (Kset (reg 1) (wA (reg 1) (dict t))).all fun y =>
+    !(le (reg 1) y) || lt y (powOf80 (reg 1) (wA (reg 1) (dict t), TM.Term.one))
+def hypA82 : List BT := grp82.filter okHyp82
+def bigNodes82 (a : BT) : List BT :=
+  (BT.toL a).filter fun t => (bigPart (reg 1) (toList (dict a))).contains (dict t)
+def hypB82 : List BT := (hypA82.flatMap bigNodes82).eraseDups
+def hypA82' : List BT := grp82.filter fun a => std0_82 a && inT (dict a) && lt (dict a) M
+def hypB82' : List BT := (hypA82'.flatMap bigNodes82).eraseDups
+def bigComps82 (a : BT) : List Term := (toList (dict a)).filter (fun p => !lt p (reg 1))
+def BP82 : List Term := (grp82.flatMap bigComps82).eraseDups
+def isD1_82 : BT → Bool | .D 1 _ => true | _ => false
+def L1_82 : List BT := S82.filter fun t => btLe72 1 t && isD1_82 t
+def bad82 : List BT := L1_82.filter fun t => BT.isStd t && !(std0_82 t)
+def refFam82 : List BT := (L1_82.flatMap fun h => bad82.map fun t => BT.sum h t).filter okHyp82
+
+-- 母集団の大きさ。
+-- (重い測定。数は §82 の前書きに記録) #guard (grp82.length, S82.length) == (687, 1722)
+#guard (hypA82.length, hypB82.length, (hypB82.filter fireN82).length) == (201, 141, 100)
+#guard BP82.length == 518
+-- (重い測定。数は §82 の前書きに記録) #guard (L1_82.length, bad82.length, refFam82.length) == (421, 38, 5949)
+
+/-! **否定 1 — 残る条項は偽、しかも §78・§80 の母集団は一つも見ていない。**
+`refFam82` の 5949 項のうち **528 項**で `LocalK2Big_80` が破れる。四群そのもの
+(201 項) でも、その部分項ぜんぶ (373 項) でも反証は **0** — だから §78 の
+「標準なら落ちない」も §80 の「87 の失敗はぜんぶ領域の外」も、母集団の形の話で
+あって定理ではなかった。`not_localK2Big_80` が最小の反証を凍結する。 -/
+
+-- (重い測定。数は §82 の前書きに記録) #guard (refFam82.filter fun a => !(k2bigb82 a)).length == 528
+#guard (hypA82.filter fun a => !(k2bigb82 a)).length == 0
+-- (重い測定。数は §82 の前書きに記録) #guard (S82.filter fun a => okHyp82 a).length == 373
+-- (重い測定。数は §82 の前書きに記録) #guard ((S82.filter okHyp82).filter fun a => !(k2bigb82 a)).length == 0
+-- (重い測定。数は §82 の前書きに記録) #guard (refFam82.filter fun a => !(k2bigb82 a) && BT.size a == 15).length == 1
+-- (重い測定。数は §82 の前書きに記録) #guard (refFam82.filter fun a => !(k2bigb82 a) && BT.size a < 15).length == 0
+
+/-! **否定 2 — 落ちるのはいつも成分の側。** 反証する 528 項はどれも
+「成分のどれかが `BT.isStd (ψ₀ ·)` を満たさない」形で、**修理した条項 (§82.7) の
+仮説を満たすものは一つも無い**。逆に、四群の中でも `hypB82` の 141 節のうち
+1 節は `BT.isStd (ψ₀ ·)` を満たさない — 継承しないことは領域の中でも起きている。 -/
+
+-- (重い測定。数は §82 の前書きに記録) #guard (refFam82.filter fun a => (BT.toL a).all std0_82).length == 0
+#guard (hypB82.filter fun t => !(std0_82 t)).length == 1
+#guard (hypB82.filter fun t => !(BT.isStd t)).length == 0
+
+/-! **肯定 1 — 正しい側条件をつければ落ちない。** 段 1 以下の部分項 729 個のうち、
+発火して `BT.isStd (ψ₀ ·)` を満たす 265 節で節ごとの条項は反例 0。`BT.isStd` だけに
+ゆるめると 10 節で落ちる (`not_nodeBigT_nBad82` がその最小)。
+`hypB82` の 100 歩でも反例 0 で、**空回りではない** — 13 節で `K_{Ω₁} (dict t)` に
+`Ω₁` 以上の元があり、110 節では `K` が空 (`nodeBigT_of_empty82` が只で片づける分)。 -/
+
+-- (重い測定。数は §82 の前書きに記録) #guard (S82.filter fun t => btLe72 1 t).length == 729
+-- (重い測定。数は §82 の前書きに記録) #guard (S82.filter fun t => btLe72 1 t && fireN82 t && std0_82 t).length == 265
+-- (重い測定。数は §82 の前書きに記録) #guard (S82.filter fun t => btLe72 1 t && fireN82 t && std0_82 t && !(nodeb82 t)).length == 0
+-- (重い測定。数は §82 の前書きに記録) #guard (S82.filter fun t => btLe72 1 t && fireN82 t && BT.isStd t && !(nodeb82 t)).length == 10
+#guard (hypB82.filter fun t => fireN82 t && !(nodeb82 t)).length == 0
+#guard (hypB82.filter fun t =>
+  ((Kset (reg 1) (dict t)).filter (le (reg 1))).length > 0).length == 13
+#guard (hypB82.filter fun t => (Kset (reg 1) (dict t)).isEmpty).length == 110
+
+/-! **肯定 2 — 節の形に移すのに払った代償は、段の上限の中では只。** §82.4 の条項は
+`K_{Ω₁} (dict t)` を見るが、もとの条項が語るのは `K_{Ω₁} (wA Ω₁ (dict t))` だけ。
+段 1 以下では判定は一度も食い違わない (`hypB82` の 100 歩でも、`S82` の標準な
+265 節でも 0)。段の上限を外すと 3 歩だけ食い違い、そこは `wA` 側なら通る。 -/
+
+#guard (hypB82.filter fun t => fireN82 t && (nodeb82 t != nodeA82 t)).length == 0
+-- (重い測定。数は §82 の前書きに記録) #guard (S82.filter fun t =>
+--     btLe72 1 t && fireN82 t && std0_82 t && (nodeb82 t != nodeA82 t)).length == 0
+#guard hypB82'.length == 343
+#guard (hypB82'.filter fun t => fireN82 t && !(nodeb82 t)).length == 3
+#guard (hypB82'.filter fun t => fireN82 t && !(nodeA82 t)).length == 0
+#guard (hypB82'.filter fun t => fireN82 t && !(nodeb82 t) && btLe72 1 t).length == 0
+
+/-! **肯定 3 — 閉じた形 (測定のみ、証明ではない)。** 大きい成分 `p` について
+`Ω₁ · wA Ω₁ p` は `log p` の `Ω₁` 以上の部分に**ぴったり等しい** — 518 個で反例 0。
+だから節ごとの条項は「`p` の `K` の大きい元が `ω^(log p の大きい部分)` より下」と
+読める。`W^(wA Ω₁ p ⊖ Ω₁) ≤ p` も 518 個で反例 0 で、逆向きは 83 個で落ちる。 -/
+
+#guard (BP82.filter fun p => !(mulL (reg 1) (wA (reg 1) p)
+  == ofList ((toList (logOm p)).filter (fun q => !lt q (reg 1))))).length == 0
+#guard (BP82.filter fun p =>
+  !(le (powOf80 (reg 1) (wA (reg 1) p, TM.Term.one)) p)).length == 0
+#guard (BP82.filter fun p =>
+  !(le p (powOf80 (reg 1) (wA (reg 1) p, TM.Term.one)))).length == 83
+
+end
+
+/-! ### §82.9 公理 -/
+
 end Evidence.Region
