@@ -27584,4 +27584,789 @@ end
 
 /-! ### §73.7 公理 -/
 
+/-! ## §74 THE ORDER BRIDGE — WHICH HALF IS FREE, WHAT THE MEASUREMENT MEASURES,
+    AND EXACTLY WHERE IT STOPS
+
+§71 reduced row 326's decreasing and increasing clauses to ONE hypothesis, the order bridge
+`VOfLtA71`, and split cofinality so that its index-side half rides on the OTHER direction,
+`VOfLtA71'`.  §74 is about those two.  **The second one stops being an independent
+hypothesis.**  It is a THEOREM given the first, so `certIn_t326_bt71`'s eight hypotheses
+become seven, and every measurement of `VOfLtA71` is at the same time a measurement of
+`VOfLtA71'`.  The bridge ITSELF is NOT proved; §74.6 says in two named pieces what is left,
+and §74.8 says what was swept.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §74.1  **THE BUCHHOLZ ORDER IS TRICHOTOMOUS.**  `toL` only ever returns `.D` atoms —
+         `atomsL_any74` proves `AtomsL` for EVERY `BT`, so it is a theorem and not a side
+         condition, and `BT.ltL`'s junk branch (`| _, _ => false`, the one that makes the
+         decision partial) is unreachable on component lists.  `ltS_tricho74` is trichotomy
+         by induction on `sizeLB`, `lt_tricho74` lifts it to `BT.lt`.  The one hypothesis it
+         does need is `Hwf74`: every `.D`'s argument must satisfy `BT.ofL a.toL = a`.
+         **That is not decoration.**  `BT.zero` and `BT.sum BT.zero BT.zero` have the same
+         component list and are different terms, so `.D 0 .zero` and `.D 0 (.sum .zero .zero)`
+         are incomparable AND unequal — §74.8 freezes the witness.
+
+  §74.4  **AND IT IS IRREFLEXIVE AND ASYMMETRIC, with no side condition at all.**
+         `lt_irrefl74` / `lt_asymm74` hold for every `BT`, `Hwf74` or not: those two need
+         only that the recursion follows the same `if`-chain on both sides.  `lt_tricho3_74`
+         puts the three together in the exclusive form — the Buchholz-side counterpart of
+         `Evidence/WF.lean` §8.4's `lt_trichotomy_inT`.
+
+  §74.2  The sub-region's values are hereditarily rebuildable: `nfSum_bValA7174`
+         unconditionally, `hwf74_bValA7174` from `lvlLe 1` through §71.6's
+         `bArg_eq_bValA71_71` (below level 2 the collapsing branch never fires, so the
+         argument of every `.D` is again a `bValA71`).  Hence `lt_tricho_bValA7174`:
+         any two sub-region indices are comparable on the Buchholz side.
+
+  §74.3  **`bVal` IS A FUNCTION OF `bValA71`.**  `bVal_eq_strip74`:
+
+             bVal t = BT.ofL (stripL74 (bValA71 t).toL)         (lvlLe 1 t)
+
+         where `stripL74` drops a leading `ψ₀0` and does nothing else.  That is the ENTIRE
+         leading-`(0,0)` exception of §71.2, stated in the direction that can be used
+         backwards: equal `bValA71` forces equal `bVal`, hence equal `vOf`
+         (`vOf_eq_of_bValA7174`).  Without it the "the two values are equal" branch of the
+         trichotomy cannot be closed, and the reduction below does not go through.
+         (Measured beyond its hypothesis: it holds on all 1291 trees with ≤ 4 nodes and
+         levels < 3 and all 3941 with levels < 4.  `lvlLe 1` is used only to know
+         `bArg w c = 0 ⟺ c = nil`, which is where the fold would have to be analysed.)
+
+  §74.5  **THE BRIDGE ONLY HAS TO BE PROVED IN ONE DIRECTION.**
+
+             vOfLtA71'_of74 (Hp) (Hr) (HV : VOfLtA71) : VOfLtA71'
+
+         Three ingredients and nothing else: trichotomy on the Buchholz side (§74.1/§74.2),
+         `vOf` being well defined on `bValA71` (§74.3), and the linearity of `lt` on 𝔗(M)
+         (`Evidence/WF.lean` §8.4 — that is all `Hp`/`Hr` are for here, they supply
+         `inT (vOf ·)` and nothing else).  The same three give `vOfInj_of74`: **the bridge
+         PROVES that `vOf` is injective on the sub-region**, which §71 could only measure.
+         The converse `vOfLtA71_of74` needs that injectivity back as a hypothesis
+         (`VOfInjA74`), and `vOfLt_iff74` packages the pair:
+         `VOfLtA71 ↔ VOfInjA74 ∧ VOfLtA71'`.
+
+  §74.6  **THE MEASURED FORM IS THE HYPOTHESIS, AND THE HYPOTHESIS IS `dict`.**  §71.8
+         measured an EQUALITY of Booleans, not an implication.  `bridgeEq_iff74` proves
+         `BridgeEq74 ↔ VOfLtA71` (given `Hp`/`Hr`), so `bridgeFail71 == 0` measures the
+         hypothesis itself and nothing weaker.  `vOfLtA71_of_dict74` then splits the bridge
+         into two named halves:
+
+             VOfIsDict74 :  vOf t = dict (bValA71 t)              on the sub-region
+             DictLtA74   :  dict preserves `BT.lt` on those values
+
+         `DictLtA74` is `Trans/Dict.lean`'s acceptance record item (C) verbatim.
+         `VOfIsDict74` is the bookkeeping half — the `1 +` of `vOf` against the leading
+         `ψ₀0` of `bValA71` — and it is NOT free: 2390 of `subP 8`'s 2397 indices have a
+         leading component that is not `ψ₀0`, and for those the identity is exactly
+         `1 + ψ₀(α) = ψ₀(α)`, i.e. `ψ₀(α) ≥ ω` for `α ≠ 0`, which needs `collapse`
+         unfolded.  §74 does not unfold it.
+
+  §74.7  `certIn_t326_74'` — §71's best form with `VOfLtA71'` deleted.  Row 326's
+         certificate now stands on FIVE hypotheses: §68's `PsiIdxOKStd` / `RegionStd`, the
+         bridge `VOfLtA71`, the density half `CofDenseS1`, and `BCofIn71`, which mentions
+         no `dict` at all.  §71's best was six.  (`certIn_t326_74` does the same to
+         `certIn_t326_bt71`, which still carries §71.7's two cores as hypotheses.)
+
+WHAT THE MEASUREMENT SAYS (§74.8 gives every construction).  **The negative result first:
+STANDARDNESS IS ESSENTIAL AND THE LEVEL BOUND IS NOT ENOUGH.**  On `nf1_74 6` — the 465
+normal-form indices with ≤ 5 nodes and levels ≤ 1, standard or not — the bridge fails on
+51 143 of the 216 225 ordered pairs.  305 of the 465 are non-standard, and EVERY failing
+pair has a non-standard endpoint: restricted to the 160 standard ones (= `subP 6`) there is
+not one failure.  So `stdB1` cannot be relaxed to `nfB && lvlLe 1`, and the smallest witness
+is `(0,0)(1,0)` against `(0,0)(0,0)(1,1)`, the second of which `stdB` rejects.
+
+The same split is confirmed one size up (`s74sweep3.lean`): on `nf1_74 7`'s 2772 indices —
+2163 of them non-standard — 2 233 666 of the 7 683 984 pairs fail, and ZERO of the failures
+has both endpoints standard.
+
+Positively: zero counterexamples to the equality on `subP 6` (25 600 pairs), `subP 7`
+(370 881, §71.8's population) and `subP 8` (5 745 609, `s74sweep1.lean`), and the sweep is
+not vacuous — 12 720 of `subP 6`'s 25 600 pairs have `BT.lt` true.  `vOf` and `bValA71` are
+both injective on `subP 8`.  **A more general form falls out of the measurement, not of the
+proof:** the same equality holds on `popS 3 6` (235 standard indices, levels 0..2),
+`popS 4 6` (250, levels 0..3), `popS 3 7` (1105) and `popS 4 7` (1263) — 2 816 194 further
+pairs in `s74sweep2.lean` — i.e. §69's un-restricted `VOfLtStd` shape, with no failure.
+`VOfIsDict74` is measured well past the sub-region: `subP 8` (2397), `popNFB 3 7` (4958,
+levels 0..2) and `allB71 3 6` (11 497, no normal form and no standardness), zero mismatches.
+
+WHAT IS **NOT** CLAIMED.  `VOfLtA71`, `VOfInjA74`, `VOfIsDict74`, `DictLtA74`, `CofDenseS1`
+and `BCofIn71` are NAMED AND UNPROVED.  §74 proves nothing about `dict`: not that it
+preserves the order, not that it is injective, not that its image is `vOf`.  The
+`popS 3 6` / `popS 4 6` measurement is a measurement — nothing here says the bridge holds
+above level 1, and §71.6's collapsing branch, which §74.2 relies on being unreachable, does
+fire at level 2.  Nothing here repairs `LimCofS1`: `CofDenseS1` still stands untouched, and
+§69's counterexample outside the sub-region is untouched too. -/
+
+/-! ### §74.1 Buchholz 側の順序は線型である -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- `toL` が返すのはいつでも `.D` の列。`AtomsL` は仮定ではなく定理である。 -/
+theorem atomsL_any74 : ∀ t : BT, AtomsL t
+  | .zero => atomsL_zero
+  | .D u a => atomsL_D u a
+  | .sum a b => by
+      intro x hx
+      rcases List.mem_append.mp (show x ∈ a.toL ++ b.toL from hx) with h | h
+      · exact atomsL_any74 a x h
+      · exact atomsL_any74 b x h
+
+theorem atoms_toL74 (t : BT) : Atoms t.toL := atomsL_any74 t
+
+/-- **遺伝的な `ofL` 正規性。** どの `.D` の引数も成分から組み直せる。 -/
+def Hwf74 : BT → Prop
+  | .zero => True
+  | .D _ a => NfSum a ∧ Hwf74 a
+  | .sum a b => Hwf74 a ∧ Hwf74 b
+
+theorem hwf74_zero : Hwf74 .zero := trivial
+
+theorem hwf74_D {u : Nat} {a : BT} (h1 : NfSum a) (h2 : Hwf74 a) : Hwf74 (.D u a) := ⟨h1, h2⟩
+
+theorem hwf74_toL : ∀ (t : BT), Hwf74 t → ∀ z ∈ t.toL, Hwf74 z
+  | .zero => by intro _ z hz; exact absurd hz (by simp [Trans.Dict.BT.toL])
+  | .D u a => by
+      intro h z hz
+      rw [List.mem_singleton.mp (show z ∈ [BT.D u a] from hz)]; exact h
+  | .sum a b => by
+      intro h z hz
+      rcases List.mem_append.mp (show z ∈ a.toL ++ b.toL from hz) with hh | hh
+      · exact hwf74_toL a h.1 z hh
+      · exact hwf74_toL b h.2 z hh
+
+theorem hwf74_ofL : ∀ (l : List BT), (∀ z ∈ l, Hwf74 z) → Hwf74 (BT.ofL l)
+  | [], _ => trivial
+  | [x], h => h x (List.Mem.head _)
+  | x :: y :: r, h => ⟨h x (List.Mem.head _),
+      hwf74_ofL (y :: r) (fun z hz => h z (List.Mem.tail x hz))⟩
+
+theorem hwf74_bplus {a b : BT} (ha : Hwf74 a) (hb : Hwf74 b) : Hwf74 (bplus a b) := by
+  refine hwf74_ofL _ (fun z hz => ?_)
+  rcases List.mem_append.mp hz with h | h
+  · exact hwf74_toL a ha z h
+  · exact hwf74_toL b hb z h
+
+/-- **§74.1 の主定理。** `ltS` は遺伝的に正規な `.D` の列の上で三分律を満たす。 -/
+theorem ltS_tricho74 : ∀ (n : Nat) (x y : List BT), Atoms x → Atoms y →
+    (∀ z ∈ x, Hwf74 z) → (∀ z ∈ y, Hwf74 z) → sizeLB x + sizeLB y ≤ n →
+    ltS x y = true ∨ x = y ∨ ltS y x = true := by
+  intro n
+  induction n with
+  | zero =>
+    intro x y _ _ _ _ hn
+    cases x with
+    | nil => cases y with
+      | nil => exact Or.inr (Or.inl rfl)
+      | cons z zs =>
+        exact absurd hn (by have := one_le_size z; show ¬ (0 + (z.size + sizeLB zs) ≤ 0); omega)
+    | cons z zs =>
+      exact absurd hn (by have := one_le_size z
+                          show ¬ ((z.size + sizeLB zs) + sizeLB y ≤ 0); omega)
+  | succ k ih =>
+    intro x y hax hay hwx hwy hn
+    cases x with
+    | nil => cases y with
+      | nil => exact Or.inr (Or.inl rfl)
+      | cons y0 ys => exact Or.inl (by
+          obtain ⟨v, b, rfl⟩ := hay y0 (List.Mem.head _)
+          exact ltS_nil_cons _ _)
+    | cons x0 xs =>
+      obtain ⟨u, a, rfl⟩ := hax x0 (List.Mem.head _)
+      cases y with
+      | nil => exact Or.inr (Or.inr (ltS_nil_cons _ _))
+      | cons y0 ys =>
+        obtain ⟨v, b, rfl⟩ := hay y0 (List.Mem.head _)
+        have hsx : sizeLB (BT.D u a :: xs) = (1 + a.size) + sizeLB xs := rfl
+        have hsy : sizeLB (BT.D v b :: ys) = (1 + b.size) + sizeLB ys := rfl
+        by_cases h3 : u < v
+        · exact Or.inl (by rw [ltS_cons u a xs v b ys, if_pos h3])
+        · by_cases h4 : v < u
+          · exact Or.inr (Or.inr (by rw [ltS_cons v b ys u a xs, if_pos h4]))
+          · by_cases h5 : (a == b) = true
+            · have hab : a = b := bt_eq_of_beq71 a b h5
+              subst hab
+              have hba : (a == a) = true := bt_beq_self71 a
+              rcases ih xs ys (fun z hz => hax z (List.Mem.tail _ hz))
+                  (fun z hz => hay z (List.Mem.tail _ hz))
+                  (fun z hz => hwx z (List.Mem.tail _ hz))
+                  (fun z hz => hwy z (List.Mem.tail _ hz))
+                  (by have := one_le_size a; omega) with h | h | h
+              · exact Or.inl (by
+                  rw [ltS_cons u a xs v a ys, if_neg h3, if_neg h4, if_pos hba]; exact h)
+              · exact Or.inr (Or.inl (by
+                  rw [h, show u = v from Nat.le_antisymm (Nat.not_lt.mp h4) (Nat.not_lt.mp h3)]))
+              · exact Or.inr (Or.inr (by
+                  rw [ltS_cons v a ys u a xs, if_neg h4, if_neg h3, if_pos hba]; exact h))
+            · have hwa : Hwf74 (BT.D u a) := hwx _ (List.Mem.head _)
+              have hwb : Hwf74 (BT.D v b) := hwy _ (List.Mem.head _)
+              have hta := sizeLB_toL a
+              have htb := sizeLB_toL b
+              rcases ih a.toL b.toL (atoms_toL74 a) (atoms_toL74 b)
+                  (hwf74_toL a hwa.2) (hwf74_toL b hwb.2) (by omega) with h | h | h
+              · exact Or.inl (by
+                  rw [ltS_cons u a xs v b ys, if_neg h3, if_neg h4, if_neg h5]; exact h)
+              · exact absurd (show (a == b) = true from by
+                    rw [show a = b from by
+                      rw [← show BT.ofL a.toL = a from hwa.1,
+                        ← show BT.ofL b.toL = b from hwb.1, h]]
+                    exact bt_beq_self71 b) h5
+              · exact Or.inr (Or.inr (by
+                  rw [ltS_cons v b ys u a xs, if_neg h4, if_neg h3,
+                    if_neg (show ¬((b == a) = true) from by
+                      intro hc; exact h5 (by rw [bt_eq_of_beq71 b a hc]; exact bt_beq_self71 a))]
+                  exact h))
+
+/-- **`BT.lt` の三分律。** -/
+theorem lt_tricho74 (s t : BT) (hs : Hwf74 s) (ht : Hwf74 t) (hns : NfSum s) (hnt : NfSum t) :
+    BT.lt s t = true ∨ s = t ∨ BT.lt t s = true := by
+  rw [lt_eq_ltS, lt_eq_ltS]
+  rcases ltS_tricho74 (sizeLB s.toL + sizeLB t.toL) s.toL t.toL
+      (atoms_toL74 s) (atoms_toL74 t) (hwf74_toL s hs) (hwf74_toL t ht)
+      (Nat.le_refl _) with h | h | h
+  · exact Or.inl h
+  · exact Or.inr (Or.inl (by rw [← show BT.ofL s.toL = s from hns,
+      ← show BT.ofL t.toL = t from hnt, h]))
+  · exact Or.inr (Or.inr h)
+
+end
+
+/-! ### §74.2 部分領域の値は遺伝的に正規 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem nfSum_bValA7174 : ∀ t : B, NfSum (bValA71 t)
+  | .nil => nfSum_zero
+  | .nd _ r c => nfSum_bplus (bValA71 r) (BT.D _ (bArg _ c)) (atomsL_any74 _) (atomsL_any74 _)
+
+theorem hwf74_bValA7174 : ∀ (t : B), lvlLe 1 t = true → Hwf74 (bValA71 t)
+  | .nil => fun _ => trivial
+  | .nd w r c => by
+      intro h
+      obtain ⟨_, hr, hc⟩ := (lvlLe_nd_iff 1 w r c).mp h
+      show Hwf74 (bplus (bValA71 r) (BT.D w (bArg w c)))
+      refine hwf74_bplus (hwf74_bValA7174 r hr) (hwf74_D ?_ ?_)
+      · rw [bArg_eq_bValA71_71 c w hc]; exact nfSum_bValA7174 c
+      · rw [bArg_eq_bValA71_71 c w hc]; exact hwf74_bValA7174 c hc
+
+theorem append_singleton_ne_nil74 (l : List BT) (x : BT) : l ++ [x] ≠ [] := by
+  cases l with
+  | nil => exact List.cons_ne_nil x []
+  | cons z zs => exact List.cons_ne_nil z (zs ++ [x])
+
+theorem toL_bValA71_ne_nil74 : ∀ (t : B), t ≠ .nil → (bValA71 t).toL ≠ []
+  | .nil => fun h => absurd rfl h
+  | .nd w r c => fun _ => by
+      rw [toL_bValA71_nd w r c]; exact append_singleton_ne_nil74 _ _
+
+theorem bValA71_ne_zero74 (t : B) (h : t ≠ .nil) : bValA71 t ≠ .zero := by
+  intro hc
+  exact toL_bValA71_ne_nil74 t h (by rw [hc]; rfl)
+
+/-- **部分領域での三分律。** -/
+theorem lt_tricho_bValA7174 (u t : B) (hu : lvlLe 1 u = true) (ht : lvlLe 1 t = true) :
+    BT.lt (bValA71 u) (bValA71 t) = true ∨ bValA71 u = bValA71 t
+      ∨ BT.lt (bValA71 t) (bValA71 u) = true :=
+  lt_tricho74 _ _ (hwf74_bValA7174 u hu) (hwf74_bValA7174 t ht)
+    (nfSum_bValA7174 u) (nfSum_bValA7174 t)
+
+end
+
+/-! ### §74.3 `bVal` は `bValA71` の関数である — 先頭の `(0,0)` を落とすだけ -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 先頭が `ψ₀0` ならそれを落とす。`bVal` と `bValA71` の差はこれだけ。 -/
+def stripL74 : List BT → List BT
+  | BT.D 0 BT.zero :: rest => rest
+  | l => l
+
+theorem stripL74_cons_eq74 (zs : List BT) : stripL74 (BT.D 0 BT.zero :: zs) = zs := rfl
+
+theorem stripL74_cons_ne74 (z : BT) (zs : List BT) (h : z ≠ BT.D 0 BT.zero) :
+    stripL74 (z :: zs) = z :: zs := by
+  cases z with
+  | zero => rfl
+  | sum p q => rfl
+  | D u a =>
+    cases u with
+    | zero =>
+      cases a with
+      | zero => exact absurd rfl h
+      | D p b => rfl
+      | sum p q => rfl
+    | succ k => rfl
+
+theorem stripL74_append74 (l m : List BT) (h : l ≠ []) :
+    stripL74 (l ++ m) = stripL74 l ++ m := by
+  cases l with
+  | nil => exact absurd rfl h
+  | cons z zs =>
+    by_cases hz : z = BT.D 0 BT.zero
+    · subst hz
+      rw [List.cons_append, stripL74_cons_eq74, stripL74_cons_eq74]
+    · rw [List.cons_append, stripL74_cons_ne74 z (zs ++ m) hz,
+        stripL74_cons_ne74 z zs hz, List.cons_append]
+
+theorem atoms_stripL74 (l : List BT) (h : Atoms l) : Atoms (stripL74 l) := by
+  cases l with
+  | nil => exact h
+  | cons z zs =>
+    by_cases hz : z = BT.D 0 BT.zero
+    · subst hz; rw [stripL74_cons_eq74]; exact fun x hx => h x (List.Mem.tail _ hx)
+    · rw [stripL74_cons_ne74 z zs hz]; exact h
+
+/-- **§74.3 の主定理。** `bVal` は `bValA71` の成分列から先頭の `ψ₀0` を落として組み直したもの。
+    段 1 以下でのみ主張する — `bArg w c = 0 ⟺ c = nil` がそこでしか言えないため。 -/
+theorem bVal_eq_strip74 : ∀ (t : B), lvlLe 1 t = true →
+    bVal t = BT.ofL (stripL74 (bValA71 t).toL) := by
+  intro t
+  induction t with
+  | nil => intro _; rfl
+  | nd w r c ihr _ =>
+    intro h
+    obtain ⟨_, hr, hc⟩ := (lvlLe_nd_iff 1 w r c).mp h
+    have hA : bArg w c = bValA71 c := bArg_eq_bValA71_71 c w hc
+    cases r with
+    | nil =>
+      by_cases hc0 : c = B.nil
+      · subst hc0
+        by_cases hw0 : w = 0
+        · subst hw0
+          show bplus (bVal B.nil) BT.zero = _
+          rw [toL_bValA71_nd 0 B.nil B.nil,
+            show (bValA71 B.nil).toL = ([] : List BT) from rfl,
+            show bArg 0 B.nil = BT.zero from rfl, List.nil_append, stripL74_cons_eq74]
+          rfl
+        · show bplus (bVal B.nil) (if (B.nil == B.nil && w == 0 && B.nil == B.nil) = true
+              then BT.zero else BT.D w (bArg w B.nil)) = _
+          rw [if_neg (show ¬((B.nil == B.nil && w == 0 && B.nil == B.nil) = true) from by
+              intro hcc
+              obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hcc
+              obtain ⟨_, h3⟩ := (Bool.and_eq_true _ _).mp h1
+              exact hw0 (eq_of_beq h3))]
+          rw [toL_bValA71_nd w B.nil B.nil,
+            show (bValA71 B.nil).toL = ([] : List BT) from rfl, List.nil_append,
+            stripL74_cons_ne74 _ _ (show BT.D w (bArg w B.nil) ≠ BT.D 0 BT.zero from by
+              intro hcc; injection hcc with h1 _; exact hw0 h1)]
+          rfl
+      · show bplus (bVal B.nil) (if (B.nil == B.nil && w == 0 && c == B.nil) = true
+              then BT.zero else BT.D w (bArg w c)) = _
+        rw [if_neg (show ¬((B.nil == B.nil && w == 0 && c == B.nil) = true) from by
+            intro hcc
+            obtain ⟨_, h2⟩ := (Bool.and_eq_true _ _).mp hcc
+            exact hc0 (of_decide_eq_true h2))]
+        rw [toL_bValA71_nd w B.nil c,
+          show (bValA71 B.nil).toL = ([] : List BT) from rfl, List.nil_append,
+          stripL74_cons_ne74 _ _ (show BT.D w (bArg w c) ≠ BT.D 0 BT.zero from by
+            intro hcc; injection hcc with _ h2
+            rw [hA] at h2
+            exact bValA71_ne_zero74 c hc0 h2)]
+        rfl
+    | nd v s a =>
+      have hrne : (B.nd v s a) ≠ B.nil := fun hcc => B.noConfusion hcc
+      have hnn : (bValA71 (B.nd v s a)).toL ≠ [] := toL_bValA71_ne_nil74 _ hrne
+      have hbr : bVal (B.nd v s a) = BT.ofL (stripL74 (bValA71 (B.nd v s a)).toL) := ihr hr
+      have htbr : (bVal (B.nd v s a)).toL = stripL74 (bValA71 (B.nd v s a)).toL := by
+        rw [hbr]
+        exact toL_ofL _ (atoms_stripL74 _ (atoms_toL74 _))
+      show bplus (bVal (B.nd v s a)) (if (B.nd v s a == B.nil && w == 0 && c == B.nil) = true
+          then BT.zero else BT.D w (bArg w c)) = _
+      rw [if_neg (show ¬((B.nd v s a == B.nil && w == 0 && c == B.nil) = true) from by
+          intro hcc
+          obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hcc
+          obtain ⟨h2, _⟩ := (Bool.and_eq_true _ _).mp h1
+          exact Bool.noConfusion h2)]
+      show BT.ofL ((bVal (B.nd v s a)).toL ++ (BT.D w (bArg w c)).toL) = _
+      rw [htbr, toL_bValA71_nd w (B.nd v s a) c, stripL74_append74 _ _ hnn]
+      rfl
+
+/-- **`bValA71` が決まれば `vOf` も決まる。** -/
+theorem vOf_eq_of_bValA7174 (u t : B) (hu : lvlLe 1 u = true) (ht : lvlLe 1 t = true)
+    (h : bValA71 u = bValA71 t) : vOf u = vOf t := by
+  cases u with
+  | nil => cases t with
+    | nil => rfl
+    | nd w r c =>
+      exact absurd h.symm (bValA71_ne_zero74 (.nd w r c) (fun hcc => B.noConfusion hcc))
+  | nd w1 r1 c1 => cases t with
+    | nil => exact absurd h (bValA71_ne_zero74 (.nd w1 r1 c1) (fun hcc => B.noConfusion hcc))
+    | nd w2 r2 c2 =>
+      show TM.Term.plus TM.Term.one (Trans.Dict.dict (bVal (B.nd w1 r1 c1)))
+         = TM.Term.plus TM.Term.one (Trans.Dict.dict (bVal (B.nd w2 r2 c2)))
+      rw [bVal_eq_strip74 _ hu, bVal_eq_strip74 _ ht, h]
+
+end
+
+/-! ### §74.4 反射律と反対称律 — 燃料の再帰で直に -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+theorem ltS_irrefl74 : ∀ (n : Nat) (x : List BT), Atoms x → sizeLB x + sizeLB x ≤ n →
+    ltS x x = false := by
+  intro n
+  induction n with
+  | zero =>
+    intro x _ hn
+    cases x with
+    | nil => exact ltS_nil_nil
+    | cons z zs =>
+      exact absurd hn (by have := one_le_size z
+                          show ¬ ((z.size + sizeLB zs) + (z.size + sizeLB zs) ≤ 0); omega)
+  | succ k ih =>
+    intro x hax hn
+    cases x with
+    | nil => exact ltS_nil_nil
+    | cons x0 xs =>
+      obtain ⟨u, a, rfl⟩ := hax x0 (List.Mem.head _)
+      rw [ltS_cons u a xs u a xs, if_neg (Nat.lt_irrefl u), if_neg (Nat.lt_irrefl u),
+        if_pos (bt_beq_self71 a)]
+      exact ih xs (fun z hz => hax z (List.Mem.tail _ hz))
+        (by have := one_le_size a
+            have h1 : sizeLB (BT.D u a :: xs) = (1 + a.size) + sizeLB xs := rfl
+            omega)
+
+theorem ltS_asymm74 : ∀ (n : Nat) (x y : List BT), Atoms x → Atoms y →
+    sizeLB x + sizeLB y ≤ n → ltS x y = true → ltS y x = false := by
+  intro n
+  induction n with
+  | zero =>
+    intro x y _ _ hn _
+    cases x with
+    | nil => cases y with
+      | nil => exact ltS_nil_nil
+      | cons z zs =>
+        exact absurd hn (by have := one_le_size z
+                            show ¬ (0 + (z.size + sizeLB zs) ≤ 0); omega)
+    | cons z zs =>
+      exact absurd hn (by have := one_le_size z
+                          show ¬ ((z.size + sizeLB zs) + sizeLB y ≤ 0); omega)
+  | succ k ih =>
+    intro x y hax hay hn hlt
+    cases x with
+    | nil => cases y with
+      | nil => exact ltS_nil_nil
+      | cons y0 ys =>
+        obtain ⟨v, b, rfl⟩ := hay y0 (List.Mem.head _)
+        exact ltS_cons_nil _ _
+    | cons x0 xs =>
+      obtain ⟨u, a, rfl⟩ := hax x0 (List.Mem.head _)
+      cases y with
+      | nil => exact absurd hlt (by rw [ltS_cons_nil]; exact fun hc => Bool.noConfusion hc)
+      | cons y0 ys =>
+        obtain ⟨v, b, rfl⟩ := hay y0 (List.Mem.head _)
+        have hsx : sizeLB (BT.D u a :: xs) = (1 + a.size) + sizeLB xs := rfl
+        have hsy : sizeLB (BT.D v b :: ys) = (1 + b.size) + sizeLB ys := rfl
+        by_cases h3 : u < v
+        · rw [ltS_cons v b ys u a xs, if_neg (Nat.not_lt.mpr (Nat.le_of_lt h3)), if_pos h3]
+        · rw [ltS_cons u a xs v b ys, if_neg h3] at hlt
+          by_cases h4 : v < u
+          · exact absurd hlt (by rw [if_pos h4]; exact fun hc => Bool.noConfusion hc)
+          · rw [if_neg h4] at hlt
+            rw [ltS_cons v b ys u a xs, if_neg h4, if_neg h3]
+            by_cases h5 : (a == b) = true
+            · have hab : a = b := bt_eq_of_beq71 a b h5
+              subst hab
+              rw [if_pos h5] at hlt
+              rw [if_pos (bt_beq_self71 a)]
+              exact ih xs ys (fun z hz => hax z (List.Mem.tail _ hz))
+                (fun z hz => hay z (List.Mem.tail _ hz))
+                (by have := one_le_size a; omega) hlt
+            · rw [if_neg h5] at hlt
+              rw [if_neg (show ¬((b == a) = true) from by
+                intro hc; exact h5 (by rw [bt_eq_of_beq71 b a hc]; exact bt_beq_self71 a))]
+              have hta := sizeLB_toL a
+              have htb := sizeLB_toL b
+              exact ih a.toL b.toL (atoms_toL74 a) (atoms_toL74 b) (by omega) hlt
+
+/-- **`BT.lt` は非反射的。** 無条件。 -/
+theorem lt_irrefl74 (s : BT) : BT.lt s s = false := by
+  rw [lt_eq_ltS]
+  exact ltS_irrefl74 (sizeLB s.toL + sizeLB s.toL) s.toL (atoms_toL74 s) (Nat.le_refl _)
+
+/-- **`BT.lt` は反対称的。** 無条件。 -/
+theorem lt_asymm74 {s t : BT} (h : BT.lt s t = true) : BT.lt t s = false := by
+  rw [lt_eq_ltS] at h
+  rw [lt_eq_ltS]
+  exact ltS_asymm74 (sizeLB s.toL + sizeLB t.toL) s.toL t.toL
+    (atoms_toL74 s) (atoms_toL74 t) (Nat.le_refl _) h
+
+/-- **Buchholz 側の順序は狭義の全順序である。** 三分律を排他の形で書いたもの
+    (`Evidence/WF.lean` §8.4 の `lt_trichotomy_inT` の Buchholz 側の相方)。 -/
+theorem lt_tricho3_74 (s t : BT) (hs : Hwf74 s) (ht : Hwf74 t) (hns : NfSum s) (hnt : NfSum t) :
+    (BT.lt s t = true ∧ s ≠ t ∧ BT.lt t s = false)
+  ∨ (BT.lt s t = false ∧ s = t ∧ BT.lt t s = false)
+  ∨ (BT.lt s t = false ∧ s ≠ t ∧ BT.lt t s = true) := by
+  rcases lt_tricho74 s t hs ht hns hnt with h | h | h
+  · refine Or.inl ⟨h, ?_, lt_asymm74 h⟩
+    intro hc; rw [hc, lt_irrefl74] at h; exact Bool.noConfusion h
+  · subst h; exact Or.inr (Or.inl ⟨lt_irrefl74 s, rfl, lt_irrefl74 s⟩)
+  · refine Or.inr (Or.inr ⟨lt_asymm74 h, ?_, h⟩)
+    intro hc; rw [hc, lt_irrefl74] at h; exact Bool.noConfusion h
+
+end
+
+/-! ### §74.5 橋は一方向で足りる -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§74.5 の主定理。** `VOfLtA71` から `VOfLtA71'` が出る。使うのは Buchholz 側の
+    三分律 (§74.1)、`bVal` が `bValA71` の関数であること (§74.3)、そして 𝔗(M) の
+    順序が非反射・反対称であること (`Evidence/WF.lean` §8.4) だけ。 -/
+theorem vOfLtA71'_of74 (Hp : PsiIdxOKStd) (Hr : RegionStd) (HV : VOfLtA71) : VOfLtA71' := by
+  intro u t hu ht hlt
+  rcases lt_tricho_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) with h | h | h
+  · exact h
+  · exact absurd hlt (by
+      rw [vOf_eq_of_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) h,
+        Evidence.WF.lt_irrefl]
+      exact fun hc => Bool.noConfusion hc)
+  · exact absurd hlt (by
+      rw [lt_asymm_inT (inT_vOf_std Hp Hr t (stdB_of_stdB1 t ht))
+        (inT_vOf_std Hp Hr u (stdB_of_stdB1 u hu)) (HV t u ht hu h)]
+      exact fun hc => Bool.noConfusion hc)
+
+/-- **橋は `vOf` の単射性も出す。** -/
+theorem vOfInj_of74 (HV : VOfLtA71) (u t : B) (hu : stdB1 u = true) (ht : stdB1 t = true)
+    (h : vOf u = vOf t) : bValA71 u = bValA71 t := by
+  rcases lt_tricho_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) with hh | hh | hh
+  · exact absurd (HV u t hu ht hh)
+      (by rw [h, Evidence.WF.lt_irrefl]; exact fun hc => Bool.noConfusion hc)
+  · exact hh
+  · exact absurd (HV t u ht hu hh)
+      (by rw [h, Evidence.WF.lt_irrefl]; exact fun hc => Bool.noConfusion hc)
+
+/-- 逆向きに要る単射性。**未証明** — §74.6 で測る。 -/
+def VOfInjA74 : Prop := ∀ (u t : B), stdB1 u = true → stdB1 t = true →
+    vOf u = vOf t → bValA71 u = bValA71 t
+
+/-- **逆向き。** `VOfLtA71'` と単射性から `VOfLtA71`。§74.5 と合わせて、単射性の下では
+    橋の二つの向きは同値である。 -/
+theorem vOfLtA71_of74 (Hp : PsiIdxOKStd) (Hr : RegionStd) (HI : VOfInjA74) (HV' : VOfLtA71') :
+    VOfLtA71 := by
+  intro u t hu ht hlt
+  rcases lt_comparable_inT (inT_vOf_std Hp Hr u (stdB_of_stdB1 u hu))
+      (inT_vOf_std Hp Hr t (stdB_of_stdB1 t ht)) with h | h | h
+  · exact h
+  · exact absurd hlt (by rw [HI u t hu ht h, lt_irrefl74]; exact fun hc => Bool.noConfusion hc)
+  · exact absurd hlt (by rw [lt_asymm74 (HV' t u ht hu h)]; exact fun hc => Bool.noConfusion hc)
+
+/-- **単射性は橋から出るので、同値は片側だけの話になる。** -/
+theorem vOfLt_iff74 (Hp : PsiIdxOKStd) (Hr : RegionStd) :
+    VOfLtA71 ↔ (VOfInjA74 ∧ VOfLtA71') :=
+  ⟨fun HV => ⟨fun u t hu ht h => vOfInj_of74 HV u t hu ht h, vOfLtA71'_of74 Hp Hr HV⟩,
+   fun h => vOfLtA71_of74 Hp Hr h.1 h.2⟩
+
+end
+
+/-! ### §74.6 測定の形 — 等号と、`dict` への還元 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- §71.8 が実際に測ったのはこの等号である (含意ではない)。 -/
+def BridgeEq74 : Prop := ∀ (u t : B), stdB1 u = true → stdB1 t = true →
+    BT.lt (bValA71 u) (bValA71 t) = lt (vOf u) (vOf t)
+
+/-- **等号は片側の含意から出る。** -/
+theorem bridgeEq_of74 (Hp : PsiIdxOKStd) (Hr : RegionStd) (HV : VOfLtA71) : BridgeEq74 := by
+  intro u t hu ht
+  cases h : BT.lt (bValA71 u) (bValA71 t) with
+  | true => exact (HV u t hu ht h).symm
+  | false =>
+    rcases lt_tricho_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) with
+      hh | hh | hh
+    · exact absurd hh (by rw [h]; exact fun hc => Bool.noConfusion hc)
+    · rw [vOf_eq_of_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) hh,
+        Evidence.WF.lt_irrefl]
+    · rw [lt_asymm_inT (inT_vOf_std Hp Hr t (stdB_of_stdB1 t ht))
+        (inT_vOf_std Hp Hr u (stdB_of_stdB1 u hu)) (HV t u ht hu hh)]
+
+theorem vOfLtA71_of_bridgeEq74 (H : BridgeEq74) : VOfLtA71 :=
+  fun u t hu ht h => by rw [← H u t hu ht]; exact h
+
+theorem vOfLtA71'_of_bridgeEq74 (H : BridgeEq74) : VOfLtA71' :=
+  fun u t hu ht h => by rw [H u t hu ht]; exact h
+
+/-- **測定の形と仮説の形は同値。** `bridgeFail71 == 0` が言っているのは左辺である。 -/
+theorem bridgeEq_iff74 (Hp : PsiIdxOKStd) (Hr : RegionStd) : BridgeEq74 ↔ VOfLtA71 :=
+  ⟨vOfLtA71_of_bridgeEq74, bridgeEq_of74 Hp Hr⟩
+
+/-- **添字の値は `dict` の像そのもの。** `vOf` の `1 +` は `bValA71` の先頭の `ψ₀0` と
+    同じもの。**未証明** — 段 1 以下の部分領域でも `ψ₀(α) ≥ ω` (`α ≠ 0`) が要る。
+    §74.8 で 11 497 個の添字 (標準形も標準性も問わない) について測る。 -/
+def VOfIsDict74 : Prop := ∀ (t : B), stdB1 t = true → vOf t = dict (bValA71 t)
+
+/-- **`dict` が順序を保つこと** — `Trans/Dict.lean` の受領記録 (C) そのもの。**未証明。** -/
+def DictLtA74 : Prop := ∀ (u t : B), stdB1 u = true → stdB1 t = true →
+    BT.lt (bValA71 u) (bValA71 t) = true → lt (dict (bValA71 u)) (dict (bValA71 t)) = true
+
+/-- **§74.6 の主定理。** 橋は「値は `dict` の像である」と「`dict` は順序を保つ」の
+    二つに割れる。§74 が止まったのはこの二つの手前である。 -/
+theorem vOfLtA71_of_dict74 (H1 : VOfIsDict74) (H2 : DictLtA74) : VOfLtA71 := by
+  intro u t hu ht h
+  rw [H1 u hu, H1 t ht]
+  exact H2 u t hu ht h
+
+end
+
+/-! ### §74.7 組み立て -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **§71.5 の `certIn_t326_bt71` から `VOfLtA71'` が落ちる。** 仮説は 7 つ。 -/
+theorem certIn_t326_74 (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HV : VOfLtA71) (HBD : BDecCore71) (HBI : BIncCore71)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_bt71 Hp Hr HV (vOfLtA71'_of74 Hp Hr HV) HBD HBI HCD HBC hacc
+
+/-- **§74 の最終形。** §71.7 が減少と増加を定理にしたので、`certIn_t326_71'` の側に
+    §74.5 を差すと、326 行目の証明書が持つ仮説は
+
+        `Hp`・`Hr` (§68 の 2 つ)、橋 `VOfLtA71`、密度 `CofDenseS1`、
+        そして Buchholz 側だけの `BCofIn71`
+
+    の 5 つになる。`dict` を含むのはうち 4 つ (`BCofIn71` は `dict` を含まない)。
+    §71 の最良は `VOfLtA71'` を別に要求して 6 つだった。 -/
+theorem certIn_t326_74' (Hp : PsiIdxOKStd) (Hr : RegionStd)
+    (HV : VOfLtA71) (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_71' Hp Hr HV HCD
+    (cofInS1_of71 Hp Hr (vOfLtA71'_of74 Hp Hr HV) HBC) hacc
+
+end
+
+/-! ### §74.8 測定 (凍結)
+
+母集団の作り方を先に書く。添字の側は §70.6 / §71.8 のものに二つ足す:
+
+    popNFB L n = ((List.range n).flatMap (enumNodes L)).filter (nfB · && · != nil)
+                 節は 0 … n-1 個、段は 0 … L-1
+    subP n     = (popNFB 2 n).filter stdB1              段 1 以下の標準な添字 (部分領域)
+    popS L n   = (popNFB L n).filter stdB               段の上限を外した標準な添字
+    allB71 L n = (List.range n).flatMap (enumNodes L)   標準形も標準性も問わない全列挙
+    nf1_74 n   = (popNFB 2 n).filter (lvlLe 1 ·)        段 1 以下の標準形、**標準性は問わない**
+
+`nf1_74` が §74 で新しく足したもので、否定的な結果はここで出る。重い掃きは
+
+    s74sweep1.lean   subP 8 (2397) の 2397² = 5 745 609 対              反例 0
+    s74sweep2.lean   popS 3 7 (1105) の 1 221 025 対、popS 4 7 (1263) の
+                     1 595 169 対 — **部分領域の外**、段 2・段 3 まで       反例 0
+    s74sweep3.lean   nf1_74 7 (2772、うち標準でないもの 2163) の 7 683 984 対
+                     — 2 233 666 対で落ちるが、両端が標準な対は 0
+
+に凍結してある。合計 16 245 787 対。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+/-- 段 1 以下の標準形。**標準性は問わない** — 橋が落ちるのはここ。 -/
+def nf1_74 (n : Nat) : List B := (popNFB 2 n).filter fun t => lvlLe 1 t
+
+/-- 等号の形で数える (§71.8 の `bridgeFail71` と同じ主張、値を先に作る)。 -/
+def pairFail74 (l : List B) : Nat :=
+  let vs := l.map fun t => (bValA71 t, vOf t)
+  (vs.flatMap fun p => vs.filter fun q => !(BT.lt p.1 q.1 == lt p.2 q.2)).length
+
+/-! **§74.1 の鋭さ。** `Hwf74` を落とすと三分律は本当に壊れる。成分列が同じで項が違う
+二つ — これが `BT.ltL` の唯一の穴である。 -/
+
+#guard BT.lt (BT.D 0 BT.zero) (BT.D 0 (BT.sum BT.zero BT.zero)) == false
+#guard BT.lt (BT.D 0 (BT.sum BT.zero BT.zero)) (BT.D 0 BT.zero) == false
+#guard ((BT.D 0 BT.zero) == (BT.D 0 (BT.sum BT.zero BT.zero))) == false
+#guard (BT.zero).toL == (BT.sum BT.zero BT.zero).toL
+
+/-! **§74.3 の受領と、その仮説の緩さ。** 定理なので `subP` の行は確認であり、
+`allB71` の行は `lvlLe 1` が鋭くないことの測定である。 -/
+
+#guard (subP 8).all fun t => bVal t == BT.ofL (stripL74 (bValA71 t).toL)
+#guard (allB71 3 5).length == 1291
+#guard ((allB71 3 5).filter fun t => bVal t != BT.ofL (stripL74 (bValA71 t).toL)).length == 0
+#guard (allB71 4 5).length == 3941
+#guard ((allB71 4 5).filter fun t => bVal t != BT.ofL (stripL74 (bValA71 t).toL)).length == 0
+
+/-! **先頭の成分の割れ方。** `bVal` が `bValA71` と違うのは先頭が `ψ₀0` のときだけで、
+それは自然数の添字 7 個しかない。残る 2390 個では `VOfIsDict74` は `1 + ψ₀(α) = ψ₀(α)`
+そのものになる — §74.6 が止まったのはここ。 -/
+
+#guard (subP 8).length == 2397
+#guard ((subP 8).filter fun t => (bValA71 t).toL.head? == some (BT.D 0 BT.zero)).length == 7
+#guard ((subP 8).filter fun t => (bValA71 t).toL.head? != some (BT.D 0 BT.zero)).length == 2390
+
+/-! **`VOfIsDict74` の測定。** 部分領域の外まで走らせる — 段 2 まで、標準形でも標準でも
+ないものまで。反例 0。**未証明。** -/
+
+#guard (subP 8).all fun t => vOf t == dict (bValA71 t)
+#guard (popNFB 3 7).length == 4958
+#guard ((popNFB 3 7).filter fun t => vOf t != dict (bValA71 t)).length == 0
+#guard (allB71 3 6).length == 11497
+#guard ((allB71 3 6).filter fun t => vOf t != dict (bValA71 t)).length == 0
+
+/-! **`VOfInjA74` の測定。** `vOf` も `bValA71` も部分領域で単射。§74.5 はこれを橋から
+出すので、これは橋を測るのと同じ強さの測定である。 -/
+
+#guard ((subP 8).map vOf).eraseDups.length == 2397
+#guard ((subP 8).map bValA71).eraseDups.length == 2397
+
+/-! **橋そのもの (等号の形)。** `subP 8` は `s74sweep1.lean`。 -/
+
+#guard (subP 6).length == 160
+#guard pairFail74 (subP 6) == 0
+#guard (subP 7).length == 609
+#guard pairFail74 (subP 7) == 0
+-- 掃きが空回りしていないこと。`BT.lt` が真になる対の数。
+#guard ((subP 6).flatMap fun u =>
+  (subP 6).filter fun t => BT.lt (bValA71 u) (bValA71 t)).length == 12720
+
+/-! **否定的な結果 — 標準性は落とせない。** 段 1 以下の標準形でも、標準でない添字を
+入れると橋は 216 225 対のうち 51 143 対で落ちる。落ちた対にはかならず標準でない端がある。
+最小の証人は `(0,0)(1,0)` と `(0,0)(0,0)(1,1)` で、後者を `stdB` は退ける。 -/
+
+#guard (nf1_74 6).length == 465
+#guard ((nf1_74 6).filter fun t => !(stdB t)).length == 305
+#guard ((nf1_74 6).filter stdB).length == 160
+#guard pairFail74 (nf1_74 6) == 51143
+#guard ((nf1_74 6).flatMap fun u => (nf1_74 6).filter fun t =>
+  !(BT.lt (bValA71 u) (bValA71 t) == lt (vOf u) (vOf t)) && stdB u && stdB t).length == 0
+#guard (decodeB [[0,0],[1,0]]).map stdB == some true
+#guard (decodeB [[0,0],[0,0],[1,1]]).map stdB == some false
+
+/-! **部分領域の外 — より一般の形は測定としては通る。** 段 2・段 3 まで許した標準な添字で
+反例 0。§69 の `VOfLtStd` の形である。**定理ではない。** -/
+
+#guard (popS 3 6).length == 235
+#guard pairFail74 (popS 3 6) == 0
+#guard (popS 4 6).length == 250
+#guard pairFail74 (popS 4 6) == 0
+
+end
+
+/-! ### §74.9 公理 -/
+
 end Evidence.Region
