@@ -35187,4 +35187,1173 @@ end
 
 /-! ### §82.9 公理 -/
 
+/-! ## §83 THE TWO HALVES OF COFINALITY — THE BUCHHOLZ SIDE IS A THEOREM
+
+Row 326's certificate stands on four named hypotheses (§76.5b).  Two of them are the
+cofinality clause, split by §71.4 into
+
+    CofDenseS1   the 𝔗(M) side — the sub-region is dense below every limit value
+    BCofIn71     the Buchholz side — pure `BT`, no `dict` anywhere
+
+**§83 proves `BCofIn71`.**  Row 326's certificate loses a hypothesis; three remain.
+
+WHAT THE PROOF IS.  `BCofIn71` asks for `∃ n` with `¬ (fs t n < u)`.  What is actually
+proved is the STRICT form `mainDom83` — `∃ n, u < fs t n` — because that is the shape the
+recursion needs: the sub-challenger produced at every step has to be strictly dominated,
+not merely not-dominating.  The strict form implies the asked form by §74.4's asymmetry.
+
+  §83.1  **THE ORDER THEORY `ltS` STILL LACKED.**  `ltS_trans83` (transitivity — §68/§74
+         had irreflexivity, asymmetry and trichotomy but not this) and
+         `ltS_prefix_indep83`: on a list that is NOT an extension of `P`, the comparison
+         against `P ++ X` does not see `X` at all.  `splitP83` is the either/or that every
+         later section opens with — either the challenger extends the prefix, or the prefix
+         alone already decides.
+
+  §83.2  **THE VALUE IS THE PLAIN MAP.**  `toL_bValA71_map83` : `(bValA71 x).toL =
+         (toL x).map fB72`, unconditionally.  This is what carries §72's `descOK_map72`
+         (`nonIncr` becomes descending) and §72.3's `key72` (every node's argument is below
+         the tree) onto the `BT` side, and it is what turns "a component of the value" back
+         into "a node of the index".
+
+  §83.3  **THE CHALLENGER'S HEREDITARY STANDARDNESS.**  `GS83` — `nonIncr`, `stdIn`,
+         `lvlLe 1` — is closed under taking a node's argument, and `stdIn` hands out
+         `visOK v c c` for each node, which is exactly `key72`'s missing hypothesis.
+         `subLt83` : every node's argument of a `GS83` index with `visOK 0` is strictly
+         below it in `BT.lt`.
+
+  §83.4  **THE COLLAPSING BASE.**  `iterDom83`.  `rwB`'s bottom branch replaces the last
+         summand by the `iterD` tower, and the challenger has to be caught by some rung.
+         The induction is on the SIZE OF THE CHALLENGER, not on the term: at the bottom of
+         the level-one chain the challenger loses one `ψ₀` and the tower gains one rung.
+         `subLt83` is what makes the challenger shrink — without `visOK` the statement is
+         FALSE, and `ψ₀(Ω)` is the witness (it is below `Ω` and above every rung).
+
+  §83.5  **THE `repNode` BASE.**  `repDomBase83`.  Here the head of the sequence is
+         CONSTANT — `ψ_v(P)·(n+1)` — so no rung dominates by its head; what dominates is
+         the LENGTH, and the challenger's tail is bounded by its own head because `nonIncr`
+         makes the component list descending.  `lt_succ_le83` (`x < y ⊕ 1 → x ≤ y`) is the
+         other half.
+
+  §83.6  **THE TWO RECURSIONS.**  `repDom83` / `rwDom83`, the dominance twins of §71.7's
+         `repB_dec_inc71` / `rwB_dec_inc71`, on the same two inductions with the same
+         invariant `hasLowAnc w c ∨ v < w`.
+
+  §83.7  **THE ASSEMBLY.**  `mainDom83`, `bCofIn71_thm : BCofIn71`, and the certificate
+         forms `cofInS1_83`, `limCofS1_83`, `certIn_t326_83` / `certIn_t326_step83`.
+         AND THE SPLIT HAS NOTHING LEFT TO GIVE.  `cofDenseS1_iff_limCofS1_83` : under the
+         bridge, `CofDenseS1 ↔ LimCofS1` — the reverse direction is three lines, because with
+         `LimCofS1` the witness `u` can be taken to be `fsB t n` itself and `LimDecS1` puts it
+         below `vOf t`.  So §71.4's split bought exactly one thing, the Buchholz half, and
+         §83 has spent it: what remains of row 326's cofinality clause is the WHOLE 𝔗(M)
+         statement, and no further splitting of it is available.
+
+  §83.8  **THE NEGATIVE RESULT.**  `not_iterDom_without_visOK83` — drop `visOK 0` from
+         §83.4 and the statement becomes FALSE.  `sbad83 = ψ₀(Ω)` satisfies `nonIncr`,
+         `stdIn` and `lvlLe 1`, sits strictly below `Ω`, and `sbad83_not_dominated` proves
+         that NO rung of the tower reaches it — it is the supremum.  This is the Buchholz-side
+         twin of §70.3's `sbad_not_witness`, and the same shape §69 used to refute the
+         unrestricted clause.
+
+  §83.9  The measurement (frozen).  §83.10 the axioms.
+
+WHAT IS **NOT** CLAIMED.  `CofDenseS1` is NOT proved — §83 proves nothing about 𝔗(M) and
+mentions `dict` only through §76's ready-made consumers.  Row 326 still needs
+`PsiIdxOKStd172`, `DictLtA74` and `CofDenseS1`.  What §83.7 adds about it is a NEGATIVE
+structural fact, not progress on it: `CofDenseS1` is now equivalent to the full cofinality
+clause, so a proof has to move an arbitrary 𝔗(M) term `s` — one that is NOT in the image of
+`vOf` and so cannot be carried across the bridge — and that needs a partial inverse of `dict`
+on the initial segment, which no section of this file builds.
+Nothing here says the `K`-gate is closed (§82 refuted the form it had), and nothing here is
+a statement about `vOf`: the bridge `VOfLtA71'` is still what carries `BCofIn71` to `CofInS1`.
+-/
+
+/-! ### §83.1 `ltS` の推移律と前置きの独立性 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 右が空なら小さくならない。 -/
+theorem ltS_right_nil83 : ∀ (l : List BT), ltS l [] = false
+  | [] => ltS_nil_nil
+  | x :: xs => ltS_cons_nil x xs
+
+/-- **`ltS` は推移的。** §68/§74 が持っていなかった唯一の順序律。 -/
+theorem ltS_trans83 : ∀ (n : Nat) (x y z : List BT), Atoms x → Atoms y → Atoms z →
+    sizeLB x + sizeLB y + sizeLB z ≤ n → ltS x y = true → ltS y z = true → ltS x z = true := by
+  intro n
+  induction n with
+  | zero =>
+    intro x y z _ _ _ hn _ h2
+    cases z with
+    | nil => exact absurd h2 (by rw [ltS_right_nil83]; exact fun hc => Bool.noConfusion hc)
+    | cons z0 zs =>
+      exact absurd hn (by have := one_le_size z0
+                          show ¬ (sizeLB x + sizeLB y + (z0.size + sizeLB zs) ≤ 0); omega)
+  | succ k ih =>
+    intro x y z hax hay haz hn h1 h2
+    cases z with
+    | nil => exact absurd h2 (by rw [ltS_right_nil83]; exact fun hc => Bool.noConfusion hc)
+    | cons z0 zs =>
+      obtain ⟨p, c, rfl⟩ := haz z0 (List.Mem.head _)
+      cases x with
+      | nil => exact ltS_nil_cons _ _
+      | cons x0 xs =>
+        obtain ⟨u, a, rfl⟩ := hax x0 (List.Mem.head _)
+        cases y with
+        | nil => exact absurd h1 (by rw [ltS_right_nil83]; exact fun hc => Bool.noConfusion hc)
+        | cons y0 ys =>
+          obtain ⟨v, b, rfl⟩ := hay y0 (List.Mem.head _)
+          have hsx : sizeLB (BT.D u a :: xs) = (1 + a.size) + sizeLB xs := rfl
+          have hsy : sizeLB (BT.D v b :: ys) = (1 + b.size) + sizeLB ys := rfl
+          have hsz : sizeLB (BT.D p c :: zs) = (1 + c.size) + sizeLB zs := rfl
+          have hta := sizeLB_toL a
+          have htb := sizeLB_toL b
+          have htc := sizeLB_toL c
+          have h1a := one_le_size a
+          have h1b := one_le_size b
+          have h1c := one_le_size c
+          rw [ltS_cons u a xs v b ys] at h1
+          rw [ltS_cons v b ys p c zs] at h2
+          rw [ltS_cons u a xs p c zs]
+          by_cases huv : u < v
+          · have hpv : ¬ (p < v) := by
+              intro hc
+              rw [if_neg (Nat.not_lt.mpr (Nat.le_of_lt hc)), if_pos hc] at h2
+              exact Bool.noConfusion h2
+            exact if_pos (by omega)
+          · rw [if_neg huv] at h1
+            by_cases hvu : v < u
+            · exact absurd h1 (by rw [if_pos hvu]; exact fun hc => Bool.noConfusion hc)
+            · rw [if_neg hvu] at h1
+              have huv' : u = v := by omega
+              subst huv'
+              by_cases hup : u < p
+              · exact if_pos hup
+              · rw [if_neg hup] at h2 ⊢
+                by_cases hpu : p < u
+                · exact absurd h2 (by rw [if_pos hpu]; exact fun hc => Bool.noConfusion hc)
+                · rw [if_neg hpu] at h2 ⊢
+                  by_cases hab : (a == b) = true
+                  · have hab' : a = b := bt_eq_of_beq71 a b hab
+                    subst hab'
+                    rw [if_pos hab] at h1
+                    by_cases hac : (a == c) = true
+                    · rw [if_pos hac]
+                      rw [if_pos hac] at h2
+                      exact ih xs ys zs (fun w hw => hax w (List.Mem.tail _ hw))
+                        (fun w hw => hay w (List.Mem.tail _ hw))
+                        (fun w hw => haz w (List.Mem.tail _ hw)) (by omega) h1 h2
+                    · rw [if_neg hac]
+                      rw [if_neg hac] at h2
+                      exact h2
+                  · rw [if_neg hab] at h1
+                    by_cases hbc : (b == c) = true
+                    · have hbc' : b = c := bt_eq_of_beq71 b c hbc
+                      subst hbc'
+                      rw [if_neg hab]
+                      exact h1
+                    · rw [if_neg hbc] at h2
+                      have hac : ¬ ((a == c) = true) := by
+                        intro hc
+                        have hac' : a = c := bt_eq_of_beq71 a c hc
+                        subst hac'
+                        rw [ltS_asymm74 (sizeLB b.toL + sizeLB a.toL) b.toL a.toL
+                          (atoms_toL74 b) (atoms_toL74 a) (Nat.le_refl _) h2] at h1
+                        exact Bool.noConfusion h1
+                      rw [if_neg hac]
+                      exact ih a.toL b.toL c.toL (atoms_toL74 a) (atoms_toL74 b)
+                        (atoms_toL74 c) (by omega) h1 h2
+
+/-- **`BT.lt` は推移的。** -/
+theorem lt_trans83 {s t w : BT} (h1 : BT.lt s t = true) (h2 : BT.lt t w = true) :
+    BT.lt s w = true := by
+  rw [lt_eq_ltS] at h1 h2
+  rw [lt_eq_ltS]
+  exact ltS_trans83 (sizeLB s.toL + sizeLB t.toL + sizeLB w.toL) s.toL t.toL w.toL
+    (atoms_toL74 s) (atoms_toL74 t) (atoms_toL74 w) (Nat.le_refl _) h1 h2
+
+/-- **前置きの独立性。** `L` が `P` の延長でないなら、`P` の右に何を足しても比較は変わらない。 -/
+theorem ltS_prefix_indep83 : ∀ (P L : List BT), Atoms P → Atoms L → (∀ R, L ≠ P ++ R) →
+    ∀ X, ltS L (P ++ X) = ltS L P := by
+  intro P
+  induction P with
+  | nil => intro L _ _ hne _; exact absurd rfl (hne L)
+  | cons p0 ps ih =>
+    intro L hap haL hne X
+    obtain ⟨q, e, rfl⟩ := hap p0 (List.Mem.head _)
+    cases L with
+    | nil => rfl
+    | cons l0 ls =>
+      obtain ⟨u, a, rfl⟩ := haL l0 (List.Mem.head _)
+      show ltS (BT.D u a :: ls) (BT.D q e :: (ps ++ X)) = ltS (BT.D u a :: ls) (BT.D q e :: ps)
+      rw [ltS_cons u a ls q e (ps ++ X), ltS_cons u a ls q e ps]
+      by_cases h1 : u < q
+      · rw [if_pos h1, if_pos h1]
+      · rw [if_neg h1, if_neg h1]
+        by_cases h2 : q < u
+        · rw [if_pos h2, if_pos h2]
+        · rw [if_neg h2, if_neg h2]
+          by_cases h3 : (a == e) = true
+          · rw [if_pos h3, if_pos h3]
+            refine ih ls (fun z hz => hap z (List.Mem.tail _ hz))
+              (fun z hz => haL z (List.Mem.tail _ hz)) ?_ X
+            intro R hc
+            refine hne R ?_
+            have hae : a = e := bt_eq_of_beq71 a e h3
+            have huq : u = q := Nat.le_antisymm (Nat.not_lt.mp h2) (Nat.not_lt.mp h1)
+            rw [hae, huq, hc]
+            rfl
+          · rw [if_neg h3, if_neg h3]
+
+/-- **§83.1 の主定理。** 前置きで割る。延長であるか、前置きだけで決まるかのどちらか。 -/
+theorem splitP83 (P L : List BT) (hap : Atoms P) (haL : Atoms L) :
+    (∃ R, L = P ++ R) ∨ (∀ X, ltS L (P ++ X) = ltS L P) := by
+  by_cases h : ∃ R, L = P ++ R
+  · exact Or.inl h
+  · exact Or.inr (ltS_prefix_indep83 P L hap haL (fun R hc => h ⟨R, hc⟩))
+
+end
+
+/-! ### §83.2 値の成分列は節の列の像そのもの
+
+`bValA71` の成分列は `toL` の `map fB72` である — 前置きも崩れも入らない。これで §72 の
+道具 (`descOK_map72`・`key72`・`argTransfer72`) がそのまま `bValA71` の側で使える。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **§83.2 の主定理。** 無条件。 -/
+theorem toL_bValA71_map83 : ∀ (x : B), (bValA71 x).toL = (toL x).map fB72
+  | .nil => rfl
+  | .nd w r c => by
+      rw [toL_bValA71_nd w r c, toL_nd w r c, List.map_append, toL_bValA71_map83 r]
+      rfl
+
+/-- 値の成分は `.D` の列。 -/
+theorem atoms_bValA71_83 (x : B) : Atoms (bValA71 x).toL := atoms_toL74 (bValA71 x)
+
+/-- 一節の値。段が 1 以下なら `bArg` は `bValA71`。 -/
+theorem toL_bValA71_nd83 (v : Nat) (r c : B) (hc : lvlLe 1 c = true) :
+    (bValA71 (.nd v r c)).toL = (bValA71 r).toL ++ [BT.D v (bValA71 c)] := by
+  rw [toL_bValA71_nd v r c, bArg_eq_bValA71_71 c v hc]
+
+/-- 成分から節へ戻る。段が 1 以下なら成分の引数は部分木の値。 -/
+theorem mem_toL_bValA71_83 (x : B) (hx : lvlLe 1 x = true) (v : Nat) (z : BT)
+    (h : BT.D v z ∈ (bValA71 x).toL) : ∃ ξ : B, (v, ξ) ∈ toL x ∧ z = bValA71 ξ := by
+  rw [toL_bValA71_map83 x] at h
+  obtain ⟨q, hq, he⟩ := List.mem_map.mp h
+  have he' : BT.D q.1 (bArg q.1 q.2) = BT.D v z := he
+  have h1 : q.1 = v := by injection he'
+  have h2 : bArg q.1 q.2 = z := by injection he'
+  refine ⟨q.2, ?_, ?_⟩
+  · rw [← h1]; exact hq
+  · rw [← h2, h1, bArg_eq_bValA71_71 q.2 v (lvlL72_of_lvlLe x hx q hq).2]
+
+/-- 段の上限は最後の節の段を縛る。 -/
+theorem lastLvl_le83 : ∀ (t : B) (m : Nat), lvlLe m t = true → lastLvl t ≤ m := by
+  intro t
+  induction t with
+  | nil => intro m _; exact Nat.zero_le m
+  | nd v r c _ ihc =>
+    intro m h
+    obtain ⟨h1, _, h3⟩ := (lvlLe_nd_iff m v r c).mp h
+    cases c with
+    | nil => exact h1
+    | nd u s d => exact ihc m h3
+
+end
+
+/-! ### §83.3 挑戦者の遺伝的な標準性
+
+挑戦者 `u` について要るのは 3 つだけ — 和が降べき (`nonIncr`)、各節の中が良い (`stdIn`)、
+段が 1 以下 (`lvlLe 1`)。`stdIn` は節の引数ごとにこの 3 つと `visOK` を配る (`stdIn_mem83`)
+ので、`GS83` は「節の引数を取る」操作で閉じている。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **挑戦者の遺伝的な標準性。** `nfB` は要らない — 節の引数の段は 1 でもよい。 -/
+def GS83 (x : B) : Prop := nonIncr x = true ∧ stdIn x = true ∧ lvlLe 1 x = true
+
+theorem gs83_of_std83 (x : B) (h : stdB1 x = true) : GS83 x := by
+  have hs := stdB_of_stdB1 x h
+  have hs' : ((nfB x && nonIncr x) && stdIn x) = true := hs
+  obtain ⟨h1, h3⟩ := (Bool.and_eq_true _ _).mp hs'
+  obtain ⟨_, h2⟩ := (Bool.and_eq_true _ _).mp h1
+  exact ⟨h2, h3, lvlLe1_of_stdB1 x h⟩
+
+/-- `stdIn` は節ごとに `nonIncr`・`visOK`・`stdIn` を配る。 -/
+theorem stdIn_mem83 : ∀ (t : B), stdIn t = true → ∀ q ∈ toL t,
+    nonIncr q.2 = true ∧ visOK q.1 q.2 q.2 = true ∧ stdIn q.2 = true := by
+  intro t
+  induction t with
+  | nil => intro _ q hq; cases hq
+  | nd v r c ihr _ =>
+    intro h q hq
+    obtain ⟨h1, h2, h3, h4⟩ := stdIn_nd h
+    rw [toL_nd] at hq
+    rcases List.mem_append.mp hq with hq | hq
+    · exact ihr h1 q hq
+    · rw [List.mem_singleton.mp hq]; exact ⟨h2, h3, h4⟩
+
+/-- **`GS83` は節の引数を取る操作で閉じている。** -/
+theorem gs83_mem83 (x : B) (hx : GS83 x) (q : Nat × B) (hq : q ∈ toL x) :
+    GS83 q.2 ∧ visOK q.1 q.2 q.2 = true := by
+  obtain ⟨h2, h3, h4⟩ := stdIn_mem83 x hx.2.1 q hq
+  exact ⟨⟨h2, h4, (lvlL72_of_lvlLe x hx.2.2 q hq).2⟩, h3⟩
+
+/-- 節の列は部分木を取っても増えない。 -/
+theorem nodes72_trans83 : ∀ (t : B) (q : Nat × B), q ∈ nodes72 t →
+    ∀ q', q' ∈ nodes72 q.2 → q' ∈ nodes72 t := by
+  intro t
+  induction t with
+  | nil => intro q hq; cases hq
+  | nd v r c ihr ihc =>
+    intro q hq q' hq'
+    have hq2 : q ∈ nodes72 r ++ ((v, c) :: nodes72 c) := hq
+    show q' ∈ nodes72 r ++ ((v, c) :: nodes72 c)
+    rcases List.mem_append.mp hq2 with h | h
+    · exact List.mem_append.mpr (Or.inl (ihr q h q' hq'))
+    · rcases List.mem_cons.mp h with h | h
+      · rw [h] at hq'
+        exact List.mem_append.mpr (Or.inr (List.mem_cons.mpr (Or.inr hq')))
+      · exact List.mem_append.mpr (Or.inr (List.mem_cons.mpr (Or.inr (ihc q h q' hq'))))
+
+/-- 段の上限は節の列に伝わる。 -/
+theorem lvlLe_nodes83 : ∀ (t : B), lvlLe 1 t = true → ∀ q ∈ nodes72 t,
+    q.1 ≤ 1 ∧ lvlLe 1 q.2 = true := by
+  intro t
+  induction t with
+  | nil => intro _ q hq; cases hq
+  | nd v r c ihr ihc =>
+    intro h q hq
+    obtain ⟨h1, h2, h3⟩ := (lvlLe_nd_iff 1 v r c).mp h
+    have hq2 : q ∈ nodes72 r ++ ((v, c) :: nodes72 c) := hq
+    rcases List.mem_append.mp hq2 with hh | hh
+    · exact ihr h2 q hh
+    · rcases List.mem_cons.mp hh with hh | hh
+      · rw [hh]; exact ⟨h1, h3⟩
+      · exact ihc h3 q hh
+
+/-- **§83.3 の主定理。** 良い添字のどの節の引数も、その添字より真に小さい。
+    §72.3 の `key72` を `bValA71` の側へ移したもの。**`visOK 0` が要る。** -/
+theorem subLt83 (x : B) (hx : GS83 x) (hv : visOK 0 x x = true) :
+    ∀ q ∈ nodes72 x, BT.lt (bValA71 q.2) (bValA71 x) = true := by
+  intro q hq
+  have hc := key72 x hx.2.2 hx.1 hv hx.2.1 q hq
+  have hl := (lvlLe_nodes83 x hx.2.2 q hq).2
+  have h := argTransfer72 0 0 q.2 x hl hx.2.2 hc
+  rw [bArg_eq_bValA71_71 q.2 0 hl, bArg_eq_bValA71_71 x 0 hx.2.2] at h
+  exact h
+
+/-- 値の成分列は降べき。§72.4a の `descOK_map72`。 -/
+theorem descOK_bValA71_83 (x : B) (hx : GS83 x) : descOK72 ((bValA71 x).toL) = true := by
+  rw [toL_bValA71_map83 x]
+  exact descOK_map72 (toL x) (lvlL72_of_lvlLe x hx.2.2) hx.1
+
+end
+
+/-! ### §83.4 崩れの枝の底 — `iterD` の塔は挑戦者を捕まえる
+
+`rwB` の底の枝は最後の加数を `iterD` の塔で置き換える。挑戦者をどの段が捕まえるかは
+項の形では決まらない — **挑戦者の大きさ**で決まる。段 1 の鎖の底まで降りると挑戦者は
+`ψ₀` を一つ失い、塔は一段伸びる。それが `subLt83` の役目で、`visOK` を落とすとこの
+主張は**偽になる** (`ψ₀(Ω)` は `Ω` より下だがどの段よりも上)。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 段 1 の鎖。`hasLowAnc 1 c = false` と `lastLvl c = 1` は「節がぜんぶ段 1」と同じ。 -/
+def Chain83 (c : B) : Prop :=
+  c ≠ .nil ∧ lvlLe 1 c = true ∧ lastLvl c = 1 ∧ hasLowAnc 1 c = false
+
+theorem plugB_leaf83 (v : Nat) (r y : B) : plugB (.nd v r .nil) y = appB r y := rfl
+
+theorem plugB_nd83 (v : Nat) (r : B) (u : Nat) (s d y : B) :
+    plugB (.nd v r (.nd u s d)) y = .nd v r (plugB (.nd u s d) y) := rfl
+
+/-- 鎖の底の節の段は 1。 -/
+theorem chainLeaf83 (u : Nat) (Q : B) (h : Chain83 (.nd u Q .nil)) : u = 1 := h.2.2.1
+
+/-- 鎖の引数はまた鎖。 -/
+theorem chainArg83 (u : Nat) (Q d : B) (h : Chain83 (.nd u Q d)) (hd : d ≠ .nil) :
+    u = 1 ∧ Chain83 d := by
+  obtain ⟨_, hlv, hll, hlow⟩ := h
+  obtain ⟨h1, _, h3⟩ := (lvlLe_nd_iff 1 u Q d).mp hlv
+  rw [hasLowAnc_nd71 1 u Q d hd] at hlow
+  obtain ⟨hu, hd2⟩ := Bool.or_eq_false_iff.mp hlow
+  have hu1 : u = 1 := by
+    have : ¬ (u < 1) := by intro hcc; rw [decide_eq_true hcc] at hu; exact Bool.noConfusion hu
+    omega
+  exact ⟨hu1, ⟨hd, h3, by rw [← hll]; exact (lastLvl_nd71 u Q d hd).symm, hd2⟩⟩
+
+/-- 一節どうしの比較の分解。 -/
+theorem ltS_cons_single83 (p : Nat) (z : BT) (rest : List BT) (v : Nat) (A : BT)
+    (h : ltS (BT.D p z :: rest) [BT.D v A] = true) : p < v ∨ (p = v ∧ BT.lt z A = true) := by
+  rw [ltS_cons p z rest v A []] at h
+  by_cases h1 : p < v
+  · exact Or.inl h1
+  · rw [if_neg h1] at h
+    by_cases h2 : v < p
+    · exact absurd h (by rw [if_pos h2]; exact fun hc => Bool.noConfusion hc)
+    · rw [if_neg h2] at h
+      by_cases h3 : (z == A) = true
+      · rw [if_pos h3, ltS_right_nil83] at h
+        exact absurd h (fun hc => Bool.noConfusion hc)
+      · rw [if_neg h3] at h
+        exact Or.inr ⟨Nat.le_antisymm (Nat.not_lt.mp h2) (Nat.not_lt.mp h1),
+          by rw [lt_eq_ltS]; exact h⟩
+
+/-- 引数が真に小さければ一節は小さい。 -/
+theorem ltS_single83 (p : Nat) (z T : BT) (rest : List BT) (h : BT.lt z T = true) :
+    ltS (BT.D p z :: rest) [BT.D p T] = true := by
+  have hne : ¬ ((z == T) = true) := by
+    intro hcc
+    rw [bt_eq_of_beq71 z T hcc, lt_irrefl74] at h
+    exact Bool.noConfusion h
+  rw [ltS_cons p z rest p T [], if_neg (Nat.lt_irrefl p), if_neg (Nat.lt_irrefl p),
+    if_neg hne, ← lt_eq_ltS]
+  exact h
+
+/-- 段が小さい方が小さい。 -/
+theorem ltS_lvl83 (p q : Nat) (z T : BT) (rest ys : List BT) (h : p < q) :
+    ltS (BT.D p z :: rest) (BT.D q T :: ys) = true := by
+  rw [ltS_cons p z rest q T ys, if_pos h]
+
+theorem toL_iterD_zero83 (c : B) (hc : lvlLe 1 c = true) :
+    (bValA71 (iterD 0 c 0)).toL = [BT.D 0 (bValA71 (plugB c .nil))] :=
+  toL_bValA71_nd83 0 .nil (plugB c .nil) (lvlLe_plugB c 1 .nil hc rfl)
+
+theorem toL_iterD_succ83 (c : B) (hc : lvlLe 1 c = true) (m : Nat) :
+    (bValA71 (iterD 0 c (m + 1))).toL = [BT.D 0 (bValA71 (plugB c (iterD 0 c m)))] :=
+  toL_bValA71_nd83 0 .nil (plugB c (iterD 0 c m))
+    (lvlLe_plugB c 1 _ hc (lvlLe_iterD m 0 c 1 (Nat.zero_le 1) hc))
+
+/-- **§83.4 の主定理。** 挑戦者の大きさについての強い帰納法。`c` は塔を作る鎖 (固定)、
+    `d` はいま見ている鎖の尻尾。 -/
+theorem iterDom83 (c : B) (hc : Chain83 c) : ∀ (N : Nat) (η : B), sizeB η < N →
+    lvlLe 1 η = true → (∀ q ∈ nodes72 η, BT.lt (bValA71 q.2) (bValA71 c) = true) →
+    ∀ (d : B), Chain83 d → BT.lt (bValA71 η) (bValA71 d) = true →
+    ∃ n, BT.lt (bValA71 η) (bValA71 (plugB d (iterD 0 c n))) = true := by
+  intro N
+  induction N with
+  | zero => intro η hsz; exact absurd hsz (Nat.not_lt_zero _)
+  | succ k ih =>
+    intro η hsz hlv hsub d hd hlt
+    obtain ⟨hdne, hdlv, hdll, hdlow⟩ := hd
+    cases d with
+    | nil => exact absurd rfl hdne
+    | nd u Q e =>
+      obtain ⟨hu1, hQ, he⟩ := (lvlLe_nd_iff 1 u Q e).mp hdlv
+      have hatP : Atoms (bValA71 Q).toL := atoms_bValA71_83 Q
+      have hatL : Atoms (bValA71 η).toL := atoms_bValA71_83 η
+      cases e with
+      | nil =>
+        -- 鎖の底。塔が一段伸びる。
+        have hu : u = 1 := chainLeaf83 u Q ⟨hdne, hdlv, hdll, hdlow⟩
+        subst hu
+        rw [lt_eq_ltS, toL_bValA71_nd83 1 Q .nil rfl] at hlt
+        rcases splitP83 (bValA71 Q).toL (bValA71 η).toL hatP hatL with ⟨R, hR⟩ | hind
+        · rw [hR, ltS_append_left71 _ hatP] at hlt
+          have hatR : Atoms R := by
+            intro z hz
+            exact hatL z (by rw [hR]; exact List.mem_append.mpr (Or.inr hz))
+          cases hRc : R with
+          | nil =>
+            refine ⟨0, ?_⟩
+            rw [lt_eq_ltS, plugB_leaf83, toL_bValA71_appB71, hR, hRc,
+              ltS_append_left71 _ hatP, toL_iterD_zero83 c hc.2.1]
+            exact ltS_nil_cons _ _
+          | cons z0 zs =>
+            obtain ⟨p, ζ, hz0⟩ := hatR z0 (by rw [hRc]; exact List.Mem.head _)
+            rw [hRc, hz0] at hlt
+            have hp : p = 0 := by
+              rcases ltS_cons_single83 p ζ zs 1 (bValA71 B.nil) hlt with h | h
+              · omega
+              · exact absurd h.2 (by
+                  rw [lt_eq_ltS, show (bValA71 B.nil).toL = [] from rfl, ltS_right_nil83]
+                  exact fun hcc => Bool.noConfusion hcc)
+            subst hp
+            obtain ⟨ξ, hξm, hξv⟩ := mem_toL_bValA71_83 η hlv 0 ζ
+              (by rw [hR, hRc, hz0]; exact List.mem_append.mpr (Or.inr (List.Mem.head _)))
+            have hξn : (0, ξ) ∈ nodes72 η := toL_sub_nodes72 η (0, ξ) hξm
+            have hξc : BT.lt (bValA71 ξ) (bValA71 c) = true := hsub (0, ξ) hξn
+            have hξsz : sizeB ξ < k := by
+              have := sizeB_mem72 η (0, ξ) hξm
+              show sizeB ((0, ξ) : Nat × B).2 < k
+              omega
+            have hξlv : lvlLe 1 ξ = true := (lvlL72_of_lvlLe η hlv (0, ξ) hξm).2
+            have hξsub : ∀ q ∈ nodes72 ξ, BT.lt (bValA71 q.2) (bValA71 c) = true :=
+              fun q hq => hsub q (nodes72_trans83 η (0, ξ) hξn q hq)
+            obtain ⟨m, hm⟩ := ih ξ hξsz hξlv hξsub c hc hξc
+            refine ⟨m + 1, ?_⟩
+            rw [lt_eq_ltS, plugB_leaf83, toL_bValA71_appB71, hR, hRc, hz0,
+              ltS_append_left71 _ hatP, toL_iterD_succ83 c hc.2.1 m]
+            rw [hξv]
+            exact ltS_single83 0 _ _ zs hm
+        · refine ⟨0, ?_⟩
+          rw [lt_eq_ltS, plugB_leaf83, toL_bValA71_appB71, hind]
+          rw [hind] at hlt
+          exact hlt
+      | nd u2 s2 d2 =>
+        -- 鎖を一つ降りる。挑戦者も一つ小さくなる。
+        have hene : (B.nd u2 s2 d2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+        obtain ⟨hu, hch⟩ := chainArg83 u Q _ ⟨hdne, hdlv, hdll, hdlow⟩ hene
+        subst hu
+        rw [lt_eq_ltS, toL_bValA71_nd83 1 Q _ he] at hlt
+        rcases splitP83 (bValA71 Q).toL (bValA71 η).toL hatP hatL with ⟨R, hR⟩ | hind
+        · rw [hR, ltS_append_left71 _ hatP] at hlt
+          have hatR : Atoms R := by
+            intro z hz
+            exact hatL z (by rw [hR]; exact List.mem_append.mpr (Or.inr hz))
+          have hplug : ∀ n : Nat, (bValA71 (plugB (B.nd 1 Q (B.nd u2 s2 d2)) (iterD 0 c n))).toL
+              = (bValA71 Q).toL ++ [BT.D 1 (bValA71 (plugB (B.nd u2 s2 d2) (iterD 0 c n)))] := by
+            intro n
+            rw [plugB_nd83 1 Q u2 s2 d2 (iterD 0 c n)]
+            exact toL_bValA71_nd83 1 Q _ (lvlLe_plugB _ 1 _ he
+              (lvlLe_iterD n 0 c 1 (Nat.zero_le 1) hc.2.1))
+          cases hRc : R with
+          | nil =>
+            refine ⟨0, ?_⟩
+            rw [lt_eq_ltS, hplug 0, hR, hRc, ltS_append_left71 _ hatP]
+            exact ltS_nil_cons _ _
+          | cons z0 zs =>
+            obtain ⟨p, ζ, hz0⟩ := hatR z0 (by rw [hRc]; exact List.Mem.head _)
+            rw [hRc, hz0] at hlt
+            rcases ltS_cons_single83 p ζ zs 1 (bValA71 (B.nd u2 s2 d2)) hlt with hp | hp
+            · refine ⟨0, ?_⟩
+              rw [lt_eq_ltS, hplug 0, hR, hRc, hz0, ltS_append_left71 _ hatP]
+              exact ltS_lvl83 p 1 ζ _ zs [] hp
+            · obtain ⟨hpv, hζ⟩ := hp
+              subst hpv
+              obtain ⟨ξ, hξm, hξv⟩ := mem_toL_bValA71_83 η hlv 1 ζ
+                (by rw [hR, hRc, hz0]; exact List.mem_append.mpr (Or.inr (List.Mem.head _)))
+              have hξn : (1, ξ) ∈ nodes72 η := toL_sub_nodes72 η (1, ξ) hξm
+              have hξsz : sizeB ξ < k := by
+                have := sizeB_mem72 η (1, ξ) hξm
+                show sizeB ((1, ξ) : Nat × B).2 < k
+                omega
+              have hξlv : lvlLe 1 ξ = true := (lvlL72_of_lvlLe η hlv (1, ξ) hξm).2
+              have hξsub : ∀ q ∈ nodes72 ξ, BT.lt (bValA71 q.2) (bValA71 c) = true :=
+                fun q hq => hsub q (nodes72_trans83 η (1, ξ) hξn q hq)
+              obtain ⟨m, hm⟩ := ih ξ hξsz hξlv hξsub _ hch (by rw [← hξv]; exact hζ)
+              refine ⟨m, ?_⟩
+              rw [lt_eq_ltS, hplug m, hR, hRc, hz0, ltS_append_left71 _ hatP, hξv]
+              exact ltS_single83 1 _ _ zs hm
+        · refine ⟨0, ?_⟩
+          rw [lt_eq_ltS, plugB_nd83 1 Q u2 s2 d2 (iterD 0 c 0),
+            toL_bValA71_nd83 1 Q _ (lvlLe_plugB _ 1 _ he
+              (lvlLe_iterD 0 0 c 1 (Nat.zero_le 1) hc.2.1)), hind]
+          rw [hind] at hlt
+          exact hlt
+
+end
+
+/-! ### §83.5 `repNode` の枝の底 — 頭は動かない、伸びるのは長さ
+
+段 0 の葉の枝では列の頭が `ψ_v(P)` で固定される。だから「頭で追い抜く」ことはできず、
+挑戦者を捕まえるのは**成分の個数**である。挑戦者の尻尾が頭で押さえられているのが
+`nonIncr`、すなわち §72 の `descOK_map72` で、`x < y ⊕ 1 → x ≤ y` (`lt_succ_le83`) が
+残りの半分。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- 引数が真に小さければ、その先の成分によらず小さい。 -/
+theorem ltS_arg83 (p : Nat) (z T : BT) (rest ys : List BT) (h : BT.lt z T = true) :
+    ltS (BT.D p z :: rest) (BT.D p T :: ys) = true := by
+  have hne : ¬ ((z == T) = true) := by
+    intro hcc
+    rw [bt_eq_of_beq71 z T hcc, lt_irrefl74] at h
+    exact Bool.noConfusion h
+  rw [ltS_cons p z rest p T ys, if_neg (Nat.lt_irrefl p), if_neg (Nat.lt_irrefl p),
+    if_neg hne, ← lt_eq_ltS]
+  exact h
+
+/-- `BT.le` は推移的。 -/
+theorem le_trans83 {a b c : BT} (h1 : BT.le a b = true) (h2 : BT.le b c = true) :
+    BT.le a c = true := by
+  have h1' : ((a == b) || BT.lt a b) = true := h1
+  have h2' : ((b == c) || BT.lt b c) = true := h2
+  show ((a == c) || BT.lt a c) = true
+  rcases (Bool.or_eq_true _ _).mp h1' with e1 | e1
+  · rw [bt_eq_of_beq71 a b e1]; exact h2
+  · rcases (Bool.or_eq_true _ _).mp h2' with e2 | e2
+    · rw [← bt_eq_of_beq71 b c e2, e1, Bool.or_true]
+    · rw [lt_trans83 e1 e2, Bool.or_true]
+
+/-- 降べきの列は尻尾を落としても降べき。 -/
+theorem descOK_tail83 (x : BT) : ∀ (l : List BT), descOK72 (x :: l) = true →
+    descOK72 l = true
+  | [], _ => rfl
+  | y :: r, h => ((Bool.and_eq_true _ _).mp h).2
+
+theorem descOK_suffix83 : ∀ (a b : List BT), descOK72 (a ++ b) = true → descOK72 b = true
+  | [], _, h => h
+  | x :: a', b, h => descOK_suffix83 a' b (descOK_tail83 x (a' ++ b) h)
+
+/-- 降べきの列では頭がすべてを押さえる。 -/
+theorem descOK_head83 : ∀ (l : List BT) (x : BT), descOK72 (x :: l) = true →
+    ∀ y ∈ l, BT.le y x = true := by
+  intro l
+  induction l with
+  | nil => intro _ _ y hy; cases hy
+  | cons y0 l' ih =>
+    intro x h y hy
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+    rcases List.mem_cons.mp hy with hy | hy
+    · rw [hy]; exact h1
+    · exact le_trans83 (ih y0 h2 y hy) h1
+
+/-- `ψ_u(P)` の並びの成分列。 -/
+theorem replicate_snoc83 (X : BT) : ∀ n : Nat,
+    List.replicate n X ++ [X] = List.replicate (n + 1) X
+  | 0 => rfl
+  | k + 1 => by
+      show X :: (List.replicate k X ++ [X]) = X :: List.replicate (k + 1) X
+      rw [replicate_snoc83 X k]
+
+theorem toL_repNode83 (u : Nat) (P : B) (hP : lvlLe 1 P = true) : ∀ n : Nat,
+    (bValA71 (repNode u P n)).toL = List.replicate (n + 1) (BT.D u (bValA71 P))
+  | 0 => by
+      show (bValA71 (B.nd u B.nil P)).toL = _
+      rw [toL_bValA71_nd83 u .nil P hP]
+      rfl
+  | k + 1 => by
+      show (bValA71 (B.nd u (repNode u P k) P)).toL = _
+      rw [toL_bValA71_nd83 u (repNode u P k) P hP, toL_repNode83 u P hP k,
+        replicate_snoc83 (BT.D u (bValA71 P)) (k + 1)]
+
+/-- **頭で押さえられた列は、十分長い並びに追い越される。** -/
+theorem ltS_replicate83 : ∀ (l : List BT) (u : Nat) (A : BT) (n : Nat), Atoms l →
+    (∀ y ∈ l, BT.le y (BT.D u A) = true) → l.length < n →
+    ltS l (List.replicate n (BT.D u A)) = true := by
+  intro l
+  induction l with
+  | nil =>
+    intro u A n _ _ hn
+    cases n with
+    | zero => exact absurd hn (Nat.not_lt_zero _)
+    | succ m =>
+      show ltS [] (BT.D u A :: List.replicate m (BT.D u A)) = true
+      exact ltS_nil_cons _ _
+  | cons y0 l' ih =>
+    intro u A n hat hle hn
+    obtain ⟨q, b, rfl⟩ := hat y0 (List.Mem.head _)
+    cases n with
+    | zero => exact absurd hn (Nat.not_lt_zero _)
+    | succ m =>
+      show ltS (BT.D q b :: l') (BT.D u A :: List.replicate m (BT.D u A)) = true
+      have h := hle (BT.D q b) (List.Mem.head _)
+      have h' : ((BT.D q b == BT.D u A) || BT.lt (BT.D q b) (BT.D u A)) = true := h
+      rcases (Bool.or_eq_true _ _).mp h' with e | e
+      · have he : BT.D q b = BT.D u A := bt_eq_of_beq71 _ _ e
+        have hq : q = u := by injection he
+        have hb : b = A := by injection he
+        subst hq; subst hb
+        rw [ltS_cons q b l' q b (List.replicate m (BT.D q b)),
+          if_neg (Nat.lt_irrefl q), if_neg (Nat.lt_irrefl q), if_pos (bt_beq_self71 b)]
+        refine ih q b m (fun z hz => hat z (List.Mem.tail _ hz))
+          (fun z hz => hle z (List.Mem.tail _ hz)) ?_
+        have : (BT.D q b :: l').length = l'.length + 1 := rfl
+        omega
+      · rw [lt_eq_ltS] at e
+        rcases ltS_cons_single83 q b [] u A e with h1 | h1
+        · exact ltS_lvl83 q u b A l' _ h1
+        · obtain ⟨hqu, hba⟩ := h1
+          subst hqu
+          exact ltS_arg83 q b A l' _ hba
+
+/-- **`x < y ⊕ 1` なら `x ≤ y`。** 部分領域の値の上で。 -/
+theorem lt_succ_le83 (z P : B)
+    (h : BT.lt (bValA71 z) (bValA71 (.nd 0 P .nil)) = true) :
+    bValA71 z = bValA71 P ∨ BT.lt (bValA71 z) (bValA71 P) = true := by
+  rw [lt_eq_ltS, toL_bValA71_nd83 0 P .nil rfl] at h
+  rcases splitP83 (bValA71 P).toL (bValA71 z).toL (atoms_bValA71_83 P)
+      (atoms_bValA71_83 z) with ⟨R, hR⟩ | hind
+  · rw [hR, ltS_append_left71 _ (atoms_bValA71_83 P)] at h
+    cases hRc : R with
+    | nil =>
+      refine Or.inl ?_
+      have he : (bValA71 z).toL = (bValA71 P).toL := by
+        rw [hR, hRc, List.append_nil]
+      rw [← show BT.ofL (bValA71 z).toL = bValA71 z from nfSum_bValA7174 z,
+        ← show BT.ofL (bValA71 P).toL = bValA71 P from nfSum_bValA7174 P, he]
+    | cons z0 zs =>
+      have hatR : Atoms R := by
+        intro w hw
+        exact atoms_bValA71_83 z w (by rw [hR]; exact List.mem_append.mpr (Or.inr hw))
+      obtain ⟨p, ζ, hz0⟩ := hatR z0 (by rw [hRc]; exact List.Mem.head _)
+      rw [hRc, hz0] at h
+      rcases ltS_cons_single83 p ζ zs 0 (bValA71 B.nil) h with h1 | h1
+      · exact absurd h1 (Nat.not_lt_zero _)
+      · exact absurd h1.2 (by
+          rw [lt_eq_ltS, show (bValA71 B.nil).toL = [] from rfl, ltS_right_nil83]
+          exact fun hcc => Bool.noConfusion hcc)
+  · refine Or.inr ?_
+    rw [lt_eq_ltS, ← hind [BT.D 0 (bValA71 B.nil)]]
+    exact h
+
+/-- **§83.5 の主定理。** 最後の加数が `ψ₀(0)` の枝の底。 -/
+theorem repDomBase83 (v : Nat) (r P : B) (hP : lvlLe 1 P = true)
+    (η : B) (hη : GS83 η)
+    (hlt : BT.lt (bValA71 η) (bValA71 (.nd v r (.nd 0 P .nil))) = true) :
+    ∃ n, BT.lt (bValA71 η) (bValA71 (appB r (repNode v P n))) = true := by
+  have hatP : Atoms (bValA71 r).toL := atoms_bValA71_83 r
+  have hatL : Atoms (bValA71 η).toL := atoms_bValA71_83 η
+  have hlvc : lvlLe 1 (B.nd 0 P .nil) = true :=
+    (lvlLe_nd_iff 1 0 P .nil).mpr ⟨Nat.zero_le 1, hP, rfl⟩
+  rw [lt_eq_ltS, toL_bValA71_nd83 v r _ hlvc] at hlt
+  have htgt : ∀ n : Nat, (bValA71 (appB r (repNode v P n))).toL
+      = (bValA71 r).toL ++ List.replicate (n + 1) (BT.D v (bValA71 P)) := by
+    intro n
+    rw [toL_bValA71_appB71 (repNode v P n) r, toL_repNode83 v P hP n]
+  rcases splitP83 (bValA71 r).toL (bValA71 η).toL hatP hatL with ⟨R, hR⟩ | hind
+  · rw [hR, ltS_append_left71 _ hatP] at hlt
+    have hatR : Atoms R := by
+      intro w hw
+      exact hatL w (by rw [hR]; exact List.mem_append.mpr (Or.inr hw))
+    cases hRc : R with
+    | nil =>
+      refine ⟨0, ?_⟩
+      rw [lt_eq_ltS, htgt 0, hR, hRc, ltS_append_left71 _ hatP]
+      exact ltS_nil_cons _ _
+    | cons z0 zs =>
+      obtain ⟨p, ζ, hz0⟩ := hatR z0 (by rw [hRc]; exact List.Mem.head _)
+      rw [hRc, hz0] at hlt
+      rcases ltS_cons_single83 p ζ zs v (bValA71 (B.nd 0 P .nil)) hlt with h1 | h1
+      · refine ⟨0, ?_⟩
+        rw [lt_eq_ltS, htgt 0, hR, hRc, hz0, ltS_append_left71 _ hatP]
+        exact ltS_lvl83 p v ζ _ zs _ h1
+      · obtain ⟨hpv, hζ⟩ := h1
+        subst hpv
+        obtain ⟨ξ, hξm, hξv⟩ := mem_toL_bValA71_83 η hη.2.2 p ζ
+          (by rw [hR, hRc, hz0]; exact List.mem_append.mpr (Or.inr (List.Mem.head _)))
+        subst hξv
+        rcases lt_succ_le83 ξ P hζ with he | he
+        · -- 頭が一致する。長さで追い越す。
+          refine ⟨zs.length + 1, ?_⟩
+          rw [lt_eq_ltS, htgt (zs.length + 1), hR, hRc, hz0, ltS_append_left71 _ hatP, he,
+            show List.replicate (zs.length + 1 + 1) (BT.D p (bValA71 P))
+              = BT.D p (bValA71 P) :: List.replicate (zs.length + 1) (BT.D p (bValA71 P)) from rfl,
+            ltS_cons p (bValA71 P) zs p (bValA71 P) _, if_neg (Nat.lt_irrefl p),
+            if_neg (Nat.lt_irrefl p), if_pos (bt_beq_self71 (bValA71 P))]
+          have hdesc : descOK72 (BT.D p (bValA71 P) :: zs) = true := by
+            have hd := descOK_bValA71_83 η hη
+            rw [hR, hRc, hz0, he] at hd
+            exact descOK_suffix83 _ _ hd
+          refine ltS_replicate83 zs p (bValA71 P) (zs.length + 1)
+            (fun w hw => hatR w (by rw [hRc, hz0]; exact List.Mem.tail _ hw))
+            (descOK_head83 zs _ hdesc) (Nat.lt_succ_self _)
+        · refine ⟨0, ?_⟩
+          rw [lt_eq_ltS, htgt 0, hR, hRc, hz0, ltS_append_left71 _ hatP]
+          exact ltS_arg83 p _ _ zs _ he
+  · refine ⟨0, ?_⟩
+    rw [lt_eq_ltS, htgt 0, hind]
+    rw [hind] at hlt
+    exact hlt
+
+end
+
+/-! ### §83.6 二つの再帰 — §71.7 の減少・増加の双子
+
+`fsB` の枝は §71.7 と同じ二つ。前置きで割って最後の加数に降りる操作は両方に共通なので
+`descend83` にまとめる — そこで挑戦者は「成分の引数」に置き換わり、一段小さくなる。
+不変量 `hasLowAnc w c = true ∨ v < w` も §71.7 のまま。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **一段降りる。** 前置きで割り、成分の引数を新しい挑戦者にする。 -/
+theorem descend83 (v : Nat) (r c : B) (hc : lvlLe 1 c = true)
+    (g : Nat → B) (hg : ∀ n, lvlLe 1 (g n) = true)
+    (η : B) (hlv : lvlLe 1 η = true)
+    (hlt : BT.lt (bValA71 η) (bValA71 (.nd v r c)) = true)
+    (HIH : ∀ ξ : B, (v, ξ) ∈ toL η → BT.lt (bValA71 ξ) (bValA71 c) = true →
+       ∃ n, BT.lt (bValA71 ξ) (bValA71 (g n)) = true) :
+    ∃ n, BT.lt (bValA71 η) (bValA71 (.nd v r (g n))) = true := by
+  have hatP : Atoms (bValA71 r).toL := atoms_bValA71_83 r
+  have hatL : Atoms (bValA71 η).toL := atoms_bValA71_83 η
+  have htgt : ∀ n, (bValA71 (B.nd v r (g n))).toL
+      = (bValA71 r).toL ++ [BT.D v (bValA71 (g n))] :=
+    fun n => toL_bValA71_nd83 v r (g n) (hg n)
+  rw [lt_eq_ltS, toL_bValA71_nd83 v r c hc] at hlt
+  rcases splitP83 (bValA71 r).toL (bValA71 η).toL hatP hatL with ⟨R, hR⟩ | hind
+  · rw [hR, ltS_append_left71 _ hatP] at hlt
+    have hatR : Atoms R := by
+      intro w hw
+      exact hatL w (by rw [hR]; exact List.mem_append.mpr (Or.inr hw))
+    cases hRc : R with
+    | nil =>
+      refine ⟨0, ?_⟩
+      rw [lt_eq_ltS, htgt 0, hR, hRc, ltS_append_left71 _ hatP]
+      exact ltS_nil_cons _ _
+    | cons z0 zs =>
+      obtain ⟨p, ζ, hz0⟩ := hatR z0 (by rw [hRc]; exact List.Mem.head _)
+      rw [hRc, hz0] at hlt
+      rcases ltS_cons_single83 p ζ zs v (bValA71 c) hlt with h1 | h1
+      · refine ⟨0, ?_⟩
+        rw [lt_eq_ltS, htgt 0, hR, hRc, hz0, ltS_append_left71 _ hatP]
+        exact ltS_lvl83 p v ζ _ zs _ h1
+      · obtain ⟨hpv, hζ⟩ := h1
+        subst hpv
+        obtain ⟨ξ, hξm, hξv⟩ := mem_toL_bValA71_83 η hlv p ζ
+          (by rw [hR, hRc, hz0]; exact List.mem_append.mpr (Or.inr (List.Mem.head _)))
+        subst hξv
+        obtain ⟨n, hn⟩ := HIH ξ hξm hζ
+        refine ⟨n, ?_⟩
+        rw [lt_eq_ltS, htgt n, hR, hRc, hz0, ltS_append_left71 _ hatP]
+        exact ltS_arg83 p _ _ zs _ hn
+  · refine ⟨0, ?_⟩
+    rw [lt_eq_ltS, htgt 0, hind]
+    rw [hind] at hlt
+    exact hlt
+
+/-- **段 0 の葉の枝の支配。** §71.7 の `repB_dec_inc71` の双子。 -/
+theorem repDom83 : ∀ (c : B), c ≠ .nil → lastLvl c = 0 → ∀ (v : Nat) (r : B),
+    lvlLe 1 (.nd v r c) = true → ∀ (η : B), GS83 η →
+    BT.lt (bValA71 η) (bValA71 (.nd v r c)) = true →
+    ∃ n, BT.lt (bValA71 η) (bValA71 (repB (.nd v r c) n)) = true := by
+  intro c
+  induction c with
+  | nil => intro h; exact absurd rfl h
+  | nd u P d _ ihd =>
+    intro _ hll v r hlv η hη hlt
+    obtain ⟨_, _, hc⟩ := (lvlLe_nd_iff 1 v r (.nd u P d)).mp hlv
+    obtain ⟨_, hP, _⟩ := (lvlLe_nd_iff 1 u P d).mp hc
+    cases d with
+    | nil =>
+      have hu0 : u = 0 := hll
+      subst hu0
+      obtain ⟨n, hn⟩ := repDomBase83 v r P hP η hη hlt
+      refine ⟨n, ?_⟩
+      rw [repB_base71 v r P n]
+      exact hn
+    | nd u2 s2 d2 =>
+      have hdne : (B.nd u2 s2 d2) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+      have hlld : lastLvl (B.nd u2 s2 d2) = 0 := by
+        rw [← lastLvl_nd71 u P _ hdne]; exact hll
+      obtain ⟨n, hn⟩ := descend83 v r (B.nd u P (B.nd u2 s2 d2)) hc
+        (fun n => repB (B.nd u P (B.nd u2 s2 d2)) n) (fun n => lvlLe_repB _ 1 n hc)
+        η hη.2.2 hlt
+        (fun ξ hξm hξlt => ihd hdne hlld u P hc ξ (gs83_mem83 η hη (v, ξ) hξm).1 hξlt)
+      refine ⟨n, ?_⟩
+      rw [repB_deep71 v r u P _ n hdne]
+      exact hn
+
+/-- **段 `w ≥ 1` の葉の枝の支配。** §71.7 の `rwB_dec_inc71` の双子。底では §83.4。 -/
+theorem rwDom83 : ∀ (c : B), c ≠ .nil → ∀ (w : Nat), lastLvl c = w →
+    ∀ (v : Nat) (r : B), (hasLowAnc w c = true ∨ v < w) → lvlLe 1 (.nd v r c) = true →
+    ∀ (η : B), GS83 η → BT.lt (bValA71 η) (bValA71 (.nd v r c)) = true →
+    ∃ n, BT.lt (bValA71 η) (bValA71 (rwB w n (.nd v r c))) = true := by
+  intro c
+  induction c with
+  | nil => intro h; exact absurd rfl h
+  | nd u P d _ ihd =>
+    intro _ w hll v r hdis hlv η hη hlt
+    obtain ⟨hv1, _, hc⟩ := (lvlLe_nd_iff 1 v r (.nd u P d)).mp hlv
+    have hcne : (B.nd u P d) ≠ .nil := by intro hcc; exact B.noConfusion hcc
+    by_cases hla : hasLowAnc w (.nd u P d) = true
+    · have hdne : d ≠ .nil := by
+        intro hcc
+        rw [hcc, hasLowAnc_leaf71 w u P] at hla
+        exact Bool.noConfusion hla
+      have hdis2 : hasLowAnc w d = true ∨ u < w := by
+        rw [hasLowAnc_nd71 w u P d hdne] at hla
+        rcases (Bool.or_eq_true _ _).mp hla with h | h
+        · exact Or.inr (of_decide_eq_true h)
+        · exact Or.inl h
+      have hll2 : lastLvl d = w := by rw [← hll]; exact (lastLvl_nd71 u P d hdne).symm
+      obtain ⟨n, hn⟩ := descend83 v r (B.nd u P d) hc
+        (fun n => rwB w n (B.nd u P d)) (fun n => lvlLe_rwB _ w n 1 hc)
+        η hη.2.2 hlt
+        (fun ξ hξm hξlt => ihd hdne w hll2 u P hdis2 hc ξ (gs83_mem83 η hη (v, ξ) hξm).1 hξlt)
+      refine ⟨n, ?_⟩
+      rw [rwB_nd71 w n v r u P d, if_pos hla]
+      exact hn
+    · have hvw : v < w := by
+        rcases hdis with h | h
+        · exact absurd h hla
+        · exact h
+      have hlow : hasLowAnc w (.nd u P d) = false := by
+        cases hcc : hasLowAnc w (.nd u P d) with
+        | false => rfl
+        | true => exact absurd hcc hla
+      have hwle : w ≤ 1 := by rw [← hll]; exact lastLvl_le83 _ 1 hc
+      have hv0 : v = 0 := by omega
+      have hw1 : w = 1 := by omega
+      subst hv0; subst hw1
+      have hchain : Chain83 (B.nd u P d) := ⟨hcne, hc, hll, hlow⟩
+      obtain ⟨m, hm⟩ := descend83 0 r (B.nd u P d) hc
+        (fun m => plugB (B.nd u P d) (iterD 0 (B.nd u P d) m))
+        (fun m => lvlLe_plugB _ 1 _ hc (lvlLe_iterD m 0 _ 1 (Nat.zero_le 1) hc))
+        η hη.2.2 hlt
+        (fun ξ hξm hξlt => by
+          have hgs := gs83_mem83 η hη (0, ξ) hξm
+          have hsub : ∀ q ∈ nodes72 ξ, BT.lt (bValA71 q.2) (bValA71 (B.nd u P d)) = true :=
+            fun q hq => lt_trans83 (subLt83 ξ hgs.1 hgs.2 q hq) hξlt
+          exact iterDom83 _ hchain (sizeB ξ + 1) ξ (Nat.lt_succ_self _) hgs.1.2.2 hsub
+            _ hchain hξlt)
+      refine ⟨m + 1, ?_⟩
+      rw [rwB_nd71 1 (m + 1) 0 r u P d, if_neg hla, if_pos hvw]
+      exact hm
+
+end
+
+/-! ### §83.7 組み立て — `BCofIn71` は定理である
+
+§71.1 が「基本列は前置きに触らない」を言い、`fsB` の枝は §71.7 と同じ二つなので、
+支配は §83.6 の二つで尽きる。強い形 (`mainDom83`) から求められた形へは §74.4 の
+反対称律ひとつ。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- **強い形。** 極限の添字の基本列は、下にあるどの部分領域の値も**真に追い越す**。 -/
+theorem mainDom83 (t : B) (ht : stdB1 t = true) (hk : kindB t = BMS.Kind.lim)
+    (η : B) (hη : GS83 η) (hlt : BT.lt (bValA71 η) (bValA71 t) = true) :
+    ∃ n, BT.lt (bValA71 η) (bValA71 (fsB t n)) = true := by
+  obtain ⟨r, a, ha, rfl⟩ := kindB_lim_std t (stdB_of_stdB1 t ht) hk
+  have hlv : lvlLe 1 (B.nd 0 r a) = true := lvlLe1_of_stdB1 _ ht
+  by_cases hz : (lastLvl a == 0) = true
+  · obtain ⟨n, hn⟩ := repDom83 a ha (eq_of_beq hz) 0 r hlv η hη hlt
+    refine ⟨n, ?_⟩
+    rw [fsB_ne_nil71 0 r a n ha, if_pos hz]
+    exact hn
+  · obtain ⟨n, hn⟩ := rwDom83 a ha (lastLvl a) rfl 0 r (Or.inr (lastLvl_pos71 a hz)) hlv η hη hlt
+    refine ⟨n, ?_⟩
+    rw [fsB_ne_nil71 0 r a n ha, if_neg hz]
+    exact hn
+
+/-- **§83 の主定理。`BCofIn71` は定理である。** 仮説なし。 -/
+theorem bCofIn71_thm : BCofIn71 := by
+  intro t ht hk u hu hlt
+  obtain ⟨n, hn⟩ := mainDom83 t ht hk u (gs83_of_std83 u hu) hlt
+  exact ⟨n, lt_asymm74 hn⟩
+
+/-- §71.4 の内側の共終性。橋の逆向きだけになる。 -/
+theorem cofInS1_83 (Hp : PsiIdxOKStd172) (HV : VOfLtA71') : CofInS1 :=
+  cofInS1_172_76 Hp HV bCofIn71_thm
+
+/-- 同じものを §71.4 の絞らない形の仮説で。 -/
+theorem cofInS1_of71_83 (Hp : PsiIdxOKStd) (Hr : RegionStd) (HV : VOfLtA71') : CofInS1 :=
+  cofInS1_of71 Hp Hr HV bCofIn71_thm
+
+/-- **共終性に残るのは `CofDenseS1` だけ。** -/
+theorem limCofS1_83 (Hp : PsiIdxOKStd172) (HV : VOfLtA71') (HD : CofDenseS1) : LimCofS1 :=
+  limCofS1_172_76 Hp HD (cofInS1_83 Hp HV)
+
+/-- **§83 の最終形。326 行目の証明書に残る仮説は 3 つ** —
+    `PsiIdxOKStd172` (§72 の門)、`DictLtA74` (`dict` の順序保存)、`CofDenseS1` (密度)。
+    §76.5b の最良は 4 つで、4 つめが `BCofIn71` だった。 -/
+theorem certIn_t326_83 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HCD : CofDenseS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_dict76 Hp H2 HCD bCofIn71_thm hacc
+
+/-- 同じものを §73 の一歩ぶんの門で。 -/
+theorem certIn_t326_step83 (Hs : PsiIdxStep073) (H2 : DictLtA74) (HCD : CofDenseS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step76 Hs H2 HCD bCofIn71_thm hacc
+
+/-- **逆向き。** `LimCofS1` が言えれば `CofDenseS1` はただで出る — 証人に `fsB t n` を
+    取ればよく、`LimDecS1` がそれを `vOf t` の下に置く。 -/
+theorem cofDenseS1_of_limCofS1_83 (HL : LimCofS1) (HD : LimDecS1) : CofDenseS1 := by
+  intro t ht hk s hs hlt
+  obtain ⟨n, hn⟩ := HL t ht hk s hs hlt
+  exact ⟨fsB t n, stdB1_fsB t ht n, hn, HD t ht hk n⟩
+
+/-- **§71.4 の分割はもう縮まない。** `BCofIn71` が定理になったので、残る半分は
+    共終性そのものと**同値**である。橋 (`VOfLtA71`) の下で。 -/
+theorem cofDenseS1_iff_limCofS1_83 (Hp : PsiIdxOKStd172) (HV : VOfLtA71) :
+    CofDenseS1 ↔ LimCofS1 :=
+  ⟨fun H => limCofS1_83 Hp (vOfLtA71'_76 Hp HV) H,
+   fun H => cofDenseS1_of_limCofS1_83 H (limDecS1_of_bridge71 HV)⟩
+
+/-- 同じことを `dict` の順序保存から。 -/
+theorem cofDenseS1_iff_dict83 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) :
+    CofDenseS1 ↔ LimCofS1 :=
+  cofDenseS1_iff_limCofS1_83 Hp (vOfLtA71_of_dictLt76 Hp H2)
+
+end
+
+/-! ### §83.8 `visOK` は外せない — `ψ₀(Ω)` が反例
+
+§83.4 の `iterDom83` から `visOK 0` を落とすと**偽になる**。`sbad83 = ψ₀(Ω)` は
+`nonIncr`・`stdIn`・`lvlLe 1` をすべて満たし (`GS83`)、`Ω` より真に下にあるが、`ψ₀` の塔の
+どの段にも届かない — それが上限だからである。これは §69 が使った形そのもので、§70.3 の
+`sbad_not_witness` の Buchholz 側の相方である。`visOK 0 sbad83 sbad83 = false` は
+`cmpS` が整礎再帰で書かれていて `rfl` では簡約しないので、§83.9 の `#guard` で押さえる。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+/-- `Ω = ψ₁(0)`。 -/
+def om83 : B := .nd 1 .nil .nil
+
+/-- `ψ₀(Ω)` — 塔の上限そのもの。 -/
+def sbad83 : B := .nd 0 .nil om83
+
+theorem plugB_om83 (Y : B) : plugB om83 Y = Y := appB_nil Y
+
+theorem chain83_om83 : Chain83 om83 :=
+  ⟨by intro hc; exact B.noConfusion hc, rfl, rfl, rfl⟩
+
+theorem gs83_sbad83 : GS83 sbad83 := ⟨rfl, rfl, rfl⟩
+
+/-- `ψ₀(Ω)` は `Ω` より下。 -/
+theorem lt_sbad83_om83 : BT.lt (bValA71 sbad83) (bValA71 om83) = true := rfl
+
+/-- 塔の各段は `ψ₀` の一節で、その引数は `Ω` を含まない。 -/
+theorem tower_shape83 : ∀ n : Nat, ∃ Z, bValA71 (iterD 0 om83 n) = BT.D 0 Z
+    ∧ ltS [BT.D 1 BT.zero] Z.toL = false
+  | 0 => ⟨bArg 0 (plugB om83 .nil), rfl, by
+      rw [plugB_om83]
+      show ltS [BT.D 1 BT.zero] (BT.zero).toL = false
+      exact ltS_right_nil83 _⟩
+  | k + 1 => by
+      obtain ⟨Z, hZ, _⟩ := tower_shape83 k
+      refine ⟨bArg 0 (plugB om83 (iterD 0 om83 k)), rfl, ?_⟩
+      rw [plugB_om83, bArg_eq_bValA71_71 _ 0 (lvlLe_iterD k 0 om83 1 (Nat.zero_le 1) rfl), hZ]
+      show ltS [BT.D 1 BT.zero] [BT.D 0 Z] = false
+      rw [ltS_cons 1 BT.zero [] 0 Z [], if_neg (by omega), if_pos (by omega)]
+
+/-- **反例。** どの段も `ψ₀(Ω)` に届かない。 -/
+theorem sbad83_not_dominated : ∀ n : Nat,
+    BT.lt (bValA71 sbad83) (bValA71 (plugB om83 (iterD 0 om83 n))) = false := by
+  intro n
+  rw [plugB_om83]
+  obtain ⟨Z, hZ, hZlt⟩ := tower_shape83 n
+  rw [hZ, lt_eq_ltS]
+  show ltS [BT.D 0 (BT.D 1 BT.zero)] [BT.D 0 Z] = false
+  rw [ltS_cons 0 (BT.D 1 BT.zero) [] 0 Z []]
+  rw [if_neg (Nat.lt_irrefl 0), if_neg (Nat.lt_irrefl 0)]
+  by_cases h : (BT.D 1 BT.zero == Z) = true
+  · rw [if_pos h]; exact ltS_nil_nil
+  · rw [if_neg h]; exact hZlt
+
+/-- **§83.8 の主定理。`GS83` だけでは §83.4 は成り立たない。** -/
+theorem not_iterDom_without_visOK83 :
+    ¬ (∀ (η : B), GS83 η → ∀ (c : B), Chain83 c → BT.lt (bValA71 η) (bValA71 c) = true →
+       ∃ n, BT.lt (bValA71 η) (bValA71 (plugB c (iterD 0 c n))) = true) := by
+  intro H
+  obtain ⟨n, hn⟩ := H sbad83 gs83_sbad83 om83 chain83_om83 lt_sbad83_om83
+  rw [sbad83_not_dominated n] at hn
+  exact Bool.noConfusion hn
+
+end
+
+/-! ### §83.9 測定 (凍結)
+
+母集団の作り方を先に書く。**主定理は定理なので、以下は根拠ではなく受領である。**
+
+    subP n = (popNFB 2 n).filter stdB1      節は 0 … n-1 個、段は 0 と 1
+    pairs83 l = { (t, u) | t ∈ l, kindB t = lim, u ∈ l, bValA71 u < bValA71 t }
+
+**核は `subP 4` (13 個、極限 8 個、対 63 個)。**深さは節 3 個ぶん、幅は `fsB` の二つの枝の
+両方 — `repB` の枝が 34 対、`rwB` の枝 (崩れ、§83.4 が支える側) が 29 対。`subP 5`
+(45 個、799 対) は同じ掃きを一行で広げたもの。
+
+**そこに一つ族を足す。** それが要点である。`subP` の中では必要な添字は `n ≤ 3` で収まり、
+「定数で足りる」ように見えてしまう。`t = ψ₀(Ω) = sbad83` と挑戦者 `tow83 k = ψ₀ᵏ(0)` の
+族では必要な添字はちょうど `k`、すなわち**挑戦者の節の個数そのもの**で、上に有界でない。
+これが「項についての帰納法ではなく挑戦者の大きさについての帰納法」を強いる形であり、
+§83.4 の設計はここから来ている。10 個。
+
+**負の結果 (24 個)。** `sbad83` は `GS83` を満たすが `visOK 0` を満たさず、塔のどの段にも
+届かない — §83.8 の定理の受領。`visOK 0 sbad83 sbad83 = false` は `cmpS` が整礎再帰なので
+定理にできず、ここで測る。
+
+**§69 の反例は覆っていない。** `tdiag = (0,0)(1,1)(2,2)` は段 2 の節を持つので `stdB1` では
+なく、§83 の主定理の仮説を満たさない (§70.3 の `not_stdB1_tdiag` と同じこと)。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT)
+open TM TM.Term
+
+def tow83 : Nat → B
+  | 0 => .nil
+  | k + 1 => .nd 0 .nil (tow83 k)
+
+def limOf83 (l : List B) : List B := l.filter (fun t => kindB t == BMS.Kind.lim)
+
+def leastN83 (t u : B) (K : Nat) : Option Nat :=
+  (List.range K).find? (fun n => BT.lt (bValA71 u) (bValA71 (fsB t n)))
+
+def pairs83 (l : List B) : List (B × B) :=
+  (limOf83 l).flatMap fun t => l.filterMap fun u =>
+    if BT.lt (bValA71 u) (bValA71 t) then some (t, u) else none
+
+/-- `fsB` の第 2 の枝 (`rwB`、崩れ) に落ちる添字か。 -/
+def rwBranch83 (t : B) : Bool := match t with
+  | .nd _ _ a => !(lastLvl a == 0)
+  | _ => false
+
+-- 核の母集団。
+#guard (subP 4).length == 13
+#guard (limOf83 (subP 4)).length == 8
+#guard (pairs83 (subP 4)).length == 63
+#guard (pairs83 (subP 4)).all fun p => (leastN83 p.1 p.2 16).isSome
+#guard ((pairs83 (subP 4)).map fun p => (leastN83 p.1 p.2 16).getD 99).foldl max 0 == 3
+#guard ((pairs83 (subP 4)).filter fun p => (leastN83 p.1 p.2 16).getD 99 ≥ 1).length == 29
+-- 二つの枝の幅。
+#guard ((pairs83 (subP 4)).filter fun p => rwBranch83 p.1).length == 29
+#guard ((pairs83 (subP 4)).filter fun p => !(rwBranch83 p.1)).length == 34
+-- `BCofIn71` が求める形そのもの (含意ではなく等式)。
+#guard (pairs83 (subP 4)).all fun p =>
+  match leastN83 p.1 p.2 16 with
+  | none => false
+  | some n => BT.lt (bValA71 (fsB p.1 n)) (bValA71 p.2) == false
+-- 広い側、一行。
+#guard (subP 5).length == 45
+#guard (pairs83 (subP 5)).length == 799
+#guard (pairs83 (subP 5)).all fun p =>
+  match leastN83 p.1 p.2 16 with
+  | none => false
+  | some n => BT.lt (bValA71 (fsB p.1 n)) (bValA71 p.2) == false
+
+/-! **必要な添字は挑戦者の大きさそのもの。** `subP` の中では `n ≤ 3` に見えるが、
+    塔の族では `n = k = sizeB (tow83 k)` で上に有界でない。 -/
+#guard stdB1 sbad83 && (kindB sbad83 == BMS.Kind.lim)
+#guard (List.range 10).all fun k => stdB1 (tow83 k)
+#guard (List.range 10).all fun k => sizeB (tow83 k) == k
+#guard (List.range 10).all fun k => leastN83 sbad83 (tow83 k) 24 == some k
+-- 定数の添字では足りない。`n = 3` は `k ≤ 3` しか捕まえない。
+#guard (List.range 10).all fun k =>
+  (BT.lt (bValA71 (tow83 k)) (bValA71 (fsB sbad83 3)) == decide (k ≤ 3))
+
+/-! **負の結果。** `visOK 0` を落とすと §83.4 は偽になる (§83.8 の定理の受領)。 -/
+#guard nonIncr sbad83 && stdIn sbad83 && lvlLe 1 sbad83
+#guard visOK 0 sbad83 sbad83 == false
+#guard BT.lt (bValA71 sbad83) (bValA71 om83)
+#guard (List.range 24).all fun n =>
+  BT.lt (bValA71 sbad83) (bValA71 (plugB om83 (iterD 0 om83 n))) == false
+
+/-! **§69 の反例は覆っていない。** 段 2 の節があるので部分領域の外。 -/
+#guard stdB1 tdiag == false
+#guard lvlLe 1 tdiag == false
+#guard kindB tdiag == BMS.Kind.lim
+
+end
+
+/-! ### §83.10 公理 -/
+
 end Evidence.Region
