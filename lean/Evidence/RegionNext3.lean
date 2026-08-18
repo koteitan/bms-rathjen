@@ -16569,4 +16569,1302 @@ private def resPairs99 (l : List BT) : List (BT × BT) :=
 
 end
 
+/-! ## §98 THE HIGH SIDE — THE `Γ₀` TOWER IS AN INDUCTION, AND THE STEP THAT BUILDS IT IS ONE LEMMA
+
+§94 split row 326's density gate in two at `ε₀` and §97 closed the low half: below `ε₀`
+`dict` is ONTO, so the witness for a challenger is its own preimage.  §98 attacks the other
+half, and the first thing to say is why the low half's route is closed here.  §97's engine is
+`phiNF_zero_cn97` — `φ̄0` does not skip at a Cantor normal form — and §97.7 already pinned
+where that stops: `phiNF 0 ε₀ = ε₀`, the skip happens EXACTLY at `ε₀`.  Above it the inverse
+`invE97` answers with the wrong term (§97's `dictInv97_needs_ltE97`: `ω^(ε₀+1)` comes back as
+`1`), and §94.6 showed the failure is not one term but a TOWER — `rawT94 n`, every rung in
+𝔗(M), every rung with `dictInv = none`, every rung below `Γ₁`, and not one rung dominated by
+§94.7's 495-term pool.  **Above `ε₀` the witness must be BUILT.**
+
+§94.6 built four of them and checked them in the kernel.  **§98 turns that into an
+induction, and the induction is one lemma about one step.**
+
+  §98.1  **THE `BT` TOOLKIT.**  `ltL_append_r98` (the right list may grow), `btlt_hd98` /
+         `btlt_arg98` / `btlt_sum_r98` / `btlt_cons_same98` (one component's comparison),
+         and the two facts that carry the head condition: `gb1_nil98` (`Hd085 b ⟹ GB 1 b = []`)
+         and `btlt_hd0_D1_98` (`Hd085 b ⟹ b < ψ₁(y)`).  Everything later about standardness
+         is assembled from these; no `BT`-order theory beyond §83's `lt_trans83` is used.
+
+  §98.2  **THE STEP OPERATOR, AND THE INVARIANT IT NEEDS.**
+         `bStep98 x = ψ₀( Ω^Ω ⊕ ψ₁(ψ₁ x) )`.  This is §94.6's `bWitT94` with the `⊕ Ω`
+         removed — simpler, and its value is one Veblen step rather than one-plus-one.  It is
+         NOT closed on legal witnesses: `Inv98 x` adds one conjunct to "level ≤ 1, standard,
+         head `D 0`", namely that every element of `GB 0 x` is below the new argument
+         `Ω^Ω ⊕ Ω^(dict x)`.  `inv_bStep98` proves the invariant is preserved, and §98.8's
+         `bStep98_needs_gb98` proves the conjunct is not decoration.
+
+  §98.2b **THE CLIMB IS GENERAL.**  `bIter98 x n` iterates the step from ANY `x` with
+         `Inv98 x`; `lt_x_bStep98` (the step strictly increases — again only the fourth
+         conjunct is spent), `inv_bIter98`, `lt_bIter98_mono`, `legal_bIter98`.  The `Γ₀`
+         tower `bTowG98` is `bIter98 (ψ₀(Ω^Ω))` (`bTowG98_eq98`).
+
+  §98.3  **`ψ₁` TWICE, IN CLOSED FORM.**  `dict_D1x98 : dict (ψ₁ x) = ω^(Ω₁ ⊕ dict x)` and
+         `dict_D1D1x98 : dict (ψ₁ψ₁ x) = ω^(ω^(Ω₁ ⊕ dict x))`, from §77.7's `collapse1_eq77`
+         and §79.7's `le_reg1_collapse1_79`.  The hypotheses are packaged as `Good98 (dict x)`:
+         `inT`, additively principal, `≠ 1`, a fixed point of `ω^·`, below `Ω₁`, and at or
+         above `Γ₀`.
+
+  §98.4  **THE MAIN LEMMA — THE FOLD, COMPUTED.**  `dict_bStep98` :
+
+             dict (bStep98 x)  =  φ̄( dict x , Γ₀ ⊕ 1 ).
+
+         The base-`Ω₁` decomposition of the argument is `[(Ω₁, 1), (dict x, 1)]`
+         (`wcnf_cons_ge` twice), the fold fires its strongly critical branch once — that is
+         where `Γ₀ = ψ_{Ω₁}(0)` comes from — and then takes one Veblen step.  Every
+         hypothesis of `Good98` is spent somewhere, and §98.8 says where.
+
+  §98.5  **THE TOWER IS AN INDUCTION.**  `good_bIter98` and `dict_bIter98` (and the `Γ₀`
+         instances `good_bTowG98`, `dict_bTowG98`): for EVERY `n`, `bTowG98 n` is a legal
+         witness and `dict (bTowG98 (n+1)) = φ̄(dict (bTowG98 n), Γ₀ ⊕ 1)`.  The order
+         transfer runs forwards here — `lt_dict98`, §94.5's `btlt_of_lt94` reversed, from
+         `bOnto85` and `DictLtA74`.
+
+  §98.6  **THE RAW TOWER IS DOMINATED, AT EVERY RUNG.**  `lt_rawT_bTowG98` :
+         `rawT94 n < dict (bTowG98 (n+1))`, by induction on the Veblen order alone;
+         `lt_bTowG_Gam98` : every rung's value is below `Γ₁`, by a `BT.lt` computation and
+         the transfer; `inT_rawT98` and `lt_rawT_Gam98`.  §94.6's four frozen `#guard`s are
+         now theorems for all `n`.
+
+  §98.7  **WHAT THAT BUYS THE CLAUSE.**  `denseHi_step98` : for any `x` with `Inv98 x` and
+         `Good98 (dict x)`, any challenger at or below `φ̄(dict x, 0)` — the shape §85.7 and
+         §94.6 proved is MISSING from `dict`'s image — is witnessed by `bStep98 x` below any
+         image point above it.  `denseHi_iter98` says the same at every rung of a climb, and
+         `denseHi_rawT98` / `denseHi_rawT_vOf98` are the `Γ₀`-tower instance: a target at or
+         above `Γ₁` and a challenger at or below `rawT94 n` need no hypothesis beyond the two
+         row 326 already carries.
+
+  §98.8  **THE ONE CLAUSE THAT REMAINS BELOW `Γ₁`, NAMED — AND FOUR REFUTATIONS.**
+         `CofGam1_98` : every term of 𝔗(M) in `[Γ₀, Γ₁)` is at or below some rung of the raw
+         tower.  It is a HYPOTHESIS and is marked as such.  `denseHi_below_Gam1_98` proves
+         that with it, EVERY challenger below `Γ₁` is witnessed at every target at or above
+         `Γ₁`.  The four refutations pin the rest: `bStep98_needs_gb98` (a legal `x` whose
+         step is not standard), `dict_bStep98_needs_G098` (at `ε₀` the value is `φ̄(ε₀, Γ₀)` —
+         `phiNFsucc` fires and the `⊕ 1` is lost), `dict_bStep98_needs_fp98` (`Γ₀ ⊕ Γ₀` is
+         above `Γ₀` but not additively principal, and the exponent that reaches the fold is
+         `ω^(Γ₀ ⊕ Γ₀)`), and `btLe0_bTowG98` — **the construction leaves level 0 at every
+         rung.**  That is the honest counterpart of §97's `btLe0_invE97`: above `Γ₀` staying
+         at level 0 is impossible, and level 1 is exactly where it stops.  §85.6 refutes the
+         clause at level 2 and nothing here goes there.
+
+WHAT IS **NOT** CLAIMED.  `DictDenseHi94` is NOT proved, `DictDense85` is NOT proved and
+`CofDenseS1` is NOT closed.  On the cofinality side row 326 still waits on `DictDenseHi94`
+and on nothing else (§97.6), and §98 does not change that.  `CofGam1_98` is an unproved
+hypothesis, introduced by name and used only where it is written.  `PsiIdxOKStd172` and
+`DictLtA74` are used, not proved, and they are the two clauses row 326 already carries.
+
+**Where §98 stopped, precisely.**  Two gaps, and they are different.  (i) Below `Γ₁` the
+clause is now ONE 𝔗(M)-side cofinality statement, `CofGam1_98` — the `Γ₁` analogue of §9's
+`cof_eps0`, whose sequence is the raw `φ̄`-tower `rawT94` and whose proof this repository does
+not have (`Evidence/WF.lean` §15's combinators cover `φ̄ a ·` in the SECOND argument,
+`lim_clauses_phi_arg`; the tower climbs in the FIRST, which is `TM/FS.lean`'s `iterGamma`
+clause and has no Evidence-level cofinality theorem).  (ii) At or above `Γ₁` nothing is
+proved at all: `denseHi_step98` climbs from a given `x`, but choosing that `x` for an
+arbitrary challenger is the general problem, and it needs the `Γ₀`-analogue of §97 — `dict`
+onto the Veblen fragment below `Γ₀`, then onto the `ψ_{Ω₁}` fragment above it.  §98 does not
+attempt either.  What §98 does remove is the doubt §94 recorded about its own construction:
+the family is no longer "a construction with a frozen kernel check on four rungs".
+
+WHAT THE MEASUREMENT SAYS (§98.9 gives the construction).  One population, 120 terms, built
+so that BOTH hypotheses are visible and NEITHER is filtered out — §93's bridge held 292/292
+where its own hypothesis failed, and that is the failure mode this design avoids.  19 of the
+120 are not even legal witnesses, because the step operator does not preserve legality.
+
+  * **The structural hypothesis is exactly right — 495 of 495.**  On the whole of §94.7's
+    pool, `bStep98 x` is a legal witness EXACTLY when `Inv98`'s fourth conjunct holds: 324
+    pass, 171 fail, 0 disagreements.
+  * **The value hypothesis is exactly right — 120 of 120.**  `dict (bStep98 x) = φ̄(dict x,
+    Γ₀ ⊕ 1)` holds EXACTLY when `Good98 (dict x)`: 65 hits, 55 misses, 0 disagreements.
+  * **Not carried by a trivial conjunct.**  Drop `Γ₀ ≤ ·` and the predicate would call 70,
+    not 65.  Each conjunct is visible: 49 terms are not additively principal, 50 are not
+    fixed points of `ω^·`, 36 are below `Γ₀`, 1 is `1` itself.
+  * **The tower, computed.**  Six rungs: all legal, all with the closed form, all dominating
+    `rawT94 n` and all below `Γ₁` — and `btLe72 0` is FALSE at every rung.
+  * **The negative, and it is §94.7's.**  0 of the 495 pool values land in `[rawT94 n, Γ₁)`,
+    at any rung; the raw tower is `inT`, has `dictInv = none` and is below `Γ₁` at 8 rungs,
+    and is NOT `CN` at any of them — §97's low side does not reach it and does not claim to.
+  * **Three BUILT counterexamples**, one per hypothesis: `xBad98` (legal, step not standard),
+    `xEps98` (value `φ̄(ε₀, Γ₀)`, the `⊕ 1` lost), `xSum98` (above `Γ₀`, not principal).
+    §94.6's naive `ψ₀(Ω^(Γ₀+1))` is re-recorded as a theorem: right level, right head, not
+    standard. -/
+
+
+/-! ### §98.1 BT 側の道具 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+
+/-- `ltL` は右の列を伸ばしても真のまま。 -/
+theorem ltL_append_r98 : ∀ (f : Nat) (l1 l2 l3 : List BT),
+    BT.ltL f l1 l2 = true → BT.ltL f l1 (l2 ++ l3) = true := by
+  intro f
+  induction f with
+  | zero => intro l1 l2 l3 h; rw [ltL_zero93] at h; exact Bool.noConfusion h
+  | succ f ih =>
+    intro l1 l2 l3 h
+    cases l2 with
+    | nil =>
+      cases l1 with
+      | nil => rw [ltL_nil_nil93] at h; exact Bool.noConfusion h
+      | cons p ps => rw [ltL_cons_nil93] at h; exact Bool.noConfusion h
+    | cons q qs =>
+      cases l1 with
+      | nil => exact ltL_nil_cons93 _ _ _
+      | cons p ps =>
+        cases p with
+        | zero => exact absurd h (by cases q <;> exact Bool.noConfusion)
+        | sum s t => exact absurd h (by cases q <;> exact Bool.noConfusion)
+        | D u a =>
+          cases q with
+          | zero => exact absurd h (by exact Bool.noConfusion)
+          | sum s t => exact absurd h (by exact Bool.noConfusion)
+          | D v b =>
+            rw [ltL_DD93] at h
+            rw [List.cons_append, ltL_DD93]
+            by_cases h1 : u < v
+            · rw [if_pos h1]
+            · rw [if_neg h1] at h ⊢
+              by_cases h2 : v < u
+              · rw [if_pos h2] at h; exact Bool.noConfusion h
+              · rw [if_neg h2] at h ⊢
+                by_cases h3 : (a == b) = true
+                · rw [if_pos h3] at h ⊢; exact ih ps qs l3 h
+                · rw [if_neg h3] at h ⊢; exact h
+
+/-- 成分ひとつぶんの `BT.lt` — 添字で決まる場合。 -/
+theorem btlt_hd98 {u v : Nat} (a b : BT) (h : u < v) : BT.lt (BT.D u a) (BT.D v b) = true := by
+  show BT.ltL (BT.size (BT.D u a) + BT.size (BT.D v b) + 2) [BT.D u a] [BT.D v b] = true
+  rw [show BT.size (BT.D u a) + BT.size (BT.D v b) + 2
+      = (BT.size (BT.D u a) + BT.size (BT.D v b) + 1) + 1 from rfl, ltL_DD93, if_pos h]
+
+/-- 成分ひとつぶんの `BT.lt` — 引数で決まる場合。 -/
+theorem btlt_arg98 {u : Nat} {a b : BT} (hne : (a == b) = false) (h : BT.lt a b = true) :
+    BT.lt (BT.D u a) (BT.D u b) = true := by
+  show BT.ltL (BT.size (BT.D u a) + BT.size (BT.D u b) + 2) [BT.D u a] [BT.D u b] = true
+  rw [show BT.size (BT.D u a) + BT.size (BT.D u b) + 2
+      = (BT.size (BT.D u a) + BT.size (BT.D u b) + 1) + 1 from rfl, ltL_DD93,
+    if_neg (by omega), if_neg (by omega),
+    if_neg (by rw [hne]; exact Bool.noConfusion)]
+  refine ltL_fuel93 (BT.size a + BT.size b + 2) _ _ _ ?_ h
+  show BT.size a + BT.size b + 2 ≤ (1 + BT.size a) + (1 + BT.size b) + 1
+  omega
+
+/-- 右側に和を足しても `BT.lt` は保たれる。 -/
+theorem btlt_sum_r98 {e p q : BT} (h : BT.lt e p = true) : BT.lt e (BT.sum p q) = true := by
+  show BT.ltL (BT.size e + BT.size (BT.sum p q) + 2) (BT.toL e) (BT.toL p ++ BT.toL q) = true
+  refine ltL_fuel93 (BT.size e + BT.size p + 2) _ _ _ ?_
+    (ltL_append_r98 _ _ _ _ h)
+  show BT.size e + BT.size p + 2 ≤ BT.size e + (1 + BT.size p + BT.size q) + 2
+  omega
+
+/-- 成分がすべて `D 0` なら `GB 1` は空。 -/
+theorem gb1_nil98 : ∀ (x : BT), Hd085 x → BT.GB 1 x = []
+  | .zero, _ => rfl
+  | .D u c, h => by
+      rw [hd085_D94 h]; rfl
+  | .sum a b, h => by
+      obtain ⟨ha, hb⟩ := hd085_sum94 h
+      show BT.GB 1 a ++ BT.GB 1 b = []
+      rw [gb1_nil98 a ha, gb1_nil98 b hb]; rfl
+
+/-- 成分がすべて `D 0` なら段 1 の成分より下。 -/
+theorem btlt_hd0_D1_98 {x : BT} (h : Hd085 x) (y : BT) : BT.lt x (BT.D 1 y) = true := by
+  show BT.ltL (BT.size x + BT.size (BT.D 1 y) + 2) x.toL [BT.D 1 y] = true
+  cases hx : x.toL with
+  | nil => exact ltL_nil_cons93 _ _ _
+  | cons z zs =>
+      obtain ⟨c, hc⟩ := h z (by rw [hx]; exact List.Mem.head _)
+      rw [hc]
+      rw [show BT.size x + BT.size (BT.D 1 y) + 2
+          = (BT.size x + BT.size (BT.D 1 y) + 1) + 1 from rfl, ltL_DD93, if_pos (by omega)]
+
+/-- 成分がすべて `D 0` なら段 1 の成分ではない。 -/
+theorem ne_D1_hd098 {x : BT} (h : Hd085 x) (y : BT) : ¬ (x = BT.D 1 y) := by
+  intro hx
+  obtain ⟨c, hc⟩ := h (BT.D 1 y) (by rw [hx]; exact List.Mem.head _)
+  injection hc with h1 _
+  exact Nat.noConfusion h1
+
+/-- `BT.lt` から相異なることを取り出す。 -/
+theorem bt_ne_of_lt98 {a b : BT} (h : BT.lt a b = true) : (a == b) = false := by
+  cases hab : (a == b) with
+  | false => rfl
+  | true =>
+      exfalso
+      rw [bt_beq_eq77 hab] at h
+      rw [lt_asymm74 h] at h
+      exact Bool.noConfusion h
+
+theorem btlt_zero_D98 (u : Nat) (a : BT) : BT.lt BT.zero (BT.D u a) = true := by
+  show BT.ltL (BT.size BT.zero + BT.size (BT.D u a) + 2) [] [BT.D u a] = true
+  exact ltL_nil_cons93 _ _ _
+
+/-- 先頭が同じ和は尾で決まる。 -/
+theorem btlt_cons_same98 {u : Nat} {a q q' : BT} (h : BT.lt q q' = true) :
+    BT.lt (BT.sum (BT.D u a) q) (BT.sum (BT.D u a) q') = true := by
+  show BT.ltL (BT.size (BT.sum (BT.D u a) q) + BT.size (BT.sum (BT.D u a) q') + 2)
+      (BT.D u a :: q.toL) (BT.D u a :: q'.toL) = true
+  rw [show BT.size (BT.sum (BT.D u a) q) + BT.size (BT.sum (BT.D u a) q') + 2
+      = (BT.size (BT.sum (BT.D u a) q) + BT.size (BT.sum (BT.D u a) q') + 1) + 1 from rfl,
+    ltL_DD93, if_neg (by omega), if_neg (by omega), if_pos (bt_beq_refl a)]
+  refine ltL_fuel93 (BT.size q + BT.size q' + 2) _ _ _ ?_ h
+  show BT.size q + BT.size q' + 2
+      ≤ (1 + (1 + BT.size a) + BT.size q) + (1 + (1 + BT.size a) + BT.size q') + 1
+  omega
+
+/-! ### §98.2 段を一つ上げる作用素 -/
+
+/-- 一段上げる作用素の引数 — `Ω^Ω ⊕ ψ₁(ψ₁ x)`。 -/
+def bArg98 (x : BT) : BT := BT.sum bOO94 (BT.D 1 (BT.D 1 x))
+
+/-- **一段上げる作用素。** `ψ₀(Ω^Ω ⊕ Ω^(dict x))`。 -/
+def bStep98 (x : BT) : BT := BT.D 0 (bArg98 x)
+
+/-- `Γ₀` の上の証人の族 — §94.6 の `bWitT94` を簡単にしたもの。 -/
+def bTowG98 : Nat → BT
+  | 0 => BT.D 0 bOO94
+  | n + 1 => bStep98 (bTowG98 n)
+
+theorem gb0_bArg98 (x : BT) : BT.GB 0 (bArg98 x) =
+    [BT.D 1 (BT.D 1 BT.zero), BT.D 1 BT.zero, BT.zero, BT.D 1 x, x] ++ BT.GB 0 x := rfl
+
+theorem gb0_bStep98 (x : BT) :
+    BT.GB 0 (bStep98 x) = bArg98 x :: BT.GB 0 (bArg98 x) := rfl
+
+/-- `bOO94` より下にいる 5 つ。 -/
+theorem lt_bOO98 {x : BT} (hd : Hd085 x) :
+    BT.lt (BT.D 1 (BT.D 1 BT.zero)) bOO94 = true ∧ BT.lt (BT.D 1 BT.zero) bOO94 = true ∧
+    BT.lt BT.zero bOO94 = true ∧ BT.lt (BT.D 1 x) bOO94 = true ∧ BT.lt x bOO94 = true := by
+  have hx : BT.lt x (BT.D 1 (BT.D 1 BT.zero)) = true := btlt_hd0_D1_98 hd _
+  refine ⟨?_, ?_, btlt_zero_D98 _ _, ?_, btlt_hd0_D1_98 hd _⟩
+  · exact btlt_arg98 (by rfl) (btlt_arg98 (by rfl) (btlt_zero_D98 1 BT.zero))
+  · exact btlt_arg98 (by rfl) (btlt_zero_D98 1 (BT.D 1 BT.zero))
+  · exact btlt_arg98 (bt_beq_false _ _ (ne_D1_hd098 hd _)) hx
+
+/-- 段 1 の成分は `bOO94` より下。 -/
+theorem lt_D1D1_bOO98 {x : BT} (hd : Hd085 x) :
+    BT.lt (BT.D 1 (BT.D 1 x)) bOO94 = true :=
+  btlt_arg98 (bt_beq_false _ _ (fun h => by
+    injection h with _ h2; exact ne_D1_hd098 hd _ h2))
+    (btlt_arg98 (bt_beq_false _ _ (ne_D1_hd098 hd _)) (btlt_hd0_D1_98 hd _))
+
+/-- **引数は標準。** -/
+theorem isStd_bArg98 {x : BT} (hd : Hd085 x) (hs : BT.isStd x = true) :
+    BT.isStd (bArg98 x) = true := by
+  have h1 : BT.isStd (BT.D 1 x) = true := by
+    show (BT.isStd x && (BT.GB 1 x).all (fun e => BT.lt e x)) = true
+    rw [hs, gb1_nil98 x hd]; rfl
+  have h2 : BT.isStd (BT.D 1 (BT.D 1 x)) = true := by
+    show (BT.isStd (BT.D 1 x) && (BT.GB 1 (BT.D 1 x)).all (fun e => BT.lt e (BT.D 1 x))) = true
+    rw [h1, show BT.GB 1 (BT.D 1 x) = x :: BT.GB 1 x from rfl, gb1_nil98 x hd]
+    show (BT.lt x (BT.D 1 x) && true) = true
+    rw [btlt_hd0_D1_98 hd x]; rfl
+  show (BT.isP bOO94 && BT.isStd bOO94 && BT.isStd (BT.D 1 (BT.D 1 x)) &&
+    (BT.isP (BT.D 1 (BT.D 1 x)) && BT.le (BT.D 1 (BT.D 1 x)) bOO94)) = true
+  rw [show BT.isP bOO94 = true from rfl, show BT.isStd bOO94 = true from rfl, h2,
+    show BT.isP (BT.D 1 (BT.D 1 x)) = true from rfl,
+    show BT.le (BT.D 1 (BT.D 1 x)) bOO94
+      = ((BT.D 1 (BT.D 1 x) == bOO94) || BT.lt (BT.D 1 (BT.D 1 x)) bOO94) from rfl,
+    lt_D1D1_bOO98 hd, Bool.or_true]
+  rfl
+
+theorem btlt_self_sum98 {u : Nat} {a : BT} (v : Nat) (b : BT) :
+    BT.lt (BT.D u a) (BT.sum (BT.D u a) (BT.D v b)) = true := by
+  show BT.ltL (BT.size (BT.D u a) + BT.size (BT.sum (BT.D u a) (BT.D v b)) + 2)
+      [BT.D u a] (BT.D u a :: [BT.D v b]) = true
+  rw [show BT.size (BT.D u a) + BT.size (BT.sum (BT.D u a) (BT.D v b)) + 2
+      = (BT.size (BT.D u a) + BT.size (BT.sum (BT.D u a) (BT.D v b)) + 1) + 1 from rfl,
+    ltL_DD93, if_neg (by omega), if_neg (by omega), if_pos (bt_beq_refl a)]
+  exact ltL_nil_cons93 _ _ _
+
+/-- 引数どうしの順序は `x` の順序で決まる。 -/
+theorem lt_bArg98 {x y : BT} (h : BT.lt x y = true) : BT.lt (bArg98 x) (bArg98 y) = true :=
+  btlt_cons_same98 (btlt_arg98 (bt_beq_false _ _ (fun hc => by
+      injection hc with _ h2
+      rw [h2, lt_asymm74 h] at h; exact Bool.noConfusion h))
+    (btlt_arg98 (bt_ne_of_lt98 h) h))
+
+/-- **不変量。** 正しい証人であることに、係数集合が次の引数より下という一条を足したもの。 -/
+def Inv98 (x : BT) : Prop :=
+  btLe72 1 x = true ∧ BT.isStd x = true ∧ Hd085 x ∧
+    (∀ e ∈ BT.GB 0 x, BT.lt e (bArg98 x))
+
+theorem hd0_bStep98 (x : BT) : Hd085 (bStep98 x) := by
+  intro z hz
+  exact ⟨bArg98 x, List.mem_singleton.mp hz⟩
+
+theorem btLe_bStep98 {x : BT} (h : btLe72 1 x = true) : btLe72 1 (bStep98 x) = true := by
+  show (decide (0 ≤ 1) && (btLe72 1 bOO94 && (decide (1 ≤ 1) &&
+    (decide (1 ≤ 1) && btLe72 1 x)))) = true
+  rw [h]; rfl
+
+/-- 5 つの成分はどれも次の引数より下。 -/
+theorem lt_five_bArg98 {x y : BT} (hd : Hd085 x) :
+    ∀ e ∈ [BT.D 1 (BT.D 1 BT.zero), BT.D 1 BT.zero, BT.zero, BT.D 1 x, x],
+      BT.lt e (bArg98 y) = true := by
+  obtain ⟨h1, h2, h3, h4, h5⟩ := lt_bOO98 hd
+  intro e he
+  rcases List.mem_cons.mp he with h | he
+  · rw [h]; exact btlt_sum_r98 h1
+  rcases List.mem_cons.mp he with h | he
+  · rw [h]; exact btlt_sum_r98 h2
+  rcases List.mem_cons.mp he with h | he
+  · rw [h]; exact btlt_sum_r98 h3
+  rcases List.mem_cons.mp he with h | he
+  · rw [h]; exact btlt_sum_r98 h4
+  rcases List.mem_cons.mp he with h | he
+  · rw [h]; exact btlt_sum_r98 h5
+  · cases he
+
+/-- **一段上げた項は標準。** 効いているのは不変量の 4 番目の条だけ。 -/
+theorem isStd_bStep98 {x : BT} (hd : Hd085 x) (hs : BT.isStd x = true)
+    (hgb : ∀ e ∈ BT.GB 0 x, BT.lt e (bArg98 x)) : BT.isStd (bStep98 x) = true := by
+  show (BT.isStd (bArg98 x) &&
+    (BT.GB 0 (bArg98 x)).all (fun e => BT.lt e (bArg98 x))) = true
+  rw [isStd_bArg98 hd hs, gb0_bArg98 x]
+  show (List.all _ _) = true
+  rw [List.all_eq_true]
+  intro e he
+  rcases List.mem_append.mp he with h1 | h1
+  · exact lt_five_bArg98 (y := x) hd e h1
+  · exact hgb e h1
+
+/-- **一段上げても不変量は保たれる。** -/
+theorem inv_bStep98 {x : BT} (H : Inv98 x) (hlt : BT.lt x (bStep98 x) = true) :
+    Inv98 (bStep98 x) := by
+  obtain ⟨hb, hs, hd, hgb⟩ := H
+  have hstd : BT.isStd (bStep98 x) = true := isStd_bStep98 hd hs hgb
+  refine ⟨btLe_bStep98 hb, hstd, hd0_bStep98 x, ?_⟩
+  have hA : BT.lt (bArg98 x) (bArg98 (bStep98 x)) = true := lt_bArg98 hlt
+  intro e he
+  rcases List.mem_cons.mp (by rw [← gb0_bStep98 x]; exact he) with h1 | h1
+  · rw [h1]; exact hA
+  · rw [gb0_bArg98 x] at h1
+    rcases List.mem_append.mp h1 with h2 | h2
+    · exact lt_five_bArg98 (y := bStep98 x) hd e h2
+    · exact lt_trans83 (hgb e h2) hA
+
+/-- 塔は `BT.lt` で増える。 -/
+theorem lt_bTowG98 : ∀ n, BT.lt (bTowG98 n) (bTowG98 (n + 1)) = true
+  | 0 => by
+      show BT.lt (BT.D 0 bOO94) (BT.D 0 (bArg98 (BT.D 0 bOO94))) = true
+      exact btlt_arg98 (by rfl) (btlt_self_sum98 1 (BT.D 1 (BT.D 0 bOO94)))
+  | n + 1 => by
+      show BT.lt (BT.D 0 (bArg98 (bTowG98 n))) (BT.D 0 (bArg98 (bTowG98 (n + 1)))) = true
+      have h := lt_bArg98 (lt_bTowG98 n)
+      exact btlt_arg98 (bt_ne_of_lt98 h) h
+
+/-- **塔の各段は不変量を満たす。** -/
+theorem inv_bTowG98 : ∀ n, Inv98 (bTowG98 n)
+  | 0 => by
+      refine ⟨rfl, rfl, ?_, ?_⟩
+      · intro z hz; exact ⟨bOO94, List.mem_singleton.mp hz⟩
+      · intro e he
+        rcases List.mem_cons.mp (show e ∈ bOO94 :: BT.GB 0 bOO94 from he) with h1 | h1
+        · rw [h1]; exact btlt_self_sum98 1 (BT.D 1 (BT.D 0 bOO94))
+        · rcases List.mem_cons.mp (show e ∈ BT.D 1 (BT.D 1 BT.zero) ::
+              [BT.D 1 BT.zero, BT.zero] from h1) with h2 | h2
+          · rw [h2]
+            exact btlt_sum_r98 (btlt_arg98 (by rfl)
+              (btlt_arg98 (by rfl) (btlt_zero_D98 1 BT.zero)))
+          · rcases List.mem_cons.mp h2 with h3 | h3
+            · rw [h3]
+              exact btlt_sum_r98 (btlt_arg98 (by rfl) (btlt_zero_D98 1 (BT.D 1 BT.zero)))
+            · rw [List.mem_singleton.mp h3]; exact btlt_sum_r98 (btlt_zero_D98 _ _)
+  | n + 1 => inv_bStep98 (inv_bTowG98 n) (lt_bTowG98 n)
+
+/-- **塔の各段は正しい証人である。** -/
+theorem legal_bTowG98 (n : Nat) :
+    btLe72 1 (bTowG98 n) = true ∧ BT.isStd (bTowG98 n) = true ∧ Hd085 (bTowG98 n) :=
+  ⟨(inv_bTowG98 n).1, (inv_bTowG98 n).2.1, (inv_bTowG98 n).2.2.1⟩
+
+end
+
+/-! ### §98.2b どんな出発点からでも登れる -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+
+theorem size_mem_toL98 : ∀ (x z : BT), z ∈ x.toL → BT.size z ≤ BT.size x
+  | .zero, _, hz => by cases hz
+  | .D u a, z, hz => by
+      rw [List.mem_singleton.mp (show z ∈ [BT.D u a] from hz)]
+      exact Nat.le_refl _
+  | .sum p q, z, hz => by
+      rcases List.mem_append.mp (show z ∈ p.toL ++ q.toL from hz) with h1 | h1
+      · have := size_mem_toL98 p z h1
+        show BT.size z ≤ 1 + BT.size p + BT.size q
+        omega
+      · have := size_mem_toL98 q z h1
+        show BT.size z ≤ 1 + BT.size p + BT.size q
+        omega
+
+/-- 成分がすべて `D 0` なら、成分の引数は係数集合の元。 -/
+theorem head_gb98 : ∀ (x : BT), Hd085 x → ∀ z ∈ x.toL, ∃ c, z = BT.D 0 c ∧ c ∈ BT.GB 0 x
+  | .zero, _, _, hz => by cases hz
+  | .D u a, h, z, hz => by
+      have hu := hd085_D94 h
+      subst hu
+      exact ⟨a, List.mem_singleton.mp (show z ∈ [BT.D 0 a] from hz), List.Mem.head _⟩
+  | .sum p q, h, z, hz => by
+      obtain ⟨hp, hq⟩ := hd085_sum94 h
+      rcases List.mem_append.mp (show z ∈ p.toL ++ q.toL from hz) with h1 | h1
+      · obtain ⟨c, hc, hm⟩ := head_gb98 p hp z h1
+        exact ⟨c, hc, List.mem_append_left _ hm⟩
+      · obtain ⟨c, hc, hm⟩ := head_gb98 q hq z h1
+        exact ⟨c, hc, List.mem_append_right _ hm⟩
+
+/-- **一段上げると真に上がる。** 効いているのは不変量の 4 番目の条だけ。 -/
+theorem lt_x_bStep98 {x : BT} (hd : Hd085 x)
+    (hgb : ∀ e ∈ BT.GB 0 x, BT.lt e (bArg98 x)) : BT.lt x (bStep98 x) = true := by
+  show BT.ltL (BT.size x + BT.size (BT.D 0 (bArg98 x)) + 2) x.toL [BT.D 0 (bArg98 x)] = true
+  cases hx : x.toL with
+  | nil => exact ltL_nil_cons93 _ _ _
+  | cons z zs =>
+      obtain ⟨c, hzc, hcm⟩ := head_gb98 x hd z (by rw [hx]; exact List.Mem.head _)
+      have hsz : BT.size z ≤ BT.size x := size_mem_toL98 x z (by rw [hx]; exact List.Mem.head _)
+      rw [hzc] at hsz
+      have hlt := hgb c hcm
+      rw [hzc,
+        show BT.size x + BT.size (BT.D 0 (bArg98 x)) + 2
+          = (BT.size x + BT.size (BT.D 0 (bArg98 x)) + 1) + 1 from rfl,
+        ltL_DD93, if_neg (by omega), if_neg (by omega),
+        if_neg (by rw [bt_ne_of_lt98 hlt]; exact Bool.noConfusion)]
+      refine ltL_fuel93 (BT.size c + BT.size (bArg98 x) + 2) _ _ _ ?_ hlt
+      have h1 : BT.size (BT.D 0 c) = 1 + BT.size c := rfl
+      have h2 : BT.size (BT.D 0 (bArg98 x)) = 1 + BT.size (bArg98 x) := rfl
+      omega
+
+/-- 出発点を選べる塔。 -/
+def bIter98 (x : BT) : Nat → BT
+  | 0 => x
+  | n + 1 => bStep98 (bIter98 x n)
+
+theorem inv_bIter98 {x : BT} (H : Inv98 x) : ∀ n, Inv98 (bIter98 x n)
+  | 0 => H
+  | n + 1 => by
+      have hI := inv_bIter98 H n
+      exact inv_bStep98 hI (lt_x_bStep98 hI.2.2.1 hI.2.2.2)
+
+theorem lt_bIter98 {x : BT} (H : Inv98 x) (n : Nat) :
+    BT.lt (bIter98 x n) (bIter98 x (n + 1)) = true :=
+  lt_x_bStep98 (inv_bIter98 H n).2.2.1 (inv_bIter98 H n).2.2.2
+
+theorem lt_bIter98_mono {x : BT} (H : Inv98 x) :
+    ∀ (k n : Nat), k < n → BT.lt (bIter98 x k) (bIter98 x n) = true
+  | k, 0, h => absurd h (by omega)
+  | k, n + 1, h => by
+      rcases Nat.lt_or_ge k n with h1 | h1
+      · exact lt_trans83 (lt_bIter98_mono H k n h1) (lt_bIter98 H n)
+      · have hkn : k = n := by omega
+        rw [hkn]; exact lt_bIter98 H n
+
+theorem legal_bIter98 {x : BT} (H : Inv98 x) (n : Nat) :
+    btLe72 1 (bIter98 x n) = true ∧ BT.isStd (bIter98 x n) = true ∧ Hd085 (bIter98 x n) :=
+  ⟨(inv_bIter98 H n).1, (inv_bIter98 H n).2.1, (inv_bIter98 H n).2.2.1⟩
+
+end
+
+/-! ### §98.3 値 — `ψ₁` を二度重ねたところまで -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Γ₀ = ψ_Ω(0)` の上にいて、`Ω₁` より下にいる `ω` 冪の不動点。 -/
+def Good98 (X : Term) : Prop :=
+  inT X = true ∧ X.isAP = true ∧ (X == TM.Term.one) = false ∧ omegaNF X = X ∧
+    lt X (reg 1) = true ∧ le G094 X = true
+
+theorem lt_W_reg2_98 : lt (reg 1) (reg 2) = true := by decide
+
+theorem ltM_W98 : lt (reg 1) M = true := ltM_W79
+
+theorem good_ltM98 {X : Term} (h : Good98 X) : lt X M = true :=
+  lt_trans_inT h.1 inT_W79 inT_M h.2.2.2.2.1 ltM_W98
+
+theorem good_reg2_98 {X : Term} (h : Good98 X) : lt X (reg 2) = true :=
+  lt_trans_inT h.1 inT_W79 (inT_reg 2) h.2.2.2.2.1 lt_W_reg2_98
+
+theorem good_toList98 {X : Term} (h : Good98 X) : toList X = [X] := toList_isAP81 h.2.1
+
+/-- `Ω₁ ⊕ X` は正規和そのもの。 -/
+theorem plus_W_98 {X : Term} (h : Good98 X) : plus (reg 1) X = add (reg 1) X := by
+  show (match toList X with
+        | [] => reg 1
+        | b1 :: _ => ofList ((toList (reg 1)).filter (fun a => le b1 a) ++ toList X)) = _
+  rw [good_toList98 h]
+  show ofList ((toList (reg 1)).filter (fun a => le X a) ++ [X]) = add (reg 1) X
+  rw [show toList (reg 1) = [reg 1] from rfl,
+    List.filter_cons_of_pos (by rw [le_of_lt h.2.2.2.2.1])]
+  rfl
+
+theorem inT_addWX98 {X : Term} (h : Good98 X) : inT (add (reg 1) X) = true := by
+  rw [← plus_W_98 h]; exact inT_plus inT_W79 h.1
+
+theorem ltM_addWX98 {X : Term} (h : Good98 X) : lt (add (reg 1) X) M = true := by
+  rw [show add (reg 1) X = ofList [reg 1, X] from rfl]
+  refine lt_ofList_M _ ?_
+  intro z hz
+  rcases List.mem_cons.mp hz with h1 | h1
+  · rw [h1]; exact ltM_W98
+  · rw [List.mem_singleton.mp h1]; exact good_ltM98 h
+
+theorem splitFin_addWX98 {X : Term} (h : Good98 X) :
+    splitFin (add (reg 1) X) = (add (reg 1) X, 0) := by
+  unfold splitFin
+  rw [show toList (add (reg 1) X) = [reg 1, X] from by
+        show reg 1 :: toList X = _; rw [good_toList98 h]]
+  show (ofList (List.take (2 - (List.takeWhile (fun x => x == TM.Term.one)
+      ([reg 1, X].reverse)).length) [reg 1, X]),
+    (List.takeWhile (fun x => x == TM.Term.one) ([reg 1, X].reverse)).length)
+      = (add (reg 1) X, 0)
+  rw [show ([reg 1, X].reverse) = [X, reg 1] from rfl,
+    show (List.takeWhile (fun x => x == TM.Term.one) [X, reg 1]) = [] from by
+      show (match (X == TM.Term.one) with
+            | true => X :: List.takeWhile (fun x => x == TM.Term.one) [reg 1]
+            | false => []) = []
+      rw [h.2.2.1]]
+  rfl
+
+/-- **`ω^(Ω₁ ⊕ X)` は生の `φ̄0`。** -/
+theorem omegaNF_addWX98 {X : Term} (h : Good98 X) :
+    omegaNF (add (reg 1) X) = phi zero (add (reg 1) X) := by
+  rw [omegaNF_of_le_M (lt_asymm_inT (inT_addWX98 h) inT_M (ltM_addWX98 h))]
+  unfold phiNF
+  rw [show ((add (reg 1) X).isSC && lt zero (add (reg 1) X)) = false from by
+    rw [show (add (reg 1) X).isSC = false from rfl]; rfl]
+  show phiNFsucc zero (add (reg 1) X) = phi zero (add (reg 1) X)
+  unfold phiNFsucc
+  rw [splitFin_addWX98 h]
+  show phiNFdefault zero (add (reg 1) X) = phi zero (add (reg 1) X)
+  exact phiNFdefault_zero94 _
+
+/-- `ψ₁` を一度当てた形。 -/
+def P98 (X : Term) : Term := phi zero (add (reg 1) X)
+/-- `ψ₁` を二度当てた形。 -/
+def Q98 (X : Term) : Term := phi zero (P98 X)
+
+theorem collapse1_good98 {X : Term} (h : Good98 X) : collapse 1 X = P98 X := by
+  rw [collapse1_eq77 X h.1 (by
+      intro p hp
+      rw [good_toList98 h] at hp
+      rw [List.mem_singleton.mp hp]
+      exact good_reg2_98 h),
+    plus_W_98 h]
+  exact omegaNF_addWX98 h
+
+theorem isStd_D1_98 {x : BT} (hd : Hd085 x) (hs : BT.isStd x = true) :
+    BT.isStd (BT.D 1 x) = true := by
+  show (BT.isStd x && (BT.GB 1 x).all (fun e => BT.lt e x)) = true
+  rw [hs, gb1_nil98 x hd]; rfl
+
+theorem btLe_D1_98 {x : BT} (hb : btLe72 1 x = true) : btLe72 1 (BT.D 1 x) = true := by
+  show (decide (1 ≤ 1) && btLe72 1 x) = true
+  rw [hb]; rfl
+
+/-- `ψ₁` を一度。 -/
+theorem dict_D1x98 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hg : Good98 (dict x)) : dict (BT.D 1 x) = P98 (dict x) := by
+  rw [dict_D1_eq77 Hp x hb hs, plus_W_98 hg]
+  exact omegaNF_addWX98 hg
+
+/-- `ψ₁` を二度。 -/
+theorem dict_D1D1x98 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hd : Hd085 x) (hg : Good98 (dict x)) :
+    dict (BT.D 1 (BT.D 1 x)) = Q98 (dict x) := by
+  have hb1 := btLe_D1_98 hb
+  have hs1 := isStd_D1_98 hd hs
+  have hiP : inT (P98 (dict x)) = true := by
+    rw [← dict_D1x98 Hp hb hs hg]
+    exact (inT_dict_of_std172 Hp (BT.D 1 x) hb1 hs1).1
+  have hlePW : le (reg 1) (P98 (dict x)) = true := by
+    rw [← collapse1_good98 hg]
+    refine le_reg1_collapse1_79 (dict x) hg.1 ?_
+    intro p hp
+    rw [good_toList98 hg] at hp
+    rw [List.mem_singleton.mp hp]
+    exact good_reg2_98 hg
+  have hltPW : lt (P98 (dict x)) (reg 1) = false := by
+    rcases (Bool.or_eq_true _ _).mp hlePW with h1 | h1
+    · rw [← eq_of_beq h1]; exact lt_irrefl _
+    · exact lt_asymm_inT inT_W79 hiP h1
+  have hplus : plus (reg 1) (P98 (dict x)) = P98 (dict x) := by
+    show (match toList (P98 (dict x)) with
+          | [] => reg 1
+          | b1 :: _ => ofList ((toList (reg 1)).filter (fun a => le b1 a) ++
+              toList (P98 (dict x)))) = _
+    rw [show toList (P98 (dict x)) = [P98 (dict x)] from rfl]
+    show ofList ((toList (reg 1)).filter (fun a => le (P98 (dict x)) a) ++ [P98 (dict x)])
+        = P98 (dict x)
+    rw [show toList (reg 1) = [reg 1] from rfl,
+      List.filter_cons_of_neg (by
+        show ¬ (le (P98 (dict x)) (reg 1) = true)
+        rw [show le (P98 (dict x)) (reg 1) = false from by
+          show ((P98 (dict x) == reg 1) || lt (P98 (dict x)) (reg 1)) = false
+          rw [show (P98 (dict x) == reg 1) = false from rfl, hltPW]; rfl]
+        exact Bool.noConfusion)]
+    rfl
+  rw [dict_D1_eq77 Hp (BT.D 1 x) hb1 hs1, dict_D1x98 Hp hb hs hg, hplus]
+  show omegaNF (phi zero (add (reg 1) (dict x))) = phi zero (phi zero (add (reg 1) (dict x)))
+  rw [omegaNF_of_le_M (ltM_left_phi94 zero (add (reg 1) (dict x))),
+    phiNF_zero_phi94 (show add (reg 1) (dict x) ≠ zero from by
+      intro hc; exact Term.noConfusion hc)]
+
+/-! ### §98.4 値 — `ψ₀` の畳み込み -/
+
+theorem phiNF_G098 {X : Term} (h : lt X G094 = false) :
+    phiNF X (plus G094 TM.Term.one) = phi X (plus G094 TM.Term.one) := by
+  rw [show plus G094 TM.Term.one = add G094 TM.Term.one from rfl]
+  unfold phiNF
+  rw [show ((add G094 TM.Term.one).isSC && lt X (add G094 TM.Term.one)) = false from by
+    rw [show (add G094 TM.Term.one).isSC = false from rfl]; rfl]
+  show phiNFsucc X (add G094 TM.Term.one) = phi X (add G094 TM.Term.one)
+  unfold phiNFsucc
+  rw [show splitFin (add G094 TM.Term.one) = (G094, 1) from rfl]
+  split
+  rename_i g m hgm
+  injection hgm with hg hm
+  subst hg; subst hm
+  rw [if_pos (show 1 ≥ 1 by omega)]
+  show (if (G094.isSC && lt X G094) = true then _ else phiNFdefault X (add G094 TM.Term.one))
+      = phi X (add G094 TM.Term.one)
+  rw [if_neg (by rw [h]; rw [Bool.and_false]; exact Bool.noConfusion)]
+  show phiNFdefault X (add G094 TM.Term.one) = phi X (add G094 TM.Term.one)
+  unfold phiNFdefault
+  rw [if_neg (by
+    rw [show ((add G094 TM.Term.one == zero) && X.isSC) = false from by
+      rw [show (add G094 TM.Term.one == zero) = false from rfl]; rfl]
+    exact Bool.noConfusion)]
+
+theorem omegaNF_phi98 {X Y : Term} (h : lt zero X = true) : omegaNF (phi X Y) = phi X Y := by
+  rw [omegaNF_of_le_M (ltM_left_phi94 X Y)]
+  unfold phiNF
+  rw [show ((phi X Y).isSC && lt zero (phi X Y)) = false from by
+    rw [show (phi X Y).isSC = false from rfl]; rfl]
+  show (if lt zero X = true then phi X Y else phiNFsucc zero (phi X Y)) = phi X Y
+  rw [if_pos h]
+
+/-- `ψ₁` の像は `Ω₁` より下にはいない。 -/
+theorem ltW_dictD1_false98 (Hp : PsiIdxOKStd172) {a : BT} (hb1 : btLe72 1 (BT.D 1 a) = true)
+    (hs1 : BT.isStd (BT.D 1 a) = true) : lt (dict (BT.D 1 a)) (reg 1) = false := by
+  have hb := (btLe72_D 1 1 a hb1).2
+  have hs := isStd_of_D hs1
+  have hia := (inT_dict_of_std172 Hp a hb hs).1
+  have hle : le (reg 1) (dict (BT.D 1 a)) = true := by
+    rw [Trans.Dict.dict_D]
+    exact le_reg1_collapse1_79 (dict a) hia
+      (fun p hp => lt_pure73_reg2 (pure73_toList _ (pure73_dict a hb) p hp))
+  rcases (Bool.or_eq_true _ _).mp hle with h1 | h1
+  · rw [← eq_of_beq h1]; exact lt_irrefl _
+  · exact lt_asymm_inT inT_W79 (inT_dict_of_std172 Hp (BT.D 1 a) hb1 hs1).1 h1
+
+theorem isStd_D1D1_98 {x : BT} (hd : Hd085 x) (hs : BT.isStd x = true) :
+    BT.isStd (BT.D 1 (BT.D 1 x)) = true := by
+  show (BT.isStd (BT.D 1 x) && (BT.GB 1 (BT.D 1 x)).all (fun e => BT.lt e (BT.D 1 x))) = true
+  rw [isStd_D1_98 hd hs, show BT.GB 1 (BT.D 1 x) = x :: BT.GB 1 x from rfl, gb1_nil98 x hd]
+  show (BT.lt x (BT.D 1 x) && true) = true
+  rw [btlt_hd0_D1_98 hd x]; rfl
+
+theorem lt_zero_good98 {X : Term} (hg : Good98 X) : lt zero X = true := by
+  rcases (Bool.or_eq_true _ _).mp hg.2.2.2.2.2 with h1 | h1
+  · rw [← eq_of_beq h1]; decide
+  · exact lt_trans_inT inT_zero (by decide) hg.1 (by decide) h1
+
+theorem lt_G0_false98 {X : Term} (hg : Good98 X) : lt X G094 = false := by
+  rcases (Bool.or_eq_true _ _).mp hg.2.2.2.2.2 with h1 | h1
+  · rw [← eq_of_beq h1]; exact lt_irrefl _
+  · exact lt_asymm_inT (by decide) hg.1 h1
+
+theorem ne_W_good98 {X : Term} (hg : Good98 X) : (reg 1 == X) = false := by
+  cases hc : (reg 1 == X) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h := hg.2.2.2.2.1
+      rw [← eq_of_beq hc, lt_irrefl] at h
+      exact Bool.noConfusion h
+
+theorem le_W_false98 {X : Term} (hg : Good98 X) : le (reg 1) X = false := by
+  show ((reg 1 == X) || lt (reg 1) X) = false
+  rw [ne_W_good98 hg, lt_asymm_inT hg.1 inT_W79 hg.2.2.2.2.1]
+  rfl
+
+/-- **§98.4 の主定理。** 一段上げた証人の値は `φ̄(dict x, Γ₀ ⊕ 1)`。 -/
+theorem dict_bStep98 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hd : Hd085 x) (hg : Good98 (dict x)) :
+    dict (bStep98 x) = phi (dict x) (plus G094 TM.Term.one) := by
+  have hb1 := btLe_D1_98 hb
+  have hs1 := isStd_D1_98 hd hs
+  have hb2 := btLe_D1_98 hb1
+  have hs2 := isStd_D1D1_98 hd hs
+  have hP : dict (BT.D 1 x) = P98 (dict x) := dict_D1x98 Hp hb hs hg
+  have hQ : dict (BT.D 1 (BT.D 1 x)) = Q98 (dict x) := dict_D1D1x98 Hp hb hs hd hg
+  have hltP : lt (P98 (dict x)) (reg 1) = false := by
+    rw [← hP]; exact ltW_dictD1_false98 Hp hb1 hs1
+  have hltQ : lt (Q98 (dict x)) (reg 1) = false := by
+    rw [← hQ]; exact ltW_dictD1_false98 Hp hb2 hs2
+  have hleQA : le (Q98 (dict x)) (dict bOO94) = true := by
+    rw [← hQ]
+    have h1 : le (dict x) (dict (BT.Om 1)) = true := by
+      show le (dict x) (reg 1) = true
+      exact le_of_lt hg.2.2.2.2.1
+    exact le_collapse1_le96 Hp (BT.D 1 x) (BT.D 1 (BT.Om 1)) hb2 rfl hs2 rfl
+      (le_collapse1_le96 Hp x (BT.Om 1) hb1 rfl hs1 rfl h1)
+  have hdictArg : dict (bArg98 x) = add (dict bOO94) (Q98 (dict x)) := by
+    show plus (dict bOO94) (dict (BT.D 1 (BT.D 1 x))) = _
+    rw [hQ]
+    show (match toList (Q98 (dict x)) with
+          | [] => dict bOO94
+          | b1 :: _ => ofList ((toList (dict bOO94)).filter (fun a => le b1 a) ++
+              toList (Q98 (dict x)))) = add (dict bOO94) (Q98 (dict x))
+    rw [show toList (Q98 (dict x)) = [Q98 (dict x)] from rfl]
+    show ofList ((toList (dict bOO94)).filter (fun a => le (Q98 (dict x)) a)
+        ++ [Q98 (dict x)]) = _
+    rw [show toList (dict bOO94) = [dict bOO94] from rfl,
+      List.filter_cons_of_pos (by rw [hleQA])]
+    rfl
+  have hwA : wA (reg 1) (Q98 (dict x)) = dict x := by
+    show ofList (((toList (logOm (Q98 (dict x)))).filter (fun q => !lt q (reg 1))).map
+      (divAP (reg 1))) = _
+    rw [show logOm (Q98 (dict x)) = P98 (dict x) from rfl,
+      show toList (P98 (dict x)) = [P98 (dict x)] from rfl,
+      List.filter_cons_of_pos (by rw [hltP]; rfl)]
+    show ofList [divAP (reg 1) (P98 (dict x))] = dict x
+    show omegaNF (subAP (reg 1) (logOm (P98 (dict x)))) = dict x
+    rw [show logOm (P98 (dict x)) = add (reg 1) (dict x) from by
+        show (if phiShifted zero (add (reg 1) (dict x)) then _ else _) = _
+        rw [show phiShifted zero (add (reg 1) (dict x)) = false from by
+          show (isFP zero (splitFin (add (reg 1) (dict x))).1 ||
+            ((add (reg 1) (dict x) == zero) && (zero : Term).isSC)) = false
+          rw [splitFin_addWX98 hg]
+          rfl]
+        rfl,
+      show subAP (reg 1) (add (reg 1) (dict x)) = dict x from by
+        show (match toList (add (reg 1) (dict x)) with
+              | [] => zero
+              | p :: rest => if p == reg 1 then ofList rest else add (reg 1) (dict x)) = _
+        rw [show toList (add (reg 1) (dict x)) = [reg 1, dict x] from by
+              show reg 1 :: toList (dict x) = _; rw [good_toList98 hg]]
+        show (if (reg 1 == reg 1) = true then ofList [dict x] else _) = dict x
+        rw [if_pos (by rfl)]
+        rfl]
+    exact hg.2.2.2.1
+  have hwC : wC (reg 1) (Q98 (dict x)) = TM.Term.one := by
+    show omegaNF (ofList ((toList (logOm (Q98 (dict x)))).filter (fun q => lt q (reg 1)))) = _
+    rw [show logOm (Q98 (dict x)) = P98 (dict x) from rfl,
+      show toList (P98 (dict x)) = [P98 (dict x)] from rfl,
+      List.filter_cons_of_neg (by rw [hltP]; exact Bool.noConfusion)]
+    rfl
+  have hwQ : wcnf (reg 1) [Q98 (dict x)] = ([(dict x, TM.Term.one)], zero) := by
+    rw [wcnf_cons_ge hltQ, wcnf_nil]
+    show ([(wA (reg 1) (Q98 (dict x)), wC (reg 1) (Q98 (dict x)))], (zero : Term)) = _
+    rw [hwA, hwC]
+  have hw : wcnf (reg 1) (toList (add (dict bOO94) (Q98 (dict x))))
+      = ([(reg 1, TM.Term.one), (dict x, TM.Term.one)], zero) := by
+    rw [show toList (add (dict bOO94) (Q98 (dict x))) = [dict bOO94, Q98 (dict x)] from rfl,
+      wcnf_cons_ge (show lt (dict bOO94) (reg 1) = false from by decide), hwQ]
+    show (if (wA (reg 1) (dict bOO94) == dict x) = true
+          then ((wA (reg 1) (dict bOO94),
+                 plus (wC (reg 1) (dict bOO94)) TM.Term.one) :: [], (zero : Term))
+          else ((wA (reg 1) (dict bOO94), wC (reg 1) (dict bOO94)) ::
+                 (dict x, TM.Term.one) :: [], (zero : Term))) = _
+    rw [show wA (reg 1) (dict bOO94) = reg 1 from rfl,
+      if_neg (by rw [ne_W_good98 hg]; exact Bool.noConfusion),
+      show wC (reg 1) (dict bOO94) = TM.Term.one from rfl]
+  have hfold : ([(reg 1, TM.Term.one), (dict x, TM.Term.one)].foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).2.getD zero = phiNF (dict x) (plus G094 TM.Term.one) := by
+    show (stepF (reg 1) (baseOf 0) (stepF (reg 1) (baseOf 0) (none, none)
+      (reg 1, TM.Term.one)) (dict x, TM.Term.one)).2.getD zero = _
+    rw [show stepF (reg 1) (baseOf 0) (none, none) (reg 1, TM.Term.one)
+        = (some zero, some G094) from rfl]
+    show (if le (reg 1) (dict x) = true then _ else
+      ((some zero : Option Term), some (phiNF (dict x) (plus G094 TM.Term.one)))).2.getD zero = _
+    rw [if_neg (by rw [le_W_false98 hg]; exact Bool.noConfusion)]
+    rfl
+  have hiV : inT (phi (dict x) (plus G094 TM.Term.one)) = true := by
+    show (inT (dict x) && inT (plus G094 TM.Term.one) && lt (dict x) M
+      && lt (plus G094 TM.Term.one) M) = true
+    rw [hg.1, good_ltM98 hg, show inT (plus G094 TM.Term.one) = true from by decide,
+      show lt (plus G094 TM.Term.one) M = true from by decide]
+    rfl
+  show collapse 0 (dict (bArg98 x)) = _
+  rw [hdictArg, collapse0_raw89]
+  show omegaNF (plus (reg 0) (plus
+    (((wcnf (reg 1) (toList (add (dict bOO94) (Q98 (dict x))))).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero)
+    ((wcnf (reg 1) (toList (add (dict bOO94) (Q98 (dict x))))).2))) = _
+  rw [hw]
+  show omegaNF (plus (reg 0) (plus
+    (([(reg 1, TM.Term.one), (dict x, TM.Term.one)].foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) zero)) = _
+  rw [hfold, phiNF_G098 (lt_G0_false98 hg)]
+  show omegaNF (plus (reg 0) (plus (phi (dict x) (plus G094 TM.Term.one)) zero)) = _
+  rw [show plus (phi (dict x) (plus G094 TM.Term.one)) zero
+      = phi (dict x) (plus G094 TM.Term.one) from rfl,
+    show plus (reg 0) (phi (dict x) (plus G094 TM.Term.one))
+      = plus zero (phi (dict x) (plus G094 TM.Term.one)) from rfl,
+    plus_zero_left_inT hiV, omegaNF_phi98 (lt_zero_good98 hg)]
+
+end
+
+/-! ### §98.5 塔 — 帰納法 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg dictInv)
+open TM TM.Term
+open Evidence.WF
+
+/-- **順序の順向きの移送。** 良い項どうしなら `BT.lt` は `dict` の順序へ運ばれる。
+    `bOnto85` と `DictLtA74` だけを使う — §94.5 の `btlt_of_lt94` の逆向き。 -/
+theorem lt_dict98 (H2 : DictLtA74) {p q : BT}
+    (hp : btLe72 1 p = true) (hsp : BT.isStd p = true) (hdp : Hd085 p)
+    (hq : btLe72 1 q = true) (hsq : BT.isStd q = true) (hdq : Hd085 q)
+    (h : BT.lt p q = true) : lt (dict p) (dict q) = true := by
+  obtain ⟨u, hu, hvu⟩ := bOnto85 p hp hdp hsp
+  obtain ⟨t, ht, hvt⟩ := bOnto85 q hq hdq hsq
+  have hx := H2 u t hu ht (by rw [hvu, hvt]; exact h)
+  rw [hvu, hvt] at hx
+  exact hx
+
+theorem lt_bTowG98_mono : ∀ (k n : Nat), k < n → BT.lt (bTowG98 k) (bTowG98 n) = true
+  | k, 0, h => absurd h (by omega)
+  | k, n + 1, h => by
+      rcases Nat.lt_or_ge k n with h1 | h1
+      · exact lt_trans83 (lt_bTowG98_mono k n h1) (lt_bTowG98 n)
+      · have : k = n := by omega
+        rw [this]; exact lt_bTowG98 n
+
+theorem dict_bTowG98_zero : dict (bTowG98 0) = G094 := rfl
+
+theorem le_G0_bTowG98 (H2 : DictLtA74) : ∀ n, le G094 (dict (bTowG98 n)) = true
+  | 0 => by decide
+  | n + 1 => by
+      refine le_of_lt ?_
+      rw [← dict_bTowG98_zero]
+      exact lt_dict98 H2 (legal_bTowG98 0).1 (legal_bTowG98 0).2.1 (legal_bTowG98 0).2.2
+        (legal_bTowG98 (n+1)).1 (legal_bTowG98 (n+1)).2.1 (legal_bTowG98 (n+1)).2.2
+        (lt_bTowG98_mono 0 (n+1) (by omega))
+
+/-- **塔の各段は `Good98`。** -/
+theorem good_bTowG98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) :
+    ∀ n, Good98 (dict (bTowG98 n)) := by
+  intro n
+  induction n with
+  | zero =>
+      rw [dict_bTowG98_zero]
+      exact ⟨by decide, rfl, rfl, by decide, by decide, by decide⟩
+  | succ m ih =>
+      have hval : dict (bTowG98 (m + 1)) = phi (dict (bTowG98 m)) (plus G094 TM.Term.one) :=
+        dict_bStep98 Hp (legal_bTowG98 m).1 (legal_bTowG98 m).2.1 (legal_bTowG98 m).2.2 ih
+      refine ⟨(inT_dict_of_std172 Hp _ (legal_bTowG98 (m+1)).1 (legal_bTowG98 (m+1)).2.1).1,
+        ?_, ?_, ?_,
+        ltW_dict94 Hp _ (legal_bTowG98 (m+1)).1 (legal_bTowG98 (m+1)).2.1
+          (legal_bTowG98 (m+1)).2.2,
+        le_G0_bTowG98 H2 (m+1)⟩
+      · rw [hval]; rfl
+      · rw [hval, show plus G094 TM.Term.one = add G094 TM.Term.one from rfl]
+        cases hc : (phi (dict (bTowG98 m)) (add G094 TM.Term.one) == TM.Term.one) with
+        | false => rfl
+        | true =>
+            exact absurd (eq_of_beq hc)
+              (by intro h; injection h with _ h2; exact Term.noConfusion h2)
+      · rw [hval]; exact omegaNF_phi98 (lt_zero_good98 ih)
+
+/-- 出発点を選べる塔でも `Γ₀` の上にとどまる。 -/
+theorem le_G0_bIter98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {x : BT} (H : Inv98 x)
+    (hg0 : le G094 (dict x) = true) : ∀ n, le G094 (dict (bIter98 x n)) = true
+  | 0 => hg0
+  | n + 1 => by
+      have hlt := lt_dict98 H2 (legal_bIter98 H 0).1 (legal_bIter98 H 0).2.1
+        (legal_bIter98 H 0).2.2 (legal_bIter98 H (n+1)).1 (legal_bIter98 H (n+1)).2.1
+        (legal_bIter98 H (n+1)).2.2 (lt_bIter98_mono H 0 (n+1) (by omega))
+      exact le_trans3 (inT_le_fragR _ (by decide : inT G094 = true))
+        (inT_le_fragR _ (inT_dict_of_std172 Hp _ (legal_bIter98 H 0).1
+          (legal_bIter98 H 0).2.1).1)
+        (inT_le_fragR _ (inT_dict_of_std172 Hp _ (legal_bIter98 H (n+1)).1
+          (legal_bIter98 H (n+1)).2.1).1)
+        hg0 (le_of_lt hlt)
+
+/-- **出発点を選べる塔の各段も `Good98`。** -/
+theorem good_bIter98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {x : BT} (H : Inv98 x)
+    (hg : Good98 (dict x)) : ∀ n, Good98 (dict (bIter98 x n)) := by
+  intro n
+  induction n with
+  | zero => exact hg
+  | succ m ih =>
+      have hval : dict (bIter98 x (m + 1))
+          = phi (dict (bIter98 x m)) (plus G094 TM.Term.one) :=
+        dict_bStep98 Hp (legal_bIter98 H m).1 (legal_bIter98 H m).2.1
+          (legal_bIter98 H m).2.2 ih
+      refine ⟨(inT_dict_of_std172 Hp _ (legal_bIter98 H (m+1)).1
+          (legal_bIter98 H (m+1)).2.1).1, ?_, ?_, ?_,
+        ltW_dict94 Hp _ (legal_bIter98 H (m+1)).1 (legal_bIter98 H (m+1)).2.1
+          (legal_bIter98 H (m+1)).2.2,
+        le_G0_bIter98 Hp H2 H hg.2.2.2.2.2 (m+1)⟩
+      · rw [hval]; rfl
+      · rw [hval, show plus G094 TM.Term.one = add G094 TM.Term.one from rfl]
+        cases hc : (phi (dict (bIter98 x m)) (add G094 TM.Term.one) == TM.Term.one) with
+        | false => rfl
+        | true =>
+            exact absurd (eq_of_beq hc)
+              (by intro h; injection h with _ h2; exact Term.noConfusion h2)
+      · rw [hval]; exact omegaNF_phi98 (lt_zero_good98 ih)
+
+/-- **§98.5 の主定理 (0)。** 出発点を選べる塔の値の閉じた形 — `φ̄` の段を一つずつ上げる。 -/
+theorem dict_bIter98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {x : BT} (H : Inv98 x)
+    (hg : Good98 (dict x)) (n : Nat) :
+    dict (bIter98 x (n + 1)) = phi (dict (bIter98 x n)) (plus G094 TM.Term.one) :=
+  dict_bStep98 Hp (legal_bIter98 H n).1 (legal_bIter98 H n).2.1 (legal_bIter98 H n).2.2
+    (good_bIter98 Hp H2 H hg n)
+
+/-- `Γ₀` から出発した塔がもとの `bTowG98`。 -/
+theorem bTowG98_eq98 : ∀ n, bTowG98 n = bIter98 (BT.D 0 bOO94) n
+  | 0 => rfl
+  | n + 1 => by
+      show bStep98 (bTowG98 n) = bStep98 (bIter98 (BT.D 0 bOO94) n)
+      rw [bTowG98_eq98 n]
+
+/-- **§98.5 の主定理 (1)。** 塔の値の閉じた形。 -/
+theorem dict_bTowG98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (n : Nat) :
+    dict (bTowG98 (n + 1)) = phi (dict (bTowG98 n)) (plus G094 TM.Term.one) :=
+  dict_bStep98 Hp (legal_bTowG98 n).1 (legal_bTowG98 n).2.1 (legal_bTowG98 n).2.2
+    (good_bTowG98 Hp H2 n)
+
+end
+
+/-! ### §98.6 生の塔を上から押さえる -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg dictInv)
+open TM TM.Term
+open Evidence.WF
+
+theorem inT_rawT98 : ∀ n, inT (rawT94 n) = true
+  | 0 => by decide
+  | n + 1 => by
+      show (inT (rawT94 n) && inT zero && lt (rawT94 n) M && lt zero M) = true
+      rw [inT_rawT98 n, inT_zero, lt_zero_M]
+      cases n with
+      | zero => rw [show rawT94 0 = phi G094 zero from rfl, lt_phi_M]; rfl
+      | succ m => rw [show rawT94 (m+1) = phi (rawT94 m) zero from rfl, lt_phi_M]; rfl
+
+theorem ltM_rawT98 : ∀ n, lt (rawT94 n) M = true
+  | 0 => lt_phi_M _ _
+  | _ + 1 => lt_phi_M _ _
+
+/-- **§98.6 の主定理 (1)。** 生の塔の各段は、一段上の証人の値の下にいる。 -/
+theorem lt_rawT_bTowG98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) :
+    ∀ n, lt (rawT94 n) (dict (bTowG98 (n + 1))) = true
+  | 0 => by
+      rw [dict_bTowG98 Hp H2 0, dict_bTowG98_zero]
+      exact lt_phi_arg (by decide)
+  | n + 1 => by
+      have hih := lt_rawT_bTowG98 Hp H2 n
+      have hne : ¬ (rawT94 n = dict (bTowG98 (n + 1))) := by
+        intro hc
+        rw [hc, lt_irrefl] at hih
+        exact Bool.noConfusion hih
+      rw [dict_bTowG98 Hp H2 (n + 1),
+        show rawT94 (n + 1) = phi (rawT94 n) zero from rfl,
+        lt_phi_phi (by intro hc; injection hc with h1 _; exact hne h1),
+        if_neg hne, if_pos hih]
+      exact lt_zero_ne76 (by intro hc; exact Term.noConfusion hc)
+
+theorem hd0_bGam98 : Hd085 bGam85 := by
+  intro z hz
+  exact ⟨BT.sum (BT.D 1 (BT.D 1 (BT.Om 1))) (BT.D 1 (BT.D 1 (BT.Om 1))),
+    List.mem_singleton.mp hz⟩
+
+theorem btlt_bTowG_bGam98 : ∀ n, BT.lt (bTowG98 n) bGam85 = true
+  | 0 => btlt_arg98 (by rfl) (btlt_self_sum98 1 (BT.D 1 (BT.Om 1)))
+  | n + 1 => by
+      have hd := (legal_bTowG98 n).2.2
+      have hlt := lt_D1D1_bOO98 hd
+      show BT.lt (BT.D 0 (bArg98 (bTowG98 n)))
+        (BT.D 0 (BT.sum bOO94 bOO94)) = true
+      refine btlt_arg98 (bt_beq_false _ _ (fun hc => ?_)) (btlt_cons_same98 hlt)
+      injection hc with _ h2
+      rw [h2, lt_asymm74 hlt] at hlt
+      exact Bool.noConfusion hlt
+
+/-- **§98.6 の主定理 (2)。** 塔の各段の値は `Γ₁ = ψ_Ω(1)` より下。 -/
+theorem lt_bTowG_Gam98 (H2 : DictLtA74) (n : Nat) :
+    lt (dict (bTowG98 n)) Gam1_94 = true :=
+  lt_dict98 H2 (legal_bTowG98 n).1 (legal_bTowG98 n).2.1 (legal_bTowG98 n).2.2
+    rfl rfl hd0_bGam98 (btlt_bTowG_bGam98 n)
+
+/-- **§98.6 の主定理 (3)。** 生の塔の各段は `Γ₁` より下。 -/
+theorem lt_rawT_Gam98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (n : Nat) :
+    lt (rawT94 n) Gam1_94 = true :=
+  lt_trans_inT (inT_rawT98 n)
+    (inT_dict_of_std172 Hp _ (legal_bTowG98 (n+1)).1 (legal_bTowG98 (n+1)).2.1).1
+    (inT_dict_of_std172 Hp _ (rfl : btLe72 1 bGam85 = true) (rfl : BT.isStd bGam85 = true)).1
+    (lt_rawT_bTowG98 Hp H2 n) (lt_bTowG_Gam98 H2 (n+1))
+
+end
+
+/-! ### §98.7 条項の切れ端 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+open Evidence.WF
+
+/-- 一段上げた証人の値は `φ̄(dict x, 0)` より真に上。§85.7 が像に入らないと言った形が
+    まさにこれである。 -/
+theorem lt_phi0_bStep98 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hd : Hd085 x) (hg : Good98 (dict x)) :
+    lt (phi (dict x) zero) (dict (bStep98 x)) = true := by
+  rw [dict_bStep98 Hp hb hs hd hg]
+  exact lt_phi_arg (by decide)
+
+/-- **§98.7 の主定理。** `φ̄(dict x, 0)` 以下の挑戦者は、`bStep98 x` の上にある像点を
+    目標とするかぎり、証人 `bStep98 x` を持つ。 -/
+theorem denseHi_step98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {x q : BT}
+    (hI : Inv98 x) (hg : Good98 (dict x))
+    (hbq : btLe72 1 q = true) (hsq : BT.isStd q = true) (hdq : Hd085 q)
+    (hlt : BT.lt (bStep98 x) q = true) {s : Term} (hs : inT s = true)
+    (hle : le s (phi (dict x) zero) = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) (dict q) = true := by
+  obtain ⟨hb, hst, hd, hgb⟩ := hI
+  have hbS := btLe_bStep98 hb
+  have hsS := isStd_bStep98 hd hst hgb
+  have hdS := hd0_bStep98 x
+  have hiS := (inT_dict_of_std172 Hp _ hbS hsS).1
+  have hiP : inT (phi (dict x) zero) = true := by
+    show (inT (dict x) && inT zero && lt (dict x) M && lt zero M) = true
+    rw [hg.1, inT_zero, good_ltM98 hg, lt_zero_M]; rfl
+  refine ⟨bStep98 x, hbS, hsS, hdS, ?_, ?_⟩
+  · exact le_of_lt (lt_of_le_of_lt3 (inT_le_fragR _ hs) (inT_le_fragR _ hiP)
+      (inT_le_fragR _ hiS) hle (lt_phi0_bStep98 Hp hb hst hd hg))
+  · exact lt_dict98 H2 hbS hsS hdS hbq hsq hdq hlt
+
+/-- **§98.7 の系。**  出発点を選べる塔の各段で同じことが言える — `φ̄` の段を一つ上げる
+    たびに、その一段下の `φ̄(·, 0)` 以下の挑戦者がまとめて片づく。 -/
+theorem denseHi_iter98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {x : BT}
+    (H : Inv98 x) (hg : Good98 (dict x)) (n : Nat) {q : BT}
+    (hbq : btLe72 1 q = true) (hsq : BT.isStd q = true) (hdq : Hd085 q)
+    (hlt : BT.lt (bIter98 x (n + 1)) q = true) {s : Term} (hs : inT s = true)
+    (hle : le s (phi (dict (bIter98 x n)) zero) = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) (dict q) = true :=
+  denseHi_step98 Hp H2 (inv_bIter98 H n) (good_bIter98 Hp H2 H hg n) hbq hsq hdq hlt hs hle
+
+/-- **生の塔のところでは `DictDenseHi94` の要求は満たせる。**  目標の値が `Γ₁` 以上なら、
+    `rawT94 n` 以下の挑戦者は `bTowG98 (n+1)` が証人になる。 -/
+theorem denseHi_rawT98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {v : Term}
+    (hiv : inT v = true) (hv : le Gam1_94 v = true) (n : Nat) {s : Term}
+    (hs : inT s = true) (hle : le s (rawT94 n) = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true := by
+  have hL := legal_bTowG98 (n + 1)
+  have hiS := (inT_dict_of_std172 Hp _ hL.1 hL.2.1).1
+  have hiG : inT Gam1_94 = true :=
+    (inT_dict_of_std172 Hp bGam85 (rfl : btLe72 1 bGam85 = true)
+      (rfl : BT.isStd bGam85 = true)).1
+  refine ⟨bTowG98 (n + 1), hL.1, hL.2.1, hL.2.2, ?_, ?_⟩
+  · exact le_of_lt (lt_of_le_of_lt3 (inT_le_fragR _ hs) (inT_le_fragR _ (inT_rawT98 n))
+      (inT_le_fragR _ hiS) hle (lt_rawT_bTowG98 Hp H2 n))
+  · exact lt_of_lt_of_le3 (inT_le_fragR _ hiS) (inT_le_fragR _ hiG) (inT_le_fragR _ hiv)
+      (lt_bTowG_Gam98 H2 (n + 1)) hv
+
+/-- 部分領域の目標に当てはめた形。 -/
+theorem denseHi_rawT_vOf98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {t : B}
+    (ht : stdB1 t = true) (hv : le Gam1_94 (vOf t) = true) (n : Nat) {s : Term}
+    (hs : inT s = true) (hle : le s (rawT94 n) = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) (vOf t) = true :=
+  denseHi_rawT98 Hp H2 (inT_vOf94 Hp t ht) hv n hs hle
+
+end
+
+/-! ### §98.8 残る一本を名指しし、四つを反証する -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+open Evidence.WF
+
+/-- **残る一本 — 𝔗(M) 側の `Γ₁` の共終性。証明しない。**
+    `Γ₀` 以上 `Γ₁` 未満の項はどれも生の塔のどれかの段に押さえられる、という主張。 -/
+def CofGam1_98 : Prop := ∀ s : Term, inT s = true → lt s Gam1_94 = true →
+    le G094 s = true → ∃ n, le s (rawT94 n) = true
+
+/-- **`Γ₁` より下の挑戦者・`Γ₁` 以上の目標のところでは、残るのは `CofGam1_98` だけ。** -/
+theorem denseHi_below_Gam1_98 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HC : CofGam1_98)
+    {v : Term} (hiv : inT v = true) (hv : le Gam1_94 v = true)
+    {s : Term} (hs : inT s = true) (hlt : lt s Gam1_94 = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true := by
+  have hiG0 : inT G094 = true := by decide
+  have hiG : inT Gam1_94 = true :=
+    (inT_dict_of_std172 Hp bGam85 (rfl : btLe72 1 bGam85 = true)
+      (rfl : BT.isStd bGam85 = true)).1
+  rcases Evidence.WF.lt_trichotomy_inT hs hiG0 with h | h | h
+  · have hL := legal_bTowG98 0
+    refine ⟨bTowG98 0, hL.1, hL.2.1, hL.2.2, ?_, ?_⟩
+    · rw [dict_bTowG98_zero]; exact le_of_lt h.1
+    · exact lt_of_lt_of_le3 (inT_le_fragR _ (by rw [dict_bTowG98_zero]; exact hiG0))
+        (inT_le_fragR _ hiG) (inT_le_fragR _ hiv) (lt_bTowG_Gam98 H2 0) hv
+  · obtain ⟨n, hn⟩ := HC s hs hlt (by rw [h.2.1]; exact le_self G094)
+    exact denseHi_rawT98 Hp H2 hiv hv n hs hn
+  · obtain ⟨n, hn⟩ := HC s hs hlt (le_of_lt h.2.2)
+    exact denseHi_rawT98 Hp H2 hiv hv n hs hn
+
+/-- **反証 1 — 一段上げる作用素は「正しい証人」だけでは閉じない。**
+    段 1 以下・標準・成分が `D 0` の項で、一段上げると標準でなくなるものがある。
+    効いているのは `Inv98` の 4 番目の条 (`GB 0 x` が新しい引数より下) である。 -/
+def xBad98 : BT := BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero))))
+
+theorem legal_xBad98 :
+    btLe72 1 xBad98 = true ∧ BT.isStd xBad98 = true ∧ hd085B xBad98 = true := ⟨rfl, rfl, rfl⟩
+
+theorem bStep98_needs_gb98 : ¬ (∀ x : BT, btLe72 1 x = true → BT.isStd x = true →
+    hd085B x = true → BT.isStd (bStep98 x) = true) := by
+  intro h
+  exact absurd (h xBad98 rfl rfl rfl) (by decide)
+
+/-- **反証 2 — 値の閉じた形は `Γ₀ ≤ dict x` を要る。**  `dict x = ε₀` のところでは
+    `φ̄(ε₀, Γ₀ ⊕ 1)` ではなく `φ̄(ε₀, Γ₀)` が出る — `phiNFsucc` が発火するからで、
+    落ちるのはちょうど `⊕ 1` の一段である。 -/
+def xEps98 : BT := BT.D 0 (BT.Om 1)
+
+theorem dict_xEps98 : dict xEps98 = E081 := rfl
+
+theorem dict_bStep_xEps98 : dict (bStep98 xEps98) = phi E081 G094 := rfl
+
+theorem dict_bStep98_needs_G098 : ¬ (∀ x : BT, btLe72 1 x = true → BT.isStd x = true →
+    hd085B x = true → dict (bStep98 x) = phi (dict x) (plus G094 TM.Term.one)) := by
+  intro h
+  exact absurd (h xEps98 rfl rfl rfl) (by decide)
+
+/-- **反証 3 — `Γ₀ ≤ dict x` だけでは足りない。`dict x` は `ω` 冪の不動点でなければ
+    ならない。**  `Γ₀ ⊕ Γ₀` は `Γ₀` より上だが加法主要ではなく、指数に入るのは
+    `ω^(Γ₀ ⊕ Γ₀)` の方である。 -/
+def xSum98 : BT := BT.sum (BT.D 0 bOO94) (BT.D 0 bOO94)
+
+theorem le_G0_xSum98 : le G094 (dict xSum98) = true := by decide
+
+theorem dict_bStep98_needs_fp98 : ¬ (∀ x : BT, btLe72 1 x = true → BT.isStd x = true →
+    hd085B x = true → le G094 (dict x) = true →
+    dict (bStep98 x) = phi (dict x) (plus G094 TM.Term.one)) := by
+  intro h
+  exact absurd (h xSum98 rfl rfl rfl le_G0_xSum98) (by decide)
+
+/-- **反証 4 — 段は 0 では足りない。**  §97 の `btLe0_invE97` は像が段 0 から出ないことを
+    言ったが、`Γ₀` の上ではそれは不可能である。一段上げた項はどの段でも `btLe72 0` を
+    破る。段 2 へは一歩も行かない (`btLe72 1` は保たれる) — §85.6 が条項を反証するのは
+    そこである。 -/
+theorem btLe0_bStep98 (x : BT) : btLe72 0 (bStep98 x) = false := rfl
+
+theorem btLe0_bTowG98 : ∀ n, btLe72 0 (bTowG98 n) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+/-- §94.6 の素朴な候補は段も頭も正しいが標準ではない — §98 の構成が `Ω^Ω` を
+    先頭に置く理由。 -/
+theorem naive_not_std98 :
+    BT.isStd bNaive94 = false ∧ (btLe72 1 bNaive94 && hd085B bNaive94) = true := ⟨rfl, rfl⟩
+
+end
+
+/-! ### §98.9 測定 (凍結)
+
+**構成を先に書く。**  §94.7 の 495 項の母集団をそのまま再利用し、そこへ `1` と `ε₀` の
+逆像、塔の 6 段、そして「一段上げた」項をすべて足す。**仮説では濾さない** — だから
+120 項のうち 19 項は正しい証人ですらない (一段上げる作用素は `Inv98` の 4 番目の条を
+破る項の上では標準性を壊す)。仮説が母集団に見えていない一斉合格は証拠にならない
+(§93 の教訓)。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg dictInv)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Inv98` の 4 番目の条を Bool で。 -/
+def inv98B (x : BT) : Bool := (BT.GB 0 x).all (fun e => BT.lt e (bArg98 x))
+/-- `Good98` を Bool で。 -/
+def good98B (X : Term) : Bool :=
+  X.isAP && !(X == TM.Term.one) && (omegaNF X == X) && lt X (reg 1) && le G094 X
+/-- `Γ₀ ≤ ·` を落とした形 — 非退化の確認用。 -/
+def good98noG (X : Term) : Bool :=
+  X.isAP && !(X == TM.Term.one) && (omegaNF X == X) && lt X (reg 1)
+/-- §98.4 の結論そのもの。 -/
+def okStep98 (x : BT) : Bool := dict (bStep98 x) == phi (dict x) (plus G094 TM.Term.one)
+
+def base98 : List BT := BT.D 0 BT.zero :: BT.D 0 (BT.Om 1) :: everyB94 9 pool94
+def pop98 : List BT := (base98 ++ (List.range 6).map bTowG98 ++ base98.map bStep98).eraseDups
+
+/-! 母集団。仮説で濾していないので、正しい証人でない項が 19 入っている。 -/
+#guard pop98.length == 120
+#guard pop98.countP bgood94 == 101
+#guard pop98.all fun x => lt (dict x) (reg 1)
+
+/-! **肯定 1 (構造) — 一段上げて標準になるのはちょうど `Inv98` の 4 番目の条が
+    成り立つところ。**  §94.7 の 495 項すべてで一致、食い違い 0。324 が通り 171 が落ちる。 -/
+#guard pool94.length == 495
+#guard pool94.countP (fun x => bgood94 (bStep98 x) != inv98B x) == 0
+#guard pool94.countP inv98B == 324
+
+/-! **肯定 2 (値) — 閉じた形が成り立つのはちょうど `Good98` のところ。**
+    120 項で 65 = 65、食い違い 0。 -/
+#guard pop98.countP (fun x => good98B (dict x)) == 65
+#guard pop98.countP okStep98 == 65
+#guard pop98.countP (fun x => okStep98 x != good98B (dict x)) == 0
+
+/-! **非退化 — `Γ₀ ≤ ·` を落とすと 70 になる。**  仮説の各条は母集団に見えている:
+    加法主要でないものが 49、`ω` 冪の不動点でないものが 50、`Γ₀` より下が 36、`1` が 1。 -/
+#guard pop98.countP (fun x => good98noG (dict x)) == 70
+#guard pop98.countP (fun x => !((dict x).isAP)) == 49
+#guard pop98.countP (fun x => (omegaNF (dict x) == dict x) == false) == 50
+#guard pop98.countP (fun x => le G094 (dict x) == false) == 36
+#guard pop98.countP (fun x => dict x == TM.Term.one) == 1
+
+/-! **肯定 3 — 塔。**  各段は正しい証人、値は閉じた形、生の塔を上から押さえ、`Γ₁` より下。
+    そして段 0 にはどの段も収まらない — §97 の `btLe0_invE97` と対照的である。 -/
+#guard (List.range 6).all fun n => bgood94 (bTowG98 n) && (btLe72 0 (bTowG98 n) == false)
+#guard (List.range 5).all fun n =>
+  dict (bTowG98 (n+1)) == phi (dict (bTowG98 n)) (plus G094 TM.Term.one)
+#guard (List.range 5).all fun n =>
+  lt (rawT94 n) (dict (bTowG98 (n+1))) && lt (dict (bTowG98 (n+1))) Gam1_94
+
+/-! **否定 — 母集団は生の塔のところで密ではない。**  §94.7 の 495 の値のうち
+    `[rawT94 n, Γ₁)` に入るものは 0。塔の段はどれも `dict` の像に入らず、CN でもない
+    (§97 の低い側は届かない)。 -/
+#guard (List.range 5).all fun n => dpool94.countP (fun d => le (rawT94 n) d && lt d Gam1_94) == 0
+#guard (List.range 8).all fun n =>
+  inT (rawT94 n) && (dictInv (rawT94 n)).isNone && lt (rawT94 n) Gam1_94
+#guard (List.range 8).all fun n => CN (rawT94 n) == false
+
+/-! **否定 (作った項)。**  §98.8 の四つを数字で。`xBad98` は正しい証人だが一段上げると
+    標準でない。`xEps98` の値は `φ̄(ε₀, Γ₀)` で `⊕ 1` が落ちる。`xSum98` は `Γ₀` より
+    上だが加法主要でなく、指数に入るのは `ω^(Γ₀ ⊕ Γ₀)` の方。 -/
+#guard bgood94 xBad98 && (BT.isStd (bStep98 xBad98) == false) && (inv98B xBad98 == false)
+#guard bgood94 xEps98 && (okStep98 xEps98 == false)
+#guard dict (bStep98 xEps98) == phi E081 G094
+#guard bgood94 xSum98 && le G094 (dict xSum98) && (okStep98 xSum98 == false)
+#guard (BT.isStd bNaive94 == false) && btLe72 1 bNaive94 && hd085B bNaive94
+
+end
+
 end Evidence.Region
