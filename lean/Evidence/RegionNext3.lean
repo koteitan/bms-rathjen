@@ -6830,4 +6830,949 @@ end
 /-! ### §87.7 公理 -/
 
 
+/-! ## §88 THE `K`-ELEMENT IS A COLLAPSE INDEX — AND THE STEP-BLIND FORM OF THAT IS FALSE
+
+§87 stopped proposing sufficient conditions, spent Buchholz's `G(a,0) < a` as far as it goes,
+and left the gate as ONE implication, named: from `c < a` in Buchholz's order to
+`y < i₀ ⊕ Δ` in `𝔗(M)`, at a `K`-element `y` of `dict c`.  §88 takes the `𝔗(M)` side of that
+implication apart.  **It does not close the gate.**  What it does is say what `y` IS.
+
+`K_κ` is not hereditary: `K_{Ω₁}(α)` can dwarf `α` — that is the whole reason 2.1(vi)'s last
+conjunct is a condition and not a triviality, and it is why five sections' worth of clauses
+comparing `y` against `Δ`, against `i₀`, or against a split of the two have all died.  But the
+terms the gate meets are not arbitrary elements of `𝔗(M)`: they are `dict`-images, and in a
+`dict`-image the only source of a `K_{Ω₁}`-element is a `ψ_{Ω₁}` emitted by the fold — that
+is, a `ψ₀` of the Buchholz side.  §88.1 traces `K_{Ω₁}` through `collapse` itself; §88.2 runs
+the trace down the Buchholz term.  The result is that **every `K_{Ω₁}`-element of `dict c` is
+bounded by the collapse index of a `ψ₀` occurring inside `c`** — so `y` is never an arbitrary
+ordinal, it sits under an index of the very kind the scan is building, and the gate is an
+inequality between two collapse indices and nothing else.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §88.1  **THE TRACEBACK THROUGH `collapse`.**  `mem_Kset_collapse88` : for `x ∈ 𝔗(M)` below
+         `M` whose gate holds,
+
+             y ∈ K_{Ω_{u+1}}(ψ_u x)  →  y ≤ idxF88 u x   or   y ∈ K_{Ω_{u+1}}(x).
+
+         `idxF88 u x` is the index the fold ends holding (`none` if the strongly critical
+         branch never fires).  Three pieces carry it.  `mem_Kset_psi_reg88` : `K_κ(ψ_κ i)` is inside
+         `{i} ∪ K_κ(i)`, because the other two branches of 2.2(vi) give the empty list and
+         `K_κ Ω_{u+1} = ∅`.  `le_idx_fold88` : **the scan's index only grows** — every index it ever
+         emits is `≤` the one it ends with (§75.2's `le_prev_idxOf75` run along the fold, with
+         §64.5's `fold_inv` for the state invariant, which §66.1's `PsiIdxOK` supplies).
+         `Kset_fold_snd88` : the fold's accumulated VALUE has `K_κ` inside
+         `{≤ the running index} ∪ K_κ(incoming value) ∪ K_κ(the pairs)` — the Veblen branch
+         adds only its pair and the base (whose `K_κ` is empty), and the strongly critical
+         branch adds `ψ_κ i`, whose `K_κ` is `{i} ∪ K_κ i` and whose `K_κ i` is below `i` for
+         free, since `inT (ψ_κ i)` says so.  `mem_Kset_wcnf_snd88` handles the tail `ρ`.
+
+  §88.2  **THE `K`-ELEMENT IS A `ψ₀` INDEX.**  `d0Args88 c` is the list of arguments of the
+         `ψ₀`s occurring anywhere in `c`.  `kset_dict_idx88` :
+
+             y ∈ K_{Ω₁}(dict c)  →  ∃ e ∈ d0Args88 c, ∃ j, idxF88 0 (dict e) = some j
+                                     ∧ y ≤ j ∧ inT j.
+
+         The induction is on `c` with §87.1's gate-induction hypothesis: the `ψ₁` components
+         strip by §77.7 (`kset_strip_D1_88`), the `ψ₁` layer contributes nothing of its own,
+         and the `ψ₀` components hand over §88.1.  Standardness comes along for free — a `ψ₀`
+         subterm of a standard term is standard AT SUBSCRIPT `0`, which is exactly what
+         §87.1's gate wants, so no extra hypothesis appears.
+
+  §88.3  **THE RESIDUE, AND IT IS POINTWISE.**  `IdxK88 a` is §87's `ArgK87` with §88.2's
+         output added as hypotheses (`e`, `j`, `y ≤ j`, `inT j`).  Everything added is a
+         theorem, so `idxStd88_of_step073` gives the converse and the reduction is exact.
+         `gateStd87_of_idxK88` is sharper than §87.4's `gate87_of_arg87` in one further way:
+         **it consumes the condition at ONE term**, not globally, so any per-term sufficient
+         condition now plugs straight in (§88.5 uses that twice).  `IdxLtK88` is the sharp
+         form — same hypotheses, conclusion `j < i₀ ⊕ Δ` instead of `y < i₀ ⊕ Δ` — and it
+         implies `IdxK88`.  It is a SUFFICIENT condition, not an equivalent one; §88.6
+         measures it clean on all 199 terms.
+
+  §88.4  **THE STEP-BLIND SHARP FORM IS FALSE, AS A THEOREM.**  Drop from `IdxLtK88` the one
+         link that ties the index `j` to the step it is asked at — that `j` actually bounds a
+         `K`-element of THIS step — and ask instead about every `ψ₀` inside every subscript-`1`
+         component of `a`.  `not_idxLtBlindStd88` refutes it, and the counterexample is §82's
+         `aBad82` (15 symbols), the same term that killed §75's per-pair clause.  §87.6
+         measured the same wall for `K`-elements (`anyStep87`); §88 shows it does not move
+         when the `K`-element is replaced by the index that bounds it.
+
+  §88.5  **A WIDER UNCONDITIONAL LAYER THAN §87.5's.**  `flatD1_88 a` asks only that the
+         arguments of the SUBSCRIPT-`1` components of `a` mention no `ψ₀`; the `ψ₀` components
+         may carry anything, because §87.2 has already put them below `Ω₁` and out of the
+         scan's sight.  `gateStd87_of_flatD1_88` proves the gate there.  `flat87 → flatD1_88`
+         (`flatD1_of_flat87_88`) and the inclusion is strict — `wid88 = ψ₁ψ₁0 ⊕ ψ₀ψ₀0` is in
+         the new layer and not the old (`flat87_lt_flatD1_88`).  `NoIdx88` is the second
+         pointwise layer: if none of those `ψ₀`s ever fires, the clause is vacuous.
+
+WHAT IS **NOT** CLAIMED.  The gate is NOT closed.  `IdxStd88` is EQUIVALENT to
+`PsiIdxStep073`, so §88 is again a repackaging — what it repackages is the `K`-element itself,
+which every section from §75 to §87 treated as an opaque ordinal.  `IdxLtStd88` is not proved
+either, and it is not known to follow from the gate (only to imply it).  §86's `SplitK86`,
+§87's `ArgStd87`, `LocalK2Snd_78`, `DictHeadLt77`, `CofDenseS1`, `BCofIn71`, `DictLtA74` are
+untouched; §76's bridge `dictLtA74_iff76` is NOT used anywhere in §88 — the reduction spends
+only Buchholz standardness and the fold's own arithmetic.
+
+WHAT THE MEASUREMENT SAYS (§88.6 gives the construction: §87's `qual87`, §86's `qual86`,
+§84's `qual84` and row 326's `r326_84` reused verbatim, plus 27 terms built to fire a branch
+none of them ever fired).  199 terms in all.
+
+  * **The new population fires the OTHER clause.**  Over `qual88`'s 54 firing steps the
+    `K_{Ω₁} aV` side is EMPTY and the `K_{Ω₁} cV` side has 45 elements; over `qual87`'s 53
+    firing steps it is exactly the other way round, 31 and **0**.  **§87's second clause was
+    vacuous on every population measured up to now.**  The construction that reaches it is to
+    put the `ψ₀` in the summand list of the firing component's argument instead of under its
+    `ψ₁` cap.
+  * **§88.2 holds on all 199.**  `kLeIdxb88` — every `K_{Ω₁}`-element of a subscript-`1`
+    component's argument is under some `ψ₀` index inside it — never fails.
+  * **The sharp clause holds on all 199, the step-blind one fails on 127.**
+    `idxLtb88` : 0 failures everywhere including all 41 of row 326's indices.
+    `idxLtBlindb88` : 27 of `qual88`, 25 of `qual87`, 53 of `qual86`, 22 of `qual84`, 0 of
+    `r326_84`.  §88.4 turns that into a theorem.
+  * **§84's split clause fails on the `cV` side too.**  `splitb84` is false on 18 of the 27
+    (`famG88` 3, `famH88` 6, `famI88` 9) and §75's per-pair clause on all 27.  §86 refuted
+    `SplitStd84` on the `aV` side; the refutation is not one-sided.
+  * **The gate does not fail.**  `stepOKb`, `idxb84`, `splitb86` : 0 failures on `qual88`.
+    §88 is not a fifth refutation of a clause the gate needs.
+  * **The wider layer is wider in theory only.**  `flatD1_88` covers the same 10 of row 326's
+    41 indices that `flat87` covered, and 0 of the 158 adversarial terms.  `wid88` witnesses
+    that the inclusion is strict; the corpus does not.
+-/
+
+/-! ### §88.1 崩壊を通した `K` の追跡 — 最後の指数と、その先 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`ψ_{Ω_{u+1}}` の `K` は引数そのものか引数の `K`。** `K_κ Ω_{u+1} = ∅` だけ使う。 -/
+theorem mem_Kset_psi_reg88 {u : Nat} {i y : Term}
+    (h : y ∈ Kset (reg (u+1)) (psi (reg (u+1)) i)) : y = i ∨ y ∈ Kset (reg (u+1)) i := by
+  rw [show Kset (reg (u+1)) (psi (reg (u+1)) i)
+      = (if le (psi (reg (u+1)) i) (kminus (reg (u+1))) then [] else
+         if lt (reg (u+1)) (reg (u+1)) then Kset (reg (u+1)) (reg (u+1))
+         else i :: (Kset (reg (u+1)) (reg (u+1)) ++ Kset (reg (u+1)) i)) from rfl] at h
+  split at h
+  · cases h
+  · split at h
+    · exact absurd h (fun hc => mem_Kset_reg (u+1) hc)
+    · rcases List.mem_cons.mp h with h1 | h1
+      · exact Or.inl h1
+      · rcases List.mem_append.mp h1 with h2 | h2
+        · exact absurd h2 (fun hc => mem_Kset_reg (u+1) hc)
+        · exact Or.inr h2
+
+/-- 段の底の `K` は空。 -/
+theorem mem_Kset_baseOf88 {k y : Term} (u : Nat) (h : y ∈ Kset k (baseOf u)) : False := by
+  unfold baseOf at h
+  split at h
+  · cases h
+  · rcases mem_Kset_plus h with h1 | h1
+    · exact mem_Kset_reg u h1
+    · rw [Kset_one] at h1; cases h1
+
+/-- `wcnf` の尾は「先頭を捨てた列」そのもの。 -/
+theorem wcnf_snd_cons88 (w p : Term) (rest : List Term) :
+    (wcnf w (p :: rest)).2 = if lt p w = true then ofList (p :: rest) else (wcnf w rest).2 := by
+  by_cases hlp : lt p w = true
+  · rw [wcnf_cons_lt hlp, if_pos hlp]
+  · have hlp' : lt p w = false := bool_false hlp
+    rw [wcnf_cons_ge hlp', if_neg hlp]
+    cases hr : wcnf w rest with
+    | mk fst snd =>
+      cases fst with
+      | nil => rfl
+      | cons ac0 ps =>
+        cases ac0 with
+        | mk a' c' =>
+          show (if (wA w p == a') = true then ((wA w p, plus (wC w p) c') :: ps, snd)
+                else ((wA w p, wC w p) :: (a', c') :: ps, snd)).2 = snd
+          split <;> rfl
+
+/-- **`wcnf` の尾の `K` は元の列の `K`。** -/
+theorem mem_Kset_wcnf_snd88 {k w y : Term} : ∀ (L : List Term),
+    y ∈ Kset k (wcnf w L).2 → y ∈ KsetL k L := by
+  intro L
+  induction L with
+  | nil => intro h; cases h
+  | cons p rest ih =>
+    intro h
+    rw [wcnf_snd_cons88] at h
+    split at h
+    · rw [Kset_ofList] at h; exact h
+    · exact mem_KsetL_of_sub (fun a ha => List.Mem.tail _ ha) (ih h)
+
+
+/-- **走査の指数は伸びる一方。** 入ってきた指数も、途中で吐かれた指数も、
+    畳み込みが最後に残す指数以下にある。`ψ` が 𝔗(M) の項であることだけ要る
+    (§66.1 の `PsiIdxOK`、門から只で出る)。 -/
+theorem le_idx_fold88 {u : Nat} :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ p ∈ scanSt (reg (u+1)) (baseOf u) s l, le (reg (u+1)) p.2.1 = true →
+          inT (psi (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2)) = true) →
+      (∀ i0, s.1 = some i0 → ∃ j, (l.foldl (stepF (reg (u+1)) (baseOf u)) s).1 = some j ∧
+          le i0 j = true) ∧
+      (∀ p ∈ scanSt (reg (u+1)) (baseOf u) s l, le (reg (u+1)) p.2.1 = true →
+          ∃ j, (l.foldl (stepF (reg (u+1)) (baseOf u)) s).1 = some j ∧
+            le (idxOf (reg (u+1)) p.1 p.2) j = true) := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have hlw : lt (reg (u+1)) M = true := ltM_reg (u+1)
+  intro l
+  induction l with
+  | nil =>
+    intro s hs _ _
+    refine ⟨?_, ?_⟩
+    · intro i0 hi0
+      exact ⟨i0, hi0, Evidence.WF.le_self _⟩
+    · intro p hp; cases hp
+  | cons ac t ih =>
+    intro s hs hall hpsi
+    have hfoldInv : StInv ((ac :: t).foldl (stepF (reg (u+1)) (baseOf u)) s) :=
+      fold_inv mulDescInT hw hlw (inT_baseOf u) (ltM_baseOf u) (ac :: t) s hs hall hpsi
+    have hac := hall ac (List.Mem.head _)
+    have hmemhead : ((s, ac) : (Option Term × Option Term) × (Term × Term)) ∈
+        scanSt (reg (u+1)) (baseOf u) s (ac :: t) := List.Mem.head _
+    have hs' : StInv (stepF (reg (u+1)) (baseOf u) s ac) :=
+      stepF_inv mulDescInT hw hlw (inT_baseOf u) (ltM_baseOf u) hs hac
+        (hpsi (s, ac) hmemhead)
+    obtain ⟨IH1, IH2⟩ := ih (stepF (reg (u+1)) (baseOf u) s ac) hs'
+      (fun a ha => hall a (List.Mem.tail _ ha))
+      (fun p hp => hpsi p (List.Mem.tail _ hp))
+    have hfold : ((ac :: t).foldl (stepF (reg (u+1)) (baseOf u)) s)
+        = t.foldl (stepF (reg (u+1)) (baseOf u)) (stepF (reg (u+1)) (baseOf u) s ac) := rfl
+    have hfire : le (reg (u+1)) ac.1 = true →
+        (stepF (reg (u+1)) (baseOf u) s ac).1 = some (idxOf (reg (u+1)) s ac) := by
+      intro hle
+      rw [stepF_fst, if_pos hle]
+    have hstep : ∀ i0, s.1 = some i0 → ∃ i1,
+        (stepF (reg (u+1)) (baseOf u) s ac).1 = some i1 ∧ le i0 i1 = true := by
+      intro i0 hi0
+      cases hle : le (reg (u+1)) ac.1 with
+      | true =>
+        exact ⟨idxOf (reg (u+1)) s ac, hfire hle,
+          le_prev_idxOf75 hw hs hi0 hac.1 hac.2.2.1⟩
+      | false =>
+        refine ⟨i0, ?_, Evidence.WF.le_self _⟩
+        rw [stepF_fst, if_neg (by rw [hle]; exact Bool.noConfusion), hi0]
+    refine ⟨?_, ?_⟩
+    · intro i0 hi0
+      obtain ⟨i1, hi1, hle1⟩ := hstep i0 hi0
+      obtain ⟨j, hj, hle2⟩ := IH1 i1 hi1
+      refine ⟨j, by rw [hfold]; exact hj, ?_⟩
+      have hjT : inT j = true := (hfoldInv.1 j (by rw [hfold]; exact hj)).1
+      exact le_trans3 (inT_le_fragR _ (hs.1 i0 hi0).1) (inT_le_fragR _ (hs'.1 i1 hi1).1)
+        (inT_le_fragR _ hjT) hle1 hle2
+    · intro p hp hle
+      rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt (reg (u+1)) (baseOf u)
+          (stepF (reg (u+1)) (baseOf u) s ac) t from hp) with h | h
+      · subst h
+        obtain ⟨j, hj, hle2⟩ := IH1 (idxOf (reg (u+1)) s ac) (hfire hle)
+        exact ⟨j, by rw [hfold]; exact hj, hle2⟩
+      · obtain ⟨j, hj, hle2⟩ := IH2 p h hle
+        exact ⟨j, by rw [hfold]; exact hj, hle2⟩
+
+
+theorem opt_cases88 {a : Type} (o : Option a) : o = none ∨ ∃ v, o = some v := by
+  cases o with
+  | none => exact Or.inl rfl
+  | some v => exact Or.inr ⟨v, rfl⟩
+
+theorem stepF_snd_fire88 {w base : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (h : le w ac.1 = true) :
+    (stepF w base s ac).2 = some (psi w (idxOf w s ac)) := by
+  unfold stepF; rw [if_pos h]
+
+theorem stepF_snd_veb88 {w base : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (h : le w ac.1 = false) :
+    (stepF w base s ac).2 = some (phiNF ac.1
+      (plus (match s.2 with | none => base | some v => v)
+            (match s.2 with | none => sub1 ac.2 | some _ => ac.2))) := by
+  unfold stepF; rw [if_neg (by rw [h]; exact Bool.noConfusion)]; rfl
+
+/-- **畳み込みが最後に持っている値の `K` は三つのどれか。** 指数以下か、入ってきた値の
+    `K` か、成分の `K`。ヴェブレン枝は成分と底しか足さず、強臨界枝が足す `ψ_{Ω_{u+1}}` の
+    `K` は「指数そのもの」と「指数の `K`」で、どちらも指数以下 (§66.1 の `ψ` が項である
+    ことから)。 -/
+theorem Kset_fold_snd88 {u : Nat} :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ p ∈ scanSt (reg (u+1)) (baseOf u) s l, le (reg (u+1)) p.2.1 = true →
+          inT (psi (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2)) = true) →
+      ∀ y, y ∈ Kset (reg (u+1))
+            ((l.foldl (stepF (reg (u+1)) (baseOf u)) s).2.getD zero) →
+        (∃ j, (l.foldl (stepF (reg (u+1)) (baseOf u)) s).1 = some j ∧ le y j = true)
+        ∨ (∃ v, s.2 = some v ∧ y ∈ Kset (reg (u+1)) v)
+        ∨ (∃ ac, ac ∈ l ∧ (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2)) := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have hlw : lt (reg (u+1)) M = true := ltM_reg (u+1)
+  intro l
+  induction l with
+  | nil =>
+    intro s _ _ _ y hy
+    have hy2 : y ∈ Kset (reg (u+1)) (s.2.getD zero) := hy
+    rcases opt_cases88 s.2 with hs2 | ⟨v, hs2⟩
+    · rw [hs2] at hy2; cases hy2
+    · exact Or.inr (Or.inl ⟨v, hs2, by rw [hs2] at hy2; exact hy2⟩)
+  | cons ac t ih =>
+    intro s hs hall hpsi y hy
+    have hac := hall ac (List.Mem.head _)
+    have hmemhead : ((s, ac) : (Option Term × Option Term) × (Term × Term)) ∈
+        scanSt (reg (u+1)) (baseOf u) s (ac :: t) := List.Mem.head _
+    have hs' : StInv (stepF (reg (u+1)) (baseOf u) s ac) :=
+      stepF_inv mulDescInT hw hlw (inT_baseOf u) (ltM_baseOf u) hs hac
+        (hpsi (s, ac) hmemhead)
+    have hfold : ((ac :: t).foldl (stepF (reg (u+1)) (baseOf u)) s)
+        = t.foldl (stepF (reg (u+1)) (baseOf u)) (stepF (reg (u+1)) (baseOf u) s ac) := rfl
+    have halls : ∀ a ∈ t, inT a.1 = true ∧ lt a.1 M = true ∧ inT a.2 = true ∧ lt a.2 M = true :=
+      fun a ha => hall a (List.Mem.tail _ ha)
+    have hpsis : ∀ p ∈ scanSt (reg (u+1)) (baseOf u)
+        (stepF (reg (u+1)) (baseOf u) s ac) t, le (reg (u+1)) p.2.1 = true →
+          inT (psi (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2)) = true :=
+      fun p hp => hpsi p (List.Mem.tail _ hp)
+    have hmono := (le_idx_fold88 t (stepF (reg (u+1)) (baseOf u) s ac) hs' halls hpsis).1
+    rw [hfold] at hy
+    rcases ih (stepF (reg (u+1)) (baseOf u) s ac) hs' halls hpsis y hy with h | h | h
+    · exact Or.inl ⟨h.choose, by rw [hfold]; exact h.choose_spec.1, h.choose_spec.2⟩
+    · obtain ⟨v, hv, hyv⟩ := h
+      cases hle : le (reg (u+1)) ac.1 with
+      | true =>
+        rw [stepF_snd_fire88 hle] at hv
+        have hve : v = psi (reg (u+1)) (idxOf (reg (u+1)) s ac) := (Option.some.inj hv).symm
+        rw [hve] at hyv
+        have hfst : (stepF (reg (u+1)) (baseOf u) s ac).1
+            = some (idxOf (reg (u+1)) s ac) := by rw [stepF_fst, if_pos hle]
+        obtain ⟨j, hj, hlej⟩ := hmono (idxOf (reg (u+1)) s ac) hfst
+        have hjT : inT j = true :=
+          ((fold_inv mulDescInT hw hlw (inT_baseOf u) (ltM_baseOf u) t
+            (stepF (reg (u+1)) (baseOf u) s ac) hs' halls hpsis).1 j hj).1
+        have hiT : inT (idxOf (reg (u+1)) s ac) = true :=
+          (inT_idxOf mulDescInT hw hlw hs hac.1 hac.2.1 hac.2.2.1 hac.2.2.2).1
+        refine Or.inl ⟨j, by rw [hfold]; exact hj, ?_⟩
+        rcases mem_Kset_psi_reg88 hyv with h1 | h1
+        · rw [h1]; exact hlej
+        · have hall2 := ksetAll_of_inT_psi (hpsi (s, ac) hmemhead hle)
+          have hlty : lt y (idxOf (reg (u+1)) s ac) = true := List.all_eq_true.mp hall2 y h1
+          have hyT : inT y = true := inT_mem_Kset75 _ hiT _ y h1
+          exact le_trans3 (inT_le_fragR _ hyT) (inT_le_fragR _ hiT) (inT_le_fragR _ hjT)
+            (le_of_lt hlty) hlej
+      | false =>
+        rw [stepF_snd_veb88 hle] at hv
+        have hve : v = phiNF ac.1
+            (plus (match s.2 with | none => baseOf u | some v => v)
+                  (match s.2 with | none => sub1 ac.2 | some _ => ac.2)) :=
+          (Option.some.inj hv).symm
+        rw [hve] at hyv
+        rcases mem_Kset_phiNF hyv with h1 | h1
+        · exact Or.inr (Or.inr ⟨ac, List.Mem.head _, Or.inl h1⟩)
+        · rcases mem_Kset_plus h1 with h2 | h2
+          · rcases opt_cases88 s.2 with hs2 | ⟨v0, hs2⟩
+            · rw [hs2] at h2
+              exact absurd h2 (fun hc => mem_Kset_baseOf88 u hc)
+            · rw [hs2] at h2
+              exact Or.inr (Or.inl ⟨v0, hs2, h2⟩)
+          · refine Or.inr (Or.inr ⟨ac, List.Mem.head _, Or.inr ?_⟩)
+            rcases opt_cases88 s.2 with hs2 | ⟨v0, hs2⟩
+            · rw [hs2] at h2; exact mem_Kset_sub1 h2
+            · rw [hs2] at h2; exact h2
+    · obtain ⟨a2, ha2, hy2⟩ := h
+      exact Or.inr (Or.inr ⟨a2, List.Mem.tail _ ha2, hy2⟩)
+
+/-- **畳み込みが最後に持っている指数。** `none` なら強臨界枝は一度も発火していない。 -/
+def idxF88 (u : Nat) (x : Term) : Option Term :=
+  ((wcnf (reg (u+1)) (toList x)).1.foldl (init := ((none : Option Term), (none : Option Term)))
+    (stepF (reg (u+1)) (baseOf u))).1
+
+/-- 最後の指数は 𝔗(M) の項。 -/
+theorem inT_idxF88 {u : Nat} {x : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK u x) {j : Term} (hj : idxF88 u x = some j) :
+    inT j = true ∧ lt j M = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  exact (fold_inv mulDescInT (inT_reg (u+1)) (ltM_reg (u+1)) (inT_baseOf u) (ltM_baseOf u)
+    (wcnf (reg (u+1)) (toList x)).1 (none, none) stInv_none hallOK Hp).1 j hj
+
+/-- **§88.1 の主定理 — 崩壊の像の `K` の追跡。** `ψ_u` の像の `K` の元は、その崩壊が
+    最後に持つ指数以下であるか、引数の `K` の元であるかのどちらか。前者が
+    「この `ψ` が生んだ分」、後者が「引数から持ち越された分」。 -/
+theorem mem_Kset_collapse88 {u : Nat} {x y : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK u x) (h : y ∈ Kset (reg (u+1)) (collapse u x)) :
+    (∃ j, idxF88 u x = some j ∧ le y j = true) ∨ y ∈ Kset (reg (u+1)) x := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd (ltM_toList x hx hlx)
+  rw [collapse_eq] at h
+  rcases mem_Kset_plus (mem_Kset_omegaNF h) with h2 | h2
+  · exact absurd h2 (fun hc2 => mem_Kset_reg u hc2)
+  · rcases mem_Kset_plus h2 with h3 | h3
+    · rcases Kset_fold_snd88 (wcnf (reg (u+1)) (toList x)).1 (none, none) stInv_none
+        hallOK Hp y h3 with h4 | h4 | h4
+      · exact Or.inl h4
+      · obtain ⟨v, hv, _⟩ := h4; cases hv
+      · obtain ⟨ac, hac, hy⟩ := h4
+        refine Or.inr ?_
+        rw [Kset_eq_KsetL]
+        exact mem_KsetL_of_sub (fun a ha => bigPart_sub _ _ a ha)
+          (mem_Kset_wcnf (toList x) ac hac hy)
+    · refine Or.inr ?_
+      rw [Kset_eq_KsetL]
+      exact mem_Kset_wcnf_snd88 (toList x) h3
+
+end
+
+/-! ### §88.2 `K` の元は `ψ₀` の指数 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`ψ₀` の引数を全部集める。** 深さは問わない。 -/
+def d0Args88 : BT → List BT
+  | .zero => []
+  | .D u c => if u == 0 then c :: d0Args88 c else d0Args88 c
+  | .sum a b => d0Args88 a ++ d0Args88 b
+
+theorem d0Args88_D0 (c : BT) : d0Args88 (BT.D 0 c) = c :: d0Args88 c := by
+  show (if (0 : Nat) == 0 then c :: d0Args88 c else d0Args88 c) = _
+  rfl
+
+theorem d0Args88_D1 (c : BT) : d0Args88 (BT.D 1 c) = d0Args88 c := by
+  show (if (1 : Nat) == 0 then c :: d0Args88 c else d0Args88 c) = _
+  rfl
+
+/-- `ψ₀` を含まない項には `ψ₀` の引数が無い。 -/
+theorem d0Args88_noD0_87 : ∀ (c : BT), noD0_87 c = true → d0Args88 c = []
+  | .zero, _ => rfl
+  | .D u x, hn => by
+      obtain ⟨hu0, hnx⟩ := noD0_D87 hn
+      show (if u == 0 then x :: d0Args88 x else d0Args88 x) = []
+      rw [if_neg (by
+        intro hc
+        exact hu0 (by
+          have := (beq_iff_eq (a := u) (b := 0)).mp hc
+          exact this))]
+      exact d0Args88_noD0_87 x hnx
+  | .sum x y, hn => by
+      obtain ⟨hnx, hny⟩ := noD0_sum87 hn
+      show d0Args88 x ++ d0Args88 y = []
+      rw [d0Args88_noD0_87 x hnx, d0Args88_noD0_87 y hny]
+      rfl
+
+/-- `ψ₁` の像から `ω^(Ω₁ ⊕ ·)` をはがす、単独版 (§87.3 の `kset_strip_D1_87`)。 -/
+theorem kset_strip_D1_88 {c : BT} (ih : ∀ b : BT, BT.size b < BT.size c → GateStd87 b)
+    (hbc : btLe72 1 c = true) (hsc : BT.isStd c = true) {y : Term}
+    (h : y ∈ Kset (reg 1) (dict (BT.D 1 c))) : y ∈ Kset (reg 1) (dict c) := by
+  have hin := inT_dict_ih87 c ih hbc hsc
+  have hcol : dict (BT.D 1 c) = omegaNF (plus (reg 1) (dict c)) := by
+    rw [Trans.Dict.dict_D]
+    exact collapse1_eq77 (dict c) hin.1
+      (fun z hz => lt_pure73_reg2 (pure73_toList _ (pure73_dict c hbc) z hz))
+  rw [hcol] at h
+  rcases mem_Kset_plus (mem_Kset_omegaNF h) with h2 | h2
+  · exact (mem_Kset_reg 1 h2).elim
+  · exact h2
+
+/-- **§88.2 の主定理 — `K` の元はどれも `ψ₀` の指数以下。**  `dict c` の `K_{Ω₁}` の元は、
+    `c` のどこかに現れる `ψ₀ e` について、その崩壊が最後に持つ指数以下にある。
+    §87.3 が「`K` の元は成分の引数の `K`」まで落としたところを、`ψ₀` の指数まで落とす。 -/
+theorem kset_dict_idx88 : ∀ (c : BT), (∀ b : BT, BT.size b < BT.size c → GateStd87 b) →
+    btLe72 1 c = true → BT.isStd c = true →
+    ∀ y ∈ Kset (reg 1) (dict c),
+      ∃ e ∈ d0Args88 c, ∃ j, idxF88 0 (dict e) = some j ∧ le y j = true ∧ inT j = true
+  | .zero, _, _, _ => by intro y hy; cases hy
+  | .D u x, ih, hb, hs => by
+      intro y hy
+      obtain ⟨hu, hbx⟩ := btLe72_D 1 u x hb
+      have hsx : BT.isStd x = true := isStd_of_D hs
+      have hsz : BT.size x < BT.size (BT.D u x) := by rw [size_D87]; omega
+      have ihx : ∀ b : BT, BT.size b < BT.size x → GateStd87 b := fun b hz => ih b (by omega)
+      cases u with
+      | zero =>
+        have hin := inT_dict_ih87 x ihx hbx hsx
+        have hgate : KsetStepOK 0 (dict x) := ih x hsz hbx hs
+        have hpi : PsiIdxOK 0 (dict x) := psiIdxOK_of_stepOK 0 (dict x) hin.1 hin.2 hgate
+        rw [Trans.Dict.dict_D] at hy
+        rcases mem_Kset_collapse88 hin.1 hin.2 hpi hy with h1 | h1
+        · obtain ⟨j, hj, hlej⟩ := h1
+          exact ⟨x, by rw [d0Args88_D0]; exact List.Mem.head _, j, hj, hlej,
+            (inT_idxF88 hin.1 hin.2 hpi hj).1⟩
+        · obtain ⟨e, he, hj⟩ := kset_dict_idx88 x ihx hbx hsx y h1
+          exact ⟨e, by rw [d0Args88_D0]; exact List.Mem.tail _ he, hj⟩
+      | succ u' =>
+        cases u' with
+        | zero =>
+          have h1 := kset_strip_D1_88 ihx hbx hsx hy
+          obtain ⟨e, he, hj⟩ := kset_dict_idx88 x ihx hbx hsx y h1
+          exact ⟨e, by rw [d0Args88_D1]; exact he, hj⟩
+        | succ u'' => exact absurd hu (by omega)
+  | .sum x z, ih, hb, hs => by
+      intro y hy
+      obtain ⟨hbx, hbz⟩ := btLe72_sum 1 x z hb
+      obtain ⟨hsx, hsz2⟩ := isStd_of_sum hs
+      have hzx : BT.size x < BT.size (BT.sum x z) := by
+        rw [size_sum87]; have := size_pos87 z; omega
+      have hzz : BT.size z < BT.size (BT.sum x z) := by
+        rw [size_sum87]; have := size_pos87 x; omega
+      rw [Trans.Dict.dict_sum] at hy
+      rcases mem_Kset_plus hy with h1 | h1
+      · obtain ⟨e, he, hj⟩ := kset_dict_idx88 x (fun b hb2 => ih b (by omega)) hbx hsx y h1
+        exact ⟨e, List.mem_append.mpr (Or.inl he), hj⟩
+      · obtain ⟨e, he, hj⟩ := kset_dict_idx88 z (fun b hb2 => ih b (by omega)) hbz hsz2 y h1
+        exact ⟨e, List.mem_append.mpr (Or.inr he), hj⟩
+
+end
+
+
+
+/-! ### §88.3 残余 — ふたつの崩壊の指数の比較 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§88 の条項。** §87 の `ArgK87` に §88.2 が只で渡すもの — 「`K` の元 `y` は `c` の
+    どこかの `ψ₀ e` の崩壊指数 `j` 以下」 — を足した形。足したものはすべて定理だから、
+    門との同値は保たれる (`idxStd88_of_step073` が逆向き)。 -/
+def IdxK88 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true → inT (idxOf (reg 1) p.1 p.2) = true →
+      ∀ (y : Term) (c e : BT) (j : Term),
+        BT.D 1 c ∈ BT.toL a → BT.isStd (BT.D 1 c) = true → BT.lt c a = true →
+        e ∈ d0Args88 c → idxF88 0 (dict e) = some j → inT j = true → le y j = true →
+        inT y = true → y ∈ Kset (reg 1) (dict c) →
+        (y ∈ Kset (reg 1) p.2.1 ∨ y ∈ Kset (reg 1) p.2.2) →
+        lt y (idxOf (reg 1) p.1 p.2) = true
+
+/-- **鋭い形 — `y` を落として指数どうしを比べる。**  仮説は `IdxK88` と同じ (歩と成分の
+    結びつき `y ∈ K_{Ω₁}(dict c)` と `y ∈ K_{Ω₁} aV ∪ K_{Ω₁} cV` を含む) で、結論だけ
+    `j < i₀ ⊕ Δ` に強めたもの。`IdxK88` を出す。**門から出るとは限らない** —
+    十分条件であって同値ではない。§88.5 が 199 項で測る。 -/
+def IdxLtK88 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true → inT (idxOf (reg 1) p.1 p.2) = true →
+      ∀ (y : Term) (c e : BT) (j : Term),
+        BT.D 1 c ∈ BT.toL a → BT.isStd (BT.D 1 c) = true → BT.lt c a = true →
+        e ∈ d0Args88 c → idxF88 0 (dict e) = some j → inT j = true → le y j = true →
+        inT y = true → y ∈ Kset (reg 1) (dict c) →
+        (y ∈ Kset (reg 1) p.2.1 ∨ y ∈ Kset (reg 1) p.2.2) →
+        lt j (idxOf (reg 1) p.1 p.2) = true
+
+theorem idxK88_of_idxLtK88 {a : BT} (H : IdxLtK88 a) : IdxK88 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he hj hjT hlej hyT hyk hy
+  exact lt_of_le_of_lt3 (inT_le_fragR _ hyT) (inT_le_fragR _ hjT) (inT_le_fragR _ hidxT)
+    hlej (H p hp hle hidxT y c e j hc hstd hltc he hj hjT hlej hyT hyk hy)
+
+/-- **§88 の残る仮説。** 部分領域の項について §88 の条項。**証明しない。** -/
+def IdxStd88 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK88 a
+
+/-- 鋭い形の大域版。**証明しない。** -/
+def IdxLtStd88 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxLtK88 a
+
+theorem idxStd88_of_idxLtStd88 (H : IdxLtStd88) : IdxStd88 :=
+  fun a hb hs => idxK88_of_idxLtK88 (H a hb hs)
+
+/-- **§88.3 の主定理。** 一項ぶんの門は §88 の条項と帰納法の仮説から出る。
+    §87.4 の `gate87_of_arg87` と違い、条項が要るのは**その項ひとつ**だけ。 -/
+theorem gateStd87_of_idxK88 (a : BT)
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b)
+    (H : btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK88 a) : GateStd87 a := by
+  intro hb hs
+  have hin := inT_dict_ih87 a ih hb (isStd_of_D hs)
+  obtain ⟨hcL, hdL⟩ := inT_toList (dict a) hin.1
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcL hdL
+      (ltM_toList (dict a) hin.1 hin.2)
+  intro p hp hle
+  refine scan_idx84 (wcnf (reg 1) (toList (dict a))).1 (none, none)
+    stInv_none (kInv75_none 0) hallOK ?_ p hp hle
+  intro q hq hle2 hst y hy
+  obtain ⟨hi1, hl1, hi2, hl2⟩ := hallOK q.2 (scanSt_mem_snd _ _ _ _ q hq)
+  obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT (inT_reg 1) (ltM_reg 1) hst hi1 hl1 hi2 hl2
+  obtain ⟨c, hc, hstd, hltc, hyk⟩ := kset_arg87 ih hb hs hq hy
+  have hszc0 : BT.size (BT.D 1 c) ≤ BT.size a := size_mem_toL87 a _ hc
+  have hszc : BT.size c < BT.size a := by rw [size_D87] at hszc0; omega
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (btLe72_toL87 a _ hb hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D hstd
+  have ihc : ∀ b : BT, BT.size b < BT.size c → GateStd87 b := fun b hz => ih b (by omega)
+  have hinc := inT_dict_ih87 c ihc hbc hsc
+  have hyT : inT y = true := inT_mem_Kset75 (dict c) hinc.1 _ y hyk
+  obtain ⟨e, he, j, hj, hlej, hjT⟩ := kset_dict_idx88 c ihc hbc hsc y hyk
+  exact H hb hs q hq hle2 hidxT y c e j hc hstd hltc he hj hjT hlej hyT hyk hy
+
+/-- **§88 の第一の結論。** §73 の残る門は §88 の条項から出る。 -/
+theorem psiIdxStep073_of_idxStd88 (H : IdxStd88) : PsiIdxStep073 :=
+  step073_of_gate87 (fun a ih => gateStd87_of_idxK88 a ih (fun hb hs => H a hb hs))
+
+theorem psiIdxStep073_of_idxLtStd88 (H : IdxLtStd88) : PsiIdxStep073 :=
+  psiIdxStep073_of_idxStd88 (idxStd88_of_idxLtStd88 H)
+
+/-- **逆向き。** 足した仮説はすべて落ちるので、分解は過不足がない。 -/
+theorem idxStd88_of_step073 (H : PsiIdxStep073) : IdxStd88 := by
+  intro a hb hs p hp hle _ y _ _ _ _ _ _ _ _ _ _ _ _ hy
+  exact (H a hb hs p hp hle).2 y hy
+
+/-- **§88 の第二の結論。** 326 行目の証明書が `K` の側で待つのは §88 の条項ひとつ。 -/
+theorem certIn_t326_idx88 (H : IdxStd88)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step73 (psiIdxStep073_of_idxStd88 H) HD HI HC hacc
+
+end
+
+/-! ### §88.4 否定 — 歩と成分の結びつきを切ると鋭い形は偽 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **結びつきを切った鋭い形。** `IdxLtK88` から「`j` はこの歩の `K` の元 `y` を実際に
+    押さえている」を落として、`a` のどの添字 1 の成分の、どの `ψ₀` の指数についても
+    訊く形。**偽** — `not_idxLtBlindStd88`。 -/
+def IdxLtBlind88 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true →
+      ∀ (c e : BT) (j : Term), BT.D 1 c ∈ BT.toL a → e ∈ d0Args88 c →
+        idxF88 0 (dict e) = some j → lt j (idxOf (reg 1) p.1 p.2) = true
+
+def IdxLtBlindStd88 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxLtBlind88 a
+
+/-- 判定器。 -/
+def idxLtBlindb88 (a : BT) : Bool :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).all fun p =>
+    !(le (reg 1) p.2.1) ||
+      ((BT.toL a).all fun t => match t with
+        | BT.D 1 c => (d0Args88 c).all fun e =>
+            match idxF88 0 (dict e) with
+            | none => true
+            | some j => lt j (idxOf (reg 1) p.1 p.2)
+        | _ => true)
+
+theorem b88_of_idxLtBlind88 {a : BT} (H : IdxLtBlind88 a) : idxLtBlindb88 a = true := by
+  show ((scanSt (reg 1) (baseOf 0) (none, none)
+    (wcnf (reg 1) (toList (dict a))).1).all _) = true
+  rw [List.all_eq_true]
+  intro p hp
+  cases hle : le (reg 1) p.2.1 with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or, List.all_eq_true]
+    intro t ht
+    cases t with
+    | zero => rfl
+    | sum x z => rfl
+    | D u c =>
+      cases u with
+      | zero => rfl
+      | succ u' =>
+        cases u' with
+        | zero =>
+          show ((d0Args88 c).all _) = true
+          rw [List.all_eq_true]
+          intro e he
+          cases hj : idxF88 0 (dict e) with
+          | none => rfl
+          | some j => exact H p hp hle c e j ht he hj
+        | succ u'' => rfl
+
+/-- **§88.4 の主定理 — 結びつきを切った鋭い形は偽。**  反証項は §82 の `aBad82`
+    (記号 15 個) で足りる。§87.6 の `anyStep87` が「歩を問わない形は偽」と測ったのと
+    同じ壁が、`K` の元を指数に置き換えても残る。 -/
+theorem not_idxLtBlind88_aBad82 : ¬ IdxLtBlind88 aBad82 := by
+  intro H
+  have h := b88_of_idxLtBlind88 H
+  rw [show idxLtBlindb88 aBad82 = false from by decide] at h
+  exact Bool.noConfusion h
+
+theorem not_idxLtBlindStd88 : ¬ IdxLtBlindStd88 := fun H =>
+  not_idxLtBlind88_aBad82 (H aBad82 aBad82_hyps.1 aBad82_hyps.2.1)
+
+end
+
+/-! ### §88.5 無条件に通る層 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 添字 1 の成分の引数にだけ `ψ₀` が無いこと。§87.5 の `flat87` より弱い —
+    `ψ₀` の成分の引数には何を入れてもよい。 -/
+def flatD1_88 (a : BT) : Bool :=
+  (BT.toL a).all fun t => match t with
+    | BT.D 1 c => noD0_87 c
+    | _ => true
+
+theorem noD0_of_flatD1_88 {a : BT} (hf : flatD1_88 a = true) {c : BT}
+    (hc : BT.D 1 c ∈ BT.toL a) : noD0_87 c = true :=
+  List.all_eq_true.mp hf (BT.D 1 c) hc
+
+/-- §87.5 の層は §88.5 の層に含まれる。 -/
+theorem flatD1_of_flat87_88 {a : BT} (hf : flat87 a = true) : flatD1_88 a = true := by
+  unfold flatD1_88
+  rw [List.all_eq_true]
+  intro t ht
+  cases t with
+  | zero => rfl
+  | sum x y => rfl
+  | D u c =>
+    cases u with
+    | zero => rfl
+    | succ u' =>
+      cases u' with
+      | zero => exact flat87_toL87 a hf 1 c ht
+      | succ u'' => rfl
+
+/-- §88.5 の層が §87.5 の層より真に広いことの証人。 -/
+def wid88 : BT := BT.sum (BT.D 1 (BT.D 1 BT.zero)) (BT.D 0 (BT.D 0 BT.zero))
+
+/-- **包含は真に広い。** `wid88 = ψ₁ψ₁0 ⊕ ψ₀ψ₀0` は §88.5 の層に入り §87.5 の層に入らない。 -/
+theorem flat87_lt_flatD1_88 :
+    flat87 wid88 = false ∧ flatD1_88 wid88 = true ∧
+    btLe72 1 wid88 = true ∧ BT.isStd (BT.D 0 wid88) = true :=
+  ⟨by decide, by decide, by decide, by decide⟩
+
+theorem idxK88_of_flatD1_88 {a : BT} (hf : flatD1_88 a = true) : IdxK88 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he hj hjT hlej hyT hyk hy
+  rw [d0Args88_noD0_87 c (noD0_of_flatD1_88 hf hc)] at he
+  cases he
+
+/-- **§88.5 の主定理 — §87.5 より広い無条件の層。**  添字 1 の成分の引数に `ψ₀` が
+    無ければ門は定理。`ψ₀` の成分の引数には何を入れてもよい (そこは §87.2 が `Ω₁` の
+    下に落として走査から消す)。 -/
+theorem gateStd87_of_flatD1_88 {a : BT}
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b) (hf : flatD1_88 a = true) :
+    GateStd87 a :=
+  gateStd87_of_idxK88 a ih (fun _ _ => idxK88_of_flatD1_88 hf)
+
+/-- 添字 1 の成分の中の `ψ₀` が一つも発火しない層。 -/
+def NoIdx88 (a : BT) : Prop :=
+  ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ e ∈ d0Args88 c, idxF88 0 (dict e) = none
+
+theorem idxK88_of_noIdx88 {a : BT} (H : NoIdx88 a) : IdxK88 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he hj hjT hlej hyT hyk hy
+  rw [H c hc e he] at hj
+  cases hj
+
+theorem gateStd87_of_noIdx88 {a : BT}
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b) (H : NoIdx88 a) : GateStd87 a :=
+  gateStd87_of_idxK88 a ih (fun _ _ => idxK88_of_noIdx88 H)
+
+end
+
+
+/-! ### §88.6 測定 (凍結)
+
+**構成を先に書く。**  母集団は §87 のもの (`qual87` 25 個)・§86 の `qual86` 53 個・
+§84 の `qual84` 53 個・326 行目とその基本列 `r326_84` 41 個を**そのまま使い**、その上に
+**§87 までのどの母集団も一度も踏んでいない枝**を足す。§87.6 が数えた 31 個の逃げる元は
+ぜんぶ `K_{Ω₁} aV` の側だった。`K_{Ω₁} cV` の側が発火するには、発火する成分 `ψ₁ c` の
+引数 `c` が「発火するだけの `ψ₁` の塔」と「尾に `ψ₀`」を**同時に**持たねばならない。
+§86・§87 の族は `ψ₀` を帽子 `ψ₁^m` の**内側**に置くので、その `ψ₀` は `wA` の側へ回り、
+`wC` はいつも `1` だった。§88 の族は `ψ₀` を発火する成分の引数の**直下の和**に置く。
+
+    twr86 k = ψ₁^k 0                                  (§86 の記法)
+    famG88  h ⊕ ψ₁(ψ₁^{k+2}0 ⊕ ψ₀(h ⊕ g))                             9 個
+    famH88  h ⊕ ψ₁(ψ₁^{k+3}0 ⊕ ψ₀(h ⊕ g') ⊕ ψ₀(h ⊕ g))  (尾が二つ)      9 個
+    famI88  h ⊕ ψ₁(ψ₁^{k+2}0 ⊕ ψ₀(h ⊕ ψ₁(ψ₁^{k+2}0 ⊕ ψ₀(h ⊕ g))))     9 個
+                                                       (`ψ₀` が二重、内側も同じ形)
+    pop88 = 上の和集合 27 個、qual88 = §84 の `okHyp84` を満たすもの 27 個 (全部)
+
+測るのは `qual88` 27・`qual87` 25・`qual86` 53・`qual84` 53・`r326_84` 41 の
+あわせて **199 項**。
+
+**測定の結果。**
+
+  * **母集団は新しい枝に当たっている。**  `qual88` の 54 の発火歩で `K_{Ω₁} aV` の元は
+    **0 個**、`K_{Ω₁} cV` の元は **45 個**。`qual87` はちょうど裏返しで、53 の発火歩に
+    `aV` が 31・`cV` が **0**。§87 の残余の**第二連言は §87 までのどの母集団でも空回り
+    していた** — `cvFire88` は `qual87`・`qual86`・`qual84`・`r326_84` の 172 項で 0、
+    `qual88` の 27 項で全部真。
+  * **§88.2 は測定でも正しい。**  `kLeIdxb88` — 添字 1 の成分の引数の像の `K` の元が、
+    その中の `ψ₀` の崩壊指数のどれか以下か — は 199 項すべてで真。
+  * **鋭い条項は落ちない。**  `idxLtb88` (歩と成分の結びつきを保った形) は 199 項すべてで
+    真。`r326_84` の 41 添字も含む。
+  * **否定 1 — 結びつきを切ると偽。**  `idxLtBlindb88` は `qual88` で 27、`qual87` で 25、
+    `qual86` で 53、`qual84` で 22 落ちる (`r326_84` では 0)。**§88.4 はこれを定理に
+    している** (`not_idxLtBlindStd88`、反証項は §82 の `aBad82`、記号 15 個)。
+    §87.6 の `anyStep87` と同じ壁が、`K` の元を指数に置き換えても残る。
+  * **否定 2 — §84 の分割条項は `cV` の側でも落ちる。**  `splitb84` は `qual88` の 27 項
+    のうち **18 項**で落ちる (`famG88` 3・`famH88` 6・`famI88` 9)、§75 の対ごとの条件は
+    27 項全部で落ちる。§86 は `aV` の側で `SplitStd84` を反証した。**同じ条項が `cV` の
+    側でも落ちる** — 反証は片側の話ではない。
+  * **肯定 — 門は落ちない。**  `stepOKb`・`idxb84`・`splitb86` は `qual88` の 27 項で
+    失敗 0。§88 は四つ目の反証を出していない (`SplitK86` も無傷)。
+  * **§88.5 の層は §87.5 の層より真に広い。**  `wid88 = ψ₁ψ₁0 ⊕ ψ₀ψ₀0` は
+    `flat87` が偽で `flatD1_88` が真。ただし**測定では広がりが見えない**:
+    `flatD1_88` は `qual88`・`qual87`・`qual86`・`qual84` の 158 項で 0、
+    `r326_84` の 41 添字で 10 — §87.5 とちょうど同じ 10 個である。
+    層が広がったのは定理の側であって、行の側ではない。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+def famG88 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 3).map fun j =>
+    BT.sum (twr86 (k+5)) (BT.D 1 (BT.sum (twr86 (k+2))
+      (BT.D 0 (BT.sum (twr86 (k+5)) (twr86 (j+1))))))
+def famH88 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 3).map fun j =>
+    BT.sum (twr86 (k+5)) (BT.D 1 (BT.sum (twr86 (k+3))
+      (BT.sum (BT.D 0 (BT.sum (twr86 (k+5)) (twr86 (j+2))))
+              (BT.D 0 (BT.sum (twr86 (k+5)) (twr86 (j+1)))))))
+def famI88 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 3).map fun j =>
+    BT.sum (twr86 (k+5)) (BT.D 1 (BT.sum (twr86 (k+2))
+      (BT.D 0 (BT.sum (twr86 (k+5)) (BT.D 1 (BT.sum (twr86 (k+2))
+        (BT.D 0 (BT.sum (twr86 (k+5)) (twr86 (j+1))))))))))
+
+def pop88 : List BT := (famG88 ++ famH88 ++ famI88).eraseDups
+def qual88 : List BT := pop88.filter okHyp84
+
+/-- §88.2 の中身の判定器 — 添字 1 の成分の引数の像の `K` の元は、その中の `ψ₀` の
+    崩壊指数のどれか以下か。 -/
+def kLeIdxb88 (a : BT) : Bool :=
+  (BT.toL a).all fun t => match t with
+    | BT.D 1 c => (Kset (reg 1) (dict c)).all fun y =>
+        (d0Args88 c).any fun e => match idxF88 0 (dict e) with
+          | none => false
+          | some j => le y j
+    | _ => true
+
+/-- §88.3 の鋭い条項 `IdxLtK88` の判定器 — 歩と成分の結びつきを保った形。 -/
+def idxLtb88 (a : BT) : Bool :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).all fun p =>
+    !(le (reg 1) p.2.1) ||
+      ((BT.toL a).all fun t => match t with
+        | BT.D 1 c => (d0Args88 c).all fun e => match idxF88 0 (dict e) with
+            | none => true
+            | some j =>
+              !((Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).any fun y =>
+                  (Kset (reg 1) (dict c)).contains y && le y j) ||
+              lt j (idxOf (reg 1) p.1 p.2)
+        | _ => true)
+
+/-- 発火歩で `K_{Ω₁} cV` が空でないか — §88 の母集団が新しく踏む枝。 -/
+def cvFire88 (a : BT) : Bool :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).any fun p =>
+    le (reg 1) p.2.1 && !((Kset (reg 1) p.2.2).isEmpty)
+
+-- 母集団の大きさと形。
+#guard (pop88.length, qual88.length) == (27, 27)
+#guard ((famG88.filter okHyp84).length, (famH88.filter okHyp84).length,
+        (famI88.filter okHyp84).length) == (9, 9, 9)
+#guard ((pop88.map BT.size).foldl min 999, (pop88.map BT.size).foldl max 0) == (22, 47)
+
+/-! **肯定 1 — 母集団は `cV` の側の枝に当たっている。** `qual88` の発火歩の `K` は
+ぜんぶ `cV` の側、`qual87` の発火歩の `K` はぜんぶ `aV` の側。§87 の残余の第二連言は
+§87 までのどの母集団でも空回りしていた。 -/
+
+#guard
+  (let fires := qual88.flatMap fun a =>
+     (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).filter
+       (fun p => le (reg 1) p.2.1)
+   (fires.length, (fires.flatMap fun p => Kset (reg 1) p.2.1).length,
+    (fires.flatMap fun p => Kset (reg 1) p.2.2).length)) == (54, 0, 45)
+#guard
+  (let fires := qual87.flatMap fun a =>
+     (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).filter
+       (fun p => le (reg 1) p.2.1)
+   (fires.length, (fires.flatMap fun p => Kset (reg 1) p.2.1).length,
+    (fires.flatMap fun p => Kset (reg 1) p.2.2).length)) == (53, 31, 0)
+#guard ((qual88.filter fun a => cvFire88 a).length,
+        (qual87.filter fun a => cvFire88 a).length,
+        (qual86.filter fun a => cvFire88 a).length,
+        (qual84.filter fun a => cvFire88 a).length,
+        (r326_84.filter fun q => cvFire88 q.2).length) == (27, 0, 0, 0, 0)
+
+/-! **肯定 2 — §88.2 の中身と鋭い条項。** どちらも 199 項で失敗 0。 -/
+
+#guard ((qual88.filter fun a => !(kLeIdxb88 a)).length,
+        (qual87.filter fun a => !(kLeIdxb88 a)).length,
+        (qual86.filter fun a => !(kLeIdxb88 a)).length,
+        (qual84.filter fun a => !(kLeIdxb88 a)).length,
+        (r326_84.filter fun q => !(kLeIdxb88 q.2)).length) == (0, 0, 0, 0, 0)
+#guard ((qual88.filter fun a => !(idxLtb88 a)).length,
+        (qual87.filter fun a => !(idxLtb88 a)).length,
+        (qual86.filter fun a => !(idxLtb88 a)).length,
+        (qual84.filter fun a => !(idxLtb88 a)).length,
+        (r326_84.filter fun q => !(idxLtb88 q.2)).length) == (0, 0, 0, 0, 0)
+
+/-! **否定 1 — 歩と成分の結びつきを切ると偽。** §88.4 が定理にしている分の測定。 -/
+
+#guard ((qual88.filter fun a => !(idxLtBlindb88 a)).length,
+        (qual87.filter fun a => !(idxLtBlindb88 a)).length,
+        (qual86.filter fun a => !(idxLtBlindb88 a)).length,
+        (qual84.filter fun a => !(idxLtBlindb88 a)).length,
+        (r326_84.filter fun q => !(idxLtBlindb88 q.2)).length) == (27, 25, 53, 22, 0)
+#guard (idxLtBlindb88 aBad82, idxLtBlindb88 bad86, idxLtb88 aBad82, idxLtb88 bad86,
+        kLeIdxb88 aBad82, kLeIdxb88 bad86) == (false, false, true, true, true, true)
+#guard (qual88.filter fun a => !(anyStep87 a)).length == 27
+
+/-! **否定 2 — §84 の分割条項は `cV` の側でも落ちる。** §86 の反証は片側の話ではない。 -/
+
+#guard ((qual88.filter fun a => !(splitb84 0 (dict a))).length,
+        (qual88.filter fun a => !(localOKb73 0 (dict a))).length) == (18, 27)
+#guard ((famG88.filter fun a => !(splitb84 0 (dict a))).length,
+        (famH88.filter fun a => !(splitb84 0 (dict a))).length,
+        (famI88.filter fun a => !(splitb84 0 (dict a))).length) == (3, 6, 9)
+
+/-! **肯定 3 — 門は落ちない。** §88 は四つ目の反証を出していない。 -/
+
+#guard ((qual88.filter fun a => !(stepOKb 0 (dict a))).length,
+        (qual88.filter fun a => !(idxb84 0 (dict a))).length,
+        (qual88.filter fun a => !(splitb86 0 (dict a))).length) == (0, 0, 0)
+
+/-! **肯定 4 と否定 3 — 層の広さ。** `wid88` は §88.5 の層に入って §87.5 の層に入らない。
+だが母集団と行の上では広がりが見えない — `r326_84` で覆えるのは §87.5 と同じ 10 個。 -/
+
+#guard (okHyp84 wid88, flat87 wid88, flatD1_88 wid88, stepOKb 0 (dict wid88))
+       == (true, false, true, true)
+#guard ((qual88.filter fun a => flatD1_88 a).length,
+        (qual87.filter fun a => flatD1_88 a).length,
+        (qual86.filter fun a => flatD1_88 a).length,
+        (qual84.filter fun a => flatD1_88 a).length,
+        (r326_84.filter fun q => flatD1_88 q.2).length, r326_84.length)
+       == (0, 0, 0, 0, 10, 41)
+
+end
+
+/-! ### §88.7 公理 -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+end
+
 end Evidence.Region
