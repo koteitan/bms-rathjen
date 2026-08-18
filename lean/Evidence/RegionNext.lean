@@ -31677,4 +31677,1096 @@ end
 
 /-! ### §78.6 公理 -/
 
+/-! ## §79 TWO OF THE HEAD COMPARISON'S THREE HALVES ARE THEOREMS
+
+§77 reduced `Trans/Dict.lean`'s acceptance record item (C) to ONE named hypothesis,
+`DictHeadLt77`, and split it into two halves — `CollapseMono77` (equal subscripts) and
+`DictCross77` (different subscripts, which the level bound forces to be the single
+inequality `ψ₀(α) < ψ₁(β)`).  It proved the `u = v = 1` case of the first half only
+NON-STRICTLY (`le_collapse1_77`) and named the gap exactly: the strictness of `ω^·` on
+𝔗(M), the analogue of `CNVOps` §29's D3, which §65.3 deliberately stopped short of
+because every consumer it had needed only `le`.
+
+**§79 closes that gap, the half it was blocking, and the cross half as well.**  What is
+left of the oldest unproved claim in the file is ONE statement: `collapse 0` preserves the
+order of its argument's image — the Veblen / `ψ_{Z0}` fold.
+
+WHAT IS PROVED.
+
+  §79.1  **D3 ON 𝔗(M).**  `dnArg_ne_inT79` : `x` not a fixed point of `ω^·` and `x < y`
+         forces `dnArg x ≠ dnArg y`.  The proof is `CNVOps` §29's, one notch up, and the
+         work is exactly where §65 said it would be: at `CNV` the re-count fires only on
+         `φ̄(d,e)` with `d ≠ 0`, at `inT` it fires on every STRONGLY CRITICAL `γ` too, so
+         `dnArg_or79` has to produce `TM.Term.isFP zero γ` rather than a `φ̄` shape, and
+         `splitFin_plus_ofNat79` / `splitFin_fst_last79` are the `inT` versions of the two
+         `splitFin` facts that pin `x = γ ⊕ (m-1)`.
+
+  §79.2  **`ω^·` IS STRICTLY MONOTONE ON 𝔗(M).**  `lt_omegaNF_inT79`.  Of §65.3's seven
+         branches exactly ONE was losing strictness — both sides ordinary terms, where the
+         comparison is `φ̄0(dnArg x)` against `φ̄0(dnArg y)`.  D1 and D2 give `≤` there and
+         §79.1 rules out the equality.  The other six were strict already.
+
+  §79.3  **`plus e ·` IS STRICTLY MONOTONE ON 𝔗(M).**  `plus_smono_right_inT79`.  §65.4's
+         proof re-run with `lt` — three places had been weakened to `le` and all three were
+         strict to begin with (`lt_head_add`, §77.2's `lt_add_tail77`, `lt_of_hd_lt`).
+
+  §79.4  **THE `u = v = 1` HALF.**  `omPlusMono79 : PsiIdxOKStd172 → OmPlusMono77`, hence
+         `collapseMono1_79`.  This is `le_collapse1_77` with §79.3 into §79.2 instead of
+         §65.4 into §65.3.
+
+  §79.5  **`ltM_·` RE-RUN AT `Ω₁`.**  The `M`-bound family of §64.2 (`lt_plus_M`,
+         `ltM_phiNF`, `ltM_omegaNF`, `ltM_sub1`, …) has an `Ω₁` twin, with three
+         differences and no more: `φ̄αβ < Z0` needs BOTH arguments below (2.3.5, where
+         `φ̄αβ < M` was free); `ψ_{Ω₁}(ι) < Ω₁` comes from 2.3.8's `κ ≤ γ` branch and needs
+         nothing of `ι`; and `ω^·`'s `ω̄^·` branch cannot fire because `x < Ω₁ < M`.  The
+         last of these is `ltW_omegaNF79` — `Ω₁` is an ε-number.
+
+  §79.6  **`ψ₀` LANDS BELOW `Ω₁`.**  `lt_collapse0_W79` : `PsiIdxOK 0 x → collapse 0 x < Ω₁`.
+         `wcnf_W79` bounds the base-`Ω₁` CNF's coefficients and tail, and `foldW79` runs
+         `StW79` — "the accumulator is in 𝔗(M) and below `Ω₁`" — along the same fold that
+         §64.5's `StInv` runs.  The strongly critical branch needs NO side condition beyond
+         the `PsiIdxOK` that the fold already consumes; the Veblen branch is 2.3.5 applied
+         to `φ̄` with both arguments below.
+
+  §79.7  **THE CROSS HALF.**  `dictCross79 : PsiIdxOKStd172 → DictCross77`, from §79.6 and
+         `Ω₁ = ω^Ω₁ ≤ ω^(Ω₁+β) = ψ₁(β)` (`le_reg1_plus79`, `omegaNF_reg1_79`,
+         `le_reg1_collapse1_79`, on §77.7's closed form for `ψ₁`).
+
+  §79.8  **WHAT ROW 326 NOW WAITS FOR.**  `dictHeadLt79 (Hp : PsiIdxOKStd172)
+         (H0 : CollapseMono0_79) : DictHeadLt77`, and through §77 and §76:
+         `dictLtA74_79`, `vOfLtA71_79`, `limDecS1_79`, `limIncS1_79`, `certIn_t326_79`.
+
+WHAT IS **NOT** CLAIMED.  `CollapseMono0_79` — `collapse 0` preserving the order — is NOT
+proved and is stated as a named hypothesis, not smuggled in.  Nothing here proves
+`PsiIdxOKStd172`, `CofDenseS1` or `BCofIn71`.  §79.6 is a bound on `collapse 0`, not a
+monotonicity of it, and the two do not imply each other.
+
+WHAT THE MEASUREMENT SAYS (§79.9 gives the construction).  **The negatives first.**
+
+  * **D3's side condition is load-bearing, and its worst case is a `ψ`.**  On the 333
+    `inT` terms, `dnArg` collapses NO pair once `isFP zero x = false` is demanded and **26
+    pairs** once it is dropped.  The smallest witness is `x = ε₀`, `y = ε₀ ⊕ 1`; the third
+    is `x = Γ₀ = ψ_{Z0}(0)` — the branch `CNV` never sees, which is precisely why §65.3
+    could not reuse `CNVOps` §29 as it stood.
+  * **`collapse 0`'s monotonicity still needs the `K`-condition, and depth makes it worse.**
+    With `BT.isStd (ψ₀ ·)` demanded of both sides, 0 inversions; with it dropped, **66**.
+    §77 measured 28 on a corpus nesting 5 deep; at 9 deep it is 66.  `collapse 1` inverts
+    0 either way — §79.4 is a theorem.
+  * **Standardness is not optional, and §77 under-measured it too.**  On the level-bounded
+    but NOT standard population (109 terms, 11881 pairs) `dict` inverts **211** pairs;
+    §77's 24-term version of the same population inverted 35.
+
+  The positives.  `DictCross77` (§79.7) holds on all three populations with 0 inversions;
+  `collapse 0 (dict a) < Ω₁` and `Ω₁ ≤ collapse 1 (dict a)` hold on all 127 terms, the 18
+  region-outside ones included; `ω^·` is strictly monotone on 110889 `inT` pairs and on
+  200704 pairs when 115 non-`inT` terms are mixed in; `plus e ·` on 84³ triples.
+-/
+
+/-! ### §79.1 D3 の 𝔗(M) 版 — `dnArg` は 2 つの引数を潰さない -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- `le` の反対称性 — 𝔗(M) の上で。 -/
+theorem le_antisymm_inT79 {a b : Term} (ha : inT a = true) (hb : inT b = true)
+    (h1 : le a b = true) (h2 : le b a = true) : a = b := by
+  by_cases hab : a = b
+  · exact hab
+  · exfalso
+    have l1 : lt a b = true := lt_of_le_of_ne h1 hab
+    have l2 : lt b a = true := lt_of_le_of_ne h2 (fun hc => hab hc.symm)
+    rw [lt_asymm_inT ha hb l1] at l2
+    exact Bool.noConfusion l2
+
+/-- `isFP zero` の十分条件 — 強臨界項。𝔗(M) で `isFixP` が広がるのはここ。 -/
+theorem isFP_zero_of_sc79 {g : Term} (hsc : g.isSC = true) (hlt : lt zero g = true) :
+    TM.Term.isFP zero g = true := by
+  unfold TM.Term.isFP
+  rw [hsc, hlt]
+  rfl
+
+/-- `isFP zero (φ̄cd)` は `0 < c` そのもの。 -/
+theorem isFP_zero_phi_iff79 (c d : Term) :
+    TM.Term.isFP zero (phi c d) = lt zero c := rfl
+
+theorem lt_zero_sc79 {g : Term} (h : g ≠ zero) : lt zero g = true := lt_zero_left h
+
+/-- 数え直しが起きなければ `dnArg` は恒等。 -/
+theorem dnArg_self_of_not_isFP79 {x g : Term} {m : Nat} (hs : splitFin x = (g, m))
+    (hfp : TM.Term.isFP zero g = false) : dnArg x = x := by
+  unfold dnArg
+  rw [hs]
+  dsimp only
+  split
+  · cases g with
+    | zero => rfl
+    | omg _ => rfl
+    | add _ _ => rfl
+    | M =>
+        rw [isFP_zero_of_sc79 rfl
+          (lt_zero_sc79 (by intro hc; exact Term.noConfusion hc))] at hfp
+        exact Bool.noConfusion hfp
+    | psi _ _ =>
+        rw [isFP_zero_of_sc79 rfl
+          (lt_zero_sc79 (by intro hc; exact Term.noConfusion hc))] at hfp
+        exact Bool.noConfusion hfp
+    | Z _ =>
+        rw [isFP_zero_of_sc79 rfl
+          (lt_zero_sc79 (by intro hc; exact Term.noConfusion hc))] at hfp
+        exact Bool.noConfusion hfp
+    | phi c d =>
+        dsimp only
+        rw [if_neg (by rw [show lt zero c = false from hfp]; exact Bool.noConfusion)]
+  · rfl
+
+/-- `dnArg` の枝を、数え直しが起きた側の形つきで。**側条件なし。** -/
+theorem dnArg_or79 {x g : Term} {m : Nat} (hs : splitFin x = (g, m)) :
+    dnArg x = x ∨ (1 ≤ m ∧ TM.Term.isFP zero g = true
+                   ∧ dnArg x = plus g (ofNat (m - 1))) := by
+  rcases dnArg_or hs with h | ⟨hm, h⟩
+  · exact Or.inl h
+  · by_cases hfp : TM.Term.isFP zero g = true
+    · exact Or.inr ⟨hm, hfp, h⟩
+    · exact Or.inl (dnArg_self_of_not_isFP79 hs (bool_false hfp))
+
+/-- 数え直しが起きる形での `dnArg` の値。 -/
+theorem dnArg_recount79 {x g : Term} {k : Nat} (hs : splitFin x = (g, k + 1))
+    (hfp : TM.Term.isFP zero g = true) : dnArg x = plus g (ofNat k) := by
+  unfold dnArg
+  rw [hs]
+  dsimp only
+  rw [if_pos (by omega : 1 ≤ k + 1)]
+  cases g with
+  | zero => exact Bool.noConfusion hfp
+  | omg _ => exact Bool.noConfusion hfp
+  | add _ _ => exact Bool.noConfusion hfp
+  | M =>
+      dsimp only
+      rw [if_pos (show ((M : Term).isSC && lt zero M) = true from by
+        rw [show ((M : Term).isSC) = true from rfl,
+          lt_zero_sc79 (by intro hc; exact Term.noConfusion hc)]; rfl)]
+      rfl
+  | psi j a =>
+      dsimp only
+      rw [if_pos (show ((psi j a).isSC && lt zero (psi j a)) = true from by
+        rw [show ((psi j a).isSC) = true from rfl,
+          lt_zero_sc79 (by intro hc; exact Term.noConfusion hc)]; rfl)]
+      rfl
+  | Z e =>
+      dsimp only
+      rw [if_pos (show ((Z e).isSC && lt zero (Z e)) = true from by
+        rw [show ((Z e).isSC) = true from rfl,
+          lt_zero_sc79 (by intro hc; exact Term.noConfusion hc)]; rfl)]
+      rfl
+  | phi c d =>
+      dsimp only
+      rw [if_pos (show lt zero c = true from hfp)]
+      rfl
+
+/-- `γ ⊕ k` の `splitFin` は `(γ, k)` — 𝔗(M) 版。 -/
+theorem splitFin_plus_ofNat79 {g : Term} (hg : inT g = true)
+    (hlast : ∀ a, ((toList g).reverse).head? = some a → (a == one) = false) (k : Nat) :
+    splitFin (plus g (ofNat k)) = (g, k) := by
+  have hspec := toList_plus_ofNat_inT hg k
+  have hrev : (toList (plus g (ofNat k))).reverse
+      = List.replicate k one ++ (toList g).reverse := by
+    rw [hspec, List.reverse_append, List.reverse_replicate]
+  have hm : ((toList (plus g (ofNat k))).reverse.takeWhile (fun x => x == one)).length = k := by
+    rw [hrev, takeWhile_replicate_append _ hlast k, List.length_replicate]
+  show (ofList ((toList (plus g (ofNat k))).take
+      ((toList (plus g (ofNat k))).length
+        - ((toList (plus g (ofNat k))).reverse.takeWhile (fun x => x == one)).length)),
+    ((toList (plus g (ofNat k))).reverse.takeWhile (fun x => x == one)).length) = (g, k)
+  rw [hm, take_of_append_replicate hspec.symm, inT_ofList_toList g hg]
+
+/-- `splitFin` の第 1 成分の末尾は `1` ではない — 𝔗(M) 版。 -/
+theorem splitFin_fst_last79 {y g : Term} {m : Nat} (hy : inT y = true)
+    (hs : splitFin y = (g, m)) :
+    ∀ a, ((toList g).reverse).head? = some a → (a == one) = false := by
+  have hgf : g = ofList (((toList y).reverse.dropWhile (fun x => x == one)).reverse) := by
+    have h0 := splitFin_fst y; rw [hs] at h0; exact h0
+  have hF1 : ((toList y).reverse.dropWhile (fun x => x == one)).reverse
+      ++ List.replicate (((toList y).reverse.takeWhile (fun x => x == one)).length) one
+      = toList y := by
+    have h0 := trailing_ones (toList y).reverse
+    rwa [List.reverse_reverse] at h0
+  have hAP : ∀ x ∈ ((toList y).reverse.dropWhile (fun x => x == one)).reverse,
+      x.isAP = true := by
+    intro x hx
+    exact inTL_isAP hy x (by rw [← hF1]; exact List.mem_append_left _ hx)
+  have hgl : toList g = ((toList y).reverse.dropWhile (fun x => x == one)).reverse := by
+    rw [hgf, toList_ofList _ hAP]
+  intro a ha
+  rw [hgl, List.reverse_reverse] at ha
+  exact head?_dropWhile _ a ha
+
+/-- **D3 の 𝔗(M) 版。** `x` が `ω^·` の不動点でなく `x < y` なら
+    `dnArg x ≠ dnArg y`。§65.3 が避けた一点。 -/
+theorem dnArg_ne_inT79 {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (hfx : TM.Term.isFP zero x = false) (h : lt x y = true) : dnArg x ≠ dnArg y := by
+  intro heq
+  have hle1 : le (dnArg x) x = true := dnArg_le_inT hx
+  have hle2 : le x (dnArg y) = true := dnArg_ge_inT hx hy h
+  rw [← heq] at hle2
+  have hxeq : dnArg x = x := le_antisymm_inT79 (inT_dnArg hx) hx hle1 hle2
+  have hdy : dnArg y = x := heq.symm.trans hxeq
+  cases hs : splitFin y with
+  | mk g m =>
+    have hcg : inT g = true := by have h0 := inT_splitFin hy; rw [hs] at h0; exact h0
+    rcases dnArg_or79 hs with hd | ⟨_, hgfp, hdny⟩
+    · rw [hd] at hdy
+      rw [← hdy, lt_irrefl] at h
+      exact Bool.noConfusion h
+    · have hxval : x = plus g (ofNat (m - 1)) := by rw [← hdy, hdny]
+      have hlast := splitFin_fst_last79 hy hs
+      have hsx : splitFin x = (g, m - 1) := by
+        rw [hxval]; exact splitFin_plus_ofNat79 hcg hlast (m - 1)
+      cases hk : m - 1 with
+      | zero =>
+        have hxg : x = g := by rw [hxval, hk]; rfl
+        rw [hxg, hgfp] at hfx
+        exact Bool.noConfusion hfx
+      | succ k =>
+        rw [hk] at hsx
+        have hdx : dnArg x = plus g (ofNat k) := dnArg_recount79 hsx hgfp
+        rw [hxeq, hxval, hk] at hdx
+        have h1 := toList_plus_ofNat_inT hcg (k + 1)
+        have h2 := toList_plus_ofNat_inT hcg k
+        rw [hdx, h2] at h1
+        have hlen := congrArg List.length h1
+        rw [List.length_append, List.length_append, List.length_replicate,
+          List.length_replicate] at hlen
+        omega
+
+end
+
+/-! ### §79.2 `ω^·` は 𝔗(M) の上で**狭義**単調
+
+§65.3 の `le_omegaNF_of_lt_inT` の 7 分岐のうち、非狭義でしか結論が出ていなかったのは
+最後の 1 つ — 両辺とも不動点でない枝 — だけである。そこは `φ̄0(dnArg x)` と
+`φ̄0(dnArg y)` の比較で、D1・D2 が `dnArg x ≤ dnArg y` を与え、§79.1 の D3 が
+等号を排除する。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`ω^·` は 𝔗(M) の上で狭義単調。** §65.3 の `le` 版に D3 を足しただけ。 -/
+theorem lt_omegaNF_inT79 {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (h : lt x y = true) : lt (omegaNF x) (omegaNF y) = true := by
+  rw [omegaNF_eq_gen x, omegaNF_eq_gen y]
+  by_cases hMy : lt M y = true
+  · rw [if_pos hMy]
+    by_cases hMx : lt M x = true
+    · rw [if_pos hMx]; exact lt_omg_omg h
+    · rw [if_neg hMx]
+      by_cases hfx : TM.Term.isFP zero x = true
+      · rw [if_pos hfx]; exact lt_isFP_omg hfx
+      · rw [if_neg hfx]; exact lt_phi_omg _ _ _
+  · rw [if_neg hMy]
+    have hMx : ¬ (lt M x = true) := by
+      intro hc
+      exact hMy (lt_trans_inT inT_M hx hy hc h)
+    rw [if_neg hMx]
+    have hxM : x ≠ M := by
+      intro hc
+      rw [hc] at h
+      exact hMy h
+    by_cases hfx : TM.Term.isFP zero x = true
+    · rw [if_pos hfx]
+      by_cases hfy : TM.Term.isFP zero y = true
+      · rw [if_pos hfy]; exact h
+      · rw [if_neg hfy]
+        exact lt_isFP_phi_zero hfx hxM (dnArg_ge_inT hx hy h)
+    · rw [if_neg hfx]
+      by_cases hfy : TM.Term.isFP zero y = true
+      · rw [if_pos hfy]
+        refine lt_phi_zero_isFP hfy ?_
+        exact lt_of_le_of_lt3 (inT_le_fragR _ (inT_dnArg hx)) (inT_le_fragR x hx)
+          (inT_le_fragR y hy) (dnArg_le_inT hx) h
+      · rw [if_neg hfy]
+        refine lt_phi_arg ?_
+        refine lt_of_le_of_ne (le_trans_inT (inT_dnArg hx) hx (inT_dnArg hy)
+          (dnArg_le_inT hx) (dnArg_ge_inT hx hy h)) ?_
+        exact dnArg_ne_inT79 hx hy (bool_false hfx) h
+
+end
+
+/-! ### §79.3 `plus e ·` は**狭義**単調
+
+§65.4 の `plus_mono_right_inT` の証明をそのまま `lt` で走らせる。分岐は同じ 6 つで、
+`le_add_tail` が §77.2 の `lt_add_tail77` に、`le_of_lt (lt_head_add ·)` が
+`lt_head_add` そのものに置き換わるだけ — つまり非狭義に落としていた場所が 3 つあり、
+どれももとから狭義だった。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+theorem plus_smono_step79 {e e' e1 : Term} {E' : List Term} (he : inT e = true)
+    (hE : toList e = e1 :: E') (hE' : ofList E' = e')
+    (ih : ∀ x y, inT x = true → inT y = true → lt x y = true →
+        lt (plus e' x) (plus e' y) = true) :
+    ∀ (x y : Term), inT x = true → inT y = true → lt x y = true →
+      lt (plus e x) (plus e y) = true := by
+  intro x y hx hy h
+  have hap1 : e1.isAP = true := inTL_isAP he e1 (by rw [hE]; exact List.Mem.head _)
+  have hi1 : inT e1 = true := inTL_inT he e1 (by rw [hE]; exact List.Mem.head _)
+  have hee : e = ofList (e1 :: E') := by rw [← hE, inT_ofList_toList e he]
+  cases hX : toList x with
+  | nil =>
+    have hxz : x = zero := toList_eq_nil x hX
+    subst hxz
+    show lt e (plus e y) = true
+    cases hY : toList y with
+    | nil =>
+      exfalso
+      have hyz : y = zero := toList_eq_nil y hY
+      rw [hyz, lt_irrefl] at h
+      exact Bool.noConfusion h
+    | cons y1 Y' =>
+      have hyne : y ≠ zero := by
+        intro hc
+        rw [hc] at hY
+        exact List.cons_ne_nil y1 Y' (show y1 :: Y' = ([] : List Term) from hY.symm)
+      have hiy1 : inT y1 = true := inTL_inT hy y1 (by rw [hY]; exact List.Mem.head _)
+      rw [plus_cons he hy hE hE' hY]
+      by_cases hle : le y1 e1 = true
+      · rw [if_pos hle]
+        cases hEc : E' with
+        | nil =>
+          rw [hEc] at hee
+          rw [show e = e1 from hee]
+          exact lt_head_add hap1 _
+        | cons f F =>
+          rw [hEc] at hee hE'
+          have hee2 : e = add e1 e' := by rw [hee, ← hE']; rfl
+          rw [hee2]
+          refine lt_add_tail77 ?_
+          exact ih zero y inT_zero hy (lt_zero_left hyne)
+      · rw [if_neg hle]
+        refine lt_of_hd_lt he hy hE hY ?_
+        exact lt_of_not_le_inT hiy1 hi1 (bool_false hle)
+  | cons x1 X' =>
+    have hix1 : inT x1 = true := inTL_inT hx x1 (by rw [hX]; exact List.Mem.head _)
+    rw [plus_cons he hx hE hE' hX]
+    cases hY : toList y with
+    | nil =>
+      exfalso
+      have hyz : y = zero := toList_eq_nil y hY
+      rw [hyz, lt_zero_right] at h
+      exact Bool.noConfusion h
+    | cons y1 Y' =>
+      have hiy1 : inT y1 = true := inTL_inT hy y1 (by rw [hY]; exact List.Mem.head _)
+      rw [plus_cons he hy hE hE' hY]
+      have hxy1 : le x1 y1 = true := hd_mono_inT hx hy hX hY (le_of_lt h)
+      by_cases hlx : le x1 e1 = true
+      · rw [if_pos hlx]
+        by_cases hly : le y1 e1 = true
+        · rw [if_pos hly]
+          exact lt_add_tail77 (ih x y hx hy h)
+        · rw [if_neg hly]
+          refine lt_add_of_lt_hd hy hY ?_
+          exact lt_of_not_le_inT hiy1 hi1 (bool_false hly)
+      · have hly : ¬ (le y1 e1 = true) := by
+          intro hc
+          exact hlx (le_trans_inT hix1 hiy1 hi1 hxy1 hc)
+        rw [if_neg hlx, if_neg hly]
+        exact h
+
+/-- **`plus e ·` は狭義単調。** 側条件なし。 -/
+theorem plus_smono_right_inT79 : ∀ (e : Term), inT e = true → ∀ (x y : Term), inT x = true →
+    inT y = true → lt x y = true → lt (plus e x) (plus e y) = true := by
+  have hzero : ∀ (x y : Term), inT x = true → inT y = true → lt x y = true →
+      lt (plus zero x) (plus zero y) = true := by
+    intro x y hx hy h
+    rw [plus_zero_left_inT hx, plus_zero_left_inT hy]
+    exact h
+  intro e
+  induction e with
+  | zero => intro _; exact hzero
+  | M => intro he; exact plus_smono_step79 he rfl rfl hzero
+  | omg _ _ => intro he; exact plus_smono_step79 he rfl rfl hzero
+  | phi _ _ _ _ => intro he; exact plus_smono_step79 he rfl rfl hzero
+  | psi _ _ _ _ => intro he; exact plus_smono_step79 he rfl rfl hzero
+  | Z _ _ => intro he; exact plus_smono_step79 he rfl rfl hzero
+  | add u v _ ihv =>
+    intro he
+    obtain ⟨_, _, hiv, _⟩ := inT_add he
+    exact plus_smono_step79 he rfl (inT_ofList_toList v hiv) (ihv hiv)
+
+end
+
+/-! ### §79.4 `u = v = 1` の半分は定理になった
+
+§77.8 の `le_collapse1_77` が `≤` で止めていたところに §79.2 と §79.3 を入れるだけ。
+`OmPlusMono77` — §77 が「`ω^(Ω₁+·)` の単調性そのもの」と書いた仮説 — が消える。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§79 の第一の主定理。** §77.8 の `OmPlusMono77` は定理である。 -/
+theorem omPlusMono79 (Hp : PsiIdxOKStd172) : OmPlusMono77 := by
+  intro a b hbA hbB hsA hsB h
+  have hia := (inT_dict_of_std172 Hp a (btLe72_D 1 1 a hbA).2 (isStd_of_D hsA)).1
+  have hib := (inT_dict_of_std172 Hp b (btLe72_D 1 1 b hbB).2 (isStd_of_D hsB)).1
+  exact lt_omegaNF_inT79 (inT_plus (inT_reg 1) hia) (inT_plus (inT_reg 1) hib)
+    (plus_smono_right_inT79 (reg 1) (inT_reg 1) (dict a) (dict b) hia hib h)
+
+/-- **`CollapseMono77` の `u = 1` の半分。** §77.8 の `le_collapse1_77` の狭義版。 -/
+theorem collapseMono1_79 (Hp : PsiIdxOKStd172) :
+    ∀ (a b : BT), btLe72 1 (BT.D 1 a) = true → btLe72 1 (BT.D 1 b) = true →
+      BT.isStd (BT.D 1 a) = true → BT.isStd (BT.D 1 b) = true → lt (dict a) (dict b) = true →
+      lt (collapse 1 (dict a)) (collapse 1 (dict b)) = true :=
+  collapseMono1_of77 Hp (omPlusMono79 Hp)
+
+/-- **残るのは `u = v = 0` の Veblen 折り畳みと段をまたぐ 1 本だけ。** -/
+theorem dictHeadLt_of_zero79 (Hp : PsiIdxOKStd172) (H1 : DictCross77)
+    (H0 : ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+      BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true → lt (dict a) (dict b) = true →
+      lt (collapse 0 (dict a)) (collapse 0 (dict b)) = true) : DictHeadLt77 :=
+  dictHeadLt_of_split77 H1 (collapseMono_of_split77 H0 (collapseMono1_79 Hp))
+
+end
+
+/-! ### §79.5 `Ω₁` の下に留まる — `ltM_·` の一族をそのまま `Ω₁` で走らせる
+
+段をまたぐ半分 `ψ₀(α) < ψ₁(β)` は、`ψ₀` の像が `Ω₁` の下にあること 1 本に落ちる
+(§79.7)。そのために §64.2 の `ltM_phiNF`・`ltM_omegaNF`・`lt_plus_M` … の一族を
+`M` の代わりに `Ω₁ = reg 1 = Z 0` で走らせる。違いは 3 か所しかない:
+
+  * `lt (φ̄αβ) M` は無条件 (2.3.2) だが `lt (φ̄αβ) (Z 0)` は両引数が下であることを
+    要求する (2.3.5) — `lt_phi_Z_of`;
+  * `lt (ψκα) M` は無条件だが `lt (ψ_{Ω₁}α) (Ω₁)` は 2.3.8 の `κ ≤ γ` の枝で来る;
+  * `ω^·` の `ω̄^·` 枝は `M < x` を要求するので、`x < Ω₁ < M` から潰れる。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+theorem inT_W79 : inT (reg 1) = true := inT_reg 1
+theorem ltM_W79 : lt (reg 1) M = true := ltM_reg 1
+
+theorem lt_zero_W79 : lt zero (reg 1) = true :=
+  lt_zero_left (by intro hc; exact Term.noConfusion hc)
+
+theorem ltM_of_ltW79 {t : Term} (ht : inT t = true) (h : lt t (reg 1) = true) :
+    lt t M = true := lt_trans_inT ht inT_W79 inT_M h ltM_W79
+
+theorem lt_add_W79 (a b : Term) : lt (add a b) (reg 1) = lt a (reg 1) :=
+  lt_add_nsum (by intro hc; exact Term.noConfusion hc) rfl
+
+theorem lt_phi_W79 {a b : Term} (h1 : lt a (reg 1) = true) (h2 : lt b (reg 1) = true) :
+    lt (phi a b) (reg 1) = true := lt_phi_Z_of h1 h2
+
+theorem lt_one_W79 : lt TM.Term.one (reg 1) = true := lt_phi_W79 lt_zero_W79 lt_zero_W79
+
+/-- **2.3.8 の枝。** `ψ_{Ω₁}(ι) < Ω₁` — 添字について何も要らない。 -/
+theorem lt_psi_W79 (i : Term) : lt (psi (reg 1) i) (reg 1) = true := by
+  show lt (psi (Z zero) i) (Z zero) = true
+  rw [lt_eq_ltF_succ, ltF_succ_psi_Z,
+    if_pos (by rw [show ((Z zero : Term) == Z zero) = true from rfl, Bool.true_or])]
+
+theorem lt_ofList_W79 : ∀ (l : List Term), (∀ x ∈ l, lt x (reg 1) = true) →
+    lt (ofList l) (reg 1) = true
+  | [], _ => lt_zero_W79
+  | [a], h => h a (List.Mem.head _)
+  | a :: b :: t, h => by
+    show lt (add a (ofList (b :: t))) (reg 1) = true
+    rw [lt_add_W79]
+    exact h a (List.Mem.head _)
+
+theorem lt_ofList_cons_W79 (a : Term) : ∀ (t : List Term), lt a (reg 1) = true →
+    lt (ofList (a :: t)) (reg 1) = true
+  | [], h => h
+  | b :: u, h => by
+    show lt (add a (ofList (b :: u))) (reg 1) = true
+    rw [lt_add_W79]; exact h
+
+theorem ltW_of_le79 {y a : Term} (hy : inT y = true) (ha : inT a = true)
+    (hle : le y a = true) (hla : lt a (reg 1) = true) : lt y (reg 1) = true :=
+  lt_of_le_of_lt3 (inT_le_fragR y hy) (inT_le_fragR a ha) (inT_le_fragR _ inT_W79) hle hla
+
+theorem ltW_of_hdLe79 : ∀ {a b : Term}, inT a = true → inT b = true →
+    hdLe b a = true → lt a (reg 1) = true → lt b (reg 1) = true := by
+  intro a b hia hib hhd hla
+  cases b with
+  | zero => exact Bool.noConfusion hhd
+  | M => exact ltW_of_le79 hib hia hhd hla
+  | omg c => exact ltW_of_le79 hib hia hhd hla
+  | phi c d => exact ltW_of_le79 hib hia hhd hla
+  | psi c d => exact ltW_of_le79 hib hia hhd hla
+  | Z c => exact ltW_of_le79 hib hia hhd hla
+  | add c d =>
+    obtain ⟨_, hic, _, _⟩ := inT_add hib
+    rw [lt_add_W79]
+    exact ltW_of_le79 hic hia hhd hla
+
+/-- `Ω₁` より下の項の成分はすべて `Ω₁` より下。 -/
+theorem ltW_toList79 : ∀ (s : Term), inT s = true → lt s (reg 1) = true →
+    ∀ x ∈ toList s, lt x (reg 1) = true := by
+  intro s
+  induction s with
+  | zero => intro _ _ x hx; cases hx
+  | M => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | omg a _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | phi a b _ _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | psi k a _ _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | Z a _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | add a b _ ihb =>
+    intro h hl x hx
+    obtain ⟨hap, hia, hib, hhd⟩ := inT_add h
+    have hla : lt a (reg 1) = true := by rw [← lt_add_W79 a b]; exact hl
+    have hlb : lt b (reg 1) = true := ltW_of_hdLe79 hia hib hhd hla
+    rcases List.mem_cons.mp (show x ∈ a :: toList b from hx) with h1 | h1
+    · rw [h1]; exact hla
+    · exact ihb hib hlb x h1
+
+theorem lt_plus_W79 {s t : Term} (hs : inT s = true) (ht : inT t = true)
+    (hls : lt s (reg 1) = true) (hlt : lt t (reg 1) = true) :
+    lt (plus s t) (reg 1) = true := by
+  cases hl : toList t with
+  | nil => rw [show plus s t = s from by unfold TM.Term.plus; rw [hl]]; exact hls
+  | cons b1 rest =>
+    rw [plus_eq (s := s) hl]
+    refine lt_ofList_W79 _ ?_
+    intro x hx
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact ltW_toList79 s hs hls x (List.mem_filter.mp h1).1
+    · exact ltW_toList79 t ht hlt x h1
+
+theorem lt_ofNat_W79 : ∀ n, lt (ofNat n) (reg 1) = true
+  | 0 => lt_zero_W79
+  | n + 1 => lt_plus_W79 (inT_ofNat n) inT_one (lt_ofNat_W79 n) lt_one_W79
+
+theorem ltW_take_ofList79 {b : Term} (h : inT b = true) (hl : lt b (reg 1) = true) (k : Nat) :
+    lt (ofList ((toList b).take k)) (reg 1) = true :=
+  lt_ofList_W79 _ (fun x hx => ltW_toList79 b h hl x (List.mem_of_mem_take hx))
+
+theorem ltW_splitFin79 {b : Term} (h : inT b = true) (hl : lt b (reg 1) = true) :
+    lt (splitFin b).1 (reg 1) = true := ltW_take_ofList79 h hl _
+
+theorem ltW_dropIfHead79 {c : Term} (h : inT c = true) (hlc : lt c (reg 1) = true)
+    (P : Term → Bool) :
+    lt (match toList c with
+        | [] => zero
+        | p :: rest => if P p then ofList rest else c) (reg 1) = true := by
+  cases hl : toList c with
+  | nil => exact lt_zero_W79
+  | cons p rest =>
+    show lt (if P p = true then ofList rest else c) (reg 1) = true
+    split
+    · exact lt_ofList_W79 rest (fun x hx =>
+        ltW_toList79 c h hlc x (by rw [hl]; exact List.Mem.tail p hx))
+    · exact hlc
+
+theorem ltW_sub1_79 {c : Term} (h : inT c = true) (hl : lt c (reg 1) = true) :
+    lt (sub1 c) (reg 1) = true := ltW_dropIfHead79 h hl (fun p => p == TM.Term.one)
+
+theorem ltW_phiNFdefault79 {a b : Term} (hla : lt a (reg 1) = true)
+    (hlb : lt b (reg 1) = true) : lt (phiNFdefault a b) (reg 1) = true := by
+  unfold phiNFdefault
+  split
+  · exact hla
+  · exact lt_phi_W79 hla hlb
+
+theorem ltW_phiNFsucc79 {a b : Term} (hib : inT b = true) (hla : lt a (reg 1) = true)
+    (hlb : lt b (reg 1) = true) : lt (phiNFsucc a b) (reg 1) = true := by
+  have hdef := ltW_phiNFdefault79 (b := b) hla hlb
+  have hg : inT (splitFin b).1 = true := inT_splitFin hib
+  have hgm : lt (splitFin b).1 (reg 1) = true := ltW_splitFin79 hib hlb
+  unfold phiNFsucc
+  split
+  rename_i heq
+  rw [heq] at hg hgm
+  split
+  · split <;> (split <;>
+      first
+        | exact lt_phi_W79 hla
+            (lt_plus_W79 hg (inT_ofNat _) hgm (lt_ofNat_W79 _))
+        | exact hdef)
+  · exact hdef
+
+theorem ltW_phiNF79 {a b : Term} (hib : inT b = true) (hla : lt a (reg 1) = true)
+    (hlb : lt b (reg 1) = true) : lt (phiNF a b) (reg 1) = true := by
+  unfold phiNF
+  split
+  · exact hlb
+  · split
+    · split
+      · exact hlb
+      · exact ltW_phiNFsucc79 hib hla hlb
+    · exact ltW_phiNFsucc79 hib hla hlb
+
+/-- **`Ω₁` は ε 数。** `x < Ω₁` なら `ω^x < Ω₁`。 -/
+theorem ltW_omegaNF79 {x : Term} (hx : inT x = true) (hlx : lt x (reg 1) = true) :
+    lt (omegaNF x) (reg 1) = true := by
+  have hxM : lt x M = true := ltM_of_ltW79 hx hlx
+  unfold omegaNF
+  split
+  · rename_i h
+    exact absurd hxM (by rw [lt_asymm_inT inT_M hx h]; exact Bool.noConfusion)
+  · split
+    · rename_i h1 h2
+      exact absurd hxM (by rw [eq_of_beq h2, lt_M_M]; exact Bool.noConfusion)
+    · exact ltW_phiNF79 hx lt_zero_W79 hlx
+
+end
+
+/-! ### §79.6 `wcnf` と畳み込みは `Ω₁` を越えない
+
+§64.4 の `wcnf_spec` と §64.5 の `fold_inv` を、`M` の代わりに `Ω₁` で走らせる。
+係数は `ω^(w より下の部分)` なので §79.5 の ε 数性で下に留まり、畳み込みの累算器は
+強臨界枝では `ψ_{Ω₁}(·)` (2.3.8 で無条件に下)、ヴェブレン枝では `φ̄` の引数が
+どちらも下だから下 (2.3.5)。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open Trans.Dict (sub1 subAP logOm divAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+theorem ltW_wC79 {p : Term} (hp : inT p = true) : lt (wC (reg 1) p) (reg 1) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList _ (inT_logOm hp)
+  unfold wC
+  refine ltW_omegaNF79 (inT_filter_ofList hc hd _) ?_
+  refine lt_ofList_W79 _ ?_
+  intro x hx
+  exact (List.mem_filter.mp hx).2
+
+/-- `wcnf` の返り値が `Ω₁` の下にあること。 -/
+def PairW79 (r : List (Term × Term) × Term) : Prop :=
+  lt r.2 (reg 1) = true ∧ (∀ ac ∈ r.1, inT ac.2 = true ∧ lt ac.2 (reg 1) = true)
+
+theorem wcnf_W79 : ∀ (L : List Term), inTL L = true → PairW79 (wcnf (reg 1) L) := by
+  intro L
+  induction L with
+  | nil => intro _; exact ⟨lt_zero_W79, by intro ac hac; cases hac⟩
+  | cons p rest ih =>
+    intro hc
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have IH := ih hcr
+    by_cases hlp : lt p (reg 1) = true
+    · rw [wcnf_cons_lt hlp]
+      exact ⟨lt_ofList_cons_W79 p rest hlp, by intro ac hac; cases hac⟩
+    · have hlp' : lt p (reg 1) = false := bool_false hlp
+      have hCi := inT_wC (w := reg 1) hip
+      have hC := ltW_wC79 hip
+      rw [wcnf_cons_ge hlp']
+      cases hr : wcnf (reg 1) rest with
+      | mk fst snd =>
+        rw [hr] at IH
+        obtain ⟨hs2, hall⟩ := IH
+        cases fst with
+        | nil =>
+          refine ⟨hs2, ?_⟩
+          intro ac hac
+          rw [List.mem_singleton.mp hac]
+          exact ⟨hCi, hC⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac0 := hall (a', c') (List.Mem.head _)
+            show PairW79 (if (wA (reg 1) p == a') = true
+              then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+              else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd))
+            by_cases heq : (wA (reg 1) p == a') = true
+            · rw [if_pos heq]
+              refine ⟨hs2, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]
+                exact ⟨inT_plus hCi hac0.1, lt_plus_W79 hCi hac0.1 hC hac0.2⟩
+              · exact hall ac (List.Mem.tail _ h)
+            · rw [if_neg heq]
+              refine ⟨hs2, ?_⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h | h
+              · rw [h]; exact ⟨hCi, hC⟩
+              · exact hall ac h
+
+/-- 畳み込みの不変量、`Ω₁` の側。累算器だけを見る。 -/
+def StW79 (s : Option Term × Option Term) : Prop :=
+  ∀ v, s.2 = some v → inT v = true ∧ lt v (reg 1) = true
+
+theorem stepW79 {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : StW79 s) (h1 : inT ac.1 = true) (h2 : lt ac.1 M = true)
+    (h3 : inT ac.2 = true) (h3w : lt ac.2 (reg 1) = true)
+    (hpsi : le (reg 1) ac.1 = true → inT (psi (reg 1) (idxOf (reg 1) s ac)) = true) :
+    StW79 (stepF (reg 1) (baseOf 0) s ac) := by
+  unfold stepF
+  split
+  · rename_i hle
+    intro v hq
+    rw [← Option.some.inj (show some (psi (reg 1) (idxOf (reg 1) s ac)) = some v from hq)]
+    exact ⟨hpsi hle, lt_psi_W79 _⟩
+  · rename_i hle
+    intro v hq
+    have hbse : inT (match s.2 with | none => baseOf 0 | some v => v) = true ∧
+        lt (match s.2 with | none => baseOf 0 | some v => v) (reg 1) = true := by
+      cases hq2 : s.2 with
+      | none => exact ⟨inT_baseOf 0, show lt (baseOf 0) (reg 1) = true from lt_zero_W79⟩
+      | some v0 => exact hs v0 hq2
+    have hcc : inT (match s.2 with | none => sub1 ac.2 | some _ => ac.2) = true ∧
+        lt (match s.2 with | none => sub1 ac.2 | some _ => ac.2) (reg 1) = true := by
+      cases hq2 : s.2 with
+      | none => exact ⟨inT_sub1 h3, ltW_sub1_79 h3 h3w⟩
+      | some v0 => exact ⟨h3, h3w⟩
+    have hA : lt ac.1 (reg 1) = true := lt_of_not_le_inT inT_W79 h1 (bool_false hle)
+    have hP := lt_plus_W79 hbse.1 hcc.1 hbse.2 hcc.2
+    rw [← Option.some.inj (show some (phiNF ac.1
+      (plus (match s.2 with | none => baseOf 0 | some v => v)
+            (match s.2 with | none => sub1 ac.2 | some _ => ac.2))) = some v from hq)]
+    exact ⟨inT_phiNF h1 (inT_plus hbse.1 hcc.1) h2
+             (ltM_of_ltW79 (inT_plus hbse.1 hcc.1) hP),
+           ltW_phiNF79 (inT_plus hbse.1 hcc.1) hA hP⟩
+
+theorem foldW79 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StW79 s →
+    (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+    (∀ ac ∈ l, lt ac.2 (reg 1) = true) →
+    (∀ p ∈ scanSt (reg 1) (baseOf 0) s l, le (reg 1) p.2.1 = true →
+        inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true) →
+    StW79 (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil => intro s hs _ _ _; exact hs
+  | cons ac t ih =>
+    intro s hs hall hallw hpsi
+    have hstep : StW79 (stepF (reg 1) (baseOf 0) s ac) :=
+      stepW79 hs (hall ac (List.Mem.head _)).1 (hall ac (List.Mem.head _)).2.1
+        (hall ac (List.Mem.head _)).2.2.1 (hallw ac (List.Mem.head _))
+        (hpsi (s, ac) (List.Mem.head _))
+    exact ih (stepF (reg 1) (baseOf 0) s ac) hstep
+      (fun a ha => hall a (List.Mem.tail _ ha))
+      (fun a ha => hallw a (List.Mem.tail _ ha))
+      (fun p hp => hpsi p (List.Mem.tail _ hp))
+
+/-- **§79.6 の主定理。** `ψ₀` の像は `Ω₁` の下 — 崩壊関数がそもそも崩壊であること。 -/
+theorem lt_collapse0_W79 (x : Term) (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK 0 x) : lt (collapse 0 x) (reg 1) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨⟨h21, h22⟩, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (show (reg 1).isSC = true from rfl) (toList x) hc hd
+      (ltM_toList x hx hlx)
+  have hW := wcnf_W79 (toList x) hc
+  have hinit : StW79 ((none : Option Term), (none : Option Term)) := by
+    intro v h; cases h
+  have hst := foldW79 (wcnf (reg 1) (toList x)).1 (none, none) hinit hallOK
+    (fun ac hac => (hW.2 ac hac).2) Hp
+  have hv : inT (((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) = true ∧
+      lt (((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) (reg 1) = true := by
+    cases hg : ((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2 with
+    | none => exact ⟨inT_zero, lt_zero_W79⟩
+    | some v => exact hst v hg
+  rw [collapse_eq]
+  refine ltW_omegaNF79 (inT_plus (inT_reg 0) (inT_plus hv.1 h21)) ?_
+  exact lt_plus_W79 (inT_reg 0) (inT_plus hv.1 h21) lt_zero_W79
+    (lt_plus_W79 hv.1 h21 hv.2 hW.1)
+
+end
+
+/-! ### §79.7 段をまたぐ半分 — `ψ₀(α) < Ω₁ ≤ ψ₁(β)`
+
+`DictCross77` は段の上限で `u = 0`・`v = 1` に潰れる (§77.8)。そこに §79.6 の
+「`ψ₀` は `Ω₁` の下」と、`Ω₁ = ω^Ω₁ ≤ ω^(Ω₁+β) = ψ₁(β)` を継ぐだけ。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Ω₁ ≤ Ω₁ ⊕ y` — 和が頭を落とすときも落とさないときも。 -/
+theorem le_reg1_plus79 {y : Term} (hy : inT y = true) :
+    le (reg 1) (plus (reg 1) y) = true := by
+  cases hY : toList y with
+  | nil =>
+    have hyz : y = zero := toList_eq_nil y hY
+    subst hyz
+    show le (reg 1) (reg 1) = true
+    exact Evidence.WF.le_self _
+  | cons y1 Y' =>
+    have hiy1 : inT y1 = true := inTL_inT hy y1 (by rw [hY]; exact List.Mem.head _)
+    rw [plus_cons inT_W79 hy (show toList (reg 1) = (Z zero) :: [] from rfl) rfl hY]
+    by_cases hle : le y1 (Z zero) = true
+    · rw [if_pos hle]
+      exact le_of_lt (lt_head_add (show ((Z zero : Term)).isAP = true from rfl) _)
+    · rw [if_neg hle]
+      refine le_of_lt (lt_of_lt_of_le3 (inT_le_fragR _ inT_W79) (inT_le_fragR y1 hiy1)
+        (inT_le_fragR y hy) ?_ (le_hd_self_inT hy hY))
+      exact lt_of_not_le_inT hiy1 inT_W79 (bool_false hle)
+
+/-- `ω^Ω₁ = Ω₁` — 強臨界項は自分自身が `ω` の指数 (§65.3 が言う `isFixP` の拡がり)。 -/
+theorem omegaNF_reg1_79 : omegaNF (reg 1) = reg 1 := by
+  rw [omegaNF_eq_gen,
+    if_neg (by rw [lt_asymm_inT inT_W79 inT_M ltM_W79]; exact Bool.noConfusion),
+    if_pos (isFP_zero_of_sc79 (show (reg 1).isSC = true from rfl) lt_zero_W79)]
+
+/-- `Ω₁ ≤ ψ₁(β)`。 -/
+theorem le_reg1_collapse1_79 (y : Term) (hy : inT y = true)
+    (hlt : ∀ p ∈ toList y, lt p (reg 2) = true) : le (reg 1) (collapse 1 y) = true := by
+  have h1 : le (omegaNF (reg 1)) (omegaNF (plus (reg 1) y)) = true :=
+    omegaNF_mono_inT inT_W79 (inT_plus inT_W79 hy) (le_reg1_plus79 hy)
+  rw [omegaNF_reg1_79] at h1
+  rw [collapse1_eq77 y hy hlt]
+  exact h1
+
+/-- **§79 の第二の主定理。** §77.8 の `DictCross77` は定理である。 -/
+theorem dictCross79 (Hp : PsiIdxOKStd172) : DictCross77 := by
+  refine dictCross_of01_77 ?_
+  intro a b hbA hbB hsA hsB
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 1 b hbB).2
+  have hia := inT_dict_of_std172 Hp a hba (isStd_of_D hsA)
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  have h0 : lt (dict (BT.D 0 a)) (reg 1) = true := by
+    rw [Trans.Dict.dict_D]
+    exact lt_collapse0_W79 (dict a) hia.1 hia.2 (Hp 0 a (by omega) hba hsA)
+  have h1 : le (reg 1) (dict (BT.D 1 b)) = true := by
+    rw [Trans.Dict.dict_D]
+    exact le_reg1_collapse1_79 (dict b) hib.1
+      (fun p hp => lt_pure73_reg2 (pure73_toList _ (pure73_dict b hbb) p hp))
+  exact lt_of_lt_of_le3 (inT_le_fragR _ (inT_dict_of_std172 Hp (BT.D 0 a) hbA hsA).1)
+    (inT_le_fragR _ inT_W79)
+    (inT_le_fragR _ (inT_dict_of_std172 Hp (BT.D 1 b) hbB hsB).1) h0 h1
+
+end
+
+/-! ### §79.8 残るのは Veblen の折り畳みひとつ
+
+§77 は `DictHeadLt77` を 2 つに割った。§79.4 が `u = v = 1` を、§79.7 が段をまたぐ
+半分を閉じた。残るのは `u = v = 0` — `collapse 0` の単調性、すなわち [Rathjen, 1991]
+2.6(vi) の `φ̄` の再カウントと `ψ_{Z0}` の指数の折り畳みである。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- `u = v = 0` の半分。**証明していない。** -/
+def CollapseMono0_79 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true → lt (dict a) (dict b) = true →
+    lt (collapse 0 (dict a)) (collapse 0 (dict b)) = true
+
+/-- **§79 の第三の主定理。** 頭部の比較に残る仮説は `CollapseMono0_79` ひとつ。 -/
+theorem dictHeadLt79 (Hp : PsiIdxOKStd172) (H0 : CollapseMono0_79) : DictHeadLt77 :=
+  dictHeadLt_of_split77 (dictCross79 Hp) (collapseMono_of_split77 H0 (collapseMono1_79 Hp))
+
+theorem dictLtA74_79 (Hp : PsiIdxOKStd172) (H0 : CollapseMono0_79) : DictLtA74 :=
+  dictLtA74_of_head77 Hp (dictHeadLt79 Hp H0)
+
+theorem vOfLtA71_79 (Hp : PsiIdxOKStd172) (H0 : CollapseMono0_79) : VOfLtA71 :=
+  vOfLtA71_of_head77 Hp (dictHeadLt79 Hp H0)
+
+theorem limDecS1_79 (Hp : PsiIdxOKStd172) (H0 : CollapseMono0_79) : LimDecS1 :=
+  limDecS1_77 Hp (dictHeadLt79 Hp H0)
+
+theorem limIncS1_79 (Hp : PsiIdxOKStd172) (H0 : CollapseMono0_79) : LimIncS1 :=
+  limIncS1_77 Hp (dictHeadLt79 Hp H0)
+
+/-- **326 行目の証明書。** §77 の 4 つのうち `DictHeadLt77` が `CollapseMono0_79` に替わる。 -/
+theorem certIn_t326_79 (Hp : PsiIdxOKStd172) (H0 : CollapseMono0_79)
+    (HCD : CofDenseS1) (HBC : BCofIn71)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_head77 Hp (dictHeadLt79 Hp H0) HCD HBC hacc
+
+end
+
+/-! ### §79.9 測定 (凍結)
+
+**構成。** 種 `bs79` は段 1 以下の 6 項 (`0`・`1`・`ω`・`Ω₁`・`ψ₁ψ₁0`・`ψ₀ψ₁0`)。
+**深さの線** `deep79` は `ψ₀`・`ψ₁` を 1 段ずつかぶせて 2 つに 1 つ間引く操作を 7 回
+繰り返した層の合併 — 入れ子は 10 段まで届き、標準かつ段 1 以下のものだけでも 9 段。
+**幅の線** `wide79` は成分が降順の 2 項和・3 項和 (`BT.isStd` の和の節が要求する形)。
+**領域の外** `out79` は添字 2・3 — **上限の 2 つ先** — を 1 段/2 段かぶせたもので、
+そのうえにさらに `ψ₀`・`ψ₁` を重ねた形も入れてある。変数はそれぞれ自分の形で
+量化する: 頭部の対は主要項どうし、和の対は和どうし、段をまたぐ対は `(ψ₀·, ψ₁·)`。
+
+    popAll79   127 項  (入れ子 10 段まで、うち 18 項が段の上限の外)
+    popGood79   55 項  段 1 以下かつ `BT.isStd`  (§79 の仮説そのもの)
+                        単項 30・2 項和 20・3 項和 5、入れ子 8 段以上が 8 項、9 段が 1 項
+    popStd79    67 項  `BT.isStd` のみ (段の上限を外す)
+    popLv79    109 項  段の上限のみ (標準性を外す)
+
+𝔗(M) の側 `tpopRaw79` は手で組んだ 14 項 (`M`・`ω̄^·`・`Z 1`・`ψ_{Z1}0` など領域の
+外のものを含む) を `ω^·`・`⊕1`・`⊕2`・`φ̄0·`・`φ̄1·`・`ψ_{Z0}·` で 2 回閉じ、
+`dict` の像を足したもの — 448 項、うち `inT` なのは 333 項。
+-/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+private def dedup79 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def every79 (k : Nat) (l : List BT) : List BT :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+private def dep79 : BT → Nat
+  | .zero => 0
+  | .D _ a => 1 + dep79 a
+  | .sum a b => max (dep79 a) (dep79 b)
+private def wid79 : BT → Nat
+  | .sum a b => wid79 a + wid79 b
+  | _ => 1
+
+private def bs79 : List BT :=
+  [BT.zero, BT.D 0 BT.zero, BT.D 0 (BT.D 0 BT.zero), BT.D 1 BT.zero,
+   BT.D 1 (BT.D 1 BT.zero), BT.D 0 (BT.D 1 BT.zero)]
+private def cap01_79 (l : List BT) : List BT := l.map (BT.D 0) ++ l.map (BT.D 1)
+private def cap23_79 (l : List BT) : List BT := l.map (BT.D 2) ++ l.map (BT.D 3)
+private def lay79 : Nat → List BT → List BT
+  | 0, l => l
+  | n + 1, l => every79 2 (cap01_79 (lay79 n l))
+private def deep79 : List BT :=
+  dedup79 (bs79 ++ lay79 1 bs79 ++ lay79 2 bs79 ++ lay79 3 bs79 ++ lay79 4 bs79
+            ++ lay79 5 bs79 ++ lay79 6 bs79 ++ lay79 7 bs79)
+private def prin79 (l : List BT) : List BT := l.filter BT.isP
+private def sums2_79 (l : List BT) : List BT :=
+  (prin79 l).flatMap (fun a => ((prin79 l).filter (fun b => BT.le b a)).map (BT.sum a))
+private def sums3_79 (l : List BT) : List BT :=
+  (prin79 l).flatMap (fun a =>
+    ((prin79 l).filter (fun b => BT.le b a)).flatMap (fun b =>
+      ((prin79 l).filter (fun c => BT.le c b)).map (fun c => BT.sum a (BT.sum b c))))
+private def wide79 : List BT :=
+  dedup79 (every79 5 (sums2_79 (every79 2 deep79))
+            ++ every79 31 (sums3_79 (every79 3 deep79)))
+private def out79 : List BT :=
+  dedup79 (every79 2 (cap23_79 (every79 3 deep79))
+            ++ every79 3 (cap01_79 (every79 5 (cap23_79 (every79 5 deep79)))))
+
+private def popAll79 : List BT := dedup79 (deep79 ++ wide79 ++ out79)
+private def popGood79 : List BT := popAll79.filter (fun x => btLe72 1 x && BT.isStd x)
+private def popStd79  : List BT := popAll79.filter BT.isStd
+private def popLv79   : List BT := popAll79.filter (btLe72 1 ·)
+
+/-! 母集団の形 — 深さも幅も、そして領域の外も。 -/
+#guard (popAll79.length, popGood79.length, popStd79.length, popLv79.length) == (127, 55, 67, 109)
+#guard (popAll79.foldl (fun m x => max m (dep79 x)) 0,
+        popGood79.foldl (fun m x => max m (dep79 x)) 0) == (10, 9)
+#guard (popGood79.countP (fun x => wid79 x == 1), popGood79.countP (fun x => wid79 x == 2),
+        popGood79.countP (fun x => wid79 x == 3)) == (30, 20, 5)
+#guard (popGood79.countP (fun x => 8 ≤ dep79 x), popAll79.countP (fun x => !(btLe72 1 x)))
+        == (8, 18)
+
+private def okPair79 (a b : BT) : Bool := !(BT.lt a b) || TM.Term.lt (dict a) (dict b)
+private def fails79 (l : List BT) : Nat :=
+  (l.flatMap (fun a => l.map (fun b => (a, b)))).countP (fun p => !(okPair79 p.1 p.2))
+private def crossFail79 (l : List BT) : Nat :=
+  ((l.filter BT.isP).flatMap (fun a => (l.filter BT.isP).map (fun b => (a, b)))).countP
+    (fun p => match p.1, p.2 with
+      | BT.D u _, BT.D v _ => u < v && !(TM.Term.lt (dict p.1) (dict p.2))
+      | _, _ => false)
+private def headFail79 (l : List BT) : Nat :=
+  ((l.filter BT.isP).flatMap (fun a => (l.filter BT.isP).map (fun b => (a, b)))).countP
+    (fun p => BT.lt p.1 p.2 && !(TM.Term.lt (dict p.1) (dict p.2)))
+private def monoFail79 (w : Nat) (l : List BT) : Nat :=
+  (l.flatMap (fun a => l.map (fun b => (a, b)))).countP
+    (fun p => TM.Term.lt (dict p.1) (dict p.2) &&
+      !(TM.Term.lt (collapse w (dict p.1)) (collapse w (dict p.2))))
+
+/-! **肯定 1 — §77 の主張。** 3025 対で反例 0、標準性だけでも 4489 対で 0。 -/
+#guard (fails79 popGood79, fails79 popStd79) == (0, 0)
+
+/-! **否定 1 — 標準性は外せない、そして深さは効く。** 段の上限だけの 109 項
+    (11881 対) で `dict` は **211 対**を反転する。§77 は同じ形の母集団 (24 項・
+    入れ子 5 段) で 35 だった。 -/
+#guard fails79 popLv79 == 211
+
+/-! **肯定 2 — §79.7 の `DictCross77`。** 段をまたぐ対は 3 つの母集団すべてで反例 0
+    (定理なので確認)。頭部の対も 0。 -/
+#guard (headFail79 popGood79, crossFail79 popGood79, crossFail79 popStd79,
+        crossFail79 popLv79) == (0, 0, 0, 0)
+
+/-! **肯定 3 と否定 2 — §79.4 は定理、`u = 0` はまだ仮説。**
+    `collapse 1` は門を課しても外しても 0 (§79.4 が定理にした半分)。
+    `collapse 0` は `BT.isStd (ψ₀ ·)` — `K` の条件 — を落とすと **66 対**反転し、
+    課すと 0。§77 は同じ測り方で 28 だった。 -/
+#guard (monoFail79 1 popGood79,
+        monoFail79 1 (popGood79.filter (fun a => BT.isStd (BT.D 1 a)))) == (0, 0)
+#guard (monoFail79 0 popGood79,
+        monoFail79 0 (popGood79.filter (fun a => BT.isStd (BT.D 0 a)))) == (66, 0)
+
+/-! **肯定 4 — §79.6/§79.7 の 2 本。** `ψ₀` の像は `Ω₁` の下、`Ω₁` は `ψ₁` の像の下。
+    どちらも 127 項すべて (領域の外の 18 項を含む) で反例 0。 -/
+#guard (popAll79.countP (fun a => !(TM.Term.lt (collapse 0 (dict a)) (reg 1))),
+        popAll79.countP (fun a => !(TM.Term.le (reg 1) (collapse 1 (dict a)))),
+        popAll79.countP (fun a => !(TM.Term.lt (collapse 0 (dict a)) (collapse 1 (dict a)))))
+        == (0, 0, 0)
+
+private def tsd79 : List Term :=
+  [zero, TM.Term.one, TM.Term.omega, phi TM.Term.one zero, phi (TM.Term.ofNat 2) zero,
+   psi (Z zero) zero, Z zero, Z TM.Term.one, M, omg M, omg (Z zero),
+   phi zero (Z zero), psi (Z zero) (Z zero), psi (Z TM.Term.one) zero]
+private def tclose79 (l : List Term) : List Term :=
+  l ++ l.map omegaNF ++ l.map (fun t => plus t TM.Term.one)
+    ++ l.map (fun t => plus t (plus t TM.Term.one))
+    ++ l.map (fun t => phi zero t) ++ l.map (fun t => phi TM.Term.one t)
+    ++ l.map (fun t => psi (Z zero) t)
+private def tdedup79 (l : List Term) : List Term :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def tevery79 (k : Nat) (l : List Term) : List Term :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+private def tpopRaw79 : List Term :=
+  tdedup79 (tclose79 (tclose79 tsd79) ++ popGood79.map dict ++ popStd79.map dict)
+private def tpop79 : List Term := tpopRaw79.filter (fun t => inT t)
+
+private def omFail79 (l : List Term) : Nat :=
+  (l.flatMap (fun a => l.map (fun b => (a, b)))).countP
+    (fun p => TM.Term.lt p.1 p.2 && !(TM.Term.lt (omegaNF p.1) (omegaNF p.2)))
+private def d3Fail79 (l : List Term) : Nat :=
+  (l.flatMap (fun a => l.map (fun b => (a, b)))).countP
+    (fun p => TM.Term.lt p.1 p.2 && !(TM.Term.isFP zero p.1) && dnArg p.1 == dnArg p.2)
+private def d3Drop79 (l : List Term) : Nat :=
+  (l.flatMap (fun a => l.map (fun b => (a, b)))).countP
+    (fun p => TM.Term.lt p.1 p.2 && dnArg p.1 == dnArg p.2)
+private def plusFail79 (l : List Term) : Nat :=
+  (l.flatMap (fun e => l.flatMap (fun a => l.map (fun b => (e, a, b))))).countP
+    (fun p => TM.Term.lt p.2.1 p.2.2 && !(TM.Term.lt (plus p.1 p.2.1) (plus p.1 p.2.2)))
+
+#guard (tpopRaw79.length, tpop79.length) == (448, 333)
+
+/-! **肯定 5 — §79.2 と §79.3。** `ω^·` の狭義単調性は `inT` の 333 項 (110889 対) で
+    反例 0、`inT` でない 115 項を混ぜた 448 項 (200704 対) でも 0。`plus e ·` の
+    狭義単調性は 84³ の三つ組で 0。 -/
+#guard (omFail79 tpop79, omFail79 tpopRaw79) == (0, 0)
+#guard plusFail79 (tevery79 4 tpop79) == 0
+
+/-! **否定 3 — D3 の側条件は飾りではない。** `isFP zero x = false` を課すと `dnArg` が
+    潰す対は 0。落とすと `inT` の中だけで **26 対**、全体で 33 対。最小の証人は
+    `x = ε₀`, `y = ε₀ ⊕ 1` — `dnArg` はどちらも `ε₀` に送る。3 番目の証人 `Γ₀` は
+    §65.3 が「𝔗(M) では強臨界項も `ω^·` の不動点」と言った、`CNV` には無い枝である。 -/
+#guard (d3Fail79 tpop79, d3Drop79 tpop79) == (0, 26)
+#guard (d3Fail79 tpopRaw79, d3Drop79 tpopRaw79) == (0, 33)
+#guard dnArg (phi TM.Term.one zero) == dnArg (plus (phi TM.Term.one zero) TM.Term.one)
+#guard dnArg (psi (Z zero) zero) == dnArg (plus (psi (Z zero) zero) TM.Term.one)
+
+end
+
+/-! ### §79.10 公理 -/
+
 end Evidence.Region
