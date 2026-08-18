@@ -12619,4 +12619,697 @@ private def dpairs93 : List (BT × BT) :=
 
 end
 
+/-! ## §94 THE DENSITY GATE — THE CLAUSE LIVES BELOW `Ω₁`, AND ITS `ε₀` INSTANCE IS A THEOREM
+
+§85 moved row 326's cofinality clause off BMS entirely: `CofDenseS1` **is** `DictDense85`, a
+statement about the image of `dict` and nothing else.  What it left open is the direction
+that has to READ AN ARBITRARY TERM OF 𝔗(M) and produce a Buchholz term above it but still
+below the target — the place §83 stopped.  §94 attacks that direction and closes the first
+piece of it.
+
+**The clause is smaller than it looks, and §94.1 says how much.**  Every value of the
+sub-region is below `Ω₁`, so every challenger is too: `ltW_vOf94` / `ltW_chal94`, from
+§79.6's `lt_collapse0_W79` and the head condition `Hd085` alone.  `M`, `ω̄^·`, `Z` and the
+whole uncountable part of 𝔗(M) never occur in an instance of `DictDense85`.  That is not a
+convenience — it is what makes the rest of §94 possible, because it puts the clause inside
+the Veblen fragment where §9 of `Evidence/WF.lean` already has a cofinality theorem.
+
+  §94.1  **THE CLAUSE LIVES BELOW `Ω₁`.**  `ltW_dict94` : a standard Buchholz term of level
+         ≤ 1 all of whose components are `D 0` has `dict b < Ω₁`, with no hypothesis beyond
+         `PsiIdxOKStd172` (which is only what makes `dict b` a term at all).  `ltW_vOf94`
+         and `ltW_chal94` carry it to `vOf t` and to the challenger.
+
+  §94.2  **THE ω-TOWER, BUCHHOLZ SIDE.**  `bTow94 n = ψ₀ⁿ(0)`.  `std_bTow94`,
+         `btLe_bTow94`, `hd0_bTow94` say it is a legal witness for every `n` — the
+         standardness is the only real work, and it comes down to `BT.lt (ψ₀ᵏ 0) (ψ₀ⁿ 0)`
+         for `k < n` (`lt_bTow94`).  `dict_bTow94` : `dict (bTow94 (n+1))` is exactly §9's
+         `tower n`, through §77.7's `collapse0_eq77` and the fact that `φ̄0` does not skip
+         below `ε₀` (`phiNF_zero_phi94`).
+
+  §94.3  **THE `ε₀` INSTANCE IS A THEOREM.**  `dictDense_atE94` : if `vOf t = ε₀` then the
+         density clause holds at `t`, for EVERY challenger, with no unproved hypothesis at
+         all.  The reading of the arbitrary term is `Evidence.WF.cof_eps0`, and the witness
+         it names is `bTow94`.  `dense_lowS94` is the free half above: any challenger below
+         `ε₀` at a target above `ε₀` is witnessed by the single term `ψ₀(Ω₁)`.
+
+  §94.4  **WHAT IS LEFT, NAMED.**  `DictDenseLo94` (targets whose value is below `ε₀`) and
+         `DictDenseHi94` (challenger AND target at or above `ε₀`).  `dictDense85_of94`
+         proves `DictDense85` from the two, `dictDense85_iff94` proves the split loses
+         nothing, and `certIn_t326_94` re-hangs row 326.  Neither clause is proved.
+
+  §94.5  **THE ORDER TRANSFER RUNS BACKWARDS ON THE SUB-REGION.**  `btlt_of_lt94` /
+         `btle_of_le94` : between legal witnesses, `lt (dict p) (dict q)` gives back
+         `BT.lt p q`.  It costs only §74's trichotomy `lt_tricho_bValA7174`, `bOnto85`, and
+         `DictLtA74` — all three already in play for row 326.  One consequence closes a loop
+         §85 left half-open: §85 proved `DictOnto85 → DictDense85`, and
+         `dictOnto85_iff94` proves the converse, so the two forms of the clause are the
+         SAME statement under the hypotheses row 326 already carries.
+
+  §94.6  **THE WITNESS IS BUILT, NOT ENUMERATED — AGAIN, AND ONE STEP HIGHER.**  §85.7
+         showed `φ̄(Γ₀,0)` has no Buchholz preimage at all.  §94.6 shows that is not one
+         term but a TOWER: `rawT94 n` — `φ̄(Γ₀,0)`, `φ̄(φ̄(Γ₀,0),0)`, … — every rung a term
+         of 𝔗(M), every rung with `dictInv = none`, every rung below `Γ₁ = ψ_Ω(1)`, and NOT
+         ONE rung witnessed by the 495-term Buchholz pool of §94.7.  `bWitT94` builds the
+         witnesses by hand,
+
+             bWitT94 0     = ψ₀(Ω^Ω) = Γ₀
+             bWitT94 (n+1) = ψ₀( Ω^Ω ⊕ ψ₁( ψ₁(bWitT94 n) ⊕ Ω ) )   ( = ψ₀(Ω^Ω ⊕ Ω^(w+1)) )
+
+         and every rung is standard, of level ≤ 1, headed `D 0`, below `Γ₁`, and above the
+         raw rung below it.  The first one, `ψ₀(Ω^Ω ⊕ Ω^(Γ₀+1))`, has value
+         `φ̄(Γ₀+1, Γ₀+1)` — and the reason the naive `ψ₀(Ω^(Γ₀+1))` is NOT a witness is
+         instructive: it is not a normal form, because `G(·,0)` of its argument contains the
+         `Ω^Ω` that `Γ₀ = ψ₀(Ω^Ω)` drags in.  Putting the `Ω^Ω` back in FRONT repairs
+         exactly that.
+
+WHAT IS **NOT** CLAIMED.  `DictDense85` is NOT proved and `CofDenseS1` is NOT closed.  What
+§94 removes from the clause is its `ε₀` instance and every challenger below `ε₀` — a slice,
+not the statement.  `DictDenseLo94` and `DictDenseHi94` are hypotheses and are marked as
+such; row 326 now stands on `PsiIdxOKStd172`, `DictLtA74` and those two.
+
+**Where §94 stopped, precisely.**  `DictDenseLo94` — targets below `ε₀` — is where `dict`
+looks ONTO: an exact inverse `s ↦ ψ₀(inv s)` reproduces every term of the CNF fragment
+(measured: 207 of 207, and every image is a legal witness), so the clause there is not
+density but surjectivity.  Turning that measurement into a proof needs four 𝔗(M)-side
+order facts that this repository does not have — `plus a b = a ⊕ b` under `inT`,
+`le a (a ⊕ b)` and `le b (a ⊕ b)`, `d < φ̄0d`, and `φ̄0` unskipped at every argument below
+`ε₀` (§94.2 proves that last one only for arguments of the shape `φ̄0Y`) — plus §94.5's
+transfer to carry each of them to `BT.isStd`.  That is the shape of the remaining work on
+the low side; the high side, `DictDenseHi94`, is a different problem and §94 does not touch
+it.  §94.6's family is a construction with a frozen kernel check on four rungs, not an
+induction.  Nothing here touches level two, where §85.6 proves the clause false.
+
+WHAT THE MEASUREMENT SAYS (§94.7 gives the construction).  The two sides are grown
+independently: challengers on the 𝔗(M) side from `[0, 1, ω, ε₀, Γ₀]` by raw `φ̄`, `ψ_Ω` and
+`⊕` (221 terms, all below `Ω₁` — §94.1 says they must be), targets and witnesses on the
+Buchholz side from `[0, 1, Ω₁]` by `ψ₀`, `ψ₁` and `⊕` (495 legal witnesses, 462 of them
+limit indices by `bOnto85`).  **This closes the hole the §93 coordinator measurement named:**
+its sample reached only 4 distinct hard challengers; this one has 74, and 518 hard pairs.
+
+  * **Every hard pair is witnessed — 518 of 518.**  A "hard" challenger is one with no legal
+    Buchholz preimage (`dictInv` answers `none`, or answers with a term that is not
+    standard, not level ≤ 1, or not headed `D 0`).  74 of the 221 challengers are hard; not
+    one of the 518 pairs they make with a target lacks a witness in the pool.
+  * **The 10 pairs the pool misses are all EASY ones.**  Of 2093 pairs, 2083 are witnessed
+    from the pool; every one of the 10 that is not has an exact legal preimage, so the
+    witness is the challenger itself and the pool was merely short.  0 pairs are unwitnessed
+    once preimages count.
+  * **198 of the 2093 pairs are exactly what §94.3 turns into theorems** (challenger below
+    `ε₀`, target at or above it), 12 fall to `DictDenseLo94` and 1883 to `DictDenseHi94`.
+    So the split is not cosmetic: it names where 1883 of 2093 measured instances live.
+  * **The negative.**  The pool is NOT dense at the raw-`φ̄` tower over `Γ₀` (§94.6): 0 of
+    its 495 values lands in `[rawT94 n, Γ₁)`, for any of the four rungs measured.  A finite
+    pool never can be — but the built family shows the clause is not what fails. -/
+
+/-! ### §94.1 条項は `Ω₁` より下にしかない
+
+`DictDense85` の証人は「段 1 以下・標準・成分がすべて `D 0`」の Buchholz 項である。
+その像は §79.6 の `lt_collapse0_W79` で `Ω₁` より下に落ちる — 頭の条件 `Hd085` が
+`collapse 1` の枝を殺すからで、それ以外の仮説は要らない。したがって部分領域の値も、
+その下にいる挑戦者も、すべて `Ω₁` より下にいる。`M`・`ω̄^·`・`Z` は条項に現れない。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+open Evidence.WF
+
+/-- 成分が `D 0` なら段は 0。 -/
+theorem hd085_D94 {u : Nat} {c : BT} (h : Hd085 (BT.D u c)) : u = 0 := by
+  obtain ⟨e, he⟩ := h (BT.D u c) (List.Mem.head _)
+  injection he with h1 _
+
+/-- 頭の条件は和の両側へ。 -/
+theorem hd085_sum94 {x y : BT} (h : Hd085 (BT.sum x y)) : Hd085 x ∧ Hd085 y := by
+  constructor
+  · intro z hz; exact h z (by show z ∈ x.toL ++ y.toL; exact List.mem_append_left _ hz)
+  · intro z hz; exact h z (by show z ∈ x.toL ++ y.toL; exact List.mem_append_right _ hz)
+
+/-- **§94.1 の主定理。** 成分がすべて `D 0` の標準項の像は `Ω₁` より下。 -/
+theorem ltW_dict94 (Hp : PsiIdxOKStd172) : ∀ (b : BT), btLe72 1 b = true →
+    BT.isStd b = true → Hd085 b → lt (dict b) (reg 1) = true
+  | .zero, _, _, _ => by rw [Trans.Dict.dict_zero]; exact lt_zero_W79
+  | .D u c, hb, hs, hd => by
+      have hu0 : u = 0 := hd085_D94 hd
+      subst hu0
+      obtain ⟨_, hbc⟩ := btLe72_D 1 0 c hb
+      have hic := inT_dict_of_std172 Hp c hbc (isStd_of_D hs)
+      rw [Trans.Dict.dict_D]
+      exact lt_collapse0_W79 (dict c) hic.1 hic.2 (Hp 0 c (by omega) hbc hs)
+  | .sum x y, hb, hs, hd => by
+      obtain ⟨hbx, hby⟩ := btLe72_sum 1 x y hb
+      obtain ⟨hsx, hsy⟩ := isStd_of_sum hs
+      obtain ⟨hdx, hdy⟩ := hd085_sum94 hd
+      have hix := inT_dict_of_std172 Hp x hbx hsx
+      have hiy := inT_dict_of_std172 Hp y hby hsy
+      rw [Trans.Dict.dict_sum]
+      exact lt_plus_W79 hix.1 hiy.1 (ltW_dict94 Hp x hbx hsx hdx) (ltW_dict94 Hp y hby hsy hdy)
+
+/-- 部分領域の値は `inT`。 -/
+theorem inT_vOf94 (Hp : PsiIdxOKStd172) (t : B) (ht : stdB1 t = true) :
+    inT (vOf t) = true := by
+  rw [vOfIsDict76 Hp t ht]
+  exact (inT_dict_of_std172 Hp _ (btLeA77 t ht) (stdA77 t ht)).1
+
+/-- **部分領域の値はすべて `Ω₁` より下。** -/
+theorem ltW_vOf94 (Hp : PsiIdxOKStd172) (t : B) (ht : stdB1 t = true) :
+    lt (vOf t) (reg 1) = true := by
+  rw [vOfIsDict76 Hp t ht]
+  exact ltW_dict94 Hp _ (btLeA77 t ht) (stdA77 t ht)
+    (hd085_bValA71_85 t (nfB_of_stdB t (stdB_of_stdB1 t ht)))
+
+/-- **挑戦者もすべて `Ω₁` より下。** 条項は可算の側にしか触らない。 -/
+theorem ltW_chal94 (Hp : PsiIdxOKStd172) (t : B) (ht : stdB1 t = true)
+    (s : Term) (hs : inT s = true) (h : lt s (vOf t) = true) : lt s (reg 1) = true :=
+  lt_trans_inT hs (inT_vOf94 Hp t ht) inT_W79 h (ltW_vOf94 Hp t ht)
+
+/-! ### §94.2 ω の塔 — Buchholz 側
+
+`ε₀` より下では `φ̄0` は不動点を飛ばさない (`phiNF_zero_phi94`)。だから `ψ₀` の塔
+`ψ₀ⁿ(0)` の像は §9 の `tower` そのものになる。標準性がいちばん手間で、
+`GB 0` の元がどれも `ψ₀ᵏ(0)` (`k` 小) であること (`mem_GB_bTow94`) と、
+塔が `BT.lt` で増えること (`lt_bTow94`) に落ちる。 -/
+
+theorem phiNFdefault_zero94 (b : Term) : phiNFdefault zero b = phi zero b := by
+  unfold phiNFdefault
+  rw [show ((b == zero) && (zero : Term).isSC) = false from by
+    rw [show (zero : Term).isSC = false from rfl, Bool.and_false]]
+  rfl
+
+theorem beq_phi0_one94 {Y : Term} (hY : Y ≠ zero) : (phi zero Y == TM.Term.one) = false := by
+  cases h : (phi zero Y == TM.Term.one) with
+  | false => rfl
+  | true =>
+      have hh := eq_of_beq h
+      injection hh with _ h2
+      exact absurd h2 hY
+
+theorem takeWhile_phi0_94 {Y : Term} (hY : Y ≠ zero) :
+    ([phi zero Y] : List Term).takeWhile (fun x => x == TM.Term.one) = [] := by
+  show (match (phi zero Y == TM.Term.one) with
+        | true => phi zero Y :: ([] : List Term).takeWhile (fun x => x == TM.Term.one)
+        | false => ([] : List Term)) = []
+  rw [beq_phi0_one94 hY]
+
+theorem splitFin_phi0_94 {Y : Term} (hY : Y ≠ zero) :
+    splitFin (phi zero Y) = (phi zero Y, 0) := by
+  unfold splitFin
+  show (ofList ((toList (phi zero Y)).take
+      ((toList (phi zero Y)).length -
+        (((toList (phi zero Y)).reverse.takeWhile (fun x => x == TM.Term.one)).length))),
+    (((toList (phi zero Y)).reverse.takeWhile (fun x => x == TM.Term.one)).length))
+      = (phi zero Y, 0)
+  rw [show toList (phi zero Y) = [phi zero Y] from rfl,
+    show ([phi zero Y] : List Term).reverse = [phi zero Y] from rfl,
+    takeWhile_phi0_94 hY]
+  rfl
+
+/-- **`ε₀` の下では `φ̄0` は飛ばさない。** 引数が `0` でない `ω` 冪なら `ω^·` は生の `φ̄0`。 -/
+theorem phiNF_zero_phi94 {Y : Term} (hY : Y ≠ zero) :
+    phiNF zero (phi zero Y) = phi zero (phi zero Y) := by
+  unfold phiNF
+  rw [show ((phi zero Y).isSC && lt zero (phi zero Y)) = false from by
+    rw [show (phi zero Y).isSC = false from rfl]; rfl]
+  show (if lt zero zero = true then phi zero Y else phiNFsucc zero (phi zero Y))
+      = phi zero (phi zero Y)
+  rw [show lt zero zero = false from rfl]
+  show phiNFsucc zero (phi zero Y) = phi zero (phi zero Y)
+  unfold phiNFsucc
+  rw [splitFin_phi0_94 hY]
+  show phiNFdefault zero (phi zero Y) = phi zero (phi zero Y)
+  exact phiNFdefault_zero94 _
+
+/-- `ψ₀` の塔 — Buchholz 側。 -/
+def bTow94 : Nat → BT
+  | 0 => BT.zero
+  | n + 1 => BT.D 0 (bTow94 n)
+
+theorem size_bTow94 : ∀ n, (bTow94 n).size = n + 1
+  | 0 => rfl
+  | n + 1 => by
+      show 1 + (bTow94 n).size = n + 1 + 1
+      rw [size_bTow94 n]
+      omega
+
+theorem bTow94_inj : ∀ (k n : Nat), k ≠ n → (bTow94 k == bTow94 n) = false
+  | 0, 0, h => absurd rfl h
+  | 0, _ + 1, _ => rfl
+  | _ + 1, 0, _ => rfl
+  | j + 1, m + 1, h => by
+      show (bTow94 j == bTow94 m) = false
+      exact bTow94_inj j m (by omega)
+
+theorem btLe_bTow94 : ∀ n, btLe72 1 (bTow94 n) = true
+  | 0 => rfl
+  | n + 1 => by
+      show (decide (0 ≤ 1) && btLe72 1 (bTow94 n)) = true
+      rw [btLe_bTow94 n]; rfl
+
+theorem hd0_bTow94 : ∀ n, Hd085 (bTow94 n)
+  | 0 => by intro x hx; cases hx
+  | n + 1 => by
+      intro x hx
+      have hm : x ∈ [BT.D 0 (bTow94 n)] := hx
+      exact ⟨bTow94 n, List.mem_singleton.mp hm⟩
+
+theorem ltL_bTow94 : ∀ (k n f : Nat), k < n → k + 1 ≤ f →
+    BT.ltL f (bTow94 k).toL (bTow94 n).toL = true
+  | 0, n, f, hkn, hf => by
+      cases n with
+      | zero => omega
+      | succ m =>
+        cases f with
+        | zero => omega
+        | succ g =>
+          show BT.ltL (g + 1) [] [BT.D 0 (bTow94 m)] = true
+          rfl
+  | k + 1, n, f, hkn, hf => by
+      cases n with
+      | zero => omega
+      | succ m =>
+        cases f with
+        | zero => omega
+        | succ g =>
+          show BT.ltL (g + 1) [BT.D 0 (bTow94 k)] [BT.D 0 (bTow94 m)] = true
+          show (if (bTow94 k == bTow94 m) = true then BT.ltL g [] []
+                else BT.ltL g (bTow94 k).toL (bTow94 m).toL) = true
+          rw [bTow94_inj k m (by omega)]
+          show BT.ltL g (bTow94 k).toL (bTow94 m).toL = true
+          exact ltL_bTow94 k m g (by omega) (by omega)
+
+/-- **塔は `BT.lt` で増える。** -/
+theorem lt_bTow94 {k n : Nat} (h : k < n) : BT.lt (bTow94 k) (bTow94 n) = true := by
+  show BT.ltL ((bTow94 k).size + (bTow94 n).size + 2) (bTow94 k).toL (bTow94 n).toL = true
+  refine ltL_bTow94 k n _ h ?_
+  rw [size_bTow94 k, size_bTow94 n]
+  omega
+
+theorem mem_GB_bTow94 : ∀ (n : Nat) (e : BT), e ∈ BT.GB 0 (bTow94 n) → ∃ k, k < n ∧ e = bTow94 k
+  | 0, e, he => by cases he
+  | n + 1, e, he => by
+      have h : e ∈ bTow94 n :: BT.GB 0 (bTow94 n) := he
+      rcases List.mem_cons.mp h with h1 | h1
+      · exact ⟨n, Nat.lt_succ_self _, h1⟩
+      · obtain ⟨k, hk, hek⟩ := mem_GB_bTow94 n e h1
+        exact ⟨k, Nat.lt_succ_of_lt hk, hek⟩
+
+/-- **塔は標準。** -/
+theorem std_bTow94 : ∀ n, BT.isStd (bTow94 n) = true
+  | 0 => rfl
+  | n + 1 => by
+      show (BT.isStd (bTow94 n) && (BT.GB 0 (bTow94 n)).all (fun e => BT.lt e (bTow94 n))) = true
+      rw [std_bTow94 n]
+      show (BT.GB 0 (bTow94 n)).all (fun e => BT.lt e (bTow94 n)) = true
+      rw [List.all_eq_true]
+      intro e he
+      obtain ⟨k, hk, hek⟩ := mem_GB_bTow94 n e he
+      rw [hek]
+      exact lt_bTow94 hk
+
+theorem ltM_left_phi94 (a b : Term) : lt M (phi a b) = false :=
+  Evidence.StageA.ltF_M_phi _ a b
+
+theorem ltM_tower94 : ∀ n, lt (Evidence.WF.tower n) M = true
+  | 0 => lt_phi_M _ _
+  | _ + 1 => lt_phi_M _ _
+
+theorem inT_tower94 : ∀ n, inT (Evidence.WF.tower n) = true
+  | 0 => inT_one
+  | n + 1 => by
+      show (inT zero && inT (Evidence.WF.tower n) && lt zero M
+            && lt (Evidence.WF.tower n) M) = true
+      rw [inT_zero, inT_tower94 n, lt_zero_M, ltM_tower94 n]
+      rfl
+
+theorem ltE_tower94 (n : Nat) : lt (Evidence.WF.tower n) E081 = true :=
+  Evidence.WF.lt_tower_eps0 n
+
+theorem ltW_tower94 (n : Nat) : lt (Evidence.WF.tower n) (reg 1) = true :=
+  ltW_of_ltE81 (inT_tower94 n) (ltE_tower94 n)
+
+theorem omegaNF_tower94 : ∀ n, omegaNF (Evidence.WF.tower n) = Evidence.WF.tower (n + 1)
+  | 0 => by rfl
+  | n + 1 => by
+      show omegaNF (phi zero (Evidence.WF.tower n)) = phi zero (phi zero (Evidence.WF.tower n))
+      rw [omegaNF_of_le_M (ltM_left_phi94 zero (Evidence.WF.tower n))]
+      exact phiNF_zero_phi94 (Evidence.WF.tower_ne_zero n)
+
+/-- **§94.2 の主定理。** `ψ₀` の塔の像は §9 の ω の塔。 -/
+theorem dict_bTow94 : ∀ n, dict (bTow94 (n + 1)) = Evidence.WF.tower n
+  | 0 => by rfl
+  | n + 1 => by
+      show dict (BT.D 0 (bTow94 (n + 1))) = Evidence.WF.tower (n + 1)
+      rw [Trans.Dict.dict_D, dict_bTow94 n,
+        collapse0_eq77 (Evidence.WF.tower n) (inT_tower94 n)
+          (fun p hp => ltW_toList79 (Evidence.WF.tower n) (inT_tower94 n) (ltW_tower94 n) p hp)]
+      exact omegaNF_tower94 n
+
+/-! ### §94.3 `ε₀` の場合は定理
+
+目標の値が `ε₀` なら、挑戦者を読むのは §9 の `cof_eps0` で、証人は §94.2 の塔。
+仮説はひとつも要らない。目標が `ε₀` より上なら、`ε₀` より下の挑戦者は
+`ψ₀(Ω₁)` ひとつで足りる。 -/
+
+/-- `ε₀` の証人 — `ψ₀(Ω₁)`。 -/
+def bE94 : BT := BT.D 0 (BT.Om 1)
+
+theorem hd0_bE94 : Hd085 bE94 := by
+  intro x hx
+  exact ⟨BT.Om 1, List.mem_singleton.mp hx⟩
+
+theorem dict_bE94 : dict bE94 = E081 := by rfl
+
+theorem le_of_lt94 {s t : Term} (h : lt s t = true) : le s t = true := by
+  show ((s == t) || lt s t) = true
+  rw [h]
+  exact Bool.or_true _
+
+/-- **`ε₀` より下の挑戦者は只。** 目標が `ε₀` より上なら証人は `ψ₀(Ω₁)` ひとつ。 -/
+theorem dense_lowS94 {t : B} {s : Term} (hE : lt E081 (vOf t) = true) (h : lt s E081 = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) (vOf t) = true := by
+  refine ⟨bE94, rfl, rfl, hd0_bE94, ?_, ?_⟩
+  · rw [dict_bE94]; exact le_of_lt94 h
+  · rw [dict_bE94]; exact hE
+
+/-- **§94.3 の主定理。** 目標の値が `ε₀` ちょうどなら密度は定理である。 -/
+theorem dictDense_atE94 {t : B} (hv : vOf t = E081) :
+    ∀ s, inT s = true → lt s (vOf t) = true →
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) (vOf t) = true := by
+  intro s hs hlt
+  rw [hv] at hlt ⊢
+  obtain ⟨n, hn⟩ := Evidence.WF.cof_eps0 s hs hlt
+  refine ⟨bTow94 (n + 1), btLe_bTow94 _, std_bTow94 _, hd0_bTow94 _, ?_, ?_⟩
+  · rw [dict_bTow94 n]; exact hn
+  · rw [dict_bTow94 n]; exact ltE_tower94 n
+
+/-! ### §94.4 残る条項 -/
+
+/-- 目標の値が `ε₀` より下のところ。**証明しない。** -/
+def DictDenseLo94 : Prop := ∀ (t : B), stdB1 t = true → kindB t = BMS.Kind.lim →
+    lt (vOf t) E081 = true → ∀ s, inT s = true → lt s (vOf t) = true →
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) (vOf t) = true
+
+/-- 目標の値が `ε₀` より上で、挑戦者も `ε₀` 以上のところ。**証明しない。** -/
+def DictDenseHi94 : Prop := ∀ (t : B), stdB1 t = true → kindB t = BMS.Kind.lim →
+    lt E081 (vOf t) = true → ∀ s, inT s = true → le E081 s = true → lt s (vOf t) = true →
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) (vOf t) = true
+
+/-- **§94.4 の主定理。** 残る 2 条項から `DictDense85` が出る。 -/
+theorem dictDense85_of94 (Hp : PsiIdxOKStd172) (HL : DictDenseLo94) (HH : DictDenseHi94) :
+    DictDense85 := by
+  intro t ht hk s hs hlt
+  rcases Evidence.WF.lt_trichotomy_inT (inT_vOf94 Hp t ht) inT_E81 with h | h | h
+  · exact HL t ht hk h.1 s hs hlt
+  · exact dictDense_atE94 h.2.1 s hs hlt
+  · rcases Evidence.WF.lt_trichotomy_inT hs inT_E81 with h2 | h2 | h2
+    · exact dense_lowS94 h.2.2 h2.1
+    · refine HH t ht hk h.2.2 s hs ?_ hlt
+      rw [h2.2.1]
+      show ((E081 == E081) || lt E081 E081) = true
+      rw [show (E081 == E081) = true from rfl]
+      rfl
+    · exact HH t ht hk h.2.2 s hs (le_of_lt94 h2.2.2) hlt
+
+theorem dictDenseLo_of85 (H : DictDense85) : DictDenseLo94 :=
+  fun t ht hk _ s hs hlt => H t ht hk s hs hlt
+
+theorem dictDenseHi_of85 (H : DictDense85) : DictDenseHi94 :=
+  fun t ht hk _ s hs _ hlt => H t ht hk s hs hlt
+
+/-- **分割は情報を落とさない。** -/
+theorem dictDense85_iff94 (Hp : PsiIdxOKStd172) :
+    DictDense85 ↔ (DictDenseLo94 ∧ DictDenseHi94) :=
+  ⟨fun H => ⟨dictDenseLo_of85 H, dictDenseHi_of85 H⟩, fun h => dictDense85_of94 Hp h.1 h.2⟩
+
+/-- 326 行目の証明書 — 共終性の側で待つのは 2 条項。 -/
+theorem certIn_t326_94 (Hp : PsiIdxOKStd172) (H2 : DictLtA74)
+    (HL : DictDenseLo94) (HH : DictDenseHi94)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_85 Hp H2 (dictDense85_of94 Hp HL HH) hacc
+
+end
+
+/-! ### §94.5 順序の移送は逆向きにも走る
+
+`DictLtA74` は `BT.lt` を `dict` の順序に運ぶ。良い項どうしなら逆も走る — §74 の三分律
+`lt_tricho_bValA7174` と `bOnto85` を挟めばよい。仮説は 326 行目がすでに抱えている
+2 つだけである。その帰結として、§85 の 2 つの形 `DictOnto85` と `DictDense85` は
+同じ主張になる (§85 は片側しか証明していない)。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+open Evidence.WF
+
+/-- **順序の逆向きの移送。** 良い項どうしなら `dict` の順序は `BT.lt` に戻る。
+    §74 の三分律と `DictLtA74` だけを使う。 -/
+theorem btlt_of_lt94 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {p q : BT}
+    (hp : btLe72 1 p = true) (hsp : BT.isStd p = true) (hdp : Hd085 p)
+    (hq : btLe72 1 q = true) (hsq : BT.isStd q = true) (hdq : Hd085 q)
+    (h : lt (dict p) (dict q) = true) : BT.lt p q = true := by
+  obtain ⟨u, hu, hvu⟩ := bOnto85 p hp hdp hsp
+  obtain ⟨t, ht, hvt⟩ := bOnto85 q hq hdq hsq
+  have hip := (inT_dict_of_std172 Hp p hp hsp).1
+  have hiq := (inT_dict_of_std172 Hp q hq hsq).1
+  rcases lt_tricho_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) with h1 | h1 | h1
+  · rw [← hvu, ← hvt]; exact h1
+  · exfalso
+    have hpq : p = q := by rw [← hvu, ← hvt, h1]
+    rw [hpq] at h
+    rw [lt_asymm_inT hiq hiq h] at h
+    exact Bool.noConfusion h
+  · exfalso
+    have hlt : lt (dict q) (dict p) = true := by
+      have hx := H2 t u ht hu h1
+      rw [hvt, hvu] at hx
+      exact hx
+    rw [lt_asymm_inT hip hiq h] at hlt
+    exact Bool.noConfusion hlt
+
+/-- 同じ形の `≤`。 -/
+theorem btle_of_le94 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {p q : BT}
+    (hp : btLe72 1 p = true) (hsp : BT.isStd p = true) (hdp : Hd085 p)
+    (hq : btLe72 1 q = true) (hsq : BT.isStd q = true) (hdq : Hd085 q)
+    (h : le (dict p) (dict q) = true) : BT.le p q = true := by
+  rcases (Bool.or_eq_true _ _).mp h with h1 | h1
+  · obtain ⟨u, hu, hvu⟩ := bOnto85 p hp hdp hsp
+    obtain ⟨t, ht, hvt⟩ := bOnto85 q hq hdq hsq
+    have hde : dict p = dict q := eq_of_beq h1
+    have hiq := (inT_dict_of_std172 Hp q hq hsq).1
+    rcases lt_tricho_bValA7174 u t (lvlLe1_of_stdB1 u hu) (lvlLe1_of_stdB1 t ht) with h2 | h2 | h2
+    · exfalso
+      have hx := H2 u t hu ht h2
+      rw [hvu, hvt, hde] at hx
+      rw [lt_asymm_inT hiq hiq hx] at hx
+      exact Bool.noConfusion hx
+    · have hpq : p = q := by rw [← hvu, ← hvt, h2]
+      show ((p == q) || BT.lt p q) = true
+      rw [hpq, bt_beq_refl q]
+      rfl
+    · exfalso
+      have hx := H2 t u ht hu h2
+      rw [hvu, hvt, hde] at hx
+      rw [lt_asymm_inT hiq hiq hx] at hx
+      exact Bool.noConfusion hx
+  · show ((p == q) || BT.lt p q) = true
+    rw [btlt_of_lt94 Hp H2 hp hsp hdp hq hsq hdq h1]
+    exact Bool.or_true _
+
+/-- **§85 の 2 つの形は同値。** §85 は `DictOnto85 → DictDense85` を証明した。
+    逆は `btlt_of_lt94` 一本で出る。仮説は 326 行目がすでに抱えている 2 つだけ。 -/
+theorem dictOnto85_of_dictDense94 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : DictDense85) :
+    DictOnto85 := by
+  intro t ht hk s hs hlt
+  obtain ⟨b, hb, hbs, hbd, hle, hblt⟩ := H t ht hk s hs hlt
+  have hdt : Hd085 (bValA71 t) := hd085_bValA71_85 t (nfB_of_stdB t (stdB_of_stdB1 t ht))
+  refine ⟨b, hb, hbs, hle, ?_⟩
+  refine btlt_of_lt94 Hp H2 hb hbs hbd (btLeA77 t ht) (stdA77 t ht) hdt ?_
+  rw [← vOfIsDict76 Hp t ht]
+  exact hblt
+
+theorem dictOnto85_iff94 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) :
+    DictOnto85 ↔ DictDense85 :=
+  ⟨dictDense85_of_dictOnto85 Hp H2, dictOnto85_of_dictDense94 Hp H2⟩
+
+
+end
+
+/-! ### §94.6 証人は作るもの — `Γ₀` の上の生の `φ̄` の塔
+
+§85.7 は `φ̄(Γ₀,0)` が `dict` の像に入らないことを見た。それは 1 項ではなく塔である。
+`rawT94` の各段は `inT` を満たし、`dictInv` は `none` を返し、どの段も `Γ₁ = ψ_Ω(1)`
+より下にいる。そして §94.6 の 495 項の母集団は、どの段についても
+`[rawT94 n, Γ₁)` に値を 1 つも持たない。
+
+証人は書ける。素朴な `ψ₀(Ω^(Γ₀+1))` は**標準形ではない** — 引数の `G(·,0)` に
+`Γ₀ = ψ₀(Ω^Ω)` が引きずり込む `Ω^Ω` が入り、それは `Ω^(Γ₀+1)` より大きい。
+`Ω^Ω` を先頭に戻すとちょうどそれが直る:
+
+    bWitT94 (n+1) = ψ₀( Ω^Ω ⊕ ψ₁( ψ₁(bWitT94 n) ⊕ Ω ) ) -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv)
+open TM TM.Term
+
+/-- `Γ₀ = ψ_Ω(0)`。 -/
+def G094 : Term := psi (Z zero) zero
+
+/-- `dict` が 1 つも作らない項の塔。 -/
+def rawT94 : Nat → Term
+  | 0 => phi G094 zero
+  | n + 1 => phi (rawT94 n) zero
+
+/-- `Γ₁ = ψ_Ω(1)` — §85.7 の `bGam85` の像。 -/
+def Gam1_94 : Term := dict bGam85
+
+/-- `Ω^Ω = ψ₁(ψ₁(Ω₁))`。 -/
+def bOO94 : BT := BT.D 1 (BT.D 1 (BT.Om 1))
+
+/-- 手で作った証人の族。 -/
+def bWitT94 : Nat → BT
+  | 0 => BT.D 0 bOO94
+  | n + 1 => BT.D 0 (BT.add bOO94 (BT.D 1 (BT.sum (BT.D 1 (bWitT94 n)) (BT.D 1 BT.zero))))
+
+/-- 素朴な候補 — `ψ₀(Ω^(Γ₀+1))`。**標準形ではない。** -/
+def bNaive94 : BT := BT.D 0 (BT.D 1 (BT.sum (BT.D 1 (BT.D 0 bOO94)) (BT.D 1 BT.zero)))
+
+/-! 生の塔は 𝔗(M) の項で、`dict` の像に入らず、`Γ₁` より下にいる。 -/
+#guard (List.range 4).all fun n => inT (rawT94 n)
+#guard (List.range 4).all fun n => (dictInv (rawT94 n)).isNone
+#guard (List.range 4).all fun n => lt (rawT94 n) Gam1_94
+
+/-! 手で作った族は正しい証人である — 段 1 以下・標準・成分は `D 0`。 -/
+#guard (List.range 4).all fun n =>
+  BT.isStd (bWitT94 n) && btLe72 1 (bWitT94 n) && hd085B (bWitT94 n)
+#guard (List.range 4).all fun n => lt (dict (bWitT94 n)) Gam1_94
+#guard (List.range 3).all fun n => le (rawT94 n) (dict (bWitT94 (n + 1)))
+
+/-! 最初の段の値は `φ̄(Γ₀+1, Γ₀+1)`。 -/
+#guard dict (bWitT94 0) == G094
+#guard dict (bWitT94 1) == phi (plus G094 TM.Term.one) (plus G094 TM.Term.one)
+
+/-! **素朴な候補が落ちる理由。** `ψ₀(Ω^(Γ₀+1))` は標準形ではない。
+    `Ω^Ω` を先頭に戻したものは標準形で、値は同じ枝から出る。 -/
+#guard BT.isStd bNaive94 == false
+#guard btLe72 1 bNaive94 && hd085B bNaive94
+#guard BT.isStd (bWitT94 1)
+
+end
+
+/-! ### §94.7 測定 (凍結)
+
+**構成を先に書く。**  2 つの側を独立に育てる。
+
+    挑戦者 (𝔗(M) 側)   種 `[0, 1, ω, ε₀, Γ₀]` を 生の `φ̄`・`ψ_Ω(·)`・`⊕` で 2 段育て、
+                       `inT` と `· < Ω₁` で濾す。221 項。
+    目標と証人 (Buchholz 側)  §85.7 の種 `[0, 1, Ω₁]` を `ψ₀`・`ψ₁` で 5 段育て、
+                       良い項どうしの和を足し、「段 1 以下・標準・成分は `D 0`」で
+                       濾す。495 項、うち 462 は `bOnto85` で極限の添字になる。
+
+**§93 の測定が名指しした穴 — 難しい挑戦者が 4 種類しか届いていない — をここで塞ぐ。**
+難しい挑戦者は 74 種類、難しい対は 518。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg dictInv)
+open TM TM.Term
+
+def dedupT94 (l : List Term) : List Term :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+def everyT94 (k : Nat) (l : List Term) : List Term :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+def everyB94 (k : Nat) (l : List BT) : List BT :=
+  (l.zipIdx.filter (fun p => p.2 % k == 0)).map (·.1)
+
+def tseed94 : List Term := [zero, TM.Term.one, TM.Term.omega, E081, G094]
+def tgrow94 (p : List Term) : List Term :=
+  p ++ p.flatMap (fun a => p.map (fun b => phi a b))
+    ++ p.map (fun a => psi (Z zero) a)
+    ++ p.flatMap (fun a => p.map (fun b => plus a b))
+def okChal94 (s : Term) : Bool := inT s && lt s (reg 1)
+def p1_94 : List Term := dedupT94 ((tgrow94 tseed94).filter okChal94)
+def chal94 : List Term :=
+  dedupT94 (p1_94 ++ dedupT94 ((tgrow94 (everyT94 4 p1_94)).filter okChal94))
+
+def bgood94 (b : BT) : Bool := BT.isStd b && btLe72 1 b && hd085B b
+def un94 (p : List BT) : List BT := (p ++ p.flatMap fun x => [BT.D 0 x, BT.D 1 x]).eraseDups
+def core94 : List BT := un94 (un94 (un94 (un94 (un94 seeds85))))
+def gcore94 : List BT := core94.filter bgood94
+def sums94 : List BT := (gcore94.flatMap fun a => gcore94.map fun b => BT.add a b).eraseDups
+def pool94 : List BT := (core94 ++ sums94).filter bgood94
+def dpool94 : List Term := pool94.map dict
+def lim94 : List BT := pool94.filter fun b => kindB (bInv85 b) == BMS.Kind.lim
+def tgt94 : List BT := everyB94 20 lim94
+def wit94 (v s : Term) : Bool := dpool94.any fun d => le s d && lt d v
+def prs94 : List (Term × Term) :=
+  tgt94.flatMap fun b => (chal94.filter fun s => lt s (dict b)).map fun s => (dict b, s)
+/-- 難しい挑戦者 — 正しい Buchholz 逆像を持たない。 -/
+def hardC94 (s : Term) : Bool :=
+  match dictInv s with | none => true | some b => !(bgood94 b)
+/-- 逆像そのものが証人になる場合。 -/
+def exactWit94 (v s : Term) : Bool :=
+  match dictInv s with
+  | none => false
+  | some b => bgood94 b && dict b == s && lt s v
+
+/-! 母集団。挑戦者は §94.1 の言うとおり全部 `Ω₁` より下にいる。 -/
+#guard chal94.length == 221
+#guard chal94.all fun s => inT s && lt s (reg 1)
+#guard pool94.length == 495
+#guard pool94.all bgood94
+#guard lim94.length == 462
+#guard tgt94.length == 24
+
+/-! **肯定 1 — 難しい対は 518 のうち 518 が証人を持つ。**
+    §93 の測定の挑戦者側は 4 種類しか難しくなかった。ここでは 74 種類ある。 -/
+#guard chal94.countP hardC94 == 74
+#guard prs94.length == 2093
+#guard prs94.countP (fun p => hardC94 p.2) == 518
+#guard prs94.countP (fun p => hardC94 p.2 && !(wit94 p.1 p.2)) == 0
+
+/-! **肯定 2 — 母集団が落とす 10 対はどれも易しい方で、逆像そのものが証人。** -/
+#guard prs94.countP (fun p => wit94 p.1 p.2) == 2083
+#guard prs94.countP (fun p => !(wit94 p.1 p.2) && !(exactWit94 p.1 p.2)) == 0
+
+/-! **肯定 3 — 分割は飾りではない。**  198 対が §94.3 の定理になる分、
+    12 対が `DictDenseLo94`、1883 対が `DictDenseHi94` に落ちる。 -/
+#guard prs94.countP (fun p => lt p.2 E081 && le E081 p.1) == 198
+#guard prs94.countP (fun p => lt p.1 E081) == 12
+#guard prs94.countP (fun p => le E081 p.2 && lt E081 p.1) == 1883
+
+/-! **低い側 (`DictDenseLo94`) の形 — そこでは `dict` は上への写像に見える。**
+    `ε₀` より下の項を厳密に戻す写像 `invE94` を書いて測ると、207 項の母集団で
+    207 回とも `dict (invE94 s) = s` であり、その像は 207 回とも正しい証人である。
+    つまり低い側の条項は密度ではなく全射性で、証明にするのに足りないのは 𝔗(M) 側の
+    順序の事実 4 つ (前書き) と §94.5 の移送だけである。**定理にはしていない。** -/
+
+def invE94 : Term → BT
+  | zero => BT.zero
+  | phi a b => match a with | zero => BT.D 0 (invE94 b) | _ => BT.zero
+  | add a b => BT.sum (invE94 a) (invE94 b)
+  | _ => BT.zero
+
+def lowSeed94 : List Term := [zero, TM.Term.one, TM.Term.omega]
+def lowGrow94 (p : List Term) : List Term :=
+  (p ++ p.map (fun a => phi zero a) ++ p.flatMap (fun a => p.map (fun b => plus a b))).eraseDups
+def lowPop94 : List Term :=
+  (lowGrow94 (lowGrow94 (lowGrow94 lowSeed94))).filter (fun s => inT s && lt s E081)
+
+#guard lowPop94.length == 207
+#guard lowPop94.all fun s => dict (invE94 s) == s
+#guard lowPop94.all fun s => bgood94 (invE94 s)
+
+/-! **否定 — 母集団は `Γ₀` の上の生の塔のところで密ではない。**
+    495 の値のうち `[rawT94 n, Γ₁)` に入るものは 0。証人は §94.6 が手で作る。 -/
+#guard (List.range 4).all fun n => dpool94.countP (fun d => le (rawT94 n) d && lt d Gam1_94) == 0
+
+end
+
 end Evidence.Region
