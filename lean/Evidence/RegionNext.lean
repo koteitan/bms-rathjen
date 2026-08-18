@@ -31016,4 +31016,665 @@ open Evidence.WF
 
 end
 
+/-! ## §78 THE `⊖ 1` HALF OF THE `K`-GATE IS A THEOREM — ONE COMPARISON IS ALL THAT IS LEFT
+
+§75 reduced the whole `K`-gate to two clauses about a single firing pair `(aV, cV)` of the
+`wcnf` scan on `dict a`, with `Δ = W^(aV ⊖ W)·cV`:
+
+    LocalFacts2_75 0 (aV, cV) :  (K2')  K_{Ω₁} aV ∪ K_{Ω₁} cV < Δ
+                                 (K4)   Δ ⊖ 1 ≠ Δ  ⟹  both `K`-sets are empty
+
+**§78 proves (K4), unconditionally.**  Not for the level-one image, not for standard `a`, not
+even for a firing pair: for EVERY pair of 𝔗(M) terms.  What is left of the gate is (K2')
+alone, and §78.5 measures which of its two halves carries the content.
+
+WHAT IS PROVED.
+
+  §78.1  **FOUR SMALL FACTS ABOUT `0` AND `1`.**  `ofList l = 0` only for `l = []` and
+         `l = [0]`; a `≤ 1` additively principal term IS `1` (through §8's `below_one`);
+         `s ⊕ t = 0` forces both; and `ω^x = 1` forces `x = 0` — the last by `ω^1 = ω`
+         and §65.3's `omegaNF_mono_inT`, which is cheaper than opening `phiNF`'s five
+         branches.  `logOm q = 0` on an additively principal `q` likewise forces `q = 1`,
+         and there the `φ̄(0,·)` clause of `logOm` is the only one that has to be looked at.
+
+  §78.2  **(K4) IS A THEOREM.**  `k4_78`.  The proof is a chain of forcings and it says
+         exactly where the branch lives:
+
+             Δ ⊖ 1 ≠ Δ  ⟹  the leading component of Δ is `1`
+                        ⟹  ω^(W·(aV ⊖ W) + log cV₀) = 1   (`Δ` is a `mulL`, so its
+                                                            components are `ω`-powers)
+                        ⟹  W·(aV ⊖ W) = 0  and  log cV₀ = 0
+                        ⟹  aV = W  and  cV = a natural number.
+
+         Both `K`-sets are then empty by §75.4b's `kset_fst_reg75` and `Kset κ 1 = ∅` — the
+         two lemmas that §75 already had and could not reach.  **The branch is not vacuous**:
+         §78.5 exhibits the pairs where it fires (4 of 102 in this section's population, 27 of
+         325 in §75.6's), and at every one of them `Δ = 1`.
+
+  §78.3  **WHAT IS LEFT IS ONE CLAUSE.**  `LocalK2_78` is (K2') by itself;
+         `localStdFacts2_of_k2_78` recovers §75's two-clause `LocalStdFacts2_75` from it, and
+         `psiIdxOKStd172_of_k2_78` chains §73's and §72's assemblies to §72's second gate.
+         `certIn_t326_k2_78` re-derives row 326's certificate on top of §77:
+
+             LocalK2_78 → DictHeadLt77 → CofDenseS1 → BCofIn71 → Acc → CertifiedIn …
+
+         `localK2_of_split78` splits the residual at `aV` and `cV`, because §78.5 says the two
+         halves are not equally hard, and `ksetOK_dd_of_k2_78` records — in one line off
+         §75.2's `mem_Kset_ddOf75` — that the residual IMPLIES [Rathjen, 1991] 2.1(vi) for the
+         single term `Δ`.  §78.5 measures the converse at 0 disagreements on 429 firing pairs,
+         so the residual's real shape is one term, not a pair.
+
+WHAT IS **NOT** CLAIMED.  (K2') is NOT proved, in either half.  It is the transport of
+Buchholz's `G(a,0) < a` that §68, §72, §73 and §75 all named, and §78 does not spend `isStd`
+either.  Nothing here proves `DictHeadLt77`, `CofDenseS1` or `BCofIn71`.
+
+WHAT THE MEASUREMENT SAYS (§78.5 gives the construction).  **The negative results first.**
+
+  * **The residual is the `aV` half.**  Over the three populations — 129 in-region terms,
+    217 with an index past the bound, 118 non-standard, 429 firing pairs in all — (K2') fails
+    87 times and **every single failure is `K_{Ω₁} aV ≮ Δ`.  The `cV` half does not fail
+    once.**  §75.6 measured only the union.  A §79 that wants the gate should attack
+    `K_{Ω₁} aV < Δ` and may treat `K_{Ω₁} cV < Δ` as the easier half.
+  * **`BT.isStd` is the side condition that carries (K2'), not the level bound.**  On the
+    bumped terms that stay standard (51 terms, 51 pairs) (K2') does not fail at all, even
+    with `ψ₃` inside; on the level-bounded but NOT standard population (118 terms, 110 pairs)
+    it fails 4 times.  `kBad78 = ψ₁ψ₁(ψ₁ψ₁ψ₀ψ₁ψ₁ψ₁0 ⊕ ψ₀ψ₁ψ₁ψ₁ψ₁ψ₁0)` freezes the smallest
+    of the four as a theorem: level ≤ 1, `BT.isStd` TRUE, `BT.isStd (ψ₀ ·)` FALSE, `k2b78`
+    false.  It is §75.6's `wStep75` phenomenon one width up — a term that is Buchholz standard
+    and stops being so under one `ψ₀`; `wStep75` was a tower, this one is a sum.
+  * **§73.7's (K2) is not the same clause as (K2'), and this population separates them.**
+    `K_{Ω₁} aV < aV` fails 92 times against (K2')'s 87, and the two verdicts DISAGREE on 5
+    pairs.  Inside the region (K2) fails 5 times and (K2') zero times.  §75.4c found this at
+    `ψ`-nesting 9 in towers; it is here again at width 2 and 3, which is independent evidence
+    that the comparison must be against `Δ`.
+  * **(K4) survives everything.**  0 failures on all 429 pairs — which is what a theorem has
+    to do, and the measurement was made BEFORE the proof; that is why (K4) was the clause to
+    attack.
+
+  The positive side.  0 failures of (K2') and of (K4) on the 102 firing pairs of the
+  in-region population, 19 of which have a non-empty `K_{Ω₁} aV` and 12 a non-empty
+  `K_{Ω₁} cV`; 88 distinct `(aV, cV)` shapes.  The (K4) branch `Δ ⊖ 1 ≠ Δ` fires at 4 of the
+  102, and at every one of them `aV = Ω₁`, `cV = 1`, `Δ = 1` — exactly the shape §78.2 forces;
+  on §75.6's `hotD75` it fires at 27 of 325 and `k4b78` holds at all 27.  `K_{Ω₁} Δ` is
+  non-empty at 155 of the 429, so the reformulation above is not vacuous either.  §75.6's
+  (K3) `cV ≤ Δ` holds at all 429 (still unproved); `aV ≤ Δ` fails at 8, which is why §75.4c
+  dropped (K5).  `ksetStepOK_wOK78` and `ksetStepOK_wWide78` freeze the new decidable route
+  on a `ψ`-nesting-9 tower and on a width-2 sum, both with a non-empty `K_{Ω₁} aV`.
+-/
+/-! ### §78.1 補助 — `0` と `1` をめぐる四つの小さな事実 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ofList l = 0` になるのは列が空か `[0]` のときだけ。 -/
+private theorem ofList_eq_zero78 : ∀ (l : List Term), ofList l = zero → l = [] ∨ l = [zero]
+  | [], _ => Or.inl rfl
+  | [a], h => Or.inr (by rw [show a = zero from h])
+  | _ :: _ :: _, h => absurd h (by intro hc; exact Term.noConfusion hc)
+
+/-- `1` 以下の加法主要項は `1` そのもの。 -/
+private theorem eq_one_of_le_one78 {q : Term} (hq : inT q = true) (hap : q.isAP = true)
+    (h : le q one = true) : q = one := by
+  rcases (Bool.or_eq_true _ _).mp (show ((q == one) || lt q one) = true from h) with h1 | h1
+  · exact of_decide_eq_true h1
+  · exact absurd (below_one q hq (fuelOf q one) h1) (ne_zero_of_isAP hap)
+
+/-- `ω^x = 1` なら `x = 0`。`ω^1 = ω` で押さえる。 -/
+private theorem eq_zero_of_omegaNF_one78 {z : Term} (hz : inT z = true)
+    (h : omegaNF z = one) : z = zero := by
+  by_cases hne : z = zero
+  · exact hne
+  exfalso
+  have h2 : le (omegaNF one) (omegaNF z) = true :=
+    omegaNF_mono_inT inT_one hz (le_one_inT hz hne)
+  rw [h, show omegaNF one = phi zero one from rfl] at h2
+  have h3 : (phi zero one : Term) = one :=
+    eq_one_of_le_one78 (by decide) rfl h2
+  exact Term.noConfusion h3 (fun _ h5 => Term.noConfusion h5)
+
+/-- `s ⊕ t = 0` なら両方 `0`。 -/
+private theorem plus_eq_zero78 {s t : Term} (ht : inT t = true) (h : plus s t = zero) :
+    s = zero ∧ t = zero := by
+  cases hl : toList t with
+  | nil => rw [plus_nil hl] at h; exact ⟨h, toList_eq_nil t hl⟩
+  | cons b1 r =>
+    exfalso
+    rw [plus_cons66 hl] at h
+    have hb1 : b1 ∈ (toList s).filter (fun a => le b1 a) ++ (b1 :: r) :=
+      List.mem_append.mpr (Or.inr (List.Mem.head _))
+    rcases ofList_eq_zero78 _ h with h2 | h2
+    · rw [h2] at hb1; cases hb1
+    · rw [h2] at hb1
+      have hz : b1 = zero := List.mem_singleton.mp hb1
+      have hap : b1.isAP = true := inTL_isAP ht b1 (by rw [hl]; exact List.Mem.head _)
+      rw [hz] at hap
+      exact Bool.noConfusion hap
+
+/-- `mulL e y = 0` なら `y` の成分列は空。 -/
+private theorem toList_nil_of_mulL_zero78 {e y : Term} (h : mulL e y = zero) :
+    toList y = [] := by
+  cases hl : toList y with
+  | nil => rfl
+  | cons p r =>
+    exfalso
+    have h1 : ofList ((toList y).map (fun q => omegaNF (plus e (logOm q)))) = zero := h
+    rw [hl, List.map_cons] at h1
+    rcases ofList_eq_zero78 _ h1 with h2 | h2
+    · exact List.cons_ne_nil _ _ h2
+    · injection h2 with hh _
+      exact ne_zero_of_isAP (isAP_omegaNF _) hh
+
+/-- `subAP w h = 0` なら成分列は空か `[w]`。 -/
+private theorem subAP_eq_zero78 {w t : Term} (ht : inT t = true) (h : subAP w t = zero) :
+    toList t = [] ∨ toList t = [w] := by
+  cases hl : toList t with
+  | nil => exact Or.inl rfl
+  | cons p r =>
+    have h1 : (if p == w then ofList r else t) = zero := by
+      rw [show subAP w t = (match toList t with
+            | [] => zero
+            | q :: rest => if q == w then ofList rest else t) from rfl, hl] at h
+      exact h
+    by_cases hp : (p == w) = true
+    · rw [if_pos hp] at h1
+      rcases ofList_eq_zero78 r h1 with h2 | h2
+      · refine Or.inr ?_
+        rw [h2, of_decide_eq_true hp]
+      · exfalso
+        have hap : (zero : Term).isAP = true :=
+          inTL_isAP ht zero (by rw [hl, h2]; exact List.Mem.tail _ (List.Mem.head _))
+        exact Bool.noConfusion hap
+    · rw [if_neg hp] at h1
+      exfalso
+      rw [h1] at hl
+      exact List.cons_ne_nil _ _ (show ([] : List Term) = p :: r from hl).symm
+
+/-- 成分列が空か `[Ω_{u+1}]` なら `K_{Ω_{u+1}}` は空。 -/
+private theorem kset_nil_of_toList78 {u : Nat} {t : Term}
+    (h : toList t = [] ∨ toList t = [reg (u+1)]) : ∀ y, y ∈ Kset (reg (u+1)) t → False := by
+  intro y hy
+  rw [Kset_eq_KsetL] at hy
+  rcases h with h | h
+  · rw [h] at hy
+    obtain ⟨a, ha, _⟩ := (mem_KsetL_iff _ y _).mp hy
+    cases ha
+  · rw [h] at hy
+    obtain ⟨a, ha, hya⟩ := (mem_KsetL_iff _ y _).mp hy
+    rw [List.mem_singleton.mp ha] at hya
+    exact mem_Kset_reg (u+1) hya
+
+/-- `logOm q = 0` になる加法主要項は `1` だけ。 -/
+private theorem eq_one_of_logOm_zero78 : ∀ {q : Term}, q.isAP = true → logOm q = zero → q = one
+  | zero, hap, _ => Bool.noConfusion hap
+  | add _ _, hap, _ => Bool.noConfusion hap
+  | M, _, h => absurd (show (M : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | omg a, _, h => absurd (show (omg a : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | psi k a, _, h => absurd (show (psi k a : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | Z a, _, h => absurd (show (Z a : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | phi M b, _, h => absurd (show (phi M b : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | phi (add x y) b, _, h =>
+    absurd (show (phi (add x y) b : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | phi (omg x) b, _, h =>
+    absurd (show (phi (omg x) b : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | phi (phi x y) b, _, h =>
+    absurd (show (phi (phi x y) b : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | phi (psi x y) b, _, h =>
+    absurd (show (phi (psi x y) b : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | phi (Z x) b, _, h =>
+    absurd (show (phi (Z x) b : Term) = zero from h) (fun hc => Term.noConfusion hc)
+  | phi zero b, _, h => by
+    by_cases hs : phiShifted zero b = true
+    · exfalso
+      have hz : plus b one = zero := by
+        rw [show logOm (phi zero b) = (if phiShifted zero b then plus b one else b) from rfl,
+          if_pos hs] at h
+        exact h
+      exact Term.noConfusion (plus_eq_zero78 inT_one hz).2
+    · have hb : b = zero := by
+        rw [show logOm (phi zero b) = (if phiShifted zero b then plus b one else b) from rfl,
+          if_neg hs] at h
+        exact h
+      rw [hb]
+      rfl
+
+end
+
+/-! ### §78.2 (K4) は定理 — `Δ ⊖ 1 ≠ Δ` は `aV = Ω_{u+1}`・`cV ∈ ℕ` を強いる -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§78.1 の主定理 — (K4) は定理。**  `Δ ⊖ 1 ≠ Δ` なら `aV` の `K` も `cV` の `K` も空。
+    発火 (`Ω_{u+1} ≤ aV`) すら要らない。 -/
+theorem k4_78 {u : Nat} {ac : Term × Term} (h1 : inT ac.1 = true) (h2 : inT ac.2 = true)
+    (h : sub1 (ddOf75 (reg (u+1)) ac) ≠ ddOf75 (reg (u+1)) ac) :
+    (∀ y, y ∈ Kset (reg (u+1)) ac.1 → False) ∧
+      (∀ y, y ∈ Kset (reg (u+1)) ac.2 → False) := by
+  have hw : inT (reg (u+1)) = true := inT_reg (u+1)
+  have he : inT (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) = true :=
+    inT_mulL mulDescInT hw (inT_subAP h1)
+  have hmap : toList (ddOf75 (reg (u+1)) ac)
+      = (toList ac.2).map
+        (fun q => omegaNF (plus (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) (logOm q))) := by
+    show toList (ofList _) = _
+    refine toList_ofList _ (fun x hx => ?_)
+    obtain ⟨q, _, hq⟩ := List.mem_map.mp hx
+    rw [← hq]
+    exact isAP_omegaNF _
+  cases hl : toList (ddOf75 (reg (u+1)) ac) with
+  | nil =>
+    exact absurd (by rw [toList_eq_nil _ hl]; rfl) h
+  | cons p r =>
+    have hsub : sub1 (ddOf75 (reg (u+1)) ac)
+        = (if p == one then ofList r else ddOf75 (reg (u+1)) ac) := by
+      show (match toList (ddOf75 (reg (u+1)) ac) with
+            | [] => zero
+            | q :: rest => if q == one then ofList rest else ddOf75 (reg (u+1)) ac) = _
+      rw [hl]
+    have hp : p = one := by
+      by_cases hpp : (p == one) = true
+      · exact of_decide_eq_true hpp
+      · exact absurd (by rw [hsub, if_neg hpp]) h
+    cases hl2 : toList ac.2 with
+    | nil =>
+      exfalso
+      rw [hl2, List.map_nil] at hmap
+      rw [hmap] at hl
+      exact List.cons_ne_nil _ _ hl.symm
+    | cons q0 r0 =>
+      obtain ⟨hc2, hd2⟩ := inT_toList ac.2 h2
+      rw [hl2] at hc2 hd2
+      obtain ⟨⟨hap0, hq0⟩, hcr⟩ := inTL_cons.mp hc2
+      rw [hl2, List.map_cons] at hmap
+      rw [hmap] at hl
+      injection hl with hfp _
+      rw [hp] at hfp
+      have hz : plus (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) (logOm q0) = zero :=
+        eq_zero_of_omegaNF_one78 (inT_plus he (inT_logOm hq0)) hfp
+      obtain ⟨hez, hlz⟩ := plus_eq_zero78 (inT_logOm hq0) hz
+      have hq01 : q0 = one := eq_one_of_logOm_zero78 hap0 hlz
+      refine ⟨kset_nil_of_toList78 (subAP_eq_zero78 h1
+        (toList_eq_nil _ (toList_nil_of_mulL_zero78 hez))), ?_⟩
+      intro y hy
+      rw [Kset_eq_KsetL] at hy
+      obtain ⟨a, ha, hya⟩ := (mem_KsetL_iff _ y _).mp hy
+      have haone : a = one := by
+        rw [hl2] at ha
+        cases ha with
+        | head => exact hq01
+        | tail _ hmem =>
+          have hai := (Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcr a hmem)
+          have hle : le a q0 = true := descL_bound_inT r0 q0 hq0 hcr hd2 a hmem
+          rw [hq01] at hle
+          exact eq_one_of_le_one78 hai.2 hai.1 hle
+      rw [haone, Kset_one] at hya
+      cases hya
+
+/-- 両方の `K` が空なら (K2')・(K4) はそのまま出る。 -/
+theorem localFacts2_of_empty78 {u : Nat} {ac : Term × Term}
+    (h1 : ∀ y, y ∈ Kset (reg (u+1)) ac.1 → False)
+    (h2 : ∀ y, y ∈ Kset (reg (u+1)) ac.2 → False) : LocalFacts2_75 u ac :=
+  ⟨fun y hy => by
+      rcases hy with hy | hy
+      · exact (h1 y hy).elim
+      · exact (h2 y hy).elim,
+   fun _ => ⟨h1, h2⟩⟩
+
+/-- 指数が `Ω_{u+1}` ちょうどで係数が自然数なら、対はまるごと只で片づく。 -/
+theorem localFacts2_reg_ofNat78 {u n : Nat} {ac : Term × Term}
+    (h1 : ac.1 = reg (u+1)) (h2 : ac.2 = ofNat n) : LocalFacts2_75 u ac :=
+  localFacts2_of_empty78 (kset_fst_reg75 h1) (kset_snd_ofNat75 h2)
+
+/-- **(K2') だけ残る形。** 指数側の `K` は `Ω_{u+1}` なら空、(K4) は §78.1 の定理。 -/
+theorem localFacts2_of_reg_fst78 {u : Nat} {ac : Term × Term}
+    (hi1 : inT ac.1 = true) (hi2 : inT ac.2 = true) (h1 : ac.1 = reg (u+1))
+    (h2 : ∀ y, y ∈ Kset (reg (u+1)) ac.2 → lt y (ddOf75 (reg (u+1)) ac) = true) :
+    LocalFacts2_75 u ac :=
+  ⟨fun y hy => by
+      rcases hy with hy | hy
+      · exact (kset_fst_reg75 h1 y hy).elim
+      · exact h2 y hy,
+   fun hne => k4_78 hi1 hi2 hne⟩
+
+end
+
+/-! ### §78.3 残るのは一条項 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+def LocalK2_78 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, (y ∈ Kset (reg 1) ac.1 ∨ y ∈ Kset (reg 1) ac.2) →
+        lt y (ddOf75 (reg 1) ac) = true
+
+/-- **§78.2 の主定理。** 一条項から §75 の二条項が出る — (K4) は仮説ではない。 -/
+theorem localStdFacts2_of_k2_78 (H : LocalK2_78) : LocalStdFacts2_75 := by
+  intro a hb hs hi hl ac hac hle
+  obtain ⟨hc, hd⟩ := inT_toList (dict a) hi
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hc hd
+    (ltM_toList (dict a) hi hl)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  exact ⟨H a hb hs hi hl ac hac hle, fun hne => k4_78 hi1 hi2 hne⟩
+
+theorem localStd75_of_k2_78 (H : LocalK2_78) : LocalStd75 :=
+  localStd75_of_facts2_75 (localStdFacts2_of_k2_78 H)
+
+theorem psiIdxStep073_of_k2_78 (H : LocalK2_78) : PsiIdxStep073 :=
+  psiIdxStep073_of_facts2_75 (localStdFacts2_of_k2_78 H)
+
+theorem psiIdxOKStd172_of_k2_78 (H : LocalK2_78) : PsiIdxOKStd172 :=
+  psiIdxOKStd172_of_step172 (psiIdxStepStd172_of_step073 (psiIdxStep073_of_k2_78 H))
+
+/-- **§78 の結論。** 326 行目の証明書は、`K` の側では (K2') ただ一つを待つ。 -/
+theorem certIn_t326_k2_78 (H : LocalK2_78) (HD : DictHeadLt77) (HCD : CofDenseS1)
+    (HBC : BCofIn71) (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_head77 (psiIdxOKStd172_of_k2_78 H) HD HCD HBC hacc
+
+/-- 残る一条項の `aV` 側。**§78.5 が測るとおり、破れるのはこちらだけ。** -/
+def LocalK2Fst_78 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.1 → lt y (ddOf75 (reg 1) ac) = true
+
+/-- 残る一条項の `cV` 側。**429 歩で一度も破れない** (§78.5)。 -/
+def LocalK2Snd_78 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    ∀ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true →
+      ∀ y, y ∈ Kset (reg 1) ac.2 → lt y (ddOf75 (reg 1) ac) = true
+
+/-- 二つに割った形から元の一条項。 -/
+theorem localK2_of_split78 (H1 : LocalK2Fst_78) (H2 : LocalK2Snd_78) : LocalK2_78 := by
+  intro a hb hs hi hl ac hac hle y hy
+  rcases hy with hy | hy
+  · exact H1 a hb hs hi hl ac hac hle y hy
+  · exact H2 a hb hs hi hl ac hac hle y hy
+
+/-- **残る条項は `Δ` 自身の 2.1(vi) を含む。** §75.2 の `mem_Kset_ddOf75` の一行の系。
+    **逆も 429 歩すべてで成り立つ** (§78.5、不一致 0) が、それは測定であって証明ではない
+    — `K_{Ω₁} aV ∪ K_{Ω₁} cV ⊆ K_{Ω₁} Δ` を示すには `omegaNF`・`logOm`・`plus` の
+    `Kset` 補題を逆向きに引き直さねばならない。§79 の材料。 -/
+theorem ksetOK_dd_of_k2_78 {u : Nat} {ac : Term × Term}
+    (h : ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) →
+      lt y (ddOf75 (reg (u+1)) ac) = true) :
+    ∀ y ∈ Kset (reg (u+1)) (ddOf75 (reg (u+1)) ac),
+      lt y (ddOf75 (reg (u+1)) ac) = true :=
+  fun y hy => h y (mem_Kset_ddOf75 hy)
+
+end
+
+/-! ### §78.4 判定器 — `⊖ 1` を見ない形 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+def k2b78 (u : Nat) (x : Term) : Bool :=
+  (wcnf (reg (u+1)) (toList x)).1.all fun ac =>
+    !(le (reg (u+1)) ac.1) ||
+      ((Kset (reg (u+1)) ac.1 ++ Kset (reg (u+1)) ac.2).all fun y =>
+        lt y (mulL (mulL (reg (u+1)) (subAP (reg (u+1)) ac.1)) ac.2))
+
+/-- **判定器から局所条件。** `⊖ 1` の始末は §78.1 の (K4) がする。 -/
+theorem localK75_of_k2b78 {u : Nat} {x : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (h : k2b78 u x = true) : LocalK75 u x := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg (u+1)) (isSC_reg_succ u) (toList x) hc hd
+    (ltM_toList x hx hlx)
+  refine localK75_of_facts2_75 u x (fun ac hac hle => ?_)
+  obtain ⟨hi1, _, hi2, _⟩ := hallOK ac hac
+  have hall := List.all_eq_true.mp h ac hac
+  rw [hle, Bool.not_true, Bool.false_or] at hall
+  refine ⟨fun y hy => ?_, fun hne => k4_78 hi1 hi2 hne⟩
+  refine List.all_eq_true.mp hall y ?_
+  rcases hy with hy | hy
+  · exact List.mem_append.mpr (Or.inl hy)
+  · exact List.mem_append.mpr (Or.inr hy)
+
+/-- 系 — 判定器から一歩ぶんの門。 -/
+theorem ksetStepOK_of_k2b78 {u : Nat} {x : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (h : k2b78 u x = true) : KsetStepOK u x :=
+  ksetStepOK_of_local75 u x hx hlx (localK75_of_k2b78 hx hlx h)
+
+end
+
+/-! ### §78.5 測定 (凍結)
+
+**構成を先に書く。**  `tw78 p` は添字の列 `p` を上から順に重ねた塔
+`ψ_{p₁}ψ_{p₂}…ψ_{p_k}0`、`T78 n k` は長さ `n` の `{0,1}` 列のうち `0` が `k` 個以下のもの
+から作った塔の全体。母集団は**深さと幅を別々に振った四つの群**で、`ψ₀` をかぶせて
+Buchholz 標準になるものだけを残す (条項が語るのはそこだけだから)。
+
+    G1  深さ  `{0,1}^9` の塔ぜんぶ                              42 個  `ψ` の入れ子 9 段, 幅 1
+    G2  幅 2   `ψ₁ψ₁(x ⊕ y)`,  x,y ∈ T78 6 1                    24 個  入れ子 8 段, 幅 2
+    G3  幅 3   `ψ₁(x ⊕ y ⊕ z)`,  x,y,z ∈ T78 4 1                32 個  入れ子 5 段, 幅 3
+    G4  係数枝 深さ 4 以下の塔ぜんぶ と `ψ₁^k 0 ⊕ y` (k = 3,4,5)  31 個  (K4) の枝が出るのは
+                                                                       この形だけ
+    ------------------------------------------------------------------------------------
+    pop78 = G1 ++ G2 ++ G3 ++ G4 の標準なもの                   129 個, 発火 102 歩
+
+**領域の外**も二通りに作る。`bump78 u` は `ψ₀` を `ψ_u` に差し替える (**上限より 2 つ・
+3 つ先の添字**)、`nst78` は G2・G3 の生成元のうち標準でないもの。
+
+    bmp78 = bump78 2 と bump78 3 を pop78 に当てたもの          217 個, 発火 217 歩
+          (うち 41 個は `ψ₀` を持たない塔なので変わらない — 上限を本当に外れる歩は 176)
+    nst78 = G2・G3 の非標準なもの (段の上限は満たす)            118 個, 発火 110 歩
+
+`x ⊕ y` の形は `Δ` の材料を稼ぐために入れた。深さだけでは幅は出ない — §75.6 が
+同じことを別の形で言っている。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 添字の列から塔を作る。 -/
+def tw78 : List Nat → BT
+  | [] => BT.zero
+  | u :: r => BT.D u (tw78 r)
+
+def bits78 : Nat → List (List Nat)
+  | 0 => [[]]
+  | k+1 => (bits78 k).flatMap fun l => [0 :: l, 1 :: l]
+
+/-- 長さ `n` の `{0,1}` 列で `0` が `k` 個以下のものから作った塔。 -/
+def T78 (n k : Nat) : List BT :=
+  ((bits78 n).filter fun l => (l.filter (· == 0)).length ≤ k).map tw78
+
+/-- 条項が語る側 — `ψ₀` をかぶせて Buchholz 標準。 -/
+def std78 (a : BT) : Bool := BT.isStd (BT.D 0 a)
+
+def sums2_78 (l : List BT) : List BT := l.flatMap fun x => l.map fun y => BT.sum x y
+def sums3_78 (l : List BT) : List BT :=
+  l.flatMap fun x => l.flatMap fun y => l.map fun z => BT.sum x (BT.sum y z)
+
+/-- `ψ₀` を `ψ_u` に差し替える — **上限より先の添字**を入れる操作。 -/
+def bump78 (u : Nat) : BT → BT
+  | .zero => .zero
+  | .D 0 a => .D u a
+  | .D v a => .D v (bump78 u a)
+  | .sum a b => .sum (bump78 u a) b
+
+def rawG1_78 : List BT := T78 9 9
+def rawG2_78 : List BT := (sums2_78 (T78 6 1)).map fun s => BT.D 1 (BT.D 1 s)
+def rawG3_78 : List BT := (sums3_78 (T78 4 1)).map fun s => BT.D 1 s
+def rawG4_78 : List BT := ((List.range 5).flatMap fun n => T78 n 9)
+  ++ ([3,4,5].flatMap fun k => (T78 4 1).map fun y =>
+        BT.sum (tw78 (List.replicate k 1)) y)
+
+def pop78 : List BT := (rawG1_78 ++ rawG2_78 ++ rawG3_78 ++ rawG4_78).filter std78
+def bmp78 : List BT := (pop78.map (bump78 2) ++ pop78.map (bump78 3)).eraseDups
+def nst78 : List BT := (rawG2_78 ++ rawG3_78).filter fun a => !(std78 a)
+
+/-- 発火する対だけ。 -/
+def fire78 (a : BT) : List (Term × Term) :=
+  ((wcnf (reg 1) (toList (dict a))).1).filter fun ac => le (reg 1) ac.1
+def dd78 (ac : Term × Term) : Term := mulL (mulL (reg 1) (subAP (reg 1) ac.1)) ac.2
+/-- (K4) の判定器 — 定理になった側。 -/
+def k4b78 (ac : Term × Term) : Bool :=
+  (sub1 (dd78 ac) == dd78 ac) || ((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).isEmpty)
+/-- 三つの母集団の発火する対をぜんぶ。 -/
+def allp78 : List (Term × Term) := (pop78 ++ bmp78 ++ nst78).flatMap fire78
+
+-- 母集団の大きさ。
+#guard [(rawG1_78.filter std78).length, (rawG2_78.filter std78).length,
+        (rawG3_78.filter std78).length, (rawG4_78.filter std78).length] == [42, 24, 32, 31]
+#guard pop78.length == 129
+#guard bmp78.length == 217
+#guard nst78.length == 118
+#guard (pop78.flatMap fire78).length == 102
+#guard (bmp78.flatMap fire78).length == 217
+#guard (nst78.flatMap fire78).length == 110
+-- 段と標準性。
+#guard pop78.all (btLe72 1)
+#guard nst78.all (btLe72 1)
+-- `ψ₀` を持たない塔は `bump78` で変わらない。段の上限を本当に外れるのは 176 個。
+#guard (bmp78.filter (btLe72 1)).length == 41
+#guard ((bmp78.filter fun a => !(btLe72 1 a)).flatMap fire78).length == 176
+#guard (((bmp78.filter (btLe72 1)).flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).all fun y => lt y (dd78 ac))).length == 0
+
+/-! **肯定 1 — 領域の中では (K2') も (K4) も落ちない。`K` は空回りしていない。**
+102 歩のうち 19 歩で `K_{Ω₁} aV` が、12 歩で `K_{Ω₁} cV` が空でない。 -/
+
+#guard (pop78.filter fun a => !(k2b78 0 (dict a))).length == 0
+#guard ((pop78.flatMap fire78).filter fun ac => !(k4b78 ac)).length == 0
+#guard ((pop78.flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.1).isEmpty)).length == 19
+#guard ((pop78.flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.2).isEmpty)).length == 12
+#guard ((pop78.flatMap fire78).map fun ac => (toStr ac.1, toStr ac.2)).eraseDups.length == 88
+
+/-! **肯定 2 — (K4) の枝は空回りではない。** `Δ ⊖ 1 ≠ Δ` は 102 歩のうち 4 歩で起き、
+そのどれでも `aV = Ω₁`・`cV = 1`・`Δ = 1` — §78.2 の証明が言うとおりの形。 -/
+
+#guard ((pop78.flatMap fire78).filter fun ac => sub1 (dd78 ac) != dd78 ac).length == 4
+#guard ((pop78.flatMap fire78).filter fun ac =>
+  sub1 (dd78 ac) != dd78 ac && !(ac.1 == reg 1 && ac.2 == one && dd78 ac == one)).length == 0
+
+/-! **否定 1 — 破れるのは (K2') の `aV` 側だけ。** 三つの母集団の 429 歩で (K2') は
+87 回落ちるが、**そのすべてが `K_{Ω₁} aV ≮ Δ`**。`cV` 側は一度も落ちない。
+§75.6 は和の形でしか測っていなかった。**§79 は `aV` 側を狙えばよい。** -/
+
+#guard ((bmp78.flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).all fun y => lt y (dd78 ac))).length == 83
+#guard ((nst78.flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).all fun y => lt y (dd78 ac))).length == 4
+#guard (((bmp78 ++ nst78 ++ pop78).flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.2).all fun y => lt y (dd78 ac))).length == 0
+#guard (((bmp78 ++ nst78 ++ pop78).flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.1).all fun y => lt y (dd78 ac))).length == 87
+
+/-! **否定 2 — (K2') を担ぐ側条件は `BT.isStd` であって段の上限ではない。**
+添字を 2・3 に上げても標準なままの 51 個では (K2') は一度も落ちない。段の上限を
+満たしたまま標準でない 118 個では 4 回落ちる。 -/
+
+#guard (bmp78.filter std78).length == 51
+#guard (((bmp78.filter std78).flatMap fire78).filter fun ac =>
+  !((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).all fun y => lt y (dd78 ac))).length == 0
+#guard (nst78.filter fun a => !(k2b78 0 (dict a))).length == 4
+
+/-! **否定 3 — (K4) は三つの母集団のどこでも落ちない。** 定理なのだから当然だが、
+**測ったのは定理を書く前**で、これが (K4) を狙った理由。 -/
+
+#guard (((bmp78 ++ nst78 ++ pop78).flatMap fire78).filter fun ac => !(k4b78 ac)).length == 0
+
+/-! **否定 4 — §73.7 の (K2) 「`K_{Ω₁} aV < aV`」はこの母集団でも偽、そして
+`Δ` と比べる形とは一致しない。** 429 歩で (K2) は 92 回、(K2') は 87 回落ち、**5 歩で
+食い違う** — 領域の中の 102 歩でも (K2) は 5 回落ち、(K2') は 0 回。§75.4c が
+深さ 9 の塔で見たことが、幅 2・3 の和でも同じ形で起きる。 -/
+
+#guard (allp78.filter fun ac => !(KOK73 ac.1)).length == 92
+#guard (allp78.filter fun ac => !((Kset (reg 1) ac.1).all fun y => lt y (dd78 ac))).length == 87
+#guard (allp78.filter fun ac =>
+  KOK73 ac.1 != ((Kset (reg 1) ac.1).all fun y => lt y (dd78 ac))).length == 5
+#guard ((pop78.flatMap fire78).filter fun ac => !(KOK73 ac.1)).length == 5
+#guard ((pop78.flatMap fire78).filter fun ac => !(KOK73 ac.2)).length == 0
+
+/-! **肯定 3 — 残る条項は `Δ` ひとつについての 2.1(vi) と一致する (測定のみ)。**
+`K_{Ω₁} Δ ⊆ K_{Ω₁} aV ∪ K_{Ω₁} cV` は §75.2 の定理 (`mem_Kset_ddOf75`)。逆の包含は
+429 歩すべてで成り立ち、判定は一度も食い違わない。155 歩で `K_{Ω₁} Δ` は空でないから
+空回りでもない。**§79 は「対」ではなく「一項 `Δ`」を相手にすればよい。** -/
+
+#guard (allp78.filter fun ac => !((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).all fun y =>
+  y ∈ Kset (reg 1) (dd78 ac))).length == 0
+#guard (allp78.filter fun ac => !((Kset (reg 1) (dd78 ac)).all fun y =>
+  y ∈ Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2)).length == 0
+#guard (allp78.filter fun ac =>
+  ((Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2).all fun y => lt y (dd78 ac))
+    != KOK73 (dd78 ac)).length == 0
+#guard (allp78.filter fun ac => !((Kset (reg 1) (dd78 ac)).isEmpty)).length == 155
+
+/-! **肯定 4 — §75.6 の (K3) はこの母集団でも 429 歩で無条件。証明はしていない。**
+`aV ≤ Δ` の方は 8 歩で落ちる — §75.4c が (K5) を捨てた理由。 -/
+
+#guard (allp78.filter fun ac => !(le ac.2 (dd78 ac))).length == 0
+#guard (allp78.filter fun ac => !(le ac.1 (dd78 ac))).length == 8
+
+/-- **否定 2、定理の形。** 段 1 以下で、`BT` そのものは Buchholz 標準なのに `ψ₀` を
+    かぶせると標準でなくなる項があり、そこで (K2') は破れる。§75.6 の `wStep75` の
+    現象が幅 2 で起きたもので、`wStep75` 自身は塔だった。 -/
+def kBad78 : BT :=
+  BT.D 1 (BT.D 1 (BT.sum (BT.D 1 (BT.D 1 (BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero))))))
+    (BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero))))))))
+
+theorem not_k2_kBad78 :
+    btLe72 1 kBad78 = true ∧ BT.isStd kBad78 = true ∧
+    BT.isStd (BT.D 0 kBad78) = false ∧ k2b78 0 (dict kBad78) = false :=
+  ⟨by decide, by decide, by decide, by decide⟩
+
+/-- **肯定、定理の形 (深さ)。** `ψ` の入れ子 9 段の塔。`K_{Ω₁} aV` は空でない。
+    §78.4 の判定器 — `⊖ 1` を見ない方 — だけで門が出る。 -/
+def wOK78 : BT :=
+  BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 (BT.D 0 BT.zero))))))))
+
+theorem ksetStepOK_wOK78 : KsetStepOK 0 (dict wOK78) :=
+  ksetStepOK_of_k2b78 (by decide) (by decide) (by decide)
+
+/-- **肯定、定理の形 (幅)。** 二項和の上。 -/
+def wWide78 : BT :=
+  BT.D 1 (BT.D 1 (BT.sum (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 BT.zero))))))
+    (BT.D 1 (BT.D 1 (BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero))))))))
+
+theorem ksetStepOK_wWide78 : KsetStepOK 0 (dict wWide78) :=
+  ksetStepOK_of_k2b78 (by decide) (by decide) (by decide)
+
+/-- 系 — 2.1(vi) の `K` の連言も同じ道で出る。 -/
+theorem ksetIdxOK_wOK78 : KsetIdxOK 0 (dict wOK78) :=
+  ksetIdxOK_of_stepOK 0 (dict wOK78) ksetStepOK_wOK78
+
+/-! §75.6 の母集団でも同じことを確かめておく。`hotD75` の 325 歩で (K4) は
+27 歩で発火し、そのどれでも両方の `K` が空 — §78.2 が証明した形。 -/
+
+#guard ((hotD75.flatMap fires73).filter fun p => sub1 (dd73 p) != dd73 p).length == 27
+#guard ((hotD75.flatMap fires73).filter fun p =>
+  sub1 (dd73 p) != dd73 p && !(k4b78 p.2)).length == 0
+#guard ((stdE75.flatMap fires73).filter fun p => !(k4b78 p.2)).length == 0
+
+end
+
+/-! ### §78.6 公理 -/
+
 end Evidence.Region
