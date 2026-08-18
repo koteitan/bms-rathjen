@@ -6525,4 +6525,808 @@ def corpus100 : List BT := corpus95 ++ qual100
 
 end
 
+/-! ## §102 `cof_eps0` ONE AND TWO LEVELS UP — THE `Γ₁` COFINALITY CLAUSE IS A THEOREM
+
+§98 reduced the high half of row 326's density gate, below `Γ₁`, to ONE named clause and
+left it as a hypothesis:
+
+> `CofGam1_98` : every term of 𝔗(M) in `[Γ₀, Γ₁)` is at or below some rung of the raw
+> tower `rawT94` — the `Γ₁` analogue of §9's `cof_eps0`.
+
+and it said, in its own words, why it stopped there:
+
+> `WF.lean` §15's combinators only climb `φ̄ a ·` in the SECOND argument; the tower climbs
+> in the FIRST (`TM/FS.lean`'s `iterGamma`), and there is no Evidence-level cofinality
+> theorem for it.
+
+**§102 builds the first-argument climb, and `CofGam1_98` is now a theorem
+(`CofGam1_102`).**  It costs one structural induction and eleven clause-readings of 2.3.
+No `Frag`, no transitivity, no comparability — for exactly §9's reason: §7 has to compare
+two arbitrary terms, §9 and §102 only have to compare an arbitrary term with a tower.
+
+WHAT MADE IT SHORT.  §9's shape analysis is "a term below `ε₀` is a CNF term".  The
+analogue here is read off 2.3 the same way and is nearly as small: a term of 𝔗(M) below
+`ψ_Ω(q)` is built from `0`, `⊕` and `φ̄` **and at most `ψ`s whose index is `Ω`** — 2.3.2 and
+2.3.3 kill `M` and `ω̄^·`, 2.3.9 kills every `Z`, and 2.3.14(iii) kills every `ψ` whose index
+is not `Ω`, because `Ω = Z0` is the least regular term and 2.3.15 says so.  Only the `ψ`
+clause depends on which `q` one is below, so §102 proves the induction ONCE with that clause
+as a hypothesis (`towBound102`) and pays it twice:
+
+  * at `q = 1` (`Γ₁`) the one surviving `ψ` is `Γ₀` itself — 2.3.14(ii) sends the comparison
+    down to `α < 1` and §9's `below_one` finishes it;
+  * at `q = 0` (`Γ₀`) NO `ψ` survives at all, since `α < 0` is false.
+
+  §102.1  **THE CLAUSES OF 2.3, AS REWRITE RULES AT `ψ_Ω(q)`.**  `lt_M_psi102`,
+          `lt_omg_psi102`, `lt_Z_psiOm102`, `lt_psi_Om102`, `lt_psiZ_psiOm102`,
+          `lt_hd_of_phi_lt_psi102` (the FIRST component of 2.3.5; §65 already had the second),
+          `lt_psi_phi_eq102` / `lt_psi_phi_of_le_fst102` (2.3.4), `lt_add_psi102` and
+          `lt_add_ap102` (2.3.10), and `lt_Z_Om102` / `lt_Om_Z102` (`Ω` is the least `Z`).
+          All at the default fuel; the only new fact about `starF` is `starF f 0 = 0`.
+
+  §102.2  **THE TOWER, THE HEIGHT, AND THE INDUCTION.**  `vTow102 c` is `c`, `φ̄(c,0)`,
+          `φ̄(φ̄(c,0),0)`, …; `htG102` reads the overtaking index off the term's own syntax
+          (`⊕` takes its head, `φ̄` takes `max(htG a + 1, htG b)`, a `ψ` takes 1).
+          `towBound102` : `s ∈ 𝔗(M)`, `s < ψ_Ω(q)` and `htG102 s ≤ m` give
+          `s < vTow102 c m`.
+
+  §102.3  **`Γ₁`.**  `rawT_eq102` (§94.6's raw tower is `vTow102 Γ₀` shifted by one),
+          `hpsi_Gam1_102`, and `cofGam1_102` — **which does not need `Γ₀ ≤ s`**, so it is
+          strictly stronger than the clause §98 asked for.  `CofGam1_102 : CofGam1_98`.
+
+  §102.4  **`Γ₀`, FOR FREE.**  `cofGam0_102` : every term of 𝔗(M) below `Γ₀` is at or below
+          a rung of `gTow102 = 1, ε₀, φ̄(ε₀,0), …`.  And `iterGamma_gTow102` proves that
+          tower IS `TM/FS.lean`'s `iterGamma 1` — i.e. **this repository's own fundamental
+          sequence of `Γ₀`**, `fsN Γ₀ ·` (also kernel-checked at 8 rungs).  So it is the
+          cofinality clause of the `Γ₀` row, not merely an auxiliary of §102.3.
+
+  §102.5  **WHAT THAT BUYS.**  `denseHi_below_Gam1_102` : §98's `denseHi_below_Gam1_98` with
+          its third hypothesis discharged.  Every challenger below `Γ₁` is witnessed at
+          every target at or above `Γ₁`, from `PsiIdxOKStd172` and `DictLtA74` and nothing
+          else — the two clauses row 326 already carries.
+
+  §102.6  **`DictDenseHi94`, DECOMPOSED — AND THREE CLAUSES REMAIN.**  `dictDenseHi_of102`
+          splits the gate into (a) target `≥ Γ₁`, challenger `< Γ₁` — now a theorem;
+          (b1) target in `(ε₀, Γ₀]`; (b2) target in `(Γ₀, Γ₁)`; (c) target and challenger
+          both `≥ Γ₁`.  (b1) is reduced further, to `DictOntoMid102` alone
+          (`denseMid_of_onto102`: a challenger is witnessed by its own preimage, with the
+          single point `s = ε₀` handled by §94.3's `bE94`), which is §97 transposed one
+          level up.  (b2) is `DictDenseMid102` and (c) is `DictDenseAbove102`; all three are
+          HYPOTHESES and are marked as such.  `certIn_t326_102` is row 326 through them.
+
+  §102.7  **TWO REFUTATIONS, AND THEY BREAK DIFFERENT CONJUNCTS.**  `cofGam1_needs_inT102`:
+          delete the formation condition and `ψ_Ω(0 ⊕ M)` is a counterexample — above `Γ₀`,
+          below `Γ₁`, and above EVERY rung of the raw tower.  It fails 2.1(iii) at
+          `isAP 0 = false`, exactly like §9's `φ̄(0 ⊕ M)0` and §97's `junk97`.
+          `cofGam0_needs_inT102`: at `Γ₀` that shape no longer works and the counterexample
+          is `ψ_1(0)`, which breaks **2.1(vi), `κ ∈ R`** instead.  Worth recording because
+          the tower that climbs the FIRST argument is coarser than §9's ω-tower: `φ̄(0 ⊕ M)0`
+          is below `ε₀`, hence below `gTow102 1`, so §9's own junk cannot break it
+          (`#guard`ed both ways).
+
+WHAT IS **NOT** CLAIMED.  `DictDenseHi94` is NOT proved, `DictDense85` is NOT proved and
+`CofDenseS1` is NOT closed.  Row 326 still waits on `PsiIdxOKStd172`, `HiMono89` and — on
+the density side — the three clauses of §102.6 in place of `DictDenseHi94`.  §102 does not
+shorten the list of clauses row 326 carries; what it changes is INSIDE the density gate.
+`PsiIdxOKStd172` and `DictLtA74` are used, not proved.
+
+**Where §102 stopped, precisely.**  Case (a) is closed.  Of the rest, (c) is untouched here
+exactly as in §98.  For (b) the measurement (§102.9) says the segment splits at `Γ₀` and
+the two halves are NOT alike, so they are two problems and not one:
+
+  * Below `Γ₀` every one of 129 terms of `(ε₀, Γ₀)` has a preimage under `dictInv`, and
+    every one of those preimages is a LEGAL witness (level ≤ 1, standard, head `D 0`).  So
+    there the witness is the challenger's own preimage and what is missing is a PROOF —
+    `DictOntoMid102`, which is §97 (`dict` onto below `ε₀`) one level up.  **§102.4's tower
+    is inside that image too**, with legal witnesses at all 6 rungs measured, so §102.4 and
+    `DictOntoMid102` are the two halves of a density theorem at the target `Γ₀`.
+  * Above `Γ₀` it is a different story.  Of 94 terms of `[Γ₀, Γ₁)` only 56 have any preimage
+    and only 35 a legal one, and §94.6's raw tower has none at any rung.  There the witness
+    must be BUILT, which is what §98's `bStep98` does — but §98's step lands at
+    `φ̄(dict x, Γ₀ ⊕ 1)`, a whole Veblen step above its input, so that family cannot be dense
+    inside a segment.  **(b2) needs a finer step operator than §98's, and this file does not
+    have one.**
+
+So the answer to "does the same climb cover the targets in `(ε₀, Γ₁)`" is NO, and the two
+halves need different things: below `Γ₀` the analogue of §97 one level down from `Γ₁`, above
+`Γ₀` a new construction.
+
+WHAT THE MEASUREMENT SAYS (§102.8 gives the construction).  One population, 102 terms, built
+so that BOTH hypotheses stay visible and NEITHER is filtered — §97's model, and the failure
+mode §93 fell into (a bridge that held 292/292 where its own hypothesis failed).  Nineteen
+of the 102 are below `Γ₁` and are NOT terms of 𝔗(M); they are in on purpose.
+
+  * **The claim is exact at both levels.**  `inT s` and `s < Γ₁` give `s ≤ rawT94 (htG102 s)`
+    with 0 misses; `inT s` and `s < Γ₀` give `s ≤ gTow102 (htG102 s)` with 0 misses.
+  * **The formation condition is load-bearing and its failure is visible.**  Drop `inT` and
+    5 terms miss at `Γ₁` and 5 at `Γ₀` — and they are not the same 5: the first five are
+    `ψ_Ω(0 ⊕ M)` and four shapes built on it, the second five `ψ_1(0)` and its four.
+  * **But the hypothesis is not a restatement of the conclusion.**  The other 14 of the 19
+    ill-formed terms below `Γ₁` ARE still dominated by the tower.
+  * **The height is doing work.**  24 terms sit at `gTow102 (htG102 s)` and NOT at the rung
+    below it; the heights realised run 0 … 5.  Control: replace `htG102` by the constant 0
+    and the `Γ₀` claim breaks.
+  * **The towers behave.**  Eight rungs of each: all in 𝔗(M), strictly increasing, all below
+    their limit.
+  * **The named witnesses are in the population**, and two further `#guard`s say which
+    conjunct each one breaks — `isAP 0 = false` for one, `isR 1 = false` for the other. -/
+
+
+/-! ### §102.1 `ψ_Ω(q)` の下にいる形 — 2.3 の節をそのまま読む -/
+
+section
+open TM TM.Term
+open Evidence.WF
+
+/-- `Γ₁ = ψ_Ω(1)`。§94 の `Gam1_94 = dict bGam85` は文字どおりこれである。 -/
+theorem Gam1_eq102 : Gam1_94 = psi (Z zero) TM.Term.one := rfl
+
+/-- `Γ₀ = ψ_Ω(0)`。 -/
+theorem G094_eq102 : G094 = psi (Z zero) zero := rfl
+
+theorem starF_zero102 : ∀ f : Nat, starF f zero = zero
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem lt_right_zero102 (t : Term) : lt t zero = false := ltF_right_zero _ t
+
+/-- 2.3.2 — `M` は `ψ` の下にいない。 -/
+theorem lt_M_psi102 (k a : Term) : lt M (psi k a) = false := by
+  rw [lt_eq_ltF_succ]; exact ltF_succ_M_psi _ k a
+
+/-- 2.3.2/2.3.3 — `ω̄^·` は `ψ` の下にいない。 -/
+theorem lt_omg_psi102 (x k a : Term) : lt (omg x) (psi k a) = false := by
+  rw [lt_eq_ltF_succ]; exact ltF_succ_omg_psi _ x k a
+
+/-- 2.3.15 — `Ω = Z0` は `Z` の最小元。 -/
+theorem lt_Z_Om102 : ∀ e : Term, lt (Z e) (Z zero) = false := by
+  intro e
+  by_cases h : e = zero
+  · subst h; exact lt_irrefl _
+  · rw [lt_eq_ltF_succ, ltF_succ_Z_Z _ (by intro hc; injection hc with h1; exact h h1),
+      ltF_right_zero, if_neg (by intro hc; exact Bool.noConfusion hc), starF_zero102,
+      ltF_right_zero]
+    rfl
+
+theorem lt_Om_Z102 {e : Term} (h : e ≠ zero) : lt (Z zero) (Z e) = true := by
+  rw [lt_eq_ltF_succ,
+    ltF_succ_Z_Z _ (by intro hc; injection hc with h1; exact h h1.symm),
+    if_pos (ltF_left_zero (by omega) h), starF_zero102]
+  exact ltF_left_zero (by omega) (by intro hc; exact Term.noConfusion hc)
+
+/-- 2.3.9 — `Z e` は `ψ_Ω(q)` の下にいない。`e` が何であれ、`q` が何であれ。 -/
+theorem lt_Z_psiOm102 (e q : Term) : lt (Z e) (psi (Z zero) q) = false := by
+  have hq := deg_pos q
+  rw [lt_eq_ltF_succ, ltF_succ_Z_psi]
+  by_cases h : e = zero
+  · subst h; rw [if_pos (by rw [show ((Z zero : Term) == Z zero) = true from rfl]; rfl)]
+  · rw [if_pos ?_]
+    rw [show ltF (2 * ((Z e).deg + (psi (Z zero) q).deg) + 7) (Z zero) (Z e)
+          = lt (Z zero) (Z e) from
+        (lt_eq_ltF (Z zero) (Z e) _ (by
+          show (1 + (zero : Term).deg) + (1 + e.deg)
+            ≤ 2 * ((1 + e.deg) + (1 + (Z zero).deg + q.deg)) + 7
+          simp only [TM.Term.deg]; omega)).symm, lt_Om_Z102 h, Bool.or_true]
+
+/-- 2.3.6 — 添字が `Ω` でない `ψ` は `Ω` の下にいない。 -/
+theorem lt_psi_Om102 {e a : Term} (h : e ≠ zero) : lt (psi (Z e) a) (Z zero) = false := by
+  rw [lt_eq_ltF_succ, ltF_succ_psi_Z,
+    show ltF (2 * ((psi (Z e) a).deg + (Z zero).deg) + 7) (Z e) (Z zero) = lt (Z e) (Z zero) from
+      (lt_eq_ltF (Z e) (Z zero) _ (by
+        show (1 + e.deg) + (1 + (zero : Term).deg)
+          ≤ 2 * ((1 + (1 + e.deg) + a.deg) + (1 + (zero : Term).deg)) + 7
+        simp only [TM.Term.deg]; omega)).symm, lt_Z_Om102 e,
+    if_neg (by
+      rw [show ((Z e : Term) == Z zero) = false from by
+        simp only [beq_eq_false_iff_ne, ne_eq]
+        intro hc; injection hc with h1; exact h h1]
+      intro hc; exact Bool.noConfusion hc),
+    starF_zero102, ltF_right_zero]
+  rfl
+
+/-- 2.3.14(iii) — 添字が `Ω` でない `ψ` は `ψ_Ω(q)` の下にいない。 -/
+theorem lt_psiZ_psiOm102 {e a : Term} (h : e ≠ zero) (q : Term) :
+    lt (psi (Z e) a) (psi (Z zero) q) = false := by
+  have hq := deg_pos q
+  have hne : psi (Z e) a ≠ psi (Z zero) q := by
+    intro hc; injection hc with h1 _; injection h1 with h2; exact h h2
+  rw [lt_eq_ltF_succ, ltF_succ_psi_psi _ hne,
+    if_neg (by intro hc; injection hc with h1; exact h h1),
+    show ltF (2 * ((psi (Z e) a).deg + (psi (Z zero) q).deg) + 7) (Z e) (Z zero)
+        = lt (Z e) (Z zero) from
+      (lt_eq_ltF (Z e) (Z zero) _ (by
+        show (1 + e.deg) + (1 + (zero : Term).deg)
+          ≤ 2 * ((1 + (1 + e.deg) + a.deg) + (1 + (1 + (zero : Term).deg) + q.deg)) + 7
+        simp only [TM.Term.deg]; omega)).symm, lt_Z_Om102 e,
+    if_neg (by intro hc; exact Bool.noConfusion hc),
+    show ltF (2 * ((psi (Z e) a).deg + (psi (Z zero) q).deg) + 7)
+          (psi (Z e) a) (Z zero) = lt (psi (Z e) a) (Z zero) from
+      (lt_eq_ltF (psi (Z e) a) (Z zero) _ (by
+        show (1 + (1 + e.deg) + a.deg) + (1 + (zero : Term).deg)
+          ≤ 2 * ((1 + (1 + e.deg) + a.deg) + (1 + (1 + (zero : Term).deg) + q.deg)) + 7
+        simp only [TM.Term.deg]; omega)).symm]
+  exact lt_psi_Om102 h
+
+/-- 2.3.5 の第 1 成分。§65 の `lt_arg_of_phi_lt_psi` が第 2 成分である。 -/
+theorem lt_hd_of_phi_lt_psi102 {a b k c : Term} (h : lt (phi a b) (psi k c) = true) :
+    lt a (psi k c) = true := by
+  rw [lt_eq_ltF_succ, ltF_succ_phi_psi,
+    show ltF (2 * ((phi a b).deg + (psi k c).deg) + 7) a (psi k c) = lt a (psi k c) from
+      (lt_eq_ltF a (psi k c) _ (by
+        show a.deg + (1 + k.deg + c.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + k.deg + c.deg)) + 7
+        omega)).symm] at h
+  exact ((Bool.and_eq_true _ _).mp h).1
+
+/-- 2.3.4 を `lt` の高さで — `ψ` と `φ̄` の比較はそのまま 4 つの選言。 -/
+theorem lt_psi_phi_eq102 (k a c d : Term) :
+    lt (psi k a) (phi c d)
+      = ((psi k a == c) || (psi k a == d) || lt (psi k a) c || lt (psi k a) d) := by
+  rw [lt_eq_ltF_succ, ltF_succ_psi_phi,
+    show ltF (2 * ((psi k a).deg + (phi c d).deg) + 7) (psi k a) c = lt (psi k a) c from
+      (lt_eq_ltF (psi k a) c _ (by
+        show (1 + k.deg + a.deg) + c.deg
+          ≤ 2 * ((1 + k.deg + a.deg) + (1 + c.deg + d.deg)) + 7
+        omega)).symm,
+    show ltF (2 * ((psi k a).deg + (phi c d).deg) + 7) (psi k a) d = lt (psi k a) d from
+      (lt_eq_ltF (psi k a) d _ (by
+        show (1 + k.deg + a.deg) + d.deg
+          ≤ 2 * ((1 + k.deg + a.deg) + (1 + c.deg + d.deg)) + 7
+        omega)).symm]
+
+/-- 2.3.4 の第 1 成分。 -/
+theorem lt_psi_phi_of_le_fst102 {k a c d : Term} (h : le (psi k a) c = true) :
+    lt (psi k a) (phi c d) = true := by
+  rw [lt_psi_phi_eq102]
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [he, Bool.true_or, Bool.true_or, Bool.true_or]
+  · rw [hl, Bool.or_true, Bool.true_or]
+
+/-- 2.3.10 を `ψ` の的で。 -/
+theorem lt_add_psi102 (a b k c : Term) : lt (add a b) (psi k c) = lt a (psi k c) := by
+  have hb := deg_pos b
+  show ltF (fuelOf (add a b) (psi k c)) (add a b) (psi k c) = _
+  rw [show fuelOf (add a b) (psi k c)
+        = (2 * ((add a b).deg + (psi k c).deg) + 7) + 1 from by
+      show 2 * ((add a b).deg + (psi k c).deg) + 8 = _; omega,
+    show ltF ((2 * ((add a b).deg + (psi k c).deg) + 7) + 1) (add a b) (psi k c)
+        = ltF (2 * ((add a b).deg + (psi k c).deg) + 7) a (psi k c) from rfl]
+  exact (lt_eq_ltF a (psi k c) _
+    (by show a.deg + (psi k c).deg ≤ 2 * ((1 + a.deg + b.deg) + (psi k c).deg) + 7;
+        omega)).symm
+
+theorem ltF_succ_add_ap102 (f : Nat) (a b : Term) : ∀ {t : Term}, isAP t = true →
+    ltF (f + 1) (add a b) t = ltF f a t
+  | zero, h => Bool.noConfusion h
+  | add _ _, h => Bool.noConfusion h
+  | M, _ => rfl
+  | omg _, _ => rfl
+  | phi _ _, _ => rfl
+  | psi _ _, _ => rfl
+  | Z _, _ => rfl
+
+/-- 2.3.10 を任意の加法主要項の的で。 -/
+theorem lt_add_ap102 (a b : Term) {t : Term} (ht : isAP t = true) :
+    lt (add a b) t = lt a t := by
+  have hb := deg_pos b
+  show ltF (fuelOf (add a b) t) (add a b) t = _
+  rw [show fuelOf (add a b) t = (2 * ((add a b).deg + t.deg) + 7) + 1 from by
+      show 2 * ((add a b).deg + t.deg) + 8 = _; omega,
+    ltF_succ_add_ap102 _ a b ht]
+  exact (lt_eq_ltF a t _
+    (by show a.deg + t.deg ≤ 2 * ((1 + a.deg + b.deg) + t.deg) + 7; omega)).symm
+
+theorem inT_psi102 {k a : Term} (h : inT (psi k a) = true) :
+    k.isR = true ∧ inT k = true ∧ inT a = true := by
+  simp only [inT, Bool.and_eq_true] at h
+  exact ⟨h.1.1.1.1, h.1.1.1.2, h.1.1.2⟩
+
+end
+
+/-! ### §102.2 第 1 引数を登る塔と、項から読む高さ -/
+
+section
+open TM TM.Term
+open Evidence.WF
+
+/-- **第 1 引数を登る `φ̄` の塔** — 種 `c` から。
+    `vTow102 c 0 = c`, `vTow102 c (n+1) = φ̄(vTow102 c n, 0)`。 -/
+def vTow102 (c : Term) : Nat → Term
+  | 0 => c
+  | n + 1 => phi (vTow102 c n) zero
+
+/-- **項の構文から読む塔の高さ。**  §9 の `ht` の第 1 引数版:
+    `⊕` は頭だけ、`φ̄` は第 1 引数で一段上がる。`ψ` は 1 (塔の種の分)。 -/
+def htG102 : Term → Nat
+  | zero => 0
+  | M => 0
+  | add a _ => htG102 a
+  | omg _ => 0
+  | phi a b => max (htG102 a + 1) (htG102 b)
+  | psi _ _ => 1
+  | Z _ => 0
+
+theorem isAP_vTow102 {c : Term} (hc : isAP c = true) : ∀ m, isAP (vTow102 c m) = true
+  | 0 => hc
+  | _ + 1 => rfl
+
+theorem vTow_ne_zero102 {c : Term} (hc : isAP c = true) : ∀ m, vTow102 c m ≠ zero
+  | 0 => by
+      intro h
+      have hz : c = zero := h
+      rw [hz] at hc
+      exact Bool.noConfusion hc
+  | _ + 1 => by intro h; exact Term.noConfusion h
+
+/-- **§102 の中核。**  `ψ_Ω(q)` より下の 𝔗(M) の項はどれも、第 1 引数を登る塔の
+    `htG102` 段目で押さえられる。`ψ` の節だけが実例ごとに違うので、そこは仮説にしてある
+    (`Γ₁` では `Γ₀` そのもの、`Γ₀` では空)。証明は 1 本の構造帰納で、
+    移行律も比較可能性も `Frag` も使わない — §9 とまったく同じ理由による。 -/
+theorem towBound102 {c q : Term} (hc : isAP c = true)
+    (hpsi : ∀ (k a : Term), inT (psi k a) = true →
+      lt (psi k a) (psi (Z zero) q) = true → ∀ m, 1 ≤ m →
+      lt (psi k a) (vTow102 c m) = true) :
+    ∀ (s : Term), inT s = true → lt s (psi (Z zero) q) = true →
+    ∀ m, htG102 s ≤ m → lt s (vTow102 c m) = true := by
+  intro s
+  induction s with
+  | zero => intro _ _ m _; exact lt_zero_ne76 (vTow_ne_zero102 hc m)
+  | M => intro _ h _ _; rw [lt_M_psi102] at h; exact Bool.noConfusion h
+  | omg x _ => intro _ h _ _; rw [lt_omg_psi102] at h; exact Bool.noConfusion h
+  | Z e _ => intro _ h _ _; rw [lt_Z_psiOm102] at h; exact Bool.noConfusion h
+  | add a b iha _ =>
+      intro hin h m hm
+      obtain ⟨_, hina, _⟩ := inT_add hin
+      rw [lt_add_psi102] at h
+      rw [lt_add_ap102 a b (isAP_vTow102 hc m)]
+      exact iha hina h m hm
+  | phi u d ihu ihd =>
+      intro hin h m hm
+      obtain ⟨hinu, hind⟩ := inT_phi hin
+      have hu1 : lt u (psi (Z zero) q) = true := lt_hd_of_phi_lt_psi102 h
+      have hd1 : lt d (psi (Z zero) q) = true := lt_arg_of_phi_lt_psi h
+      have hm2 : max (htG102 u + 1) (htG102 d) ≤ m := hm
+      cases m with
+      | zero => omega
+      | succ m' =>
+          have hcc : lt u (vTow102 c m') = true := ihu hinu hu1 m' (by omega)
+          have hne : u ≠ vTow102 c m' := by
+            intro hh; rw [hh, lt_irrefl] at hcc; exact Bool.noConfusion hcc
+          rw [show vTow102 c (m' + 1) = phi (vTow102 c m') zero from rfl,
+            lt_phi_phi (by intro hh; injection hh with h1 _; exact hne h1),
+            if_neg hne, if_pos hcc]
+          exact ihd hind hd1 (m' + 1) (by omega)
+  | psi k a _ _ =>
+      intro hin h m hm
+      exact hpsi k a hin h m hm
+
+end
+
+/-! ### §102.3 実例 1 — `Γ₁`、そして §98 が名指しした条項 -/
+
+section
+open TM TM.Term
+open Evidence.WF
+
+theorem le_G0_vTow102 : ∀ m, le G094 (vTow102 G094 m) = true
+  | 0 => le_self G094
+  | m + 1 => le_of_lt (lt_psi_phi_of_le_fst102 (le_G0_vTow102 m))
+
+/-- §94.6 の生の塔は、種を `Γ₀` にした一般の塔の 1 段ずらしである。 -/
+theorem rawT_eq102 : ∀ n, rawT94 n = vTow102 G094 (n + 1)
+  | 0 => rfl
+  | n + 1 => by
+      show phi (rawT94 n) zero = phi (vTow102 G094 (n + 1)) zero
+      rw [rawT_eq102 n]
+
+/-- `Γ₁` の下に生き残る `ψ` は `Γ₀` ただ 1 つ。`κ ∈ R` と `α ∈ 𝔗(M)` の両方を使う。 -/
+theorem hpsi_Gam1_102 : ∀ (k a : Term), inT (psi k a) = true →
+    lt (psi k a) (psi (Z zero) TM.Term.one) = true → ∀ m, 1 ≤ m →
+    lt (psi k a) (vTow102 G094 m) = true := by
+  intro k a hin h m hm
+  obtain ⟨hisR, _, hina⟩ := inT_psi102 hin
+  cases k with
+  | zero => exact Bool.noConfusion hisR
+  | M => exact Bool.noConfusion hisR
+  | add _ _ => exact Bool.noConfusion hisR
+  | omg _ => exact Bool.noConfusion hisR
+  | phi _ _ => exact Bool.noConfusion hisR
+  | psi _ _ => exact Bool.noConfusion hisR
+  | Z e =>
+      by_cases he : e = zero
+      · subst he
+        rw [lt_psi_same] at h
+        have haz : a = zero := below_one a hina (fuelOf a TM.Term.one) h
+        subst haz
+        cases m with
+        | zero => omega
+        | succ m' =>
+            rw [show vTow102 G094 (m' + 1) = phi (vTow102 G094 m') zero from rfl]
+            exact lt_psi_phi_of_le_fst102 (le_G0_vTow102 m')
+      · rw [lt_psiZ_psiOm102 he] at h; exact Bool.noConfusion h
+
+/-- **§102 の主定理 (1) — 𝔗(M) 側の `Γ₁` の共終性。**
+    `Γ₁` より下の 𝔗(M) の項はどれも §94.6 の生の塔のどれかの段以下にいる。
+    §9 の `cof_eps0` の `Γ₁` 版で、`Γ₀ ≤ s` は要らない。 -/
+theorem cofGam1_102 (s : Term) (hs : inT s = true) (h : lt s Gam1_94 = true) :
+    ∃ n, le s (rawT94 n) = true := by
+  refine ⟨htG102 s, ?_⟩
+  rw [rawT_eq102 (htG102 s)]
+  exact le_of_lt (towBound102 (show isAP G094 = true from rfl) hpsi_Gam1_102 s hs
+    (by rw [← Gam1_eq102]; exact h) (htG102 s + 1) (by omega))
+
+/-- **§98 が名指しした条項は定理である。** -/
+theorem CofGam1_102 : CofGam1_98 := fun s hs hlt _ => cofGam1_102 s hs hlt
+
+end
+
+/-! ### §102.4 実例 2 — `Γ₀`、そしてそれは repo 自身の基本列である -/
+
+section
+open TM TM.Term
+open Evidence.WF
+
+/-- **`Γ₀` の塔** — `1, ε₀, φ̄(ε₀,0), …`。 -/
+def gTow102 : Nat → Term := vTow102 TM.Term.one
+
+/-- `Γ₀` の下には `ψ` が 1 つも生き残らない。効いているのは `κ ∈ R` である。 -/
+theorem hpsi_Gam0_102 : ∀ (k a : Term), inT (psi k a) = true →
+    lt (psi k a) (psi (Z zero) zero) = true → ∀ m, 1 ≤ m →
+    lt (psi k a) (vTow102 TM.Term.one m) = true := by
+  intro k a hin h m _
+  obtain ⟨hisR, _, _⟩ := inT_psi102 hin
+  cases k with
+  | zero => exact Bool.noConfusion hisR
+  | M => exact Bool.noConfusion hisR
+  | add _ _ => exact Bool.noConfusion hisR
+  | omg _ => exact Bool.noConfusion hisR
+  | phi _ _ => exact Bool.noConfusion hisR
+  | psi _ _ => exact Bool.noConfusion hisR
+  | Z e =>
+      by_cases he : e = zero
+      · subst he; rw [lt_psi_same, lt_right_zero102] at h; exact Bool.noConfusion h
+      · rw [lt_psiZ_psiOm102 he] at h; exact Bool.noConfusion h
+
+/-- **§102 の主定理 (2) — 𝔗(M) 側の `Γ₀` の共終性。** -/
+theorem cofGam0_102 (s : Term) (hs : inT s = true) (h : lt s G094 = true) :
+    ∃ n, le s (gTow102 n) = true :=
+  ⟨htG102 s, le_of_lt (towBound102 (show isAP TM.Term.one = true from rfl) hpsi_Gam0_102 s hs
+    (show lt s (psi (Z zero) zero) = true from h) (htG102 s) (Nat.le_refl _))⟩
+
+/-- `φ̄(φ̄uv, 0)` のところで `phiNF` は飛ばさない — 第 2 引数が `0` で、第 1 引数が `SC` でない。 -/
+theorem phiNF_phi_zero102 (u v : Term) : phiNF (phi u v) zero = phi (phi u v) zero := rfl
+
+theorem vTow_one_phi102 : ∀ n, ∃ u v, vTow102 TM.Term.one n = phi u v
+  | 0 => ⟨zero, zero, rfl⟩
+  | n + 1 => ⟨vTow102 TM.Term.one n, zero, rfl⟩
+
+/-- **`Γ₀` の塔は `TM/FS.lean` の `iterGamma` そのもの。** -/
+theorem iterGamma_gTow102 : ∀ n, iterGamma TM.Term.one n = gTow102 n
+  | 0 => rfl
+  | n + 1 => by
+      obtain ⟨u, v, huv⟩ := vTow_one_phi102 n
+      show phiNF (iterGamma TM.Term.one n) zero = phi (vTow102 TM.Term.one n) zero
+      rw [show iterGamma TM.Term.one n = vTow102 TM.Term.one n from iterGamma_gTow102 n,
+        huv, phiNF_phi_zero102]
+
+/-! `Γ₀` の塔は repo の基本列 `fsN Γ₀ ·` と項ごとに一致する (核で確認)。 -/
+#guard (List.range 8).all fun n => gTow102 n == fsN G094 n
+
+end
+
+/-! ### §102.5 条項が買うもの -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`Γ₁` より下の挑戦者・`Γ₁` 以上の目標のところは、もう仮説なしで閉じる。**
+    §98 の `denseHi_below_Gam1_98` から `CofGam1_98` が落ちた形。
+    残るのは 326 行目がすでに抱えている 2 つだけである。 -/
+theorem denseHi_below_Gam1_102 (Hp : PsiIdxOKStd172) (H2 : DictLtA74)
+    {v : Term} (hiv : inT v = true) (hv : le Gam1_94 v = true)
+    {s : Term} (hs : inT s = true) (hlt : lt s Gam1_94 = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true :=
+  denseHi_below_Gam1_98 Hp H2 CofGam1_102 hiv hv hs hlt
+
+end
+
+/-! ### §102.6 `DictDenseHi94` の分解 — 残っているのはあと三本 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- **(b1)** 目標が `(ε₀, Γ₀]` にあるところ — `dict` が `(ε₀, Γ₀)` に全射であること。
+    **証明しない。**  §97 (`dict` は `ε₀` より下で全射) をちょうど一段上げたものである。 -/
+def DictOntoMid102 : Prop := ∀ s : Term, inT s = true → lt E081 s = true → lt s G094 = true →
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧ dict b = s
+
+/-- **(b2)** 目標が `(Γ₀, Γ₁)` にあるところ。**証明しない。**  ここは全射ではない
+    (§102.9 の測定) ので、形は「全射」ではなく「稠密」でなければならない。 -/
+def DictDenseMid102 : Prop := ∀ v : Term, inT v = true → lt G094 v = true →
+    lt v Gam1_94 = true → ∀ s : Term, inT s = true → lt s v = true →
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true
+
+/-- **(c)** 目標も挑戦者も `Γ₁` 以上のところ。**証明しない。**  §98 も触れていない。 -/
+def DictDenseAbove102 : Prop := ∀ v : Term, inT v = true → le Gam1_94 v = true →
+    ∀ s : Term, inT s = true → le Gam1_94 s = true → lt s v = true →
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true
+
+theorem inT_G094_102 : inT G094 = true := by decide
+
+theorem inT_Gam1_102 (Hp : PsiIdxOKStd172) : inT Gam1_94 = true :=
+  (inT_dict_of_std172 Hp bGam85 (rfl : btLe72 1 bGam85 = true)
+    (rfl : BT.isStd bGam85 = true)).1
+
+/-- **`(ε₀, Γ₀]` の目標は (b1) ひとつで片づく。**  挑戦者は自分の逆像が証人になる
+    (§97 の低い側と同じ理屈)、ただ 1 点 `s = ε₀` だけ §94.3 の `bE94` を使う。 -/
+theorem denseMid_of_onto102 (H : DictOntoMid102) {v : Term} (hiv : inT v = true)
+    (hvG : le v G094 = true) (hvE : lt E081 v = true)
+    {s : Term} (hs : inT s = true) (hlt : lt s v = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true := by
+  have hsG : lt s G094 = true :=
+    lt_of_lt_of_le3 (inT_le_fragR _ hs) (inT_le_fragR _ hiv) (inT_le_fragR _ inT_G094_102)
+      hlt hvG
+  rcases lt_trichotomy_inT hs inT_E81 with h | h | h
+  · exact ⟨bE94, rfl, rfl, hd0_bE94, by rw [dict_bE94]; exact le_of_lt94 h.1,
+      by rw [dict_bE94]; exact hvE⟩
+  · exact ⟨bE94, rfl, rfl, hd0_bE94, by rw [dict_bE94, h.2.1]; exact le_self E081,
+      by rw [dict_bE94]; exact hvE⟩
+  · obtain ⟨b, hb, hsb, hdb, hval⟩ := H s hs h.2.2 hsG
+    exact ⟨b, hb, hsb, hdb, by rw [hval]; exact le_self s, by rw [hval]; exact hlt⟩
+
+/-- **§102.6 の主定理。**  `DictDenseHi94` は (a) + (b1) + (b2) + (c) で、
+    (a) — 目標が `Γ₁` 以上・挑戦者が `Γ₁` より下 — は §102.5 で定理になった。
+    残るのは (b1)(b2)(c) の三本である。 -/
+theorem dictDenseHi_of102 (Hp : PsiIdxOKStd172) (H2 : DictLtA74)
+    (H1 : DictOntoMid102) (H3 : DictDenseMid102) (H4 : DictDenseAbove102) :
+    DictDenseHi94 := by
+  intro t ht _ hvE s hs _ hlt
+  have hiv : inT (vOf t) = true := inT_vOf94 Hp t ht
+  have hiG1 : inT Gam1_94 = true := inT_Gam1_102 Hp
+  rcases lt_trichotomy_inT hiv hiG1 with hv | hv | hv
+  · rcases lt_trichotomy_inT hiv inT_G094_102 with hg | hg | hg
+    · exact denseMid_of_onto102 H1 hiv (le_of_lt94 hg.1) hvE hs hlt
+    · exact denseMid_of_onto102 H1 hiv (by rw [hg.2.1]; exact le_self G094) hvE hs hlt
+    · exact H3 (vOf t) hiv hg.2.2 hv.1 s hs hlt
+  · rcases lt_trichotomy_inT hs hiG1 with hsg | hsg | hsg
+    · exact denseHi_below_Gam1_102 Hp H2 hiv (by rw [hv.2.1]; exact le_self Gam1_94) hs hsg.1
+    · exact H4 (vOf t) hiv (by rw [hv.2.1]; exact le_self Gam1_94) s hs
+        (by rw [hsg.2.1]; exact le_self Gam1_94) hlt
+    · exact H4 (vOf t) hiv (by rw [hv.2.1]; exact le_self Gam1_94) s hs
+        (le_of_lt94 hsg.2.2) hlt
+  · rcases lt_trichotomy_inT hs hiG1 with hsg | hsg | hsg
+    · exact denseHi_below_Gam1_102 Hp H2 hiv (le_of_lt94 hv.2.2) hs hsg.1
+    · exact H4 (vOf t) hiv (le_of_lt94 hv.2.2) s hs (by rw [hsg.2.1]; exact le_self Gam1_94) hlt
+    · exact H4 (vOf t) hiv (le_of_lt94 hv.2.2) s hs (le_of_lt94 hsg.2.2) hlt
+
+/-- 326 行目の証明書 — 密度の側で待つのは §102.6 の三本だけ。 -/
+theorem certIn_t326_102 (Hp : PsiIdxOKStd172) (H : HiMono89)
+    (H1 : DictOntoMid102) (H3 : DictDenseMid102) (H4 : DictDenseAbove102)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_99 Hp H (dictDenseHi_of102 Hp (dictLtA74_99 Hp H) H1 H3 H4) hacc
+
+end
+
+/-! ### §102.7 二つの反証 — `inT` は飾りではなく、落ちる条は場所ごとに違う -/
+
+section
+open TM TM.Term
+open Evidence.WF
+
+/-- **`Γ₁` 側の junk** — `ψ_Ω(0 ⊕ M)`。2.1(iii) の `isAP 0 = false` で落ちる。 -/
+def junk1_102 : Term := psi (Z zero) (add zero M)
+
+/-- **`Γ₀` 側の junk** — `ψ_1(0)`。2.1(vi) の `κ ∈ R` で落ちる。 -/
+def junk0_102 : Term := psi TM.Term.one zero
+
+#guard inT junk1_102 == false
+#guard inT (add zero M) == false
+#guard inT junk0_102 == false
+#guard Term.isR TM.Term.one == false
+
+theorem lt_junk1_Gam102 : lt junk1_102 Gam1_94 = true := by decide
+theorem le_G0_junk1_102 : le G094 junk1_102 = true := by decide
+theorem lt_junk0_G0_102 : lt junk0_102 G094 = true := by decide
+
+theorem lt_junk1_rawT102 : ∀ n, lt junk1_102 (rawT94 n) = false
+  | 0 => by decide
+  | n + 1 => by
+      rw [show junk1_102 = psi (Z zero) (add zero M) from rfl,
+        show rawT94 (n + 1) = phi (rawT94 n) zero from rfl, lt_psi_phi_eq102,
+        show lt (psi (Z zero) (add zero M)) (rawT94 n) = false from lt_junk1_rawT102 n,
+        lt_right_zero102,
+        show ((psi (Z zero) (add zero M) == rawT94 n) : Bool) = false from by cases n <;> rfl,
+        show ((psi (Z zero) (add zero M) == (zero : Term)) : Bool) = false from rfl]
+      rfl
+
+theorem lt_junk0_gTow102 : ∀ n, lt junk0_102 (gTow102 n) = false
+  | 0 => by decide
+  | n + 1 => by
+      rw [show junk0_102 = psi TM.Term.one zero from rfl,
+        show gTow102 (n + 1) = phi (gTow102 n) zero from rfl, lt_psi_phi_eq102,
+        show lt (psi TM.Term.one zero) (gTow102 n) = false from lt_junk0_gTow102 n,
+        lt_right_zero102,
+        show ((psi TM.Term.one zero == gTow102 n) : Bool) = false from by cases n <;> rfl,
+        show ((psi TM.Term.one zero == (zero : Term)) : Bool) = false from rfl]
+      rfl
+
+/-- **反証 1。**  `cofGam1_102` から形成条件を削ると偽になる。`ψ_Ω(0 ⊕ M)` は
+    `Γ₀` 以上・`Γ₁` 未満で、生の塔のどの段より上にいる。 -/
+theorem cofGam1_needs_inT102 :
+    ¬ (∀ s : Term, lt s Gam1_94 = true → le G094 s = true → ∃ n, le s (rawT94 n) = true) := by
+  intro hcof
+  obtain ⟨n, hn⟩ := hcof junk1_102 lt_junk1_Gam102 le_G0_junk1_102
+  rw [show le junk1_102 (rawT94 n) = ((junk1_102 == rawT94 n) || lt junk1_102 (rawT94 n)) from rfl,
+    lt_junk1_rawT102 n,
+    show ((junk1_102 == rawT94 n) : Bool) = false from by cases n <;> rfl] at hn
+  exact Bool.noConfusion hn
+
+/-- **反証 2、そして落ちる条は別のものである。**  `Γ₀` のところで形成条件を削ると
+    `ψ_1(0)` が反例になる — こちらが破るのは `κ ∈ R` (2.1(vi)) であって、
+    §9 の junk や `junk1_102` が破る `isAP` (2.1(iii)) ではない。 -/
+theorem cofGam0_needs_inT102 :
+    ¬ (∀ s : Term, lt s G094 = true → ∃ n, le s (gTow102 n) = true) := by
+  intro hcof
+  obtain ⟨n, hn⟩ := hcof junk0_102 lt_junk0_G0_102
+  rw [show le junk0_102 (gTow102 n) = ((junk0_102 == gTow102 n) || lt junk0_102 (gTow102 n)) from rfl,
+    lt_junk0_gTow102 n,
+    show ((junk0_102 == gTow102 n) : Bool) = false from by cases n <;> rfl] at hn
+  exact Bool.noConfusion hn
+
+/-! **§9 の junk はここでは反例にならない。**  `φ̄(0 ⊕ M, 0)` は ε₀ より下で、
+    `Γ₀` の塔の 1 段目 (= ε₀) に捕まる。第 1 引数を登る塔は ω 塔より粗い。 -/
+#guard le (phi (add zero M) zero) (gTow102 1) == true
+#guard le (phi (add zero M) zero) (gTow102 0) == false
+
+end
+
+/-! ### §102.8 測定 — 母集団の作り方と、両方の仮説が見えていること -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv)
+open TM TM.Term
+open Evidence.WF
+
+/-- **種。**  ill-formed な形を意図的に入れてある — `0 ⊕ M` (2.1(iii) を破る)、
+    `ψ_1(0)`・`ψ_M(0)` (2.1(vi) を破る)、`ψ_Ω(0 ⊕ M)` (引数が 2.1(iii) を破る)、
+    そして `M`・`Z ·`・`ω̄^·` (どれも `Γ₁` の下にいない形)。**濾さない。** -/
+private def seed102 : List Term :=
+  [zero, TM.Term.one, TM.Term.omega, ofNat 2, phi TM.Term.one zero,
+   phi TM.Term.one TM.Term.one, phi (ofNat 2) zero, phi TM.Term.omega zero,
+   phi (phi TM.Term.one zero) zero, G094, Gam1_94,
+   M, Z zero, omg (Z zero), add zero M,
+   psi TM.Term.one zero, psi M zero, psi (Z zero) (add zero M)]
+
+/-- **母集団。**  種と、種から作った 6 種類の形。 -/
+def pool102 : List Term :=
+  (seed102
+    ++ (seed102.map fun x => phi x zero)
+    ++ (seed102.map fun x => phi zero x)
+    ++ (seed102.map fun x => phi (phi x zero) zero)
+    ++ (seed102.map fun x => add x TM.Term.one)
+    ++ (seed102.map fun x => psi (Z zero) x)
+    ++ (seed102.map fun x => plus G094 x)).eraseDups
+
+#eval pool102.length
+/-! 母集団の内訳 — `inT`、`Γ₁` の下、`Γ₀` の下。 -/
+#eval (pool102.countP fun s => inT s,
+       pool102.countP fun s => lt s Gam1_94,
+       pool102.countP fun s => inT s && lt s Gam1_94,
+       pool102.countP fun s => inT s && lt s G094)
+
+/-! **主張はぴったり。**  `inT` かつ `Γ₁` の下なら、生の塔の `htG102` 段目で押さえられる。
+    外れは 0。 -/
+#guard pool102.countP (fun s => inT s && lt s Gam1_94 && !(le s (rawT94 (htG102 s)))) == 0
+#guard pool102.countP (fun s => inT s && lt s G094 && !(le s (gTow102 (htG102 s)))) == 0
+
+/-! **`inT` は飾りではない。**  形成条件を落とすと、`Γ₁` の下でも `Γ₀` の下でも外れが出る。
+    出る数がここに見えていることが肝心で、0 なら母集団が届いていないという意味になる。 -/
+#eval (pool102.countP fun s => lt s Gam1_94 && !(le s (rawT94 (htG102 s))),
+       pool102.countP fun s => lt s G094 && !(le s (gTow102 (htG102 s))))
+
+/-! **しかし仮説は結論の言い換えではない。**  `Γ₁` の下にいる ill-formed な項の総数と、
+    そのうち塔に押さえられてしまうものの数。後者が 0 でないことが肝心である。 -/
+#eval (pool102.countP fun s => !(inT s) && lt s Gam1_94,
+       pool102.countP fun s => !(inT s) && lt s Gam1_94 && le s (rawT94 (htG102 s)))
+#guard (pool102.countP fun s => !(inT s) && lt s Gam1_94 && le s (rawT94 (htG102 s))) > 0
+
+/-! 実際に出てくる高さの上限 — 高さが 0/1 に潰れていないこと。 -/
+#eval ((pool102.filter fun s => inT s && lt s Gam1_94).map fun s => htG102 s).foldl max 0
+#guard (((pool102.filter fun s => inT s && lt s Gam1_94).map fun s => htG102 s).foldl max 0) ≥ 4
+#guard pool102.countP (fun s => lt s Gam1_94 && !(le s (rawT94 (htG102 s)))) > 0
+#guard pool102.countP (fun s => lt s G094 && !(le s (gTow102 (htG102 s)))) > 0
+
+/-! **高さは仕事をしている。**  `Γ₀` の塔で、`htG102 s` 段目には入るが 1 つ下の段には
+    入らない項の数。0 なら高さは飾りである。 -/
+#eval pool102.countP fun s => inT s && lt s G094 && 1 ≤ htG102 s
+    && le s (gTow102 (htG102 s)) && !(le s (gTow102 (htG102 s - 1)))
+#guard (pool102.countP fun s => inT s && lt s G094 && 1 ≤ htG102 s
+    && le s (gTow102 (htG102 s)) && !(le s (gTow102 (htG102 s - 1)))) > 0
+
+/-! **負の対照。**  高さを定数 0 にすると `Γ₀` の側で外れが出る。 -/
+#guard pool102.countP (fun s => inT s && lt s G094 && !(le s (gTow102 0))) > 0
+
+/-! **名指しの証人。**  二つの junk は母集団に入っていて、それぞれ別の条を破る。 -/
+#guard pool102.contains junk1_102
+#guard pool102.contains junk0_102
+#guard lt junk1_102 Gam1_94 && le G094 junk1_102 && !(inT junk1_102)
+#guard (List.range 12).all fun n => le junk1_102 (rawT94 n) == false
+#guard lt junk0_102 G094 && !(inT junk0_102)
+#guard (List.range 12).all fun n => le junk0_102 (gTow102 n) == false
+
+/-! 塔そのもの — 段はどれも 𝔗(M) の項で、真に上がる。 -/
+#guard (List.range 8).all fun n => inT (gTow102 n) && inT (rawT94 n)
+#guard (List.range 8).all fun n => lt (gTow102 n) (gTow102 (n + 1))
+#guard (List.range 8).all fun n => lt (rawT94 n) (rawT94 (n + 1))
+#guard (List.range 8).all fun n => lt (gTow102 n) G094 && lt (rawT94 n) Gam1_94
+
+end
+
+/-! ### §102.9 どこで止まったか — `(ε₀, Γ₁)` の目標 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv)
+open TM TM.Term
+open Evidence.WF
+
+private def vseed102 : List Term :=
+  [zero, TM.Term.one, TM.Term.omega, phi TM.Term.one zero, phi TM.Term.one TM.Term.one,
+   phi (ofNat 2) zero, phi TM.Term.omega zero, phi (phi TM.Term.one zero) zero,
+   ofNat 2, ofNat 3]
+
+private def vgrow102 (p : List Term) : List Term :=
+  (p ++ (p.flatMap fun x => p.map fun y => phi x y)
+     ++ (p.flatMap fun x => p.map fun y => plus x y)).eraseDups
+
+/-- `(ε₀, Γ₀)` の中の 𝔗(M) の項。 -/
+def midPool102 : List Term :=
+  (vgrow102 vseed102).filter fun t => inT t && lt E081 t && lt t G094
+
+/-- `[Γ₀, Γ₁)` の中の 𝔗(M) の項。 -/
+def hiPool102 : List Term :=
+  (vgrow102 (vseed102 ++ [G094, phi G094 zero, plus G094 TM.Term.one])).filter
+    fun t => inT t && le G094 t && lt t Gam1_94
+
+/-! **`(ε₀, Γ₀)` では `dict` は全射に見える** — 母集団のすべてが合法な逆像を持つ。
+    だから目標が `(ε₀, Γ₀)` にあるところは「作れない」のではなく「証明がない」。
+    §97 をちょうど一段上げたものが要る。 -/
+#eval (midPool102.length,
+       midPool102.countP fun t => match dictInv t with
+         | some b => dict b == t && btLe72 1 b && BT.isStd b && hd085B b
+         | none => false)
+#guard midPool102.length > 100
+#guard midPool102.countP (fun t => match dictInv t with
+         | some b => dict b == t && btLe72 1 b && BT.isStd b && hd085B b
+         | none => false) == midPool102.length
+
+/-! **`[Γ₀, Γ₁)` では全射ではない。**  逆像がある項・合法な逆像がある項の数を並べる。
+    生の塔はその極端な場合で、どの段も逆像を持たない (§94.6)。 -/
+#eval (hiPool102.length,
+       hiPool102.countP fun t => (dictInv t).isSome,
+       hiPool102.countP fun t => match dictInv t with
+         | some b => dict b == t && btLe72 1 b && BT.isStd b && hd085B b
+         | none => false)
+#guard hiPool102.countP (fun t => (dictInv t).isSome) < hiPool102.length
+#guard (List.range 8).all fun n => (dictInv (rawT94 n)).isNone
+
+/-! `Γ₀` の塔のほうは逆像を持ち、しかも合法である — §102.4 の塔は `dict` の像の中にいる。
+    ここが `(ε₀, Γ₀)` と `[Γ₀, Γ₁)` を分ける。 -/
+#guard (List.range 6).all fun n => match dictInv (gTow102 n) with
+  | some b => dict b == gTow102 n && btLe72 1 b && BT.isStd b && hd085B b
+  | none => false
+
+end
+
 end Evidence.Region

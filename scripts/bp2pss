@@ -195,12 +195,15 @@ if [ "$have_ref" = no ]; then
   exit 0
 fi
 
-theirs=$(node "$ref" "$term" 2>/dev/null) || {
-  echo "bp2pss: DISAGREEMENT — TransRev refuses a term inside bOnto85's domain." >&2
-  echo "bp2pss:   ours: $ours" >&2
-  node "$ref" "$term" >&2 2>&1 || true
+if theirs=$(node "$ref" "$term" 2>/dev/null); then
+  :
+else
+  echo "bp2pss: DISAGREEMENT — the reference refuses a term that is inside" >&2
+  echo "bp2pss: bOnto85's domain, so the two domains do not agree here." >&2
+  echo "bp2pss:   ours  : $ours" >&2
+  echo "bp2pss:   theirs: $(node "$ref" "$term" 2>&1 >/dev/null)" >&2
   exit 1
-}
+fi
 
 # The expected relation, not blind equality: see "what it inverts" in --help.
 # `ours` is all-(0,0) exactly when the term is a natural number.

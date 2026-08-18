@@ -124,42 +124,62 @@ def parse (s : String) : Option BT :=
   | none => none
 
 def usage : String :=
-  "usage: bp2psscli <buchholz term>\n\
+  "usage: bp2psscli <buchholz term>   |   bp2psscli --batch\n\
    \n\
    Prints the Bashicu matrix whose value the term is: §85's bInv85, then matB.\n\
    Accepts both forms bpcli prints -- p0(p1(0)) and D_0 D_1 0.\n\
    \n\
    The domain is bOnto85's: standard, level <= 1, every component a D 0\n\
-   (equivalently, below Omega = p1(0)).  Outside it, exit 2."
+   (equivalently, below Omega = p1(0)).  Outside it, exit 2.\n\
+   \n\
+   --batch answers every line with `= <matrix>` or `! <why it is out of domain>`\n\
+   and always exits 0.  It exists because this executable imports the whole of\n\
+   Evidence and so costs about two seconds to START; scripts/bp2pss-check.sh runs\n\
+   a hundred terms through one process instead of a hundred processes."
 
-def run (s : String) : IO UInt32 := do
+/-- The answer, or the clause of `bOnto85`'s domain that failed. -/
+def answer (s : String) : Except String String :=
   match parse s with
-  | none =>
-    IO.eprintln s!"bp2psscli: cannot parse the Buchholz term: {s}"
-    pure 2
+  | none => .error s!"cannot parse the Buchholz term: {s}"
   | some b =>
     if !BT.isStd b then
-      IO.eprintln "bp2psscli: the term is not standard (isStandardBuchholz is false), \
-        so it is outside bOnto85's domain"
-      pure 2
+      .error "the term is not standard (isStandardBuchholz is false), so it is \
+        outside bOnto85's domain"
     else if !btLe72 1 b then
-      IO.eprintln "bp2psscli: the term carries a node of level 2 or more, so it is \
-        outside the level-one sub-region (btLe72 1 is false).  §85 spends the level \
-        bound twice and one level up the clause it serves is refuted (§85.6)"
-      pure 2
+      .error "the term carries a node of level 2 or more, so it is outside the \
+        level-one sub-region (btLe72 1 is false).  §85 spends the level bound twice \
+        and one level up the clause it serves is refuted (§85.6)"
     else if !hd0B b then
-      IO.eprintln "bp2psscli: a component of the term is not a D 0, i.e. the term is \
-        not below Omega = p1(0), so it is outside bOnto85's domain.  Omega itself is \
-        standard and of level 1 and is the value of NO index (not_bValA71_om85)"
-      pure 2
+      .error "a component of the term is not a D 0, i.e. the term is not below \
+        Omega = p1(0), so it is outside bOnto85's domain.  Omega itself is standard \
+        and of level 1 and is the value of NO index (not_bValA71_om85)"
     else
-      IO.println (BMS.showMatrix (matB (bInv85 b) 0))
-      pure 0
+      .ok (BMS.showMatrix (matB (bInv85 b) 0))
+
+def run (s : String) : IO UInt32 := do
+  match answer s with
+  | .error e => IO.eprintln s!"bp2psscli: {e}"; pure 2
+  | .ok m => IO.println m; pure 0
+
+partial def batchLoop (h : IO.FS.Stream) : IO Unit := do
+  let line ← h.getLine
+  if line.isEmpty then pure ()        -- EOF
+  else
+    let s := line.trimAscii.toString
+    match answer s with
+    | .error e => IO.println s!"! {e}"
+    | .ok m => IO.println s!"= {m}"
+    batchLoop h
+
+def batch : IO UInt32 := do
+  batchLoop (← IO.getStdin)
+  pure 0
 
 end BP2PSS
 
 def main (args : List String) : IO UInt32 := do
   match args with
+  | ["--batch"] => BP2PSS.batch
   | [s] => BP2PSS.run s
   | _ =>
     IO.eprintln BP2PSS.usage
