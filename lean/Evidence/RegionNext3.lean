@@ -8962,4 +8962,1026 @@ open TM TM.Term
 
 end
 
+/-! ## §90 THE `ψ₀` INDEX IS ITSELF A TERM OF THE REGION — AND `e < a` IS FREE
+
+§88 said what the `K`-element `y` IS: it is bounded by the collapse index `j = idxF88 0 (dict e)`
+of a `ψ₀ e` occurring inside the component `ψ₁ c`, and it named the residue `IdxK88` /
+`IdxLtK88`.  What §88 handed the residue about `e` was one thing — that `e` occurs in `c`.
+§90 hands it four more, and every one of them is a theorem.  **The gate is still open.**
+
+The first is Buchholz's, and it was on the table the whole time.  `G(a,0)` has no `u ≤ v`
+branch to fail: `GB 0 (ψ_v x) = x :: GB 0 x` for EVERY `v`, so `G(a,0)` collects the argument
+of every `ψ` occurring anywhere in `a`, at any depth.  `BT.isStd (ψ₀ a)` says `G(a,0) < a`.
+Hence not only `c < a` (which §82.3 extracted and §87.3 delivered) but **`e < a` as well** —
+for the `ψ₀`-argument `e` buried arbitrarily deep inside the component.  §88 never asked.
+
+The second is that `e` is a term OF THE SUB-REGION, and a smaller one: `BT.isStd (ψ₀ e)`,
+`btLe72 1 e`, and `BT.size e < BT.size a`.  So the induction that proves the gate has already
+proved it AT `e`, and the third fact follows: `ψ_{Ω₁}(j)` is a genuine `𝔗(M)` term, so
+`K_{Ω₁}(j) < j`.  **The residue's `j` is not an ordinal from nowhere; it is a collapse index
+of the same region, sitting under the same 2.1(vi) condition the scan is trying to establish.**
+
+The fourth is arithmetic, and it repairs something §88 dropped.  §87.4 exempted the
+`K_{Ω₁} aV`-elements below `Ω₁` (§86.3); when §88.3 merged the two clauses into one it lost
+the exemption.  §86.3's `lt_sub1dd_of_ltW86` never looked at where `y` came from — it needs
+only `inT y` and `y < Ω₁` — so the exemption is available on the `cV` side too.  §90 takes it
+on both sides at once, and the only steps where it does not apply are the ones with
+`aV = Ω₁` (`subAP Ω₁ aV = 0`): 32 of the corpus's 295 firing steps.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §90.1  **`e < a`.**  `d0Args_sub_GB0_90` puts `d0Args88 c` inside `BT.GB 0 c`, `GB0_toL_90`
+         carries a component's `G(·,0)` into the whole term's, and `lt_d0Args_90` reads off
+         `BT.lt e a` from `std0_split82`.  `isStd_d0Args_90`, `btLe72_d0Args_90` and
+         `size_d0Args_90` are the three that make `e` a smaller term of the sub-region.
+
+  §90.2  **THE FINAL INDEX IS AN EMITTED INDEX.**  `idxF_step90` : the index the fold ends
+         holding is either the one the incoming state had or the `idxOf` of an actual firing
+         step of the scan — no hypotheses at all, the fold's own arithmetic.  With §66.1's
+         `PsiIdxOK` (free from the gate at `e`) that gives `inT_psi_idxF90` :
+         `inT (ψ_{Ω₁} j) = true`, hence `K_{Ω₁}(j) < j` by `ksetAll_of_inT_psi`.
+
+  §90.3  **THE `cV` SIDE IS FREE BELOW `Ω₁` TOO.**  `lt_idxOf_of_lt_reg90` : at a step with
+         `subAP Ω₁ aV ≠ 0`, EVERY `y ∈ 𝔗(M)` below `Ω₁` is below `Δ ⊖ 1 ≤ i₀ ⊕ Δ`, whatever
+         `K`-set it came from.  §87.4 spent this on the `aV` side only; §88.3 spent it nowhere.
+
+  §90.4  **THE RESIDUE.**  `IdxK90` is `IdxK88` with §90.1's three facts, and with the
+         obligation dropped at the elements §90.3 closes.  Everything added is a theorem, so
+         `idxStd90_of_step073` is the converse and the reduction is exact — `IdxStd90` IS
+         `PsiIdxStep073`.  `gateStd87_of_idxK90` consumes it at ONE term, like §88.3's.
+         `IdxLtK90` is the sharp form (`j < i₀ ⊕ Δ` instead of `y < i₀ ⊕ Δ`) and implies it.
+         `psiIdxStep073_of_idxStd90` and `certIn_t326_idx90` re-hang row 326.
+
+  §90.5  **A WIDER SYNTACTIC LAYER — AND ITS CEILING, PROVED.**  `noD1_90 x` says `x` mentions
+         no `ψ₁`; then the strongly critical branch of `collapse 0 (dict x)` never fires and
+         `kset_nil_noD1_90` gives `K_{Ω₁}(dict x) = ∅` — with `ψ₀`s allowed anywhere, which
+         §87.5's `noD0_87` forbade outright.  `flatK90` layers that under the `ψ₁` chain and
+         `flatD1K90` asks it of the arguments of the subscript-`1` components;
+         `kset_nil_flatK90` and `gateStd87_of_flatD1K90` are the gate on that layer.
+         `flatD1K_of_flatD1_88` is the inclusion and `wid90 = ψ₁(ψ₁ψ₁0 ⊕ ψ₀ψ₀0)` witnesses
+         that it is strict.  **The ceiling is proved too**: `noIdx88_of_flatD1K90` shows the
+         new layer is INSIDE §88.5's `NoIdx88`.  It is a syntactic description of a piece of
+         a semantic layer §88 already had, not new ground.
+
+  §90.6  **THE NEGATIVE, AND IT IS SHARP.**  Guard §88.4's step-blind sharp form with the new
+         Buchholz fact — ask `j < i₀ ⊕ Δ` only of those `e` with `e < a` — and it is STILL
+         false: `not_idxLtBlindStd90`, counterexample §82's `aBad82` (15 symbols).  The reason
+         is a theorem and not a measurement: `idxLtBlind88_of_idxLtBlind90` shows the guard is
+         VACUOUS on the sub-region, because §90.1 proves `e < a` for every `e` there.
+         **§90.1's fact cannot close the gate by itself; it has to be spent against the step.**
+
+WHAT IS **NOT** CLAIMED.  The gate is NOT closed.  `IdxStd90` is EQUIVALENT to
+`PsiIdxStep073`; `IdxLtStd90` is not proved and is not known to follow from the gate.  §88's
+`IdxLtStd88`, §86's `SplitK86`, §87's `ArgStd87`, `LocalK2Snd_78`, `DictHeadLt77`,
+`CofDenseS1`, `BCofIn71`, `DictLtA74` are all untouched — `DictLtA74` in particular is NOT
+used anywhere in §90, and §90 does not turn `e < a` in Buchholz's order into any statement
+about `𝔗(M)`.  That step — from `e < a` to a comparison of collapse indices, AT the step the
+scan is holding — is what is left, and §90.6 is the theorem that says the first half of it
+alone is not enough.
+
+WHAT THE MEASUREMENT SAYS (§90.7 gives the construction: §88's `qual88` — the `famG88`,
+`famH88`, `famI88` that route the `ψ₀` into `wC` — with §87's `qual87`, §86's `qual86`, §84's
+`qual84` and row 326's `r326_84`, which route it into `wA`, all reused verbatim, plus 18 terms
+built to put a FIRING component's argument inside §90.5's layer).  217 terms in all.
+
+  * **§90.1 holds on all 217, as it must.**  `ltArg90b` — every `ψ₀`-argument inside a
+    subscript-`1` component is below the whole term — never fails.  That is the measurement of
+    a theorem, and it is also §90.6's negative: the guard it would add is vacuous.
+  * **The sharp clause holds on all 217.**  `idxLt90b` : 0 failures, `r326_84`'s 41 indices
+    included.  It is `idxLtb88` with §90.3's exemption cut out of the obligation.
+  * **The step-blind form guarded by `e < a` fails exactly as far as §88.4's.**
+    `idxLtBlind90b` : 27 of `qual88`, 25 of `qual87`, 53 of `qual86`, 22 of `qual84`, 0 of
+    `r326_84` and 0 of the new 18 — the same numbers as `idxLtBlindb88`, because the guard is
+    vacuous.
+  * **§90.3's exemption is REAL and EMPTY.**  Of the 111 `K`-elements at the corpus's 295
+    firing steps, 66 are on the `aV` side and 45 on the `cV` side; exactly **1** of the 111 is
+    below `Ω₁`, and it is on the `aV` side, where §87.4 already had it.  **0 of the 45 `cV`
+    elements are below `Ω₁`.**  The branch §90.3 opens is a theorem the corpus never needs.
+  * **`aV = Ω₁` is not a corner case.**  32 of the 295 firing steps have `subAP Ω₁ aV = 0`
+    (`qual88` 6, `qual86` 5, `qual84` 18, `famJ90`/`famK90` 3), so the exemption's side
+    condition cannot be dropped.
+  * **The new layer covers all 41 of row 326's indices**, where §87.5's `flat87` and §88.5's
+    `flatD1_88` covered 10 — and **0 of the 158 adversarial terms**, exactly as `flatD1_88`.
+    Two things keep that from being progress.  First, `r326_84`'s 41 terms contribute **0 of
+    the 295 firing steps**: the gate is vacuous there for a cruder reason than any layer.
+    Second, `noIdx88_of_flatD1K90` proves the layer is inside §88.5's `NoIdx88`.
+  * **The layer is not vacuous for want of firing, though.**  `famJ90`/`famK90` — 18 terms,
+    all qualifying — have 2 firing steps each and sit in the new layer while failing
+    `flatD1_88` and `flat87` on all 18.
+  * **The gate does not fail on the new terms.**  `stepOKb`, `idxb84`, `splitb86` : 0 failures
+    on the 18.  §90 is not a sixth refutation of a clause the gate needs.
+-/
+
+/-! ### §90.1 `G(a,0)` は深い `ψ₀` の引数まで届く -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `d0Args88 c` は `G(c,0)` の中。`GB 0` は `u ≤ v` の枝で落ちることがないので、
+    深さに関わらず引数をぜんぶ拾う。 -/
+theorem d0Args_sub_GB0_90 : ∀ (c : BT), ∀ e ∈ d0Args88 c, e ∈ BT.GB 0 c
+  | .zero => by intro e he; cases he
+  | .D u x => by
+      intro e he
+      have hgb : BT.GB 0 (BT.D u x) = x :: BT.GB 0 x := by
+        show (if 0 ≤ u then x :: BT.GB 0 x else []) = _
+        rw [if_pos (Nat.zero_le u)]
+      have hd : e ∈ (if u == 0 then x :: d0Args88 x else d0Args88 x) := he
+      rw [hgb]
+      by_cases hu : (u == 0) = true
+      · rw [if_pos hu] at hd
+        rcases List.mem_cons.mp hd with h1 | h1
+        · rw [h1]; exact List.Mem.head _
+        · exact List.Mem.tail _ (d0Args_sub_GB0_90 x e h1)
+      · rw [if_neg hu] at hd
+        exact List.Mem.tail _ (d0Args_sub_GB0_90 x e hd)
+  | .sum x y => by
+      intro e he
+      have hd : e ∈ d0Args88 x ++ d0Args88 y := he
+      show e ∈ BT.GB 0 x ++ BT.GB 0 y
+      rcases List.mem_append.mp hd with h1 | h1
+      · exact List.mem_append.mpr (Or.inl (d0Args_sub_GB0_90 x e h1))
+      · exact List.mem_append.mpr (Or.inr (d0Args_sub_GB0_90 y e h1))
+
+/-- 成分の `G(·,0)` は全体の `G(·,0)` の中。 -/
+theorem GB0_toL_90 : ∀ (a t : BT), t ∈ BT.toL a → ∀ e ∈ BT.GB 0 t, e ∈ BT.GB 0 a := by
+  intro a
+  induction a with
+  | zero => intro t h; cases h
+  | D u c _ =>
+    intro t h e he
+    rw [List.mem_singleton.mp (show t ∈ [BT.D u c] from h)] at he
+    exact he
+  | sum x y ihx ihy =>
+    intro t h e he
+    show e ∈ BT.GB 0 x ++ BT.GB 0 y
+    rcases List.mem_append.mp (show t ∈ BT.toL x ++ BT.toL y from h) with h1 | h1
+    · exact List.mem_append.mpr (Or.inl (ihx t h1 e he))
+    · exact List.mem_append.mpr (Or.inr (ihy t h1 e he))
+
+/-- **§90.1 の主定理 — §88 が置いていった Buchholz の事実。**  `ψ₁ c` が `a` の成分で、
+    `e` が `c` のどこか (深さは問わない) の `ψ₀` の引数なら、`e` も `a` より小さい。
+    §82.3 の `comp_facts82` は成分の引数 `c` までしか読まなかったが、`G(a,0)` は
+    そこで止まらない。 -/
+theorem lt_d0Args_90 {a c e : BT} (hs : BT.isStd (BT.D 0 a) = true)
+    (hc : BT.D 1 c ∈ BT.toL a) (he : e ∈ d0Args88 c) : BT.lt e a = true := by
+  have h1 : e ∈ BT.GB 0 c := d0Args_sub_GB0_90 c e he
+  have h2 : e ∈ BT.GB 0 (BT.D 1 c) := by
+    show e ∈ (if 0 ≤ 1 then c :: BT.GB 0 c else [])
+    rw [if_pos (by omega : 0 ≤ 1)]
+    exact List.Mem.tail _ h1
+  exact (std0_split82 hs).2 e (GB0_toL_90 a _ hc e h2)
+
+/-- `ψ₀ e` は標準 — 標準性は部分項に降りる。 -/
+theorem isStd_d0Args_90 : ∀ (c : BT), BT.isStd c = true → ∀ e ∈ d0Args88 c,
+    BT.isStd (BT.D 0 e) = true
+  | .zero, _ => by intro e he; cases he
+  | .D u x, hst => by
+      intro e he
+      have hd : e ∈ (if u == 0 then x :: d0Args88 x else d0Args88 x) := he
+      by_cases hu : (u == 0) = true
+      · rw [if_pos hu] at hd
+        have hue : u = 0 := (beq_iff_eq (a := u) (b := 0)).mp hu
+        subst hue
+        rcases List.mem_cons.mp hd with h1 | h1
+        · rw [h1]; exact hst
+        · exact isStd_d0Args_90 x (isStd_of_D hst) e h1
+      · rw [if_neg hu] at hd
+        exact isStd_d0Args_90 x (isStd_of_D hst) e hd
+  | .sum x y, hst => by
+      intro e he
+      have hd : e ∈ d0Args88 x ++ d0Args88 y := he
+      obtain ⟨hx, hy⟩ := isStd_of_sum hst
+      rcases List.mem_append.mp hd with h1 | h1
+      · exact isStd_d0Args_90 x hx e h1
+      · exact isStd_d0Args_90 y hy e h1
+
+/-- `e` も段 1 以下。 -/
+theorem btLe72_d0Args_90 : ∀ (c : BT), btLe72 1 c = true → ∀ e ∈ d0Args88 c,
+    btLe72 1 e = true
+  | .zero, _ => by intro e he; cases he
+  | .D u x, hb => by
+      intro e he
+      have hd : e ∈ (if u == 0 then x :: d0Args88 x else d0Args88 x) := he
+      obtain ⟨_, hbx⟩ := btLe72_D 1 u x hb
+      by_cases hu : (u == 0) = true
+      · rw [if_pos hu] at hd
+        rcases List.mem_cons.mp hd with h1 | h1
+        · rw [h1]; exact hbx
+        · exact btLe72_d0Args_90 x hbx e h1
+      · rw [if_neg hu] at hd
+        exact btLe72_d0Args_90 x hbx e hd
+  | .sum x y, hb => by
+      intro e he
+      have hd : e ∈ d0Args88 x ++ d0Args88 y := he
+      obtain ⟨hbx, hby⟩ := btLe72_sum 1 x y hb
+      rcases List.mem_append.mp hd with h1 | h1
+      · exact btLe72_d0Args_90 x hbx e h1
+      · exact btLe72_d0Args_90 y hby e h1
+
+/-- `e` は真に小さい — だから帰納法の仮説が `e` に届く。 -/
+theorem size_d0Args_90 : ∀ (c : BT), ∀ e ∈ d0Args88 c, BT.size e < BT.size c
+  | .zero => by intro e he; cases he
+  | .D u x => by
+      intro e he
+      have hd : e ∈ (if u == 0 then x :: d0Args88 x else d0Args88 x) := he
+      rw [size_D87]
+      by_cases hu : (u == 0) = true
+      · rw [if_pos hu] at hd
+        rcases List.mem_cons.mp hd with h1 | h1
+        · rw [h1]; omega
+        · have := size_d0Args_90 x e h1; omega
+      · rw [if_neg hu] at hd
+        have := size_d0Args_90 x e hd; omega
+  | .sum x y => by
+      intro e he
+      have hd : e ∈ d0Args88 x ++ d0Args88 y := he
+      rw [size_sum87]
+      rcases List.mem_append.mp hd with h1 | h1
+      · have := size_d0Args_90 x e h1; have := size_pos87 y; omega
+      · have := size_d0Args_90 y e h1; have := size_pos87 x; omega
+
+end
+
+/-! ### §90.2 畳み込みが最後に持つ指数は、実際に吐かれた指数 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **畳み込みが最後に持つ指数は、入ってきた指数か、発火した歩の `idxOf` そのもの。**
+    仮定はいっさい要らない — 畳み込みの算術だけ。§88.1 の `le_idx_fold88` は
+    「以下」しか言わなかったが、実は等しい歩が名指しできる。 -/
+theorem idxF_step90 {w base : Term} :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term) (j : Term),
+      (l.foldl (stepF w base) s).1 = some j →
+        (∃ p ∈ scanSt w base s l, le w p.2.1 = true ∧ idxOf w p.1 p.2 = j) ∨ s.1 = some j := by
+  intro l
+  induction l with
+  | nil => intro s j h; exact Or.inr h
+  | cons ac t ih =>
+    intro s j h
+    have hfold : ((ac :: t).foldl (stepF w base) s)
+        = t.foldl (stepF w base) (stepF w base s ac) := rfl
+    rw [hfold] at h
+    rcases ih (stepF w base s ac) j h with ⟨p, hp, hle, he⟩ | h1
+    · exact Or.inl ⟨p, List.Mem.tail _ hp, hle, he⟩
+    · cases hfire : le w ac.1 with
+      | true =>
+        refine Or.inl ⟨(s, ac), List.Mem.head _, hfire, ?_⟩
+        rw [stepF_fst, if_pos hfire] at h1
+        exact (Option.some.inj h1)
+      | false =>
+        rw [stepF_fst, if_neg (by rw [hfire]; exact Bool.noConfusion)] at h1
+        exact Or.inr h1
+
+/-- **§90.2 の主定理 — 最後の指数 `j` について `ψ_{Ω₁} j` は 𝔗(M) の項。**
+    だから `ksetAll_of_inT_psi` で `K_{Ω₁}(j) < j` — 残余の `j` は
+    「どこかの順序数」ではなく、走査が立てようとしているのと同じ 2.1(vi) の
+    条件を満たす崩壊指数である。 -/
+theorem inT_psi_idxF90 {x : Term} (Hp : PsiIdxOK 0 x) {j : Term}
+    (hj : idxF88 0 x = some j) : inT (psi (reg 1) j) = true := by
+  have h : ((wcnf (reg 1) (toList x)).1.foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).1 = some j := hj
+  rcases idxF_step90 (wcnf (reg 1) (toList x)).1 (none, none) j h with ⟨p, hp, hle, he⟩ | h1
+  · rw [← he]; exact Hp p hp hle
+  · cases h1
+
+end
+
+/-! ### §90.3 `cV` の側も `Ω₁` の下では只 — `aV = Ω₁` の歩を除いて -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§90.3 の主定理。**  §86.3 の `lt_sub1dd_of_ltW86` は `y` の出どころを見ない —
+    `inT y` と `y < Ω₁` しか要らない。だから `aV ⊖ Ω₁ ≠ 0` の歩では、`K_{Ω₁} cV` の
+    元も含めて `Ω₁` より下の元がぜんぶ只で片づく。§87.4 はこれを `aV` の側にしか
+    使わず、§88.3 は二つの条項を一つに畳んだときに落としてしまった。 -/
+theorem lt_idxOf_of_lt_reg90 {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hz : ac.2 ≠ zero)
+    (hsub : subAP (reg 1) ac.1 ≠ zero) {y : Term}
+    (hyi : inT y = true) (hlt : lt y (reg 1) = true)
+    (hidxT : inT (idxOf (reg 1) s ac) = true) :
+    lt y (idxOf (reg 1) s ac) = true := by
+  have hdT : inT (ddOf75 (reg 1) ac) = true := inT_ddOf75 (inT_reg 1) h1 h3
+  exact lt_of_lt_of_le3 (inT_le_fragR y hyi) (inT_le_fragR _ (inT_sub1 hdT))
+    (inT_le_fragR _ hidxT)
+    (lt_sub1dd_of_ltW86 omegaNF_reg1_79 h1 h3 hz hsub hyi hlt)
+    (le_sub1dd_idxOf75 (inT_reg 1) hst h1 h3)
+
+end
+
+/-! ### §90.4 残余 — `e` は部分領域のより小さい項で、`j` はその崩壊指数 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§90 の条項。** §88 の `IdxK88` に、§90.1 の四つ (`isStd (ψ₀ e)`・`btLe72 1 e`・
+    `e < a`・`size e < size a`) と §90.2 の一つ (`ψ_{Ω₁} j` が 𝔗(M) の項) を足し、
+    §90.3 が片づける元 — `y < Ω₁` かつ `aV ⊖ Ω₁ ≠ 0` — を義務から外した形。
+    足したものも外したものもすべて定理だから、門との同値は保たれる
+    (`idxStd90_of_step073` が逆向き)。 -/
+def IdxK90 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true → inT (idxOf (reg 1) p.1 p.2) = true →
+      ∀ (y : Term) (c e : BT) (j : Term),
+        BT.D 1 c ∈ BT.toL a → BT.isStd (BT.D 1 c) = true → BT.lt c a = true →
+        e ∈ d0Args88 c → BT.isStd (BT.D 0 e) = true → btLe72 1 e = true →
+        BT.lt e a = true → BT.size e < BT.size a →
+        idxF88 0 (dict e) = some j → inT j = true → inT (psi (reg 1) j) = true →
+        le y j = true → inT y = true → y ∈ Kset (reg 1) (dict c) →
+        (lt y (reg 1) = false ∨ subAP (reg 1) p.2.1 = zero) →
+        (y ∈ Kset (reg 1) p.2.1 ∨ y ∈ Kset (reg 1) p.2.2) →
+        lt y (idxOf (reg 1) p.1 p.2) = true
+
+/-- **鋭い形 — `y` を落として指数どうしを比べる。**  仮説は `IdxK90` と同じ (歩と成分の
+    結びつきを含む) で、結論だけ `j < i₀ ⊕ Δ` に強めたもの。`IdxK90` を出す。
+    **門から出るとは限らない。** -/
+def IdxLtK90 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true → inT (idxOf (reg 1) p.1 p.2) = true →
+      ∀ (y : Term) (c e : BT) (j : Term),
+        BT.D 1 c ∈ BT.toL a → BT.isStd (BT.D 1 c) = true → BT.lt c a = true →
+        e ∈ d0Args88 c → BT.isStd (BT.D 0 e) = true → btLe72 1 e = true →
+        BT.lt e a = true → BT.size e < BT.size a →
+        idxF88 0 (dict e) = some j → inT j = true → inT (psi (reg 1) j) = true →
+        le y j = true → inT y = true → y ∈ Kset (reg 1) (dict c) →
+        (lt y (reg 1) = false ∨ subAP (reg 1) p.2.1 = zero) →
+        (y ∈ Kset (reg 1) p.2.1 ∨ y ∈ Kset (reg 1) p.2.2) →
+        lt j (idxOf (reg 1) p.1 p.2) = true
+
+theorem idxK90_of_idxLtK90 {a : BT} (H : IdxLtK90 a) : IdxK90 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk hfr hy
+  exact lt_of_le_of_lt3 (inT_le_fragR _ hyT) (inT_le_fragR _ hjT) (inT_le_fragR _ hidxT) hlej
+    (H p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk hfr hy)
+
+/-- §88 の条項は §90 の条項を出す — 仮説が増えただけだから。 -/
+theorem idxK90_of_idxK88 {a : BT} (H : IdxK88 a) : IdxK90 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he _ _ _ _ hj hjT _ hlej hyT hyk _ hy
+  exact H p hp hle hidxT y c e j hc hstd hltc he hj hjT hlej hyT hyk hy
+
+/-- **§90 の残る仮説。** 部分領域の項について §90 の条項。**証明しない。** -/
+def IdxStd90 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK90 a
+
+/-- 鋭い形の大域版。**証明しない。** -/
+def IdxLtStd90 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxLtK90 a
+
+theorem idxStd90_of_idxLtStd90 (H : IdxLtStd90) : IdxStd90 :=
+  fun a hb hs => idxK90_of_idxLtK90 (H a hb hs)
+
+/-- **§90.4 の主定理。** 一項ぶんの門は §90 の条項と帰納法の仮説から出る。
+    §88.3 の `gateStd87_of_idxK88` と同じく、条項が要るのは**その項ひとつ**だけ。 -/
+theorem gateStd87_of_idxK90 (a : BT)
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b)
+    (H : btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK90 a) : GateStd87 a := by
+  intro hb hs
+  have hin := inT_dict_ih87 a ih hb (isStd_of_D hs)
+  obtain ⟨hcL, hdL⟩ := inT_toList (dict a) hin.1
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcL hdL
+      (ltM_toList (dict a) hin.1 hin.2)
+  have hnz := wcnf_snd_ne_zero84 (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcL hdL
+    (ltM_toList (dict a) hin.1 hin.2)
+  intro p hp hle
+  refine scan_idx84 (wcnf (reg 1) (toList (dict a))).1 (none, none)
+    stInv_none (kInv75_none 0) hallOK ?_ p hp hle
+  intro q hq hle2 hst y hy
+  obtain ⟨hi1, hl1, hi2, hl2⟩ := hallOK q.2 (scanSt_mem_snd _ _ _ _ q hq)
+  obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT (inT_reg 1) (ltM_reg 1) hst hi1 hl1 hi2 hl2
+  obtain ⟨c, hc, hstd, hltc, hyk⟩ := kset_arg87 ih hb hs hq hy
+  have hszc0 : BT.size (BT.D 1 c) ≤ BT.size a := size_mem_toL87 a _ hc
+  have hszc : BT.size c < BT.size a := by rw [size_D87] at hszc0; omega
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (btLe72_toL87 a _ hb hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D hstd
+  have ihc : ∀ b : BT, BT.size b < BT.size c → GateStd87 b := fun b hz => ih b (by omega)
+  have hinc := inT_dict_ih87 c ihc hbc hsc
+  have hyT : inT y = true := inT_mem_Kset75 (dict c) hinc.1 _ y hyk
+  obtain ⟨e, he, j, hj, hlej, hjT⟩ := kset_dict_idx88 c ihc hbc hsc y hyk
+  have hse : BT.isStd (BT.D 0 e) = true := isStd_d0Args_90 c hsc e he
+  have hbe : btLe72 1 e = true := btLe72_d0Args_90 c hbc e he
+  have hlte : BT.lt e a = true := lt_d0Args_90 hs hc he
+  have hsze : BT.size e < BT.size a := by have := size_d0Args_90 c e he; omega
+  have ihe : ∀ b : BT, BT.size b < BT.size e → GateStd87 b := fun b hz => ih b (by omega)
+  have hine := inT_dict_ih87 e ihe hbe (isStd_of_D hse)
+  have hpsiT : inT (psi (reg 1) j) = true :=
+    inT_psi_idxF90 (psiIdxOK_of_stepOK 0 (dict e) hine.1 hine.2 (ih e hsze hbe hse)) hj
+  cases hlty : lt y (reg 1) with
+  | false =>
+    exact H hb hs q hq hle2 hidxT y c e j hc hstd hltc he hse hbe hlte hsze
+      hj hjT hpsiT hlej hyT hyk (Or.inl hlty) hy
+  | true =>
+    by_cases hsub : subAP (reg 1) q.2.1 = zero
+    · exact H hb hs q hq hle2 hidxT y c e j hc hstd hltc he hse hbe hlte hsze
+        hj hjT hpsiT hlej hyT hyk (Or.inr hsub) hy
+    · exact lt_idxOf_of_lt_reg90 hst hi1 hi2 (hnz q.2 (scanSt_mem_snd _ _ _ _ q hq))
+        hsub hyT hlty hidxT
+
+/-- **§90 の第一の結論。** §73 の残る門は §90 の条項から出る。 -/
+theorem psiIdxStep073_of_idxStd90 (H : IdxStd90) : PsiIdxStep073 :=
+  step073_of_gate87 (fun a ih => gateStd87_of_idxK90 a ih (fun hb hs => H a hb hs))
+
+theorem psiIdxStep073_of_idxLtStd90 (H : IdxLtStd90) : PsiIdxStep073 :=
+  psiIdxStep073_of_idxStd90 (idxStd90_of_idxLtStd90 H)
+
+/-- **逆向き。** 足した仮説も外した義務もすべて落ちるので、分解は過不足がない。 -/
+theorem idxStd90_of_step073 (H : PsiIdxStep073) : IdxStd90 := by
+  intro a hb hs p hp hle
+  intro _ y _ _ _
+  intro _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ hy
+  exact (H a hb hs p hp hle).2 y hy
+
+/-- **§90 の第二の結論。** 326 行目の証明書が `K` の側で待つのは §90 の条項ひとつ。 -/
+theorem certIn_t326_idx90 (H : IdxStd90)
+    (HD : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step73 (psiIdxStep073_of_idxStd90 H) HD HI HC hacc
+
+end
+
+/-! ### §90.5 `ψ₀` を許す層 — そして層の天井 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁` を一つも含まない項。§87.5 の `noD0_87` の裏返し。 -/
+def noD1_90 : BT → Bool
+  | .zero => true
+  | .D u c => (u == 0) && noD1_90 c
+  | .sum a b => noD1_90 a && noD1_90 b
+
+theorem noD1_D90 {u : Nat} {c : BT} (h : noD1_90 (BT.D u c) = true) :
+    u = 0 ∧ noD1_90 c = true := by
+  obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h
+  exact ⟨(beq_iff_eq (a := u) (b := 0)).mp h1, h2⟩
+
+theorem noD1_sum90 {a b : BT} (h : noD1_90 (BT.sum a b) = true) :
+    noD1_90 a = true ∧ noD1_90 b = true := (Bool.and_eq_true _ _).mp h
+
+/-- `ψ₁` の無い項の成分はぜんぶ `ψ₀` の節。 -/
+theorem noD1_toL90 : ∀ (c : BT), noD1_90 c = true → ∀ t ∈ BT.toL c,
+    ∃ x, t = BT.D 0 x ∧ noD1_90 x = true := by
+  intro c
+  induction c with
+  | zero => intro _ t ht; cases ht
+  | D u x _ =>
+    intro hn t ht
+    obtain ⟨hu, hnx⟩ := noD1_D90 hn
+    subst hu
+    exact ⟨x, List.mem_singleton.mp (show t ∈ [BT.D 0 x] from ht), hnx⟩
+  | sum x z ihx ihz =>
+    intro hn t ht
+    obtain ⟨hnx, hnz⟩ := noD1_sum90 hn
+    rcases List.mem_append.mp (show t ∈ BT.toL x ++ BT.toL z from ht) with h1 | h1
+    · exact ihx hnx t h1
+    · exact ihz hnz t h1
+
+/-- 添字 0 の節の像は `Ω₁` の下 — §87.2 の `lt_reg1_dict_D0_87` を、周りの項ではなく
+    その節ひとつの門から引き直した形。 -/
+theorem lt_reg1_dict_D0_90 {x : BT} (ihx : ∀ b : BT, BT.size b < BT.size x → GateStd87 b)
+    (hg : GateStd87 x) (hb : btLe72 1 x = true) (hs : BT.isStd (BT.D 0 x) = true) :
+    lt (dict (BT.D 0 x)) (reg 1) = true := by
+  have hin := inT_dict_ih87 x ihx hb (isStd_of_D hs)
+  rw [Trans.Dict.dict_D]
+  exact lt_collapse0_W79 (dict x) hin.1 hin.2
+    (psiIdxOK_of_stepOK 0 (dict x) hin.1 hin.2 (hg hb hs))
+
+/-- `ψ₁` の無い項の像の成分はぜんぶ `Ω₁` の下 — だから走査は一度も発火しない。 -/
+theorem lt_reg1_toList_noD1_90 (c : BT)
+    (ih : ∀ b : BT, BT.size b < BT.size c → GateStd87 b)
+    (hb : btLe72 1 c = true) (hs : BT.isStd c = true) (hn : noD1_90 c = true) :
+    ∀ p ∈ toList (dict c), lt p (reg 1) = true := by
+  intro p hp
+  obtain ⟨_, t, ht, hpe⟩ := toList_dict82 c p hp
+  obtain ⟨x, hte, hnx⟩ := noD1_toL90 c hn t ht
+  have hszt : BT.size t ≤ BT.size c := size_mem_toL87 c t ht
+  have hszx : BT.size x < BT.size c := by rw [hte, size_D87] at hszt; omega
+  have hbt : btLe72 1 t = true := btLe72_toL87 c t hb ht
+  have hbx : btLe72 1 x = true := by rw [hte] at hbt; exact (btLe72_D 1 0 x hbt).2
+  have hst : BT.isStd (BT.D 0 x) = true := by
+    rw [← hte]; exact isStd_toL82 c hs t ht
+  have ihx : ∀ b : BT, BT.size b < BT.size x → GateStd87 b := fun b hz => ih b (by omega)
+  rw [hpe, hte]
+  exact lt_reg1_dict_D0_90 ihx (ih x hszx) hbx hst
+
+/-- 成分がぜんぶ `w` より下なら `wcnf` は対を一つも出さない。 -/
+theorem wcnf_fst_nil90 {w : Term} : ∀ (L : List Term), (∀ p ∈ L, lt p w = true) →
+    (wcnf w L).1 = []
+  | [], _ => rfl
+  | p :: rest, h => by
+      rw [wcnf_cons_lt (h p (List.Mem.head _))]
+
+/-- 対が一つも無ければ最後の指数は `none`。 -/
+theorem idxF88_none_of_nil90 {x : Term} (h : (wcnf (reg 1) (toList x)).1 = []) :
+    idxF88 0 x = none := by
+  show ((wcnf (reg 1) (toList x)).1.foldl (init := ((none : Option Term), (none : Option Term)))
+    (stepF (reg 1) (baseOf 0))).1 = none
+  rw [h]
+  rfl
+
+/-- **`ψ₁` を一つも含まない項の像の `K_{Ω₁}` は空。**  `ψ₀` はいくつあってもよい —
+    強臨界枝が一度も発火しないので、崩壊は `ω^·` を被せるだけになる。
+    §87.5 の `kset_nil_noD0_87` は `ψ₀` を一つも許さなかった。 -/
+theorem kset_nil_noD1_90 : ∀ (c : BT), (∀ b : BT, BT.size b < BT.size c → GateStd87 b) →
+    btLe72 1 c = true → BT.isStd c = true → noD1_90 c = true →
+    ∀ y, y ∈ Kset (reg 1) (dict c) → False
+  | .zero, _, _, _, _ => by intro y hy; cases hy
+  | .D u x, ih, hb, hs, hn => by
+      intro y hy
+      obtain ⟨hu0, hnx⟩ := noD1_D90 hn
+      subst hu0
+      obtain ⟨_, hbx⟩ := btLe72_D 1 0 x hb
+      have hsx : BT.isStd x = true := isStd_of_D hs
+      have hsz : BT.size x < BT.size (BT.D 0 x) := by rw [size_D87]; omega
+      have ihx : ∀ b : BT, BT.size b < BT.size x → GateStd87 b := fun b hz => ih b (by omega)
+      have hin := inT_dict_ih87 x ihx hbx hsx
+      have hpi : PsiIdxOK 0 (dict x) :=
+        psiIdxOK_of_stepOK 0 (dict x) hin.1 hin.2 (ih x hsz hbx hs)
+      rw [Trans.Dict.dict_D] at hy
+      rcases mem_Kset_collapse88 hin.1 hin.2 hpi hy with h1 | h1
+      · obtain ⟨j, hj, _⟩ := h1
+        rw [idxF88_none_of_nil90
+          (wcnf_fst_nil90 _ (lt_reg1_toList_noD1_90 x ihx hbx hsx hnx))] at hj
+        cases hj
+      · exact kset_nil_noD1_90 x ihx hbx hsx hnx y h1
+  | .sum x z, ih, hb, hs, hn => by
+      intro y hy
+      obtain ⟨hnx, hnz⟩ := noD1_sum90 hn
+      obtain ⟨hbx, hbz⟩ := btLe72_sum 1 x z hb
+      obtain ⟨hsx, hsz2⟩ := isStd_of_sum hs
+      have hzx : BT.size x < BT.size (BT.sum x z) := by
+        rw [size_sum87]; have := size_pos87 z; omega
+      have hzz : BT.size z < BT.size (BT.sum x z) := by
+        rw [size_sum87]; have := size_pos87 x; omega
+      rw [Trans.Dict.dict_sum] at hy
+      rcases mem_Kset_plus hy with h1 | h1
+      · exact kset_nil_noD1_90 x (fun b hb2 => ih b (by omega)) hbx hsx hnx y h1
+      · exact kset_nil_noD1_90 z (fun b hb2 => ih b (by omega)) hbz hsz2 hnz y h1
+
+/-- 像の `K_{Ω₁}` が空であることの構造的な十分条件。`ψ₀` の引数に `ψ₁` が無ければよく、
+    `ψ₁` の下ではこの条件が続けばよい。 -/
+def flatK90 : BT → Bool
+  | .zero => true
+  | .D u c => if u == 0 then noD1_90 c else flatK90 c
+  | .sum a b => flatK90 a && flatK90 b
+
+theorem flatK90_of_noD1_90 : ∀ (c : BT), noD1_90 c = true → flatK90 c = true
+  | .zero, _ => rfl
+  | .D u x, hn => by
+      obtain ⟨hu, hnx⟩ := noD1_D90 hn
+      subst hu
+      show (if (0 : Nat) == 0 then noD1_90 x else flatK90 x) = true
+      rw [if_pos (show ((0 : Nat) == 0) = true from rfl)]
+      exact hnx
+  | .sum x z, hn => by
+      obtain ⟨hnx, hnz⟩ := noD1_sum90 hn
+      show (flatK90 x && flatK90 z) = true
+      rw [flatK90_of_noD1_90 x hnx, flatK90_of_noD1_90 z hnz]
+      rfl
+
+theorem flatK90_of_noD0_87 : ∀ (c : BT), noD0_87 c = true → flatK90 c = true
+  | .zero, _ => rfl
+  | .D u x, hn => by
+      obtain ⟨hu0, hnx⟩ := noD0_D87 hn
+      show (if u == 0 then noD1_90 x else flatK90 x) = true
+      rw [if_neg (by
+        intro hc
+        exact hu0 ((beq_iff_eq (a := u) (b := 0)).mp hc))]
+      exact flatK90_of_noD0_87 x hnx
+  | .sum x z, hn => by
+      obtain ⟨hnx, hnz⟩ := noD0_sum87 hn
+      show (flatK90 x && flatK90 z) = true
+      rw [flatK90_of_noD0_87 x hnx, flatK90_of_noD0_87 z hnz]
+      rfl
+
+/-- **§90.5 の主定理 — 像の `K_{Ω₁}` が空になる層。** -/
+theorem kset_nil_flatK90 : ∀ (c : BT), (∀ b : BT, BT.size b < BT.size c → GateStd87 b) →
+    btLe72 1 c = true → BT.isStd c = true → flatK90 c = true →
+    ∀ y, y ∈ Kset (reg 1) (dict c) → False
+  | .zero, _, _, _, _ => by intro y hy; cases hy
+  | .D u x, ih, hb, hs, hf => by
+      intro y hy
+      obtain ⟨hu, hbx⟩ := btLe72_D 1 u x hb
+      have hfe : (if u == 0 then noD1_90 x else flatK90 x) = true := hf
+      cases u with
+      | zero =>
+        rw [if_pos (show ((0 : Nat) == 0) = true from rfl)] at hfe
+        exact kset_nil_noD1_90 (BT.D 0 x) ih hb hs
+          (show noD1_90 (BT.D 0 x) = true from by
+            show ((0 : Nat) == 0 && noD1_90 x) = true
+            rw [hfe]; rfl) y hy
+      | succ u' =>
+        cases u' with
+        | zero =>
+          rw [if_neg (by intro hc; exact Bool.noConfusion hc)] at hfe
+          have hsx : BT.isStd x = true := isStd_of_D hs
+          have ihx : ∀ b : BT, BT.size b < BT.size x → GateStd87 b := by
+            intro b hz
+            refine ih b ?_
+            rw [size_D87]
+            omega
+          exact kset_nil_flatK90 x ihx hbx hsx hfe y (kset_strip_D1_88 ihx hbx hsx hy)
+        | succ u'' => exact absurd hu (by omega)
+  | .sum x z, ih, hb, hs, hf => by
+      intro y hy
+      obtain ⟨hfx, hfz⟩ :=
+        (Bool.and_eq_true _ _).mp (show (flatK90 x && flatK90 z) = true from hf)
+      obtain ⟨hbx, hbz⟩ := btLe72_sum 1 x z hb
+      obtain ⟨hsx, hsz2⟩ := isStd_of_sum hs
+      have hzx : BT.size x < BT.size (BT.sum x z) := by
+        rw [size_sum87]; have := size_pos87 z; omega
+      have hzz : BT.size z < BT.size (BT.sum x z) := by
+        rw [size_sum87]; have := size_pos87 x; omega
+      rw [Trans.Dict.dict_sum] at hy
+      rcases mem_Kset_plus hy with h1 | h1
+      · exact kset_nil_flatK90 x (fun b hb2 => ih b (by omega)) hbx hsx hfx y h1
+      · exact kset_nil_flatK90 z (fun b hb2 => ih b (by omega)) hbz hsz2 hfz y h1
+
+/-- 添字 1 の成分の引数がこの層に入っているか。§88.5 の `flatD1_88` の緩め。 -/
+def flatD1K90 (a : BT) : Bool :=
+  (BT.toL a).all fun t => match t with
+    | BT.D 1 c => flatK90 c
+    | _ => true
+
+theorem flatK_of_flatD1K90 {a : BT} (hf : flatD1K90 a = true) {c : BT}
+    (hc : BT.D 1 c ∈ BT.toL a) : flatK90 c = true :=
+  List.all_eq_true.mp hf (BT.D 1 c) hc
+
+/-- §88.5 の層は §90.5 の層に含まれる。 -/
+theorem flatD1K_of_flatD1_88 {a : BT} (hf : flatD1_88 a = true) : flatD1K90 a = true := by
+  unfold flatD1K90
+  rw [List.all_eq_true]
+  intro t ht
+  cases t with
+  | zero => rfl
+  | sum x y => rfl
+  | D u c =>
+    cases u with
+    | zero => rfl
+    | succ u' =>
+      cases u' with
+      | zero => exact flatK90_of_noD0_87 c (noD0_of_flatD1_88 hf ht)
+      | succ u'' => rfl
+
+theorem idxK90_of_flatD1K90 {a : BT} (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b)
+    (hb : btLe72 1 a = true) (_hs : BT.isStd (BT.D 0 a) = true) (hf : flatD1K90 a = true) :
+    IdxK90 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he _ _ _ _ _ _ _ _ _ hyk _ _
+  have hszc0 : BT.size (BT.D 1 c) ≤ BT.size a := size_mem_toL87 a _ hc
+  have hszc : BT.size c < BT.size a := by rw [size_D87] at hszc0; omega
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (btLe72_toL87 a _ hb hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D hstd
+  have ihc : ∀ b : BT, BT.size b < BT.size c → GateStd87 b := fun b hz => ih b (by omega)
+  exact (kset_nil_flatK90 c ihc hbc hsc (flatK_of_flatD1K90 hf hc) y hyk).elim
+
+/-- **§90.5 の系 — §88.5 の `flatD1_88` より広い層の上で門は定理。** -/
+theorem gateStd87_of_flatD1K90 {a : BT}
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b) (hf : flatD1K90 a = true) :
+    GateStd87 a :=
+  gateStd87_of_idxK90 a ih (fun hb hs => idxK90_of_flatD1K90 ih hb hs hf)
+
+/-- 層が §88.5 の `flatD1_88` より真に広いことの証人。 -/
+def wid90 : BT := BT.D 1 (BT.sum (BT.D 1 (BT.D 1 BT.zero)) (BT.D 0 (BT.D 0 BT.zero)))
+
+theorem flatD1_lt_flatD1K90 :
+    flat87 wid90 = false ∧ flatD1_88 wid90 = false ∧ flatD1K90 wid90 = true ∧
+    btLe72 1 wid90 = true ∧ BT.isStd (BT.D 0 wid90) = true :=
+  ⟨by decide, by decide, by decide, by decide, by decide⟩
+
+/-! **層の天井。** 新しい層の `ψ₀` はどれも発火しない — つまりこの層は §88.5 の
+`NoIdx88` の中にある。広がったのは**判定できる書き方**であって、領域ではない。 -/
+
+theorem noD1_d0Args_90 : ∀ (c : BT), noD1_90 c = true → ∀ e ∈ d0Args88 c, noD1_90 e = true
+  | .zero, _ => by intro e he; cases he
+  | .D u x, hn => by
+      intro e he
+      obtain ⟨hu, hnx⟩ := noD1_D90 hn
+      subst hu
+      have hd : e ∈ (if (0 : Nat) == 0 then x :: d0Args88 x else d0Args88 x) := he
+      rw [if_pos (show ((0 : Nat) == 0) = true from rfl)] at hd
+      rcases List.mem_cons.mp hd with h1 | h1
+      · rw [h1]; exact hnx
+      · exact noD1_d0Args_90 x hnx e h1
+  | .sum x z, hn => by
+      intro e he
+      have hd : e ∈ d0Args88 x ++ d0Args88 z := he
+      obtain ⟨hnx, hnz⟩ := noD1_sum90 hn
+      rcases List.mem_append.mp hd with h1 | h1
+      · exact noD1_d0Args_90 x hnx e h1
+      · exact noD1_d0Args_90 z hnz e h1
+
+theorem noD1_d0Args_flatK90 : ∀ (c : BT), flatK90 c = true → ∀ e ∈ d0Args88 c,
+    noD1_90 e = true
+  | .zero, _ => by intro e he; cases he
+  | .D u x, hf => by
+      intro e he
+      have hfe : (if u == 0 then noD1_90 x else flatK90 x) = true := hf
+      have hd : e ∈ (if u == 0 then x :: d0Args88 x else d0Args88 x) := he
+      by_cases hu : (u == 0) = true
+      · rw [if_pos hu] at hfe
+        rw [if_pos hu] at hd
+        rcases List.mem_cons.mp hd with h1 | h1
+        · rw [h1]; exact hfe
+        · exact noD1_d0Args_90 x hfe e h1
+      · rw [if_neg hu] at hfe
+        rw [if_neg hu] at hd
+        exact noD1_d0Args_flatK90 x hfe e hd
+  | .sum x z, hf => by
+      intro e he
+      have hd : e ∈ d0Args88 x ++ d0Args88 z := he
+      obtain ⟨hfx, hfz⟩ :=
+        (Bool.and_eq_true _ _).mp (show (flatK90 x && flatK90 z) = true from hf)
+      rcases List.mem_append.mp hd with h1 | h1
+      · exact noD1_d0Args_flatK90 x hfx e h1
+      · exact noD1_d0Args_flatK90 z hfz e h1
+
+/-- **§90.5 の天井 — 新しい層は §88.5 の `NoIdx88` の中。**  だから §90.5 が広げたのは
+    「判定できる形」であって、門が新しく通る領域ではない。 -/
+theorem noIdx88_of_flatD1K90 {a : BT}
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b)
+    (hb : btLe72 1 a = true) (hs : BT.isStd (BT.D 0 a) = true) (hf : flatD1K90 a = true) :
+    NoIdx88 a := by
+  intro c hc e he
+  have hszc0 : BT.size (BT.D 1 c) ≤ BT.size a := size_mem_toL87 a _ hc
+  have hszc : BT.size c < BT.size a := by rw [size_D87] at hszc0; omega
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (btLe72_toL87 a _ hb hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D (comp_facts82 hs hc).1
+  have hne : noD1_90 e = true := noD1_d0Args_flatK90 c (flatK_of_flatD1K90 hf hc) e he
+  have hbe : btLe72 1 e = true := btLe72_d0Args_90 c hbc e he
+  have hse : BT.isStd e = true := isStd_of_D (isStd_d0Args_90 c hsc e he)
+  have hsze : BT.size e < BT.size a := by have := size_d0Args_90 c e he; omega
+  have ihe : ∀ b : BT, BT.size b < BT.size e → GateStd87 b := fun b hz => ih b (by omega)
+  exact idxF88_none_of_nil90
+    (wcnf_fst_nil90 _ (lt_reg1_toList_noD1_90 e ihe hbe hse hne))
+
+end
+
+/-! ### §90.6 否定 — 新しい Buchholz の事実で守っても盲目形は偽 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- §88.4 の盲目形に §90.1 の事実を条件として付けた形。**偽** — `not_idxLtBlindStd90`。 -/
+def IdxLtBlind90 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true →
+      ∀ (c e : BT) (j : Term), BT.D 1 c ∈ BT.toL a → e ∈ d0Args88 c →
+        BT.lt e a = true → idxF88 0 (dict e) = some j →
+        lt j (idxOf (reg 1) p.1 p.2) = true
+
+def IdxLtBlindStd90 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxLtBlind90 a
+
+/-- **付けた条件は空回りする。**  部分領域では §90.1 が `e < a` を無条件に出すので、
+    §88.4 の盲目形と §90.6 の盲目形は同じものになる。 -/
+theorem idxLtBlind88_of_idxLtBlind90 {a : BT} (hs : BT.isStd (BT.D 0 a) = true)
+    (H : IdxLtBlind90 a) : IdxLtBlind88 a := by
+  intro p hp hle c e j hc he hj
+  exact H p hp hle c e j hc he (lt_d0Args_90 hs hc he) hj
+
+/-- **§90.6 の主定理 — 盲目形は `e < a` を付けても偽。**  反証項は §82 の `aBad82`
+    (記号 15 個)。**§90.1 の事実だけでは門は閉じない** — 歩との結びつきに使わねばならない。 -/
+theorem not_idxLtBlind90_aBad82 : ¬ IdxLtBlind90 aBad82 := fun H =>
+  not_idxLtBlind88_aBad82 (idxLtBlind88_of_idxLtBlind90 aBad82_hyps.2.1 H)
+
+theorem not_idxLtBlindStd90 : ¬ IdxLtBlindStd90 := fun H =>
+  not_idxLtBlind90_aBad82 (H aBad82 aBad82_hyps.1 aBad82_hyps.2.1)
+
+end
+
+/-! ### §90.7 測定 (凍結)
+
+**構成を先に書く。**  母集団は §88 の `qual88` 27 個 — `famG88`・`famH88`・`famI88`、
+`ψ₀` を発火する成分の引数の**直下の和**に置いて `wC` の側へ回す族 — と、§87 の `qual87`
+25 個・§86 の `qual86` 53 個・§84 の `qual84` 53 個・326 行目とその基本列 `r326_84` 41 個
+— `ψ₀` を帽子 `ψ₁^m` の**内側**に置いて `wA` の側へ回す族 — を**そのまま使う**。
+どちらの回し方も要る (§88.6 が数えたとおり、片方だけでは残余の片側が空回りする)。
+その上に、**発火する成分の引数が §90.5 の層に入る**ように組んだ 18 個を足す。
+
+    dep90 n = ψ₀^n 0                                   (`ψ₁` を含まない引数)
+    famJ90  ψ₁^{k+5}0 ⊕ ψ₁(ψ₁^{k+2}0 ⊕ ψ₀(dep90 (j+1)))                    9 個
+    famK90  ψ₁^{k+5}0 ⊕ ψ₁(ψ₁^{k+3}0 ⊕ ψ₀(dep90 (j+2)) ⊕ ψ₀(dep90 (j+1)))  9 個
+    pop90 = 18 個、qual90 = §84 の `okHyp84` を満たすもの 18 個 (全部)
+
+測るのは `qual90` 18・`qual88` 27・`qual87` 25・`qual86` 53・`qual84` 53・`r326_84` 41 の
+あわせて **217 項**、その **295 の発火歩**。
+
+**測定の結果。**
+
+  * **§90.1 は 217 項すべてで正しい。**  `ltArg90b` — 添字 1 の成分の中の `ψ₀` の引数が
+    どれも項全体より小さいか — は失敗 0。定理の測定であり、同時に §90.6 の否定でもある:
+    付け加えられる条件が空回りすることの数字。
+  * **鋭い条項は落ちない。**  `idxLt90b` (§90.3 が外した義務を除いた形) は 217 項すべてで
+    真。`r326_84` の 41 添字も含む。
+  * **否定 1 — 盲目形は `e < a` を付けても偽。**  `idxLtBlind90b` は `qual88` で 27、
+    `qual87` で 25、`qual86` で 53、`qual84` で 22 落ちる (`r326_84`・`qual90` では 0) —
+    `idxLtBlindb88` とちょうど同じ五つの数。**§90.6 はこれを定理にしている**
+    (`not_idxLtBlindStd90`、反証項は `aBad82`、記号 15 個)。
+  * **否定 2 — §90.3 の免除は定理として本物、母集団では空。**  295 の発火歩の `K` の元は
+    `aV` の側に 66・`cV` の側に 45 のあわせて 111 個。そのうち `Ω₁` より下は **1 個だけ**で、
+    しかも `aV` の側 (§87.4 が既に持っていた側) にある。**`cV` の 45 個は一つも
+    `Ω₁` より下に無い。** §90.3 が開ける枝を母集団は一度も要求しない。
+  * **`aV = Ω₁` は隅の話ではない。**  295 の発火歩のうち **32** で `subAP Ω₁ aV = 0`
+    (`qual88` 6・`qual86` 5・`qual84` 18・`qual90` 3)。§90.3 の側条件は落とせない。
+  * **否定 3 — 新しい層は広いが、新しい領域ではない。**  `flatD1K90` は `r326_84` の
+    41 添字**ぜんぶ**を覆う (§87.5 の `flat87` と §88.5 の `flatD1_88` は 10)。しかし
+    `r326_84` の 41 項は 295 の発火歩に **1 歩も出さない** — そこでの門はどの層より
+    粗い理由で空回りしている。そして `noIdx88_of_flatD1K90` が、この層が §88.5 の
+    `NoIdx88` の中にあることを**定理として**言う。広がったのは判定できる書き方だけである。
+    反例づくりの 158 項 (`qual88`・`qual87`・`qual86`・`qual84`) では `flatD1_88` と同じく 0。
+  * **層が空回りしているわけではない。**  `qual90` の 18 項は 1 項あたり 2 歩、
+    あわせて 36 の発火歩を持ち、18 項すべてが `flatD1K90` に入り、`flatD1_88` にも
+    `flat87` にも 18 項すべてが入らない。
+  * **門は落ちない。**  `stepOKb`・`idxb84`・`splitb86` は `qual90` の 18 項で失敗 0。
+    §90 は六つ目の反証を出していない。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁` を含まない引数 — `ψ₀` の塔。 -/
+def dep90 : Nat → BT
+  | 0 => BT.zero
+  | k+1 => BT.D 0 (dep90 k)
+
+def famJ90 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 3).map fun j =>
+    BT.sum (twr86 (k+5)) (BT.D 1 (BT.sum (twr86 (k+2)) (BT.D 0 (dep90 (j+1)))))
+def famK90 : List BT :=
+  (List.range 3).flatMap fun k => (List.range 3).map fun j =>
+    BT.sum (twr86 (k+5)) (BT.D 1 (BT.sum (twr86 (k+3))
+      (BT.sum (BT.D 0 (dep90 (j+2))) (BT.D 0 (dep90 (j+1))))))
+
+def pop90 : List BT := (famJ90 ++ famK90).eraseDups
+def qual90 : List BT := pop90.filter okHyp84
+
+/-- 発火した歩だけ。 -/
+def fireSt90 (a : BT) : List ((Option Term × Option Term) × (Term × Term)) :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).filter
+    (fun p => le (reg 1) p.2.1)
+
+/-- §90.1 の中身の判定器 — 添字 1 の成分の中の `ψ₀` の引数は項全体より小さいか。 -/
+def ltArg90b (a : BT) : Bool :=
+  (BT.toL a).all fun t => match t with
+    | BT.D 1 c => (d0Args88 c).all fun e => BT.lt e a
+    | _ => true
+
+/-- §90.4 の鋭い条項 `IdxLtK90` の判定器 — §90.3 が外した義務を除いた形。 -/
+def idxLt90b (a : BT) : Bool :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).all fun p =>
+    !(le (reg 1) p.2.1) ||
+      ((BT.toL a).all fun t => match t with
+        | BT.D 1 c => (d0Args88 c).all fun e => match idxF88 0 (dict e) with
+            | none => true
+            | some j =>
+              !((Kset (reg 1) p.2.1 ++ Kset (reg 1) p.2.2).any fun y =>
+                  (Kset (reg 1) (dict c)).contains y && le y j &&
+                  (!(lt y (reg 1)) || (subAP (reg 1) p.2.1 == zero))) ||
+              lt j (idxOf (reg 1) p.1 p.2)
+        | _ => true)
+
+/-- §90.6 の盲目形の判定器。 -/
+def idxLtBlind90b (a : BT) : Bool :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).all fun p =>
+    !(le (reg 1) p.2.1) ||
+      ((BT.toL a).all fun t => match t with
+        | BT.D 1 c => (d0Args88 c).all fun e =>
+            !(BT.lt e a) ||
+            (match idxF88 0 (dict e) with
+             | none => true
+             | some j => lt j (idxOf (reg 1) p.1 p.2))
+        | _ => true)
+
+-- 母集団の大きさと形。
+#guard (pop90.length, qual90.length,
+        (famJ90.filter okHyp84).length, (famK90.filter okHyp84).length) == (18, 18, 9, 9)
+#guard ((pop90.map BT.size).foldl min 999, (pop90.map BT.size).foldl max 0) == (15, 29)
+#guard (qual88.length, qual87.length, qual86.length, qual84.length, r326_84.length) ==
+        (27, 25, 53, 53, 41)
+
+/-! **肯定 1 — §90.1 の事実。** 217 項すべてで失敗 0。 -/
+
+#guard ((qual90.filter fun a => !(ltArg90b a)).length,
+        (qual88.filter fun a => !(ltArg90b a)).length,
+        (qual87.filter fun a => !(ltArg90b a)).length,
+        (qual86.filter fun a => !(ltArg90b a)).length,
+        (qual84.filter fun a => !(ltArg90b a)).length,
+        (r326_84.filter fun q => !(ltArg90b q.2)).length) == (0, 0, 0, 0, 0, 0)
+
+/-! **肯定 2 — 鋭い条項。** 217 項すべてで失敗 0。 -/
+
+#guard ((qual90.filter fun a => !(idxLt90b a)).length,
+        (qual88.filter fun a => !(idxLt90b a)).length,
+        (qual87.filter fun a => !(idxLt90b a)).length,
+        (qual86.filter fun a => !(idxLt90b a)).length,
+        (qual84.filter fun a => !(idxLt90b a)).length,
+        (r326_84.filter fun q => !(idxLt90b q.2)).length) == (0, 0, 0, 0, 0, 0)
+
+/-! **否定 1 — `e < a` を付けても盲目形は偽。** §88.4 とちょうど同じ五つの数 —
+付けた条件が空回りしているという意味である。§90.6 が定理にしている。 -/
+
+#guard ((qual90.filter fun a => !(idxLtBlind90b a)).length,
+        (qual88.filter fun a => !(idxLtBlind90b a)).length,
+        (qual87.filter fun a => !(idxLtBlind90b a)).length,
+        (qual86.filter fun a => !(idxLtBlind90b a)).length,
+        (qual84.filter fun a => !(idxLtBlind90b a)).length,
+        (r326_84.filter fun q => !(idxLtBlind90b q.2)).length) == (0, 27, 25, 53, 22, 0)
+#guard (idxLtBlind90b aBad82, idxLtBlindb88 aBad82, idxLt90b aBad82, idxLt90b bad86,
+        ltArg90b aBad82, ltArg90b bad86) == (false, false, true, true, true, true)
+
+/-! **否定 2 — §90.3 の免除は本物で、母集団では空。** `cV` の 45 個は一つも `Ω₁` より
+下に無い。`Ω₁` より下の元は 111 個中 1 個で、`aV` の側 (§87.4 が既に持っていた側)。 -/
+
+#guard
+  (let f := (qual88 ++ qual87 ++ qual86 ++ qual84 ++ (r326_84.map Prod.snd) ++ qual90).flatMap
+     fireSt90
+   ((f.flatMap fun p => Kset (reg 1) p.2.1).length,
+    (f.flatMap fun p => (Kset (reg 1) p.2.1).filter fun y => lt y (reg 1)).length,
+    (f.flatMap fun p => Kset (reg 1) p.2.2).length,
+    (f.flatMap fun p => (Kset (reg 1) p.2.2).filter fun y => lt y (reg 1)).length))
+  == (66, 1, 45, 0)
+
+/-! **否定 2 の続き — `aV = Ω₁` の歩は 295 中 32。** 側条件は落とせない。 -/
+
+#guard
+  (let f := (qual88 ++ qual87 ++ qual86 ++ qual84 ++ (r326_84.map Prod.snd) ++ qual90).flatMap
+     fireSt90
+   (f.length, (f.filter fun p => subAP (reg 1) p.2.1 == zero).length)) == (295, 32)
+#guard ((qual88.flatMap fireSt90).length, (qual87.flatMap fireSt90).length,
+        (qual86.flatMap fireSt90).length, (qual84.flatMap fireSt90).length,
+        ((r326_84.map Prod.snd).flatMap fireSt90).length,
+        (qual90.flatMap fireSt90).length) == (54, 53, 95, 57, 0, 36)
+
+/-! **否定 3 と肯定 3 — 層の広さと層の天井。** `r326_84` の 41 添字ぜんぶを覆うが、
+その 41 項は発火歩を 1 歩も出さない。反例づくりの 158 項では `flatD1_88` と同じく 0。 -/
+
+#guard ((r326_84.filter fun q => flatD1K90 q.2).length,
+        (r326_84.filter fun q => flatD1_88 q.2).length,
+        (r326_84.filter fun q => flat87 q.2).length, r326_84.length) == (41, 10, 10, 41)
+#guard ((qual88.filter fun a => flatD1K90 a).length,
+        (qual87.filter fun a => flatD1K90 a).length,
+        (qual86.filter fun a => flatD1K90 a).length,
+        (qual84.filter fun a => flatD1K90 a).length) == (0, 0, 0, 0)
+#guard ((qual90.filter fun a => flatD1K90 a).length,
+        (qual90.filter fun a => flatD1_88 a).length,
+        (qual90.filter fun a => flat87 a).length,
+        (qual90.filter fun a => (fireSt90 a).length == 2).length) == (18, 0, 0, 18)
+#guard (okHyp84 wid90, flat87 wid90, flatD1_88 wid90, flatD1K90 wid90,
+        stepOKb 0 (dict wid90)) == (true, false, false, true, true)
+
+/-! **肯定 4 — 門は落ちない。** §90 は六つ目の反証を出していない。 -/
+
+#guard ((qual90.filter fun a => !(stepOKb 0 (dict a))).length,
+        (qual90.filter fun a => !(idxb84 0 (dict a))).length,
+        (qual90.filter fun a => !(splitb86 0 (dict a))).length) == (0, 0, 0)
+
+end
+
+/-! ### §90.8 公理 -/
+
+section
+open Trans.Recal (bplus)
+open Evidence.Region
+open Trans.Dict (BT dict)
+open TM TM.Term
+
+end
+
 end Evidence.Region
