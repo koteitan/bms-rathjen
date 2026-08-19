@@ -9919,4 +9919,661 @@ def popQ113 : List BT := q1_113 ++ q2_113 ++ q3_113
 
 end
 
+/-! ## §115 `IdxStd110` IS **NOT** VACUOUS OVER STANDARD TERMS — THE COMPARISON IS NECESSARY
+       TOO, AND WHAT §110 WAS SHORT OF IS THE DECIDER, NOT THE CLAUSE
+
+§110 cut §105's residue with one unconditional strict monotonicity, took all 153 surviving
+obligations over 599 standard terms, and then wrote down a limit in the words §100 had used
+before it: it could not exhibit a surviving obligation on a standard term, and every term it
+found with `cV ≤ c` was non-standard and failed the gate.  §115 answers that limit twice, and
+the two answers are opposite.
+
+**FIRST — THE VACUITY §110 SAW IS A THEOREM WHERE IT HOLDS, NOT A PROPERTY OF ITS
+POPULATION.**  At a FIRST firing step the index is `Δ ⊖ 1`, so `Δ ≤ y` alone kills the
+obligation (`not_lt_idxOf_of_le_dd115`: `Δ ⊖ 1 ≤ Δ ≤ y`, and the order is asymmetric).  Read
+§110's own monotonicity in the non-strict direction (`le_mulL_mono115`) and that becomes the
+CONVERSE of §110's exemption:
+
+    **`lt_coef_of_lt_idxOf115` — at a first firing step, if `y = ω^E·c` ON THE NOSE, then the
+    obligation IMPLIES `c < cV`.**
+
+So there the coefficient comparison is not merely sufficient, it is NECESSARY, and
+`coefFree110_of_lt_idxOf115` says the decidable form fires at every such step.  **No clause
+can carry a surviving obligation at a first firing step with exact recovery, on ANY term
+where the gate holds — standard or not.**  §110's 153-out-of-153 was forced, and so was
+§110's 0-out-of-150 on the non-standard side.
+
+**SECOND — THAT LEAVES EXACTLY ONE HOLE, AND THE SURVIVOR LIVES IN IT.**  The necessity proof
+wants the recovery exact.  `coefOf110 E` peels `E` off each digit of `y`; a digit that does
+not carry `E` as a prefix comes back whole.  If such a digit is BELOW `Ω₁` nothing breaks —
+the recovered coefficient is still a term, only a little too big, and `coefFree110` checks
+`y ≤ ω^E·c` rather than equality, so it still fires (`ctrl115`).  If such a digit is `Ω₁` or
+above, the recovered coefficient is not a descending list at all: it is not a term of 𝔗(M),
+`coefFree110` goes silently false, and the obligation stands.  Building that needs a `ψ₀`
+argument whose OWN fold fires twice, which needs the argument to be a SUM:
+
+    `carr115  = ψ₁(ψ₁ψ₁0 ⊕ ψ₁0)`                                            (7 symbols)
+    `arg115   = eHi2_105 ⊕ carr115`                                         (16 symbols)
+    `surv115  = ψ₁(ψ₁ψ₁0 ⊕ ψ₁ψ₁0 ⊕ ψ₀ arg115) ⊕ ψ₁ψ₁0`                      (30 symbols)
+
+**`surv115` is standard, at level ≤ 1, its `dict` image is in 𝔗(M), the gate does not fail on
+it, and its one obligation survives §92.1, §92.2, all three of §95, §100, both of §105 AND
+§110's coefficient comparison** (`surv115_counts`).  There `E = ω^(Ω₁·2)` and
+
+    `y = ω^E ⊕ Ω₁`  —  one digit AT the power, and one digit at `Ω₁`, which carries no `E`.
+
+`coefOf110 E y = 1 ⊕ Ω₁`, which is not descending, so `inT` is false and §110 sees nothing
+(`surv115_shape`).  **`IdxK110` is not vacuous over standard terms.**
+
+**AND THE FIX IS ONE LINE OF ROUNDING.**  A digit `q ≤ ω^E` is covered by `ω^E·1` whatever it
+is, so round its coefficient up to `1` and only peel the rest:
+
+    `coef1U115 E q = if q ≤ ω^E then 1 else coef1_110 E q`,  `coefUp115`, `coefFreeU115`.
+
+At `surv115` that gives `c = 2 < cV` and the obligation is free (`surv115_taken`).  No new
+arithmetic is needed: `lt_idxOf_of_coef110` is already general in the coefficient, so
+`lt_idxOf_of_coefFreeU115` is that theorem with a different witness plugged in.  **What §110
+was short of is the DECIDER, not the clause** — `CoefK110`, §110's ∃-form, already covered
+this obligation; `coefOf110` simply named the wrong `z`.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §115.1  `not_lt_of_le115`, `le_mulL_mono115`, `idxOf_none115`,
+          **`not_lt_idxOf_of_le_dd115`**, `not_lt_idxOf_of_le_coef115`,
+          **`lt_coef_of_lt_idxOf115`** (the converse of §110's exemption at a first firing
+          step), `coefFree110_of_lt_idxOf115` (its decidable form).
+
+  §115.2  `coef1U115`, `coefUp115`, `coefFreeU115`, `lt_idxOf_of_coefFreeU115`.
+
+  §115.3  `IdxK115` is `IdxK110` with ONE hypothesis added — `coefFreeU115 p y = false` — so
+          the clause is a SUBSET of §110's (`idxK115_of_idxK110`) and §115 demonstrably adds
+          no obligation.  `gateStd87_of_idxK115` consumes it at one term,
+          `idxStd115_of_step073` is the converse (so `IdxStd115` is still EXACTLY the gate),
+          and `psiIdxStep073_of_idxStd115` / `certIn_t326_idx115` re-hang row 326 — on
+          `DictLtStd92`, `HiMono89` and `IdxStd115`, and on nothing else (`LeIdxSelf95` has
+          been a theorem since §112).
+
+WHAT IS **NOT** CLAIMED.  The gate is NOT closed.  `IdxStd115` is EQUIVALENT to
+`PsiIdxStep073`, as `IdxStd110`, `IdxStd105`, `IdxStd100`, `IdxStd95`, `IdxStd92` and
+`IdxStd90` were.  `HiMono89` and `DictLtStd92` are untouched and still unproved.
+`LocalK2Snd_78`, `IdxLtStd92`, `SplitK86`, `ArgStd87`, `CofDenseS1`, `BCofIn71` are untouched.
+§86's wall stands: every theorem here names the step and compares `y` against `ω^E·c`, never
+against `i₀` alone or `Δ` alone.  **`lt_coef_of_lt_idxOf115` is proved only at a FIRST firing
+step** — with a previous index `idxOf = i₀ ⊕ Δ` is strictly above `Δ` and the argument gives
+nothing; §92.1 is still what covers that side, and 448 of the 920 obligations measured in
+§110's populations are there.  And it is proved only for EXACT recovery: `surv115` is exactly
+what the inexact case allows.  §115 does NOT prove `y < Δ ⟹ coefUp115 E y < cV`.
+
+**§115 MOVED THE RESIDUE; IT DID NOT REMOVE IT** — and unlike §110 it can say precisely where
+the next adversary has to live.  Over 423 standard terms BUILT here (896 constructed), 423
+obligations, 97 after §95, 65 after §105, **47 after §110 and 0 after §115**; all 47 are true
+obligations at a first firing step, all 47 have `inT (coefOf110 E y) = false`, and NONE of the
+47 has an exact recovery — exactly as §115.1 forces.  On §110's own 599 terms the corrected
+decider takes everything §110 took (574 of 920 against 534, and 0 the other way).  It is not
+a tautology: over 1022 terms and 1343 obligations it never fires where the obligation is
+false, and the only true obligations at a first firing step it misses are the three with
+`cV = 1`, where nothing can be strictly below the coefficient and §105.2 takes them.
+
+**AND THE MEASUREMENT POLICY IS THE POINT OF THIS SECTION.**  §110's populations were not
+blind to the SHAPE: 35 of their 920 obligations already have a digit of `y` above the leading
+one that is `Ω₁` or more, and 167 of their 1275 `ψ₀` arguments are already sums.  What they
+never contained is that shape AT A STEP THAT SURVIVES §95 — the 35 go to 1 after §92 and to 0
+after §95.  A clean sweep hid a survivor that the population could name but never carried far
+enough, and only building the two halves together — the sum in the argument AND the carrier
+that drops `Ω₁` into the second digit of the index — produced it.  The control is one symbol
+away: `ctrl115` has the same sum, the same inexact recovery, and §110 takes it.
+
+**THE HONEST LIMIT.**  `IdxK115` has no surviving obligation on the 1022 standard terms
+measured here, so §115 is now where §110 was — with one difference: §115.1 names what an
+adversary must look like.  At a first firing step the corrected comparison can only fail if
+`y` agrees with `Δ` on its leading digit AND the last digit of `cV` is `1`; if the leading
+digits differ the comparison is decided there, and if `cV` does not end in `1` the rounding
+error (one unit per low digit of `y`) is absorbed.  Terms whose `cV` has two or more digits
+are 381 of 1000 in the merged-coefficient family built for this, and 74 of them end in `1` —
+but in every one of them `y` stayed below the leading digit of `Δ`.  Whether the outer
+component ordering and `BT.isStd` together forbid the agreeing case is exactly the next
+question.
+-/
+
+/-! ### §115.1 最初の発火歩では、係数の比較は十分であるだけでなく必要 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `a ≤ b` なら `b < a` ではない。 -/
+theorem not_lt_of_le115 {a b : Term} (ha : inT a = true) (hb : inT b = true)
+    (h : le a b = true) : lt b a = false := by
+  have h' : ((a == b) || lt a b) = true := h
+  rcases (Bool.or_eq_true _ _).mp h' with hq | hq
+  · rw [eq_of_beq hq]; exact lt_irrefl _
+  · exact lt_asymm_inT ha hb hq
+
+/-- `ω^E·` は非狭義でも単調 — §110.1 の狭義単調性に等号の場合を足しただけ。 -/
+theorem le_mulL_mono115 {E c c' : Term} (hE : inT E = true) (hc : inT c = true)
+    (hc' : inT c' = true) (hcM : lt c M = true) (hc'M : lt c' M = true)
+    (h : le c c' = true) : le (mulL E c) (mulL E c') = true := by
+  have h' : ((c == c') || lt c c') = true := h
+  rcases (Bool.or_eq_true _ _).mp h' with hq | hq
+  · rw [eq_of_beq hq]; exact Evidence.WF.le_self _
+  · exact le_of_lt (mulL_smono_right110 hE hc hc' hcM hc'M hq)
+
+/-- 最初の発火歩の指数は `Δ ⊖ 1` そのもの。 -/
+theorem idxOf_none115 {w : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : s.1 = none) : idxOf w s ac = sub1 (ddOf75 w ac) := by
+  show (match s.1 with
+        | none => sub1 (mulL (mulL w (subAP w ac.1)) ac.2)
+        | some j => plus j (mulL (mulL w (subAP w ac.1)) ac.2)) = _
+  rw [hs]
+  try rfl
+
+/-- **§115.1 の第一の定理 — 最初の発火歩に余地はない。**  `Δ ≤ y` なら義務は偽である。
+    指数は `Δ ⊖ 1 ≤ Δ` だから、`Δ` を超えない元しか只にならない。 -/
+theorem not_lt_idxOf_of_le_dd115 {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : s.1 = none) (h1 : inT ac.1 = true) (h3 : inT ac.2 = true)
+    {y : Term} (hyi : inT y = true) (hle : le (ddOf75 (reg 1) ac) y = true) :
+    lt y (idxOf (reg 1) s ac) = false := by
+  have hdT : inT (ddOf75 (reg 1) ac) = true := inT_ddOf75 (inT_reg 1) h1 h3
+  have hsT : inT (sub1 (ddOf75 (reg 1) ac)) = true := inT_sub1 hdT
+  rw [idxOf_none115 (w := reg 1) (ac := ac) hs]
+  exact not_lt_of_le115 hsT hyi (le_trans_inT hsT hdT hyi (le_sub1_self75 hdT) hle)
+
+/-- **係数で書いた形。**  復元がちょうどで `cV ≤ c` なら、最初の発火歩の義務は偽。 -/
+theorem not_lt_idxOf_of_le_coef115 {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : s.1 = none) (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hl3 : lt ac.2 M = true)
+    {y c : Term} (hyi : inT y = true) (hci : inT c = true) (hcM : lt c M = true)
+    (hex : mulL (eOf110 ac) c = y) (hcv : le ac.2 c = true) :
+    lt y (idxOf (reg 1) s ac) = false := by
+  have hE : inT (eOf110 ac) = true := inT_mulL mulDescInT (inT_reg 1) (inT_subAP h1)
+  have hstep : le (mulL (eOf110 ac) ac.2) (mulL (eOf110 ac) c) = true :=
+    le_mulL_mono115 hE h3 hci hl3 hcM hcv
+  rw [hex] at hstep
+  refine not_lt_idxOf_of_le_dd115 hs h1 h3 hyi ?_
+  rw [ddOf_eq_mulL_eOf110]
+  exact hstep
+
+/-- **§115.1 の主定理 — 係数の比較は必要条件である。**  最初の発火歩で復元がちょうどなら、
+    義務が成り立つことと `c < cV` は同値になる。片側は §110 の
+    `lt_idxOf_of_coef110`、もう片側がこれである。 -/
+theorem lt_coef_of_lt_idxOf115 {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : s.1 = none) (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hl3 : lt ac.2 M = true)
+    {y c : Term} (hyi : inT y = true) (hci : inT c = true) (hcM : lt c M = true)
+    (hex : mulL (eOf110 ac) c = y) (hobl : lt y (idxOf (reg 1) s ac) = true) :
+    lt c ac.2 = true := by
+  rcases lt_trichotomy_inT hci h3 with hq | hq | hq
+  · exact hq.1
+  · exfalso
+    rw [not_lt_idxOf_of_le_coef115 hs h1 h3 hl3 hyi hci hcM hex
+      (by rw [hq.2.1]; exact Evidence.WF.le_self _)] at hobl
+    exact Bool.noConfusion hobl
+  · exfalso
+    rw [not_lt_idxOf_of_le_coef115 hs h1 h3 hl3 hyi hci hcM hex (le_of_lt hq.2.2)] at hobl
+    exact Bool.noConfusion hobl
+
+/-- **判定できる形 — §110 の判定器は「最初の発火歩・復元ちょうど」では完全。**
+    そこでは `IdxK110` の仮説 (`coefFree110 = false`) と結論 (義務) は両立しない。
+    §110 が 599 項の測定で見た空虚さは、母集団の性質ではなく **定理** である。 -/
+theorem coefFree110_of_lt_idxOf115 {s : Option Term × Option Term} {ac : Term × Term}
+    (hs : s.1 = none) (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hl3 : lt ac.2 M = true)
+    {y : Term} (hyi : inT y = true) (hsub : (subAP (reg 1) ac.1 == zero) = false)
+    (hci : inT (coefOf110 (eOf110 ac) y) = true)
+    (hcM : lt (coefOf110 (eOf110 ac) y) M = true)
+    (hex : mulL (eOf110 ac) (coefOf110 (eOf110 ac) y) = y)
+    (hobl : lt y (idxOf (reg 1) s ac) = true) :
+    coefFree110 (s, ac) y = true := by
+  have h5 : lt (coefOf110 (eOf110 ac) y) ac.2 = true :=
+    lt_coef_of_lt_idxOf115 hs h1 h3 hl3 hyi hci hcM hex hobl
+  have h4 : le y (mulL (eOf110 ac) (coefOf110 (eOf110 ac) y)) = true := by
+    rw [hex]; exact Evidence.WF.le_self _
+  show (!(subAP (reg 1) ac.1 == zero) && inT (coefOf110 (eOf110 ac) y)
+        && lt (coefOf110 (eOf110 ac) y) M
+        && le y (mulL (eOf110 ac) (coefOf110 (eOf110 ac) y))
+        && lt (coefOf110 (eOf110 ac) y) ac.2) = true
+  rw [hsub, hci, hcM, h4, h5]
+  rfl
+
+end
+
+/-! ### §115.2 復元を直す — `ω^E` を超えない成分は係数 `1` に丸める -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 一桁ぶんの補正した割り算。`q ≤ ω^E` の桁は `ω^E·1` で覆えるので係数 `1` にする。
+    `coef1_110` はそこで `E` の接頭辞を剥がせず桁をそのまま返すから、
+    `Ω₁` 以上の桁が混じると復元が 𝔗(M) の項でなくなる — それがこの丸めの理由である。 -/
+def coef1U115 (E q : Term) : Term :=
+  if le q (omegaNF E) then TM.Term.one else coef1_110 E q
+
+/-- **補正した係数。**  `coefOf110` の桁ごとの写像を `coef1U115` に取り替えただけ。 -/
+def coefUp115 (E x : Term) : Term := ofList ((toList x).map (coef1U115 E))
+
+/-- **判定器。**  §110 の `coefFree110` とまったく同じ形で、係数だけ差し替えたもの。
+    `inT`・`lt · M`・`le y (ω^E·c)` を確かめるので、定理の側は何も借りない。 -/
+def coefFreeU115 (p : (Option Term × Option Term) × (Term × Term)) (y : Term) : Bool :=
+  !(subAP (reg 1) p.2.1 == zero)
+    && inT (coefUp115 (eOf110 p.2) y) && lt (coefUp115 (eOf110 p.2) y) M
+    && le y (mulL (eOf110 p.2) (coefUp115 (eOf110 p.2) y))
+    && lt (coefUp115 (eOf110 p.2) y) p.2.2
+
+/-- **判定器を通す形。**  §110 の `lt_idxOf_of_coef110` は係数について一般だから、
+    そこに補正した係数を入れるだけでよい。新しい算術は要らない。 -/
+theorem lt_idxOf_of_coefFreeU115 {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (h1 : inT ac.1 = true) (h3 : inT ac.2 = true) (hl3 : lt ac.2 M = true)
+    (hz : ac.2 ≠ zero) {y : Term} (hyi : inT y = true)
+    (hcf : coefFreeU115 (s, ac) y = true) (hidxT : inT (idxOf (reg 1) s ac) = true) :
+    lt y (idxOf (reg 1) s ac) = true := by
+  obtain ⟨hp1, hlt⟩ := (Bool.and_eq_true _ _).mp hcf
+  obtain ⟨hp2, hle⟩ := (Bool.and_eq_true _ _).mp hp1
+  obtain ⟨hp3, hcM⟩ := (Bool.and_eq_true _ _).mp hp2
+  obtain ⟨hsb, hci⟩ := (Bool.and_eq_true _ _).mp hp3
+  have hsub : subAP (reg 1) ac.1 ≠ zero := by
+    intro hcc
+    rw [show (subAP (reg 1) ac.1 == zero) = true from by rw [hcc]; exact beq_self_eq_true _]
+      at hsb
+    exact Bool.noConfusion hsb
+  exact lt_idxOf_of_coef110 hst h1 h3 hl3 hz hsub hyi hci hcM hle hlt hidxT
+
+end
+
+/-! ### §115.3 条項 — 補正した係数の比較をひとつ足す -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§115 の条項。**  §110 の `IdxK110` に仮説をひとつ足しただけ
+    (`coefFreeU115 p y = false`) なので、条項は §110 の条項の部分集合であり
+    (`idxK115_of_idxK110`)、§115 は義務をひとつも増やさない。 -/
+def IdxK115 (a : BT) : Prop :=
+  ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+    le (reg 1) p.2.1 = true → inT (idxOf (reg 1) p.1 p.2) = true →
+      ∀ (y : Term) (c e : BT) (j : Term),
+        BT.D 1 c ∈ BT.toL a → BT.isStd (BT.D 1 c) = true → BT.lt c a = true →
+        e ∈ d0Args88 c → BT.isStd (BT.D 0 e) = true → btLe72 1 e = true →
+        BT.lt e a = true → BT.size e < BT.size a →
+        idxF88 0 (dict e) = some j → inT j = true → inT (psi (reg 1) j) = true →
+        le y j = true → inT y = true → y ∈ Kset (reg 1) (dict c) →
+        lt y (reg 1) = false →
+        (le y (reg 1) = false ∨ subAP (reg 1) p.2.1 = zero) →
+        powFree105 p y = false → coefFree110 p y = false → coefFreeU115 p y = false →
+        (∀ i0, p.1.1 = some i0 → lt i0 y = true) →
+        monoClosed95 a p e = false → freeSelf95 p e = false →
+        (y ∈ Kset (reg 1) p.2.1 ∨ y ∈ Kset (reg 1) p.2.2) →
+        lt y (idxOf (reg 1) p.1 p.2) = true
+
+/-- §110 の条項は §115 の条項を出す — 仮説がひとつ増えただけだから。 -/
+theorem idxK115_of_idxK110 {a : BT} (H : IdxK110 a) : IdxK115 a := by
+  intro p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk
+    hlty hor hpw hcf _ hgt hmono hsf hy
+  exact H p hp hle hidxT y c e j hc hstd hltc he hse hbe hlte hsz hj hjT hpsiT hlej hyT hyk
+    hlty hor hpw hcf hgt hmono hsf hy
+
+/-- **§115 の残る仮説。** 部分領域の項について §115 の条項。**証明しない。** -/
+def IdxStd115 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK115 a
+
+/-- **§115.3 の主定理。** 一項ぶんの門は §115 の条項と、326 行目が既に抱えている
+    二つの条項から出る (`LeIdxSelf95` は §112 以来定理である)。 -/
+theorem gateStd87_of_idxK115 (HD : DictLtStd92) (HM : HiMono89) (HL : LeIdxSelf95) (a : BT)
+    (ih : ∀ b : BT, BT.size b < BT.size a → GateStd87 b)
+    (H : btLe72 1 a = true → BT.isStd (BT.D 0 a) = true → IdxK115 a) : GateStd87 a := by
+  intro hb hs
+  have hin := inT_dict_ih87 a ih hb (isStd_of_D hs)
+  obtain ⟨hcL, hdL⟩ := inT_toList (dict a) hin.1
+  obtain ⟨_, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcL hdL
+      (ltM_toList (dict a) hin.1 hin.2)
+  have hnz := wcnf_snd_ne_zero84 (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hcL hdL
+    (ltM_toList (dict a) hin.1 hin.2)
+  intro p hp hle
+  refine scan_idx84 (wcnf (reg 1) (toList (dict a))).1 (none, none)
+    stInv_none (kInv75_none 0) hallOK ?_ p hp hle
+  intro q hq hle2 hst y hy
+  obtain ⟨hi1, hl1, hi2, hl2⟩ := hallOK q.2 (scanSt_mem_snd _ _ _ _ q hq)
+  obtain ⟨hidxT, _⟩ := inT_idxOf mulDescInT (inT_reg 1) (ltM_reg 1) hst hi1 hl1 hi2 hl2
+  have hnz2 : q.2.2 ≠ zero := hnz q.2 (scanSt_mem_snd _ _ _ _ q hq)
+  obtain ⟨c, hc, hstd, hltc, hyk⟩ := kset_arg87 ih hb hs hq hy
+  have hszc0 : BT.size (BT.D 1 c) ≤ BT.size a := size_mem_toL87 a _ hc
+  have hszc : BT.size c < BT.size a := by rw [size_D87] at hszc0; omega
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (btLe72_toL87 a _ hb hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D hstd
+  have ihc : ∀ b : BT, BT.size b < BT.size c → GateStd87 b := fun b hz => ih b (by omega)
+  have hinc := inT_dict_ih87 c ihc hbc hsc
+  have hyT : inT y = true := inT_mem_Kset75 (dict c) hinc.1 _ y hyk
+  obtain ⟨e, he, j, hj, hlej, hjT⟩ := kset_dict_idx88 c ihc hbc hsc y hyk
+  have hse : BT.isStd (BT.D 0 e) = true := isStd_d0Args_90 c hsc e he
+  have hbe : btLe72 1 e = true := btLe72_d0Args_90 c hbc e he
+  have hlte : BT.lt e a = true := lt_d0Args_90 hs hc he
+  have hsze : BT.size e < BT.size a := by have := size_d0Args_90 c e he; omega
+  have ihe : ∀ b : BT, BT.size b < BT.size e → GateStd87 b := fun b hz => ih b (by omega)
+  have hine := inT_dict_ih87 e ihe hbe (isStd_of_D hse)
+  have hpe : PsiIdxOK 0 (dict e) :=
+    psiIdxOK_of_stepOK 0 (dict e) hine.1 hine.2 (ih e hsze hbe hse)
+  have hpsiT : inT (psi (reg 1) j) = true := inT_psi_idxF90 hpe hj
+  have hfin : (∀ i1, q.1.1 = some i1 → lt i1 y = true) →
+      lt y (idxOf (reg 1) q.1 q.2) = true := by
+    intro hgt
+    cases hlty : lt y (reg 1) with
+    | true => exact lt_idxOf_of_lt_reg100 hst hi1 hi2 hl2 hnz2 hy hyT hlty hidxT
+    | false =>
+    cases hsf : freeSelf95 q e with
+    | true =>
+      have hjle : le j (dict e) = true := HL (dict e) hine.1 hine.2 hpe j hj
+      have hyle : le y (dict e) = true :=
+        le_trans3 (inT_le_fragR _ hyT) (inT_le_fragR _ hjT) (inT_le_fragR _ hine.1) hlej hjle
+      exact lt_of_le_of_lt3 (inT_le_fragR _ hyT) (inT_le_fragR _ hine.1)
+        (inT_le_fragR _ hidxT) hyle hsf
+    | false =>
+    cases hmono : monoClosed95 a q e with
+    | true =>
+      obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp hmono
+      obtain ⟨h5, h6⟩ := (Bool.and_eq_true _ _).mp h1
+      obtain ⟨J, hJ, hidxe⟩ := isLastIdx92_eq h5
+      have hne : hiW89 (dict e) ≠ hiW89 (dict a) := by
+        intro hcc
+        rw [show (hiW89 (dict e) == hiW89 (dict a)) = true from by
+          rw [hcc]; exact beq_self_eq_true _] at h2
+        exact Bool.noConfusion h2
+      have hlj : lt j J = true :=
+        lt_idxF_of_lt95 HD HM hbe hb hse hs hlte hine.1 hine.2 hin.1 hin.2 hpe h6 hne hj hJ
+      refine lt_of_le_of_lt3 (inT_le_fragR _ hyT) (inT_le_fragR _ hjT)
+        (inT_le_fragR _ hidxT) hlej ?_
+      rw [hidxe]
+      exact hlj
+    | false =>
+      cases hpw : powFree105 q y with
+      | true => exact lt_idxOf_of_powFree105 hst hi1 hi2 hnz2 hyT hpw hidxT
+      | false =>
+      cases hcf : coefFree110 q y with
+      | true => exact lt_idxOf_of_coefFree110 hst hi1 hi2 hl2 hnz2 hyT hcf hidxT
+      | false =>
+      cases hcu : coefFreeU115 q y with
+      | true => exact lt_idxOf_of_coefFreeU115 hst hi1 hi2 hl2 hnz2 hyT hcu hidxT
+      | false =>
+      by_cases hsub : subAP (reg 1) q.2.1 = zero
+      · exact H hb hs q hq hle2 hidxT y c e j hc hstd hltc he hse hbe hlte hsze
+          hj hjT hpsiT hlej hyT hyk hlty (Or.inr hsub) hpw hcf hcu hgt hmono hsf hy
+      · cases hley : le y (reg 1) with
+        | true =>
+          exact lt_idxOf_of_le_reg105 hst hi1 hi2 hl2 hnz2 hsub hy hyT hley hidxT
+        | false =>
+          exact H hb hs q hq hle2 hidxT y c e j hc hstd hltc he hse hbe hlte hsze
+            hj hjT hpsiT hlej hyT hyk hlty (Or.inl hley) hpw hcf hcu hgt hmono hsf hy
+  cases hq1 : q.1.1 with
+  | none =>
+    refine hfin ?_
+    intro i1 h1
+    rw [hq1] at h1
+    cases h1
+  | some i0 =>
+    cases hbb : le y i0 with
+    | true =>
+      exact lt_idxOf_of_le_prev92 (inT_reg 1) hst hq1 hi1 hi2 hnz2 hyT hidxT hbb
+    | false =>
+      refine hfin ?_
+      intro i1 h1
+      rw [hq1] at h1
+      rw [← Option.some.inj h1]
+      exact lt_of_not_le_inT hyT (hst.1 i0 hq1).1 hbb
+
+/-- **逆向き。** 足した仮説も外した義務もすべて落ちるので、分解は過不足がない
+    — `IdxStd115` は依然として門とちょうど同値である。 -/
+theorem idxStd115_of_step073 (H : PsiIdxStep073) : IdxStd115 := by
+  intro a hb hs p hp hle
+  intro _ y _ _ _
+  intro _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ hy
+  exact (H a hb hs p hp hle).2 y hy
+
+/-- **§115 の第一の結論。** -/
+theorem psiIdxStep073_of_idxStd115 (HD : DictLtStd92) (HM : HiMono89)
+    (H : IdxStd115) : PsiIdxStep073 :=
+  step073_of_gate87
+    (fun a ih => gateStd87_of_idxK115 HD HM leIdxSelf112 a ih (fun hb hs => H a hb hs))
+
+/-- **§115 の第二の結論 — 326 行目は §115 の条項と、§74/§89 の二つに載る。** -/
+theorem certIn_t326_idx115 (HD : DictLtStd92) (HM : HiMono89) (H : IdxStd115)
+    (HDe : LimDecS1) (HI : LimIncS1) (HC : LimCofS1)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_step73 (psiIdxStep073_of_idxStd115 HD HM H) HDe HI HC hacc
+
+end
+
+/-! ### §115.4 測定 (凍結) — 標準な項の上の生き残りを組み立てる -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- §115 の条項が訊く組 — §110 の残余から補正した係数の比較で片づくぶんを引いたもの。 -/
+def oblPost115 (a : BT) :
+    List (((Option Term × Option Term) × (Term × Term)) × Term × BT × Term) :=
+  (oblPost110 a).filter fun w => !(coefFreeU115 w.1 w.2.1)
+
+/-- **`Ω₁` の担い手 (7 記号)。**  `ψ₀` の引数の側に足すと、その引数の畳み込みに
+    二つ目の発火歩ができて、指数の第二成分が `Ω₁` になる — `ω^E` の接頭辞を持たない桁である。 -/
+def carr115 : BT := BT.D 1 (BT.sum (BT.D 1 (BT.D 1 BT.zero)) (BT.D 1 BT.zero))
+
+/-- **和になった `ψ₀` の引数 (16 記号)。**  §110 の引数はどれも `ψ₁(·)` 一本で、
+    畳み込みの発火歩がひとつしかなかった。ここは和だから二つある。 -/
+def arg115 : BT := BT.sum eHi2_105 carr115
+
+/-- **§115 の証人 (30 記号)。**  標準で、段は 1 以下、`dict` の像は 𝔗(M) にいて、門は
+    そこで落ちない。義務はひとつあり、§92.1・§92.2・§95 の三つ・§100・§105 の二つ・
+    **§110 の係数の比較のどれにも取られない。** -/
+def surv115 : BT := BT.sum (slot105 1 arg115) vebTail95
+
+/-- **枠を一段下げたもの (26 記号)** — §110 の `advC110` と同じ操作。 -/
+def advSlot115 : BT := BT.sum (slot105 0 arg115) vebTail95
+
+/-- **対照 (27 記号)。**  引数は同じく和だが、担い手が `Ω₁` を落とさない。
+    義務は §105 を生き延び、そこは §110 の係数の比較が持っていく。
+    `surv115` との差は担い手ひとつしかない。 -/
+def ctrl115 : BT := BT.sum (slot105 1 (BT.sum eHi2_105 (twr86 3))) vebTail95
+
+/-- **§110 の条項は標準な項の上で空虚ではない。**  `surv115` の一本の義務は
+    §110 のどの免除にも取られず、しかも義務そのものは真で、門はそこで落ちない。
+    **§110 が「標準な項では生き残りを出せない」と書いた位置は、ここで破れる。** -/
+theorem surv115_counts :
+    okHyp84 surv115 = true ∧ BT.isStd (BT.D 0 surv115) = true ∧
+    inT (dict surv115) = true ∧ stepOKb 0 (dict surv115) = true ∧
+    idxb84 0 (dict surv115) = true ∧ splitb86 0 (dict surv115) = true ∧
+    idxLt90b surv115 = true ∧ ltArg90b surv115 = true ∧
+    lastFire92 (dict surv115) = false ∧
+    (oblPre92 surv115).length = 1 ∧ (oblPost95 surv115).length = 1 ∧
+    (oblPost105 surv115).length = 1 ∧ (oblPost110 surv115).length = 1 ∧
+    ((oblPost110 surv115).all gOK110) = true :=
+  ⟨by decide, by decide, by decide, by decide, by decide, by decide, by decide,
+   by decide, by decide, by decide, by decide, by decide, by decide, by decide⟩
+
+/-- **その一本の形。**  最初の発火歩・`aV ⊖ Ω₁ ≠ 0`・`Ω₁^(aV ⊖ Ω₁) < y`、そして
+    **`y` は二成分で、二つ目が `Ω₁` — `ω^E` の接頭辞を持たない桁である。**
+    だから `coefOf110` の復元は 𝔗(M) の項ですらなくなり (`inT` が偽)、
+    §110 の判定器はそこで黙って偽になる。復元がちょうどでないことが、
+    §115.1 の必要性の定理が残していた唯一の隙間である。 -/
+theorem surv115_shape :
+    ((oblPost110 surv115).all fun w =>
+      (w.1.1.1 == none) && !(subAP (reg 1) w.1.2.1 == zero)
+        && lt (powOf80 (reg 1) w.1.2) w.2.1
+        && ((toList w.2.1).length == 2)
+        && !(inT (coefOf110 (eOf110 w.1.2) w.2.1))
+        && !(mulL (eOf110 w.1.2) (coefOf110 (eOf110 w.1.2) w.2.1) == w.2.1)
+        && (match toList w.2.1 with
+            | _ :: q :: _ => q == reg 1
+            | _ => false)) = true :=
+  by decide
+
+/-- **そして補正した係数がそれを持っていく。**  丸めた復元は `2` で、歩の係数より真に下。
+    `CoefLtStd110` の ∃ の形はもともとこの義務を覆っていた — 足りなかったのは
+    **判定器のほう** であって、条項の考えではない。 -/
+theorem surv115_taken :
+    ((oblPost110 surv115).all fun w =>
+      coefFreeU115 w.1 w.2.1 && (coefUp115 (eOf110 w.1.2) w.2.1 == plus one one)) = true ∧
+    (oblPost115 surv115).length = 0 :=
+  ⟨by decide, by decide⟩
+
+/-- **否定その一 — 補正しても買っているのは標準性である。**  `advSlot115` は `surv115` の
+    枠を一段下げただけで、段は 1 以下、`dict` の像は 𝔗(M) にいる。それでも
+    `BT.isStd (ψ₀ ·)` は偽、門はそこで落ち、補正した係数の比較も破れ、
+    **義務そのものも偽である。**  §110 の `advC110_not_std` と同じ壁が §115 にもある。 -/
+theorem advSlot115_not_std :
+    btLe72 1 advSlot115 = true ∧ inT (dict advSlot115) = true ∧
+    BT.isStd (BT.D 0 advSlot115) = false ∧ stepOKb 0 (dict advSlot115) = false ∧
+    (oblPost110 advSlot115).length = 1 ∧ (oblPost115 advSlot115).length = 1 ∧
+    ((oblPost110 advSlot115).all fun w => !(coefFreeU115 w.1 w.2.1) && !(gOK110 w)) = true :=
+  ⟨by decide, by decide, by decide, by decide, by decide, by decide, by decide⟩
+
+/-- **否定その二 — 生き残りを作っているのは担い手ひとつであり、復元の不正確さではない。**
+    `ctrl115` は引数が和であるところまで `surv115` と同じで、担い手だけが違う。
+    そこでも `y` は二成分で復元はちょうどにならない (`ω^E·c` は `y` を真に超える) が、
+    第二成分が `Ω₁` の下にとどまるので `coefOf110` の値は 𝔗(M) の項のままで、
+    **§110 の係数の比較がそのまま持っていく。**  §110 を破るのは
+    「`ω^E` の接頭辞を持たない `Ω₁` 以上の桁」であって、不正確さ一般ではない。 -/
+theorem ctrl115_taken :
+    okHyp84 ctrl115 = true ∧ (oblPost105 ctrl115).length = 1 ∧
+    (oblPost110 ctrl115).length = 0 ∧
+    ((oblPost105 ctrl115).all fun w =>
+      ((toList w.2.1).length == 2)
+        && !(mulL (eOf110 w.1.2) (coefOf110 (eOf110 w.1.2) w.2.1) == w.2.1)
+        && inT (coefOf110 (eOf110 w.1.2) w.2.1)
+        && coefFree110 w.1 w.2.1) = true :=
+  ⟨by decide, by decide, by decide, by decide⟩
+
+/-- 担い手 — `Ω₁` を落とすものと、落とさない対照。 -/
+def carrL115 : List BT :=
+  [ carr115
+  , BT.D 1 (BT.sum (BT.D 1 (BT.D 1 BT.zero)) (BT.D 0 BT.zero))
+  , BT.D 1 (BT.sum (BT.D 1 (BT.D 1 BT.zero)) (BT.D 0 (BT.D 0 BT.zero)))
+  , BT.D 1 (BT.sum (BT.D 1 (BT.D 1 BT.zero)) (BT.D 1 (BT.D 0 BT.zero)))
+  , twr86 3, twr86 2, vebTail95, BT.D 1 BT.zero ]
+
+/-- 頭 — 発火歩の `aV` を `Ω₁·2` にする引数たち。 -/
+def headL115 : List BT := [eHi2_105, slot105 1 BT.zero, eHi3_105, ehi100 0, eNest105 BT.zero]
+
+/-- **和になった `ψ₀` の引数を組み立てる。**  担い手を一つ足したものと二つ足したもの。 -/
+def argSum115 : List BT :=
+  (headL115.flatMap fun X => carrL115.map fun W => BT.sum X W)
+  ++ (headL115.flatMap fun X => carrL115.flatMap fun W => carrL115.map fun V =>
+        BT.sum X (BT.sum W V))
+
+def wrapL115 : List (BT → BT) :=
+  [ fun e => BT.sum (slot105 1 e) vebTail95, fun e => slot105 1 e
+  , fun e => BT.sum (slot105 2 e) vebTail95
+  , fun e => BT.sum (twr86 5) (BT.sum (slot105 1 e) vebTail95) ]
+
+def pop115 : List BT := (wrapL115.flatMap fun f => argSum115.map f).eraseDups
+def qual115 : List BT := pop115.filter okHyp84
+
+-- 組み立てた母集団の大きさ。
+#guard (pop115.length, qual115.length) == (896, 423)
+#guard ((pop115.map BT.size).foldl min 999, (pop115.map BT.size).foldl max 0) == (20, 50)
+#guard (BT.size surv115, BT.size advSlot115, BT.size ctrl115, BT.size arg115,
+        BT.size carr115) == (30, 26, 27, 16, 7)
+
+/-! **門は組み立てた母集団のどこでも落ちない。** -/
+
+#guard ((qual115.filter fun a => !(stepOKb 0 (dict a))).length,
+        (qual115.filter fun a => !(idxb84 0 (dict a))).length,
+        (qual115.filter fun a => !(splitb86 0 (dict a))).length,
+        (qual115.filter fun a => !(idxLt90b a)).length,
+        (qual115.filter fun a => !(ltArg90b a)).length) == (0, 0, 0, 0, 0)
+
+/-! **§110 の条項は空虚ではない — 47 である。**  標準な 423 項で 423 の義務、
+§95 の後で 97、§105 の後で 65、**§110 の後で 47、§115 の後で 0**。
+47 はすべて実際に成り立っている義務で (門はどこでも落ちない)、47 項に散らばっている。 -/
+
+#guard ((qual115.flatMap oblPre92).length, (qual115.flatMap oblPost95).length,
+        (qual115.flatMap oblPost105).length, (qual115.flatMap oblPost110).length,
+        (qual115.flatMap oblPost115).length) == (423, 97, 65, 47, 0)
+#guard ((qual115.filter fun a => !((oblPost110 a).isEmpty)).length,
+        (qual115.flatMap oblPost110).countP gOK110) == (47, 47)
+
+/-! **47 の形は一つ。**  どれも最初の発火歩で、**復元はどれもちょうどでなく、
+`coefOf110` の値は 𝔗(M) の項ですらない。**  `y` の成分数は 2 が 21、3 が 26。
+§115.1 の必要性の定理が言うとおり、生き残りは「復元がちょうどでない」ところにしか居ない。 -/
+
+#guard (let o := qual115.flatMap oblPost110
+        (o.length, o.countP (fun w => w.1.1.1 == none),
+         o.countP (fun w => (toList w.2.1).length == 2),
+         o.countP (fun w => (toList w.2.1).length == 3),
+         o.countP (fun w => !(inT (coefOf110 (eOf110 w.1.2) w.2.1))),
+         o.countP (fun w => mulL (eOf110 w.1.2) (coefOf110 (eOf110 w.1.2) w.2.1) == w.2.1)))
+       == (47, 47, 21, 26, 47, 0)
+
+/-! **§110 の母集団はこの形を出せなかった — 出せなかった理由は「無かった」ではない。**
+`corpus105`・`wideAdvQ110`・`pairQ110` の 599 項が持つ 920 の義務のうち、`y` の先頭でない
+成分が `Ω₁` 以上のものは **35 ある**。ところがその 35 は §92 で 1 に、§95 で 0 になる。
+形は母集団の中に在ったが、**§95 を生き延びる歩の上には一度も現れなかった。**
+`ψ₀` の引数が和になっているものも 1275 個中 167 個あった。足りなかったのは和でも形でもなく、
+その形が §105 まで生き延びる組み合わせである。 -/
+
+#guard (let big : (((Option Term × Option Term) × (Term × Term)) × Term × BT × Term) → Bool :=
+          fun w => match toList w.2.1 with
+                   | _ :: t => t.any (fun q => !(lt q (reg 1)))
+                   | [] => false
+        let P := corpus105 ++ wideAdvQ110 ++ pairQ110
+        ((P.flatMap oblPre92).countP big, (P.flatMap oblPost92).countP big,
+         (P.flatMap oblPost95).countP big, (P.flatMap oblPost105).countP big))
+       == (35, 1, 0, 0)
+
+/-! **補正した判定器は §110 の判定器を覆う。**  599 項の 920 の生の義務で、§110 が
+取るのは 534、§115 が取るのは 574 — そして **§110 が取って §115 が取らないものは 0**。
+`corpus105 ++ wideAdvQ110 ++ pairQ110` の 153 の残余も 153 すべて取る。 -/
+
+#guard (let P := corpus105 ++ wideAdvQ110 ++ pairQ110
+        let o := P.flatMap oblPre92
+        (o.length, o.countP (fun w => coefFree110 w.1 w.2.1),
+         o.countP (fun w => coefFreeU115 w.1 w.2.1),
+         o.countP (fun w => coefFree110 w.1 w.2.1 && !(coefFreeU115 w.1 w.2.1)),
+         (P.flatMap oblPost105).length,
+         (P.flatMap oblPost105).countP (fun w => coefFreeU115 w.1 w.2.1)))
+       == (920, 534, 574, 0, 153, 153)
+
+/-! **そして判定器は恒真でない。**  1022 項の 1343 の生の義務のうち補正した比較が通るのは
+962 で、**義務が偽なのに通るものは 0**。最初の発火歩・`aV ⊖ Ω₁ ≠ 0`・義務が真なのに
+通らないものは 3 つあり、その 3 つはどれも `cV = 1` の歩である — `1` より真に下の係数は
+無いのだから、係数の比較はそこでは原理的に使えない。**その 3 つは §105.2 の
+`powFree105` が取る。** -/
+
+#guard (let P := corpus105 ++ wideAdvQ110 ++ pairQ110 ++ qual115
+        let o := P.flatMap oblPre92
+        (P.length, o.length, o.countP (fun w => coefFreeU115 w.1 w.2.1),
+         o.countP (fun w => coefFreeU115 w.1 w.2.1 && !(gOK110 w)),
+         o.countP (fun w => (w.1.1.1 == none) && !(subAP (reg 1) w.1.2.1 == zero)
+                     && gOK110 w && !(coefFreeU115 w.1 w.2.1)),
+         o.countP (fun w => (w.1.1.1 == none) && !(subAP (reg 1) w.1.2.1 == zero)
+                     && gOK110 w && !(coefFreeU115 w.1 w.2.1)
+                     && (w.1.2.2 == TM.Term.one) && powFree105 w.1 w.2.1)))
+       == (1022, 1343, 962, 0, 3, 3)
+
+/-! **§115 の残余は、組み立てた 1022 項では 0 である。**  これは §110 が置かれていたのと
+同じ位置であり、§110 のときと違って **何を作れば破れるかは §115.1 が名指ししている**：
+最初の発火歩では、`y` が `Δ` と先頭成分まで一致していて、しかも `cV` の最後の成分が `1`
+であるような義務でなければ、補正した比較は破れない。先頭成分が違えばそこで比較が決まり、
+`cV` の最後が `1` でなければ丸めの誤差 (`y` の低い成分ひとつにつき `1`) が吸収される。
+その形は組み立てても出なかった — `cV` が二成分以上の義務は 381、最後の成分が `1` の
+ものは 74 あるが、そのどれも `y` は `Δ` の先頭成分より下だった。 -/
+
+#guard ((corpus105 ++ wideAdvQ110 ++ pairQ110 ++ qual115).flatMap oblPost115).length == 0
+
+end
+
 end Evidence.Region
