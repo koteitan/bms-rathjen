@@ -7329,4 +7329,994 @@ def hiPool102 : List Term :=
 
 end
 
+/-! ## §103 THE `Γ₀` TOWER IS INSIDE `dict`'s IMAGE — AND THE FRAGMENT BELOW `Γ₀` IS `CNV`
+
+§102 decomposed the high half of row 326's density gate into four cases, closed one of them,
+and named the second `DictOntoMid102`: `dict` is onto the segment `(ε₀, Γ₀)` with legal
+witnesses.  It called that case "§97 transposed one level up" and measured 129 of 129.
+
+**§103 does not close `DictOntoMid102`.**  What it closes is the case §102 said was the
+other half of the same statement — the single target `v = Γ₀` — and it does so with no new
+hypothesis at all, by **building the Buchholz preimage of §102.4's tower and proving it is
+one**.  Along the way it corrects the oracle §102's 129/129 was measured with.
+
+  §103.1  **THE FRAGMENT — `inT` AND `CNV` ARE THE SAME CONDITION BELOW `Γ₀`.**  This is
+          §97.3 one level up, and it is where §102.4 pays off.  `ltG0_cnv103` : every Veblen
+          normal form is below `Γ₀` (2.3.5 read as an equation, `lt_phi_psi103`).
+          `cnv_of_ltG0_103` : every term of 𝔗(M) below `Γ₀` is a Veblen normal form — §102.4's
+          cofinality puts it under a rung of `gTow102`, every rung is `CNV` (`cnv_gTow103`),
+          and §15.1's `cnv_of_lt_cnv` closes downwards.  Below `ε₀` §97 had `CN`; here the
+          fragment is `CNV`, and the proof is the same two steps.
+
+  §103.2  **`Good98` CARRIES A CONJUNCT ITS OWN `ψ₁` LEMMAS DO NOT USE.**  `Good103` is
+          §98.3's package with `Γ₀ ≤ X` deleted.  Every one of `dict_D1x98` / `dict_D1D1x98`'s
+          steps goes through unchanged — `plus_W_103`, `splitFin_addWX103`,
+          `omegaNF_addWX103`, `collapse1_good103` — which is what lets §98's `ψ₁` machinery be
+          used BELOW `Γ₀`, where §98 itself never goes.  The two `ψ₁` lemmas are re-proved
+          against the weaker package as `dict_D1x103` and `dict_D1D1x103`.
+
+  §103.3  **THE FOLD AT ONE PAIR.**  `collapse0_Q103` : for `X` in `Good103` and not strongly
+          critical, `ψ₀(ω^(ω^(Ω₁ ⊕ X))) = φ̄(X, 0)`.  The base-`Ω₁` decomposition of the
+          argument is the single pair `(X, 1)` (`wA`/`wC` computed, exactly as in §98.4), the
+          fold takes its Veblen branch once with `base = 0` and `c ⊖ 1 = 0`, and `ω^·` does
+          not skip on the way out.  Where §98.4's fold fires the strongly critical branch and
+          lands ABOVE `Γ₀`, this one never does and lands strictly below it.
+
+  §103.4  **THE TOWER'S PREIMAGE.**  `gInv103` : `ψ₀0`, `ψ₀Ω₁`, `ψ₀ψ₁ψ₁(·)`, …  and
+          `dict_gInv103 : dict (gInv103 n) = gTow102 n` for EVERY `n` — §102.4's tower, which
+          `iterGamma_gTow102` proves is this repository's own fundamental sequence `fsN Γ₀`,
+          is inside `dict`'s image at every rung.  Legality is proved, not measured:
+          `btLe1_gInv103`, `isStd_gInv103`, `hd085_gInv103`, and the `BT`-order fact the
+          standardness induction needs, `btlt_mono103` and `cov103`.
+
+  §103.5  **WHAT THAT BUYS THE GATE.**  `denseAtGam0_103` : every challenger of 𝔗(M) below
+          `Γ₀` is witnessed at the target `Γ₀`, from `PsiIdxOKStd172` and nothing else.  So
+          §102.6's (b1) splits again: `DictOntoMidOpen103` is (b1) with the target restricted
+          to `(ε₀, Γ₀)` — **strictly weaker than `DictOntoMid102`, which implies it**
+          (`open_of_ontoMid103`) — and `dictDenseHi_of103` / `certIn_t326_103` put row 326
+          through it.  The endpoint `v = Γ₀` is no longer a hypothesis.
+
+  §103.6  **LEVEL HONESTY, BOTH WAYS.**  `btLe1_gInv103` : the construction never emits an
+          index above 1, so §85.6's level-two refutation stays out of reach — §97's
+          `btLe0_invE97` discipline, one level up.  `btLe0_gInv103` : it leaves level 0 at
+          every rung from the first on.  And it HAS to: `noLevel0_inMid103` — by §81.6's
+          `lt_dict_E81`, no level-0 standard term has a value above `ε₀` at all, so **not one
+          witness of this whole region is reachable by §97's construction.**  That is the
+          precise sense in which the two halves are different problems.
+
+  §103.7  **THE JUNK ANALOGUE, BUILT FOR THIS INTERVAL.**  §97's `junk97 = φ̄(0 ⊕ M, 0)` is
+          below `ε₀`; §102's `junk1_102` is above `Γ₀`; §102's `junk0_102 = ψ_1(0)` is in this
+          interval but was used there against a cofinality clause.  The Veblen-shaped
+          analogue is `junkV103 = φ̄(1, ψ_1(0))` — it LOOKS like a term of the fragment and
+          its defect is one level in, in the Veblen ARGUMENT, at 2.1(vi).  Both dominate the
+          whole fragment (`le_junk0_cnv103`, `le_junkV_cnv103`, by one induction each through
+          2.3.4 and 2.3.10), and since §103.1 says the fragment is exactly what lies below
+          `Γ₀`, `denseAtGam0_needs_inT103` follows: **delete `inT` from §103.5 and it is
+          FALSE.**  This is §97.8's `denseLo_needs_inT97` one floor up, with a different junk
+          term breaking a different conjunct.
+
+  §103.8  **THE MEASUREMENT, AND WHAT IT CORRECTS.**  §102's 129/129 for `DictOntoMid102` was
+          taken with `dictInv` as the oracle.  **`dictInv` is not a complete oracle.**  On a
+          population built to be adversarial where §102's was not — 359 terms of `(ε₀, Γ₀)`,
+          seeded with fixed-point arguments `φ̄(a, φ̄(a₁, ·))` — `dictInv` finds a legal
+          preimage for only 354.  The five it misses are all of one family, `φ̄(a, φ̄(a, ·))`
+          with the SAME first argument, which `vebPairs`' peel test (`lt a a₁`, strict) does
+          not reach; it returns a term with the right VALUE that is not standard.  **For
+          every one of the five a legal witness exists and is built here**
+          (`witMiss103`, five frozen `#guard`s).  So the five are an incompleteness of the
+          inverse, NOT a gap in `dict`, and `DictOntoMid102` is not refuted — but the
+          evidence for it is weaker than 129/129 made it look, and any future proof has to
+          handle the family `dictInv` cannot.
+
+WHAT IS **NOT** CLAIMED.  `DictOntoMid102` is NOT proved and NOT refuted.  `DictDenseMid102`
+and `DictDenseAbove102` are untouched.  `DictDenseHi94` is NOT proved, `DictDense85` is NOT
+proved, `CofDenseS1` is NOT closed.  `PsiIdxOKStd172` and `DictLtA74` are used, not proved.
+`dictInv` is used only as a measurement oracle and §103.8 says exactly where it is wrong.
+
+**Where §103 stopped, precisely.**  The tower is a chain: `gInv103 (n+1)` is built from
+`gInv103 n` and its value is `φ̄(dict (gInv103 n), 0)`.  That covers the targets `Γ₀` and the
+rungs, and nothing between them.  To reach an arbitrary target of `(ε₀, Γ₀)` the fold has to
+be inverted with MORE than one pair, and §103.3 computes it with exactly one.  The general
+case is a mutual recursion (`arg` for the base-`Ω₁` digits, `inv` for the term) whose value
+half needs `wcnf ∘ xOf = id` and whose standardness half cannot use §94.5's `btlt_of_lt94` at
+all — that lemma requires `Hd085` on both sides, and the arguments this construction has to
+compare are `ψ₁`-headed.  §103 does not attempt it.
+
+WHAT THE MEASUREMENT SAYS (§103.8 gives the construction).  Two populations.  §102.8's
+`pool102` is reused verbatim so the fragment claim is tested where BOTH hypotheses are
+visible and neither is filtered; the second is new and adversarial.
+
+  * **The fragment claim is exact.**  On `pool102`'s 102 terms `CNV` calls 30 and
+    `inT ∧ · < Γ₀` calls the SAME 30 — 0 disagreements in either direction.
+  * **`inT` is load-bearing and its failure is visible.**  12 of the 102 are below `Γ₀` and
+    are NOT terms of 𝔗(M), and none of the 12 is `CNV`; `junkV103` and `junk0_102` are two
+    of them and each is above EVERY one of 12 rungs of the tower.
+  * **But the hypothesis is not a restatement of the conclusion.**  7 of those same 12
+    ill-formed terms ARE dominated by the tower — `φ̄(1, 0 ⊕ M)` is one, and it is guarded
+    by name.
+  * **The tower, computed.**  Eight rungs: value exactly `gTow102 n`, level ≤ 1 at all of
+    them, level 0 at none of them from rung 1 on, standard and head `D 0` at all of them,
+    strictly increasing, all in 𝔗(M) and all below `Γ₀`.
+  * **The onto measurement, redone adversarially.**  359 terms of `(ε₀, Γ₀)`, 359 with a
+    `dictInv` preimage, 354 with a LEGAL one.  The 5 misses are guarded to be exactly the
+    `φ̄(a, φ̄(a, ·))` family, guarded to be misses for the reason claimed (right value, not
+    standard), and each is given a hand-built legal witness (`witMiss103`), guarded to
+    exhaust the miss list. -/
+
+/-! ### §103.1 `Γ₀` の下の断片 — `inT` と `CNV` は同じ条件 -/
+
+section
+open TM TM.Term
+open Evidence.WF
+
+/-- 2.3.5 を等式で — `φ̄αβ < ψκγ` はちょうど両成分が下にいること。§102.1 の
+    `lt_hd_of_phi_lt_psi102` はこの片側だけを取り出したものである。 -/
+theorem lt_phi_psi103 (a b k c : Term) :
+    lt (phi a b) (psi k c) = (lt a (psi k c) && lt b (psi k c)) := by
+  rw [lt_eq_ltF_succ, ltF_succ_phi_psi,
+    show ltF (2 * ((phi a b).deg + (psi k c).deg) + 7) a (psi k c) = lt a (psi k c) from
+      (lt_eq_ltF a (psi k c) _ (by
+        show a.deg + (1 + k.deg + c.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + k.deg + c.deg)) + 7
+        omega)).symm,
+    show ltF (2 * ((phi a b).deg + (psi k c).deg) + 7) b (psi k c) = lt b (psi k c) from
+      (lt_eq_ltF b (psi k c) _ (by
+        show b.deg + (1 + k.deg + c.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + k.deg + c.deg)) + 7
+        omega)).symm]
+
+/-- 2.3.9 を等式で — `φ̄αβ < Zδ` も同じ形。 -/
+theorem lt_phi_Z103 (a b d : Term) :
+    lt (phi a b) (Z d) = (lt a (Z d) && lt b (Z d)) := by
+  rw [lt_eq_ltF_succ, ltF_succ_phi_Z,
+    show ltF (2 * ((phi a b).deg + (Z d).deg) + 7) a (Z d) = lt a (Z d) from
+      (lt_eq_ltF a (Z d) _ (by
+        show a.deg + (1 + d.deg) ≤ 2 * ((1 + a.deg + b.deg) + (1 + d.deg)) + 7
+        omega)).symm,
+    show ltF (2 * ((phi a b).deg + (Z d).deg) + 7) b (Z d) = lt b (Z d) from
+      (lt_eq_ltF b (Z d) _ (by
+        show b.deg + (1 + d.deg) ≤ 2 * ((1 + a.deg + b.deg) + (1 + d.deg)) + 7
+        omega)).symm]
+
+/-- **Veblen 標準形はみな `Γ₀` より下。** §97 の `lt_E081_cn97` を一段上げたもの。 -/
+theorem ltG0_cnv103 : ∀ (s : Term), CNV s = true → lt s G094 = true
+  | zero, _ => lt_zero_ne76 (by intro h; exact Term.noConfusion h)
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi a b, h => by
+      obtain ⟨ha, hb⟩ := cnv_phi h
+      show lt (phi a b) (psi (Z zero) zero) = true
+      rw [lt_phi_psi103,
+        show lt a (psi (Z zero) zero) = true from ltG0_cnv103 a ha,
+        show lt b (psi (Z zero) zero) = true from ltG0_cnv103 b hb]
+      rfl
+  | add a b, h => by
+      obtain ⟨_, ha, _, _⟩ := cnv_add h
+      show lt (add a b) (psi (Z zero) zero) = true
+      rw [lt_add_psi102]
+      exact ltG0_cnv103 a ha
+
+/-- `Γ₀` の塔の段はみな Veblen 標準形。 -/
+theorem cnv_gTow103 : ∀ n, CNV (gTow102 n) = true
+  | 0 => rfl
+  | n + 1 => by
+      show (CNV (gTow102 n) && CNV zero) = true
+      rw [cnv_gTow103 n]; rfl
+
+/-- **`Γ₀` より下の 𝔗(M) の項はみな Veblen 標準形。** §97 の `cn_of_ltE97` の `Γ₀` 版で、
+    §102.4 の共終性と §15.1 の下方閉性のふたつだけを使う。 -/
+theorem cnv_of_ltG0_103 {s : Term} (hs : inT s = true) (h : lt s G094 = true) :
+    CNV s = true :=
+  cnv_of_lt_cnv hs (cnv_gTow103 (htG102 s))
+    (towBound102 (show isAP TM.Term.one = true from rfl) hpsi_Gam0_102 s hs
+      (show lt s (psi (Z zero) zero) = true from h) (htG102 s) (Nat.le_refl _))
+
+end
+
+/-! ### §103.2 `Good98` から `Γ₀ ≤ X` を落とす -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- §98.3 の `Good98` から最後の条 `Γ₀ ≤ X` を落としたもの。`ψ₁` の 2 本の補題は
+    その条をひとつも使っていない — だから `Γ₀` の下でも通る。 -/
+def Good103 (X : Term) : Prop :=
+  inT X = true ∧ X.isAP = true ∧ (X == TM.Term.one) = false ∧ omegaNF X = X ∧
+    lt X (reg 1) = true
+
+theorem good103_of_good98 {X : Term} (h : Good98 X) : Good103 X :=
+  ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, h.2.2.2.2.1⟩
+
+theorem good_toList103 {X : Term} (h : Good103 X) : toList X = [X] := toList_isAP81 h.2.1
+
+theorem good_ltM103 {X : Term} (h : Good103 X) : lt X M = true :=
+  lt_trans_inT h.1 inT_W79 inT_M h.2.2.2.2 ltM_W98
+
+theorem good_reg2_103 {X : Term} (h : Good103 X) : lt X (reg 2) = true :=
+  lt_trans_inT h.1 inT_W79 (inT_reg 2) h.2.2.2.2 lt_W_reg2_98
+
+theorem plus_W_103 {X : Term} (h : Good103 X) : plus (reg 1) X = add (reg 1) X := by
+  show (match toList X with
+        | [] => reg 1
+        | b1 :: _ => ofList ((toList (reg 1)).filter (fun a => le b1 a) ++ toList X)) = _
+  rw [good_toList103 h]
+  show ofList ((toList (reg 1)).filter (fun a => le X a) ++ [X]) = add (reg 1) X
+  rw [show toList (reg 1) = [reg 1] from rfl,
+    List.filter_cons_of_pos (by rw [le_of_lt h.2.2.2.2])]
+  rfl
+
+theorem inT_addWX103 {X : Term} (h : Good103 X) : inT (add (reg 1) X) = true := by
+  rw [← plus_W_103 h]; exact inT_plus inT_W79 h.1
+
+theorem ltM_addWX103 {X : Term} (h : Good103 X) : lt (add (reg 1) X) M = true := by
+  rw [show add (reg 1) X = ofList [reg 1, X] from rfl]
+  refine lt_ofList_M _ ?_
+  intro z hz
+  rcases List.mem_cons.mp hz with h1 | h1
+  · rw [h1]; exact ltM_W98
+  · rw [List.mem_singleton.mp h1]; exact good_ltM103 h
+
+theorem splitFin_addWX103 {X : Term} (h : Good103 X) :
+    splitFin (add (reg 1) X) = (add (reg 1) X, 0) := by
+  unfold splitFin
+  rw [show toList (add (reg 1) X) = [reg 1, X] from by
+        show reg 1 :: toList X = _; rw [good_toList103 h]]
+  show (ofList (List.take (2 - (List.takeWhile (fun x => x == TM.Term.one)
+      ([reg 1, X].reverse)).length) [reg 1, X]),
+    (List.takeWhile (fun x => x == TM.Term.one) ([reg 1, X].reverse)).length)
+      = (add (reg 1) X, 0)
+  rw [show ([reg 1, X].reverse) = [X, reg 1] from rfl,
+    show (List.takeWhile (fun x => x == TM.Term.one) [X, reg 1]) = [] from by
+      show (match (X == TM.Term.one) with
+            | true => X :: List.takeWhile (fun x => x == TM.Term.one) [reg 1]
+            | false => []) = []
+      rw [h.2.2.1]]
+  rfl
+
+theorem omegaNF_addWX103 {X : Term} (h : Good103 X) :
+    omegaNF (add (reg 1) X) = phi zero (add (reg 1) X) := by
+  rw [omegaNF_of_le_M (lt_asymm_inT (inT_addWX103 h) inT_M (ltM_addWX103 h))]
+  unfold phiNF
+  rw [show ((add (reg 1) X).isSC && lt zero (add (reg 1) X)) = false from by
+    rw [show (add (reg 1) X).isSC = false from rfl]; rfl]
+  show phiNFsucc zero (add (reg 1) X) = phi zero (add (reg 1) X)
+  unfold phiNFsucc
+  rw [splitFin_addWX103 h]
+  show phiNFdefault zero (add (reg 1) X) = phi zero (add (reg 1) X)
+  exact phiNFdefault_zero94 _
+
+theorem collapse1_good103 {X : Term} (h : Good103 X) : collapse 1 X = P98 X := by
+  rw [collapse1_eq77 X h.1 (by
+      intro p hp
+      rw [good_toList103 h] at hp
+      rw [List.mem_singleton.mp hp]
+      exact good_reg2_103 h),
+    plus_W_103 h]
+  exact omegaNF_addWX103 h
+
+/-- `ψ₁` を一度 — `Γ₀` の下でも通る。 -/
+theorem dict_D1x103 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hg : Good103 (dict x)) : dict (BT.D 1 x) = P98 (dict x) := by
+  rw [dict_D1_eq77 Hp x hb hs, plus_W_103 hg]
+  exact omegaNF_addWX103 hg
+
+/-- `ψ₁` を二度。 -/
+theorem dict_D1D1x103 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hd : Hd085 x) (hg : Good103 (dict x)) :
+    dict (BT.D 1 (BT.D 1 x)) = Q98 (dict x) := by
+  have hb1 := btLe_D1_98 hb
+  have hs1 := isStd_D1_98 hd hs
+  have hiP : inT (P98 (dict x)) = true := by
+    rw [← dict_D1x103 Hp hb hs hg]
+    exact (inT_dict_of_std172 Hp (BT.D 1 x) hb1 hs1).1
+  have hlePW : le (reg 1) (P98 (dict x)) = true := by
+    rw [← collapse1_good103 hg]
+    refine le_reg1_collapse1_79 (dict x) hg.1 ?_
+    intro p hp
+    rw [good_toList103 hg] at hp
+    rw [List.mem_singleton.mp hp]
+    exact good_reg2_103 hg
+  have hltPW : lt (P98 (dict x)) (reg 1) = false := by
+    rcases (Bool.or_eq_true _ _).mp hlePW with h1 | h1
+    · rw [← eq_of_beq h1]; exact lt_irrefl _
+    · exact lt_asymm_inT inT_W79 hiP h1
+  have hplus : plus (reg 1) (P98 (dict x)) = P98 (dict x) := by
+    show (match toList (P98 (dict x)) with
+          | [] => reg 1
+          | b1 :: _ => ofList ((toList (reg 1)).filter (fun a => le b1 a) ++
+              toList (P98 (dict x)))) = _
+    rw [show toList (P98 (dict x)) = [P98 (dict x)] from rfl]
+    show ofList ((toList (reg 1)).filter (fun a => le (P98 (dict x)) a) ++ [P98 (dict x)])
+        = P98 (dict x)
+    rw [show toList (reg 1) = [reg 1] from rfl,
+      List.filter_cons_of_neg (by
+        show ¬ (le (P98 (dict x)) (reg 1) = true)
+        rw [show le (P98 (dict x)) (reg 1) = false from by
+          show ((P98 (dict x) == reg 1) || lt (P98 (dict x)) (reg 1)) = false
+          rw [show (P98 (dict x) == reg 1) = false from rfl, hltPW]; rfl]
+        exact Bool.noConfusion)]
+    rfl
+  rw [dict_D1_eq77 Hp (BT.D 1 x) hb1 hs1, dict_D1x103 Hp hb hs hg, hplus]
+  show omegaNF (phi zero (add (reg 1) (dict x))) = phi zero (phi zero (add (reg 1) (dict x)))
+  rw [omegaNF_of_le_M (ltM_left_phi94 zero (add (reg 1) (dict x))),
+    phiNF_zero_phi94 (show add (reg 1) (dict x) ≠ zero from by
+      intro hc; exact Term.noConfusion hc)]
+
+end
+
+/-! ### §103.3 畳み込みを一組だけ回す -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem ltW_P103 (X : Term) : lt (P98 X) (reg 1) = false := by
+  show lt (phi zero (add (reg 1) X)) (Z zero) = false
+  rw [lt_phi_Z103, show lt (add (reg 1) X) (Z zero) = lt (reg 1) (Z zero) from
+      lt_add_ap102 _ _ (show isAP (Z zero) = true from rfl),
+    show lt (reg 1) (Z zero) = false from lt_irrefl _, Bool.and_false]
+
+theorem ltW_Q103 (X : Term) : lt (Q98 X) (reg 1) = false := by
+  show lt (phi zero (P98 X)) (Z zero) = false
+  rw [lt_phi_Z103, show lt (P98 X) (Z zero) = false from ltW_P103 X, Bool.and_false]
+
+theorem le_W_false103 {X : Term} (h : Good103 X) : le (reg 1) X = false := by
+  have hlt := h.2.2.2.2
+  show ((reg 1 == X) || lt (reg 1) X) = false
+  rw [show (reg 1 == X) = false from by
+      cases hc : (reg 1 == X) with
+      | false => rfl
+      | true =>
+          exfalso
+          rw [← eq_of_beq hc, lt_irrefl] at hlt
+          exact Bool.noConfusion hlt,
+    lt_asymm_inT h.1 inT_W79 hlt]
+  rfl
+
+/-- `SC` でない頭なら `φ̄α0` は飛ばさない。 -/
+theorem phiNF_zero_right103 {X : Term} (h : X.isSC = false) : phiNF X zero = phi X zero := by
+  unfold phiNF
+  rw [show ((zero : Term).isSC && lt X zero) = false from rfl]
+  show phiNFsucc X zero = phi X zero
+  unfold phiNFsucc
+  rw [show splitFin (zero : Term) = (zero, 0) from rfl]
+  show phiNFdefault X zero = phi X zero
+  unfold phiNFdefault
+  rw [if_neg (by rw [show ((zero : Term) == zero) = true from rfl, Bool.true_and, h]
+                 exact Bool.noConfusion)]
+
+/-- **§103.3 の主定理。**  `ψ₀(ω^(ω^(Ω₁ ⊕ X))) = φ̄(X,0)`。
+    底 `Ω₁` の展開はただ一組 `(X, 1)` で、畳み込みは Veblen 枝を一度だけ通る。
+    §98.4 の `dict_bStep98` が強臨界枝を一度通って `Γ₀` の上へ出るのに対し、
+    こちらは強臨界枝を一度も通らないので `Γ₀` の下に留まる。 -/
+theorem collapse0_Q103 {X : Term} (h : Good103 X) (hSC : X.isSC = false) :
+    collapse 0 (Q98 X) = phi X zero := by
+  have hap := h.2.1
+  have hXnz : X ≠ zero := by intro hz; rw [hz] at hap; exact Bool.noConfusion hap
+  have hltP : lt (P98 X) (reg 1) = false := ltW_P103 X
+  have hltQ : lt (Q98 X) (reg 1) = false := ltW_Q103 X
+  have hwA : wA (reg 1) (Q98 X) = X := by
+    show ofList (((toList (logOm (Q98 X))).filter (fun q => !lt q (reg 1))).map
+      (divAP (reg 1))) = _
+    rw [show logOm (Q98 X) = P98 X from rfl,
+      show toList (P98 X) = [P98 X] from rfl,
+      List.filter_cons_of_pos (by rw [hltP]; rfl)]
+    show ofList [divAP (reg 1) (P98 X)] = X
+    show omegaNF (subAP (reg 1) (logOm (P98 X))) = X
+    rw [show logOm (P98 X) = add (reg 1) X from by
+        show (if phiShifted zero (add (reg 1) X) then _ else _) = _
+        rw [show phiShifted zero (add (reg 1) X) = false from by
+          show (isFP zero (splitFin (add (reg 1) X)).1 ||
+            ((add (reg 1) X == zero) && (zero : Term).isSC)) = false
+          rw [splitFin_addWX103 h]
+          rfl]
+        rfl,
+      show subAP (reg 1) (add (reg 1) X) = X from by
+        show (match toList (add (reg 1) X) with
+              | [] => zero
+              | p :: rest => if p == reg 1 then ofList rest else add (reg 1) X) = _
+        rw [show toList (add (reg 1) X) = [reg 1, X] from by
+              show reg 1 :: toList X = _; rw [good_toList103 h]]
+        show (if (reg 1 == reg 1) = true then ofList [X] else _) = X
+        rw [if_pos (by rfl)]
+        rfl]
+    exact h.2.2.2.1
+  have hwC : wC (reg 1) (Q98 X) = TM.Term.one := by
+    show omegaNF (ofList ((toList (logOm (Q98 X))).filter (fun q => lt q (reg 1)))) = _
+    rw [show logOm (Q98 X) = P98 X from rfl,
+      show toList (P98 X) = [P98 X] from rfl,
+      List.filter_cons_of_neg (by rw [hltP]; exact Bool.noConfusion)]
+    rfl
+  have hw : wcnf (reg 1) (toList (Q98 X)) = ([(X, TM.Term.one)], zero) := by
+    rw [show toList (Q98 X) = [Q98 X] from rfl, wcnf_cons_ge hltQ, wcnf_nil]
+    show ([(wA (reg 1) (Q98 X), wC (reg 1) (Q98 X))], (zero : Term)) = _
+    rw [hwA, hwC]
+  have hfold : ([(X, TM.Term.one)].foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).2.getD zero = phi X zero := by
+    show (stepF (reg 1) (baseOf 0) (none, none) (X, TM.Term.one)).2.getD zero = _
+    show (if le (reg 1) X = true then _ else
+      ((none : Option Term), some (phiNF X zero))).2.getD zero = _
+    rw [if_neg (by rw [le_W_false103 h]; exact Bool.noConfusion)]
+    show phiNF X zero = phi X zero
+    exact phiNF_zero_right103 hSC
+  have hiV : inT (phi X zero) = true := by
+    show (inT X && inT zero && lt X M && lt (zero : Term) M) = true
+    rw [h.1, show inT (zero : Term) = true from rfl, good_ltM103 h,
+      show lt (zero : Term) M = true from by decide]
+    rfl
+  rw [collapse0_raw89]
+  show omegaNF (plus (reg 0) (plus
+    (((wcnf (reg 1) (toList (Q98 X))).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero)
+    ((wcnf (reg 1) (toList (Q98 X))).2))) = _
+  rw [hw]
+  show omegaNF (plus (reg 0) (plus
+    (([(X, TM.Term.one)].foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) zero)) = _
+  rw [hfold]
+  show omegaNF (plus (reg 0) (plus (phi X zero) zero)) = _
+  rw [show plus (phi X zero) zero = phi X zero from rfl,
+    show plus (reg 0) (phi X zero) = plus zero (phi X zero) from rfl,
+    plus_zero_left_inT hiV, omegaNF_phi98 (lt_zero_ne76 hXnz)]
+
+end
+
+/-! ### §103.4 塔の原像 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg)
+open TM TM.Term
+open Evidence.WF
+
+theorem ltM_gTow103 (n : Nat) : lt (gTow102 n) M = true := by
+  obtain ⟨u, v, huv⟩ := vTow_one_phi102 n
+  rw [show gTow102 n = vTow102 TM.Term.one n from rfl, huv]
+  exact lt_phi_M u v
+
+theorem inT_gTow103 : ∀ n, inT (gTow102 n) = true
+  | 0 => rfl
+  | n + 1 => by
+      show (inT (gTow102 n) && inT zero && lt (gTow102 n) M && lt (zero : Term) M) = true
+      rw [inT_gTow103 n, ltM_gTow103 n]; rfl
+
+theorem gTow_ne_zero103 (n : Nat) : gTow102 n ≠ zero :=
+  vTow_ne_zero102 (show isAP TM.Term.one = true from rfl) n
+
+theorem ltW_gTow103 (n : Nat) : lt (gTow102 n) (reg 1) = true :=
+  lt_trans_inT (inT_gTow103 n) (show inT G094 = true from by decide) inT_W79
+    (ltG0_cnv103 _ (cnv_gTow103 n)) (show lt G094 (reg 1) = true from by decide)
+
+/-- **`Γ₀` の塔は 1 段目から上が `Good103`。**  `Γ₀ ≤ ·` は成り立たないので `Good98` では
+    ない — §103.2 で条を落としてあるのはこのためである。 -/
+theorem good103_gTow103 (n : Nat) : Good103 (gTow102 (n + 1)) := by
+  refine ⟨inT_gTow103 (n + 1), rfl, ?_, ?_, ltW_gTow103 (n + 1)⟩
+  · show (phi (gTow102 n) zero == phi zero zero) = false
+    cases hc : (phi (gTow102 n) zero == phi zero zero) with
+    | false => rfl
+    | true =>
+        exfalso
+        have hq := eq_of_beq hc
+        injection hq with h1 _
+        exact gTow_ne_zero103 n h1
+  · show omegaNF (phi (gTow102 n) zero) = phi (gTow102 n) zero
+    exact omegaNF_phi98 (lt_zero_ne76 (gTow_ne_zero103 n))
+
+theorem isSC_gTow103 (n : Nat) : (gTow102 (n + 1)).isSC = false := rfl
+
+/-- **`Γ₀` の塔の Buchholz 側の原像。**  `ψ₀0`, `ψ₀Ω₁`, `ψ₀ψ₁ψ₁(·)`, …
+    1 段目だけが別扱いなのは `Good103` の `X ≠ 1` がそこで初めて立つからである。 -/
+def gInv103 : Nat → BT
+  | 0 => BT.D 0 BT.zero
+  | 1 => BT.D 0 (BT.D 1 BT.zero)
+  | n + 2 => BT.D 0 (BT.D 1 (BT.D 1 (gInv103 (n + 1))))
+
+theorem hd085_gInv103 : ∀ n, Hd085 (gInv103 n)
+  | 0 => fun _ hx => ⟨BT.zero, List.mem_singleton.mp hx⟩
+  | 1 => fun _ hx => ⟨BT.D 1 BT.zero, List.mem_singleton.mp hx⟩
+  | n + 2 => fun _ hx => ⟨BT.D 1 (BT.D 1 (gInv103 (n + 1))), List.mem_singleton.mp hx⟩
+
+/-- **段は 1 を超えない。** -/
+theorem btLe1_gInv103 : ∀ n, btLe72 1 (gInv103 n) = true
+  | 0 => rfl
+  | 1 => rfl
+  | n + 2 => by
+      show (decide (0 ≤ 1) && (decide (1 ≤ 1) &&
+        (decide (1 ≤ 1) && btLe72 1 (gInv103 (n + 1))))) = true
+      rw [btLe1_gInv103 (n + 1)]; rfl
+
+/-- 塔は `BT.lt` で真に上がる。 -/
+theorem btlt_mono103 : ∀ n, BT.lt (gInv103 n) (gInv103 (n + 1)) = true
+  | 0 => by decide
+  | 1 => by decide
+  | n + 2 => by
+      have ih := btlt_mono103 (n + 1)
+      have h1 : BT.lt (BT.D 1 (gInv103 (n + 1))) (BT.D 1 (gInv103 (n + 2))) = true :=
+        btlt_arg98 (bt_ne_of_lt98 ih) ih
+      have h2 : BT.lt (BT.D 1 (BT.D 1 (gInv103 (n + 1))))
+          (BT.D 1 (BT.D 1 (gInv103 (n + 2)))) = true :=
+        btlt_arg98 (bt_ne_of_lt98 h1) h1
+      exact btlt_arg98 (bt_ne_of_lt98 h2) h2
+
+/-- `GB 0` の元はみな一段上の `ψ₁ψ₁` の下 — 標準性の帰納法の核。 -/
+theorem cov103 : ∀ n, ∀ e ∈ BT.GB 0 (gInv103 n),
+    BT.lt e (BT.D 1 (BT.D 1 (gInv103 n))) = true
+  | 0 => by decide
+  | 1 => by decide
+  | n + 2 => by
+      intro e he
+      have hd := hd085_gInv103 (n + 1)
+      have hmono := btlt_mono103 (n + 1)
+      have hz1 : BT.lt (BT.D 1 (gInv103 (n + 1))) (BT.D 1 (gInv103 (n + 2))) = true :=
+        btlt_arg98 (bt_ne_of_lt98 hmono) hmono
+      have hz : BT.lt (BT.D 1 (BT.D 1 (gInv103 (n + 1))))
+          (BT.D 1 (BT.D 1 (gInv103 (n + 2)))) = true :=
+        btlt_arg98 (bt_ne_of_lt98 hz1) hz1
+      have hmem : e ∈ BT.D 1 (BT.D 1 (gInv103 (n + 1))) ::
+          BT.D 1 (gInv103 (n + 1)) :: gInv103 (n + 1) :: BT.GB 0 (gInv103 (n + 1)) := he
+      rcases List.mem_cons.mp hmem with h1 | h1
+      · rw [h1]; exact hz
+      rcases List.mem_cons.mp h1 with h2 | h2
+      · rw [h2]
+        exact btlt_arg98 (bt_ne_of_lt98 (btlt_hd0_D1_98 hd (gInv103 (n + 2))))
+          (btlt_hd0_D1_98 hd (gInv103 (n + 2)))
+      rcases List.mem_cons.mp h2 with h3 | h3
+      · rw [h3]; exact btlt_hd0_D1_98 hd _
+      · exact lt_trans83 (cov103 (n + 1) e h3) hz
+
+/-- **塔の原像はどれも標準。** -/
+theorem isStd_gInv103 : ∀ n, BT.isStd (gInv103 n) = true
+  | 0 => rfl
+  | 1 => rfl
+  | n + 2 => by
+      have hd := hd085_gInv103 (n + 1)
+      have hs := isStd_gInv103 (n + 1)
+      show (BT.isStd (BT.D 1 (BT.D 1 (gInv103 (n + 1)))) &&
+        (BT.GB 0 (BT.D 1 (BT.D 1 (gInv103 (n + 1))))).all
+          (fun e => BT.lt e (BT.D 1 (BT.D 1 (gInv103 (n + 1)))))) = true
+      rw [isStd_D1D1_98 hd hs, Bool.true_and, List.all_eq_true]
+      intro x hx
+      have hmem : x ∈ BT.D 1 (gInv103 (n + 1)) :: gInv103 (n + 1) ::
+          BT.GB 0 (gInv103 (n + 1)) := hx
+      rcases List.mem_cons.mp hmem with h1 | h1
+      · rw [h1]
+        exact btlt_arg98 (bt_ne_of_lt98 (btlt_hd0_D1_98 hd (gInv103 (n + 1))))
+          (btlt_hd0_D1_98 hd (gInv103 (n + 1)))
+      rcases List.mem_cons.mp h1 with h2 | h2
+      · rw [h2]; exact btlt_hd0_D1_98 hd _
+      · exact cov103 (n + 1) x h2
+
+/-- **§103.4 の主定理 — `Γ₀` の塔はどの段も `dict` の像である。**
+    §102.4 が `iterGamma_gTow102` で「これは repo 自身の基本列 `fsN Γ₀` である」と言った
+    その塔が、まるごと `dict` の像の中にいる。 -/
+theorem dict_gInv103 (Hp : PsiIdxOKStd172) : ∀ n, dict (gInv103 n) = gTow102 n
+  | 0 => by decide
+  | 1 => by decide
+  | n + 2 => by
+      have ih := dict_gInv103 Hp (n + 1)
+      have hg : Good103 (dict (gInv103 (n + 1))) := by rw [ih]; exact good103_gTow103 n
+      have hSC : (dict (gInv103 (n + 1))).isSC = false := by rw [ih]; exact isSC_gTow103 n
+      show collapse 0 (dict (BT.D 1 (BT.D 1 (gInv103 (n + 1))))) = phi (gTow102 (n + 1)) zero
+      rw [dict_D1D1x103 Hp (btLe1_gInv103 (n + 1)) (isStd_gInv103 (n + 1))
+          (hd085_gInv103 (n + 1)) hg,
+        collapse0_Q103 hg hSC, ih]
+
+end
+
+/-! ### §103.5 密度の門に何が効いたか — 目標 `Γ₀` は仮説ではなくなる -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- **目標が `Γ₀` ちょうどのところは定理である。**  `Γ₀` より下の挑戦者はどれも
+    §102.4 の塔のある段以下にいて、その段は §103.4 で `dict` の像だから、その原像が証人に
+    なる。仮説は `PsiIdxOKStd172` ひとつだけ。 -/
+theorem denseAtGam0_103 (Hp : PsiIdxOKStd172) {s : Term} (hs : inT s = true)
+    (hlt : lt s G094 = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) G094 = true := by
+  obtain ⟨n, hn⟩ := cofGam0_102 s hs hlt
+  refine ⟨gInv103 n, btLe1_gInv103 n, isStd_gInv103 n, hd085_gInv103 n, ?_, ?_⟩
+  · rw [dict_gInv103 Hp n]; exact hn
+  · rw [dict_gInv103 Hp n]; exact ltG0_cnv103 _ (cnv_gTow103 n)
+
+/-- **§102.6 の (b1) から端点 `v = Γ₀` を外したもの。**  `DictOntoMid102` より真に弱い
+    — `open_of_ontoMid103` が一方向で、逆は全射性と稠密性の差だけ強い。**証明しない。** -/
+def DictOntoMidOpen103 : Prop := ∀ v : Term, inT v = true → lt E081 v = true →
+    lt v G094 = true → ∀ s : Term, inT s = true → lt s v = true →
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true
+
+/-- `DictOntoMid102` は `DictOntoMidOpen103` を含む。 -/
+theorem open_of_ontoMid103 (H : DictOntoMid102) : DictOntoMidOpen103 :=
+  fun _ hiv hvE hvG _ hs hlt => denseMid_of_onto102 H hiv (le_of_lt94 hvG) hvE hs hlt
+
+/-- **(b1) は端点と内部に分かれ、端点はもう定理である。** -/
+theorem denseMid_of_open103 (Hp : PsiIdxOKStd172) (H : DictOntoMidOpen103) {v : Term}
+    (hiv : inT v = true) (hvG : le v G094 = true) (hvE : lt E081 v = true)
+    {s : Term} (hs : inT s = true) (hlt : lt s v = true) :
+    ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+      le s (dict b) = true ∧ lt (dict b) v = true := by
+  rcases (Bool.or_eq_true _ _).mp hvG with h1 | h1
+  · have hv : v = G094 := eq_of_beq h1
+    subst hv
+    exact denseAtGam0_103 Hp hs hlt
+  · exact H v hiv hvE h1 s hs hlt
+
+/-- **§102.6 の主定理を弱い仮説で。**  (a) は §102.5、(b1) の端点は §103.5、
+    残るのは (b1) の内部・(b2)・(c) の三本である。 -/
+theorem dictDenseHi_of103 (Hp : PsiIdxOKStd172) (H2 : DictLtA74)
+    (H1 : DictOntoMidOpen103) (H3 : DictDenseMid102) (H4 : DictDenseAbove102) :
+    DictDenseHi94 := by
+  intro t ht _ hvE s hs _ hlt
+  have hiv : inT (vOf t) = true := inT_vOf94 Hp t ht
+  have hiG1 : inT Gam1_94 = true := inT_Gam1_102 Hp
+  rcases lt_trichotomy_inT hiv hiG1 with hv | hv | hv
+  · rcases lt_trichotomy_inT hiv inT_G094_102 with hg | hg | hg
+    · exact denseMid_of_open103 Hp H1 hiv (le_of_lt94 hg.1) hvE hs hlt
+    · exact denseMid_of_open103 Hp H1 hiv (by rw [hg.2.1]; exact le_self G094) hvE hs hlt
+    · exact H3 (vOf t) hiv hg.2.2 hv.1 s hs hlt
+  · rcases lt_trichotomy_inT hs hiG1 with hsg | hsg | hsg
+    · exact denseHi_below_Gam1_102 Hp H2 hiv (by rw [hv.2.1]; exact le_self Gam1_94) hs hsg.1
+    · exact H4 (vOf t) hiv (by rw [hv.2.1]; exact le_self Gam1_94) s hs
+        (by rw [hsg.2.1]; exact le_self Gam1_94) hlt
+    · exact H4 (vOf t) hiv (by rw [hv.2.1]; exact le_self Gam1_94) s hs
+        (le_of_lt94 hsg.2.2) hlt
+  · rcases lt_trichotomy_inT hs hiG1 with hsg | hsg | hsg
+    · exact denseHi_below_Gam1_102 Hp H2 hiv (le_of_lt94 hv.2.2) hs hsg.1
+    · exact H4 (vOf t) hiv (le_of_lt94 hv.2.2) s hs (by rw [hsg.2.1]; exact le_self Gam1_94) hlt
+    · exact H4 (vOf t) hiv (le_of_lt94 hv.2.2) s hs (le_of_lt94 hsg.2.2) hlt
+
+/-- 326 行目の証明書 — 密度の側で待つのは (b1) の**内部**と (b2)・(c) の三本。 -/
+theorem certIn_t326_103 (Hp : PsiIdxOKStd172) (H : HiMono89)
+    (H1 : DictOntoMidOpen103) (H3 : DictDenseMid102) (H4 : DictDenseAbove102)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_99 Hp H (dictDenseHi_of103 Hp (dictLtA74_99 Hp H) H1 H3 H4) hacc
+
+end
+
+/-! ### §103.6 段の正直さ — 上へは 1 まで、下へは 0 では届かない -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- **構成は 1 段目から上で段 0 を離れる。**  §98.8 の `btLe0_bTowG98` と同じ規律。 -/
+theorem btLe0_gInv103 : ∀ n, btLe72 0 (gInv103 (n + 1)) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+/-- **そして離れるほかない。**  §81.6 の `lt_dict_E81` により段 0 の標準項の値は
+    `ε₀` より下にしかないので、`(ε₀, Γ₀]` の証人は**一つも**段 0 では作れない。
+    §97 の構成がこの区間に届かないのは偶然ではない。 -/
+theorem noLevel0_inMid103 (Hp : PsiIdxOKStd172) {s : Term} (h : lt E081 s = true) :
+    ¬ ∃ b : BT, btLe72 0 b = true ∧ BT.isStd b = true ∧ dict b = s := by
+  rintro ⟨b, hb, hst, hd⟩
+  have h1 : lt (dict b) E081 = true := lt_dict_E81 Hp b hb hst
+  have his : inT s = true := by
+    rw [← hd]; exact (inT_dict_of_std172 Hp b (btLe72_mono81 b hb) hst).1
+  rw [hd, lt_asymm_inT inT_E81 his h] at h1
+  exact Bool.noConfusion h1
+
+end
+
+/-! ### §103.7 この区間の junk — Veblen の形をしていて、欠陥は一段内側にある -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`(ε₀, Γ₀)` の junk。**  `φ̄(1, ψ_1(0))`。Veblen の形をしているのに 2.1(vi) の
+    `κ ∈ R` を Veblen の**引数**の中で破る。§97 の `junk97 = φ̄(0 ⊕ M, 0)` は `ε₀` より
+    下、§102 の `junk1_102` は `Γ₀` より上、§102 の `junk0_102 = ψ_1(0)` はこの区間に
+    いるが 2.1(vi) を最上位で破る — 三つとも別の項で、別の場所で効く。 -/
+def junkV103 : Term := phi TM.Term.one (psi TM.Term.one zero)
+
+theorem lt_zero_psi103 (k c : Term) : lt zero (psi k c) = true :=
+  lt_zero_ne76 (by intro h; exact Term.noConfusion h)
+
+theorem lt_zero_Z103 (d : Term) : lt zero (Z d) = true :=
+  lt_zero_ne76 (by intro h; exact Term.noConfusion h)
+
+theorem lt_one_G0_103 : lt TM.Term.one G094 = true := by
+  show lt (phi zero zero) (psi (Z zero) zero) = true
+  rw [lt_phi_psi103, lt_zero_psi103]; rfl
+
+theorem lt_one_Om103 : lt TM.Term.one (Z zero) = true := by
+  show lt (phi zero zero) (Z zero) = true
+  rw [lt_phi_Z103, lt_zero_Z103]; rfl
+
+/-- `ψ_1(0) < Γ₀` — 2.3.14(ii) を一歩だけ。`decide` は `starF` の層で走り切らないので
+    節を手で当てる。 -/
+theorem lt_junk0_G0_103 : lt junk0_102 G094 = true := by
+  have hne : psi TM.Term.one zero ≠ psi (Z zero) zero := by
+    intro h; injection h with h1 _; exact Term.noConfusion h1
+  show lt (psi TM.Term.one zero) (psi (Z zero) zero) = true
+  rw [lt_eq_ltF_succ, ltF_succ_psi_psi _ hne,
+    if_neg (by intro h; exact Term.noConfusion h),
+    show ltF (2 * ((psi TM.Term.one zero).deg + (psi (Z zero) zero).deg) + 7)
+        TM.Term.one (Z zero) = lt TM.Term.one (Z zero) from
+      (lt_eq_ltF TM.Term.one (Z zero) _ (by
+        show (1 + (zero : Term).deg + (zero : Term).deg) + (1 + (zero : Term).deg)
+          ≤ 2 * ((1 + (1 + (zero : Term).deg + (zero : Term).deg) + (zero : Term).deg)
+              + (1 + (1 + (zero : Term).deg) + (zero : Term).deg)) + 7
+        simp only [TM.Term.deg]; omega)).symm,
+    lt_one_Om103, if_pos rfl,
+    show ltF (2 * ((psi TM.Term.one zero).deg + (psi (Z zero) zero).deg) + 7)
+        TM.Term.one (psi (Z zero) zero) = lt TM.Term.one (psi (Z zero) zero) from
+      (lt_eq_ltF TM.Term.one (psi (Z zero) zero) _ (by
+        show (1 + (zero : Term).deg + (zero : Term).deg)
+            + (1 + (1 + (zero : Term).deg) + (zero : Term).deg)
+          ≤ 2 * ((1 + (1 + (zero : Term).deg + (zero : Term).deg) + (zero : Term).deg)
+              + (1 + (1 + (zero : Term).deg) + (zero : Term).deg)) + 7
+        simp only [TM.Term.deg]; omega)).symm]
+  exact lt_one_G0_103
+
+theorem lt_junkV_G0_103 : lt junkV103 G094 = true := by
+  show lt (phi TM.Term.one (psi TM.Term.one zero)) (psi (Z zero) zero) = true
+  rw [lt_phi_psi103,
+    show lt TM.Term.one (psi (Z zero) zero) = true from lt_one_G0_103,
+    show lt (psi TM.Term.one zero) (psi (Z zero) zero) = true from lt_junk0_G0_103]
+  rfl
+
+/-- **`ψ_1(0)` は Veblen 標準形をすべて超える。**  2.3.4 と 2.3.10 の二節だけを使う。 -/
+theorem le_junk0_cnv103 : ∀ (y : Term), CNV y = true → le junk0_102 y = false
+  | zero, _ => by
+      show ((junk0_102 == zero) || lt junk0_102 zero) = false
+      rw [show (junk0_102 == zero) = false from rfl, lt_right_zero102]
+      rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi c d, h => by
+      obtain ⟨hc, hd⟩ := cnv_phi h
+      obtain ⟨hec, hlc⟩ := Bool.or_eq_false_iff.mp (le_junk0_cnv103 c hc)
+      obtain ⟨hed, hld⟩ := Bool.or_eq_false_iff.mp (le_junk0_cnv103 d hd)
+      show ((junk0_102 == phi c d) || lt junk0_102 (phi c d)) = false
+      rw [show (junk0_102 == phi c d) = false from rfl,
+        show lt junk0_102 (phi c d) = _ from lt_psi_phi_eq102 TM.Term.one zero c d,
+        show (psi TM.Term.one zero == c) = false from hec,
+        show (psi TM.Term.one zero == d) = false from hed,
+        show lt (psi TM.Term.one zero) c = false from hlc,
+        show lt (psi TM.Term.one zero) d = false from hld]
+      rfl
+  | add a b, h => by
+      obtain ⟨_, ha, _, _⟩ := cnv_add h
+      show ((junk0_102 == add a b) || lt junk0_102 (add a b)) = false
+      rw [show (junk0_102 == add a b) = false from rfl,
+        Cert.lt_ap_add (show isAP junk0_102 = true from rfl) a b,
+        le_junk0_cnv103 a ha]
+      rfl
+
+/-- **`φ̄(1, ψ_1(0))` も Veblen 標準形をすべて超える。**  2.3.13 の三節はどれも
+    `ψ_1(0)` 側か第 2 引数側へ落ちるので、帰納法はそのまま回る。 -/
+theorem le_junkV_cnv103 : ∀ (y : Term), CNV y = true → le junkV103 y = false
+  | zero, _ => by
+      show ((junkV103 == zero) || lt junkV103 zero) = false
+      rw [show (junkV103 == zero) = false from rfl, lt_right_zero102]
+      rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+  | phi c d, h => by
+      obtain ⟨_, hd⟩ := cnv_phi h
+      have hne : junkV103 ≠ phi c d := by
+        intro hq
+        have hq2 : phi TM.Term.one (psi TM.Term.one zero) = phi c d := hq
+        injection hq2 with _ h2
+        rw [← h2] at hd
+        exact Bool.noConfusion hd
+      have hJd : lt junk0_102 d = false :=
+        (Bool.or_eq_false_iff.mp (le_junk0_cnv103 d hd)).2
+      have hJy : lt junk0_102 (phi c d) = false :=
+        (Bool.or_eq_false_iff.mp (le_junk0_cnv103 (phi c d) h)).2
+      have hVd : le junkV103 d = false := le_junkV_cnv103 d hd
+      show ((junkV103 == phi c d) || lt junkV103 (phi c d)) = false
+      rw [show (junkV103 == phi c d) = false from by
+            cases hcc : (junkV103 == phi c d) with
+            | false => rfl
+            | true => exact absurd (eq_of_beq hcc) hne,
+        show lt junkV103 (phi c d) = _ from lt_phi_phi hne]
+      by_cases h1 : TM.Term.one = c
+      · rw [if_pos h1, show lt (psi TM.Term.one zero) d = false from hJd]; rfl
+      · rw [if_neg h1]
+        by_cases h2 : lt TM.Term.one c = true
+        · rw [if_pos h2, show lt (psi TM.Term.one zero) (phi c d) = false from hJy]; rfl
+        · rw [if_neg h2,
+            show le (phi TM.Term.one (psi TM.Term.one zero)) d = false from hVd]; rfl
+  | add a b, h => by
+      obtain ⟨_, ha, _, _⟩ := cnv_add h
+      show ((junkV103 == add a b) || lt junkV103 (add a b)) = false
+      rw [show (junkV103 == add a b) = false from rfl,
+        Cert.lt_ap_add (show isAP junkV103 = true from rfl) a b,
+        le_junkV_cnv103 a ha]
+      rfl
+
+/-- **§103.5 から `inT` を落とすと偽。**  junk は `(ε₀, Γ₀)` にいて、しかも `dict` の
+    像 (= §103.1 により `Γ₀` より下の 𝔗(M) の項ぜんぶ = Veblen 標準形ぜんぶ) を
+    **すべて超える**から、証人が 1 つも取れない。§97.8 の `denseLo_needs_inT97` の
+    一階上で、破れる条は 2.1(iii) ではなく 2.1(vi) である。 -/
+theorem denseAtGam0_needs_inT103 (Hp : PsiIdxOKStd172) :
+    ¬ (∀ s : Term, lt s G094 = true →
+        ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+          le s (dict b) = true ∧ lt (dict b) G094 = true) := by
+  intro H
+  obtain ⟨b, hb, hst, _, hle, hlt⟩ := H junkV103 lt_junkV_G0_103
+  have hi := (inT_dict_of_std172 Hp b hb hst).1
+  rw [le_junkV_cnv103 _ (cnv_of_ltG0_103 hi hlt)] at hle
+  exact Bool.noConfusion hle
+
+/-- 同じことを §102 の `junk0_102` で。破れる条は同じ 2.1(vi) だが、こちらは
+    Veblen の形すらしていない。 -/
+theorem denseAtGam0_needs_inT_psi103 (Hp : PsiIdxOKStd172) :
+    ¬ (∀ s : Term, lt s G094 = true →
+        ∃ b : BT, btLe72 1 b = true ∧ BT.isStd b = true ∧ Hd085 b ∧
+          le s (dict b) = true ∧ lt (dict b) G094 = true) := by
+  intro H
+  obtain ⟨b, hb, hst, _, hle, hlt⟩ := H junk0_102 lt_junk0_G0_103
+  have hi := (inT_dict_of_std172 Hp b hb hst).1
+  rw [le_junk0_cnv103 _ (cnv_of_ltG0_103 hi hlt)] at hle
+  exact Bool.noConfusion hle
+
+end
+
+/-! ### §103.8 測定 — 母集団の作り方と、`dictInv` が神託ではないこと -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv)
+open TM TM.Term
+open Evidence.WF
+
+/-! **断片の主張はぴったり。**  §102.8 の母集団をそのまま使う — ill-formed な形が
+    18 個の種のうちに入っていて、濾していない。`CNV s` が成り立つのはちょうど
+    `inT s && s < Γ₀` のとき。食い違いは両向きとも 0。 -/
+#eval (pool102.length,
+       pool102.countP fun s => CNV s,
+       pool102.countP fun s => inT s && lt s G094)
+#guard pool102.countP (fun s => CNV s && !(inT s && lt s G094)) == 0
+#guard pool102.countP (fun s => (inT s && lt s G094) && !(CNV s)) == 0
+
+/-! **`inT` は飾りではなく、落ちるところが見えている。**  `Γ₀` より下で `inT` でない
+    項の数と、そのうち §102.4 の塔に押さえられてしまう数。 -/
+#eval (pool102.countP fun s => !(inT s) && lt s G094,
+       pool102.countP fun s => !(inT s) && lt s G094 && le s (gTow102 (htG102 s)))
+#guard (pool102.countP fun s => !(inT s) && lt s G094) > 0
+/-! 後者が 0 でないので、仮説は結論の言い換えではない。 -/
+#guard (pool102.countP fun s => !(inT s) && lt s G094 && le s (gTow102 (htG102 s))) > 0
+
+/-! **名指しの junk。**  区間の中にいて、`inT` でなく、`CNV` でもなく、塔のどの段も
+    超え、`dictInv` の像でもない。 -/
+#guard lt E081 junkV103 && lt junkV103 G094 && !(inT junkV103) && !(CNV junkV103)
+#guard lt E081 junk0_102 && lt junk0_102 G094 && !(inT junk0_102) && !(CNV junk0_102)
+#guard (List.range 12).all fun n => le junkV103 (gTow102 n) == false
+#guard (List.range 12).all fun n => le junk0_102 (gTow102 n) == false
+#guard (dictInv junkV103).isNone
+/-! それぞれが破る条 — どちらも 2.1(vi) の `κ ∈ R` だが、`junkV103` は Veblen の
+    引数の中で破る。 -/
+#guard isR TM.Term.one == false
+#guard inT (psi TM.Term.one zero) == false
+
+/-! **ill-formed でも塔に押さえられるものはある** — `φ̄(1, 0 ⊕ M)`。
+    2.1(iii) を破るが、値は小さい。 -/
+def junkDom103 : Term := phi TM.Term.one (add zero M)
+#guard !(inT junkDom103) && lt E081 junkDom103 && lt junkDom103 G094
+#guard (List.range 12).any fun n => le junkDom103 (gTow102 n)
+
+/-! **塔、計算。**  8 段：値はぴったり `gTow102 n`、段は 1 以下、1 段目から上は
+    段 0 では書けない、標準で頭は `D 0`。 -/
+#guard (List.range 8).all fun n => dict (gInv103 n) == gTow102 n
+#guard (List.range 8).all fun n =>
+  btLe72 1 (gInv103 n) && BT.isStd (gInv103 n) && hd085B (gInv103 n)
+#guard (List.range 8).all fun n => btLe72 0 (gInv103 (n + 1)) == false
+#guard (List.range 8).all fun n => inT (gTow102 n) && lt (gTow102 n) G094
+#guard (List.range 8).all fun n => lt (gTow102 n) (gTow102 (n + 1))
+
+/-! ### 全射の測定をやり直す — §102.9 より意地悪な母集団で
+
+§102.9 は `midPool102` の 129 項すべてに合法な `dictInv` 逆像があると報告した。
+その母集団は `φ̄(x,y)` と `plus` の一段の閉包で、**固定点を第 2 引数に持つ形が
+ほとんど入っていない**。種にそれを入れて作り直すと、`dictInv` は取りこぼす。 -/
+
+private def aseed103 : List Term :=
+  [zero, TM.Term.one, TM.Term.omega, ofNat 2, ofNat 3,
+   phi TM.Term.one zero,
+   phi (ofNat 2) zero,
+   phi TM.Term.omega zero,
+   phi (phi TM.Term.one zero) zero,
+   phi TM.Term.one TM.Term.one,
+   phi zero (phi TM.Term.one zero),
+   phi TM.Term.one (phi (ofNat 2) zero),
+   phi TM.Term.one (plus (phi (ofNat 2) zero) TM.Term.one),
+   plus (phi (ofNat 2) zero) (phi TM.Term.one zero),
+   phi TM.Term.one (plus (phi (ofNat 2) zero) TM.Term.omega),
+   phi zero (plus (phi TM.Term.one zero) TM.Term.one)]
+
+private def agrow103 (p : List Term) : List Term :=
+  (p ++ (p.flatMap fun x => p.map fun y => phi x y)
+     ++ (p.flatMap fun x => p.map fun y => plus x y)).eraseDups
+
+/-- `(ε₀, Γ₀)` の中の 𝔗(M) の項 — 敵対的な種から。 -/
+def aPool103 : List Term :=
+  (agrow103 aseed103).filter fun t => inT t && lt E081 t && lt t G094
+
+/-- 「合法な逆像がある」を `dictInv` を神託にして測る述語。 -/
+def legalPre103 (t : Term) : Bool :=
+  match dictInv t with
+  | some b => dict b == t && btLe72 1 b && BT.isStd b && hd085B b
+  | none => false
+
+/-! 母集団の大きさ、合法な逆像の数、逆像そのものの数。**逆像は全部にあるのに
+    合法なのは全部ではない。** -/
+#eval (aPool103.length, aPool103.countP legalPre103,
+       aPool103.countP fun t => (dictInv t).isSome)
+#guard aPool103.length > 300
+#guard aPool103.countP (fun t => (dictInv t).isSome) == aPool103.length
+#guard aPool103.countP legalPre103 < aPool103.length
+
+/-! 取りこぼしはどれも `φ̄(a, φ̄(a, ·))` — 第 1 引数が**同じ**入れ子。
+    `vebPairs` の剥がし判定は `lt a a₁` で真に大きいときしか働かない。 -/
+#eval ((aPool103.filter fun t => !(legalPre103 t)).map fun t => t.toStr)
+#guard (aPool103.filter fun t => !(legalPre103 t)).all fun t => match t with
+  | phi a (phi a1 _) => a == a1
+  | phi a (add (phi a1 _) _) => a == a1
+  | _ => false
+/-! 値は合っているのに標準でない、が取りこぼしの中身である。 -/
+#guard (aPool103.filter fun t => !(legalPre103 t)).all fun t => match dictInv t with
+  | some b => dict b == t && !(BT.isStd b)
+  | none => false
+
+/-! **取りこぼした 5 項には合法な証人が実在する — 手で作った。**
+    だから 5 項は `dict` の穴ではなく `dictInv` の不完全さであり、
+    `DictOntoMid102` は反証されていない。 -/
+private def bOne103 : BT := BT.D 0 BT.zero                     -- 1
+private def bOm103 : BT := BT.D 1 BT.zero                      -- Ω₁
+private def bOO103 : BT := BT.D 1 (BT.D 1 BT.zero)             -- Ω₁²
+private def bE1_103 : BT := BT.D 0 (BT.sum bOO103 bOm103)      -- ε_{ζ₀+1}
+private def bE2_103 : BT := BT.D 0 (BT.sum bOO103 (BT.sum bOm103 bOm103))
+private def bE3_103 : BT := BT.D 0 (BT.sum bOO103 (BT.D 1 bOne103))
+
+/-- `dictInv` が取りこぼす 5 項と、手で作った合法な証人。 -/
+def witMiss103 : List (Term × BT) :=
+  [(phi zero (phi zero (phi TM.Term.one zero)),
+      BT.D 0 (BT.sum bOm103 (BT.D 0 (BT.sum bOm103 bOne103)))),
+   (phi zero (phi zero (plus (phi TM.Term.one zero) TM.Term.one)),
+      BT.D 0 (BT.sum bOm103 (BT.D 0 (BT.sum bOm103 (BT.sum bOne103 bOne103))))),
+   (phi TM.Term.one (phi TM.Term.one (phi (ofNat 2) zero)),
+      BT.D 0 (BT.sum bOO103 (BT.D 1 bE1_103))),
+   (phi TM.Term.one (phi TM.Term.one (plus (phi (ofNat 2) zero) TM.Term.one)),
+      BT.D 0 (BT.sum bOO103 (BT.D 1 bE2_103))),
+   (phi TM.Term.one (phi TM.Term.one (plus (phi (ofNat 2) zero) TM.Term.omega)),
+      BT.D 0 (BT.sum bOO103 (BT.D 1 bE3_103)))]
+
+#guard witMiss103.all fun p =>
+  dict p.2 == p.1 && btLe72 1 p.2 && BT.isStd p.2 && hd085B p.2
+#guard witMiss103.all fun p => !(legalPre103 p.1)
+#guard witMiss103.all fun p => inT p.1 && lt E081 p.1 && lt p.1 G094
+#guard (aPool103.filter fun t => !(legalPre103 t)).all fun t =>
+  witMiss103.any fun p => p.1 == t
+#guard witMiss103.length == (aPool103.filter fun t => !(legalPre103 t)).length
+
+end
+
 end Evidence.Region
