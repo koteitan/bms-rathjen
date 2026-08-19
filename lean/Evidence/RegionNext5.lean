@@ -8852,4 +8852,1071 @@ private def ingOK114 (p : BT × BT) : Bool :=
 
 end
 
+/-! ## §113 THE COEFFICIENT HALF IS A THEOREM — `Γ₀` IS CLOSED ALONG THE FOLD, AND THE
+       WINDOW HAS A THIRD ROUTE
+
+§108 reduced `GapAtG0_107` to one clause `SCFirst108`; §111 proved that clause EQUIVALENT to
+its one-component form `SCFirstOne111`, closed the CARRIER half (`Gam0Drags111` +
+`carrier_notStd111`, no shape restriction left) and left the other half named but untouched:
+
+> a value in the window with a leading digit BELOW `Γ₀` needs a coefficient already in the
+> window, which is an induction on the term's size.
+
+**§113 proves that half.**  It is not an induction on the term's size: it is one closure
+property of `Γ₀` along the fold, and the whole of it is `lt_phi_gT113` — 2.3.13(i) read at
+the target `φ̄(Γ₀,R)`.  §113 then BUILDS the term §111 said might exist and could not find,
+and that term refutes two things §108 and §111 had believed.
+
+  §113.1  **THE TARGET IS `φ̄(Γ₀,R)` AND THE ARITHMETIC CLOSES UNDER IT.**  2.3.13(i) says
+          `φ̄(a,b) < φ̄(Γ₀,R) ↔ b < φ̄(Γ₀,R)` as soon as `a < Γ₀` — the FIRST argument drops
+          out of the comparison entirely (`lt_phi_gT113`).  With 2.3.10 (`lt_add_gT113`)
+          that closes `ofList`, `plus`, `ofNat`, `sub1`, `splitFin`, `phiNFdefault`,
+          `phiNFsucc`, `phiNF` and `ω^·` under "below `φ̄(Γ₀,R)`" — §79's development for
+          `Ω₁`, repeated at a Veblen target.  `R` is free, so the same lemmas serve the
+          window's BOTTOM (`R = 0`) and its TOP (`R = Γ₀⊕1`).
+
+  §113.2  **THE FOLD NEVER LEAVES.**  `StG113` is the invariant "the accumulator is below the
+          target"; `stepG113` proves one step keeps it, from `lt a Γ₀` on the pair's exponent
+          — which also kills the strongly critical branch, since `Γ₀ < Ω₁` — and `lt c` on
+          its coefficient.  `foldG113` runs it along the whole digit list.  **Nothing here
+          is an induction on a Buchholz term.**
+
+  §113.3  **AND `wcnf` DOES NOT EITHER.**  `wcnfG113` carries the same two conditions through
+          the base-`Ω₁` decomposition, merging included, and `collapse0_facts113` closes the
+          outer `ω^·`: **if every digit exponent is below `Γ₀` and every coefficient and the
+          sub-`Ω₁` tail are below `φ̄(Γ₀,R)`, then `ψ₀`'s value is below `φ̄(Γ₀,R)`.**
+
+  §113.4  **THE COEFFICIENT HALF, NAMED.**  At `R = 0` the target is the window's bottom
+          `φ̄(Γ₀,0)`, and the contrapositive is the clause §111 asked for:
+          `coefWin113` — a value that reaches the window forces one of exactly three things,
+          and `badP113` decides which: a digit exponent at or above `Γ₀` (§111's carrier
+          half, on the 𝔗(M) side — **the bridge from that to §111's Buchholz-side
+          `carrier_notStd111` is NOT proved here**), a digit COEFFICIENT at or above the
+          window's BOTTOM, or a sub-`Ω₁` component at or above it.  "In the window" is read
+          as "at or above the window's bottom": the upper side would follow from `UpProp113`
+          (§113.6) and is NOT claimed.  `scFirstOne_needs113` hands that witness to `SCFirstOne111` for
+          free, and `winProp_iff_scFirstOne113` says the hand-over loses nothing: the clause
+          may now ASSUME the witness.  **This removes residue rather than moving it** — the
+          half is proved, not reduced to something else.
+
+  §113.5  **THE THIRD ROUTE INTO THE WINDOW, BUILT.**  §111 warned that its two families
+          might not be all of them.  They are not.  `cCoef113 w = ψ₀(ψ₁ w)` puts a
+          window-valued term under a single `ψ₁`: at `w = bWin108 1` the digit is
+          `Ω₁^1 · φ̄(Γ₀,1)` — **exponent `1`, far below `Γ₀`; the whole of the window value is
+          in the COEFFICIENT** — and `dict (cCoef113 (bWin108 1)) = φ̄(Γ₀,1)`, inside the
+          window.  §108's populations C and D, §111's F and G — 2966 terms — contain 0 of
+          this shape.  And prefixing `Ω^Ω` does NOT repair it:
+          `cJump113 = ψ₀(Ω^Ω ⊕ ψ₁(bWin108 1))` still has value `φ̄(Γ₀,1)`, **and it satisfies
+          `ψ₀(Ω^Ω) < ·`.**  Two consequences:
+
+            * `scFirstOneNoStd_false113` : the ONE-COMPONENT clause cannot be stated without
+              `isStd` either.  §108 showed this for the sum form (`bad108`, two `ψ₀`
+              components); §111 wrote that the premise `ψ₀(Ω^Ω) < b` "removes every one of
+              the near-misses on its own".  **That was a statement about F, not about the
+              shape**: `cJump113` satisfies the premise and sits in the window.
+            * `leadSCJumps_false113` : `cJump113`'s leading base-`Ω₁` digit exponent IS at or
+              above `Ω₁`, so the fold DOES take its strongly critical branch first — and the
+              value is in the window anyway.  §107's reason, refuted a second time and now
+              WITH the premise §108 added.  The mechanism is visible: `plus` drops the
+              accumulator when the next coefficient is bigger, so "the base is `Γ₀`, hence
+              later Veblen digits land at `φ̄(a,Γ₀⊕c)`" fails exactly when a coefficient
+              outruns the base.
+
+          What stops both is standardness, and §113.5 says where: `notStd_cCoef113` — the
+          coefficient route needs a STANDARD term of window value inside the `ψ₁`, and
+          `isStd` is hereditary, so **the coefficient route is literally the induction
+          hypothesis.**  That is the honest content of "an induction on the term's size".
+
+  §113.6  **WHAT IS LEFT, NAMED AND MEASURED.**  With the coefficient half proved, what
+          `SCFirstOne111` still needs is one arithmetical clause, `UpProp113`: a `ψ₀`
+          argument that carries something at or above the window's TOP has value at or above
+          the window's top.  It is the propagation step the size induction consumes, and it
+          is NOT proved here (30/30 and 9992/9992, premise firing 9 and 1718).
+
+WHAT IS **NOT** CLAIMED.  **`SCFirstOne111` is NOT proved and NOT refuted, and neither is
+`SCFirst108` or `GapAtG0_107`.**  `UpProp113` and `Gam0Drags111` are measured, not proved.
+`cCoef113` and `cJump113` are NOT counterexamples to anything: §113.5 proves neither is
+standard.  `DictDenseMid107`, `DictDenseMid102`, `DictDenseHi94`, `DictDense85`, `CofDenseS1`
+and row 326's certificate are exactly where §111 left them — row 326 still depends on
+`SCFirst108`, now equivalently on `WinProp113`, through `gap_of108`.  `PsiIdxOKStd172` and
+`DictLtA74` are used, not proved.  §113 does not touch §103's hole and does not reach
+`FoldSkips108`.
+
+**Where §113 stopped, precisely, and what moved.**  §111 left two halves; §113 pays one of
+them in full and finds it was cheaper than advertised — the `Γ₀`-closure of the Veblen layer,
+not an induction — and then shows the neighbourhood is again wider than the last measurement
+saw.  **The residue did shrink**: `SCFirstOne111` is now equivalent to a clause that may
+assume a named, decidable witness, and the three shapes that witness can take are separated,
+one of them blocked outright (the hereditary argument for the coefficient, §113.5) and one
+matching §111's carrier half in content though not yet in form (the exponent at `Γ₀`; the
+𝔗(M)-side clause and §111's Buchholz-side theorem are not bridged here).  What is genuinely left is `UpProp113` plus the bookkeeping
+that turns "at or above the bottom" into "at or above the top" — and §113.5 says why that
+bookkeeping is the induction and not an oversight.
+
+**AND THE OVERPAYMENT LEDGER.**  §113 found one: §111's reading that the premise
+`ψ₀(Ω^Ω) < b` "removes every one of the near-misses on its own" was paid for by F, and F
+could not see the shape that breaks it.  The seventh entry.
+
+WHAT THE MEASUREMENT SAYS (§113.7 gives the construction).  One population is BUILT and one
+is re-read.  **Q** is the third route at 10 window-and-above seeds in three shapes — bare
+`ψ₀(ψ₁ w)`, the `Ω^Ω` repair `ψ₀(Ω^Ω ⊕ ψ₁ w)`, and (as a CONTROL) `w` moved out of the `ψ₁`
+into the tail `ψ₀(Ω^Ω ⊕ w)` — 30 terms, **not filtered by standardness**.  **E** is §108.6's
+enumeration of every standard level-`≤ 1` term of size `≤ 12` (9992), re-read.
+
+  * **12 of Q's 30 land in the window, 4 in each shape — and 8 of those 12 satisfy
+    `ψ₀(Ω^Ω) < ·`.**  §111's F had 13 in the window and 0 with the premise.
+  * **The coefficient clause fires ALONE on 7 of the 10 bare terms and on 0 of the other 20.**
+    Moving `w` out of the `ψ₁` (the control) switches the clause from the coefficient to the
+    tail: 0 coefficient-only, 7 tail.  So it is the `ψ₁` and nothing else that turns a window
+    value into a coefficient.
+  * **All 30 are level `≤ 1`, `D 0`-headed and `inT`; 7 are standard; and 0 of the 12 in the
+    window are legal witnesses.**  The 6 that are legal AND satisfy the premise all have
+    values BELOW the window's bottom.
+  * **§108's populations C and D and §111's F and G contain 0 terms of the new shape, out of
+    1463, 1463, 30 and 10.**  E contains 483 — and cannot contain a dangerous one, because
+    the shape is dangerous exactly when the term inside the `ψ₁` is a window carrier, and
+    those are not standard.  The seed problem, one level up from §111's.
+  * **The two known families fire only the carrier clause.**  On §108.1's `bWin108` at four
+    rungs and on all ten of §111.2's `cWin111`, the exponent clause fires and the coefficient
+    and tail clauses do not.  **So the coefficient half is about a route neither family
+    contains** — which is why it had to be built.
+  * **The clause's hypothesis is visible on E, both ways.**  `badP113` fires on 4587 of E's
+    9992 and does not on 5405.  Restricted to the 5318 that are legal `ψ₀` arguments it fires
+    on 3 and fires ALONE on 0 — the coefficient route is nearly invisible among standard
+    terms, exactly as the hereditary argument predicts.
+  * **E confirms the clause it cannot test.**  2606 of E's terms give a legal `ψ₀(z)` with
+    `ψ₀(Ω^Ω) < ψ₀(z)`; 0 land in the window and 0 break `SCFirstOne111`.
+  * **`UpProp113` holds 30/30 on Q and 9992/9992 on E, with the premise firing 9 and 1718.**
+    Not a clean sweep of a vacuous hypothesis.
+  * **The digit exponents descend** on §108's family at four rungs, on all ten of §111's, on
+    §98's tower and on the new family — so "the LEADING digit is below `Γ₀`" and "every digit
+    is below `Γ₀`" are the same hypothesis on everything measured. -/
+
+/-! ### §113.1 的 `φ̄(Γ₀,R)` の下で閉じる算術
+
+2.3.13(i) は「指数が `Γ₀` より下なら、`φ̄(Γ₀,R)` との比較は第 2 引数だけで決まる」と言う。
+第 1 引数は比較から**消える**。これと 2.3.10 だけで、`plus`・`ofList`・`sub1`・`phiNF`・
+`ω^·` が全部この的の下で閉じる。§79 が `Ω₁` について書いたものを Veblen の的で書き直した
+だけで、`R` は自由だから窓の下端と上端の両方に使える。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 窓の下端・上端をまとめて扱う的 — `φ̄(Γ₀,R)`。 -/
+def gT113 (R : Term) : Term := phi G094 R
+
+theorem gT113_zero : gT113 zero = rawT94 0 := rfl
+theorem gT113_top : gT113 (plus G094 TM.Term.one) = dict (bTowG98 1) := rfl
+
+theorem isAP_gT113 (R : Term) : (gT113 R).isAP = true := rfl
+
+theorem ne_G0_of_lt113 {a : Term} (ha : lt a G094 = true) : a ≠ G094 := by
+  intro hc
+  rw [hc, lt_irrefl] at ha
+  exact Bool.noConfusion ha
+
+/-- **2.3.13(i) を等式で。**  指数が `Γ₀` より下なら `φ̄(Γ₀,R)` との比較は第 2 引数だけで決まる。 -/
+theorem lt_phi_gT113 {a b : Term} (R : Term) (ha : lt a G094 = true) :
+    lt (phi a b) (gT113 R) = lt b (gT113 R) := by
+  have hne : a ≠ G094 := ne_G0_of_lt113 ha
+  have hne2 : phi a b ≠ phi G094 R := by
+    intro hc; injection hc with h1 _; exact hne h1
+  show lt (phi a b) (phi G094 R) = lt b (phi G094 R)
+  rw [lt_eq_ltF_succ, ltF_succ_phi_phi _ hne2, if_neg hne,
+    if_pos (by
+      rw [show ltF (2 * ((phi a b).deg + (phi G094 R).deg) + 7) a G094 = lt a G094 from
+        (lt_eq_ltF a G094 _ (by
+          show a.deg + G094.deg ≤ 2 * ((1 + a.deg + b.deg) + (1 + G094.deg + R.deg)) + 7
+          omega)).symm]
+      exact ha),
+    show ltF (2 * ((phi a b).deg + (phi G094 R).deg) + 7) b (phi G094 R)
+        = lt b (phi G094 R) from
+      (lt_eq_ltF b (phi G094 R) _ (by
+        show b.deg + (1 + G094.deg + R.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + G094.deg + R.deg)) + 7
+        omega)).symm]
+
+/-- 和は頭で決まる。 -/
+theorem lt_add_gT113 (a b : Term) (R : Term) :
+    lt (add a b) (gT113 R) = lt a (gT113 R) := lt_add_ap102 a b (isAP_gT113 R)
+
+theorem lt_zero_gT113 (R : Term) : lt zero (gT113 R) = true :=
+  lt_zero_left (by intro hc; exact Term.noConfusion hc)
+
+theorem lt_ofList_gT113 (R : Term) : ∀ (l : List Term), (∀ x ∈ l, lt x (gT113 R) = true) →
+    lt (ofList l) (gT113 R) = true
+  | [], _ => lt_zero_gT113 R
+  | [a], h => h a (List.Mem.head _)
+  | a :: b :: t, h => by
+    show lt (add a (ofList (b :: t))) (gT113 R) = true
+    rw [lt_add_gT113]
+    exact h a (List.Mem.head _)
+
+
+/-- 的が 𝔗(M) の項であること。 -/
+theorem inT_gT113 {R : Term} (hR : inT R = true) (hRM : lt R M = true) :
+    inT (gT113 R) = true := by
+  show (inT G094 && inT R && lt G094 M && lt R M) = true
+  rw [inT_G094_102, hR, hRM, show lt G094 M = true from by decide]
+  rfl
+
+theorem ltG_of_le113 {R y a : Term} (hiT : inT (gT113 R) = true) (hy : inT y = true)
+    (ha : inT a = true) (hle : le y a = true) (hla : lt a (gT113 R) = true) :
+    lt y (gT113 R) = true :=
+  lt_of_le_of_lt3 (inT_le_fragR y hy) (inT_le_fragR a ha) (inT_le_fragR _ hiT) hle hla
+
+theorem ltG_of_hdLe113 {R : Term} (hiT : inT (gT113 R) = true) :
+    ∀ {a b : Term}, inT a = true → inT b = true → hdLe b a = true →
+      lt a (gT113 R) = true → lt b (gT113 R) = true := by
+  intro a b hia hib hhd hla
+  cases b with
+  | zero => exact Bool.noConfusion hhd
+  | M => exact ltG_of_le113 hiT hib hia hhd hla
+  | omg c => exact ltG_of_le113 hiT hib hia hhd hla
+  | phi c d => exact ltG_of_le113 hiT hib hia hhd hla
+  | psi c d => exact ltG_of_le113 hiT hib hia hhd hla
+  | Z c => exact ltG_of_le113 hiT hib hia hhd hla
+  | add c d =>
+    obtain ⟨_, hic, _, _⟩ := inT_add hib
+    rw [lt_add_gT113]
+    exact ltG_of_le113 hiT hic hia hhd hla
+
+/-- 的より下の項の成分はすべて的より下。 -/
+theorem ltG_toList113 {R : Term} (hiT : inT (gT113 R) = true) :
+    ∀ (s : Term), inT s = true → lt s (gT113 R) = true →
+      ∀ x ∈ toList s, lt x (gT113 R) = true := by
+  intro s
+  induction s with
+  | zero => intro _ _ x hx; cases hx
+  | M => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | omg a _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | phi a b _ _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | psi k a _ _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | Z a _ => intro _ h x hx; rw [List.mem_singleton.mp hx]; exact h
+  | add a b _ ihb =>
+    intro h hl x hx
+    obtain ⟨hap, hia, hib, hhd⟩ := inT_add h
+    have hla : lt a (gT113 R) = true := by rw [← lt_add_gT113 a b R]; exact hl
+    have hlb : lt b (gT113 R) = true := ltG_of_hdLe113 hiT hia hib hhd hla
+    rcases List.mem_cons.mp (show x ∈ a :: toList b from hx) with h1 | h1
+    · rw [h1]; exact hla
+    · exact ihb hib hlb x h1
+
+/-- **`plus` は的の下で閉じる。** -/
+theorem lt_plus_gT113 {R s t : Term} (hiT : inT (gT113 R) = true)
+    (hs : inT s = true) (ht : inT t = true)
+    (hls : lt s (gT113 R) = true) (hlt : lt t (gT113 R) = true) :
+    lt (plus s t) (gT113 R) = true := by
+  cases hl : toList t with
+  | nil => rw [show plus s t = s from by unfold TM.Term.plus; rw [hl]]; exact hls
+  | cons b1 rest =>
+    rw [plus_eq (s := s) hl]
+    refine lt_ofList_gT113 R _ ?_
+    intro x hx
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact ltG_toList113 hiT s hs hls x (List.mem_filter.mp h1).1
+    · exact ltG_toList113 hiT t ht hlt x h1
+
+theorem lt_zero_G0_113 : lt (zero : Term) G094 = true :=
+  lt_zero_left (by intro hc; exact Term.noConfusion hc)
+
+theorem lt_one_gT113 (R : Term) : lt TM.Term.one (gT113 R) = true := by
+  show lt (phi zero zero) (gT113 R) = true
+  rw [lt_phi_gT113 R lt_zero_G0_113]
+  exact lt_zero_gT113 R
+
+theorem lt_ofNat_gT113 {R : Term} (hiT : inT (gT113 R) = true) : ∀ n,
+    lt (TM.Term.ofNat n) (gT113 R) = true
+  | 0 => lt_zero_gT113 R
+  | n + 1 => lt_plus_gT113 hiT (inT_ofNat n) inT_one (lt_ofNat_gT113 hiT n) (lt_one_gT113 R)
+
+
+theorem lt_G0_gT113 (R : Term) : lt G094 (gT113 R) = true :=
+  lt_psi_phi_of_le_fst102 (le_self G094)
+
+theorem ltG_take_ofList113 {R b : Term} (hiT : inT (gT113 R) = true) (h : inT b = true)
+    (hl : lt b (gT113 R) = true) (k : Nat) :
+    lt (ofList ((toList b).take k)) (gT113 R) = true :=
+  lt_ofList_gT113 R _ (fun x hx => ltG_toList113 hiT b h hl x (List.mem_of_mem_take hx))
+
+theorem ltG_splitFin113 {R b : Term} (hiT : inT (gT113 R) = true) (h : inT b = true)
+    (hl : lt b (gT113 R) = true) : lt (splitFin b).1 (gT113 R) = true :=
+  ltG_take_ofList113 hiT h hl _
+
+theorem lt_phiNFdefault113 {R a b : Term} (hiT : inT (gT113 R) = true) (hia : inT a = true)
+    (ha : lt a G094 = true) (hb : lt b (gT113 R) = true) :
+    lt (phiNFdefault a b) (gT113 R) = true := by
+  unfold phiNFdefault
+  split
+  · exact lt_trans_inT hia inT_G094_102 hiT ha (lt_G0_gT113 R)
+  · rw [lt_phi_gT113 R ha]; exact hb
+
+theorem lt_phiNFsucc113 {R a b : Term} (hiT : inT (gT113 R) = true) (hia : inT a = true)
+    (hib : inT b = true) (ha : lt a G094 = true) (hb : lt b (gT113 R) = true) :
+    lt (phiNFsucc a b) (gT113 R) = true := by
+  have hg : lt (splitFin b).1 (gT113 R) = true := ltG_splitFin113 hiT hib hb
+  have hig : inT (splitFin b).1 = true := inT_splitFin hib
+  have hdef := lt_phiNFdefault113 hiT hia ha hb
+  have hdown : ∀ n : Nat, lt (phi a (plus (splitFin b).1 (TM.Term.ofNat n))) (gT113 R) = true := by
+    intro n
+    rw [lt_phi_gT113 R ha]
+    exact lt_plus_gT113 hiT hig (inT_ofNat n) hg (lt_ofNat_gT113 hiT n)
+  unfold phiNFsucc
+  split
+  rename_i heq
+  rw [heq] at hdown
+  split
+  · split <;> (split <;> first | exact hdown _ | exact hdef)
+  · exact hdef
+
+/-- **`φ` の正規化は的の下で閉じる** — 指数が `Γ₀` より下なら。 -/
+theorem lt_phiNF113 {R a b : Term} (hiT : inT (gT113 R) = true) (hia : inT a = true)
+    (hib : inT b = true) (ha : lt a G094 = true) (hb : lt b (gT113 R) = true) :
+    lt (phiNF a b) (gT113 R) = true := by
+  unfold phiNF
+  split
+  · exact hb
+  · split
+    · split
+      · exact hb
+      · exact lt_phiNFsucc113 hiT hia hib ha hb
+    · exact lt_phiNFsucc113 hiT hia hib ha hb
+
+/-- **`ω^·` は的の下で閉じる。** -/
+theorem lt_omegaNF113 {R x : Term} (hiT : inT (gT113 R) = true) (hix : inT x = true)
+    (hxM : lt x M = true) (hx : lt x (gT113 R) = true) :
+    lt (omegaNF x) (gT113 R) = true := by
+  have hMx : lt M x = false := lt_asymm_inT hix (show inT (M : Term) = true from rfl) hxM
+  have hxne : (x == M) = false := by
+    cases hb : (x == M) with
+    | false => rfl
+    | true =>
+        exfalso
+        rw [eq_of_beq hb, lt_irrefl] at hxM
+        exact Bool.noConfusion hxM
+  show lt (if lt M x then omg x else if x == M then M else phiNF zero x) (gT113 R) = true
+  rw [if_neg (by rw [hMx]; exact Bool.noConfusion),
+    if_neg (by rw [hxne]; exact Bool.noConfusion)]
+  exact lt_phiNF113 hiT inT_zero hix lt_zero_G0_113 hx
+
+/-- `sub1` は的の下から出ない。 -/
+theorem lt_sub1_113 {R c : Term} (hiT : inT (gT113 R) = true) (hic : inT c = true)
+    (hc : lt c (gT113 R) = true) : lt (sub1 c) (gT113 R) = true := by
+  show lt (match toList c with
+           | [] => zero
+           | p :: rest => if p == TM.Term.one then ofList rest else c) (gT113 R) = true
+  cases hl : toList c with
+  | nil => exact lt_zero_gT113 R
+  | cons p rest =>
+      show lt (if (p == TM.Term.one) = true then ofList rest else c) (gT113 R) = true
+      by_cases hp : (p == TM.Term.one) = true
+      · rw [if_pos hp]
+        refine lt_ofList_gT113 R rest ?_
+        intro x hx
+        exact ltG_toList113 hiT c hic hc x (by rw [hl]; exact List.Mem.tail _ hx)
+      · rw [if_neg hp]; exact hc
+
+
+end
+
+/-! ### §113.2 畳み込みは的の下から出ない
+
+`stepF` の Veblen 枝は `phiNF a (前の値 ⊕ 係数)` を出す。指数が `Γ₀` より下なら
+`Γ₀ < Ω₁` だから強臨界枝は死んでいて、あとは §113.1 の閉包がそのまま効く。 -/
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem lt_G0_W113 : lt G094 (reg 1) = true := lt_psi_W79 zero
+
+/-- 畳み込みの累算器が満たす不変量 — 「的より下」を `inT` と `< M` と一緒に運ぶ。 -/
+def StG113 (R : Term) (s : Option Term × Option Term) : Prop :=
+  ∀ v, s.2 = some v → inT v = true ∧ lt v M = true ∧ lt v (gT113 R) = true
+
+theorem stepVal113 {R a bse cc : Term} (hiT : inT (gT113 R) = true)
+    (hia : inT a = true) (haM : lt a M = true) (haG : lt a G094 = true)
+    (hib : inT bse = true) (hbM : lt bse M = true) (hbG : lt bse (gT113 R) = true)
+    (hic : inT cc = true) (hcM : lt cc M = true) (hcG : lt cc (gT113 R) = true) :
+    inT (phiNF a (plus bse cc)) = true ∧ lt (phiNF a (plus bse cc)) M = true
+      ∧ lt (phiNF a (plus bse cc)) (gT113 R) = true := by
+  have hip : inT (plus bse cc) = true := inT_plus hib hic
+  have hpM : lt (plus bse cc) M = true := lt_plus_M hib hic hbM hcM
+  have hpG : lt (plus bse cc) (gT113 R) = true := lt_plus_gT113 hiT hib hic hbG hcG
+  exact ⟨inT_phiNF hia hip haM hpM, ltM_phiNF haM hpM,
+    lt_phiNF113 hiT hia hip haG hpG⟩
+
+/-- **畳み込みの一歩は的の下から出ない** — 指数が `Γ₀` より下で係数が的より下なら。 -/
+theorem stepG113 {R : Term} (hiT : inT (gT113 R) = true) {s : Option Term × Option Term}
+    {ac : Term × Term}
+    (hia : inT ac.1 = true) (haM : lt ac.1 M = true) (haG : lt ac.1 G094 = true)
+    (hic : inT ac.2 = true) (hcM : lt ac.2 M = true) (hcG : lt ac.2 (gT113 R) = true)
+    (hs : StG113 R s) : StG113 R (stepF (reg 1) (baseOf 0) s ac) := by
+  have hleW : le (reg 1) ac.1 = false :=
+    leW_false106 hia (lt_trans_inT hia inT_G094_102 inT_W79 haG lt_G0_W113)
+  unfold stepF
+  split
+  · rename_i hle
+    exfalso; rw [hleW] at hle; exact Bool.noConfusion hle
+  · cases hs2 : s.2 with
+    | none =>
+        intro v hv
+        rw [← Option.some.inj
+          (show some (phiNF ac.1 (plus (baseOf 0) (sub1 ac.2))) = some v from hv)]
+        exact stepVal113 hiT hia haM haG (inT_baseOf 0) (ltM_baseOf 0)
+          (show lt (baseOf 0) (gT113 R) = true from lt_zero_gT113 R)
+          (inT_sub1 hic) (ltM_sub1 hic hcM) (lt_sub1_113 hiT hic hcG)
+    | some v0 =>
+        obtain ⟨hiv0, hv0M, hv0G⟩ := hs v0 hs2
+        intro v hv
+        rw [← Option.some.inj (show some (phiNF ac.1 (plus v0 ac.2)) = some v from hv)]
+        exact stepVal113 hiT hia haM haG hiv0 hv0M hv0G hic hcM hcG
+
+/-- 畳み込み全体。 -/
+theorem foldG113 {R : Term} (hiT : inT (gT113 R) = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StG113 R s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ lt ac.1 G094 = true ∧
+        inT ac.2 = true ∧ lt ac.2 M = true ∧ lt ac.2 (gT113 R) = true) →
+      StG113 R (l.foldl (stepF (reg 1) (baseOf 0)) s)
+  | [], _, hs, _ => hs
+  | ac :: t, s, hs, hall => by
+      obtain ⟨h1, h2, h3, h4, h5, h6⟩ := hall ac (List.Mem.head _)
+      exact foldG113 hiT t (stepF (reg 1) (baseOf 0) s ac)
+        (stepG113 hiT h1 h2 h3 h4 h5 h6 hs)
+        (fun a ha => hall a (List.Mem.tail _ ha))
+
+
+end
+
+/-! ### §113.3 `wcnf` から `collapse 0` へ
+
+底 `Ω₁` の分解も同じ二条件を運ぶ — 桁の併合 (`plus (wC w p) c'`) も的の下で閉じるから。
+外側の `ω^·` を閉じれば `ψ₀` の値そのものが的の下に入る。 -/
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- `wcnf` の対と尾が的の下にとどまる条件。 -/
+theorem wcnfG113 {R : Term} (hiT : inT (gT113 R) = true) :
+    ∀ (L : List Term), inTL L = true → descL L = true → (∀ x ∈ L, lt x M = true) →
+      (∀ p ∈ L, lt p (reg 1) = true → lt p (gT113 R) = true) →
+      (∀ p ∈ L, lt p (reg 1) = false →
+        lt (wA (reg 1) p) G094 = true ∧ lt (wC (reg 1) p) (gT113 R) = true) →
+      (∀ ac ∈ (wcnf (reg 1) L).1, lt ac.1 G094 = true ∧ lt ac.2 (gT113 R) = true)
+        ∧ lt (wcnf (reg 1) L).2 (gT113 R) = true := by
+  intro L
+  induction L with
+  | nil =>
+    intro _ _ _ _ _
+    exact ⟨(by intro ac hac; cases hac), lt_zero_gT113 R⟩
+  | cons p rest ih =>
+    intro hc hd hM hlo hhi
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    by_cases hlp : lt p (reg 1) = true
+    · rw [wcnf_cons_lt hlp]
+      refine ⟨(by intro ac hac; cases hac), ?_⟩
+      refine lt_ofList_gT113 R _ ?_
+      intro x hx
+      rcases List.mem_cons.mp hx with h1 | h1
+      · rw [h1]; exact hlo p (List.Mem.head _) hlp
+      · have hix : inT x = true := ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcr x h1)).2
+        have hle := descL_bound_inT rest p hip hcr hd x h1
+        exact hlo x (List.Mem.tail _ h1) (ltW_of_le79 hix hip hle hlp)
+    · have hlp' : lt p (reg 1) = false := bool_false hlp
+      obtain ⟨hwA, hwC⟩ := hhi p (List.Mem.head _) hlp'
+      have IH := ih hcr hdr (fun q hq => hM q (List.Mem.tail _ hq))
+        (fun q hq => hlo q (List.Mem.tail _ hq))
+        (fun q hq => hhi q (List.Mem.tail _ hq))
+      have hiwC : inT (wC (reg 1) p) = true := inT_wC hip
+      rw [wcnf_cons_ge hlp']
+      cases hr : wcnf (reg 1) rest with
+      | mk fst snd =>
+        rw [hr] at IH
+        obtain ⟨hall, hsnd⟩ := IH
+        cases fst with
+        | nil =>
+          refine ⟨?_, hsnd⟩
+          intro ac hac
+          rw [List.mem_singleton.mp hac]
+          exact ⟨hwA, hwC⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac0 := hall (a', c') (List.Mem.head _)
+            have hic' : inT c' = true := by
+              have hPO := wcnf_spec_sc (inT_reg 1) (show (reg 1).isSC = true from rfl)
+                rest hcr hdr (fun x hx => hM x (List.Mem.tail _ hx))
+              rw [hr] at hPO
+              exact (hPO.2 (a', c') (List.Mem.head _)).2.2.1
+            show (∀ ac ∈ (if (wA (reg 1) p == a') = true
+                then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd)).1,
+                lt ac.1 G094 = true ∧ lt ac.2 (gT113 R) = true)
+              ∧ lt (if (wA (reg 1) p == a') = true
+                then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd)).2 (gT113 R) = true
+            by_cases heq : (wA (reg 1) p == a') = true
+            · rw [if_pos heq]
+              refine ⟨?_, hsnd⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h1 | h1
+              · rw [h1]
+                exact ⟨hwA, lt_plus_gT113 hiT hiwC hic' hwC hac0.2⟩
+              · exact hall ac (List.Mem.tail _ h1)
+            · rw [if_neg heq]
+              refine ⟨?_, hsnd⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h1 | h1
+              · rw [h1]; exact ⟨hwA, hwC⟩
+              · exact hall ac h1
+
+
+/-- **§113 の主定理 (1)。**  底 `Ω₁` の展開の**桁の指数がどれも `Γ₀` より下**で、
+    **係数と尾がどれも `φ̄(Γ₀,R)` より下**なら、`ψ₀` の値も `φ̄(Γ₀,R)` より下である。 -/
+theorem collapse0_facts113 {R x : Term} (hiT : inT (gT113 R) = true)
+    (hx : inT x = true) (hxM : lt x M = true)
+    (hlo : ∀ p ∈ toList x, lt p (reg 1) = true → lt p (gT113 R) = true)
+    (hhi : ∀ p ∈ toList x, lt p (reg 1) = false →
+      lt (wA (reg 1) p) G094 = true ∧ lt (wC (reg 1) p) (gT113 R) = true) :
+    inT (collapse 0 x) = true ∧ lt (collapse 0 x) (gT113 R) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  have hM := ltM_toList x hx hxM
+  obtain ⟨hallG, hrhoG⟩ := wcnfG113 hiT (toList x) hc hd hM hlo hhi
+  obtain ⟨⟨hrhoT, hrhoM⟩, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (show (reg 1).isSC = true from rfl) (toList x) hc hd hM
+  have hinit : StG113 R ((none : Option Term), (none : Option Term)) := by intro v h; cases h
+  have hst := foldG113 hiT (wcnf (reg 1) (toList x)).1 (none, none) hinit
+    (fun ac hac => ⟨(hallOK ac hac).1, (hallOK ac hac).2.1, (hallG ac hac).1,
+      (hallOK ac hac).2.2.1, (hallOK ac hac).2.2.2, (hallG ac hac).2⟩)
+  have hacc : inT (accW89 x) = true ∧ lt (accW89 x) M = true
+      ∧ lt (accW89 x) (gT113 R) = true := by
+    unfold accW89
+    cases hg : ((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2 with
+    | none => exact ⟨inT_zero, lt_zero_M, lt_zero_gT113 R⟩
+    | some v => exact hst v hg
+  have hrT : inT (rhoW89 x) = true := hrhoT
+  have hrM : lt (rhoW89 x) M = true := hrhoM
+  have hrG : lt (rhoW89 x) (gT113 R) = true := hrhoG
+  have hs1 : inT (plus (accW89 x) (rhoW89 x)) = true := inT_plus hacc.1 hrT
+  have hs2 : lt (plus (accW89 x) (rhoW89 x)) M = true := lt_plus_M hacc.1 hrT hacc.2.1 hrM
+  have hs3 : lt (plus (accW89 x) (rhoW89 x)) (gT113 R) = true :=
+    lt_plus_gT113 hiT hacc.1 hrT hacc.2.2 hrG
+  rw [collapse0_raw89]
+  exact ⟨inT_omegaNF (inT_plus inT_zero hs1),
+    lt_omegaNF113 hiT (inT_plus inT_zero hs1)
+      (lt_plus_M inT_zero hs1 lt_zero_M hs2)
+      (lt_plus_gT113 hiT inT_zero hs1 (lt_zero_gT113 R) hs3)⟩
+
+
+/-- 値の側だけ。 -/
+theorem collapse0_ltG113 {R x : Term} (hiT : inT (gT113 R) = true)
+    (hx : inT x = true) (hxM : lt x M = true)
+    (hlo : ∀ p ∈ toList x, lt p (reg 1) = true → lt p (gT113 R) = true)
+    (hhi : ∀ p ∈ toList x, lt p (reg 1) = false →
+      lt (wA (reg 1) p) G094 = true ∧ lt (wC (reg 1) p) (gT113 R) = true) :
+    lt (collapse 0 x) (gT113 R) = true := (collapse0_facts113 hiT hx hxM hlo hhi).2
+
+theorem not_le_of_lt113 {a b : Term} (ha : inT a = true) (hb : inT b = true)
+    (h : lt b a = true) : le a b = false := by
+  show ((a == b) || lt a b) = false
+  rw [show (a == b) = false from by
+      cases hc : (a == b) with
+      | false => rfl
+      | true => exfalso; rw [← eq_of_beq hc, lt_irrefl] at h; exact Bool.noConfusion h,
+    lt_asymm_inT hb ha h]
+  rfl
+
+end
+
+/-! ### §113.4 係数の半分 — 名指しの形
+
+`R = 0` にすると的は窓の下端 `φ̄(Γ₀,0)` そのものである。**対偶がそのまま §111 の求めた
+条項で、起きうる形は三つしかない。** -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§113.4 の主定理 (1) — 係数の半分、対偶の形。**  桁の指数がどれも `Γ₀` より下で、
+    係数も `Ω₁` より下の成分も窓の下端に届かなければ、`ψ₀` の値は窓に入らない。 -/
+theorem notWin113 {x : Term} (hx : inT x = true) (hxM : lt x M = true)
+    (hlo : ∀ p ∈ toList x, lt p (reg 1) = true → lt p (rawT94 0) = true)
+    (hhi : ∀ p ∈ toList x, lt p (reg 1) = false →
+      lt (wA (reg 1) p) G094 = true ∧ lt (wC (reg 1) p) (rawT94 0) = true) :
+    le (rawT94 0) (collapse 0 x) = false := by
+  have hiT : inT (gT113 zero) = true := inT_rawT98 0
+  obtain ⟨hiC, hltC⟩ := collapse0_facts113 (R := zero) hiT hx hxM hlo hhi
+  exact not_le_of_lt113 hiT hiC hltC
+
+/-- 「この成分が窓の下端以上のものを持ち込んでいる」を決定可能な形で。
+    `Ω₁` より下の成分なら値そのもの、桁なら指数が `Γ₀` 以上か係数が窓の下端以上か。 -/
+def badP113 (p : Term) : Bool :=
+  match lt p (reg 1) with
+  | true => !(lt p (rawT94 0))
+  | false => !(lt (wA (reg 1) p) G094) || !(lt (wC (reg 1) p) (rawT94 0))
+
+/-- **§113.4 の主定理 (2) — 係数の半分。**  値が窓の下端に届いたなら、`ψ₀` の引数には
+    「桁の指数が `Γ₀` 以上の成分」か「係数が窓の下端以上の成分」か
+    「`Ω₁` より下で値が窓の下端以上の成分」が必ずある。**係数の側が名指しで出る。** -/
+theorem coefWin113 {x : Term} (hx : inT x = true) (hxM : lt x M = true)
+    (hle : le (rawT94 0) (collapse 0 x) = true) :
+    (toList x).any badP113 = true := by
+  cases hb : (toList x).any badP113 with
+  | true => rfl
+  | false =>
+      exfalso
+      have hall : ∀ p ∈ toList x, badP113 p = false := by
+        intro p hp
+        cases hbp : badP113 p with
+        | false => rfl
+        | true =>
+            exfalso
+            rw [List.any_eq_true.mpr ⟨p, hp, hbp⟩] at hb
+            exact Bool.noConfusion hb
+      have hlo : ∀ p ∈ toList x, lt p (reg 1) = true → lt p (rawT94 0) = true := by
+        intro p hp h1
+        have h := hall p hp
+        unfold badP113 at h
+        rw [h1] at h
+        cases h2 : lt p (rawT94 0) with
+        | true => rfl
+        | false => rw [h2] at h; exact Bool.noConfusion h
+      have hhi : ∀ p ∈ toList x, lt p (reg 1) = false →
+          lt (wA (reg 1) p) G094 = true ∧ lt (wC (reg 1) p) (rawT94 0) = true := by
+        intro p hp h1
+        have h := hall p hp
+        unfold badP113 at h
+        rw [h1] at h
+        constructor
+        · cases h2 : lt (wA (reg 1) p) G094 with
+          | true => rfl
+          | false => rw [h2] at h; exact Bool.noConfusion h
+        · cases h2 : lt (wC (reg 1) p) (rawT94 0) with
+          | true => rfl
+          | false =>
+              rw [h2] at h
+              cases h3 : lt (wA (reg 1) p) G094 with
+              | true => rw [h3] at h; exact Bool.noConfusion h
+              | false => rw [h3] at h; exact Bool.noConfusion h
+      rw [notWin113 hx hxM hlo hhi] at hle
+      exact Bool.noConfusion hle
+
+/-- 存在の形で。 -/
+theorem coefWinEx113 {x : Term} (hx : inT x = true) (hxM : lt x M = true)
+    (hle : le (rawT94 0) (collapse 0 x) = true) :
+    ∃ p ∈ toList x, badP113 p = true :=
+  List.any_eq_true.mp (coefWin113 hx hxM hle)
+
+
+/-- **§113.4 の主定理 (3) — 条項の前提に、名指しの証人が只でつく。** -/
+theorem scFirstOne_needs113 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hle : le (rawT94 0) (dict (BT.D 0 a)) = true) :
+    (toList (dict a)).any badP113 = true := by
+  have hba : btLe72 1 a = true := by
+    have h : (decide (0 ≤ 1) && btLe72 1 a) = true := hb
+    exact ((Bool.and_eq_true _ _).mp h).2
+  have hsa : BT.isStd a = true := by
+    have h : (BT.isStd a && (BT.GB 0 a).all (fun e => BT.lt e a)) = true := hs
+    exact ((Bool.and_eq_true _ _).mp h).1
+  obtain ⟨hiA, hAM⟩ := inT_dict_of_std172 Hp a hba hsa
+  exact coefWin113 hiA hAM hle
+
+/-- **残っているもの、名指しで。**  `SCFirstOne111` に「引数が窓の下端以上のものを
+    運んでいる」という前提を足しただけのもの。**証明しない。** -/
+def WinProp113 : Prop := ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    BT.lt (bTowG98 0) (BT.D 0 a) = true → le (rawT94 0) (dict (BT.D 0 a)) = true →
+    (toList (dict a)).any badP113 = true →
+    le (dict (bTowG98 1)) (dict (BT.D 0 a)) = true
+
+/-- 只の向き。 -/
+theorem winProp_of_scFirstOne113 (H : SCFirstOne111) : WinProp113 :=
+  fun a hb hs hlt hle _ => H a hb hs hlt hle
+
+/-- **§113.4 の主定理 (4) — 足した前提は只である。**  係数の半分が証明ずみだから、
+    条項は「窓の下端以上のものを運んでいる成分がある」を**仮定してよい**。 -/
+theorem scFirstOne_of_winProp113 (Hp : PsiIdxOKStd172) (H : WinProp113) : SCFirstOne111 :=
+  fun a hb hs hlt hle => H a hb hs hlt hle (scFirstOne_needs113 Hp hb hs hle)
+
+/-- **二つは同値。**  §113 は残余を動かしたのではなく、条項に只の情報を足した。 -/
+theorem winProp_iff_scFirstOne113 (Hp : PsiIdxOKStd172) : WinProp113 ↔ SCFirstOne111 :=
+  ⟨scFirstOne_of_winProp113 Hp, winProp_of_scFirstOne113⟩
+
+/-- そして五つの帰結もそのまま乗る。 -/
+theorem gap_of_winProp113 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : WinProp113) :
+    GapAtG0_107 := gap_of_one111 Hp H2 (scFirstOne_of_winProp113 Hp H)
+
+theorem denseMid107_false_of_winProp113 (Hp : PsiIdxOKStd172) (H2 : DictLtA74)
+    (H : WinProp113) : ¬ DictDenseMid107 :=
+  denseMid107_false_of_one111 Hp H2 (scFirstOne_of_winProp113 Hp H)
+
+theorem cofDenseS1_false_of_winProp113 (Hp : PsiIdxOKStd172) (H2 : DictLtA74)
+    (H : WinProp113) : ¬ CofDenseS1 :=
+  cofDenseS1_false_of_one111 Hp H2 (scFirstOne_of_winProp113 Hp H)
+
+
+end
+
+/-! ### §113.5 第三の道 — 窓の値を `ψ₁` の中に入れる
+
+§111 は「第三の道があるかもしれない、**作ってから**結論せよ」と書いた。**ある。**
+窓の値を持つ項をひとつ `ψ₁` でくるむと、底 `Ω₁` の桁は指数 `1`・係数がその値そのもの
+になる。指数は `Γ₀` よりはるかに下で、窓の値は全部**係数**の側にある。しかも `Ω^Ω` を
+前置しても窓から出ない — `plus` は次の係数のほうが大きければ累算器を捨てるからで、
+§107 の「基底が `Γ₀` になるので以後の Veblen 桁は `φ̄(a,Γ₀⊕c)` に着く」はそこで破れる。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- **第三の運び手。**  窓の値を持つ項を `ψ₁` ひとつでくるむ。 -/
+def cCoef113 (w : BT) : BT := BT.D 0 (BT.D 1 w)
+
+/-- **`Ω^Ω` を前置した形。**  §108.4 の修理をかけても窓から出ない。 -/
+def cJump113 : BT := BT.D 0 (BT.sum bOO94 (BT.D 1 (bWin108 1)))
+
+/-- 先頭の桁の指数。 -/
+def leadExp113 (a : BT) : Term := ((wcnf (reg 1) (toList (dict a))).1.headD (zero, zero)).1
+/-- 先頭の桁の係数。 -/
+def leadCoef113 (a : BT) : Term := ((wcnf (reg 1) (toList (dict a))).1.headD (zero, zero)).2
+
+set_option maxRecDepth 40000 in
+/-- 値は `φ̄(Γ₀,1)` — §108.1 の第 1 段と同じ点。 -/
+theorem dict_cCoef113 : dict (cCoef113 (bWin108 1)) = phi G094 TM.Term.one := rfl
+
+set_option maxRecDepth 40000 in
+theorem inWin_cCoef113 : (le (rawT94 0) (dict (cCoef113 (bWin108 1)))
+    && lt (dict (cCoef113 (bWin108 1))) (dict (bTowG98 1))) = true := rfl
+
+set_option maxRecDepth 40000 in
+/-- **指数は `1`。**  `Γ₀` よりはるかに下 — 運び手ではなく係数が窓に入れている。 -/
+theorem leadExp_cCoef113 : lt (leadExp113 (BT.D 1 (bWin108 1))) G094 = true := rfl
+
+set_option maxRecDepth 40000 in
+/-- **そして係数が窓の下端以上である。**  §113.4 の三つの形のうち係数の形。 -/
+theorem leadCoef_cCoef113 : le (rawT94 0) (leadCoef113 (BT.D 1 (bWin108 1))) = true := rfl
+
+set_option maxRecDepth 40000 in
+theorem level_cCoef113 : (btLe72 1 (cCoef113 (bWin108 1)) && hd085B (cCoef113 (bWin108 1)))
+    = true := rfl
+
+set_option maxRecDepth 40000 in
+/-- 裸の形は §111 の族と同じく `ψ₀(Ω^Ω)` より下にいる — だから条項の前提が外す。 -/
+theorem notLt_bTow_cCoef113 : BT.lt (bTowG98 0) (cCoef113 (bWin108 1)) = false := rfl
+
+set_option maxRecDepth 40000 in
+/-- **前置しても値は動かない。** -/
+theorem dict_cJump113 : dict cJump113 = phi G094 TM.Term.one := rfl
+
+set_option maxRecDepth 40000 in
+theorem inWin_cJump113 :
+    (le (rawT94 0) (dict cJump113) && lt (dict cJump113) (dict (bTowG98 1))) = true := rfl
+
+set_option maxRecDepth 40000 in
+/-- **そして条項の前提を満たす。**  §111 の F は 30 項とも満たさなかった。 -/
+theorem lt_bTow_cJump113 : BT.lt (bTowG98 0) cJump113 = true := rfl
+
+set_option maxRecDepth 40000 in
+/-- **窓の上端には届かない** — 条項の結論が破れている。 -/
+theorem notLe_top_cJump113 : le (dict (bTowG98 1)) (dict cJump113) = false := rfl
+
+set_option maxRecDepth 40000 in
+theorem level_cJump113 :
+    (btLe72 1 cJump113 && hd085B cJump113 && inT (dict cJump113)) = true := rfl
+
+theorem hd085_cJump113 : Hd085 cJump113 := by
+  intro z hz; exact ⟨_, List.mem_singleton.mp hz⟩
+
+set_option maxRecDepth 40000 in
+/-- **強臨界枝は先に発火している。**  それでも値は窓の中にいる。 -/
+theorem leadSC_cJump113 : le (reg 1) (leadExp113 (BT.sum bOO94 (BT.D 1 (bWin108 1)))) = true :=
+  rfl
+
+/-! 標準性はどこで壊れるか — 遺伝である。 -/
+
+theorem notStd_D1_113 {y : BT} (h : BT.isStd y = false) : BT.isStd (BT.D 1 y) = false := by
+  show (BT.isStd y && (BT.GB 1 y).all (fun e => BT.lt e y)) = false
+  rw [h]; rfl
+
+theorem notStd_D0_113 {x : BT} (h : BT.isStd x = false) : BT.isStd (BT.D 0 x) = false := by
+  show (BT.isStd x && (BT.GB 0 x).all (fun e => BT.lt e x)) = false
+  rw [h]; rfl
+
+theorem notStd_sumD1_113 {p y : BT} (h : BT.isStd y = false) :
+    BT.isStd (BT.sum p (BT.D 1 y)) = false := by
+  show (BT.isP p && BT.isStd p && BT.isStd (BT.D 1 y)
+    && (BT.isP (BT.D 1 y) && BT.le (BT.D 1 y) p)) = false
+  rw [notStd_D1_113 h, Bool.and_false, Bool.false_and]
+
+/-- **§113.5 の主定理。**  係数の道は「窓の値を持つ**標準な**項」を `ψ₁` の中に要求する。
+    `isStd` は遺伝するから、そこが立たなければ全体も立たない — **つまりこの道そのものが
+    帰納法の仮定である。**  「大きさについての帰納」の中身はこれである。 -/
+theorem notStd_cCoef113 {w : BT} (h : BT.isStd w = false) (r : BT) :
+    BT.isStd (BT.D 0 (BT.sum r (BT.D 1 w))) = false :=
+  notStd_D0_113 (notStd_sumD1_113 h)
+
+theorem notStd_cCoefBare113 {w : BT} (h : BT.isStd w = false) :
+    BT.isStd (cCoef113 w) = false := notStd_D0_113 (notStd_D1_113 h)
+
+theorem notStd_cJump113 : BT.isStd cJump113 = false :=
+  notStd_cCoef113 (notStd_bWin108 1) bOO94
+
+/-- `SCFirstOne111` から標準性を外したもの — **前提 `ψ₀(Ω^Ω) < b` は残してある。** -/
+def SCFirstOneNoStd113 : Prop := ∀ a : BT, btLe72 1 (BT.D 0 a) = true →
+    BT.lt (bTowG98 0) (BT.D 0 a) = true → le (rawT94 0) (dict (BT.D 0 a)) = true →
+    le (dict (bTowG98 1)) (dict (BT.D 0 a)) = true
+
+set_option maxRecDepth 40000 in
+/-- **§113.5 の主定理 (2)。**  1 成分形からも標準性は外せない。§108 は和の形で同じことを
+    示し (`scFirstNoStd_false108`)、§111 は「前提が近い外れを全部外す」と書いた。
+    **外さない。**  `cJump113` は前提を満たして窓の中にいる。 -/
+theorem scFirstOneNoStd_false113 : ¬ SCFirstOneNoStd113 := by
+  intro H
+  have h : le (dict (bTowG98 1)) (dict cJump113) = true :=
+    H (BT.sum bOO94 (BT.D 1 (bWin108 1))) rfl rfl rfl
+  rw [notLe_top_cJump113] at h
+  exact Bool.noConfusion h
+
+/-- §107 の理由を「前提つき・先頭の桁が強臨界」で書き直したもの。 -/
+def LeadSCJumps113 : Prop := ∀ a : BT, btLe72 1 (BT.D 0 a) = true → Hd085 (BT.D 0 a) →
+    BT.lt (bTowG98 0) (BT.D 0 a) = true → le (reg 1) (leadExp113 a) = true →
+    le (rawT94 0) (dict (BT.D 0 a)) = true →
+    le (dict (bTowG98 1)) (dict (BT.D 0 a)) = true
+
+set_option maxRecDepth 40000 in
+/-- **§113.5 の主定理 (3)。**  「先に強臨界枝が発火すれば窓を飛び越す」も偽である。
+    `cJump113` では実際に先に発火していて、値は窓の中にいる。仕掛けは `plus` で、
+    次の係数が累算器より大きければ累算器は捨てられる。 -/
+theorem leadSCJumps_false113 : ¬ LeadSCJumps113 := by
+  intro H
+  have h : le (dict (bTowG98 1)) (dict cJump113) = true :=
+    H (BT.sum bOO94 (BT.D 1 (bWin108 1))) rfl hd085_cJump113 rfl rfl rfl
+  rw [notLe_top_cJump113] at h
+  exact Bool.noConfusion h
+
+end
+
+/-! ### §113.6 残っているもの、名指しで — と段の正直さ
+
+係数の半分が定理になったので、`SCFirstOne111` に残るのは**持ち上げ**ひとつである:
+運んでいるものが窓の**上端**以上なら値も上端以上、という算術。§113.4 が与えるのは
+「下端以上」までで、下端から上端への差が大きさについての帰納法そのもの (§113.5)。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 「この成分は窓の上端以上のものを運んでいる」。 -/
+def upP113 (p : Term) : Bool :=
+  match lt p (reg 1) with
+  | true => le (dict (bTowG98 1)) p
+  | false => le (dict (bTowG98 1)) (wC (reg 1) p)
+
+/-- **残っているもの — 伝播。**  引数のどこかが窓の上端以上のものを運んでいるなら、
+    `ψ₀` の値も窓の上端以上である。**証明しない** (§113.7 が測る)。 -/
+def UpProp113 : Prop := ∀ x : Term, inT x = true → lt x M = true →
+    (toList x).any upP113 = true → le (dict (bTowG98 1)) (collapse 0 x) = true
+
+/-! 段の正直さ — §98・§103・§107・§111 と同じ規律。 -/
+
+theorem btLe1_cCoef113 {w : BT} (h : btLe72 1 w = true) : btLe72 1 (cCoef113 w) = true := by
+  show (decide (0 ≤ 1) && (decide (1 ≤ 1) && btLe72 1 w)) = true
+  rw [h]; rfl
+
+set_option maxRecDepth 40000 in
+theorem btLe0_cJump113 : btLe72 0 cJump113 = false := rfl
+
+end
+
+/-! ### §113.7 測定 (凍結)
+
+**構成を先に書く。**  母集団はふたつ。ひとつは新しく作り、ひとつは §108.6 のものを
+読み直す。
+
+    Q  窓の中と上に値を持つ種 10 個 (`seedW113`) を三つの形にはめたもの、30 項。
+       q1 = `ψ₀(ψ₁ w)`            §113.5 の第三の運び手 (係数の道)
+       q2 = `ψ₀(Ω^Ω ⊕ ψ₁ w)`      §108.4 の修理をかけた形
+       q3 = `ψ₀(Ω^Ω ⊕ w)`         **対照** — `w` を `ψ₁` から出して尾に置く
+       **標準性で濾さない。**
+    E  §108.6 の数え上げ (大きさ 12 までの標準・段 1 以下の項 9992 個) をそのまま読み直す。
+
+**仮説が母集団に見えていること。**  `badP113` は E の 4587 項で鳴り、5405 項で鳴らない
+— 両側とも見えている。`UpProp113` の前提は Q で 9 項・E で 1718 項で発火する。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 三つの節を別々に読むための道具。 -/
+def prs113 (a : BT) : List (Term × Term) := (wcnf (reg 1) (toList (dict a))).1
+def expGeG0_113 (a : BT) : Bool := (prs113 a).any (fun ac => !(lt ac.1 G094))
+def coefHi113 (a : BT) : Bool := (prs113 a).any (fun ac => !(lt ac.2 (rawT94 0)))
+def tailHi113 (a : BT) : Bool := !(lt (rhoW89 (dict a)) (rawT94 0))
+def leadHiW113 (a : BT) : Bool := le (reg 1) (leadExp113 a)
+def coefOnly113 (a : BT) : Bool := coefHi113 a && !(expGeG0_113 a) && !(tailHi113 a)
+def anyBad113 (a : BT) : Bool := (toList (dict a)).any badP113
+def anyUp113 (a : BT) : Bool := (toList (dict a)).any upP113
+def argOf113 : BT → BT | BT.D _ a => a | b => b
+/-- 指数が降順か。 -/
+def expDesc113 (a : BT) : Bool :=
+  let l := (prs113 a).map (·.1)
+  (l.zip (l.drop 1)).all (fun q => lt q.2 q.1)
+/-- 「`ψ₁` の直下が `ψ₀` 項」— 第三の運び手の目印。 -/
+def d1OverD0_113 (b : BT) : Bool :=
+  match b with
+  | BT.D 0 x => (BT.toL x).any (fun p => match p with
+                                 | BT.D 1 (BT.D 0 _) => true
+                                 | _ => false)
+  | _ => false
+
+def seedW113 : List BT :=
+  [ bWin108 1, bWin108 2, bTowG98 1, bTowG98 2, cWin111 cCar111,
+    cWin111 (BT.D 0 BT.zero), bWinOO108 1, bTowG98 0, smallB108, BT.D 0 (BT.Om 1) ]
+def q1_113 : List BT := seedW113.map fun w => cCoef113 w
+def q2_113 : List BT := seedW113.map fun w => BT.D 0 (BT.sum bOO94 (BT.D 1 w))
+def q3_113 : List BT := seedW113.map fun w => BT.D 0 (BT.sum bOO94 w)
+def popQ113 : List BT := q1_113 ++ q2_113 ++ q3_113
+
+#guard popQ113.length == 30
+
+/-! **30 項のうち 12 項が窓の中に入る — 三つの形とも 4 項ずつ。**  そして **12 項のうち
+    8 項が条項の前提 `ψ₀(Ω^Ω) < ·` を満たす。**  §111 の F は窓に 13 項入れて、前提を
+    満たすものは 0 項だった。 -/
+#eval (popQ113.countP fun b => inWin108 (dict b),
+       q1_113.countP fun b => inWin108 (dict b),
+       q2_113.countP fun b => inWin108 (dict b),
+       q3_113.countP fun b => inWin108 (dict b),
+       (popQ113.filter fun b => inWin108 (dict b)).countP fun b => BT.lt (bTowG98 0) b)
+#guard (popQ113.countP fun b => inWin108 (dict b)) == 12
+#guard (q1_113.countP fun b => inWin108 (dict b)) == 4
+#guard (q2_113.countP fun b => inWin108 (dict b)) == 4
+#guard (q3_113.countP fun b => inWin108 (dict b)) == 4
+#guard ((popQ113.filter fun b => inWin108 (dict b)).countP fun b =>
+          BT.lt (bTowG98 0) b) == 8
+
+/-! **係数の節だけが鳴るのは裸の形の 7 項で、ほかの 20 項では 0 項。**  対照 q3 は
+    `w` を `ψ₁` から出しただけで節が係数から尾に移る — **窓の値を係数に変えているのは
+    `ψ₁` であって他ではない。** -/
+#eval (popQ113.countP fun b => coefOnly113 (argOf113 b),
+       q1_113.countP fun b => coefOnly113 (argOf113 b),
+       q2_113.countP fun b => coefOnly113 (argOf113 b),
+       q3_113.countP fun b => coefOnly113 (argOf113 b),
+       q3_113.countP fun b => tailHi113 (argOf113 b))
+#guard (popQ113.countP fun b => coefOnly113 (argOf113 b)) == 7
+#guard (q1_113.countP fun b => coefOnly113 (argOf113 b)) == 7
+#guard (q2_113.countP fun b => coefOnly113 (argOf113 b)) == 0
+#guard (q3_113.countP fun b => coefOnly113 (argOf113 b)) == 0
+#guard (q3_113.countP fun b => tailHi113 (argOf113 b)) == 7
+#guard (popQ113.countP fun b => coefHi113 (argOf113 b)) == 14
+#guard (popQ113.countP fun b => expGeG0_113 (argOf113 b)) == 20
+#guard (popQ113.countP fun b => leadHiW113 (argOf113 b)) == 20
+
+/-! **30 項とも段 1 以下・成分は `D 0`・値は `inT`。7 項は標準で、窓に入る 12 項のうち
+    正しい証人は 0 項。**  正しい証人でしかも前提を満たす 6 項は、値がすべて窓の
+    **下端より下**にいる。 -/
+#eval (popQ113.countP fun b => btLe72 1 b && hd085B b && inT (dict b),
+       popQ113.countP fun b => BT.isStd b,
+       popQ113.countP fun b => inWin108 (dict b) && bgood94 b,
+       popQ113.countP fun b => bgood94 b && BT.lt (bTowG98 0) b)
+#guard (popQ113.countP fun b => btLe72 1 b && hd085B b && inT (dict b)) == 30
+#guard (popQ113.countP fun b => BT.isStd b) == 7
+#guard (popQ113.countP fun b => inWin108 (dict b) && bgood94 b) == 0
+#guard (popQ113.countP fun b => bgood94 b && BT.lt (bTowG98 0) b) == 6
+#guard (popQ113.countP fun b => bgood94 b && BT.lt (bTowG98 0) b
+          && lt (dict b) (rawT94 0)) == 6
+
+/-! **§108 の C・D と §111 の F・G はこの形をひとつも含まない** — 1463・1463・30・10 項中
+    0 項。E は 483 項含むが、危ないものは含みえない: この形が危ないのは `ψ₁` の中身が
+    窓の運び手のときで、それは標準ではなく、E は標準な項しか作らない。**§111 の種の問題が
+    一段上でくり返している。** -/
+#eval (rawC108.countP d1OverD0_113, rawD108.countP d1OverD0_113,
+       popF111.countP d1OverD0_113, popG111.countP d1OverD0_113,
+       allStd108.countP d1OverD0_113,
+       q1_113.countP d1OverD0_113, q2_113.countP d1OverD0_113,
+       q3_113.countP d1OverD0_113)
+#guard (rawC108.countP d1OverD0_113) == 0
+#guard (rawD108.countP d1OverD0_113) == 0
+#guard (popF111.countP d1OverD0_113) == 0
+#guard (popG111.countP d1OverD0_113) == 0
+#guard (q1_113.countP d1OverD0_113) == 10
+#guard (q2_113.countP d1OverD0_113) == 10
+#guard (q3_113.countP d1OverD0_113) == 0
+
+/-! **既知の二族は運び手の節しか鳴らさない。**  §108.1 の `bWin108` の 4 段でも
+    §111.2 の `cWin111` の 10 項でも、指数の節が鳴って係数と尾の節は鳴らない。
+    **だから係数の半分はどちらの族も含まない道についての話で、作るしかなかった。** -/
+#guard (List.range 4).all fun k =>
+  expGeG0_113 (sumG0_108 k) && !(coefHi113 (sumG0_108 k)) && !(tailHi113 (sumG0_108 k))
+#guard tailF111.all fun v =>
+  expGeG0_113 (cArg111 v) && !(coefHi113 (cArg111 v)) && !(tailHi113 (cArg111 v))
+
+/-! **指数は降順である。**  だから「先頭の桁が `Γ₀` より下」と「どの桁も `Γ₀` より下」は
+    測った範囲では同じ仮定である。 -/
+#guard (List.range 4).all fun k => expDesc113 (sumG0_108 k)
+#guard tailF111.all fun v => expDesc113 (cArg111 v)
+#guard expDesc113 (bArg98 (bTowG98 1))
+#guard popQ113.all fun b => expDesc113 (argOf113 b)
+
+/-! **E の読み直し (1) — 条項の仮説は両側とも見えている。** -/
+#eval (allStd108.length, allStd108.countP fun z => anyBad113 z,
+       allStd108.countP fun z => !(anyBad113 z),
+       allStd108.countP fun z => coefHi113 z, allStd108.countP fun z => coefOnly113 z)
+#guard (allStd108.countP fun z => anyBad113 z) == 4587
+#guard (allStd108.countP fun z => !(anyBad113 z)) == 5405
+#guard (allStd108.countP fun z => coefHi113 z) == 513
+#guard (allStd108.countP fun z => coefOnly113 z) == 501
+
+/-! **E の読み直し (2) — 正しい `ψ₀` 引数の上では係数の道はほとんど見えない。**
+    5318 項が `ψ₀` を載せて標準になり、そのうち係数の節が鳴るのは 3 項、
+    **係数の節だけが鳴るものは 0 項。**  遺伝の議論 (§113.5) が言うとおりである。 -/
+#eval (allStd108.countP fun z => BT.isStd (BT.D 0 z),
+       (allStd108.filter fun z => BT.isStd (BT.D 0 z)).countP fun z => coefHi113 z,
+       (allStd108.filter fun z => BT.isStd (BT.D 0 z)).countP fun z => coefOnly113 z)
+#guard (allStd108.countP fun z => BT.isStd (BT.D 0 z)) == 5318
+#guard ((allStd108.filter fun z => BT.isStd (BT.D 0 z)).countP fun z => coefHi113 z) == 3
+#guard ((allStd108.filter fun z => BT.isStd (BT.D 0 z)).countP fun z => coefOnly113 z) == 0
+
+/-! **E の読み直し (3) — 条項そのものは E で外れ 0。**  2606 項が「正しい証人でしかも
+    `ψ₀(Ω^Ω) < ·`」を満たし、窓に入るのは 0 項、条項が破れるのも 0 項。 -/
+#eval (allStd108.countP fun z => BT.isStd (BT.D 0 z) && BT.lt (bTowG98 0) (BT.D 0 z),
+       allStd108.countP fun z => BT.isStd (BT.D 0 z) && BT.lt (bTowG98 0) (BT.D 0 z)
+          && inWin108 (dict (BT.D 0 z)))
+#guard (allStd108.countP fun z =>
+  BT.isStd (BT.D 0 z) && BT.lt (bTowG98 0) (BT.D 0 z)) == 2606
+#guard (allStd108.countP fun z => BT.isStd (BT.D 0 z) && BT.lt (bTowG98 0) (BT.D 0 z)
+          && inWin108 (dict (BT.D 0 z))) == 0
+#guard (allStd108.countP fun z => BT.isStd (BT.D 0 z) && BT.lt (bTowG98 0) (BT.D 0 z)
+          && le (rawT94 0) (dict (BT.D 0 z))
+          && !(le (dict (bTowG98 1)) (dict (BT.D 0 z)))) == 0
+
+/-! **残った条項 `UpProp113` は Q で 30/30、E で 9992/9992、前提は 9 項と 1718 項で
+    発火する。**  空振りの一掃ではない。 -/
+#eval (popQ113.countP fun b => anyUp113 (argOf113 b),
+       allStd108.countP fun z => anyUp113 z)
+#guard (popQ113.countP fun b => anyUp113 (argOf113 b)) == 9
+#guard (popQ113.countP fun b =>
+  !(anyUp113 (argOf113 b)) || le (dict (bTowG98 1)) (dict b)) == 30
+#guard (allStd108.countP fun z => anyUp113 z) == 1718
+#guard (allStd108.countP fun z =>
+  !(anyUp113 z) || le (dict (bTowG98 1)) (collapse 0 (dict z))) == 9992
+
+end
+
 end Evidence.Region
