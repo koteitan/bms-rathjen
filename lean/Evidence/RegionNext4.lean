@@ -12049,4 +12049,665 @@ def valueShape106 (t : Term) : Bool :=
 
 end
 
+/-! ## §108 THE WINDOW IS INSIDE `dict`'s RAW IMAGE — WHAT KEEPS IT OUT IS THE NORMAL
+       FORM, NOT THE FOLD
+
+§107 proved `DictDenseAbove102` false, built the finer step operator, showed it cannot be
+pushed above `Γ₀`, and then named the clause everything now hangs on:
+
+    `GapAtG0_107` :  no legal witness has a value in  `[φ̄(Γ₀,0), φ̄(Γ₀,Γ₀⊕1))`
+
+measured on 570 + 88 legal witnesses with 0 exceptions, and NOT proved.  §107 also wrote out
+the reason it believed:
+
+> Above `Γ₀` the fold takes its strongly critical branch FIRST, so the base is `Γ₀`, and
+> every later Veblen digit lands at `φ̄(a, Γ₀ ⊕ c)` with `c ≥ 1`.
+
+§108 was asked to decide the clause.  **The clause is not decided.  Its stated reason is
+REFUTED, the true reason is identified and half of it is now a theorem, and what is left is
+one clause with no standardness in it.**
+
+  §108.1  **THE WINDOW IS NOT EMPTY OF PREIMAGES.**  `bWin108 k = ψ₀(ψ₁ψ₁ψ₀Ω^Ω ⊕ … ⊕
+          ψ₁ψ₁ψ₀Ω^Ω)` (`k+1` copies).  Its `dict` value is `φ̄(Γ₀, k)` — for `k ≥ 1`
+          strictly inside the window, at the rung `k`.  It is level `≤ 1`, its components
+          are `D 0`-headed, its value is `inT`, and `dict`'s OWN inverse names it:
+          `dictInv_win108 : dictInv (φ̄(Γ₀,1)) = some (bWin108 1)`.  §94.6's raw tower had NO
+          preimage at all (`dictInv (rawT94 n) = none`); the rungs above it have one.
+          The single thing wrong with it is `BT.isStd`.
+
+  §108.2  **AND THE THING WRONG WITH IT IS ONE ELEMENT OF `G₀`, IN GENERAL.**
+          `needOO108` — if an element at or above `Ω^Ω` sits in `G(0, ·)` of the leading
+          component's argument, then that argument must itself be strictly above `Ω^Ω`,
+          because that is what `isStandardBuchholz` says.  The Veblen digit `Γ₀` is carried
+          by `ψ₁ψ₁(ψ₀ Ω^Ω)`, which is BELOW `Ω^Ω` (§98's `lt_D1D1_bOO98`), and it drags
+          `Ω^Ω` into `G(0,·)` with it.  `lt_sumD1D1_bOO108` says a sum led by that shape is
+          still below `Ω^Ω` whatever the tail is, so `lead_notStd108` closes the whole route
+          — **for every `x` whose coefficient set reaches `Ω^Ω` and every tail `r`** — and
+          `notStd_bWin108` is the family above as its instance, at every rung `k`.
+          `vStep_notStd108` is the same theorem for §107's finer operator, and §107's
+          `vStep_bStep_not_std107` drops out of it (`vStep_bStep_of108`).
+
+  §108.3  **§107'S STATED REASON IS NOT THE REASON.**  `phiNF_G0_one108 : φ̄(Γ₀,1) = φ̄(Γ₀,1)`
+          — 2.6(vi)'s strongly critical clause degenerates only at second argument `0`, so
+          `φ̄(Γ₀,·)` is emitted freely above it — and `dict_bWin108_1` exhibits a term whose
+          fold puts `Γ₀` FIRST as a VEBLEN digit with coefficient 2 and lands at `φ̄(Γ₀,1)`.
+          So the fold does NOT have to take its strongly critical branch first above `Γ₀`.
+          What forces it to is the normal-form condition, one level up.
+
+  §108.4  **WHAT THE REPAIR COSTS.**  Prefixing `Ω^Ω` restores standardness — that is §98's
+          `bStep98` — and it moves the value from `φ̄(Γ₀,k)` to `φ̄(Γ₀, Γ₀⊕(k+1))`
+          (`bWinOO108`, `dict_bWinOO108_0/1`).  `bWinOO108 0` IS `bTowG98 1`, the top of the
+          window.  **The repair does not step into the window; it steps over the whole of
+          it.**  That is the quantitative content of the gap.
+
+  §108.5  **THE REDUCTION — THE STANDARDNESS HALF IS NOW A THEOREM.**  `ooLead108` : a legal
+          witness whose value reaches `φ̄(Γ₀,0)` is strictly above `ψ₀(Ω^Ω)` in `BT.lt`.  It
+          is proved, from `PsiIdxOKStd172` and `DictLtA74` — the two hypotheses row 326
+          already carries — through §94.5's `btlt_of_lt94` and §107.5's `lt_G0_rawT0_107`.
+          What is left is ONE clause, `SCFirst108`:
+
+              once `ψ₀(Ω^Ω) < b`, the value of `ψ₀` jumps the window.
+
+          `gap_of108 : SCFirst108 → GapAtG0_107`.  **The clause cannot be stated without
+          standardness, and §108.5 proves that too** (`scFirstNoStd_false108`): `bad108 =
+          ψ₀(Ω^Ω ⊕ 1) ⊕ bWin108 1` has a leading component BELOW the window, `plus` absorbs
+          that leading component, and the whole term's value is §108.1's `φ̄(Γ₀,1)` — inside
+          the window, with the hypothesis `ψ₀(Ω^Ω) < b` satisfied.  Only `isStd` removes it,
+          and it removes it at the SECOND component, by `notStd_bWin108`.  Reducing
+          `SCFirst108` further to its one-component form needs §93's bridge
+          `toList (dict a) = (toL a).map dict` — §96's named residue — to see that a standard
+          sum's components cannot outrun its leading one.  `FoldSkips108` is the 𝔗(M)-level
+          form of the same statement, about `collapse 0` alone, which is the shape §109 should
+          aim at; the bridge to it is the one order fact §103 already named as missing
+          (`BT.lt` transported through `dict` at a `ψ₁`-HEADED term, which `btlt_of_lt94`
+          cannot do — it needs `Hd085` on both sides).
+
+WHAT IS **NOT** CLAIMED.  **`GapAtG0_107` is NOT proved and NOT refuted.**  `SCFirst108` and
+`FoldSkips108` are measured, not proved.  `DictDenseMid107`, `DictDenseAbove107`,
+`DictOntoMidOpen103`, `DictDenseHi94`, `DictDense85` and `CofDenseS1` are exactly where §107
+left them; row 326's certificate is unchanged (`certIn_t326_107` still stands, and it is
+still vacuous if the gap is a theorem).  `PsiIdxOKStd172` and `DictLtA74` are used, not
+proved.  `bWin108` is NOT a counterexample to anything: it is not a legal witness, and §108
+proves it is not, at every rung.
+
+**Where §108 stopped, precisely, and what moved.**  §107 left "prove the fold's strongly
+critical branch fires first".  §108 returns: **the fold does not fire it first — the normal
+form does**, the normal-form half is now a theorem, and the residue is one clause about what
+`collapse 0` does once its argument passes `Ω^Ω`.  A proof of `SCFirst108` needs what §89
+needed: the accumulator's shape after the first `ψ_{Ω₁}` step, an induction along the digit
+list carrying the invariant "the accumulator never enters the window", and an outer induction
+for the tail `ρ`, since a coefficient inside the window would propagate one.  **A refutation
+now has a precise shape too, and §108.1 says what it is**: a term whose leading base-`Ω₁`
+digit is exactly `Γ₀` with coefficient `≥ 2` (or with a lower digit after it), whose argument
+is nevertheless at or above `Ω^Ω` in `BT.lt`.  §108.2 proves that the canonical carrier of a
+`Γ₀` digit is below `Ω^Ω` and drags `Ω^Ω` into `G(0,·)` with it, and §108.6's population E
+shows by enumeration that up to size 14 there is no other carrier; what is NOT proved is that
+there is none at all.
+
+**AND IT IS §69'S FINDING AGAIN, ONE LEVEL UP.**  §69 found that `vOf tdiag = ψ_{Ω₁}(Ω₂)` is
+not the supremum of its own fundamental sequence — `sbad = ψ_{Ω₁}(φ̄(1,Ω₁))` sits in the gap
+between the sequence's values and the value.  §108's window sits in the gap between §94.6's
+first raw rung and §98's first tower rung.  Both have the same shape: **𝔗(M) has terms the
+Buchholz side cannot name, at exactly the places where the Buchholz side's own normal-form
+condition forbids the naming** — there the expansion, here `isStandardBuchholz`.  §69's gap
+is at the index/expansion level and §108's at the `dict`-image level, and if `GapAtG0_107` is
+a theorem the two are one phenomenon measured twice: the region's value is bigger than what
+the region's own machinery can reach.  §108 does not prove they are the same; it records that
+they have the same shape and the same cause, and that §69's is the earlier sighting.
+
+WHAT THE MEASUREMENT SAYS (§108.6 gives the construction).  Five populations.  §107's two are
+reused unchanged (570 and 88 legal witnesses).  Three are new.  **C** is built to hit the
+window: 13 DIGIT CARRIERS `ψ₁ψ₁ z` chosen so that `dict z` is exactly a base-`Ω₁` digit
+exponent — `Ω₁`, `Γ₀`, `ε₀`, `ζ₀`, `Γ₀⊕1`, `φ̄(Γ₀,Γ₀⊕1)` — summed up to three at a time and
+put under one `ψ₀` (1463 terms, 155 legal).  **D** exists because C is BLIND: every term of C
+has a single `ψ₀` component, so no term of C has the shape of §108.5's counterexample.  D
+sums 11 `ψ₀`-components up to three at a time (1463 terms, 164 legal).  **Neither C nor D is
+filtered by standardness, which is the whole point.**  **E** is not a sample at all: it is
+every standard level-`≤ 1` Buchholz term of size `≤ 12`, 9992 of them (`isStd` is hereditary,
+so pruning at each size loses nothing).
+
+  * **23 of C's 1463 and 420 of D's land in the window; 0 of C's 155 and 0 of D's 164 do.**
+    Standardness is the only filter that removes them: all 23 of C's are level `≤ 1` and
+    `D 0`-headed, and every one has `argHd < Ω^Ω` with an element at or above `Ω^Ω` in
+    `G(0, argHd)` — one uniform reason, the one §108.2 proves.
+  * **The proved half is visible, and the raw population shows it is doing work.**  The
+    standardness half `c1b` holds on 155/155, 570/570, 88/88 and 164/164 legal terms — and on
+    only 874 of C's 1463 RAW ones.  Its premise holds for 42, 163, 58 and 81 of them, so it
+    is not vacuous.
+  * **The residual clause needs standardness, and D shows it.**  Without `isStd` the clause
+    breaks on 102 of D's 1463 terms — C could not see a single one.  With it: 1463/1463 on D,
+    164/164, 155/155, 570/570 and 88/88, the premise firing on 81 of D's raw terms.
+  * **The 𝔗(M)-level form holds.**  `FoldSkips108` on the arguments' values: 1463/1463 with
+    the premise on 116, and 455/455 with the premise on 121 on §107's own pool.
+  * **The family climbs the whole window and the repair jumps it.**  `dict (bWin108 (k+1)) =
+    φ̄(Γ₀,k+1)` for `k ≤ 5`, every rung in the window and every rung non-standard; with the
+    `Ω^Ω` prefix every rung is legal and at or above `φ̄(Γ₀,Γ₀⊕1)`.
+  * **E settles the two facts §108.2's argument needs, by enumeration.**  Not one of the 9992
+    standard terms has a value in the window.  And the carrier is UNIQUE: `Γ₀`, `Ω₁^Ω₁`,
+    `Ω₁·Γ₀` and `Ω₁^Γ₀` each have exactly ONE standard preimage — `ψ₀(Ω^Ω)`, `Ω^Ω`,
+    `ψ₁ψ₀(Ω^Ω)` and `ψ₁ψ₁ψ₀(Ω^Ω)`.  So the `Γ₀` digit can only be carried by the term
+    §108.2 proves is below `Ω^Ω`, and a refutation would have to be a carrier that this
+    enumeration does not reach.  (Extending E to size 14 — 58239 terms — gives the same
+    four answers and the same 0.)
+  * **The named endpoints, again.**  `dictInv` answers `some` at every rung of the window and
+    `none` at every rung of §94.6's raw tower. -/
+
+
+/-! ### §108.1 窓の中に値を持つ項 — 足りないのは標準性だけ
+
+`Γ₀` の桁を運ぶ成分は `ψ₁ψ₁(ψ₀ Ω^Ω)` である。その値は `Ω₁^Γ₀`、つまり底 `Ω₁` の展開で
+指数 `Γ₀`・係数 1 の桁ひとつ。これを `k+1` 個ならべて `ψ₀` を載せると、係数が `k+1` に
+なり、畳み込みの最初の Veblen 段が `φ̄(Γ₀, sub1(k+1)) = φ̄(Γ₀, k)` を返す。
+**`k ≥ 1` のとき、それは窓のちょうど中である。** -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`Γ₀` の桁を運ぶ成分。**  `ψ₁ψ₁(ψ₀ Ω^Ω)`。値は `Ω₁^Γ₀`。 -/
+def dgG0_108 : BT := BT.D 1 (BT.D 1 (BT.D 0 bOO94))
+
+theorem dict_dgG0_108 : dict dgG0_108 = phi zero (phi zero (add (Z zero) G094)) := rfl
+
+/-- 桁を `k+1` 個ならべたもの。 -/
+def sumG0_108 : Nat → BT
+  | 0 => dgG0_108
+  | n + 1 => BT.sum dgG0_108 (sumG0_108 n)
+
+/-- **窓の中に値を持つ項の族。** -/
+def bWin108 (k : Nat) : BT := BT.D 0 (sumG0_108 k)
+
+theorem hd085_bWin108 (k : Nat) : Hd085 (bWin108 k) := by
+  intro z hz; exact ⟨sumG0_108 k, List.mem_singleton.mp hz⟩
+
+theorem hd085_D0bOO108 : Hd085 (BT.D 0 bOO94) := by
+  intro z hz; exact ⟨bOO94, List.mem_singleton.mp hz⟩
+
+theorem btLe_bWin108 : ∀ k, btLe72 1 (bWin108 k) = true
+  | 0 => rfl
+  | k + 1 => by
+      show (decide (0 ≤ 1) && (btLe72 1 dgG0_108 && btLe72 1 (sumG0_108 k))) = true
+      have h : btLe72 1 (BT.D 0 (sumG0_108 k)) = true := btLe_bWin108 k
+      have h' : btLe72 1 (sumG0_108 k) = true := by
+        rw [show btLe72 1 (BT.D 0 (sumG0_108 k))
+              = (decide (0 ≤ 1) && btLe72 1 (sumG0_108 k)) from rfl] at h
+        exact ((Bool.and_eq_true _ _).mp h).2
+      rw [h']; rfl
+
+/-- 値は `Γ₀` のすぐ上の段を順に登る。段 0 だけは 2.6(vi) が `Γ₀` に潰す。 -/
+theorem dict_bWin108_0 : dict (bWin108 0) = G094 := rfl
+theorem dict_bWin108_1 : dict (bWin108 1) = phi G094 TM.Term.one := rfl
+theorem dict_bWin108_2 : dict (bWin108 2) = phi G094 (TM.Term.ofNat 2) := rfl
+theorem dict_bWin108_3 : dict (bWin108 3) = phi G094 (TM.Term.ofNat 3) := rfl
+
+/-- **`dict` 自身の逆引きが、その項を名指しで返す。**  §94.6 の生の塔は
+    `dictInv` が `none` を返した。窓の中の段はそうではない。 -/
+theorem dictInv_win108 : dictInv (phi G094 TM.Term.one) = some (bWin108 1) := rfl
+
+end
+
+/-! ### §108.2 障害は `G₀` の条件で、しかも一般の定理
+
+`isStandardBuchholz` は「`G(u,a)` の元はどれも `a` より下」と言う。`Γ₀` の桁を運ぶ成分
+`ψ₁ψ₁(ψ₀ Ω^Ω)` は `Ω^Ω` より下 (§98 の `lt_D1D1_bOO98`) なのに、`Ω^Ω` を `G(0,·)` に
+引きずり込む。だから `ψ₀` を載せると条件が破れる — **尾が何であっても、`x` が何であっても
+である。** -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 先頭成分の引数。 -/
+def argHd108 : BT → BT
+  | BT.zero => BT.zero
+  | BT.D _ a => a
+  | BT.sum p _ => argHd108 p
+
+theorem argHd_bWin108 (k : Nat) : argHd108 (bWin108 k) = sumG0_108 k := rfl
+
+/-- 標準性は先頭成分の引数のところで `GB 0` を押さえる。 -/
+theorem gbLead108 : ∀ b : BT, Hd085 b → BT.isStd b = true →
+    ∀ e ∈ BT.GB 0 (argHd108 b), BT.lt e (argHd108 b) = true
+  | BT.zero, _, _ => by intro e he; exact absurd he (List.not_mem_nil)
+  | BT.D u a, hd, hs => by
+      have hu : u = 0 := hd085_D94 hd
+      subst hu
+      have h : (BT.isStd a && (BT.GB 0 a).all (fun e => BT.lt e a)) = true := hs
+      intro e he
+      exact List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h).2 e he
+  | BT.sum p q, hd, hs =>
+      gbLead108 p (hd085_sum94 hd).1 (isStd_of_sum hs).1
+
+theorem bt_le_refl108 (x : BT) : BT.le x x = true := by
+  show ((x == x) || BT.lt x x) = true
+  rw [bt_beq_refl x]; rfl
+
+/-- **§108.2 の主定理 (1)。**  `Ω^Ω` 以上の元が先頭成分の引数の係数集合にいるなら、
+    その引数は `Ω^Ω` より真に上でなければならない。標準形の条件そのもの。 -/
+theorem needOO108 {b : BT} (hd : Hd085 b) (hs : BT.isStd b = true)
+    {e : BT} (he : e ∈ BT.GB 0 (argHd108 b)) (hle : BT.le bOO94 e = true) :
+    BT.lt bOO94 (argHd108 b) = true := by
+  have h1 : BT.lt e (argHd108 b) = true := gbLead108 b hd hs e he
+  rcases (Bool.or_eq_true _ _).mp hle with h2 | h2
+  · rw [bt_beq_eq77 h2]; exact h1
+  · exact lt_trans83 h2 h1
+
+/-- 頭が `Γ₀` の桁を運ぶ形なら、尾が何であれ和の全体は `Ω^Ω` より下。 -/
+theorem lt_sumD1D1_bOO108 {x : BT} (hd : Hd085 x) (r : BT) :
+    BT.lt (BT.sum (BT.D 1 (BT.D 1 x)) r) bOO94 = true := by
+  refine btlt_of_hd106 (u := 1) (a := BT.D 1 x) (b := BT.D 1 (BT.Om 1))
+    (ps := BT.toL r) (qs := []) rfl rfl ?_ ?_
+  · exact bt_beq_false _ _ (fun h => by
+      injection h with _ h2; exact ne_D1_hd098 hd BT.zero h2)
+  · exact btlt_arg98 (bt_beq_false _ _ (ne_D1_hd098 hd BT.zero)) (btlt_hd0_D1_98 hd BT.zero)
+
+/-- 桁をいくつならべても `Ω^Ω` より下のまま。 -/
+theorem lt_sumG0_bOO108 : ∀ k, BT.lt (sumG0_108 k) bOO94 = true
+  | 0 => lt_D1D1_bOO98 hd085_D0bOO108
+  | k + 1 => lt_sumD1D1_bOO108 hd085_D0bOO108 (sumG0_108 k)
+
+/-- `Ω^Ω` は桁の係数集合に入っている。 -/
+theorem memOO_dgG0_108 : bOO94 ∈ BT.GB 0 dgG0_108 := by
+  show bOO94 ∈ BT.D 1 (BT.D 0 bOO94) :: BT.D 0 bOO94 :: bOO94 :: BT.GB 0 bOO94
+  exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))
+
+theorem memOO_sumG0_108 : ∀ k, bOO94 ∈ BT.GB 0 (sumG0_108 k)
+  | 0 => memOO_dgG0_108
+  | _ + 1 => List.mem_append_left _ memOO_dgG0_108
+
+/-- **§108.2 の主定理 (2)。**  窓の中に値を持つ族は、どの段でも標準ではない。
+    理由は畳み込みと関係がなく、`Ω^Ω` が係数集合にいるのに引数がそれより下だから。 -/
+theorem notStd_bWin108 (k : Nat) : BT.isStd (bWin108 k) = false := by
+  cases h : BT.isStd (bWin108 k) with
+  | false => rfl
+  | true =>
+      exfalso
+      have hx := needOO108 (hd085_bWin108 k) h (memOO_sumG0_108 k) (bt_le_refl108 bOO94)
+      rw [argHd_bWin108 k, lt_asymm74 (lt_sumG0_bOO108 k)] at hx
+      exact Bool.noConfusion hx
+
+/-- **§108.2 の主定理 (3)。**  `Γ₀` の桁を先頭に置く道は、尾が何であれ閉じている
+    — `x` にも尾 `r` にも条件はない。 -/
+theorem lead_notStd108 {x : BT} (hd : Hd085 x) {e : BT} (he : e ∈ BT.GB 0 x)
+    (hle : BT.le bOO94 e = true) (r : BT) :
+    BT.isStd (BT.D 0 (BT.sum (BT.D 1 (BT.D 1 x)) r)) = false := by
+  cases h : BT.isStd (BT.D 0 (BT.sum (BT.D 1 (BT.D 1 x)) r)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have hd0 : Hd085 (BT.D 0 (BT.sum (BT.D 1 (BT.D 1 x)) r)) := by
+        intro z hz; exact ⟨_, List.mem_singleton.mp hz⟩
+      have hm : e ∈ BT.GB 0 (argHd108 (BT.D 0 (BT.sum (BT.D 1 (BT.D 1 x)) r))) := by
+        show e ∈ (BT.D 1 x :: x :: BT.GB 0 x) ++ BT.GB 0 r
+        exact List.mem_append_left _ (List.Mem.tail _ (List.Mem.tail _ he))
+      have hx := needOO108 hd0 h hm hle
+      rw [show argHd108 (BT.D 0 (BT.sum (BT.D 1 (BT.D 1 x)) r))
+            = BT.sum (BT.D 1 (BT.D 1 x)) r from rfl,
+        lt_asymm74 (lt_sumD1D1_bOO108 hd r)] at hx
+      exact Bool.noConfusion hx
+
+/-- **細かい作用素は `Ω^Ω` 以上の係数を持つ項の上で標準性を壊す — `x` は一般。** -/
+theorem vStep_notStd108 {x : BT} (hd : Hd085 x) {e : BT} (he : e ∈ BT.GB 0 x)
+    (hle : BT.le bOO94 e = true) : BT.isStd (vStep107 x) = false := by
+  cases h : BT.isStd (vStep107 x) with
+  | false => rfl
+  | true =>
+      exfalso
+      have hm : e ∈ BT.GB 0 (argHd108 (vStep107 x)) := by
+        show e ∈ BT.D 1 x :: x :: BT.GB 0 x
+        exact List.Mem.tail _ (List.Mem.tail _ he)
+      have hx := needOO108 (hd0_vStep107 x) h hm hle
+      rw [show argHd108 (vStep107 x) = BT.D 1 (BT.D 1 x) from rfl,
+        lt_asymm74 (lt_D1D1_bOO98 hd)] at hx
+      exact Bool.noConfusion hx
+
+/-- §107 の `vStep_bStep_not_std107` はその系である。 -/
+theorem vStep_bStep_of108 (x : BT) : BT.isStd (vStep107 (bStep98 x)) = false :=
+  vStep_notStd108 (hd0_bStep98 x) (by rw [gb0_bStep98]; exact List.Mem.head _)
+    (by
+      show ((bOO94 == bArg98 x) || BT.lt bOO94 (bArg98 x)) = true
+      rw [show BT.lt bOO94 (bArg98 x) = true from btlt_self_sum98 1 (BT.D 1 x)]
+      exact Bool.or_true _)
+
+end
+
+/-! ### §108.3 §107 の言う理由は理由ではない
+
+2.6(vi) の強臨界の枝が `φ̄(A,·)` を潰すのは第 2 引数が `0` のときだけである。`1` では
+潰さない。だから `Γ₀` の上でも畳み込みは Veblen 枝を先に取れるし、実際に取る。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **強臨界の枝は第 2 引数 `0` のところにしかない。** -/
+theorem phiNF_G0_one108 : phiNF G094 TM.Term.one = phi G094 TM.Term.one := rfl
+
+/-- そして畳み込みは実際に `Γ₀` を最初の Veblen 桁として取り、`φ̄(Γ₀,1)` に着く。
+    §107.5 の「強臨界枝が先に発火する」は、畳み込みの性質ではない。 -/
+theorem foldTakesVeblen108 : collapse 0 (dict (sumG0_108 1)) = phi G094 TM.Term.one := rfl
+
+end
+
+/-! ### §108.4 前置の代価 — 直すと窓をまたぐ
+
+標準性を直す方法は `Ω^Ω` を前に置くことである (§98 の `bStep98` がそれ)。すると底 `Ω₁`
+の展開の先頭桁の指数が `Ω₁` になり、強臨界枝が先に発火して基底が `Γ₀` になる。値は
+`φ̄(Γ₀,k)` から `φ̄(Γ₀, Γ₀⊕(k+1))` へ飛ぶ — **窓の中に降りるのではなく、窓をまたぐ。** -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Ω^Ω` を前に置いて標準性を直した族。段 0 は §98 の塔の第 1 段そのもの。 -/
+def bWinOO108 (k : Nat) : BT := BT.D 0 (BT.sum bOO94 (sumG0_108 k))
+
+theorem bWinOO_zero108 : bWinOO108 0 = bTowG98 1 := rfl
+
+theorem dict_bWinOO108_0 : dict (bWinOO108 0) = phi G094 (plus G094 TM.Term.one) := rfl
+theorem dict_bWinOO108_1 : dict (bWinOO108 1) = phi G094 (plus G094 (TM.Term.ofNat 2)) := rfl
+
+end
+
+/-! ### §108.5 還元 — 標準性の側は定理、残るのは畳み込みの側 1 条項
+
+`φ̄(Γ₀,0) ≤ dict b` なら `Γ₀ < dict b`、つまり `dict (ψ₀Ω^Ω) < dict b`。§94.5 の
+`btlt_of_lt94` はそれを `BT.lt` に戻す — 両辺とも `D 0` 成分だけなので使える。
+**だから隙間の標準性の側は定理である。** 残るのは畳み込みの側だけで、そこには
+`isStd` がひとつも残っていない。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§108.5 の主定理 (1) — 標準性の側は定理。**  値が窓の下端に届く正しい証人は
+    `ψ₀(Ω^Ω)` より `BT.lt` で真に上にいる。 -/
+theorem ooLead108 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) {b : BT} (hb : btLe72 1 b = true)
+    (hs : BT.isStd b = true) (hd : Hd085 b) (hle : le (rawT94 0) (dict b) = true) :
+    BT.lt (bTowG98 0) b = true := by
+  have hib : inT (dict b) = true := (inT_dict_of_std172 Hp b hb hs).1
+  have hlt : lt G094 (dict b) = true := by
+    rcases (Bool.or_eq_true _ _).mp hle with h | h
+    · rw [← eq_of_beq h]; exact lt_G0_rawT0_107
+    · exact lt_trans_inT inT_G094_102 (inT_rawT98 0) hib lt_G0_rawT0_107 h
+  refine btlt_of_lt94 Hp H2 (legal_bTowG98 0).1 (legal_bTowG98 0).2.1 (legal_bTowG98 0).2.2
+    hb hs hd ?_
+  rw [dict_bTowG98_zero]; exact hlt
+
+/-- **残る条項。**  引数が `ψ₀(Ω^Ω)` を越えたら、`ψ₀` の値は窓をまるごと飛び越す。
+    §107.5 の「強臨界枝が先に発火するので以後の Veblen 桁は `Γ₀ ⊕ c` (`c ≥ 1`) に着く」
+    はここに集約される。**証明しない。** -/
+def SCFirst108 : Prop := ∀ b : BT, btLe72 1 b = true → BT.isStd b = true → Hd085 b →
+    BT.lt (bTowG98 0) b = true → le (rawT94 0) (dict b) = true →
+    le (dict (bTowG98 1)) (dict b) = true
+
+/-- 同じ条項から標準性を外したもの。 -/
+def SCFirstNoStd108 : Prop := ∀ b : BT, btLe72 1 b = true → Hd085 b →
+    BT.lt (bTowG98 0) b = true → le (rawT94 0) (dict b) = true →
+    le (dict (bTowG98 1)) (dict b) = true
+
+/-- `ψ₀(Ω^Ω ⊕ 1)` — 値は `φ̄(0,Γ₀)`、窓の下端より下。 -/
+def smallB108 : BT := BT.D 0 (BT.sum bOO94 (BT.D 0 BT.zero))
+
+/-- **手で作った反例。**  先頭成分の値は窓より下、第 2 成分は §108.1 の窓の中の項。
+    和を取ると `plus` が先頭を吸収して、全体の値がそのまま窓の中に入る。 -/
+def bad108 : BT := BT.sum smallB108 (bWin108 1)
+
+theorem hd085_bad108 : Hd085 bad108 := by
+  intro z hz
+  have hm : z ∈ smallB108 :: bWin108 1 :: ([] : List BT) := hz
+  rcases List.mem_cons.mp hm with h | h
+  · exact ⟨_, h⟩
+  · exact ⟨_, List.mem_singleton.mp h⟩
+
+theorem dict_bad108 : dict bad108 = phi G094 TM.Term.one := rfl
+theorem inWin_bad108 :
+    (le (rawT94 0) (dict bad108) && lt (dict bad108) (dict (bTowG98 1))) = true := rfl
+
+/-- **§108.5 の主定理 (2) — 条項から標準性は外せない。**  母集団は `ψ₀` ひとつぶんの
+    項しか含まないのでこれを見つけられない (§93 の失敗の形)。手で作るしかない。 -/
+theorem scFirstNoStd_false108 : ¬ SCFirstNoStd108 := by
+  intro H
+  have h := H bad108 (rfl : btLe72 1 bad108 = true) hd085_bad108
+    (rfl : BT.lt (bTowG98 0) bad108 = true) (rfl : le (rawT94 0) (dict bad108) = true)
+  rw [show le (dict (bTowG98 1)) (dict bad108) = false from rfl] at h
+  exact Bool.noConfusion h
+
+/-- そして `bad108` が正しい証人でないのは §108.2 の理由による — 第 2 成分が
+    標準でないからで、`notStd_bWin108` がそれを言っている。 -/
+theorem notStd_bad108 : BT.isStd bad108 = false := rfl
+
+/-- **同じ主張を 𝔗(M) の側で。**  `collapse 0` だけの話で、Buchholz 側の語がひとつも
+    入っていない — §109 が証明すべきはこちらの形である。**証明しない。**
+    ただし `SCFirst108` からこちらへ渡す橋は repository にない: `BT.lt` を `dict` で
+    運ぶ §94.5 の `btlt_of_lt94` は両辺に `Hd085` を要求し、`Ω^Ω` は `ψ₁` が頭なので
+    その仮定を満たさない (§103 が名指しした穴と同じ)。 -/
+def FoldSkips108 : Prop := ∀ X : Term, inT X = true → lt X M = true →
+    le (dict bOO94) X = true → le (rawT94 0) (collapse 0 X) = true →
+    le (dict (bTowG98 1)) (collapse 0 X) = true
+
+/-- **§108.5 の主定理 (2) — 隙間は 1 条項に還元される。** -/
+theorem gap_of108 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : SCFirst108) : GapAtG0_107 :=
+  fun b hb hs hd hle => H b hb hs hd (ooLead108 Hp H2 hb hs hd hle) hle
+
+/-! §107.5 の 5 つの帰結を、条項 1 本の形で書き直しておく。 -/
+
+theorem denseMid107_false_of108 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : SCFirst108) :
+    ¬ DictDenseMid107 := denseMid107_false_of_gap107 Hp H2 (gap_of108 Hp H2 H)
+
+theorem denseMid102_false_of108 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : SCFirst108) :
+    ¬ DictDenseMid102 := denseMid102_false_of_gap107 Hp H2 (gap_of108 Hp H2 H)
+
+theorem dictDenseHi94_false_of108 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : SCFirst108) :
+    ¬ DictDenseHi94 := dictDenseHi94_false_of_gap107 Hp H2 (gap_of108 Hp H2 H)
+
+theorem dictDense85_false_of108 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : SCFirst108) :
+    ¬ DictDense85 := dictDense85_false_of_gap107 Hp H2 (gap_of108 Hp H2 H)
+
+theorem cofDenseS1_false_of108 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (H : SCFirst108) :
+    ¬ CofDenseS1 := cofDenseS1_false_of_gap107 Hp H2 (gap_of108 Hp H2 H)
+
+end
+
+/-! ### §108.6 測定 (凍結)
+
+**構成を先に書く。**  母集団は 3 つ。§107 の 2 つ (`popA107` 570 項・`popB107` 88 項) は
+そのまま使い、3 つ目を新しく作る。3 つ目の種は **桁を運ぶ成分 13 個** — `ψ₁ψ₁ z` の
+`dict z` がちょうど底 `Ω₁` の桁の指数になるように選んだもので、指数は
+`Ω₁`・`Γ₀`・`ε₀`・`ζ₀`・`Γ₀⊕1`・`φ̄(Γ₀,Γ₀⊕1)`、それに `ψ₀` 成分と裸の `ψ₁` 成分。
+これを 3 個までの和にして `ψ₀` を載せる (1463 項)。**標準性で濾さない** — 濾さないことが
+この節の要点である。濾すと 155 項になる。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 桁を運ぶ成分 — `ψ₁ψ₁ z` の `dict z` が桁の指数を決める。 -/
+def carr108 : List BT :=
+  [ bOO94,
+    BT.D 1 (BT.D 1 (BT.D 0 bOO94)),
+    BT.D 1 (BT.D 1 (BT.D 0 (BT.Om 1))),
+    BT.D 1 (BT.D 1 (BT.D 0 (BT.D 1 (BT.Om 1)))),
+    BT.D 1 (BT.D 1 (BT.sum (BT.D 0 bOO94) (BT.D 0 BT.zero))),
+    BT.D 1 (BT.D 1 (BT.D 0 (BT.sum bOO94 (BT.D 1 (BT.D 1 (BT.D 0 bOO94)))))),
+    BT.D 1 (BT.D 1 BT.zero), BT.D 1 (BT.D 1 (BT.Om 1)), BT.D 1 BT.zero, BT.D 1 (BT.Om 1),
+    BT.D 0 bOO94, BT.D 0 (BT.Om 1), BT.D 0 BT.zero ]
+
+def sumsC108 : Nat → List BT → List BT
+  | 0, base => base
+  | n + 1, base => (base.flatMap fun x => (sumsC108 n base).map fun y => BT.sum x y)
+                     ++ sumsC108 n base
+def rawC108 : List BT := ((sumsC108 2 carr108).map (fun a => BT.D 0 a)).eraseDups
+def popC108 : List BT := rawC108.filter bgood94
+
+/-- 窓 `[φ̄(Γ₀,0), φ̄(Γ₀,Γ₀⊕1))`。 -/
+def inWin108 (d : Term) : Bool := le (rawT94 0) d && lt d (dict (bTowG98 1))
+/-- §108.5 の証明ずみの側。 -/
+def c1b_108 (b : BT) : Bool :=
+  !(le (rawT94 0) (dict b)) || BT.lt (bTowG98 0) b
+/-- 残る条項。 -/
+def c2b_108 (b : BT) : Bool :=
+  !(BT.lt (bTowG98 0) b && le (rawT94 0) (dict b)) || le (dict (bTowG98 1)) (dict b)
+/-- 𝔗(M) 側の条項。 -/
+def fold108 (X : Term) : Bool :=
+  !(le (dict bOO94) X && le (rawT94 0) (collapse 0 X)) || le (dict (bTowG98 1)) (collapse 0 X)
+
+#eval (rawC108.length, popC108.length)
+#guard rawC108.length == 1463
+#guard popC108.length == 155
+
+/-! **窓に入るのは 1463 中 23 項、正しい証人では 0 項。** -/
+#eval (rawC108.countP (fun b => inWin108 (dict b)),
+       popC108.countP (fun b => inWin108 (dict b)))
+#guard (rawC108.countP fun b => inWin108 (dict b)) == 23
+#guard (popC108.countP fun b => inWin108 (dict b)) == 0
+
+/-! **23 項を落とすのは標準性だけで、理由は 1 つ。**  どれも段 1 以下・成分は `D 0`、
+    引数は `Ω^Ω` より下、なのに `G(0,·)` に `Ω^Ω` 以上の元がいる — §108.2 の形。 -/
+#guard (rawC108.filter fun b => inWin108 (dict b)).all fun b =>
+  btLe72 1 b && hd085B b && (BT.isStd b == false)
+#guard (rawC108.filter fun b => inWin108 (dict b)).all fun b =>
+  BT.lt (argHd108 b) bOO94 && (BT.GB 0 (argHd108 b)).any (fun e => BT.le bOO94 e)
+
+/-! **証明ずみの側は空振りではなく、しかも標準性が効いている。**
+    正しい証人では 155/155・570/570・88/88、濾していない 1463 項では 874 しか通らない。 -/
+#eval (popC108.countP (fun b => le (rawT94 0) (dict b)),
+       popA107.countP (fun b => le (rawT94 0) (dict b)),
+       popB107.countP (fun b => le (rawT94 0) (dict b)))
+#eval (popC108.countP c1b_108, popA107.countP c1b_108, popB107.countP c1b_108,
+       rawC108.countP c1b_108)
+#guard (popC108.countP c1b_108) == 155
+#guard (popA107.countP c1b_108) == 570
+#guard (popB107.countP c1b_108) == 88
+#guard (rawC108.countP c1b_108) == 874
+
+/-! **母集団 C では、標準性を外した条項も通ってしまう** — C の項は `ψ₀` 成分がひとつ
+    しかないので、§108.5 の反例の形が入っていない。D がそれを直す。 -/
+#eval (popC108.countP c2b_108, popA107.countP c2b_108, popB107.countP c2b_108,
+       rawC108.countP c2b_108,
+       rawC108.countP fun b => BT.lt (bTowG98 0) b && le (rawT94 0) (dict b))
+#guard (popC108.countP c2b_108) == 155
+#guard (popA107.countP c2b_108) == 570
+#guard (popB107.countP c2b_108) == 88
+#guard (rawC108.countP c2b_108) == 1463
+#guard (rawC108.countP fun b => BT.lt (bTowG98 0) b && le (rawT94 0) (dict b)) == 76
+
+/-! **𝔗(M) の側の形も通る。** -/
+def vpopC108 : List Term := (rawC108.map argHd108).eraseDups.map dict
+def vpopA108 : List Term := (popA107.map argHd108).eraseDups.map dict
+#eval (vpopC108.length, vpopC108.countP fold108,
+       vpopC108.countP (fun X => le (dict bOO94) X && le (rawT94 0) (collapse 0 X)),
+       vpopA108.length, vpopA108.countP fold108,
+       vpopA108.countP (fun X => le (dict bOO94) X && le (rawT94 0) (collapse 0 X)))
+#guard vpopC108.countP fold108 == vpopC108.length
+#guard vpopA108.countP fold108 == vpopA108.length
+#guard (vpopC108.countP fun X => le (dict bOO94) X && le (rawT94 0) (collapse 0 X)) == 116
+#guard (vpopA108.countP fun X => le (dict bOO94) X && le (rawT94 0) (collapse 0 X)) == 121
+
+/-! **窓の段は全部 `dict` の生の像で、全部標準ではない。** -/
+#guard (List.range 6).all fun k => dict (bWin108 (k+1)) == phi G094 (TM.Term.ofNat (k+1))
+#guard (List.range 6).all fun k =>
+  btLe72 1 (bWin108 (k+1)) && hd085B (bWin108 (k+1)) && inT (dict (bWin108 (k+1)))
+#guard (List.range 6).all fun k => inWin108 (dict (bWin108 (k+1)))
+#guard (List.range 6).all fun k => BT.isStd (bWin108 (k+1)) == false
+
+/-! **`Ω^Ω` を前に置くと正しい証人になり、値は窓をまたぐ。** -/
+#guard (List.range 6).all fun k => bgood94 (bWinOO108 k)
+#guard (List.range 6).all fun k =>
+  dict (bWinOO108 k) == phi G094 (plus G094 (TM.Term.ofNat (k+1)))
+#guard (List.range 6).all fun k => le (dict (bTowG98 1)) (dict (bWinOO108 k))
+
+/-! **母集団 D — 成分をふたつ以上持つ項。**  C は `ψ₀` ひとつぶんの項しか含まないので
+    §108.5 の反例 `bad108` の形が見えない (§93 の失敗の形)。11 個の `ψ₀` 成分の和を
+    3 個まで取って 1463 項。窓に入るのは 420 項、正しい証人では 0 項。 -/
+
+def seedD108 : List BT :=
+  [ BT.D 0 bOO94, bWin108 0, bWin108 1, bWin108 2, bWinOO108 0, bWinOO108 1, smallB108,
+    BT.D 0 (BT.sum bOO94 (BT.D 1 (BT.D 1 (BT.D 0 (BT.Om 1))))),
+    BT.D 0 (BT.Om 1), BT.D 0 BT.zero, BT.D 0 (BT.D 1 (BT.Om 1)) ]
+def rawD108 : List BT := (sumsC108 2 seedD108).eraseDups
+def popD108 : List BT := rawD108.filter bgood94
+/-- 標準性を入れた残る条項。 -/
+def c2c_108 (b : BT) : Bool :=
+  !(BT.isStd b && BT.lt (bTowG98 0) b && le (rawT94 0) (dict b)) ||
+    le (dict (bTowG98 1)) (dict b)
+
+#eval (rawD108.length, popD108.length,
+       rawD108.countP (fun b => inWin108 (dict b)),
+       popD108.countP (fun b => inWin108 (dict b)))
+#guard rawD108.length == 1463
+#guard popD108.length == 164
+#guard (rawD108.countP fun b => inWin108 (dict b)) == 420
+#guard (popD108.countP fun b => inWin108 (dict b)) == 0
+
+/-! **標準性は外せない。**  標準性なしの条項は 1463 中 102 項で破れる — `bad108` は
+    そのひとつで、`SCFirstNoStd108` の反証はそれを名指しで使う。入れれば 1463/1463。 -/
+#eval (rawD108.countP c2b_108, rawD108.countP c2c_108, popD108.countP c2c_108,
+       rawD108.countP (fun b => BT.isStd b && BT.lt (bTowG98 0) b && le (rawT94 0) (dict b)),
+       rawD108.countP (fun b => BT.lt (bTowG98 0) b && le (rawT94 0) (dict b)))
+#guard (rawD108.countP c2b_108) == 1361
+#guard (rawD108.countP c2c_108) == 1463
+#guard (popD108.countP c2c_108) == 164
+#guard (rawD108.countP fun b => BT.isStd b && BT.lt (bTowG98 0) b && le (rawT94 0) (dict b)) == 81
+
+/-! **証明ずみの側も D で通り、隙間そのものも D で外れ 0。** -/
+#guard (popD108.countP c1b_108) == 164
+#guard (popD108.countP fun b => le (rawT94 0) (dict b) && !(le (dict (bTowG98 1)) (dict b))) == 0
+#guard rawD108.contains bad108
+
+/-! **母集団 E — 数え上げ。**  段 1 以下・標準な Buchholz 項を大きさ 12 まで全部
+    (9992 項)。`isStd` は部分項へ遺伝するので、各段で標準なものだけを残しても
+    数え落としはない。**窓に入る値はひとつもなく、`Γ₀` の桁を運ぶ成分はただひとつ。** -/
+
+/-- `lv` の第 `i` 成分 = 大きさ `i+1` の標準・段 1 以下の項。 -/
+def stepBT108 (lv : List (List BT)) : List (List BT) :=
+  let n := lv.length
+  let prev := lv.getD (n - 1) []
+  let ds := prev.map (fun a => BT.D 0 a) ++ prev.map (fun a => BT.D 1 a)
+  let ss := (List.range (n - 1)).flatMap fun i =>
+      (lv.getD i []).flatMap fun a => (lv.getD (n - 2 - i) []).map fun b => BT.sum a b
+  lv ++ [(ds ++ ss).filter BT.isStd]
+
+def lvBT108 : Nat → List (List BT)
+  | 0 => [[BT.zero]]
+  | n + 1 => stepBT108 (lvBT108 n)
+
+def allStd108 : List BT := (lvBT108 11).flatten
+
+#eval ((lvBT108 11).map List.length, allStd108.length,
+       allStd108.countP (fun z => btLe72 1 z && hd085B z))
+#guard allStd108.length == 9992
+#guard (allStd108.countP fun z => btLe72 1 z && hd085B z) == 2923
+
+/-! **窓に入る標準な項は 9992 中 0 項。** -/
+#guard (allStd108.countP fun z => inWin108 (dict z)) == 0
+
+/-! **そして桁を運ぶ成分は一意である。**  `Γ₀`・`Ω₁^Ω₁`・`Ω₁·Γ₀`・`Ω₁^Γ₀` の
+    どれも、大きさ 12 までの標準な項のなかに逆像はちょうど 1 つ。
+    (大きさ 14 まで 58239 項に広げても答えは同じ。) -/
+#guard (allStd108.filter fun z => dict z == G094) == [BT.D 0 bOO94]
+#guard (allStd108.filter fun z => dict z == dict bOO94) == [bOO94]
+#guard (allStd108.filter fun z => dict z == phi zero (add (Z zero) G094))
+        == [BT.D 1 (BT.D 0 bOO94)]
+#guard (allStd108.filter fun z => dict z == dict dgG0_108) == [dgG0_108]
+
+/-! **窓の中の項は 𝔗(M) の項として本物で、逆引きも答える。** -/
+#guard (List.range 6).all fun k =>
+  inT (phi G094 (TM.Term.ofNat (k+1))) && (dictInv (phi G094 (TM.Term.ofNat (k+1)))).isSome
+#guard (List.range 6).all fun n => (dictInv (rawT94 n)).isNone
+
+end
+
 end Evidence.Region
