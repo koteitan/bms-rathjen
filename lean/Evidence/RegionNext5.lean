@@ -10576,4 +10576,2378 @@ def qual115 : List BT := pop115.filter okHyp84
 
 end
 
+/-! ## §118 THE FOLD'S LATER PAIRS, AND THE COEFFICIENT THAT IS NOT `1`
+
+§103 closed the endpoint `Γ₀` of §102's (b1) and left the open interval `(ε₀, Γ₀)`.  §106 made
+the FIRST Veblen argument a theorem — one pair of the fold, inverted in general, with a legal
+iterable Buchholz witness — and named what was left in two words:
+
+> the fold's LATER pairs (`acc := φ̄(a, acc ⊕ c)`), and the Buchholz witness for a COEFFICIENT
+> other than `1` — a digit needs a sub-`Ω₁` tail inside the `ψ₁` sum, which `mulB106` does not
+> carry.
+
+**§118 does both, and a third thing §106 did not name.**  `DictOntoMidOpen103` is still NOT
+closed; what is closed is the two items, plus the sub-`Ω₁` TAIL of `wcnf` — which is what
+carries the first Veblen argument `0`, i.e. the `ω`-powers.  On §103.8's own adversarial pool
+the number moves from §106's **14 built witnesses to 191**, every one of them checked against
+the full hypothesis list of the theorem that proves its value.
+
+  §118.1  **`BT.ofL` AS A TOOLKIT.**  §106 wrote `mulB106` as its own recursion and re-proved
+          `toL`, `GB`, `btLe72`, `isStd` and `dict` for it by hand.  All five are facts about
+          `BT.ofL` on a list of PRINCIPAL components (`toL_ofL118`, `gb_ofL118`,
+          `btLe_ofL118`, `isStd_ofL118`, `dict_ofL118`), and `mulB106 ls = BT.ofL (ls.map
+          (D 1))` (`mulB106_eq_ofL118`).  Everything below is that toolkit applied to a
+          component list that is no longer homogeneous.
+
+  §118.2  **THE COEFFICIENT THAT IS NOT `1`.**  `mixB118 ls ns` puts the digits `ls` as `ψ₁`
+          nodes and then a tail `ns` of `ψ₀` nodes in the SAME sum; `powB118` and `vebB118`
+          put `ψ₁` and `ψ₀` on top.  `dict_vebB118` : the value is `φ̄(1 ⊕ A, ω^ρ)` where `ρ`
+          is the tail's value — **and `ω^ρ ≠ 1` exactly when the tail is not empty**
+          (`omegaNF_ne_one118`).  §106's `collapse0_argAP106` had the value formula for a
+          coefficient `B ≠ 1` but no witness; this is the witness.  Legality is proved, not
+          measured: `isStd_vebB118`, `btLe1_vebB118`, `btLe0_vebB118`, `hd085_vebB118`, and
+          `dig_vebB118` — the output is again a `Dig106`, so the construction still iterates.
+          `mixB118 ls [] = mulB106 ls`, so §106 is the empty-tail case, verbatim.
+
+  §118.3  **THE FOLD'S LATER PAIRS.**  `foldV118` is `acc := φ̄(a, acc ⊕ c)` as a function and
+          `fold_some118` says the fold IS that function as soon as every exponent is below
+          `Ω₁`; `fold_none118` starts it with `base` and `c ⊖ 1`.  `wcnf_argM118` runs the
+          base-`Ω₁` decomposition backwards at `n` components at once — the merge test is
+          killed by `descP118`, strict descent of the exponents — and `collapse0_argM118` is
+          §106's `collapse0_one_pair106` with the number of pairs free.  §113's
+          `collapse0_ltG113` reads the same fold for a BOUND with the target free; this reads
+          it for the VALUE with the pair list free.
+
+  §118.3c **AND THE TAIL `ρ`.**  `collapse0_pairsT118` deletes the hypothesis `ρ = 0`: the
+          value is `ω^(acc ⊕ ρ)`.  That is the only route to a target whose first Veblen
+          argument is `0`; 12 of §103.8's 359 are of that shape and 8 of them are delivered.
+          §106 never mentions
+          `ρ`; it is invisible when there is one pair and the target is an ε-number.
+
+  §118.4  **THE WITNESS AT `n` PAIRS, AND IN GENERAL.**  `vebN118 ys = ψ₀(Σ ψ₁ yᵢ)` is the
+          `n`-pair witness and `vebG118 ys ms = ψ₀(Σ ψ₁ yᵢ ⊕ Σ mⱼ)` adds the tail;
+          `vebN118 ys = vebG118 ys []`, `vebB118 ls ns = vebN118 [mixB118 ls ns]`, and
+          `vebB118 ls [] = vebB106 ls`.  One shape, three levels of §106, §118.2 and §118.4.
+          `dict_vebN118` and `dict_vebG118` are the values.  **Neither uses
+          `PsiIdxOKStd172`** — the second gate enters only where the components are computed
+          by `dict_D1_eq77`, not in the fold.
+
+  §118.5  **WHAT IS LEFT, NAMED.**  Two shapes, and they are not the same one.  A target that
+          is a SUM needs `BT.sum` of witnesses (106 of 359) — the construction here is for
+          additively principal targets only.  A digit COEFFICIENT that is a SUM needs several
+          components with the SAME exponent, merged back by `wcnf` — and `descP118` forbids
+          exactly that (62 of 359).  `noMerge118` is the built refutation: with the
+          coefficient `2`, `argM118` computes `φ̄(1, ω²)` and not `φ̄(1,1)`.
+
+  §118.6  **THE MEASUREMENT.**  Three populations, all BUILT, none filtered, and the
+          covering condition is VISIBLE in this one — §106's blindness does not recur.
+
+WHAT IS **NOT** CLAIMED.  **`DictOntoMidOpen103` is NOT proved and NOT refuted.**
+`DictOntoMid102`, `DictDenseMid102`, `DictDenseAbove102`, `DictDenseMid107`,
+`DictDenseAbove107`, `DictDenseHi94`, `DictDense85` and `CofDenseS1` are exactly where §106
+and §113 left them; row 326's certificate is unchanged and §118 adds no clause to it and
+removes none.  `PsiIdxOKStd172` is used, not proved; `DictLtA74` is not used at all.
+`CovM118` / `CovG118` are HYPOTHESES — decidable ones, discharged in every instance below and
+measured in §118.6, never assumed silently.  `GapAtG0_107` and `SCFirst108` are untouched.
+
+**Where §118 stopped, precisely, and what moved.**  §106's residue was "the second Veblen
+argument"; that is gone.  What is left is not a Veblen fact at all — it is two facts about
+SUMS: a sum target (the witness is a `BT.sum`, and its legality is a descending condition
+across two witnesses, not one), and a sum coefficient (the `wcnf` merge, which needs the
+`n`-component induction run with EQUAL exponents allowed).  **This removes residue and also
+names a different one**: §106's 14 built witnesses become 191 on the same pool, and the 173
+that remain are 106 + 62 + 5 with the 5 being §103's known `dictInv` incompleteness, for
+which §103's own hand-built witnesses satisfy §118's theorem in full.
+
+**AND THE OVERPAYMENT LEDGER.**  §118 found two, the ninth and tenth.  `dict_mixB118` does
+not read `lt A (reg 1)` — the digit/tail value formula never compares `A` with `Ω₁`, only the
+`ψ₁` step does.  And `dict_vebN118` / `dict_vebG118` do not read `PsiIdxOKStd172`: the second
+gate is paid at `dict_D1_eq77`, one layer below, and the fold theorem is free of it.
+
+WHAT THE MEASUREMENT SAYS (§118.6 gives the construction).  Three populations, built on §97's
+model so the hypotheses stay VISIBLE, plus §103.8's adversarial pool re-read.
+
+  * **The `n`-pair value formula is exact where its hypothesis holds.**  156 pair lists, 32
+    satisfy it, 0 misses — and **24 of the 32 have two pairs**, so the later pairs are
+    actually exercised and not a vacuous generalisation.
+  * **The hypothesis is visible and is not a restatement of the conclusion.**  124 of the 156
+    fail it, and 24 of those 124 satisfy the conclusion anyway.
+  * **The tail is exact too, and it is the only route to an `ω`-power.**  112 (pairs, `ρ`)
+    cases, 40 satisfy the hypothesis, 0 misses; 30 have `ρ ≠ 0` and **all 30 land on a value
+    whose first Veblen argument is `0`** — a shape no construction of §106 or §118.2 emits.
+  * **The witness with a tail is exact.**  169 `(ls, ns)` pairs, 86 satisfy the hypothesis,
+    and on all 86 the value, standardness, both level bounds, the head condition AND `Dig106`
+    hold.  All 86 have a NON-EMPTY tail, i.e. all 86 are coefficients other than `1`.
+  * **The covering condition is visible HERE.**  §106 swept 289 Buchholz terms and all 19
+    legal ones satisfied its covering condition — the §93 failure mode — and had to build
+    `deep106` by hand.  With a tail the condition fires inside the population: **4 of the 169
+    have legal digits, a legal tail and a descending list and still FAIL `CovM118`**, and
+    all 4 produce a non-standard term.  3 of the 4 have the right VALUE anyway, so the
+    condition is about standardness and nothing else.  `deepC118 = ψ₀ψ₁ψ₀ψ₁ψ₁0` is the
+    named one: its tail digit `ψ₀(Ω₁²) = ζ₀` is legal on its own.
+  * **Descending is not decoration.**  69 of the 169 are not descending and 73 of the 169
+    produce a non-standard term.
+  * **The reach, on §103.8's own adversarial pool.**  359 terms of `(ε₀, Γ₀)`.  §106 built 14
+    witnesses; §118 delivers **186** — and every one of the 186 is checked against the FULL
+    hypothesis list of `dict_vebG118`, shape included, not merely against `dict b == t`.  12
+    of the 186 use two or more pairs, 157 use a coefficient other than `1`, 8 use a non-zero
+    tail.  §103's five `dictInv` misses are covered too, by §103's own `witMiss103` witnesses,
+    which satisfy §118's hypotheses in full — **191 of 359**.
+  * **The `ω`-powers, which only the tail reaches.**  12 of the 359 have first Veblen
+    argument `0`; 8 are delivered, and every one of the 8 has `ρ ≠ 0`.  Nothing in §106 or
+    §118.2 can emit one.
+  * **And what the 173 are.**  106 are additive sums (the target is not principal), 62 have a
+    digit coefficient that is not additively principal (the `wcnf` merge), 5 are §103's
+    `dictInv` misses.  106 + 62 + 5 = 173, with nothing unaccounted for. -/
+
+
+/-! ### §118.1 `BT.ofL` の道具 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem toL_isP118 : ∀ {x : BT}, BT.isP x = true → BT.toL x = [x]
+  | .D _ _, _ => rfl
+  | .zero, h => Bool.noConfusion h
+  | .sum _ _, h => Bool.noConfusion h
+
+theorem isP_D118 (u : Nat) (a : BT) : BT.isP (BT.D u a) = true := rfl
+
+theorem toL_ofL118 : ∀ (l : List BT), (∀ x ∈ l, BT.isP x = true) → BT.toL (BT.ofL l) = l
+  | [], _ => rfl
+  | [a], h => toL_isP118 (h a (List.Mem.head _))
+  | a :: b :: r, h => by
+      show BT.toL a ++ BT.toL (BT.ofL (b :: r)) = _
+      rw [toL_isP118 (h a (List.Mem.head _)),
+        toL_ofL118 (b :: r) (fun z hz => h z (List.Mem.tail _ hz))]
+      rfl
+
+theorem gb_ofL118 (u : Nat) : ∀ (l : List BT), BT.GB u (BT.ofL l) = l.flatMap (BT.GB u)
+  | [] => rfl
+  | [a] => by
+      show BT.GB u a = _
+      rw [List.flatMap_cons, List.flatMap_nil, List.append_nil]
+  | a :: b :: r => by
+      show BT.GB u a ++ BT.GB u (BT.ofL (b :: r)) = _
+      rw [gb_ofL118 u (b :: r)]
+      rfl
+
+theorem btLe_ofL118 (m : Nat) : ∀ (l : List BT), (∀ x ∈ l, btLe72 m x = true) →
+    btLe72 m (BT.ofL l) = true
+  | [], _ => rfl
+  | [a], h => h a (List.Mem.head _)
+  | a :: b :: r, h => by
+      show (btLe72 m a && btLe72 m (BT.ofL (b :: r))) = true
+      rw [h a (List.Mem.head _),
+        btLe_ofL118 m (b :: r) (fun z hz => h z (List.Mem.tail _ hz))]
+      rfl
+
+theorem isStd_sum_D118 (a : BT) (u : Nat) (c : BT) :
+    BT.isStd (BT.sum a (BT.D u c))
+      = (BT.isP a && BT.isStd a && BT.isStd (BT.D u c) && BT.le (BT.D u c) a) := rfl
+
+theorem isStd_sum_sum118 (a b c : BT) :
+    BT.isStd (BT.sum a (BT.sum b c))
+      = (BT.isP a && BT.isStd a && BT.isStd (BT.sum b c) && BT.le b a) := rfl
+
+theorem isStd_ofL118 : ∀ (l : List BT), (∀ x ∈ l, BT.isP x = true) →
+    (∀ x ∈ l, BT.isStd x = true) → bdesc106 l → BT.isStd (BT.ofL l) = true
+  | [], _, _, _ => rfl
+  | [a], _, hs, _ => hs a (List.Mem.head _)
+  | a :: b :: r, hp, hs, hd => by
+      have hsr : BT.isStd (BT.ofL (b :: r)) = true :=
+        isStd_ofL118 (b :: r) (fun z hz => hp z (List.Mem.tail _ hz))
+          (fun z hz => hs z (List.Mem.tail _ hz)) (bdesc_tail106 hd)
+      have hpb : BT.isP b = true := hp b (List.Mem.tail _ (List.Mem.head _))
+      cases r with
+      | nil =>
+          cases b with
+          | zero => exact Bool.noConfusion hpb
+          | sum _ _ => exact Bool.noConfusion hpb
+          | D u c =>
+              show BT.isStd (BT.sum a (BT.D u c)) = true
+              rw [isStd_sum_D118, hp a (List.Mem.head _), hs a (List.Mem.head _),
+                show BT.isStd (BT.D u c) = true from hsr, hd.1]
+              rfl
+      | cons c r' =>
+          show BT.isStd (BT.sum a (BT.ofL (b :: c :: r'))) = true
+          rw [show BT.ofL (b :: c :: r') = BT.sum b (BT.ofL (c :: r')) from rfl,
+            isStd_sum_sum118, hp a (List.Mem.head _), hs a (List.Mem.head _), hd.1,
+            show BT.isStd (BT.sum b (BT.ofL (c :: r'))) = true from hsr]
+          rfl
+
+theorem bdesc_append118 : ∀ (l1 l2 : List BT), bdesc106 l1 → bdesc106 l2 →
+    (∀ y ∈ l2, ∀ x ∈ l1, BT.le y x = true) → bdesc106 (l1 ++ l2)
+  | [], l2, _, h2, _ => h2
+  | [a], l2, _, h2, hj => by
+      cases l2 with
+      | nil => trivial
+      | cons b r => exact ⟨hj b (List.Mem.head _) a (List.Mem.head _), h2⟩
+  | a :: b :: r, l2, h1, h2, hj => by
+      show BT.le b a = true ∧ bdesc106 (b :: (r ++ l2))
+      exact ⟨h1.1, bdesc_append118 (b :: r) l2 h1.2 h2
+        (fun y hy x hx => hj y hy x (List.Mem.tail _ hx))⟩
+
+/-- 主要成分の `dict` は加法主要。 -/
+theorem isAP_dict_isP118 : ∀ {x : BT}, BT.isP x = true → (dict x).isAP = true
+  | .D u a, _ => by
+      show (collapse u (dict a)).isAP = true
+      rw [collapse_eq]
+      exact isAP_omegaNF _
+  | .zero, h => Bool.noConfusion h
+  | .sum _ _, h => Bool.noConfusion h
+
+theorem dict_ofL118 : ∀ (l : List BT), (∀ x ∈ l, BT.isP x = true) →
+    descL (l.map dict) = true → dict (BT.ofL l) = ofList (l.map dict)
+  | [], _, _ => rfl
+  | [a], _, _ => rfl
+  | a :: b :: r, hp, hd => by
+      have hAP : ∀ x ∈ (b :: r).map dict, x.isAP = true := by
+        intro x hx
+        obtain ⟨z, hz, hxz⟩ := List.mem_map.mp hx
+        rw [← hxz]
+        exact isAP_dict_isP118 (hp z (List.Mem.tail _ hz))
+      have htl : toList (ofList ((b :: r).map dict)) = dict b :: r.map dict := by
+        rw [toList_ofList _ hAP]; rfl
+      show plus (dict a) (dict (BT.ofL (b :: r))) = _
+      rw [dict_ofL118 (b :: r) (fun z hz => hp z (List.Mem.tail _ hz)) (descL_tail hd),
+        plus_cons66 htl,
+        show toList (dict a) = [dict a] from
+          toList_isAP81 (isAP_dict_isP118 (hp a (List.Mem.head _))),
+        List.filter_cons_of_pos (by exact (descL_cons.mp hd).1)]
+      rfl
+
+end
+
+/-! ### §118.2 桁と尾をひとつの `ψ₁` に入れる -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Ω₁·A ⊕ ρ` の Buchholz 側 — 段 1 の桁 `ls` を並べ、そのうしろに段 0 の尾 `ns`。
+    `ns = []` なら §106 の `mulB106 ls` そのものである。 -/
+def mixB118 (ls ns : List BT) : BT := BT.ofL (ls.map (BT.D 1) ++ ns)
+/-- `ω^(Ω₁·(1 ⊕ A) ⊕ ρ)`。 -/
+def powB118 (ls ns : List BT) : BT := BT.D 1 (mixB118 ls ns)
+/-- `φ̄(1 ⊕ A, ω^ρ)`。 -/
+def vebB118 (ls ns : List BT) : BT := BT.D 0 (powB118 ls ns)
+
+/-- 尾の桁 — 主要成分であることが余分に要る。 -/
+def TDig118 (n : BT) : Prop :=
+  BT.isP n = true ∧ btLe72 1 n = true ∧ BT.isStd n = true ∧ Hd085 n
+
+/-- **被覆条件** — §106 の `cov_vebB106` にあたるもの。`ns = []` なら `Dig106` から出る
+    (`covM_nil118`)。決定可能な条件で、使うたびに実際に確かめる。 -/
+def CovM118 (ls ns : List BT) : Prop :=
+  ∀ e ∈ BT.GB 0 (mixB118 ls ns), BT.lt e (powB118 ls ns) = true
+
+theorem mulB106_eq_ofL118 : ∀ (ls : List BT), mulB106 ls = BT.ofL (ls.map (BT.D 1))
+  | [] => rfl
+  | [_] => rfl
+  | l :: l2 :: ls => by
+      show BT.sum (BT.D 1 l) (mulB106 (l2 :: ls)) = _
+      rw [mulB106_eq_ofL118 (l2 :: ls)]
+      rfl
+
+theorem mixB118_nil118 (ls : List BT) : mixB118 ls [] = mulB106 ls := by
+  rw [mulB106_eq_ofL118]
+  show BT.ofL (ls.map (BT.D 1) ++ []) = _
+  rw [List.append_nil]
+
+/-- 主要かつ頭が段 0 の項は `D 0 c` そのもの。 -/
+theorem eq_D0_of_isP118 {n : BT} (hp : BT.isP n = true) (hd : Hd085 n) :
+    ∃ c, n = BT.D 0 c := hd n (by rw [toL_isP118 hp]; exact List.Mem.head _)
+
+theorem gb1_nil_tail118 {n : BT} (hp : BT.isP n = true) (hd : Hd085 n) :
+    BT.GB 1 n = [] := by
+  obtain ⟨c, hc⟩ := eq_D0_of_isP118 hp hd
+  rw [hc]
+  show (if 1 ≤ 0 then c :: BT.GB 1 c else []) = []
+  rw [if_neg (by omega)]
+
+theorem isP_mem_mix118 {ls ns : List BT} (hT : ∀ n ∈ ns, TDig118 n) :
+    ∀ x ∈ ls.map (BT.D 1) ++ ns, BT.isP x = true := by
+  intro x hx
+  rcases List.mem_append.mp hx with h1 | h1
+  · obtain ⟨l, _, hxl⟩ := List.mem_map.mp h1
+    rw [← hxl]; rfl
+  · exact (hT x h1).1
+
+theorem toL_mixB118 {ls ns : List BT} (hT : ∀ n ∈ ns, TDig118 n) :
+    BT.toL (mixB118 ls ns) = ls.map (BT.D 1) ++ ns :=
+  toL_ofL118 _ (isP_mem_mix118 hT)
+
+theorem gb1_digs118 : ∀ (ls : List BT), (∀ l ∈ ls, Hd085 l) →
+    (ls.map (BT.D 1)).flatMap (BT.GB 1) = ls
+  | [], _ => rfl
+  | l :: r, h => by
+      show BT.GB 1 (BT.D 1 l) ++ (r.map (BT.D 1)).flatMap (BT.GB 1) = _
+      rw [gb1_digs118 r (fun z hz => h z (List.Mem.tail _ hz)),
+        show BT.GB 1 (BT.D 1 l) = [l] from by
+          show (if 1 ≤ 1 then l :: BT.GB 1 l else []) = [l]
+          rw [if_pos (Nat.le_refl 1), gb1_nil98 l (h l (List.Mem.head _))]]
+      rfl
+
+theorem gb1_tails118 : ∀ (ns : List BT), (∀ n ∈ ns, TDig118 n) →
+    ns.flatMap (BT.GB 1) = []
+  | [], _ => rfl
+  | n :: r, h => by
+      show BT.GB 1 n ++ r.flatMap (BT.GB 1) = _
+      rw [gb1_tails118 r (fun z hz => h z (List.Mem.tail _ hz)),
+        gb1_nil_tail118 (h n (List.Mem.head _)).1 (h n (List.Mem.head _)).2.2.2]
+      rfl
+
+theorem gb0_digs118 : ∀ (ls : List BT),
+    (ls.map (BT.D 1)).flatMap (BT.GB 0) = ls.flatMap (fun l => l :: BT.GB 0 l)
+  | [] => rfl
+  | l :: r => by
+      show BT.GB 0 (BT.D 1 l) ++ (r.map (BT.D 1)).flatMap (BT.GB 0) = _
+      rw [gb0_digs118 r,
+        show BT.GB 0 (BT.D 1 l) = l :: BT.GB 0 l from by
+          show (if 0 ≤ 1 then l :: BT.GB 0 l else []) = _
+          rw [if_pos (by omega)]]
+      rfl
+
+theorem gb1_mixB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) : BT.GB 1 (mixB118 ls ns) = ls := by
+  show BT.GB 1 (BT.ofL (ls.map (BT.D 1) ++ ns)) = _
+  rw [gb_ofL118, List.flatMap_append, gb1_digs118 ls (fun l hl => (hD l hl).2.2.1),
+    gb1_tails118 ns hT, List.append_nil]
+
+theorem gb0_mixB118 {ls ns : List BT} :
+    BT.GB 0 (mixB118 ls ns)
+      = ls.flatMap (fun l => l :: BT.GB 0 l) ++ ns.flatMap (BT.GB 0) := by
+  show BT.GB 0 (BT.ofL (ls.map (BT.D 1) ++ ns)) = _
+  rw [gb_ofL118, List.flatMap_append, gb0_digs118 ls]
+
+theorem btLe_mixB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) : btLe72 1 (mixB118 ls ns) = true := by
+  refine btLe_ofL118 1 _ ?_
+  intro x hx
+  rcases List.mem_append.mp hx with h1 | h1
+  · obtain ⟨l, hl, hxl⟩ := List.mem_map.mp h1
+    rw [← hxl]
+    show (decide (1 ≤ 1) && btLe72 1 l) = true
+    rw [(hD l hl).1]; rfl
+  · exact (hT x h1).2.1
+
+theorem isStd_mixB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) (hde : bdesc106 (ls.map (BT.D 1) ++ ns)) :
+    BT.isStd (mixB118 ls ns) = true := by
+  refine isStd_ofL118 _ (isP_mem_mix118 hT) ?_ hde
+  intro x hx
+  rcases List.mem_append.mp hx with h1 | h1
+  · obtain ⟨l, hl, hxl⟩ := List.mem_map.mp h1
+    rw [← hxl]
+    show (BT.isStd l && (BT.GB 1 l).all (fun e => BT.lt e l)) = true
+    rw [(hD l hl).2.1, gb1_nil98 l (hD l hl).2.2.1]
+    rfl
+  · exact (hT x h1).2.2.1
+
+end
+
+/-! ### §118.2b 合法性 — 標準形・段・被覆 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem toL_mix_cons118 {l0 : BT} {r ns : List BT} (hT : ∀ n ∈ ns, TDig118 n) :
+    BT.toL (mixB118 (l0 :: r) ns) = BT.D 1 l0 :: (r.map (BT.D 1) ++ ns) := by
+  rw [toL_mixB118 hT]; rfl
+
+theorem hd085_mix_nil118 {ns : List BT} (hT : ∀ n ∈ ns, TDig118 n) :
+    Hd085 (mixB118 [] ns) := by
+  intro x hx
+  rw [toL_mixB118 hT] at hx
+  exact eq_D0_of_isP118 (hT x (by simpa using hx)).1 (hT x (by simpa using hx)).2.2.2
+
+/-- 桁は作った和より真に小さい。 -/
+theorem btlt_dig_mix118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) {l : BT} (hl : l ∈ ls) :
+    BT.lt l (mixB118 ls ns) = true := by
+  cases ls with
+  | nil => cases hl
+  | cons l0 r => exact btlt_hd0_hd1_106 (hD l hl).2.2.1 (toL_mix_cons118 hT)
+
+theorem isStd_powB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) (hde : bdesc106 (ls.map (BT.D 1) ++ ns)) :
+    BT.isStd (powB118 ls ns) = true := by
+  show (BT.isStd (mixB118 ls ns) &&
+    (BT.GB 1 (mixB118 ls ns)).all (fun e => BT.lt e (mixB118 ls ns))) = true
+  rw [isStd_mixB118 hD hT hde, Bool.true_and, gb1_mixB118 hD hT, List.all_eq_true]
+  intro x hx
+  exact btlt_dig_mix118 hD hT hx
+
+/-- `Ω₁·A ⊕ ρ < ω^(Ω₁·(1⊕A) ⊕ ρ)`。 -/
+theorem btlt_mix_pow118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) :
+    BT.lt (mixB118 ls ns) (powB118 ls ns) = true := by
+  cases ls with
+  | nil => exact btlt_hd0_D1_98 (hd085_mix_nil118 hT) _
+  | cons l0 r =>
+      have hm := toL_mix_cons118 (l0 := l0) (r := r) hT
+      have hlt : BT.lt l0 (mixB118 (l0 :: r) ns) = true :=
+        btlt_dig_mix118 hD hT (List.Mem.head _)
+      exact btlt_of_hd106 hm rfl (bt_ne_of_lt98 hlt) hlt
+
+theorem gb0_sub_mix118 {ls ns : List BT} {l : BT} (hl : l ∈ ls) :
+    ∀ e ∈ BT.GB 0 l, e ∈ BT.GB 0 (mixB118 ls ns) := by
+  intro e he
+  rw [gb0_mixB118]
+  exact List.mem_append_left _ (List.mem_flatMap.mpr ⟨l, hl, List.Mem.tail _ he⟩)
+
+theorem mem_gb0_mix_dig118 {ls ns : List BT} {l : BT} (hl : l ∈ ls) :
+    l ∈ BT.GB 0 (mixB118 ls ns) := by
+  rw [gb0_mixB118]
+  exact List.mem_append_left _ (List.mem_flatMap.mpr ⟨l, hl, List.Mem.head _⟩)
+
+theorem gb0_sub_mix_tail118 {ls ns : List BT} {n : BT} (hn : n ∈ ns) :
+    ∀ e ∈ BT.GB 0 n, e ∈ BT.GB 0 (mixB118 ls ns) := by
+  intro e he
+  rw [gb0_mixB118]
+  exact List.mem_append_right _ (List.mem_flatMap.mpr ⟨n, hn, he⟩)
+
+theorem hd085_vebB118 (ls ns : List BT) : Hd085 (vebB118 ls ns) := by
+  intro x hx
+  exact ⟨powB118 ls ns, List.mem_singleton.mp hx⟩
+
+theorem gb0_powB118 (ls ns : List BT) :
+    BT.GB 0 (powB118 ls ns) = mixB118 ls ns :: BT.GB 0 (mixB118 ls ns) := by
+  show (if 0 ≤ 1 then mixB118 ls ns :: BT.GB 0 (mixB118 ls ns) else []) = _
+  rw [if_pos (by omega)]
+
+theorem gb0_vebB118 (ls ns : List BT) :
+    BT.GB 0 (vebB118 ls ns) = powB118 ls ns :: BT.GB 0 (powB118 ls ns) := by
+  show (if 0 ≤ 0 then powB118 ls ns :: BT.GB 0 (powB118 ls ns) else []) = _
+  rw [if_pos (by omega)]
+
+theorem isStd_vebB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) (hde : bdesc106 (ls.map (BT.D 1) ++ ns))
+    (hC : CovM118 ls ns) : BT.isStd (vebB118 ls ns) = true := by
+  show (BT.isStd (powB118 ls ns) &&
+    (BT.GB 0 (powB118 ls ns)).all (fun e => BT.lt e (powB118 ls ns))) = true
+  rw [isStd_powB118 hD hT hde, Bool.true_and, gb0_powB118, List.all_eq_true]
+  intro x hx
+  rcases List.mem_cons.mp hx with h1 | h1
+  · rw [h1]; exact btlt_mix_pow118 hD hT
+  · exact hC x h1
+
+theorem btLe_vebB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) : btLe72 1 (vebB118 ls ns) = true := by
+  show (decide (0 ≤ 1) && (decide (1 ≤ 1) && btLe72 1 (mixB118 ls ns))) = true
+  rw [btLe_mixB118 hD hT]
+  rfl
+
+/-- **段の正直さ (上)。**  上へは 1 まで。§85.6 の段 2 の反証には届かない。 -/
+theorem btLe1_vebB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) : btLe72 1 (vebB118 ls ns) = true := btLe_vebB118 hD hT
+
+/-- **段の正直さ (下)。**  段 0 は最初の一歩で離れる。§103.6 の `noLevel0_inMid103` が
+    そう要求する。 -/
+theorem btLe0_vebB118 (ls ns : List BT) : btLe72 0 (vebB118 ls ns) = false := rfl
+
+/-- 段 0 頭で `GB 0` が `mix` に収まる項は、作った値より真に小さい。 -/
+theorem btlt_hd0_veb118 {ls ns : List BT} (hC : CovM118 ls ns) {x : BT} (hx : Hd085 x)
+    (hsub : ∀ e ∈ BT.GB 0 x, e ∈ BT.GB 0 (mixB118 ls ns)) :
+    BT.lt x (vebB118 ls ns) = true := by
+  cases hxl : BT.toL x with
+  | nil =>
+      show BT.ltL (BT.size x + BT.size (vebB118 ls ns) + 2) (BT.toL x)
+        (BT.toL (vebB118 ls ns)) = true
+      rw [hxl, show BT.size x + BT.size (vebB118 ls ns) + 2
+          = (BT.size x + BT.size (vebB118 ls ns) + 1) + 1 from rfl]
+      exact ltL_nil_cons93 _ _ _
+  | cons y ys =>
+      obtain ⟨c, hc⟩ := hx y (by rw [hxl]; exact List.Mem.head _)
+      have hcg : c ∈ BT.GB 0 x :=
+        mem_gb0_of_toL106 x 0 c (by rw [hxl, ← hc]; exact List.Mem.head _)
+      have hcl : BT.lt c (powB118 ls ns) = true := hC c (hsub c hcg)
+      exact btlt_of_hd106 (u := 0) (a := c) (b := powB118 ls ns) (ps := ys) (qs := [])
+        (by rw [hxl, hc]) rfl (bt_ne_of_lt98 hcl) hcl
+
+theorem btlt_mix_D1veb118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) (hC : CovM118 ls ns) :
+    BT.lt (mixB118 ls ns) (BT.D 1 (vebB118 ls ns)) = true := by
+  cases ls with
+  | nil => exact btlt_hd0_D1_98 (hd085_mix_nil118 hT) _
+  | cons l0 r =>
+      have hlt : BT.lt l0 (vebB118 (l0 :: r) ns) = true :=
+        btlt_hd0_veb118 hC (hD l0 (List.Mem.head _)).2.2.1 (gb0_sub_mix118 (List.Mem.head _))
+      exact btlt_of_hd106 (toL_mix_cons118 hT) rfl (bt_ne_of_lt98 hlt) hlt
+
+/-- **作った値も桁として使える** — §106 の `cov_vebB106` を尾つきに広げたもの。 -/
+theorem cov_vebB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) (hC : CovM118 ls ns) :
+    ∀ e ∈ BT.GB 0 (vebB118 ls ns),
+      BT.lt e (BT.D 1 (BT.D 1 (vebB118 ls ns))) = true := by
+  intro e he
+  have hmv : BT.lt (mixB118 ls ns) (BT.D 1 (vebB118 ls ns)) = true :=
+    btlt_mix_D1veb118 hD hT hC
+  have hvv : BT.lt (vebB118 ls ns) (BT.D 1 (vebB118 ls ns)) = true :=
+    btlt_hd0_D1_98 (hd085_vebB118 ls ns) _
+  rw [gb0_vebB118, gb0_powB118] at he
+  rcases List.mem_cons.mp he with h1 | h1
+  · rw [h1]
+    exact btlt_arg98 (bt_ne_of_lt98 hmv) hmv
+  rcases List.mem_cons.mp h1 with h2 | h2
+  · rw [h2]
+    exact lt_trans83 hmv (btlt_arg98 (bt_ne_of_lt98 hvv) hvv)
+  · exact lt_trans83 (hC e h2)
+      (btlt_arg98 (bt_ne_of_lt98 hmv) hmv)
+
+/-- **証人は次の桁になる** — 構成は反復できる。 -/
+theorem dig_vebB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) (hde : bdesc106 (ls.map (BT.D 1) ++ ns))
+    (hC : CovM118 ls ns) : Dig106 (vebB118 ls ns) :=
+  ⟨btLe_vebB118 hD hT, isStd_vebB118 hD hT hde hC, hd085_vebB118 ls ns,
+    cov_vebB118 hD hT hC⟩
+
+/-- 主要成分でもある。 -/
+theorem tdig_vebB118 {ls ns : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hT : ∀ n ∈ ns, TDig118 n) (hde : bdesc106 (ls.map (BT.D 1) ++ ns))
+    (hC : CovM118 ls ns) : TDig118 (vebB118 ls ns) :=
+  ⟨rfl, btLe_vebB118 hD hT, isStd_vebB118 hD hT hde hC, hd085_vebB118 ls ns⟩
+
+theorem le_of_btlt118 {a b : BT} (h : BT.lt a b = true) : BT.le a b = true := by
+  show ((a == b) || BT.lt a b) = true
+  rw [h, Bool.or_true]
+
+theorem bdesc_map_D1_118 : ∀ (ls : List BT), bdesc106 ls → bdesc106 (ls.map (BT.D 1))
+  | [], _ => trivial
+  | [_], _ => trivial
+  | _ :: b :: r, h => ⟨btle_arg106 h.1, bdesc_map_D1_118 (b :: r) h.2⟩
+
+/-- 桁の列と尾の列がそれぞれ降順なら、並べたものも降順 — 段 1 は段 0 より上。 -/
+theorem bdesc_mix118 {ls ns : List BT} (hT : ∀ n ∈ ns, TDig118 n)
+    (hdl : bdesc106 ls) (hdn : bdesc106 ns) : bdesc106 (ls.map (BT.D 1) ++ ns) := by
+  refine bdesc_append118 _ _ (bdesc_map_D1_118 ls hdl) hdn ?_
+  intro y hy x hx
+  obtain ⟨l, _, hxl⟩ := List.mem_map.mp hx
+  rw [← hxl]
+  exact le_of_btlt118 (btlt_hd0_D1_98 (hT y hy).2.2.2 l)
+
+/-- **`ns = []` では被覆条件は `Dig106` から出る** — §106 の場合をそのまま含む。 -/
+theorem covM_nil118 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l)
+    (hde : bdesc106 ls) : CovM118 ls [] := by
+  intro e he
+  show BT.lt e (BT.D 1 (mixB118 ls [])) = true
+  rw [mixB118_nil118] at he ⊢
+  exact gb0_lt_powB106 hD hde e he
+
+end
+
+/-! ### §118.2c 値 — 係数が `1` でない Buchholz 証人 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem descL_append118 : ∀ (l1 l2 : List Term), descL l1 = true → descL l2 = true →
+    (∀ y ∈ l2, ∀ x ∈ l1, le y x = true) → descL (l1 ++ l2) = true
+  | [], l2, _, h2, _ => h2
+  | [a], l2, _, h2, hj => by
+      cases l2 with
+      | nil => rfl
+      | cons b r =>
+          show (le b a && descL (b :: r)) = true
+          rw [hj b (List.Mem.head _) a (List.Mem.head _), h2]
+          rfl
+  | a :: b :: r, l2, h1, h2, hj => by
+      show (le b a && descL ((b :: r) ++ l2)) = true
+      rw [(descL_cons.mp h1).1,
+        descL_append118 (b :: r) l2 (descL_cons.mp h1).2 h2
+          (fun y hy x hx => hj y hy x (List.Mem.tail _ hx))]
+      rfl
+
+/-- 成分がすべて右の項の頭以上なら、`plus` はただの連結。 -/
+theorem plus_concat118 {s t : Term} (hs : inT s = true)
+    (hj : ∀ y ∈ toList t, ∀ x ∈ toList s, le y x = true) :
+    plus s t = ofList (toList s ++ toList t) := by
+  cases hl : toList t with
+  | nil => rw [plus_nil hl, List.append_nil, inT_ofList_toList s hs]
+  | cons b1 r =>
+      rw [plus_cons66 hl,
+        show (toList s).filter (fun a => le b1 a) = toList s from
+          List.filter_eq_self.mpr (fun x hx => hj b1 (by rw [hl]; exact List.Mem.head _) x hx)]
+
+/-- **桁と尾の値。**  `dict (Ω₁·A ⊕ ρ) = Ω₁·A ⊕ ρ`。 -/
+theorem dict_mixB118 (Hp : PsiIdxOKStd172) {A rho : Term} {ls ns : List BT}
+    (hD : ∀ l ∈ ls, Dig106 l) (hT : ∀ n ∈ ns, TDig118 n)
+    (hA : inT A = true)
+    (hmap : ls.map dict = (toList A).map logOm)
+    (hrho : inT rho = true) (hrhoW : lt rho (reg 1) = true)
+    (hns : ns.map dict = toList rho) :
+    dict (mixB118 ls ns) = plus (mulL (reg 1) A) rho := by
+  have hmulT : inT (mulL (reg 1) A) = true := inT_mulL mulDescInT (inT_reg 1) hA
+  have hmulL : toList (mulL (reg 1) A)
+      = (toList A).map (fun p => omegaNF (plus (reg 1) (logOm p))) := toList_mulLW106
+  have hpt : ∀ l ∈ ls, (fun l => dict (BT.D 1 l)) l
+      = ((fun g => omegaNF (plus (reg 1) g)) ∘ dict) l := by
+    intro l hl
+    exact dict_D1_eq77 Hp l (hD l hl).1 (hD l hl).2.1
+  have hdigs : ls.map (fun l => dict (BT.D 1 l)) = toList (mulL (reg 1) A) := by
+    rw [hmulL, List.map_congr_left hpt, ← List.map_map, hmap, List.map_map]
+    rfl
+  have hjoin : ∀ y ∈ toList rho, ∀ x ∈ toList (mulL (reg 1) A), le y x = true := by
+    intro y hy x hx
+    exact le_of_lt94 (lt_of_ltW_geW106 (inTL_inT hrho y hy) (inTL_inT hmulT x hx)
+      (ltW_toList79 rho hrho hrhoW y hy) (geW_mulL106 hA x hx))
+  have hdesc : descL ((ls.map (BT.D 1) ++ ns).map dict) = true := by
+    rw [List.map_append, List.map_map,
+      show (dict ∘ BT.D 1) = (fun l => dict (BT.D 1 l)) from rfl, hdigs, hns]
+    exact descL_append118 _ _ (by rw [hmulL]; exact mulDescInT (reg 1) A (inT_reg 1) hA)
+      (inT_toList rho hrho).2 hjoin
+  show dict (BT.ofL (ls.map (BT.D 1) ++ ns)) = _
+  rw [dict_ofL118 _ (isP_mem_mix118 hT) hdesc, List.map_append, List.map_map,
+    show (dict ∘ BT.D 1) = (fun l => dict (BT.D 1 l)) from rfl, hdigs, hns,
+    plus_concat118 hmulT hjoin]
+
+theorem omegaNF_ne_one118 {rho : Term} (hrho : inT rho = true) (hrhoM : lt rho M = true)
+    (hne : rho ≠ zero) : (omegaNF rho == TM.Term.one) = false := by
+  cases hc : (omegaNF rho == TM.Term.one) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h1 : logOm (omegaNF rho) = rho := logOm_omegaNF106 hrho hrhoM
+      rw [eq_of_beq hc] at h1
+      exact hne (h1.symm.trans (show logOm TM.Term.one = zero by decide))
+
+theorem ltW_omegaNF_lt118 {rho : Term} (hrho : inT rho = true) (hrhoW : lt rho (reg 1) = true) :
+    lt (omegaNF rho) (reg 1) = true := by
+  have h1 := lt_omegaNF_inT79 hrho (inT_reg 1) hrhoW
+  rw [omegaNF_reg1_80] at h1
+  exact h1
+
+/-- **`ψ₁` の中身の値。**  `dict (ψ₁ (Ω₁·A ⊕ ρ)) = ω^(Ω₁·(1⊕A) ⊕ ρ)`、つまり
+    §106 の一組の引数 `argV106 (1⊕A) (ω^ρ)` そのもの。**尾 `ρ` が係数を `1` から動かす。** -/
+theorem dict_powB118 (Hp : PsiIdxOKStd172) {A rho : Term} {ls ns : List BT}
+    (hD : ∀ l ∈ ls, Dig106 l) (hT : ∀ n ∈ ns, TDig118 n)
+    (hde : bdesc106 (ls.map (BT.D 1) ++ ns))
+    (hA : inT A = true) (hAM : lt A M = true) (hAW : lt A (reg 1) = true)
+    (hmap : ls.map dict = (toList A).map logOm)
+    (hrho : inT rho = true) (hrhoM : lt rho M = true) (hrhoW : lt rho (reg 1) = true)
+    (hns : ns.map dict = toList rho) :
+    dict (powB118 ls ns) = argV106 (plus TM.Term.one A) (omegaNF rho) := by
+  have hmulT : inT (mulL (reg 1) A) = true := inT_mulL mulDescInT (inT_reg 1) hA
+  show dict (BT.D 1 (mixB118 ls ns)) = _
+  rw [dict_D1_eq77 Hp (mixB118 ls ns) (btLe_mixB118 hD hT) (isStd_mixB118 hD hT hde),
+    dict_mixB118 Hp hD hT hA hmap hrho hrhoW hns,
+    ← plus_assoc_inT (reg 1) (mulL (reg 1) A) rho (inT_reg 1) hmulT hrho,
+    plus_one_mulL106 hA hAM hAW]
+  show _ = omegaNF (plus (mulL (reg 1) (plus TM.Term.one A)) (logOm (omegaNF rho)))
+  rw [logOm_omegaNF106 hrho hrhoM]
+
+/-- **§118.2 の主定理 — 係数が `1` でない目標に、作った合法な証人。**
+    `dict (vebB118 ls ns) = φ̄(1 ⊕ A, ω^ρ)`。`ns = []` なら `ω^ρ = 1` で §106 に戻る。 -/
+theorem dict_vebB118 (Hp : PsiIdxOKStd172) {A rho : Term} {ls ns : List BT}
+    (hD : ∀ l ∈ ls, Dig106 l) (hT : ∀ n ∈ ns, TDig118 n)
+    (hde : bdesc106 (ls.map (BT.D 1) ++ ns))
+    (hA : inT A = true) (hAM : lt A M = true) (hAW : lt A (reg 1) = true)
+    (hmap : ls.map dict = (toList A).map logOm)
+    (hrho : inT rho = true) (hrhoM : lt rho M = true) (hrhoW : lt rho (reg 1) = true)
+    (hrhone : rho ≠ zero) (hns : ns.map dict = toList rho)
+    (hnoskip : phiNF (plus TM.Term.one A) (omegaNF rho)
+      = phi (plus TM.Term.one A) (omegaNF rho)) :
+    dict (vebB118 ls ns) = phi (plus TM.Term.one A) (omegaNF rho) := by
+  show collapse 0 (dict (powB118 ls ns)) = _
+  rw [dict_powB118 Hp hD hT hde hA hAM hAW hmap hrho hrhoM hrhoW hns]
+  exact collapse0_argAP106 (inT_plus inT_one106 hA)
+    (lt_plus_M inT_one106 hA ltM_one106 hAM)
+    (lt_plus_W79 inT_one106 hA ltW_one106 hAW) (ne_zero_plus_one106 hA)
+    (inT_omegaNF hrho) (ltM_omegaNF hrho hrhoM) (ltW_omegaNF_lt118 hrho hrhoW)
+    (isAP_omegaNF _) (omegaNF_ne_one118 hrho hrhoM hrhone) hnoskip
+
+end
+
+/-! ### §118.3 折り畳みの**あとの**組 — `acc := φ̄(a, acc ⊕ c)` -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 二組目からの積み上げ。**これが §106 に無かった部分である。** -/
+def foldV118 (acc : Term) : List (Term × Term) → Term
+  | [] => acc
+  | ac :: r => foldV118 (phiNF ac.1 (plus acc ac.2)) r
+
+/-- 組の列がぜんぶで作る値。最初の組だけ `base` と `c ⊖ 1` を使う。 -/
+def valP118 : List (Term × Term) → Term
+  | [] => zero
+  | ac :: r => foldV118 (phiNF ac.1 (plus (baseOf 0) (sub1 ac.2))) r
+
+/-- **Veblen 枝しか通らない折り畳みは `foldV118` そのもの。** -/
+theorem fold_some118 : ∀ (prs : List (Term × Term)) (i : Option Term) (acc : Term),
+    (∀ p ∈ prs, le (reg 1) p.1 = false) →
+    prs.foldl (stepF (reg 1) (baseOf 0)) (i, some acc) = (i, some (foldV118 acc prs))
+  | [], _, _, _ => rfl
+  | ac :: r, i, acc, h => by
+      have hstep : stepF (reg 1) (baseOf 0) (i, some acc) ac
+          = (i, some (phiNF ac.1 (plus acc ac.2))) := by
+        show (if le (reg 1) ac.1 = true then _ else (i, some (phiNF ac.1 (plus acc ac.2)))) = _
+        rw [if_neg (by rw [h ac (List.Mem.head _)]; exact Bool.noConfusion)]
+      show (r.foldl (stepF (reg 1) (baseOf 0)) (stepF (reg 1) (baseOf 0) (i, some acc) ac)) = _
+      rw [hstep, fold_some118 r i _ (fun p hp => h p (List.Mem.tail _ hp))]
+      rfl
+
+theorem fold_none118 {ac : Term × Term} {r : List (Term × Term)}
+    (h : ∀ p ∈ ac :: r, le (reg 1) p.1 = false) :
+    ((ac :: r).foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2 = some (valP118 (ac :: r)) := by
+  have hstep : stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term)) ac
+      = ((none : Option Term), some (phiNF ac.1 (plus (baseOf 0) (sub1 ac.2)))) := by
+    show (if le (reg 1) ac.1 = true then _ else
+      ((none : Option Term), some (phiNF ac.1 (plus (baseOf 0) (sub1 ac.2))))) = _
+    rw [if_neg (by rw [h ac (List.Mem.head _)]; exact Bool.noConfusion)]
+  show (r.foldl (stepF (reg 1) (baseOf 0))
+    (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term)) ac)).2 = _
+  rw [hstep, fold_some118 r none _ (fun p hp => h p (List.Mem.tail _ hp))]
+  rfl
+
+/-- **`n` 組の折り畳みの値。**  §106 の `collapse0_one_pair106` を組の数について一般に
+    したもの。尾 `ρ` が `0` で、指数がぜんぶ `Ω₁` より下という二つだけが条件である。 -/
+theorem collapse0_pairs118 {x R : Term} {ac : Term × Term} {r : List (Term × Term)}
+    (hw : wcnf (reg 1) (toList x) = (ac :: r, zero))
+    (hlow : ∀ p ∈ ac :: r, le (reg 1) p.1 = false)
+    (hiR : inT R = true) (hRnf : omegaNF R = R)
+    (hval : valP118 (ac :: r) = R) : collapse 0 x = R := by
+  rw [collapse0_raw89]
+  show omegaNF (plus (reg 0) (plus
+    (((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero)
+    ((wcnf (reg 1) (toList x)).2))) = _
+  rw [hw]
+  show omegaNF (plus (reg 0) (plus
+    (((ac :: r).foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) zero)) = _
+  rw [fold_none118 hlow]
+  show omegaNF (plus (reg 0) (plus (valP118 (ac :: r)) zero)) = _
+  rw [hval, show plus R zero = R from rfl,
+    show plus (reg 0) R = plus zero R from rfl, plus_zero_left_inT hiR, hRnf]
+
+end
+
+/-! ### §118.3b `wcnf` を `n` 成分で読む -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- **一成分ぶんの分解。**  §106 の `collapse0_argV106` の中で計算されていた三つを
+    取り出したもの — 一組では使い捨てだったが、`n` 組では帰納法の材料になる。 -/
+theorem argV_facts118 {A B : Term} (hA : inT A = true) (hAM : lt A M = true)
+    (hAW : lt A (reg 1) = true) (hAne : A ≠ zero)
+    (hB : inT B = true) (hBM : lt B M = true) (hgW0 : lt (logOm B) (reg 1) = true) :
+    lt (argV106 A B) (reg 1) = false ∧ wA (reg 1) (argV106 A B) = A
+      ∧ wC (reg 1) (argV106 A B) = omegaNF (logOm B) := by
+  have hg : inT (logOm B) = true := inT_logOm hB
+  have hgM : lt (logOm B) M = true := ltM_logOm hB hBM
+  have hgW : ∀ q ∈ toList (logOm B), lt q (reg 1) = true :=
+    ltW_toList79 (logOm B) hg hgW0
+  have hmul : inT (mulL (reg 1) A) = true := inT_mulL mulDescInT (inT_reg 1) hA
+  have hmulM : lt (mulL (reg 1) A) M = true := ltM_mulL (inT_reg 1) hA (ltM_reg 1) hAM
+  have hY : inT (plus (mulL (reg 1) A) (logOm B)) = true := inT_plus hmul hg
+  have hYM : lt (plus (mulL (reg 1) A) (logOm B)) M = true := lt_plus_M hmul hg hmulM hgM
+  have hlist := toList_argY106 hA hB hgW0
+  have hmulnil : toList (mulL (reg 1) A) ≠ [] := by
+    intro hc
+    exact mulL_ne_zero106 hAne (toList_eq_nil _ hc)
+  have hYW : lt (plus (mulL (reg 1) A) (logOm B)) (reg 1) = false := by
+    cases hm : toList (mulL (reg 1) A) with
+    | nil => exact absurd hm hmulnil
+    | cons q rest =>
+        refine ltW_hd106 (q := q) (rest := rest ++ toList (logOm B)) ?_ ?_
+        · rw [hlist, hm]; rfl
+        · exact geW_mulL106 hA q (by rw [hm]; exact List.Mem.head _)
+  have hlog : logOm (argV106 A B) = plus (mulL (reg 1) A) (logOm B) :=
+    logOm_omegaNF106 hY hYM
+  have hfil1 : (toList (plus (mulL (reg 1) A) (logOm B))).filter (fun q => !lt q (reg 1))
+      = toList (mulL (reg 1) A) := by
+    rw [hlist, List.filter_append,
+      show (toList (mulL (reg 1) A)).filter (fun q => !lt q (reg 1))
+          = toList (mulL (reg 1) A) from
+        List.filter_eq_self.mpr (fun q hq => by rw [geW_mulL106 hA q hq]; rfl),
+      show (toList (logOm B)).filter (fun q => !lt q (reg 1)) = [] from
+        List.filter_eq_nil_iff.mpr (fun q hq => by rw [hgW q hq]; exact Bool.noConfusion),
+      List.append_nil]
+  have hfil2 : (toList (plus (mulL (reg 1) A) (logOm B))).filter (fun q => lt q (reg 1))
+      = toList (logOm B) := by
+    rw [hlist, List.filter_append,
+      show (toList (mulL (reg 1) A)).filter (fun q => lt q (reg 1)) = [] from
+        List.filter_eq_nil_iff.mpr (fun q hq => by
+          rw [geW_mulL106 hA q hq]; exact Bool.noConfusion),
+      show (toList (logOm B)).filter (fun q => lt q (reg 1)) = toList (logOm B) from
+        List.filter_eq_self.mpr (fun q hq => hgW q hq),
+      List.nil_append]
+  refine ⟨ltW_omegaNF106 hY hYW, ?_, ?_⟩
+  · show ofList (((toList (logOm (argV106 A B))).filter
+      (fun q => !lt q (reg 1))).map (divAP (reg 1))) = A
+    rw [hlog, hfil1]
+    exact divAP_mulL106 hA hAM hAW
+  · show omegaNF (ofList ((toList (logOm (argV106 A B))).filter (fun q => lt q (reg 1))))
+      = omegaNF (logOm B)
+    rw [hlog, hfil2, inT_ofList_toList (logOm B) hg]
+
+/-- 組の列から `ψ₀` の引数を組み立てる — `Trans.Dict.xOf` の、係数が加法主要な場合。 -/
+def argM118 (prs : List (Term × Term)) : Term :=
+  ofList (prs.map (fun ac => argV106 ac.1 ac.2))
+
+/-- 一組が満たすべき条件 — 指数は `0` でなく `Ω₁` より下、係数は加法主要で `Ω₁` より下。 -/
+def OKP118 (ac : Term × Term) : Prop :=
+  inT ac.1 = true ∧ lt ac.1 M = true ∧ lt ac.1 (reg 1) = true ∧ ac.1 ≠ zero ∧
+    inT ac.2 = true ∧ lt ac.2 M = true ∧ lt ac.2 (reg 1) = true ∧ ac.2.isAP = true
+
+/-- 指数は隣り合って真に降る — これが `wcnf` の併合を止める。 -/
+def descP118 : List (Term × Term) → Prop
+  | [] => True
+  | [_] => True
+  | a :: b :: r => lt b.1 a.1 = true ∧ descP118 (b :: r)
+
+theorem descP_tail118 {a : Term × Term} {l : List (Term × Term)}
+    (h : descP118 (a :: l)) : descP118 l := by
+  cases l with
+  | nil => trivial
+  | cons b r => exact h.2
+
+theorem toList_argM118 (prs : List (Term × Term)) :
+    toList (argM118 prs) = prs.map (fun ac => argV106 ac.1 ac.2) := by
+  refine toList_ofList _ ?_
+  intro x hx
+  obtain ⟨ac, _, hxa⟩ := List.mem_map.mp hx
+  rw [← hxa]
+  exact isAP_omegaNF _
+
+theorem wC_eq_of_OKP118 {ac : Term × Term} (h : OKP118 ac) :
+    omegaNF (logOm ac.2) = ac.2 :=
+  omegaNF_logOm100 h.2.2.2.2.1 h.2.2.2.2.2.2.2 h.2.2.2.2.2.1
+
+theorem ltW_logOm_of_OKP118 {ac : Term × Term} (h : OKP118 ac) :
+    lt (logOm ac.2) (reg 1) = true :=
+  ltW_logOm106 h.2.2.2.2.1 h.2.2.2.2.2.2.2 h.2.2.2.2.2.1 h.2.2.2.2.2.2.1
+
+/-- **`n` 成分の底 `Ω₁` 分解。**  組がそのまま戻る。尾は `0`。 -/
+theorem wcnf_argM118 : ∀ (prs : List (Term × Term)), (∀ p ∈ prs, OKP118 p) →
+    descP118 prs → wcnf (reg 1) (toList (argM118 prs)) = (prs, zero)
+  | [], _, _ => rfl
+  | ac :: r, hOK, hd => by
+      have hac := hOK ac (List.Mem.head _)
+      have hf := argV_facts118 hac.1 hac.2.1 hac.2.2.1 hac.2.2.2.1
+        hac.2.2.2.2.1 hac.2.2.2.2.2.1 (ltW_logOm_of_OKP118 hac)
+      have hih := wcnf_argM118 r (fun p hp => hOK p (List.Mem.tail _ hp)) (descP_tail118 hd)
+      rw [toList_argM118] at hih ⊢
+      show wcnf (reg 1) (argV106 ac.1 ac.2 :: r.map (fun ac => argV106 ac.1 ac.2)) = _
+      rw [wcnf_cons_ge hf.1, hih, hf.2.1, hf.2.2, wC_eq_of_OKP118 hac]
+      cases r with
+      | nil => rfl
+      | cons b r' =>
+          have hlt : lt b.1 ac.1 = true := hd.1
+          have hne : (ac.1 == b.1) = false := by
+            cases hc : (ac.1 == b.1) with
+            | false => rfl
+            | true =>
+                exfalso
+                rw [← eq_of_beq hc, lt_irrefl] at hlt
+                exact Bool.noConfusion hlt
+          show (if (ac.1 == b.1) = true then _ else ((ac.1, ac.2) :: (b.1, b.2) :: r', zero))
+            = _
+          rw [if_neg (by rw [hne]; exact Bool.noConfusion)]
+
+/-- **§118.3 の主定理 — `n` 組の値。**  `ψ₀(Σ ω^(Ω₁·aᵢ ⊕ log cᵢ))` は
+    `φ̄(aₙ, … φ̄(a₁, c₁ ⊖ 1) ⊕ … ⊕ cₙ)`。**あとの組が読めるようになった。** -/
+theorem collapse0_argM118 {ac : Term × Term} {r : List (Term × Term)} {R : Term}
+    (hOK : ∀ p ∈ ac :: r, OKP118 p) (hd : descP118 (ac :: r))
+    (hiR : inT R = true) (hRnf : omegaNF R = R)
+    (hval : valP118 (ac :: r) = R) : collapse 0 (argM118 (ac :: r)) = R := by
+  refine collapse0_pairs118 (wcnf_argM118 (ac :: r) hOK hd) ?_ hiR hRnf hval
+  intro p hp
+  exact leW_false106 (hOK p hp).1 (hOK p hp).2.2.1
+
+end
+
+/-! ### §118.4 `n` 組ぶんの Buchholz 証人 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁` を横に並べたもの — 組ひとつにつき `ψ₁` ひとつ。 -/
+def powN118 (ys : List BT) : BT := BT.ofL (ys.map (BT.D 1))
+/-- そして `ψ₀` をかぶせる。 -/
+def vebN118 (ys : List BT) : BT := BT.D 0 (powN118 ys)
+
+/-- **被覆条件、`n` 組の形。** -/
+def CovN118 (ys : List BT) : Prop :=
+  ∀ e ∈ BT.GB 0 (powN118 ys), BT.lt e (powN118 ys) = true
+
+/-- 一元リストなら §118.2 の構成そのもの。 -/
+theorem vebN_one118 (ls ns : List BT) : vebN118 [mixB118 ls ns] = vebB118 ls ns := rfl
+
+theorem gb0_powN118 (ys : List BT) :
+    BT.GB 0 (powN118 ys) = ys.flatMap (fun y => y :: BT.GB 0 y) := by
+  show BT.GB 0 (BT.ofL (ys.map (BT.D 1))) = _
+  rw [gb_ofL118, gb0_digs118]
+
+theorem gb0_vebN118 (ys : List BT) :
+    BT.GB 0 (vebN118 ys) = powN118 ys :: BT.GB 0 (powN118 ys) := by
+  show (if 0 ≤ 0 then powN118 ys :: BT.GB 0 (powN118 ys) else []) = _
+  rw [if_pos (by omega)]
+
+theorem btLe_powN118 {ys : List BT} (h : ∀ y ∈ ys, btLe72 1 y = true) :
+    btLe72 1 (powN118 ys) = true := by
+  refine btLe_ofL118 1 _ ?_
+  intro x hx
+  obtain ⟨y, hy, hxy⟩ := List.mem_map.mp hx
+  rw [← hxy]
+  show (decide (1 ≤ 1) && btLe72 1 y) = true
+  rw [h y hy]; rfl
+
+theorem isStd_powN118 {ys : List BT} (h : ∀ y ∈ ys, BT.isStd (BT.D 1 y) = true)
+    (hde : bdesc106 ys) : BT.isStd (powN118 ys) = true := by
+  refine isStd_ofL118 _ ?_ ?_ (bdesc_map_D1_118 ys hde)
+  · intro x hx
+    obtain ⟨y, _, hxy⟩ := List.mem_map.mp hx
+    rw [← hxy]; rfl
+  · intro x hx
+    obtain ⟨y, hy, hxy⟩ := List.mem_map.mp hx
+    rw [← hxy]
+    exact h y hy
+
+theorem hd085_vebN118 (ys : List BT) : Hd085 (vebN118 ys) := by
+  intro x hx
+  exact ⟨powN118 ys, List.mem_singleton.mp hx⟩
+
+theorem btLe_vebN118 {ys : List BT} (h : ∀ y ∈ ys, btLe72 1 y = true) :
+    btLe72 1 (vebN118 ys) = true := by
+  show (decide (0 ≤ 1) && btLe72 1 (powN118 ys)) = true
+  rw [btLe_powN118 h]; rfl
+
+/-- **段の正直さ。**  上へは 1 まで、下は最初の一歩で 0 を離れる。 -/
+theorem btLe1_vebN118 {ys : List BT} (h : ∀ y ∈ ys, btLe72 1 y = true) :
+    btLe72 1 (vebN118 ys) = true := btLe_vebN118 h
+
+theorem btLe0_vebN118 : ∀ (y : BT) (r : List BT), btLe72 0 (vebN118 (y :: r)) = false
+  | _, [] => rfl
+  | _, _ :: _ => rfl
+
+theorem isStd_vebN118 {ys : List BT} (h : ∀ y ∈ ys, BT.isStd (BT.D 1 y) = true)
+    (hde : bdesc106 ys) (hC : CovN118 ys) : BT.isStd (vebN118 ys) = true := by
+  show (BT.isStd (powN118 ys) &&
+    (BT.GB 0 (powN118 ys)).all (fun e => BT.lt e (powN118 ys))) = true
+  rw [isStd_powN118 h hde, Bool.true_and, List.all_eq_true]
+  intro x hx
+  exact hC x hx
+
+/-- **`n` 個の `ψ₁` の値。** -/
+theorem dict_powN118 {ys : List BT}
+    (hdesc : descL (ys.map (fun y => dict (BT.D 1 y))) = true) :
+    dict (powN118 ys) = ofList (ys.map (fun y => dict (BT.D 1 y))) := by
+  show dict (BT.ofL (ys.map (BT.D 1))) = _
+  rw [dict_ofL118 _ (by
+      intro x hx
+      obtain ⟨y, _, hxy⟩ := List.mem_map.mp hx
+      rw [← hxy]; rfl) (by
+      rw [List.map_map]
+      exact hdesc), List.map_map]
+  rfl
+
+/-- **§118.4 の主定理 — `n` 組の目標に、作った証人。**  `ψ₀` の下に `ψ₁` を `n` 個
+    並べる。`ys` が一つなら §118.2、その `ns` が空なら §106 である。 -/
+theorem dict_vebN118 {ys : List BT}
+    {ac : Term × Term} {r : List (Term × Term)} {R : Term}
+    (hdesc : descL (ys.map (fun y => dict (BT.D 1 y))) = true)
+    (hcomp : ys.map (fun y => dict (BT.D 1 y))
+      = (ac :: r).map (fun p => argV106 p.1 p.2))
+    (hOK : ∀ p ∈ ac :: r, OKP118 p) (hd : descP118 (ac :: r))
+    (hiR : inT R = true) (hRnf : omegaNF R = R)
+    (hval : valP118 (ac :: r) = R) :
+    dict (vebN118 ys) = R := by
+  show collapse 0 (dict (powN118 ys)) = _
+  rw [dict_powN118 hdesc, hcomp]
+  exact collapse0_argM118 hOK hd hiR hRnf hval
+
+end
+
+/-! ### §118.3c 尾 `ρ` — `ω` 冪も同じ折り畳みで出る -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 組の列と `Ω₁` より下の尾から `ψ₀` の引数を組み立てる。 -/
+def argT118 (prs : List (Term × Term)) (rho : Term) : Term :=
+  ofList (prs.map (fun ac => argV106 ac.1 ac.2) ++ toList rho)
+
+theorem toList_argT118 {prs : List (Term × Term)} {rho : Term} (hrho : inT rho = true) :
+    toList (argT118 prs rho) = prs.map (fun ac => argV106 ac.1 ac.2) ++ toList rho := by
+  refine toList_ofList _ ?_
+  intro x hx
+  rcases List.mem_append.mp hx with h1 | h1
+  · obtain ⟨ac, _, hxa⟩ := List.mem_map.mp h1
+    rw [← hxa]
+    exact isAP_omegaNF _
+  · exact inTL_isAP hrho x h1
+
+/-- **尾つきの底 `Ω₁` 分解。** -/
+theorem wcnf_argT118 {rho : Term} (hrho : inT rho = true) (hrhoW : lt rho (reg 1) = true) :
+    ∀ (prs : List (Term × Term)), (∀ p ∈ prs, OKP118 p) → descP118 prs →
+      wcnf (reg 1) (prs.map (fun ac => argV106 ac.1 ac.2) ++ toList rho) = (prs, rho)
+  | [], _, _ => by
+      show wcnf (reg 1) (toList rho) = ([], rho)
+      rw [wcnf_all_lt77 (reg 1) (toList rho) (ltW_toList79 rho hrho hrhoW),
+        inT_ofList_toList rho hrho]
+  | ac :: r, hOK, hd => by
+      have hac := hOK ac (List.Mem.head _)
+      have hf := argV_facts118 hac.1 hac.2.1 hac.2.2.1 hac.2.2.2.1
+        hac.2.2.2.2.1 hac.2.2.2.2.2.1 (ltW_logOm_of_OKP118 hac)
+      have hih := wcnf_argT118 hrho hrhoW r (fun p hp => hOK p (List.Mem.tail _ hp))
+        (descP_tail118 hd)
+      show wcnf (reg 1)
+        (argV106 ac.1 ac.2 :: (r.map (fun ac => argV106 ac.1 ac.2) ++ toList rho)) = _
+      rw [wcnf_cons_ge hf.1, hih, hf.2.1, hf.2.2, wC_eq_of_OKP118 hac]
+      cases r with
+      | nil => rfl
+      | cons b r' =>
+          have hlt : lt b.1 ac.1 = true := hd.1
+          have hne : (ac.1 == b.1) = false := by
+            cases hc : (ac.1 == b.1) with
+            | false => rfl
+            | true =>
+                exfalso
+                rw [← eq_of_beq hc, lt_irrefl] at hlt
+                exact Bool.noConfusion hlt
+          show (if (ac.1 == b.1) = true then _ else ((ac.1, ac.2) :: (b.1, b.2) :: r', rho))
+            = _
+          rw [if_neg (by rw [hne]; exact Bool.noConfusion)]
+
+/-- **尾つきの折り畳みの値。**  `collapse0_pairs118` の `ρ = 0` を外したもの。
+    ここで初めて第 1 Veblen 引数が `0` の目標 — `ω` 冪 — に届く。 -/
+theorem collapse0_pairsT118 {x rho : Term} {ac : Term × Term} {r : List (Term × Term)}
+    (hw : wcnf (reg 1) (toList x) = (ac :: r, rho))
+    (hlow : ∀ p ∈ ac :: r, le (reg 1) p.1 = false)
+    (hiS : inT (plus (valP118 (ac :: r)) rho) = true) :
+    collapse 0 x = omegaNF (plus (valP118 (ac :: r)) rho) := by
+  rw [collapse0_raw89]
+  show omegaNF (plus (reg 0) (plus
+    (((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero)
+    ((wcnf (reg 1) (toList x)).2))) = _
+  rw [hw]
+  show omegaNF (plus (reg 0) (plus
+    (((ac :: r).foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) rho)) = _
+  rw [fold_none118 hlow]
+  show omegaNF (plus (reg 0) (plus (valP118 (ac :: r)) rho)) = _
+  rw [show plus (reg 0) (plus (valP118 (ac :: r)) rho)
+      = plus zero (plus (valP118 (ac :: r)) rho) from rfl, plus_zero_left_inT hiS]
+
+/-- **§118.3c の主定理。**  組の列 + 尾から、`ψ₀` の値がそのまま読める。 -/
+theorem collapse0_argT118 {rho : Term} {ac : Term × Term} {r : List (Term × Term)}
+    (hOK : ∀ p ∈ ac :: r, OKP118 p) (hd : descP118 (ac :: r))
+    (hrho : inT rho = true) (hrhoW : lt rho (reg 1) = true)
+    (hiS : inT (plus (valP118 (ac :: r)) rho) = true) :
+    collapse 0 (argT118 (ac :: r) rho)
+      = omegaNF (plus (valP118 (ac :: r)) rho) := by
+  refine collapse0_pairsT118 (rho := rho) ?_ ?_ hiS
+  · rw [toList_argT118 hrho]
+    exact wcnf_argT118 hrho hrhoW (ac :: r) hOK hd
+  · intro p hp
+    exact leW_false106 (hOK p hp).1 (hOK p hp).2.2.1
+
+end
+
+/-! ### §118.4b `ψ₁` の列と `ψ₀` の尾 — 一般の証人 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- **一般の証人。**  `ψ₀` の下に `ψ₁` を `ys` 個並べ、そのうしろに段 0 の尾 `ms`。
+    `ms = []` なら §118.4 の `vebN118`、`ys` が一元なら §118.2 の `vebB118` である。 -/
+def vebG118 (ys ms : List BT) : BT := BT.D 0 (mixB118 ys ms)
+
+/-- 被覆条件、一般の形 — 外側が `ψ₀` なので `mix` 自身より下でよい。 -/
+def CovG118 (ys ms : List BT) : Prop :=
+  ∀ e ∈ BT.GB 0 (mixB118 ys ms), BT.lt e (mixB118 ys ms) = true
+
+theorem vebG_nil118 (ys : List BT) : vebG118 ys [] = vebN118 ys := by
+  show BT.D 0 (BT.ofL (ys.map (BT.D 1) ++ [])) = _
+  rw [List.append_nil]
+  rfl
+
+theorem btLe_mixG118 {ys ms : List BT} (hY : ∀ y ∈ ys, btLe72 1 y = true)
+    (hM : ∀ m ∈ ms, TDig118 m) : btLe72 1 (mixB118 ys ms) = true := by
+  refine btLe_ofL118 1 _ ?_
+  intro x hx
+  rcases List.mem_append.mp hx with h1 | h1
+  · obtain ⟨y, hy, hxy⟩ := List.mem_map.mp h1
+    rw [← hxy]
+    show (decide (1 ≤ 1) && btLe72 1 y) = true
+    rw [hY y hy]; rfl
+  · exact (hM x h1).2.1
+
+theorem isStd_mixG118 {ys ms : List BT} (hY : ∀ y ∈ ys, BT.isStd (BT.D 1 y) = true)
+    (hM : ∀ m ∈ ms, TDig118 m) (hde : bdesc106 (ys.map (BT.D 1) ++ ms)) :
+    BT.isStd (mixB118 ys ms) = true := by
+  refine isStd_ofL118 _ (isP_mem_mix118 hM) ?_ hde
+  intro x hx
+  rcases List.mem_append.mp hx with h1 | h1
+  · obtain ⟨y, hy, hxy⟩ := List.mem_map.mp h1
+    rw [← hxy]
+    exact hY y hy
+  · exact (hM x h1).2.2.1
+
+theorem isStd_vebG118 {ys ms : List BT} (hY : ∀ y ∈ ys, BT.isStd (BT.D 1 y) = true)
+    (hM : ∀ m ∈ ms, TDig118 m) (hde : bdesc106 (ys.map (BT.D 1) ++ ms))
+    (hC : CovG118 ys ms) : BT.isStd (vebG118 ys ms) = true := by
+  show (BT.isStd (mixB118 ys ms) &&
+    (BT.GB 0 (mixB118 ys ms)).all (fun e => BT.lt e (mixB118 ys ms))) = true
+  rw [isStd_mixG118 hY hM hde, Bool.true_and, List.all_eq_true]
+  intro x hx
+  exact hC x hx
+
+theorem hd085_vebG118 (ys ms : List BT) : Hd085 (vebG118 ys ms) := by
+  intro x hx
+  exact ⟨mixB118 ys ms, List.mem_singleton.mp hx⟩
+
+/-- **段の正直さ (上)。** -/
+theorem btLe1_vebG118 {ys ms : List BT} (hY : ∀ y ∈ ys, btLe72 1 y = true)
+    (hM : ∀ m ∈ ms, TDig118 m) : btLe72 1 (vebG118 ys ms) = true := by
+  show (decide (0 ≤ 1) && btLe72 1 (mixB118 ys ms)) = true
+  rw [btLe_mixG118 hY hM]; rfl
+
+theorem btLe0_ofL_D1_118 : ∀ (y : BT) (L : List BT), btLe72 0 (BT.ofL (BT.D 1 y :: L)) = false
+  | _, [] => rfl
+  | _, _ :: _ => rfl
+
+/-- **段の正直さ (下)。**  `ψ₁` を一つでも使えば段 0 を離れる。 -/
+theorem btLe0_vebG118 (y : BT) (r ms : List BT) :
+    btLe72 0 (vebG118 (y :: r) ms) = false := by
+  show (decide (0 ≤ 0) && btLe72 0 (BT.ofL (BT.D 1 y :: (r.map (BT.D 1) ++ ms)))) = false
+  rw [btLe0_ofL_D1_118]
+  rfl
+
+/-- **§118.4b の主定理 — 一般の証人の値。** -/
+theorem dict_vebG118 {ys ms : List BT} {ac : Term × Term} {r : List (Term × Term)}
+    {rho : Term}
+    (hM : ∀ m ∈ ms, TDig118 m)
+    (hdesc : descL ((ys.map (BT.D 1) ++ ms).map dict) = true)
+    (hcomp : (ys.map (BT.D 1) ++ ms).map dict
+      = (ac :: r).map (fun p => argV106 p.1 p.2) ++ toList rho)
+    (hOK : ∀ p ∈ ac :: r, OKP118 p) (hd : descP118 (ac :: r))
+    (hrho : inT rho = true) (hrhoW : lt rho (reg 1) = true)
+    (hiS : inT (plus (valP118 (ac :: r)) rho) = true) :
+    dict (vebG118 ys ms) = omegaNF (plus (valP118 (ac :: r)) rho) := by
+  have hx : dict (mixB118 ys ms) = argT118 (ac :: r) rho := by
+    show dict (BT.ofL (ys.map (BT.D 1) ++ ms)) = _
+    rw [dict_ofL118 _ (isP_mem_mix118 hM) hdesc, hcomp]
+    rfl
+  show collapse 0 (dict (mixB118 ys ms)) = _
+  rw [hx]
+  exact collapse0_argT118 hOK hd hrho hrhoW hiS
+
+end
+
+/-! ### §118.5 §106 を含むこと、そして残るものを名指す -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§106 はここの尾が空の場合である。** -/
+theorem vebB118_nil118 (ls : List BT) : vebB118 ls [] = vebB106 ls := by
+  show BT.D 0 (BT.D 1 (mixB118 ls [])) = _
+  rw [mixB118_nil118]
+  rfl
+
+/-- **一元リストは §118.2 の構成である。** -/
+theorem vebG_one118 (ls ns : List BT) : vebG118 [mixB118 ls ns] [] = vebB118 ls ns := by
+  rw [vebG_nil118]
+  rfl
+
+/-- **名指しの否定 — 係数が加法主要でないと、一成分の形は別の値を計算する。**
+    `argM118 [(1,2)]` の底 `Ω₁` 分解は `(1, ω²)` であって `(1,2)` ではない。和の係数は
+    **同じ指数の成分をいくつも並べて `wcnf` に併合させる**ほかなく、それは `descP118` が
+    禁じている形そのものである。§118 の残余の片方はこれで、`OKP118` の `isAP` は飾りでない。 -/
+theorem noMerge118 :
+    collapse 0 (argM118 [(TM.Term.one, ofNat 2)]) ≠ valP118 [(TM.Term.one, ofNat 2)] := by
+  decide
+
+end
+
+/-! ### §118.6 測定 — 三つの母集団と、§103.8 の敵対的な母集団 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1 dictInv)
+open TM TM.Term
+open Evidence.WF
+
+/-- `OKP118` と `descP118` をそのまま Bool にしたもの。 -/
+def okpB118 (ac : Term × Term) : Bool :=
+  inT ac.1 && lt ac.1 M && lt ac.1 (reg 1) && !(ac.1 == zero) &&
+    inT ac.2 && lt ac.2 M && lt ac.2 (reg 1) && ac.2.isAP
+
+def descPB118 : List (Term × Term) → Bool
+  | [] => true
+  | [_] => true
+  | a :: b :: r => lt b.1 a.1 && descPB118 (b :: r)
+
+def hypP118 (prs : List (Term × Term)) : Bool :=
+  !prs.isEmpty && prs.all okpB118 && descPB118 prs
+
+def tdigB118 (n : BT) : Bool := BT.isP n && btLe72 1 n && BT.isStd n && hd085B n
+
+def covMB118 (ls ns : List BT) : Bool :=
+  (BT.GB 0 (mixB118 ls ns)).all (fun e => BT.lt e (powB118 ls ns))
+
+/-! **母集団 1 — 組の列。**  種に `Γ₀` (強臨界) と `2` (係数が加法主要でない形) を
+    入れてある。**濾していない。** -/
+private def aS118 : List Term := [TM.Term.one, ofNat 2, phi TM.Term.one zero, G094]
+private def cS118 : List Term := [TM.Term.one, TM.Term.omega, ofNat 2]
+
+def pSeed118 : List (Term × Term) := aS118.flatMap fun a => cS118.map fun c => (a, c)
+
+def pPool118 : List (List (Term × Term)) :=
+  pSeed118.map (fun p => [p]) ++ (pSeed118.flatMap fun p => pSeed118.map fun q => [p, q])
+
+#eval (pPool118.length, pPool118.countP hypP118,
+       pPool118.countP fun prs => hypP118 prs && prs.length ≥ 2)
+/-! **仮説が立つところではぴったり。** -/
+#guard pPool118.all fun prs =>
+  !(hypP118 prs) || (collapse 0 (argM118 prs) == valP118 prs)
+/-! **あとの組が実際に効いている** — 仮説が立つものの多くは二組である。 -/
+#guard (pPool118.countP fun prs => hypP118 prs && prs.length ≥ 2) == 24
+/-! **仮説は見えていて、結論の言い換えでもない。** -/
+#guard (pPool118.countP fun prs => !(hypP118 prs)) == 124
+#guard (pPool118.countP fun prs =>
+  !(hypP118 prs) && (collapse 0 (argM118 prs) == valP118 prs)) == 24
+
+/-! **名指しの否定 — 係数 `2` は一成分では書けない。** -/
+#guard !(collapse 0 (argM118 [(TM.Term.one, ofNat 2)]) == valP118 [(TM.Term.one, ofNat 2)])
+#guard valP118 [(TM.Term.one, ofNat 2)] == phi TM.Term.one TM.Term.one
+#guard collapse 0 (argM118 [(TM.Term.one, ofNat 2)])
+  == phi TM.Term.one (omegaNF (plus TM.Term.one TM.Term.one))
+
+/-! **母集団 2 — 尾 `ρ` つき。** -/
+def rhoS118 : List Term := [zero, TM.Term.one, TM.Term.omega, plus TM.Term.omega TM.Term.one]
+
+def tPool118 : List (List (Term × Term) × Term) :=
+  ((pSeed118.map fun p => [p])
+    ++ (pSeed118.take 4).flatMap (fun p => (pSeed118.take 4).map fun q => [p, q])).flatMap
+      fun prs => rhoS118.map fun r => (prs, r)
+
+def hypT118 (q : List (Term × Term) × Term) : Bool :=
+  hypP118 q.1 && inT q.2 && lt q.2 (reg 1) && inT (plus (valP118 q.1) q.2)
+
+#eval (tPool118.length, tPool118.countP hypT118)
+#guard tPool118.all fun q =>
+  !(hypT118 q) || (collapse 0 (argT118 q.1 q.2) == omegaNF (plus (valP118 q.1) q.2))
+/-! **尾は `ω` 冪への唯一の道** — `ρ ≠ 0` の 30 件はどれも第 1 Veblen 引数が `0`。 -/
+#guard (tPool118.countP fun q => hypT118 q && !(q.2 == zero)) == 30
+#guard (tPool118.filter fun q => hypT118 q && !(q.2 == zero)).all fun q =>
+  match omegaNF (plus (valP118 q.1) q.2) with | phi a _ => a == zero | _ => false
+
+/-! **母集団 3 — 桁と尾の Buchholz 側。**  昇順のものも被覆条件を破るものも入れてある。 -/
+private def dS118 : List BT := [BT.zero, BT.D 0 BT.zero, BT.D 0 (BT.D 1 BT.zero)]
+private def tS118 : List BT :=
+  [BT.D 0 BT.zero, BT.D 0 (BT.D 1 BT.zero), BT.D 0 (BT.D 1 (BT.D 1 BT.zero))]
+
+def lsPool118 : List (List BT) :=
+  [] :: dS118.map (fun x => [x]) ++ dS118.flatMap (fun x => dS118.map fun y => [x, y])
+def nsPool118 : List (List BT) :=
+  [] :: tS118.map (fun x => [x]) ++ tS118.flatMap (fun x => tS118.map fun y => [x, y])
+def wPool118 : List (List BT × List BT) :=
+  lsPool118.flatMap fun ls => nsPool118.map fun ns => (ls, ns)
+
+def aOf118 (ls : List BT) : Term := ofList (ls.map fun l => omegaNF (dict l))
+def rhoOf118 (ns : List BT) : Term := ofList (ns.map dict)
+
+def hypW118 (ls ns : List BT) : Bool :=
+  ls.all digB106 && ns.all tdigB118 && bdescB106 (ls.map (BT.D 1) ++ ns)
+    && covMB118 ls ns && !(rhoOf118 ns == zero)
+    && (phiNF (plus TM.Term.one (aOf118 ls)) (omegaNF (rhoOf118 ns))
+        == phi (plus TM.Term.one (aOf118 ls)) (omegaNF (rhoOf118 ns)))
+
+#eval (wPool118.length, wPool118.countP fun q => hypW118 q.1 q.2)
+/-! **仮説が立つところでは値も合法性もぴったり。** -/
+#guard wPool118.all fun q =>
+  !(hypW118 q.1 q.2) ||
+    ((dict (vebB118 q.1 q.2) == phi (plus TM.Term.one (aOf118 q.1)) (omegaNF (rhoOf118 q.2)))
+      && BT.isStd (vebB118 q.1 q.2) && btLe72 1 (vebB118 q.1 q.2)
+      && (btLe72 0 (vebB118 q.1 q.2) == false) && hd085B (vebB118 q.1 q.2)
+      && digB106 (vebB118 q.1 q.2) && tdigB118 (vebB118 q.1 q.2))
+/-! **どれも係数が `1` でない** — 尾が空でないものだけが仮説を満たす。 -/
+#guard (wPool118.countP fun q => hypW118 q.1 q.2 && q.2.isEmpty) == 0
+#guard (wPool118.countP fun q => hypW118 q.1 q.2) == 86
+
+/-! **被覆条件は、この母集団では見える。**  §106 は 289 項を掃いて合法な 19 項が全部
+    条件を満たし (§93 の失敗の形)、`deep106` を手で組むほかなかった。尾を付けると
+    条件は母集団の中で発火する: 桁も尾も合法で降順なのに `CovM118` を破るものが 4 件、
+    どれも標準形でない項を作る。**そのうち 3 件は値だけは合っている** — 被覆条件は
+    標準形の話であって値の話ではない。 -/
+#guard (wPool118.countP fun q => q.1.all digB106 && q.2.all tdigB118
+  && bdescB106 (q.1.map (BT.D 1) ++ q.2) && !(covMB118 q.1 q.2)) == 4
+#guard (wPool118.filter fun q => q.1.all digB106 && q.2.all tdigB118
+  && bdescB106 (q.1.map (BT.D 1) ++ q.2) && !(covMB118 q.1 q.2)).all fun q =>
+    !(BT.isStd (vebB118 q.1 q.2))
+#guard (wPool118.countP fun q => q.1.all digB106 && q.2.all tdigB118
+  && bdescB106 (q.1.map (BT.D 1) ++ q.2) && !(covMB118 q.1 q.2)
+  && (dict (vebB118 q.1 q.2)
+      == phi (plus TM.Term.one (aOf118 q.1)) (omegaNF (rhoOf118 q.2)))) == 3
+/-! **降順も飾りではない。** -/
+#guard (wPool118.countP fun q => !(bdescB106 (q.1.map (BT.D 1) ++ q.2))) == 69
+#guard (wPool118.countP fun q => !(BT.isStd (vebB118 q.1 q.2))) == 73
+
+/-! **名指しの被覆条件破り。**  尾の桁 `ψ₀(Ω₁²) = ζ₀` はそれ自体は合法である。 -/
+def deepC118 : BT := vebB118 [] [BT.D 0 (BT.D 1 (BT.D 1 BT.zero))]
+#guard tdigB118 (BT.D 0 (BT.D 1 (BT.D 1 BT.zero)))
+#guard !(covMB118 [] [BT.D 0 (BT.D 1 (BT.D 1 BT.zero))])
+#guard !(BT.isStd deepC118)
+
+/-! **作った証人、名前つき。** -/
+#guard dict (vebB118 [] [BT.D 0 BT.zero]) == phi TM.Term.one TM.Term.omega
+#guard dict (vebB118 [BT.zero] [BT.D 0 (BT.D 1 BT.zero)])
+  == phi (ofNat 2) (phi TM.Term.one zero)
+#guard dict (vebN118 [BT.D 1 BT.zero, BT.zero])
+  == phi TM.Term.one (phi (ofNat 2) zero)
+#guard BT.isStd (vebN118 [BT.D 1 BT.zero, BT.zero])
+  && btLe72 1 (vebN118 [BT.D 1 BT.zero, BT.zero])
+  && (btLe72 0 (vebN118 [BT.D 1 BT.zero, BT.zero]) == false)
+/-! §106 の塔は尾が空の場合。 -/
+#guard (List.range 8).all fun n => vebB118 [gInv103 (n+1)] [] == vebB106 [gInv103 (n+1)]
+
+/-! ### §103.8 の敵対的な母集団で測り直す
+
+`dictInv` を証人の**神託**としてだけ使い、出てきた項を §118 の定理の仮説に
+**全部**当てて確かめる — 形 (`vebG118 ys ms == b`) も含めて。値だけ合っている項を
+数えているのではない。 -/
+
+def isD1_118 (x : BT) : Bool := match x with | .D 1 _ => true | _ => false
+def argD1_118 (x : BT) : BT := match x with | .D 1 y => y | _ => BT.zero
+def legalB118 (b : BT) : Bool := btLe72 1 b && BT.isStd b && hd085B b
+
+/-- 目標 `t` と証人 `b` に対して、`dict_vebG118` の仮説と結論を**全部**確かめる。 -/
+def instOK118 (t : Term) (b : BT) : Bool :=
+  match b with
+  | BT.D 0 p =>
+      let L := BT.toL p
+      let ys := (L.takeWhile isD1_118).map argD1_118
+      let ms := L.dropWhile isD1_118
+      let pr := wcnf (reg 1) (toList (dict p))
+      legalB118 b && (dict b == t) && (vebG118 ys ms == b)
+        && ms.all tdigB118 && descL (L.map dict)
+        && (L.map dict == pr.1.map (fun q => argV106 q.1 q.2) ++ toList pr.2)
+        && !pr.1.isEmpty && pr.1.all okpB118 && descPB118 pr.1
+        && inT pr.2 && lt pr.2 (reg 1) && inT (plus (valP118 pr.1) pr.2)
+        && (omegaNF (plus (valP118 pr.1) pr.2) == t)
+  | _ => false
+
+def reach118 (t : Term) : Bool :=
+  match dictInv t with | some b => instOK118 t b | none => false
+
+def nPairs118 (t : Term) : Nat :=
+  match dictInv t with
+  | some (BT.D 0 p) => (wcnf (reg 1) (toList (dict p))).1.length
+  | _ => 0
+def bigCoef118 (t : Term) : Bool :=
+  match dictInv t with
+  | some (BT.D 0 p) => (wcnf (reg 1) (toList (dict p))).1.any fun ac => !(ac.2 == TM.Term.one)
+  | _ => false
+def tailRho118 (t : Term) : Bool :=
+  match dictInv t with
+  | some (BT.D 0 p) => !((wcnf (reg 1) (toList (dict p))).2 == zero)
+  | _ => false
+def badCoef118 (t : Term) : Bool :=
+  match dictInv t with
+  | some (BT.D 0 p) => !((wcnf (reg 1) (toList (dict p))).1.all fun ac => ac.2.isAP)
+  | _ => false
+def isAdd118 (t : Term) : Bool := match t with | add _ _ => true | _ => false
+def isOmPow118 (t : Term) : Bool := match t with | phi a _ => a == zero | _ => false
+
+def builtShape106_118 (t : Term) : Bool :=
+  match t with | phi a zero => !(a == zero) | _ => false
+
+#eval (aPool103.length, aPool103.countP builtShape106_118, aPool103.countP reach118)
+#eval (aPool103.countP fun t => reach118 t && nPairs118 t ≥ 2,
+       aPool103.countP fun t => reach118 t && bigCoef118 t,
+       aPool103.countP fun t => reach118 t && tailRho118 t)
+#eval (aPool103.countP isAdd118, aPool103.countP badCoef118,
+       aPool103.countP fun t => !(reach118 t) && !(isAdd118 t) && !(badCoef118 t))
+
+/-! **§106 は 14、§118 は 186。**  そして §103 が `dictInv` の取りこぼしとして名指した
+    5 項は、§103 自身が手で作った証人が §118 の仮説を**全部**満たす — 合わせて 191。 -/
+#guard aPool103.countP builtShape106_118 == 14
+#guard aPool103.countP reach118 == 186
+#guard aPool103.all fun t => !(builtShape106_118 t) || reach118 t
+#guard witMiss103.all fun q => instOK118 q.1 q.2
+#guard witMiss103.length == 5
+
+/-! **`ω` 冪 — 尾 `ρ` が無ければ一つも届かない形。** -/
+#eval (aPool103.countP isOmPow118, aPool103.countP fun t => isOmPow118 t && reach118 t)
+#guard aPool103.countP isOmPow118 == 12
+#guard (aPool103.countP fun t => isOmPow118 t && reach118 t) == 8
+#guard aPool103.all fun t => !(isOmPow118 t && reach118 t) || tailRho118 t
+
+/-! **残る 173 の内訳 — 和が 106、係数が加法主要でないものが 62、§103 の
+    取りこぼしが 5。取り残しは無い。** -/
+#guard aPool103.countP isAdd118 == 106
+#guard aPool103.countP badCoef118 == 62
+#guard (aPool103.countP fun t => !(reach118 t) && !(isAdd118 t) && !(badCoef118 t)) == 5
+#guard aPool103.length - aPool103.countP reach118 == 173
+
+/-! **これでも `DictOntoMidOpen103` は閉じていない。**  条項は 326 行目の証明書に
+    そのまま残っている — §118 は条項を一本も足さず、一本も外していない。 -/
+#guard aPool103.countP reach118 < aPool103.length
+
+end
+
+/-! ## §117 A VEBLEN TARGET, READ OFF THE OTHER FOLD — `VebRest114` SPLITS AT ONE
+       DECIDABLE CONDITION, AND WHAT SURVIVES IS THE EQUAL-EXPONENT CASE
+
+§114 split §109's hard half at the shape of `b`'s fold and closed the half where `b`
+all-fires, by pointing §114.2's machinery at the target `ψ_{Ω₁}(j_b)`.  Its own closing
+sentence names what that machinery could NOT reach:
+
+> The other class is untouched: when `b`'s fold ends in a `φ̄`-term the comparison is
+> `φ̄(α,γ) < φ̄(β,δ)`, and §114 adds nothing to it.
+
+**§117 adds it.**  §114.1's target had to be strongly critical because `φ̄` is only known to be
+harmless below a target closed under it; §113.1 had already shown that a `φ̄`-target works too
+as soon as 2.3.13(i) applies, but it read that clause at the single point `Γ₀`.  §117 reads it
+with the first argument FREE, and then the whole of §114.2 transposes: the fold stays below
+`φ̄(A,R)` under a decidable condition on ONE side.  What is new on top of that is the other
+direction — §117.3 proves the fold never goes DOWN, so any intermediate value of `b`'s own
+fold is a legal target — and that is what lets the target be read off `b` when `b` has no
+collapse index at all, which is exactly where §114's tool gives nothing.
+
+WHAT IS PROVED.
+
+  §117.1  **2.3.13(i) AT A FREE TARGET** (`lt_phi_vT117`).  `φ̄(a,b) < φ̄(A,R) ↔ b < φ̄(A,R)`
+          whenever `a < A` — §113.1's `lt_phi_gT113` with `Γ₀` replaced by anything.
+          `lt_phiNF_wk117` is §114.1's `lt_phiNF_ap114` with its `hphi` hypothesis cut down to
+          the ONE exponent the proof actually applies it to (§114 asked for closure of the
+          target under `φ̄` at every pair of arguments, which a Veblen target does NOT have),
+          and `lt_phiNF_vT117` puts the two together.  **Everything else in §114.1 —
+          `ltAP_of_hdLe114`, `ltAP_toList114`, `lt_ofList_ap114`, `lt_plus_ap114`,
+          `lt_down_ap114` — was already stated at a general additively principal target and
+          is reused unchanged.**
+
+  §117.2  **THE FOLD STAYS BELOW A VEBLEN TARGET** (`accW89_ltV117`).  `VebIngV117 x A R n`
+          is the transposed ingredient condition: every base-`Ω₁` pair from the `n`-th on is
+          non-firing with exponent below `A` and coefficient below `φ̄(A,R)`, and the value the
+          first `n` pairs leave is below `φ̄(A,R)`.  **The parameter `n` is the new part**:
+          §114.2 had to start at the end of the firing prefix, §117.2 may start anywhere, so
+          a common prefix of the two folds can be PEELED instead of bounded.  The split is
+          `List.take_append_drop` and the non-firing of the tail is part of the decidable
+          condition, so §109.1's prefix property is not used here at all.
+
+  §117.3  **THE FOLD NEVER GOES DOWN** (`le_foldTake_accW89_117`).  `le_phiNF_ge117` : for
+          `T` additively principal with `1 < T ≤ X`, `T ≤ φ̄-normalise(C,X)` — all five
+          branches of `phiNF`, the step-down branch through §95's `le_hd_down95` and the
+          `β = 0` branch killed by `T ≠ 0`.  With §81's `le_self_plus_ap81` that makes
+          "the accumulator only grows" an invariant (`GeV117`), so the value after `k` steps
+          of a fold is `≤` its final value whenever the remaining pairs are Veblen.
+          §109.3's `accGt109` is the same statement for the ONE target `ψ_{Ω₁}(j)` and the
+          LAST step; this is it for every intermediate value and the whole tail.
+
+  §117.4  **THE SPLIT** (`hiMono_vebT117`, `hiMono_closed117`, `vebRest_of117`).  Put the two
+          halves together at a target read off `b`: if `b`'s fold after `k` steps holds a term
+          of the shape `φ̄(A,R)` and everything after step `k` is Veblen, then that term is
+          below `ψ₀(hi b)` (§117.3) and `a`'s side needs only `VebIngV117` (§117.2).
+          `closed117 a b` is the decidable disjunction of §114.3's `ψ_{Ω₁}(j_b)` route and
+          this one; `VebRest117` is `VebRest114` restricted to `closed117 a b = false`, and
+          `vebRest_of117` re-hangs `VebRest114`, `hiMono_of_four117` re-hangs `HiMono89` and
+          `certIn_t326_117` re-hangs row 326.
+
+  §117.5  **THE NEGATIVES, AND THE LEVEL HONESTY.**  `reachSep117` : `(ψ₁0, ψ₁ψ₁0)` is
+          `K`-standard on both sides, `b` has **no collapse index at all**, so §114.3's tool
+          says nothing — and §117.4 closes it.  `restSep117` : `(ψ₁0, ψ₁ψ₀ψ₁0)`, `K`-standard
+          on both sides, conclusion TRUE, and `closed117 = false` — **the residual clause's
+          hypothesis is not empty.**  What fails there is named: the two digit-exponent lists
+          are EQUAL (`restExp117`), so no target of the shape `φ̄(A,·)` has `A` above `a`'s
+          exponents.  `restTriv117` : letting `n` run to the FULL length of `a`'s pair list
+          would close that pair — and would close it because at `n = |a|` the condition IS the
+          conclusion.  **That is why `closed117` stops the range one short**, and §117.6
+          measures the difference.  `knownSplit117` : §81's `cexA89` and §101's `bothBadA101`
+          are both `closed117 = false`, i.e. the two known witnesses against this clause live
+          in the part §117 does NOT close.
+
+WHAT IS **NOT** CLAIMED.  **`VebRest114` is NOT proved and NOT refuted; §117 MOVES the
+residue.**  `VebRest117` is `VebRest114` on the pairs `closed117` misses, unweakened and
+unproved, and §117.6 exhibits 54 `K`-standard pairs where its hypothesis fires.  `VebIngF114`,
+`IdxMono101`, `IdxLeMix109`, `PsiIdxOKStd172`, `DictOntoMidOpen103`, `DictDenseMid107`,
+`DictDenseAbove107` are untouched.  Row 326 rests on `PsiIdxOKStd172`, `IdxMono101`,
+`IdxLeMix109`, `VebIngF114`, **`VebRest117`**, `DictOntoMidOpen103`, `DictDenseMid107`,
+`DictDenseAbove107` (`certIn_t326_117`).
+
+**WHERE §117 STOPPED, PRECISELY.**  A target of the shape `φ̄(A,R)` separates two folds only
+when `A` is STRICTLY above every exponent `a` still has to spend; 2.3.13 has a clause for
+`A` equal to that exponent as well (`a = c ⟹ compare the second arguments`) and §117 does not
+port it.  Every one of the 54 `K`-standard pairs §117 misses has `a`'s leading digit exponent
+EQUAL to `b`'s — and the shape is not by itself the obstruction, since §117 closes 107 other
+pairs that also have it.  Reading 2.3.13's first clause at the fold would need `phiNF` to be
+monotone in its second argument, which the repository does not have; and past that first
+difference what is left is `a`'s later COEFFICIENTS against `b`'s value, which is §104's
+stopping point word for word.  So the residue has moved from "compare two Veblen folds" to
+"compare two Veblen folds that agree on their leading exponent", and §117 has not removed it.
+
+WHAT THE MEASUREMENT SAYS (§117.6 gives the construction).  §114.5's three seed lines plus a
+fourth BUILT for this section: `ψ₁(ψ₀ z)` puts a large value in a digit's COEFFICIENT
+(exponent `1`, coefficient `ω^(ψ₀ z)`, §104.2), and the coefficient is what a Veblen target
+tests, while §114's population only ever produced small ones.  15 seeds, 135 terms with their
+two-term sums, nothing filtered.
+
+  * **The tool is sound where it could fail.**  4465 residual pairs of the shape `VebRest114`
+    covers, **782 of them BREAK the conclusion**, and `closed117` fires on **0** of those 782
+    while firing on 3523 pairs overall.  Not a vacuous sweep: the hypothesis is live on 79%
+    of the pairs where the conclusion holds.
+  * **The residual clause is not empty.**  Of 990 `K`-standard residual pairs `closed117`
+    closes 936 and misses **54**; the smallest miss is `(ψ₁0, ψ₁ψ₀ψ₁0)` at 2 + 4 symbols.
+  * **§117 reaches a class §114 could not.**  Of the 120 `K`-standard pairs where `b` has no
+    collapse index, §114.3's `ψ_{Ω₁}` route closes **0** and §117.4's Veblen route closes 95.
+    Where `b` does have an index the two routes together close 841 of 870.
+  * **The restriction on `n` is what keeps the clause honest.**  Letting `n` reach the full
+    length of `a`'s pair list closes all 990 — it adds exactly the 54 — and on the shape-only
+    population that variant holds on 3523 of the 3683 pairs where the conclusion holds, i.e.
+    it is the conclusion restated wherever `b`'s value is `φ̄`-shaped.
+  * **The misses have one shape.**  All 54 have `a`'s leading digit exponent EQUAL to `b`'s;
+    107 of the 936 §117 closes have it too, so the shape is necessary and not sufficient.
+  * **The coefficient line had to be BUILT.**  Drop it and the population is §114.5's 65
+    terms: 1540 residual pairs, **84 breaks** and 34 `K`-standard misses.  Adding the line
+    multiplies the breaks by 9.3 — that is 9.3× the chances for the soundness check to fail,
+    and it did not. -/
+
+
+/-! ### §117.1 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **2.3.13(i) を的自由で。** -/
+theorem lt_phi_vT117 {a b A R : Term} (ha : lt a A = true) :
+    lt (phi a b) (phi A R) = lt b (phi A R) := by
+  have hne : a ≠ A := by
+    intro hc; rw [hc, lt_irrefl] at ha; exact Bool.noConfusion ha
+  have hne2 : phi a b ≠ phi A R := by
+    intro hc; injection hc with h1 _; exact hne h1
+  rw [lt_eq_ltF_succ, ltF_succ_phi_phi _ hne2, if_neg hne,
+    if_pos (by
+      rw [show ltF (2 * ((phi a b).deg + (phi A R).deg) + 7) a A = lt a A from
+        (lt_eq_ltF a A _ (by
+          show a.deg + A.deg ≤ 2 * ((1 + a.deg + b.deg) + (1 + A.deg + R.deg)) + 7
+          omega)).symm]
+      exact ha),
+    show ltF (2 * ((phi a b).deg + (phi A R).deg) + 7) b (phi A R)
+        = lt b (phi A R) from
+      (lt_eq_ltF b (phi A R) _ (by
+        show b.deg + (1 + A.deg + R.deg)
+          ≤ 2 * ((1 + a.deg + b.deg) + (1 + A.deg + R.deg)) + 7
+        omega)).symm]
+
+theorem inT_phiT117 {A R : Term} (hiA : inT A = true) (hiR : inT R = true)
+    (hAM : lt A M = true) (hRM : lt R M = true) : inT (phi A R) = true := by
+  show (inT A && inT R && lt A M && lt R M) = true
+  rw [hiA, hiR, hAM, hRM]; rfl
+
+theorem phiT_ne_zero117 {A R : Term} : (phi A R) ≠ zero := by
+  intro hc; exact Term.noConfusion hc
+
+/-- **§114.1 の `lt_phiNF_ap114` を、指数一つぶんの弱い仮定で。** -/
+theorem lt_phiNF_wk117 {A X S : Term} (hSap : S.isAP = true) (hSz : S ≠ zero)
+    (hfS : FragR S = true) (hX : inT X = true) (h1 : lt TM.Term.one S = true)
+    (hphi : ∀ q : Term, lt q S = true → lt (phi A q) S = true)
+    (hA : lt A S = true) (hXS : lt X S = true) : lt (phiNF A X) S = true := by
+  have hall := ltAP_toList114 hfS hSap X hX hXS
+  have hdown := lt_down_ap114 hSap hSz hfS hX h1 hall
+  have hdef : lt (phiNFdefault A X) S = true := by
+    unfold phiNFdefault
+    split
+    · exact hA
+    · exact hphi X hXS
+  have hsucc : lt (phiNFsucc A X) S = true := by
+    unfold phiNFsucc
+    split
+    rename_i heq
+    rw [heq] at hdown
+    split
+    · split <;> (split <;> first | exact hphi _ hdown | exact hdef)
+    · exact hdef
+  unfold phiNF
+  split
+  · exact hXS
+  · split
+    · split
+      · exact hXS
+      · exact hsucc
+    · exact hsucc
+
+/-- **`φ̄` の正規化は Veblen の的の下で閉じる** — 指数が `A` より下なら。 -/
+theorem lt_phiNF_vT117 {a X A R : Term} (hiA : inT A = true) (hiR : inT R = true)
+    (hAM : lt A M = true) (hRM : lt R M = true) (hia : inT a = true) (haM : lt a M = true)
+    (hX : inT X = true) (h1 : lt TM.Term.one (phi A R) = true)
+    (ha : lt a A = true) (hXS : lt X (phi A R) = true) :
+    lt (phiNF a X) (phi A R) = true := by
+  have hiT : inT (phi A R) = true := inT_phiT117 hiA hiR hAM hRM
+  refine lt_phiNF_wk117 (show (phi A R).isAP = true from rfl) phiT_ne_zero117
+    (inT_le_fragR _ hiT) hX h1 (fun q hq => by rw [lt_phi_vT117 ha]; exact hq) ?_ hXS
+  exact lt_phi_of_le100 a.deg a A R (Nat.le_refl _) hia haM hiT (Or.inl (le_of_lt94 ha))
+
+end
+
+
+/-! ### §117.2 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **Veblen の一歩は Veblen の的を越えない** — 指数が `A` より下なら。 -/
+theorem ltS117_step {A R : Term} (hiA : inT A = true) (hiR : inT R = true)
+    (hAM : lt A M = true) (hRM : lt R M = true) (h1 : lt TM.Term.one (phi A R) = true)
+    {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (hL : LtS114 (phi A R) s) (hi1 : inT ac.1 = true)
+    (h1M : lt ac.1 M = true) (h2 : inT ac.2 = true) (hf : le (reg 1) ac.1 = false)
+    (hA : lt ac.1 A = true) (hC : lt ac.2 (phi A R) = true) :
+    LtS114 (phi A R) (stepF (reg 1) (baseOf 0) s ac) := by
+  intro v hv
+  rw [stepF_snd_veb88 hf] at hv
+  rw [← Option.some.inj hv]
+  have hiT : inT (phi A R) = true := inT_phiT117 hiA hiR hAM hRM
+  have hfS : FragR (phi A R) = true := inT_le_fragR _ hiT
+  have hSz : (phi A R) ≠ zero := phiT_ne_zero117
+  have hCs : lt (sub1 ac.2) (phi A R) = true :=
+    lt_of_le_of_lt3 (inT_le_fragR _ (inT_sub1 h2)) (inT_le_fragR _ h2) hfS
+      (le_sub1_self75 h2) hC
+  cases hs2 : s.2 with
+  | none =>
+      refine lt_phiNF_vT117 hiA hiR hAM hRM hi1 h1M
+        (inT_plus (inT_baseOf 0) (inT_sub1 h2)) h1 hA ?_
+      refine lt_plus_ap114 rfl hSz hfS (inT_baseOf 0) (inT_sub1 h2) ?_ hCs
+      exact show lt zero (phi A R) = true from lt_zero_left hSz
+  | some v0 =>
+      have hiv : inT v0 = true := (hst.2 v0 hs2).1
+      exact lt_phiNF_vT117 hiA hiR hAM hRM hi1 h1M (inT_plus hiv h2) h1 hA
+        (lt_plus_ap114 rfl hSz hfS hiv h2 (hL v0 hs2) hC)
+
+/-- **Veblen だけの尾を通しても Veblen の的の下に留まる。** -/
+theorem ltS117_fold {A R : Term} (hiA : inT A = true) (hiR : inT R = true)
+    (hAM : lt A M = true) (hRM : lt R M = true) (h1 : lt TM.Term.one (phi A R) = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s →
+      LtS114 (phi A R) s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ ac ∈ l, le (reg 1) ac.1 = false ∧ lt ac.1 A = true
+        ∧ lt ac.2 (phi A R) = true) →
+      LtS114 (phi A R) (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil => intro s _ hL _ _; exact hL
+  | cons ac t ih =>
+      intro s hst hL hall hveb
+      have hac := hall ac (List.Mem.head _)
+      have hv := hveb ac (List.Mem.head _)
+      have hs1 : StInv (stepF (reg 1) (baseOf 0) s ac) :=
+        stepF_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0) hst hac
+          (fun hcc => absurd hcc (by rw [hv.1]; exact Bool.noConfusion))
+      exact ih _ hs1
+        (ltS117_step hiA hiR hAM hRM h1 hst hL hac.1 hac.2.1 hac.2.2.1 hv.1 hv.2.1 hv.2.2)
+        (fun a ha => hall a (List.Mem.tail _ ha)) (fun a ha => hveb a (List.Mem.tail _ ha))
+
+/-- **成分の条件、Veblen の的で。**  `n` 段だけ畳んでから始めてよい: 途中の値が的の下に
+    あり、残りの対の指数が `A` より下、係数が的の下なら足りる。**見ているのは `x` の側
+    だけ**である。 -/
+def VebIngV117 (x A R : Term) (n : Nat) : Bool :=
+  lt TM.Term.one (phi A R)
+    && (((wcnf (reg 1) (toList x)).1.drop n).all
+        (fun ac => !le (reg 1) ac.1 && lt ac.1 A && lt ac.2 (phi A R)))
+    && (match (((wcnf (reg 1) (toList x)).1.take n).foldl (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))).2 with
+        | none => true
+        | some v => lt v (phi A R))
+
+/-- **§117.2 の主定理 — 成分が Veblen の的の下なら値も下。** -/
+theorem accW89_ltV117 {x A R : Term} (hx : inT x = true) (hlx : lt x M = true)
+    (Hp : PsiIdxOK 0 x) (hiA : inT A = true) (hAM : lt A M = true)
+    (hiR : inT R = true) (hRM : lt R M = true)
+    (n : Nat) (h : VebIngV117 x A R n = true) :
+    lt (accW89 x) (phi A R) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList x) hc hd
+    (ltM_toList x hx hlx)
+  obtain ⟨h12, h3⟩ := (Bool.and_eq_true _ _).mp h
+  obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h12
+  have hsplit : (wcnf (reg 1) (toList x)).1.take n ++ (wcnf (reg 1) (toList x)).1.drop n
+      = (wcnf (reg 1) (toList x)).1 := List.take_append_drop n _
+  have hmemT : ∀ ac ∈ (wcnf (reg 1) (toList x)).1.take n,
+      ac ∈ (wcnf (reg 1) (toList x)).1 := by
+    intro ac hac; rw [← hsplit]; exact List.mem_append_left _ hac
+  have hmemD : ∀ ac ∈ (wcnf (reg 1) (toList x)).1.drop n,
+      ac ∈ (wcnf (reg 1) (toList x)).1 := by
+    intro ac hac; rw [← hsplit]; exact List.mem_append_right _ hac
+  have hstT : StInv (((wcnf (reg 1) (toList x)).1.take n).foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))) :=
+    fold_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0)
+      _ (none, none) stInv_none (fun z hz => hallOK z (hmemT z hz))
+      (by
+        intro p hp
+        refine Hp p ?_
+        rw [← hsplit, scanSt_append109]
+        exact List.mem_append_left _ hp)
+  have hLT : LtS114 (phi A R) (((wcnf (reg 1) (toList x)).1.take n).foldl
+      (stepF (reg 1) (baseOf 0)) ((none : Option Term), (none : Option Term))) := by
+    intro v hv
+    rw [hv] at h3
+    exact h3
+  have hveb : ∀ ac ∈ (wcnf (reg 1) (toList x)).1.drop n,
+      le (reg 1) ac.1 = false ∧ lt ac.1 A = true ∧ lt ac.2 (phi A R) = true := by
+    intro ac hac
+    have hb := List.all_eq_true.mp h2 ac hac
+    obtain ⟨hb12, hb3⟩ := (Bool.and_eq_true _ _).mp hb
+    obtain ⟨hb1, hb2⟩ := (Bool.and_eq_true _ _).mp hb12
+    exact ⟨by cases hq : le (reg 1) ac.1 with
+             | false => rfl
+             | true => rw [hq] at hb1; exact Bool.noConfusion hb1, hb2, hb3⟩
+  have hmain := ltS117_fold hiA hiR hAM hRM h1 _ _ hstT hLT
+    (fun z hz => hallOK z (hmemD z hz)) hveb
+  have hfoldE : ((wcnf (reg 1) (toList x)).1.take n
+        ++ (wcnf (reg 1) (toList x)).1.drop n).foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))
+      = ((wcnf (reg 1) (toList x)).1.drop n).foldl (stepF (reg 1) (baseOf 0))
+          (((wcnf (reg 1) (toList x)).1.take n).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))) := List.foldl_append
+  rw [hsplit] at hfoldE
+  show lt (((wcnf (reg 1) (toList x)).1.foldl
+    (init := ((none : Option Term), (none : Option Term)))
+    (stepF (reg 1) (baseOf 0))).2.getD zero) (phi A R) = true
+  rw [hfoldE]
+  cases hv : (((wcnf (reg 1) (toList x)).1.drop n).foldl (stepF (reg 1) (baseOf 0))
+      (((wcnf (reg 1) (toList x)).1.take n).foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term)))).2 with
+  | none => exact lt_zero_left phiT_ne_zero117
+  | some v => exact hmain v hv
+
+end
+
+
+/-! ### §117.3 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 加法主要な項との比較は頭で決まる。 -/
+theorem lt_hd_ap117 {T X x : Term} {s : List Term} (hapT : T.isAP = true)
+    (hl : toList X = x :: s) : lt X T = lt x T := by
+  cases X with
+  | zero => cases hl
+  | add a b =>
+      have hx : x = a := by
+        have : (a :: toList b) = x :: s := hl
+        exact (List.cons.inj this).1.symm
+      rw [hx]; exact lt_add_ap102 a b hapT
+  | M => rw [show x = M from ((List.cons.inj hl).1).symm]
+  | omg c => rw [show x = omg c from ((List.cons.inj hl).1).symm]
+  | phi c d => rw [show x = phi c d from ((List.cons.inj hl).1).symm]
+  | psi c d => rw [show x = psi c d from ((List.cons.inj hl).1).symm]
+  | Z c => rw [show x = Z c from ((List.cons.inj hl).1).symm]
+
+/-- 加法主要な項が和以下なら、その頭以下でもある。 -/
+theorem le_hd_of_le_ap117 {T X x : Term} {s : List Term} (hiT : inT T = true)
+    (hapT : T.isAP = true) (hiX : inT X = true) (hl : toList X = x :: s)
+    (hle : le T X = true) : le T x = true := by
+  have hix : inT x = true := inTL_inT hiX x (by rw [hl]; exact List.Mem.head _)
+  cases hb : le T x with
+  | true => rfl
+  | false =>
+      exfalso
+      have hxT : lt x T = true := lt_of_not_le_inT hiT hix hb
+      have hXT : lt X T = true := by rw [lt_hd_ap117 hapT hl]; exact hxT
+      rcases (Bool.or_eq_true _ _).mp hle with he | hlt
+      · rw [eq_of_beq he, lt_irrefl] at hXT; exact Bool.noConfusion hXT
+      · rw [lt_asymm_inT hiT hiX hlt] at hXT; exact Bool.noConfusion hXT
+
+/-- **`φ̄` の正規化は第二引数を下げない。**  `T` が加法主要で `1 < T ≤ X` なら
+    `T ≤ φ̄(C,X)` — `phiNF` が返す五つの枝すべてで。 -/
+theorem le_phiNF_ge117 {T C X : Term} (hiT : inT T = true) (hapT : T.isAP = true)
+    (h1T : lt TM.Term.one T = true) (hTM : lt T M = true)
+    (hiC : inT C = true) (hCM : lt C M = true)
+    (hiX : inT X = true) (hXM : lt X M = true)
+    (hle : le T X = true) : le T (phiNF C X) = true := by
+  have hTz : T ≠ zero := by
+    intro hc; rw [hc, lt_zero_right] at h1T; exact Bool.noConfusion h1T
+  have hXz : X ≠ zero := by
+    intro hc
+    rw [hc] at hle
+    rcases (Bool.or_eq_true _ _).mp hle with he | hlt
+    · exact hTz (eq_of_beq he)
+    · rw [lt_zero_right] at hlt; exact Bool.noConfusion hlt
+  have hstep : ∀ Y : Term, inT Y = true → lt Y M = true → le T Y = true →
+      le T (phi C Y) = true := by
+    intro Y hiY hYM hTY
+    exact le_of_lt94 (lt_phi_of_le100 T.deg T C Y (Nat.le_refl _) hiT hTM
+      (inT_phiT117 hiC hiY hCM hYM) (Or.inr hTY))
+  have hphiX : le T (phi C X) = true := hstep X hiX hXM hle
+  have hdef : le T (phiNFdefault C X) = true := by
+    unfold phiNFdefault
+    split
+    · rename_i hh
+      exact absurd (eq_of_beq ((Bool.and_eq_true _ _).mp hh).1) hXz
+    · exact hphiX
+  cases hl : toList X with
+  | nil => exact absurd (toList_eq_nil X hl) hXz
+  | cons x t =>
+      have hix : inT x = true := inTL_inT hiX x (by rw [hl]; exact List.Mem.head _)
+      have hTx : le T x = true := le_hd_of_le_ap117 hiT hapT hiX hl hle
+      have h1x : lt TM.Term.one x = true :=
+        lt_of_lt_of_le3 (show FragR TM.Term.one = true from rfl) (inT_le_fragR T hiT)
+          (inT_le_fragR x hix) h1T hTx
+      have hidown : inT (plus (splitFin X).1 (ofNat ((splitFin X).2 - 1))) = true :=
+        inT_plus (inT_splitFin hiX) (inT_ofNat _)
+      have hdownM : lt (plus (splitFin X).1 (ofNat ((splitFin X).2 - 1))) M = true :=
+        lt_plus_M (inT_splitFin hiX) (inT_ofNat _) (ltM_splitFin hiX hXM) (ltM_ofNat _)
+      have hdown : le T (plus (splitFin X).1 (ofNat ((splitFin X).2 - 1))) = true :=
+        le_trans3 (inT_le_fragR T hiT) (inT_le_fragR x hix) (inT_le_fragR _ hidown)
+          hTx (le_hd_down95 hiX hl h1x)
+      have hsucc : le T (phiNFsucc C X) = true := by
+        unfold phiNFsucc
+        split
+        rename_i heq
+        rw [heq] at hdown hidown hdownM
+        split
+        · split <;> (split <;> first | exact hstep _ hidown hdownM hdown | exact hdef)
+        · exact hdef
+      unfold phiNF
+      split
+      · exact hle
+      · split
+        · split
+          · exact hle
+          · exact hsucc
+        · exact hsucc
+
+end
+
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 累算器は加法主要 — 発火の枝でも Veblen の枝でも。 -/
+def ApV117 (s : Option Term × Option Term) : Prop := ∀ v, s.2 = some v → v.isAP = true
+
+theorem apV117_none : ApV117 ((none : Option Term), (none : Option Term)) := by
+  intro v h; cases h
+
+theorem apV117_step (s : Option Term × Option Term) (ac : Term × Term) :
+    ApV117 (stepF (reg 1) (baseOf 0) s ac) := by
+  intro v hv
+  cases hf : le (reg 1) ac.1 with
+  | true =>
+      rw [stepF_snd_fire88 hf] at hv
+      rw [← Option.some.inj hv]; rfl
+  | false =>
+      rw [stepF_snd_veb88 hf] at hv
+      rw [← Option.some.inj hv]; exact isAP_phiNF _ _
+
+theorem apV117_fold : ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+    ApV117 s → ApV117 (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil => intro s h; exact h
+  | cons ac t ih => intro s _; exact ih _ (apV117_step s ac)
+
+/-- 「的は今の値以下」という不変量。 -/
+def GeV117 (T : Term) (s : Option Term × Option Term) : Prop :=
+  ∃ v, s.2 = some v ∧ le T v = true
+
+/-- **Veblen の一歩は値を下げない。** -/
+theorem geV117_step {T : Term} (hiT : inT T = true) (hapT : T.isAP = true)
+    (h1T : lt TM.Term.one T = true) (hTM : lt T M = true)
+    {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (hap : ApV117 s) (hge : GeV117 T s)
+    (hi1 : inT ac.1 = true) (h1M : lt ac.1 M = true) (hi2 : inT ac.2 = true)
+    (h2M : lt ac.2 M = true) (hf : le (reg 1) ac.1 = false) :
+    GeV117 T (stepF (reg 1) (baseOf 0) s ac) := by
+  obtain ⟨v, hv2, hTv⟩ := hge
+  have hval : (stepF (reg 1) (baseOf 0) s ac).2 = some (phiNF ac.1 (plus v ac.2)) := by
+    rw [stepF_snd_veb88 hf, hv2]
+  refine ⟨_, hval, ?_⟩
+  have hiv : inT v = true := (hst.2 v hv2).1
+  have hvM : lt v M = true := (hst.2 v hv2).2
+  have hapv : v.isAP = true := hap v hv2
+  have hTplus : le T (plus v ac.2) = true :=
+    le_trans3 (inT_le_fragR _ hiT) (inT_le_fragR _ hiv) (inT_le_fragR _ (inT_plus hiv hi2))
+      hTv (le_self_plus_ap81 hiv hapv hi2)
+  exact le_phiNF_ge117 hiT hapT h1T hTM hi1 h1M (inT_plus hiv hi2)
+    (lt_plus_M hiv hi2 hvM h2M) hTplus
+
+/-- **Veblen だけの尾を通しても値は下がらない。** -/
+theorem geV117_fold {T : Term} (hiT : inT T = true) (hapT : T.isAP = true)
+    (h1T : lt TM.Term.one T = true) (hTM : lt T M = true) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term), StInv s → ApV117 s →
+      GeV117 T s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ ac ∈ l, le (reg 1) ac.1 = false) →
+      GeV117 T (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil => intro s _ _ hge _ _; exact hge
+  | cons ac t ih =>
+      intro s hst hap hge hall hveb
+      have hac := hall ac (List.Mem.head _)
+      have hf := hveb ac (List.Mem.head _)
+      have hs1 : StInv (stepF (reg 1) (baseOf 0) s ac) :=
+        stepF_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0) hst hac
+          (fun hcc => absurd hcc (by rw [hf]; exact Bool.noConfusion))
+      exact ih _ hs1 (apV117_step s ac)
+        (geV117_step hiT hapT h1T hTM hst hap hge hac.1 hac.2.1 hac.2.2.1 hac.2.2.2 hf)
+        (fun a ha => hall a (List.Mem.tail _ ha)) (fun a ha => hveb a (List.Mem.tail _ ha))
+
+/-- **§117.3 の主定理 — 途中の値は最後の値以下。**  `x` の側だけを見ている。 -/
+theorem le_foldTake_accW89_117 {y T : Term} (hy : inT y = true) (hly : lt y M = true)
+    (Hp : PsiIdxOK 0 y) (hiT : inT T = true) (hapT : T.isAP = true)
+    (h1T : lt TM.Term.one T = true) (hTM : lt T M = true) (k : Nat)
+    (hveb : ∀ ac ∈ (wcnf (reg 1) (toList y)).1.drop k, le (reg 1) ac.1 = false)
+    (htk : (((wcnf (reg 1) (toList y)).1.take k).foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))).2 = some T) :
+    le T (accW89 y) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList y hy
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList y) hc hd
+    (ltM_toList y hy hly)
+  have hsplit : (wcnf (reg 1) (toList y)).1.take k ++ (wcnf (reg 1) (toList y)).1.drop k
+      = (wcnf (reg 1) (toList y)).1 := List.take_append_drop k _
+  have hmemT : ∀ ac ∈ (wcnf (reg 1) (toList y)).1.take k,
+      ac ∈ (wcnf (reg 1) (toList y)).1 := by
+    intro ac hac; rw [← hsplit]; exact List.mem_append_left _ hac
+  have hmemD : ∀ ac ∈ (wcnf (reg 1) (toList y)).1.drop k,
+      ac ∈ (wcnf (reg 1) (toList y)).1 := by
+    intro ac hac; rw [← hsplit]; exact List.mem_append_right _ hac
+  have hstT : StInv (((wcnf (reg 1) (toList y)).1.take k).foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))) :=
+    fold_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0)
+      _ (none, none) stInv_none (fun z hz => hallOK z (hmemT z hz))
+      (by
+        intro p hp
+        refine Hp p ?_
+        rw [← hsplit, scanSt_append109]
+        exact List.mem_append_left _ hp)
+  have hmain := geV117_fold hiT hapT h1T hTM _ _ hstT
+    (apV117_fold _ _ apV117_none) ⟨T, htk, Evidence.WF.le_self T⟩
+    (fun z hz => hallOK z (hmemD z hz)) hveb
+  have hfoldE : ((wcnf (reg 1) (toList y)).1.take k
+        ++ (wcnf (reg 1) (toList y)).1.drop k).foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))
+      = ((wcnf (reg 1) (toList y)).1.drop k).foldl (stepF (reg 1) (baseOf 0))
+          (((wcnf (reg 1) (toList y)).1.take k).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))) := List.foldl_append
+  rw [hsplit] at hfoldE
+  obtain ⟨v, hv2, hTv⟩ := hmain
+  show le T (((wcnf (reg 1) (toList y)).1.foldl
+    (init := ((none : Option Term), (none : Option Term)))
+    (stepF (reg 1) (baseOf 0))).2.getD zero) = true
+  rw [hfoldE, hv2]
+  exact hTv
+
+end
+
+
+/-! ### §117.4 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 前から `k` 段だけ畳んだ値。 -/
+def foldVal117 (y : Term) (k : Nat) : Option Term :=
+  (((wcnf (reg 1) (toList y)).1.take k).foldl (stepF (reg 1) (baseOf 0))
+    ((none : Option Term), (none : Option Term))).2
+
+theorem foldVal_inT117 {y T : Term} (hy : inT y = true) (hly : lt y M = true)
+    (Hp : PsiIdxOK 0 y) (k : Nat) (htk : foldVal117 y k = some T) :
+    inT T = true ∧ lt T M = true := by
+  obtain ⟨hc, hd⟩ := inT_toList y hy
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList y) hc hd
+    (ltM_toList y hy hly)
+  have hsplit : (wcnf (reg 1) (toList y)).1.take k ++ (wcnf (reg 1) (toList y)).1.drop k
+      = (wcnf (reg 1) (toList y)).1 := List.take_append_drop k _
+  have hmemT : ∀ ac ∈ (wcnf (reg 1) (toList y)).1.take k,
+      ac ∈ (wcnf (reg 1) (toList y)).1 := by
+    intro ac hac; rw [← hsplit]; exact List.mem_append_left _ hac
+  have hstT : StInv (((wcnf (reg 1) (toList y)).1.take k).foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))) :=
+    fold_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0)
+      _ (none, none) stInv_none (fun z hz => hallOK z (hmemT z hz))
+      (by
+        intro p hp
+        refine Hp p ?_
+        rw [← hsplit, scanSt_append109]
+        exact List.mem_append_left _ hp)
+  exact hstT.2 T htk
+
+/-- **§117.4 の道具 — Veblen の的ひとつで一組を閉じる。**  `b` の折り畳みの途中の値が
+    `φ̄(A,R)` の形をしていて、そこから先が全部 Veblen なら、その値は `b` の値以下
+    (§117.3)。`a` の側は §117.2 の成分の条件だけを見る。**二つの折り畳みを比べていない。** -/
+theorem hiMono_vebT117 (Hp : PsiIdxOKStd172) {a b : BT} {A R : Term} (n k : Nat)
+    (hbA : btLe72 1 (BT.D 0 a) = true) (hbB : btLe72 1 (BT.D 0 b) = true)
+    (hsA : BT.isStd (BT.D 0 a) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    (hWa : le (reg 1) (dict a) = true) (hWb : le (reg 1) (dict b) = true)
+    (hveb : ∀ ac ∈ (wcnf (reg 1) (toList (dict b))).1.drop k, le (reg 1) ac.1 = false)
+    (htgt : foldVal117 (dict b) k = some (phi A R))
+    (h : VebIngV117 (dict a) A R n = true) :
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true := by
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hia := inT_dict_of_std172 Hp a hba (isStd_of_D hsA)
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  have hpa : PsiIdxOK 0 (dict a) := Hp 0 a (by omega) hba hsA
+  have hpb : PsiIdxOK 0 (dict b) := Hp 0 b (by omega) hbb hsB
+  obtain ⟨hiT, hTM⟩ := foldVal_inT117 hib.1 hib.2 hpb k htgt
+  obtain ⟨hiA, hiR, hAM, hRM⟩ := inT_phi4 hiT
+  have h1T : lt TM.Term.one (phi A R) = true :=
+    ((Bool.and_eq_true _ _).mp ((Bool.and_eq_true _ _).mp h).1).1
+  have hle : le (phi A R) (accW89 (dict b)) = true :=
+    le_foldTake_accW89_117 hib.1 hib.2 hpb hiT rfl h1T hTM k hveb htgt
+  have hlt : lt (accW89 (dict a)) (phi A R) = true :=
+    accW89_ltV117 hia.1 hia.2 hpa hiA hAM hiR hRM n h
+  have hacca : inT (accW89 (dict a)) = true :=
+    (accW89_facts (dict a) hia.1 hia.2 hpa hWa).1
+  have haccb : inT (accW89 (dict b)) = true :=
+    (accW89_facts (dict b) hib.1 hib.2 hpb hWb).1
+  rw [collapse0_hi89 (dict a) hia.1 hia.2 hpa hWa,
+    collapse0_hi89 (dict b) hib.1 hib.2 hpb hWb]
+  exact lt_of_lt_of_le3 (inT_le_fragR _ hacca) (inT_le_fragR _ hiT)
+    (inT_le_fragR _ haccb) hlt hle
+
+/-- `b` の `k` 段目の値を的にして閉じられるか — 判定できる。 -/
+def tgtOK117 (a b : BT) (k : Nat) : Bool :=
+  ((wcnf (reg 1) (toList (dict b))).1.drop k).all (fun ac => !le (reg 1) ac.1)
+    && (match foldVal117 (dict b) k with
+        | some (TM.Term.phi A R) =>
+            (List.range ((wcnf (reg 1) (toList (dict a))).1.length)).any
+              (fun n => VebIngV117 (dict a) A R n)
+        | _ => false)
+
+/-- **§117 の道具が届く組。**  §114.3 の `ψ_{Ω₁}` の的か、§117.4 の Veblen の的か。
+    `a` を全部畳んでしまう `n` は入れていない (`List.range` は長さちょうどまで) ので、
+    **結論そのものを条項に紛れ込ませていない**。 -/
+def closed117 (a b : BT) : Bool :=
+  (match idxF88 0 (dict b) with
+   | none => false
+   | some jb => VebIng114 (dict a) (psi (reg 1) jb))
+  || (List.range ((wcnf (reg 1) (toList (dict b))).1.length + 1)).any (tgtOK117 a b)
+
+theorem hiMono_closed117 (Hp : PsiIdxOKStd172) {a b : BT}
+    (hbA : btLe72 1 (BT.D 0 a) = true) (hbB : btLe72 1 (BT.D 0 b) = true)
+    (hsA : BT.isStd (BT.D 0 a) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    (hWa : le (reg 1) (dict a) = true) (hWb : le (reg 1) (dict b) = true)
+    (h : closed117 a b = true) :
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with h1 | h2
+  · cases hjb : idxF88 0 (dict b) with
+    | none => rw [hjb] at h1; exact Bool.noConfusion h1
+    | some jb =>
+        rw [hjb] at h1
+        exact hiMono_bIdx114 Hp hbA hbB hsA hsB hWa hWb hjb h1
+  · obtain ⟨k, _, hk⟩ := List.any_eq_true.mp h2
+    obtain ⟨hk1, hk2⟩ := (Bool.and_eq_true _ _).mp hk
+    have hveb : ∀ ac ∈ (wcnf (reg 1) (toList (dict b))).1.drop k, le (reg 1) ac.1 = false := by
+      intro ac hac
+      have := List.all_eq_true.mp hk1 ac hac
+      cases hq : le (reg 1) ac.1 with
+      | false => rfl
+      | true => rw [hq] at this; exact Bool.noConfusion this
+    cases hfv : foldVal117 (dict b) k with
+    | none => rw [hfv] at hk2; exact Bool.noConfusion hk2
+    | some T =>
+        cases T with
+        | phi A R =>
+            rw [hfv] at hk2
+            obtain ⟨n, _, hn⟩ := List.any_eq_true.mp hk2
+            exact hiMono_vebT117 Hp n k hbA hbB hsA hsB hWa hWb hveb hfv hn
+        | zero => rw [hfv] at hk2; exact Bool.noConfusion hk2
+        | M => rw [hfv] at hk2; exact Bool.noConfusion hk2
+        | add _ _ => rw [hfv] at hk2; exact Bool.noConfusion hk2
+        | omg _ => rw [hfv] at hk2; exact Bool.noConfusion hk2
+        | psi _ _ => rw [hfv] at hk2; exact Bool.noConfusion hk2
+        | Z _ => rw [hfv] at hk2; exact Bool.noConfusion hk2
+
+/-- **`VebRest114` の残り — §117 の道具が届かない組だけ。** -/
+def VebRest117 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lastFire92 (dict a) = false → lastFire92 (dict b) = false →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    closed117 a b = false →
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true
+
+/-- **§117.4 の主定理 — `VebRest114` を架け替える。** -/
+theorem vebRest_of117 (Hp : PsiIdxOKStd172) (H : VebRest117) : VebRest114 := by
+  intro a b hbA hbB hsA hsB hWa hWb hfa hfb hlt
+  cases hcl : closed117 a b with
+  | true => exact hiMono_closed117 Hp hbA hbB hsA hsB hWa hWb hcl
+  | false => exact H a b hbA hbB hsA hsB hWa hWb hfa hfb hlt hcl
+
+/-- **`HiMono89` を四つの条項に架け替える。** -/
+theorem hiMono_of_four117 (Hp : PsiIdxOKStd172) (HA : IdxMono101) (HB : IdxLeMix109)
+    (H1 : VebIngF114) (H2 : VebRest117) : HiMono89 :=
+  hiMono_of_four114 Hp HA HB H1 (vebRest_of117 Hp H2)
+
+/-- **326 行目を架け替える。** -/
+theorem certIn_t326_117 (Hp : PsiIdxOKStd172) (HA : IdxMono101) (HB : IdxLeMix109)
+    (H1 : VebIngF114) (H2 : VebRest117) (HD1 : DictOntoMidOpen103) (HD3 : DictDenseMid107)
+    (HD4 : DictDenseAbove107) (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_114 Hp HA HB H1 (vebRest_of117 Hp H2) HD1 HD3 HD4 hacc
+
+end
+
+/-! ### §117.5 否定と段の正直さ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§114 の道具が届かない組の証人 (a)** — `ψ₁0`、2 記号。 -/
+def reachA117 : BT := w1_101
+/-- **その相棒 (b)** — `ψ₁ψ₁0`、3 記号。**指数を持たない**ので §114.3 の
+    `ψ_{Ω₁}(j_b)` の的は存在しない。 -/
+def reachB117 : BT := w2_101
+
+/-- **§117 は §114 が届かない場所に届く。**  `b` は指数を持たないので §114.3 の道具は
+    何も言わないが、`b` の折り畳みの途中の値が `φ̄` の形をしているので §117.4 が閉じる。 -/
+theorem reachSep117 :
+    (btLe72 1 (BT.D 0 reachA117), BT.isStd (BT.D 0 reachA117),
+     le (reg 1) (dict reachA117), lastFire92 (dict reachA117),
+     btLe72 1 (BT.D 0 reachB117), BT.isStd (BT.D 0 reachB117),
+     le (reg 1) (dict reachB117), lastFire92 (dict reachB117),
+     (idxF88 0 (dict reachB117)).isSome,
+     lt (hiW89 (dict reachA117)) (hiW89 (dict reachB117)),
+     lt (collapse 0 (hiW89 (dict reachA117))) (collapse 0 (hiW89 (dict reachB117))),
+     closed117 reachA117 reachB117, BT.size reachA117, BT.size reachB117)
+    = (true, true, true, false, true, true, true, false, false, true, true, true, 2, 3) := rfl
+
+/-- **残る条項の証人 (a)** — `ψ₁0`、2 記号。 -/
+def restA117 : BT := w1_101
+/-- **その相棒 (b)** — `ψ₁ψ₀ψ₁0`、4 記号。 -/
+def restB117 : BT := BT.D 1 (BT.D 0 w1_101)
+
+/-- **`VebRest117` の仮定は空でない。**  両辺とも `K` 標準、どちらの折り畳みも最後の対が
+    発火せず、`hi` は狭義に増え、**結論は成り立つ**。それでも `closed117` は偽である。 -/
+theorem restSep117 :
+    (btLe72 1 (BT.D 0 restA117), BT.isStd (BT.D 0 restA117),
+     le (reg 1) (dict restA117), lastFire92 (dict restA117),
+     btLe72 1 (BT.D 0 restB117), BT.isStd (BT.D 0 restB117),
+     le (reg 1) (dict restB117), lastFire92 (dict restB117),
+     lt (hiW89 (dict restA117)) (hiW89 (dict restB117)),
+     lt (collapse 0 (hiW89 (dict restA117))) (collapse 0 (hiW89 (dict restB117))),
+     closed117 restA117 restB117, BT.size restA117, BT.size restB117)
+    = (true, true, true, false, true, true, true, false, true, true, false, 2, 4) := rfl
+
+/-- **何が足りないかは名前がついている — 指数が等しい。**  両辺の底 `Ω₁` の分解の
+    指数の列が**同じ**なので、`a` の指数の上にある `φ̄(A,·)` の的は存在しない。 -/
+theorem restExp117 :
+    ((wcnf (reg 1) (toList (dict restA117))).1.map (fun ac => ac.1)
+       == (wcnf (reg 1) (toList (dict restB117))).1.map (fun ac => ac.1),
+     (wcnf (reg 1) (toList (dict restA117))).1.length,
+     (wcnf (reg 1) (toList (dict restB117))).1.length) = (true, 1, 1) := rfl
+
+/-- `n` を `a` の対の個数**ちょうど**まで許した形。 -/
+def tgtOKtriv117 (a b : BT) (k : Nat) : Bool :=
+  ((wcnf (reg 1) (toList (dict b))).1.drop k).all (fun ac => !le (reg 1) ac.1)
+    && (match foldVal117 (dict b) k with
+        | some (TM.Term.phi A R) =>
+            (List.range ((wcnf (reg 1) (toList (dict a))).1.length + 1)).any
+              (fun n => VebIngV117 (dict a) A R n)
+        | _ => false)
+
+def closedTriv117 (a b : BT) : Bool :=
+  (match idxF88 0 (dict b) with
+   | none => false
+   | some jb => VebIng114 (dict a) (psi (reg 1) jb))
+  || (List.range ((wcnf (reg 1) (toList (dict b))).1.length + 1)).any (tgtOKtriv117 a b)
+
+/-- **段の正直さ — `n` の範囲を一つ短く止めているのは飾りではない。**  `a` を**全部**
+    畳んでよいとすると `restSep117` の組は閉じる。閉じるのは、`n` が `a` の対の個数
+    ちょうどのとき条件が**結論そのもの**になるからである。§117.6 の受領 4 が、その形が
+    母集団の上で結論とほぼ同値であることを測る。 -/
+theorem restTriv117 :
+    (closed117 restA117 restB117, closedTriv117 restA117 restB117) = (false, true) := rfl
+
+/-- **既知の証人はどちらの側に落ちるか。**  §81 の `cexA89` と §101 の `bothBadA101` は
+    どちらも `closed117` が偽 — **この条項に対する既知の反例は、§117 が閉じない側に
+    そのまま残っている**。§114.4 の `revA114` は `b` が全発火するので `VebIngF114` の側。 -/
+theorem knownSplit117 :
+    (closed117 cexA89 cexB89, closed117 bothBadA101 bothBadB101,
+     lastFire92 (dict cexB89), lastFire92 (dict bothBadB101),
+     lastFire92 (dict revB114)) = (false, false, false, false, true) := rfl
+
+end
+
+
+/-! ### §117.6 測定 (凍結)
+
+**構成 — §114.5 の三本の線に、四本目を組んで足す。**  §117 の条項が見るのは指数と
+**係数**であり、§114.5 の母集団は係数が小さい項ばかりだった。`ψ₁(ψ₀ z)` の底 `Ω₁` の
+分解は指数 `1`・係数 `ω^(ψ₀ z)` (§104.2) だから、`z` を大きく取れば係数だけが大きい項に
+なる。それを種にした線を足す (`coefSeed117`)。濾さない。
+
+    fireSeed117  全発火する種 4 個 (§114.5 と同じ)
+    vebSeed117   発火しない種 3 個 (§114.5 と同じ)
+    mixSeed117   `revA114` とその親戚 3 個 (§114.5 と同じ)
+    coefSeed117  係数が大きい種 5 個 (**組んだ線**)
+    pop117       その 2 項和も入れた 135 項  濾さない
+
+`popNo117` は `coefSeed117` を抜いた 65 項 (§114.5 の母集団そのもの) で、**組んだ線が
+要ることの受領**である。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+private def dedup117 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def w4_117 : BT := BT.D 1 w3_101
+private def fireSeed117 : List BT :=
+  [w2_101, w3_101, w4_117, BT.D 1 (BT.sum w3_101 w3_101)]
+private def vebSeed117 : List BT :=
+  [w1_101, BT.D 1 (BT.D 0 w1_101), BT.D 1 (BT.D 0 (BT.sum w2_101 w1_101))]
+private def mixSeed117 : List BT :=
+  [revA114, BT.D 1 (BT.sum (BT.D 1 (BT.D 0 w1_101)) (BT.D 1 BT.zero)),
+   BT.D 1 (BT.D 1 (BT.D 0 w3_101))]
+private def g0B117 : BT := BT.D 0 w3_101
+private def coefSeed117 : List BT :=
+  [BT.D 1 g0B117, BT.D 1 (BT.D 0 (BT.D 1 g0B117)), BT.D 1 (BT.sum g0B117 w1_101),
+   BT.D 1 (BT.D 0 (BT.sum w3_101 w3_101)),
+   BT.D 1 (BT.sum (BT.D 1 g0B117) (BT.D 0 w3_101))]
+private def seeds117 : List BT := fireSeed117 ++ vebSeed117 ++ mixSeed117 ++ coefSeed117
+private def widen117 (l : List BT) : List BT :=
+  dedup117 (l ++ l.flatMap (fun a => (l.filter (fun b => BT.le b a)).map (BT.sum a)))
+private def pop117 : List BT := widen117 seeds117
+private def popNo117 : List BT := widen117 (fireSeed117 ++ vebSeed117 ++ mixSeed117)
+private def ok117 (a : BT) : Bool := btLe72 1 a && BT.isStd a && le (reg 1) (dict a)
+private def kstd117 (a : BT) : Bool := ok117 a && BT.isStd (BT.D 0 a)
+private def samp117 : List BT := pop117.filter ok117
+private def ksamp117 : List BT := pop117.filter kstd117
+private def sampNo117 : List BT := popNo117.filter ok117
+private def ksampNo117 : List BT := popNo117.filter kstd117
+private def pairs117 (l : List BT) : List (BT × BT) :=
+  l.flatMap (fun a => l.map (fun b => (a, b)))
+/-- 残余 — `hi` が狭義に増え、**どちらの**折り畳みも最後の対が発火しない組。
+    `VebRest114` の担当分そのもの。 -/
+private def resid117 (l : List BT) : List (BT × BT) :=
+  (pairs117 l).filter (fun p =>
+    lt (hiW89 (dict p.1)) (hiW89 (dict p.2)) && !lastFire92 (dict p.1)
+      && !lastFire92 (dict p.2))
+private def concl117 (p : BT × BT) : Bool :=
+  lt (collapse 0 (hiW89 (dict p.1))) (collapse 0 (hiW89 (dict p.2)))
+private def hasIdx117 (a : BT) : Bool := (idxF88 0 (dict a)).isSome
+private def psiRoute117 (p : BT × BT) : Bool :=
+  match idxF88 0 (dict p.2) with
+  | none => false
+  | some jb => VebIng114 (dict p.1) (psi (reg 1) jb)
+private def vebRoute117 (p : BT × BT) : Bool :=
+  (List.range ((wcnf (reg 1) (toList (dict p.2))).1.length + 1)).any (tgtOK117 p.1 p.2)
+private def hdExp117 (y : Term) : Term :=
+  match (wcnf (reg 1) (toList y)).1 with | [] => zero | ac :: _ => ac.1
+
+/-! 母集団の形。**135 項、形の条件を満たすのが 104 項、`K` 標準が 54 項。** -/
+#guard (pop117.length, samp117.length, ksamp117.length) == (135, 104, 54)
+
+/-! **受領 1 — 道具は破れる場所で破れない。**  §117 の担当する残余は 4465 組、うち
+    **782 組が結論を破る**。`closed117` はその 782 組では**一度も真にならず**、
+    それでいて母集団ぜんぶでは 3523 組で真になる — 空虚な掃き出しではない。 -/
+#guard ((resid117 samp117).length, (resid117 ksamp117).length,
+        (resid117 samp117).countP (fun p => !concl117 p),
+        (resid117 ksamp117).countP (fun p => !concl117 p)) == (4465, 990, 782, 0)
+#guard ((resid117 samp117).countP (fun p => closed117 p.1 p.2 && !concl117 p),
+        (resid117 samp117).countP (fun p => closed117 p.1 p.2)) == (0, 3104)
+
+/-! **受領 2 — 残る条項の仮定は空でない。**  `K` 標準な 990 組のうち `closed117` が
+    閉じるのは 936 組、**残り 54 組**。§114.3 の `ψ_{Ω₁}` の道筋だけなら 744 組、
+    §117.4 の Veblen の的だけなら 503 組。 -/
+#guard ((resid117 ksamp117).countP (fun p => closed117 p.1 p.2),
+        (resid117 ksamp117).countP (fun p => !closed117 p.1 p.2),
+        (resid117 ksamp117).countP psiRoute117,
+        (resid117 ksamp117).countP vebRoute117) == (936, 54, 744, 503)
+
+/-! **受領 3 — §117 は §114 が届かない類に届く。**  `b` が指数を持たない `K` 標準な
+    120 組では §114.3 の道筋は **0 組**しか閉じず、§117.4 が 95 組を閉じる。
+    `b` が指数を持つ 870 組では二つ合わせて 841 組。 -/
+#guard ((resid117 ksamp117).countP (fun p => hasIdx117 p.2),
+        (resid117 ksamp117).countP (fun p => hasIdx117 p.2 && closed117 p.1 p.2),
+        (resid117 ksamp117).countP (fun p => !hasIdx117 p.2),
+        (resid117 ksamp117).countP (fun p => !hasIdx117 p.2 && closed117 p.1 p.2),
+        (resid117 ksamp117).countP (fun p => !hasIdx117 p.2 && psiRoute117 p))
+      == (870, 841, 120, 95, 0)
+
+/-! **受領 4 — `n` を一つ短く止めているのは飾りではない。**  `n` を `a` の対の個数
+    ちょうどまで許すと 990 組ぜんぶが閉じ (増えるのはちょうど例の 54 組)、しかも形の
+    条件だけの母集団では**結論が成り立つ 3683 組のうち 3523 組**でその形が成り立つ。
+    `b` の値が `φ̄` の形をしている限り、それは結論の言い換えである。 -/
+#guard ((resid117 ksamp117).countP (fun p => closedTriv117 p.1 p.2),
+        (resid117 ksamp117).countP (fun p => closedTriv117 p.1 p.2 && !closed117 p.1 p.2),
+        (resid117 samp117).countP (fun p => concl117 p && closedTriv117 p.1 p.2),
+        (resid117 samp117).countP (fun p => concl117 p && !closedTriv117 p.1 p.2))
+      == (990, 54, 3523, 160)
+
+/-! **受領 5 — 外した 54 組は一つの形をしている。**  どれも `a` の先頭の指数が `b` の
+    先頭の指数と**等しい**。しかもその形そのものが障害なのではない: 閉じた 936 組にも
+    107 組ある。 -/
+#guard (((resid117 ksamp117).filter (fun p => !closed117 p.1 p.2)).countP
+          (fun p => hdExp117 (dict p.1) == hdExp117 (dict p.2)),
+        ((resid117 ksamp117).filter (fun p => !closed117 p.1 p.2)).length,
+        ((resid117 ksamp117).filter (fun p => closed117 p.1 p.2)).countP
+          (fun p => hdExp117 (dict p.1) == hdExp117 (dict p.2))) == (54, 54, 107)
+
+/-! **受領 6 — 係数の線は組む必要があった。**  それを抜いた 65 項 (§114.5 の母集団) では
+    残余 1540 組・破れ 84 組で、`K` 標準の外れは 34 組。線を足すと破れは 9.3 倍になり、
+    健全性の検査はその分だけ落ちる機会が増えた — そして落ちなかった。 -/
+#guard (popNo117.length, (resid117 sampNo117).length,
+        (resid117 sampNo117).countP (fun p => !concl117 p),
+        (resid117 ksampNo117).length,
+        (resid117 ksampNo117).countP (fun p => !closed117 p.1 p.2)) == (65, 1540, 84, 666, 34)
+
+end
+
 end Evidence.Region
