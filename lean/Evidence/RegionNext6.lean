@@ -9299,4 +9299,1039 @@ def argE119 : List BT :=
 
 end
 
+/-! ## §124 THE DIVISION SURVIVES ON THE FIRING PREFIX — `IdxLeMix109` IS A THEOREM
+
+§109 wrote the clause down and four sections carried it without touching it:
+
+    `IdxLeMix109` :  `a`'s fold fires at its last pair, `b`'s does NOT, and
+                     `hi (dict a) < hi (dict b)`  ⟹  the collapse indices satisfy
+                     `ja ≤ jb` .
+
+§120 closed its strict sibling `IdxMono101` by showing that the firing fold is a DIVISION,
+`X = ω^(Ω₁·Ω₁)·(1 ⊕ j)` (`divOm120`), and taking the contrapositive of two NON-strict maps.
+In §120.4 it also named, for whoever took this clause, the one route it could see:
+
+> the firing pairs are a PREFIX (§109.1's `fireSplit109`), so the index is the prefix's
+> index, and §120.1's induction run on that prefix gives `ω^(Ω₁·Ω₁)·(1 ⊕ j) ≤ X` for every
+> `X` that has an index at all — `≤` where §120.1 has `=`.
+
+**The route is right about the prefix and wrong about the `≤`.**  Running §120.1's induction
+on the prefix does not weaken the identity.  It moves the RIGHT-HAND SIDE, and what comes out
+is still an equality:
+
+    **`ω^(Ω₁·Ω₁)·(1 ⊕ j) = ofList ((toList X).takeWhile fires)`**    (`divCut124`)
+
+for every `X` whose components are all `≥ Ω₁` and which has an index at all — **with no
+firing hypothesis on either side.**  When every component fires the right-hand side IS `X`
+and this is §120's `divOm120`; when some component does not fire it is the firing prefix of
+`X`, strictly below `X`.  Keeping the firing components is monotone (`cutMono124`), so §120's
+contrapositive runs unchanged and the clause comes out needing neither `lastFire92 (dict a)`
+nor `lastFire92 (dict b)`.
+
+WHAT IS PROVED.
+
+  §124.1  **THE IDENTITY, RESTRICTED TO THE PREFIX** (`cutFire124`).  §120.1's
+          `mulL_sumDD120` assumed every pair fires; `cutFire124` assumes nothing and proves
+          `ω^(Ω₁·Ω₁)·Σ{Δ over the firing pairs} = ofList (the firing components)`.  The
+          induction is §120.1's with one branch added — the step where the head component
+          does not fire, where `wcnfFstHd109` says the head PAIR does not fire either and
+          both sides are `0`.  `wcnfTakeCons124` is §120.1's `wcnf_cons_sum120` with its
+          "all pairs fire" hypothesis replaced by "the head component fires", which is the
+          only thing that decomposition ever read.
+
+  §124.2  **THE INDEX IS THE PREFIX'S INDEX** (`idxTake124`, `sumTake124`, `divCut124`).
+          A non-firing pair leaves the index component of the fold alone (`foldNotFire124`),
+          and §109.1's `fireSplit109` says the non-firing pairs are exactly the `dropWhile`,
+          so the whole tail is silent.  `sumTake124` is §120.2's `plus_one_idx120` run on the
+          prefix; `divCut124` puts the two together and adds the bound `1 ⊕ j < M` that the
+          strict monotonicity lemmas need.
+
+  §124.3  **THE CUT IS MONOTONE** (`lt_append_cut124`, `dropNotFire124`, `cutMono124`).
+          §89.4's `lt_append_hi89` — "comparing the `≥ Ω₁` parts decides the comparison" — is
+          stated at the one cut point `Ω₁`, and its proof uses that cut point in exactly one
+          place: to see that the head of the tail is below the head of the big part.
+          `lt_append_cut124` is the same proof with `reg 1` replaced by that hypothesis
+          itself, and it then applies at the cut "does this component fire", which is a cut
+          because firing is upward closed along the component list — `dropNotFire124`, which
+          is §109.1's `fireMono109` read on components rather than on pairs.
+
+  §124.4  **THE CLAUSE** (`idxLe_core124`, `IdxLeAny124`, `idxLeMix109_of_psi124`).
+          `idxLe_core124` mentions no `dict`, no `BT`, no `K`-condition and **no firing**:
+          two 𝔗(M) terms with all components `≥ Ω₁`, both with an index, and the order of the
+          terms decides the order of the indices, non-strictly.  `IdxLeAny124` is the `BT`
+          form, `idxLeMix109_of_psi124 : PsiIdxOKStd172 → IdxLeMix109`, and
+          `hiMono_of_two124` / `certIn_t326_124` take `IdxLeMix109` off §120's list.
+
+  §124.5  **THE STRICT FORM IS FALSE HERE TOO** (`not_idxLtAny124`) — §109's `mixA109`/
+          `mixB109` refute it verbatim, since dropping hypotheses only makes the strict form
+          harder.  `sepCutFacts124` freezes the BUILT witness `ψ₁⁴0 ⊕ ψ₁³0 ⊕ Ω₁` (13 symbols)
+          on which the prefix is proper AND two components fire — the shape §124.6's first
+          population does not contain.
+
+  §124.6  the measurement.
+
+WHAT IS **NOT** CLAIMED.  `IdxLeMix109` is delivered as `PsiIdxOKStd172 → IdxLeMix109`, not
+as a bare theorem, for §120's reason word for word: every order lemma in the file is stated
+on 𝔗(M) and without the gate `dict a` need not be a 𝔗(M) term.  At the point of use the
+hypothesis is free — `hiMono_of_three120` and `certIn_t326_120` both take it already.
+`VebIngF114` and `VebRest117` are untouched and unproved; `HiMono89` is not proved.  §124
+REMOVES a residue rather than moving one.  Row 326's Veblen side is now `VebIngF114`,
+`VebRest117` and `PsiIdxOKStd172`.
+
+**WHERE §124 STOPPED.**  Nowhere on its own clause: it is closed, and it is closed in a
+strictly stronger form than the one it was asked for (`IdxLeAny124` — no firing on either
+side).  What it does NOT do is help the two Veblen clauses that remain, and the reason is
+§120's, unchanged: the division has an inverse, `phiNF` does not.  §124 says one new thing
+about that boundary — the division is not confined to the all-firing terms, it lives on the
+firing PREFIX of every term — but the Veblen tail beyond that prefix is exactly what
+`VebIngF114` and `VebRest117` are about, and nothing here touches it.
+
+**THE LEDGER, thirteenth entry, and it is against a hand-off again.**  §120 named the route
+out of its own `a`-side hypothesis and named it as a WEAKENING (`≤` where §120.1 has `=`).
+The weakening is not needed: the equality holds once the right-hand side is read as the
+prefix rather than the term.  **What was short was not an inequality.  It was the right
+right-hand side.**  And the other half of the entry is against §109: `IdxLeMix109` carries
+two firing hypotheses and the proof reads NEITHER — the second one (`lastFire92 (dict b) =
+false`) is not even used to know that `b`'s fold has a Veblen tail, because §124 never asks.
+The one lemma that had to be re-stated rather than re-used is §89.4's `lt_append_hi89`,
+written at the single cut point `Ω₁` in a proof that never needed a particular cut point.
+
+WHAT THE MEASUREMENT SAYS (§124.6 gives the construction).  Two populations, BUILT from a
+firing line and a non-firing line, nothing filtered.
+
+  * **120 terms, 89 of them `K`-standard, max 32 symbols.  70 have a collapse index, 24 of
+    those fire at the last pair and 46 do not; 19 have no index at all.**
+  * **The identity is the section.**  `ω^(Ω₁·Ω₁)·(1 ⊕ j) = the firing prefix` holds on
+    **70 of 70** terms that have an index.  §120's `ω^(Ω₁·Ω₁)·ΣΔ = hi` holds on **24 of the
+    same 70** — the firing ones, and no other.  The two numbers are the section in one line.
+  * **The prefix is really proper.**  46 of the 89 have a firing prefix strictly inside their
+    component list; on those 46, and only those, §120's identity fails and §124's holds.
+  * **The clause, seen, and the strict form refuted by count.**  2415 residual pairs have an
+    index on both sides: `ja ≤ jb` breaks **0** times and `ja < jb` breaks **289** times.
+    By class — (fires, fires) 276/0/0, (fires, Veblen) 358/0/**46**, (Veblen, fires) 746/0/0,
+    (Veblen, Veblen) **1035**/0/**243**.  The last class is the one NO clause in the file
+    covered: `IdxMono101` wants both sides firing, `IdxLeMix109` wants `a` firing.
+  * **A hypothesis this population cannot see.**  Of 3916 residual pairs over the 89, the
+    number with an index on `a` and none on `b` is **0** — §109.2 as a count.  So "b has an
+    index" is never a filter here; it is structural (without it there is no `jb` to compare),
+    NOT empirically necessary, and §124 claims only the former.
+  * **A shape this population cannot express, and it was not a size problem.**  All 46 proper
+    prefixes have **exactly one** firing component: `≥ 2 firing components followed by a
+    non-firing one` occurs **0 times in 120 terms of up to 32 symbols**.  The witness was
+    BUILT from the statement — `sepCut124 = ψ₁⁴0 ⊕ ψ₁³0 ⊕ Ω₁`, **13 symbols**, two firing
+    components and one not — and only then was the population widened.  Widening the SHAPE
+    (three-term sums with three DISTINCT summands) and not the size — 363 terms, **the same
+    maximum of 32 symbols** — gives **90** of them.  §116's failure mode was size; this one
+    was shape, and a deeper sweep at the old shape would have found nothing.
+  * **And the next shape up is still absent.**  `≥ 3 firing components before a non-firing
+    one` occurs 0 times in both populations; `sepCut2124` (20 symbols) is built by hand and
+    behaves the same. -/
+
+/-! ### §124.1 発火する成分は前置き — そこだけで §120.1 の恒等式が立つ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- `takeWhile` の要素はもとの列の要素。 -/
+theorem mem_of_takeWhile124 {α : Type} (P : α → Bool) : ∀ (l : List α) (a : α),
+    a ∈ l.takeWhile P → a ∈ l
+  | [], a, h => by cases h
+  | b :: t, a, h => by
+      by_cases hb : P b = true
+      · rw [List.takeWhile_cons_of_pos hb] at h
+        rcases List.mem_cons.mp h with h1 | h1
+        · rw [h1]; exact List.Mem.head _
+        · exact List.Mem.tail _ (mem_of_takeWhile124 P t a h1)
+      · rw [List.takeWhile_cons_of_neg (by simpa using hb)] at h; cases h
+
+/-- `dropWhile` の要素はもとの列の要素。 -/
+theorem mem_of_dropWhile124 {α : Type} (P : α → Bool) : ∀ (l : List α) (a : α),
+    a ∈ l.dropWhile P → a ∈ l
+  | [], a, h => by cases h
+  | b :: t, a, h => by
+      by_cases hb : P b = true
+      · rw [List.dropWhile_cons_of_pos hb] at h
+        exact List.Mem.tail _ (mem_of_dropWhile124 P t a h)
+      · rw [List.dropWhile_cons_of_neg (by simpa using hb)] at h
+        exact h
+
+/-- 前置きの成分列は 𝔗(M) の並び。 -/
+theorem inTL_takeWhile124 (P : Term → Bool) {l : List Term} (h : inTL l = true) :
+    inTL (l.takeWhile P) = true := by
+  show (l.takeWhile P).all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  exact List.all_eq_true.mp h x (mem_of_takeWhile124 P l x hx)
+
+/-- 後半の成分列も 𝔗(M) の並び。 -/
+theorem inTL_dropWhile124 (P : Term → Bool) {l : List Term} (h : inTL l = true) :
+    inTL (l.dropWhile P) = true := by
+  show (l.dropWhile P).all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  exact List.all_eq_true.mp h x (mem_of_dropWhile124 P l x hx)
+
+/-- 前置きの成分列も降順。 -/
+theorem descL_takeWhile124 (P : Term → Bool) : ∀ (l : List Term), inTL l = true →
+    descL l = true → descL (l.takeWhile P) = true := by
+  intro l
+  induction l with
+  | nil => intro _ _; rfl
+  | cons a t ih =>
+    intro hc hd
+    obtain ⟨⟨_, hia⟩, hct⟩ := inTL_cons.mp hc
+    have hdt := descL_tail hd
+    have hbound := descL_bound_inT t a hia hct hd
+    by_cases hp : P a = true
+    · rw [List.takeWhile_cons_of_pos hp]
+      cases hf : t.takeWhile P with
+      | nil => rfl
+      | cons b s =>
+        refine descL_cons.mpr ⟨?_, by rw [← hf]; exact ih hct hdt⟩
+        have hb : b ∈ t.takeWhile P := by rw [hf]; exact List.Mem.head _
+        exact hbound b (mem_of_takeWhile124 P t b hb)
+    · rw [List.takeWhile_cons_of_neg (by simpa using hp)]; rfl
+
+/-- 前置きの `Δ` の総和はもとの総和以下。 -/
+theorem le_sumDD_take124 {w : Term} (hw : inT w = true) (P : (Term × Term) → Bool) :
+    ∀ (l : List (Term × Term)), (∀ ac ∈ l, inT ac.1 = true ∧ inT ac.2 = true) →
+      le (sumDD112 w (l.takeWhile P)) (sumDD112 w l) = true := by
+  intro l
+  induction l with
+  | nil => intro _; exact Evidence.WF.le_self _
+  | cons ac t ih =>
+    intro hin
+    by_cases hp : P ac = true
+    · rw [List.takeWhile_cons_of_pos hp, sumDD_cons112, sumDD_cons112]
+      exact plus_mono_right_inT _ (inT_ddOf75 hw (hin ac (List.Mem.head _)).1
+          (hin ac (List.Mem.head _)).2) _ _
+        (inT_sumDD112 hw _ (fun a ha => hin a (List.Mem.tail _
+          (mem_of_takeWhile124 P t a ha))))
+        (inT_sumDD112 hw t (fun a ha => hin a (List.Mem.tail _ ha)))
+        (ih (fun a ha => hin a (List.Mem.tail _ ha)))
+    · rw [List.takeWhile_cons_of_neg (by simpa using hp)]
+      exact Evidence.WF.le_zero_any _
+
+/-- **一成分ぶんの分け方 — 発火する前置きだけを見た `wcnf_cons_sum120`。**
+    §120.1 の `wcnf_cons_sum120` は「対がぜんぶ発火する」ことを要ったが、こちらは
+    頭の成分が発火することしか要らない。 -/
+theorem wcnfTakeCons124 {p : Term} (hip : inT p = true) (hpM : lt p M = true)
+    (hlp : lt p (reg 1) = false) (hfire : le (reg 1) (wA (reg 1) p) = true)
+    {rest : List Term} (hcr : inTL rest = true) (hdr : descL rest = true)
+    (hmr : ∀ x ∈ rest, lt x M = true) :
+    sumDD112 (reg 1) ((wcnf (reg 1) (p :: rest)).1.takeWhile (fun z => le (reg 1) z.1))
+      = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+          (sumDD112 (reg 1)
+            ((wcnf (reg 1) rest).1.takeWhile (fun z => le (reg 1) z.1))) := by
+  have hA : inT (wA (reg 1) p) = true := inT_wA109 (inT_reg 1) (isSC_reg_succ 0) hip
+  have hC : inT (wC (reg 1) p) = true := inT_wC hip
+  have hCM : lt (wC (reg 1) p) M = true := ltM_wC hip hpM
+  have hE : inT (mulL (reg 1) (subAP (reg 1) (wA (reg 1) p))) = true :=
+    inT_mulL mulDescInT (inT_reg 1) (inT_subAP hA)
+  obtain ⟨_, hallR⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) rest hcr hdr hmr
+  cases hr : wcnf (reg 1) rest with
+  | mk fst snd =>
+    have hRl : (wcnf (reg 1) rest).1 = fst := by rw [hr]
+    cases fst with
+    | nil =>
+        have hW : (wcnf (reg 1) (p :: rest)).1 = [(wA (reg 1) p, wC (reg 1) p)] := by
+          rw [wcnf_cons_ge hlp, hr]
+        rw [hW,
+          show ([(wA (reg 1) p, wC (reg 1) p)] : List (Term × Term)).takeWhile
+              (fun z => le (reg 1) z.1)
+            = (wA (reg 1) p, wC (reg 1) p) :: ([] : List (Term × Term)).takeWhile
+                (fun z => le (reg 1) z.1) from List.takeWhile_cons_of_pos hfire]
+        rfl
+    | cons ac0 ps =>
+        cases ac0 with
+        | mk a' c' =>
+          have hmem0 : ((a', c') : Term × Term) ∈ (wcnf (reg 1) rest).1 := by
+            rw [hRl]; exact List.Mem.head _
+          have hmemT : ∀ ac ∈ ps.takeWhile (fun z => le (reg 1) z.1),
+              ac ∈ (wcnf (reg 1) rest).1 := by
+            intro ac hac
+            rw [hRl]
+            exact List.Mem.tail _ (mem_of_takeWhile124 _ ps ac hac)
+          have hc'i : inT c' = true := (hallR (a', c') hmem0).2.2.1
+          have hc'M : lt c' M = true := (hallR (a', c') hmem0).2.2.2
+          have hSps : inT (sumDD112 (reg 1) (ps.takeWhile (fun z => le (reg 1) z.1)))
+              = true :=
+            inT_sumDD112 (inT_reg 1) _ (fun ac hac =>
+              ⟨(hallR ac (hmemT ac hac)).1, (hallR ac (hmemT ac hac)).2.2.1⟩)
+          by_cases heq : (wA (reg 1) p == a') = true
+          · have hpa' : a' = wA (reg 1) p := (eq_of_beq heq).symm
+            subst hpa'
+            have hW : (wcnf (reg 1) (p :: rest)).1
+                = (wA (reg 1) p, plus (wC (reg 1) p) c') :: ps := by
+              rw [wcnf_cons_ge hlp, hr]
+              show ((if (wA (reg 1) p == wA (reg 1) p) = true
+                     then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                     else ((wA (reg 1) p, wC (reg 1) p) :: (wA (reg 1) p, c') :: ps, snd))
+                    : List (Term × Term) × Term).1 = _
+              rw [if_pos heq]
+            have hdist : ddOf75 (reg 1) (wA (reg 1) p, plus (wC (reg 1) p) c')
+                = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+                    (ddOf75 (reg 1) (wA (reg 1) p, c')) :=
+              mulL_distrib112 hE hC hc'i hCM hc'M
+            show sumDD112 (reg 1) ((wcnf (reg 1) (p :: rest)).1.takeWhile
+                (fun z => le (reg 1) z.1))
+              = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+                  (sumDD112 (reg 1) (((wA (reg 1) p, c') :: ps).takeWhile
+                    (fun z => le (reg 1) z.1)))
+            rw [hW,
+              show ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps).takeWhile
+                  (fun z => le (reg 1) z.1)
+                = (wA (reg 1) p, plus (wC (reg 1) p) c')
+                    :: ps.takeWhile (fun z => le (reg 1) z.1) from
+                List.takeWhile_cons_of_pos hfire,
+              show ((wA (reg 1) p, c') :: ps).takeWhile (fun z => le (reg 1) z.1)
+                = (wA (reg 1) p, c') :: ps.takeWhile (fun z => le (reg 1) z.1) from
+                List.takeWhile_cons_of_pos hfire,
+              sumDD_cons112, sumDD_cons112, hdist]
+            exact plus_assoc_inT _ _ _ (inT_ddOf75 (inT_reg 1) hA hC)
+              (inT_ddOf75 (inT_reg 1) hA hc'i) hSps
+          · have hW : (wcnf (reg 1) (p :: rest)).1
+                = (wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps := by
+              rw [wcnf_cons_ge hlp, hr]
+              show ((if (wA (reg 1) p == a') = true
+                     then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                     else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd))
+                    : List (Term × Term) × Term).1 = _
+              rw [if_neg heq]
+            show sumDD112 (reg 1) ((wcnf (reg 1) (p :: rest)).1.takeWhile
+                (fun z => le (reg 1) z.1))
+              = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+                  (sumDD112 (reg 1) (((a', c') :: ps).takeWhile
+                    (fun z => le (reg 1) z.1)))
+            rw [hW,
+              show ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps).takeWhile
+                  (fun z => le (reg 1) z.1)
+                = (wA (reg 1) p, wC (reg 1) p)
+                    :: ((a', c') :: ps).takeWhile (fun z => le (reg 1) z.1) from
+                List.takeWhile_cons_of_pos hfire]
+            rfl
+
+/-- **§124.1 の主定理 — 発火する成分の前置きは、その対の `Δ` の総和を `ω^{Ω₁·Ω₁}`
+    倍したものそのもの。**  §120.1 の `mulL_sumDD120` は「対がぜんぶ発火する」ことを
+    要ったが、こちらは要らない。発火しないところで両辺とも止まる。 -/
+theorem cutFire124 : ∀ (L : List Term), inTL L = true → descL L = true →
+    (∀ x ∈ L, lt x M = true) → (∀ p ∈ L, lt p (reg 1) = false) →
+    mulL E120 (sumDD112 (reg 1)
+        ((wcnf (reg 1) L).1.takeWhile (fun z => le (reg 1) z.1)))
+      = ofList (L.takeWhile (fun q => le (reg 1) (wA (reg 1) q))) := by
+  intro L
+  induction L with
+  | nil => intro _ _ _ _; rfl
+  | cons p rest ih =>
+    intro hc hd hm hge
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hmr : ∀ x ∈ rest, lt x M = true := fun x hx => hm x (List.Mem.tail p hx)
+    have hger : ∀ x ∈ rest, lt x (reg 1) = false := fun x hx => hge x (List.Mem.tail p hx)
+    have hpM : lt p M = true := hm p (List.Mem.head _)
+    have hlp : lt p (reg 1) = false := hge p (List.Mem.head _)
+    have hA : inT (wA (reg 1) p) = true := inT_wA109 (inT_reg 1) (isSC_reg_succ 0) hip
+    have hC : inT (wC (reg 1) p) = true := inT_wC hip
+    by_cases hfire : le (reg 1) (wA (reg 1) p) = true
+    · obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) rest hcr hdr hmr
+      have hD : inT (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p)) = true :=
+        inT_ddOf75 (inT_reg 1) hA hC
+      have hDM : lt (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p)) M = true :=
+        lt_of_le_of_lt3 (inT_le_fragR _ hD) (inT_le_fragR _ hip)
+          (inT_le_fragR _ (show inT (M : Term) = true from rfl))
+          (le_ddOf_self112 hap hip hpM) hpM
+      have hSfull : inT (sumDD112 (reg 1) (wcnf (reg 1) rest).1) = true :=
+        inT_sumDD112 (inT_reg 1) _ (fun ac hac => ⟨(hallOK ac hac).1, (hallOK ac hac).2.2.1⟩)
+      have hS : inT (sumDD112 (reg 1)
+          ((wcnf (reg 1) rest).1.takeWhile (fun z => le (reg 1) z.1))) = true :=
+        inT_sumDD112 (inT_reg 1) _ (fun ac hac =>
+          ⟨(hallOK ac (mem_of_takeWhile124 _ _ ac hac)).1,
+           (hallOK ac (mem_of_takeWhile124 _ _ ac hac)).2.2.1⟩)
+      have hSfullM : lt (sumDD112 (reg 1) (wcnf (reg 1) rest).1) M = true :=
+        lt_of_le_of_lt3 (inT_le_fragR _ hSfull)
+          (inT_le_fragR _ (inT_ofList rest hcr hdr))
+          (inT_le_fragR _ (show inT (M : Term) = true from rfl))
+          (le_sumDD_wcnf112 rest hcr hdr hmr) (lt_ofList_M _ hmr)
+      have hSM : lt (sumDD112 (reg 1)
+          ((wcnf (reg 1) rest).1.takeWhile (fun z => le (reg 1) z.1))) M = true :=
+        lt_of_le_of_lt3 (inT_le_fragR _ hS) (inT_le_fragR _ hSfull)
+          (inT_le_fragR _ (show inT (M : Term) = true from rfl))
+          (le_sumDD_take124 (inT_reg 1) _ _
+            (fun ac hac => ⟨(hallOK ac hac).1, (hallOK ac hac).2.2.1⟩)) hSfullM
+      have hcT : inTL ((p :: rest).takeWhile (fun q => le (reg 1) (wA (reg 1) q))) = true :=
+        inTL_takeWhile124 _ hc
+      have hdT : descL ((p :: rest).takeWhile (fun q => le (reg 1) (wA (reg 1) q)))
+          = true := descL_takeWhile124 _ (p :: rest) hc hd
+      have hsp : (p :: rest).takeWhile (fun q => le (reg 1) (wA (reg 1) q))
+          = p :: rest.takeWhile (fun q => le (reg 1) (wA (reg 1) q)) :=
+        List.takeWhile_cons_of_pos hfire
+      rw [hsp] at hcT hdT
+      rw [hsp, wcnfTakeCons124 hip hpM hlp hfire hcr hdr hmr,
+        mulL_distrib112 inT_E120 hD hS hDM hSM,
+        mulL_ddOf_self120 hap hip hpM (lt_false_of_le120 (inT_reg 1) hA hfire),
+        ih hcr hdr hmr hger]
+      exact plus_ofList_cons112 p _ hcT hdT
+    · obtain ⟨c, ps, he⟩ := wcnfFstHd109 rest hlp
+      rw [show (p :: rest).takeWhile (fun q => le (reg 1) (wA (reg 1) q))
+            = [] from List.takeWhile_cons_of_neg
+              (show ¬ ((fun q => le (reg 1) (wA (reg 1) q)) p = true) from hfire), he,
+        show ((wA (reg 1) p, c) :: ps).takeWhile (fun z => le (reg 1) z.1)
+            = [] from List.takeWhile_cons_of_neg
+              (show ¬ ((fun z : Term × Term => le (reg 1) z.1)
+                ((wA (reg 1) p, c) : Term × Term) = true) from hfire)]
+      rfl
+
+end
+
+/-! ### §124.2 折り畳みが持つ指数は、発火する前置きの指数 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 発火しない対の並びでは、折り畳みの指数はまったく動かない。 -/
+theorem foldNotFire124 {w base : Term} : ∀ (t : List (Term × Term)),
+    (∀ ac ∈ t, le w ac.1 = false) →
+    ∀ (s : Option Term × Option Term), (t.foldl (stepF w base) s).1 = s.1 := by
+  intro t
+  induction t with
+  | nil => intro _ s; rfl
+  | cons ac r ih =>
+    intro hnf s
+    rw [List.foldl_cons, ih (fun a ha => hnf a (List.Mem.tail _ ha)), stepF_fst,
+      if_neg (by rw [hnf ac (List.Mem.head _)]; exact fun hcon => Bool.noConfusion hcon)]
+
+/-- 折り畳みは `takeWhile` と `dropWhile` に割れる。 -/
+theorem foldl_split124 {α β : Type} (f : β → α → β) (P : α → Bool) :
+    ∀ (l : List α) (b : β),
+      l.foldl f b = (l.dropWhile P).foldl f ((l.takeWhile P).foldl f b) := by
+  intro l
+  induction l with
+  | nil => intro _; rfl
+  | cons a t ih =>
+    intro b
+    by_cases h : P a = true
+    · rw [List.takeWhile_cons_of_pos h, List.dropWhile_cons_of_pos h,
+        List.foldl_cons, List.foldl_cons]
+      exact ih (f b a)
+    · rw [List.takeWhile_cons_of_neg (show ¬ (P a = true) from h),
+        List.dropWhile_cons_of_neg (show ¬ (P a = true) from h)]
+      rfl
+
+/-- **指数は前置きだけで決まる。**  §109.1 の `fireSplit109` が後半をぜんぶ黙らせる。 -/
+theorem idxTake124 {X : Term} (hX : inT X = true) :
+    idxF88 0 X
+      = (((wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1)).foldl
+          (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))).1 := by
+  obtain ⟨hc, hd⟩ := inT_toList X hX
+  have hfold : (wcnf (reg 1) (toList X)).1.foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))
+      = ((wcnf (reg 1) (toList X)).1.dropWhile (fun z => le (reg 1) z.1)).foldl
+          (stepF (reg 1) (baseOf 0))
+          (((wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1)).foldl
+            (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))) :=
+    foldl_split124 (stepF (reg 1) (baseOf 0)) (fun z => le (reg 1) z.1)
+      (wcnf (reg 1) (toList X)).1 ((none : Option Term), (none : Option Term))
+  show ((wcnf (reg 1) (toList X)).1.foldl
+    (init := ((none : Option Term), (none : Option Term)))
+    (stepF (reg 1) (baseOf 0))).1 = _
+  rw [hfold]
+  exact foldNotFire124 _
+    (fireSplit109 (show (reg 1).isSC = true from isSC_reg_succ 0) (inT_reg 1)
+      (show (reg 1).isAP = true from rfl) (toList X) hc hd) _
+
+/-- **`1 ⊕ j` は前置きの `Δ` の総和。**  §120.2 の `plus_one_idx120` の、
+    前置きだけを見た形。 -/
+theorem sumTake124 {X : Term} (hX : inT X = true) (hXM : lt X M = true)
+    {ac : Term × Term} {t : List (Term × Term)}
+    (hps : (wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1) = ac :: t)
+    {j : Term} (hj : idxF88 0 X = some j) :
+    inT j = true ∧ plus TM.Term.one j
+      = sumDD112 (reg 1)
+          ((wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1)) := by
+  obtain ⟨hc, hd⟩ := inT_toList X hX
+  have hmL := ltM_toList X hX hXM
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList X) hc hd hmL
+  have hmem : ∀ x ∈ ac :: t, x ∈ (wcnf (reg 1) (toList X)).1 := by
+    intro x hx
+    exact mem_of_takeWhile124 _ _ x (by rw [hps]; exact hx)
+  have hin : ∀ x ∈ ac :: t, inT x.1 = true ∧ inT x.2 = true := by
+    intro x hx
+    exact ⟨(hallOK x (hmem x hx)).1, (hallOK x (hmem x hx)).2.2.1⟩
+  have hfire : ∀ x ∈ ac :: t, le (reg 1) x.1 = true := by
+    intro x hx
+    exact mem_takeWhile109 _ _ x (by rw [hps]; exact hx)
+  have hD : inT (ddOf75 (reg 1) ac) = true :=
+    inT_ddOf75 (inT_reg 1) (hin ac (List.Mem.head _)).1 (hin ac (List.Mem.head _)).2
+  have hS : inT (sumDD112 (reg 1) t) = true :=
+    inT_sumDD112 (inT_reg 1) t (fun a ha => hin a (List.Mem.tail _ ha))
+  have hfold : idxF88 0 X
+      = some (plus (sub1 (ddOf75 (reg 1) ac)) (sumDD112 (reg 1) t)) := by
+    rw [idxTake124 hX, hps]
+    exact foldNone120 (inT_reg 1) ac t hin hfire
+  have hjeq : j = plus (sub1 (ddOf75 (reg 1) ac)) (sumDD112 (reg 1) t) :=
+    Option.some.inj (hj.symm.trans hfold)
+  have hcnz : ac.2 ≠ zero :=
+    wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) (toList X) hc hd hmL ac
+      (hmem ac (List.Mem.head _))
+  have hDnz : ddOf75 (reg 1) ac ≠ zero := ddOf_ne_zero84 hcnz
+  have hD1 : lt (ddOf75 (reg 1) ac) TM.Term.one = false := by
+    cases hcc : lt (ddOf75 (reg 1) ac) TM.Term.one with
+    | false => rfl
+    | true =>
+        exact absurd (below_one _ hD (fuelOf (ddOf75 (reg 1) ac) TM.Term.one) hcc) hDnz
+  refine ⟨by rw [hjeq]; exact inT_plus (inT_sub1 hD) hS, ?_⟩
+  rw [hjeq,
+    ← plus_assoc_inT TM.Term.one (sub1 (ddOf75 (reg 1) ac)) (sumDD112 (reg 1) t)
+      inT_one (inT_sub1 hD) hS,
+    sub1_eq_subAP112,
+    plus_subAP112 inT_one (show (TM.Term.one).isAP = true from rfl) hD hD1,
+    hps, sumDD_cons112]
+
+/-- **§124.2 の主定理 — 割り算は前置きの上で成り立つ。**  発火の仮定は一つも要らず、
+    指数を持ってさえいればよい。§120.4 が名指しした「`=` を `≤` に緩める」道は、
+    実は緩めなくてよい: 右辺を項そのものではなく**発火する前置き**にすれば等式である。 -/
+theorem divCut124 {X j : Term} (hX : inT X = true) (hXM : lt X M = true)
+    (hXh : ∀ p ∈ toList X, lt p (reg 1) = false) (hj : idxF88 0 X = some j) :
+    inT j = true ∧ lt (plus TM.Term.one j) M = true
+      ∧ mulL E120 (plus TM.Term.one j)
+        = ofList ((toList X).takeWhile (fun q => le (reg 1) (wA (reg 1) q))) := by
+  obtain ⟨hc, hd⟩ := inT_toList X hX
+  have hmL := ltM_toList X hX hXM
+  have hne : ∃ ac t,
+      (wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1) = ac :: t := by
+    cases hps : (wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1) with
+    | nil =>
+        exfalso
+        rw [idxTake124 hX, hps] at hj
+        exact Option.some_ne_none j (show (some j : Option Term) = none from hj.symm)
+    | cons ac t => exact ⟨ac, t, rfl⟩
+  obtain ⟨ac, t, hps⟩ := hne
+  obtain ⟨hij, hsum⟩ := sumTake124 hX hXM hps hj
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList X) hc hd hmL
+  have hSfull : inT (sumDD112 (reg 1) (wcnf (reg 1) (toList X)).1) = true :=
+    inT_sumDD112 (inT_reg 1) _ (fun z hz => ⟨(hallOK z hz).1, (hallOK z hz).2.2.1⟩)
+  have hS : inT (sumDD112 (reg 1)
+      ((wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1))) = true :=
+    inT_sumDD112 (inT_reg 1) _ (fun z hz =>
+      ⟨(hallOK z (mem_of_takeWhile124 _ _ z hz)).1,
+       (hallOK z (mem_of_takeWhile124 _ _ z hz)).2.2.1⟩)
+  have hSfullX : le (sumDD112 (reg 1) (wcnf (reg 1) (toList X)).1) X = true := by
+    have h2 := le_sumDD_wcnf112 (toList X) hc hd hmL
+    rw [inT_ofList_toList X hX] at h2
+    exact h2
+  have hSfullM : lt (sumDD112 (reg 1) (wcnf (reg 1) (toList X)).1) M = true :=
+    lt_of_le_of_lt3 (inT_le_fragR _ hSfull) (inT_le_fragR _ hX)
+      (inT_le_fragR _ (show inT (M : Term) = true from rfl)) hSfullX hXM
+  have hSM : lt (sumDD112 (reg 1)
+      ((wcnf (reg 1) (toList X)).1.takeWhile (fun z => le (reg 1) z.1))) M = true :=
+    lt_of_le_of_lt3 (inT_le_fragR _ hS) (inT_le_fragR _ hSfull)
+      (inT_le_fragR _ (show inT (M : Term) = true from rfl))
+      (le_sumDD_take124 (inT_reg 1) _ _
+        (fun z hz => ⟨(hallOK z hz).1, (hallOK z hz).2.2.1⟩)) hSfullM
+  refine ⟨hij, by rw [hsum]; exact hSM, ?_⟩
+  rw [hsum]
+  exact cutFire124 (toList X) hc hd hmL hXh
+
+end
+
+/-! ### §124.3 切り口はどこでも順序を保つ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§89.4 の `lt_append_hi89` を、切り口を `Ω₁` に固定しない形に引き直す。**
+    元の証明が `reg 1` を使うのは「尾の頭 < 頭部の頭」を出す一箇所だけなので、
+    そこを交叉の仮定そのものに置き換える。 -/
+theorem lt_append_cut124 : ∀ (Hy Hx : List Term), inTL Hy = true → inTL Hx = true →
+    descL Hy = true → descL Hx = true →
+    ∀ (Ly Lx : List Term), inTL Ly = true → inTL Lx = true →
+    descL (Hy ++ Ly) = true → descL (Hx ++ Lx) = true →
+    (∀ p ∈ Hx, ∀ q ∈ Ly, lt q p = true) →
+    lt (ofList Hy) (ofList Hx) = true →
+    lt (ofList (Hy ++ Ly)) (ofList (Hx ++ Lx)) = true := by
+  intro Hy
+  induction Hy with
+  | nil =>
+    intro Hx _ hcx _ hdx Ly Lx hcLy hcLx hdyL hdxL hcross hlt
+    cases Hx with
+    | nil =>
+      exfalso
+      rw [show ofList ([] : List Term) = zero from rfl, lt_irrefl] at hlt
+      exact Bool.noConfusion hlt
+    | cons cx Hx' =>
+      have hcxL : inTL (cx :: (Hx' ++ Lx)) = true := inTL_append89 hcx hcLx
+      have hiT : inT (ofList (cx :: (Hx' ++ Lx))) = true := inT_ofList _ hcxL hdxL
+      cases Ly with
+      | nil =>
+        show lt (ofList ([] : List Term)) (ofList (cx :: (Hx' ++ Lx))) = true
+        exact lt_zero_left (ofList_ne_zero81 _ (List.cons_ne_nil _ _) (fun z hz =>
+          ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcxL z hz)).1))
+      | cons l1 Ly' =>
+        have hcyL : inTL (l1 :: Ly') = true := hcLy
+        have hiS : inT (ofList (l1 :: Ly')) = true := inT_ofList _ hcyL hdyL
+        refine lt_of_hd_lt hiS hiT (toList_ofList89 hcyL) (toList_ofList89 hcxL) ?_
+        exact hcross cx (List.Mem.head _) l1 (List.Mem.head _)
+  | cons cy Hy' ih =>
+    intro Hx hcy hcx hdy hdx Ly Lx hcLy hcLx hdyL hdxL hcross hlt
+    cases Hx with
+    | nil =>
+      exfalso
+      rw [show ofList ([] : List Term) = zero from rfl, lt_zero_right] at hlt
+      exact Bool.noConfusion hlt
+    | cons cx Hx' =>
+      obtain ⟨⟨_, hicy⟩, hcy'⟩ := inTL_cons.mp hcy
+      obtain ⟨⟨_, hicx⟩, hcx'⟩ := inTL_cons.mp hcx
+      have hdy' := descL_tail hdy
+      have hdx' := descL_tail hdx
+      have hdyL' := descL_tail hdyL
+      have hdxL' := descL_tail hdxL
+      have hcyL : inTL (cy :: (Hy' ++ Ly)) = true := inTL_append89 hcy hcLy
+      have hcxL : inTL (cx :: (Hx' ++ Lx)) = true := inTL_append89 hcx hcLx
+      have hiSL : inT (ofList (cy :: (Hy' ++ Ly))) = true := inT_ofList _ hcyL hdyL
+      have hiTL : inT (ofList (cx :: (Hx' ++ Lx))) = true := inT_ofList _ hcxL hdxL
+      by_cases hcc : cy = cx
+      · subst hcc
+        have hiHy : inT (ofList (cy :: Hy')) = true := inT_ofList _ hcy hdy
+        have hiHx : inT (ofList (cy :: Hx')) = true := inT_ofList _ hcx hdx
+        have hiHy' : inT (ofList Hy') = true := inT_ofList _ hcy' hdy'
+        have hiHx' : inT (ofList Hx') = true := inT_ofList _ hcx' hdx'
+        have hrec : lt (ofList Hy') (ofList Hx') = true :=
+          lt_hd_eq_inv89 hiHy hiHx (toList_ofList89 hcy) (toList_ofList89 hcx)
+            hiHy' hiHx' (toList_ofList89 hcy') (toList_ofList89 hcx') hlt
+        have hIH := ih Hx' hcy' hcx' hdy' hdx' Ly Lx hcLy hcLx hdyL' hdxL'
+          (fun p hp q hq => hcross p (List.Mem.tail _ hp) q hq) hrec
+        exact lt_of_hd_eq77 hiSL hiTL (toList_ofList89 hcyL) (toList_ofList89 hcxL) hIH
+      · have hiHy : inT (ofList (cy :: Hy')) = true := inT_ofList _ hcy hdy
+        have hiHx : inT (ofList (cx :: Hx')) = true := inT_ofList _ hcx hdx
+        have hle : le cy cx = true := hd_mono_inT hiHy hiHx
+          (toList_ofList89 hcy) (toList_ofList89 hcx) (le_of_lt hlt)
+        have hlcc : lt cy cx = true := by
+          rcases (Bool.or_eq_true _ _).mp hle with hq | hl
+          · exact absurd (eq_of_beq hq) hcc
+          · exact hl
+        exact lt_of_hd_lt hiSL hiTL (toList_ofList89 hcyL) (toList_ofList89 hcxL) hlcc
+
+/-- **発火しない成分は後ろにまとまる。**  §109.1 の `fireMono109` を成分の側で使う。 -/
+theorem dropNotFire124 : ∀ (L : List Term), inTL L = true → descL L = true →
+    (∀ p ∈ L, lt p (reg 1) = false) →
+    ∀ q ∈ L.dropWhile (fun z => le (reg 1) (wA (reg 1) z)),
+      le (reg 1) (wA (reg 1) q) = false := by
+  intro L
+  induction L with
+  | nil => intro _ _ _ q hq; cases hq
+  | cons p rest ih =>
+    intro hc hd hge q hq
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hger : ∀ x ∈ rest, lt x (reg 1) = false := fun x hx => hge x (List.Mem.tail p hx)
+    have hlp : lt p (reg 1) = false := hge p (List.Mem.head _)
+    by_cases hf : le (reg 1) (wA (reg 1) p) = true
+    · rw [show (p :: rest).dropWhile (fun z => le (reg 1) (wA (reg 1) z))
+          = rest.dropWhile (fun z => le (reg 1) (wA (reg 1) z)) from
+        List.dropWhile_cons_of_pos hf] at hq
+      exact ih hcr hdr hger q hq
+    · rw [show (p :: rest).dropWhile (fun z => le (reg 1) (wA (reg 1) z))
+          = p :: rest from List.dropWhile_cons_of_neg
+            (show ¬ ((fun z => le (reg 1) (wA (reg 1) z)) p = true) from hf)] at hq
+      rcases List.mem_cons.mp hq with h1 | h1
+      · rw [h1]; exact bool_false hf
+      · cases hq2 : le (reg 1) (wA (reg 1) q) with
+        | false => rfl
+        | true =>
+            exfalso
+            have hiq : inT q = true :=
+              ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcr q h1)).2
+            have haq : q.isAP = true :=
+              ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcr q h1)).1
+            have hqp : le q p = true := descL_bound_inT rest p hip hcr hd q h1
+            exact absurd (fireMono109 (show (reg 1).isSC = true from isSC_reg_succ 0)
+              (inT_reg 1) (show (reg 1).isAP = true from rfl) hap hip hlp haq hiq
+              (hger q h1) hqp hq2) hf
+
+/-- **§124.3 の主定理 — 「発火する成分だけを残す」写像は順序を保つ。** -/
+theorem cutMono124 {X Y : Term} (hX : inT X = true) (hY : inT Y = true)
+    (hXh : ∀ p ∈ toList X, lt p (reg 1) = false)
+    (hYh : ∀ p ∈ toList Y, lt p (reg 1) = false)
+    (h : lt X Y = true) :
+    le (ofList ((toList X).takeWhile (fun q => le (reg 1) (wA (reg 1) q))))
+       (ofList ((toList Y).takeWhile (fun q => le (reg 1) (wA (reg 1) q)))) = true := by
+  obtain ⟨hcX, hdX⟩ := inT_toList X hX
+  obtain ⟨hcY, hdY⟩ := inT_toList Y hY
+  have hsX : (toList X).takeWhile (fun q => le (reg 1) (wA (reg 1) q))
+      ++ (toList X).dropWhile (fun q => le (reg 1) (wA (reg 1) q)) = toList X :=
+    List.takeWhile_append_dropWhile
+  have hsY : (toList Y).takeWhile (fun q => le (reg 1) (wA (reg 1) q))
+      ++ (toList Y).dropWhile (fun q => le (reg 1) (wA (reg 1) q)) = toList Y :=
+    List.takeWhile_append_dropWhile
+  have hiCX : inT (ofList ((toList X).takeWhile (fun q => le (reg 1) (wA (reg 1) q))))
+      = true := inT_ofList _ (inTL_takeWhile124 _ hcX) (descL_takeWhile124 _ _ hcX hdX)
+  have hiCY : inT (ofList ((toList Y).takeWhile (fun q => le (reg 1) (wA (reg 1) q))))
+      = true := inT_ofList _ (inTL_takeWhile124 _ hcY) (descL_takeWhile124 _ _ hcY hdY)
+  cases hcc : le (ofList ((toList X).takeWhile (fun q => le (reg 1) (wA (reg 1) q))))
+      (ofList ((toList Y).takeWhile (fun q => le (reg 1) (wA (reg 1) q)))) with
+  | true => rfl
+  | false =>
+      exfalso
+      have h2 := lt_of_not_le_inT hiCX hiCY hcc
+      have hcross : ∀ p ∈ (toList X).takeWhile (fun q => le (reg 1) (wA (reg 1) q)),
+          ∀ q ∈ (toList Y).dropWhile (fun q => le (reg 1) (wA (reg 1) q)),
+            lt q p = true := by
+        intro p hp q hq
+        have hpm : p ∈ toList X := mem_of_takeWhile124 _ _ p hp
+        have hqm : q ∈ toList Y := mem_of_dropWhile124 _ _ q hq
+        have hfp : le (reg 1) (wA (reg 1) p) = true := mem_takeWhile109 _ _ p hp
+        have hfq : le (reg 1) (wA (reg 1) q) = false := dropNotFire124 (toList Y) hcY hdY hYh q hq
+        have hip : inT p = true :=
+          ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcX p hpm)).2
+        have hap : p.isAP = true :=
+          ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcX p hpm)).1
+        have hiq : inT q = true :=
+          ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcY q hqm)).2
+        have haq : q.isAP = true :=
+          ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcY q hqm)).1
+        cases hlq : lt q p with
+        | true => rfl
+        | false =>
+            exfalso
+            have hpq : le p q = true :=
+              le_of_not_lt3 (inT_le_fragR _ hiq) (inT_le_fragR _ hip) hlq
+            have hfq2 : le (reg 1) (wA (reg 1) q) = true :=
+              fireMono109 (show (reg 1).isSC = true from isSC_reg_succ 0)
+                (inT_reg 1) (show (reg 1).isAP = true from rfl) haq hiq (hYh q hqm)
+                hap hip (hXh p hpm) hpq hfp
+            rw [hfq] at hfq2
+            exact Bool.noConfusion hfq2
+      have h3 := lt_append_cut124
+        ((toList Y).takeWhile (fun q => le (reg 1) (wA (reg 1) q)))
+        ((toList X).takeWhile (fun q => le (reg 1) (wA (reg 1) q)))
+        (inTL_takeWhile124 _ hcY) (inTL_takeWhile124 _ hcX)
+        (descL_takeWhile124 _ _ hcY hdY) (descL_takeWhile124 _ _ hcX hdX)
+        ((toList Y).dropWhile (fun q => le (reg 1) (wA (reg 1) q)))
+        ((toList X).dropWhile (fun q => le (reg 1) (wA (reg 1) q)))
+        (inTL_dropWhile124 _ hcY) (inTL_dropWhile124 _ hcX)
+        (by rw [hsY]; exact hdY) (by rw [hsX]; exact hdX)
+        hcross h2
+      rw [hsY, hsX, inT_ofList_toList Y hY, inT_ofList_toList X hX] at h3
+      rw [lt_asymm_inT hX hY h] at h3
+      exact Bool.noConfusion h3
+
+end
+
+/-! ### §124.4 条項 — 逆写像は前置きの上にある -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§124 の主定理 — 指数を持つ二つの折り畳みでは、`hi` の比較が指数の比較。**
+    §120.3 の `idxMono_core120` と同じ形だが、**発火の仮定がどちらの側にも無い**。
+    結論が非狭義になるのがその代償で、§109 の `not_idxLtMix109` がそれが代償では
+    なく真実であることを言っている。 -/
+theorem idxLe_core124 {X Y jX jY : Term}
+    (hX : inT X = true) (hXM : lt X M = true) (hY : inT Y = true) (hYM : lt Y M = true)
+    (hXh : ∀ p ∈ toList X, lt p (reg 1) = false)
+    (hYh : ∀ p ∈ toList Y, lt p (reg 1) = false)
+    (hjX : idxF88 0 X = some jX) (hjY : idxF88 0 Y = some jY)
+    (h : lt X Y = true) : le jX jY = true := by
+  obtain ⟨hijX, hMX, hcx⟩ := divCut124 hX hXM hXh hjX
+  obtain ⟨hijY, hMY, hcy⟩ := divCut124 hY hYM hYh hjY
+  have hmono := cutMono124 hX hY hXh hYh h
+  rw [← hcx, ← hcy] at hmono
+  cases hcc : le jX jY with
+  | true => rfl
+  | false =>
+      exfalso
+      have hlt : lt jY jX = true := lt_of_not_le_inT hijX hijY hcc
+      have h1 : lt (plus TM.Term.one jY) (plus TM.Term.one jX) = true :=
+        plus_smono_right_inT79 TM.Term.one inT_one jY jX hijY hijX hlt
+      have h2 : lt (mulL E120 (plus TM.Term.one jY))
+          (mulL E120 (plus TM.Term.one jX)) = true :=
+        mulL_smono_right110 inT_E120 (inT_plus inT_one hijY) (inT_plus inT_one hijX)
+          hMY hMX h1
+      have hiA : inT (mulL E120 (plus TM.Term.one jX)) = true :=
+        inT_mulL mulDescInT inT_E120 (inT_plus inT_one hijX)
+      have hiB : inT (mulL E120 (plus TM.Term.one jY)) = true :=
+        inT_mulL mulDescInT inT_E120 (inT_plus inT_one hijY)
+      rcases (Bool.or_eq_true _ _).mp hmono with he | hl2
+      · rw [eq_of_beq he, lt_irrefl] at h2; exact Bool.noConfusion h2
+      · rw [lt_asymm_inT hiA hiB hl2] at h2; exact Bool.noConfusion h2
+
+/-- `hi` を戻した形。 -/
+theorem idxLe_hiW124 {X Y jX jY : Term} (hX : inT X = true) (hXM : lt X M = true)
+    (hY : inT Y = true) (hYM : lt Y M = true)
+    (hjX : idxF88 0 X = some jX) (hjY : idxF88 0 Y = some jY)
+    (h : lt (hiW89 X) (hiW89 Y) = true) : le jX jY = true :=
+  idxLe_core124 (inT_hiW89 hX) (ltM_hiW112 hX hXM) (inT_hiW89 hY) (ltM_hiW112 hY hYM)
+    (hiW89_ge89 hX) (hiW89_ge89 hY)
+    (by rw [idxF_hiW101 hX]; exact hjX) (by rw [idxF_hiW101 hY]; exact hjY) h
+
+/-- **発火の条件をどちらの側にも課さない条項。**  §109 の `IdxLeMix109` も
+    §120 が閉じた `IdxMono101` の非狭義版も、これの特別な場合である。 -/
+def IdxLeAny124 : Prop :=
+  ∀ (a b : BT) (ja jb : Term), btLe72 1 a = true → btLe72 1 b = true →
+    BT.isStd a = true → BT.isStd b = true →
+    idxF88 0 (dict a) = some ja → idxF88 0 (dict b) = some jb →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true → le ja jb = true
+
+/-- **`IdxLeAny124` は定理である。**  `PsiIdxOKStd172` は `dict a` が 𝔗(M) の項で
+    あることにだけ使う — §120 の `idxMono101_of_psi120` と同じ理由。 -/
+theorem idxLeAny124_of_psi124 (Hp : PsiIdxOKStd172) : IdxLeAny124 := by
+  intro a b ja jb hba hbb hsa hsb hja hjb hlt
+  obtain ⟨hia, hiaM⟩ := inT_dict_of_std172 Hp a hba hsa
+  obtain ⟨hib, hibM⟩ := inT_dict_of_std172 Hp b hbb hsb
+  exact idxLe_hiW124 hia hiaM hib hibM hja hjb hlt
+
+/-- **§109 の `IdxLeMix109` は定理である。**  発火の仮定は二つとも使わない。 -/
+theorem idxLeMix109_of_psi124 (Hp : PsiIdxOKStd172) : IdxLeMix109 := by
+  intro a b ja jb hba hbb hsa hsb _hfa _hfb hja hjb hlt
+  exact idxLeAny124_of_psi124 Hp a b ja jb hba hbb hsa hsb hja hjb hlt
+
+/-- **`HiMono89` は二つの条項に架け替わる。**  §120 の三つから `IdxLeMix109` が落ちる。 -/
+theorem hiMono_of_two124 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    HiMono89 :=
+  hiMono_of_three120 Hp (idxLeMix109_of_psi124 Hp) H1 H2
+
+/-- **326 行目を架け替える。** -/
+theorem certIn_t326_124 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117)
+    (HD1 : DictOntoMidOpen103) (HD3 : DictDenseMid107) (HD4 : DictDenseAbove107)
+    (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_120 Hp (idxLeMix109_of_psi124 Hp) H1 H2 HD1 HD3 HD4 hacc
+
+end
+
+/-! ### §124.5 否定と段の正直さ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 発火の条件を課さないまま**狭義**を求めた条項。 -/
+def IdxLtAny124 : Prop :=
+  ∀ (a b : BT) (ja jb : Term), btLe72 1 a = true → btLe72 1 b = true →
+    BT.isStd a = true → BT.isStd b = true →
+    idxF88 0 (dict a) = some ja → idxF88 0 (dict b) = some jb →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true → lt ja jb = true
+
+/-- **狭義は偽 — §109 の証人がそのまま効く。**  `IdxLeAny124` が非狭義なのは
+    弱めたのではない。 -/
+theorem not_idxLtAny124 : ¬ IdxLtAny124 := by
+  intro H
+  exact not_idxLtMix109 (fun a b ja jb h1 h2 h3 h4 _ _ h7 h8 h9 =>
+    H a b ja jb h1 h2 h3 h4 h7 h8 h9)
+
+/-- **組んだ証人 — 発火する成分が二つ、そのあとに発火しない成分。**
+    `ψ₁⁴0 ⊕ ψ₁³0 ⊕ Ω₁`、13 記号。`K` 標準で `Ω₁ ≤ dict`、最後の対は発火せず、
+    指数はあり、成分 3 個のうち**前の 2 個が発火する**。§124 の恒等式
+    `ω^{Ω₁·Ω₁}·(1 ⊕ j) = 前置き` はここで成り立ち、§120 の恒等式
+    `ω^{Ω₁·Ω₁}·ΣΔ = hi` はここで**成り立たない**。§124.6 の母集団はこの形を
+    一つも含まない (`noTwoCut124`) ので、これは組んだのであって拾ったのではない。 -/
+def sepCut124 : BT := BT.sum (wt120 3) (BT.sum (wt120 2) w1_101)
+
+/-- 成分の前置き — 測定と証人が見る量。 -/
+def cutL124 (x : Term) : List Term :=
+  (toList x).takeWhile (fun q => le (reg 1) (wA (reg 1) q))
+
+set_option maxRecDepth 10000 in
+/-- **証人の性質、凍結。** -/
+theorem sepCutFacts124 :
+    (btLe72 1 sepCut124, BT.isStd sepCut124, BT.isStd (BT.D 0 sepCut124),
+     le (reg 1) (dict sepCut124), lastFire92 (dict sepCut124),
+     (idxF88 0 (dict sepCut124)).isSome,
+     (cutL124 (hiW89 (dict sepCut124))).length,
+     (toList (hiW89 (dict sepCut124))).length,
+     mulL E120 (plus TM.Term.one ((idxF88 0 (dict sepCut124)).getD zero))
+       == ofList (cutL124 (hiW89 (dict sepCut124))),
+     mulL E120 (sumDD112 (reg 1) (wcnf (reg 1) (toList (dict sepCut124))).1)
+       == hiW89 (dict sepCut124),
+     BT.size sepCut124)
+    = (true, true, true, true, false, true, 2, 3, true, false, 13) := rfl
+/-- **一段上の証人 — 発火する成分が三つ。**  `ψ₁⁵0 ⊕ ψ₁⁴0 ⊕ ψ₁³0 ⊕ Ω₁`、20 記号。
+    §124.6 の**どちらの**母集団もこの形を含まない。 -/
+def sepCut2124 : BT := BT.sum (wt120 4) (BT.sum (wt120 3) (BT.sum (wt120 2) w1_101))
+
+set_option maxRecDepth 10000 in
+/-- **一段上の証人の性質、凍結。** -/
+theorem sepCut2Facts124 :
+    (btLe72 1 sepCut2124, BT.isStd sepCut2124, BT.isStd (BT.D 0 sepCut2124),
+     le (reg 1) (dict sepCut2124), lastFire92 (dict sepCut2124),
+     (idxF88 0 (dict sepCut2124)).isSome,
+     (cutL124 (hiW89 (dict sepCut2124))).length,
+     (toList (hiW89 (dict sepCut2124))).length,
+     mulL E120 (plus TM.Term.one ((idxF88 0 (dict sepCut2124)).getD zero))
+       == ofList (cutL124 (hiW89 (dict sepCut2124))),
+     mulL E120 (sumDD112 (reg 1) (wcnf (reg 1) (toList (dict sepCut2124))).1)
+       == hiW89 (dict sepCut2124),
+     BT.size sepCut2124)
+    = (true, true, true, true, false, true, 3, 4, true, false, 20) := rfl
+
+end
+
+/-! ### §124.6 測定 (凍結)
+
+**構成 — 発火する線と発火しない線を両方組み、濾さない。**  §109.5 の作り方をそのまま
+借りる。発火するのは `ψ₁` の塔で、発火しないのは帽子 `ψ₁ψ₀ z` と `Ω₁` 自身。
+
+    fireSeed124  発火する側の種 5 個
+    vebSeed124   発火しない側の種 5 個 (`Ω₁` と帽子 4 個)
+    pop124       その 2 項和・`a ⊕ b ⊕ b` の形の 3 項和も入れた 120 項  濾さない
+    popB124      3 項和を**三つとも別**にし、種を 1 個足した 363 項 — 大きさは同じ
+                 (どちらも最大 32 記号) で、**形だけ**を広げた対照
+
+`pop124` は「発火する成分が二つ続いてから発火しない成分が来る」形を一つも含まない。
+`popB124` はそれを 90 項含む。**足りなかったのは深さではなく形である。** -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+def dedup124 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+
+def fireSeed124 : List BT :=
+  [w2_101, w3_101, BT.D 1 w3_101, BT.D 1 (BT.sum w2_101 w2_101),
+   BT.D 1 (BT.sum w3_101 w3_101)]
+def vebSeed124 : List BT :=
+  [w1_101, BT.D 1 (BT.D 0 w1_101), BT.D 1 (BT.D 0 w2_101),
+   BT.D 1 (BT.D 0 (BT.sum w2_101 w1_101)), BT.D 1 (BT.D 0 (BT.sum w3_101 w2_101))]
+def seeds124 : List BT := fireSeed124 ++ vebSeed124
+
+def pop124 : List BT :=
+  dedup124 (seeds124
+    ++ seeds124.flatMap (fun a => (seeds124.filter (fun b => BT.le b a)).map (BT.sum a))
+    ++ seeds124.flatMap (fun a => (seeds124.filter (fun b => BT.le b a)).map
+         (fun b => BT.sum a (BT.sum b b))))
+
+def ok124 (a : BT) : Bool :=
+  btLe72 1 a && BT.isStd a && BT.isStd (BT.D 0 a) && le (reg 1) (dict a)
+def hasIdx124 (a : BT) : Bool := (idxF88 0 (dict a)).isSome
+def fr124 (a : BT) : Bool := lastFire92 (dict a)
+def jOf124 (a : BT) : Term := (idxF88 0 (dict a)).getD zero
+/-- §124 の恒等式 — `ω^{Ω₁·Ω₁}·(1 ⊕ j)` は発火する成分の前置きか。 -/
+def divOK124 (a : BT) : Bool :=
+  mulL E120 (plus TM.Term.one (jOf124 a)) == ofList (cutL124 (hiW89 (dict a)))
+/-- §120 の恒等式 — `ω^{Ω₁·Ω₁}·ΣΔ` は `hi` そのものか。 -/
+def recOK124 (a : BT) : Bool :=
+  mulL E120 (sumDD112 (reg 1) (wcnf (reg 1) (toList (dict a))).1) == hiW89 (dict a)
+def nCut124 (a : BT) : Nat := (cutL124 (hiW89 (dict a))).length
+def nComp124 (a : BT) : Nat := (toList (hiW89 (dict a))).length
+def properCut124 (a : BT) : Bool := 0 < nCut124 a && nCut124 a < nComp124 a
+
+def samp124 : List BT := pop124.filter ok124
+def fireS124 : List BT := samp124.filter fr124
+def vebS124 : List BT := samp124.filter (fun a => !fr124 a)
+def idxS124 : List BT := samp124.filter hasIdx124
+def vebI124 : List BT := vebS124.filter hasIdx124
+def noIdx124 : List BT := samp124.filter (fun a => !hasIdx124 a)
+
+def pairs124 (l l' : List BT) : List (BT × BT) :=
+  l.flatMap (fun a => l'.map (fun b => (a, b)))
+def resid124 (l l' : List BT) : List (BT × BT) :=
+  (pairs124 l l').filter (fun p => lt (hiW89 (dict p.1)) (hiW89 (dict p.2)))
+def leBad124 (l l' : List BT) : List (BT × BT) :=
+  (resid124 l l').filter (fun p => !(le (jOf124 p.1) (jOf124 p.2)))
+def ltBad124 (l l' : List BT) : List (BT × BT) :=
+  (resid124 l l').filter (fun p => !(lt (jOf124 p.1) (jOf124 p.2)))
+
+def seedB124 : List BT := fireSeed124 ++ vebSeed124 ++ [wt120 4]
+def popB124 : List BT :=
+  dedup124 (seedB124
+    ++ seedB124.flatMap (fun a => (seedB124.filter (fun b => BT.le b a)).map (BT.sum a))
+    ++ seedB124.flatMap (fun a => (seedB124.filter (fun b => BT.le b a)).flatMap
+         (fun b => (seedB124.filter (fun c => BT.le c b)).map
+           (fun c => BT.sum a (BT.sum b c)))))
+def sampB124 : List BT := popB124.filter ok124
+def idxB124 : List BT := sampB124.filter hasIdx124
+
+set_option maxRecDepth 100000 in
+/-- **段の正直さ — 定理として。**  どちらの母集団も段 1 に収まり、段 0 に落ちるものは
+    一つもない。 -/
+theorem levelHonest124 :
+    (pop124.all (fun a => btLe72 1 a), pop124.countP (fun a => btLe72 0 a),
+     popB124.all (fun a => btLe72 1 a), popB124.countP (fun a => btLe72 0 a))
+    = (true, 0, true, 0) := rfl
+
+/-! 母集団の形。**120 項のうち `K` 標準は 89 項、最大 32 記号。指数を持つのは 70 項で、
+    そのうち最後の対が発火するのは 24 項、しないのは 46 項。指数を持たないのが 19 項。** -/
+set_option maxRecDepth 100000 in
+#guard (pop124.length, samp124.length, fireS124.length, vebS124.length,
+        idxS124.length, vebI124.length, noIdx124.length,
+        (pop124.map BT.size).foldl (fun a b => if a < b then b else a) 0)
+    == (120, 89, 24, 65, 70, 46, 19, 32)
+
+/-! **受領 1 — この節そのものが一行で見える。**  §124 の恒等式は**指数を持つ 70 項で
+    70 回**成り立つ。§120 の恒等式は**同じ 70 項で 24 回** — 発火する側だけ。
+    掃いても仮定が見えない (§93 の失敗) のではない。**§124 には仮定が無い。** -/
+set_option maxRecDepth 100000 in
+#guard (idxS124.countP divOK124, idxS124.countP recOK124,
+        fireS124.countP recOK124, vebI124.countP recOK124, vebI124.countP divOK124)
+    == (70, 24, 24, 0, 46)
+
+/-! **受領 2 — 前置きは本当に真の前置き。**  89 項のうち 46 項で発火する成分が
+    成分列の途中で切れる。**その 46 項でだけ** §120 の恒等式が破れ §124 のが成り立つ。 -/
+set_option maxRecDepth 100000 in
+#guard (samp124.countP properCut124, vebI124.countP properCut124,
+        fireS124.countP properCut124) == (46, 46, 0)
+
+/-! **受領 3 — 条項、見えている。狭義は数で反証されている。**  両側が指数を持つ残余の
+    対は 2415 組、`ja ≤ jb` の破れ **0**、`ja < jb` の破れ **289**。四つの場合で
+    (発火, 発火) 276/0/0、(発火, Veblen) 358/0/**46**、(Veblen, 発火) 746/0/0、
+    (Veblen, Veblen) **1035**/0/**243**。**最後の場合はこの file のどの条項も
+    覆っていなかった** — `IdxMono101` は両側の発火を、`IdxLeMix109` は `a` の発火を要る。 -/
+set_option maxRecDepth 100000 in
+#guard ((resid124 fireS124 fireS124).length, (leBad124 fireS124 fireS124).length,
+        (ltBad124 fireS124 fireS124).length,
+        (resid124 fireS124 vebI124).length, (leBad124 fireS124 vebI124).length,
+        (ltBad124 fireS124 vebI124).length,
+        (resid124 vebI124 fireS124).length, (leBad124 vebI124 fireS124).length,
+        (ltBad124 vebI124 fireS124).length,
+        (resid124 vebI124 vebI124).length, (leBad124 vebI124 vebI124).length,
+        (ltBad124 vebI124 vebI124).length)
+    == (276, 0, 0, 358, 0, 46, 746, 0, 0, 1035, 0, 243)
+
+/-! **受領 4 — この母集団に見えない仮定を、見えると言わない。**  89 項の残余の対 3916 組の
+    うち、`a` が指数を持ち `b` が持たないものは **0 組** (§109.2 が数として見えている)。
+    「`b` が指数を持つ」は濾しになっていない。要るのは**構造上**の理由 —
+    それが無ければ比べる `jb` が無い — であって、測定が必要性を示したのではない。 -/
+set_option maxRecDepth 100000 in
+#guard ((resid124 samp124 samp124).length,
+        (resid124 samp124 samp124).countP (fun p => hasIdx124 p.1 && !hasIdx124 p.2),
+        (resid124 idxS124 idxS124).length, (leBad124 idxS124 idxS124).length,
+        (ltBad124 idxS124 idxS124).length)
+    == (3916, 0, 2415, 0, 289)
+
+/-! **受領 5 — 母集団が言えない形があり、それは大きさの話ではなかった (§111 と §116 の
+    使い分け)。**  `pop124` の 46 の真の前置きは**すべて発火する成分がちょうど 1 個**で、
+    「2 個以上発火してから発火しない成分が来る」形は **120 項・最大 32 記号で 0 回**。
+    証人は文から**組んだ** (`sepCut124`、13 記号)。そのあとで形だけを広げた `popB124`
+    — 363 項、**最大は同じ 32 記号** — がその形を **90 項**持つ。**深さを足しても
+    出なかった。足りなかったのは形である。**  三つ以上はどちらの母集団にも無い。 -/
+set_option maxRecDepth 100000 in
+#guard (vebI124.countP (fun a => 2 ≤ nCut124 a),
+        popB124.length, sampB124.length, idxB124.length,
+        idxB124.countP divOK124, idxB124.countP recOK124,
+        idxB124.countP (fun a => properCut124 a && 2 ≤ nCut124 a),
+        idxB124.countP (fun a => properCut124 a && 3 ≤ nCut124 a),
+        (popB124.map BT.size).foldl (fun a b => if a < b then b else a) 0)
+    == (0, 363, 304, 274, 274, 55, 90, 0, 32)
+
+end
+
 end Evidence.Region
