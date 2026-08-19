@@ -227,6 +227,9 @@ B が済んでいる区間の中の 1 行を、表に出したいとき。
 | スクリプト | 何を見るか |
 |---|---|
 | `crosscheck.sh` | `BMS/` が yaBMS の C 実装と一致するか |
+| `pss2bp` | 行列 1 個の Buchholz 項。参照実装の `Trans` と照合する |
+| `bp2pss` | Buchholz 項 1 個の行列 (逆向き)。参照実装の `TransRev` と照合する |
+| `bp2pss-check.sh` | §85 の逆写像 `bInv85` が `TransRev` と一致するか。100 例と対照 9 個 |
 | `standard-audit.sh` | 表の全行がバシク行列の標準形か |
 | `refimpl-audit.sh` | 表の全行が変換写像と一致するか |
 | `padicbot-ref.js` | `TM/` の順序・Rathjen 表記の標準形を独立実装と突き合わせる |

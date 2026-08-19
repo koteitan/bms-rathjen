@@ -54,10 +54,22 @@ domain
 
   The two are NOT the same domain, though the head condition and `t < Omega` are.
   For a standard term, "every component is a D 0" and "t < Omega" say the same
-  thing -- D 0 is the smallest head, so the leading component decides.  What ours
-  has on top is the LEVEL bound, which reaches inside: p0(p2(0)) = psi_0(Omega_2)
-  is standard and below Omega, so TransRev answers it -- (0,0)(1,1)(2,2) -- and we
-  refuse.  Ours is a proper subset of theirs.  scripts/bp2pss-check.sh measures it.
+  thing -- D 0 is the smallest head, so the leading component decides.  (Measured:
+  they agree on all 128 standard level-<=1 terms of a 547-term population.)  What
+  ours has on top is the LEVEL bound, which reaches inside: p0(p2(0)) =
+  psi_0(Omega_2) is standard and below Omega, so TransRev answers it --
+  (0,0)(1,1)(2,2) -- and we refuse.
+
+  A third difference existed and no longer does.  common.js's G used to be written
+  a.flatMap(G) on a formal sum, and Array.prototype.flatMap passes the INDEX as
+  the second argument, so G's level was silently replaced by the component index;
+  isStandardBuchholz then over-rejected psi_1(eps_0*2) and under-rejected
+  psi_0(Omega+zeta_0).  That is fixed upstream (Naruyoko/googology, "Fix G(a,u)
+  for isStandardBuchholz").  If the two standardness verdicts still disagree, the
+  common.js under $PSS2BP is a stale copy from before that commit -- update it
+  rather than reading the disagreement as a finding.  G is used only by
+  isStandardBuchholz and that only by TransRev, so `Trans` and scripts/pss2bp were
+  never affected either way.
 
 what it inverts
   `bInv85` inverts `bValA71`, not `Trans`.  §71.2: `bValA71` is `bVal` without the

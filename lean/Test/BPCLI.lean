@@ -12,7 +12,9 @@ same instrument as the Lean library: it is a convenience for reading values, and
 it must never be used to validate the port.  That is the v0.1.41 calibration
 accident (see `plan/constitutions.md`) in one sentence.
 
-`scripts/or` is the sibling that prints the 𝔗(M) side, i.e. `dict` of this.
+`scripts/or` is the sibling that prints the 𝔗(M) side, i.e. `dict` of this, and
+`Test/BP2PSS.lean` (`scripts/bp2pss`) is the reverse of this one: Buchholz term →
+matrix, through §85's `bInv85`.
 
 Exit codes: 0 printed a term, 2 could not (unparseable, or outside `oRB`'s domain
 — it is the 2-row fragment, `none` on any column of height 3 or more).

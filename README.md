@@ -50,6 +50,11 @@ YABMS=/path/to/yaBMS/c/bms ../scripts/crosscheck.sh   # BMS 実装の照合
 
 lake build orcli                              # 一度だけ
 ../scripts/or "(0,0)(1,1)(2,1)"               # 行列 → 𝔗(M) 表記 (標準形も判定)
+
+lake build bpcli bp2psscli                    # 一度だけ
+../scripts/pss2bp "(0,0)(1,1)(2,1)"           # 行列 → Buchholz 項
+../scripts/bp2pss "p0(p1(p1(0)))"             # Buchholz 項 → 行列 (逆向き)
+../scripts/bp2pss-check.sh                    # 逆写像 bInv85 と TransRev の照合
 ```
 
 ## 検査器と、その試験
@@ -65,6 +70,9 @@ lake build orcli                              # 一度だけ
 | `scripts/check-math.js` | 数式が GitHub で壊れるか、リンクとアンカーが生きているか | 引数に `.md` を渡す。アンカー規則は GitHub 実測の 7 例で自己試験 |
 | `scripts/settled.sh` | 作業役がファイルを書き終えたか | `scripts/settled.sh --self-test` — 5 ケース |
 | `scripts/or` | 行列 1 個の 𝔗(M) 表記と、それが標準形か | `scripts/or --self-test` — 6 ケース |
+| `scripts/pss2bp` | 行列 1 個の Buchholz 項 (参照実装の `Trans` と照合) | `scripts/pss2bp --self-test` — 8 ケース |
+| `scripts/bp2pss` | Buchholz 項 1 個の行列 — 逆向き (参照実装の `TransRev` と照合) | `scripts/bp2pss --self-test` — 15 ケース |
+| `scripts/bp2pss-check.sh` | §85 の逆写像 `bInv85` が `TransRev` と一致するか | 100 例と 9 個の対照そのものが試験 |
 | `scripts/standard-audit.sh` | 表の全行がバシク行列の標準形か | |
 | `scripts/crosscheck.sh` | BMS の実装が yaBMS の C 実装と一致するか | 112 例そのものが試験 |
 | `scripts/refimpl-audit.sh` | 表の全行が変換写像と一致するか | |

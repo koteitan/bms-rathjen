@@ -12,7 +12,9 @@
 # it too and compares, the way scripts/or asks yaBMS for the standard-form verdict:
 # a tool that reports a verdict carries its own second opinion (plan/constitutions.md).
 #
-# scripts/or is the sibling that prints the Rathjen T(M) side, i.e. `dict` of this.
+# scripts/or is the sibling that prints the Rathjen T(M) side, i.e. `dict` of this,
+# and scripts/bp2pss is this script run backwards: Buchholz term -> matrix, through
+# §85's bInv85, checked against naruyoko's TransRev.
 #
 # Exit: 0 agreed (or the reference was not consulted), 1 the two disagree,
 #       2 could not answer.
