@@ -13591,4 +13591,1071 @@ theorem survC110_shape : ((oblPost105 survC105).all shape110) = true := by decid
 
 end
 
+/-! ## §109 THE FOLD'S FIRING PAIRS ARE A PREFIX — AND THE `a`-FIRES HALF NEEDS ONLY `≤`
+
+§104 named the coefficient's `z` and then stopped at the sentence this section starts from:
+
+> Naming the coefficient is not yet COMPARING TWO FOLDS. … `lastFire92` forces ALL pairs to
+> fire (exponents descend), so that branch is the "divide by `Ω₁^Ω₁`" map and is disjoint from
+> the Veblen residue; **the repository has no descending-exponent lemma for `wcnf` yet, which
+> is what such a proof would need first.**
+
+**§109 proves that lemma, and then uses it to close the `a`-fires half of `HiMono89` down to
+one comparison of collapse INDICES — with no Veblen arithmetic left in it at all.**  What the
+closing costs is one clause, and the clause is **non-strict**: the strict form is refuted here
+by a 11-symbol witness that the section's own population hands over.
+
+WHAT IS PROVED.
+
+  §109.1  **FIRING IS A PREFIX PROPERTY** (`fireSplit109`).  The pairs of `wcnf w L` split as
+          "all firing" then "none firing": every pair in `dropWhile (fires)` fails to fire.
+          The content is `fireMono109` — `q ≤ p ⟹ (q's pair fires ⟹ p's pair fires)` — which
+          needs only the HEAD of `logOm`, so §65.5's `divDescSC` (`logOm` mono → `subAP` mono →
+          `ω^·` mono) does the work and the full lexicographic monotonicity of `wA` is never
+          needed.  `inT_wA109` re-derives `inT (wA w p)` from `divDescSC`, since §64.4's
+          `inT_wA` assumed the FALSE `DivDescInT`.  Corollary
+          `allFire_of_lastFire109` : `lastFire92 x ⟹ allFire101 x` — §104's missing lemma —
+          and its converse `lastFire_of_allFire109`.
+
+  §109.2  **FIRING TRAVELS RIGHT** (`fireHead109`, `idxF_some109`).  If `X`'s fold fires at its
+          last pair and `X < Y`, then `Y`'s fold fires at its FIRST pair, hence `Y` HAS a
+          collapse index.  Proof: §109.1 makes `X`'s head pair fire, §65.1's `hd_mono_inT`
+          carries `X`'s head component below `Y`'s, and `fireMono109` carries the firing across.
+          **No gate, no bridge.**
+
+  §109.3  **THE VEBLEN TAIL IS STRICTLY ABOVE THE PREFIX'S `ψ_{Ω₁}`** (`accGt109`).  §95.1's
+          `accGeb95` proves `ψ_{Ω₁}(j) ≤ acc`; §109.3 proves `<` whenever the last pair does
+          not fire.  Two ingredients, both new: `lt_psi_phiNF109` (the strict form of §95.1's
+          `le_psi_phiNF95` — `phiNF` returns either its own argument or a `φ̄`-term, and
+          `lt_psi_phi_of_le` is already strict) and `wcnf_cnz109` (**the base-`w`
+          COEFFICIENTS are never `0`**), which is what makes `acc ⊕ c` overtake `acc` at the
+          first Veblen step.
+
+  §109.4  **THE PAYOFF** (`hiMono_fireA109`).  When `a`'s fold fires at its last pair,
+          `HiMono89`'s conclusion follows from the index comparison alone: `b` also has an
+          index (§109.2), `ψ₀(hi (dict a)) = ψ_{Ω₁}(ja)` (§92.2), and either `b` fires too —
+          §101.5's `IdxMono101`, verbatim — or `b` has a Veblen tail and §109.3 supplies the
+          strictness, so the clause only has to say `ja ≤ jb`.  `IdxLeMix109` is that clause;
+          `hiMono_of_three109` puts `HiMono89` on `IdxMono101 ∧ IdxLeMix109 ∧ HiMonoVebA109`
+          and `certIn_t326_109` re-hangs row 326 on them.
+          **And the strict clause is FALSE** (`not_idxLtMix109`): `mixA109 = ψ₁ψ₁ψ₁0`,
+          `mixB109 = ψ₁ψ₁ψ₁0 ⊕ Ω₁` are both `K`-standard, `hi (dict a) < hi (dict b)`, and
+          **their indices are EQUAL** — the conclusion still holds, and it holds because of
+          the Veblen tail, not because of the index.  The non-strictness of `IdxLeMix109` is
+          therefore not a weakening but the truth.
+
+WHAT IS **NOT** CLAIMED.  `HiMono89` is NOT proved and NOT refuted.  **§109 MOVES the residue
+and it moves the SMALLER half of it.**  `IdxMono101` is §101's clause untouched and unproved;
+`IdxLeMix109` is new and unproved; `HiMonoVebA109` — the case where `a`'s fold does NOT fire —
+is the whole remaining difficulty, and `knownAreVeb109` says plainly where the known
+counterexamples live: `bothBadA101` (§101.4), `scBadA101` (§101.2) and `cexA89` (§81) ALL have
+`lastFire92 (dict ·) = false`, so **every witness that has ever been built against this clause
+sits in the half §109 did not close.**  On §109.5's own population the `a`-fires half carries
+636 of 7140 residual pairs and **0 of the 388 breaks.**  Row 326 rests on `PsiIdxOKStd172`,
+`IdxMono101`, `IdxLeMix109`, `HiMonoVebA109`, `DictOntoMidOpen103`, `DictDenseMid107`,
+`DictDenseAbove107`.
+
+**WHERE §109 STOPPED, PRECISELY.**  The `a`-fires half is now pure index arithmetic: the map
+`(A, c) ↦ Ω₁^(A ⊖ Ω₁)·c` summed along the fold, compared against the same map on a longer or
+taller list.  That is §92's `IdxMono101` and §109 does not run it — it is the "divide by
+`Ω₁^Ω₁`" map §104 named, and the repository still has no lemma that it preserves the order of
+`hi`.  The other half is untouched: when `a`'s fold has a Veblen tail its value is a `φ̄`-term
+and comparing two `φ̄`-terms is §104's stopping point word for word, `φ̄(α,γ) < φ̄(β,δ)` at
+`α < β` iff `γ < φ̄(β,δ)`.
+
+WHAT THE MEASUREMENT SAYS (§109.5 gives the construction).  One population, BUILT from a
+firing line and a non-firing line so that all four combinations occur, and nothing filtered.
+
+  * **The population is not blind to any of the three theorems.**  48 of its 120 terms have no
+    collapse index at all, 48 have one without firing at the last pair, 24 fire everywhere;
+    12 of those 24 have two or more pairs, so §109.1 is not a statement about singletons.
+  * **§109.2's hypothesis does all the work.**  1128 residual pairs have a `b` with NO index —
+    and in every one of them `a` fails to fire.  Drop the hypothesis and the conclusion breaks
+    1128 times.
+  * **§109.3's hypothesis does all the work.**  On the 48 terms with an index and a Veblen tail
+    the strict inequality holds 48 times out of 48; on the 24 that fire everywhere it holds
+    0 times out of 24, because there the value IS `ψ_{Ω₁}(j)`.
+  * **The four cases, and where the breaks are.**  (fire, fire) 276 pairs / 0 breaks,
+    (fire, Veblen) 360 / 0, (Veblen, fire) 1944 / 13, (Veblen, Veblen) 4560 / 375.  Every
+    break is on the side §109 did not close.
+  * **The non-strict clause is exactly right.**  Over the 636 residual pairs with `a` firing,
+    `ja ≤ jb` never fails and `ja < jb` fails 48 times (46 of them `K`-standard);
+    **all 48 failures are `ja = jb`** and none reverses the order.
+  * **The witness is the smallest one the population contains** — 11 symbols, and every
+    `K`-standard failure has at least that many. -/
+
+/-! ### §109.1 発火は前置き — 対の指数は降る -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- `w` が加法主要なら `w ≤ ·` は頭部だけを見る (⇒)。 -/
+theorem le_hd_of_le109 {w Y b : Term} {s : List Term} (hw : inT w = true)
+    (hwap : w.isAP = true) (hY : inT Y = true) (hl : toList Y = b :: s)
+    (h : le w Y = true) : le w b = true := by
+  have hib : inT b = true := inTL_inT hY b (by rw [hl]; exact List.Mem.head _)
+  cases hc : le w b with
+  | true => rfl
+  | false =>
+      exfalso
+      have hbw : lt b w = true := lt_of_not_le_inT hw hib hc
+      have hYw : lt Y w = true := by
+        rw [← inT_ofList_toList Y hY, hl, lt_ofList_nsum hwap]; exact hbw
+      rcases (Bool.or_eq_true _ _).mp h with he | hlt
+      · rw [eq_of_beq he, lt_irrefl] at hYw; exact Bool.noConfusion hYw
+      · rw [lt_asymm_inT hw hY hlt] at hYw; exact Bool.noConfusion hYw
+
+/-- 逆向き (⇐)。 -/
+theorem le_of_le_hd109 {w Y b : Term} {s : List Term} (hw : inT w = true)
+    (hY : inT Y = true) (hl : toList Y = b :: s) (h : le w b = true) : le w Y = true :=
+  le_trans_inT hw (inTL_inT hY b (by rw [hl]; exact List.Mem.head _)) hY h
+    (le_hd_self_inT hY hl)
+
+/-- `wA` は `𝔗(M)` の項 — §64.4 の `inT_wA` は偽の (G1) を仮定していたので引き直す。 -/
+theorem inT_wA109 {w p : Term} (hw : inT w = true) (hsc : w.isSC = true)
+    (hp : inT p = true) : inT (wA w p) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList _ (inT_logOm hp)
+  refine inT_ofList _ ?_
+    (divDescSC w _ hw hsc (inTL_filter _ hc) (descL_filter_inT _ hc hd _) ?_)
+  · show (List.map (divAP w) _).all _ = true
+    rw [List.all_eq_true]
+    intro x hx
+    obtain ⟨q, hq, hxe⟩ := List.mem_map.mp hx
+    rw [← hxe]
+    show ((divAP w q).isAP && inT (divAP w q)) = true
+    rw [isAP_divAP, inT_divAP (inTL_inT (inT_logOm hp) q (List.mem_filter.mp hq).1)]
+    rfl
+  · intro q hq
+    have h2 := (List.mem_filter.mp hq).2
+    cases hlq : lt q w with
+    | false => rfl
+    | true => rw [hlq] at h2; exact Bool.noConfusion h2
+
+/-- `wA` の成分列の頭は、`logOm` の成分列の頭の `divAP`。 -/
+theorem toList_wA109 {w p b : Term} {s : List Term}
+    (hl : toList (logOm p) = b :: s) (hbw : lt b w = false) :
+    toList (wA w p) = divAP w b :: ((s.filter (fun q => !lt q w)).map (divAP w)) := by
+  show toList (ofList (((toList (logOm p)).filter (fun q => !lt q w)).map (divAP w))) = _
+  rw [hl, List.filter_cons_of_pos (by rw [hbw]; rfl), List.map_cons]
+  refine toList_ofList _ ?_
+  intro x hx
+  rcases List.mem_cons.mp hx with h1 | h1
+  · rw [h1]; exact isAP_divAP _ _
+  · obtain ⟨q, _, hxe⟩ := List.mem_map.mp h1
+    rw [← hxe]; exact isAP_divAP _ _
+
+/-- `w` 以上の加法主要項の `logOm` の成分列は空でなく、その頭も `w` 以上。 -/
+theorem hd_logOm109 {w p : Term} (hsc : w.isSC = true) (hw : inT w = true)
+    (hwap : w.isAP = true) (hap : p.isAP = true) (hp : inT p = true)
+    (hpw : lt p w = false) : ∃ b s, toList (logOm p) = b :: s ∧ lt b w = false := by
+  have hgw : lt (logOm p) w = false := lt_logOm_of_sc hsc hw hap hp hpw
+  cases hl : toList (logOm p) with
+  | nil =>
+      exfalso
+      have hz : logOm p = zero := toList_eq_nil _ hl
+      have hwz : w ≠ zero := by
+        intro hc; rw [hc] at hsc; exact Bool.noConfusion hsc
+      rw [hz, lt_zero_left hwz] at hgw
+      exact Bool.noConfusion hgw
+  | cons b s =>
+      refine ⟨b, s, rfl, ?_⟩
+      rw [← lt_ofList_nsum hwap b s, ← hl, inT_ofList_toList _ (inT_logOm hp)]
+      exact hgw
+
+/-- `divAP w` は `{x : w ≤ x}` の上で単調 — §65.5 の `divDescSC` の中身そのもの。 -/
+theorem divAP_mono109 {w x y : Term} (hsc : w.isSC = true) (hw : inT w = true)
+    (hax : x.isAP = true) (hix : inT x = true) (hxw : lt x w = false)
+    (hay : y.isAP = true) (hiy : inT y = true) (h : le x y = true) :
+    le (divAP w x) (divAP w y) = true := by
+  refine omegaNF_mono_inT (inT_subAP (inT_logOm hix)) (inT_subAP (inT_logOm hiy)) ?_
+  refine subAP_mono_inT (inT_logOm hix) (inT_logOm hiy) (lt_logOm_of_sc hsc hw hax hix hxw) ?_
+  exact logOm_mono_inT hax hay hix hiy h
+
+/-- **§109.1 の第一の定理 — 「発火する」は上向きに閉じている。**
+    `q ≤ p` で `q` の対が発火するなら `p` の対も発火する。 -/
+theorem fireMono109 {w p q : Term} (hsc : w.isSC = true) (hw : inT w = true)
+    (hwap : w.isAP = true)
+    (hap : p.isAP = true) (hip : inT p = true) (hpw : lt p w = false)
+    (haq : q.isAP = true) (hiq : inT q = true) (hqw : lt q w = false)
+    (hqp : le q p = true) (h : le w (wA w q) = true) : le w (wA w p) = true := by
+  obtain ⟨bq, sq, hlq, hbqw⟩ := hd_logOm109 hsc hw hwap haq hiq hqw
+  obtain ⟨bp, sp, hlp, hbpw⟩ := hd_logOm109 hsc hw hwap hap hip hpw
+  have hgq : inT (logOm q) = true := inT_logOm hiq
+  have hgp : inT (logOm p) = true := inT_logOm hip
+  have hibq : inT bq = true := inTL_inT hgq bq (by rw [hlq]; exact List.Mem.head _)
+  have hibp : inT bp = true := inTL_inT hgp bp (by rw [hlp]; exact List.Mem.head _)
+  have habq : bq.isAP = true := inTL_isAP hgq bq (by rw [hlq]; exact List.Mem.head _)
+  have habp : bp.isAP = true := inTL_isAP hgp bp (by rw [hlp]; exact List.Mem.head _)
+  have hbb : le bq bp = true :=
+    hd_mono_inT hgq hgp hlq hlp (logOm_mono_inT haq hap hiq hip hqp)
+  have hdd : le (divAP w bq) (divAP w bp) = true :=
+    divAP_mono109 hsc hw habq hibq hbqw habp hibp hbb
+  have h1 : le w (divAP w bq) = true :=
+    le_hd_of_le109 hw hwap (inT_wA109 hw hsc hiq) (toList_wA109 hlq hbqw) h
+  exact le_of_le_hd109 hw (inT_wA109 hw hsc hip) (toList_wA109 hlp hbpw)
+    (le_trans_inT hw (inT_divAP hibq) (inT_divAP hibp) h1 hdd)
+
+/-- `wcnf` の対の列の頭の指数は、成分列の頭の `wA`。 -/
+theorem wcnfFstHd109 {w q : Term} (rest : List Term) (hq : lt q w = false) :
+    ∃ c ps, (wcnf w (q :: rest)).1 = (wA w q, c) :: ps := by
+  rw [wcnf_cons_ge hq]
+  cases hr : wcnf w rest with
+  | mk fst snd =>
+    cases fst with
+    | nil => exact ⟨wC w q, [], rfl⟩
+    | cons ac0 ps =>
+      cases ac0 with
+      | mk a' c' =>
+        by_cases heq : (wA w q == a') = true
+        · refine ⟨plus (wC w q) c', ps, ?_⟩
+          show ((if (wA w q == a') = true
+                 then ((wA w q, plus (wC w q) c') :: ps, snd)
+                 else ((wA w q, wC w q) :: (a', c') :: ps, snd))
+                : List (Term × Term) × Term).1 = _
+          rw [if_pos heq]
+        · refine ⟨wC w q, (a', c') :: ps, ?_⟩
+          show ((if (wA w q == a') = true
+                 then ((wA w q, plus (wC w q) c') :: ps, snd)
+                 else ((wA w q, wC w q) :: (a', c') :: ps, snd))
+                : List (Term × Term) × Term).1 = _
+          rw [if_neg heq]
+
+/-- 対の列が空でないなら、成分列の頭は `w` 以上でその `wA` が頭の指数。 -/
+theorem wcnf_fst_cons109 {w : Term} : ∀ (L : List Term) (ac0 : Term × Term)
+    (ps : List (Term × Term)), (wcnf w L).1 = ac0 :: ps →
+    ∃ q rest, L = q :: rest ∧ lt q w = false ∧ ac0.1 = wA w q := by
+  intro L
+  cases L with
+  | nil => intro ac0 ps h; exact absurd h (by intro hc; cases hc)
+  | cons q rest =>
+      intro ac0 ps h
+      by_cases hlq : lt q w = true
+      · rw [wcnf_cons_lt hlq] at h; exact absurd h (by intro hc; cases hc)
+      · have hq := bool_false hlq
+        obtain ⟨c, ps', he⟩ := wcnfFstHd109 rest hq
+        rw [he] at h
+        injection h with h1 _
+        exact ⟨q, rest, rfl, hq, by rw [← h1]⟩
+
+theorem mem_takeWhile109 {α : Type} (p : α → Bool) : ∀ (l : List α) (a : α),
+    a ∈ l.takeWhile p → p a = true
+  | [], a, h => by cases h
+  | b :: t, a, h => by
+      by_cases hb : p b = true
+      · rw [List.takeWhile_cons_of_pos hb] at h
+        rcases List.mem_cons.mp h with h1 | h1
+        · rw [h1]; exact hb
+        · exact mem_takeWhile109 p t a h1
+      · rw [List.takeWhile_cons_of_neg (by simpa using hb)] at h; cases h
+
+/-- **§109.1 の主定理 — 発火する対は前置きをなす。**  `dropWhile` の側には
+    発火する対は一つもない。§104 が「この repo に無い」と名指しした補題である。 -/
+theorem fireSplit109 {w : Term} (hsc : w.isSC = true) (hw : inT w = true)
+    (hwap : w.isAP = true) : ∀ (L : List Term), inTL L = true → descL L = true →
+      ∀ ac ∈ (wcnf w L).1.dropWhile (fun z => le w z.1), le w ac.1 = false := by
+  intro L
+  induction L with
+  | nil => intro _ _ ac hac; exact absurd hac (by intro hc; cases hc)
+  | cons p rest ih =>
+    intro hc hd ac hac
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hR := ih hcr hdr
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp] at hac; exact absurd hac (by intro hcc; cases hcc)
+    · have hlp' : lt p w = false := bool_false hlp
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        have hRl : (wcnf w rest).1 = fst := by rw [hr]
+        cases fst with
+        | nil =>
+            have hW : (wcnf w (p :: rest)).1 = [(wA w p, wC w p)] := by
+              rw [wcnf_cons_ge hlp', hr]
+            rw [hW] at hac
+            by_cases hf : le w (wA w p) = true
+            · rw [List.dropWhile_cons_of_pos (p := fun z : Term × Term => le w z.1) hf] at hac
+              exact absurd hac (by intro hcc; cases hcc)
+            · rw [List.dropWhile_cons_of_neg (p := fun z : Term × Term => le w z.1) (by simpa using hf)] at hac
+              rw [List.mem_singleton.mp hac]
+              exact bool_false hf
+        | cons ac0 ps =>
+            cases ac0 with
+            | mk a' c' =>
+              obtain ⟨q, rest', hrest, hqw, ha'⟩ :=
+                wcnf_fst_cons109 rest (a', c') ps (by rw [hRl])
+              have hcr' : inTL (q :: rest') = true := by rw [← hrest]; exact hcr
+              obtain ⟨⟨haq, hiq⟩, _⟩ := inTL_cons.mp hcr'
+              have hd' : descL (p :: q :: rest') = true := by rw [← hrest]; exact hd
+              have hqp : le q p = true := (descL_cons.mp hd').1
+              have hmono : le w a' = true → le w (wA w p) = true := by
+                intro hfa
+                exact fireMono109 hsc hw hwap hap hip hlp' haq hiq hqw hqp
+                  (by rw [← show a' = wA w q from ha']; exact hfa)
+              by_cases heq : (wA w p == a') = true
+              · have hpa' : a' = wA w p := (eq_of_beq heq).symm
+                have hW : (wcnf w (p :: rest)).1 = (wA w p, plus (wC w p) c') :: ps := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show ((if (wA w p == a') = true
+                         then ((wA w p, plus (wC w p) c') :: ps, snd)
+                         else ((wA w p, wC w p) :: (a', c') :: ps, snd))
+                        : List (Term × Term) × Term).1 = _
+                  rw [if_pos heq]
+                rw [hW] at hac
+                by_cases hf : le w (wA w p) = true
+                · rw [List.dropWhile_cons_of_pos (p := fun z : Term × Term => le w z.1) hf] at hac
+                  refine hR ac ?_
+                  rw [hRl, List.dropWhile_cons_of_pos (p := fun z : Term × Term => le w z.1)
+                    (show le w ((a', c') : Term × Term).1 = true from by rw [hpa']; exact hf)]
+                  exact hac
+                · rw [List.dropWhile_cons_of_neg (p := fun z : Term × Term => le w z.1) (by simpa using hf)] at hac
+                  rcases List.mem_cons.mp hac with h1 | h1
+                  · rw [h1]; exact bool_false hf
+                  · refine hR ac ?_
+                    rw [hRl, List.dropWhile_cons_of_neg (p := fun z : Term × Term => le w z.1)
+                      (show ¬ (le w ((a', c') : Term × Term).1 = true) from by
+                        rw [hpa']; simpa using hf)]
+                    exact List.Mem.tail _ h1
+              · have hW : (wcnf w (p :: rest)).1
+                    = (wA w p, wC w p) :: (a', c') :: ps := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show ((if (wA w p == a') = true
+                         then ((wA w p, plus (wC w p) c') :: ps, snd)
+                         else ((wA w p, wC w p) :: (a', c') :: ps, snd))
+                        : List (Term × Term) × Term).1 = _
+                  rw [if_neg heq]
+                rw [hW] at hac
+                by_cases hf : le w (wA w p) = true
+                · rw [List.dropWhile_cons_of_pos (p := fun z : Term × Term => le w z.1) hf] at hac
+                  refine hR ac ?_
+                  rw [hRl]; exact hac
+                · have hfa' : ¬ (le w a' = true) := fun hx => hf (hmono hx)
+                  rw [List.dropWhile_cons_of_neg (p := fun z : Term × Term => le w z.1) (by simpa using hf)] at hac
+                  rcases List.mem_cons.mp hac with h1 | h1
+                  · rw [h1]; exact bool_false hf
+                  · refine hR ac ?_
+                    rw [hRl, List.dropWhile_cons_of_neg (p := fun z : Term × Term => le w z.1)
+                      (show ¬ (le w ((a', c') : Term × Term).1 = true) from hfa')]
+                    exact h1
+
+theorem reverse_append_cons109 {α : Type} (A D : List α) {e : α} {es : List α}
+    (hD : D.reverse = e :: es) : (A ++ D).reverse = e :: (es ++ A.reverse) := by
+  rw [List.reverse_append, hD]; rfl
+
+/-- 列の言葉での「最後が発火するならぜんぶ発火する」。 -/
+theorem allFire_of_lastFireL109 {w : Term} (hsc : w.isSC = true) (hw : inT w = true)
+    (hwap : w.isAP = true) (L : List Term) (hc : inTL L = true) (hd : descL L = true)
+    {ac0 : Term × Term} {t : List (Term × Term)}
+    (hrev : (wcnf w L).1.reverse = ac0 :: t) (hfire : le w ac0.1 = true) :
+    ∀ ac ∈ (wcnf w L).1, le w ac.1 = true := by
+  intro ac hac
+  cases hf : le w ac.1 with
+  | true => rfl
+  | false =>
+      exfalso
+      have hsp := fireSplit109 hsc hw hwap L hc hd
+      have hmemD : ac ∈ (wcnf w L).1.dropWhile (fun z => le w z.1) := by
+        have he : ((wcnf w L).1.takeWhile (fun z : Term × Term => le w z.1))
+            ++ ((wcnf w L).1.dropWhile (fun z : Term × Term => le w z.1)) = (wcnf w L).1 :=
+          List.takeWhile_append_dropWhile
+        rcases List.mem_append.mp (show ac ∈ _ ++ _ from by rw [he]; exact hac) with h1 | h1
+        · exact absurd (mem_takeWhile109 _ _ _ h1) (by rw [hf]; exact Bool.noConfusion)
+        · exact h1
+      cases hDr : ((wcnf w L).1.dropWhile (fun z : Term × Term => le w z.1)).reverse with
+      | nil =>
+          have hDn : (wcnf w L).1.dropWhile (fun z : Term × Term => le w z.1) = [] := by
+            rw [← List.reverse_reverse
+              ((wcnf w L).1.dropWhile (fun z : Term × Term => le w z.1)), hDr]
+            rfl
+          rw [hDn] at hmemD; cases hmemD
+      | cons e es =>
+          have hAD : ((wcnf w L).1.takeWhile (fun z : Term × Term => le w z.1))
+              ++ ((wcnf w L).1.dropWhile (fun z : Term × Term => le w z.1)) = (wcnf w L).1 :=
+            List.takeWhile_append_dropWhile
+          have hrev2 := reverse_append_cons109
+            ((wcnf w L).1.takeWhile (fun z : Term × Term => le w z.1))
+            ((wcnf w L).1.dropWhile (fun z : Term × Term => le w z.1)) hDr
+          rw [hAD] at hrev2
+          have hee : e = ac0 := by
+            rw [hrev] at hrev2; injection hrev2 with h1 _; exact h1.symm
+          have hmem0 : ac0 ∈ (wcnf w L).1.dropWhile (fun z : Term × Term => le w z.1) := by
+            rw [← hee, ← List.mem_reverse, hDr]; exact List.Mem.head _
+          rw [hsp ac0 hmem0] at hfire
+          exact Bool.noConfusion hfire
+
+/-- **§104 が名指しした欠けている補題。**  最後の対が発火するなら**どの対も**発火する。 -/
+theorem allFire_of_lastFire109 {x : Term} (hx : inT x = true) (h : lastFire92 x = true) :
+    allFire101 x = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  refine List.all_eq_true.mpr ?_
+  unfold lastFire92 at h
+  cases hrev : (wcnf (reg 1) (toList x)).1.reverse with
+  | nil => rw [hrev] at h; exact absurd h Bool.noConfusion
+  | cons ac0 t =>
+      rw [hrev] at h
+      exact allFire_of_lastFireL109 (isSC_reg_succ 0) (inT_reg 1)
+        (show (reg 1).isAP = true from rfl) (toList x) hc hd hrev h
+
+/-- 逆 — `Ω₁ ≤ x` なら対の列は空でないので、全発火は最後の発火。 -/
+theorem lastFire_of_allFire109 {x : Term} (hx : inT x = true) (hW : le (reg 1) x = true)
+    (h : allFire101 x = true) : lastFire92 x = true := by
+  have hne := wcnf_fst_ne_nil81 hx hW
+  unfold lastFire92
+  cases hrev : (wcnf (reg 1) (toList x)).1.reverse with
+  | nil =>
+      exact absurd (by
+        rw [← List.reverse_reverse ((wcnf (reg 1) (toList x)).1), hrev]; rfl) hne
+  | cons ac0 t =>
+      exact List.all_eq_true.mp h ac0 (by rw [← List.mem_reverse, hrev]; exact List.Mem.head _)
+
+end
+
+/-! ### §109.2 `a` の折り畳みが発火するなら `b` の折り畳みも頭で発火する -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 指数の枠はいちど `some` になったら `some` のまま。 -/
+theorem fold_fst_some109 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+    s.1 ≠ none → (l.foldl (stepF (reg 1) (baseOf 0)) s).1 ≠ none
+  | [], _, h => h
+  | ac :: t, s, h => fold_fst_some109 t _ (by
+      rw [stepF_fst]
+      split
+      · intro hc; cases hc
+      · exact h)
+
+/-- 頭の対が発火すれば指数が出る。 -/
+theorem idxF_some_of_head109 {Y : Term} {ac0 : Term × Term} {ps : List (Term × Term)}
+    (hW : (wcnf (reg 1) (toList Y)).1 = ac0 :: ps)
+    (hfq : le (reg 1) ac0.1 = true) : ∃ j, idxF88 0 Y = some j := by
+  have hne : idxF88 0 Y ≠ none := by
+    show ((wcnf (reg 1) (toList Y)).1.foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).1 ≠ none
+    rw [hW]
+    refine fold_fst_some109 ps _ ?_
+    rw [stepF_fst, if_pos hfq]
+    intro hc; cases hc
+  cases hj : idxF88 0 Y with
+  | none => exact absurd hj hne
+  | some j => exact ⟨j, rfl⟩
+
+/-- **§109.2 の主定理 — 発火は右に伝わる。**  `X` の折り畳みが最後の対で発火し
+    `X < Y` なら、`Y` の折り畳みは**頭の対で**発火する。証明は §109.1 の
+    `fireMono109` と頭部の単調性だけ — 門も橋も使わない。 -/
+theorem fireHead109 {X Y : Term} (hX : inT X = true) (hY : inT Y = true)
+    (hfa : lastFire92 X = true) (hlt : lt X Y = true) :
+    ∃ q c ps, (wcnf (reg 1) (toList Y)).1 = (wA (reg 1) q, c) :: ps ∧
+      le (reg 1) (wA (reg 1) q) = true := by
+  have hall := allFire_of_lastFire109 hX hfa
+  cases hXl : (wcnf (reg 1) (toList X)).1 with
+  | nil =>
+      exfalso
+      unfold lastFire92 at hfa
+      rw [hXl] at hfa
+      exact Bool.noConfusion hfa
+  | cons ac0 ps0 =>
+      obtain ⟨p, s, hXt, hpw, hp1⟩ := wcnf_fst_cons109 (toList X) ac0 ps0 hXl
+      have hfp : le (reg 1) (wA (reg 1) p) = true := by
+        rw [← hp1]
+        exact List.all_eq_true.mp hall ac0 (by rw [hXl]; exact List.Mem.head _)
+      have hYne : Y ≠ zero := by
+        intro hc; rw [hc, lt_zero_right] at hlt; exact Bool.noConfusion hlt
+      cases hYt : toList Y with
+      | nil => exact absurd (toList_eq_nil Y hYt) hYne
+      | cons q rest =>
+          have hip : inT p = true := inTL_inT hX p (by rw [hXt]; exact List.Mem.head _)
+          have hap : p.isAP = true := inTL_isAP hX p (by rw [hXt]; exact List.Mem.head _)
+          have hiq : inT q = true := inTL_inT hY q (by rw [hYt]; exact List.Mem.head _)
+          have haq : q.isAP = true := inTL_isAP hY q (by rw [hYt]; exact List.Mem.head _)
+          have hpq : le p q = true := hd_mono_inT hX hY hXt hYt (le_of_lt94 hlt)
+          have hqw : lt q (reg 1) = false := by
+            cases hc : lt q (reg 1) with
+            | false => rfl
+            | true =>
+                exfalso
+                have := lt_of_le_of_lt3 (inT_le_fragR p hip) (inT_le_fragR q hiq)
+                  (inT_le_fragR _ inT_W79) hpq hc
+                rw [this] at hpw
+                exact Bool.noConfusion hpw
+          obtain ⟨c, ps, he⟩ := wcnfFstHd109 (w := reg 1) rest hqw
+          refine ⟨q, c, ps, he, ?_⟩
+          exact fireMono109 (isSC_reg_succ 0) (inT_reg 1) (show (reg 1).isAP = true from rfl)
+            haq hiq hqw hap hip hpw hpq hfp
+
+/-- **系 — 発火する `X` の上に `Y` があれば `Y` は指数を出す。** -/
+theorem idxF_some109 {X Y : Term} (hX : inT X = true) (hY : inT Y = true)
+    (hfa : lastFire92 X = true) (hlt : lt X Y = true) : ∃ j, idxF88 0 Y = some j := by
+  obtain ⟨q, c, ps, hW, hfq⟩ := fireHead109 hX hY hfa hlt
+  exact idxF_some_of_head109 hW hfq
+
+end
+
+/-! ### §109.3 Veblen の尾は前置きの `ψ_{Ω₁}` を狭義に超える -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§95.1 の `le_psi_phiNF95` の狭義版。**  入口が狭義なら出口も狭義 — `phiNF` が
+    値を返す枝は「引数そのもの」か「`φ̄` の項」しかなく、前者は仮定が狭義、
+    後者は `lt_psi_phi_of_le` が狭義を返すからである。 -/
+theorem lt_psi_phiNF109 {k c a X x : Term} {s : List Term}
+    (hfw : FragR (psi k c) = true) (hX : inT X = true)
+    (hl : toList X = x :: s) (hwx : le (psi k c) x = true)
+    (hlt : lt (psi k c) X = true) : lt (psi k c) (phiNF a X) = true := by
+  have hix : inT x = true := inTL_inT hX x (by rw [hl]; exact List.Mem.head _)
+  have h1x : lt TM.Term.one x = true :=
+    lt_of_lt_of_le3 (show FragR TM.Term.one = true from rfl) hfw (inT_le_fragR x hix)
+      (lt_one_psi95 k c) hwx
+  have hwX : le (psi k c) X = true := le_of_lt94 hlt
+  have hXne : X ≠ zero := by
+    intro hc; rw [hc] at hl; exact List.cons_ne_nil x s hl.symm
+  have hdown : le (psi k c) (plus (splitFin X).1 (ofNat ((splitFin X).2 - 1))) = true :=
+    le_trans3 hfw (inT_le_fragR x hix)
+      (inT_le_fragR _ (inT_plus (inT_splitFin hX) (inT_ofNat _))) hwx
+      (le_hd_down95 hX hl h1x)
+  have hdef : lt (psi k c) (phiNFdefault a X) = true := by
+    unfold phiNFdefault
+    split
+    · rename_i h
+      exact absurd (eq_of_beq ((Bool.and_eq_true _ _).mp h).1) hXne
+    · exact lt_psi_phi_of_le hwX
+  have hsucc : lt (psi k c) (phiNFsucc a X) = true := by
+    unfold phiNFsucc
+    split
+    rename_i heq
+    rw [heq] at hdown
+    split
+    · split <;> (split <;> first | exact lt_psi_phi_of_le hdown | exact hdef)
+    · exact hdef
+  unfold phiNF
+  split
+  · exact hlt
+  · split
+    · split
+      · exact hlt
+      · exact hsucc
+    · exact hsucc
+
+/-- `v` が加法主要で `c ≠ 0` なら `v < v ⊕ c`。 -/
+theorem lt_self_plus109 {v cc : Term} (hv : inT v = true) (hap : v.isAP = true)
+    (hcc : inT cc = true) (hne : cc ≠ zero) : lt v (plus v cc) = true := by
+  cases hl : toList cc with
+  | nil => exact absurd (toList_eq_nil cc hl) hne
+  | cons c1 r =>
+      have hic1 : inT c1 = true := inTL_inT hcc c1 (by rw [hl]; exact List.Mem.head _)
+      rw [plus_cons66 hl, toList_isAP81 hap]
+      by_cases hf : le c1 v = true
+      · rw [List.filter_cons_of_pos hf]
+        show lt v (add v (ofList (c1 :: r))) = true
+        exact lt_head_add hap _
+      · rw [List.filter_cons_of_neg (by simpa using hf),
+          show (List.filter (fun a => le c1 a) ([] : List Term)) = [] from rfl,
+          List.nil_append, ← hl, inT_ofList_toList cc hcc]
+        exact lt_of_lt_of_le3 (inT_le_fragR v hv) (inT_le_fragR c1 hic1) (inT_le_fragR cc hcc)
+          (lt_of_not_le_inT hic1 hv (bool_false hf)) (le_hd_self_inT hcc hl)
+
+/-- **底 `w` の分解の係数は `0` でない。**  `wcnf` の係数は `ω` 冪か、その `plus`。 -/
+theorem wcnf_cnz109 {w : Term} (hw : inT w = true) (hsc : w.isSC = true) : ∀ (L : List Term),
+    inTL L = true → descL L = true → (∀ x ∈ L, lt x M = true) →
+    ∀ ac ∈ (wcnf w L).1, ac.2 ≠ zero := by
+  intro L
+  induction L with
+  | nil => intro _ _ _ ac hac; cases hac
+  | cons p rest ih =>
+    intro hc hd hm ac hac
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hmr : ∀ x ∈ rest, lt x M = true := fun x hx => hm x (List.Mem.tail p hx)
+    have hIH := ih hcr hdr hmr
+    have hCne : wC w p ≠ zero := by
+      intro hcc
+      have hA : (wC w p).isAP = true :=
+        isAP_omegaNF (ofList ((toList (logOm p)).filter (fun q => lt q w)))
+      rw [hcc] at hA
+      exact Bool.noConfusion hA
+    by_cases hlp : lt p w = true
+    · rw [wcnf_cons_lt hlp] at hac; cases hac
+    · have hlp' : lt p w = false := bool_false hlp
+      rw [wcnf_cons_ge hlp'] at hac
+      cases hr : wcnf w rest with
+      | mk fst snd =>
+        rw [hr] at hac
+        cases fst with
+        | nil => rw [List.mem_singleton.mp hac]; exact hCne
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hmem0 : ((a', c') : Term × Term) ∈ (wcnf w rest).1 := by
+              rw [hr]; exact List.Mem.head _
+            have hc'inT : inT c' = true := by
+              obtain ⟨_, hall⟩ := wcnf_spec_sc hw hsc rest hcr hdr hmr
+              exact (hall _ hmem0).2.2.1
+            have hplus : plus (wC w p) c' ≠ zero := by
+              intro hcc
+              have h1 : le (wC w p) (plus (wC w p) c') = true :=
+                le_self_plus_ap81 (inT_wC hip) (isAP_omegaNF _) hc'inT
+              rw [hcc] at h1
+              rcases (Bool.or_eq_true _ _).mp h1 with he | hl2
+              · exact hCne (eq_of_beq he)
+              · rw [lt_zero_right] at hl2; exact Bool.noConfusion hl2
+            have hac' : ac ∈ (if (wA w p == a') = true
+                then ((wA w p, plus (wC w p) c') :: ps, snd)
+                else ((wA w p, wC w p) :: (a', c') :: ps, snd)).1 := hac
+            by_cases heq : (wA w p == a') = true
+            · rw [if_pos heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · rw [h1]; exact hplus
+              · exact hIH ac (by rw [hr]; exact List.Mem.tail _ h1)
+            · rw [if_neg heq] at hac'
+              rcases List.mem_cons.mp hac' with h1 | h1
+              · rw [h1]; exact hCne
+              · exact hIH ac (by rw [hr]; exact h1)
+
+/-- 折り畳みの累算器は「今の指数の `ψ_{Ω₁}` そのもの」か「それより狭義に上」。 -/
+def AccSt109 (s : Option Term × Option Term) : Prop :=
+  (∀ v, s.2 = some v → v.isAP = true) ∧
+  (∀ i, s.1 = some i → ∃ v, s.2 = some v ∧
+      (v = psi (reg 1) i ∨ lt (psi (reg 1) i) v = true))
+
+theorem accSt109_none : AccSt109 ((none : Option Term), (none : Option Term)) := by
+  constructor
+  · intro v h; cases h
+  · intro i h; cases h
+
+/-- **Veblen の一歩は狭義に上げる。**  係数が `0` でないので、累算器が
+    `ψ_{Ω₁}(i)` ちょうどでも一歩で追い越す。 -/
+theorem vebStrict109 {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (hidx : IdxInv92 s) (hg : AccSt109 s)
+    (h3 : inT ac.2 = true) (hne : ac.2 ≠ zero) (hf : le (reg 1) ac.1 = false)
+    {i : Term} (hi : s.1 = some i) :
+    ∃ v, (stepF (reg 1) (baseOf 0) s ac).2 = some v ∧ lt (psi (reg 1) i) v = true := by
+  obtain ⟨v, hv2, hdisj⟩ := hg.2 i hi
+  have hapv : v.isAP = true := hg.1 v hv2
+  have hiv : inT v = true := (hst.2 v hv2).1
+  have hii : inT i = true := hidx i hi
+  have hfw : FragR (psi (reg 1) i) = true := fragR_psi_reg92 (inT_le_fragR i hii)
+  have hX : inT (plus v ac.2) = true := inT_plus hiv h3
+  have hwv : le (psi (reg 1) i) v = true := by
+    rcases hdisj with he | hlt
+    · rw [he]; exact Evidence.WF.le_self _
+    · exact le_of_lt94 hlt
+  have hltX : lt (psi (reg 1) i) (plus v ac.2) = true := by
+    rcases hdisj with he | hlt
+    · rw [he]
+      exact lt_self_plus109 (by rw [← he]; exact hiv)
+        (show (psi (reg 1) i).isAP = true from rfl) h3 hne
+    · exact lt_of_lt_of_le3 hfw (inT_le_fragR v hiv) (inT_le_fragR _ hX) hlt
+        (le_self_plus_ap81 hiv hapv h3)
+  obtain ⟨y, s', hyl, hwy⟩ := le_psi_hd_plus95 hfw hiv hapv h3 hwv
+  refine ⟨phiNF ac.1 (plus v ac.2), ?_, lt_psi_phiNF109 hfw hX hyl hwy hltX⟩
+  rw [stepF_snd_veb88 hf, hv2]
+
+theorem accSt109_step {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (hidx : IdxInv92 s) (hg : AccSt109 s)
+    (h3 : inT ac.2 = true) (hne : ac.2 ≠ zero) :
+    AccSt109 (stepF (reg 1) (baseOf 0) s ac) := by
+  cases hf : le (reg 1) ac.1 with
+  | true =>
+    constructor
+    · intro v hv
+      rw [stepF_snd_fire88 hf] at hv
+      rw [← Option.some.inj hv]; rfl
+    · intro i hi
+      rw [stepF_fst, if_pos hf] at hi
+      refine ⟨psi (reg 1) (idxOf (reg 1) s ac), stepF_snd_fire88 hf, Or.inl ?_⟩
+      rw [← Option.some.inj hi]
+  | false =>
+    have hnf : ¬ (le (reg 1) ac.1 = true) := by rw [hf]; exact Bool.noConfusion
+    constructor
+    · intro v hv
+      rw [stepF_snd_veb88 hf] at hv
+      rw [← Option.some.inj hv]
+      exact isAP_phiNF _ _
+    · intro i hi
+      have hs1 : s.1 = some i := by
+        have h : (stepF (reg 1) (baseOf 0) s ac).1 = s.1 := by rw [stepF_fst, if_neg hnf]
+        rw [← h]; exact hi
+      obtain ⟨v, hv2, hlt⟩ := vebStrict109 hst hidx hg h3 hne hf hs1
+      exact ⟨v, hv2, Or.inr hlt⟩
+
+theorem accSt109_fold : ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+    StInv s → IdxInv92 s → AccSt109 s →
+      (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+      (∀ ac ∈ l, ac.2 ≠ zero) →
+      (∀ p ∈ scanSt (reg 1) (baseOf 0) s l, le (reg 1) p.2.1 = true →
+          inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true) →
+      AccSt109 (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil => intro s _ _ hg _ _ _; exact hg
+  | cons ac t ih =>
+    intro s hst hidx hg hall hnz hpsi
+    have hac := hall ac (List.Mem.head _)
+    have h1 : StInv (stepF (reg 1) (baseOf 0) s ac) :=
+      stepF_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0) hst hac
+        (hpsi (s, ac) (List.Mem.head _))
+    have h2 : IdxInv92 (stepF (reg 1) (baseOf 0) s ac) :=
+      idxInv92_step (inT_reg 1) hidx hac.1 hac.2.2.1
+    have h3 : AccSt109 (stepF (reg 1) (baseOf 0) s ac) :=
+      accSt109_step hst hidx hg hac.2.2.1 (hnz ac (List.Mem.head _))
+    exact ih _ h1 h2 h3 (fun a ha => hall a (List.Mem.tail _ ha))
+      (fun a ha => hnz a (List.Mem.tail _ ha))
+      (fun p hp => hpsi p (List.Mem.tail _ hp))
+
+theorem scanSt_append109 {w base : Term} : ∀ (l1 l2 : List (Term × Term))
+    (s : Option Term × Option Term),
+    scanSt w base s (l1 ++ l2)
+      = scanSt w base s l1 ++ scanSt w base (l1.foldl (stepF w base) s) l2 := by
+  intro l1
+  induction l1 with
+  | nil => intro l2 s; rfl
+  | cons ac t ih =>
+    intro l2 s
+    show (s, ac) :: scanSt w base (stepF w base s ac) (t ++ l2)
+      = ((s, ac) :: scanSt w base (stepF w base s ac) t) ++ _
+    rw [ih l2 (stepF w base s ac)]
+    rfl
+
+/-- **§109.3 の主定理 — 最後の対が発火しないなら、値は指数の `ψ_{Ω₁}` を狭義に超える。**
+    §95.1 の `accGeb95` は `≤` までしか言わない。狭義の差は「係数は `0` でない」
+    (§109.3 の `wcnf_cnz109`) 一点から出る。 -/
+theorem accGt109 {x : Term} (hx : inT x = true) (hlx : lt x M = true) (Hp : PsiIdxOK 0 x)
+    {j : Term} (hj : idxF88 0 x = some j) (hnf : lastFire92 x = false) :
+    lt (psi (reg 1) j) (accW89 x) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList x) hc hd
+    (ltM_toList x hx hlx)
+  have hnzAll := wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) (toList x) hc hd
+    (ltM_toList x hx hlx)
+  cases hrev : (wcnf (reg 1) (toList x)).1.reverse with
+  | nil =>
+      exfalso
+      have hnil : (wcnf (reg 1) (toList x)).1 = [] := by
+        rw [← List.reverse_reverse ((wcnf (reg 1) (toList x)).1), hrev]; rfl
+      rw [idxF88_none_of_nil90 hnil] at hj
+      cases hj
+  | cons ac t =>
+      have hfl : le (reg 1) ac.1 = false := by
+        unfold lastFire92 at hnf; rw [hrev] at hnf; exact hnf
+      have hsplit : (wcnf (reg 1) (toList x)).1 = t.reverse ++ [ac] := by
+        rw [← List.reverse_reverse ((wcnf (reg 1) (toList x)).1), hrev, List.reverse_cons]
+      have hmemL : ∀ z ∈ t.reverse, z ∈ (wcnf (reg 1) (toList x)).1 := by
+        intro z hz; rw [hsplit]; exact List.mem_append_left _ hz
+      have hmemAc : ac ∈ (wcnf (reg 1) (toList x)).1 := by
+        rw [hsplit]; exact List.mem_append_right _ (List.Mem.head _)
+      have hscan : ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) t.reverse,
+          le (reg 1) p.2.1 = true →
+          inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true := by
+        intro p hp
+        refine Hp p ?_
+        rw [hsplit, scanSt_append109]
+        exact List.mem_append_left _ hp
+      have hstS : StInv (t.reverse.foldl (stepF (reg 1) (baseOf 0)) (none, none)) :=
+        fold_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0)
+          t.reverse (none, none) stInv_none (fun z hz => hallOK z (hmemL z hz)) hscan
+      have hidxS : IdxInv92 (t.reverse.foldl (stepF (reg 1) (baseOf 0)) (none, none)) :=
+        idxInv92_fold (inT_reg 1) t.reverse (none, none) idxInv92_none
+          (fun z hz => ⟨(hallOK z (hmemL z hz)).1, (hallOK z (hmemL z hz)).2.2.1⟩)
+      have hgS : AccSt109 (t.reverse.foldl (stepF (reg 1) (baseOf 0)) (none, none)) :=
+        accSt109_fold t.reverse (none, none) stInv_none idxInv92_none accSt109_none
+          (fun z hz => hallOK z (hmemL z hz)) (fun z hz => hnzAll z (hmemL z hz)) hscan
+      have hfold : (wcnf (reg 1) (toList x)).1.foldl
+            (init := ((none : Option Term), (none : Option Term)))
+            (stepF (reg 1) (baseOf 0))
+          = stepF (reg 1) (baseOf 0)
+              (t.reverse.foldl (stepF (reg 1) (baseOf 0)) (none, none)) ac := by
+        rw [hsplit, List.foldl_append]; rfl
+      have hs1 : (t.reverse.foldl (stepF (reg 1) (baseOf 0)) (none, none)).1 = some j := by
+        have h : (((wcnf (reg 1) (toList x)).1.foldl
+            (init := ((none : Option Term), (none : Option Term)))
+            (stepF (reg 1) (baseOf 0))).1) = some j := hj
+        rw [hfold, stepF_fst, if_neg (by rw [hfl]; exact Bool.noConfusion)] at h
+        exact h
+      obtain ⟨v, hv2, hlt⟩ := vebStrict109 hstS hidxS hgS
+        (hallOK ac hmemAc).2.2.1 (hnzAll ac hmemAc) hfl hs1
+      show lt (psi (reg 1) j) (((wcnf (reg 1) (toList x)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) = true
+      rw [hfold, hv2]
+      exact hlt
+
+/-- 最後の対が発火するなら指数は出る — §109.1 の全発火から頭の対が発火するので。 -/
+theorem idxF_some_of_lastFire109 {x : Term} (hx : inT x = true) (h : lastFire92 x = true) :
+    ∃ j, idxF88 0 x = some j := by
+  cases hl : (wcnf (reg 1) (toList x)).1 with
+  | nil =>
+      exfalso
+      unfold lastFire92 at h
+      rw [hl] at h
+      exact Bool.noConfusion h
+  | cons ac0 ps =>
+      refine idxF_some_of_head109 hl ?_
+      exact List.all_eq_true.mp (allFire_of_lastFire109 hx h) ac0
+        (by rw [hl]; exact List.Mem.head _)
+
+end
+
+/-! ### §109.4 `a` の側が発火する半分は、指数の**非狭義**の比較しか要らない -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **混ざった場合の条項 — 非狭義。**  `a` の折り畳みは全発火、`b` のはそうでない。
+    狭義の差は §109.3 の `accGt109` が Veblen の尾から只で出す。 -/
+def IdxLeMix109 : Prop :=
+  ∀ (a b : BT) (ja jb : Term), btLe72 1 a = true → btLe72 1 b = true →
+    BT.isStd a = true → BT.isStd b = true →
+    lastFire92 (dict a) = true → lastFire92 (dict b) = false →
+    idxF88 0 (dict a) = some ja → idxF88 0 (dict b) = some jb →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true → le ja jb = true
+
+/-- **§109.4 の主定理 — `a` の折り畳みが発火する半分は指数の比較だけで閉じる。**
+    `b` が全発火なら §101.5 の `IdxMono101`、そうでなければ §109.2 が `b` の指数の
+    存在を保証し、§109.3 が狭義の差を供給するので条項は非狭義で足りる。 -/
+theorem hiMono_fireA109 (Hp : PsiIdxOKStd172) (H1 : IdxMono101) (H2 : IdxLeMix109)
+    {a b : BT} (hbA : btLe72 1 (BT.D 0 a) = true) (hbB : btLe72 1 (BT.D 0 b) = true)
+    (hsA : BT.isStd (BT.D 0 a) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    (_hWa : le (reg 1) (dict a) = true) (hWb : le (reg 1) (dict b) = true)
+    (hfa : lastFire92 (dict a) = true)
+    (hlt : lt (hiW89 (dict a)) (hiW89 (dict b)) = true) :
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true := by
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hsa := isStd_of_D hsA
+  have hsb := isStd_of_D hsB
+  have hia := inT_dict_of_std172 Hp a hba hsa
+  have hib := inT_dict_of_std172 Hp b hbb hsb
+  obtain ⟨ja, hja⟩ := idxF_some_of_lastFire109 hia.1 hfa
+  obtain ⟨jb, hjb⟩ : ∃ jb, idxF88 0 (dict b) = some jb := by
+    have h := idxF_some109 (inT_hiW89 hia.1) (inT_hiW89 hib.1)
+      (by rw [lastFire_hiW101 hia.1]; exact hfa) hlt
+    rw [idxF_hiW101 hib.1] at h
+    exact h
+  cases hfb : lastFire92 (dict b) with
+  | true => exact hiMonoFire_of_idxMono101 Hp H1 hba hsa hbb hsb hfa hfb hja hjb hlt
+  | false =>
+      have hpb : PsiIdxOK 0 (dict b) := Hp 0 b (by omega) hbb hsB
+      have hva : collapse 0 (hiW89 (dict a)) = psi (reg 1) ja :=
+        collapse0_hi_psi92 hia.1 hfa hja
+      have hvb : collapse 0 (hiW89 (dict b)) = accW89 (dict b) :=
+        collapse0_hi89 (dict b) hib.1 hib.2 hpb hWb
+      have hgt : lt (psi (reg 1) jb) (accW89 (dict b)) = true :=
+        accGt109 hib.1 hib.2 hpb hjb hfb
+      have hle : le ja jb = true := H2 a b ja jb hba hbb hsa hsb hfa hfb hja hjb hlt
+      have hija : inT ja = true := inT_idxF92 hia.1 hia.2 hja
+      have hijb : inT jb = true := inT_idxF92 hib.1 hib.2 hjb
+      have hacc : inT (accW89 (dict b)) = true :=
+        (accW89_facts (dict b) hib.1 hib.2 hpb hWb).1
+      have hpsle : le (psi (reg 1) ja) (psi (reg 1) jb) = true := by
+        rcases (Bool.or_eq_true _ _).mp hle with he | hl2
+        · rw [eq_of_beq he]; exact Evidence.WF.le_self _
+        · exact le_of_lt94 (by rw [lt_psi_same]; exact hl2)
+      rw [hva, hvb]
+      exact lt_of_le_of_lt3 (fragR_psi_reg92 (inT_le_fragR ja hija))
+        (fragR_psi_reg92 (inT_le_fragR jb hijb)) (inT_le_fragR _ hacc) hpsle hgt
+
+/-- 残る半分 — `a` の折り畳みの最後の対が発火しない場合。 -/
+def HiMonoVebA109 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lastFire92 (dict a) = false →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true
+
+/-- **`HiMono89` は三つに割れる。** -/
+theorem hiMono_of_three109 (Hp : PsiIdxOKStd172) (H1 : IdxMono101) (H2 : IdxLeMix109)
+    (H3 : HiMonoVebA109) : HiMono89 := by
+  intro a b hbA hbB hsA hsB hWa hWb hlt
+  cases hfa : lastFire92 (dict a) with
+  | true => exact hiMono_fireA109 Hp H1 H2 hbA hbB hsA hsB hWa hWb hfa hlt
+  | false => exact H3 a b hbA hbB hsA hsB hWa hWb hfa hlt
+
+/-- **326 行目を三つの条項に架け替える。** -/
+theorem certIn_t326_109 (Hp : PsiIdxOKStd172) (H1 : IdxMono101) (H2 : IdxLeMix109)
+    (H3 : HiMonoVebA109) (HD1 : DictOntoMidOpen103) (HD3 : DictDenseMid107)
+    (HD4 : DictDenseAbove107) (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_107 Hp (hiMono_of_three109 Hp H1 H2 H3) HD1 HD3 HD4 hacc
+
+/-- 混ざった場合に**狭義**の比較を課した条項。 -/
+def IdxLtMix109 : Prop :=
+  ∀ (a b : BT) (ja jb : Term), btLe72 1 a = true → btLe72 1 b = true →
+    BT.isStd a = true → BT.isStd b = true →
+    lastFire92 (dict a) = true → lastFire92 (dict b) = false →
+    idxF88 0 (dict a) = some ja → idxF88 0 (dict b) = some jb →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true → lt ja jb = true
+
+/-- 分離の証人 — `ψ₁ψ₁ψ₁0` と `ψ₁ψ₁ψ₁0 ⊕ Ω₁`、記号数 4 + 7。組んだのではなく
+    §109.5 の母集団の中の**最小**のもの (`minSep109`)。 -/
+def mixA109 : BT := w3_101
+/-- その相棒 — 尾に `Ω₁` を一つ足しただけ。対の指数は `1` で、発火しない。 -/
+def mixB109 : BT := BT.sum w3_101 w1_101
+
+/-- **証人の性質、凍結。**  形の条件も `K` の条件も両方満たし、`a` は全発火、
+    `b` は最後の対が発火せず、`hi` は狭義に増え、**指数は等しい**。それでも
+    結論は成り立つ — 狭義の差は Veblen の尾が出している。 -/
+theorem mixSep109 :
+    (btLe72 1 mixA109, BT.isStd mixA109, BT.isStd (BT.D 0 mixA109),
+     le (reg 1) (dict mixA109), lastFire92 (dict mixA109), allFire101 (dict mixA109),
+     btLe72 1 mixB109, BT.isStd mixB109, BT.isStd (BT.D 0 mixB109),
+     le (reg 1) (dict mixB109), lastFire92 (dict mixB109),
+     lt (hiW89 (dict mixA109)) (hiW89 (dict mixB109)),
+     idxF88 0 (dict mixA109) == idxF88 0 (dict mixB109),
+     lt (collapse 0 (hiW89 (dict mixA109))) (collapse 0 (hiW89 (dict mixB109))),
+     BT.size mixA109, BT.size mixB109)
+    = (true, true, true, true, true, true,
+       true, true, true, true, false, true, true, true, 4, 7) := rfl
+
+/-- **否定 — 混ざった場合に狭義を課すと偽。**  §109.4 の条項が非狭義なのは
+    弱めたのではなく、狭義では**成り立たない**からである。 -/
+theorem not_idxLtMix109 : ¬ IdxLtMix109 := by
+  intro H
+  cases hj : idxF88 0 (dict mixA109) with
+  | none =>
+      have h : (idxF88 0 (dict mixA109)).isSome = true := rfl
+      rw [hj] at h
+      exact Bool.noConfusion h
+  | some j0 =>
+      have hjb : idxF88 0 (dict mixB109) = some j0 := by
+        rw [← hj]
+        exact eq_of_beq (show (idxF88 0 (dict mixB109) == idxF88 0 (dict mixA109)) = true from rfl)
+      have h := H mixA109 mixB109 j0 j0 rfl rfl rfl rfl rfl rfl hj hjb rfl
+      rw [lt_irrefl] at h
+      exact Bool.noConfusion h
+
+/-- **段の正直さ — 既知の反例はすべて `§109` が閉じなかった半分にいる。**  §101.4 の
+    `bothBadA101`、§101.2 の `scBadA101`、§81 の `cexA89` はどれも最後の対が発火しない。 -/
+theorem knownAreVeb109 :
+    (lastFire92 (dict bothBadA101), lastFire92 (dict scBadA101), lastFire92 (dict cexA89))
+    = (false, false, false) := rfl
+
+end
+
+/-! ### §109.5 測定 (凍結)
+
+**構成 — 発火する線と発火しない線を両方組み、濾さない。**  §101・§104 の作り方に倣う。
+発火するのは `ψ₁` の塔 (`ψ₁ψ₁0` 以上) で、発火しないのは帽子 `ψ₁ψ₀ z` と `Ω₁` 自身。
+
+    fireSeed109  発火する種 5 個  (`ψ₁ψ₁0` 〜 `ψ₁ψ₁ψ₁ψ₁0`、幅つきも)
+    vebSeed109   発火しない種 5 個 (`Ω₁` と帽子 4 個)
+    pop109       その 2 項和・3 項和も入れた 120 項  濾さない
+
+四つの場合がすべて母集団に入っていて、破れは `a` が発火しない側だけに出る。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+private def dedup109 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+
+private def w4_109 : BT := BT.D 1 w3_101
+
+private def fireSeed109 : List BT :=
+  [w2_101, w3_101, w4_109, BT.D 1 (BT.sum w2_101 w2_101), BT.D 1 (BT.sum w3_101 w3_101)]
+private def vebSeed109 : List BT :=
+  [w1_101, BT.D 1 (BT.D 0 w1_101), BT.D 1 (BT.D 0 w2_101),
+   BT.D 1 (BT.D 0 (BT.sum w2_101 w1_101)), BT.D 1 (BT.D 0 (BT.sum w3_101 w2_101))]
+private def seeds109 : List BT := fireSeed109 ++ vebSeed109
+
+private def pop109 : List BT :=
+  dedup109 (seeds109
+    ++ seeds109.flatMap (fun a => (seeds109.filter (fun b => BT.le b a)).map (BT.sum a))
+    ++ seeds109.flatMap (fun a => (seeds109.filter (fun b => BT.le b a)).map
+         (fun b => BT.sum a (BT.sum b b))))
+
+private def ok109 (a : BT) : Bool := btLe72 1 a && BT.isStd a && le (reg 1) (dict a)
+private def kstd109 (a : BT) : Bool := ok109 a && BT.isStd (BT.D 0 a)
+private def samp109 : List BT := pop109.filter ok109
+private def ksamp109 : List BT := pop109.filter kstd109
+
+private def pairs109 (l : List BT) : List (BT × BT) :=
+  l.flatMap (fun a => l.map (fun b => (a, b)))
+private def resid109 (l : List BT) : List (BT × BT) :=
+  (pairs109 l).filter (fun p => lt (hiW89 (dict p.1)) (hiW89 (dict p.2)))
+private def bad109 (l : List BT) : List (BT × BT) :=
+  (resid109 l).filter (fun p =>
+    !(lt (collapse 0 (hiW89 (dict p.1))) (collapse 0 (hiW89 (dict p.2)))))
+private def fr109 (a : BT) : Bool := allFire101 (dict a)
+private def cls109 (l : List (BT × BT)) (x y : Bool) : List (BT × BT) :=
+  l.filter (fun p => fr109 p.1 == x && fr109 p.2 == y)
+private def hasIdx109 (a : BT) : Bool := (idxF88 0 (dict a)).isSome
+private def jOf109 (a : BT) : Term := (idxF88 0 (dict a)).getD zero
+private def idxBad109 (l : List BT) : List (BT × BT) :=
+  (resid109 l).filter (fun p => fr109 p.1 && hasIdx109 p.2 && !(lt (jOf109 p.1) (jOf109 p.2)))
+
+/-! 母集団の形。**120 項のうち全発火は 24 項**で、`K` 標準は 89 項。 -/
+#guard (pop109.length, samp109.length, ksamp109.length,
+        (pop109.map BT.size).foldl (fun a b => if a < b then b else a) 0) == (120, 120, 89, 32)
+
+/-! **受領 1 — §109.1、見えている。**  `lastFire` と `allFire` は 120 項で一度も食い違わず、
+    しかも全発火の 24 項のうち **12 項は対が 2 個以上**あるから、主張は空虚でない。 -/
+#guard (samp109.countP (fun a => lastFire92 (dict a)),
+        samp109.countP (fun a => allFire101 (dict a)),
+        samp109.countP (fun a => lastFire92 (dict a) != allFire101 (dict a)),
+        (samp109.filter fr109).countP
+          (fun b => 2 ≤ (wcnf (reg 1) (toList (dict b))).1.length)) == (24, 24, 0, 12)
+
+/-! **受領 2 — §109.2、見えている。**  120 項のうち **48 項は指数を持たない**。
+    残余の対のうち `b` が指数を持たないものは 1128 組あり、**そのすべてで `a` は
+    発火していない** — 仮定を外すと結論は 1128 回破れる。 -/
+#guard (samp109.countP (fun b => !hasIdx109 b),
+        ((resid109 samp109).filter (fun p => !hasIdx109 p.2)).length,
+        ((resid109 samp109).filter (fun p => fr109 p.1 && !hasIdx109 p.2)).length)
+        == (48, 1128, 0)
+
+/-! **受領 3 — §109.3、見えている。**  指数を持ち全発火でない 48 項では
+    `ψ_{Ω₁}(j) <` 値が**例外なく狭義**、全発火の 24 項では**一度も狭義でない**
+    (値は `ψ_{Ω₁}(j)` そのもの)。 -/
+#guard ((samp109.filter (fun b => hasIdx109 b && !fr109 b)).length,
+        (samp109.filter (fun b => hasIdx109 b && !fr109 b)).countP
+          (fun b => !(lt (psi (reg 1) (jOf109 b)) (collapse 0 (hiW89 (dict b))))),
+        (samp109.filter fr109).countP
+          (fun b => lt (psi (reg 1) (jOf109 b)) (collapse 0 (hiW89 (dict b))))) == (48, 0, 0)
+
+/-! **受領 4 — 四つの場合の内訳。**  破れは `a` が発火しない側にしか出ない。
+    形の条件だけの 120 項では (発火,発火) 276 組・破れ 0、(発火,Veblen) 360 組・破れ 0、
+    (Veblen,発火) 1944 組・破れ 13、(Veblen,Veblen) 4560 組・破れ 375。 -/
+#guard ([(true, true), (true, false), (false, true), (false, false)].map (fun c =>
+    ((cls109 (resid109 samp109) c.1 c.2).length, (cls109 (bad109 samp109) c.1 c.2).length)))
+    == [(276, 0), (360, 0), (1944, 13), (4560, 375)]
+#guard ([(true, true), (true, false), (false, true), (false, false)].map (fun c =>
+    ((cls109 (resid109 ksamp109) c.1 c.2).length, (cls109 (bad109 ksamp109) c.1 c.2).length)))
+    == [(276, 0), (358, 0), (1202, 0), (2080, 0)]
+
+/-! **受領 5 — §109.4 の非狭義は弱めではない。**  `a` が発火する残余は 636 組で、
+    そこでは `ja ≤ jb` が**一度も破れない**が、`ja < jb` は **48 組で破れる**
+    (`K` 標準に絞っても 46 組)。**その 48 組はすべて `ja = jb`** であって、
+    順序が逆転しているものは一つもない。 -/
+#guard (((resid109 samp109).filter (fun p => fr109 p.1)).length,
+        ((resid109 samp109).filter (fun p => fr109 p.1)).countP
+          (fun p => !(le (jOf109 p.1) (jOf109 p.2))),
+        (idxBad109 samp109).length, (idxBad109 ksamp109).length,
+        (idxBad109 samp109).countP (fun p => jOf109 p.1 == jOf109 p.2),
+        (idxBad109 samp109).countP (fun p => lt (jOf109 p.2) (jOf109 p.1)))
+        == (636, 0, 48, 46, 48, 0)
+
+/-! **受領 6 — §109.4 の証人は掃いて出した最小のもの。**  46 組の `K` 標準な破れの
+    どれも記号数の和は 11 以上で、`(mixA109, mixB109)` はその 11 を実現している。 -/
+#guard (idxBad109 ksamp109).all (fun p => 11 ≤ BT.size p.1 + BT.size p.2)
+#guard (idxBad109 ksamp109).contains (mixA109, mixB109)
+
+end
+
 end Evidence.Region
