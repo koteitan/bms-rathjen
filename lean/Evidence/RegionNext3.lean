@@ -5258,12 +5258,9 @@ open Trans.Recal
 open Trans.Dict (BT)
 open TM TM.Term
 
-def bInvA85 : B → BT → B
-  | acc, .zero => acc
-  | acc, .D u a => .nd u acc (bInvA85 .nil a)
-  | acc, .sum x y => bInvA85 (bInvA85 acc x) y
-
-def bInv85 (b : BT) : B := bInvA85 .nil b
+/-! `bInvA85` と `bInv85` は `Evidence/Index.lean` で**定義**してある — `scripts/bp2pss`
+    がこの写像を計算するためだけに `Evidence` を丸ごと読まずに済むように。
+    `bVal_bInv85`・`bOnto85` をはじめ、これについての定理はすべてここにある。 -/
 
 def g85 : BT → Nat × B
   | .D u a => (u, bInv85 a)

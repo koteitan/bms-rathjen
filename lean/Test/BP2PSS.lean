@@ -37,7 +37,7 @@ before v0.1.x).  The empty term is `0`, whose matrix is the empty matrix.
 Exit codes: 0 printed a matrix, 2 could not (unparseable, or outside `bOnto85`'s
 domain).
 -/
-import Evidence.RegionNext3
+import Evidence.Index
 
 open Trans.Dict (BT)
 open Evidence.Region

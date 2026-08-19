@@ -1,4 +1,5 @@
 import Evidence.Region
+import Evidence.Index
 import Rows.TM
 import Rows.Ladder
 import Trans.DictInv
@@ -44,16 +45,10 @@ open BMS
 
 /-! ## §1 The generalised index -/
 
-/-- `nd v r a` = `r ⊕ ψ_v(a)`.  `Region.A` is the case `v ∈ {0,1}` with `ψ₁`'s argument
-    forced to `0`. -/
-inductive B where
-  | nil : B
-  | nd  : Nat → B → B → B
-deriving DecidableEq, Inhabited
-
-def matB : B → Nat → Matrix
-  | .nil, _ => []
-  | .nd v r a, d => matB r d ++ ([d, v] :: matB a (d + 1))
+/-! `B` (`nd v r a` = `r ⊕ ψ_v(a)`; `Region.A` is the case `v ∈ {0,1}` with `ψ₁`'s
+    argument forced to `0`) and `matB` are DEFINED in `Evidence/Index.lean`, so that a
+    tool needing only to compute with them can import that leaf instead of all of
+    `Evidence`.  Everything proved about them is here. -/
 
 /-- `Region.A` の埋め込み。 -/
 def embed : A → B

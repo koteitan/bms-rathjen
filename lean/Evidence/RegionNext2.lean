@@ -10496,11 +10496,8 @@ open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
 open TM TM.Term
 open Evidence.WF
 
-/-- `BT` の側の添字の上限。 -/
-def btLe72 (m : Nat) : BT → Bool
-  | .zero => true
-  | .D u a => decide (u ≤ m) && btLe72 m a
-  | .sum a b => btLe72 m a && btLe72 m b
+/-! `btLe72` — `BT` の側の添字の上限 — は `Evidence/Index.lean` で**定義**してある
+    (`Trans.Dict` しか要らないので)。その性質はここで証明する。 -/
 
 theorem btLe72_D (m u : Nat) (a : BT) (h : btLe72 m (BT.D u a) = true) :
     u ≤ m ∧ btLe72 m a = true := by
