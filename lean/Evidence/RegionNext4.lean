@@ -10752,4 +10752,1301 @@ def valB107 : List Term := popB107.map dict
 
 end
 
+/-! ## §106 THE FIRST VEBLEN ARGUMENT IS FREE — ONE PAIR OF THE FOLD, INVERTED IN GENERAL
+
+§103 closed the ENDPOINT of §102's (b1) — the single target `Γ₀` — by BUILDING the Buchholz
+preimage of §102.4's tower and proving it is one, and it named exactly what was left: the
+OPEN interval `(ε₀, Γ₀)`, whose general case is a mutual recursion (digits + term) "whose
+value half needs `wcnf ∘ xOf = id` and whose standardness half cannot use §94.5's
+`btlt_of_lt94` at all — that lemma requires `Hd085` on both sides and the arguments this
+construction has to compare are `ψ₁`-headed."
+
+**§106 builds that mutual recursion and proves both halves — for ONE pair of the fold.**
+`DictOntoMidOpen103` is NOT closed.  What is closed is the half §103 could not even state:
+the FIRST Veblen argument.  §103.3's `collapse0_Q103` inverts the `ψ₀` fold at one base-`Ω₁`
+pair only when the exponent is an ε-number in `Good103`, which is why §103's tower is the
+single chain `φ̄(φ̄(…,0),0)` and nothing else.  §106.3's `collapse0_argV106` inverts it at one
+pair with **no condition on the exponent at all**, and §106.4/§106.5 build the Buchholz
+witness for the coefficient `1` and prove it legal — by an induction that carries its own
+covering condition, since `btlt_of_lt94` really is out of reach.
+
+  §106.1  **THE ROUND TRIP `wcnf` NEEDS.**  `logOm_omegaNF106 : logOm (ω^Y) = Y` for every
+          term of 𝔗(M) below `M` — §100.2's `omegaNF_logOm100` read backwards, and only the
+          forward direction was in the repository.  The proof is three lines and not a case
+          analysis over `phiNF`'s five branches: `ω^·` is strictly monotone on 𝔗(M) (§79's
+          `lt_omegaNF_inT79`), hence injective, and `ω^(log(ω^Y)) = ω^Y` then forces
+          `log(ω^Y) = Y` by §8's trichotomy.  This is "`wcnf ∘ xOf = id`" in its smallest
+          form.  `ltW_omegaNF106` is the side fact that `ω^·` does not fall below `Ω₁`.
+
+  §106.2  **`divAP Ω₁` INVERTS `Ω₁ ·`, COMPONENT BY COMPONENT.**  `divAP_dig106` and
+          `divAP_mulL106` : `ofList ((toList (Ω₁·A)).map (divAP Ω₁)) = A` for every `A` of
+          𝔗(M) below `Ω₁`.  Nothing here mentions `dict`; it is the arithmetic of `mulL`,
+          and it is what makes the digit half of the recursion one step rather than an
+          induction.
+
+  §106.3  **ONE PAIR, INVERTED IN GENERAL.**  `collapse0_one_pair106` reduces `collapse 0 V`
+          for an additively principal `V ≥ Ω₁` to a single Veblen step with the exponent,
+          the coefficient and the result all free — the modular form §103.3 did not have.
+          `collapse0_argV106` : `ψ₀(Ω₁^A·c) = φ̄(A,B)` for the argument
+          `argV106 A B = ω^(Ω₁·A ⊕ log B)`.  Two corollaries pin the two shapes the
+          coefficient can take: `collapse0_mulL106` (`B = 0`, coefficient `1`) — **which is
+          `collapse0_Q103` with its whole `Good103` hypothesis deleted** — and
+          `collapse0_argAP106` (`B` additively principal and `≠ 1`, coefficient `B`).
+
+  §106.4  **THE DIGITS, AND WHY THEY ARE LEGAL.**  `mulB106` lays the digits of `Ω₁·A` side
+          by side as `ψ₁`-nodes, `powB106` and `vebB106` put `ψ₁` and `ψ₀` on top.  Legality
+          is proved, not measured: `btLe_vebB106`, `isStd_vebB106`, `hd085_vebB106`, and the
+          covering condition `cov_vebB106` that makes the construction ITERABLE — §103.4's
+          `cov103` generalised from a chain to a list.  `Dig106` is the invariant the
+          induction carries and `dig_zero106` starts it.  **`btlt_of_lt94` is not used
+          anywhere in §106.4**, exactly as §103 predicted; what replaces it is
+          `btlt_hd0_hd1_106` — a level-0-headed term is below every level-1-headed one — plus
+          one `BT.le` transitivity and `btlt_of_hd106`, which says the tail of a sum is not
+          read once the heads' arguments differ.
+
+  §106.5  **THE MAIN THEOREM, AND THE STEP.**  `dict_vebB106` : `dict (vebB106 ls) =
+          φ̄(1 ⊕ A, 0)` whenever `ls` is a descending list of `Dig106` witnesses whose values
+          are the `logOm`s of `A`'s components.  `rch_step106` iterates it: `Rch106 s` and
+          `CNV s` give `Rch106 (φ̄(1 ⊕ ω^s, 0))`.  From `0` that reaches `ε₀`, `ζ₀`,
+          `φ̄(ε₀,0)`, … — §103.4's tower is the special case of a ONE-element list whose
+          value is an ε-number.  `btLe0_vebB106` : the construction leaves level 0 at once,
+          as §103.6's `noLevel0_inMid103` says it must, and `btLe1_vebB106` : it never goes
+          above 1, so §85.6's level-two refutation stays out of reach.
+
+  §106.6  **WHAT IT REACHES, AND WHAT IT DOES NOT.**  Two populations, neither filtered, and
+          two named refutations.  The reach is stated as a number on §103.8's own adversarial
+          pool and it is not a large one.
+
+WHAT IS **NOT** CLAIMED.  **`DictOntoMidOpen103` is NOT proved and NOT refuted.**
+`DictOntoMid102`, `DictDenseMid102` and `DictDenseAbove102` are untouched; `DictDenseHi94`,
+`DictDense85` and `CofDenseS1` are exactly where §103 left them, and row 326 depends on the
+same list as before — `certIn_t326_103` is unchanged and §106 adds no clause to it and
+removes none.  `PsiIdxOKStd172` and `DictLtA74` are used, not proved (`DictLtA74` in fact is
+not used at all in §106).
+
+**Where §106 stopped, precisely, and what moved.**  §103's residue was the whole open
+interval; §106's is the SECOND Veblen argument.  The fold's LATER pairs
+(`acc := φ̄(a, acc ⊕ c)`) are not inverted here, and the Buchholz witness is built only for
+the coefficient `1`, i.e. for the targets `φ̄(A,0)`.  On §103.8's adversarial pool `aPool103`
+that is 14 of 359 terms as a BUILT witness and 171 of 359 as a proved VALUE formula; the
+remaining 188 need a coefficient that is a sum, or `B = 1` — which one pair cannot express,
+because the coefficient of a base-`Ω₁` digit is always additively principal and `sub1` sends
+`1` to `0` — or a peel into more than one pair.  **This is a move of the residue, not a
+removal of it, and the number says how far it moved.**
+
+WHAT THE MEASUREMENT SAYS (§106.6 gives the construction).  Two populations, built on §97's
+model so that the hypotheses stay VISIBLE and nothing is filtered out.
+
+  * **The one-pair formula is exact where its hypothesis holds.**  144 `(A,B)` pairs, seeded
+    with `0`, with `Γ₀` (strongly critical), with `1` (which no coefficient can be) and with
+    sums; 65 satisfy the hypothesis and on all 65 `ψ₀(argV106 A B) = φ̄(A,B)`, 0 misses.
+  * **The hypothesis is visible, and it is not a restatement of the conclusion.**  79 of the
+    144 fail it — and 3 of those 79 satisfy the conclusion anyway.
+  * **Two named refutations.**  `A = Γ₀`: `ψ₀(argV106 Γ₀ 0) = Γ₀`, NOT `φ̄(Γ₀,0)` — 2.6(vi)'s
+    last line folds `φ̄(A,0)` to `A` for `A ∈ SC` and `dict` never emits the redundant term.
+    `B = 1`: `ψ₀(argV106 ε₀ 1) = φ̄(ε₀,0)`, NOT `φ̄(ε₀,1)` — the coefficient is principal and
+    `sub1 1 = 0`.
+  * **The witness is exact where `Dig106` and the descending condition hold.**  43 lists, 21
+    of them legal, and on all 21 the value, the level bound, standardness, the head condition
+    AND the covering condition all hold; the other 22 are in on purpose and at least one of
+    them really does produce a non-standard term.
+  * **The covering condition cannot be found by enumeration — it has to be built.**  Sweeping
+    289 Buchholz terms, all 19 that are standard, level ≤ 1 and `D 0`-headed also satisfy it:
+    on that population the hypothesis is INVISIBLE, which is §93's failure mode.  `deep106 =
+    ψ₀ψ₁ψ₁ψ₁ψ₁0` is built by hand, is standard, level ≤ 1 and `D 0`-headed, FAILS the
+    covering condition, and `vebB106 [deep106]` is not standard.  §95's lesson, applied.
+  * **§103.4's tower is a corollary.**  Eight rungs: `dict (vebB106 [gInv103 (n+1)]) =
+    gTow102 (n+2)`, legal and `Dig106` at every rung, and level 0 at none of them.  The list
+    form goes further than the chain: `φ̄(3,0)` and `φ̄(ε₀ ⊕ 1, 0)` are two-element lists and
+    no chain produces them.
+  * **The reach, on §103.8's own adversarial pool.**  359 terms of `(ε₀,Γ₀)`: 14 are `φ̄(A,0)`
+    (the built witnesses), 171 satisfy the one-pair value hypothesis, and the value formula
+    holds on all 171.  188 remain, and they are the second Veblen argument. -/
+
+/-! ### §106.1 `logOm ∘ ω^· = id` — `wcnf` が要る往復 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 成分が `Ω₁` 以上の項の頭は `Ω₁` より下でない。 -/
+theorem ltW_geW106 {Y : Term} (hne : Y ≠ zero)
+    (hall : ∀ q ∈ toList Y, lt q (reg 1) = false) : lt Y (reg 1) = false := by
+  cases Y with
+  | zero => exact absurd rfl hne
+  | add a b =>
+      rw [lt_add_ap102 a b (show isAP (reg 1) = true from rfl)]
+      exact hall a (by show a ∈ a :: toList b; exact List.Mem.head _)
+  | M => exact hall M (List.Mem.head _)
+  | omg x => exact hall (omg x) (List.Mem.head _)
+  | phi a b => exact hall (phi a b) (List.Mem.head _)
+  | psi k a => exact hall (psi k a) (List.Mem.head _)
+  | Z d => exact hall (Z d) (List.Mem.head _)
+
+theorem logOm_omegaNF106 {Y : Term} (hY : inT Y = true) (hYM : lt Y M = true) :
+    logOm (omegaNF Y) = Y := by
+  have hi : inT (omegaNF Y) = true := inT_omegaNF hY
+  have hm : lt (omegaNF Y) M = true := ltM_omegaNF hY hYM
+  have hround : omegaNF (logOm (omegaNF Y)) = omegaNF Y :=
+    omegaNF_logOm100 hi (isAP_omegaNF Y) hm
+  have hiL : inT (logOm (omegaNF Y)) = true := inT_logOm hi
+  rcases lt_trichotomy_inT hiL hY with h | h | h
+  · exfalso
+    have h1 := lt_omegaNF_inT79 hiL hY h.1
+    rw [hround, lt_irrefl] at h1
+    exact Bool.noConfusion h1
+  · exact h.2.1
+  · exfalso
+    have h1 := lt_omegaNF_inT79 hY hiL h.2.2
+    rw [hround, lt_irrefl] at h1
+    exact Bool.noConfusion h1
+
+theorem ltW_omegaNF106 {Y : Term} (hY : inT Y = true) (hYW : lt Y (reg 1) = false) :
+    lt (omegaNF Y) (reg 1) = false := by
+  have hi : inT (omegaNF Y) = true := inT_omegaNF hY
+  rcases lt_trichotomy_inT hY (inT_reg 1) with h | h | h
+  · rw [h.1] at hYW; exact Bool.noConfusion hYW
+  · rw [h.2.1, omegaNF_reg1_80, lt_irrefl]
+  · have h1 := lt_omegaNF_inT79 (inT_reg 1) hY h.2.2
+    rw [omegaNF_reg1_80] at h1
+    exact lt_asymm_inT (inT_reg 1) hi h1
+
+
+end
+
+/-! ### §106.2 `Ω₁ ·` の逆はちょうど `divAP` -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Ω₁` より下の項を左から `Ω₁` で足すと、成分列は `Ω₁` を頭に置いただけ。 -/
+theorem toList_plusW106 {g : Term} (hg : inT g = true)
+    (hgW : ∀ q ∈ toList g, lt q (reg 1) = true) :
+    toList (plus (reg 1) g) = reg 1 :: toList g := by
+  cases hl : toList g with
+  | nil =>
+      rw [plus_nil hl]
+      rfl
+  | cons b1 r =>
+      have hb1 : lt b1 (reg 1) = true := hgW b1 (by rw [hl]; exact List.Mem.head _)
+      rw [plus_cons66 hl,
+        show (toList (reg 1)).filter (fun a => le b1 a) = [reg 1] from by
+          show (List.filter (fun a => le b1 a) [reg 1]) = [reg 1]
+          rw [List.filter_cons_of_pos (by rw [le_of_lt94 hb1])]
+          rfl]
+      rw [show ([reg 1] ++ (b1 :: r)) = reg 1 :: (b1 :: r) from rfl,
+        toList_ofList _ (by
+          intro x hx
+          rcases List.mem_cons.mp hx with h1 | h1
+          · rw [h1]; rfl
+          · exact inTL_isAP hg x (by rw [hl]; exact h1))]
+
+theorem subAP_plusW106 {g : Term} (hg : inT g = true)
+    (hgW : ∀ q ∈ toList g, lt q (reg 1) = true) :
+    subAP (reg 1) (plus (reg 1) g) = g := by
+  rw [subAP_cons (reg 1) _ (reg 1) (toList g) (toList_plusW106 hg hgW),
+    if_pos (by rfl), inT_ofList_toList g hg]
+
+/-- `Ω₁` より下の項の `logOm` も `Ω₁` より下。 -/
+theorem ltW_logOm106 {p : Term} (hp : inT p = true) (hap : p.isAP = true)
+    (hpM : lt p M = true) (hpW : lt p (reg 1) = true) : lt (logOm p) (reg 1) = true := by
+  have hg : inT (logOm p) = true := inT_logOm hp
+  have hpe : omegaNF (logOm p) = p := omegaNF_logOm100 hp hap hpM
+  rcases lt_trichotomy_inT hg (inT_reg 1) with h | h | h
+  · exact h.1
+  · exfalso
+    rw [h.2.1, omegaNF_reg1_80] at hpe
+    rw [← hpe, lt_irrefl] at hpW
+    exact Bool.noConfusion hpW
+  · exfalso
+    have h1 := lt_omegaNF_inT79 (inT_reg 1) hg h.2.2
+    rw [omegaNF_reg1_80, hpe] at h1
+    rw [lt_asymm_inT (inT_reg 1) hp h1] at hpW
+    exact Bool.noConfusion hpW
+
+/-- **一成分ぶんの割り算がちょうど戻る。**  `divAP Ω₁ (Ω₁ · p) = p`。 -/
+theorem divAP_dig106 {p : Term} (hp : inT p = true) (hap : p.isAP = true)
+    (hpM : lt p M = true) (hpW : lt p (reg 1) = true) :
+    divAP (reg 1) (omegaNF (plus (reg 1) (logOm p))) = p := by
+  have hg : inT (logOm p) = true := inT_logOm hp
+  have hgM : lt (logOm p) M = true := ltM_logOm hp hpM
+  have hgW : ∀ q ∈ toList (logOm p), lt q (reg 1) = true :=
+    ltW_toList79 (logOm p) hg (ltW_logOm106 hp hap hpM hpW)
+  have hY : inT (plus (reg 1) (logOm p)) = true := inT_plus (inT_reg 1) hg
+  have hYM : lt (plus (reg 1) (logOm p)) M = true :=
+    lt_plus_M (inT_reg 1) hg (ltM_reg 1) hgM
+  show omegaNF (subAP (reg 1) (logOm (omegaNF (plus (reg 1) (logOm p))))) = p
+  rw [logOm_omegaNF106 hY hYM, subAP_plusW106 hg hgW]
+  exact omegaNF_logOm100 hp hap hpM
+
+theorem ltW_plusW106 {g : Term} (hg : inT g = true) :
+    lt (plus (reg 1) g) (reg 1) = false := by
+  have hle : le (reg 1) (plus (reg 1) g) = true :=
+    le_self_plus_ap81 (inT_reg 1) (show isAP (reg 1) = true from rfl) hg
+  rcases (Bool.or_eq_true _ _).mp hle with h | h
+  · rw [← eq_of_beq h]; exact lt_irrefl _
+  · exact lt_asymm_inT (inT_reg 1) (inT_plus (inT_reg 1) hg) h
+
+theorem toList_mulLW106 {A : Term} :
+    toList (mulL (reg 1) A) = (toList A).map (fun p => omegaNF (plus (reg 1) (logOm p))) := by
+  show toList (ofList ((toList A).map (fun p => omegaNF (plus (reg 1) (logOm p)))))
+    = (toList A).map (fun p => omegaNF (plus (reg 1) (logOm p)))
+  refine toList_ofList _ ?_
+  intro x hx
+  obtain ⟨p, _, hxp⟩ := List.mem_map.mp hx
+  rw [← hxp]
+  exact isAP_omegaNF _
+
+/-- `Ω₁ · A` の成分はどれも `Ω₁` より下でない。 -/
+theorem geW_mulL106 {A : Term} (hA : inT A = true) :
+    ∀ q ∈ toList (mulL (reg 1) A), lt q (reg 1) = false := by
+  intro q hq
+  rw [toList_mulLW106] at hq
+  obtain ⟨p, hp, hqp⟩ := List.mem_map.mp hq
+  rw [← hqp]
+  exact ltW_omegaNF106 (inT_plus (inT_reg 1) (inT_logOm (inTL_inT hA p hp)))
+    (ltW_plusW106 (inT_logOm (inTL_inT hA p hp)))
+
+/-- **`wcnf` は `Ω₁ · A` から `A` をそのまま戻す。** -/
+theorem divAP_mulL106 {A : Term} (hA : inT A = true) (hAM : lt A M = true)
+    (hAW : lt A (reg 1) = true) :
+    ofList ((toList (mulL (reg 1) A)).map (divAP (reg 1))) = A := by
+  have hpt : ∀ x ∈ toList A,
+      (divAP (reg 1) ∘ fun p => omegaNF (plus (reg 1) (logOm p))) x = id x := by
+    intro x hx
+    exact divAP_dig106 (inTL_inT hA x hx) (inTL_isAP hA x hx)
+      (ltM_toList A hA hAM x hx) (ltW_toList79 A hA hAW x hx)
+  have hkey : (toList (mulL (reg 1) A)).map (divAP (reg 1)) = toList A := by
+    rw [toList_mulLW106, List.map_map, List.map_congr_left hpt, List.map_id]
+  rw [hkey, inT_ofList_toList A hA]
+
+
+end
+
+/-! ### §106.3 一組の畳み込み、第 1 引数も第 2 引数も一般に -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 頭が `Ω₁` より下でなければ、項も `Ω₁` より下でない。 -/
+theorem ltW_hd106 {Y q : Term} {rest : List Term} (hl : toList Y = q :: rest)
+    (hq : lt q (reg 1) = false) : lt Y (reg 1) = false := by
+  cases Y with
+  | zero =>
+      exfalso
+      have h2 : ([] : List Term) = q :: rest := hl
+      exact List.cons_ne_nil q rest h2.symm
+  | add a b =>
+      have h2 : a :: toList b = q :: rest := hl
+      injection h2 with h1 _
+      rw [lt_add_ap102 a b (show isAP (reg 1) = true from rfl), h1]
+      exact hq
+  | M =>
+      have h2 : [M] = q :: rest := hl
+      injection h2 with h1 _
+      rw [h1]; exact hq
+  | omg x =>
+      have h2 : [omg x] = q :: rest := hl
+      injection h2 with h1 _
+      rw [h1]; exact hq
+  | phi a b =>
+      have h2 : [phi a b] = q :: rest := hl
+      injection h2 with h1 _
+      rw [h1]; exact hq
+  | psi k a =>
+      have h2 : [psi k a] = q :: rest := hl
+      injection h2 with h1 _
+      rw [h1]; exact hq
+  | Z d =>
+      have h2 : [Z d] = q :: rest := hl
+      injection h2 with h1 _
+      rw [h1]; exact hq
+
+/-- **一組だけの畳み込み。**  `ψ₀` の引数が `Ω₁` 以上の加法主要項ひとつなら、`collapse 0`
+    は `wcnf` が返す唯一の組 `(A, c)` に Veblen 枝を一度当てるだけである。§103.3 の
+    `collapse0_Q103` はこの補題の `A` が ε 数・`c = 1` の場合にあたる。 -/
+theorem collapse0_one_pair106 {V A c R : Term} (hVap : V.isAP = true)
+    (hVW : lt V (reg 1) = false)
+    (hwA : wA (reg 1) V = A) (hwC : wC (reg 1) V = c)
+    (hAW : le (reg 1) A = false)
+    (hiR : inT R = true) (hRnf : omegaNF R = R)
+    (hacc : phiNF A (plus (baseOf 0) (sub1 c)) = R) :
+    collapse 0 V = R := by
+  have hw : wcnf (reg 1) (toList V) = ([(A, c)], zero) := by
+    rw [toList_isAP81 hVap, wcnf_cons_ge hVW, wcnf_nil]
+    show ([(wA (reg 1) V, wC (reg 1) V)], (zero : Term)) = _
+    rw [hwA, hwC]
+  have hfold : ([(A, c)].foldl
+      (init := ((none : Option Term), (none : Option Term)))
+      (stepF (reg 1) (baseOf 0))).2.getD zero = R := by
+    show (stepF (reg 1) (baseOf 0) (none, none) (A, c)).2.getD zero = _
+    show (if le (reg 1) A = true then _ else
+      ((none : Option Term), some (phiNF A (plus (baseOf 0) (sub1 c))))).2.getD zero = _
+    rw [if_neg (by rw [hAW]; exact Bool.noConfusion)]
+    exact hacc
+  rw [collapse0_raw89]
+  show omegaNF (plus (reg 0) (plus
+    (((wcnf (reg 1) (toList V)).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero)
+    ((wcnf (reg 1) (toList V)).2))) = _
+  rw [hw]
+  show omegaNF (plus (reg 0) (plus
+    (([(A, c)].foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2.getD zero) zero)) = _
+  rw [hfold]
+  show omegaNF (plus (reg 0) (plus R zero)) = _
+  rw [show plus R zero = R from rfl,
+    show plus (reg 0) R = plus zero R from rfl, plus_zero_left_inT hiR, hRnf]
+
+theorem mulL_ne_zero106 {A : Term} (hAne : A ≠ zero) : mulL (reg 1) A ≠ zero := by
+  intro hc
+  have h1 : toList (mulL (reg 1) A) = [] := by rw [hc]; rfl
+  rw [toList_mulLW106] at h1
+  exact hAne (toList_eq_nil A (List.map_eq_nil_iff.mp h1))
+
+theorem leW_false106 {A : Term} (hA : inT A = true) (hAW : lt A (reg 1) = true) :
+    le (reg 1) A = false := by
+  show ((reg 1 == A) || lt (reg 1) A) = false
+  rw [show (reg 1 == A) = false from by
+      cases hc : (reg 1 == A) with
+      | false => rfl
+      | true =>
+          exfalso
+          rw [← eq_of_beq hc, lt_irrefl] at hAW
+          exact Bool.noConfusion hAW,
+    lt_asymm_inT hA (inT_reg 1) hAW]
+  rfl
+
+theorem lt_of_ltW_geW106 {b q : Term} (hb : inT b = true) (hq : inT q = true)
+    (h1 : lt b (reg 1) = true) (h2 : lt q (reg 1) = false) : lt b q = true := by
+  rcases lt_trichotomy_inT hq (inT_reg 1) with h | h | h
+  · rw [h.1] at h2; exact Bool.noConfusion h2
+  · rw [h.2.1]; exact h1
+  · exact lt_trans_inT hb (inT_reg 1) hq h1 h.2.2
+
+/-- **一組の `ψ₀` 引数。**  `Ω₁^A · c` を `A` と第 2 引数 `B` から組み立てたもの。
+    `B = 0` なら係数は `1`、`B` が加法主要なら係数は `B` である。 -/
+def argV106 (A B : Term) : Term := omegaNF (plus (mulL (reg 1) A) (logOm B))
+
+theorem toList_argY106 {A B : Term} (hA : inT A = true) (hB : inT B = true)
+    (hgW0 : lt (logOm B) (reg 1) = true) :
+    toList (plus (mulL (reg 1) A) (logOm B))
+      = toList (mulL (reg 1) A) ++ toList (logOm B) := by
+  have hg : inT (logOm B) = true := inT_logOm hB
+  have hgW : ∀ q ∈ toList (logOm B), lt q (reg 1) = true :=
+    ltW_toList79 (logOm B) hg hgW0
+  have hmul : inT (mulL (reg 1) A) = true := inT_mulL mulDescInT (inT_reg 1) hA
+  cases hl : toList (logOm B) with
+  | nil => rw [plus_nil hl, List.append_nil]
+  | cons b1 r =>
+      have hb1W : lt b1 (reg 1) = true := hgW b1 (by rw [hl]; exact List.Mem.head _)
+      have hb1T : inT b1 = true := inTL_inT hg b1 (by rw [hl]; exact List.Mem.head _)
+      rw [plus_cons66 hl,
+        show (toList (mulL (reg 1) A)).filter (fun a => le b1 a)
+            = toList (mulL (reg 1) A) from by
+          refine List.filter_eq_self.mpr ?_
+          intro q hq
+          exact le_of_lt94 (lt_of_ltW_geW106 hb1T (inTL_inT hmul q hq) hb1W
+            (geW_mulL106 hA q hq)),
+        toList_ofList _ (by
+          intro x hx
+          rcases List.mem_append.mp hx with h1 | h1
+          · exact inTL_isAP hmul x h1
+          · exact inTL_isAP hg x (by rw [hl]; exact h1))]
+
+/-- **§106.3 の主定理 — 一組の Veblen 枝、第 1・第 2 引数とも一般。**
+    `ψ₀(Ω₁^A · B) = φ̄(A,B)`。§103.3 は `B = 0` かつ `A` が ε 数の場合である。 -/
+theorem collapse0_argV106 {A B : Term}
+    (hA : inT A = true) (hAM : lt A M = true) (hAW : lt A (reg 1) = true)
+    (hAne : A ≠ zero)
+    (hB : inT B = true) (hBM : lt B M = true) (hgW0 : lt (logOm B) (reg 1) = true)
+    (hacc : phiNF A (sub1 (omegaNF (logOm B))) = phi A B) :
+    collapse 0 (argV106 A B) = phi A B := by
+  have hg : inT (logOm B) = true := inT_logOm hB
+  have hgM : lt (logOm B) M = true := ltM_logOm hB hBM
+  have hgW : ∀ q ∈ toList (logOm B), lt q (reg 1) = true :=
+    ltW_toList79 (logOm B) hg hgW0
+  have hmul : inT (mulL (reg 1) A) = true := inT_mulL mulDescInT (inT_reg 1) hA
+  have hmulM : lt (mulL (reg 1) A) M = true := ltM_mulL (inT_reg 1) hA (ltM_reg 1) hAM
+  have hY : inT (plus (mulL (reg 1) A) (logOm B)) = true := inT_plus hmul hg
+  have hYM : lt (plus (mulL (reg 1) A) (logOm B)) M = true :=
+    lt_plus_M hmul hg hmulM hgM
+  have hlist := toList_argY106 hA hB hgW0
+  have hmulnil : toList (mulL (reg 1) A) ≠ [] := by
+    intro hc
+    exact mulL_ne_zero106 hAne (toList_eq_nil _ hc)
+  have hYW : lt (plus (mulL (reg 1) A) (logOm B)) (reg 1) = false := by
+    cases hm : toList (mulL (reg 1) A) with
+    | nil => exact absurd hm hmulnil
+    | cons q rest =>
+        refine ltW_hd106 (q := q) (rest := rest ++ toList (logOm B)) ?_ ?_
+        · rw [hlist, hm]; rfl
+        · exact geW_mulL106 hA q (by rw [hm]; exact List.Mem.head _)
+  have hlog : logOm (argV106 A B) = plus (mulL (reg 1) A) (logOm B) :=
+    logOm_omegaNF106 hY hYM
+  have hfil1 : (toList (plus (mulL (reg 1) A) (logOm B))).filter (fun q => !lt q (reg 1))
+      = toList (mulL (reg 1) A) := by
+    rw [hlist, List.filter_append,
+      show (toList (mulL (reg 1) A)).filter (fun q => !lt q (reg 1))
+          = toList (mulL (reg 1) A) from
+        List.filter_eq_self.mpr (fun q hq => by rw [geW_mulL106 hA q hq]; rfl),
+      show (toList (logOm B)).filter (fun q => !lt q (reg 1)) = [] from
+        List.filter_eq_nil_iff.mpr (fun q hq => by rw [hgW q hq]; exact Bool.noConfusion),
+      List.append_nil]
+  have hfil2 : (toList (plus (mulL (reg 1) A) (logOm B))).filter (fun q => lt q (reg 1))
+      = toList (logOm B) := by
+    rw [hlist, List.filter_append,
+      show (toList (mulL (reg 1) A)).filter (fun q => lt q (reg 1)) = [] from
+        List.filter_eq_nil_iff.mpr (fun q hq => by
+          rw [geW_mulL106 hA q hq]; exact Bool.noConfusion),
+      show (toList (logOm B)).filter (fun q => lt q (reg 1)) = toList (logOm B) from
+        List.filter_eq_self.mpr (fun q hq => hgW q hq),
+      List.nil_append]
+  refine collapse0_one_pair106 (V := argV106 A B) (A := A) (c := omegaNF (logOm B))
+    (R := phi A B) (isAP_omegaNF _)
+    (ltW_omegaNF106 hY hYW) ?_ ?_ (leW_false106 hA hAW) ?_ ?_ ?_
+  · show ofList (((toList (logOm (argV106 A B))).filter
+      (fun q => !lt q (reg 1))).map (divAP (reg 1))) = A
+    rw [hlog, hfil1]
+    exact divAP_mulL106 hA hAM hAW
+  · show omegaNF (ofList ((toList (logOm (argV106 A B))).filter (fun q => lt q (reg 1))))
+      = omegaNF (logOm B)
+    rw [hlog, hfil2, inT_ofList_toList (logOm B) hg]
+  · show inT (phi A B) = true
+    show (inT A && inT B && lt A M && lt B M) = true
+    rw [hA, hB, hAM, hBM]; rfl
+  · exact omegaNF_phi98 (lt_zero_ne76 hAne)
+  · rw [show plus (baseOf 0) (sub1 (omegaNF (logOm B)))
+        = plus zero (sub1 (omegaNF (logOm B))) from rfl,
+      plus_zero_left_inT (inT_sub1 (inT_omegaNF hg))]
+    exact hacc
+
+
+/-- `B = 0` の場合 — §103.3 の `collapse0_Q103` を `A` の条件なしに一般化したもの。 -/
+theorem collapse0_mulL106 {A : Term} (hA : inT A = true) (hAM : lt A M = true)
+    (hAW : lt A (reg 1) = true) (hAne : A ≠ zero) (hASC : A.isSC = false) :
+    collapse 0 (omegaNF (mulL (reg 1) A)) = phi A zero := by
+  have h := collapse0_argV106 hA hAM hAW hAne (show inT (zero : Term) = true from rfl)
+    (show lt (zero : Term) M = true from by decide)
+    (show lt (logOm (zero : Term)) (reg 1) = true from by decide)
+    (by
+      show phiNF A (sub1 (omegaNF (logOm (zero : Term)))) = phi A zero
+      rw [show sub1 (omegaNF (logOm (zero : Term))) = zero from rfl]
+      exact phiNF_zero_right103 hASC)
+  rw [show argV106 A zero = omegaNF (mulL (reg 1) A) from by
+    show omegaNF (plus (mulL (reg 1) A) (logOm zero)) = _
+    rw [plus_nil (show toList (logOm (zero : Term)) = [] from rfl)]] at h
+  exact h
+
+/-- `B` が加法主要で `1` でない場合 — 係数がそのまま `B` になる。 -/
+theorem collapse0_argAP106 {A B : Term}
+    (hA : inT A = true) (hAM : lt A M = true) (hAW : lt A (reg 1) = true)
+    (hAne : A ≠ zero)
+    (hB : inT B = true) (hBM : lt B M = true) (hBW : lt B (reg 1) = true)
+    (hBap : B.isAP = true) (hBne : (B == TM.Term.one) = false)
+    (hnoskip : phiNF A B = phi A B) :
+    collapse 0 (argV106 A B) = phi A B := by
+  refine collapse0_argV106 hA hAM hAW hAne hB hBM
+    (ltW_logOm106 hB hBap hBM hBW) ?_
+  rw [show omegaNF (logOm B) = B from omegaNF_logOm100 hB hBap hBM,
+    show sub1 B = B from by
+      show (match toList B with
+            | [] => zero
+            | p :: rest => if p == TM.Term.one then ofList rest else B) = B
+      rw [toList_isAP81 hBap]
+      show (if (B == TM.Term.one) = true then ofList [] else B) = B
+      rw [if_neg (by rw [hBne]; exact Bool.noConfusion)]]
+  exact hnoskip
+
+theorem divAP_W_W106 : divAP (reg 1) (reg 1) = TM.Term.one := rfl
+
+theorem dig_eq_W_iff106 {p : Term} (hp : inT p = true) (hap : p.isAP = true)
+    (hpM : lt p M = true) (hpW : lt p (reg 1) = true)
+    (h : omegaNF (plus (reg 1) (logOm p)) = reg 1) : p = TM.Term.one := by
+  have h1 := divAP_dig106 hp hap hpM hpW
+  rw [h, divAP_W_W106] at h1
+  exact h1.symm
+
+theorem le_dig_W106 {p : Term} (hp : inT p = true) (hap : p.isAP = true)
+    (hpM : lt p M = true) (hpW : lt p (reg 1) = true) :
+    le (omegaNF (plus (reg 1) (logOm p))) (reg 1) = le p TM.Term.one := by
+  have hpz : p ≠ zero := by intro hz; rw [hz] at hap; exact Bool.noConfusion hap
+  have hlt1 : lt p TM.Term.one = false := by
+    cases hc : lt p TM.Term.one with
+    | false => rfl
+    | true => exact absurd (below_one p hp (fuelOf p TM.Term.one) hc) hpz
+  have hlt2 : lt (omegaNF (plus (reg 1) (logOm p))) (reg 1) = false :=
+    ltW_omegaNF106 (inT_plus (inT_reg 1) (inT_logOm hp)) (ltW_plusW106 (inT_logOm hp))
+  show ((omegaNF (plus (reg 1) (logOm p)) == reg 1) || _) = ((p == TM.Term.one) || _)
+  rw [hlt1, hlt2, Bool.or_false, Bool.or_false]
+  cases hc : (omegaNF (plus (reg 1) (logOm p)) == reg 1) with
+  | true => rw [dig_eq_W_iff106 hp hap hpM hpW (eq_of_beq hc)]; rfl
+  | false =>
+      cases hd : (p == TM.Term.one) with
+      | false => rfl
+      | true =>
+          exfalso
+          rw [eq_of_beq hd] at hc
+          rw [show omegaNF (plus (reg 1) (logOm TM.Term.one)) = reg 1 from rfl] at hc
+          rw [show (reg 1 == reg 1) = true from rfl] at hc
+          exact Bool.noConfusion hc
+
+/-- **`Ω₁ + Ω₁·A = Ω₁·(1+A)`。**  §106.2 の主定理を `ψ₁` の像に載せるための橋。 -/
+theorem plus_one_mulL106 {A : Term} (hA : inT A = true) (hAM : lt A M = true)
+    (hAW : lt A (reg 1) = true) :
+    plus (reg 1) (mulL (reg 1) A) = mulL (reg 1) (plus TM.Term.one A) := by
+  cases hl : toList A with
+  | nil =>
+      rw [show A = zero from toList_eq_nil A hl]
+      rfl
+  | cons b1 r =>
+      have hib1 : inT b1 = true := inTL_inT hA b1 (by rw [hl]; exact List.Mem.head _)
+      have hab1 : b1.isAP = true := inTL_isAP hA b1 (by rw [hl]; exact List.Mem.head _)
+      have hMb1 : lt b1 M = true := ltM_toList A hA hAM b1 (by rw [hl]; exact List.Mem.head _)
+      have hWb1 : lt b1 (reg 1) = true := ltW_toList79 A hA hAW b1 (by rw [hl]; exact List.Mem.head _)
+      have hmul : toList (mulL (reg 1) A)
+          = (fun p => omegaNF (plus (reg 1) (logOm p))) b1
+            :: r.map (fun p => omegaNF (plus (reg 1) (logOm p))) := by
+        rw [toList_mulLW106, hl]; rfl
+      have hone : toList (plus TM.Term.one A)
+          = ([TM.Term.one].filter (fun a => le b1 a)) ++ (b1 :: r) := by
+        rw [plus_cons66 hl]
+        refine toList_ofList _ ?_
+        intro x hx
+        rcases List.mem_append.mp hx with h1 | h1
+        · rw [List.mem_singleton.mp (List.mem_filter.mp h1).1]; rfl
+        · exact inTL_isAP hA x (by rw [hl]; exact h1)
+      show plus (reg 1) (mulL (reg 1) A)
+        = ofList ((toList (plus TM.Term.one A)).map (fun p => omegaNF (plus (reg 1) (logOm p))))
+      rw [plus_cons66 hmul, hone,
+        show (toList (reg 1)).filter
+            (fun a => le ((fun p => omegaNF (plus (reg 1) (logOm p))) b1) a)
+          = ([TM.Term.one].filter (fun a => le b1 a)).map
+              (fun p => omegaNF (plus (reg 1) (logOm p))) from by
+          show (List.filter (fun a => le (omegaNF (plus (reg 1) (logOm b1))) a) [reg 1])
+            = (List.filter (fun a => le b1 a) [TM.Term.one]).map _
+          cases hc : le b1 TM.Term.one with
+          | true =>
+              rw [List.filter_cons_of_pos (by rw [show le (omegaNF (plus (reg 1) (logOm b1))) (reg 1) = true from by
+                    rw [le_dig_W106 hib1 hab1 hMb1 hWb1, hc]]),
+                List.filter_cons_of_pos (by rw [hc])]
+              rw [show TM.Term.one = TM.Term.one from rfl]
+              show [reg 1] = [omegaNF (plus (reg 1) (logOm TM.Term.one))]
+              rfl
+          | false =>
+              rw [List.filter_cons_of_neg (by
+                    rw [show le (omegaNF (plus (reg 1) (logOm b1))) (reg 1) = false from by
+                      rw [le_dig_W106 hib1 hab1 hMb1 hWb1, hc]]
+                    exact Bool.noConfusion),
+                List.filter_cons_of_neg (by rw [hc]; exact Bool.noConfusion)]
+              rfl,
+        List.map_append]
+      rfl
+
+theorem inT_one106 : inT TM.Term.one = true := by decide
+theorem ltM_one106 : lt TM.Term.one M = true := by decide
+theorem ltW_one106 : lt TM.Term.one (reg 1) = true := lt_one_Om103
+
+theorem ne_zero_plus_one106 {A : Term} (hA : inT A = true) :
+    plus TM.Term.one A ≠ zero := by
+  intro hz
+  have h1 : le TM.Term.one (plus TM.Term.one A) = true :=
+    le_self_plus_ap81 inT_one106 (show isAP TM.Term.one = true from rfl) hA
+  rw [hz, show le TM.Term.one zero = false from by decide] at h1
+  exact Bool.noConfusion h1
+
+theorem isSC_plus_one106 {A : Term} (hA : inT A = true) (hASC : A.isSC = false) :
+    (plus TM.Term.one A).isSC = false := by
+  cases hl : toList A with
+  | nil => rw [plus_nil hl]; rfl
+  | cons b1 r =>
+      rw [plus_cons66 hl]
+      cases hc : (toList TM.Term.one).filter (fun a => le b1 a) with
+      | nil =>
+          rw [List.nil_append, show ofList (b1 :: r) = A from by
+            rw [← hl, inT_ofList_toList A hA]]
+          exact hASC
+      | cons z zs =>
+          show (ofList (z :: (zs ++ (b1 :: r)))).isSC = false
+          cases zs with
+          | nil => rfl
+          | cons w ws => rfl
+
+
+end
+
+/-! ### §106.4 Buchholz 側の桁と、その合法性 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+
+def mulB106 : List BT → BT
+  | [] => BT.zero
+  | [l] => BT.D 1 l
+  | l :: ls => BT.sum (BT.D 1 l) (mulB106 ls)
+
+def powB106 (ls : List BT) : BT := BT.D 1 (mulB106 ls)
+def vebB106 (ls : List BT) : BT := BT.D 0 (powB106 ls)
+
+/-- 成分が `BT.le` で降順。 -/
+def bdesc106 : List BT → Prop
+  | [] => True
+  | [_] => True
+  | a :: b :: r => BT.le b a = true ∧ bdesc106 (b :: r)
+
+theorem toL_mulB106 : ∀ (ls : List BT), BT.toL (mulB106 ls) = ls.map (BT.D 1)
+  | [] => rfl
+  | [_] => rfl
+  | l :: l2 :: ls => by
+      show BT.toL (BT.D 1 l) ++ BT.toL (mulB106 (l2 :: ls)) = _
+      rw [toL_mulB106 (l2 :: ls)]
+      rfl
+
+theorem gb1_mulB106 : ∀ (ls : List BT), (∀ l ∈ ls, Hd085 l) → BT.GB 1 (mulB106 ls) = ls
+  | [], _ => rfl
+  | [l], h => by
+      show (if 1 ≤ 1 then l :: BT.GB 1 l else []) = [l]
+      rw [if_pos (Nat.le_refl 1), gb1_nil98 l (h l (List.Mem.head _))]
+  | l :: l2 :: ls, h => by
+      show BT.GB 1 (BT.D 1 l) ++ BT.GB 1 (mulB106 (l2 :: ls)) = _
+      rw [gb1_mulB106 (l2 :: ls) (fun z hz => h z (List.Mem.tail _ hz)),
+        show BT.GB 1 (BT.D 1 l) = [l] from by
+          show (if 1 ≤ 1 then l :: BT.GB 1 l else []) = [l]
+          rw [if_pos (Nat.le_refl 1), gb1_nil98 l (h l (List.Mem.head _))]]
+      rfl
+
+theorem gb0_mulB106 : ∀ (ls : List BT),
+    BT.GB 0 (mulB106 ls) = ls.flatMap (fun l => l :: BT.GB 0 l)
+  | [] => rfl
+  | [l] => by
+      show (if 0 ≤ 1 then l :: BT.GB 0 l else []) = _
+      rw [if_pos (by omega), List.flatMap_cons, List.flatMap_nil, List.append_nil]
+  | l :: l2 :: ls => by
+      show BT.GB 0 (BT.D 1 l) ++ BT.GB 0 (mulB106 (l2 :: ls)) = _
+      rw [gb0_mulB106 (l2 :: ls),
+        show BT.GB 0 (BT.D 1 l) = l :: BT.GB 0 l from by
+          show (if 0 ≤ 1 then l :: BT.GB 0 l else []) = _
+          rw [if_pos (by omega)]]
+      rfl
+
+theorem btLe_mulB106 : ∀ (ls : List BT), (∀ l ∈ ls, btLe72 1 l = true) →
+    btLe72 1 (mulB106 ls) = true
+  | [], _ => rfl
+  | [l], h => by
+      show (decide (1 ≤ 1) && btLe72 1 l) = true
+      rw [h l (List.Mem.head _)]; rfl
+  | l :: l2 :: ls, h => by
+      show (btLe72 1 (BT.D 1 l) && btLe72 1 (mulB106 (l2 :: ls))) = true
+      rw [btLe_mulB106 (l2 :: ls) (fun z hz => h z (List.Mem.tail _ hz)),
+        show btLe72 1 (BT.D 1 l) = true from by
+          show (decide (1 ≤ 1) && btLe72 1 l) = true
+          rw [h l (List.Mem.head _)]; rfl]
+      rfl
+
+theorem btle_arg106 {u : Nat} {a b : BT} (h : BT.le a b = true) :
+    BT.le (BT.D u a) (BT.D u b) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with h1 | h1
+  · rw [bt_beq_eq77 h1]
+    show ((BT.D u b == BT.D u b) || _) = true
+    rw [bt_beq_refl]; rfl
+  · show ((BT.D u a == BT.D u b) || BT.lt (BT.D u a) (BT.D u b)) = true
+    rw [btlt_arg98 (bt_ne_of_lt98 h1) h1, Bool.or_true]
+
+theorem isStd_mulB106 : ∀ (ls : List BT), (∀ l ∈ ls, BT.isStd l = true) →
+    (∀ l ∈ ls, Hd085 l) → bdesc106 ls → BT.isStd (mulB106 ls) = true
+  | [], _, _, _ => rfl
+  | [l], hs, hd, _ => by
+      show (BT.isStd l && (BT.GB 1 l).all (fun e => BT.lt e l)) = true
+      rw [hs l (List.Mem.head _), gb1_nil98 l (hd l (List.Mem.head _))]
+      rfl
+  | l :: l2 :: ls, hs, hd, hde => by
+      have hsr : ∀ z ∈ l2 :: ls, BT.isStd z = true := fun z hz => hs z (List.Mem.tail _ hz)
+      have hdr : ∀ z ∈ l2 :: ls, Hd085 z := fun z hz => hd z (List.Mem.tail _ hz)
+      have hstd1 : BT.isStd (BT.D 1 l) = true := by
+        show (BT.isStd l && (BT.GB 1 l).all (fun e => BT.lt e l)) = true
+        rw [hs l (List.Mem.head _), gb1_nil98 l (hd l (List.Mem.head _))]
+        rfl
+      have hle : BT.le (BT.D 1 l2) (BT.D 1 l) = true := btle_arg106 hde.1
+      cases ls with
+      | nil =>
+          show (BT.isP (BT.D 1 l) && BT.isStd (BT.D 1 l) && BT.isStd (BT.D 1 l2) &&
+            (BT.isP (BT.D 1 l2) && BT.le (BT.D 1 l2) (BT.D 1 l))) = true
+          rw [hstd1, show BT.isStd (BT.D 1 l2) = true from
+              isStd_mulB106 [l2] hsr hdr trivial, hle]
+          rfl
+      | cons l3 ls' =>
+          show (BT.isP (BT.D 1 l) && BT.isStd (BT.D 1 l) &&
+            BT.isStd (BT.sum (BT.D 1 l2) (mulB106 (l3 :: ls'))) &&
+            BT.le (BT.D 1 l2) (BT.D 1 l)) = true
+          rw [hstd1, show BT.isStd (BT.sum (BT.D 1 l2) (mulB106 (l3 :: ls'))) = true from
+              isStd_mulB106 (l2 :: l3 :: ls') hsr hdr hde.2, hle]
+          rfl
+
+/-! `BT` の順序の小道具 — `btlt_of_lt94` が使えないところを埋める。 -/
+
+theorem size_pos106 : ∀ (x : BT), 1 ≤ BT.size x
+  | .zero => Nat.le_refl 1
+  | .D _ a => by have := size_pos106 a; show 1 ≤ 1 + BT.size a; omega
+  | .sum a b => by
+      have := size_pos106 a; have := size_pos106 b
+      show 1 ≤ 1 + BT.size a + BT.size b; omega
+
+theorem size_toL106 : ∀ (x : BT), ∀ z ∈ BT.toL x, BT.size z ≤ BT.size x
+  | .zero, _, hz => by cases hz
+  | .D u a, z, hz => by
+      rw [List.mem_singleton.mp (show z ∈ [BT.D u a] from hz)]
+      exact Nat.le_refl _
+  | .sum a b, z, hz => by
+      rcases List.mem_append.mp (show z ∈ BT.toL a ++ BT.toL b from hz) with h | h
+      · have := size_toL106 a z h
+        show BT.size z ≤ 1 + BT.size a + BT.size b
+        have := size_pos106 b; omega
+      · have := size_toL106 b z h
+        show BT.size z ≤ 1 + BT.size a + BT.size b
+        have := size_pos106 a; omega
+
+/-- 頭が同じ段で引数が真に小さいなら、尾は見ずに真に小さい。 -/
+theorem btlt_of_hd106 {x y : BT} {u : Nat} {a b : BT} {ps qs : List BT}
+    (hx : BT.toL x = BT.D u a :: ps) (hy : BT.toL y = BT.D u b :: qs)
+    (hne : (a == b) = false) (h : BT.lt a b = true) : BT.lt x y = true := by
+  have hsa : BT.size (BT.D u a) ≤ BT.size x := size_toL106 x _ (by rw [hx]; exact List.Mem.head _)
+  have hsb : BT.size (BT.D u b) ≤ BT.size y := size_toL106 y _ (by rw [hy]; exact List.Mem.head _)
+  have hsa' : 1 + BT.size a ≤ BT.size x := hsa
+  have hsb' : 1 + BT.size b ≤ BT.size y := hsb
+  show BT.ltL (BT.size x + BT.size y + 2) (BT.toL x) (BT.toL y) = true
+  rw [hx, hy, show BT.size x + BT.size y + 2 = (BT.size x + BT.size y + 1) + 1 from rfl,
+    ltL_DD93, if_neg (by omega), if_neg (by omega),
+    if_neg (by rw [hne]; exact Bool.noConfusion)]
+  exact ltL_fuel93 (BT.size a + BT.size b + 2) _ _ _ (by omega) h
+
+/-- 成分がすべて `D 0` の項は、頭が段 1 の項より真に小さい。§98 の `btlt_hd0_D1_98` の
+    的を一般の項にしたもの。 -/
+theorem btlt_hd0_hd1_106 {x m : BT} (h : Hd085 x) {z : BT} {rest : List BT}
+    (hm : BT.toL m = BT.D 1 z :: rest) : BT.lt x m = true := by
+  show BT.ltL (BT.size x + BT.size m + 2) (BT.toL x) (BT.toL m) = true
+  rw [hm]
+  cases hx : BT.toL x with
+  | nil =>
+      rw [show BT.size x + BT.size m + 2 = (BT.size x + BT.size m + 1) + 1 from rfl]
+      exact ltL_nil_cons93 _ _ _
+  | cons y ys =>
+      obtain ⟨c, hc⟩ := h y (by rw [hx]; exact List.Mem.head _)
+      rw [hc,
+        show BT.size x + BT.size m + 2 = (BT.size x + BT.size m + 1) + 1 from rfl,
+        ltL_DD93, if_pos (by omega)]
+
+theorem bt_le_trans106 {a b c : BT} (h1 : BT.le a b = true) (h2 : BT.le b c = true) :
+    BT.le a c = true := by
+  rcases (Bool.or_eq_true _ _).mp h1 with e1 | e1
+  · rw [bt_beq_eq77 e1]; exact h2
+  · rcases (Bool.or_eq_true _ _).mp h2 with e2 | e2
+    · rw [← bt_beq_eq77 e2]
+      show ((a == b) || BT.lt a b) = true
+      rw [e1, Bool.or_true]
+    · show ((a == c) || BT.lt a c) = true
+      rw [lt_trans83 e1 e2, Bool.or_true]
+
+theorem bdesc_tail106 {a : BT} {ls : List BT} (h : bdesc106 (a :: ls)) : bdesc106 ls := by
+  cases ls with
+  | nil => trivial
+  | cons b r => exact h.2
+
+theorem bdesc_head106 : ∀ (l : BT) (ls : List BT), bdesc106 (l :: ls) →
+    ∀ z ∈ l :: ls, BT.le z l = true
+  | l, [], _, z, hz => by
+      rw [List.mem_singleton.mp hz]
+      show ((l == l) || _) = true
+      rw [bt_beq_refl]; rfl
+  | l, b :: r, h, z, hz => by
+      rcases List.mem_cons.mp hz with h1 | h1
+      · rw [h1]
+        show ((l == l) || _) = true
+        rw [bt_beq_refl]; rfl
+      · exact bt_le_trans106 (bdesc_head106 b r h.2 z h1) h.1
+
+theorem le_D1_head_mulB106 : ∀ (l : BT) (ls : List BT),
+    BT.le (BT.D 1 l) (mulB106 (l :: ls)) = true
+  | l, [] => by
+      show ((BT.D 1 l == BT.D 1 l) || _) = true
+      rw [bt_beq_refl]; rfl
+  | l, b :: r => by
+      have hnn : BT.toL (mulB106 (b :: r)) ≠ [] := by
+        rw [toL_mulB106 (b :: r)]
+        exact List.cons_ne_nil _ _
+      show ((BT.D 1 l == BT.sum (BT.D 1 l) (mulB106 (b :: r))) ||
+        BT.lt (BT.D 1 l) (BT.sum (BT.D 1 l) (mulB106 (b :: r)))) = true
+      have hlt : BT.lt (BT.D 1 l) (BT.sum (BT.D 1 l) (mulB106 (b :: r))) = true := by
+        show BT.ltL (BT.size (BT.D 1 l) + BT.size (BT.sum (BT.D 1 l) (mulB106 (b :: r))) + 2)
+          [BT.D 1 l] (BT.D 1 l :: BT.toL (mulB106 (b :: r))) = true
+        rw [show BT.size (BT.D 1 l) + BT.size (BT.sum (BT.D 1 l) (mulB106 (b :: r))) + 2
+            = (BT.size (BT.D 1 l) + BT.size (BT.sum (BT.D 1 l) (mulB106 (b :: r))) + 1) + 1
+            from rfl,
+          ltL_DD93, if_neg (by omega), if_neg (by omega), if_pos (bt_beq_refl l)]
+        cases hq : BT.toL (mulB106 (b :: r)) with
+        | nil => exact absurd hq hnn
+        | cons q qs => exact ltL_nil_cons93 _ _ _
+      rw [hlt, Bool.or_true]
+
+theorem le_D1_mulB106 {l : BT} {ls : List BT} (hde : bdesc106 (l :: ls)) :
+    ∀ z ∈ l :: ls, BT.le (BT.D 1 z) (mulB106 (l :: ls)) = true := by
+  intro z hz
+  exact bt_le_trans106 (btle_arg106 (bdesc_head106 l ls hde z hz))
+    (le_D1_head_mulB106 l ls)
+
+theorem mem_gb0_of_toL106 : ∀ (l : BT) (u : Nat) (a : BT),
+    BT.D u a ∈ BT.toL l → a ∈ BT.GB 0 l
+  | .zero, _, _, hz => by cases hz
+  | .D v b, u, a, hz => by
+      have h1 : BT.D u a = BT.D v b := List.mem_singleton.mp hz
+      injection h1 with _ h2
+      show a ∈ (if 0 ≤ v then b :: BT.GB 0 b else [])
+      rw [if_pos (by omega), h2]
+      exact List.Mem.head _
+  | .sum x y, u, a, hz => by
+      rcases List.mem_append.mp (show BT.D u a ∈ BT.toL x ++ BT.toL y from hz) with h | h
+      · exact List.mem_append_left _ (mem_gb0_of_toL106 x u a h)
+      · exact List.mem_append_right _ (mem_gb0_of_toL106 y u a h)
+
+theorem btlt_of_lt_le106 {e x y : BT} (h1 : BT.lt e x = true) (h2 : BT.le x y = true) :
+    BT.lt e y = true := by
+  rcases (Bool.or_eq_true _ _).mp h2 with e2 | e2
+  · rw [← bt_beq_eq77 e2]; exact h1
+  · exact lt_trans83 h1 e2
+
+/-- **桁として使える証人。**  段 1 以下・標準・成分は `D 0`・`GB 0` は一段上に収まる。 -/
+def Dig106 (l : BT) : Prop :=
+  btLe72 1 l = true ∧ BT.isStd l = true ∧ Hd085 l ∧
+    ∀ e ∈ BT.GB 0 l, BT.lt e (BT.D 1 (BT.D 1 l)) = true
+
+/-- `GB 0 (Ω₁·A)` の元はどれも `Ω₁^{1+A}` の下。 -/
+theorem gb0_lt_powB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls) :
+    ∀ e ∈ BT.GB 0 (mulB106 ls), BT.lt e (BT.D 1 (mulB106 ls)) = true := by
+  intro e he
+  rw [gb0_mulB106 ls] at he
+  obtain ⟨l, hl, he2⟩ := List.mem_flatMap.mp he
+  rcases List.mem_cons.mp he2 with h1 | h1
+  · rw [h1]; exact btlt_hd0_D1_98 (hD l hl).2.2.1 _
+  · cases ls with
+    | nil => cases hl
+    | cons l0 rest =>
+        exact btlt_of_lt_le106 ((hD l hl).2.2.2 e h1)
+          (btle_arg106 (le_D1_mulB106 hde l hl))
+
+/-- `GB 1 (Ω₁·A)` の元はどれも `Ω₁·A` の下。 -/
+theorem gb1_lt_mulB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) :
+    ∀ e ∈ BT.GB 1 (mulB106 ls), BT.lt e (mulB106 ls) = true := by
+  intro e he
+  rw [gb1_mulB106 ls (fun l hl => (hD l hl).2.2.1)] at he
+  cases ls with
+  | nil => cases he
+  | cons l0 rest =>
+      refine btlt_hd0_hd1_106 (hD e he).2.2.1 (z := l0) (rest := rest.map (BT.D 1)) ?_
+      rw [toL_mulB106 (l0 :: rest)]
+      rfl
+
+theorem btlt_mul_pow106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) :
+    BT.lt (mulB106 ls) (BT.D 1 (mulB106 ls)) = true := by
+  cases ls with
+  | nil => exact btlt_zero_D98 1 BT.zero
+  | cons l0 rest =>
+      have hm : BT.toL (mulB106 (l0 :: rest)) = BT.D 1 l0 :: rest.map (BT.D 1) := by
+        rw [toL_mulB106 (l0 :: rest)]; rfl
+      have hlt : BT.lt l0 (mulB106 (l0 :: rest)) = true :=
+        btlt_hd0_hd1_106 (hD l0 (List.Mem.head _)).2.2.1 hm
+      exact btlt_of_hd106 hm rfl (bt_ne_of_lt98 hlt) hlt
+
+theorem isStd_powB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls) :
+    BT.isStd (powB106 ls) = true := by
+  show (BT.isStd (mulB106 ls) &&
+    (BT.GB 1 (mulB106 ls)).all (fun e => BT.lt e (mulB106 ls))) = true
+  rw [isStd_mulB106 ls (fun l hl => (hD l hl).2.1) (fun l hl => (hD l hl).2.2.1) hde,
+    Bool.true_and, List.all_eq_true]
+  intro x hx
+  exact gb1_lt_mulB106 hD x hx
+
+theorem isStd_vebB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls) :
+    BT.isStd (vebB106 ls) = true := by
+  show (BT.isStd (powB106 ls) &&
+    (BT.GB 0 (powB106 ls)).all (fun e => BT.lt e (powB106 ls))) = true
+  rw [isStd_powB106 hD hde, Bool.true_and,
+    show BT.GB 0 (powB106 ls) = mulB106 ls :: BT.GB 0 (mulB106 ls) from by
+      show (if 0 ≤ 1 then mulB106 ls :: BT.GB 0 (mulB106 ls) else []) = _
+      rw [if_pos (by omega)],
+    List.all_eq_true]
+  intro x hx
+  rcases List.mem_cons.mp hx with h1 | h1
+  · rw [h1]; exact btlt_mul_pow106 hD
+  · exact gb0_lt_powB106 hD hde x h1
+
+theorem btLe_vebB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) :
+    btLe72 1 (vebB106 ls) = true := by
+  show (decide (0 ≤ 1) && (decide (1 ≤ 1) && btLe72 1 (mulB106 ls))) = true
+  rw [btLe_mulB106 ls (fun l hl => (hD l hl).1)]
+  rfl
+
+theorem hd085_vebB106 (ls : List BT) : Hd085 (vebB106 ls) := by
+  intro x hx
+  exact ⟨powB106 ls, List.mem_singleton.mp hx⟩
+
+/-- 桁は作った値より真に小さい。 -/
+theorem btlt_dig_vebB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls)
+    {l : BT} (hl : l ∈ ls) : BT.lt l (vebB106 ls) = true := by
+  cases hx : BT.toL l with
+  | nil =>
+      show BT.ltL (BT.size l + BT.size (vebB106 ls) + 2) (BT.toL l) (BT.toL (vebB106 ls)) = true
+      rw [hx, show BT.size l + BT.size (vebB106 ls) + 2
+          = (BT.size l + BT.size (vebB106 ls) + 1) + 1 from rfl]
+      exact ltL_nil_cons93 _ _ _
+  | cons y ys =>
+      obtain ⟨c, hc⟩ := (hD l hl).2.2.1 y (by rw [hx]; exact List.Mem.head _)
+      have hcg : c ∈ BT.GB 0 l := mem_gb0_of_toL106 l 0 c (by rw [hx, ← hc]; exact List.Mem.head _)
+      have hcl : BT.lt c (BT.D 1 (mulB106 ls)) = true := by
+        cases ls with
+        | nil => cases hl
+        | cons l0 rest =>
+            exact btlt_of_lt_le106 ((hD l hl).2.2.2 c hcg)
+              (btle_arg106 (le_D1_mulB106 hde l hl))
+      refine btlt_of_hd106 (u := 0) (a := c) (b := powB106 ls) (ps := ys) (qs := [])
+        (by rw [hx, hc]) rfl (bt_ne_of_lt98 hcl) hcl
+
+theorem btlt_mul_D1veb106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls) :
+    BT.lt (mulB106 ls) (BT.D 1 (vebB106 ls)) = true := by
+  cases ls with
+  | nil => exact btlt_zero_D98 1 (vebB106 [])
+  | cons l0 rest =>
+      have hl0 : l0 ∈ l0 :: rest := List.Mem.head _
+      have hm : BT.toL (mulB106 (l0 :: rest)) = BT.D 1 l0 :: rest.map (BT.D 1) := by
+        rw [toL_mulB106 (l0 :: rest)]; rfl
+      have hlt : BT.lt l0 (vebB106 (l0 :: rest)) = true := btlt_dig_vebB106 hD hde hl0
+      exact btlt_of_hd106 hm rfl (bt_ne_of_lt98 hlt) hlt
+
+/-- **作った値も桁として使える。**  これが反復を可能にする条で、§103 の `cov103` を
+    リストに広げたものである。 -/
+theorem cov_vebB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls) :
+    ∀ e ∈ BT.GB 0 (vebB106 ls), BT.lt e (BT.D 1 (BT.D 1 (vebB106 ls))) = true := by
+  intro e he
+  have hmem : e ∈ powB106 ls :: (mulB106 ls :: BT.GB 0 (mulB106 ls)) := by
+    have h0 : BT.GB 0 (vebB106 ls) = powB106 ls :: BT.GB 0 (powB106 ls) := by
+      show (if 0 ≤ 0 then powB106 ls :: BT.GB 0 (powB106 ls) else []) = _
+      rw [if_pos (by omega)]
+    have h1 : BT.GB 0 (powB106 ls) = mulB106 ls :: BT.GB 0 (mulB106 ls) := by
+      show (if 0 ≤ 1 then mulB106 ls :: BT.GB 0 (mulB106 ls) else []) = _
+      rw [if_pos (by omega)]
+    rw [h0, h1] at he
+    exact he
+  have hmv : BT.lt (mulB106 ls) (BT.D 1 (vebB106 ls)) = true := btlt_mul_D1veb106 hD hde
+  rcases List.mem_cons.mp hmem with h1 | h1
+  · rw [h1]
+    exact btlt_arg98 (bt_ne_of_lt98 hmv) hmv
+  rcases List.mem_cons.mp h1 with h2 | h2
+  · rw [h2]
+    have hvv : BT.lt (vebB106 ls) (BT.D 1 (vebB106 ls)) = true :=
+      btlt_hd0_D1_98 (hd085_vebB106 ls) _
+    exact lt_trans83 hmv (btlt_arg98 (bt_ne_of_lt98 hvv) hvv)
+  · rw [gb0_mulB106 ls] at h2
+    obtain ⟨l, hl, he2⟩ := List.mem_flatMap.mp h2
+    have hlv : BT.lt l (vebB106 ls) = true := btlt_dig_vebB106 hD hde hl
+    rcases List.mem_cons.mp he2 with h3 | h3
+    · rw [h3]; exact btlt_hd0_D1_98 (hD l hl).2.2.1 _
+    · have hstep : BT.lt (BT.D 1 (BT.D 1 l)) (BT.D 1 (BT.D 1 (vebB106 ls))) = true := by
+        have h4 : BT.lt (BT.D 1 l) (BT.D 1 (vebB106 ls)) = true :=
+          btlt_arg98 (bt_ne_of_lt98 hlv) hlv
+        exact btlt_arg98 (bt_ne_of_lt98 h4) h4
+      exact lt_trans83 ((hD l hl).2.2.2 e h3) hstep
+
+theorem dig_vebB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls) :
+    Dig106 (vebB106 ls) :=
+  ⟨btLe_vebB106 hD, isStd_vebB106 hD hde, hd085_vebB106 ls, cov_vebB106 hD hde⟩
+
+theorem dig_zero106 : Dig106 BT.zero := by
+  refine ⟨rfl, rfl, ?_, ?_⟩
+  · intro x hx
+    exact absurd hx (by intro h; cases h)
+  · intro e he
+    exact absurd he (by intro h; cases h)
+
+end
+
+/-! ### §106.5 値、そして主定理 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- 桁の値の列。 -/
+def digs106 (ls : List BT) : List Term :=
+  ls.map (fun l => omegaNF (plus (reg 1) (dict l)))
+
+theorem dict_mulB106 (Hp : PsiIdxOKStd172) : ∀ (ls : List BT),
+    (∀ l ∈ ls, btLe72 1 l = true ∧ BT.isStd l = true) →
+    descL (digs106 ls) = true →
+    dict (mulB106 ls) = ofList (digs106 ls)
+  | [], _, _ => rfl
+  | [l], h, _ => by
+      show dict (BT.D 1 l) = _
+      rw [dict_D1_eq77 Hp l (h l (List.Mem.head _)).1 (h l (List.Mem.head _)).2]
+      rfl
+  | l :: l2 :: ls, h, hd => by
+      have hrest : ∀ z ∈ l2 :: ls, btLe72 1 z = true ∧ BT.isStd z = true :=
+        fun z hz => h z (List.Mem.tail _ hz)
+      have hdr : descL (digs106 (l2 :: ls)) = true := descL_tail hd
+      have hAP : ∀ x ∈ digs106 (l2 :: ls), x.isAP = true := by
+        intro x hx
+        obtain ⟨z, _, hxz⟩ := List.mem_map.mp hx
+        rw [← hxz]; exact isAP_omegaNF _
+      have htl : toList (ofList (digs106 (l2 :: ls)))
+          = omegaNF (plus (reg 1) (dict l2)) :: digs106 ls := by
+        rw [toList_ofList _ hAP]; rfl
+      show plus (dict (BT.D 1 l)) (dict (mulB106 (l2 :: ls))) = _
+      rw [dict_D1_eq77 Hp l (h l (List.Mem.head _)).1 (h l (List.Mem.head _)).2,
+        dict_mulB106 Hp (l2 :: ls) hrest hdr, plus_cons66 htl,
+        show toList (omegaNF (plus (reg 1) (dict l))) = [omegaNF (plus (reg 1) (dict l))] from
+          toList_isAP81 (isAP_omegaNF _),
+        List.filter_cons_of_pos (by
+          have := descL_cons.mp hd
+          exact this.1)]
+      rfl
+
+theorem digs_eq_map106 {A : Term} {ls : List BT}
+    (hmap : ls.map dict = (toList A).map logOm) :
+    digs106 ls = (toList A).map (fun p => omegaNF (plus (reg 1) (logOm p))) := by
+  show ls.map (fun l => omegaNF (plus (reg 1) (dict l))) = _
+  rw [show (fun l => omegaNF (plus (reg 1) (dict l)))
+      = (fun g => omegaNF (plus (reg 1) g)) ∘ dict from rfl,
+    ← List.map_map, hmap, List.map_map]
+  rfl
+
+theorem ofList_digs106 {A : Term} {ls : List BT}
+    (hmap : ls.map dict = (toList A).map logOm) :
+    ofList (digs106 ls) = mulL (reg 1) A := by
+  rw [digs_eq_map106 hmap]; rfl
+
+theorem dict_powB106 (Hp : PsiIdxOKStd172) {A : Term} {ls : List BT}
+    (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls)
+    (hA : inT A = true) (hAM : lt A M = true) (hAW : lt A (reg 1) = true)
+    (hmap : ls.map dict = (toList A).map logOm) :
+    dict (powB106 ls) = omegaNF (mulL (reg 1) (plus TM.Term.one A)) := by
+  have hdesc : descL (digs106 ls) = true := by
+    rw [digs_eq_map106 hmap]
+    exact mulDescInT (reg 1) A (inT_reg 1) hA
+  have hm : dict (mulB106 ls) = mulL (reg 1) A := by
+    rw [dict_mulB106 Hp ls (fun l hl => ⟨(hD l hl).1, (hD l hl).2.1⟩) hdesc]
+    exact ofList_digs106 hmap
+  show dict (BT.D 1 (mulB106 ls)) = _
+  rw [dict_D1_eq77 Hp (mulB106 ls) (btLe_mulB106 ls (fun l hl => (hD l hl).1))
+      (isStd_mulB106 ls (fun l hl => (hD l hl).2.1) (fun l hl => (hD l hl).2.2.1) hde),
+    hm, plus_one_mulL106 hA hAM hAW]
+
+/-- **§106.5 の主定理 — `φ̄(1 ⊕ A, 0)` は `dict` の像で、証人は合法である。**
+    §103.4 の `dict_gInv103` は `ls` が塔の一段ぶんの一元リストの場合にあたる。 -/
+theorem dict_vebB106 (Hp : PsiIdxOKStd172) {A : Term} {ls : List BT}
+    (hD : ∀ l ∈ ls, Dig106 l) (hde : bdesc106 ls)
+    (hA : inT A = true) (hAM : lt A M = true) (hAW : lt A (reg 1) = true)
+    (hASC : A.isSC = false) (hmap : ls.map dict = (toList A).map logOm) :
+    dict (vebB106 ls) = phi (plus TM.Term.one A) zero := by
+  show collapse 0 (dict (powB106 ls)) = _
+  rw [dict_powB106 Hp hD hde hA hAM hAW hmap]
+  exact collapse0_mulL106 (inT_plus inT_one106 hA) (lt_plus_M inT_one106 hA ltM_one106 hAM)
+    (lt_plus_W79 inT_one106 hA ltW_one106 hAW) (ne_zero_plus_one106 hA)
+    (isSC_plus_one106 hA hASC)
+
+/-! 到達可能な類 — 反復できる形にして、`0` から登る。 -/
+
+theorem cnv_not_sc106 : ∀ {s : Term}, CNV s = true → s.isSC = false
+  | zero, _ => rfl
+  | phi _ _, _ => rfl
+  | add _ _, _ => rfl
+  | M, h => Bool.noConfusion h
+  | omg _, h => Bool.noConfusion h
+  | psi _ _, h => Bool.noConfusion h
+  | Z _, h => Bool.noConfusion h
+
+theorem ltW_of_cnv106 {s : Term} (h : CNV s = true) : lt s (reg 1) = true :=
+  lt_trans_inT (inT_of_cnv s h) (show inT G094 = true from by decide) (inT_reg 1)
+    (ltG0_cnv103 s h) (show lt G094 (reg 1) = true from by decide)
+
+/-- **到達可能** — 桁としても使える合法な証人がある。 -/
+def Rch106 (s : Term) : Prop := ∃ b : BT, Dig106 b ∧ dict b = s
+
+theorem rch_zero106 : Rch106 zero := ⟨BT.zero, dig_zero106, rfl⟩
+
+theorem cnv_veb106 {A : Term} (h : CNV A = true) :
+    CNV (phi (plus TM.Term.one A) zero) = true := by
+  show (CNV (plus TM.Term.one A) && CNV zero) = true
+  rw [cnv_plus (show CNV TM.Term.one = true from rfl) h]
+  rfl
+
+/-- **一段のぼる。**  `s` に到達できるなら `φ̄(1 ⊕ ω^s, 0)` にも到達できる。
+    `s = 0` から始めて `ε₀`, `ζ₀`, `φ̄(ε₀,0)`, … と、`Γ₀` の塔だけでなく
+    第 1 引数が何であってもよい。 -/
+theorem rch_step106 (Hp : PsiIdxOKStd172) {s : Term} (h : Rch106 s) (hcnv : CNV s = true) :
+    Rch106 (phi (plus TM.Term.one (omegaNF s)) zero) ∧
+      CNV (phi (plus TM.Term.one (omegaNF s)) zero) = true := by
+  obtain ⟨b, hb, hbs⟩ := h
+  have hsingle : ∀ l ∈ [b], Dig106 l := by
+    intro l hl; rw [List.mem_singleton.mp hl]; exact hb
+  have his : inT s = true := inT_of_cnv s hcnv
+  have hsM : lt s M = true := cnv_lt_M s hcnv
+  have hsW : lt s (reg 1) = true := ltW_of_cnv106 hcnv
+  have hAcnv : CNV (omegaNF s) = true := by
+    rw [omegaNF_cnv hcnv]; exact cnv_phiNF_zero hcnv
+  have hA : inT (omegaNF s) = true := inT_omegaNF his
+  have hAM : lt (omegaNF s) M = true := ltM_omegaNF his hsM
+  have hAW : lt (omegaNF s) (reg 1) = true := by
+    have h1 := lt_omegaNF_inT79 his (inT_reg 1) hsW
+    rw [omegaNF_reg1_80] at h1; exact h1
+  refine ⟨⟨vebB106 [b], dig_vebB106 hsingle trivial, ?_⟩, cnv_veb106 hAcnv⟩
+  refine dict_vebB106 Hp hsingle trivial hA hAM hAW (cnv_not_sc106 hAcnv) ?_
+  show [dict b] = (toList (omegaNF s)).map logOm
+  rw [hbs, toList_isAP81 (isAP_omegaNF s)]
+  show [s] = [logOm (omegaNF s)]
+  rw [logOm_omegaNF106 his hsM]
+
+/-- **段の正直さ。**  上へは 1 まで。 -/
+theorem btLe1_vebB106 {ls : List BT} (hD : ∀ l ∈ ls, Dig106 l) :
+    btLe72 1 (vebB106 ls) = true := btLe_vebB106 hD
+
+/-- **そして段 0 は 1 段目から離れる。**  §103.6 の `btLe0_gInv103` と同じ規律。 -/
+theorem btLe0_vebB106 (ls : List BT) : btLe72 0 (vebB106 ls) = false := rfl
+
+end
+
+
+/-! ### §106.6 測定 — 何に届き、何に届かないか -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict collapse reg wcnf logOm divAP subAP mulL sub1 dictInv)
+open TM TM.Term
+open Evidence.WF
+
+/-- `collapse0_argV106` の仮説をそのまま Bool にしたもの。 -/
+def okAB106 (A B : Term) : Bool :=
+  inT A && lt A M && lt A (reg 1) && !(A == zero) &&
+  inT B && lt B M && lt (logOm B) (reg 1) &&
+  (phiNF A (sub1 (omegaNF (logOm B))) == phi A B)
+
+/-- 桁の条件をそのまま Bool にしたもの。 -/
+def digB106 (l : BT) : Bool :=
+  btLe72 1 l && BT.isStd l && hd085B l &&
+    (BT.GB 0 l).all (fun e => BT.lt e (BT.D 1 (BT.D 1 l)))
+
+/-- リストの降順条件。 -/
+def bdescB106 : List BT → Bool
+  | [] => true
+  | [_] => true
+  | a :: b :: r => BT.le b a && bdescB106 (b :: r)
+
+/-! **母集団 1 — `(A,B)` の対。**  種に `0`、`Γ₀` (強臨界)、`1` (係数にできない)、
+    和、`φ̄(1,1)` (第 2 引数が加法主要でない形の材料) を入れてある。**濾していない。** -/
+private def abSeed106 : List Term :=
+  [zero, TM.Term.one, TM.Term.omega, ofNat 2, ofNat 3,
+   phi TM.Term.one zero, phi (ofNat 2) zero, phi TM.Term.one TM.Term.one,
+   phi zero (phi TM.Term.one zero), G094, plus (phi TM.Term.one zero) TM.Term.one,
+   plus (phi TM.Term.one zero) (phi TM.Term.one zero)]
+
+def abPool106 : List (Term × Term) :=
+  abSeed106.flatMap fun a => abSeed106.map fun b => (a, b)
+
+#eval (abPool106.length, abPool106.countP fun p => okAB106 p.1 p.2)
+/-! **仮説が立つところではぴったり。** -/
+#guard abPool106.all fun p =>
+  !(okAB106 p.1 p.2) || (collapse 0 (argV106 p.1 p.2) == phi p.1 p.2)
+/-! **そして仮説は見えている** — 立たない対がちゃんとある。 -/
+#guard (abPool106.countP fun p => !(okAB106 p.1 p.2)) > 0
+/-! **仮説は結論の言い換えでもない** — 立たないのに式が合う対もある。 -/
+#eval (abPool106.countP fun p =>
+  !(okAB106 p.1 p.2) && (collapse 0 (argV106 p.1 p.2) == phi p.1 p.2))
+
+/-! **名指しの否定 (1) — `A` が強臨界だと偽。**  `φ̄(Γ₀,0)` は 2.6(vi) 末尾が
+    `Γ₀` そのものに畳む冗長な項で、`dict` は決して出さない。 -/
+#guard G094.isSC
+#guard collapse 0 (argV106 G094 zero) == G094
+#guard !(collapse 0 (argV106 G094 zero) == phi G094 zero)
+
+/-! **名指しの否定 (2) — `B = 1` は一組では届かない。**  係数は必ず加法主要なので
+    `1 ⊕ 1` は書けず、`sub1` が `1` を `0` に落としてしまう。 -/
+#guard collapse 0 (argV106 (phi TM.Term.one zero) TM.Term.one)
+  == phi (phi TM.Term.one zero) zero
+#guard !(collapse 0 (argV106 (phi TM.Term.one zero) TM.Term.one)
+  == phi (phi TM.Term.one zero) TM.Term.one)
+
+/-! **母集団 2 — 桁のリスト。**  昇順のものも `Dig106` を破るものも入れてある。 -/
+private def lsSeed106 : List BT :=
+  [BT.zero, BT.D 0 BT.zero, BT.D 0 (BT.D 1 BT.zero),
+   BT.D 0 (BT.D 1 (BT.D 1 BT.zero)), BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero))),
+   BT.sum (BT.D 0 (BT.D 1 BT.zero)) (BT.D 0 BT.zero)]
+
+def lsPool106 : List (List BT) :=
+  [] :: lsSeed106.map (fun x => [x])
+     ++ lsSeed106.flatMap (fun x => lsSeed106.map fun y => [x, y])
+
+#eval (lsPool106.length,
+       lsPool106.countP fun ls => ls.all digB106 && bdescB106 ls)
+/-! **仮説が立つところでは値も合法性もぴったり。** -/
+#guard lsPool106.all fun ls =>
+  !(ls.all digB106 && bdescB106 ls) ||
+    (dict (vebB106 ls) == phi (plus TM.Term.one (ofList (ls.map fun l => omegaNF (dict l)))) zero
+     && BT.isStd (vebB106 ls) && btLe72 1 (vebB106 ls) && hd085B (vebB106 ls)
+     && digB106 (vebB106 ls))
+/-! **降順は飾りではない** — 昇順のリストは母集団に入っていて、実際に落ちる。 -/
+#guard (lsPool106.countP fun ls => !(bdescB106 ls)) > 0
+#guard (lsPool106.filter fun ls => !(bdescB106 ls)).any fun ls => !(BT.isStd (vebB106 ls))
+
+/-! **`Dig106` の被覆条件も飾りではない — ただし列挙では出ない。**
+    288 個の `BT` を掃いても段 1 以下・標準・頭 `D 0` の 19 個は全部条件を満たす。
+    落ちる形は**作らないと出てこない**: `ψ₁` を四重に入れ子にすると `GB 0` の頭が
+    一段上を追い越す。§95 の教訓 — 列挙ではなく組み立てる。 -/
+def deep106 : BT := BT.D 0 (BT.D 1 (BT.D 1 (BT.D 1 (BT.D 1 BT.zero))))
+#guard btLe72 1 deep106 && BT.isStd deep106 && hd085B deep106
+#guard !(digB106 deep106)
+#guard !(BT.isStd (vebB106 [deep106]))
+
+/-! **塔、計算。**  §103.4 の `gInv103` は一元リストの特別な場合である。 -/
+#guard (List.range 8).all fun n => dict (vebB106 [gInv103 (n+1)]) == gTow102 (n+2)
+#guard (List.range 8).all fun n =>
+  btLe72 1 (vebB106 [gInv103 (n+1)]) && BT.isStd (vebB106 [gInv103 (n+1)])
+    && hd085B (vebB106 [gInv103 (n+1)]) && digB106 (vebB106 [gInv103 (n+1)])
+#guard (List.range 8).all fun n => btLe72 0 (vebB106 [gInv103 (n+1)]) == false
+
+/-! **リストは塔より広い。**  一元リストでは第 1 引数は加法主要なものだけだが、
+    複数元なら和も出る。 -/
+#guard dict (vebB106 [BT.zero, BT.zero]) == phi (ofNat 3) zero
+#guard dict (vebB106 [BT.D 0 (BT.D 1 BT.zero), BT.zero])
+  == phi (plus (phi TM.Term.one zero) TM.Term.one) zero
+#guard BT.isStd (vebB106 [BT.zero, BT.zero])
+  && BT.isStd (vebB106 [BT.D 0 (BT.D 1 BT.zero), BT.zero])
+
+/-! **届く範囲、§103.8 の敵対的な母集団で。**  359 項のうち、証人まで作れているのは
+    `φ̄(A,0)` の形の 14 項、値の式 (`collapse0_argV106`) が覆うのは 171 項。
+    **残る 188 項が §106 の残余で、それは第 2 引数である。** -/
+def builtShape106 (t : Term) : Bool :=
+  match t with | phi a zero => !(a == zero) | _ => false
+def valueShape106 (t : Term) : Bool :=
+  match t with | phi a b => okAB106 a b | _ => false
+
+#eval (aPool103.length, aPool103.countP builtShape106, aPool103.countP valueShape106)
+#guard aPool103.countP builtShape106 == 14
+#guard aPool103.countP valueShape106 == 171
+#guard aPool103.all fun t => !(valueShape106 t) ||
+  (match t with | phi a b => collapse 0 (argV106 a b) == t | _ => false)
+
+end
+
 end Evidence.Region
