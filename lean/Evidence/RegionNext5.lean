@@ -12,6 +12,8 @@ namespace Evidence.Region
 
 open BMS
 
+/-! ## §104 THE COEFFICIENT'S `z` IS NAMEABLE, AND NAMING IT IS FREE
+
 §99 collapsed row 326's whole Veblen fold onto `HiMono89`; §101 took §99's approach (i) —
 replace the `K`-condition by a 𝔗(M)-side predicate — and showed the two predicates its
 vocabulary could express are not enough, with a BUILT pair that REVERSES the order.  Its
