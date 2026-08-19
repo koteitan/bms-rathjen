@@ -7922,4 +7922,201 @@ theorem no_extra_of_dictLt121 (HD : DictLtStd92)
 
 end
 
+/-! ## §121 (addendum) THE SEPARATING STEP, BUILT — AND THE MEASUREMENT
+
+§121.1-§121.4 are in `RegionNext6` and are proofs.  This addendum is the negative and the
+measurement, and it exists because §121.4's ledger (`extra_is_inversion121` /
+`no_extra_of_dictLt121`) says exactly what to look for and the corpus cannot produce it.
+
+**THE RESIDUE §121 MOVED IS INVISIBLE TO THE CORPUS — 0 of 413 places.**  Over 249 terms
+built by §84, §88, §90, §92, §95, §100 and §105 (188 `K`-standard, 61 level-bounded but not
+`K`-standard), the clause's own obligation shape — a level-1 component `ψ₁c` of `a`, a
+`ψ₀`-argument `e` inside `c`, `BT.lt e a`, `size e < size a`, `idxF88 0 (dict e)` defined —
+occurs 254 times, and the `hi` parts are in strict order at **every one of them**: the three
+classes (equal / in order / reversed) come out `(0, 207, 0)` on the `K`-standard side and
+`(0, 47, 0)` on the control.  On the 413 `(step, element)` triples `monoClosed95` exempts
+111 and `monoHi121` exempts **the same 111** — §121 loses no exemption anywhere.
+
+That is trap (2) of the measurement policy, and dropping the `K`-condition does not fix it:
+the control population produces the shape 0 times as well.  So the shape was BUILT.
+
+**THE BUILT WITNESS.**  `aSep121 = ψ₁(ψ₁ψ₁ψ₁0) ⊕ ψ₁(ψ₁ψ₁0 ⊕ ψ₀ eSep121)` with
+`eSep121 = ψ₁(ψ₀0 ⊕ ψ₁ψ₁ψ₁ψ₁0)` (21 and 9 symbols).  It satisfies EVERY hypothesis
+`IdxK121` puts on the triple `(a, c, e)` — the level bound on both sides, the membership
+`ψ₁c ∈ toL a`, `e ∈ d0Args88 c`, `BT.lt c a`, `BT.lt e a`, `size e < size a`,
+`inT (dict ·)` and `lt (dict ·) M` on both, `idxF88 0 (dict e)` defined, `lastFire92 (dict a)`
+and `isLastIdx92 a p` at the last firing step — and fails exactly the standardness ones.
+There
+
+    `monoClosed95 aSep121 pSep121 eSep121 = true`  and  `monoHi121 aSep121 pSep121 eSep121 = false` ,
+
+so the two side conditions are not the same Bool, and §121's clause is not a relabelling of
+§115's.  `lt (dict eSep121) (dict aSep121) = false` at the same triple — §121.4's theorem,
+seen: the separating step IS a `dict` inversion.
+
+**THE ONE DEFECT, AND WHY IT CANNOT BE AVOIDED.**  All three standardness failures
+(`BT.isStd a`, `BT.isStd (ψ₁c)`, `BT.isStd (ψ₀e)`) come from ONE ascending sum,
+`ψ₀0 ⊕ ψ₁ψ₁ψ₁ψ₁0` inside `e`: `plus` drops the leading `1` and `dict e` jumps above
+`dict a` while `BT.lt e a` still holds.  §77.9's own negative points the same way —
+`dict` inverts 35 of 576 pairs on the level-bounded NON-standard population and 0 of 5041 on
+the standard one — and `BT.isStd` is structural, so an ascending sum anywhere inside `a`
+kills `BT.isStd a` too.  **Hence the extra obligations of `IdxStd121` over `IdxStd115` are
+empty on every term the clause is ever applied to unless `BT.isStd` itself fails**, which is
+`DictLtStd92` restated.
+
+**IT IS A SIZE THRESHOLD, NOT A KIND.**  Trap (4), and it bites here: along
+`aGr121 3 m` the separation fires at **0 of the sizes 17, 18, 19, 20 and at all of 21, 22,
+23** — `m ≥ 4` is needed for `dict (eF121 m)` to climb over `dict (aGr121 3 m)`.  A sweep
+capped at 20 symbols would have reported that the shape does not exist.
+-/
+
+/-! ### §121.5 否定 — 分ける歩を組み立てる -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁` の塔。 -/
+def tw121 : Nat → BT
+  | 0 => BT.zero
+  | (n+1) => BT.D 1 (tw121 n)
+
+/-- **順序を壊す部品。**  `ψ₀0 ⊕ (ψ₁)^m 0` は昇べきだから `BT.isStd` を満たさず、
+    `plus` が先頭の `1` を捨てるので `dict` は `(ψ₁)^m 0` の像と同じになる。
+    `BT` の側では頭が `ψ₀0` だから小さいまま。§77.9 の否定が指していたのはこの形である。 -/
+def eF121 (m : Nat) : BT := BT.D 1 (BT.sum (BT.D 0 BT.zero) (tw121 m))
+
+/-- 条項が訊く形に埋め込む — `ψ₁c` の中に `ψ₀e` を入れ、`dict c` は `Ω₁²` 以上に保つ
+    (そうしないとこの成分の組が発火せず、`lastFire92` が偽になる)。 -/
+def cGr121 (m : Nat) : BT := BT.sum (tw121 2) (BT.D 0 (eF121 m))
+def aGr121 (n m : Nat) : BT := BT.sum (BT.D 1 (tw121 n)) (BT.D 1 (cGr121 m))
+
+/-- 最後の発火歩。 -/
+def lastFire121 (a : BT) : (Option Term × Option Term) × (Term × Term) :=
+  match ((scanSt (reg 1) (baseOf 0) (none, none)
+      (wcnf (reg 1) (toList (dict a))).1).filter (fun p => le (reg 1) p.2.1)).reverse with
+  | [] => ((none, none), (zero, zero))
+  | p :: _ => p
+
+def aSep121 : BT := aGr121 3 4
+def cSep121 : BT := cGr121 4
+def eSep121 : BT := eF121 4
+def pSep121 : (Option Term × Option Term) × (Term × Term) := lastFire121 aSep121
+
+/-! **段の上限は満たす。標準性だけが落ちる。**  そして落ちる元は一つ — `eSep121` の中の
+    昇べきの和 — で、`BT.isStd` は構造的だから `c` と `a` にも伝わる。 -/
+#guard (btLe72 1 aSep121, btLe72 1 eSep121, BT.isStd (BT.D 0 aSep121),
+        BT.isStd (BT.D 1 cSep121), BT.isStd (BT.D 0 eSep121), BT.isStd aSep121)
+       == (true, true, false, false, false, false)
+
+/-! 条項が訊く組の形は満たす。 -/
+#guard ((BT.toL aSep121).contains (BT.D 1 cSep121), (d0Args88 cSep121).contains eSep121,
+        BT.lt eSep121 aSep121, BT.lt cSep121 aSep121,
+        decide (BT.size eSep121 < BT.size aSep121))
+       == (true, true, true, true, true)
+
+/-! 𝔗(M) の側の仮定も満たす。 -/
+#guard (inT (dict aSep121), lt (dict aSep121) M, inT (dict eSep121), lt (dict eSep121) M,
+        match idxF88 0 (dict eSep121) with | none => false | some _ => true)
+       == (true, true, true, true, true)
+
+/-! **本体 — §95 の側条件は真、§121 の側条件は偽。**  だから `IdxStd121` は
+    `IdxStd115` の言い換えではない。 -/
+#guard (lastFire92 (dict aSep121), isLastIdx92 aSep121 pSep121,
+        monoClosed95 aSep121 pSep121 eSep121, monoHi121 aSep121 pSep121 eSep121)
+       == (true, true, true, false)
+
+/-! **そして分ける歩は `dict` の逆転そのもの** — §121.4 の `extra_is_inversion121` を
+    目で見た形。`hi` は食い違い、しかも逆順である。 -/
+#guard (hiW89 (dict eSep121) == hiW89 (dict aSep121),
+        lt (hiW89 (dict eSep121)) (hiW89 (dict aSep121)),
+        lt (dict eSep121) (dict aSep121))
+       == (false, false, false)
+
+#guard (BT.size aSep121, BT.size eSep121, BT.size cSep121) == (21, 9, 14)
+
+/-! **大きさの閾値であって種類の違いではない (測定の罠 (4))。**
+    `m ≤ 3` (記号 17-20 個) では二つの側条件は一致し、`m ≥ 4` (記号 21 個以上) で分かれる。 -/
+#guard ((List.range 7).map fun m =>
+          (monoClosed95 (aGr121 3 m) (lastFire121 (aGr121 3 m)) (eF121 m),
+           monoHi121 (aGr121 3 m) (lastFire121 (aGr121 3 m)) (eF121 m),
+           BT.size (aGr121 3 m)))
+       == [(true, true, 17), (true, true, 18), (true, true, 19), (true, true, 20),
+           (true, false, 21), (true, false, 22), (true, false, 23)]
+
+end
+
+/-! ### §121.6 測定 (凍結) -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- §84・§88・§90・§92・§95・§100・§105 が組んだ族ぜんぶ。新しい族は §121.5 の三つだけ。 -/
+def rawPop121 : List BT :=
+  (pop84 ++ pop88 ++ pop90 ++ pop92 ++ pop95 ++ pop100 ++ pop105).eraseDups
+
+/-- 条項が実際に当てられる項 — 段 1 以下で `K` 標準、像が 𝔗(M) の中。 -/
+def kstd121 : List BT := rawPop121.filter okHyp84
+
+/-- 対照 — 段は同じで `K` の条件だけが落ちる項。 -/
+def offK121 : List BT :=
+  rawPop121.filter fun a => btLe72 1 a && !(BT.isStd (BT.D 0 a)) && inT (dict a) && lt (dict a) M
+
+/-- `IdxK121` が訊く `(a, e)` の組 — 条項の仮定をすべて満たすものだけ。 -/
+def obl121 (a : BT) : List (BT × BT) :=
+  (BT.toL a).flatMap fun t => match t with
+    | BT.D 1 c =>
+        if BT.isStd (BT.D 1 c) && BT.lt c a then
+          ((d0Args88 c).filter fun e =>
+            BT.isStd (BT.D 0 e) && btLe72 1 e && BT.lt e a &&
+              decide (BT.size e < BT.size a) &&
+              (match idxF88 0 (dict e) with | none => false | some _ => true)).map (fun e => (a, e))
+        else []
+    | _ => []
+
+/-- 三分類 — 0: `hi` が一致, 1: `hi` が順に並ぶ, 2: `hi` が逆順 (§121 だけが訊く)。 -/
+def cls121 (q : BT × BT) : Nat :=
+  if hiW89 (dict q.2) == hiW89 (dict q.1) then 0
+  else if lt (hiW89 (dict q.2)) (hiW89 (dict q.1)) then 1 else 2
+
+def cnt121 (l : List BT) : Nat × Nat × Nat × Nat × Nat :=
+  let ps := l.flatMap obl121
+  (ps.length,
+   (ps.filter fun q => cls121 q == 0).length,
+   (ps.filter fun q => cls121 q == 1).length,
+   (ps.filter fun q => cls121 q == 2).length,
+   (ps.filter fun q => !(lt (dict q.2) (dict q.1))).length)
+
+/-- 歩まで込めた勘定 — 発火歩 × 条項の組。二つ目が §95 の免除、三つ目が §121 の免除。 -/
+def stepCnt121 (l : List BT) : Nat × Nat × Nat :=
+  let t := l.flatMap fun a => (fireSt90 a).flatMap fun p => (obl121 a).map fun q => (a, p, q.2)
+  (t.length,
+   (t.filter fun w => monoClosed95 w.1 w.2.1 w.2.2).length,
+   (t.filter fun w => monoHi121 w.1 w.2.1 w.2.2).length)
+
+-- 母集団の大きさ。最後が「最後の対が発火する項」の数。
+#guard (rawPop121.length, kstd121.length, offK121.length,
+        (kstd121.filter fun a => lastFire92 (dict a)).length) == (249, 188, 61, 84)
+
+/-! **`hi` は一度も食い違わず、一度も逆転しない。**  `K` 標準な側で 207 組、
+    対照で 47 組、どちらも三分類は `(0, 全部, 0)`、`dict` の逆転も 0。 -/
+#guard cnt121 kstd121 == (207, 0, 207, 0, 0)
+#guard cnt121 offK121 == (47, 0, 47, 0, 0)
+
+/-! **§121 は免除をひとつも失わない。**  342 + 71 の (歩, 元) の組で
+    `monoClosed95` が 97 + 14 を免除し、`monoHi121` も同じ 97 + 14 を免除する。 -/
+#guard stepCnt121 kstd121 == (342, 97, 97)
+#guard stepCnt121 offK121 == (71, 14, 14)
+
+end
+
 end Evidence.Region
