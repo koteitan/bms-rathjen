@@ -2,11 +2,22 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.8.54
+バージョン: v0.8.55
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
 Arch. Math. Logic 30 (1991), §2) の対応。
+
+> [!WARNING]
+> **5 行の値は疑わしい。** `(0,0)(1,1)(2,2)` から始まる 5 行 —
+> `(0,0)(1,1)(2,2)`・`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`・`(0,0)(1,1)(2,2)(2,2)`・
+> `(0,0)(1,1)(2,2)(2,2)(2,2)`・`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)` — は、BMS の展開の値の列が
+> 外部の独立実装の基本列と一致しない。原因は 1 つで、基本列が $`Z(1)`$ を降りるとき、
+> 先方は到達不能基数として $`\psi^{\chi^M_0(0)}`$ で降り、BMS の展開は $`\Omega_2`$ として
+> $`\omega`$ 塔で降りる。$`Z(1)`$ を含む他の 15 行は健全である。
+> **値は変えていない** — 5 行のうち 3 行は正しい値が分かっておらず、外部実装は独立実装で
+> あって神託ではなく、BMS 側の翻訳を持たないのでどちらの側を直すべきかを言えない。
+> 詳細と対照は [diff.md](diff.md) の §137。
 
 **証明列の ✅ は[証明の仕様](#証明の仕様)の E.cert が Lean の定理であることを意味する。**
 それ以外の印は ✅ の材料であって ✅ ではない。**印はすべてビルドが計算して付ける**
@@ -54,7 +65,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L241) | $`\psi_{\Omega}(0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ | $`\Gamma_0`$ |  | [fₙ](../lean/Rows/G7.lean#L6) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 |
 | [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L245) | $`\psi_{\Omega}(0)+1`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0))))+\psi_{0}(0)`$ | $`\Gamma_0+1`$ |  |  |  |
 | [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L247) | $`\bar{\varphi}(0,\psi_{\Omega}(0))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0)))+\psi_{0}(0))`$ | $`\omega^{\Gamma_0+1}`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L259) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ | $`\psi_0(\Omega_2)`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正 |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L259) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ | $`\psi_0(\Omega_2)`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正。🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)。外部は ψ_Ω(φ̄(1,Ω)) と読む |
 | [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L263) | $`\bar{\varphi}(1,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(0))`$ | $`\varepsilon_{\psi_0(\Omega_2)+1}`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)`](../lean/Rows/TM.lean#L266) | $`\bar{\varphi}(2,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0)))`$ | $`\zeta_{\psi_0(\Omega_2)+1}`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L269) | $`\psi_{\Omega}(Z(1)+1)`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ | $`\Gamma_{\psi_0(\Omega_2)+1}`$ |  | [fₙ](../lean/Rows/G12.lean#L50) |  |
@@ -64,19 +75,19 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,2)(2,0)(2,0)`](../lean/Rows/TM.lean#L285) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(0)+\psi_{0}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+2))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,0)(3,0)`](../lean/Rows/TM.lean#L289) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{0}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\omega))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,0)(3,1)`](../lean/Rows/TM.lean#L293) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{1}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\varepsilon_0))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L297) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_0(\Omega_2)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L302) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)(2,1)`](../lean/Rows/TM.lean#L306) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1\cdot 2))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)(3,1)`](../lean/Rows/TM.lean#L310) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(0,\Omega+\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_1)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L315) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_2)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L320) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 2)`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | 旧値 φ̄(ω²,0) を訂正 |
-| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L325) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 3)`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L329) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)))`$ | $`\psi_0(\psi_2(1))`$ |  | [fₙ](../lean/Rows/Selected.lean#L3557) | 旧値 φ̄(ω^ω,0) を訂正 |
-| [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L334) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+1))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)+\psi_{0}(0)))`$ | $`\psi_0(\psi_2(2))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L337) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{0}(0))))`$ | $`\psi_0(\psi_2(\omega))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L340) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{1}(0))))`$ | $`\psi_0(\psi_2(\varepsilon_0))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L343) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\psi_2(\psi_0(\Omega_2)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L347) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ | $`\psi_0(\psi_2(\Omega_1))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) |  |
+| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L297) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137) |
+| [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L303) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,1)(2,1)`](../lean/Rows/TM.lean#L307) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1\cdot 2))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,1)(3,1)`](../lean/Rows/TM.lean#L311) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(0,\Omega+\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_1)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L316) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_2)))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L321) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 2)`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | 旧値 φ̄(ω²,0) を訂正。🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137) |
+| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L326) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 3)`$ |  |  | 🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137) |
+| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L331) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)))`$ | $`\psi_0(\psi_2(1))`$ |  | [fₙ](../lean/Rows/Selected.lean#L3557) | 旧値 φ̄(ω^ω,0) を訂正 |
+| [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L336) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+1))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)+\psi_{0}(0)))`$ | $`\psi_0(\psi_2(2))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L339) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{0}(0))))`$ | $`\psi_0(\psi_2(\omega))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L342) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{1}(0))))`$ | $`\psi_0(\psi_2(\varepsilon_0))`$ |  |  |  |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L345) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\psi_2(\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)。外部は ψ_Ω(φ̄(0, Ω₂ + ψ_Ω(φ̄(1,Ω)))) と読む |
+| [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L350) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ | $`\psi_0(\psi_2(\Omega_1))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) |  |
 
 ## 列の意味
 

@@ -258,7 +258,7 @@ def rows : List Row := [
   -- reference implementation rather than by hand.
   { m := [[0,0],[1,1],[2,2]], t := psi (Z zero) (Z (phi zero zero)),
     name := "\\psi_0(\\Omega_2)", proof := "namespace G4",
-    note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正",
+    note := "行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正。🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)。外部は ψ_Ω(φ̄(1,Ω)) と読む",
     sel := "**M** 1 行目に 2 が現れる最初。**T** Z の最初。**B** Ω₂ の最初" },
   { m := [[0,0],[1,1],[2,2],[1,1]],
     t := phi (phi zero zero) (psi (Z zero) (Z (phi zero zero))),
@@ -298,7 +298,8 @@ def rows : List Row := [
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero))
         (psi (Z zero) (Z (phi zero zero)))))),
-    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_0(\\Omega_2)))" },
+    name := "\\psi_0(\\Omega_2+\\psi_1(\\Omega_2+\\psi_0(\\Omega_2)))",
+    note := "🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)" },
   { m := [[0,0],[1,1],[2,2],[2,1]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (phi zero (add (phi (phi zero zero) (Z zero)) (Z zero)))),
@@ -320,12 +321,13 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,2],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero)) (Z (phi zero zero))),
     name := "\\psi_0(\\Omega_2\\cdot 2)", proof := "namespace G6",
-    note := "旧値 φ̄(ω²,0) を訂正",
+    note := "旧値 φ̄(ω²,0) を訂正。🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)",
     sel := "**B** ψ₀ の引数が和になる最初" },
   { m := [[0,0],[1,1],[2,2],[2,2],[2,2]],
     t := psi (Z zero) (add (Z (phi zero zero))
       (add (Z (phi zero zero)) (Z (phi zero zero)))),
-    name := "\\psi_0(\\Omega_2\\cdot 3)" },
+    name := "\\psi_0(\\Omega_2\\cdot 3)",
+    note := "🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)" },
   { m := [[0,0],[1,1],[2,2],[3,0]],
     t := psi (Z zero) (phi zero (Z (phi zero zero))),
     name := "\\psi_0(\\psi_2(1))", proof := "namespace G2",
@@ -343,7 +345,8 @@ def rows : List Row := [
   { m := [[0,0],[1,1],[2,2],[3,0],[4,1],[5,2]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero))
       (psi (Z zero) (Z (phi zero zero))))),
-    name := "\\psi_0(\\psi_2(\\psi_0(\\Omega_2)))" },
+    name := "\\psi_0(\\psi_2(\\psi_0(\\Omega_2)))",
+    note := "🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)。外部は ψ_Ω(φ̄(0, Ω₂ + ψ_Ω(φ̄(1,Ω)))) と読む" },
   { m := [[0,0],[1,1],[2,2],[3,1]],
     t := psi (Z zero) (phi zero (add (Z (phi zero zero)) (Z zero))),
     name := "\\psi_0(\\psi_2(\\Omega_1))", proof := "namespace G8",
