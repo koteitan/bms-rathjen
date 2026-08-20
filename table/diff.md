@@ -11,28 +11,29 @@
 > 印は 🚨 未着手 / 🚨🤖 着手中 / ✅ 完了 の 3 つだけ。
 > 他の目的に使わない。済んだ作業の記録は [findings.md](findings.md) に置く。
 >
+> **木は依存関係を表す。親は子に依存する** — 子が全部できて初めて親ができる。
+> 分類や話題でまとめない。
+>
 > **この注意書きより下は、作業項目だけを置く。**
 
 ## ツリー
 
 - 🚨 対応表を完成させる
-  - 🚨 表の値を正す
-    - 🚨 壊れている 5 行の値を差し替える
-      - 🚨 `reg` を直しても順序と `inT` が壊れない道を見つける
-      - 🚨 `Trans/Dict.lean` を書き換えてビルドを通す
-      - 🚨 `Rows/TM.lean` の 5 行の値を書き換える
-      - 🚨 5 行の注記と表のバナーを外す
-    - 🚨 Hexirp 氏の表と食い違う 9 行について、どちらが正しいかを決める
-      - 🚨 9 行を BMS の順序に並べ、両側の単調性と単射性を測る
-      - 🚨 行ごとに当方が正しいか先方が正しいかを書く
-      - 🚨 当方が誤っている行があれば表に印を付ける
   - 🚨 選定 23 行に [E.cert](table-r1.md#ecert) を付ける
     - 🚨 326 行目に [E.cert](table-r1.md#ecert) を付ける
-      - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`t \in \mathfrak{T}(M)`$ と $`f_n \in \mathfrak{T}(M)`$ を供給する
+      - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`t \in \mathfrak{T}(M)`$ と $`f_n \in \mathfrak{T}(M)`$ を出す
         - 🚨 `PsiIdxOKStd172` を証明するか反証する
-      - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`f_n \lt t`$ と $`f_n \lt f_{n+1}`$ を供給する
+      - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`f_n \lt t`$ と $`f_n \lt f_{n+1}`$ を出す
         - 🚨 `HiMono89` を証明するか反証する
-      - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を供給する
-        - 🚨 `vOf tGap107` が大きすぎるのか展開の値が小さすぎるのかを決める
-        - 🚨 決まった側を直す
+      - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を出す
         - 🚨 `LimCofS1` を証明する
+          - 🚨 `vOf` が基本列の上限を超えないようにする
+            - 🚨 `vOf tGap107` が大きすぎるのか展開の値が小さすぎるのかを決める
+            - 🚨 決まった側の定義を直す
+              - 🚨 `reg` を直しても順序と `inT` が壊れない道を見つける
+              - 🚨 `Trans/Dict.lean` を書き換えてビルドを通す
+              - 🚨 `Rows/TM.lean` の壊れている 5 行の値を書き換える
+              - 🚨 5 行の注記と表のバナーを外す
+              - 🚨 Hexirp 氏の表と食い違う 9 行について、どちらが正しいかを決める
+                - 🚨 9 行を BMS の順序に並べ、両側の単調性と単射性を測る
+                - 🚨 行ごとに当方が正しいか先方が正しいかを書く
