@@ -4425,4 +4425,816 @@ def brCar122 (z : BT) : Bool := (toList (dict z)).any carr122
 
 end
 
+/-! ## §125 `Gam0Drags111` IS NOT A CLAUSE — AND ROW 326'S CERTIFICATE IS VACUOUS
+       UNDER EXACTLY THE HYPOTHESES IT CARRIES
+
+§111.5 named
+
+    `Gam0Drags111` :  ∀ z, `btLe72 1 z` → `isStd z` → `dict z = Γ₀` →
+                      `Hd085 z` ∧ ∃ e ∈ `G(z,0)`, `Ω^Ω ≤ e`
+
+and measured it.  §122 then proved `tightUp122` and `cofDenseS1_false122` on it, which put
+**the whole density side of row 326 on this one clause**.  §125 takes it off the list.
+
+  §125.1  **THE FIRST CONJUNCT IS A THEOREM.**  `hd085_of_gam0_125` — and the only thing
+          about `Γ₀` it uses is `Γ₀ < Ω₁`.  Weaken the premise `dict z = Γ₀` to
+          `lt (dict z) (reg 1) = true` and the recursion into a sum goes through; §94.1's
+          `ltW_dict94` is the converse and was already there.  Cost: `PsiIdxOKStd172`,
+          which every consumer of `Gam0Drags111` already takes.
+
+  §125.2  **THE SECOND CONJUNCT IS THE ORDER GATE AT ONE POINT.**  `reachOO_of_gam0_125`
+          — `ψ₀(Ω^Ω)` is standard with value exactly `Γ₀` (three `rfl`s), so if `z`'s head
+          argument were below `Ω^Ω` then `z < ψ₀(Ω^Ω)`, and `DictLtStd92` would give
+          `Γ₀ < Γ₀`.  Cost: `DictLtStd92`, which §121 derives from `PsiIdxOKStd172` and the
+          Veblen clauses row 326 already carries.
+
+  §125.3  **THE HUNT.**  2 096 684 standard level-`≤ 1` terms up to size 18 hold exactly
+          ONE term of value `Γ₀`, and it is `ψ₀(Ω^Ω)`.  Drop standardness and uniqueness is
+          FALSE at size 9 (`gam0UniqueNoStd125_false`), by `plus` absorption — the same
+          break as §122's sixth family.  What blocks the repair is a theorem, not a sweep:
+          `carrierHead125` says a term that carries `Ω^Ω` behind the head must put a
+          level-1 digit in front, and that digit fires.
+
+  §125.4  **THE COMPOSITION, AND WHAT IT COSTS ROW 326.**
+
+    `gam0Drags_of_three125`  :  `PsiIdxOKStd172` → `VebIngF114` → `VebRest117` → `Gam0Drags111`
+    `denseMid107_false125`   :  the same three  →  `¬ DictDenseMid107`
+    `certHyp_absurd125`      :  those three together with `DictDenseMid107` give `False`
+
+`certIn_t326_124` takes `PsiIdxOKStd172`, `VebIngF114`, `VebRest117`, `DictOntoMidOpen103`,
+`DictDenseMid107`, `DictDenseAbove107`.  Its first three prove its fifth false.  **The
+certificate cannot be applied to anything: its hypotheses are contradictory.**
+`certIn_t326_vacuous125` states that with §124's exact argument list and concludes `False`.
+
+WHAT IS **NOT** CLAIMED.  This does not show the table entry for row 326 is wrong.  It shows
+this ROUTE to certifying it is dead — the density argument and the certificate cannot both
+stand.  `PsiIdxOKStd172`, `VebIngF114` (= `VebPairs123`) and `VebRest117` are still
+unproved; if one of them is false the argument above says nothing at all.  `DictOntoMidOpen103`
+is untouched and is now beside the point on this route.  §69's cofinality reading is
+untouched.
+
+**THE LEDGER, fourteenth entry, and it is against §111.**  §111.5 wrote the residue as ONE
+clause with two conjuncts and measured the conjunction.  The conjuncts have nothing to do
+with each other: the first needs only `Γ₀ < Ω₁` and no gate at all beyond `Hp`, the second
+is `DictLtStd92` evaluated at a single pair.  Fourteen sections carried both because they
+were written on one line.  **Measure the conjuncts, not the conjunction.**
+
+**AND A FIFTH WAY A SWEEP LIES.**  §111.7 swept 9992 terms where the premise fired once.
+§125.3 swept 2 096 684 and built a population of 4526 where the premise really fires.  Both
+came back clean, and both were RIGHT — the clause is true.  Neither told anybody it was
+PROVABLE, and neither pointed at the proof.  A sweep measures truth; it says nothing about
+where the proof is.  Here the proof came from reading the two conjuncts apart. -/
+
+/-! ### §125.1 THE FIRST CONJUNCT IS A THEOREM — IT NEEDS ONLY `Γ₀ < Ω₁`
+
+`Gam0Drags111` (§111.5) is a conjunction.  Its first conjunct — `Hd085 z`, "every
+component of `z` is a level-0 node `ψ₀ c`" — needs nothing about `Γ₀` beyond the fact
+that `Γ₀ < Ω₁`.  So it is not a measurement: it is a theorem, and the only hypothesis
+it costs is `PsiIdxOKStd172`, which every consumer of `Gam0Drags111` in §122 already
+carries.
+
+The route.
+
+  * §94.1 の `ltW_dict94` は逆向き — 成分が全部 `D 0` なら値は `Ω₁` より下。
+    ここで要るのはその**対偶の一般形**である: 値が `Ω₁` より下なら成分は全部 `D 0`。
+  * 段 1 の節ひとつは `Ω₁` を下回れない (§98.3 の `ltW_dictD1_false98`)。
+  * 和は両側を下から押さえる (`le_self_plus_ap81` と `le_self_plus75`)。主要成分の
+    `dict` は加法主要 (§118 の `isAP_dict_isP118`) なので左側にも使える。
+
+そこで `dict z = G094` は `lt (dict z) (reg 1) = true` へ弱めてよく、その形なら
+和の再帰がそのまま通る。**残るのは第二の連言だけ** (`drags_of_second_125`)。 -/
+
+/-! #### §125.1a Below `Ω₁` forces every component to level 0 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§125.1a の主定理。**  値が `Ω₁` より下の標準・段 1 以下の項は、成分がすべて
+    `D 0` である。§94.1 の `ltW_dict94` の逆。 -/
+theorem hd085_of_ltW125 (Hp : PsiIdxOKStd172) : ∀ (z : BT), btLe72 1 z = true →
+    BT.isStd z = true → lt (dict z) (reg 1) = true → Hd085 z
+  | .zero, _, _, _ => by
+      intro w hw
+      exact absurd hw List.not_mem_nil
+  | .D u c, hb, hs, hlt => by
+      obtain ⟨hu, _⟩ := btLe72_D 1 u c hb
+      have hu01 : u = 0 ∨ u = 1 := by omega
+      rcases hu01 with rfl | rfl
+      · exact hd085_D0_111 c
+      · rw [ltW_dictD1_false98 Hp hb hs] at hlt
+        exact Bool.noConfusion hlt
+  | .sum x y, hb, hs, hlt => by
+      obtain ⟨hbx, hby⟩ := btLe72_sum 1 x y hb
+      obtain ⟨hsx, hsy⟩ := isStd_of_sum hs
+      have hpx : BT.isP x = true := isP_of_isStd_sum hs
+      have hix : inT (dict x) = true := (inT_dict_of_std172 Hp x hbx hsx).1
+      have hiy : inT (dict y) = true := (inT_dict_of_std172 Hp y hby hsy).1
+      rw [Trans.Dict.dict_sum] at hlt
+      have hlx : lt (dict x) (reg 1) = true :=
+        lt_of_le_of_lt3 (inT_le_fragR _ hix) (inT_le_fragR _ (inT_plus hix hiy))
+          (inT_le_fragR _ inT_W79)
+          (le_self_plus_ap81 hix (isAP_dict_isP118 hpx) hiy) hlt
+      have hly : lt (dict y) (reg 1) = true :=
+        lt_of_le_of_lt3 (inT_le_fragR _ hiy) (inT_le_fragR _ (inT_plus hix hiy))
+          (inT_le_fragR _ inT_W79) (le_self_plus75 hix hiy) hlt
+      intro w hw
+      rcases List.mem_append.mp hw with h1 | h1
+      · exact hd085_of_ltW125 Hp x hbx hsx hlx w h1
+      · exact hd085_of_ltW125 Hp y hby hsy hly w h1
+
+/-- `Γ₀ < Ω₁` — `Γ₀` は可算側にいる。 -/
+theorem ltW_G0_125 : lt G094 (reg 1) = true := rfl
+
+/-- **§125.1 の主定理。**  `Gam0Drags111` の第一の連言は定理である。 -/
+theorem hd085_of_gam0_125 (Hp : PsiIdxOKStd172) {z : BT} (hb : btLe72 1 z = true)
+    (hs : BT.isStd z = true) (hd : dict z = G094) : Hd085 z :=
+  hd085_of_ltW125 Hp z hb hs (by rw [hd]; exact ltW_G0_125)
+
+end
+
+/-! #### §125.1b What is left of `Gam0Drags111`
+
+第一の連言が定理になったので、§111.5 の条項は**第二の連言だけ**になる。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Gam0Drags111` に残るもの — `G(0, z)` に `Ω^Ω` 以上の元があること。 -/
+def Gam0Carr125 : Prop := ∀ z : BT, btLe72 1 z = true → BT.isStd z = true →
+    dict z = G094 → ∃ e ∈ BT.GB 0 z, BT.le bOO94 e = true
+
+/-- **半分は済んだ。**  `Gam0Drags111` は `PsiIdxOKStd172` と `Gam0Carr125` から出る。 -/
+theorem drags_of_carr125 (Hp : PsiIdxOKStd172) (H : Gam0Carr125) : Gam0Drags111 :=
+  fun z hb hs hd => ⟨hd085_of_gam0_125 Hp hb hs hd, H z hb hs hd⟩
+
+end
+
+/-! #### §125.1c 測定 — 仮説が母集団に見えていること
+
+§111.7 の反省。`dict z = G094` は 9992 項中 1 回しか発火しない。§125.1a の仮説
+`lt (dict z) (reg 1)` はそうではない — §108.6 の同じ母集団 (大きさ 12 までの標準・
+段 1 以下の項) で 2923 回発火し、しかも `hd085B` と**完全に一致する**。つまり
+§125.1a は両向きに正しく、空振りの掃き掃除ではない。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! 段 1 以下の標準項では `hd085B` と「`Ω₁` より下」は同値 — §125.1a とその逆 (§94.1)
+    を母集団で見たもの。 -/
+#guard allStd108.all fun z => (btLe72 1 z && BT.isStd z) == false ||
+  (hd085B z == lt (dict z) (reg 1))
+
+/-! 仮説の発火数。`dict z = G094` は 1 回、`lt (dict z) (reg 1)` は 2923 回。 -/
+#guard (allStd108.countP fun z => btLe72 1 z && BT.isStd z && lt (dict z) (reg 1)) == 2923
+#guard (allStd108.countP fun z => btLe72 1 z && BT.isStd z && dict z == G094) == 1
+
+end
+
+/-! ### §125.2 THE SECOND CONJUNCT IS THE ORDER GATE, AND NOTHING MORE
+
+`Gam0Drags111` は二つの連言である。
+
+    ∀ z, btLe72 1 z → BT.isStd z → dict z = Γ₀ → Hd085 z ∧ ∃ e ∈ G(z,0), Ω^Ω ≤ e
+
+第一 (`Hd085 z`) はここでは扱わない — **仮定として受け取る。**  §125.2 が示すのは第二
+
+    ∃ e ∈ G(z,0), Ω^Ω ≤ e                                  (`reachOO_of_gam0_125`)
+
+で、使う条項は `DictLtStd92` ただ一つである。`DictLtStd92` は §92 が名指しし、§121 の
+`dictLtStd_of_four121` が `PsiIdxOKStd172` と Veblen の三条項 (`IdxLeMix109`・
+`VebIngF114`・`VebRest117`) から出す、**326 行がすでに抱えている門**である。§122 の
+`tightUp122`・`cofDenseS1_false122` はどれも `Hp` と `HD` を引数に取っている。だから
+
+  * `Gam0Drags111` の第二の連言は **326 行の証明書に新しい印を一つも足さない**。
+  * `Hg` を消費する側 (`tight_of_four122` など) は、第一の連言を渡すだけでよくなる
+    (`gam0Drags_of_hd125`・`gam0Drags_of_four125`)。
+
+**筋。**  `ψ₀(Ω^Ω)` は標準・段 1 以下で、値はちょうど `Γ₀` — 三つとも `rfl`
+(§125.2a)。`Hd085 z` なので `z` の先頭成分は `ψ₀ c` の形である。もし `c < Ω^Ω` なら、
+頭が同じ段で引数が真に小さいので `z < ψ₀(Ω^Ω)` (§106 の `btlt_of_hd106`)、したがって
+`DictLtStd92` から `dict z < Γ₀`。ところが `dict z = Γ₀` なので `Γ₀ < Γ₀` になり、これは
+成り立たない。§74 の三分律より `Ω^Ω ≤ c` であり、その `c` は `G(z,0)` の元である
+(§125.2b の `mem_GB0_125`)。`z = 0` の場合も同じ一撃で外れる — 成分列が空なら
+`z < ψ₀(Ω^Ω)` が只で立つ。
+
+**測定はしていない。**  §111.7 は大きさ 12 までの標準・段 1 以下の項 9992 個を掃いて、
+前提 `dict z = Γ₀` が 1 回しか発火しなかった。掃き出しはここでは一度も使わない。
+
+**外せなかったもの、その理由。**  `DictLtStd92` の使いどころは一箇所
+
+    BT.lt z (ψ₀ Ω^Ω) = true  →  lt (dict z) Γ₀ = true
+
+だけである。これは `collapse 0` の狭義単調性そのもので、§96 の `CollapseLe0_96`
+(「残る一本。**証明しない。**」) と同じ内容である。値の側から回る道 — `collapse 0 x = Γ₀`
+を `x` について解く — も試したが、`ω^` の ε 数の議論で潰せるのは `x < Ω₁` の場合だけで、
+`Ω₁ ≤ x` の場合は畳み込みの累算器が `Γ₀` になる形を全部数える必要があり、それは §122 の
+`winUpAux122` と同じ大きさの場合分けになる。ここでは踏み込まない。 -/
+
+/-! #### §125.2a The anchor: `ψ₀(Ω^Ω)` is standard, level `≤ 1`, and its value is `Γ₀` -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₀(Ω^Ω)` の値は `Γ₀`。 -/
+theorem dict_bOOD0_125 : dict (BT.D 0 bOO94) = G094 := rfl
+
+/-- `ψ₀(Ω^Ω)` は標準。 -/
+theorem isStd_bOOD0_125 : BT.isStd (BT.D 0 bOO94) = true := rfl
+
+/-- `ψ₀(Ω^Ω)` は段 1 以下。 -/
+theorem btLe_bOOD0_125 : btLe72 1 (BT.D 0 bOO94) = true := rfl
+
+/-- `ψ₀(Ω^Ω)` の成分列は一つ。 -/
+theorem toL_bOOD0_125 : BT.toL (BT.D 0 bOO94) = [BT.D 0 bOO94] := rfl
+
+/-- `Ω^Ω = ψ₁ψ₁Ω₁` 自身も標準。 -/
+theorem isStd_bOO125 : BT.isStd bOO94 = true := rfl
+
+/-! 見本の側では結論がそのまま見える — `Ω^Ω` は `G(ψ₀ Ω^Ω, 0)` の元である。 -/
+#guard (BT.GB 0 (BT.D 0 bOO94)).any (fun e => BT.le bOO94 e)
+
+end
+
+/-! #### §125.2b Housekeeping: standard terms are `ofL`-normal, hereditarily -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 標準な和の先頭は主成分。 -/
+theorem isP_hd125 {a b : BT} (h : BT.isStd (BT.sum a b) = true) : BT.isP a = true := by
+  obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp h
+  obtain ⟨h2, _⟩ := (Bool.and_eq_true _ _).mp h1
+  exact ((Bool.and_eq_true _ _).mp h2).1
+
+/-- 標準な和の後ろの項は `0` ではない。 -/
+theorem ne_zero_snd125 {a b : BT} (h : BT.isStd (BT.sum a b) = true) : b ≠ BT.zero := by
+  intro hb
+  subst hb
+  obtain ⟨_, h4⟩ := (Bool.and_eq_true _ _).mp h
+  have h5 : (BT.isP BT.zero && BT.le BT.zero a) = true := h4
+  rw [show BT.isP BT.zero = false from rfl, Bool.false_and] at h5
+  exact Bool.noConfusion h5
+
+/-- `0` でない標準な項は成分を持つ。 -/
+theorem toL_ne_nil125 : ∀ z : BT, BT.isStd z = true → z ≠ BT.zero → BT.toL z ≠ []
+  | BT.zero, _, hne => absurd rfl hne
+  | BT.D u a, _, _ => by
+      show [BT.D u a] ≠ []
+      exact List.cons_ne_nil _ _
+  | BT.sum a b, hs, _ => by
+      rw [show BT.toL (BT.sum a b) = BT.toL a ++ BT.toL b from rfl, toL_isP118 (isP_hd125 hs)]
+      show a :: BT.toL b ≠ []
+      exact List.cons_ne_nil _ _
+
+/-- 標準な項は自分の成分列から組み直せる (§53 の `NfSum`)。 -/
+theorem nfSum_isStd125 : ∀ z : BT, BT.isStd z = true → NfSum z
+  | BT.zero, _ => rfl
+  | BT.D _ _, _ => rfl
+  | BT.sum a b, hs => by
+      have hsb : BT.isStd b = true := (isStd_of_sum hs).2
+      have hnb : NfSum b := nfSum_isStd125 b hsb
+      have htb : BT.toL b ≠ [] := toL_ne_nil125 b hsb (ne_zero_snd125 hs)
+      show BT.ofL (BT.toL a ++ BT.toL b) = BT.sum a b
+      rw [toL_isP118 (isP_hd125 hs)]
+      cases hq : BT.toL b with
+      | nil => exact absurd hq htb
+      | cons x xs =>
+          show BT.sum a (BT.ofL (x :: xs)) = BT.sum a b
+          rw [← hq, show BT.ofL (BT.toL b) = b from hnb]
+
+/-- 標準な項は遺伝的に `ofL` 正規 (§74 の `Hwf74`) — 三分律の前提。 -/
+theorem hwf74_isStd125 : ∀ z : BT, BT.isStd z = true → Hwf74 z
+  | BT.zero, _ => trivial
+  | BT.D _ a, h => ⟨nfSum_isStd125 a (isStd_of_D h), hwf74_isStd125 a (isStd_of_D h)⟩
+  | BT.sum a b, h =>
+      ⟨hwf74_isStd125 a (isStd_of_sum h).1, hwf74_isStd125 b (isStd_of_sum h).2⟩
+
+/-- 成分の引数はその項の `G(·,0)` の元。§104 の `sub_GB0_104` の頭の側。 -/
+theorem mem_GB0_125 : ∀ (a : BT) (u : Nat) (c : BT), BT.D u c ∈ BT.toL a → c ∈ BT.GB 0 a := by
+  intro a
+  induction a with
+  | zero => intro u c h; cases h
+  | D v e _ =>
+      intro u c h
+      have he : BT.D u c = BT.D v e := List.mem_singleton.mp (show BT.D u c ∈ [BT.D v e] from h)
+      have hce : c = e := by injection he
+      have hgb : BT.GB 0 (BT.D v e) = e :: BT.GB 0 e := by
+        show (if 0 ≤ v then e :: BT.GB 0 e else []) = _
+        rw [if_pos (Nat.zero_le v)]
+      rw [hgb, hce]
+      exact List.Mem.head _
+  | sum s t ihs iht =>
+      intro u c h
+      have hgb : BT.GB 0 (BT.sum s t) = BT.GB 0 s ++ BT.GB 0 t := rfl
+      rw [hgb]
+      rcases List.mem_append.mp (show BT.D u c ∈ BT.toL s ++ BT.toL t from h) with h1 | h1
+      · exact List.mem_append.mpr (Or.inl (ihs u c h1))
+      · exact List.mem_append.mpr (Or.inr (iht u c h1))
+
+end
+
+/-! #### §125.2c The second conjunct, from the order gate alone -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§125.2 の主定理。**  値が `Γ₀` の標準な段 1 以下の項は、`G(z,0)` のどこかで
+    `Ω^Ω = ψ₁ψ₁Ω₁` 以上のものに触る — `Hd085 z` を仮定して。 -/
+theorem reachOO_of_gam0_125 (HD : DictLtStd92) {z : BT} (hb : btLe72 1 z = true)
+    (hs : BT.isStd z = true) (hd : dict z = G094) (hh : Hd085 z) :
+    ∃ e ∈ BT.GB 0 z, BT.le bOO94 e = true := by
+  have key : BT.lt z (BT.D 0 bOO94) = false := by
+    cases hq : BT.lt z (BT.D 0 bOO94) with
+    | false => rfl
+    | true =>
+        exfalso
+        have h := HD z (BT.D 0 bOO94) hb btLe_bOOD0_125 hs isStd_bOOD0_125 hq
+        rw [hd, dict_bOOD0_125, lt_irrefl] at h
+        exact Bool.noConfusion h
+  cases hz : BT.toL z with
+  | nil =>
+      exfalso
+      have hlt : BT.lt z (BT.D 0 bOO94) = true := by
+        show BT.ltL (BT.size z + BT.size (BT.D 0 bOO94) + 2)
+            (BT.toL z) (BT.toL (BT.D 0 bOO94)) = true
+        rw [hz, toL_bOOD0_125,
+          show BT.size z + BT.size (BT.D 0 bOO94) + 2
+            = (BT.size z + BT.size (BT.D 0 bOO94) + 1) + 1 from rfl]
+        exact ltL_nil_cons93 _ _ _
+      rw [hlt] at key
+      exact Bool.noConfusion key
+  | cons y ys =>
+      have hmem : y ∈ BT.toL z := by rw [hz]; exact List.Mem.head _
+      obtain ⟨c, hc⟩ := hh y hmem
+      subst hc
+      obtain ⟨_, hStd, _, _⟩ := good_toL77 z hs hb
+      have hsc : BT.isStd c = true := isStd_of_D (hStd _ hmem)
+      refine ⟨c, mem_GB0_125 z 0 c hmem, ?_⟩
+      rcases lt_tricho74 c bOO94 (hwf74_isStd125 c hsc) (hwf74_isStd125 bOO94 isStd_bOO125)
+          (nfSum_isStd125 c hsc) (nfSum_isStd125 bOO94 isStd_bOO125) with h | h | h
+      · exfalso
+        have hne : (c == bOO94) = false :=
+          bt_beq_false _ _ (fun he => by rw [he, lt_irrefl74] at h; exact Bool.noConfusion h)
+        rw [btlt_of_hd106 hz toL_bOOD0_125 hne h] at key
+        exact Bool.noConfusion key
+      · rw [h]; exact bt_le_refl108 bOO94
+      · show ((bOO94 == c) || BT.lt bOO94 c) = true
+        rw [h]; exact Bool.or_true _
+
+end
+
+/-! #### §125.2d What the consumers now need
+
+第一の連言に名前をつけて、§122 の消費者を組み直す。`Gam0Drags111` は
+`Gam0Hd125` に縮む。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **`Gam0Drags111` の第一の連言だけ。**  §125.2 は証明しない — 受け取るだけ。 -/
+def Gam0Hd125 : Prop := ∀ z : BT, btLe72 1 z = true → BT.isStd z = true →
+    dict z = G094 → Hd085 z
+
+/-- **§125.2 の主定理 (2)。**  `Gam0Drags111` は第一の連言と門ひとつに縮む。 -/
+theorem gam0Drags_of_hd125 (HD : DictLtStd92) (HH : Gam0Hd125) : Gam0Drags111 :=
+  fun z hb hs hd => ⟨HH z hb hs hd, reachOO_of_gam0_125 HD hb hs hd (HH z hb hs hd)⟩
+
+/-- **§125.2 の主定理 (3)。**  326 行がすでに抱えている四条項で書き直したもの。
+    `Gam0Drags111` は新しい印を一つも足さない。 -/
+theorem gam0Drags_of_four125 (Hp : PsiIdxOKStd172) (HB : IdxLeMix109)
+    (H1 : VebIngF114) (H2 : VebRest117) (HH : Gam0Hd125) : Gam0Drags111 :=
+  gam0Drags_of_hd125 (dictLtStd_of_four121 Hp (idxMono101_of_psi120 Hp) HB H1 H2) HH
+
+/-! §122 の消費者を組み直したもの。`Hg` の代わりに `Gam0Hd125` を渡す。 -/
+
+theorem tightUp125 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) (HH : Gam0Hd125) :
+    TightUp119 := tightUp122 Hp HD (gam0Drags_of_hd125 HD HH)
+
+theorem cofDenseS1_false125 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (HH : Gam0Hd125) : ¬ CofDenseS1 :=
+  cofDenseS1_false122 Hp H2 HD (gam0Drags_of_hd125 HD HH)
+
+theorem gap125 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (HH : Gam0Hd125) : GapAtG0_107 := gap122 Hp H2 HD (gam0Drags_of_hd125 HD HH)
+
+theorem tight_of_four125 (Hp : PsiIdxOKStd172) (HB : IdxLeMix109) (H1 : VebIngF114)
+    (H2 : VebRest117) (HH : Gam0Hd125) : TightUp119 :=
+  tight_of_four122 Hp HB H1 H2 (gam0Drags_of_four125 Hp HB H1 H2 HH)
+
+end
+
+/-! ### §125.3 THE HUNT FOR A SECOND WITNESS — WHAT BLOCKS IT IS ONE ORDER FACT
+
+§111.5 の `Gam0Unique111` / `Gam0Drags111` を反証しにいった記録である。**反証は出て
+いない。**  出たのは三つ。
+
+  §125.3a **値が `Γ₀` の項は一意ではない — 標準性を外せば。**  `plus` の吸収
+          ([Rathjen, 1991] 2.6(ii)) と `wcnf` の尾 `ρ` を使うと、`ψ₀` の引数の
+          **後ろに** 運び手 `ψ₀(Ω^Ω)` を置くだけで値は `Γ₀` に戻る。前に置いた桁は
+          `1 ⊕ Γ₀ = Γ₀` で消えるか、畳み込みの Veblen 側の値 `v < Γ₀` として
+          `plus v Γ₀ = Γ₀` で消える。最小の証人は**大きさ 9**:
+
+              zAbs125  = ψ₀(Ω₁ ⊕ ψ₀(Ω^Ω))      `dict = Γ₀`、引数は標準、外側だけ標準でない
+              zPlus125 = ψ₀(1  ⊕ ψ₀(Ω^Ω))      `dict = Γ₀`、`1 + Γ₀ = Γ₀` そのもの
+
+          `gam0UniqueNoStd125_false` が「標準性を外した `Gam0Unique111`」を反証する。
+          §122 の `tightUpNoStd122_false` と同じ形の結果である。
+
+  §125.3b **止めているものは一箇所しかない。**  `carrierHead125` — `ψ₀(x)` が標準で
+          `Ω^Ω ∈ G(x,0)` なら、`x` の先頭成分の段は 0 ではない (`notHd085_carrier125`)。
+          運び手を後ろに置く形は、先頭に段 1 の桁を必ず要求する。ところがその桁は
+          `wcnf` で発火して `v ≥ Γ₀` を出すので、`plus v Γ₀ ≠ Γ₀` になる。逃げ道は
+          「`Ω^Ω ≤ a` なのに `dict a < Ω^Ω`」という**順序の逆転**ひとつだけである。
+
+  §125.3c **その一箇所を測った — 数え上げで。**  母集団は大きさ 16 までの標準・
+          段 1 以下の項 **346487 個** (E は 12 まで 9992 個、E14 は 14 まで 58239 個)。
+          `Ω^Ω ≤ a` を満たす主成分は **71950 個**あり、逆転は **0 個**。
+          `dict` の `Ω^Ω` の逆像も `Γ₀` の逆像も、大きさ 16 までちょうど 1 つずつ。
+          (`Sweep18.lean` は同じ数え上げを大きさ 18・**2096684 項**まで延ばした。
+          `dict z = Γ₀` はやはり大きさ 5 の 1 項だけである。)
+
+  §125.3.4 **同じ一箇所を作って測った — 数え上げでは届かない大きさで。**  段 1 の桁を
+          **7454 個**作った (大きさ 89 まで、§122 の第六の族の 16 をはるかに超える)。
+          `Ω^Ω ≤ a` は **5955 個**で成り立ち、逆転は **0 個**。そして
+          `ψ₀(a ⊕ ψ₀(Ω^Ω))` は、**先頭の条件を通る 5955 個では値が `Γ₀` にならず、
+          値が `Γ₀` になる 210 個では先頭の条件を通らない** — 重なりは 0 個である。
+          §125.3b の二つの要求はこの母集団の上でちょうど排反している。
+
+**測定の母集団について (§111.7 の失敗様式の修理)。**  §111.7 は「9992 項のうち前提
+`dict z = G094` が 1 回だけ発火した」と書いた。仮説の見えない母集団である。ここでは
+前提が**発火する項を作った** — `absFam125` の 6483 項のうち **2933 項**が
+`dict z = G094` を満たし、そのうち **1656 項**は `ψ₀` の引数まで標準で、
+**2933 項すべてが `Gam0Drags111` の結論を満たす**。二桁の族 `absFam2_125` でも
+1593/1593。**`Gam0Drags111` は、前提が本当に発火する 4526 項の上で成り立っている。**
+
+**まだ定理ではない。**  §125.3b の還元は紙の議論で、Lean にあるのは
+`carrierHead125` / `notHd085_carrier125` だけである。残りは `NoInvOO125` —
+`dict` が `Ω^Ω` のところで順序を保つこと。それは `DictLtStd92` の一点版である。
+**`Gam0Unique111` も `Gam0Drags111` も反証できなかった。**  行 326 の密度の側は
+`Gam0Drags111` に懸かったままで、この節はそれを外していない。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+set_option maxRecDepth 1000000
+
+/-! #### §125.3a Two witnesses of value `Γ₀` -/
+
+/-- **吸収の証人。**  `ψ₀(Ω₁ ⊕ ψ₀(Ω^Ω))` — 前の桁 `Ω₁` は `wcnf` の Veblen 側で
+    `v = φ̄(1,0) = ε₀ < Γ₀` になり、`plus v Γ₀ = Γ₀` で消える。 -/
+def zAbs125 : BT := BT.D 0 (BT.sum (BT.Om 1) (BT.D 0 bOO94))
+
+/-- **`plus` そのものの証人。**  `ψ₀(1 ⊕ ψ₀(Ω^Ω))` — `1 + Γ₀ = Γ₀`。 -/
+def zPlus125 : BT := BT.D 0 (BT.sum BT.one (BT.D 0 bOO94))
+
+theorem dict_zAbs125 : dict zAbs125 = G094 := rfl
+theorem dict_zPlus125 : dict zPlus125 = G094 := rfl
+theorem btLe1_zAbs125 : btLe72 1 zAbs125 = true := rfl
+theorem btLe1_zPlus125 : btLe72 1 zPlus125 = true := rfl
+theorem notStd_zAbs125 : BT.isStd zAbs125 = false := rfl
+theorem notStd_zPlus125 : BT.isStd zPlus125 = false := rfl
+
+/-- **`zAbs125` は外側の `ψ₀` だけで標準性を外れる。**  引数は標準である。 -/
+theorem std_arg_zAbs125 : BT.isStd (BT.sum (BT.Om 1) (BT.D 0 bOO94)) = true := rfl
+
+/-- 外れる理由は係数の条件ひとつ — `Ω^Ω` が引数より小さくない。 -/
+theorem why_notStd_zAbs125 : BT.lt bOO94 (BT.sum (BT.Om 1) (BT.D 0 bOO94)) = false := rfl
+
+theorem ne_zAbs125 : zAbs125 ≠ bTowG98 0 := by decide
+theorem ne_zPlus125 : zPlus125 ≠ bTowG98 0 := by decide
+
+theorem size_zAbs125 : BT.size zAbs125 = 9 := rfl
+theorem size_zPlus125 : BT.size zPlus125 = 9 := rfl
+
+/-- `Gam0Unique111` から標準性を外したもの。 -/
+def Gam0UniqueNoStd125 : Prop :=
+  ∀ z : BT, btLe72 1 z = true → dict z = G094 → z = bTowG98 0
+
+/-- **`Gam0Unique111` の標準性は運んでいる。**  外すと吸収の族が反例になる。 -/
+theorem gam0UniqueNoStd125_false : ¬ Gam0UniqueNoStd125 := fun H =>
+  ne_zAbs125 (H zAbs125 btLe1_zAbs125 dict_zAbs125)
+
+/-! #### §125.3b The drag conclusion survives on the witnesses -/
+
+theorem hd085_zAbs125 : Hd085 zAbs125 := by
+  intro z hz
+  exact ⟨BT.sum (BT.Om 1) (BT.D 0 bOO94), List.mem_singleton.mp hz⟩
+
+theorem hd085_zPlus125 : Hd085 zPlus125 := by
+  intro z hz
+  exact ⟨BT.sum BT.one (BT.D 0 bOO94), List.mem_singleton.mp hz⟩
+
+theorem memOO_absArg125 (a : BT) : bOO94 ∈ BT.GB 0 (BT.sum a (BT.D 0 bOO94)) := by
+  show bOO94 ∈ BT.GB 0 a ++ (bOO94 :: BT.GB 0 bOO94)
+  exact List.mem_append.mpr (Or.inr (List.Mem.head _))
+
+/-- **`Gam0Drags111` の結論は証人の上で成り立つ。**  反例ではない。 -/
+theorem drags_zAbs125 : Hd085 zAbs125 ∧ ∃ e ∈ BT.GB 0 zAbs125, BT.le bOO94 e = true :=
+  ⟨hd085_zAbs125, ⟨bOO94, List.Mem.tail _ (memOO_absArg125 (BT.Om 1)), bt_le_refl108 bOO94⟩⟩
+
+theorem drags_zPlus125 : Hd085 zPlus125 ∧ ∃ e ∈ BT.GB 0 zPlus125, BT.le bOO94 e = true :=
+  ⟨hd085_zPlus125, ⟨bOO94, List.Mem.tail _ (memOO_absArg125 BT.one), bt_le_refl108 bOO94⟩⟩
+
+/-! #### §125.3c What blocks the family — a theorem, not a measurement -/
+
+/-- 先頭の成分の段は 0 ではない — `Ω^Ω` が `ψ₀` の引数より小さいことの内訳。 -/
+theorem headHi_of_ltOO125 : ∀ (n : Nat) (l : List BT),
+    BT.ltL n (BT.toL bOO94) l = true → ∃ v w tl, l = BT.D v w :: tl ∧ v ≠ 0
+  | 0, l, h => by
+      have e : BT.ltL 0 (BT.toL bOO94) l = false := rfl
+      rw [e] at h; exact Bool.noConfusion h
+  | n + 1, [], h => by
+      have e : BT.ltL (n + 1) (BT.toL bOO94) ([] : List BT) = false := rfl
+      rw [e] at h; exact Bool.noConfusion h
+  | n + 1, BT.zero :: qs, h => by
+      have e : BT.ltL (n + 1) (BT.toL bOO94) (BT.zero :: qs) = false := rfl
+      rw [e] at h; exact Bool.noConfusion h
+  | n + 1, BT.sum a b :: qs, h => by
+      have e : BT.ltL (n + 1) (BT.toL bOO94) (BT.sum a b :: qs) = false := rfl
+      rw [e] at h; exact Bool.noConfusion h
+  | n + 1, BT.D 0 c :: qs, h => by
+      have e : BT.ltL (n + 1) (BT.toL bOO94) (BT.D 0 c :: qs) = false := rfl
+      rw [e] at h; exact Bool.noConfusion h
+  | _ + 1, BT.D (v + 1) c :: qs, _ => ⟨v + 1, c, qs, rfl, Nat.succ_ne_zero v⟩
+
+/-- **§125.3b の主定理。**  `ψ₀(x)` が標準で `Ω^Ω ∈ G(x,0)` なら、`x` の先頭成分は
+    段 1 以上の桁である。運び手を後ろに置く形は、必ず段 1 の桁を先頭に呼ぶ。 -/
+theorem carrierHead125 {x : BT} (hs : BT.isStd (BT.D 0 x) = true)
+    (hm : bOO94 ∈ BT.GB 0 x) : ∃ v w tl, BT.toL x = BT.D v w :: tl ∧ v ≠ 0 :=
+  headHi_of_ltOO125 _ _ ((std0_split82 hs).2 bOO94 hm)
+
+/-- 同じことを `Hd085` で。 -/
+theorem notHd085_carrier125 {x : BT} (hs : BT.isStd (BT.D 0 x) = true)
+    (hm : bOO94 ∈ BT.GB 0 x) : ¬ Hd085 x := by
+  obtain ⟨v, w, tl, he, hv⟩ := carrierHead125 hs hm
+  intro hd
+  obtain ⟨c, hc⟩ := hd (BT.D v w) (by rw [he]; exact List.Mem.head tl)
+  injection hc with hv0 _
+  exact hv hv0
+
+/-- 吸収の族に当てた形 — どの `a` でも先頭は段 1 の桁でなければならない。 -/
+theorem absFam_head125 (a : BT)
+    (hs : BT.isStd (BT.D 0 (BT.sum a (BT.D 0 bOO94))) = true) :
+    ∃ v w tl, BT.toL (BT.sum a (BT.D 0 bOO94)) = BT.D v w :: tl ∧ v ≠ 0 :=
+  carrierHead125 hs (memOO_absArg125 a)
+
+/-- **残った一点。**  `dict` が `Ω^Ω` のところで順序を保つこと。**証明しない。**
+    これが成り立てば §125.3b の議論で `Gam0Unique111` が閉じる。 -/
+def NoInvOO125 : Prop := ∀ a : BT, btLe72 1 a = true → BT.isStd a = true →
+    BT.isP a = true → BT.le bOO94 a = true → le (dict bOO94) (dict a) = true
+
+/-! #### §125.3d Measurement (frozen)
+
+**構成を先に書く。**  母集団は三つ。ひとつは数え上げ、ふたつは作ったもの。
+
+    E16   大きさ 16 までの標準・段 1 以下の項を全部 (`lvBT108 15`、346487 項)。
+          `isStd` は部分項へ遺伝するので数え落としはない。E は 12 まで 9992 項、
+          E14 は 14 まで 58239 項なので、これは E14 の 5.95 倍である。
+    A     吸収の族 `absFam125` — `ψ₀(a ⊕ ψ₀(Ω^Ω))`、`a` は E の主成分 6483 個。
+          **標準性で濾さない。**  濾さないことがこの節の要点である。
+    A2    同じ形の二桁版 `absFam2_125` — `ψ₀(a ⊕ b ⊕ ψ₀(Ω^Ω))`、2500 項。
+    A3    **対照** — 運び手を**前**に置いた `ψ₀(Ω^Ω ⊕ a)`、6483 項。 -/
+
+def prinE125 : List BT := allStd108.filter BT.isP
+def absArg125 : List BT := prinE125.map fun a => BT.sum a (BT.D 0 bOO94)
+def absFam125 : List BT := absArg125.map (BT.D 0 ·)
+def prinS125 : List BT := allStd108.filter fun a => BT.isP a && BT.size a <= 6
+def absFam2_125 : List BT :=
+  prinS125.flatMap fun a => prinS125.map fun b => BT.D 0 (BT.sum a (BT.sum b (BT.D 0 bOO94)))
+def absFam3_125 : List BT := prinE125.map fun a => BT.D 0 (BT.sum bOO94 a)
+
+/-- `Gam0Drags111` の結論の判定器。 -/
+def dragB125 (z : BT) : Bool := hd085B z && (BT.GB 0 z).any (fun e => BT.le bOO94 e)
+
+/-! **A — 前提が発火する母集団は作れる。**  6483 項のうち **2933 項**で
+    `dict z = G094` が成り立ち、**1656 項**は `ψ₀` の引数まで標準で、
+    外側の `ψ₀` ひとつで標準性を外れる。標準なものは **0 項** (§125.3b のとおり)。
+    そして **2933 項すべてが `Gam0Drags111` の結論を満たす**。 -/
+#guard (prinE125.length, absFam125.length,
+        absFam125.countP fun z => dict z == G094,
+        absFam125.countP fun z => dict z == G094 && dragB125 z,
+        absFam125.countP fun z => dict z == G094 && BT.isStd z,
+        absArg125.countP fun x => dict (BT.D 0 x) == G094 && BT.isStd x)
+    == (6483, 6483, 2933, 2933, 0, 1656)
+
+/-! **A2 — 桁を二つ前に置いても同じ。**  1593/2500 が値 `Γ₀`、結論は 1593/1593、
+    標準は 0。 -/
+#guard (absFam2_125.length,
+        absFam2_125.countP fun z => dict z == G094,
+        absFam2_125.countP fun z => dict z == G094 && dragB125 z,
+        absFam2_125.countP fun z => dict z == G094 && BT.isStd z)
+    == (2500, 1593, 1593, 0)
+
+/-! **A3 — 運び手を前に置く修理は値を外す。**  標準なものは 3033 項あるが、
+    値が `Γ₀` のものは **0 項** — 発火した畳み込みは `Γ₀` を返し、そのうしろに
+    `ρ` が付くので `Γ₀ ⊕ ρ ≠ Γ₀` になる。**位置が全部である。** -/
+#guard (absFam3_125.length, absFam3_125.countP fun z => dict z == G094,
+        absFam3_125.countP BT.isStd) == (6483, 0, 3033)
+
+/-- 各大きさで (項数, `dict z = Γ₀`, `dict z = Ω^Ω`, `Ω^Ω ≤ z` の主成分, 順序の逆転)。 -/
+def scan125 (L : List BT) : Nat × Nat × Nat × Nat × Nat :=
+  let w := dict bOO94
+  L.foldl (init := (0, 0, 0, 0, 0)) fun s z =>
+    let d := dict z
+    let hi := BT.isP z && BT.le bOO94 z
+    (s.1 + 1,
+     s.2.1 + (if d == G094 then 1 else 0),
+     s.2.2.1 + (if d == w then 1 else 0),
+     s.2.2.2.1 + (if hi then 1 else 0),
+     s.2.2.2.2 + (if (hi && lt d w) || (BT.isP z && BT.lt z bOO94 && le w d) then 1 else 0))
+
+/-! **E16 — 数え上げ、大きさ 1 から 16 まで。**  `Γ₀` の逆像も `Ω^Ω` の逆像も
+    ちょうど 1 つずつ (大きさ 5 と 4)。**そして `Ω^Ω ≤ a` の主成分 71950 個の上で
+    順序の逆転は 0 個** — §125.3b が残した一点は、正しい母集団の上で測って空である。
+    §111.7 は前提が 1 回しか発火しない母集団を測った。ここは違う。 -/
+#guard ((lvBT108 15).map scan125) ==
+  [(1, 0, 0, 0, 0), (2, 0, 0, 0, 0), (4, 0, 0, 0, 0), (7, 0, 1, 1, 0),
+   (15, 1, 0, 2, 0), (33, 0, 0, 4, 0), (79, 0, 0, 11, 0), (184, 0, 0, 29, 0),
+   (432, 0, 0, 72, 0), (1013, 0, 0, 181, 0), (2418, 0, 0, 446, 0), (5804, 0, 0, 1109, 0),
+   (14063, 0, 0, 2764, 0), (34184, 0, 0, 6908, 0), (83497, 0, 0, 17251, 0),
+   (204751, 0, 0, 43172, 0)]
+
+/-! #### §125.3e The built digit pool — do not enumerate, build
+
+数え上げは大きさ 16 で止まる。§122 の第六の族の第一項は大きさ 16 だった。ここでは
+段 1 の桁を **大きさ 89 まで**作って、§125.3b が残した一点をそこで測る。 -/
+
+def seed125 : List BT :=
+  [BT.zero, BT.one, BT.Om 1, BT.D 1 (BT.D 1 BT.zero), bOO94, BT.D 0 bOO94,
+   bTowG98 1, bTowG98 2, cSix122 (bTowG98 0), BT.D 1 (BT.D 1 (BT.D 0 bOO94)),
+   BT.D 1 (BT.sum (BT.Om 1) (BT.Om 1)), BT.sum bOO94 bOO94,
+   BT.D 1 (BT.D 1 (BT.sum (BT.D 1 BT.zero) BT.one))]
+
+def grow125 (P : List BT) : List BT :=
+  ((P.map (BT.D 1 ·)) ++ (P.map (BT.D 0 ·)) ++
+   (P.flatMap fun a => P.map fun b => BT.sum a b)).filter
+     fun t => btLe72 1 t && BT.isStd t
+
+def pool125 : List BT := (seed125 ++ grow125 seed125).eraseDups
+def poolB125 : List BT := (pool125 ++ grow125 pool125).eraseDups
+
+/-- 作った段 1 の桁。 -/
+def dig125 : List BT :=
+  ((poolB125.map (BT.D 1 ·)) ++
+   (poolB125.flatMap fun a => pool125.map fun b => BT.D 1 (BT.sum a b))).filter
+     fun t => btLe72 1 t && BT.isStd t
+
+/-- 運び手を後ろに置いた `ψ₀` の引数。 -/
+def carrArg125 (a : BT) : BT := BT.sum a (BT.D 0 bOO94)
+
+/-! **母集団の大きさ。**  7454 個の段 1 の桁、大きさは 89 まで。 -/
+#guard (pool125.length, poolB125.length, dig125.length,
+        (dig125.map BT.size).foldl max 0) == (87, 1160, 7454, 89)
+
+/-! **順序の逆転は作っても出ない。**  `Ω^Ω ≤ a` は 5955 個で成り立ち、
+    `dict a < Ω^Ω` になるものは **0 個**。逆向きも 0 個。 -/
+#guard (dig125.countP fun a => BT.le bOO94 a,
+        dig125.countP fun a => BT.le bOO94 a && lt (dict a) (dict bOO94),
+        dig125.countP fun a => BT.lt a bOO94 && le (dict bOO94) (dict a))
+    == (5955, 0, 0)
+
+/-! **二つの要求はちょうど排反している。**  `carrierHead125` の必要条件
+    `Ω^Ω < a ⊕ ψ₀(Ω^Ω)` を通るのは 5955 個、値が `Γ₀` になるのは 210 個、
+    **両方を満たすものは 0 個**。標準で値が `Γ₀` のものも 0 個。 -/
+#guard (dig125.countP fun a => BT.lt bOO94 (carrArg125 a),
+        dig125.countP fun a => dict (BT.D 0 (carrArg125 a)) == G094,
+        dig125.countP fun a => BT.lt bOO94 (carrArg125 a)
+                               && dict (BT.D 0 (carrArg125 a)) == G094,
+        dig125.countP fun a => BT.isStd (BT.D 0 (carrArg125 a))
+                               && dict (BT.D 0 (carrArg125 a)) == G094)
+    == (5955, 210, 0, 0)
+
+/-! **作った母集団のなかで値が `Γ₀` の標準な `ψ₀` の項は `ψ₀(Ω^Ω)` ひとつ。** -/
+#guard (poolB125.map (BT.D 0 ·)).filter (fun z => BT.isStd z && dict z == G094)
+    == [bTowG98 0]
+
+end
+
+/-! ### §125.4 THE COMPOSITION — `Gam0Drags111` LEAVES, AND THE CERTIFICATE DIES WITH IT
+
+§125.1 は第一の連言を `PsiIdxOKStd172` から出し、§125.2 は第二の連言を `DictLtStd92` から
+出す。二つを繋ぐと `Gam0Drags111` は仮定ではなくなる。そして §121 が `DictLtStd92` を
+326 行がすでに抱えている三つから出すので、条項は一つも増えない。
+
+その先が問題である。§122 は `Gam0Drags111` から `¬ DictDenseMid107` を出していた。
+いま `Gam0Drags111` はその三つから出る。ところが `certIn_t326_124` はその三つ**と**
+`DictDenseMid107` を同時に取る。**両立しない。** -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **§125 の主定理 (1)。**  第一の連言は `PsiIdxOKStd172` だけで出る (§125.1a)。 -/
+theorem gam0Hd_of_psi125 (Hp : PsiIdxOKStd172) : Gam0Hd125 :=
+  fun _ hb hs hd => hd085_of_gam0_125 Hp hb hs hd
+
+/-- **§125 の主定理 (2)。**  `Gam0Drags111` は条項ではない — 二つの門から出る。 -/
+theorem gam0Drags125 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) : Gam0Drags111 :=
+  gam0Drags_of_hd125 HD (gam0Hd_of_psi125 Hp)
+
+/-- §121 の `DictLtStd92`、326 行の三条項から。 -/
+theorem dictLtStd125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    DictLtStd92 := dictLtStd121 Hp (hiMono_of_two124 Hp H1 H2)
+
+/-- 同じ三つから `DictLtA74` も出る (§81 と §99)。 -/
+theorem dictLtA74_125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    DictLtA74 :=
+  dictLtA74_81 Hp (collapseMono0Hi_of_hiMono99 Hp (hiMono_of_two124 Hp H1 H2))
+
+/-- **§125 の主定理 (3)。**  326 行がすでに抱えている三つだけで `Gam0Drags111` が出る。
+    §111.5 が命名し §111.7 が測り §122 が全体を乗せた条項は、条項ではなかった。 -/
+theorem gam0Drags_of_three125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    Gam0Drags111 :=
+  gam0Drags125 Hp (dictLtStd125 Hp H1 H2)
+
+/-! **五つの密度の主張は、326 行の仮定だけで偽になる。** -/
+
+theorem denseMid107_false125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    ¬ DictDenseMid107 :=
+  denseMid107_false122 Hp (dictLtA74_125 Hp H1 H2) (dictLtStd125 Hp H1 H2)
+    (gam0Drags_of_three125 Hp H1 H2)
+
+theorem denseMid102_false125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    ¬ DictDenseMid102 :=
+  denseMid102_false122 Hp (dictLtA74_125 Hp H1 H2) (dictLtStd125 Hp H1 H2)
+    (gam0Drags_of_three125 Hp H1 H2)
+
+theorem dictDenseHi94_false125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    ¬ DictDenseHi94 :=
+  dictDenseHi94_false122 Hp (dictLtA74_125 Hp H1 H2) (dictLtStd125 Hp H1 H2)
+    (gam0Drags_of_three125 Hp H1 H2)
+
+theorem dictDense85_false125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    ¬ DictDense85 :=
+  dictDense85_false122 Hp (dictLtA74_125 Hp H1 H2) (dictLtStd125 Hp H1 H2)
+    (gam0Drags_of_three125 Hp H1 H2)
+
+theorem cofDenseS1_false_three125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114)
+    (H2 : VebRest117) : ¬ CofDenseS1 :=
+  cofDenseS1_false122 Hp (dictLtA74_125 Hp H1 H2) (dictLtStd125 Hp H1 H2)
+    (gam0Drags_of_three125 Hp H1 H2)
+
+/-- §108 と §111 と §113 の条項も、同じ三つから出る。 -/
+theorem gapAtG0_125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    GapAtG0_107 :=
+  gap122 Hp (dictLtA74_125 Hp H1 H2) (dictLtStd125 Hp H1 H2)
+    (gam0Drags_of_three125 Hp H1 H2)
+
+theorem tightUp_of_three125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117) :
+    TightUp119 :=
+  tightUp122 Hp (dictLtStd125 Hp H1 H2) (gam0Drags_of_three125 Hp H1 H2)
+
+/-- **§125 の帰結。**  `certIn_t326_124` の第一・第二・第三の仮定は、その第五の仮定を
+    偽にする。 -/
+theorem certHyp_absurd125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117)
+    (HD3 : DictDenseMid107) : False :=
+  denseMid107_false125 Hp H1 H2 HD3
+
+end
+
+/-! ### §125.5 The same thing written on §124's own argument list
+
+`certIn_t326_124` の引数をそのまま並べて `False` を出す。証明書が空虚であるとは
+この形のことである。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- **326 行の証明書は適用できない。**  `certIn_t326_124` と同じ仮定を取り、`False` を
+    返す。仮定が両立しないので、あの証明書からは何も出ない。 -/
+theorem certIn_t326_vacuous125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : VebRest117)
+    (_HD1 : DictOntoMidOpen103) (HD3 : DictDenseMid107) (_HD4 : DictDenseAbove107)
+    (_hacc : Acc Evidence.WF.RT (vOf t326)) : False :=
+  certHyp_absurd125 Hp H1 H2 HD3
+
+end
 end Evidence.Region
