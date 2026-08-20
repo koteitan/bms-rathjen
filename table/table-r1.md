@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.8.57
+バージョン: v0.8.58
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -82,7 +82,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L241) | $`\psi_{\Omega}(0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ | $`\Gamma_0`$ |  | [fₙ](../lean/Rows/G7.lean#L6) | ψ 項の初登場。旧値 φ̄(3,0) を訂正 |
 | [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L245) | $`\psi_{\Omega}(0)+1`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0))))+\psi_{0}(0)`$ | $`\Gamma_0+1`$ |  |  |  |
 | [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L247) | $`\bar{\varphi}(0,\psi_{\Omega}(0))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0)))+\psi_{0}(0))`$ | $`\omega^{\Gamma_0+1}`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L259) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ | $`\psi_0(\Omega_2)`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正。🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)。外部は ψ_Ω(φ̄(1,Ω)) と読む |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L259) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ | $`\psi_0(\Omega_2)`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正。🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。正しい値は ψ_Ω(φ̄(1,Ω)) (§140、測定であって証明ではない)。詳細は diff.md |
 | [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L263) | $`\bar{\varphi}(1,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(0))`$ | $`\varepsilon_{\psi_0(\Omega_2)+1}`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)`](../lean/Rows/TM.lean#L266) | $`\bar{\varphi}(2,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0)))`$ | $`\zeta_{\psi_0(\Omega_2)+1}`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L269) | $`\psi_{\Omega}(Z(1)+1)`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ | $`\Gamma_{\psi_0(\Omega_2)+1}`$ |  | [fₙ](../lean/Rows/G12.lean#L50) |  |
@@ -92,18 +92,18 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,2)(2,0)(2,0)`](../lean/Rows/TM.lean#L285) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(0)+\psi_{0}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+2))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,0)(3,0)`](../lean/Rows/TM.lean#L289) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{0}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\omega))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,0)(3,1)`](../lean/Rows/TM.lean#L293) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{1}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\varepsilon_0))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L297) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137) |
+| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L297) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。正しい値は ψ_Ω(Z1 ⊕ φ̄(0, φ̄(1,Ω) ⊕ ψ_Ω(φ̄(1,Ω)))) (§140、測定であって証明ではない)。詳細は diff.md |
 | [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L303) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,1)(2,1)`](../lean/Rows/TM.lean#L307) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1\cdot 2))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,1)(3,1)`](../lean/Rows/TM.lean#L311) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(0,\Omega+\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_1)))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L316) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_2)))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L321) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 2)`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | 旧値 φ̄(ω²,0) を訂正。🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137) |
-| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L326) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 3)`$ |  |  | 🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137) |
+| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L321) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 2)`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | 旧値 φ̄(ω²,0) を訂正。🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。正しい値は ψ_Ω(Z1 ⊕ φ̄(1, Ω⊕1)) (§140、測定であって証明ではない)。詳細は diff.md |
+| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L326) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 3)`$ |  |  | 🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。正しい値は ψ_Ω(Z1 ⊕ Z1 ⊕ φ̄(1, Ω⊕1⊕1)) (§140、測定であって証明ではない)。詳細は diff.md |
 | [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L331) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)))`$ | $`\psi_0(\psi_2(1))`$ |  | [fₙ](../lean/Rows/Selected.lean#L3557) | 旧値 φ̄(ω^ω,0) を訂正 |
 | [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L336) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+1))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)+\psi_{0}(0)))`$ | $`\psi_0(\psi_2(2))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L339) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{0}(0))))`$ | $`\psi_0(\psi_2(\omega))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L342) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{1}(0))))`$ | $`\psi_0(\psi_2(\varepsilon_0))`$ |  |  |  |
-| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L345) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\psi_2(\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい** — 基本列が外部の独立実装のものと一致しない (diff.md §137)。外部は ψ_Ω(φ̄(0, Ω₂ + ψ_Ω(φ̄(1,Ω)))) と読む |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L345) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\psi_2(\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。正しい値は ψ_Ω(φ̄(0, Z1 ⊕ ψ_Ω(φ̄(1,Ω)))) (§140、測定であって証明ではない)。詳細は diff.md |
 | [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L350) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ | $`\psi_0(\psi_2(\Omega_1))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) |  |
 
 ## 列の意味
