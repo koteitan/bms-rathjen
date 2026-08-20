@@ -10334,4 +10334,916 @@ set_option maxRecDepth 100000 in
 
 end
 
+/-! ## §123 THE DIVISION SURVIVES A VEBLEN TAIL ON THE LEFT — HALF OF `VebIngF114` IS A
+       THEOREM, AND `§117` GAINS NOTHING HERE
+
+§114 split §109's hard half at the shape of `b`'s fold and handed on two clauses.  `VebRest114`
+got §117 and `IdxMono101` got §120.  **`VebIngF114` has had no section of its own**, and its
+statement is a decidable condition on ONE term against ONE target:
+
+    `VebIng114 (dict a) (ψ_{Ω₁} j_b)` = every non-firing pair's exponent and coefficient
+      below the target,  AND  `ψ_{Ω₁}` of `a`'s own collapse index below the target.
+
+**§123 proves the second conjunct and shows the first is the whole clause.**  `VebIngF114` is
+NOT proved and NOT refuted; what §123 does is replace it by `VebPairs123` — the same statement
+with the index conjunct deleted — and prove that the deletion is sound.  §123.4's
+`vebIngF_iff_pairs123` states the honest half of that in one line: the two clauses are
+**equivalent**, so §123 removes a conjunct, not a residue.
+
+WHAT IS PROVED.
+
+  §123.1  **THE DIVISION SURVIVES A PREFIX** (`preDiv123`).  §120.1 proved
+          `ω^(Ω₁·Ω₁)·ΣΔ = X` when every base-`Ω₁` pair of `X` fires.  Run the same induction
+          on the FIRING PREFIX alone and the equality becomes `≤`: `wcnf_cons_take123` is
+          §120.1's `wcnf_cons_sum120` with "every pair fires" cut down to "the head pair
+          fires" — which is all its two branches ever read — and the non-firing head simply
+          empties the prefix.  `ltM_sumDD123` supplies the size bound §120 got for free from
+          `le_sumDD_wcnf112`, which does not survive the cut.
+
+  §123.2  **THE INDEX IS THE PREFIX'S INDEX** (`preIdx123`, `foldFst_take123`).  §114.2's
+          `fold_fst_veb114` says the Veblen steps never touch the index slot, so `idxF88` is
+          the prefix's fold; then §120.2's `foldNone120` and the `⊖ 1` payback give
+          `1 ⊕ j = ΣΔ(prefix)` **without `lastFire92`**.
+
+  §123.3  **THE CLAUSE** (`idxLtMixF123`).  Put the two together against a `b` that all-fires:
+          `ω^(Ω₁·Ω₁)·(1 ⊕ j_a) ≤ hi a < hi b = ω^(Ω₁·Ω₁)·(1 ⊕ j_b)`, and the contrapositive
+          of two non-strict maps gives `j_a < j_b` — §120.3's argument with `=` weakened to
+          `≤` on one side.  **This is the route §120.4 named and declined**: "with that,
+          `lastFire92 (dict a)` could be replaced by §109.2's free `idxF88 0 (dict a) ≠ none`
+          … §120 does not run it: the clause it was asked to prove does not ask for it."  The
+          clause §123 was asked to prove does ask for it.  `idxMono_noFireA123` is §120's own
+          `IdxMono101` with the `a`-side firing hypothesis gone, which §120.5 measured as
+          breaking 0 times in 388 pairs and claimed nothing about.
+
+  §123.4  **THE SPLIT** (`vebIdx_true123`, `vebIngF_of_pairs123`).  `VebIng114` is
+          `vebPair123 && vebIdx123` (`vebIng_eq123`, `rfl`), the second conjunct is §123.3,
+          and `VebPairs123` is the first alone.  `hiMono_of_three123` and `certIn_t326_123`
+          re-hang `HiMono89` and row 326.  `vebIngF_iff_pairs123` : the two clauses are
+          equivalent — **§123 moves no residue.**
+
+  §123.5  **§117's TOOL GIVES NOTHING HERE, AND THAT IS A THEOREM** (`tgtOK_false123`,
+          `closed_eq123`).  §117 wrote that `hiMono_closed117` "could also be pointed at
+          `VebIngF114`'s half but that doing so was out of its scope."  Pointing it there is
+          free and worth nothing: when `b` all-fires, cutting its pair list anywhere leaves
+          either a firing pair in the tail or the whole list, and the value at the end is a
+          `ψ_{Ω₁}`, never a `φ̄` — so `tgtOK117 a b k = false` for EVERY `k`, and
+          `closed117 a b` collapses to `VebIng114` itself.  With §123.4 it collapses further,
+          to `vebPair123` (`closed_eq_pairs123`).
+
+  §123.6  the negatives and the level honesty; §123.7 the measurement.
+
+WHAT IS **NOT** CLAIMED.  **`VebIngF114` is NOT proved.**  `VebPairs123` is unproved, and by
+`vebIngF_iff_pairs123` it is exactly as strong as `VebIngF114` was.  What §123 delivers is
+that the clause's two conjuncts are not of equal difficulty: one is a theorem of the same
+hypotheses, the other is the whole of it, and what the other needs is the `BT`-side fact §114
+named — a `K`-standard `a` below such a `b` cannot name an exponent or a coefficient at or
+above `ψ_{Ω₁}(j_b)` — which is §90.1 translated into 𝔗(M), and §90 says plainly that this
+translation is what nobody has.  `IdxLeMix109`, `VebRest117`, `PsiIdxOKStd172`,
+`DictOntoMidOpen103`, `DictDenseMid107`, `DictDenseAbove107` are untouched.  Row 326 rests on
+`PsiIdxOKStd172`, `IdxLeMix109`, **`VebPairs123`**, `VebRest117`, `DictOntoMidOpen103`,
+`DictDenseMid107`, `DictDenseAbove107` (`certIn_t326_123`).
+
+**THE LEDGER, thirteenth entry, and it is against §114 — mildly.**  `VebIng114` was written as
+one decidable condition and handed on as one clause.  Half of it never needed a clause: the
+index conjunct follows from the hypotheses `VebIngF114` already carries, by machinery that
+§120 built for a different branch and explicitly declined to generalise.  **Check what your
+statement READS**: §114's own measurement said the condition and the conclusion "agree exactly"
+on the all-fire class, which is true and which hid that one of its two conjuncts is free.
+
+**WHERE §123 STOPPED, PRECISELY.**  At `vebPair123`.  §114's built reversal `revA114` fails it
+at the exponent (`Γ₀ ⊕ 1 ≥ Γ₀ = ψ_{Ω₁}(0)`) and satisfies the index conjunct vacuously — it
+has no collapse index at all — so §123's theorem does not touch the witness that made the
+clause necessary, and §123.6 says so in the witness's own numbers.
+
+WHAT THE MEASUREMENT SAYS (§123.7 gives the construction).  §114.5's three seed lines plus a
+fourth BUILT for this section — a FIRING PREFIX carrying a VEBLEN TAIL, which is the exact
+shape §123.3 reads and §120.3 cannot — 149 terms with their two-term sums, nothing filtered.
+
+  * **The proved conjunct is not vacuous and not idle.**  Of the 815 residual pairs in the
+    all-fire half, **325 have an `a` with a collapse index**, i.e. 325 where §123.4's
+    conclusion says something and §120.3's theorem cannot be applied at all.  §114's own
+    population already had 119 of them; the fourth line multiplies that by 2.7 but was **not**
+    needed to see the shape — that is reported, not hidden.
+  * **The split lands where it says.**  On the same 815 pairs `VebIng114` fails 15 times,
+    **all 15 in `vebPair123` and 0 in `vebIdx123`** — as it must, `vebIdx123` being a theorem
+    there.  On the 549 `K`-standard ones nothing fails at all.
+  * **And one class over the other conjunct is the one that fails.**  Where `b` has an index
+    but a Veblen tail — §117's class, where §123.3's hypothesis is absent — `vebIdx123` fails
+    **96** times in 2255 pairs and `vebPair123` 106 times.  `sepR114` is the smallest of the
+    96, and it is `K`-standard on both sides.  **The `b`-side all-fire hypothesis is exactly
+    what makes §123.4 a theorem**, and dropping it makes the statement false.
+  * **§117's route fires 0 times here and 1154 times next door.**  `tgtOK117` is true at no
+    `k` on any of the 815 all-fire pairs, and true on 1154 of the 2850 other residual pairs.
+    Not a sweep that could not see its subject: `closed117` equals `VebIng114` on all 815 and
+    is true on 800 of them.
+  * **The breaks have no index.**  All 15 breaks in the all-fire half have an `a` with NO
+    collapse index, so §123's theorem is vacuous at every one of them — the residue is in
+    `vebPair123` and nowhere else.  14 of the 15 reverse the order.
+  * **The induction is not about singletons, and the merge branch is not idle.**  64 terms
+    have two or more base-`Ω₁` pairs and 10 have three or more; **10 carry a firing prefix of
+    length ≥ 2 under a Veblen tail** (the shape §123.1's induction actually walks), and
+    `wcnf` really merges components on 19, four of them in that class.
+  * **Size, checked.**  A second population up to 49 symbols (272 terms, against 31 and 149)
+    has 3383 pairs in the all-fire half, **1843 of them with an `a`-side index**, and still
+    **0 `vebIdx123` failures and 0 `tgtOK117` firings**; 29 terms carry three or more pairs
+    where the first population had 10.  Depth is added; behaviour is not. -/
+
+/-! ### §123.1 発火する前置きだけの割り算 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- 発火する対の前置き。 -/
+abbrev fireTake123 (l : List (Term × Term)) : List (Term × Term) :=
+  l.takeWhile (fun z => le (reg 1) z.1)
+
+/-- 発火する頭は前置きに入る。 -/
+theorem fireTake_cons123 (ac : Term × Term) (t : List (Term × Term))
+    (h : le (reg 1) ac.1 = true) : fireTake123 (ac :: t) = ac :: fireTake123 t :=
+  List.takeWhile_cons_of_pos h
+
+/-- 発火しない頭で前置きは切れる。 -/
+theorem fireTake_cons_neg123 (ac : Term × Term) (t : List (Term × Term))
+    (h : le (reg 1) ac.1 = false) : fireTake123 (ac :: t) = [] :=
+  List.takeWhile_cons_of_neg (by rw [h]; exact Bool.noConfusion)
+
+/-- 前置きの元は元の列の元。 -/
+theorem mem_of_takeWhile123 {a : Type} (p : a → Bool) : ∀ (l : List a) (x : a),
+    x ∈ l.takeWhile p → x ∈ l
+  | [], x, h => by cases h
+  | b :: t, x, h => by
+      by_cases hb : p b = true
+      · rw [List.takeWhile_cons_of_pos hb] at h
+        rcases List.mem_cons.mp h with h1 | h1
+        · rw [h1]; exact List.Mem.head _
+        · exact List.Mem.tail _ (mem_of_takeWhile123 p t x h1)
+      · rw [List.takeWhile_cons_of_neg hb] at h; cases h
+
+/-- 前置きの `Δ` の総和を頭の成分で割る。§120.1 の `wcnf_cons_sum120` を、
+    「全部の対が発火する」ではなく「頭の対が発火する」だけで。 -/
+theorem wcnf_cons_take123 {p : Term} (hip : inT p = true) (hpM : lt p M = true)
+    (hlp : lt p (reg 1) = false) {rest : List Term} (hcr : inTL rest = true)
+    (hdr : descL rest = true) (hmr : ∀ x ∈ rest, lt x M = true)
+    (hfire : le (reg 1) (wA (reg 1) p) = true) :
+    sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (p :: rest)).1)
+      = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+          (sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) rest).1)) := by
+  have hA : inT (wA (reg 1) p) = true := inT_wA109 (inT_reg 1) (isSC_reg_succ 0) hip
+  have hC : inT (wC (reg 1) p) = true := inT_wC hip
+  have hCM : lt (wC (reg 1) p) M = true := ltM_wC hip hpM
+  have hE : inT (mulL (reg 1) (subAP (reg 1) (wA (reg 1) p))) = true :=
+    inT_mulL mulDescInT (inT_reg 1) (inT_subAP hA)
+  obtain ⟨_, hallR⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) rest hcr hdr hmr
+  cases hr : wcnf (reg 1) rest with
+  | mk fst snd =>
+    have hRl : (wcnf (reg 1) rest).1 = fst := by rw [hr]
+    cases fst with
+    | nil =>
+        have hW : (wcnf (reg 1) (p :: rest)).1 = [(wA (reg 1) p, wC (reg 1) p)] := by
+          rw [wcnf_cons_ge hlp, hr]
+        show sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (p :: rest)).1)
+            = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+                (sumDD112 (reg 1) (fireTake123 ([] : List (Term × Term))))
+        rw [hW, fireTake_cons123 (wA (reg 1) p, wC (reg 1) p) [] hfire]
+        rfl
+    | cons ac0 ps =>
+        cases ac0 with
+        | mk a' c' =>
+          have hmem0 : ((a', c') : Term × Term) ∈ (wcnf (reg 1) rest).1 := by
+            rw [hRl]; exact List.Mem.head _
+          have hc'i : inT c' = true := (hallR (a', c') hmem0).2.2.1
+          have hc'M : lt c' M = true := (hallR (a', c') hmem0).2.2.2
+          have hSps : inT (sumDD112 (reg 1) (fireTake123 ps)) = true :=
+            inT_sumDD112 (inT_reg 1) _ (fun ac hac =>
+              ⟨(hallR ac (by rw [hRl]
+                             exact List.Mem.tail _ (mem_of_takeWhile123 _ _ _ hac))).1,
+               (hallR ac (by rw [hRl]
+                             exact List.Mem.tail _ (mem_of_takeWhile123 _ _ _ hac))).2.2.1⟩)
+          by_cases heq : (wA (reg 1) p == a') = true
+          · have hpa' : a' = wA (reg 1) p := (eq_of_beq heq).symm
+            subst hpa'
+            have hW : (wcnf (reg 1) (p :: rest)).1
+                = (wA (reg 1) p, plus (wC (reg 1) p) c') :: ps := by
+              rw [wcnf_cons_ge hlp, hr]
+              show ((if (wA (reg 1) p == wA (reg 1) p) = true
+                     then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                     else ((wA (reg 1) p, wC (reg 1) p) :: (wA (reg 1) p, c') :: ps, snd))
+                    : List (Term × Term) × Term).1 = _
+              rw [if_pos heq]
+            have hdist : ddOf75 (reg 1) (wA (reg 1) p, plus (wC (reg 1) p) c')
+                = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+                    (ddOf75 (reg 1) (wA (reg 1) p, c')) :=
+              mulL_distrib112 hE hC hc'i hCM hc'M
+            show sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (p :: rest)).1)
+                = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+                    (sumDD112 (reg 1) (fireTake123 ((wA (reg 1) p, c') :: ps)))
+            rw [hW, fireTake_cons123 (wA (reg 1) p, plus (wC (reg 1) p) c') ps hfire,
+              fireTake_cons123 (wA (reg 1) p, c') ps hfire,
+              sumDD_cons112, sumDD_cons112, hdist]
+            exact plus_assoc_inT _ _ _ (inT_ddOf75 (inT_reg 1) hA hC)
+              (inT_ddOf75 (inT_reg 1) hA hc'i) hSps
+          · have hW : (wcnf (reg 1) (p :: rest)).1
+                = (wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps := by
+              rw [wcnf_cons_ge hlp, hr]
+              show ((if (wA (reg 1) p == a') = true
+                     then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                     else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd))
+                    : List (Term × Term) × Term).1 = _
+              rw [if_neg heq]
+            show sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (p :: rest)).1)
+                = plus (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p))
+                    (sumDD112 (reg 1) (fireTake123 ((a', c') :: ps)))
+            rw [hW, fireTake_cons123 (wA (reg 1) p, wC (reg 1) p) ((a', c') :: ps) hfire,
+              sumDD_cons112]
+
+/-- `Δ` は `M` の下。 -/
+theorem ltM_ddOf123 {ac : Term × Term} (h1 : inT ac.1 = true) (h1M : lt ac.1 M = true)
+    (h2 : inT ac.2 = true) (h2M : lt ac.2 M = true) :
+    lt (ddOf75 (reg 1) ac) M = true :=
+  ltM_mulL (inT_mulL mulDescInT (inT_reg 1) (inT_subAP h1)) h2
+    (ltM_mulL (inT_reg 1) (inT_subAP h1) (ltM_reg 1) (ltM_subAP h1 h1M)) h2M
+
+/-- `Δ` の総和も `M` の下 — 対の列がどれでも。 -/
+theorem ltM_sumDD123 : ∀ (l : List (Term × Term)),
+    (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+    lt (sumDD112 (reg 1) l) M = true
+  | [], _ => lt_zero_left (by intro hcc; exact Term.noConfusion hcc)
+  | ac :: t, h => by
+      rw [sumDD_cons112]
+      have h0 := h ac (List.Mem.head _)
+      have ht : ∀ z ∈ t, inT z.1 = true ∧ lt z.1 M = true ∧ inT z.2 = true
+          ∧ lt z.2 M = true := fun z hz => h z (List.Mem.tail _ hz)
+      exact lt_plus_M (inT_ddOf75 (inT_reg 1) h0.1 h0.2.2.1)
+        (inT_sumDD112 (inT_reg 1) t (fun z hz => ⟨(ht z hz).1, (ht z hz).2.2.1⟩))
+        (ltM_ddOf123 h0.1 h0.2.1 h0.2.2.1 h0.2.2.2) (ltM_sumDD123 t ht)
+
+/-- **§123.1 の主定理 — 発火する前置きだけを割っても、`Ω₁^{Ω₁}` 倍は項を超えない。**
+    §120.1 の等号は「対がぜんぶ発火する」ときのもの。前置きだけなら **`≤`** になる
+    — それが `lastFire92` を仮定しない側で要るものである。 -/
+theorem preDiv123 : ∀ (L : List Term), inTL L = true → descL L = true →
+    (∀ x ∈ L, lt x M = true) →
+    le (mulL E120 (sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) L).1))) (ofList L) = true := by
+  intro L
+  induction L with
+  | nil =>
+      intro _ _ _
+      show le (mulL E120 zero) (ofList ([] : List Term)) = true
+      rw [mulL_zero112]
+      exact Evidence.Region.le_zero_left _
+  | cons p rest ih =>
+    intro hc hd hm
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    have hmr : ∀ x ∈ rest, lt x M = true := fun x hx => hm x (List.Mem.tail p hx)
+    have hpM : lt p M = true := hm p (List.Mem.head _)
+    by_cases hlp : lt p (reg 1) = true
+    · have hW : (wcnf (reg 1) (p :: rest)).1 = [] := by rw [wcnf_cons_lt hlp]
+      rw [hW]
+      show le (mulL E120 zero) (ofList (p :: rest)) = true
+      rw [mulL_zero112]
+      exact Evidence.Region.le_zero_left _
+    · have hlp' : lt p (reg 1) = false := bool_false hlp
+      have hA : inT (wA (reg 1) p) = true := inT_wA109 (inT_reg 1) (isSC_reg_succ 0) hip
+      have hC : inT (wC (reg 1) p) = true := inT_wC hip
+      by_cases hf : le (reg 1) (wA (reg 1) p) = true
+      · obtain ⟨_, hallR⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) rest hcr hdr hmr
+        have hSmem : ∀ ac ∈ fireTake123 (wcnf (reg 1) rest).1,
+            inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true :=
+          fun ac hac => hallR ac (mem_of_takeWhile123 _ _ _ hac)
+        have hS : inT (sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) rest).1)) = true :=
+          inT_sumDD112 (inT_reg 1) _ (fun ac hac => ⟨(hSmem ac hac).1, (hSmem ac hac).2.2.1⟩)
+        have hSM : lt (sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) rest).1)) M = true :=
+          ltM_sumDD123 _ hSmem
+        have hD : inT (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p)) = true :=
+          inT_ddOf75 (inT_reg 1) hA hC
+        have hDM : lt (ddOf75 (reg 1) (wA (reg 1) p, wC (reg 1) p)) M = true :=
+          lt_of_le_of_lt3 (inT_le_fragR _ hD) (inT_le_fragR _ hip)
+            (inT_le_fragR _ (show inT (M : Term) = true from rfl))
+            (le_ddOf_self112 hap hip hpM) hpM
+        rw [wcnf_cons_take123 hip hpM hlp' hcr hdr hmr hf,
+          mulL_distrib112 inT_E120 hD hS hDM hSM,
+          mulL_ddOf_self120 hap hip hpM (lt_false_of_le120 (inT_reg 1) hA hf),
+          ← plus_ofList_cons112 p rest hc hd]
+        exact plus_mono_right_inT p hip _ _ (inT_mulL mulDescInT inT_E120 hS)
+          (inT_ofList rest hcr hdr) (ih hcr hdr hmr)
+      · obtain ⟨c, ps, he⟩ := wcnfFstHd109 (w := reg 1) rest hlp'
+        have hW : fireTake123 (wcnf (reg 1) (p :: rest)).1 = [] := by
+          rw [he]
+          exact fireTake_cons_neg123 (wA (reg 1) p, c) ps (bool_false hf)
+        rw [hW]
+        show le (mulL E120 zero) (ofList (p :: rest)) = true
+        rw [mulL_zero112]
+        exact Evidence.Region.le_zero_left _
+
+/-! ### §123.2 前置きが出す指数 -/
+
+/-- **Veblen の尾は指数の枠を触らないから、指数は前置きだけで決まる。** -/
+theorem foldFst_take123 (l : List (Term × Term))
+    (hV : ∀ ac ∈ l.dropWhile (fun z : Term × Term => le (reg 1) z.1),
+      le (reg 1) ac.1 = false) :
+    (l.foldl (stepF (reg 1) (baseOf 0)) ((none : Option Term), (none : Option Term))).1
+      = ((fireTake123 l).foldl (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))).1 := by
+  have hFV : fireTake123 l ++ l.dropWhile (fun z : Term × Term => le (reg 1) z.1) = l :=
+    List.takeWhile_append_dropWhile
+  have h1 : (l.foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))).1
+      = ((fireTake123 l ++ l.dropWhile (fun z : Term × Term => le (reg 1) z.1)).foldl
+          (stepF (reg 1) (baseOf 0)) ((none : Option Term), (none : Option Term))).1 := by
+    rw [hFV]
+  rw [h1, List.foldl_append]
+  exact fold_fst_veb114 _ _ hV
+
+/-- 前置きの総和の型と大きさ。 -/
+theorem sumFire_facts123 {X : Term} (hX : inT X = true) (hXM : lt X M = true) :
+    inT (sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (toList X)).1)) = true
+      ∧ lt (sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (toList X)).1)) M = true := by
+  obtain ⟨hc, hd⟩ := inT_toList X hX
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList X) hc hd
+    (ltM_toList X hX hXM)
+  have hmem : ∀ ac ∈ fireTake123 (wcnf (reg 1) (toList X)).1,
+      inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true :=
+    fun ac hac => hallOK ac (mem_of_takeWhile123 _ _ _ hac)
+  exact ⟨inT_sumDD112 (inT_reg 1) _ (fun ac hac => ⟨(hmem ac hac).1, (hmem ac hac).2.2.1⟩),
+    ltM_sumDD123 _ hmem⟩
+
+/-- **§123.2 の主定理 — `1 ⊕ j` は発火する前置きの `Δ` の総和そのもの。**
+    §120.2 の `plus_one_idx120` は「対がぜんぶ発火する」ときのもの。折り畳みの
+    Veblen の尾は指数の枠を触らない (§114.2 の `fold_fst_veb114`) から、
+    **発火が前置きでありさえすれば同じ等式が立つ** — `lastFire92` は要らない。 -/
+theorem preIdx123 {X : Term} (hX : inT X = true) (hXM : lt X M = true)
+    {j : Term} (hj : idxF88 0 X = some j) :
+    inT j = true ∧ plus TM.Term.one j
+      = sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (toList X)).1) := by
+  obtain ⟨hc, hd⟩ := inT_toList X hX
+  have hmL := ltM_toList X hX hXM
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList X) hc hd hmL
+  have hVveb : ∀ ac ∈ (wcnf (reg 1) (toList X)).1.dropWhile
+      (fun z : Term × Term => le (reg 1) z.1), le (reg 1) ac.1 = false :=
+    fireSplit109 (isSC_reg_succ 0) (inT_reg 1) (show (reg 1).isAP = true from rfl)
+      (toList X) hc hd
+  have hidx : idxF88 0 X
+      = ((fireTake123 (wcnf (reg 1) (toList X)).1).foldl (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))).1 :=
+    foldFst_take123 _ hVveb
+  cases hFT : fireTake123 (wcnf (reg 1) (toList X)).1 with
+  | nil =>
+      exfalso
+      have hnone : idxF88 0 X = none := by rw [hidx, hFT]; rfl
+      rw [hnone] at hj
+      cases hj
+  | cons ac t =>
+      have hFT' : (wcnf (reg 1) (toList X)).1.takeWhile
+          (fun z : Term × Term => le (reg 1) z.1) = ac :: t := hFT
+      have hfire : ∀ x ∈ ac :: t, le (reg 1) x.1 = true := by
+        intro x hx
+        exact mem_takeWhile109 (fun z : Term × Term => le (reg 1) z.1)
+          (wcnf (reg 1) (toList X)).1 x (by rw [hFT']; exact hx)
+      have hin : ∀ x ∈ ac :: t, inT x.1 = true ∧ inT x.2 = true := by
+        intro x hx
+        have h2 := hallOK x (mem_of_takeWhile123 (fun z : Term × Term => le (reg 1) z.1)
+          (wcnf (reg 1) (toList X)).1 x (by rw [hFT']; exact hx))
+        exact ⟨h2.1, h2.2.2.1⟩
+      have hD : inT (ddOf75 (reg 1) ac) = true :=
+        inT_ddOf75 (inT_reg 1) (hin ac (List.Mem.head _)).1 (hin ac (List.Mem.head _)).2
+      have hS : inT (sumDD112 (reg 1) t) = true :=
+        inT_sumDD112 (inT_reg 1) t (fun a ha => hin a (List.Mem.tail _ ha))
+      have hfold : idxF88 0 X
+          = some (plus (sub1 (ddOf75 (reg 1) ac)) (sumDD112 (reg 1) t)) := by
+        rw [hidx, hFT]
+        exact foldNone120 (inT_reg 1) ac t hin hfire
+      have hjeq : j = plus (sub1 (ddOf75 (reg 1) ac)) (sumDD112 (reg 1) t) :=
+        Option.some.inj (hj.symm.trans hfold)
+      have hcnz : ac.2 ≠ zero :=
+        wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) (toList X) hc hd hmL ac
+          (mem_of_takeWhile123 (fun z : Term × Term => le (reg 1) z.1)
+            (wcnf (reg 1) (toList X)).1 ac (by rw [hFT']; exact List.Mem.head _))
+      have hDnz : ddOf75 (reg 1) ac ≠ zero := ddOf_ne_zero84 hcnz
+      have hD1 : lt (ddOf75 (reg 1) ac) TM.Term.one = false := by
+        cases hcc : lt (ddOf75 (reg 1) ac) TM.Term.one with
+        | false => rfl
+        | true =>
+            exact absurd (below_one _ hD (fuelOf (ddOf75 (reg 1) ac) TM.Term.one) hcc) hDnz
+      refine ⟨by rw [hjeq]; exact inT_plus (inT_sub1 hD) hS, ?_⟩
+      rw [hjeq,
+        ← plus_assoc_inT TM.Term.one (sub1 (ddOf75 (reg 1) ac)) (sumDD112 (reg 1) t)
+          inT_one (inT_sub1 hD) hS,
+        sub1_eq_subAP112,
+        plus_subAP112 inT_one (show (TM.Term.one).isAP = true from rfl) hD hD1,
+        sumDD_cons112]
+
+/-! ### §123.3 条項 — 逆写像は Veblen の尾を左に残しても効く -/
+
+/-- **§123.3 の主定理 — 割り算の逆は Veblen の尾を左に残しても効く。**
+    §120.3 の `idxMono_core120` は両側が全発火することを仮定する。
+    `X` の側は「指数を持つ」だけでよい: 等号が `≤` になるだけで、対偶は同じに通る。
+    **§120.4 が名指しして走らなかった道である。** -/
+theorem idxLtMixF123 {X Y jX jY : Term}
+    (hX : inT X = true) (hXM : lt X M = true) (hY : inT Y = true) (hYM : lt Y M = true)
+    (hYh : ∀ p ∈ toList Y, lt p (reg 1) = false)
+    (hfY : lastFire92 Y = true)
+    (hjX : idxF88 0 X = some jX) (hjY : idxF88 0 Y = some jY)
+    (h : lt X Y = true) : lt jX jY = true := by
+  obtain ⟨hijX, hsumX⟩ := preIdx123 hX hXM hjX
+  obtain ⟨hSX, hSXM⟩ := sumFire_facts123 hX hXM
+  obtain ⟨hijY, hSY, hSYM, hsumY, hrecY⟩ := allFireData120 hY hYM hYh hfY hjY
+  obtain ⟨hc, hd⟩ := inT_toList X hX
+  have hleX : le (mulL E120 (sumDD112 (reg 1) (fireTake123 (wcnf (reg 1) (toList X)).1)))
+      X = true := by
+    have h2 := preDiv123 (toList X) hc hd (ltM_toList X hX hXM)
+    rw [inT_ofList_toList X hX] at h2
+    exact h2
+  cases hcc : lt jX jY with
+  | true => rfl
+  | false =>
+      exfalso
+      have hle : le jY jX = true :=
+        le_of_not_lt3 (inT_le_fragR _ hijX) (inT_le_fragR _ hijY) hcc
+      have h1 : le (plus TM.Term.one jY) (plus TM.Term.one jX) = true :=
+        plus_mono_right_inT TM.Term.one inT_one jY jX hijY hijX hle
+      rw [hsumX, hsumY] at h1
+      have h2 := mulL_mono_right112 inT_E120 hSY hSX hSYM hSXM h1
+      rw [hrecY] at h2
+      have h3 : le Y X = true :=
+        le_trans3 (inT_le_fragR _ hY)
+          (inT_le_fragR _ (inT_mulL mulDescInT inT_E120 hSX))
+          (inT_le_fragR _ hX) h2 hleX
+      rcases (Bool.or_eq_true _ _).mp h3 with he | hl
+      · rw [eq_of_beq he, lt_irrefl] at h; exact Bool.noConfusion h
+      · rw [lt_asymm_inT hX hY h] at hl; exact Bool.noConfusion hl
+
+end
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §123.4 分割 — `VebIng114` の二つの連言 -/
+
+/-- `hi` を付けた形 — §120.3 の `idxMono_hiW120` から `a` 側の全発火の仮定を外したもの。 -/
+theorem idxLtMixF_hiW123 {X Y jX jY : Term} (hX : inT X = true) (hXM : lt X M = true)
+    (hY : inT Y = true) (hYM : lt Y M = true) (hfY : lastFire92 Y = true)
+    (hjX : idxF88 0 X = some jX) (hjY : idxF88 0 Y = some jY)
+    (h : lt (hiW89 X) (hiW89 Y) = true) : lt jX jY = true :=
+  idxLtMixF123 (inT_hiW89 hX) (ltM_hiW112 hX hXM) (inT_hiW89 hY) (ltM_hiW112 hY hYM)
+    (hiW89_ge89 hY) (by rw [lastFire_hiW101 hY]; exact hfY)
+    (by rw [idxF_hiW101 hX]; exact hjX) (by rw [idxF_hiW101 hY]; exact hjY) h
+
+/-- `VebIng114` の第一連言 — 発火しない対の指数と係数が的の下にあるか。 -/
+def vebPair123 (x S : Term) : Bool :=
+  (wcnf (reg 1) (toList x)).1.all (fun ac => le (reg 1) ac.1 || (lt ac.1 S && lt ac.2 S))
+
+/-- `VebIng114` の第二連言 — 発火する前置きが出す `ψ_{Ω₁}` が的の下にあるか。 -/
+def vebIdx123 (x S : Term) : Bool :=
+  match idxF88 0 x with | none => true | some i => lt (psi (reg 1) i) S
+
+/-- §114 の成分の条件は、この二つの連言そのもの。 -/
+theorem vebIng_eq123 (x S : Term) : VebIng114 x S = (vebPair123 x S && vebIdx123 x S) := rfl
+
+/-- **§123.4 の主定理 — `VebIng114` の第二連言は定理である。**  `b` が全発火する
+    ところでは `ψ_{Ω₁}` の的は割り算の像そのもので、`a` の指数は前置きだけで
+    決まる。`a` の側の全発火も `K` の条件も**一度も読まない**。 -/
+theorem vebIdx_true123 (Hp : PsiIdxOKStd172) {a b : BT} {jb : Term}
+    (hbA : btLe72 1 (BT.D 0 a) = true) (hbB : btLe72 1 (BT.D 0 b) = true)
+    (hsA : BT.isStd (BT.D 0 a) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    (hfb : lastFire92 (dict b) = true)
+    (hlt : lt (hiW89 (dict a)) (hiW89 (dict b)) = true)
+    (hjb : idxF88 0 (dict b) = some jb) :
+    vebIdx123 (dict a) (psi (reg 1) jb) = true := by
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hia := inT_dict_of_std172 Hp a hba (isStd_of_D hsA)
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  show (match idxF88 0 (dict a) with
+        | none => true
+        | some i => lt (psi (reg 1) i) (psi (reg 1) jb)) = true
+  cases hja : idxF88 0 (dict a) with
+  | none => rfl
+  | some ja =>
+      show lt (psi (reg 1) ja) (psi (reg 1) jb) = true
+      rw [lt_psi_same]
+      exact idxLtMixF_hiW123 hia.1 hia.2 hib.1 hib.2 hfb hja hjb hlt
+
+/-- **残る条項 — 対の側だけ。**  §114 の `VebIngF114` から第二連言を外したもの。 -/
+def VebPairs123 : Prop :=
+  ∀ (a b : BT) (jb : Term), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lastFire92 (dict a) = false → lastFire92 (dict b) = true →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    idxF88 0 (dict b) = some jb →
+    vebPair123 (dict a) (psi (reg 1) jb) = true
+
+/-- **§123.4 の系 — `VebIngF114` は対の側の条項だけで出る。** -/
+theorem vebIngF_of_pairs123 (Hp : PsiIdxOKStd172) (H : VebPairs123) : VebIngF114 := by
+  intro a b jb hbA hbB hsA hsB hWa hWb hfa hfb hlt hjb
+  rw [vebIng_eq123, H a b jb hbA hbB hsA hsB hWa hWb hfa hfb hlt hjb,
+    vebIdx_true123 Hp hbA hbB hsA hsB hfb hlt hjb]
+  rfl
+
+/-- **§123 は残余を動かしていない — 定理として。**  `VebPairs123` は `VebIngF114` と
+    **同値**である。§123 が外したのは条項ではなく、条項の中の**只の連言**である。 -/
+theorem vebIngF_iff_pairs123 (Hp : PsiIdxOKStd172) : VebIngF114 ↔ VebPairs123 :=
+  ⟨fun H a b jb hbA hbB hsA hsB hWa hWb hfa hfb hlt hjb => by
+      have h := H a b jb hbA hbB hsA hsB hWa hWb hfa hfb hlt hjb
+      rw [vebIng_eq123] at h
+      exact ((Bool.and_eq_true _ _).mp h).1,
+   vebIngF_of_pairs123 Hp⟩
+
+/-- **§120.3 の一般化 — `a` の側の全発火は要らなかった。**  §120.5 は「その仮定を
+    落としても 388 組で一度も破れない」と測り、必要性については**何も主張しない**と
+    書いた。§123.3 はそれを定理にする。 -/
+theorem idxMono_noFireA123 (Hp : PsiIdxOKStd172) {a b : BT} {ja jb : Term}
+    (hba : btLe72 1 a = true) (hbb : btLe72 1 b = true)
+    (hsa : BT.isStd a = true) (hsb : BT.isStd b = true)
+    (hfb : lastFire92 (dict b) = true)
+    (hja : idxF88 0 (dict a) = some ja) (hjb : idxF88 0 (dict b) = some jb)
+    (hlt : lt (hiW89 (dict a)) (hiW89 (dict b)) = true) : lt ja jb = true := by
+  obtain ⟨hia, hiaM⟩ := inT_dict_of_std172 Hp a hba hsa
+  obtain ⟨hib, hibM⟩ := inT_dict_of_std172 Hp b hbb hsb
+  exact idxLtMixF_hiW123 hia hiaM hib hibM hfb hja hjb hlt
+
+/-- その系 — §101 の条項をもう一度 (§120.3 の `idxMono101_of_psi120` の弱い仮定版)。 -/
+theorem idxMono101_of_noFireA123 (Hp : PsiIdxOKStd172) : IdxMono101 :=
+  fun _ _ _ _ hba hbb hsa hsb _ hfb hja hjb hlt =>
+    idxMono_noFireA123 Hp hba hbb hsa hsb hfb hja hjb hlt
+
+/-- **`HiMono89` を三つの条項に架け替える。**  §120 の三つのうち `VebIngF114` が
+    `VebPairs123` に痩せる。 -/
+theorem hiMono_of_three123 (Hp : PsiIdxOKStd172) (HB : IdxLeMix109) (H1 : VebPairs123)
+    (H2 : VebRest117) : HiMono89 :=
+  hiMono_of_three120 Hp HB (vebIngF_of_pairs123 Hp H1) H2
+
+/-- **326 行目を架け替える。** -/
+theorem certIn_t326_123 (Hp : PsiIdxOKStd172) (HB : IdxLeMix109) (H1 : VebPairs123)
+    (H2 : VebRest117) (HD1 : DictOntoMidOpen103) (HD3 : DictDenseMid107)
+    (HD4 : DictDenseAbove107) (hacc : Acc Evidence.WF.RT (vOf t326)) :
+    Evidence.Cert.CertifiedIn Evidence.Cert.DomI (matB t326 0) (vOf t326) :=
+  certIn_t326_120 Hp HB (vebIngF_of_pairs123 Hp H1) H2 HD1 HD3 HD4 hacc
+
+end
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §123.5 §117 の道具はこの半分では何も出さない -/
+
+/-- **§117.4 の的はこの半分には一つも無い。**  `b` が全発火するなら、途中で切っても
+    残りは発火するか、切り口が末尾で値が `ψ_{Ω₁}` になるかのどちらかで、
+    `φ̄` の形をした途中値は**存在しない**。 -/
+theorem tgtOK_false123 {a b : BT} (hib : inT (dict b) = true)
+    (hfb : lastFire92 (dict b) = true) (k : Nat) : tgtOK117 a b k = false := by
+  have hall : ∀ ac ∈ (wcnf (reg 1) (toList (dict b))).1, le (reg 1) ac.1 = true :=
+    fun ac hac => List.all_eq_true.mp (allFire_of_lastFire109 hib hfb) ac hac
+  have hsp : (wcnf (reg 1) (toList (dict b))).1.take k
+      ++ (wcnf (reg 1) (toList (dict b))).1.drop k = (wcnf (reg 1) (toList (dict b))).1 :=
+    List.take_append_drop k _
+  cases hd : (wcnf (reg 1) (toList (dict b))).1.drop k with
+  | cons ac t =>
+      have hf : le (reg 1) ac.1 = true :=
+        hall ac (by rw [← hsp, hd]; exact List.mem_append_right _ (List.Mem.head _))
+      have h1 : (((wcnf (reg 1) (toList (dict b))).1.drop k).all
+          (fun z : Term × Term => !le (reg 1) z.1)) = false := by
+        rw [hd, List.all_cons, hf]
+        rfl
+      unfold tgtOK117
+      rw [h1]
+      rfl
+  | nil =>
+      have htake : (wcnf (reg 1) (toList (dict b))).1.take k
+          = (wcnf (reg 1) (toList (dict b))).1 := by
+        have h := hsp
+        rw [hd, List.append_nil] at h
+        exact h
+      obtain ⟨jb, hjb⟩ := idxF_some_of_lastFire109 hib hfb
+      have hstate := fold_fire_state114 (wcnf (reg 1) (toList (dict b))).1
+        ((none : Option Term), (none : Option Term)) hall (Or.inl ⟨rfl, rfl⟩)
+      have hfv : ∃ i, foldVal117 (dict b) k = some (psi (reg 1) i) := by
+        rcases hstate with h1 | ⟨i, _, hi2⟩
+        · exfalso
+          have : idxF88 0 (dict b) = none := h1.1
+          rw [this] at hjb
+          cases hjb
+        · exact ⟨i, by
+            show (((wcnf (reg 1) (toList (dict b))).1.take k).foldl
+              (stepF (reg 1) (baseOf 0))
+              ((none : Option Term), (none : Option Term))).2 = _
+            rw [htake]
+            exact hi2⟩
+      obtain ⟨i, hi⟩ := hfv
+      unfold tgtOK117
+      rw [hi]
+      exact Bool.and_false _
+
+/-- **§123.5 の主定理 — この半分では §117 の判定は §114 の条件そのもの。**
+    §117 は「`hiMono_closed117` は `VebIngF114` の側にも向けられる」と書いたが、
+    向けても得るものは無い: `closed117` の第二の選択肢は `b` が全発火するところでは
+    **一度も真にならない**。 -/
+theorem closed_eq123 {a b : BT} {jb : Term} (hib : inT (dict b) = true)
+    (hfb : lastFire92 (dict b) = true) (hjb : idxF88 0 (dict b) = some jb) :
+    closed117 a b = VebIng114 (dict a) (psi (reg 1) jb) := by
+  have h2 : (List.range ((wcnf (reg 1) (toList (dict b))).1.length + 1)).any (tgtOK117 a b)
+      = false := by
+    cases hq : (List.range ((wcnf (reg 1) (toList (dict b))).1.length + 1)).any
+        (tgtOK117 a b) with
+    | false => rfl
+    | true =>
+        exfalso
+        obtain ⟨k, _, hk⟩ := List.any_eq_true.mp hq
+        rw [tgtOK_false123 hib hfb k] at hk
+        exact Bool.noConfusion hk
+  show ((match idxF88 0 (dict b) with
+         | none => false
+         | some j => VebIng114 (dict a) (psi (reg 1) j))
+        || (List.range ((wcnf (reg 1) (toList (dict b))).1.length + 1)).any (tgtOK117 a b))
+      = VebIng114 (dict a) (psi (reg 1) jb)
+  rw [hjb, h2, Bool.or_false]
+
+/-- **§123.5 の系 — 残余は対の側ちょうど。**  §117 の判定は、この半分では
+    §123.4 で定理になった連言を落として、**第一連言そのもの**になる。 -/
+theorem closed_eq_pairs123 (Hp : PsiIdxOKStd172) {a b : BT} {jb : Term}
+    (hbA : btLe72 1 (BT.D 0 a) = true) (hbB : btLe72 1 (BT.D 0 b) = true)
+    (hsA : BT.isStd (BT.D 0 a) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    (hfb : lastFire92 (dict b) = true)
+    (hlt : lt (hiW89 (dict a)) (hiW89 (dict b)) = true)
+    (hjb : idxF88 0 (dict b) = some jb) :
+    closed117 a b = vebPair123 (dict a) (psi (reg 1) jb) := by
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  rw [closed_eq123 hib.1 hfb hjb, vebIng_eq123,
+    vebIdx_true123 Hp hbA hbB hsA hsB hfb hlt hjb]
+  exact Bool.and_true _
+
+end
+
+/-! ### §123.6 否定と段の正直さ -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁ψ₁ψ₁ψ₁0`、5 記号 — 全発火する `b` の一番小さいもの。 -/
+def w4_123 : BT := BT.D 1 w3_101
+
+/-- **否定 1 — §114 の逆転はまるごと第一連言の側にある。**  `revA114`/`revB114` は
+    `VebIng114` を破るが、破っているのは**指数と係数の条項だけ**で、第二連言は
+    真である。しかも `revA114` は崩壊指数を**持たない**ので、§123.4 の定理は
+    この証人では空虚である。**§123 は条項を必要にした証人に触っていない。** -/
+theorem revSplit123 :
+    (VebIng114 (dict revA114) (psi (reg 1) (jOf114 revB114)),
+     vebPair123 (dict revA114) (psi (reg 1) (jOf114 revB114)),
+     vebIdx123 (dict revA114) (psi (reg 1) (jOf114 revB114)),
+     (idxF88 0 (dict revA114)).isSome, lastFire92 (dict revB114))
+    = (false, false, true, false, true) := rfl
+
+/-- **否定 2 — 一つ隣では、破れるのは反対の連言である。**  §114 の `sepR114` の対は
+    `b` に Veblen の尾があり、そこでは `vebIdx123` が**偽**で `vebPair123` は真:
+    指数が等しい (`j_a = j_b`) ので `ψ_{Ω₁}` の比較が狭義にならない。
+    **`b` が全発火するという仮定が §123.4 を定理にしているものそのもので、
+    外すと文は偽になる。** -/
+theorem sepSplit123 :
+    (VebIng114 (dict sepRA114) (psi (reg 1) (jOf114 sepRB114)),
+     vebPair123 (dict sepRA114) (psi (reg 1) (jOf114 sepRB114)),
+     vebIdx123 (dict sepRA114) (psi (reg 1) (jOf114 sepRB114)),
+     lastFire92 (dict sepRB114), jOf114 sepRA114 == jOf114 sepRB114)
+    = (false, true, false, false, true) := rfl
+
+/-- **否定 3 — §114 の `knownSplit114` がこちらの半分に置いた証人も第一連言で破れる。** -/
+theorem scSplit123 :
+    (VebIng114 (dict scBadA101) (psi (reg 1) (jOf114 scBadB101)),
+     vebPair123 (dict scBadA101) (psi (reg 1) (jOf114 scBadB101)),
+     vebIdx123 (dict scBadA101) (psi (reg 1) (jOf114 scBadB101)),
+     (idxF88 0 (dict scBadA101)).isSome, lastFire92 (dict scBadB101))
+    = (false, false, true, true, true) := rfl
+
+/-- **§123.3 が §120.3 より広いことの証人 — §120 自身の証人の裏返し。**
+    `mixB109` (`= sepRA114`、`ψ₁ψ₁ψ₁0 ⊕ ψ₁0`、7 記号) は §120.4 が
+    「`b` の側の全発火は要る」と言うために使った項である。それを **`a` の側**に置くと、
+    折り畳みは発火する前置きと Veblen の尾を持ち、崩壊指数を持ちながら
+    `lastFire92 = false` — **`idxMono_core120` は届かず、§123.3 は届く。**
+    両辺とも `K` 標準で、`hi` は狭義に増え、`b` は全発火する。
+    そして §117 の道具はここでも何も出さない (`tgtOK117` はどの `k` でも偽)。 -/
+theorem preSep123 :
+    (btLe72 1 (BT.D 0 mixB109), BT.isStd (BT.D 0 mixB109), le (reg 1) (dict mixB109),
+     lastFire92 (dict mixB109), (idxF88 0 (dict mixB109)).isSome,
+     btLe72 1 (BT.D 0 w4_123), BT.isStd (BT.D 0 w4_123), le (reg 1) (dict w4_123),
+     lastFire92 (dict w4_123),
+     lt (hiW89 (dict mixB109)) (hiW89 (dict w4_123)),
+     vebIdx123 (dict mixB109) (psi (reg 1) (jOf114 w4_123)),
+     VebIng114 (dict mixB109) (psi (reg 1) (jOf114 w4_123)),
+     (List.range ((wcnf (reg 1) (toList (dict w4_123))).1.length + 1)).any
+       (tgtOK117 mixB109 w4_123),
+     closed117 mixB109 w4_123, BT.size mixB109, BT.size w4_123)
+    = (true, true, true, false, true, true, true, true, true, true, true, true,
+       false, true, 7, 5) := rfl
+
+/-- **段の正直さ。**  §123 が組んだ項も、§114 から借りた証人も、`ψ₁` の段を出ず
+    (`btLe72 1` が真)、`ψ₀` の段には**落ちない** (`btLe72 0` が偽)。 -/
+theorem levelHonest123 :
+    (btLe72 1 mixB109, btLe72 0 mixB109, btLe72 1 w4_123, btLe72 0 w4_123,
+     btLe72 1 revA114, btLe72 0 revA114, btLe72 1 sepRA114, btLe72 0 sepRA114)
+    = (true, false, true, false, true, false, true, false) := rfl
+
+end
+
+/-! ### §123.7 測定 (凍結)
+
+**構成 — §114.5 の三本の線に、四本目を組んで足す。**  §123.3 が読む形は
+「折り畳みに**発火する前置きがあり、しかも Veblen の尾が続く**」項で、その上に
+全発火する `b` を置いた対である。§114.5 の母集団はその形を持ってはいるが (119 組)、
+狙って作られてはいない。四本目 `preSeed123` はそれを狙って作る — `Ω₁^{Ω₁}` の塔に
+`Ω₁` や `ψ₀` を継ぎ足して、前置きの長さを 1 から 2 に伸ばす。濾さない。
+
+    fireSeed123  全発火する種 4 個 (§114.5 の `fireSeed114`)
+    vebSeed123   発火しない種 3 個 (§114.5 の `vebSeed114`)
+    mixSeed123   §114 の逆転とその親戚 3 個 (§114.5 の `mixSeed114`)
+    preSeed123   **前置き + Veblen の尾** 6 個 (§123 が組んだ線)
+    pop123       その 2 項和も入れた 149 項  濾さない
+
+`pop114_123` は `preSeed123` を抜いた §114.5 の 65 項ちょうど、`popDeep123` は
+`ψ₁` の塔を二段深くして最大 49 記号まで伸ばした 272 項である。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+private def dedup123 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+private def w5_123 : BT := BT.D 1 w4_123
+private def w6_123 : BT := BT.D 1 w5_123
+private def fireSeed123 : List BT :=
+  [w2_101, w3_101, w4_123, BT.D 1 (BT.sum w3_101 w3_101)]
+private def vebSeed123 : List BT :=
+  [w1_101, BT.D 1 (BT.D 0 w1_101), BT.D 1 (BT.D 0 (BT.sum w2_101 w1_101))]
+private def mixSeed123 : List BT :=
+  [revA114, BT.D 1 (BT.sum (BT.D 1 (BT.D 0 w1_101)) (BT.D 1 BT.zero)),
+   BT.D 1 (BT.D 1 (BT.D 0 w3_101))]
+/-- **§123 が組んだ線** — 発火する前置きと Veblen の尾を同じ項に持たせる。 -/
+private def preSeed123 : List BT :=
+  [BT.sum w3_101 w1_101, BT.sum w4_123 w2_101,
+   BT.D 1 (BT.sum w3_101 (BT.D 0 w3_101)), BT.sum w4_123 (BT.D 1 (BT.D 0 w3_101)),
+   BT.sum w4_123 (BT.sum w3_101 w1_101),
+   BT.sum w4_123 (BT.sum w3_101 (BT.D 1 (BT.D 0 w1_101)))]
+private def deepSeed123 : List BT :=
+  [w5_123, w6_123, BT.D 1 (BT.sum w4_123 w4_123), BT.sum w5_123 (BT.sum w4_123 w1_101),
+   BT.sum w6_123 (BT.sum w5_123 (BT.D 1 (BT.D 0 (BT.sum w3_101 w1_101)))),
+   BT.D 1 (BT.D 0 (BT.sum w3_101 w1_101))]
+private def widen123 (l : List BT) : List BT :=
+  dedup123 (l ++ l.flatMap (fun a => (l.filter (fun b => BT.le b a)).map (BT.sum a)))
+private def pop123 : List BT :=
+  widen123 (fireSeed123 ++ vebSeed123 ++ mixSeed123 ++ preSeed123)
+private def pop114_123 : List BT := widen123 (fireSeed123 ++ vebSeed123 ++ mixSeed123)
+private def popDeep123 : List BT :=
+  widen123 (fireSeed123 ++ vebSeed123 ++ mixSeed123 ++ preSeed123 ++ deepSeed123)
+
+private def ok123 (a : BT) : Bool := btLe72 1 a && BT.isStd a && le (reg 1) (dict a)
+private def kstd123 (a : BT) : Bool := ok123 a && BT.isStd (BT.D 0 a)
+private def samp123 : List BT := pop123.filter ok123
+private def ksamp123 : List BT := pop123.filter kstd123
+private def samp114_123 : List BT := pop114_123.filter ok123
+private def sampD123 : List BT := popDeep123.filter ok123
+private def ksampD123 : List BT := popDeep123.filter kstd123
+private def hasIdx123 (a : BT) : Bool := (idxF88 0 (dict a)).isSome
+private def pairsA123 (l : List BT) : List (BT × BT) :=
+  l.flatMap (fun a => l.map (fun b => (a, b)))
+/-- 残余 — `hi` が狭義に増え、`a` の最後の対が発火しない対。§114 の担当分。 -/
+private def resid123 (l : List BT) : List (BT × BT) :=
+  (pairsA123 l).filter (fun p =>
+    lt (hiW89 (dict p.1)) (hiW89 (dict p.2)) && !lastFire92 (dict p.1))
+/-- そのうち `b` が全発火する半分 — `VebIngF114` の担当分。 -/
+private def af123 (l : List BT) : List (BT × BT) :=
+  (resid123 l).filter (fun p => allFire101 (dict p.2))
+private def concl123 (p : BT × BT) : Bool :=
+  lt (collapse 0 (hiW89 (dict p.1))) (collapse 0 (hiW89 (dict p.2)))
+private def rev123 (p : BT × BT) : Bool :=
+  lt (collapse 0 (hiW89 (dict p.2))) (collapse 0 (hiW89 (dict p.1)))
+private def ing123 (p : BT × BT) : Bool := VebIng114 (dict p.1) (psi (reg 1) (jOf114 p.2))
+private def pairOK123 (p : BT × BT) : Bool := vebPair123 (dict p.1) (psi (reg 1) (jOf114 p.2))
+private def idxOK123 (p : BT × BT) : Bool := vebIdx123 (dict p.1) (psi (reg 1) (jOf114 p.2))
+private def tgtAny123 (p : BT × BT) : Bool :=
+  (List.range ((wcnf (reg 1) (toList (dict p.2))).1.length + 1)).any (tgtOK117 p.1 p.2)
+private def merge123 (a : BT) : Bool :=
+  (wcnf (reg 1) (toList (dict a))).1.length < (toList (hiW89 (dict a))).length
+private def preLen123 (a : BT) : Nat :=
+  ((wcnf (reg 1) (toList (dict a))).1.takeWhile
+    (fun z : Term × Term => le (reg 1) z.1)).length
+
+/-! 母集団の形。**149 項のうち形の条件を満たすのが 90 項、`K` 標準が 71 項**で、
+    崩壊指数を持つのが 55 項、全発火が 14 項、**指数を持ちながら全発火しないのが 41 項**
+    — 最後のものが §123.3 が読み §120.3 が読めない類である。 -/
+#guard (pop123.length, samp123.length, ksamp123.length,
+        samp123.countP hasIdx123, samp123.countP (fun a => lastFire92 (dict a)),
+        samp123.countP (fun a => hasIdx123 a && !lastFire92 (dict a)))
+  == (149, 90, 71, 55, 14, 41)
+
+/-! §114.5 の母集団そのもの (65 項) では、その類は 21 項。 -/
+#guard (pop114_123.length, samp114_123.length,
+        samp114_123.countP (fun a => hasIdx123 a && !lastFire92 (dict a))) == (65, 65, 21)
+
+/-! **受領 1 — 担当する半分は空でない。**  残余 3665 組のうち `b` が全発火するのは
+    815 組、`K` 標準では 2145 組のうち 549 組。 -/
+#guard ((resid123 samp123).length, (af123 samp123).length,
+        (resid123 ksamp123).length, (af123 ksamp123).length) == (3665, 815, 2145, 549)
+
+/-! **受領 2 — 分割はちょうど言った場所に落ちる。**  `b` が全発火する 815 組で
+    `VebIng114` は 15 回破れ、**その 15 回はぜんぶ第一連言、第二連言は 0 回**。
+    `K` 標準の 549 組では何も破れない。 -/
+#guard ((af123 samp123).countP (fun p => !ing123 p),
+        (af123 samp123).countP (fun p => !pairOK123 p),
+        (af123 samp123).countP (fun p => !idxOK123 p),
+        (af123 ksamp123).countP (fun p => !ing123 p),
+        (af123 ksamp123).countP (fun p => !idxOK123 p)) == (15, 15, 0, 0, 0)
+
+/-! **受領 3 — 一つ隣では破れるのは反対の連言である。**  `b` が指数を持ちながら
+    Veblen の尾を持つ 2255 組 (§117 の担当分、§123.3 の仮定が無いところ) では
+    **第二連言が 96 回破れ**、第一連言は 106 回。`b` が全発火するという仮定が
+    §123.4 を定理にしているものそのものである。 -/
+#guard (((resid123 samp123).filter
+           (fun p => !allFire101 (dict p.2) && hasIdx123 p.2)).length,
+        ((resid123 samp123).filter
+           (fun p => !allFire101 (dict p.2) && hasIdx123 p.2)).countP
+          (fun p => !idxOK123 p),
+        ((resid123 samp123).filter
+           (fun p => !allFire101 (dict p.2) && hasIdx123 p.2)).countP
+          (fun p => !pairOK123 p)) == (2255, 96, 106)
+
+/-! **受領 4 — 証明した連言は空虚でない。**  815 組のうち **325 組で `a` が崩壊指数を
+    持つ** — そこでは §123.4 の結論は本当に何かを言い、§120.3 の定理は
+    (`lastFire92 (dict a)` が偽なので) 一度も適用できない。§114.5 の母集団だけでも
+    119 組あるので、**この形は組まなくても見えていた** — 四本目の線は 2.7 倍にした
+    だけである。隠さずに書く。 -/
+#guard ((af123 samp123).countP (fun p => hasIdx123 p.1),
+        (af123 ksamp123).countP (fun p => hasIdx123 p.1),
+        (af123 samp114_123).countP (fun p => hasIdx123 p.1)) == (325, 325, 119)
+
+/-! **受領 5 — 破れには指数が無い。**  全発火の半分の破れ 15 組はどれも `a` が
+    崩壊指数を持たず、§123.4 の定理はそこで空虚である。**残余は第一連言にしか無い。**
+    14 組が順序の逆転。 -/
+#guard ((af123 samp123).countP (fun p => !concl123 p),
+        (af123 samp123).countP (fun p => !concl123 p && rev123 p),
+        (af123 samp123).countP (fun p => !concl123 p && hasIdx123 p.1),
+        (af123 ksamp123).countP (fun p => !concl123 p)) == (15, 14, 0, 0)
+
+/-! **受領 6 — §117 の道具はここでは 0 回、隣では 1154 回。**  空虚な掃き出しでは
+    ない: 同じ判定が全発火でない残余 2850 組のうち 1154 組で発火する。 -/
+#guard ((af123 samp123).countP tgtAny123,
+        ((resid123 samp123).filter (fun p => !allFire101 (dict p.2))).countP tgtAny123,
+        ((resid123 samp123).filter (fun p => !allFire101 (dict p.2))).length)
+  == (0, 1154, 2850)
+
+/-! **受領 7 — `closed117` はこの半分では `VebIng114` そのもの (§123.5 の定理)。**
+    815 組すべてで一致し、そのうち 800 組で真。 -/
+#guard ((af123 samp123).countP (fun p => closed117 p.1 p.2 == ing123 p),
+        (af123 samp123).length,
+        (af123 samp123).countP (fun p => closed117 p.1 p.2)) == (815, 815, 800)
+
+/-! **受領 8 — §123.1 の帰納法は一成分の話ではなく、併合の枝も遊んでいない。**
+    64 項が対を二つ以上、10 項が三つ以上持ち、**10 項が Veblen の尾の下に長さ 2 以上の
+    発火する前置きを持つ**。`wcnf` が成分を実際に併合するのは 19 項、そのうち 4 項が
+    その類にある。 -/
+#guard (samp123.countP (fun a => 2 ≤ (wcnf (reg 1) (toList (dict a))).1.length),
+        samp123.countP (fun a => 3 ≤ (wcnf (reg 1) (toList (dict a))).1.length),
+        samp123.countP (fun a => hasIdx123 a && !lastFire92 (dict a) && 2 ≤ preLen123 a),
+        samp123.countP merge123,
+        samp123.countP (fun a => hasIdx123 a && !lastFire92 (dict a) && merge123 a))
+  == (64, 10, 10, 19, 4)
+
+/-! **受領 9 — 段の正直さ。**  母集団は `ψ₁` の段を出ず、`ψ₀` の段には落ちない。
+    最大 31 記号。 -/
+#guard (pop123.all (fun a => btLe72 1 a), pop123.countP (fun a => btLe72 0 a),
+        pop123.foldl (fun m a => max m (BT.size a)) 0) == (true, 0, 31)
+
+/-! **受領 10 — 大きさを確かめる。**  塔を二段深くした 272 項 (最大 49 記号、対を
+    三つ以上持つ項が 29 — 最初の母集団では 10) でも、全発火の半分 3383 組のうち
+    **1843 組で `a` が指数を持ちながら第二連言の破れは 0、`tgtOK117` の発火も 0**。
+    破れは第一連言に 24 組で、`K` 標準の 2403 組では 0。深さは足した。振舞いは変わらない。 -/
+#guard (popDeep123.length, sampD123.length, ksampD123.length,
+        popDeep123.foldl (fun m a => max m (BT.size a)) 0,
+        sampD123.countP (fun a => hasIdx123 a && !lastFire92 (dict a)),
+        sampD123.countP (fun a => 3 ≤ (wcnf (reg 1) (toList (dict a))).1.length))
+  == (272, 167, 139, 49, 88, 29)
+#guard ((resid123 sampD123).length, (af123 sampD123).length,
+        (af123 sampD123).countP (fun p => !idxOK123 p),
+        (af123 sampD123).countP (fun p => !pairOK123 p),
+        (af123 sampD123).countP (fun p => hasIdx123 p.1),
+        (af123 sampD123).countP tgtAny123) == (12029, 3383, 0, 24, 1843, 0)
+#guard ((af123 ksampD123).length, (af123 ksampD123).countP (fun p => !ing123 p),
+        ((resid123 sampD123).filter
+           (fun p => !allFire101 (dict p.2) && hasIdx123 p.2)).countP
+          (fun p => !idxOK123 p)) == (2403, 0, 217)
+
+end
+
 end Evidence.Region
