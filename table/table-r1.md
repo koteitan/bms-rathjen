@@ -2,53 +2,33 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.9.0
+バージョン: v0.9.1
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
 Arch. Math. Logic 30 (1991), §2) の対応。
 
 > [!WARNING]
-> **5 行の値は疑わしい。** `(0,0)(1,1)(2,2)` から始まる 5 行 —
-> `(0,0)(1,1)(2,2)`・`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`・`(0,0)(1,1)(2,2)(2,2)`・
-> `(0,0)(1,1)(2,2)(2,2)(2,2)`・`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)` — は、BMS の展開の値の列が
-> 外部の独立実装の基本列と一致しない。原因は 1 つで、基本列が $`Z(1)`$ を降りるとき、
-> 先方は到達不能基数として $`\psi^{\chi^M_0(0)}`$ で降り、BMS の展開は $`\Omega_2`$ として
-> $`\omega`$ 塔で降りる。$`Z(1)`$ を含む他の 15 行は健全である。
-> **値は変えていない** — 5 行のうち 3 行は正しい値が分かっておらず、外部実装は独立実装で
-> あって神託ではなく、BMS 側の翻訳を持たないのでどちらの側を直すべきかを言えない。
-> **5 行とも Lean の定理で反証済み** (§139、仮定ゼロ): 掲載値はその行列自身の展開の値の
-> 上限より真に上にある。外部が名指した正しい値は §140 に記録した (測定であって証明ではない)。
-> 欠陥は 2 つあって別物である (§141): `Trans.oR` が行列に付ける値と、
-> `TM/FS.lean` の基本列 — 後者は `ψ_Ω(Z(1))` に**共終でない**ことが証明された。
+> **5 行の値は疑わしい。** `(0,0)(1,1)(2,2)`・`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`・
+> `(0,0)(1,1)(2,2)(2,2)`・`(0,0)(1,1)(2,2)(2,2)(2,2)`・`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`。
+> どれも展開の値の上限がその値に届かない。Lean の定理で、仮定は無い。
+> 原因は 1 つで、基本列が $`Z(1)`$ を降りるときの扱いである。$`Z(1)`$ を含む他の 15 行は健全。
 >
-> **より広い注意 — そして直す場所は分かっている。** `Z(1)` は χ₁(0) = I であって
-> $`\Omega_2`$ ではない (`TM/Terms.lean` の冒頭、2026-08-12)。したがって通称欄の
-> $`\psi_0(\Omega_2)`$ という読みは、破れが測定された 5 行に限らず `Z(1)` を含む行すべてに
-> ついて疑わしい。
->
-> ただし**値が書けないわけではない** — `plan/chi-2ary.md` (2026-08-13) がその点を訂正して
-> いる。資料の値 $`\psi_\Omega(\varepsilon_{\Omega+1})`$ は現行の型で `inT = true` である。
-> 誤っているのは型ではなく `Trans/Dict.lean` の `reg` で、Buchholz の $`\Omega_{u+1}`$ を
-> `Z u` に送っており $`u \geq 1`$ で外れる。同文書は修理方針として
-> 「$`\Omega`$ 階層のところだけ compositional をやめる」を選び、χ を 2 引数に戻す案を
-> R1 では**却下**した。**その修理はまだ実装されていない。**
->
-> 詳細と対照は [findings.md](findings.md) の §137・§139・§140・§141。
+> `Z(1)` は $`\chi_1(0) = I`$ であって $`\Omega_2`$ ではないので、通称欄の
+> $`\psi_0(\Omega_2)`$ という読みは `Z(1)` を含む行すべてについて疑わしい。
+> **値はまだ変えていない。** 対照と根拠は [findings.md](findings.md)。
 
 **備考欄の `(h)` は Hexirp 氏の対応表との照合。** 60 行中 50 行が先方の表にある。
 
 | 印 | 意味 | 行数 |
 |---|---|---|
-| `(h)` | 先方の表にあり、辞書が検証済みの範囲で値が一致 | 17 |
-| `(h≠)` | 先方の表にあり、検証済みの範囲で値が**食い違う** | 9 |
-| `(h?)` | 先方の表にあるが、辞書が未検証の範囲。**比較していない** | 24 |
+| `(h)` | 先方の表にあり、値が一致 | 17 |
+| `(h≠)` | 先方の表にあり、値が**食い違う** | 9 |
+| `(h?)` | 先方の表にあるが、辞書が訳せない範囲。**比較していない** | 24 |
 | 印なし | 先方の表に無い | 10 |
 
-辞書は `scripts/hexirp-rathjen-check.py` が 10 例で固定したもので、`W(x)` が `x ≠ 0` で
-訳せないため $`\Omega`$ 階層より上は「未検証」に落ちる。`(h?)` は一致とも不一致とも
-言っていない。なお検証済みの断片 390 行では当方の `oR` が先方と 379 行一致し、
-**単調性と単射性は当方だけが保つ** (先方は非単調 2 対・潰す 2 対、当方 0)。
+先方の `W(x)` は $`x \neq 0`$ で訳せないため、$`\Omega`$ 階層より上は `(h?)` になる。
+`(h?)` は一致とも不一致とも言っていない。
 
 **証明列の ✅ は[証明の仕様](#証明の仕様)の E.cert が Lean の定理であることを意味する。**
 それ以外の印は ✅ の材料であって ✅ ではない。**印はすべてビルドが計算して付ける**
@@ -73,7 +53,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(1,1)`](../lean/Rows/TM.lean#L140) | $`\bar{\varphi}(1,1)`$ | $`\psi_{0}(\psi_{1}(0)+\psi_{1}(0))`$ | $`\varepsilon_1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L345)+[o](../lean/Trans/TM.lean) | (h) |
 | [`(0,0)(1,1)(2,0)`](../lean/Rows/TM.lean#L143) | $`\bar{\varphi}(1,\omega)`$ | $`\psi_{0}(\psi_{1}(\psi_{0}(0)))`$ | $`\varepsilon_\omega`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L346)+[o](../lean/Trans/TM.lean) | (h) |
 | [`(0,0)(1,1)(2,0)(0,0)`](../lean/Rows/TM.lean#L147) | $`\bar{\varphi}(1,\omega)+1`$ | $`\psi_{0}(\psi_{1}(\psi_{0}(0)))+\psi_{0}(0)`$ | $`\varepsilon_\omega+1`$ | [✅](../lean/Evidence/Cert.lean) | [fₙ](../lean/Rows/Proofs.lean#L269)+[o](../lean/Trans/TM.lean) | (h) |
-| [`(0,0)(1,1)(2,0)(1,1)(1,0)(2,1)(3,0)(1,0)(2,1)`](../lean/Rows/TM.lean#L151) | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ | $`\psi_{0}(\psi_{1}(\psi_{0}(0))+\psi_{1}(0)+\psi_{0}(\psi_{1}(\psi_{0}(0)))+\psi_{0}(\psi_{1}(0)))`$ | $`\omega^{\varepsilon_{\omega+1}+\varepsilon_\omega+\varepsilon_0}`$ |  | [fₙ](../lean/Rows/Selected.lean#L312) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 1) |
+| [`(0,0)(1,1)(2,0)(1,1)(1,0)(2,1)(3,0)(1,0)(2,1)`](../lean/Rows/TM.lean#L151) | $`\bar{\varphi}(0,\bar{\varphi}(1,\omega+1)+\bar{\varphi}(1,\omega)+\bar{\varphi}(1,0))`$ | $`\psi_{0}(\psi_{1}(\psi_{0}(0))+\psi_{1}(0)+\psi_{0}(\psi_{1}(\psi_{0}(0)))+\psi_{0}(\psi_{1}(0)))`$ | $`\omega^{\varepsilon_{\omega+1}+\varepsilon_\omega+\varepsilon_0}`$ |  | [fₙ](../lean/Rows/Selected.lean#L312) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 1) |
 | [`(0,0)(1,1)(2,0)(2,0)`](../lean/Rows/TM.lean#L157) | $`\bar{\varphi}(1,\bar{\varphi}(0,2))`$ | $`\psi_{0}(\psi_{1}(\psi_{0}(0)+\psi_{0}(0)))`$ | $`\varepsilon_{\omega^2}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L299)+[o](../lean/Trans/TM.lean) | (h) |
 | [`(0,0)(1,1)(2,0)(3,0)`](../lean/Rows/TM.lean#L160) | $`\bar{\varphi}(1,\bar{\varphi}(0,\omega))`$ | $`\psi_{0}(\psi_{1}(\psi_{0}(\psi_{0}(0))))`$ | $`\varepsilon_{\omega^\omega}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L284)+[o](../lean/Trans/TM.lean) | (h) |
 | [`(0,0)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L164) | $`\bar{\varphi}(1,\bar{\varphi}(1,0))`$ | $`\psi_{0}(\psi_{1}(\psi_{0}(\psi_{1}(0))))`$ | $`\varepsilon_{\varepsilon_0}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L252)+[o](../lean/Trans/TM.lean) | (h) |
@@ -81,22 +61,22 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,1)(0,0)`](../lean/Rows/TM.lean#L171) | $`\bar{\varphi}(2,0)+1`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)))+\psi_{0}(0)`$ | $`\zeta_0+1`$ |  | [fₙ](../lean/Rows/Proofs.lean#L164)+[o](../lean/Trans/TM.lean) | (h) |
 | [`(0,0)(1,1)(2,1)(1,0)`](../lean/Rows/TM.lean#L174) | $`\bar{\varphi}(0,\bar{\varphi}(2,0))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{0}(0))`$ | $`\omega^{\zeta_0+1}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L191)+[o](../lean/Trans/TM.lean) | (h) |
 | [`(0,0)(1,1)(2,1)(1,1)`](../lean/Rows/TM.lean#L177) | $`\bar{\varphi}(1,\bar{\varphi}(2,0))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(0))`$ | $`\varepsilon_{\zeta_0+1}`$ |  | [fₙ](../lean/Rows/Proofs.lean#L234)+[o](../lean/Trans/TM.lean) | (h) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)`](../lean/Rows/TM.lean#L182) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\omega)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(0)))+\psi_{1}(\psi_{0}(0)))`$ | $`\varepsilon_{\varepsilon_{\zeta_0+1}+\omega}`$ |  | [fₙ](../lean/Rows/Selected.lean#L573) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L188) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\bar{\varphi}(1,0))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(0)))+\psi_{1}(\psi_{0}(\psi_{1}(0))))`$ | $`\varepsilon_{\varepsilon_{\zeta_0+1}+\varepsilon_0}`$ |  | [fₙ](../lean/Rows/Selected.lean#L843) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 2) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)`](../lean/Rows/TM.lean#L195) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)))))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{0}(0))))))`$ | $`\varepsilon_{\varepsilon_{\omega^{\omega^{\zeta_0+1}}}}`$ |  | [fₙ](../lean/Rows/Selected.lean#L1046) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)`](../lean/Rows/TM.lean#L201) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(1,0)))))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{0}(\psi_{1}(0)))))))`$ | $`\varepsilon_{\varepsilon_{\omega^{\omega^{\zeta_0+\varepsilon_0}}}}`$ |  | [fₙ](../lean/Rows/Selected.lean#L1348) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
-| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)(7,1)`](../lean/Rows/TM.lean#L207) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{0}(\psi_{1}(\psi_{1}(0))))))))`$ | $`\varepsilon_{\varepsilon_{\omega^{\omega^{\zeta_0\cdot 2}}}}`$ |  | [fₙ](../lean/Rows/Selected.lean#L1685) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([diff.md](diff.md) 族 3) |
-| [`(0,0)(1,1)(2,1)(2,0)`](../lean/Rows/TM.lean#L219) | $`\bar{\varphi}(2,\omega)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{0}(0)))`$ | $`\zeta_\omega`$ |  |  | (h) 旧値 ε_{ζ₀·ω} を訂正 (較正事故) |
-| [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L222) | $`\bar{\varphi}(3,0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)))`$ | $`\bar{\varphi}(3,0)`$ |  |  | (h) 旧値 ζ₁ を訂正 (較正事故の初検出行) |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)`](../lean/Rows/TM.lean#L226) | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)+\psi_{0}(0))+\psi_{1}(0))`$ | $`\varepsilon_{\bar{\varphi}(3,\omega)+1}`$ |  | [fₙ](../lean/Rows/G9.lean#L6) | (h≠) 外部の表と食い違う ([diff.md](diff.md) 族 4) |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L232) | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)+\psi_{0}(0))+\psi_{1}(\psi_{1}(0)))`$ | $`\zeta_{\bar{\varphi}(3,\omega)+1}`$ |  | [fₙ](../lean/Rows/G10.lean#L6) | (h≠) 外部の表と食い違う ([diff.md](diff.md) 族 4) |
-| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L239) | $`\bar{\varphi}(3,\omega+1)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)+\psi_{0}(0))+\psi_{1}(\psi_{1}(0)+\psi_{1}(0)))`$ | $`\bar{\varphi}(3,\omega+1)`$ |  | [fₙ](../lean/Rows/G11.lean#L36) | (h≠) 外部の表と食い違う ([diff.md](diff.md) 族 4) |
-| [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L245) | $`\bar{\varphi}(\omega,0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{0}(0))))`$ | $`\bar{\varphi}(\omega,0)`$ |  | [fₙ](../lean/Rows/Selected.lean#L2114) | (h) 旧値 ζ_ω を訂正 |
-| [`(0,0)(1,1)(2,1)(3,0)(4,1)`](../lean/Rows/TM.lean#L249) | $`\bar{\varphi}(\bar{\varphi}(1,0),0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{0}(\psi_{1}(0)))))`$ | $`\bar{\varphi}(\varepsilon_0,0)`$ |  | [fₙ](../lean/Rows/G3.lean#L6) | (h) 旧値 ζ_{ε₀} を訂正 |
-| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L253) | $`\psi_{\Omega}(0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ | $`\Gamma_0`$ |  | [fₙ](../lean/Rows/G7.lean#L6) | (h?) ψ 項の初登場。旧値 φ̄(3,0) を訂正 |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)`](../lean/Rows/TM.lean#L182) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\omega)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(0)))+\psi_{1}(\psi_{0}(0)))`$ | $`\varepsilon_{\varepsilon_{\zeta_0+1}+\omega}`$ |  | [fₙ](../lean/Rows/Selected.lean#L573) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 2) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(1,1)(2,0)(3,1)`](../lean/Rows/TM.lean#L188) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(2,0))+\bar{\varphi}(1,0))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(0)))+\psi_{1}(\psi_{0}(\psi_{1}(0))))`$ | $`\varepsilon_{\varepsilon_{\zeta_0+1}+\varepsilon_0}`$ |  | [fₙ](../lean/Rows/Selected.lean#L843) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 2) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)`](../lean/Rows/TM.lean#L195) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)))))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{0}(0))))))`$ | $`\varepsilon_{\varepsilon_{\omega^{\omega^{\zeta_0+1}}}}`$ |  | [fₙ](../lean/Rows/Selected.lean#L1046) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 3) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)`](../lean/Rows/TM.lean#L201) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(1,0)))))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{0}(\psi_{1}(0)))))))`$ | $`\varepsilon_{\varepsilon_{\omega^{\omega^{\zeta_0+\varepsilon_0}}}}`$ |  | [fₙ](../lean/Rows/Selected.lean#L1348) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 3) |
+| [`(0,0)(1,1)(2,1)(1,1)(2,0)(3,1)(4,1)(3,1)(4,0)(5,1)(6,1)(5,0)(6,1)(7,1)`](../lean/Rows/TM.lean#L207) | $`\bar{\varphi}(1,\bar{\varphi}(1,\bar{\varphi}(0,\bar{\varphi}(0,\bar{\varphi}(2,0)+\bar{\varphi}(2,0)))))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{1}(\psi_{0}(\psi_{1}(\psi_{1}(0))+\psi_{0}(\psi_{1}(\psi_{1}(0))))))))`$ | $`\varepsilon_{\varepsilon_{\omega^{\omega^{\zeta_0\cdot 2}}}}`$ |  | [fₙ](../lean/Rows/Selected.lean#L1685) | (h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 3) |
+| [`(0,0)(1,1)(2,1)(2,0)`](../lean/Rows/TM.lean#L219) | $`\bar{\varphi}(2,\omega)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{0}(0)))`$ | $`\zeta_\omega`$ |  |  | (h) |
+| [`(0,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L222) | $`\bar{\varphi}(3,0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)))`$ | $`\bar{\varphi}(3,0)`$ |  |  | (h) |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)`](../lean/Rows/TM.lean#L226) | $`\bar{\varphi}(1,\bar{\varphi}(3,\omega))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)+\psi_{0}(0))+\psi_{1}(0))`$ | $`\varepsilon_{\bar{\varphi}(3,\omega)+1}`$ |  | [fₙ](../lean/Rows/G9.lean#L6) | (h≠) 外部の表と食い違う ([findings.md](findings.md) 族 4) |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)`](../lean/Rows/TM.lean#L232) | $`\bar{\varphi}(2,\bar{\varphi}(3,\omega))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)+\psi_{0}(0))+\psi_{1}(\psi_{1}(0)))`$ | $`\zeta_{\bar{\varphi}(3,\omega)+1}`$ |  | [fₙ](../lean/Rows/G10.lean#L6) | (h≠) 外部の表と食い違う ([findings.md](findings.md) 族 4) |
+| [`(0,0)(1,1)(2,1)(2,1)(2,0)(1,1)(2,1)(2,1)`](../lean/Rows/TM.lean#L239) | $`\bar{\varphi}(3,\omega+1)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(0)+\psi_{1}(0)+\psi_{0}(0))+\psi_{1}(\psi_{1}(0)+\psi_{1}(0)))`$ | $`\bar{\varphi}(3,\omega+1)`$ |  | [fₙ](../lean/Rows/G11.lean#L36) | (h≠) 外部の表と食い違う ([findings.md](findings.md) 族 4) |
+| [`(0,0)(1,1)(2,1)(3,0)`](../lean/Rows/TM.lean#L245) | $`\bar{\varphi}(\omega,0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{0}(0))))`$ | $`\bar{\varphi}(\omega,0)`$ |  | [fₙ](../lean/Rows/Selected.lean#L2114) | (h) |
+| [`(0,0)(1,1)(2,1)(3,0)(4,1)`](../lean/Rows/TM.lean#L249) | $`\bar{\varphi}(\bar{\varphi}(1,0),0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{0}(\psi_{1}(0)))))`$ | $`\bar{\varphi}(\varepsilon_0,0)`$ |  | [fₙ](../lean/Rows/G3.lean#L6) | (h) |
+| [`(0,0)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L253) | $`\psi_{\Omega}(0)`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ | $`\Gamma_0`$ |  | [fₙ](../lean/Rows/G7.lean#L6) | (h?) ψ 項の初登場 |
 | [`(0,0)(1,1)(2,1)(3,1)(0,0)`](../lean/Rows/TM.lean#L257) | $`\psi_{\Omega}(0)+1`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0))))+\psi_{0}(0)`$ | $`\Gamma_0+1`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,1)(3,1)(1,0)`](../lean/Rows/TM.lean#L260) | $`\bar{\varphi}(0,\psi_{\Omega}(0))`$ | $`\psi_{0}(\psi_{1}(\psi_{1}(\psi_{1}(0)))+\psi_{0}(0))`$ | $`\omega^{\Gamma_0+1}`$ |  |  | (h?) |
-| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L273) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ | $`\psi_0(\Omega_2)`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | (h?) 行 1 に 2 が現れる最初の行。旧値 φ̄(ω,0) を訂正。🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。差し替えの候補は ψ_Ω(φ̄(1,Ω))。**Hexirp 氏・naruyoko 氏・§69 の `sbad` の三者一致** (§140、測定であって証明ではない)。詳細は diff.md |
+| [`(0,0)(1,1)(2,2)`](../lean/Rows/TM.lean#L273) | $`\psi_{\Omega}(Z(1))`$ | $`\psi_{0}(\psi_{2}(0))`$ | $`\psi_0(\Omega_2)`$ |  | [fₙ](../lean/Rows/G4.lean#L6) | (h?) 🚨 **値は疑わしい** — 展開の値の上限がこの値に届かない。`ψ_Ω(φ̄(1,Ω))` が正しいという証拠が 3 つある。[findings.md](findings.md) |
 | [`(0,0)(1,1)(2,2)(1,1)`](../lean/Rows/TM.lean#L277) | $`\bar{\varphi}(1,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(0))`$ | $`\varepsilon_{\psi_0(\Omega_2)+1}`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)`](../lean/Rows/TM.lean#L281) | $`\bar{\varphi}(2,\psi_{\Omega}(Z(1)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0)))`$ | $`\zeta_{\psi_0(\Omega_2)+1}`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(1,1)(2,1)(3,1)`](../lean/Rows/TM.lean#L285) | $`\psi_{\Omega}(Z(1)+1)`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{1}(\psi_{1}(0))))`$ | $`\Gamma_{\psi_0(\Omega_2)+1}`$ |  | [fₙ](../lean/Rows/G12.lean#L50) | (h?) |
@@ -106,18 +86,18 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 | [`(0,0)(1,1)(2,2)(2,0)(2,0)`](../lean/Rows/TM.lean#L305) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(0)+\psi_{0}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+2))`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(2,0)(3,0)`](../lean/Rows/TM.lean#L310) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{0}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\omega))`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(2,0)(3,1)`](../lean/Rows/TM.lean#L315) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{1}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\varepsilon_0))`$ |  |  | (h?) |
-| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L320) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_0(\Omega_2)))`$ |  |  | (h?) 🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。差し替えは**未決**。naruyoko 氏の基本列は ψ_Ω(Z1 ⊕ φ̄(0, φ̄(1,Ω) ⊕ ψ_Ω(φ̄(1,Ω)))) を指し (§140)、Hexirp 氏の表は Z1 の加数を持たない ψ_Ω(φ̄(0, φ̄(1,Ω) ⊕ ψ_Ω(φ̄(1,Ω)))) を与える。外部 2 つが食い違う。詳細は diff.md |
+| [`(0,0)(1,1)(2,2)(2,0)(3,1)(4,2)`](../lean/Rows/TM.lean#L320) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_0(\Omega_2)))`$ |  |  | (h?) 🚨 **値は疑わしい** — 展開の値の上限がこの値に届かない。差し替え先は未決。[findings.md](findings.md) |
 | [`(0,0)(1,1)(2,2)(2,1)`](../lean/Rows/TM.lean#L326) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1))`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(2,1)(2,1)`](../lean/Rows/TM.lean#L331) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\Omega+\Omega))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(0)+\psi_{1}(0)))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\Omega_1\cdot 2))`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(2,1)(3,1)`](../lean/Rows/TM.lean#L336) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(0,\Omega+\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{1}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_1)))`$ |  |  |  |
 | [`(0,0)(1,1)(2,2)(2,1)(3,2)`](../lean/Rows/TM.lean#L341) | $`\psi_{\Omega}(Z(1)+\bar{\varphi}(0,\bar{\varphi}(1,\Omega)+\bar{\varphi}(1,\Omega)))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0)+\psi_{1}(\psi_{2}(0))))`$ | $`\psi_0(\Omega_2+\psi_1(\Omega_2+\psi_1(\Omega_2)))`$ |  |  | (h?) |
-| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L347) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 2)`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | (h?) 旧値 φ̄(ω²,0) を訂正。🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。差し替えは**未決**。naruyoko 氏の基本列は ψ_Ω(Z1 ⊕ φ̄(1, Ω⊕1)) を指し (§140)、Hexirp 氏の表は ψ_Ω(φ̄(1, Ω⊕1)) を与える。外部 2 つが食い違う。詳細は diff.md |
-| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L352) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 3)`$ |  |  | (h?) 🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。差し替えは**未決**。naruyoko 氏の基本列は ψ_Ω(Z1 ⊕ Z1 ⊕ φ̄(1, Ω⊕1⊕1)) を指し (§140)、Hexirp 氏の表は ψ_Ω(φ̄(1, Ω⊕1⊕1)) を与える。外部 2 つが食い違う。詳細は diff.md |
-| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L357) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)))`$ | $`\psi_0(\psi_2(1))`$ |  | [fₙ](../lean/Rows/Selected.lean#L3557) | (h?) 旧値 φ̄(ω^ω,0) を訂正 |
+| [`(0,0)(1,1)(2,2)(2,2)`](../lean/Rows/TM.lean#L347) | $`\psi_{\Omega}(Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 2)`$ |  | [fₙ](../lean/Rows/G6.lean#L6) | (h?) 🚨 **値は疑わしい** — 展開の値の上限がこの値に届かない。差し替え先は未決。[findings.md](findings.md) |
+| [`(0,0)(1,1)(2,2)(2,2)(2,2)`](../lean/Rows/TM.lean#L352) | $`\psi_{\Omega}(Z(1)+Z(1)+Z(1))`$ | $`\psi_{0}(\psi_{2}(0)+\psi_{2}(0)+\psi_{2}(0))`$ | $`\psi_0(\Omega_2\cdot 3)`$ |  |  | (h?) 🚨 **値は疑わしい** — 展開の値の上限がこの値に届かない。差し替え先は未決。[findings.md](findings.md) |
+| [`(0,0)(1,1)(2,2)(3,0)`](../lean/Rows/TM.lean#L357) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)))`$ | $`\psi_0(\psi_2(1))`$ |  | [fₙ](../lean/Rows/Selected.lean#L3557) | (h?) |
 | [`(0,0)(1,1)(2,2)(3,0)(3,0)`](../lean/Rows/TM.lean#L362) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+1))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(0)+\psi_{0}(0)))`$ | $`\psi_0(\psi_2(2))`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(3,0)(4,0)`](../lean/Rows/TM.lean#L366) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{0}(0))))`$ | $`\psi_0(\psi_2(\omega))`$ |  |  | (h?) |
 | [`(0,0)(1,1)(2,2)(3,0)(4,1)`](../lean/Rows/TM.lean#L370) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\bar{\varphi}(1,0)))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{1}(0))))`$ | $`\psi_0(\psi_2(\varepsilon_0))`$ |  |  | (h?) |
-| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L374) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\psi_2(\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい**。§139 が仮定ゼロで反証 — 掲載値はこの行列自身の展開の値の上限より真に上にある。差し替えの候補は ψ_Ω(φ̄(0, Z1 ⊕ ψ_Ω(φ̄(1,Ω)))) (§140、測定)。**この行は Hexirp 氏の表に無い**ので照合は naruyoko 氏の 1 つだけ。詳細は diff.md |
+| [`(0,0)(1,1)(2,2)(3,0)(4,1)(5,2)`](../lean/Rows/TM.lean#L374) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\psi_{\Omega}(Z(1))))`$ | $`\psi_{0}(\psi_{2}(\psi_{0}(\psi_{2}(0))))`$ | $`\psi_0(\psi_2(\psi_0(\Omega_2)))`$ |  |  | 🚨 **値は疑わしい** — 展開の値の上限がこの値に届かない。`ψ_Ω(φ̄(0, Z1 ⊕ ψ_Ω(φ̄(1,Ω))))` が候補。[findings.md](findings.md) |
 | [`(0,0)(1,1)(2,2)(3,1)`](../lean/Rows/TM.lean#L379) | $`\psi_{\Omega}(\bar{\varphi}(0,Z(1)+\Omega))`$ | $`\psi_{0}(\psi_{2}(\psi_{1}(0)))`$ | $`\psi_0(\psi_2(\Omega_1))`$ |  | [fₙ](../lean/Rows/G8.lean#L6) | (h?) |
 
 ## 列の意味
@@ -285,8 +265,9 @@ BMS `(0,0)(1,1)(2,2)` の Buchholz 値 $`\psi_0(\psi_2(0))`$ には 3 者が一�
 \text{資料} \;\longmapsto\; \psi_\Omega(\bar\varphi(1, \Omega+1))
 ```
 
-**根は型にある** ([D.TM](#dtm))。$`Z(1)`$ は $`\Omega_2`$ ではなく $`I`$ で、
-$`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型を変える必要がある。
+**根は翻訳にある。** $`Z(1)`$ は $`\Omega_2`$ ではなく $`I`$ で、`Trans/Dict.lean` の
+`reg` が Buchholz の $`\Omega_{u+1}`$ を `Z u` に送るのが誤り。資料の値
+$`\psi_\Omega(\bar\varphi(1,\Omega+1))`$ は現在の項型で書ける。
 
 **✅ の付いた行は影響を受けない。** ✅ は [E.cert](#ecert) から来ており、
 翻訳関数を一度も通らないからである。

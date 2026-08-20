@@ -163,8 +163,9 @@ BMS `(0,0)(1,1)(2,2)` の Buchholz 値 $`\psi_0(\psi_2(0))`$ には 3 者が一�
 \text{資料} \;\longmapsto\; \psi_\Omega(\bar\varphi(1, \Omega+1))
 ```
 
-**根は型にある** ([D.TM](#dtm))。$`Z(1)`$ は $`\Omega_2`$ ではなく $`I`$ で、
-$`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型を変える必要がある。
+**根は翻訳にある。** $`Z(1)`$ は $`\Omega_2`$ ではなく $`I`$ で、`Trans/Dict.lean` の
+`reg` が Buchholz の $`\Omega_{u+1}`$ を `Z u` に送るのが誤り。資料の値
+$`\psi_\Omega(\bar\varphi(1,\Omega+1))`$ は現在の項型で書ける。
 
 **✅ の付いた行は影響を受けない。** ✅ は [E.cert](#ecert) から来ており、
 翻訳関数を一度も通らないからである。
