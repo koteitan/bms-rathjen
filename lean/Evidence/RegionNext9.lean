@@ -2356,16 +2356,16 @@ external reading of the row's value, and named `Z 1` as the common step.  It did
 what `TM/FS.lean` — this repository's OWN fundamental sequences on the 𝔗(M) side — says
 at that step.  §138c asks it.
 
-WHAT `TM/FS.lean` SAYS.  `fsN (ψ_Ω(Z 1)) n` enters the `psi` / `.isLim` diagonalisation
+WHAT `TM/FS.lean` SAYS.  `fsNOld (ψ_Ω(Z 1)) n` enters the `psi` / `.isLim` diagonalisation
 (`cofT (Z 1) = Z 1`, not `ω`, and not below `κ = Ω`), and there `fsT (Z d) s = s` — the
 "regular: κ[s] = s" clause — feeds the PREVIOUS term back as the index:
 
-    fsN (ψ_Ω(Z 1)) 0     = ψ_Ω(0)                    = Γ₀
-    fsN (ψ_Ω(Z 1)) (n+1) = ψ_Ω(fsN (ψ_Ω(Z 1)) n)
+    fsNOld (ψ_Ω(Z 1)) 0     = ψ_Ω(0)                    = Γ₀
+    fsNOld (ψ_Ω(Z 1)) (n+1) = ψ_Ω(fsNOld (ψ_Ω(Z 1)) n)
 
 i.e. the ψ_Ω-TOWER.  The index it feeds back is a ψ_Ω-value.  That is right exactly when
-`cof α = κ`; here `cof α = Z 1 > κ`, and `fsN` has no clause that produces a ψ_{Z 1}-value.
-The visible consequence is `fsN_agree138`: **`fsN` returns the same sequence for
+`cof α = κ`; here `cof α = Z 1 > κ`, and `fsNOld` has no clause that produces a ψ_{Z 1}-value.
+The visible consequence is `fsN_agree138`: **`fsNOld` returns the same sequence for
 `ψ_Ω(Z 1)` and for `ψ_Ω(Ω)`**, two terms this repository's own order separates.
 
 THE THREE SEQUENCES AT ROW 37, TERM BY TERM (the first two proved here, the third measured).
@@ -2375,7 +2375,7 @@ THE THREE SEQUENCES AT ROW 37, TERM BY TERM (the first two proved here, the thir
   (c) external `fund`   ψ^W(ψ^I(0)), ψ^W(ψ^I(ψ^I(0))), …                 climbs to ψ^W(I)
 
 (a) is not (b): `lt_wt_psiTW138` puts `ψ_Ω(Ω)` strictly BELOW every member of (b)'s tower,
-and `lt_fsN_wt138` puts every member of (a) strictly below `ψ_Ω(Ω)`.  So `oR` and `fsN` are
+and `lt_fsN_wt138` puts every member of (a) strictly below `ψ_Ω(Ω)`.  So `oR` and `fsNOld` are
 NOT "consistent with each other and wrong together" — one change cannot repair both.
 
 (a) is the external's answer for the WRONG TERM.  Measured with `scripts/padicbot-ref.js`
@@ -2385,9 +2385,9 @@ against naruyoko's `padicBotRathjen`, under the dictionary that file fixes
     fund(ψ^W(W), n)  = ψ^W(ψ^W(…ψ^W(0)…))   ← exactly (a), one index along
     fund(ψ^W(I), n)  = ψ^W(ψ^I(…ψ^I(0)…))   ← (c)
 
-The external distinguishes the two terms; `fsN` does not.  Where the external and `fsN` are
+The external distinguishes the two terms; `fsNOld` does not.  Where the external and `fsNOld` are
 looking at the SAME term they agree: at `sbad = ψ_Ω(φ̄(1,Ω))`, the value the external names
-for row 37, `fund(sbad, n) = ψ^W(φ^0_0…(W+1))` is `fsN sbad (n+1)` term for term.
+for row 37, `fund(sbad, n) = ψ^W(φ^0_0…(W+1))` is `fsNOld sbad (n+1)` term for term.
 
 WHERE EACH DEFECT SITS.
 
@@ -2404,17 +2404,17 @@ WHERE EACH DEFECT SITS.
                 external names for row 37.  It is the value AT the matrix, `ψ_Ω(Z 1)`,
                 that is too big.
 
-WHAT A REPAIR COSTS.  `diagReach138` walks only the branches `fsN` actually takes and asks
+WHAT A REPAIR COSTS.  `diagReach138` walks only the branches `fsNOld` actually takes and asks
 whether the diagonalisation is ever asked to descend a regular strictly above `κ`.  Over
 all 60 rows of `Rows.rows` it fires on EXACTLY §137's five, and on none of those five does
-the expansion ride `fsN` at any uniform shift.  44 of the 60 rows do ride `fsN`; repairing
+the expansion ride `fsNOld` at any uniform shift.  44 of the 60 rows do ride `fsNOld`; repairing
 the clause touches none of them.  **No row's E3 evidence depends on the `Z 1` behaviour of
 `fs`.**  Row 37's own E3 mark (`Rows/G4.lean`) is a closed form of the EXPANSION values,
-not a statement about `fsN`, and `Rows/Selected.lean` already records row 37 as one of the
-six rows that "do not ride `fsN`".
+not a statement about `fsNOld`, and `Rows/Selected.lean` already records row 37 as one of the
+six rows that "do not ride `fsNOld`".
 
-WHAT IS PROOF AND WHAT IS EVIDENCE.  Proved: the closed form of `fsN` at `ψ_Ω(Z 1)`, that
-it coincides with `fsN` at `ψ_Ω(Ω)`, and the gap.  Measured (`#guard`, and `node` for the
+WHAT IS PROOF AND WHAT IS EVIDENCE.  Proved: the closed form of `fsNOld` at `ψ_Ω(Z 1)`, that
+it coincides with `fsNOld` at `ψ_Ω(Ω)`, and the gap.  Measured (`#guard`, and `node` for the
 external): `oR`'s tower on the expansions, the row scan, and the external's `fund`.  NOT
 claimed: which of the two sides of the correspondence carries the "true" ordinal for the
 matrix `(0,0)(1,1)(2,2)` — §137 says plainly that an independent implementation cannot
@@ -2424,21 +2424,21 @@ decide that, and nothing here changes it.
 section
 open TM TM.Term
 
-/-! ## §141c.1 THE CLOSED FORM OF `fsN` AT `ψ_Ω(Z 1)` -/
+/-! ### §141.1 THE CLOSED FORM OF `fsNOld` AT `ψ_Ω(Z 1)` -/
 
-/-- `fsN` が ψ_Ω(Z 1) に与える列の閉じた形 — ψ_Ω の塔。 -/
+/-- `fsNOld` が ψ_Ω(Z 1) に与える列の閉じた形 — ψ_Ω の塔。 -/
 def gTow141 : Nat → Term
   | 0 => psi (Z zero) zero
   | n + 1 => psi (Z zero) (gTow141 n)
 
-/-- **`fsN` の ψ_Ω(Z 1) での閉じた形。** 対角化が前の項をそのまま添字に戻すので、
+/-- **`fsNOld` の ψ_Ω(Z 1) での閉じた形。** 対角化が前の項をそのまま添字に戻すので、
     出てくるのは ψ_Ω の塔である。 -/
-theorem fsN_psiZ1_141 : ∀ n : Nat, fsN (psi (Z zero) (Z TM.Term.one)) n = gTow141 n
+theorem fsN_psiZ1_141 : ∀ n : Nat, fsNOld (psi (Z zero) (Z TM.Term.one)) n = gTow141 n
   | 0 => by
-      rw [fsN]
+      rw [fsNOld]
       rfl
   | n + 1 => by
-      rw [fsN]
+      rw [fsNOld]
       simp only [show kindT (Z TM.Term.one) = KindT.isLim from rfl,
         show cofT (Z TM.Term.one) = Z TM.Term.one from rfl,
         show ((Z TM.Term.one : Term) == omega) = false from rfl,
@@ -2448,12 +2448,12 @@ theorem fsN_psiZ1_141 : ∀ n : Nat, fsN (psi (Z zero) (Z TM.Term.one)) n = gTow
       rfl
 
 /-- **同じ列が ψ_Ω(Ω) にも出る。** `fsT (Z d) s = s` は `d` を見ない。 -/
-theorem fsN_psiOm_141 : ∀ n : Nat, fsN (psi (Z zero) (Z zero)) n = gTow141 n
+theorem fsN_psiOm_141 : ∀ n : Nat, fsNOld (psi (Z zero) (Z zero)) n = gTow141 n
   | 0 => by
-      rw [fsN]
+      rw [fsNOld]
       rfl
   | n + 1 => by
-      rw [fsN]
+      rw [fsNOld]
       simp only [show kindT (Z zero) = KindT.isLim from rfl,
         show cofT (Z zero) = Z zero from rfl,
         show ((Z zero : Term) == omega) = false from rfl,
@@ -2462,13 +2462,13 @@ theorem fsN_psiOm_141 : ∀ n : Nat, fsN (psi (Z zero) (Z zero)) n = gTow141 n
       rw [fsN_psiOm_141 n]
       rfl
 
-/-- **`fsN` は ψ_Ω(Z 1) と ψ_Ω(Ω) を区別しない。** 当方の順序は両者を分ける
+/-- **`fsNOld` は ψ_Ω(Z 1) と ψ_Ω(Ω) を区別しない。** 当方の順序は両者を分ける
     (`lt_wt_zt141`) のだから、基本列が両方で正しいことはあり得ない。 -/
 theorem fsN_agree141 (n : Nat) :
-    fsN (psi (Z zero) (Z TM.Term.one)) n = fsN (psi (Z zero) (Z zero)) n := by
+    fsNOld (psi (Z zero) (Z TM.Term.one)) n = fsNOld (psi (Z zero) (Z zero)) n := by
   rw [fsN_psiZ1_141 n, fsN_psiOm_141 n]
 
-/-! ## §141c.2 隙間 — `ψ_Ω(Ω)` が列の上・値の下に入る -/
+/-! ### §141.2 隙間 — `ψ_Ω(Ω)` が列の上・値の下に入る -/
 
 /-- ψ_Ω(x) < Ω。[R91] 2.3.8。 -/
 theorem psi_lt_Om141 (x : Term) : lt (psi (Z zero) x) (Z zero) = true := by
@@ -2527,13 +2527,13 @@ theorem lt_gTow_wt141 : ∀ n : Nat, lt (gTow141 n) (psi (Z zero) (Z zero)) = tr
 
 /-- **`TM/FS.lean` の列は ψ_Ω(Ω) を超えない。** -/
 theorem lt_fsN_wt141 (n : Nat) :
-    lt (fsN (psi (Z zero) (Z TM.Term.one)) n) (psi (Z zero) (Z zero)) = true := by
+    lt (fsNOld (psi (Z zero) (Z TM.Term.one)) n) (psi (Z zero) (Z zero)) = true := by
   rw [fsN_psiZ1_141 n]
   exact lt_gTow_wt141 n
 
 /-- **§69 の `CofGap` と同じ形。** ψ_Ω(Ω) は列のどの項以下でもない。 -/
 theorem le_wt_fsN141 (n : Nat) :
-    le (psi (Z zero) (Z zero)) (fsN (psi (Z zero) (Z TM.Term.one)) n) = false := by
+    le (psi (Z zero) (Z zero)) (fsNOld (psi (Z zero) (Z TM.Term.one)) n) = false := by
   obtain ⟨y, hy, hne, hlt⟩ := gTow_shape141 n
   rw [fsN_psiZ1_141 n]
   show (((psi (Z zero) (Z zero) : Term) == gTow141 n)
@@ -2552,10 +2552,10 @@ theorem lt_wt_zt141 : lt (psi (Z zero) (Z zero)) (psi (Z zero) (Z TM.Term.one)) 
 theorem fsN_not_cofinal141 :
     inT (psi (Z zero) (Z zero)) = true
       ∧ lt (psi (Z zero) (Z zero)) (psi (Z zero) (Z TM.Term.one)) = true
-      ∧ ∀ n : Nat, le (psi (Z zero) (Z zero)) (fsN (psi (Z zero) (Z TM.Term.one)) n) = false :=
+      ∧ ∀ n : Nat, le (psi (Z zero) (Z zero)) (fsNOld (psi (Z zero) (Z TM.Term.one)) n) = false :=
   ⟨inT_wt141, lt_wt_zt141, le_wt_fsN141⟩
 
-/-! ## §141c.3 `fsN` の列 対 展開の値の列 — 両者は互いに違う -/
+/-! ### §141.3 `fsNOld` の列 対 展開の値の列 — 両者は互いに違う -/
 
 /-- Ω は §69 の塔 `TW` のどの段よりも下。 -/
 theorem lt_Om_TW141 : ∀ j : Nat, lt (Z zero) (TW j) = true
@@ -2572,7 +2572,7 @@ theorem lt_Om_TW141 : ∀ j : Nat, lt (Z zero) (TW j) = true
         lt_Om_TW141 j]
       simp
 
-/-- **隙間の項は展開の値の塔のどの段よりも下。** つまり `fsN` の列と `oR` の列は
+/-- **隙間の項は展開の値の塔のどの段よりも下。** つまり `fsNOld` の列と `oR` の列は
     同じ上限を持ち得ない — 一方を直しても他方は直らない。 -/
 theorem lt_wt_psiTW141 (j : Nat) :
     lt (psi (Z zero) (Z zero)) (psi (Z zero) (TW j)) = true := by
@@ -2585,25 +2585,25 @@ theorem lt_wt_psiTW141 (j : Nat) :
 #guard (List.range 5).all fun n =>
   Trans.oR (BMS.expand [[0,0],[1,1],[2,2]] (n+3)) == some (psi (Z zero) (TW (n+3)))
 
--- どの段でも `fsN` の列と一致しない。
+-- どの段でも `fsNOld` の列と一致しない。
 #guard (List.range 8).all fun n =>
   !(Trans.oR (BMS.expand [[0,0],[1,1],[2,2]] n)
-    == some (fsN (psi (Z zero) (Z TM.Term.one)) n))
+    == some (fsNOld (psi (Z zero) (Z TM.Term.one)) n))
 
 -- 一様なずらしを 0..7 まで探しても乗らない。
 #guard (List.range 8).all fun j =>
   !((List.range 4).all fun n =>
       Trans.oR (BMS.expand [[0,0],[1,1],[2,2]] n)
-        == some (fsN (psi (Z zero) (Z TM.Term.one)) (n+j)))
+        == some (fsNOld (psi (Z zero) (Z TM.Term.one)) (n+j)))
 
 -- 掲載値と行列の確認 — 読み違いではない (§137 と同じ検査)。
 #guard (Rows.rows.find? fun r => r.m == [[0,0],[1,1],[2,2]]).map (·.t)
        == some (psi (Z zero) (Z TM.Term.one))
 
-/-! ## §141c.4 修理の代価 — どの行の E3 が `Z 1` の節に乗っているか -/
+/-! ### §141.4 修理の代価 — どの行の E3 が `Z 1` の節に乗っているか -/
 
-/-- `fsN` が実際に降りる枝だけを辿り、対角化が κ より真に上の正則を降りるよう
-    求められる箇所に当たるか。節ごとに `fsN` の再帰をそのまま写したもの。 -/
+/-- `fsNOld` が実際に降りる枝だけを辿り、対角化が κ より真に上の正則を降りるよう
+    求められる箇所に当たるか。節ごとに `fsNOld` の再帰をそのまま写したもの。 -/
 def diagReach141 : Term → Bool
   | add _ b => diagReach141 b
   | omg g => if kindT g == KindT.isSucc then false else diagReach141 g
@@ -2626,15 +2626,15 @@ def diagReach141 : Term → Bool
            else !(p == k))
   | _ => false
 
-/-- 展開が `fsN` に一様なずらしで乗るか (`Rows/Selected.lean` の `hasShift` と同じ)。 -/
+/-- 展開が `fsNOld` に一様なずらしで乗るか (`Rows/Selected.lean` の `hasShift` と同じ)。 -/
 def hasShift141 (r : Rows.Row) : Bool :=
   (List.range 6).any fun j =>
-    (List.range 4).all fun n => Trans.oR (BMS.expand r.m n) == some (fsN r.t (n + j))
+    (List.range 4).all fun n => Trans.oR (BMS.expand r.m n) == some (fsNOld r.t (n + j))
 
 -- **欠陥の節に届く行は、表 60 行のうちちょうど §137 の 5 行。**
 #guard ((Rows.rows.filter fun r => diagReach141 r.t).map (·.m)) == brokenRows137
 
--- **その 5 行はどれも `fsN` に乗らない** — 修理はどの行の E3 も壊さない。
+-- **その 5 行はどれも `fsNOld` に乗らない** — 修理はどの行の E3 も壊さない。
 #guard (Rows.rows.filter fun r => diagReach141 r.t).all fun r => !(hasShift141 r)
 
 -- 乗る行は 60 行中 44 行ある (検査が空回りしていないこと)。
@@ -2643,7 +2643,7 @@ def hasShift141 (r : Rows.Row) : Bool :=
 
 /-! ### 対照 -/
 
--- 対照 1 — 健全な行 60 `(0,0)(1,1)(2,2)(3,1)` は `fsN` に乗り (`Rows/G8.lean` の
+-- 対照 1 — 健全な行 60 `(0,0)(1,1)(2,2)(3,1)` は `fsNOld` に乗り (`Rows/G8.lean` の
 -- `oR_M` は定理)、`diagReach141` は沈黙する。
 #guard (Rows.rows.filter fun r => r.m == [[0,0],[1,1],[2,2],[3,1]]).all fun r =>
   hasShift141 r && !(diagReach141 r.t)
@@ -2653,14 +2653,14 @@ def hasShift141 (r : Rows.Row) : Bool :=
 #guard !(diagReach141 (psi (Z zero) (Z zero)))
 #guard diagReach141 (psi (Z zero) (Z TM.Term.one))
 
--- 対照 3 — `fsN` は ψ_Ω(Ω) には正しい形の列を出しており、その列こそが
+-- 対照 3 — `fsNOld` は ψ_Ω(Ω) には正しい形の列を出しており、その列こそが
 -- ψ_Ω(Z 1) にも出てしまっているもの。
 #guard (List.range 5).all fun n =>
-  fsN (psi (Z zero) (Z TM.Term.one)) n == fsN (psi (Z zero) (Z zero)) n
+  fsNOld (psi (Z zero) (Z TM.Term.one)) n == fsNOld (psi (Z zero) (Z zero)) n
 
--- 対照 4 — 外部が行 37 に名指した値 `sbad` では、`fsN` は Ω+1 の上の ω 塔を出し、
+-- 対照 4 — 外部が行 37 に名指した値 `sbad` では、`fsNOld` は Ω+1 の上の ω 塔を出し、
 -- その各項は `sbad` の下にある (ψ_Ω(Z 1) で起きた破れは起きない)。
-#guard (List.range 6).all fun n => lt (fsN sbad n) sbad
+#guard (List.range 6).all fun n => lt (fsNOld sbad n) sbad
 #guard (List.range 6).all fun n => lt (psi (Z zero) (TW n)) sbad
 
 /-! ### 公理 — `sorryAx` も `native_decide` も無いこと -/
@@ -3141,24 +3141,24 @@ def lo143 : List BT := every143 11 (allStd108.filter fun z => btLe72 1 z)
 
 
 **THIS FILE IS A PROTOTYPE AND TOUCHES NOTHING.**  It defines `fsN144` BESIDE `TM/FS.lean`'s
-`fsN`, under a new name, so that the repair can be proved and priced without a rebuild of
+`fsNOld`, under a new name, so that the repair can be proved and priced without a rebuild of
 everything above `TM/FS.lean`.  Integration is a separate decision.
 
-WHAT §141 LEFT.  `fsN_not_cofinal141` proves, with no hypothesis, that `fsN` is not cofinal
+WHAT §141 LEFT.  `fsN_not_cofinal141` proves, with no hypothesis, that `fsNOld` is not cofinal
 at `ψ_Ω(Z 1)`: the term `ψ_Ω(Ω)` is `inT`, is strictly below `ψ_Ω(Z 1)`, and is strictly
-above every member of `fsN (ψ_Ω(Z 1)) ·`.  §141 also located the cause — the `psi` /
+above every member of `fsNOld (ψ_Ω(Z 1)) ·`.  §141 also located the cause — the `psi` /
 `.isLim` diagonalisation feeds the PREVIOUS VALUE back as the index:
 
-    fsN (psi k a) 0       = psi k (fsT a 0)
-    fsN (psi k a) (m+1)   = psi k (fsT a (fsN (psi k a) m))
+    fsNOld (psi k a) 0       = psi k (fsT a 0)
+    fsNOld (psi k a) (m+1)   = psi k (fsT a (fsNOld (psi k a) m))
 
 The index is therefore always a `ψ_κ`-value, hence below `κ`.  That is right when
 `cof α = κ`.  When `cof α = π` is a regular strictly ABOVE `κ` the indices must climb
 inside `π`, and nothing below `κ` ever does; the sequence stalls at `ψ_κ(κ)`.  The visible
-symptom is `fsN_agree141` — `fsN` returns the SAME sequence for `ψ_Ω(Z 1)` and `ψ_Ω(Ω)`,
+symptom is `fsN_agree141` — `fsNOld` returns the SAME sequence for `ψ_Ω(Z 1)` and `ψ_Ω(Ω)`,
 two terms this repository's own order separates (`lt_wt_zt141`).
 
-THE REPAIR, IN ONE LINE.  Replace the fed-back index `fsN (psi k a) m` — a `ψ_κ`-value —
+THE REPAIR, IN ONE LINE.  Replace the fed-back index `fsNOld (psi k a) m` — a `ψ_κ`-value —
 by the same recursion run at `π = cof α` instead of at `κ`:
 
     x 0        = 0
@@ -3169,7 +3169,7 @@ When `π = κ` this is the old clause verbatim — `fsN143_eq_fsN_diag` PROVES i
 measured.  When `π > κ` the indices are `ψ_π`-values and they climb inside `π`.
 `fsT`, `cofT`, `psiSeed`, `kindT`, `predT` are UNCHANGED and reused as they stand: `κ` is
 not visible inside `fsT`, so the only place that can see "the cofinality is a regular above
-the collapsing index" is the `fsN` call site, which is where the repair goes.
+the collapsing index" is the `fsNOld` call site, which is where the repair goes.
 
 PROVENANCE OF THE NEW CLAUSE (`TM/FS.lean` is a design choice, so a clause without
 provenance is not a repair).
@@ -3194,8 +3194,8 @@ provenance is not a repair).
 
      The first is `fsN144 (ψ_Ω(Z 1)) (n+1)` term for term (`fsN143_psiZ1_144` gives the
      closed form; the offset by one is the SAME offset `TM/FS.lean`'s provenance section
-     already records for the Γ₀ row and for `fund(ψ^W(W), ·)`, and `fsN` has it too).
-     The second is `fsN (ψ_Ω(Ω)) (n+1)`, i.e. the branch this file leaves alone.
+     already records for the Γ₀ row and for `fund(ψ^W(W), ·)`, and `fsNOld` has it too).
+     The second is `fsNOld (ψ_Ω(Ω)) (n+1)`, i.e. the branch this file leaves alone.
      The third shows the index is fed through `α[·]` and not a bare tower, which is what
      `diagIdx144` does.
      `ψ^W(ω^I)` and `ψ^W(W ⊕ I)` are NOT terms over there (their `dom` raises), so they
@@ -3205,15 +3205,15 @@ WHAT IS PROVED AND WHAT IS MEASURED — stated once, plainly.
 
   PROVED (no hypothesis, no `sorry`, no `native_decide`):
     `fsN143_eq_fsN_of_silent144`
-                             `diagReach141 t = false → ∀ n, fsN144 t n = fsN t n`.  ALL terms,
-                             ALL indices, no corpus — by `TM.Term.fsN.induct`, so every case
-                             is one of `fsN`'s own branches.  §141 MEASURED this over 60
+                             `diagReach141 t = false → ∀ n, fsN144 t n = fsNOld t n`.  ALL terms,
+                             ALL indices, no corpus — by `TM.Term.fsNOld.induct`, so every case
+                             is one of `fsNOld`'s own branches.  §141 MEASURED this over 60
                              rows; here it is a theorem, which is what makes "no row's E3
                              changes" checkable rather than sampled.
-    `fsN143_sbad144`         hence `fsN144 sbad n = fsN sbad n` for every `n`.
+    `fsN143_sbad144`         hence `fsN144 sbad n = fsNOld sbad n` for every `n`.
     `sameFs143_of_silent144` the same fact in the form the row `#guard`s use.
-    `fsN143_eq_fsN_diag`     `fsN144 = fsN` on the whole `π = κ` branch, all `k`, `a`, `n`.
-    `fsN143_psiOm_144`       hence `fsN144 (ψ_Ω(Ω)) n = fsN (ψ_Ω(Ω)) n` for every `n`.
+    `fsN143_eq_fsN_diag`     `fsN144 = fsNOld` on the whole `π = κ` branch, all `k`, `a`, `n`.
+    `fsN143_psiOm_144`       hence `fsN144 (ψ_Ω(Ω)) n = fsNOld (ψ_Ω(Ω)) n` for every `n`.
     `fsN143_psiZ1_144`       closed form at `ψ_Ω(Z 1)`: `ψ_Ω` of the `ψ_{Z 1}`-tower.
     `fsN143_gap_closed144`   §141's witness `ψ_Ω(Ω)` is `≤` the member at index 1, and
                              EVERY member of §141's old sequence is strictly below it.
@@ -3243,7 +3243,7 @@ def diagIdx144 (p a : Term) : Nat → Term
   | 0 => zero
   | n + 1 => psi p (fsT a (diagIdx144 p a n))
 
-/-- 修理版 `fsN`。 -/
+/-- 修理版 `fsNOld`。 -/
 def fsN144 : Term → Nat → Term
   | add a b, n => plus a (fsN144 b n)
   | omg g, n =>
@@ -3288,7 +3288,7 @@ def fsN144 : Term → Nat → Term
 
 /-! ### §144.2 CLAUSE LEMMAS
 
-`rw [fsN]` picks the wrong equation at a `psi` (the definition matches `k` against `Z d`
+`rw [fsNOld]` picks the wrong equation at a `psi` (the definition matches `k` against `Z d`
 inside the clause, so a generic `psi k a` matches no specialised equation and falls through
 to the catch-all).  These lemmas state each clause once, from `eq_def`, so the induction
 below can rewrite with `if_pos` / `if_neg` instead of fighting `simp`.
@@ -3329,16 +3329,16 @@ theorem dR_psi144 (k a : Term) :
               else !(p == k))) := by
   rw [diagReach141.eq_def]; try rfl
 
-theorem fsN_add144 (a b : Term) (n : Nat) : fsN (add a b) n = plus a (fsN b n) := by
-  rw [TM.Term.fsN.eq_def]; try rfl
+theorem fsN_add144 (a b : Term) (n : Nat) : fsNOld (add a b) n = plus a (fsNOld b n) := by
+  rw [TM.Term.fsNOld.eq_def]; try rfl
 theorem fsN143_add144 (a b : Term) (n : Nat) : fsN144 (add a b) n = plus a (fsN144 b n) := by
   rw [fsN144.eq_def]; try rfl
 
 theorem fsN_omg144 (g : Term) (n : Nat) :
-    fsN (omg g) n = (match kindT g with
+    fsNOld (omg g) n = (match kindT g with
                      | KindT.isSucc => mulNat (omegaNF (predT g)) n
-                     | _ => omegaNF (fsN g n)) := by
-  rw [TM.Term.fsN.eq_def]; try rfl
+                     | _ => omegaNF (fsNOld g n)) := by
+  rw [TM.Term.fsNOld.eq_def]; try rfl
 theorem fsN143_omg144 (g : Term) (n : Nat) :
     fsN144 (omg g) n = (match kindT g with
                         | KindT.isSucc => mulNat (omegaNF (predT g)) n
@@ -3346,7 +3346,7 @@ theorem fsN143_omg144 (g : Term) (n : Nat) :
   rw [fsN144.eq_def]; try rfl
 
 theorem fsN_phi144 (a b : Term) (n : Nat) :
-    fsN (phi a b) n
+    fsNOld (phi a b) n
       = (if phiShifted a b || kindT b == KindT.isSucc then
            (match kindT a with
             | KindT.isZero => mulNat (omegaNF (if phiShifted a b then b else predT b)) n
@@ -3354,13 +3354,13 @@ theorem fsN_phi144 (a b : Term) (n : Nat) :
                 iterPhiAt (predT a)
                   (plus (phiNF a (if phiShifted a b then b else predT b)) one) n
             | KindT.isLim =>
-                phiNF (fsN a n) (plus (phiNF a (if phiShifted a b then b else predT b)) one))
-         else if kindT b == KindT.isLim then phiNF a (fsN b n)
+                phiNF (fsNOld a n) (plus (phiNF a (if phiShifted a b then b else predT b)) one))
+         else if kindT b == KindT.isLim then phiNF a (fsNOld b n)
          else (match kindT a with
                | KindT.isSucc => iterPhiAt (predT a) zero n
-               | KindT.isLim => phiNF (fsN a n) zero
+               | KindT.isLim => phiNF (fsNOld a n) zero
                | KindT.isZero => zero)) := by
-  rw [TM.Term.fsN.eq_def]; try rfl
+  rw [TM.Term.fsNOld.eq_def]; try rfl
 theorem fsN143_phi144 (a b : Term) (n : Nat) :
     fsN144 (phi a b) n
       = (if phiShifted a b || kindT b == KindT.isSucc then
@@ -3379,23 +3379,23 @@ theorem fsN143_phi144 (a b : Term) (n : Nat) :
   rw [fsN144.eq_def]; try rfl
 
 theorem fsN_psi144 (k a : Term) (n : Nat) :
-    fsN (psi k a) n
+    fsNOld (psi k a) n
       = (match kindT a with
          | KindT.isZero =>
              (match k with
               | Z d => (match kindT d with
-                        | KindT.isLim => Z (fsN d n)
+                        | KindT.isLim => Z (fsNOld d n)
                         | _ => iterGamma (psiSeed k) n)
               | _ => zero)
          | KindT.isSucc => iterGamma (plus (psi k (predT a)) one) n
          | KindT.isLim =>
              (let p := cofT a
-              if p == omega then psi k (fsN a n)
+              if p == omega then psi k (fsNOld a n)
               else if lt p k then zero
               else (match n with
                     | 0 => psi k (fsT a zero)
-                    | m + 1 => psi k (fsT a (fsN (psi k a) m))))) := by
-  rw [TM.Term.fsN.eq_def]; try rfl
+                    | m + 1 => psi k (fsT a (fsNOld (psi k a) m))))) := by
+  rw [TM.Term.fsNOld.eq_def]; try rfl
 theorem fsN143_psi144 (k a : Term) (n : Nat) :
     fsN144 (psi k a) n
       = (match kindT a with
@@ -3418,16 +3418,16 @@ theorem fsN143_psi144 (k a : Term) (n : Nat) :
 
 /-! ### §144.3 THE REPAIR CHANGES NOTHING WHERE `diagReach141` IS SILENT — A THEOREM
 
-§141's `diagReach141` walks exactly the branches `fsN` takes and flags the one place the
+§141's `diagReach141` walks exactly the branches `fsNOld` takes and flags the one place the
 repair touches.  The theorem below says the two definitions agree on EVERY term it does not
 flag — all terms, all indices, no corpus.  §141 measured this over 60 rows; here it is
-proved.  The proof is by `TM.Term.fsN.induct` (the functional induction principle of the
-ORIGINAL `fsN`), so every case is one of `fsN`'s own branches.
+proved.  The proof is by `TM.Term.fsNOld.induct` (the functional induction principle of the
+ORIGINAL `fsNOld`), so every case is one of `fsNOld`'s own branches.
 -/
 
-theorem fsN_zero144 (n : Nat) : fsN zero n = zero := by rw [TM.Term.fsN.eq_def]; try rfl
-theorem fsN_M144 (n : Nat) : fsN M n = zero := by rw [TM.Term.fsN.eq_def]; try rfl
-theorem fsN_Z144 (d : Term) (n : Nat) : fsN (Z d) n = zero := by rw [TM.Term.fsN.eq_def]; try rfl
+theorem fsN_zero144 (n : Nat) : fsNOld zero n = zero := by rw [TM.Term.fsNOld.eq_def]; try rfl
+theorem fsN_M144 (n : Nat) : fsNOld M n = zero := by rw [TM.Term.fsNOld.eq_def]; try rfl
+theorem fsN_Z144 (d : Term) (n : Nat) : fsNOld (Z d) n = zero := by rw [TM.Term.fsNOld.eq_def]; try rfl
 theorem fsN143_zero144 (n : Nat) : fsN144 zero n = zero := by rw [fsN144.eq_def]; try rfl
 theorem fsN143_M144 (n : Nat) : fsN144 M n = zero := by rw [fsN144.eq_def]; try rfl
 theorem fsN143_Z144 (d : Term) (n : Nat) : fsN144 (Z d) n = zero := by
@@ -3439,19 +3439,19 @@ theorem diagIdx143_succ (p a : Term) (n : Nat) :
 
 theorem fsN_diag0_144 {k a : Term} (hlim : kindT a = KindT.isLim)
     (hom : ((cofT a : Term) == omega) = false) (hlt : lt (cofT a) k = false) :
-    fsN (psi k a) 0 = psi k (fsT a zero) := by
-  rw [TM.Term.fsN.eq_def]
+    fsNOld (psi k a) 0 = psi k (fsT a zero) := by
+  rw [TM.Term.fsNOld.eq_def]
   simp only [hlim, hom, Bool.false_eq_true, if_false, hlt]
 
 theorem fsN_diagS_144 {k a : Term} (hlim : kindT a = KindT.isLim)
     (hom : ((cofT a : Term) == omega) = false) (hlt : lt (cofT a) k = false) (m : Nat) :
-    fsN (psi k a) (m + 1) = psi k (fsT a (fsN (psi k a) m)) := by
-  rw [TM.Term.fsN.eq_def]
+    fsNOld (psi k a) (m + 1) = psi k (fsT a (fsNOld (psi k a) m)) := by
+  rw [TM.Term.fsNOld.eq_def]
   simp only [hlim, hom, Bool.false_eq_true, if_false, hlt]
 
 theorem diagIdx143_eq_fsN {k a : Term} (hlim : kindT a = KindT.isLim) (hcof : cofT a = k)
     (hom : ((k : Term) == omega) = false) :
-    ∀ n : Nat, diagIdx144 k a (n + 1) = fsN (psi k a) n
+    ∀ n : Nat, diagIdx144 k a (n + 1) = fsNOld (psi k a) n
   | 0 => by
       rw [diagIdx143_succ, diagIdx143_zero,
         fsN_diag0_144 hlim (by rw [hcof]; exact hom)
@@ -3464,9 +3464,9 @@ theorem diagIdx143_eq_fsN {k a : Term} (hlim : kindT a = KindT.isLim) (hcof : co
 /-- **`diagReach141` が沈黙する項では、修理版と旧版は完全に同じ列を出す。**
     項も添字も自由。母集団ではなく定理。§141 の「44 行はどれも動かない」の証明版。 -/
 theorem fsN143_eq_fsN_of_silent144 :
-    ∀ (t : Term) (n : Nat), diagReach141 t = false → fsN144 t n = fsN t n := by
+    ∀ (t : Term) (n : Nat), diagReach141 t = false → fsN144 t n = fsNOld t n := by
   intro t n
-  induction t, n using TM.Term.fsN.induct with
+  induction t, n using TM.Term.fsNOld.induct with
   | case1 a b n ih =>
       intro h; rw [dR_add144] at h; rw [fsN_add144, fsN143_add144, ih h]
   | case2 g n hg => intro _; rw [fsN_omg144, fsN143_omg144]; simp only [hg]
@@ -3581,7 +3581,7 @@ theorem fsN143_eq_fsN_of_silent144 :
 
 /-- **系 — §137 が行 37 に名指した値 `sbad = ψ_Ω(φ̄(1,Ω))` では列は一切動かない。**
     すべての `n` について。測定ではなく定理。 -/
-theorem fsN143_sbad144 (n : Nat) : fsN144 sbad n = fsN sbad n :=
+theorem fsN143_sbad144 (n : Nat) : fsN144 sbad n = fsNOld sbad n :=
   fsN143_eq_fsN_of_silent144 sbad n rfl
 
 /-! ### §144.3b The `π = κ` diagonalisation, stated directly -/
@@ -3597,7 +3597,7 @@ theorem fsN143_diag_144 {k a : Term} (hlim : kindT a = KindT.isLim)
     「κ ≠ ω」「κ が正則項」だけで、`k` も `a` も `n` も自由。 -/
 theorem fsN143_eq_fsN_diag {k a : Term} (hlim : kindT a = KindT.isLim) (hcof : cofT a = k)
     (hom : ((k : Term) == omega) = false) (hR : k.isR = true) :
-    ∀ n : Nat, fsN144 (psi k a) n = fsN (psi k a) n
+    ∀ n : Nat, fsN144 (psi k a) n = fsNOld (psi k a) n
   | 0 => by
       rw [fsN143_diag_144 hlim (by rw [hcof]; exact hom)
             (by rw [hcof]; exact Evidence.WF.lt_irrefl k) (by rw [hcof]; exact hR),
@@ -3613,7 +3613,7 @@ theorem fsN143_eq_fsN_diag {k a : Term} (hlim : kindT a = KindT.isLim) (hcof : c
 
 /-- §141 が「壊れていない側」として名指した項。`fsN144` はここでは何もしていない。 -/
 theorem fsN143_psiOm_144 (n : Nat) :
-    fsN144 (psi (Z zero) (Z zero)) n = fsN (psi (Z zero) (Z zero)) n :=
+    fsN144 (psi (Z zero) (Z zero)) n = fsNOld (psi (Z zero) (Z zero)) n :=
   fsN143_eq_fsN_diag (a := Z zero) (k := Z zero) rfl rfl rfl rfl n
 
 /-- ゆえに `ψ_Ω(Ω)` での閉じた形は §141 の `gTow141` のまま。 -/
@@ -3716,7 +3716,7 @@ theorem fsN143_gap_closed144 :
       ∧ lt (psi (Z zero) (Z zero)) (psi (Z zero) (Z TM.Term.one)) = true
       ∧ le (psi (Z zero) (Z zero)) (fsN144 (psi (Z zero) (Z TM.Term.one)) 1) = true
       ∧ ∀ n : Nat,
-          lt (fsN (psi (Z zero) (Z TM.Term.one)) n)
+          lt (fsNOld (psi (Z zero) (Z TM.Term.one)) n)
              (fsN144 (psi (Z zero) (Z TM.Term.one)) 1) = true := by
   refine ⟨inT_wt141, lt_wt_zt141, ?_, ?_⟩
   · rw [fsN143_psiZ1_144 1]
@@ -3750,13 +3750,13 @@ theorem fsN143_ne_144 (n : Nat) :
 
 `sameFs144` compares the two definitions term by term over `n < 8`; `hasShift144` is
 `Rows/Selected.lean`'s `hasShift` (and §141's `hasShift141`) with `fsN144` in place of
-`fsN`.  `hitM144` mirrors `diagReach141` but flags the OTHER branch — the one where the
+`fsNOld`.  `hitM144` mirrors `diagReach141` but flags the OTHER branch — the one where the
 cofinality is not a regular TERM (`p = M`), which `fsN144` deliberately leaves on the old
 clause because `ψ_M` is not a term of 𝔗(M) (`isR M = false`).
 -/
 
 /-- 二つの定義が `n < 8` で一致するか。 -/
-def sameFs144 (t : Term) : Bool := (List.range 8).all fun n => fsN144 t n == fsN t n
+def sameFs144 (t : Term) : Bool := (List.range 8).all fun n => fsN144 t n == fsNOld t n
 
 /-- 上の定理の `#guard` 用の形。 -/
 theorem sameFs143_of_silent144 (t : Term) (h : diagReach141 t = false) : sameFs144 t = true := by
@@ -3804,17 +3804,17 @@ def hitM144 : Term → Bool
 -- **`diagReach141` が発火する行と、実際に値が変わる行は同じ集合。**
 #guard Rows.rows.all fun r => diagReach141 r.t == !(sameFs144 r.t)
 
--- **`fsN` に乗る行は 44 行のまま、乗る・乗らないが変わる行は一つも無い。**
+-- **`fsNOld` に乗る行は 44 行のまま、乗る・乗らないが変わる行は一つも無い。**
 #guard (Rows.rows.countP fun r => hasShift144 r) == 44
 #guard (Rows.rows.countP fun r => hasShift141 r) == 44
 #guard Rows.rows.all fun r => hasShift141 r == hasShift144 r
 
--- 変わる 5 行は修理の前も後も `fsN` に乗らない。E3 はどれも動かない。
+-- 変わる 5 行は修理の前も後も `fsNOld` に乗らない。E3 はどれも動かない。
 #guard (Rows.rows.filter fun r => diagReach141 r.t).all fun r => !(hasShift144 r)
 
--- §137 が行 37 に名指した値 `sbad` では、`fsN144` は `fsN` と同じ列を出す。
+-- §137 が行 37 に名指した値 `sbad` では、`fsN144` は `fsNOld` と同じ列を出す。
 #guard sameFs144 sbad
-#guard (List.range 8).all fun n => fsN144 sbad n == fsN sbad n
+#guard (List.range 8).all fun n => fsN144 sbad n == fsNOld sbad n
 
 -- `TM/FS.lean` の母集団 169 項でも、変わるのは `diagReach141` が発火する項だけ。
 #guard TM.Term.domCorpus.all fun t => diagReach141 t == !(sameFs144 t)
@@ -3842,12 +3842,12 @@ def hitM144 : Term → Bool
 #guard (List.range 6).all fun n => inT (fsN144 (psi (Z zero) (Z TM.Term.one)) n)
 -- 旧列は `ψ_Ω(Ω)` を超えないが、新列は添字 1 で超える (§141 との対比)。
 #guard le (psi (Z zero) (Z zero)) (fsN144 (psi (Z zero) (Z TM.Term.one)) 1)
-#guard (List.range 6).all fun n => !(le (psi (Z zero) (Z zero)) (fsN (psi (Z zero) (Z TM.Term.one)) n))
+#guard (List.range 6).all fun n => !(le (psi (Z zero) (Z zero)) (fsNOld (psi (Z zero) (Z TM.Term.one)) n))
 -- 新列は `ψ_Ω(Ω)` の列と添字 1 以上で違う。
 #guard (List.range 6).all fun n =>
   !(fsN144 (psi (Z zero) (Z TM.Term.one)) (n+1) == fsN144 (psi (Z zero) (Z zero)) (n+1))
 -- 添字 0 は両者で同じ (`x 0 = 0` なので、修理は n = 0 を動かさない)。
-#guard fsN144 (psi (Z zero) (Z TM.Term.one)) 0 == fsN (psi (Z zero) (Z TM.Term.one)) 0
+#guard fsN144 (psi (Z zero) (Z TM.Term.one)) 0 == fsNOld (psi (Z zero) (Z TM.Term.one)) 0
 
 /-! ### 公理 — `sorryAx` も `native_decide` も無いこと -/
 
@@ -4596,4 +4596,53 @@ def cenW145 (P : List BT) : Nat × Nat × Nat × Nat × Nat :=
 #print axioms nearMiss145
 
 end
+/-! ## §146 THE REPAIR IS IN PRODUCTION — WHAT CHANGED, MEASURED AGAINST THE OLD DEFINITION
+
+`TM/FS.lean`'s `fsN` now descends a cofinality that is a regular STRICTLY above the
+collapsing index through `ψ_p` rather than through `ψ_κ`; the pre-repair definition is kept
+beside it as `fsNOld`, because §141 proves — with no hypothesis — that it is not cofinal at
+`ψ_Ω(Z 1)`.  §144 prototyped the change and measured its cost; §146 checks the production
+definition against the old one directly.
+
+The branch is guarded by `p.isR && p != k`, not merely `p.isR`.  At `p = κ` the two agree
+(§144's `fsN144_eq_fsN_diag`), but they agree only in VALUE — the definitional shape differs,
+and `Rows/G8Dict.lean` has a `rfl` that reads it.  Keeping `p = κ` on the old clause confines
+the change to the case it is for and keeps every existing `rfl`.  `p = M` stays on the old
+clause too: `isR M` is false and `ψ_M` is not a term of 𝔗(M). -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ_Ω(Z 1)` — §141's witness point. -/
+def zOne146 : Term := psi (Z zero) (Z (phi zero zero))
+
+/-! 修理が効いていること。 -/
+
+#guard (List.range 5).any fun n => !(fsN zOne146 n == fsNOld zOne146 n)
+
+/-! 旧版は `ψ_Ω(Z 1)` と `ψ_Ω(Ω)` を区別しない (§141 の `fsNOld_agree141`)。
+    新版は区別する。 -/
+
+#guard (List.range 5).all fun n => fsNOld zOne146 n == fsNOld (psi (Z zero) (Z zero)) n
+#guard (List.range 5).any fun n => !(fsN zOne146 n == fsN (psi (Z zero) (Z zero)) n)
+
+/-! **変わるのは 60 行中ちょうど 5 行で、それは §137 の 5 行である。** -/
+
+def changed146 : List (BMS.Matrix) :=
+  (Rows.rows.filter fun r => !((List.range 6).all fun n => fsN r.t n == fsNOld r.t n)).map (·.m)
+
+#guard changed146.length == 5
+#guard changed146 == brokenRows137
+
+/-! **§141 の隙間は塞がった。**  証人 `ψ_Ω(Ω)` は新版の列の添字 1 で拾われ、
+    旧版の列は添字 5 でもまだ届かない。 -/
+
+#guard le (psi (Z zero) (Z zero)) (fsN zOne146 1) == true
+#guard le (psi (Z zero) (Z zero)) (fsNOld zOne146 5) == false
+
+end
+
 end Evidence.Region

@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.8.60
+バージョン: v0.9.0
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -34,7 +34,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 > 「$`\Omega`$ 階層のところだけ compositional をやめる」を選び、χ を 2 引数に戻す案を
 > R1 では**却下**した。**その修理はまだ実装されていない。**
 >
-> 詳細と対照は [diff.md](diff.md) の §137・§139・§140・§141。
+> 詳細と対照は [findings.md](findings.md) の §137・§139・§140・§141。
 
 **備考欄の `(h)` は Hexirp 氏の対応表との照合。** 60 行中 50 行が先方の表にある。
 
@@ -291,7 +291,7 @@ $`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型�
 **✅ の付いた行は影響を受けない。** ✅ は [E.cert](#ecert) から来ており、
 翻訳関数を一度も通らないからである。
 
-外部の対応表との差分は [diff.md](diff.md) に、再実行手順は
+外部の対応表との差分は [findings.md](findings.md) に、再実行手順は
 [scripts/external-check.py](../scripts/external-check.py) にある。
 
 # 実装
@@ -308,5 +308,6 @@ $`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型�
 - 作り方・作業手順・資料の場所 — [plan/README.md](../plan/README.md)
 - 表を読むとき・書くときの原則 (注意書き) — [plan/constitutions.md](../plan/constitutions.md)
 - この表自身の仕様 — [plan/spec.md](../plan/spec.md)
-- 外部の対応表との差分 — [diff.md](diff.md)
+- 作業ツリー — [diff.md](diff.md)
+- 外部の対応表との差分、各項目の根拠 — [findings.md](findings.md)
 - 本筋から外した補足 — [misc.md](misc.md)

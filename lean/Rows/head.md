@@ -2,7 +2,7 @@
 
 <!-- このファイルは `lean/` の `lake exe gentable` による生成物。手編集しないこと。 -->
 
-バージョン: v0.8.60
+バージョン: v0.9.0
 
 順序数表記と見做した BMS (活性化関数を任意化し `[n]` なしで扱う) と、
 Rathjen の表記系 $`\mathfrak{T}(M)`$ (Rathjen, *Proof-theoretic analysis of KPM*,
@@ -34,7 +34,7 @@ Arch. Math. Logic 30 (1991), §2) の対応。
 > 「$`\Omega`$ 階層のところだけ compositional をやめる」を選び、χ を 2 引数に戻す案を
 > R1 では**却下**した。**その修理はまだ実装されていない。**
 >
-> 詳細と対照は [diff.md](diff.md) の §137・§139・§140・§141。
+> 詳細と対照は [findings.md](findings.md) の §137・§139・§140・§141。
 
 **備考欄の `(h)` は Hexirp 氏の対応表との照合。** 60 行中 50 行が先方の表にある。
 

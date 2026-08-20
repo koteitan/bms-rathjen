@@ -179,7 +179,72 @@ def psiSeed : Term → Term
     | _ => zero                        -- for δ a limit, `fsN` uses Z(δ[n]) instead
   | _ => zero
 
-/-- Nat-indexed fundamental sequence t[n] (assumes `cofT t = ω`). -/
+/-- **The pre-2026-08-21 definition, kept for the record.**  Its diagonalisation feeds the
+    PREVIOUS TERM OF ITS OWN SEQUENCE back as the index, which is right only when the
+    cofinality of `α` equals the collapsing index `κ`.  When `cof α` is a regular strictly
+    ABOVE `κ` — `ψ_Ω(Z 1)` is the first place this happens — the sequence is not cofinal in
+    its own target: `Evidence/RegionNext9.lean` §141 proves it, with no hypothesis, by
+    exhibiting `ψ_Ω(Ω)` above every member and strictly below `ψ_Ω(Z 1)`.  `fsN` below is the
+    repair; §144 measures that it changes exactly five table rows and no row's E3. -/
+def fsNOld : Term → Nat → Term
+  | add a b, n => plus a (fsNOld b n)
+  | omg g, n =>
+    (match kindT g with
+     | .isSucc => mulNat (omegaNF (predT g)) n   -- ω̄^{γ'+1}[n] = ω^{γ'}·n
+     | _ => omegaNF (fsNOld g n))                   -- into the exponent (boundaries collapse via ω^)
+  | phi a b, n =>
+    if phiShifted a b || kindT b == .isSucc then
+      -- the semantic argument is a successor c+1: base = φ_a(c) + 1
+      let c := if phiShifted a b then b else predT b
+      let base := plus (phiNF a c) one
+      match kindT a with
+      | .isZero => mulNat (omegaNF c) n          -- ω^{c+1}[n] = ω^c · n
+      | .isSucc => iterPhiAt (predT a) base n    -- φ_{a'}^{(n)}(base)
+      | .isLim => phiNF (fsNOld a n) base           -- φ_{a[n]}(base)
+    else if kindT b == .isLim then phiNF a (fsNOld b n)
+    else
+      -- b = 0 (a ≠ 0, a ∉ SC): φ_a(0)
+      (match kindT a with
+       | .isSucc => iterPhiAt (predT a) zero n
+       | .isLim => phiNF (fsNOld a n) zero
+       | .isZero => zero)                        -- φ̄00 = 1 is a successor (unreachable)
+  | psi k a, n =>
+    (match kindT a with
+     | .isZero =>
+       (match k with
+        | Z d =>
+          (match kindT d with
+           | .isLim => Z (fsNOld d n)               -- ψ_{Zδ}0[n] = Z(δ[n]) for δ a limit
+           | _ => iterGamma (psiSeed k) n)       -- Γ-closure
+        | _ => zero)
+     | .isSucc => iterGamma (plus (psi k (predT a)) one) n
+     | .isLim =>
+       let p := cofT a
+       if p == omega then psi k (fsNOld a n)        -- countable cofinality: propagate
+       else if lt p k then zero                  -- cof α < κ: outside the scope of fsNOld (junk)
+       else
+         -- diagonalization: t[0] = ψκ(α[0]), t[n+1] = ψκ(α[t[n]])
+         (match n with
+          | 0 => psi k (fsT a zero)
+          | m + 1 => psi k (fsT a (fsNOld (psi k a) m))))
+  | _, _ => zero   -- never used on zero, successors, Z or M
+  termination_by t n => (sizeOf t, n)
+  decreasing_by all_goals simp_wf <;> omega
+
+/-- The diagonalisation index when `cof α` is a regular `p` strictly above the collapsing
+    index: the `ψ_p`-tower fed through `α`'s own fundamental sequence.  This is the standard
+    Buchholz-style clause `cof α = Ω_{μ+1}, μ ≥ ν ⇒ ψ_ν(α)[n] = ψ_ν(α[γ n])` with
+    `γ 0 = 0`, `γ (m+1) = ψ_{μ+1}(γ m)`, and it agrees term for term with naruyoko's
+    `padicBotRathjen` implementation of P進大好きbot's Rathjen-type notation. -/
+def diagIdx (p a : Term) : Nat → Term
+  | 0 => zero
+  | n + 1 => psi p (fsT a (diagIdx p a n))
+
+/-- Nat-indexed fundamental sequence t[n] (assumes `cofT t = ω`).
+
+    **Repaired 2026-08-21** at the diagonalisation: when `cof α` is a regular strictly above
+    the collapsing index, the index descends through `ψ_p` and not through `ψ_κ`.  The old
+    definition is kept beside it as `fsNOld`; see its docstring. -/
 def fsN : Term → Nat → Term
   | add a b, n => plus a (fsN b n)
   | omg g, n =>
@@ -216,8 +281,17 @@ def fsN : Term → Nat → Term
        let p := cofT a
        if p == omega then psi k (fsN a n)        -- countable cofinality: propagate
        else if lt p k then zero                  -- cof α < κ: outside the scope of fsN (junk)
+       else if p.isR && p != k then
+         -- `cof α` is a regular STRICTLY ABOVE `κ`: the index must descend through `ψ_p`,
+         -- not through `ψ_κ` ([Rathjen, 1990] 3.6 — `χ_α` is normal, so a descent through a
+         -- regular `π` needs a cofinal supply of indices below `π`, and `ψ_π` is the only
+         -- 𝔗(M) operation that produces them).  `p = M` keeps the old clause: `isR M` is
+         -- false and `ψ_M` is not a term of 𝔗(M).  `p = κ` also keeps the old clause, so
+         -- the change is confined to the case it is for; the two agree there anyway
+         -- (`Evidence/RegionNext9.lean` §144), but keeping the shape keeps every `rfl`.
+         psi k (fsT a (diagIdx p a n))
        else
-         -- diagonalization: t[0] = ψκ(α[0]), t[n+1] = ψκ(α[t[n]])
+         -- `cof α = κ`: t[0] = ψκ(α[0]), t[n+1] = ψκ(α[t[n]])
          (match n with
           | 0 => psi k (fsT a zero)
           | m + 1 => psi k (fsT a (fsN (psi k a) m))))

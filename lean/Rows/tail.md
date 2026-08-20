@@ -169,7 +169,7 @@ $`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型�
 **✅ の付いた行は影響を受けない。** ✅ は [E.cert](#ecert) から来ており、
 翻訳関数を一度も通らないからである。
 
-外部の対応表との差分は [diff.md](diff.md) に、再実行手順は
+外部の対応表との差分は [findings.md](findings.md) に、再実行手順は
 [scripts/external-check.py](../scripts/external-check.py) にある。
 
 # 実装
@@ -186,5 +186,6 @@ $`\Omega_2 = \chi_0(1)`$ は現在の型では書けない。直すには項型�
 - 作り方・作業手順・資料の場所 — [plan/README.md](../plan/README.md)
 - 表を読むとき・書くときの原則 (注意書き) — [plan/constitutions.md](../plan/constitutions.md)
 - この表自身の仕様 — [plan/spec.md](../plan/spec.md)
-- 外部の対応表との差分 — [diff.md](diff.md)
+- 作業ツリー — [diff.md](diff.md)
+- 外部の対応表との差分、各項目の根拠 — [findings.md](findings.md)
 - 本筋から外した補足 — [misc.md](misc.md)
