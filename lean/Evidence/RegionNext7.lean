@@ -5237,4 +5237,92 @@ theorem certIn_t326_vacuous125 (Hp : PsiIdxOKStd172) (H1 : VebIngF114) (H2 : Veb
   certHyp_absurd125 Hp H1 H2 HD3
 
 end
+
+/-! ## §126 THIS IS NOT ABOUT ROW 326 — TWO GATES ALREADY REFUTE THE COFINALITY OF
+       THE SUB-REGION'S FUNDAMENTAL SEQUENCES
+
+§125 showed row 326's certificate cannot be applied.  The reason generalises past row 326,
+and past the density chain, to the statement the whole sub-region correspondence rests on.
+
+    `limCofS1_false126` :  `PsiIdxOKStd172` → `HiMono89` → `¬ LimCofS1`
+
+`LimCofS1` (§70.5) reads: for every standard level-`≤ 1` LIMIT matrix `t`, every term
+`s < vOf t` of 𝔗(M) is reached — `∃ n, s ≤ vOf (fsB t n)`.  Its negation says
+
+    **some standard level-`≤ 1` limit matrix has a value STRICTLY ABOVE the supremum of
+    its own fundamental sequence.**
+
+That is not a defect of one row.  It is the assignment `vOf` being too big somewhere in the
+sub-region, which is the shape §69 already found for the unrestricted `LimCofS`
+(`LimCofS` is FALSE — §69).  `LimCofS1` was the restriction that survived §69's
+counterexample and was swept clean; §126 shows the restriction does not survive either,
+provided the two gates hold.
+
+**THE ROUTE, and note how short it is.**  `HiMono89` and `Hp` give `DictLtStd92` (§121
+`dictLtStd121`) and `DictLtA74` (§81 + §99).  `DictLtStd92` and `Hp` give `Gam0Drags111`
+(§125).  Those three give `¬ CofDenseS1` (§122), and §83's bridge
+`cofDenseS1_iff_dict83` makes `CofDenseS1` and `LimCofS1` EQUIVALENT under `Hp` and
+`DictLtA74`.  No new clause enters anywhere.
+
+**WHAT THIS COSTS THE OTHER ROUTE TO ROW 326.**  §121's `certIn_t326_idx121` does not go
+through the density chain at all — it takes `HiMono89`, `IdxStd121`, and the three order
+conjuncts including `LimCofS1`.  It is inconsistent too, for the same reason:
+`certIn_t326_idx121_absurd126` takes §121's argument list plus `Hp` and returns `False`.
+
+**SO THE READING IS NOW A THREE-WAY ONE, AND EVERY BRANCH IS A REAL FINDING.**  Exactly one
+of these holds:
+
+  1. `PsiIdxOKStd172` is FALSE — the first gate, named in §72, measured only, and every
+     conditional theorem in `RegionNext3`-`RegionNext7` is then vacuous;
+  2. `HiMono89` is FALSE — equivalently one of `VebPairs123` / `VebRest117` is
+     (`hiMono_of_two124`), so the Veblen side of the ordering fails;
+  3. both gates hold and `vOf` assigns some standard level-`≤ 1` limit matrix a value above
+     the supremum of its fundamental sequence — **the table's value is too big there**,
+     which is what §69's cofinality reading already suggested for the unrestricted region.
+
+WHAT IS **NOT** CLAIMED.  §126 does not say which branch.  It does not exhibit the matrix in
+branch 3 — the proof runs through `GapAtG0_107` by contradiction and nothing here extracts a
+witness.  Naming that matrix is the next job, and it is the one that could be checked against
+the reference implementation.  Nothing here proves either gate, and nothing here touches
+`DictOntoMidOpen103`, `IdxStd121` or the well-foundedness assumption. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Gam0Drags111`、`HiMono89` から直接。§125 は Veblen の二条項を経由していたが、
+    要るのは `HiMono89` だけである。 -/
+theorem gam0Drags_of_hiMono126 (Hp : PsiIdxOKStd172) (HM : HiMono89) : Gam0Drags111 :=
+  gam0Drags125 Hp (dictLtStd121 Hp HM)
+
+/-- §81 と §99。 -/
+theorem dictLtA74_126 (Hp : PsiIdxOKStd172) (HM : HiMono89) : DictLtA74 :=
+  dictLtA74_81 Hp (collapseMono0Hi_of_hiMono99 Hp HM)
+
+/-- **密度は二つの門だけで偽になる。** -/
+theorem cofDenseS1_false126 (Hp : PsiIdxOKStd172) (HM : HiMono89) : ¬ CofDenseS1 :=
+  cofDenseS1_false122 Hp (dictLtA74_126 Hp HM) (dictLtStd121 Hp HM)
+    (gam0Drags_of_hiMono126 Hp HM)
+
+/-- **§126 の主定理。**  部分領域の基本列は共終ではない — 二つの門のもとで。
+    §83 の橋 `cofDenseS1_iff_dict83` が密度と共終性を同値にしている。 -/
+theorem limCofS1_false126 (Hp : PsiIdxOKStd172) (HM : HiMono89) : ¬ LimCofS1 :=
+  fun H => cofDenseS1_false126 Hp HM
+    ((cofDenseS1_iff_dict83 Hp (dictLtA74_126 Hp HM)).mpr H)
+
+/-- **§121 の道も同じ理由で使えない。**  `certIn_t326_idx121` の引数に `Hp` を足すと
+    `False` が出る。密度の鎖を通らない道でも変わらない。 -/
+theorem certIn_t326_idx121_absurd126 (Hp : PsiIdxOKStd172) (HM : HiMono89)
+    (_H : IdxStd121) (_HDe : LimDecS1) (_HI : LimIncS1) (HC : LimCofS1)
+    (_hacc : Acc Evidence.WF.RT (vOf t326)) : False :=
+  limCofS1_false126 Hp HM HC
+
+/-- 三つ組の形でも同じ。`VebIngF114` と `VebRest117` は `HiMono89` を作るだけである。 -/
+theorem limCofS1_false_three126 (Hp : PsiIdxOKStd172) (H1 : VebIngF114)
+    (H2 : VebRest117) : ¬ LimCofS1 :=
+  limCofS1_false126 Hp (hiMono_of_two124 Hp H1 H2)
+
+end
 end Evidence.Region
