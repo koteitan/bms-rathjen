@@ -6031,7 +6031,6 @@ never fires anywhere reachable.
           only thing carrying the clause.
 -/
 
-namespace Evidence.Region
 
 /-! ### §129.1 The last Veblen step, in closed form -/
 
@@ -6782,7 +6781,6 @@ end
 g126f.lean — §130: an attack on the FIRST gate, `PsiIdxOKStd172`.
 -/
 
-namespace Evidence.Region
 
 /-! ## §130 THE FIRST GATE IS FALSE THE MOMENT `BT.isStd` IS DROPPED — AND WHAT IS LEFT
        OF IT LIVES ONLY AT `u = 0` ON ARGUMENTS THAT CARRY A LEVEL-ONE NODE
