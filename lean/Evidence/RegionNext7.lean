@@ -7297,4 +7297,249 @@ def merged130 (a : BT) : Nat :=
   (emit130 0 (dict a)).any fun i => !((Kset (reg 1) i).isEmpty)).length == 0
 
 end
+/-! ## §127 NAMING THE MATRIX BEHIND `¬ LimCofS1`
+
+§126 proved `limCofS1_false126 : PsiIdxOKStd172 → HiMono89 → ¬ LimCofS1` by contradiction,
+through `GapAtG0_107`, and said in so many words that it does not exhibit the matrix.
+This section exhibits it.  The witness is already in the tree — it is §107's `tGap107`,
+the index that sits at the TOP of the window, paired with the BOTTOM of the window as the
+term it cannot reach.
+
+    t  :=  `tGap107`  =  `bInv85 (bTowG98 1)`,  whose matrix is
+           `(0,0)(1,1)(2,1)(3,1)(1,1)(2,1)(3,0)(4,1)(5,1)(6,1)`
+           and whose value is  `vOf t = φ̄(Γ₀, Γ₀⊕1)`  (the window's upper end)
+
+    s  :=  `rawT94 0`  =  `φ̄(Γ₀, 0)`  =  `phi (psi (Z zero) zero) zero`
+           (the window's lower end, §94's tower of terms `dict` never produces)
+
+`s` sits INSIDE `[φ̄(Γ₀,0), φ̄(Γ₀,Γ₀⊕1))`.  `GapAtG0_107` says no legitimate witness has a
+value there; every `fsB t n` is a legitimate witness; so no term of the fundamental sequence
+reaches `s`, while `s` is strictly below `vOf t`.  That is `LimCofS1` failing, with names on
+it instead of a contradiction.
+
+**WHAT NEEDS THE GATES AND WHAT DOES NOT.**  `stdB1 t`, `kindB t = lim`, `matB t 0`,
+`inT s` and `lt s (vOf t)` are all gate-free — the last two by `decide`.  Only
+`∀ n, le s (vOf (fsB t n)) = false` uses `PsiIdxOKStd172` and `HiMono89`, and it uses them
+only through `GapAtG0_107` (`gap122`) and `LimDecS1` (`limDecS1_of_bridge71`).
+§127.6 checks the first six steps of that ∀ by computation, gate-free.
+
+Nothing here proves either gate, and nothing here says the table is wrong. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §127.1 二つの門から `GapAtG0_107` まで -/
+
+/-- §126 の道をそのまま `GapAtG0_107` の形で止めたもの。 -/
+theorem gapAtG0_127 (Hp : PsiIdxOKStd172) (HM : HiMono89) : GapAtG0_107 :=
+  gap122 Hp (dictLtA74_126 Hp HM) (dictLtStd121 Hp HM) (gam0Drags_of_hiMono126 Hp HM)
+
+/-- 基本列が `vOf t` の下に居ること。橋は `DictLtA74` から作る。 -/
+theorem limDecS1_127 (Hp : PsiIdxOKStd172) (HM : HiMono89) : LimDecS1 :=
+  limDecS1_of_bridge71 (vOfLtA71_of_dictLt76 Hp (dictLtA74_126 Hp HM))
+
+/-! ### §127.2 名前のついた証人 — ここは門を使わない -/
+
+/-- **添字は標準で、階数は 1 以下。** §107 の計算事実。 -/
+theorem std127 : stdB1 tGap107 = true := stdB1_tGap107
+
+/-- **添字は極限。** `rfl`。 -/
+theorem lim127 : kindB tGap107 = BMS.Kind.lim := rfl
+
+/-- **行列そのもの。** 列を並べたもの。`rfl`。 -/
+theorem mat127 : matB tGap107 0 =
+    [[0,0],[1,1],[2,1],[3,1],[1,1],[2,1],[3,0],[4,1],[5,1],[6,1]] := rfl
+
+/-- **挑戦者の項は `φ̄(Γ₀,0)`。** `rfl`。 -/
+theorem s127 : rawT94 0 = phi (psi (Z zero) zero) zero := rfl
+
+/-- 挑戦者は 𝔗(M) の項。`decide`。 -/
+theorem inT_s127 : inT (rawT94 0) = true := by decide
+
+/-- **挑戦者は添字の値より真に下。** `decide`。門は要らない。 -/
+theorem lt_s_vOf127 : lt (rawT94 0) (vOf tGap107) = true := by decide
+
+/-- 添字の値は窓の上端 `φ̄(Γ₀, Γ₀⊕1)`。こちらは `dict` の像として書くので門が要る。 -/
+theorem vOf127 (Hp : PsiIdxOKStd172) : vOf tGap107 = dict (bTowG98 1) :=
+  vOf_tGap107 Hp
+
+/-! ### §127.3 基本列は挑戦者に届かない — 門が要るのはここだけ -/
+
+/-- **主補題。** 基本列のどの段も `φ̄(Γ₀,0)` を上から押さえない。
+    段の値が `φ̄(Γ₀,0)` 以上なら §107 の窓の外、つまり窓の上端以上でなければならず、
+    しかし段の値は窓の上端より真に下である。両立しない。 -/
+theorem noReach127 (Hp : PsiIdxOKStd172) (HM : HiMono89) (n : Nat) :
+    le (rawT94 0) (vOf (fsB tGap107 n)) = false := by
+  cases hcase : le (rawT94 0) (vOf (fsB tGap107 n)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have hu : stdB1 (fsB tGap107 n) = true := stdB1_fsB tGap107 std127 n
+      have hv : vOf (fsB tGap107 n) = dict (bValA71 (fsB tGap107 n)) :=
+        vOfIsDict76 Hp _ hu
+      have hb : btLe72 1 (bValA71 (fsB tGap107 n)) = true := btLeA77 _ hu
+      have hst : BT.isStd (bValA71 (fsB tGap107 n)) = true := stdA77 _ hu
+      have hd : Hd085 (bValA71 (fsB tGap107 n)) :=
+        hd085_bValA71_85 _ (nfB_of_stdB _ (stdB_of_stdB1 _ hu))
+      have hle : le (rawT94 0) (dict (bValA71 (fsB tGap107 n))) = true := by
+        rw [← hv]; exact hcase
+      have hup : le (dict (bTowG98 1)) (dict (bValA71 (fsB tGap107 n))) = true :=
+        gapAtG0_127 Hp HM _ hb hst hd hle
+      have hdn : lt (dict (bValA71 (fsB tGap107 n))) (dict (bTowG98 1)) = true := by
+        rw [← hv, ← vOf127 Hp]
+        exact limDecS1_127 Hp HM tGap107 std127 lim127 n
+      exact gap_contra107 Hp hb hst hdn hup
+
+/-! ### §127.4 まとめ -/
+
+/-- **§127 の主定理。**  二つの門のもとで `LimCofS1` を外す証人は具体的である。
+    添字は `tGap107`、行列は `(0,0)(1,1)(2,1)(3,1)(1,1)(2,1)(3,0)(4,1)(5,1)(6,1)`、
+    挑戦者は `φ̄(Γ₀,0)`。 -/
+theorem limCofS1_witness127 (Hp : PsiIdxOKStd172) (HM : HiMono89) :
+    stdB1 tGap107 = true
+    ∧ kindB tGap107 = BMS.Kind.lim
+    ∧ matB tGap107 0 = [[0,0],[1,1],[2,1],[3,1],[1,1],[2,1],[3,0],[4,1],[5,1],[6,1]]
+    ∧ rawT94 0 = phi (psi (Z zero) zero) zero
+    ∧ inT (rawT94 0) = true
+    ∧ lt (rawT94 0) (vOf tGap107) = true
+    ∧ ∀ n, le (rawT94 0) (vOf (fsB tGap107 n)) = false :=
+  ⟨std127, lim127, mat127, s127, inT_s127, lt_s_vOf127, noReach127 Hp HM⟩
+
+/-- **§126 の否定を、名前のついた証人だけから作り直したもの。**
+    `cofDenseS1_iff_dict83` を通らない。 -/
+theorem limCofS1_false127 (Hp : PsiIdxOKStd172) (HM : HiMono89) : ¬ LimCofS1 := by
+  intro H
+  obtain ⟨n, hn⟩ := H tGap107 std127 lim127 (rawT94 0) inT_s127 lt_s_vOf127
+  rw [noReach127 Hp HM n] at hn
+  exact Bool.noConfusion hn
+
+/-- 密度の側も同じ二つの門で外れる。§83 の橋を一度だけ使う。 -/
+theorem cofDenseS1_false127 (Hp : PsiIdxOKStd172) (HM : HiMono89) : ¬ CofDenseS1 :=
+  fun H => limCofS1_false127 Hp HM
+    ((cofDenseS1_iff_dict83 Hp (dictLtA74_126 Hp HM)).mp H)
+
+/-! ### §127.5 証人の正体 — 窓の下端は `dict` の像にない項
+
+`s = φ̄(Γ₀,0)` は §94 の「`dict` が一つも作らない項の塔」の第 0 段である。
+`inT` は Rathjen 2.1(v) をそのまま実装していて Veblen の対に正規形の条件を課さないので、
+`s` は 𝔗(M) の項であり、`lt` はそれを `Γ₀ = ψ_Ω(0)` の真上に置く。
+外れているのは「`vOf` がここで大きすぎる」か「𝔗(M) の側がこの窓に項を持ちすぎる」かの
+どちらかで、§127 はどちらとも言わない。 -/
+
+theorem s_above_G0_127 : lt (psi (Z zero) zero) (rawT94 0) = true := lt_G0_rawT0_107
+
+/-- 窓の下端が `s`、上端が `vOf tGap107`。両方とも門を使わない。 -/
+theorem window127 :
+    lt (psi (Z zero) zero) (rawT94 0) = true
+    ∧ lt (rawT94 0) (vOf tGap107) = true :=
+  ⟨s_above_G0_127, lt_s_vOf127⟩
+
+/-! ### §127.6 測定 — ∀ の最初の六段を門なしで確かめる
+
+`noReach127` の結論は門つきだが、各段は計算で確かめられる。行列は yaBMS の
+`bms "(0,0)(1,1)(2,1)(3,1)(1,1)(2,1)(3,0)(4,1)(5,1)(6,1)[n]"` と一致する。 -/
+
+#guard matB (fsB tGap107 0) 0 == [[0,0],[1,1],[2,1],[3,1],[1,1],[2,1],[3,0],[4,1],[5,1]]
+#guard matB (fsB tGap107 1) 0 ==
+  [[0,0],[1,1],[2,1],[3,1],[1,1],[2,1],[3,0],[4,1],[5,1],[6,0],[7,1],[8,1]]
+#guard matB (fsB tGap107 2) 0 ==
+  [[0,0],[1,1],[2,1],[3,1],[1,1],[2,1],[3,0],[4,1],[5,1],[6,0],[7,1],[8,1],[9,0],[10,1],[11,1]]
+
+#guard le (rawT94 0) (vOf (fsB tGap107 0)) == false
+#guard le (rawT94 0) (vOf (fsB tGap107 1)) == false
+#guard le (rawT94 0) (vOf (fsB tGap107 2)) == false
+#guard le (rawT94 0) (vOf (fsB tGap107 3)) == false
+#guard le (rawT94 0) (vOf (fsB tGap107 4)) == false
+#guard le (rawT94 0) (vOf (fsB tGap107 5)) == false
+
+-- 段の値は挑戦者より真に下 — 追い越すどころか下にいる。
+#guard lt (vOf (fsB tGap107 5)) (rawT94 0) == true
+
+#print axioms limCofS1_witness127
+#print axioms limCofS1_false127
+
+end
+
+/-! ### §127.7 THE WITNESS IS A NON-NORMAL VEBLEN TERM — MEASURED, AND IT REACHES `dict`
+
+§127.5 flagged that `s = φ̄(Γ₀,0)` is a term `dict` never produces.  Here is what that is,
+measured rather than guessed, and it is worse than "outside the image".
+
+`phiNF` (Rathjen 1991, 2.6(vi)) re-counts fixed points, so `φ̄(Γ₀,0) = Γ₀` — that is
+`phiNF_G0_zero127` below, by `rfl`.  But `inT` implements 2.1(v) as
+`inT a && inT b && lt a M && lt b M`, with **no normal-form condition on the Veblen pair**,
+so the raw syntax tree `phi Γ₀ 0` is a term of 𝔗(M) as ported, and `lt` places it
+**strictly above** `Γ₀`.  The same syntax tree therefore appears twice in the order at two
+different places, once normalised and once not.
+
+    `inT_raw127`      :  `inT (phi G094 zero) = true`
+    `phiNF_G0_zero127`:  `phiNF G094 zero = G094`
+    `lt_raw127`       :  `lt G094 (phi G094 zero) = true`
+    `raw_ne127`       :  `phi G094 zero ≠ G094`
+
+**AND IT IS NOT CONFINED TO TERMS OUTSIDE `dict`'s IMAGE.**  Over §108.6's frozen population
+of 9992 standard level-`≤ 1` terms, `dict z` is a top-level `phi a b` that is not its own
+normal form **314 times**, and in **all 314** the produced term is `lt`-STRICTLY ABOVE its
+own normalised value.  130 of them are the fixed-point branch (`b` strongly critical,
+`a < b`); the other 184 come out of `phiNFsucc`.  The smallest is at `BT.size 3`.
+
+**WHAT THIS DOES AND DOES NOT MEAN.**  It does NOT say `dict` is wrong, and it does NOT
+retract §126 — `¬ LimCofS1` is a theorem about the definitions as they stand in this repo.
+What it does is add a FOURTH reading to §126's three:
+
+  4. `TM/NF.lean`'s `inT` (2.1(v)) and `lt` are not faithful to [Rathjen 1991] on
+     non-normal Veblen pairs, the window `[φ̄(Γ₀,0), φ̄(Γ₀,Γ₀⊕1))` is populated only by
+     terms that the paper's 𝔗(M) does not contain (or contains but identifies), and
+     `GapAtG0_107` — hence §122, §125 and §126 — is an artifact of the port.
+
+**Deciding between branch 4 and the other three requires reading the paper, not more Lean.**
+[Rathjen 1991] 2.1(v), Remark (ii), and 2.6(vi) are what settle it.  Until that is read,
+every conditional result from §107 onward should be read as conditional on the port of
+2.1(v) as well as on the two gates.  Nothing here is retracted and nothing here is claimed
+about the table. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `inT` は正規形の条件を課さないので、生の `φ(Γ₀,0)` も 𝔗(M) の項である。 -/
+theorem inT_raw127 : inT (phi G094 zero) = true := rfl
+
+/-- ところが 2.6(vi) の `φ̄` はそれを `Γ₀` に戻す。 -/
+theorem phiNF_G0_zero127 : phiNF G094 zero = G094 := rfl
+
+/-- そして `lt` は生の方を真上に置く。同じ順序数が二箇所にある。 -/
+theorem lt_raw127 : lt G094 (phi G094 zero) = true := rfl
+
+theorem lt_raw_rev127 : lt (phi G094 zero) G094 = false := rfl
+
+theorem raw_ne127 : phi G094 zero ≠ G094 := by decide
+
+/-- 窓の下端はその生の項そのもの。 -/
+theorem rawT0_eq127 : rawT94 0 = phi G094 zero := rfl
+
+/-! **`dict` の像の中にもある。**  §108.6 の 9992 項のうち、`dict z` が最上位で
+    正規形でない `phi` になるのは 314 項。**314 項すべて**で、出てきた項は自分の
+    正規形より `lt` で真に上にある。うち 130 項は不動点の枝、残り 184 項は
+    `phiNFsucc` の枝。最小は `BT.size 3`。 -/
+
+def rawImg127 : List BT := allStd108.filter fun z => btLe72 1 z && BT.isStd z &&
+  (match dict z with | phi a b => !(phiNF a b == phi a b) | _ => false)
+
+#guard rawImg127.length == 314
+#guard (rawImg127.countP fun z => match dict z with
+          | phi a b => lt (phiNF a b) (phi a b) | _ => false) == 314
+#guard (rawImg127.countP fun z => match dict z with
+          | phi a b => lt (phi a b) (phiNF a b) | _ => false) == 0
+#guard (rawImg127.countP fun z => match dict z with
+          | phi a b => b.isSC && lt a b | _ => false) == 130
+#guard (rawImg127.map BT.size).take 3 == [3, 6, 6]
+#guard (allStd108.countP fun z => btLe72 1 z && BT.isStd z && inT (dict z)) == 9992
+
+end
 end Evidence.Region
