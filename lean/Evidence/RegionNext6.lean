@@ -11246,4 +11246,1291 @@ private def preLen123 (a : BT) : Nat :=
 
 end
 
+/-! ## §122 THE ONE MISSING STEP IS A THEOREM, AND `TightUp119` GOES WITH IT — THE WINDOW
+       IS DECIDED, ON `Gam0Drags111`
+
+§119 reduced row 326's density side to one clause and named, in one sentence, the one step
+inside it that was not closed:
+
+> `carrierOfExpG0_119` shows where standardness would enter (`Ω^Ω < a`) and I did NOT close
+> the step from "`Ω^Ω < a`" to "some digit fires" — that is the whole remaining gap.
+
+**§122 closes that step (§122.1–§122.2) and then closes the clause.**
+
+    `tightUp122` :  `PsiIdxOKStd172` → `DictLtStd92` → `Gam0Drags111` → `TightUp119` .
+
+`DictLtStd92` costs row 326 nothing new: §121's `dictLtStd_of_four121` gets it from the three
+Veblen clauses row 326 already carries plus §120's `idxMono101_of_psi120`
+(`tight_of_four122`).  So `GapAtG0_107` follows (`gap122`, `gap_of_four122`), and with it
+**`DictDenseMid107`, `DictDenseMid102`, `DictDenseHi94`, `DictDense85` and `CofDenseS1` are
+all FALSE** — one line each, §107.5's corollaries, now with no window clause in front of
+them.  `SCFirst108`, `SCFirstOne111`, `WinProp113`, `ExpUp116`, `CoefUp116` and `ExpUp116`'s
+whole family are theorems too.
+
+**WHAT MOVED AND WHAT DID NOT.**  The residue did NOT vanish: it **moved from `TightUp119`
+to `Gam0Drags111`**, which §111.5 named and §111.7 measured and nobody has proved.  That is
+said here rather than counted around.  What changed is the SHAPE of what is owed: `TightUp119`
+was a statement about the fold, about every standard argument whose value reaches the window;
+`Gam0Drags111` is a statement about ONE value — every standard level-`≤ 1` term whose value is
+exactly `Γ₀` is `D 0`-headed and drags something at or above `Ω^Ω` into `G(0,·)`.  §111.7
+measured its mechanism on **1164 of 1164** standard terms of value in `[Γ₀, Ω₁)`.
+
+  §122.1  **A DIGIT AT OR ABOVE `dict Ω^Ω` FIRES.**  `dict Ω^Ω = ω^(Ω₁·Ω₁)` and `Ω₁·Ω₁`
+          is `ω^(Ω₁ ⊕ Ω₁)`, so `fireP122` is three small facts: `ω^·` is strictly monotone,
+          so `ω^E ≤ p` descends to `E ≤ logOm p` (`le_logOm_of_le122`); the head of a term
+          at or above an ADDITIVELY PRINCIPAL bound is itself at or above it (§109.1's
+          `le_hd_of_le109`, twice); and `Ω₁ ⊕ Ω₁ ≤ h ⟹ Ω₁ ≤ h ⊖ Ω₁` (`le_subAP_W122`).
+          **The last one is the only one with a case split**, and it is the one place the
+          `⊖` can throw material away: if the head of `h` is above `Ω₁` then `⊖ Ω₁` does
+          nothing, and if it IS `Ω₁` then what is left must still be at or above `Ω₁`,
+          because `Ω₁ ⊕ ·` is strictly monotone (§79's `plus_smono_right_inT79`).
+
+  §122.2  **THE STEP.**  `fireBig122` : `PsiIdxOKStd172 + DictLtStd92 + Ω^Ω < a ⟹` some
+          component of `dict a` fires.  `DictLtStd92` turns `Ω^Ω < a` into
+          `ω^(Ω₁·Ω₁) < dict a`; the head of `toList (dict a)` is at or above `ω^(Ω₁·Ω₁)`
+          because that bound is additively principal; §122.1 fires it.  `fireBigPair122`
+          puts it into the pair list through §119's `wcnf_expG119`.  **No induction, no
+          size, no `Hd085`.**
+
+  §122.3  **THE `Γ₀` DIGIT'S ARITHMETIC.**  `lt_phiG0_snd122` : with the same first argument
+          the `φ̄` comparison is the comparison of the second arguments (2.3.13 read at
+          `a = c`, which §113.1 did not need).  `le_wTop_phiNFG0_122` carries
+          `Γ₀ ⊕ 1 ≤ Y ⟹ φ̄(Γ₀,Y) ≥ φ̄(Γ₀,Γ₀⊕1)` through all five branches of `phiNF`.
+          **The two step-down branches are where the branch condition is load-bearing**: at
+          `Y = Γ₀ ⊕ 1` the step down would land on `φ̄(Γ₀,Γ₀)`, which is BELOW the top, and
+          it is exactly `Γ₀ < g` — false there — that excludes it.
+
+  §122.4  **THE CARRIER BRANCH.**  After one tame firing the accumulator is exactly
+          `ψ_{Ω₁}(0) = Γ₀`; every later Veblen digit keeps the value at or above `Γ₀`
+          (§117's `le_phiNF_ge117`), and the digit whose exponent is exactly `Γ₀` then lands
+          at `φ̄(Γ₀, Γ₀ ⊕ c)` with `c ≥ 1`, which is at or above the window's top.
+          `foldBigCar122` splits the pair list at §109.1's firing prefix; `scanSt_append122`
+          — the fold's own scan splits along `++` — is the one piece of bookkeeping the
+          repository did not have.  `carrierUp122` is the branch, end to end.
+
+  §122.5  **THE OTHER BRANCH, AND WHY IT NEEDS NO "AT MOST ONE FIRING PAIR".**
+          `collapse0_tame122` : if every digit's coefficient and every sub-`Ω₁` component is
+          below the window's bottom, every pair is tame and NO digit has exponent exactly
+          `Γ₀`, then the value is **below the bottom or at or above the top** — never inside.
+          It is §113.1–§113.3's arithmetic with the firing branch admitted: a tame firing
+          pair is `(Ω₁,1)`, its `Δ` is `1`, `sub1 1 = 0`, so the value it writes is
+          `ψ_{Ω₁}(0) = Γ₀`, still below the bottom.  A SECOND firing pair would write
+          `ψ_{Ω₁}(i)` with `i ≠ 0`, which is at or above the top (§116.3's
+          `le_wTop_psi116`).  **So the invariant is a disjunction and "the merge leaves at
+          most one pair per exponent" never has to be proved** — the case that would break
+          the bound proves the conclusion instead.
+
+  §122.6  **THE ASSEMBLY.**  `winUpAux122` re-runs §119.6's induction with four branches —
+          not tame (§119.4's `expUpBig119`), a sub-`Ω₁` component at or above the bottom
+          (the induction hypothesis, §116), a coefficient at or above the bottom (§119.1's
+          `coefUpStep119`), a digit of exponent exactly `Γ₀` (§122.4 through §119.5's
+          `carrierOfExpG0_119`) — and §122.5 says the remainder cannot reach the bottom.
+          **No clause is left in it.**
+
+WHAT IS **NOT** CLAIMED.  **`Gam0Drags111` is NOT proved**, and neither are
+`PsiIdxOKStd172`, `DictLtA74`, `IdxLeMix109`, `VebIngF114`, `VebRest117`.  §122 does not
+touch §103's hole (`DictOntoMidOpen103`) and does not reach `FoldSkips108`.  The `K` side
+(`IdxStd121`) is untouched.  §69's cofinality argument runs on `TowerVal` and is untouched;
+what §122 gives it is that `CofDenseS1` — the density statement that would have supplied the
+other route — is false.
+
+**THE SIXTH FAMILY EXISTS, AND IT WAS BUILT.**  §119 said "assume a sixth family reaches the
+window until proved otherwise".  There is one, and §122.7 builds it:
+
+    `cSix122 w = ψ₁ψ₁ w ⊕ ψ₁ψ₁ w`      value of `ψ₀` of it:  `φ̄(Γ₀, 1)`
+
+— **two copies of the same digit, so `wcnf`'s MERGE makes the coefficient `1 ⊕ 1 = 2`, the
+fold never fires, `sub1 2 = 1`, and the value is `φ̄(Γ₀,1)`, strictly inside the window.**
+4 of the 30 land inside the window, **all 4 are tame and all 4 fail `BT.isStd` at the outermost
+`ψ₀`**; for the first one `six_facts122` proves that the `ψ₀`-ARGUMENT itself is standard, so
+the single failure is at the outermost `ψ₀` — the same one as §108's, §111's, §113's, §116's
+and §119's families.  `tightUpNoStd122_false` refutes `TightUp119`
+minus its standardness hypothesis with it.  And the reason it is not a counterexample is
+exactly §122.2's premise: **`Ω^Ω < a` is FALSE on all 4**, because `ψ₁ψ₁(ψ₀ Ω^Ω) < Ω^Ω` in
+`BT.lt` while its value is above `Γ₀` — §111.4's order inversion again.  §119's own S never
+produced it (0 of 30 land in the window) and the enumerations could not: the first member has
+**size 16**, and E stops at 12, E14 at 14.
+
+**AND THE OVERPAYMENT LEDGER — ENTRY THIRTEEN, AND IT IS A CREDIT AND A DEBIT AT ONCE.**
+§119 named the missing step and named it EXACTLY right: the step from `Ω^Ω < a` to a firing
+digit is the whole of the carrier branch, and §122.1–§122.2 is that step and nothing else.
+**What §119's account missed is that the clause has a SECOND branch** — the one where no
+digit has exponent `Γ₀` at all, so the value cannot even reach the bottom (§122.5).  §119
+described the residue as one shape ("a fold that fires once, returns to `Γ₀`, and then meets
+a Veblen digit of exponent at most `Γ₀`") because that is the shape E's ONE tame place has.
+The second branch fires **0 times on E's 2495 places and 0 times on E14's 16425 — and 7 times
+on §119's own built S**.  **The branch the enumeration cannot see was visible in the built
+population all along, and the prose read the enumeration.** -/
+
+/-! ### §122.1 `Ω₁·Ω₁` の上の桁は必ず発火する -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+/-- `Ω₁·Ω₁ = ω^(Ω₁ ⊕ Ω₁)`。`dict bOO94 = ω^(Ω₁·Ω₁)` の指数そのもの。 -/
+def W2_122 : Term := omegaNF (plus (reg 1) (reg 1))
+
+theorem inT_W2_122 : inT W2_122 = true := rfl
+theorem isAP_W2_122 : W2_122.isAP = true := rfl
+theorem ltM_W2_122 : lt W2_122 M = true := rfl
+theorem toList_W2_122 : toList W2_122 = [W2_122] := rfl
+theorem dict_bOO_122 : dict bOO94 = omegaNF W2_122 := rfl
+theorem logOm_bOO_122 : logOm (dict bOO94) = W2_122 := rfl
+theorem omegaNF_W_122 : omegaNF (reg 1) = reg 1 := rfl
+theorem toList_WW_122 : toList (plus (reg 1) (reg 1)) = [reg 1, reg 1] := rfl
+theorem le_W_WW_122 : le (reg 1) (plus (reg 1) (reg 1)) = true := rfl
+theorem le_WW_W_122 : le (plus (reg 1) (reg 1)) (reg 1) = false := rfl
+theorem inT_WW_122 : inT (plus (reg 1) (reg 1)) = true := rfl
+theorem le_WW_zero_122 : le (plus (reg 1) (reg 1)) zero = false := rfl
+
+/-- `ω^·` は狭義単調だから `ω^E ≤ p` は `E ≤ logOm p` に降りる。 -/
+theorem le_logOm_of_le122 {E p : Term} (hE : inT E = true) (hp : inT p = true)
+    (hap : p.isAP = true) (hpM : lt p M = true) (h : le (omegaNF E) p = true) :
+    le E (logOm p) = true := by
+  have hlp : inT (logOm p) = true := inT_logOm hp
+  cases hq : lt (logOm p) E with
+  | false => exact le_of_not_lt3 (inT_le_fragR _ hlp) (inT_le_fragR _ hE) hq
+  | true =>
+      exfalso
+      have h1 : lt (omegaNF (logOm p)) (omegaNF E) = true := lt_omegaNF_inT79 hlp hE hq
+      rw [omegaNF_logOm100 hp hap hpM] at h1
+      rw [not_le_of_lt113 (inT_omegaNF hE) hp h1] at h
+      exact Bool.noConfusion h
+
+/-- `w = ω^w` なら `w ≤ x` は `ω^·` を通る。 -/
+theorem le_omegaNF122 {w x : Term} (hw : inT w = true) (hx : inT x = true)
+    (hwe : omegaNF w = w) (h : le w x = true) : le w (omegaNF x) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with he | hlt
+  · rw [← eq_of_beq he, hwe]; exact le_self _
+  · have h1 := lt_omegaNF_inT79 hw hx hlt
+    rw [hwe] at h1
+    exact le_of_lt h1
+
+/-- **`Ω₁ ⊕ Ω₁ ≤ h` なら `h ⊖ Ω₁` は `Ω₁` 以上。** -/
+theorem le_subAP_W122 {h : Term} (hh : inT h = true)
+    (hge : le (plus (reg 1) (reg 1)) h = true) : le (reg 1) (subAP (reg 1) h) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList h hh
+  have hWh : le (reg 1) h = true :=
+    le_trans_inT (inT_reg 1) inT_WW_122 hh le_W_WW_122 hge
+  cases hl : toList h with
+  | nil =>
+      exfalso
+      rw [toList_eq_nil h hl] at hge
+      rw [le_WW_zero_122] at hge
+      exact Bool.noConfusion hge
+  | cons b r =>
+      have hib : inT b = true := inTL_inT hh b (by rw [hl]; exact List.Mem.head _)
+      rw [subAP_cons (reg 1) h b r hl]
+      by_cases hbe : (b == reg 1) = true
+      · rw [if_pos hbe]
+        have hbW : b = reg 1 := eq_of_beq hbe
+        obtain ⟨_, hcr⟩ := inTL_cons.mp (by rw [← hl]; exact hc)
+        cases hr : r with
+        | nil =>
+            exfalso
+            have hhe : h = reg 1 := by
+              rw [← inT_ofList_toList h hh, hl, hr, hbW]; rfl
+            rw [hhe, le_WW_W_122] at hge
+            exact Bool.noConfusion hge
+        | cons b1 rest =>
+            rw [← hr]
+            have hdr : descL r = true := descL_tail (show descL (b :: r) = true by
+              rw [← hl]; exact hd)
+            have hiR : inT (ofList r) = true := inT_ofList r hcr hdr
+            have hlR : toList (ofList r) = r := toList_ofList89 hcr
+            have hb1 : le b1 (reg 1) = true := by
+              have h0 := descL_bound_inT r b hib hcr (show descL (b :: r) = true by
+                rw [← hl]; exact hd) b1 (by rw [hr]; exact List.Mem.head _)
+              rw [hbW] at h0; exact h0
+            have hfl : (toList (reg 1)).filter (fun a => le b1 a) = [reg 1] := by
+              rw [toList_W_119, List.filter_cons_of_pos (by rw [hb1])]
+              rfl
+            have htl : toList (plus (reg 1) (ofList r)) = toList h := by
+              rw [toList_plus_inT (inT_reg 1) hiR (by rw [hlR, hr]), hfl, hlR, hl, hbW]
+              rfl
+            have hpe : plus (reg 1) (ofList r) = h := by
+              rw [← inT_ofList_toList (plus (reg 1) (ofList r)) (inT_plus (inT_reg 1) hiR),
+                htl, inT_ofList_toList h hh]
+            cases hq : lt (ofList r) (reg 1) with
+            | false => exact le_of_not_lt3 (inT_le_fragR _ hiR) (inT_le_fragR _ (inT_reg 1)) hq
+            | true =>
+                exfalso
+                have h1 : lt (plus (reg 1) (ofList r)) (plus (reg 1) (reg 1)) = true :=
+                  plus_smono_right_inT79 (reg 1) (inT_reg 1) (ofList r) (reg 1) hiR
+                    (inT_reg 1) hq
+                rw [hpe] at h1
+                rw [not_le_of_lt113 inT_WW_122 hh h1] at hge
+                exact Bool.noConfusion hge
+      · rw [if_neg (by cases hq : (b == reg 1) with
+          | false => exact Bool.noConfusion
+          | true => exact absurd hq hbe)]
+        exact hWh
+
+/-- **`Ω₁·Ω₁ ≤ q` なら `q / Ω₁` は `Ω₁` 以上。** -/
+theorem le_divAP_W122 {q : Term} (hq : inT q = true) (haq : q.isAP = true)
+    (hqM : lt q M = true) (hge : le W2_122 q = true) :
+    le (reg 1) (divAP (reg 1) q) = true := by
+  have hge' : le (omegaNF (plus (reg 1) (reg 1))) q = true := hge
+  have h1 : le (plus (reg 1) (reg 1)) (logOm q) = true :=
+    le_logOm_of_le122 inT_WW_122 hq haq hqM hge'
+  have h2 := le_subAP_W122 (inT_logOm hq) h1
+  show le (reg 1) (omegaNF (subAP (reg 1) (logOm q))) = true
+  exact le_omegaNF122 (inT_reg 1) (inT_subAP (inT_logOm hq)) omegaNF_W_122 h2
+
+/-- **§122.1 の主定理 — `ω^(Ω₁·Ω₁) = dict Ω^Ω` 以上の桁は発火する。**
+    §119 が閉じられなかった一歩の、成分ひとつぶんの形。 -/
+theorem fireP122 {p : Term} (hp : inT p = true) (hap : p.isAP = true) (hpM : lt p M = true)
+    (h : le (dict bOO94) p = true) : le (reg 1) (wA (reg 1) p) = true := by
+  have h' : le (omegaNF W2_122) p = true := by rw [← dict_bOO_122]; exact h
+  have hlp : inT (logOm p) = true := inT_logOm hp
+  have hlpM : lt (logOm p) M = true := ltM_logOm hp hpM
+  have hge : le W2_122 (logOm p) = true := le_logOm_of_le122 inT_W2_122 hp hap hpM h'
+  cases hl : toList (logOm p) with
+  | nil =>
+      exfalso
+      rw [toList_eq_nil _ hl, show le W2_122 zero = false from rfl] at hge
+      exact Bool.noConfusion hge
+  | cons q0 r =>
+      have hmem : q0 ∈ toList (logOm p) := by rw [hl]; exact List.Mem.head _
+      have hq0 : le W2_122 q0 = true := le_hd_of_le109 inT_W2_122 isAP_W2_122 hlp hl hge
+      have hiq0 : inT q0 = true := inTL_inT hlp q0 hmem
+      have haq0 : q0.isAP = true := inTL_isAP hlp q0 hmem
+      have hq0M : lt q0 M = true := ltM_toList _ hlp hlpM q0 hmem
+      have hWq0 : le (reg 1) q0 = true :=
+        le_trans_inT (inT_reg 1) inT_W2_122 hiq0
+          (le_of_lt (show lt (reg 1) W2_122 = true from rfl)) hq0
+      have hfl : lt q0 (reg 1) = false := by
+        cases hx : lt q0 (reg 1) with
+        | false => rfl
+        | true => rw [not_le_of_lt113 (inT_reg 1) hiq0 hx] at hWq0; exact Bool.noConfusion hWq0
+      have hwl : toList (wA (reg 1) p)
+          = divAP (reg 1) q0 :: (r.filter (fun x => !lt x (reg 1))).map (divAP (reg 1)) := by
+        rw [toList_wA119, hl, List.filter_cons_of_pos (by rw [hfl]; rfl)]
+        rfl
+      exact le_of_le_hd109 (inT_reg 1)
+        (inT_wA109 (inT_reg 1) (show (reg 1).isSC = true from rfl) hp) hwl
+        (le_divAP_W122 hiq0 haq0 hq0M hq0)
+
+end
+
+/-! ### §122.2 §119 が閉じられなかった一歩 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem inT_dict_bOO122 : inT (dict bOO94) = true := rfl
+theorem isAP_dict_bOO122 : (dict bOO94).isAP = true := rfl
+theorem lt_W_dict_bOO122 : lt (reg 1) (dict bOO94) = true := rfl
+theorem legal_bOO122 : btLe72 1 bOO94 = true := rfl
+theorem std_bOO122 : BT.isStd bOO94 = true := rfl
+
+/-- **§122.2 の主定理 — `Ω^Ω < a` なら `dict a` の桁がひとつ発火する。**
+    §119 が「閉じていない一歩はこれだ」と名指しした一歩、そのもの。 -/
+theorem fireBig122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) {a : BT}
+    (hba : btLe72 1 a = true) (hsa : BT.isStd a = true) (hlt : BT.lt bOO94 a = true) :
+    ∃ p ∈ toList (dict a), lt p (reg 1) = false ∧ le (reg 1) (wA (reg 1) p) = true := by
+  obtain ⟨hiA, hAM⟩ := inT_dict_of_std172 Hp a hba hsa
+  have hlt2 : lt (dict bOO94) (dict a) = true :=
+    HD bOO94 a legal_bOO122 hba std_bOO122 hsa hlt
+  cases hl : toList (dict a) with
+  | nil =>
+      exfalso
+      rw [toList_eq_nil _ hl, show lt (dict bOO94) zero = false from ltF_right_zero _ _] at hlt2
+      exact Bool.noConfusion hlt2
+  | cons p0 t =>
+      rw [← hl]
+      have hmem : p0 ∈ toList (dict a) := by rw [hl]; exact List.Mem.head _
+      have hge : le (dict bOO94) p0 = true :=
+        le_hd_of_le109 inT_dict_bOO122 isAP_dict_bOO122 hiA hl (le_of_lt hlt2)
+      have hip : inT p0 = true := inTL_inT hiA p0 hmem
+      have hap : p0.isAP = true := inTL_isAP hiA p0 hmem
+      have hpM : lt p0 M = true := ltM_toList _ hiA hAM p0 hmem
+      have hWp : le (reg 1) p0 = true :=
+        le_trans_inT (inT_reg 1) inT_dict_bOO122 hip (le_of_lt lt_W_dict_bOO122) hge
+      refine ⟨p0, hmem, ?_, fireP122 hip hap hpM hge⟩
+      cases hx : lt p0 (reg 1) with
+      | false => rfl
+      | true => rw [not_le_of_lt113 (inT_reg 1) hip hx] at hWp; exact Bool.noConfusion hWp
+
+/-- 対の列の言葉で。 -/
+theorem fireBigPair122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) {a : BT}
+    (hba : btLe72 1 a = true) (hsa : BT.isStd a = true) (hlt : BT.lt bOO94 a = true) :
+    ∃ ac ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) ac.1 = true := by
+  obtain ⟨hiA, _⟩ := inT_dict_of_std172 Hp a hba hsa
+  obtain ⟨hc, hd⟩ := inT_toList _ hiA
+  obtain ⟨p, hp, hpw, hfire⟩ := fireBig122 Hp HD hba hsa hlt
+  obtain ⟨ac, hac, hace⟩ := wcnf_expG119 (toList (dict a)) hc hd p hp hpw
+  exact ⟨ac, hac, by rw [hace]; exact hfire⟩
+
+end
+
+/-! ### §122.3 指数がちょうど `Γ₀` の Veblen 桁 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem wTop_eq122 : wTop116 = phi G094 (plus G094 TM.Term.one) := rfl
+theorem le_G01_wTop122 : le (plus G094 TM.Term.one) wTop116 = true := rfl
+theorem isSC_G0_122 : G094.isSC = true := rfl
+
+/-- 第 1 引数が同じなら `φ̄` の比較は第 2 引数だけで決まる。 -/
+theorem lt_phiG0_snd122 {b d : Term} : lt (phi G094 b) (phi G094 d) = lt b d := by
+  by_cases h : b = d
+  · rw [h, lt_irrefl, lt_irrefl]
+  · have hne2 : phi G094 b ≠ phi G094 d := by
+      intro hc; injection hc with _ h2; exact h h2
+    rw [lt_eq_ltF_succ, ltF_succ_phi_phi _ hne2, if_pos rfl,
+      show ltF (2 * ((phi G094 b).deg + (phi G094 d).deg) + 7) b d = lt b d from
+        (lt_eq_ltF b d _ (by
+          show b.deg + d.deg ≤ 2 * ((1 + G094.deg + b.deg) + (1 + G094.deg + d.deg)) + 7
+          omega)).symm]
+
+/-- 第 2 引数が `Γ₀ ⊕ 1` 以上なら `φ̄(Γ₀,·)` は窓の上端以上。 -/
+theorem le_wTop_phiG0_122 {Y : Term} (h : le (plus G094 TM.Term.one) Y = true) :
+    le wTop116 (phi G094 Y) = true := by
+  rw [wTop_eq122]
+  rcases (Bool.or_eq_true _ _).mp h with he | hlt
+  · rw [eq_of_beq he]; exact le_self _
+  · exact le_of_lt (by rw [lt_phiG0_snd122]; exact hlt)
+
+/-- 窓の上端以上のものに有限個の `1` を足しても `φ̄(Γ₀,·)` は窓の上端以上。 -/
+theorem le_wTop_phiG0_down122 {g : Term} (hig : inT g = true) (hbig : le wTop116 g = true)
+    (n : Nat) : le wTop116 (phi G094 (plus g (ofNat n))) = true :=
+  le_wTop_phiG0_122
+    (le_trans_inT (inT_plus inT_G094_102 inT_one) inT_wTop116
+      (inT_plus hig (inT_ofNat n)) le_G01_wTop122
+      (leG_plus_left116 inT_wTop116 isAP_wTop116 hig (inT_ofNat n) hbig))
+
+/-- `φ̄` の項の四つ組を取り出す。 -/
+theorem inT_phi_parts122 {d e : Term} (h : inT (phi d e) = true) :
+    inT d = true ∧ inT e = true ∧ lt d M = true ∧ lt e M = true := by
+  have hall : (inT d && inT e && lt d M && lt e M) = true := h
+  have h12 := (Bool.and_eq_true _ _).mp hall
+  have h34 := (Bool.and_eq_true _ _).mp h12.1
+  have h56 := (Bool.and_eq_true _ _).mp h34.1
+  exact ⟨h56.1, h56.2, h34.2, h12.2⟩
+
+/-- 正規化した `φ̄(Γ₀,·)` — 五つの枝ぜんぶ。 -/
+theorem le_wTop_phiNFG0_122 {Y : Term} (hiY : inT Y = true) (hYM : lt Y M = true)
+    (hge : le (plus G094 TM.Term.one) Y = true) : le wTop116 (phiNF G094 Y) = true := by
+  have hYz : Y ≠ zero := by
+    intro hc
+    rw [hc, show le (plus G094 TM.Term.one) zero = false from rfl] at hge
+    exact Bool.noConfusion hge
+  have hphiY : le wTop116 (phi G094 Y) = true := le_wTop_phiG0_122 hge
+  have hdef : le wTop116 (phiNFdefault G094 Y) = true := by
+    unfold phiNFdefault
+    rw [if_neg (by
+      cases hb : (Y == zero) with
+      | false => rw [Bool.false_and]; exact Bool.noConfusion
+      | true => exact absurd (eq_of_beq hb) hYz)]
+    exact hphiY
+  have hig : inT (splitFin Y).1 = true := inT_splitFin hiY
+  have hsucc : le wTop116 (phiNFsucc G094 Y) = true := by
+    unfold phiNFsucc
+    split
+    rename_i heq
+    split
+    · split
+      · rename_i d e
+        rw [heq] at hig
+        have hig2 : inT (phi d e) = true := hig
+        obtain ⟨hid, hie, hdM, heM⟩ := inT_phi_parts122 hig2
+        split
+        · rename_i hlt
+          exact le_wTop_phiG0_down122 hig2 (le_wTop_phi119 hid hie hdM heM hlt) _
+        · exact hdef
+      · split
+        · rename_i hcond
+          rw [heq] at hig
+          exact le_wTop_phiG0_down122 hig
+            (le_wTop_SC119 ((Bool.and_eq_true _ _).mp hcond).1
+              ((Bool.and_eq_true _ _).mp hcond).2) _
+        · exact hdef
+    · exact hdef
+  unfold phiNF
+  split
+  · rename_i hh
+    exact le_wTop_SC119 ((Bool.and_eq_true _ _).mp hh).1 ((Bool.and_eq_true _ _).mp hh).2
+  · split
+    · rename_i c d hYeq
+      split
+      · rename_i hAc
+        obtain ⟨hic, hid, hcM, hdM⟩ := inT_phi_parts122 (show inT (phi c d) = true from hiY)
+        exact le_wTop_phi119 hic hid hcM hdM hAc
+      · exact hsucc
+    · exact hsucc
+
+end
+
+/-! ### §122.4 発火のあとで `Γ₀` の桁に会えば窓の上端を越える -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem leW_G0_false122 : le (reg 1) G094 = false := rfl
+
+/-- `ψ_{Ω₁}` の値は `Γ₀` 以上。 -/
+theorem le_G0_psi122 (i : Term) : le G094 (psi (reg 1) i) = true := by
+  by_cases h : i = zero
+  · rw [h]; exact le_self _
+  · refine le_of_lt94 ?_
+    show lt (psi (reg 1) zero) (psi (reg 1) i) = true
+    rw [lt_psi_same]
+    exact lt_zero_left h
+
+/-- 指数がちょうど `Γ₀` の Veblen 桁 — 入ってきた値が `Γ₀` 以上なら窓の上端を越える。 -/
+theorem stepBigVebG0_122 {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (hf : le (reg 1) ac.1 = false) (heA : ac.1 = G094)
+    (h3 : inT ac.2 = true) (h4 : lt ac.2 M = true) (hz : ac.2 ≠ zero)
+    {v : Term} (hs2 : s.2 = some v) (hv : le G094 v = true) :
+    BigU116 (stepF (reg 1) (baseOf 0) s ac) := by
+  obtain ⟨hiv, hvM⟩ := hst.2 v hs2
+  refine ⟨phiNF ac.1 (plus v ac.2), by rw [stepF_snd_veb88 hf, hs2], ?_⟩
+  rw [heA]
+  refine le_wTop_phiNFG0_122 (inT_plus hiv h3) (lt_plus_M hiv h3 hvM h4) ?_
+  refine le_trans_inT (inT_plus inT_G094_102 inT_one) (inT_plus hiv inT_one)
+    (inT_plus hiv h3) (plus_mono_left112 inT_G094_102 hiv inT_one hv) ?_
+  exact plus_mono_right_inT v hiv TM.Term.one ac.2 inT_one h3 (le_one_inT h3 hz)
+
+/-- 指数が `Γ₀` より下の Veblen 桁 — 値は `Γ₀` 以上のまま。 -/
+theorem stepG0Keep122 {s : Option Term × Option Term} {ac : Term × Term}
+    (hst : StInv s) (hf : le (reg 1) ac.1 = false)
+    (h1 : inT ac.1 = true) (h2 : lt ac.1 M = true) (h3 : inT ac.2 = true)
+    (h4 : lt ac.2 M = true) {v : Term} (hs2 : s.2 = some v) (hv : le G094 v = true) :
+    ∃ v', (stepF (reg 1) (baseOf 0) s ac).2 = some v' ∧ le G094 v' = true := by
+  obtain ⟨hiv, hvM⟩ := hst.2 v hs2
+  refine ⟨phiNF ac.1 (plus v ac.2), by rw [stepF_snd_veb88 hf, hs2], ?_⟩
+  exact le_phiNF_ge117 inT_G094_102 isAP_G0_119 (by decide) (show lt G094 M = true from by decide) h1 h2
+    (inT_plus hiv h3) (lt_plus_M hiv h3 hvM h4)
+    (leG_plus_left116 inT_G094_102 isAP_G0_119 hiv h3 hv)
+
+/-- 「発火ずみ」の不変量。 -/
+def CarSt122 (s : Option Term × Option Term) : Prop :=
+  BigU116 s ∨ ∃ v, s.2 = some v ∧ le G094 v = true
+
+/-- 発火する対だけの空でない列を畳むと、値は `ψ_{Ω₁}` の像。 -/
+theorem foldFire122 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+    l ≠ [] → (∀ ac ∈ l, le (reg 1) ac.1 = true) →
+    ∃ i, (l.foldl (stepF (reg 1) (baseOf 0)) s).2 = some (psi (reg 1) i) := by
+  intro l
+  induction l with
+  | nil => intro _ hne _; exact absurd rfl hne
+  | cons ac t ih =>
+    intro s _ hall
+    cases t with
+    | nil =>
+        refine ⟨idxOf (reg 1) s ac, ?_⟩
+        show (stepF (reg 1) (baseOf 0) s ac).2 = _
+        exact stepF_snd_fire88 (hall ac (List.Mem.head _))
+    | cons b r =>
+        exact ih (stepF (reg 1) (baseOf 0) s ac) (List.cons_ne_nil b r)
+          (fun x hx => hall x (List.Mem.tail _ hx))
+
+/-- **§122.4 の主定理 — 発火のあとの Veblen 側。** -/
+theorem foldCar122 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+    StInv s →
+    (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+    (∀ ac ∈ l, ac.2 ≠ zero) →
+    (∀ ac ∈ l, le (reg 1) ac.1 = false) →
+    (∀ p ∈ scanSt (reg 1) (baseOf 0) s l, le (reg 1) p.2.1 = true →
+        inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true) →
+    CarSt122 s →
+    (BigU116 s ∨ ∃ ac ∈ l, ac.1 = G094) →
+    BigU116 (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil =>
+      intro s _ _ _ _ _ _ hbig
+      rcases hbig with h | ⟨ac, hac, _⟩
+      · exact h
+      · cases hac
+  | cons ac t ih =>
+    intro s hst hall hnz hnf hpsi hcar hbig
+    obtain ⟨h1, h2, h3, h4⟩ := hall ac (List.Mem.head _)
+    have hf : le (reg 1) ac.1 = false := hnf ac (List.Mem.head _)
+    have hstep : StInv (stepF (reg 1) (baseOf 0) s ac) :=
+      stepF_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0) hst
+        ⟨h1, h2, h3, h4⟩ (hpsi (s, ac) (List.Mem.head _))
+    refine ih _ hstep (fun x hx => hall x (List.Mem.tail _ hx))
+      (fun x hx => hnz x (List.Mem.tail _ hx)) (fun x hx => hnf x (List.Mem.tail _ hx))
+      (fun p hp => hpsi p (List.Mem.tail _ hp)) ?_ ?_
+    · rcases hcar with hb | ⟨v, hs2, hv⟩
+      · exact Or.inl (stepBigNoFire116 hst hf h1 h2 h3 h4 (Or.inl hb))
+      · by_cases hG : ac.1 = G094
+        · exact Or.inl (stepBigVebG0_122 hst hf hG h3 h4 (hnz ac (List.Mem.head _)) hs2 hv)
+        · exact Or.inr (stepG0Keep122 hst hf h1 h2 h3 h4 hs2 hv)
+    · rcases hbig with hb | ⟨ac0, hac0, hG0⟩
+      · exact Or.inl (stepBigNoFire116 hst hf h1 h2 h3 h4 (Or.inl hb))
+      · rcases List.mem_cons.mp hac0 with he | ht
+        · rcases hcar with hb | ⟨v, hs2, hv⟩
+          · exact Or.inl (stepBigNoFire116 hst hf h1 h2 h3 h4 (Or.inl hb))
+          · refine Or.inl (stepBigVebG0_122 hst hf (by rw [← he]; exact hG0) h3 h4
+              (hnz ac (List.Mem.head _)) hs2 hv)
+        · exact Or.inr ⟨ac0, ht, hG0⟩
+
+/-- `scanSt` は連結で割れる。 -/
+theorem scanSt_append122 (w base : Term) : ∀ (l1 l2 : List (Term × Term))
+    (s : Option Term × Option Term),
+    scanSt w base s (l1 ++ l2)
+      = scanSt w base s l1 ++ scanSt w base (l1.foldl (stepF w base) s) l2 := by
+  intro l1
+  induction l1 with
+  | nil => intro l2 s; rfl
+  | cons ac t ih =>
+    intro l2 s
+    show (s, ac) :: scanSt w base (stepF w base s ac) (t ++ l2) = _
+    rw [ih l2 (stepF w base s ac)]
+    rfl
+
+/-- **§122.4 の主定理 (2) — 対の列に発火する対と `Γ₀` の対があれば畳み込みは窓の上端以上。** -/
+theorem foldBigCar122 (P : List (Term × Term))
+    (hallOK : ∀ ac ∈ P, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true)
+    (hnz : ∀ ac ∈ P, ac.2 ≠ zero)
+    (hpsi : ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) P, le (reg 1) p.2.1 = true →
+        inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true)
+    (hds : ∀ ac ∈ P.dropWhile (fun z => le (reg 1) z.1), le (reg 1) ac.1 = false)
+    (hfire : ∃ ac ∈ P, le (reg 1) ac.1 = true)
+    (hG0 : ∃ ac ∈ P, ac.1 = G094) :
+    BigU116 (P.foldl (stepF (reg 1) (baseOf 0)) (none, none)) := by
+  have hsplit : P.takeWhile (fun z => le (reg 1) z.1) ++ P.dropWhile (fun z => le (reg 1) z.1)
+      = P := List.takeWhile_append_dropWhile
+  have hpre_ne : P.takeWhile (fun z => le (reg 1) z.1) ≠ [] := by
+    intro hnil
+    obtain ⟨ac, hac, hfa⟩ := hfire
+    have hin : ac ∈ P.dropWhile (fun z => le (reg 1) z.1) := by
+      rw [← hsplit, hnil, List.nil_append] at hac; exact hac
+    rw [hds ac hin] at hfa
+    exact Bool.noConfusion hfa
+  have hscan := scanSt_append122 (reg 1) (baseOf 0)
+    (P.takeWhile (fun z => le (reg 1) z.1)) (P.dropWhile (fun z => le (reg 1) z.1)) (none, none)
+  rw [hsplit] at hscan
+  have hpsiPre : ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none)
+      (P.takeWhile (fun z => le (reg 1) z.1)), le (reg 1) p.2.1 = true →
+        inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true := by
+    intro p hp
+    exact hpsi p (by rw [hscan]; exact List.mem_append_left _ hp)
+  have hpsiPost : ∀ p ∈ scanSt (reg 1) (baseOf 0)
+      ((P.takeWhile (fun z => le (reg 1) z.1)).foldl (stepF (reg 1) (baseOf 0)) (none, none))
+      (P.dropWhile (fun z => le (reg 1) z.1)), le (reg 1) p.2.1 = true →
+        inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true := by
+    intro p hp
+    exact hpsi p (by rw [hscan]; exact List.mem_append_right _ hp)
+  have hStInv0 : StInv ((P.takeWhile (fun z => le (reg 1) z.1)).foldl
+      (stepF (reg 1) (baseOf 0)) (none, none)) :=
+    fold_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0)
+      _ (none, none) stInv_none
+      (fun x hx => hallOK x (by rw [← hsplit]; exact List.mem_append_left _ hx)) hpsiPre
+  have hcar0 : CarSt122 ((P.takeWhile (fun z => le (reg 1) z.1)).foldl
+      (stepF (reg 1) (baseOf 0)) (none, none)) := by
+    obtain ⟨i, hi⟩ := foldFire122 (P.takeWhile (fun z => le (reg 1) z.1)) (none, none)
+      hpre_ne (fun x hx => mem_takeWhile109 _ _ x hx)
+    exact Or.inr ⟨psi (reg 1) i, hi, le_G0_psi122 i⟩
+  have hG0post : ∃ ac ∈ P.dropWhile (fun z => le (reg 1) z.1), ac.1 = G094 := by
+    obtain ⟨ac, hac, he⟩ := hG0
+    rw [← hsplit] at hac
+    rcases List.mem_append.mp hac with h | h
+    · exfalso
+      have h2 := mem_takeWhile109 _ _ ac h
+      rw [he, leW_G0_false122] at h2
+      exact Bool.noConfusion h2
+    · exact ⟨ac, h, he⟩
+  rw [← hsplit, List.foldl_append]
+  exact foldCar122 (P.dropWhile (fun z => le (reg 1) z.1)) _ hStInv0
+    (fun x hx => hallOK x (by rw [← hsplit]; exact List.mem_append_right _ hx))
+    (fun x hx => hnz x (by rw [← hsplit]; exact List.mem_append_right _ hx))
+    hds hpsiPost hcar0 (Or.inr hG0post)
+
+/-- **§122.4 の主定理 (3) — `Ω^Ω < a` と `Γ₀` の桁から、値は窓の上端以上。** -/
+theorem carrierUp122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) {a : BT}
+    (hba : btLe72 1 a = true) (hsa : BT.isStd a = true)
+    (hs0 : BT.isStd (BT.D 0 a) = true) (hlt : BT.lt bOO94 a = true)
+    (hG0 : ∃ ac ∈ (wcnf (reg 1) (toList (dict a))).1, ac.1 = G094) :
+    le wTop116 (dict (BT.D 0 a)) = true := by
+  obtain ⟨hiA, hAM⟩ := inT_dict_of_std172 Hp a hba hsa
+  obtain ⟨hc, hd⟩ := inT_toList _ hiA
+  have hM := ltM_toList _ hiA hAM
+  obtain ⟨⟨hrT, hrM⟩, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hc hd hM
+  have Hpx : PsiIdxOK 0 (dict a) := Hp 0 a (by omega) hba hs0
+  have hfold := foldBigCar122 (wcnf (reg 1) (toList (dict a))).1 hallOK
+    (wcnf_coef_ne_zero119 (toList (dict a)) hc hd hM) Hpx
+    (fireSplit109 (isSC_reg_succ 0) (inT_reg 1) (show (reg 1).isAP = true from rfl)
+      (toList (dict a)) hc hd)
+    (fireBigPair122 Hp HD hba hsa hlt) hG0
+  have hacc : inT (accW89 (dict a)) = true ∧ lt (accW89 (dict a)) M = true := by
+    have hstF : StInv ((wcnf (reg 1) (toList (dict a))).1.foldl
+        (stepF (reg 1) (baseOf 0)) (none, none)) :=
+      fold_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0)
+        (wcnf (reg 1) (toList (dict a))).1 (none, none) stInv_none hallOK Hpx
+    unfold accW89
+    cases hg : ((wcnf (reg 1) (toList (dict a))).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 1) (baseOf 0))).2 with
+    | none => exact ⟨inT_zero, lt_zero_M⟩
+    | some v => exact hstF.2 v hg
+  obtain ⟨v, hv, hbv⟩ := hfold
+  have hav : accW89 (dict a) = v := by unfold accW89; rw [hv]; rfl
+  have hbig : le wTop116 (plus (accW89 (dict a)) (rhoW89 (dict a))) = true := by
+    rw [hav]
+    exact leG_plus_left116 inT_wTop116 isAP_wTop116 (by rw [← hav]; exact hacc.1) hrT hbv
+  have hsi : inT (plus (accW89 (dict a)) (rhoW89 (dict a))) = true := inT_plus hacc.1 hrT
+  have hsM : lt (plus (accW89 (dict a)) (rhoW89 (dict a))) M = true :=
+    lt_plus_M hacc.1 hrT hacc.2 hrM
+  show le wTop116 (collapse 0 (dict a)) = true
+  rw [collapse0_raw89]
+  refine leG_omegaNF116 inT_wTop116 isAP_wTop116 ltM_wTop116 lt_one_wTop116
+    (inT_plus (inT_reg 0) hsi) (lt_plus_M (inT_reg 0) hsi lt_zero_M hsM) ?_
+  exact leG_plus_right116 inT_wTop116 (inT_reg 0) hsi hbig
+
+end
+
+/-! ### §122.5 おとなしい対の列で `Γ₀` の桁がなければ窓に入れない -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem lt_G0_bot122 : lt G094 (gT113 zero) = true := by decide
+theorem inT_gT0_122 : inT (gT113 zero) = true := by decide
+
+/-- **§113.3 の `wcnfG113`、指数の条件を「`Γ₀` より下か発火する」に緩めたもの。** -/
+theorem wcnfG122 {R : Term} (hiT : inT (gT113 R) = true) :
+    ∀ (L : List Term), inTL L = true → descL L = true → (∀ x ∈ L, lt x M = true) →
+      (∀ p ∈ L, lt p (reg 1) = true → lt p (gT113 R) = true) →
+      (∀ p ∈ L, lt p (reg 1) = false →
+        (lt (wA (reg 1) p) G094 = true ∨ le (reg 1) (wA (reg 1) p) = true)
+          ∧ lt (wC (reg 1) p) (gT113 R) = true) →
+      (∀ ac ∈ (wcnf (reg 1) L).1,
+          (lt ac.1 G094 = true ∨ le (reg 1) ac.1 = true) ∧ lt ac.2 (gT113 R) = true)
+        ∧ lt (wcnf (reg 1) L).2 (gT113 R) = true := by
+  intro L
+  induction L with
+  | nil =>
+    intro _ _ _ _ _
+    exact ⟨(by intro ac hac; cases hac), lt_zero_gT113 R⟩
+  | cons p rest ih =>
+    intro hc hd hM hlo hhi
+    obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+    have hdr := descL_tail hd
+    by_cases hlp : lt p (reg 1) = true
+    · rw [wcnf_cons_lt hlp]
+      refine ⟨(by intro ac hac; cases hac), ?_⟩
+      refine lt_ofList_gT113 R _ ?_
+      intro x hx
+      rcases List.mem_cons.mp hx with h1 | h1
+      · rw [h1]; exact hlo p (List.Mem.head _) hlp
+      · have hix : inT x = true := ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcr x h1)).2
+        have hle := descL_bound_inT rest p hip hcr hd x h1
+        exact hlo x (List.Mem.tail _ h1) (ltW_of_le79 hix hip hle hlp)
+    · have hlp' : lt p (reg 1) = false := bool_false hlp
+      obtain ⟨hwA, hwC⟩ := hhi p (List.Mem.head _) hlp'
+      have IH := ih hcr hdr (fun q hq => hM q (List.Mem.tail _ hq))
+        (fun q hq => hlo q (List.Mem.tail _ hq))
+        (fun q hq => hhi q (List.Mem.tail _ hq))
+      have hiwC : inT (wC (reg 1) p) = true := inT_wC hip
+      rw [wcnf_cons_ge hlp']
+      cases hr : wcnf (reg 1) rest with
+      | mk fst snd =>
+        rw [hr] at IH
+        obtain ⟨hall, hsnd⟩ := IH
+        cases fst with
+        | nil =>
+          refine ⟨?_, hsnd⟩
+          intro ac hac
+          rw [List.mem_singleton.mp hac]
+          exact ⟨hwA, hwC⟩
+        | cons ac0 ps =>
+          cases ac0 with
+          | mk a' c' =>
+            have hac0 := hall (a', c') (List.Mem.head _)
+            have hic' : inT c' = true := by
+              have hPO := wcnf_spec_sc (inT_reg 1) (show (reg 1).isSC = true from rfl)
+                rest hcr hdr (fun x hx => hM x (List.Mem.tail _ hx))
+              rw [hr] at hPO
+              exact (hPO.2 (a', c') (List.Mem.head _)).2.2.1
+            show (∀ ac ∈ (if (wA (reg 1) p == a') = true
+                then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd)).1,
+                (lt ac.1 G094 = true ∨ le (reg 1) ac.1 = true) ∧ lt ac.2 (gT113 R) = true)
+              ∧ lt (if (wA (reg 1) p == a') = true
+                then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd)).2 (gT113 R) = true
+            by_cases heq : (wA (reg 1) p == a') = true
+            · rw [if_pos heq]
+              refine ⟨?_, hsnd⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h1 | h1
+              · rw [h1]
+                exact ⟨hwA, lt_plus_gT113 hiT hiwC hic' hwC hac0.2⟩
+              · exact hall ac (List.Mem.tail _ h1)
+            · rw [if_neg heq]
+              refine ⟨?_, hsnd⟩
+              intro ac hac
+              rcases List.mem_cons.mp hac with h1 | h1
+              · rw [h1]; exact ⟨hwA, hwC⟩
+              · exact hall ac h1
+
+/-- おとなしい畳み込みの不変量 — 「窓の上端以上で発火ずみ」か「窓の下端より下で指数 `0`」。 -/
+def TmSt122 (s : Option Term × Option Term) : Prop :=
+  (BigU116 s ∧ ∃ i, s.1 = some i) ∨ (StG113 zero s ∧ ∀ i, s.1 = some i → i = zero)
+
+theorem tmSt_none122 : TmSt122 ((none : Option Term), (none : Option Term)) :=
+  Or.inr ⟨(by intro v hv; cases hv), (by intro i hi; cases hi)⟩
+
+/-- 発火する対がおとなしいと `Δ = 1`。 -/
+theorem dd_one122 {ac : Term × Term} (hA : ac.1 = reg 1) (hc : ac.2 = TM.Term.one) :
+    ddOf75 (reg 1) ac = TM.Term.one := by
+  show mulL (mulL (reg 1) (subAP (reg 1) ac.1)) ac.2 = TM.Term.one
+  rw [hA, hc]
+  rfl
+
+/-- おとなしい発火の一歩。 -/
+theorem stepTmFire122 {s : Option Term × Option Term} {ac : Term × Term}
+    (hA : ac.1 = reg 1) (hc : ac.2 = TM.Term.one)
+    (hs : StG113 zero s ∧ ∀ i, s.1 = some i → i = zero) :
+    TmSt122 (stepF (reg 1) (baseOf 0) s ac) := by
+  have hf : le (reg 1) ac.1 = true := by rw [hA]; exact le_self _
+  cases hs1 : s.1 with
+  | none =>
+      have hidx : idxOf (reg 1) s ac = zero := by
+        show (match s.1 with
+              | none => sub1 (mulL (mulL (reg 1) (subAP (reg 1) ac.1)) ac.2)
+              | some j => plus j (mulL (mulL (reg 1) (subAP (reg 1) ac.1)) ac.2)) = zero
+        rw [hs1]
+        show sub1 (ddOf75 (reg 1) ac) = zero
+        rw [dd_one122 hA hc]
+        rfl
+      refine Or.inr ⟨?_, ?_⟩
+      · intro v hv
+        have hve : v = psi (reg 1) (idxOf (reg 1) s ac) :=
+          (Option.some.inj ((stepF_snd_fire88 hf).symm.trans hv)).symm
+        rw [hve, hidx]
+        exact ⟨inT_G094_102, by decide, lt_G0_bot122⟩
+      · intro i hi
+        have h2 : (if le (reg 1) ac.1 = true then some (idxOf (reg 1) s ac) else s.1) = some i := by
+          rw [← stepF_fst]; exact hi
+        rw [if_pos hf] at h2
+        rw [← Option.some.inj h2, hidx]
+  | some i0 =>
+      have hi0 : i0 = zero := hs.2 i0 hs1
+      have hidx : idxOf (reg 1) s ac = TM.Term.one := by
+        rw [idxOf_some92 hs1, dd_one122 hA hc, hi0]
+        exact plus_zero_left_inT inT_one
+      refine Or.inl ⟨⟨psi (reg 1) (idxOf (reg 1) s ac), stepF_snd_fire88 hf, ?_⟩, ?_⟩
+      · rw [hidx]
+        exact le_wTop_psi116 (fun hcc => Term.noConfusion hcc)
+      · exact ⟨idxOf (reg 1) s ac, by rw [stepF_fst, if_pos hf]⟩
+
+/-- **§122.5 の主定理 (1) — おとなしい対の列の畳み込み。** -/
+theorem foldT122 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+    StInv s → TmSt122 s →
+    (∀ ac ∈ l, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true ∧ lt ac.2 M = true) →
+    (∀ ac ∈ l, (lt ac.1 G094 = true ∨ (ac.1 = reg 1 ∧ ac.2 = TM.Term.one))
+        ∧ lt ac.2 (gT113 zero) = true) →
+    (∀ p ∈ scanSt (reg 1) (baseOf 0) s l, le (reg 1) p.2.1 = true →
+        inT (psi (reg 1) (idxOf (reg 1) p.1 p.2)) = true) →
+    TmSt122 (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil => intro s _ hs _ _ _; exact hs
+  | cons ac t ih =>
+    intro s hst hs hall hgood hpsi
+    obtain ⟨h1, h2, h3, h4⟩ := hall ac (List.Mem.head _)
+    obtain ⟨hshape, hcG⟩ := hgood ac (List.Mem.head _)
+    have hstep : StInv (stepF (reg 1) (baseOf 0) s ac) :=
+      stepF_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0) hst
+        ⟨h1, h2, h3, h4⟩ (hpsi (s, ac) (List.Mem.head _))
+    refine ih _ hstep ?_ (fun x hx => hall x (List.Mem.tail _ hx))
+      (fun x hx => hgood x (List.Mem.tail _ hx)) (fun p hp => hpsi p (List.Mem.tail _ hp))
+    rcases hshape with hveb | ⟨hA, hcone⟩
+    · have hf : le (reg 1) ac.1 = false :=
+        leW_false106 h1 (lt_trans_inT h1 inT_G094_102 inT_W79 hveb lt_G0_W113)
+      rcases hs with ⟨hb, i, hi⟩ | ⟨hg, hidx⟩
+      · refine Or.inl ⟨stepBigNoFire116 hst hf h1 h2 h3 h4 (Or.inl hb), ?_⟩
+        exact ⟨i, by rw [stepF_fst, if_neg (by rw [hf]; exact Bool.noConfusion)]; exact hi⟩
+      · refine Or.inr ⟨stepG113 inT_gT0_122 h1 h2 hveb h3 h4 hcG hg, ?_⟩
+        intro i hi
+        refine hidx i ?_
+        have h5 : (if le (reg 1) ac.1 = true then some (idxOf (reg 1) s ac) else s.1)
+            = some i := by rw [← stepF_fst]; exact hi
+        rw [if_neg (by rw [hf]; exact Bool.noConfusion)] at h5
+        exact h5
+    · have hf : le (reg 1) ac.1 = true := by rw [hA]; exact le_self _
+      rcases hs with ⟨hb, i, hi⟩ | hg
+      · have hdz : ddOf75 (reg 1) ac ≠ zero :=
+          ddOf_ne_zero84 (by rw [hcone]; exact fun hcc => Term.noConfusion hcc)
+        have hidxne : idxOf (reg 1) s ac ≠ zero := by
+          rw [idxOf_some92 hi]
+          intro hcc
+          exact hdz (le_zero_eq116 (by
+            rw [← hcc]
+            exact le_self_plus75 (hst.1 i hi).1 (inT_ddOf75 (inT_reg 1) h1 h3)))
+        exact Or.inl ⟨⟨psi (reg 1) (idxOf (reg 1) s ac), stepF_snd_fire88 hf,
+          le_wTop_psi116 hidxne⟩, ⟨idxOf (reg 1) s ac, by rw [stepF_fst, if_pos hf]⟩⟩
+      · exact stepTmFire122 hA hcone hg
+
+/-- **§122.5 の主定理 (2) — おとなしくて `Γ₀` の桁がなければ、窓の下端に届かないか
+    窓の上端を越えるかのどちらかで、窓の中には入れない。** -/
+theorem collapse0_tame122 {x : Term} (hx : inT x = true) (hxM : lt x M = true)
+    (Hpx : PsiIdxOK 0 x)
+    (hlo : ∀ p ∈ toList x, lt p (reg 1) = true → lt p (rawT94 0) = true)
+    (hhi : ∀ p ∈ toList x, lt p (reg 1) = false →
+      (lt (wA (reg 1) p) G094 = true ∨ le (reg 1) (wA (reg 1) p) = true)
+        ∧ lt (wC (reg 1) p) (rawT94 0) = true)
+    (htame : ((wcnf (reg 1) (toList x)).1).any bigP119 = false) :
+    lt (collapse 0 x) (rawT94 0) = true ∨ le wTop116 (collapse 0 x) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList x hx
+  have hM := ltM_toList x hx hxM
+  obtain ⟨hallG, hrhoG⟩ := wcnfG122 (R := zero) inT_gT0_122 (toList x) hc hd hM hlo hhi
+  obtain ⟨⟨hrhoT, hrhoM⟩, hallOK⟩ :=
+    wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList x) hc hd hM
+  have hnz := wcnf_coef_ne_zero119 (toList x) hc hd hM
+  have hgood : ∀ ac ∈ (wcnf (reg 1) (toList x)).1,
+      (lt ac.1 G094 = true ∨ (ac.1 = reg 1 ∧ ac.2 = TM.Term.one))
+        ∧ lt ac.2 (gT113 zero) = true := by
+    intro ac hac
+    obtain ⟨hsh, hcG⟩ := hallG ac hac
+    refine ⟨?_, hcG⟩
+    rcases hsh with h | h
+    · exact Or.inl h
+    · refine Or.inr ?_
+      have hb : bigP119 ac = false := by
+        cases hbb : bigP119 ac with
+        | false => rfl
+        | true => rw [List.any_eq_true.mpr ⟨ac, hac, hbb⟩] at htame; exact Bool.noConfusion htame
+      unfold bigP119 at hb
+      rw [if_pos h] at hb
+      have hb2 := Bool.or_eq_false_iff.mp hb
+      have hA : ac.1 = reg 1 := by
+        rcases (Bool.or_eq_true _ _).mp h with he | hlt
+        · exact (eq_of_beq he).symm
+        · exfalso; rw [hlt] at hb2; exact Bool.noConfusion hb2.1
+      have hic : inT ac.2 = true := (hallOK ac hac).2.2.1
+      have hcone : ac.2 = TM.Term.one := by
+        have hle : le ac.2 TM.Term.one = true :=
+          le_of_not_lt3 (inT_le_fragR _ inT_one) (inT_le_fragR _ hic) hb2.2
+        rcases (Bool.or_eq_true _ _).mp hle with he | hlt
+        · exact eq_of_beq he
+        · exact absurd (below_one _ hic (fuelOf ac.2 TM.Term.one) hlt) (hnz ac hac)
+      exact ⟨hA, hcone⟩
+  have hfold := foldT122 (wcnf (reg 1) (toList x)).1 (none, none) stInv_none tmSt_none122
+    hallOK hgood Hpx
+  rcases hfold with ⟨hb, _⟩ | ⟨hg, _⟩
+  · refine Or.inr ?_
+    have hacc : inT (accW89 x) = true ∧ lt (accW89 x) M = true := by
+      have hstF : StInv ((wcnf (reg 1) (toList x)).1.foldl
+          (stepF (reg 1) (baseOf 0)) (none, none)) :=
+        fold_inv mulDescInT (inT_reg 1) (ltM_reg 1) (inT_baseOf 0) (ltM_baseOf 0)
+          (wcnf (reg 1) (toList x)).1 (none, none) stInv_none hallOK Hpx
+      unfold accW89
+      cases hgg : ((wcnf (reg 1) (toList x)).1.foldl
+          (init := ((none : Option Term), (none : Option Term)))
+          (stepF (reg 1) (baseOf 0))).2 with
+      | none => exact ⟨inT_zero, lt_zero_M⟩
+      | some v => exact hstF.2 v hgg
+    obtain ⟨v, hv, hbv⟩ := hb
+    have hav : accW89 x = v := by unfold accW89; rw [hv]; rfl
+    have hbig : le wTop116 (plus (accW89 x) (rhoW89 x)) = true := by
+      rw [hav]
+      exact leG_plus_left116 inT_wTop116 isAP_wTop116 (by rw [← hav]; exact hacc.1) hrhoT hbv
+    have hsi : inT (plus (accW89 x) (rhoW89 x)) = true := inT_plus hacc.1 hrhoT
+    have hsM : lt (plus (accW89 x) (rhoW89 x)) M = true :=
+      lt_plus_M hacc.1 hrhoT hacc.2 hrhoM
+    rw [collapse0_raw89]
+    refine leG_omegaNF116 inT_wTop116 isAP_wTop116 ltM_wTop116 lt_one_wTop116
+      (inT_plus (inT_reg 0) hsi) (lt_plus_M (inT_reg 0) hsi lt_zero_M hsM) ?_
+    exact leG_plus_right116 inT_wTop116 (inT_reg 0) hsi hbig
+  · refine Or.inl ?_
+    have hacc : inT (accW89 x) = true ∧ lt (accW89 x) M = true
+        ∧ lt (accW89 x) (gT113 zero) = true := by
+      unfold accW89
+      cases hgg : ((wcnf (reg 1) (toList x)).1.foldl
+          (init := ((none : Option Term), (none : Option Term)))
+          (stepF (reg 1) (baseOf 0))).2 with
+      | none => exact ⟨inT_zero, lt_zero_M, lt_zero_gT113 zero⟩
+      | some v => exact hg v hgg
+    have hs1 : inT (plus (accW89 x) (rhoW89 x)) = true := inT_plus hacc.1 hrhoT
+    have hs2 : lt (plus (accW89 x) (rhoW89 x)) M = true :=
+      lt_plus_M hacc.1 hrhoT hacc.2.1 hrhoM
+    have hs3 : lt (plus (accW89 x) (rhoW89 x)) (gT113 zero) = true :=
+      lt_plus_gT113 inT_gT0_122 hacc.1 hrhoT hacc.2.2 hrhoG
+    rw [collapse0_raw89]
+    exact lt_omegaNF113 inT_gT0_122 (inT_plus inT_zero hs1)
+      (lt_plus_M inT_zero hs1 lt_zero_M hs2)
+      (lt_plus_gT113 inT_gT0_122 inT_zero hs1 (lt_zero_gT113 zero) hs3)
+
+end
+
+/-! ### §122.6 `TightUp119` は定理である -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+theorem all_false_of_any122 {l : List Term} {f : Term → Bool} (h : l.any f = false) :
+    ∀ p ∈ l, f p = false := by
+  intro p hp
+  cases hb : f p with
+  | false => rfl
+  | true => rw [List.any_eq_true.mpr ⟨p, hp, hb⟩] at h; exact Bool.noConfusion h
+
+/-- `Ω₁` より下で窓の下端以上の成分。 -/
+def loBad122 (p : Term) : Bool := lt p (reg 1) && !(lt p (rawT94 0))
+/-- 係数が窓の下端以上の桁。 -/
+def coefBad122 (p : Term) : Bool := !(lt p (reg 1)) && !(lt (wC (reg 1) p) (rawT94 0))
+/-- 指数がちょうど `Γ₀` の桁。 -/
+def carr122 (p : Term) : Bool := !(lt p (reg 1)) && (wA (reg 1) p == G094)
+
+/-- **§122.6 の主定理 — 帳簿の帰納法、条項なし。** -/
+theorem winUpAux122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) (Hg : Gam0Drags111) :
+    ∀ (n : Nat) (a : BT), BT.size a ≤ n → btLe72 1 (BT.D 0 a) = true →
+      BT.isStd (BT.D 0 a) = true → le (rawT94 0) (dict (BT.D 0 a)) = true →
+      le wTop116 (dict (BT.D 0 a)) = true := by
+  intro n
+  induction n with
+  | zero =>
+      intro a hn _ _ _
+      exact absurd hn (by have := size_pos87 a; omega)
+  | succ n ih =>
+    intro a hn hb hs hle
+    have hba : btLe72 1 a = true := by
+      have h : (decide (0 ≤ 1) && btLe72 1 a) = true := hb
+      exact ((Bool.and_eq_true _ _).mp h).2
+    have hsa : BT.isStd a = true := by
+      have h : (BT.isStd a && (BT.GB 0 a).all (fun e => BT.lt e a)) = true := hs
+      exact ((Bool.and_eq_true _ _).mp h).1
+    obtain ⟨hiA, hAM⟩ := inT_dict_of_std172 Hp a hba hsa
+    obtain ⟨hcL, hdL⟩ := inT_toList _ hiA
+    cases hany : ((wcnf (reg 1) (toList (dict a))).1).any bigP119 with
+    | true => exact expUpBig119 hiA hAM (Hp 0 a (by omega) hba hs) (List.any_eq_true.mp hany)
+    | false =>
+      cases hlo : (toList (dict a)).any loBad122 with
+      | true =>
+          obtain ⟨p, hp, hbad⟩ := List.any_eq_true.mp hlo
+          have hpw : lt p (reg 1) = true := ((Bool.and_eq_true _ _).mp hbad).1
+          have hlep : le (rawT94 0) p = true := by
+            have h2 := ((Bool.and_eq_true _ _).mp hbad).2
+            have h3 : lt p (rawT94 0) = false := by
+              cases hq : lt p (rawT94 0) with
+              | false => rfl
+              | true => rw [hq] at h2; exact Bool.noConfusion h2
+            exact le_of_not_lt3 (inT_le_fragR _ (inTL_inT hiA p hp))
+              (inT_le_fragR _ (inT_rawT98 0)) h3
+          refine upPropIn116 hiA hAM (Hp 0 a (by omega) hba hs) ?_
+          obtain ⟨c, hc, hpc⟩ := mem_toList_dict101 Hp hba hsa p hp
+          obtain ⟨hAt, hStd, hBt, _⟩ := good_toL77 a hsa hba
+          obtain ⟨u, c', hcc⟩ := hAt c hc
+          have hbc : btLe72 1 c = true := hBt c hc
+          have hsc : BT.isStd c = true := hStd c hc
+          subst hcc
+          have hu : u = 0 := by
+            rcases Nat.eq_zero_or_pos u with h0 | h1
+            · exact h0
+            · exfalso
+              have hu1 : u = 1 := by
+                have h := (btLe72_D 1 u c' hbc).1
+                omega
+              subst hu1
+              have hcon := ltW_dictD1_false98 Hp hbc hsc
+              rw [← hpc, hpw] at hcon
+              exact Bool.noConfusion hcon
+          subst hu
+          have hsz : BT.size c' ≤ n := by
+            have h1 : BT.size (BT.D 0 c') ≤ BT.size a := size_mem_toL87 a _ hc
+            have h2 : BT.size (BT.D 0 c') = 1 + BT.size c' := size_D87 0 c'
+            omega
+          have hIH := ih c' hsz hbc hsc (by rw [← hpc]; exact hlep)
+          refine List.any_eq_true.mpr ⟨p, hp, ?_⟩
+          unfold upP113
+          rw [hpw, hpc]
+          exact hIH
+      | false =>
+        have hloAll : ∀ p ∈ toList (dict a), lt p (reg 1) = true →
+            lt p (rawT94 0) = true := by
+          intro p hp h1
+          have h2 := all_false_of_any122 hlo p hp
+          unfold loBad122 at h2
+          rw [h1, Bool.true_and] at h2
+          cases hq : lt p (rawT94 0) with
+          | true => rfl
+          | false => rw [hq] at h2; exact Bool.noConfusion h2
+        cases hcf : (toList (dict a)).any coefBad122 with
+        | true =>
+            obtain ⟨p, hp, hbad⟩ := List.any_eq_true.mp hcf
+            have hpw : lt p (reg 1) = false := by
+              have h1 := ((Bool.and_eq_true _ _).mp hbad).1
+              cases hq : lt p (reg 1) with
+              | false => rfl
+              | true => rw [hq] at h1; exact Bool.noConfusion h1
+            have hq : lt (wC (reg 1) p) (rawT94 0) = false := by
+              have h2 := ((Bool.and_eq_true _ _).mp hbad).2
+              cases hq2 : lt (wC (reg 1) p) (rawT94 0) with
+              | false => rfl
+              | true => rw [hq2] at h2; exact Bool.noConfusion h2
+            refine upPropIn116 hiA hAM (Hp 0 a (by omega) hba hs) ?_
+            exact List.any_eq_true.mpr ⟨p, hp, coefUpStep119 Hp ih hn hba hsa hp hpw hq⟩
+        | false =>
+          have hcfAll : ∀ p ∈ toList (dict a), lt p (reg 1) = false →
+              lt (wC (reg 1) p) (rawT94 0) = true := by
+            intro p hp h1
+            have h2 := all_false_of_any122 hcf p hp
+            unfold coefBad122 at h2
+            rw [h1, Bool.not_false, Bool.true_and] at h2
+            cases hq : lt (wC (reg 1) p) (rawT94 0) with
+            | true => rfl
+            | false => rw [hq] at h2; exact Bool.noConfusion h2
+          cases hcr : (toList (dict a)).any carr122 with
+          | true =>
+              obtain ⟨p, hp, hbad⟩ := List.any_eq_true.mp hcr
+              have hpw : lt p (reg 1) = false := by
+                have h1 := ((Bool.and_eq_true _ _).mp hbad).1
+                cases hq : lt p (reg 1) with
+                | false => rfl
+                | true => rw [hq] at h1; exact Bool.noConfusion h1
+              have hEq : wA (reg 1) p = G094 := eq_of_beq ((Bool.and_eq_true _ _).mp hbad).2
+              have hOO : BT.lt bOO94 a = true :=
+                carrierOfExpG0_119 Hp Hg hba hsa hs hp hpw hEq
+              obtain ⟨ac, hac, hace⟩ := wcnf_expG119 (toList (dict a)) hcL hdL p hp hpw
+              exact carrierUp122 Hp HD hba hsa hs hOO ⟨ac, hac, by rw [hace, hEq]⟩
+          | false =>
+              have hcrAll : ∀ p ∈ toList (dict a), lt p (reg 1) = false →
+                  (wA (reg 1) p == G094) = false := by
+                intro p hp h1
+                have h2 := all_false_of_any122 hcr p hp
+                unfold carr122 at h2
+                rw [h1, Bool.not_false, Bool.true_and] at h2
+                exact h2
+              have hhi : ∀ p ∈ toList (dict a), lt p (reg 1) = false →
+                  (lt (wA (reg 1) p) G094 = true ∨ le (reg 1) (wA (reg 1) p) = true)
+                    ∧ lt (wC (reg 1) p) (rawT94 0) = true := by
+                intro p hp hpw
+                refine ⟨?_, hcfAll p hp hpw⟩
+                cases hex : lt (wA (reg 1) p) G094 with
+                | true => exact Or.inl rfl
+                | false =>
+                    rcases tameExp119 hcL hdL hp hpw hex hany with h1 | h1
+                    · exfalso
+                      have h3 := hcrAll p hp hpw
+                      rw [h1, beq_self_eq_true] at h3
+                      exact Bool.noConfusion h3
+                    · exact Or.inr (by rw [h1]; exact le_self _)
+              rcases collapse0_tame122 hiA hAM (Hp 0 a (by omega) hba hs) hloAll hhi hany with
+                hlt | hbig
+              · exfalso
+                rw [not_le_of_lt113 (inT_rawT98 0)
+                  (inT_dict_of_std172 Hp (BT.D 0 a) hb hs).1 hlt] at hle
+                exact Bool.noConfusion hle
+              · exact hbig
+
+/-- **§122.6 の主定理 (2) — `TightUp119` は定理。** -/
+theorem tightUp122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) (Hg : Gam0Drags111) :
+    TightUp119 :=
+  fun a hb hs hle _ => winUpAux122 Hp HD Hg (BT.size a) a (Nat.le_refl _) hb hs hle
+
+/-- **`TightUp119` は row 326 の証明書の外から一つも新しい条項を要らない。**
+    `DictLtStd92` は §121 の `dictLtStd_of_four121` が Veblen の三条項と §120 の
+    `idxMono101_of_psi120` から出す。 -/
+theorem tight_of_four122 (Hp : PsiIdxOKStd172) (HB : IdxLeMix109) (H1 : VebIngF114)
+    (H2 : VebRest117) (Hg : Gam0Drags111) : TightUp119 :=
+  tightUp122 Hp (dictLtStd_of_four121 Hp (idxMono101_of_psi120 Hp) HB H1 H2) Hg
+
+/-- **§122.6 の主定理 (3) — `GapAtG0_107`。** -/
+theorem gap122 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (Hg : Gam0Drags111) : GapAtG0_107 := gap_of_tight119 Hp H2 (tightUp122 Hp HD Hg)
+
+theorem gap_of_four122 (Hp : PsiIdxOKStd172) (HA : DictLtA74) (HB : IdxLeMix109)
+    (H1 : VebIngF114) (H2 : VebRest117) (Hg : Gam0Drags111) : GapAtG0_107 :=
+  gap122 Hp HA (dictLtStd_of_four121 Hp (idxMono101_of_psi120 Hp) HB H1 H2) Hg
+
+/-! **五つの密度の主張はすべて偽。** -/
+
+theorem denseMid107_false122 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (Hg : Gam0Drags111) : ¬ DictDenseMid107 :=
+  denseMid107_false_of_gap107 Hp H2 (gap122 Hp H2 HD Hg)
+
+theorem denseMid102_false122 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (Hg : Gam0Drags111) : ¬ DictDenseMid102 :=
+  denseMid102_false_of_gap107 Hp H2 (gap122 Hp H2 HD Hg)
+
+theorem dictDenseHi94_false122 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (Hg : Gam0Drags111) : ¬ DictDenseHi94 :=
+  dictDenseHi94_false_of_gap107 Hp H2 (gap122 Hp H2 HD Hg)
+
+theorem dictDense85_false122 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (Hg : Gam0Drags111) : ¬ DictDense85 :=
+  dictDense85_false_of_gap107 Hp H2 (gap122 Hp H2 HD Hg)
+
+theorem cofDenseS1_false122 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (Hg : Gam0Drags111) : ¬ CofDenseS1 :=
+  cofDenseS1_false_of_gap107 Hp H2 (gap122 Hp H2 HD Hg)
+
+/-! **§111 と §108 の条項も定理になる。** -/
+
+theorem winProp122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) (Hg : Gam0Drags111) :
+    WinProp113 := winProp_of_tight119 Hp (tightUp122 Hp HD Hg)
+
+theorem scFirstOne122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) (Hg : Gam0Drags111) :
+    SCFirstOne111 := scFirstOne_of_winProp113 Hp (winProp122 Hp HD Hg)
+
+theorem scFirst122 (Hp : PsiIdxOKStd172) (H2 : DictLtA74) (HD : DictLtStd92)
+    (Hg : Gam0Drags111) : SCFirst108 :=
+  scFirst_of_scFirstOne111 Hp H2 (scFirstOne122 Hp HD Hg)
+
+theorem expUp122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) (Hg : Gam0Drags111) : ExpUp116 :=
+  expUp116_of_tight119 Hp (tightUp122 Hp HD Hg)
+
+theorem coefUp122 (Hp : PsiIdxOKStd172) (HD : DictLtStd92) (Hg : Gam0Drags111) : CoefUp116 :=
+  coefUp116_of_tight119 Hp (tightUp122 Hp HD Hg)
+
+end
+
+/-! ### §122.7 測定 (凍結)
+
+**構成を先に書く。**  母集団は三つ。ひとつは新しく作り、ふたつは §108.6 / §116.7 のものを
+読み直す。
+
+    S122  **第六の族。**  `Γ₀` の桁を運ぶ形を `ψ₁ψ₁ w` から
+          `ψ₁ψ₁ w ⊕ ψ₁ψ₁ w` に変えたもの — 併合が係数を `2` にするので、
+          発火なしで `φ̄(Γ₀, c ⊖ 1)` に着く。§119.7 の 10 個の種にはめ、
+          さらに三つの形に置いて 30 項。**標準性で濾さない。**
+    E     §108.6 の `allStd108` (大きさ 12 までの標準・段 1 以下の項 9992 個)。
+    E14   §116.7 の `bigE116` (大きさ 14 まで 58239 個)。 -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict dictInv reg collapse wcnf logOm divAP subAP mulL sub1)
+open TM TM.Term
+open Evidence.WF
+
+set_option maxRecDepth 100000
+
+/-- **第六の族の運び手。**  §111 の `cWin111` は係数を `ψ₁` の中に入れたが、
+    こちらは同じ桁を**二つ並べる** — `wcnf` の併合が係数を `1 ⊕ 1 = 2` にする。 -/
+def cSix122 (w : BT) : BT := BT.sum (BT.D 1 (BT.D 1 w)) (BT.D 1 (BT.D 1 w))
+
+def argS122 : List BT :=
+  (seedE119.map cSix122) ++ (seedE119.map fun w => BT.sum bOO94 (cSix122 w))
+    ++ (seedE119.map fun w => BT.sum (cSix122 w) (BT.D 0 bOO94))
+
+#guard argS122.length == 30
+
+/-! **段の正直さ — 定理として。**  作った運び手は段 1 を超えず、段 0 は一歩目で離れる。 -/
+theorem btLe1_cSix122 {w : BT} (h : btLe72 1 w = true) : btLe72 1 (cSix122 w) = true := by
+  show ((decide (1 ≤ 1) && (decide (1 ≤ 1) && btLe72 1 w))
+    && (decide (1 ≤ 1) && (decide (1 ≤ 1) && btLe72 1 w))) = true
+  rw [h]; rfl
+
+theorem btLe0_cSix122 (w : BT) : btLe72 0 (cSix122 w) = false := by
+  show ((decide (1 ≤ 0) && (decide (1 ≤ 0) && btLe72 0 w))
+    && (decide (1 ≤ 0) && (decide (1 ≤ 0) && btLe72 0 w))) = false
+  rfl
+
+theorem btLe1_D0cSix122 {w : BT} (h : btLe72 1 w = true) :
+    btLe72 1 (BT.D 0 (cSix122 w)) = true := by
+  show (decide (0 ≤ 1) && btLe72 1 (cSix122 w)) = true
+  rw [btLe1_cSix122 h]; rfl
+
+/-- **第六の族の第一項の値は `φ̄(Γ₀,1)` — 窓のちょうど内側。** -/
+theorem dict_cSix122 : dict (BT.D 0 (cSix122 (bTowG98 0))) = phi G094 TM.Term.one := rfl
+
+/-- **第六の族は窓に入り、対の列はおとなしく、`ψ₁` の引数は標準で、
+    破れるのは外側の `ψ₀` の標準性だけ — そして `Ω^Ω < a` がそこで破れている。** -/
+theorem six_facts122 :
+    btLe72 1 (BT.D 0 (cSix122 (bTowG98 0))) = true
+    ∧ le (rawT94 0) (dict (BT.D 0 (cSix122 (bTowG98 0)))) = true
+    ∧ le wTop116 (dict (BT.D 0 (cSix122 (bTowG98 0)))) = false
+    ∧ ((wcnf (reg 1) (toList (dict (cSix122 (bTowG98 0))))).1).any bigP119 = false
+    ∧ BT.isStd (cSix122 (bTowG98 0)) = true
+    ∧ BT.isStd (BT.D 0 (cSix122 (bTowG98 0))) = false
+    ∧ BT.lt bOO94 (cSix122 (bTowG98 0)) = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- `TightUp119` から標準性を外したもの。 -/
+def TightUpNoStd122 : Prop := ∀ a : BT, btLe72 1 (BT.D 0 a) = true →
+    le (rawT94 0) (dict (BT.D 0 a)) = true →
+    ((wcnf (reg 1) (toList (dict a))).1).any bigP119 = false →
+    le wTop116 (dict (BT.D 0 a)) = true
+
+/-- **`TightUp119` の標準性は運んでいる。**  外すと第六の族が反例になる。 -/
+theorem tightUpNoStd122_false : ¬ TightUpNoStd122 := by
+  intro H
+  have h := H (cSix122 (bTowG98 0)) rfl rfl rfl
+  rw [show le wTop116 (dict (BT.D 0 (cSix122 (bTowG98 0)))) = false from rfl] at h
+  exact Bool.noConfusion h
+
+/-- 窓の中 — 標準性で濾さない版。 -/
+def winNoStd122 (z : BT) : Bool :=
+  btLe72 1 (BT.D 0 z) && le (rawT94 0) (dict (BT.D 0 z)) && !(le wTop116 (dict (BT.D 0 z)))
+/-- §122.2 の前提。 -/
+def ooLt122 (z : BT) : Bool := BT.lt bOO94 z
+/-- 運び手の枝の判定器 — §122.6 の場合分けの第四の枝。 -/
+def brCar122 (z : BT) : Bool := (toList (dict z)).any carr122
+
+/-! **S122 — 第六の族は本物で、止めているのは標準性ひとつである。**  30 項のうち
+    **4 項が窓のちょうど内側**に入り、**その 4 項はすべておとなしく**、**4 項すべてが
+    標準でなく**、**4 項すべてで `Ω^Ω < a` が破れている** — §122.2 の前提が破れる場所と
+    第六の族が一致する。そして標準なもののなかに窓に入るものは **0 項** (定理どおり)。 -/
+#guard (argS122.length, argS122.countP winNoStd122,
+        argS122.countP fun z => winNoStd122 z && tame119 z,
+        argS122.countP fun z => winNoStd122 z && tame119 z && !(BT.isStd (BT.D 0 z)),
+        argS122.countP fun z => winNoStd122 z && tame119 z && !(ooLt122 z),
+        argS122.countP fun z => base116 z && !(conc116 z)) == (30, 4, 4, 4, 4, 0)
+
+/-! **母集団は形を表現できていなかった (失敗様式 2)。**  §119.7 の S (30 項) には
+    窓の内側に入る項が **0 項**しかない。第六の族は §119 の種からは出てこない。 -/
+#guard (argE119.countP winNoStd122, argE119.countP fun z => base116 z && !(conc116 z))
+    == (0, 0)
+
+/-! **大きさの問題でもある (失敗様式 4)。**  第六の族の第一項は大きさ **16** で、
+    E は 12 まで、E14 は 14 までしか作らない。 -/
+#guard BT.size (BT.D 0 (cSix122 (bTowG98 0))) == 16
+
+/-! **分割を測る。**  §122.6 の場合分けは四つ (おとなしくない / `Ω₁` より下の成分 /
+    係数 / 運び手 / どれでもない)。E で条項が訊かれる 2495 項のうちおとなしいのは 1 項で、
+    その 1 項は**運び手の枝**を通る。`Ω₁` より下の成分の枝・係数の枝・どれでもない枝は
+    **0 項**。E14 でも同じ。**畳み込みの側で仕事をしているのは運び手の枝ひとつである。** -/
+#guard (fun L => (L.length, L.countP fun z => tame119 z && brCar122 z,
+        L.countP fun z => tame119 z && !(brCar122 z)))
+    (allStd108.filter base116) == (2495, 1, 0)
+
+#guard (fun L => (L.length, L.countP fun z => tame119 z && brCar122 z,
+        L.countP fun z => tame119 z && !(brCar122 z)))
+    (bigE116.filter base116) == (16425, 1, 0)
+
+/-! **その 1 項では §122.2 の前提が成り立つ。**  `bTowG98 1` の `ψ₀` 引数は
+    `Ω^Ω` より上で、運び手の桁を持つ — `carrierUp122` がそのまま走る場所である。 -/
+#guard ooLt122 (bArg98 (bTowG98 0)) && brCar122 (bArg98 (bTowG98 0))
+
+/-! **`collapse0_tame122` (どれでもない枝) は空振りではない — が、それを見せるのは
+    数え上げではなく作った母集団のほうである。**  §119.7 の S の 30 項では
+    おとなしい 13 項のうち **7 項**がこの枝を通り、**6 項**が運び手の枝を通る。
+    E と E14 では 0 項。**枝が要らないのではなく、E がその形を作らない。** -/
+#guard (argE119.countP fun z => tame119 z && brCar122 z,
+        argE119.countP fun z => tame119 z && !(brCar122 z)
+          && !((toList (dict z)).any loBad122) && !((toList (dict z)).any coefBad122),
+        argE119.countP tame119) == (6, 7, 13)
+
+/-! **`Ω^Ω` を前置する修理は窓を跳び越す (§108.4 の再現)。**  S122 で
+    `Ω^Ω < z` は 16 項、そのうち **15 項**が窓の上端以上。 -/
+#guard (argS122.countP ooLt122, argS122.countP fun z => ooLt122 z && conc116 z) == (16, 15)
+
+end
+
 end Evidence.Region
