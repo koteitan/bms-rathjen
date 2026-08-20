@@ -7590,4 +7590,1012 @@ def rawImg127 : List BT := allStd108.filter fun z => btLe72 1 z && BT.isStd z &&
 
 end
 
+/-! ## §132 THE FIRST GATE: THE `K`-FREE HALF IS AN UNCONDITIONAL THEOREM, AND THE
+       RESIDUAL IS EXACTLY THE COLUMN §130 MEASURED
+
+§130 split `PsiIdxOKStd172` into `u = 1` (a theorem), level-zero arguments (a theorem), and
+one remaining case: `u = 0` on arguments that carry a level-one node.  §130 also measured,
+on standard level-`≤ 1` trees, the number of firing steps whose materials carry a NON-EMPTY
+`K_{Ω₁}` — "the only place 2.1(vi)'s last conjunct can say anything" — and found
+1, 2, 7, 28, 91, 273, 838, 2494 at sizes 8…15.  §132 proves that this column IS the whole
+residual: everything outside it is an unconditional theorem.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §132.1  **WHEN NO FIRING PAIR CARRIES A `K`, THE STEP GATE IS FREE.**
+          `Kset_scanSt_state132` is the missing half of §66.2's `Kset_scanSt`: it tracks the
+          `K` of the index the fold is HOLDING, not only of the index it emits.  With it,
+
+              ksetStepOK_of_fireNil132 :
+                (∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = true →
+                    ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) → False)
+                → KsetStepOK u x
+
+          with no hypothesis at all — no gate, no `BT.isStd`, no induction, and `x` need not
+          be in the image of `dict`.  `ksetStepOK_of_bigNil132` (the big components carry no
+          `K`) and `ksetStepOK_of_kNil132` (`K_{Ω_{u+1}} x` itself is empty) are the coarser
+          corollaries.  The firing form is the sharp one, and it is what makes the residual
+          coincide with §130's column instead of merely containing it.
+
+  §132.2  **THE SPLIT.**  Combining with §130's level-zero half,
+
+              step073_of_fireNe132 :
+                (∀ a, btLe72 1 a → btLe72 0 a = false → BT.isStd (ψ₀ a)
+                    → fireK132 a ≠ [] → KsetStepOK 0 (dict a))
+                → PsiIdxStep073
+
+          and hence `PsiIdxStepStd172` and `PsiIdxOKStd172` through §73's chain.
+          `fireNe132_of_step073` is the converse, so this is a SPLIT and not a weakening.
+          **The gate now quantifies over `u = 0`, arguments that really carry a level-one
+          node, AND arguments whose firing steps really read a coefficient set.**
+
+  §132.3  **THE OBVIOUS STRENGTHENING IS FALSE.**  The natural way to finish — "every
+          element of `K_{Ω₁}(dict a)` is below every emitted index" (`KDom132`) — is
+          refuted by a standard tree of size 10,
+
+              kDomBad132 = ψ₁ψ₁ψ₁0 ⊕ ψ₀ψ₁ψ₁ψ₁0 ,
+
+          whose image is `ω^(ω^(Ω₁⊕Ω₁)) ⊕ ψ_{Ω₁}0`, whose `K_{Ω₁}` is `{0}`, and whose one
+          emitted index is `0` itself, so `0 < 0` is asked for and refused.  The step gate
+          `stepOKb 0 (dict kDomBad132)` nevertheless holds: the `ψ_{Ω₁}0` sits in the TAIL
+          `ρ < Ω₁`, which no firing step ever reads.  That is exactly why §132.1 is stated
+          over the firing pairs and not over `Kset (dict a)`.
+
+  §132.4  **THE RESIDUAL, MEASURED.**  On the 12 436 standard trees of size ≤ 13 with
+          `BT.isStd (ψ₀ ·)`, §130's split leaves 12 182 and §132's leaves **402**, and the
+          per-size row is `1, 2, 7, 28, 91, 273` at sizes 8…13 (838 at size 14) — §130's
+          column verbatim.  `min130` is still inside, `kDomBad132` is outside.
+
+  §132.5  **A NEGATIVE SEARCH BY CONSTRUCTION.**  §130 enumerated to size 15.  §132.5 builds
+          nine parametrised families around the shape that DOES break the gate once
+          `BT.isStd (ψ₀ ·)` is dropped, and pushes them to size 28: 8 962 trees, 4 033 of
+          them standard, 2 455 of those in the residual, **0 breaks**.  On the two families
+          §130 named, the two boundaries COINCIDE exactly:
+          `ψ₁(ψ₁ψ₁0 ⊕ ψ₀(ψ₁^k 0))` breaks iff `k ≥ 4` and `BT.isStd (ψ₀ ·)` fails iff
+          `k ≥ 4`; `ψ₁^m(ψ₀(ψ₁^k 0))` breaks iff `3 ≤ m < k` and `BT.isStd (ψ₀ ·)` holds
+          iff `k ≤ m`.  `min130` is the corner `m = 3, k = 4`.
+
+WHAT IS NOT CLAIMED.  The gate is NOT refuted and NOT proved.  §132 removes a population,
+not the mechanism.  The residual is still §88's `IdxLtStd88` — "the index of an inner `ψ₀`
+is below the index the outer fold emits" — and nothing here touches that.  In particular
+the natural argument "`BT.isStd (ψ₀ a)` puts every `e ∈ GB 0 a` below `a`, and `dict` is
+order preserving, so the inner index stays below the outer one" cannot be run here: every
+order-preservation statement about `dict` in this repository (`DictLtA74`, `DictLtStd92`,
+`dictLtStd121`, `DictLtAtom96`, `dictHeadLtUpTo96_of_hi`, …) is either an unproved
+hypothesis or carries `PsiIdxOKStd172` as an argument, so that route is circular.
+-/
+
+/-! ### §132.1 The step gate is free when no firing pair carries a `K` -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- 畳み込みが**持っている**指数の `K` も、発火する成分の `K` の外に出ない。
+    §66.2 の `Kset_scanSt` は**吐かれる**指数について同じことを言う。 -/
+theorem Kset_scanSt_state132 {k w base : Term} (hw : ∀ z, z ∈ Kset k w → False)
+    (S : Term → Prop) :
+    ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+      (∀ i0, s.1 = some i0 → ∀ y, y ∈ Kset k i0 → S y) →
+      (∀ ac ∈ l, le w ac.1 = true → ∀ y, (y ∈ Kset k ac.1 ∨ y ∈ Kset k ac.2) → S y) →
+      ∀ p ∈ scanSt w base s l, ∀ i0, p.1.1 = some i0 → ∀ y, y ∈ Kset k i0 → S y := by
+  intro l
+  induction l with
+  | nil => intro s _ _ p hp; cases hp
+  | cons ac t ih =>
+    intro s hs hall p hp i0 hi0 y hy
+    rcases List.mem_cons.mp (show p ∈ (s, ac) :: scanSt w base (stepF w base s ac) t from hp)
+      with h | h
+    · subst h; exact hs i0 hi0 y hy
+    · refine ih (stepF w base s ac) ?_ (fun a ha => hall a (List.Mem.tail _ ha)) p h i0 hi0 y hy
+      intro j hj z hz
+      rw [stepF_fst] at hj
+      cases hle : le w ac.1 with
+      | true =>
+        rw [if_pos hle] at hj
+        have hz2 : z ∈ Kset k (idxOf w s ac) := by rw [Option.some.inj hj]; exact hz
+        rcases mem_Kset_idxOf hw hz2 with h1 | h1
+        · obtain ⟨i1, hi1, hz1⟩ := h1
+          exact hs i1 hi1 z hz1
+        · exact hall ac (List.Mem.head _) hle z h1
+      | false =>
+        rw [if_neg (by rw [hle]; exact Bool.noConfusion)] at hj
+        exact hs j hj z hz
+
+/-- **§132.1 の主定理。** 発火する対の材料 (指数側 `a` と係数側 `c`) がどちらも
+    `K_{Ω_{u+1}}` を持たないなら、一歩ぶんの残る仮定は無条件で成り立つ。仮定も標準性も
+    帰納法も要らず、`x` が `dict` の像である必要もない。 -/
+theorem ksetStepOK_of_fireNil132 (u : Nat) (x : Term)
+    (h : ∀ ac ∈ (wcnf (reg (u+1)) (toList x)).1, le (reg (u+1)) ac.1 = true →
+      ∀ y, (y ∈ Kset (reg (u+1)) ac.1 ∨ y ∈ Kset (reg (u+1)) ac.2) → False) :
+    KsetStepOK u x := by
+  intro p hp hfire
+  refine ⟨?_, ?_⟩
+  · intro i0 hi0 y hy
+    exact (Kset_scanSt_state132 (fun z hz => mem_Kset_reg (u+1) hz) (fun _ => False)
+      (wcnf (reg (u+1)) (toList x)).1 (none, none) (fun j hj => by cases hj) h
+      p hp i0 hi0 y hy).elim
+  · intro y hy
+    exact (h p.2 (scanSt_mem_snd _ _ _ _ p hp) hfire y hy).elim
+
+/-- 粗い形 1 — `x` の**大きい成分**の `K` が空なら同じ結論。 -/
+theorem ksetStepOK_of_bigNil132 (u : Nat) (x : Term)
+    (h : ∀ y, y ∈ KsetL (reg (u+1)) (bigPart (reg (u+1)) (toList x)) → False) :
+    KsetStepOK u x :=
+  ksetStepOK_of_fireNil132 u x
+    (fun ac hac _ y hy => h y (mem_Kset_wcnf (toList x) ac hac hy))
+
+/-- 粗い形 2 — `K_{Ω_{u+1}} x` そのものが空なら同じ結論。 -/
+theorem ksetStepOK_of_kNil132 (u : Nat) (x : Term)
+    (h : ∀ y, y ∈ Kset (reg (u+1)) x → False) : KsetStepOK u x :=
+  ksetStepOK_of_bigNil132 u x (fun y hy => h y (by
+    rw [Kset_eq_KsetL]
+    exact mem_KsetL_of_sub (fun q hq => bigPart_sub _ _ q hq) hy))
+
+theorem ksetStepOK_of_kset_eq_nil132 {u : Nat} {x : Term} (h : Kset (reg (u+1)) x = []) :
+    KsetStepOK u x :=
+  ksetStepOK_of_kNil132 u x (fun y hy => by rw [h] at hy; cases hy)
+
+end
+
+/-! ### §132.2 The split -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **発火する対が読む係数集合。**  §132 が残す条件はこれが空でないこと。
+    §130 が「2.1(vi) の最後の連言が何かを言える唯一の場所」と測ったものと同じ。 -/
+def fireK132 (a : BT) : List Term :=
+  ((wcnf (reg 1) (toList (dict a))).1.filter (fun ac => le (reg 1) ac.1)).flatMap
+    (fun ac => Kset (reg 1) ac.1 ++ Kset (reg 1) ac.2)
+
+theorem mem_fireK132 {a : BT} {ac : Term × Term}
+    (hac : ac ∈ (wcnf (reg 1) (toList (dict a))).1) (hfire : le (reg 1) ac.1 = true)
+    {y : Term} (hy : y ∈ Kset (reg 1) ac.1 ∨ y ∈ Kset (reg 1) ac.2) : y ∈ fireK132 a := by
+  refine List.mem_flatMap.mpr ⟨ac, List.mem_filter.mpr ⟨hac, by rw [hfire]⟩, ?_⟩
+  rcases hy with h | h
+  · exact List.mem_append.mpr (Or.inl h)
+  · exact List.mem_append.mpr (Or.inr h)
+
+/-- `fireK132 a` が空な引数では、一項ぶんの残る仮定は無条件の定理。 -/
+theorem gateStd87_of_fireNil132 {a : BT} (h : fireK132 a = []) : GateStd87 a := by
+  intro _ _
+  exact ksetStepOK_of_fireNil132 0 (dict a) (fun ac hac hfire y hy => by
+    have := mem_fireK132 hac hfire hy
+    rw [h] at this
+    cases this)
+
+/-- **§132.2 の主定理。** §73 の残る仮定に残るのは、**段 1 の節を実際に持ち、かつ
+    発火する対が実際に `K_{Ω₁}` を読む**引数だけ。 -/
+theorem step073_of_fireNe132
+    (H : ∀ a : BT, btLe72 1 a = true → btLe72 0 a = false → BT.isStd (BT.D 0 a) = true →
+          fireK132 a ≠ [] → KsetStepOK 0 (dict a)) : PsiIdxStep073 := by
+  intro a hb hs
+  cases hk : fireK132 a with
+  | nil => exact gateStd87_of_fireNil132 hk hb hs
+  | cons z zs =>
+    cases h0 : btLe72 0 a with
+    | true => exact ksetStepOK_zero130 a h0
+    | false => exact H a hb h0 hs (by rw [hk]; exact List.cons_ne_nil z zs)
+
+theorem psiIdxStepStd172_of_fireNe132
+    (H : ∀ a : BT, btLe72 1 a = true → btLe72 0 a = false → BT.isStd (BT.D 0 a) = true →
+          fireK132 a ≠ [] → KsetStepOK 0 (dict a)) : PsiIdxStepStd172 :=
+  psiIdxStepStd172_of_step073 (step073_of_fireNe132 H)
+
+/-- **第一の残る仮定そのもの。** -/
+theorem psiIdxOKStd172_of_fireNe132
+    (H : ∀ a : BT, btLe72 1 a = true → btLe72 0 a = false → BT.isStd (BT.D 0 a) = true →
+          fireK132 a ≠ [] → KsetStepOK 0 (dict a)) : PsiIdxOKStd172 :=
+  psiIdxOKStd172_of_step073 (step073_of_fireNe132 H)
+
+/-- 逆向き — 分割が本当に分割であることの記録。 -/
+theorem fireNe132_of_step073 (H : PsiIdxStep073) :
+    ∀ a : BT, btLe72 1 a = true → btLe72 0 a = false → BT.isStd (BT.D 0 a) = true →
+      fireK132 a ≠ [] → KsetStepOK 0 (dict a) :=
+  fun a hb _ hs _ => H a hb hs
+
+/-- 粗い形の分割。`dict a` の大きい成分の `K_{Ω₁}` で切ったもの。 -/
+def bigK132 (a : BT) : List Term := KsetL (reg 1) (bigPart (reg 1) (toList (dict a)))
+
+theorem step073_of_bigNe132
+    (H : ∀ a : BT, btLe72 1 a = true → btLe72 0 a = false → BT.isStd (BT.D 0 a) = true →
+          bigK132 a ≠ [] → KsetStepOK 0 (dict a)) : PsiIdxStep073 := by
+  intro a hb hs
+  cases hk : bigK132 a with
+  | nil =>
+    refine ksetStepOK_of_bigNil132 0 (dict a) (fun y hy => ?_)
+    rw [show KsetL (reg (0+1)) (bigPart (reg (0+1)) (toList (dict a))) = bigK132 a from rfl,
+      hk] at hy
+    cases hy
+  | cons z zs =>
+    cases h0 : btLe72 0 a with
+    | true => exact ksetStepOK_zero130 a h0
+    | false => exact H a hb h0 hs (by rw [hk]; exact List.cons_ne_nil z zs)
+
+end
+
+/-! ### §132.3 The obvious strengthening is false -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- **素直な強化。** 「`K_{Ω₁}(dict a)` の元はどれも、吐かれるどの指数より小さい」。
+    これが本当なら §132.2 の残りは只で閉じる。**偽である。** -/
+def KDom132 : Prop :=
+  ∀ a : BT, btLe72 1 a = true → BT.isStd (BT.D 0 a) = true →
+    ∀ p ∈ scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1,
+      le (reg 1) p.2.1 = true → ∀ y ∈ Kset (reg 1) (dict a),
+        lt y (idxOf (reg 1) p.1 p.2) = true
+
+/-- その判定器。 -/
+def kDomb132 (a : BT) : Bool :=
+  (scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).all fun p =>
+    !(le (reg 1) p.2.1) ||
+      (Kset (reg 1) (dict a)).all (fun y => lt y (idxOf (reg 1) p.1 p.2))
+
+theorem kDomb132_of_KDom132 (H : KDom132) {a : BT} (hb : btLe72 1 a = true)
+    (hs : BT.isStd (BT.D 0 a) = true) : kDomb132 a = true := by
+  show ((scanSt (reg 1) (baseOf 0) (none, none) (wcnf (reg 1) (toList (dict a))).1).all fun p =>
+    !(le (reg 1) p.2.1) ||
+      (Kset (reg 1) (dict a)).all (fun y => lt y (idxOf (reg 1) p.1 p.2))) = true
+  rw [List.all_eq_true]
+  intro p hp
+  cases hle : le (reg 1) p.2.1 with
+  | false => rfl
+  | true =>
+    rw [Bool.not_true, Bool.false_or, List.all_eq_true]
+    intro y hy
+    exact H a hb hs p hp hle y hy
+
+/-- **反例。** `ψ₁ψ₁ψ₁0 ⊕ ψ₀ψ₁ψ₁ψ₁0`、`BT` の大きさ 10。 -/
+def kDomBad132 : BT := BT.sum (nest130 3) (BT.D 0 (nest130 3))
+
+theorem size_kDomBad132 : kDomBad132.size = 10 := rfl
+theorem btLe_kDomBad132 : btLe72 1 kDomBad132 = true := by decide
+theorem std_kDomBad132 : BT.isStd (BT.D 0 kDomBad132) = true := by decide
+
+/-- **§132.3 の主定理。** 素直な強化は標準な木で外れる。 -/
+theorem not_KDom132 : ¬ KDom132 := fun H =>
+  Bool.noConfusion ((kDomb132_of_KDom132 H btLe_kDomBad132 std_kDomBad132).symm.trans
+    (show kDomb132 kDomBad132 = false from rfl))
+
+/-- **しかし残る仮定そのものは満たされる。** 外れた `ψ_{Ω₁}0` は末尾 `ρ < Ω₁` に座っていて、
+    発火する歩はそこを読まない。だから §132.1 は `Kset` ではなく発火する対で書いてある。 -/
+theorem stepOKb_kDomBad132 : stepOKb 0 (dict kDomBad132) = true := by decide
+theorem fireK_kDomBad132 : fireK132 kDomBad132 = [] := rfl
+theorem bigK_kDomBad132 : bigK132 kDomBad132 = [] := rfl
+theorem kset_kDomBad132 : Kset (reg 1) (dict kDomBad132) = [zero] := rfl
+
+/-! 吐かれる指数は `0` そのもので、`0 < 0` が要求されて外れる。 -/
+#guard ((scanSt (reg 1) (baseOf 0) (none, none)
+    (wcnf (reg 1) (toList (dict kDomBad132))).1).filter
+  (fun p => le (reg 1) p.2.1)).map (fun p => idxOf (reg 1) p.1 p.2) == [zero]
+
+end
+
+/-! ### §132.4 Measurement (frozen)
+
+母集団は §130 の `stdTab130` — 段 1 以下の木を**大きさで全数**作り、各段で `BT.isStd`
+で絞ったもの。ここで測るのは `BT.isStd (ψ₀ a)` を満たす木、大きさ 13 まで 12 436 本。 -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+def stdU132 (n : Nat) : List BT :=
+  ((stdTab130 n).flatten).filter fun a => BT.isStd (BT.D 0 a)
+
+/-! **残る母集団の縮み。** 12 436 本のうち、§130 の分割が残すのは 12 182 本
+(段 1 の節を持つもの)、§132 の分割が残すのは **402 本** — 3.2 %。
+粗い形なら大きい成分で 415 本、`Kset (dict a)` で 447 本。 -/
+
+#guard (stdU132 12).length == 12436
+#guard ((stdU132 12).countP fun a => !(btLe72 0 a)) == 12182
+#guard ((stdU132 12).countP fun a => !((fireK132 a).isEmpty)) == 402
+#guard ((stdU132 12).countP fun a => !((bigK132 a).isEmpty)) == 415
+#guard ((stdU132 12).countP fun a => !((Kset (reg 1) (dict a)).isEmpty)) == 447
+
+/-! **大きさごと。行は大きさ 1…13。** 発火する対が `K` を読む本数は
+`1, 2, 7, 28, 91, 273` (大きさ 8…13) — §130 が「2.1(vi) の最後の連言が何かを言える
+唯一の場所」として測った列そのもの。**§132 はその列が残り全部であることを証明する。** -/
+
+#guard ((stdTab130 12).map fun l =>
+    l.countP fun a => BT.isStd (BT.D 0 a) && !((fireK132 a).isEmpty)) ==
+  [0, 0, 0, 0, 0, 0, 0, 1, 2, 7, 28, 91, 273]
+#guard ((stdTab130 12).map fun l =>
+    l.countP fun a => BT.isStd (BT.D 0 a) && !((bigK132 a).isEmpty)) ==
+  [0, 0, 0, 0, 0, 0, 0, 1, 2, 7, 29, 94, 282]
+#guard ((stdTab130 12).map fun l =>
+    l.countP fun a => BT.isStd (BT.D 0 a) && !((Kset (reg 1) (dict a)).isEmpty)) ==
+  [0, 0, 0, 0, 0, 0, 0, 1, 2, 8, 31, 101, 304]
+
+/-! 大きさ 14 の段だけでは 838 本 — これも §130 の列と一致する。 -/
+
+#guard (((stdTab130 13).getD 13 []).countP fun a =>
+  BT.isStd (BT.D 0 a) && !((fireK132 a).isEmpty)) == 838
+
+/-! **空回りしていない。** §130 の反例 `min130` は残ったまま、`kDomBad132` は外れる。 -/
+
+#guard !((fireK132 min130).isEmpty)
+#guard (fireK132 kDomBad132).isEmpty
+#guard !(BT.isStd (BT.D 0 min130))
+#guard BT.isStd (BT.D 0 kDomBad132)
+
+#print axioms ksetStepOK_of_fireNil132
+#print axioms step073_of_fireNe132
+#print axioms psiIdxOKStd172_of_fireNe132
+#print axioms not_KDom132
+
+end
+
+
+/-! ### §132.5 A negative search BY CONSTRUCTION, not by enumeration (frozen)
+
+§130 enumerated every standard level-`≤ 1` tree to size 15.  §132.5 does the opposite: it
+builds nine parametrised families around the shape that DOES break the gate once
+`BT.isStd (ψ₀ ·)` is dropped, and pushes the parameters to size 28.  Nothing breaks. -/
+
+section
+open Evidence.Region
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁` を `n` 回かぶせる。 -/
+def nst132 : Nat → BT → BT
+  | 0, t => t
+  | n+1, t => BT.D 1 (nst132 n t)
+
+/-- 残る仮定を外すか (標準性つき)。 -/
+def bad132 (a : BT) : Bool := btLe72 1 a && BT.isStd (BT.D 0 a) && !(stepOKb 0 (dict a))
+/-- 残る仮定を外すか (`BT.isStd a` だけ — `ψ₀` の標準性は課さない)。 -/
+def raw132 (a : BT) : Bool := btLe72 1 a && BT.isStd a && !(stepOKb 0 (dict a))
+/-- §132 が残す方に居るか。 -/
+def hot132 (a : BT) : Bool := btLe72 1 a && BT.isStd (BT.D 0 a) && !((fireK132 a).isEmpty)
+
+/-! **§130 が名指しした族。**  `ψ₁(ψ₁ψ₁0 ⊕ ψ₀(ψ₁^k 0))` は `k ≥ 4` で残る仮定を外し、
+`BT.isStd (ψ₀ ·)` は `k ≥ 4` をちょうど外す。**二つの境目が一致する。** -/
+
+def famA132 (k : Nat) : BT := BT.D 1 (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 k BT.zero)))
+
+#guard (List.range 9).all fun k => raw132 (famA132 k) == decide (4 ≤ k)
+#guard (List.range 9).all fun k => BT.isStd (BT.D 0 (famA132 k)) == decide (k ≤ 3)
+#guard (List.range 12).all fun k => !(bad132 (famA132 k))
+
+/-! **`min130` の族。**  `ψ₁^m(ψ₀(ψ₁^k 0))` は `3 ≤ m < k` でちょうど残る仮定を外し、
+`BT.isStd (ψ₀ ·)` は `k ≤ m` でちょうど成り立つ。**やはり境目が一致する** —
+`min130 = famB132 3 4` はその角である。 -/
+
+def famB132 (m k : Nat) : BT := nst132 m (BT.D 0 (nst132 k BT.zero))
+
+#guard famB132 3 4 == min130
+#guard (List.range 8).all fun m => (List.range 8).all fun k =>
+  raw132 (famB132 m k) == decide (3 ≤ m ∧ m < k)
+#guard (List.range 8).all fun m => (List.range 8).all fun k =>
+  BT.isStd (BT.D 0 (famB132 m k)) == decide (k ≤ m)
+#guard (List.range 10).all fun m => (List.range 10).all fun k => !(bad132 (famB132 m k))
+
+/-! **九つの族、8962 本、大きさ 28 まで。**  そのうち `btLe72 1` かつ
+`BT.isStd (ψ₀ ·)` なのが 4033 本、§132 が残す方に居るのが 2455 本、
+**残る仮定を外すものは 0 本。** -/
+
+def famPool132 : List BT :=
+  let R := List.range
+  ((R 9).flatMap fun m => (R 9).flatMap fun p => (R 9).map fun k =>
+      nst132 m (if p == 0 then BT.D 0 (nst132 k BT.zero)
+             else BT.sum (nst132 p BT.zero) (BT.D 0 (nst132 k BT.zero)))) ++
+  ((R 8).flatMap fun m => (R 8).flatMap fun k => (R 8).map fun j =>
+      nst132 m (BT.D 0 (nst132 k (BT.D 0 (nst132 j BT.zero))))) ++
+  ((R 6).flatMap fun m => (R 6).flatMap fun p => (R 6).flatMap fun k => (R 6).map fun j =>
+      nst132 m (BT.sum (nst132 p BT.zero)
+        (BT.D 0 (BT.sum (nst132 k BT.zero) (BT.D 0 (nst132 j BT.zero)))))) ++
+  ((R 6).flatMap fun m => (R 6).flatMap fun p => (R 6).flatMap fun k => (R 6).map fun j =>
+      nst132 m (BT.sum (nst132 p BT.zero)
+        (BT.sum (BT.D 0 (nst132 k BT.zero)) (BT.D 0 (nst132 j BT.zero))))) ++
+  ((R 6).flatMap fun m => (R 6).flatMap fun p => (R 6).flatMap fun q => (R 6).map fun k =>
+      nst132 m (BT.sum (nst132 p BT.zero)
+        (BT.sum (nst132 q BT.zero) (BT.D 0 (nst132 k BT.zero))))) ++
+  ((R 8).flatMap fun m => (R 8).flatMap fun k => (R 8).map fun j =>
+      nst132 m (BT.D 0 (BT.sum (nst132 k BT.zero) (nst132 j BT.zero)))) ++
+  ((R 9).flatMap fun m => (R 9).flatMap fun p => (R 9).map fun k =>
+      nst132 m (nst132 p (BT.D 0 (nst132 k BT.zero)))) ++
+  ((R 6).flatMap fun m => (R 6).flatMap fun p => (R 6).flatMap fun k => (R 6).map fun j =>
+      nst132 m (BT.sum (nst132 p (BT.D 0 (nst132 k BT.zero))) (BT.D 0 (nst132 j BT.zero)))) ++
+  ((R 6).flatMap fun m => (R 6).flatMap fun k => (R 6).flatMap fun p => (R 6).map fun j =>
+      nst132 m (BT.D 0 (nst132 k (BT.sum (nst132 p BT.zero) (BT.D 0 (nst132 j BT.zero))))))
+
+#guard famPool132.length == 8962
+#guard (famPool132.map BT.size).foldl max 0 == 28
+#guard (famPool132.countP fun a => btLe72 1 a && BT.isStd (BT.D 0 a)) == 4033
+#guard famPool132.countP hot132 == 2455
+#guard famPool132.countP bad132 == 0
+
+end
+
+
+/-! ## §133 THE SECOND GATE RESTS ON A CLAUSE WITH NO ANALYTIC CONTENT
+
+`HiMono89` (§89) is the second of the two gates carrying row 326 and the whole level-≤1
+sub-region.  §129 left it standing on exactly one hypothesis: `BT.isStd (BT.D 0 a)` of the
+LEFT term — §81's `cexA89`/`cexB89` and §101's `bothBadA101`/`bothBadB101` satisfy every
+other hypothesis of `VebRest129`, are left open by `closed129`, and break the conclusion.
+§133 asks what that one hypothesis is doing.
+
+WHAT IS PROVED, UNCONDITIONALLY.
+
+  §133.1  **THE DEFECT, LOCATED AND MEASURED.**  `BT.isStd (BT.D 0 a)` is
+           `BT.isStd a && (G(a,0)).all (· < a)`.  Both near-misses pass the first conjunct.
+           In the second conjunct each has **exactly one** offending coefficient, and in
+           both cases that coefficient is the argument of the term's **unique `ψ₀` node**:
+
+               cexA89      = ψ₁ψ₀ψ₁ψ₁0                    offender  E = ψ₁ψ₁0    = cexB89
+               bothBadA101 = ψ₁ψ₁0 ⊕ ψ₁ψ₁0 ⊕ ψ₁ψ₀(ψ₁ψ₁ψ₁0 ⊕ ψ₁0)
+                                                          offender  E = ψ₁ψ₁ψ₁0 ⊕ ψ₁0
+
+           The amount is the same in both: **a < E ≤ b**.  A `ψ₀` node hides a value of any
+           size inside a syntactically small component (`ψ₁ψ₀X < ψ₁ψ₁0` for every `X`), and
+           `K`-standardness is exactly the clause that caps it.  Repairing `a` therefore
+           means pushing `a` up to `b`'s own height — and that is where `hi a < hi b` dies.
+
+  §133.2  **THE ANALYTIC CONTENT OF THE CLAUSE IS ALREADY TRUE AT BOTH NEAR-MISSES.**
+           Every proof from `VebRest129` up to `HiMono89` consumes `BT.isStd (BT.D 0 a)`
+           through one door only — `dictFacts129`, which extracts `inT (dict a)`,
+           `lt (dict a) M` and `PsiIdxOK 0 (dict a)`.  All three HOLD at `cexA89` and at
+           `bothBadA101`, and so does `PsiIdxOK 1 (dict a)`.  Hence the relaxation
+
+               `HiMonoSem133` — `HiMono89` with `BT.isStd (BT.D 0 ·)` replaced by
+                                `inT`, `< M`, `PsiIdxOK 0`, `PsiIdxOK 1`
+
+           implies `HiMono89` (under `PsiIdxOKStd172`) and is **FALSE**, with no gate
+           assumed.  Same for `VebRestSem133` against `VebRest129`.  So the clause carrying
+           the second gate is purely syntactic: it cannot be traded for anything the
+           machinery currently knows how to use.
+
+  §133.3  **THE OBVIOUS REPAIR PROVABLY CANNOT WORK.**  Prepend independent heads `c`, `c'`
+           to the two sides: 12 heads each, 144 combinations per pair.  Whenever the result
+           satisfies every hypothesis of `HiMono89` — 66 of the 144 for the §81 pair, 44 for
+           the §101 pair — `closed117` CLOSES it, so under `PsiIdxOKStd172` the conclusion
+           is FORCED (`repair_forced133`).  And prepending on the LEFT only is dead for a
+           different reason: for every head, either `ψ₀(c ⊕ a)` is still not `K`-standard,
+           or `hi (c ⊕ a) < hi b` is gone (`repair_asym133`).  Standardising means clearing
+           the coefficient `E`, and `E` sits at `b`'s own height.
+
+  §133.4  **A BUILT FAMILY, 200× §129'S POOL, STILL EMPTY.**  A family of level-≤1 terms
+           of the smuggling shape (`h ⊕ ψ₁ψ₀E`, `ψ₁(w ⊕ ψ₀E)`, and sums of these) —
+           1853 terms, up to **41 symbols**, where §129's exhaustive sweep stopped at 9.
+           Against the 871 of them that are `K`-standard: **262150 pairs break the
+           conclusion, and 0 of those have a `K`-standard left term** (`census133`).
+
+WHAT IS NOT PROVED.  §133 does NOT prove that `K`-standardness forces the conclusion.
+The no-go of §133.3 covers one repair family, and §133.4 is measurement.  The three-way
+reading of §125/§126 is unchanged; what §133 adds is that branch 2 cannot be reached by
+weakening `BT.isStd (BT.D 0 a)` to its analytic consequences.
+-/
+
+/-! ### §133.1 The defect of the two near-misses, exactly -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- §81 の `cexA89` がただ一つ外す係数 — `ψ₁ψ₁0`。**これは `cexB89` そのもの。** -/
+def offA133 : BT := BT.D 1 (BT.D 1 BT.zero)
+
+/-- §101 の `bothBadA101` がただ一つ外す係数 — `ψ₁ψ₁ψ₁0 ⊕ ψ₁0`。 -/
+def offB133 : BT := BT.sum (BT.D 1 (BT.D 1 (BT.D 1 BT.zero))) (BT.D 1 BT.zero)
+
+/-- **`BT.isStd (ψ₀ a)` の二つの連言。**  定義そのもの。 -/
+theorem isStd0_eq133 (a : BT) :
+    BT.isStd (BT.D 0 a) = (BT.isStd a && (BT.GB 0 a).all (fun e => BT.lt e a)) := rfl
+
+/-- **一般の形 — `K` 標準性は `ψ₀` の引数を項自身の下に抑える。**
+    §82.3 の `std0_split82` と §90.1 の `d0Args_sub_GB0_90` の合成。
+    `ψ₁ψ₀X < ψ₁ψ₁0` はどんな `X` でも成り立つから、`ψ₀` の節は好きなだけ大きい値を
+    見た目の小さい成分に隠せる。それを止めているのがこの条項だけである。 -/
+theorem d0Arg_cap133 {a e : BT} (h : BT.isStd (BT.D 0 a) = true) (he : e ∈ d0Args88 a) :
+    BT.lt e a = true :=
+  (std0_split82 h).2 e (d0Args_sub_GB0_90 a e he)
+
+/-- **§133.1 の第一の定理 — §81 の左辺が外す条項はどれか。**
+    `cexA89` 自身は Buchholz 標準。`G(cexA89, 0)` の 4 個の係数のうちちょうど 1 個だけが
+    `< cexA89` を満たさない。その 1 個は `cexA89` の唯一の `ψ₀` の引数であり、
+    **それは右辺 `cexB89` そのもの**である。外し方は最大で `cexA89 < offA133`。 -/
+theorem cexA_defect133 :
+    (BT.isStd cexA89,
+     (BT.GB 0 cexA89).length,
+     ((BT.GB 0 cexA89).filter (fun e => !BT.lt e cexA89) == [offA133]),
+     (d0Args88 cexA89 == [offA133]),
+     (offA133 == cexB89),
+     BT.lt cexA89 offA133,
+     BT.le offA133 cexB89,
+     BT.isStd (BT.D 0 offA133),
+     BT.isStd (BT.D 0 cexA89))
+    = (true, 4, true, true, true, true, true, true, false) := rfl
+
+/-- **§133.1 の第二の定理 — §101 の左辺が外す条項はどれか。**  同じ形。
+    `G(bothBadA101, 0)` の 10 個の係数のうちちょうど 1 個、それは唯一の `ψ₀` の引数で、
+    `bothBadA101 < offB133 ≤ bothBadB101`。 -/
+theorem bothBadA_defect133 :
+    (BT.isStd bothBadA101,
+     (BT.GB 0 bothBadA101).length,
+     ((BT.GB 0 bothBadA101).filter (fun e => !BT.lt e bothBadA101) == [offB133]),
+     (d0Args88 bothBadA101 == [offB133]),
+     BT.lt bothBadA101 offB133,
+     BT.le offB133 bothBadB101,
+     BT.isStd (BT.D 0 offB133),
+     BT.isStd (BT.D 0 bothBadA101))
+    = (true, 10, true, true, true, true, true, false) := rfl
+
+/-- **どちらも同じ形の欠陥、同じ大きさ。**  唯一の `ψ₀` の引数 `E` が `a < E ≤ b` に
+    座っている。`K` 標準性が要求するのは `E < a`、つまり `a` を `b` の高さまで
+    押し上げることである。 -/
+theorem gap133 :
+    (BT.lt cexA89 offA133, BT.le offA133 cexB89,
+     BT.lt bothBadA101 offB133, BT.le offB133 bothBadB101)
+    = (true, true, true, true) := rfl
+
+/-- **結論の破れ方は二通りある。**  §81 の対は `ψ₀(hi a) = ψ₀(hi b)` (φ̄ の飛ばしで
+    止まる)、§101 の対は `ψ₀(hi a) > ψ₀(hi b)` (真の逆転)。 -/
+theorem breakKinds133 :
+    ((collapse 0 (hiW89 (dict cexA89)) == collapse 0 (hiW89 (dict cexB89))),
+     le (collapse 0 (hiW89 (dict bothBadA101))) (collapse 0 (hiW89 (dict bothBadB101))),
+     lt (collapse 0 (hiW89 (dict bothBadB101))) (collapse 0 (hiW89 (dict bothBadA101))))
+    = (true, false, true) := rfl
+
+end
+
+/-! ### §133.2 The analytic content of the clause is already true at both near-misses -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+/-- `PsiIdxOK` の判定器 — 有限リストの `all` そのもの。 -/
+def psiIdxB133 (u : Nat) (x : Term) : Bool :=
+  (scanSt (reg (u+1)) (baseOf u) (none, none) (wcnf (reg (u+1)) (toList x)).1).all
+    (fun p => !(le (reg (u+1)) p.2.1) || inT (psi (reg (u+1)) (idxOf (reg (u+1)) p.1 p.2)))
+
+theorem psiIdxOK_of_B133 {u : Nat} {x : Term} (h : psiIdxB133 u x = true) : PsiIdxOK u x := by
+  intro p hp hle
+  have h2 := List.all_eq_true.mp h p hp
+  rw [hle] at h2
+  simpa using h2
+
+/-- `G(a,1) ⊆ G(a,0)` — `GB` は添字が小さいほど多く拾う。 -/
+theorem GB1_sub_GB0_133 : ∀ (a : BT), ∀ e ∈ BT.GB 1 a, e ∈ BT.GB 0 a
+  | .zero => by intro e he; cases he
+  | .D v x => by
+      intro e he
+      have h0 : BT.GB 0 (BT.D v x) = x :: BT.GB 0 x := by
+        show (if 0 ≤ v then x :: BT.GB 0 x else []) = _
+        rw [if_pos (Nat.zero_le v)]
+      by_cases hv : 1 ≤ v
+      · have h1 : BT.GB 1 (BT.D v x) = x :: BT.GB 1 x := by
+          show (if 1 ≤ v then x :: BT.GB 1 x else []) = _
+          rw [if_pos hv]
+        rw [h1] at he; rw [h0]
+        rcases List.mem_cons.mp he with h | h
+        · rw [h]; exact List.Mem.head _
+        · exact List.Mem.tail _ (GB1_sub_GB0_133 x e h)
+      · have h1 : BT.GB 1 (BT.D v x) = [] := by
+          show (if 1 ≤ v then x :: BT.GB 1 x else []) = _
+          rw [if_neg hv]
+        rw [h1] at he; cases he
+  | .sum x y => by
+      intro e he
+      have hm : e ∈ BT.GB 1 x ++ BT.GB 1 y := he
+      show e ∈ BT.GB 0 x ++ BT.GB 0 y
+      rcases List.mem_append.mp hm with h | h
+      · exact List.mem_append.mpr (Or.inl (GB1_sub_GB0_133 x e h))
+      · exact List.mem_append.mpr (Or.inr (GB1_sub_GB0_133 y e h))
+
+/-- `ψ₀a` が `K` 標準なら `ψ₁a` も `K` 標準。 -/
+theorem isStd1_of_isStd0_133 {a : BT} (h : BT.isStd (BT.D 0 a) = true) :
+    BT.isStd (BT.D 1 a) = true := by
+  obtain ⟨h1, h2⟩ := std0_split82 h
+  show (BT.isStd a && (BT.GB 1 a).all (fun e => BT.lt e a)) = true
+  rw [h1, Bool.true_and]
+  exact List.all_eq_true.mpr (fun e he => h2 e (GB1_sub_GB0_133 a e he))
+
+/-- **測定 (凍結) — 四つの証人はどれも判定器を通る。**  左辺の二つは `K` 標準では
+    ないのに、`PsiIdxOKStd172` がそこから渡すはずの事実はぜんぶ成り立っている。 -/
+theorem analytic_witnesses133 :
+    (psiIdxB133 0 (dict cexA89), psiIdxB133 1 (dict cexA89),
+     inT (dict cexA89), lt (dict cexA89) M,
+     psiIdxB133 0 (dict bothBadA101), psiIdxB133 1 (dict bothBadA101),
+     inT (dict bothBadA101), lt (dict bothBadA101) M)
+    = (true, true, true, true, true, true, true, true) := rfl
+
+/-- **`HiMono89` の意味論版。**  `BT.isStd (ψ₀ ·)` を、`dictFacts129` が実際に
+    取り出す事実だけに置き換えたもの。 -/
+def HiMonoSem133 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    PsiIdxOK 0 (dict a) → PsiIdxOK 1 (dict a) →
+    inT (dict b) = true → lt (dict b) M = true →
+    PsiIdxOK 0 (dict b) → PsiIdxOK 1 (dict b) →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true
+
+/-- **意味論版は本物より強い** — 第一の門を仮定すれば `HiMono89` が出る。 -/
+theorem hiMono_of_sem133 (Hp : PsiIdxOKStd172) (H : HiMonoSem133) : HiMono89 := by
+  intro a b hbA hbB hsA hsB hWa hWb hlt
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hia := inT_dict_of_std172 Hp a hba (isStd_of_D hsA)
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  exact H a b hbA hbB hia.1 hia.2
+    (Hp 0 a (by omega) hba hsA) (Hp 1 a (by omega) hba (isStd1_of_isStd0_133 hsA))
+    hib.1 hib.2
+    (Hp 0 b (by omega) hbb hsB) (Hp 1 b (by omega) hbb (isStd1_of_isStd0_133 hsB))
+    hWa hWb hlt
+
+/-- **§133.2 の主定理 (1) — 意味論版は偽。**  門は何も仮定していない。証人は §81 の対。 -/
+theorem not_hiMonoSem133 : ¬ HiMonoSem133 := by
+  intro H
+  have h := H cexA89 cexB89
+    (show btLe72 1 (BT.D 0 cexA89) = true from rfl)
+    (show btLe72 1 (BT.D 0 cexB89) = true from rfl)
+    (show inT (dict cexA89) = true from rfl) (show lt (dict cexA89) M = true from rfl)
+    (psiIdxOK_of_B133 (show psiIdxB133 0 (dict cexA89) = true from rfl))
+    (psiIdxOK_of_B133 (show psiIdxB133 1 (dict cexA89) = true from rfl))
+    (show inT (dict cexB89) = true from rfl) (show lt (dict cexB89) M = true from rfl)
+    (psiIdxOK_of_B133 (show psiIdxB133 0 (dict cexB89) = true from rfl))
+    (psiIdxOK_of_B133 (show psiIdxB133 1 (dict cexB89) = true from rfl))
+    (show le (reg 1) (dict cexA89) = true from rfl)
+    (show le (reg 1) (dict cexB89) = true from rfl)
+    (show lt (hiW89 (dict cexA89)) (hiW89 (dict cexB89)) = true from rfl)
+  rw [show lt (collapse 0 (hiW89 (dict cexA89))) (collapse 0 (hiW89 (dict cexB89)))
+        = false from rfl] at h
+  exact Bool.noConfusion h
+
+/-- **同じことを §101 の対で。**  こちらは真の逆転で外す。 -/
+theorem not_hiMonoSem132' : ¬ HiMonoSem133 := by
+  intro H
+  have h := H bothBadA101 bothBadB101
+    (show btLe72 1 (BT.D 0 bothBadA101) = true from rfl)
+    (show btLe72 1 (BT.D 0 bothBadB101) = true from rfl)
+    (show inT (dict bothBadA101) = true from rfl)
+    (show lt (dict bothBadA101) M = true from rfl)
+    (psiIdxOK_of_B133 (show psiIdxB133 0 (dict bothBadA101) = true from rfl))
+    (psiIdxOK_of_B133 (show psiIdxB133 1 (dict bothBadA101) = true from rfl))
+    (show inT (dict bothBadB101) = true from rfl)
+    (show lt (dict bothBadB101) M = true from rfl)
+    (psiIdxOK_of_B133 (show psiIdxB133 0 (dict bothBadB101) = true from rfl))
+    (psiIdxOK_of_B133 (show psiIdxB133 1 (dict bothBadB101) = true from rfl))
+    (show le (reg 1) (dict bothBadA101) = true from rfl)
+    (show le (reg 1) (dict bothBadB101) = true from rfl)
+    (show lt (hiW89 (dict bothBadA101)) (hiW89 (dict bothBadB101)) = true from rfl)
+  rw [show lt (collapse 0 (hiW89 (dict bothBadA101)))
+        (collapse 0 (hiW89 (dict bothBadB101))) = false from rfl] at h
+  exact Bool.noConfusion h
+
+/-- **`VebRest129` の意味論版。** -/
+def VebRestSem133 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    inT (dict a) = true → lt (dict a) M = true →
+    PsiIdxOK 0 (dict a) → PsiIdxOK 1 (dict a) →
+    inT (dict b) = true → lt (dict b) M = true →
+    PsiIdxOK 0 (dict b) → PsiIdxOK 1 (dict b) →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lastFire92 (dict a) = false → lastFire92 (dict b) = false →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    closed129 a b = false →
+    lt (collapse 0 (hiW89 (dict a))) (collapse 0 (hiW89 (dict b))) = true
+
+theorem vebRest129_of_sem133 (Hp : PsiIdxOKStd172) (H : VebRestSem133) : VebRest129 := by
+  intro a b hbA hbB hsA hsB hWa hWb hfa hfb hlt hcl
+  have hba := (btLe72_D 1 0 a hbA).2
+  have hbb := (btLe72_D 1 0 b hbB).2
+  have hia := inT_dict_of_std172 Hp a hba (isStd_of_D hsA)
+  have hib := inT_dict_of_std172 Hp b hbb (isStd_of_D hsB)
+  exact H a b hbA hbB hia.1 hia.2
+    (Hp 0 a (by omega) hba hsA) (Hp 1 a (by omega) hba (isStd1_of_isStd0_133 hsA))
+    hib.1 hib.2
+    (Hp 0 b (by omega) hbb hsB) (Hp 1 b (by omega) hbb (isStd1_of_isStd0_133 hsB))
+    hWa hWb hfa hfb hlt hcl
+
+/-- **§133.2 の主定理 (2) — 残る条項の意味論版も偽。**  §129 が残した一節は、
+    その意味論的な中身では支えられない。 -/
+theorem not_vebRestSem133 : ¬ VebRestSem133 := by
+  intro H
+  have h := H cexA89 cexB89
+    (show btLe72 1 (BT.D 0 cexA89) = true from rfl)
+    (show btLe72 1 (BT.D 0 cexB89) = true from rfl)
+    (show inT (dict cexA89) = true from rfl) (show lt (dict cexA89) M = true from rfl)
+    (psiIdxOK_of_B133 (show psiIdxB133 0 (dict cexA89) = true from rfl))
+    (psiIdxOK_of_B133 (show psiIdxB133 1 (dict cexA89) = true from rfl))
+    (show inT (dict cexB89) = true from rfl) (show lt (dict cexB89) M = true from rfl)
+    (psiIdxOK_of_B133 (show psiIdxB133 0 (dict cexB89) = true from rfl))
+    (psiIdxOK_of_B133 (show psiIdxB133 1 (dict cexB89) = true from rfl))
+    (show le (reg 1) (dict cexA89) = true from rfl)
+    (show le (reg 1) (dict cexB89) = true from rfl)
+    (show lastFire92 (dict cexA89) = false from rfl)
+    (show lastFire92 (dict cexB89) = false from rfl)
+    (show lt (hiW89 (dict cexA89)) (hiW89 (dict cexB89)) = true from rfl)
+    (show closed129 cexA89 cexB89 = false from rfl)
+  rw [show lt (collapse 0 (hiW89 (dict cexA89))) (collapse 0 (hiW89 (dict cexB89)))
+        = false from rfl] at h
+  exact Bool.noConfusion h
+
+end
+
+/-! ### §133.3 The obvious repair provably cannot work -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+def wv133 : Nat → BT
+  | 0 => BT.zero
+  | n+1 => BT.D 1 (wv133 n)
+
+/-- 修理に使う頭 12 個 — `ψ₁` の塔と 2 項和。 -/
+def hdList133 : List BT :=
+  [wv133 1, wv133 2, wv133 3, wv133 4, wv133 5,
+   BT.sum (wv133 2) (wv133 2), BT.sum (wv133 3) (wv133 2), BT.sum (wv133 3) (wv133 3),
+   BT.sum (wv133 4) (wv133 3), BT.sum (wv133 4) (wv133 4),
+   BT.sum (wv133 5) (wv133 4), BT.sum (wv133 5) (wv133 5)]
+
+/-- 左右に**別々の**頭を足した 144 通り。 -/
+def pairList133 (a b : BT) : List (BT × BT) :=
+  hdList133.flatMap (fun c => hdList133.map (fun c' => (BT.add c a, BT.add c' b)))
+
+/-- `HiMono89` の仮定 7 本。 -/
+def hypOK133 (p : BT × BT) : Bool :=
+  btLe72 1 (BT.D 0 p.1) && btLe72 1 (BT.D 0 p.2) &&
+  BT.isStd (BT.D 0 p.1) && BT.isStd (BT.D 0 p.2) &&
+  le (reg 1) (dict p.1) && le (reg 1) (dict p.2) &&
+  lt (hiW89 (dict p.1)) (hiW89 (dict p.2))
+
+/-- 仮定が揃うなら §117 の道具が届く。 -/
+def repGood133 (p : BT × BT) : Bool := !(hypOK133 p) || closed117 p.1 p.2
+
+set_option maxRecDepth 1000000 in
+/-- **§81 の対の修理はぜんぶ §117 が閉じる。** -/
+theorem repairA_all133 : (pairList133 cexA89 cexB89).all repGood133 = true := rfl
+
+set_option maxRecDepth 1000000 in
+/-- **§101 の対も同じ。** -/
+theorem repairB_all133 : (pairList133 bothBadA101 bothBadB101).all repGood133 = true := rfl
+
+set_option maxRecDepth 1000000 in
+/-- 144 通りのうち、仮定が揃うのは §81 の対で 66 通り、§101 の対で 44 通り。
+    空振りではない。 -/
+theorem repair_count133 :
+    ((pairList133 cexA89 cexB89).length,
+     (pairList133 cexA89 cexB89).countP hypOK133,
+     (pairList133 bothBadA101 bothBadB101).countP hypOK133) = (144, 66, 44) := rfl
+
+/-- **§133.3 の主定理 — 頭を足す修理は結論を強いる。**  左右に好きな頭を足して
+    `HiMono89` の仮定が揃ったなら、第一の門のもとで結論が出る。**反例にはならない。** -/
+theorem repair_forced133 (Hp : PsiIdxOKStd172) {a b : BT}
+    (Hall : (pairList133 a b).all repGood133 = true)
+    (p : BT × BT) (hp : p ∈ pairList133 a b) (hh : hypOK133 p = true) :
+    lt (collapse 0 (hiW89 (dict p.1))) (collapse 0 (hiW89 (dict p.2))) = true := by
+  have h := List.all_eq_true.mp Hall p hp
+  unfold repGood133 at h
+  rw [hh] at h
+  have hcl : closed117 p.1 p.2 = true := by simpa using h
+  unfold hypOK133 at hh
+  simp only [Bool.and_eq_true] at hh
+  obtain ⟨⟨⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩, h6⟩, _⟩ := hh
+  exact hiMono_closed117 Hp h1 h2 h3 h4 h5 h6 hcl
+
+set_option maxRecDepth 1000000 in
+/-- **左だけに足す道も死んでいる。**  どの頭 `c` でも、`ψ₀(c ⊕ a)` が `K` 標準に
+    ならないか、`hi (c ⊕ a) < hi b` が残らないかのどちらかである。
+    標準にするには頭が係数 `E` を越えねばならず、そのとき左辺が右辺を追い越す。 -/
+theorem repair_asym133 :
+    (hdList133.all (fun c =>
+        !(BT.isStd (BT.D 0 (BT.add c cexA89))) ||
+        !(lt (hiW89 (dict (BT.add c cexA89))) (hiW89 (dict cexB89)))),
+     hdList133.all (fun c =>
+        !(BT.isStd (BT.D 0 (BT.add c bothBadA101))) ||
+        !(lt (hiW89 (dict (BT.add c bothBadA101))) (hiW89 (dict bothBadB101)))))
+    = (true, true) := rfl
+
+end
+
+/-! ### §133.4 Measurement (frozen) — a built family, not a sweep
+
+母集団は「隠し持ち」の形を組んだもの: `h ⊕ ψ₁ψ₀E`、`ψ₁(w_j ⊕ ψ₀E)`、およびその和。
+`h`, `E` は `ψ₁` だけでできた降順和 (添字 1..4、長さ 3 まで) の 34 項。
+最大 41 記号 — §129 の総当たりは 9 記号で止まっている。 -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf)
+open TM TM.Term
+open Evidence.WF
+
+private def sumOf133 : List Nat → BT
+  | [] => BT.zero
+  | [j] => wv133 j
+  | j :: r => BT.sum (wv133 j) (sumOf133 r)
+
+private def descAll133 (mx : Nat) : Nat → List (List Nat)
+  | 0 => []
+  | n+1 =>
+      let ones := ((List.range mx).map (fun i => i+1))
+      let prev := descAll133 mx n
+      ones.map (fun j => [j]) ++
+      prev.flatMap (fun l => match l with
+        | [] => []
+        | h :: _ => (ones.filter (fun j => h ≤ j)).map (fun j => j :: l))
+
+private def poolL133 (mx n : Nat) : List BT :=
+  ((descAll133 mx n).map sumOf133).filter (fun t => BT.isStd t)
+
+private def okW133 (a : BT) : Bool :=
+  btLe72 1 (BT.D 0 a) && BT.isStd a && le (reg 1) (dict a)
+private def okK133 (a : BT) : Bool :=
+  btLe72 1 (BT.D 0 a) && BT.isStd (BT.D 0 a) && le (reg 1) (dict a)
+private def dedup133 (l : List BT) : List BT :=
+  l.foldl (fun acc a => if acc.contains a then acc else acc ++ [a]) []
+
+private def P133 : List BT := poolL133 4 3
+private def T0_133 : List BT := P133.map (fun E => BT.D 1 (BT.D 0 E))
+private def T1_133 : List BT := (List.range 4).flatMap (fun i =>
+  P133.map (fun E => BT.D 1 (BT.add (wv133 (i+1)) (BT.D 0 E))))
+
+private def fam133 : List BT :=
+  dedup133 (P133 ++ T0_133 ++ T1_133
+    ++ P133.flatMap (fun h => T0_133.map (fun t => BT.add h t))
+    ++ P133.flatMap (fun h => T1_133.map (fun t => BT.add h t))
+    ++ T0_133.flatMap (fun x => T0_133.map (fun y => BT.add x y))) |>.filter okW133
+
+private def recs133 : List (Bool × Term × Term) :=
+  fam133.map (fun t => (okK133 t, hiW89 (dict t), collapse 0 (hiW89 (dict t))))
+private def recsK133 : List (Term × Term) :=
+  (recs133.filter (fun r => r.1)).map (fun r => r.2)
+
+/-- 結論を破る組。値は左辺が `K` 標準かどうか。 -/
+private def bad133 : List Bool :=
+  recs133.flatMap (fun a => recsK133.filterMap (fun b =>
+    if lt a.2.1 b.1 && !(lt a.2.2 b.2) then some a.1 else none))
+
+private def census133 : Nat × Nat × Nat × Nat × Nat :=
+  (fam133.length, recsK133.length, (fam133.map BT.size).foldl max 0,
+   bad133.length, bad133.countP id)
+
+/-! **受領 — 組んだ母集団の勘定。**  並びは (項の数, うち `K` 標準の数, 最大の記号数,
+    結論を破る組の数, そのうち左辺も `K` 標準の数)。
+    **1853 項・最大 41 記号で 262150 組が結論を破り、そのうち左辺が `K` 標準なのは 0。** -/
+#guard census133 == (1853, 871, 41, 262150, 0)
+
+end
+
+
+/-! ## §134 AN INDEPENDENT IMPLEMENTATION CONFIRMS BRANCH 3 AND NAMES THE VALUE
+
+§126 left three branches.  §132 and §133 attacked the two gates and closed neither.  §134
+asks the third branch of an instrument this repository does not control:
+naruyoko's `padicBotRathjen/implementation.js`, an independent implementation of
+P進大好きbot's Rathjen-type notation, with its own `inOT`, `lessThan` and `fund`, reached
+through `scripts/padicbot-ref.js`.  Nothing external was copied into this repository; the
+source is CC BY-SA 3.0 and cited by URL in that script's header.
+
+**THE ANSWER.**  `vOf tGap107` OVERSHOOTS.  The BMS expansion of §127's witness matrix is,
+term for term, the external implementation's canonical fundamental sequence for the window's
+**BOTTOM**, not for the value this repository assigns it.
+
+    `oR (witness[n])`  ==  `extFund (φ_{Γ₀}(1), n+1)`      10 of 10 steps, their `equal`
+    `extFund (φ_{Γ₀}(Γ₀+1), n)` is a different sequence — `φ_{tow n}(φ_{Γ₀}(Γ₀)+1)` — every
+    member of which is at or above `φ_{Γ₀}(1)`, while every step this repo produces is
+    strictly below it (their `lessThan`, n ≤ 24; this repo's `lt`, n ≤ 40).
+
+So the two sequences are separated by a fixed term and cannot share a supremum.
+
+**THE CONTROL, and it is what makes this readable.**  Five neighbouring rows of the same
+family are healthy under the same instrument and one is broken:
+
+    `(0,0)(1,1)(2,1)(3,1)`                            `Γ₀`                 reached
+    `(0,0)(1,1)(2,1)(3,1)(1,1)`                       `φ_1(Γ₀+1)`          reached
+    `(0,0)(1,1)(2,1)(3,1)(1,1)(2,1)`                  `φ_2(Γ₀+1)`          reached
+    `…(3,0)(4,1)`                                     `φ_{φ_1(0)}(Γ₀+1)`   reached
+    `…(3,0)(4,1)(5,1)`                                `φ_{φ_2(0)}(Γ₀+1)`   reached
+    `…(3,0)(4,1)(5,1)(6,1)`   ← §127's witness        `φ_{Γ₀}(Γ₀+1)`       **never**
+
+The test is not vacuous and the break is exactly at the window, not everywhere.
+
+**THREE THINGS THAT WERE RULED OUT BY THE SAME RUN.**
+
+  * *"The window is empty because there is nothing there."*  No — enumerating 62 664 terms
+    over `{1, W, ψ^W(0)}` up to size 5, 13 181 pass their `inOT` and **143 lie inside the
+    window**.  The window is empty only in `dict`'s image, not in 𝔗(M).
+  * *"This repo's order misplaces the window."*  No — 41 terms spanning `Γ₀`, the window and
+    `Ω`, sorted by this repo's `lt`, handed to their `lessThan`: **0 of 40 adjacent pairs
+    disagree**, with a working reverse control.  Under the literal reading of 2.7 there is
+    exactly ONE disagreement and it is the collapse §127.8 already records.
+  * *"The port of 2.1(v) is unfaithful"* — §127.7's retracted branch, refuted a second time
+    and independently: their `inOT` ACCEPTS `φ^0_{Γ₀}(1)` and REJECTS `φ^0_{Γ₀}(0)`, which is
+    this repo's picture with the 2.7 shift applied.
+
+**WHAT §134 DOES NOT SETTLE.**  The external implementation carries no BMS translation, so it
+cannot say which SIDE of the correspondence is wrong.  What it establishes is: *given `oR`'s
+values on the expansions*, the limit's value must be `φ̄(Γ₀,0)`.  The logically open
+alternative — that `oR` undershoots on the whole cofinal chain instead — is not excluded.
+Both alternatives are `¬ LimCofS1`.  Branches 1 and 2 are untouched by this section.
+
+**AND THE ONE OBLIGATION LEFT, WHICH IS WORTH MORE THAN THE REST.**  The closed form
+
+    `vOf (fsB tGap107 n) = φ̄(tow n, Γ₀)`
+
+is verified below for `n ≤ 40` and externally for `n ≤ 24`.  **Proving it for all `n` makes
+§127's `noReach127` GATE-FREE** — and then the two gates are irrelevant to branch 3, which
+would stand on its own.  The measurement below already is gate-free; only the induction is
+missing.
+
+**NO PUBLISHED ROW IS CONTRADICTED.**  `table-r1.md` runs from `(0,0)(1,1)(2,1)(3,1)(1,0)`
+straight to `(0,0)(1,1)(2,2)`; the whole window region, the witness included, is skipped.
+What §134 says is about the translation `oR` that produces the table's values, not about a
+row that has been published. -/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-- Veblen の塔 — 外部実装の `fund(ψ^W(0), n+1)` と同じ列。 -/
+def two134 : Term := TM.Term.plus one one
+
+def tow134 : Nat → Term
+  | 0 => phi two134 zero
+  | n+1 => phi (tow134 n) zero
+
+/-! **基本列の値の閉じた形** — `n ≤ 40` で計算により確認 (門を使わない)。
+    これを全ての `n` で証明すると §127 の `noReach127` から門が消える。 -/
+
+#guard (List.range 41).all fun n => vOf (fsB tGap107 n) == phi (tow134 n) G094
+
+/-! 各段は窓の下端より真に下、狭義増加、そして標準・段 1 以下。 -/
+
+#guard (List.range 41).all fun n => lt (vOf (fsB tGap107 n)) (rawT94 0)
+#guard (List.range 40).all fun n => lt (vOf (fsB tGap107 n)) (vOf (fsB tGap107 (n+1)))
+#guard (List.range 41).all fun n => stdB1 (fsB tGap107 n)
+
+/-- **残る義務。**  上の閉じた形を全ての `n` で。**証明しない。** -/
+def ClosedFS134 : Prop := ∀ n : Nat, vOf (fsB tGap107 n) = phi (tow134 n) G094
+
+/-- **その形にすれば門は要らない。**  閉じた形と、塔についての門を使わない順序の事実
+    だけで、`∀ n` が出る。残っているのはその二つを証明することだけである。 -/
+theorem noReach_of_closed134 (H : ClosedFS134)
+    (Htow : ∀ n, le (rawT94 0) (phi (tow134 n) G094) = false) :
+    ∀ n, le (rawT94 0) (vOf (fsB tGap107 n)) = false :=
+  fun n => by rw [H n]; exact Htow n
+
+/-- 上の第二の仮定は `n ≤ 40` で計算により成立している (§134 の `#guard`)。 -/
+def TowBelow134 : Prop := ∀ n, le (rawT94 0) (phi (tow134 n) G094) = false
+
+end
 end Evidence.Region
