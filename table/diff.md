@@ -15,20 +15,22 @@
 
 ## ツリー
 
-- 🚨 選定 23 行に ✅ を付ける
-  - 🚨 326 行目に ✅ を付ける
-    - 🚨 `PsiIdxOKStd172` を証明するか反証する
-    - 🚨 `HiMono89` を証明するか反証する
-    - 🚨 `LimCofS1` を成り立たせる
-      - 🚨 `vOf tGap107` が大きすぎるのか展開の値が小さすぎるのかを決める
-      - 🚨 決まった側を直す
-      - 🚨 `LimCofS1` を証明する
+- 🚨 選定 23 行に [E.cert](table-r1.md#ecert) を付ける
+ - 🚨 326 行目に [E.cert](table-r1.md#ecert) を付ける
+  - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`t \in \mathfrak{T}(M)`$ と $`f_n \in \mathfrak{T}(M)`$ を供給する
+   - 🚨 `PsiIdxOKStd172` を証明するか反証する
+  - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`f_n \lt t`$ と $`f_n \lt f_{n+1}`$ を供給する
+   - 🚨 `HiMono89` を証明するか反証する
+  - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を供給する
+   - 🚨 `vOf tGap107` が大きすぎるのか展開の値が小さすぎるのかを決める
+   - 🚨 決まった側を直す
+   - 🚨 `LimCofS1` を証明する
 - 🚨 表の値を直す
-  - 🚨 `reg` を直しても順序と `inT` が壊れない道を見つける
-  - 🚨 `Trans/Dict.lean` を書き換えてビルドを通す
-  - 🚨 壊れている 5 行の `Rows/TM.lean` の値を書き換える
-  - 🚨 5 行の注記と表のバナーを外す
+ - 🚨 `reg` を直しても順序と `inT` が壊れない道を見つける
+ - 🚨 `Trans/Dict.lean` を書き換えてビルドを通す
+ - 🚨 壊れている 5 行の `Rows/TM.lean` の値を書き換える
+ - 🚨 5 行の注記と表のバナーを外す
 - 🚨 Hexirp 氏の表と食い違う 9 行について、どちらが正しいかを決める
-  - 🚨 9 行を BMS の順序に並べ、両側の単調性と単射性を測る
-  - 🚨 行ごとに当方が正しいか先方が正しいかを書く
-  - 🚨 当方が誤っている行があれば表に印を付ける
+ - 🚨 9 行を BMS の順序に並べ、両側の単調性と単射性を測る
+ - 🚨 行ごとに当方が正しいか先方が正しいかを書く
+ - 🚨 当方が誤っている行があれば表に印を付ける
