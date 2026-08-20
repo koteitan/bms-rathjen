@@ -7463,43 +7463,56 @@ theorem window127 :
 
 end
 
-/-! ### §127.7 THE WITNESS IS A NON-NORMAL VEBLEN TERM — MEASURED, AND IT REACHES `dict`
+/-! ### §127.7 A READING ERROR, RETRACTED — AND THE ONE REAL THING NEXT TO IT
 
-§127.5 flagged that `s = φ̄(Γ₀,0)` is a term `dict` never produces.  Here is what that is,
-measured rather than guessed, and it is worse than "outside the image".
+**§127.7 AS FIRST WRITTEN WAS WRONG AND IS RETRACTED HERE.**  It claimed that `inT`'s clause
+for `phi` is unfaithful to [Rathjen 1991] 2.1(v), that `φ̄(Γ₀,0)` and `Γ₀` are the same
+ordinal sitting at two places in `lt`, and that §107's window might therefore be an artifact
+of the port.  All three are false.  The error was reading `phiNF a b` as "the normal form of
+the term `phi a b`".  It is not that.
 
-`phiNF` (Rathjen 1991, 2.6(vi)) re-counts fixed points, so `φ̄(Γ₀,0) = Γ₀` — that is
-`phiNF_G0_zero127` below, by `rfl`.  But `inT` implements 2.1(v) as
-`inT a && inT b && lt a M && lt b M`, with **no normal-form condition on the Veblen pair**,
-so the raw syntax tree `phi Γ₀ 0` is a term of 𝔗(M) as ported, and `lt` places it
-**strictly above** `Γ₀`.  The same syntax tree therefore appears twice in the order at two
-different places, once normalised and once not.
+    `phi a b`    is Rathjen's  **φ̄**αβ  — the raw CONSTRUCTOR of 2.1(v).  It RE-COUNTS:
+                 it skips the values of `φ_α` that other terms already name.
+    `phiNF a b`  is Rathjen's  **φ**αβ  — 2.6(vi), the operation taking a PAIR OF ARGUMENTS
+                 to the term that denotes the true Veblen value `φ_α(β)`.
 
-    `inT_raw127`      :  `inT (phi G094 zero) = true`
-    `phiNF_G0_zero127`:  `phiNF G094 zero = G094`
-    `lt_raw127`       :  `lt G094 (phi G094 zero) = true`
-    `raw_ne127`       :  `phi G094 zero ≠ G094`
+They are different functions of `(a, b)`, and comparing their outputs is a category error.
+2.1(v) reads "α, β ∈ 𝔗(M), α, β < M ⇒ φ̄αβ ∈ AP" with no normal-form side condition, and
+Remark (ii) of §2.1 spells out a side condition for `ψ` and for nothing else.
+**`TM/NF.lean`'s clause is verbatim faithful and must be left alone.**
 
-**AND IT IS NOT CONFINED TO TERMS OUTSIDE `dict`'s IMAGE.**  Over §108.6's frozen population
-of 9992 standard level-`≤ 1` terms, `dict z` is a top-level `phi a b` that is not its own
-normal form **314 times**, and in **all 314** the produced term is `lt`-STRICTLY ABOVE its
-own normalised value.  130 of them are the fixed-point branch (`b` strongly critical,
-`a < b`); the other 184 come out of `phiNFsucc`.  The smallest is at `BT.size 3`.
+What `φ̄Γ₀0` denotes is settled by 2.7, which this repo already transcribes as `TM/FS.lean`'s
+`phiShifted`: for `β = 0` and `α ∈ SC`, `φ̄α0 = φα1`.  So `φ̄Γ₀0` denotes `φ(Γ₀,1)`, which IS
+strictly above `Γ₀`, and `lt G094 (phi G094 zero) = true` is right.  `phiNF G094 zero = G094`
+says "the term for the ordinal `φ_{Γ₀}(0)` is `Γ₀` itself"; it never said anything about the
+term `phi G094 zero`.
 
-**WHAT THIS DOES AND DOES NOT MEAN.**  It does NOT say `dict` is wrong, and it does NOT
-retract §126 — `¬ LimCofS1` is a theorem about the definitions as they stand in this repo.
-What it does is add a FOURTH reading to §126's three:
+The 314 count below is therefore not a defect count.  `phiNF a b ≠ phi a b` is the normal
+state of affairs for a constructor whose job is to skip indices, and the criterion misjudges
+audited rows: `dict (ψ₀(Ω₁ ⊕ 1)) = φ̄(0, ε₀)` — table row `(0,0)(1,1)(1,0)`, which
+`TM/Terms.lean`'s header states is `ω^(ε₀+1)` and NOT `ε₀` — is one of the 314.  The guards
+are kept, relabelled: they measure how often the shift fires, not how often anything is broken.
 
-  4. `TM/NF.lean`'s `inT` (2.1(v)) and `lt` are not faithful to [Rathjen 1991] on
-     non-normal Veblen pairs, the window `[φ̄(Γ₀,0), φ̄(Γ₀,Γ₀⊕1))` is populated only by
-     terms that the paper's 𝔗(M) does not contain (or contains but identifies), and
-     `GapAtG0_107` — hence §122, §125 and §126 — is an artifact of the port.
+**THE ONE REAL THING, AND IT IS NEXT DOOR.**  `TM/FS.lean:88-104` records a KNOWN GAP in 2.7
+as printed: for `α ∈ SC`, clause 1 gives `φ̄α0 = φα1`, and at `β = 1` no clause fires, so
+`φ̄α1 = φα1` as well — two terms, one ordinal, while 2.3.13(ii) orders `φ̄α0 < φ̄α1`.  The note
+argues the second disjunct should read `a.isSC`, DID NOT PATCH IT, and justified that by
+measurement: the shape `φ̄(A,B)` with `A ∈ SC` and `B ≠ 0` occurs in 0 of 51 table rows, 0 of
+750 CNV-corpus terms, and 0 of a 336-term pool of `dict` values.
 
-**Deciding between branch 4 and the other three requires reading the paper, not more Lean.**
-[Rathjen 1991] 2.1(v), Remark (ii), and 2.6(vi) are what settle it.  Until that is read,
-every conditional result from §107 onward should be read as conditional on the port of
-2.1(v) as well as on the two gates.  Nothing here is retracted and nothing here is claimed
-about the table. -/
+**§107's window reaches it.**  `dict (bTowG98 1) = φ̄(Γ₀, Γ₀⊕1)` — the window's UPPER endpoint
+and §127's witness value — has `A = Γ₀ ∈ SC` and `B ≠ 0`.  That is precisely the shape the
+note measured as unreachable.  So the gap's measured reach was SHORT: the pools it was
+measured against do not contain the window's top.  Under the repaired reading the endpoint
+denotes `φ(Γ₀,Γ₀+2)` instead of `φ(Γ₀,Γ₀+1)` — one index, and the window is not emptied
+either way — but anything that computes the window's WIDTH or enumerates its top has to be
+checked against both readings.  §122, §125 and §126 use neither, so they stand.
+
+**WHAT ELSE SURVIVED THE CHECK.**  `dict` is injective on the 9992-term standard population.
+The window `[φ̄(Γ₀,0), φ̄(Γ₀,Γ₀⊕1))` holds 0 values at every size from 1 to 14 over 58239
+standard level-`≤ 1` terms, and the reason is structural, not a short sweep: `phiNFdefault`
+returns `α` when `β = 0` and `α ∈ SC`, so `dict` can never emit the shape `φ̄(SC,0)` at all,
+and that shape is exactly the window's lower endpoint.  `GapAtG0_107` is not refuted. -/
 
 section
 open Trans.Recal
@@ -7507,13 +7520,20 @@ open Trans.Dict (BT dict reg collapse)
 open TM TM.Term
 open Evidence.WF
 
-/-- `inT` は正規形の条件を課さないので、生の `φ(Γ₀,0)` も 𝔗(M) の項である。 -/
+/-- `inT` は 2.1(v) をそのまま実装している。生の `φ̄(Γ₀,0)` は 𝔗(M) の項である。 -/
 theorem inT_raw127 : inT (phi G094 zero) = true := rfl
 
-/-- ところが 2.6(vi) の `φ̄` はそれを `Γ₀` に戻す。 -/
+/-- 2.6(vi)。**引数の対から、真の Veblen 値 `φ_{Γ₀}(0)` を表す項へ。**
+    「項 `phi G094 zero` の正規形」ではない。 -/
 theorem phiNF_G0_zero127 : phiNF G094 zero = G094 := rfl
 
-/-- そして `lt` は生の方を真上に置く。同じ順序数が二箇所にある。 -/
+/-- 2.7 (`TM/FS.lean` の `phiShifted`)。`β = 0` かつ `α ∈ SC` なので飛ばしが発火する
+    — つまり項 `φ̄(Γ₀,0)` が表すのは `φ(Γ₀,1)` であって `Γ₀` ではない。 -/
+theorem phiShifted_G0_zero127 : TM.Term.phiShifted G094 zero = true := rfl
+
+theorem isSC_G0_127 : G094.isSC = true := rfl
+
+/-- だから `lt` が生の方を上に置くのは**正しい**。 -/
 theorem lt_raw127 : lt G094 (phi G094 zero) = true := rfl
 
 theorem lt_raw_rev127 : lt (phi G094 zero) G094 = false := rfl
@@ -7523,10 +7543,40 @@ theorem raw_ne127 : phi G094 zero ≠ G094 := by decide
 /-- 窓の下端はその生の項そのもの。 -/
 theorem rawT0_eq127 : rawT94 0 = phi G094 zero := rfl
 
-/-! **`dict` の像の中にもある。**  §108.6 の 9992 項のうち、`dict z` が最上位で
-    正規形でない `phi` になるのは 314 項。**314 項すべて**で、出てきた項は自分の
-    正規形より `lt` で真に上にある。うち 130 項は不動点の枝、残り 184 項は
-    `phiNFsucc` の枝。最小は `BT.size 3`。 -/
+/-! ### §127.8 `TM/FS.lean` の KNOWN GAP は窓の上端に届く
+
+2.7 を字義どおり読むと、`α ∈ SC` のとき `φ̄α0` と `φ̄α1` が同じ順序数 `φ_α(1)` を表す
+(下の 3 つ)。`TM/FS.lean:88-104` はこれを記録し、直さない理由を「その形が
+51 行・750 項・336 個の `dict` 値のどれにも出ない」と測定で述べている。
+**窓の上端はその形である。** -/
+
+/-- 2.6(vi) は `φ(Γ₀,1)` の項として `phi G094 one` を返す。 -/
+theorem phiNF_G0_one127 : phiNF G094 one = phi G094 one := rfl
+
+/-- ところが 2.7 を字義どおり読むと `β = 1` では飛ばしが発火しない。
+    だから `φ̄(Γ₀,0)` と `φ̄(Γ₀,1)` が同じ順序数を表す — 記録済みの穴。 -/
+theorem phiShifted_G0_one127 : TM.Term.phiShifted G094 one = false := rfl
+
+/-- **窓の上端は `φ̄(A,B)`・`A ∈ SC`・`B ≠ 0` の形。**  測定が「出ない」と言った形。 -/
+theorem dictTop_shape127 : dict (bTowG98 1) = phi G094 (TM.Term.plus G094 one) := rfl
+
+theorem phiShifted_top127 :
+    TM.Term.phiShifted G094 (TM.Term.plus G094 one) = false := rfl
+
+/-! ### §127.9 取り下げた判定基準が誤判定する監査済みの行
+
+`(0,0)(1,1)(1,0)` は `ω^(ε₀+1)` であって `ε₀` ではない (`TM/Terms.lean` の冒頭)。
+取り下げた基準はこの行を「正規形でない」と言う。 -/
+
+theorem anchor_dict127 : dict (BT.D 0 (BT.sum (BT.Om 1) BT.one)) = phi zero E081 := rfl
+
+theorem anchor_phiNF127 : phiNF zero E081 = E081 := rfl
+
+theorem anchor_lt127 : lt E081 (phi zero E081) = true := rfl
+
+/-! **飛ばしが発火する頻度** (欠陥の数ではない)。§108.6 の 9992 項のうち、`dict z` が
+    最上位で `phi a b` になり `phiNF a b ≠ phi a b` となるのは 314 項。
+    うち 130 項は不動点の枝。上の監査済みの行もこの 314 の中にいる。 -/
 
 def rawImg127 : List BT := allStd108.filter fun z => btLe72 1 z && BT.isStd z &&
   (match dict z with | phi a b => !(phiNF a b == phi a b) | _ => false)
@@ -7535,11 +7585,11 @@ def rawImg127 : List BT := allStd108.filter fun z => btLe72 1 z && BT.isStd z &&
 #guard (rawImg127.countP fun z => match dict z with
           | phi a b => lt (phiNF a b) (phi a b) | _ => false) == 314
 #guard (rawImg127.countP fun z => match dict z with
-          | phi a b => lt (phi a b) (phiNF a b) | _ => false) == 0
-#guard (rawImg127.countP fun z => match dict z with
           | phi a b => b.isSC && lt a b | _ => false) == 130
 #guard (rawImg127.map BT.size).take 3 == [3, 6, 6]
+#guard rawImg127.contains (BT.D 0 (BT.sum (BT.Om 1) BT.one)) == true
 #guard (allStd108.countP fun z => btLe72 1 z && BT.isStd z && inT (dict z)) == 9992
 
 end
+
 end Evidence.Region
