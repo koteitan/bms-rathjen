@@ -5885,4 +5885,1277 @@ theorem domShape154 (Hp : PsiIdxOKStd172) {a b : BT}
 #print axioms domShape154
 
 end
+
+/-!
+# §155 THE FIRST GATE: MULTI-DIGIT PLUMBING BEYOND §152's famB
+
+§152 closed the famB family (single digit, coefficient 1, singleton K) at every
+height.  This file widens the proved class in the three directions §152 named:
+
+  §155.1  Two towers over ARBITRARY seeds compared: at equal height the bottoms
+          decide (`lt_UW_UW_same155`, an equality), across heights the higher
+          tower wins in both directions (`lt_UW_UW_lt155`, `lt_UW_UW_false155`).
+
+  §155.2  `collapse 0` of the general tower is `ψ_{Ω₁}` of it (`collapse0_UW155`)
+          — §139's `collapse0_TW139` for every seed `s < Ω₁`.
+
+  §155.3  The NESTED family `famC155 m k j = ψ₁^m(ψ₀(ψ₁^k(ψ₀(ψ₁^j 0))))`, whose
+          seed's `K_{Ω₁}` has TWO elements.  Closed forms, the gate's step on the
+          wedge `k ≤ m ∧ j ≤ m` (`ksetStepOK_famC155`), both refutation sides
+          (`not_ksetStepOK_famC_k155` / `_j155`), the exact step boundary
+          (`stepOK_iff_famC155`), the standardness contrapositives, and the
+          per-term gate `famC_no_refute155` + `firstFire_famC155`.
+          NOTE: the step boundary (`k ≤ m ∧ j ≤ m`) is strictly WIDER than the
+          standardness boundary (`j ≤ k ≤ m`, measured §155.6) — the two lines
+          coincide on famB but NOT on famC; standardness stays inside the gate.
+
+  §155.4  The COEFFICIENT family `famE155 j = ψ₁(ψ₁²0 ⊕ ψ₀(ψ₁^j 0))`: its dict
+          image fires with digit `(Ω₁, C)` where `C = ψ_{Ω₁}(…) ≠ 1` and
+          `A ⊖ Ω₁ = 0`, so the emitted index sits BELOW `Ω₁` while the escaping
+          element sits above — the step genuinely has no arithmetic way out
+          (`not_ksetStepOK_famE155`, all j ≥ 4).  Standardness breaks in exact
+          sync (`not_std_famE155`), and the standard member j = 3 satisfies the
+          step (`stepOK_famE3_155`): `famE_no_refute155`.
+
+  §155.5  MULTI-DIGIT `wcnf`: sums of famB terms.  The self-sum merges into ONE
+          digit with coefficient 2 (`ksetStepOK_famBsum2_155`), the cross sum
+          keeps TWO firing digits and the second step's obligations discharge
+          against the accumulated index (`ksetStepOK_famB_sum155`).
+
+  §155.6  Measurement (frozen): closed forms re-checked by the kernel, the famC
+          and famE boundaries frozen on ranges, the H1 residual counted on the
+          frozen pools, and pool membership of the new families.
+-/
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §155.1 Two towers over arbitrary seeds -/
+
+/-- **同じ高さの塔の比較は底の比較 (等式)。**  §152.6 は片側の不等式だけだった。 -/
+theorem lt_UW_UW_same155 (s t : Term) : ∀ j : Nat,
+    lt (UW152 s j) (UW152 t j) = lt s t
+  | 0 => by
+      show lt (phi zero (add (Z zero) s)) (phi zero (add (Z zero) t)) = _
+      rw [lt_phi_same139, lt_add_same139]
+  | j + 1 => by
+      show lt (phi zero (UW152 s j)) (phi zero (UW152 t j)) = _
+      rw [lt_phi_same139]
+      exact lt_UW_UW_same155 s t j
+
+/-- **低い塔は高い塔より下 — 種がどちらも任意でも。** -/
+theorem lt_UW_UW_lt155 (s t : Term) : ∀ a b : Nat, a < b →
+    lt (UW152 s a) (UW152 t b) = true
+  | 0, 0, h => absurd h (by omega)
+  | 0, b + 1, _ => by
+      show lt (phi zero (add (Z zero) s)) (phi zero (UW152 t b)) = true
+      rw [lt_phi_same139, lt_add_nsum (ne_zero_UW152 t b) (nsum_UW152 t b)]
+      exact lt_Om_UW152 t b
+  | a + 1, 0, h => absurd h (by omega)
+  | a + 1, b + 1, h => by
+      show lt (phi zero (UW152 s a)) (phi zero (UW152 t b)) = true
+      rw [lt_phi_same139]
+      exact lt_UW_UW_lt155 s t a b (by omega)
+
+/-- `Ω₁` より下の種の塔は底 `Ω₁ ⊕ t` より下に居ない。 -/
+theorem lt_UW_addOm155 {s : Term} (hlt : lt s (reg 1) = true) (t : Term) (a : Nat) :
+    lt (UW152 s a) (add (Z zero) t) = false := by
+  rw [lt_nsum_add100 (ne_zero_UW152 s a) (nsum_UW152 s a)]
+  exact le_UW_reg1_152 hlt a
+
+/-- **発散の側 — 高い塔は低い塔より下に居ない、種がどちらも任意でも。**
+    左の種だけ `Ω₁` より下であればよい。 -/
+theorem lt_UW_UW_false155 {s : Term} (hlt : lt s (reg 1) = true) (t : Term) :
+    ∀ b a : Nat, b < a → lt (UW152 s a) (UW152 t b) = false
+  | 0, 0, h => absurd h (by omega)
+  | 0, a + 1, _ => by
+      show lt (phi zero (UW152 s a)) (phi zero (add (Z zero) t)) = false
+      rw [lt_phi_same139]
+      exact lt_UW_addOm155 hlt t a
+  | b + 1, 0, h => absurd h (by omega)
+  | b + 1, a + 1, h => by
+      show lt (phi zero (UW152 s a)) (phi zero (UW152 t b)) = false
+      rw [lt_phi_same139]
+      exact lt_UW_UW_false155 hlt t b a (by omega)
+
+/-- 高さの違う塔は項として等しくない。 -/
+theorem UW_ne155 (s t : Term) : ∀ a b : Nat, a < b → UW152 s a ≠ UW152 t b
+  | 0, 0, h => absurd h (by omega)
+  | _ + 1, 0, h => absurd h (by omega)
+  | 0, b + 1, _ => by
+      intro hc
+      have hc2 : phi zero (add (Z zero) s) = phi zero (UW152 t b) := hc
+      injection hc2 with _ h2
+      cases b with
+      | zero => exact Term.noConfusion h2
+      | succ b' => exact Term.noConfusion h2
+  | a + 1, b + 1, h => by
+      intro hc
+      have hc2 : phi zero (UW152 s a) = phi zero (UW152 t b) := hc
+      injection hc2 with _ h2
+      exact UW_ne155 s t a b (by omega) h2
+
+theorem beq_UW_ne155 (s t : Term) {a b : Nat} (h : a < b) :
+    ((UW152 s a : Term) == UW152 t b) = false :=
+  beq_eq_false_iff_ne.mpr (UW_ne155 s t a b h)
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §155.2 `collapse 0` of the general tower, and the nested family's closed forms -/
+
+/-- **一般の塔の頭。**  `collapse 0 (UW152 s (j+2)) = ψ_{Ω₁}(UW152 s (j+2))` —
+    §139.6 の `collapse0_TW139` を任意の種 `s < Ω₁` へ。 -/
+theorem collapse0_UW155 {s : Term} (hlt : lt s (reg 1) = true) :
+    ∀ j : Nat, collapse 0 (UW152 s (j + 2)) = psi (Z zero) (UW152 s (j + 2))
+  | 0 =>
+      collapse0_tower139 (X := add (Z zero) s)
+        (beq_UW_one152 s 0) (beq_UW_one152 s 1) (beq_UW_one152 s 2)
+        (le_UW_reg1_152 hlt 0) (lt_UW_reg1_152 hlt 1) (le_reg1_UW152 s 1)
+        (lt_UW_reg1_152 hlt 2)
+  | j + 1 =>
+      collapse0_tower139 (X := UW152 s j)
+        (beq_UW_one152 s (j + 1)) (beq_UW_one152 s (j + 2)) (beq_UW_one152 s (j + 3))
+        (le_UW_reg1_152 hlt (j + 1)) (lt_UW_reg1_152 hlt (j + 2))
+        (le_reg1_UW152 s (j + 2)) (lt_UW_reg1_152 hlt (j + 3))
+
+/-- 入れ子の族。`famC155 m k j = ψ₁^m(ψ₀(ψ₁^k(ψ₀(ψ₁^j 0))))`。 -/
+def famC155 (m k j : Nat) : BT := nst132 m (BT.D 0 (famB132 k j))
+
+/-- 入れ子の種の閉じた形 — `ψ_{Ω₁}(UW152 (sd152 j) (k-1))`。 -/
+def sdC155 (kk jj : Nat) : Term := psi (Z zero) (UW152 (sd152 (jj + 3)) (kk + 2))
+
+/-- 入れ子の種は `Ω₁` より下。 -/
+theorem lt_sdC_reg1_155 (kk jj : Nat) : lt (sdC155 kk jj) (reg 1) = true :=
+  lt_psiOm_reg1_139 _
+
+/-- `Ω₁` は入れ子の種より下に居ない。 -/
+theorem lt_Om_sdC_155 (kk jj : Nat) : lt (Z zero) (sdC155 kk jj) = false :=
+  lt_Om_psi141 _
+
+/-- **入れ子の種の値。**  `dict (ψ₀(famB (k+3) (j+3))) = ψ_{Ω₁}(内の塔)`。 -/
+theorem sdC_eq155 (kk jj : Nat) :
+    dict (BT.D 0 (famB132 (kk + 3) (jj + 3))) = sdC155 kk jj := by
+  obtain ⟨_, _, hlt, _, _⟩ := sd_facts152 jj
+  rw [Trans.Dict.dict_D, dict_famB152 jj (kk + 2)]
+  exact collapse0_UW155 hlt kk
+
+/-- **閉じた形 — 入れ子の族の像も塔。**  §152.4 の `dict_famB152` の一段深い形。 -/
+theorem dict_famC155 (kk jj : Nat) : ∀ m : Nat,
+    dict (famC155 (m + 1) (kk + 3) (jj + 3)) = UW152 (sdC155 kk jj) m
+  | 0 => by
+      show collapse 1 (dict (BT.D 0 (famB132 (kk + 3) (jj + 3)))) = _
+      rw [sdC_eq155 kk jj]
+      exact collapse1_seed152 rfl rfl (lt_psiOm_reg1_139 _) (lt_psiOm_Om2_139 _)
+  | m + 1 => by
+      show collapse 1 (dict (famC155 (m + 1) (kk + 3) (jj + 3))) = _
+      rw [dict_famC155 kk jj m]
+      exact collapse1_UW152 (lt_psiOm_reg1_139 _) m
+
+/-- **入れ子の種の `K_{Ω₁}` は二元 — 内の塔と、その種の逃げる元。** -/
+theorem Kset_sdC155 (kk jj : Nat) :
+    Kset (reg 1) (sdC155 kk jj)
+      = UW152 (sd152 (jj + 3)) (kk + 2) :: Kset (reg 1) (sd152 (jj + 3)) := by
+  show Kset (reg 1) (psi (Z zero) (UW152 (sd152 (jj + 3)) (kk + 2))) = _
+  rw [Kset_psi_reg152, Kset_UW152]
+
+/-- 種同士の比較 — 内の入れ子が正しい向き (`j ≤ k`) なら内の種は外の種より下。 -/
+theorem lt_sd_sdC155 (kk jj : Nat) (h : jj ≤ kk) :
+    lt (sd152 (jj + 3)) (sdC155 kk jj) = true := by
+  cases jj with
+  | zero =>
+      show lt (sd152 3) (psi (Z zero) (UW152 (sd152 3) (kk + 2))) = true
+      rw [sd3_152, lt_psi_same]
+      exact lt_zero_left (ne_zero_UW152 _ _)
+  | succ jp =>
+      show lt (sd152 (jp + 4)) (psi (Z zero) (UW152 (sd152 (jp + 4)) (kk + 2))) = true
+      rw [sd_psi152 jp, lt_psi_same]
+      exact lt_TW_UW152 _ (jp + 3) (kk + 2) (by omega)
+
+/-! ### §155.3 The gate on the nested family, both sides -/
+
+/-- **第一の門の一歩は `k ≤ m ∧ j ≤ m` の全域で成り立つ。**  逃げる元は二つ —
+    内の塔 `UW152 s₁ (k-1)` は高さ比較 (`k < m`) か種の比較 (`k = m`、そこで
+    `j ≤ k` が要るが `j ≤ m = k` から出る) で、内の種の元 `TW (j-1)` は
+    高さ比較 (`j ≤ m`) で、どちらも指数 `UW152 sdC (m-1)` より下。 -/
+theorem ksetStepOK_famC155 {m k j : Nat} (h3k : 3 ≤ k) (h3j : 3 ≤ j)
+    (hkm : k ≤ m) (hjm : j ≤ m) : KsetStepOK 0 (dict (famC155 m k j)) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 3 := ⟨j - 3, by omega⟩
+  obtain ⟨d, rfl⟩ : ∃ d, m = (kk + d) + 3 := ⟨m - (kk + 3), by omega⟩
+  rw [show kk + d + 3 = (kk + d + 2) + 1 from rfl, dict_famC155 kk jj (kk + d + 2)]
+  refine stepOK_UW152 (lt_sdC_reg1_155 kk jj) (kk + d) ?_
+  intro y hy
+  rw [Kset_sdC155 kk jj] at hy
+  rcases List.mem_cons.mp hy with h1 | h1
+  · subst h1
+    cases d with
+    | zero =>
+        show lt (UW152 (sd152 (jj + 3)) (kk + 2)) (UW152 (sdC155 kk jj) (kk + 2)) = true
+        rw [lt_UW_UW_same155 (sd152 (jj + 3)) (sdC155 kk jj) (kk + 2)]
+        exact lt_sd_sdC155 kk jj (by omega)
+    | succ d' =>
+        exact lt_UW_UW_lt155 _ _ _ _ (by omega)
+  · cases jj with
+    | zero =>
+        rw [Kset_sd3_152] at h1
+        rw [List.mem_singleton.mp h1]
+        exact lt_zero_left (ne_zero_UW152 _ _)
+    | succ jp =>
+        rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at h1
+        rw [List.mem_singleton.mp h1]
+        exact lt_TW_UW152 _ (jp + 3) (kk + d + 2) (by omega)
+
+/-- **発散の側 1 — `m < k` では一歩は成り立たない。**  内の塔が指数より高い。 -/
+theorem not_ksetStepOK_famC_k155 {m k j : Nat} (h3m : 3 ≤ m) (h3j : 3 ≤ j) (hmk : m < k) :
+    ¬ KsetStepOK 0 (dict (famC155 m k j)) := by
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 3 := ⟨j - 3, by omega⟩
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨e, rfl⟩ : ∃ e, k = (mm + e + 1) + 3 := ⟨k - (mm + 4), by omega⟩
+  intro H
+  rw [show mm + 3 = (mm + 2) + 1 from rfl, dict_famC155 (mm + e + 1) jj (mm + 2)] at H
+  have hp : (((none : Option Term), (none : Option Term)),
+      (UW152 (sdC155 (mm + e + 1) jj) (mm + 1), TM.Term.one))
+      ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (wcnf (reg 1) [UW152 (sdC155 (mm + e + 1) jj) (mm + 2)]).1 := by
+    rw [wcnf_UW152 (lt_sdC_reg1_155 (mm + e + 1) jj) mm]
+    exact List.Mem.head _
+  have hstep := (H _ hp (le_reg1_UW152 _ (mm + 1))).2
+    (UW152 (sd152 (jj + 3)) (mm + e + 3)) (Or.inl (by
+      show UW152 (sd152 (jj + 3)) (mm + e + 3)
+        ∈ Kset (reg 1) (UW152 (sdC155 (mm + e + 1) jj) (mm + 1))
+      rw [Kset_UW152, Kset_sdC155 (mm + e + 1) jj]
+      exact List.Mem.head _))
+  rw [show idxOf (reg (0 + 1)) (((none : Option Term), (none : Option Term)))
+        (UW152 (sdC155 (mm + e + 1) jj) (mm + 1), TM.Term.one)
+      = UW152 (sdC155 (mm + e + 1) jj) (mm + 2)
+      from idx_UW152 (lt_sdC_reg1_155 (mm + e + 1) jj) mm,
+    lt_UW_UW_false155 (sd_facts152 jj).2.2.1 _ (mm + 2) (mm + e + 3) (by omega)] at hstep
+  exact Bool.noConfusion hstep
+
+/-- **発散の側 2 — `m < j` でも一歩は成り立たない。**  内の種の元 `TW (j-1)` が
+    指数より高い。`k` と `m` の関係には依らない。 -/
+theorem not_ksetStepOK_famC_j155 {m k j : Nat} (h3m : 3 ≤ m) (h3k : 3 ≤ k) (hmj : m < j) :
+    ¬ KsetStepOK 0 (dict (famC155 m k j)) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨e, rfl⟩ : ∃ e, j = (mm + e + 1) + 3 := ⟨j - (mm + 4), by omega⟩
+  intro H
+  rw [show mm + 3 = (mm + 2) + 1 from rfl, dict_famC155 kk (mm + e + 1) (mm + 2)] at H
+  have hp : (((none : Option Term), (none : Option Term)),
+      (UW152 (sdC155 kk (mm + e + 1)) (mm + 1), TM.Term.one))
+      ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (wcnf (reg 1) [UW152 (sdC155 kk (mm + e + 1)) (mm + 2)]).1 := by
+    rw [wcnf_UW152 (lt_sdC_reg1_155 kk (mm + e + 1)) mm]
+    exact List.Mem.head _
+  have hstep := (H _ hp (le_reg1_UW152 _ (mm + 1))).2
+    (TW (mm + e + 3)) (Or.inl (by
+      show TW (mm + e + 3) ∈ Kset (reg 1) (UW152 (sdC155 kk (mm + e + 1)) (mm + 1))
+      rw [Kset_UW152, Kset_sdC155 kk (mm + e + 1),
+        show mm + e + 1 + 3 = mm + e + 4 from rfl, Kset_sd_psi152 (mm + e)]
+      exact List.Mem.tail _ (List.Mem.head _)))
+  rw [show idxOf (reg (0 + 1)) (((none : Option Term), (none : Option Term)))
+        (UW152 (sdC155 kk (mm + e + 1)) (mm + 1), TM.Term.one)
+      = UW152 (sdC155 kk (mm + e + 1)) (mm + 2)
+      from idx_UW152 (lt_sdC_reg1_155 kk (mm + e + 1)) mm,
+    lt_TW_UW_false152 (lt_Om_sdC_155 kk (mm + e + 1)) (mm + 2) (mm + e + 3)
+      (by omega)] at hstep
+  exact Bool.noConfusion hstep
+
+/-- **入れ子の族の一歩の正確な境界 — `k ≤ m ∧ j ≤ m`。**  §152.7 の famB の境界
+    (`k ≤ m`) の一段深い形。標準性の境界 (`j ≤ k ≤ m`、§155.6 で凍結) より真に広い。 -/
+theorem stepOK_iff_famC155 {m k j : Nat} (h3m : 3 ≤ m) (h3k : 3 ≤ k) (h3j : 3 ≤ j) :
+    KsetStepOK 0 (dict (famC155 m k j)) ↔ (k ≤ m ∧ j ≤ m) := by
+  constructor
+  · intro H
+    constructor
+    · rcases Nat.lt_or_ge m k with h | h
+      · exact absurd H (not_ksetStepOK_famC_k155 h3m h3j h)
+      · omega
+    · rcases Nat.lt_or_ge m j with h | h
+      · exact absurd H (not_ksetStepOK_famC_j155 h3m h3k h)
+      · omega
+  · intro h
+    exact ksetStepOK_famC155 h3k h3j h.1 h.2
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §155.3b Standardness pins the nested family inside the gate -/
+
+/-- 一般化した比較の否定 — `ψ₁` の塔 (底は任意) は、それより低い
+    `ψ₁^i(ψ₀ w)` 形の項より下に居ない。§152.9 の `ltL_bT_famB_false152` の一般形。 -/
+theorem ltL_nst_nstD0_false155 (x w : BT) : ∀ (f : Nat), ∀ (jn i : Nat), i ≤ jn →
+    BT.ltL f (BT.toL (nst132 (jn + 1) x)) (BT.toL (nst132 i (BT.D 0 w))) = false
+  | 0, _, _, _ => rfl
+  | f + 1, jn, 0, _ => by
+      show (if (1 : Nat) < 0 then true else if (0 : Nat) < 1 then false
+            else if nst132 jn x == w then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 jn x)) (BT.toL w)) = false
+      rw [if_neg (by omega), if_pos (by omega)]
+  | f + 1, jn, i + 1, h => by
+      obtain ⟨jq, rfl⟩ : ∃ jq, jn = jq + 1 := ⟨jn - 1, by omega⟩
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 (jq + 1) x == nst132 i (BT.D 0 w) then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 (jq + 1) x))
+              (BT.toL (nst132 i (BT.D 0 w)))) = false
+      rw [if_neg (by omega), if_neg (by omega)]
+      cases hbeq : (nst132 (jq + 1) x == nst132 i (BT.D 0 w)) with
+      | true =>
+          rw [if_pos rfl]
+          cases f with
+          | zero => rfl
+          | succ f => rfl
+      | false =>
+          rw [if_neg (fun hc => Bool.noConfusion hc)]
+          exact ltL_nst_nstD0_false155 x w f jq i (by omega)
+
+/-- `m < j` では内の裸の塔は族の項より下に居ない。 -/
+theorem bT_not_lt_famC155 {m j : Nat} (k : Nat) (h : m < j) :
+    BT.lt (nst132 j BT.zero) (famC155 m k j) = false := by
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 1 := ⟨j - 1, by omega⟩
+  exact ltL_nst_nstD0_false155 BT.zero (famB132 k (jj + 1)) _ jj m (by omega)
+
+/-- `m < k` では中の famB は族の項より下に居ない。 -/
+theorem famB_not_lt_famC155 {m k : Nat} (j : Nat) (hk : 1 ≤ k) (h : m < k) :
+    BT.lt (famB132 k j) (famC155 m k j) = false := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 1 := ⟨k - 1, by omega⟩
+  exact ltL_nst_nstD0_false155 (BT.D 0 (nst132 j BT.zero)) (famB132 (kk + 1) j)
+    _ kk m (by omega)
+
+theorem famB_mem_GB_famC155 (k j : Nat) : ∀ m : Nat,
+    famB132 k j ∈ BT.GB 0 (famC155 m k j)
+  | 0 => by
+      show famB132 k j
+        ∈ (if 0 ≤ 0 then famB132 k j :: BT.GB 0 (famB132 k j) else [])
+      rw [if_pos (by omega)]
+      exact List.Mem.head _
+  | m + 1 => by
+      show famB132 k j
+        ∈ (if 0 ≤ 1 then famC155 m k j :: BT.GB 0 (famC155 m k j) else [])
+      rw [if_pos (by omega)]
+      exact List.Mem.tail _ (famB_mem_GB_famC155 k j m)
+
+theorem bT_mem_GB_famC155 (k j : Nat) : ∀ m : Nat,
+    nst132 j BT.zero ∈ BT.GB 0 (famC155 m k j)
+  | 0 => by
+      show nst132 j BT.zero
+        ∈ (if 0 ≤ 0 then famB132 k j :: BT.GB 0 (famB132 k j) else [])
+      rw [if_pos (by omega)]
+      exact List.Mem.tail _ (bT_mem_GB152 j k)
+  | m + 1 => by
+      show nst132 j BT.zero
+        ∈ (if 0 ≤ 1 then famC155 m k j :: BT.GB 0 (famC155 m k j) else [])
+      rw [if_pos (by omega)]
+      exact List.Mem.tail _ (bT_mem_GB_famC155 k j m)
+
+/-- **`m < k` の入れ子は `K` 標準でない。** -/
+theorem not_std_famC_k155 {m k j : Nat} (hk : 1 ≤ k) (hmk : m < k) :
+    BT.isStd (BT.D 0 (famC155 m k j)) = false := by
+  cases hs : BT.isStd (BT.D 0 (famC155 m k j)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famC155 m k j)
+          && (BT.GB 0 (famC155 m k j)).all (fun e => BT.lt e (famC155 m k j))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (famB_mem_GB_famC155 k j m)
+      rw [famB_not_lt_famC155 j hk hmk] at h2
+      exact Bool.noConfusion h2
+
+/-- **`m < j` の入れ子も `K` 標準でない。** -/
+theorem not_std_famC_j155 {m k j : Nat} (hmj : m < j) :
+    BT.isStd (BT.D 0 (famC155 m k j)) = false := by
+  cases hs : BT.isStd (BT.D 0 (famC155 m k j)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famC155 m k j)
+          && (BT.GB 0 (famC155 m k j)).all (fun e => BT.lt e (famC155 m k j))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (bT_mem_GB_famC155 k j m)
+      rw [bT_not_lt_famC155 k hmj] at h2
+      exact Bool.noConfusion h2
+
+/-- **主定理 — 入れ子の族は第一の門をどの高さ・どの深さでも反証できない。**
+    `K` 標準なら `k ≤ m` と `j ≤ m` が出て、門の一歩は定理になる。 -/
+theorem famC_no_refute155 {m k j : Nat} (h3k : 3 ≤ k) (h3j : 3 ≤ j)
+    (hs : BT.isStd (BT.D 0 (famC155 m k j)) = true) :
+    KsetStepOK 0 (dict (famC155 m k j)) := by
+  have hkm : k ≤ m := by
+    rcases Nat.lt_or_ge m k with h | h
+    · rw [not_std_famC_k155 (by omega) h] at hs
+      exact Bool.noConfusion hs
+    · omega
+  have hjm : j ≤ m := by
+    rcases Nat.lt_or_ge m j with h | h
+    · rw [not_std_famC_j155 h] at hs
+      exact Bool.noConfusion hs
+    · omega
+  exact ksetStepOK_famC155 h3k h3j hkm hjm
+
+/-- 一項ぶんの門、§87 の帰納法が消費する形。 -/
+theorem gateStd87_famC155 (m k j : Nat) (h3k : 3 ≤ k) (h3j : 3 ≤ j) :
+    GateStd87 (famC155 m k j) :=
+  fun _ hs => famC_no_refute155 h3k h3j hs
+
+/-- **§145.4 の H1 の義務、入れ子の族の上で。** -/
+theorem firstFire_famC155 (m k j : Nat) (h3k : 3 ≤ k) (h3j : 3 ≤ j)
+    (hs : BT.isStd (BT.D 0 (famC155 m k j)) = true) : FirstFire145 (famC155 m k j) :=
+  fun p hp _ hle y hy => (famC_no_refute155 h3k h3j hs p hp hle).2 y hy
+
+/-- 標準性は再帰的 — 入れ子の内側の `ψ₀` の標準性が取り出せる。 -/
+theorem isStd_inner_famC155 {k j : Nat} : ∀ m : Nat,
+    BT.isStd (famC155 m k j) = true → BT.isStd (BT.D 0 (famB132 k j)) = true
+  | 0, h => h
+  | m + 1, h => isStd_inner_famC155 m (isStd_of_D h)
+
+/-- **2.1(vi) の条項そのもの、入れ子の族の標準側の全域で。** -/
+theorem psiIdxOK_famC155 {m k j : Nat} (h3k : 3 ≤ k) (h3j : 3 ≤ j)
+    (hs : BT.isStd (BT.D 0 (famC155 m k j)) = true) :
+    PsiIdxOK 0 (dict (famC155 m k j)) := by
+  have hsi : BT.isStd (BT.D 0 (famB132 k j)) = true :=
+    isStd_inner_famC155 m (isStd_of_D hs)
+  have hb : btLe72 1 (BT.D 0 (famB132 k j)) = true := by
+    show (decide (0 ≤ 1) && btLe72 1 (famB132 k j)) = true
+    rw [btLe_famB152 k j]
+    rfl
+  have h0 : inT (dict (BT.D 0 (famB132 k j))) = true
+      ∧ lt (dict (BT.D 0 (famB132 k j))) M = true := by
+    rw [Trans.Dict.dict_D]
+    exact inT_collapse_gap3 0 (dict (famB132 k j)) (inT_dict_famB152 k j).1
+      (inT_dict_famB152 k j).2
+      (psiIdxOK_of_stepOK 0 _ (inT_dict_famB152 k j).1 (inT_dict_famB152 k j).2
+        (famB_no_refute152 k j hsi))
+  have hin := nst_inT152 hb h0 m
+  exact psiIdxOK_of_stepOK 0 _ hin.1 hin.2 (famC_no_refute155 h3k h3j hs)
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §155.4 The coefficient family: digit `(Ω₁, ψ_{Ω₁}(…))`, `A ⊖ Ω₁ = 0`
+
+`famE155 j = ψ₁(ψ₁²0 ⊕ ψ₀(ψ₁^j 0))`.  Its dict image is `ω^(TW 1 ⊕ s)` with
+`s = sd152 j < Ω₁`: the single wcnf digit is `(Ω₁, s)` — coefficient ≠ 1 and
+`subAP Ω₁ A = 0`, the corner every §136 exemption leaves.  The emitted index is
+`s` itself, BELOW `Ω₁`, while for `j ≥ 4` the escaping element `TW (j-1)` sits
+above `Ω₁` — the step genuinely has no way out, and standardness breaks in sync. -/
+
+/-- 係数の族。`famE155 j = ψ₁(ψ₁²0 ⊕ ψ₀(ψ₁^j 0))` — **§130 が名指しした
+    `famA132` そのもの** (`famE_eq_famA155`)。§132.5 はこの族の境界を `k < 9` の
+    測定で凍結した。ここでは全ての高さで証明する。 -/
+def famE155 (j : Nat) : BT :=
+  BT.D 1 (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 j BT.zero)))
+
+/-- §130 の `famA132` との同一視 — 定義そのまま。 -/
+theorem famE_eq_famA155 (j : Nat) : famE155 j = famA132 j := rfl
+
+/-- 種は `ψ_{Ω₁}` の形。 -/
+theorem sd_psi_form155 : ∀ jj : Nat, ∃ X : Term, sd152 (jj + 3) = psi (Z zero) X
+  | 0 => ⟨zero, sd3_152⟩
+  | jp + 1 => ⟨TW (jp + 3), by
+      rw [show jp + 1 + 3 = jp + 4 from rfl]
+      exact sd_psi152 jp⟩
+
+/-- `ψ_{Ω₁}(X)` は `TW` の塔のどの段 (`a ≥ 1`) よりも下。 -/
+theorem lt_psiOm_TW155 (X : Term) : ∀ a : Nat, lt (psi (Z zero) X) (TW (a + 1)) = true
+  | 0 => by
+      show lt (psi (Z zero) X) (phi zero (TW 0)) = true
+      rw [lt_psi_phi_eq102,
+        show lt (psi (Z zero) X) (TW 0) = true from by
+          show lt (psi (Z zero) X) (add (Z zero) (Z zero)) = true
+          rw [lt_nsum_add100 (show (psi (Z zero) X : Term) ≠ zero from by
+                intro hc; exact Term.noConfusion hc) rfl]
+          show ((psi (Z zero) X == Z zero) || lt (psi (Z zero) X) (Z zero)) = true
+          rw [show lt (psi (Z zero) X) (Z zero) = true from lt_psiOm_reg1_139 X]
+          exact Bool.or_true _,
+        Bool.or_true]
+  | a + 1 => by
+      show lt (psi (Z zero) X) (phi zero (TW (a + 1))) = true
+      rw [lt_psi_phi_eq102, lt_psiOm_TW155 X a, Bool.or_true]
+
+/-- 逆向き — 塔は `ψ_{Ω₁}(X)` より下に居ない。 -/
+theorem lt_TW_psi155 (X : Term) : ∀ a : Nat, lt (TW a) (psi (Z zero) X) = false
+  | 0 => by
+      show lt (add (Z zero) (Z zero)) (psi (Z zero) X) = false
+      rw [lt_add_psi102]
+      exact lt_Om_psi141 X
+  | a + 1 => by
+      show lt (phi zero (TW a)) (psi (Z zero) X) = false
+      rw [lt_phi_psi103, lt_TW_psi155 X a]
+      exact Bool.and_false _
+
+theorem splitFin_add_psi155 (p X : Term) :
+    splitFin (add p (psi (Z zero) X)) = (add p (psi (Z zero) X), 0) := by
+  show (ofList ((p :: toList (psi (Z zero) X)).take
+          ((p :: toList (psi (Z zero) X)).length
+            - ((p :: toList (psi (Z zero) X)).reverse.takeWhile (· == TM.Term.one)).length)),
+        ((p :: toList (psi (Z zero) X)).reverse.takeWhile (· == TM.Term.one)).length) = _
+  rw [show toList (psi (Z zero) X) = [psi (Z zero) X] from rfl,
+    show ([p, psi (Z zero) X].reverse : List Term) = [psi (Z zero) X, p] from rfl,
+    show List.takeWhile (· == TM.Term.one) [psi (Z zero) X, p] = [] from by
+      rw [List.takeWhile_cons,
+        show ((psi (Z zero) X : Term) == TM.Term.one) = false from rfl]
+      rfl]
+  rfl
+
+theorem phiShifted_add_psi155 (p X : Term) :
+    phiShifted zero (add p (psi (Z zero) X)) = false := by
+  show (isFP zero (splitFin (add p (psi (Z zero) X))).1
+        || (((add p (psi (Z zero) X) : Term) == zero) && (zero : Term).isSC)) = false
+  rw [splitFin_add_psi155 p X, isFP_add152]
+  rfl
+
+theorem le_psiOm_TW1_155 (X : Term) : le (psi (Z zero) X) (TW 1) = true := by
+  show ((psi (Z zero) X == TW 1) || lt (psi (Z zero) X) (TW 1)) = true
+  rw [lt_psiOm_TW155 X 0]
+  exact Bool.or_true _
+
+theorem plus_TW1_psi155 (X : Term) :
+    plus (TW 1) (psi (Z zero) X) = add (TW 1) (psi (Z zero) X) := by
+  rw [plus_cons66 (show toList (psi (Z zero) X) = [psi (Z zero) X] from rfl),
+    show toList (TW 1) = [TW 1] from rfl,
+    List.filter_cons_of_pos (by exact le_psiOm_TW1_155 X)]
+  rfl
+
+/-- **底の値 — `ψ₁(TW 1 ⊕ ψ_{Ω₁}X) = ω^(TW 1 ⊕ ψ_{Ω₁}X)`。** -/
+theorem collapse1_TW1_psi155 (X : Term) :
+    collapse 1 (add (TW 1) (psi (Z zero) X))
+      = phi zero (add (TW 1) (psi (Z zero) X)) := by
+  show omegaNF (plus (reg 1) (plus
+    (((wcnf (reg 2) (toList (add (TW 1) (psi (Z zero) X)))).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 2) (baseOf 1))).2.getD zero)
+    ((wcnf (reg 2) (toList (add (TW 1) (psi (Z zero) X)))).2))) = _
+  rw [show toList (add (TW 1) (psi (Z zero) X)) = [TW 1, psi (Z zero) X] from rfl,
+    wcnf_cons_lt (lt_TW_reg2_139 1)]
+  show omegaNF (plus (reg 1) (plus zero (ofList [TW 1, psi (Z zero) X]))) = _
+  rw [show (ofList [TW 1, psi (Z zero) X] : Term) = add (TW 1) (psi (Z zero) X) from rfl,
+    show plus zero (add (TW 1) (psi (Z zero) X)) = add (TW 1) (psi (Z zero) X) from rfl,
+    show plus (reg 1) (add (TW 1) (psi (Z zero) X)) = add (TW 1) (psi (Z zero) X) from by
+      show ofList (List.filter (fun a => le (TW 1) a) [Z zero]
+        ++ [TW 1, psi (Z zero) X]) = _
+      rw [show List.filter (fun a => le (TW 1) a) [Z zero] = [] from by
+        show (match le (TW 1) (Z zero) with
+              | true => Z zero :: List.filter (fun a => le (TW 1) a) []
+              | false => List.filter (fun a => le (TW 1) a) []) = []
+        rw [show le (TW 1) (Z zero) = false from le_TW_reg1_139 1]
+        rfl]
+      rfl]
+  exact omegaNF_add_psi139 (ltF_M_add139 (fun f => ltF_M_phi135 zero (TW 0) f) rfl X)
+
+/-- **閉じた形 — 係数の族の像。**  `dict (famE155 j) = ω^(TW 1 ⊕ sd152 j)`。 -/
+theorem dict_famE155 (jj : Nat) :
+    dict (famE155 (jj + 3)) = phi zero (add (TW 1) (sd152 (jj + 3))) := by
+  obtain ⟨X, hX⟩ := sd_psi_form155 jj
+  show collapse 1 (dict (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 (jj + 3) BT.zero)))) = _
+  rw [Trans.Dict.dict_sum,
+    show dict (nst132 2 BT.zero) = TW 1 from dict_bT152 0,
+    show dict (BT.D 0 (nst132 (jj + 3) BT.zero)) = sd152 (jj + 3) from rfl, hX,
+    plus_TW1_psi155 X]
+  exact collapse1_TW1_psi155 X
+
+theorem lt_E_reg1_155 (X : Term) :
+    lt (phi zero (add (TW 1) (psi (Z zero) X))) (reg 1) = false := by
+  rw [lt_phi_reg1_100,
+    show lt (add (TW 1) (psi (Z zero) X)) (reg 1) = false from by
+      rw [lt_add_nsum (show (reg 1 : Term) ≠ zero from by
+            intro hc; exact Term.noConfusion hc) rfl]
+      exact lt_TW_reg1_139 1]
+  exact Bool.and_false _
+
+/-- 発火する桁の指数の側 — `A = Ω₁` そのもの。 -/
+theorem wA_famE155 (X : Term) :
+    wA (reg 1) (phi zero (add (TW 1) (psi (Z zero) X))) = Z zero := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (phi zero (add (TW 1) (psi (Z zero) X))))))) = _
+  rw [logOm_phi0_135 (phiShifted_add_psi155 (TW 1) X),
+    show toList (add (TW 1) (psi (Z zero) X)) = [TW 1, psi (Z zero) X] from rfl,
+    show List.filter (fun q => !lt q (reg 1)) [TW 1, psi (Z zero) X] = [TW 1] from by
+      rw [List.filter_cons_of_pos (by
+            show (!lt (TW 1) (reg 1)) = true
+            rw [lt_TW_reg1_139 1]
+            rfl),
+        List.filter_cons_of_neg (by
+            intro hc
+            rw [lt_psiOm_reg1_139 X] at hc
+            exact Bool.noConfusion hc)]
+      rfl]
+  show divAP (reg 1) (TW 1) = _
+  show omegaNF (subAP (reg 1) (logOm (TW 1))) = _
+  rw [show logOm (TW 1) = TW 0 from logOm_phi0_135 (show phiShifted zero (TW 0) = false from rfl),
+    show subAP (reg 1) (TW 0) = Z zero from by
+      show (if ((Z zero : Term) == reg 1) = true then ofList [Z zero] else TW 0) = _
+      rw [if_pos (by rfl)]
+      rfl]
+  exact omegaNF_Z139 zero
+
+/-- 発火する桁の係数の側 — `C = ψ_{Ω₁}(X) ≠ 1`。 -/
+theorem wC_famE155 (X : Term) :
+    wC (reg 1) (phi zero (add (TW 1) (psi (Z zero) X))) = psi (Z zero) X := by
+  show omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+    (toList (logOm (phi zero (add (TW 1) (psi (Z zero) X))))))) = _
+  rw [logOm_phi0_135 (phiShifted_add_psi155 (TW 1) X),
+    show toList (add (TW 1) (psi (Z zero) X)) = [TW 1, psi (Z zero) X] from rfl,
+    show List.filter (fun q => lt q (reg 1)) [TW 1, psi (Z zero) X]
+        = [psi (Z zero) X] from by
+      rw [List.filter_cons_of_neg (by
+            intro hc
+            rw [lt_TW_reg1_139 1] at hc
+            exact Bool.noConfusion hc),
+        List.filter_cons_of_pos (by exact lt_psiOm_reg1_139 X)]
+      rfl]
+  show omegaNF (psi (Z zero) X) = _
+  exact omegaNF_psi139 (Z zero) X
+
+/-- **係数の族の `wcnf` — 桁は一つ、`(Ω₁, ψ_{Ω₁}X)`。** -/
+theorem wcnf_famE155 (X : Term) :
+    wcnf (reg 1) [phi zero (add (TW 1) (psi (Z zero) X))]
+      = ([((Z zero : Term), psi (Z zero) X)], zero) := by
+  rw [wcnf_cons_ge (lt_E_reg1_155 X)]
+  show ([(wA (reg 1) (phi zero (add (TW 1) (psi (Z zero) X))),
+         wC (reg 1) (phi zero (add (TW 1) (psi (Z zero) X))))], zero) = _
+  rw [wA_famE155 X, wC_famE155 X]
+
+/-- **吐かれる指数は係数から来る `ψ_{Ω₁}X` そのもの — `Ω₁` より下。** -/
+theorem idx_famE155 (X : Term) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        ((Z zero : Term), psi (Z zero) X)
+      = psi (Z zero) X := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (Z zero))) (psi (Z zero) X)) = _
+  rw [show subAP (reg 1) (Z zero) = zero from by
+      show (if ((Z zero : Term) == reg 1) = true then ofList [] else Z zero) = _
+      rw [if_pos (by rfl)]
+      rfl,
+    show mulL (reg 1) zero = zero from rfl]
+  show sub1 (ofList [omegaNF (plus zero (logOm (psi (Z zero) X)))]) = _
+  rw [show logOm (psi (Z zero) X) = psi (Z zero) X from rfl,
+    show plus zero (psi (Z zero) X) = psi (Z zero) X from rfl,
+    omegaNF_psi139 (Z zero) X]
+  show (if ((psi (Z zero) X : Term) == TM.Term.one) = true then ofList []
+        else psi (Z zero) X) = _
+  rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+
+/-- **主定理 — `j ≥ 4` の係数の族では門の一歩は成り立たない。**  逃げる元
+    `TW (j-1) ≥ Ω₁` に対し指数は `ψ_{Ω₁}(TW (j-1)) < Ω₁`。算術のどの免除も
+    届かない形 — `A ⊖ Ω₁ = 0` かつ係数の `K` が空でない。 -/
+theorem not_ksetStepOK_famE155 (jj : Nat) :
+    ¬ KsetStepOK 0 (dict (famE155 (jj + 4))) := by
+  intro H
+  have hd : dict (famE155 (jj + 4))
+      = phi zero (add (TW 1) (psi (Z zero) (TW (jj + 3)))) := by
+    have h := dict_famE155 (jj + 1)
+    rw [show jj + 1 + 3 = jj + 4 from rfl, sd_psi152 jj] at h
+    exact h
+  rw [hd] at H
+  have hp : (((none : Option Term), (none : Option Term)),
+      ((Z zero : Term), psi (Z zero) (TW (jj + 3))))
+      ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (wcnf (reg 1)
+          (toList (phi zero (add (TW 1) (psi (Z zero) (TW (jj + 3))))))).1 := by
+    rw [show toList (phi zero (add (TW 1) (psi (Z zero) (TW (jj + 3)))))
+          = [phi zero (add (TW 1) (psi (Z zero) (TW (jj + 3))))] from rfl,
+      wcnf_famE155 (TW (jj + 3))]
+    exact List.Mem.head _
+  have hstep := (H _ hp (by rfl)).2 (TW (jj + 3)) (Or.inr (by
+      show TW (jj + 3) ∈ Kset (reg 1) (psi (Z zero) (TW (jj + 3)))
+      rw [Kset_psi_reg152, Kset_TW152]
+      exact List.Mem.head _))
+  rw [show idxOf (reg (0 + 1)) (((none : Option Term), (none : Option Term)))
+        ((Z zero : Term), psi (Z zero) (TW (jj + 3))) = psi (Z zero) (TW (jj + 3))
+      from idx_famE155 (TW (jj + 3)),
+    lt_TW_psi155 (TW (jj + 3)) (jj + 3)] at hstep
+  exact Bool.noConfusion hstep
+
+/-! §155.4b Standardness breaks in exact sync on the coefficient family -/
+
+theorem ltL_bT_bT_false155 : ∀ (f a b : Nat), b ≤ a →
+    BT.ltL f (BT.toL (nst132 a BT.zero)) (BT.toL (nst132 b BT.zero)) = false
+  | 0, _, _, _ => rfl
+  | _ + 1, 0, 0, _ => rfl
+  | _ + 1, _ + 1, 0, _ => rfl
+  | _ + 1, 0, _ + 1, h => absurd h (by omega)
+  | f + 1, a + 1, b + 1, h => by
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 a BT.zero == nst132 b BT.zero then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 a BT.zero)) (BT.toL (nst132 b BT.zero))) = false
+      rw [if_neg (by omega), if_neg (by omega)]
+      cases hbeq : (nst132 a BT.zero == nst132 b BT.zero) with
+      | true =>
+          rw [if_pos rfl]
+          cases f with
+          | zero => rfl
+          | succ f => rfl
+      | false =>
+          rw [if_neg (fun hc => Bool.noConfusion hc)]
+          exact ltL_bT_bT_false155 f a b (by omega)
+
+theorem ltL_aux_famE155 : ∀ (f jj : Nat),
+    BT.ltL f [nst132 (jj + 3) BT.zero]
+      [nst132 2 BT.zero, BT.D 0 (nst132 (jj + 4) BT.zero)] = false
+  | 0, _ => rfl
+  | f + 1, jj => by
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 (jj + 2) BT.zero == nst132 1 BT.zero
+              then BT.ltL f [] [BT.D 0 (nst132 (jj + 4) BT.zero)]
+            else BT.ltL f (BT.toL (nst132 (jj + 2) BT.zero))
+              (BT.toL (nst132 1 BT.zero))) = false
+      rw [if_neg (by omega), if_neg (by omega),
+        if_neg (by rw [beq_bT_bT152 (jj + 2) 1 (by omega)]; exact Bool.noConfusion)]
+      exact ltL_bT_bT_false155 f (jj + 2) 1 (by omega)
+
+theorem ltL_bT_famE_false155 : ∀ (f jj : Nat),
+    BT.ltL f (BT.toL (nst132 (jj + 4) BT.zero)) (BT.toL (famE155 (jj + 4))) = false
+  | 0, _ => rfl
+  | f + 1, jj => by
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 (jj + 3) BT.zero
+                == BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 (jj + 4) BT.zero))
+              then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 (jj + 3) BT.zero))
+              (BT.toL (BT.sum (nst132 2 BT.zero)
+                (BT.D 0 (nst132 (jj + 4) BT.zero))))) = false
+      rw [if_neg (by omega), if_neg (by omega),
+        if_neg (fun hc => Bool.noConfusion hc)]
+      exact ltL_aux_famE155 f jj
+
+theorem bT_mem_GB_famE155 (j : Nat) : nst132 j BT.zero ∈ BT.GB 0 (famE155 j) := by
+  show nst132 j BT.zero
+    ∈ (if 0 ≤ 1 then
+        BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 j BT.zero))
+          :: BT.GB 0 (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 j BT.zero)))
+       else [])
+  rw [if_pos (by omega)]
+  refine List.Mem.tail _ ?_
+  show nst132 j BT.zero
+    ∈ BT.GB 0 (nst132 2 BT.zero) ++ BT.GB 0 (BT.D 0 (nst132 j BT.zero))
+  refine List.mem_append.mpr (Or.inr ?_)
+  show nst132 j BT.zero
+    ∈ (if 0 ≤ 0 then nst132 j BT.zero :: BT.GB 0 (nst132 j BT.zero) else [])
+  rw [if_pos (by omega)]
+  exact List.Mem.head _
+
+/-- **`j ≥ 4` の係数の族は `K` 標準でない。**  内の裸の塔が項全体より下に居ない。 -/
+theorem not_std_famE155 (jj : Nat) :
+    BT.isStd (BT.D 0 (famE155 (jj + 4))) = false := by
+  cases hs : BT.isStd (BT.D 0 (famE155 (jj + 4))) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famE155 (jj + 4))
+          && (BT.GB 0 (famE155 (jj + 4))).all
+              (fun e => BT.lt e (famE155 (jj + 4)))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (bT_mem_GB_famE155 (jj + 4))
+      rw [show BT.lt (nst132 (jj + 4) BT.zero) (famE155 (jj + 4)) = false from
+        ltL_bT_famE_false155 _ jj] at h2
+      exact Bool.noConfusion h2
+
+/-- 標準な唯一の発火形 `j = 3` — そこでは逃げる元は `0` で、一歩は成り立つ (計算)。 -/
+theorem stepOK_famE3_155 : KsetStepOK 0 (dict (famE155 3)) :=
+  ksetStepOK_of_b (by decide)
+
+theorem isStd_D0_famE3_155 : BT.isStd (BT.D 0 (famE155 3)) = true := by decide
+
+/-- **係数の族の門と標準性はちょうど同値 (`j ≥ 3`)。**  §152.12 の famB の一致が
+    係数 ≠ 1・`A ⊖ Ω₁ = 0` の角でも成り立つ。 -/
+theorem stepOK_iff_famE155 {j : Nat} (h3 : 3 ≤ j) :
+    KsetStepOK 0 (dict (famE155 j)) ↔ BT.isStd (BT.D 0 (famE155 j)) = true := by
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 3 := ⟨j - 3, by omega⟩
+  cases jj with
+  | zero => exact ⟨fun _ => isStd_D0_famE3_155, fun _ => stepOK_famE3_155⟩
+  | succ jp =>
+      constructor
+      · intro H
+        exact absurd H (by
+          rw [show jp + 1 + 3 = jp + 4 from rfl]
+          exact not_ksetStepOK_famE155 jp)
+      · intro hs
+        exfalso
+        rw [show jp + 1 + 3 = jp + 4 from rfl, not_std_famE155 jp] at hs
+        exact Bool.noConfusion hs
+
+/-- **主定理 — 係数の族は第一の門を反証できない。**  `K` 標準なら一歩は成り立つ。 -/
+theorem famE_no_refute155 {j : Nat} (h3 : 3 ≤ j)
+    (hs : BT.isStd (BT.D 0 (famE155 j)) = true) :
+    KsetStepOK 0 (dict (famE155 j)) := (stepOK_iff_famE155 h3).mpr hs
+
+/-- **§145.4 の H1 の義務、係数の族の上で。** -/
+theorem firstFire_famE155 (j : Nat) (h3 : 3 ≤ j)
+    (hs : BT.isStd (BT.D 0 (famE155 j)) = true) : FirstFire145 (famE155 j) :=
+  fun p hp _ hle y hy => (famE_no_refute155 h3 hs p hp hle).2 y hy
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §155.5 Multi-digit `wcnf`: sums of famB terms
+
+The self-sum `famB ⊕ famB` MERGES into one digit with coefficient `2 = 1 ⊕ 1` —
+the `mulL e c, c > 1` case.  The cross sum `famB m k ⊕ famB m' k'` (`m' < m`)
+keeps TWO firing digits; the second step's obligations discharge against the
+accumulated index `i₀ ⊕ Δ₂`. -/
+
+theorem plus_UW_self155 (s : Term) (j : Nat) :
+    plus (UW152 s (j + 2)) (UW152 s (j + 2))
+      = add (UW152 s (j + 2)) (UW152 s (j + 2)) := by
+  rw [plus_cons66 (show toList (UW152 s (j + 2)) = [UW152 s (j + 2)] from rfl),
+    show toList (UW152 s (j + 2)) = [UW152 s (j + 2)] from rfl,
+    List.filter_cons_of_pos (by
+      show ((UW152 s (j + 2) == UW152 s (j + 2))
+            || lt (UW152 s (j + 2)) (UW152 s (j + 2))) = true
+      rw [beq_self_eq_true]
+      rfl)]
+  rfl
+
+/-- **併合 — 同じ塔の和の `wcnf` は桁一つ、係数 `2`。** -/
+theorem wcnf_famBsum2_155 {s : Term} (hlt : lt s (reg 1) = true) (j : Nat) :
+    wcnf (reg 1) [UW152 s (j + 2), UW152 s (j + 2)]
+      = ([(UW152 s (j + 1), add TM.Term.one TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_152 hlt (j + 2)), wcnf_UW152 hlt j]
+  show (if (wA (reg 1) (UW152 s (j + 2)) == UW152 s (j + 1)) = true
+        then ((wA (reg 1) (UW152 s (j + 2)),
+               plus (wC (reg 1) (UW152 s (j + 2))) TM.Term.one) :: [], zero)
+        else ((wA (reg 1) (UW152 s (j + 2)), wC (reg 1) (UW152 s (j + 2)))
+              :: (UW152 s (j + 1), TM.Term.one) :: [], zero)) = _
+  rw [wA_UW152 hlt j, wC_UW152 hlt j, if_pos (beq_self_eq_true _),
+    show plus TM.Term.one TM.Term.one = add TM.Term.one TM.Term.one from rfl]
+
+/-- **係数 `2` の吐く指数 — `mulL` が係数の成分ごとに塔を作り、`⊕` で並ぶ。** -/
+theorem idx_famBsum2_155 {s : Term} (hlt : lt s (reg 1) = true) (j : Nat) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        (UW152 s (j + 1), add TM.Term.one TM.Term.one)
+      = add (UW152 s (j + 2)) (UW152 s (j + 2)) := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (UW152 s (j + 1))))
+    (add TM.Term.one TM.Term.one)) = _
+  rw [subAP_UW152 s (j + 1), mulL_Om1_UW152 hlt j]
+  show sub1 (ofList [omegaNF (plus (UW152 s (j + 1)) (logOm TM.Term.one)),
+                     omegaNF (plus (UW152 s (j + 1)) (logOm TM.Term.one))]) = _
+  rw [show logOm TM.Term.one = zero from rfl,
+    show plus (UW152 s (j + 1)) zero = UW152 s (j + 1) from rfl,
+    omegaNF_UW152 s (j + 1)]
+  show (if ((UW152 s (j + 2) : Term) == TM.Term.one) = true
+        then ofList (toList (UW152 s (j + 2)))
+        else add (UW152 s (j + 2)) (UW152 s (j + 2))) = _
+  rw [if_neg (by rw [beq_UW_one152 s (j + 2)]; exact Bool.noConfusion)]
+
+/-- **一段ぶんの門、係数 `2` の形。**  種の `K` の元がみな指数 (塔の対) より下なら済む。 -/
+theorem stepOK_famBsum2_155 {s : Term} (hlt : lt s (reg 1) = true) (j : Nat)
+    (H : ∀ y ∈ Kset (reg 1) s,
+      lt y (add (UW152 s (j + 2)) (UW152 s (j + 2))) = true) :
+    KsetStepOK 0 (add (UW152 s (j + 2)) (UW152 s (j + 2))) := by
+  intro p hp hle
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [UW152 s (j + 2), UW152 s (j + 2)]).1 := hp
+  rw [wcnf_famBsum2_155 hlt j] at hp
+  replace hp : p = (((none : Option Term), (none : Option Term)),
+      (UW152 s (j + 1), add TM.Term.one TM.Term.one)) := List.mem_singleton.mp hp
+  subst hp
+  constructor
+  · intro i0 hi0
+    have hi0x : (none : Option Term) = some i0 := hi0
+    cases hi0x
+  · intro y hy
+    show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      (UW152 s (j + 1), add TM.Term.one TM.Term.one)) = true
+    rw [idx_famBsum2_155 hlt j]
+    rcases hy with h | h
+    · rw [show (((none : Option Term), (none : Option Term)),
+          (UW152 s (j + 1), add TM.Term.one TM.Term.one)).2.1 = UW152 s (j + 1) from rfl,
+        Kset_UW152 s (j + 1)] at h
+      exact H y h
+    · rw [show (((none : Option Term), (none : Option Term)),
+          (UW152 s (j + 1), add TM.Term.one TM.Term.one)).2.2
+            = add TM.Term.one TM.Term.one from rfl] at h
+      exact absurd h (by intro hc; cases hc)
+
+/-- **併合の族の門 — `famB ⊕ famB` は標準側の全域で一歩を満たす。** -/
+theorem ksetStepOK_famBsum2_155 {m k : Nat} (h3 : 3 ≤ k) (hkm : k ≤ m) :
+    KsetStepOK 0 (dict (BT.sum (famB132 m k) (famB132 m k))) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  obtain ⟨d, rfl⟩ : ∃ d, m = (kk + d) + 3 := ⟨m - (kk + 3), by omega⟩
+  obtain ⟨_, _, hlt, _, _⟩ := sd_facts152 kk
+  rw [Trans.Dict.dict_sum,
+    show kk + d + 3 = (kk + d + 2) + 1 from rfl,
+    dict_famB152 kk (kk + d + 2),
+    plus_UW_self155 (sd152 (kk + 3)) (kk + d)]
+  refine stepOK_famBsum2_155 hlt (kk + d) ?_
+  intro y hy
+  cases kk with
+  | zero =>
+      rw [Kset_sd3_152] at hy
+      rw [List.mem_singleton.mp hy]
+      exact lt_zero_left (by intro hc; exact Term.noConfusion hc)
+  | succ jp =>
+      rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at hy
+      rw [List.mem_singleton.mp hy]
+      rw [lt_nsum_add100 (show (TW (jp + 3) : Term) ≠ zero from by
+            intro hc; exact Term.noConfusion hc) rfl]
+      show ((TW (jp + 3) == UW152 (sd152 (jp + 1 + 3)) (jp + 1 + d + 2))
+            || lt (TW (jp + 3)) (UW152 (sd152 (jp + 1 + 3)) (jp + 1 + d + 2))) = true
+      rw [lt_TW_UW152 _ (jp + 3) (jp + 1 + d + 2) (by omega)]
+      exact Bool.or_true _
+
+/-! §155.5b The cross sum: two firing digits -/
+
+theorem beq_UW_ne155' (s t : Term) {a b : Nat} (h : b < a) :
+    ((UW152 s a : Term) == UW152 t b) = false :=
+  beq_eq_false_iff_ne.mpr (fun hc => UW_ne155 t s b a h hc.symm)
+
+/-- **二桁の `wcnf` — 高さの違う塔の和は併合されない。** -/
+theorem wcnf_famBsumX_155 {s t : Term} (hs : lt s (reg 1) = true)
+    (ht : lt t (reg 1) = true) {a b : Nat} (hab : b < a) :
+    wcnf (reg 1) [UW152 s (a + 2), UW152 t (b + 2)]
+      = ([(UW152 s (a + 1), TM.Term.one), (UW152 t (b + 1), TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_152 hs (a + 2)), wcnf_UW152 ht b]
+  show (if (wA (reg 1) (UW152 s (a + 2)) == UW152 t (b + 1)) = true
+        then ((wA (reg 1) (UW152 s (a + 2)),
+               plus (wC (reg 1) (UW152 s (a + 2))) TM.Term.one) :: [], zero)
+        else ((wA (reg 1) (UW152 s (a + 2)), wC (reg 1) (UW152 s (a + 2)))
+              :: (UW152 t (b + 1), TM.Term.one) :: [], zero)) = _
+  rw [wA_UW152 hs a, wC_UW152 hs a,
+    if_neg (by
+      rw [beq_UW_ne155' s t (show b + 1 < a + 1 by omega)]
+      exact Bool.noConfusion)]
+
+/-- 最初の発火の一歩の後の状態。 -/
+theorem stepF_fire155 {s : Term} (hlt : lt s (reg 1) = true) (j : Nat) :
+    stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (j + 1), TM.Term.one)
+      = (some (UW152 s (j + 2)), some (psi (reg 1) (UW152 s (j + 2)))) := by
+  show (if le (reg 1) (UW152 s (j + 1)) = true
+        then (some (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                (UW152 s (j + 1), TM.Term.one)),
+              some (psi (reg 1) (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                (UW152 s (j + 1), TM.Term.one))))
+        else ((none : Option Term),
+              some (phiNF (UW152 s (j + 1)) (plus (baseOf 0) (sub1 TM.Term.one))))) = _
+  rw [if_pos (le_reg1_UW152 s (j + 1)), idx_UW152 hlt j]
+
+/-- 二歩目の吐く指数 — 直前の指数に塔を足す。 -/
+theorem idx2_155 {t : Term} (ht : lt t (reg 1) = true) (i0 : Term) (s2 : Option Term)
+    (b : Nat) :
+    idxOf (reg 1) (some i0, s2) (UW152 t (b + 1), TM.Term.one)
+      = plus i0 (UW152 t (b + 2)) := by
+  show plus i0 (mulL (mulL (reg 1) (subAP (reg 1) (UW152 t (b + 1)))) TM.Term.one) = _
+  rw [subAP_UW152 t (b + 1), mulL_Om1_UW152 ht b, mulL_UW_one152 t (b + 1)]
+
+theorem plus_UW_UW155 {s t : Term} (a b : Nat) (h : b < a) :
+    plus (UW152 s (a + 2)) (UW152 t (b + 2))
+      = add (UW152 s (a + 2)) (UW152 t (b + 2)) := by
+  rw [plus_cons66 (show toList (UW152 t (b + 2)) = [UW152 t (b + 2)] from rfl),
+    show toList (UW152 s (a + 2)) = [UW152 s (a + 2)] from rfl,
+    List.filter_cons_of_pos (by
+      show ((UW152 t (b + 2) == UW152 s (a + 2))
+            || lt (UW152 t (b + 2)) (UW152 s (a + 2))) = true
+      rw [lt_UW_UW_lt155 t s (b + 2) (a + 2) (by omega)]
+      exact Bool.or_true _)]
+  rfl
+
+/-- **一段ぶんの門、二桁の形。**  一歩目は種 `s` の `K` の塔の義務、二歩目は
+    直前の指数の `K` (= `K s`) と種 `t` の `K` の義務 — どれも指数の和より下なら済む。 -/
+theorem stepOK_famBsumX_155 {s t : Term} (hs : lt s (reg 1) = true)
+    (ht : lt t (reg 1) = true) {a b : Nat} (hab : b < a)
+    (H1 : ∀ y ∈ Kset (reg 1) s, lt y (UW152 s (a + 2)) = true)
+    (H1' : ∀ y ∈ Kset (reg 1) s,
+      lt y (add (UW152 s (a + 2)) (UW152 t (b + 2))) = true)
+    (H2' : ∀ y ∈ Kset (reg 1) t,
+      lt y (add (UW152 s (a + 2)) (UW152 t (b + 2))) = true) :
+    KsetStepOK 0 (add (UW152 s (a + 2)) (UW152 t (b + 2))) := by
+  intro p hp hle
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [UW152 s (a + 2), UW152 t (b + 2)]).1 := hp
+  rw [wcnf_famBsumX_155 hs ht hab] at hp
+  replace hp : p ∈ [(((none : Option Term), (none : Option Term)),
+        (UW152 s (a + 1), TM.Term.one)),
+      (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one), (UW152 t (b + 1), TM.Term.one))] := hp
+  rw [stepF_fire155 hs a] at hp
+  rcases List.mem_cons.mp hp with h1 | h1
+  · subst h1
+    constructor
+    · intro i0 hi0
+      have hi0x : (none : Option Term) = some i0 := hi0
+      cases hi0x
+    · intro y hy
+      show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one)) = true
+      rw [idx_UW152 hs a]
+      rcases hy with h | h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.1 = UW152 s (a + 1) from rfl,
+          Kset_UW152 s (a + 1)] at h
+        exact H1 y h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+  · replace h1 : p = ((some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))), (UW152 t (b + 1), TM.Term.one)) :=
+      List.mem_singleton.mp h1
+    subst h1
+    constructor
+    · intro i0 hi0 y hy
+      have hi0e : i0 = UW152 s (a + 2) := by
+        have hx : some (UW152 s (a + 2)) = some i0 := hi0
+        injection hx with hx2
+        exact hx2.symm
+      subst hi0e
+      rw [Kset_UW152 s (a + 2)] at hy
+      show lt y (idxOf (reg 1) (some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))) (UW152 t (b + 1), TM.Term.one)) = true
+      rw [idx2_155 ht (UW152 s (a + 2)) _ b, plus_UW_UW155 a b hab]
+      exact H1' y hy
+    · intro y hy
+      show lt y (idxOf (reg 1) (some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))) (UW152 t (b + 1), TM.Term.one)) = true
+      rw [idx2_155 ht (UW152 s (a + 2)) _ b, plus_UW_UW155 a b hab]
+      rcases hy with h | h
+      · rw [show ((some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2)))),
+            (UW152 t (b + 1), TM.Term.one)).2.1 = UW152 t (b + 1) from rfl,
+          Kset_UW152 t (b + 1)] at h
+        exact H2' y h
+      · rw [show ((some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2)))),
+            (UW152 t (b + 1), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+
+/-- **二桁の族の門 — `famB m k ⊕ famB m' k'` (`m' < m`) は標準側の全域で一歩を満たす。** -/
+theorem ksetStepOK_famB_sum155 {m k m' k' : Nat} (h3 : 3 ≤ k) (hkm : k ≤ m)
+    (h3' : 3 ≤ k') (hk'm' : k' ≤ m') (hm'm : m' < m) :
+    KsetStepOK 0 (dict (BT.sum (famB132 m k) (famB132 m' k'))) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  obtain ⟨kq, rfl⟩ : ∃ kq, k' = kq + 3 := ⟨k' - 3, by omega⟩
+  obtain ⟨d, rfl⟩ : ∃ d, m = (kk + d) + 3 := ⟨m - (kk + 3), by omega⟩
+  obtain ⟨e, rfl⟩ : ∃ e, m' = (kq + e) + 3 := ⟨m' - (kq + 3), by omega⟩
+  obtain ⟨_, _, hs, _, _⟩ := sd_facts152 kk
+  obtain ⟨_, _, ht, _, _⟩ := sd_facts152 kq
+  have hab : kq + e < kk + d := by omega
+  rw [Trans.Dict.dict_sum,
+    show kk + d + 3 = (kk + d + 2) + 1 from rfl,
+    show kq + e + 3 = (kq + e + 2) + 1 from rfl,
+    dict_famB152 kk (kk + d + 2), dict_famB152 kq (kq + e + 2),
+    plus_UW_UW155 (kk + d) (kq + e) hab]
+  refine stepOK_famBsumX_155 hs ht hab ?_ ?_ ?_
+  · intro y hy
+    cases kk with
+    | zero =>
+        rw [Kset_sd3_152] at hy
+        rw [List.mem_singleton.mp hy]
+        exact lt_zero_left (ne_zero_UW152 _ _)
+    | succ jp =>
+        rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at hy
+        rw [List.mem_singleton.mp hy]
+        exact lt_TW_UW152 _ (jp + 3) (jp + 1 + d + 2) (by omega)
+  · intro y hy
+    cases kk with
+    | zero =>
+        rw [Kset_sd3_152] at hy
+        rw [List.mem_singleton.mp hy]
+        exact lt_zero_left (by intro hc; exact Term.noConfusion hc)
+    | succ jp =>
+        rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at hy
+        rw [List.mem_singleton.mp hy]
+        rw [lt_nsum_add100 (show (TW (jp + 3) : Term) ≠ zero from by
+              intro hc; exact Term.noConfusion hc) rfl]
+        show ((TW (jp + 3) == UW152 (sd152 (jp + 1 + 3)) (jp + 1 + d + 2))
+              || lt (TW (jp + 3)) (UW152 (sd152 (jp + 1 + 3)) (jp + 1 + d + 2))) = true
+        rw [lt_TW_UW152 _ (jp + 3) (jp + 1 + d + 2) (by omega)]
+        exact Bool.or_true _
+  · intro y hy
+    cases kq with
+    | zero =>
+        rw [Kset_sd3_152] at hy
+        rw [List.mem_singleton.mp hy]
+        exact lt_zero_left (by intro hc; exact Term.noConfusion hc)
+    | succ jp =>
+        rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at hy
+        rw [List.mem_singleton.mp hy]
+        rw [lt_nsum_add100 (show (TW (jp + 3) : Term) ≠ zero from by
+              intro hc; exact Term.noConfusion hc) rfl]
+        show ((TW (jp + 3) == UW152 (sd152 (kk + 3)) (kk + d + 2))
+              || lt (TW (jp + 3)) (UW152 (sd152 (kk + 3)) (kk + d + 2))) = true
+        rw [lt_TW_UW152 _ (jp + 3) (kk + d + 2) (by omega)]
+        exact Bool.or_true _
+
+/-- 一項ぶんの門と H1 の義務、和の族の上で。 -/
+theorem gateStd87_famBsum2_155 (m k : Nat) (h3 : 3 ≤ k) (hkm : k ≤ m) :
+    GateStd87 (BT.sum (famB132 m k) (famB132 m k)) :=
+  fun _ _ => ksetStepOK_famBsum2_155 h3 hkm
+
+theorem gateStd87_famB_sum155 (m k m' k' : Nat) (h3 : 3 ≤ k) (hkm : k ≤ m)
+    (h3' : 3 ≤ k') (hk'm' : k' ≤ m') (hm'm : m' < m) :
+    GateStd87 (BT.sum (famB132 m k) (famB132 m' k')) :=
+  fun _ _ => ksetStepOK_famB_sum155 h3 hkm h3' hk'm' hm'm
+
+theorem firstFire_famBsum2_155 (m k : Nat) (h3 : 3 ≤ k) (hkm : k ≤ m) :
+    FirstFire145 (BT.sum (famB132 m k) (famB132 m k)) :=
+  fun p hp _ hle y hy => (ksetStepOK_famBsum2_155 h3 hkm p hp hle).2 y hy
+
+theorem firstFire_famB_sum155 (m k m' k' : Nat) (h3 : 3 ≤ k) (hkm : k ≤ m)
+    (h3' : 3 ≤ k') (hk'm' : k' ≤ m') (hm'm : m' < m) :
+    FirstFire145 (BT.sum (famB132 m k) (famB132 m' k')) :=
+  fun p hp _ hle y hy => (ksetStepOK_famB_sum155 h3 hkm h3' hk'm' hm'm p hp hle).2 y hy
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §155.6 Measurement (frozen) — the theorems against the kernel and the pools
+
+Everything below is measurement, not proof. -/
+
+/-! famC の閉じた形の照合 — `dict` の値は本当に入れ子の種の塔。 -/
+#guard (List.range 3).all fun m => (List.range 2).all fun kk => (List.range 2).all fun jj =>
+  dict (famC155 (m + 1) (kk + 3) (jj + 3)) == UW152 (sdC155 kk jj) m
+
+/-! **famC の二つの境界の凍結 (`3 ≤ m, k, j < 9`)。**  一歩は `k ≤ m ∧ j ≤ m`
+    (証明済みの iff と一致)、標準性は `j ≤ k ∧ k ≤ m`。門の一歩の領域は標準領域より
+    真に広い — `j > k` の楔では一歩は立つが標準性は立たない。 -/
+#guard (List.range 6).all fun m0 => (List.range 6).all fun k0 => (List.range 6).all fun j0 =>
+  (stepOKb 0 (dict (famC155 (m0 + 3) (k0 + 3) (j0 + 3)))
+      == (decide (k0 ≤ m0) && decide (j0 ≤ m0)))
+  && (BT.isStd (BT.D 0 (famC155 (m0 + 3) (k0 + 3) (j0 + 3)))
+      == (decide (j0 ≤ k0) && decide (k0 ≤ m0)))
+
+/-! famE の閉じた形と境界の凍結 — 一歩も標準性も `j = 3` だけ (発火形 `j ≥ 3` の中で)。 -/
+#guard (List.range 6).all fun jj =>
+  dict (famE155 (jj + 3)) == phi zero (add (TW 1) (sd152 (jj + 3)))
+#guard (List.range 7).all fun j0 =>
+  (stepOKb 0 (dict (famE155 (j0 + 3))) == decide (j0 == 0))
+  && (BT.isStd (BT.D 0 (famE155 (j0 + 3))) == decide (j0 == 0))
+
+/-! 和の族の照合 — 併合 (係数 2) も二桁も、定理の領域で一歩の判定器は真。 -/
+#guard (List.range 4).all fun k0 => (List.range 3).all fun d =>
+  stepOKb 0 (dict (BT.sum (famB132 (k0 + 3 + d) (k0 + 3)) (famB132 (k0 + 3 + d) (k0 + 3))))
+#guard (List.range 3).all fun k0 => (List.range 3).all fun d =>
+  stepOKb 0 (dict (BT.sum (famB132 (k0 + 4 + d) (k0 + 3)) (famB132 (k0 + 3) (k0 + 3))))
+
+/-! **母集団との重なり。**  famC は §132.5 の famPool132 の第二の族そのもの
+    (`m, k, j < 8`)、famE は famPool132 の第一の族 (`m = 1, p = 2`) と §145.5 の
+    fm145 (`j ≤ 6`) に居る。famC は fm145 に居ない — 入れ子の深さ 2 は §145.5 の
+    掃きの外。凍結済みの掃きは低い高さだけ、定理は全ての高さ。 -/
+#guard famPool132.contains (famC155 4 4 4)
+#guard famPool132.contains (famE155 4)
+#guard fm145.contains (famE155 4)
+#guard fm145.contains (famE155 6)
+#guard !(fm145.contains (famC155 4 4 4))
+
+/-! **H1 の残る母集団は凍結済みの母集団の上で空。**  §145.4 の H1 が義務を課すのは
+    `hotb136 = true` かつ `laterHotb145 = false` の `K` 標準な項だけ — その形は
+    §132.5 の famPool132 にも §136.4 の pool136 にも §145.5 の fm145 にも 0 本。 -/
+#guard (famPool132.filter (fun a => btLe72 1 a && !btLe72 0 a && BT.isStd (BT.D 0 a)
+    && !(fireK132 a).isEmpty && hotb136 a && !hiPure145 a && !laterHotb145 a)).length == 0
+#guard (pool136.filter (fun a => btLe72 1 a && !btLe72 0 a && BT.isStd (BT.D 0 a)
+    && !(fireK132 a).isEmpty && hotb136 a && !hiPure145 a && !laterHotb145 a)).length == 0
+#guard (fm145.filter (fun a => resid136 a && hotb136 a && !hiPure145 a
+    && !laterHotb145 a)).length == 0
+
+/-! ### §155.7 What fraction of the §132 residual the PROVED classes are
+
+Shape deciders for the classes closed at every height by §152 + §155:
+pure towers, famB, famC (nested), famE (= famA132), and famB ⊕ famB. -/
+
+def isTow155 : BT → Bool
+  | BT.zero => true
+  | BT.D 1 a => isTow155 a
+  | _ => false
+
+def isFamB155 : BT → Bool
+  | BT.D 1 a => isFamB155 a
+  | BT.D 0 a => isTow155 a
+  | _ => false
+
+def isFamC155 : BT → Bool
+  | BT.D 1 a => isFamC155 a
+  | BT.D 0 a => isFamB155 a
+  | _ => false
+
+def isFamE155 : BT → Bool
+  | BT.D 1 (BT.sum x (BT.D 0 y)) => (x == nst132 2 BT.zero) && isTow155 y
+  | _ => false
+
+def isSumBB155 : BT → Bool
+  | BT.sum x y => isFamB155 x && isFamB155 y
+  | _ => false
+
+def covered155 (a : BT) : Bool :=
+  isTow155 a || isFamB155 a || isFamC155 a || isFamE155 a || isSumBB155 a
+
+/-! **被覆の凍結。**  §132 の残り (`resid136`) のうち、証明済みの形の類に文字通り
+    入っている本数:
+    famPool132 (2455 本): famB 391 + famC 80 + famE 1 + famB⊕famB 32 = **504 本 (20.5%)**。
+    pool136 (925 本): **0 本** — pool136 は混合の和 (裸の塔 ⊕ famB、famB ⊕ 裸の塔、
+    和の種) だけで組んであり、まだ証明の類の外。
+    fm145 (3371 本): **15 本**。
+    残る形の名: 混合の塔の和と、種が和の `ψ₀` — §155.5 の `stepOK_famBsumX_155` の
+    種を `Ω₁` (裸の塔) と和に広げるのが次の一歩。 -/
+#guard (famPool132.filter resid136).length == 2455
+#guard ((famPool132.filter resid136).countP isFamB155,
+        (famPool132.filter resid136).countP isFamC155,
+        (famPool132.filter resid136).countP isFamE155,
+        (famPool132.filter resid136).countP isSumBB155,
+        (famPool132.filter resid136).countP covered155) == (391, 80, 1, 32, 504)
+#guard (pool136.filter resid136).length == 925
+#guard ((pool136.filter resid136).countP covered155) == 0
+#guard (fm145.filter resid136).length == 3371
+#guard ((fm145.filter resid136).countP covered155) == 15
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms lt_UW_UW_same155
+#print axioms lt_UW_UW_lt155
+#print axioms lt_UW_UW_false155
+#print axioms collapse0_UW155
+#print axioms dict_famC155
+#print axioms ksetStepOK_famC155
+#print axioms not_ksetStepOK_famC_k155
+#print axioms not_ksetStepOK_famC_j155
+#print axioms stepOK_iff_famC155
+#print axioms famC_no_refute155
+#print axioms firstFire_famC155
+#print axioms psiIdxOK_famC155
+#print axioms dict_famE155
+#print axioms not_ksetStepOK_famE155
+#print axioms not_std_famE155
+#print axioms stepOK_iff_famE155
+#print axioms famE_no_refute155
+#print axioms firstFire_famE155
+#print axioms ksetStepOK_famBsum2_155
+#print axioms ksetStepOK_famB_sum155
+#print axioms firstFire_famBsum2_155
+#print axioms firstFire_famB_sum155
+
+end
+
 end Evidence.Region
