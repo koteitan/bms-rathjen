@@ -23,7 +23,8 @@
     - 🚨 326 行目に [E.cert](table-r1.md#ecert) を付ける
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`t \in \mathfrak{T}(M)`$ と $`f_n \in \mathfrak{T}(M)`$ を出す
         - 🚨🤖 `PsiIdxOKStd172` を証明するか反証する
-          - 🚨🤖 混合和の族に門の段を通す
+          - ✅ 混合和の族に門の段を通す
+          - 🚨🤖 ψ₁ で包まれた混合和に門の段を通す
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`f_n \lt t`$ と $`f_n \lt f_{n+1}`$ を出す
         - 🚨🤖 `HiMono89` を証明するか反証する
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を出す

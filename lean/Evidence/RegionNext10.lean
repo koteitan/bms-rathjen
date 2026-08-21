@@ -7158,4 +7158,1327 @@ def covered155 (a : BT) : Bool :=
 
 end
 
+
+
+/-!
+# §156 THE FIRST GATE: the cross sum with an ARBITRARY second seed, and sum-seed towers
+
+§155.5 closed the cross sum `famB m k ⊕ famB m' k'` — both summands towers over
+famB seeds (`sd152 k < Ω₁`).  This file widens it in the two directions §155.7
+named as the residual:
+
+  §156.1  Seed-free plumbing: every §152.3 `wcnf`/`idxOf` lemma about the tower
+          `UW152 s j` holds for an ARBITRARY seed `s` — including `s = Ω₁`,
+          whose tower is `TW` (`TW (j+1) = UW152 Ω₁ j`).  The hypothesis
+          `lt s Ω₁ = true` was never load-bearing.
+
+  §156.2  Order/equality tools: seed-injectivity of the towers, `le` on `TW`.
+
+  §156.3  The GENERAL cross sum `UW152 s (a+2) ⊕ UW152 t (b+2)`: two firing
+          digits for any two seeds (equal heights allowed when the seeds
+          differ), and the step lemma `stepOK_sumX156` whose obligations are
+          only the K-sets of the two seeds.
+
+  §156.4  MIXED sums at the BT level, both orders:
+          `famB m k ⊕ ψ₁^p 0` (`3 ≤ k ≤ m`, `1 ≤ p ≤ m`, the low towers
+          `p ≤ 3` by their own small digits — `(1,1)`, `(1⊕1,1)` do not fire,
+          `(Ω₁,1)` fires into the accumulated index) and
+          `ψ₁^p 0 ⊕ famB m k` (`3 ≤ k`, `3 ≤ m < p`, `k ≤ p` — the escaping
+          element discharges against the HEAD tower's index).
+
+  §156.5  SUM-SEED towers `famD156 m k j = ψ₁^m(ψ₀(ψ₁^k 0 ⊕ ψ₁^j 0))`:
+          the seed's closed forms in all five regimes
+          (`j = k` merges to coefficient 2; `4 ≤ j < k` two firing digits;
+          `j = 3` fires as `(Ω₁,1)` and the value drops to `ψ_{Ω₁}(tower ⊕ 1)`;
+          `j ∈ {1,2}` do not fire and the value is `φ̄(j, ψ_{Ω₁}(tower))`),
+          the tower over each seed, and the step on `3 ≤ k ≤ m`, `1 ≤ j ≤ k` —
+          exactly the residual range (frozen below).
+
+  §156.6  Measurement (frozen): the resid boundaries of the three families,
+          kernel re-checks of the closed forms, pool membership, and the new
+          coverage counts on `famPool132` / `pool136` / `fm145`.
+-/
+
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §156.1 Seed-free plumbing for the tower `UW152 s j` -/
+
+/-- 塔は `Ω₁` より下に居ない — 種がどれでも。§152.3 の `lt_UW_reg1_152` から
+    仮定 `s < Ω₁` を外したもの。底 `Ω₁ ⊕ s` の頭が `Ω₁` なので種は見えない。 -/
+theorem lt_UW_reg1_156 (s : Term) : ∀ j : Nat, lt (UW152 s j) (reg 1) = false
+  | 0 => by
+      show lt (phi zero (add (Z zero) s)) (reg 1) = false
+      rw [lt_phi_reg1_100,
+        show lt (add (Z zero) s) (reg 1) = false from by
+          rw [lt_add_nsum (show (reg 1 : Term) ≠ zero from by
+                intro hc; exact Term.noConfusion hc) rfl]
+          show lt (Z zero) (Z zero) = false
+          exact lt_irrefl _]
+      exact Bool.and_false _
+  | j + 1 => by
+      show lt (phi zero (UW152 s j)) (reg 1) = false
+      rw [lt_phi_reg1_100, lt_UW_reg1_156 s j]
+      exact Bool.and_false _
+
+theorem le_UW_reg1_156 (s : Term) (j : Nat) : le (UW152 s j) (reg 1) = false := by
+  show (((UW152 s j : Term) == Z zero) || lt (UW152 s j) (Z zero)) = false
+  rw [beq_UW_Om152 s j, show lt (UW152 s j) (Z zero) = false from lt_UW_reg1_156 s j]
+  rfl
+
+theorem plus_Om1_UW156 (s : Term) (j : Nat) :
+    plus (reg 1) (UW152 s j) = UW152 s j := by
+  cases j with
+  | zero =>
+      show ofList (List.filter (fun a => le (phi zero (add (Z zero) s)) a) [Z zero]
+        ++ [phi zero (add (Z zero) s)]) = _
+      rw [show List.filter (fun a => le (phi zero (add (Z zero) s)) a) [Z zero] = [] from by
+        show (match le (phi zero (add (Z zero) s)) (Z zero) with
+              | true => Z zero
+                  :: List.filter (fun a => le (phi zero (add (Z zero) s)) a) []
+              | false => List.filter (fun a => le (phi zero (add (Z zero) s)) a) []) = []
+        rw [show le (phi zero (add (Z zero) s)) (Z zero) = false from le_UW_reg1_156 s 0]
+        rfl]
+      rfl
+  | succ j =>
+      show ofList (List.filter (fun a => le (phi zero (UW152 s j)) a) [Z zero]
+        ++ [phi zero (UW152 s j)]) = _
+      rw [show List.filter (fun a => le (phi zero (UW152 s j)) a) [Z zero] = [] from by
+        show (match le (phi zero (UW152 s j)) (Z zero) with
+              | true => Z zero :: List.filter (fun a => le (phi zero (UW152 s j)) a) []
+              | false => List.filter (fun a => le (phi zero (UW152 s j)) a) []) = []
+        rw [show le (phi zero (UW152 s j)) (Z zero) = false from le_UW_reg1_156 s (j + 1)]
+        rfl]
+      rfl
+
+theorem mulL_Om1_UW156 (s : Term) (j : Nat) :
+    mulL (reg 1) (UW152 s (j + 1)) = UW152 s (j + 1) := by
+  show ofList [omegaNF (plus (reg 1) (logOm (UW152 s (j + 1))))] = _
+  rw [logOm_UW152 s j, plus_Om1_UW156 s j, omegaNF_UW152 s j]
+  rfl
+
+theorem filter_ge_UW156 (s : Term) (j : Nat) :
+    List.filter (fun q => !lt q (reg 1)) [UW152 s j] = [UW152 s j] := by
+  show (match (!lt (UW152 s j) (reg 1)) with
+        | true => UW152 s j :: List.filter (fun q => !lt q (reg 1)) []
+        | false => List.filter (fun q => !lt q (reg 1)) []) = _
+  rw [lt_UW_reg1_156 s j]
+  rfl
+
+theorem filter_lt_UW156 (s : Term) (j : Nat) :
+    List.filter (fun q => lt q (reg 1)) [UW152 s j] = [] := by
+  show (match (lt (UW152 s j) (reg 1)) with
+        | true => UW152 s j :: List.filter (fun q => lt q (reg 1)) []
+        | false => List.filter (fun q => lt q (reg 1)) []) = _
+  rw [lt_UW_reg1_156 s j]
+  rfl
+
+/-- **発火する段の `wcnf` — 桁一つ、指数は一段下の塔。種は任意。** -/
+theorem wA_UW156 (s : Term) (j : Nat) :
+    wA (reg 1) (UW152 s (j + 2)) = UW152 s (j + 1) := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (UW152 s (j + 2)))))) = _
+  rw [logOm_UW152 s (j + 1),
+    show toList (UW152 s (j + 1)) = [UW152 s (j + 1)] from rfl,
+    filter_ge_UW156 s (j + 1)]
+  show ofList [divAP (reg 1) (UW152 s (j + 1))] = _
+  show ofList [omegaNF (subAP (reg 1) (logOm (UW152 s (j + 1))))] = _
+  rw [logOm_UW152 s j, subAP_UW152 s j, omegaNF_UW152 s j]
+  rfl
+
+theorem wC_UW156 (s : Term) (j : Nat) :
+    wC (reg 1) (UW152 s (j + 2)) = TM.Term.one := by
+  show omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+    (toList (logOm (UW152 s (j + 2)))))) = _
+  rw [logOm_UW152 s (j + 1),
+    show toList (UW152 s (j + 1)) = [UW152 s (j + 1)] from rfl,
+    filter_lt_UW156 s (j + 1)]
+  exact omegaNF_zero135
+
+theorem wcnf_UW156 (s : Term) (j : Nat) :
+    wcnf (reg 1) [UW152 s (j + 2)] = ([(UW152 s (j + 1), TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_156 s (j + 2))]
+  show ([(wA (reg 1) (UW152 s (j + 2)), wC (reg 1) (UW152 s (j + 2)))], zero) = _
+  rw [wA_UW156 s j, wC_UW156 s j]
+
+theorem idx_UW156 (s : Term) (j : Nat) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      (UW152 s (j + 1), TM.Term.one) = UW152 s (j + 2) := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (UW152 s (j + 1)))) TM.Term.one) = _
+  rw [subAP_UW152 s (j + 1), mulL_Om1_UW156 s j, mulL_UW_one152 s (j + 1),
+    sub1_UW152 s (j + 2)]
+
+/-- 最初の発火の一歩の後の状態 — 種は任意。 -/
+theorem stepF_fire156 (s : Term) (j : Nat) :
+    stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (j + 1), TM.Term.one)
+      = (some (UW152 s (j + 2)), some (psi (reg 1) (UW152 s (j + 2)))) := by
+  show (if le (reg 1) (UW152 s (j + 1)) = true
+        then (some (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                (UW152 s (j + 1), TM.Term.one)),
+              some (psi (reg 1) (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                (UW152 s (j + 1), TM.Term.one))))
+        else ((none : Option Term),
+              some (phiNF (UW152 s (j + 1)) (plus (baseOf 0) (sub1 TM.Term.one))))) = _
+  rw [if_pos (le_reg1_UW152 s (j + 1)), idx_UW156 s j]
+
+/-- 二歩目の吐く指数 — 直前の指数に塔を足す。種は任意。 -/
+theorem idx2_156 (t : Term) (i0 : Term) (s2 : Option Term) (b : Nat) :
+    idxOf (reg 1) (some i0, s2) (UW152 t (b + 1), TM.Term.one)
+      = plus i0 (UW152 t (b + 2)) := by
+  show plus i0 (mulL (mulL (reg 1) (subAP (reg 1) (UW152 t (b + 1)))) TM.Term.one) = _
+  rw [subAP_UW152 t (b + 1), mulL_Om1_UW156 t b, mulL_UW_one152 t (b + 1)]
+
+/-! ### §156.2 `TW` is the tower over `Ω₁`; seed-injectivity; order tools -/
+
+/-- `TW (j+1) = UW152 Ω₁ j` — 裸の塔は種 `Ω₁` の `UW` の塔。 -/
+theorem TW_UW156 : ∀ j : Nat, TW (j + 1) = UW152 (Z zero) j
+  | 0 => rfl
+  | j + 1 => congrArg (phi zero) (TW_UW156 j)
+
+/-- 同じ高さの塔が等しければ種も等しい。 -/
+theorem UW_seed_ne156 {s t : Term} (h : s ≠ t) : ∀ j : Nat, UW152 s j ≠ UW152 t j
+  | 0 => fun hc => by
+      have hc2 : phi zero (add (Z zero) s) = phi zero (add (Z zero) t) := hc
+      injection hc2 with _ h2
+      injection h2 with _ h3
+      exact h h3
+  | j + 1 => fun hc => by
+      have hc2 : phi zero (UW152 s j) = phi zero (UW152 t j) := hc
+      injection hc2 with _ h2
+      exact UW_seed_ne156 h j h2
+
+theorem beq_UW_seed156 {s t : Term} (h : s ≠ t) (j : Nat) :
+    ((UW152 s j : Term) == UW152 t j) = false :=
+  beq_eq_false_iff_ne.mpr (UW_seed_ne156 h j)
+
+theorem le_self156 (x : Term) : le x x = true := by
+  show ((x == x) || lt x x) = true
+  rw [beq_self_eq_true]
+  rfl
+
+/-- `a ≤ b` なら `TW a ≤ TW b` (`b ≥ 1`)。 -/
+theorem le_TW_TW156 {a b : Nat} (h : a ≤ b) (hb : 1 ≤ b) :
+    le (TW a) (TW b) = true := by
+  rcases Nat.eq_or_lt_of_le h with rfl | hlt
+  · exact le_self156 _
+  · obtain ⟨c, rfl⟩ : ∃ c, b = c + 1 := ⟨b - 1, by omega⟩
+    show (((TW a : Term) == TW (c + 1)) || lt (TW a) (TW (c + 1))) = true
+    rw [TW_UW156 c, lt_TW_UW152 (Z zero) a c (by omega)]
+    exact Bool.or_true _
+
+theorem lt_one_UW156 (s : Term) (j : Nat) : lt TM.Term.one (UW152 s j) = true := by
+  cases j with
+  | zero =>
+      show lt (phi zero zero) (phi zero (add (Z zero) s)) = true
+      rw [lt_phi_same139]
+      exact lt_zero_left (by intro hc; exact Term.noConfusion hc)
+  | succ j =>
+      show lt (phi zero zero) (phi zero (UW152 s j)) = true
+      rw [lt_phi_same139]
+      exact lt_zero_left (ne_zero_UW152 s j)
+
+theorem Kset_Om156 : Kset (reg 1) (Z zero) = [] := rfl
+
+/-! ### §156.3 The general cross sum: `plus`, `wcnf`, the step -/
+
+theorem plus_UW_UW156 {s t : Term} {a b : Nat}
+    (h : le (UW152 t b) (UW152 s a) = true) :
+    plus (UW152 s a) (UW152 t b) = add (UW152 s a) (UW152 t b) := by
+  rw [plus_cons66 (show toList (UW152 t b) = [UW152 t b] from by cases b <;> rfl),
+    show toList (UW152 s a) = [UW152 s a] from by cases a <;> rfl,
+    List.filter_cons_of_pos (by exact h)]
+  rfl
+
+theorem plus_UW_one156 (s : Term) (j : Nat) :
+    plus (UW152 s j) TM.Term.one = add (UW152 s j) TM.Term.one := by
+  rw [plus_cons66 (show toList (TM.Term.one : Term) = [TM.Term.one] from rfl),
+    show toList (UW152 s j) = [UW152 s j] from by cases j <;> rfl,
+    List.filter_cons_of_pos (by
+      show ((TM.Term.one == UW152 s j) || lt TM.Term.one (UW152 s j)) = true
+      rw [lt_one_UW156 s j]
+      exact Bool.or_true _)]
+  rfl
+
+theorem plus_UW_Om156 (s : Term) (a : Nat) :
+    plus (UW152 s a) (Z zero) = add (UW152 s a) (Z zero) := by
+  rw [plus_cons66 (show toList (Z zero : Term) = [Z zero] from rfl),
+    show toList (UW152 s a) = [UW152 s a] from by cases a <;> rfl,
+    List.filter_cons_of_pos (by exact le_reg1_UW152 s a)]
+  rfl
+
+theorem plus_UW_TW156 {s : Term} {a c : Nat}
+    (h : le (TW (c + 1)) (UW152 s a) = true) :
+    plus (UW152 s a) (TW (c + 1)) = add (UW152 s a) (TW (c + 1)) := by
+  rw [plus_cons66 (show toList (TW (c + 1)) = [TW (c + 1)] from rfl),
+    show toList (UW152 s a) = [UW152 s a] from by cases a <;> rfl,
+    List.filter_cons_of_pos (by exact h)]
+  rfl
+
+/-- **二桁の `wcnf`、種は両方とも任意。**  桁が併合されない条件は指数の不等だけ —
+    高さが違うか、同じ高さで種が違うか。 -/
+theorem wcnf_sumX156 (s t : Term) {a b : Nat}
+    (hne : ((UW152 s (a + 1) : Term) == UW152 t (b + 1)) = false) :
+    wcnf (reg 1) [UW152 s (a + 2), UW152 t (b + 2)]
+      = ([(UW152 s (a + 1), TM.Term.one), (UW152 t (b + 1), TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_156 s (a + 2)), wcnf_UW156 t b]
+  show (if (wA (reg 1) (UW152 s (a + 2)) == UW152 t (b + 1)) = true
+        then ((wA (reg 1) (UW152 s (a + 2)),
+               plus (wC (reg 1) (UW152 s (a + 2))) TM.Term.one) :: [], zero)
+        else ((wA (reg 1) (UW152 s (a + 2)), wC (reg 1) (UW152 s (a + 2)))
+              :: (UW152 t (b + 1), TM.Term.one) :: [], zero)) = _
+  rw [wA_UW156 s a, wC_UW156 s a, if_neg (by rw [hne]; exact Bool.noConfusion)]
+
+/-- **§155.5b の主定理の一般形 — 二桁の一段ぶんの門、種は両方とも任意。**
+    `ksetStepOK_famB_sum155` の第二の種を famB の種から任意の種に広げたもの。
+    高さが同じでも種が違えばよい (`hne`)。 -/
+theorem stepOK_sumX156 (s t : Term) {a b : Nat}
+    (hne : ((UW152 s (a + 1) : Term) == UW152 t (b + 1)) = false)
+    (hle : le (UW152 t (b + 2)) (UW152 s (a + 2)) = true)
+    (H1 : ∀ y ∈ Kset (reg 1) s, lt y (UW152 s (a + 2)) = true)
+    (H1' : ∀ y ∈ Kset (reg 1) s,
+      lt y (add (UW152 s (a + 2)) (UW152 t (b + 2))) = true)
+    (H2' : ∀ y ∈ Kset (reg 1) t,
+      lt y (add (UW152 s (a + 2)) (UW152 t (b + 2))) = true) :
+    KsetStepOK 0 (add (UW152 s (a + 2)) (UW152 t (b + 2))) := by
+  intro p hp hle2
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [UW152 s (a + 2), UW152 t (b + 2)]).1 := hp
+  rw [wcnf_sumX156 s t hne] at hp
+  replace hp : p ∈ [(((none : Option Term), (none : Option Term)),
+        (UW152 s (a + 1), TM.Term.one)),
+      (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one), (UW152 t (b + 1), TM.Term.one))] := hp
+  rw [stepF_fire156 s a] at hp
+  rcases List.mem_cons.mp hp with h1 | h1
+  · subst h1
+    constructor
+    · intro i0 hi0
+      have hi0x : (none : Option Term) = some i0 := hi0
+      cases hi0x
+    · intro y hy
+      show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one)) = true
+      rw [idx_UW156 s a]
+      rcases hy with h | h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.1 = UW152 s (a + 1) from rfl,
+          Kset_UW152 s (a + 1)] at h
+        exact H1 y h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+  · replace h1 : p = ((some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))), (UW152 t (b + 1), TM.Term.one)) :=
+      List.mem_singleton.mp h1
+    subst h1
+    constructor
+    · intro i0 hi0 y hy
+      have hi0e : i0 = UW152 s (a + 2) := by
+        have hx : some (UW152 s (a + 2)) = some i0 := hi0
+        injection hx with hx2
+        exact hx2.symm
+      subst hi0e
+      rw [Kset_UW152 s (a + 2)] at hy
+      show lt y (idxOf (reg 1) (some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))) (UW152 t (b + 1), TM.Term.one)) = true
+      rw [idx2_156 t (UW152 s (a + 2)) _ b, plus_UW_UW156 hle]
+      exact H1' y hy
+    · intro y hy
+      show lt y (idxOf (reg 1) (some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))) (UW152 t (b + 1), TM.Term.one)) = true
+      rw [idx2_156 t (UW152 s (a + 2)) _ b, plus_UW_UW156 hle]
+      rcases hy with h | h
+      · rw [show ((some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2)))),
+            (UW152 t (b + 1), TM.Term.one)).2.1 = UW152 t (b + 1) from rfl,
+          Kset_UW152 t (b + 1)] at h
+        exact H2' y h
+      · rw [show ((some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2)))),
+            (UW152 t (b + 1), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+
+/-! ### §156.4 Mixed sums at the BT level, both orders
+
+The low towers `ψ₁^p 0` (`p ≤ 3`) have their own small digits: `dict (ψ₁ 0) = Ω₁`
+gives the digit `(1,1)`, `TW 1` gives `(1⊕1,1)` — neither fires — and `TW 2`
+gives `(Ω₁,1)`, which FIRES and its obligations discharge against the
+accumulated index `i₀ ⊕ 1`. -/
+
+theorem wcnf_UW_Om156 (s : Term) (a : Nat) :
+    wcnf (reg 1) [UW152 s (a + 2), Z zero]
+      = ([(UW152 s (a + 1), TM.Term.one), (TM.Term.one, TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_156 s (a + 2)),
+    show wcnf (reg 1) [Z zero]
+      = ([((TM.Term.one : Term), TM.Term.one)], zero) from by decide]
+  show (if (wA (reg 1) (UW152 s (a + 2)) == TM.Term.one) = true
+        then ((wA (reg 1) (UW152 s (a + 2)),
+               plus (wC (reg 1) (UW152 s (a + 2))) TM.Term.one) :: [], zero)
+        else ((wA (reg 1) (UW152 s (a + 2)), wC (reg 1) (UW152 s (a + 2)))
+              :: (TM.Term.one, TM.Term.one) :: [], zero)) = _
+  rw [wA_UW156 s a, wC_UW156 s a,
+    if_neg (by rw [beq_UW_one152 s (a + 1)]; exact Bool.noConfusion)]
+
+theorem wcnf_UW_TW1_156 (s : Term) (a : Nat) :
+    wcnf (reg 1) [UW152 s (a + 2), TW 1]
+      = ([(UW152 s (a + 1), TM.Term.one),
+          (add TM.Term.one TM.Term.one, TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_156 s (a + 2)),
+    show wcnf (reg 1) [TW 1]
+      = ([((add TM.Term.one TM.Term.one : Term), TM.Term.one)], zero) from by decide]
+  show (if (wA (reg 1) (UW152 s (a + 2)) == add TM.Term.one TM.Term.one) = true
+        then ((wA (reg 1) (UW152 s (a + 2)),
+               plus (wC (reg 1) (UW152 s (a + 2))) TM.Term.one) :: [], zero)
+        else ((wA (reg 1) (UW152 s (a + 2)), wC (reg 1) (UW152 s (a + 2)))
+              :: (add TM.Term.one TM.Term.one, TM.Term.one) :: [], zero)) = _
+  rw [wA_UW156 s a, wC_UW156 s a,
+    if_neg (by intro hc; exact Bool.noConfusion hc)]
+
+theorem wcnf_UW_TW2_156 (s : Term) (a : Nat) :
+    wcnf (reg 1) [UW152 s (a + 2), TW 2]
+      = ([(UW152 s (a + 1), TM.Term.one), (Z zero, TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_156 s (a + 2)),
+    show wcnf (reg 1) [TW 2]
+      = ([((Z zero : Term), TM.Term.one)], zero) from by decide]
+  show (if (wA (reg 1) (UW152 s (a + 2)) == Z zero) = true
+        then ((wA (reg 1) (UW152 s (a + 2)),
+               plus (wC (reg 1) (UW152 s (a + 2))) TM.Term.one) :: [], zero)
+        else ((wA (reg 1) (UW152 s (a + 2)), wC (reg 1) (UW152 s (a + 2)))
+              :: (Z zero, TM.Term.one) :: [], zero)) = _
+  rw [wA_UW156 s a, wC_UW156 s a,
+    if_neg (by rw [beq_UW_Om152 s (a + 1)]; exact Bool.noConfusion)]
+
+/-- `(Ω₁, 1)` の桁の吐く指数 — 直前の指数に `1` を足すだけ。 -/
+theorem idxOm156 (i0 : Term) (s2 : Option Term) :
+    idxOf (reg 1) (some i0, s2) ((Z zero : Term), TM.Term.one)
+      = plus i0 TM.Term.one := by
+  show plus i0 (mulL (mulL (reg 1) (subAP (reg 1) (Z zero))) TM.Term.one) = _
+  rw [show mulL (mulL (reg 1) (subAP (reg 1) (Z zero))) TM.Term.one
+        = TM.Term.one from by decide]
+
+/-- **一段ぶんの門、`famB ⊕ Ω₁` の形。**  第二の桁 `(1,1)` は発火しない。 -/
+theorem stepOK_UW_Om156 (s : Term) (a : Nat)
+    (H1 : ∀ y ∈ Kset (reg 1) s, lt y (UW152 s (a + 2)) = true) :
+    KsetStepOK 0 (add (UW152 s (a + 2)) (Z zero)) := by
+  intro p hp hle2
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [UW152 s (a + 2), Z zero]).1 := hp
+  rw [wcnf_UW_Om156 s a] at hp
+  replace hp : p ∈ [(((none : Option Term), (none : Option Term)),
+        (UW152 s (a + 1), TM.Term.one)),
+      (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one), ((TM.Term.one : Term), TM.Term.one))] := hp
+  rcases List.mem_cons.mp hp with h1 | h1
+  · subst h1
+    constructor
+    · intro i0 hi0
+      have hi0x : (none : Option Term) = some i0 := hi0
+      cases hi0x
+    · intro y hy
+      show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one)) = true
+      rw [idx_UW156 s a]
+      rcases hy with h | h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.1 = UW152 s (a + 1) from rfl,
+          Kset_UW152 s (a + 1)] at h
+        exact H1 y h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+  · replace h1 : p = (stepF (reg 1) (baseOf 0)
+        ((none : Option Term), (none : Option Term)) (UW152 s (a + 1), TM.Term.one),
+        ((TM.Term.one : Term), TM.Term.one)) := List.mem_singleton.mp h1
+    subst h1
+    have hle3 : le (reg 1) TM.Term.one = true := hle2
+    exact absurd hle3 (by decide)
+
+/-- **一段ぶんの門、`famB ⊕ TW 1` の形。**  第二の桁 `(1⊕1,1)` は発火しない。 -/
+theorem stepOK_UW_TW1_156 (s : Term) (a : Nat)
+    (H1 : ∀ y ∈ Kset (reg 1) s, lt y (UW152 s (a + 2)) = true) :
+    KsetStepOK 0 (add (UW152 s (a + 2)) (TW 1)) := by
+  intro p hp hle2
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [UW152 s (a + 2), TW 1]).1 := hp
+  rw [wcnf_UW_TW1_156 s a] at hp
+  replace hp : p ∈ [(((none : Option Term), (none : Option Term)),
+        (UW152 s (a + 1), TM.Term.one)),
+      (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one),
+       ((add TM.Term.one TM.Term.one : Term), TM.Term.one))] := hp
+  rcases List.mem_cons.mp hp with h1 | h1
+  · subst h1
+    constructor
+    · intro i0 hi0
+      have hi0x : (none : Option Term) = some i0 := hi0
+      cases hi0x
+    · intro y hy
+      show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one)) = true
+      rw [idx_UW156 s a]
+      rcases hy with h | h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.1 = UW152 s (a + 1) from rfl,
+          Kset_UW152 s (a + 1)] at h
+        exact H1 y h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+  · replace h1 : p = (stepF (reg 1) (baseOf 0)
+        ((none : Option Term), (none : Option Term)) (UW152 s (a + 1), TM.Term.one),
+        ((add TM.Term.one TM.Term.one : Term), TM.Term.one)) := List.mem_singleton.mp h1
+    subst h1
+    have hle3 : le (reg 1) (add TM.Term.one TM.Term.one) = true := hle2
+    exact absurd hle3 (by decide)
+
+/-- **一段ぶんの門、`famB ⊕ TW 2` の形。**  第二の桁 `(Ω₁,1)` は発火し、
+    義務は直前の指数 `i₀ ⊕ 1` に対して済む。 -/
+theorem stepOK_UW_TW2_156 (s : Term) (a : Nat)
+    (H1 : ∀ y ∈ Kset (reg 1) s, lt y (UW152 s (a + 2)) = true)
+    (H2 : ∀ y ∈ Kset (reg 1) s, lt y (add (UW152 s (a + 2)) TM.Term.one) = true) :
+    KsetStepOK 0 (add (UW152 s (a + 2)) (TW 2)) := by
+  intro p hp hle2
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [UW152 s (a + 2), TW 2]).1 := hp
+  rw [wcnf_UW_TW2_156 s a] at hp
+  replace hp : p ∈ [(((none : Option Term), (none : Option Term)),
+        (UW152 s (a + 1), TM.Term.one)),
+      (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one), ((Z zero : Term), TM.Term.one))] := hp
+  rw [stepF_fire156 s a] at hp
+  rcases List.mem_cons.mp hp with h1 | h1
+  · subst h1
+    constructor
+    · intro i0 hi0
+      have hi0x : (none : Option Term) = some i0 := hi0
+      cases hi0x
+    · intro y hy
+      show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        (UW152 s (a + 1), TM.Term.one)) = true
+      rw [idx_UW156 s a]
+      rcases hy with h | h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.1 = UW152 s (a + 1) from rfl,
+          Kset_UW152 s (a + 1)] at h
+        exact H1 y h
+      · rw [show (((none : Option Term), (none : Option Term)),
+            (UW152 s (a + 1), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+  · replace h1 : p = ((some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))), ((Z zero : Term), TM.Term.one)) :=
+      List.mem_singleton.mp h1
+    subst h1
+    constructor
+    · intro i0 hi0 y hy
+      have hi0e : i0 = UW152 s (a + 2) := by
+        have hx : some (UW152 s (a + 2)) = some i0 := hi0
+        injection hx with hx2
+        exact hx2.symm
+      subst hi0e
+      rw [Kset_UW152 s (a + 2)] at hy
+      show lt y (idxOf (reg 1) (some (UW152 s (a + 2)),
+        some (psi (reg 1) (UW152 s (a + 2)))) ((Z zero : Term), TM.Term.one)) = true
+      rw [idxOm156 (UW152 s (a + 2)) _, plus_UW_one156 s (a + 2)]
+      exact H2 y hy
+    · intro y hy
+      rcases hy with h | h
+      · rw [show ((some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2)))),
+            ((Z zero : Term), TM.Term.one)).2.1 = Z zero from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+      · rw [show ((some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2)))),
+            ((Z zero : Term), TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+        exact absurd h (by intro hc; cases hc)
+
+/-- 種の `K` の元は種の塔より下 (`K` の元の高さ以上の高さで)。famB152 の義務の共通形。 -/
+theorem Ksd_lt_UW156 (kk : Nat) (t : Term) (c : Nat) (hc : kk + 2 ≤ c) :
+    ∀ y ∈ Kset (reg 1) (sd152 (kk + 3)), lt y (UW152 t c) = true := by
+  intro y hy
+  cases kk with
+  | zero =>
+      rw [Kset_sd3_152] at hy
+      rw [List.mem_singleton.mp hy]
+      exact lt_zero_left (ne_zero_UW152 _ _)
+  | succ jp =>
+      rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at hy
+      rw [List.mem_singleton.mp hy]
+      exact lt_TW_UW152 _ (jp + 3) c (by omega)
+
+/-- 種の `K` の元は、頭が塔の和よりも下。 -/
+theorem Ksd_lt_add156 (kk : Nat) (t : Term) (c : Nat) (hc : kk + 2 ≤ c) (R : Term) :
+    ∀ y ∈ Kset (reg 1) (sd152 (kk + 3)), lt y (add (UW152 t c) R) = true := by
+  intro y hy
+  cases kk with
+  | zero =>
+      rw [Kset_sd3_152] at hy
+      rw [List.mem_singleton.mp hy]
+      exact lt_zero_left (by intro hc2; exact Term.noConfusion hc2)
+  | succ jp =>
+      rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at hy
+      rw [List.mem_singleton.mp hy]
+      rw [lt_nsum_add100 (show (TW (jp + 3) : Term) ≠ zero from by
+            intro hc2; exact Term.noConfusion hc2) rfl]
+      exact le_of_lt (lt_TW_UW152 _ (jp + 3) c (by omega))
+
+/-- 同じく、頭が `Ω₁` の種の塔 (= `TW`) の和 — 等しい高さも `le` で許す。 -/
+theorem Ksd_le_addTW156 (kk : Nat) (c : Nat) (hc : kk + 2 ≤ c + 1) (R : Term) :
+    ∀ y ∈ Kset (reg 1) (sd152 (kk + 3)),
+      lt y (add (UW152 (Z zero) c) R) = true := by
+  intro y hy
+  cases kk with
+  | zero =>
+      rw [Kset_sd3_152] at hy
+      rw [List.mem_singleton.mp hy]
+      exact lt_zero_left (by intro hc2; exact Term.noConfusion hc2)
+  | succ jp =>
+      rw [show jp + 1 + 3 = jp + 4 from rfl, Kset_sd_psi152 jp] at hy
+      rw [List.mem_singleton.mp hy]
+      rw [lt_nsum_add100 (show (TW (jp + 3) : Term) ≠ zero from by
+            intro hc2; exact Term.noConfusion hc2) rfl,
+        ← TW_UW156 c]
+      exact le_TW_TW156 (by omega) (by omega)
+
+/-- **主定理 1 — `famB m k ⊕ ψ₁^p 0` は `3 ≤ k ≤ m`、`1 ≤ p ≤ m` の全域で
+    第一の門の一歩を満たす。**  §132.5 の測定した resid の範囲そのもの。 -/
+theorem ksetStepOK_famB_tow156 {m k p : Nat} (h3 : 3 ≤ k) (hkm : k ≤ m)
+    (h1p : 1 ≤ p) (hpm : p ≤ m) :
+    KsetStepOK 0 (dict (BT.sum (famB132 m k) (nst132 p BT.zero))) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  obtain ⟨d, rfl⟩ : ∃ d, m = (kk + d) + 3 := ⟨m - (kk + 3), by omega⟩
+  rw [Trans.Dict.dict_sum, show kk + d + 3 = (kk + d + 2) + 1 from rfl,
+    dict_famB152 kk (kk + d + 2)]
+  cases p with
+  | zero => exact absurd h1p (by omega)
+  | succ p0 =>
+    cases p0 with
+    | zero =>
+        rw [show dict (nst132 1 BT.zero) = Z zero from by decide,
+          plus_UW_Om156 (sd152 (kk + 3)) (kk + d + 2)]
+        exact stepOK_UW_Om156 _ (kk + d) (Ksd_lt_UW156 kk _ (kk + d + 2) (by omega))
+    | succ p1 =>
+      cases p1 with
+      | zero =>
+          rw [show dict (nst132 2 BT.zero) = TW 1 from dict_bT152 0,
+            plus_UW_TW156 (c := 0)
+              (le_of_lt (lt_TW_UW152 (sd152 (kk + 3)) 1 (kk + d + 2) (by omega)))]
+          exact stepOK_UW_TW1_156 _ (kk + d) (Ksd_lt_UW156 kk _ (kk + d + 2) (by omega))
+      | succ p2 =>
+        cases p2 with
+        | zero =>
+            rw [show dict (nst132 3 BT.zero) = TW 2 from dict_bT152 1,
+              plus_UW_TW156 (c := 1)
+                (le_of_lt (lt_TW_UW152 (sd152 (kk + 3)) 2 (kk + d + 2) (by omega)))]
+            exact stepOK_UW_TW2_156 _ (kk + d)
+              (Ksd_lt_UW156 kk _ (kk + d + 2) (by omega))
+              (Ksd_lt_add156 kk _ (kk + d + 2) (by omega) TM.Term.one)
+        | succ p3 =>
+            -- p = p3 + 4 ≤ m
+            have hOrd : le (UW152 (Z zero) (p3 + 2))
+                (UW152 (sd152 (kk + 3)) (kk + d + 2)) = true :=
+              le_of_lt (lt_UW_UW_lt155 (Z zero) (sd152 (kk + 3)) (p3 + 2) (kk + d + 2)
+                (by omega))
+            rw [show dict (nst132 (p3 + 4) BT.zero) = TW (p3 + 3) from dict_bT152 (p3 + 2),
+              show (TW (p3 + 3) : Term) = UW152 (Z zero) (p3 + 2) from TW_UW156 (p3 + 2),
+              plus_UW_UW156 hOrd]
+            refine stepOK_sumX156 (sd152 (kk + 3)) (Z zero)
+              (beq_UW_ne155' _ _ (show p3 + 1 < kk + d + 1 by omega)) hOrd
+              (Ksd_lt_UW156 kk _ (kk + d + 2) (by omega))
+              (Ksd_lt_add156 kk _ (kk + d + 2) (by omega) _) ?_
+            intro y hy
+            cases hy
+
+/-- **主定理 2 — `ψ₁^p 0 ⊕ famB m k` は `3 ≤ k`、`3 ≤ m < p`、`k ≤ p` の全域で
+    第一の門の一歩を満たす。**  famB の側は単独では標準でない `k > m` も含む —
+    逃げる元 `TW (k-1)` は頭の塔の積んだ指数に対して済む。 -/
+theorem ksetStepOK_tow_famB156 {p m k : Nat} (h3k : 3 ≤ k) (h3m : 3 ≤ m)
+    (hmp : m < p) (hkp : k ≤ p) :
+    KsetStepOK 0 (dict (BT.sum (nst132 p BT.zero) (famB132 m k))) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨e, rfl⟩ : ∃ e, p = (mm + e) + 4 := ⟨p - (mm + 4), by omega⟩
+  have hle2 : le (UW152 (sd152 (kk + 3)) (mm + 2))
+      (UW152 (Z zero) (mm + e + 2)) = true := by
+    cases e with
+    | zero =>
+        refine le_of_lt ?_
+        show lt (UW152 (sd152 (kk + 3)) (mm + 2)) (UW152 (Z zero) (mm + 2)) = true
+        rw [lt_UW_UW_same155]
+        exact (sd_facts152 kk).2.2.1
+    | succ e' =>
+        exact le_of_lt (lt_UW_UW_lt155 _ _ _ _ (by omega))
+  have hne : ((UW152 (Z zero) (mm + e + 1) : Term)
+      == UW152 (sd152 (kk + 3)) (mm + 1)) = false := by
+    cases e with
+    | zero =>
+        show ((UW152 (Z zero) (mm + 1) : Term)
+          == UW152 (sd152 (kk + 3)) (mm + 1)) = false
+        refine beq_UW_seed156 ?_ (mm + 1)
+        obtain ⟨X, hX⟩ := sd_psi_form155 kk
+        rw [hX]
+        intro hc
+        exact Term.noConfusion hc
+    | succ e' =>
+        exact beq_UW_ne155' _ _ (show mm + 1 < mm + (e' + 1) + 1 by omega)
+  rw [Trans.Dict.dict_sum, show mm + 3 = (mm + 2) + 1 from rfl,
+    dict_famB152 kk (mm + 2),
+    show dict (nst132 ((mm + e) + 4) BT.zero) = TW ((mm + e) + 3) from
+      dict_bT152 ((mm + e) + 2),
+    show (TW ((mm + e) + 3) : Term) = UW152 (Z zero) ((mm + e) + 2) from
+      TW_UW156 ((mm + e) + 2),
+    plus_UW_UW156 hle2]
+  refine stepOK_sumX156 (Z zero) (sd152 (kk + 3)) hne hle2 ?_ ?_ ?_
+  · intro y hy
+    cases hy
+  · intro y hy
+    cases hy
+  · exact Ksd_le_addTW156 kk (mm + e + 2) (by omega) _
+
+/-! 一項ぶんの門と最初の発火の義務、混合の和の族の上で。 -/
+
+theorem gateStd87_famB_tow156 (m k p : Nat) (h3 : 3 ≤ k) (hkm : k ≤ m)
+    (h1p : 1 ≤ p) (hpm : p ≤ m) :
+    GateStd87 (BT.sum (famB132 m k) (nst132 p BT.zero)) :=
+  fun _ _ => ksetStepOK_famB_tow156 h3 hkm h1p hpm
+
+theorem gateStd87_tow_famB156 (p m k : Nat) (h3k : 3 ≤ k) (h3m : 3 ≤ m)
+    (hmp : m < p) (hkp : k ≤ p) :
+    GateStd87 (BT.sum (nst132 p BT.zero) (famB132 m k)) :=
+  fun _ _ => ksetStepOK_tow_famB156 h3k h3m hmp hkp
+
+theorem firstFire_famB_tow156 (m k p : Nat) (h3 : 3 ≤ k) (hkm : k ≤ m)
+    (h1p : 1 ≤ p) (hpm : p ≤ m) :
+    FirstFire145 (BT.sum (famB132 m k) (nst132 p BT.zero)) :=
+  fun q hq _ hle y hy => (ksetStepOK_famB_tow156 h3 hkm h1p hpm q hq hle).2 y hy
+
+theorem firstFire_tow_famB156 (p m k : Nat) (h3k : 3 ≤ k) (h3m : 3 ≤ m)
+    (hmp : m < p) (hkp : k ≤ p) :
+    FirstFire145 (BT.sum (nst132 p BT.zero) (famB132 m k)) :=
+  fun q hq _ hle y hy => (ksetStepOK_tow_famB156 h3k h3m hmp hkp q hq hle).2 y hy
+
+/-! ### §156.5a `collapse 0` of the tower sums — the seed values of the sum-seed family -/
+
+theorem wcnf_sum2_156 (s : Term) (j : Nat) :
+    wcnf (reg 1) [UW152 s (j + 2), UW152 s (j + 2)]
+      = ([(UW152 s (j + 1), add TM.Term.one TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_UW_reg1_156 s (j + 2)), wcnf_UW156 s j]
+  show (if (wA (reg 1) (UW152 s (j + 2)) == UW152 s (j + 1)) = true
+        then ((wA (reg 1) (UW152 s (j + 2)),
+               plus (wC (reg 1) (UW152 s (j + 2))) TM.Term.one) :: [], zero)
+        else ((wA (reg 1) (UW152 s (j + 2)), wC (reg 1) (UW152 s (j + 2)))
+              :: (UW152 s (j + 1), TM.Term.one) :: [], zero)) = _
+  rw [wA_UW156 s j, wC_UW156 s j, if_pos (beq_self_eq_true _),
+    show plus TM.Term.one TM.Term.one = add TM.Term.one TM.Term.one from rfl]
+
+theorem idx_sum2_156 (s : Term) (j : Nat) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term))
+        (UW152 s (j + 1), add TM.Term.one TM.Term.one)
+      = add (UW152 s (j + 2)) (UW152 s (j + 2)) := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (UW152 s (j + 1))))
+    (add TM.Term.one TM.Term.one)) = _
+  rw [subAP_UW152 s (j + 1), mulL_Om1_UW156 s j]
+  show sub1 (ofList [omegaNF (plus (UW152 s (j + 1)) (logOm TM.Term.one)),
+                     omegaNF (plus (UW152 s (j + 1)) (logOm TM.Term.one))]) = _
+  rw [show logOm TM.Term.one = zero from rfl,
+    show plus (UW152 s (j + 1)) zero = UW152 s (j + 1) from rfl,
+    omegaNF_UW152 s (j + 1)]
+  show (if ((UW152 s (j + 2) : Term) == TM.Term.one) = true
+        then ofList (toList (UW152 s (j + 2)))
+        else add (UW152 s (j + 2)) (UW152 s (j + 2))) = _
+  rw [if_neg (by rw [beq_UW_one152 s (j + 2)]; exact Bool.noConfusion)]
+
+theorem stepF_fire2_156 (s : Term) (j : Nat) :
+    stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (j + 1), add TM.Term.one TM.Term.one)
+      = (some (add (UW152 s (j + 2)) (UW152 s (j + 2))),
+         some (psi (reg 1) (add (UW152 s (j + 2)) (UW152 s (j + 2))))) := by
+  show (if le (reg 1) (UW152 s (j + 1)) = true
+        then (some (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                (UW152 s (j + 1), add TM.Term.one TM.Term.one)),
+              some (psi (reg 1) (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                (UW152 s (j + 1), add TM.Term.one TM.Term.one))))
+        else ((none : Option Term),
+              some (phiNF (UW152 s (j + 1))
+                (plus (baseOf 0) (sub1 (add TM.Term.one TM.Term.one)))))) = _
+  rw [if_pos (le_reg1_UW152 s (j + 1)), idx_sum2_156 s j]
+
+/-- **併合の側 — 等しい塔の和の `ψ₀` は `ψ_{Ω₁}(和)` そのもの。** -/
+theorem collapse0_sum2_156 (s : Term) (j : Nat) :
+    collapse 0 (add (UW152 s (j + 2)) (UW152 s (j + 2)))
+      = psi (Z zero) (add (UW152 s (j + 2)) (UW152 s (j + 2))) := by
+  rw [collapse_eq,
+    show toList (add (UW152 s (j + 2)) (UW152 s (j + 2)))
+      = [UW152 s (j + 2), UW152 s (j + 2)] from rfl,
+    wcnf_sum2_156 s j]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (UW152 s (j + 1), add TM.Term.one TM.Term.one)).2.getD zero) zero)) = _
+  rw [stepF_fire2_156 s j]
+  exact omegaNF_psi139 _ _
+
+/-- **二桁の側 — 順に発火し、指数が積もる。** `ψ₀(塔 ⊕ 塔) = ψ_{Ω₁}(塔 ⊕ 塔)`。 -/
+theorem collapse0_sumX156 (s t : Term) {a b : Nat}
+    (hne : ((UW152 s (a + 1) : Term) == UW152 t (b + 1)) = false)
+    (hle : le (UW152 t (b + 2)) (UW152 s (a + 2)) = true) :
+    collapse 0 (add (UW152 s (a + 2)) (UW152 t (b + 2)))
+      = psi (Z zero) (add (UW152 s (a + 2)) (UW152 t (b + 2))) := by
+  rw [collapse_eq,
+    show toList (add (UW152 s (a + 2)) (UW152 t (b + 2)))
+      = [UW152 s (a + 2), UW152 t (b + 2)] from rfl,
+    wcnf_sumX156 s t hne]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0)
+        (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+          (UW152 s (a + 1), TM.Term.one))
+        (UW152 t (b + 1), TM.Term.one)).2.getD zero) zero)) = _
+  rw [stepF_fire156 s a,
+    show stepF (reg 1) (baseOf 0)
+        (some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2))))
+        (UW152 t (b + 1), TM.Term.one)
+      = (some (add (UW152 s (a + 2)) (UW152 t (b + 2))),
+         some (psi (reg 1) (add (UW152 s (a + 2)) (UW152 t (b + 2))))) from by
+      show (if le (reg 1) (UW152 t (b + 1)) = true
+            then (some (idxOf (reg 1) (some (UW152 s (a + 2)),
+                    some (psi (reg 1) (UW152 s (a + 2))))
+                    (UW152 t (b + 1), TM.Term.one)),
+                  some (psi (reg 1) (idxOf (reg 1) (some (UW152 s (a + 2)),
+                    some (psi (reg 1) (UW152 s (a + 2))))
+                    (UW152 t (b + 1), TM.Term.one))))
+            else (some (UW152 s (a + 2)),
+                  some (phiNF (UW152 t (b + 1))
+                    (plus (psi (reg 1) (UW152 s (a + 2))) TM.Term.one)))) = _
+      rw [if_pos (le_reg1_UW152 t (b + 1)), idx2_156 t (UW152 s (a + 2)) _ b,
+        plus_UW_UW156 hle]]
+  exact omegaNF_psi139 _ _
+
+/-! 発火しない桁の一歩と、その `φ̄` の正規形。 -/
+
+theorem stepF_nofire156 {A : Term} (hA : le (reg 1) A = false)
+    (i0 v C : Term) :
+    stepF (reg 1) (baseOf 0) (some i0, some v) (A, C)
+      = (some i0, some (phiNF A (plus v C))) := by
+  show (if le (reg 1) A = true
+        then (some (idxOf (reg 1) (some i0, some v) (A, C)),
+              some (psi (reg 1) (idxOf (reg 1) (some i0, some v) (A, C))))
+        else (some i0, some (phiNF A (plus v C)))) = _
+  rw [if_neg (by rw [hA]; exact Bool.noConfusion)]
+
+theorem lt_one_psi156 (k c : Term) : lt TM.Term.one (psi k c) = true := by
+  show lt (phi zero zero) (psi k c) = true
+  rw [lt_phi_psi103, lt_zero_left (show (psi k c : Term) ≠ zero from by
+    intro hc; exact Term.noConfusion hc)]
+  rfl
+
+theorem lt_two_psi156 (k c : Term) :
+    lt (add TM.Term.one TM.Term.one) (psi k c) = true := by
+  rw [lt_add_nsum (show (psi k c : Term) ≠ zero from by
+        intro hc; exact Term.noConfusion hc) rfl]
+  exact lt_one_psi156 k c
+
+theorem plus_psi_one156 (k c : Term) :
+    plus (psi k c) TM.Term.one = add (psi k c) TM.Term.one := by
+  rw [plus_cons66 (show toList (TM.Term.one : Term) = [TM.Term.one] from rfl),
+    show toList (psi k c) = [psi k c] from rfl,
+    List.filter_cons_of_pos (by
+      show ((TM.Term.one == psi k c) || lt TM.Term.one (psi k c)) = true
+      rw [lt_one_psi156 k c]
+      exact Bool.or_true _)]
+  rfl
+
+/-- `φ̄ a (ψ ⊕ 1)` は一段降りて `φ̄ a ψ` — `ψ` は `a`-不動点の形なので。 -/
+theorem phiNF_add_psi_one156 (a k c : Term) (h : lt a (psi k c) = true) :
+    phiNF a (add (psi k c) TM.Term.one) = phi a (psi k c) := by
+  show (if ((add (psi k c) TM.Term.one).isSC
+          && lt a (add (psi k c) TM.Term.one)) = true
+        then add (psi k c) TM.Term.one
+        else phiNFsucc a (add (psi k c) TM.Term.one)) = _
+  rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+  show (if lt a (psi k c) = true
+        then phi a (psi k c)
+        else phiNFdefault a (add (psi k c) TM.Term.one)) = _
+  rw [if_pos h]
+
+/-- `ω^(φ̄ c b) = φ̄ c b` — 第 1 引数が `0` より上なら `ω`-不動点。 -/
+theorem omegaNF_phiC156 {c : Term} (hzc : lt zero c = true) (b : Term) :
+    omegaNF (phi c b) = phi c b := by
+  show (if lt M (phi c b) = true then omg (phi c b)
+        else if ((phi c b : Term) == M) = true then M
+        else phiNF zero (phi c b)) = _
+  rw [if_neg (by
+        rw [show lt M (phi c b) = false from by
+          show ltF (fuelOf M (phi c b)) M (phi c b) = false
+          exact ltF_M_phi135 c b _]
+        exact Bool.noConfusion),
+    if_neg (show ¬(((phi c b : Term) == M) = true) from by
+        intro hc; exact Bool.noConfusion hc)]
+  show (if ((phi c b).isSC && lt zero (phi c b)) = true then phi c b
+        else if lt zero c = true then phi c b
+        else phiNFsucc zero (phi c b)) = _
+  rw [if_neg (by intro hc; exact Bool.noConfusion hc), if_pos hzc]
+
+/-- **`j = 3` の側 — `ψ₀(塔 ⊕ TW 2) = ψ_{Ω₁}(塔 ⊕ 1)`。**  `(Ω₁,1)` の桁が発火し、
+    指数は `1` だけ積む。 -/
+theorem collapse0_UW_TW2_156 (s : Term) (a : Nat) :
+    collapse 0 (add (UW152 s (a + 2)) (TW 2))
+      = psi (Z zero) (add (UW152 s (a + 2)) TM.Term.one) := by
+  rw [collapse_eq,
+    show toList (add (UW152 s (a + 2)) (TW 2)) = [UW152 s (a + 2), TW 2] from rfl,
+    wcnf_UW_TW2_156 s a]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0)
+        (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+          (UW152 s (a + 1), TM.Term.one))
+        ((Z zero : Term), TM.Term.one)).2.getD zero) zero)) = _
+  rw [stepF_fire156 s a,
+    show stepF (reg 1) (baseOf 0)
+        (some (UW152 s (a + 2)), some (psi (reg 1) (UW152 s (a + 2))))
+        ((Z zero : Term), TM.Term.one)
+      = (some (add (UW152 s (a + 2)) TM.Term.one),
+         some (psi (reg 1) (add (UW152 s (a + 2)) TM.Term.one))) from by
+      show (if le (reg 1) (Z zero) = true
+            then (some (idxOf (reg 1) (some (UW152 s (a + 2)),
+                    some (psi (reg 1) (UW152 s (a + 2))))
+                    ((Z zero : Term), TM.Term.one)),
+                  some (psi (reg 1) (idxOf (reg 1) (some (UW152 s (a + 2)),
+                    some (psi (reg 1) (UW152 s (a + 2))))
+                    ((Z zero : Term), TM.Term.one))))
+            else (some (UW152 s (a + 2)),
+                  some (phiNF (Z zero)
+                    (plus (psi (reg 1) (UW152 s (a + 2))) TM.Term.one)))) = _
+      rw [if_pos (show le (reg 1) (Z zero) = true from by decide),
+        idxOm156 (UW152 s (a + 2)) _, plus_UW_one156 s (a + 2)]]
+  exact omegaNF_psi139 _ _
+
+/-- **`j = 2` の側 — `ψ₀(塔 ⊕ TW 1) = φ̄(2, ψ_{Ω₁}(塔))`。**  `(1⊕1,1)` は発火せず、
+    `φ̄` の枝が動く。 -/
+theorem collapse0_UW_TW1_156 (s : Term) (a : Nat) :
+    collapse 0 (add (UW152 s (a + 2)) (TW 1))
+      = phi (add TM.Term.one TM.Term.one) (psi (Z zero) (UW152 s (a + 2))) := by
+  rw [collapse_eq,
+    show toList (add (UW152 s (a + 2)) (TW 1)) = [UW152 s (a + 2), TW 1] from rfl,
+    wcnf_UW_TW1_156 s a]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0)
+        (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+          (UW152 s (a + 1), TM.Term.one))
+        ((add TM.Term.one TM.Term.one : Term), TM.Term.one)).2.getD zero) zero)) = _
+  rw [stepF_fire156 s a,
+    stepF_nofire156 (A := add TM.Term.one TM.Term.one) (by decide)
+      (UW152 s (a + 2)) (psi (reg 1) (UW152 s (a + 2))) TM.Term.one,
+    plus_psi_one156 (reg 1) (UW152 s (a + 2)),
+    phiNF_add_psi_one156 (add TM.Term.one TM.Term.one) (reg 1) (UW152 s (a + 2))
+      (lt_two_psi156 (reg 1) (UW152 s (a + 2)))]
+  exact omegaNF_phiC156
+    (lt_zero_left (by intro hc; exact Term.noConfusion hc)) _
+
+/-- **`j = 1` の側 — `ψ₀(塔 ⊕ Ω₁) = φ̄(1, ψ_{Ω₁}(塔))`。**  `(1,1)` は発火しない。 -/
+theorem collapse0_UW_Om156 (s : Term) (a : Nat) :
+    collapse 0 (add (UW152 s (a + 2)) (Z zero))
+      = phi TM.Term.one (psi (Z zero) (UW152 s (a + 2))) := by
+  rw [collapse_eq,
+    show toList (add (UW152 s (a + 2)) (Z zero)) = [UW152 s (a + 2), Z zero] from rfl,
+    wcnf_UW_Om156 s a]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0)
+        (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+          (UW152 s (a + 1), TM.Term.one))
+        ((TM.Term.one : Term), TM.Term.one)).2.getD zero) zero)) = _
+  rw [stepF_fire156 s a,
+    stepF_nofire156 (A := TM.Term.one) (by decide)
+      (UW152 s (a + 2)) (psi (reg 1) (UW152 s (a + 2))) TM.Term.one,
+    plus_psi_one156 (reg 1) (UW152 s (a + 2)),
+    phiNF_add_psi_one156 TM.Term.one (reg 1) (UW152 s (a + 2))
+      (lt_one_psi156 (reg 1) (UW152 s (a + 2)))]
+  exact omegaNF_phiC156
+    (lt_zero_left (by intro hc; exact Term.noConfusion hc)) _
+
+/-! ### §156.5b The sum-seed family: dict closed forms and the gate -/
+
+/-- 和の種の族。`famD156 m k j = ψ₁^m(ψ₀(ψ₁^k 0 ⊕ ψ₁^j 0))` — famPool132 の第六の族。 -/
+def famD156 (m k j : Nat) : BT :=
+  nst132 m (BT.D 0 (BT.sum (nst132 k BT.zero) (nst132 j BT.zero)))
+
+theorem lt_psiOm_reg2_156 (A : Term) : lt (psi (Z zero) A) (reg 2) = true := by
+  show lt (psi (Z zero) A) (Z TM.Term.one) = true
+  exact lt_psiOm_Om2_139 A
+
+theorem lt_phiPsi_reg1_156 {c : Term} (hc : lt c (reg 1) = true) (X : Term) :
+    lt (phi c (psi (Z zero) X)) (reg 1) = true := by
+  rw [lt_phi_reg1_100, hc, lt_psiOm_reg1_139 X]
+  rfl
+
+theorem lt_phiPsi_reg2_156 {c : Term} (hc : lt c (Z TM.Term.one) = true) (X : Term) :
+    lt (phi c (psi (Z zero) X)) (reg 2) = true := by
+  show lt (phi c (psi (Z zero) X)) (Z TM.Term.one) = true
+  rw [lt_phi_Z103, hc, lt_psiOm_Om2_139 X]
+  rfl
+
+/-- 種 `S < Ω₁` の上の `ψ₁` の塔 — `dict (ψ₁^{m+1} W) = UW152 S m`、`dict W = S` なら。 -/
+theorem dict_nstD0_156 {S : Term} (hap : S.isAP = true)
+    (hone : ((S : Term) == TM.Term.one) = false)
+    (hlt : lt S (reg 1) = true) (hlt2 : lt S (reg 2) = true)
+    {W : BT} (hW : dict W = S) : ∀ m : Nat, dict (nst132 (m + 1) W) = UW152 S m
+  | 0 => by
+      show collapse 1 (dict (nst132 0 W)) = _
+      show collapse 1 (dict W) = _
+      rw [hW]
+      exact collapse1_seed152 hap hone hlt hlt2
+  | m + 1 => by
+      show collapse 1 (dict (nst132 (m + 1) W)) = _
+      rw [dict_nstD0_156 hap hone hlt hlt2 hW m]
+      exact collapse1_UW152 hlt m
+
+/-! 種の値 — 五つの領域の閉じた形。`4 ≤ j < k`、`j = k`、`j = 3`、`j = 2`、`j = 1`、
+    そして `k = 3` の三つの具象。 -/
+
+theorem dictD0_sum_lt156 (kk jj : Nat) (hjk : jj < kk) :
+    dict (BT.D 0 (BT.sum (nst132 (kk + 4) BT.zero) (nst132 (jj + 4) BT.zero)))
+      = psi (Z zero) (add (UW152 (Z zero) (kk + 2)) (UW152 (Z zero) (jj + 2))) := by
+  rw [Trans.Dict.dict_D, Trans.Dict.dict_sum,
+    show dict (nst132 (kk + 4) BT.zero) = TW (kk + 3) from dict_bT152 (kk + 2),
+    show dict (nst132 (jj + 4) BT.zero) = TW (jj + 3) from dict_bT152 (jj + 2),
+    show (TW (kk + 3) : Term) = UW152 (Z zero) (kk + 2) from TW_UW156 (kk + 2),
+    show (TW (jj + 3) : Term) = UW152 (Z zero) (jj + 2) from TW_UW156 (jj + 2),
+    plus_UW_UW156 (le_of_lt (lt_UW_UW_lt155 (Z zero) (Z zero) (jj + 2) (kk + 2)
+      (by omega)))]
+  exact collapse0_sumX156 (Z zero) (Z zero)
+    (beq_UW_ne155' _ _ (show jj + 1 < kk + 1 by omega))
+    (le_of_lt (lt_UW_UW_lt155 _ _ _ _ (by omega)))
+
+theorem dictD0_sum_eq156 (kk : Nat) :
+    dict (BT.D 0 (BT.sum (nst132 (kk + 4) BT.zero) (nst132 (kk + 4) BT.zero)))
+      = psi (Z zero) (add (UW152 (Z zero) (kk + 2)) (UW152 (Z zero) (kk + 2))) := by
+  rw [Trans.Dict.dict_D, Trans.Dict.dict_sum,
+    show dict (nst132 (kk + 4) BT.zero) = TW (kk + 3) from dict_bT152 (kk + 2),
+    show (TW (kk + 3) : Term) = UW152 (Z zero) (kk + 2) from TW_UW156 (kk + 2),
+    plus_UW_UW156 (le_self156 (UW152 (Z zero) (kk + 2)))]
+  exact collapse0_sum2_156 (Z zero) kk
+
+theorem dictD0_sum_j3_156 (kk : Nat) :
+    dict (BT.D 0 (BT.sum (nst132 (kk + 4) BT.zero) (nst132 3 BT.zero)))
+      = psi (Z zero) (add (UW152 (Z zero) (kk + 2)) TM.Term.one) := by
+  rw [Trans.Dict.dict_D, Trans.Dict.dict_sum,
+    show dict (nst132 (kk + 4) BT.zero) = TW (kk + 3) from dict_bT152 (kk + 2),
+    show dict (nst132 3 BT.zero) = TW 2 from dict_bT152 1,
+    show (TW (kk + 3) : Term) = UW152 (Z zero) (kk + 2) from TW_UW156 (kk + 2),
+    plus_UW_TW156 (c := 1)
+      (le_of_lt (lt_TW_UW152 (Z zero) 2 (kk + 2) (by omega)))]
+  exact collapse0_UW_TW2_156 (Z zero) kk
+
+theorem dictD0_sum_j2_156 (kk : Nat) :
+    dict (BT.D 0 (BT.sum (nst132 (kk + 4) BT.zero) (nst132 2 BT.zero)))
+      = phi (add TM.Term.one TM.Term.one) (psi (Z zero) (UW152 (Z zero) (kk + 2))) := by
+  rw [Trans.Dict.dict_D, Trans.Dict.dict_sum,
+    show dict (nst132 (kk + 4) BT.zero) = TW (kk + 3) from dict_bT152 (kk + 2),
+    show dict (nst132 2 BT.zero) = TW 1 from dict_bT152 0,
+    show (TW (kk + 3) : Term) = UW152 (Z zero) (kk + 2) from TW_UW156 (kk + 2),
+    plus_UW_TW156 (c := 0)
+      (le_of_lt (lt_TW_UW152 (Z zero) 1 (kk + 2) (by omega)))]
+  exact collapse0_UW_TW1_156 (Z zero) kk
+
+theorem dictD0_sum_j1_156 (kk : Nat) :
+    dict (BT.D 0 (BT.sum (nst132 (kk + 4) BT.zero) (nst132 1 BT.zero)))
+      = phi TM.Term.one (psi (Z zero) (UW152 (Z zero) (kk + 2))) := by
+  rw [Trans.Dict.dict_D, Trans.Dict.dict_sum,
+    show dict (nst132 (kk + 4) BT.zero) = TW (kk + 3) from dict_bT152 (kk + 2),
+    show dict (nst132 1 BT.zero) = Z zero from by decide,
+    show (TW (kk + 3) : Term) = UW152 (Z zero) (kk + 2) from TW_UW156 (kk + 2),
+    plus_UW_Om156 (Z zero) (kk + 2)]
+  exact collapse0_UW_Om156 (Z zero) kk
+
+theorem dictD0_33_156 :
+    dict (BT.D 0 (BT.sum (nst132 3 BT.zero) (nst132 3 BT.zero)))
+      = psi (Z zero) TM.Term.one := by decide
+
+theorem dictD0_32_156 :
+    dict (BT.D 0 (BT.sum (nst132 3 BT.zero) (nst132 2 BT.zero)))
+      = phi (add TM.Term.one TM.Term.one) (psi (Z zero) zero) := by decide
+
+theorem dictD0_31_156 :
+    dict (BT.D 0 (BT.sum (nst132 3 BT.zero) (nst132 1 BT.zero)))
+      = phi TM.Term.one (psi (Z zero) zero) := by decide
+
+/-- **主定理 3 — 和の種の塔 `famD156 m k j` は `3 ≤ k ≤ m`、`1 ≤ j ≤ k` の全域で
+    第一の門の一歩を満たす。**  §132.5 の測定した resid の範囲そのもの。
+    どの領域でも種の `K` は一元で、その元の頭は内の高い塔 — `k ≤ m` で外の塔より下。 -/
+theorem ksetStepOK_famD156 {m k j : Nat} (h3k : 3 ≤ k) (hkm : k ≤ m)
+    (h1j : 1 ≤ j) (hjk : j ≤ k) : KsetStepOK 0 (dict (famD156 m k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨kq, rfl⟩ : ∃ kq, k = kq + 3 := ⟨k - 3, by omega⟩
+  show KsetStepOK 0 (dict (nst132 ((mm + 2) + 1)
+    (BT.D 0 (BT.sum (nst132 (kq + 3) BT.zero) (nst132 j BT.zero)))))
+  cases kq with
+  | zero =>
+      -- k = 3, j ∈ {1, 2, 3}
+      cases j with
+      | zero => exact absurd h1j (by omega)
+      | succ j0 =>
+        cases j0 with
+        | zero =>
+            rw [dict_nstD0_156 rfl rfl
+              (lt_phiPsi_reg1_156 (by decide) zero)
+              (lt_phiPsi_reg2_156 (by decide) zero) dictD0_31_156 (mm + 2)]
+            refine stepOK_UW152 (lt_phiPsi_reg1_156 (by decide) zero) mm ?_
+            intro y hy
+            replace hy : y ∈ Kset (reg 1) (psi (Z zero) zero) := hy
+            rw [Kset_psi_reg152] at hy
+            replace hy : y ∈ [(zero : Term)] := hy
+            rw [List.mem_singleton.mp hy]
+            exact lt_zero_left (ne_zero_UW152 _ _)
+        | succ j1 =>
+          cases j1 with
+          | zero =>
+              rw [dict_nstD0_156 rfl rfl
+                (lt_phiPsi_reg1_156 (by decide) zero)
+                (lt_phiPsi_reg2_156 (by decide) zero) dictD0_32_156 (mm + 2)]
+              refine stepOK_UW152 (lt_phiPsi_reg1_156 (by decide) zero) mm ?_
+              intro y hy
+              replace hy : y ∈ Kset (reg 1) (psi (Z zero) zero) := hy
+              rw [Kset_psi_reg152] at hy
+              replace hy : y ∈ [(zero : Term)] := hy
+              rw [List.mem_singleton.mp hy]
+              exact lt_zero_left (ne_zero_UW152 _ _)
+          | succ j2 =>
+              -- j = j2 + 3 ≤ 3, so j2 = 0
+              obtain rfl : j2 = 0 := by omega
+              rw [dict_nstD0_156 rfl rfl
+                (lt_psiOm_reg1_139 TM.Term.one)
+                (lt_psiOm_reg2_156 TM.Term.one) dictD0_33_156 (mm + 2)]
+              refine stepOK_UW152 (lt_psiOm_reg1_139 TM.Term.one) mm ?_
+              intro y hy
+              rw [Kset_psi_reg152] at hy
+              replace hy : y ∈ [TM.Term.one] := hy
+              rw [List.mem_singleton.mp hy]
+              exact lt_one_UW156 _ _
+  | succ kk =>
+      -- k = kk + 4
+      have hkm2 : kk + 2 < mm + 2 := by omega
+      cases j with
+      | zero => exact absurd h1j (by omega)
+      | succ j0 =>
+        cases j0 with
+        | zero =>
+            -- j = 1
+            rw [dict_nstD0_156 rfl rfl
+              (lt_phiPsi_reg1_156 (by decide) _)
+              (lt_phiPsi_reg2_156 (by decide) _) (dictD0_sum_j1_156 kk) (mm + 2)]
+            refine stepOK_UW152 (lt_phiPsi_reg1_156 (by decide) _) mm ?_
+            intro y hy
+            replace hy : y ∈ Kset (reg 1) (psi (Z zero) (UW152 (Z zero) (kk + 2))) := hy
+            rw [Kset_psi_reg152, Kset_UW152] at hy
+            replace hy : y ∈ [UW152 (Z zero) (kk + 2)] := hy
+            rw [List.mem_singleton.mp hy]
+            exact lt_UW_UW_lt155 _ _ _ _ hkm2
+        | succ j1 =>
+          cases j1 with
+          | zero =>
+              -- j = 2
+              rw [dict_nstD0_156 rfl rfl
+                (lt_phiPsi_reg1_156 (by decide) _)
+                (lt_phiPsi_reg2_156 (by decide) _) (dictD0_sum_j2_156 kk) (mm + 2)]
+              refine stepOK_UW152 (lt_phiPsi_reg1_156 (by decide) _) mm ?_
+              intro y hy
+              replace hy : y ∈ Kset (reg 1) (psi (Z zero) (UW152 (Z zero) (kk + 2))) := hy
+              rw [Kset_psi_reg152, Kset_UW152] at hy
+              replace hy : y ∈ [UW152 (Z zero) (kk + 2)] := hy
+              rw [List.mem_singleton.mp hy]
+              exact lt_UW_UW_lt155 _ _ _ _ hkm2
+          | succ j2 =>
+            cases j2 with
+            | zero =>
+                -- j = 3
+                rw [dict_nstD0_156 rfl rfl
+                  (lt_psiOm_reg1_139 _) (lt_psiOm_reg2_156 _)
+                  (dictD0_sum_j3_156 kk) (mm + 2)]
+                refine stepOK_UW152 (lt_psiOm_reg1_139 _) mm ?_
+                intro y hy
+                rw [Kset_psi_reg152] at hy
+                replace hy : y ∈ (add (UW152 (Z zero) (kk + 2)) TM.Term.one)
+                    :: (Kset (reg 1) (UW152 (Z zero) (kk + 2))
+                        ++ Kset (reg 1) TM.Term.one) := hy
+                rw [Kset_UW152] at hy
+                replace hy : y ∈ [add (UW152 (Z zero) (kk + 2)) TM.Term.one] := hy
+                rw [List.mem_singleton.mp hy,
+                  lt_add_nsum (ne_zero_UW152 _ _) (nsum_UW152 _ _)]
+                exact lt_UW_UW_lt155 _ _ _ _ hkm2
+            | succ jj =>
+                -- j = jj + 4 ≤ k = kk + 4
+                rcases Nat.eq_or_lt_of_le (show jj ≤ kk by omega) with rfl | hlt3
+                · -- j = k: the merged coefficient-2 seed
+                  rw [dict_nstD0_156 rfl rfl
+                    (lt_psiOm_reg1_139 _) (lt_psiOm_reg2_156 _)
+                    (dictD0_sum_eq156 jj) (mm + 2)]
+                  refine stepOK_UW152 (lt_psiOm_reg1_139 _) mm ?_
+                  intro y hy
+                  rw [Kset_psi_reg152] at hy
+                  replace hy : y ∈ (add (UW152 (Z zero) (jj + 2)) (UW152 (Z zero) (jj + 2)))
+                      :: (Kset (reg 1) (UW152 (Z zero) (jj + 2))
+                          ++ Kset (reg 1) (UW152 (Z zero) (jj + 2))) := hy
+                  rw [Kset_UW152] at hy
+                  replace hy : y ∈ [add (UW152 (Z zero) (jj + 2)) (UW152 (Z zero) (jj + 2))]
+                    := hy
+                  rw [List.mem_singleton.mp hy,
+                    lt_add_nsum (ne_zero_UW152 _ _) (nsum_UW152 _ _)]
+                  exact lt_UW_UW_lt155 _ _ _ _ (by omega)
+                · -- 4 ≤ j < k: the two-digit seed
+                  rw [dict_nstD0_156 rfl rfl
+                    (lt_psiOm_reg1_139 _) (lt_psiOm_reg2_156 _)
+                    (dictD0_sum_lt156 kk jj hlt3) (mm + 2)]
+                  refine stepOK_UW152 (lt_psiOm_reg1_139 _) mm ?_
+                  intro y hy
+                  rw [Kset_psi_reg152] at hy
+                  replace hy : y ∈ (add (UW152 (Z zero) (kk + 2)) (UW152 (Z zero) (jj + 2)))
+                      :: (Kset (reg 1) (UW152 (Z zero) (kk + 2))
+                          ++ Kset (reg 1) (UW152 (Z zero) (jj + 2))) := hy
+                  rw [Kset_UW152 (Z zero) (kk + 2), Kset_UW152 (Z zero) (jj + 2)] at hy
+                  replace hy : y ∈ [add (UW152 (Z zero) (kk + 2)) (UW152 (Z zero) (jj + 2))]
+                    := hy
+                  rw [List.mem_singleton.mp hy,
+                    lt_add_nsum (ne_zero_UW152 _ _) (nsum_UW152 _ _)]
+                  exact lt_UW_UW_lt155 _ _ _ _ hkm2
+
+theorem gateStd87_famD156 (m k j : Nat) (h3k : 3 ≤ k) (hkm : k ≤ m)
+    (h1j : 1 ≤ j) (hjk : j ≤ k) : GateStd87 (famD156 m k j) :=
+  fun _ _ => ksetStepOK_famD156 h3k hkm h1j hjk
+
+theorem firstFire_famD156 (m k j : Nat) (h3k : 3 ≤ k) (hkm : k ≤ m)
+    (h1j : 1 ≤ j) (hjk : j ≤ k) : FirstFire145 (famD156 m k j) :=
+  fun q hq _ hle y hy => (ksetStepOK_famD156 h3k hkm h1j hjk q hq hle).2 y hy
+
+/-! ### §156.6 Measurement (frozen) — everything below is measurement, not proof -/
+
+/-- 混合の和の判定器 — 裸の塔と famB の和、どちらの順でも。 -/
+def isMixTB156 : BT → Bool
+  | BT.sum x y => (isTow155 x && isFamB155 y) || (isFamB155 x && isTow155 y)
+  | _ => false
+
+/-- 和の種の塔の判定器 — `ψ₀` の引数が裸の塔の和。 -/
+def isSumSeed156 : BT → Bool
+  | BT.D 1 a => isSumSeed156 a
+  | BT.D 0 (BT.sum x y) => isTow155 x && isTow155 y
+  | _ => false
+
+/-- §152+§155 の類に §156 の二類を足した被覆判定器。 -/
+def covered156 (a : BT) : Bool := covered155 a || isMixTB156 a || isSumSeed156 a
+
+/-! **resid の境界の凍結 (`m, k, p, j < 7`)。**  三つの族の §132 の残る母集団は
+    ちょうど定理の領域: `famB m k ⊕ ψ₁^p 0` は `3 ≤ k ≤ m ∧ 1 ≤ p ≤ m`、
+    `ψ₁^p 0 ⊕ famB m k` は `3 ≤ k ∧ 3 ≤ m < p ∧ k ≤ p` (famB は単独では標準でない
+    `k > m` も入る)、`famD156 m k j` は `3 ≤ k ≤ m ∧ 1 ≤ j ≤ k`。 -/
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun p =>
+  resid136 (BT.sum (famB132 m k) (nst132 p BT.zero))
+    == (decide (3 ≤ k) && decide (k ≤ m) && decide (1 ≤ p) && decide (p ≤ m))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun p =>
+  resid136 (BT.sum (nst132 p BT.zero) (famB132 m k))
+    == (decide (3 ≤ k) && decide (3 ≤ m) && decide (m < p) && decide (k ≤ p))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun j =>
+  resid136 (famD156 m k j)
+    == (decide (3 ≤ k) && decide (k ≤ m) && decide (1 ≤ j) && decide (j ≤ k))
+
+/-! **定理の領域で一歩の判定器は真 (`< 7` で凍結)。** -/
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun p =>
+  !(decide (3 ≤ k) && decide (k ≤ m) && decide (1 ≤ p) && decide (p ≤ m))
+  || stepOKb 0 (dict (BT.sum (famB132 m k) (nst132 p BT.zero)))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun p =>
+  !(decide (3 ≤ k) && decide (3 ≤ m) && decide (m < p) && decide (k ≤ p))
+  || stepOKb 0 (dict (BT.sum (nst132 p BT.zero) (famB132 m k)))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun j =>
+  !(decide (3 ≤ k) && decide (k ≤ m) && decide (1 ≤ j) && decide (j ≤ k))
+  || stepOKb 0 (dict (famD156 m k j))
+
+/-! **閉じた形の照合 — `dict` の値は本当に定理の言う形。** -/
+
+#guard dict (BT.sum (famB132 5 4) (nst132 3 BT.zero)) == add (UW152 (sd152 4) 4) (TW 2)
+#guard dict (BT.sum (famB132 5 4) (nst132 1 BT.zero)) == add (UW152 (sd152 4) 4) (Z zero)
+#guard dict (BT.sum (nst132 6 BT.zero) (famB132 5 4)) == add (TW 5) (UW152 (sd152 4) 4)
+#guard dict (famD156 4 4 4) == UW152 (psi (Z zero) (add (TW 3) (TW 3))) 3
+#guard dict (famD156 5 5 4) == UW152 (psi (Z zero) (add (TW 4) (TW 3))) 4
+#guard dict (famD156 4 4 3) == UW152 (psi (Z zero) (add (TW 3) TM.Term.one)) 3
+#guard dict (famD156 4 4 2)
+  == UW152 (phi (add TM.Term.one TM.Term.one) (psi (Z zero) (TW 3))) 3
+#guard dict (famD156 4 4 1) == UW152 (phi TM.Term.one (psi (Z zero) (TW 3))) 3
+#guard dict (famD156 4 3 3) == UW152 (psi (Z zero) TM.Term.one) 3
+#guard dict (famD156 4 3 2)
+  == UW152 (phi (add TM.Term.one TM.Term.one) (psi (Z zero) zero)) 3
+#guard dict (famD156 4 3 1) == UW152 (phi TM.Term.one (psi (Z zero) zero)) 3
+
+/-! **母集団との重なり。**  famD156 は famPool132 の第六の族そのもの、混合の和は
+    pool136 の第一・第二の族に居る。 -/
+
+#guard famPool132.contains (famD156 4 4 2)
+#guard famPool132.contains (famD156 7 5 3)
+#guard pool136.contains (BT.sum (nst132 4 BT.zero) (famB132 3 3))
+#guard pool136.contains (BT.sum (famB132 3 3) (nst132 2 BT.zero))
+#guard fm145.contains (BT.sum (nst132 4 BT.zero) (famB132 3 3))
+
+/-! **被覆の凍結。**  §132 の残り (`resid136`) のうち、証明済みの形の類に文字通り
+    入っている本数:
+    famPool132 (2455 本): §155.7 の 504 に和の種の塔 65 が加わり **569 本 (23.2%)**。
+    混合の和は famPool132 では全て `ψ₁` に包まれた形 (`ψ₁^m(塔 ⊕ ψ₀ ...)`) で現れ、
+    頂点の和としては現れない — その類はここでは動かない。
+    pool136 (925 本): 頂点の混合の和 70 本が新たに入り **0 → 70 本 (7.6%)**。
+    fm145 (3371 本): 混合の和 25 + 和の種 26 で **15 → 66 本 (2.0%)**。
+    残る形の名: `ψ₁` に包まれた混合の和 — 底が `塔 ⊕ ψ₀(…)` の φ̄0 の塔。その
+    `wcnf` の桁は `(塔, ψ_{Ω₁}(…))` — 係数が `1` でない famE155 の形の一般化 —
+    が §156 の外に残る次の一歩。 -/
+
+#guard (famPool132.filter resid136).length == 2455
+#guard ((famPool132.filter resid136).countP isMixTB156) == 0
+#guard ((famPool132.filter resid136).countP isSumSeed156) == 65
+#guard ((famPool132.filter resid136).countP covered156) == 569
+#guard (pool136.filter resid136).length == 925
+#guard ((pool136.filter resid136).countP isMixTB156) == 70
+#guard ((pool136.filter resid136).countP isSumSeed156) == 0
+#guard ((pool136.filter resid136).countP covered156) == 70
+#guard (fm145.filter resid136).length == 3371
+#guard ((fm145.filter resid136).countP isMixTB156) == 25
+#guard ((fm145.filter resid136).countP isSumSeed156) == 26
+#guard ((fm145.filter resid136).countP covered156) == 66
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms lt_UW_reg1_156
+#print axioms wcnf_UW156
+#print axioms idx_UW156
+#print axioms stepF_fire156
+#print axioms idx2_156
+#print axioms TW_UW156
+#print axioms beq_UW_seed156
+#print axioms wcnf_sumX156
+#print axioms stepOK_sumX156
+#print axioms stepOK_UW_Om156
+#print axioms stepOK_UW_TW1_156
+#print axioms stepOK_UW_TW2_156
+#print axioms ksetStepOK_famB_tow156
+#print axioms ksetStepOK_tow_famB156
+#print axioms gateStd87_famB_tow156
+#print axioms gateStd87_tow_famB156
+#print axioms firstFire_famB_tow156
+#print axioms firstFire_tow_famB156
+#print axioms collapse0_sum2_156
+#print axioms collapse0_sumX156
+#print axioms collapse0_UW_TW2_156
+#print axioms collapse0_UW_TW1_156
+#print axioms collapse0_UW_Om156
+#print axioms dictD0_sum_lt156
+#print axioms dictD0_sum_eq156
+#print axioms dictD0_sum_j3_156
+#print axioms dictD0_sum_j2_156
+#print axioms dictD0_sum_j1_156
+#print axioms dict_nstD0_156
+#print axioms ksetStepOK_famD156
+#print axioms gateStd87_famD156
+#print axioms firstFire_famD156
+
+end
+
+
 end Evidence.Region
