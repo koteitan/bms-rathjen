@@ -4388,4 +4388,1501 @@ closed forms re-computed by the kernel. -/
   !(bad132 (nst132 m (BT.D 0 (BT.sum (nst132 k BT.zero) (nst132 j BT.zero)))))
 
 end
+/-! ## §153 WHICH SIDE IS WRONG AT `tGap107` — `vOf` OVERSHOOTS, THREE ARBITERS AGREE
+# §153a  The §134 fork at `tGap107` is DECIDED: `vOf` overshoots; the expansion values stand
+
+Verdict (three independent arbiters, none previously asked this question, all agree):
+the value of the matrix `(0,0)(1,1)(2,1)(3,1)(1,1)(2,1)(3,0)(4,1)(5,1)(6,1)` is
+`φ̄(Γ₀,0)` (the ordinal φ_{Γ₀}(1)) — the sup of the expansion values — and NOT
+`vOf tGap107 = φ̄(Γ₀,Γ₀⊕1)` (the ordinal φ_{Γ₀}(Γ₀+1)).
+
+What this file freezes in Lean (all `decide`, gate-free):
+
+* `oRB` (the port of naruyoko's `Trans`) sends the matrix to exactly `bTowG98 1`
+  = ψ₀(Ω^Ω ⊕ Ω^Γ₀), a STANDARD Buchholz term, and sends the first expansions to
+  ψ₀(Ω^Ω ⊕ Ω^(g n)) where `g` is precisely the canonical Γ₀-approximating tower
+  (g 0 = ψ₀(Ω²), g (n+1) = ψ₀(Ω^(g n)); n ≤ 8 measured externally, n ≤ 1 frozen
+  here — kernel reduction of the port grows too fast beyond 12 columns).  So in
+  Buchholz's own system the matrix IS the limit of its expansion:
+  sup_n ψ₀(Ω^Ω ⊕ Ω^(g n)) = ψ₀(Ω^Ω ⊕ Ω^Γ₀).
+* ψ₀(Ω^Ω ⊕ Ω^Γ₀) denotes φ_{Γ₀}(1):  ψ₀(Ω^Ω ⊕ Ω^γ) = φ_γ(Γ₀+1) on the whole
+  chain below (measured), and sup_{γ→Γ₀} φ_γ(Γ₀+1) = φ_{Γ₀}(1) by the Veblen
+  fs rule φ_λ(1)[n] = φ_{λ[n]}(φ_λ(0)+1); the map α ↦ φ_α(Γ₀+1) is NOT
+  continuous at α = Γ₀, and continuing it across that point is exactly the
+  step `dict` gets wrong.
+* The vOf-side ordinal φ_{Γ₀}(Γ₀+1) has its own standard Buchholz term
+  (`highB153`), STRICTLY ABOVE `bTowG98 1`, whose canonical matrix strictly
+  EXTENDS the witness matrix by ten more columns; φ_{Γ₀}(2) (`midB153`) sits
+  strictly between, on the 16-column extension.  Both canonical matrices are
+  produced identically by §85's `bInv85` (frozen below) and by naruyoko's
+  independent `TransRev` (measured).  So reading `vOf`'s value into the
+  10-column matrix would break the order of the correspondence.
+* Hexirp's table (バシク行列システムとRathjenの弱マーロのpsiの対応) gives the
+  10-column matrix the value `phi(psi(W(0),0),1)` and the 16-column matrix
+  `phi(psi(W(0),0),1+1)`.  Translated by the repository's validated dictionary
+  (`phiNF (1+a) b`, `scripts/hexirp-rathjen-check.py`), both land STRICTLY
+  BELOW `vOf tGap107` — the second is an order violation against `vOf`, since
+  its matrix strictly extends the witness matrix.  These rows contain `psi`,
+  so they sit outside the `CNV` fragment §147 counted: this comparison is new.
+
+Cofinality note: `¬ LimCofS1` (§135) is untouched either way; this file settles
+which SIDE of the §134 fork was wrong, not the (already unconditional) verdict.
+The corrected value of `tGap107` is the term `rawT94 0 = phi (psi (Z zero) zero) zero`.
+-/
+set_option maxRecDepth 8000
+set_option maxHeartbeats 2000000
+open Trans.Dict (BT)
+open TM.Term
+
+/-! ### §153.1 The Buchholz side (arbiter: Buchholz's own system, through the validated port) -/
+
+/-- 展開の値の Buchholz 側の指数の塔。`g 0 = ψ₀(Ω²)`、`g (n+1) = ψ₀(Ω^(g n))`。
+    これは Γ₀ の正準近似列である。 -/
+def gT153 : Nat → BT
+  | 0 => .D 0 (.D 1 (.D 1 .zero))
+  | n + 1 => .D 0 (.D 1 (.D 1 (gT153 n)))
+
+/-- 展開 n 段目の Buchholz 値 `ψ₀(Ω^Ω ⊕ Ω^(g n))`。 -/
+def eV153 (n : Nat) : BT := .D 0 (.sum bOO94 (.D 1 (.D 1 (gT153 n))))
+
+/-- `Γ₀ = ψ₀(Ω^Ω)` の Buchholz 項。 -/
+def g0B153 : BT := .D 0 bOO94
+
+/-- `φ_{Γ₀}(2)` の Buchholz 項 `ψ₀(Ω^Ω ⊕ Ω^Γ₀ ⊕ Ω^Γ₀)`。 -/
+def midB153 : BT :=
+  .D 0 (.sum bOO94 (.sum (.D 1 (.D 1 g0B153)) (.D 1 (.D 1 g0B153))))
+
+/-- `vOf` 側の主張 `φ_{Γ₀}(Γ₀+1)` の Buchholz 項
+    `ψ₀(Ω^Ω ⊕ Ω^Γ₀·Γ₀ ⊕ Ω^Γ₀)` (`Ω^Γ₀·Γ₀ = ψ₁(ψ₁(Γ₀) ⊕ Γ₀)`)。 -/
+def highB153 : BT :=
+  .D 0 (.sum bOO94 (.sum (.D 1 (.sum (.D 1 g0B153) g0B153)) (.D 1 (.D 1 g0B153))))
+
+/-- `φ_{Γ₀}(2)` の正準行列 — 証人行列を 6 列延長する 16 列
+    (naruyoko の `TransRev` の実測と下の `bInv85` が同じものを出す)。 -/
+def midMat153 : BMS.Matrix :=
+  [[0,0],[1,1],[2,1],[3,1],[1,1],[2,1],[3,0],[4,1],[5,1],[6,1],
+   [1,1],[2,1],[3,0],[4,1],[5,1],[6,1]]
+
+/-- `φ_{Γ₀}(Γ₀+1)` の正準行列 — 証人行列を 10 列延長する 20 列 (同上)。 -/
+def highMat153 : BMS.Matrix :=
+  [[0,0],[1,1],[2,1],[3,1],[1,1],[2,1],[3,0],[4,1],[5,1],[6,1],
+   [2,0],[3,1],[4,1],[5,1],[1,1],[2,1],[3,0],[4,1],[5,1],[6,1]]
+
+/-- **行列の Buchholz 値は `bTowG98 1` そのもの。** -/
+theorem oRB_tGap153 : Trans.Recal.oRB (matB tGap107 0) = some (bTowG98 1) := by decide
+
+/-- **展開 0 段目の Buchholz 値は `ψ₀(Ω^Ω ⊕ Ω^(g 0))`。** -/
+theorem oRB_fs0_153 : Trans.Recal.oRB (matB (fsB tGap107 0) 0) = some (eV153 0) := by decide
+
+set_option maxHeartbeats 20000000 in
+/-- **展開 1 段目も塔に乗る。**  (2 段目以降は移植の核簡約が育ちすぎるため
+    外部測定 n ≤ 8 に置く。値の側の全 n は `closedFS134_135` が既に定理。) -/
+theorem oRB_fs1_153 : Trans.Recal.oRB (matB (fsB tGap107 1) 0) = some (eV153 1) := by decide
+
+/-- **鎖は狭義増加で、全段が行列の値より真に下、全段が標準。** -/
+theorem chain153 :
+    ((List.range 8).all fun n =>
+      BT.lt (eV153 n) (eV153 (n + 1)) && BT.lt (eV153 n) (bTowG98 1)
+        && BT.isStd (eV153 n)) = true := by decide
+
+/-- **`bTowG98 1 < midB153 < highB153`、三つとも標準。**
+    `vOf` の主張する順序数は行列の Buchholz 値より真に上にある。 -/
+theorem order153 :
+    (BT.isStd (bTowG98 1) && BT.isStd midB153 && BT.isStd highB153
+      && BT.lt (bTowG98 1) midB153 && BT.lt midB153 highB153) = true := by decide
+
+/-- **`φ_{Γ₀}(2)` の正準行列は証人行列を真に延長する 16 列。**
+    §85 の逆訳が naruyoko の `TransRev` の実測と同じ行列を出す。 -/
+theorem binv_mid153 : matB (bInv85 midB153) 0 = midMat153 := by decide
+
+/-- **`φ_{Γ₀}(Γ₀+1)` の正準行列は 20 列。** 同上。 -/
+theorem binv_high153 : matB (bInv85 highB153) 0 = highMat153 := by decide
+
+/-- **頭の `Ω^Ω` を外した綴りは標準でない。**  `ψ₀(Ω^Γ₀)` も `ψ₀(Ω^Γ₀ ⊕ Ω^Γ₀)` も
+    Buchholz の標準形でない — `Γ₀` の指数は前に `Ω^Ω` の加数を要る。 -/
+theorem nonstd153 :
+    (BT.isStd (.D 0 (.D 1 (.D 1 g0B153)))
+      || BT.isStd (.D 0 (.sum (.D 1 (.D 1 g0B153)) (.D 1 (.D 1 g0B153))))) = false := by
+  decide
+
+/-! ### §153.2 The Hexirp side (arbiter: the external table, through the validated dictionary) -/
+
+/-- Hexirp 氏の表の証人行列の行 `phi(psi(W(0),0),1)` を、検証済みの辞書
+    (`phiNF (1+a) b`) で当方の項にしたもの。 -/
+def hexM153 : TM.Term := phiNF (psi (Z zero) zero) (ofNat 1)
+
+/-- 同じく 16 列の行列の行 `phi(psi(W(0),0),1+1)` の訳。 -/
+def hexMmid153 : TM.Term := phiNF (psi (Z zero) zero) (ofNat 2)
+
+/-- **辞書の橋が作る綴りを釘で留める。** `φ̄(Γ₀,1)`・`φ̄(Γ₀,2)`。
+    (`φ̄(Γ₀,0)` と `φ̄(Γ₀,1)` が同じ順序数 `φ_{Γ₀}(1)` を表すのは §127.8 の記録済みの穴。
+    どちらの読みでも下の不等式は成り立つ。) -/
+theorem hex_spelling153 :
+    hexM153 = phi (psi (Z zero) zero) one
+      ∧ hexMmid153 = phi (psi (Z zero) zero) (ofNat 2) :=
+  ⟨by decide, by decide⟩
+
+/-- **Hexirp 氏の値は、どの綴りでも `vOf tGap107` より真に下。**
+    3 番目が順序の破れである: `vOf` が 10 列の行列に付ける値は、
+    先方が 16 列の行列 (真に長い) に付ける値より真に上にある。 -/
+theorem hex_lt_vOf153 :
+    (lt (rawT94 0) (vOf tGap107) && lt hexM153 (vOf tGap107)
+      && lt hexMmid153 (vOf tGap107)) = true := by decide
+
+/-- **綴りの列は当方の順序で整列している。**
+    `φ̄(Γ₀,0) < φ̄(Γ₀,1) < φ̄(Γ₀,2) < vOf tGap107`。 -/
+theorem hex_chain153 :
+    (lt (rawT94 0) hexM153 && lt hexM153 hexMmid153
+      && lt hexMmid153 (vOf tGap107)) = true := by decide
+
+/-! ### §153.3 What is already green and completes the picture
+
+`noReach135`: every expansion value is strictly below `rawT94 0 = φ̄(Γ₀,0)`.
+`lt_s_vOf127`: `φ̄(Γ₀,0) < vOf tGap107`.  With §1 and §2 above:
+
+    expansion values  <  φ̄(Γ₀,0)  ≡  value of the matrix (all three arbiters)
+                                   <  vOf tGap107  (which belongs to the 20-column matrix)
+-/
+
+#print axioms oRB_tGap153
+#print axioms oRB_fs0_153
+#print axioms oRB_fs1_153
+#print axioms chain153
+#print axioms order153
+#print axioms binv_mid153
+#print axioms binv_high153
+#print axioms nonstd153
+#print axioms hex_spelling153
+#print axioms hex_lt_vOf153
+#print axioms hex_chain153
+
+/-! ## §154 `TailOK151` REDUCES TO THE MID-LIST DOMINATION `Dom154`
+
+The trichotomy the reduction rests on, proven as a list lemma (`transport154`):
+`hi a < hi b` forces the two `wcnf` pair lists into "a common prefix, then the
+left side ends, or the head pairs strictly drop in the (exponent, coefficient)
+lexicographic order".  Instantiated under equal last exponents:
+
+  * divergence at both last pairs  → clause (i) of `tailDec151` (PROVEN here);
+  * the left list a proper prefix  → impossible — the strict descent of the
+    merged exponents (`wcnf_descP154`, new) contradicts `sameExp145`;
+  * divergence before a last pair  → the named residual `Dom154`, and its
+    divergence shape is forced (`domShape154`): the left tail is nonempty or
+    the exponent strictly drops.
+
+`tailOK151_of_dom154 (Hp : PsiIdxOKStd172) (HD : Dom154) : TailOK151` is the
+bridge; `xmono145_of_dom154` chains it to §151's.  `Dom154` needs the left
+`K`-standardness in an essential way — §151's control (`cenNoK151`) breaks
+clause (ii) in 144/31/156 pairs once it is dropped — and no Term-side carrier
+of the `G₀`-condition exists yet; that is the remaining wall. -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- `subAP` を成分列で書いたもの。 -/
+theorem subAP_eq154 {w g b : Term} {s : List Term} (hl : toList g = b :: s) :
+    subAP w g = if b == w then ofList s else g := by
+  show (match toList g with
+        | [] => zero
+        | p :: rest => if p == w then ofList rest else g) = _
+  rw [hl]
+
+/-- **`· ⊖ Ω₁` は、頭の成分が `Ω₁` 以上の項の上で狭義単調。** -/
+theorem subAP_smono154 {x y : Term} (hig : inT x = true) (hih : inT y = true)
+    {bg bh : Term} {sg sh : List Term}
+    (hlg : toList x = bg :: sg) (hlh : toList y = bh :: sh)
+    (hbg : lt bg (reg 1) = false) (hbh : lt bh (reg 1) = false)
+    (hxy : lt x y = true) :
+    lt (subAP (reg 1) x) (subAP (reg 1) y) = true := by
+  have hcg := (inT_toList x hig).1
+  have hdg := (inT_toList x hig).2
+  have hch := (inT_toList y hih).1
+  have hdh := (inT_toList y hih).2
+  rw [hlg] at hcg hdg
+  rw [hlh] at hch hdh
+  obtain ⟨⟨_, hibg⟩, hcsg⟩ := inTL_cons.mp hcg
+  obtain ⟨⟨_, hibh⟩, hcsh⟩ := inTL_cons.mp hch
+  have hisg : inT (ofList sg) = true := inT_ofList sg hcsg (descL_tail hdg)
+  have hish : inT (ofList sh) = true := inT_ofList sh hcsh (descL_tail hdh)
+  rw [subAP_eq154 hlg, subAP_eq154 hlh]
+  by_cases hqg : (bg == (reg 1 : Term)) = true
+  · rw [if_pos hqg]
+    by_cases hqh : (bh == (reg 1 : Term)) = true
+    · -- both heads are exactly Ω₁ — peel them
+      rw [if_pos hqh]
+      have hbb : bh = bg := by rw [eq_of_beq hqg, eq_of_beq hqh]
+      refine lt_hd_eq_inv89 hig hih hlg (by rw [hlh, hbb]) hisg hish
+        (toList_ofList89 hcsg) (toList_ofList89 hcsh) hxy
+    · -- left head is Ω₁, right head is strictly above it
+      rw [if_neg hqh]
+      have hWh : lt (reg 1) bh = true := by
+        rcases (Bool.or_eq_true _ _).mp (le_reg1_of_not_lt89 hibh hbh) with he | hl2
+        · exfalso
+          have hb2 : (bh == (reg 1 : Term)) = true := by
+            rw [← eq_of_beq he]; exact beq_self_eq_true _
+          rw [hb2] at hqh; exact hqh rfl
+        · exact hl2
+      have hne : y ≠ zero := by
+        intro hc
+        rw [hc] at hlh
+        exact List.cons_ne_nil bh sh (by rw [← hlh]; rfl)
+      cases hsg : sg with
+      | nil => exact lt_zero_left hne
+      | cons c cs =>
+          subst hsg
+          have hic : inT c = true := (inTL_cons.mp hcsg).1.2
+          have hcW : le c bg = true :=
+            descL_bound_inT (c :: cs) bg hibg hcsg hdg c (List.Mem.head _)
+          have hcbh : lt c bh = true := by
+            refine lt_of_le_of_lt3 (inT_le_fragR c hic) (inT_le_fragR bg hibg)
+              (inT_le_fragR bh hibh) hcW ?_
+            rw [eq_of_beq hqg]; exact hWh
+          exact lt_of_hd_lt hisg hih (toList_ofList89 hcsg) hlh hcbh
+  · rw [if_neg hqg]
+    by_cases hqh : (bh == (reg 1 : Term)) = true
+    · -- impossible: x < y forces bg ≤ bh = Ω₁ ≤ bg, so bg = Ω₁
+      exfalso
+      have hgle : le bg bh = true := hd_mono_inT hig hih hlg hlh (le_of_lt hxy)
+      have hgW : le bg (reg 1) = true := by rw [← eq_of_beq hqh]; exact hgle
+      rcases (Bool.or_eq_true _ _).mp hgW with he | hl2
+      · rw [he] at hqg; exact hqg rfl
+      · rw [hl2] at hbg; exact Bool.noConfusion hbg
+    · rw [if_neg hqh]; exact hxy
+
+/-- **`divAP Ω₁` は `Ω₁` 以上の加法主要項の上で狭義単調。** -/
+theorem divAP_smono154 {p q : Term}
+    (hap : p.isAP = true) (hip : inT p = true) (hpM : lt p M = true)
+    (hpw : lt p (reg 1) = false)
+    (haq : q.isAP = true) (hiq : inT q = true) (hqM : lt q M = true)
+    (hqw : lt q (reg 1) = false)
+    (h : lt p q = true) : lt (divAP (reg 1) p) (divAP (reg 1) q) = true := by
+  obtain ⟨bp, sp, hlp, hbp⟩ := hd_logOm109 (isSC_reg_succ 0) (inT_reg 1)
+    (show (reg 1 : Term).isAP = true from rfl) hap hip hpw
+  obtain ⟨bq, sq, hlq, hbq⟩ := hd_logOm109 (isSC_reg_succ 0) (inT_reg 1)
+    (show (reg 1 : Term).isAP = true from rfl) haq hiq hqw
+  have hg : lt (logOm p) (logOm q) = true := logOm_smono110 hip hap hpM hiq haq hqM h
+  show lt (omegaNF (subAP (reg 1) (logOm p))) (omegaNF (subAP (reg 1) (logOm q))) = true
+  exact lt_omegaNF_inT79 (inT_subAP (inT_logOm hip)) (inT_subAP (inT_logOm hiq))
+    (subAP_smono154 (inT_logOm hip) (inT_logOm hiq) hlp hlq hbp hbq hg)
+
+/-- 割った成分列は 𝔗(M) の成分の条件を満たす。 -/
+theorem inTL_mapDiv154 (H : List Term) (hc : inTL H = true) :
+    inTL (H.map (divAP (reg 1))) = true := by
+  show (H.map (divAP (reg 1))).all _ = true
+  rw [List.all_eq_true]
+  intro x hx
+  obtain ⟨q, hq, hxe⟩ := List.mem_map.mp hx
+  have hiq : inT q = true :=
+    ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hc q hq)).2
+  rw [← hxe]
+  show ((divAP (reg 1) q).isAP && inT (divAP (reg 1) q)) = true
+  rw [isAP_divAP, inT_divAP hiq]
+  rfl
+
+/-- 割った成分列は降順のまま。 -/
+theorem descL_mapDiv154 : ∀ (H : List Term), inTL H = true → descL H = true →
+    (∀ p ∈ H, lt p (reg 1) = false) → descL (H.map (divAP (reg 1))) = true := by
+  intro H
+  induction H with
+  | nil => intro _ _ _; rfl
+  | cons p t ih =>
+    intro hc hd hW
+    obtain ⟨⟨hap, hip⟩, hct⟩ := inTL_cons.mp hc
+    cases t with
+    | nil => rfl
+    | cons q t' =>
+        obtain ⟨⟨haq, hiq⟩, _⟩ := inTL_cons.mp hct
+        obtain ⟨hqp, hdt⟩ := descL_cons.mp hd
+        have hih := ih hct hdt (fun z hz => hW z (List.Mem.tail _ hz))
+        refine descL_cons.mpr ⟨?_, hih⟩
+        exact divAP_mono109 (isSC_reg_succ 0) (inT_reg 1) haq hiq
+          (hW q (List.Mem.tail _ (List.Mem.head _))) hap hip hqp
+
+/-- **割り算は成分列の比較を保つ。** -/
+theorem mapDiv_smono154 : ∀ (H1 H2 : List Term), inTL H1 = true → inTL H2 = true →
+    descL H1 = true → descL H2 = true →
+    (∀ p ∈ H1, lt p (reg 1) = false) → (∀ p ∈ H2, lt p (reg 1) = false) →
+    (∀ p ∈ H1, lt p M = true) → (∀ p ∈ H2, lt p M = true) →
+    lt (ofList H1) (ofList H2) = true →
+    lt (ofList (H1.map (divAP (reg 1)))) (ofList (H2.map (divAP (reg 1)))) = true := by
+  intro H1
+  induction H1 with
+  | nil =>
+    intro H2 _ hc2 _ _ _ _ _ _ h
+    cases H2 with
+    | nil =>
+        exfalso
+        rw [show ofList ([] : List Term) = zero from rfl, lt_irrefl] at h
+        exact Bool.noConfusion h
+    | cons q t2 =>
+        refine lt_zero_left ?_
+        refine ofList_ne_zero81 _ (List.cons_ne_nil _ _) ?_
+        intro z hz
+        obtain ⟨r, _, hze⟩ := List.mem_map.mp hz
+        rw [← hze]
+        exact isAP_divAP _ _
+  | cons p t1 ih =>
+    intro H2 hc1 hc2 hd1 hd2 hW1 hW2 hM1 hM2 h
+    cases H2 with
+    | nil =>
+        exfalso
+        rw [show ofList ([] : List Term) = zero from rfl, lt_zero_right] at h
+        exact Bool.noConfusion h
+    | cons q t2 =>
+        obtain ⟨⟨hap, hip⟩, hct1⟩ := inTL_cons.mp hc1
+        obtain ⟨⟨haq, hiq⟩, hct2⟩ := inTL_cons.mp hc2
+        have hi1 : inT (ofList (p :: t1)) = true := inT_ofList _ hc1 hd1
+        have hi2 : inT (ofList (q :: t2)) = true := inT_ofList _ hc2 hd2
+        have hcm1 : inTL ((p :: t1).map (divAP (reg 1))) = true := inTL_mapDiv154 _ hc1
+        have hcm2 : inTL ((q :: t2).map (divAP (reg 1))) = true := inTL_mapDiv154 _ hc2
+        have hdm1 : descL ((p :: t1).map (divAP (reg 1))) = true :=
+          descL_mapDiv154 _ hc1 hd1 hW1
+        have hdm2 : descL ((q :: t2).map (divAP (reg 1))) = true :=
+          descL_mapDiv154 _ hc2 hd2 hW2
+        have him1 : inT (ofList ((p :: t1).map (divAP (reg 1)))) = true :=
+          inT_ofList _ hcm1 hdm1
+        have him2 : inT (ofList ((q :: t2).map (divAP (reg 1)))) = true :=
+          inT_ofList _ hcm2 hdm2
+        rcases lt_trichotomy_inT hip hiq with hpq | hpq | hpq
+        · -- heads strictly compare — divAP is strictly monotone on them
+          refine lt_of_hd_lt him1 him2 (toList_ofList89 hcm1) (toList_ofList89 hcm2) ?_
+          exact divAP_smono154 hap hip (hM1 p (List.Mem.head _)) (hW1 p (List.Mem.head _))
+            haq hiq (hM2 q (List.Mem.head _)) (hW2 q (List.Mem.head _)) hpq.1
+        · -- equal heads — peel and use the induction hypothesis
+          have hpe : p = q := hpq.2.1
+          subst hpe
+          have hit1 : inT (ofList t1) = true := inT_ofList t1 hct1 (descL_tail hd1)
+          have hit2 : inT (ofList t2) = true := inT_ofList t2 hct2 (descL_tail hd2)
+          have hrec : lt (ofList t1) (ofList t2) = true :=
+            lt_hd_eq_inv89 hi1 hi2 (toList_ofList89 hc1) (toList_ofList89 hc2)
+              hit1 hit2 (toList_ofList89 hct1) (toList_ofList89 hct2) h
+          have hIH := ih t2 hct1 hct2 (descL_tail hd1) (descL_tail hd2)
+            (fun z hz => hW1 z (List.Mem.tail _ hz)) (fun z hz => hW2 z (List.Mem.tail _ hz))
+            (fun z hz => hM1 z (List.Mem.tail _ hz)) (fun z hz => hM2 z (List.Mem.tail _ hz))
+            hrec
+          exact lt_of_hd_eq77 him1 him2 (toList_ofList89 hcm1) (toList_ofList89 hcm2) hIH
+        · -- reversed heads contradict the hypothesis
+          exfalso
+          have h2 : lt (ofList (q :: t2)) (ofList (p :: t1)) = true :=
+            lt_of_hd_lt hi2 hi1 (toList_ofList89 hc2) (toList_ofList89 hc1) hpq.2.2
+          rw [lt_asymm_inT hi1 hi2 h] at h2
+          exact Bool.noConfusion h2
+
+/-- **§154 の要 — 成分は (指数, 係数) の辞書式で比べる。**
+    `Ω₁` 以上の加法主要成分 `p < q` は、`wA` が狭義に増えるか、`wA` が一致して
+    `wC` が狭義に増えるかのどちらか。 -/
+theorem compLex154 {p q : Term}
+    (hap : p.isAP = true) (hip : inT p = true) (hpM : lt p M = true)
+    (_hpw : lt p (reg 1) = false)
+    (haq : q.isAP = true) (hiq : inT q = true) (hqM : lt q M = true)
+    (_hqw : lt q (reg 1) = false)
+    (h : lt p q = true) :
+    lt (wA (reg 1) p) (wA (reg 1) q) = true
+      ∨ (wA (reg 1) p = wA (reg 1) q ∧ lt (wC (reg 1) p) (wC (reg 1) q) = true) := by
+  have hgp : inT (logOm p) = true := inT_logOm hip
+  have hgq : inT (logOm q) = true := inT_logOm hiq
+  have hg : lt (logOm p) (logOm q) = true := logOm_smono110 hip hap hpM hiq haq hqM h
+  by_cases he : hiW89 (logOm p) = hiW89 (logOm q)
+  · -- same high part: the exponents agree and the low parts carry the comparison
+    right
+    constructor
+    · show ofList (((toList (logOm p)).filter (fun z => !lt z (reg 1))).map (divAP (reg 1)))
+        = ofList (((toList (logOm q)).filter (fun z => !lt z (reg 1))).map (divAP (reg 1)))
+      rw [← toList_hiW89 hgp, ← toList_hiW89 hgq, he]
+    · have hlo : lt (loW89 (logOm p)) (loW89 (logOm q)) = true :=
+        lo_lt_of_lt89 hgp hgq he hg
+      show lt (omegaNF (ofList ((toList (logOm p)).filter (fun z => lt z (reg 1)))))
+        (omegaNF (ofList ((toList (logOm q)).filter (fun z => lt z (reg 1))))) = true
+      exact lt_omegaNF_inT79 (inT_loW89 hgp) (inT_loW89 hgq) hlo
+  · -- the high parts separate: the exponents strictly compare
+    left
+    have hhi : lt (hiW89 (logOm p)) (hiW89 (logOm q)) = true := lt_hi89 hgp hgq hg he
+    have hcp := (inT_toList _ hgp).1
+    have hdp := (inT_toList _ hgp).2
+    have hcq := (inT_toList _ hgq).1
+    have hdq := (inT_toList _ hgq).2
+    have hfp : inTL ((toList (logOm p)).filter (fun z => !lt z (reg 1))) = true :=
+      inTL_filter _ hcp
+    have hfq : inTL ((toList (logOm q)).filter (fun z => !lt z (reg 1))) = true :=
+      inTL_filter _ hcq
+    have hkey := mapDiv_smono154
+      ((toList (logOm p)).filter (fun z => !lt z (reg 1)))
+      ((toList (logOm q)).filter (fun z => !lt z (reg 1)))
+      hfp hfq (descL_filter_inT _ hcp hdp _) (descL_filter_inT _ hcq hdq _)
+      (by
+        intro z hz
+        have h2 := (List.mem_filter.mp hz).2
+        cases hlz : lt z (reg 1) with
+        | false => rfl
+        | true => rw [hlz] at h2; exact Bool.noConfusion h2)
+      (by
+        intro z hz
+        have h2 := (List.mem_filter.mp hz).2
+        cases hlz : lt z (reg 1) with
+        | false => rfl
+        | true => rw [hlz] at h2; exact Bool.noConfusion h2)
+      (fun z hz => ltM_toList _ hgp (ltM_logOm hip hpM) z (List.mem_filter.mp hz).1)
+      (fun z hz => ltM_toList _ hgq (ltM_logOm hiq hqM) z (List.mem_filter.mp hz).1)
+      (by rw [← toList_hiW89 hgp, ← toList_hiW89 hgq,
+              inT_ofList_toList _ (inT_hiW89 hgp), inT_ofList_toList _ (inT_hiW89 hgq)]
+          exact hhi)
+    exact hkey
+
+/-- `wA` は広義単調。 -/
+theorem wA_mono154 {p q : Term}
+    (hap : p.isAP = true) (hip : inT p = true) (hpM : lt p M = true)
+    (hpw : lt p (reg 1) = false)
+    (haq : q.isAP = true) (hiq : inT q = true) (hqM : lt q M = true)
+    (hqw : lt q (reg 1) = false)
+    (h : le p q = true) : le (wA (reg 1) p) (wA (reg 1) q) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [eq_of_beq he]
+    exact le_self _
+  · rcases compLex154 hap hip hpM hpw haq hiq hqM hqw hl with h1 | h1
+    · exact le_of_lt h1
+    · rw [h1.1]
+      exact le_self _
+
+/-- 加法主要な的の下では、成分はどれも的の下。 -/
+theorem comp_lt_ap154 {x t c : Term} (hx : inT x = true) (hit : inT t = true)
+    (hat : t.isAP = true) (h : lt x t = true) (hc : c ∈ toList x) : lt c t = true := by
+  cases hlx : toList x with
+  | nil => rw [hlx] at hc; cases hc
+  | cons b s =>
+      rw [hlx] at hc
+      have hcb := (inT_toList x hx).1
+      have hdb := (inT_toList x hx).2
+      rw [hlx] at hcb hdb
+      obtain ⟨⟨_, hib⟩, hcs⟩ := inTL_cons.mp hcb
+      have hbt : lt b t = true := by
+        rw [← inT_ofList_toList x hx, hlx, lt_ofList_nsum hat] at h
+        exact h
+      rcases List.mem_cons.mp hc with h1 | h1
+      · rw [h1]; exact hbt
+      · have hic : inT c = true :=
+          ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hcs c h1)).2
+        have hcb2 : le c b = true := descL_bound_inT s b hib hcs hdb c h1
+        exact lt_of_le_of_lt3 (inT_le_fragR c hic) (inT_le_fragR b hib)
+          (inT_le_fragR t hit) hcb2 hbt
+
+/-- **加法主要な的は和で閉じる** — `x, y < t` なら `x ⊕ y < t`。 -/
+theorem apClose154 {x y t : Term} (hx : inT x = true) (hy : inT y = true)
+    (hit : inT t = true) (hat : t.isAP = true)
+    (h1 : lt x t = true) (h2 : lt y t = true) : lt (plus x y) t = true := by
+  cases hly : toList y with
+  | nil => rw [plus_nil hly]; exact h1
+  | cons b1 r =>
+      rw [plus_eq (s := x) hly]
+      cases hf : (toList x).filter (fun z => le b1 z) with
+      | nil =>
+          rw [List.nil_append, inT_ofList_toList y hy]
+          exact h2
+      | cons c cs =>
+          rw [List.cons_append, lt_ofList_nsum hat]
+          refine comp_lt_ap154 hx hit hat h1 ?_
+          have : c ∈ (toList x).filter (fun z => le b1 z) := by
+            rw [hf]; exact List.Mem.head _
+          exact (List.mem_filter.mp this).1
+
+/-- **有界の頭 — 全成分が `q` より下の並びの `wcnf` の頭の対は、`q` の対より辞書式で下。** -/
+theorem headLex154 {q : Term}
+    (haq : q.isAP = true) (hiq : inT q = true) (hqM : lt q M = true)
+    (hqw : lt q (reg 1) = false) :
+    ∀ (L : List Term), inTL L = true → descL L = true → (∀ z ∈ L, lt z M = true) →
+    (∀ z ∈ L, lt z q = true) →
+    ∀ B D ps, (wcnf (reg 1) L).1 = (B, D) :: ps →
+    lt B (wA (reg 1) q) = true
+      ∨ (B = wA (reg 1) q ∧ lt D (wC (reg 1) q) = true) := by
+  intro L
+  induction L with
+  | nil =>
+      intro _ _ _ _ B D ps hW
+      exact absurd (show ([] : List (Term × Term)) = (B, D) :: ps from hW) (by simp)
+  | cons p rest ih =>
+      intro hc hd hm hallq B D ps hW
+      obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+      have hdr := descL_tail hd
+      have hmr : ∀ z ∈ rest, lt z M = true := fun z hz => hm z (List.Mem.tail p hz)
+      have hallqr : ∀ z ∈ rest, lt z q = true := fun z hz => hallq z (List.Mem.tail p hz)
+      by_cases hlp : lt p (reg 1) = true
+      · rw [wcnf_cons_lt hlp] at hW
+        exact absurd (show ([] : List (Term × Term)) = (B, D) :: ps from hW) (by simp)
+      · have hlp' : lt p (reg 1) = false := bool_false hlp
+        have hLex := compLex154 hap hip (hm p (List.Mem.head _)) hlp'
+          haq hiq hqM hqw (hallq p (List.Mem.head _))
+        rw [wcnf_cons_ge hlp'] at hW
+        cases hr : wcnf (reg 1) rest with
+        | mk fst snd =>
+          rw [hr] at hW
+          cases fst with
+          | nil =>
+              have hW' : [((wA (reg 1) p, wC (reg 1) p) : Term × Term)]
+                  = (B, D) :: ps := hW
+              injection hW' with h1 _
+              injection h1 with hB hD
+              rw [← hB, ← hD]
+              exact hLex
+          | cons ac0 ps' =>
+              cases ac0 with
+              | mk a' c' =>
+                have hW' : (if (wA (reg 1) p == a') = true
+                    then (((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps',
+                            snd) : List (Term × Term) × Term)
+                    else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps', snd)).1
+                    = (B, D) :: ps := hW
+                by_cases heq : (wA (reg 1) p == a') = true
+                · rw [if_pos heq] at hW'
+                  have hW'' : ((wA (reg 1) p, plus (wC (reg 1) p) c') : Term × Term) :: ps'
+                      = (B, D) :: ps := hW'
+                  injection hW'' with h1 _
+                  injection h1 with hB hD
+                  rcases hLex with hL | hL
+                  · left; rw [← hB]; exact hL
+                  · right
+                    refine ⟨by rw [← hB]; exact hL.1, ?_⟩
+                    have hIH := ih hcr hdr hmr hallqr a' c' ps' (by rw [hr])
+                    have ha'p : a' = wA (reg 1) p := (eq_of_beq heq).symm
+                    have hic' : inT c' = true := by
+                      obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+                        rest hcr hdr hmr
+                      exact (hallOK (a', c') (by rw [hr]; exact List.Mem.head _)).2.2.1
+                    rcases hIH with hI | hI
+                    · exfalso
+                      rw [ha'p, hL.1, lt_irrefl] at hI
+                      exact Bool.noConfusion hI
+                    · rw [← hD]
+                      exact apClose154 (inT_wC hip) hic' (inT_wC hiq)
+                        (isAP_omegaNF _) hL.2 hI.2
+                · rw [if_neg heq] at hW'
+                  have hW'' : ((wA (reg 1) p, wC (reg 1) p) : Term × Term)
+                      :: (a', c') :: ps' = (B, D) :: ps := hW'
+                  injection hW'' with h1 _
+                  injection h1 with hB hD
+                  rw [← hB, ← hD]
+                  exact hLex
+
+/-- **対リストの辞書式の分岐。**  共通の前置き `R` の後、左が尽きて右が残るか、
+    先頭の対が (指数, 係数) の辞書式で狭義に下がるかのどちらか。 -/
+def PLex154 (L1 L2 : List (Term × Term)) : Prop :=
+  ∃ R S1 S2, L1 = R ++ S1 ∧ L2 = R ++ S2 ∧
+    ((S1 = [] ∧ S2 ≠ []) ∨
+     (∃ x t1 y t2, S1 = x :: t1 ∧ S2 = y :: t2 ∧
+        (lt x.1 y.1 = true ∨ (x.1 = y.1 ∧ lt x.2 y.2 = true))))
+
+/-- **§154 の運搬定理 — 項の比較は対リストの辞書式の分岐を強いる。**
+    `Ω₁` 以上の成分列の比較 (`hi` の比較) は、`wcnf` の対リストの上では
+    「共通の前置き + 左が尽きる/先頭の対が辞書式で下がる」の形になる。 -/
+theorem transport154 : ∀ (H1 H2 : List Term), inTL H1 = true → inTL H2 = true →
+    descL H1 = true → descL H2 = true →
+    (∀ p ∈ H1, lt p (reg 1) = false) → (∀ p ∈ H2, lt p (reg 1) = false) →
+    (∀ p ∈ H1, lt p M = true) → (∀ p ∈ H2, lt p M = true) →
+    lt (ofList H1) (ofList H2) = true →
+    PLex154 (wcnf (reg 1) H1).1 (wcnf (reg 1) H2).1 := by
+  intro H1
+  induction H1 with
+  | nil =>
+      intro H2 _ hc2 _ hd2 _ hW2 _ hM2 h
+      cases H2 with
+      | nil =>
+          exfalso
+          rw [show ofList ([] : List Term) = zero from rfl, lt_irrefl] at h
+          exact Bool.noConfusion h
+      | cons q t2 =>
+          obtain ⟨c, ps, hP2⟩ := wcnfFstHd109 (w := reg 1) t2 (hW2 q (List.Mem.head _))
+          refine ⟨[], [], (wA (reg 1) q, c) :: ps, rfl, by rw [hP2]; rfl, ?_⟩
+          exact Or.inl ⟨rfl, List.cons_ne_nil _ _⟩
+  | cons p t1 ih =>
+      intro H2 hc1 hc2 hd1 hd2 hW1 hW2 hM1 hM2 h
+      cases H2 with
+      | nil =>
+          exfalso
+          rw [show ofList ([] : List Term) = zero from rfl, lt_zero_right] at h
+          exact Bool.noConfusion h
+      | cons q t2 =>
+          obtain ⟨⟨hap, hip⟩, hct1⟩ := inTL_cons.mp hc1
+          obtain ⟨⟨haq, hiq⟩, hct2⟩ := inTL_cons.mp hc2
+          have hpw : lt p (reg 1) = false := hW1 p (List.Mem.head _)
+          have hqw : lt q (reg 1) = false := hW2 q (List.Mem.head _)
+          have hpM : lt p M = true := hM1 p (List.Mem.head _)
+          have hqM : lt q M = true := hM2 q (List.Mem.head _)
+          have hi1 : inT (ofList (p :: t1)) = true := inT_ofList _ hc1 hd1
+          have hi2 : inT (ofList (q :: t2)) = true := inT_ofList _ hc2 hd2
+          have hdt1 := descL_tail hd1
+          have hdt2 := descL_tail hd2
+          have hmt1 : ∀ z ∈ t1, lt z M = true := fun z hz => hM1 z (List.Mem.tail _ hz)
+          have hmt2 : ∀ z ∈ t2, lt z M = true := fun z hz => hM2 z (List.Mem.tail _ hz)
+          have hwt1 : ∀ z ∈ t1, lt z (reg 1) = false :=
+            fun z hz => hW1 z (List.Mem.tail _ hz)
+          have hwt2 : ∀ z ∈ t2, lt z (reg 1) = false :=
+            fun z hz => hW2 z (List.Mem.tail _ hz)
+          obtain ⟨_, hOK1⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) t1 hct1 hdt1 hmt1
+          obtain ⟨_, hOK2⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) t2 hct2 hdt2 hmt2
+          rcases lt_trichotomy_inT hip hiq with hpq | hpq | hpq
+          · -- head divergence: p < q — the whole left list sits below q
+            have hAll : ∀ z ∈ p :: t1, lt z q = true := by
+              intro z hz
+              rcases List.mem_cons.mp hz with h1 | h1
+              · rw [h1]; exact hpq.1
+              · have hiz : inT z = true :=
+                  ((Bool.and_eq_true _ _).mp (List.all_eq_true.mp hct1 z h1)).2
+                exact lt_of_le_of_lt3 (inT_le_fragR z hiz) (inT_le_fragR p hip)
+                  (inT_le_fragR q hiq) (descL_bound_inT t1 p hip hct1 hd1 z h1) hpq.1
+            obtain ⟨D, ps1, hP1⟩ := wcnfFstHd109 (w := reg 1) t1 hpw
+            have hHL := headLex154 haq hiq hqM hqw (p :: t1) hc1 hd1 hM1 hAll
+              (wA (reg 1) p) D ps1 hP1
+            obtain ⟨_, hOKfull1⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+              (p :: t1) hc1 hd1 hM1
+            have hiD : inT D = true :=
+              (hOKfull1 _ (by rw [hP1]; exact List.Mem.head _)).2.2.1
+            -- the head of the right pair list is (wA q, D2) with wC q ≤ D2
+            cases hr2 : wcnf (reg 1) t2 with
+            | mk fst2 snd2 =>
+              cases fst2 with
+              | nil =>
+                  have hP2 : (wcnf (reg 1) (q :: t2)).1
+                      = [(wA (reg 1) q, wC (reg 1) q)] := by
+                    rw [wcnf_cons_ge hqw, hr2]
+                  refine ⟨[], (wA (reg 1) p, D) :: ps1, [(wA (reg 1) q, wC (reg 1) q)],
+                    by rw [hP1]; rfl, by rw [hP2]; rfl, Or.inr ?_⟩
+                  refine ⟨(wA (reg 1) p, D), ps1, (wA (reg 1) q, wC (reg 1) q), [],
+                    rfl, rfl, ?_⟩
+                  rcases hHL with h1 | h1
+                  · exact Or.inl h1
+                  · exact Or.inr ⟨h1.1, h1.2⟩
+              | cons ac2 ps2 =>
+                  by_cases hme : (wA (reg 1) q == ac2.1) = true
+                  · have hP2 : (wcnf (reg 1) (q :: t2)).1
+                        = (wA (reg 1) q, plus (wC (reg 1) q) ac2.2) :: ps2 := by
+                      rw [wcnf_cons_ge hqw, hr2]
+                      show ((if (wA (reg 1) q == ac2.1) = true
+                          then ((wA (reg 1) q, plus (wC (reg 1) q) ac2.2) :: ps2, snd2)
+                          else ((wA (reg 1) q, wC (reg 1) q) :: (ac2.1, ac2.2) :: ps2,
+                                snd2)) : List (Term × Term) × Term).1 = _
+                      rw [if_pos hme]
+                    have hiac2 : inT ac2.2 = true :=
+                      (hOK2 ac2 (by rw [hr2]; exact List.Mem.head _)).2.2.1
+                    have hle2 : le (wC (reg 1) q) (plus (wC (reg 1) q) ac2.2) = true :=
+                      le_self_plus_ap81 (inT_wC hiq) (isAP_omegaNF _) hiac2
+                    refine ⟨[], (wA (reg 1) p, D) :: ps1,
+                      (wA (reg 1) q, plus (wC (reg 1) q) ac2.2) :: ps2,
+                      by rw [hP1]; rfl, by rw [hP2]; rfl, Or.inr ?_⟩
+                    refine ⟨(wA (reg 1) p, D), ps1,
+                      (wA (reg 1) q, plus (wC (reg 1) q) ac2.2), ps2, rfl, rfl, ?_⟩
+                    rcases hHL with h1 | h1
+                    · exact Or.inl h1
+                    · refine Or.inr ⟨h1.1, ?_⟩
+                      exact lt_of_lt_of_le3 (inT_le_fragR D hiD)
+                        (inT_le_fragR _ (inT_wC hiq))
+                        (inT_le_fragR _ (inT_plus (inT_wC hiq) hiac2)) h1.2 hle2
+                  · have hP2 : (wcnf (reg 1) (q :: t2)).1
+                        = (wA (reg 1) q, wC (reg 1) q) :: ac2 :: ps2 := by
+                      rw [wcnf_cons_ge hqw, hr2]
+                      show ((if (wA (reg 1) q == ac2.1) = true
+                          then ((wA (reg 1) q, plus (wC (reg 1) q) ac2.2) :: ps2, snd2)
+                          else ((wA (reg 1) q, wC (reg 1) q) :: (ac2.1, ac2.2) :: ps2,
+                                snd2)) : List (Term × Term) × Term).1 = _
+                      rw [if_neg hme]
+                    refine ⟨[], (wA (reg 1) p, D) :: ps1,
+                      (wA (reg 1) q, wC (reg 1) q) :: ac2 :: ps2,
+                      by rw [hP1]; rfl, by rw [hP2]; rfl, Or.inr ?_⟩
+                    refine ⟨(wA (reg 1) p, D), ps1,
+                      (wA (reg 1) q, wC (reg 1) q), ac2 :: ps2, rfl, rfl, ?_⟩
+                    rcases hHL with h1 | h1
+                    · exact Or.inl h1
+                    · exact Or.inr ⟨h1.1, h1.2⟩
+          · -- equal heads: peel and lift the inner divergence through the merge
+            have hpe : p = q := hpq.2.1
+            subst hpe
+            have hit1 : inT (ofList t1) = true := inT_ofList t1 hct1 hdt1
+            have hit2 : inT (ofList t2) = true := inT_ofList t2 hct2 hdt2
+            have hrec : lt (ofList t1) (ofList t2) = true :=
+              lt_hd_eq_inv89 hi1 hi2 (toList_ofList89 hc1) (toList_ofList89 hc2)
+                hit1 hit2 (toList_ofList89 hct1) (toList_ofList89 hct2) h
+            have hIH := ih t2 hct1 hct2 hdt1 hdt2 hwt1 hwt2 hmt1 hmt2 hrec
+            obtain ⟨R, S1, S2, e1, e2, hbr⟩ := hIH
+            cases hr1 : wcnf (reg 1) t1 with
+            | mk fst1 snd1 =>
+              cases hr2 : wcnf (reg 1) t2 with
+              | mk fst2 snd2 =>
+                rw [hr1] at e1
+                rw [hr2] at e2
+                have e1' : fst1 = R ++ S1 := e1
+                have e2' : fst2 = R ++ S2 := e2
+                subst e1'
+                subst e2'
+                cases R with
+                | cons ac R' =>
+                    by_cases hme : (wA (reg 1) p == ac.1) = true
+                    · have hP1 : (wcnf (reg 1) (p :: t1)).1
+                          = (wA (reg 1) p, plus (wC (reg 1) p) ac.2) :: (R' ++ S1) := by
+                        rw [wcnf_cons_ge hpw, hr1]
+                        show ((if (wA (reg 1) p == ac.1) = true
+                            then ((wA (reg 1) p, plus (wC (reg 1) p) ac.2) :: (R' ++ S1),
+                                  snd1)
+                            else ((wA (reg 1) p, wC (reg 1) p) :: (ac.1, ac.2)
+                                  :: (R' ++ S1), snd1)) : List (Term × Term) × Term).1 = _
+                        rw [if_pos hme]
+                      have hP2 : (wcnf (reg 1) (p :: t2)).1
+                          = (wA (reg 1) p, plus (wC (reg 1) p) ac.2) :: (R' ++ S2) := by
+                        rw [wcnf_cons_ge hpw, hr2]
+                        show ((if (wA (reg 1) p == ac.1) = true
+                            then ((wA (reg 1) p, plus (wC (reg 1) p) ac.2) :: (R' ++ S2),
+                                  snd2)
+                            else ((wA (reg 1) p, wC (reg 1) p) :: (ac.1, ac.2)
+                                  :: (R' ++ S2), snd2)) : List (Term × Term) × Term).1 = _
+                        rw [if_pos hme]
+                      exact ⟨(wA (reg 1) p, plus (wC (reg 1) p) ac.2) :: R', S1, S2,
+                        by rw [hP1]; rfl, by rw [hP2]; rfl, hbr⟩
+                    · have hP1 : (wcnf (reg 1) (p :: t1)).1
+                          = (wA (reg 1) p, wC (reg 1) p) :: ac :: (R' ++ S1) := by
+                        rw [wcnf_cons_ge hpw, hr1]
+                        show ((if (wA (reg 1) p == ac.1) = true
+                            then ((wA (reg 1) p, plus (wC (reg 1) p) ac.2) :: (R' ++ S1),
+                                  snd1)
+                            else ((wA (reg 1) p, wC (reg 1) p) :: (ac.1, ac.2)
+                                  :: (R' ++ S1), snd1)) : List (Term × Term) × Term).1 = _
+                        rw [if_neg hme]
+                      have hP2 : (wcnf (reg 1) (p :: t2)).1
+                          = (wA (reg 1) p, wC (reg 1) p) :: ac :: (R' ++ S2) := by
+                        rw [wcnf_cons_ge hpw, hr2]
+                        show ((if (wA (reg 1) p == ac.1) = true
+                            then ((wA (reg 1) p, plus (wC (reg 1) p) ac.2) :: (R' ++ S2),
+                                  snd2)
+                            else ((wA (reg 1) p, wC (reg 1) p) :: (ac.1, ac.2)
+                                  :: (R' ++ S2), snd2)) : List (Term × Term) × Term).1 = _
+                        rw [if_neg hme]
+                      exact ⟨(wA (reg 1) p, wC (reg 1) p) :: ac :: R', S1, S2,
+                        by rw [hP1]; rfl, by rw [hP2]; rfl, hbr⟩
+                | nil =>
+                  rw [List.nil_append] at hr1 hr2
+                  rcases hbr with ⟨hS1nil, hS2ne⟩ | ⟨x, tx, y, ty, hSx, hSy, hdiv⟩
+                  · -- left tail has no pairs; the right tail's head either merges or not
+                    subst hS1nil
+                    have hP1 : (wcnf (reg 1) (p :: t1)).1
+                        = [(wA (reg 1) p, wC (reg 1) p)] := by
+                      rw [wcnf_cons_ge hpw, hr1]
+                    cases hS2 : S2 with
+                    | nil => exact absurd hS2 hS2ne
+                    | cons ac2 ps2 =>
+                        subst hS2
+                        by_cases hme : (wA (reg 1) p == ac2.1) = true
+                        · have hP2 : (wcnf (reg 1) (p :: t2)).1
+                              = (wA (reg 1) p, plus (wC (reg 1) p) ac2.2) :: ps2 := by
+                            rw [wcnf_cons_ge hpw, hr2]
+                            show ((if (wA (reg 1) p == ac2.1) = true
+                                then ((wA (reg 1) p, plus (wC (reg 1) p) ac2.2) :: ps2,
+                                      snd2)
+                                else ((wA (reg 1) p, wC (reg 1) p) :: (ac2.1, ac2.2)
+                                      :: ps2, snd2)) : List (Term × Term) × Term).1 = _
+                            rw [if_pos hme]
+                          have hiac2 : inT ac2.2 = true :=
+                            (hOK2 ac2 (by rw [hr2]; exact List.Mem.head _)).2.2.1
+                          have hnz2 : ac2.2 ≠ zero :=
+                            wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) t2 hct2 hdt2 hmt2
+                              ac2 (by rw [hr2]; exact List.Mem.head _)
+                          refine ⟨[], [(wA (reg 1) p, wC (reg 1) p)],
+                            (wA (reg 1) p, plus (wC (reg 1) p) ac2.2) :: ps2,
+                            by rw [hP1]; rfl, by rw [hP2]; rfl, Or.inr ?_⟩
+                          refine ⟨(wA (reg 1) p, wC (reg 1) p), [],
+                            (wA (reg 1) p, plus (wC (reg 1) p) ac2.2), ps2, rfl, rfl, ?_⟩
+                          refine Or.inr ⟨rfl, ?_⟩
+                          exact lt_self_plus109 (inT_wC hip) (isAP_omegaNF _) hiac2 hnz2
+                        · have hP2 : (wcnf (reg 1) (p :: t2)).1
+                              = (wA (reg 1) p, wC (reg 1) p) :: ac2 :: ps2 := by
+                            rw [wcnf_cons_ge hpw, hr2]
+                            show ((if (wA (reg 1) p == ac2.1) = true
+                                then ((wA (reg 1) p, plus (wC (reg 1) p) ac2.2) :: ps2,
+                                      snd2)
+                                else ((wA (reg 1) p, wC (reg 1) p) :: (ac2.1, ac2.2)
+                                      :: ps2, snd2)) : List (Term × Term) × Term).1 = _
+                            rw [if_neg hme]
+                          exact ⟨[(wA (reg 1) p, wC (reg 1) p)], [], ac2 :: ps2,
+                            by rw [hP1]; rfl, by rw [hP2]; rfl,
+                            Or.inl ⟨rfl, List.cons_ne_nil _ _⟩⟩
+                  · -- the tails diverge at their heads
+                    subst hSx
+                    subst hSy
+                    rcases hdiv with hexp | hcoef
+                    · -- exponent divergence x.1 < y.1
+                      by_cases hmx : (wA (reg 1) p == x.1) = true
+                      · -- impossible: y.1 ≤ wA p = x.1 < y.1
+                        exfalso
+                        obtain ⟨q2, rest2, ht2e, hq2w, hy1⟩ :=
+                          wcnf_fst_cons109 (w := reg 1) t2 y ty (by rw [hr2])
+                        have hiq2 : inT q2 = true := by
+                          have := hct2
+                          rw [ht2e] at this
+                          exact (inTL_cons.mp this).1.2
+                        have haq2 : q2.isAP = true := by
+                          have := hct2
+                          rw [ht2e] at this
+                          exact (inTL_cons.mp this).1.1
+                        have hq2p : le q2 p = true := by
+                          have := hd2
+                          rw [ht2e] at this
+                          exact (descL_cons.mp this).1
+                        have hq2M : lt q2 M = true := by
+                          refine hmt2 q2 ?_
+                          rw [ht2e]; exact List.Mem.head _
+                        have hyA : le y.1 (wA (reg 1) p) = true := by
+                          rw [hy1]
+                          exact wA_mono154 haq2 hiq2 hq2M hq2w hap hip hpM hpw hq2p
+                        have hx1 : lt (wA (reg 1) p) y.1 = true := by
+                          rw [eq_of_beq hmx]; exact hexp
+                        have hiy1 : inT y.1 = true :=
+                          (hOK2 y (by rw [hr2]; exact List.Mem.head _)).1
+                        have hiwAp : inT (wA (reg 1) p) = true :=
+                          inT_wA109 (inT_reg 1) (isSC_reg_succ 0) hip
+                        have : lt (wA (reg 1) p) (wA (reg 1) p) = true :=
+                          lt_of_lt_of_le3 (inT_le_fragR _ hiwAp) (inT_le_fragR _ hiy1)
+                            (inT_le_fragR _ hiwAp) hx1 hyA
+                        rw [lt_irrefl] at this
+                        exact Bool.noConfusion this
+                      · by_cases hmy : (wA (reg 1) p == y.1) = true
+                        · -- the right head merges, the left does not
+                          have hP1 : (wcnf (reg 1) (p :: t1)).1
+                              = (wA (reg 1) p, wC (reg 1) p) :: x :: tx := by
+                            rw [wcnf_cons_ge hpw, hr1]
+                            show ((if (wA (reg 1) p == x.1) = true
+                                then ((wA (reg 1) p, plus (wC (reg 1) p) x.2) :: tx, snd1)
+                                else ((wA (reg 1) p, wC (reg 1) p) :: (x.1, x.2)
+                                      :: tx, snd1)) : List (Term × Term) × Term).1 = _
+                            rw [if_neg hmx]
+                          have hP2 : (wcnf (reg 1) (p :: t2)).1
+                              = (wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty := by
+                            rw [wcnf_cons_ge hpw, hr2]
+                            show ((if (wA (reg 1) p == y.1) = true
+                                then ((wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty, snd2)
+                                else ((wA (reg 1) p, wC (reg 1) p) :: (y.1, y.2)
+                                      :: ty, snd2)) : List (Term × Term) × Term).1 = _
+                            rw [if_pos hmy]
+                          have hiy2 : inT y.2 = true :=
+                            (hOK2 y (by rw [hr2]; exact List.Mem.head _)).2.2.1
+                          have hnz2 : y.2 ≠ zero :=
+                            wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) t2 hct2 hdt2 hmt2
+                              y (by rw [hr2]; exact List.Mem.head _)
+                          refine ⟨[], (wA (reg 1) p, wC (reg 1) p) :: x :: tx,
+                            (wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty,
+                            by rw [hP1]; rfl, by rw [hP2]; rfl, Or.inr ?_⟩
+                          refine ⟨(wA (reg 1) p, wC (reg 1) p), x :: tx,
+                            (wA (reg 1) p, plus (wC (reg 1) p) y.2), ty, rfl, rfl, ?_⟩
+                          refine Or.inr ⟨rfl, ?_⟩
+                          exact lt_self_plus109 (inT_wC hip) (isAP_omegaNF _) hiy2 hnz2
+                        · -- neither head merges
+                          have hP1 : (wcnf (reg 1) (p :: t1)).1
+                              = (wA (reg 1) p, wC (reg 1) p) :: x :: tx := by
+                            rw [wcnf_cons_ge hpw, hr1]
+                            show ((if (wA (reg 1) p == x.1) = true
+                                then ((wA (reg 1) p, plus (wC (reg 1) p) x.2) :: tx, snd1)
+                                else ((wA (reg 1) p, wC (reg 1) p) :: (x.1, x.2)
+                                      :: tx, snd1)) : List (Term × Term) × Term).1 = _
+                            rw [if_neg hmx]
+                          have hP2 : (wcnf (reg 1) (p :: t2)).1
+                              = (wA (reg 1) p, wC (reg 1) p) :: y :: ty := by
+                            rw [wcnf_cons_ge hpw, hr2]
+                            show ((if (wA (reg 1) p == y.1) = true
+                                then ((wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty, snd2)
+                                else ((wA (reg 1) p, wC (reg 1) p) :: (y.1, y.2)
+                                      :: ty, snd2)) : List (Term × Term) × Term).1 = _
+                            rw [if_neg hmy]
+                          exact ⟨[(wA (reg 1) p, wC (reg 1) p)], x :: tx, y :: ty,
+                            by rw [hP1]; rfl, by rw [hP2]; rfl,
+                            Or.inr ⟨x, tx, y, ty, rfl, rfl, Or.inl hexp⟩⟩
+                    · -- coefficient divergence: x.1 = y.1, x.2 < y.2
+                      obtain ⟨hxy1, hxy2⟩ := hcoef
+                      by_cases hmx : (wA (reg 1) p == x.1) = true
+                      · have hmy : (wA (reg 1) p == y.1) = true := by
+                          rw [← hxy1]; exact hmx
+                        have hP1 : (wcnf (reg 1) (p :: t1)).1
+                            = (wA (reg 1) p, plus (wC (reg 1) p) x.2) :: tx := by
+                          rw [wcnf_cons_ge hpw, hr1]
+                          show ((if (wA (reg 1) p == x.1) = true
+                              then ((wA (reg 1) p, plus (wC (reg 1) p) x.2) :: tx, snd1)
+                              else ((wA (reg 1) p, wC (reg 1) p) :: (x.1, x.2)
+                                    :: tx, snd1)) : List (Term × Term) × Term).1 = _
+                          rw [if_pos hmx]
+                        have hP2 : (wcnf (reg 1) (p :: t2)).1
+                            = (wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty := by
+                          rw [wcnf_cons_ge hpw, hr2]
+                          show ((if (wA (reg 1) p == y.1) = true
+                              then ((wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty, snd2)
+                              else ((wA (reg 1) p, wC (reg 1) p) :: (y.1, y.2)
+                                    :: ty, snd2)) : List (Term × Term) × Term).1 = _
+                          rw [if_pos hmy]
+                        have hix2 : inT x.2 = true :=
+                          (hOK1 x (by rw [hr1]; exact List.Mem.head _)).2.2.1
+                        have hiy2 : inT y.2 = true :=
+                          (hOK2 y (by rw [hr2]; exact List.Mem.head _)).2.2.1
+                        refine ⟨[], (wA (reg 1) p, plus (wC (reg 1) p) x.2) :: tx,
+                          (wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty,
+                          by rw [hP1]; rfl, by rw [hP2]; rfl, Or.inr ?_⟩
+                        refine ⟨(wA (reg 1) p, plus (wC (reg 1) p) x.2), tx,
+                          (wA (reg 1) p, plus (wC (reg 1) p) y.2), ty, rfl, rfl, ?_⟩
+                        refine Or.inr ⟨rfl, ?_⟩
+                        exact plus_smono_right_inT79 (wC (reg 1) p) (inT_wC hip)
+                          x.2 y.2 hix2 hiy2 hxy2
+                      · have hmy : (wA (reg 1) p == y.1) = false := by
+                          rw [← hxy1]; exact bool_false hmx
+                        have hP1 : (wcnf (reg 1) (p :: t1)).1
+                            = (wA (reg 1) p, wC (reg 1) p) :: x :: tx := by
+                          rw [wcnf_cons_ge hpw, hr1]
+                          show ((if (wA (reg 1) p == x.1) = true
+                              then ((wA (reg 1) p, plus (wC (reg 1) p) x.2) :: tx, snd1)
+                              else ((wA (reg 1) p, wC (reg 1) p) :: (x.1, x.2)
+                                    :: tx, snd1)) : List (Term × Term) × Term).1 = _
+                          rw [if_neg hmx]
+                        have hP2 : (wcnf (reg 1) (p :: t2)).1
+                            = (wA (reg 1) p, wC (reg 1) p) :: y :: ty := by
+                          rw [wcnf_cons_ge hpw, hr2]
+                          show ((if (wA (reg 1) p == y.1) = true
+                              then ((wA (reg 1) p, plus (wC (reg 1) p) y.2) :: ty, snd2)
+                              else ((wA (reg 1) p, wC (reg 1) p) :: (y.1, y.2)
+                                    :: ty, snd2)) : List (Term × Term) × Term).1 = _
+                          rw [if_neg (by rw [hmy]; exact Bool.noConfusion)]
+                        exact ⟨[(wA (reg 1) p, wC (reg 1) p)], x :: tx, y :: ty,
+                          by rw [hP1]; rfl, by rw [hP2]; rfl,
+                          Or.inr ⟨x, tx, y, ty, rfl, rfl, Or.inr ⟨hxy1, hxy2⟩⟩⟩
+          · -- reversed heads contradict the hypothesis
+            exfalso
+            have h2 : lt (ofList (q :: t2)) (ofList (p :: t1)) = true :=
+              lt_of_hd_lt hi2 hi1 (toList_ofList89 hc2) (toList_ofList89 hc1) hpq.2.2
+            rw [lt_asymm_inT hi1 hi2 h] at h2
+            exact Bool.noConfusion h2
+
+/-- **`1 ⊖` は 0 でない項の上で狭義単調。** -/
+theorem sub1_smono154 {c c' : Term} (hic : inT c = true) (hic' : inT c' = true)
+    (hnz : c ≠ zero) (h : lt c c' = true) : lt (sub1 c) (sub1 c') = true := by
+  cases hlc : toList c with
+  | nil => exact absurd (toList_eq_nil c hlc) hnz
+  | cons b r =>
+      cases hlc' : toList c' with
+      | nil =>
+          exfalso
+          rw [toList_eq_nil c' hlc', lt_zero_right] at h
+          exact Bool.noConfusion h
+      | cons b' r' =>
+          have hcb := (inT_toList c hic).1
+          have hdb := (inT_toList c hic).2
+          have hcb' := (inT_toList c' hic').1
+          have hdb' := (inT_toList c' hic').2
+          rw [hlc] at hcb hdb
+          rw [hlc'] at hcb' hdb'
+          obtain ⟨⟨hab, hib⟩, hcr⟩ := inTL_cons.mp hcb
+          obtain ⟨⟨hab', hib'⟩, hcr'⟩ := inTL_cons.mp hcb'
+          have hir : inT (ofList r) = true := inT_ofList r hcr (descL_tail hdb)
+          have hir' : inT (ofList r') = true := inT_ofList r' hcr' (descL_tail hdb')
+          rw [show sub1 c = subAP TM.Term.one c from rfl,
+            show sub1 c' = subAP TM.Term.one c' from rfl,
+            subAP_eq154 hlc, subAP_eq154 hlc']
+          by_cases hq : (b == TM.Term.one) = true
+          · rw [if_pos hq]
+            by_cases hq' : (b' == TM.Term.one) = true
+            · -- both heads are 1 — peel them
+              rw [if_pos hq']
+              have hbb : b' = b := by rw [eq_of_beq hq, eq_of_beq hq']
+              exact lt_hd_eq_inv89 hic hic' hlc (by rw [hlc', hbb]) hir hir'
+                (toList_ofList89 hcr) (toList_ofList89 hcr') h
+            · -- left head is 1, the right head is strictly above 1
+              rw [if_neg hq']
+              have h1b' : lt TM.Term.one b' = true := by
+                rcases lt_trichotomy_inT inT_one hib' with h2 | h2 | h2
+                · exact h2.1
+                · exfalso
+                  have : (b' == TM.Term.one) = true := by
+                    rw [← h2.2.1]; exact beq_self_eq_true _
+                  rw [this] at hq'; exact hq' rfl
+                · exfalso
+                  have hz : b' = zero :=
+                    lt_one_zero148 b'.deg b' (Nat.le_refl _) hib' h2.2.2
+                  rw [hz] at hab'
+                  exact Bool.noConfusion hab'
+              have hcne : c' ≠ zero := by
+                intro hz
+                rw [hz] at hlc'
+                exact List.cons_ne_nil b' r' (by rw [← hlc']; rfl)
+              cases hr : r with
+              | nil => exact lt_zero_left hcne
+              | cons d r2 =>
+                  subst hr
+                  have hid : inT d = true := (inTL_cons.mp hcr).1.2
+                  have hd1 : le d b = true :=
+                    descL_bound_inT (d :: r2) b hib hcr hdb d (List.Mem.head _)
+                  have hdb2 : lt d b' = true := by
+                    refine lt_of_le_of_lt3 (inT_le_fragR d hid) (inT_le_fragR b hib)
+                      (inT_le_fragR b' hib') hd1 ?_
+                    rw [eq_of_beq hq]; exact h1b'
+                  exact lt_of_hd_lt hir hic' (toList_ofList89 hcr) hlc' hdb2
+          · rw [if_neg hq]
+            by_cases hq' : (b' == TM.Term.one) = true
+            · -- impossible: c < c' forces b ≤ b' = 1, so b = 1
+              exfalso
+              have hble : le b b' = true := hd_mono_inT hic hic' hlc hlc' (le_of_lt h)
+              rcases (Bool.or_eq_true _ _).mp hble with he | hl2
+              · rw [eq_of_beq he] at hq
+                rw [hq'] at hq
+                exact hq rfl
+              · have hb1 : lt b TM.Term.one = true := by
+                  rw [← eq_of_beq hq']; exact hl2
+                have hz : b = zero := lt_one_zero148 b.deg b (Nat.le_refl _) hib hb1
+                rw [hz] at hab
+                exact Bool.noConfusion hab
+            · rw [if_neg hq']; exact h
+
+/-- 前置きを削っても真の降順は残る。 -/
+theorem descP_suffix154 : ∀ (l1 l2 : List (Term × Term)),
+    descP118 (l1 ++ l2) → descP118 l2 := by
+  intro l1
+  induction l1 with
+  | nil => intro l2 h; exact h
+  | cons a l1' ih => intro l2 h; exact ih l2 (descP_tail118 h)
+
+/-- 真の降順のもとで、後ろの指数は頭の指数より狭義に下。 -/
+theorem descP_bound154 : ∀ (l : List (Term × Term)) (a : Term × Term),
+    (∀ w ∈ a :: l, inT w.1 = true) → descP118 (a :: l) →
+    ∀ z ∈ l, lt z.1 a.1 = true := by
+  intro l
+  induction l with
+  | nil => intro a _ _ z hz; cases hz
+  | cons b r ih =>
+      intro a hin hd z hz
+      obtain ⟨hba, hbr⟩ := hd
+      rcases List.mem_cons.mp hz with h1 | h1
+      · rw [h1]; exact hba
+      · have hzb : lt z.1 b.1 = true :=
+          ih b (fun w hw => hin w (List.Mem.tail _ hw)) hbr z h1
+        exact lt_trans_inT (hin z (List.Mem.tail _ (List.Mem.tail _ h1)))
+          (hin b (List.Mem.tail _ (List.Mem.head _)))
+          (hin a (List.Mem.head _)) hzb hba
+
+/-- **`wcnf` の指数の列は真の降順。**  併合が隣り合う同指数をすべて呑むから。 -/
+theorem wcnf_descP154 : ∀ (L : List Term), inTL L = true → descL L = true →
+    (∀ z ∈ L, lt z M = true) → descP118 (wcnf (reg 1) L).1 := by
+  intro L
+  induction L with
+  | nil => intro _ _ _; trivial
+  | cons p rest ih =>
+      intro hc hd hm
+      obtain ⟨⟨hap, hip⟩, hcr⟩ := inTL_cons.mp hc
+      have hdr := descL_tail hd
+      have hmr : ∀ z ∈ rest, lt z M = true := fun z hz => hm z (List.Mem.tail p hz)
+      by_cases hlp : lt p (reg 1) = true
+      · rw [wcnf_cons_lt hlp]
+        trivial
+      · have hlp' : lt p (reg 1) = false := bool_false hlp
+        have hIH := ih hcr hdr hmr
+        cases hr : wcnf (reg 1) rest with
+        | mk fst snd =>
+          have hIH' : descP118 fst := by rw [hr] at hIH; exact hIH
+          cases fst with
+          | nil =>
+              have hP : (wcnf (reg 1) (p :: rest)).1 = [(wA (reg 1) p, wC (reg 1) p)] := by
+                rw [wcnf_cons_ge hlp', hr]
+              rw [hP]
+              trivial
+          | cons ac' ps =>
+              by_cases hme : (wA (reg 1) p == ac'.1) = true
+              · have hP : (wcnf (reg 1) (p :: rest)).1
+                    = (wA (reg 1) p, plus (wC (reg 1) p) ac'.2) :: ps := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show ((if (wA (reg 1) p == ac'.1) = true
+                      then ((wA (reg 1) p, plus (wC (reg 1) p) ac'.2) :: ps, snd)
+                      else ((wA (reg 1) p, wC (reg 1) p) :: (ac'.1, ac'.2) :: ps,
+                            snd)) : List (Term × Term) × Term).1 = _
+                  rw [if_pos hme]
+                rw [hP]
+                cases ps with
+                | nil => trivial
+                | cons b r =>
+                    refine ⟨?_, hIH'.2⟩
+                    show lt b.1 (wA (reg 1) p) = true
+                    rw [eq_of_beq hme]
+                    exact hIH'.1
+              · have hP : (wcnf (reg 1) (p :: rest)).1
+                    = (wA (reg 1) p, wC (reg 1) p) :: ac' :: ps := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show ((if (wA (reg 1) p == ac'.1) = true
+                      then ((wA (reg 1) p, plus (wC (reg 1) p) ac'.2) :: ps, snd)
+                      else ((wA (reg 1) p, wC (reg 1) p) :: (ac'.1, ac'.2) :: ps,
+                            snd)) : List (Term × Term) × Term).1 = _
+                  rw [if_neg hme]
+                rw [hP]
+                obtain ⟨q, rest', hre, hqw, hac1⟩ :=
+                  wcnf_fst_cons109 (w := reg 1) rest ac' ps (by rw [hr])
+                have hiq : inT q = true := by
+                  have := hcr
+                  rw [hre] at this
+                  exact (inTL_cons.mp this).1.2
+                have haq : q.isAP = true := by
+                  have := hcr
+                  rw [hre] at this
+                  exact (inTL_cons.mp this).1.1
+                have hqM : lt q M = true := by
+                  refine hmr q ?_
+                  rw [hre]; exact List.Mem.head _
+                have hqp : le q p = true := by
+                  have := hd
+                  rw [hre] at this
+                  exact (descL_cons.mp this).1
+                have hAle : le (wA (reg 1) q) (wA (reg 1) p) = true :=
+                  wA_mono154 haq hiq hqM hqw hap hip (hm p (List.Mem.head _)) hlp' hqp
+                have hAlt : lt ac'.1 (wA (reg 1) p) = true := by
+                  rw [hac1]
+                  rcases (Bool.or_eq_true _ _).mp hAle with he | hl2
+                  · exfalso
+                    have : (wA (reg 1) p == ac'.1) = true := by
+                      rw [hac1, ← eq_of_beq he]
+                      exact beq_self_eq_true _
+                    rw [this] at hme
+                    exact hme rfl
+                  · exact hl2
+                exact ⟨hAlt, hIH'⟩
+
+/-- 最後の一歩の指数は最後の対の指数そのもの。 -/
+theorem lastStep_fst154 {y : Term} {ca pa : Term × Term}
+    (hac : lastAC151 y = some ca) (hls : lastStep129 y = some pa) : pa.1 = ca.1 := by
+  cases hpv : prevV151 y with
+  | none =>
+      rw [lastStep_prev_none151 hac hpv] at hls
+      rw [← Option.some.inj hls]
+  | some v =>
+      rw [lastStep_prev_some151 hac hpv] at hls
+      rw [← Option.some.inj hls]
+
+/-- **§154 の残り — 途中で割れる組の支配。**  適格で最後の指数が等しく `hi` が増え、
+    対リストが最後の対より前で割れる (共通の前置き `R` の直後、どちらかの側に
+    まだ対が残る) とき、条項 (ii) が立つ — 左の `X` は右の接頭辞の値より下。
+    §151 の測定では全数の掃き (13 記号、6548370 義務) の 4467597 組がここに乗り、
+    外れは 0。 -/
+def Dom154 : Prop :=
+  ∀ (a b : BT), btLe72 1 (BT.D 0 a) = true → btLe72 1 (BT.D 0 b) = true →
+    BT.isStd (BT.D 0 a) = true → BT.isStd (BT.D 0 b) = true →
+    le (reg 1) (dict a) = true → le (reg 1) (dict b) = true →
+    lastFire92 (dict a) = false → lastFire92 (dict b) = false →
+    lt (hiW89 (dict a)) (hiW89 (dict b)) = true →
+    sameExp145 a b = true →
+    ∀ (R : List (Term × Term)) (x : Term × Term) (tx : List (Term × Term))
+      (y : Term × Term) (ty : List (Term × Term)),
+      (wcnf (reg 1) (toList (dict a))).1 = R ++ x :: tx →
+      (wcnf (reg 1) (toList (dict b))).1 = R ++ y :: ty →
+      (tx ≠ [] ∨ ty ≠ []) →
+      (lt x.1 y.1 = true ∨ (x.1 = y.1 ∧ lt x.2 y.2 = true)) →
+      tail2_151 (lastStep129 (dict a)) (prevV151 (dict b)) = true
+
+/-- **§154 の主定理 — `TailOK151` は `Dom154` に還る。**  運搬定理が対リストを
+    「共通の前置き + 分岐」に割り、最後の対どうしで割れる組は条項 (i) が閉じ、
+    前置きで尽きる組は指数の真の降順と最後の指数の一致が両立しない。残るのは
+    途中で割れる組 — それが `Dom154` である。 -/
+theorem tailOK151_of_dom154 (Hp : PsiIdxOKStd172) (HD : Dom154) : TailOK151 := by
+  intro a b hbA hbB hsA hsB hWa hWb hfa hfb hlt hse
+  obtain ⟨hia, hlaM, hpa⟩ := dictFacts151 Hp hbA hsA
+  obtain ⟨hib, hlbM, hpb⟩ := dictFacts151 Hp hbB hsB
+  have hcLa := (inT_toList _ hia).1
+  have hdLa := (inT_toList _ hia).2
+  have hcLb := (inT_toList _ hib).1
+  have hdLb := (inT_toList _ hib).2
+  have hmLa : ∀ z ∈ toList (dict a), lt z M = true := ltM_toList _ hia hlaM
+  have hmLb : ∀ z ∈ toList (dict b), lt z M = true := ltM_toList _ hib hlbM
+  obtain ⟨_, hOKa⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+    (toList (dict a)) hcLa hdLa hmLa
+  obtain ⟨_, hOKb⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+    (toList (dict b)) hcLb hdLb hmLb
+  cases hrevA : (wcnf (reg 1) (toList (dict a))).1.reverse with
+  | nil =>
+      exfalso
+      have hln : lastStep129 (dict a) = none := by unfold lastStep129; rw [hrevA]
+      have hf : sameExp145 a b = false := by unfold sameExp145; rw [hln]
+      rw [hf] at hse
+      exact Bool.noConfusion hse
+  | cons ca ra =>
+  cases hrevB : (wcnf (reg 1) (toList (dict b))).1.reverse with
+  | nil =>
+      exfalso
+      have hln : lastStep129 (dict b) = none := by unfold lastStep129; rw [hrevB]
+      have hf : sameExp145 a b = false := by
+        unfold sameExp145
+        rw [hln]
+        cases lastStep129 (dict a) <;> rfl
+      rw [hf] at hse
+      exact Bool.noConfusion hse
+  | cons cb rb =>
+  have hacA : lastAC151 (dict a) = some ca := by unfold lastAC151; rw [hrevA]
+  have hacB : lastAC151 (dict b) = some cb := by unfold lastAC151; rw [hrevB]
+  have hmemA : ca ∈ (wcnf (reg 1) (toList (dict a))).1 :=
+    List.mem_reverse.mp (by rw [hrevA]; exact List.Mem.head _)
+  have hmemB : cb ∈ (wcnf (reg 1) (toList (dict b))).1 :=
+    List.mem_reverse.mp (by rw [hrevB]; exact List.Mem.head _)
+  obtain ⟨Xa, hlsA⟩ : ∃ X, lastStep129 (dict a) = some (ca.1, X) := by
+    cases hpv : prevV151 (dict a) with
+    | none => exact ⟨_, lastStep_prev_none151 hacA hpv⟩
+    | some v => exact ⟨_, lastStep_prev_some151 hacA hpv⟩
+  obtain ⟨Xb, hlsB⟩ : ∃ X, lastStep129 (dict b) = some (cb.1, X) := by
+    cases hpv : prevV151 (dict b) with
+    | none => exact ⟨_, lastStep_prev_none151 hacB hpv⟩
+    | some v => exact ⟨_, lastStep_prev_some151 hacB hpv⟩
+  have hexpEq : ca.1 = cb.1 := by
+    have he : sameExp145 a b = ((ca.1 : Term) == cb.1) := by
+      unfold sameExp145; rw [hlsA, hlsB]
+    rw [he] at hse
+    exact eq_of_beq hse
+  have hlt' : lt (ofList (toList (hiW89 (dict a))))
+      (ofList (toList (hiW89 (dict b)))) = true := by
+    rw [inT_ofList_toList _ (inT_hiW89 hia), inT_ofList_toList _ (inT_hiW89 hib)]
+    exact hlt
+  have hPL := transport154 (toList (hiW89 (dict a))) (toList (hiW89 (dict b)))
+    (inT_toList _ (inT_hiW89 hia)).1 (inT_toList _ (inT_hiW89 hib)).1
+    (inT_toList _ (inT_hiW89 hia)).2 (inT_toList _ (inT_hiW89 hib)).2
+    (hiW89_ge89 hia) (hiW89_ge89 hib)
+    (fun z hz => by
+      rw [toList_hiW89 hia] at hz
+      exact hmLa z (List.mem_filter.mp hz).1)
+    (fun z hz => by
+      rw [toList_hiW89 hib] at hz
+      exact hmLb z (List.mem_filter.mp hz).1)
+    hlt'
+  rw [wcnfFst_hiW101 hia, wcnfFst_hiW101 hib] at hPL
+  obtain ⟨R, S1, S2, e1, e2, hbr⟩ := hPL
+  rcases hbr with ⟨hS1nil, hS2ne⟩ | ⟨x, tx, yb, ty, hSx, hSy, hdiv⟩
+  · -- 前置きで尽きる側 — 指数の真の降順と最後の指数の一致が両立しない
+    exfalso
+    subst hS1nil
+    rw [List.append_nil] at e1
+    have hRrev : R.reverse = ca :: ra := by rw [← e1]; exact hrevA
+    have hRe : R = ra.reverse ++ [ca] := by
+      have h2 := congrArg List.reverse hRrev
+      rw [List.reverse_reverse, List.reverse_cons] at h2
+      exact h2
+    have hdP : descP118 ((wcnf (reg 1) (toList (dict b))).1) :=
+      wcnf_descP154 _ hcLb hdLb hmLb
+    rw [e2, hRe, List.append_assoc] at hdP
+    have hdP2 : descP118 (ca :: S2) := descP_suffix154 _ _ hdP
+    cases hS2r : S2.reverse with
+    | nil =>
+        refine hS2ne ?_
+        rw [← List.reverse_reverse S2, hS2r]
+        rfl
+    | cons cb2 rb2 =>
+        have hcb2mem : cb2 ∈ S2 :=
+          List.mem_reverse.mp (by rw [hS2r]; exact List.Mem.head _)
+        have hrevB2 : (wcnf (reg 1) (toList (dict b))).1.reverse
+            = cb2 :: (rb2 ++ R.reverse) := by
+          rw [e2, List.reverse_append, hS2r]
+          rfl
+        have hcbe : cb = cb2 := by
+          have h2 := hrevB.symm.trans hrevB2
+          injection h2 with h3 _
+        have hIn : ∀ w ∈ ca :: S2, inT w.1 = true := by
+          intro w hw
+          rcases List.mem_cons.mp hw with h1 | h1
+          · rw [h1]
+            refine (hOKb ca ?_).1
+            rw [e2, hRe]
+            exact List.mem_append_left _ (List.mem_append_right _ (List.Mem.head _))
+          · refine (hOKb w ?_).1
+            rw [e2]
+            exact List.mem_append_right _ h1
+        have hlast : lt cb2.1 ca.1 = true := descP_bound154 S2 ca hIn hdP2 cb2 hcb2mem
+        rw [← hcbe, hexpEq, lt_irrefl] at hlast
+        exact Bool.noConfusion hlast
+  · subst hSx
+    subst hSy
+    by_cases hboth : tx = [] ∧ ty = []
+    · -- 最後の対どうしで割れる — 条項 (i)
+      obtain ⟨htx, hty⟩ := hboth
+      subst htx
+      subst hty
+      have hrevA2 : (wcnf (reg 1) (toList (dict a))).1.reverse = x :: R.reverse := by
+        rw [e1, List.reverse_append]
+        rfl
+      have hrevB2 : (wcnf (reg 1) (toList (dict b))).1.reverse = yb :: R.reverse := by
+        rw [e2, List.reverse_append]
+        rfl
+      have hxa : ca = x ∧ ra = R.reverse := by
+        have h2 := hrevA.symm.trans hrevA2
+        injection h2 with h3 h4
+        exact ⟨h3, h4⟩
+      have hyb : cb = yb ∧ rb = R.reverse := by
+        have h2 := hrevB.symm.trans hrevB2
+        injection h2 with h3 h4
+        exact ⟨h3, h4⟩
+      rcases hdiv with hexp | ⟨hE, hC⟩
+      · exfalso
+        rw [← hxa.1, ← hyb.1, ← hexpEq, lt_irrefl] at hexp
+        exact Bool.noConfusion hexp
+      · have hCc : lt ca.2 cb.2 = true := by rw [hxa.1, hyb.1]; exact hC
+        have hpva : prevV151 (dict a)
+            = ((R.reverse).reverse.foldl (stepF (reg 1) (baseOf 0))
+               ((none : Option Term), (none : Option Term))).2 := by
+          unfold prevV151
+          rw [hrevA2]
+        have hpvb : prevV151 (dict b)
+            = ((R.reverse).reverse.foldl (stepF (reg 1) (baseOf 0))
+               ((none : Option Term), (none : Option Term))).2 := by
+          unfold prevV151
+          rw [hrevB2]
+        have hPVeq : prevV151 (dict a) = prevV151 (dict b) := by rw [hpva, hpvb]
+        have hia2 : inT ca.2 = true := (hOKa ca hmemA).2.2.1
+        have hib2 : inT cb.2 = true := (hOKb cb hmemB).2.2.1
+        cases hpv : prevV151 (dict a) with
+        | none =>
+            have hpvB : prevV151 (dict b) = none := by rw [← hPVeq]; exact hpv
+            have hnz : ca.2 ≠ zero :=
+              wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) _ hcLa hdLa hmLa ca hmemA
+            have hsub : lt (sub1 ca.2) (sub1 cb.2) = true :=
+              sub1_smono154 hia2 hib2 hnz hCc
+            show (tail1_151 (prevV151 (dict a)) (prevV151 (dict b)) (lastAC151 (dict a))
+                (lastAC151 (dict b))
+              || tail2_151 (lastStep129 (dict a)) (prevV151 (dict b))) = true
+            rw [hpv, hpvB, hacA, hacB]
+            show (lt (sub1 ca.2) (sub1 cb.2)
+              || tail2_151 (lastStep129 (dict a)) none) = true
+            rw [hsub]
+            rfl
+        | some v =>
+            have hpvB : prevV151 (dict b) = some v := by rw [← hPVeq]; exact hpv
+            show (tail1_151 (prevV151 (dict a)) (prevV151 (dict b)) (lastAC151 (dict a))
+                (lastAC151 (dict b))
+              || tail2_151 (lastStep129 (dict a)) (prevV151 (dict b))) = true
+            rw [hpv, hpvB, hacA, hacB]
+            show (((v == v) && lt ca.2 cb.2)
+              || tail2_151 (lastStep129 (dict a)) (some v)) = true
+            rw [beq_self_eq_true, hCc]
+            rfl
+    · -- 途中で割れる — `Dom154` が受け取る
+      have hor : tx ≠ [] ∨ ty ≠ [] := by
+        by_cases htx : tx = []
+        · right
+          intro hty
+          exact hboth ⟨htx, hty⟩
+        · left
+          exact htx
+      have hdom := HD a b hbA hbB hsA hsB hWa hWb hfa hfb hlt hse
+        R x tx yb ty e1 e2 hor hdiv
+      show (tail1_151 (prevV151 (dict a)) (prevV151 (dict b)) (lastAC151 (dict a))
+          (lastAC151 (dict b))
+        || tail2_151 (lastStep129 (dict a)) (prevV151 (dict b))) = true
+      rw [hdom]
+      exact Bool.or_true _
+
+#print axioms tailOK151_of_dom154
+
+/-- **系 — 第二の門の同指数の半分は `Dom154` に還る。** -/
+theorem xmono145_of_dom154 (Hp : PsiIdxOKStd172) (HD : Dom154) : XMono145 :=
+  xmono145_of_tailOK151 Hp (tailOK151_of_dom154 Hp HD)
+
+#print axioms xmono145_of_dom154
+
+/-! ### §154 MEASUREMENT — the trichotomy on the frozen pools
+
+運搬定理の言う三分岐を §151 の母集団の上で数える。読み方は
+(退化した形, 最後の対どうしの割れ, そのうち条項 (i) が外れる数,
+ 途中の割れ = `Dom154` の義務, そのうち条項 (ii) が外れる数,
+ 割れの向きが辞書式で下がらない数)。定理の言う通りなら 1・3・5・6 列目は 0。 -/
+
+/-- 共通の前置きを剥がす。 -/
+def stripPre154 : List (Term × Term) → List (Term × Term) →
+    (List (Term × Term) × List (Term × Term))
+  | x :: t1, y :: t2 => if x == y then stripPre154 t1 t2 else (x :: t1, y :: t2)
+  | l1, l2 => (l1, l2)
+
+def dq154 (a : BT) : Q151 × List (Term × Term) :=
+  (dq151 a, (wcnf (reg 1) (toList (dict a))).1)
+
+def cnt154 (L : List BT) : Nat × Nat × Nat × Nat × Nat × Nat :=
+  let D := (L.filter qual151).map dq154
+  D.foldl (fun (acc : Nat × Nat × Nat × Nat × Nat × Nat) x =>
+      D.foldl (fun (r : Nat × Nat × Nat × Nat × Nat × Nat) y =>
+        if lt x.1.1.1 y.1.1.1 && sameQ151 x.1 y.1 then
+          match stripPre154 x.2 y.2 with
+          | (xx :: t1, yy :: t2) =>
+              let lex := lt xx.1 yy.1 || ((xx.1 == yy.1) && lt xx.2 yy.2)
+              if t1.isEmpty && t2.isEmpty then
+                (r.1, r.2.1 + 1, r.2.2.1 + (if d1Q151 x.1 y.1 then 0 else 1),
+                 r.2.2.2.1, r.2.2.2.2.1, r.2.2.2.2.2 + (if lex then 0 else 1))
+              else
+                (r.1, r.2.1, r.2.2.1,
+                 r.2.2.2.1 + 1, r.2.2.2.2.1 + (if d2Q151 x.1 y.1 then 0 else 1),
+                 r.2.2.2.2.2 + (if lex then 0 else 1))
+          | _ => (r.1 + 1, r.2)
+        else r) acc) (0, 0, 0, 0, 0, 0)
+
+/-! 三分岐の実測 — §151 の条項の分割と一致する。二列目 (最後の対どうしの割れ) は
+§151 の条項 (i) の列そのもの、四列目 (途中の割れ = `Dom154` の義務) は条項 (ii) の
+列そのもの。退化した形・条項の外れ・辞書式で下がらない割れは 0。 -/
+
+#guard cnt154 poolD151 == (0, 420, 0, 840, 0, 0)
+#guard cnt154 poolC151 == (0, 244, 0, 2126, 0, 0)
+#guard cnt154 poolE151 == (0, 146, 0, 25542, 0, 0)
+#guard cnt154 poolA151 == (0, 720, 0, 53048, 0, 0)
+
+/-- **`Dom154` の割れの形は強いられている。**  途中の割れが `a` の最後の対で
+    起きる (`tx = []`) なら、指数の一致 (`x.1 = y.1`) はあり得ない — 右の列の
+    真の降順と最後の指数の一致が両立しないから。残る `Dom154` の中身は
+    「`tx ≠ []`か、指数が狭義に下がる割れ」だけである。 -/
+theorem domShape154 (Hp : PsiIdxOKStd172) {a b : BT}
+    (hbB : btLe72 1 (BT.D 0 b) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    (hse : sameExp145 a b = true)
+    {R : List (Term × Term)} {x : Term × Term} {y : Term × Term}
+    {ty : List (Term × Term)}
+    (e1 : (wcnf (reg 1) (toList (dict a))).1 = R ++ [x])
+    (e2 : (wcnf (reg 1) (toList (dict b))).1 = R ++ y :: ty)
+    (hty : ty ≠ [])
+    (hE : x.1 = y.1) : False := by
+  obtain ⟨hib, hlbM, hpb⟩ := dictFacts151 Hp hbB hsB
+  have hcLb := (inT_toList _ hib).1
+  have hdLb := (inT_toList _ hib).2
+  have hmLb : ∀ z ∈ toList (dict b), lt z M = true := ltM_toList _ hib hlbM
+  obtain ⟨_, hOKb⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+    (toList (dict b)) hcLb hdLb hmLb
+  -- a's last pair is x
+  have hrevA : (wcnf (reg 1) (toList (dict a))).1.reverse = x :: R.reverse := by
+    rw [e1, List.reverse_append]
+    rfl
+  have hacA : lastAC151 (dict a) = some x := by unfold lastAC151; rw [hrevA]
+  obtain ⟨Xa, hlsA⟩ : ∃ X, lastStep129 (dict a) = some (x.1, X) := by
+    cases hpv : prevV151 (dict a) with
+    | none => exact ⟨_, lastStep_prev_none151 hacA hpv⟩
+    | some v => exact ⟨_, lastStep_prev_some151 hacA hpv⟩
+  -- b's last pair cb sits inside ty
+  cases htyr : ty.reverse with
+  | nil =>
+      refine hty ?_
+      rw [← List.reverse_reverse ty, htyr]
+      rfl
+  | cons cb tyr =>
+      have hcbmem : cb ∈ ty := List.mem_reverse.mp (by rw [htyr]; exact List.Mem.head _)
+      have hrevB : (wcnf (reg 1) (toList (dict b))).1.reverse
+          = cb :: (tyr ++ [y] ++ R.reverse) := by
+        rw [e2, List.reverse_append, List.reverse_cons, htyr]
+        rfl
+      have hacB : lastAC151 (dict b) = some cb := by unfold lastAC151; rw [hrevB]
+      obtain ⟨Xb, hlsB⟩ : ∃ X, lastStep129 (dict b) = some (cb.1, X) := by
+        cases hpv : prevV151 (dict b) with
+        | none => exact ⟨_, lastStep_prev_none151 hacB hpv⟩
+        | some v => exact ⟨_, lastStep_prev_some151 hacB hpv⟩
+      -- equal last exponents name cb's exponent
+      have hexpEq : x.1 = cb.1 := by
+        have he : sameExp145 a b = ((x.1 : Term) == cb.1) := by
+          unfold sameExp145; rw [hlsA, hlsB]
+        rw [he] at hse
+        exact eq_of_beq hse
+      -- strict descent inside b's pair list refutes it
+      have hdP : descP118 ((wcnf (reg 1) (toList (dict b))).1) :=
+        wcnf_descP154 _ hcLb hdLb hmLb
+      rw [e2] at hdP
+      have hdP2 : descP118 (y :: ty) := descP_suffix154 _ _ hdP
+      have hIn : ∀ w ∈ y :: ty, inT w.1 = true := by
+        intro w hw
+        refine (hOKb w ?_).1
+        rw [e2]
+        exact List.mem_append_right _ hw
+      have hlast : lt cb.1 y.1 = true := descP_bound154 ty y hIn hdP2 cb hcbmem
+      rw [← hexpEq, ← hE, lt_irrefl] at hlast
+      exact Bool.noConfusion hlast
+
+#print axioms domShape154
+
+end
 end Evidence.Region
