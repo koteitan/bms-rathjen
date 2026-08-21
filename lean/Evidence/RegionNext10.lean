@@ -18877,4 +18877,1788 @@ def covered162 (a : BT) : Bool :=
 
 end
 
+
+/-
+g165 — WIDENING §164's DECIDED CRITERION.
+
+§164 stopped the coefficient carrier's descent with ONE inequality per `ψ₁` node met
+on the level-0 descent: `wA (reg 1) (dict (ψ₁ e)) ≤ ac.1` (the CAP), plus the demand
+that that exponent not fire.  On §151's pools `subordChk164` accepts 914 of the 1174
+qualifying terms.  §164's own frozen `relaxCov164` locates the residual: relaxing the
+CAP alone lifts D/A/E to 235/590/228 but leaves C at 83, and relaxing the FIRE test
+alone moves nothing — so 222 of the 260 misses are pure CAP refusals and the 38 in
+pool C need both tests relaxed.  Since the cap is genuinely FALSE on those terms,
+`Sub157` has to come out of a DIFFERENT generator of the closure.
+
+WHAT IS NEW HERE.  `Sub157 A w` has three generators; §164 only ever used `ofPhi`
+inside the level-0 fold.  `ofLe` is available at every layer, and this file installs
+it at the three places where §164 threw it away:
+
+  §165.1  IN THE FOLD, PER STEP (`ChainOK165`).  §164's `PairOK164` demanded the cap
+          at every Veblen pair of `dict d`, and refused every firing pair outright.
+          Here each pair may instead exhibit the value the fold lands on — the
+          explicit term `φ̄ a (v ⊕ c)`, or `ψ_{Ω₁}(i)` on a firing pair — as
+          `le`-below the bound `w'`, and `Sub157.ofLe` closes that step, leaving the
+          fold's invariant intact.  Exponents descend along the pair list while the
+          fold value grows, so the natural pattern is: escape on the early pairs (big
+          exponent, small value), cap on the late ones.  §164's route is the special
+          case where every pair takes the cap.  Note the firing escape needs NO
+          `PsiIdxOK`: `inT (ψ_{Ω₁} i)` and `ψ_{Ω₁} i < M` are Bool tests that the
+          decider simply evaluates.
+  §165.3  AT THE BLOCK: `le (wC (reg 1) (dict (ψ₁ c))) w'`.
+  §165.4  AT THE TOP: `le ac.2 w'`, which §164 never tried at all.
+
+MAIN (per-`a`, as required — global forms of this shape are FALSE and are not
+claimed here):
+
+    subord157_at_chk165 (Hp : PsiIdxOKStd172) (hb hs) (hchk : subordChk165 a = true)
+        (P S ac) (hsplit) (hfire) : Sub157 ac.1 (wVal157 P) ac.2
+
+MEASUREMENT (frozen `#guard`s at the end).  Per QUALIFYING TERM (`qual151`), the
+count each decider accepts.  `+blk` and `+chain` are the diagnostic intermediates of
+§165.5 and isolate where the gain comes from.
+
+    pool                    qual   §164   +blk   +chain   §165
+    §151 D                   235    235    235      235    235
+    §151 C                   121     83     83      121    121
+    §151 A                   590    410    410      590    590
+    §151 E                   228    186    186      228    228
+    exhaustive, size ≤ 12   2962   2960   2960     2962   2962
+    deep, size ≤ 44          693    622    625      693    693
+    total                   4829   4496   4499     4829   4829
+
+Two pools are built here because §164's uniform-growth pools cannot reach the shapes
+that break it: `exhPool165` is EVERY `BT` up to `BT.size` 12 (2962 of them qualify),
+and `deepPool165` is a hand-built family of towers under `ψ₀` under `ψ₁`, up to eight
+levels of nesting and `BT.size` 44.  Neither contains a term `subordChk165` refuses.
+The whole gain is the per-step escape (`+chain`); the block restriction on its own
+moves 3 terms.
+
+WHAT THE POOLS CANNOT REACH.  Nothing here is evidence about `BT.size` above 44, nor
+about level-2 digits (`BT.D 2 _`), which `btLe72 1` excludes from every pool.  The
+enumeration is complete only to size 12.
+
+FALSIFICATION TEST (`ctrl165`, frozen too).  On the `K`-DROPPED controls — the terms
+with `BT.isStd a` but not `BT.isStd (ψ₀ a)`, where §161's sweep of `HeartLo161` DOES
+fail — the criterion refuses:
+
+    control population        controls   §164   §165
+    §151 pools                      75      0      0
+    exhaustive, size ≤ 12         1849    684    684
+    deep shapes                    697     42     42
+
+So `subordChk165` is not vacuously true: it turns down 1165 of 1849 controls and all
+75 of §151's, and it accepts EXACTLY what §164 accepts there.  The whole widening
+lives on `K`-standard terms — which is where its soundness proof needs them.
+
+SELF-CHECK ON THE STANDING HYPOTHESIS (`hpChk165`, frozen).  `Hp : PsiIdxOKStd172` is
+the ONE assumption the headline still carries — the same one §157–§164 carry.  §112's
+`psiIdxOKb` decides `PsiIdxOK` in both directions, so a `false` would refute `Hp` the
+way §130 refutes its `BT.isStd a`-only cousin at `famB132 3 4`.  Instances found in
+the pools, and instances that hold:
+
+    §151 pools               2423 / 2423
+    all `BT`, size ≤ 12     15310 / 15310
+    deep shapes              2427 / 2427
+
+Nothing is refuted.  `Hp` remains an assumption of the whole chain, not of this file.
+
+No `sorry`, no `native_decide`, no new axiom; every headline prints
+`[propext, Quot.sound]`.
+-/
+
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §165.1 The per-step condition on the level-0 fold -/
+
+/-- The exponent `stepF` hands to `φ̄` at one pair, in the Veblen branch. -/
+def stepX165 (s2 : Option Term) (pr : Term × Term) : Term :=
+  match s2 with
+  | none => plus (baseOf 0) (sub1 pr.2)
+  | some v => plus v pr.2
+
+/-- The value `stepF` lands on at one pair, in the Veblen branch. -/
+def stepV165 (s2 : Option Term) (pr : Term × Term) : Term := phiNF pr.1 (stepX165 s2 pr)
+
+/-- `stepF` in the strongly critical branch, unfolded once. -/
+theorem stepF_fire165 {w base : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (h : le w ac.1 = true) :
+    stepF w base s ac = (some (idxOf w s ac), some (psi w (idxOf w s ac))) := by
+  show (if le w ac.1 = true then (some (idxOf w s ac), some (psi w (idxOf w s ac)))
+      else (s.1, some (phiNF ac.1
+        (plus (match s.2 with | none => base | some v => v)
+              (match s.2 with | none => sub1 ac.2 | some _ => ac.2))))) = _
+  rw [if_pos h]
+
+/-- **The chain condition.**  At every pair of the level-0 decomposition either the
+    step goes through STRUCTURALLY (the Veblen exponent is capped by `A`, §164's
+    route) or the value the fold lands on is already `le`-below the bound `w'`. -/
+def ChainOK165 (A w' : Term) : (Option Term × Option Term) → List (Term × Term) → Prop
+  | _, [] => True
+  | s, pr :: rest =>
+      ((le (reg 1) pr.1 = false ∧
+          ((le pr.1 A = true ∧ ((pr.1).isSC = false ∨ Sub157 A w' pr.1))
+            ∨ le (stepV165 s.2 pr) w' = true))
+        ∨ (le (reg 1) pr.1 = true ∧
+            inT (psi (reg 1) (idxOf (reg 1) s pr)) = true ∧
+            lt (psi (reg 1) (idxOf (reg 1) s pr)) M = true ∧
+            le (psi (reg 1) (idxOf (reg 1) s pr)) w' = true))
+      ∧ ChainOK165 A w' (stepF (reg 1) (baseOf 0) s pr) rest
+
+theorem chainOK_nil165 {A w' : Term} {s : Option Term × Option Term} :
+    ChainOK165 A w' s [] := trivial
+
+theorem chainOK_cons165 {A w' : Term} {s : Option Term × Option Term} {pr : Term × Term}
+    {rest : List (Term × Term)} (h : ChainOK165 A w' s (pr :: rest)) :
+    ((le (reg 1) pr.1 = false ∧
+          ((le pr.1 A = true ∧ ((pr.1).isSC = false ∨ Sub157 A w' pr.1))
+            ∨ le (stepV165 s.2 pr) w' = true))
+        ∨ (le (reg 1) pr.1 = true ∧
+            inT (psi (reg 1) (idxOf (reg 1) s pr)) = true ∧
+            lt (psi (reg 1) (idxOf (reg 1) s pr)) M = true ∧
+            le (psi (reg 1) (idxOf (reg 1) s pr)) w' = true))
+      ∧ ChainOK165 A w' (stepF (reg 1) (baseOf 0) s pr) rest := h
+
+theorem chainOK_mk165 {A w' : Term} {s : Option Term × Option Term} {pr : Term × Term}
+    {rest : List (Term × Term)}
+    (h : ((le (reg 1) pr.1 = false ∧
+          ((le pr.1 A = true ∧ ((pr.1).isSC = false ∨ Sub157 A w' pr.1))
+            ∨ le (stepV165 s.2 pr) w' = true))
+        ∨ (le (reg 1) pr.1 = true ∧
+            inT (psi (reg 1) (idxOf (reg 1) s pr)) = true ∧
+            lt (psi (reg 1) (idxOf (reg 1) s pr)) M = true ∧
+            le (psi (reg 1) (idxOf (reg 1) s pr)) w' = true))
+      ∧ ChainOK165 A w' (stepF (reg 1) (baseOf 0) s pr) rest) :
+    ChainOK165 A w' s (pr :: rest) := h
+
+/-- The wellformedness facts about one pair that the fold needs unconditionally. -/
+def PairFacts165 (A w' : Term) (pr : Term × Term) : Prop :=
+  inT pr.1 = true ∧ lt pr.1 M = true ∧ inT pr.2 = true ∧ lt pr.2 M = true ∧
+    SubC164 A w' pr.2
+
+/-- §164's `FoldOK164` with the `< M` bound carried too. -/
+def FoldOK165 (A w' : Term) (s : Option Term × Option Term) : Prop :=
+  ∀ v, s.2 = some v → inT v = true ∧ lt v M = true ∧ SubC164 A w' v
+
+theorem foldOK_init165 {A w' : Term} :
+    FoldOK165 A w' ((none : Option Term), (none : Option Term)) := by
+  intro v hv
+  exact absurd hv (by intro hc; cases hc)
+
+/-- **The fold stays in the closure**, with the structural route demanded only where
+    the step did not escape.  Generalises §164's `fold_sub164`. -/
+theorem fold_sub165 {A w' : Term} (h1 : le TM.Term.one w' = true) :
+    ∀ (Q : List (Term × Term)) (s : Option Term × Option Term),
+      (∀ pr ∈ Q, PairFacts165 A w' pr) → ChainOK165 A w' s Q → FoldOK165 A w' s →
+      FoldOK165 A w' (Q.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro Q
+  induction Q with
+  | nil => intro s _ _ hs; exact hs
+  | cons pr rest ih =>
+      intro s hall hchain hs
+      obtain ⟨hiα, hαM, hi2, hM2, hs2⟩ := hall pr (List.Mem.head _)
+      obtain ⟨hdisj, hrest⟩ := chainOK_cons165 hchain
+      refine ih _ (fun z hz => hall z (List.Mem.tail _ hz)) hrest ?_
+      rcases hdisj with ⟨hfire, hcase⟩ | ⟨hfire, hip, hlp, hlep⟩
+      · have hiX : inT (stepX165 s.2 pr) = true := by
+          cases hsnd : s.2 with
+          | none =>
+              show inT (plus (baseOf 0) (sub1 pr.2)) = true
+              exact inT_plus (inT_baseOf 0) (inT_sub1 hi2)
+          | some v0 =>
+              show inT (plus v0 pr.2) = true
+              exact inT_plus (hs v0 hsnd).1 hi2
+        have hXM : lt (stepX165 s.2 pr) M = true := by
+          cases hsnd : s.2 with
+          | none =>
+              show lt (plus (baseOf 0) (sub1 pr.2)) M = true
+              exact lt_plus_M (inT_baseOf 0) (inT_sub1 hi2) (ltM_baseOf 0) (ltM_sub1 hi2 hM2)
+          | some v0 =>
+              show lt (plus v0 pr.2) M = true
+              exact lt_plus_M (hs v0 hsnd).1 hi2 (hs v0 hsnd).2.1 hM2
+        have hXsub : SubC164 A w' (stepX165 s.2 pr) := by
+          cases hsnd : s.2 with
+          | none =>
+              show SubC164 A w' (plus (baseOf 0) (sub1 pr.2))
+              exact subC_plus164 (inT_baseOf 0) (inT_sub1 hi2) subC_zero164
+                (subC_sub1_164 hi2 hs2)
+          | some v0 =>
+              show SubC164 A w' (plus v0 pr.2)
+              exact subC_plus164 (hs v0 hsnd).1 hi2 (hs v0 hsnd).2.2 hs2
+        have hmain : Sub157 A w' (stepV165 s.2 pr) := by
+          rcases hcase with ⟨hcap, hsc⟩ | hle
+          · exact sub157_phiNF164 hiα hαM hcap hsc hiX h1 hXsub
+          · exact Sub157.ofLe (inT_phiNF hiα hiX hαM hXM) (ltM_phiNF hαM hXM) hle
+        have hnew : (stepF (reg 1) (baseOf 0) s pr).2 = some (stepV165 s.2 pr) := by
+          cases hsnd : s.2 with
+          | none => rw [stepF_veb_none164 hfire hsnd]; rfl
+          | some v0 => rw [stepF_veb_some164 hfire hsnd]; rfl
+        intro v hv
+        rw [hnew] at hv
+        have hve : v = stepV165 s.2 pr := by injection hv with hq; exact hq.symm
+        subst hve
+        exact ⟨(sub157_inT hmain).1, (sub157_inT hmain).2,
+          subC_of_isAP164 (isAP_phiNF _ _) hmain⟩
+      · rw [stepF_fire165 hfire]
+        intro v hv
+        have hve : v = psi (reg 1) (idxOf (reg 1) s pr) := by
+          injection hv with hq; exact hq.symm
+        subst hve
+        exact ⟨hip, hlp,
+          subC_of_isAP164
+            (show (psi (reg 1) (idxOf (reg 1) s pr)).isAP = true from rfl)
+            (Sub157.ofLe hip hlp hlep)⟩
+
+/-! ## §165.2 The descent, with the widened step -/
+
+/-- §164's `Cap164` with the per-node cap replaced by the per-step chain. -/
+inductive Cap165 (A w' : Term) : BT → Prop where
+  | ofLe : ∀ {d : BT}, le (dict (BT.D 0 d)) w' = true → Cap165 A w' d
+  | mk : ∀ {d : BT},
+      ChainOK165 A w' ((none : Option Term), (none : Option Term))
+        ((wcnf (reg 1) (toList (dict d))).1) →
+      (∀ e : BT, BT.D 1 e ∈ BT.toL d → ∀ y : BT, BT.D 0 y ∈ BT.toL e → Cap165 A w' y) →
+      (∀ y : BT, BT.D 0 y ∈ BT.toL d → Cap165 A w' y) →
+      Cap165 A w' d
+
+/-- The blanket pair facts, with NO cap hypothesis — §164's `pairs_ok164` minus the
+    bullets that consumed `CapE164`. -/
+theorem pairs_facts165 (Hp : PsiIdxOKStd172) {A w' : Term} (h1 : le TM.Term.one w' = true)
+    {d : BT} (hb : btLe72 1 (BT.D 0 d) = true) (hs : BT.isStd (BT.D 0 d) = true)
+    (hsub : ∀ e : BT, BT.D 1 e ∈ BT.toL d → ∀ y : BT, BT.D 0 y ∈ BT.toL e →
+      Sub157 A w' (dict (BT.D 0 y))) :
+    ∀ pr ∈ (wcnf (reg 1) (toList (dict d))).1, PairFacts165 A w' pr := by
+  intro pr hpr
+  have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+  have hsd : BT.isStd d = true := isStd_of_D hs
+  obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp d hbd hsd
+  obtain ⟨P, S, hPS⟩ := mem_split164 _ pr hpr
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict d)) P S pr hPS
+  have hname := block_name164 Hp hbd hsd hsp
+  have hinB : ∀ p ∈ B, inT p = true := by
+    intro p hp
+    refine inTL_inT hid p ?_
+    rw [hsp.eqL]
+    exact List.mem_append.mpr (Or.inl (List.mem_append.mpr (Or.inr hp)))
+  obtain ⟨hcL, hdL⟩ := inT_toList _ hid
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+    (toList (dict d)) hcL hdL (ltM_toList _ hid hidM)
+  obtain ⟨hiA', hAM', hiC', hCM'⟩ := hallOK pr hpr
+  refine ⟨hiA', hAM', hiC', hCM', ?_⟩
+  rw [hsp.blkC]
+  refine subC_blockC164 B hinB ?_
+  intro p hp
+  obtain ⟨e, hem, hbe, hse, hpe⟩ := hname p hp
+  rw [hpe]
+  exact sub157_wC_dict161 Hp hbe hse h1 (fun y hy => hsub e hem y hy)
+
+/-- **The fold value is in the closure** as soon as the chain holds. -/
+theorem sub157_foldV165 {A w' : Term} (h1 : le TM.Term.one w' = true) {d : BT}
+    (hfacts : ∀ pr ∈ (wcnf (reg 1) (toList (dict d))).1, PairFacts165 A w' pr)
+    (hchain : ChainOK165 A w' ((none : Option Term), (none : Option Term))
+      ((wcnf (reg 1) (toList (dict d))).1)) :
+    Sub157 A w' (foldV161 d) := by
+  unfold foldV161
+  cases h2 : (((wcnf (reg 1) (toList (dict d))).1.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2) with
+  | none => exact sub157_zero161
+  | some v =>
+      obtain ⟨hiv, _, hsv⟩ :=
+        fold_sub165 h1 _ ((none : Option Term), (none : Option Term)) hfacts hchain
+          foldOK_init165 v h2
+      exact sub157_of_comps161 v hiv hsv
+
+/-- **The widened residual closes the level-0 descent.** -/
+theorem lo0Sub_of_cap165 (Hp : PsiIdxOKStd172) {A w' : Term} (h1 : le TM.Term.one w' = true) :
+    ∀ {d : BT}, Cap165 A w' d → btLe72 1 (BT.D 0 d) = true → BT.isStd (BT.D 0 d) = true →
+      Lo0Sub161 A w' d := by
+  intro d hd
+  induction hd with
+  | @ofLe d hle => intro _ _; exact Lo0Sub161.ofLe hle
+  | @mk d hch _ _ ih1 ih0 =>
+      intro hb hs
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      refine Lo0Sub161.step ?_ ?_
+      · refine sub157_foldV165 h1 ?_ hch
+        refine pairs_facts165 Hp h1 hb hs ?_
+        intro e hem y hym
+        have hb1 : btLe72 1 (BT.D 1 e) = true := hgood.2.2.1 _ hem
+        have hs1 : BT.isStd (BT.D 1 e) = true := hgood.2.1 _ hem
+        have hbe : btLe72 1 e = true := (btLe72_D 1 1 e hb1).2
+        have hse : BT.isStd e = true := isStd_of_D hs1
+        have hge : GoodL77 (BT.toL e) := good_toL77 e hse hbe
+        exact sub157_dict_D0_161 Hp h1 (ih1 e hem y hym (hge.2.2.1 _ hym) (hge.2.1 _ hym))
+          (hge.2.2.1 _ hym) (hge.2.1 _ hym)
+      · intro y hym
+        exact ih0 y hym (hgood.2.2.1 _ hym) (hgood.2.1 _ hym)
+
+/-! ## §165.3 The carrier at one `a`, with the block-level `≤`-exit -/
+
+/-- **`Subord157` at one `a`, from the widened residual plus a per-block `≤`-exit.** -/
+theorem subord157_at_mix165 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (_hfire : le (reg 1) ac.1 = false)
+    (H : ∀ c : BT, BT.D 1 c ∈ BT.toL a → wA (reg 1) (dict (BT.D 1 c)) = ac.1 →
+      le (wC (reg 1) (dict (BT.D 1 c))) (wVal157 P) = true ∨
+      (∀ d : BT, BT.D 0 d ∈ BT.toL c → Cap165 ac.1 (wVal157 P) d)) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine sub157_of_split159 hsp ?_
+  intro p hp
+  obtain ⟨h1, c, hcm, hbc, hsc, hpe⟩ := split_facts161 Hp hb hs hsplit hsp hp
+  have hblk : wA (reg 1) (dict (BT.D 1 c)) = ac.1 := by
+    rw [← hpe]; exact hsp.blkA p hp
+  rw [hpe]
+  rcases H c hcm hblk with hle | hcap
+  · obtain ⟨hic, hcM⟩ :=
+      inT_dict_of_std172 Hp (BT.D 1 c) (hgood.2.2.1 _ hcm) (hgood.2.1 _ hcm)
+    exact Sub157.ofLe (inT_wC hic) (ltM_wC hic hcM) hle
+  · refine sub157_wC_dict161 Hp hbc hsc h1 ?_
+    intro d hdm
+    have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+    exact sub157_dict_D0_161 Hp h1
+      (lo0Sub_of_cap165 Hp h1 (hcap d hdm) (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm))
+      (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+
+/-! ## §165.4 The whole obligation at one `a`, DECIDED -/
+
+def chainChk165 (A w' : Term) : (Option Term × Option Term) → List (Term × Term) → Bool
+  | _, [] => true
+  | s, pr :: rest =>
+      ((!(le (reg 1) pr.1)
+          && ((le pr.1 A && (!((pr.1).isSC) || (inT pr.1 && lt pr.1 M && le pr.1 w')))
+              || le (stepV165 s.2 pr) w'))
+        || (le (reg 1) pr.1
+          && inT (psi (reg 1) (idxOf (reg 1) s pr))
+          && lt (psi (reg 1) (idxOf (reg 1) s pr)) M
+          && le (psi (reg 1) (idxOf (reg 1) s pr)) w'))
+      && chainChk165 A w' (stepF (reg 1) (baseOf 0) s pr) rest
+
+theorem chain_of_chk165 {A w' : Term} : ∀ (s : Option Term × Option Term)
+    (L : List (Term × Term)), chainChk165 A w' s L = true → ChainOK165 A w' s L
+  | _, [], _ => chainOK_nil165
+  | s, pr :: rest, h => by
+      have h' : (((!(le (reg 1) pr.1)
+            && ((le pr.1 A && (!((pr.1).isSC) || (inT pr.1 && lt pr.1 M && le pr.1 w')))
+                || le (stepV165 s.2 pr) w'))
+          || (le (reg 1) pr.1
+            && inT (psi (reg 1) (idxOf (reg 1) s pr))
+            && lt (psi (reg 1) (idxOf (reg 1) s pr)) M
+            && le (psi (reg 1) (idxOf (reg 1) s pr)) w'))
+          && chainChk165 A w' (stepF (reg 1) (baseOf 0) s pr) rest) = true := h
+      obtain ⟨hdis, hrec⟩ := (Bool.and_eq_true _ _).mp h'
+      refine chainOK_mk165 ⟨?_, chain_of_chk165 _ rest hrec⟩
+      rcases (Bool.or_eq_true _ _).mp hdis with hv | hf
+      · obtain ⟨hnf, hbody⟩ := (Bool.and_eq_true _ _).mp hv
+        refine Or.inl ⟨?_, ?_⟩
+        · cases hc : le (reg 1) pr.1 with
+          | false => rfl
+          | true => rw [hc] at hnf; exact Bool.noConfusion hnf
+        · rcases (Bool.or_eq_true _ _).mp hbody with hcap | hle
+          · obtain ⟨hA, hsc⟩ := (Bool.and_eq_true _ _).mp hcap
+            refine Or.inl ⟨hA, ?_⟩
+            cases hsc2 : (pr.1).isSC with
+            | false => exact Or.inl rfl
+            | true =>
+                rw [hsc2] at hsc
+                have h4 : (inT pr.1 && lt pr.1 M && le pr.1 w') = true := by
+                  simpa using hsc
+                obtain ⟨h45, h6⟩ := (Bool.and_eq_true _ _).mp h4
+                obtain ⟨h4', h5⟩ := (Bool.and_eq_true _ _).mp h45
+                exact Or.inr (Sub157.ofLe h4' h5 h6)
+          · exact Or.inr hle
+      · obtain ⟨h123, h4⟩ := (Bool.and_eq_true _ _).mp hf
+        obtain ⟨h12, h3⟩ := (Bool.and_eq_true _ _).mp h123
+        obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h12
+        exact Or.inr ⟨h1, h2, h3, h4⟩
+
+def capStep165 (A w' : Term) (rec : BT → Bool) (d : BT) : Bool :=
+  chainChk165 A w' ((none : Option Term), (none : Option Term))
+      ((wcnf (reg 1) (toList (dict d))).1) &&
+  (BT.toL d).all (fun z =>
+    match z with
+    | BT.D u x =>
+        if u == 0 then rec x
+        else if u == 1 then
+          (BT.toL x).all (fun y =>
+            match y with
+            | BT.D v e => if v == 0 then rec e else true
+            | _ => true)
+        else true
+    | _ => true)
+
+/-- The descent, decided. -/
+def capChk165 (A w' : Term) : Nat → BT → Bool
+  | 0, _ => false
+  | n + 1, d => le (dict (BT.D 0 d)) w' || capStep165 A w' (capChk165 A w' n) d
+
+theorem cap_of_chk165 {A w' : Term} : ∀ (n : Nat) (d : BT), BT.size d < n →
+    capChk165 A w' n d = true → Cap165 A w' d
+  | 0, _, h, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hchk => by
+      have hchk0 : (le (dict (BT.D 0 d)) w' || capStep165 A w' (capChk165 A w' n) d) = true :=
+        hchk
+      cases hle : le (dict (BT.D 0 d)) w' with
+      | true => exact Cap165.ofLe hle
+      | false =>
+      rw [hle, Bool.false_or] at hchk0
+      have hstep : (chainChk165 A w' ((none : Option Term), (none : Option Term))
+            ((wcnf (reg 1) (toList (dict d))).1) &&
+          (BT.toL d).all (fun z =>
+            match z with
+            | BT.D u x =>
+                if u == 0 then capChk165 A w' n x
+                else if u == 1 then
+                  (BT.toL x).all (fun y =>
+                    match y with
+                    | BT.D v e => if v == 0 then capChk165 A w' n e else true
+                    | _ => true)
+                else true
+            | _ => true)) = true := hchk0
+      obtain ⟨hch, hall0⟩ := (Bool.and_eq_true _ _).mp hstep
+      have hall := List.all_eq_true.mp hall0
+      refine Cap165.mk (chain_of_chk165 _ _ hch) ?_ ?_
+      · intro e hem y hym
+        have h2 : (BT.toL e).all (fun y =>
+            match y with
+            | BT.D v e' => if v == 0 then capChk165 A w' n e' else true
+            | _ => true) = true := hall _ hem
+        have h4 : capChk165 A w' n y = true := List.all_eq_true.mp h2 _ hym
+        have hsz1 : BT.size (BT.D 1 e) ≤ BT.size d := size_mem_toL87 d _ hem
+        have hsz0 : BT.size (BT.D 0 y) ≤ BT.size e := size_mem_toL87 e _ hym
+        rw [size_D87] at hsz1 hsz0
+        exact cap_of_chk165 n y (by omega) h4
+      · intro y hym
+        have h2 : capChk165 A w' n y = true := hall _ hym
+        have hsz0 : BT.size (BT.D 0 y) ≤ BT.size d := size_mem_toL87 d _ hym
+        rw [size_D87] at hsz0
+        exact cap_of_chk165 n y (by omega) h2
+
+def pairChk165 (a : BT) (P : List (Term × Term)) (ac : Term × Term) : Bool :=
+  le (reg 1) ac.1 || le ac.2 (wVal157 P) ||
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then
+        !(wA (reg 1) (dict (BT.D 1 c)) == ac.1) ||
+        le (wC (reg 1) (dict (BT.D 1 c))) (wVal157 P) ||
+        (BT.toL c).all (fun y =>
+          match y with
+          | BT.D v d => if v == 0 then capChk165 ac.1 (wVal157 P) (BT.size d + 1) d else true
+          | _ => true)
+      else true
+    | _ => true)
+
+def walkChk165 (a : BT) : List (Term × Term) → List (Term × Term) → Bool
+  | _, [] => true
+  | P, ac :: S => pairChk165 a P ac && walkChk165 a (P ++ [ac]) S
+
+theorem walk_split165 (a : BT) : ∀ (Q P S : List (Term × Term)) (ac : Term × Term),
+    walkChk165 a P (Q ++ ac :: S) = true → pairChk165 a (P ++ Q) ac = true
+  | [], P, S, ac, h => by
+      have h' : (pairChk165 a P ac && walkChk165 a (P ++ [ac]) S) = true := h
+      rw [List.append_nil]
+      exact ((Bool.and_eq_true _ _).mp h').1
+  | q :: Q', P, S, ac, h => by
+      have h' : (pairChk165 a P q && walkChk165 a (P ++ [q]) (Q' ++ ac :: S)) = true := h
+      have hr := walk_split165 a Q' (P ++ [q]) S ac ((Bool.and_eq_true _ _).mp h').2
+      rw [List.append_assoc] at hr
+      exact hr
+
+/-- **The whole obligation at one `a`, decided.** -/
+def subordChk165 (a : BT) : Bool :=
+  walkChk165 a [] ((wcnf (reg 1) (toList (dict a))).1)
+
+/-- **HEADLINE — `Subord157` at one `a`, from the widened decided criterion.** -/
+theorem subord157_at_chk165 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hchk : subordChk165 a = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hw : walkChk165 a [] (P ++ ac :: S) = true := by rw [← hsplit]; exact hchk
+  have hp0 := walk_split165 a P [] S ac hw
+  rw [List.nil_append] at hp0
+  have hp' : (le (reg 1) ac.1 || le ac.2 (wVal157 P) ||
+      (BT.toL a).all (fun z =>
+        match z with
+        | BT.D u c => if u == 1 then
+            !(wA (reg 1) (dict (BT.D 1 c)) == ac.1) ||
+            le (wC (reg 1) (dict (BT.D 1 c))) (wVal157 P) ||
+            (BT.toL c).all (fun y =>
+              match y with
+              | BT.D v d => if v == 0 then capChk165 ac.1 (wVal157 P) (BT.size d + 1) d
+                else true
+              | _ => true)
+          else true
+        | _ => true)) = true := hp0
+  rw [hfire, Bool.false_or] at hp'
+  cases htop : le ac.2 (wVal157 P) with
+  | true =>
+      obtain ⟨hiy, hyM⟩ := inT_dict_of_std172 Hp a hba hsa
+      obtain ⟨hcL, hdL⟩ := inT_toList _ hiy
+      obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+        (toList (dict a)) hcL hdL (ltM_toList _ hiy hyM)
+      have hmem : ac ∈ (wcnf (reg 1) (toList (dict a))).1 := by
+        rw [hsplit]; exact List.mem_append_right _ (List.Mem.head _)
+      obtain ⟨_, _, hi2, hM2⟩ := hallOK ac hmem
+      exact Sub157.ofLe hi2 hM2 htop
+  | false =>
+      rw [htop, Bool.false_or] at hp'
+      refine subord157_at_mix165 Hp hb hs P S ac hsplit hfire ?_
+      intro c hcm hblk
+      have h1 : (!(wA (reg 1) (dict (BT.D 1 c)) == ac.1) ||
+          le (wC (reg 1) (dict (BT.D 1 c))) (wVal157 P) ||
+          (BT.toL c).all (fun y =>
+            match y with
+            | BT.D v d => if v == 0 then capChk165 ac.1 (wVal157 P) (BT.size d + 1) d
+              else true
+            | _ => true)) = true := List.all_eq_true.mp hp' _ hcm
+      rw [beq_of_eq hblk, Bool.not_true, Bool.false_or] at h1
+      cases hbl : le (wC (reg 1) (dict (BT.D 1 c))) (wVal157 P) with
+      | true => exact Or.inl rfl
+      | false =>
+          rw [hbl, Bool.false_or] at h1
+          refine Or.inr ?_
+          intro d hdm
+          have h2 : capChk165 ac.1 (wVal157 P) (BT.size d + 1) d = true :=
+            List.all_eq_true.mp h1 _ hdm
+          exact cap_of_chk165 (BT.size d + 1) d (Nat.lt_succ_self _) h2
+
+/-! ## §165.5 The pools -/
+
+/-- `btLevels165 n = [the `BT` of size 1, …, the `BT` of size n]`, exhaustively. -/
+def btLevels165 : Nat → List (List BT)
+  | 0 => []
+  | 1 => [[BT.zero]]
+  | n + 1 =>
+      let prev := btLevels165 n
+      let ds := (prev.getD (n - 1) []).flatMap (fun x => [BT.D 0 x, BT.D 1 x])
+      let ss := (List.range (n - 1)).flatMap (fun i =>
+        (prev.getD i []).flatMap (fun x =>
+          (prev.getD (n - i - 2) []).map (fun y => BT.sum x y)))
+      prev ++ [ds ++ ss]
+
+/-- EXHAUSTIVE pool: every `BT` up to `BT.size` 12 that qualifies. -/
+def exhPool165 : List BT := ((btLevels165 12).flatten).filter qual151
+
+def tw165 (n : Nat) : BT := nst132 n BT.zero
+
+/-- DELIBERATELY DEEP pool: hand-built shapes with `ψ₁` towers under `ψ₀` under `ψ₁`,
+    up to eight levels of nesting — the depth the uniform-growth pools never reach. -/
+def deepShapes165 : List BT :=
+  ((List.range 6).flatMap fun i =>
+   (List.range 6).flatMap fun j =>
+   (List.range 5).flatMap fun k =>
+    [ BT.sum (tw165 (i+1)) (BT.D 1 (BT.D 0 (BT.sum (tw165 (j+1)) (BT.D 1 (BT.D 0 (tw165 k))))))
+    , BT.D 1 (BT.sum (tw165 (i+1)) (BT.D 0 (BT.sum (tw165 (j+1)) (BT.D 1 (BT.D 0 (tw165 k))))))
+    , BT.sum (tw165 (i+1))
+        (BT.D 1 (BT.D 0 (BT.sum (BT.D 1 (tw165 (j+1))) (BT.D 1 (BT.D 0 (tw165 k))))))
+    , BT.sum (BT.D 1 (BT.D 0 (tw165 (i+1))))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (j+1)) (BT.D 0 (tw165 k)))))
+    , BT.D 1 (BT.D 0 (BT.D 1 (BT.D 0 (BT.D 1 (BT.D 0 (BT.sum (tw165 i) (tw165 j)))))))
+    , BT.sum (tw165 (i+1)) (BT.D 1 (BT.D 0 (BT.sum (BT.D 1 (BT.D 0 (tw165 (j+1)))) (tw165 k))))
+    , BT.sum (tw165 (i+1)) (BT.sum (BT.D 1 (BT.D 0 (tw165 (j+1)))) (BT.D 1 (BT.D 0 (tw165 k))))
+    , BT.D 1 (BT.sum (BT.D 1 (BT.D 0 (tw165 (i+1)))) (BT.D 0 (BT.sum (tw165 (j+1)) (tw165 k))))
+    -- three ψ₀ levels, each carrying its own tower
+    , BT.D 1 (BT.D 0 (BT.sum (tw165 (i+1))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (j+1)) (BT.D 1 (BT.D 0 (tw165 (k+1)))))))))
+    , BT.sum (tw165 (i+1)) (BT.D 1 (BT.D 0 (BT.sum (tw165 (j+1))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (k+1)) (BT.D 1 (BT.D 0 BT.zero))))))))
+    -- coefficient sums: two ψ₀ digits side by side under one ψ₁
+    , BT.sum (tw165 (i+1))
+        (BT.D 1 (BT.sum (BT.D 0 (tw165 (j+1))) (BT.D 0 (tw165 k))))
+    , BT.sum (tw165 (i+1))
+        (BT.D 1 (BT.sum (tw165 (j+1)) (BT.sum (BT.D 0 (tw165 (k+1))) (BT.D 0 BT.zero))))
+    -- a ψ₁ node whose own argument is a sum of towers (big base-Ω₁ exponent)
+    , BT.sum (tw165 (i+1))
+        (BT.D 1 (BT.D 0 (BT.sum (BT.sum (tw165 (j+1)) (tw165 (j+1))) (BT.D 1 (tw165 k)))))
+    , BT.D 1 (BT.D 0 (BT.sum (BT.sum (tw165 (i+1)) (tw165 (j+1)))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (k+1)) (tw165 k))))))
+    -- three summands at the top
+    , BT.sum (tw165 (i+1)) (BT.sum (tw165 (j+1))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (k+1)) (BT.D 1 (BT.D 0 (tw165 k)))))))
+    , BT.sum (BT.D 1 (BT.D 0 (tw165 (i+1)))) (BT.sum (BT.D 1 (BT.D 0 (tw165 (j+1))))
+        (BT.D 1 (BT.D 0 (tw165 (k+1)))))
+    -- four levels of ψ₀ under ψ₁, each with its own tower
+    , BT.sum (tw165 (i+1)) (BT.D 1 (BT.D 0 (BT.sum (tw165 (j+1))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (k+1))
+          (BT.D 1 (BT.D 0 (BT.sum (tw165 j) (BT.D 1 (BT.D 0 (tw165 i))))))))))))
+    -- long pair list: several distinct base-Ω₁ exponents in one term
+    , BT.sum (tw165 (i+2)) (BT.sum (tw165 (j+1))
+        (BT.sum (BT.D 1 (BT.D 0 (tw165 (k+1)))) (BT.D 1 (BT.D 0 BT.zero))))
+    , BT.sum (tw165 (i+3)) (BT.sum (tw165 (j+2)) (BT.sum (tw165 (k+1))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (j+1)) (BT.D 1 (BT.D 0 (tw165 k))))))))
+    -- coefficient carrying a ψ₀ whose own argument is a tall tower
+    , BT.sum (tw165 (i+1)) (BT.D 1 (BT.sum (tw165 (j+1)) (BT.D 0 (tw165 (k+3)))))
+    , BT.sum (tw165 (i+1)) (BT.D 1 (BT.sum (BT.D 1 (BT.D 0 (tw165 (j+2))))
+        (BT.D 0 (tw165 (k+2)))))
+    -- nested coefficient sums two deep
+    , BT.sum (tw165 (i+1)) (BT.D 1 (BT.sum (tw165 (j+1))
+        (BT.sum (BT.D 0 (BT.sum (tw165 (k+1)) (BT.D 1 (BT.D 0 (tw165 k)))))
+                (BT.D 0 (tw165 j)))))
+    -- a ψ₁ node under a ψ₀ under a ψ₁ under a ψ₀ (alternating, depth 6)
+    , BT.D 1 (BT.D 0 (BT.D 1 (BT.D 0 (BT.sum (tw165 (i+1))
+        (BT.D 1 (BT.D 0 (BT.sum (tw165 (j+1)) (tw165 (k+1)))))))))
+    -- repeated summand (equal digits merge into one wcnf block)
+    , BT.sum (tw165 (i+1)) (BT.sum (BT.D 1 (BT.D 0 (tw165 (j+1))))
+        (BT.sum (BT.D 1 (BT.D 0 (tw165 (j+1)))) (BT.D 1 (BT.D 0 (tw165 k)))))
+    ])
+
+def deepPool165 : List BT := deepShapes165.filter qual151
+
+/-! ### ATTRIBUTION (diagnostic; nothing below is used by any theorem)
+
+`subordChk165` differs from `subordChk164` in four independent ways.  These two
+intermediates isolate the first two so the gain can be attributed:
+
+  * `subordChkBlk165` — §164's node test verbatim, but the obligation is demanded
+    only of the `ψ₁` digits whose OWN base-`Ω₁` exponent is this pair's exponent
+    (`wA (reg 1) (dict (ψ₁ c)) == ac.1`).  §164 demanded it of every `ψ₁` digit of
+    `a` against every pair's exponent, which is far more than its own proof uses.
+  * `subordChkChain165` — the above plus §165.1's per-step escape. -/
+
+def pairChkBlk165 (a : BT) (P : List (Term × Term)) (ac : Term × Term) : Bool :=
+  le (reg 1) ac.1 ||
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then
+        !(wA (reg 1) (dict (BT.D 1 c)) == ac.1) ||
+        (BT.toL c).all (fun y =>
+          match y with
+          | BT.D v d => if v == 0 then capChk164 ac.1 (wVal157 P) (BT.size d + 1) d else true
+          | _ => true)
+      else true
+    | _ => true)
+
+def pairChkChain165 (a : BT) (P : List (Term × Term)) (ac : Term × Term) : Bool :=
+  le (reg 1) ac.1 ||
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then
+        !(wA (reg 1) (dict (BT.D 1 c)) == ac.1) ||
+        (BT.toL c).all (fun y =>
+          match y with
+          | BT.D v d => if v == 0 then capChk165 ac.1 (wVal157 P) (BT.size d + 1) d else true
+          | _ => true)
+      else true
+    | _ => true)
+
+def walkG165 (f : BT → List (Term × Term) → Term × Term → Bool) (a : BT) :
+    List (Term × Term) → List (Term × Term) → Bool
+  | _, [] => true
+  | P, ac :: S => f a P ac && walkG165 f a (P ++ [ac]) S
+
+def subordChkBlk165 (a : BT) : Bool :=
+  walkG165 pairChkBlk165 a [] ((wcnf (reg 1) (toList (dict a))).1)
+def subordChkChain165 (a : BT) : Bool :=
+  walkG165 pairChkChain165 a [] ((wcnf (reg 1) (toList (dict a))).1)
+
+/-- (qualifying, §164, +block, +chain, this file's full decider). -/
+def cov165 (L : List BT) : Nat × Nat × Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length, (D.filter subordChk164).length, (D.filter subordChkBlk165).length,
+   (D.filter subordChkChain165).length, (D.filter subordChk165).length)
+
+/-- FALSIFICATION TEST.  The `K`-dropped controls (`qualNoK151` but NOT `qual151`):
+    §161's sweep of `HeartLo161` fails on these, so a criterion with real content must
+    refuse a good share of them.  (They are outside the theorem's hypotheses — it
+    demands `BT.isStd (ψ₀ a)` — so acceptance here would prove nothing, but blanket
+    acceptance would show the criterion is not measuring `K`-standardness at all.) -/
+def ctrl165 (L : List BT) : Nat × Nat × Nat :=
+  let D := L.filter (fun a => qualNoK151 a && !(qual151 a))
+  (D.length, (D.filter subordChk164).length, (D.filter subordChk165).length)
+
+#guard ctrl165 (poolD151 ++ poolC151 ++ poolA151 ++ poolE151) == (75, 0, 0)
+#guard cov165 poolD151 == (235, 235, 235, 235, 235)
+#guard cov165 poolC151 == (121, 83, 83, 121, 121)
+#guard cov165 poolA151 == (590, 410, 410, 590, 590)
+#guard cov165 poolE151 == (228, 186, 186, 228, 228)
+#guard exhPool165.length == 2962
+#guard (exhPool165.map BT.size).foldl max 0 == 12
+#guard cov165 exhPool165 == (2962, 2960, 2960, 2962, 2962)
+#guard deepPool165.length == 693
+#guard (deepPool165.map BT.size).foldl max 0 == 44
+#guard cov165 deepPool165 == (693, 622, 625, 693, 693)
+#guard ctrl165 ((btLevels165 12).flatten) == (1849, 684, 684)
+#guard ctrl165 deepShapes165 == (697, 42, 42)
+/-! ### SELF-CHECK on the standing hypothesis
+
+`Hp : PsiIdxOKStd172` is the ONE assumption the headline still carries, and it is the
+same one §157–§164 carry.  §112's `psiIdxOKb` decides `PsiIdxOK` in BOTH directions
+(`psiIdxOK_of_psiIdxOKb112`, `psiIdxOKb_of_psiIdxOK`), so a `false` here would REFUTE
+`Hp` outright, exactly as §130 refutes the `BT.isStd a`-only form at `famB132 3 4`.
+`hpChk165` enumerates every instance of `Hp` a pool contains — both `u = 0` and
+`u = 1` — and counts how many hold.  Equal entries mean no instance is refuted. -/
+
+def hpChk165 (L : List BT) : Nat × Nat :=
+  let inst := L.flatMap (fun a =>
+    (if btLe72 1 a && BT.isStd (BT.D 0 a) then [((0 : Nat), a)] else []) ++
+    (if btLe72 1 a && BT.isStd (BT.D 1 a) then [((1 : Nat), a)] else []))
+  (inst.length, (inst.filter (fun q => psiIdxOKb q.1 (dict q.2))).length)
+
+#guard hpChk165 (poolD151 ++ poolC151 ++ poolA151 ++ poolE151) == (2423, 2423)
+#guard hpChk165 ((btLevels165 12).flatten) == (15310, 15310)
+#guard hpChk165 deepShapes165 == (2427, 2427)
+
+-- the widening never loses a term §164 already had
+#guard ((poolD151 ++ poolC151 ++ poolA151 ++ poolE151).filter qual151).all
+        (fun a => !(subordChk164 a) || subordChk165 a)
+#guard exhPool165.all (fun a => !(subordChk164 a) || subordChk165 a)
+#guard deepPool165.all (fun a => !(subordChk164 a) || subordChk165 a)
+
+#print axioms stepF_fire165
+#print axioms fold_sub165
+#print axioms pairs_facts165
+#print axioms sub157_foldV165
+#print axioms lo0Sub_of_cap165
+#print axioms subord157_at_mix165
+#print axioms chain_of_chk165
+#print axioms cap_of_chk165
+#print axioms walk_split165
+#print axioms subord157_at_chk165
+
+end
+
+/-
+g166 — `ExpHeart160`'s no-fired-prefix half, PROVED on a decided region.
+
+WHAT THIS FILE DOES.  §163 reduced the no-fired-prefix half of `ExpHeart160` to
+`LtDwitFree163` and named what was missing: "a fold invariant for `stepF` that carries
+`inT v ∧ v.isAP ∧ closure` across non-firing pairs".  **That invariant is built here**
+(§166.2, `foldR_sub166`), and with it the whole `collapse 0` value of a `ψ₀`-argument is
+put inside `SubR157 w` FOR EVERY BOUND `w` — no order comparison anywhere — as soon as a
+DECIDED per-term criterion `expFree166` accepts the argument (§166.5).
+
+The criterion is exactly the non-firing condition, taken hereditarily:
+
+  * at every `ψ₁` node `c` met on the walk, its base-`Ω₁` exponent must not fire
+    (`noFireChk166 c` — the same test as §164's `capEChk164`, minus the cap), and
+  * every `ψ₀`-argument named at depth ≤ 2 below the node must pass again.
+
+It is a THEOREM that the criterion suffices (`subR157_dict_chk166`), not a sweep.
+`lvl0161` — §163.3's whole free region — is a strict corner of it (`expFree_of_lvl0166`,
+and §166.7 exhibits members outside `lvl0161`).
+
+WHAT THIS FILE DOES NOT DO.  It does not prove `LtDwitFree163`; `expFree166` is a
+structural criterion and `BT.lt d dwit163` is an order comparison, and §166.7 measures
+how far apart they are on the pools.  It does not prove `ExpHeart160`, and it states NO
+global `∀ a, gates → region` form — the three retractions this project has already
+recorded are all of that shape.  Everything below is per-`a` or per-`d`.
+
+THE HEADLINES.
+
+  §166.5  `subR157_dict_chk166` / `subR157_dict_free166` — per-`d`, unconditional
+          apart from `Hp`.  The `ψ₀`-image is in the closure of EVERY bound.
+  §166.6  `expHeart160_at_chk166`, `expSubR157_at_chk166` — the heart clause and
+          `ExpSubR157` AT ONE `a`, on the decided region.
+  §166.6  `expSubR157_at_freeOrLe166` — the two exits mixed pair by pair, the
+          exponent-side twin of §164.10.
+  §166.6  `expSubR157_at_freeOrFired166` — §160.5c's bridge in the same shape: on a
+          FIRED prefix the second exit is the §128-style `lt`-clause at the index the
+          fold really built.
+  §166.6b `expSubR157_at_walk166` — the WHOLE obligation at one `a`, DECIDED, the
+          exponent-side twin of §164.11b's `subord157_at_chk164`.  It accepts 1174 of
+          the 1174 qualifying §151 pool terms and all 56 gate-passing members of the
+          deep pool built here — `awit163` included (§166.7b), which is the term where
+          §163 proved the structural route cannot work.
+
+MEASUREMENT is §166.8, read it against §166.9, which says what each pool contains and
+what it cannot reach.  The one number to distrust without §166.9 is any `n/n` row: pools
+A, C and E contain no depth-3 `ψ₀`-argument at all, so the clause is vacuous there.
+
+No `sorry`, no `native_decide`, no new axiom.
+-/
+
+
+open BMS
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §166.1 Componentwise membership in the recursive closure
+
+The exponent-side twin of §164.1's `SubC164`.  `SubR157` is closed under `φ̄` only
+through `subR157_phiNF160`, which asks for the SECOND argument componentwise; so the
+fold has to carry the componentwise form, exactly as §164 does on the coefficient side. -/
+
+/-- Every `⊕` component of `t` is in the recursive closure of `w`. -/
+def SubRC166 (w t : Term) : Prop := ∀ z ∈ toList t, SubR157 w z
+
+theorem subRC_zero166 {w : Term} : SubRC166 w zero := by
+  intro z hz
+  exact absurd hz (by intro hc; cases hc)
+
+theorem subRC_of_isAP166 {w t : Term} (hap : t.isAP = true) (h : SubR157 w t) :
+    SubRC166 w t := by
+  intro z hz
+  rw [toList_of_isAP hap] at hz
+  rw [List.mem_singleton.mp hz]
+  exact h
+
+theorem subRC_plus166 {w V R : Term} (hV : inT V = true) (hR : inT R = true)
+    (hsV : SubRC166 w V) (hsR : SubRC166 w R) : SubRC166 w (plus V R) := by
+  intro z hz
+  rcases mem_toList_plus161 hV hR z hz with h | h
+  · exact hsV z h
+  · exact hsR z h
+
+theorem subRC_sub1_166 {w c : Term} (hc : inT c = true) (h : SubRC166 w c) :
+    SubRC166 w (sub1 c) := fun z hz => h z (mem_toList_sub1_164 hc z hz)
+
+theorem subR157_of_comps166 {w X : Term} (hX : inT X = true) (h : SubRC166 w X) :
+    SubR157 w X := subR157_toList160 hX h
+
+/-! ## §166.2 THE FOLD INVARIANT §163.6 ASKED FOR
+
+`stepF (reg 1) (baseOf 0)` in the Veblen branch is `φ̄ (exponent) (previous ⊕ coefficient)`.
+`subR157_phiNF160` swallows every branch of `phiNF`, so the invariant
+"the running value is componentwise in the closure" survives a non-firing pair as soon
+as the pair's own exponent and coefficient are.  Nothing here is about `dict`, `BT`, or
+standardness: it is the fold, and any base `w` at all. -/
+
+/-- What one pair of the base-`Ω₁` decomposition must satisfy. -/
+def PairR166 (w : Term) (pr : Term × Term) : Prop :=
+  le (reg 1) pr.1 = false ∧ SubR157 w pr.1 ∧ inT pr.2 = true ∧ SubRC166 w pr.2
+
+/-- The invariant carried along the fold. -/
+def FoldR166 (w : Term) (s : Option Term × Option Term) : Prop :=
+  ∀ v, s.2 = some v → inT v = true ∧ SubRC166 w v
+
+theorem foldR_init166 {w : Term} :
+    FoldR166 w ((none : Option Term), (none : Option Term)) := by
+  intro v hv
+  exact absurd hv (by intro hc; cases hc)
+
+/-- **The step lemma.**  A non-firing pair keeps the fold inside the closure. -/
+theorem foldR_step166 {w : Term} {s : Option Term × Option Term} {pr : Term × Term}
+    (hs : FoldR166 w s) (h : PairR166 w pr) :
+    FoldR166 w (stepF (reg 1) (baseOf 0) s pr) := by
+  obtain ⟨hfire, hA, hi2, hs2⟩ := h
+  cases hsnd : s.2 with
+  | none =>
+      intro v hv
+      rw [stepF_veb_none164 hfire hsnd] at hv
+      have hve : v = phiNF pr.1 (plus (baseOf 0) (sub1 pr.2)) := by
+        injection hv with hq; exact hq.symm
+      subst hve
+      have hib : inT (baseOf 0) = true := inT_zero
+      have hisub : inT (sub1 pr.2) = true := inT_sub1 hi2
+      have hX : SubRC166 w (plus (baseOf 0) (sub1 pr.2)) :=
+        subRC_plus166 hib hisub subRC_zero166 (subRC_sub1_166 hi2 hs2)
+      have hmain : SubR157 w (phiNF pr.1 (plus (baseOf 0) (sub1 pr.2))) :=
+        subR157_phiNF160 (inT_plus hib hisub) hA hX
+      exact ⟨(subR157_inT hmain).1, subRC_of_isAP166 (isAP_phiNF _ _) hmain⟩
+  | some v0 =>
+      intro v hv
+      rw [stepF_veb_some164 hfire hsnd] at hv
+      have hve : v = phiNF pr.1 (plus v0 pr.2) := by
+        injection hv with hq; exact hq.symm
+      subst hve
+      obtain ⟨hiv0, hsv0⟩ := hs v0 hsnd
+      have hX : SubRC166 w (plus v0 pr.2) := subRC_plus166 hiv0 hi2 hsv0 hs2
+      have hmain : SubR157 w (phiNF pr.1 (plus v0 pr.2)) :=
+        subR157_phiNF160 (inT_plus hiv0 hi2) hA hX
+      exact ⟨(subR157_inT hmain).1, subRC_of_isAP166 (isAP_phiNF _ _) hmain⟩
+
+/-- **The fold never leaves the closure.** -/
+theorem foldR_sub166 {w : Term} :
+    ∀ (Q : List (Term × Term)) (s : Option Term × Option Term),
+      (∀ pr ∈ Q, PairR166 w pr) → FoldR166 w s →
+      FoldR166 w (Q.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro Q
+  induction Q with
+  | nil => intro s _ hs; exact hs
+  | cons pr rest ih =>
+      intro s hall hs
+      exact ih _ (fun z hz => hall z (List.Mem.tail _ hz))
+        (foldR_step166 hs (hall pr (List.Mem.head _)))
+
+/-- The accumulator of `collapse 0`. -/
+theorem accR166 {w x : Term}
+    (hpairs : ∀ pr ∈ (wcnf (reg 1) (toList x)).1, PairR166 w pr) :
+    inT (accW89 x) = true ∧ SubRC166 w (accW89 x) := by
+  unfold accW89
+  cases h2 : (((wcnf (reg 1) (toList x)).1.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2) with
+  | none => exact ⟨inT_zero, subRC_zero166⟩
+  | some v => exact foldR_sub166 _ _ hpairs foldR_init166 v h2
+
+/-- The tail of `collapse 0` — the components already below `Ω₁`. -/
+theorem rhoR166 {w x : Term} (hix : inT x = true)
+    (hlo : ∀ z ∈ toList x, lt z (reg 1) = true → SubR157 w z) :
+    inT (rhoW89 x) = true ∧ SubRC166 w (rhoW89 x) := by
+  rw [rhoW89_lo89 hix]
+  refine ⟨inT_loW89 hix, ?_⟩
+  intro z hz
+  rw [toList_loW89 hix] at hz
+  exact hlo z (List.mem_filter.mp hz).1 (List.mem_filter.mp hz).2
+
+theorem reg0_eq166 : reg 0 = zero := rfl
+
+/-- **`collapse 0` stays in the closure** as soon as its accumulator and its tail do. -/
+theorem subR157_collapse0_166 {w x : Term}
+    (ha : inT (accW89 x) = true) (hac : SubRC166 w (accW89 x))
+    (hr : inT (rhoW89 x) = true) (hrc : SubRC166 w (rhoW89 x)) :
+    SubR157 w (collapse 0 x) := by
+  rw [collapse0_raw89, reg0_eq166]
+  have hAcc : SubR157 w (accW89 x) := subR157_of_comps166 ha hac
+  have hRho : SubR157 w (rhoW89 x) := subR157_of_comps166 hr hrc
+  have hP : SubR157 w (plus zero (plus (accW89 x) (rhoW89 x))) :=
+    SubR157.ofPlus (subR157_zero160 w) (SubR157.ofPlus hAcc hRho)
+  obtain ⟨hiP, hPM⟩ := subR157_inT hP
+  refine subR157_omegaNF160 hiP hPM ?_
+  exact subRC_plus166 inT_zero (inT_plus ha hr) subRC_zero166
+    (subRC_plus166 ha hr hac hrc)
+
+/-! ## §166.3 Naming the components of a `dict` image -/
+
+/-- A component below `Ω₁` is the image of a `ψ₀` digit. -/
+theorem low_name166 (Hp : PsiIdxOKStd172) {d : BT} (hbd : btLe72 1 d = true)
+    (hsd : BT.isStd d = true) {z : Term} (hz : z ∈ toList (dict d))
+    (hzW : lt z (reg 1) = true) :
+    ∃ e : BT, BT.D 0 e ∈ BT.toL d ∧ btLe72 1 (BT.D 0 e) = true
+      ∧ BT.isStd (BT.D 0 e) = true ∧ z = dict (BT.D 0 e) := by
+  obtain ⟨u, e, hmem, hbue, hsue, hu1, hze⟩ := comp_name160 Hp hbd hsd z hz
+  have hhi := hiA_dict93 Hp u e hbue hsue
+  rw [← hze, hzW] at hhi
+  have h1 : decide (1 ≤ u) = false := hhi.symm
+  have h2 : ¬ (1 ≤ u) := by
+    intro hc; rw [decide_eq_true hc] at h1; exact Bool.noConfusion h1
+  have hu : u = 0 := by omega
+  subst hu
+  exact ⟨e, hmem, hbue, hsue, hze⟩
+
+/-- A component at or above `Ω₁` is the image of a `ψ₁` digit. -/
+theorem hi_name166 (Hp : PsiIdxOKStd172) {d : BT} (hbd : btLe72 1 d = true)
+    (hsd : BT.isStd d = true) {p : Term} (hp : p ∈ toList (dict d))
+    (hf : lt p (reg 1) = false) :
+    ∃ c : BT, BT.D 1 c ∈ BT.toL d ∧ btLe72 1 (BT.D 1 c) = true
+      ∧ BT.isStd (BT.D 1 c) = true ∧ p = dict (BT.D 1 c) := by
+  obtain ⟨u, c, hmem, hbuc, hsuc, hu1, hpe⟩ := comp_name160 Hp hbd hsd p hp
+  have hhi := hiA_dict93 Hp u c hbuc hsuc
+  rw [← hpe, hf] at hhi
+  have hu : 1 ≤ u := of_decide_eq_true hhi.symm
+  have hu' : u = 1 := by omega
+  subst hu'
+  exact ⟨c, hmem, hbuc, hsuc, hpe⟩
+
+/-- **The coefficient of a `ψ₁` component**, componentwise — §104's closed form plus
+    the naming of the low digits. -/
+theorem subRC_wC_D1_166 (Hp : PsiIdxOKStd172) {w : Term} {c : BT}
+    (hbc : btLe72 1 c = true) (hsc : BT.isStd c = true)
+    (h : ∀ e : BT, BT.D 0 e ∈ BT.toL c → SubR157 w (dict (BT.D 0 e))) :
+    inT (wC (reg 1) (dict (BT.D 1 c))) = true
+      ∧ SubRC166 w (wC (reg 1) (dict (BT.D 1 c))) := by
+  obtain ⟨hic, hcM⟩ := inT_dict_of_std172 Hp c hbc hsc
+  have hcomp : ∀ z ∈ toList (loW89 (dict c)), SubR157 w z := by
+    intro z hz
+    rw [toList_loW89 hic] at hz
+    obtain ⟨e, hem, hbe, hse, hze⟩ :=
+      low_name166 Hp hbc hsc (List.mem_filter.mp hz).1 (List.mem_filter.mp hz).2
+    rw [hze]
+    exact h e hem
+  have hlo : SubR157 w (loW89 (dict c)) := subR157_toList160 (inT_loW89 hic) hcomp
+  obtain ⟨hilo, hloM⟩ := subR157_inT hlo
+  have hmain : SubR157 w (omegaNF (loW89 (dict c))) :=
+    subR157_omegaNF160 hilo hloM hcomp
+  rw [wC_dict_D1_104 Hp hbc hsc]
+  exact ⟨(subR157_inT hmain).1, subRC_of_isAP166 (isAP_omegaNF _) hmain⟩
+
+/-- **Every pair of the decomposition is good** as soon as every high component is.
+    Pure list plumbing over `wcnf`'s merge branch. -/
+theorem pairsR166 {w : Term} : ∀ (L : List Term),
+    (∀ p ∈ L, lt p (reg 1) = false →
+      le (reg 1) (wA (reg 1) p) = false ∧ SubR157 w (wA (reg 1) p)
+        ∧ inT (wC (reg 1) p) = true ∧ SubRC166 w (wC (reg 1) p)) →
+    ∀ pr ∈ (wcnf (reg 1) L).1, PairR166 w pr := by
+  intro L
+  induction L with
+  | nil => intro _ pr hpr; cases hpr
+  | cons p rest ih =>
+      intro hall pr hpr
+      by_cases hlp : lt p (reg 1) = true
+      · rw [wcnf_cons_lt hlp] at hpr; cases hpr
+      · have hlp' : lt p (reg 1) = false := bool_false hlp
+        obtain ⟨hf, hA, hiC, hC⟩ := hall p (List.Mem.head _) hlp'
+        have IH := ih (fun q hq => hall q (List.Mem.tail _ hq))
+        rw [wcnf_cons_ge hlp'] at hpr
+        cases hr : wcnf (reg 1) rest with
+        | mk fst snd =>
+          rw [hr] at hpr
+          have hmem0 : ∀ q : Term × Term, q ∈ fst → q ∈ (wcnf (reg 1) rest).1 := by
+            intro q hq; rw [hr]; exact hq
+          cases fst with
+          | nil =>
+              rw [List.mem_singleton.mp hpr]
+              exact ⟨hf, hA, hiC, hC⟩
+          | cons ac0 ps =>
+            cases ac0 with
+            | mk a' c' =>
+              have hpr' : pr ∈ (if (wA (reg 1) p == a') = true
+                  then ((wA (reg 1) p, plus (wC (reg 1) p) c') :: ps, snd)
+                  else ((wA (reg 1) p, wC (reg 1) p) :: (a', c') :: ps, snd)).1 := hpr
+              by_cases heq : (wA (reg 1) p == a') = true
+              · rw [if_pos heq] at hpr'
+                rcases List.mem_cons.mp hpr' with h1 | h1
+                · obtain ⟨_, _, hic', hc'⟩ := IH (a', c') (hmem0 _ (List.Mem.head _))
+                  rw [h1]
+                  exact ⟨hf, hA, inT_plus hiC hic', subRC_plus166 hiC hic' hC hc'⟩
+                · exact IH pr (hmem0 _ (List.Mem.tail _ h1))
+              · rw [if_neg heq] at hpr'
+                rcases List.mem_cons.mp hpr' with h1 | h1
+                · rw [h1]; exact ⟨hf, hA, hiC, hC⟩
+                · exact IH pr (hmem0 _ h1)
+
+/-! ## §166.4 The criterion, decided
+
+`noFireChk166 c` is §164's `capEChk164` with the cap dropped: the base-`Ω₁` exponent of
+the `ψ₁` node `c` does not reach `Ω₁`.  §160.4 shows that exponent is `1 ⊕ ⊕ᵢω^{dict xᵢ}`
+over the `ψ₁` digits `xᵢ` of `c`, so the test says exactly "no `xᵢ` carries a `ψ₁` digit"
+— the `ψ₁ψ₁ψ₁` chain of §163's threshold `dwit163`, refused one node at a time. -/
+
+def noFireChk166 (c : BT) : Bool := !(le (reg 1) (wA (reg 1) (dict (BT.D 1 c))))
+
+/-- The depth-2 obligations under one `ψ₁` node: its own `ψ₀` digits (the coefficient
+    side) and the `ψ₀` digits of its `ψ₁` digits (the exponent side). -/
+def expInner166 (rec : BT → Bool) (c : BT) : Bool :=
+  (BT.toL c).all (fun y =>
+    match y with
+    | BT.D v x =>
+        if v == 0 then rec x
+        else (BT.toL x).all (fun t =>
+          match t with
+          | BT.D v' e => if v' == 0 then rec e else true
+          | _ => true)
+    | _ => true)
+
+def expChkStep166 (rec : BT → Bool) (d : BT) : Bool :=
+  (BT.toL d).all (fun z =>
+    match z with
+    | BT.D u c => if u == 0 then rec c else (noFireChk166 c && expInner166 rec c)
+    | _ => true)
+
+/-- The walk, with fuel. -/
+def expChk166 : Nat → BT → Bool
+  | 0, _ => false
+  | n + 1, d => expChkStep166 (expChk166 n) d
+
+/-- The criterion at a term, with its own size as fuel. -/
+def expFree166 (d : BT) : Bool := expChk166 (BT.size d + 1) d
+
+theorem chk_D0_166 {rec : BT → Bool} {d c : BT} (h : expChkStep166 rec d = true)
+    (hc : BT.D 0 c ∈ BT.toL d) : rec c = true := List.all_eq_true.mp h _ hc
+
+theorem chk_D1_166 {rec : BT → Bool} {d c : BT} (h : expChkStep166 rec d = true)
+    (hc : BT.D 1 c ∈ BT.toL d) : noFireChk166 c = true ∧ expInner166 rec c = true := by
+  have h2 : (noFireChk166 c && expInner166 rec c) = true := List.all_eq_true.mp h _ hc
+  exact (Bool.and_eq_true _ _).mp h2
+
+theorem inner_D0_166 {rec : BT → Bool} {c x : BT} (h : expInner166 rec c = true)
+    (hx : BT.D 0 x ∈ BT.toL c) : rec x = true := List.all_eq_true.mp h _ hx
+
+theorem inner_D1_D0_166 {rec : BT → Bool} {c x e : BT} (h : expInner166 rec c = true)
+    (hx : BT.D 1 x ∈ BT.toL c) (he : BT.D 0 e ∈ BT.toL x) : rec e = true := by
+  have h1 : (BT.toL x).all (fun t =>
+      match t with
+      | BT.D v' e => if v' == 0 then rec e else true
+      | _ => true) = true := List.all_eq_true.mp h _ hx
+  exact List.all_eq_true.mp h1 _ he
+
+theorem noFire_of_chk166 {c : BT} (h : noFireChk166 c = true) :
+    le (reg 1) (wA (reg 1) (dict (BT.D 1 c))) = false := by
+  cases hq : le (reg 1) (wA (reg 1) (dict (BT.D 1 c))) with
+  | false => rfl
+  | true =>
+      have h2 : (!(le (reg 1) (wA (reg 1) (dict (BT.D 1 c))))) = true := h
+      rw [hq] at h2
+      exact Bool.noConfusion h2
+
+/-! ## §166.5 THE HEADLINE — a decided `ψ₀`-argument is subordinate to EVERY bound
+
+No `a`, no prefix `P`, no split, no order comparison.  This is `LtDwitFree163`'s
+conclusion on the region the fold invariant can actually reach. -/
+
+theorem subR157_dict_chk166 (Hp : PsiIdxOKStd172) {w : Term} :
+    ∀ (n : Nat) (d : BT), BT.size d < n → expChk166 n d = true →
+      btLe72 1 (BT.D 0 d) = true → BT.isStd (BT.D 0 d) = true →
+      SubR157 w (dict (BT.D 0 d))
+  | 0, _, h, _, _, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hchk, hb, hs => by
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp d hbd hsd
+      have hstep : expChkStep166 (expChk166 n) d = true := hchk
+      have hdn : BT.size d ≤ n := by omega
+      have hlow : ∀ z ∈ toList (dict d), lt z (reg 1) = true → SubR157 w z := by
+        intro z hz hzW
+        obtain ⟨e, hem, hbe, hse, hze⟩ := low_name166 Hp hbd hsd hz hzW
+        have hsz0 : BT.size (BT.D 0 e) ≤ BT.size d := size_mem_toL87 d _ hem
+        rw [size_D87] at hsz0
+        rw [hze]
+        exact subR157_dict_chk166 Hp n e (by omega) (chk_D0_166 hstep hem) hbe hse
+      have hpairs : ∀ pr ∈ (wcnf (reg 1) (toList (dict d))).1, PairR166 w pr := by
+        refine pairsR166 (toList (dict d)) ?_
+        intro p hp hf
+        obtain ⟨c, hcm, hbD, hsD, hpe⟩ := hi_name166 Hp hbd hsd hp hf
+        have hbc : btLe72 1 c = true := (btLe72_D 1 1 c hbD).2
+        have hsc : BT.isStd c = true := isStd_of_D hsD
+        have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+        obtain ⟨hnf, hinner⟩ := chk_D1_166 hstep hcm
+        have hszc : BT.size (BT.D 1 c) ≤ BT.size d := size_mem_toL87 d _ hcm
+        rw [size_D87] at hszc
+        have hnfire : le (reg 1) (wA (reg 1) (dict (BT.D 1 c))) = false :=
+          noFire_of_chk166 hnf
+        have hcoef : ∀ e : BT, BT.D 0 e ∈ BT.toL c → SubR157 w (dict (BT.D 0 e)) := by
+          intro e hem
+          have hsz1 : BT.size (BT.D 0 e) ≤ BT.size c := size_mem_toL87 c _ hem
+          rw [size_D87] at hsz1
+          exact subR157_dict_chk166 Hp n e (by omega) (inner_D0_166 hinner hem)
+            (hgc.2.2.1 _ hem) (hgc.2.1 _ hem)
+        have hexp : ∀ x e : BT, BT.D 1 x ∈ BT.toL c → BT.D 0 e ∈ BT.toL x →
+            SubR157 w (dict (BT.D 0 e)) := by
+          intro x e hxm hem
+          have hbx1 : btLe72 1 (BT.D 1 x) = true := hgc.2.2.1 _ hxm
+          have hsx1 : BT.isStd (BT.D 1 x) = true := hgc.2.1 _ hxm
+          have hbx : btLe72 1 x = true := (btLe72_D 1 1 x hbx1).2
+          have hsx : BT.isStd x = true := isStd_of_D hsx1
+          have hgx : GoodL77 (BT.toL x) := good_toL77 x hsx hbx
+          have hszx : BT.size (BT.D 1 x) ≤ BT.size c := size_mem_toL87 c _ hxm
+          rw [size_D87] at hszx
+          have hsze : BT.size (BT.D 0 e) ≤ BT.size x := size_mem_toL87 x _ hem
+          rw [size_D87] at hsze
+          exact subR157_dict_chk166 Hp n e (by omega) (inner_D1_D0_166 hinner hxm hem)
+            (hgx.2.2.1 _ hem) (hgx.2.1 _ hem)
+        obtain ⟨hiC, hCC⟩ := subRC_wC_D1_166 Hp hbc hsc hcoef
+        refine ⟨?_, ?_, ?_, ?_⟩
+        · rw [hpe]; exact hnfire
+        · rw [hpe]; exact subR157_wA_D1_160 Hp hbD hsD hnfire hexp
+        · rw [hpe]; exact hiC
+        · rw [hpe]; exact hCC
+      obtain ⟨hia, hca⟩ := accR166 hpairs
+      obtain ⟨hir, hcr⟩ := rhoR166 hid hlow
+      rw [Trans.Dict.dict_D]
+      exact subR157_collapse0_166 hia hca hir hcr
+
+/-- **The headline, at one `d`.** -/
+theorem subR157_dict_free166 (Hp : PsiIdxOKStd172) {w : Term} {d : BT}
+    (h : expFree166 d = true) (hb : btLe72 1 (BT.D 0 d) = true)
+    (hs : BT.isStd (BT.D 0 d) = true) : SubR157 w (dict (BT.D 0 d)) :=
+  subR157_dict_chk166 Hp (BT.size d + 1) d (Nat.lt_succ_self _) h hb hs
+
+/-! ## §166.6 THE CONSUMERS — the heart clause and `ExpSubR157` at one `a` -/
+
+/-- The depth-3 free-region test at one `a`, with an arbitrary per-argument test. -/
+def expChkAf166 (f : BT → Bool) (a : BT) : Bool :=
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v x => if v == 1 then (BT.toL x).all (fun t =>
+            match t with
+            | BT.D v' d => if v' == 0 then f d else true
+            | _ => true) else true
+        | _ => true) else true
+    | _ => true)
+
+/-- The region this file proves. -/
+def expChkA166 (a : BT) : Bool := expChkAf166 expFree166 a
+
+theorem free_of_expChkAf166 {f : BT → Bool} {a : BT} (h : expChkAf166 f a = true)
+    {c x d : BT} (hc : BT.D 1 c ∈ BT.toL a) (hx : BT.D 1 x ∈ BT.toL c)
+    (hd : BT.D 0 d ∈ BT.toL x) : f d = true := by
+  have h1 : (BT.toL c).all (fun y =>
+      match y with
+      | BT.D v x => if v == 1 then (BT.toL x).all (fun t =>
+          match t with
+          | BT.D v' d => if v' == 0 then f d else true
+          | _ => true) else true
+      | _ => true) = true := List.all_eq_true.mp h _ hc
+  have h2 : (BT.toL x).all (fun t =>
+      match t with
+      | BT.D v' d => if v' == 0 then f d else true
+      | _ => true) = true := List.all_eq_true.mp h1 _ hx
+  exact List.all_eq_true.mp h2 _ hd
+
+/-- **`ExpHeart160`'s clause AT ONE `a`, for EVERY bound.**  Proved, not assumed. -/
+theorem expHeart160_at_chk166 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hchk : expChkA166 a = true) (w : Term) :
+    ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+      SubR157 w (dict (BT.D 0 d)) := by
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  exact subR157_dict_free166 Hp
+    (free_of_expChkAf166 (f := expFree166) hchk hc hx hd) hbd hsd
+
+/-- **`ExpSubR157` AT ONE `a`, on the decided region.** -/
+theorem expSubR157_at_chk166 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hchk : expChkA166 a = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    SubR157 (wVal157 P) ac.1 :=
+  expSubR157_at163 Hp hb hs P S ac hsplit hfire
+    (expHeart160_at_chk166 Hp hb hs hchk (wVal157 P))
+
+/-- **The two exits, mixed pair by pair** — the exponent-side twin of §164.10's
+    `subord157_at_flatOrLe164`.  Neither region contains the other: the criterion needs
+    nothing about the prefix and covers `P = []`, the `≤`-bound needs no shape
+    restriction on `d` but only bites once the prefix has grown. -/
+theorem expSubR157_at_freeOrLe166 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false)
+    (hmix : ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c →
+      BT.D 0 d ∈ BT.toL x →
+      expFree166 d = true ∨ le (dict (BT.D 0 d)) (wVal157 P) = true) :
+    SubR157 (wVal157 P) ac.1 := by
+  refine expSubR157_at163 Hp hb hs P S ac hsplit hfire ?_
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  rcases hmix c x d hc hx hd with h | h
+  · exact subR157_dict_free166 Hp h hbd hsd
+  · obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp (BT.D 0 d) hbd hsd
+    exact SubR157.ofLe hid hidM h
+
+/-- **§160.5c's bridge in the same shape.**  On a prefix whose first pair FIRED, the
+    second exit is the §128-style `lt`-clause at the index `i` the fold really built —
+    `psi_le_wVal_dict160` supplies `ψ_{Ω₁}(i) ≤ wVal157 P` and `subR157_of_ltPsi160`
+    converts it.  So the residual outside the criterion is exactly §128's clause, at a
+    target the prefix names. -/
+theorem expSubR157_at_freeOrFired166 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false)
+    {z : Term × Term} {P' : List (Term × Term)} (hP : P = z :: P')
+    (hfired : le (reg 1) z.1 = true)
+    (hmix : ∀ i : Term, inT i = true → lt i M = true →
+      le (psi (reg 1) i) (wVal157 P) = true →
+      ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+        expFree166 d = true ∨ lt (dict (BT.D 0 d)) (psi (reg 1) i) = true) :
+    SubR157 (wVal157 P) ac.1 := by
+  obtain ⟨i, hii, hiM, hle⟩ := psi_le_wVal_dict160 Hp hb hs hsplit hP hfired
+  have hiw : inT (wVal157 P) = true :=
+    (wVal_dict_facts160 Hp hb hs P (ac :: S) hsplit).1
+  refine expSubR157_at163 Hp hb hs P S ac hsplit hfire ?_
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  rcases hmix i hii hiM hle c x d hc hx hd with h | h
+  · exact subR157_dict_free166 Hp h hbd hsd
+  · obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp (BT.D 0 d) hbd hsd
+    exact subR157_of_ltPsi160 hid hidM hii hiw h hle
+
+/-! ### §166.6b The whole obligation at one `a`, DECIDED
+
+The exponent-side twin of §164.11b's `subordChk164`: walk the pair list carrying each
+pair's own prefix, and at every NON-firing pair check each depth-3 `ψ₀`-argument either
+by the criterion or by the `≤`-bound against that prefix's fold value.  Anything the
+walk accepts is PROVED, not swept. -/
+
+def expPairChk166 (a : BT) (P : List (Term × Term)) (ac : Term × Term) : Bool :=
+  le (reg 1) ac.1 ||
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v x => if v == 1 then (BT.toL x).all (fun t =>
+            match t with
+            | BT.D v' d => if v' == 0 then
+                (expFree166 d || le (dict (BT.D 0 d)) (wVal157 P)) else true
+            | _ => true) else true
+        | _ => true) else true
+    | _ => true)
+
+def expWalk166 (a : BT) : List (Term × Term) → List (Term × Term) → Bool
+  | _, [] => true
+  | P, ac :: S => expPairChk166 a P ac && expWalk166 a (P ++ [ac]) S
+
+theorem expWalk_split166 (a : BT) : ∀ (Q P S : List (Term × Term)) (ac : Term × Term),
+    expWalk166 a P (Q ++ ac :: S) = true → expPairChk166 a (P ++ Q) ac = true
+  | [], P, S, ac, h => by
+      have h' : (expPairChk166 a P ac && expWalk166 a (P ++ [ac]) S) = true := h
+      rw [List.append_nil]
+      exact ((Bool.and_eq_true _ _).mp h').1
+  | q :: Q', P, S, ac, h => by
+      have h' : (expPairChk166 a P q && expWalk166 a (P ++ [q]) (Q' ++ ac :: S)) = true := h
+      have hr := expWalk_split166 a Q' (P ++ [q]) S ac ((Bool.and_eq_true _ _).mp h').2
+      rw [List.append_assoc] at hr
+      exact hr
+
+/-- The whole obligation at one `a`, decided. -/
+def expSubChk166 (a : BT) : Bool :=
+  expWalk166 a [] ((wcnf (reg 1) (toList (dict a))).1)
+
+/-- **`ExpSubR157` at one `a`, from the decided residual.**  The headline in the shape
+    §164's `subord157_at_chk164` has on the coefficient side. -/
+theorem expSubR157_at_walk166 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hchk : expSubChk166 a = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    SubR157 (wVal157 P) ac.1 := by
+  have hw : expWalk166 a [] (P ++ ac :: S) = true := by rw [← hsplit]; exact hchk
+  have hp0 := expWalk_split166 a P [] S ac hw
+  rw [List.nil_append] at hp0
+  have hp' : (le (reg 1) ac.1 ||
+      (BT.toL a).all (fun z =>
+        match z with
+        | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+            match y with
+            | BT.D v x => if v == 1 then (BT.toL x).all (fun t =>
+                match t with
+                | BT.D v' d => if v' == 0 then
+                    (expFree166 d || le (dict (BT.D 0 d)) (wVal157 P)) else true
+                | _ => true) else true
+            | _ => true) else true
+        | _ => true)) = true := hp0
+  rw [hfire] at hp'
+  have hrest : (BT.toL a).all (fun z =>
+      match z with
+      | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+          match y with
+          | BT.D v x => if v == 1 then (BT.toL x).all (fun t =>
+              match t with
+              | BT.D v' d => if v' == 0 then
+                  (expFree166 d || le (dict (BT.D 0 d)) (wVal157 P)) else true
+              | _ => true) else true
+          | _ => true) else true
+      | _ => true) = true := hp'
+  refine expSubR157_at_freeOrLe166 Hp hb hs P S ac hsplit hfire ?_
+  intro c x d hc hx hd
+  have h1 : (BT.toL c).all (fun y =>
+      match y with
+      | BT.D v x => if v == 1 then (BT.toL x).all (fun t =>
+          match t with
+          | BT.D v' d => if v' == 0 then
+              (expFree166 d || le (dict (BT.D 0 d)) (wVal157 P)) else true
+          | _ => true) else true
+      | _ => true) = true := List.all_eq_true.mp hrest _ hc
+  have h2 : (BT.toL x).all (fun t =>
+      match t with
+      | BT.D v' d => if v' == 0 then
+          (expFree166 d || le (dict (BT.D 0 d)) (wVal157 P)) else true
+      | _ => true) = true := List.all_eq_true.mp h1 _ hx
+  have h3 : (expFree166 d || le (dict (BT.D 0 d)) (wVal157 P)) = true :=
+    List.all_eq_true.mp h2 _ hd
+  exact (Bool.or_eq_true _ _).mp h3
+
+/-- The gate every census row below is taken behind: the two hypotheses every theorem
+    in this file carries besides `Hp`. -/
+def qual166 (a : BT) : Bool := btLe72 1 (BT.D 0 a) && BT.isStd (BT.D 0 a)
+
+/-! ## §166.7 The region is strictly bigger than §163's, and where it stops -/
+
+/-- `lvl0161` — §163.3's whole free region — is a corner of the criterion. -/
+theorem expFree_of_lvl0166 : ∀ (n : Nat) (d : BT), BT.size d < n → lvl0161 d = true →
+    expChk166 n d = true
+  | 0, _, h, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hl => by
+      show expChkStep166 (expChk166 n) d = true
+      refine List.all_eq_true.mpr ?_
+      intro z hz
+      obtain ⟨e, hze, hle⟩ := lvl0_toL161 d hl z hz
+      have hsz0 : BT.size z ≤ BT.size d := size_mem_toL87 d _ hz
+      rw [hze] at hsz0
+      rw [size_D87] at hsz0
+      have hrec : expChk166 n e = true := expFree_of_lvl0166 n e (by omega) hle
+      rw [hze]
+      exact hrec
+
+theorem expFree_of_lvl0_free166 {d : BT} (h : lvl0161 d = true) : expFree166 d = true :=
+  expFree_of_lvl0166 (BT.size d + 1) d (Nat.lt_succ_self _) h
+
+/-- `Ω₁ = ψ₁0` is accepted and is not `lvl0161`. -/
+theorem free_Om166 : expFree166 (BT.D 1 BT.zero) = true := by rfl
+theorem not_lvl0_Om166 : lvl0161 (BT.D 1 BT.zero) = false := by rfl
+/-- `ψ₁ψ₁0` — two `ψ₁` levels — is accepted; `flat164` refuses it. -/
+theorem free_psiOnePsiOne166 : expFree166 (BT.D 1 (BT.D 1 BT.zero)) = true := by rfl
+theorem not_flat_psiOnePsiOne166 : flat164 (BT.D 1 (BT.D 1 BT.zero)) = false := by rfl
+/-- §163's threshold `dwit163 = ψ₁ψ₁ψ₁0` is refused — three `ψ₁` levels fire. -/
+theorem not_free_dwit166 : expFree166 dwit163 = false := by rfl
+/-- …and so is the depth-3 argument of §163's refutation witness. -/
+theorem not_free_awit166 : expChkA166 awit163 = false := by rfl
+
+/-- The criterion is NOT the order test `BT.lt · dwit163`: it refuses terms below the
+    threshold whose `ψ₁` chain sits under a `ψ₀`.  Both sides are computed. -/
+def offThr166 : BT := BT.D 0 dwit163
+theorem lt_offThr166 : BT.lt offThr166 dwit163 = true := by rfl
+theorem not_free_offThr166 : expFree166 offThr166 = false := by rfl
+/-- …but that term is not `K`-standard, which is why §163's sweep did not see it. -/
+theorem not_std_offThr166 : BT.isStd (BT.D 0 offThr166) = false := by rfl
+
+/-! ### §166.7b The §163 refutation witness is still DECIDED — by the other exit
+
+`awit163` is where the structural route provably dies (§163.1): its depth-3 argument is
+`dwit163` and `dict (ψ₀ dwit163) = Γ₀` carries a `ψ`-leaf.  The criterion refuses it,
+as it must.  The WALK accepts it, because at that pair the prefix has already fired and
+`le (dict (ψ₀ dwit163)) (wVal157 P)` holds — §163's own `leaf_le_wVal163`, now consumed
+by a theorem instead of being an observation. -/
+
+theorem qual_awit166 : qual166 awit163 = true := by rfl
+theorem not_chkA_awit166 : expChkA166 awit163 = false := by rfl
+/-- **`ExpSubR157` is a theorem at `awit163`.** -/
+theorem walk_awit166 : expSubChk166 awit163 = true := by rfl
+
+theorem expSubR157_at_awit166 (Hp : PsiIdxOKStd172)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict awit163))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    SubR157 (wVal157 P) ac.1 :=
+  expSubR157_at_walk166 Hp gateB163 gateS163 walk_awit166 P S ac hsplit hfire
+
+end
+
+/-! ## §166.8 MEASUREMENT — frozen as `#guard`
+
+Two populations.  (i) §151's four pools, the same ones §161/§164 published on, filtered
+by `qual151`.  (ii) A pool built here ON PURPOSE to reach what the uniform-growth pools
+cannot: `ψ₁` towers of height up to 6, `ψ₀` nodes interleaved into them, and the
+`awit163` shape (a big first summand forced in by standardness).  101 terms, `BT.size`
+up to 19, six levels of `ψ₁` nesting — past the `BT.size` 13 / six-level ceiling the
+briefing named as the reason the earlier sweeps missed §163's witness.
+
+WHAT THE POOLS CAN AND CANNOT REACH is reported in §166.9. -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-- `ψ₁` tower of height `n`. -/
+def tw166 : Nat → BT
+  | 0 => BT.zero
+  | n + 1 => BT.D 1 (tw166 n)
+
+/-- The deliberately deep pool: towers, towers under `ψ₀`, and `awit163`-shaped sums
+    whose big first summand is what makes them standard. -/
+def deep166 : List BT :=
+  ((List.range 7).map tw166) ++
+  ((List.range 7).map (fun n => BT.D 0 (tw166 n))) ++
+  ((List.range 6).map (fun n => BT.D 1 (BT.D 0 (tw166 n)))) ++
+  ((List.range 6).map (fun n => BT.D 1 (BT.D 1 (BT.D 0 (tw166 n))))) ++
+  ((List.range 6).flatMap (fun n => (List.range 4).map (fun m =>
+      BT.sum (BT.D 1 (tw166 n)) (BT.D 1 (BT.D 1 (BT.D 0 (tw166 m))))))) ++
+  ((List.range 6).flatMap (fun n => (List.range 4).map (fun m =>
+      BT.sum (BT.D 1 (tw166 n)) (BT.D 1 (BT.D 1 (tw166 m)))))) ++
+  ((List.range 5).flatMap (fun n => (List.range 4).map (fun m =>
+      BT.sum (BT.D 1 (tw166 n)) (BT.sum (BT.D 1 (tw166 m)) (BT.D 1 (BT.D 0 (tw166 m))))))) ++
+  [awit163, dwit163, cwit163, xwit163, BT.D 1 awit163, BT.D 0 awit163,
+   BT.sum (BT.D 1 dwit163) (BT.D 1 (BT.D 1 (BT.D 0 dwit163)))]
+
+/-- Sanity: the deep pool really is deep. -/
+def maxSize166 (L : List BT) : Nat := L.foldl (fun m a => max m (BT.size a)) 0
+#guard maxSize166 deep166 == 19
+#guard deep166.length == 101
+
+/-- PER-ARGUMENT census: (gate-passing terms, `lvl0161`, `flat164`, `expFree166`,
+    `BT.lt · dwit163`, terms where `expFree166` and the order test DISAGREE). -/
+def covD166 (L : List BT) : Nat × Nat × Nat × Nat × Nat × Nat :=
+  let D := L.filter qual166
+  (D.length,
+   (D.filter lvl0161).length,
+   (D.filter flat164).length,
+   (D.filter expFree166).length,
+   (D.filter (fun d => BT.lt d dwit163)).length,
+   (D.filter (fun d => expFree166 d != BT.lt d dwit163)).length)
+
+#guard covD166 poolA151 == (590, 0, 0, 590, 590, 0)
+#guard covD166 poolC151 == (121, 0, 0, 0, 0, 0)
+#guard covD166 poolD151 == (235, 0, 0, 225, 225, 0)
+#guard covD166 poolE151 == (228, 0, 0, 228, 228, 0)
+#guard covD166 deep166 == (56, 2, 5, 11, 11, 0)
+
+/-- PER-`a` census on the depth-3 free region: (qualifying, §163's `LvlFree163` in
+    decided form, §164's `flat164` in the same shape, THIS file's region). -/
+def covA166 (L : List BT) : Nat × Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length,
+   (D.filter (expChkAf166 lvl0161)).length,
+   (D.filter (expChkAf166 flat164)).length,
+   (D.filter expChkA166).length)
+
+#guard covA166 poolA151 == (590, 590, 590, 590)
+#guard covA166 poolC151 == (121, 121, 121, 121)
+#guard covA166 poolD151 == (235, 79, 178, 235)
+#guard covA166 poolE151 == (228, 228, 228, 228)
+
+/-- The same on the deep pool, behind `qual166` (the §151 gate `qual151` also asks
+    `le (reg 1) (dict a)` and `¬lastFire92`, which most deep terms fail). -/
+def covA2_166 (L : List BT) : Nat × Nat × Nat × Nat :=
+  let D := L.filter qual166
+  (D.length,
+   (D.filter (expChkAf166 lvl0161)).length,
+   (D.filter (expChkAf166 flat164)).length,
+   (D.filter expChkA166).length)
+
+#guard covA2_166 deep166 == (56, 40, 45, 50)
+
+/-- The FULL per-`a` obligation, decided: (qualifying, free region alone, free region
+    or the `≤`-bound taken pair by pair).  The last column is the number of pool terms
+    at which `ExpSubR157` is a THEOREM with only `Hp`. -/
+def covW166 (L : List BT) : Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length, (D.filter expChkA166).length, (D.filter expSubChk166).length)
+
+#guard covW166 poolA151 == (590, 590, 590)
+#guard covW166 poolC151 == (121, 121, 121)
+#guard covW166 poolD151 == (235, 235, 235)
+#guard covW166 poolE151 == (228, 228, 228)
+
+def covW2_166 (L : List BT) : Nat × Nat × Nat :=
+  let D := L.filter qual166
+  (D.length, (D.filter expChkA166).length, (D.filter expSubChk166).length)
+
+#guard covW2_166 deep166 == (56, 50, 56)
+
+/-! ### §166.8b THE ADVERSARIAL POPULATION — hunting a refutation of the walk
+
+The rows above are coverage.  This block is the opposite: a population built to BREAK
+`expSubChk166`.  Two halves.
+
+`enum166` is the EXHAUSTIVE closure of `{0}` under `ψ₀·`, `ψ₁·` and `⊕`, three rounds
+— 676 terms, everything small, nothing chosen by hand.  It is the control: it shows
+that small terms almost never have a depth-3 `ψ₀`-argument at all (1 of 44), which is
+why the earlier sweeps could not see this clause.
+
+`hit166` is the hunt: a depth-3 `ψ₀`-argument that IS a `ψ₁` tower — the shape the
+criterion must refuse — paired with every first summand the search could think of,
+including ones chosen to keep the prefix from firing (`ψ₀`-headed and `ψ₁ψ₀`-headed
+first summands), plus 3-summand and sum-argument variants. -/
+
+def dedup166 (l : List BT) : List BT :=
+  l.foldl (fun acc x => if acc.contains x then acc else acc ++ [x]) []
+
+def enum166 : Nat → List BT
+  | 0 => [BT.zero]
+  | n + 1 =>
+    let prev := enum166 n
+    dedup166 (prev ++ prev.flatMap (fun x => [BT.D 0 x, BT.D 1 x])
+                   ++ prev.flatMap (fun a => prev.map (fun b => BT.sum a b)))
+
+def hit166 : List BT :=
+  ((List.range 7).flatMap (fun n => (List.range 7).map (fun m =>
+      BT.sum (BT.D 1 (tw166 n)) (BT.D 1 (BT.D 1 (BT.D 0 (tw166 m))))))) ++
+  ((List.range 6).flatMap (fun n => (List.range 6).map (fun m =>
+      BT.sum (BT.D 0 (tw166 n)) (BT.D 1 (BT.D 1 (BT.D 0 (tw166 m))))))) ++
+  ((List.range 6).flatMap (fun n => (List.range 6).map (fun m =>
+      BT.sum (BT.D 1 (BT.D 0 (tw166 n))) (BT.D 1 (BT.D 1 (BT.D 0 (tw166 m))))))) ++
+  ((List.range 6).map (fun m => BT.D 1 (BT.D 1 (BT.D 0 (tw166 m))))) ++
+  ((List.range 6).map (fun m => BT.D 1 (BT.D 1 (BT.D 1 (BT.D 0 (tw166 m)))))) ++
+  ((List.range 5).flatMap (fun n => (List.range 5).flatMap (fun m =>
+      (List.range 3).map (fun k =>
+        BT.sum (BT.D 1 (tw166 n)) (BT.sum (BT.D 1 (tw166 k))
+          (BT.D 1 (BT.D 1 (BT.D 0 (tw166 m))))))))) ++
+  ((List.range 5).flatMap (fun n => (List.range 5).map (fun m =>
+      BT.sum (BT.D 1 (tw166 n))
+        (BT.D 1 (BT.D 1 (BT.D 0 (BT.sum (tw166 m) (tw166 m)))))))) ++
+  ((List.range 5).flatMap (fun n => (List.range 5).map (fun m =>
+      BT.sum (BT.D 1 (tw166 n))
+        (BT.D 1 (BT.sum (BT.D 1 (BT.D 0 (tw166 m))) (BT.D 0 (tw166 m))))))) ++
+  ((List.range 5).flatMap (fun n => (List.range 5).map (fun m =>
+      BT.sum (BT.D 1 (tw166 n))
+        (BT.D 1 (BT.sum (BT.D 1 (BT.D 0 (tw166 m))) (BT.D 1 (BT.D 0 (tw166 n))))))))
+
+def pop166 : List BT := dedup166 (enum166 3 ++ hit166)
+
+/-- Does the depth-3 clause have anything at all to say at `a`?  A row where this is
+    `0` is vacuous and must not be read as coverage. -/
+def hasD3_166 (a : BT) : Bool :=
+  (BT.toL a).any (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then (BT.toL c).any (fun y =>
+        match y with
+        | BT.D v x => if v == 1 then (BT.toL x).any (fun t =>
+            match t with
+            | BT.D v' _ => v' == 0
+            | _ => false) else false
+        | _ => false) else false
+    | _ => false)
+
+/-- (population, gate-passing, of those the clause is NON-vacuous at, free region,
+     walk, **walk refutations**). -/
+def hunt166 (L : List BT) : Nat × Nat × Nat × Nat × Nat × Nat :=
+  let D := L.filter qual166
+  (L.length, D.length, (D.filter hasD3_166).length,
+   (D.filter expChkA166).length,
+   (D.filter expSubChk166).length,
+   (D.filter (fun a => !expSubChk166 a)).length)
+
+#guard hunt166 (enum166 3) == (676, 44, 1, 44, 44, 0)
+#guard hunt166 hit166 == (283, 78, 74, 47, 78, 0)
+#guard hunt166 pop166 == (958, 121, 74, 90, 121, 0)
+#guard (pop166.filter qual166).foldl (fun m a => max m (BT.size a)) 0 == 23
+-- 31 gate-passing terms where the criterion PROVABLY cannot work and the `≤` exit
+-- carries them — the `awit163` mechanism, 31 times over.
+#guard ((pop166.filter qual166).filter (fun a => hasD3_166 a && !expChkA166 a)).length == 31
+
+end
+
+/-! ## §166.9 WHAT THE POOLS REACH, AND WHAT REMAINS
+
+READ THIS BEFORE QUOTING THE NUMBERS.  A sweep measures truth on the population it was
+built on, nothing more.  What follows says what each population contains.
+
+PER-ARGUMENT (`covD166`, gate = the two hypotheses the theorems carry).  Columns:
+gate-passing, `lvl0161`, `flat164`, `expFree166`, `BT.lt · dwit163`, disagreements
+between the last two.
+
+    poolA   590    0    0   590   590   0
+    poolC   121    0    0     0     0   0
+    poolD   235    0    0   225   225   0
+    poolE   228    0    0   228   228   0
+    deep     56    2    5    11    11   0
+    total  1230    2    5  1054  1054   0
+
+  * `lvl0161` accepting 2 of 1230 is not a misprint and is not §161's published figure.
+    §161/§163 publish `lvl0161` under the depth-2 walk `coefChk164 lvl0161`; here it is
+    applied to the pool term ITSELF as a `ψ₀`-argument, which is the shape
+    `subR157_dict_chk166` consumes.  On that shape §163.3's whole free region is
+    essentially empty on these populations and this file's is 1054.
+  * Pool C is `ψ₁` TOWERS (`tw151 n`, `n = 3…6`), so every one of its 121 terms carries
+    a firing `ψ₁ψ₁ψ₁` chain and the criterion accepts NONE.  That is the honest end of
+    the range, and it is the population that shows the criterion is not vacuously true.
+  * `expFree166` and `BT.lt · dwit163` disagree 0 times on all 1230.  That is evidence
+    for §163's measured equivalence with one side now a theorem.  It is NOT a proof, and
+    §166.7's `offThr166 = ψ₀(ψ₁ψ₁ψ₁0)` shows the two are NOT equal in general: it is
+    below the threshold and the criterion refuses it.  It stays out of every census only
+    because `BT.isStd (ψ₀ offThr166) = false`.  The agreement is a fact about
+    `K`-standard terms and nothing here proves it.
+
+PER-`a` DEPTH-3 FREE REGION (`covA166`/`covA2_166`).  Columns: qualifying, `lvl0161`,
+`flat164`, this file's region, all three under the same depth-3 walk.
+
+    poolA   590   590   590   590
+    poolC   121   121   121   121
+    poolD   235    79   178   235
+    poolE   228   228   228   228
+    deep     56    40    45    50
+
+  * Pools A, C and E give `n/n/n/n` because they contain NO depth-3 `ψ₀`-argument at
+    all — every `ψ₁` digit two levels down has a `ψ₁` or nothing under it, so the clause
+    is vacuous there.  Do not read those rows as coverage.
+  * Pool D is where the clause bites (`ip151 x = ψ₁ψ₁ψ₀x` puts a `ψ₀` at depth 3) and
+    the gain is real: 79 → 178 → 235.  The deep pool is the other real row: 40 → 45 → 50.
+
+THE FULL OBLIGATION (`covW166`/`covW2_166`), free region OR the `≤`-bound taken pair by
+pair.  The last column counts terms at which `ExpSubR157` is a THEOREM with only `Hp`:
+
+    poolA   590   590   590
+    poolC   121   121   121
+    poolD   235   235   235
+    poolE   228   228   228
+    deep     56    50    56
+
+  * 1174 of 1174 on §151's four pools, and 56 of 56 on the deep pool — INCLUDING
+    `awit163`, the §163.1 witness where the structural route provably dies (§166.7b).
+    For comparison, §164's coefficient-side `subordChk164` reaches 914 of the same 1174.
+  * The six deep terms outside the free region are exactly the `awit163` family; they go
+    through the `≤` exit, which is `leaf_le_wVal163` generalised.
+
+THE HUNT (`hunt166`, §166.8b).  Coverage rows are worth little until someone tries to
+break the thing.  Columns: population, gate-passing, of those the ones the clause is
+NON-vacuous at, free region, walk, WALK REFUTATIONS.
+
+    enum166 3   676    44     1    44    44   0
+    hit166      283    78    74    47    78   0
+    pop166      958   121    74    90   121   0
+
+  * `enum166 3` is EXHAUSTIVE — every term reachable from `0` by `ψ₀·`, `ψ₁·`, `⊕` in
+    three rounds.  Only 1 of its 44 gate-passing terms has a depth-3 `ψ₀`-argument at
+    all.  That is the measured reason the earlier sweeps could not see this clause, and
+    it is why `enum166` alone would be a worthless test.
+  * `hit166` is the hunt: a depth-3 argument that IS a `ψ₁` tower — the shape the
+    criterion must refuse — against every first summand the search could think of,
+    including `ψ₀`-headed and `ψ₁ψ₀`-headed ones picked to stop the prefix from firing.
+    74 of its 78 gate-passing terms make the clause non-vacuous, the criterion refuses
+    31 of them, and the walk still decides all 78.  Max `BT.size` 23.
+  * ZERO refutations of `expSubChk166` were found.  That is NOT a theorem, and this file
+    states no global form of it.  It is what a hunt aimed at the failure mode returned.
+
+WHAT THE POPULATIONS CANNOT REACH.  No digit above level 1 (the `btLe72 1` gate forbids
+it).  No `ψ₁` node with more than three summands in its argument, and no coefficient
+carrying more than two `ψ₀` digits.  `enum166` stops at three construction rounds, so
+nothing in it exceeds `BT.size` 8 or so; everything larger in these populations is
+hand-shaped, so a refutation of a kind nobody thought to shape would not appear.  The
+one shape actively hunted and not found is: a depth-3 argument with a firing chain whose
+prefix does NOT fire.  §166.9's last paragraph says why it may not exist.
+
+WHAT REMAINS for `ExpHeart160`.
+  (i)  Prefixes with a fired pair: `expSubR157_at_freeOrFired166` shows the residual is
+       §128's `lt`-clause at target `ψ_{Ω₁}(i)`, at the arguments the criterion refuses.
+       `awit163` is the live witness and there the comparison holds (`walk_awit166`).
+  (ii) Prefixes with no fired pair: the criterion is proved sufficient and pool C shows
+       it is not vacuous, but the implication
+       `no pair of a's wcnf fires → every depth-3 argument passes expFree166`
+       is NOT proved here.  It is the same statement §163 measured on the order side,
+       and the reason to believe it is standardness, not the fold: making a depth-3
+       argument tall forces a `ψ₁`-tall summand into `a` to keep `BT.isStd (ψ₀ a)`, and
+       that summand fires.  `awit163` is exactly that mechanism caught in the act.  It
+       is a `BT`-order statement, and it is the next step. -/
+
+/-! ## §166.10 Axiom record -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+#print axioms foldR_step166
+#print axioms foldR_sub166
+#print axioms accR166
+#print axioms rhoR166
+#print axioms subR157_collapse0_166
+#print axioms low_name166
+#print axioms hi_name166
+#print axioms subRC_wC_D1_166
+#print axioms pairsR166
+#print axioms subR157_dict_chk166
+#print axioms subR157_dict_free166
+#print axioms expHeart160_at_chk166
+#print axioms expSubR157_at_chk166
+#print axioms expSubR157_at_freeOrLe166
+#print axioms expSubR157_at_freeOrFired166
+#print axioms expWalk_split166
+#print axioms expSubR157_at_walk166
+#print axioms expFree_of_lvl0166
+#print axioms expFree_of_lvl0_free166
+#print axioms free_Om166
+#print axioms not_free_dwit166
+#print axioms not_free_awit166
+#print axioms lt_offThr166
+#print axioms not_free_offThr166
+#print axioms not_std_offThr166
+#print axioms qual_awit166
+#print axioms not_chkA_awit166
+#print axioms walk_awit166
+#print axioms expSubR157_at_awit166
+
+end
+
 end Evidence.Region

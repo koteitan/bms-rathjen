@@ -34,10 +34,12 @@
         - 🚨🤖 `HiMono89` を証明するか反証する
           - 🚨 `Subord157` を証明する
             - 🚨 `HeartLo161` を証明する
-              - 🚨 `subordChk164` が外す 260 項の出口を作る
+              - ✅ `subordChk164` が外す 260 項の出口を作る
+              - 🚨 K 標準な項が `subordChk165` を通ることを証明する
           - 🚨 `ExpSubR157` を証明する
             - 🚨 `ExpHeart160` を証明する
               - 🚨 `VebD0_128` を証明する
+              - 🚨 ⊕ の成分が全体より `BT.le` であることを証明する
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を出す
         - 🚨 `LimCofS1` を証明する
           - 🚨 `vOf` が基本列の上限を超えないようにする
