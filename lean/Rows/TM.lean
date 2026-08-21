@@ -152,7 +152,7 @@ def rows : List Row := [
     t := phi zero (add (phi (phi zero zero) (add (phi zero (phi zero zero)) (phi zero zero)))
       (add (phi (phi zero zero) (phi zero (phi zero zero))) (phi (phi zero zero) zero))),
     name := "\\omega^{\\varepsilon_{\\omega+1}+\\varepsilon_\\omega+\\varepsilon_0}",
-    proof := "namespace F1", note := "(h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 1)",
+    proof := "namespace F1", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,0],[2,0]], t := phi one (phi zero (ofNat 2)),
     name := "\\varepsilon_{\\omega^2}", proof := "«(0,0)(1,1)(2,0)(2,0)»", hasO := true,
@@ -183,33 +183,33 @@ def rows : List Row := [
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi zero (phi zero zero))),
     name := "\\varepsilon_{\\varepsilon_{\\zeta_0+1}+\\omega}",
-    proof := "namespace F2a", note := "(h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 2)",
+    proof := "namespace F2a", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[1,1],[2,0],[3,1]],
     t := phi (phi zero zero) (add (phi (phi zero zero)
       (phi (add (phi zero zero) (phi zero zero)) zero)) (phi (phi zero zero) zero)),
     name := "\\varepsilon_{\\varepsilon_{\\zeta_0+1}+\\varepsilon_0}",
-    proof := "namespace F2b", note := "(h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 2)",
+    proof := "namespace F2b", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   -- 食い違い行 (diff.md 族 3、3 行)。ここだけ当方の値が先方より大きい。3 行とも決着済み。
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (phi (add (phi zero zero) (phi zero zero)) zero)))),
     name := "\\varepsilon_{\\varepsilon_{\\omega^{\\omega^{\\zeta_0+1}}}}",
-    proof := "namespace F3a", note := "(h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 3)",
+    proof := "namespace F3a", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero) (phi (phi zero zero) zero))))),
     name := "\\varepsilon_{\\varepsilon_{\\omega^{\\omega^{\\zeta_0+\\varepsilon_0}}}}",
-    proof := "namespace F3b", note := "(h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 3)",
+    proof := "namespace F3b", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   { m := [[0,0],[1,1],[2,1],[1,1],[2,0],[3,1],[4,1],[3,1],[4,0],[5,1],[6,1],[5,0],[6,1],[7,1]],
     t := phi (phi zero zero) (phi (phi zero zero) (phi zero (phi zero
       (add (phi (add (phi zero zero) (phi zero zero)) zero)
         (phi (add (phi zero zero) (phi zero zero)) zero))))),
     name := "\\varepsilon_{\\varepsilon_{\\omega^{\\omega^{\\zeta_0\\cdot 2}}}}",
-    proof := "namespace F3c", note := "(h≠) 外部の表と食い違うが決着済み。当方が正しい ([findings.md](findings.md) 族 3)",
+    proof := "namespace F3c", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ。当方が大きい側" },
   -- The rows below were withdrawn in v0.1.42 (the o? calibration failure; see
   -- table/refimpl-audit-2026-08-09.txt and plan/README.md) and RESTORED in v0.1.48
@@ -227,20 +227,20 @@ def rows : List Row := [
     t := phi (phi zero zero) (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (phi zero (phi zero zero))),
     name := "\\varepsilon_{\\bar{\\varphi}(3,\\omega)+1}",
-    proof := "namespace G9", note := "(h≠) 外部の表と食い違う ([findings.md](findings.md) 族 4)",
+    proof := "namespace G9", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1]],
     t := phi (add (phi zero zero) (phi zero zero))
       (phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
         (phi zero (phi zero zero))),
     name := "\\zeta_{\\bar{\\varphi}(3,\\omega)+1}",
-    proof := "namespace G10", note := "(h≠) 外部の表と食い違う ([findings.md](findings.md) 族 4)",
+    proof := "namespace G10", note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[2,1],[2,0],[1,1],[2,1],[2,1]],
     t := phi (add (phi zero zero) (add (phi zero zero) (phi zero zero)))
       (add (phi zero (phi zero zero)) (phi zero zero)),
     name := "\\bar{\\varphi}(3,\\omega+1)", proof := "namespace G11",
-    note := "(h≠) 外部の表と食い違う ([findings.md](findings.md) 族 4)",
+    note := "(h≠) 先方の表と食い違うが、当方が正しい ([findings.md](findings.md))",
     sel := "**D** 外部の表と食い違う 9 行の 1 つ" },
   { m := [[0,0],[1,1],[2,1],[3,0]], t := phi (phi zero (phi zero zero)) zero,
     name := "\\bar{\\varphi}(\\omega,0)", proof := "namespace G1",
