@@ -20661,4 +20661,1888 @@ open Evidence.WF
 
 end
 
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! # §168 THE `j = 0` TAIL OF CLASSES (a), (b), (d)
+
+§162 closed classes (a) `famJ162`, (b) `famI162`, (d) `famK162` under `1 ≤ j`.
+At `j = 0` the innermost `ψ₀`'s argument is `ψ₁^0 0 = 0`, so `dict` of that
+component is the literal `1` (`sd0_152`), and every closed form of §162 has to be
+redone: `TailOK158 (sd152 0)` is FALSE (`ho` fails), the `splitFin` of the base is
+no longer `(B, 0)`, and in class (a) the trailing `1` is eaten by the `ω^·`
+re-count.
+
+WHAT CHANGES, MEASURED FIRST (see §168.6):
+
+  (b) `famI162 m p k 0`: base `TW(a+1) ⊕ sd_k ⊕ 1`, a THREE-component base whose
+      `splitFin` is `(TW(a+1) ⊕ sd_k, 1)`.  The head of that split is an `add`, so
+      it is not an `ω^·` fixed-point shape and `ω^B = φ̄0 B` all the same
+      (§168.1).  Boundary unchanged: `k ≤ m + p`.  `1 ≤ k` suffices here — §162
+      needed `3 ≤ k` only to order `sd_j ≤ sd_k`, and `1 ≤ sd_k` is free.
+
+  (a) `famJ162 m p k 0`: the inner `ψ₀` value is `ω^(sd_k ⊕ 1)`, and since `sd_k`
+      IS an `ω^·` fixed point the `+1` is re-counted away:
+      `dict (ψ₀(ψ₁^k 0 ⊕ ψ₀ 0)) = φ̄0(sd_k) = JT0_168 k` — one component, not the
+      two of §162's `JT162 k j`.  Base `TW(a+1) ⊕ φ̄0(sd_k)`, `splitFin = (B,0)`.
+      Boundary unchanged: `k ≤ m + p`.
+
+  (d) `famK162 m k p 0`: the inner tower's base is `TW(a+1) ⊕ 1`, `splitFin
+      = (TW(a+1), 1)`; `K_{Ω₁}` of it is EMPTY, so the only obligation left is the
+      tower itself.  Boundary unchanged: `k + p ≤ m` (`2 ≤ k`), and the `k = 0`
+      slice reduces to class (a)'s seed with boundary `p ≤ m`.
+
+Everything below is proved from §162's generic `PT162 B ℓ` machinery; the three
+families supply only their `dict` closed form, `BaseOK162`, their `K_{Ω₁}`, and
+the reach.  §162's standardness contrapositives `not_std_famI162`,
+`not_std_famJ162`, `not_std_famK162` are already generic in `j` and are reused
+verbatim.
+-/
+
+/-! ### §168.1 A base whose last component is the literal `1` -/
+
+/-- `dnArg` は「裾の `1` を数え直す」操作 — 分けた頭が不動点の形でなければ恒等。 -/
+theorem dnArg_notFP168 {x : Term} (hs : isFP zero (splitFin x).1 = false) :
+    dnArg x = x := by
+  rw [dnArg_eq104, if_neg (by rintro ⟨-, h⟩; rw [hs] at h; exact Bool.noConfusion h)]
+
+/-- **裾に `1` があってもよい底の資料。**  §162 の `baseOK_WB162` は
+    `splitFin B = (B, 0)` を要求したが、実際に効いているのは「分けた頭が
+    `ω^·` の不動点の形でない」ことだけ。 -/
+theorem baseOK_WB168 {a : Nat} {Y : Term}
+    (hs : isFP zero (splitFin (WB162 a Y)).1 = false) : BaseOK162 (WB162 a Y) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · show lt (add (TW (a + 1)) Y) (reg 1) = false
+    rw [lt_add_nsum (show (reg 1 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl]
+    exact lt_TW_reg1_162 a
+  · show (((Z zero : Term) == add (TW (a + 1)) Y)
+      || lt (Z zero) (add (TW (a + 1)) Y)) = true
+    rw [show lt (Z zero) (add (TW (a + 1)) Y) = true from by
+      rw [lt_nsum_add100 (show (Z zero : Term) ≠ zero from by
+        intro hc; exact Term.noConfusion hc) rfl]
+      exact le_reg1_TW162 a]
+    exact Bool.or_true _
+  · show lt (add (TW (a + 1)) Y) (reg 2) = true
+    rw [lt_add_nsum (show (reg 2 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl]
+    exact lt_TW_reg2_162 a
+  · show (isFP zero (splitFin (WB162 a Y)).1
+      || (((WB162 a Y : Term) == zero) && (zero : Term).isSC)) = false
+    rw [hs]
+    rfl
+  · exact omegaNF_shape152 (show lt M (WB162 a Y) = false from
+      ltF_M_add162 rfl (fun f => ltF_M_phi135 zero (TW a) f) _) rfl
+      (isFP_add152 _ _) (dnArg_notFP168 hs)
+
+/-- §162 の `collapse1_WB162` の、`BaseOK162` を直接受け取る版。 -/
+theorem collapse1_WB168 {a : Nat} {Y : Term}
+    (hof : ofList (TW (a + 1) :: toList Y) = WB162 a Y)
+    (hb : BaseOK162 (WB162 a Y)) :
+    collapse 1 (WB162 a Y) = PT162 (WB162 a Y) 0 := by
+  rw [collapse1_gen162 (show toList (WB162 a Y) = TW (a + 1) :: toList Y from rfl)
+      (lt_TW_reg2_162 a) hof, plus_Om1_WB162 hof]
+  exact hb.homg
+
+theorem takeWhile_one_cons168 (l : List Term) :
+    List.takeWhile (· == TM.Term.one) (TM.Term.one :: l)
+      = TM.Term.one :: List.takeWhile (· == TM.Term.one) l := rfl
+
+theorem takeWhile_ne_one168 {s : Term} (hone : ((s : Term) == TM.Term.one) = false)
+    (l : List Term) : List.takeWhile (· == TM.Term.one) (s :: l) = [] := by
+  rw [List.takeWhile_cons, hone]
+  rfl
+
+/-- `x ⊕ 1` の分割。 -/
+theorem splitFin_addOne168 {s : Term} (hone : ((s : Term) == TM.Term.one) = false) :
+    splitFin (add s TM.Term.one) = (s, 1) := by
+  show (ofList ((toList (add s TM.Term.one)).take
+          ((toList (add s TM.Term.one)).length
+          - ((toList (add s TM.Term.one)).reverse.takeWhile (· == TM.Term.one)).length)),
+        ((toList (add s TM.Term.one)).reverse.takeWhile (· == TM.Term.one)).length) = _
+  rw [show toList (add s TM.Term.one) = [s, TM.Term.one] from rfl,
+    show ([s, TM.Term.one].reverse : List Term) = [TM.Term.one, s] from rfl,
+    show List.takeWhile (· == TM.Term.one) [TM.Term.one, s] = [TM.Term.one] from by
+      rw [takeWhile_one_cons168, takeWhile_ne_one168 hone]]
+  show (ofList [s], 1) = _
+  rfl
+
+/-- `x ⊕ s ⊕ 1` の分割 — `s ≠ 1` なら裾の `1` は一つだけ。 -/
+theorem splitFin_add3One168 {x s : Term} (hone : ((s : Term) == TM.Term.one) = false) :
+    splitFin (add x (add s TM.Term.one)) = (add x s, 1) := by
+  show (ofList ((toList (add x (add s TM.Term.one))).take
+          ((toList (add x (add s TM.Term.one))).length
+          - ((toList (add x (add s TM.Term.one))).reverse.takeWhile
+              (· == TM.Term.one)).length)),
+        ((toList (add x (add s TM.Term.one))).reverse.takeWhile
+          (· == TM.Term.one)).length) = _
+  rw [show toList (add x (add s TM.Term.one)) = [x, s, TM.Term.one] from rfl,
+    show ([x, s, TM.Term.one].reverse : List Term) = [TM.Term.one, s, x] from rfl,
+    show List.takeWhile (· == TM.Term.one) [TM.Term.one, s, x] = [TM.Term.one] from by
+      rw [takeWhile_one_cons168, takeWhile_ne_one168 hone]]
+  show (ofList [x, s], 1) = _
+  rfl
+
+/-- **裾の `1` は `ω^·` で数え直されて消える** — 頭が `ω^·` の不動点のとき。 -/
+theorem omegaNF_addOne_FP168 {s : Term} (hM : lt M (add s TM.Term.one) = false)
+    (hone : ((s : Term) == TM.Term.one) = false) (hfp : isFP zero s = true) :
+    omegaNF (add s TM.Term.one) = phi zero s := by
+  show (if lt M (add s TM.Term.one) then omg (add s TM.Term.one)
+        else if (add s TM.Term.one : Term) == M then M
+        else phiNF zero (add s TM.Term.one)) = _
+  rw [hM, if_neg (by exact Bool.noConfusion),
+    show ((add s TM.Term.one : Term) == M) = false from rfl,
+    if_neg (by exact Bool.noConfusion),
+    phiNF_zero_eq104, isFP_add152, if_neg (by exact Bool.noConfusion),
+    show dnArg (add s TM.Term.one) = s from by
+      rw [dnArg_eq104, splitFin_addOne168 hone,
+        if_pos (show ((s, 1) : Term × Nat).2 ≥ 1 ∧ isFP zero ((s, 1) : Term × Nat).1 = true
+          from ⟨Nat.le_refl 1, hfp⟩)]
+      rfl]
+
+/-! 小さな順序の道具 -/
+
+theorem lt_one_UW168 (s : Term) : ∀ j : Nat, lt TM.Term.one (UW152 s j) = true
+  | 0 => by
+      show lt (phi zero zero) (phi zero (add (Z zero) s)) = true
+      rw [lt_phi_same139]
+      exact lt_zero_left (show (add (Z zero) s : Term) ≠ zero from by
+        intro hc; exact Term.noConfusion hc)
+  | j + 1 => by
+      show lt (phi zero zero) (phi zero (UW152 s j)) = true
+      rw [lt_phi_same139]
+      exact lt_zero_left (ne_zero_UW152 s j)
+
+theorem beq_TW_one168 (a : Nat) : ((TW (a + 1) : Term) == TM.Term.one) = false := by
+  rw [TW_UW156 a]
+  exact beq_UW_one152 (Z zero) a
+
+theorem le_one_TW168 (a : Nat) : le TM.Term.one (TW (a + 1)) = true := by
+  rw [TW_UW156 a]
+  exact le_of_lt (lt_one_UW168 (Z zero) a)
+
+/-- `1 = sd152 0` は他のどの種以下。 -/
+theorem le_one_sd168 : ∀ k : Nat, 1 ≤ k → le TM.Term.one (sd152 k) = true
+  | 0, h => absurd h (by omega)
+  | 1, _ => by rw [sd1_152]; decide
+  | 2, _ => by rw [sd2_152]; decide
+  | 3, _ => by rw [sd3_152]; exact le_of_lt (lt_one_psi156 (Z zero) zero)
+  | kk + 4, _ => by
+      rw [sd_psi152 kk]
+      exact le_of_lt (lt_one_psi156 (Z zero) (TW (kk + 3)))
+
+theorem lt_psi_TW168 (X : Term) : ∀ a : Nat, lt (psi (Z zero) X) (TW a) = true
+  | 0 => by
+      show lt (psi (Z zero) X) (add (Z zero) (Z zero)) = true
+      rw [lt_nsum_add100 (show (psi (Z zero) X : Term) ≠ zero from by
+        intro hc; exact Term.noConfusion hc) rfl]
+      exact le_of_lt (lt_psiOm_reg1_139 X)
+  | a + 1 =>
+      lt_isFP_phi_zero (isFP_psiOm162 X)
+        (show (psi (Z zero) X : Term) ≠ M from by intro hc; exact Term.noConfusion hc)
+        (le_psi_TW162 X a)
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §168.2 Class (b) at `j = 0`: base `TW(a+1) ⊕ sd_k ⊕ 1` -/
+
+theorem toList_IB0_168 (s : Term) (a : Nat) :
+    toList (WB162 a (add s TM.Term.one)) = [TW (a + 1), s, TM.Term.one] := rfl
+
+theorem ofList_IB0_168 (s : Term) (a : Nat) :
+    ofList (TW (a + 1) :: toList (add s TM.Term.one)) = WB162 a (add s TM.Term.one) := rfl
+
+theorem splitFin_IB0_168 {s : Term} (hone : ((s : Term) == TM.Term.one) = false)
+    (a : Nat) :
+    splitFin (WB162 a (add s TM.Term.one)) = (add (TW (a + 1)) s, 1) :=
+  splitFin_add3One168 hone
+
+theorem baseOK_IB0_168 {s : Term} (hone : ((s : Term) == TM.Term.one) = false)
+    (a : Nat) : BaseOK162 (WB162 a (add s TM.Term.one)) :=
+  baseOK_WB168 (by rw [splitFin_IB0_168 hone a]; exact isFP_add152 _ _)
+
+theorem Kset_IB0_168 (s : Term) (a : Nat) :
+    Kset (reg 1) (WB162 a (add s TM.Term.one)) = Kset (reg 1) s := by
+  show Kset (reg 1) (TW (a + 1)) ++ (Kset (reg 1) s ++ Kset (reg 1) (TM.Term.one : Term))
+    = _
+  rw [Kset_TW152 (a + 1), show Kset (reg 1) (TM.Term.one : Term) = [] from rfl]
+  exact List.append_nil _
+
+/-- **閉じた形 — 族 (b) の `j = 0` の像は「塔 ⊕ 種 ⊕ 1」の上の塔。** -/
+theorem dict_famI0_168 {a k : Nat} (h1k : 1 ≤ k) :
+    ∀ m : Nat, dict (famI162 (m + 1) (a + 2) k 0)
+      = PT162 (WB162 a (add (sd152 k) TM.Term.one)) m
+  | 0 => by
+      have hK : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+      show collapse 1 (dict (BT.sum (nst132 (a + 2) BT.zero)
+        (BT.sum (BT.D 0 (nst132 k BT.zero)) (BT.D 0 (nst132 0 BT.zero))))) = _
+      rw [Trans.Dict.dict_sum, Trans.Dict.dict_sum, dict_bT152 a,
+        show dict (BT.D 0 (nst132 k BT.zero)) = sd152 k from rfl,
+        show dict (BT.D 0 (nst132 0 BT.zero)) = TM.Term.one from sd0_152,
+        plus_tail_tail162 (toList_tail158 hK)
+          (show toList (TM.Term.one : Term) = [TM.Term.one] from rfl)
+          (le_one_sd168 k h1k),
+        plus_head_tail162 (show toList (TM.Term.one : Term) = [TM.Term.one] from rfl)
+          (show le (sd152 k) (TW (a + 1)) = true from by
+            rw [TW_UW156 a]
+            exact le_tail_UW158 hK (Z zero) a)]
+      exact collapse1_WB168 (ofList_IB0_168 (sd152 k) a) (baseOK_IB0_168 hK.ho a)
+  | m + 1 => by
+      have hK : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+      show collapse 1 (dict (famI162 (m + 1) (a + 2) k 0)) = _
+      rw [dict_famI0_168 h1k m]
+      exact collapse1_PT162 (baseOK_IB0_168 hK.ho a) m
+
+/-- **主定理 1 — `2 ≤ m`, `2 ≤ p`, `1 ≤ k ≤ m + p` で第一の門の一歩。** -/
+theorem ksetStepOK_famI0_168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h1k : 1 ≤ k)
+    (hkmp : k ≤ m + p) : KsetStepOK 0 (dict (famI162 m p k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  have hK : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+  have hb := baseOK_IB0_168 hK.ho a
+  rw [show dict (famI162 (mm + 2) (a + 2) k 0)
+      = PT162 (WB162 a (add (sd152 k) TM.Term.one)) (mm + 1) from
+    dict_famI0_168 h1k (mm + 1)]
+  refine stepOK_PTA162 hb (subAP_WB162 a _)
+    (plus_Om1_WB162 (ofList_IB0_168 (sd152 k) a)) mm ?_
+  intro y hy
+  rw [Kset_IB0_168 (sd152 k) a] at hy
+  exact Ksd_lt_PT162 hb (a + 1) (fun c hc => lt_TW_WB162 _ hc) (mm + 1) k (by omega) y hy
+
+/-- **主定理 2 — `m + p < k` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famI0_168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p)
+    (hk : m + p < k) : ¬ KsetStepOK 0 (dict (famI162 m p k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+  have hK : TailOK158 (sd152 (kk + 4)) := tailOK_sd158 (kk + 4) (by omega)
+  have hb := baseOK_IB0_168 hK.ho a
+  rw [show dict (famI162 (mm + 2) (a + 2) (kk + 4) 0)
+      = PT162 (WB162 a (add (sd152 (kk + 4)) TM.Term.one)) (mm + 1) from
+    dict_famI0_168 (by omega) (mm + 1)]
+  refine not_stepOK_PTA162 hb (subAP_WB162 a _)
+    (plus_Om1_WB162 (ofList_IB0_168 (sd152 (kk + 4)) a)) mm (y := TW (kk + 3)) ?_ ?_
+  · rw [Kset_IB0_168 (sd152 (kk + 4)) a]
+    exact Ksd_escape158 kk
+  · exact lt_TW_PT_reach_false162 (a + 1) (fun c hc => lt_TW_WB_false162 _ hc)
+      (kk + 3) (mm + 1) (by omega)
+
+/-- **境界はちょうど `k ≤ m + p` (両向き)。** -/
+theorem stepOK_iff_famI0_168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h1k : 1 ≤ k) :
+    KsetStepOK 0 (dict (famI162 m p k 0)) ↔ k ≤ m + p := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge (m + p) k with hlt | hge
+    · exact absurd H (not_ksetStepOK_famI0_168 h2m h2p hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famI0_168 h2m h2p h1k h
+
+/-- **標準性は同期して破れる** (§162 の `not_std_famI162` は `j` に依らない)。 -/
+theorem not_std_famI0_168 {m p k : Nat} (h1p : 1 ≤ p) (hk : m + p < k) :
+    BT.isStd (BT.D 0 (famI162 m p k 0)) = false := not_std_famI162 h1p hk
+
+/-- **主定理 3 — この切り口は第一の門を反証できない。** -/
+theorem famI0_no_refute168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h1k : 1 ≤ k)
+    (hs : BT.isStd (BT.D 0 (famI162 m p k 0)) = true) :
+    KsetStepOK 0 (dict (famI162 m p k 0)) := by
+  rcases Nat.lt_or_ge (m + p) k with hlt | hge
+  · exfalso
+    rw [not_std_famI0_168 (by omega) hlt] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famI0_168 h2m h2p h1k hge
+
+theorem gateStd87_famI0_168 (m p k : Nat) (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h1k : 1 ≤ k)
+    (hkmp : k ≤ m + p) : GateStd87 (famI162 m p k 0) :=
+  fun _ _ => ksetStepOK_famI0_168 h2m h2p h1k hkmp
+
+theorem firstFire_famI0_168 (m p k : Nat) (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h1k : 1 ≤ k)
+    (hkmp : k ≤ m + p) : FirstFire145 (famI162 m p k 0) :=
+  fun r hr _ hle y hy => (ksetStepOK_famI0_168 h2m h2p h1k hkmp r hr hle).2 y hy
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §168.3 Class (a) at `j = 0`: the inner `ψ₀` loses its `+1` -/
+
+/-- `j = 0` の内側の `ψ₀` の値 — `ω^(種)`。§162 の `JT162 k j = ω^(種 ⊕ 種)` の
+    退化形だが、`種 ⊕ 1` の `1` は `ω^·` の数え直しで消えるので成分は一つ。 -/
+def JT0_168 (k : Nat) : Term := phi zero (sd152 k)
+
+theorem toList_JT0_168 (k : Nat) : toList (JT0_168 k) = [JT0_168 k] := rfl
+
+theorem Kset_JT0_168 (k : Nat) :
+    Kset (reg 1) (JT0_168 k) = Kset (reg 1) (sd152 k) := rfl
+
+theorem beq_JT0_one168 {k : Nat} (h3k : 3 ≤ k) :
+    ((JT0_168 k : Term) == TM.Term.one) = false := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  refine beq_eq_false_iff_ne.mpr ?_
+  intro hc
+  have hc2 : phi zero (sd152 (kk + 3)) = phi zero zero := hc
+  injection hc2 with _ h2
+  rw [sd_arg162 kk] at h2
+  exact Term.noConfusion h2
+
+theorem wcnf_one168 : wcnf (reg 1) [TM.Term.one] = ([], TM.Term.one) := by
+  rw [wcnf_cons_lt (show lt TM.Term.one (reg 1) = true from by decide)]
+  rfl
+
+/-- **`ψ₀`(高い塔 ⊕ 1) の値** — 桁が発火し、裾の `1` は数え直しで消える。 -/
+theorem collapse0_UW_one168 (s : Term) (b : Nat) :
+    collapse 0 (add (UW152 s (b + 2)) TM.Term.one)
+      = phi zero (psi (Z zero) (UW152 s (b + 2))) := by
+  rw [collapse_eq,
+    show toList (add (UW152 s (b + 2)) TM.Term.one)
+      = [UW152 s (b + 2), TM.Term.one] from rfl,
+    show wcnf (reg 1) [UW152 s (b + 2), TM.Term.one]
+        = ([(UW152 s (b + 1), TM.Term.one)], TM.Term.one) from by
+      rw [wcnf_cons_ge (lt_UW_reg1_156 s (b + 2)), wcnf_one168]
+      show ([(wA (reg 1) (UW152 s (b + 2)), wC (reg 1) (UW152 s (b + 2)))],
+        TM.Term.one) = _
+      rw [wA_UW156 s b, wC_UW156 s b]]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (UW152 s (b + 1), TM.Term.one)).2.getD zero) TM.Term.one)) = _
+  rw [stepF_fire156 s b]
+  show omegaNF (plus zero (plus (psi (Z zero) (UW152 s (b + 2))) TM.Term.one)) = _
+  rw [show plus (psi (Z zero) (UW152 s (b + 2))) TM.Term.one
+        = add (psi (Z zero) (UW152 s (b + 2))) TM.Term.one from by
+      rw [plus_cons66 (show toList (TM.Term.one : Term) = TM.Term.one :: [] from rfl),
+        show toList (psi (Z zero) (UW152 s (b + 2)))
+          = [psi (Z zero) (UW152 s (b + 2))] from rfl,
+        List.filter_cons_of_pos (show le TM.Term.one (psi (Z zero) (UW152 s (b + 2)))
+          = true from le_of_lt (lt_one_psi156 (Z zero) (UW152 s (b + 2))))]
+      rfl,
+    show plus zero (add (psi (Z zero) (UW152 s (b + 2))) TM.Term.one)
+        = add (psi (Z zero) (UW152 s (b + 2))) TM.Term.one from by
+      rw [plus_cons66 (show toList (add (psi (Z zero) (UW152 s (b + 2))) TM.Term.one)
+          = psi (Z zero) (UW152 s (b + 2)) :: [TM.Term.one] from rfl),
+        show toList (zero : Term) = [] from rfl]
+      rfl]
+  exact omegaNF_addOne_FP168
+    (ltF_M_add162 rfl (fun f => ltF_M_psi139 f (Z zero) (UW152 s (b + 2))) _)
+    rfl (isFP_psiOm162 _)
+
+/-- **`ψ₀`(`ψ₁³0` の像 ⊕ 1) の値** — `(Ω₁,1)` が発火し、指数は `0` に落ちる。 -/
+theorem collapse0_TW2_one168 :
+    collapse 0 (add (TW 2) TM.Term.one) = phi zero (psi (Z zero) zero) := by
+  rw [collapse_eq,
+    show toList (add (TW 2) TM.Term.one) = [TW 2, TM.Term.one] from rfl,
+    show wcnf (reg 1) [TW 2, TM.Term.one]
+        = ([((Z zero : Term), TM.Term.one)], TM.Term.one) from by
+      rw [wcnf_cons_ge (lt_TW_reg1_162 1), wcnf_one168]
+      show ([(wA (reg 1) (TW 2), wC (reg 1) (TW 2))], TM.Term.one) = _
+      rw [wA_TW2_162, wC_TW2_162]]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      ((Z zero : Term), TM.Term.one)).2.getD zero) TM.Term.one)) = _
+  rw [stepF_Om162]
+  show omegaNF (plus zero (plus (psi (Z zero) zero) TM.Term.one)) = _
+  rw [show plus (psi (Z zero) zero) TM.Term.one
+        = add (psi (Z zero) zero) TM.Term.one from by
+      rw [plus_cons66 (show toList (TM.Term.one : Term) = TM.Term.one :: [] from rfl),
+        show toList (psi (Z zero) zero) = [psi (Z zero) zero] from rfl,
+        List.filter_cons_of_pos (show le TM.Term.one (psi (Z zero) zero) = true from
+          le_of_lt (lt_one_psi156 (Z zero) zero))]
+      rfl,
+    show plus zero (add (psi (Z zero) zero) TM.Term.one)
+        = add (psi (Z zero) zero) TM.Term.one from by
+      rw [plus_cons66 (show toList (add (psi (Z zero) zero) TM.Term.one)
+          = psi (Z zero) zero :: [TM.Term.one] from rfl),
+        show toList (zero : Term) = [] from rfl]
+      rfl]
+  exact omegaNF_addOne_FP168
+    (ltF_M_add162 rfl (fun f => ltF_M_psi139 f (Z zero) zero) _)
+    rfl (isFP_psiOm162 zero)
+
+/-- **内側の `ψ₀` の閉じた形 (`j = 0`)。** -/
+theorem dict_seedJ0_168 {k : Nat} (h3k : 3 ≤ k) :
+    dict (BT.D 0 (BT.sum (nst132 k BT.zero) (BT.D 0 (nst132 0 BT.zero))))
+      = JT0_168 k := by
+  rcases Nat.eq_or_lt_of_le h3k with h3 | h4
+  · obtain rfl : k = 3 := h3.symm
+    show collapse 0 (dict (BT.sum (nst132 3 BT.zero) (BT.D 0 (nst132 0 BT.zero)))) = _
+    rw [Trans.Dict.dict_sum,
+      show dict (nst132 3 BT.zero) = TW 2 from dict_bT152 1,
+      show dict (BT.D 0 (nst132 0 BT.zero)) = TM.Term.one from sd0_152,
+      show plus (TW 2) TM.Term.one = add (TW 2) TM.Term.one from by
+        rw [plus_cons66 (show toList (TM.Term.one : Term) = TM.Term.one :: [] from rfl),
+          show toList (TW 2) = [TW 2] from rfl,
+          List.filter_cons_of_pos (le_one_TW168 1)]
+        rfl,
+      collapse0_TW2_one168]
+    show phi zero (psi (Z zero) zero) = phi zero (sd152 3)
+    rw [sd3_152]
+  · obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+    show collapse 0 (dict (BT.sum (nst132 (kk + 4) BT.zero)
+      (BT.D 0 (nst132 0 BT.zero)))) = _
+    rw [Trans.Dict.dict_sum,
+      show dict (nst132 (kk + 4) BT.zero) = TW (kk + 3) from dict_bT152 (kk + 2),
+      show dict (BT.D 0 (nst132 0 BT.zero)) = TM.Term.one from sd0_152,
+      TW_UW156 (kk + 2),
+      show plus (UW152 (Z zero) (kk + 2)) TM.Term.one
+          = add (UW152 (Z zero) (kk + 2)) TM.Term.one from by
+        rw [plus_cons66 (show toList (TM.Term.one : Term) = TM.Term.one :: [] from rfl),
+          show toList (UW152 (Z zero) (kk + 2)) = [UW152 (Z zero) (kk + 2)] from rfl,
+          List.filter_cons_of_pos (show le TM.Term.one (UW152 (Z zero) (kk + 2)) = true
+            from le_of_lt (lt_one_UW168 (Z zero) (kk + 2)))]
+        rfl,
+      collapse0_UW_one168 (Z zero) kk]
+    show phi zero (psi (Z zero) (UW152 (Z zero) (kk + 2))) = phi zero (sd152 (kk + 4))
+    rw [sd_psi152 kk, TW_UW156 (kk + 2)]
+
+theorem lt_JT0_TW168 {k : Nat} (h3k : 3 ≤ k) (a : Nat) :
+    lt (JT0_168 k) (TW (a + 1)) = true := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  show lt (phi zero (sd152 (kk + 3))) (phi zero (TW a)) = true
+  rw [lt_phi_same139, sd_arg162 kk]
+  exact lt_psi_TW168 (sdArg162 kk) a
+
+theorem lt_JT0_reg1_168 {k : Nat} (h3k : 3 ≤ k) : lt (JT0_168 k) (reg 1) = true := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  show lt (phi zero (sd152 (kk + 3))) (reg 1) = true
+  rw [lt_phi_reg1_100, sd_arg162 kk, lt_psiOm_reg1_139 (sdArg162 kk),
+    lt_zero_left (show (reg 1 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc)]
+  rfl
+
+theorem lt_JT0_reg2_168 {k : Nat} (h3k : 3 ≤ k) : lt (JT0_168 k) (reg 2) = true := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  show lt (phi zero (sd152 (kk + 3))) (Z TM.Term.one) = true
+  rw [lt_phi_Z103, sd_arg162 kk, lt_psiOm_Om2_139 (sdArg162 kk),
+    lt_zero_left (show (Z TM.Term.one : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc)]
+  rfl
+
+/-- `Ω₁ < φ̄0 X` は嘘 — `X` が `Ω₁` より下でも `Ω₁` でもないとき。§162 は
+    この向きを持っていなかった。 -/
+theorem lt_Om_phi0_false168 {X : Term} (hz : ((Z zero : Term) == X) = false)
+    (hlt : lt (Z zero) X = false) : lt (Z zero) (phi zero X) = false := by
+  have hd : (phi zero X).deg = 1 + (zero : Term).deg + X.deg := rfl
+  have h1 : (zero : Term).deg = 1 := rfl
+  have hz0 : (Z zero).deg = 1 + (zero : Term).deg := rfl
+  have hXpos : 1 ≤ X.deg := Evidence.WF.deg_pos X
+  have hZ : ltF ((Z zero).deg + (phi zero X).deg) (Z zero) (zero : Term) = false := by
+    rw [← Evidence.WF.lt_eq_ltF (Z zero) (zero : Term) _ (by omega)]
+    exact lt_zero_right _
+  have hX : ltF ((Z zero).deg + (phi zero X).deg) (Z zero) X = false := by
+    rw [← Evidence.WF.lt_eq_ltF (Z zero) X _ (by omega)]
+    exact hlt
+  rw [Evidence.WF.lt_eq_ltF (Z zero) (phi zero X)
+      ((Z zero).deg + (phi zero X).deg + 1) (Nat.le_succ _),
+    Evidence.WF.ltF_succ_Z_phi,
+    show ((Z zero : Term) == (zero : Term)) = false from rfl, hz, hZ, hX]
+  rfl
+
+/-- 種の上の `φ̄0` にも `Ω₁` は届かない。 -/
+theorem lt_Om_JT0_false168 {k : Nat} (h3k : 3 ≤ k) :
+    lt (Z zero) (JT0_168 k) = false := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  show lt (Z zero) (phi zero (sd152 (kk + 3))) = false
+  rw [sd_arg162 kk]
+  exact lt_Om_phi0_false168 rfl (lt_Om_psi141 (sdArg162 kk))
+
+theorem ofList_JB0_168 (k a : Nat) :
+    ofList (TW (a + 1) :: toList (JT0_168 k)) = WB162 a (JT0_168 k) := rfl
+
+theorem splitFin_JB0_168 {k : Nat} (h3k : 3 ≤ k) (a : Nat) :
+    splitFin (WB162 a (JT0_168 k)) = (WB162 a (JT0_168 k), 0) :=
+  splitFin_add2_162 (toList_JT0_168 k) (beq_JT0_one168 h3k)
+
+theorem Kset_JB0_168 (k a : Nat) :
+    Kset (reg 1) (WB162 a (JT0_168 k)) = Kset (reg 1) (sd152 k) := by
+  show Kset (reg 1) (TW (a + 1)) ++ Kset (reg 1) (JT0_168 k) = _
+  rw [Kset_TW152 (a + 1)]
+  rfl
+
+/-- **閉じた形 — 族 (a) の `j = 0` の像。** -/
+theorem dict_famJ0_168 {a k : Nat} (h3k : 3 ≤ k) :
+    ∀ m : Nat, dict (famJ162 (m + 1) (a + 2) k 0)
+      = PT162 (WB162 a (JT0_168 k)) m
+  | 0 => by
+      show collapse 1 (dict (BT.sum (nst132 (a + 2) BT.zero)
+        (BT.D 0 (BT.sum (nst132 k BT.zero) (BT.D 0 (nst132 0 BT.zero)))))) = _
+      rw [Trans.Dict.dict_sum, dict_bT152 a, dict_seedJ0_168 h3k,
+        show plus (TW (a + 1)) (JT0_168 k) = WB162 a (JT0_168 k) from by
+          rw [plus_cons66 (toList_JT0_168 k),
+            show toList (TW (a + 1)) = [TW (a + 1)] from rfl,
+            List.filter_cons_of_pos (le_of_lt (lt_JT0_TW168 h3k a))]
+          rfl]
+      exact collapse1_WB162 (ofList_JB0_168 k a) (splitFin_JB0_168 h3k a)
+  | m + 1 => by
+      show collapse 1 (dict (famJ162 (m + 1) (a + 2) k 0)) = _
+      rw [dict_famJ0_168 h3k m]
+      exact collapse1_PT162 (baseOK_WB162 (splitFin_JB0_168 h3k a)) m
+
+/-- **主定理 4 — `2 ≤ m`, `2 ≤ p`, `3 ≤ k ≤ m + p` で第一の門の一歩。** -/
+theorem ksetStepOK_famJ0_168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hkmp : k ≤ m + p) : KsetStepOK 0 (dict (famJ162 m p k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  have hb := baseOK_WB162 (splitFin_JB0_168 h3k a)
+  rw [show dict (famJ162 (mm + 2) (a + 2) k 0)
+      = PT162 (WB162 a (JT0_168 k)) (mm + 1) from dict_famJ0_168 h3k (mm + 1)]
+  refine stepOK_PTA162 hb (subAP_WB162 a _)
+    (plus_Om1_WB162 (ofList_JB0_168 k a)) mm ?_
+  intro y hy
+  rw [Kset_JB0_168 k a] at hy
+  exact Ksd_lt_PT162 hb (a + 1) (fun c hc => lt_TW_WB162 _ hc) (mm + 1) k (by omega) y hy
+
+/-- **主定理 5 — `m + p < k` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famJ0_168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p)
+    (hk : m + p < k) : ¬ KsetStepOK 0 (dict (famJ162 m p k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+  have hb := baseOK_WB162 (splitFin_JB0_168 (show 3 ≤ kk + 4 by omega) a)
+  rw [show dict (famJ162 (mm + 2) (a + 2) (kk + 4) 0)
+      = PT162 (WB162 a (JT0_168 (kk + 4))) (mm + 1) from
+    dict_famJ0_168 (by omega) (mm + 1)]
+  refine not_stepOK_PTA162 hb (subAP_WB162 a _)
+    (plus_Om1_WB162 (ofList_JB0_168 (kk + 4) a)) mm (y := TW (kk + 3)) ?_ ?_
+  · rw [Kset_JB0_168 (kk + 4) a]
+    exact Ksd_escape158 kk
+  · exact lt_TW_PT_reach_false162 (a + 1) (fun c hc => lt_TW_WB_false162 _ hc)
+      (kk + 3) (mm + 1) (by omega)
+
+/-- **境界はちょうど `k ≤ m + p` (両向き)。** -/
+theorem stepOK_iff_famJ0_168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k) :
+    KsetStepOK 0 (dict (famJ162 m p k 0)) ↔ k ≤ m + p := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge (m + p) k with hlt | hge
+    · exact absurd H (not_ksetStepOK_famJ0_168 h2m h2p hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famJ0_168 h2m h2p h3k h
+
+theorem not_std_famJ0_168 {m p k : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p) (h1k : 1 ≤ k)
+    (hk : m + p < k) : BT.isStd (BT.D 0 (famJ162 m p k 0)) = false :=
+  not_std_famJ162 h1m h1p h1k hk
+
+/-- **主定理 6 — この切り口も第一の門を反証できない。** -/
+theorem famJ0_no_refute168 {m p k : Nat} (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hs : BT.isStd (BT.D 0 (famJ162 m p k 0)) = true) :
+    KsetStepOK 0 (dict (famJ162 m p k 0)) := by
+  rcases Nat.lt_or_ge (m + p) k with hlt | hge
+  · exfalso
+    rw [not_std_famJ0_168 (by omega) (by omega) (by omega) hlt] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famJ0_168 h2m h2p h3k hge
+
+theorem gateStd87_famJ0_168 (m p k : Nat) (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hkmp : k ≤ m + p) : GateStd87 (famJ162 m p k 0) :=
+  fun _ _ => ksetStepOK_famJ0_168 h2m h2p h3k hkmp
+
+theorem firstFire_famJ0_168 (m p k : Nat) (h2m : 2 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hkmp : k ≤ m + p) : FirstFire145 (famJ162 m p k 0) :=
+  fun r hr _ hle y hy => (ksetStepOK_famJ0_168 h2m h2p h3k hkmp r hr hle).2 y hy
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §168.4 Class (d) at `j = 0`: the inner base is `TW(a+1) ⊕ 1` -/
+
+theorem ofList_KB0_168 (a : Nat) :
+    ofList (TW (a + 1) :: toList (TM.Term.one : Term)) = WB162 a TM.Term.one := rfl
+
+theorem splitFin_KB0_168 (a : Nat) :
+    splitFin (WB162 a TM.Term.one) = (TW (a + 1), 1) :=
+  splitFin_addOne168 (beq_TW_one168 a)
+
+theorem baseOK_KB0_168 (a : Nat) : BaseOK162 (WB162 a TM.Term.one) :=
+  baseOK_WB168 (by rw [splitFin_KB0_168 a]; exact isFP_phi0_152 (TW a))
+
+theorem Kset_KB0_168 (a : Nat) : Kset (reg 1) (WB162 a TM.Term.one) = [] := by
+  show Kset (reg 1) (TW (a + 1)) ++ Kset (reg 1) (TM.Term.one : Term) = []
+  rw [Kset_TW152 (a + 1)]
+  rfl
+
+/-- **中の塔の閉じた形 (`j = 0`)。** -/
+theorem dict_famF0_168 (a : Nat) : ∀ k : Nat,
+    dict (nst132 (k + 1) (BT.sum (nst132 (a + 2) BT.zero) (BT.D 0 (nst132 0 BT.zero))))
+      = PT162 (WB162 a TM.Term.one) k
+  | 0 => by
+      show collapse 1 (dict (BT.sum (nst132 (a + 2) BT.zero)
+        (BT.D 0 (nst132 0 BT.zero)))) = _
+      rw [Trans.Dict.dict_sum, dict_bT152 a,
+        show dict (BT.D 0 (nst132 0 BT.zero)) = TM.Term.one from sd0_152,
+        show plus (TW (a + 1)) TM.Term.one = WB162 a TM.Term.one from by
+          rw [plus_cons66 (show toList (TM.Term.one : Term) = TM.Term.one :: [] from rfl),
+            show toList (TW (a + 1)) = [TW (a + 1)] from rfl,
+            List.filter_cons_of_pos (le_one_TW168 a)]
+          rfl]
+      exact collapse1_WB168 (ofList_KB0_168 a) (baseOK_KB0_168 a)
+  | k + 1 => by
+      show collapse 1 (dict (nst132 (k + 1) (BT.sum (nst132 (a + 2) BT.zero)
+        (BT.D 0 (nst132 0 BT.zero))))) = _
+      rw [dict_famF0_168 a k]
+      exact collapse1_PT162 (baseOK_KB0_168 a) k
+
+theorem dict_seedK0_168 (a k : Nat) :
+    dict (BT.D 0 (nst132 (k + 2) (BT.sum (nst132 (a + 2) BT.zero)
+      (BT.D 0 (nst132 0 BT.zero)))))
+      = psi (Z zero) (PT162 (WB162 a TM.Term.one) (k + 1)) := by
+  show collapse 0 (dict (nst132 (k + 2) (BT.sum (nst132 (a + 2) BT.zero)
+    (BT.D 0 (nst132 0 BT.zero))))) = _
+  rw [dict_famF0_168 a (k + 1)]
+  exact collapse0_PT162 (baseOK_KB0_168 a) (subAP_WB162 a _)
+    (plus_Om1_WB162 (ofList_KB0_168 a)) k
+
+/-- **閉じた形 (`2 ≤ k`, `j = 0`)。** -/
+theorem dict_famK0_168 (a k : Nat) : ∀ m : Nat,
+    dict (famK162 (m + 1) (k + 2) (a + 2) 0)
+      = UW152 (psi (Z zero) (PT162 (WB162 a TM.Term.one) (k + 1))) m :=
+  dict_towerSeed162 rfl rfl (lt_psiOm_reg1_139 _) (lt_psiOm_Om2_139 _)
+    (dict_seedK0_168 a k)
+
+/-- **閉じた形 (`k = 0`, `j = 0`)。** -/
+theorem dict_famK00_168 {p : Nat} (h3p : 3 ≤ p) : ∀ m : Nat,
+    dict (famK162 (m + 1) 0 p 0) = UW152 (JT0_168 p) m :=
+  dict_towerSeed162 rfl (beq_JT0_one168 h3p) (lt_JT0_reg1_168 h3p)
+    (lt_JT0_reg2_168 h3p) (dict_seedJ0_168 h3p)
+
+/-! 塔と塔の比較 — §162.12 の二つを尾について一般化したもの。 -/
+
+theorem lt_towB_UW168 {S : Term} (hS : TailOK158 S) (a : Nat) (Y : Term) (d kk : Nat)
+    (h : a + 1 ≤ d) :
+    lt (PT162 (WB162 a Y) kk) (UW152 S (d + kk + 1)) = true := by
+  rw [UW_PT162 S (d + kk + 1), lt_PT_shift162 (WB162 a Y) (add (Z zero) S) kk d]
+  show lt (add (TW (a + 1)) Y) (PT162 (add (Z zero) S) d) = true
+  rw [lt_add_nsum (ne_zero_PT162 (add (Z zero) S) d) (nsum_PT162 (add (Z zero) S) d)]
+  exact lt_TW_PT_low162 (baseOK_addOm162 hS) (a + 1) d h
+
+theorem lt_towB_UW_false168 {S : Term} (hS : TailOK158 S) {a : Nat} {Y : Term}
+    (hbY : BaseOK162 (WB162 a Y)) (kk mm : Nat) (h : mm < a + kk + 2) :
+    lt (PT162 (WB162 a Y) kk) (UW152 S mm) = false := by
+  rw [UW_PT162 S mm]
+  rcases Nat.lt_or_ge kk mm with hlt | hge
+  · obtain ⟨d, rfl⟩ : ∃ d, mm = d + kk + 1 := ⟨mm - kk - 1, by omega⟩
+    rw [lt_PT_shift162 (WB162 a Y) (add (Z zero) S) kk d]
+    show lt (add (TW (a + 1)) Y) (PT162 (add (Z zero) S) d) = false
+    rw [lt_add_nsum (ne_zero_PT162 (add (Z zero) S) d) (nsum_PT162 (add (Z zero) S) d)]
+    exact lt_TW_PT_none162 (fun c => lt_TW_addOm_false162 hS c) (a + 1) d (by omega)
+  · rcases Nat.eq_or_lt_of_le hge with heq | hgt
+    · rw [heq, lt_PT_same162 (WB162 a Y) (add (Z zero) S) kk]
+      show lt (add (TW (a + 1)) Y) (add (Z zero) S) = false
+      rw [lt_add_add (show add (TW (a + 1)) Y ≠ add (Z zero) S from by
+            intro hc
+            injection hc with h1 _
+            exact Term.noConfusion h1),
+        if_neg (show ¬((TW (a + 1) : Term) = Z zero) from by
+          intro hc; exact Term.noConfusion hc)]
+      exact lt_TW_reg1_162 a
+    · obtain ⟨d, rfl⟩ : ∃ d, kk = d + mm + 1 := ⟨kk - mm - 1, by omega⟩
+      rw [lt_PT_shift_rev162 (WB162 a Y) (add (Z zero) S) mm d]
+      show lt (phi zero (PA162 (WB162 a Y) d)) (add (Z zero) S) = false
+      rw [lt_phi_add152]
+      show (((PT162 (WB162 a Y) d : Term) == Z zero)
+        || lt (PT162 (WB162 a Y) d) (Z zero)) = false
+      rw [beq_PT_Om162 (WB162 a Y) d,
+        show lt (PT162 (WB162 a Y) d) (Z zero) = false from lt_PT_reg1_162 hbY d]
+      rfl
+
+/-- **主定理 7 (`2 ≤ k`) — `3 ≤ m`, `2 ≤ p`, `k + p ≤ m` で第一の門の一歩。** -/
+theorem ksetStepOK_famK0_168 {m k p : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h2p : 2 ≤ p)
+    (hkp : k + p ≤ m) : KsetStepOK 0 (dict (famK162 m k p 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 2 := ⟨k - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (WB162 a TM.Term.one) (kk + 1))) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) (kk + 2) (a + 2) 0)
+      = UW152 (psi (Z zero) (PT162 (WB162 a TM.Term.one) (kk + 1))) (mm + 2) from
+    dict_famK0_168 a kk (mm + 2)]
+  refine stepOK_UW152 hS.h1 mm ?_
+  intro y hy
+  rw [Kset_psi_reg152, Kset_PT162, Kset_KB0_168 a] at hy
+  rcases List.mem_cons.mp hy with h | h
+  · rw [h]
+    obtain ⟨d, hd⟩ : ∃ d, mm + 2 = d + (kk + 1) + 1 := ⟨mm - kk, by omega⟩
+    rw [hd]
+    exact lt_towB_UW168 hS a TM.Term.one d (kk + 1) (by omega)
+  · cases h
+
+/-- **主定理 8 (`2 ≤ k`) — `m < k + p` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famK0_168 {m k p : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h2p : 2 ≤ p)
+    (hkp : m < k + p) : ¬ KsetStepOK 0 (dict (famK162 m k p 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 2 := ⟨k - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (WB162 a TM.Term.one) (kk + 1))) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) (kk + 2) (a + 2) 0)
+      = UW152 (psi (Z zero) (PT162 (WB162 a TM.Term.one) (kk + 1))) (mm + 2) from
+    dict_famK0_168 a kk (mm + 2)]
+  refine not_stepOK_UW162 hS.h1 mm
+    (y := PT162 (WB162 a TM.Term.one) (kk + 1)) ?_ ?_
+  · rw [Kset_psi_reg152]
+    exact List.Mem.head _
+  · exact lt_towB_UW_false168 hS (baseOK_KB0_168 a) (kk + 1) (mm + 2) (by omega)
+
+/-- **境界はちょうど `k + p ≤ m` (`2 ≤ k`, 両向き)。** -/
+theorem stepOK_iff_famK0_168 {m k p : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h2p : 2 ≤ p) :
+    KsetStepOK 0 (dict (famK162 m k p 0)) ↔ k + p ≤ m := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge m (k + p) with hlt | hge
+    · exact absurd H (not_ksetStepOK_famK0_168 h3m h2k h2p hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famK0_168 h3m h2k h2p h
+
+/-- **主定理 9 (`k = 0`) — `3 ≤ p ≤ m` で第一の門の一歩。** -/
+theorem ksetStepOK_famK00_168 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) (hpm : p ≤ m) :
+    KsetStepOK 0 (dict (famK162 m 0 p 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  rw [show dict (famK162 (mm + 3) 0 p 0) = UW152 (JT0_168 p) (mm + 2) from
+    dict_famK00_168 h3p (mm + 2)]
+  refine stepOK_UW152 (lt_JT0_reg1_168 h3p) mm ?_
+  intro y hy
+  rw [Kset_JT0_168 p] at hy
+  exact Ksd_lt_UW162 _ (mm + 2) p (by omega) y hy
+
+/-- **主定理 9b (`k = 0`) — `m < p` では一歩は成り立たない。**  §162 は `k = 0` の
+    切り口の逆向きを持っていなかった。 -/
+theorem not_ksetStepOK_famK00_168 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) (hmp : m < p) :
+    ¬ KsetStepOK 0 (dict (famK162 m 0 p 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 4 := ⟨p - 4, by omega⟩
+  rw [show dict (famK162 (mm + 3) 0 (pp + 4) 0) = UW152 (JT0_168 (pp + 4)) (mm + 2) from
+    dict_famK00_168 (by omega) (mm + 2)]
+  refine not_stepOK_UW162 (lt_JT0_reg1_168 (show 3 ≤ pp + 4 by omega)) mm
+    (y := TW (pp + 3)) ?_ ?_
+  · rw [Kset_JT0_168 (pp + 4)]
+    exact Ksd_escape158 pp
+  · exact lt_TW_UW_false152 (lt_Om_JT0_false168 (show 3 ≤ pp + 4 by omega))
+      (mm + 2) (pp + 3) (by omega)
+
+/-- **境界はちょうど `p ≤ m` (`k = 0`, 両向き)。** -/
+theorem stepOK_iff_famK00_168 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) :
+    KsetStepOK 0 (dict (famK162 m 0 p 0)) ↔ p ≤ m := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge m p with hlt | hge
+    · exact absurd H (not_ksetStepOK_famK00_168 h3m h3p hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famK00_168 h3m h3p h
+
+theorem not_std_famK0_168 {m k p : Nat} (h1p : 1 ≤ p) (h : m < k + p) :
+    BT.isStd (BT.D 0 (famK162 m k p 0)) = false := not_std_famK162 h1p h
+
+/-- **主定理 10 — `2 ≤ k` の切り口は第一の門を反証できない。** -/
+theorem famK0_no_refute168 {m k p : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h2p : 2 ≤ p)
+    (hs : BT.isStd (BT.D 0 (famK162 m k p 0)) = true) :
+    KsetStepOK 0 (dict (famK162 m k p 0)) := by
+  rcases Nat.lt_or_ge m (k + p) with hlt | hge
+  · exfalso
+    rw [not_std_famK0_168 (by omega) hlt] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famK0_168 h3m h2k h2p hge
+
+/-- **主定理 11 — `k = 0` の切り口も反証できない。** -/
+theorem famK00_no_refute168 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p)
+    (hs : BT.isStd (BT.D 0 (famK162 m 0 p 0)) = true) :
+    KsetStepOK 0 (dict (famK162 m 0 p 0)) := by
+  rcases Nat.lt_or_ge m p with hlt | hge
+  · exfalso
+    rw [not_std_famK0_168 (by omega) (show m < 0 + p by omega)] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famK00_168 h3m h3p hge
+
+theorem gateStd87_famK0_168 (m k p : Nat) (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h2p : 2 ≤ p)
+    (hkp : k + p ≤ m) : GateStd87 (famK162 m k p 0) :=
+  fun _ _ => ksetStepOK_famK0_168 h3m h2k h2p hkp
+
+theorem firstFire_famK0_168 (m k p : Nat) (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h2p : 2 ≤ p)
+    (hkp : k + p ≤ m) : FirstFire145 (famK162 m k p 0) :=
+  fun r hr _ hle y hy => (ksetStepOK_famK0_168 h3m h2k h2p hkp r hr hle).2 y hy
+
+theorem gateStd87_famK00_168 (m p : Nat) (h3m : 3 ≤ m) (h3p : 3 ≤ p) (hpm : p ≤ m) :
+    GateStd87 (famK162 m 0 p 0) :=
+  fun _ _ => ksetStepOK_famK00_168 h3m h3p hpm
+
+theorem firstFire_famK00_168 (m p : Nat) (h3m : 3 ≤ m) (h3p : 3 ≤ p) (hpm : p ≤ m) :
+    FirstFire145 (famK162 m 0 p 0) :=
+  fun r hr _ hle y hy => (ksetStepOK_famK00_168 h3m h3p hpm r hr hle).2 y hy
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §168.5 The `p = 1` slices at `j = 0`: an `Ω₁`-headed base
+
+§162.13 built the `Ω₁`-headed base `OBW162 Y = Ω₁ ⊕ Ω₁ ⊕ Y` and its step
+(`stepOK_OBW162` / `not_stepOK_OBW162`), but both demand `splitFin` of the base to
+be trivial.  At `j = 0` in class (b) the base ends in `1`, so the same two
+lemmas are restated over `BaseOK162` directly. -/
+
+/-- 頭が `Ω₁` の底の資料 — 裾に `1` があってもよい版。 -/
+theorem baseOK_addOmY168 {Y : Term}
+    (hfp : isFP zero (splitFin (add (Z zero) Y)).1 = false) :
+    BaseOK162 (add (Z zero) Y) := by
+  refine ⟨?_, le_reg1_addOm162 Y, ?_, ?_,
+    omegaNF_shape152 (show lt M (add (Z zero) Y) = false from ltF_M_addOm135 Y _) rfl
+      (isFP_add152 _ _) (dnArg_notFP168 hfp)⟩
+  · show lt (add (Z zero) Y) (reg 1) = false
+    rw [lt_add_nsum (show (reg 1 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl]
+    exact lt_irrefl _
+  · show lt (add (Z zero) Y) (reg 2) = true
+    rw [lt_add_nsum (show (reg 2 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl]
+    exact lt_Om_Om2_139
+  · show (isFP zero (splitFin (add (Z zero) Y)).1
+      || (((add (Z zero) Y : Term) == zero) && (zero : Term).isSC)) = false
+    rw [hfp]
+    rfl
+
+theorem baseOK_OBW168 {Y : Term}
+    (hfp : isFP zero (splitFin (OBW162 Y)).1 = false) : BaseOK162 (OBW162 Y) :=
+  baseOK_addOmY168 hfp
+
+theorem collapse1_OBW168 {Y : Term} (hof : ofList (Z zero :: toList Y) = add (Z zero) Y)
+    (hof2 : ofList (Z zero :: Z zero :: toList Y) = OBW162 Y)
+    (hb : BaseOK162 (OBW162 Y)) :
+    collapse 1 (add (Z zero) Y) = PT162 (OBW162 Y) 0 := by
+  rw [collapse1_gen162 (show toList (add (Z zero) Y) = Z zero :: toList Y from rfl)
+      (show lt (Z zero) (reg 2) = true from lt_Om_Om2_139) hof,
+    plus_Om1_OBW162 hof2]
+  exact hb.homg
+
+theorem stepOK_OBW168 {Y : Term} (hof : ofList (Z zero :: toList Y) = add (Z zero) Y)
+    (hof2 : ofList (Z zero :: Z zero :: toList Y) = OBW162 Y)
+    (hb : BaseOK162 (OBW162 Y)) (hb' : BaseOK162 (add (Z zero) Y)) (ℓ : Nat)
+    (H : ∀ y ∈ Kset (reg 1) Y, lt y (PT162 (OBW162 Y) (ℓ + 1)) = true) :
+    KsetStepOK 0 (PT162 (OBW162 Y) (ℓ + 1)) := by
+  cases ℓ with
+  | zero =>
+      refine stepOK_PTB162 hb (subAP_OBW162 hof) hb'.homg hb'.hps
+        (plus_Om1_OBW162 hof2) ?_
+      intro y hy
+      exact H y (show y ∈ Kset (reg 1) Y from hy)
+  | succ ℓ =>
+      refine stepOK_PT_succ162 hb ℓ ?_
+      intro y hy
+      exact H y (show y ∈ Kset (reg 1) Y from hy)
+
+theorem not_stepOK_OBW168 {Y y : Term} (hof : ofList (Z zero :: toList Y) = add (Z zero) Y)
+    (hof2 : ofList (Z zero :: Z zero :: toList Y) = OBW162 Y)
+    (hb : BaseOK162 (OBW162 Y)) (hb' : BaseOK162 (add (Z zero) Y)) (ℓ : Nat)
+    (hy : y ∈ Kset (reg 1) Y) (hlt : lt y (PT162 (OBW162 Y) (ℓ + 1)) = false) :
+    ¬ KsetStepOK 0 (PT162 (OBW162 Y) (ℓ + 1)) := by
+  cases ℓ with
+  | zero =>
+      exact not_stepOK_PTB162 hb (subAP_OBW162 hof) hb'.homg hb'.hps
+        (plus_Om1_OBW162 hof2) (le_reg1_phi0_162 (le_reg1_addOm162 Y))
+        (show y ∈ Kset (reg 1) (add (Z zero) Y) from hy) hlt
+  | succ ℓ =>
+      exact not_stepOK_PT_succ162 hb ℓ
+        (show y ∈ Kset (reg 1) (OBW162 Y) from hy) hlt
+
+/-- `x ⊕ y ⊕ s ⊕ 1` の分割。 -/
+theorem splitFin_add4One168 {x y s : Term}
+    (hone : ((s : Term) == TM.Term.one) = false) :
+    splitFin (add x (add y (add s TM.Term.one))) = (add x (add y s), 1) := by
+  show (ofList ((toList (add x (add y (add s TM.Term.one)))).take
+          ((toList (add x (add y (add s TM.Term.one)))).length
+          - ((toList (add x (add y (add s TM.Term.one)))).reverse.takeWhile
+              (· == TM.Term.one)).length)),
+        ((toList (add x (add y (add s TM.Term.one)))).reverse.takeWhile
+          (· == TM.Term.one)).length) = _
+  rw [show toList (add x (add y (add s TM.Term.one))) = [x, y, s, TM.Term.one] from rfl,
+    show ([x, y, s, TM.Term.one].reverse : List Term) = [TM.Term.one, s, y, x] from rfl,
+    show List.takeWhile (· == TM.Term.one) [TM.Term.one, s, y, x] = [TM.Term.one] from by
+      rw [takeWhile_one_cons168, takeWhile_ne_one168 hone]]
+  show (ofList [x, y, s], 1) = _
+  rfl
+
+/-- `x ⊕ y ⊕ t` の分割 — `t` が単独の AP で `1` でないとき。 -/
+theorem splitFin_add3_168 {x y t : Term} (ht : toList t = [t])
+    (hone : ((t : Term) == TM.Term.one) = false) :
+    splitFin (add x (add y t)) = (add x (add y t), 0) := by
+  show (ofList ((toList (add x (add y t))).take
+          ((toList (add x (add y t))).length
+          - ((toList (add x (add y t))).reverse.takeWhile (· == TM.Term.one)).length)),
+        ((toList (add x (add y t))).reverse.takeWhile (· == TM.Term.one)).length) = _
+  rw [show toList (add x (add y t)) = [x, y, t] from by
+      show x :: y :: toList t = _
+      rw [ht],
+    show ([x, y, t].reverse : List Term) = [t, y, x] from rfl,
+    takeWhile_ne_one168 hone]
+  show (ofList [x, y, t], 0) = _
+  rfl
+
+/-! §168.5a Class (b) at `p = 1`, `j = 0`: base `Ω₁ ⊕ Ω₁ ⊕ sd_k ⊕ 1` -/
+
+theorem ofI1_168 (s : Term) :
+    ofList (Z zero :: toList (add s TM.Term.one))
+      = add (Z zero) (add s TM.Term.one) := rfl
+
+theorem ofI2_168 (s : Term) :
+    ofList (Z zero :: Z zero :: toList (add s TM.Term.one))
+      = OBW162 (add s TM.Term.one) := rfl
+
+theorem baseOK_OI1_168 {s : Term} (hone : ((s : Term) == TM.Term.one) = false) :
+    BaseOK162 (add (Z zero) (add s TM.Term.one)) :=
+  baseOK_addOmY168 (by rw [splitFin_add3One168 hone]; exact isFP_add152 _ _)
+
+theorem baseOK_OI2_168 {s : Term} (hone : ((s : Term) == TM.Term.one) = false) :
+    BaseOK162 (OBW162 (add s TM.Term.one)) :=
+  baseOK_OBW168 (by
+    rw [show splitFin (OBW162 (add s TM.Term.one))
+        = (add (Z zero) (add (Z zero) s), 1) from splitFin_add4One168 hone]
+    exact isFP_add152 _ _)
+
+theorem plus_Om_addOne168 {s : Term} (hle : le s (Z zero) = true) :
+    plus (Z zero) (add s TM.Term.one) = add (Z zero) (add s TM.Term.one) := by
+  rw [plus_cons66 (show toList (add s TM.Term.one) = s :: [TM.Term.one] from rfl),
+    show toList (Z zero) = [Z zero] from rfl,
+    List.filter_cons_of_pos (by exact hle)]
+  rfl
+
+theorem Kset_OI_168 (s : Term) :
+    Kset (reg 1) (add s TM.Term.one) = Kset (reg 1) s := by
+  show Kset (reg 1) s ++ Kset (reg 1) (TM.Term.one : Term) = _
+  rw [show Kset (reg 1) (TM.Term.one : Term) = [] from rfl]
+  exact List.append_nil _
+
+/-- **閉じた形 — 類 (b) の `p = 1`, `j = 0`。** -/
+theorem dict_famI1_0_168 {k : Nat} (h1k : 1 ≤ k) : ∀ m : Nat,
+    dict (famI162 (m + 1) 1 k 0) = PT162 (OBW162 (add (sd152 k) TM.Term.one)) m
+  | 0 => by
+      have hK : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+      show collapse 1 (dict (BT.sum (nst132 1 BT.zero)
+        (BT.sum (BT.D 0 (nst132 k BT.zero)) (BT.D 0 (nst132 0 BT.zero))))) = _
+      rw [Trans.Dict.dict_sum, Trans.Dict.dict_sum, dict_tow162 1,
+        show dict (BT.D 0 (nst132 k BT.zero)) = sd152 k from rfl,
+        show dict (BT.D 0 (nst132 0 BT.zero)) = TM.Term.one from sd0_152,
+        plus_tail_tail162 (toList_tail158 hK)
+          (show toList (TM.Term.one : Term) = [TM.Term.one] from rfl)
+          (le_one_sd168 k h1k),
+        show plus (MW162 1) (add (sd152 k) TM.Term.one)
+            = add (Z zero) (add (sd152 k) TM.Term.one) from
+          plus_Om_addOne168 (le_of_lt hK.h1)]
+      exact collapse1_OBW168 (ofI1_168 (sd152 k)) (ofI2_168 (sd152 k))
+        (baseOK_OI2_168 hK.ho)
+  | m + 1 => by
+      have hK : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+      show collapse 1 (dict (famI162 (m + 1) 1 k 0)) = _
+      rw [dict_famI1_0_168 h1k m]
+      exact collapse1_PT162 (baseOK_OI2_168 hK.ho) m
+
+/-- **主定理 12 — 類 (b) の `p = 1`, `j = 0`、`2 ≤ m`, `1 ≤ k ≤ m + 1` で一歩。** -/
+theorem ksetStepOK_famI1_0_168 {m k : Nat} (h2m : 2 ≤ m) (h1k : 1 ≤ k)
+    (hkm : k ≤ m + 1) : KsetStepOK 0 (dict (famI162 m 1 k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  have hK : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+  rw [dict_famI1_0_168 h1k (mm + 1)]
+  refine stepOK_OBW168 (ofI1_168 (sd152 k)) (ofI2_168 (sd152 k))
+    (baseOK_OI2_168 hK.ho) (baseOK_OI1_168 hK.ho) mm ?_
+  intro y hy
+  rw [Kset_OI_168 (sd152 k)] at hy
+  exact Ksd_lt_PT162 (baseOK_OI2_168 hK.ho) 0
+    (fun c hc => lt_TW_OBW162 _ hc) (mm + 1) k (by omega) y hy
+
+/-- **主定理 13 — `m + 1 < k` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famI1_0_168 {m k : Nat} (h2m : 2 ≤ m) (hk : m + 1 < k) :
+    ¬ KsetStepOK 0 (dict (famI162 m 1 k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+  have hK : TailOK158 (sd152 (kk + 4)) := tailOK_sd158 (kk + 4) (by omega)
+  rw [dict_famI1_0_168 (show 1 ≤ kk + 4 by omega) (mm + 1)]
+  refine not_stepOK_OBW168 (ofI1_168 (sd152 (kk + 4))) (ofI2_168 (sd152 (kk + 4)))
+    (baseOK_OI2_168 hK.ho) (baseOK_OI1_168 hK.ho) mm (y := TW (kk + 3)) ?_ ?_
+  · rw [Kset_OI_168 (sd152 (kk + 4))]
+    exact Ksd_escape158 kk
+  · exact lt_TW_PT_reach_false162
+      (B := OBW162 (add (sd152 (kk + 4)) TM.Term.one)) 0
+      (fun c hc => lt_TW_OBW_false162 _ hc) (kk + 3) (mm + 1) (by omega)
+
+theorem stepOK_iff_famI1_0_168 {m k : Nat} (h2m : 2 ≤ m) (h1k : 1 ≤ k) :
+    KsetStepOK 0 (dict (famI162 m 1 k 0)) ↔ k ≤ m + 1 := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge (m + 1) k with hlt | hge
+    · exact absurd H (not_ksetStepOK_famI1_0_168 h2m hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famI1_0_168 h2m h1k h
+
+theorem famI1_0_no_refute168 {m k : Nat} (h2m : 2 ≤ m) (h1k : 1 ≤ k)
+    (hs : BT.isStd (BT.D 0 (famI162 m 1 k 0)) = true) :
+    KsetStepOK 0 (dict (famI162 m 1 k 0)) := by
+  rcases Nat.lt_or_ge (m + 1) k with hlt | hge
+  · exfalso
+    rw [not_std_famI162 (show 1 ≤ 1 by omega) (show m + 1 < k by omega)] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famI1_0_168 h2m h1k hge
+
+theorem gateStd87_famI1_0_168 (m k : Nat) (h2m : 2 ≤ m) (h1k : 1 ≤ k)
+    (hkm : k ≤ m + 1) : GateStd87 (famI162 m 1 k 0) :=
+  fun _ _ => ksetStepOK_famI1_0_168 h2m h1k hkm
+
+theorem firstFire_famI1_0_168 (m k : Nat) (h2m : 2 ≤ m) (h1k : 1 ≤ k)
+    (hkm : k ≤ m + 1) : FirstFire145 (famI162 m 1 k 0) :=
+  fun r hr _ hle y hy => (ksetStepOK_famI1_0_168 h2m h1k hkm r hr hle).2 y hy
+
+/-! §168.5b Class (a) at `p = 1`, `j = 0`: base `Ω₁ ⊕ Ω₁ ⊕ ω^(sd_k)` -/
+
+theorem ofJ1_168 (k : Nat) :
+    ofList (Z zero :: toList (JT0_168 k)) = add (Z zero) (JT0_168 k) := rfl
+
+theorem ofJ2_168 (k : Nat) :
+    ofList (Z zero :: Z zero :: toList (JT0_168 k)) = OBW162 (JT0_168 k) := rfl
+
+theorem splitJ1_168 {k : Nat} (h3k : 3 ≤ k) :
+    splitFin (add (Z zero) (JT0_168 k)) = (add (Z zero) (JT0_168 k), 0) :=
+  splitFin_add2_162 (toList_JT0_168 k) (beq_JT0_one168 h3k)
+
+theorem splitJ2_168 {k : Nat} (h3k : 3 ≤ k) :
+    splitFin (OBW162 (JT0_168 k)) = (OBW162 (JT0_168 k), 0) :=
+  splitFin_add3_168 (toList_JT0_168 k) (beq_JT0_one168 h3k)
+
+/-- **閉じた形 — 類 (a) の `p = 1`, `j = 0`。** -/
+theorem dict_famJ1_0_168 {k : Nat} (h3k : 3 ≤ k) : ∀ m : Nat,
+    dict (famJ162 (m + 1) 1 k 0) = PT162 (OBW162 (JT0_168 k)) m
+  | 0 => by
+      show collapse 1 (dict (BT.sum (nst132 1 BT.zero)
+        (BT.D 0 (BT.sum (nst132 k BT.zero) (BT.D 0 (nst132 0 BT.zero)))))) = _
+      rw [Trans.Dict.dict_sum, dict_tow162 1, dict_seedJ0_168 h3k,
+        show plus (MW162 1) (JT0_168 k) = add (Z zero) (JT0_168 k) from
+          plus_reg1_ap152 rfl (le_of_lt (lt_JT0_reg1_168 h3k))]
+      exact collapse1_OBW168 (ofJ1_168 k) (ofJ2_168 k)
+        (baseOK_OBW162 (splitJ2_168 h3k))
+  | m + 1 => by
+      show collapse 1 (dict (famJ162 (m + 1) 1 k 0)) = _
+      rw [dict_famJ1_0_168 h3k m]
+      exact collapse1_PT162 (baseOK_OBW162 (splitJ2_168 h3k)) m
+
+/-- **主定理 14 — 類 (a) の `p = 1`, `j = 0`、`2 ≤ m`, `3 ≤ k ≤ m + 1` で一歩。** -/
+theorem ksetStepOK_famJ1_0_168 {m k : Nat} (h2m : 2 ≤ m) (h3k : 3 ≤ k)
+    (hkm : k ≤ m + 1) : KsetStepOK 0 (dict (famJ162 m 1 k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  rw [dict_famJ1_0_168 h3k (mm + 1)]
+  refine stepOK_OBW168 (ofJ1_168 k) (ofJ2_168 k)
+    (baseOK_OBW162 (splitJ2_168 h3k)) (baseOK_addOmY162 (splitJ1_168 h3k)) mm ?_
+  intro y hy
+  rw [Kset_JT0_168 k] at hy
+  exact Ksd_lt_PT162 (baseOK_OBW162 (splitJ2_168 h3k)) 0
+    (fun c hc => lt_TW_OBW162 _ hc) (mm + 1) k (by omega) y hy
+
+/-- **主定理 15 — `m + 1 < k` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famJ1_0_168 {m k : Nat} (h2m : 2 ≤ m) (hk : m + 1 < k) :
+    ¬ KsetStepOK 0 (dict (famJ162 m 1 k 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 2 := ⟨m - 2, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+  rw [dict_famJ1_0_168 (show 3 ≤ kk + 4 by omega) (mm + 1)]
+  refine not_stepOK_OBW168 (ofJ1_168 (kk + 4)) (ofJ2_168 (kk + 4))
+    (baseOK_OBW162 (splitJ2_168 (show 3 ≤ kk + 4 by omega)))
+    (baseOK_addOmY162 (splitJ1_168 (show 3 ≤ kk + 4 by omega))) mm
+    (y := TW (kk + 3)) ?_ ?_
+  · rw [Kset_JT0_168 (kk + 4)]
+    exact Ksd_escape158 kk
+  · exact lt_TW_PT_reach_false162 (B := OBW162 (JT0_168 (kk + 4))) 0
+      (fun c hc => lt_TW_OBW_false162 _ hc) (kk + 3) (mm + 1) (by omega)
+
+theorem stepOK_iff_famJ1_0_168 {m k : Nat} (h2m : 2 ≤ m) (h3k : 3 ≤ k) :
+    KsetStepOK 0 (dict (famJ162 m 1 k 0)) ↔ k ≤ m + 1 := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge (m + 1) k with hlt | hge
+    · exact absurd H (not_ksetStepOK_famJ1_0_168 h2m hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famJ1_0_168 h2m h3k h
+
+theorem famJ1_0_no_refute168 {m k : Nat} (h2m : 2 ≤ m) (h3k : 3 ≤ k)
+    (hs : BT.isStd (BT.D 0 (famJ162 m 1 k 0)) = true) :
+    KsetStepOK 0 (dict (famJ162 m 1 k 0)) := by
+  rcases Nat.lt_or_ge (m + 1) k with hlt | hge
+  · exfalso
+    rw [not_std_famJ162 (show 1 ≤ m by omega) (show 1 ≤ 1 by omega)
+      (show 1 ≤ k by omega) (show m + 1 < k by omega)] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famJ1_0_168 h2m h3k hge
+
+theorem gateStd87_famJ1_0_168 (m k : Nat) (h2m : 2 ≤ m) (h3k : 3 ≤ k)
+    (hkm : k ≤ m + 1) : GateStd87 (famJ162 m 1 k 0) :=
+  fun _ _ => ksetStepOK_famJ1_0_168 h2m h3k hkm
+
+theorem firstFire_famJ1_0_168 (m k : Nat) (h2m : 2 ≤ m) (h3k : 3 ≤ k)
+    (hkm : k ≤ m + 1) : FirstFire145 (famJ162 m 1 k 0) :=
+  fun r hr _ hle y hy => (ksetStepOK_famJ1_0_168 h2m h3k hkm r hr hle).2 y hy
+
+end
+
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §168.6 Measurement (frozen) — everything below is measurement, not proof -/
+
+/-- §168.2 の証明した領域の判定器 (`j = 0` の (b))。 -/
+def isFamI0_168 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.sum (BT.D 0 y) (BT.D 0 z))) =>
+      match towH158 x, towH158 y, towH158 z with
+      | some p, some k, some j =>
+          decide (j = 0) && decide (2 ≤ m) && decide (1 ≤ p) && decide (1 ≤ k)
+            && decide (k ≤ m + p)
+      | _, _, _ => false
+  | _ => false
+
+/-- §168.3 の証明した領域の判定器 (`j = 0` の (a))。 -/
+def isFamJ0_168 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.D 0 (BT.sum y (BT.D 0 z)))) =>
+      match towH158 x, towH158 y, towH158 z with
+      | some p, some k, some j =>
+          decide (j = 0) && decide (2 ≤ m) && decide (1 ≤ p) && decide (3 ≤ k)
+            && decide (k ≤ m + p)
+      | _, _, _ => false
+  | _ => false
+
+/-- §168.4 の証明した領域の判定器 (`j = 0` の (d))。 -/
+def isFamK0_168 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.D 0 X) =>
+      match peel158 X with
+      | (k, BT.sum y (BT.D 0 z)) =>
+          match towH158 y, towH158 z with
+          | some p, some j =>
+              decide (j = 0) &&
+              ((decide (3 ≤ m) && decide (2 ≤ k) && decide (2 ≤ p)
+                && decide (k + p ≤ m))
+              || (decide (k = 0) && decide (3 ≤ m) && decide (3 ≤ p)
+                && decide (p ≤ m)))
+          | _, _ => false
+      | _ => false
+  | _ => false
+
+def covered168 (a : BT) : Bool :=
+  covered162 a || isFamI0_168 a || isFamJ0_168 a || isFamK0_168 a
+
+/-! 判定器は狙った形にだけ当たる (測定)。 -/
+
+#guard isFamI0_168 (famI162 3 2 4 0)
+#guard !(isFamI0_168 (famI162 3 2 4 1))
+#guard isFamJ0_168 (famJ162 3 2 4 0)
+#guard !(isFamJ0_168 (famJ162 3 2 4 1))
+#guard isFamK0_168 (famK162 5 2 3 0)
+#guard !(isFamK0_168 (famK162 5 2 3 1))
+#guard !(isFamI0_168 (famJ162 3 2 4 0))
+#guard !(isFamJ0_168 (famI162 3 2 4 0))
+#guard isFamI0_168 (famI162 3 1 4 0)
+#guard isFamJ0_168 (famJ162 3 1 4 0)
+#guard !(isFamI0_168 (famI162 3 1 5 0))
+#guard !(isFamJ0_168 (famJ162 3 1 5 0))
+
+/-! 閉じた形の照合 (測定) — 証明前に測った値。 -/
+
+#guard dict (famI162 2 3 4 0)
+  == phi zero (phi zero (add (TW 2) (add (sd152 4) TM.Term.one)))
+#guard dict (famI162 3 2 1 0)
+  == phi zero (phi zero (phi zero (add (TW 1) (add (sd152 1) TM.Term.one))))
+#guard dict (BT.D 0 (BT.sum (nst132 4 BT.zero) (BT.D 0 (nst132 0 BT.zero))))
+  == phi zero (sd152 4)
+#guard dict (BT.D 0 (BT.sum (nst132 3 BT.zero) (BT.D 0 (nst132 0 BT.zero))))
+  == phi zero (sd152 3)
+#guard dict (famJ162 2 3 4 0) == phi zero (phi zero (add (TW 2) (phi zero (sd152 4))))
+#guard dict (famJ162 2 3 3 0) == phi zero (phi zero (add (TW 2) (phi zero (sd152 3))))
+#guard dict (nst132 1 (BT.sum (nst132 3 BT.zero) (BT.D 0 (nst132 0 BT.zero))))
+  == phi zero (add (TW 2) TM.Term.one)
+#guard dict (famK162 3 2 3 0)
+  == UW152 (psi (Z zero) (phi zero (phi zero (add (TW 2) TM.Term.one)))) 2
+#guard dict (famK162 4 0 3 0) == UW152 (phi zero (sd152 3)) 3
+
+/-! 境界の掃き (測定) — 証明した窓より広く。 -/
+
+#guard (List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun k =>
+  !(decide (2 ≤ m) && decide (1 ≤ p) && decide (1 ≤ k) && decide (k ≤ m + p))
+  || stepOKb 0 (dict (famI162 m p k 0))
+
+#guard (List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun k =>
+  !(decide (2 ≤ m) && decide (1 ≤ p) && decide (m + p < k))
+  || !(stepOKb 0 (dict (famI162 m p k 0)))
+
+#guard (List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun k =>
+  !(decide (2 ≤ m) && decide (1 ≤ p) && decide (3 ≤ k) && decide (k ≤ m + p))
+  || stepOKb 0 (dict (famJ162 m p k 0))
+
+#guard (List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun k =>
+  !(decide (2 ≤ m) && decide (1 ≤ p) && decide (m + p < k))
+  || !(stepOKb 0 (dict (famJ162 m p k 0)))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun p =>
+  !(decide (3 ≤ m) && decide (2 ≤ k) && decide (2 ≤ p) && decide (k + p ≤ m))
+  || stepOKb 0 (dict (famK162 m k p 0))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun k => (List.range 7).all fun p =>
+  !(decide (3 ≤ m) && decide (2 ≤ k) && decide (2 ≤ p) && decide (m < k + p))
+  || !(stepOKb 0 (dict (famK162 m k p 0)))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun p =>
+  !(decide (3 ≤ m) && decide (3 ≤ p) && decide (p ≤ m))
+  || stepOKb 0 (dict (famK162 m 0 p 0))
+
+#guard (List.range 7).all fun m => (List.range 7).all fun p =>
+  !(decide (3 ≤ m) && decide (3 ≤ p) && decide (m < p))
+  || !(stepOKb 0 (dict (famK162 m 0 p 0)))
+
+/-! `j = 0` の形だけの判定器 — 狙う母集団の大きさを測るため (証明とは無関係)。 -/
+
+def shapeI0_168 (a : BT) : Bool :=
+  match peel158 a with
+  | (_, BT.sum _ (BT.sum (BT.D 0 y) (BT.D 0 z))) =>
+      match towH158 y, towH158 z with
+      | some _, some j => decide (j = 0)
+      | _, _ => false
+  | _ => false
+
+def shapeJ0_168 (a : BT) : Bool :=
+  match peel158 a with
+  | (_, BT.sum _ (BT.D 0 (BT.sum y (BT.D 0 z)))) =>
+      match towH158 y, towH158 z with
+      | some _, some j => decide (j = 0)
+      | _, _ => false
+  | _ => false
+
+def shapeK0_168 (a : BT) : Bool :=
+  match peel158 a with
+  | (_, BT.D 0 X) =>
+      match peel158 X with
+      | (_, BT.sum y (BT.D 0 z)) =>
+          match towH158 y, towH158 z with
+          | some _, some j => decide (j = 0)
+          | _, _ => false
+      | _ => false
+  | _ => false
+
+/-! 被覆 (測定 — すべて実測値を凍結したもの)。 -/
+
+#guard (famPool132.filter resid136).length == 2455
+#guard ((famPool132.filter resid136).countP covered162) == 1998
+
+/-! `j = 0` の三つの形が `resid136` にどれだけ居て、`§162` がどれだけ残したか。 -/
+#guard ((famPool132.filter resid136).countP shapeI0_168) == 65
+#guard ((famPool132.filter resid136).countP shapeJ0_168) == 65
+#guard ((famPool132.filter resid136).countP shapeK0_168) == 22
+#guard ((famPool132.filter resid136).countP fun a => shapeI0_168 a && !(covered162 a)) == 65
+#guard ((famPool132.filter resid136).countP fun a => shapeJ0_168 a && !(covered162 a)) == 65
+#guard ((famPool132.filter resid136).countP fun a => shapeK0_168 a && !(covered162 a)) == 22
+
+/-! §168 が新しく取る本数 (どれも `§162` の外)。 -/
+#guard ((famPool132.filter resid136).countP isFamI0_168) == 56
+#guard ((famPool132.filter resid136).countP isFamJ0_168) == 56
+#guard ((famPool132.filter resid136).countP isFamK0_168) == 10
+#guard ((famPool132.filter resid136).countP fun a => isFamI0_168 a && !(covered162 a)) == 56
+#guard ((famPool132.filter resid136).countP fun a => isFamJ0_168 a && !(covered162 a)) == 56
+#guard ((famPool132.filter resid136).countP fun a => isFamK0_168 a && !(covered162 a)) == 10
+
+/-! 合計。`1998 + 56 + 56 + 10 = 2120`。 -/
+#guard ((famPool132.filter resid136).countP covered168) == 2120
+#guard ((pool136.filter resid136).countP covered168) == 70
+#guard ((fm145.filter resid136).countP covered168) == 400
+
+/-! **`j = 0` に残るもの** — (b),(a) は `m = 1` の 9 本ずつ、(d) は `k = 1` と
+    `p = 1` の 12 本。どれも `§168` の窓の外で、ここでは決めていない。 -/
+#guard ((famPool132.filter resid136).countP fun a => shapeI0_168 a && !(covered168 a)) == 9
+#guard ((famPool132.filter resid136).countP fun a => shapeJ0_168 a && !(covered168 a)) == 9
+#guard ((famPool132.filter resid136).countP fun a => shapeK0_168 a && !(covered168 a)) == 12
+
+/-! 母集団全体に残るもの。`2455 - 2120 = 335`。 -/
+#guard ((famPool132.filter resid136).countP fun a => !(covered168 a)) == 335
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms baseOK_WB168
+#print axioms omegaNF_addOne_FP168
+#print axioms dict_famI0_168
+#print axioms ksetStepOK_famI0_168
+#print axioms not_ksetStepOK_famI0_168
+#print axioms stepOK_iff_famI0_168
+#print axioms famI0_no_refute168
+#print axioms gateStd87_famI0_168
+#print axioms firstFire_famI0_168
+#print axioms dict_seedJ0_168
+#print axioms dict_famJ0_168
+#print axioms ksetStepOK_famJ0_168
+#print axioms not_ksetStepOK_famJ0_168
+#print axioms stepOK_iff_famJ0_168
+#print axioms famJ0_no_refute168
+#print axioms gateStd87_famJ0_168
+#print axioms firstFire_famJ0_168
+#print axioms dict_famF0_168
+#print axioms dict_seedK0_168
+#print axioms dict_famK0_168
+#print axioms dict_famK00_168
+#print axioms ksetStepOK_famK0_168
+#print axioms not_ksetStepOK_famK0_168
+#print axioms stepOK_iff_famK0_168
+#print axioms ksetStepOK_famK00_168
+#print axioms famK0_no_refute168
+#print axioms famK00_no_refute168
+#print axioms gateStd87_famK0_168
+#print axioms firstFire_famK0_168
+#print axioms gateStd87_famK00_168
+#print axioms firstFire_famK00_168
+#print axioms lt_Om_phi0_false168
+#print axioms lt_Om_JT0_false168
+#print axioms not_ksetStepOK_famK00_168
+#print axioms stepOK_iff_famK00_168
+#print axioms baseOK_addOmY168
+#print axioms stepOK_OBW168
+#print axioms not_stepOK_OBW168
+#print axioms dict_famI1_0_168
+#print axioms ksetStepOK_famI1_0_168
+#print axioms not_ksetStepOK_famI1_0_168
+#print axioms stepOK_iff_famI1_0_168
+#print axioms famI1_0_no_refute168
+#print axioms gateStd87_famI1_0_168
+#print axioms firstFire_famI1_0_168
+#print axioms dict_famJ1_0_168
+#print axioms ksetStepOK_famJ1_0_168
+#print axioms not_ksetStepOK_famJ1_0_168
+#print axioms stepOK_iff_famJ1_0_168
+#print axioms famJ1_0_no_refute168
+#print axioms gateStd87_famJ1_0_168
+#print axioms firstFire_famJ1_0_168
+
+end
+
+/-!
+# §169 CLASS (d) AT `p = 1` — the `Ω₁`-headed INNER base
+
+§162.12 closed class (d) `famK162 m k p j = ψ₁^m(ψ₀(ψ₁^k(ψ₁^p 0 ⊕ ψ₀(ψ₁^j 0))))` for
+`2 ≤ k`, `2 ≤ p` (boundary `k + p ≤ m`) and for the `k = 0` slice.  It left `k = 1`,
+`p = 1` and `j = 0` open.  This file takes `p = 1`.
+
+At `p = 1` the inner term `ψ₁^k(ψ₁ 0 ⊕ ψ₀(ψ₁^j 0))` is exactly `famF158 k 1 j`, whose
+`dict` §162.10 already computed: `PT162 (OB162 (sd152 j)) (k-1)`, a tower over the
+`Ω₁`-HEADED base `OB162 t = Ω₁ ⊕ Ω₁ ⊕ t`.  Both isolating hypotheses of §162.2
+(`subAP (reg 1) B = B`, `plus (reg 1) B = B`) fail on that base, so `collapse0_PT162`
+does not apply.  Two replacements suffice:
+
+  * `collapse0_PT_succ169` — level `ℓ + 2` needs no hypothesis on `B`'s head at all
+    (`wcnf_PT_succ162` / `idx_PT_succ162`);
+  * `collapse0_PTB169` — level `1`, the `B = Ω₁ ⊕ B'` variant of §162.2b.
+
+The base `OB162 t` sits BELOW every `φ̄0`-tower over `Ω₁ ⊕ σ` (its head is the bare `Ω₁`),
+so the reach lemma is one-sided — only the height can obstruct — and the boundary comes
+out at `k + 1 ≤ m`, i.e. §162.12's `k + p ≤ m` read at `p = 1`.
+
+WHAT IS PROVED, with its real hypotheses:
+
+  `stepOK_iff_famK1_169`  `3 ≤ m`, `2 ≤ k`, `1 ≤ j ≤ m`:
+      `KsetStepOK 0 (dict (famK162 m k 1 j)) ↔ k + 1 ≤ m`   (both directions)
+  `not_std_famK1_169`     `m < k + 1` ⇒ `BT.isStd (BT.D 0 (famK162 m k 1 j)) = false`
+      (§162.12c's `not_std_famK162` at `p = 1`; no new work)
+  `famK1_no_refute169`, `gateStd87_famK1_169`, `firstFire_famK1_169`.
+
+WHAT IS **NOT** here, and why.  Each corner's boundary is MEASURED in §169.6 over the
+window `m, k, j ≤ 7` and frozen as `#guard`; measured is not proved, and nothing is
+claimed outside that window.
+
+  * `k ≤ 1` at `p = 1`.  At `k = 1` the inner tower is `PT162 B 0`, whose `wcnf` digit
+    is `(1 ⊕ 1, sd152 j)` — the coefficient is the seed, not `1`, and the exponent
+    `1 ⊕ 1 = 2` sits below `Ω₁` so it does not even fire.  A different regime
+    (§155.4's), not a gap in this proof.  `stepOK_UW152` only accepts `(tower, 1)`.
+    Measured boundary at `k ≤ 1`, `3 ≤ m`: the step holds iff `j ≤ m`.
+    This costs no coverage: `famPool132`'s residual contains no `p = 1`, `k ≤ 1`
+    class-(d) term that `covered162` had left open.
+  * `j = 0`.  The base would be `Ω₁ ⊕ Ω₁ ⊕ 1`; `TailOK158 (sd152 0)` is false
+    (`sd152 0 = 1` fails `ho`), so `dict_famF1_162` does not reach it.  Measured
+    boundary at `j = 0`, `3 ≤ m`: the step holds iff `k + 1 ≤ m` — the same line as
+    the proved side.  This IS the whole remaining `p = 1` cost: 6 terms.
+  * `m ≤ 2`.  `stepOK_UW152` / `not_stepOK_UW162` only speak about `UW152 s (ℓ + 2)`,
+    and `dict (famK162 m k 1 j)` is `UW152 σ (m - 1)`.  Measured: at `m ≤ 2` the step
+    holds for EVERY `(k, j)` in the window, so this is a limit of the tools used here,
+    not a wall in the mathematics.
+
+The hypothesis `j ≤ m` is not slack in the tool: measured over the same window, inside
+`3 ≤ m`, `2 ≤ k`, `1 ≤ j`, `k + 1 ≤ m` the step holds EXACTLY when `j ≤ m`, and the 20
+`(m, k, j)` that break it are listed.  So `stepOK_iff_famK1_169`'s hypotheses cannot be
+weakened by dropping it.
+
+COVERAGE (measured, frozen).  On `famPool132`'s 2455-term residual `resid136`, the
+proved classes go from §162's 1998 to **2020**; the class-(d) leftover goes from 66 to
+44.  All 22 gained are `p = 1` — that is every `p = 1` class-(d) term §162 had left open
+except the 6 with `j = 0`.
+
+`pool136` (70) and `fm145` (344) do not move, and the two reasons are DIFFERENT and both
+measured.  `pool136` holds no class-(d) term at all (count 0).  `fm145` holds 58 of them
+and 12 are still uncovered — but all 58 have `k = 0`, so not one lies in the `p = 1`
+slice this file proves; the 12 are the `k = 0`, `j = 0` corner.
+-/
+
+
+open BMS
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §169.1 `collapse 0` of a tower whose base's head is `Ω₁`
+
+Both lemmas here are NEW and GENERIC in `B` — nothing in them is special to class (d).
+`§162.12`'s `collapse0_PT162` needs `subAP (reg 1) B = B` and `plus (reg 1) B = B`, which
+hold exactly when `B`'s head sits strictly ABOVE `Ω₁`.  Any family whose `ψ₀` sits on a
+tower over an `Ω₁`-headed base wants these two instead; take them from here. -/
+
+/-- **段 2 以上の `ψ₀`** — 底の頭は何でもよい (`§162.2` の `succ` 版の桁を使う)。 -/
+theorem collapse0_PT_succ169 {B : Term} (hb : BaseOK162 B) (ℓ : Nat) :
+    collapse 0 (PT162 B (ℓ + 2)) = psi (Z zero) (PT162 B (ℓ + 2)) := by
+  rw [collapse_eq, toList_PT162 B (ℓ + 2), wcnf_PT_succ162 hb ℓ]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (PT162 B (ℓ + 1), TM.Term.one)).2.getD zero) zero)) = _
+  rw [show stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (PT162 B (ℓ + 1), TM.Term.one)
+      = (some (PT162 B (ℓ + 2)), some (psi (reg 1) (PT162 B (ℓ + 2)))) from by
+      show (if le (reg 1) (PT162 B (ℓ + 1)) = true
+            then (some (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                    (PT162 B (ℓ + 1), TM.Term.one)),
+                  some (psi (reg 1) (idxOf (reg 1)
+                    ((none : Option Term), (none : Option Term))
+                    (PT162 B (ℓ + 1), TM.Term.one))))
+            else ((none : Option Term),
+                  some (phiNF (PT162 B (ℓ + 1)) (plus (baseOf 0) (sub1 TM.Term.one))))) = _
+      rw [if_pos (le_reg1_PT162 hb (ℓ + 1)), idx_PT_succ162 hb ℓ]]
+  show omegaNF (psi (Z zero) (PT162 B (ℓ + 2))) = _
+  exact omegaNF_psi139 _ _
+
+/-- **段 1 の `ψ₀`、底の頭が `Ω₁` のとき** — 桁は `(φ̄0 B', 1)` だが吐く指数は同じ。 -/
+theorem collapse0_PTB169 {B B' : Term} (hb : BaseOK162 B) (hsub : subAP (reg 1) B = B')
+    (homg' : omegaNF B' = phi zero B') (hps' : phiShifted zero B' = false)
+    (hplus' : plus (reg 1) B' = B) (hfire : le (reg 1) (phi zero B') = true) :
+    collapse 0 (PT162 B 1) = psi (Z zero) (PT162 B 1) := by
+  rw [collapse_eq, toList_PT162 B 1, wcnf_PTB162 hb hsub homg']
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      ((phi zero B' : Term), TM.Term.one)).2.getD zero) zero)) = _
+  rw [show stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        ((phi zero B' : Term), TM.Term.one)
+      = (some (PT162 B 1), some (psi (reg 1) (PT162 B 1))) from by
+      show (if le (reg 1) (phi zero B') = true
+            then (some (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+                    ((phi zero B' : Term), TM.Term.one)),
+                  some (psi (reg 1) (idxOf (reg 1)
+                    ((none : Option Term), (none : Option Term))
+                    ((phi zero B' : Term), TM.Term.one))))
+            else ((none : Option Term),
+                  some (phiNF (phi zero B') (plus (baseOf 0) (sub1 TM.Term.one))))) = _
+      rw [if_pos hfire, idx_PTB162 hb hps' hplus']]
+  show omegaNF (psi (Z zero) (PT162 B 1)) = _
+  exact omegaNF_psi139 _ _
+
+/-! ### §169.2 The seed of class (d) at `p = 1`, and the closed form -/
+
+/-- **`p = 1` の種** — 中の塔は `Ω₁ ⊕ Ω₁ ⊕ 種` の上に立つ。 -/
+theorem dict_seedK1_169 {j : Nat} (h1j : 1 ≤ j) (kk : Nat) :
+    dict (BT.D 0 (famF158 (kk + 2) 1 j))
+      = psi (Z zero) (PT162 (OB162 (sd152 j)) (kk + 1)) := by
+  have hT : TailOK158 (sd152 j) := tailOK_sd158 j h1j
+  have htl : toList (sd152 j) = [sd152 j] := toList_tail158 hT
+  have hd : dict (famF158 (kk + 2) 1 j) = PT162 (OB162 (sd152 j)) (kk + 1) :=
+    dict_famF1_162 h1j (kk + 1)
+  show collapse 0 (dict (famF158 (kk + 2) 1 j)) = _
+  rw [hd]
+  cases kk with
+  | zero =>
+      exact collapse0_PTB169 (baseOK_OB162 hT) (subAP_OB162 htl)
+        (omegaNF_addOm152 hT.hap hT.ho) (phiShifted_addOm158 hT) (plus_Om1_OB162 htl)
+        (le_reg1_phi0_162 (le_reg1_addOm162 (sd152 j)))
+  | succ q => exact collapse0_PT_succ169 (baseOK_OB162 hT) q
+
+/-- **閉じた形 (`p = 1`, `2 ≤ k`)** — 像は種の上の `UW152` の塔。 -/
+theorem dict_famK1_169 {j kk : Nat} (h1j : 1 ≤ j) : ∀ m : Nat,
+    dict (famK162 (m + 1) (kk + 2) 1 j)
+      = UW152 (psi (Z zero) (PT162 (OB162 (sd152 j)) (kk + 1))) m :=
+  dict_towerSeed162 rfl rfl (lt_psiOm_reg1_139 _) (lt_psiOm_Om2_139 _)
+    (dict_seedK1_169 h1j kk)
+
+/-! ### §169.3 The inner tower against the outer tower, both directions -/
+
+/-- **中の塔は外の塔より下** — 外がひとつでも高ければ。底の頭が裸の `Ω₁` なので
+    §162.12 の `lt_towB_UW162` と違い高さの条件しか要らない。 -/
+theorem lt_OB_PT169 {S t : Term} (hS : TailOK158 S) (kk d : Nat) :
+    lt (PT162 (OB162 t) kk) (UW152 S (d + kk + 1)) = true := by
+  rw [UW_PT162 S (d + kk + 1), lt_PT_shift162 (OB162 t) (add (Z zero) S) kk d]
+  show lt (add (Z zero) (add (Z zero) t)) (PT162 (add (Z zero) S) d) = true
+  rw [lt_add_nsum (ne_zero_PT162 (add (Z zero) S) d) (nsum_PT162 (add (Z zero) S) d)]
+  exact lt_Om_PT162 (baseOK_addOm162 hS) d
+
+/-- **中の塔は外の塔より下に居ない** — 外が中より高くないとき、二つの場合。 -/
+theorem lt_OB_PT_false169 {S t : Term} (hS : TailOK158 S) (hT : TailOK158 t)
+    (kk mm : Nat) (h : mm ≤ kk) :
+    lt (PT162 (OB162 t) kk) (UW152 S mm) = false := by
+  rw [UW_PT162 S mm]
+  rcases Nat.eq_or_lt_of_le h with heq | hgt
+  · rw [heq, lt_PT_same162 (OB162 t) (add (Z zero) S) kk]
+    show lt (add (Z zero) (add (Z zero) t)) (add (Z zero) S) = false
+    rw [lt_add_add (show add (Z zero) (add (Z zero) t) ≠ add (Z zero) S from by
+          intro hc
+          injection hc with _ h2
+          have hns := hS.hns
+          rw [← h2] at hns
+          exact Bool.noConfusion hns),
+      if_pos (rfl : (Z zero : Term) = Z zero),
+      lt_add_nsum (tail_ne_zero158 hS) hS.hns]
+    exact lt_Om_tail_false158 hS
+  · obtain ⟨d, rfl⟩ : ∃ d, kk = d + mm + 1 := ⟨kk - mm - 1, by omega⟩
+    rw [lt_PT_shift_rev162 (OB162 t) (add (Z zero) S) mm d]
+    show lt (phi zero (PA162 (OB162 t) d)) (add (Z zero) S) = false
+    rw [lt_phi_add152]
+    show (((PT162 (OB162 t) d : Term) == Z zero)
+      || lt (PT162 (OB162 t) d) (Z zero)) = false
+    rw [beq_PT_Om162 (OB162 t) d,
+      show lt (PT162 (OB162 t) d) (Z zero) = false from
+        lt_PT_reg1_162 (baseOK_OB162 hT) d]
+    rfl
+
+/-! ### §169.4 The step, both directions -/
+
+/-- **主定理 1 — 類 (d) の `p = 1`、`3 ≤ m`, `2 ≤ k`, `1 ≤ j ≤ m`, `k + 1 ≤ m`
+    で第一の門の一歩。** -/
+theorem ksetStepOK_famK1_169 {m k j : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h1j : 1 ≤ j)
+    (hkm : k + 1 ≤ m) (hjm : j ≤ m) : KsetStepOK 0 (dict (famK162 m k 1 j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 2 := ⟨k - 2, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (OB162 (sd152 j)) (kk + 1))) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) (kk + 2) 1 j)
+      = UW152 (psi (Z zero) (PT162 (OB162 (sd152 j)) (kk + 1))) (mm + 2) from
+    dict_famK1_169 h1j (mm + 2)]
+  refine stepOK_UW152 hS.h1 mm ?_
+  intro y hy
+  rw [Kset_psi_reg152, Kset_PT162, Kset_OB162] at hy
+  rcases List.mem_cons.mp hy with h | h
+  · rw [h]
+    obtain ⟨d, hd⟩ : ∃ d, mm + 2 = d + (kk + 1) + 1 := ⟨mm - kk, by omega⟩
+    rw [hd]
+    exact lt_OB_PT169 hS (kk + 1) d
+  · exact Ksd_lt_UW162 _ (mm + 2) j (by omega) y h
+
+/-- **主定理 2 — `m < k + 1` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famK1_169 {m k j : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h1j : 1 ≤ j)
+    (hkm : m < k + 1) : ¬ KsetStepOK 0 (dict (famK162 m k 1 j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 2 := ⟨k - 2, by omega⟩
+  have hT : TailOK158 (sd152 j) := tailOK_sd158 j h1j
+  have hS : TailOK158 (psi (Z zero) (PT162 (OB162 (sd152 j)) (kk + 1))) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) (kk + 2) 1 j)
+      = UW152 (psi (Z zero) (PT162 (OB162 (sd152 j)) (kk + 1))) (mm + 2) from
+    dict_famK1_169 h1j (mm + 2)]
+  refine not_stepOK_UW162 hS.h1 mm
+    (y := PT162 (OB162 (sd152 j)) (kk + 1)) ?_ ?_
+  · rw [Kset_psi_reg152]
+    exact List.Mem.head _
+  · exact lt_OB_PT_false169 hS hT (kk + 1) (mm + 2) (by omega)
+
+/-- **境界はちょうど `k + 1 ≤ m` (`p = 1`, `2 ≤ k`)。** -/
+theorem stepOK_iff_famK1_169 {m k j : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h1j : 1 ≤ j)
+    (hjm : j ≤ m) : KsetStepOK 0 (dict (famK162 m k 1 j)) ↔ k + 1 ≤ m := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge m (k + 1) with hlt | hge
+    · exact absurd H (not_ksetStepOK_famK1_169 h3m h2k h1j hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famK1_169 h3m h2k h1j h hjm
+
+/-! ### §169.5 The standardness contrapositive, and the gate wrappers
+
+`not_std_famK162` is already stated for every `1 ≤ p`, so the failing wedge `m < k + 1`
+is covered by it at `p = 1` with no new work. -/
+
+theorem not_std_famK1_169 {m k j : Nat} (h : m < k + 1) :
+    BT.isStd (BT.D 0 (famK162 m k 1 j)) = false :=
+  not_std_famK162 (p := 1) (by omega) h
+
+/-- **主定理 3 — `p = 1` の切り口も第一の門を反証できない。** -/
+theorem famK1_no_refute169 {m k j : Nat} (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h1j : 1 ≤ j)
+    (hjm : j ≤ m) (hs : BT.isStd (BT.D 0 (famK162 m k 1 j)) = true) :
+    KsetStepOK 0 (dict (famK162 m k 1 j)) := by
+  rcases Nat.lt_or_ge m (k + 1) with hlt | hge
+  · exfalso
+    rw [not_std_famK1_169 hlt] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famK1_169 h3m h2k h1j hge hjm
+
+theorem gateStd87_famK1_169 (m k j : Nat) (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h1j : 1 ≤ j)
+    (hkm : k + 1 ≤ m) (hjm : j ≤ m) : GateStd87 (famK162 m k 1 j) :=
+  fun _ _ => ksetStepOK_famK1_169 h3m h2k h1j hkm hjm
+
+theorem firstFire_famK1_169 (m k j : Nat) (h3m : 3 ≤ m) (h2k : 2 ≤ k) (h1j : 1 ≤ j)
+    (hkm : k + 1 ≤ m) (hjm : j ≤ m) : FirstFire145 (famK162 m k 1 j) :=
+  fun r hr _ hle y hy =>
+    (ksetStepOK_famK1_169 h3m h2k h1j hkm hjm r hr hle).2 y hy
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §169.6 Measurement (frozen) — everything below is measurement, not proof -/
+
+/-- §169 の証明した領域の判定器。 -/
+def isFamK1_169 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.D 0 X) =>
+      match peel158 X with
+      | (k, BT.sum y (BT.D 0 z)) =>
+          match towH158 y, towH158 z with
+          | some p, some j =>
+              decide (p = 1) && decide (3 ≤ m) && decide (2 ≤ k) && decide (1 ≤ j)
+                && decide (k + 1 ≤ m) && decide (j ≤ m)
+          | _, _ => false
+      | _ => false
+  | _ => false
+
+def covered169 (a : BT) : Bool := covered162 a || isFamK1_169 a
+
+/-- 類 (d) の指数を読む — 測定のためだけ。 -/
+def decK169 (a : BT) : Option (Nat × Nat × Nat × Nat) :=
+  match peel158 a with
+  | (m, BT.D 0 X) =>
+      match peel158 X with
+      | (k, BT.sum y (BT.D 0 z)) =>
+          match towH158 y, towH158 z with
+          | some p, some j => some (m, k, p, j)
+          | _, _ => none
+      | _ => none
+  | _ => none
+
+/-- 類 (d) の形だけを見る判定器 — 残りの数え上げ用。 -/
+def isDany169 (a : BT) : Bool :=
+  match peel158 a with
+  | (_, BT.D 0 X) =>
+      match peel158 X with
+      | (_, BT.sum _ (BT.D 0 _)) => true
+      | _ => false
+  | _ => false
+
+/-! 判定器は狙った形にだけ当たる。 -/
+#guard isFamK1_169 (famK162 4 2 1 3)
+#guard isFamK1_169 (famK162 3 2 1 1)
+#guard !(isFamK1_169 (famK162 4 2 2 3))
+#guard !(isFamK1_169 (famK162 2 2 1 1))
+#guard !(isFamK1_169 (famK162 4 1 1 3))
+#guard !(isFamK1_169 (famK162 4 2 1 0))
+#guard !(isFamK1_169 (famK162 3 3 1 1))
+#guard !(isFamK1_169 (famF158 3 1 4))
+#guard !(isFamK1_169 (famH162 3 2 1 4))
+
+/-! 閉じた形の照合。 -/
+#guard dict (famK162 4 2 1 3)
+  == UW152 (psi (Z zero) (phi zero (phi zero
+      (add (Z zero) (add (Z zero) (sd152 3)))))) 3
+#guard dict (famK162 5 3 1 2)
+  == UW152 (psi (Z zero) (phi zero (phi zero (phi zero
+      (add (Z zero) (add (Z zero) (sd152 2))))))) 4
+#guard dict (famK162 4 2 1 3)
+  == UW152 (psi (Z zero) (PT162 (OB162 (sd152 3)) 1)) 3
+#guard dict (famK162 5 4 1 5)
+  == UW152 (psi (Z zero) (PT162 (OB162 (sd152 5)) 3)) 4
+#guard dict (BT.D 0 (famF158 2 1 2)) == psi (Z zero) (PT162 (OB162 (sd152 2)) 1)
+#guard dict (BT.D 0 (famF158 5 1 2)) == psi (Z zero) (PT162 (OB162 (sd152 2)) 4)
+
+/-! 境界の掃き — 証明した窓 (`m, k, j ≤ 5` が母集団) より広く取る。 -/
+#guard (List.range 8).all fun m => (List.range 8).all fun k => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ k) && decide (1 ≤ j) && decide (j ≤ m)
+    && decide (k + 1 ≤ m))
+  || stepOKb 0 (dict (famK162 m k 1 j))
+
+#guard (List.range 8).all fun m => (List.range 8).all fun k => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ k) && decide (1 ≤ j) && decide (m < k + 1))
+  || !(stepOKb 0 (dict (famK162 m k 1 j)))
+
+/-! `j ≤ m` は飾りではない — 外すと掃きは通らない。破れる `(m, k, j)` を全部並べる。 -/
+#guard !((List.range 8).all fun m => (List.range 8).all fun k => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ k) && decide (1 ≤ j) && decide (k + 1 ≤ m))
+  || stepOKb 0 (dict (famK162 m k 1 j)))
+
+#eval ((List.range 8).flatMap fun m => (List.range 8).flatMap fun k =>
+  (List.range 8).map fun j => ((m, k, j),
+    decide (3 ≤ m) && decide (2 ≤ k) && decide (1 ≤ j) && decide (k + 1 ≤ m)
+      && !(stepOKb 0 (dict (famK162 m k 1 j))))).filter (fun q => q.2)
+
+/-! しかも `j ≤ m` はちょうど境界 — `3 ≤ m`, `2 ≤ k`, `1 ≤ j`, `k + 1 ≤ m` の窓では
+    一歩が成り立つのは `j ≤ m` のときに限る。証明した仮定より弱くはできない。 -/
+#guard (List.range 8).all fun m => (List.range 8).all fun k => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ k) && decide (1 ≤ j) && decide (k + 1 ≤ m))
+  || (stepOKb 0 (dict (famK162 m k 1 j)) == decide (j ≤ m))
+
+/-! `k = 1` と `k ≥ 2` の桁の違い (測定、凍結) — 段 0 の桁は `(1 ⊕ 1, 種)`、係数が `1`
+    ではなく `sd152 j` そのもの。しかも `A = 1 ⊕ 1 = 2` は `Ω₁` より下なので発火しない。
+    段 1 は §162.2b の形 `(φ̄0 B', 1)`、段 2 以上は §162.2 の形 `(一段下の塔, 1)`。
+    `stepOK_UW152` / `not_stepOK_UW162` が受けるのは後ろの二つだけ。 -/
+#guard (wcnf (reg 1) (toList (PT162 (OB162 (sd152 3)) 0))).1
+  == [(add TM.Term.one TM.Term.one, sd152 3)]
+#guard !(le (reg 1) (add TM.Term.one TM.Term.one))
+#guard (wcnf (reg 1) (toList (PT162 (OB162 (sd152 3)) 1))).1
+  == [(phi zero (add (Z zero) (sd152 3)), TM.Term.one)]
+#guard (wcnf (reg 1) (toList (PT162 (OB162 (sd152 3)) 2))).1
+  == [(PT162 (OB162 (sd152 3)) 1, TM.Term.one)]
+
+/-! `j = 0` が届かない理由 — `sd152 0` は `1` で、`TailOK158` の `ho` を満たさない。 -/
+#guard sd152 0 == TM.Term.one
+
+/-! 手の届かない隅 — 一歩が成り立つ (m,k) / (k,j) / (m,j) を全部並べる。 -/
+#eval ((List.range 8).flatMap fun k => (List.range 8).map fun j =>
+  ((k, j), stepOKb 0 (dict (famK162 1 k 1 j)))).filter (fun q => q.2)
+#eval ((List.range 8).flatMap fun k => (List.range 8).map fun j =>
+  ((k, j), stepOKb 0 (dict (famK162 2 k 1 j)))).filter (fun q => q.2)
+#eval ((List.range 8).flatMap fun m => (List.range 8).map fun j =>
+  ((m, j), stepOKb 0 (dict (famK162 m 1 1 j)))).filter (fun q => q.2)
+#eval ((List.range 8).flatMap fun m => (List.range 8).map fun j =>
+  ((m, j), stepOKb 0 (dict (famK162 m 0 1 j)))).filter (fun q => q.2)
+#eval ((List.range 8).flatMap fun m => (List.range 8).map fun k =>
+  ((m, k), stepOKb 0 (dict (famK162 m k 1 0)))).filter (fun q => q.2)
+
+/-! 隅の境界 (測定、凍結) — **これは測定であって証明ではない。**
+    窓は `m, k, j ≤ 7`。この窓の外は何も言っていない。
+
+    `m ≤ 2` — どの `(k, j)` でも一歩は成り立つ。だから `m ≤ 2` は「壁」ではなく
+    「この file の道具 (`stepOK_UW152` は `UW152 s (ℓ+2)` しか見ない) が届かない所」。 -/
+#guard (List.range 8).all fun k => (List.range 8).all fun j =>
+  stepOKb 0 (dict (famK162 0 k 1 j)) && stepOKb 0 (dict (famK162 1 k 1 j))
+    && stepOKb 0 (dict (famK162 2 k 1 j))
+
+/-! `k ≤ 1` の隅 (`3 ≤ m`) — 境界は `k + 1 ≤ m` ではなく `j ≤ m`。 -/
+#guard (List.range 8).all fun m => (List.range 8).all fun j =>
+  !(decide (3 ≤ m))
+  || ((stepOKb 0 (dict (famK162 m 1 1 j)) == decide (j ≤ m))
+      && (stepOKb 0 (dict (famK162 m 0 1 j)) == decide (j ≤ m)))
+
+/-! `j = 0` の隅 (`3 ≤ m`) — 境界は証明した側と同じ `k + 1 ≤ m`。 -/
+#guard (List.range 8).all fun m => (List.range 8).all fun k =>
+  !(decide (3 ≤ m)) || (stepOKb 0 (dict (famK162 m k 1 0)) == decide (k + 1 ≤ m))
+
+/-! 被覆 (測定、凍結)。三つの母集団すべてで前後を測る。 -/
+#guard (famPool132.filter resid136).length == 2455
+#guard ((famPool132.filter resid136).countP covered162) == 1998
+#guard ((famPool132.filter resid136).countP isFamK1_169) == 22
+#guard ((famPool132.filter resid136).countP covered169) == 2020
+#guard ((pool136.filter resid136).countP covered162) == 70
+#guard ((pool136.filter resid136).countP covered169) == 70
+#guard ((fm145.filter resid136).countP covered162) == 344
+#guard ((fm145.filter resid136).countP covered169) == 344
+
+/-! `pool136` が動かないのは類 (d) の形がそこに一本も居ないから。`fm145` は違う —
+    類 (d) の形は居るが、`covered162` の外に残っている物が無い。 -/
+#guard ((pool136.filter resid136).countP isDany169) == 0
+#guard ((fm145.filter resid136).countP isDany169) == 58
+#guard ((fm145.filter resid136).countP (fun a => isDany169 a && !(covered162 a))) == 12
+#guard ((fm145.filter resid136).countP (fun a => isDany169 a && !(covered169 a))) == 12
+
+/-! `fm145` の 12 本が動かない理由 — どれも `k = 0` で、`p = 1` の切り口に一本も居ない。 -/
+#guard (((fm145.filter resid136).filter (fun a => !(covered169 a))).filterMap
+  decK169).all (fun q => q.2.1 == 0)
+#guard (((fm145.filter resid136).filter (fun a => !(covered169 a))).filterMap
+  decK169).countP (fun q => q.2.2.1 == 1) == 0
+#eval ((fm145.filter resid136).filter (fun a => !(covered169 a))).filterMap decK169
+
+/-! 類 (d) の残り — `covered162` / `covered169` の外に居る類 (d) の項の指数、全部。 -/
+#guard (((famPool132.filter resid136).filter (fun a => !(covered162 a))).filterMap
+  decK169).length == 66
+#eval ((famPool132.filter resid136).filter (fun a => !(covered162 a))).filterMap decK169
+#guard (((famPool132.filter resid136).filter (fun a => !(covered169 a))).filterMap
+  decK169).length == 44
+#eval ((famPool132.filter resid136).filter (fun a => !(covered169 a))).filterMap decK169
+
+/-! 残り 44 本の内訳 — 隅ごとに数える。どれも §169 の外の壁。 -/
+
+/-- 類 (d) で `covered169` の外に居る項の指数だけを取り出す。 -/
+def leftK169 : List (Nat × Nat × Nat × Nat) :=
+  ((famPool132.filter resid136).filter (fun a => !(covered169 a))).filterMap decK169
+
+/-- `p = 1` の切り口で `covered162` の外に居た項 (この file の担当ぶん、全部)。 -/
+def mineK169 : List (Nat × Nat × Nat × Nat) :=
+  (((famPool132.filter resid136).filter (fun a => !(covered162 a))).filterMap
+    decK169).filter (fun q => q.2.2.1 == 1)
+
+#guard leftK169.length == 44
+#guard (leftK169.countP (fun q => q.2.1 == 1)) == 28
+#guard (leftK169.countP (fun q => q.2.2.1 == 1)) == 6
+#guard (leftK169.countP (fun q => q.2.1 == 0)) == 6
+#guard (leftK169.countP (fun q => decide (2 ≤ q.2.1) && decide (2 ≤ q.2.2.1))) == 4
+#guard (leftK169.countP (fun q => q.2.2.2 == 0)) == 22
+
+/-! 四つの隅は重ならず、足して 44 — 残りはこれで尽きている。 -/
+#guard leftK169.all (fun q =>
+  (if q.2.1 == 1 then 1 else 0) + (if q.2.2.1 == 1 then 1 else 0)
+    + (if q.2.1 == 0 then 1 else 0)
+    + (if decide (2 ≤ q.2.1) && decide (2 ≤ q.2.2.1) then 1 else 0) == 1)
+
+/-! この file の担当ぶん — `p = 1` で `covered162` の外に居た 28 本のうち、
+    残るのはちょうど `j = 0` の 6 本。 -/
+#guard mineK169.length == 28
+#guard (mineK169.countP (fun q => q.2.2.2 == 0)) == 6
+#guard (mineK169.filter (fun q => q.2.2.2 != 0)).length == 22
+#guard leftK169.all (fun q => !(q.2.2.1 == 1) || q.2.2.2 == 0)
+#eval mineK169
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms collapse0_PT_succ169
+#print axioms collapse0_PTB169
+#print axioms dict_seedK1_169
+#print axioms dict_famK1_169
+#print axioms lt_OB_PT169
+#print axioms lt_OB_PT_false169
+#print axioms ksetStepOK_famK1_169
+#print axioms not_ksetStepOK_famK1_169
+#print axioms stepOK_iff_famK1_169
+#print axioms not_std_famK1_169
+#print axioms famK1_no_refute169
+#print axioms gateStd87_famK1_169
+#print axioms firstFire_famK1_169
+
+end
+
 end Evidence.Region
