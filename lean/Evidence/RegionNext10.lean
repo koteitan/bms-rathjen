@@ -13216,6 +13216,8 @@ theorem subord157_at_lvl0161 (Hp : PsiIdxOKStd172) {a : BT}
     (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
 
 /-- The global form of the free region. -/
+/- **⚠ 大域形。前件は適格項の全体では偽なので、成果として数えないこと。**
+    中身があるのは同じ名前の per-a 形 (`..._at_...`) の方である。 -/
 theorem subord157_of_lvl0161 (Hp : PsiIdxOKStd172)
     (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
       ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
@@ -14203,6 +14205,1598 @@ theorem expSubR157_proof (Hp : PsiIdxOKStd172) (H : ExpHeart160) : ExpSubR157 :=
 #print axioms psi_le_wVal_dict160
 #print axioms subR157_of_ltPsi160
 #print axioms expSubR157_proof
+
+end
+
+
+
+/-
+g163 — `ExpHeart160`, THE RESIDUAL OF §160
+
+WHAT THIS FILE SETTLES.
+
+The task handed to this file was §160's verifier's route: prove `ExpLeaf160` by the
+purely STRUCTURAL statement
+
+    under `btLe72 1 (ψ₀a)` and `isStd (ψ₀a)`, every depth-3 `ψ₀`-argument `d`
+    (`ψ₁c ∈ toL a`, `ψ₁x ∈ toL c`, `ψ₀d ∈ toL x`) has `PsiL160 (dict (ψ₀ d)) = []`,
+
+so that no order comparison is needed anywhere and §160.5c's bridge is dead weight.
+
+THAT STATEMENT IS FALSE, and §163.1 refutes it with a closed witness, by `rfl`.
+`awit163 = ψ₁(ψ₁ψ₁ψ₁0) ⊕ ψ₁(ψ₁(ψ₀(ψ₁ψ₁ψ₁0)))` passes both gates, carries the depth-3
+triple `(cwit163, xwit163, dwit163)`, and `dict (ψ₀ dwit163) = ψ_{Z0}(0) = Γ₀`, whose
+`PsiL160` is `[Γ₀]`.  The witness is not vacuous: `wcnf (reg 1) (toList (dict awit163))`
+has exactly two pairs, the first FIRED and the second NOT, so it is a genuine instance
+of `ExpLeaf160`'s hypotheses, and `cwit163` even sits in that pair's own block, so the
+narrowed "c in the current block B" quantifier is hit too.
+
+§160's own header already said the right thing and the verifier over-read it:
+
+    "(ii) the prefixes with no fired pair, where the bound is `1` (or a `φ̄`-tower over
+     `0`) and the claim is that `dict (ψ₀ d)` has NO `ψ`-leaf at all."
+
+Leaf-freeness is claimed only for prefixes with NO FIRED PAIR.  In the witness the
+prefix's single pair fires, `wVal157 P163` is a genuine `ψ_{Ω₁}(i)`, and the leaf `Γ₀`
+is `le`-below it (§163.1's `leaf_le_wVal163`) — so `ExpLeaf160` itself survives, but
+only through the ORDER comparison the route was trying to delete.  §160.5c's
+`psi_le_wVal160` / `subR157_of_ltPsi160` are load-bearing after all.
+
+WHAT IS PROVED HERE, unconditionally beyond `PsiIdxOKStd172`:
+
+  §163.1  `leafFree_refuted163` — the structural route is false.  With the witness data
+          `fire_awit163`, `block_awit163`, `leaf_le_wVal163` pinning down that the
+          witness really is an `ExpLeaf160` instance and that the surviving bound is an
+          order comparison against a fired `ψ_{Ω₁}(i)`.
+
+  §163.2  `expSubR157_at163` — `ExpSubR157` AT ONE `a`, from the heart clause at that
+          same `a` only.  `expSubR157_of_heart160` with the global `ExpHeart160`
+          replaced by a local hypothesis; this is what a free region needs.
+
+  §163.3  `subR157_dict_lvl0_163` — a hereditarily level-0 `ψ₀`-argument's image is in
+          the closure FOR EVERY BOUND `w`.  No `G₀`-condition, no bound, no order
+          comparison: `dict (ψ₀ d) = ω^(dict d)` there and the whole descent is `φ̄`.
+
+  §163.4  `expSubR157_at_lvl0163` / `expSubR157_of_lvl0163` — THE FREE REGION.
+          `ExpSubR157` holds, PROVED, wherever every depth-3 `ψ₀`-argument is
+          hereditarily level-0.  This is the exponent-side twin of §161's
+          `subord157_at_lvl0161` / `subord157_of_lvl0161`, and it is exactly the same
+          region, so on that region BOTH carriers of §157 are theorems.
+
+  §163.5  `expSubR157_at_ltDwit163` / `expSubR157_of_ltDwit163` — THE BIGGER REGION.
+          `dwit163 = ψ₁ψ₁ψ₁0` is the THRESHOLD, and on `BT.lt a dwit163` the whole
+          no-fired-prefix half of `ExpHeart160` reduces to ONE clause about ONE `BT`
+          term, `LtDwitFree163` — no `a`, no `P`, no split, no bound in it.
+          Measured on two pools of standard `btLe72 1` terms — 10858 grown uniformly,
+          and 1067 grown deep and seeded with `awit163` itself — 0 mismatches on each
+          of `PsiL160 (dict (ψ₀ d)) = [] ↔ BT.lt d dwit163` and
+          `no pair of wcnf (dict a) fires ↔ BT.lt a dwit163`, and 0 failures of
+          "no pair fires → every depth-3 argument is leaf-free".
+
+          WHY THE POOLS MISSED THE REFUTATION.  In the 10858-term pool, 4388 terms
+          carry a real depth-3 triple and NOT ONE of them has a non-leaf-free depth-3
+          argument; in the deep pool, 404 carry one and exactly ONE fails — `awit163`,
+          the term that had to be built by hand.  Uniform growth does not reach it:
+          `awit163` has `BT.size` 13 and needs level-1 nesting 6.  A sweep that sees
+          only such pools reports "0 failures everywhere" and is not wrong about the
+          pool — it is wrong about the class.
+
+WHAT IS NOT PROVED.  `ExpHeart160` / `ExpLeaf160` in full.  The scopes closed here are
+`LvlFree163` (unconditionally) and `BT.lt a dwit163` (modulo `LtDwitFree163`);
+§163.6 records the precise goal state that remains outside them.
+
+AXIOMS.  Everything is `[propext, Quot.sound]` except `expSubR157_at_ltDwit163` and
+`expSubR157_of_ltDwit163`, which inherit `Classical.choice` from the project's own
+`lt_trans83`; nothing here introduces it.
+-/
+
+section
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §163.1 THE REFUTATION OF THE STRUCTURAL ROUTE -/
+
+/-- `ψ₁ψ₁ψ₁0`.  The minimal `ψ₀`-argument whose image carries a `ψ`-leaf:
+    `dict (ψ₀ dwit163) = Γ₀`. -/
+def dwit163 : BT := .D 1 (.D 1 (.D 1 .zero))
+/-- `ψ₀(dwit163)` — a node with no level-1 component, so its pair does not fire. -/
+def xwit163 : BT := .D 0 dwit163
+def cwit163 : BT := .D 1 xwit163
+/-- The witness.  The big first component is what makes `ψ₀ awit163` STANDARD:
+    without it `dwit163 < awit163` fails and `isStd` rejects the term. -/
+def awit163 : BT := .sum (.D 1 dwit163) (.D 1 cwit163)
+
+theorem gateB163 : btLe72 1 (BT.D 0 awit163) = true := by rfl
+theorem gateS163 : BT.isStd (BT.D 0 awit163) = true := by rfl
+theorem m1_163 : BT.D 1 cwit163 ∈ BT.toL awit163 := List.Mem.tail _ (List.Mem.head _)
+theorem m2_163 : BT.D 1 xwit163 ∈ BT.toL cwit163 := List.Mem.head _
+theorem m3_163 : BT.D 0 dwit163 ∈ BT.toL xwit163 := List.Mem.head _
+
+/-- The image of the depth-3 argument is `Γ₀`, and its leaf list is NOT empty. -/
+theorem leaf163 : PsiL160 (dict (BT.D 0 dwit163)) = [psi (Z zero) zero] := by rfl
+
+/-- The prefix of the witness' non-fired pair. -/
+def P163 : List (Term × Term) := (wcnf (reg 1) (toList (dict awit163))).1.take 1
+/-- The non-fired pair of the witness. -/
+def ac163 : Term × Term :=
+  match (wcnf (reg 1) (toList (dict awit163))).1.drop 1 with
+  | [] => (zero, zero)
+  | p :: _ => p
+def S163 : List (Term × Term) := (wcnf (reg 1) (toList (dict awit163))).1.drop 2
+
+theorem split163 :
+    (wcnf (reg 1) (toList (dict awit163))).1 = P163 ++ ac163 :: S163 := by rfl
+theorem nofire163 : le (reg 1) ac163.1 = false := by rfl
+/-- The prefix is not empty and its own pair FIRED — this is a §160.5c situation. -/
+theorem prefire163 : P163.length = 1 ∧ ∀ z ∈ P163, le (reg 1) z.1 = true := by
+  refine ⟨by rfl, ?_⟩
+  intro z hz
+  have : z = (P163.take 1).headD (zero, zero) := by
+    revert hz; revert z
+    show ∀ z ∈ P163, z = (P163.take 1).headD (zero, zero)
+    decide +kernel
+  rw [this]; rfl
+
+/-- The witness really is an instance of `ExpLeaf160`'s hypotheses. -/
+theorem fire_awit163 :
+    ∃ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict awit163))).1 = P ++ ac :: S ∧
+      le (reg 1) ac.1 = false :=
+  ⟨P163, S163, ac163, split163, nofire163⟩
+
+/-- …and `cwit163` sits in that very pair's block, so the narrowed
+    "`c` in the current block `B`" quantifier is hit as well. -/
+theorem block_awit163 : wA (reg 1) (dict (BT.D 1 cwit163)) = ac163.1 := by rfl
+
+/-- The surviving bound is an ORDER comparison, not a structural one: the leaf `Γ₀`
+    of the depth-3 image is `le`-below the fold value of the fired prefix. -/
+theorem leaf_le_wVal163 : le (psi (Z zero) zero) (wVal157 P163) = true := by rfl
+
+/-- The verifier's route, stated exactly: `ExpLeaf160` with the conclusion replaced by
+    leaf-freeness of the depth-3 image. -/
+def LeafFreeRoute163 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+        PsiL160 (dict (BT.D 0 d)) = []
+
+/-- **THE REFUTATION.** -/
+theorem leafFree_refuted163 : ¬ LeafFreeRoute163 := by
+  intro H
+  have h := H awit163 gateB163 gateS163 P163 S163 ac163 split163 nofire163
+    cwit163 xwit163 dwit163 m1_163 m2_163 m3_163
+  rw [leaf163] at h
+  exact absurd h (List.cons_ne_nil _ _)
+
+/-- The gate-free form, without the `wcnf` hypotheses — the sentence the briefing
+    actually asserted. -/
+theorem leafFree_refuted_bare163 :
+    ¬ (∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+        ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+          PsiL160 (dict (BT.D 0 d)) = []) := by
+  intro H
+  have h := H awit163 gateB163 gateS163 cwit163 xwit163 dwit163 m1_163 m2_163 m3_163
+  rw [leaf163] at h
+  exact absurd h (List.cons_ne_nil _ _)
+
+/-! ## §163.2 `ExpSubR157` AT ONE `a` -/
+
+/-- **`ExpSubR157` at a single `a`, from the heart clause at that same `a`.**
+    `expSubR157_of_heart160` with the global `ExpHeart160` localised — this is what a
+    free-region theorem needs. -/
+theorem expSubR157_at163 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false)
+    (H : ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c →
+      BT.D 0 d ∈ BT.toL x → SubR157 (wVal157 P) (dict (BT.D 0 d))) :
+    SubR157 (wVal157 P) ac.1 := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split160 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine expSubR157_of_split160 hsp ?_
+  intro p hpB
+  have hpL : p ∈ toList (dict a) := by
+    rw [hsp.eqL]
+    exact List.mem_append.mpr (Or.inl (List.mem_append.mpr (Or.inr hpB)))
+  obtain ⟨u, c, hmem, hbuc, hsuc, _, hpe⟩ := comp_name160 Hp hba hsa p hpL
+  have hAeq : wA (reg 1) p = ac.1 := hsp.blkA p hpB
+  cases u with
+  | zero =>
+      rw [hpe, wA_dict_D0_160 Hp hbuc hsuc]
+      exact subR157_zero160 _
+  | succ u' =>
+      cases u' with
+      | zero =>
+          have hnf : le (reg 1) (wA (reg 1) (dict (BT.D 1 c))) = false := by
+            rw [← hpe, hAeq]; exact hfire
+          rw [hpe]
+          exact subR157_wA_D1_160 Hp hbuc hsuc hnf
+            (fun x d hx hd => H c x d hmem hx hd)
+      | succ u'' =>
+          exfalso
+          have hu : u'' + 1 + 1 ≤ 1 := (btLe72_D 1 (u'' + 1 + 1) c hbuc).1
+          omega
+
+/-! ## §163.3 THE HEREDITARILY LEVEL-0 ARGUMENTS ARE FREE
+
+`lvl0161 d` says no `ψ₁` occurs anywhere inside `d` (§161.7a).  There
+`dict (ψ₀ d) = ω^(dict d)` (`collapse0_eq77`, since every component of `dict d` is a
+`ψ₀`-image and so below `Ω₁`), and `ω^·` is a `φ̄`-step, which `SubR157` decomposes for
+free.  So the conclusion holds FOR EVERY BOUND `w` — no `G₀`-condition, no order
+comparison.  This is the exponent-side twin of §161's `lo0Sub_of_lvl0161`. -/
+
+/-- **A hereditarily level-0 image is subordinate to every bound.** -/
+theorem subR157_dict_lvl0_163 (Hp : PsiIdxOKStd172) {w : Term} :
+    ∀ (n : Nat) (d : BT), BT.size d < n → lvl0161 d = true →
+      btLe72 1 (BT.D 0 d) = true → BT.isStd (BT.D 0 d) = true →
+      SubR157 w (dict (BT.D 0 d))
+  | 0, _, h, _, _, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hl, hb, hs => by
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp d hbd hsd
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      have hcomp : ∀ z ∈ toList (dict d),
+          ∃ c : BT, BT.D 0 c ∈ BT.toL d ∧ z = dict (BT.D 0 c) := by
+        intro z hz
+        obtain ⟨q, hq, hze⟩ := mem_toList_dict101 Hp hbd hsd z hz
+        obtain ⟨c, hce, _⟩ := lvl0_toL161 d hl q hq
+        exact ⟨c, by rw [← hce]; exact hq, by rw [hze, hce]⟩
+      have hltW : ∀ p ∈ toList (dict d), lt p (reg 1) = true := by
+        intro p hp
+        obtain ⟨c, hcm, hpe⟩ := hcomp p hp
+        rw [hpe]
+        exact lt_dict_D0_W93 Hp (hgood.2.2.1 _ hcm) (hgood.2.1 _ hcm)
+      have heq : dict (BT.D 0 d) = omegaNF (dict d) := by
+        rw [Trans.Dict.dict_D]
+        exact collapse0_eq77 (dict d) hid hltW
+      rw [heq]
+      refine subR157_omegaNF160 hid hidM ?_
+      intro z hz
+      obtain ⟨c, hcm, hze⟩ := hcomp z hz
+      rw [hze]
+      have hsz0 : BT.size (BT.D 0 c) ≤ BT.size d := size_mem_toL87 d _ hcm
+      rw [size_D87] at hsz0
+      obtain ⟨c', hce, hlc⟩ := lvl0_toL161 d hl (BT.D 0 c) hcm
+      have hcc : c = c' := by injection hce with _ h2
+      exact subR157_dict_lvl0_163 Hp n c (by omega) (by rw [hcc]; exact hlc)
+        (hgood.2.2.1 _ hcm) (hgood.2.1 _ hcm)
+
+/-! ## §163.4 THE FREE REGION -/
+
+/-- Every depth-3 `ψ₀`-argument of `a` is hereditarily level-0. -/
+def LvlFree163 (a : BT) : Prop :=
+  ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+    lvl0161 d = true
+
+/-- The gates a depth-3 argument inherits. -/
+theorem depth3_gates163 {a : BT} (hb : btLe72 1 (BT.D 0 a) = true)
+    (hs : BT.isStd (BT.D 0 a) = true) {c x d : BT}
+    (hc : BT.D 1 c ∈ BT.toL a) (hx : BT.D 1 x ∈ BT.toL c) (hd : BT.D 0 d ∈ BT.toL x) :
+    btLe72 1 (BT.D 0 d) = true ∧ BT.isStd (BT.D 0 d) = true := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgooda : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (hgooda.2.2.1 _ hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D (hgooda.2.1 _ hc)
+  have hgoodc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  have hbx : btLe72 1 x = true := (btLe72_D 1 1 x (hgoodc.2.2.1 _ hx)).2
+  have hsx : BT.isStd x = true := isStd_of_D (hgoodc.2.1 _ hx)
+  have hgoodx : GoodL77 (BT.toL x) := good_toL77 x hsx hbx
+  exact ⟨hgoodx.2.2.1 _ hd, hgoodx.2.1 _ hd⟩
+
+/-- **THE FREE REGION, at one `a`.**  Where every depth-3 `ψ₀`-argument is
+    hereditarily level-0, `ExpSubR157` holds at `a` with no carrier and no
+    `G₀`-condition — proved, not assumed. -/
+theorem expSubR157_at_lvl0163 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hfree : LvlFree163 a)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    SubR157 (wVal157 P) ac.1 := by
+  refine expSubR157_at163 Hp hb hs P S ac hsplit hfire ?_
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  exact subR157_dict_lvl0_163 Hp (BT.size d + 1) d (Nat.lt_succ_self _)
+    (hfree c x d hc hx hd) hbd hsd
+
+/-- **THE FREE REGION, globally.**  Same region as §161's `subord157_of_lvl0161`, so on
+    it BOTH carriers of §157 are theorems and `dom154_of_carriers157` applies. -/
+/- **⚠ 大域形。前件は適格項の全体では偽なので、成果として数えないこと。**
+    中身があるのは同じ名前の per-a 形 (`..._at_...`) の方である。 -/
+theorem expSubR157_of_lvl0163 (Hp : PsiIdxOKStd172)
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      LvlFree163 a) :
+    ExpSubR157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    expSubR157_at_lvl0163 Hp hb hs (H a hb hs) P S ac hsplit hfire
+
+/-- The heart clause itself holds on the free region, in `ExpHeart160`'s own shape. -/
+theorem expHeart160_at_lvl0163 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hfree : LvlFree163 a) (w : Term) :
+    ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+      SubR157 w (dict (BT.D 0 d)) := by
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  exact subR157_dict_lvl0_163 Hp (BT.size d + 1) d (Nat.lt_succ_self _)
+    (hfree c x d hc hx hd) hbd hsd
+
+/-! ## §163.5 THE BIGGER REGION — `a` BELOW `ψ₁ψ₁ψ₁0`
+
+`dwit163` is not an accident: it is the THRESHOLD.  Two facts, measured on 10858
+standard `btLe72 1` terms (sweep2) with 0 mismatches each:
+
+    PsiL160 (dict (ψ₀ d)) = []                    ↔   BT.lt d dwit163
+    no pair of `wcnf (reg 1) (toList (dict a))` fires ↔   BT.lt a dwit163
+
+The second is §160's case (ii) restated on the `BT` side, and it has a short reason:
+if a pair fires, some `ψ₁c ∈ toL a` has `ψ₁x ∈ toL c` with `dict x ≥ Ω₁`, so `x` carries
+a level-1 component, so `c ≥ ψ₁Ω₁` and `a ≥ ψ₁ψ₁Ω₁ = dwit163`; conversely `a < dwit163`
+forces every such `x` below `Ω₁`.
+
+So the whole no-fired-prefix half of `ExpHeart160` reduces to the FORWARD direction of
+the first line — one statement about one `BT` term, with no `a`, no `P`, no split and no
+bound in it.  `subR157_dict_lvl0_163` is the corner of it where `d` has no `ψ₁` at all. -/
+
+/-- **The one statement the no-fired-prefix half still needs**, in the form the closure
+    lemmas of §160.1 actually produce: below `ψ₁ψ₁ψ₁0` the image is in the closure of
+    EVERY bound, so no comparison against `wVal157 P` is ever made. -/
+def LtDwitFree163 : Prop :=
+  ∀ (w : Term) (d : BT), btLe72 1 (BT.D 0 d) = true → BT.isStd (BT.D 0 d) = true →
+    BT.lt d dwit163 = true → SubR157 w (dict (BT.D 0 d))
+
+/-- The same in leaf form — strictly stronger, and what the sweep measured. -/
+def LtDwitLeafFree163 : Prop :=
+  ∀ d : BT, btLe72 1 (BT.D 0 d) = true → BT.isStd (BT.D 0 d) = true →
+    BT.lt d dwit163 = true → PsiL160 (dict (BT.D 0 d)) = []
+
+/-- The leaf form implies the closure form. -/
+theorem ltDwitFree_of_leaf163 (Hp : PsiIdxOKStd172) (H : LtDwitLeafFree163) :
+    LtDwitFree163 := by
+  intro w d hbd hsd hlt
+  obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp (BT.D 0 d) hbd hsd
+  refine subR157_of_psiL160 _ hid hidM ?_
+  rw [H d hbd hsd hlt]
+  intro s hs0
+  exact absurd hs0 (by intro hcon; cases hcon)
+
+/-- `subR157_dict_lvl0_163` is the corner of `LtDwitFree163` already proved: every
+    hereditarily level-0 `d` is below the threshold. -/
+theorem ltDwitFree_at_lvl0163 (Hp : PsiIdxOKStd172) (w : Term) (d : BT)
+    (hbd : btLe72 1 (BT.D 0 d) = true) (hsd : BT.isStd (BT.D 0 d) = true)
+    (hl : lvl0161 d = true) : SubR157 w (dict (BT.D 0 d)) :=
+  subR157_dict_lvl0_163 Hp (BT.size d + 1) d (Nat.lt_succ_self _) hl hbd hsd
+
+/-- `G(·,0)` passes through a node. -/
+theorem gb_D163 (u : Nat) {s e : BT} (he : e ∈ BT.GB 0 s) : e ∈ BT.GB 0 (BT.D u s) := by
+  have hgb : BT.GB 0 (BT.D u s) = s :: BT.GB 0 s := by
+    show (if 0 ≤ u then s :: BT.GB 0 s else []) = _
+    rw [if_pos (Nat.zero_le u)]
+  rw [hgb]
+  exact List.Mem.tail _ he
+
+/-- A depth-3 `ψ₀`-argument is a `G(a,0)` member, hence below `a` when `ψ₀a` is
+    standard. -/
+theorem lt_depth3_163 {a : BT} (hs : BT.isStd (BT.D 0 a) = true) {c x d : BT}
+    (hc : BT.D 1 c ∈ BT.toL a) (hx : BT.D 1 x ∈ BT.toL c) (hd : BT.D 0 d ∈ BT.toL x) :
+    BT.lt d a = true := by
+  have h1 : d ∈ BT.GB 0 x := mem_GB0_125 x 0 d hd
+  have h2 : d ∈ BT.GB 0 c := GB_mem_toL93 c _ hx d (gb_D163 1 h1)
+  have h3 : d ∈ BT.GB 0 a := GB_mem_toL93 a _ hc d (gb_D163 1 h2)
+  have hsu : (BT.isStd a && (BT.GB 0 a).all (fun e => BT.lt e a)) = true := hs
+  exact List.all_eq_true.mp ((Bool.and_eq_true _ _).mp hsu).2 d h3
+
+/-- **THE BIGGER FREE REGION, at one `a`** — modulo the single clause
+    `LtDwitLeafFree163`.  No `G₀`-condition, no order comparison against `wVal157 P`,
+    and the region is a decidable `BT`-side test. -/
+theorem expSubR157_at_ltDwit163 (Hp : PsiIdxOKStd172) (HA : LtDwitFree163) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hlta : BT.lt a dwit163 = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    SubR157 (wVal157 P) ac.1 := by
+  refine expSubR157_at163 Hp hb hs P S ac hsplit hfire ?_
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  exact HA _ d hbd hsd (lt_trans83 (lt_depth3_163 hs hc hx hd) hlta)
+
+/-- **THE BIGGER FREE REGION, globally.** -/
+/- **⚠ 大域形。前件は適格項の全体では偽なので、成果として数えないこと。**
+    中身があるのは同じ名前の per-a 形 (`..._at_...`) の方である。 -/
+theorem expSubR157_of_ltDwit163 (Hp : PsiIdxOKStd172) (HA : LtDwitFree163)
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      BT.lt a dwit163 = true) :
+    ExpSubR157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    expSubR157_at_ltDwit163 Hp HA hb hs (H a hb hs) P S ac hsplit hfire
+
+/-- The witness of §163.1 is exactly on the other side of the threshold, so it is no
+    counterexample to any of this. -/
+theorem awit_not_below163 : BT.lt awit163 dwit163 = false := by rfl
+theorem dwit_not_below163 : BT.lt dwit163 dwit163 = false := by rfl
+
+/-! ## §163.6 WHAT REMAINS
+
+The scopes closed above are `LvlFree163` (unconditionally) and `BT.lt a dwit163`
+(modulo `LtDwitFree163`).  Two goal states beat this file.
+
+FIRST — `LtDwitFree163` itself, i.e. after `dict_D0_shape161`,
+
+    Hp : PsiIdxOKStd172,  d : BT,  gates on ψ₀d,  hlt : BT.lt d dwit163 = true
+    ⊢ PsiL160 (foldV161 d) = []
+
+the LEVEL-0 FOLD VALUE again, but now with no `a`, no `P`, no split and no bound in the
+statement.  `hlt` says every level-1 chain in `d` is shorter than three, so no pair of
+`wcnf (reg 1) (toList (dict d))` fires and the fold stays in the Veblen branch, where
+its value is a `phiNF` and `SubR157`/`PsiL160` decompose it.  What is missing is the
+fold invariant: a step lemma for `stepF (reg 1) (baseOf 0)` carrying
+`inT v ∧ v.isAP ∧ PsiL160 v = []` across a non-firing pair.  `stE81_pre157` supplies
+the `inT`/`isAP` half at every prefix; the `PsiL160` half needs
+`subR157_phiNF160`-style reasoning at `w := zero`, which is why §163.3 was written for
+an ARBITRARY bound `w` — that generality is what lets the same induction be reused here.
+
+SECOND — outside `BT.lt a dwit163`, the goal state is, after `expSubR157_at163`,
+
+    Hp : PsiIdxOKStd172,  a c x d : BT,  gates on ψ₀a,
+    hc : ψ₁c ∈ toL a,  hx : ψ₁x ∈ toL c,  hd : ψ₀d ∈ toL x,
+    hfire : le (reg 1) ac.1 = false
+    ⊢ SubR157 (wVal157 P) (foldV161 d)
+
+— the LEVEL-0 FOLD VALUE of `d`, the same object §161's `HeartLo161` stops at through
+`Lo0Sub161.step`.  `subR157_dict_lvl0_163` is precisely the `Lo0Sub161.pure` corner,
+where `foldV161 d = zero`; the tail half of the descent recurses by `BT.size` exactly
+as in `sub157_dict_D0_161`.  Two things are now known about the remaining half:
+
+  * it CANNOT be discharged structurally.  §163.1 exhibits a depth-3 `d` whose
+    `foldV161 d` is a `ψ_{Ω₁}`-value, so `PsiL160 (dict (ψ₀ d)) ≠ []` and only an order
+    comparison can bound it.  `leaf_le_wVal163` shows the comparison does hold there.
+
+  * so §160.5c is not dead weight.  The two halves are: (i) prefixes with a fired pair,
+    where `psi_le_wVal160` supplies `ψ_{Ω₁}(i) ≤ wVal157 P` and what is missing is the
+    §128-style `lt`-clause at target `ψ_{Ω₁}(i)`; (ii) prefixes with no fired pair,
+    where — the exponents of a `wcnf` list descending — NO pair of the whole list fires,
+    and there the leaf-free claim is still open but is no longer contradicted by any
+    witness: `awit163` fires at its first pair precisely because standardness forced the
+    big `ψ₁(ψ₁ψ₁ψ₁0)` component in to make `dwit163 < awit163` hold. -/
+
+/-! ## §163.7 Axiom record -/
+
+#print axioms leafFree_refuted163
+#print axioms leafFree_refuted_bare163
+#print axioms fire_awit163
+#print axioms block_awit163
+#print axioms leaf_le_wVal163
+#print axioms expSubR157_at163
+#print axioms subR157_dict_lvl0_163
+#print axioms expSubR157_at_lvl0163
+#print axioms expSubR157_of_lvl0163
+#print axioms expHeart160_at_lvl0163
+#print axioms lt_depth3_163
+#print axioms ltDwitFree_of_leaf163
+#print axioms ltDwitFree_at_lvl0163
+#print axioms expSubR157_at_ltDwit163
+#print axioms expSubR157_of_ltDwit163
+
+end
+
+
+/-
+g164 — `HeartLo161`, the coefficient carrier's residual (§161).
+
+WHAT IS PROVED.  `HeartLo161` is NOT closed.  What is closed is
+
+  * `Cap164` — `HeartLo161` reduced to ONE inequality per `ψ₁` node met on the
+    level-0 descent: that node's base-`Ω₁` exponent must not fire and must be `≤`
+    the ambient Veblen exponent.  Everything else in §161's chain — the fold, the
+    `φ̄`-normalisation, the `ω^·` layers, the `dict` layer — is discharged here.
+        `subord157_of_cap164 : PsiIdxOKStd172 → HeartCap164 → Subord157`
+  * `flat164` — a DECIDABLE region on which that inequality is a theorem, because
+    the exponent is literally `1` (`wA_dict_D1_one164`).  It strictly contains
+    §161's `lvl0161` free region: `Ω₁ = ψ₁0`, the argument of `ε₀ = ψ₀(Ω₁)`, is
+    flat and not level-0.
+  * `subordChk164` — the whole obligation at one `a`, decided, combining the cap
+    with §161's `ofLe` exit.  `subord157_at_chk164` proves it sufficient, so every
+    term it accepts is a PROVED instance of `Subord157` at that `a`.
+
+MEASUREMENT (frozen `#guard`s below, §151 pools, per QUALIFYING TERM).  The
+`coefArgs104 = []` and `lvl0161` columns reproduce §161's own published figures,
+which is what validates the deciders.
+
+    pool   qual   §161 noCoef   §161 lvl0161   flat164   subordChk164
+    D       235       35            167          194         235
+    C       121       59             71           71          83
+    A       590        0            120          340         410
+    E       228        0             32          110         186
+    total  1174       94            390          715         914
+
+WHERE THE RESIDUAL LIVES (diagnostic, measurement only, `relaxCov164`).  Relaxing
+the FIRE test alone changes nothing; relaxing the CAP test alone lifts D/A/E to
+235/590/228 and C to 83.  So on these pools the obstruction is the exponent
+inequality `wA (reg 1) (dict (ψ₁ e)) ≤ ac.1`, not the `ψ_{Ω₁}` firing.
+
+The other exit is stated too: `LeHeart164` — the §128-shaped `≤`-clause on the
+`ψ₀`-images — discharges `HeartLo161` outright (`heartLo161_of_le164`), the
+`Subord157` twin of §160.5c.
+
+No `sorry`, no `native_decide`, no new axiom; every headline prints
+`[propext, Quot.sound]`.
+-/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §164.1 Componentwise membership in the capped closure -/
+
+/-- Every component of `t` is in the capped closure. -/
+def SubC164 (A w' t : Term) : Prop := ∀ z ∈ toList t, Sub157 A w' z
+
+theorem subC_zero164 {A w' : Term} : SubC164 A w' zero := by
+  intro z hz
+  exact absurd hz (by intro hc; cases hc)
+
+theorem subC_of_isAP164 {A w' t : Term} (hap : t.isAP = true) (h : Sub157 A w' t) :
+    SubC164 A w' t := by
+  intro z hz
+  rw [toList_of_isAP hap] at hz
+  rw [List.mem_singleton.mp hz]
+  exact h
+
+theorem subC_plus164 {A w' V R : Term} (hV : inT V = true) (hR : inT R = true)
+    (hsV : SubC164 A w' V) (hsR : SubC164 A w' R) : SubC164 A w' (plus V R) := by
+  intro z hz
+  rcases mem_toList_plus161 hV hR z hz with h | h
+  · exact hsV z h
+  · exact hsR z h
+
+theorem mem_toList_sub1_164 {c : Term} (hc : inT c = true) :
+    ∀ z ∈ toList (sub1 c), z ∈ toList c := by
+  rw [sub1_eq_subAP112]
+  cases hl : toList c with
+  | nil =>
+      rw [subAP_nil _ _ hl]
+      intro z hz
+      exact absurd hz (by intro hcc; cases hcc)
+  | cons p rest =>
+      rw [subAP_cons TM.Term.one c p rest hl]
+      by_cases hpe : (p == TM.Term.one) = true
+      · rw [if_pos hpe,
+          WF.toList_ofList rest (fun y hy => inTL_isAP hc y (by rw [hl]; exact List.Mem.tail _ hy))]
+        intro z hz
+        exact List.Mem.tail _ hz
+      · rw [if_neg hpe]
+        intro z hz
+        rw [hl] at hz
+        exact hz
+
+theorem subC_sub1_164 {A w' c : Term} (hc : inT c = true) (h : SubC164 A w' c) :
+    SubC164 A w' (sub1 c) := fun z hz => h z (mem_toList_sub1_164 hc z hz)
+
+/-! ## §164.2 The `φ̄`-normalisation stays in the closure
+
+The exact analogue of §161.2's `sub157_omegaNF161`, with the first argument `α`
+capped by `A` instead of being `0`.  Branch 4 of `phiNF_shape157` (`φ̄α0 = α` for
+strongly critical `α`) is the only one that does not go through: there the value
+IS the exponent, so the exponent itself has to be in the closure. -/
+
+theorem sub157_phiNF164 {A w' α X : Term} (hiα : inT α = true) (hαM : lt α M = true)
+    (hαA : le α A = true) (hsc : α.isSC = false ∨ Sub157 A w' α)
+    (hiX : inT X = true) (h1 : le TM.Term.one w' = true)
+    (hall : SubC164 A w' X) : Sub157 A w' (phiNF α X) := by
+  rcases phiNF_shape157 α X with ⟨he, _, _⟩ | ⟨c, d, _, _, he⟩
+    | ⟨g, m, hsp, _, he⟩ | ⟨he, hsc2, _⟩ | he
+  · rw [he]; exact sub157_of_comps161 X hiX hall
+  · rw [he]; exact sub157_of_comps161 X hiX hall
+  · rw [he]
+    refine Sub157.ofPhi hiα hαM hαA ?_
+    have hig : inT g = true := by
+      have h0 := inT_splitFin hiX; rw [hsp] at h0; exact h0
+    refine sub157_of_comps161 _ (inT_plus hig (inT_ofNat _)) ?_
+    intro s hs
+    rw [toList_plus_ofNat_inT hig (m - 1)] at hs
+    rcases List.mem_append.mp hs with hm | hm
+    · refine hall s ?_
+      refine mem_toList_splitFin161 hiX s ?_
+      rw [hsp]; exact hm
+    · have hone : s = TM.Term.one := List.eq_of_mem_replicate hm
+      subst hone
+      exact Sub157.ofLe inT_one lt_one_M h1
+  · rw [he]
+    rcases hsc with hc | hc
+    · rw [hc] at hsc2; exact Bool.noConfusion hsc2
+    · exact hc
+  · rw [he]
+    exact Sub157.ofPhi hiα hαM hαA (sub157_of_comps161 X hiX hall)
+
+theorem subC_phiNF164 {A w' α X : Term} (hiα : inT α = true) (hαM : lt α M = true)
+    (hαA : le α A = true) (hsc : α.isSC = false ∨ Sub157 A w' α)
+    (hiX : inT X = true) (h1 : le TM.Term.one w' = true)
+    (hall : SubC164 A w' X) : SubC164 A w' (phiNF α X) :=
+  subC_of_isAP164 (isAP_phiNF α X) (sub157_phiNF164 hiα hαM hαA hsc hiX h1 hall)
+
+/-! ## §164.3 The `collapse`-fold never leaves the closure
+
+`stepF` in the Veblen branch, unfolded once for each of the two states. -/
+
+theorem stepF_veb_none164 {w base : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (h : le w ac.1 = false) (h2 : s.2 = none) :
+    (stepF w base s ac).2 = some (phiNF ac.1 (plus base (sub1 ac.2))) := by
+  show (if le w ac.1 = true then (some (idxOf w s ac), some (psi w (idxOf w s ac)))
+      else (s.1, some (phiNF ac.1
+        (plus (match s.2 with | none => base | some v => v)
+              (match s.2 with | none => sub1 ac.2 | some _ => ac.2))))).2 = _
+  rw [if_neg (by rw [h]; exact Bool.noConfusion)]
+  show some (phiNF ac.1
+      (plus (match s.2 with | none => base | some v => v)
+            (match s.2 with | none => sub1 ac.2 | some _ => ac.2))) = _
+  rw [h2]
+
+theorem stepF_veb_some164 {w base v : Term} {s : Option Term × Option Term} {ac : Term × Term}
+    (h : le w ac.1 = false) (h2 : s.2 = some v) :
+    (stepF w base s ac).2 = some (phiNF ac.1 (plus v ac.2)) := by
+  show (if le w ac.1 = true then (some (idxOf w s ac), some (psi w (idxOf w s ac)))
+      else (s.1, some (phiNF ac.1
+        (plus (match s.2 with | none => base | some v => v)
+              (match s.2 with | none => sub1 ac.2 | some _ => ac.2))))).2 = _
+  rw [if_neg (by rw [h]; exact Bool.noConfusion)]
+  show some (phiNF ac.1
+      (plus (match s.2 with | none => base | some v => v)
+            (match s.2 with | none => sub1 ac.2 | some _ => ac.2))) = _
+  rw [h2]
+
+/-- What one pair of the base-`Ω₁` decomposition has to satisfy for the fold to stay
+    inside the closure. -/
+def PairOK164 (A w' : Term) (pr : Term × Term) : Prop :=
+  le (reg 1) pr.1 = false ∧ le pr.1 A = true ∧ inT pr.1 = true ∧ lt pr.1 M = true ∧
+  ((pr.1).isSC = false ∨ Sub157 A w' pr.1) ∧ inT pr.2 = true ∧ SubC164 A w' pr.2
+
+/-- The invariant carried along the fold. -/
+def FoldOK164 (A w' : Term) (s : Option Term × Option Term) : Prop :=
+  ∀ v, s.2 = some v → inT v = true ∧ SubC164 A w' v
+
+theorem foldOK_init164 {A w' : Term} :
+    FoldOK164 A w' ((none : Option Term), (none : Option Term)) := by
+  intro v hv
+  exact absurd hv (by intro hc; cases hc)
+
+theorem fold_sub164 {A w' : Term} (h1 : le TM.Term.one w' = true) :
+    ∀ (Q : List (Term × Term)) (s : Option Term × Option Term),
+      (∀ pr ∈ Q, PairOK164 A w' pr) → FoldOK164 A w' s →
+      FoldOK164 A w' (Q.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro Q
+  induction Q with
+  | nil => intro s _ hs; exact hs
+  | cons pr rest ih =>
+      intro s hall hs
+      obtain ⟨hfire, hcap, hiα, hαM, hsc, hi2, hs2⟩ := hall pr (List.Mem.head _)
+      refine ih _ (fun z hz => hall z (List.Mem.tail _ hz)) ?_
+      cases hsnd : s.2 with
+      | none =>
+          intro v hv
+          rw [stepF_veb_none164 hfire hsnd] at hv
+          have hve : v = phiNF pr.1 (plus (baseOf 0) (sub1 pr.2)) := by
+            injection hv with hq; exact hq.symm
+          subst hve
+          have hib : inT (baseOf 0) = true := inT_zero
+          have hisub : inT (sub1 pr.2) = true := inT_sub1 hi2
+          have hX : SubC164 A w' (plus (baseOf 0) (sub1 pr.2)) :=
+            subC_plus164 hib hisub subC_zero164 (subC_sub1_164 hi2 hs2)
+          have hmain : Sub157 A w' (phiNF pr.1 (plus (baseOf 0) (sub1 pr.2))) :=
+            sub157_phiNF164 hiα hαM hcap hsc (inT_plus hib hisub) h1 hX
+          exact ⟨(sub157_inT hmain).1, subC_of_isAP164 (isAP_phiNF _ _) hmain⟩
+      | some v0 =>
+          intro v hv
+          rw [stepF_veb_some164 hfire hsnd] at hv
+          have hve : v = phiNF pr.1 (plus v0 pr.2) := by
+            injection hv with hq; exact hq.symm
+          subst hve
+          obtain ⟨hiv0, hsv0⟩ := hs v0 hsnd
+          have hX : SubC164 A w' (plus v0 pr.2) :=
+            subC_plus164 hiv0 hi2 hsv0 hs2
+          have hmain : Sub157 A w' (phiNF pr.1 (plus v0 pr.2)) :=
+            sub157_phiNF164 hiα hαM hcap hsc (inT_plus hiv0 hi2) h1 hX
+          exact ⟨(sub157_inT hmain).1, subC_of_isAP164 (isAP_phiNF _ _) hmain⟩
+
+/-- **The fold value is in the closure** as soon as every pair is. -/
+theorem sub157_foldV164 {A w' : Term} (h1 : le TM.Term.one w' = true) {d : BT}
+    (hpairs : ∀ pr ∈ (wcnf (reg 1) (toList (dict d))).1, PairOK164 A w' pr) :
+    Sub157 A w' (foldV161 d) := by
+  unfold foldV161
+  cases h2 : (((wcnf (reg 1) (toList (dict d))).1.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2) with
+  | none => exact sub157_zero161
+  | some v =>
+      obtain ⟨hiv, hsv⟩ :=
+        fold_sub164 h1 _ _ hpairs foldOK_init164 v h2
+      exact sub157_of_comps161 v hiv hsv
+
+/-! ## §164.4 Naming the pairs of a `dict` image -/
+
+theorem mem_split164 {α : Type} : ∀ (l : List α) (x : α), x ∈ l → ∃ p s, l = p ++ x :: s
+  | [], _, hx => by cases hx
+  | y :: t, x, hx => by
+      rcases List.mem_cons.mp hx with h | h
+      · exact ⟨[], t, by rw [h]; rfl⟩
+      · obtain ⟨p, s, he⟩ := mem_split164 t x h
+        exact ⟨y :: p, s, by rw [he]; rfl⟩
+
+theorem inT_blockC164 {w : Term} : ∀ (B : List Term), (∀ p ∈ B, inT p = true) →
+    inT (blockC159 w B) = true
+  | [], _ => inT_zero
+  | p :: r, h => by
+      rw [blockC159_cons]
+      exact inT_plus (inT_wC (h p (List.Mem.head _)))
+        (inT_blockC164 r (fun z hz => h z (List.Mem.tail _ hz)))
+
+theorem subC_blockC164 {A w' w : Term} : ∀ (B : List Term), (∀ p ∈ B, inT p = true) →
+    (∀ p ∈ B, Sub157 A w' (wC w p)) → SubC164 A w' (blockC159 w B)
+  | [], _, _ => by rw [blockC159_nil]; exact subC_zero164
+  | p :: r, hi, h => by
+      rw [blockC159_cons]
+      refine subC_plus164 (inT_wC (hi p (List.Mem.head _)))
+        (inT_blockC164 r (fun z hz => hi z (List.Mem.tail _ hz))) ?_ ?_
+      · exact subC_of_isAP164 (isAP_omegaNF _) (h p (List.Mem.head _))
+      · exact subC_blockC164 r (fun z hz => hi z (List.Mem.tail _ hz))
+          (fun z hz => h z (List.Mem.tail _ hz))
+
+/-- Every component of `B` is the image of a `ψ₁` digit of `d`. -/
+theorem block_name164 (Hp : PsiIdxOKStd172) {d : BT}
+    (hbd : btLe72 1 d = true) (hsd : BT.isStd d = true)
+    {P S : List (Term × Term)} {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsp : Split159 (reg 1) (toList (dict d)) P S ac Lpre B Lsuf) :
+    ∀ p ∈ B, ∃ e : BT, BT.D 1 e ∈ BT.toL d ∧ btLe72 1 e = true ∧ BT.isStd e = true ∧
+      p = dict (BT.D 1 e) := by
+  intro p hp
+  have hpL : p ∈ toList (dict d) := by
+    rw [hsp.eqL]
+    exact List.mem_append.mpr (Or.inl (List.mem_append.mpr (Or.inr hp)))
+  obtain ⟨u, e, hmem, hbue, hsue, hu1, hpe⟩ := comp_name160 Hp hbd hsd p hpL
+  have hfire : lt p (reg 1) = false := hsp.blkFire p hp
+  have hhi := hiA_dict93 Hp u e hbue hsue
+  rw [← hpe, hfire] at hhi
+  have hu : 1 ≤ u := of_decide_eq_true hhi.symm
+  have hu' : u = 1 := by omega
+  subst hu'
+  exact ⟨e, hmem, (btLe72_D 1 1 e hbue).2, isStd_of_D hsue, hpe⟩
+
+/-! ## §164.5 The exponent of a flat `ψ₁` node is `1` -/
+
+theorem filter_hi_plusW164 {g : Term} (hg : inT g = true)
+    (hlo : ∀ q ∈ toList g, lt q (reg 1) = true) :
+    (toList (plus (reg 1) g)).filter (fun q => !lt q (reg 1)) = [reg 1] := by
+  cases hl : toList g with
+  | nil =>
+      rw [plus_nil hl, toList_W_119,
+        List.filter_cons_of_pos (by rw [lt_irrefl]; rfl)]
+      rfl
+  | cons b1 r =>
+      have hb1 : lt b1 (reg 1) = true := hlo b1 (by rw [hl]; exact List.Mem.head _)
+      rw [toList_plus_inT (inT_reg 1) hg hl, toList_W_119,
+        List.filter_cons_of_pos (by rw [le_of_lt hb1])]
+      show ((reg 1 :: toList g).filter (fun q => !lt q (reg 1))) = [reg 1]
+      rw [List.filter_cons_of_pos (by rw [lt_irrefl]; rfl),
+        filter_hi_nil160 (toList g) hlo]
+
+/-- **A `ψ₁` node whose argument has no `ψ₁` digit has base-`Ω₁` exponent `1`.** -/
+theorem wA_dict_D1_one164 (Hp : PsiIdxOKStd172) {c : BT}
+    (hbc : btLe72 1 c = true) (hsc : BT.isStd c = true)
+    (hlo : ∀ z ∈ BT.toL c, ∃ y : BT, z = BT.D 0 y) :
+    wA (reg 1) (dict (BT.D 1 c)) = TM.Term.one := by
+  obtain ⟨hic, hcM⟩ := inT_dict_of_std172 Hp c hbc hsc
+  have hlow : ∀ q ∈ toList (dict c), lt q (reg 1) = true := by
+    intro q hq
+    obtain ⟨u, y, hmem, hbuy, hsuy, hu1, hqe⟩ := comp_name160 Hp hbc hsc q hq
+    obtain ⟨y', hy'⟩ := hlo _ hmem
+    have hu0 : u = 0 := by injection hy' with h1 _
+    subst hu0
+    rw [hqe]
+    exact lt_dict_D0_W93 Hp hbuy hsuy
+  show ofList (((toList (logOm (dict (BT.D 1 c)))).filter (fun q => !lt q (reg 1))).map
+      (divAP (reg 1))) = TM.Term.one
+  rw [logOm_dict_D1_104 Hp hbc hsc, filter_hi_plusW164 hic hlow]
+  show ofList [divAP (reg 1) (reg 1)] = TM.Term.one
+  rw [divAP_W_W_119]
+  rfl
+
+theorem hi_mem_plusW164 {g : Term} (hg : inT g = true) :
+    ∃ q, q ∈ toList (plus (reg 1) g) ∧ lt q (reg 1) = false := by
+  cases hl : toList g with
+  | nil =>
+      refine ⟨reg 1, ?_, by rw [lt_irrefl]⟩
+      rw [plus_nil hl, toList_W_119]
+      exact List.Mem.head _
+  | cons b1 r =>
+      by_cases hb : le b1 (reg 1) = true
+      · refine ⟨reg 1, ?_, by rw [lt_irrefl]⟩
+        rw [toList_plus_inT (inT_reg 1) hg hl, toList_W_119,
+          List.filter_cons_of_pos (by rw [hb])]
+        show reg 1 ∈ reg 1 :: toList g
+        exact List.Mem.head _
+      · refine ⟨b1, ?_, ?_⟩
+        · rw [toList_plus_inT (inT_reg 1) hg hl]
+          exact List.mem_append_right _ (by rw [hl]; exact List.Mem.head _)
+        · cases hc : lt b1 (reg 1) with
+          | false => rfl
+          | true => exact absurd (le_of_lt hc) hb
+
+/-- The exponent of a `ψ₁` image is never `0`. -/
+theorem wA_dict_D1_ne_zero164 (Hp : PsiIdxOKStd172) {c : BT}
+    (hbc : btLe72 1 c = true) (hsc : BT.isStd c = true) :
+    wA (reg 1) (dict (BT.D 1 c)) ≠ zero := by
+  intro hcon
+  obtain ⟨hic, hcM⟩ := inT_dict_of_std172 Hp c hbc hsc
+  obtain ⟨q, hqm, hqw⟩ := hi_mem_plusW164 hic
+  have hlist : toList (wA (reg 1) (dict (BT.D 1 c)))
+      = (((toList (logOm (dict (BT.D 1 c)))).filter (fun z => !lt z (reg 1))).map
+          (divAP (reg 1))) := toList_wA119
+  rw [hcon, logOm_dict_D1_104 Hp hbc hsc] at hlist
+  have hmem : divAP (reg 1) q ∈
+      ((toList (plus (reg 1) (dict c))).filter (fun z => !lt z (reg 1))).map (divAP (reg 1)) :=
+    List.mem_map_of_mem (List.mem_filter.mpr ⟨hqm, by rw [hqw]; rfl⟩)
+  rw [← hlist] at hmem
+  have hnil : divAP (reg 1) q ∈ ([] : List Term) := hmem
+  cases hnil
+
+/-! ## §164.6 The residual, node by node -/
+
+/-- The residual condition at ONE `ψ₁` node inside a `ψ₀` argument: its base-`Ω₁`
+    exponent does not fire and is capped by the ambient Veblen exponent `A`. -/
+def CapE164 (A w' : Term) (e : BT) : Prop :=
+  le (wA (reg 1) (dict (BT.D 1 e))) A = true ∧
+  le (reg 1) (wA (reg 1) (dict (BT.D 1 e))) = false ∧
+  ((wA (reg 1) (dict (BT.D 1 e))).isSC = false ∨
+    Sub157 A w' (wA (reg 1) (dict (BT.D 1 e))))
+
+/-- **The residual of `HeartLo161`, as a descent.**  Every `ψ₁` node met on the way
+    down satisfies `CapE164`; the descent then continues through the `ψ₀` digits of
+    that node's argument and of the node itself. -/
+inductive Cap164 (A w' : Term) : BT → Prop where
+  | ofLe : ∀ {d : BT}, le (dict (BT.D 0 d)) w' = true → Cap164 A w' d
+  | mk : ∀ {d : BT},
+      (∀ e : BT, BT.D 1 e ∈ BT.toL d → CapE164 A w' e) →
+      (∀ e : BT, BT.D 1 e ∈ BT.toL d → ∀ y : BT, BT.D 0 y ∈ BT.toL e → Cap164 A w' y) →
+      (∀ y : BT, BT.D 0 y ∈ BT.toL d → Cap164 A w' y) →
+      Cap164 A w' d
+
+theorem pairs_ok164 (Hp : PsiIdxOKStd172) {A w' : Term} (h1 : le TM.Term.one w' = true)
+    {d : BT} (hb : btLe72 1 (BT.D 0 d) = true) (hs : BT.isStd (BT.D 0 d) = true)
+    (hcap : ∀ e : BT, BT.D 1 e ∈ BT.toL d → CapE164 A w' e)
+    (hsub : ∀ e : BT, BT.D 1 e ∈ BT.toL d → ∀ y : BT, BT.D 0 y ∈ BT.toL e →
+      Sub157 A w' (dict (BT.D 0 y))) :
+    ∀ pr ∈ (wcnf (reg 1) (toList (dict d))).1, PairOK164 A w' pr := by
+  intro pr hpr
+  have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+  have hsd : BT.isStd d = true := isStd_of_D hs
+  obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp d hbd hsd
+  obtain ⟨P, S, hPS⟩ := mem_split164 _ pr hpr
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict d)) P S pr hPS
+  have hname := block_name164 Hp hbd hsd hsp
+  have hinB : ∀ p ∈ B, inT p = true := by
+    intro p hp
+    refine inTL_inT hid p ?_
+    rw [hsp.eqL]
+    exact List.mem_append.mpr (Or.inl (List.mem_append.mpr (Or.inr hp)))
+  obtain ⟨q, Btl, hBe, hqfire, hac1⟩ := head_of_split159 hsp
+  have hqB : q ∈ B := by rw [hBe]; exact List.Mem.head _
+  obtain ⟨e0, he0m, hbe0, hse0, hqe⟩ := hname q hqB
+  obtain ⟨hcapA, hcapF, hcapS⟩ := hcap e0 he0m
+  have hA : pr.1 = wA (reg 1) (dict (BT.D 1 e0)) := by rw [hac1, hqe]
+  have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+  obtain ⟨hie0, hie0M⟩ :=
+    inT_dict_of_std172 Hp (BT.D 1 e0) (hgood.2.2.1 _ he0m) (hgood.2.1 _ he0m)
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [hA]; exact hcapF
+  · rw [hA]; exact hcapA
+  · rw [hA]
+    exact inT_wA109 (inT_reg 1) (show (reg 1).isSC = true from rfl) hie0
+  · rw [hA]; exact ltM_wA hie0 hie0M
+  · rw [hA]; exact hcapS
+  · rw [hsp.blkC]; exact inT_blockC164 B hinB
+  · rw [hsp.blkC]
+    refine subC_blockC164 B hinB ?_
+    intro p hp
+    obtain ⟨e, hem, hbe, hse, hpe⟩ := hname p hp
+    rw [hpe]
+    exact sub157_wC_dict161 Hp hbe hse h1 (fun y hy => hsub e hem y hy)
+
+/-- **The residual closes the level-0 descent.** -/
+theorem lo0Sub_of_cap164 (Hp : PsiIdxOKStd172) {A w' : Term} (h1 : le TM.Term.one w' = true) :
+    ∀ {d : BT}, Cap164 A w' d → btLe72 1 (BT.D 0 d) = true → BT.isStd (BT.D 0 d) = true →
+      Lo0Sub161 A w' d := by
+  intro d hd
+  induction hd with
+  | @ofLe d hle => intro _ _; exact Lo0Sub161.ofLe hle
+  | @mk d hE _ _ ih1 ih0 =>
+      intro hb hs
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      refine Lo0Sub161.step ?_ ?_
+      · refine sub157_foldV164 h1 ?_
+        refine pairs_ok164 Hp h1 hb hs hE ?_
+        intro e hem y hym
+        have hb1 : btLe72 1 (BT.D 1 e) = true := hgood.2.2.1 _ hem
+        have hs1 : BT.isStd (BT.D 1 e) = true := hgood.2.1 _ hem
+        have hbe : btLe72 1 e = true := (btLe72_D 1 1 e hb1).2
+        have hse : BT.isStd e = true := isStd_of_D hs1
+        have hge : GoodL77 (BT.toL e) := good_toL77 e hse hbe
+        exact sub157_dict_D0_161 Hp h1 (ih1 e hem y hym (hge.2.2.1 _ hym) (hge.2.1 _ hym))
+          (hge.2.2.1 _ hym) (hge.2.1 _ hym)
+      · intro y hym
+        exact ih0 y hym (hgood.2.2.1 _ hym) (hgood.2.1 _ hym)
+
+/-! ## §164.7 The decidable region where the residual is a theorem -/
+
+/-- `e` has no `ψ₁` digit at the top. -/
+def noD1164 : BT → Bool
+  | .zero => true
+  | .D u _ => u == 0
+  | .sum a b => noD1164 a && noD1164 b
+
+/-- `d` is FLAT: every `ψ₁` node inside it (reached through `ψ₀` nodes) has an
+    argument with no `ψ₁` digit.  Strictly weaker than §161's `lvl0161`, which
+    forbids `ψ₁` outright. -/
+def flat164 : BT → Bool
+  | .zero => true
+  | .D u x => if u == 0 then flat164 x else (noD1164 x && flat164 x)
+  | .sum a b => flat164 a && flat164 b
+
+theorem noD1_toL164 : ∀ (e : BT), noD1164 e = true → ∀ z ∈ BT.toL e, ∃ y : BT, z = BT.D 0 y
+  | .zero, _, _, hz => by cases hz
+  | .D u x, h, z, hz => by
+      have hz' : z = BT.D u x := List.mem_singleton.mp hz
+      have hu : (u == 0) = true := h
+      exact ⟨x, by rw [hz', eq_of_beq hu]⟩
+  | .sum a b, h, z, hz => by
+      obtain ⟨ha, hb⟩ := (Bool.and_eq_true _ _).mp h
+      rcases List.mem_append.mp (show z ∈ BT.toL a ++ BT.toL b from hz) with h3 | h3
+      · exact noD1_toL164 a ha z h3
+      · exact noD1_toL164 b hb z h3
+
+theorem flat_toL164 : ∀ (d : BT), flat164 d = true → ∀ z ∈ BT.toL d, flat164 z = true
+  | .zero, _, _, hz => by cases hz
+  | .D u x, h, z, hz => by
+      have hz' : z = BT.D u x := List.mem_singleton.mp hz
+      rw [hz']; exact h
+  | .sum a b, h, z, hz => by
+      obtain ⟨ha, hb⟩ := (Bool.and_eq_true _ _).mp h
+      rcases List.mem_append.mp (show z ∈ BT.toL a ++ BT.toL b from hz) with h3 | h3
+      · exact flat_toL164 a ha z h3
+      · exact flat_toL164 b hb z h3
+
+theorem flat_D0_164 {x : BT} (h : flat164 (BT.D 0 x) = true) : flat164 x = true := h
+
+theorem flat_D1_164 {x : BT} (h : flat164 (BT.D 1 x) = true) :
+    noD1164 x = true ∧ flat164 x = true := (Bool.and_eq_true _ _).mp h
+
+theorem flat_of_lvl0164 : ∀ (d : BT), lvl0161 d = true → flat164 d = true
+  | .zero, _ => rfl
+  | .D u x, h => by
+      obtain ⟨hu, hx⟩ := (Bool.and_eq_true _ _).mp (show ((u == 0) && lvl0161 x) = true from h)
+      have hu0 : u = 0 := eq_of_beq hu
+      subst hu0
+      show (if (0 == 0) then flat164 x else _) = true
+      rw [if_pos (show (0 == 0) = true from rfl)]
+      exact flat_of_lvl0164 x hx
+  | .sum a b, h => by
+      obtain ⟨ha, hb⟩ := (Bool.and_eq_true _ _).mp (show (lvl0161 a && lvl0161 b) = true from h)
+      show (flat164 a && flat164 b) = true
+      rw [flat_of_lvl0164 a ha, flat_of_lvl0164 b hb]
+      rfl
+
+/-- **The flat region satisfies the residual.** -/
+theorem cap_of_flat164 (Hp : PsiIdxOKStd172) {A w' : Term} (hA1 : le TM.Term.one A = true) :
+    ∀ (n : Nat) (d : BT), BT.size d < n → btLe72 1 (BT.D 0 d) = true →
+      BT.isStd (BT.D 0 d) = true → flat164 d = true → Cap164 A w' d
+  | 0, _, h, _, _, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hb, hs, hf => by
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      refine Cap164.mk ?_ ?_ ?_
+      · intro e hem
+        have hb1 : btLe72 1 (BT.D 1 e) = true := hgood.2.2.1 _ hem
+        have hs1 : BT.isStd (BT.D 1 e) = true := hgood.2.1 _ hem
+        have hbe : btLe72 1 e = true := (btLe72_D 1 1 e hb1).2
+        have hse : BT.isStd e = true := isStd_of_D hs1
+        have hfe : noD1164 e = true := (flat_D1_164 (flat_toL164 d hf _ hem)).1
+        have hone : wA (reg 1) (dict (BT.D 1 e)) = TM.Term.one :=
+          wA_dict_D1_one164 Hp hbe hse (noD1_toL164 e hfe)
+        refine ⟨?_, ?_, ?_⟩
+        · rw [hone]; exact hA1
+        · rw [hone]; exact leW_false157 inT_one lt_one_W79
+        · rw [hone]; exact Or.inl rfl
+      · intro e hem y hym
+        have hb1 : btLe72 1 (BT.D 1 e) = true := hgood.2.2.1 _ hem
+        have hs1 : BT.isStd (BT.D 1 e) = true := hgood.2.1 _ hem
+        have hbe : btLe72 1 e = true := (btLe72_D 1 1 e hb1).2
+        have hse : BT.isStd e = true := isStd_of_D hs1
+        have hge : GoodL77 (BT.toL e) := good_toL77 e hse hbe
+        have hfe : flat164 e = true := (flat_D1_164 (flat_toL164 d hf _ hem)).2
+        have hfy : flat164 y = true := flat_D0_164 (flat_toL164 e hfe _ hym)
+        have hs1' : BT.size (BT.D 1 e) ≤ BT.size d := size_mem_toL87 d _ hem
+        have hs0' : BT.size (BT.D 0 y) ≤ BT.size e := size_mem_toL87 e _ hym
+        rw [size_D87] at hs1' hs0'
+        exact cap_of_flat164 Hp hA1 n y (by omega) (hge.2.2.1 _ hym) (hge.2.1 _ hym) hfy
+      · intro y hym
+        have hfy : flat164 y = true := flat_D0_164 (flat_toL164 d hf _ hym)
+        have hs0' : BT.size (BT.D 0 y) ≤ BT.size d := size_mem_toL87 d _ hym
+        rw [size_D87] at hs0'
+        exact cap_of_flat164 Hp hA1 n y (by omega) (hgood.2.2.1 _ hym) (hgood.2.1 _ hym) hfy
+
+/-! ## §164.8 The carriers -/
+
+/-- **`Subord157` at one `a`, from the residual `Cap164`.** -/
+theorem subord157_at_cap164 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false)
+    (H : ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+      Cap164 ac.1 (wVal157 P) d) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine sub157_of_split159 hsp ?_
+  intro p hp
+  obtain ⟨h1, c, hcm, hbc, hsc, hpe⟩ := split_facts161 Hp hb hs hsplit hsp hp
+  rw [hpe]
+  refine sub157_wC_dict161 Hp hbc hsc h1 ?_
+  intro d hdm
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  exact sub157_dict_D0_161 Hp h1
+    (lo0Sub_of_cap164 Hp h1 (H c hcm d hdm) (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm))
+    (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+
+/-- The ambient Veblen exponent is at least `1`. -/
+theorem le_one_ac164 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    {P S : List (Term × Term)} {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsp : Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf) :
+    le TM.Term.one ac.1 = true := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  obtain ⟨q, Btl, hBe, hqfire, hac1⟩ := head_of_split159 hsp
+  have hqB : q ∈ B := by rw [hBe]; exact List.Mem.head _
+  obtain ⟨e, hem, hbe, hse, hqe⟩ := block_name164 Hp hba hsa hsp q hqB
+  have hA : ac.1 = wA (reg 1) (dict (BT.D 1 e)) := by rw [hac1, hqe]
+  obtain ⟨hie, _⟩ :=
+    inT_dict_of_std172 Hp (BT.D 1 e) (hgood.2.2.1 _ hem) (hgood.2.1 _ hem)
+  refine le_one157 ?_ ?_
+  · rw [hA]
+    exact inT_wA109 (inT_reg 1) (show (reg 1).isSC = true from rfl) hie
+  · rw [hA]
+    exact wA_dict_D1_ne_zero164 Hp hbe hse
+
+/-- **THE FREE REGION, ENLARGED.**  Where every `ψ₀`-argument sitting in a
+    coefficient position is FLAT, `Subord157` holds at `a` — proved, no carrier. -/
+theorem subord157_at_flat164 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hfree : ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+      flat164 d = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  have hA1 : le TM.Term.one ac.1 = true := le_one_ac164 Hp hb hs hsp
+  refine subord157_at_cap164 Hp hb hs P S ac hsplit hfire ?_
+  intro c hcm d hdm
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (hgood.2.2.1 _ hcm)).2
+  have hsc : BT.isStd c = true := isStd_of_D (hgood.2.1 _ hcm)
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  exact cap_of_flat164 Hp hA1 (BT.size d + 1) d (Nat.lt_succ_self _)
+    (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm) (hfree c hcm d hdm)
+
+/-- The global form of the enlarged free region. -/
+/- **⚠ 大域形。前件は適格項の全体では偽なので、成果として数えないこと。**
+    中身があるのは同じ名前の per-a 形 (`..._at_...`) の方である。 -/
+theorem subord157_of_flat164 (Hp : PsiIdxOKStd172)
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c → flat164 d = true) :
+    Subord157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    subord157_at_flat164 Hp hb hs (H a hb hs) P S ac hsplit hfire
+
+/-- **The residual of `HeartLo161`, restated as `Cap164` everywhere.** -/
+def HeartCap164 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+        Cap164 ac.1 (wVal157 P) d
+
+/- **⚠ 前件は反証済み — この大域形は使えない。**  `HeartCap164` は §151 のプールの
+    適格項 1174 のうち 260 で破れる (最小の証人は pool C の `BT.size` 15 の項で、
+    段の指数が 2 に対し Veblen の指数が 1)。前件が偽なので何でも出る。
+    **中身があるのは per-a 形の `subord157_at_chk164` の方である。** -/
+theorem heartLo161_of_cap164 (H : HeartCap164) (Hp : PsiIdxOKStd172) : HeartLo161 := by
+  intro a hb hs P S ac Lpre B Lsuf hsplit hsp hfire c hcm hpB d hdm
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (hgood.2.2.1 _ hcm)).2
+  have hsc : BT.isStd c = true := isStd_of_D (hgood.2.1 _ hcm)
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  obtain ⟨h1, _, _, _, _, _⟩ := split_facts161 Hp hb hs hsplit hsp
+    (show dict (BT.D 1 c) ∈ B from hpB)
+  exact lo0Sub_of_cap164 Hp h1 (H a hb hs P S ac hsplit hfire c hcm d hdm)
+    (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+
+/-- **`Subord157` from the reduced residual.** -/
+/- **⚠ 前件は反証済み — この大域形は使えない。**  `HeartCap164` は §151 のプールの
+    適格項 1174 のうち 260 で破れる (最小の証人は pool C の `BT.size` 15 の項で、
+    段の指数が 2 に対し Veblen の指数が 1)。前件が偽なので何でも出る。
+    **中身があるのは per-a 形の `subord157_at_chk164` の方である。** -/
+theorem subord157_of_cap164 (Hp : PsiIdxOKStd172) (H : HeartCap164) : Subord157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    subord157_at_cap164 Hp hb hs P S ac hsplit hfire (H a hb hs P S ac hsplit hfire)
+
+/-! ## §164.9 The other exit: a `lt`-bound against a fired prefix
+
+§161's `Lo0Sub161.ofLe` stops the descent outright.  Composed with §160's
+`psi_le_wVal160` — once the prefix has fired, its fold value dominates `ψ_{Ω₁}(i)`
+for an index the fold really built — the §128-shaped `lt`-clause discharges the
+coefficient carrier's residual in one step, exactly as it does the exponent
+carrier's in §160.5c. -/
+
+theorem lo0Sub_of_ltPsi164 {A w' i : Term} {d : BT}
+    (hid : inT (dict (BT.D 0 d)) = true) (hii : inT i = true) (hiw : inT w' = true)
+    (hlt : lt (dict (BT.D 0 d)) (psi (reg 1) i) = true)
+    (hle : le (psi (reg 1) i) w' = true) : Lo0Sub161 A w' d :=
+  Lo0Sub161.ofLe (le_of_lt (lt_of_lt_of_le3 (inT_le_fragR _ hid)
+    (fragR_psi_reg92 (inT_le_fragR _ hii)) (inT_le_fragR _ hiw) hlt hle))
+
+/-- The `≤`-clause on the `ψ₀`-images in coefficient position — the `Subord157`
+    twin of §160's `ExpHeart160` route. -/
+def LeHeart164 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+        le (dict (BT.D 0 d)) (wVal157 P) = true
+
+theorem heartLo161_of_le164 (H : LeHeart164) : HeartLo161 :=
+  fun a hb hs P S ac _ _ _ hsplit _ hfire c hcm _ d hdm =>
+    Lo0Sub161.ofLe (H a hb hs P S ac hsplit hfire c hcm d hdm)
+
+/- **⚠ 前件は反証済み — この大域形は使えない。**  `LeHeart164` が成り立つのは
+    適格項 1174 のうち 308 だけで、866 が反証する。
+    **中身があるのは per-a 形の方である。** -/
+theorem subord157_of_le164 (Hp : PsiIdxOKStd172) (H : LeHeart164) : Subord157 :=
+  subord157_proof Hp (heartLo161_of_le164 H)
+
+/-! ## §164.10 The two exits combined
+
+Neither region contains the other: `flat164` needs nothing about the prefix and
+covers `P = []`, while the `≤`-bound needs no shape restriction on `d` but only
+bites once the prefix has grown.  At a single `a` they may be mixed pair by pair. -/
+
+/-- **`Subord157` at one `a` from the two exits, taken pointwise.** -/
+theorem subord157_at_flatOrLe164 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false)
+    (hfree : ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+      flat164 d = true ∨ le (dict (BT.D 0 d)) (wVal157 P) = true) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  have hA1 : le TM.Term.one ac.1 = true := le_one_ac164 Hp hb hs hsp
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  obtain ⟨Lpre', B', Lsuf', hsp'⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine sub157_of_split159 hsp' ?_
+  intro p hp
+  obtain ⟨h1, c, hcm, hbc, hsc, hpe⟩ := split_facts161 Hp hb hs hsplit hsp' hp
+  rw [hpe]
+  refine sub157_wC_dict161 Hp hbc hsc h1 ?_
+  intro d hdm
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  refine sub157_dict_D0_161 Hp h1 ?_ (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+  rcases hfree c hcm d hdm with hfl | hle
+  · exact lo0Sub_of_cap164 Hp h1
+      (cap_of_flat164 Hp hA1 (BT.size d + 1) d (Nat.lt_succ_self _)
+        (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm) hfl)
+      (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+  · exact Lo0Sub161.ofLe hle
+
+/-- The global form. -/
+theorem subord157_of_flatOrLe164 (Hp : PsiIdxOKStd172)
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      ∀ (P S : List (Term × Term)) (ac : Term × Term),
+        (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+        le (reg 1) ac.1 = false →
+        ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+          flat164 d = true ∨ le (dict (BT.D 0 d)) (wVal157 P) = true) :
+    Subord157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    subord157_at_flatOrLe164 Hp hb hs P S ac hsplit hfire (H a hb hs P S ac hsplit hfire)
+
+/-! ## §164.11b The residual, DECIDED
+
+`Cap164` is a descent through `BT`, so it has a decidable sufficient form: walk the
+argument and check, at every `ψ₁` node met, that its base-`Ω₁` exponent does not
+fire and is `≤` the ambient Veblen exponent.  `capChk164` is that walk and
+`cap_of_chk164` proves it sufficient, so anything it accepts is PROVED, not swept. -/
+
+def capEChk164 (A w' : Term) (x : BT) : Bool :=
+  le (wA (reg 1) (dict (BT.D 1 x))) A
+    && !(le (reg 1) (wA (reg 1) (dict (BT.D 1 x))))
+    && (!((wA (reg 1) (dict (BT.D 1 x))).isSC)
+        || (inT (wA (reg 1) (dict (BT.D 1 x)))
+            && lt (wA (reg 1) (dict (BT.D 1 x))) M
+            && le (wA (reg 1) (dict (BT.D 1 x))) w'))
+
+theorem capE_of_chk164 {A w' : Term} {x : BT} (h : capEChk164 A w' x = true) :
+    CapE164 A w' x := by
+  obtain ⟨h12, h3⟩ := (Bool.and_eq_true _ _).mp h
+  obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp h12
+  refine ⟨h1, ?_, ?_⟩
+  · cases hc : le (reg 1) (wA (reg 1) (dict (BT.D 1 x))) with
+    | false => rfl
+    | true => rw [hc] at h2; exact Bool.noConfusion h2
+  · cases hsc : (wA (reg 1) (dict (BT.D 1 x))).isSC with
+    | false => exact Or.inl rfl
+    | true =>
+        rw [hsc] at h3
+        have h4 : (inT (wA (reg 1) (dict (BT.D 1 x)))
+            && lt (wA (reg 1) (dict (BT.D 1 x))) M
+            && le (wA (reg 1) (dict (BT.D 1 x))) w') = true := h3
+        obtain ⟨h45, h6⟩ := (Bool.and_eq_true _ _).mp h4
+        obtain ⟨h4', h5⟩ := (Bool.and_eq_true _ _).mp h45
+        exact Or.inr (Sub157.ofLe h4' h5 h6)
+
+def capChkStep164 (A w' : Term) (rec : BT → Bool) (d : BT) : Bool :=
+  (BT.toL d).all (fun z =>
+    match z with
+    | BT.D u x =>
+        if u == 0 then rec x
+        else if u == 1 then
+          capEChk164 A w' x && (BT.toL x).all (fun y =>
+            match y with
+            | BT.D v e => if v == 0 then rec e else true
+            | _ => true)
+        else false
+    | _ => true)
+
+/-- The descent, decided: at every node either the `ψ₀`-image is already below the
+    bound (§161's `ofLe` exit) or every `ψ₁` node here is capped. -/
+def capChk164 (A w' : Term) : Nat → BT → Bool
+  | 0, _ => false
+  | n + 1, d => le (dict (BT.D 0 d)) w' || capChkStep164 A w' (capChk164 A w' n) d
+
+theorem cap_of_chk164 {A w' : Term} : ∀ (n : Nat) (d : BT), BT.size d < n →
+    capChk164 A w' n d = true → Cap164 A w' d
+  | 0, _, h, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hchk => by
+      have hchk0 : (le (dict (BT.D 0 d)) w' ||
+          capChkStep164 A w' (capChk164 A w' n) d) = true := hchk
+      cases hle : le (dict (BT.D 0 d)) w' with
+      | true => exact Cap164.ofLe hle
+      | false =>
+      rw [hle] at hchk0
+      have hchk' : (BT.toL d).all (fun z =>
+          match z with
+          | BT.D u x =>
+              if u == 0 then capChk164 A w' n x
+              else if u == 1 then
+                capEChk164 A w' x && (BT.toL x).all (fun y =>
+                  match y with
+                  | BT.D v e => if v == 0 then capChk164 A w' n e else true
+                  | _ => true)
+              else false
+          | _ => true) = true := hchk0
+      have hall := List.all_eq_true.mp hchk'
+      refine Cap164.mk ?_ ?_ ?_
+      · intro e hem
+        have h2 : (capEChk164 A w' e && (BT.toL e).all (fun y =>
+            match y with
+            | BT.D v e' => if v == 0 then capChk164 A w' n e' else true
+            | _ => true)) = true := hall _ hem
+        exact capE_of_chk164 ((Bool.and_eq_true _ _).mp h2).1
+      · intro e hem y hym
+        have h2 : (capEChk164 A w' e && (BT.toL e).all (fun y =>
+            match y with
+            | BT.D v e' => if v == 0 then capChk164 A w' n e' else true
+            | _ => true)) = true := hall _ hem
+        have h4 : capChk164 A w' n y = true :=
+          List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h2).2 _ hym
+        have hsz1 : BT.size (BT.D 1 e) ≤ BT.size d := size_mem_toL87 d _ hem
+        have hsz0 : BT.size (BT.D 0 y) ≤ BT.size e := size_mem_toL87 e _ hym
+        rw [size_D87] at hsz1 hsz0
+        exact cap_of_chk164 n y (by omega) h4
+      · intro y hym
+        have h2 : capChk164 A w' n y = true := hall _ hym
+        have hsz0 : BT.size (BT.D 0 y) ≤ BT.size d := size_mem_toL87 d _ hym
+        rw [size_D87] at hsz0
+        exact cap_of_chk164 n y (by omega) h2
+
+/-- The whole obligation at one pair with its own prefix, decided. -/
+def pairChk164 (a : BT) (P : List (Term × Term)) (ac : Term × Term) : Bool :=
+  le (reg 1) ac.1 ||
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v d => if v == 0 then capChk164 ac.1 (wVal157 P) (BT.size d + 1) d else true
+        | _ => true) else true
+    | _ => true)
+
+/-- The walk along the pair list, carrying each pair's own prefix. -/
+def walkChk164 (a : BT) : List (Term × Term) → List (Term × Term) → Bool
+  | _, [] => true
+  | P, ac :: S => pairChk164 a P ac && walkChk164 a (P ++ [ac]) S
+
+theorem walk_split164 (a : BT) : ∀ (Q P S : List (Term × Term)) (ac : Term × Term),
+    walkChk164 a P (Q ++ ac :: S) = true → pairChk164 a (P ++ Q) ac = true
+  | [], P, S, ac, h => by
+      have h' : (pairChk164 a P ac && walkChk164 a (P ++ [ac]) S) = true := h
+      rw [List.append_nil]
+      exact ((Bool.and_eq_true _ _).mp h').1
+  | q :: Q', P, S, ac, h => by
+      have h' : (pairChk164 a P q && walkChk164 a (P ++ [q]) (Q' ++ ac :: S)) = true := h
+      have hr := walk_split164 a Q' (P ++ [q]) S ac ((Bool.and_eq_true _ _).mp h').2
+      rw [List.append_assoc] at hr
+      exact hr
+
+/-- The whole obligation at one `a`, decided. -/
+def subordChk164 (a : BT) : Bool :=
+  walkChk164 a [] ((wcnf (reg 1) (toList (dict a))).1)
+
+/-- **`Subord157` at one `a`, from the decided residual.** -/
+theorem subord157_at_chk164 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hchk : subordChk164 a = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  have hw : walkChk164 a [] (P ++ ac :: S) = true := by rw [← hsplit]; exact hchk
+  have hp0 := walk_split164 a P [] S ac hw
+  rw [List.nil_append] at hp0
+  have hp' : (le (reg 1) ac.1 ||
+      (BT.toL a).all (fun z =>
+        match z with
+        | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+            match y with
+            | BT.D v d => if v == 0 then capChk164 ac.1 (wVal157 P) (BT.size d + 1) d
+              else true
+            | _ => true) else true
+        | _ => true)) = true := hp0
+  rw [hfire] at hp'
+  have hrest : (BT.toL a).all (fun z =>
+      match z with
+      | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+          match y with
+          | BT.D v d => if v == 0 then capChk164 ac.1 (wVal157 P) (BT.size d + 1) d
+            else true
+          | _ => true) else true
+      | _ => true) = true := hp'
+  refine subord157_at_cap164 Hp hb hs P S ac hsplit hfire ?_
+  intro c hcm d hdm
+  have h1 : (BT.toL c).all (fun y =>
+      match y with
+      | BT.D v d' => if v == 0 then capChk164 ac.1 (wVal157 P) (BT.size d' + 1) d'
+        else true
+      | _ => true) = true := List.all_eq_true.mp hrest _ hcm
+  have h2 : capChk164 ac.1 (wVal157 P) (BT.size d + 1) d = true :=
+    List.all_eq_true.mp h1 _ hdm
+  exact cap_of_chk164 (BT.size d + 1) d (Nat.lt_succ_self _) h2
+
+/-- The global form. -/
+/- **⚠ 大域形。前件は適格項の全体では偽なので、成果として数えないこと。**
+    中身があるのは同じ名前の per-a 形 (`..._at_...`) の方である。 -/
+theorem subord157_of_chk164 (Hp : PsiIdxOKStd172)
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      subordChk164 a = true) :
+    Subord157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    subord157_at_chk164 Hp hb hs (H a hb hs) P S ac hsplit hfire
+
+/-! ## §164.11 The enlargement is strict
+
+`Ω₁ = ψ₁0` — the argument of `ε₀ = ψ₀(Ω₁)` — is flat but not level-0, so the
+§161 free region does not contain it and this one does.  Two more witnesses:
+`ψ₁(ε₀)` (a `ψ₁` under a `ψ₀` under a `ψ₁`) is flat, and `ψ₁(ψ₁0)` is not — the
+latter is exactly the shape whose exponent fires past `1`. -/
+
+theorem flat_Om164 : flat164 (BT.D 1 BT.zero) = true := rfl
+theorem not_lvl0_Om164 : lvl0161 (BT.D 1 BT.zero) = false := rfl
+theorem flat_psiOne_eps164 :
+    flat164 (BT.D 1 (BT.D 0 (BT.D 1 BT.zero))) = true := rfl
+theorem not_lvl0_psiOne_eps164 :
+    lvl0161 (BT.D 1 (BT.D 0 (BT.D 1 BT.zero))) = false := rfl
+theorem not_flat_psiOnePsiOne164 :
+    flat164 (BT.D 1 (BT.D 1 BT.zero)) = false := rfl
+
+/-! ## §164.12 The free region, decided
+
+`coefChk164 f a` is the decidable form of the free-region hypothesis at `a`:
+every `ψ₀`-argument sitting in a coefficient position of `a` passes `f`.  It is a
+sufficient condition, PROVED to imply the hypothesis, so every pool member it
+accepts is a proved instance of `Subord157` at that `a` — not a sweep hit. -/
+
+def coefChk164 (f : BT → Bool) (a : BT) : Bool :=
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v e => if v == 0 then f e else true
+        | _ => true) else true
+    | _ => true)
+
+theorem free_of_coefChk164 {f : BT → Bool} {a : BT} (h : coefChk164 f a = true) :
+    ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c → f d = true := by
+  intro c hc d hd
+  have h1 := List.all_eq_true.mp h _ hc
+  have h2 : (BT.toL c).all (fun y =>
+      match y with
+      | BT.D v e => if v == 0 then f e else true
+      | _ => true) = true := h1
+  have h3 := List.all_eq_true.mp h2 _ hd
+  exact h3
+
+/-- **The free region in decided form.** -/
+theorem subord157_at_coefChk164 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hchk : coefChk164 flat164 a = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    Sub157 ac.1 (wVal157 P) ac.2 :=
+  subord157_at_flat164 Hp hb hs (free_of_coefChk164 hchk) P S ac hsplit hfire
+
+/-! ### §164.12b Census on §151's pools (measurement, frozen)
+
+Per QUALIFYING TERM (`qual151`), the count of terms the three free regions accept:
+`coefArgs104 a = []` (§161.6), `lvl0161` (§161.8), `flat164` (here).  The first two
+columns reproduce §161's own published figures (35/235, 167/235; 59/121, 71/121;
+0/590, 120/590; 0/228, 32/228), which is what validates the decider.  The gain is
+in the last column, and it is nil on pool C. -/
+
+def cov164 (L : List BT) : Nat × Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length,
+   (D.filter (coefChk164 (fun _ => false))).length,
+   (D.filter (coefChk164 lvl0161)).length,
+   (D.filter (coefChk164 flat164)).length)
+
+#guard cov164 poolD151 == (235, 35, 167, 194)
+#guard cov164 poolC151 == (121, 59, 71, 71)
+#guard cov164 poolA151 == (590, 0, 120, 340)
+#guard cov164 poolE151 == (228, 0, 32, 110)
+
+def cov2_164 (L : List BT) : Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length, (D.filter (coefChk164 flat164)).length, (D.filter subordChk164).length)
+
+#guard cov2_164 poolD151 == (235, 194, 235)
+#guard cov2_164 poolC151 == (121, 71, 83)
+#guard cov2_164 poolE151 == (228, 110, 186)
+#guard cov2_164 poolA151 == (590, 340, 410)
+
+/-! ### §164.12c Where the residual lives — DIAGNOSTIC, MEASUREMENT ONLY
+
+`relaxChk164` is `subordChk164` with the per-node test replaced by an arbitrary
+one.  Instantiated at the two UNSOUND relaxations below it decides nothing; it
+only says which of `capEChk164`'s two tests refuses each term.  Nothing in this
+block is used by any theorem. -/
+
+def relaxStep164 (cE : Term → Term → BT → Bool) (A w' : Term) (rec : BT → Bool)
+    (d : BT) : Bool :=
+  (BT.toL d).all (fun z =>
+    match z with
+    | BT.D u x =>
+        if u == 0 then rec x
+        else if u == 1 then
+          cE A w' x && (BT.toL x).all (fun y =>
+            match y with
+            | BT.D v e => if v == 0 then rec e else true
+            | _ => true)
+        else false
+    | _ => true)
+
+def relaxChk164 (cE : Term → Term → BT → Bool) (A w' : Term) : Nat → BT → Bool
+  | 0, _ => false
+  | n + 1, d => le (dict (BT.D 0 d)) w' || relaxStep164 cE A w' (relaxChk164 cE A w' n) d
+
+def relaxPair164 (cE : Term → Term → BT → Bool) (a : BT) (P : List (Term × Term))
+    (ac : Term × Term) : Bool :=
+  le (reg 1) ac.1 ||
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c => if u == 1 then (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v d => if v == 0 then relaxChk164 cE ac.1 (wVal157 P) (BT.size d + 1) d
+          else true
+        | _ => true) else true
+    | _ => true)
+
+def relaxWalk164 (cE : Term → Term → BT → Bool) (a : BT) :
+    List (Term × Term) → List (Term × Term) → Bool
+  | _, [] => true
+  | P, ac :: S => relaxPair164 cE a P ac && relaxWalk164 cE a (P ++ [ac]) S
+
+def relaxSub164 (cE : Term → Term → BT → Bool) (a : BT) : Bool :=
+  relaxWalk164 cE a [] ((wcnf (reg 1) (toList (dict a))).1)
+
+/-- Keep the cap, drop the fire test.  UNSOUND — measurement only. -/
+def cE_noFire164 (A _w' : Term) (x : BT) : Bool := le (wA (reg 1) (dict (BT.D 1 x))) A
+/-- Keep the fire test, drop the cap.  UNSOUND — measurement only. -/
+def cE_noCap164 (_A _w' : Term) (x : BT) : Bool :=
+  !(le (reg 1) (wA (reg 1) (dict (BT.D 1 x))))
+/-- Drop both.  UNSOUND — measurement only. -/
+def cE_all164 (_A _w' : Term) (_x : BT) : Bool := true
+
+/-- (qualifying, proved by `subordChk164`, cap-only, fire-only, neither). -/
+def relaxCov164 (L : List BT) : Nat × Nat × Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length,
+   (D.filter subordChk164).length,
+   (D.filter (relaxSub164 cE_noFire164)).length,
+   (D.filter (relaxSub164 cE_noCap164)).length,
+   (D.filter (relaxSub164 cE_all164)).length)
+
+#guard relaxCov164 poolD151 == (235, 235, 235, 235, 235)
+#guard relaxCov164 poolC151 == (121, 83, 83, 83, 121)
+#guard relaxCov164 poolE151 == (228, 186, 186, 228, 228)
+#guard relaxCov164 poolA151 == (590, 410, 410, 590, 590)
+
+/-! ## §164.13 Axiom record -/
+
+#print axioms sub157_phiNF164
+#print axioms fold_sub164
+#print axioms sub157_foldV164
+#print axioms wA_dict_D1_one164
+#print axioms wA_dict_D1_ne_zero164
+#print axioms pairs_ok164
+#print axioms lo0Sub_of_cap164
+#print axioms cap_of_flat164
+#print axioms flat_of_lvl0164
+#print axioms subord157_at_cap164
+#print axioms subord157_at_flat164
+#print axioms subord157_of_flat164
+#print axioms heartLo161_of_cap164
+#print axioms subord157_of_cap164
+#print axioms lo0Sub_of_ltPsi164
+#print axioms heartLo161_of_le164
+#print axioms subord157_of_le164
+#print axioms subord157_at_flatOrLe164
+#print axioms subord157_of_flatOrLe164
+#print axioms flat_Om164
+#print axioms not_lvl0_Om164
+#print axioms flat_psiOne_eps164
+#print axioms not_flat_psiOnePsiOne164
+#print axioms free_of_coefChk164
+#print axioms subord157_at_coefChk164
+#print axioms capE_of_chk164
+#print axioms cap_of_chk164
+#print axioms walk_split164
+#print axioms subord157_at_chk164
+#print axioms subord157_of_chk164
 
 end
 

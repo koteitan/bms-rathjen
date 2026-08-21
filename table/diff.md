@@ -29,10 +29,12 @@
           - 🚨🤖 底が 3 成分以上の族に門の段を通す
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`f_n \lt t`$ と $`f_n \lt f_{n+1}`$ を出す
         - 🚨🤖 `HiMono89` を証明するか反証する
-          - 🚨🤖 `Subord157` を証明する
-            - 🚨🤖 `HeartLo161` を証明する
-          - 🚨🤖 `ExpSubR157` を証明する
-            - 🚨🤖 `ExpLeaf160` を証明する
+          - 🚨 `Subord157` を証明する
+            - 🚨 `HeartLo161` を証明する
+              - 🚨 `subordChk164` が外す 260 項の出口を作る
+          - 🚨 `ExpSubR157` を証明する
+            - 🚨 `ExpHeart160` を証明する
+              - 🚨 `VebD0_128` を証明する
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を出す
         - 🚨 `LimCofS1` を証明する
           - 🚨 `vOf` が基本列の上限を超えないようにする
