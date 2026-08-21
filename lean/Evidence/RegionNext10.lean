@@ -12172,4 +12172,2038 @@ def covered158 (a : BT) : Bool := covered156 a || isFamF158 a || isFamG158 a
 end
 
 
+
+
+/-
+g161 — THE COEFFICIENT CARRIER `Subord157`
+
+WHAT IS PROVED.  `Subord157` is NOT closed here.  What is closed is the whole
+SHAPE ANALYSIS between it and the `G₀`-condition — item (2) of §157's handoff —
+plus a proved free region.  The headline is
+
+    subord157_proof (Hp : PsiIdxOKStd172) (H : HeartLo161) : Subord157
+
+with `HeartLo161` a statement about ONE `ψ_{Ω₁}`-index, four layers below the
+carrier.  The chain, each link a theorem of this file:
+
+    Subord157
+      ⟵ ONE component of the block          (§159 `Split159`, `sub157_of_split159`)
+      ⟵ the `ω^·` wrapper of `wC` is gone   (§161.2 `sub157_omegaNF161`)
+      ⟵ ONE `ψ₀`-VALUE `dict (ψ₀ d)`        (§161.4, §104's `wC_dict_D1_104`)
+      ⟵ the level-0 descent `Lo0Sub161`     (§161.7 `sub157_dict_D0_161`)
+      = `HeartLo161`.
+
+`Lo0Sub161` alternates between two moves: descend through a `ψ₀`-node (free — its
+image is a pure `ω`-tower, `collapse0_eq77`), or stop and put that node's level-0
+FOLD VALUE `foldV161 d` in the closure.  The fold value is the ONLY place a genuine
+`ψ_{Ω₁}(i)` can appear, so `HeartLo161` is the `G₀`-condition with nothing else
+attached.
+
+MEASUREMENT (sweep, not proof; `scratchpad/g161/sweep4.lean`, §151 pools).
+`HeartLo161` holds on 305/305, 134/134, 1240/1240, 456/456 Veblen pairs of the
+standard pools D/C/A/E — 2135 pairs, 0 failures — and FAILS on 36/72, 22/22, 12/24
+pairs of the `K`-dropped controls.  So it has exactly the strength of `Subord157`
+itself: `K`-standardness is load-bearing inside it, and nothing weaker was thrown
+away on the way down.
+
+Two earlier candidates were REFUTED by sweep and must not be retried:
+  * `le s (wVal157 P)` for every sub-`Ω₁` component `s` — 690/1240 failures on
+    poolA (`sweep1.lean`).  The closure's `φ̄`-peeling is essential.
+  * `Lo0Sub161` WITHOUT the `step` constructor (i.e. `ofLe` ∪ hereditarily-level-0)
+    — 590/1240 on poolA (`sweep2.lean`).  The fold value has to be carried.
+
+THE FREE REGION (proved, no carrier).  `subord157_at_lvl0161`: where every
+`ψ₀`-argument in a coefficient position is hereditarily level-0, `Subord157` holds
+at `a`.  Measured coverage per TERM: 167/235 (D), 71/121 (C), 120/590 (A),
+32/228 (E).  `subord157_at_noCoef161` is the weaker `coefArgs104 a = []` corner:
+35/235, 59/121, 0/590, 0/228.
+
+REMAINING HYPOTHESES.  `PsiIdxOKStd172` is unavoidable — every `dict`-level fact
+in this area consumes it (`inT_dict_of_std172`, `mem_toList_dict101`,
+`wC_dict_D1_104`), and §157's own `dom154_of_carriers157` already takes it.
+`HeartLo161` is the open one.
+
+The file is self-contained: the §159 plumbing (`Split159`, `wcnf_split159`,
+`dict_split159`, …) is copied verbatim, since it lives outside the project tree.
+No `sorry`, no `native_decide`, no new axiom; every headline prints
+`[propext, Quot.sound]`.
+-/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §161.0 The §159 plumbing, copied -/
+
+/-- The coefficient produced by a block of components that all share one `wA`. -/
+def blockC159 (w : Term) (B : List Term) : Term :=
+  (B.map (wC w)).foldr plus zero
+
+theorem blockC159_nil (w : Term) : blockC159 w [] = zero := rfl
+
+theorem blockC159_cons (w p : Term) (B : List Term) :
+    blockC159 w (p :: B) = plus (wC w p) (blockC159 w B) := rfl
+
+theorem blockC159_single (w p : Term) : blockC159 w [p] = wC w p := by
+  show plus (wC w p) zero = wC w p
+  exact plus_zero _
+
+theorem wcnf_eq_nil_of_fst159 {w : Term} : ∀ (L : List Term),
+    (∀ p ∈ L, lt p w = false) → (wcnf w L).1 = [] → L = []
+  | [], _, _ => rfl
+  | p :: rest, hall, h => by
+      obtain ⟨c, ps, he⟩ := wcnfFstHd109 (w := w) rest (hall p (List.Mem.head _))
+      rw [he] at h
+      exact absurd h (by intro hc; cases hc)
+
+/-- **The positional decomposition of one `wcnf` split**, as a record. -/
+structure Split159 (w : Term) (L : List Term) (P S : List (Term × Term))
+    (ac : Term × Term) (Lpre B Lsuf : List Term) : Prop where
+  eqL : L = Lpre ++ B ++ Lsuf
+  bne : B ≠ []
+  preFire : ∀ p ∈ Lpre, lt p w = false
+  blkFire : ∀ p ∈ B, lt p w = false
+  blkA : ∀ p ∈ B, wA w p = ac.1
+  blkC : ac.2 = blockC159 w B
+  preEq : wcnf w Lpre = (P, zero)
+  cutEq : wcnf w (Lpre ++ B) = (P ++ [ac], zero)
+  sufEq : (wcnf w (B ++ Lsuf)).1 = ac :: S
+
+/-- **§159 MAIN — a `wcnf` split is a split of the component list.** -/
+theorem wcnf_split159 {w : Term} : ∀ (L : List Term)
+    (P S : List (Term × Term)) (ac : Term × Term),
+    (wcnf w L).1 = P ++ ac :: S →
+    ∃ Lpre B Lsuf : List Term, Split159 w L P S ac Lpre B Lsuf := by
+  intro L
+  induction L with
+  | nil =>
+      intro P S ac h
+      have h' : ([] : List (Term × Term)) = P ++ ac :: S := h
+      cases P with
+      | nil => exact absurd h' (by intro hc; cases hc)
+      | cons x Q => exact absurd h' (by intro hc; cases hc)
+  | cons p rest ih =>
+      intro P S ac h
+      by_cases hlp : lt p w = true
+      · rw [wcnf_cons_lt hlp] at h
+        have h' : ([] : List (Term × Term)) = P ++ ac :: S := h
+        cases P with
+        | nil => exact absurd h' (by intro hc; cases hc)
+        | cons x Q => exact absurd h' (by intro hc; cases hc)
+      · have hlp' : lt p w = false := bool_false hlp
+        have hW0 : wcnf w [p] = ([(wA w p, wC w p)], zero) := by
+          rw [wcnf_cons_ge hlp', wcnf_nil]
+        cases hr : wcnf w rest with
+        | mk fst snd =>
+          have hrf : (wcnf w rest).1 = fst := by rw [hr]
+          cases fst with
+          | nil =>
+              have hW : wcnf w (p :: rest) = ([(wA w p, wC w p)], snd) := by
+                rw [wcnf_cons_ge hlp', hr]
+              rw [hW] at h
+              have h' : [(wA w p, wC w p)] = P ++ ac :: S := h
+              cases P with
+              | nil =>
+                  have h'' : [(wA w p, wC w p)] = ac :: S := h'
+                  have hac : ac = (wA w p, wC w p) := by
+                    injection h'' with h1 _; exact h1.symm
+                  have hS : S = [] := by
+                    injection h'' with _ h2; exact h2.symm
+                  subst hac; subst hS
+                  refine ⟨[], [p], rest, ⟨rfl, ?_, ?_, ?_, ?_, rfl, rfl, ?_, ?_⟩⟩
+                  · intro hc; cases hc
+                  · intro q hq; cases hq
+                  · intro q hq; rw [List.mem_singleton.mp hq]; exact hlp'
+                  · intro q hq; rw [List.mem_singleton.mp hq]
+                  · exact hW0
+                  · show (wcnf w (p :: rest)).1 = _
+                    rw [hW]
+              | cons x Q =>
+                  exfalso
+                  have hQ : ([] : List (Term × Term)) = Q ++ ac :: S := by
+                    injection h' with _ h2
+                  cases Q with
+                  | nil => exact absurd hQ (by intro hc; cases hc)
+                  | cons y R => exact absurd hQ (by intro hc; cases hc)
+          | cons ac' ps =>
+              by_cases hme : (wA w p == ac'.1) = true
+              · have hW : wcnf w (p :: rest)
+                    = ((wA w p, plus (wC w p) ac'.2) :: ps, snd) := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show (if (wA w p == ac'.1) = true
+                      then ((wA w p, plus (wC w p) ac'.2) :: ps, snd)
+                      else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: ps, snd)) = _
+                  rw [if_pos hme]
+                rw [hW] at h
+                have h' : (wA w p, plus (wC w p) ac'.2) :: ps = P ++ ac :: S := h
+                cases P with
+                | nil =>
+                    have h'' : (wA w p, plus (wC w p) ac'.2) :: ps = ac :: S := h'
+                    have hac : ac = (wA w p, plus (wC w p) ac'.2) := by
+                      injection h'' with h1 _; exact h1.symm
+                    have hS : S = ps := by
+                      injection h'' with _ h2; exact h2.symm
+                    subst hac
+                    obtain ⟨Lpre', B', Lsuf', hsp⟩ := ih [] ps ac'
+                      (by show (wcnf w rest).1 = ac' :: ps; exact hrf)
+                    have hpn : Lpre' = [] :=
+                      wcnf_eq_nil_of_fst159 Lpre' hsp.preFire (by rw [hsp.preEq])
+                    subst hpn
+                    have hrest : rest = B' ++ Lsuf' := hsp.eqL
+                    have hcut' : wcnf w B' = ([ac'], zero) := hsp.cutEq
+                    refine ⟨[], p :: B', Lsuf', ⟨?_, ?_, ?_, ?_, ?_, ?_, rfl, ?_, ?_⟩⟩
+                    · exact congrArg (fun l => p :: l) hrest
+                    · intro hc; cases hc
+                    · intro q hq; cases hq
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]; exact hlp'
+                      · exact hsp.blkFire q h1
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]
+                      · rw [hsp.blkA q h1]; exact (eq_of_beq hme).symm
+                    · show plus (wC w p) ac'.2 = blockC159 w (p :: B')
+                      rw [blockC159_cons, hsp.blkC]
+                    · show wcnf w (p :: B') = ([(wA w p, plus (wC w p) ac'.2)], zero)
+                      rw [wcnf_cons_ge hlp', hcut']
+                      show (if (wA w p == ac'.1) = true
+                          then ((wA w p, plus (wC w p) ac'.2) :: [], zero)
+                          else ((wA w p, wC w p) :: ac' :: [], zero))
+                          = ([(wA w p, plus (wC w p) ac'.2)], zero)
+                      rw [if_pos hme]
+                    · rw [hS]
+                      show (wcnf w (p :: (B' ++ Lsuf'))).1 = _
+                      rw [← hrest, hW]
+                | cons x Q =>
+                    have hx : x = (wA w p, plus (wC w p) ac'.2) := by
+                      injection h' with h1 _; exact h1.symm
+                    have hps : ps = Q ++ ac :: S := by
+                      injection h' with _ h2
+                    subst hx
+                    obtain ⟨Lpre', B', Lsuf', hsp⟩ :=
+                      ih (ac' :: Q) S ac (by rw [hrf, hps]; rfl)
+                    refine ⟨p :: Lpre', B', Lsuf',
+                      ⟨?_, hsp.bne, ?_, hsp.blkFire, hsp.blkA, hsp.blkC, ?_, ?_, hsp.sufEq⟩⟩
+                    · exact congrArg (fun l => p :: l) hsp.eqL
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]; exact hlp'
+                      · exact hsp.preFire q h1
+                    · show wcnf w (p :: Lpre') = _
+                      rw [wcnf_cons_ge hlp', hsp.preEq]
+                      show (if (wA w p == ac'.1) = true
+                          then ((wA w p, plus (wC w p) ac'.2) :: Q, zero)
+                          else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: Q, zero)) = _
+                      rw [if_pos hme]
+                    · show wcnf w (p :: (Lpre' ++ B'))
+                          = ((wA w p, plus (wC w p) ac'.2) :: (Q ++ [ac]), zero)
+                      rw [wcnf_cons_ge hlp', hsp.cutEq]
+                      show (if (wA w p == ac'.1) = true
+                          then ((wA w p, plus (wC w p) ac'.2) :: (Q ++ [ac]), zero)
+                          else ((wA w p, wC w p) :: ac' :: (Q ++ [ac]), zero))
+                          = ((wA w p, plus (wC w p) ac'.2) :: (Q ++ [ac]), zero)
+                      rw [if_pos hme]
+              · have hW : wcnf w (p :: rest)
+                    = ((wA w p, wC w p) :: ac' :: ps, snd) := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show (if (wA w p == ac'.1) = true
+                      then ((wA w p, plus (wC w p) ac'.2) :: ps, snd)
+                      else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: ps, snd)) = _
+                  rw [if_neg hme]
+                rw [hW] at h
+                have h' : (wA w p, wC w p) :: ac' :: ps = P ++ ac :: S := h
+                cases P with
+                | nil =>
+                    have h'' : (wA w p, wC w p) :: ac' :: ps = ac :: S := h'
+                    have hac : ac = (wA w p, wC w p) := by
+                      injection h'' with h1 _; exact h1.symm
+                    have hS : S = ac' :: ps := by
+                      injection h'' with _ h2; exact h2.symm
+                    subst hac; subst hS
+                    refine ⟨[], [p], rest, ⟨rfl, ?_, ?_, ?_, ?_, rfl, rfl, ?_, ?_⟩⟩
+                    · intro hc; cases hc
+                    · intro q hq; cases hq
+                    · intro q hq; rw [List.mem_singleton.mp hq]; exact hlp'
+                    · intro q hq; rw [List.mem_singleton.mp hq]
+                    · exact hW0
+                    · show (wcnf w (p :: rest)).1 = _
+                      rw [hW]
+                | cons x Q =>
+                    have hx : x = (wA w p, wC w p) := by
+                      injection h' with h1 _; exact h1.symm
+                    have hQ : ac' :: ps = Q ++ ac :: S := by
+                      injection h' with _ h2
+                    subst hx
+                    obtain ⟨Lpre', B', Lsuf', hsp⟩ := ih Q S ac (by rw [hrf]; exact hQ)
+                    refine ⟨p :: Lpre', B', Lsuf',
+                      ⟨?_, hsp.bne, ?_, hsp.blkFire, hsp.blkA, hsp.blkC, ?_, ?_, hsp.sufEq⟩⟩
+                    · exact congrArg (fun l => p :: l) hsp.eqL
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]; exact hlp'
+                      · exact hsp.preFire q h1
+                    · show wcnf w (p :: Lpre') = _
+                      cases Q with
+                      | nil =>
+                          rw [wcnf_cons_ge hlp', hsp.preEq]
+                      | cons y R =>
+                          have hQ' : ac' :: ps = y :: (R ++ ac :: S) := hQ
+                          have hy : y = ac' := by
+                            injection hQ' with h1 _; exact h1.symm
+                          have hpre2 : wcnf w Lpre' = (ac' :: R, zero) := by
+                            rw [← hy]; exact hsp.preEq
+                          rw [wcnf_cons_ge hlp', hpre2]
+                          show (if (wA w p == ac'.1) = true
+                              then ((wA w p, plus (wC w p) ac'.2) :: R, zero)
+                              else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: R, zero)) = _
+                          rw [if_neg hme, hy]
+                    · cases Q with
+                      | nil =>
+                          have hQ' : ac' :: ps = ac :: S := hQ
+                          have hy : ac' = ac := by
+                            injection hQ' with h1 _
+                          have hcut : wcnf w (Lpre' ++ B') = ([ac], zero) := hsp.cutEq
+                          show wcnf w (p :: (Lpre' ++ B'))
+                              = ((wA w p, wC w p) :: ac :: [], zero)
+                          rw [wcnf_cons_ge hlp', hcut]
+                          show (if (wA w p == ac.1) = true
+                              then ((wA w p, plus (wC w p) ac.2) :: [], zero)
+                              else ((wA w p, wC w p) :: ac :: [], zero))
+                              = ((wA w p, wC w p) :: ac :: [], zero)
+                          rw [if_neg (by rw [← hy]; exact hme)]
+                      | cons y R =>
+                          have hQ' : ac' :: ps = y :: (R ++ ac :: S) := hQ
+                          have hy : y = ac' := by
+                            injection hQ' with h1 _; exact h1.symm
+                          have hmey : ¬((wA w p == y.1) = true) := by rw [hy]; exact hme
+                          have hcut : wcnf w (Lpre' ++ B') = ((y :: R) ++ [ac], zero) :=
+                            hsp.cutEq
+                          show wcnf w (p :: (Lpre' ++ B'))
+                              = ((wA w p, wC w p) :: y :: (R ++ [ac]), zero)
+                          rw [wcnf_cons_ge hlp', hcut]
+                          show (if (wA w p == y.1) = true
+                              then ((wA w p, plus (wC w p) y.2) :: (R ++ [ac]), zero)
+                              else ((wA w p, wC w p) :: y :: (R ++ [ac]), zero))
+                              = ((wA w p, wC w p) :: y :: (R ++ [ac]), zero)
+                          rw [if_neg hmey]
+
+theorem sub157_blockC159 {A w' : Term} (w : Term) : ∀ (B : List Term), B ≠ [] →
+    (∀ p ∈ B, Sub157 A w' (wC w p)) → Sub157 A w' (blockC159 w B)
+  | [], hne, _ => absurd rfl hne
+  | [p], _, hall => by
+      rw [blockC159_single]; exact hall p (List.Mem.head _)
+  | p :: q :: r, _, hall => by
+      rw [blockC159_cons]
+      exact Sub157.ofPlus (hall p (List.Mem.head _))
+        (sub157_blockC159 w (q :: r) (by intro hc; cases hc)
+          (fun z hz => hall z (List.Mem.tail _ hz)))
+
+theorem head_of_split159 {w : Term} {L : List Term} {P S : List (Term × Term)}
+    {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsp : Split159 w L P S ac Lpre B Lsuf) :
+    ∃ (q : Term) (Btl : List Term), B = q :: Btl ∧ lt q w = false ∧ ac.1 = wA w q := by
+  cases hB : B with
+  | nil => exact absurd hB hsp.bne
+  | cons q Btl =>
+      refine ⟨q, Btl, rfl, ?_, ?_⟩
+      · exact hsp.blkFire q (by rw [hB]; exact List.Mem.head _)
+      · exact (hsp.blkA q (by rw [hB]; exact List.Mem.head _)).symm
+
+theorem sub157_of_split159 {w A w' : Term} {L : List Term} {P S : List (Term × Term)}
+    {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsp : Split159 w L P S ac Lpre B Lsuf)
+    (h : ∀ p ∈ B, Sub157 A w' (wC w p)) : Sub157 A w' ac.2 := by
+  rw [hsp.blkC]; exact sub157_blockC159 w B hsp.bne h
+
+/-- **`Subord157` reduced to ONE component.** -/
+theorem subord157_of_comp159
+    (H : ∀ (a : BT), btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      ∀ (P S : List (Term × Term)) (ac : Term × Term) (Lpre B Lsuf : List Term),
+        Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf →
+        le (reg 1) ac.1 = false →
+        ∀ p ∈ B, Sub157 ac.1 (wVal157 P) (wC (reg 1) p)) :
+    Subord157 := by
+  intro a hb hs P S ac hsplit hfire
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  exact sub157_of_split159 hsp (H a hb hs P S ac Lpre B Lsuf hsp hfire)
+
+theorem mem_toList_dict_facts159 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true) :
+    ∀ z ∈ toList (dict a), ∃ (u : Nat) (c : BT),
+      u ≤ 1 ∧ BT.D u c ∈ BT.toL a ∧ BT.lt c a = true ∧
+      btLe72 1 c = true ∧ BT.isStd c = true ∧ BT.size c < BT.size a ∧
+      z = dict (BT.D u c) := by
+  intro z hz
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  obtain ⟨q, hq, rfl⟩ := mem_toList_dict101 Hp hba hsa z hz
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  obtain ⟨u, c, rfl⟩ := hgood.1 q hq
+  have hu : u ≤ 1 := (btLe72_D 1 u c (hgood.2.2.1 _ hq)).1
+  have hlt : BT.lt c a = true := (comp_facts82 hs hq).2
+  have hbc : btLe72 1 c = true := (btLe72_D 1 u c (hgood.2.2.1 _ hq)).2
+  have hsc : BT.isStd c = true := isStd_of_D (hgood.2.1 _ hq)
+  have hsz0 : BT.size (BT.D u c) ≤ BT.size a := size_mem_toL87 a _ hq
+  have hsz : BT.size c < BT.size a := by rw [size_D87] at hsz0; omega
+  exact ⟨u, c, hu, hq, hlt, hbc, hsc, hsz, rfl⟩
+
+theorem dict_split159 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (h : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S) :
+    ∃ Lpre B Lsuf : List Term,
+      Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf ∧
+      (∀ p ∈ Lpre ++ B, ∃ (u : Nat) (c : BT),
+        u ≤ 1 ∧ BT.D u c ∈ BT.toL a ∧ BT.lt c a = true ∧
+        btLe72 1 c = true ∧ BT.isStd c = true ∧ BT.size c < BT.size a ∧
+        p = dict (BT.D u c)) := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac h
+  refine ⟨Lpre, B, Lsuf, hsp, ?_⟩
+  intro p hp
+  refine mem_toList_dict_facts159 Hp hb hs p ?_
+  rw [hsp.eqL]
+  exact List.mem_append.mpr (Or.inl hp)
+
+theorem wVal157_nil159 : wVal157 [] = TM.Term.one := rfl
+
+theorem pre_nil_iff159 {w : Term} {L : List Term} {P S : List (Term × Term)}
+    {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsp : Split159 w L P S ac Lpre B Lsuf) : Lpre = [] ↔ P = [] := by
+  constructor
+  · intro h
+    subst h
+    have h1 : (wcnf w ([] : List Term)) = (P, zero) := hsp.preEq
+    rw [wcnf_nil] at h1
+    injection h1 with h2 _
+    exact h2.symm
+  · intro h
+    refine wcnf_eq_nil_of_fst159 Lpre hsp.preFire ?_
+    rw [hsp.preEq, h]
+
+/-! ## §161.1 Elementary list and term helpers -/
+
+theorem mem_of_mem_dropWhile161 {α : Type} (p : α → Bool) : ∀ (l : List α) {x : α},
+    x ∈ l.dropWhile p → x ∈ l := by
+  intro l
+  induction l with
+  | nil => intro x h; exact h
+  | cons a t ih =>
+      intro x h
+      cases hp : p a with
+      | true =>
+          have he : (a :: t).dropWhile p = t.dropWhile p := by
+            show (match p a with | true => t.dropWhile p | false => a :: t) = _
+            rw [hp]
+          rw [he] at h
+          exact List.Mem.tail _ (ih h)
+      | false =>
+          have he : (a :: t).dropWhile p = a :: t := by
+            show (match p a with | true => t.dropWhile p | false => a :: t) = _
+            rw [hp]
+          rw [he] at h
+          exact h
+
+/-- The last conjunct of `inT (add a b)`, isolated so the first three can be read off. -/
+def tailOK161 (a b : Term) : Bool :=
+  match b with
+  | add c _ => le c a
+  | x => x.isAP && le x a
+
+theorem inT_add_eq161 (a b : Term) :
+    inT (add a b) = (a.isAP && inT a && inT b && tailOK161 a b) := by
+  cases b <;> rfl
+
+theorem inT_add_facts161 {a b : Term} (h : inT (add a b) = true) :
+    a.isAP = true ∧ inT a = true ∧ inT b = true := by
+  rw [inT_add_eq161] at h
+  obtain ⟨h3, _⟩ := (Bool.and_eq_true _ _).mp h
+  obtain ⟨h2, hib⟩ := (Bool.and_eq_true _ _).mp h3
+  obtain ⟨hap, hia⟩ := (Bool.and_eq_true _ _).mp h2
+  exact ⟨hap, hia, hib⟩
+
+/-- Every component of `(splitFin x).1` is a component of `x`. -/
+theorem mem_toList_splitFin161 {x : Term} (hix : inT x = true) :
+    ∀ s ∈ toList (splitFin x).1, s ∈ toList x := by
+  intro s hs
+  have hap : ∀ y ∈ toList x, y.isAP = true := by
+    intro y hy
+    exact inTL_isAP hix y hy
+  rw [splitFin_fst] at hs
+  have hap2 : ∀ y ∈ (List.dropWhile (fun z => z == TM.Term.one)
+      (toList x).reverse).reverse, y.isAP = true := by
+    intro y hy
+    refine hap y ?_
+    have h1 := List.mem_reverse.mp hy
+    have h2 := mem_of_mem_dropWhile161 _ _ h1
+    exact List.mem_reverse.mp h2
+  rw [WF.toList_ofList _ hap2] at hs
+  have h1 := List.mem_reverse.mp hs
+  have h2 := mem_of_mem_dropWhile161 _ _ h1
+  exact List.mem_reverse.mp h2
+
+/-! ## §161.2 The closure from the components
+
+`Sub157 A w' t` needs nothing about `A` when every component of `t` is already
+`≤ w'`: the `plus`-constructor rebuilds the term out of `ofLe`-leaves. -/
+
+theorem sub157_zero161 {A w' : Term} : Sub157 A w' zero :=
+  Sub157.ofLe inT_zero lt_zero_M (le_zero_any w')
+
+/-- **The closure is determined component-wise.**  `plus` rebuilds a term out of
+    its `toList`, and `Sub157` is closed under `plus`. -/
+theorem sub157_of_comps161 {A w' : Term} : ∀ (t : Term), inT t = true →
+    (∀ s ∈ toList t, Sub157 A w' s) → Sub157 A w' t := by
+  intro t
+  induction t with
+  | zero => intro _ _; exact sub157_zero161
+  | M => intro _ hall; exact hall M (List.Mem.head _)
+  | omg x => intro _ hall; exact hall (omg x) (List.Mem.head _)
+  | phi x y => intro _ hall; exact hall (TM.Term.phi x y) (List.Mem.head _)
+  | psi k c => intro _ hall; exact hall (psi k c) (List.Mem.head _)
+  | Z x => intro _ hall; exact hall (Z x) (List.Mem.head _)
+  | add x y _ ihy =>
+      intro hi hall
+      obtain ⟨_, _, hiy⟩ := inT_add_facts161 hi
+      have hmem : ∀ s ∈ toList y, s ∈ toList (add x y) := by
+        intro s hs; exact List.Mem.tail _ hs
+      have hx : Sub157 A w' x := hall x (List.Mem.head _)
+      have hy : Sub157 A w' y := ihy hiy (fun s hs => hall s (hmem s hs))
+      have hpe : plus x y = add x y := plus_eq_add97 hi
+      have := Sub157.ofPlus hx hy
+      rwa [hpe] at this
+
+/-- **The `ω^·` layer.**  `ω^x` is in the closure as soon as every component of
+    the exponent `x` is `≤ w'` and `1 ≤ w'`: `phiNF`'s five branches either return
+    a component of `x` outright or wrap the (shortened) exponent in `φ̄0`. -/
+theorem sub157_omegaNF161 {A w' x : Term} (hix : inT x = true) (hxM : lt x M = true)
+    (h1 : le TM.Term.one w' = true)
+    (hall : ∀ s ∈ toList x, Sub157 A w' s) :
+    Sub157 A w' (omegaNF x) := by
+  rw [omegaNF_eq_phiNF128 hix hxM]
+  rcases phiNF_shape157 zero x with ⟨he, _, _⟩ | ⟨c, d, _, _, he⟩
+    | ⟨g, m, hsp, _, he⟩ | ⟨_, hsc, _⟩ | he
+  · rw [he]; exact sub157_of_comps161 x hix hall
+  · rw [he]; exact sub157_of_comps161 x hix hall
+  · rw [he]
+    refine Sub157.ofPhi inT_zero lt_zero_M (le_zero_any A) ?_
+    have hig : inT g = true := by
+      have h0 := inT_splitFin hix; rw [hsp] at h0; exact h0
+    refine sub157_of_comps161 _ (inT_plus hig (inT_ofNat _)) ?_
+    intro s hs
+    rw [toList_plus_ofNat_inT hig (m - 1)] at hs
+    rcases List.mem_append.mp hs with hm | hm
+    · refine hall s ?_
+      refine mem_toList_splitFin161 hix s ?_
+      rw [hsp]; exact hm
+    · have hone : s = TM.Term.one := List.eq_of_mem_replicate hm
+      subst hone
+      exact Sub157.ofLe inT_one lt_one_M h1
+  · exact Bool.noConfusion hsc
+  · rw [he]
+    exact Sub157.ofPhi inT_zero lt_zero_M (le_zero_any A)
+      (sub157_of_comps161 x hix hall)
+
+/-- **The coefficient of one component.**  `wC (reg 1) p = ω^(the components of
+    `logOm p` below `Ω₁`)`, so the whole coefficient obligation collapses to a
+    statement about those small components. -/
+theorem sub157_wC161 {A w' p : Term} (hip : inT p = true) (hpM : lt p M = true)
+    (h1 : le TM.Term.one w' = true)
+    (hsm : ∀ s ∈ toList (logOm p), lt s (reg 1) = true → Sub157 A w' s) :
+    Sub157 A w' (wC (reg 1) p) := by
+  obtain ⟨hc, hd⟩ := inT_toList _ (inT_logOm hip)
+  have hmM : ∀ z ∈ toList (logOm p), lt z M = true :=
+    ltM_toList _ (inT_logOm hip) (ltM_logOm hip hpM)
+  have hiX : inT (ofList (List.filter (fun q => lt q (reg 1)) (toList (logOm p)))) = true :=
+    inT_filter_ofList hc hd _
+  have hXM : lt (ofList (List.filter (fun q => lt q (reg 1)) (toList (logOm p)))) M = true :=
+    ltM_filter_ofList hmM _
+  have hapf : ∀ y ∈ List.filter (fun q => lt q (reg 1)) (toList (logOm p)),
+      y.isAP = true := by
+    intro y hy
+    exact inTL_isAP (inT_logOm hip) y (List.mem_filter.mp hy).1
+  show Sub157 A w' (omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+      (toList (logOm p)))))
+  refine sub157_omegaNF161 hiX hXM h1 ?_
+  intro s hs
+  rw [WF.toList_ofList _ hapf] at hs
+  obtain ⟨hmem, hflt⟩ := List.mem_filter.mp hs
+  exact hsm s hmem hflt
+
+/-! ## §161.3 The bound is at least `1` -/
+
+/-- Every prefix fold value dominates `1`: the fold starts at `one` and every
+    step lands on an `ε`-number (`StE81`). -/
+theorem le_one_wVal161 {y : Term} (hy : inT y = true) (hly : lt y M = true)
+    (Hpy : PsiIdxOK 0 y) (P S : List (Term × Term))
+    (hsplit : (wcnf (reg 1) (toList y)).1 = P ++ S) :
+    le TM.Term.one (wVal157 P) = true := by
+  have hst := stE81_pre157 hy hly Hpy P S hsplit
+  unfold wVal157
+  cases hs2 : (P.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2 with
+  | none => exact le_self _
+  | some v =>
+      obtain ⟨hiv, _, _, hE⟩ := hst v hs2
+      exact le_of_lt (lt_of_lt_of_le3 (show FragR TM.Term.one = true from rfl)
+        (inT_le_fragR _ inT_E81) (inT_le_fragR _ hiv) lt_one_E81_157 hE)
+
+/-! ## §161.4 THE `BT` LAYER — the coefficient of a fired component
+
+§104's `wC_dict_D1_104` identifies the coefficient of a fired component outright:
+
+    wC (reg 1) (dict (ψ₁ c))  =  ω^(loW89 (dict c))
+
+and `loW89 (dict c)` is the sum of `dict c`'s components below `Ω₁`, each of which
+§101's `mem_toList_loW_dict101` names as `dict (ψ₀ d)` for a level-0 component `d`
+of `c`.  Composed with §161.2 that turns the coefficient obligation into a
+statement about the `ψ₀`-VALUES `dict (ψ₀ d)` — §128's `vebArgs`/`coefArgs`
+vocabulary, and the Term-side form of the `G₀`-condition. -/
+
+theorem sub157_wC_dict161 (Hp : PsiIdxOKStd172) {A w' : Term} {c : BT}
+    (hbc : btLe72 1 c = true) (hsc : BT.isStd c = true)
+    (h1 : le TM.Term.one w' = true)
+    (hd : ∀ d : BT, BT.D 0 d ∈ BT.toL c → Sub157 A w' (dict (BT.D 0 d))) :
+    Sub157 A w' (wC (reg 1) (dict (BT.D 1 c))) := by
+  obtain ⟨hic, hcM⟩ := inT_dict_of_std172 Hp c hbc hsc
+  have hilo : inT (loW89 (dict c)) = true := inT_loW89 hic
+  have hloM : lt (loW89 (dict c)) M = true := by
+    show lt (ofList (List.filter (fun p => lt p (reg 1)) (toList (dict c)))) M = true
+    exact lt_ofList_M _
+      (fun z hz => ltM_toList _ hic hcM z (List.mem_filter.mp hz).1)
+  rw [wC_dict_D1_104 Hp hbc hsc]
+  refine sub157_omegaNF161 hilo hloM h1 ?_
+  intro z hz
+  obtain ⟨d, hdm, hze⟩ := mem_toList_loW_dict101 Hp hbc hsc z hz
+  rw [hze]
+  exact hd d hdm
+
+/-! ## §161.5 THE REDUCTION — `Subord157` from the `ψ₀`-values alone
+
+`Heart161` is `Subord157` with four layers peeled off:
+
+  * the run-length MERGE of `wcnf` (§159's `Split159` / `sub157_blockC159`),
+  * the `ω^·` wrapper of `wC` (§161.2's `sub157_omegaNF161`),
+  * the split of the exponent into components (§161.2's `sub157_of_comps161`),
+  * the `dict` layer (§104/§101, §161.4).
+
+What is left is a statement about ONE `ψ₀`-value `dict (ψ₀ d)` sitting in the
+COEFFICIENT position of the Veblen pair — `d ∈ coefArgs104 a` in §128's
+vocabulary — and the fold value of that pair's own prefix. -/
+
+/-- **The heart.**  For a standard `a`, every `ψ₀`-value named by the coefficient
+    position of a Veblen pair of `dict a` is subordinate to the fold value of that
+    pair's own prefix, with `φ̄`-exponents capped by the pair's exponent. -/
+def Heart161 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term) (Lpre B Lsuf : List Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf →
+      le (reg 1) ac.1 = false →
+      ∀ c : BT, BT.D 1 c ∈ BT.toL a → dict (BT.D 1 c) ∈ B →
+        ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+          Sub157 ac.1 (wVal157 P) (dict (BT.D 0 d))
+
+/-- The term-level intermediate: the same statement about the sub-`Ω₁` components
+    of a fired component's `ω`-logarithm, without the `dict` layer. -/
+def HeartT161 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term) (Lpre B Lsuf : List Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf →
+      le (reg 1) ac.1 = false →
+      ∀ p ∈ B, ∀ s ∈ toList (logOm p), lt s (reg 1) = true →
+        Sub157 ac.1 (wVal157 P) s
+
+/-- `Subord157` reduced to one component, keeping the original split in hand. -/
+theorem subord157_of_comp161
+    (H : ∀ (a : BT), btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      ∀ (P S : List (Term × Term)) (ac : Term × Term) (Lpre B Lsuf : List Term),
+        (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+        Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf →
+        le (reg 1) ac.1 = false →
+        ∀ p ∈ B, Sub157 ac.1 (wVal157 P) (wC (reg 1) p)) :
+    Subord157 := by
+  intro a hb hs P S ac hsplit hfire
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  exact sub157_of_split159 hsp (H a hb hs P S ac Lpre B Lsuf hsplit hsp hfire)
+
+/-- The standing facts a split of a standard image carries. -/
+theorem split_facts161 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    {P S : List (Term × Term)} {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hsp : Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf)
+    {p : Term} (hp : p ∈ B) :
+    le TM.Term.one (wVal157 P) = true ∧
+    ∃ c : BT, BT.D 1 c ∈ BT.toL a ∧ btLe72 1 c = true ∧ BT.isStd c = true ∧
+      p = dict (BT.D 1 c) := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  obtain ⟨hiy, hyM⟩ := inT_dict_of_std172 Hp a hba hsa
+  have Hpy : PsiIdxOK 0 (dict a) := Hp 0 a (Nat.zero_le 1) hba hs
+  have hpmem : p ∈ toList (dict a) := by
+    rw [hsp.eqL]
+    exact List.mem_append_left _ (List.mem_append_right _ hp)
+  have hpw : lt p (reg 1) = false := hsp.blkFire p hp
+  have hphi : p ∈ toList (hiW89 (dict a)) := by
+    rw [toList_hiW89 hiy]
+    exact List.mem_filter.mpr ⟨hpmem, by rw [hpw]; rfl⟩
+  obtain ⟨c, hcm, hpe⟩ := mem_toList_hiW_dict101 Hp hba hsa p hphi
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hb1 : btLe72 1 (BT.D 1 c) = true := hgood.2.2.1 _ hcm
+  have hs1 : BT.isStd (BT.D 1 c) = true := hgood.2.1 _ hcm
+  exact ⟨le_one_wVal161 hiy hyM Hpy P (ac :: S) hsplit,
+    c, hcm, (btLe72_D 1 1 c hb1).2, isStd_of_D hs1, hpe⟩
+
+/-- **§161 MAIN — the carrier follows from the heart.** -/
+theorem subord157_of_heart161 (Hp : PsiIdxOKStd172) (H : Heart161) : Subord157 := by
+  refine subord157_of_comp161 ?_
+  intro a hb hs P S ac Lpre B Lsuf hsplit hsp hfire p hp
+  obtain ⟨h1, c, hcm, hbc, hsc, hpe⟩ := split_facts161 Hp hb hs hsplit hsp hp
+  rw [hpe]
+  refine sub157_wC_dict161 Hp hbc hsc h1 ?_
+  intro d hdm
+  exact H a hb hs P S ac Lpre B Lsuf hsplit hsp hfire c hcm (by rw [← hpe]; exact hp) d hdm
+
+/-- The same, from the term-level intermediate. -/
+theorem subord157_of_heartT161 (Hp : PsiIdxOKStd172) (H : HeartT161) : Subord157 := by
+  refine subord157_of_comp161 ?_
+  intro a hb hs P S ac Lpre B Lsuf hsplit hsp hfire p hp
+  obtain ⟨h1, c, _, _, _, _⟩ := split_facts161 Hp hb hs hsplit hsp hp
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  obtain ⟨hiy, hyM⟩ := inT_dict_of_std172 Hp a hba hsa
+  have hpmem : p ∈ toList (dict a) := by
+    rw [hsp.eqL]
+    exact List.mem_append_left _ (List.mem_append_right _ hp)
+  exact sub157_wC161 (inTL_inT hiy p hpmem) (ltM_toList _ hiy hyM p hpmem) h1
+    (H a hb hs P S ac Lpre B Lsuf hsplit hsp hfire p hp)
+
+/-! ## §161.6 THE FREE REGION — no `ψ₀` in any coefficient position
+
+The mirror of §128's `vebPair_of_nil128`: where §128's `coefArgs104 a` is empty
+the heart is vacuous, so `Subord157` is a THEOREM at `a`, with no carrier and no
+`G₀`-condition.  `coefArgs104 a = []` says exactly that no level-1 component of
+`a` carries a level-0 component — the `K`-free corner. -/
+
+theorem subord157_at_noCoef161 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hnil : coefArgs104 a = [])
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine sub157_of_split159 hsp ?_
+  intro p hp
+  obtain ⟨h1, c, hcm, hbc, hsc, hpe⟩ := split_facts161 Hp hb hs hsplit hsp hp
+  rw [hpe]
+  refine sub157_wC_dict161 Hp hbc hsc h1 ?_
+  intro d hdm
+  exact absurd (mem_coefArgs_of128 hcm hdm) (by rw [hnil]; intro hc; cases hc)
+
+/-- The global form of the free region. -/
+theorem subord157_of_noCoef161 (Hp : PsiIdxOKStd172)
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      coefArgs104 a = []) :
+    Subord157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    subord157_at_noCoef161 Hp hb hs (H a hb hs) P S ac hsplit hfire
+
+/-! ## §161.7 THE LEVEL-0 RECURSION
+
+`collapse_eq` at `u = 0` reads
+
+    dict (ψ₀ d)  =  ω^( V(d) ⊕ ρ(d) )
+
+with `V(d)` the value the level-0 fold accumulates over the FIRED (level-1) part of
+`dict d` and `ρ(d)` the `wcnf`-tail, whose components are exactly the images
+`dict (ψ₀ e)` of `d`'s own level-0 components.  §161.2 strips the `ω^·`, so:
+
+    Sub157 A w' (dict (ψ₀ d))
+      ⟸  Sub157 A w' (V d)   ∧   Sub157 A w' (dict (ψ₀ e)) for every level-0 e of d.
+
+The second half recurses (`BT.size` drops); the first half is where the genuine
+`ψ_{Ω₁}(i)`-index of §133 appears, and is the only place the recursion can stop.
+Where `d` has no level-1 component at all, `V d = 0` and the whole descent is free. -/
+
+/-- The value the level-0 collapse of `dict d` accumulates. -/
+def foldV161 (d : BT) : Term :=
+  (((wcnf (reg 1) (toList (dict d))).1.foldl (stepF (reg 1) (baseOf 0))
+    ((none : Option Term), (none : Option Term))).2).getD zero
+
+/-- The tail the level-0 collapse of `dict d` leaves. -/
+def tailV161 (d : BT) : Term := (wcnf (reg 1) (toList (dict d))).2
+
+theorem inTL_isAP_mem161 : ∀ (L : List Term), inTL L = true → ∀ y ∈ L, y.isAP = true
+  | [], _, _, hy => by cases hy
+  | p :: rest, hc, y, hy => by
+      obtain ⟨⟨hap, _⟩, hcr⟩ := inTL_cons.mp hc
+      rcases List.mem_cons.mp hy with h | h
+      · rw [h]; exact hap
+      · exact inTL_isAP_mem161 rest hcr y h
+
+/-- A component of a normal sum comes from one of the summands. -/
+theorem mem_toList_plus161 {V R : Term} (hV : inT V = true) (hR : inT R = true) :
+    ∀ s ∈ toList (plus V R), s ∈ toList V ∨ s ∈ toList R := by
+  intro s hs
+  cases hl : toList R with
+  | nil => rw [plus_nil hl] at hs; exact Or.inl hs
+  | cons b1 r =>
+      rw [plus_cons66 hl] at hs
+      have hap : ∀ y ∈ List.filter (fun a => le b1 a) (toList V) ++ b1 :: r,
+          y.isAP = true := by
+        intro y hy
+        rcases List.mem_append.mp hy with h | h
+        · exact inTL_isAP hV y (List.mem_filter.mp h).1
+        · exact inTL_isAP hR y (by rw [hl]; exact h)
+      rw [WF.toList_ofList _ hap] at hs
+      rcases List.mem_append.mp hs with h | h
+      · exact Or.inl (List.mem_filter.mp h).1
+      · exact Or.inr h
+
+/-- Every component of the `wcnf`-tail is a component of the list it came from. -/
+theorem tail_mem161 {w : Term} : ∀ (L : List Term), inTL L = true →
+    ∀ s ∈ toList ((wcnf w L).2), s ∈ L := by
+  intro L
+  induction L with
+  | nil =>
+      intro _ s hs
+      rw [wcnf_nil] at hs
+      exact absurd hs (by intro hc; cases hc)
+  | cons p rest ih =>
+      intro hc s hs
+      rw [wcnf_snd_cons88] at hs
+      by_cases hlp : lt p w = true
+      · rw [if_pos hlp] at hs
+        rw [WF.toList_ofList _ (inTL_isAP_mem161 (p :: rest) hc)] at hs
+        exact hs
+      · rw [if_neg hlp] at hs
+        exact List.Mem.tail _ (ih (inTL_cons.mp hc).2 s hs)
+
+/-- The fold value is a single additively principal term (or `0`). -/
+theorem foldV_facts161 (Hp : PsiIdxOKStd172) {d : BT}
+    (hb : btLe72 1 (BT.D 0 d) = true) (hs : BT.isStd (BT.D 0 d) = true) :
+    inT (foldV161 d) = true ∧ lt (foldV161 d) M = true ∧
+      (∀ s ∈ toList (foldV161 d), s = foldV161 d) := by
+  have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+  have hsd : BT.isStd d = true := isStd_of_D hs
+  obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp d hbd hsd
+  have Hpd : PsiIdxOK 0 (dict d) := Hp 0 d (Nat.zero_le 1) hbd hs
+  have hst := stE81_pre157 hid hidM Hpd (wcnf (reg 1) (toList (dict d))).1 []
+    (by rw [List.append_nil])
+  unfold foldV161
+  cases h2 : (((wcnf (reg 1) (toList (dict d))).1.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2) with
+  | none =>
+      refine ⟨inT_zero, lt_zero_M, ?_⟩
+      intro s hsm
+      exact absurd hsm (by intro hc; cases hc)
+  | some v =>
+      obtain ⟨hiv, hvW, hap, _⟩ := hst v h2
+      refine ⟨hiv, ltM_of_ltW79 hiv hvW, ?_⟩
+      intro s hsm
+      have hsm' : s ∈ toList v := hsm
+      rw [toList_of_isAP hap] at hsm'
+      show s = v
+      exact List.mem_singleton.mp hsm'
+
+theorem tailV_facts161 (Hp : PsiIdxOKStd172) {d : BT}
+    (hb : btLe72 1 (BT.D 0 d) = true) (hs : BT.isStd (BT.D 0 d) = true) :
+    inT (tailV161 d) = true ∧ lt (tailV161 d) M = true ∧
+      ∀ s ∈ toList (tailV161 d), ∃ e : BT, BT.D 0 e ∈ BT.toL d ∧ s = dict (BT.D 0 e) := by
+  have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+  have hsd : BT.isStd d = true := isStd_of_D hs
+  obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp d hbd hsd
+  obtain ⟨hc, hd⟩ := inT_toList _ hid
+  obtain ⟨⟨hiT, hTM⟩, _⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0)
+    (toList (dict d)) hc hd (ltM_toList _ hid hidM)
+  refine ⟨hiT, hTM, ?_⟩
+  intro s hsm
+  have hmem : s ∈ toList (dict d) := tail_mem161 (w := reg 1) (toList (dict d)) hc s hsm
+  have hTW : lt (tailV161 d) (reg 1) = true := (wcnf_W79 (toList (dict d)) hc).1
+  have hsW : lt s (reg 1) = true :=
+    ltAP_toList114 (inT_le_fragR _ (inT_reg 1)) (show (reg 1).isAP = true from rfl)
+      _ hiT hTW s hsm
+  refine mem_toList_loW_dict101 Hp hbd hsd s ?_
+  rw [toList_loW89 hid]
+  exact List.mem_filter.mpr ⟨hmem, by rw [hsW]⟩
+
+/-- **The shape of a `ψ₀`-image.** -/
+theorem dict_D0_shape161 (Hp : PsiIdxOKStd172) {d : BT}
+    (hb : btLe72 1 (BT.D 0 d) = true) (hs : BT.isStd (BT.D 0 d) = true) :
+    dict (BT.D 0 d) = omegaNF (plus (foldV161 d) (tailV161 d)) := by
+  have hiV := (foldV_facts161 Hp hb hs).1
+  have hiT := (tailV_facts161 Hp hb hs).1
+  rw [Trans.Dict.dict_D, collapse_eq]
+  show omegaNF (plus (reg 0) (plus (foldV161 d) (tailV161 d))) = _
+  rw [show (reg 0 : Term) = zero from rfl, plus_zero_left_inT (inT_plus hiV hiT)]
+
+/-- The level-0 descent.  `ofLe` stops outright, `pure` descends through a node with
+    no level-1 component, `step` descends through any node once its fold value has
+    been put in the closure. -/
+inductive Lo0Sub161 (A w' : Term) : BT → Prop where
+  | ofLe : ∀ {d : BT}, le (dict (BT.D 0 d)) w' = true → Lo0Sub161 A w' d
+  | pure : ∀ {d : BT}, (∀ z ∈ BT.toL d, ∃ c : BT, z = BT.D 0 c) →
+      (∀ c : BT, BT.D 0 c ∈ BT.toL d → Lo0Sub161 A w' c) → Lo0Sub161 A w' d
+  | step : ∀ {d : BT}, Sub157 A w' (foldV161 d) →
+      (∀ c : BT, BT.D 0 c ∈ BT.toL d → Lo0Sub161 A w' c) → Lo0Sub161 A w' d
+
+/-- **The `ψ₀`-value of a descending argument is in the closure.** -/
+theorem sub157_dict_D0_161 (Hp : PsiIdxOKStd172) {A w' : Term}
+    (h1 : le TM.Term.one w' = true) :
+    ∀ {d : BT}, Lo0Sub161 A w' d → btLe72 1 (BT.D 0 d) = true →
+      BT.isStd (BT.D 0 d) = true → Sub157 A w' (dict (BT.D 0 d)) := by
+  intro d hd
+  induction hd with
+  | @ofLe d hle =>
+      intro hb hs
+      obtain ⟨hi, hM⟩ := inT_dict_of_std172 Hp (BT.D 0 d) hb hs
+      exact Sub157.ofLe hi hM hle
+  | @pure d hall _ ih =>
+      intro hb hs
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp d hbd hsd
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      have hcomp : ∀ z ∈ toList (dict d),
+          ∃ c : BT, BT.D 0 c ∈ BT.toL d ∧ z = dict (BT.D 0 c) := by
+        intro z hz
+        obtain ⟨q, hq, hze⟩ := mem_toList_dict101 Hp hbd hsd z hz
+        obtain ⟨c, hce⟩ := hall q hq
+        exact ⟨c, by rw [← hce]; exact hq, by rw [hze, hce]⟩
+      have hltW : ∀ p ∈ toList (dict d), lt p (reg 1) = true := by
+        intro p hp
+        obtain ⟨c, hcm, hpe⟩ := hcomp p hp
+        rw [hpe]
+        exact lt_dict_D0_W93 Hp (hgood.2.2.1 _ hcm) (hgood.2.1 _ hcm)
+      have heq : dict (BT.D 0 d) = omegaNF (dict d) := by
+        rw [Trans.Dict.dict_D]
+        exact collapse0_eq77 (dict d) hid hltW
+      rw [heq]
+      refine sub157_omegaNF161 hid hidM h1 ?_
+      intro z hz
+      obtain ⟨c, hcm, hze⟩ := hcomp z hz
+      rw [hze]
+      exact ih c hcm (hgood.2.2.1 _ hcm) (hgood.2.1 _ hcm)
+  | @step d hV _ ih =>
+      intro hb hs
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      obtain ⟨hiV, hVM, hVs⟩ := foldV_facts161 Hp hb hs
+      obtain ⟨hiT, hTM, hTs⟩ := tailV_facts161 Hp hb hs
+      rw [dict_D0_shape161 Hp hb hs]
+      refine sub157_omegaNF161 (inT_plus hiV hiT)
+        (lt_plus_M hiV hiT hVM hTM) h1 ?_
+      intro z hz
+      rcases mem_toList_plus161 hiV hiT z hz with h | h
+      · rw [hVs z h]; exact hV
+      · obtain ⟨e, hem, hze⟩ := hTs z h
+        rw [hze]
+        exact ih e hem (hgood.2.2.1 _ hem) (hgood.2.1 _ hem)
+
+/-! ### §161.7a The decidable sufficient condition
+
+A `BT` with no `ψ₁` anywhere inside it descends all the way by `pure`. -/
+
+/-- `d` is hereditarily level-0: no `ψ₁` anywhere inside it. -/
+def lvl0161 : BT → Bool
+  | .zero => true
+  | .D u a => (u == 0) && lvl0161 a
+  | .sum a b => lvl0161 a && lvl0161 b
+
+theorem lvl0_toL161 : ∀ (d : BT), lvl0161 d = true →
+    ∀ z ∈ BT.toL d, ∃ c : BT, z = BT.D 0 c ∧ lvl0161 c = true
+  | .zero, _, _, hz => by cases hz
+  | .D u a, h, z, hz => by
+      have hz' : z = BT.D u a := List.mem_singleton.mp hz
+      have h2 : ((u == 0) && lvl0161 a) = true := h
+      obtain ⟨hu, ha⟩ := (Bool.and_eq_true _ _).mp h2
+      have hu0 : u = 0 := eq_of_beq hu
+      exact ⟨a, by rw [hz', hu0], ha⟩
+  | .sum a b, h, z, hz => by
+      have h2 : (lvl0161 a && lvl0161 b) = true := h
+      obtain ⟨ha, hb⟩ := (Bool.and_eq_true _ _).mp h2
+      have hz' : z ∈ BT.toL a ++ BT.toL b := hz
+      rcases List.mem_append.mp hz' with h3 | h3
+      · exact lvl0_toL161 a ha z h3
+      · exact lvl0_toL161 b hb z h3
+
+theorem lo0Sub_of_lvl0161 {A w' : Term} : ∀ (n : Nat) (d : BT), BT.size d < n →
+    lvl0161 d = true → Lo0Sub161 A w' d
+  | 0, _, h, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hl => by
+      refine Lo0Sub161.pure ?_ ?_
+      · intro z hz
+        obtain ⟨c, hce, _⟩ := lvl0_toL161 d hl z hz
+        exact ⟨c, hce⟩
+      intro c hcm
+      obtain ⟨c', hce, hlc⟩ := lvl0_toL161 d hl (BT.D 0 c) hcm
+      have hcc : c = c' := by injection hce with _ h2
+      have hs0 : BT.size (BT.D 0 c) ≤ BT.size d := size_mem_toL87 d _ hcm
+      rw [size_D87] at hs0
+      exact lo0Sub_of_lvl0161 n c (by omega) (by rw [hcc]; exact hlc)
+
+/-! ## §161.8 THE HEART, IN ITS SHARPEST FORM, AND THE FREE REGION
+
+`HeartLo161` is the bottom of the chain.  Sweep (`sweep4.lean`): 0 failures on all
+2135 Veblen pairs of the standard §151 pools, 36/72 + 22/22 + 12/24 failures on the
+`K`-dropped controls — the same separation `Subord157` itself shows, so nothing was
+lost on the way down and `K`-standardness is load-bearing inside it. -/
+
+/-- **The heart, after the level-0 recursion.**  Only the `ψ₀`-values whose
+    argument carries a level-1 component — the genuine `ψ_{Ω₁}(i)`-pieces —
+    still have to be bounded by the fold value of the pair's own prefix. -/
+def HeartLo161 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term) (Lpre B Lsuf : List Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      Split159 (reg 1) (toList (dict a)) P S ac Lpre B Lsuf →
+      le (reg 1) ac.1 = false →
+      ∀ c : BT, BT.D 1 c ∈ BT.toL a → dict (BT.D 1 c) ∈ B →
+        ∀ d : BT, BT.D 0 d ∈ BT.toL c → Lo0Sub161 ac.1 (wVal157 P) d
+
+theorem heart161_of_heartLo161 (Hp : PsiIdxOKStd172) (H : HeartLo161) : Heart161 := by
+  intro a hb hs P S ac Lpre B Lsuf hsplit hsp hfire c hcm hpB d hdm
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hb1 : btLe72 1 (BT.D 1 c) = true := hgood.2.2.1 _ hcm
+  have hs1 : BT.isStd (BT.D 1 c) = true := hgood.2.1 _ hcm
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c hb1).2
+  have hsc : BT.isStd c = true := isStd_of_D hs1
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  obtain ⟨h1, _, _, _, _, _⟩ := split_facts161 Hp hb hs hsplit hsp
+    (show dict (BT.D 1 c) ∈ B from hpB)
+  exact sub157_dict_D0_161 Hp h1
+    (H a hb hs P S ac Lpre B Lsuf hsplit hsp hfire c hcm hpB d hdm)
+    (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+
+/-- **§161 MAIN, sharpest form.** -/
+theorem subord157_of_heartLo161 (Hp : PsiIdxOKStd172) (H : HeartLo161) : Subord157 :=
+  subord157_of_heart161 Hp (heart161_of_heartLo161 Hp H)
+
+/-- **THE FREE REGION.**  Where every `ψ₀`-argument sitting in a coefficient
+    position is hereditarily level-0, `Subord157` holds at `a` with no carrier and
+    no `G₀`-condition — proved, not assumed. -/
+theorem subord157_at_lvl0161 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hfree : ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+      lvl0161 d = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine sub157_of_split159 hsp ?_
+  intro p hp
+  obtain ⟨h1, c, hcm, hbc, hsc, hpe⟩ := split_facts161 Hp hb hs hsplit hsp hp
+  rw [hpe]
+  refine sub157_wC_dict161 Hp hbc hsc h1 ?_
+  intro d hdm
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  exact sub157_dict_D0_161 Hp h1
+    (lo0Sub_of_lvl0161 (BT.size d + 1) d (Nat.lt_succ_self _) (hfree c hcm d hdm))
+    (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+
+/-- The global form of the free region. -/
+theorem subord157_of_lvl0161 (Hp : PsiIdxOKStd172)
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      ∀ c : BT, BT.D 1 c ∈ BT.toL a → ∀ d : BT, BT.D 0 d ∈ BT.toL c →
+        lvl0161 d = true) :
+    Subord157 :=
+  fun a hb hs P S ac hsplit hfire =>
+    subord157_at_lvl0161 Hp hb hs (H a hb hs) P S ac hsplit hfire
+
+/-- **THE REQUESTED HEADLINE.**  `Subord157`, with the two hypotheses that could
+    NOT be removed:
+
+  * `Hp : PsiIdxOKStd172` — the standing gate of this whole area; `dom154_of_carriers157`,
+    the only consumer of `Subord157`, already takes it, so it costs the project nothing.
+  * `H : HeartLo161` — the `G₀`-condition itself.  THIS IS THE OPEN ONE.
+
+    Unfolded, what is still missing is a single inequality: for a Veblen pair `(A_j, C_j)`
+    of a standard `dict a` and a `ψ₀`-node `d` reached inside `A_j`'s coefficient
+    position, the LEVEL-0 FOLD VALUE `foldV161 d` — a `ψ_{Ω₁}(i)` in the fired branch,
+    a `φ̄(A₀, X₀)` in the Veblen branch — must satisfy `Sub157 A_j (wVal157 P_j)`.
+    §128's `vebArgs_lt128` / `vebArgs_isStd128` / `vebArgs_btLe128` / `vebArgs_size128`
+    are the matching supply on the `BT` side; `mem_vebArgs_coef128` puts exactly these
+    `d` in `vebArgs128 a`. -/
+theorem subord157_proof (Hp : PsiIdxOKStd172) (H : HeartLo161) : Subord157 :=
+  subord157_of_heartLo161 Hp H
+
+/-! ## §161.9 Axiom record -/
+
+#print axioms sub157_of_comps161
+#print axioms sub157_omegaNF161
+#print axioms sub157_wC161
+#print axioms sub157_wC_dict161
+#print axioms le_one_wVal161
+#print axioms subord157_of_heart161
+#print axioms subord157_of_heartT161
+#print axioms subord157_at_noCoef161
+#print axioms subord157_of_noCoef161
+#print axioms sub157_dict_D0_161
+#print axioms lo0Sub_of_lvl0161
+#print axioms subord157_of_heartLo161
+#print axioms subord157_at_lvl0161
+#print axioms subord157_of_lvl0161
+#print axioms subord157_proof
+
+end
+
+
+/-
+g160 — `ExpSubR157`, THE EXPONENT CARRIER OF §157
+
+§157 reduced the whole second gate to the two Props `Subord157 ∧ ExpSubR157`.
+This file attacks the exponent one:
+
+    ExpSubR157 : ∀ a, btLe72 1 (ψ₀a) → isStd (ψ₀a) →
+      ∀ P S ac, (wcnf Ω₁ (toList (dict a))).1 = P ++ ac :: S → le Ω₁ ac.1 = false →
+        SubR157 (wVal157 P) ac.1
+
+WHAT IS PROVED HERE (all of it unconditional except `PsiIdxOKStd172`, the project's
+standing dict-wellformedness gate that §157's own consumer `dom154_of_carriers157`
+already takes):
+
+  §160.1  `SubR157` is a *closure*, so it is generous.  `zero`, `one`, every `ofNat n`,
+          every `ofList` of members, every `phiNF`/`omegaNF` of a term whose components
+          are members — all free (`subR157_zero160` … `subR157_omegaNF160`).  The only
+          terms it cannot swallow for free are `psi`/`Z`/`M` leaves, which must be
+          `le`-below the bound.  That is the whole content of the carrier.
+
+  §160.2  The ordered decomposition of a `wcnf` split (g159's `Split159` /
+          `wcnf_split159`, copied verbatim), so the merged pair `ac` is replaced by a
+          single component `p` of `toList (dict a)`.
+
+  §160.3  A `ψ₀`-component contributes exponent `0`: `wA_dict_D0_160`.  So half the
+          components are discharged outright.
+
+  §160.4  A `ψ₁`-component's exponent is `1 ⊕ ω^{dict x}` summed over the `ψ₁`
+          components `ψ₁x` of `c` (`subR157_wA_D1_160`), and in the Veblen range every
+          such `dict x` is below `Ω₁`, hence a sum of `ψ₀`-images.  The `1` and the
+          `ω^·` are free; the `φ̄`-pieces recurse.
+
+  §160.5  THE ASSEMBLY.  `ExpSubR157` follows from ONE clause about the depth-2
+          `ψ₀`-arguments — exactly §128's `vebArgs128` names, exactly the shape of
+          §128's own open clause `VebD0_128`:
+
+            ExpHeart160 : … → ∀ c x d, ψ₁c ∈ a → ψ₁x ∈ c → ψ₀d ∈ x →
+                SubR157 (wVal157 P) (dict (ψ₀ d))
+
+          `subR157_of_lt160` says a `lt`-bound discharges it, so the §128-style clause
+          `lt (dict (ψ₀d)) (wVal157 P)` is enough — but it is NOT necessary: `ω` sits
+          above the bound `1` at the leading pair and is still subordinate, because it
+          is `φ̄(0,1)`.  Only the `ψ_{Ω₁}`-leaves inside `dict (ψ₀ d)` really have to be
+          `le`-below `wVal157 P` (`ExpLeaf160`, §160.5b).  That last inequality is the
+          project's item (3) and is NOT proved here.
+
+  §160.5c THE BOUND IS NOT OPAQUE.  `psi_le_wVal160`: if the first pair of the prefix
+          fires, `wVal157 P` dominates `ψ_{Ω₁}(i)` for an index the fold really built.
+          With `subR157_of_ltPsi160` that turns §128's `lt`-clause at target
+          `ψ_{Ω₁}(i)` into `ExpHeart160` at such a `P` in one step.  What is left open
+          is therefore exactly: (i) that `lt`-clause, and (ii) the prefixes with no
+          fired pair, where the bound is `1` (or a `φ̄`-tower over `0`) and the claim is
+          that `dict (ψ₀ d)` has NO `ψ`-leaf at all.
+
+WHAT IS NOT PROVED.  `ExpHeart160` / `ExpLeaf160`.  Everything else in the file is
+unconditional beyond `PsiIdxOKStd172`.
+-/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §160.1 `SubR157` is a closure — what it swallows for free -/
+
+/-- `zero` is below every bound. -/
+theorem subR157_zero160 (w : Term) : SubR157 w zero := by
+  refine SubR157.ofLe inT_zero lt_zero_M ?_
+  cases hc : (zero : Term) == w with
+  | true => show ((zero : Term) == w || _) = true; rw [hc]; rfl
+  | false =>
+      have hne : w ≠ zero := by
+        intro h; rw [h] at hc; exact Bool.noConfusion (hc.symm.trans (beq_self_eq_true _))
+      show ((zero : Term) == w || lt zero w) = true
+      rw [lt_zero_left hne]
+      exact Bool.or_true _
+
+/-- `1 = φ̄00`, so it is a `φ̄`-step over `zero` — no bound needed. -/
+theorem subR157_one160 (w : Term) : SubR157 w TM.Term.one :=
+  SubR157.ofPhi (subR157_zero160 w) (subR157_zero160 w)
+
+theorem subR157_ofNat160 (w : Term) : ∀ n : Nat, SubR157 w (TM.Term.ofNat n)
+  | 0 => subR157_zero160 w
+  | n + 1 => SubR157.ofPlus (subR157_ofNat160 w n) (subR157_one160 w)
+
+/-- A `le`-bound is enough — the raw `ofLe`, packaged. -/
+theorem subR157_of_le160 {w t : Term} (hit : inT t = true) (htM : lt t M = true)
+    (h : le t w = true) : SubR157 w t := SubR157.ofLe hit htM h
+
+/-- …and so is a strict `lt`-bound. -/
+theorem subR157_of_lt160 {w t : Term} (hit : inT t = true) (htM : lt t M = true)
+    (h : lt t w = true) : SubR157 w t := SubR157.ofLe hit htM (le_of_lt h)
+
+/-- The bound may be raised. -/
+theorem subR157_mono160 {w w' t : Term} (hiw : inT w = true) (hiw' : inT w' = true)
+    (hle : le w w' = true) (h : SubR157 w t) : SubR157 w' t := by
+  induction h with
+  | ofLe hit hltM hle2 =>
+      exact SubR157.ofLe hit hltM
+        (le_trans3 (inT_le_fragR _ hit) (inT_le_fragR _ hiw) (inT_le_fragR _ hiw') hle2 hle)
+  | ofPhi _ _ iha ihx => exact SubR157.ofPhi iha ihx
+  | ofPlus _ _ ihp ihq => exact SubR157.ofPlus ihp ihq
+
+/-- A descending list of members rebuilds into a member. -/
+theorem subR157_ofList160 {w : Term} : ∀ (L : List Term),
+    inTL L = true → descL L = true → (∀ z ∈ L, SubR157 w z) → SubR157 w (ofList L)
+  | [], _, _, _ => subR157_zero160 w
+  | [x], _, _, h => h x (List.Mem.head _)
+  | x :: y :: r, hc, hd, h => by
+      have hle : le y x = true := (descL_cons.mp hd).1
+      have hap : ∀ z ∈ y :: r, z.isAP = true := by
+        intro z hz
+        exact ((Bool.and_eq_true _ _).mp
+          (List.all_eq_true.mp (inTL_cons.mp hc).2 z hz)).1
+      have hx : x.isAP = true := (inTL_cons.mp hc).1.1
+      rw [← Evidence.StageA.plus_ofList_cons hx hap hle]
+      exact SubR157.ofPlus (h x (List.Mem.head _))
+        (subR157_ofList160 (y :: r) (inTL_cons.mp hc).2 (descL_cons.mp hd).2
+          (fun z hz => h z (List.Mem.tail _ hz)))
+
+/-- **Componentwise suffices.**  A term is subordinate as soon as all its `⊕`
+    components are. -/
+theorem subR157_toList160 {w X : Term} (hX : inT X = true)
+    (h : ∀ z ∈ toList X, SubR157 w z) : SubR157 w X := by
+  rw [← inT_ofList_toList X hX]
+  exact subR157_ofList160 (toList X) (inT_toList X hX).1 (inT_toList X hX).2 h
+
+/-- The infinite part of `splitFin` is a prefix of the components. -/
+theorem subR157_splitFin160 {w b : Term} (hb : inT b = true)
+    (h : ∀ z ∈ toList b, SubR157 w z) : SubR157 w (splitFin b).1 := by
+  obtain ⟨hc, hd⟩ := inT_toList b hb
+  show SubR157 w (ofList ((toList b).take
+    ((toList b).length - ((toList b).reverse.takeWhile (fun x => x == TM.Term.one)).length)))
+  refine subR157_ofList160 _ (inTL_take _ _ hc) (descL_take _ _ hd) ?_
+  intro z hz
+  exact h z (List.mem_of_mem_take hz)
+
+theorem subR157_phiNFdefault160 {w a b : Term} (ha : SubR157 w a) (hb : SubR157 w b) :
+    SubR157 w (phiNFdefault a b) := by
+  unfold phiNFdefault
+  by_cases hc : (b == zero && a.isSC) = true
+  · rw [if_pos hc]; exact ha
+  · rw [if_neg hc]; exact SubR157.ofPhi ha hb
+
+theorem subR157_phiNFsucc160 {w a b : Term} (hib : inT b = true) (ha : SubR157 w a)
+    (h : ∀ z ∈ toList b, SubR157 w z) : SubR157 w (phiNFsucc a b) := by
+  have hb : SubR157 w b := subR157_toList160 hib h
+  have hg : SubR157 w (splitFin b).1 := subR157_splitFin160 hib h
+  unfold phiNFsucc
+  cases hs : splitFin b with
+  | mk g m =>
+    rw [hs] at hg
+    dsimp only
+    by_cases hm : m ≥ 1
+    · rw [if_pos hm]
+      have hdown : SubR157 w (plus g (TM.Term.ofNat (m - 1))) :=
+        SubR157.ofPlus hg (subR157_ofNat160 w (m - 1))
+      cases g with
+      | phi d e =>
+          dsimp only
+          by_cases hlt : lt a d = true
+          · rw [if_pos hlt]; exact SubR157.ofPhi ha hdown
+          · rw [if_neg hlt]; exact subR157_phiNFdefault160 ha hb
+      | zero =>
+          dsimp only
+          by_cases hlt : ((zero : Term).isSC && lt a zero) = true
+          · rw [if_pos hlt]; exact SubR157.ofPhi ha hdown
+          · rw [if_neg hlt]; exact subR157_phiNFdefault160 ha hb
+      | M =>
+          dsimp only
+          by_cases hlt : ((M : Term).isSC && lt a M) = true
+          · rw [if_pos hlt]; exact SubR157.ofPhi ha hdown
+          · rw [if_neg hlt]; exact subR157_phiNFdefault160 ha hb
+      | add p q =>
+          dsimp only
+          by_cases hlt : ((add p q).isSC && lt a (add p q)) = true
+          · rw [if_pos hlt]; exact SubR157.ofPhi ha hdown
+          · rw [if_neg hlt]; exact subR157_phiNFdefault160 ha hb
+      | omg p =>
+          dsimp only
+          by_cases hlt : ((omg p).isSC && lt a (omg p)) = true
+          · rw [if_pos hlt]; exact SubR157.ofPhi ha hdown
+          · rw [if_neg hlt]; exact subR157_phiNFdefault160 ha hb
+      | psi k p =>
+          dsimp only
+          by_cases hlt : ((psi k p).isSC && lt a (psi k p)) = true
+          · rw [if_pos hlt]; exact SubR157.ofPhi ha hdown
+          · rw [if_neg hlt]; exact subR157_phiNFdefault160 ha hb
+      | Z p =>
+          dsimp only
+          by_cases hlt : ((Z p).isSC && lt a (Z p)) = true
+          · rw [if_pos hlt]; exact SubR157.ofPhi ha hdown
+          · rw [if_neg hlt]; exact subR157_phiNFdefault160 ha hb
+    · rw [if_neg hm]; exact subR157_phiNFdefault160 ha hb
+
+/-- **Every branch of `φ̄`'s normalizer stays inside the closure.** -/
+theorem subR157_phiNF160 {w a b : Term} (hib : inT b = true) (ha : SubR157 w a)
+    (h : ∀ z ∈ toList b, SubR157 w z) : SubR157 w (phiNF a b) := by
+  have hb : SubR157 w b := subR157_toList160 hib h
+  unfold phiNF
+  by_cases hc : (b.isSC && lt a b) = true
+  · rw [if_pos hc]; exact hb
+  · rw [if_neg hc]
+    cases b with
+    | phi c d =>
+        dsimp only
+        by_cases hlt : lt a c = true
+        · rw [if_pos hlt]; exact hb
+        · rw [if_neg hlt]; exact subR157_phiNFsucc160 hib ha h
+    | zero => exact subR157_phiNFsucc160 hib ha h
+    | M => exact subR157_phiNFsucc160 hib ha h
+    | add p q => exact subR157_phiNFsucc160 hib ha h
+    | omg p => exact subR157_phiNFsucc160 hib ha h
+    | psi k p => exact subR157_phiNFsucc160 hib ha h
+    | Z p => exact subR157_phiNFsucc160 hib ha h
+
+/-- **`ω^·` is free.**  `ω^X = φ̄0X` below `M`. -/
+theorem subR157_omegaNF160 {w b : Term} (hib : inT b = true) (hbM : lt b M = true)
+    (h : ∀ z ∈ toList b, SubR157 w z) : SubR157 w (omegaNF b) := by
+  rw [omegaNF_eq_phiNF128 hib hbM]
+  exact subR157_phiNF160 hib (subR157_zero160 w) h
+
+/-! ### §160.1b The leaves — the ONLY thing a bound has to dominate
+
+`SubR157 w` decomposes `⊕` and `φ̄` and swallows `zero`; everything else has to be
+`le`-below `w`.  `PsiL160` lists exactly those places, so `subR157_of_psiL160` turns
+any subordination goal into finitely many `le`-comparisons against `ψ`/`Z`/`M`/`ω̄`
+leaves.  Note that this is genuinely weaker than `lt t w`: at the leading pair the
+bound is `1` and the exponent may be `ω^ω`, whose leaf list is EMPTY. -/
+
+/-- `⊕` on wellformed terms is the raw constructor. -/
+theorem plus_eq_add160 {a b : Term} (h : inT (add a b) = true) : plus a b = add a b := by
+  obtain ⟨hap, hia, hib, _⟩ := inT_add h
+  have hhd : hdLe b a = true := hdLe_of_inT_add h
+  cases hl : toList b with
+  | nil =>
+      exfalso
+      have hz : b = zero := toList_eq_nil b hl
+      rw [hz] at hhd
+      exact Bool.noConfusion hhd
+  | cons y r =>
+      have hap' : ∀ z ∈ y :: r, z.isAP = true := by
+        intro z hz
+        exact inTL_isAP hib z (by rw [hl]; exact hz)
+      have hle : le y a = true := by
+        rw [← hdLe_eq_of_toList (a := a) hl]; exact hhd
+      have hb : ofList (y :: r) = b := by
+        rw [← hl]; exact inT_ofList_toList b hib
+      have h1 := Evidence.StageA.plus_ofList_cons hap hap' hle
+      rw [hb] at h1
+      rw [h1, show ofList (a :: y :: r) = add a (ofList (y :: r)) from rfl, hb]
+
+/-- The leaves `SubR157` cannot decompose: everything that is not `zero`, a `⊕`, or a
+    `φ̄`. -/
+def PsiL160 : Term → List Term
+  | zero => []
+  | add a b => PsiL160 a ++ PsiL160 b
+  | phi a b => PsiL160 a ++ PsiL160 b
+  | t => [t]
+
+/-- **Bounding the leaves is enough.** -/
+theorem subR157_of_psiL160 {w : Term} : ∀ t : Term, inT t = true → lt t M = true →
+    (∀ s ∈ PsiL160 t, le s w = true) → SubR157 w t := by
+  intro t
+  induction t with
+  | zero => intro _ _ _; exact subR157_zero160 w
+  | M => intro hit htM h; exact SubR157.ofLe hit htM (h _ (List.Mem.head _))
+  | omg a _ => intro hit htM h; exact SubR157.ofLe hit htM (h _ (List.Mem.head _))
+  | psi k a _ _ => intro hit htM h; exact SubR157.ofLe hit htM (h _ (List.Mem.head _))
+  | Z a _ => intro hit htM h; exact SubR157.ofLe hit htM (h _ (List.Mem.head _))
+  | phi a b iha ihb =>
+      intro hit htM h
+      have hx : (inT a && inT b && lt a M && lt b M) = true := hit
+      have h1 := (Bool.and_eq_true _ _).mp hx
+      have h2 := (Bool.and_eq_true _ _).mp h1.1
+      have h3 := (Bool.and_eq_true _ _).mp h2.1
+      refine SubR157.ofPhi (iha h3.1 h2.2 ?_) (ihb h3.2 h1.2 ?_)
+      · intro s hs; exact h s (List.mem_append.mpr (Or.inl hs))
+      · intro s hs; exact h s (List.mem_append.mpr (Or.inr hs))
+  | add a b iha ihb =>
+      intro hit htM h
+      obtain ⟨hap, hia, hib, _⟩ := inT_add hit
+      have hcomp : ∀ x ∈ toList (add a b), lt x M = true := ltM_toList _ hit htM
+      have hlaM : lt a M = true := hcomp a (List.Mem.head _)
+      have hlbM : lt b M = true := by
+        rw [← inT_ofList_toList b hib]
+        refine lt_ofList_M _ ?_
+        intro x hx
+        exact hcomp x (List.Mem.tail _ hx)
+      rw [← plus_eq_add160 hit]
+      refine SubR157.ofPlus (iha hia hlaM ?_) (ihb hib hlbM ?_)
+      · intro s hs; exact h s (List.mem_append.mpr (Or.inl hs))
+      · intro s hs; exact h s (List.mem_append.mpr (Or.inr hs))
+
+/-! ## §160.2 The ordered decomposition of a `wcnf` split (g159, copied) -/
+
+/-- The coefficient a merged block contributes. -/
+def blockC160 (w : Term) (B : List Term) : Term :=
+  (B.map (wC w)).foldr plus zero
+
+theorem blockC160_cons (w p : Term) (B : List Term) :
+    blockC160 w (p :: B) = plus (wC w p) (blockC160 w B) := rfl
+
+theorem wcnf_eq_nil_of_fst160 {w : Term} : ∀ (L : List Term),
+    (∀ p ∈ L, lt p w = false) → (wcnf w L).1 = [] → L = []
+  | [], _, _ => rfl
+  | p :: rest, hall, h => by
+      obtain ⟨c, ps, he⟩ := wcnfFstHd109 (w := w) rest (hall p (List.Mem.head _))
+      rw [he] at h
+      exact absurd h (by intro hc; cases hc)
+
+/-- The positional decomposition of one `wcnf` split. -/
+structure Split160 (w : Term) (L : List Term) (P S : List (Term × Term))
+    (ac : Term × Term) (Lpre B Lsuf : List Term) : Prop where
+  eqL : L = Lpre ++ B ++ Lsuf
+  bne : B ≠ []
+  preFire : ∀ p ∈ Lpre, lt p w = false
+  blkFire : ∀ p ∈ B, lt p w = false
+  blkA : ∀ p ∈ B, wA w p = ac.1
+  blkC : ac.2 = blockC160 w B
+  preEq : wcnf w Lpre = (P, zero)
+  cutEq : wcnf w (Lpre ++ B) = (P ++ [ac], zero)
+  sufEq : (wcnf w (B ++ Lsuf)).1 = ac :: S
+
+/-- **The ordered decomposition.**  Pure list plumbing: no `inT`, no `descL`, no
+    standardness, any base `w`. -/
+theorem wcnf_split160 {w : Term} : ∀ (L : List Term)
+    (P S : List (Term × Term)) (ac : Term × Term),
+    (wcnf w L).1 = P ++ ac :: S →
+    ∃ Lpre B Lsuf : List Term, Split160 w L P S ac Lpre B Lsuf := by
+  intro L
+  induction L with
+  | nil =>
+      intro P S ac h
+      have h' : ([] : List (Term × Term)) = P ++ ac :: S := h
+      cases P with
+      | nil => exact absurd h' (by intro hc; cases hc)
+      | cons x Q => exact absurd h' (by intro hc; cases hc)
+  | cons p rest ih =>
+      intro P S ac h
+      by_cases hlp : lt p w = true
+      · rw [wcnf_cons_lt hlp] at h
+        have h' : ([] : List (Term × Term)) = P ++ ac :: S := h
+        cases P with
+        | nil => exact absurd h' (by intro hc; cases hc)
+        | cons x Q => exact absurd h' (by intro hc; cases hc)
+      · have hlp' : lt p w = false := bool_false hlp
+        have hW0 : wcnf w [p] = ([(wA w p, wC w p)], zero) := by
+          rw [wcnf_cons_ge hlp', wcnf_nil]
+        cases hr : wcnf w rest with
+        | mk fst snd =>
+          have hrf : (wcnf w rest).1 = fst := by rw [hr]
+          cases fst with
+          | nil =>
+              have hW : wcnf w (p :: rest) = ([(wA w p, wC w p)], snd) := by
+                rw [wcnf_cons_ge hlp', hr]
+              rw [hW] at h
+              have h' : [(wA w p, wC w p)] = P ++ ac :: S := h
+              cases P with
+              | nil =>
+                  have h'' : [(wA w p, wC w p)] = ac :: S := h'
+                  have hac : ac = (wA w p, wC w p) := by
+                    injection h'' with h1 _; exact h1.symm
+                  have hS : S = [] := by
+                    injection h'' with _ h2; exact h2.symm
+                  subst hac; subst hS
+                  refine ⟨[], [p], rest, ⟨rfl, ?_, ?_, ?_, ?_, rfl, rfl, ?_, ?_⟩⟩
+                  · intro hc; cases hc
+                  · intro q hq; cases hq
+                  · intro q hq; rw [List.mem_singleton.mp hq]; exact hlp'
+                  · intro q hq; rw [List.mem_singleton.mp hq]
+                  · exact hW0
+                  · show (wcnf w (p :: rest)).1 = _
+                    rw [hW]
+              | cons x Q =>
+                  exfalso
+                  have hQ : ([] : List (Term × Term)) = Q ++ ac :: S := by
+                    injection h' with _ h2
+                  cases Q with
+                  | nil => exact absurd hQ (by intro hc; cases hc)
+                  | cons y R => exact absurd hQ (by intro hc; cases hc)
+          | cons ac' ps =>
+              by_cases hme : (wA w p == ac'.1) = true
+              · have hW : wcnf w (p :: rest)
+                    = ((wA w p, plus (wC w p) ac'.2) :: ps, snd) := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show (if (wA w p == ac'.1) = true
+                      then ((wA w p, plus (wC w p) ac'.2) :: ps, snd)
+                      else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: ps, snd)) = _
+                  rw [if_pos hme]
+                rw [hW] at h
+                have h' : (wA w p, plus (wC w p) ac'.2) :: ps = P ++ ac :: S := h
+                cases P with
+                | nil =>
+                    have h'' : (wA w p, plus (wC w p) ac'.2) :: ps = ac :: S := h'
+                    have hac : ac = (wA w p, plus (wC w p) ac'.2) := by
+                      injection h'' with h1 _; exact h1.symm
+                    have hS : S = ps := by
+                      injection h'' with _ h2; exact h2.symm
+                    subst hac
+                    obtain ⟨Lpre', B', Lsuf', hsp⟩ := ih [] ps ac'
+                      (by show (wcnf w rest).1 = ac' :: ps; exact hrf)
+                    have hpn : Lpre' = [] :=
+                      wcnf_eq_nil_of_fst160 Lpre' hsp.preFire (by rw [hsp.preEq])
+                    subst hpn
+                    have hrest : rest = B' ++ Lsuf' := hsp.eqL
+                    have hcut' : wcnf w B' = ([ac'], zero) := hsp.cutEq
+                    refine ⟨[], p :: B', Lsuf', ⟨?_, ?_, ?_, ?_, ?_, ?_, rfl, ?_, ?_⟩⟩
+                    · exact congrArg (fun l => p :: l) hrest
+                    · intro hc; cases hc
+                    · intro q hq; cases hq
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]; exact hlp'
+                      · exact hsp.blkFire q h1
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]
+                      · rw [hsp.blkA q h1]; exact (eq_of_beq hme).symm
+                    · show plus (wC w p) ac'.2 = blockC160 w (p :: B')
+                      rw [blockC160_cons, hsp.blkC]
+                    · show wcnf w (p :: B') = ([(wA w p, plus (wC w p) ac'.2)], zero)
+                      rw [wcnf_cons_ge hlp', hcut']
+                      show (if (wA w p == ac'.1) = true
+                          then ((wA w p, plus (wC w p) ac'.2) :: [], zero)
+                          else ((wA w p, wC w p) :: ac' :: [], zero))
+                          = ([(wA w p, plus (wC w p) ac'.2)], zero)
+                      rw [if_pos hme]
+                    · rw [hS]
+                      show (wcnf w (p :: (B' ++ Lsuf'))).1 = _
+                      rw [← hrest, hW]
+                | cons x Q =>
+                    have hx : x = (wA w p, plus (wC w p) ac'.2) := by
+                      injection h' with h1 _; exact h1.symm
+                    have hps : ps = Q ++ ac :: S := by
+                      injection h' with _ h2
+                    subst hx
+                    obtain ⟨Lpre', B', Lsuf', hsp⟩ :=
+                      ih (ac' :: Q) S ac (by rw [hrf, hps]; rfl)
+                    refine ⟨p :: Lpre', B', Lsuf',
+                      ⟨?_, hsp.bne, ?_, hsp.blkFire, hsp.blkA, hsp.blkC, ?_, ?_, hsp.sufEq⟩⟩
+                    · exact congrArg (fun l => p :: l) hsp.eqL
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]; exact hlp'
+                      · exact hsp.preFire q h1
+                    · show wcnf w (p :: Lpre') = _
+                      rw [wcnf_cons_ge hlp', hsp.preEq]
+                      show (if (wA w p == ac'.1) = true
+                          then ((wA w p, plus (wC w p) ac'.2) :: Q, zero)
+                          else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: Q, zero)) = _
+                      rw [if_pos hme]
+                    · show wcnf w (p :: (Lpre' ++ B'))
+                          = ((wA w p, plus (wC w p) ac'.2) :: (Q ++ [ac]), zero)
+                      rw [wcnf_cons_ge hlp', hsp.cutEq]
+                      show (if (wA w p == ac'.1) = true
+                          then ((wA w p, plus (wC w p) ac'.2) :: (Q ++ [ac]), zero)
+                          else ((wA w p, wC w p) :: ac' :: (Q ++ [ac]), zero))
+                          = ((wA w p, plus (wC w p) ac'.2) :: (Q ++ [ac]), zero)
+                      rw [if_pos hme]
+              · have hW : wcnf w (p :: rest)
+                    = ((wA w p, wC w p) :: ac' :: ps, snd) := by
+                  rw [wcnf_cons_ge hlp', hr]
+                  show (if (wA w p == ac'.1) = true
+                      then ((wA w p, plus (wC w p) ac'.2) :: ps, snd)
+                      else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: ps, snd)) = _
+                  rw [if_neg hme]
+                rw [hW] at h
+                have h' : (wA w p, wC w p) :: ac' :: ps = P ++ ac :: S := h
+                cases P with
+                | nil =>
+                    have h'' : (wA w p, wC w p) :: ac' :: ps = ac :: S := h'
+                    have hac : ac = (wA w p, wC w p) := by
+                      injection h'' with h1 _; exact h1.symm
+                    have hS : S = ac' :: ps := by
+                      injection h'' with _ h2; exact h2.symm
+                    subst hac; subst hS
+                    refine ⟨[], [p], rest, ⟨rfl, ?_, ?_, ?_, ?_, rfl, rfl, ?_, ?_⟩⟩
+                    · intro hc; cases hc
+                    · intro q hq; cases hq
+                    · intro q hq; rw [List.mem_singleton.mp hq]; exact hlp'
+                    · intro q hq; rw [List.mem_singleton.mp hq]
+                    · exact hW0
+                    · show (wcnf w (p :: rest)).1 = _
+                      rw [hW]
+                | cons x Q =>
+                    have hx : x = (wA w p, wC w p) := by
+                      injection h' with h1 _; exact h1.symm
+                    have hQ : ac' :: ps = Q ++ ac :: S := by
+                      injection h' with _ h2
+                    subst hx
+                    obtain ⟨Lpre', B', Lsuf', hsp⟩ := ih Q S ac (by rw [hrf]; exact hQ)
+                    refine ⟨p :: Lpre', B', Lsuf',
+                      ⟨?_, hsp.bne, ?_, hsp.blkFire, hsp.blkA, hsp.blkC, ?_, ?_, hsp.sufEq⟩⟩
+                    · exact congrArg (fun l => p :: l) hsp.eqL
+                    · intro q hq
+                      rcases List.mem_cons.mp hq with h1 | h1
+                      · rw [h1]; exact hlp'
+                      · exact hsp.preFire q h1
+                    · show wcnf w (p :: Lpre') = _
+                      cases Q with
+                      | nil =>
+                          rw [wcnf_cons_ge hlp', hsp.preEq]
+                      | cons y R =>
+                          have hQ' : ac' :: ps = y :: (R ++ ac :: S) := hQ
+                          have hy : y = ac' := by
+                            injection hQ' with h1 _; exact h1.symm
+                          have hpre2 : wcnf w Lpre' = (ac' :: R, zero) := by
+                            rw [← hy]; exact hsp.preEq
+                          rw [wcnf_cons_ge hlp', hpre2]
+                          show (if (wA w p == ac'.1) = true
+                              then ((wA w p, plus (wC w p) ac'.2) :: R, zero)
+                              else ((wA w p, wC w p) :: (ac'.1, ac'.2) :: R, zero)) = _
+                          rw [if_neg hme, hy]
+                    · cases Q with
+                      | nil =>
+                          have hQ' : ac' :: ps = ac :: S := hQ
+                          have hy : ac' = ac := by
+                            injection hQ' with h1 _
+                          have hcut : wcnf w (Lpre' ++ B') = ([ac], zero) := hsp.cutEq
+                          show wcnf w (p :: (Lpre' ++ B'))
+                              = ((wA w p, wC w p) :: ac :: [], zero)
+                          rw [wcnf_cons_ge hlp', hcut]
+                          show (if (wA w p == ac.1) = true
+                              then ((wA w p, plus (wC w p) ac.2) :: [], zero)
+                              else ((wA w p, wC w p) :: ac :: [], zero))
+                              = ((wA w p, wC w p) :: ac :: [], zero)
+                          rw [if_neg (by rw [← hy]; exact hme)]
+                      | cons y R =>
+                          have hQ' : ac' :: ps = y :: (R ++ ac :: S) := hQ
+                          have hy : y = ac' := by
+                            injection hQ' with h1 _; exact h1.symm
+                          have hmey : ¬((wA w p == y.1) = true) := by rw [hy]; exact hme
+                          have hcut : wcnf w (Lpre' ++ B') = ((y :: R) ++ [ac], zero) :=
+                            hsp.cutEq
+                          show wcnf w (p :: (Lpre' ++ B'))
+                              = ((wA w p, wC w p) :: y :: (R ++ [ac]), zero)
+                          rw [wcnf_cons_ge hlp', hcut]
+                          show (if (wA w p == y.1) = true
+                              then ((wA w p, plus (wC w p) y.2) :: (R ++ [ac]), zero)
+                              else ((wA w p, wC w p) :: y :: (R ++ [ac]), zero))
+                              = ((wA w p, wC w p) :: y :: (R ++ [ac]), zero)
+                          rw [if_neg hmey]
+
+/-- The block's head names the pair's exponent. -/
+theorem head_of_split160 {w : Term} {L : List Term} {P S : List (Term × Term)}
+    {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsp : Split160 w L P S ac Lpre B Lsuf) :
+    ∃ (q : Term) (Btl : List Term), B = q :: Btl ∧ lt q w = false ∧ ac.1 = wA w q := by
+  cases hB : B with
+  | nil => exact absurd hB hsp.bne
+  | cons q Btl =>
+      refine ⟨q, Btl, rfl, ?_, ?_⟩
+      · exact hsp.blkFire q (by rw [hB]; exact List.Mem.head _)
+      · exact (hsp.blkA q (by rw [hB]; exact List.Mem.head _)).symm
+
+/-- **The exponent obligation, reduced to one component.** -/
+theorem expSubR157_of_split160 {w w' : Term} {L : List Term} {P S : List (Term × Term)}
+    {ac : Term × Term} {Lpre B Lsuf : List Term}
+    (hsp : Split160 w L P S ac Lpre B Lsuf)
+    (h : ∀ p ∈ B, SubR157 w' (wA w p)) : SubR157 w' ac.1 := by
+  obtain ⟨q, Btl, hB, _, hA⟩ := head_of_split160 hsp
+  rw [hA]
+  exact h q (by rw [hB]; exact List.Mem.head _)
+
+/-! ## §160.3 A `ψ₀`-component contributes exponent `0` -/
+
+theorem filter_hi_nil160 : ∀ (l : List Term), (∀ q ∈ l, lt q (reg 1) = true) →
+    l.filter (fun q => !lt q (reg 1)) = []
+  | [], _ => rfl
+  | q :: r, h => by
+      rw [List.filter_cons_of_neg (by rw [h q (List.Mem.head _)]; exact Bool.noConfusion)]
+      exact filter_hi_nil160 r (fun z hz => h z (List.Mem.tail _ hz))
+
+/-- **The image of a `ψ₀` digit has base-`Ω₁` exponent `0`.**  Everything below `Ω₁`
+    is swallowed by the coefficient. -/
+theorem wA_dict_D0_160 (Hp : PsiIdxOKStd172) {c : BT} (hb : btLe72 1 (BT.D 0 c) = true)
+    (hs : BT.isStd (BT.D 0 c) = true) : wA (reg 1) (dict (BT.D 0 c)) = zero := by
+  obtain ⟨hip, hpM⟩ := inT_dict_of_std172 Hp (BT.D 0 c) hb hs
+  have hlt : lt (dict (BT.D 0 c)) (reg 1) = true := lt_dict_D0_W93 Hp hb hs
+  have hap : (dict (BT.D 0 c)).isAP = true := isAP_dict_D76 0 c
+  have hlog : lt (logOm (dict (BT.D 0 c))) (reg 1) = true := ltW_logOm106 hip hap hpM hlt
+  have hall : ∀ q ∈ toList (logOm (dict (BT.D 0 c))), lt q (reg 1) = true :=
+    ltAP_toList114 (inT_le_fragR _ (inT_reg 1)) (show (reg 1).isAP = true from rfl)
+      _ (inT_logOm hip) hlog
+  show ofList (((toList (logOm (dict (BT.D 0 c)))).filter (fun q => !lt q (reg 1))).map
+      (divAP (reg 1))) = zero
+  rw [filter_hi_nil160 _ hall]
+  rfl
+
+/-! ## §160.4 A `ψ₁`-component's exponent -/
+
+/-- Below `Ω₁` every component of an image is a `ψ₀` image, so the whole image is
+    subordinate as soon as those are. -/
+theorem subR157_dict_comp160 (Hp : PsiIdxOKStd172) {x : BT} {w : Term}
+    (hbx : btLe72 1 x = true) (hsx : BT.isStd x = true)
+    (hlow : lt (dict x) (reg 1) = true)
+    (h : ∀ d : BT, BT.D 0 d ∈ BT.toL x → SubR157 w (dict (BT.D 0 d))) :
+    ∀ z ∈ toList (dict x), SubR157 w z := by
+  obtain ⟨hix, hxM⟩ := inT_dict_of_std172 Hp x hbx hsx
+  intro z hz
+  have hzW : lt z (reg 1) = true :=
+    ltAP_toList114 (inT_le_fragR _ (inT_reg 1)) (show (reg 1).isAP = true from rfl)
+      _ hix hlow z hz
+  obtain ⟨p, hp, hze⟩ := mem_toList_dict101 Hp hbx hsx z hz
+  have hgood : GoodL77 (BT.toL x) := good_toL77 x hsx hbx
+  obtain ⟨u, d, hpe⟩ := hgood.1 p hp
+  subst hpe
+  have hbud : btLe72 1 (BT.D u d) = true := hgood.2.2.1 _ hp
+  have hsud : BT.isStd (BT.D u d) = true := hgood.2.1 _ hp
+  have hhi := hiA_dict93 Hp u d hbud hsud
+  rw [← hze, hzW] at hhi
+  have hu : u = 0 := by
+    have h1 : decide (1 ≤ u) = false := hhi.symm
+    have h2 : ¬ (1 ≤ u) := by
+      intro hc; rw [decide_eq_true hc] at h1; exact Bool.noConfusion h1
+    omega
+  subst hu
+  rw [hze]
+  exact h d hp
+
+theorem subR157_dict_lo160 (Hp : PsiIdxOKStd172) {x : BT} {w : Term}
+    (hbx : btLe72 1 x = true) (hsx : BT.isStd x = true)
+    (hlow : lt (dict x) (reg 1) = true)
+    (h : ∀ d : BT, BT.D 0 d ∈ BT.toL x → SubR157 w (dict (BT.D 0 d))) :
+    SubR157 w (dict x) :=
+  subR157_toList160 (inT_dict_of_std172 Hp x hbx hsx).1
+    (subR157_dict_comp160 Hp hbx hsx hlow h)
+
+/-- **The exponent of a non-firing `ψ₁` component is subordinate**, given the depth-2
+    `ψ₀`-arguments are.  This is the `SubR157` twin of §128's `lt_wA_dict128`: the
+    `Ω₁` digit contributes `1` and every other digit contributes `ω^{dict x}` with
+    `dict x < Ω₁`. -/
+theorem subR157_wA_D1_160 (Hp : PsiIdxOKStd172) {c : BT} {w : Term}
+    (hbD : btLe72 1 (BT.D 1 c) = true) (hsD : BT.isStd (BT.D 1 c) = true)
+    (hnf : le (reg 1) (wA (reg 1) (dict (BT.D 1 c))) = false)
+    (h : ∀ x d : BT, BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+          SubR157 w (dict (BT.D 0 d))) :
+    SubR157 w (wA (reg 1) (dict (BT.D 1 c))) := by
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c hbD).2
+  have hsc : BT.isStd c = true := isStd_of_D hsD
+  obtain ⟨hic, hcM⟩ := inT_dict_of_std172 Hp c hbc hsc
+  obtain ⟨hip, hpM⟩ := inT_dict_of_std172 Hp (BT.D 1 c) hbD hsD
+  have hiwA : inT (wA (reg 1) (dict (BT.D 1 c))) = true :=
+    inT_wA109 (inT_reg 1) (show (reg 1).isSC = true from rfl) hip
+  have hltW : lt (wA (reg 1) (dict (BT.D 1 c))) (reg 1) = true :=
+    ltW_of_leW_false128 hiwA hnf
+  have hallW : ∀ z ∈ toList (wA (reg 1) (dict (BT.D 1 c))), lt z (reg 1) = true :=
+    ltAP_toList114 (inT_le_fragR _ (inT_reg 1)) (show (reg 1).isAP = true from rfl)
+      _ hiwA hltW
+  have hgoodc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  refine subR157_toList160 hiwA ?_
+  intro z hz
+  have hzW := hallW z hz
+  rw [toList_wA119] at hz
+  obtain ⟨q, hq, hze⟩ := List.mem_map.mp hz
+  have hqm : q ∈ toList (logOm (dict (BT.D 1 c))) := (List.mem_filter.mp hq).1
+  have hqw : lt q (reg 1) = false := by
+    have hb := (List.mem_filter.mp hq).2
+    cases hcq : lt q (reg 1) with
+    | false => rfl
+    | true => rw [hcq] at hb; exact Bool.noConfusion hb
+  rw [logOm_dict_D1_104 Hp hbc hsc] at hqm
+  rcases mem_toList_plusW119 hic q hqm with hcase | hcase
+  · rw [← hze, hcase, divAP_W_W_119]
+    exact subR157_one160 w
+  · have hhi : q ∈ toList (hiW89 (dict c)) := by
+      rw [toList_hiW89 hic]
+      exact List.mem_filter.mpr ⟨hcase, by rw [hqw]; rfl⟩
+    obtain ⟨x, hxm, hqe⟩ := mem_toList_hiW_dict101 Hp hbc hsc q hhi
+    have hbx1 : btLe72 1 (BT.D 1 x) = true := hgoodc.2.2.1 _ hxm
+    have hsx1 : BT.isStd (BT.D 1 x) = true := hgoodc.2.1 _ hxm
+    have hbx : btLe72 1 x = true := (btLe72_D 1 1 x hbx1).2
+    have hsx : BT.isStd x = true := isStd_of_D hsx1
+    have hdiv : divAP (reg 1) q = omegaNF (dict x) := by
+      rw [hqe]; exact divAP_dictD1_119 Hp hbx hsx
+    obtain ⟨hix, hxM⟩ := inT_dict_of_std172 Hp x hbx hsx
+    have hlowx : lt (dict x) (reg 1) = true := by
+      refine ltW_of_ltW_omegaNF128 hix ?_
+      rw [← hdiv, hze]; exact hzW
+    rw [← hze, hdiv]
+    exact subR157_omegaNF160 hix hxM
+      (subR157_dict_comp160 Hp hbx hsx hlowx (fun d hd => h x d hxm hd))
+
+/-! ## §160.5 THE ASSEMBLY -/
+
+/-- **The clause that remains** — the `SubR157` twin of §128's open clause
+    `VebD0_128`.  Its names are §128's `vebArgs128` names on the exponent side:
+    `ψ₁c` a component of `a`, `ψ₁x` a component of `c`, `ψ₀d` a component of `x`.
+
+    `subR157_of_lt160` shows the §128-style `lt (dict (ψ₀d)) (wVal157 P)` discharges
+    it; the converse fails (`ω = φ̄01` is subordinate to the bound `1`), so this is
+    strictly weaker than the `lt` clause. -/
+def ExpHeart160 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+        SubR157 (wVal157 P) (dict (BT.D 0 d))
+
+/-- The §128-shaped version implies it — `vebArgs128` already names these `d`. -/
+theorem expHeart160_of_vebArgs160
+    (H : ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+      ∀ (P S : List (Term × Term)) (ac : Term × Term),
+        (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+        le (reg 1) ac.1 = false →
+        ∀ d ∈ vebArgs128 a, SubR157 (wVal157 P) (dict (BT.D 0 d))) :
+    ExpHeart160 := by
+  intro a hb hs P S ac hsplit hfire c x d hc hx hd
+  exact H a hb hs P S ac hsplit hfire d (mem_vebArgs_exp128 hc hx hd)
+
+/-- Naming a component of `dict a` as the image of a component of `a`. -/
+theorem comp_name160 (Hp : PsiIdxOKStd172) {a : BT} (hb : btLe72 1 a = true)
+    (hs : BT.isStd a = true) :
+    ∀ z ∈ toList (dict a), ∃ (u : Nat) (c : BT),
+      BT.D u c ∈ BT.toL a ∧ btLe72 1 (BT.D u c) = true ∧ BT.isStd (BT.D u c) = true
+      ∧ u ≤ 1 ∧ z = dict (BT.D u c) := by
+  intro z hz
+  obtain ⟨p, hp, hze⟩ := mem_toList_dict101 Hp hb hs z hz
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hs hb
+  obtain ⟨u, c, hpe⟩ := hgood.1 p hp
+  subst hpe
+  exact ⟨u, c, hp, hgood.2.2.1 _ hp, hgood.2.1 _ hp,
+    (btLe72_D 1 u c (hgood.2.2.1 _ hp)).1, hze⟩
+
+/-- **§160 MAIN — the exponent carrier, from the one remaining clause.** -/
+theorem expSubR157_of_heart160 (Hp : PsiIdxOKStd172) (H : ExpHeart160) : ExpSubR157 := by
+  intro a hb hs P S ac hsplit hfire
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split160 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine expSubR157_of_split160 hsp ?_
+  intro p hpB
+  have hpL : p ∈ toList (dict a) := by
+    rw [hsp.eqL]
+    exact List.mem_append.mpr (Or.inl (List.mem_append.mpr (Or.inr hpB)))
+  obtain ⟨u, c, hmem, hbuc, hsuc, _, hpe⟩ := comp_name160 Hp hba hsa p hpL
+  have hAeq : wA (reg 1) p = ac.1 := hsp.blkA p hpB
+  cases u with
+  | zero =>
+      rw [hpe, wA_dict_D0_160 Hp hbuc hsuc]
+      exact subR157_zero160 _
+  | succ u' =>
+      cases u' with
+      | zero =>
+          have hnf : le (reg 1) (wA (reg 1) (dict (BT.D 1 c))) = false := by
+            rw [← hpe, hAeq]; exact hfire
+          rw [hpe]
+          exact subR157_wA_D1_160 Hp hbuc hsuc hnf
+            (fun x d hx hd => H a hb hs P S ac hsplit hfire c x d hmem hx hd)
+      | succ u'' =>
+          exfalso
+          have hu : u'' + 1 + 1 ≤ 1 := (btLe72_D 1 (u'' + 1 + 1) c hbuc).1
+          omega
+
+/-! ### §160.5b The clause, sharpened to `ψ`-leaves
+
+`ExpHeart160` still speaks about a whole `ψ₀`-image.  `PsiL160` strips that down: the
+only thing that must sit below `wVal157 P` is each `ψ`/`Z`/`M` LEAF of that image.
+The `ω^·` and `φ̄` scaffolding around them is free.  This is the exact form of the
+sentence "the `ψ`-pieces have arguments bounded by the prefix index". -/
+
+/-- The `ψ`-leaf form of the remaining clause. -/
+def ExpLeaf160 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+        ∀ s ∈ PsiL160 (dict (BT.D 0 d)), le s (wVal157 P) = true
+
+theorem expHeart160_of_leaf160 (Hp : PsiIdxOKStd172) (H : ExpLeaf160) : ExpHeart160 := by
+  intro a hb hs P S ac hsplit hfire c x d hc hx hd
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgooda : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c (hgooda.2.2.1 _ hc)).2
+  have hsc : BT.isStd c = true := isStd_of_D (hgooda.2.1 _ hc)
+  have hgoodc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  have hbx : btLe72 1 x = true := (btLe72_D 1 1 x (hgoodc.2.2.1 _ hx)).2
+  have hsx : BT.isStd x = true := isStd_of_D (hgoodc.2.1 _ hx)
+  have hgoodx : GoodL77 (BT.toL x) := good_toL77 x hsx hbx
+  have hbd : btLe72 1 (BT.D 0 d) = true := hgoodx.2.2.1 _ hd
+  have hsd : BT.isStd (BT.D 0 d) = true := hgoodx.2.1 _ hd
+  obtain ⟨hid, hidM⟩ := inT_dict_of_std172 Hp (BT.D 0 d) hbd hsd
+  exact subR157_of_psiL160 _ hid hidM (H a hb hs P S ac hsplit hfire c x d hc hx hd)
+
+theorem expSubR157_of_leaf160 (Hp : PsiIdxOKStd172) (H : ExpLeaf160) : ExpSubR157 :=
+  expSubR157_of_heart160 Hp (expHeart160_of_leaf160 Hp H)
+
+/-! ### §160.5c The bound is not opaque — the fired prefix pins it from below
+
+`wVal157 P` is the running `collapse 0` value.  As soon as the FIRST pair of `P`
+fires, that value dominates `ψ_{Ω₁}(i)` for an index `i` the fold really built
+(`psi_le_wVal160`), because the fired steps only add to the index (`le_psi_mono157`)
+and the Veblen steps never fall back (§117's `geV117_fold`).  So at such a `P`,
+§128's `lt`-clause at target `ψ_{Ω₁}(i)` discharges `ExpHeart160` in one step
+(`subR157_of_ltPsi160`).  This is the formal content of "the `ψ`-pieces are bounded
+by the prefix index", from the side of the bound. -/
+
+/-- Once the fold has an index it never loses it. -/
+theorem fold_fst_some160 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term)
+    (i0 : Term), s.1 = some i0 →
+    ∃ i, (l.foldl (stepF (reg 1) (baseOf 0)) s).1 = some i := by
+  intro l
+  induction l with
+  | nil => intro s i0 h; exact ⟨i0, h⟩
+  | cons ac t ih =>
+      intro s i0 h
+      by_cases hf : le (reg 1) ac.1 = true
+      · exact ih _ (idxOf (reg 1) s ac) (by rw [stepF_fst, if_pos hf])
+      · exact ih _ i0 (by rw [stepF_fst, if_neg hf]; exact h)
+
+/-- **The fired prefix pins the fold value from below.** -/
+theorem psi_le_wVal160 {u : Term} (hu : inT u = true) (huM : lt u M = true)
+    (Hpu : PsiIdxOK 0 u) {P S : List (Term × Term)}
+    (hsplit : (wcnf (reg 1) (toList u)).1 = P ++ S)
+    {ac : Term × Term} {P' : List (Term × Term)} (hP : P = ac :: P')
+    (hfired : le (reg 1) ac.1 = true) :
+    ∃ i, inT i = true ∧ lt i M = true ∧ le (psi (reg 1) i) (wVal157 P) = true := by
+  obtain ⟨hc, hd⟩ := inT_toList u hu
+  have hmL := ltM_toList u hu huM
+  have hdP : descP118 ((wcnf (reg 1) (toList u)).1) := wcnf_descP154 _ hc hd hmL
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList u) hc hd hmL
+  have hmemP : ∀ z ∈ P, z ∈ (wcnf (reg 1) (toList u)).1 := by
+    intro z hz; rw [hsplit]; exact List.mem_append_left _ hz
+  have hdPP : descP118 P := by
+    refine descP_prefix157 P S ?_
+    rw [← hsplit]; exact hdP
+  obtain ⟨F, V, hFV, hF, hV⟩ := splitFV157 P hdPP (fun z hz => (hallOK z (hmemP z hz)).1)
+  have hFne : F ≠ [] := by
+    intro hc0
+    subst hc0
+    have hacV : ac ∈ V := by rw [← List.nil_append V, ← hFV, hP]; exact List.Mem.head _
+    rw [hV ac hacV] at hfired
+    exact Bool.noConfusion hfired
+  have hsplit1 : (wcnf (reg 1) (toList u)).1 = F ++ (V ++ S) := by
+    rw [hsplit, hFV, List.append_assoc]
+  obtain ⟨f, F'', hFc⟩ : ∃ f F'', F = f :: F'' := by
+    cases F with
+    | nil => exact absurd rfl hFne
+    | cons f F'' => exact ⟨f, F'', rfl⟩
+  obtain ⟨i, hi⟩ : ∃ i, (F.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).1 = some i := by
+    rw [hFc]
+    show ∃ i, (F''.foldl (stepF (reg 1) (baseOf 0))
+      (stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term)) f)).1 = some i
+    refine fold_fst_some160 F'' _ (idxOf (reg 1)
+      ((none : Option Term), (none : Option Term)) f) ?_
+    rw [stepF_fst, if_pos (hF f (by rw [hFc]; exact List.Mem.head _))]
+  have hcohF : Coh157 (F.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))) := coh_fold157 _ _ hF rfl
+  have hT2 : (F.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2 = some (psi (reg 1) i) := by
+    have h2 := hcohF
+    unfold Coh157 at h2
+    rw [hi] at h2
+    exact h2
+  have hstE := stE81_pre157 hu huM Hpu F (V ++ S) hsplit1
+  obtain ⟨hiT, hTW, hTap, hTE⟩ := hstE (psi (reg 1) i) hT2
+  have h1T : lt TM.Term.one (psi (reg 1) i) = true :=
+    lt_of_lt_of_le3 (show FragR TM.Term.one = true from rfl) (inT_le_fragR _ inT_E81)
+      (inT_le_fragR _ hiT) lt_one_E81_157 hTE
+  have hTM : lt (psi (reg 1) i) M = true := ltM_of_ltW79 hiT hTW
+  obtain ⟨hstInv, hallFVS⟩ := preSt_inv129 hu huM Hpu F (V ++ S) hsplit1.symm
+  have hapF : ApV117 (F.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))) := apV117_fold _ _ apV117_none
+  have hallV : ∀ z ∈ V, inT z.1 = true ∧ lt z.1 M = true ∧ inT z.2 = true
+      ∧ lt z.2 M = true := by
+    intro z hz
+    exact hallFVS z (List.mem_append_right _ (List.mem_append_left _ hz))
+  have hmain := geV117_fold hiT hTap h1T hTM V _ hstInv hapF
+    ⟨psi (reg 1) i, hT2, Evidence.WF.le_self _⟩ hallV hV
+  obtain ⟨v', hv'2, hTv'⟩ := hmain
+  have hPfold : (P.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2 = some v' := by
+    rw [hFV, List.foldl_append]; exact hv'2
+  have hw : wVal157 P = v' := by
+    unfold wVal157
+    rw [hPfold]
+    rfl
+  exact ⟨i, (hstInv.1 i hi).1, (hstInv.1 i hi).2, by rw [hw]; exact hTv'⟩
+
+/-- The same, at a `dict` image, with `Hp` supplying `PsiIdxOK`. -/
+theorem psi_le_wVal_dict160 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    {P S : List (Term × Term)}
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ S)
+    {z : Term × Term} {P' : List (Term × Term)} (hP : P = z :: P')
+    (hfired : le (reg 1) z.1 = true) :
+    ∃ i, inT i = true ∧ lt i M = true ∧ le (psi (reg 1) i) (wVal157 P) = true := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  obtain ⟨hia, haM⟩ := inT_dict_of_std172 Hp a hba hsa
+  exact psi_le_wVal160 hia haM (Hp 0 a (Nat.zero_le 1) hba hs) hsplit hP hfired
+
+/-- The value of a prefix is a `𝔗(M)` term below `Ω₁`. -/
+theorem wVal_dict_facts160 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term))
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ S) :
+    inT (wVal157 P) = true ∧ lt (wVal157 P) (reg 1) = true := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  obtain ⟨hia, haM⟩ := inT_dict_of_std172 Hp a hba hsa
+  exact wVal_facts157 hia haM (Hp 0 a (Nat.zero_le 1) hba hs) P S hsplit
+
+/-- **The one-step bridge to §128.**  A `lt`-bound against `ψ_{Ω₁}(i)` plus
+    `psi_le_wVal_dict160` discharge a subordination goal outright. -/
+theorem subR157_of_ltPsi160 {i t w : Term} (hit : inT t = true) (htM : lt t M = true)
+    (hii : inT i = true) (hiw : inT w = true)
+    (hlt : lt t (psi (reg 1) i) = true) (hle : le (psi (reg 1) i) w = true) :
+    SubR157 w t :=
+  SubR157.ofLe hit htM (le_of_lt (lt_of_lt_of_le3 (inT_le_fragR _ hit)
+    (fragR_psi_reg92 (inT_le_fragR _ hii)) (inT_le_fragR _ hiw) hlt hle))
+
+/-- **The headline, with its hypotheses named.**  `Hp` is the project's standing
+    dict-wellformedness gate (§72's `PsiIdxOKStd172`), already a hypothesis of
+    §157's consumer `dom154_of_carriers157`.  `ExpHeart160` is the remaining
+    mathematical content — item (3) of the §157 handoff, in the same shape as §128's
+    own open clause `VebD0_128`. -/
+theorem expSubR157_proof (Hp : PsiIdxOKStd172) (H : ExpHeart160) : ExpSubR157 :=
+  expSubR157_of_heart160 Hp H
+
+/-! ## §160.6 Axiom record -/
+
+#print axioms subR157_omegaNF160
+#print axioms subR157_of_psiL160
+#print axioms wcnf_split160
+#print axioms wA_dict_D0_160
+#print axioms subR157_wA_D1_160
+#print axioms expSubR157_of_heart160
+#print axioms expHeart160_of_leaf160
+#print axioms expSubR157_of_leaf160
+#print axioms psi_le_wVal160
+#print axioms psi_le_wVal_dict160
+#print axioms subR157_of_ltPsi160
+#print axioms expSubR157_proof
+
+end
+
 end Evidence.Region
