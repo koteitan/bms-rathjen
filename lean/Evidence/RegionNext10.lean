@@ -10536,4 +10536,1640 @@ no classical reasoning of its own. -/
 
 end
 
+
+
+/-!
+# §158 THE FIRST GATE: `ψ₁`-WRAPPED MIXED SUMS — towers over a base `塔 ⊕ ε`
+
+§156 closed the mixed sums that sit at the TOP of a term (`famB ⊕ ψ₁^p 0`,
+`ψ₁^p 0 ⊕ famB`) and the sum-seed towers.  The measured leftover of `resid136`
+on `famPool132` is all `ψ₁`-WRAPPED: the mixed sum sits under `m` layers of `ψ₁`,
+so its `dict` image is a φ̄0-tower over the base
+
+    B = UW152 σ b ⊕ t        (`MB158`),   `t < Ω₁` an ε-number,
+
+a head at or above `Ω₁` plus a tail below `Ω₁`.  The `wcnf` digit of the BOTTOM
+level of that tower is `(UW152 σ b, t)` — coefficient ≠ 1 and `A ⊖ Ω₁ = 0` —
+which is §155.4's `famE155` shape with the head `TW 1` replaced by an arbitrary
+tower.  This file proves that layer, the tower layers above it, the exact
+height boundary, and instantiates on the two largest leftover classes.
+
+  §158.1  The mixed base `MB158 σ b t` and its tower `MT158 σ b t ℓ`: the whole
+          §152.3/§156.1 plumbing (`wcnf`, `idxOf`, `Kset`, `collapse 1`).
+
+  §158.2  The step, all four regimes of the bottom level:
+          `stepOK_MT158` (ℓ ≥ 1: the tower digit `(MT ℓ, 1)` fires),
+          `stepOK_MT0_158` (ℓ = 0, `b ≥ 1`: the digit `(UW152 σ (b+1), t)` fires
+            and the emitted index is the tower's own bottom level),
+          `stepOK_MT0_Om158` (ℓ = 0, `b = 0`, `σ = Ω₁`: `A = Ω₁`, the emitted
+            index is the COEFFICIENT `t` itself — §155.4's corner, generalized),
+          `stepOK_MT0_nofire158` (ℓ = 0, `b = 0`, `σ < Ω₁`: `A = σ < Ω₁`, the
+            digit does not fire at all).
+          Failure in sync: `not_stepOK_MT158`, `not_stepOK_MT0_158`,
+          `not_stepOK_MT0_Om158`.
+
+  §158.3  `TW a` against the tower — the exact height boundary, both directions.
+
+  §158.4  `famF158 m p k = ψ₁^m(ψ₁^p 0 ⊕ ψ₀(ψ₁^k 0))`, proved for `1 ≤ m`,
+          `2 ≤ p`, `3 ≤ k`: closed form (`dict_famF158`), the step exactly on
+          `k ≤ m + p` (`ksetStepOK_famF158` / `not_ksetStepOK_famF158` /
+          `stepOK_iff_famF158`), the standardness contrapositive above it
+          (`not_std_famF158`), and `famF_no_refute158`.
+          `famF158 1 2 k = famE155 k`, so §155.4's corner is the `m = 1, p = 2`
+          slice and its boundary `k ≤ 3` is `k ≤ m + p`.
+          NOT covered: `p = 1`, whose base is `Ω₁ ⊕ Ω₁ ⊕ s` — three components,
+          outside `MB158`.  (27 of the class's 328 residual terms.)
+
+  §158.5  `famG158 m p k j = ψ₁^m(ψ₁^p(ψ₀(ψ₁^k 0)) ⊕ ψ₀(ψ₁^j 0))` — the largest
+          leftover class — proved for `1 ≤ m`, `1 ≤ p`, `1 ≤ k`, `1 ≤ j`: the
+          same theorems with TWO escaping elements, the step exactly on
+          `k ≤ m + p ∧ j ≤ m + p` (once `3 ≤ m + p`, i.e. once a digit fires;
+          at `m = p = 1` the digit does not fire and the step holds vacuously).
+          NOT covered: `m = 0` (a top-level sum) and `p = 0` or `k = 0` or
+          `j = 0` (the seed is `1`, not an ε-number).
+
+  §158.6  Measurement (frozen): resid boundaries, step boundaries both ways,
+          dict spot checks, coverage counts.  On `famPool132`'s 2455-term
+          residual the proved classes go from 569 (§156) to **1314**.
+          What is left is the shapes whose base has three or more components:
+          `ψ₁^m(塔 ⊕ ψ₀(和))`, `ψ₁^m(塔 ⊕ ψ₀ ⊕ ψ₀)`, `ψ₁^m(塔 ⊕ 塔 ⊕ ψ₀)`,
+          and `ψ₁^m(ψ₀(塔 の上の和))`.
+-/
+
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §158.1 The mixed base and its tower -/
+
+/-- 尾の条件 — `Ω₁` より下の ε 数。AP で、`0`・`1`・`M` でなく、`ω^·` と `log_ω` の
+    不動点であること。`sd152 k` (`k ≥ 1`) はすべてこれを満たす。 -/
+structure TailOK158 (t : Term) : Prop where
+  hap : t.isAP = true
+  hns : NSum t = true
+  hz : ((t : Term) == zero) = false
+  ho : ((t : Term) == TM.Term.one) = false
+  hM : ((t : Term) == M) = false
+  h1 : lt t (reg 1) = true
+  h2 : lt t (reg 2) = true
+  hle0 : le (reg 1) t = false
+  hlog : logOm t = t
+  homg : omegaNF t = t
+  hfp : isFP zero t = true
+
+theorem tail_ne_zero158 {t : Term} (ht : TailOK158 t) : t ≠ zero :=
+  beq_eq_false_iff_ne.mp ht.hz
+
+theorem tail_ne_M158 {t : Term} (ht : TailOK158 t) : t ≠ M :=
+  beq_eq_false_iff_ne.mp ht.hM
+
+theorem toList_tail158 {t : Term} (ht : TailOK158 t) : toList t = [t] :=
+  toList_isAP81 ht.hap
+
+theorem mulL_tail158 {t : Term} (ht : TailOK158 t) (w : Term) :
+    mulL w t = ofList [omegaNF (plus w t)] := by
+  show ofList (List.map (fun p => omegaNF (plus w (logOm p))) (toList t)) = _
+  rw [toList_tail158 ht]
+  show ofList [omegaNF (plus w (logOm t))] = _
+  rw [ht.hlog]
+
+theorem plus_zero_tail158 {t : Term} (ht : TailOK158 t) : plus zero t = t := by
+  rw [plus_cons66 (toList_tail158 ht)]
+  rfl
+
+theorem sub1_tail158 {t : Term} (ht : TailOK158 t) : sub1 t = t := by
+  show (match toList t with
+        | [] => zero
+        | p :: rest => if p == TM.Term.one then ofList rest else t) = _
+  rw [toList_tail158 ht]
+  show (if ((t : Term) == TM.Term.one) = true then ofList [] else t) = _
+  rw [if_neg (by rw [ht.ho]; exact Bool.noConfusion)]
+
+/-- 混合の底 — `Ω₁` 以上の頭 `UW152 σ b` と `Ω₁` より下の尾 `t`。 -/
+def MB158 (σ : Term) (b : Nat) (t : Term) : Term := add (UW152 σ b) t
+
+/-- 混合の底の上に積んだ φ̄0 の塔。 -/
+def MT158 (σ : Term) (b : Nat) (t : Term) : Nat → Term
+  | 0 => phi zero (MB158 σ b t)
+  | ℓ + 1 => phi zero (MT158 σ b t ℓ)
+
+theorem toList_MB158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    toList (MB158 σ b t) = [UW152 σ b, t] := by
+  show UW152 σ b :: toList t = _
+  rw [toList_tail158 ht]
+
+theorem plus_zero_MB158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    plus zero (MB158 σ b t) = MB158 σ b t := by
+  rw [plus_cons66 (toList_MB158 σ b ht)]
+  rfl
+
+theorem toList_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, toList (MT158 σ b t ℓ) = [MT158 σ b t ℓ]
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem beq_MT_zero158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, ((MT158 σ b t ℓ : Term) == zero) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem ne_zero_MT158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    MT158 σ b t ℓ ≠ zero := beq_eq_false_iff_ne.mp (beq_MT_zero158 σ b t ℓ)
+
+theorem beq_MT_Om158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, ((MT158 σ b t ℓ : Term) == Z zero) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem beq_MT_one158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, ((MT158 σ b t ℓ : Term) == TM.Term.one) = false
+  | 0 => rfl
+  | ℓ + 1 => by
+      refine beq_eq_false_iff_ne.mpr ?_
+      intro hc
+      have hc2 : phi zero (MT158 σ b t ℓ) = phi zero zero := hc
+      injection hc2 with _ h2
+      exact ne_zero_MT158 σ b t ℓ h2
+
+theorem nsum_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, NSum (MT158 σ b t ℓ) = true
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem splitFin_MB158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    splitFin (MB158 σ b t) = (MB158 σ b t, 0) := by
+  show (ofList ((UW152 σ b :: toList t).take ((UW152 σ b :: toList t).length
+          - ((UW152 σ b :: toList t).reverse.takeWhile (· == TM.Term.one)).length)),
+        ((UW152 σ b :: toList t).reverse.takeWhile (· == TM.Term.one)).length) = _
+  rw [toList_tail158 ht,
+    show ([UW152 σ b, t].reverse : List Term) = [t, UW152 σ b] from rfl,
+    show List.takeWhile (· == TM.Term.one) [t, UW152 σ b] = [] from by
+      rw [List.takeWhile_cons, ht.ho]
+      rfl]
+  show (ofList [UW152 σ b, t], 0) = _
+  rfl
+
+theorem phiShifted_MB158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    phiShifted zero (MB158 σ b t) = false := by
+  show (isFP zero (splitFin (MB158 σ b t)).1
+        || (((MB158 σ b t : Term) == zero) && (zero : Term).isSC)) = false
+  rw [splitFin_MB158 σ b ht]
+  show (isFP zero (add (UW152 σ b) t)
+        || (((add (UW152 σ b) t : Term) == zero) && (zero : Term).isSC)) = false
+  rw [isFP_add152]
+  rfl
+
+theorem phiShifted_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, phiShifted zero (MT158 σ b t ℓ) = false
+  | 0 => phiShifted_phi0_135 (beq_MT_one158 σ b t 0)
+  | ℓ + 1 => phiShifted_phi0_135 (beq_MT_one158 σ b t (ℓ + 1))
+
+theorem logOm_MT0_158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    logOm (MT158 σ b t 0) = MB158 σ b t :=
+  logOm_phi0_135 (phiShifted_MB158 σ b ht)
+
+theorem logOm_MT158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    logOm (MT158 σ b t (ℓ + 1)) = MT158 σ b t ℓ :=
+  logOm_phi0_135 (phiShifted_MT158 σ b t ℓ)
+
+theorem ltF_M_UW158 (σ : Term) : ∀ (b f : Nat), ltF f M (UW152 σ b) = false
+  | 0, f => ltF_M_phi135 zero (add (Z zero) σ) f
+  | b + 1, f => ltF_M_phi135 zero (UW152 σ b) f
+
+theorem beq_M_UW158 (σ : Term) : ∀ b : Nat, ((M : Term) == UW152 σ b) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem ltF_M_MB158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ f : Nat, ltF f M (MB158 σ b t) = false
+  | 0 => rfl
+  | g + 1 => by
+      show (((M : Term) == UW152 σ b) || ltF g M (UW152 σ b)) = false
+      rw [beq_M_UW158 σ b, ltF_M_UW158 σ b g]
+      rfl
+
+theorem omegaNF_MB158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    omegaNF (MB158 σ b t) = phi zero (MB158 σ b t) := by
+  refine omegaNF_shape152 (ltF_M_MB158 σ b t _) rfl (isFP_add152 _ _) ?_
+  rw [dnArg_eq104, splitFin_MB158 σ b ht]
+  rw [if_neg (by intro hc; omega)]
+
+theorem omegaNF_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, omegaNF (MT158 σ b t ℓ) = MT158 σ b t (ℓ + 1)
+  | 0 => omegaNF_phi0_135 (beq_MT_one158 σ b t 0)
+  | ℓ + 1 => omegaNF_phi0_135 (beq_MT_one158 σ b t (ℓ + 1))
+
+theorem lt_MB_reg1_158 (σ : Term) (b : Nat) (t : Term) :
+    lt (MB158 σ b t) (reg 1) = false := by
+  show lt (add (UW152 σ b) t) (reg 1) = false
+  rw [lt_add_nsum (show (reg 1 : Term) ≠ zero from by
+        intro hc; exact Term.noConfusion hc) rfl]
+  exact lt_UW_reg1_156 σ b
+
+theorem lt_MT_reg1_158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, lt (MT158 σ b t ℓ) (reg 1) = false
+  | 0 => by
+      show lt (phi zero (MB158 σ b t)) (reg 1) = false
+      rw [lt_phi_reg1_100, lt_MB_reg1_158 σ b t]
+      exact Bool.and_false _
+  | ℓ + 1 => by
+      show lt (phi zero (MT158 σ b t ℓ)) (reg 1) = false
+      rw [lt_phi_reg1_100, lt_MT_reg1_158 σ b t ℓ]
+      exact Bool.and_false _
+
+theorem le_MT_reg1_158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    le (MT158 σ b t ℓ) (reg 1) = false := by
+  show (((MT158 σ b t ℓ : Term) == Z zero) || lt (MT158 σ b t ℓ) (Z zero)) = false
+  rw [beq_MT_Om158 σ b t ℓ,
+    show lt (MT158 σ b t ℓ) (Z zero) = false from lt_MT_reg1_158 σ b t ℓ]
+  rfl
+
+theorem lt_Om_MB158 (σ : Term) (b : Nat) (t : Term) :
+    lt (Z zero) (MB158 σ b t) = true := by
+  show lt (Z zero) (add (UW152 σ b) t) = true
+  rw [lt_nsum_add100 (show (Z zero : Term) ≠ zero from by
+        intro hc; exact Term.noConfusion hc) rfl]
+  exact le_reg1_UW152 σ b
+
+theorem lt_Om_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, lt (Z zero) (MT158 σ b t ℓ) = true
+  | 0 => lt_Z_phi_of_le (show le (Z zero) (MB158 σ b t) = true from by
+      show (((Z zero : Term) == MB158 σ b t) || lt (Z zero) (MB158 σ b t)) = true
+      rw [lt_Om_MB158 σ b t]
+      exact Bool.or_true _)
+  | ℓ + 1 => lt_Z_phi_of_le (show le (Z zero) (MT158 σ b t ℓ) = true from by
+      show (((Z zero : Term) == MT158 σ b t ℓ) || lt (Z zero) (MT158 σ b t ℓ)) = true
+      rw [lt_Om_MT158 σ b t ℓ]
+      exact Bool.or_true _)
+
+theorem le_reg1_MT158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    le (reg 1) (MT158 σ b t ℓ) = true := by
+  show (((Z zero : Term) == MT158 σ b t ℓ) || lt (Z zero) (MT158 σ b t ℓ)) = true
+  rw [lt_Om_MT158 σ b t ℓ]
+  exact Bool.or_true _
+
+/-- 塔は `Ω₂` より下 — 種は任意。§152.4 の内側の補題の外出し。 -/
+theorem lt_UW_reg2_158 (σ : Term) : ∀ b : Nat, lt (UW152 σ b) (reg 2) = true
+  | 0 => by
+      show lt (phi zero (add (Z zero) σ)) (Z TM.Term.one) = true
+      rw [lt_phi_Z103,
+        show lt (add (Z zero) σ) (Z TM.Term.one) = true from by
+          rw [lt_add_nsum (show (Z TM.Term.one : Term) ≠ zero from by
+                intro hc; exact Term.noConfusion hc) rfl]
+          exact lt_Om_Om2_139,
+        lt_zero_left (show (Z TM.Term.one : Term) ≠ zero from by
+          intro hc; exact Term.noConfusion hc)]
+      rfl
+  | b + 1 => by
+      show lt (phi zero (UW152 σ b)) (Z TM.Term.one) = true
+      rw [lt_phi_Z103,
+        show lt (UW152 σ b) (Z TM.Term.one) = true from lt_UW_reg2_158 σ b,
+        lt_zero_left (show (Z TM.Term.one : Term) ≠ zero from by
+          intro hc; exact Term.noConfusion hc)]
+      rfl
+
+theorem lt_MB_reg2_158 (σ : Term) (b : Nat) (t : Term) :
+    lt (MB158 σ b t) (reg 2) = true := by
+  show lt (add (UW152 σ b) t) (Z TM.Term.one) = true
+  rw [lt_add_nsum (show (Z TM.Term.one : Term) ≠ zero from by
+        intro hc; exact Term.noConfusion hc) rfl]
+  exact lt_UW_reg2_158 σ b
+
+theorem lt_MT_reg2_158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, lt (MT158 σ b t ℓ) (reg 2) = true
+  | 0 => by
+      show lt (phi zero (MB158 σ b t)) (Z TM.Term.one) = true
+      rw [lt_phi_Z103,
+        show lt (MB158 σ b t) (Z TM.Term.one) = true from lt_MB_reg2_158 σ b t,
+        lt_zero_left (show (Z TM.Term.one : Term) ≠ zero from by
+          intro hc; exact Term.noConfusion hc)]
+      rfl
+  | ℓ + 1 => by
+      show lt (phi zero (MT158 σ b t ℓ)) (Z TM.Term.one) = true
+      rw [lt_phi_Z103,
+        show lt (MT158 σ b t ℓ) (Z TM.Term.one) = true from lt_MT_reg2_158 σ b t ℓ,
+        lt_zero_left (show (Z TM.Term.one : Term) ≠ zero from by
+          intro hc; exact Term.noConfusion hc)]
+      rfl
+
+theorem subAP_MB158 (σ : Term) (b : Nat) (t : Term) :
+    subAP (reg 1) (MB158 σ b t) = MB158 σ b t := by
+  cases b <;> rfl
+
+theorem subAP_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, subAP (reg 1) (MT158 σ b t ℓ) = MT158 σ b t ℓ
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem plus_Om1_MB158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    plus (reg 1) (MB158 σ b t) = MB158 σ b t := by
+  rw [plus_cons66 (toList_MB158 σ b ht), show toList (reg 1) = [Z zero] from rfl,
+    show List.filter (fun a => le (UW152 σ b) a) [Z zero] = [] from by
+      show (match le (UW152 σ b) (Z zero) with
+            | true => Z zero :: List.filter (fun a => le (UW152 σ b) a) []
+            | false => List.filter (fun a => le (UW152 σ b) a) []) = []
+      rw [show le (UW152 σ b) (Z zero) = false from le_UW_reg1_156 σ b]
+      rfl]
+  rfl
+
+theorem plus_Om1_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, plus (reg 1) (MT158 σ b t ℓ) = MT158 σ b t ℓ
+  | 0 => by
+      rw [plus_cons66 (toList_MT158 σ b t 0), show toList (reg 1) = [Z zero] from rfl,
+        show List.filter (fun a => le (MT158 σ b t 0) a) [Z zero] = [] from by
+          show (match le (MT158 σ b t 0) (Z zero) with
+                | true => Z zero :: List.filter (fun a => le (MT158 σ b t 0) a) []
+                | false => List.filter (fun a => le (MT158 σ b t 0) a) []) = []
+          rw [show le (MT158 σ b t 0) (Z zero) = false from le_MT_reg1_158 σ b t 0]
+          rfl]
+      rfl
+  | ℓ + 1 => by
+      rw [plus_cons66 (toList_MT158 σ b t (ℓ + 1)),
+        show toList (reg 1) = [Z zero] from rfl,
+        show List.filter (fun a => le (MT158 σ b t (ℓ + 1)) a) [Z zero] = [] from by
+          show (match le (MT158 σ b t (ℓ + 1)) (Z zero) with
+                | true => Z zero :: List.filter (fun a => le (MT158 σ b t (ℓ + 1)) a) []
+                | false => List.filter (fun a => le (MT158 σ b t (ℓ + 1)) a) []) = []
+          rw [show le (MT158 σ b t (ℓ + 1)) (Z zero) = false from
+            le_MT_reg1_158 σ b t (ℓ + 1)]
+          rfl]
+      rfl
+
+theorem mulL_Om1_MT158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    ∀ ℓ : Nat, mulL (reg 1) (MT158 σ b t ℓ) = MT158 σ b t ℓ
+  | 0 => by
+      show ofList [omegaNF (plus (reg 1) (logOm (MT158 σ b t 0)))] = _
+      rw [logOm_MT0_158 σ b ht, plus_Om1_MB158 σ b ht, omegaNF_MB158 σ b ht]
+      rfl
+  | ℓ + 1 => by
+      show ofList [omegaNF (plus (reg 1) (logOm (MT158 σ b t (ℓ + 1))))] = _
+      rw [logOm_MT158 σ b t ℓ, plus_Om1_MT158 σ b t ℓ, omegaNF_MT158 σ b t ℓ]
+      rfl
+
+theorem mulL_MT_one158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    mulL (MT158 σ b t ℓ) TM.Term.one = MT158 σ b t (ℓ + 1) := by
+  show ofList [omegaNF (plus (MT158 σ b t ℓ) (logOm TM.Term.one))] = _
+  rw [show logOm TM.Term.one = zero from rfl,
+    show plus (MT158 σ b t ℓ) zero = MT158 σ b t ℓ from rfl, omegaNF_MT158 σ b t ℓ]
+  rfl
+
+theorem sub1_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, sub1 (MT158 σ b t ℓ) = MT158 σ b t ℓ
+  | 0 => by
+      show (if ((MT158 σ b t 0 : Term) == TM.Term.one) = true then ofList []
+            else MT158 σ b t 0) = _
+      rw [if_neg (by rw [beq_MT_one158 σ b t 0]; exact Bool.noConfusion)]
+  | ℓ + 1 => by
+      show (if ((MT158 σ b t (ℓ + 1) : Term) == TM.Term.one) = true then ofList []
+            else MT158 σ b t (ℓ + 1)) = _
+      rw [if_neg (by rw [beq_MT_one158 σ b t (ℓ + 1)]; exact Bool.noConfusion)]
+
+theorem divAP_MT158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    ∀ ℓ : Nat, divAP (reg 1) (MT158 σ b t ℓ) = MT158 σ b t ℓ
+  | 0 => by
+      show omegaNF (subAP (reg 1) (logOm (MT158 σ b t 0))) = _
+      rw [logOm_MT0_158 σ b ht, subAP_MB158 σ b t, omegaNF_MB158 σ b ht]
+      rfl
+  | ℓ + 1 => by
+      show omegaNF (subAP (reg 1) (logOm (MT158 σ b t (ℓ + 1)))) = _
+      rw [logOm_MT158 σ b t ℓ, subAP_MT158 σ b t ℓ, omegaNF_MT158 σ b t ℓ]
+
+theorem filter_ge_MT158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    List.filter (fun q => !lt q (reg 1)) [MT158 σ b t ℓ] = [MT158 σ b t ℓ] := by
+  show (match (!lt (MT158 σ b t ℓ) (reg 1)) with
+        | true => MT158 σ b t ℓ :: List.filter (fun q => !lt q (reg 1)) []
+        | false => List.filter (fun q => !lt q (reg 1)) []) = _
+  rw [lt_MT_reg1_158 σ b t ℓ]
+  rfl
+
+theorem filter_lt_MT158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    List.filter (fun q => lt q (reg 1)) [MT158 σ b t ℓ] = [] := by
+  show (match (lt (MT158 σ b t ℓ) (reg 1)) with
+        | true => MT158 σ b t ℓ :: List.filter (fun q => lt q (reg 1)) []
+        | false => List.filter (fun q => lt q (reg 1)) []) = _
+  rw [lt_MT_reg1_158 σ b t ℓ]
+  rfl
+
+/-- 塔の段の `wcnf` — 桁は一つ、指数は一段下、係数は `1`。 -/
+theorem wA_MT158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) (ℓ : Nat) :
+    wA (reg 1) (MT158 σ b t (ℓ + 1)) = MT158 σ b t ℓ := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (MT158 σ b t (ℓ + 1)))))) = _
+  rw [logOm_MT158 σ b t ℓ, toList_MT158 σ b t ℓ, filter_ge_MT158 σ b t ℓ]
+  show ofList [divAP (reg 1) (MT158 σ b t ℓ)] = _
+  rw [divAP_MT158 σ b ht ℓ]
+  rfl
+
+theorem wC_MT158 (σ : Term) (b : Nat) (t : Term) (ℓ : Nat) :
+    wC (reg 1) (MT158 σ b t (ℓ + 1)) = TM.Term.one := by
+  show omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+    (toList (logOm (MT158 σ b t (ℓ + 1)))))) = _
+  rw [logOm_MT158 σ b t ℓ, toList_MT158 σ b t ℓ, filter_lt_MT158 σ b t ℓ]
+  exact omegaNF_zero135
+
+theorem wcnf_MT158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) (ℓ : Nat) :
+    wcnf (reg 1) [MT158 σ b t (ℓ + 1)] = ([(MT158 σ b t ℓ, TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_MT_reg1_158 σ b t (ℓ + 1))]
+  show ([(wA (reg 1) (MT158 σ b t (ℓ + 1)), wC (reg 1) (MT158 σ b t (ℓ + 1)))], zero) = _
+  rw [wA_MT158 σ b ht ℓ, wC_MT158 σ b t ℓ]
+
+theorem idx_MT158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) (ℓ : Nat) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      (MT158 σ b t ℓ, TM.Term.one) = MT158 σ b t (ℓ + 1) := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (MT158 σ b t ℓ))) TM.Term.one) = _
+  rw [subAP_MT158 σ b t ℓ, mulL_Om1_MT158 σ b ht ℓ, mulL_MT_one158 σ b t ℓ,
+    sub1_MT158 σ b t (ℓ + 1)]
+
+/-- 底の段の係数の側 — `C = t ≠ 1`。 -/
+theorem wC_MT0_158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    wC (reg 1) (MT158 σ b t 0) = t := by
+  show omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+    (toList (logOm (MT158 σ b t 0))))) = _
+  rw [logOm_MT0_158 σ b ht, toList_MB158 σ b ht,
+    show List.filter (fun q => lt q (reg 1)) [UW152 σ b, t] = [t] from by
+      rw [List.filter_cons_of_neg (by
+            intro hc
+            rw [lt_UW_reg1_156 σ b] at hc
+            exact Bool.noConfusion hc),
+        List.filter_cons_of_pos (by exact ht.h1)]
+      rfl]
+  show omegaNF t = _
+  exact ht.homg
+
+/-- 底の段の指数の側 (`b ≥ 1`) — `A = UW152 σ (b+1)` そのもの、`Ω₁` 以上。 -/
+theorem wA_MT0_158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    wA (reg 1) (MT158 σ (b + 1) t 0) = UW152 σ (b + 1) := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (MT158 σ (b + 1) t 0))))) = _
+  rw [logOm_MT0_158 σ (b + 1) ht, toList_MB158 σ (b + 1) ht,
+    show List.filter (fun q => !lt q (reg 1)) [UW152 σ (b + 1), t]
+        = [UW152 σ (b + 1)] from by
+      rw [List.filter_cons_of_pos (by
+            show (!lt (UW152 σ (b + 1)) (reg 1)) = true
+            rw [lt_UW_reg1_156 σ (b + 1)]
+            rfl),
+        List.filter_cons_of_neg (by
+            intro hc
+            rw [ht.h1] at hc
+            exact Bool.noConfusion hc)]
+      rfl]
+  show ofList [divAP (reg 1) (UW152 σ (b + 1))] = _
+  show ofList [omegaNF (subAP (reg 1) (logOm (UW152 σ (b + 1))))] = _
+  rw [logOm_UW152 σ b, subAP_UW152 σ b, omegaNF_UW152 σ b]
+  rfl
+
+theorem wcnf_MT0_158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    wcnf (reg 1) [MT158 σ (b + 1) t 0] = ([(UW152 σ (b + 1), t)], zero) := by
+  rw [wcnf_cons_ge (lt_MT_reg1_158 σ (b + 1) t 0)]
+  show ([(wA (reg 1) (MT158 σ (b + 1) t 0), wC (reg 1) (MT158 σ (b + 1) t 0))], zero) = _
+  rw [wA_MT0_158 σ b ht, wC_MT0_158 σ (b + 1) ht]
+
+/-- 尾は頭の塔より下 — `ε` 数と `φ̄0` の 2.3.4。 -/
+theorem lt_tail_UW158 {t : Term} (ht : TailOK158 t) (σ : Term) :
+    ∀ b : Nat, lt t (UW152 σ b) = true
+  | 0 => lt_isFP_phi_zero ht.hfp (tail_ne_M158 ht)
+      (show le t (add (Z zero) σ) = true from by
+        show ((t == add (Z zero) σ) || lt t (add (Z zero) σ)) = true
+        rw [show lt t (add (Z zero) σ) = true from by
+          rw [lt_nsum_add100 (tail_ne_zero158 ht) ht.hns]
+          show ((t == Z zero) || lt t (Z zero)) = true
+          rw [show lt t (Z zero) = true from ht.h1]
+          exact Bool.or_true _]
+        exact Bool.or_true _)
+  | b + 1 => lt_isFP_phi_zero ht.hfp (tail_ne_M158 ht)
+      (show le t (UW152 σ b) = true from by
+        show ((t == UW152 σ b) || lt t (UW152 σ b)) = true
+        rw [lt_tail_UW158 ht σ b]
+        exact Bool.or_true _)
+
+theorem le_tail_UW158 {t : Term} (ht : TailOK158 t) (σ : Term) (b : Nat) :
+    le t (UW152 σ b) = true := by
+  show ((t == UW152 σ b) || lt t (UW152 σ b)) = true
+  rw [lt_tail_UW158 ht σ b]
+  exact Bool.or_true _
+
+theorem plus_UW_tail158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    plus (UW152 σ b) t = MB158 σ b t := by
+  rw [plus_cons66 (toList_tail158 ht),
+    show toList (UW152 σ b) = [UW152 σ b] from by cases b <;> rfl,
+    List.filter_cons_of_pos (by exact le_tail_UW158 ht σ b)]
+  rfl
+
+theorem idx_MT0_158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term)) (UW152 σ (b + 1), t)
+      = MT158 σ (b + 1) t 0 := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (UW152 σ (b + 1)))) t) = _
+  rw [subAP_UW152 σ (b + 1), mulL_Om1_UW156 σ b, mulL_tail158 ht (UW152 σ (b + 1)),
+    plus_UW_tail158 σ (b + 1) ht, omegaNF_MB158 σ (b + 1) ht]
+  show (if ((MT158 σ (b + 1) t 0 : Term) == TM.Term.one) = true then ofList []
+        else MT158 σ (b + 1) t 0) = _
+  rw [if_neg (by rw [beq_MT_one158 σ (b + 1) t 0]; exact Bool.noConfusion)]
+
+/-- `K_{Ω₁}` は底のもの — 塔は何も足さない。 -/
+theorem Kset_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, Kset (reg 1) (MT158 σ b t ℓ) = Kset (reg 1) (MB158 σ b t)
+  | 0 => rfl
+  | ℓ + 1 => Kset_MT158 σ b t ℓ
+
+theorem Kset_MB158 (σ : Term) (b : Nat) (t : Term) :
+    Kset (reg 1) (MB158 σ b t) = Kset (reg 1) σ ++ Kset (reg 1) t := by
+  show Kset (reg 1) (UW152 σ b) ++ Kset (reg 1) t = _
+  rw [Kset_UW152 σ b]
+
+/-- `collapse 1` は底の上に φ̄0 を一段積むだけ。 -/
+theorem collapse1_MB158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) :
+    collapse 1 (MB158 σ b t) = MT158 σ b t 0 := by
+  show omegaNF (plus (reg 1) (plus
+    (((wcnf (reg 2) (toList (MB158 σ b t))).1.foldl
+        (init := ((none : Option Term), (none : Option Term)))
+        (stepF (reg 2) (baseOf 1))).2.getD zero)
+    ((wcnf (reg 2) (toList (MB158 σ b t))).2))) = _
+  rw [toList_MB158 σ b ht, wcnf_cons_lt (lt_UW_reg2_158 σ b)]
+  show omegaNF (plus (reg 1) (plus zero (ofList [UW152 σ b, t]))) = _
+  rw [show (ofList [UW152 σ b, t] : Term) = MB158 σ b t from rfl,
+    plus_zero_MB158 σ b ht, plus_Om1_MB158 σ b ht]
+  exact omegaNF_MB158 σ b ht
+
+theorem collapse1_MT158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ ℓ : Nat, collapse 1 (MT158 σ b t ℓ) = MT158 σ b t (ℓ + 1)
+  | 0 => collapse1_phi0_139 (beq_MT_one158 σ b t 0) (lt_MT_reg2_158 σ b t 0)
+      (le_MT_reg1_158 σ b t 0)
+  | ℓ + 1 => collapse1_phi0_139 (beq_MT_one158 σ b t (ℓ + 1))
+      (lt_MT_reg2_158 σ b t (ℓ + 1)) (le_MT_reg1_158 σ b t (ℓ + 1))
+
+/-! ### §158.2 The step, all four regimes -/
+
+/-- **塔の段 (`ℓ ≥ 1`) の一歩** — 桁は `(MT ℓ, 1)`、吐く指数は一段上の塔。 -/
+theorem stepOK_MT158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) (ℓ : Nat)
+    (H : ∀ y ∈ Kset (reg 1) (MB158 σ b t), lt y (MT158 σ b t (ℓ + 1)) = true) :
+    KsetStepOK 0 (MT158 σ b t (ℓ + 1)) := by
+  intro p hp hle
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [MT158 σ b t (ℓ + 1)]).1 := hp
+  rw [wcnf_MT158 σ b ht ℓ] at hp
+  replace hp : p = (((none : Option Term), (none : Option Term)),
+      (MT158 σ b t ℓ, TM.Term.one)) := List.mem_singleton.mp hp
+  subst hp
+  constructor
+  · intro i0 hi0
+    have hi0x : (none : Option Term) = some i0 := hi0
+    cases hi0x
+  · intro y hy
+    show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      (MT158 σ b t ℓ, TM.Term.one)) = true
+    rw [idx_MT158 σ b ht ℓ]
+    rcases hy with h | h
+    · rw [show (((none : Option Term), (none : Option Term)),
+          (MT158 σ b t ℓ, TM.Term.one)).2.1 = MT158 σ b t ℓ from rfl,
+        Kset_MT158 σ b t ℓ] at h
+      exact H y h
+    · rw [show (((none : Option Term), (none : Option Term)),
+          (MT158 σ b t ℓ, TM.Term.one)).2.2 = TM.Term.one from rfl] at h
+      exact absurd h (by intro hc; cases hc)
+
+/-- **底の段 (`b ≥ 1`) の一歩** — 桁は `(UW152 σ (b+1), t)`、係数 ≠ 1、`A ⊖ Ω₁ = 0`。
+    吐く指数は塔の底そのもの。 -/
+theorem stepOK_MT0_158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t)
+    (H1 : ∀ y ∈ Kset (reg 1) σ, lt y (MT158 σ (b + 1) t 0) = true)
+    (H2 : ∀ y ∈ Kset (reg 1) t, lt y (MT158 σ (b + 1) t 0) = true) :
+    KsetStepOK 0 (MT158 σ (b + 1) t 0) := by
+  intro p hp hle
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [MT158 σ (b + 1) t 0]).1 := hp
+  rw [wcnf_MT0_158 σ b ht] at hp
+  replace hp : p = (((none : Option Term), (none : Option Term)),
+      (UW152 σ (b + 1), t)) := List.mem_singleton.mp hp
+  subst hp
+  constructor
+  · intro i0 hi0
+    have hi0x : (none : Option Term) = some i0 := hi0
+    cases hi0x
+  · intro y hy
+    show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      (UW152 σ (b + 1), t)) = true
+    rw [idx_MT0_158 σ b ht]
+    rcases hy with h | h
+    · rw [show (((none : Option Term), (none : Option Term)),
+          (UW152 σ (b + 1), t)).2.1 = UW152 σ (b + 1) from rfl,
+        Kset_UW152 σ (b + 1)] at h
+      exact H1 y h
+    · rw [show (((none : Option Term), (none : Option Term)),
+          (UW152 σ (b + 1), t)).2.2 = t from rfl] at h
+      exact H2 y h
+
+/-! §158.2b The `b = 0` corners: `σ = Ω₁` fires into the coefficient (§155.4's
+    `famE155`, generalized), `σ < Ω₁` does not fire at all. -/
+
+theorem wA_MT0_Om158 {t : Term} (ht : TailOK158 t) :
+    wA (reg 1) (MT158 (Z zero) 0 t 0) = Z zero := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (MT158 (Z zero) 0 t 0))))) = _
+  rw [logOm_MT0_158 (Z zero) 0 ht, toList_MB158 (Z zero) 0 ht,
+    show List.filter (fun q => !lt q (reg 1)) [UW152 (Z zero) 0, t]
+        = [UW152 (Z zero) 0] from by
+      rw [List.filter_cons_of_pos (by
+            show (!lt (UW152 (Z zero) 0) (reg 1)) = true
+            rw [lt_UW_reg1_156 (Z zero) 0]
+            rfl),
+        List.filter_cons_of_neg (by
+            intro hc
+            rw [ht.h1] at hc
+            exact Bool.noConfusion hc)]
+      rfl]
+  show ofList [divAP (reg 1) (phi zero (add (Z zero) (Z zero)))] = _
+  show ofList [omegaNF (subAP (reg 1) (logOm (phi zero (add (Z zero) (Z zero)))))] = _
+  rw [show logOm (phi zero (add (Z zero) (Z zero))) = add (Z zero) (Z zero) from
+      logOm_phi0_135 (show phiShifted zero (TW 0) = false from rfl),
+    show subAP (reg 1) (add (Z zero) (Z zero)) = Z zero from by
+      show (if ((Z zero : Term) == reg 1) = true then ofList [Z zero] else TW 0) = _
+      rw [if_pos (by rfl)]
+      rfl,
+    show omegaNF (Z zero) = Z zero from omegaNF_reg1_79]
+  rfl
+
+theorem wcnf_MT0_Om158 {t : Term} (ht : TailOK158 t) :
+    wcnf (reg 1) [MT158 (Z zero) 0 t 0] = ([((Z zero : Term), t)], zero) := by
+  rw [wcnf_cons_ge (lt_MT_reg1_158 (Z zero) 0 t 0)]
+  show ([(wA (reg 1) (MT158 (Z zero) 0 t 0), wC (reg 1) (MT158 (Z zero) 0 t 0))], zero) = _
+  rw [wA_MT0_Om158 ht, wC_MT0_158 (Z zero) 0 ht]
+
+/-- **`Ω₁` の角で吐かれる指数は係数そのもの** — `Ω₁ ⊖ Ω₁ = 0` なので `Ω₁` が消える。 -/
+theorem idx_MT0_Om158 {t : Term} (ht : TailOK158 t) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term)) ((Z zero : Term), t) = t := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (Z zero))) t) = _
+  rw [show subAP (reg 1) (Z zero) = zero from by
+      show (if ((Z zero : Term) == reg 1) = true then ofList [] else Z zero) = _
+      rw [if_pos (by rfl)]
+      rfl,
+    show mulL (reg 1) zero = zero from rfl]
+  rw [mulL_tail158 ht zero, plus_zero_tail158 ht, ht.homg]
+  exact sub1_tail158 ht
+
+/-- **`b = 0`、`σ = Ω₁` の一歩** — §155.4 の `famE155` の一般形。義務は「係数の `K` が
+    係数より下」。 -/
+theorem stepOK_MT0_Om158 {t : Term} (ht : TailOK158 t)
+    (H : ∀ y ∈ Kset (reg 1) t, lt y t = true) :
+    KsetStepOK 0 (MT158 (Z zero) 0 t 0) := by
+  intro p hp hle
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [MT158 (Z zero) 0 t 0]).1 := hp
+  rw [wcnf_MT0_Om158 ht] at hp
+  replace hp : p = (((none : Option Term), (none : Option Term)),
+      ((Z zero : Term), t)) := List.mem_singleton.mp hp
+  subst hp
+  constructor
+  · intro i0 hi0
+    have hi0x : (none : Option Term) = some i0 := hi0
+    cases hi0x
+  · intro y hy
+    show lt y (idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      ((Z zero : Term), t)) = true
+    rw [idx_MT0_Om158 ht]
+    rcases hy with h | h
+    · rw [show ((((none : Option Term), (none : Option Term)),
+          ((Z zero : Term), t)).2.1) = Z zero from rfl, Kset_Om156] at h
+      cases h
+    · rw [show ((((none : Option Term), (none : Option Term)),
+          ((Z zero : Term), t)).2.2) = t from rfl] at h
+      exact H y h
+
+theorem phiShifted_addOm158 {σ : Term} (hσ : TailOK158 σ) :
+    phiShifted zero (add (Z zero) σ) = false := by
+  show (isFP zero (splitFin (add (Z zero) σ)).1
+        || (((add (Z zero) σ : Term) == zero) && (zero : Term).isSC)) = false
+  rw [splitFin_addOm152 hσ.hap hσ.ho, isFP_add152]
+  rfl
+
+/-- **`b = 0`、`σ < Ω₁` の一歩** — `A = σ < Ω₁` なので桁は発火せず、義務は空。 -/
+theorem wA_MT0_nofire158 {σ : Term} (hσ : TailOK158 σ) {t : Term} (ht : TailOK158 t) :
+    wA (reg 1) (MT158 σ 0 t 0) = σ := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (MT158 σ 0 t 0))))) = _
+  rw [logOm_MT0_158 σ 0 ht, toList_MB158 σ 0 ht,
+    show List.filter (fun q => !lt q (reg 1)) [UW152 σ 0, t] = [UW152 σ 0] from by
+      rw [List.filter_cons_of_pos (by
+            show (!lt (UW152 σ 0) (reg 1)) = true
+            rw [lt_UW_reg1_156 σ 0]
+            rfl),
+        List.filter_cons_of_neg (by
+            intro hc
+            rw [ht.h1] at hc
+            exact Bool.noConfusion hc)]
+      rfl]
+  show ofList [omegaNF (subAP (reg 1) (logOm (UW152 σ 0)))] = _
+  rw [show logOm (UW152 σ 0) = add (Z zero) σ from
+      logOm_phi0_135 (phiShifted_addOm158 hσ),
+    show subAP (reg 1) (add (Z zero) σ) = σ from by
+      show (if ((Z zero : Term) == reg 1) = true then ofList (toList σ)
+            else add (Z zero) σ) = _
+      rw [if_pos (by rfl), toList_tail158 hσ]
+      rfl,
+    hσ.homg]
+  rfl
+
+theorem stepOK_MT0_nofire158 {σ : Term} (hσ : TailOK158 σ) {t : Term} (ht : TailOK158 t) :
+    KsetStepOK 0 (MT158 σ 0 t 0) := by
+  intro p hp hle
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) [MT158 σ 0 t 0]).1 := hp
+  rw [show wcnf (reg 1) [MT158 σ 0 t 0] = ([(σ, t)], zero) from by
+      rw [wcnf_cons_ge (lt_MT_reg1_158 σ 0 t 0)]
+      show ([(wA (reg 1) (MT158 σ 0 t 0), wC (reg 1) (MT158 σ 0 t 0))], zero) = _
+      rw [wA_MT0_nofire158 hσ ht, wC_MT0_158 σ 0 ht]] at hp
+  replace hp : p = (((none : Option Term), (none : Option Term)), (σ, t)) :=
+    List.mem_singleton.mp hp
+  subst hp
+  exfalso
+  have hle2 : le (reg 1) σ = true := hle
+  rw [hσ.hle0] at hle2
+  exact Bool.noConfusion hle2
+
+/-! §158.2c Failure, in sync -/
+
+theorem not_stepOK_MT158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t) (ℓ : Nat)
+    (y : Term) (hy : y ∈ Kset (reg 1) (MB158 σ b t))
+    (hlt : lt y (MT158 σ b t (ℓ + 1)) = false) :
+    ¬ KsetStepOK 0 (MT158 σ b t (ℓ + 1)) := by
+  intro H
+  have hp : (((none : Option Term), (none : Option Term)), (MT158 σ b t ℓ, TM.Term.one))
+      ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (wcnf (reg 1) (toList (MT158 σ b t (ℓ + 1)))).1 := by
+    rw [toList_MT158 σ b t (ℓ + 1), wcnf_MT158 σ b ht ℓ]
+    exact List.Mem.head _
+  have hstep := (H _ hp (le_reg1_MT158 σ b t ℓ)).2 y (Or.inl (by
+    show y ∈ Kset (reg 1) (MT158 σ b t ℓ)
+    rw [Kset_MT158 σ b t ℓ]
+    exact hy))
+  rw [show idxOf (reg (0 + 1)) ((none : Option Term), (none : Option Term))
+        (MT158 σ b t ℓ, TM.Term.one) = MT158 σ b t (ℓ + 1) from idx_MT158 σ b ht ℓ,
+    hlt] at hstep
+  exact Bool.noConfusion hstep
+
+theorem not_stepOK_MT0_158 (σ : Term) (b : Nat) {t : Term} (ht : TailOK158 t)
+    {y : Term} (hy : y ∈ Kset (reg 1) σ ∨ y ∈ Kset (reg 1) t)
+    (hlt : lt y (MT158 σ (b + 1) t 0) = false) :
+    ¬ KsetStepOK 0 (MT158 σ (b + 1) t 0) := by
+  intro H
+  have hp : (((none : Option Term), (none : Option Term)), (UW152 σ (b + 1), t))
+      ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (wcnf (reg 1) (toList (MT158 σ (b + 1) t 0))).1 := by
+    rw [toList_MT158 σ (b + 1) t 0, wcnf_MT0_158 σ b ht]
+    exact List.Mem.head _
+  have hstep := (H _ hp (le_reg1_UW152 σ (b + 1))).2 y (by
+    rcases hy with h | h
+    · refine Or.inl ?_
+      show y ∈ Kset (reg 1) (UW152 σ (b + 1))
+      rw [Kset_UW152 σ (b + 1)]
+      exact h
+    · exact Or.inr h)
+  rw [show idxOf (reg (0 + 1)) ((none : Option Term), (none : Option Term))
+        (UW152 σ (b + 1), t) = MT158 σ (b + 1) t 0 from idx_MT0_158 σ b ht,
+    hlt] at hstep
+  exact Bool.noConfusion hstep
+
+theorem not_stepOK_MT0_Om158 {t : Term} (ht : TailOK158 t) {y : Term}
+    (hy : y ∈ Kset (reg 1) t) (hlt : lt y t = false) :
+    ¬ KsetStepOK 0 (MT158 (Z zero) 0 t 0) := by
+  intro H
+  have hp : (((none : Option Term), (none : Option Term)), ((Z zero : Term), t))
+      ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+        (wcnf (reg 1) (toList (MT158 (Z zero) 0 t 0))).1 := by
+    rw [toList_MT158 (Z zero) 0 t 0, wcnf_MT0_Om158 ht]
+    exact List.Mem.head _
+  have hstep := (H _ hp (by rfl)).2 y (Or.inr hy)
+  rw [show idxOf (reg (0 + 1)) ((none : Option Term), (none : Option Term))
+        ((Z zero : Term), t) = t from idx_MT0_Om158 ht, hlt] at hstep
+  exact Bool.noConfusion hstep
+
+/-! ### §158.3 `TW a` against the tower — the exact height boundary -/
+
+theorem lt_TW0_MB158 (σ : Term) (b : Nat) (t : Term) :
+    lt (TW 0) (MB158 σ b t) = true := by
+  have hne : (Z zero : Term) ≠ UW152 σ b := beq_eq_false_iff_ne.mp (beq_Om_UW152 σ b)
+  show lt (add (Z zero) (Z zero)) (add (UW152 σ b) t) = true
+  rw [lt_add_add (show add (Z zero) (Z zero) ≠ add (UW152 σ b) t from by
+        intro hc
+        injection hc with h1 _
+        exact hne h1),
+    if_neg hne]
+  exact lt_Om_UW152 σ b
+
+theorem lt_TW_MB158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ a : Nat, le (TW a) (UW152 σ b) = true → lt (TW a) (MB158 σ b t) = true
+  | 0, _ => lt_TW0_MB158 σ b t
+  | a + 1, h => by
+      show lt (phi zero (TW a)) (add (UW152 σ b) t) = true
+      rw [lt_phi_add152]
+      exact h
+
+theorem lt_TW_MB_false158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ a : Nat, le (TW a) (UW152 σ b) = false → lt (TW a) (MB158 σ b t) = false
+  | 0, h => by
+      exfalso
+      rw [show le (TW 0) (UW152 σ b) = true from
+        le_of_lt (lt_TW_UW152 σ 0 b (by omega))] at h
+      exact Bool.noConfusion h
+  | a + 1, h => by
+      show lt (phi zero (TW a)) (add (UW152 σ b) t) = false
+      rw [lt_phi_add152]
+      exact h
+
+theorem lt_TW_MT_low158 (σ : Term) (b : Nat) (t : Term) :
+    ∀ (a ℓ : Nat), a ≤ ℓ → lt (TW a) (MT158 σ b t ℓ) = true
+  | 0, ℓ, _ => by
+      show lt (add (Z zero) (Z zero)) (MT158 σ b t ℓ) = true
+      rw [lt_add_nsum (ne_zero_MT158 σ b t ℓ) (nsum_MT158 σ b t ℓ)]
+      exact lt_Om_MT158 σ b t ℓ
+  | _ + 1, 0, h => absurd h (by omega)
+  | a + 1, ℓ + 1, h => by
+      show lt (phi zero (TW a)) (phi zero (MT158 σ b t ℓ)) = true
+      rw [lt_phi_same139]
+      exact lt_TW_MT_low158 σ b t a ℓ (by omega)
+
+theorem lt_TW_MT_high158 (σ : Term) (b : Nat) (t : Term) (c : Nat)
+    (h : le (TW c) (UW152 σ b) = true) :
+    ∀ ℓ : Nat, lt (TW (c + 1 + ℓ)) (MT158 σ b t ℓ) = true
+  | 0 => by
+      show lt (phi zero (TW c)) (phi zero (MB158 σ b t)) = true
+      rw [lt_phi_same139]
+      exact lt_TW_MB158 σ b t c h
+  | ℓ + 1 => by
+      show lt (phi zero (TW (c + 1 + ℓ))) (phi zero (MT158 σ b t ℓ)) = true
+      rw [lt_phi_same139]
+      exact lt_TW_MT_high158 σ b t c h ℓ
+
+theorem lt_TW_MT_false158 (σ : Term) (b : Nat) (t : Term) (c : Nat)
+    (h : le (TW c) (UW152 σ b) = false) :
+    ∀ ℓ : Nat, lt (TW (c + 1 + ℓ)) (MT158 σ b t ℓ) = false
+  | 0 => by
+      show lt (phi zero (TW c)) (phi zero (MB158 σ b t)) = false
+      rw [lt_phi_same139]
+      exact lt_TW_MB_false158 σ b t c h
+  | ℓ + 1 => by
+      show lt (phi zero (TW (c + 1 + ℓ))) (phi zero (MT158 σ b t ℓ)) = false
+      rw [lt_phi_same139]
+      exact lt_TW_MT_false158 σ b t c h ℓ
+
+/-- **届く範囲** — 頭の塔が `TW R` まで届くなら、高さ `ℓ` の塔は `TW (ℓ+R+1)` まで
+    上に見る。 -/
+theorem lt_TW_MT_reach158 (σ : Term) (b : Nat) (t : Term) (R : Nat)
+    (hR : ∀ c : Nat, c ≤ R → le (TW c) (UW152 σ b) = true) (a ℓ : Nat)
+    (ha : a ≤ ℓ + R + 1) : lt (TW a) (MT158 σ b t ℓ) = true := by
+  rcases Nat.lt_or_ge ℓ a with hal | hal
+  · obtain ⟨c, rfl⟩ : ∃ c, a = c + 1 + ℓ := ⟨a - 1 - ℓ, by omega⟩
+    exact lt_TW_MT_high158 σ b t c (hR c (by omega)) ℓ
+  · exact lt_TW_MT_low158 σ b t a ℓ hal
+
+/-- **届かない範囲** — 逆向き。 -/
+theorem lt_TW_MT_reach_false158 (σ : Term) (b : Nat) (t : Term) (R : Nat)
+    (hR : ∀ c : Nat, R < c → le (TW c) (UW152 σ b) = false) (a ℓ : Nat)
+    (ha : ℓ + R + 1 < a) : lt (TW a) (MT158 σ b t ℓ) = false := by
+  obtain ⟨c, rfl⟩ : ∃ c, a = c + 1 + ℓ := ⟨a - 1 - ℓ, by omega⟩
+  exact lt_TW_MT_false158 σ b t c (hR c (by omega)) ℓ
+
+/-! 二つの種での届く範囲 — `σ = Ω₁` (裸の塔) は一段ぶん高い。 -/
+
+theorem le_TW_UW_Om158 {b c : Nat} (h : c ≤ b + 1) :
+    le (TW c) (UW152 (Z zero) b) = true := by
+  rw [← TW_UW156 b]
+  exact le_TW_TW156 h (by omega)
+
+theorem le_TW_UW_Om_false158 {b c : Nat} (h : b + 1 < c) :
+    le (TW c) (UW152 (Z zero) b) = false := by
+  obtain ⟨d, rfl⟩ : ∃ d, c = d + 1 := ⟨c - 1, by omega⟩
+  show (((TW (d + 1) : Term) == UW152 (Z zero) b)
+    || lt (TW (d + 1)) (UW152 (Z zero) b)) = false
+  rw [show ((TW (d + 1) : Term) == UW152 (Z zero) b) = false from by
+      rw [TW_UW156 d]
+      exact beq_UW_ne155' (Z zero) (Z zero) (show b < d by omega),
+    lt_TW_UW_false152 (show lt (Z zero) (Z zero) = false from lt_irrefl _)
+      b (d + 1) (by omega)]
+  rfl
+
+theorem le_TW_UW_sd158 {σ : Term} {b c : Nat} (h : c ≤ b) :
+    le (TW c) (UW152 σ b) = true := le_of_lt (lt_TW_UW152 σ c b h)
+
+theorem lt_Om_tail_false158 {t : Term} (ht : TailOK158 t) : lt (Z zero) t = false := by
+  cases hh : lt (Z zero) t with
+  | false => rfl
+  | true =>
+      exfalso
+      have h := ht.hle0
+      rw [show le (reg 1) t = true from by
+        show (((Z zero : Term) == t) || lt (Z zero) t) = true
+        rw [hh]
+        exact Bool.or_true _] at h
+      exact Bool.noConfusion h
+
+theorem Om_ne_tail158 {t : Term} (ht : TailOK158 t) : (Z zero : Term) ≠ t := by
+  intro hc
+  have h := ht.hle0
+  rw [show le (reg 1) t = true from by
+    show (((Z zero : Term) == t) || lt (Z zero) t) = true
+    rw [← hc, beq_self_eq_true]
+    rfl] at h
+  exact Bool.noConfusion h
+
+theorem le_TW_UW_sd_false158 {σ : Term} (hσ : TailOK158 σ) {b c : Nat} (h : b < c) :
+    le (TW c) (UW152 σ b) = false := by
+  obtain ⟨d, rfl⟩ : ∃ d, c = d + 1 := ⟨c - 1, by omega⟩
+  show (((TW (d + 1) : Term) == UW152 σ b) || lt (TW (d + 1)) (UW152 σ b)) = false
+  rw [show ((TW (d + 1) : Term) == UW152 σ b) = false from by
+      rw [TW_UW156 d]
+      rcases Nat.eq_or_lt_of_le (show b ≤ d by omega) with hb | hb
+      · rw [hb]
+        exact beq_UW_seed156 (Om_ne_tail158 hσ) d
+      · exact beq_UW_ne155' (Z zero) σ hb,
+    lt_TW_UW_false152 (lt_Om_tail_false158 hσ) b (d + 1) (by omega)]
+  rfl
+
+/-! 種 `sd152 k` の `K` の元と、塔の比較。 -/
+
+theorem tailOK_sd158 : ∀ k : Nat, 1 ≤ k → TailOK158 (sd152 k)
+  | 0, h => absurd h (by omega)
+  | 1, _ => by
+      rw [sd1_152]
+      exact ⟨rfl, rfl, rfl, rfl, rfl, by decide, by decide, by decide, rfl,
+        by decide, by decide⟩
+  | 2, _ => by
+      rw [sd2_152]
+      exact ⟨rfl, rfl, rfl, rfl, rfl, by decide, by decide, by decide, rfl,
+        by decide, by decide⟩
+  | k + 3, _ => by
+      obtain ⟨X, hX⟩ := sd_psi_form155 k
+      rw [hX]
+      refine ⟨rfl, rfl, rfl, rfl, rfl, lt_psiOm_reg1_139 X, lt_psiOm_Om2_139 X, ?_,
+        rfl, omegaNF_psi139 (Z zero) X, ?_⟩
+      · show (((Z zero : Term) == psi (Z zero) X) || lt (Z zero) (psi (Z zero) X)) = false
+        rw [lt_Om_psi141 X]
+        rfl
+      · show (((psi (Z zero) X : Term).isSC && lt zero (psi (Z zero) X)) || false) = true
+        rw [show ((psi (Z zero) X : Term).isSC) = true from rfl,
+          lt_zero_left (show (psi (Z zero) X : Term) ≠ zero from by
+            intro hc; exact Term.noConfusion hc)]
+        rfl
+
+theorem Ksd_escape158 (kk : Nat) : TW (kk + 3) ∈ Kset (reg 1) (sd152 (kk + 4)) := by
+  rw [Kset_sd_psi152 kk]
+  exact List.Mem.head _
+
+theorem Ksd_lt_MT158 (σ : Term) (b : Nat) (t : Term) (R : Nat)
+    (hR : ∀ c : Nat, c ≤ R → le (TW c) (UW152 σ b) = true) (ℓ : Nat) :
+    ∀ k : Nat, k ≤ ℓ + R + 2 →
+      ∀ y ∈ Kset (reg 1) (sd152 k), lt y (MT158 σ b t ℓ) = true
+  | 0, _ => by
+      intro y hy
+      rw [show Kset (reg 1) (sd152 0) = [] from by decide] at hy
+      cases hy
+  | 1, _ => by
+      intro y hy
+      rw [show Kset (reg 1) (sd152 1) = [] from by decide] at hy
+      cases hy
+  | 2, _ => by
+      intro y hy
+      rw [show Kset (reg 1) (sd152 2) = [] from by decide] at hy
+      cases hy
+  | 3, _ => by
+      intro y hy
+      rw [Kset_sd3_152] at hy
+      rw [List.mem_singleton.mp hy]
+      exact lt_zero_left (ne_zero_MT158 σ b t ℓ)
+  | kk + 4, hk => by
+      intro y hy
+      rw [Kset_sd_psi152 kk] at hy
+      rw [List.mem_singleton.mp hy]
+      exact lt_TW_MT_reach158 σ b t R hR (kk + 3) ℓ (by omega)
+
+/-! ### §158.4 `famF158 m p k = ψ₁^m(ψ₁^p 0 ⊕ ψ₀(ψ₁^k 0))` -/
+
+/-- 第一の残る族 — `ψ₁` に包まれた「裸の塔 ⊕ `ψ₀` の種」。 -/
+def famF158 (m p k : Nat) : BT :=
+  nst132 m (BT.sum (nst132 p BT.zero) (BT.D 0 (nst132 k BT.zero)))
+
+/-- §155.4 の `famE155` はこの族の `m = 1`, `p = 2` の切り口。 -/
+theorem famF_eq_famE158 (k : Nat) : famF158 1 2 k = famE155 k := rfl
+
+theorem dict_famF158 (p k : Nat) (hk : TailOK158 (sd152 k)) :
+    ∀ m : Nat, dict (famF158 (m + 1) (p + 2) k) = MT158 (Z zero) p (sd152 k) m
+  | 0 => by
+      show collapse 1 (dict (BT.sum (nst132 (p + 2) BT.zero)
+        (BT.D 0 (nst132 k BT.zero)))) = _
+      rw [Trans.Dict.dict_sum,
+        show dict (nst132 (p + 2) BT.zero) = TW (p + 1) from dict_bT152 p,
+        show dict (BT.D 0 (nst132 k BT.zero)) = sd152 k from rfl,
+        TW_UW156 p, plus_UW_tail158 (Z zero) p hk]
+      exact collapse1_MB158 (Z zero) p hk
+  | m + 1 => by
+      show collapse 1 (dict (famF158 (m + 1) (p + 2) k)) = _
+      rw [dict_famF158 p k hk m]
+      exact collapse1_MT158 (Z zero) p (sd152 k) m
+
+/-- **主定理 1 — `1 ≤ m`, `2 ≤ p`, `3 ≤ k ≤ m + p` の全域で第一の門の一歩。** -/
+theorem ksetStepOK_famF158 {m p k : Nat} (h1m : 1 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hkmp : k ≤ m + p) : KsetStepOK 0 (dict (famF158 m p k)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 2 := ⟨p - 2, by omega⟩
+  have hk : TailOK158 (sd152 k) := tailOK_sd158 k (by omega)
+  rw [dict_famF158 pp k hk mm]
+  cases mm with
+  | zero =>
+      cases pp with
+      | zero =>
+          obtain rfl : k = 3 := by omega
+          refine stepOK_MT0_Om158 hk ?_
+          intro y hy
+          rw [Kset_sd3_152] at hy
+          rw [List.mem_singleton.mp hy, sd3_152]
+          exact lt_zero_left (show (psi (Z zero) zero : Term) ≠ zero from by
+            intro hc; exact Term.noConfusion hc)
+      | succ pq =>
+          refine stepOK_MT0_158 (Z zero) pq hk ?_ ?_
+          · intro y hy
+            rw [Kset_Om156] at hy
+            cases hy
+          · exact Ksd_lt_MT158 (Z zero) (pq + 1) (sd152 k) (pq + 2)
+              (fun c hc => le_TW_UW_Om158 (by omega)) 0 k (by omega)
+  | succ mq =>
+      refine stepOK_MT158 (Z zero) pp hk mq ?_
+      intro y hy
+      rw [Kset_MB158 (Z zero) pp (sd152 k)] at hy
+      rcases List.mem_append.mp hy with h | h
+      · rw [Kset_Om156] at h
+        cases h
+      · exact Ksd_lt_MT158 (Z zero) pp (sd152 k) (pp + 1)
+          (fun c hc => le_TW_UW_Om158 (by omega)) (mq + 1) k (by omega) y h
+
+/-- **主定理 2 — `m + p < k` では一歩は成り立たない。**  逃げる元 `TW (k-1)` が
+    吐かれる指数より下に居ない。 -/
+theorem not_ksetStepOK_famF158 {m p k : Nat} (h1m : 1 ≤ m) (h2p : 2 ≤ p)
+    (hk : m + p < k) : ¬ KsetStepOK 0 (dict (famF158 m p k)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 2 := ⟨p - 2, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+  have hT : TailOK158 (sd152 (kk + 4)) := tailOK_sd158 (kk + 4) (by omega)
+  rw [dict_famF158 pp (kk + 4) hT mm]
+  cases mm with
+  | zero =>
+      cases pp with
+      | zero =>
+          refine not_stepOK_MT0_Om158 hT (Ksd_escape158 kk) ?_
+          rw [sd_psi152 kk]
+          exact lt_TW_psi155 (TW (kk + 3)) (kk + 3)
+      | succ pq =>
+          refine not_stepOK_MT0_158 (Z zero) pq hT (Or.inr (Ksd_escape158 kk)) ?_
+          exact lt_TW_MT_reach_false158 (Z zero) (pq + 1) (sd152 (kk + 4)) (pq + 2)
+            (fun c hc => le_TW_UW_Om_false158 (by omega)) (kk + 3) 0 (by omega)
+  | succ mq =>
+      refine not_stepOK_MT158 (Z zero) pp hT mq (TW (kk + 3)) ?_ ?_
+      · rw [Kset_MB158 (Z zero) pp (sd152 (kk + 4))]
+        exact List.mem_append.mpr (Or.inr (Ksd_escape158 kk))
+      · exact lt_TW_MT_reach_false158 (Z zero) pp (sd152 (kk + 4)) (pp + 1)
+          (fun c hc => le_TW_UW_Om_false158 (by omega)) (kk + 3) (mq + 1) (by omega)
+
+/-! §158.4b The standardness contrapositive on the failing wedge -/
+
+theorem mem_GB_nst158 {x Y : BT} (h : x ∈ BT.GB 0 Y) :
+    ∀ m : Nat, x ∈ BT.GB 0 (nst132 m Y)
+  | 0 => h
+  | m + 1 => by
+      show x ∈ (if 0 ≤ 1 then nst132 m Y :: BT.GB 0 (nst132 m Y) else [])
+      rw [if_pos (by omega)]
+      exact List.Mem.tail _ (mem_GB_nst158 h m)
+
+theorem mem_GB_D0_158 (W : BT) : W ∈ BT.GB 0 (BT.D 0 W) := by
+  show W ∈ (if 0 ≤ 0 then W :: BT.GB 0 W else [])
+  rw [if_pos (by omega)]
+  exact List.Mem.head _
+
+theorem mem_GB_famF158 (m p k : Nat) :
+    nst132 k BT.zero ∈ BT.GB 0 (famF158 m p k) := by
+  refine mem_GB_nst158 ?_ m
+  show nst132 k BT.zero ∈ BT.GB 0 (nst132 p BT.zero)
+    ++ BT.GB 0 (BT.D 0 (nst132 k BT.zero))
+  exact List.mem_append.mpr (Or.inr (mem_GB_D0_158 _))
+
+theorem ltL_tow_famF_false158 : ∀ (f m pp k a : Nat), m + pp + 1 < a →
+    BT.ltL f (BT.toL (nst132 a BT.zero)) (BT.toL (famF158 m (pp + 1) k)) = false
+  | 0, _, _, _, _, _ => rfl
+  | f + 1, 0, pp, k, a, h => by
+      obtain ⟨aa, rfl⟩ : ∃ aa, a = aa + 1 := ⟨a - 1, by omega⟩
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 aa BT.zero == nst132 pp BT.zero
+              then BT.ltL f [] [BT.D 0 (nst132 k BT.zero)]
+            else BT.ltL f (BT.toL (nst132 aa BT.zero))
+              (BT.toL (nst132 pp BT.zero))) = false
+      rw [if_neg (by omega), if_neg (by omega),
+        if_neg (by rw [beq_bT_bT152 aa pp (by omega)]; exact Bool.noConfusion)]
+      exact ltL_bT_bT_false155 f aa pp (by omega)
+  | f + 1, m + 1, pp, k, a, h => by
+      obtain ⟨aa, rfl⟩ : ∃ aa, a = aa + 1 := ⟨a - 1, by omega⟩
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 aa BT.zero == nst132 m (BT.sum (nst132 (pp + 1) BT.zero)
+                (BT.D 0 (nst132 k BT.zero)))
+              then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 aa BT.zero))
+              (BT.toL (nst132 m (BT.sum (nst132 (pp + 1) BT.zero)
+                (BT.D 0 (nst132 k BT.zero)))))) = false
+      rw [if_neg (by omega), if_neg (by omega)]
+      cases hb : (nst132 aa BT.zero == nst132 m (BT.sum (nst132 (pp + 1) BT.zero)
+          (BT.D 0 (nst132 k BT.zero)))) with
+      | true =>
+          rw [if_pos rfl]
+          cases f with
+          | zero => rfl
+          | succ f => rfl
+      | false =>
+          rw [if_neg (fun hc => Bool.noConfusion hc)]
+          exact ltL_tow_famF_false158 f m pp k aa (by omega)
+
+/-- **標準性は同期して破れる** — `m + p < k` では内の裸の塔が項全体より下に居ない。 -/
+theorem not_std_famF158 {m p k : Nat} (h1p : 1 ≤ p) (hk : m + p < k) :
+    BT.isStd (BT.D 0 (famF158 m p k)) = false := by
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  cases hs : BT.isStd (BT.D 0 (famF158 m (pp + 1) k)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famF158 m (pp + 1) k)
+          && (BT.GB 0 (famF158 m (pp + 1) k)).all
+              (fun e => BT.lt e (famF158 m (pp + 1) k))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (mem_GB_famF158 m (pp + 1) k)
+      rw [show BT.lt (nst132 k BT.zero) (famF158 m (pp + 1) k) = false from
+        ltL_tow_famF_false158 _ m pp k k (by omega)] at h2
+      exact Bool.noConfusion h2
+
+/-- **境界はちょうど `k ≤ m + p`。** -/
+theorem stepOK_iff_famF158 {m p k : Nat} (h1m : 1 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k) :
+    KsetStepOK 0 (dict (famF158 m p k)) ↔ k ≤ m + p := by
+  constructor
+  · intro H
+    rcases Nat.lt_or_ge (m + p) k with hlt | hge
+    · exact absurd H (not_ksetStepOK_famF158 h1m h2p hlt)
+    · exact hge
+  · intro h
+    exact ksetStepOK_famF158 h1m h2p h3k h
+
+/-- **主定理 3 — この族は第一の門を反証できない。**  `K` 標準なら一歩は成り立つ。 -/
+theorem famF_no_refute158 {m p k : Nat} (h1m : 1 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hs : BT.isStd (BT.D 0 (famF158 m p k)) = true) :
+    KsetStepOK 0 (dict (famF158 m p k)) := by
+  rcases Nat.lt_or_ge (m + p) k with hlt | hge
+  · exfalso
+    rw [not_std_famF158 (by omega) hlt] at hs
+    exact Bool.noConfusion hs
+  · exact ksetStepOK_famF158 h1m h2p h3k hge
+
+theorem gateStd87_famF158 (m p k : Nat) (h1m : 1 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hkmp : k ≤ m + p) : GateStd87 (famF158 m p k) :=
+  fun _ _ => ksetStepOK_famF158 h1m h2p h3k hkmp
+
+theorem firstFire_famF158 (m p k : Nat) (h1m : 1 ≤ m) (h2p : 2 ≤ p) (h3k : 3 ≤ k)
+    (hkmp : k ≤ m + p) : FirstFire145 (famF158 m p k) :=
+  fun q hq _ hle y hy => (ksetStepOK_famF158 h1m h2p h3k hkmp q hq hle).2 y hy
+
+/-! ### §158.5 `famG158 m p k j = ψ₁^m(ψ₁^p(ψ₀(ψ₁^k 0)) ⊕ ψ₀(ψ₁^j 0))` -/
+
+/-- 最大の残る族 — `ψ₁` に包まれた「famB ⊕ `ψ₀` の種」。逃げる元は二つ。 -/
+def famG158 (m p k j : Nat) : BT :=
+  nst132 m (BT.sum (nst132 p (BT.D 0 (nst132 k BT.zero))) (BT.D 0 (nst132 j BT.zero)))
+
+/-- §152.4 の `dict_famB152` を `k ≥ 1` に広げたもの。 -/
+theorem dict_famB158 {k : Nat} (hk : TailOK158 (sd152 k)) :
+    ∀ p : Nat, dict (nst132 (p + 1) (BT.D 0 (nst132 k BT.zero))) = UW152 (sd152 k) p
+  | 0 => by
+      show collapse 1 (dict (BT.D 0 (nst132 k BT.zero))) = _
+      exact collapse1_seed152 hk.hap hk.ho hk.h1 hk.h2
+  | p + 1 => by
+      show collapse 1 (dict (nst132 (p + 1) (BT.D 0 (nst132 k BT.zero)))) = _
+      rw [dict_famB158 hk p]
+      exact collapse1_UW152 hk.h1 p
+
+theorem dict_famG158 {k j : Nat} (hk : TailOK158 (sd152 k)) (hj : TailOK158 (sd152 j))
+    (p : Nat) : ∀ m : Nat,
+    dict (famG158 (m + 1) (p + 1) k j) = MT158 (sd152 k) p (sd152 j) m
+  | 0 => by
+      show collapse 1 (dict (BT.sum (nst132 (p + 1) (BT.D 0 (nst132 k BT.zero)))
+        (BT.D 0 (nst132 j BT.zero)))) = _
+      rw [Trans.Dict.dict_sum, dict_famB158 hk p,
+        show dict (BT.D 0 (nst132 j BT.zero)) = sd152 j from rfl,
+        plus_UW_tail158 (sd152 k) p hj]
+      exact collapse1_MB158 (sd152 k) p hj
+  | m + 1 => by
+      show collapse 1 (dict (famG158 (m + 1) (p + 1) k j)) = _
+      rw [dict_famG158 hk hj p m]
+      exact collapse1_MT158 (sd152 k) p (sd152 j) m
+
+/-- **主定理 4 — `1 ≤ m`, `1 ≤ p`, `1 ≤ k ≤ m + p`, `1 ≤ j ≤ m + p` の全域で
+    第一の門の一歩。** -/
+theorem ksetStepOK_famG158 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h1k : 1 ≤ k) (h1j : 1 ≤ j) (hk : k ≤ m + p) (hj : j ≤ m + p) :
+    KsetStepOK 0 (dict (famG158 m p k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  have hkT : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+  have hjT : TailOK158 (sd152 j) := tailOK_sd158 j h1j
+  rw [dict_famG158 hkT hjT pp mm]
+  cases mm with
+  | zero =>
+      cases pp with
+      | zero => exact stepOK_MT0_nofire158 hkT hjT
+      | succ pq =>
+          refine stepOK_MT0_158 (sd152 k) pq hjT ?_ ?_
+          · exact Ksd_lt_MT158 (sd152 k) (pq + 1) (sd152 j) (pq + 1)
+              (fun c hc => le_TW_UW_sd158 hc) 0 k (by omega)
+          · exact Ksd_lt_MT158 (sd152 k) (pq + 1) (sd152 j) (pq + 1)
+              (fun c hc => le_TW_UW_sd158 hc) 0 j (by omega)
+  | succ mq =>
+      refine stepOK_MT158 (sd152 k) pp hjT mq ?_
+      intro y hy
+      rw [Kset_MB158 (sd152 k) pp (sd152 j)] at hy
+      rcases List.mem_append.mp hy with h | h
+      · exact Ksd_lt_MT158 (sd152 k) pp (sd152 j) pp
+          (fun c hc => le_TW_UW_sd158 hc) (mq + 1) k (by omega) y h
+      · exact Ksd_lt_MT158 (sd152 k) pp (sd152 j) pp
+          (fun c hc => le_TW_UW_sd158 hc) (mq + 1) j (by omega) y h
+
+/-- **主定理 5 — 内の種が高すぎると一歩は成り立たない。** -/
+theorem not_ksetStepOK_famG_k158 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h3 : 3 ≤ m + p) (h1j : 1 ≤ j) (hk : m + p < k) :
+    ¬ KsetStepOK 0 (dict (famG158 m p k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+  have hkT : TailOK158 (sd152 (kk + 4)) := tailOK_sd158 (kk + 4) (by omega)
+  have hjT : TailOK158 (sd152 j) := tailOK_sd158 j h1j
+  rw [dict_famG158 hkT hjT pp mm]
+  cases mm with
+  | zero =>
+      cases pp with
+      | zero => exact absurd h3 (by omega)
+      | succ pq =>
+          refine not_stepOK_MT0_158 (sd152 (kk + 4)) pq hjT
+            (Or.inl (Ksd_escape158 kk)) ?_
+          exact lt_TW_MT_reach_false158 (sd152 (kk + 4)) (pq + 1) (sd152 j) (pq + 1)
+            (fun c hc => le_TW_UW_sd_false158 hkT hc) (kk + 3) 0 (by omega)
+  | succ mq =>
+      refine not_stepOK_MT158 (sd152 (kk + 4)) pp hjT mq (TW (kk + 3)) ?_ ?_
+      · rw [Kset_MB158 (sd152 (kk + 4)) pp (sd152 j)]
+        exact List.mem_append.mpr (Or.inl (Ksd_escape158 kk))
+      · exact lt_TW_MT_reach_false158 (sd152 (kk + 4)) pp (sd152 j) pp
+          (fun c hc => le_TW_UW_sd_false158 hkT hc) (kk + 3) (mq + 1) (by omega)
+
+/-- **主定理 6 — 尾の種が高すぎても一歩は成り立たない。** -/
+theorem not_ksetStepOK_famG_j158 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h3 : 3 ≤ m + p) (h1k : 1 ≤ k) (hj : m + p < j) :
+    ¬ KsetStepOK 0 (dict (famG158 m p k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 4 := ⟨j - 4, by omega⟩
+  have hkT : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+  have hjT : TailOK158 (sd152 (jj + 4)) := tailOK_sd158 (jj + 4) (by omega)
+  rw [dict_famG158 hkT hjT pp mm]
+  cases mm with
+  | zero =>
+      cases pp with
+      | zero => exact absurd h3 (by omega)
+      | succ pq =>
+          refine not_stepOK_MT0_158 (sd152 k) pq hjT
+            (Or.inr (Ksd_escape158 jj)) ?_
+          exact lt_TW_MT_reach_false158 (sd152 k) (pq + 1) (sd152 (jj + 4)) (pq + 1)
+            (fun c hc => le_TW_UW_sd_false158 hkT hc) (jj + 3) 0 (by omega)
+  | succ mq =>
+      refine not_stepOK_MT158 (sd152 k) pp hjT mq (TW (jj + 3)) ?_ ?_
+      · rw [Kset_MB158 (sd152 k) pp (sd152 (jj + 4))]
+        exact List.mem_append.mpr (Or.inr (Ksd_escape158 jj))
+      · exact lt_TW_MT_reach_false158 (sd152 k) pp (sd152 (jj + 4)) pp
+          (fun c hc => le_TW_UW_sd_false158 hkT hc) (jj + 3) (mq + 1) (by omega)
+
+/-! §158.5b The standardness contrapositive, both escapes -/
+
+theorem beq_tow_nstD0_158 (W : BT) : ∀ (x y : Nat),
+    ((nst132 x BT.zero : BT) == nst132 y (BT.D 0 W)) = false
+  | 0, 0 => rfl
+  | 0, _ + 1 => rfl
+  | _ + 1, 0 => rfl
+  | x + 1, y + 1 => by
+      show ((nst132 x BT.zero : BT) == nst132 y (BT.D 0 W)) = false
+      exact beq_tow_nstD0_158 W x y
+
+theorem ltL_tow_nstD0_false158 (W : BT) : ∀ (f x y : Nat), y < x →
+    BT.ltL f (BT.toL (nst132 x BT.zero)) (BT.toL (nst132 y (BT.D 0 W))) = false
+  | 0, _, _, _ => rfl
+  | _ + 1, 0, _, h => absurd h (by omega)
+  | f + 1, x + 1, 0, _ => by
+      show (if (1 : Nat) < 0 then true else if (0 : Nat) < 1 then false
+            else if nst132 x BT.zero == W then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 x BT.zero)) (BT.toL W)) = false
+      rw [if_neg (by omega), if_pos (by omega)]
+  | f + 1, x + 1, y + 1, h => by
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 x BT.zero == nst132 y (BT.D 0 W) then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 x BT.zero))
+              (BT.toL (nst132 y (BT.D 0 W)))) = false
+      rw [if_neg (by omega), if_neg (by omega),
+        if_neg (by rw [beq_tow_nstD0_158 W x y]; exact Bool.noConfusion)]
+      exact ltL_tow_nstD0_false158 W f x y (by omega)
+
+theorem ltL_tow_famG_false158 : ∀ (f m pp k j a : Nat), m + pp + 1 < a →
+    BT.ltL f (BT.toL (nst132 a BT.zero)) (BT.toL (famG158 m (pp + 1) k j)) = false
+  | 0, _, _, _, _, _, _ => rfl
+  | f + 1, 0, pp, k, j, a, h => by
+      obtain ⟨aa, rfl⟩ : ∃ aa, a = aa + 1 := ⟨a - 1, by omega⟩
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 aa BT.zero == nst132 pp (BT.D 0 (nst132 k BT.zero))
+              then BT.ltL f [] [BT.D 0 (nst132 j BT.zero)]
+            else BT.ltL f (BT.toL (nst132 aa BT.zero))
+              (BT.toL (nst132 pp (BT.D 0 (nst132 k BT.zero))))) = false
+      rw [if_neg (by omega), if_neg (by omega),
+        if_neg (by rw [beq_tow_nstD0_158 (nst132 k BT.zero) aa pp]
+                   exact Bool.noConfusion)]
+      exact ltL_tow_nstD0_false158 (nst132 k BT.zero) f aa pp (by omega)
+  | f + 1, m + 1, pp, k, j, a, h => by
+      obtain ⟨aa, rfl⟩ : ∃ aa, a = aa + 1 := ⟨a - 1, by omega⟩
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 aa BT.zero == nst132 m
+                (BT.sum (nst132 (pp + 1) (BT.D 0 (nst132 k BT.zero)))
+                  (BT.D 0 (nst132 j BT.zero)))
+              then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 aa BT.zero))
+              (BT.toL (nst132 m (BT.sum (nst132 (pp + 1) (BT.D 0 (nst132 k BT.zero)))
+                (BT.D 0 (nst132 j BT.zero)))))) = false
+      rw [if_neg (by omega), if_neg (by omega)]
+      cases hb : (nst132 aa BT.zero == nst132 m
+          (BT.sum (nst132 (pp + 1) (BT.D 0 (nst132 k BT.zero)))
+            (BT.D 0 (nst132 j BT.zero)))) with
+      | true =>
+          rw [if_pos rfl]
+          cases f with
+          | zero => rfl
+          | succ f => rfl
+      | false =>
+          rw [if_neg (fun hc => Bool.noConfusion hc)]
+          exact ltL_tow_famG_false158 f m pp k j aa (by omega)
+
+theorem mem_GB_famG_k158 (m p k j : Nat) :
+    nst132 k BT.zero ∈ BT.GB 0 (famG158 m p k j) := by
+  refine mem_GB_nst158 ?_ m
+  show nst132 k BT.zero ∈ BT.GB 0 (nst132 p (BT.D 0 (nst132 k BT.zero)))
+    ++ BT.GB 0 (BT.D 0 (nst132 j BT.zero))
+  exact List.mem_append.mpr (Or.inl (mem_GB_nst158 (mem_GB_D0_158 _) p))
+
+theorem mem_GB_famG_j158 (m p k j : Nat) :
+    nst132 j BT.zero ∈ BT.GB 0 (famG158 m p k j) := by
+  refine mem_GB_nst158 ?_ m
+  show nst132 j BT.zero ∈ BT.GB 0 (nst132 p (BT.D 0 (nst132 k BT.zero)))
+    ++ BT.GB 0 (BT.D 0 (nst132 j BT.zero))
+  exact List.mem_append.mpr (Or.inr (mem_GB_D0_158 _))
+
+theorem not_std_famG_k158 {m p k j : Nat} (h1p : 1 ≤ p) (hk : m + p < k) :
+    BT.isStd (BT.D 0 (famG158 m p k j)) = false := by
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  cases hs : BT.isStd (BT.D 0 (famG158 m (pp + 1) k j)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famG158 m (pp + 1) k j)
+          && (BT.GB 0 (famG158 m (pp + 1) k j)).all
+              (fun e => BT.lt e (famG158 m (pp + 1) k j))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (mem_GB_famG_k158 m (pp + 1) k j)
+      rw [show BT.lt (nst132 k BT.zero) (famG158 m (pp + 1) k j) = false from
+        ltL_tow_famG_false158 _ m pp k j k (by omega)] at h2
+      exact Bool.noConfusion h2
+
+theorem not_std_famG_j158 {m p k j : Nat} (h1p : 1 ≤ p) (hj : m + p < j) :
+    BT.isStd (BT.D 0 (famG158 m p k j)) = false := by
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  cases hs : BT.isStd (BT.D 0 (famG158 m (pp + 1) k j)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famG158 m (pp + 1) k j)
+          && (BT.GB 0 (famG158 m (pp + 1) k j)).all
+              (fun e => BT.lt e (famG158 m (pp + 1) k j))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (mem_GB_famG_j158 m (pp + 1) k j)
+      rw [show BT.lt (nst132 j BT.zero) (famG158 m (pp + 1) k j) = false from
+        ltL_tow_famG_false158 _ m pp k j j (by omega)] at h2
+      exact Bool.noConfusion h2
+
+/-- **主定理 7 — この族も第一の門を反証できない。** -/
+theorem famG_no_refute158 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h1k : 1 ≤ k) (h1j : 1 ≤ j)
+    (hs : BT.isStd (BT.D 0 (famG158 m p k j)) = true) :
+    KsetStepOK 0 (dict (famG158 m p k j)) := by
+  rcases Nat.lt_or_ge (m + p) k with hlt | hgek
+  · exfalso
+    rw [not_std_famG_k158 h1p hlt] at hs
+    exact Bool.noConfusion hs
+  · rcases Nat.lt_or_ge (m + p) j with hlt | hgej
+    · exfalso
+      rw [not_std_famG_j158 h1p hlt] at hs
+      exact Bool.noConfusion hs
+    · exact ksetStepOK_famG158 h1m h1p h1k h1j hgek hgej
+
+/-- **境界はちょうど `k ≤ m + p ∧ j ≤ m + p` (発火する `3 ≤ m + p` で)。** -/
+theorem stepOK_iff_famG158 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h3 : 3 ≤ m + p) (h1k : 1 ≤ k) (h1j : 1 ≤ j) :
+    KsetStepOK 0 (dict (famG158 m p k j)) ↔ (k ≤ m + p ∧ j ≤ m + p) := by
+  constructor
+  · intro H
+    refine ⟨?_, ?_⟩
+    · rcases Nat.lt_or_ge (m + p) k with hlt | hge
+      · exact absurd H (not_ksetStepOK_famG_k158 h1m h1p h3 h1j hlt)
+      · exact hge
+    · rcases Nat.lt_or_ge (m + p) j with hlt | hge
+      · exact absurd H (not_ksetStepOK_famG_j158 h1m h1p h3 h1k hlt)
+      · exact hge
+  · intro h
+    exact ksetStepOK_famG158 h1m h1p h1k h1j h.1 h.2
+
+theorem gateStd87_famG158 (m p k j : Nat) (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h1k : 1 ≤ k) (h1j : 1 ≤ j) (hk : k ≤ m + p) (hj : j ≤ m + p) :
+    GateStd87 (famG158 m p k j) :=
+  fun _ _ => ksetStepOK_famG158 h1m h1p h1k h1j hk hj
+
+theorem firstFire_famG158 (m p k j : Nat) (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h1k : 1 ≤ k) (h1j : 1 ≤ j) (hk : k ≤ m + p) (hj : j ≤ m + p) :
+    FirstFire145 (famG158 m p k j) :=
+  fun q hq _ hle y hy => (ksetStepOK_famG158 h1m h1p h1k h1j hk hj q hq hle).2 y hy
+
+/-! ### §158.6 Measurement (frozen) — everything below is measurement, not proof -/
+
+/-- `ψ₁` の層を剥がす — (層の数, 中身)。 -/
+def peel158 : BT → Nat × BT
+  | BT.D 1 a => ((peel158 a).1 + 1, (peel158 a).2)
+  | t => (0, t)
+
+/-- `ψ₁` の塔の高さ (塔でなければ `none`)。 -/
+def towH158 : BT → Option Nat
+  | BT.zero => some 0
+  | BT.D 1 a => match towH158 a with | some n => some (n + 1) | none => none
+  | _ => none
+
+/-- `famF158` の証明した領域の判定器 — 形だけでなく `1 ≤ m`, `2 ≤ p`, `3 ≤ k ≤ m+p`
+    まで見る。 -/
+def isFamF158 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.D 0 y)) =>
+      match towH158 x, towH158 y with
+      | some p, some k =>
+          decide (1 ≤ m) && decide (2 ≤ p) && decide (3 ≤ k) && decide (k ≤ m + p)
+      | _, _ => false
+  | _ => false
+
+/-- `famG158` の証明した領域の判定器。 -/
+def isFamG158 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.D 0 y)) =>
+      match peel158 x with
+      | (p, BT.D 0 z) =>
+          match towH158 z, towH158 y with
+          | some k, some j =>
+              decide (1 ≤ m) && decide (1 ≤ p) && decide (1 ≤ k) && decide (1 ≤ j)
+                && decide (k ≤ m + p) && decide (j ≤ m + p)
+          | _, _ => false
+      | _ => false
+  | _ => false
+
+def covered158 (a : BT) : Bool := covered156 a || isFamF158 a || isFamG158 a
+
+/-! 判定器は狙った形にだけ当たる (測定)。 -/
+
+#guard isFamF158 (famF158 3 2 4)
+#guard !(isFamF158 (famF158 1 1 3))
+#guard !(isFamF158 (famF158 2 3 6))
+#guard isFamG158 (famG158 3 2 4 3)
+#guard !(isFamG158 (famG158 1 1 3 3))
+#guard !(isFamG158 (famF158 3 2 4))
+#guard !(isFamF158 (famG158 3 2 4 3))
+
+/-! **resid の境界の凍結。**  §132 の残る母集団は、二つの族ではちょうど定理の言う
+    範囲: `famF158 m p k` は `1 ≤ m ∧ 1 ≤ p ∧ 3 ≤ k ≤ m + p` (`m, p, k < 6`)、
+    `famG158 m p k j` は `1 ≤ m ∧ 1 ≤ p` のもとで
+    `(3 ≤ k ∨ 3 ≤ j) ∧ k ≤ m + p ∧ j ≤ m + p` (`m, p, k, j < 5`)。
+    証明した領域はこのうち `p ≥ 2` (famF)、`k, j ≥ 1` (famG) の部分。 -/
+
+#guard (List.range 6).all fun m => (List.range 6).all fun p => (List.range 6).all fun k =>
+  resid136 (famF158 m p k)
+    == (decide (1 ≤ m) && decide (1 ≤ p) && decide (3 ≤ k) && decide (k ≤ m + p))
+
+#guard (List.range 5).all fun m => (List.range 5).all fun p => (List.range 5).all fun k =>
+  (List.range 5).all fun j =>
+  !(decide (1 ≤ m) && decide (1 ≤ p))
+  || (resid136 (famG158 m p k j)
+      == ((decide (3 ≤ k) || decide (3 ≤ j))
+          && decide (k ≤ m + p) && decide (j ≤ m + p)))
+
+/-! **一歩の境界の凍結 — 両側。**  定理の領域で判定器は真、その外 (発火する形で) は偽。 -/
+
+#guard (List.range 6).all fun m => (List.range 6).all fun p => (List.range 6).all fun k =>
+  !(decide (1 ≤ m) && decide (2 ≤ p) && decide (3 ≤ k) && decide (k ≤ m + p))
+  || stepOKb 0 (dict (famF158 m p k))
+
+#guard (List.range 6).all fun m => (List.range 6).all fun p => (List.range 6).all fun k =>
+  !(decide (1 ≤ m) && decide (2 ≤ p) && decide (m + p < k))
+  || !(stepOKb 0 (dict (famF158 m p k)))
+
+#guard (List.range 5).all fun m => (List.range 5).all fun p => (List.range 5).all fun k =>
+  (List.range 5).all fun j =>
+  !(decide (1 ≤ m) && decide (1 ≤ p) && decide (1 ≤ k) && decide (1 ≤ j)
+    && decide (k ≤ m + p) && decide (j ≤ m + p))
+  || stepOKb 0 (dict (famG158 m p k j))
+
+#guard (List.range 5).all fun m => (List.range 5).all fun p => (List.range 5).all fun k =>
+  (List.range 5).all fun j =>
+  !(decide (1 ≤ m) && decide (1 ≤ p) && decide (3 ≤ m + p) && decide (1 ≤ k)
+    && decide (1 ≤ j) && (decide (m + p < k) || decide (m + p < j)))
+  || !(stepOKb 0 (dict (famG158 m p k j)))
+
+/-! **§155.4 の角、そのまま。**  `famF158 1 2 k = famE155 k` の一歩は `k ≤ 3` で真、
+    `k ≥ 4` で偽。一段高い塔 (`m = 2`) では境界が `k ≤ 4` に上がる。 -/
+
+#guard ((List.range 8).map fun k => stepOKb 0 (dict (famF158 1 2 k)))
+  == [true, true, true, true, false, false, false, false]
+#guard ((List.range 8).map fun k => stepOKb 0 (dict (famF158 2 2 k)))
+  == [true, true, true, true, true, false, false, false]
+
+/-! **閉じた形の照合 — `dict` の値は本当に定理の言う塔。** -/
+
+#guard dict (famF158 1 2 3) == phi zero (add (TW 1) (sd152 3))
+#guard dict (famF158 2 3 4) == phi zero (phi zero (add (TW 2) (sd152 4)))
+#guard dict (famF158 3 3 5) == phi zero (phi zero (phi zero (add (TW 2) (sd152 5))))
+#guard dict (famG158 1 1 3 3) == phi zero (add (UW152 (sd152 3) 0) (sd152 3))
+#guard dict (famG158 2 2 4 3) == phi zero (phi zero (add (UW152 (sd152 4) 1) (sd152 3)))
+#guard dict (famG158 3 2 4 5)
+  == phi zero (phi zero (phi zero (add (UW152 (sd152 4) 1) (sd152 5))))
+
+/-! **被覆の凍結。**  §132 の残り (`resid136`) のうち、証明済みの領域に文字通り
+    入っている本数:
+    famPool132 (2455 本): §156 の 569 に `famF158` の 301 と `famG158` の 445 が
+    加わり (重なりは §155.4 の 1 本)、**1314 本 (53.5%)**。
+    pool136 (925 本): 変わらず 70 本 — pool136 の混合の和は頂点にあり、`ψ₁` に
+    包まれていない。
+    fm145 (3371 本): 66 → **115 本**。
+    残る形の名: `ψ₁` に包まれた「塔 ⊕ ψ₀(和)」「塔 ⊕ ψ₀ ⊕ ψ₀」「塔 ⊕ 塔 ⊕ ψ₀」と、
+    `ψ₀` の中の塔の上の和 — どれも底の成分が三つ以上になる形で、§158 の
+    二成分の底 `MB158` の外にある。 -/
+
+#guard (famPool132.filter resid136).length == 2455
+#guard ((famPool132.filter resid136).countP isFamF158) == 301
+#guard ((famPool132.filter resid136).countP isFamG158) == 445
+#guard ((famPool132.filter resid136).countP covered156) == 569
+#guard ((famPool132.filter resid136).countP covered158) == 1314
+#guard (pool136.filter resid136).length == 925
+#guard ((pool136.filter resid136).countP covered158) == 70
+#guard (fm145.filter resid136).length == 3371
+#guard ((fm145.filter resid136).countP isFamF158) == 50
+#guard ((fm145.filter resid136).countP isFamG158) == 0
+#guard ((fm145.filter resid136).countP covered158) == 115
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms wcnf_MT158
+#print axioms idx_MT158
+#print axioms wcnf_MT0_158
+#print axioms idx_MT0_158
+#print axioms wcnf_MT0_Om158
+#print axioms idx_MT0_Om158
+#print axioms collapse1_MB158
+#print axioms collapse1_MT158
+#print axioms stepOK_MT158
+#print axioms stepOK_MT0_158
+#print axioms stepOK_MT0_Om158
+#print axioms stepOK_MT0_nofire158
+#print axioms not_stepOK_MT158
+#print axioms not_stepOK_MT0_158
+#print axioms not_stepOK_MT0_Om158
+#print axioms lt_TW_MT_reach158
+#print axioms lt_TW_MT_reach_false158
+#print axioms tailOK_sd158
+#print axioms dict_famF158
+#print axioms ksetStepOK_famF158
+#print axioms not_ksetStepOK_famF158
+#print axioms not_std_famF158
+#print axioms stepOK_iff_famF158
+#print axioms famF_no_refute158
+#print axioms gateStd87_famF158
+#print axioms firstFire_famF158
+#print axioms dict_famB158
+#print axioms dict_famG158
+#print axioms ksetStepOK_famG158
+#print axioms not_ksetStepOK_famG_k158
+#print axioms not_ksetStepOK_famG_j158
+#print axioms not_std_famG_k158
+#print axioms not_std_famG_j158
+#print axioms stepOK_iff_famG158
+#print axioms famG_no_refute158
+#print axioms gateStd87_famG158
+#print axioms firstFire_famG158
+
+end
+
+
 end Evidence.Region
