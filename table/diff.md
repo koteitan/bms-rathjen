@@ -22,21 +22,21 @@
   - 🚨 選定 23 行に [E.cert](table-r1.md#ecert) を付ける
     - 🚨 326 行目に [E.cert](table-r1.md#ecert) を付ける
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`t \in \mathfrak{T}(M)`$ と $`f_n \in \mathfrak{T}(M)`$ を出す
-        - 🚨 `PsiIdxOKStd172` を証明するか反証する
+        - 🚨🤖 `PsiIdxOKStd172` を証明するか反証する
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`f_n \lt t`$ と $`f_n \lt f_{n+1}`$ を出す
-        - 🚨 `HiMono89` を証明するか反証する
+        - 🚨🤖 `HiMono89` を証明するか反証する
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を出す
         - 🚨 `LimCofS1` を証明する
           - 🚨 `vOf` が基本列の上限を超えないようにする
-            - 🚨 `vOf tGap107` が大きすぎるのか展開の値が小さすぎるのかを決める
+            - 🚨🤖 `vOf tGap107` が大きすぎるのか展開の値が小さすぎるのかを決める
             - 🚨 決まった側の定義を直す
               - ✅ `reg` だけを直す道があるか決める
               - 🚨 χ を 2 引数に戻す
-                - 🚨 `Term` の `Z` を 2 引数にする
-                - 🚨 `inT` に第 2 引数の整形式条件を足す
-                - 🚨 `TM/Order.lean` を [Rathjen 1990] 3.14・3.15 に差し替える
-                - 🚨 `*` と $`K_\kappa`$ を第 2 引数に対応させる
-                - 🚨 `TM/FS.lean` の `Z` 節を直す
+                - 🚨🤖 `Term` の `Z` を 2 引数にする
+                - 🚨🤖 `inT` に第 2 引数の整形式条件を足す
+                - 🚨🤖 `TM/Order.lean` を [Rathjen 1990] 3.14・3.15 に差し替える
+                - 🚨🤖 `*` と $`K_\kappa`$ を第 2 引数に対応させる
+                - 🚨🤖 `TM/FS.lean` の `Z` 節を直す
                 - 🚨 `Trans/Dict.lean` の `reg` を直す
                 - 🚨 `Rows/TM.lean` の壊れている 5 行の値を書き換える
                 - 🚨 5 行の注記と表のバナーを外す
