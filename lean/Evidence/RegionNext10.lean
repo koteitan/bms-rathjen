@@ -8481,4 +8481,2059 @@ def covered156 (a : BT) : Bool := covered155 a || isMixTB156 a || isSumSeed156 a
 end
 
 
+
+
+/-! # §157 `Dom154` REDUCED TO THE STANDARDNESS CARRIERS `Subord157 ∧ ExpSubR157`
+
+The assembly: every arithmetic ingredient of the mid-list domination is proven here
+(the walk along `a`'s Veblen suffix, the fired-index domination, the fold growth on
+`b`'s side, the vacuous `ty = []` case), on top of the library's §110/§112/§117/§120/§129
+toolboxes.  What remains hypothetical is exactly the sweep-separated standardness
+carrier pair (`Subord157`, `ExpSubR157`). -/
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §157.1 The closures and the carriers -/
+
+/-- Terms subordinate to the bound `w`, with `φ̄`-exponents capped by `A`.
+    Wellformedness is carried in the constructors. -/
+inductive Sub157 (A w : Term) : Term → Prop where
+  | ofLe : ∀ {t : Term}, inT t = true → lt t M = true → le t w = true → Sub157 A w t
+  | ofPhi : ∀ {α ξ : Term}, inT α = true → lt α M = true → le α A = true →
+      Sub157 A w ξ → Sub157 A w (TM.Term.phi α ξ)
+  | ofPlus : ∀ {p q : Term}, Sub157 A w p → Sub157 A w q → Sub157 A w (plus p q)
+
+/-- The recursive (uncapped) closure — for exponents. -/
+inductive SubR157 (w : Term) : Term → Prop where
+  | ofLe : ∀ {t : Term}, inT t = true → lt t M = true → le t w = true → SubR157 w t
+  | ofPhi : ∀ {α ξ : Term}, SubR157 w α → SubR157 w ξ → SubR157 w (TM.Term.phi α ξ)
+  | ofPlus : ∀ {p q : Term}, SubR157 w p → SubR157 w q → SubR157 w (plus p q)
+
+/-- Fold value of a pair-list prefix, defaulting to `one` on the empty prefix. -/
+def wVal157 (P : List (Term × Term)) : Term :=
+  ((P.foldl (stepF (reg 1) (baseOf 0))
+    ((none : Option Term), (none : Option Term))).2).getD TM.Term.one
+
+/-- **The standardness carrier** (assumed): every Veblen pair's coefficient in the
+    `wcnf` list of a standard image is subordinate to the fold value of its own
+    prefix, with `φ̄`-exponents capped by its own exponent. -/
+def Subord157 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      Sub157 ac.1 (wVal157 P) ac.2
+
+/-- **The exponent carrier** (assumed): every Veblen pair's exponent is recursively
+    subordinate to the fold value of its own prefix. -/
+def ExpSubR157 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      SubR157 (wVal157 P) ac.1
+
+/-! ## §157.2 Wellformedness of closure members -/
+
+theorem sub157_inT {A w t : Term} (h : Sub157 A w t) : inT t = true ∧ lt t M = true := by
+  induction h with
+  | ofLe hit hltM _ => exact ⟨hit, hltM⟩
+  | ofPhi hiα hαM _ _ ih =>
+      refine ⟨?_, lt_phi_M _ _⟩
+      show (_ && _ && _ && _) = true
+      rw [hiα, ih.1, hαM, ih.2]
+      rfl
+  | ofPlus _ _ ihp ihq =>
+      exact ⟨inT_plus ihp.1 ihq.1, lt_plus_M ihp.1 ihq.1 ihp.2 ihq.2⟩
+
+theorem subR157_inT {w t : Term} (h : SubR157 w t) : inT t = true ∧ lt t M = true := by
+  induction h with
+  | ofLe hit hltM _ => exact ⟨hit, hltM⟩
+  | ofPhi _ _ ihα ihξ =>
+      refine ⟨?_, lt_phi_M _ _⟩
+      show (_ && _ && _ && _) = true
+      rw [ihα.1, ihξ.1, ihα.2, ihξ.2]
+      rfl
+  | ofPlus _ _ ihp ihq =>
+      exact ⟨inT_plus ihp.1 ihq.1, lt_plus_M ihp.1 ihq.1 ihp.2 ihq.2⟩
+
+/-! ## §157.3 Closures below a target -/
+
+/-- Small helper: nonzero terms are at least `one`. -/
+theorem le_one157 {c : Term} (hc : inT c = true) (hz : c ≠ zero) :
+    le TM.Term.one c = true := by
+  cases hlt : lt c TM.Term.one with
+  | true => exact absurd (below_one c hc _ hlt) hz
+  | false =>
+      exact le_of_not_lt3 (inT_le_fragR _ hc) (show FragR TM.Term.one = true from rfl) hlt
+
+/-- The capped closure stays below an additively principal target `T`, given the
+    bound `w < T`, the cap `A < B`, and closure of `T` under `φ̄` with first
+    argument below `B`. -/
+theorem subLt157 {A w t T B : Term} (hs : Sub157 A w t)
+    (hiT : inT T = true) (hTap : T.isAP = true)
+    (hiA : inT A = true) (hiB : inT B = true) (hAB : lt A B = true)
+    (hiw : inT w = true) (hw : lt w T = true)
+    (hraw : ∀ α ξ : Term, inT α = true → lt α M = true → inT ξ = true → lt ξ M = true →
+      lt α B = true → lt ξ T = true → lt (phi α ξ) T = true) :
+    lt t T = true := by
+  have hfT : FragR T = true := inT_le_fragR _ hiT
+  have hTz : T ≠ zero := by
+    intro hc
+    rw [hc, lt_zero_right] at hw
+    exact Bool.noConfusion hw
+  induction hs with
+  | ofLe hit _ hle =>
+      exact lt_of_le_of_lt3 (inT_le_fragR _ hit) (inT_le_fragR _ hiw) hfT hle hw
+  | @ofPhi α ξ hiα hαM hαA hξ ih =>
+      have hξf := sub157_inT hξ
+      have hαB : lt α B = true :=
+        lt_of_le_of_lt3 (inT_le_fragR _ hiα) (inT_le_fragR _ hiA) (inT_le_fragR _ hiB)
+          hαA hAB
+      exact hraw α ξ hiα hαM hξf.1 hξf.2 hαB ih
+  | @ofPlus p q hp hq ihp ihq =>
+      exact lt_plus_ap114 hTap hTz hfT (sub157_inT hp).1 (sub157_inT hq).1 ihp ihq
+
+/-- The recursive closure stays below an additively principal target `T` closed
+    under `φ̄` with both arguments below `T`. -/
+theorem subRLt157 {w t T : Term} (hs : SubR157 w t)
+    (hiT : inT T = true) (hTap : T.isAP = true)
+    (hiw : inT w = true) (hw : lt w T = true)
+    (hraw : ∀ α ξ : Term, inT α = true → lt α M = true → inT ξ = true → lt ξ M = true →
+      lt α T = true → lt ξ T = true → lt (phi α ξ) T = true) :
+    lt t T = true := by
+  have hfT : FragR T = true := inT_le_fragR _ hiT
+  have hTz : T ≠ zero := by
+    intro hc
+    rw [hc, lt_zero_right] at hw
+    exact Bool.noConfusion hw
+  induction hs with
+  | ofLe hit _ hle =>
+      exact lt_of_le_of_lt3 (inT_le_fragR _ hit) (inT_le_fragR _ hiw) hfT hle hw
+  | @ofPhi α ξ hα hξ ihα ihξ =>
+      have hαf := subR157_inT hα
+      have hξf := subR157_inT hξ
+      exact hraw α ξ hαf.1 hαf.2 hξf.1 hξf.2 ihα ihξ
+  | @ofPlus p q hp hq ihp ihq =>
+      exact lt_plus_ap114 hTap hTz hfT (subR157_inT hp).1 (subR157_inT hq).1 ihp ihq
+
+/-! ## §157.4 The `φ̄`-target dispatchers -/
+
+theorem inT_phi_facts157 {a b : Term} (h : inT (TM.Term.phi a b) = true) :
+    inT a = true ∧ inT b = true ∧ lt a M = true ∧ lt b M = true := by
+  have h4 : (inT a && inT b && lt a M && lt b M) = true := h
+  obtain ⟨h3, hbM⟩ := (Bool.and_eq_true _ _).mp h4
+  obtain ⟨h2, haM⟩ := (Bool.and_eq_true _ _).mp h3
+  obtain ⟨hia, hib⟩ := (Bool.and_eq_true _ _).mp h2
+  exact ⟨hia, hib, haM, hbM⟩
+
+/-- `isFP` decides `FixSh129`. -/
+theorem isFP_iff157 (A g : Term) : isFP A g = true ↔ FixSh129 A g := by
+  constructor
+  · intro h
+    rcases (Bool.or_eq_true _ _).mp h with h1 | h2
+    · obtain ⟨hsc, hlt⟩ := (Bool.and_eq_true _ _).mp h1
+      exact Or.inl ⟨hsc, hlt⟩
+    · cases g with
+      | phi c d => exact Or.inr ⟨c, d, rfl, h2⟩
+      | zero => exact Bool.noConfusion h2
+      | M => exact Bool.noConfusion h2
+      | omg x => exact Bool.noConfusion h2
+      | add x y => exact Bool.noConfusion h2
+      | psi k c => exact Bool.noConfusion h2
+      | Z x => exact Bool.noConfusion h2
+  · intro h
+    rcases h with ⟨hsc, hlt⟩ | ⟨d, e, he, hlt⟩
+    · exact (Bool.or_eq_true _ _).mpr (Or.inl ((Bool.and_eq_true _ _).mpr ⟨hsc, hlt⟩))
+    · subst he
+      exact (Bool.or_eq_true _ _).mpr (Or.inr hlt)
+
+theorem phiNFdefault_shape157 (B δ : Term) :
+    (phiNFdefault B δ = B ∧ B.isSC = true ∧ δ = zero)
+  ∨ phiNFdefault B δ = TM.Term.phi B δ := by
+  unfold phiNFdefault
+  by_cases hd : (δ == zero && B.isSC) = true
+  · rw [if_pos hd]
+    obtain ⟨h1, h2⟩ := (Bool.and_eq_true _ _).mp hd
+    exact Or.inl ⟨rfl, h2, eq_of_beq h1⟩
+  · rw [if_neg hd]
+    exact Or.inr rfl
+
+/-- The five branch shapes of `phiNF B δ`. -/
+theorem phiNF_shape157 (B δ : Term) :
+    (phiNF B δ = δ ∧ δ.isSC = true ∧ lt B δ = true)
+  ∨ (∃ c d, δ = TM.Term.phi c d ∧ lt B c = true ∧ phiNF B δ = δ)
+  ∨ (∃ g m, splitFin δ = (g, m) ∧ m ≥ 1
+      ∧ phiNF B δ = TM.Term.phi B (plus g (ofNat (m-1))))
+  ∨ (phiNF B δ = B ∧ B.isSC = true ∧ δ = zero)
+  ∨ (phiNF B δ = TM.Term.phi B δ) := by
+  by_cases hfp : isFP B δ = true
+  · rcases (isFP_iff157 B δ).mp hfp with ⟨hsc, hlt⟩ | ⟨c, d, he, hlt⟩
+    · exact Or.inl ⟨phiNF_fixSh129 (Or.inl ⟨hsc, hlt⟩), hsc, hlt⟩
+    · exact Or.inr (Or.inl ⟨c, d, he, hlt,
+        phiNF_fixSh129 (Or.inr ⟨c, d, he, hlt⟩)⟩)
+  · have hnf : ¬ FixSh129 B δ := fun hc => hfp ((isFP_iff157 B δ).mpr hc)
+    have he1 : phiNF B δ = phiNFsucc B δ := phiNF_notFix129 hnf
+    cases hsp : splitFin δ with
+    | mk g m =>
+      by_cases hm : m ≥ 1
+      · by_cases hg : isFP B g = true
+        · exact Or.inr (Or.inr (Or.inl ⟨g, m, rfl, hm, by
+            rw [he1]; exact phiNFsucc_val129 hsp hm ((isFP_iff157 B g).mp hg)⟩))
+        · have hd : phiNFsucc B δ = phiNFdefault B δ :=
+            phiNFsucc_def129 hsp (fun hc => hg ((isFP_iff157 B g).mpr hc))
+          rcases phiNFdefault_shape157 B δ with ⟨h1, h2, h3⟩ | h1
+          · exact Or.inr (Or.inr (Or.inr (Or.inl ⟨by rw [he1, hd]; exact h1, h2, h3⟩)))
+          · exact Or.inr (Or.inr (Or.inr (Or.inr (by rw [he1, hd]; exact h1))))
+      · have hd : phiNFsucc B δ = phiNFdefault B δ := phiNFsucc_lo129 hsp hm
+        rcases phiNFdefault_shape157 B δ with ⟨h1, h2, h3⟩ | h1
+        · exact Or.inr (Or.inr (Or.inr (Or.inl ⟨by rw [he1, hd]; exact h1, h2, h3⟩)))
+        · exact Or.inr (Or.inr (Or.inr (Or.inr (by rw [he1, hd]; exact h1))))
+
+/-- A strongly critical term below `Ω₁` is a `ψ`-term. -/
+theorem sc_shape157 {t : Term} (hsc : t.isSC = true) (hW : lt t (reg 1) = true) :
+    ∃ k c, t = psi k c := by
+  cases t with
+  | M => rw [lt_M_reg1_false100] at hW; exact Bool.noConfusion hW
+  | Z d => rw [lt_Z_reg1_false100] at hW; exact Bool.noConfusion hW
+  | psi k c => exact ⟨k, c, rfl⟩
+  | zero => exact Bool.noConfusion hsc
+  | omg x => exact Bool.noConfusion hsc
+  | add x y => exact Bool.noConfusion hsc
+  | phi x y => exact Bool.noConfusion hsc
+
+/-- **Raw `φ̄` below a `phiNF`-target** — first argument below `B`, second below
+    the target. -/
+theorem lt_phi_vTgt157 {B δ p q : Term} (hiB : inT B = true) (hiδ : inT δ = true)
+    (hip : inT p = true) (hiq : inT q = true)
+    (hTW : lt (phiNF B δ) (reg 1) = true)
+    (hpB : lt p B = true) (hq : lt q (phiNF B δ) = true) :
+    lt (phi p q) (phiNF B δ) = true := by
+  rcases phiNF_shape157 B δ with ⟨he, hsc, hBδ⟩ | ⟨c, d, hδe, hBc, he⟩
+    | ⟨g, m, hsp, hm, he⟩ | ⟨he, hsc, _⟩ | he
+  · rw [he] at hq hTW ⊢
+    obtain ⟨k, c, hk⟩ := sc_shape157 hsc hTW
+    subst hk
+    exact lt_phi_psi_of (lt_trans_inT hip hiB hiδ hpB hBδ) hq
+  · rw [he] at hq ⊢
+    subst hδe
+    have hic : inT c = true := (inT_phi_facts157 hiδ).1
+    rw [lt_phi_vT117 (lt_trans_inT hip hiB hic hpB hBc)]
+    exact hq
+  · rw [he] at hq ⊢
+    rw [lt_phi_vT117 hpB]
+    exact hq
+  · rw [he] at hq hTW ⊢
+    obtain ⟨k, c, hk⟩ := sc_shape157 hsc hTW
+    subst hk
+    exact lt_phi_psi_of hpB hq
+  · rw [he] at hq ⊢
+    rw [lt_phi_vT117 hpB]
+    exact hq
+
+/-- **`φ̄`-normalisation below a `phiNF`-target** — exponent below `B`, argument
+    below the target. -/
+theorem lt_phiNF_vTgt157 {B δ a X : Term} (hiB : inT B = true) (hBM : lt B M = true)
+    (hiδ : inT δ = true) (hδM : lt δ M = true)
+    (hia : inT a = true) (haM : lt a M = true) (hiX : inT X = true)
+    (hT1 : lt TM.Term.one (phiNF B δ) = true) (hTW : lt (phiNF B δ) (reg 1) = true)
+    (haB : lt a B = true) (hX : lt X (phiNF B δ) = true) :
+    lt (phiNF a X) (phiNF B δ) = true := by
+  rcases phiNF_shape157 B δ with ⟨he, hsc, hBδ⟩ | ⟨c, d, hδe, hBc, he⟩
+    | ⟨g, m, hsp, hm, he⟩ | ⟨he, hsc, _⟩ | he
+  · rw [he] at hX hTW ⊢
+    obtain ⟨k, c, hk⟩ := sc_shape157 hsc hTW
+    subst hk
+    exact lt_phiNF_psi114 (inT_le_fragR _ hiδ) hiX
+      (lt_trans_inT hia hiB hiδ haB hBδ) hX
+  · rw [he] at hX hT1 ⊢
+    subst hδe
+    obtain ⟨hic, hid, hcM, hdM⟩ := inT_phi_facts157 hiδ
+    exact lt_phiNF_vT117 hic hid hcM hdM hia haM hiX hT1
+      (lt_trans_inT hia hiB hic haB hBc) hX
+  · rw [he] at hX hT1 ⊢
+    have hig : inT g = true := by
+      have h0 := inT_splitFin hiδ; rw [hsp] at h0; exact h0
+    have hgM : lt g M = true := by
+      have h0 := ltM_splitFin hiδ hδM; rw [hsp] at h0; exact h0
+    exact lt_phiNF_vT117 hiB (inT_plus hig (inT_ofNat _)) hBM
+      (lt_plus_M hig (inT_ofNat _) hgM (ltM_ofNat _)) hia haM hiX hT1 haB hX
+  · rw [he] at hX hTW ⊢
+    obtain ⟨k, c, hk⟩ := sc_shape157 hsc hTW
+    subst hk
+    exact lt_phiNF_psi114 (inT_le_fragR _ hiB) hiX haB hX
+  · rw [he] at hX hT1 ⊢
+    exact lt_phiNF_vT117 hiB hiδ hBM hδM hia haM hiX hT1 haB hX
+
+/-! ## §157.5 List and fold plumbing -/
+
+theorem leW_false157 {A : Term} (hiA : inT A = true) (h : lt A (reg 1) = true) :
+    le (reg 1) A = false := by
+  cases hle : le (reg 1) A with
+  | false => rfl
+  | true =>
+      exfalso
+      have h2 : lt A A = true := lt_of_lt_of_le3 (inT_le_fragR _ hiA)
+        (inT_le_fragR _ (inT_reg 1)) (inT_le_fragR _ hiA) h hle
+      rw [lt_irrefl] at h2
+      exact Bool.noConfusion h2
+
+/-- Strict descent survives dropping a prefix: elements of the prefix strictly
+    dominate the divergence pair's exponent. -/
+theorem descP_cross157 : ∀ (P : List (Term × Term)) (q : Term × Term)
+    (S : List (Term × Term)), descP118 (P ++ q :: S) →
+    (∀ w ∈ P ++ q :: S, inT w.1 = true) →
+    ∀ z ∈ P, lt q.1 z.1 = true := by
+  intro P
+  induction P with
+  | nil => intro q S _ _ z hz; cases hz
+  | cons a P' ih =>
+      intro q S hd hin z hz
+      have hd' : descP118 (a :: (P' ++ q :: S)) := hd
+      rcases List.mem_cons.mp hz with h1 | h1
+      · rw [h1]
+        exact descP_bound154 (P' ++ q :: S) a hin hd' q
+          (List.mem_append_right _ (List.Mem.head _))
+      · exact ih q S (descP_tail118 hd')
+          (fun w hw => hin w (List.Mem.tail _ hw)) z h1
+
+/-- A strictly descending pair list splits into a fired prefix and a Veblen tail. -/
+theorem splitFV157 : ∀ (l : List (Term × Term)), descP118 l →
+    (∀ z ∈ l, inT z.1 = true) →
+    ∃ F V, l = F ++ V ∧ (∀ z ∈ F, le (reg 1) z.1 = true)
+      ∧ (∀ z ∈ V, le (reg 1) z.1 = false) := by
+  intro l
+  induction l with
+  | nil => exact fun _ _ => ⟨[], [], rfl, fun z hz => absurd hz (List.not_mem_nil),
+      fun z hz => absurd hz (List.not_mem_nil)⟩
+  | cons a l' ih =>
+      intro hd hin
+      by_cases hf : le (reg 1) a.1 = true
+      · obtain ⟨F', V', he, hF, hV⟩ := ih (descP_tail118 hd)
+          (fun z hz => hin z (List.Mem.tail _ hz))
+        refine ⟨a :: F', V', by rw [he]; rfl, ?_, hV⟩
+        intro z hz
+        rcases List.mem_cons.mp hz with h1 | h1
+        · rw [h1]; exact hf
+        · exact hF z h1
+      · refine ⟨[], a :: l', rfl, fun z hz => absurd hz (List.not_mem_nil), ?_⟩
+        intro z hz
+        have haW : lt a.1 (reg 1) = true :=
+          ltW_of_leW_false128 (hin a (List.Mem.head _)) (bool_false hf)
+        rcases List.mem_cons.mp hz with h1 | h1
+        · rw [h1]; exact bool_false hf
+        · have hz1 : lt z.1 a.1 = true :=
+            descP_bound154 l' a hin hd z h1
+          exact leW_false157 (hin z (List.Mem.tail _ h1))
+            (lt_trans_inT (hin z (List.Mem.tail _ h1)) (hin a (List.Mem.head _))
+              (inT_reg 1) hz1 haW)
+
+/-- `prevV151`/`lastAC151` read off a last-pair split. -/
+theorem prevV_split157 {y : Term} {Q : List (Term × Term)} {ca : Term × Term}
+    (h : (wcnf (reg 1) (toList y)).1 = Q ++ [ca]) :
+    prevV151 y = (Q.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2 ∧ lastAC151 y = some ca := by
+  have hrev : (wcnf (reg 1) (toList y)).1.reverse = ca :: Q.reverse := by
+    rw [h, List.reverse_append]
+    rfl
+  unfold prevV151 lastAC151
+  rw [hrev]
+  dsimp only
+  rw [List.reverse_reverse]
+  exact ⟨rfl, rfl⟩
+
+/-- `StE81` holds after folding any prefix of the `wcnf` pair list. -/
+theorem stE81_pre157 {y : Term} (hy : inT y = true) (hly : lt y M = true)
+    (Hp : PsiIdxOK 0 y) (P S : List (Term × Term))
+    (hsplit : (wcnf (reg 1) (toList y)).1 = P ++ S) :
+    StE81 (P.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))) := by
+  obtain ⟨hc, hd⟩ := inT_toList y hy
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList y) hc hd
+    (ltM_toList y hy hly)
+  have hWp := wcnf_W79 (toList y) hc
+  have hNZ := wcnf_NZ81 (toList y) hc
+  have hinit : StE81 ((none : Option Term), (none : Option Term)) := by
+    intro z hz; cases hz
+  exact foldE81 P (none, none) hinit
+    (fun z hz => hallOK z (by rw [hsplit]; exact List.mem_append_left _ hz))
+    (fun z hz => (hWp.2 z (by rw [hsplit]; exact List.mem_append_left _ hz)).2)
+    (fun z hz => hNZ z (by rw [hsplit]; exact List.mem_append_left _ hz))
+    (fun p hp hf => Hp p (by
+      rw [hsplit, scanSt_append109]
+      exact List.mem_append_left _ hp) hf)
+
+/-- Fired coherence: the value is `ψ_{Ω₁}` of the index, preserved by fired steps
+    from the empty state. -/
+def Coh157 (s : Option Term × Option Term) : Prop :=
+  s.2 = Option.map (psi (reg 1)) s.1
+
+theorem coh_fold157 : ∀ (l : List (Term × Term)) (s : Option Term × Option Term),
+    (∀ z ∈ l, le (reg 1) z.1 = true) → Coh157 s →
+    Coh157 (l.foldl (stepF (reg 1) (baseOf 0)) s) := by
+  intro l
+  induction l with
+  | nil => intro s _ h; exact h
+  | cons ac t ih =>
+      intro s hall _
+      refine ih _ (fun z hz => hall z (List.Mem.tail _ hz)) ?_
+      have hf : le (reg 1) ac.1 = true := hall ac (List.Mem.head _)
+      show (stepF (reg 1) (baseOf 0) s ac).2
+        = Option.map (psi (reg 1)) (stepF (reg 1) (baseOf 0) s ac).1
+      rw [stepF_snd_fire88 hf, stepF_fst, if_pos hf]
+      rfl
+
+/-! ## §157.6 The walk along a Veblen suffix -/
+
+theorem foldl_snoc157 (P : List (Term × Term)) (ac : Term × Term)
+    (s : Option Term × Option Term) :
+    (P ++ [ac]).foldl (stepF (reg 1) (baseOf 0)) s
+      = stepF (reg 1) (baseOf 0) (P.foldl (stepF (reg 1) (baseOf 0)) s) ac := by
+  rw [List.foldl_append]
+  rfl
+
+theorem wVal_facts157 {y : Term} (hy : inT y = true) (hly : lt y M = true)
+    (Hp : PsiIdxOK 0 y) (P S : List (Term × Term))
+    (hsplit : (wcnf (reg 1) (toList y)).1 = P ++ S) :
+    inT (wVal157 P) = true ∧ lt (wVal157 P) (reg 1) = true := by
+  have hst := stE81_pre157 hy hly Hp P S hsplit
+  unfold wVal157
+  cases hs2 : (P.foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2 with
+  | none => exact ⟨inT_one, lt_one_W79⟩
+  | some v =>
+      obtain ⟨hiv, hvW, _, _⟩ := hst v hs2
+      exact ⟨hiv, hvW⟩
+
+/-- **The walk.**  Along a Veblen sublist of the pair list, if every pair's
+    coefficient is subordinate (`HSub`), every exponent is below the cap `B`
+    (`hexp`), and the target `T` is additively principal and closed under the
+    `φ̄`-steps with exponents below `B`, then the fold value stays strictly
+    below `T`. -/
+theorem walk157 {u : Term} (hu : inT u = true) (huM : lt u M = true)
+    (Hpu : PsiIdxOK 0 u)
+    {T B : Term} (hiT : inT T = true) (hTap : T.isAP = true) (hiB : inT B = true)
+    (HSub : ∀ P S ac, (wcnf (reg 1) (toList u)).1 = P ++ ac :: S →
+        le (reg 1) ac.1 = false → Sub157 ac.1 (wVal157 P) ac.2)
+    (S0 : List (Term × Term))
+    (hstep : ∀ a X, inT a = true → lt a M = true → inT X = true → lt X M = true →
+        lt a B = true → lt X T = true → lt (phiNF a X) T = true)
+    (hraw : ∀ α ξ : Term, inT α = true → lt α M = true → inT ξ = true → lt ξ M = true →
+        lt α B = true → lt ξ T = true → lt (phi α ξ) T = true)
+    (hexp : ∀ P S ac, (wcnf (reg 1) (toList u)).1 = P ++ ac :: S → ac ∈ S0 →
+        le (reg 1) ac.1 = false → lt (wVal157 P) T = true → lt ac.1 B = true) :
+    ∀ (S P S2 : List (Term × Term)),
+      (wcnf (reg 1) (toList u)).1 = P ++ (S ++ S2) →
+      (∀ z ∈ S, z ∈ S0) →
+      (∀ z ∈ S, le (reg 1) z.1 = false) →
+      lt (wVal157 P) T = true →
+      lt (wVal157 (P ++ S)) T = true := by
+  intro S
+  induction S with
+  | nil =>
+      intro P S2 _ _ _ hvP
+      rw [List.append_nil]
+      exact hvP
+  | cons ac S' ih =>
+      intro P S2 hsplit hS0 hVeb hvP
+      have hsplit' : (wcnf (reg 1) (toList u)).1 = P ++ ac :: (S' ++ S2) := hsplit
+      obtain ⟨hc, hd⟩ := inT_toList u hu
+      obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList u) hc hd
+        (ltM_toList u hu huM)
+      have hmem : ac ∈ (wcnf (reg 1) (toList u)).1 := by
+        rw [hsplit']
+        exact List.mem_append_right _ (List.Mem.head _)
+      obtain ⟨hi1, h1M, hi2, h2M⟩ := hallOK ac hmem
+      have hf : le (reg 1) ac.1 = false := hVeb ac (List.Mem.head _)
+      have hAB : lt ac.1 B = true :=
+        hexp P (S' ++ S2) ac hsplit' (hS0 ac (List.Mem.head _)) hf hvP
+      obtain ⟨hiw, hwW⟩ := wVal_facts157 hu huM Hpu P (ac :: (S' ++ S2)) hsplit'
+      have hsub : Sub157 ac.1 (wVal157 P) ac.2 := HSub P (S' ++ S2) ac hsplit' hf
+      have hC : lt ac.2 T = true := subLt157 hsub hiT hTap hi1 hiB hAB hiw hvP hraw
+      have hfT : FragR T = true := inT_le_fragR _ hiT
+      have hTz : T ≠ zero := by
+        intro hcc
+        rw [hcc, lt_zero_right] at hvP
+        exact Bool.noConfusion hvP
+      have hst := stE81_pre157 hu huM Hpu P (ac :: (S' ++ S2)) hsplit'
+      have hv' : lt (wVal157 (P ++ [ac])) T = true := by
+        cases hs2 : (P.foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))).2 with
+        | none =>
+            have hv2 : ((P ++ [ac]).foldl (stepF (reg 1) (baseOf 0))
+                ((none : Option Term), (none : Option Term))).2
+                = some (phiNF ac.1 (plus (baseOf 0) (sub1 ac.2))) := by
+              rw [foldl_snoc157, stepF_snd_veb88 hf, hs2]
+            have hwv : wVal157 (P ++ [ac])
+                = phiNF ac.1 (plus (baseOf 0) (sub1 ac.2)) := by
+              unfold wVal157
+              rw [hv2]
+              rfl
+            rw [hwv]
+            have harg : lt (plus (baseOf 0) (sub1 ac.2)) T = true :=
+              lt_plus_ap114 hTap hTz hfT (inT_baseOf 0) (inT_sub1 hi2)
+                (show lt (baseOf 0) T = true from lt_zero_left hTz)
+                (lt_of_le_of_lt3 (inT_le_fragR _ (inT_sub1 hi2)) (inT_le_fragR _ hi2)
+                  hfT (le_sub1_self75 hi2) hC)
+            exact hstep ac.1 _ hi1 h1M (inT_plus (inT_baseOf 0) (inT_sub1 hi2))
+              (lt_plus_M (inT_baseOf 0) (inT_sub1 hi2) (ltM_baseOf 0)
+                (ltM_sub1 hi2 h2M)) hAB harg
+        | some v =>
+            obtain ⟨hiv, hvW, _, _⟩ := hst v hs2
+            have hvM : lt v M = true := ltM_of_ltW79 hiv hvW
+            have hveq : wVal157 P = v := by
+              unfold wVal157
+              rw [hs2]
+              rfl
+            have hv2 : ((P ++ [ac]).foldl (stepF (reg 1) (baseOf 0))
+                ((none : Option Term), (none : Option Term))).2
+                = some (phiNF ac.1 (plus v ac.2)) := by
+              rw [foldl_snoc157, stepF_snd_veb88 hf, hs2]
+            have hwv : wVal157 (P ++ [ac]) = phiNF ac.1 (plus v ac.2) := by
+              unfold wVal157
+              rw [hv2]
+              rfl
+            rw [hwv]
+            have hvT : lt v T = true := by
+              rw [← hveq]
+              exact hvP
+            have harg : lt (plus v ac.2) T = true :=
+              lt_plus_ap114 hTap hTz hfT hiv hi2 hvT hC
+            exact hstep ac.1 _ hi1 h1M (inT_plus hiv hi2)
+              (lt_plus_M hiv hi2 hvM h2M) hAB harg
+      have hsplit2 : (wcnf (reg 1) (toList u)).1 = (P ++ [ac]) ++ (S' ++ S2) := by
+        rw [hsplit', List.append_assoc, List.singleton_append]
+      have hrec := ih (P ++ [ac]) S2 hsplit2
+        (fun z hz => hS0 z (List.Mem.tail _ hz))
+        (fun z hz => hVeb z (List.Mem.tail _ hz)) hv'
+      rw [show P ++ ac :: S' = (P ++ [ac]) ++ S' from by
+        rw [List.append_assoc, List.singleton_append]]
+      exact hrec
+
+/-! ## §157.7 Fold growth on the right side -/
+
+theorem descP_prefix157 : ∀ (l1 l2 : List (Term × Term)),
+    descP118 (l1 ++ l2) → descP118 l1 := by
+  intro l1
+  induction l1 with
+  | nil => intro _ _; trivial
+  | cons a t ih =>
+      intro l2 h
+      cases t with
+      | nil => trivial
+      | cons b r =>
+          exact ⟨(h : descP118 (a :: b :: (r ++ l2))).1, ih l2 (h : descP118 (a :: b :: (r ++ l2))).2⟩
+
+theorem lt_one_E81_157 : lt TM.Term.one E081 = true := by decide
+
+theorem le_psi_mono157 {i j : Term} (h : le i j = true) :
+    le (psi (reg 1) i) (psi (reg 1) j) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [eq_of_beq he]
+    exact Evidence.WF.le_self _
+  · have hne : psi (reg 1) i ≠ psi (reg 1) j := by
+      intro hc
+      injection hc with _ h2
+      rw [h2, lt_irrefl] at hl
+      exact Bool.noConfusion hl
+    refine le_of_lt ?_
+    rw [lt_psi_psi100 hne, if_pos rfl]
+    exact hl
+
+theorem lt_psi_smono157 {i j : Term} (h : lt i j = true) :
+    lt (psi (reg 1) i) (psi (reg 1) j) = true := by
+  have hne : psi (reg 1) i ≠ psi (reg 1) j := by
+    intro hc
+    injection hc with _ h2
+    rw [h2, lt_irrefl] at h
+    exact Bool.noConfusion h
+  rw [lt_psi_psi100 hne, if_pos rfl]
+  exact h
+
+theorem le_self_plus157 {i d : Term} (hi : inT i = true) (hd : inT d = true) :
+    le i (plus i d) = true := by
+  have h := plus_mono_right_inT i hi zero d inT_zero hd (le_zero_left _)
+  rwa [plus_nil (show toList (zero : Term) = [] from rfl)] at h
+
+theorem lt_self_plus157 {i d : Term} (hi : inT i = true) (hd : inT d = true)
+    (hz : d ≠ zero) : lt i (plus i d) = true := by
+  have h1 : lt i (plus i TM.Term.one) = true := lt_self_plus_one_inT i hi
+  have h2 : le (plus i TM.Term.one) (plus i d) = true :=
+    plus_mono_right_inT i hi TM.Term.one d inT_one hd (le_one157 hd hz)
+  exact lt_of_lt_of_le3 (inT_le_fragR _ hi) (inT_le_fragR _ (inT_plus hi inT_one))
+    (inT_le_fragR _ (inT_plus hi hd)) h1 h2
+
+/-- **The right side never falls back.**  From the state right after the
+    divergence step `y`, folding any further pairs short of the last one keeps
+    the value at least `T`. -/
+theorem tLe157 {u : Term} (hu : inT u = true) (huM : lt u M = true)
+    (Hpu : PsiIdxOK 0 u) {R ty' : List (Term × Term)} {y cb : Term × Term}
+    (hsplit : (wcnf (reg 1) (toList u)).1 = R ++ y :: (ty' ++ [cb]))
+    {T : Term}
+    (hT2 : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))).2 = some T) :
+    ∃ v', ((R ++ y :: ty').foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))).2 = some v' ∧ le T v' = true := by
+  obtain ⟨hc, hd⟩ := inT_toList u hu
+  have hmL := ltM_toList u hu huM
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList u) hc hd hmL
+  have hsplit1 : (wcnf (reg 1) (toList u)).1 = (R ++ [y]) ++ (ty' ++ [cb]) := by
+    rw [hsplit, List.append_assoc, List.singleton_append]
+  -- T's facts
+  have hstE := stE81_pre157 hu huM Hpu (R ++ [y]) (ty' ++ [cb]) hsplit1
+  obtain ⟨hiT, hTW, hTap, hTE⟩ := hstE T hT2
+  have h1T : lt TM.Term.one T = true :=
+    lt_of_lt_of_le3 (show FragR TM.Term.one = true from rfl) (inT_le_fragR _ inT_E81)
+      (inT_le_fragR _ hiT) lt_one_E81_157 hTE
+  have hTM : lt T M = true := ltM_of_ltW79 hiT hTW
+  -- descent and the fired/Veblen split of ty'
+  have hdP : descP118 ((wcnf (reg 1) (toList u)).1) := wcnf_descP154 _ hc hd hmL
+  have hdPt : descP118 (ty' ++ [cb]) := by
+    rw [hsplit1] at hdP
+    exact descP_suffix154 _ _ hdP
+  have hdty : descP118 ty' := descP_prefix157 _ _ hdPt
+  have hmemty : ∀ z ∈ ty', z ∈ (wcnf (reg 1) (toList u)).1 := by
+    intro z hz
+    rw [hsplit1]
+    exact List.mem_append_right _ (List.mem_append_left _ hz)
+  obtain ⟨F, V, hFV, hF, hV⟩ := splitFV157 ty' hdty
+    (fun z hz => (hallOK z (hmemty z hz)).1)
+  -- the value after the fired block dominates T
+  have hsplit2 : (wcnf (reg 1) (toList u)).1 = ((R ++ [y]) ++ F) ++ (V ++ [cb]) := by
+    have hassoc : ((R ++ [y]) ++ F) ++ (V ++ [cb])
+        = (R ++ [y]) ++ ((F ++ V) ++ [cb]) := by
+      simp only [List.append_assoc]
+    rw [hsplit1, hFV, hassoc]
+  obtain ⟨v2, hs22, hTv2⟩ : ∃ v2,
+      (((R ++ [y]) ++ F).foldl (stepF (reg 1) (baseOf 0))
+        ((none : Option Term), (none : Option Term))).2 = some v2 ∧ le T v2 = true := by
+    cases F with
+    | nil =>
+        rw [List.append_nil]
+        exact ⟨T, hT2, Evidence.WF.le_self T⟩
+    | cons f F'' =>
+        -- the head of the fired block sits in `ty'`, so `y` fires and so does all of `R`
+        have hfmem : f ∈ ty' := by
+          rw [hFV]
+          exact List.mem_append_left _ (List.Mem.head _)
+        have hfW : le (reg 1) f.1 = true := hF f (List.Mem.head _)
+        have hdPy : descP118 (y :: (ty' ++ [cb])) := by
+          rw [hsplit] at hdP
+          exact descP_suffix154 _ _ hdP
+        have hinY : ∀ w ∈ y :: (ty' ++ [cb]), inT w.1 = true := by
+          intro w hw
+          refine (hallOK w ?_).1
+          rw [hsplit]
+          exact List.mem_append_right _ hw
+        have hfy : lt f.1 y.1 = true :=
+          descP_bound154 (ty' ++ [cb]) y hinY hdPy f (List.mem_append_left _ hfmem)
+        have hyW : le (reg 1) y.1 = true := by
+          refine le_of_lt ?_
+          exact lt_of_le_of_lt3 (inT_le_fragR _ (inT_reg 1))
+            (inT_le_fragR _ (hallOK f (hmemty f hfmem)).1)
+            (inT_le_fragR _ (hinY y (List.Mem.head _))) hfW hfy
+        have hRfire : ∀ z ∈ R, le (reg 1) z.1 = true := by
+          intro z hz
+          have hyz : lt y.1 z.1 = true := by
+            refine descP_cross157 R y (ty' ++ [cb]) ?_ ?_ z hz
+            · rw [← hsplit]
+              exact hdP
+            · intro w hw
+              refine (hallOK w ?_).1
+              rw [hsplit]
+              exact hw
+          refine le_of_lt ?_
+          refine lt_of_le_of_lt3 (inT_le_fragR _ (inT_reg 1))
+            (inT_le_fragR _ (hinY y (List.Mem.head _)))
+            (inT_le_fragR _ ?_) hyW hyz
+          refine (hallOK z ?_).1
+          rw [hsplit]
+          exact List.mem_append_left _ hz
+        have hRyfire : ∀ z ∈ R ++ [y], le (reg 1) z.1 = true := by
+          intro z hz
+          rcases List.mem_append.mp hz with h1 | h1
+          · exact hRfire z h1
+          · rcases List.mem_cons.mp h1 with h2 | h2
+            · rw [h2]; exact hyW
+            · cases h2
+        -- coherence of both states
+        have hcoh1 : Coh157 ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))) :=
+          coh_fold157 _ _ hRyfire rfl
+        obtain ⟨i1, hs11⟩ : ∃ i1, ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))).1 = some i1 := by
+          cases hs1c : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+              ((none : Option Term), (none : Option Term))).1 with
+          | none =>
+              exfalso
+              have h2 := hcoh1
+              unfold Coh157 at h2
+              rw [hs1c, hT2] at h2
+              have h3 : (some T : Option Term) = none := h2
+              exact Option.some_ne_none T h3
+          | some i1 => exact ⟨i1, rfl⟩
+        have hTpsi : T = psi (reg 1) i1 := by
+          have h2 := hcoh1
+          unfold Coh157 at h2
+          rw [hs11, hT2] at h2
+          have h3 : (some T : Option Term) = some (psi (reg 1) i1) := h2
+          exact Option.some.inj h3
+        -- StInv at the (R ++ [y]) prefix, for `inT i1`
+        obtain ⟨hstInv1, _⟩ := preSt_inv129 hu huM Hpu (R ++ [y]) (ty' ++ [cb]) hsplit1.symm
+        have hi1 : inT i1 = true := (hstInv1.1 i1 hs11).1
+        -- fold the fired block with `foldSome120`
+        have hinF : ∀ z ∈ (f :: F''), inT z.1 = true ∧ inT z.2 = true := by
+          intro z hz
+          have h2 := hallOK z (by
+            rw [hsplit1]
+            refine List.mem_append_right _ (List.mem_append_left _ ?_)
+            rw [hFV]
+            exact List.mem_append_left _ hz)
+          exact ⟨h2.1, h2.2.2.1⟩
+        have hs1eta : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term)))
+            = (some i1, ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+                ((none : Option Term), (none : Option Term))).2) := by
+          rw [← hs11]
+        have hidx2 : (((R ++ [y]) ++ (f :: F'')).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))).1
+            = some (plus i1 (sumDD112 (reg 1) (f :: F''))) := by
+          rw [List.foldl_append, hs1eta]
+          exact foldSome120 (inT_reg 1) (f :: F'') hinF hF i1 _ hi1
+        have hcoh2 : Coh157 (((R ++ [y]) ++ (f :: F'')).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))) := by
+          refine coh_fold157 _ _ ?_ rfl
+          intro z hz
+          rcases List.mem_append.mp hz with h1 | h1
+          · exact hRyfire z h1
+          · exact hF z h1
+        have hs22 : (((R ++ [y]) ++ (f :: F'')).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))).2
+            = some (psi (reg 1) (plus i1 (sumDD112 (reg 1) (f :: F'')))) := by
+          have h2 := hcoh2
+          unfold Coh157 at h2
+          rw [hidx2] at h2
+          exact h2
+        refine ⟨psi (reg 1) (plus i1 (sumDD112 (reg 1) (f :: F''))), hs22, ?_⟩
+        rw [hTpsi]
+        refine le_psi_mono157 ?_
+        exact le_self_plus157 hi1 (inT_sumDD112 (inT_reg 1) _ hinF)
+  -- Veblen tail: the value never drops below `T`
+  obtain ⟨hstInv2, _⟩ := preSt_inv129 hu huM Hpu ((R ++ [y]) ++ F) (V ++ [cb]) hsplit2.symm
+  have hap2 : ApV117 (((R ++ [y]) ++ F).foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))) :=
+    apV117_fold _ _ apV117_none
+  have hallV : ∀ ac ∈ V, inT ac.1 = true ∧ lt ac.1 M = true ∧ inT ac.2 = true
+      ∧ lt ac.2 M = true := by
+    intro ac hac
+    refine hallOK ac ?_
+    rw [hsplit2]
+    exact List.mem_append_right _ (List.mem_append_left _ hac)
+  have hmain := geV117_fold hiT hTap h1T hTM V _ hstInv2 hap2 ⟨v2, hs22, hTv2⟩ hallV hV
+  obtain ⟨v', hv'2, hTv'⟩ := hmain
+  refine ⟨v', ?_, hTv'⟩
+  have heq : R ++ y :: ty' = ((R ++ [y]) ++ F) ++ V := by
+    rw [List.append_assoc, List.append_assoc, List.singleton_append, hFV]
+  rw [heq, List.foldl_append]
+  exact hv'2
+
+/-! ## §157.8 Sums of `Ω₁`-multiples absorb small tails -/
+
+theorem hd_le157 {l c : Term} {r : List Term} (hil : inT l = true)
+    (h : toList l = c :: r) : le c l = true := by
+  cases r with
+  | nil =>
+      have hle : l = c := by
+        rw [← inT_ofList_toList l hil, h]
+        rfl
+      rw [hle]
+      exact Evidence.WF.le_self c
+  | cons b t =>
+      have hle : l = add c (ofList (b :: t)) := by
+        rw [← inT_ofList_toList l hil, h]
+        rfl
+      rw [hle]
+      exact le_left_add97 (by rw [← hle]; exact hil)
+
+/-- Anything `< Ω₁` sits below a nonzero sum of `≥ Ω₁` components. -/
+theorem lt_big_of_ltW157 {v l : Term} (hiv : inT v = true) (hil : inT l = true)
+    (hv : ∀ c ∈ toList v, le (reg 1) c = true) (hlW : lt l (reg 1) = true)
+    (hvz : v ≠ zero) : lt l v = true := by
+  cases hL : toList l with
+  | nil =>
+      rw [toList_eq_nil l hL]
+      exact lt_zero_left hvz
+  | cons b1 r =>
+      cases hV : toList v with
+      | nil => exact absurd (toList_eq_nil v hV) hvz
+      | cons d V' =>
+          have hib1 : inT b1 = true := inTL_inT hil b1 (by rw [hL]; exact List.Mem.head _)
+          have hid : inT d = true := inTL_inT hiv d (by rw [hV]; exact List.Mem.head _)
+          have hb1l : le b1 l = true := hd_le157 hil hL
+          have hb1W : lt b1 (reg 1) = true :=
+            lt_of_le_of_lt3 (inT_le_fragR _ hib1) (inT_le_fragR _ hil)
+              (inT_le_fragR _ (inT_reg 1)) hb1l hlW
+          have hb1d : lt b1 d = true :=
+            lt_of_lt_of_le3 (inT_le_fragR _ hib1) (inT_le_fragR _ (inT_reg 1))
+              (inT_le_fragR _ hid) hb1W (hv d (by rw [hV]; exact List.Mem.head _))
+          exact lt_of_hd_lt hil hiv hL hV hb1d
+
+/-- Appending a `< Ω₁` term to a sum of `≥ Ω₁` components is plain concatenation. -/
+theorem plus_big_toList157 {u l : Term} (hiu : inT u = true) (hil : inT l = true)
+    (hu : ∀ c ∈ toList u, le (reg 1) c = true) (hlW : lt l (reg 1) = true) :
+    plus u l = ofList (toList u ++ toList l) := by
+  cases hL : toList l with
+  | nil =>
+      rw [plus_nil hL, List.append_nil, inT_ofList_toList u hiu]
+  | cons b1 rest =>
+      show (match toList l with
+            | [] => u
+            | b1 :: _ => ofList ((toList u).filter (fun a => le b1 a) ++ toList l)) = _
+      rw [hL]
+      dsimp only
+      have hib1 : inT b1 = true := inTL_inT hil b1 (by rw [hL]; exact List.Mem.head _)
+      have hb1l : le b1 l = true := hd_le157 hil hL
+      have hb1W : lt b1 (reg 1) = true :=
+        lt_of_le_of_lt3 (inT_le_fragR _ hib1) (inT_le_fragR _ hil)
+          (inT_le_fragR _ (inT_reg 1)) hb1l hlW
+      have hfilt : (toList u).filter (fun a => le b1 a) = toList u := by
+        refine List.filter_eq_self.mpr ?_
+        intro a ha
+        have hia : inT a = true := inTL_inT hiu a ha
+        exact le_of_lt (lt_of_lt_of_le3 (inT_le_fragR _ hib1)
+          (inT_le_fragR _ (inT_reg 1)) (inT_le_fragR _ hia) hb1W (hu a ha))
+      rw [hfilt]
+
+/-- **Absorption**: if `u < v` and both are sums of `≥ Ω₁` components, adding
+    any `< Ω₁` tail to `u` keeps it below `v`. -/
+theorem plus_lt_big157 : ∀ (n : Nat) (u v l : Term), (toList u).length ≤ n →
+    inT u = true → inT v = true → inT l = true →
+    (∀ c ∈ toList u, le (reg 1) c = true) → (∀ c ∈ toList v, le (reg 1) c = true) →
+    lt l (reg 1) = true → lt u v = true → lt (plus u l) v = true := by
+  intro n
+  induction n with
+  | zero =>
+      intro u v l hn hiu hiv hil hu hv hlW huv
+      cases hU : toList u with
+      | nil =>
+          rw [toList_eq_nil u hU, plus_zero_left_inT hil]
+          have hvz : v ≠ zero := by
+            intro hc
+            rw [hc, lt_zero_right] at huv
+            exact Bool.noConfusion huv
+          exact lt_big_of_ltW157 hiv hil hv hlW hvz
+      | cons c U' =>
+          exfalso
+          rw [hU] at hn
+          simp at hn
+  | succ n ih =>
+      intro u v l hn hiu hiv hil hu hv hlW huv
+      cases hU : toList u with
+      | nil =>
+          rw [toList_eq_nil u hU, plus_zero_left_inT hil]
+          have hvz : v ≠ zero := by
+            intro hc
+            rw [hc, lt_zero_right] at huv
+            exact Bool.noConfusion huv
+          exact lt_big_of_ltW157 hiv hil hv hlW hvz
+      | cons c U' =>
+          have hvz : v ≠ zero := by
+            intro hc
+            rw [hc, lt_zero_right] at huv
+            exact Bool.noConfusion huv
+          cases hV : toList v with
+          | nil => exact absurd (toList_eq_nil v hV) hvz
+          | cons d V' =>
+              have hic : inT c = true := inTL_inT hiu c (by rw [hU]; exact List.Mem.head _)
+              have hid : inT d = true := inTL_inT hiv d (by rw [hV]; exact List.Mem.head _)
+              -- shared plumbing
+              have hcu := (inT_toList u hiu).1
+              have hdu := (inT_toList u hiu).2
+              have hcl := (inT_toList l hil).1
+              have hplTL : plus u l = ofList (toList u ++ toList l) :=
+                plus_big_toList157 hiu hil hu hlW
+              have hLL : inTL (toList u ++ toList l) = true := inTL_append89 hcu hcl
+              have hplt : toList (plus u l) = c :: (U' ++ toList l) := by
+                rw [hplTL, toList_ofList89 hLL, hU]
+                rfl
+              by_cases hcd : (c == d) = true
+              · have hceq : c = d := eq_of_beq hcd
+                rw [← hceq] at hV
+                -- tails
+                have hcU' : inTL U' = true := by
+                  have h2 := hcu
+                  rw [hU] at h2
+                  exact (inTL_cons.mp h2).2
+                have hdU' : descL U' = true := by
+                  have h2 := hdu
+                  rw [hU] at h2
+                  exact descL_tail h2
+                have hcV' : inTL V' = true := by
+                  have h2 := (inT_toList v hiv).1
+                  rw [hV] at h2
+                  exact (inTL_cons.mp h2).2
+                have hdV' : descL V' = true := by
+                  have h2 := (inT_toList v hiv).2
+                  rw [hV] at h2
+                  exact descL_tail h2
+                have hiu' : inT (ofList U') = true := inT_ofList U' hcU' hdU'
+                have hiv' : inT (ofList V') = true := inT_ofList V' hcV' hdV'
+                have htu' : toList (ofList U') = U' := toList_ofList89 hcU'
+                have htv' : toList (ofList V') = V' := toList_ofList89 hcV'
+                have htails : lt (ofList U') (ofList V') = true :=
+                  lt_hd_eq_inv89 hiu hiv hU hV hiu' hiv' htu' htv' huv
+                have hlen : (toList (ofList U')).length ≤ n := by
+                  rw [htu']
+                  rw [hU, List.length_cons] at hn
+                  omega
+                have hu' : ∀ x ∈ toList (ofList U'), le (reg 1) x = true := by
+                  intro x hx
+                  rw [htu'] at hx
+                  exact hu x (by rw [hU]; exact List.Mem.tail _ hx)
+                have hv' : ∀ x ∈ toList (ofList V'), le (reg 1) x = true := by
+                  intro x hx
+                  rw [htv'] at hx
+                  exact hv x (by rw [hV]; exact List.Mem.tail _ hx)
+                have hrec : lt (plus (ofList U') l) (ofList V') = true :=
+                  ih (ofList U') (ofList V') l hlen hiu' hiv' hil hu' hv' hlW htails
+                have hrebuild : plus (ofList U') l = ofList (U' ++ toList l) := by
+                  have h2 := plus_big_toList157 hiu' hil hu' hlW
+                  rw [htu'] at h2
+                  exact h2
+                exact lt_of_hd_eq77 (inT_plus hiu hil) hiv hplt hV
+                  (by rw [← hrebuild]; exact hrec)
+              · by_cases hlt : lt c d = true
+                · exact lt_of_hd_lt (inT_plus hiu hil) hiv hplt hV hlt
+                · exfalso
+                  have hled : le c d = false := by
+                    show ((c == d) || lt c d) = false
+                    rw [bool_false (fun hcc => hcd hcc), bool_false (fun hcc => hlt hcc)]
+                    rfl
+                  have hdc : lt d c = true := lt_of_not_le_inT hic hid hled
+                  have hvu : lt v u = true := lt_of_hd_lt hiv hiu hV hU hdc
+                  rw [lt_asymm_inT hiv hiu hvu] at huv
+                  exact Bool.noConfusion huv
+
+/-! ## §157.9 Fired-index domination -/
+
+theorem le_omegaNF157 {x y : Term} (hx : inT x = true) (hy : inT y = true)
+    (h : le x y = true) : le (omegaNF x) (omegaNF y) = true := by
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [eq_of_beq he]
+    exact Evidence.WF.le_self _
+  · exact le_of_lt (lt_omegaNF_inT79 hx hy hl)
+
+theorem comp_le157 {t p : Term} (hit : inT t = true) (hp : p ∈ toList t) :
+    le p t = true := by
+  cases hL : toList t with
+  | nil => rw [hL] at hp; cases hp
+  | cons c r =>
+      have hp2 : p ∈ c :: r := by rw [← hL]; exact hp
+      have hcle : le c t = true := hd_le157 hit hL
+      have hcu := (inT_toList t hit).1
+      have hdu := (inT_toList t hit).2
+      rw [hL] at hcu hdu
+      have hic : inT c = true := (inTL_cons.mp hcu).1.2
+      rcases List.mem_cons.mp hp2 with h1 | h1
+      · rw [h1]; exact hcle
+      · have hple : le p c = true :=
+          descL_bound_inT r c hic (inTL_cons.mp hcu).2 hdu p h1
+        have hip : inT p = true := inTL_inT hit p hp
+        exact le_trans3 (inT_le_fragR _ hip) (inT_le_fragR _ hic)
+          (inT_le_fragR _ hit) hple hcle
+
+/-- A fired exponent has a `≥ Ω₁` head component. -/
+theorem fired_head157 {A : Term} (hiA : inT A = true) (hW : le (reg 1) A = true) :
+    ∃ b s, toList A = b :: s ∧ lt b (reg 1) = false := by
+  cases hL : toList A with
+  | nil =>
+      exfalso
+      have hz : A = zero := toList_eq_nil A hL
+      rw [hz] at hW
+      exact Term.noConfusion (reg1_eq100.symm.trans (le_zero_eq116 hW))
+  | cons b s =>
+      have hib : inT b = true := inTL_inT hiA b (by rw [hL]; exact List.Mem.head _)
+      have hle : le (reg 1) b = true :=
+        le_hd_of_le_ap117 (inT_reg 1) (show (reg 1 : Term).isAP = true from rfl) hiA hL hW
+      exact ⟨b, s, rfl, lt_false_of_le120 (inT_reg 1) hib hle⟩
+
+theorem inTL_map_omegaNF157 {s : Term} (his : inT s = true) :
+    inTL ((toList s).map (fun p => omegaNF (plus (reg 1) (logOm p)))) = true := by
+  show (((toList s).map _).all _) = true
+  rw [List.all_eq_true]
+  intro x hx
+  obtain ⟨p, hp, hpe⟩ := List.mem_map.mp hx
+  have hip : inT p = true := inTL_inT his p hp
+  have h1 : inT (omegaNF (plus (reg 1) (logOm p))) = true :=
+    inT_omegaNF (inT_plus (inT_reg 1) (inT_logOm hip))
+  rw [← hpe]
+  show ((omegaNF (plus (reg 1) (logOm p))).isAP && inT (omegaNF (plus (reg 1) (logOm p)))) = true
+  rw [isAP_omegaNF, h1]
+  rfl
+
+/-- Every component of `Ω₁·s` is `≥ Ω₁`. -/
+theorem mulLW_comp_ge157 {s : Term} (his : inT s = true) {c : Term}
+    (hc : c ∈ toList (mulL (reg 1) s)) : le (reg 1) c = true := by
+  have hTL : toList (mulL (reg 1) s)
+      = (toList s).map (fun p => omegaNF (plus (reg 1) (logOm p))) := by
+    show toList (ofList _) = _
+    exact toList_ofList89 (inTL_map_omegaNF157 his)
+  rw [hTL] at hc
+  obtain ⟨p, hp, hpe⟩ := List.mem_map.mp hc
+  have hip : inT p = true := inTL_inT his p hp
+  have hle : le (reg 1) (plus (reg 1) (logOm p)) = true :=
+    le_self_plus157 (inT_reg 1) (inT_logOm hip)
+  have h3 : le (omegaNF (reg 1)) (omegaNF (plus (reg 1) (logOm p))) = true :=
+    le_omegaNF157 (inT_reg 1) (inT_plus (inT_reg 1) (inT_logOm hip)) hle
+  rw [omegaNF_reg1_80] at h3
+  rw [← hpe]
+  exact h3
+
+/-- **The exponent absorption**: `Ω₁·(z₁ ⊖ Ω₁) ⊕ l < Ω₁·(y₁ ⊖ Ω₁)` for fired
+    `z₁ < y₁` and any `l < Ω₁`. -/
+theorem expLt157 {z1 y1 l : Term} (hiz : inT z1 = true) (hzM : lt z1 M = true)
+    (hiy : inT y1 = true) (hyM : lt y1 M = true)
+    (hzW : le (reg 1) z1 = true) (hyW : le (reg 1) y1 = true)
+    (hzy : lt z1 y1 = true)
+    (hil : inT l = true) (hlW : lt l (reg 1) = true) :
+    lt (plus (mulL (reg 1) (subAP (reg 1) z1)) l)
+      (mulL (reg 1) (subAP (reg 1) y1)) = true := by
+  obtain ⟨bz, sz, hLz, hbz⟩ := fired_head157 hiz hzW
+  obtain ⟨by_, sy, hLy, hby⟩ := fired_head157 hiy hyW
+  have hs : lt (subAP (reg 1) z1) (subAP (reg 1) y1) = true :=
+    subAP_smono154 hiz hiy hLz hLy hbz hby hzy
+  have hE : lt (mulL (reg 1) (subAP (reg 1) z1))
+      (mulL (reg 1) (subAP (reg 1) y1)) = true :=
+    mulL_smono_right110 (inT_reg 1) (inT_subAP hiz) (inT_subAP hiy)
+      (ltM_subAP hiz hzM) (ltM_subAP hiy hyM) hs
+  exact plus_lt_big157 ((toList (mulL (reg 1) (subAP (reg 1) z1))).length) _ _ _
+    (Nat.le_refl _) (inT_mulL mulDescInT (inT_reg 1) (inT_subAP hiz))
+    (inT_mulL mulDescInT (inT_reg 1) (inT_subAP hiy)) hil
+    (fun c hc => mulLW_comp_ge157 (inT_subAP hiz) hc)
+    (fun c hc => mulLW_comp_ge157 (inT_subAP hiy) hc) hlW hE
+
+/-- One fired pair's `Δ` with exponent below `y₁` sits below `ω^{Ω₁·(y₁ ⊖ Ω₁)}`. -/
+theorem dd_lt_omegaE157 {ac : Term × Term} {y1 : Term}
+    (hi1 : inT ac.1 = true) (h1M : lt ac.1 M = true)
+    (hi2 : inT ac.2 = true) (h2M : lt ac.2 M = true) (h2W : lt ac.2 (reg 1) = true)
+    (hiy : inT y1 = true) (hyM : lt y1 M = true)
+    (hacW : le (reg 1) ac.1 = true) (hyW : le (reg 1) y1 = true)
+    (hlt : lt ac.1 y1 = true) :
+    lt (ddOf75 (reg 1) ac) (omegaNF (mulL (reg 1) (subAP (reg 1) y1))) = true := by
+  have hiEz : inT (mulL (reg 1) (subAP (reg 1) ac.1)) = true :=
+    inT_mulL mulDescInT (inT_reg 1) (inT_subAP hi1)
+  have hiEy : inT (mulL (reg 1) (subAP (reg 1) y1)) = true :=
+    inT_mulL mulDescInT (inT_reg 1) (inT_subAP hiy)
+  have hTLd : ddOf75 (reg 1) ac
+      = ofList ((toList ac.2).map (fun p =>
+          omegaNF (plus (mulL (reg 1) (subAP (reg 1) ac.1)) (logOm p)))) := rfl
+  rw [hTLd]
+  refine lt_ofList_ap114 (isAP_omegaNF _) (ne_zero_of_isAP (isAP_omegaNF _)) _ ?_
+  intro c hc
+  obtain ⟨p, hp, hpe⟩ := List.mem_map.mp hc
+  rw [← hpe]
+  have hip : inT p = true := inTL_inT hi2 p hp
+  have hpAP : p.isAP = true := inTL_isAP hi2 p hp
+  have hpM : lt p M = true := ltM_toList ac.2 hi2 h2M p hp
+  have hpW : lt p (reg 1) = true :=
+    lt_of_le_of_lt3 (inT_le_fragR _ hip) (inT_le_fragR _ hi2)
+      (inT_le_fragR _ (inT_reg 1)) (comp_le157 hi2 hp) h2W
+  have hlog : lt (logOm p) (reg 1) = true := ltW_logOm106 hip hpAP hpM hpW
+  have hexp := expLt157 hi1 h1M hiy hyM hacW hyW hlt (inT_logOm hip) hlog
+  exact lt_omegaNF_inT79 (inT_plus hiEz (inT_logOm hip)) hiEy hexp
+
+theorem mulL_one157 (E : Term) : mulL E TM.Term.one = omegaNF E := by
+  show ofList [omegaNF (plus E (logOm TM.Term.one))] = omegaNF E
+  rw [show logOm TM.Term.one = zero from rfl,
+    plus_nil (show toList (zero : Term) = [] from rfl)]
+  rfl
+
+theorem sumDD_lt_ap157 {S : Term} (hSap : S.isAP = true) (hSz : S ≠ zero)
+    (hfS : FragR S = true) :
+    ∀ (F : List (Term × Term)),
+      (∀ z ∈ F, inT z.1 = true ∧ inT z.2 = true) →
+      (∀ z ∈ F, lt (ddOf75 (reg 1) z) S = true) →
+      lt (sumDD112 (reg 1) F) S = true
+  | [], _, _ => lt_zero_left hSz
+  | z :: F', hin, hlt => by
+      rw [sumDD_cons112]
+      exact lt_plus_ap114 hSap hSz hfS
+        (inT_ddOf75 (inT_reg 1) (hin z (List.Mem.head _)).1 (hin z (List.Mem.head _)).2)
+        (inT_sumDD112 (inT_reg 1) F' (fun a ha => hin a (List.Mem.tail _ ha)))
+        (hlt z (List.Mem.head _))
+        (sumDD_lt_ap157 hSap hSz hfS F' (fun a ha => hin a (List.Mem.tail _ ha))
+          (fun a ha => hlt a (List.Mem.tail _ ha)))
+
+/-- **Δ-sum domination.**  A lexicographically smaller fired head followed by a
+    strictly smaller fired tail accumulates less than the single bigger pair. -/
+theorem sumDD_lt157 {x y : Term × Term} {F : List (Term × Term)}
+    (hix1 : inT x.1 = true) (hx1M : lt x.1 M = true)
+    (hix2 : inT x.2 = true) (hx2M : lt x.2 M = true) (hx2W : lt x.2 (reg 1) = true)
+    (hiy1 : inT y.1 = true) (hy1M : lt y.1 M = true)
+    (hiy2 : inT y.2 = true) (hy2M : lt y.2 M = true) (hy2z : y.2 ≠ zero)
+    (hxW : le (reg 1) x.1 = true) (hyW : le (reg 1) y.1 = true)
+    (hinF : ∀ z ∈ F, inT z.1 = true ∧ lt z.1 M = true ∧ inT z.2 = true
+      ∧ lt z.2 M = true ∧ lt z.2 (reg 1) = true)
+    (hFW : ∀ z ∈ F, le (reg 1) z.1 = true)
+    (hFx : ∀ z ∈ F, lt z.1 x.1 = true)
+    (hdiv : lt x.1 y.1 = true ∨ (x.1 = y.1 ∧ lt x.2 y.2 = true)) :
+    lt (sumDD112 (reg 1) (x :: F)) (ddOf75 (reg 1) y) = true := by
+  have hiDy : inT (ddOf75 (reg 1) y) = true := inT_ddOf75 (inT_reg 1) hiy1 hiy2
+  rcases hdiv with hlt | ⟨heq, hC⟩
+  · -- strict exponent drop: everything sits below ω^{Ω₁·(y₁ ⊖ Ω₁)} ≤ Δ_y
+    have hiEy : inT (mulL (reg 1) (subAP (reg 1) y.1)) = true :=
+      inT_mulL mulDescInT (inT_reg 1) (inT_subAP hiy1)
+    have hbound : ∀ z ∈ (x :: F),
+        lt (ddOf75 (reg 1) z) (omegaNF (mulL (reg 1) (subAP (reg 1) y.1))) = true := by
+      intro z hz
+      rcases List.mem_cons.mp hz with h1 | h1
+      · rw [h1]
+        exact dd_lt_omegaE157 hix1 hx1M hix2 hx2M hx2W hiy1 hy1M hxW hyW hlt
+      · obtain ⟨hz1, hz1M, hz2, hz2M, hz2W⟩ := hinF z h1
+        exact dd_lt_omegaE157 hz1 hz1M hz2 hz2M hz2W hiy1 hy1M (hFW z h1) hyW
+          (lt_trans_inT hz1 hix1 hiy1 (hFx z h1) hlt)
+    have hin' : ∀ z ∈ (x :: F), inT z.1 = true ∧ inT z.2 = true := by
+      intro z hz
+      rcases List.mem_cons.mp hz with h1 | h1
+      · rw [h1]; exact ⟨hix1, hix2⟩
+      · exact ⟨(hinF z h1).1, (hinF z h1).2.2.1⟩
+    have hsum := sumDD_lt_ap157 (isAP_omegaNF _)
+      (ne_zero_of_isAP (isAP_omegaNF _))
+      (inT_le_fragR _ (inT_omegaNF hiEy)) (x :: F) hin' hbound
+    have hle2 : le (omegaNF (mulL (reg 1) (subAP (reg 1) y.1)))
+        (ddOf75 (reg 1) y) = true := by
+      have h2 : le (mulL (mulL (reg 1) (subAP (reg 1) y.1)) TM.Term.one)
+          (mulL (mulL (reg 1) (subAP (reg 1) y.1)) y.2) = true :=
+        le_mulL_mono115 hiEy inT_one hiy2 lt_one_M hy2M (le_one157 hiy2 hy2z)
+      rw [mulL_one157] at h2
+      exact h2
+    exact lt_of_lt_of_le3
+      (inT_le_fragR _ (inT_sumDD112 (inT_reg 1) _ hin'))
+      (inT_le_fragR _ (inT_omegaNF hiEy)) (inT_le_fragR _ hiDy) hsum hle2
+  · -- equal exponents, coefficient drop
+    have hiE : inT (mulL (reg 1) (subAP (reg 1) x.1)) = true :=
+      inT_mulL mulDescInT (inT_reg 1) (inT_subAP hix1)
+    have hEeq : subAP (reg 1) x.1 = subAP (reg 1) y.1 := by rw [heq]
+    have hplus1 : le (plus x.2 TM.Term.one) y.2 = true := by
+      rw [plus_one_eq_succT_inT hix2]
+      exact le_succT_of_lt_inT x.2 hix2 y.2 hiy2 hC
+    cases F with
+    | nil =>
+        rw [sumDD_cons112, show sumDD112 (reg 1) [] = zero from rfl,
+          plus_nil (show toList (zero : Term) = [] from rfl)]
+        show lt (mulL (mulL (reg 1) (subAP (reg 1) x.1)) x.2) (ddOf75 (reg 1) y) = true
+        rw [hEeq]
+        exact mulL_smono_right110
+          (inT_mulL mulDescInT (inT_reg 1) (inT_subAP hiy1)) hix2 hiy2 hx2M hy2M hC
+    | cons f F'' =>
+        rw [sumDD_cons112]
+        have hinF' : ∀ z ∈ (f :: F''), inT z.1 = true ∧ inT z.2 = true :=
+          fun z hz => ⟨(hinF z hz).1, (hinF z hz).2.2.1⟩
+        have hboundF : ∀ z ∈ (f :: F''),
+            lt (ddOf75 (reg 1) z) (omegaNF (mulL (reg 1) (subAP (reg 1) x.1))) = true := by
+          intro z hz
+          obtain ⟨hz1, hz1M, hz2, hz2M, hz2W⟩ := hinF z hz
+          exact dd_lt_omegaE157 hz1 hz1M hz2 hz2M hz2W hix1 hx1M (hFW z hz) hxW (hFx z hz)
+        have hsumF := sumDD_lt_ap157 (isAP_omegaNF _)
+          (ne_zero_of_isAP (isAP_omegaNF _))
+          (inT_le_fragR _ (inT_omegaNF hiE)) (f :: F'') hinF' hboundF
+        have hiDx : inT (ddOf75 (reg 1) x) = true := inT_ddOf75 (inT_reg 1) hix1 hix2
+        have hstep1 : lt (plus (ddOf75 (reg 1) x) (sumDD112 (reg 1) (f :: F'')))
+            (plus (ddOf75 (reg 1) x)
+              (omegaNF (mulL (reg 1) (subAP (reg 1) x.1)))) = true :=
+          plus_smono_right_inT79 _ hiDx _ _
+            (inT_sumDD112 (inT_reg 1) _ hinF') (inT_omegaNF hiE) hsumF
+        have hstep2 : plus (ddOf75 (reg 1) x)
+              (omegaNF (mulL (reg 1) (subAP (reg 1) x.1)))
+            = mulL (mulL (reg 1) (subAP (reg 1) x.1)) (plus x.2 TM.Term.one) := by
+          rw [mulL_distrib112 hiE hix2 inT_one hx2M lt_one_M, mulL_one157]
+          rfl
+        have hstep3 : le (mulL (mulL (reg 1) (subAP (reg 1) x.1)) (plus x.2 TM.Term.one))
+            (ddOf75 (reg 1) y) = true := by
+          show le (mulL (mulL (reg 1) (subAP (reg 1) x.1)) (plus x.2 TM.Term.one))
+            (mulL (mulL (reg 1) (subAP (reg 1) y.1)) y.2) = true
+          rw [← hEeq]
+          exact le_mulL_mono115 hiE (inT_plus hix2 inT_one) hiy2
+            (lt_plus_M hix2 inT_one hx2M lt_one_M) hy2M hplus1
+        rw [hstep2] at hstep1
+        exact lt_of_lt_of_le3
+          (inT_le_fragR _ (inT_plus hiDx (inT_sumDD112 (inT_reg 1) _ hinF')))
+          (inT_le_fragR _ (inT_mulL mulDescInT hiE (inT_plus hix2 inT_one)))
+          (inT_le_fragR _ hiDy) hstep1 hstep3
+
+/-- **The index after `a`'s fired block is below the index of `b`'s step `y`.** -/
+theorem idxLt157 {sR : Option Term × Option Term} {x y : Term × Term}
+    {F : List (Term × Term)}
+    (hix1 : inT x.1 = true) (hx1M : lt x.1 M = true)
+    (hix2 : inT x.2 = true) (hx2M : lt x.2 M = true) (hx2W : lt x.2 (reg 1) = true)
+    (hx2z : x.2 ≠ zero)
+    (hiy1 : inT y.1 = true) (hy1M : lt y.1 M = true)
+    (hiy2 : inT y.2 = true) (hy2M : lt y.2 M = true) (hy2z : y.2 ≠ zero)
+    (hxW : le (reg 1) x.1 = true) (hyW : le (reg 1) y.1 = true)
+    (hinF : ∀ z ∈ F, inT z.1 = true ∧ lt z.1 M = true ∧ inT z.2 = true
+      ∧ lt z.2 M = true ∧ lt z.2 (reg 1) = true)
+    (hFW : ∀ z ∈ F, le (reg 1) z.1 = true)
+    (hFx : ∀ z ∈ F, lt z.1 x.1 = true)
+    (hdiv : lt x.1 y.1 = true ∨ (x.1 = y.1 ∧ lt x.2 y.2 = true))
+    (hsR : sR = ((none : Option Term), (none : Option Term))
+      ∨ ∃ i0, sR.1 = some i0 ∧ inT i0 = true) :
+    ∃ ia, ((x :: F).foldl (stepF (reg 1) (baseOf 0)) sR).1 = some ia
+      ∧ lt ia (idxOf (reg 1) sR y) = true := by
+  have hinFx : ∀ z ∈ (x :: F), inT z.1 = true ∧ inT z.2 = true := by
+    intro z hz
+    rcases List.mem_cons.mp hz with h1 | h1
+    · rw [h1]; exact ⟨hix1, hix2⟩
+    · exact ⟨(hinF z h1).1, (hinF z h1).2.2.1⟩
+  have hfireFx : ∀ z ∈ (x :: F), le (reg 1) z.1 = true := by
+    intro z hz
+    rcases List.mem_cons.mp hz with h1 | h1
+    · rw [h1]; exact hxW
+    · exact hFW z h1
+  have hcore : lt (sumDD112 (reg 1) (x :: F)) (ddOf75 (reg 1) y) = true :=
+    sumDD_lt157 hix1 hx1M hix2 hx2M hx2W hiy1 hy1M hiy2 hy2M hy2z hxW hyW
+      hinF hFW hFx hdiv
+  have hiSum : inT (sumDD112 (reg 1) (x :: F)) = true :=
+    inT_sumDD112 (inT_reg 1) _ hinFx
+  have hiDy : inT (ddOf75 (reg 1) y) = true := inT_ddOf75 (inT_reg 1) hiy1 hiy2
+  have hiDx : inT (ddOf75 (reg 1) x) = true := inT_ddOf75 (inT_reg 1) hix1 hix2
+  have hiSumF : inT (sumDD112 (reg 1) F) = true :=
+    inT_sumDD112 (inT_reg 1) _ (fun z hz => hinFx z (List.Mem.tail _ hz))
+  rcases hsR with hnone | ⟨i0, hs1, hi0⟩
+  · -- no index yet: pay the `⊖ 1` and reflect through `1 ⊕ ·`
+    subst hnone
+    have hfold := foldNone120 (base := baseOf 0) (inT_reg 1) x F hinFx hfireFx
+    refine ⟨plus (sub1 (ddOf75 (reg 1) x)) (sumDD112 (reg 1) F), hfold, ?_⟩
+    rw [idxOf_none112 rfl]
+    -- 1 ⊕ (Δ_x ⊖ 1) = Δ_x  and  1 ⊕ (Δ_y ⊖ 1) = Δ_y
+    have hD1x : lt (ddOf75 (reg 1) x) TM.Term.one = false := by
+      cases hcc : lt (ddOf75 (reg 1) x) TM.Term.one with
+      | false => rfl
+      | true => exact absurd (below_one _ hiDx _ hcc) (ddOf_ne_zero84 hx2z)
+    have hD1y : lt (ddOf75 (reg 1) y) TM.Term.one = false := by
+      cases hcc : lt (ddOf75 (reg 1) y) TM.Term.one with
+      | false => rfl
+      | true => exact absurd (below_one _ hiDy _ hcc) (ddOf_ne_zero84 hy2z)
+    have h1x : plus TM.Term.one (sub1 (ddOf75 (reg 1) x)) = ddOf75 (reg 1) x := by
+      rw [sub1_eq_subAP112]
+      exact plus_subAP112 inT_one rfl hiDx hD1x
+    have h1y : plus TM.Term.one (sub1 (ddOf75 (reg 1) y)) = ddOf75 (reg 1) y := by
+      rw [sub1_eq_subAP112]
+      exact plus_subAP112 inT_one rfl hiDy hD1y
+    have ha1 : plus TM.Term.one (plus (sub1 (ddOf75 (reg 1) x)) (sumDD112 (reg 1) F))
+        = sumDD112 (reg 1) (x :: F) := by
+      rw [← plus_assoc_inT TM.Term.one (sub1 (ddOf75 (reg 1) x)) (sumDD112 (reg 1) F)
+          inT_one (inT_sub1 hiDx) hiSumF, h1x, sumDD_cons112]
+    cases hcc : lt (plus (sub1 (ddOf75 (reg 1) x)) (sumDD112 (reg 1) F))
+        (sub1 (ddOf75 (reg 1) y)) with
+    | true => rfl
+    | false =>
+        exfalso
+        have hle : le (sub1 (ddOf75 (reg 1) y))
+            (plus (sub1 (ddOf75 (reg 1) x)) (sumDD112 (reg 1) F)) = true :=
+          le_of_not_lt3 (inT_le_fragR _ (inT_plus (inT_sub1 hiDx) hiSumF))
+            (inT_le_fragR _ (inT_sub1 hiDy)) hcc
+        have h2 := plus_mono_right_inT TM.Term.one inT_one _ _ (inT_sub1 hiDy)
+          (inT_plus (inT_sub1 hiDx) hiSumF) hle
+        rw [h1y, ha1] at h2
+        have h3 := lt_of_lt_of_le3 (inT_le_fragR _ hiSum) (inT_le_fragR _ hiDy)
+          (inT_le_fragR _ hiSum) hcore h2
+        rw [lt_irrefl] at h3
+        exact Bool.noConfusion h3
+  · -- an index is present: add on both sides
+    have hseta : sR = (some i0, sR.2) := by rw [← hs1]
+    have hfold : ((x :: F).foldl (stepF (reg 1) (baseOf 0)) sR).1
+        = some (plus i0 (sumDD112 (reg 1) (x :: F))) := by
+      rw [hseta]
+      exact foldSome120 (inT_reg 1) (x :: F) hinFx hfireFx i0 _ hi0
+    refine ⟨plus i0 (sumDD112 (reg 1) (x :: F)), hfold, ?_⟩
+    rw [idxOf_some112 hs1]
+    exact plus_smono_right_inT79 i0 hi0 _ _ hiSum hiDy hcore
+
+/-! ## §157.10 The two vacuous corners -/
+
+/-- The right list cannot end at the divergence pair while the left tail goes on. -/
+theorem tyNil157 (Hp : PsiIdxOKStd172) {a b : BT}
+    (hbA : btLe72 1 (BT.D 0 a) = true) (hsA : BT.isStd (BT.D 0 a) = true)
+    (hbB : btLe72 1 (BT.D 0 b) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    (hse : sameExp145 a b = true)
+    {R : List (Term × Term)} {x : Term × Term} {tx : List (Term × Term)}
+    {y : Term × Term}
+    (e1 : (wcnf (reg 1) (toList (dict a))).1 = R ++ x :: tx)
+    (e2 : (wcnf (reg 1) (toList (dict b))).1 = R ++ [y])
+    (htx : tx ≠ [])
+    (hdiv : lt x.1 y.1 = true ∨ (x.1 = y.1 ∧ lt x.2 y.2 = true)) : False := by
+  obtain ⟨hia, hlaM, hpa⟩ := dictFacts151 Hp hbA hsA
+  obtain ⟨hib, hlbM, hpb⟩ := dictFacts151 Hp hbB hsB
+  obtain ⟨hc, hd⟩ := inT_toList _ hia
+  have hmL := ltM_toList _ hia hlaM
+  obtain ⟨_, hOKa⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hc hd hmL
+  obtain ⟨hcb, hdb⟩ := inT_toList _ hib
+  have hmLb := ltM_toList _ hib hlbM
+  obtain ⟨_, hOKb⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict b)) hcb hdb hmLb
+  have hdPa := wcnf_descP154 _ hc hd hmL
+  cases htxr : tx.reverse with
+  | nil =>
+      refine htx ?_
+      rw [← List.reverse_reverse tx, htxr]
+      rfl
+  | cons ca txr =>
+      have htxe : tx = txr.reverse ++ [ca] := by
+        rw [← List.reverse_reverse tx, htxr, List.reverse_cons]
+      have hQa : (wcnf (reg 1) (toList (dict a))).1
+          = (R ++ x :: txr.reverse) ++ [ca] := by
+        rw [e1, htxe, List.append_assoc, List.cons_append]
+      obtain ⟨hpva, haca⟩ := prevV_split157 hQa
+      obtain ⟨Xa, hlsa⟩ : ∃ X, lastStep129 (dict a) = some (ca.1, X) := by
+        cases hpv : prevV151 (dict a) with
+        | none => exact ⟨_, lastStep_prev_none151 haca hpv⟩
+        | some v => exact ⟨_, lastStep_prev_some151 haca hpv⟩
+      obtain ⟨hpvb, hacb⟩ := prevV_split157 e2
+      obtain ⟨Xb, hlsb⟩ : ∃ X, lastStep129 (dict b) = some (y.1, X) := by
+        cases hpv : prevV151 (dict b) with
+        | none => exact ⟨_, lastStep_prev_none151 hacb hpv⟩
+        | some v => exact ⟨_, lastStep_prev_some151 hacb hpv⟩
+      have hexpEq : ca.1 = y.1 := by
+        have he : sameExp145 a b = ((ca.1 : Term) == y.1) := by
+          unfold sameExp145
+          rw [hlsa, hlsb]
+        rw [he] at hse
+        exact eq_of_beq hse
+      have hdX : descP118 (x :: tx) := by
+        rw [e1] at hdPa
+        exact descP_suffix154 _ _ hdPa
+      have hinX : ∀ w ∈ x :: tx, inT w.1 = true := by
+        intro w hw
+        refine (hOKa w ?_).1
+        rw [e1]
+        exact List.mem_append_right _ hw
+      have hcatx : ca ∈ tx := by
+        rw [htxe]
+        exact List.mem_append_right _ (List.Mem.head _)
+      have hlast : lt ca.1 x.1 = true := descP_bound154 tx x hinX hdX ca hcatx
+      have hxy : le x.1 y.1 = true := by
+        rcases hdiv with h | ⟨h, _⟩
+        · exact le_of_lt h
+        · rw [h]
+          exact Evidence.WF.le_self _
+      have hix1 : inT x.1 = true := hinX x (List.Mem.head _)
+      have hica1 : inT ca.1 = true := hinX ca (List.Mem.tail _ hcatx)
+      have hiy1 : inT y.1 = true := by
+        refine (hOKb y ?_).1
+        rw [e2]
+        exact List.mem_append_right _ (List.Mem.head _)
+      have hcon : lt ca.1 y.1 = true :=
+        lt_of_lt_of_le3 (inT_le_fragR _ hica1) (inT_le_fragR _ hix1)
+          (inT_le_fragR _ hiy1) hlast hxy
+      rw [← hexpEq, lt_irrefl] at hcon
+      exact Bool.noConfusion hcon
+
+/-- The left list cannot end at the divergence pair with equal exponents while
+    the right tail goes on. -/
+theorem txNil157 (Hp : PsiIdxOKStd172) {a b : BT}
+    (hbB : btLe72 1 (BT.D 0 b) = true) (hsB : BT.isStd (BT.D 0 b) = true)
+    {R : List (Term × Term)} {x y cb : Term × Term} {ty' : List (Term × Term)}
+    (hse : sameExp145 a b = true)
+    (e1 : (wcnf (reg 1) (toList (dict a))).1 = R ++ [x])
+    (e2 : (wcnf (reg 1) (toList (dict b))).1 = (R ++ y :: ty') ++ [cb])
+    (hE : x.1 = y.1) : False := by
+  obtain ⟨hib, hlbM, hpb⟩ := dictFacts151 Hp hbB hsB
+  obtain ⟨hcb, hdb⟩ := inT_toList _ hib
+  have hmLb := ltM_toList _ hib hlbM
+  obtain ⟨_, hOKb⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict b)) hcb hdb hmLb
+  have hdPb := wcnf_descP154 _ hcb hdb hmLb
+  obtain ⟨hpva, haca⟩ := prevV_split157 e1
+  obtain ⟨Xa, hlsa⟩ : ∃ X, lastStep129 (dict a) = some (x.1, X) := by
+    cases hpv : prevV151 (dict a) with
+    | none => exact ⟨_, lastStep_prev_none151 haca hpv⟩
+    | some v => exact ⟨_, lastStep_prev_some151 haca hpv⟩
+  obtain ⟨hpvb, hacb⟩ := prevV_split157 e2
+  obtain ⟨Xb, hlsb⟩ : ∃ X, lastStep129 (dict b) = some (cb.1, X) := by
+    cases hpv : prevV151 (dict b) with
+    | none => exact ⟨_, lastStep_prev_none151 hacb hpv⟩
+    | some v => exact ⟨_, lastStep_prev_some151 hacb hpv⟩
+  have hexpEq : x.1 = cb.1 := by
+    have he : sameExp145 a b = ((x.1 : Term) == cb.1) := by
+      unfold sameExp145
+      rw [hlsa, hlsb]
+    rw [he] at hse
+    exact eq_of_beq hse
+  have e2b : (wcnf (reg 1) (toList (dict b))).1 = R ++ y :: (ty' ++ [cb]) := by
+    rw [e2, List.append_assoc, List.cons_append]
+  have hdY : descP118 (y :: (ty' ++ [cb])) := by
+    rw [e2b] at hdPb
+    exact descP_suffix154 _ _ hdPb
+  have hinY : ∀ w ∈ y :: (ty' ++ [cb]), inT w.1 = true := by
+    intro w hw
+    refine (hOKb w ?_).1
+    rw [e2b]
+    exact List.mem_append_right _ hw
+  have hcbm : cb ∈ ty' ++ [cb] := List.mem_append_right _ (List.Mem.head _)
+  have hlast : lt cb.1 y.1 = true := descP_bound154 (ty' ++ [cb]) y hinY hdY cb hcbm
+  rw [← hexpEq, ← hE, lt_irrefl] at hlast
+  exact Bool.noConfusion hlast
+
+/-! ## §157.11 The left side, packaged -/
+
+/-- **The left tail stays below the target.**  From `lt (wVal157 P0) T` along an
+    all-Veblen suffix `S0` whose exponents stay below the cap `B`, the argument
+    of the fold's last step is `< T`. -/
+theorem leftLt157 {u : Term} (hu : inT u = true) (huM : lt u M = true)
+    (Hpu : PsiIdxOK 0 u)
+    (HSub : ∀ P S ac, (wcnf (reg 1) (toList u)).1 = P ++ ac :: S →
+        le (reg 1) ac.1 = false → Sub157 ac.1 (wVal157 P) ac.2)
+    {T B : Term} (hiT : inT T = true) (hTap : T.isAP = true) (hiB : inT B = true)
+    (hstep : ∀ a X, inT a = true → lt a M = true → inT X = true → lt X M = true →
+        lt a B = true → lt X T = true → lt (phiNF a X) T = true)
+    (hraw : ∀ α ξ : Term, inT α = true → lt α M = true → inT ξ = true → lt ξ M = true →
+        lt α B = true → lt ξ T = true → lt (phi α ξ) T = true)
+    (P0 S0 : List (Term × Term))
+    (hsplit0 : (wcnf (reg 1) (toList u)).1 = P0 ++ S0)
+    (hS0V : ∀ z ∈ S0, le (reg 1) z.1 = false)
+    (hS0ne : S0 ≠ [])
+    (hexp : ∀ P S ac, (wcnf (reg 1) (toList u)).1 = P ++ ac :: S → ac ∈ S0 →
+        le (reg 1) ac.1 = false → lt (wVal157 P) T = true → lt ac.1 B = true)
+    (hv0 : lt (wVal157 P0) T = true) :
+    ∃ pa, lastStep129 u = some pa ∧ lt pa.2 T = true := by
+  have hfT : FragR T = true := inT_le_fragR _ hiT
+  have hTz : T ≠ zero := by
+    intro hcc
+    rw [hcc, lt_zero_right] at hv0
+    exact Bool.noConfusion hv0
+  obtain ⟨hc, hd⟩ := inT_toList u hu
+  obtain ⟨_, hallOK⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList u) hc hd
+    (ltM_toList u hu huM)
+  cases hrev : S0.reverse with
+  | nil =>
+      exfalso
+      refine hS0ne ?_
+      rw [← List.reverse_reverse S0, hrev]
+      rfl
+  | cons ca S0r =>
+      have hS0e : S0 = S0r.reverse ++ [ca] := by
+        rw [← List.reverse_reverse S0, hrev, List.reverse_cons]
+      have hQa : (wcnf (reg 1) (toList u)).1 = (P0 ++ S0r.reverse) ++ [ca] := by
+        rw [hsplit0, hS0e, ← List.append_assoc]
+      have hcaS0 : ca ∈ S0 := by
+        rw [hS0e]
+        exact List.mem_append_right _ (List.Mem.head _)
+      have hfca : le (reg 1) ca.1 = false := hS0V ca hcaS0
+      have hwalk : lt (wVal157 (P0 ++ S0r.reverse)) T = true := by
+        refine walk157 hu huM Hpu hiT hTap hiB HSub S0 hstep hraw hexp
+          S0r.reverse P0 [ca] ?_ ?_ ?_ hv0
+        · rw [hsplit0, hS0e]
+        · intro z hz
+          rw [hS0e]
+          exact List.mem_append_left _ hz
+        · intro z hz
+          exact hS0V z (by rw [hS0e]; exact List.mem_append_left _ hz)
+      have hsplitca : (wcnf (reg 1) (toList u)).1
+          = (P0 ++ S0r.reverse) ++ ca :: [] := hQa
+      have hACa : lt ca.1 B = true := hexp _ _ ca hsplitca hcaS0 hfca hwalk
+      have hmemca : ca ∈ (wcnf (reg 1) (toList u)).1 := by
+        rw [hQa]
+        exact List.mem_append_right _ (List.Mem.head _)
+      obtain ⟨hica1, hca1M, hica2, hca2M⟩ := hallOK ca hmemca
+      obtain ⟨hiw, hwW⟩ := wVal_facts157 hu huM Hpu (P0 ++ S0r.reverse) [ca] hQa
+      have hCa : lt ca.2 T = true :=
+        subLt157 (HSub _ _ ca hsplitca hfca) hiT hTap hica1 hiB hACa hiw hwalk hraw
+      obtain ⟨hpva, haca⟩ := prevV_split157 hQa
+      cases hpv : prevV151 u with
+      | none =>
+          refine ⟨_, lastStep_prev_none151 haca hpv, ?_⟩
+          show lt (plus (baseOf 0) (sub1 ca.2)) T = true
+          exact lt_plus_ap114 hTap hTz hfT (inT_baseOf 0) (inT_sub1 hica2)
+            (show lt (baseOf 0) T = true from lt_zero_left hTz)
+            (lt_of_le_of_lt3 (inT_le_fragR _ (inT_sub1 hica2)) (inT_le_fragR _ hica2)
+              hfT (le_sub1_self75 hica2) hCa)
+      | some va =>
+          refine ⟨_, lastStep_prev_some151 haca hpv, ?_⟩
+          show lt (plus va ca.2) T = true
+          have h2 : ((P0 ++ S0r.reverse).foldl (stepF (reg 1) (baseOf 0))
+              ((none : Option Term), (none : Option Term))).2 = some va := by
+            rw [← hpva]
+            exact hpv
+          have hva : wVal157 (P0 ++ S0r.reverse) = va := by
+            unfold wVal157
+            rw [h2]
+            rfl
+          have hvaT : lt va T = true := by
+            rw [← hva]
+            exact hwalk
+          have hiva : inT va = true := by
+            rw [← hva]
+            exact hiw
+          exact lt_plus_ap114 hTap hTz hfT hiva hica2 hvaT hCa
+
+/-! ## §157.12 THE ASSEMBLY — `Dom154` from the carriers -/
+
+/-- **§157 MAIN.**  The mid-list domination follows from the two standardness
+    carriers: every arithmetic ingredient is a theorem. -/
+theorem dom154_of_carriers157 (Hp : PsiIdxOKStd172) (HS : Subord157)
+    (HE : ExpSubR157) : Dom154 := by
+  intro a b hbA hbB hsA hsB hWa hWb hfa hfb hltH hse R x tx y ty e1 e2 hor hdiv
+  obtain ⟨hia, hlaM, hpa⟩ := dictFacts151 Hp hbA hsA
+  obtain ⟨hib, hlbM, hpb⟩ := dictFacts151 Hp hbB hsB
+  obtain ⟨hca, hda⟩ := inT_toList _ hia
+  obtain ⟨hcb, hdb⟩ := inT_toList _ hib
+  have hmLa := ltM_toList _ hia hlaM
+  have hmLb := ltM_toList _ hib hlbM
+  obtain ⟨_, hOKa⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hca hda hmLa
+  obtain ⟨_, hOKb⟩ := wcnf_spec_sc (inT_reg 1) (isSC_reg_succ 0) (toList (dict b)) hcb hdb hmLb
+  have hWpa := wcnf_W79 (toList (dict a)) hca
+  have hWpb := wcnf_W79 (toList (dict b)) hcb
+  have hNZa := wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) (toList (dict a)) hca hda hmLa
+  have hNZb := wcnf_cnz109 (inT_reg 1) (isSC_reg_succ 0) (toList (dict b)) hcb hdb hmLb
+  have hdPa := wcnf_descP154 (toList (dict a)) hca hda hmLa
+  have hdPb := wcnf_descP154 (toList (dict b)) hcb hdb hmLb
+  have HSa := HS a hbA hsA
+  have HEa := HE a hbA hsA
+  have hmemXa : x ∈ (wcnf (reg 1) (toList (dict a))).1 := by
+    rw [e1]
+    exact List.mem_append_right _ (List.Mem.head _)
+  have hmemYb : y ∈ (wcnf (reg 1) (toList (dict b))).1 := by
+    rw [e2]
+    exact List.mem_append_right _ (List.Mem.head _)
+  obtain ⟨hix1, hx1M, hix2, hx2M⟩ := hOKa x hmemXa
+  obtain ⟨hiy1, hy1M, hiy2, hy2M⟩ := hOKb y hmemYb
+  have hx2W : lt x.2 (reg 1) = true := (hWpa.2 x hmemXa).2
+  have hy2W : lt y.2 (reg 1) = true := (hWpb.2 y hmemYb).2
+  have hx2z : x.2 ≠ zero := hNZa x hmemXa
+  have hy2z : y.2 ≠ zero := hNZb y hmemYb
+  have hdXa : descP118 (x :: tx) := by
+    have h2 := hdPa
+    rw [e1] at h2
+    exact descP_suffix154 _ _ h2
+  have hinXa : ∀ w ∈ x :: tx, inT w.1 = true := by
+    intro w hw
+    refine (hOKa w ?_).1
+    rw [e1]
+    exact List.mem_append_right _ hw
+  -- `ty = []` is vacuous
+  cases ty with
+  | nil =>
+      exfalso
+      have htx : tx ≠ [] := by
+        rcases hor with h | h
+        · exact h
+        · exact absurd rfl h
+      exact tyNil157 Hp hbA hsA hbB hsB hse e1 e2 htx hdiv
+  | cons ty0 tyr =>
+  -- write `ty = ty' ++ [cb]`
+  cases htyR : (ty0 :: tyr).reverse with
+  | nil =>
+      exfalso
+      have h2 := congrArg List.length htyR
+      rw [List.length_reverse] at h2
+      exact absurd h2 (by simp)
+  | cons cb tyr' =>
+  have hty' : ty0 :: tyr = tyr'.reverse ++ [cb] := by
+    rw [← List.reverse_reverse (ty0 :: tyr), htyR, List.reverse_cons]
+  have e2' : (wcnf (reg 1) (toList (dict b))).1
+      = R ++ y :: (tyr'.reverse ++ [cb]) := by
+    rw [e2, hty']
+  have e2s : (wcnf (reg 1) (toList (dict b))).1
+      = (R ++ [y]) ++ (tyr'.reverse ++ [cb]) := by
+    rw [e2', List.append_assoc, List.singleton_append]
+  -- the divergence-step value `T` on the right
+  cases hT2 : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+      ((none : Option Term), (none : Option Term))).2 with
+  | none =>
+      exfalso
+      have hne : (R ++ [y] : List (Term × Term)) ≠ [] := by
+        cases R with
+        | nil => exact List.cons_ne_nil _ _
+        | cons r0 R' => exact List.cons_ne_nil _ _
+      exact fold_some81 (R ++ [y]) _ hne hT2
+  | some T =>
+  have hstE := stE81_pre157 hib hlbM hpb (R ++ [y]) (tyr'.reverse ++ [cb]) e2s
+  obtain ⟨hiT, hTW, hTap, hTE⟩ := hstE T hT2
+  have h1T : lt TM.Term.one T = true :=
+    lt_of_lt_of_le3 (show FragR TM.Term.one = true from rfl) (inT_le_fragR _ inT_E81)
+      (inT_le_fragR _ hiT) lt_one_E81_157 hTE
+  have hTM : lt T M = true := ltM_of_ltW79 hiT hTW
+  have hfT : FragR T = true := inT_le_fragR _ hiT
+  have hTz : T ≠ zero := by
+    intro hcc
+    rw [hcc, lt_zero_right] at h1T
+    exact Bool.noConfusion h1T
+  -- `T ≤ v'` on the right
+  obtain ⟨v'b, hv'2, hTv'⟩ := tLe157 hib hlbM hpb e2' hT2
+  have hQb : (wcnf (reg 1) (toList (dict b))).1
+      = (R ++ y :: tyr'.reverse) ++ [cb] := by
+    rw [e2', List.append_assoc, List.cons_append]
+  obtain ⟨hpvb, hacb⟩ := prevV_split157 hQb
+  have hpvB : prevV151 (dict b) = some v'b := by
+    rw [hpvb]
+    exact hv'2
+  have hstE2 := stE81_pre157 hib hlbM hpb (R ++ y :: tyr'.reverse) [cb] hQb
+  obtain ⟨hiv', hv'W, _, _⟩ := hstE2 v'b hv'2
+  -- the ψ-target closures (shared by the two fired-`y` regions)
+  have hpsiPack : ∀ (i : Term), T = psi (reg 1) i →
+      (∀ a' X, inT a' = true → lt a' M = true → inT X = true → lt X M = true →
+        lt a' T = true → lt X T = true → lt (phiNF a' X) T = true)
+      ∧ (∀ α ξ : Term, inT α = true → lt α M = true → inT ξ = true → lt ξ M = true →
+        lt α T = true → lt ξ T = true → lt (phi α ξ) T = true) := by
+    intro i hTeq
+    constructor
+    · intro a' X hia' haM' hiX' hXM' haB hXT
+      rw [hTeq] at haB hXT ⊢
+      exact lt_phiNF_psi114 (by rw [← hTeq]; exact hfT) hiX' haB hXT
+    · intro α ξ _ _ _ _ hαB hξT
+      rw [hTeq] at hαB hξT ⊢
+      exact lt_phi_psi_of hαB hξT
+  -- close the goal from the left-side bound
+  have hclose : (∃ pa, lastStep129 (dict a) = some pa ∧ lt pa.2 T = true) →
+      tail2_151 (lastStep129 (dict a)) (prevV151 (dict b)) = true := by
+    rintro ⟨pa, hls, hpaT⟩
+    have hXai := (lastStep_inT129 hia hlaM hpa
+      (show lastStep129 (dict a) = some (pa.1, pa.2) from hls)).2.1
+    rw [hls, hpvB]
+    show lt pa.2 v'b = true
+    exact lt_of_lt_of_le3 (inT_le_fragR _ hXai) hfT (inT_le_fragR _ hiv') hpaT hTv'
+  cases hxf : le (reg 1) x.1 with
+  | false =>
+      -- `x` Veblen: the whole left suffix is Veblen
+      have hxVW : lt x.1 (reg 1) = true := ltW_of_leW_false128 hix1 hxf
+      have hXV : ∀ z ∈ x :: tx, le (reg 1) z.1 = false := by
+        intro z hz
+        rcases List.mem_cons.mp hz with h1 | h1
+        · rw [h1]
+          exact hxf
+        · exact leW_false157 (hinXa z (List.Mem.tail _ h1))
+            (lt_trans_inT (hinXa z (List.Mem.tail _ h1)) hix1 (inT_reg 1)
+              (descP_bound154 tx x hinXa hdXa z h1) hxVW)
+      cases hyf : le (reg 1) y.1 with
+      | true =>
+          -- ψ-target, walk from `R` over the whole Veblen suffix
+          have hTeq : T = psi (reg 1)
+              (idxOf (reg 1) (R.foldl (stepF (reg 1) (baseOf 0))
+                ((none : Option Term), (none : Option Term))) y) := by
+            have h2 : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+                ((none : Option Term), (none : Option Term))).2
+                = some (psi (reg 1) (idxOf (reg 1)
+                    (R.foldl (stepF (reg 1) (baseOf 0))
+                      ((none : Option Term), (none : Option Term))) y)) := by
+              rw [foldl_snoc157, stepF_snd_fire88 hyf]
+            exact Option.some.inj (hT2.symm.trans h2)
+          obtain ⟨hstepψ, hrawψ⟩ := hpsiPack _ hTeq
+          have hexpψ : ∀ P S ac, (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+              ac ∈ (x :: tx) → le (reg 1) ac.1 = false → lt (wVal157 P) T = true →
+              lt ac.1 T = true := by
+            intro P S ac hspl _ hf hvP
+            exact subRLt157 (HEa P S ac hspl hf) hiT hTap
+              (wVal_facts157 hia hlaM hpa P (ac :: S) hspl).1 hvP hrawψ
+          -- start value
+          have hv0 : lt (wVal157 R) T = true := by
+            cases hsR2 : (R.foldl (stepF (reg 1) (baseOf 0))
+                ((none : Option Term), (none : Option Term))).2 with
+            | none =>
+                have hwR : wVal157 R = TM.Term.one := by
+                  unfold wVal157
+                  rw [hsR2]
+                  rfl
+                rw [hwR]
+                exact h1T
+            | some vRv =>
+                -- `R` is all fired (from `b`'s descent above `y`)
+                have hRfireb : ∀ z ∈ R, le (reg 1) z.1 = true := by
+                  intro z hz
+                  have hyz : lt y.1 z.1 = true := by
+                    refine descP_cross157 R y (tyr'.reverse ++ [cb]) ?_ ?_ z hz
+                    · have h2 := hdPb
+                      rw [e2'] at h2
+                      exact h2
+                    · intro w hw
+                      refine (hOKb w ?_).1
+                      rw [e2']
+                      exact hw
+                  refine le_of_lt ?_
+                  refine lt_of_le_of_lt3 (inT_le_fragR _ (inT_reg 1))
+                    (inT_le_fragR _ hiy1) (inT_le_fragR _ ?_) hyf hyz
+                  refine (hOKb z ?_).1
+                  rw [e2']
+                  exact List.mem_append_left _ hz
+                have hcohR : Coh157 (R.foldl (stepF (reg 1) (baseOf 0))
+                    ((none : Option Term), (none : Option Term))) :=
+                  coh_fold157 R _ hRfireb rfl
+                cases hsR1 : (R.foldl (stepF (reg 1) (baseOf 0))
+                    ((none : Option Term), (none : Option Term))).1 with
+                | none =>
+                    exfalso
+                    have h3 := hcohR
+                    unfold Coh157 at h3
+                    rw [hsR1, hsR2] at h3
+                    have h4 : (some vRv : Option Term) = none := h3
+                    exact Option.some_ne_none vRv h4
+                | some iR =>
+                    have h3 := hcohR
+                    unfold Coh157 at h3
+                    rw [hsR1, hsR2] at h3
+                    have hvRpsi : vRv = psi (reg 1) iR :=
+                      Option.some.inj (h3 : (some vRv : Option Term) = some (psi (reg 1) iR))
+                    obtain ⟨hstRb, _⟩ := preSt_inv129 hib hlbM hpb R
+                      (y :: (tyr'.reverse ++ [cb])) e2'.symm
+                    have hiiR : inT iR = true := (hstRb.1 iR hsR1).1
+                    have hwR : wVal157 R = vRv := by
+                      unfold wVal157
+                      rw [hsR2]
+                      rfl
+                    have hidx : idxOf (reg 1) (R.foldl (stepF (reg 1) (baseOf 0))
+                        ((none : Option Term), (none : Option Term))) y
+                        = plus iR (ddOf75 (reg 1) y) := idxOf_some112 hsR1
+                    have hlt2 : lt iR (idxOf (reg 1) (R.foldl (stepF (reg 1) (baseOf 0))
+                        ((none : Option Term), (none : Option Term))) y) = true := by
+                      rw [hidx]
+                      exact lt_self_plus157 hiiR (inT_ddOf75 (inT_reg 1) hiy1 hiy2)
+                        (ddOf_ne_zero84 hy2z)
+                    rw [hwR, hTeq, hvRpsi]
+                    exact lt_psi_smono157 hlt2
+          refine hclose (leftLt157 hia hlaM hpa HSa hiT hTap hiT hstepψ hrawψ
+            R (x :: tx) e1 hXV (List.cons_ne_nil x tx) hexpψ hv0)
+      | false =>
+          -- φ̄-target with exponent `y.1`
+          have hyVW : lt y.1 (reg 1) = true := ltW_of_leW_false128 hiy1 hyf
+          cases hsR2 : (R.foldl (stepF (reg 1) (baseOf 0))
+              ((none : Option Term), (none : Option Term))).2 with
+          | none =>
+              have hTeq : T = phiNF y.1 (plus (baseOf 0) (sub1 y.2)) := by
+                have h2 : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+                    ((none : Option Term), (none : Option Term))).2
+                    = some (phiNF y.1 (plus (baseOf 0) (sub1 y.2))) := by
+                  rw [foldl_snoc157, stepF_snd_veb88 hyf, hsR2]
+                exact Option.some.inj (hT2.symm.trans h2)
+              have hiδ : inT (plus (baseOf 0) (sub1 y.2)) = true :=
+                inT_plus (inT_baseOf 0) (inT_sub1 hiy2)
+              have hδM : lt (plus (baseOf 0) (sub1 y.2)) M = true :=
+                lt_plus_M (inT_baseOf 0) (inT_sub1 hiy2) (ltM_baseOf 0)
+                  (ltM_sub1 hiy2 hy2M)
+              have h1T' : lt TM.Term.one (phiNF y.1 (plus (baseOf 0) (sub1 y.2))) = true := by
+                rw [← hTeq]
+                exact h1T
+              have hTW' : lt (phiNF y.1 (plus (baseOf 0) (sub1 y.2))) (reg 1) = true := by
+                rw [← hTeq]
+                exact hTW
+              have hstepφ : ∀ a' X, inT a' = true → lt a' M = true → inT X = true →
+                  lt X M = true → lt a' y.1 = true → lt X T = true →
+                  lt (phiNF a' X) T = true := by
+                intro a' X hia' haM' hiX' hXM' haB hXT
+                rw [hTeq] at hXT ⊢
+                exact lt_phiNF_vTgt157 hiy1 hy1M hiδ hδM hia' haM' hiX' h1T' hTW' haB hXT
+              have hrawφ : ∀ α ξ : Term, inT α = true → lt α M = true → inT ξ = true →
+                  lt ξ M = true → lt α y.1 = true → lt ξ T = true →
+                  lt (phi α ξ) T = true := by
+                intro α ξ hiα hαM hiξ hξM hαB hξT
+                rw [hTeq] at hξT ⊢
+                exact lt_phi_vTgt157 hiy1 hiδ hiα hiξ hTW' hαB hξT
+              have hwR : wVal157 R = TM.Term.one := by
+                unfold wVal157
+                rw [hsR2]
+                rfl
+              rcases hdiv with hxlty | ⟨hxeqy, hxlty2⟩
+              · -- strict exponent drop at the divergence
+                have hexpφ : ∀ P S ac, (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+                    ac ∈ (x :: tx) → le (reg 1) ac.1 = false → lt (wVal157 P) T = true →
+                    lt ac.1 y.1 = true := by
+                  intro P S ac _ hmem _ _
+                  rcases List.mem_cons.mp hmem with h1 | h1
+                  · rw [h1]
+                    exact hxlty
+                  · exact lt_trans_inT (hinXa ac (List.Mem.tail _ h1)) hix1 hiy1
+                      (descP_bound154 tx x hinXa hdXa ac h1) hxlty
+                have hv0 : lt (wVal157 R) T = true := by
+                  rw [hwR]
+                  exact h1T
+                refine hclose (leftLt157 hia hlaM hpa HSa hiT hTap hiy1 hstepφ hrawφ
+                  R (x :: tx) e1 hXV (List.cons_ne_nil x tx) hexpφ hv0)
+              · -- equal exponents: the first step is `phiMono129`
+                have htxne : tx ≠ [] := by
+                  intro hcc
+                  subst hcc
+                  exact txNil157 Hp hbB hsB hse e1 hQb hxeqy
+                have hexpφ : ∀ P S ac, (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+                    ac ∈ tx → le (reg 1) ac.1 = false → lt (wVal157 P) T = true →
+                    lt ac.1 y.1 = true := by
+                  intro P S ac _ hmem _ _
+                  rw [← hxeqy]
+                  exact descP_bound154 tx x hinXa hdXa ac hmem
+                have hsplit0 : (wcnf (reg 1) (toList (dict a))).1 = (R ++ [x]) ++ tx := by
+                  rw [e1, List.append_assoc, List.singleton_append]
+                have hVx : wVal157 (R ++ [x])
+                    = phiNF x.1 (plus (baseOf 0) (sub1 x.2)) := by
+                  unfold wVal157
+                  rw [foldl_snoc157, stepF_snd_veb88 hxf, hsR2]
+                  rfl
+                have hargs : lt (plus (baseOf 0) (sub1 x.2))
+                    (plus (baseOf 0) (sub1 y.2)) = true :=
+                  plus_smono_right_inT79 (baseOf 0) (inT_baseOf 0) _ _
+                    (inT_sub1 hix2) (inT_sub1 hiy2)
+                    (sub1_smono154 hix2 hiy2 hx2z hxlty2)
+                have hv0 : lt (wVal157 (R ++ [x])) T = true := by
+                  rw [hVx, hTeq, hxeqy]
+                  exact phiMono129 y.1 _ _ hiy1 hy1M
+                    (inT_plus (inT_baseOf 0) (inT_sub1 hix2))
+                    (lt_plus_M (inT_baseOf 0) (inT_sub1 hix2) (ltM_baseOf 0)
+                      (ltM_sub1 hix2 hx2M))
+                    hiδ hδM hargs
+                refine hclose (leftLt157 hia hlaM hpa HSa hiT hTap hiy1 hstepφ hrawφ
+                  (R ++ [x]) tx hsplit0 (fun z hz => hXV z (List.Mem.tail _ hz))
+                  htxne hexpφ hv0)
+          | some vR =>
+              obtain ⟨hivR, hvRW, hvRap, hvRE⟩ :=
+                (stE81_pre157 hib hlbM hpb R (y :: (tyr'.reverse ++ [cb])) e2') vR hsR2
+              have hvRM : lt vR M = true := ltM_of_ltW79 hivR hvRW
+              have hTeq : T = phiNF y.1 (plus vR y.2) := by
+                have h2 : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+                    ((none : Option Term), (none : Option Term))).2
+                    = some (phiNF y.1 (plus vR y.2)) := by
+                  rw [foldl_snoc157, stepF_snd_veb88 hyf, hsR2]
+                exact Option.some.inj (hT2.symm.trans h2)
+              have hiδ : inT (plus vR y.2) = true := inT_plus hivR hiy2
+              have hδM : lt (plus vR y.2) M = true := lt_plus_M hivR hiy2 hvRM hy2M
+              have h1T' : lt TM.Term.one (phiNF y.1 (plus vR y.2)) = true := by
+                rw [← hTeq]
+                exact h1T
+              have hTW' : lt (phiNF y.1 (plus vR y.2)) (reg 1) = true := by
+                rw [← hTeq]
+                exact hTW
+              have hstepφ : ∀ a' X, inT a' = true → lt a' M = true → inT X = true →
+                  lt X M = true → lt a' y.1 = true → lt X T = true →
+                  lt (phiNF a' X) T = true := by
+                intro a' X hia' haM' hiX' hXM' haB hXT
+                rw [hTeq] at hXT ⊢
+                exact lt_phiNF_vTgt157 hiy1 hy1M hiδ hδM hia' haM' hiX' h1T' hTW' haB hXT
+              have hrawφ : ∀ α ξ : Term, inT α = true → lt α M = true → inT ξ = true →
+                  lt ξ M = true → lt α y.1 = true → lt ξ T = true →
+                  lt (phi α ξ) T = true := by
+                intro α ξ hiα hαM hiξ hξM hαB hξT
+                rw [hTeq] at hξT ⊢
+                exact lt_phi_vTgt157 hiy1 hiδ hiα hiξ hTW' hαB hξT
+              have hwR : wVal157 R = vR := by
+                unfold wVal157
+                rw [hsR2]
+                rfl
+              have hvRT : lt vR T = true := by
+                rw [hTeq]
+                exact phiInfl129 y.1 vR (plus vR y.2) hiy1 hy1M hivR hvRM hiδ hδM
+                  (lt_self_plus157 hivR hiy2 hy2z)
+              rcases hdiv with hxlty | ⟨hxeqy, hxlty2⟩
+              · have hexpφ : ∀ P S ac, (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+                    ac ∈ (x :: tx) → le (reg 1) ac.1 = false → lt (wVal157 P) T = true →
+                    lt ac.1 y.1 = true := by
+                  intro P S ac _ hmem _ _
+                  rcases List.mem_cons.mp hmem with h1 | h1
+                  · rw [h1]
+                    exact hxlty
+                  · exact lt_trans_inT (hinXa ac (List.Mem.tail _ h1)) hix1 hiy1
+                      (descP_bound154 tx x hinXa hdXa ac h1) hxlty
+                have hv0 : lt (wVal157 R) T = true := by
+                  rw [hwR]
+                  exact hvRT
+                refine hclose (leftLt157 hia hlaM hpa HSa hiT hTap hiy1 hstepφ hrawφ
+                  R (x :: tx) e1 hXV (List.cons_ne_nil x tx) hexpφ hv0)
+              · have htxne : tx ≠ [] := by
+                  intro hcc
+                  subst hcc
+                  exact txNil157 Hp hbB hsB hse e1 hQb hxeqy
+                have hexpφ : ∀ P S ac, (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+                    ac ∈ tx → le (reg 1) ac.1 = false → lt (wVal157 P) T = true →
+                    lt ac.1 y.1 = true := by
+                  intro P S ac _ hmem _ _
+                  rw [← hxeqy]
+                  exact descP_bound154 tx x hinXa hdXa ac hmem
+                have hsplit0 : (wcnf (reg 1) (toList (dict a))).1 = (R ++ [x]) ++ tx := by
+                  rw [e1, List.append_assoc, List.singleton_append]
+                have hVx : wVal157 (R ++ [x]) = phiNF x.1 (plus vR x.2) := by
+                  unfold wVal157
+                  rw [foldl_snoc157, stepF_snd_veb88 hxf, hsR2]
+                  rfl
+                have hargs : lt (plus vR x.2) (plus vR y.2) = true :=
+                  plus_smono_right_inT79 vR hivR _ _ hix2 hiy2 hxlty2
+                have hv0 : lt (wVal157 (R ++ [x])) T = true := by
+                  rw [hVx, hTeq, hxeqy]
+                  exact phiMono129 y.1 _ _ hiy1 hy1M (inT_plus hivR hix2)
+                    (lt_plus_M hivR hix2 hvRM hx2M) hiδ hδM hargs
+                refine hclose (leftLt157 hia hlaM hpa HSa hiT hTap hiy1 hstepφ hrawφ
+                  (R ++ [x]) tx hsplit0 (fun z hz => hXV z (List.Mem.tail _ hz))
+                  htxne hexpφ hv0)
+  | true =>
+      -- `x` fires, hence `y` fires; `R` is all fired
+      have hyf : le (reg 1) y.1 = true := by
+        rcases hdiv with h | ⟨h, _⟩
+        · exact le_of_lt (lt_of_le_of_lt3 (inT_le_fragR _ (inT_reg 1))
+            (inT_le_fragR _ hix1) (inT_le_fragR _ hiy1) hxf h)
+        · rw [← h]
+          exact hxf
+      have hTeq : T = psi (reg 1)
+          (idxOf (reg 1) (R.foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))) y) := by
+        have h2 : ((R ++ [y]).foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))).2
+            = some (psi (reg 1) (idxOf (reg 1)
+                (R.foldl (stepF (reg 1) (baseOf 0))
+                  ((none : Option Term), (none : Option Term))) y)) := by
+          rw [foldl_snoc157, stepF_snd_fire88 hyf]
+        exact Option.some.inj (hT2.symm.trans h2)
+      obtain ⟨hstepψ, hrawψ⟩ := hpsiPack _ hTeq
+      have hRfire : ∀ z ∈ R, le (reg 1) z.1 = true := by
+        intro z hz
+        have hxz : lt x.1 z.1 = true := by
+          refine descP_cross157 R x tx ?_ ?_ z hz
+          · have h2 := hdPa
+            rw [e1] at h2
+            exact h2
+          · intro w hw
+            refine (hOKa w ?_).1
+            rw [e1]
+            exact hw
+        refine le_of_lt ?_
+        refine lt_of_le_of_lt3 (inT_le_fragR _ (inT_reg 1)) (inT_le_fragR _ hix1)
+          (inT_le_fragR _ ?_) hxf hxz
+        refine (hOKa z ?_).1
+        rw [e1]
+        exact List.mem_append_left _ hz
+      obtain ⟨Fa, Va, hFVa, hFaW, hVaV⟩ := splitFV157 tx (descP_tail118 hdXa)
+        (fun z hz => hinXa z (List.Mem.tail _ hz))
+      have hVane : Va ≠ [] := by
+        intro hcc
+        rw [hcc, List.append_nil] at hFVa
+        cases hrevA : (wcnf (reg 1) (toList (dict a))).1.reverse with
+        | nil =>
+            have h2 := congrArg List.length hrevA
+            rw [List.length_reverse, e1, List.length_append] at h2
+            simp at h2
+        | cons ca ra =>
+            have hcaM : ca ∈ (wcnf (reg 1) (toList (dict a))).1 :=
+              List.mem_reverse.mp (by rw [hrevA]; exact List.Mem.head _)
+            have hlf := hfa
+            unfold lastFire92 at hlf
+            rw [hrevA] at hlf
+            have hlf2 : le (reg 1) ca.1 = false := hlf
+            rw [e1] at hcaM
+            rcases List.mem_append.mp hcaM with h1 | h1
+            · rw [hRfire ca h1] at hlf2
+              exact Bool.noConfusion hlf2
+            · rcases List.mem_cons.mp h1 with h2 | h2
+              · rw [h2, hxf] at hlf2
+                exact Bool.noConfusion hlf2
+              · rw [hFVa] at h2
+                rw [hFaW ca h2] at hlf2
+                exact Bool.noConfusion hlf2
+      have hsplitF : (wcnf (reg 1) (toList (dict a))).1 = (R ++ x :: Fa) ++ Va := by
+        rw [e1, hFVa, List.append_assoc, List.cons_append]
+      have hP0fire : ∀ z ∈ R ++ x :: Fa, le (reg 1) z.1 = true := by
+        intro z hz
+        rcases List.mem_append.mp hz with h1 | h1
+        · exact hRfire z h1
+        · rcases List.mem_cons.mp h1 with h2 | h2
+          · rw [h2]
+            exact hxf
+          · exact hFaW z h2
+      have hinFa : ∀ z ∈ Fa, inT z.1 = true ∧ lt z.1 M = true ∧ inT z.2 = true
+          ∧ lt z.2 M = true ∧ lt z.2 (reg 1) = true := by
+        intro z hz
+        have hmz : z ∈ (wcnf (reg 1) (toList (dict a))).1 := by
+          rw [e1, hFVa]
+          exact List.mem_append_right _ (List.Mem.tail _ (List.mem_append_left _ hz))
+        obtain ⟨h1, h2, h3, h4⟩ := hOKa z hmz
+        exact ⟨h1, h2, h3, h4, (hWpa.2 z hmz).2⟩
+      have hFax : ∀ z ∈ Fa, lt z.1 x.1 = true := by
+        intro z hz
+        exact descP_bound154 tx x hinXa hdXa z (by rw [hFVa]; exact List.mem_append_left _ hz)
+      have hcohR : Coh157 (R.foldl (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))) :=
+        coh_fold157 R _ hRfire rfl
+      -- the shared state after `R`
+      have hsR : (R.foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term)))
+          = ((none : Option Term), (none : Option Term))
+          ∨ ∃ i0, (R.foldl (stepF (reg 1) (baseOf 0))
+              ((none : Option Term), (none : Option Term))).1 = some i0
+            ∧ inT i0 = true := by
+        cases hsR1 : (R.foldl (stepF (reg 1) (baseOf 0))
+            ((none : Option Term), (none : Option Term))).1 with
+        | none =>
+            refine Or.inl ?_
+            have h3 := hcohR
+            unfold Coh157 at h3
+            rw [hsR1] at h3
+            have h4 : (R.foldl (stepF (reg 1) (baseOf 0))
+                ((none : Option Term), (none : Option Term))).2 = none := h3
+            have h5 : (R.foldl (stepF (reg 1) (baseOf 0))
+                  ((none : Option Term), (none : Option Term)))
+                = ((R.foldl (stepF (reg 1) (baseOf 0))
+                    ((none : Option Term), (none : Option Term))).1,
+                   (R.foldl (stepF (reg 1) (baseOf 0))
+                    ((none : Option Term), (none : Option Term))).2) := rfl
+            rw [hsR1, h4] at h5
+            exact h5
+        | some i0 =>
+            obtain ⟨hstRa, _⟩ := preSt_inv129 hia hlaM hpa R (x :: tx) e1.symm
+            exact Or.inr ⟨i0, rfl, (hstRa.1 i0 hsR1).1⟩
+      obtain ⟨ia, hfoldia, hialt⟩ := idxLt157 hix1 hx1M hix2 hx2M hx2W hx2z
+        hiy1 hy1M hiy2 hy2M hy2z hxf hyf hinFa hFaW hFax hdiv hsR
+      have hidxP0 : ((R ++ x :: Fa).foldl (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))).1 = some ia := by
+        rw [List.foldl_append]
+        exact hfoldia
+      have hcohP0 : Coh157 ((R ++ x :: Fa).foldl (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))) :=
+        coh_fold157 _ _ hP0fire rfl
+      have hvalP0 : ((R ++ x :: Fa).foldl (stepF (reg 1) (baseOf 0))
+          ((none : Option Term), (none : Option Term))).2 = some (psi (reg 1) ia) := by
+        have h3 := hcohP0
+        unfold Coh157 at h3
+        rw [hidxP0] at h3
+        exact h3
+      have hwP0 : wVal157 (R ++ x :: Fa) = psi (reg 1) ia := by
+        unfold wVal157
+        rw [hvalP0]
+        rfl
+      have hv0 : lt (wVal157 (R ++ x :: Fa)) T = true := by
+        rw [hwP0, hTeq]
+        exact lt_psi_smono157 hialt
+      have hexpψ2 : ∀ P S ac, (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+          ac ∈ Va → le (reg 1) ac.1 = false → lt (wVal157 P) T = true →
+          lt ac.1 T = true := by
+        intro P S ac hspl _ hf hvP
+        exact subRLt157 (HEa P S ac hspl hf) hiT hTap
+          (wVal_facts157 hia hlaM hpa P (ac :: S) hspl).1 hvP hrawψ
+      refine hclose (leftLt157 hia hlaM hpa HSa hiT hTap hiT hstepψ hrawψ
+        (R ++ x :: Fa) Va hsplitF hVaV hVane hexpψ2 hv0)
+
+/-- Chained to the library consumer: `TailOK151` from the carriers. -/
+theorem tailOK151_of_carriers157 (Hp : PsiIdxOKStd172) (HS : Subord157)
+    (HE : ExpSubR157) : TailOK151 :=
+  tailOK151_of_dom154 Hp (dom154_of_carriers157 Hp HS HE)
+
+/-- And `XMono145` — the second gate's equal-exponent half — from the carriers. -/
+theorem xmono145_of_carriers157 (Hp : PsiIdxOKStd172) (HS : Subord157)
+    (HE : ExpSubR157) : XMono145 :=
+  xmono145_of_dom154 Hp (dom154_of_carriers157 Hp HS HE)
+
+/-! ## §157.13 WHAT REMAINS
+
+`Dom154` now rests on `Subord157 ∧ ExpSubR157` alone — the sweep-separated
+standardness carriers (scout-sweep6/8: 0 failures on all 2135 standard Veblen
+pairs of the §151 pools; `Subord157` fails on 70/118 pairs once left
+`K`-standardness is dropped).  Their proof needs the `dict`/`collapse`-level
+structure induction (§128's `vebArgs` machinery is the entry point): the
+`ψ_{Ω₁}`-pieces of a Veblen coefficient must be bounded by the fold value of
+the pair's own prefix, which is exactly the Term-side carrier of the
+`G₀`-condition this project has circled since §133.
+
+The `Classical.choice` in the axiom prints below is inherited from the
+read-only library (`wA_mono154` → `wcnf_descP154`, `phiNF_le_phi129` →
+`phiMono129`, `lt_self_plus_one_inT`); this file introduces no new axiom and
+no classical reasoning of its own. -/
+
+#print axioms dom154_of_carriers157
+#print axioms tailOK151_of_carriers157
+#print axioms xmono145_of_carriers157
+
+end
+
 end Evidence.Region

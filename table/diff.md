@@ -27,6 +27,8 @@
           - 🚨🤖 ψ₁ で包まれた混合和に門の段を通す
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`f_n \lt t`$ と $`f_n \lt f_{n+1}`$ を出す
         - 🚨🤖 `HiMono89` を証明するか反証する
+          - 🚨🤖 `Subord157` を証明する
+          - 🚨🤖 `ExpSubR157` を証明する
       - 🚨 [D.Certified.lim](table-r1.md#dcertifiedlim) の $`\forall s \lt t.\ \exists n.\ s \le f_n`$ を出す
         - 🚨 `LimCofS1` を証明する
           - 🚨 `vOf` が基本列の上限を超えないようにする
