@@ -26764,4 +26764,1394 @@ def coveredAll170 (a : BT) : Bool :=
 
 end
 
+
+/-!
+# g174 — `famG158` の退化した添字 (`p = 0`, `k = 0`, `j = 0`)
+
+§158 は `famG158 m p k j = ψ₁^m(ψ₁^p(ψ₀(ψ₁^k 0)) ⊕ ψ₀(ψ₁^j 0))` を
+`1 ≤ m, 1 ≤ p, 1 ≤ k, 1 ≤ j` で閉じた。残っていたのは添字が `0` に落ちる四つの隅。
+
+**測定が先** (§174.7 に凍結)。三つの退化はそれぞれ別の閉じた形を持つ:
+
+  `j = 0`  底は `UW152 (sd_k) p ⊕ 1` — 裾の `1` は **食われない**。頭 `UW152 (sd_k) p`
+           は `ω^·` の不動点の形をしていない (`isFP zero (φ̄0 X) = false`) ので
+           `dnArg` が恒等になり `ω^(A ⊕ 1) = φ̄0(A ⊕ 1)`。§168 の類 (a) とは逆。
+           段 0 の桁の係数は `1` ではなく `ω`。
+
+  `k = 0`  内側の `ψ₀ 0` の値は `1`、その上の `ψ₁` の塔は `VT174 p = φ̄0^{p+1}(Ω₁)`
+           であって `UW152` の塔ではない。`logOm (φ̄0 Ω₁) = Ω₁ ⊕ 1` (`Ω₁` が
+           `ω^·` の不動点なので `phiShifted` が立つ) — だから `p = 1` の段 0 の指数は
+           `ω` で、**発火しない**。
+
+  `p = 0`  内側の塔が無くなり、底は `Ω₁` より下の成分だけの **和** になる。像は
+           種が和の `UW152` の塔。`plus` が `sd_j ≤ sd_k` かどうかで分岐する。
+
+にもかかわらず **一歩の境界は三つとも同じ** — `k ≤ m + p ∧ j ≤ m + p`、§158 の境界
+そのもの。`m + p ≤ 2` では桁が発火しないので一歩は無条件に成り立つ (§158 の
+`m = p = 1` の隅の一般形)。§174.6 がこれを一本の定理にまとめる。
+
+窓の外に残す隅は `p = 0 ∧ k = 0` の一つだけ (§174.7 で数える)。
+**ただし本当に別物なのは `p = k = j = 0` の一本の射線だけである** (検証で測定):
+`j ≥ 1` では `plus` が先頭の 1 を吸収して `plus (sd152 0) (sd152 j) = sd152 j` となり、
+`SdOK174.hsp` は成り立ち、§174.5 の閉形式が**そのまま成り立つ**。
+`k = j = 0` のときだけ種が `1 ⊕ 1 = 2` になり `isFP` が真で閉形式が破れる。
+仮定 `1 ≤ p ∨ 1 ≤ k` は `1 ≤ p ∨ 1 ≤ k ∨ 1 ≤ j` に弱められる見込み
+(`sdOK_sd174` が `k = 0`・`j ≥ 1` の場合を既に供給している)。
+-/
+
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §174.1 底の頭 — `Ω₁` 以上の一成分 -/
+
+/-- 底 `H ⊕ Y` の頭に課す条件。§162 の `WB162` (頭が裸の塔) を頭一般に外したもの。 -/
+structure Hd174 (H : Term) : Prop where
+  htl    : toList H = [H]
+  hMne   : ((M : Term) == H) = false
+  hMf    : ∀ f : Nat, ltF f M H = false
+  hlt1   : lt H (reg 1) = false
+  hle0   : le H (reg 1) = false
+  hle1   : le (reg 1) H = true
+  hOmlt  : lt (reg 1) H = true
+  hOmne  : ((H : Term) == reg 1) = false
+  hOmne' : ((Z zero : Term) == H) = false
+  hlt2   : lt H (reg 2) = true
+  hlesd  : ∀ j : Nat, le (sd152 j) H = true
+
+theorem subAP_hd174 {H : Term} (hH : Hd174 H) : subAP (reg 1) H = H := by
+  show (match toList H with
+        | [] => (zero : Term)
+        | p :: rest => if (p == reg 1) = true then ofList rest else H) = H
+  rw [hH.htl]
+  show (if ((H : Term) == reg 1) = true then ofList ([] : List Term) else H) = H
+  rw [if_neg (by rw [hH.hOmne]; exact Bool.noConfusion)]
+
+theorem subAP_add_hd174 {H Y : Term} (hH : Hd174 H) :
+    subAP (reg 1) (add H Y) = add H Y := by
+  show (if ((H : Term) == reg 1) = true then ofList (toList Y) else add H Y) = _
+  rw [if_neg (by rw [hH.hOmne]; exact Bool.noConfusion)]
+
+theorem plus_Om1_hd174 {H Y : Term} (hH : Hd174 H)
+    (hof : ofList (H :: toList Y) = add H Y) :
+    plus (reg 1) (add H Y) = add H Y := by
+  rw [plus_cons66 (show toList (add H Y) = H :: toList Y from rfl),
+    show toList (reg 1) = [Z zero] from rfl,
+    show List.filter (fun z => le H z) [Z zero] = [] from by
+      show (match le H (Z zero) with
+            | true => Z zero :: List.filter (fun z => le H z) []
+            | false => List.filter (fun z => le H z) []) = []
+      rw [show le H (Z zero) = false from hH.hle0]
+      rfl]
+  exact hof
+
+theorem baseOK_hd174 {H Y : Term} (hH : Hd174 H)
+    (hsp : isFP zero (splitFin (add H Y)).1 = false) : BaseOK162 (add H Y) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · show lt (add H Y) (reg 1) = false
+    rw [lt_add_nsum (show (reg 1 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl]
+    exact hH.hlt1
+  · exact le_reg1_add167 hH.hle1
+  · show lt (add H Y) (reg 2) = true
+    rw [lt_add_nsum (show (reg 2 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl]
+    exact hH.hlt2
+  · show (isFP zero (splitFin (add H Y)).1
+      || (((add H Y : Term) == zero) && (zero : Term).isSC)) = false
+    rw [hsp]
+    rfl
+  · exact omegaNF_shape152 (ltF_M_add162 hH.hMne hH.hMf _) rfl (isFP_add152 _ _)
+      (dnArg_notFP168 hsp)
+
+theorem collapse1_addH174 {H Y : Term} (hH : Hd174 H)
+    (hof : ofList (H :: toList Y) = add H Y) (hb : BaseOK162 (add H Y)) :
+    collapse 1 (add H Y) = PT162 (add H Y) 0 := by
+  rw [collapse1_gen162 (show toList (add H Y) = H :: toList Y from rfl) hH.hlt2 hof,
+    plus_Om1_hd174 hH hof]
+  exact hb.homg
+
+/-! ### §174.1a 底の届く範囲 -/
+
+theorem lt_TW0_addH174 {H Y : Term} (hH : Hd174 H) : lt (TW 0) (add H Y) = true := by
+  show lt (add (Z zero) (Z zero)) (add H Y) = true
+  rw [lt_add_add (show add (Z zero) (Z zero) ≠ add H Y from by
+        intro hc
+        injection hc with h1 _
+        exact (beq_eq_false_iff_ne.mp hH.hOmne') h1),
+    if_neg (beq_eq_false_iff_ne.mp hH.hOmne')]
+  exact hH.hOmlt
+
+theorem lt_TWs_addH174 (H Y : Term) (c : Nat) :
+    lt (TW (c + 1)) (add H Y) = le (TW (c + 1)) H := by
+  show lt (phi zero (TW c)) (add H Y) = _
+  rw [lt_phi_add152]
+  rfl
+
+theorem lt_TW_addH174 {H Y : Term} (hH : Hd174 H) {R : Nat}
+    (hR : ∀ c : Nat, c ≤ R → le (TW c) H = true) :
+    ∀ c : Nat, c ≤ R → lt (TW c) (add H Y) = true
+  | 0, _ => lt_TW0_addH174 hH
+  | c + 1, h => by rw [lt_TWs_addH174 H Y c]; exact hR (c + 1) h
+
+theorem lt_TW_addH_false174 {H Y : Term} {R : Nat}
+    (hR : ∀ c : Nat, R < c → le (TW c) H = false) :
+    ∀ c : Nat, R < c → lt (TW c) (add H Y) = false
+  | 0, h => absurd h (by omega)
+  | c + 1, h => by rw [lt_TWs_addH174 H Y c]; exact hR (c + 1) h
+
+/-! ### §174.1b 段 0 の桁 — 頭が一成分のとき -/
+
+theorem wA_PT0_hd174 {H Y C A : Term} (hH : Hd174 H) (hY : Tl167 Y C)
+    (hb : BaseOK162 (add H Y)) (hdiv : divAP (reg 1) H = A) :
+    wA (reg 1) (PT162 (add H Y) 0) = A := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun z => !lt z (reg 1))
+    (toList (logOm (PT162 (add H Y) 0))))) = _
+  rw [logOm_PT0_162 hb, show toList (add H Y) = H :: toList Y from rfl,
+    filter_ge_keep167 hH.hlt1, hY.hge]
+  show ofList [divAP (reg 1) H] = _
+  rw [hdiv]
+  rfl
+
+theorem wC_PT0_hd174 {H Y C : Term} (hH : Hd174 H) (hY : Tl167 Y C)
+    (hb : BaseOK162 (add H Y)) : wC (reg 1) (PT162 (add H Y) 0) = C := by
+  show omegaNF (ofList (List.filter (fun z => lt z (reg 1))
+    (toList (logOm (PT162 (add H Y) 0))))) = _
+  rw [logOm_PT0_162 hb, show toList (add H Y) = H :: toList Y from rfl,
+    filter_lt_drop167 hH.hlt1, hY.hflt, hY.hof]
+  exact hY.homg
+
+theorem idx_PT0_hd174 {H Y C : Term} (hH : Hd174 H) (hY : Tl167 Y C)
+    (hb : BaseOK162 (add H Y)) (hmul : mulL (reg 1) H = H)
+    (hplus : plus H Y = add H Y) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term)) (H, C)
+      = PT162 (add H Y) 0 := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) H)) C) = _
+  rw [subAP_hd174 hH, hmul,
+    show mulL H C = PT162 (add H Y) 0 from by
+      show ofList (List.map (fun p => omegaNF (plus H (logOm p))) (toList C)) = _
+      rw [hY.htlC]
+      show ofList [omegaNF (plus H (logOm C))] = _
+      rw [hY.hlogC, hplus, hb.homg]
+      rfl,
+    sub1_PT162 hb 0]
+
+theorem KsetAdd174 (H Y : Term) :
+    Kset (reg 1) (add H Y) = Kset (reg 1) H ++ Kset (reg 1) Y := rfl
+
+theorem stepOK_PT0_hd174 {H Y C : Term} (hH : Hd174 H) (hY : Tl167 Y C)
+    (hb : BaseOK162 (add H Y)) (hdiv : divAP (reg 1) H = H)
+    (hmul : mulL (reg 1) H = H) (hplus : plus H Y = add H Y)
+    (Hk : ∀ y ∈ Kset (reg 1) (add H Y), lt y (PT162 (add H Y) 0) = true) :
+    KsetStepOK 0 (PT162 (add H Y) 0) := by
+  refine stepOK_PT0_167 hb (wA_PT0_hd174 hH hY hb hdiv) (wC_PT0_hd174 hH hY hb)
+    (idx_PT0_hd174 hH hY hb hmul hplus) ?_
+  intro y hy
+  refine Hk y ?_
+  rw [KsetAdd174]
+  rcases hy with h | h
+  · exact List.mem_append.mpr (Or.inl h)
+  · exact List.mem_append.mpr (Or.inr (by rw [← hY.hKC]; exact h))
+
+theorem nofire_PT0_hd174 {H Y C A : Term} (hH : Hd174 H) (hY : Tl167 Y C)
+    (hb : BaseOK162 (add H Y)) (hdiv : divAP (reg 1) H = A)
+    (hfire : le (reg 1) A = false) : KsetStepOK 0 (PT162 (add H Y) 0) :=
+  nofire_PT0_167 hb (wA_PT0_hd174 hH hY hb hdiv) (wC_PT0_hd174 hH hY hb) hfire
+
+theorem not_stepOK_PT0_hd174 {H Y C y : Term} (hH : Hd174 H) (hY : Tl167 Y C)
+    (hb : BaseOK162 (add H Y)) (hdiv : divAP (reg 1) H = H)
+    (hmul : mulL (reg 1) H = H) (hplus : plus H Y = add H Y)
+    (hy : y ∈ Kset (reg 1) (add H Y)) (hlt : lt y (PT162 (add H Y) 0) = false) :
+    ¬ KsetStepOK 0 (PT162 (add H Y) 0) := by
+  refine not_stepOK_PT0_167 hb (wA_PT0_hd174 hH hY hb hdiv) (wC_PT0_hd174 hH hY hb)
+    (idx_PT0_hd174 hH hY hb hmul hplus) hH.hle1 ?_ hlt
+  rw [KsetAdd174] at hy
+  rcases List.mem_append.mp hy with h | h
+  · exact Or.inl h
+  · exact Or.inr (by rw [hY.hKC]; exact h)
+
+/-! ## §174.2 `k = 0` の内側の塔 `VT174 p = φ̄0^{p+1}(Ω₁)`
+
+`UW152` の塔ではない — 底が `Ω₁ ⊕ 種` ではなく裸の `Ω₁` だから。 -/
+
+def VT174 : Nat → Term
+  | 0 => phi zero (Z zero)
+  | n + 1 => phi zero (VT174 n)
+
+theorem toList_VT174 : ∀ n : Nat, toList (VT174 n) = [VT174 n]
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem ne_zero_VT174 : ∀ n : Nat, VT174 n ≠ zero
+  | 0 => by intro hc; exact Term.noConfusion hc
+  | _ + 1 => by intro hc; exact Term.noConfusion hc
+
+theorem beq_M_VT174 : ∀ n : Nat, ((M : Term) == VT174 n) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem ltF_M_VT174 : ∀ (n f : Nat), ltF f M (VT174 n) = false
+  | 0, f => ltF_M_phi135 zero (Z zero) f
+  | n + 1, f => ltF_M_phi135 zero (VT174 n) f
+
+theorem beq_VT_one174 : ∀ n : Nat, ((VT174 n : Term) == TM.Term.one) = false
+  | 0 => rfl
+  | n + 1 => beq_eq_false_iff_ne.mpr (by
+      intro hc
+      have hc2 : phi zero (VT174 n) = phi zero zero := hc
+      injection hc2 with _ h2
+      exact ne_zero_VT174 n h2)
+
+theorem beq_VT_reg1_174 : ∀ n : Nat, ((VT174 n : Term) == reg 1) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem beq_reg1_VT174 : ∀ n : Nat, ((Z zero : Term) == VT174 n) = false
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem nsum_VT174 : ∀ n : Nat, NSum (VT174 n) = true
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem isFP_VT174 : ∀ n : Nat, isFP zero (VT174 n) = false
+  | 0 => isFP_phi0_152 (Z zero)
+  | n + 1 => isFP_phi0_152 (VT174 n)
+
+theorem lt_VT_reg1_174 : ∀ n : Nat, lt (VT174 n) (reg 1) = false
+  | 0 => by
+      show lt (phi zero (Z zero)) (reg 1) = false
+      rw [lt_phi_reg1_100, show lt (Z zero) (reg 1) = false from lt_irrefl _]
+      exact Bool.and_false _
+  | n + 1 => by
+      show lt (phi zero (VT174 n)) (reg 1) = false
+      rw [lt_phi_reg1_100, lt_VT_reg1_174 n]
+      exact Bool.and_false _
+
+theorem le_VT_reg1_174 (n : Nat) : le (VT174 n) (reg 1) = false := by
+  show (((VT174 n : Term) == Z zero) || lt (VT174 n) (Z zero)) = false
+  rw [show ((VT174 n : Term) == Z zero) = false from beq_VT_reg1_174 n,
+    show lt (VT174 n) (Z zero) = false from lt_VT_reg1_174 n]
+  rfl
+
+theorem lt_reg1_VT174 : ∀ n : Nat, lt (reg 1) (VT174 n) = true
+  | 0 => by
+      show lt (Z zero) (phi zero (Z zero)) = true
+      rw [lt_reg1_phi0_171, beq_self_eq_true]
+      rfl
+  | n + 1 => by
+      show lt (Z zero) (phi zero (VT174 n)) = true
+      rw [lt_reg1_phi0_171, show lt (Z zero) (VT174 n) = true from lt_reg1_VT174 n]
+      exact Bool.or_true _
+
+theorem le_reg1_VT174 (n : Nat) : le (reg 1) (VT174 n) = true := by
+  show (((Z zero : Term) == VT174 n) || lt (Z zero) (VT174 n)) = true
+  rw [show lt (Z zero) (VT174 n) = true from lt_reg1_VT174 n]
+  exact Bool.or_true _
+
+theorem lt_VT_reg2_174 : ∀ n : Nat, lt (VT174 n) (reg 2) = true
+  | 0 => by
+      show lt (phi zero (Z zero)) (Z TM.Term.one) = true
+      rw [lt_phi_Z103, lt_Om_Om2_139,
+        lt_zero_left (show (Z TM.Term.one : Term) ≠ zero from by
+          intro hc; exact Term.noConfusion hc)]
+      rfl
+  | n + 1 => by
+      show lt (phi zero (VT174 n)) (Z TM.Term.one) = true
+      rw [lt_phi_Z103,
+        show lt (VT174 n) (Z TM.Term.one) = true from lt_VT_reg2_174 n,
+        lt_zero_left (show (Z TM.Term.one : Term) ≠ zero from by
+          intro hc; exact Term.noConfusion hc)]
+      rfl
+
+theorem phiShifted_VT174 : ∀ n : Nat, phiShifted zero (VT174 n) = false
+  | 0 => phiShifted_phi0_135
+      (show ((phi zero (Z zero) : Term) == TM.Term.one) = false from rfl)
+  | n + 1 => phiShifted_phi0_135 (beq_VT_one174 (n + 1))
+
+theorem logOm_VT174 (n : Nat) : logOm (VT174 (n + 1)) = VT174 n :=
+  logOm_phi0_135 (phiShifted_VT174 n)
+
+theorem omegaNF_VT174 : ∀ n : Nat, omegaNF (VT174 n) = VT174 (n + 1)
+  | 0 => omegaNF_phi0_135
+      (show ((phi zero (Z zero) : Term) == TM.Term.one) = false from rfl)
+  | n + 1 => omegaNF_phi0_135 (beq_VT_one174 (n + 1))
+
+theorem subAP_VT174 : ∀ n : Nat, subAP (reg 1) (VT174 n) = VT174 n
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem plus_Om1_VT174 (n : Nat) : plus (reg 1) (VT174 n) = VT174 n := by
+  rw [plus_cons66 (toList_VT174 n), show toList (reg 1) = [Z zero] from rfl,
+    show List.filter (fun z => le (VT174 n) z) [Z zero] = [] from by
+      show (match le (VT174 n) (Z zero) with
+            | true => Z zero :: List.filter (fun z => le (VT174 n) z) []
+            | false => List.filter (fun z => le (VT174 n) z) []) = []
+      rw [show le (VT174 n) (Z zero) = false from le_VT_reg1_174 n]
+      rfl]
+  rfl
+
+theorem mulL_Om1_VT174 (n : Nat) : mulL (reg 1) (VT174 (n + 1)) = VT174 (n + 1) := by
+  show ofList (List.map (fun p => omegaNF (plus (reg 1) (logOm p)))
+    (toList (VT174 (n + 1)))) = _
+  rw [toList_VT174 (n + 1)]
+  show ofList [omegaNF (plus (reg 1) (logOm (VT174 (n + 1))))] = _
+  rw [logOm_VT174 n, plus_Om1_VT174 n, omegaNF_VT174 n]
+  rfl
+
+theorem divAP_VT174 (n : Nat) : divAP (reg 1) (VT174 (n + 1)) = VT174 (n + 1) := by
+  show omegaNF (subAP (reg 1) (logOm (VT174 (n + 1)))) = _
+  rw [logOm_VT174 n, subAP_VT174 n, omegaNF_VT174 n]
+
+/-- **`k = 0`、`p = 1` の段 0 の指数は `ω`** — `Ω₁` が `ω^·` の不動点なので
+    `logOm (φ̄0 Ω₁) = Ω₁ ⊕ 1` になり、`Ω₁` で割ると `1` が残る。 -/
+theorem divAP_VT0_174 : divAP (reg 1) (VT174 0) = phi zero TM.Term.one := by decide
+
+theorem Kset_VT174 : ∀ n : Nat, Kset (reg 1) (VT174 n) = []
+  | 0 => rfl
+  | n + 1 => by
+      show Kset (reg 1) (zero : Term) ++ Kset (reg 1) (VT174 n) = []
+      rw [Kset_VT174 n]
+      rfl
+
+theorem lt_TW_VT174 : ∀ (c n : Nat), c ≤ n → lt (TW c) (VT174 n) = true
+  | 0, n, _ => by
+      show lt (add (Z zero) (Z zero)) (VT174 n) = true
+      rw [lt_add_nsum (ne_zero_VT174 n) (nsum_VT174 n)]
+      exact lt_reg1_VT174 n
+  | _ + 1, 0, h => absurd h (by omega)
+  | c + 1, n + 1, h => by
+      show lt (phi zero (TW c)) (phi zero (VT174 n)) = true
+      rw [lt_phi_same139]
+      exact lt_TW_VT174 c n (by omega)
+
+theorem le_TW_VT174 {c n : Nat} (h : c ≤ n) : le (TW c) (VT174 n) = true :=
+  le_of_lt (lt_TW_VT174 c n h)
+
+theorem beq_TW_VT174 : ∀ (c n : Nat), ((TW c : Term) == VT174 n) = false
+  | 0, 0 => rfl
+  | 0, _ + 1 => rfl
+  | c + 1, 0 => by
+      show ((phi zero (TW c) : Term) == phi zero (Z zero)) = false
+      cases c <;> rfl
+  | c + 1, n + 1 => beq_eq_false_iff_ne.mpr (by
+      intro hc
+      have hc2 : phi zero (TW c) = phi zero (VT174 n) := hc
+      injection hc2 with _ h2
+      exact (beq_eq_false_iff_ne.mp (beq_TW_VT174 c n)) h2)
+
+theorem lt_TW_VT_false174 : ∀ (n c : Nat), n < c → lt (TW c) (VT174 n) = false
+  | _, 0, h => absurd h (by omega)
+  | 0, c + 1, _ => by
+      show lt (phi zero (TW c)) (phi zero (Z zero)) = false
+      rw [lt_phi_same139]
+      exact lt_TW_Om138' c
+  | n + 1, c + 1, h => by
+      show lt (phi zero (TW c)) (phi zero (VT174 n)) = false
+      rw [lt_phi_same139]
+      exact lt_TW_VT_false174 n c (by omega)
+
+theorem le_TW_VT_false174 {n c : Nat} (h : n < c) : le (TW c) (VT174 n) = false := by
+  show (((TW c : Term) == VT174 n) || lt (TW c) (VT174 n)) = false
+  rw [beq_TW_VT174 c n, lt_TW_VT_false174 n c h]
+  rfl
+
+theorem collapse1_VT174 : ∀ n : Nat, collapse 1 (VT174 n) = VT174 (n + 1)
+  | 0 => collapse1_phi0_139
+      (show ((phi zero (Z zero) : Term) == TM.Term.one) = false from rfl)
+      (lt_VT_reg2_174 0) (le_VT_reg1_174 0)
+  | n + 1 => collapse1_phi0_139 (beq_VT_one174 (n + 1))
+      (lt_VT_reg2_174 (n + 1)) (le_VT_reg1_174 (n + 1))
+
+/-- `ψ₁(ψ₀ 0)` の値 — 裾の `1` が `Ω₁` に食われて `ω^(Ω₁+1)`。 -/
+theorem collapse1_one174 : collapse 1 (TM.Term.one : Term) = VT174 0 := by decide
+
+/-! ## §174.3 内側の塔 `IH174 k p = dict (ψ₁^{p+1}(ψ₀(ψ₁^k 0)))` -/
+
+theorem isAP_sd174 : ∀ j : Nat, (sd152 j).isAP = true
+  | 0 => by rw [sd0_152]; rfl
+  | j + 1 => (tailOK_sd158 (j + 1) (by omega)).hap
+
+theorem toList_sd174 (j : Nat) : toList (sd152 j) = [sd152 j] :=
+  toList_isAP81 (isAP_sd174 j)
+
+theorem lt_sd_reg1_174 : ∀ j : Nat, lt (sd152 j) (reg 1) = true
+  | 0 => by rw [sd0_152]; decide
+  | j + 1 => (tailOK_sd158 (j + 1) (by omega)).h1
+
+theorem le_sd_reg1_174 (j : Nat) : le (sd152 j) (reg 1) = true :=
+  le_of_lt (lt_sd_reg1_174 j)
+
+theorem le_reg1_sd_false174 : ∀ j : Nat, le (reg 1) (sd152 j) = false
+  | 0 => by rw [sd0_152]; exact not_le_reg1_one152
+  | j + 1 => (tailOK_sd158 (j + 1) (by omega)).hle0
+
+theorem beq_M_sd174 : ∀ k : Nat, ((M : Term) == sd152 k) = false
+  | 0 => by rw [sd0_152]; rfl
+  | 1 => by rw [sd1_152]; rfl
+  | 2 => by rw [sd2_152]; rfl
+  | k + 3 => by
+      obtain ⟨X, hX⟩ := sd_psi_form155 k
+      rw [hX]
+      rfl
+
+theorem lt_sd_VT174 : ∀ (j n : Nat), lt (sd152 j) (VT174 n) = true
+  | 0, n => by
+      rw [sd0_152]
+      cases n with
+      | zero =>
+          show lt (phi zero zero) (phi zero (Z zero)) = true
+          rw [lt_phi_same139]
+          exact lt_zero_left (show (Z zero : Term) ≠ zero from by
+            intro hc; exact Term.noConfusion hc)
+      | succ nn =>
+          show lt (phi zero zero) (phi zero (VT174 nn)) = true
+          rw [lt_phi_same139]
+          exact lt_zero_left (ne_zero_VT174 nn)
+  | j + 1, 0 => by
+      have hT : TailOK158 (sd152 (j + 1)) := tailOK_sd158 (j + 1) (by omega)
+      show lt (sd152 (j + 1)) (phi zero (Z zero)) = true
+      exact lt_isFP_phi_zero hT.hfp (tail_ne_M158 hT)
+        (le_of_lt (show lt (sd152 (j + 1)) (Z zero) = true from hT.h1))
+  | j + 1, n + 1 => by
+      have hT : TailOK158 (sd152 (j + 1)) := tailOK_sd158 (j + 1) (by omega)
+      show lt (sd152 (j + 1)) (phi zero (VT174 n)) = true
+      exact lt_isFP_phi_zero hT.hfp (tail_ne_M158 hT)
+        (le_of_lt (lt_sd_VT174 (j + 1) n))
+
+def IH174 : Nat → Nat → Term
+  | 0, p => VT174 p
+  | k + 1, p => UW152 (sd152 (k + 1)) p
+
+theorem isFP_IH174 : ∀ (k p : Nat), isFP zero (IH174 k p) = false
+  | 0, p => isFP_VT174 p
+  | k + 1, p => by
+      show isFP zero (UW152 (sd152 (k + 1)) p) = false
+      cases p with
+      | zero => exact isFP_phi0_152 _
+      | succ pp => exact isFP_phi0_152 _
+
+theorem beq_IH_one174 : ∀ (k p : Nat), ((IH174 k p : Term) == TM.Term.one) = false
+  | 0, p => beq_VT_one174 p
+  | k + 1, p => beq_UW_one152 (sd152 (k + 1)) p
+
+theorem dict_inner174 : ∀ (k p : Nat),
+    dict (nst132 (p + 1) (BT.D 0 (nst132 k BT.zero))) = IH174 k p
+  | 0, 0 => by
+      show collapse 1 (dict (BT.D 0 (nst132 0 BT.zero))) = _
+      rw [show dict (BT.D 0 (nst132 0 BT.zero)) = TM.Term.one from sd0_152]
+      exact collapse1_one174
+  | 0, p + 1 => by
+      show collapse 1 (dict (nst132 (p + 1) (BT.D 0 (nst132 0 BT.zero)))) = _
+      rw [dict_inner174 0 p]
+      exact collapse1_VT174 p
+  | k + 1, p => dict_famB158 (tailOK_sd158 (k + 1) (by omega)) p
+
+theorem hd_IH174 : ∀ (k p : Nat), Hd174 (IH174 k p)
+  | 0, p =>
+      ⟨toList_VT174 p, beq_M_VT174 p, ltF_M_VT174 p, lt_VT_reg1_174 p,
+        le_VT_reg1_174 p, le_reg1_VT174 p, lt_reg1_VT174 p, beq_VT_reg1_174 p,
+        beq_reg1_VT174 p, lt_VT_reg2_174 p, fun j => le_of_lt (lt_sd_VT174 j p)⟩
+  | k + 1, p => by
+      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      · show toList (UW152 (sd152 (k + 1)) p) = _
+        cases p <;> rfl
+      · show ((M : Term) == UW152 (sd152 (k + 1)) p) = false
+        cases p <;> rfl
+      · exact fun f => ltF_M_UW158 (sd152 (k + 1)) p f
+      · exact lt_UW_reg1_156 (sd152 (k + 1)) p
+      · exact le_UW_reg1_156 (sd152 (k + 1)) p
+      · exact le_reg1_UW152 (sd152 (k + 1)) p
+      · exact lt_Om_UW152 (sd152 (k + 1)) p
+      · show ((UW152 (sd152 (k + 1)) p : Term) == reg 1) = false
+        cases p <;> rfl
+      · exact beq_Om_UW152 (sd152 (k + 1)) p
+      · exact lt_UW_reg2_158 (sd152 (k + 1)) p
+      · intro j
+        cases j with
+        | zero =>
+            rw [sd0_152]
+            exact le_of_lt (lt_one_UW156 (sd152 (k + 1)) p)
+        | succ jj =>
+            exact le_tail_UW158 (tailOK_sd158 (jj + 1) (by omega)) (sd152 (k + 1)) p
+
+theorem Kset_IH174 : ∀ (k p : Nat), Kset (reg 1) (IH174 k p) = Kset (reg 1) (sd152 k)
+  | 0, p => by
+      show Kset (reg 1) (VT174 p) = Kset (reg 1) (sd152 0)
+      rw [Kset_VT174 p, sd0_152]
+      rfl
+  | k + 1, p => Kset_UW152 (sd152 (k + 1)) p
+
+theorem le_TW_IH174 : ∀ (k p c : Nat), c ≤ p → le (TW c) (IH174 k p) = true
+  | 0, _, _, h => le_TW_VT174 h
+  | _ + 1, _, _, h => le_TW_UW_sd158 h
+
+theorem le_TW_IH_false174 : ∀ (k p c : Nat), p < c → le (TW c) (IH174 k p) = false
+  | 0, _, _, h => le_TW_VT_false174 h
+  | k + 1, _, _, h => le_TW_UW_sd_false158 (tailOK_sd158 (k + 1) (by omega)) h
+
+theorem divAP_IH174 : ∀ (k p : Nat), divAP (reg 1) (IH174 k (p + 1)) = IH174 k (p + 1)
+  | 0, p => divAP_VT174 p
+  | k + 1, p => by
+      show omegaNF (subAP (reg 1) (logOm (UW152 (sd152 (k + 1)) (p + 1))))
+        = UW152 (sd152 (k + 1)) (p + 1)
+      rw [logOm_UW152 (sd152 (k + 1)) p, subAP_UW152 (sd152 (k + 1)) p,
+        omegaNF_UW152 (sd152 (k + 1)) p]
+
+theorem mulL_IH174 : ∀ (k p : Nat), mulL (reg 1) (IH174 k (p + 1)) = IH174 k (p + 1)
+  | 0, p => mulL_Om1_VT174 p
+  | k + 1, p => mulL_Om1_UW156 (sd152 (k + 1)) p
+
+/-- **`p = 1` (内側の塔が一枚) の段 0 の指数は `Ω₁` に届かない** — `k = 0` なら `ω`、
+    `k ≥ 1` なら種 `sd_k` そのもの。どちらも発火しない。 -/
+theorem divAP_IH0_174 : ∀ k : Nat, le (reg 1) (divAP (reg 1) (IH174 k 0)) = false
+  | 0 => by
+      rw [show divAP (reg 1) (IH174 0 0) = phi zero TM.Term.one from divAP_VT0_174,
+        le_reg1_phi0_171]
+      exact not_le_reg1_one152
+  | k + 1 => by
+      have hT : TailOK158 (sd152 (k + 1)) := tailOK_sd158 (k + 1) (by omega)
+      rw [show divAP (reg 1) (IH174 (k + 1) 0) = sd152 (k + 1) from by
+        show omegaNF (subAP (reg 1) (logOm (UW152 (sd152 (k + 1)) 0))) = _
+        rw [show logOm (UW152 (sd152 (k + 1)) 0) = add (Z zero) (sd152 (k + 1)) from
+            logOm_phi0_135 (phiShifted_addOm158 hT),
+          show subAP (reg 1) (add (Z zero) (sd152 (k + 1))) = sd152 (k + 1) from by
+            show (if ((Z zero : Term) == reg 1) = true
+                  then ofList (toList (sd152 (k + 1)))
+                  else add (Z zero) (sd152 (k + 1))) = _
+            rw [if_pos (by rfl), toList_sd174 (k + 1)]
+            rfl,
+          hT.homg]]
+      exact hT.hle0
+
+/-! ## §174.4 `p ≥ 1` の族 — 底は `IH174 k p ⊕ sd152 j` (`k = 0`, `j = 0` を含む) -/
+
+/-- 裾が `1` のときの `Tl167` — その `ω^·` は `ω`。 -/
+theorem tl_one174 : Tl167 (TM.Term.one : Term) (omegaNF (TM.Term.one : Term)) := by
+  rw [show omegaNF (TM.Term.one : Term) = phi zero TM.Term.one from by decide]
+  exact ⟨rfl, by decide, by decide, by decide, rfl, by decide, rfl, by decide⟩
+
+theorem tl_sd174 : ∀ j : Nat, Tl167 (sd152 j) (omegaNF (sd152 j))
+  | 0 => by rw [sd0_152]; exact tl_one174
+  | j + 1 => by
+      rw [(tailOK_sd158 (j + 1) (by omega)).homg]
+      exact tl_sd167 (by omega)
+
+/-- 底。 -/
+def GB174 (k p j : Nat) : Term := add (IH174 k p) (sd152 j)
+
+theorem ofList_GB174 (k p j : Nat) :
+    ofList (IH174 k p :: toList (sd152 j)) = GB174 k p j := by
+  rw [toList_sd174 j]
+  rfl
+
+theorem plus_GB174 (k p j : Nat) : plus (IH174 k p) (sd152 j) = GB174 k p j := by
+  rw [plus_cons66 (toList_sd174 j), (hd_IH174 k p).htl,
+    List.filter_cons_of_pos
+      (show le (sd152 j) (IH174 k p) = true from (hd_IH174 k p).hlesd j)]
+  rfl
+
+theorem splitFin_GB174 : ∀ (k p j : Nat), isFP zero (splitFin (GB174 k p j)).1 = false
+  | k, p, 0 => by
+      show isFP zero (splitFin (add (IH174 k p) (sd152 0))).1 = false
+      rw [sd0_152, splitFin_addOne168 (beq_IH_one174 k p)]
+      exact isFP_IH174 k p
+  | k, p, j + 1 => by
+      show isFP zero (splitFin (add (IH174 k p) (sd152 (j + 1)))).1 = false
+      rw [splitFin_add2_162 (toList_sd174 (j + 1))
+        (tailOK_sd158 (j + 1) (by omega)).ho]
+      exact isFP_add152 _ _
+
+theorem baseOK_GB174 (k p j : Nat) : BaseOK162 (GB174 k p j) :=
+  baseOK_hd174 (hd_IH174 k p) (splitFin_GB174 k p j)
+
+theorem Kset_GB174 (k p j : Nat) :
+    Kset (reg 1) (GB174 k p j) = Kset (reg 1) (sd152 k) ++ Kset (reg 1) (sd152 j) := by
+  rw [show Kset (reg 1) (GB174 k p j)
+      = Kset (reg 1) (IH174 k p) ++ Kset (reg 1) (sd152 j) from rfl, Kset_IH174 k p]
+
+/-- **閉じた形 — `p ≥ 1` の族の像は `IH174 k p ⊕ sd152 j` の上の塔。**
+    `1 ≤ k ∧ 1 ≤ j` は §158 の `dict_famG158`、`k = 0` と `j = 0` はここで新しい。 -/
+theorem dict_famG_hi174 (k p j : Nat) : ∀ m : Nat,
+    dict (famG158 (m + 1) (p + 1) k j) = PT162 (GB174 k p j) m
+  | 0 => by
+      show collapse 1 (dict (BT.sum (nst132 (p + 1) (BT.D 0 (nst132 k BT.zero)))
+        (BT.D 0 (nst132 j BT.zero)))) = _
+      rw [Trans.Dict.dict_sum, dict_inner174 k p,
+        show dict (BT.D 0 (nst132 j BT.zero)) = sd152 j from rfl, plus_GB174 k p j]
+      exact collapse1_addH174 (hd_IH174 k p) (ofList_GB174 k p j) (baseOK_GB174 k p j)
+  | m + 1 => by
+      show collapse 1 (dict (famG158 (m + 1) (p + 1) k j)) = _
+      rw [dict_famG_hi174 k p j m]
+      exact collapse1_PT162 (baseOK_GB174 k p j) m
+
+/-- 底の届く範囲 — 内側の塔の高さ `p` まで。 -/
+theorem reach_GB174 (k p j : Nat) : ∀ c : Nat, c ≤ p → lt (TW c) (GB174 k p j) = true :=
+  lt_TW_addH174 (hd_IH174 k p) (fun c h => le_TW_IH174 k p c h)
+
+theorem reach_GB_false174 (k p j : Nat) :
+    ∀ c : Nat, p < c → lt (TW c) (GB174 k p j) = false :=
+  lt_TW_addH_false174 (fun c h => le_TW_IH_false174 k p c h)
+
+theorem KsetGB_lt174 (k p j ℓ : Nat) (hk : k ≤ ℓ + p + 2) (hj : j ≤ ℓ + p + 2) :
+    ∀ y ∈ Kset (reg 1) (GB174 k p j), lt y (PT162 (GB174 k p j) ℓ) = true := by
+  intro y hy
+  rw [Kset_GB174 k p j] at hy
+  rcases List.mem_append.mp hy with h | h
+  · exact Ksd_lt_PT162 (baseOK_GB174 k p j) p (reach_GB174 k p j) ℓ k hk y h
+  · exact Ksd_lt_PT162 (baseOK_GB174 k p j) p (reach_GB174 k p j) ℓ j hj y h
+
+theorem stepOK_GB_aux174 (k j : Nat) : ∀ (mm pp : Nat),
+    k ≤ mm + pp + 2 → j ≤ mm + pp + 2 → KsetStepOK 0 (PT162 (GB174 k pp j) mm)
+  | 0, 0, _, _ =>
+      nofire_PT0_hd174 (hd_IH174 k 0) (tl_sd174 j) (baseOK_GB174 k 0 j) rfl
+        (divAP_IH0_174 k)
+  | 0, pq + 1, hk, hj =>
+      stepOK_PT0_hd174 (hd_IH174 k (pq + 1)) (tl_sd174 j) (baseOK_GB174 k (pq + 1) j)
+        (divAP_IH174 k pq) (mulL_IH174 k pq) (plus_GB174 k (pq + 1) j)
+        (KsetGB_lt174 k (pq + 1) j 0 hk hj)
+  | mq + 1, pp, hk, hj =>
+      stepOK_PTA162 (baseOK_GB174 k pp j) (subAP_add_hd174 (hd_IH174 k pp))
+        (plus_Om1_hd174 (hd_IH174 k pp) (ofList_GB174 k pp j)) mq
+        (KsetGB_lt174 k pp j (mq + 1) hk hj)
+
+/-- **主定理 A/B — `1 ≤ m`, `1 ≤ p`, `k ≤ m + p`, `j ≤ m + p` で第一の門の一歩。**
+    `k` も `j` も `0` でよい。 -/
+theorem ksetStepOK_famG_hi174 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (hk : k ≤ m + p) (hj : j ≤ m + p) : KsetStepOK 0 (dict (famG158 m p k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  rw [dict_famG_hi174 k pp j mm]
+  exact stepOK_GB_aux174 k j mm pp (by omega) (by omega)
+
+theorem not_stepOK_GB_k_aux174 (kk j : Nat) : ∀ (mm pp : Nat), 1 ≤ mm + pp →
+    mm + pp + 2 < kk + 4 → ¬ KsetStepOK 0 (PT162 (GB174 (kk + 4) pp j) mm)
+  | 0, 0, h, _ => absurd h (by omega)
+  | 0, pq + 1, _, hlt =>
+      not_stepOK_PT0_hd174 (hd_IH174 (kk + 4) (pq + 1)) (tl_sd174 j)
+        (baseOK_GB174 (kk + 4) (pq + 1) j) (divAP_IH174 (kk + 4) pq)
+        (mulL_IH174 (kk + 4) pq) (plus_GB174 (kk + 4) (pq + 1) j)
+        (by
+          show TW (kk + 3) ∈ Kset (reg 1) (IH174 (kk + 4) (pq + 1))
+            ++ Kset (reg 1) (sd152 j)
+          rw [Kset_IH174 (kk + 4) (pq + 1)]
+          exact List.mem_append.mpr (Or.inl (Ksd_escape158 kk)))
+        (lt_TW_PT_reach_false162 (pq + 1) (reach_GB_false174 (kk + 4) (pq + 1) j)
+          (kk + 3) 0 (by omega))
+  | mq + 1, pp, _, hlt =>
+      not_stepOK_PTA162 (baseOK_GB174 (kk + 4) pp j)
+        (subAP_add_hd174 (hd_IH174 (kk + 4) pp))
+        (plus_Om1_hd174 (hd_IH174 (kk + 4) pp) (ofList_GB174 (kk + 4) pp j)) mq
+        (by
+          rw [Kset_GB174 (kk + 4) pp j]
+          exact List.mem_append.mpr (Or.inl (Ksd_escape158 kk)))
+        (lt_TW_PT_reach_false162 pp (reach_GB_false174 (kk + 4) pp j)
+          (kk + 3) (mq + 1) (by omega))
+
+theorem not_stepOK_GB_j_aux174 (k jj : Nat) : ∀ (mm pp : Nat), 1 ≤ mm + pp →
+    mm + pp + 2 < jj + 4 → ¬ KsetStepOK 0 (PT162 (GB174 k pp (jj + 4)) mm)
+  | 0, 0, h, _ => absurd h (by omega)
+  | 0, pq + 1, _, hlt =>
+      not_stepOK_PT0_hd174 (hd_IH174 k (pq + 1)) (tl_sd174 (jj + 4))
+        (baseOK_GB174 k (pq + 1) (jj + 4)) (divAP_IH174 k pq)
+        (mulL_IH174 k pq) (plus_GB174 k (pq + 1) (jj + 4))
+        (by
+          show TW (jj + 3) ∈ Kset (reg 1) (IH174 k (pq + 1))
+            ++ Kset (reg 1) (sd152 (jj + 4))
+          rw [Kset_IH174 k (pq + 1)]
+          exact List.mem_append.mpr (Or.inr (Ksd_escape158 jj)))
+        (lt_TW_PT_reach_false162 (pq + 1) (reach_GB_false174 k (pq + 1) (jj + 4))
+          (jj + 3) 0 (by omega))
+  | mq + 1, pp, _, hlt =>
+      not_stepOK_PTA162 (baseOK_GB174 k pp (jj + 4))
+        (subAP_add_hd174 (hd_IH174 k pp))
+        (plus_Om1_hd174 (hd_IH174 k pp) (ofList_GB174 k pp (jj + 4))) mq
+        (by
+          rw [Kset_GB174 k pp (jj + 4)]
+          exact List.mem_append.mpr (Or.inr (Ksd_escape158 jj)))
+        (lt_TW_PT_reach_false162 pp (reach_GB_false174 k pp (jj + 4))
+          (jj + 3) (mq + 1) (by omega))
+
+/-- **主定理 A/B' — 内の種が高すぎると一歩は成り立たない。** -/
+theorem not_ksetStepOK_famG_hi_k174 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h3 : 3 ≤ m + p) (hk : m + p < k) : ¬ KsetStepOK 0 (dict (famG158 m p k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+  rw [dict_famG_hi174 (kk + 4) pp j mm]
+  exact not_stepOK_GB_k_aux174 kk j mm pp (by omega) (by omega)
+
+/-- **主定理 A/B'' — 裾の種が高すぎても一歩は成り立たない。** -/
+theorem not_ksetStepOK_famG_hi_j174 {m p k j : Nat} (h1m : 1 ≤ m) (h1p : 1 ≤ p)
+    (h3 : 3 ≤ m + p) (hj : m + p < j) : ¬ KsetStepOK 0 (dict (famG158 m p k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨pp, rfl⟩ : ∃ pp, p = pp + 1 := ⟨p - 1, by omega⟩
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 4 := ⟨j - 4, by omega⟩
+  rw [dict_famG_hi174 k pp (jj + 4) mm]
+  exact not_stepOK_GB_j_aux174 k jj mm pp (by omega) (by omega)
+
+/-! ## §174.5 `p = 0` の族 — 種が和の塔 -/
+
+/-- 種に課す条件 — 成分がぜんぶ `Ω₁` より下、頭は `b1`。 -/
+structure SdOK174 (S b1 : Term) (r : List Term) : Prop where
+  htl  : toList S = b1 :: r
+  hof  : ofList (b1 :: r) = S
+  hb2  : lt b1 (reg 2) = true
+  hb1  : le b1 (Z zero) = true
+  hge  : List.filter (fun z => !lt z (reg 1)) (toList S) = []
+  hflt : List.filter (fun z => lt z (reg 1)) (toList S) = toList S
+  hsp  : isFP zero (splitFin (add (Z zero) S)).1 = false
+  homg : le (reg 1) (omegaNF S) = false
+  h1   : lt S (reg 1) = true
+
+theorem phiShifted_addOmS174 {S b1 : Term} {r : List Term} (hS : SdOK174 S b1 r) :
+    phiShifted zero (add (Z zero) S) = false := by
+  show (isFP zero (splitFin (add (Z zero) S)).1
+    || (((add (Z zero) S : Term) == zero) && (zero : Term).isSC)) = false
+  rw [hS.hsp]
+  rfl
+
+theorem collapse1_sdOK174 {S b1 : Term} {r : List Term} (hS : SdOK174 S b1 r) :
+    collapse 1 S = UW152 S 0 := by
+  rw [collapse1_gen162 hS.htl hS.hb2 hS.hof,
+    show plus (reg 1) S = add (Z zero) S from by
+      rw [plus_cons66 hS.htl, show toList (reg 1) = [Z zero] from rfl,
+        List.filter_cons_of_pos hS.hb1]
+      show add (Z zero) (ofList (b1 :: r)) = add (Z zero) S
+      rw [hS.hof]]
+  exact omegaNF_shape152 (ltF_M_addOm135 S _) rfl (isFP_add152 _ _)
+    (dnArg_notFP168 hS.hsp)
+
+theorem logOm_UWS0_174 {S b1 : Term} {r : List Term} (hS : SdOK174 S b1 r) :
+    logOm (UW152 S 0) = add (Z zero) S :=
+  logOm_phi0_135 (phiShifted_addOmS174 hS)
+
+theorem subAP_addOmS174 {S b1 : Term} {r : List Term} (hS : SdOK174 S b1 r) :
+    subAP (reg 1) (add (Z zero) S) = S := by
+  show (if ((Z zero : Term) == reg 1) = true then ofList (toList S)
+        else add (Z zero) S) = _
+  rw [if_pos (by rfl), hS.htl]
+  exact hS.hof
+
+theorem wcnf_UWS0_174 {S b1 : Term} {r : List Term} (hS : SdOK174 S b1 r) :
+    wcnf (reg 1) (toList (UW152 S 0)) = ([(TM.Term.one, omegaNF S)], zero) := by
+  rw [show toList (UW152 S 0) = [UW152 S 0] from rfl,
+    wcnf_cons_ge (lt_UW_reg1_156 S 0)]
+  show ([(wA (reg 1) (UW152 S 0), wC (reg 1) (UW152 S 0))], zero) = _
+  rw [show wA (reg 1) (UW152 S 0) = TM.Term.one from by
+      show ofList (List.map (divAP (reg 1)) (List.filter (fun z => !lt z (reg 1))
+        (toList (logOm (UW152 S 0))))) = _
+      rw [logOm_UWS0_174 hS, show toList (add (Z zero) S) = Z zero :: toList S from rfl,
+        filter_ge_keep167 (show lt (Z zero) (reg 1) = false from lt_irrefl _), hS.hge]
+      show ofList [divAP (reg 1) (Z zero)] = _
+      rw [divAP_Om167]
+      rfl,
+    show wC (reg 1) (UW152 S 0) = omegaNF S from by
+      show omegaNF (ofList (List.filter (fun z => lt z (reg 1))
+        (toList (logOm (UW152 S 0))))) = _
+      rw [logOm_UWS0_174 hS, show toList (add (Z zero) S) = Z zero :: toList S from rfl,
+        filter_lt_drop167 (show lt (Z zero) (reg 1) = false from lt_irrefl _), hS.hflt,
+        hS.htl, hS.hof]]
+
+theorem wcnf_UWS1_174 {S b1 : Term} {r : List Term} (hS : SdOK174 S b1 r) :
+    wcnf (reg 1) (toList (UW152 S 1)) = ([(omegaNF S, TM.Term.one)], zero) := by
+  rw [show toList (UW152 S 1) = [UW152 S 1] from rfl,
+    wcnf_cons_ge (lt_UW_reg1_156 S 1)]
+  show ([(wA (reg 1) (UW152 S 1), wC (reg 1) (UW152 S 1))], zero) = _
+  rw [show wA (reg 1) (UW152 S 1) = omegaNF S from by
+      show ofList (List.map (divAP (reg 1)) (List.filter (fun z => !lt z (reg 1))
+        (toList (logOm (UW152 S 1))))) = _
+      rw [show logOm (UW152 S 1) = UW152 S 0 from logOm_phi0_135 (phiShifted_UW152 S 0),
+        show toList (UW152 S 0) = [UW152 S 0] from rfl, filter_ge_UW156 S 0]
+      show ofList [divAP (reg 1) (UW152 S 0)] = _
+      show ofList [omegaNF (subAP (reg 1) (logOm (UW152 S 0)))] = _
+      rw [logOm_UWS0_174 hS, subAP_addOmS174 hS]
+      rfl,
+    show wC (reg 1) (UW152 S 1) = TM.Term.one from by
+      show omegaNF (ofList (List.filter (fun z => lt z (reg 1))
+        (toList (logOm (UW152 S 1))))) = _
+      rw [show logOm (UW152 S 1) = UW152 S 0 from logOm_phi0_135 (phiShifted_UW152 S 0),
+        show toList (UW152 S 0) = [UW152 S 0] from rfl, filter_lt_UW156 S 0]
+      exact omegaNF_zero135]
+
+/-- **段 0 と段 1 は発火しない** — 種が和でも同じ。 -/
+theorem stepOK_UWS_low174 {S b1 : Term} {r : List Term} (hS : SdOK174 S b1 r) :
+    ∀ ℓ : Nat, ℓ ≤ 1 → KsetStepOK 0 (UW152 S ℓ)
+  | 0, _ => stepOK_nofire162 (wcnf_UWS0_174 hS) not_le_reg1_one152
+  | 1, _ => stepOK_nofire162 (wcnf_UWS1_174 hS) hS.homg
+  | _ + 2, h => absurd h (by omega)
+
+/-! ### §174.5a 種 `plus (sd_k) (sd_j)` の資料 -/
+
+def SS174 (k j : Nat) : Term := plus (sd152 k) (sd152 j)
+
+theorem SS_true174 {k j : Nat} (h : le (sd152 j) (sd152 k) = true) :
+    SS174 k j = add (sd152 k) (sd152 j) := by
+  show plus (sd152 k) (sd152 j) = _
+  rw [plus_cons66 (toList_sd174 j), toList_sd174 k, List.filter_cons_of_pos h]
+  rfl
+
+theorem SS_false174 {k j : Nat} (h : le (sd152 j) (sd152 k) = false) :
+    SS174 k j = sd152 j := by
+  show plus (sd152 k) (sd152 j) = _
+  rw [plus_cons66 (toList_sd174 j), toList_sd174 k,
+    List.filter_cons_of_neg (by rw [h]; exact Bool.noConfusion)]
+  rfl
+
+theorem le_sd_sd174 {j k : Nat} (h : j ≤ k) : le (sd152 j) (sd152 k) = true := by
+  rcases Nat.eq_or_lt_of_le h with rfl | hlt
+  · exact le_self156 _
+  · cases j with
+    | zero =>
+        rw [sd0_152]
+        exact le_one_sd168 k (by omega)
+    | succ jj =>
+        rcases Nat.lt_or_ge k 3 with hk3 | hk3
+        · have h1 : jj = 0 := by omega
+          have h2 : k = 2 := by omega
+          subst h1
+          subst h2
+          decide
+        · exact le_sd_sd162 (by omega) h hk3
+
+theorem lt_of_le_sd_false174 {j k : Nat} (h : le (sd152 j) (sd152 k) = false) : k < j := by
+  rcases Nat.lt_or_ge k j with hlt | hge
+  · exact hlt
+  · exfalso
+    rw [le_sd_sd174 hge] at h
+    exact Bool.noConfusion h
+
+theorem ltM_add_sd174 {k : Nat} (h1k : 1 ≤ k) (Y : Term) :
+    lt M (add (sd152 k) Y) = false :=
+  ltF_M_add162 (beq_M_sd174 k) (fun f => ltF_M_sd172 k h1k f) _
+
+/-- 種が二つの和のときの資料。 -/
+theorem sdOK_add174 {k j : Nat} (h1k : 1 ≤ k) :
+    SdOK174 (add (sd152 k) (sd152 j)) (sd152 k) [sd152 j] := by
+  have hkT : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+  have htl : toList (add (sd152 k) (sd152 j)) = sd152 k :: [sd152 j] := by
+    show sd152 k :: toList (sd152 j) = _
+    rw [toList_sd174 j]
+  refine ⟨htl, rfl, hkT.h2, le_sd_reg1_174 k, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [htl]
+    exact filter_ge_nil167 (lt_sd_reg1_174 k) (filter_ge_nil167 (lt_sd_reg1_174 j) rfl)
+  · rw [htl]
+    exact filter_lt_all167 (lt_sd_reg1_174 k) (filter_lt_all167 (lt_sd_reg1_174 j) rfl)
+  · cases j with
+    | zero =>
+        rw [sd0_152, splitFin_add3One168 hkT.ho]
+        exact isFP_add152 _ _
+    | succ jj =>
+        rw [splitFin_add3_168 (toList_sd174 (jj + 1))
+          (tailOK_sd158 (jj + 1) (by omega)).ho]
+        exact isFP_add152 _ _
+  · cases j with
+    | zero =>
+        rw [sd0_152,
+          show omegaNF (add (sd152 k) TM.Term.one) = phi zero (sd152 k) from
+            omegaNF_addOne_FP168 (ltM_add_sd174 h1k TM.Term.one) hkT.ho hkT.hfp,
+          le_reg1_phi0_171]
+        exact hkT.hle0
+    | succ jj =>
+        rw [show omegaNF (add (sd152 k) (sd152 (jj + 1)))
+              = phi zero (add (sd152 k) (sd152 (jj + 1))) from
+            omegaNF_shape152 (ltM_add_sd174 h1k (sd152 (jj + 1))) rfl (isFP_add152 _ _)
+              (dnArg_notFP168 (by
+                rw [splitFin_add2_162 (toList_sd174 (jj + 1))
+                  (tailOK_sd158 (jj + 1) (by omega)).ho]
+                exact isFP_add152 _ _)),
+          le_reg1_phi0_171]
+        show (((Z zero : Term) == add (sd152 k) (sd152 (jj + 1)))
+          || lt (Z zero) (add (sd152 k) (sd152 (jj + 1)))) = false
+        rw [show ((Z zero : Term) == add (sd152 k) (sd152 (jj + 1))) = false from rfl,
+          lt_nsum_add100 (show (Z zero : Term) ≠ zero from by
+            intro hc; exact Term.noConfusion hc) rfl,
+          show le (Z zero) (sd152 k) = false from le_reg1_sd_false174 k]
+        rfl
+  · show lt (add (sd152 k) (sd152 j)) (reg 1) = true
+    rw [lt_add_nsum (show (reg 1 : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl]
+    exact lt_sd_reg1_174 k
+
+theorem sdOK_sd174 {j : Nat} (h1j : 1 ≤ j) : SdOK174 (sd152 j) (sd152 j) [] := by
+  have hT : TailOK158 (sd152 j) := tailOK_sd158 j h1j
+  refine ⟨toList_sd174 j, rfl, hT.h2, le_sd_reg1_174 j, ?_, ?_, ?_, ?_, hT.h1⟩
+  · rw [toList_sd174 j]
+    exact filter_ge_nil167 (lt_sd_reg1_174 j) rfl
+  · rw [toList_sd174 j]
+    exact filter_lt_all167 (lt_sd_reg1_174 j) rfl
+  · rw [splitFin_addOm152 hT.hap hT.ho]
+    exact isFP_add152 _ _
+  · rw [hT.homg]
+    exact hT.hle0
+
+theorem sdOK_SS174 {k j : Nat} (h1k : 1 ≤ k) : ∃ b1 r, SdOK174 (SS174 k j) b1 r := by
+  cases hb : le (sd152 j) (sd152 k) with
+  | true =>
+      rw [SS_true174 hb]
+      exact ⟨_, _, sdOK_add174 h1k⟩
+  | false =>
+      rw [SS_false174 hb]
+      exact ⟨_, _, sdOK_sd174 (by have := lt_of_le_sd_false174 hb; omega)⟩
+
+/-! ### §174.5b 閉じた形と一歩 -/
+
+theorem dict_famG_p0_174 {k j : Nat} {b1 : Term} {r : List Term}
+    (hS : SdOK174 (SS174 k j) b1 r) : ∀ m : Nat,
+    dict (famG158 (m + 1) 0 k j) = UW152 (SS174 k j) m
+  | 0 => by
+      show collapse 1 (dict (BT.sum (BT.D 0 (nst132 k BT.zero))
+        (BT.D 0 (nst132 j BT.zero)))) = _
+      rw [Trans.Dict.dict_sum,
+        show dict (BT.D 0 (nst132 k BT.zero)) = sd152 k from rfl,
+        show dict (BT.D 0 (nst132 j BT.zero)) = sd152 j from rfl,
+        show plus (sd152 k) (sd152 j) = SS174 k j from rfl]
+      exact collapse1_sdOK174 hS
+  | m + 1 => by
+      show collapse 1 (dict (famG158 (m + 1) 0 k j)) = _
+      rw [dict_famG_p0_174 hS m]
+      exact collapse1_UW152 hS.h1 m
+
+theorem Kset_SS_lt174 {k j m : Nat} (hk : k ≤ m + 1) (hj : j ≤ m + 1) :
+    ∀ y ∈ Kset (reg 1) (SS174 k j), lt y (UW152 (SS174 k j) m) = true := by
+  intro y hy
+  cases hb : le (sd152 j) (sd152 k) with
+  | true =>
+      rw [SS_true174 hb] at hy
+      rw [show Kset (reg 1) (add (sd152 k) (sd152 j))
+          = Kset (reg 1) (sd152 k) ++ Kset (reg 1) (sd152 j) from rfl] at hy
+      rcases List.mem_append.mp hy with h | h
+      · exact Ksd_lt_UW162 _ m k (by omega) y h
+      · exact Ksd_lt_UW162 _ m j (by omega) y h
+  | false =>
+      rw [SS_false174 hb] at hy
+      exact Ksd_lt_UW162 _ m j (by omega) y hy
+
+theorem stepOK_SS_aux174 {k j : Nat} {b1 : Term} {r : List Term}
+    (hS : SdOK174 (SS174 k j) b1 r) : ∀ mm : Nat, k ≤ mm + 1 → j ≤ mm + 1 →
+    KsetStepOK 0 (UW152 (SS174 k j) mm)
+  | 0, _, _ => stepOK_UWS_low174 hS 0 (by omega)
+  | 1, _, _ => stepOK_UWS_low174 hS 1 (by omega)
+  | m2 + 2, hk, hj => stepOK_UW152 hS.h1 m2 (Kset_SS_lt174 (by omega) (by omega))
+
+/-- **主定理 C/D — `1 ≤ m`, `1 ≤ k`, `k ≤ m`, `j ≤ m` で第一の門の一歩。**
+    `p = 0` の切り口 (`j = 0` を含む)。 -/
+theorem ksetStepOK_famG_p0_174 {m k j : Nat} (h1m : 1 ≤ m) (h1k : 1 ≤ k)
+    (hk : k ≤ m) (hj : j ≤ m) : KsetStepOK 0 (dict (famG158 m 0 k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 1 := ⟨m - 1, by omega⟩
+  obtain ⟨b1, r, hS⟩ := sdOK_SS174 (j := j) h1k
+  rw [dict_famG_p0_174 hS mm]
+  exact stepOK_SS_aux174 hS mm (by omega) (by omega)
+
+/-- **主定理 C/D' — `p = 0` で種が高すぎると一歩は成り立たない。** -/
+theorem not_ksetStepOK_famG_p0_174 {m k j : Nat} (h3m : 3 ≤ m) (h1k : 1 ≤ k)
+    (hbad : m < k ∨ m < j) : ¬ KsetStepOK 0 (dict (famG158 m 0 k j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨b1, r, hS⟩ := sdOK_SS174 (j := j) h1k
+  rw [dict_famG_p0_174 hS (mm + 2)]
+  have hOms : lt (Z zero) (SS174 k j) = false := by
+    cases hb : le (sd152 j) (sd152 k) with
+    | true =>
+        rw [SS_true174 hb, lt_nsum_add100 (show (Z zero : Term) ≠ zero from by
+          intro hc; exact Term.noConfusion hc) rfl]
+        exact le_reg1_sd_false174 k
+    | false =>
+        rw [SS_false174 hb]
+        exact lt_Om_tail_false158 (tailOK_sd158 j
+          (by have := lt_of_le_sd_false174 hb; omega))
+  cases hb : le (sd152 j) (sd152 k) with
+  | true =>
+      rcases hbad with hbk | hbj
+      · obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 4 := ⟨k - 4, by omega⟩
+        refine not_stepOK_UW162 hS.h1 mm (y := TW (kk + 3)) ?_ ?_
+        · rw [SS_true174 hb,
+            show Kset (reg 1) (add (sd152 (kk + 4)) (sd152 j))
+              = Kset (reg 1) (sd152 (kk + 4)) ++ Kset (reg 1) (sd152 j) from rfl]
+          exact List.mem_append.mpr (Or.inl (Ksd_escape158 kk))
+        · exact lt_TW_UW_false152 hOms (mm + 2) (kk + 3) (by omega)
+      · obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 4 := ⟨j - 4, by omega⟩
+        refine not_stepOK_UW162 hS.h1 mm (y := TW (jj + 3)) ?_ ?_
+        · rw [SS_true174 hb,
+            show Kset (reg 1) (add (sd152 k) (sd152 (jj + 4)))
+              = Kset (reg 1) (sd152 k) ++ Kset (reg 1) (sd152 (jj + 4)) from rfl]
+          exact List.mem_append.mpr (Or.inr (Ksd_escape158 jj))
+        · exact lt_TW_UW_false152 hOms (mm + 2) (jj + 3) (by omega)
+  | false =>
+      have hkj : k < j := lt_of_le_sd_false174 hb
+      have hbj : mm + 3 < j := by rcases hbad with h | h <;> omega
+      obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 4 := ⟨j - 4, by omega⟩
+      refine not_stepOK_UW162 hS.h1 mm (y := TW (jj + 3)) ?_ ?_
+      · rw [SS_false174 hb]
+        exact Ksd_escape158 jj
+      · exact lt_TW_UW_false152 hOms (mm + 2) (jj + 3) (by omega)
+
+/-! ## §174.6 標準性の対偶、no_refute、包み -/
+
+theorem ltL_tow_famG0_false174 : ∀ (f m k j a : Nat), m < a →
+    BT.ltL f (BT.toL (nst132 a BT.zero)) (BT.toL (famG158 m 0 k j)) = false
+  | 0, _, _, _, _, _ => rfl
+  | f + 1, 0, k, j, a, h => by
+      obtain ⟨aa, rfl⟩ : ∃ aa, a = aa + 1 := ⟨a - 1, by omega⟩
+      show (if (1 : Nat) < 0 then true else if (0 : Nat) < 1 then false
+            else if nst132 aa BT.zero == nst132 k BT.zero
+              then BT.ltL f [] [BT.D 0 (nst132 j BT.zero)]
+            else BT.ltL f (BT.toL (nst132 aa BT.zero))
+              (BT.toL (nst132 k BT.zero))) = false
+      rw [if_neg (by omega), if_pos (by omega)]
+  | f + 1, m + 1, k, j, a, h => by
+      obtain ⟨aa, rfl⟩ : ∃ aa, a = aa + 1 := ⟨a - 1, by omega⟩
+      show (if (1 : Nat) < 1 then true else if (1 : Nat) < 1 then false
+            else if nst132 aa BT.zero == nst132 m (BT.sum (BT.D 0 (nst132 k BT.zero))
+                (BT.D 0 (nst132 j BT.zero)))
+              then BT.ltL f [] []
+            else BT.ltL f (BT.toL (nst132 aa BT.zero))
+              (BT.toL (nst132 m (BT.sum (BT.D 0 (nst132 k BT.zero))
+                (BT.D 0 (nst132 j BT.zero)))))) = false
+      rw [if_neg (by omega), if_neg (by omega)]
+      cases hbb : (nst132 aa BT.zero == nst132 m (BT.sum (BT.D 0 (nst132 k BT.zero))
+          (BT.D 0 (nst132 j BT.zero)))) with
+      | true =>
+          rw [if_pos rfl]
+          cases f with
+          | zero => rfl
+          | succ ff => rfl
+      | false =>
+          rw [if_neg (fun hc => Bool.noConfusion hc)]
+          exact ltL_tow_famG0_false174 f m k j aa (by omega)
+
+theorem not_std_famG0_k174 {m k j : Nat} (hk : m < k) :
+    BT.isStd (BT.D 0 (famG158 m 0 k j)) = false := by
+  cases hs : BT.isStd (BT.D 0 (famG158 m 0 k j)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famG158 m 0 k j)
+          && (BT.GB 0 (famG158 m 0 k j)).all
+              (fun e => BT.lt e (famG158 m 0 k j))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (mem_GB_famG_k158 m 0 k j)
+      rw [show BT.lt (nst132 k BT.zero) (famG158 m 0 k j) = false from
+        ltL_tow_famG0_false174 _ m k j k hk] at h2
+      exact Bool.noConfusion h2
+
+theorem not_std_famG0_j174 {m k j : Nat} (hj : m < j) :
+    BT.isStd (BT.D 0 (famG158 m 0 k j)) = false := by
+  cases hs : BT.isStd (BT.D 0 (famG158 m 0 k j)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famG158 m 0 k j)
+          && (BT.GB 0 (famG158 m 0 k j)).all
+              (fun e => BT.lt e (famG158 m 0 k j))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (mem_GB_famG_j158 m 0 k j)
+      rw [show BT.lt (nst132 j BT.zero) (famG158 m 0 k j) = false from
+        ltL_tow_famG0_false174 _ m k j j hj] at h2
+      exact Bool.noConfusion h2
+
+/-- **標準性の対偶 — 添字が `0` でも同じ形。** -/
+theorem not_std_famG_k174 {m p k j : Nat} (hk : m + p < k) :
+    BT.isStd (BT.D 0 (famG158 m p k j)) = false := by
+  cases p with
+  | zero => exact not_std_famG0_k174 (by omega)
+  | succ pp => exact not_std_famG_k158 (by omega) hk
+
+theorem not_std_famG_j174 {m p k j : Nat} (hj : m + p < j) :
+    BT.isStd (BT.D 0 (famG158 m p k j)) = false := by
+  cases p with
+  | zero => exact not_std_famG0_j174 (by omega)
+  | succ pp => exact not_std_famG_j158 (by omega) hj
+
+/-- **一本にまとめた一歩** — `1 ≤ m` と `1 ≤ p ∨ 1 ≤ k` のもとで、境界は §158 と同じ
+    `k ≤ m + p ∧ j ≤ m + p`。 -/
+theorem ksetStepOK_famG174 {m p k j : Nat} (h1m : 1 ≤ m) (hpk : 1 ≤ p ∨ 1 ≤ k)
+    (hk : k ≤ m + p) (hj : j ≤ m + p) : KsetStepOK 0 (dict (famG158 m p k j)) := by
+  cases p with
+  | zero =>
+      refine ksetStepOK_famG_p0_174 h1m ?_ (by omega) (by omega)
+      rcases hpk with h | h
+      · exact absurd h (by omega)
+      · exact h
+  | succ pp => exact ksetStepOK_famG_hi174 h1m (by omega) hk hj
+
+theorem not_ksetStepOK_famG_k174 {m p k j : Nat} (h1m : 1 ≤ m) (hpk : 1 ≤ p ∨ 1 ≤ k)
+    (h3 : 3 ≤ m + p) (hk : m + p < k) : ¬ KsetStepOK 0 (dict (famG158 m p k j)) := by
+  cases p with
+  | zero =>
+      refine not_ksetStepOK_famG_p0_174 (by omega) ?_ (Or.inl (by omega))
+      rcases hpk with h | h
+      · exact absurd h (by omega)
+      · exact h
+  | succ pp => exact not_ksetStepOK_famG_hi_k174 h1m (by omega) h3 hk
+
+theorem not_ksetStepOK_famG_j174 {m p k j : Nat} (h1m : 1 ≤ m) (hpk : 1 ≤ p ∨ 1 ≤ k)
+    (h3 : 3 ≤ m + p) (hj : m + p < j) : ¬ KsetStepOK 0 (dict (famG158 m p k j)) := by
+  cases p with
+  | zero =>
+      refine not_ksetStepOK_famG_p0_174 (by omega) ?_ (Or.inr (by omega))
+      rcases hpk with h | h
+      · exact absurd h (by omega)
+      · exact h
+  | succ pp => exact not_ksetStepOK_famG_hi_j174 h1m (by omega) h3 hj
+
+/-- **境界はちょうど `k ≤ m + p ∧ j ≤ m + p`** (発火する `3 ≤ m + p` で)。 -/
+theorem stepOK_iff_famG174 {m p k j : Nat} (h1m : 1 ≤ m) (hpk : 1 ≤ p ∨ 1 ≤ k)
+    (h3 : 3 ≤ m + p) :
+    KsetStepOK 0 (dict (famG158 m p k j)) ↔ (k ≤ m + p ∧ j ≤ m + p) := by
+  constructor
+  · intro H
+    refine ⟨?_, ?_⟩
+    · rcases Nat.lt_or_ge (m + p) k with hlt | hge
+      · exact absurd H (not_ksetStepOK_famG_k174 h1m hpk h3 hlt)
+      · exact hge
+    · rcases Nat.lt_or_ge (m + p) j with hlt | hge
+      · exact absurd H (not_ksetStepOK_famG_j174 h1m hpk h3 hlt)
+      · exact hge
+  · intro h
+    exact ksetStepOK_famG174 h1m hpk h.1 h.2
+
+/-- **この族は退化した添字でも第一の門を反証できない。** -/
+theorem famG_no_refute174 {m p k j : Nat} (h1m : 1 ≤ m) (hpk : 1 ≤ p ∨ 1 ≤ k)
+    (hs : BT.isStd (BT.D 0 (famG158 m p k j)) = true) :
+    KsetStepOK 0 (dict (famG158 m p k j)) := by
+  rcases Nat.lt_or_ge (m + p) k with hlt | hgek
+  · exfalso
+    rw [not_std_famG_k174 hlt] at hs
+    exact Bool.noConfusion hs
+  · rcases Nat.lt_or_ge (m + p) j with hlt | hgej
+    · exfalso
+      rw [not_std_famG_j174 hlt] at hs
+      exact Bool.noConfusion hs
+    · exact ksetStepOK_famG174 h1m hpk hgek hgej
+
+theorem gateStd87_famG174 (m p k j : Nat) (h1m : 1 ≤ m) (hpk : 1 ≤ p ∨ 1 ≤ k)
+    (hk : k ≤ m + p) (hj : j ≤ m + p) : GateStd87 (famG158 m p k j) :=
+  fun _ _ => ksetStepOK_famG174 h1m hpk hk hj
+
+theorem firstFire_famG174 (m p k j : Nat) (h1m : 1 ≤ m) (hpk : 1 ≤ p ∨ 1 ≤ k)
+    (hk : k ≤ m + p) (hj : j ≤ m + p) : FirstFire145 (famG158 m p k j) :=
+  fun q hq _ hle y hy => (ksetStepOK_famG174 h1m hpk hk hj q hq hle).2 y hy
+
+/-! ## §174.7 測定 (凍結) — ここから下はすべて測定であって証明ではない -/
+
+/-- §174 の証明した領域の判定器 — §158 の `isFamG158` から `1 ≤ p`, `1 ≤ k`,
+    `1 ≤ j` を外し、`1 ≤ p ∨ 1 ≤ k` だけを残したもの。 -/
+def isFamGdeg174 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.D 0 y)) =>
+      match peel158 x with
+      | (p, BT.D 0 z) =>
+          match towH158 z, towH158 y with
+          | some k, some j =>
+              decide (1 ≤ m) && (decide (1 ≤ p) || decide (1 ≤ k))
+                && decide (k ≤ m + p) && decide (j ≤ m + p)
+          | _, _ => false
+      | _ => false
+  | _ => false
+
+/-- この file の前に在った領域ぜんぶ。 -/
+def covPrev174 (a : BT) : Bool :=
+  covered172 a || covered171 a || covered170 a || covered169 a || covered168 a
+    || covered167 a || covered162 a
+
+def covered174 (a : BT) : Bool := covPrev174 a || isFamGdeg174 a
+
+/-! 判定器は狙った形にだけ当たる。 -/
+#guard isFamGdeg174 (famG158 1 2 3 0)
+#guard isFamGdeg174 (famG158 1 2 0 3)
+#guard isFamGdeg174 (famG158 3 0 3 1)
+#guard isFamGdeg174 (famG158 3 0 3 0)
+#guard !(isFamGdeg174 (famG158 1 2 4 0))
+#guard !(isFamGdeg174 (famG158 3 0 4 1))
+#guard !(isFamGdeg174 (famG158 0 2 3 0))
+
+/-! **閉じた形の照合 (測定)** — §174.4/§174.5 の定理と同じ値。 -/
+
+#guard dict (famG158 1 1 3 0) == PT162 (GB174 3 0 0) 0
+#guard dict (famG158 2 3 4 0) == PT162 (GB174 4 2 0) 1
+#guard dict (famG158 1 1 0 3) == PT162 (GB174 0 0 3) 0
+#guard dict (famG158 3 2 0 4) == PT162 (GB174 0 1 4) 2
+#guard dict (famG158 1 3 0 0) == PT162 (GB174 0 2 0) 0
+#guard dict (famG158 3 0 3 1) == UW152 (SS174 3 1) 2
+#guard dict (famG158 4 0 4 0) == UW152 (SS174 4 0) 3
+#guard SS174 3 1 == add (sd152 3) (sd152 1)
+#guard SS174 1 3 == sd152 3
+#guard SS174 4 0 == add (sd152 4) TM.Term.one
+#guard VT174 0 == phi zero (Z zero)
+#guard dict (nst132 1 (BT.D 0 (nst132 0 BT.zero))) == VT174 0
+#guard dict (nst132 3 (BT.D 0 (nst132 0 BT.zero))) == VT174 2
+
+/-! **桁と発火の凍結 (測定)。**  `j = 0` の裾の `1` は食われず、段 0 の係数は `ω`。
+    `k = 0, p = 1` の段 0 の指数は `ω`、`k ≥ 1, p = 1` は種そのもの — どちらも
+    `Ω₁` に届かないので発火しない。種が和の塔は段 0・段 1 が発火せず段 2 で発火する。 -/
+
+#guard (wcnf (reg 1) (toList (PT162 (GB174 3 1 0) 0))).1
+  == [(UW152 (sd152 3) 1, phi zero TM.Term.one)]
+#guard le (reg 1) (UW152 (sd152 3) 1)
+#guard (wcnf (reg 1) (toList (PT162 (GB174 3 0 0) 0))).1
+  == [(sd152 3, phi zero TM.Term.one)]
+#guard !(le (reg 1) (sd152 3))
+#guard (wcnf (reg 1) (toList (PT162 (GB174 0 0 3) 0))).1
+  == [(phi zero TM.Term.one, sd152 3)]
+#guard !(le (reg 1) (phi zero TM.Term.one))
+#guard (wcnf (reg 1) (toList (PT162 (GB174 0 1 3) 0))).1 == [(VT174 1, sd152 3)]
+#guard le (reg 1) (VT174 1)
+#guard (wcnf (reg 1) (toList (UW152 (SS174 4 3) 0))).1
+  == [(TM.Term.one, omegaNF (SS174 4 3))]
+#guard (wcnf (reg 1) (toList (UW152 (SS174 4 3) 1))).1
+  == [(omegaNF (SS174 4 3), TM.Term.one)]
+#guard !(le (reg 1) (omegaNF (SS174 4 3)))
+#guard le (reg 1) (UW152 (SS174 4 3) 1)
+#guard omegaNF (SS174 4 0) == phi zero (sd152 4)
+#guard logOm (VT174 0) == add (Z zero) TM.Term.one
+#guard divAP (reg 1) (VT174 0) == phi zero TM.Term.one
+
+/-! **一歩の境界の凍結 — 両側、母集団より広い窓で。**
+    `j = 0` / `k = 0`: `m, p ∈ [1,5]`, `k` (resp. `j`) `∈ [0,7]`。
+    `p = 0`: `m ∈ [1,5]`, `k, j ∈ [0,6]`。 -/
+
+#guard (List.range 5).all fun mi => (List.range 5).all fun pi =>
+  (List.range 8).all fun k =>
+    stepOKb 0 (dict (famG158 (mi + 1) (pi + 1) k 0))
+      == (decide (k ≤ mi + pi + 2) || decide (mi + pi + 2 ≤ 2))
+
+#guard (List.range 5).all fun mi => (List.range 5).all fun pi =>
+  (List.range 8).all fun j =>
+    stepOKb 0 (dict (famG158 (mi + 1) (pi + 1) 0 j))
+      == (decide (j ≤ mi + pi + 2) || decide (mi + pi + 2 ≤ 2))
+
+#guard (List.range 5).all fun mi => (List.range 7).all fun k =>
+  (List.range 7).all fun j =>
+    !(decide (1 ≤ k))
+    || (stepOKb 0 (dict (famG158 (mi + 1) 0 k j))
+        == (decide (k ≤ mi + 1) && decide (j ≤ mi + 1) || decide (mi + 1 ≤ 2)))
+
+/-! **`resid136` の境界 (測定)** — 退化した切り口でも母集団に残るのは境界の内側だけ。 -/
+
+#guard (List.range 5).all fun m => (List.range 5).all fun p => (List.range 5).all fun k =>
+  (List.range 5).all fun j =>
+  !(decide (1 ≤ m) && (decide (1 ≤ p) || decide (1 ≤ k)))
+  || !(resid136 (famG158 m p k j))
+  || (decide (k ≤ m + p) && decide (j ≤ m + p))
+
+/-! **被覆 (測定、凍結)。**  §132 の残り (`resid136`) のうち、証明済みの領域に文字通り
+    入っている本数を、この file の前と後で数える。
+
+      母集団            本数    §174 の前   §174 の後
+      famPool132        2455       2297      **2455 (100%)**
+      pool136            925         70         70   (増分 0)
+      fm145             3371        428        428   (増分 0)
+
+    増分は `famPool132` だけで **+158**。`pool136` と `fm145` の増分は **0** —
+    どちらの母集団にも `famG158` の退化した添字の項が居ないから (下で数える)。
+    `famPool132` の残りは **0 本**になった。 -/
+
+#guard ((famPool132.filter resid136).length,
+        (famPool132.filter resid136).countP covPrev174,
+        (famPool132.filter resid136).countP covered174) == (2455, 2297, 2455)
+
+/-! `covPrev174` は §170 · §171 も畳んだ合併。§172 の凍結値 `2269` と §170 の
+    `2048` は、それだけでは合併になっていない — 差の 28 本は §170 が取っていて
+    §172 の判定器が見ていなかったぶん。だから「未被覆 186 本」は
+    `covered172` 基準の数で、合併基準では 158 本。 -/
+
+#guard ((famPool132.filter resid136).countP covered172,
+        (famPool132.filter resid136).countP covered170,
+        (famPool132.filter resid136).countP covPrev174) == (2269, 2048, 2297)
+#guard ((pool136.filter resid136).length,
+        (pool136.filter resid136).countP covPrev174,
+        (pool136.filter resid136).countP covered174) == (925, 70, 70)
+#guard ((fm145.filter resid136).length,
+        (fm145.filter resid136).countP covPrev174,
+        (fm145.filter resid136).countP covered174) == (3371, 428, 428)
+#guard ((famPool132.filter resid136).countP (fun a => !(covered174 a))) == 0
+#guard ((famPool132.filter resid136).countP
+  (fun a => isFamGdeg174 a && !(covPrev174 a))) == 158
+#guard ((pool136.filter resid136).countP
+  (fun a => isFamGdeg174 a && !(covPrev174 a))) == 0
+#guard ((fm145.filter resid136).countP
+  (fun a => isFamGdeg174 a && !(covPrev174 a))) == 0
+
+/-- `famG158` の形と添字を取り出す (測定用)。 -/
+def gIdx174 (a : BT) : Option (Nat × Nat × Nat × Nat) :=
+  match peel158 a with
+  | (m, BT.sum x (BT.D 0 y)) =>
+      match peel158 x with
+      | (p, BT.D 0 z) =>
+          match towH158 z, towH158 y with
+          | some k, some j => some (m, p, k, j)
+          | _, _ => none
+      | _ => none
+  | _ => none
+
+/-- 退化の四つの隅 (測定用の判定器)。 -/
+def degBucket174 (b : Nat) (a : BT) : Bool :=
+  match gIdx174 a with
+  | some (m, p, k, j) =>
+      decide (1 ≤ m) &&
+      (match b with
+       | 0 => decide (1 ≤ p) && decide (1 ≤ k) && decide (j = 0)
+       | 1 => decide (1 ≤ p) && decide (k = 0) && decide (1 ≤ j)
+       | 2 => decide (p = 0) && decide (1 ≤ k) && decide (1 ≤ j)
+       | 3 => decide (p = 0) && decide (1 ≤ k) && decide (j = 0)
+       | _ => decide (1 ≤ p) && decide (k = 0) && decide (j = 0))
+  | none => false
+
+/-! **退化した項の内訳 (測定、凍結)。**  `famPool132` の残りのうち §174 の前に未被覆
+    だったものを四つの隅で分ける。合計 158 = 65 + 65 + 22 + 6、五つ目の隅
+    (`k = j = 0`) は 0 本。 -/
+
+#guard ((famPool132.filter resid136).countP (fun a => degBucket174 0 a && !(covPrev174 a)),
+        (famPool132.filter resid136).countP (fun a => degBucket174 1 a && !(covPrev174 a)),
+        (famPool132.filter resid136).countP (fun a => degBucket174 2 a && !(covPrev174 a)),
+        (famPool132.filter resid136).countP (fun a => degBucket174 3 a && !(covPrev174 a)),
+        (famPool132.filter resid136).countP (fun a => degBucket174 4 a && !(covPrev174 a)))
+  == (65, 65, 22, 6, 0)
+
+/-! **他の二つの母集団には `famG158` の形そのものが居ない (測定)** — だから増分 0 は
+    「既に別の判定器が取っていた」のではなく「窓に項が無い」。 -/
+
+#guard ((pool136.filter resid136).countP (fun a => (gIdx174 a).isSome),
+        (fm145.filter resid136).countP (fun a => (gIdx174 a).isSome)) == (0, 0)
+
+/-! **窓の外に残す隅は空 (測定)** — `p = 0 ∧ k = 0` (`ψ₁^m(ψ₀0 ⊕ ψ₀(ψ₁^j 0))`) は
+    §174 の定理の外だが、`famPool132` の残りには一本も居ない。
+    **この隅のうち計算が本当に違うのは `j = 0` の一本だけ**で、`j ≥ 1` では
+    §174.5 の閉形式がそのまま成り立つ (検証で測定)。 -/
+
+#guard ((famPool132.filter resid136).countP (fun a =>
+  match peel158 a with
+  | (_, BT.sum x (BT.D 0 _)) =>
+      match peel158 x with
+      | (p, BT.D 0 z) =>
+          match towH158 z with
+          | some k => decide (p = 0) && decide (k = 0)
+          | _ => false
+      | _ => false
+  | _ => false)) == 0
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms dict_inner174
+#print axioms dict_famG_hi174
+#print axioms dict_famG_p0_174
+#print axioms ksetStepOK_famG_hi174
+#print axioms not_ksetStepOK_famG_hi_k174
+#print axioms not_ksetStepOK_famG_hi_j174
+#print axioms ksetStepOK_famG_p0_174
+#print axioms not_ksetStepOK_famG_p0_174
+#print axioms not_std_famG_k174
+#print axioms not_std_famG_j174
+#print axioms ksetStepOK_famG174
+#print axioms stepOK_iff_famG174
+#print axioms famG_no_refute174
+#print axioms gateStd87_famG174
+#print axioms firstFire_famG174
+
+end
+
 end Evidence.Region
