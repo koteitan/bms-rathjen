@@ -35412,4 +35412,1714 @@ def headH178 (a : BT) : Nat := ((htsOf176 a).getD []).headD 0
 
 end
 
+
+/-
+g179 — THE FREE REGION, ENLARGED AGAIN (the coefficient carrier, §161's residual).
+
+WHERE THIS SITS.  §164 proved `Subord157` at one `a` with NO carrier on its FLAT region
+(`subord157_at_flat164`): every `ψ₁` node met on the level-0 descent must have an argument
+with no `ψ₁` digit at all, so its base-`Ω₁` exponent is exactly `1` (`wA_dict_D1_one164`)
+and §164's cap `wA ≤ A` is free.  §165 widened the DECIDED criterion until it accepts every
+term measured, but nothing proves the criterion holds at a standard `a`.
+
+WHAT IS NEW HERE.  The free region is enlarged from "no `ψ₁` digit" to "every `ψ₁` digit is
+`ψ₁0`".  **Read `regZ179` for the exact region, not this sentence**: when the BLOCK digit
+itself carries a digit other than `ψ₁0`, `capBound179` collapses to `0` and the region
+degenerates to §164's flat condition there.  The code is the conservative one; every count
+below comes from it:
+
+    §179.3  `hi_dict179` — if every top-level `ψ₁` digit of `x` is `ψ₁0` then the part of
+            `dict x` at or above `Ω₁` is exactly `cntD1_179 x` copies of `Ω₁`.  NOTHING IS
+            ABSORBED, and that is why the lemma is free: the components that could absorb an
+            `Ω₁` are all `≤ Ω₁` themselves, so `plus`'s filter keeps every one of them.
+    §179.4  `wA_dict_D1_zero179` — such a node's base-`Ω₁` exponent is the FINITE ordinal
+            `cntD1_179 x + 1`.  §164's `wA_dict_D1_one164` is the case `cntD1_179 x = 0`.
+    §179.6  `cap_of_capZ179` — the decided descent `capZChk179 m` yields §164's `Cap164`
+            as soon as `ofNat (k+1) ≤ A` for every `k ≤ m`.
+    §179.7  `subord157_at_regZ179` — **`Subord157` AT ONE `a`, proved, on a region that
+            strictly contains §164's.**  The bound `m` at a block digit `c` is `c`'s own
+            `ψ₁`-digit count, because for a block member `wA (reg 1) (dict (ψ₁ c)) = ac.1`
+            (`Split159.blkA`), so `A` is the finite ordinal `cntD1_179 c + 1` too and the
+            cap is `ofNat (k+1) ≤ ofNat (m+1)`.  `subord157_at_capBlk179` is §164's
+            `subord157_at_cap164` with the residual asked only of the digits the BLOCK
+            names — that is what lets `A` be read off `c`.
+    §179.7b `regZ_of_flatTop179` — **the containment is a theorem, not a sweep**: §164's
+            free region is inside this one.  Strictness is `wit179` (§179.8).
+
+MEASUREMENT (frozen `#guard`s in §179.8; qualifying terms of §151's pools, §165's exhaustive
+pool to `BT.size` 12 and §165's deep pool).  "§164" is §164's free region taken at the top
+in the same shape as this file's (`flatTop179`), NOT §164's decided criterion.
+
+    pool                    qual   §164 free   §179 free   §164 decided
+    §151 D+C+A+E            1174         715         819            914
+    exhaustive, size ≤ 12   2962        2881        2901           2960
+    deep                     693          67          78            622
+
+`wit179` is a hand-built witness inside the new region and outside §164's, and it is a
+member of §165's exhaustive pool, so the gain is not an artefact of a hand-picked shape.
+
+WHAT THIS DOES NOT DO, AND THE EXACT WALL.  It does not prove `Subord157`, `HeartLo161`,
+`Heart161` or `subordChk165`, and it states no global `∀ a, gates → region` form.  The
+region stops where it does for a reason worth recording:
+
+  * the free region cannot be pushed to "every `ψ₁` node's digit list is a PREFIX of the
+    block digit's" — that region is larger on TWO of the three pools (849 vs 819, and
+    2904 vs 2901; on the deep pool it is TIED at 78 vs 78, and the exhaustive gain is
+    3 terms of 2962)
+    but its proof needs `toList (dict x) = (BT.toL x).map dict`, and that equality is NOT
+    free: §77's `toList_dict_ofL77` carries `DictLtUpTo77 m` and §93's `hiW_dict93` carries
+    `CollapseMono0Hi81`.  Without them `plus` may ABSORB a component, so the block digit's
+    exponent has no free lower bound.  What IS free is only the one direction used here:
+    absorption can only DROP components, and when every high component is the SAME term
+    nothing can be dropped.
+  * §164's cap fails outright on part of the standard population (§164's decided criterion
+    accepts 914 of §151's 1174 qualifying terms), so no enlargement of the CAP route can
+    finish the job at all; §165's per-step escape is an order comparison against the
+    prefix's fold value and needs the same transport.
+
+§179.9 carries the prefix region as a DEFINITION with frozen counts and no theorem, so the
+next agent can see the size of the step and what it costs.
+
+No `sorry`, no `native_decide`, no new axiom.  Every headline prints `[propext, Quot.sound]`.
+-/
+
+
+open BMS
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §179.1 The syntactic data of a node -/
+
+/-- The arguments of the top-level `ψ₁` digits. -/
+def d1args179 : BT → List BT
+  | .zero => []
+  | .D u y => if u == 1 then [y] else []
+  | .sum a b => d1args179 a ++ d1args179 b
+
+/-- `x = 0`, decided without a `LawfulBEq BT`. -/
+def isZeroBT179 : BT → Bool
+  | .zero => true
+  | .D _ _ => false
+  | .sum _ _ => false
+
+theorem eq_zero_of_isZeroBT179 : ∀ (x : BT), isZeroBT179 x = true → x = BT.zero
+  | .zero, _ => rfl
+  | .D _ _, h => Bool.noConfusion h
+  | .sum _ _, h => Bool.noConfusion h
+
+/-- Every top-level `ψ₁` digit is `ψ₁0`.  §164's `noD1164` (no `ψ₁` digit at all) implies
+    this, with count `0`. -/
+def zeroD1_179 : BT → Bool
+  | .zero => true
+  | .D u y => if u == 1 then isZeroBT179 y else true
+  | .sum a b => zeroD1_179 a && zeroD1_179 b
+
+/-- How many top-level `ψ₁` digits. -/
+def cntD1_179 : BT → Nat
+  | .zero => 0
+  | .D u _ => if u == 1 then 1 else 0
+  | .sum a b => cntD1_179 a + cntD1_179 b
+
+theorem zeroD1_of_noD1_179 : ∀ (x : BT), noD1164 x = true → zeroD1_179 x = true
+  | .zero, _ => rfl
+  | .D u y, h => by
+      have hu : (u == 0) = true := h
+      have hu0 : u = 0 := eq_of_beq hu
+      subst hu0
+      show (if ((0 : Nat) == 1) then isZeroBT179 y else true) = true
+      rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+  | .sum a b, h => by
+      obtain ⟨ha, hb⟩ := (Bool.and_eq_true _ _).mp (show (noD1164 a && noD1164 b) = true from h)
+      show (zeroD1_179 a && zeroD1_179 b) = true
+      rw [zeroD1_of_noD1_179 a ha, zeroD1_of_noD1_179 b hb]
+      rfl
+
+theorem cntD1_of_noD1_179 : ∀ (x : BT), noD1164 x = true → cntD1_179 x = 0
+  | .zero, _ => rfl
+  | .D u y, h => by
+      have hu0 : u = 0 := eq_of_beq (show (u == 0) = true from h)
+      subst hu0
+      show (if ((0 : Nat) == 1) then 1 else 0) = 0
+      rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+  | .sum a b, h => by
+      obtain ⟨ha, hb⟩ := (Bool.and_eq_true _ _).mp (show (noD1164 a && noD1164 b) = true from h)
+      show cntD1_179 a + cntD1_179 b = 0
+      rw [cntD1_of_noD1_179 a ha, cntD1_of_noD1_179 b hb]
+
+theorem mem_d1args179 : ∀ (x w : BT), BT.D 1 w ∈ BT.toL x → w ∈ d1args179 x
+  | .zero, _, h => by cases h
+  | .D u y, w, h => by
+      have he : BT.D 1 w = BT.D u y := List.mem_singleton.mp h
+      rw [← he]
+      show w ∈ (if ((1 : Nat) == 1) then [w] else [])
+      rw [if_pos (show ((1 : Nat) == 1) = true from rfl)]
+      exact List.Mem.head _
+  | .sum a b, w, h => by
+      show w ∈ d1args179 a ++ d1args179 b
+      rcases List.mem_append.mp (show BT.D 1 w ∈ BT.toL a ++ BT.toL b from h) with h1 | h1
+      · exact List.mem_append.mpr (Or.inl (mem_d1args179 a w h1))
+      · exact List.mem_append.mpr (Or.inr (mem_d1args179 b w h1))
+
+theorem zeroD1_mem179 : ∀ (x : BT), zeroD1_179 x = true → ∀ w ∈ d1args179 x, w = BT.zero
+  | .zero, _, _, h => by cases h
+  | .D u y, hz, w, hw => by
+      cases hu : (u == 1) with
+      | false =>
+          have hm : w ∈ (if (u == 1) then [y] else []) := hw
+          rw [if_neg (by rw [hu]; exact Bool.noConfusion)] at hm
+          cases hm
+      | true =>
+          have hm : w ∈ (if (u == 1) then [y] else []) := hw
+          rw [if_pos hu] at hm
+          have hwy : w = y := List.mem_singleton.mp hm
+          have hz' : (if (u == 1) then isZeroBT179 y else true) = true := hz
+          rw [if_pos hu] at hz'
+          rw [hwy]; exact eq_zero_of_isZeroBT179 y hz'
+  | .sum a b, hz, w, hw => by
+      obtain ⟨ha, hb⟩ :=
+        (Bool.and_eq_true _ _).mp (show (zeroD1_179 a && zeroD1_179 b) = true from hz)
+      rcases List.mem_append.mp (show w ∈ d1args179 a ++ d1args179 b from hw) with h1 | h1
+      · exact zeroD1_mem179 a ha w h1
+      · exact zeroD1_mem179 b hb w h1
+
+/-! ## §179.2 Small list and arithmetic helpers -/
+
+theorem replicate_add179 {α : Type} (a : α) : ∀ (m n : Nat),
+    List.replicate (m + n) a = List.replicate m a ++ List.replicate n a
+  | 0, n => by
+      show List.replicate (0 + n) a = List.replicate n a
+      rw [Nat.zero_add]
+  | m + 1, n => by
+      have he : m + 1 + n = (m + n) + 1 := by omega
+      rw [he]
+      show a :: List.replicate (m + n) a = a :: (List.replicate m a ++ List.replicate n a)
+      rw [replicate_add179 a m n]
+
+/-- Filtering by `q` swallows a previous filter by `p` when `q` implies `p` on the list. -/
+theorem filter_sub179 {α : Type} (p q : α → Bool) : ∀ (l : List α),
+    (∀ x ∈ l, q x = true → p x = true) → (l.filter p).filter q = l.filter q
+  | [], _ => rfl
+  | x :: r, h => by
+      have hrec := filter_sub179 p q r (fun z hz => h z (List.Mem.tail _ hz))
+      cases hq : q x with
+      | true =>
+          have hp : p x = true := h x (List.Mem.head _) hq
+          rw [List.filter_cons_of_pos hp, List.filter_cons_of_pos hq,
+            List.filter_cons_of_pos hq, hrec]
+      | false =>
+          have hqn : ¬ (q x = true) := by rw [hq]; exact Bool.noConfusion
+          cases hp : p x with
+          | true =>
+              rw [List.filter_cons_of_pos hp, List.filter_cons_of_neg hqn,
+                List.filter_cons_of_neg hqn, hrec]
+          | false =>
+              rw [List.filter_cons_of_neg (by rw [hp]; exact Bool.noConfusion),
+                List.filter_cons_of_neg hqn, hrec]
+
+theorem ofList_replicate179 : ∀ n : Nat, ofList (List.replicate n TM.Term.one) = ofNat n
+  | 0 => rfl
+  | 1 => rfl
+  | n + 2 => by
+      have ih := ofList_replicate179 (n + 1)
+      have hl : toList (ofNat (n + 1)) = List.replicate (n + 1) TM.Term.one := by
+        rw [← ih]
+        exact toList_ofList (by
+          intro x hx
+          rw [List.eq_of_mem_replicate hx]
+          exact isAP_one)
+      show ofList (TM.Term.one :: List.replicate (n + 1) TM.Term.one) = plus (ofNat (n+1)) one
+      show ofList (TM.Term.one :: List.replicate (n + 1) TM.Term.one)
+          = ofList ((toList (ofNat (n+1))).filter (fun a => le TM.Term.one a) ++ [TM.Term.one])
+      rw [hl]
+      have hf : (List.replicate (n + 1) TM.Term.one).filter (fun a => le TM.Term.one a)
+          = List.replicate (n + 1) TM.Term.one :=
+        List.filter_eq_self.mpr (by
+          intro x hx
+          rw [List.eq_of_mem_replicate hx]
+          exact le_self _)
+      rw [hf]
+      have hcat : List.replicate (n + 1) TM.Term.one ++ [TM.Term.one]
+          = TM.Term.one :: List.replicate (n + 1) TM.Term.one := by
+        have h2 : List.replicate (n + 1) TM.Term.one ++ List.replicate 1 TM.Term.one
+            = List.replicate (n + 2) TM.Term.one := (replicate_add179 TM.Term.one (n+1) 1).symm
+        rw [show ([TM.Term.one] : List Term) = List.replicate 1 TM.Term.one from rfl, h2]
+        rfl
+      rw [hcat]
+
+theorem isSC_ofNat179 : ∀ n : Nat, (ofNat n).isSC = false
+  | 0 => rfl
+  | 1 => rfl
+  | n + 2 => by
+      rw [← ofList_replicate179 (n + 2)]
+      show (ofList (TM.Term.one :: TM.Term.one :: List.replicate n TM.Term.one)).isSC = false
+      rfl
+
+theorem le_ofNat_mono179 {k m : Nat} (h : k ≤ m) : le (ofNat k) (ofNat m) = true := by
+  rcases Nat.eq_or_lt_of_le h with he | hl
+  · rw [he]; exact le_self _
+  · exact le_of_lt (Evidence.StageB.lt_ofNat_mono hl)
+
+/-- `dict (ψ₁0) = Ω₁`. -/
+theorem dict_D1_zero179 (Hp : PsiIdxOKStd172) : dict (BT.D 1 BT.zero) = reg 1 := by
+  rw [dict_D1_eq77 Hp BT.zero rfl rfl]
+  show omegaNF (plus (reg 1) zero) = reg 1
+  rw [plus_zero]
+  rfl
+
+/-! ## §179.3 The high part of a zero-`ψ₁` image is a block of `Ω₁`s -/
+
+theorem comp_le_W179 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hz : zeroD1_179 x = true) :
+    ∀ q ∈ toList (dict x), le q (reg 1) = true := by
+  intro q hq
+  obtain ⟨u, c, hmem, hbuc, hsuc, hu1, hqe⟩ := comp_name160 Hp hb hs q hq
+  cases u with
+  | zero => rw [hqe]; exact le_of_lt (lt_dict_D0_W93 Hp hbuc hsuc)
+  | succ u' =>
+      have hu0 : u' = 0 := by omega
+      subst hu0
+      have hc : c = BT.zero := zeroD1_mem179 x hz c (mem_d1args179 x c hmem)
+      subst hc
+      rw [hqe, dict_D1_zero179 Hp]
+      exact le_self _
+
+theorem comp_hi_eq179 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hz : zeroD1_179 x = true) :
+    ∀ q ∈ toList (dict x), lt q (reg 1) = false → q = reg 1 := by
+  intro q hq hlt
+  obtain ⟨u, c, hmem, hbuc, hsuc, hu1, hqe⟩ := comp_name160 Hp hb hs q hq
+  cases u with
+  | zero =>
+      exfalso
+      rw [hqe, lt_dict_D0_W93 Hp hbuc hsuc] at hlt
+      exact Bool.noConfusion hlt
+  | succ u' =>
+      have hu0 : u' = 0 := by omega
+      subst hu0
+      have hc : c = BT.zero := zeroD1_mem179 x hz c (mem_d1args179 x c hmem)
+      subst hc
+      rw [hqe, dict_D1_zero179 Hp]
+
+/-- **The part of `dict x` at or above `Ω₁` is exactly `cntD1_179 x` copies of `Ω₁`.**
+    Nothing is absorbed: every component of the image is `≤ Ω₁`, so `plus`'s filter keeps
+    every `Ω₁`. -/
+theorem hi_dict179 (Hp : PsiIdxOKStd172) : ∀ (x : BT), btLe72 1 x = true → BT.isStd x = true →
+    zeroD1_179 x = true →
+    (toList (dict x)).filter (fun q => !lt q (reg 1)) = List.replicate (cntD1_179 x) (reg 1)
+  | .zero, _, _, _ => by rw [Trans.Dict.dict_zero]; rfl
+  | .D u y, hb, hs, hz => by
+      have hu : u ≤ 1 := (btLe72_D 1 u y hb).1
+      rw [toList_of_isAP (isAP_dict_D76 u y)]
+      cases u with
+      | zero =>
+          rw [List.filter_cons_of_neg
+            (by rw [lt_dict_D0_W93 Hp hb hs]; exact Bool.noConfusion)]
+          rfl
+      | succ u' =>
+          have hu0 : u' = 0 := by omega
+          subst hu0
+          have hz' : (if ((1 : Nat) == 1) then isZeroBT179 y else true) = true := hz
+          rw [if_pos (show ((1 : Nat) == 1) = true from rfl)] at hz'
+          have hy : y = BT.zero := eq_zero_of_isZeroBT179 y hz'
+          subst hy
+          rw [dict_D1_zero179 Hp, List.filter_cons_of_pos (by rw [lt_irrefl]; rfl)]
+          rfl
+  | .sum a b, hb, hs, hz => by
+      obtain ⟨hba, hbb⟩ :=
+        (Bool.and_eq_true _ _).mp (show (btLe72 1 a && btLe72 1 b) = true from hb)
+      obtain ⟨hsa, hsb⟩ := isStd_of_sum hs
+      obtain ⟨hza, hzb⟩ :=
+        (Bool.and_eq_true _ _).mp (show (zeroD1_179 a && zeroD1_179 b) = true from hz)
+      have hia : inT (dict a) = true := (inT_dict_of_std172 Hp a hba hsa).1
+      have hib : inT (dict b) = true := (inT_dict_of_std172 Hp b hbb hsb).1
+      have iha := hi_dict179 Hp a hba hsa hza
+      have ihb := hi_dict179 Hp b hbb hsb hzb
+      rw [Trans.Dict.dict_sum]
+      cases hlb : toList (dict b) with
+      | nil =>
+          have hcb : cntD1_179 b = 0 := by
+            have h0 : List.replicate (cntD1_179 b) (reg 1) = [] := by
+              rw [← ihb, hlb]; rfl
+            cases hcc : cntD1_179 b with
+            | zero => rfl
+            | succ n => rw [hcc] at h0; exact absurd h0 (by intro hcon; cases hcon)
+          rw [plus_nil hlb, iha]
+          show List.replicate (cntD1_179 a) (reg 1)
+              = List.replicate (cntD1_179 a + cntD1_179 b) (reg 1)
+          rw [hcb, Nat.add_zero]
+      | cons b1 r =>
+          have hb1le : le b1 (reg 1) = true :=
+            comp_le_W179 Hp hbb hsb hzb b1 (by rw [hlb]; exact List.Mem.head _)
+          have hsubf : ((toList (dict a)).filter (fun z => le b1 z)).filter
+                (fun q => !lt q (reg 1))
+              = (toList (dict a)).filter (fun q => !lt q (reg 1)) := by
+            refine filter_sub179 _ _ (toList (dict a)) ?_
+            intro z hzm hqz
+            have hzlt : lt z (reg 1) = false := by
+              cases hcc : lt z (reg 1) with
+              | false => rfl
+              | true => rw [hcc] at hqz; exact Bool.noConfusion hqz
+            rw [comp_hi_eq179 Hp hba hsa hza z hzm hzlt]
+            exact hb1le
+          rw [toList_plus_inT hia hib hlb, List.filter_append, hsubf, iha, ihb]
+          show List.replicate (cntD1_179 a) (reg 1) ++ List.replicate (cntD1_179 b) (reg 1)
+              = List.replicate (cntD1_179 a + cntD1_179 b) (reg 1)
+          exact (replicate_add179 (reg 1) _ _).symm
+
+/-! ## §179.4 The base-`Ω₁` exponent of a zero-`ψ₁` node is FINITE -/
+
+/-- **A `ψ₁` node all of whose `ψ₁` digits are `ψ₁0` has base-`Ω₁` exponent `k+1`,
+    the finite ordinal.**  §164's `wA_dict_D1_one164` is the case `k = 0`. -/
+theorem wA_dict_D1_zero179 (Hp : PsiIdxOKStd172) {x : BT} (hb : btLe72 1 x = true)
+    (hs : BT.isStd x = true) (hz : zeroD1_179 x = true) :
+    wA (reg 1) (dict (BT.D 1 x)) = ofNat (cntD1_179 x + 1) := by
+  have hix : inT (dict x) = true := (inT_dict_of_std172 Hp x hb hs).1
+  have key : (toList (plus (reg 1) (dict x))).filter (fun q => !lt q (reg 1))
+      = List.replicate (cntD1_179 x + 1) (reg 1) := by
+    cases hl : toList (dict x) with
+    | nil =>
+        have hcx : cntD1_179 x = 0 := by
+          have h0 : List.replicate (cntD1_179 x) (reg 1) = [] := by
+            rw [← hi_dict179 Hp x hb hs hz, hl]; rfl
+          cases hcc : cntD1_179 x with
+          | zero => rfl
+          | succ n => rw [hcc] at h0; exact absurd h0 (by intro hcon; cases hcon)
+        rw [plus_nil hl, toList_W_119, List.filter_cons_of_pos (by rw [lt_irrefl]; rfl), hcx]
+        rfl
+    | cons b1 r =>
+        have hb1le : le b1 (reg 1) = true :=
+          comp_le_W179 Hp hb hs hz b1 (by rw [hl]; exact List.Mem.head _)
+        rw [toList_plus_inT (inT_reg 1) hix hl, toList_W_119,
+          List.filter_cons_of_pos (by rw [hb1le]), List.filter_append,
+          List.filter_cons_of_pos (by rw [lt_irrefl]; rfl), hi_dict179 Hp x hb hs hz]
+        rfl
+  show ofList (((toList (logOm (dict (BT.D 1 x)))).filter (fun q => !lt q (reg 1))).map
+      (divAP (reg 1))) = _
+  rw [logOm_dict_D1_104 Hp hb hs, key, List.map_replicate, divAP_W_W_119,
+    ofList_replicate179]
+
+/-! ## §179.5 The cap at such a node is free -/
+
+theorem capE_of_zero179 (Hp : PsiIdxOKStd172) {A w' : Term} {e : BT}
+    (hb : btLe72 1 e = true) (hs : BT.isStd e = true) (hz : zeroD1_179 e = true)
+    (hA : le (ofNat (cntD1_179 e + 1)) A = true) : CapE164 A w' e := by
+  have hw := wA_dict_D1_zero179 Hp hb hs hz
+  refine ⟨?_, ?_, ?_⟩
+  · rw [hw]; exact hA
+  · rw [hw]; exact leW_false157 (inT_ofNat _) (lt_ofNat_W79 _)
+  · rw [hw]; exact Or.inl (isSC_ofNat179 _)
+
+/-! ## §179.6 The decided descent -/
+
+/-- The descent of §164's `Cap164`, with the per-node test replaced by "every `ψ₁` digit is
+    `ψ₁0`, and there are at most `m` of them". -/
+def capZChk179 (m : Nat) : Nat → BT → Bool
+  | 0, _ => false
+  | n + 1, d => (BT.toL d).all (fun z =>
+      match z with
+      | BT.D u x =>
+          if u == 0 then capZChk179 m n x
+          else if u == 1 then
+            (zeroD1_179 x && decide (cntD1_179 x ≤ m)) &&
+            (BT.toL x).all (fun y =>
+              match y with
+              | BT.D v e => if v == 0 then capZChk179 m n e else true
+              | _ => true)
+          else false
+      | _ => true)
+
+theorem cap_of_capZ179 (Hp : PsiIdxOKStd172) {A w' : Term} {m : Nat}
+    (hAm : ∀ k : Nat, k ≤ m → le (ofNat (k + 1)) A = true) :
+    ∀ (n : Nat) (d : BT), BT.size d < n → btLe72 1 (BT.D 0 d) = true →
+      BT.isStd (BT.D 0 d) = true → capZChk179 m n d = true → Cap164 A w' d
+  | 0, _, h, _, _, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, d, hsz, hb, hs, hchk => by
+      have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+      have hsd : BT.isStd d = true := isStd_of_D hs
+      have hgood : GoodL77 (BT.toL d) := good_toL77 d hsd hbd
+      have hchk' : (BT.toL d).all (fun z =>
+          match z with
+          | BT.D u x =>
+              if u == 0 then capZChk179 m n x
+              else if u == 1 then
+                (zeroD1_179 x && decide (cntD1_179 x ≤ m)) &&
+                (BT.toL x).all (fun y =>
+                  match y with
+                  | BT.D v e => if v == 0 then capZChk179 m n e else true
+                  | _ => true)
+              else false
+          | _ => true) = true := hchk
+      have hall := List.all_eq_true.mp hchk'
+      refine Cap164.mk ?_ ?_ ?_
+      · intro e hem
+        have h2 : ((zeroD1_179 e && decide (cntD1_179 e ≤ m)) &&
+            (BT.toL e).all (fun y =>
+              match y with
+              | BT.D v e' => if v == 0 then capZChk179 m n e' else true
+              | _ => true)) = true := hall _ hem
+        obtain ⟨hcond, _⟩ := (Bool.and_eq_true _ _).mp h2
+        obtain ⟨hze, hle⟩ := (Bool.and_eq_true _ _).mp hcond
+        have hb1 : btLe72 1 (BT.D 1 e) = true := hgood.2.2.1 _ hem
+        have hs1 : BT.isStd (BT.D 1 e) = true := hgood.2.1 _ hem
+        exact capE_of_zero179 Hp (btLe72_D 1 1 e hb1).2 (isStd_of_D hs1) hze
+          (hAm _ (of_decide_eq_true hle))
+      · intro e hem y hym
+        have h2 : ((zeroD1_179 e && decide (cntD1_179 e ≤ m)) &&
+            (BT.toL e).all (fun y =>
+              match y with
+              | BT.D v e' => if v == 0 then capZChk179 m n e' else true
+              | _ => true)) = true := hall _ hem
+        have h4 : capZChk179 m n y = true :=
+          List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h2).2 _ hym
+        have hb1 : btLe72 1 (BT.D 1 e) = true := hgood.2.2.1 _ hem
+        have hs1 : BT.isStd (BT.D 1 e) = true := hgood.2.1 _ hem
+        have hge : GoodL77 (BT.toL e) :=
+          good_toL77 e (isStd_of_D hs1) (btLe72_D 1 1 e hb1).2
+        have hsz1 : BT.size (BT.D 1 e) ≤ BT.size d := size_mem_toL87 d _ hem
+        have hsz0 : BT.size (BT.D 0 y) ≤ BT.size e := size_mem_toL87 e _ hym
+        rw [size_D87] at hsz1 hsz0
+        exact cap_of_capZ179 Hp hAm n y (by omega) (hge.2.2.1 _ hym) (hge.2.1 _ hym) h4
+      · intro y hym
+        have h2 : capZChk179 m n y = true := hall _ hym
+        have hsz0 : BT.size (BT.D 0 y) ≤ BT.size d := size_mem_toL87 d _ hym
+        rw [size_D87] at hsz0
+        exact cap_of_capZ179 Hp hAm n y (by omega) (hgood.2.2.1 _ hym) (hgood.2.1 _ hym) h2
+
+/-! ## §179.7 `Subord157` at one `a` -/
+
+/-- §164's `subord157_at_cap164` with the residual demanded only of the digits the BLOCK
+    actually names — that is what lets the bound `A` be read off `c` itself. -/
+theorem subord157_at_capBlk179 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (_hfire : le (reg 1) ac.1 = false)
+    (H : ∀ c : BT, BT.D 1 c ∈ BT.toL a → wA (reg 1) (dict (BT.D 1 c)) = ac.1 →
+      ∀ d : BT, BT.D 0 d ∈ BT.toL c → Cap164 ac.1 (wVal157 P) d) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  refine sub157_of_split159 hsp ?_
+  intro p hp
+  obtain ⟨h1, c, hcm, hbc, hsc, hpe⟩ := split_facts161 Hp hb hs hsplit hsp hp
+  have hblk : wA (reg 1) (dict (BT.D 1 c)) = ac.1 := by rw [← hpe]; exact hsp.blkA p hp
+  rw [hpe]
+  refine sub157_wC_dict161 Hp hbc hsc h1 ?_
+  intro d hdm
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  exact sub157_dict_D0_161 Hp h1
+    (lo0Sub_of_cap164 Hp h1 (H c hcm hblk d hdm) (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm))
+    (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm)
+
+/-- The bound the block digit `c` supplies. -/
+def capBound179 (c : BT) : Nat :=
+  match zeroD1_179 c with
+  | true => cntD1_179 c
+  | false => 0
+
+theorem capBound_true179 {c : BT} (h : zeroD1_179 c = true) : capBound179 c = cntD1_179 c := by
+  show (match zeroD1_179 c with | true => cntD1_179 c | false => 0) = _
+  rw [h]
+
+theorem capBound_false179 {c : BT} (h : zeroD1_179 c = false) : capBound179 c = 0 := by
+  show (match zeroD1_179 c with | true => cntD1_179 c | false => 0) = _
+  rw [h]
+
+/-- **THE REGION, DECIDED.**  Every `ψ₀`-argument in coefficient position passes the
+    descent, with the bound read off the block digit itself. -/
+def regZ179 (a : BT) : Bool :=
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c =>
+        if u == 1 then
+          (BT.toL c).all (fun y =>
+            match y with
+            | BT.D v d => if v == 0 then capZChk179 (capBound179 c) (BT.size d + 1) d else true
+            | _ => true)
+        else true
+    | _ => true)
+
+/-- **§179 MAIN — `Subord157` at one `a`, proved, on a region strictly containing §164's
+    free region.** -/
+theorem subord157_at_regZ179 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hreg : regZ179 a = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    Sub157 ac.1 (wVal157 P) ac.2 := by
+  obtain ⟨Lpre, B, Lsuf, hsp⟩ :=
+    wcnf_split159 (w := reg 1) (toList (dict a)) P S ac hsplit
+  have hA1 : le TM.Term.one ac.1 = true := le_one_ac164 Hp hb hs hsp
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  have hgood : GoodL77 (BT.toL a) := good_toL77 a hsa hba
+  have hreg' : (BT.toL a).all (fun z =>
+      match z with
+      | BT.D u c =>
+          if u == 1 then
+            (BT.toL c).all (fun y =>
+              match y with
+              | BT.D v d => if v == 0 then capZChk179 (capBound179 c) (BT.size d + 1) d
+                else true
+              | _ => true)
+          else true
+      | _ => true) = true := hreg
+  refine subord157_at_capBlk179 Hp hb hs P S ac hsplit hfire ?_
+  intro c hcm hblk d hdm
+  have hb1 : btLe72 1 (BT.D 1 c) = true := hgood.2.2.1 _ hcm
+  have hs1 : BT.isStd (BT.D 1 c) = true := hgood.2.1 _ hcm
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c hb1).2
+  have hsc : BT.isStd c = true := isStd_of_D hs1
+  have hgc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  have hc2 : (BT.toL c).all (fun y =>
+      match y with
+      | BT.D v d' => if v == 0 then capZChk179 (capBound179 c) (BT.size d' + 1) d' else true
+      | _ => true) = true := List.all_eq_true.mp hreg' _ hcm
+  have hchk : capZChk179 (capBound179 c) (BT.size d + 1) d = true :=
+    List.all_eq_true.mp hc2 _ hdm
+  have hAm : ∀ k : Nat, k ≤ capBound179 c → le (ofNat (k + 1)) ac.1 = true := by
+    cases hzc : zeroD1_179 c with
+    | true =>
+        intro k hk
+        rw [capBound_true179 hzc] at hk
+        rw [← hblk, wA_dict_D1_zero179 Hp hbc hsc hzc]
+        exact le_ofNat_mono179 (by omega)
+    | false =>
+        intro k hk
+        rw [capBound_false179 hzc] at hk
+        have hk0 : k = 0 := by omega
+        subst hk0
+        show le (ofNat 1) ac.1 = true
+        rw [show ofNat 1 = TM.Term.one from rfl]
+        exact hA1
+  exact cap_of_capZ179 Hp hAm (BT.size d + 1) d (Nat.lt_succ_self _)
+    (hgc.2.2.1 _ hdm) (hgc.2.1 _ hdm) hchk
+
+
+/-! ## §179.7b §164's free region is contained in this one, PROVED -/
+
+theorem toL_atom179 : ∀ (d z : BT), z ∈ BT.toL d → ∃ (u : Nat) (x : BT), z = BT.D u x
+  | .zero, _, h => by cases h
+  | .D u x, z, h => ⟨u, x, List.mem_singleton.mp h⟩
+  | .sum a b, z, h => by
+      rcases List.mem_append.mp (show z ∈ BT.toL a ++ BT.toL b from h) with h1 | h1
+      · exact toL_atom179 a z h1
+      · exact toL_atom179 b z h1
+
+theorem btLe_toL179 : ∀ (d : BT), btLe72 1 d = true → ∀ z ∈ BT.toL d, btLe72 1 z = true
+  | .zero, _, _, h => by cases h
+  | .D u x, hb, z, h => by rw [List.mem_singleton.mp h]; exact hb
+  | .sum a b, hb, z, h => by
+      obtain ⟨hba, hbb⟩ :=
+        (Bool.and_eq_true _ _).mp (show (btLe72 1 a && btLe72 1 b) = true from hb)
+      rcases List.mem_append.mp (show z ∈ BT.toL a ++ BT.toL b from h) with h1 | h1
+      · exact btLe_toL179 a hba z h1
+      · exact btLe_toL179 b hbb z h1
+
+theorem capZ_of_flat179 : ∀ (m n : Nat) (d : BT), BT.size d < n → btLe72 1 d = true →
+    flat164 d = true → capZChk179 m n d = true
+  | _, 0, _, h, _, _ => absurd h (Nat.not_lt_zero _)
+  | m, n + 1, d, hsz, hbd, hf => by
+      show (BT.toL d).all (fun z =>
+        match z with
+        | BT.D u x =>
+            if u == 0 then capZChk179 m n x
+            else if u == 1 then
+              (zeroD1_179 x && decide (cntD1_179 x ≤ m)) &&
+              (BT.toL x).all (fun y =>
+                match y with
+                | BT.D v e => if v == 0 then capZChk179 m n e else true
+                | _ => true)
+            else false
+        | _ => true) = true
+      refine List.all_eq_true.mpr ?_
+      intro z hz
+      obtain ⟨u, x, hzx⟩ := toL_atom179 d z hz
+      subst hzx
+      have hbz : btLe72 1 (BT.D u x) = true := btLe_toL179 d hbd _ hz
+      have hu : u ≤ 1 := (btLe72_D 1 u x hbz).1
+      have hbx : btLe72 1 x = true := (btLe72_D 1 u x hbz).2
+      have hfz : flat164 (BT.D u x) = true := flat_toL164 d hf _ hz
+      have hszx : BT.size (BT.D u x) ≤ BT.size d := size_mem_toL87 d _ hz
+      rw [size_D87] at hszx
+      show (if u == 0 then capZChk179 m n x
+            else if u == 1 then
+              (zeroD1_179 x && decide (cntD1_179 x ≤ m)) &&
+              (BT.toL x).all (fun y =>
+                match y with
+                | BT.D v e => if v == 0 then capZChk179 m n e else true
+                | _ => true)
+            else false) = true
+      cases u with
+      | zero =>
+          rw [if_pos (show ((0 : Nat) == 0) = true from rfl)]
+          exact capZ_of_flat179 m n x (by omega) hbx (flat_D0_164 hfz)
+      | succ u' =>
+          have hu0 : u' = 0 := by omega
+          subst hu0
+          rw [if_neg (by intro hc; exact Bool.noConfusion hc),
+            if_pos (show ((1 : Nat) == 1) = true from rfl)]
+          obtain ⟨hnd, hfx⟩ := flat_D1_164 hfz
+          refine (Bool.and_eq_true _ _).mpr ⟨?_, ?_⟩
+          · rw [zeroD1_of_noD1_179 x hnd, cntD1_of_noD1_179 x hnd]
+            exact (Bool.and_eq_true _ _).mpr ⟨rfl, by simp⟩
+          · refine List.all_eq_true.mpr ?_
+            intro y hy
+            obtain ⟨v, e, hye⟩ := toL_atom179 x y hy
+            subst hye
+            have hbe : btLe72 1 (BT.D v e) = true := btLe_toL179 x hbx _ hy
+            have hsze : BT.size (BT.D v e) ≤ BT.size x := size_mem_toL87 x _ hy
+            rw [size_D87] at hsze
+            show (if v == 0 then capZChk179 m n e else true) = true
+            cases v with
+            | zero =>
+                rw [if_pos (show ((0 : Nat) == 0) = true from rfl)]
+                exact capZ_of_flat179 m n e (by omega) (btLe72_D 1 0 e hbe).2
+                  (flat_D0_164 (flat_toL164 x hfx _ hy))
+            | succ v' => rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+
+/-- §164's free region, taken at the top in this file's shape. -/
+def flatTop179 (a : BT) : Bool :=
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c =>
+        if u == 1 then
+          (BT.toL c).all (fun y =>
+            match y with
+            | BT.D v d => if v == 0 then flat164 d else true
+            | _ => true)
+        else true
+    | _ => true)
+
+/-- **§164's free region is inside this file's.**  Measured strict containment is §179.8;
+    this is the inclusion itself, proved. -/
+theorem regZ_of_flatTop179 {a : BT} (hb : btLe72 1 a = true) (h : flatTop179 a = true) :
+    regZ179 a = true := by
+  have h' : (BT.toL a).all (fun z =>
+      match z with
+      | BT.D u c =>
+          if u == 1 then
+            (BT.toL c).all (fun y =>
+              match y with
+              | BT.D v d => if v == 0 then flat164 d else true
+              | _ => true)
+          else true
+      | _ => true) = true := h
+  refine List.all_eq_true.mpr ?_
+  intro z hz
+  obtain ⟨u, c, hzc⟩ := toL_atom179 a z hz
+  subst hzc
+  have hstep : (if u == 1 then
+      (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v d => if v == 0 then flat164 d else true
+        | _ => true)
+      else true) = true := List.all_eq_true.mp h' _ hz
+  show (if u == 1 then
+      (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v d => if v == 0 then capZChk179 (capBound179 c) (BT.size d + 1) d else true
+        | _ => true)
+      else true) = true
+  have hbz : btLe72 1 (BT.D u c) = true := btLe_toL179 a hb _ hz
+  have hbc : btLe72 1 c = true := (btLe72_D 1 u c hbz).2
+  have hmain : (BT.toL c).all (fun y =>
+      match y with
+      | BT.D v d => if v == 0 then flat164 d else true
+      | _ => true) = true →
+      (BT.toL c).all (fun y =>
+        match y with
+        | BT.D v d => if v == 0 then capZChk179 (capBound179 c) (BT.size d + 1) d else true
+        | _ => true) = true := by
+    intro hstep'
+    refine List.all_eq_true.mpr ?_
+    intro y hy
+    obtain ⟨v, d, hyd⟩ := toL_atom179 c y hy
+    subst hyd
+    have hfd0 : (if v == 0 then flat164 d else true) = true := List.all_eq_true.mp hstep' _ hy
+    have hbd0 : btLe72 1 (BT.D v d) = true := btLe_toL179 c hbc _ hy
+    show (if v == 0 then capZChk179 (capBound179 c) (BT.size d + 1) d else true) = true
+    cases v with
+    | zero =>
+        rw [if_pos (show ((0 : Nat) == 0) = true from rfl)] at hfd0
+        rw [if_pos (show ((0 : Nat) == 0) = true from rfl)]
+        exact capZ_of_flat179 _ _ d (Nat.lt_succ_self _) (btLe72_D 1 0 d hbd0).2 hfd0
+    | succ v' => rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+  cases u with
+  | zero => rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+  | succ u' =>
+      cases u' with
+      | zero =>
+          rw [if_pos (show ((1 : Nat) == 1) = true from rfl)] at hstep
+          rw [if_pos (show ((1 : Nat) == 1) = true from rfl)]
+          exact hmain hstep
+      | succ u'' => rw [if_neg (by intro hc; exact Bool.noConfusion hc)]
+
+/-! ## §179.8 MEASUREMENT -/
+
+/-- (qualifying, §164's free region, this file's free region, §164's DECIDED criterion). -/
+def cov179 (L : List BT) : Nat × Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length, (D.filter flatTop179).length, (D.filter regZ179).length,
+   (D.filter subordChk164).length)
+
+#guard cov179 (poolD151 ++ poolC151 ++ poolA151 ++ poolE151) == (1174, 715, 819, 914)
+#guard cov179 exhPool165 == (2962, 2881, 2901, 2960)
+#guard cov179 deepPool165 == (693, 67, 78, 622)
+
+-- the new region never loses a term §164's free region already had
+#guard ((poolD151 ++ poolC151 ++ poolA151 ++ poolE151).filter qual151).all
+        (fun a => !(flatTop179 a) || regZ179 a)
+#guard exhPool165.all (fun a => !(flatTop179 a) || regZ179 a)
+#guard deepPool165.all (fun a => !(flatTop179 a) || regZ179 a)
+
+-- and it lands inside §164's decided criterion, as the theorem says it must
+#guard ((poolD151 ++ poolC151 ++ poolA151 ++ poolE151).filter qual151).all
+        (fun a => !(regZ179 a) || subordChk164 a)
+#guard exhPool165.all (fun a => !(regZ179 a) || subordChk164 a)
+#guard deepPool165.all (fun a => !(regZ179 a) || subordChk164 a)
+
+/-- A witness in the new region and outside §164's: `ψ₁(ψ₁0 ⊕ ψ₀ψ₁ψ₁0)`.  The `ψ₁` node
+    met on the descent is `ψ₁(ψ₁0)`, whose ARGUMENT is `ψ₁0` — count `1` — and the block
+    digit carries count `1` too.  (The node itself is not `ψ₁0`; that would be trivial.) -/
+def wit179 : BT :=
+  BT.D 1 (BT.sum (BT.D 1 BT.zero) (BT.D 0 (BT.D 1 (BT.D 1 BT.zero))))
+
+#guard qual151 wit179
+#guard !(flatTop179 wit179)
+#guard regZ179 wit179
+#guard exhPool165.contains wit179
+#guard BT.size wit179 == 8
+
+
+/-! ### §179.9 THE NEXT STEP, MEASURED — NOT PROVED
+
+The obvious enlargement is "the node's `ψ₁`-argument list is a PREFIX of the block digit's"
+(a common argument, as in §179, is the special case of a constant list).  It is measurably
+larger.  **Nothing below is proved**, and the reason is recorded in the file header: its
+soundness needs `toList (dict x) = (BT.toL x).map dict` so that the BLOCK digit's exponent
+has a lower bound, and that equality is not free — §77's `toList_dict_ofL77` carries
+`DictLtUpTo77 m` and §93's `hiW_dict93` carries `CollapseMono0Hi81`.  What §179 uses is the
+one half that IS free: `plus` can only DROP components, and when every high component is the
+SAME term nothing can be dropped. -/
+
+def capPre179 (L : List BT) : Nat → BT → Bool
+  | 0, _ => false
+  | n + 1, d => (BT.toL d).all (fun z =>
+      match z with
+      | BT.D u x =>
+          if u == 0 then capPre179 L n x
+          else if u == 1 then
+            ((d1args179 x).isPrefixOf L) &&
+            (BT.toL x).all (fun y =>
+              match y with
+              | BT.D v e => if v == 0 then capPre179 L n e else true
+              | _ => true)
+          else false
+      | _ => true)
+
+def regPre179 (a : BT) : Bool :=
+  (BT.toL a).all (fun z =>
+    match z with
+    | BT.D u c =>
+        if u == 1 then
+          (BT.toL c).all (fun y =>
+            match y with
+            | BT.D v d => if v == 0 then capPre179 (d1args179 c) (BT.size d + 1) d else true
+            | _ => true)
+        else true
+    | _ => true)
+
+/-- (qualifying, §179's PROVED region, the prefix region — measured only). -/
+def covNext179 (L : List BT) : Nat × Nat × Nat :=
+  let D := L.filter qual151
+  (D.length, (D.filter regZ179).length, (D.filter regPre179).length)
+
+#guard covNext179 (poolD151 ++ poolC151 ++ poolA151 ++ poolE151) == (1174, 819, 849)
+#guard covNext179 exhPool165 == (2962, 2901, 2904)
+#guard covNext179 deepPool165 == (693, 78, 78)
+#guard ((poolD151 ++ poolC151 ++ poolA151 ++ poolE151).filter qual151).all
+        (fun a => !(regZ179 a) || regPre179 a)
+#guard exhPool165.all (fun a => !(regZ179 a) || regPre179 a)
+#guard deepPool165.all (fun a => !(regZ179 a) || regPre179 a)
+-- the prefix region is still inside §164's DECIDED criterion, as it must be
+#guard exhPool165.all (fun a => !(regPre179 a) || subordChk164 a)
+#guard deepPool165.all (fun a => !(regPre179 a) || subordChk164 a)
+
+#print axioms dict_D1_zero179
+#print axioms hi_dict179
+#print axioms wA_dict_D1_zero179
+#print axioms capE_of_zero179
+#print axioms cap_of_capZ179
+#print axioms subord157_at_capBlk179
+#print axioms capZ_of_flat179
+#print axioms regZ_of_flatTop179
+#print axioms subord157_at_regZ179
+
+end
+
+open BMS
+
+/-
+g180 — `ExpHeart160`'s no-fired-prefix half: the `BT`-ORDER block §166 said was missing.
+
+WHAT WAS ASKED.  §166 split `ExpHeart160`'s residual in two and named case (ii) — "no
+pair of `a`'s `wcnf` fires ⟹ every depth-3 `ψ₀`-argument of `a` passes `expFree166`" —
+as a `BT`-order statement its fold machinery cannot touch, and named two lemmas the
+library lacks.
+
+THE TWO NAMED LEMMAS.
+
+  * "a `⊕`-component is `BT.le` the whole term" — `comp_le180` (§180.1).  It really was
+    missing; `comp_le157` is the 𝔗(M)-side twin.  It needs `BT.isStd` (`isStd (a ⊕ b)`
+    is what forbids `a ⊕ 0`, where the statement is false).
+  * "the forward direction of `ltW_of_ltW_omegaNF128`" — **this one was NOT missing.**
+    §79.5's `ltW_omegaNF79 : x < Ω₁ → ω^x < Ω₁` is exactly it, and §118 restates it as
+    `ltW_omegaNF_lt118`.  What was missing is its CONSUMER, `noFireChk_of_noChain180`
+    (§180.3): the assembly through §104's `logOm (dict (ψ₁c)) = Ω₁ ⊕ dict c`, §119's
+    `divAP`, and `lt_ofList_ap114` that turns "no level-1 digit two floors down" into
+    `noFireChk166 c = true`.
+
+WHAT IS PROVED (`Hp = PsiIdxOKStd172` throughout; nothing else is assumed except where
+`HiFire180` is named in the statement).
+
+  §180.2  **THE THRESHOLD, BOTH DIRECTIONS.**  For level-`≤1` standard `t`, carrying a
+          `ψ₁` chain of three (`ψ₁c ∈ toL t`, `ψ₁x ∈ toL c`, `ψ₁y ∈ toL x`) is exactly
+          `BT.le dwit163 t`; `noFires_iff_lt_dwit180` is the equivalence.  The `le`
+          half is three `btle_arg106` steps fed by `comp_le180`; the `lt` half needs
+          only the level bound.
+  §180.3  `noFireChk_of_noChain180` — §166's DECIDED node test is the chain test.
+  §180.4  `expFree_of_lt_dwit180` — **`BT.lt d dwit163 = true ⟹ expFree166 d = true`**
+          on the gates.  This is the half of §163's first measured line that matters.
+          §166 recorded that `expFree166` is NOT the order test, with the witness
+          `offThr166 = ψ₀(ψ₁ψ₁ψ₁0)`; that witness fails `BT.isStd (ψ₀ ·)`, and the
+          invariant that makes the walk go through is exactly what standardness buys:
+          `∀ e ∈ G(d,0), BT.lt e dwit163`.  So on the STANDARD region the two do agree
+          in this direction, and here is the proof.
+  §180.5  **`LtDwitFree163` IS A THEOREM.**  §163.6 named it as the FIRST of the two
+          goal states that beat that file.  It is discharged with `Hp` alone — not by
+          §163's proposed route (a `PsiL160`-carrying fold invariant) but by §166's
+          `subR157_dict_free166` composed with §180.4.  §163's `expSubR157_at_ltDwit163`
+          is re-exported here without that hypothesis as `expSubR157_at_ltDwit180`, and
+          the clause form as `expHeart160_at_ltDwit180`.
+  §180.6  `noFire_all_of_lt_dwit180` — **half of §163.5's SECOND measured line, proved**:
+          `BT.lt a dwit163 ⟹ no pair of `wcnf (reg 1) (toList (dict a))` fires`.
+  §180.7  Case (ii) VERBATIM (`expChkA_of_noFire180`, `expSubR157_at_noFire180`), and
+          the split as a reduction (`expHeart160_of_fired180`), modulo the single named
+          bridge `HiFire180` — the converse of §180.6.
+
+WHAT IS NOT PROVED, AND WHY.  `HiFire180` says a term at or above the threshold produces
+a FIRING pair.  Its proof needs the direction of the `dict` bridge that is NOT free:
+that the image of a level-1 component of `a` is still a component of `dict a`.  `plus`
+can only DROP components (§101's `mem_toList_dict_ofL101` header), a hi component is
+dropped exactly when `dict` inverts an order, and §96 shows the no-drop statement
+`FullBridge96` is EQUIVALENT to `DictDesc96`, which is `CollapseMono0Hi81`, which §99's
+`gate_iff_hiMono99` says (under `Hp`) IS `HiMono89` — the gate this whole chain is
+trying to reach.  So `HiFire180` cannot be discharged here without circularity.  It is measured in §180.8
+(0 violations on 1351 gate-passing terms across six populations, both directions).
+
+HONEST SCOPE — READ THIS BEFORE QUOTING THE FILE.  **None of this enlarges the region
+where `ExpSubR157` is proved.**  §166's decided walk `expSubChk166` already accepts every
+gate-passing term in every population measured here, and the region `BT.lt a dwit163` is
+a STRICT SUBSET of §166's `expChkA166`: on `poolC151` it is EMPTY (0 of 121) where §166
+accepts all 121.  What changes is the ledger: a named open Prop of §163 becomes a
+theorem, and §166's "measured, not proved" agreement between its criterion and the order
+test becomes proved in the direction that matters.
+
+No `sorry`, no `native_decide`, no new axiom.
+-/
+
+
+section
+open Trans.Recal (bplus)
+open Trans.Dict (BT dict collapse reg wcnf sub1 logOm divAP subAP mulL)
+open TM TM.Term
+open Evidence.WF
+
+/-! ## §180.1 THE MISSING `BT`-SIDE LEMMA — a `⊕`-component is `BT.le` the whole term -/
+
+/-- A standard term's component list is descending.  `good_toL77` proves this too, but
+    only bundled with `btLe72 1`; the order argument needs it without that. -/
+theorem descOK_toL180 : ∀ (x : BT), BT.isStd x = true → descOK72 (BT.toL x) = true
+  | .zero, _ => rfl
+  | .D _ _, _ => rfl
+  | .sum a b, hs => by
+      have hP : BT.isP a = true := isP_of_isStd_sum hs
+      obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hs
+      have hsb : BT.isStd b = true := ((Bool.and_eq_true _ _).mp h1).2
+      obtain ⟨r, hr⟩ := toL_cons77 b hsb (isStd_sum_ne_zero77 hs)
+      have ihb := descOK_toL180 b hsb
+      cases a with
+      | zero => exact Bool.noConfusion hP
+      | sum _ _ => exact Bool.noConfusion hP
+      | D v e =>
+          show descOK72 (BT.D v e :: BT.toL b) = true
+          rw [hr] at ihb ⊢
+          show (BT.le (bhd77 b) (BT.D v e) && descOK72 (bhd77 b :: r)) = true
+          rw [le_bhd77 hs, ihb]
+          rfl
+
+/-- A standard nonzero term has at least one component. -/
+theorem toL_ne_nil180 {x : BT} (hs : BT.isStd x = true) (hz : x ≠ BT.zero) :
+    BT.toL x ≠ [] := by
+  obtain ⟨r, hr⟩ := toL_cons77 x hs hz
+  rw [hr]
+  exact List.cons_ne_nil _ _
+
+/-- The head component of a standard term is `BT.le` the term. -/
+theorem hd_le180 {v : Nat} {e b : BT} (hb : BT.toL b ≠ []) :
+    BT.le (BT.D v e) (BT.sum (BT.D v e) b) = true := by
+  have hlt : BT.lt (BT.D v e) (BT.sum (BT.D v e) b) = true := by
+    rw [lt_eq_ltS]
+    show ltS [BT.D v e] (BT.D v e :: BT.toL b) = true
+    rw [ltS_cons v e [] v e (BT.toL b), if_neg (Nat.lt_irrefl v), if_neg (Nat.lt_irrefl v),
+      if_pos (bt_beq_refl e)]
+    cases hbl : BT.toL b with
+    | nil => exact absurd hbl hb
+    | cons y ys => exact ltS_nil_cons y ys
+  show ((BT.D v e == BT.sum (BT.D v e) b) || BT.lt (BT.D v e) (BT.sum (BT.D v e) b)) = true
+  rw [hlt, Bool.or_true]
+
+/-- **THE LEMMA §166 NAMED AS MISSING.**  Every `⊕`-component of a standard term is
+    `BT.le` the term.  This is `comp_le157`'s twin on the `BT` side. -/
+theorem comp_le180 : ∀ {t : BT}, BT.isStd t = true → ∀ {p : BT}, p ∈ BT.toL t →
+    BT.le p t = true
+  | .zero, _, p, hp => by exact absurd hp (by intro hc; cases hc)
+  | .D u a, _, p, hp => by
+      rw [List.mem_singleton.mp (show p ∈ [BT.D u a] from hp)]
+      exact bt_le_refl108 _
+  | .sum a b, hs, p, hp => by
+      have hP : BT.isP a = true := isP_of_isStd_sum hs
+      obtain ⟨h1, _⟩ := (Bool.and_eq_true _ _).mp hs
+      have hsb : BT.isStd b = true := ((Bool.and_eq_true _ _).mp h1).2
+      have hbne : BT.toL b ≠ [] := toL_ne_nil180 hsb (isStd_sum_ne_zero77 hs)
+      cases a with
+      | zero => exact Bool.noConfusion hP
+      | sum _ _ => exact Bool.noConfusion hP
+      | D v e =>
+          have hhd : BT.le (BT.D v e) (BT.sum (BT.D v e) b) = true := hd_le180 hbne
+          have hdesc : descOK72 (BT.D v e :: BT.toL b) = true := descOK_toL180 _ hs
+          rcases List.mem_cons.mp (show p ∈ BT.D v e :: BT.toL b from hp) with h | h
+          · rw [h]; exact hhd
+          · exact le_trans83 (descOK_head83 _ _ hdesc p h) hhd
+
+/-! ## §180.2 THE THRESHOLD `dwit163 = ψ₁ψ₁ψ₁0`, BOTH DIRECTIONS
+
+`fires180 t` says `t` carries a chain of three `ψ₁` nodes at the top: a digit `ψ₁c` of
+`t`, a digit `ψ₁x` of `c`, a digit `ψ₁y` of `x`.  That is exactly the shape §166's
+`noFireChk166` refuses, and §180.3 shows it is exactly what makes the base-`Ω₁`
+exponent of `dict (ψ₁c)` reach `Ω₁`. -/
+
+theorem le_zero180 {y : BT} (hs : BT.isStd y = true) : BT.le BT.zero y = true := by
+  by_cases hz : y = BT.zero
+  · rw [hz]; exact bt_le_refl108 _
+  · have h := lt_zero_toL y (toL_ne_nil180 hs hz)
+    show ((BT.zero == y) || BT.lt BT.zero y) = true
+    rw [h, Bool.or_true]
+
+/-- **A firing node is at least `dwit163`.**  Three applications of `btle_arg106`, each
+    fed by `comp_le180`. -/
+theorem le_dwit_of_fireNode180 {c : BT} (hs : BT.isStd (BT.D 1 c) = true)
+    {x y : BT} (hx : BT.D 1 x ∈ BT.toL c) (hy : BT.D 1 y ∈ BT.toL x) :
+    BT.le dwit163 (BT.D 1 c) = true := by
+  have hsc : BT.isStd c = true := isStd_of_D hs
+  have hsx : BT.isStd x = true := isStd_of_D (isStd_toL82 c hsc _ hx)
+  have hsy : BT.isStd y = true := isStd_of_D (isStd_toL82 x hsx _ hy)
+  have s1 : BT.le (BT.D 1 BT.zero) (BT.D 1 y) = true := btle_arg106 (le_zero180 hsy)
+  have s3 : BT.le (BT.D 1 BT.zero) x = true := le_trans83 s1 (comp_le180 hsx hy)
+  have s4 : BT.le (BT.D 1 (BT.D 1 BT.zero)) (BT.D 1 x) = true := btle_arg106 s3
+  have s6 : BT.le (BT.D 1 (BT.D 1 BT.zero)) c = true := le_trans83 s4 (comp_le180 hsc hx)
+  exact btle_arg106 s6
+
+/-- **A term with a firing digit is at least `dwit163`.** -/
+theorem le_dwit_of_fires180 {t : BT} (hs : BT.isStd t = true) {c x y : BT}
+    (hc : BT.D 1 c ∈ BT.toL t) (hx : BT.D 1 x ∈ BT.toL c) (hy : BT.D 1 y ∈ BT.toL x) :
+    BT.le dwit163 t = true :=
+  le_trans83 (le_dwit_of_fireNode180 (isStd_toL82 t hs _ hc) hx hy) (comp_le180 hs hc)
+
+/-! ### §180.2b The converse — no chain of three means strictly below the threshold -/
+
+theorem lt_T1_180 {t : BT} (hb : btLe72 1 t = true)
+    (h : ∀ c : BT, BT.D 1 c ∈ BT.toL t → False) :
+    BT.lt t (BT.D 1 BT.zero) = true := by
+  rw [lt_eq_ltS]
+  cases hL : BT.toL t with
+  | nil => exact ltS_nil_cons _ _
+  | cons z rest =>
+      have hzm : z ∈ BT.toL t := by rw [hL]; exact List.Mem.head _
+      obtain ⟨u, g, rfl⟩ := mem_toL_D87 t z hzm
+      have hbz : btLe72 1 (BT.D u g) = true := btLe72_toL87 t _ hb hzm
+      have hu1 : u ≤ 1 := (btLe72_D 1 u g hbz).1
+      have hu0 : u = 0 := by
+        cases hu : u with
+        | zero => rfl
+        | succ u' =>
+            exfalso
+            have : u' = 0 := by omega
+            subst this; subst hu
+            exact h g hzm
+      subst hu0
+      exact ltS_lvl83 0 1 g BT.zero rest [] (by omega)
+
+theorem lt_T2_180 {t : BT} (hb : btLe72 1 t = true)
+    (h : ∀ c x : BT, BT.D 1 c ∈ BT.toL t → BT.D 1 x ∈ BT.toL c → False) :
+    BT.lt t (BT.D 1 (BT.D 1 BT.zero)) = true := by
+  rw [lt_eq_ltS]
+  cases hL : BT.toL t with
+  | nil => exact ltS_nil_cons _ _
+  | cons z rest =>
+      have hzm : z ∈ BT.toL t := by rw [hL]; exact List.Mem.head _
+      obtain ⟨u, g, rfl⟩ := mem_toL_D87 t z hzm
+      have hbz : btLe72 1 (BT.D u g) = true := btLe72_toL87 t _ hb hzm
+      have hu1 : u ≤ 1 := (btLe72_D 1 u g hbz).1
+      cases hu : u with
+      | zero => exact ltS_lvl83 0 1 g (BT.D 1 BT.zero) rest [] (by omega)
+      | succ u' =>
+          have hu' : u' = 0 := by omega
+          subst hu'; subst hu
+          have hbg : btLe72 1 g = true := (btLe72_D 1 1 g hbz).2
+          have hg : BT.lt g (BT.D 1 BT.zero) = true :=
+            lt_T1_180 hbg (fun x hx => h g x hzm hx)
+          exact ltS_arg83 1 g (BT.D 1 BT.zero) rest [] hg
+
+/-- **The converse of `le_dwit_of_fires180`** — no `ψ₁` chain of three, no threshold.
+    Only the level bound is needed; standardness is not. -/
+theorem lt_dwit_of_noFires180 {t : BT} (hb : btLe72 1 t = true)
+    (h : ∀ c x y : BT, BT.D 1 c ∈ BT.toL t → BT.D 1 x ∈ BT.toL c →
+      BT.D 1 y ∈ BT.toL x → False) :
+    BT.lt t dwit163 = true := by
+  rw [lt_eq_ltS]
+  cases hL : BT.toL t with
+  | nil => exact ltS_nil_cons _ _
+  | cons z rest =>
+      have hzm : z ∈ BT.toL t := by rw [hL]; exact List.Mem.head _
+      obtain ⟨u, g, rfl⟩ := mem_toL_D87 t z hzm
+      have hbz : btLe72 1 (BT.D u g) = true := btLe72_toL87 t _ hb hzm
+      have hu1 : u ≤ 1 := (btLe72_D 1 u g hbz).1
+      cases hu : u with
+      | zero => exact ltS_lvl83 0 1 g (BT.D 1 (BT.D 1 BT.zero)) rest [] (by omega)
+      | succ u' =>
+          have hu' : u' = 0 := by omega
+          subst hu'; subst hu
+          have hbg : btLe72 1 g = true := (btLe72_D 1 1 g hbz).2
+          have hg : BT.lt g (BT.D 1 (BT.D 1 BT.zero)) = true :=
+            lt_T2_180 hbg (fun x y hx hy => h g x y hzm hx hy)
+          exact ltS_arg83 1 g (BT.D 1 (BT.D 1 BT.zero)) rest [] hg
+
+/-- **The threshold, as an equivalence** on level-`≤1` standard terms: carrying a
+    `ψ₁` chain of three is exactly reaching `dwit163`. -/
+theorem noFires_iff_lt_dwit180 {t : BT} (hb : btLe72 1 t = true) (hs : BT.isStd t = true) :
+    (∀ c x y : BT, BT.D 1 c ∈ BT.toL t → BT.D 1 x ∈ BT.toL c →
+      BT.D 1 y ∈ BT.toL x → False) ↔ BT.lt t dwit163 = true := by
+  constructor
+  · intro h; exact lt_dwit_of_noFires180 hb h
+  · intro hlt c x y hc hx hy
+    have hle : BT.le dwit163 t = true := le_dwit_of_fires180 hs hc hx hy
+    rcases (Bool.or_eq_true _ _).mp hle with he | hl
+    · rw [bt_eq_of_beq71 _ _ he, lt_irrefl74] at hlt; exact Bool.noConfusion hlt
+    · rw [lt_asymm74 hl] at hlt; exact Bool.noConfusion hlt
+
+/-! ## §180.3 THE OTHER MISSING LEMMA — `Ω₁` IS CLOSED UNDER `ω^·` AND `⊕`,
+       SO A NODE WITH NO `ψ₁` CHAIN OF THREE DOES NOT FIRE
+
+§166 named this as "the forward direction of `ltW_of_ltW_omegaNF128`: `dict x < Ω₁ →
+ω^(dict x) < Ω₁ → wA < Ω₁`".  The primitive half of it is NOT missing — §79.5's
+`ltW_omegaNF79` is exactly `x < Ω₁ ⟹ ω^x < Ω₁`, and §118 restates it as
+`ltW_omegaNF_lt118`.  What was missing is the CONSUMER below: the assembly through
+§104's closed form for `logOm (dict (ψ₁c))` and §119's `divAP`, which turns the
+absence of a level-1 digit two floors down into `noFireChk166 c = true`. -/
+
+/-- A term whose digits are all `ψ₀` has an image below `Ω₁`. -/
+theorem lt_dict_noD1_180 (Hp : PsiIdxOKStd172) {x : BT} (hbx : btLe72 1 x = true)
+    (hsx : BT.isStd x = true) (h : ∀ y : BT, BT.D 1 y ∈ BT.toL x → False) :
+    lt (dict x) (reg 1) = true := by
+  obtain ⟨hix, hxM⟩ := inT_dict_of_std172 Hp x hbx hsx
+  have hall : ∀ z ∈ toList (dict x), lt z (reg 1) = true := by
+    intro z hz
+    obtain ⟨u, c, hmem, hbuc, hsuc, hu1, hze⟩ := comp_name160 Hp hbx hsx z hz
+    cases hu : u with
+    | zero => subst hu; rw [hze]; exact lt_dict_D0_W93 Hp hbuc hsuc
+    | succ u' =>
+        exfalso
+        have hu0 : u' = 0 := by omega
+        subst hu0; subst hu
+        exact h c hmem
+  rw [← inT_ofList_toList _ hix]
+  exact lt_ofList_ap114 (show (reg 1).isAP = true from rfl)
+    (fun hc => Term.noConfusion hc) _ hall
+
+/-- **`noFireChk166` IS the `BT`-side chain test.**  If no `ψ₁` digit of `c` carries a
+    `ψ₁` digit of its own, the base-`Ω₁` exponent of `dict (ψ₁c)` stays below `Ω₁`. -/
+theorem noFireChk_of_noChain180 (Hp : PsiIdxOKStd172) {c : BT}
+    (hbD : btLe72 1 (BT.D 1 c) = true) (hsD : BT.isStd (BT.D 1 c) = true)
+    (h : ∀ x y : BT, BT.D 1 x ∈ BT.toL c → BT.D 1 y ∈ BT.toL x → False) :
+    noFireChk166 c = true := by
+  have hbc : btLe72 1 c = true := (btLe72_D 1 1 c hbD).2
+  have hsc : BT.isStd c = true := isStd_of_D hsD
+  obtain ⟨hic, hcM⟩ := inT_dict_of_std172 Hp c hbc hsc
+  obtain ⟨hip, hpM⟩ := inT_dict_of_std172 Hp (BT.D 1 c) hbD hsD
+  have hgoodc : GoodL77 (BT.toL c) := good_toL77 c hsc hbc
+  have hiwA : inT (wA (reg 1) (dict (BT.D 1 c))) = true :=
+    inT_wA109 (inT_reg 1) (show (reg 1).isSC = true from rfl) hip
+  have hkey : ∀ z ∈ (((toList (logOm (dict (BT.D 1 c)))).filter
+      (fun q => !lt q (reg 1))).map (divAP (reg 1))), lt z (reg 1) = true := by
+    intro z hz
+    obtain ⟨q, hq, hze⟩ := List.mem_map.mp hz
+    have hqm : q ∈ toList (logOm (dict (BT.D 1 c))) := (List.mem_filter.mp hq).1
+    have hqw : lt q (reg 1) = false := by
+      have hb := (List.mem_filter.mp hq).2
+      cases hcq : lt q (reg 1) with
+      | false => rfl
+      | true => rw [hcq] at hb; exact Bool.noConfusion hb
+    rw [logOm_dict_D1_104 Hp hbc hsc] at hqm
+    rcases mem_toList_plusW119 hic q hqm with hcase | hcase
+    · rw [← hze, hcase, divAP_W_W_119]
+      exact lt_one_W79
+    · have hhi : q ∈ toList (hiW89 (dict c)) := by
+        rw [toList_hiW89 hic]
+        exact List.mem_filter.mpr ⟨hcase, by rw [hqw]; rfl⟩
+      obtain ⟨x, hxm, hqe⟩ := mem_toList_hiW_dict101 Hp hbc hsc q hhi
+      have hbx1 : btLe72 1 (BT.D 1 x) = true := hgoodc.2.2.1 _ hxm
+      have hsx1 : BT.isStd (BT.D 1 x) = true := hgoodc.2.1 _ hxm
+      have hbx : btLe72 1 x = true := (btLe72_D 1 1 x hbx1).2
+      have hsx : BT.isStd x = true := isStd_of_D hsx1
+      have hdiv : divAP (reg 1) q = omegaNF (dict x) := by
+        rw [hqe]; exact divAP_dictD1_119 Hp hbx hsx
+      obtain ⟨hix, hxM⟩ := inT_dict_of_std172 Hp x hbx hsx
+      have hlowx : lt (dict x) (reg 1) = true :=
+        lt_dict_noD1_180 Hp hbx hsx (fun y hy => h x y hxm hy)
+      rw [← hze, hdiv]
+      exact ltW_omegaNF79 hix hlowx
+  have hlt : lt (wA (reg 1) (dict (BT.D 1 c))) (reg 1) = true := by
+    show lt (ofList (((toList (logOm (dict (BT.D 1 c)))).filter
+      (fun q => !lt q (reg 1))).map (divAP (reg 1)))) (reg 1) = true
+    exact lt_ofList_ap114 (show (reg 1).isAP = true from rfl)
+      (fun hc => Term.noConfusion hc) _ hkey
+  show (!(le (reg 1) (wA (reg 1) (dict (BT.D 1 c))))) = true
+  rw [not_le_of_lt113 (inT_reg 1) hiwA hlt]
+  rfl
+
+/-- Contrapositive: a node whose `noFireChk166` FAILS carries a `ψ₁` chain of three. -/
+theorem chain_of_fireChk180 (Hp : PsiIdxOKStd172) {c : BT}
+    (hbD : btLe72 1 (BT.D 1 c) = true) (hsD : BT.isStd (BT.D 1 c) = true)
+    (hf : noFireChk166 c = false) :
+    ¬ (∀ x y : BT, BT.D 1 x ∈ BT.toL c → BT.D 1 y ∈ BT.toL x → False) := by
+  intro h
+  rw [noFireChk_of_noChain180 Hp hbD hsD h] at hf
+  exact Bool.noConfusion hf
+
+/-! ## §180.4 THE WALK — below the threshold, §166's criterion ACCEPTS
+
+The invariant carried down the walk is the pair
+
+    `BT.lt t dwit163 = true`  and  `∀ e ∈ BT.GB 0 t, BT.lt e dwit163 = true`.
+
+The second half is what `BT.isStd (ψ₀ d)` buys and what §166's counterexample
+`offThr166 = ψ₀(ψ₁ψ₁ψ₁0)` lacks: `offThr166 < dwit163` holds but its own argument is
+`dwit163`, so the `GB` half fails — which is exactly why `BT.isStd (ψ₀ offThr166)` is
+`false`.  On the standard region the two tests therefore agree, and this is the proof. -/
+
+theorem not_le_dwit180 {t s : BT} (hlt : BT.lt t dwit163 = true)
+    (hle : BT.le dwit163 s = true) (hst : BT.le s t = true) : False := by
+  have h := le_trans83 hle hst
+  rcases (Bool.or_eq_true _ _).mp h with he | hl
+  · rw [bt_eq_of_beq71 _ _ he, lt_irrefl74] at hlt; exact Bool.noConfusion hlt
+  · rw [lt_asymm74 hl] at hlt; exact Bool.noConfusion hlt
+
+/-- `G(·,0)` of a component sits inside `G(·,0)` of the whole term. -/
+theorem gb_toL180 {t : BT} {u : Nat} {g : BT} (hz : BT.D u g ∈ BT.toL t) :
+    ∀ e : BT, e ∈ BT.GB 0 g → e ∈ BT.GB 0 t :=
+  fun e he => GB_mem_toL93 t _ hz e (gb_D163 u he)
+
+theorem expChk_of_lt_dwit180 (Hp : PsiIdxOKStd172) :
+    ∀ (n : Nat) (t : BT), BT.size t < n → btLe72 1 t = true → BT.isStd t = true →
+      BT.lt t dwit163 = true →
+      (∀ e : BT, e ∈ BT.GB 0 t → BT.lt e dwit163 = true) →
+      expChk166 n t = true
+  | 0, _, h, _, _, _, _ => absurd h (Nat.not_lt_zero _)
+  | n + 1, t, hsz, hb, hs, hlt, hGB => by
+      show expChkStep166 (expChk166 n) t = true
+      refine List.all_eq_true.mpr ?_
+      intro z hz
+      obtain ⟨u, g, rfl⟩ := mem_toL_D87 t z hz
+      have hbz : btLe72 1 (BT.D u g) = true := btLe72_toL87 t _ hb hz
+      have hsz1 : BT.isStd (BT.D u g) = true := isStd_toL82 t hs _ hz
+      have hbg : btLe72 1 g = true := (btLe72_D 1 u g hbz).2
+      have hsg : BT.isStd g = true := isStd_of_D hsz1
+      have hlez : BT.le (BT.D u g) t = true := comp_le180 hs hz
+      have hszg : BT.size (BT.D u g) ≤ BT.size t := size_mem_toL87 t _ hz
+      rw [size_D87] at hszg
+      have hgd : BT.lt g dwit163 = true := hGB g (mem_GB0_125 t u g hz)
+      have hGBg : ∀ e : BT, e ∈ BT.GB 0 g → BT.lt e dwit163 = true :=
+        fun e he => hGB e (gb_toL180 hz e he)
+      have hu1 : u ≤ 1 := (btLe72_D 1 u g hbz).1
+      cases hu : u with
+      | zero =>
+          subst hu
+          show expChk166 n g = true
+          exact expChk_of_lt_dwit180 Hp n g (by omega) hbg hsg hgd hGBg
+      | succ u' =>
+          have hu0 : u' = 0 := by omega
+          subst hu0; subst hu
+          show (noFireChk166 g && expInner166 (expChk166 n) g) = true
+          have hchain : ∀ x y : BT, BT.D 1 x ∈ BT.toL g → BT.D 1 y ∈ BT.toL x → False := by
+            intro x y hx hy
+            exact not_le_dwit180 hlt (le_dwit_of_fireNode180 hsz1 hx hy) hlez
+          have hnf : noFireChk166 g = true :=
+            noFireChk_of_noChain180 Hp hbz hsz1 hchain
+          have hinner : expInner166 (expChk166 n) g = true := by
+            refine List.all_eq_true.mpr ?_
+            intro y hy
+            obtain ⟨v, x, rfl⟩ := mem_toL_D87 g y hy
+            have hbv : btLe72 1 (BT.D v x) = true := btLe72_toL87 g _ hbg hy
+            have hsv : BT.isStd (BT.D v x) = true := isStd_toL82 g hsg _ hy
+            have hbx : btLe72 1 x = true := (btLe72_D 1 v x hbv).2
+            have hsx : BT.isStd x = true := isStd_of_D hsv
+            have hszx : BT.size (BT.D v x) ≤ BT.size g := size_mem_toL87 g _ hy
+            rw [size_D87] at hszx
+            have hxd : BT.lt x dwit163 = true := hGBg x (mem_GB0_125 g v x hy)
+            have hGBx : ∀ e : BT, e ∈ BT.GB 0 x → BT.lt e dwit163 = true :=
+              fun e he => hGBg e (gb_toL180 hy e he)
+            have hv1 : v ≤ 1 := (btLe72_D 1 v x hbv).1
+            cases hv : v with
+            | zero =>
+                subst hv
+                show expChk166 n x = true
+                exact expChk_of_lt_dwit180 Hp n x (by omega) hbx hsx hxd hGBx
+            | succ v' =>
+                have hv0 : v' = 0 := by omega
+                subst hv0; subst hv
+                show ((BT.toL x).all (fun tt =>
+                  match tt with
+                  | BT.D v' e => if v' == 0 then expChk166 n e else true
+                  | _ => true)) = true
+                refine List.all_eq_true.mpr ?_
+                intro tt htt
+                obtain ⟨v', e, rfl⟩ := mem_toL_D87 x tt htt
+                have hbe : btLe72 1 (BT.D v' e) = true := btLe72_toL87 x _ hbx htt
+                have hse : BT.isStd (BT.D v' e) = true := isStd_toL82 x hsx _ htt
+                have hsze : BT.size (BT.D v' e) ≤ BT.size x := size_mem_toL87 x _ htt
+                rw [size_D87] at hsze
+                cases hv2 : v' with
+                | zero =>
+                    subst hv2
+                    show expChk166 n e = true
+                    exact expChk_of_lt_dwit180 Hp n e (by omega)
+                      ((btLe72_D 1 0 e hbe).2) (isStd_of_D hse)
+                      (hGBx e (mem_GB0_125 x 0 e htt))
+                      (fun w hw => hGBx w (gb_toL180 htt w hw))
+                | succ v'' => rfl
+          rw [hnf, hinner]
+          rfl
+
+/-- **THE HEADLINE OF §180.4** — below the threshold, §166's decided criterion accepts.
+    Both gates are used: `BT.isStd (ψ₀ d)` is what makes every `G(d,0)` member below
+    `d`, hence below `dwit163`. -/
+theorem expFree_of_lt_dwit180 (Hp : PsiIdxOKStd172) {d : BT}
+    (hb : btLe72 1 (BT.D 0 d) = true) (hs : BT.isStd (BT.D 0 d) = true)
+    (hlt : BT.lt d dwit163 = true) : expFree166 d = true := by
+  have hbd : btLe72 1 d = true := (btLe72_D 1 0 d hb).2
+  have hsd : BT.isStd d = true := isStd_of_D hs
+  have hsu : (BT.isStd d && (BT.GB 0 d).all (fun e => BT.lt e d)) = true := hs
+  have hGB : ∀ e : BT, e ∈ BT.GB 0 d → BT.lt e dwit163 = true := by
+    intro e he
+    exact lt_trans83 (List.all_eq_true.mp ((Bool.and_eq_true _ _).mp hsu).2 e he) hlt
+  exact expChk_of_lt_dwit180 Hp (BT.size d + 1) d (Nat.lt_succ_self _) hbd hsd hlt hGB
+
+/-! ## §180.5 THE PAYOFF — `LtDwitFree163` IS A THEOREM
+
+§163.6 named two goal states that beat that file.  The FIRST was `LtDwitFree163`
+itself.  It is discharged here, with `PsiIdxOKStd172` as its only hypothesis — not by
+§163's proposed route (a `PsiL160`-carrying fold invariant) but by §166's criterion
+plus §180.4's order bridge. -/
+
+/-- **`LtDwitFree163`, PROVED.** -/
+theorem ltDwitFree180 (Hp : PsiIdxOKStd172) : LtDwitFree163 := by
+  intro w d hbd hsd hlt
+  exact subR157_dict_free166 Hp (expFree_of_lt_dwit180 Hp hbd hsd hlt) hbd hsd
+
+/-- **§163.5's region, now unconditional apart from `Hp`.**  Every `a` strictly below
+    `ψ₁ψ₁ψ₁0` satisfies `ExpSubR157`'s obligation at every split. -/
+theorem expSubR157_at_ltDwit180 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hlta : BT.lt a dwit163 = true)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    SubR157 (wVal157 P) ac.1 :=
+  expSubR157_at_ltDwit163 Hp (ltDwitFree180 Hp) hb hs hlta P S ac hsplit hfire
+
+/-- **`ExpHeart160`'s clause at every `a` below the threshold.** -/
+theorem expHeart160_at_ltDwit180 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hlta : BT.lt a dwit163 = true) (w : Term) :
+    ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+      SubR157 w (dict (BT.D 0 d)) := by
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  exact ltDwitFree180 Hp w d hbd hsd (lt_trans83 (lt_depth3_163 hs hc hx hd) hlta)
+
+/-! ## §180.6 HALF OF §163.5's SECOND MEASURED LINE, PROVED
+
+    `BT.lt a dwit163`  ⟹  no pair of `wcnf (reg 1) (toList (dict a))` fires.
+
+The converse needs the direction of the `dict` bridge that is NOT free — that every
+component of `a` still has a component of `dict a` as its image — and that is exactly
+the order-preservation the project does not have.  §180.8 records the goal state. -/
+
+/-- Every exponent in a `wcnf` pair list is the `wA` of some component of the input. -/
+theorem wcnf_exp_mem180 {w : Term} : ∀ (L : List Term),
+    ∀ pr ∈ (wcnf w L).1, ∃ p ∈ L, pr.1 = wA w p := by
+  intro L
+  induction L with
+  | nil => intro pr hpr; rw [wcnf_nil] at hpr; cases hpr
+  | cons p rest ih =>
+      intro pr hpr
+      by_cases hlp : lt p w = true
+      · rw [wcnf_cons_lt hlp] at hpr; cases hpr
+      · have hlp' : lt p w = false := bool_false hlp
+        rw [wcnf_cons_ge hlp'] at hpr
+        cases hr : wcnf w rest with
+        | mk fst snd =>
+          rw [hr] at hpr
+          have hmem0 : ∀ q : Term × Term, q ∈ fst → q ∈ (wcnf w rest).1 := by
+            intro q hq; rw [hr]; exact hq
+          cases fst with
+          | nil =>
+              rw [List.mem_singleton.mp hpr]
+              exact ⟨p, List.Mem.head _, rfl⟩
+          | cons ac0 ps =>
+            cases ac0 with
+            | mk a' c' =>
+              have hpr' : pr ∈ (if (wA w p == a') = true
+                  then ((wA w p, plus (wC w p) c') :: ps, snd)
+                  else ((wA w p, wC w p) :: (a', c') :: ps, snd)).1 := hpr
+              by_cases heq : (wA w p == a') = true
+              · rw [if_pos heq] at hpr'
+                rcases List.mem_cons.mp hpr' with h1 | h1
+                · rw [h1]; exact ⟨p, List.Mem.head _, rfl⟩
+                · obtain ⟨q, hq, he⟩ := ih pr (hmem0 _ (List.Mem.tail _ h1))
+                  exact ⟨q, List.Mem.tail _ hq, he⟩
+              · rw [if_neg heq] at hpr'
+                rcases List.mem_cons.mp hpr' with h1 | h1
+                · rw [h1]; exact ⟨p, List.Mem.head _, rfl⟩
+                · obtain ⟨q, hq, he⟩ := ih pr (hmem0 _ h1)
+                  exact ⟨q, List.Mem.tail _ hq, he⟩
+
+/-- **Below the threshold, NO pair of the decomposition fires.** -/
+theorem noFire_all_of_lt_dwit180 (Hp : PsiIdxOKStd172) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hlta : BT.lt a dwit163 = true) :
+    ∀ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = false := by
+  have hba : btLe72 1 a = true := (btLe72_D 1 0 a hb).2
+  have hsa : BT.isStd a = true := isStd_of_D hs
+  intro pr hpr
+  obtain ⟨p, hp, hpe⟩ := wcnf_exp_mem180 (toList (dict a)) pr hpr
+  obtain ⟨u, c, hmem, hbuc, hsuc, hu1, hpe2⟩ := comp_name160 Hp hba hsa p hp
+  cases hu : u with
+  | zero =>
+      subst hu
+      rw [hpe, hpe2, wA_dict_D0_160 Hp hbuc hsuc]
+      exact leW_false157 inT_zero lt_zero_W79
+  | succ u' =>
+      have hu0 : u' = 0 := by omega
+      subst hu0; subst hu
+      have hchain : ∀ x y : BT, BT.D 1 x ∈ BT.toL c → BT.D 1 y ∈ BT.toL x → False := by
+        intro x y hx hy
+        exact not_le_dwit180 hlta (le_dwit_of_fireNode180 hsuc hx hy)
+          (comp_le180 hsa hmem)
+      have hnf : noFireChk166 c = true := noFireChk_of_noChain180 Hp hbuc hsuc hchain
+      rw [hpe, hpe2]
+      exact noFire_of_chk166 hnf
+
+/-! ## §180.7 §166's CASE (ii), CLOSED DOWN TO ONE NAMED BRIDGE
+
+§166 left `(ii)` as: "no pair of `a`'s `wcnf` fires ⟹ every depth-3 `ψ₀`-argument of
+`a` passes `expFree166`".  Everything in it that is a `BT`-ORDER statement is proved
+above.  What is left is one implication in the OTHER direction across the `dict`
+bridge, isolated here as `HiFire180`, and it is the only thing this file assumes
+beyond `Hp`. -/
+
+/-- The one bridge `(ii)` still needs: a term at or above the threshold produces a
+    FIRING pair.  §180.6 proves the converse outright. -/
+def HiFire180 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    BT.lt a dwit163 = false →
+    ∃ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = true
+
+theorem lt_dwit_of_noFire180 (H : HiFire180) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hnf : ∀ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = false) :
+    BT.lt a dwit163 = true := by
+  cases hc : BT.lt a dwit163 with
+  | true => rfl
+  | false =>
+      exfalso
+      obtain ⟨pr, hpr, hfire⟩ := H a hb hs hc
+      rw [hnf pr hpr] at hfire
+      exact Bool.noConfusion hfire
+
+/-- Building `expChkA166` from the per-argument facts — the introduction rule matching
+    §166's elimination rule `free_of_expChkAf166`. -/
+theorem expChkA_of_free180 {a : BT}
+    (h : ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c →
+      BT.D 0 d ∈ BT.toL x → expFree166 d = true) :
+    expChkA166 a = true := by
+  show expChkAf166 expFree166 a = true
+  refine List.all_eq_true.mpr ?_
+  intro z hz
+  obtain ⟨u, c, rfl⟩ := mem_toL_D87 a z hz
+  cases u with
+  | zero => rfl
+  | succ u' =>
+    cases u' with
+    | succ u'' => rfl
+    | zero =>
+        show ((BT.toL c).all (fun y =>
+          match y with
+          | BT.D v x => if v == 1 then (BT.toL x).all (fun t =>
+              match t with
+              | BT.D v' d => if v' == 0 then expFree166 d else true
+              | _ => true) else true
+          | _ => true)) = true
+        refine List.all_eq_true.mpr ?_
+        intro y hy
+        obtain ⟨v, x, rfl⟩ := mem_toL_D87 c y hy
+        cases v with
+        | zero => rfl
+        | succ v' =>
+          cases v' with
+          | succ v'' => rfl
+          | zero =>
+              show ((BT.toL x).all (fun t =>
+                match t with
+                | BT.D v' d => if v' == 0 then expFree166 d else true
+                | _ => true)) = true
+              refine List.all_eq_true.mpr ?_
+              intro t ht
+              obtain ⟨w, d, rfl⟩ := mem_toL_D87 x t ht
+              cases w with
+              | zero =>
+                  show expFree166 d = true
+                  exact h c x d hz hy ht
+              | succ w' => rfl
+
+/-- **§166's case (ii), verbatim, modulo `HiFire180`.** -/
+theorem expChkA_of_noFire180 (Hp : PsiIdxOKStd172) (H : HiFire180) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hnf : ∀ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = false) :
+    expChkA166 a = true := by
+  have hlt : BT.lt a dwit163 = true := lt_dwit_of_noFire180 H hb hs hnf
+  refine expChkA_of_free180 ?_
+  intro c x d hc hx hd
+  obtain ⟨hbd, hsd⟩ := depth3_gates163 hb hs hc hx hd
+  exact expFree_of_lt_dwit180 Hp hbd hsd (lt_trans83 (lt_depth3_163 hs hc hx hd) hlt)
+
+/-- **`ExpSubR157` at every `a` whose decomposition has NO firing pair**, modulo
+    `HiFire180` — the no-fired-prefix half of `ExpHeart160`, closed. -/
+theorem expSubR157_at_noFire180 (Hp : PsiIdxOKStd172) (H : HiFire180) {a : BT}
+    (hb : btLe72 1 (BT.D 0 a) = true) (hs : BT.isStd (BT.D 0 a) = true)
+    (hnf : ∀ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = false)
+    (P S : List (Term × Term)) (ac : Term × Term)
+    (hsplit : (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S)
+    (hfire : le (reg 1) ac.1 = false) :
+    SubR157 (wVal157 P) ac.1 :=
+  expSubR157_at_chk166 Hp hb hs (expChkA_of_noFire180 Hp H hb hs hnf) P S ac hsplit hfire
+
+/-- The residual `ExpHeart160` clause on the OTHER half: a decomposition that has a
+    firing pair somewhere. -/
+def ExpHeartFired180 : Prop :=
+  ∀ a : BT, btLe72 1 (BT.D 0 a) = true → BT.isStd (BT.D 0 a) = true →
+    ∀ (P S : List (Term × Term)) (ac : Term × Term),
+      (wcnf (reg 1) (toList (dict a))).1 = P ++ ac :: S →
+      le (reg 1) ac.1 = false →
+      (∃ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = true) →
+      ∀ c x d : BT, BT.D 1 c ∈ BT.toL a → BT.D 1 x ∈ BT.toL c → BT.D 0 d ∈ BT.toL x →
+        SubR157 (wVal157 P) (dict (BT.D 0 d))
+
+/-- **THE SPLIT, AS A REDUCTION.**  `ExpHeart160` follows from its restriction to
+    decompositions that DO carry a firing pair.  (This is `(i)` + `(ii)`; it is NOT
+    stronger than §166's decided walk — see §180.9.) -/
+theorem expHeart160_of_fired180 (Hp : PsiIdxOKStd172) (H : HiFire180)
+    (HF : ExpHeartFired180) : ExpHeart160 := by
+  intro a hb hs P S ac hsplit hfire c x d hc hx hd
+  cases hq : ((wcnf (reg 1) (toList (dict a))).1).any (fun pr => le (reg 1) pr.1) with
+  | true =>
+      obtain ⟨pr, hpr, hf⟩ := List.any_eq_true.mp hq
+      exact HF a hb hs P S ac hsplit hfire ⟨pr, hpr, hf⟩ c x d hc hx hd
+  | false =>
+      have hnf : ∀ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = false := by
+        intro pr hpr
+        cases hcc : le (reg 1) pr.1 with
+        | false => rfl
+        | true =>
+            exfalso
+            have : ((wcnf (reg 1) (toList (dict a))).1).any (fun pr => le (reg 1) pr.1)
+                = true := List.any_eq_true.mpr ⟨pr, hpr, hcc⟩
+            rw [hq] at this
+            exact Bool.noConfusion this
+      have hlt : BT.lt a dwit163 = true := lt_dwit_of_noFire180 H hb hs hnf
+      exact expHeart160_at_ltDwit180 Hp hb hs hlt (wVal157 P) c x d hc hx hd
+
+theorem expSubR157_of_fired180 (Hp : PsiIdxOKStd172) (H : HiFire180)
+    (HF : ExpHeartFired180) : ExpSubR157 :=
+  expSubR157_of_heart160 Hp (expHeart160_of_fired180 Hp H HF)
+
+/-! ## §180.8 MEASUREMENT — frozen as `#guard`
+
+Populations: §151's four pools behind `qual151`, and §166's two purpose-built pools
+(`deep166`, `pop166`) behind `qual166`.  Everything below is MEASUREMENT. -/
+
+def nePairs180 (a : BT) : Bool := !((wcnf (reg 1) (toList (dict a))).1).isEmpty
+
+def someFire180 (a : BT) : Bool :=
+  ((wcnf (reg 1) (toList (dict a))).1).any (fun pr => le (reg 1) pr.1)
+
+/-- **The bridge, both directions.**  (gate-passing, at-or-above the threshold, of those
+    the ones whose decomposition HAS a firing pair, VIOLATIONS of `HiFire180`,
+    VIOLATIONS of §180.6 — the last column is a theorem, so it must be `0`). -/
+def bridge180 (q : BT → Bool) (L : List BT) : Nat × Nat × Nat × Nat × Nat :=
+  let D := L.filter q
+  (D.length,
+   (D.filter (fun a => !BT.lt a dwit163)).length,
+   (D.filter (fun a => !BT.lt a dwit163 && someFire180 a)).length,
+   (D.filter (fun a => !BT.lt a dwit163 && !someFire180 a)).length,
+   (D.filter (fun a => BT.lt a dwit163 && someFire180 a)).length)
+
+#guard bridge180 qual151 poolA151 == (590, 0, 0, 0, 0)
+#guard bridge180 qual151 poolC151 == (121, 121, 121, 0, 0)
+#guard bridge180 qual151 poolD151 == (235, 10, 10, 0, 0)
+#guard bridge180 qual151 poolE151 == (228, 0, 0, 0, 0)
+#guard bridge180 qual166 deep166 == (56, 45, 45, 0, 0)
+#guard bridge180 qual166 pop166 == (121, 76, 76, 0, 0)
+
+/-- **PER-ARGUMENT: what §180.4 certifies of §166's criterion.**  (gate-passing `d`,
+    §163's proved corner `lvl0161`, `BT.lt d dwit163` = §180.4's region, `expFree166`).
+    Columns three and four are equal on every population: on the standard region the
+    criterion and the order test agree, and §180.4 proves the inclusion that direction. -/
+def argCov180 (L : List BT) : Nat × Nat × Nat × Nat :=
+  let D := L.filter qual166
+  (D.length, (D.filter lvl0161).length,
+   (D.filter (fun d => BT.lt d dwit163)).length,
+   (D.filter expFree166).length)
+
+#guard argCov180 poolA151 == (590, 0, 590, 590)
+#guard argCov180 poolC151 == (121, 0, 0, 0)
+#guard argCov180 poolD151 == (235, 0, 225, 225)
+#guard argCov180 poolE151 == (228, 0, 228, 228)
+#guard argCov180 deep166 == (56, 2, 11, 11)
+#guard argCov180 pop166 == (121, 10, 45, 45)
+
+/-- **VACUITY CHECK for §180.5.**  (gate-passing, below the threshold, of those the ones
+    with a NON-EMPTY pair list, and the ones where the depth-3 clause actually has
+    something to say — `hasD3_166`).  A row whose LAST entry is `0` is a row where
+    §180.5's theorem is true but empty. -/
+def vac180 (q : BT → Bool) (L : List BT) : Nat × Nat × Nat × Nat :=
+  let D := L.filter q
+  (D.length,
+   (D.filter (fun a => BT.lt a dwit163)).length,
+   (D.filter (fun a => BT.lt a dwit163 && nePairs180 a)).length,
+   (D.filter (fun a => BT.lt a dwit163 && hasD3_166 a)).length)
+
+#guard vac180 qual151 poolA151 == (590, 590, 590, 0)
+#guard vac180 qual151 poolC151 == (121, 0, 0, 0)
+#guard vac180 qual151 poolD151 == (235, 225, 225, 225)
+#guard vac180 qual151 poolE151 == (228, 228, 228, 0)
+#guard vac180 qual166 deep166 == (56, 11, 9, 3)
+#guard vac180 qual166 pop166 == (121, 45, 35, 3)
+
+/-! Standardness is not decoration in `comp_le180`: on the degenerate sum `ψ₀0 ⊕ 0`,
+which `BT.isStd` refuses, the component is NOT `BT.le` the term. -/
+#guard (BT.toL (BT.sum (BT.D 0 BT.zero) BT.zero)).contains (BT.D 0 BT.zero) == true
+#guard BT.le (BT.D 0 BT.zero) (BT.sum (BT.D 0 BT.zero) BT.zero) == false
+#guard BT.isStd (BT.sum (BT.D 0 BT.zero) BT.zero) == false
+
+/-! §166's own witnesses, re-read through the threshold. -/
+#guard BT.lt dwit163 dwit163 == false
+#guard BT.lt awit163 dwit163 == false
+#guard expFree166 dwit163 == false
+/-! `offThr166` is BELOW the threshold and REFUSED by the criterion — the only way that
+    is possible is by failing the standardness gate, and it does. -/
+#guard BT.lt offThr166 dwit163 == true
+#guard expFree166 offThr166 == false
+#guard BT.isStd (BT.D 0 offThr166) == false
+#guard qual166 offThr166 == false
+/-! …and inside the gate the criterion does accept two `ψ₁` levels. -/
+#guard BT.lt (BT.D 1 (BT.D 1 BT.zero)) dwit163 == true
+#guard qual166 (BT.D 1 (BT.D 1 BT.zero)) == true
+#guard lvl0161 (BT.D 1 (BT.D 1 BT.zero)) == false
+
+/-! ## §180.9 WHAT REMAINS
+
+READ THE ROWS AGAINST §166.9's warning about pools; nothing here changes what the
+populations reach.
+
+1. `HiFire180` — the ONE thing this file assumes beyond `Hp`.  Goal state:
+
+       Hp : PsiIdxOKStd172,  a : BT,  gates on ψ₀a,  h : BT.lt a dwit163 = false
+       ⊢ ∃ pr ∈ (wcnf (reg 1) (toList (dict a))).1, le (reg 1) pr.1 = true
+
+   §180.2 turns `h` into a firing chain `ψ₁c ∈ toL a`, `ψ₁x ∈ toL c`, `ψ₁y ∈ toL x`, and
+   `comp_le180` moves it to the HEAD component of `a`.  Two routes were tried and both
+   hit the same wall.
+
+   (a) DIRECT.  Needs `dict (ψ₁c) ∈ toList (dict a)`.  `plus` can only DROP, and a hi
+       component is dropped exactly when `dict` inverts an order, so this is
+       `FullBridge96` = `DictDesc96` = `CollapseMono0Hi81` = `HiMono89`.
+
+   (b) THROUGH THE HEAD.  This one gets further and is worth recording.  Write
+       `dict a = plus (dict h) t` for `h` the `BT`-head.  Either `dict h` survives, and
+       the head `p₀` of `toList (dict a)` IS `dict h`, or it is dropped and `p₀` is the
+       head of `toList t`, which is then STRICTLY ABOVE `dict h`.  So `le (dict h) p₀`
+       holds unconditionally — no order preservation needed — and `p₀` is the exponent
+       of the FIRST `wcnf` pair.  With a monotonicity lemma `le p q → le (wA Ω₁ p)
+       (wA Ω₁ q)` (not in the library; the `≥Ω₁` prefix of a descending CNF is monotone,
+       so it should be provable) the goal reduces to `le (reg 1) (wA (reg 1) (dict h))`.
+       And THAT is the converse of §180.3 at one node, which needs
+       `dict (ψ₁x) ∈ toList (dict c)` — route (a) again, one floor down.
+
+   DO NOT rebuild either as a global assumption; it is the gate itself.
+
+2. `LtDwitLeafFree163` — the LEAF form (`PsiL160 (dict (ψ₀d)) = []` below the threshold)
+   is still open.  §180.5 proves the CLOSURE form `LtDwitFree163`, which is what every
+   consumer uses; the leaf form is strictly stronger and §163's route to it (a fold
+   invariant carrying `PsiL160 v = []`) is untouched here.
+
+3. The converse of §180.4 — `expFree166 d = true ⟹ BT.lt d dwit163 = true` — needs
+   "`noFireChk166 c = true ⟹ the node has no chain`", which is item 1's route (a) at one
+   node.  Measured equal on all six populations (§180.8's
+   `argCov180`, columns three and four), proved in neither direction before this file
+   and in one direction now.
+
+4. `ExpHeartFired180` — case (i).  Untouched, and it is §128's own open clause
+   `VebD0_128` at the target the prefix names (§160.5c).  This file does not narrow it. -/
+
+/-! ## §180.10 Axiom record -/
+
+#print axioms comp_le180
+#print axioms le_dwit_of_fires180
+#print axioms lt_dwit_of_noFires180
+#print axioms noFires_iff_lt_dwit180
+#print axioms lt_dict_noD1_180
+#print axioms noFireChk_of_noChain180
+#print axioms expChk_of_lt_dwit180
+#print axioms expFree_of_lt_dwit180
+#print axioms ltDwitFree180
+#print axioms expSubR157_at_ltDwit180
+#print axioms expHeart160_at_ltDwit180
+#print axioms wcnf_exp_mem180
+#print axioms noFire_all_of_lt_dwit180
+#print axioms expChkA_of_free180
+#print axioms expChkA_of_noFire180
+#print axioms expSubR157_at_noFire180
+#print axioms expHeart160_of_fired180
+#print axioms expSubR157_of_fired180
+
+end
+
 end Evidence.Region
