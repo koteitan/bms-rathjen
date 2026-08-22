@@ -24974,4 +24974,1794 @@ def decJ172 (a : BT) : Option (Nat × Nat × Nat × Nat) :=
 
 end
 
+
+/-!
+# §171 THE STEP AT THE BOTTOM TWO LEVELS OF THE SEED TOWER
+
+`stepOK_UW152` only ever looks at `UW152 s (ℓ + 2)`.  Every family whose `dict` is a
+`φ̄0`-tower over a SEED therefore carries a lower bound on the tower's height — `3 ≤ m`
+for class (d), `2 ≤ m` for the `p = 1` slices — and §169 MEASURED that the bound is a
+limit of the tool, not of the mathematics: at `m ≤ 2` the step holds for every `(k, j)`
+in its window.
+
+This file supplies the two missing levels and the level below them, and reads off the
+reason: **at levels 0 and 1 the single digit does not fire.**  Measured first (§171.9),
+then proved.
+
+  level 0  `UW152 s 0 = φ̄0(Ω₁ ⊕ s)`.  Its `wcnf` digit is `(1, ω^s)` — the exponent is
+           `ω^(Ω₁ ⊖ Ω₁) = ω^0 = 1`, and the coefficient is the seed, not `1`.
+           `le Ω₁ 1 = false`, so no index is emitted.
+  level 1  `UW152 s 1 = φ̄0 φ̄0(Ω₁ ⊕ s)`.  The digit is `(ω^s, 1)` — the exponent is now
+           the seed itself.  `s < Ω₁` and `Ω₁` is an ε-number, so `ω^s < Ω₁`, and again
+           nothing fires.
+  level 2  the digit is `(UW152 s 1, 1)` and it DOES fire; that is `stepOK_UW152`.
+
+Both regimes the brief named are here and they turn out to be the same regime seen
+twice: the coefficient is the seed rather than `1` (level 0) and the exponent falls
+below `Ω₁` (levels 0 and 1).  The digit was measured before either was assumed.
+
+The same computation over an arbitrary base gives the generic statement: **the level-0
+digit of `PT162 B 0` does not fire as soon as `B`'s largest component is exactly `Ω₁`**
+(`stepOK_PT0_Omhead171`), because each `Ω₁` in the base contributes `Ω₁ ⊖ Ω₁ = 0`, i.e.
+a `1`, to the exponent, and a finite sum of `1`s is below `Ω₁`.  §169's measured corner
+`(1 ⊕ 1, sd152 j)` is the two-`Ω₁` instance.  §167 proves the same non-firing fact three
+times over, once per family shape; this is that fact stated once, for any base.
+
+WHAT IS PROVED, with its real hypotheses:
+
+  `stepOK_lt_reg1_171`   `x` is AP and `x < Ω₁`                       ⇒ step (no digit)
+  `stepOK_UW0_171`       `s` is AP, `s ≠ 1`, `s < Ω₁`                 ⇒ step at level 0
+  `stepOK_UW1_171`       same three, plus `le Ω₁ (ω^s) = false`       ⇒ step at level 1
+  `stepOK_UW_low171`     the two together, for every `ℓ ≤ 1`
+  `stepOK_towerSeed_low171`  all three in the shape `dict_towerSeed162` hands over:
+      `dict X = S` and `m ≤ 2` ⇒ `KsetStepOK 0 (dict (nst132 m X))`
+  `stepOK_PT0_Omhead171` `BaseOK162 B`, and the `≥ Ω₁` part of `toList B` starts with
+      `Ω₁`                                                            ⇒ step at level 0
+
+and, on the families, the lower bound on `m` comes off at the low end — together with
+the boundary on `k`, `p`, `j`, because at the low levels there is no obligation left
+to fail:
+
+  `ksetStepOK_famB_low171`     `m ≤ 2`, EVERY `k`   (§152 needed `3 ≤ k ≤ m`)
+  `ksetStepOK_famC_low171`     `m ≤ 2`, `3 ≤ k`, `3 ≤ j`   (§155 needed `k, j ≤ m`)
+  `ksetStepOK_famK_low171`     `m ≤ 2`, `2 ≤ k`, `2 ≤ p`, `1 ≤ j`  (§162.12 needed
+                               `3 ≤ m`, `k + p ≤ m`, `j ≤ m`)
+  `ksetStepOK_famK0_low171`    `m ≤ 2`, `k = 0`, `3 ≤ p`, `1 ≤ j ≤ p`  (§162.12 needed
+                               `3 ≤ m`, `p ≤ m`)
+  `ksetStepOK_famK1_low171`    `m ≤ 2`, `p = 1`, `2 ≤ k`, `1 ≤ j`  (§169 needed `3 ≤ m`,
+                               `k + 1 ≤ m`, `j ≤ m`)
+  `ksetStepOK_famK0_0_low171`  `m ≤ 2`, `j = 0`, `2 ≤ k`, `2 ≤ p`  (§168 needed `3 ≤ m`,
+                               `k + p ≤ m`)
+  `ksetStepOK_famK00_low171`   `m ≤ 2`, `k = j = 0`, `3 ≤ p`       (§168 needed `3 ≤ m`,
+                               `p ≤ m`)
+  `ksetStepOK_famF1_low171`    `m = 1`, `p = 1`, `1 ≤ k`           (§162.10 needed `2 ≤ m`)
+  `ksetStepOK_famI1_0_low171`  `m = 1`, `p = 1`, `j = 0`, `1 ≤ k`  (§168 needed `2 ≤ m`)
+  `ksetStepOK_famJ1_0_low171`  `m = 1`, `p = 1`, `j = 0`, `3 ≤ k`  (§168 needed `2 ≤ m`)
+
+WHAT IS **NOT** here, and why.
+
+  * `m = 1` for classes (a), (b), (c) with `1 ≤ j`.  §167 already did that — including
+    its `p = 1` slices, which are exactly this file's non-firing argument written out
+    per family.  Nothing is re-proved here; `covered171` includes `covered167`.
+  * `m = 1` for classes (a), (b) with `j = 0` and `p ≥ 2` (§168's `famI0_168` /
+    `famJ0_168`).  There the base is `WB162 a Y` whose head is the bare tower
+    `TW (a+1)`: the level-0 digit DOES fire (measured — `wA` is `Ω₁` at `a = 0` and
+    `TW (a+1)` above it), so the non-firing argument does not reach it, and the tail
+    `Y` ends in a literal `1`, which is §168's `baseOK_WB168` regime rather than
+    §167's `Tl167`.  §171.9 freezes its measured boundary as measurement.
+  * `famF158` at `m = 0`.  Not a tower at all — no `ψ₁` wrapper.  §171.9 records that
+    its step holds throughout the measured window anyway; that is measurement.
+  * `k = 1` and `p = 1 ∧ j = 0` in class (d): the closed forms `dict_famK162` /
+    `dict_seedK1_169` do not reach them, at any `m`.
+
+§171.8b restates each of those as ONE theorem per family (`…_wide171`), the old boundary
+OR the new low levels, so a caller never has to know which half it is in.
+
+COVERAGE, measured and frozen (§171.9b, §171.9c): **the increment is zero, on all three
+pools, and the reason is that the pools are empty in this window — not that the window
+was already covered.**  `famPool132`'s 2455-term residual goes 1998 (§162) → 2101 (§167)
+→ 2120 (§168) → 2020 (§169); the union of the three is 2245, and adding §171 leaves it
+at 2245.  `pool136` stays at 70, `fm145` at 422.
+
+Counted: EVERY one of §171's six deciders matches **0** terms of `famPool132`'s residual,
+0 of `fm145`'s and 0 of `pool136`'s — not 0 *new* terms, 0 terms.  The residual holds 106
+class-(d) terms (`famPool132`) and 58 (`fm145`) and not one of them has `m ≤ 2`.  Over the
+UNFILTERED pools the same six deciders match 81 + 75 + 393 + 8 + 5 + 3 = 565 terms of
+`famPool132` and 75 of `fm145`, and 648 of `famPool132`'s 1296 class-(d) terms have
+`m ≤ 2` — so the emptiness is a property of `resid136`, not of the deciders.  That is what
+`resid136` is: §132/§136 kept the terms where the step could still fail, and on these
+families it can only fail from `m ≥ 3` up (§152 measured
+`raw132 (famB132 m k) = (3 ≤ m ∧ m < k)`).
+
+So what §171 buys is not residual coverage.  It is the removal of a hypothesis: the step
+at `m ≤ 2` becomes a theorem instead of a measurement, `stepOK_iff_*` statements no longer
+have to carve `m ≤ 2` out of their windows, and anything downstream that needs
+`KsetStepOK` at a low tower stops having to route through a standardness argument.
+
+Everything under §171.9 is MEASUREMENT, frozen as `#guard`; measured is not proved and
+nothing is claimed outside the stated windows.
+-/
+
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §171.1 A term with no digit at all -/
+
+/-- **桁が一つも無ければ義務は空。** -/
+theorem stepOK_of_nodigit171 {x : Term} (hw : (wcnf (reg 1) (toList x)).1 = []) :
+    KsetStepOK 0 x := by
+  intro p hp _
+  replace hp : p ∈ scanSt (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (wcnf (reg 1) (toList x)).1 := hp
+  rw [hw] at hp
+  replace hp : p ∈ ([] : List ((Option Term × Option Term) × (Term × Term))) := hp
+  cases hp
+
+/-- `Ω₁` より下の AP は桁を作らない。 -/
+theorem wcnfNil_lt_reg1_171 {x : Term} (hap : x.isAP = true) (h1 : lt x (reg 1) = true) :
+    (wcnf (reg 1) (toList x)).1 = [] := by
+  rw [toList_isAP81 hap, wcnf_cons_lt h1]
+
+/-- **`Ω₁` より下の AP では一歩は無条件に成り立つ。**  塔の「段 −1」— 種そのもの。 -/
+theorem stepOK_lt_reg1_171 {x : Term} (hap : x.isAP = true) (h1 : lt x (reg 1) = true) :
+    KsetStepOK 0 x := stepOK_of_nodigit171 (wcnfNil_lt_reg1_171 hap h1)
+
+/-! ### §171.2 Small arithmetic facts the low levels need -/
+
+/-- `Ω₁ ≤ 1 ⊕ δ` は成り立たない — 有限個の `1` の和は `Ω₁` より下。 -/
+theorem le_reg1_addOne171 (d : Term) : le (reg 1) (add TM.Term.one d) = false := by
+  show (((Z zero : Term) == add TM.Term.one d) || lt (Z zero) (add TM.Term.one d)) = false
+  rw [show ((Z zero : Term) == add TM.Term.one d) = false from rfl,
+    lt_nsum_add100 (show (Z zero : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl,
+    show le (Z zero) TM.Term.one = false from not_le_reg1_one152]
+  rfl
+
+/-- 頭が `1` の並びから組んだ項は `Ω₁` より下。 -/
+theorem le_reg1_ofList_one171 : ∀ L : List Term,
+    le (reg 1) (ofList (TM.Term.one :: L)) = false
+  | [] => not_le_reg1_one152
+  | a :: t => le_reg1_addOne171 (ofList (a :: t))
+
+/-- **`Ω₁ < φ̄0 Y` は `Ω₁ ≤ Y` と同じこと。** -/
+theorem lt_reg1_phi0_171 (Y : Term) :
+    lt (Z zero) (phi zero Y) = (((Z zero : Term) == Y) || lt (Z zero) Y) := by
+  rw [lt_eq_ltF_succ, ltF_succ_Z_phi,
+    show ltF (2 * ((Z zero : Term).deg + (phi zero Y).deg) + 7) (Z zero) (zero : Term)
+        = lt (Z zero) (zero : Term) from
+      (lt_eq_ltF (Z zero) zero _ (by
+        show (1 + (zero : Term).deg) + (zero : Term).deg
+          ≤ 2 * ((1 + (zero : Term).deg) + (1 + (zero : Term).deg + Y.deg)) + 7
+        omega)).symm,
+    show ltF (2 * ((Z zero : Term).deg + (phi zero Y).deg) + 7) (Z zero) Y
+        = lt (Z zero) Y from
+      (lt_eq_ltF (Z zero) Y _ (by
+        show (1 + (zero : Term).deg) + Y.deg
+          ≤ 2 * ((1 + (zero : Term).deg) + (1 + (zero : Term).deg + Y.deg)) + 7
+        omega)).symm,
+    show ((Z zero : Term) == (zero : Term)) = false from rfl,
+    lt_zero_right, Bool.false_or, Bool.or_false]
+
+/-- **`ω^·` を被せても `Ω₁` との上下は動かない。** -/
+theorem le_reg1_phi0_171 (Y : Term) : le (reg 1) (phi zero Y) = le (reg 1) Y := by
+  show (((Z zero : Term) == phi zero Y) || lt (Z zero) (phi zero Y)) = _
+  rw [show ((Z zero : Term) == phi zero Y) = false from rfl, lt_reg1_phi0_171]
+  rfl
+
+/-- 種が `Ω₁` より下の ε 数なら `ω^種` も `Ω₁` に届かない。 -/
+theorem le_reg1_omegaNF_tail171 {s : Term} (hs : TailOK158 s) :
+    le (reg 1) (omegaNF s) = false := by
+  rw [hs.homg]
+  exact hs.hle0
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §171.3 Level 0 of the seed tower: the digit `(1, ω^s)` -/
+
+theorem phiShifted_addOm171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) :
+    phiShifted zero (add (Z zero) s) = false := by
+  show (isFP zero (splitFin (add (Z zero) s)).1
+        || (((add (Z zero) s : Term) == zero) && (zero : Term).isSC)) = false
+  rw [splitFin_addOm152 hap hone, isFP_add152]
+  rfl
+
+theorem logOm_UW0_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) :
+    logOm (UW152 s 0) = add (Z zero) s :=
+  logOm_phi0_135 (phiShifted_addOm171 hap hone)
+
+theorem toList_addOm171 {s : Term} (hap : s.isAP = true) :
+    toList (add (Z zero) s) = [Z zero, s] := by
+  show Z zero :: toList s = _
+  rw [toList_isAP81 hap]
+
+theorem subAP_addOm171 {s : Term} (hap : s.isAP = true) :
+    subAP (reg 1) (add (Z zero) s) = s := by
+  show (if ((Z zero : Term) == reg 1) = true then ofList (toList s)
+        else add (Z zero) s) = _
+  rw [if_pos (by rfl), toList_isAP81 hap]
+  rfl
+
+theorem filter_ge_addOm171 {s : Term} (hap : s.isAP = true) (h1 : lt s (reg 1) = true) :
+    List.filter (fun q => !lt q (reg 1)) (toList (add (Z zero) s)) = [Z zero] := by
+  rw [toList_addOm171 hap,
+    filter_ge_keep167 (show lt (Z zero) (reg 1) = false from lt_irrefl _),
+    filter_ge_nil167 h1 rfl]
+
+theorem filter_lt_addOm171 {s : Term} (hap : s.isAP = true) (h1 : lt s (reg 1) = true) :
+    List.filter (fun q => lt q (reg 1)) (toList (add (Z zero) s)) = [s] := by
+  rw [toList_addOm171 hap,
+    filter_lt_drop167 (show lt (Z zero) (reg 1) = false from lt_irrefl _),
+    filter_lt_all167 h1 rfl]
+
+/-- **段 0 の指数は `1`。**  底の頭 `Ω₁` を `Ω₁` で割ると `0` が残るから。 -/
+theorem wA_UW0_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true) :
+    wA (reg 1) (UW152 s 0) = TM.Term.one := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (UW152 s 0))))) = _
+  rw [logOm_UW0_171 hap hone, filter_ge_addOm171 hap h1]
+  show ofList [divAP (reg 1) (Z zero)] = _
+  rw [divAP_Om167]
+  rfl
+
+/-- **段 0 の係数は `ω^種` — `1` ではない。** -/
+theorem wC_UW0_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true) :
+    wC (reg 1) (UW152 s 0) = omegaNF s := by
+  show omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+    (toList (logOm (UW152 s 0))))) = _
+  rw [logOm_UW0_171 hap hone, filter_lt_addOm171 hap h1]
+  rfl
+
+theorem wcnf_UW0_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true) :
+    wcnf (reg 1) (toList (UW152 s 0)) = ([(TM.Term.one, omegaNF s)], zero) := by
+  rw [show toList (UW152 s 0) = [UW152 s 0] from rfl,
+    wcnf_cons_ge (lt_UW_reg1_152 h1 0)]
+  show ([(wA (reg 1) (UW152 s 0), wC (reg 1) (UW152 s 0))], zero) = _
+  rw [wA_UW0_171 hap hone h1, wC_UW0_171 hap hone h1]
+
+/-- **段 0 の一歩 — 桁が発火しないので義務は空。** -/
+theorem stepOK_UW0_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true) :
+    KsetStepOK 0 (UW152 s 0) :=
+  stepOK_nofire162 (wcnf_UW0_171 hap hone h1) not_le_reg1_one152
+
+/-! ### §171.4 Level 1 of the seed tower: the digit `(ω^s, 1)` -/
+
+/-- **段 1 の指数は `ω^種` そのもの。** -/
+theorem wA_UW1_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true) :
+    wA (reg 1) (UW152 s 1) = omegaNF s := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (UW152 s 1))))) = _
+  rw [show logOm (UW152 s 1) = UW152 s 0 from logOm_phi0_135 (phiShifted_UW152 s 0),
+    show toList (UW152 s 0) = [UW152 s 0] from rfl, filter_ge_UW152 h1 0]
+  show ofList [divAP (reg 1) (UW152 s 0)] = _
+  show ofList [omegaNF (subAP (reg 1) (logOm (UW152 s 0)))] = _
+  rw [logOm_UW0_171 hap hone, subAP_addOm171 hap]
+  rfl
+
+theorem wC_UW1_171 {s : Term} (h1 : lt s (reg 1) = true) :
+    wC (reg 1) (UW152 s 1) = TM.Term.one := by
+  show omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+    (toList (logOm (UW152 s 1))))) = _
+  rw [show logOm (UW152 s 1) = UW152 s 0 from logOm_phi0_135 (phiShifted_UW152 s 0),
+    show toList (UW152 s 0) = [UW152 s 0] from rfl, filter_lt_UW152 h1 0]
+  exact omegaNF_zero135
+
+theorem wcnf_UW1_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true) :
+    wcnf (reg 1) (toList (UW152 s 1)) = ([(omegaNF s, TM.Term.one)], zero) := by
+  rw [show toList (UW152 s 1) = [UW152 s 1] from rfl,
+    wcnf_cons_ge (lt_UW_reg1_152 h1 1)]
+  show ([(wA (reg 1) (UW152 s 1), wC (reg 1) (UW152 s 1))], zero) = _
+  rw [wA_UW1_171 hap hone h1, wC_UW1_171 h1]
+
+/-- **段 1 の一歩 — `ω^種` がまだ `Ω₁` に届かないので発火しない。** -/
+theorem stepOK_UW1_171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true)
+    (hnf : le (reg 1) (omegaNF s) = false) : KsetStepOK 0 (UW152 s 1) :=
+  stepOK_nofire162 (wcnf_UW1_171 hap hone h1) hnf
+
+/-- **段 0 と段 1 をまとめて — `stepOK_UW152` の届かない二段。** -/
+theorem stepOK_UW_low171 {s : Term} (hap : s.isAP = true)
+    (hone : ((s : Term) == TM.Term.one) = false) (h1 : lt s (reg 1) = true)
+    (hnf : le (reg 1) (omegaNF s) = false) :
+    ∀ ℓ : Nat, ℓ ≤ 1 → KsetStepOK 0 (UW152 s ℓ)
+  | 0, _ => stepOK_UW0_171 hap hone h1
+  | 1, _ => stepOK_UW1_171 hap hone h1 hnf
+  | _ + 2, h => absurd h (by omega)
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §171.5 The tool at the family's own level: `m ≤ 2` -/
+
+/-- **種の上の塔の低い段 — `m ≤ 2` では第一の門の一歩は無条件。**
+    `dict_towerSeed162` がくれる形のまま受ける。 -/
+theorem stepOK_towerSeed_low171 {S : Term} {X : BT} (hX : dict X = S)
+    (hap : S.isAP = true) (hone : ((S : Term) == TM.Term.one) = false)
+    (h1 : lt S (reg 1) = true) (h2 : lt S (reg 2) = true)
+    (hnf : le (reg 1) (omegaNF S) = false) :
+    ∀ m : Nat, m ≤ 2 → KsetStepOK 0 (dict (nst132 m X))
+  | 0, _ => by
+      show KsetStepOK 0 (dict X)
+      rw [hX]
+      exact stepOK_lt_reg1_171 hap h1
+  | 1, _ => by
+      rw [dict_towerSeed162 hap hone h1 h2 hX 0]
+      exact stepOK_UW0_171 hap hone h1
+  | 2, _ => by
+      rw [dict_towerSeed162 hap hone h1 h2 hX 1]
+      exact stepOK_UW1_171 hap hone h1 hnf
+  | _ + 3, h => absurd h (by omega)
+
+/-- 種が `Ω₁` より下の ε 数のときの言い換え。 -/
+theorem stepOK_tailSeed_low171 {S : Term} {X : BT} (hX : dict X = S) (hS : TailOK158 S)
+    (m : Nat) (hm : m ≤ 2) : KsetStepOK 0 (dict (nst132 m X)) :=
+  stepOK_towerSeed_low171 hX hS.hap hS.ho hS.h1 hS.h2 (le_reg1_omegaNF_tail171 hS) m hm
+
+/-! ### §171.6 The same computation over an arbitrary base: level 0 of `PT162`
+
+§167 proved the non-firing level-0 step three times, once per family shape.  This is
+the fact behind all three, stated once: **the level-0 digit does not fire whenever the
+base's largest component is exactly `Ω₁`.**  It builds on §167's `nofire_PT0_167`. -/
+
+/-- 段 0 の指数は「底の `Ω₁` 以上の成分を `Ω₁` で割った並び」。 -/
+theorem wA_PT0_171 {B : Term} (hb : BaseOK162 B) {L : List Term}
+    (hL : List.filter (fun z => !lt z (reg 1)) (toList B) = L) :
+    wA (reg 1) (PT162 B 0) = ofList (L.map (divAP (reg 1))) := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun z => !lt z (reg 1))
+    (toList (logOm (PT162 B 0))))) = _
+  rw [logOm_PT0_162 hb, hL]
+
+/-- **底の一番大きい成分がちょうど `Ω₁` なら、段 0 の桁は発火しない。**
+    `Ω₁ ⊖ Ω₁ = 0` なので指数の頭は `1` になり、`Ω₁` に届かない。 -/
+theorem stepOK_PT0_Omhead171 {B : Term} (hb : BaseOK162 B) {L : List Term}
+    (hL : List.filter (fun z => !lt z (reg 1)) (toList B) = Z zero :: L) :
+    KsetStepOK 0 (PT162 B 0) := by
+  refine nofire_PT0_167 hb (wA_PT0_171 hb hL) rfl ?_
+  show le (reg 1) (ofList (divAP (reg 1) (Z zero) :: L.map (divAP (reg 1)))) = false
+  rw [divAP_Om167]
+  exact le_reg1_ofList_one171 _
+
+/-- 頭が `Ω₁` の底の `≥ Ω₁` の並びは `Ω₁ :: Ω₁ :: …`。 -/
+theorem filter_ge_OBW171 (Y : Term) :
+    List.filter (fun z => !lt z (reg 1)) (toList (OBW162 Y))
+      = Z zero :: (Z zero :: List.filter (fun z => !lt z (reg 1)) (toList Y)) := by
+  rw [toList_OBW162 Y,
+    filter_ge_keep167 (show lt (Z zero) (reg 1) = false from lt_irrefl _),
+    filter_ge_keep167 (show lt (Z zero) (reg 1) = false from lt_irrefl _)]
+
+/-- **`Ω₁ ⊕ Ω₁ ⊕ Y` の上の塔の段 0 — 一歩は `Y` に何の条件も要らない。** -/
+theorem stepOK_PT0_OBW171 {Y : Term} (hb : BaseOK162 (OBW162 Y)) :
+    KsetStepOK 0 (PT162 (OBW162 Y) 0) :=
+  stepOK_PT0_Omhead171 hb (filter_ge_OBW171 Y)
+
+/-- `OB162` は `OBW162` と同じ底。 -/
+theorem stepOK_PT0_OB171 {t : Term} (hb : BaseOK162 (OB162 t)) :
+    KsetStepOK 0 (PT162 (OB162 t) 0) :=
+  stepOK_PT0_Omhead171 hb (filter_ge_OBW171 t)
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §171.7 The families whose `dict` is a seed tower: `m ≤ 2` comes off -/
+
+/-- **§152 の `famB132` — `m ≤ 2` では `k` に条件が要らない。**
+    `ksetStepOK_famB152` は `3 ≤ k ≤ m` を要求していた。 -/
+theorem ksetStepOK_famB_low171 {m k : Nat} (hm : m ≤ 2) :
+    KsetStepOK 0 (dict (famB132 m k)) := by
+  cases k with
+  | zero => exact ksetStepOK_famB0_152 m
+  | succ kk =>
+      exact stepOK_tailSeed_low171
+        (show dict (BT.D 0 (nst132 (kk + 1) BT.zero)) = sd152 (kk + 1) from rfl)
+        (tailOK_sd158 (kk + 1) (by omega)) m hm
+
+/-- **§155 の `famC155` — `m ≤ 2` では `k ≤ m`, `j ≤ m` が要らない。** -/
+theorem ksetStepOK_famC_low171 {m k j : Nat} (h3k : 3 ≤ k) (h3j : 3 ≤ j) (hm : m ≤ 2) :
+    KsetStepOK 0 (dict (famC155 m k j)) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 3 := ⟨k - 3, by omega⟩
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 3 := ⟨j - 3, by omega⟩
+  exact stepOK_tailSeed_low171 (sdC_eq155 kk jj) (tailOK_psi162 _) m hm
+
+/-- **§162.12 の類 (d) (`k ≥ 2`) — `m ≤ 2` では `k + p ≤ m`, `j ≤ m` が要らない。**
+    `ksetStepOK_famK162` は `3 ≤ m` を要求していた。 -/
+theorem ksetStepOK_famK_low171 {m k p j : Nat} (h2k : 2 ≤ k) (h2p : 2 ≤ p) (h1j : 1 ≤ j)
+    (hm : m ≤ 2) : KsetStepOK 0 (dict (famK162 m k p j)) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 2 := ⟨k - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  exact stepOK_tailSeed_low171 (dict_seedK162 (a := a) (j := j) (k := kk) h1j)
+    (tailOK_psi162 _) m hm
+
+/-- `JT162` の `ω^·` は `Ω₁` に届かない。 -/
+theorem le_reg1_omegaNF_JT171 {k j : Nat} (hk : TailOK158 (sd152 k)) :
+    le (reg 1) (omegaNF (JT162 k j)) = false := by
+  rw [show omegaNF (JT162 k j) = phi zero (phi zero (add (sd152 k) (sd152 j))) from
+      omegaNF_phi0_135 (beq_JT_one162 k j),
+    le_reg1_phi0_171, le_reg1_phi0_171]
+  show (((Z zero : Term) == add (sd152 k) (sd152 j))
+    || lt (Z zero) (add (sd152 k) (sd152 j))) = false
+  rw [show ((Z zero : Term) == add (sd152 k) (sd152 j)) = false from rfl,
+    lt_nsum_add100 (show (Z zero : Term) ≠ zero from by
+      intro hc; exact Term.noConfusion hc) rfl,
+    show le (Z zero) (sd152 k) = false from hk.hle0]
+  rfl
+
+/-- **§162.12 の類 (d) の `k = 0` の切り口 — `m ≤ 2` では境界が要らない。** -/
+theorem ksetStepOK_famK0_low171 {m p j : Nat} (h3p : 3 ≤ p) (h1j : 1 ≤ j) (hjp : j ≤ p)
+    (hm : m ≤ 2) : KsetStepOK 0 (dict (famK162 m 0 p j)) :=
+  stepOK_towerSeed_low171 (dict_seedJ162 h3p h1j hjp) rfl (beq_JT_one162 p j)
+    (lt_JT_reg1_162 p j h3p) (lt_JT_reg2_162 p j h3p)
+    (le_reg1_omegaNF_JT171 (tailOK_sd158 p (by omega))) m hm
+
+/-- **§169 の類 (d) の `p = 1` の切り口 — `m ≤ 2` では `k + 1 ≤ m`, `j ≤ m` が要らない。**
+    `stepOK_iff_famK1_169` は `3 ≤ m` を要求していた。 -/
+theorem ksetStepOK_famK1_low171 {m k j : Nat} (h2k : 2 ≤ k) (h1j : 1 ≤ j) (hm : m ≤ 2) :
+    KsetStepOK 0 (dict (famK162 m k 1 j)) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 2 := ⟨k - 2, by omega⟩
+  exact stepOK_tailSeed_low171 (dict_seedK1_169 h1j kk) (tailOK_psi162 _) m hm
+
+/-- **§168 の類 (d) の `j = 0` の切り口 (`k ≥ 2`) — `m ≤ 2` では境界が要らない。** -/
+theorem ksetStepOK_famK0_0_low171 {m k p : Nat} (h2k : 2 ≤ k) (h2p : 2 ≤ p) (hm : m ≤ 2) :
+    KsetStepOK 0 (dict (famK162 m k p 0)) := by
+  obtain ⟨kk, rfl⟩ : ∃ kk, k = kk + 2 := ⟨k - 2, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 2 := ⟨p - 2, by omega⟩
+  exact stepOK_tailSeed_low171 (dict_seedK0_168 a kk) (tailOK_psi162 _) m hm
+
+/-- `JT0_168` の `ω^·` は `Ω₁` に届かない。 -/
+theorem le_reg1_omegaNF_JT0_171 {k : Nat} (h3k : 3 ≤ k) :
+    le (reg 1) (omegaNF (JT0_168 k)) = false := by
+  rw [show omegaNF (JT0_168 k) = phi zero (phi zero (sd152 k)) from
+      omegaNF_phi0_135 (beq_JT0_one168 h3k),
+    le_reg1_phi0_171, le_reg1_phi0_171]
+  exact (tailOK_sd158 k (by omega)).hle0
+
+/-- **§168 の類 (d) の `k = 0`, `j = 0` の隅 — `m ≤ 2` では境界が要らない。** -/
+theorem ksetStepOK_famK00_low171 {m p : Nat} (h3p : 3 ≤ p) (hm : m ≤ 2) :
+    KsetStepOK 0 (dict (famK162 m 0 p 0)) :=
+  stepOK_towerSeed_low171 (dict_seedJ0_168 h3p) rfl (beq_JT0_one168 h3p)
+    (lt_JT0_reg1_168 h3p) (lt_JT0_reg2_168 h3p) (le_reg1_omegaNF_JT0_171 h3p) m hm
+
+/-! ### §171.8 The `p = 1` slices §167 did not reach: `m = 1` comes off -/
+
+/-- **§162.10 の `famF158 m 1 k` — `m = 1` でも一歩。**  `2 ≤ m` を外す。 -/
+theorem ksetStepOK_famF1_low171 {k : Nat} (h1k : 1 ≤ k) :
+    KsetStepOK 0 (dict (famF158 1 1 k)) := by
+  have hT : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+  rw [dict_famF1_162 h1k 0]
+  exact stepOK_PT0_OB171 (baseOK_OB162 hT)
+
+/-- **§168 の類 (b) の `p = 1`, `j = 0` — `m = 1` でも一歩。**  `2 ≤ m` を外す。 -/
+theorem ksetStepOK_famI1_0_low171 {k : Nat} (h1k : 1 ≤ k) :
+    KsetStepOK 0 (dict (famI162 1 1 k 0)) := by
+  have hK : TailOK158 (sd152 k) := tailOK_sd158 k h1k
+  rw [dict_famI1_0_168 h1k 0]
+  exact stepOK_PT0_OBW171 (baseOK_OI2_168 hK.ho)
+
+/-- **§168 の類 (a) の `p = 1`, `j = 0` — `m = 1` でも一歩。**  `2 ≤ m` を外す。 -/
+theorem ksetStepOK_famJ1_0_low171 {k : Nat} (h3k : 3 ≤ k) :
+    KsetStepOK 0 (dict (famJ162 1 1 k 0)) := by
+  rw [dict_famJ1_0_168 h3k 0]
+  exact stepOK_PT0_OBW171 (baseOK_OBW162 (splitJ2_168 h3k))
+
+/-! ### §171.8b The widened windows, stated as single theorems
+
+Each family's own theorem, with the lower bound on `m` gone: the old boundary or the
+new low levels.  Nothing here is new mathematics — it is the two halves put together
+so that a caller never has to know which half it is in. -/
+
+/-- **§152 の `famB132`、広げた窓。**  `3 ≤ k ≤ m` か `m ≤ 2`。 -/
+theorem ksetStepOK_famB_wide171 {m k : Nat} (h : m ≤ 2 ∨ (3 ≤ k ∧ k ≤ m)) :
+    KsetStepOK 0 (dict (famB132 m k)) := by
+  rcases h with hm | ⟨h3, hkm⟩
+  · exact ksetStepOK_famB_low171 hm
+  · exact ksetStepOK_famB152 h3 hkm
+
+/-- **§155 の `famC155`、広げた窓。** -/
+theorem ksetStepOK_famC_wide171 {m k j : Nat} (h3k : 3 ≤ k) (h3j : 3 ≤ j)
+    (h : m ≤ 2 ∨ (k ≤ m ∧ j ≤ m)) : KsetStepOK 0 (dict (famC155 m k j)) := by
+  rcases h with hm | ⟨hkm, hjm⟩
+  · exact ksetStepOK_famC_low171 h3k h3j hm
+  · exact ksetStepOK_famC155 h3k h3j hkm hjm
+
+/-- **§162.12 の類 (d) (`k ≥ 2`)、広げた窓。**  `3 ≤ m` は要らない。 -/
+theorem ksetStepOK_famK_wide171 {m k p j : Nat} (h2k : 2 ≤ k) (h2p : 2 ≤ p) (h1j : 1 ≤ j)
+    (h : m ≤ 2 ∨ (k + p ≤ m ∧ j ≤ m)) : KsetStepOK 0 (dict (famK162 m k p j)) := by
+  rcases h with hm | ⟨hkp, hjm⟩
+  · exact ksetStepOK_famK_low171 h2k h2p h1j hm
+  · rcases Nat.lt_or_ge m 3 with h3 | h3
+    · exact ksetStepOK_famK_low171 h2k h2p h1j (by omega)
+    · exact ksetStepOK_famK162 h3 h2k h2p h1j hkp hjm
+
+/-- **§162.12 の類 (d) の `k = 0`、広げた窓。** -/
+theorem ksetStepOK_famK0_wide171 {m p j : Nat} (h3p : 3 ≤ p) (h1j : 1 ≤ j) (hjp : j ≤ p)
+    (h : m ≤ 2 ∨ p ≤ m) : KsetStepOK 0 (dict (famK162 m 0 p j)) := by
+  rcases h with hm | hpm
+  · exact ksetStepOK_famK0_low171 h3p h1j hjp hm
+  · rcases Nat.lt_or_ge m 3 with h3 | h3
+    · exact ksetStepOK_famK0_low171 h3p h1j hjp (by omega)
+    · exact ksetStepOK_famK0_162 h3 h3p h1j hjp hpm
+
+/-- **§169 の類 (d) の `p = 1`、広げた窓。**  `3 ≤ m` は要らない。 -/
+theorem ksetStepOK_famK1_wide171 {m k j : Nat} (h2k : 2 ≤ k) (h1j : 1 ≤ j)
+    (h : m ≤ 2 ∨ (k + 1 ≤ m ∧ j ≤ m)) : KsetStepOK 0 (dict (famK162 m k 1 j)) := by
+  rcases h with hm | ⟨hkm, hjm⟩
+  · exact ksetStepOK_famK1_low171 h2k h1j hm
+  · rcases Nat.lt_or_ge m 3 with h3 | h3
+    · exact ksetStepOK_famK1_low171 h2k h1j (by omega)
+    · exact ksetStepOK_famK1_169 h3 h2k h1j hkm hjm
+
+/-- **§168 の類 (d) の `j = 0` (`k ≥ 2`)、広げた窓。** -/
+theorem ksetStepOK_famK0_0_wide171 {m k p : Nat} (h2k : 2 ≤ k) (h2p : 2 ≤ p)
+    (h : m ≤ 2 ∨ k + p ≤ m) : KsetStepOK 0 (dict (famK162 m k p 0)) := by
+  rcases h with hm | hkp
+  · exact ksetStepOK_famK0_0_low171 h2k h2p hm
+  · rcases Nat.lt_or_ge m 3 with h3 | h3
+    · exact ksetStepOK_famK0_0_low171 h2k h2p (by omega)
+    · exact ksetStepOK_famK0_168 h3 h2k h2p hkp
+
+/-- **§168 の類 (d) の `k = j = 0`、広げた窓。** -/
+theorem ksetStepOK_famK00_wide171 {m p : Nat} (h3p : 3 ≤ p) (h : m ≤ 2 ∨ p ≤ m) :
+    KsetStepOK 0 (dict (famK162 m 0 p 0)) := by
+  rcases h with hm | hpm
+  · exact ksetStepOK_famK00_low171 h3p hm
+  · rcases Nat.lt_or_ge m 3 with h3 | h3
+    · exact ksetStepOK_famK00_low171 h3p (by omega)
+    · exact ksetStepOK_famK00_168 h3 h3p hpm
+
+/-- **§162.10 の `famF158 m 1 k`、広げた窓 — `2 ≤ m` を `1 ≤ m` に。** -/
+theorem ksetStepOK_famF1_wide171 {m k : Nat} (h1m : 1 ≤ m) (h1k : 1 ≤ k)
+    (hkm : k ≤ m + 1) : KsetStepOK 0 (dict (famF158 m 1 k)) := by
+  rcases Nat.lt_or_ge m 2 with h | h
+  · obtain rfl : m = 1 := by omega
+    exact ksetStepOK_famF1_low171 h1k
+  · exact ksetStepOK_famF1_162 h h1k hkm
+
+/-- **§168 の類 (b) の `p = 1`, `j = 0`、広げた窓 — `2 ≤ m` を `1 ≤ m` に。** -/
+theorem ksetStepOK_famI1_0_wide171 {m k : Nat} (h1m : 1 ≤ m) (h1k : 1 ≤ k)
+    (hkm : k ≤ m + 1) : KsetStepOK 0 (dict (famI162 m 1 k 0)) := by
+  rcases Nat.lt_or_ge m 2 with h | h
+  · obtain rfl : m = 1 := by omega
+    exact ksetStepOK_famI1_0_low171 h1k
+  · exact ksetStepOK_famI1_0_168 h h1k hkm
+
+/-- **§168 の類 (a) の `p = 1`, `j = 0`、広げた窓 — `2 ≤ m` を `1 ≤ m` に。** -/
+theorem ksetStepOK_famJ1_0_wide171 {m k : Nat} (h1m : 1 ≤ m) (h3k : 3 ≤ k)
+    (hkm : k ≤ m + 1) : KsetStepOK 0 (dict (famJ162 m 1 k 0)) := by
+  rcases Nat.lt_or_ge m 2 with h | h
+  · obtain rfl : m = 1 := by omega
+    exact ksetStepOK_famJ1_0_low171 h3k
+  · exact ksetStepOK_famJ1_0_168 h h3k hkm
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §171.9 Measurement (frozen) — everything below is measurement, not proof -/
+
+/-! **低い段の桁、実際の値。**  段 0 は `(1, 種)`、段 1 は `(種, 1)`、段 2 で初めて
+    塔が出る。`1 = φ̄0 0`、`sd152 3 = ψ_{Ω₁}0`。 -/
+#guard (wcnf (reg 1) (toList (UW152 (sd152 3) 0))).1 == [(TM.Term.one, sd152 3)]
+#guard (wcnf (reg 1) (toList (UW152 (sd152 3) 1))).1 == [(sd152 3, TM.Term.one)]
+#guard (wcnf (reg 1) (toList (UW152 (sd152 3) 2))).1
+  == [(UW152 (sd152 3) 1, TM.Term.one)]
+#guard (wcnf (reg 1) (toList (UW152 (sd152 5) 0))).1 == [(TM.Term.one, sd152 5)]
+#guard (wcnf (reg 1) (toList (UW152 (sd152 5) 1))).1 == [(sd152 5, TM.Term.one)]
+#guard (wcnf (reg 1) (toList (UW152 (sd152 1) 0))).1 == [(TM.Term.one, sd152 1)]
+#guard (wcnf (reg 1) (toList (UW152 (sd152 1) 1))).1 == [(sd152 1, TM.Term.one)]
+
+/-! **発火するのは段 2 から。**  これが `stepOK_UW152` が段 2 以上しか見ない理由であり、
+    段 0・段 1 で一歩が無条件に成り立つ理由でもある。 -/
+#guard ((wcnf (reg 1) (toList (UW152 (sd152 3) 0))).1.map (fun q => le (reg 1) q.1),
+        (wcnf (reg 1) (toList (UW152 (sd152 3) 1))).1.map (fun q => le (reg 1) q.1),
+        (wcnf (reg 1) (toList (UW152 (sd152 3) 2))).1.map (fun q => le (reg 1) q.1))
+  == ([false], [false], [true])
+#guard (le (reg 1) TM.Term.one, le (reg 1) (sd152 3), le (reg 1) (sd152 1),
+        le (reg 1) (omegaNF (sd152 3))) == (false, false, false, false)
+#guard (stepOKb 0 (UW152 (sd152 3) 0), stepOKb 0 (UW152 (sd152 3) 1),
+        stepOKb 0 (UW152 (sd152 3) 2)) == (true, true, true)
+
+/-! **種が裸の `Ω₁` のときは話が違う** — `Ω₁` は `Ω₁` より下ではないので §171.3/§171.4 は
+    当たらない。段 0 の桁は `(1 ⊕ 1, 1)` で発火しないが、段 1 の桁は `(Ω₁, 1)` で発火する。
+    それでも一歩は成り立つ (`K` が空だから)。測定のみ。 -/
+#guard (wcnf (reg 1) (toList (UW152 (Z zero) 0))).1
+  == [(add TM.Term.one TM.Term.one, TM.Term.one)]
+#guard (wcnf (reg 1) (toList (UW152 (Z zero) 1))).1 == [((Z zero : Term), TM.Term.one)]
+#guard (stepOKb 0 (UW152 (Z zero) 0), stepOKb 0 (UW152 (Z zero) 1)) == (true, true)
+
+/-! **底の頭が `Ω₁` の塔の段 0** — 桁は `(1 ⊕ 1, 尾)`、発火しない。§169 が測った角。 -/
+#guard (wcnf (reg 1) (toList (PT162 (OB162 (sd152 3)) 0))).1
+  == [(add TM.Term.one TM.Term.one, sd152 3)]
+#guard !(le (reg 1) (add TM.Term.one TM.Term.one))
+
+/-! **底の頭が裸の塔のときは段 0 でも発火する** — §171.6 の届かない所 (そこは §167)。
+    `WB162 1 ·` の段 0 の指数は `TW 2`、`WB162 0 ·` のそれは `Ω₁`。どちらも `Ω₁` 以上。 -/
+#guard (wcnf (reg 1) (toList (PT162 (WB162 1 (add (sd152 3) (sd152 2))) 0))).1.map
+    (fun q => le (reg 1) q.1) == [true]
+#guard (wcnf (reg 1) (toList (PT162 (WB162 0 (add (sd152 3) (sd152 2))) 0))).1
+  == [((Z zero : Term), phi zero (add (sd152 3) (sd152 2)))]
+
+/-! **族ごとの掃き。**  窓は書いてある通り。窓の外は何も言っていない。 -/
+
+/-! `famB132` は `m ≤ 2` の全域で一歩を満たす — `k` に条件は要らない (`k ≤ 8`)。 -/
+#guard (List.range 3).all fun m => (List.range 9).all fun k =>
+  stepOKb 0 (dict (famB132 m k))
+
+/-! `famC155` も同じ (`m ≤ 2`, `3 ≤ k, j ≤ 6`)。 -/
+#guard (List.range 3).all fun m => (List.range 7).all fun k => (List.range 7).all fun j =>
+  !(decide (3 ≤ k) && decide (3 ≤ j)) || stepOKb 0 (dict (famC155 m k j))
+
+/-! 類 (d) は `m ≤ 2` の全域で一歩を満たす — `k, p, j` に条件は要らない (`≤ 3`)。 -/
+#guard (List.range 3).all fun m => (List.range 4).all fun k => (List.range 4).all fun p =>
+  (List.range 4).all fun j => stepOKb 0 (dict (famK162 m k p j))
+
+/-! `p = 1` の切り口は `m = 1` の全域で一歩を満たす (`k, j ≤ 6`)。 -/
+#guard (List.range 7).all fun k => !(decide (1 ≤ k)) || stepOKb 0 (dict (famF158 1 1 k))
+#guard (List.range 7).all fun k =>
+  !(decide (1 ≤ k)) || stepOKb 0 (dict (famI162 1 1 k 0))
+#guard (List.range 7).all fun k =>
+  !(decide (3 ≤ k)) || stepOKb 0 (dict (famJ162 1 1 k 0))
+
+/-! **届かない隅、測定。**  類 (a)/(b) の `j = 0`, `p ≥ 2` は `m = 1` でも境界
+    `k ≤ 1 + p` をちょうど守る。数学の壁ではなく、この file の道具 (発火しない桁しか
+    見ない) の届かない所。窓は `2 ≤ p ≤ 5`, `1 ≤ k ≤ 8`。 -/
+#guard (List.range 6).all fun p => (List.range 9).all fun k =>
+  !(decide (2 ≤ p) && decide (1 ≤ k))
+  || (stepOKb 0 (dict (famI162 1 p k 0)) == decide (k ≤ 1 + p))
+#guard (List.range 6).all fun p => (List.range 9).all fun k =>
+  !(decide (2 ≤ p) && decide (3 ≤ k))
+  || (stepOKb 0 (dict (famJ162 1 p k 0)) == decide (k ≤ 1 + p))
+
+/-! `famF158` の `m = 0` は塔ではない (`ψ₁` が一枚も無い) ので §171 の外だが、
+    測った窓 (`p ≤ 5`, `k ≤ 7`) では一歩はどこでも成り立っている。 -/
+#guard (List.range 6).all fun p => (List.range 8).all fun k =>
+  stepOKb 0 (dict (famF158 0 p k))
+
+/-! ### §171.9b Coverage -/
+
+/-- §171.7 の `famB132` の切り口。 -/
+def isFamBlow171 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.D 0 y) =>
+      match towH158 y with
+      | some _ => decide (m ≤ 2)
+      | none => false
+  | _ => false
+
+/-- §171.7 の `famC155` の切り口。 -/
+def isFamClow171 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.D 0 X) =>
+      match peel158 X with
+      | (k, BT.D 0 y) =>
+          match towH158 y with
+          | some j => decide (m ≤ 2) && decide (3 ≤ k) && decide (3 ≤ j)
+          | none => false
+      | _ => false
+  | _ => false
+
+/-- §171.7 の類 (d) の切り口、五つぶん。 -/
+def isFamKlow171 (a : BT) : Bool :=
+  match decK169 a with
+  | some (m, k, p, j) =>
+      decide (m ≤ 2) &&
+        ((decide (2 ≤ k) && decide (2 ≤ p) && decide (1 ≤ j))
+          || (decide (k = 0) && decide (3 ≤ p) && decide (1 ≤ j) && decide (j ≤ p))
+          || (decide (p = 1) && decide (2 ≤ k) && decide (1 ≤ j))
+          || (decide (j = 0) && decide (2 ≤ k) && decide (2 ≤ p))
+          || (decide (k = 0) && decide (j = 0) && decide (3 ≤ p)))
+  | none => false
+
+/-- §171.8 の `famF158 1 1 k`。 -/
+def isFamF1low171 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.D 0 y)) =>
+      match towH158 x, towH158 y with
+      | some p, some k => decide (m = 1) && decide (p = 1) && decide (1 ≤ k)
+      | _, _ => false
+  | _ => false
+
+/-- §171.8 の `famI162 1 1 k 0`。 -/
+def isFamI1_0low171 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.sum (BT.D 0 y) (BT.D 0 z))) =>
+      match towH158 x, towH158 y, towH158 z with
+      | some p, some k, some j =>
+          decide (m = 1) && decide (p = 1) && decide (j = 0) && decide (1 ≤ k)
+      | _, _, _ => false
+  | _ => false
+
+/-- §171.8 の `famJ162 1 1 k 0`。 -/
+def isFamJ1_0low171 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.sum x (BT.D 0 (BT.sum y (BT.D 0 z)))) =>
+      match towH158 x, towH158 y, towH158 z with
+      | some p, some k, some j =>
+          decide (m = 1) && decide (p = 1) && decide (j = 0) && decide (3 ≤ k)
+      | _, _, _ => false
+  | _ => false
+
+/-- §171 が新しく当てる領域だけ。 -/
+def new171 (a : BT) : Bool :=
+  isFamBlow171 a || isFamClow171 a || isFamKlow171 a || isFamF1low171 a
+    || isFamI1_0low171 a || isFamJ1_0low171 a
+
+/-- §167 · §168 · §169 は互いに独立に §162 を伸ばしたので、まず三つの合併を取る。 -/
+def coveredPrev171 (a : BT) : Bool := covered167 a || covered168 a || covered169 a
+
+def covered171 (a : BT) : Bool := coveredPrev171 a || new171 a
+
+/-! 判定器は狙った形にだけ当たる。 -/
+#guard isFamBlow171 (famB132 2 7)
+#guard !(isFamBlow171 (famB132 3 7))
+#guard isFamClow171 (famC155 2 4 3)
+#guard !(isFamClow171 (famC155 3 4 3))
+#guard !(isFamClow171 (famC155 2 2 3))
+#guard isFamKlow171 (famK162 2 2 2 1)
+#guard isFamKlow171 (famK162 0 3 1 2)
+#guard isFamKlow171 (famK162 1 2 2 0)
+#guard isFamKlow171 (famK162 2 0 3 0)
+#guard isFamKlow171 (famK162 2 0 3 2)
+#guard !(isFamKlow171 (famK162 3 2 2 1))
+#guard !(isFamKlow171 (famK162 2 1 2 1))
+#guard !(isFamKlow171 (famK162 2 2 1 0))
+#guard isFamF1low171 (famF158 1 1 4)
+#guard !(isFamF1low171 (famF158 2 1 4))
+#guard !(isFamF1low171 (famF158 1 2 4))
+#guard isFamI1_0low171 (famI162 1 1 4 0)
+#guard !(isFamI1_0low171 (famI162 1 1 4 2))
+#guard !(isFamI1_0low171 (famI162 1 2 4 0))
+#guard isFamJ1_0low171 (famJ162 1 1 4 0)
+#guard !(isFamJ1_0low171 (famJ162 1 1 4 2))
+#guard !(isFamJ1_0low171 (famJ162 1 2 4 0))
+
+/-! 判定器が当てた項では掃きも通る — 三つの母集団すべてで。 -/
+#guard ((famPool132.filter resid136).filter new171).all (fun a => stepOKb 0 (dict a))
+#guard ((pool136.filter resid136).filter new171).all (fun a => stepOKb 0 (dict a))
+#guard ((fm145.filter resid136).filter new171).all (fun a => stepOKb 0 (dict a))
+#guard ((famPool132.filter resid136).filter covered171).all (fun a => stepOKb 0 (dict a))
+#guard ((pool136.filter resid136).filter covered171).all (fun a => stepOKb 0 (dict a))
+#guard ((fm145.filter resid136).filter covered171).all (fun a => stepOKb 0 (dict a))
+
+/-! **被覆の前後 (測定、凍結)。**  §167 · §168 · §169 は互いに独立に §162 を伸ばした
+    ので、まず三つの合併 `coveredPrev171` を測ってから §171 を足す。
+
+    **§171 の被覆の増分は三つの母集団すべてで 0 である。**  これは測定した事実で、
+    弱められた仮定が無意味だという意味ではない — 理由は §171.9c で数える。 -/
+#guard ((famPool132.filter resid136).length,
+        (famPool132.filter resid136).countP covered162,
+        (famPool132.filter resid136).countP covered167,
+        (famPool132.filter resid136).countP covered168,
+        (famPool132.filter resid136).countP covered169,
+        (famPool132.filter resid136).countP coveredPrev171,
+        (famPool132.filter resid136).countP covered171)
+  == (2455, 1998, 2101, 2120, 2020, 2245, 2245)
+#guard ((pool136.filter resid136).length,
+        (pool136.filter resid136).countP coveredPrev171,
+        (pool136.filter resid136).countP covered171) == (925, 70, 70)
+#guard ((fm145.filter resid136).length,
+        (fm145.filter resid136).countP coveredPrev171,
+        (fm145.filter resid136).countP covered171) == (3371, 422, 422)
+
+/-! ### §171.9c Why the increment is zero — counted, not guessed
+
+§171 が新しく当てた項を切り口ごとに数える (前の三つの外に居るものだけ)。ぜんぶ 0。 -/
+#guard ((famPool132.filter resid136).countP
+        (fun a => isFamBlow171 a && !(coveredPrev171 a)),
+       (famPool132.filter resid136).countP
+        (fun a => isFamClow171 a && !(coveredPrev171 a)),
+       (famPool132.filter resid136).countP
+        (fun a => isFamKlow171 a && !(coveredPrev171 a)),
+       (famPool132.filter resid136).countP
+        (fun a => (isFamF1low171 a || isFamI1_0low171 a || isFamJ1_0low171 a)
+          && !(coveredPrev171 a))) == (0, 0, 0, 0)
+#guard ((fm145.filter resid136).countP (fun a => isFamBlow171 a && !(coveredPrev171 a)),
+        (fm145.filter resid136).countP (fun a => isFamClow171 a && !(coveredPrev171 a)),
+        (fm145.filter resid136).countP (fun a => isFamKlow171 a && !(coveredPrev171 a)),
+        (fm145.filter resid136).countP
+         (fun a => (isFamF1low171 a || isFamI1_0low171 a || isFamJ1_0low171 a)
+           && !(coveredPrev171 a))) == (0, 0, 0, 0)
+#guard ((pool136.filter resid136).countP (fun a => new171 a && !(coveredPrev171 a))) == 0
+
+/-! 増分が 0 なのは §171 の窓に母集団の項が居ないからか、それとも既に別の判定器が
+    当てていたからか — 生の本数を数えて分ける。 -/
+#guard ((famPool132.filter resid136).countP isFamBlow171,
+        (famPool132.filter resid136).countP isFamClow171,
+        (famPool132.filter resid136).countP isFamKlow171,
+        (famPool132.filter resid136).countP isFamF1low171,
+        (famPool132.filter resid136).countP isFamI1_0low171,
+        (famPool132.filter resid136).countP isFamJ1_0low171) == (0, 0, 0, 0, 0, 0)
+#guard ((fm145.filter resid136).countP isFamBlow171,
+        (fm145.filter resid136).countP isFamClow171,
+        (fm145.filter resid136).countP isFamKlow171,
+        (fm145.filter resid136).countP isFamF1low171,
+        (fm145.filter resid136).countP isFamI1_0low171,
+        (fm145.filter resid136).countP isFamJ1_0low171) == (0, 0, 0, 0, 0, 0)
+#guard ((pool136.filter resid136).countP isFamBlow171,
+        (pool136.filter resid136).countP isFamClow171,
+        (pool136.filter resid136).countP isFamKlow171,
+        (pool136.filter resid136).countP new171) == (0, 0, 0, 0)
+
+/-! 類 (d) の項の `m` の分布 — 残り (`resid136`) には `m ≤ 2` が一本も無い。
+    (残りの本数, 全部の本数) を `famPool132` と `fm145` で。 -/
+#guard (((famPool132.filter resid136).filterMap decK169).countP (fun q => q.1 ≤ 2),
+        ((famPool132.filter resid136).filterMap decK169).length,
+        ((fm145.filter resid136).filterMap decK169).countP (fun q => q.1 ≤ 2),
+        ((fm145.filter resid136).filterMap decK169).length) == (0, 106, 0, 58)
+
+/-! **判定器が空振りしているのではない** — `resid136` で絞る前の母集団には §171 の窓の
+    項がちゃんと居る。絞った後に居なくなるだけ。 -/
+#guard (famPool132.countP isFamBlow171, famPool132.countP isFamClow171,
+        famPool132.countP isFamKlow171, famPool132.countP isFamF1low171,
+        famPool132.countP isFamI1_0low171, famPool132.countP isFamJ1_0low171)
+  == (81, 75, 393, 8, 5, 3)
+#guard (fm145.countP isFamBlow171, fm145.countP isFamClow171, fm145.countP isFamKlow171,
+        fm145.countP new171) == (21, 0, 45, 75)
+#guard ((famPool132.filterMap decK169).countP (fun q => q.1 ≤ 2),
+        (famPool132.filterMap decK169).length,
+        (fm145.filterMap decK169).countP (fun q => q.1 ≤ 2),
+        (fm145.filterMap decK169).length) == (648, 1296, 108, 288)
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms stepOK_lt_reg1_171
+#print axioms stepOK_UW0_171
+#print axioms stepOK_UW1_171
+#print axioms stepOK_UW_low171
+#print axioms stepOK_towerSeed_low171
+#print axioms stepOK_tailSeed_low171
+#print axioms stepOK_PT0_Omhead171
+#print axioms stepOK_PT0_OBW171
+#print axioms stepOK_PT0_OB171
+#print axioms ksetStepOK_famB_low171
+#print axioms ksetStepOK_famC_low171
+#print axioms ksetStepOK_famK_low171
+#print axioms ksetStepOK_famK0_low171
+#print axioms ksetStepOK_famK1_low171
+#print axioms ksetStepOK_famK0_0_low171
+#print axioms ksetStepOK_famK00_low171
+#print axioms ksetStepOK_famF1_low171
+#print axioms ksetStepOK_famI1_0_low171
+#print axioms ksetStepOK_famJ1_0_low171
+#print axioms ksetStepOK_famB_wide171
+#print axioms ksetStepOK_famC_wide171
+#print axioms ksetStepOK_famK_wide171
+#print axioms ksetStepOK_famK0_wide171
+#print axioms ksetStepOK_famK1_wide171
+#print axioms ksetStepOK_famK0_0_wide171
+#print axioms ksetStepOK_famK00_wide171
+#print axioms ksetStepOK_famF1_wide171
+#print axioms ksetStepOK_famI1_0_wide171
+#print axioms ksetStepOK_famJ1_0_wide171
+
+end
+
+/-
+g170 — CLASS (d) AT `k = 1`: the inner tower has height ZERO
+
+§162.12 closed class (d) `famK162 m k p j = ψ₁^m(ψ₀(ψ₁^k(ψ₁^p 0 ⊕ ψ₀(ψ₁^j 0))))` for
+`2 ≤ k`, `2 ≤ p`; §168 took `j = 0` there; §169 took `p = 1`.  This file takes
+`k = 1`, `2 ≤ p`, EVERY `j` including `0` — the 28 remaining class-(d) terms of
+`famPool132`'s residual.
+
+WHAT IS DIFFERENT AT `k = 1`.  The `ψ₀` sits directly on `PT162 (WB162 a Y) 0`, i.e. on
+`φ̄0(TW(a+1) ⊕ Y)`: the tower over the base has height `0`, so the `wcnf` digit is NOT
+`(tower one level down, 1)` but the pair the BASE itself makes — its head as the exponent
+and its TAIL as the coefficient.  §162's `collapse0_PT162` starts at level `ℓ + 1` and
+§169's `collapse0_PT_succ169` at level `ℓ + 2`, so neither sees this digit.  §158.2b had
+already computed the two level-0 digits for `MT158 σ b t 0 = φ̄0(UW152 σ b ⊕ t)`:
+
+  * `b ≥ 1`  — `wcnf_MT0_158`: digit `(UW152 σ b, t)`; `idx_MT0_158`: the fired index is
+    the whole term back again, so `ψ₀` of it is `ψ_{Ω₁}(the term)`.
+  * `b = 0`, `σ = Ω₁` — `wcnf_MT0_Om158`: digit `(Ω₁, t)`; `idx_MT0_Om158`: the fired
+    index is the COEFFICIENT `t` alone (`Ω₁ ⊖ Ω₁ = 0` eats the exponent), so the seed
+    drops all the way to `ψ_{Ω₁}(t)`.
+
+`p = a + 2`, so those are `p ≥ 3` and `p = 2`.  Both, and the two `j = 0` variants, are
+now instances of ONE lemma, §170.1's `collapse0_digit170`: a single-digit `φ̄0`-term whose
+digit fires collapses to `ψ_{Ω₁}(the emitted index)`, whatever the coefficient is.  That
+is the piece §162/§168/§169 never isolated, and it is generic — any family landing on a
+height-0 tower can take it.
+
+At `j = 0` the base's tail is the literal `1`, which is NOT `TailOK158`
+(`sd152 0 = 1` fails `ho`), so §158.2b's digit lemmas do not apply and §170.4 recomputes
+`wA`, `wC`, `idxOf` for that base.  The answer is: the coefficient becomes `ω`
+(`omegaNF 1 = ω`, the `+1` is counted into the exponent), and at `p ≥ 3` the emitted
+index is again the whole term, while at `p = 2` it is the bare `ω`.
+
+WHAT IS PROVED, with its real hypotheses:
+
+  `stepOK_iff_famK1p_170`  `3 ≤ m`, `2 ≤ p`, EVERY `j`:
+      `KsetStepOK 0 (dict (famK162 m 1 p j)) ↔ (p + 1 ≤ m ∧ j ≤ m)`
+  — both conjuncts proved in both directions.  `p + 1 ≤ m` is §162.12's `k + p ≤ m` read
+  at `k = 1`; at `p = 2` it is implied by `3 ≤ m`, so that slice's boundary is `j ≤ m`
+  alone, and at `j = 0` the second conjunct is vacuous.
+
+  `not_std_famK_j170`  `m < j` ⇒ `BT.isStd (BT.D 0 (famK162 m k p j)) = false`
+      — NEW and generic in `k`, `p`.  §162.12c's `not_std_famK162` refutes only the
+      `m < k + p` wedge, and at `k = 1`, `p = 2` that wedge is EMPTY under `3 ≤ m`, so
+      without this the `p = 2` slice would have no contrapositive at all.  The escaping
+      element of `GB 0` is the bare tower `ψ₁^j 0`.
+
+  `famK1_no_refute170`, `gateStd87_famK1p_170`, `firstFire_famK1p_170`.
+
+WHAT IS **NOT** here.  Measured in §170.10 over `m, p, j ≤ 7` and frozen as `#guard`;
+measured is not proved and nothing is claimed outside that window.
+
+  * `m ≤ 2`.  `stepOK_UW152` / `not_stepOK_UW162` only speak about `UW152 s (ℓ + 2)` and
+    `dict (famK162 m 1 p j)` is `UW152 σ (m - 1)`.  Measured: at `m ≤ 2` the step holds
+    for EVERY `(p, j)` in the window — a limit of the tools, not of the mathematics.
+    Costs no coverage: no `k = 1` term of `famPool132`'s residual has `m ≤ 2` (measured).
+  * `p ≤ 1`.  `p = 1` is §169's corner (there the digit is `(1 ⊕ 1, sd_j)`, exponent `2`,
+    which never fires); `p = 0` is a degenerate `BT.sum` with a zero summand.  Neither
+    occurs in the residual at `k = 1` (measured).
+  * `k = 0`.  Not a gap: MEASURED (§170.10), the six `k = 0` class-(d) terms left open
+    by `covered169` are exactly `(m,0,p,0)` with `3 ≤ p ≤ m`, which is §168.4's proved
+    region; they look open only because `covered169 = covered162 || isFamK1_169` never
+    absorbed `covered168`.  §170.9 restates §168's two theorems for them and adds the
+    second standardness bound (`famK0_std_bounds170`: standard ⇒ `p ≤ m` AND `j ≤ m`).
+
+COVERAGE (measured here, frozen in §170.10).  On `famPool132`'s 2455-term residual
+`covered170 = covered169 || isFamK1p_170` goes from §169's 2020 to **2048**, and the
+class-(d) leftover from 44 to 16 — all 28 gained are `k = 1`, which is every `k = 1`
+class-(d) term §169 had left open, `j = 0` ones included.  `pool136` (70) and `fm145`
+(344) do not move, both because they hold no uncovered `k = 1` class-(d) term at all
+(`pool136` holds no class-(d) term; `fm145`'s 12 uncovered ones are all `k = 0`).
+§170.10b measures the union of §162 · §168 · §169 · §170, which no earlier file's number
+is (`covered169` was built on `covered162` and skips §168).  Measured HERE, on
+`famPool132`'s residual: `covered162` 1998 → `covered168` 2120 → `+ isFamK1_169` 2142 →
+`+ isFamK1p_170` (`coveredAll170`) **2170**, leaving 285 terms of the 2455.  Of those 285
+exactly SIX are class (d), and they are the `p = 1`, `j = 0` corner §169 named.  On
+`pool136` the union is 70 (no movement from any of the three sections); on `fm145` it is
+**400** — §168 alone takes that pool from 344 to 400, and §169 and §170 add nothing there
+(measured: `fm145`'s uncovered class-(d) terms are all `k = 0`).
+-/
+
+
+open BMS
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §170.1 `collapse 0` of a ONE-DIGIT term whose digit fires
+
+Generic: no tower, no base, no coefficient shape.  Given that `X`'s `wcnf` is the single
+digit `(A, C)` with nothing left over, that the digit fires (`Ω₁ ≤ A`), and that the
+emitted index is `I`, then `ψ₀ X = ψ_{Ω₁} I`.  §162's `collapse0_PT162`, §169's
+`collapse0_PT_succ169` / `collapse0_PTB169` and everything in §170.2/§170.4 are
+instances; the only thing that ever changes is which `(A, C)` and which `I`. -/
+
+theorem collapse0_digit170 {X A C I : Term} (htl : toList X = [X])
+    (hw : wcnf (reg 1) [X] = ([(A, C)], zero)) (hfire : le (reg 1) A = true)
+    (hidx : idxOf (reg 1) ((none : Option Term), (none : Option Term)) (A, C) = I) :
+    collapse 0 X = psi (Z zero) I := by
+  rw [collapse_eq, htl, hw]
+  show omegaNF (plus (reg 0) (plus
+    ((stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term))
+      (A, C)).2.getD zero) zero)) = _
+  rw [show stepF (reg 1) (baseOf 0) ((none : Option Term), (none : Option Term)) (A, C)
+      = (some I, some (psi (reg 1) I)) from by
+      show (if le (reg 1) A = true
+            then (some (idxOf (reg 1) ((none : Option Term), (none : Option Term)) (A, C)),
+                  some (psi (reg 1) (idxOf (reg 1)
+                    ((none : Option Term), (none : Option Term)) (A, C))))
+            else ((none : Option Term),
+                  some (phiNF A (plus (baseOf 0) (sub1 C))))) = _
+      rw [if_pos hfire, hidx]]
+  show omegaNF (psi (Z zero) I) = _
+  exact omegaNF_psi139 _ _
+
+/-- 段 0 の塔は §158 の混合塔の底の段そのもの。 -/
+theorem MT_WB170 (a : Nat) (Y : Term) : MT158 (Z zero) a Y 0 = PT162 (WB162 a Y) 0 := by
+  show phi zero (add (UW152 (Z zero) a) Y) = phi zero (add (TW (a + 1)) Y)
+  rw [TW_UW156 a]
+
+/-- **段 0 の `ψ₀`、底の頭が `Ω₁` より真に上のとき** — 吐く指数は塔そのもの。 -/
+theorem collapse0_MT0_170 (σ : Term) (b : Nat) {Y : Term} (hY : TailOK158 Y) :
+    collapse 0 (MT158 σ (b + 1) Y 0) = psi (Z zero) (MT158 σ (b + 1) Y 0) :=
+  collapse0_digit170 (toList_MT158 σ (b + 1) Y 0) (wcnf_MT0_158 σ b hY)
+    (le_reg1_UW152 σ (b + 1)) (idx_MT0_158 σ b hY)
+
+/-- **段 0 の `ψ₀`、底の頭がちょうど `Ω₁` のとき** — `Ω₁ ⊖ Ω₁ = 0` が指数を食べるので
+    吐く指数は係数 `Y` だけ。値は `ψ_{Ω₁}(Y)` まで落ちる。 -/
+theorem collapse0_MT0_Om170 {Y : Term} (hY : TailOK158 Y) :
+    collapse 0 (MT158 (Z zero) 0 Y 0) = psi (Z zero) Y :=
+  collapse0_digit170 (toList_MT158 (Z zero) 0 Y 0) (wcnf_MT0_Om158 hY)
+    (show le (reg 1) (Z zero) = true from rfl) (idx_MT0_Om158 hY)
+
+/-! ### §170.2 The seed of class (d) at `k = 1`, `1 ≤ j`, and the closed form -/
+
+/-- **`k = 1`, `p ≥ 3` の種。** -/
+theorem dict_seedK1_170 {j : Nat} (h1j : 1 ≤ j) (a : Nat) :
+    dict (BT.D 0 (nst132 1 (BT.sum (nst132 (a + 3) BT.zero)
+      (BT.D 0 (nst132 j BT.zero)))))
+      = psi (Z zero) (PT162 (WB162 (a + 1) (sd152 j)) 0) := by
+  have hF : dict (nst132 1 (BT.sum (nst132 (a + 3) BT.zero)
+      (BT.D 0 (nst132 j BT.zero)))) = PT162 (WB162 (a + 1) (sd152 j)) 0 :=
+    dict_famF162 (a := a + 1) (j := j) h1j 0
+  show collapse 0 (dict (nst132 1 (BT.sum (nst132 (a + 3) BT.zero)
+    (BT.D 0 (nst132 j BT.zero))))) = _
+  rw [hF, ← MT_WB170 (a + 1) (sd152 j)]
+  exact collapse0_MT0_170 (Z zero) a (tailOK_sd158 j h1j)
+
+/-- **`k = 1`, `p = 2` の種** — `ψ₀` は種そのものの上に落ちる。 -/
+theorem dict_seedK1_p2_170 {j : Nat} (h1j : 1 ≤ j) :
+    dict (BT.D 0 (nst132 1 (BT.sum (nst132 2 BT.zero)
+      (BT.D 0 (nst132 j BT.zero))))) = psi (Z zero) (sd152 j) := by
+  have hF : dict (nst132 1 (BT.sum (nst132 2 BT.zero)
+      (BT.D 0 (nst132 j BT.zero)))) = PT162 (WB162 0 (sd152 j)) 0 :=
+    dict_famF162 (a := 0) (j := j) h1j 0
+  show collapse 0 (dict (nst132 1 (BT.sum (nst132 2 BT.zero)
+    (BT.D 0 (nst132 j BT.zero))))) = _
+  rw [hF, ← MT_WB170 0 (sd152 j)]
+  exact collapse0_MT0_Om170 (tailOK_sd158 j h1j)
+
+/-- **閉じた形 (`k = 1`, `p ≥ 3`, `1 ≤ j`)。** -/
+theorem dict_famK1_170 {j a : Nat} (h1j : 1 ≤ j) : ∀ m : Nat,
+    dict (famK162 (m + 1) 1 (a + 3) j)
+      = UW152 (psi (Z zero) (PT162 (WB162 (a + 1) (sd152 j)) 0)) m :=
+  dict_towerSeed162 rfl rfl (lt_psiOm_reg1_139 _) (lt_psiOm_Om2_139 _)
+    (dict_seedK1_170 h1j a)
+
+/-- **閉じた形 (`k = 1`, `p = 2`, `1 ≤ j`)。** -/
+theorem dict_famK1_p2_170 {j : Nat} (h1j : 1 ≤ j) : ∀ m : Nat,
+    dict (famK162 (m + 1) 1 2 j) = UW152 (psi (Z zero) (sd152 j)) m :=
+  dict_towerSeed162 rfl rfl (lt_psiOm_reg1_139 _) (lt_psiOm_Om2_139 _)
+    (dict_seedK1_p2_170 h1j)
+
+/-! ### §170.3 The step at `1 ≤ j`, both slices and both directions
+
+The reach lemmas are §168's `lt_towB_UW168` / `lt_towB_UW_false168`, already generic in
+the base's tail; only the tower height is new (it is `0`). -/
+
+/-- **主定理 1 (`p ≥ 3`, `1 ≤ j`) — `3 ≤ m`, `j ≤ m`, `p + 1 ≤ m` で第一の門の一歩。** -/
+theorem ksetStepOK_famK1_170 {m p j : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) (h1j : 1 ≤ j)
+    (hpm : p + 1 ≤ m) (hjm : j ≤ m) : KsetStepOK 0 (dict (famK162 m 1 p j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 3 := ⟨p - 3, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (WB162 (a + 1) (sd152 j)) 0)) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 (a + 3) j)
+      = UW152 (psi (Z zero) (PT162 (WB162 (a + 1) (sd152 j)) 0)) (mm + 2) from
+    dict_famK1_170 h1j (mm + 2)]
+  refine stepOK_UW152 hS.h1 mm ?_
+  intro y hy
+  rw [Kset_psi_reg152, Kset_PT162, Kset_WB1_162] at hy
+  rcases List.mem_cons.mp hy with h | h
+  · rw [h]
+    obtain ⟨d, hd⟩ : ∃ d, mm + 2 = d + 0 + 1 := ⟨mm + 1, by omega⟩
+    rw [hd]
+    exact lt_towB_UW168 hS (a + 1) (sd152 j) d 0 (by omega)
+  · exact Ksd_lt_UW162 _ (mm + 2) j (by omega) y h
+
+/-- **主定理 2 (`p ≥ 3`, `1 ≤ j`) — `m < p + 1` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famK1_170 {m p j : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) (h1j : 1 ≤ j)
+    (hmp : m < p + 1) : ¬ KsetStepOK 0 (dict (famK162 m 1 p j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 3 := ⟨p - 3, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (WB162 (a + 1) (sd152 j)) 0)) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 (a + 3) j)
+      = UW152 (psi (Z zero) (PT162 (WB162 (a + 1) (sd152 j)) 0)) (mm + 2) from
+    dict_famK1_170 h1j (mm + 2)]
+  refine not_stepOK_UW162 hS.h1 mm (y := PT162 (WB162 (a + 1) (sd152 j)) 0) ?_ ?_
+  · rw [Kset_psi_reg152]
+    exact List.Mem.head _
+  · exact lt_towB_UW_false168 hS (baseOK_WB_sd162 h1j (a + 1)) 0 (mm + 2) (by omega)
+
+/-- **主定理 3 (`p ≥ 3`) — `m < j` でも一歩は成り立たない。**  逃げる元は種の `K` の
+    塔 `TW (j-1)`、底の尾を通って `K_{Ω₁}(種)` に居る。 -/
+theorem not_ksetStepOK_famK1_j170 {m p j : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p)
+    (hmj : m < j) : ¬ KsetStepOK 0 (dict (famK162 m 1 p j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨a, rfl⟩ : ∃ a, p = a + 3 := ⟨p - 3, by omega⟩
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 4 := ⟨j - 4, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (WB162 (a + 1) (sd152 (jj + 4))) 0)) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 (a + 3) (jj + 4))
+      = UW152 (psi (Z zero) (PT162 (WB162 (a + 1) (sd152 (jj + 4))) 0)) (mm + 2) from
+    dict_famK1_170 (by omega) (mm + 2)]
+  refine not_stepOK_UW162 hS.h1 mm (y := TW (jj + 3)) ?_ ?_
+  · rw [Kset_psi_reg152, Kset_PT162, Kset_WB1_162]
+    exact List.Mem.tail _ (Ksd_escape158 jj)
+  · exact lt_TW_UW_false152 (lt_Om_psi141 _) (mm + 2) (jj + 3) (by omega)
+
+/-- **主定理 4 (`p = 2`, `1 ≤ j`) — `3 ≤ m`, `j ≤ m` で第一の門の一歩。**  ここでは
+    種は `ψ_{Ω₁}(sd_j)` そのもので、底の高さは義務に出てこない。 -/
+theorem ksetStepOK_famK1_p2_170 {m j : Nat} (h3m : 3 ≤ m) (h1j : 1 ≤ j) (hjm : j ≤ m) :
+    KsetStepOK 0 (dict (famK162 m 1 2 j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  have hJ : TailOK158 (sd152 j) := tailOK_sd158 j h1j
+  have hS : TailOK158 (psi (Z zero) (sd152 j)) := tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 2 j) = UW152 (psi (Z zero) (sd152 j)) (mm + 2) from
+    dict_famK1_p2_170 h1j (mm + 2)]
+  refine stepOK_UW152 hS.h1 mm ?_
+  intro y hy
+  rw [Kset_psi_reg152] at hy
+  rcases List.mem_cons.mp hy with h | h
+  · rw [h]
+    exact lt_tail_UW158 hJ _ (mm + 2)
+  · exact Ksd_lt_UW162 _ (mm + 2) j (by omega) y h
+
+/-- **主定理 5 (`p = 2`) — `m < j` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famK1_p2_j170 {m j : Nat} (h3m : 3 ≤ m) (hmj : m < j) :
+    ¬ KsetStepOK 0 (dict (famK162 m 1 2 j)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨jj, rfl⟩ : ∃ jj, j = jj + 4 := ⟨j - 4, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (sd152 (jj + 4))) := tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 2 (jj + 4))
+      = UW152 (psi (Z zero) (sd152 (jj + 4))) (mm + 2) from
+    dict_famK1_p2_170 (by omega) (mm + 2)]
+  refine not_stepOK_UW162 hS.h1 mm (y := TW (jj + 3)) ?_ ?_
+  · rw [Kset_psi_reg152]
+    exact List.Mem.tail _ (Ksd_escape158 jj)
+  · exact lt_TW_UW_false152 (lt_Om_psi141 _) (mm + 2) (jj + 3) (by omega)
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §170.4 The `j = 0` base: a tail that is the literal `1`
+
+`sd152 0 = 1` is not `TailOK158` (`ho` fails), so §158.2b's `wA_MT0_158` / `wC_MT0_158`
+/ `idx_MT0_158` do not reach `WB162 a 1`.  Everything is recomputed here.  The one real
+change is the coefficient: `wC = omegaNF 1 = ω`, not `1` — the `+1` of the base's tail is
+counted into the exponent by `omegaNF`.  The emitted index is unchanged in shape:
+the whole term at `p ≥ 3`, the bare coefficient `ω` at `p = 2`. -/
+
+theorem toListKB170 (a : Nat) :
+    toList (WB162 a TM.Term.one) = [TW (a + 1), (TM.Term.one : Term)] := rfl
+
+theorem logOmKB170 (a : Nat) :
+    logOm (PT162 (WB162 a TM.Term.one) 0) = WB162 a TM.Term.one :=
+  logOm_PT0_162 (baseOK_KB0_168 a)
+
+theorem lt_one_reg1_170 : lt (TM.Term.one : Term) (reg 1) = true := by decide
+
+theorem filterGeKB170 (a : Nat) :
+    List.filter (fun q => !lt q (reg 1)) [TW (a + 1), (TM.Term.one : Term)]
+      = [TW (a + 1)] := by
+  rw [List.filter_cons_of_pos (by
+        show (!lt (TW (a + 1)) (reg 1)) = true
+        rw [lt_TW_reg1_162 a]
+        rfl),
+    List.filter_cons_of_neg (by
+        intro hc
+        rw [lt_one_reg1_170] at hc
+        exact Bool.noConfusion hc)]
+  rfl
+
+theorem filterLtKB170 (a : Nat) :
+    List.filter (fun q => lt q (reg 1)) [TW (a + 1), (TM.Term.one : Term)]
+      = [(TM.Term.one : Term)] := by
+  rw [List.filter_cons_of_neg (by
+        intro hc
+        rw [lt_TW_reg1_162 a] at hc
+        exact Bool.noConfusion hc),
+    List.filter_cons_of_pos (by exact lt_one_reg1_170)]
+  rfl
+
+/-- **係数は `ω`** — `omegaNF 1 = ω`。 -/
+theorem wCKB170 (a : Nat) :
+    wC (reg 1) (PT162 (WB162 a TM.Term.one) 0) = phi zero TM.Term.one := by
+  show omegaNF (ofList (List.filter (fun q => lt q (reg 1))
+    (toList (logOm (PT162 (WB162 a TM.Term.one) 0))))) = _
+  rw [logOmKB170 a, toListKB170 a, filterLtKB170 a]
+  show omegaNF (TM.Term.one : Term) = _
+  decide
+
+/-- **指数は底の頭 (`p ≥ 3`)。** -/
+theorem wAKB170 (b : Nat) :
+    wA (reg 1) (PT162 (WB162 (b + 1) TM.Term.one) 0) = UW152 (Z zero) (b + 1) := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (PT162 (WB162 (b + 1) TM.Term.one) 0))))) = _
+  rw [logOmKB170 (b + 1), toListKB170 (b + 1), filterGeKB170 (b + 1)]
+  show ofList [divAP (reg 1) (TW (b + 1 + 1))] = _
+  rw [show (TW (b + 1 + 1) : Term) = UW152 (Z zero) (b + 1) from TW_UW156 (b + 1)]
+  show ofList [omegaNF (subAP (reg 1) (logOm (UW152 (Z zero) (b + 1))))] = _
+  rw [logOm_UW152 (Z zero) b, subAP_UW152 (Z zero) b, omegaNF_UW152 (Z zero) b]
+  rfl
+
+/-- **指数は裸の `Ω₁` (`p = 2`)。** -/
+theorem wAKB00_170 : wA (reg 1) (PT162 (WB162 0 TM.Term.one) 0) = Z zero := by
+  show ofList (List.map (divAP (reg 1)) (List.filter (fun q => !lt q (reg 1))
+    (toList (logOm (PT162 (WB162 0 TM.Term.one) 0))))) = _
+  rw [logOmKB170 0, toListKB170 0, filterGeKB170 0]
+  show ofList [divAP (reg 1) (phi zero (add (Z zero) (Z zero)))] = _
+  show ofList [omegaNF (subAP (reg 1) (logOm (phi zero (add (Z zero) (Z zero)))))] = _
+  rw [show logOm (phi zero (add (Z zero) (Z zero))) = add (Z zero) (Z zero) from
+      logOm_phi0_135 (show phiShifted zero (TW 0) = false from rfl),
+    show subAP (reg 1) (add (Z zero) (Z zero)) = Z zero from by
+      show (if ((Z zero : Term) == reg 1) = true then ofList [Z zero] else TW 0) = _
+      rw [if_pos (by rfl)]
+      rfl,
+    show omegaNF (Z zero) = Z zero from omegaNF_reg1_79]
+  rfl
+
+theorem wcnfKB170 (b : Nat) :
+    wcnf (reg 1) [PT162 (WB162 (b + 1) TM.Term.one) 0]
+      = ([(UW152 (Z zero) (b + 1), phi zero TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_PT_reg1_162 (baseOK_KB0_168 (b + 1)) 0)]
+  show ([(wA (reg 1) (PT162 (WB162 (b + 1) TM.Term.one) 0),
+          wC (reg 1) (PT162 (WB162 (b + 1) TM.Term.one) 0))], zero) = _
+  rw [wAKB170 b, wCKB170 (b + 1)]
+
+theorem wcnfKB00_170 :
+    wcnf (reg 1) [PT162 (WB162 0 TM.Term.one) 0]
+      = ([((Z zero : Term), phi zero TM.Term.one)], zero) := by
+  rw [wcnf_cons_ge (lt_PT_reg1_162 (baseOK_KB0_168 0) 0)]
+  show ([(wA (reg 1) (PT162 (WB162 0 TM.Term.one) 0),
+          wC (reg 1) (PT162 (WB162 0 TM.Term.one) 0))], zero) = _
+  rw [wAKB00_170, wCKB170 0]
+
+theorem phiShifted_one170 : phiShifted zero (TM.Term.one : Term) = false := by decide
+
+theorem plus_TW_one170 (a : Nat) :
+    plus (TW (a + 1)) TM.Term.one = WB162 a TM.Term.one := by
+  rw [plus_cons66 (show toList (TM.Term.one : Term) = (TM.Term.one : Term) :: [] from rfl),
+    show toList (TW (a + 1)) = [TW (a + 1)] from rfl,
+    List.filter_cons_of_pos (le_one_TW168 a)]
+  rfl
+
+/-- **吐く指数は塔そのもの (`p ≥ 3`, `j = 0`)。** -/
+theorem idxKB170 (b : Nat) :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      (UW152 (Z zero) (b + 1), phi zero TM.Term.one)
+      = PT162 (WB162 (b + 1) TM.Term.one) 0 := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (UW152 (Z zero) (b + 1))))
+    (phi zero TM.Term.one)) = _
+  rw [subAP_UW152 (Z zero) (b + 1), mulL_Om1_UW156 (Z zero) b,
+    show mulL (UW152 (Z zero) (b + 1)) (phi zero TM.Term.one)
+        = PT162 (WB162 (b + 1) TM.Term.one) 0 from by
+      show ofList [omegaNF (plus (UW152 (Z zero) (b + 1))
+        (logOm (phi zero TM.Term.one)))] = _
+      rw [logOm_phi0_135 phiShifted_one170, ← TW_UW156 (b + 1), plus_TW_one170 (b + 1),
+        (baseOK_KB0_168 (b + 1)).homg]
+      rfl]
+  exact sub1_PT162 (baseOK_KB0_168 (b + 1)) 0
+
+/-- **吐く指数は係数 `ω` だけ (`p = 2`, `j = 0`)。** -/
+theorem idxKB00_170 :
+    idxOf (reg 1) ((none : Option Term), (none : Option Term))
+      ((Z zero : Term), phi zero TM.Term.one) = phi zero TM.Term.one := by
+  show sub1 (mulL (mulL (reg 1) (subAP (reg 1) (Z zero))) (phi zero TM.Term.one)) = _
+  rw [show subAP (reg 1) (Z zero) = zero from by
+      show (if ((Z zero : Term) == reg 1) = true then ofList [] else Z zero) = _
+      rw [if_pos (by rfl)]
+      rfl,
+    show mulL (reg 1) (zero : Term) = zero from rfl,
+    show mulL (zero : Term) (phi zero TM.Term.one) = phi zero TM.Term.one from by
+      show ofList [omegaNF (plus (zero : Term) (logOm (phi zero TM.Term.one)))] = _
+      rw [logOm_phi0_135 phiShifted_one170,
+        show plus (zero : Term) TM.Term.one = TM.Term.one from by
+          rw [plus_cons66 (show toList (TM.Term.one : Term)
+                = (TM.Term.one : Term) :: [] from rfl)]
+          rfl]
+      decide]
+  show sub1 (phi zero TM.Term.one) = _
+  decide
+
+/-! ### §170.5 The seed and closed form at `j = 0` -/
+
+theorem dict_seedK1_j0_170 (b : Nat) :
+    dict (BT.D 0 (nst132 1 (BT.sum (nst132 (b + 3) BT.zero)
+      (BT.D 0 (nst132 0 BT.zero)))))
+      = psi (Z zero) (PT162 (WB162 (b + 1) TM.Term.one) 0) := by
+  have hF : dict (nst132 1 (BT.sum (nst132 (b + 3) BT.zero)
+      (BT.D 0 (nst132 0 BT.zero)))) = PT162 (WB162 (b + 1) TM.Term.one) 0 :=
+    dict_famF0_168 (b + 1) 0
+  show collapse 0 (dict (nst132 1 (BT.sum (nst132 (b + 3) BT.zero)
+    (BT.D 0 (nst132 0 BT.zero))))) = _
+  rw [hF]
+  exact collapse0_digit170 (toList_PT162 (WB162 (b + 1) TM.Term.one) 0) (wcnfKB170 b)
+    (le_reg1_UW152 (Z zero) (b + 1)) (idxKB170 b)
+
+theorem dict_seedK1_p2_j0_170 :
+    dict (BT.D 0 (nst132 1 (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 0 BT.zero)))))
+      = psi (Z zero) (phi zero TM.Term.one) := by
+  have hF : dict (nst132 1 (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 0 BT.zero))))
+      = PT162 (WB162 0 TM.Term.one) 0 := dict_famF0_168 0 0
+  show collapse 0 (dict (nst132 1 (BT.sum (nst132 2 BT.zero)
+    (BT.D 0 (nst132 0 BT.zero))))) = _
+  rw [hF]
+  exact collapse0_digit170 (toList_PT162 (WB162 0 TM.Term.one) 0) wcnfKB00_170
+    (show le (reg 1) (Z zero) = true from rfl) idxKB00_170
+
+theorem dict_famK1_j0_170 (b : Nat) : ∀ m : Nat,
+    dict (famK162 (m + 1) 1 (b + 3) 0)
+      = UW152 (psi (Z zero) (PT162 (WB162 (b + 1) TM.Term.one) 0)) m :=
+  dict_towerSeed162 rfl rfl (lt_psiOm_reg1_139 _) (lt_psiOm_Om2_139 _)
+    (dict_seedK1_j0_170 b)
+
+theorem dict_famK1_p2_j0_170 : ∀ m : Nat,
+    dict (famK162 (m + 1) 1 2 0) = UW152 (psi (Z zero) (phi zero TM.Term.one)) m :=
+  dict_towerSeed162 rfl rfl (lt_psiOm_reg1_139 _) (lt_psiOm_Om2_139 _)
+    dict_seedK1_p2_j0_170
+
+/-! ### §170.6 The step at `j = 0`, both slices and both directions -/
+
+theorem Kset_om170 : Kset (reg 1) (phi zero TM.Term.one) = [] := by decide
+
+theorem lt_om_UW170 (s : Term) (j : Nat) :
+    lt (phi zero TM.Term.one) (UW152 s (j + 1)) = true := by
+  show lt (phi zero TM.Term.one) (phi zero (UW152 s j)) = true
+  rw [lt_phi_same139]
+  exact lt_one_UW168 s j
+
+/-- **主定理 6 (`p ≥ 3`, `j = 0`) — `3 ≤ m`, `p + 1 ≤ m` で第一の門の一歩。** -/
+theorem ksetStepOK_famK1_j0_170 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p)
+    (hpm : p + 1 ≤ m) : KsetStepOK 0 (dict (famK162 m 1 p 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨b, rfl⟩ : ∃ b, p = b + 3 := ⟨p - 3, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (WB162 (b + 1) TM.Term.one) 0)) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 (b + 3) 0)
+      = UW152 (psi (Z zero) (PT162 (WB162 (b + 1) TM.Term.one) 0)) (mm + 2) from
+    dict_famK1_j0_170 b (mm + 2)]
+  refine stepOK_UW152 hS.h1 mm ?_
+  intro y hy
+  rw [Kset_psi_reg152, Kset_PT162, Kset_KB0_168 (b + 1)] at hy
+  rcases List.mem_cons.mp hy with h | h
+  · rw [h]
+    obtain ⟨d, hd⟩ : ∃ d, mm + 2 = d + 0 + 1 := ⟨mm + 1, by omega⟩
+    rw [hd]
+    exact lt_towB_UW168 hS (b + 1) TM.Term.one d 0 (by omega)
+  · cases h
+
+/-- **主定理 7 (`p ≥ 3`, `j = 0`) — `m < p + 1` では一歩は成り立たない。** -/
+theorem not_ksetStepOK_famK1_j0_170 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p)
+    (hmp : m < p + 1) : ¬ KsetStepOK 0 (dict (famK162 m 1 p 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  obtain ⟨b, rfl⟩ : ∃ b, p = b + 3 := ⟨p - 3, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (PT162 (WB162 (b + 1) TM.Term.one) 0)) :=
+    tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 (b + 3) 0)
+      = UW152 (psi (Z zero) (PT162 (WB162 (b + 1) TM.Term.one) 0)) (mm + 2) from
+    dict_famK1_j0_170 b (mm + 2)]
+  refine not_stepOK_UW162 hS.h1 mm (y := PT162 (WB162 (b + 1) TM.Term.one) 0) ?_ ?_
+  · rw [Kset_psi_reg152]
+    exact List.Mem.head _
+  · exact lt_towB_UW_false168 hS (baseOK_KB0_168 (b + 1)) 0 (mm + 2) (by omega)
+
+/-- **主定理 8 (`p = 2`, `j = 0`) — `3 ≤ m` だけで一歩。**  種は `ψ_{Ω₁}(ω)` で
+    `K_{Ω₁}` は `ω` ひとつ、それは塔より下。境界 `p + 1 ≤ m` は `3 ≤ m` そのもの。 -/
+theorem ksetStepOK_famK1_p2_j0_170 {m : Nat} (h3m : 3 ≤ m) :
+    KsetStepOK 0 (dict (famK162 m 1 2 0)) := by
+  obtain ⟨mm, rfl⟩ : ∃ mm, m = mm + 3 := ⟨m - 3, by omega⟩
+  have hS : TailOK158 (psi (Z zero) (phi zero TM.Term.one)) := tailOK_psi162 _
+  rw [show dict (famK162 (mm + 3) 1 2 0)
+      = UW152 (psi (Z zero) (phi zero TM.Term.one)) (mm + 2) from
+    dict_famK1_p2_j0_170 (mm + 2)]
+  refine stepOK_UW152 hS.h1 mm ?_
+  intro y hy
+  rw [Kset_psi_reg152, Kset_om170] at hy
+  rw [List.mem_singleton.mp hy]
+  exact lt_om_UW170 _ (mm + 1)
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §170.7 The four slices joined — the boundary at `k = 1`, both directions
+
+`j ≤ m` is vacuous at `j = 0` and `p + 1 ≤ m` is vacuous at `p = 2` under `3 ≤ m`, so a
+single statement covers all four slices. -/
+
+theorem ksetStepOK_famK1p_170 {m p j : Nat} (h3m : 3 ≤ m) (h2p : 2 ≤ p)
+    (hpm : p + 1 ≤ m) (hjm : j ≤ m) : KsetStepOK 0 (dict (famK162 m 1 p j)) := by
+  rcases Nat.eq_or_lt_of_le (Nat.zero_le j) with hj0 | h1j
+  · obtain rfl : j = 0 := hj0.symm
+    rcases Nat.eq_or_lt_of_le h2p with h2 | h3
+    · obtain rfl : p = 2 := h2.symm
+      exact ksetStepOK_famK1_p2_j0_170 h3m
+    · exact ksetStepOK_famK1_j0_170 h3m h3 hpm
+  · rcases Nat.eq_or_lt_of_le h2p with h2 | h3
+    · obtain rfl : p = 2 := h2.symm
+      exact ksetStepOK_famK1_p2_170 h3m h1j hjm
+    · exact ksetStepOK_famK1_170 h3m h3 h1j hpm hjm
+
+theorem not_ksetStepOK_famK1p_170 {m p j : Nat} (h3m : 3 ≤ m) (hmp : m < p + 1) :
+    ¬ KsetStepOK 0 (dict (famK162 m 1 p j)) := by
+  rcases Nat.eq_or_lt_of_le (Nat.zero_le j) with hj0 | h1j
+  · obtain rfl : j = 0 := hj0.symm
+    exact not_ksetStepOK_famK1_j0_170 h3m (by omega) hmp
+  · exact not_ksetStepOK_famK1_170 h3m (by omega) h1j hmp
+
+theorem not_ksetStepOK_famK1p_j170 {m p j : Nat} (h3m : 3 ≤ m) (h2p : 2 ≤ p)
+    (hmj : m < j) : ¬ KsetStepOK 0 (dict (famK162 m 1 p j)) := by
+  rcases Nat.eq_or_lt_of_le h2p with h2 | h3
+  · obtain rfl : p = 2 := h2.symm
+    exact not_ksetStepOK_famK1_p2_j170 h3m hmj
+  · exact not_ksetStepOK_famK1_j170 h3m h3 hmj
+
+/-- **境界はちょうど `p + 1 ≤ m` かつ `j ≤ m` (`k = 1`, `2 ≤ p`, どの `j` でも)。** -/
+theorem stepOK_iff_famK1p_170 {m p j : Nat} (h3m : 3 ≤ m) (h2p : 2 ≤ p) :
+    KsetStepOK 0 (dict (famK162 m 1 p j)) ↔ (p + 1 ≤ m ∧ j ≤ m) := by
+  constructor
+  · intro H
+    refine ⟨?_, ?_⟩
+    · rcases Nat.lt_or_ge m (p + 1) with hlt | hge
+      · exact absurd H (not_ksetStepOK_famK1p_170 h3m hlt)
+      · exact hge
+    · rcases Nat.lt_or_ge m j with hlt | hge
+      · exact absurd H (not_ksetStepOK_famK1p_j170 h3m h2p hlt)
+      · exact hge
+  · rintro ⟨h1, h2⟩
+    exact ksetStepOK_famK1p_170 h3m h2p h1 h2
+
+/-! ### §170.8 The standardness contrapositive on the `m < j` wedge
+
+§162.12c's `not_std_famK162` refutes only the `m < k + p` wedge.  At `k = 1`, `p = 2`
+that wedge is EMPTY under `3 ≤ m`, so the failing side there is the new one: `m < j`.
+The escaping element of `GB 0` is the bare tower `ψ₁^j 0`. -/
+
+theorem GB_D0_170 (W : BT) : BT.GB 0 (BT.D 0 W) = W :: BT.GB 0 W := by
+  show (if 0 ≤ 0 then W :: BT.GB 0 W else []) = _
+  rw [if_pos (by omega)]
+
+theorem mem_GB_towj170 (m k p j : Nat) :
+    nst132 j BT.zero ∈ BT.GB 0 (famK162 m k p j) := by
+  refine mem_GB_nst158 ?_ m
+  rw [GB_D0_170]
+  refine List.Mem.tail _ (mem_GB_nst158 ?_ k)
+  show nst132 j BT.zero
+    ∈ BT.GB 0 (nst132 p BT.zero) ++ BT.GB 0 (BT.D 0 (nst132 j BT.zero))
+  exact List.mem_append.mpr (Or.inr (mem_GB_D0_158 _))
+
+/-- **`m < j` の類 (d) は `K` 標準でない** — `k`, `p` に依らない。 -/
+theorem not_std_famK_j170 {m k p j : Nat} (h : m < j) :
+    BT.isStd (BT.D 0 (famK162 m k p j)) = false := by
+  cases hs : BT.isStd (BT.D 0 (famK162 m k p j)) with
+  | false => rfl
+  | true =>
+      exfalso
+      have h0 : (BT.isStd (famK162 m k p j)
+          && (BT.GB 0 (famK162 m k p j)).all
+              (fun e => BT.lt e (famK162 m k p j))) = true := hs
+      have h2 := List.all_eq_true.mp ((Bool.and_eq_true _ _).mp h0).2 _
+        (mem_GB_towj170 m k p j)
+      rw [show BT.lt (nst132 j BT.zero) (famK162 m k p j) = false from
+        ltL_tow_nstD0_false158 _ _ j m h] at h2
+      exact Bool.noConfusion h2
+
+/-- **主定理 9 — `k = 1` の切り口は第一の門を反証できない。**  破れる楔は二つ、
+    どちらも標準でない (`m < p + 1` は §162.12c、`m < j` は §170.8)。 -/
+theorem famK1_no_refute170 {m p j : Nat} (h3m : 3 ≤ m) (h2p : 2 ≤ p)
+    (hs : BT.isStd (BT.D 0 (famK162 m 1 p j)) = true) :
+    KsetStepOK 0 (dict (famK162 m 1 p j)) := by
+  rcases Nat.lt_or_ge m (p + 1) with hlt | hge
+  · exfalso
+    rw [not_std_famK162 (k := 1) (p := p) (by omega) (show m < 1 + p by omega)] at hs
+    exact Bool.noConfusion hs
+  · rcases Nat.lt_or_ge m j with hltj | hgej
+    · exfalso
+      rw [not_std_famK_j170 hltj] at hs
+      exact Bool.noConfusion hs
+    · exact ksetStepOK_famK1p_170 h3m h2p hge hgej
+
+theorem gateStd87_famK1p_170 (m p j : Nat) (h3m : 3 ≤ m) (h2p : 2 ≤ p)
+    (hpm : p + 1 ≤ m) (hjm : j ≤ m) : GateStd87 (famK162 m 1 p j) :=
+  fun _ _ => ksetStepOK_famK1p_170 h3m h2p hpm hjm
+
+theorem firstFire_famK1p_170 (m p j : Nat) (h3m : 3 ≤ m) (h2p : 2 ≤ p)
+    (hpm : p + 1 ≤ m) (hjm : j ≤ m) : FirstFire145 (famK162 m 1 p j) :=
+  fun r hr _ hle y hy => (ksetStepOK_famK1p_170 h3m h2p hpm hjm r hr hle).2 y hy
+
+/-! ### §170.9 The `k = 0` corner — SETTLED, and it was already §168's
+
+MEASURED (§170.10, frozen): the six class-(d) terms of `famPool132`'s residual that
+`covered169` leaves open at `k = 0` are exactly
+`(m, k, p, j) = (3,0,3,0), (4,0,3,0), (4,0,4,0), (5,0,3,0), (5,0,4,0), (5,0,5,0)`
+— every one has `j = 0` and `3 ≤ p ≤ m`, which is precisely §168.4's
+`ksetStepOK_famK00_168` / `stepOK_iff_famK00_168`.  Nothing new is needed: they sit
+outside `covered169` only because `covered169` is `covered162 || isFamK1_169` and never
+absorbed `covered168`.  §170.10 measures the union of all four sections, which is the
+first time that total is taken.
+
+What §170.8 does add here is the second standardness bound: a standard `k = 0` term has
+BOTH `p ≤ m` and `j ≤ m` (`famK0_std_bounds170`), so the only hypothesis of §162's
+`k = 0` step that standardness does not supply is `j ≤ p`. -/
+
+/-- **`k = 0`, `j = 0`, `3 ≤ p ≤ m` — §168.4 の定理をそのまま。**  残る 6 本は全部
+    この形 (測定、§170.10)。 -/
+theorem famK0_j0_step170 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) (hpm : p ≤ m) :
+    KsetStepOK 0 (dict (famK162 m 0 p 0)) := ksetStepOK_famK00_168 h3m h3p hpm
+
+/-- **`k = 0`, `j = 0` の境界は両向きに `p ≤ m` (§168.4)。** -/
+theorem stepOK_iff_famK0_j0_170 {m p : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) :
+    KsetStepOK 0 (dict (famK162 m 0 p 0)) ↔ p ≤ m := stepOK_iff_famK00_168 h3m h3p
+
+theorem famK0_std_bounds170 {m p j : Nat} (h1p : 1 ≤ p)
+    (hs : BT.isStd (BT.D 0 (famK162 m 0 p j)) = true) : p ≤ m ∧ j ≤ m := by
+  refine ⟨?_, ?_⟩
+  · rcases Nat.lt_or_ge m p with hlt | hge
+    · exfalso
+      rw [not_std_famK162 (k := 0) (p := p) h1p (show m < 0 + p by omega)] at hs
+      exact Bool.noConfusion hs
+    · exact hge
+  · rcases Nat.lt_or_ge m j with hlt | hge
+    · exfalso
+      rw [not_std_famK_j170 hlt] at hs
+      exact Bool.noConfusion hs
+    · exact hge
+
+/-- **`k = 0` の反証不能、`j ≤ p` の側** — `p ≤ m` は標準性から出る。 -/
+theorem famK0_no_refute170 {m p j : Nat} (h3m : 3 ≤ m) (h3p : 3 ≤ p) (h1j : 1 ≤ j)
+    (hjp : j ≤ p) (hs : BT.isStd (BT.D 0 (famK162 m 0 p j)) = true) :
+    KsetStepOK 0 (dict (famK162 m 0 p j)) :=
+  famK0_no_refute162 h3m h3p h1j hjp hs
+
+end
+
+section
+open Trans.Recal
+open Trans.Dict (BT dict)
+open Trans.Dict (wcnf divAP logOm subAP mulL sub1 reg collapse)
+open TM TM.Term
+open Evidence.WF
+
+/-! ### §170.10 Measurement (frozen) — everything below is measurement, not proof -/
+
+/-- §170 の証明した領域の判定器 (`k = 1`, `2 ≤ p`, どの `j` でも)。 -/
+def isFamK1p_170 (a : BT) : Bool :=
+  match peel158 a with
+  | (m, BT.D 0 X) =>
+      match peel158 X with
+      | (k, BT.sum y (BT.D 0 z)) =>
+          match towH158 y, towH158 z with
+          | some p, some j =>
+              decide (k = 1) && decide (3 ≤ m) && decide (2 ≤ p)
+                && decide (p + 1 ≤ m) && decide (j ≤ m)
+          | _, _ => false
+      | _ => false
+  | _ => false
+
+def covered170 (a : BT) : Bool := covered169 a || isFamK1p_170 a
+
+/-! 判定器は狙った形にだけ当たる。 -/
+#guard isFamK1p_170 (famK162 4 1 2 3)
+#guard isFamK1p_170 (famK162 5 1 3 2)
+#guard isFamK1p_170 (famK162 4 1 2 0)
+#guard !(isFamK1p_170 (famK162 4 1 4 3))
+#guard !(isFamK1p_170 (famK162 2 1 2 1))
+#guard !(isFamK1p_170 (famK162 4 1 1 3))
+#guard !(isFamK1p_170 (famK162 4 1 2 5))
+#guard !(isFamK1p_170 (famK162 4 2 2 3))
+#guard !(isFamK1p_170 (famF158 3 1 4))
+
+/-! 閉じた形の照合 — 四つの切り口すべて。 -/
+#guard dict (famK162 4 1 2 3) == UW152 (psi (Z zero) (sd152 3)) 3
+#guard dict (famK162 5 1 2 2) == UW152 (psi (Z zero) (sd152 2)) 4
+#guard dict (famK162 5 1 4 2)
+  == UW152 (psi (Z zero) (PT162 (WB162 2 (sd152 2)) 0)) 4
+#guard dict (famK162 4 1 3 3)
+  == UW152 (psi (Z zero) (PT162 (WB162 1 (sd152 3)) 0)) 3
+#guard dict (famK162 4 1 2 0)
+  == UW152 (psi (Z zero) (phi zero TM.Term.one)) 3
+#guard dict (famK162 5 1 4 0)
+  == UW152 (psi (Z zero) (PT162 (WB162 2 TM.Term.one) 0)) 4
+#guard dict (BT.D 0 (nst132 1 (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 3 BT.zero)))))
+  == psi (Z zero) (sd152 3)
+#guard dict (BT.D 0 (nst132 1 (BT.sum (nst132 4 BT.zero) (BT.D 0 (nst132 3 BT.zero)))))
+  == psi (Z zero) (PT162 (WB162 2 (sd152 3)) 0)
+#guard dict (BT.D 0 (nst132 1 (BT.sum (nst132 2 BT.zero) (BT.D 0 (nst132 0 BT.zero)))))
+  == psi (Z zero) (phi zero TM.Term.one)
+#guard dict (BT.D 0 (nst132 1 (BT.sum (nst132 4 BT.zero) (BT.D 0 (nst132 0 BT.zero)))))
+  == psi (Z zero) (PT162 (WB162 2 TM.Term.one) 0)
+
+/-! 段 0 の桁 (測定、凍結) — `p = 2` は `(Ω₁, 尾)`、`p ≥ 3` は `(TW(p-1), 尾)`。
+    係数は `1` ではなく尾そのもの。`j = 0` では尾が `1` で、係数は `omegaNF 1 = ω`。 -/
+#guard (wcnf (reg 1) (toList (PT162 (WB162 0 (sd152 3)) 0))).1
+  == [((Z zero : Term), sd152 3)]
+#guard (wcnf (reg 1) (toList (PT162 (WB162 2 (sd152 3)) 0))).1
+  == [(TW 3, sd152 3)]
+#guard (wcnf (reg 1) (toList (PT162 (WB162 0 TM.Term.one) 0))).1
+  == [((Z zero : Term), phi zero TM.Term.one)]
+#guard (wcnf (reg 1) (toList (PT162 (WB162 2 TM.Term.one) 0))).1
+  == [(TW 3, phi zero TM.Term.one)]
+#guard le (reg 1) (Z zero)
+#guard le (reg 1) (TW 3)
+#guard omegaNF (TM.Term.one : Term) == phi zero TM.Term.one
+#guard Kset (reg 1) (phi zero TM.Term.one) == ([] : List Term)
+
+/-! 境界の掃き — 証明した窓より広く取る。両向きを一度に凍結する。 -/
+#guard (List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ p))
+  || (stepOKb 0 (dict (famK162 m 1 p j)) == (decide (p + 1 ≤ m) && decide (j ≤ m)))
+
+/-! 二つの合接はどちらも飾りではない — 片方だけでは掃きは通らない。 -/
+#guard !((List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ p) && decide (p + 1 ≤ m))
+  || stepOKb 0 (dict (famK162 m 1 p j)))
+#guard !((List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ p) && decide (j ≤ m))
+  || stepOKb 0 (dict (famK162 m 1 p j)))
+
+/-! 手の届かない隅 (測定、凍結) — **これは測定であって証明ではない。**
+    窓は `m, p, j ≤ 7`。この窓の外は何も言っていない。
+
+    `m ≤ 2` — どの `(p, j)` でも一歩は成り立つ。道具の限界であって壁ではない。 -/
+#guard (List.range 8).all fun p => (List.range 8).all fun j =>
+  stepOKb 0 (dict (famK162 0 1 p j)) && stepOKb 0 (dict (famK162 1 1 p j))
+    && stepOKb 0 (dict (famK162 2 1 p j))
+
+/-! `p ≤ 1` の隅 — `p = 1` は §169 の担当。`p = 0` は零和の退化形。 -/
+#guard sd152 0 == TM.Term.one
+#guard (List.range 8).all fun m => (List.range 8).all fun j =>
+  !(decide (3 ≤ m)) || (stepOKb 0 (dict (famK162 m 1 1 j)) == decide (j ≤ m))
+
+/-! 被覆 (測定、凍結)。三つの母集団すべてで前後を測る。 -/
+#guard (famPool132.filter resid136).length == 2455
+#guard ((famPool132.filter resid136).countP covered162) == 1998
+#guard ((famPool132.filter resid136).countP covered169) == 2020
+#guard ((famPool132.filter resid136).countP isFamK1p_170) == 28
+#guard ((famPool132.filter resid136).countP covered170) == 2048
+#guard ((pool136.filter resid136).countP covered169) == 70
+#guard ((pool136.filter resid136).countP covered170) == 70
+#guard ((fm145.filter resid136).countP covered169) == 344
+#guard ((fm145.filter resid136).countP covered170) == 344
+
+/-! `pool136` は類 (d) の項を一本も持たない (§169 の測定)。`fm145` の 12 本は
+    どれも `k = 0` なので `k = 1` の切り口に一本も居ない。 -/
+#guard ((pool136.filter resid136).countP isDany169) == 0
+#guard ((fm145.filter resid136).countP (fun a => isDany169 a && !(covered170 a))) == 12
+#guard (((fm145.filter resid136).filter (fun a => !(covered170 a))).filterMap
+  decK169).all (fun q => q.2.1 == 0)
+
+/-- 類 (d) の残り — `covered170` の外に居る類 (d) の項の指数、全部。 -/
+def leftK170 : List (Nat × Nat × Nat × Nat) :=
+  ((famPool132.filter resid136).filter (fun a => !(covered170 a))).filterMap decK169
+
+/-- この file の担当ぶん — `k = 1` で `covered169` の外に居た項、全部。 -/
+def mineK170 : List (Nat × Nat × Nat × Nat) :=
+  (((famPool132.filter resid136).filter (fun a => !(covered169 a))).filterMap
+    decK169).filter (fun q => q.2.1 == 1)
+
+#guard mineK170.length == 28
+#guard (mineK170.countP (fun q => decide (2 ≤ q.2.2.1))) == 28
+#guard (mineK170.countP (fun q => decide (3 ≤ q.1))) == 28
+#guard (mineK170.countP (fun q => q.2.2.2 == 0)) == 6
+#guard leftK170.length == 16
+#guard (leftK170.countP (fun q => q.2.1 == 1)) == 0
+#guard (leftK170.countP (fun q => q.2.2.1 == 1)) == 6
+#guard (leftK170.countP (fun q => q.2.1 == 0)) == 6
+#guard (leftK170.countP (fun q => decide (2 ≤ q.2.1) && decide (2 ≤ q.2.2.1))) == 4
+/-! 残る 16 本はどれも `j = 0` — `k = 1` の切り口には一本も残っていない。 -/
+#guard leftK170.all (fun q => q.2.2.2 == 0)
+#eval leftK170
+#eval mineK170
+
+/-! `k = 0` の残り 6 本 — どれも `j = 0`, `3 ≤ p ≤ m`、つまり §168.4 の証明済みの
+    領域そのもの (§170.9)。 -/
+#guard (leftK170.filter (fun q => q.2.1 == 0))
+  == [(3, 0, 3, 0), (4, 0, 3, 0), (4, 0, 4, 0), (5, 0, 3, 0), (5, 0, 4, 0), (5, 0, 5, 0)]
+#guard (leftK170.filter (fun q => q.2.1 == 0)).all
+  (fun q => q.2.2.2 == 0 && decide (3 ≤ q.2.2.1) && decide (q.2.2.1 ≤ q.1))
+#guard (leftK170.filter (fun q => q.2.1 == 0)).all (fun q => isFamK0_168 (famK162 q.1 0 q.2.2.1 0))
+
+/-! `k = 0` の境界 (測定、凍結) — `3 ≤ m`, `2 ≤ p` で一歩は `p ≤ m ∧ j ≤ m` と同値。
+    `j ≤ p` は §162 の道具の要求であって境界ではない。 -/
+#guard (List.range 8).all fun m => (List.range 8).all fun p => (List.range 8).all fun j =>
+  !(decide (3 ≤ m) && decide (2 ≤ p))
+  || (stepOKb 0 (dict (famK162 m 0 p j)) == (decide (p ≤ m) && decide (j ≤ m)))
+
+/-! ### §170.10b The union of §162 · §168 · §169 · §170 — measured HERE for the first
+    time.  `covered169` is `covered162 || isFamK1_169` and never absorbed `covered168`,
+    so no earlier file's number is the total.  These are the counts this file measured;
+    the `#eval`s print them, the `#guard`s freeze them. -/
+
+def coveredAll170 (a : BT) : Bool :=
+  covered168 a || isFamK1_169 a || isFamK1p_170 a
+
+#guard ((famPool132.filter resid136).countP covered168) == 2120
+#guard ((famPool132.filter resid136).countP (fun a => covered168 a || isFamK1_169 a))
+  == 2142
+#guard ((famPool132.filter resid136).countP coveredAll170) == 2170
+#guard ((pool136.filter resid136).countP covered168) == 70
+#guard ((pool136.filter resid136).countP coveredAll170) == 70
+#guard ((fm145.filter resid136).countP covered168) == 400
+#guard ((fm145.filter resid136).countP coveredAll170) == 400
+#guard (((famPool132.filter resid136).filter (fun a => !(coveredAll170 a))).length) == 285
+#eval (((famPool132.filter resid136).filter (fun a => !(coveredAll170 a))).filterMap
+  decK169)
+
+/-! 合わせたあとに残る類 (d) は `p = 1`, `j = 0` の 6 本だけ (§169 が名指しした隅)。 -/
+#guard (((famPool132.filter resid136).filter (fun a => !(coveredAll170 a))).filterMap
+  decK169) == [(3, 2, 1, 0), (4, 2, 1, 0), (4, 3, 1, 0), (5, 2, 1, 0), (5, 3, 1, 0),
+    (5, 4, 1, 0)]
+
+/-! ### Axioms — no `sorryAx`, no `native_decide` -/
+
+#print axioms collapse0_digit170
+#print axioms MT_WB170
+#print axioms collapse0_MT0_170
+#print axioms collapse0_MT0_Om170
+#print axioms dict_seedK1_170
+#print axioms dict_seedK1_p2_170
+#print axioms dict_famK1_170
+#print axioms dict_famK1_p2_170
+#print axioms ksetStepOK_famK1_170
+#print axioms not_ksetStepOK_famK1_170
+#print axioms not_ksetStepOK_famK1_j170
+#print axioms ksetStepOK_famK1_p2_170
+#print axioms not_ksetStepOK_famK1_p2_j170
+#print axioms wAKB170
+#print axioms wAKB00_170
+#print axioms wCKB170
+#print axioms idxKB170
+#print axioms idxKB00_170
+#print axioms dict_seedK1_j0_170
+#print axioms dict_seedK1_p2_j0_170
+#print axioms dict_famK1_j0_170
+#print axioms dict_famK1_p2_j0_170
+#print axioms ksetStepOK_famK1_j0_170
+#print axioms not_ksetStepOK_famK1_j0_170
+#print axioms ksetStepOK_famK1_p2_j0_170
+#print axioms ksetStepOK_famK1p_170
+#print axioms not_ksetStepOK_famK1p_170
+#print axioms not_ksetStepOK_famK1p_j170
+#print axioms stepOK_iff_famK1p_170
+#print axioms not_std_famK_j170
+#print axioms famK1_no_refute170
+#print axioms gateStd87_famK1p_170
+#print axioms firstFire_famK1p_170
+#print axioms famK0_std_bounds170
+#print axioms famK0_no_refute170
+#print axioms famK0_j0_step170
+#print axioms stepOK_iff_famK0_j0_170
+#print axioms filterGeKB170
+#print axioms filterLtKB170
+#print axioms wcnfKB170
+#print axioms wcnfKB00_170
+
+end
+
 end Evidence.Region
